@@ -73,16 +73,6 @@
                         <ul class="nav">
 							<li class="dropdown">
                                 <a href="about" class="dropdown-toggle brand">$title<!-- <b class="caret"></b> --></a>
-                                <!--
-                                <ul class="dropdown-menu">
-									#if($websiteconfig.getAboutPage().length() > 0)
-									<li><a href="about">About this website</a></li>
-									#end
-									#if($websiteconfig.getHelpPage().length() > 0)
-									<li><a href="help">Help</a></li>
-									#end
-                                </ul>
-                                -->
                             </li>
 							<li><a href="search">Home</a></li>
                             <li><a href="http://www.inl.nl" target="_blank" title="Instituut voor Nederlandse Lexicologie">INL</a></li>

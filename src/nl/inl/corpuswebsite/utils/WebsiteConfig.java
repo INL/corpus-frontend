@@ -36,14 +36,14 @@ public class WebsiteConfig {
 	/** Name of the corpus we're searching */
 	private String corpusName;
 
-	/** Internal URL of the webservice (for the server) */
-	private String urlWebserviceInternal;
+//	/** Internal URL of the webservice (for the server) */
+//	private String urlWebserviceInternal;
+//
+//	/** External URL of the webservice (for the client) */
+//	private String urlWebserviceExternal;
 
-	/** External URL of the webservice (for the client) */
-	private String urlWebserviceExternal;
-
-	/** Where to find scanned pages, if there are any */
-	private String pathToSourceImages = null;
+//	/** Where to find scanned pages, if there are any */
+//	private String pathToSourceImages = null;
 
 	/** What format the corpus XML is in (tei, folia, etc.) */
 	private String corpusDataFormat = null;
@@ -60,14 +60,8 @@ public class WebsiteConfig {
 	/** Logo image to use */
 	private String pathToLogo = null;
 
-	/** Where to find our help page */
-	private String pathToHelpPage = null;
-
-	/** Where to find our about page */
-	private String pathToAboutPage = null;
-
-	/** Google Analytics key */
-	private String googleAnalyticsKey = null;
+//	/** Google Analytics key */
+//	private String googleAnalyticsKey = null;
 
 	/** Link to put in the top bar  */
 	private List<Pair<String, String>> linksInTopBar = new LinkedList<Pair<String, String>>();
@@ -80,9 +74,10 @@ public class WebsiteConfig {
 
 
 		corpusName = xmlConfig.getString("InterfaceProperties.Name", "");
-		urlWebserviceInternal = xmlConfig.getString("InterfaceProperties.WebserviceInternal", "");
-		urlWebserviceExternal = xmlConfig.getString("InterfaceProperties.WebserviceExternal", "");
-		pathToSourceImages = xmlConfig.getString("InterfaceProperties.SourceImagesLocation", "");
+
+//		urlWebserviceInternal = xmlConfig.getString("InterfaceProperties.WebserviceInternal", "");
+//		urlWebserviceExternal = xmlConfig.getString("InterfaceProperties.WebserviceExternal", "");
+//		pathToSourceImages = xmlConfig.getString("InterfaceProperties.SourceImagesLocation", "");
 
 		corpusDataFormat = xmlConfig.getString("InterfaceProperties.CorpusDataFormat", "tei");
 
@@ -91,10 +86,7 @@ public class WebsiteConfig {
 		colorLink = xmlConfig.getString("InterfaceProperties.LinkColor", "");
 		pathToLogo = xmlConfig.getString("InterfaceProperties.Logo", "");
 
-		pathToHelpPage = xmlConfig.getString("InterfaceProperties.HelpPage", "");
-		pathToAboutPage = xmlConfig.getString("InterfaceProperties.AboutPage", "");
-
-		googleAnalyticsKey = xmlConfig.getString("InterfaceProperties.GoogleAnalyticsKey", "");
+//		googleAnalyticsKey = xmlConfig.getString("InterfaceProperties.GoogleAnalyticsKey", "");
 
 		List<HierarchicalConfiguration> myfields = xmlConfig.configurationsAt("InterfaceProperties.NavLinks.Link");
 
@@ -187,13 +179,13 @@ public class WebsiteConfig {
 		return corpusName;
 	}
 
-	public String getWebserviceUrl() {
-		return urlWebserviceInternal;
-	}
-
-	public String getExternalWebserviceUrl() {
-		return urlWebserviceExternal;
-	}
+//	public String getWebserviceUrl() {
+//		return urlWebserviceInternal;
+//	}
+//
+//	public String getExternalWebserviceUrl() {
+//		return urlWebserviceExternal;
+//	}
 
 	public List<FieldDescriptor> getWordProperties() {
 		return properties;
@@ -253,25 +245,17 @@ public class WebsiteConfig {
 		return pathToLogo;
 	}
 
-	public String getSourceImagesLocation() {
-		return pathToSourceImages;
-	}
+//	public String getSourceImagesLocation() {
+//		return pathToSourceImages;
+//	}
 
 	public List<Pair<String, String>> getLinks() {
 		return linksInTopBar;
 	}
 
-	public String getHelpPage() {
-		return pathToHelpPage;
-	}
-
-	public String getAboutPage() {
-		return pathToAboutPage;
-	}
-
-	public String getGoogleAnalyticsKey() {
-		return googleAnalyticsKey;
-	}
+//	public String getGoogleAnalyticsKey() {
+//		return googleAnalyticsKey;
+//	}
 
 	public String getCorpusDataFormat() {
 		return corpusDataFormat;

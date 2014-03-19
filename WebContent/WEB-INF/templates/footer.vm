@@ -7,10 +7,10 @@
 
         </div> <!-- /container -->
 		
-		#if($websiteconfig.getGoogleAnalyticsKey().length() > 0)
+		#if($googleAnalyticsKey.length() > 0)
 		<script type="text/javascript">
           var _gaq = _gaq || [];
-          _gaq.push(['_setAccount', '$websiteconfig.getGoogleAnalyticsKey()']);
+          _gaq.push(['_setAccount', '$googleAnalyticsKey']);
           _gaq.push(['_trackPageview']);
         
           (function() {

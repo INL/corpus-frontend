@@ -9,6 +9,7 @@ package nl.inl.corpuswebsite;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -23,6 +24,8 @@ import nl.inl.corpuswebsite.response.HelpResponse;
 import nl.inl.corpuswebsite.response.SearchResponse;
 import nl.inl.corpuswebsite.utils.WebsiteConfig;
 import nl.inl.util.LogUtil;
+import nl.inl.util.OsUtil;
+import nl.inl.util.PropertiesUtil;
 
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.velocity.Template;
@@ -48,15 +51,16 @@ public class MainServlet extends HttpServlet {
 	/** Directory where the WAR was extracted to (i.e. $TOMCAT/webapps/mywar/) */
 	private File warExtractDir = null;
 
-	/** Name of the WAR file */
-	private String warFileName = "";
-
 	/** Velocity context, where we can add variables for the templating engine */
 	private VelocityContext context = new VelocityContext();
 
 	private Map<String, Template> templates = new HashMap<String, Template>();
 
 	private Map<String, BaseResponse> responses = new HashMap<String, BaseResponse>();
+
+	private String contextPath;
+
+	private Properties adminProps;
 
 	@Override
 	public void init(ServletConfig cfg) throws ServletException {
@@ -65,27 +69,67 @@ public class MainServlet extends HttpServlet {
 		// initialise log4j
 		LogUtil.initLog4j(new File(cfg.getServletContext().getRealPath(LOG4J_PROPERTIES)));
 
+		File configFile = null;
 		try {
 			startVelocity(cfg);
 
 			// Get the name of the folder that contains our deployed war file
 			warExtractDir = new File(cfg.getServletContext().getRealPath("/"));
-			warFileName = warExtractDir.getName();
+			contextPath = cfg.getServletContext().getContextPath();
 
 			// attempt to load a properties file with the same name as the folder
-			File configFile = new File(cfg.getServletContext().getRealPath("/../" + warFileName + ".xml"));
+					//new File(cfg.getServletContext().getRealPath("/../" + warFileName + ".xml"));
+			configFile = new File(warExtractDir, "WEB-INF/config/project/search.xml");
+			if (!configFile.exists() || !configFile.canRead())
+				throw new ServletException("Config file not found or not readable: " + configFile);
 			loadProperties(configFile);
+
+			// Load the external properties file (for administration settings)
+			String adminPropFileName = warExtractDir.getName() + ".properties";
+			File adminPropFile = findPropertiesFile(adminPropFileName);
+			if (adminPropFile == null)
+				throw new ServletException("File " + adminPropFileName + " (with webserviceInternal and webserviceExternal settings) not found in webapps or temp dir!");
+			adminProps = PropertiesUtil.readFromFile(adminPropFile);
+			if (getWebserviceUrl() == null)
+				throw new ServletException("Missing webserviceInternal setting in " + adminPropFile);
+			if (getExternalWebserviceUrl() == null)
+				throw new ServletException("Missing webserviceExternal setting in " + adminPropFile);
+
+		} catch(ServletException e) {
+			throw e;
+		} catch(ConfigurationException e) {
+			throw new ServletException("Error reading config file: " + configFile, e);
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			throw new ServletException(e);
 		}
 
 		// initialise responses
-		responses.put("/" + warFileName + "/page/search", new SearchResponse());
-		responses.put("/" + warFileName + "/page/about", new AboutResponse());
-		responses.put("/" + warFileName + "/page/help", new HelpResponse());
-		responses.put("/" + warFileName + "/page/article", new ArticleResponse());
+		responses.put(contextPath + "/page/search", new SearchResponse());
+		responses.put(contextPath + "/page/about", new AboutResponse());
+		responses.put(contextPath + "/page/help", new HelpResponse());
+		responses.put(contextPath + "/page/article", new ArticleResponse());
 		responses.put("error", new ErrorResponse());
 
+	}
+
+	/**
+	 * Looks for a property file with the specified name, either in the
+	 * Tomcat webapps dir or in the temp dir (/tmp on Unix, C:\\temp on Windows).
+	 *
+	 * @param fileName property file name
+	 * @return the File or null if not found
+	 */
+	private File findPropertiesFile(String fileName) {
+		File fileInWebappsDir = new File(warExtractDir.getParentFile(), fileName);
+		if (fileInWebappsDir.exists())
+			return fileInWebappsDir;
+
+		File tmpDir = OsUtil.isWindows() ? new File("C:\\temp") : new File("/tmp");
+		File fileInTmpDir = new File(tmpDir, fileName);
+		if (fileInTmpDir.exists())
+			return fileInTmpDir;
+
+		return null;
 	}
 
 	/**
@@ -172,6 +216,7 @@ public class MainServlet extends HttpServlet {
 			// if there is no corresponding response object
 			// display an error
 			br = responses.get("error");
+			br.getContext().put("error", "Response for '" + request.getRequestURI() + "' not found");
 		}
 
 		br.init(request, response, this);
@@ -182,6 +227,31 @@ public class MainServlet extends HttpServlet {
 	public File getWarExtractDir() {
 		return warExtractDir;
 	}
+
+	public File getHelpPage() {
+		return new File(warExtractDir, "WEB-INF/config/project/help.inc");
+	}
+
+	public File getAboutPage() {
+		return new File(warExtractDir, "WEB-INF/config/project/about.inc");
+	}
+
+	public String getSourceImagesLocation() {
+		return adminProps.getProperty("sourceImagesLocation", "");
+	}
+
+	public String getWebserviceUrl() {
+		return adminProps.getProperty("webserviceInternal");
+	}
+
+	public String getExternalWebserviceUrl() {
+		return adminProps.getProperty("webserviceExternal");
+	}
+
+	public Object getGoogleAnalyticsKey() {
+		return adminProps.getProperty("googleAnalyticsKey", "");
+	}
+
 
 }
 

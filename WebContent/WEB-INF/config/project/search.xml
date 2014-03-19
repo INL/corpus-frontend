@@ -1,9 +1,19 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <SearchInterface>
 	<InterfaceProperties>
-		<Name>Groot Molechaser Corpus</Name>
+		<Name>Corpus Hedendaags Nederlands</Name>
+		
+		<!--
 		<WebserviceInternal>http://localhost:8080/corpus/</WebserviceInternal>
 		<WebserviceExternal>http://svowmc01:8080/corpus/</WebserviceExternal>
+		<HelpPage>/vol1/molechaser/servlet/mc_help.txt</HelpPage>
+		<AboutPage>/vol1/molechaser/servlet/mc_about.txt</AboutPage>
+		<GoogleAnalyticsKey>UA-43624324-2</GoogleAnalyticsKey>
+		-->
+		
+		<NavLinks>
+			<Link value="http://www.clarin.eu">CLARIN</Link>
+		</NavLinks>
 	</InterfaceProperties>
 	<DocumentProperties>
 		<Property>
@@ -49,7 +59,7 @@
 		</Property>
 		<Property>
 			<Name>P.o.S.</Name>
-			<Index>type</Index>
+			<Index>pos</Index>
 			<Function>pos</Function>
 		</Property>
 	</WordProperties>

@@ -28,7 +28,7 @@ public class ArticleResponse extends BaseResponse {
 	@Override
 	protected void completeRequest() {
 		if(webservice == null)
-			webservice = new QueryServiceHandler(this.servlet.getConfig().getWebserviceUrl() + "source", 50);
+			webservice = new QueryServiceHandler(this.servlet.getWebserviceUrl() + "source", 50);
 
 		if(this.request.getParameterMap().size() > 0) {
 			// get parameter values
@@ -48,7 +48,7 @@ public class ArticleResponse extends BaseResponse {
 					String xmlResult = webservice.makeRequest(parameters);
 
 					transformer.clearParameters();
-					transformer.addParameter("source_images", this.servlet.getConfig().getSourceImagesLocation());
+					transformer.addParameter("source_images", this.servlet.getSourceImagesLocation());
 					transformer.addParameter("title_name", this.servlet.getConfig().getFieldIndexForFunction("title"));
 					String htmlResult = transformer.transform(xmlResult, articleStylesheet);
 
@@ -62,6 +62,7 @@ public class ArticleResponse extends BaseResponse {
 		}
 		this.getContext().put("title", this.servlet.getConfig().getCorpusName());
 		this.getContext().put("websiteconfig", this.servlet.getConfig());
+		this.getContext().put("googleAnalyticsKey", this.servlet.getGoogleAnalyticsKey());
 
 		// display template
 		this.displayHtmlTemplate(this.servlet.getTemplate("article"));

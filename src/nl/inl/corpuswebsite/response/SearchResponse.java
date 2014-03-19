@@ -38,7 +38,7 @@ public class SearchResponse extends BaseResponse {
 	@Override
 	protected void completeRequest() {
 		if(webservice == null)
-			webservice = new QueryServiceHandler(this.servlet.getConfig().getWebserviceUrl() + "search", 1);
+			webservice = new QueryServiceHandler(this.servlet.getWebserviceUrl() + "search", 1);
 
 		this.clearContext();
 
@@ -85,6 +85,7 @@ public class SearchResponse extends BaseResponse {
 		this.getContext().put("title", this.servlet.getConfig().getCorpusName());
 		this.getContext().put("wordproperties", this.servlet.getConfig().getWordProperties());
 		this.getContext().put("websiteconfig", this.servlet.getConfig());
+		this.getContext().put("googleAnalyticsKey", this.servlet.getGoogleAnalyticsKey());
 
 		// display template
 		this.displayHtmlTemplate(this.servlet.getTemplate("search"));
@@ -133,7 +134,7 @@ public class SearchResponse extends BaseResponse {
 					perHitResultStylesheet = getPerHitStylesheet(getResults);
 
 				if(getResults) {
-					webservice = new QueryServiceHandler(this.servlet.getConfig().getWebserviceUrl() + "result", 1);
+					webservice = new QueryServiceHandler(this.servlet.getWebserviceUrl() + "result", 1);
 					parameters.put("id", new String[]{this.getParameter("key", "")});
 				}
 
@@ -186,7 +187,7 @@ public class SearchResponse extends BaseResponse {
 					perDocResultStylesheet = getPerDocStylesheet(getResults);
 
 				if(getResults) {
-					webservice = new QueryServiceHandler(this.servlet.getConfig().getWebserviceUrl() + "result", 1);
+					webservice = new QueryServiceHandler(this.servlet.getWebserviceUrl() + "result", 1);
 					parameters.put("id", new String[]{this.getParameter("key", "")});
 				}
 
@@ -242,7 +243,7 @@ public class SearchResponse extends BaseResponse {
 						groupHitsResultStylesheet = getGroupHitsStylesheet(getResults);
 
 					if(getResults) {
-						webservice = new QueryServiceHandler(this.servlet.getConfig().getWebserviceUrl() + "result", 1);
+						webservice = new QueryServiceHandler(this.servlet.getWebserviceUrl() + "result", 1);
 						parameters.put("id", new String[]{this.getParameter("key", "")});
 					}
 
@@ -310,7 +311,7 @@ public class SearchResponse extends BaseResponse {
 						groupDocsResultStylesheet = getGroupDocsStylesheet(getResults);
 
 					if(getResults) {
-						webservice = new QueryServiceHandler(this.servlet.getConfig().getWebserviceUrl() + "result", 1);
+						webservice = new QueryServiceHandler(this.servlet.getWebserviceUrl() + "result", 1);
 						parameters.put("id", new String[]{this.getParameter("key", "")});
 					}
 
@@ -352,7 +353,7 @@ public class SearchResponse extends BaseResponse {
 		transformer.addParameter("urlparamwithoutsort", "?" + getUrlParameterStringExcept(new String[] {"sortBy", "key"}, true));
 		transformer.addParameter("urlparamwithoutvieworgroup", "?" + getUrlParameterStringExcept(new String[] {"view", "key", "viewGroup", "groupBy"}, false));
 		transformer.addParameter("urlparamquery", URLEncoder.encode(query, "UTF-8"));
-		transformer.addParameter("webserviceurl", this.servlet.getConfig().getExternalWebserviceUrl());
+		transformer.addParameter("webserviceurl", this.servlet.getExternalWebserviceUrl());
 		transformer.addParameter("resultkey", this.getParameter("key", ""));
 
 		// sometimes a pos field is called "function", sometimes "type", sometimes "pos

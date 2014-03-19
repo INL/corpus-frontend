@@ -15,9 +15,10 @@ public class AboutResponse extends BaseResponse {
 	 */
 	@Override
 	protected void completeRequest() {
-		this.putFileContentIntoContext("content", this.servlet.getConfig().getAboutPage());
+		this.putFileContentIntoContext("content", this.servlet.getAboutPage());
 		this.getContext().put("title", this.servlet.getConfig().getCorpusName());
 		this.getContext().put("websiteconfig", this.servlet.getConfig());
+		this.getContext().put("googleAnalyticsKey", this.servlet.getGoogleAnalyticsKey());
 		this.displayHtmlTemplate(this.servlet.getTemplate("contentpage"));
 
 	}

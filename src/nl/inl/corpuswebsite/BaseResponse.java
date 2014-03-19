@@ -239,11 +239,10 @@ public abstract class BaseResponse {
 		return builder.toString();
 	}
 
-	protected void putFileContentIntoContext(String contextKey, String fileName) {
-		File theFile = new File(fileName);
-		if(theFile.exists()) {
+	protected void putFileContentIntoContext(String contextKey, File pathToFile) {
+		if(pathToFile.exists()) {
 
-			List<String> lines = FileUtil.readLines(theFile);
+			List<String> lines = FileUtil.readLines(pathToFile);
 
 			StringBuilder sb = new StringBuilder();
 			for(String s : lines) {

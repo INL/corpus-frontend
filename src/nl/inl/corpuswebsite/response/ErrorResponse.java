@@ -15,7 +15,8 @@ public class ErrorResponse extends BaseResponse {
 	 */
 	@Override
 	protected void completeRequest() {
-		this.getContext().put("error", "Invalid path");
+		if (!this.getContext().containsKey("error"))
+			this.getContext().put("error", "Unknown error occurred (invalid path?)");
 		this.displayHtmlTemplate(this.servlet.getTemplate("error"));
 	}
 

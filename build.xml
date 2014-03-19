@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!DOCTYPE project>
-<project name="corpus-frontend" default="dist" basedir=".">
+<project name="corpus-frontend" default="all" basedir=".">
 	<!-- Projectgegevens -->
 	<property name="project.name" value="corpus-frontend" />
 	<property name="project.version" value="1.0" />
@@ -10,8 +10,6 @@
 	<property name="build" value="antbuild" />
 	<property name="dist" value="dist" />
 	
-	<property name="war.filename" value="search" />
-
 	<!-- Access environment variables with ${ENV.name} -->
 	<property environment="ENV" />
 	
@@ -40,22 +38,37 @@
 		<echo message="----- Building ${project.name} -----" />
 		<tstamp />
 		<mkdir dir="${build}/WEB-INF/classes" />
+        <condition property="project-variant" value="hedendaagsnederlands">
+            <not>
+        	   <isset property="project-variant" />
+        	</not>
+        </condition>
+	    <condition property="war.filename" value="search">
+	        <not>
+	            <isset property="war.filename" />
+	        </not>
+	    </condition>
+        <echo message="######################################################" />
+        <echo message="" />
+        <echo message="Project variant: &quot;${project-variant}&quot;" />
+        <echo message="" />
+        <echo message="######################################################" />
 	</target>
 	
-	<target name="BlackLab">
+	<target name="build-blacklab">
 		<ant dir="${BlackLabDir}" inheritall="false" />
 	</target>
 
 	<!-- Compileer de sources -->
-	<target name="compile" depends="init,BlackLab">
+	<target name="compile" depends="init,build-blacklab">
 		<javac includeantruntime="false" source="1.6" target="1.6" encoding="utf-8" debug="true" debuglevel="lines,vars,source" srcdir="${src}" destdir="${build}/WEB-INF/classes">
 			<!-- Het te gebruiken classpath voor compileren -->
 			<classpath>
 				<pathelement path="${java.class.path}/"/>
 				<pathelement path="${lib}/log4j-1.2.15.jar" />
-				<pathelement path="${lib}/tomcat5.5/servlet-api.jar" />
-				<pathelement path="${lib}/tomcat5.5/jsp-api.jar" />
-				<pathelement path="${lib}/tomcat5.5/jasper-runtime.jar" />
+				<pathelement path="${lib}/tomcat-7.0/servlet-api.jar" />
+				<pathelement path="${lib}/tomcat-7.0/jsp-api.jar" />
+				<pathelement path="${lib}/tomcat-7.0/jasper.jar" />
                 <pathelement path="${lib}/InlJavaLib-0.7.jar" />
 				<pathelement path="${lib}/velocity-1.5/velocity-1.5.jar" />
 				<pathelement path="${lib}/velocity-tools-1.4/velocity-tools-generic-1.4.jar" />
@@ -101,12 +114,54 @@
 		</copy>
 		
 	</target>
-
-	<!-- Bouw de war file -->
-	<target name="dist" depends="compile">
-		<mkdir dir="${dist}" />
-		<war warfile="${dist}/${war.filename}.war" webxml="WebContent/WEB-INF/web.xml" basedir="${build}" />
+	
+	<!-- Copy search.xml, help.inc and about.inc for our desired variant to 
+	     build/WEB-INF/config/project/ -->
+	<target name="copy-variant-files" depends="compile">
+        <copy todir="${build}/WEB-INF/config/project">
+            <fileset dir="WebContent/projectconfigs/${project-variant}" includes="*" />
+        </copy>		
 	</target>
+
+    <!-- Build .war file from the build directory -->
+    <target name="war" depends="copy-variant-files">
+        <mkdir dir="${dist}" />
+        <war warfile="${dist}/${war.filename}.war" webxml="WebContent/WEB-INF/web.xml" basedir="${build}" />
+        <echo message="######################################################" />
+        <echo message="" />
+        <echo message="&quot;${project-variant}&quot; corpus application built!" />
+        <echo message="" />
+        <echo message="######################################################" />
+    </target>
+    
+    <!-- Build zeebrieven.war (Brieven als Buit) -->
+    <target name="brievenalsbuit">
+    	<antcall target="war">
+            <param name="project-variant" value="brievenalsbuit" />
+            <param name="war.filename" value="zeebrieven" />
+   		</antcall>
+    </target>
+
+	<!-- Build search.war (CHN variant) -->
+	<target name="hedendaagsnederlands">
+        <antcall target="war">
+            <param name="project-variant" value="hedendaagsnederlands" />
+            <param name="war.filename" value="search" />
+        </antcall>
+	</target>
+
+    <!-- Build gysseling.war (Corpus Gysseling) -->
+    <target name="gysseling">
+        <antcall target="war">
+            <param name="project-variant" value="gysseling" />
+            <param name="war.filename" value="gysseling" />
+        </antcall>
+    </target>
+
+    <!-- Build .war files for all project variants -->
+    <target name="all" depends="hedendaagsnederlands,gysseling,brievenalsbuit">
+    	<!-- NOP -->
+    </target>
 
 	<!-- Ruim de gegenereerde files op -->
 	<target name="clean">

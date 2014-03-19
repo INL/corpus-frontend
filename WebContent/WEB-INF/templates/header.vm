@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html class="no-js">
+    <head>
+		<meta http-equiv="X-UA-Compatible" content="IE=10">
+		<meta http-equiv="content-type" content="text/html; charset=utf-8">
+        <meta name="description" content="$title search provided by the INL in Leiden.">
+        <meta name="viewport" content="width=device-width">
+		<meta property="og:image" content="../apple-touch-icon-144x144-precomposed.png" />
+		<meta property="og:description"content="$title search provided by the INL in Leiden."/>
+		<link title="Search" type="application/opensearchdescription+xml" rel="search" href="../opensearch.xml">
+        <link rel="stylesheet" href="../css/bootstrap.min.css">
+        <link rel="stylesheet" href="../css/bootstrap-responsive.min.css">
+        <link rel="stylesheet" href="../css/main.css">
+		<style>
+            body {
+                padding-top: 60px;
+                padding-bottom: 40px;
+				
+				#if($websiteconfig.getBackgroundImage().length() > 0)
+				background: url('$websiteconfig.getBackgroundImage()');
+				background-repeat: no-repeat;
+                background-position: -350px -310px;
+                background-attachment: scroll;
+				#end
+            }
+			
+			#if($websiteconfig.getBackgroundColor().length() > 0)
+			.contentbox {
+				background-color: $websiteconfig.getBackgroundColor();
+			}
+			#end
+			
+			#if($websiteconfig.getLinkColor().length() > 0)
+			a {
+				color: $websiteconfig.getLinkColor();
+			}
+			#end
+        </style>
+		<link rel="icon" type="image/png" href="../favicon.png">
+		<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+		<link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+        <script src="../js/vendor/modernizr-2.6.2-respond-1.1.0.min.js"></script>
+		<script src="../js/vendor/jquery-1.8.3.min.js"></script>
+        <script src="../js/vendor/bootstrap.min.js"></script>
+        <script src="../js/main.js"></script>
+		<script src="../js/purl.js"></script>
+		<script src="../js/status_check.js"></script>
+		<script src="../js/ajax_retriever.js"></script>
+		<title>Corpus $title search</title>
+    </head>
+    <body>
+        <!--[if lt IE 9]>
+			<br/><br/><br/>
+			<div class="alert alert-warning">
+			<h1>Error: Incompatible browser.</h1>
+            <p>You are using an <strong>outdated</strong> browser which cannot display this website correctly. Please use the latest version of <a href="http://www.mozilla.org/en-US/firefox/new/">Mozilla Firefox</a> or <a href="https://www.google.com/intl/en/chrome/browser/">Google Chrome</a> instead.</p>
+			</div>
+        <![endif]-->
+        <div class="navbar navbar-inverse navbar-fixed-top">
+            <div class="navbar-inner">
+                <div class="container">
+                    <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </a>
+					#if($websiteconfig.getLogo().length() > 0)
+					<img src="$websiteconfig.getLogo()" class="booklogo" />
+					#else
+					<!-- <img src="../img/booklogo.png" class="booklogo" /> -->
+					#end
+                    <div class="nav-collapse collapse">
+                        <ul class="nav">
+							<li class="dropdown">
+                                <a href="about" class="dropdown-toggle brand">$title<!-- <b class="caret"></b> --></a>
+                                <!--
+                                <ul class="dropdown-menu">
+									#if($websiteconfig.getAboutPage().length() > 0)
+									<li><a href="about">About this website</a></li>
+									#end
+									#if($websiteconfig.getHelpPage().length() > 0)
+									<li><a href="help">Help</a></li>
+									#end
+                                </ul>
+                                -->
+                            </li>
+							<li><a href="search">Home</a></li>
+                            <li><a href="http://www.inl.nl" target="_blank" title="Instituut voor Nederlandse Lexicologie">INL</a></li>
+                            #foreach($linkPair in $websiteconfig.getLinks())
+								<li><a href="$linkPair.first()" target="_blank">$linkPair.second()</a></li>
+							#end
+                            <li><a href="about">About the project</a></li>
+                            <li><a href="help#help">How do I search?</a></li>
+                            <!--
+                            <li>
+                                <a href="help#beta" title="This is beta software. Click to find out more." class="dropdown-toggle">BETA</a>
+                            </li>
+                            -->
+                        </ul>
+                    </div><!--/.nav-collapse -->
+                </div>
+            </div>
+        </div>
+		
+        <div class="container">
+			<noscript>
+				<br/><br/><br/>
+				<div class="alert alert-error">	
+        			<h1>Error: Javascript disabled.</h1>
+        			We notice that you have Javascript disabled in your browser. This website requires Javascript to be enabled. Please enable Javascript to use this website.
+				</div>
+    		</noscript>
+			<div class="row">

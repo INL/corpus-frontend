@@ -1,0 +1,218 @@
+@font-face {
+    font-family: 'Inl vmnw wnt';
+    src: url('../font/INLVRG__.eot');
+    src: local('Inl vmnw wnt'),
+    	 url('../font/INLVRG__.TTF') format('truetype');
+    
+}
+
+.navbar-inverse .navbar-inner {
+	background-image: -moz-linear-gradient(top, #333333, #111111);
+	background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#333333), to(#111111));
+	background-image: -webkit-linear-gradient(top, #333333, #111111);
+	background-image: -o-linear-gradient(top, #333333, #111111);
+	background-image: linear-gradient(to bottom, #333333, #111111);
+	border-color: #333333;
+}
+
+img.booklogo {
+	float: left;
+	z-index: 9000;
+	position:relative;
+}
+
+.nav .dropdown .brand {
+	color: #dddddd;
+}
+
+.navbar-fixed-top  .navbar-inner {
+	max-height: 41px;
+	-webkit-box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+	-moz-box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+	box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+}
+
+.haspadding {
+	padding: 5px;
+}
+
+.contentbox {
+	background-color: rgba(208,218,228,0.6);
+	padding: 20px;
+	margin-bottom: 20px;
+	border: 1px solid #cccccc;
+}
+
+.lightbg {
+	background-color: rgba(255,255,255,0.6);
+	border: 1px solid #cccccc;
+	margin-bottom: 20px;
+}
+
+body {
+	background: url('../img/logo.jpg');
+	background-repeat:no-repeat;
+	background-position:-350px -310px;
+	background-attachment:scroll;
+}
+
+.span1, .span2, .span3, .span4, .span5, .span6, .span10, .span12 {
+	margin-left: 0px;
+}
+
+select.medium {
+	width: 170px;
+}
+
+#cqlfield {
+	display: none;
+}
+
+.nav-collapse {
+	background-color: #222222;
+}
+
+.green {
+	color: #0e774a;
+}
+
+table {
+	width: 100%;
+}
+
+.tbl_doc {
+	width: 75%;
+}
+
+.tbl_year {
+	width: 15%;
+}
+
+.tbl_hits {
+	width: 15%;
+}
+
+td {
+	vertical-align: top;
+}
+
+th {
+	text-align: left;
+	background-color: #ffffff;
+}
+
+tr:hover {
+	background-color: rgba(0,0,0, 0.1);
+}
+
+tr.concordance {
+	border-bottom: 1px solid #ffffff;
+}
+
+tr.tbl_head {
+	border-bottom: 1px solid #aaaaaa;
+}
+
+table.documents td {
+	padding-bottom: 15px;
+}
+
+.tbl_conc_left {
+	text-align: right;
+	min-width:300px;
+}
+
+.tbl_conc_right {
+	min-width:300px;
+}
+
+.tbl_conc_hit {
+	font-weight: bold;
+	text-align: center;
+}
+
+.tbl_lemma {
+	min-width:125px;
+}
+
+.tbl_groupname {
+	width: 30%;
+}
+
+.progress {
+	margin-bottom: 2px;
+}
+
+.vtop, .checkbox.inline.vtop {
+	vertical-align: top;
+}
+
+.textchecks {
+	top: -15px;
+}
+
+hl {
+	font-weight: bold;
+}
+
+span.hl {
+	font-weight: bold;
+	background-color: #ffffff;
+}
+
+div.hitscroll {
+	position: fixed;
+	top: 100px;
+	left: 60%;
+	background-color: #444444;
+	border: #222222 1px solid;
+	z-index: 9001;	
+	padding: 10px;
+	border-radius: 5px;
+}
+
+div.hitscroll a {
+	color: #dddddd; 
+}
+
+small {
+	color: #888888;
+}
+
+.progress .bar {
+	color: #333333;
+}
+
+.xxlarge {
+	font-size:100px;
+}
+
+.row-fluid .inline-concordance, .inline-concordance .btn, td .inline-concordance {
+	font-size: 12px;
+	min-height: 0px;
+	background-color: rgba(255,255,255,0.5);
+	margin-left: 0px;
+}
+
+select[multiple].multiselect {
+	height: 30px;
+}
+
+.activeLink {
+	background-color: #FFFF00;
+}
+
+@media (max-width: 979px) {
+	.navbar-fixed-top, .navbar-fixed-bottom {
+		position: fixed;
+	}
+}
+
+span.word {
+	font-family: "Inl vmnw wnt", "Helvetica Neue", "Helvetica", "Arial,sans-serif";
+}
+
+.linenumber {
+	color: #aaaaaa;
+	font-weight: bold;
+}

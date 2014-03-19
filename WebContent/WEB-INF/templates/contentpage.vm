@@ -1,0 +1,7 @@
+#parse("header.vm")
+
+<div class="span12 contentbox">
+$!content	
+</div>
+	
+#parse("footer.vm")

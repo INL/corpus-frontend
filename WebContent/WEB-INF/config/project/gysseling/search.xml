@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<SearchInterface>
+	<InterfaceProperties>
+		<Name>Gysseling</Name>
+		
+		<!--
+		<WebserviceInternal>http://localhost:8080/gyscorpus/</WebserviceInternal>
+		<WebserviceExternal>http://svowmc01:8080/gyscorpus/</WebserviceExternal>
+		<HelpPage>/vol1/molechaser/servlet/gys_help.txt</HelpPage>
+		<AboutPage>/vol1/molechaser/servlet/gys_about.txt</AboutPage>
+		<GoogleAnalyticsKey>UA-43624324-2</GoogleAnalyticsKey>
+		-->
+		
+		<NavLinks>
+			<Link value="http://www.clarin.eu">CLARIN</Link>
+		</NavLinks>
+	</InterfaceProperties>
+	<DocumentProperties>
+		<Property>
+			<Name>Title</Name>
+			<SearchField>title</SearchField>
+			<DisplayField>title</DisplayField>
+			<Function>title</Function>
+		</Property>
+		<Property>
+			<Name>Author</Name>
+			<SearchField>author</SearchField>
+			<DisplayField>author</DisplayField>
+			<Function>author</Function>
+			<Values multiple="true">
+				<Value value=""></Value> 
+				<Value value="maerlant">Jacob van Maerlant</Value>
+				<Value value="affligem">Willem van Affligem</Value>
+				<Value value="veldeke">Heinric van Veldeke</Value>
+				<Value value="geraert">Broeder Geraert</Value> 
+				<Value value="onbekend">onbekend</Value> 
+			</Values>
+		</Property>
+		<Property type="date">
+			<Name>Date</Name>
+			<SearchField>yearFrom</SearchField>
+			<DisplayField>yearFrom</DisplayField>
+			<Function>date</Function>
+		</Property>
+		<Property>
+			<Name>Source</Name>
+			<SearchField>source</SearchField>
+			<DisplayField>source</DisplayField>
+			<Values multiple="true">
+				<Value value=""></Value>
+				<Value value="corpi">Corp.I</Value>
+				<Value value="moraalb">Nederrijns Moraalboek</Value>
+				<Value value="bern">Glossarium Bernense</Value>
+				<Value value="kerst">Sinte Kerstine</Value>
+				<Value value="diat">het Luikse Diatessaron</Value>
+				<Value value="natbl*">Der Naturen Bloeme</Value>
+				<Value value="rijmb">Rijmbijbel</Value>
+				<Value value="lutg*">Sente Lutgart</Value>
+				<Value value="floyr">Floyris ende Blantseflur</Value>
+				<Value value="gezreg">Noordlimburgse gezondheidsregels</Value>
+				<Value value="alexius">Alexiuslegende</Value>
+				<Value value="minned">Minnedichten uit Ter Doest</Value>
+				<Value value="reinout">Reinout van Montalbaen</Value>
+				<Value value="perch">Perchevael</Value>
+				<Value value="reine">Enaamse codex</Value>
+				<Value value="reing">Reinaert G</Value>
+				<Value value="nibel">Brabantse vertaling van het Nibelungenlied</Value>
+				<Value value="wrrag">Wrake van Ragise</Value>
+				<Value value="boeve">Boeve van Hamtone</Value>
+				<Value value="genrec">Nederbergse geneeskundige geneeskundige recepten</Value>
+				<Value value="trist">Tristant</Value>
+				<Value value="plgloss">Plantenglossarium uit Vlaams Artesi&#x000EB; of Frans&#x02013;Vlaanderen</Value>
+				<Value value="aiol">Aiol</Value>
+				<Value value="wiss">Wisselau</Value>
+				<Value value="obit">Antwerps Obituarium</Value>
+				<Value value="servas">Sente Servas</Value>
+			</Values>
+		</Property>
+	</DocumentProperties>
+	<WordProperties>
+		<Property>
+			<Name>Wordform</Name>
+			<Index>word</Index>
+			<Sensitive>True</Sensitive>
+			<Function>wordform</Function>
+		</Property>
+		<Property>
+			<Name>Lemma</Name>
+			<Index>lemma</Index>
+			<Function>lemma</Function>
+		</Property>
+		<Property>
+			<Name>P.o.S.</Name>
+			<Index>pos</Index>
+			<Function>pos</Function>
+		</Property>
+	</WordProperties>
+</SearchInterface>
+			

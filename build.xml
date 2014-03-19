@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE project>
+<project name="CorpusSearchWebsite" default="dist" basedir=".">
+	<!-- Projectgegevens -->
+	<property name="project.name" value="corpuswebsite" />
+	<property name="project.version" value="1.0" />
+
+	<!-- Directories -->
+	<property name="src" value="src" />
+	<property name="build" value="antbuild" />
+	<property name="dist" value="dist" />
+	
+	<property name="war.filename" value="search" />
+
+    <!-- Get the lib and tomcat directories from the common Ant file -->
+	<import file="../antCommon.xml"/>
+
+	<!-- Sla timestamp op en maak de build directory -->
+	<target name="init">
+		<echo message="----- Building ${project.name} -----" />
+		<tstamp />
+		<mkdir dir="${build}/WEB-INF/classes" />
+	</target>
+	
+	<target name="BlackLab">
+		<ant dir="${BlackLabDir}" inheritall="false" />
+	</target>
+
+	<!-- Compileer de sources -->
+	<target name="compile" depends="init,BlackLab">
+		<javac source="1.6" target="1.6" encoding="utf-8" debug="true" debuglevel="lines,vars,source" srcdir="${src}" destdir="${build}/WEB-INF/classes">
+			<!-- Het te gebruiken classpath voor compileren -->
+			<classpath>
+				<pathelement path="${java.class.path}/"/>
+				<pathelement path="${lib}/log4j-1.2.15.jar" />
+				<pathelement path="${lib}/tomcat5.5/servlet-api.jar" />
+				<pathelement path="${lib}/tomcat5.5/jsp-api.jar" />
+				<pathelement path="${lib}/tomcat5.5/jasper-runtime.jar" />
+                <pathelement path="${lib}/InlJavaLib-0.7.jar" />
+				<pathelement path="${lib}/velocity-1.5/velocity-1.5.jar" />
+				<pathelement path="${lib}/velocity-tools-1.4/velocity-tools-generic-1.4.jar" />
+				<pathelement path="${lib}/velocity-tools-1.4/velocity-tools-view-1.4.jar" />
+				<pathelement path="${lib}/velocity-1.5/lib/commons-collections-3.1.jar" />
+				<pathelement path="${lib}/velocity-1.5/lib/commons-lang-2.1.jar" />
+				<pathelement path="${lib}/commons-lang-2.6/commons-lang-2.6.jar" />
+                <pathelement path="${lib}/commons-configuration-1.9/commons-configuration-1.9.jar" />
+                <pathelement path="${lib}/commons-logging-1.1.1/commons-logging-1.1.1.jar" />
+		        <pathelement path="${lib}/lucene-3.6.0/lucene-core-3.6.0.jar" />
+		        <pathelement path="${lib}/lucene-3.6.0/lucene-highlighter-3.6.0.jar" />
+		        <pathelement path="${lib}/lucene-3.6.0/lucene-queries-3.6.0.jar" />
+				<pathelement path="${BlackLabDir}/dist/BlackLab.jar" />
+			</classpath>
+		</javac>
+		<!-- Verwijder oude templates, libraries en config files -->
+		<delete dir="${build}/WEB-INF/lib" />
+		<delete dir="${build}/WEB-INF/templates" />
+		<delete dir="${build}/WEB-INF/config" />
+		<delete dir="${build}/WEB-INF/stylesheets" /> 
+		<delete dir="${build}/css" />
+		<delete dir="${build}/img" />
+		<delete dir="${build}/js" />
+	
+		<!-- Kopieer de resources uit de src boom -->
+		<copy todir="${build}/WEB-INF/lib">
+            <fileset dir="${BlackLabDir}/dist" includes="BlackLab.jar" />
+		</copy>
+		
+		<!-- Kopieer de resources uit de src boom -->
+		<copy todir="${build}">
+			<fileset dir="WebContent" includes="META-INF/*" />
+			<fileset dir="WebContent" includes="WEB-INF/lib/*" />
+			<fileset dir="WebContent" includes="WEB-INF/templates/*" />
+			<fileset dir="WebContent" includes="WEB-INF/config/*" />
+			<fileset dir="WebContent" includes="WEB-INF/stylesheets/*" />
+			<fileset dir="WebContent" includes="font/*" />
+			<fileset dir="WebContent" includes="js/*" />
+			<fileset dir="WebContent" includes="js/vendor/*" />
+			<fileset dir="WebContent" includes="css/*" />
+			<fileset dir="WebContent" includes="img/*" />
+			<fileset dir="WebContent" includes="*" />
+		</copy>
+		
+	</target>
+
+	<!-- Bouw de war file -->
+	<target name="dist" depends="compile">
+		<mkdir dir="${dist}" />
+		<war warfile="${dist}/${war.filename}.war" webxml="WebContent/WEB-INF/web.xml" basedir="${build}" />
+		<!-- <copy todir="${tomcat}/webapps">
+			<fileset dir="." includes="${war.filename}.xml" />
+			<fileset dir="${dist}" includes="${war.filename}.war" />
+		</copy> -->
+	</target>
+
+	<!-- Ruim de gegenereerde files op -->
+	<target name="clean">
+		<delete dir="${build}" />
+		<delete dir="${dist}" />
+	</target>
+</project>

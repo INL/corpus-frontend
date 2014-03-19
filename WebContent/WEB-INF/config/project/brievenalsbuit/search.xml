@@ -1,0 +1,716 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<SearchInterface>
+	<InterfaceProperties>
+		<Name>Brieven als Buit</Name>
+		
+		<!--
+		<WebserviceInternal>http://localhost:8080/zbcorpus/</WebserviceInternal>
+		<WebserviceExternal>http://svowmc01:8080/zbcorpus/</WebserviceExternal>
+		<SourceImagesLocation>http://brievenalsbuit.inl.nl/zeeplaatjes/</SourceImagesLocation>
+		<HelpPage>/vol1/molechaser/servlet/zb_help.txt</HelpPage>
+		<AboutPage>/vol1/molechaser/servlet/zb_about.txt</AboutPage>
+		<GoogleAnalyticsKey>UA-43624324-1</GoogleAnalyticsKey>
+		-->
+		
+		<BackgroundColor>rgba(228,200,200,0.3)</BackgroundColor>
+		<BackgroundImage>../img/bab_logo_700.png</BackgroundImage>
+		<LinkColor>#b10932</LinkColor>
+		<Logo>../img/bab_logo_100.png</Logo>
+		<NavLinks>
+			<Link value="http://www.hum.leiden.edu/lucl/">LUCL</Link>
+			<!-- <Link value="help">How do I search?</Link> -->
+			<!-- <Link value="about">About the project</Link> -->
+		</NavLinks>
+	</InterfaceProperties>
+	<DocumentProperties>
+		<Property>
+			<Name>Title</Name>
+			<SearchField>title</SearchField>
+			<DisplayField>title</DisplayField>
+			<Function>title</Function>
+		</Property>
+		<Property type="date">
+			<TabGroup>Letter</TabGroup>
+			<Name>Year</Name>
+			<SearchField>datum_jaar</SearchField>
+			<DisplayField>datum_jaar</DisplayField>
+			<Function>date</Function>
+		</Property>
+		<Property>
+			<TabGroup>Letter</TabGroup>
+			<Name>Text type</Name>
+			<SearchField>type_brief</SearchField>
+			<DisplayField>type_brief</DisplayField>
+			<Values multiple="false">
+				<Value value=""></Value>
+				<Value value="private">Private letter</Value>
+				<Value value="business">Business letter</Value>
+			</Values>
+		</Property>
+		<Property>
+			<TabGroup>Letter</TabGroup>
+			<Name>Autograph</Name>
+			<SearchField>autograaf</SearchField>
+			<DisplayField>autograaf</DisplayField>
+			<Values multiple="true">
+				<Value value=""></Value>
+				<Value value="autograph">Autograph</Value>
+				<Value value="non-autograph">Non-autograph</Value>
+				<Value value="uncertain">Uncertain</Value>
+			</Values>
+		</Property>
+		<Property>
+			<TabGroup>Letter</TabGroup>
+			<Name>Signature</Name>
+			<SearchField>signatuur</SearchField>
+			<DisplayField>signatuur</DisplayField>
+		</Property>
+
+		<Property>
+			<TabGroup>Sender</TabGroup>
+			<Name>Name</Name>
+			<SearchField>afz_naam_norm</SearchField>
+			<DisplayField>afz_naam_norm</DisplayField>
+			<Function>author</Function>
+		</Property>
+		<Property>
+			<TabGroup>Sender</TabGroup>
+			<Name>Gender</Name>
+			<SearchField>afz_geslacht</SearchField>
+			<DisplayField>afz_geslacht</DisplayField>
+			<Values multiple="true">
+				<Value value=""></Value>
+				<Value>male</Value>
+				<Value>female</Value>
+				<Value>unknown</Value>
+			</Values>
+		</Property>
+		<Property>
+			<TabGroup>Sender</TabGroup>
+			<Name>Class</Name>
+			<SearchField>afz_klasse</SearchField>
+			<DisplayField>afz_klasse</DisplayField>
+			<Values multiple="true">
+				<Value value=""></Value>
+				<Value>low</Value>
+				<Value>middle-low</Value>
+				<Value>middle-high</Value>
+				<Value>high</Value>
+				<Value>unknown</Value>
+			</Values>
+		</Property>
+		<Property>
+			<TabGroup>Sender</TabGroup>
+			<Name>Age</Name>
+			<SearchField>afz_geb_lftcat</SearchField>
+			<DisplayField>afz_geb_lftcat</DisplayField>
+			<Values multiple="true">
+				<Value value=""></Value>
+				<Value>&lt;30</Value>
+				<Value>30-50</Value>
+				<Value>&gt;50</Value>
+			</Values>
+		</Property>
+		<Property>
+			<TabGroup>Sender</TabGroup>
+			<Name>Region of residence</Name>
+			<SearchField>regiocode</SearchField>
+			<DisplayField>regiocode</DisplayField>
+			<Values multiple="true">
+				<Value value=""></Value>
+				<Value>Antwerpen</Value>
+				<Value>Cara&#xEF;bisch gebied</Value>
+				<Value>Denemarken</Value>
+				<Value>Duitsland</Value>
+				<Value>Friesland</Value>
+				<Value>Gelderland</Value>
+				<Value>Groningen</Value>
+				<Value>India</Value>
+				<Value>Noord-Brabant</Value>
+				<Value>Noord-Holland (excluding Amsterdam)</Value>
+				<Value>Noord-Holland, Amsterdam</Value>
+				<Value>Noorwegen</Value>
+				<Value>Oost-Vlaanderen</Value>
+				<Value>Overijssel</Value>
+				<Value>Sri Lanka</Value>
+				<Value>Utrecht</Value>
+				<Value>Vlaams-Brabant</Value>
+				<Value>West-Vlaanderen</Value>
+				<Value>Zeeland</Value>
+				<Value>Zuid-Afrika</Value>
+				<Value>Zuid-Holland</Value>
+				<Value>Zweden</Value>
+				<Value>unknown</Value>
+			</Values>
+		</Property>
+		<Property>
+			<TabGroup>Sender</TabGroup>
+			<Name>Relationship to addressee</Name>
+			<SearchField>afz_rel_tot_adr</SearchField>
+			<DisplayField>afz_rel_tot_adr</DisplayField>
+			<Values multiple="true">
+				<Value value=""></Value>
+				<Value>(ex-)husband</Value>
+				<Value>(ex-)wife</Value>
+				<Value>acquaintance</Value>
+				<Value>aunt</Value>
+				<Value>beloved (f)</Value>
+				<Value>beloved (m)</Value>
+				<Value>brother / brother in law</Value>
+				<Value>business relation</Value>
+				<Value>daughter</Value>
+				<Value>employee</Value>
+				<Value>employer</Value>
+				<Value>family members</Value>
+				<Value>father</Value>
+				<Value>friend (f)</Value>
+				<Value>friend (m)</Value>
+				<Value>grandson</Value>
+				<Value>mother</Value>
+				<Value>nephew/cousin</Value>
+				<Value>niece/cousin</Value>
+				<Value>other</Value>
+				<Value>sister / sister in law</Value>
+				<Value>son</Value>
+				<Value>uncle</Value>
+			</Values>
+		</Property>
+	
+		<Property>
+			<TabGroup>Addressee</TabGroup>
+			<Name>Name</Name>
+			<SearchField>adr_naam_norm</SearchField>
+			<DisplayField>adr_naam_norm</DisplayField>
+		</Property>
+		<Property>
+			<TabGroup>Addressee</TabGroup>
+			<Name>Place</Name>
+			<SearchField>adr_loc_plaats_norm</SearchField>
+			<DisplayField>adr_loc_plaats_norm</DisplayField>
+			<Values multiple="true">
+				<Value value=""></Value>
+				<Value>Aalsmeer</Value>
+				<Value>Aalst</Value>
+				<Value>Alkmaar</Value>
+				<Value>Altona</Value>
+				<Value>Amersfoort</Value>
+				<Value>Amsterdam</Value>
+				<Value>Ancona</Value>
+				<Value>Arnhem</Value>
+				<Value>Basseterre</Value>
+				<Value>Batavia</Value>
+				<Value>Berbice</Value>
+				<Value>Berlijn</Value>
+				<Value>Bharuch</Value>
+				<Value>Bheemunipatnam</Value>
+				<Value>Bordeaux</Value>
+				<Value>Borkum</Value>
+				<Value>Breda</Value>
+				<Value>Brugge</Value>
+				<Value>Brussel</Value>
+				<Value>Buiksloot</Value>
+				<Value>Cadiz</Value>
+				<Value>Cochin</Value>
+				<Value>Colombo</Value>
+				<Value>Delft</Value>
+				<Value>Den Haag</Value>
+				<Value>Den Helder</Value>
+				<Value>Den Hoorn</Value>
+				<Value>Dokkum</Value>
+				<Value>Dordrecht</Value>
+				<Value>Durgerdam</Value>
+				<Value>Edam</Value>
+				<Value>El Mina</Value>
+				<Value>Enkhuizen</Value>
+				<Value>Gaast</Value>
+				<Value>Galle</Value>
+				<Value>Gdansk</Value>
+				<Value>Genua</Value>
+				<Value>Ginneken</Value>
+				<Value>Goes</Value>
+				<Value>Gouda</Value>
+				<Value>Graft</Value>
+				<Value>Groningen</Value>
+				<Value>Groothusen</Value>
+				<Value>Guinea</Value>
+				<Value>Haarlem</Value>
+				<Value>Haderslev</Value>
+				<Value>Hamburg</Value>
+				<Value>Harlingen</Value>
+				<Value>Hellevoetsluis</Value>
+				<Value>Hollum</Value>
+				<Value>Hooghly</Value>
+				<Value>Hoorn</Value>
+				<Value>Huangpu</Value>
+				<Value>Huisduinen</Value>
+				<Value>Hulst</Value>
+				<Value>H&#xF8;jer</Value>
+				<Value>Jaffna</Value>
+				<Value>Jagannaickpur</Value>
+				<Value>Japara</Value>
+				<Value>Kaap de Goede Hoop</Value>
+				<Value>Kalpitiya</Value>
+				<Value>Keulen</Value>
+				<Value>Klundert</Value>
+				<Value>La Laguna de Tenerife</Value>
+				<Value>La Rochelle</Value>
+				<Value>Landsmeer</Value>
+				<Value>Leiden</Value>
+				<Value>Livorno</Value>
+				<Value>Londen</Value>
+				<Value>Loppersum</Value>
+				<Value>Maassluis</Value>
+				<Value>Malakka</Value>
+				<Value>Medemblik</Value>
+				<Value>Middelburg</Value>
+				<Value>Muiden</Value>
+				<Value>Nagapattinam</Value>
+				<Value>Nantes</Value>
+				<Value>Napels</Value>
+				<Value>Nes</Value>
+				<Value>Nieuwendam</Value>
+				<Value>Nieuwpoort</Value>
+				<Value>Nijmegen</Value>
+				<Value>Onrust</Value>
+				<Value>Oostende</Value>
+				<Value>Oostzaan</Value>
+				<Value>Oostzaandam</Value>
+				<Value>Parijs</Value>
+				<Value>Pesaro</Value>
+				<Value>Pulicat</Value>
+				<Value>Rome</Value>
+				<Value>Rome / Napels</Value>
+				<Value>Rotterdam</Value>
+				<Value>Saint Martin</Value>
+				<Value>Schermerhorn</Value>
+				<Value>Schiedam</Value>
+				<Value>Schoonhoven</Value>
+				<Value>Siegelsum</Value>
+				<Value>Sint-Pieters-Leeuw</Value>
+				<Value>Sont</Value>
+				<Value>Straat van Gibraltar</Value>
+				<Value>Surat</Value>
+				<Value>Ternate</Value>
+				<Value>Tilburg</Value>
+				<Value>Trincomalee</Value>
+				<Value>Utrecht</Value>
+				<Value>Veere</Value>
+				<Value>Veneti&#xEB;</Value>
+				<Value>Vigo</Value>
+				<Value>Vlieland</Value>
+				<Value>Vlissingen</Value>
+				<Value>Voorburg</Value>
+				<Value>Waalwijk</Value>
+				<Value>Watergang</Value>
+				<Value>Westzaan</Value>
+				<Value>Workum</Value>
+				<Value>Zierikzee</Value>
+				<Value>Zuidland</Value>
+				<Value>Zwolle</Value>
+			</Values>
+		</Property>
+		<Property>
+			<TabGroup>Addressee</TabGroup>
+			<Name>Country</Name>
+			<SearchField>adr_loc_land_norm</SearchField>
+			<DisplayField>adr_loc_land_norm</DisplayField>
+			<Values multiple="true">
+				<Value value=""></Value>
+				<Value>Belgi&#xEB;</Value>
+				<Value>China</Value>
+				<Value>Cura&#xE7;ao</Value>
+				<Value>Denemarken</Value>
+				<Value>Duitsland</Value>
+				<Value>Engeland</Value>
+				<Value>Frankrijk</Value>
+				<Value>Ghana</Value>
+				<Value>Guadeloupe</Value>
+				<Value>Guyana</Value>
+				<Value>India</Value>
+				<Value>Indonesi&#xEB;</Value>
+				<Value>Itali&#xEB;</Value>
+				<Value>Maleisi&#xEB;</Value>
+				<Value>Martinique</Value>
+				<Value>Nederland</Value>
+				<Value>Polen</Value>
+				<Value>Saint Croix</Value>
+				<Value>Saint Kitts</Value>
+				<Value>Sint Eustatius</Value>
+				<Value>Spanje</Value>
+				<Value>Sri Lanka</Value>
+				<Value>Suriname</Value>
+				<Value>Thailand</Value>
+				<Value>Zuid-Afrika</Value>
+			</Values>
+		</Property>
+		<Property>
+			<TabGroup>Addressee</TabGroup>
+			<Name>Region</Name>
+			<SearchField>adr_loc_regio_norm</SearchField>
+			<DisplayField>adr_loc_regio_norm</DisplayField>
+			<Values multiple="true">
+				<Value value=""></Value>
+				<Value>Azi&#xEB;</Value>
+				<Value>Caraibisch gebied</Value>
+				<Value>Cara&#xEF;bisch gebied</Value>
+				<Value>Friesland</Value>
+				<Value>Gelderland</Value>
+				<Value>Groningen</Value>
+				<Value>Noord-Brabant</Value>
+				<Value>Noord-Europa</Value>
+				<Value>Noord-Holland</Value>
+				<Value>Oost-Vlaanderen</Value>
+				<Value>Overijssel</Value>
+				<Value>Utrecht</Value>
+				<Value>Vlaams-Brabant</Value>
+				<Value>West-Afrika</Value>
+				<Value>West-Vlaanderen</Value>
+				<Value>Zeeland</Value>
+				<Value>Zuid-Afrika</Value>
+				<Value>Zuid-Europa</Value>
+				<Value>Zuid-Holland</Value>
+			</Values>
+		</Property>
+		<Property>
+			<TabGroup>Addressee</TabGroup>
+			<Name>Ship</Name>
+			<SearchField>adr_loc_schip_norm</SearchField>
+			<DisplayField>adr_loc_schip_norm</DisplayField>
+			<Values multiple="true">
+				<Value value=""></Value>
+				<Value>Alida</Value>
+				<Value>Ameljaar</Value>
+				<Value>Amerika</Value>
+				<Value>Angenieten Constanje</Value>
+				<Value>Averde</Value>
+				<Value>Azi&#xEB;</Value>
+				<Value>Batavia</Value>
+				<Value>Beurs</Value>
+				<Value>Bijenkorf</Value>
+				<Value>Boom der liefde</Value>
+				<Value>Buitenleven</Value>
+				<Value>Damiaten</Value>
+				<Value>Dolfijn</Value>
+				<Value>Edam</Value>
+				<Value>Eendracht</Value>
+				<Value>Gekroonde weduwe</Value>
+				<Value>Geloof</Value>
+				<Value>Gerechtigheid</Value>
+				<Value>Gestoorde leeuw</Value>
+				<Value>Gooiland</Value>
+				<Value>Gouden Kroon</Value>
+				<Value>Graafschap Mark</Value>
+				<Value>Griffioen</Value>
+				<Value>Grutmolen</Value>
+				<Value>Haasjacht</Value>
+				<Value>Harderwijck</Value>
+				<Value>Held Woltemade</Value>
+				<Value>Hof van Breda</Value>
+				<Value>Hoogkarspel</Value>
+				<Value>Hoop</Value>
+				<Value>IJpenstein</Value>
+				<Value>Jager</Value>
+				<Value>Jonge Nicolaas Jan</Value>
+				<Value>Jonge prins</Value>
+				<Value>Juffrouw Margareta</Value>
+				<Value>Juffrouw Rebecca</Value>
+				<Value>Kasteel Medemblik</Value>
+				<Value>Keizer van Edam</Value>
+				<Value>Keizerin</Value>
+				<Value>Koning David</Value>
+				<Value>Koningin Elizabeth</Value>
+				<Value>Liefde</Value>
+				<Value>Makasser</Value>
+				<Value>Meerman</Value>
+				<Value>Middelburg</Value>
+				<Value>Nieuw Noordwijk</Value>
+				<Value>Nieuwenhove</Value>
+				<Value>Opmeer</Value>
+				<Value>Oranje</Value>
+				<Value>Parel</Value>
+				<Value>Princes Louise</Value>
+				<Value>Prins van Oranje te Paard</Value>
+				<Value>Provincie van Utrecht</Value>
+				<Value>Rheenen</Value>
+				<Value>Roselaar</Value>
+				<Value>Rotterdam</Value>
+				<Value>Salamander</Value>
+				<Value>Santo Dominicos</Value>
+				<Value>Schild van Amsterdam</Value>
+				<Value>Schuttershof</Value>
+				<Value>Sint Agatha</Value>
+				<Value>Sint Francisco</Value>
+				<Value>Sint Maria</Value>
+				<Value>Sint Maria van de onbevlekte ontvangenis</Value>
+				<Value>Sloep van Hontijn</Value>
+				<Value>Spanbroek</Value>
+				<Value>Sparendam</Value>
+				<Value>Spiegel</Value>
+				<Value>Stad Utrecht</Value>
+				<Value>Stermeer</Value>
+				<Value>Susanna</Value>
+				<Value>Tempel</Value>
+				<Value>Uitdam</Value>
+				<Value>Vergulde Kroon</Value>
+				<Value>Vergulde valk</Value>
+				<Value>Vlaardingen</Value>
+				<Value>Vogel Feniks</Value>
+				<Value>Voorzichtigheid</Value>
+				<Value>Vrede</Value>
+				<Value>Vriendschap</Value>
+				<Value>Vrijheid</Value>
+				<Value>Vrouw Tanna</Value>
+				<Value>Walcheren</Value>
+				<Value>Wapen van Alkmaar</Value>
+				<Value>Wapen van Gouda</Value>
+				<Value>Wapen van Hoorn</Value>
+				<Value>Wapen van Middelburg</Value>
+				<Value>Zoetendaal</Value>
+				<Value>Zuidpolsbroek</Value>
+				<Value>Zwanenburg</Value>			
+			</Values>
+		</Property>
+
+		
+
+		<Property>
+			<TabGroup>Sent from</TabGroup>
+			<Name>Place</Name>
+			<SearchField>afz_loc_plaats_norm</SearchField>
+			<DisplayField>afz_loc_plaats_norm</DisplayField>
+			<Values multiple="true">
+				<Value value=""></Value>
+				<Value>Akersloot</Value>
+				<Value>Alkmaar</Value>
+				<Value>Amsterdam</Value>
+				<Value>Basseterre</Value>
+				<Value>Batavia</Value>
+				<Value>Bayonne</Value>
+				<Value>Bergen</Value>
+				<Value>Blaye</Value>
+				<Value>Bordeaux</Value>
+				<Value>Bredevoort</Value>
+				<Value>Cadiz</Value>
+				<Value>Capesterre-Belle-Eau</Value>
+				<Value>Cara&#xEF;bische zee</Value>
+				<Value>Commewyne</Value>
+				<Value>Culemborg</Value>
+				<Value>De Rijp</Value>
+				<Value>Delfshaven</Value>
+				<Value>Delft</Value>
+				<Value>Demerary</Value>
+				<Value>Den Haag</Value>
+				<Value>Dordrecht</Value>
+				<Value>Edam</Value>
+				<Value>Egmond aan Zee</Value>
+				<Value>El Mina</Value>
+				<Value>Enkhuizen</Value>
+				<Value>Essequibo</Value>
+				<Value>Falmouth</Value>
+				<Value>Frederiksstad</Value>
+				<Value>Gaast</Value>
+				<Value>Goedereede</Value>
+				<Value>Goyave</Value>
+				<Value>Graft</Value>
+				<Value>Graftdijk</Value>
+				<Value>Guangzhou</Value>
+				<Value>Haarlem</Value>
+				<Value>Hamburg</Value>
+				<Value>Havana</Value>
+				<Value>Helsing&#xF8;r</Value>
+				<Value>Hooghly</Value>
+				<Value>Hoorn</Value>
+				<Value>Huangpu</Value>
+				<Value>Izmir</Value>
+				<Value>Kaap de Goede Hoop</Value>
+				<Value>Kampen</Value>
+				<Value>Kleve</Value>
+				<Value>Kristianopel</Value>
+				<Value>Leiden</Value>
+				<Value>Lissabon</Value>
+				<Value>Maasland</Value>
+				<Value>Maassluis</Value>
+				<Value>Maastricht</Value>
+				<Value>Makassar</Value>
+				<Value>Malaga</Value>
+				<Value>Marigot</Value>
+				<Value>Medemblik</Value>
+				<Value>Messina</Value>
+				<Value>Middelburg</Value>
+				<Value>Monnikendam</Value>
+				<Value>Nieuwendam</Value>
+				<Value>Nijmegen</Value>
+				<Value>Noordeinde</Value>
+				<Value>Onrust</Value>
+				<Value>Oostende</Value>
+				<Value>Oude Niedorp</Value>
+				<Value>Parakreek</Value>
+				<Value>Paramaribo</Value>
+				<Value>Parijs</Value>
+				<Value>Patna</Value>
+				<Value>Philadelphia</Value>
+				<Value>Plymouth</Value>
+				<Value>Rabat</Value>
+				<Value>Ronneby</Value>
+				<Value>Rotterdam</Value>
+				<Value>San Cristobal de la Laguna</Value>
+				<Value>Santa Cruz</Value>
+				<Value>Schellinkhout</Value>
+				<Value>Schenectady</Value>
+				<Value>Schiedam</Value>
+				<Value>St. Petersburg</Value>
+				<Value>Straat van Gibraltar</Value>
+				<Value>Suurhusen</Value>
+				<Value>Torarica</Value>
+				<Value>Utrecht</Value>
+				<Value>Veneti&#xEB;</Value>
+				<Value>Vila Nova</Value>
+				<Value>Vlieland</Value>
+				<Value>Vlissingen</Value>
+				<Value>Wesel</Value>
+				<Value>Wildekust</Value>
+				<Value>Wognum</Value>
+				<Value>Zaandam</Value>
+				<Value>Zijpe</Value>
+				<Value>Zutphen</Value>
+				<Value>Zwolle</Value>			
+			</Values>
+		</Property>
+		<Property>
+			<TabGroup>Sent from</TabGroup>
+			<Name>Country</Name>
+			<SearchField>afz_loc_land_norm</SearchField>
+			<DisplayField>afz_loc_land_norm</DisplayField>
+			<Values multiple="true">
+				<Value value=""></Value>
+				<Value>Belgi&#xEB;</Value>
+				<Value>China</Value>
+				<Value>Cuba</Value>
+				<Value>Cura&#xE7;ao</Value>
+				<Value>Denemarken</Value>
+				<Value>Duitsland</Value>
+				<Value>Engeland</Value>
+				<Value>Frankrijk</Value>
+				<Value>Ghana</Value>
+				<Value>Granada</Value>
+				<Value>Guadeloupe</Value>
+				<Value>Guyana</Value>
+				<Value>India</Value>
+				<Value>Indonesi&#xEB;</Value>
+				<Value>Itali&#xEB;</Value>
+				<Value>Marokko</Value>
+				<Value>Martinique</Value>
+				<Value>Nederland</Value>
+				<Value>Noorwegen</Value>
+				<Value>Portugal</Value>
+				<Value>Rusland</Value>
+				<Value>Saba</Value>
+				<Value>Saint Croix</Value>
+				<Value>Saint Kitts</Value>
+				<Value>Saint Thomas</Value>
+				<Value>Saint Vincent en de Grenadines</Value>
+				<Value>Sao Tom&#xE9; and Principe</Value>
+				<Value>Sint Eustatius</Value>
+				<Value>Sint Maarten</Value>
+				<Value>Spanje</Value>
+				<Value>Suriname</Value>
+				<Value>Turkije</Value>
+				<Value>Verenigde Staten</Value>
+				<Value>Zuid-Afrika</Value>
+				<Value>Zweden</Value>
+			</Values>
+		</Property>
+		<Property>
+			<TabGroup>Sent from</TabGroup>
+			<Name>Region</Name>
+			<SearchField>afz_loc_regio_norm</SearchField>
+			<DisplayField>afz_loc_regio_norm</DisplayField>
+			<Values multiple="true">
+				<Value value=""></Value>
+				<Value>Azi&#xEB;</Value>
+				<Value>Cara&#xEF;bisch gebied</Value>
+				<Value>Friesland</Value>
+				<Value>Gelderland</Value>
+				<Value>Limburg</Value>
+				<Value>Noord-Afrika</Value>
+				<Value>Noord-Amerika</Value>
+				<Value>Noord-Europa</Value>
+				<Value>Noord-Holland</Value>
+				<Value>Oost-Vlaanderen</Value>
+				<Value>Overijssel</Value>
+				<Value>Utrecht</Value>
+				<Value>West-Afrika</Value>
+				<Value>West-Vlaanderen</Value>
+				<Value>Zeeland</Value>
+				<Value>Zuid-Afrika</Value>
+				<Value>Zuid-Europa</Value>
+				<Value>Zuid-Holland</Value>
+			</Values>
+		</Property>
+		<Property>
+			<TabGroup>Sent from</TabGroup>
+			<Name>Ship</Name>
+			<SearchField>afz_loc_schip_norm</SearchField>
+			<DisplayField>afz_loc_schip_norm</DisplayField>
+			<Values multiple="true">
+				<Value value=""></Value>
+				<Value>Aardenburg</Value>
+				<Value>Amerika</Value>
+				<Value>Arend</Value>
+				<Value>Eendracht</Value>
+				<Value>Fortuin</Value>
+				<Value>Gouden poort</Value>
+				<Value>Graafschap Mark</Value>
+				<Value>Held Woltemade</Value>
+				<Value>Hilversum</Value>
+				<Value>Hoogkarspel</Value>
+				<Value>Hoop</Value>
+				<Value>Huis te Kruiningen</Value>
+				<Value>Jonge Hoveling</Value>
+				<Value>Jonge Nicolaas Jan</Value>
+				<Value>Keizer van Edam</Value>
+				<Value>Kleine Genueser</Value>
+				<Value>Mars</Value>
+				<Value>Noord-Holland</Value>
+				<Value>Onzijdigheid</Value>
+				<Value>Oranje</Value>
+				<Value>Poelwijk</Value>
+				<Value>Post</Value>
+				<Value>Prins Willem</Value>
+				<Value>Ridder van Malta</Value>
+				<Value>Sint Jacob</Value>
+				<Value>Tijdverdrijf</Value>
+				<Value>Twee gezusters</Value>
+				<Value>Vriendschap</Value>
+				<Value>Vrouw Catarina Jakoba</Value>
+				<Value>Wapen van Amsterdam</Value>
+				<Value>Welbedacht</Value>
+				<Value>West Souburg</Value>
+				<Value>Zeven gebroeders</Value>
+				<Value>Zwarte Arend</Value>
+			</Values>
+		</Property>
+
+
+
+
+	</DocumentProperties>
+	<WordProperties>
+		<Property>
+			<Name>Wordform</Name>
+			<Index>word</Index>
+			<Sensitive>True</Sensitive>
+			<Function>wordform</Function>
+		</Property>
+		<Property>
+			<Name>Lemma</Name>
+			<Index>lemma</Index>
+			<Function>lemma</Function>
+		</Property>
+		<Property>
+			<Name>Part of Speech</Name>
+			<Index>pos</Index>
+			<Function>pos</Function>
+		</Property>
+	</WordProperties>
+</SearchInterface>

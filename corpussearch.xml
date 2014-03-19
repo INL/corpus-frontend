@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<SearchInterface>
+	<InterfaceProperties>
+		<Name>Groot Molechaser Corpus</Name>
+		<WebserviceInternal>http://localhost:8080/corpus/</WebserviceInternal>
+		<WebserviceExternal>http://svowmc01:8080/corpus/</WebserviceExternal>
+	</InterfaceProperties>
+	<DocumentProperties>
+		<Property>
+			<Name>Title</Name>
+			<SearchField>titleCombined</SearchField>
+			<DisplayField>title</DisplayField>
+			<Function>title</Function>
+		</Property>
+		<Property>
+			<Name>Author</Name>
+			<SearchField>authorCombined</SearchField>
+			<DisplayField>author</DisplayField>
+			<Function>author</Function>
+		</Property>
+		<Property type="date">
+			<Name>Publication year</Name>
+			<SearchField>witnessYear_from</SearchField>
+			<DisplayField>witnessYear_from</DisplayField>
+			<Function>date</Function>
+		</Property>
+		<Property>
+			<Name>Language variant</Name>
+			<SearchField>languageVariant</SearchField>
+			<DisplayField>languageVariant</DisplayField>
+			<Values multiple="false">
+				<Value value=""></Value>
+				<Value value="NN">Dutch (Dutch)</Value>
+				<Value value="BN">Dutch (Belgian)</Value>
+			</Values>
+		</Property>
+	</DocumentProperties>
+	<WordProperties>
+		<Property>
+			<Name>Wordform</Name>
+			<Index>word</Index>
+			<Sensitive>True</Sensitive>
+			<Function>wordform</Function>
+		</Property>
+		<Property>
+			<Name>Lemma</Name>
+			<Index>lemma</Index>
+			<Function>lemma</Function>
+		</Property>
+		<Property>
+			<Name>P.o.S.</Name>
+			<Index>type</Index>
+			<Function>pos</Function>
+		</Property>
+	</WordProperties>
+</SearchInterface>
+			

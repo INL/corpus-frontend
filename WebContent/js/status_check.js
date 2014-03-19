@@ -1,9 +1,16 @@
 function checkStatus(webservice, key, callbackMethod) {
 	// check status
-	$.ajax({type: "GET", url: webservice + "status", data: {id: key}, cache: false}).done(
-		function(data) {
-			callbackMethod(webservice, key, data);
-		});
+	$.ajax({
+	    type: "GET", 
+	    url: webservice + "status", 
+	    data: {id: key}, 
+	    cache: false
+	}).done(function (data) {
+		callbackMethod(webservice, key, data);
+	})
+	.fail(function (jqXHR, textStatus) {
+        alert("AJAX request failed (cross-origin error?); textStatus = " + textStatus);
+    });
 }
 
 function loadResults(webservice, key, data) {
@@ -52,29 +59,35 @@ function getResults(key) {
 function updateStats(webservice, key) {
 	var status = "";
 	//$.ajaxSetup({ cache: false });
-	$.ajax({type: "GET", url: webservice + "jobstats", data: {id: key}, cache: false}).done(
-		function(data) {
-			debug("Updating stats");
+	$.ajax({
+	    type: "GET",
+	    url: webservice + "jobstats",
+	    data: {id: key},
+	    cache: false
+	}).done(function(data) {
+		debug("Updating stats");
 			
-			$xml = $(data);
-			var dur = $xml.find("Duration").text();
-			var hits = $xml.find("TotalHits").text();
-			var pages = $xml.find("TotalPages").text();
+		$xml = $(data);
+		var dur = $xml.find("Duration").text();
+		var hits = $xml.find("TotalHits").text();
+		var pages = $xml.find("TotalPages").text();
 			
-			$("#duration").text(dur);
-			$("#totalhits").text(hits);
-			$("#totalpages").text(pages);
+		$("#duration").text(dur);
+		$("#totalhits").text(hits);
+		$("#totalpages").text(pages);
 			
-			var max = $.url().param('max');
-			if(typeof max == 'undefined')
-				max = 50;
+		var max = $.url().param('max');
+		if(typeof max == 'undefined')
+			max = 50;
 			
-			var start = $.url().param('start');
-			if(typeof start == 'undefined')
-				start = 0;
+		var start = $.url().param('start');
+		if(typeof start == 'undefined')
+			start = 0;
 			
-			updatePagination(pages, max, start);
-		});
+		updatePagination(pages, max, start);
+	}).fail(function (jqXHR, textStatus) {
+        alert("AJAX request failed (cross-origin error?); textStatus = " + textStatus);
+    });
 }
 
 function updatePagination(totalPages, maxPerPage, startAtResult) {

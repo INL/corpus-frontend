@@ -7,10 +7,16 @@ AjaxRetriever.prototype.putAjaxResponse = function(element_id, parameters, appen
 	var myself = this;
 
 	// check status
-	$.ajax({type: "GET", url: this.webservice + this.webcall, data: parameters, cache: false}).done(
-		function(data) {
-			myself.addResponseToElement(data, element_id, append, xslSheet);
-		});
+	$.ajax({
+        type: "GET",
+        url: this.webservice + this.webcall, 
+        data: parameters, 
+        cache: false
+    }).done(function(data) {
+		myself.addResponseToElement(data, element_id, append, xslSheet);
+	}).fail(function(jqXHR, textStatus) {
+        alert("AJAX request failed (cross-origin error?); textStatus = " + textStatus);
+	});
 };
 
 AjaxRetriever.prototype.addResponseToElement = function(data, element_id, append, xslSheet) {	

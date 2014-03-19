@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<SearchInterface>
+        <InterfaceProperties>
+                <Name>Corpus Surinaams Nederlands</Name>
+                
+                <!--
+                <WebserviceInternal>http://localhost:8080/corpussurinaams/</WebserviceInternal>
+                <WebserviceExternal>http://svowmc01:8080/corpussurinaams/</WebserviceExternal>
+                <HelpPage>/vol1/molechaser/servlet/mc_help.txt</HelpPage>
+                <AboutPage>/vol1/molechaser/servlet/mc_about.txt</AboutPage>
+                <GoogleAnalyticsKey>UA-43624324-2</GoogleAnalyticsKey>
+                -->
+                
+                <NavLinks>
+                        <Link value="http://www.clarin.eu">CLARIN</Link>
+                </NavLinks>
+        </InterfaceProperties>
+        <DocumentProperties>
+                <Property>
+                        <Name>Title</Name>
+                        <SearchField>titleCombined</SearchField>
+                        <DisplayField>title</DisplayField>
+                        <Function>title</Function>
+                </Property>
+                <Property>
+                        <Name>Author</Name>
+                        <SearchField>authorCombined</SearchField>
+                        <DisplayField>author</DisplayField>
+                        <Function>author</Function>
+                </Property>
+                <Property type="date">
+                        <Name>Publication year</Name>
+                        <SearchField>witnessYear_from</SearchField>
+                        <DisplayField>witnessYear_from</DisplayField>
+                        <Function>date</Function>
+                </Property>
+                <Property>
+                        <Name>Language variant</Name>
+                        <SearchField>languageVariant</SearchField>
+                        <DisplayField>languageVariant</DisplayField>
+                        <Values multiple="false">
+                                <Value value=""></Value>
+                                <Value value="NN">Dutch (Dutch)</Value>
+                                <Value value="BN">Dutch (Belgian)</Value>
+                        </Values>
+                </Property>
+        </DocumentProperties>
+        <WordProperties>
+                <Property>
+                        <Name>Wordform</Name>
+                        <Index>word</Index>
+                        <Sensitive>True</Sensitive>
+                        <Function>wordform</Function>
+                </Property>
+                <Property>
+                        <Name>Lemma</Name>
+                        <Index>lemma</Index>
+                        <Function>lemma</Function>
+                </Property>
+                <Property>
+                        <Name>P.o.S.</Name>
+                        <Index>pos</Index>
+                        <Function>pos</Function>
+                </Property>
+        </WordProperties>
+</SearchInterface>

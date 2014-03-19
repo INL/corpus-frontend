@@ -158,8 +158,16 @@
         </antcall>
     </target>
 
+    <!-- Build surinaams.war (Corpus Gysseling) -->
+    <target name="surinaams">
+        <antcall target="war">
+            <param name="project-variant" value="surinaams" />
+            <param name="war.filename" value="searchsurinaams" />
+        </antcall>
+    </target>
+
     <!-- Build .war files for all project variants -->
-    <target name="all" depends="hedendaagsnederlands,gysseling,brievenalsbuit">
+    <target name="all" depends="hedendaagsnederlands,gysseling,brievenalsbuit,surinaams">
     	<!-- NOP -->
     </target>
 

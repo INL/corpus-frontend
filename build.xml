@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!DOCTYPE project>
-<project name="CorpusSearchWebsite" default="dist" basedir=".">
+<project name="corpus-frontend" default="dist" basedir=".">
 	<!-- Projectgegevens -->
-	<property name="project.name" value="corpuswebsite" />
+	<property name="project.name" value="corpus-frontend" />
 	<property name="project.version" value="1.0" />
 
 	<!-- Directories -->
@@ -12,9 +12,29 @@
 	
 	<property name="war.filename" value="search" />
 
-    <!-- Get the lib and tomcat directories from the common Ant file -->
-	<import file="../antCommon.xml"/>
+	<!-- Access environment variables with ${ENV.name} -->
+	<property environment="ENV" />
+	
+    <!-- Fail with an error if lib dir was not configured -->
+    <fail unless="ENV.ANT_JAVA_LIB_DIR">
+        Please set the ANT_JAVA_LIB_DIR environment variable!
+        (Should point to the directory where Java libraries can be found,
+         e.g. N:\Automatisering\Applicatieontwikkeling\javalibs).
+    </fail>
 
+	<!-- Set lib dir from environment variable -->
+	<property name="lib" value="${ENV.ANT_JAVA_LIB_DIR}" />
+	
+    <!-- Fail with an error if BlackLab dir was not configured -->
+	<fail unless="ENV.BLACKLAB_PROJECT_DIR">
+	    Please set the BLACKLAB_PROJECT_DIR environment variable!
+	    (Should point to the directory where you checked out the BlackLab
+	     project, so this build script can call BlackLab's build script)
+	</fail>
+	
+    <!-- Set BlackLab dir from environment variable -->
+    <property name="BlackLabDir" value="${ENV.BLACKLAB_PROJECT_DIR}" />
+    
 	<!-- Sla timestamp op en maak de build directory -->
 	<target name="init">
 		<echo message="----- Building ${project.name} -----" />
@@ -28,7 +48,7 @@
 
 	<!-- Compileer de sources -->
 	<target name="compile" depends="init,BlackLab">
-		<javac source="1.6" target="1.6" encoding="utf-8" debug="true" debuglevel="lines,vars,source" srcdir="${src}" destdir="${build}/WEB-INF/classes">
+		<javac includeantruntime="false" source="1.6" target="1.6" encoding="utf-8" debug="true" debuglevel="lines,vars,source" srcdir="${src}" destdir="${build}/WEB-INF/classes">
 			<!-- Het te gebruiken classpath voor compileren -->
 			<classpath>
 				<pathelement path="${java.class.path}/"/>
@@ -86,10 +106,6 @@
 	<target name="dist" depends="compile">
 		<mkdir dir="${dist}" />
 		<war warfile="${dist}/${war.filename}.war" webxml="WebContent/WEB-INF/web.xml" basedir="${build}" />
-		<!-- <copy todir="${tomcat}/webapps">
-			<fileset dir="." includes="${war.filename}.xml" />
-			<fileset dir="${dist}" includes="${war.filename}.war" />
-		</copy> -->
 	</target>
 
 	<!-- Ruim de gegenereerde files op -->

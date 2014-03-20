@@ -74,18 +74,9 @@
 							<li class="dropdown">
                                 <a href="about" class="dropdown-toggle brand">$title<!-- <b class="caret"></b> --></a>
                             </li>
-							<li><a href="search">Home</a></li>
-                            <li><a href="http://www.inl.nl" target="_blank" title="Instituut voor Nederlandse Lexicologie">INL</a></li>
-                            #foreach($linkPair in $websiteconfig.getLinks())
-								<li><a href="$linkPair.first()" target="_blank">$linkPair.second()</a></li>
+                            #foreach($link in $websiteconfig.getLinks())
+								<li><a href="$link.get('href')"#if($link.get('newWindow')) target="_blank"#else#end>$link.get('name')</a></li>
 							#end
-                            <li><a href="about">About the project</a></li>
-                            <li><a href="help#help">How do I search?</a></li>
-                            <!--
-                            <li>
-                                <a href="help#beta" title="This is beta software. Click to find out more." class="dropdown-toggle">BETA</a>
-                            </li>
-                            -->
                         </ul>
                     </div><!--/.nav-collapse -->
                 </div>

@@ -12,7 +12,11 @@
 		-->
 		
 		<NavLinks>
-			<Link value="http://www.clarin.eu">CLARIN</Link>
+            <Link value="search">Home</Link>
+            <Link value="http://www.inl.nl" newWindow="true">INL</Link>
+            <Link value="http://www.clarin.eu" newWindow="true">CLARIN</Link>
+            <Link value="about">About the project</Link>
+            <Link value="help">How do I search?</Link>
 		</NavLinks>
 	</InterfaceProperties>
 	<DocumentProperties>

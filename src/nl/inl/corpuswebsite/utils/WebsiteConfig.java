@@ -4,13 +4,14 @@
 package nl.inl.corpuswebsite.utils;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-
-import nl.inl.datastruct.Pair;
 
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.HierarchicalConfiguration;
@@ -64,7 +65,7 @@ public class WebsiteConfig {
 //	private String googleAnalyticsKey = null;
 
 	/** Link to put in the top bar  */
-	private List<Pair<String, String>> linksInTopBar = new LinkedList<Pair<String, String>>();
+	private List<Map<String, Object>> linksInTopBar = new ArrayList<Map<String, Object>>();
 
 	public WebsiteConfig(File configFile) throws ConfigurationException {
 		// Load the specified config file
@@ -95,11 +96,15 @@ public class WebsiteConfig {
 
 		    String location = sub.getString("[@value]", null);
 		    String name = sub.getString("");
+		    boolean newWindow = sub.getBoolean("[@newWindow]", false);
 		    if(location == null)
 		    	location = name;
 
-		    Pair<String, String> p = new Pair<String, String>(location, name);
-		    linksInTopBar.add(p);
+		    Map<String, Object> link = new HashMap<String, Object>();
+		    link.put("href", location);
+		    link.put("name", name);
+		    link.put("newWindow", newWindow);
+		    linksInTopBar.add(link);
 		}
 
 		myfields = xmlConfig.configurationsAt("DocumentProperties.Property");
@@ -249,7 +254,7 @@ public class WebsiteConfig {
 //		return pathToSourceImages;
 //	}
 
-	public List<Pair<String, String>> getLinks() {
+	public List<Map<String, Object>> getLinks() {
 		return linksInTopBar;
 	}
 

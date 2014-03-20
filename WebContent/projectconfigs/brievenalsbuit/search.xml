@@ -17,9 +17,11 @@
 		<LinkColor>#b10932</LinkColor>
 		<Logo>../img/bab_logo_100.png</Logo>
 		<NavLinks>
-			<Link value="http://www.hum.leiden.edu/lucl/">LUCL</Link>
-			<!-- <Link value="help">How do I search?</Link> -->
-			<!-- <Link value="about">About the project</Link> -->
+            <Link value="search">Home</Link>
+            <Link value="http://www.inl.nl" newWindow="true">INL</Link>
+            <Link value="http://www.hum.leiden.edu/lucl/">LUCL</Link>
+            <Link value="about">About the project</Link>
+            <Link value="help">How do I search?</Link>
 		</NavLinks>
 	</InterfaceProperties>
 	<DocumentProperties>

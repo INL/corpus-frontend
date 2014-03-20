@@ -226,8 +226,11 @@ public abstract class BaseResponse {
 		// clear string builder
 		builder.delete(0, builder.length());
 
-		File pathToStylesheet = new File(this.servlet.getWarExtractDir(), "WEB-INF/stylesheets/" + name);
-		BufferedReader br = new BufferedReader(new FileReader(pathToStylesheet));
+		// Look for the stylesheet in the project config dir, or else in the stylesheets dir.
+		File pathToFile = new File(this.servlet.getWarExtractDir(), "WEB-INF/config/project/" + name);
+		if (!pathToFile.exists())
+			pathToFile = new File(this.servlet.getWarExtractDir(), "WEB-INF/stylesheets/" + name);
+		BufferedReader br = new BufferedReader(new FileReader(pathToFile));
 
 		// read the response from the webservice
 		String line;

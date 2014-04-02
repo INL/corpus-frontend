@@ -23,15 +23,17 @@
 	<!-- Set lib dir from environment variable -->
 	<property name="lib" value="${ENV.ANT_JAVA_LIB_DIR}" />
 	
-    <!-- Fail with an error if BlackLab dir was not configured -->
+    <!--
+    // Fail with an error if BlackLab dir was not configured
 	<fail unless="ENV.BLACKLAB_PROJECT_DIR">
 	    Please set the BLACKLAB_PROJECT_DIR environment variable!
 	    (Should point to the directory where you checked out the BlackLab
 	     project, so this build script can call BlackLab's build script)
 	</fail>
 	
-    <!-- Set BlackLab dir from environment variable -->
+    // Set BlackLab dir from environment variable
     <property name="BlackLabDir" value="${ENV.BLACKLAB_PROJECT_DIR}" />
+	-->
     
 	<!-- Sla timestamp op en maak de build directory -->
 	<target name="init">
@@ -55,12 +57,14 @@
         <echo message="######################################################" />
 	</target>
 	
+	<!--
 	<target name="build-blacklab">
 		<ant dir="${BlackLabDir}" inheritall="false" />
 	</target>
+	-->
 
 	<!-- Compileer de sources -->
-	<target name="compile" depends="init,build-blacklab">
+	<target name="compile" depends="init">
 		<javac includeantruntime="false" source="1.6" target="1.6" encoding="utf-8" debug="true" debuglevel="lines,vars,source" srcdir="${src}" destdir="${build}/WEB-INF/classes">
 			<!-- Het te gebruiken classpath voor compileren -->
 			<classpath>
@@ -78,10 +82,10 @@
 				<pathelement path="${lib}/commons-lang-2.6/commons-lang-2.6.jar" />
                 <pathelement path="${lib}/commons-configuration-1.9/commons-configuration-1.9.jar" />
                 <pathelement path="${lib}/commons-logging-1.1.1/commons-logging-1.1.1.jar" />
-		        <pathelement path="${lib}/lucene-3.6.0/lucene-core-3.6.0.jar" />
+				<!-- <pathelement path="${lib}/lucene-3.6.0/lucene-core-3.6.0.jar" />
 		        <pathelement path="${lib}/lucene-3.6.0/lucene-highlighter-3.6.0.jar" />
 		        <pathelement path="${lib}/lucene-3.6.0/lucene-queries-3.6.0.jar" />
-				<pathelement path="${BlackLabDir}/dist/BlackLab.jar" />
+				<pathelement path="${BlackLabDir}/dist/BlackLab.jar" /> -->
 			</classpath>
 		</javac>
 		<!-- Verwijder oude templates, libraries en config files -->
@@ -93,10 +97,10 @@
 		<delete dir="${build}/img" />
 		<delete dir="${build}/js" />
 	
-		<!-- Kopieer de resources uit de src boom -->
+		<!-- Kopieer de resources uit de src boom
 		<copy todir="${build}/WEB-INF/lib">
             <fileset dir="${BlackLabDir}/dist" includes="BlackLab.jar" />
-		</copy>
+		</copy> -->
 		
 		<!-- Kopieer de resources uit de src boom -->
 		<copy todir="${build}">

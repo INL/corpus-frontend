@@ -249,7 +249,7 @@ public abstract class BaseResponse {
 
 			StringBuilder sb = new StringBuilder();
 			for(String s : lines) {
-				sb.append(s);
+				sb.append(s).append("\n");
 			}
 
 			this.getContext().put(contextKey, sb.toString());

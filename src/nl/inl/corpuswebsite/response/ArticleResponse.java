@@ -28,7 +28,7 @@ public class ArticleResponse extends BaseResponse {
 	@Override
 	protected void completeRequest() {
 		if(webservice == null)
-			webservice = new QueryServiceHandler(this.servlet.getWebserviceUrl() + "source", 50);
+			webservice = new QueryServiceHandler(this.servlet.getWebserviceUrl() + "source");
 
 		if(this.request.getParameterMap().size() > 0) {
 			// get parameter values

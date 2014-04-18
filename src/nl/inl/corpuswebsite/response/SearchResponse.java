@@ -38,7 +38,7 @@ public class SearchResponse extends BaseResponse {
 	@Override
 	protected void completeRequest() {
 		if(webservice == null)
-			webservice = new QueryServiceHandler(this.servlet.getWebserviceUrl() + "search", 1);
+			webservice = new QueryServiceHandler(this.servlet.getWebserviceUrl() + "search");
 
 		this.clearContext();
 
@@ -134,7 +134,7 @@ public class SearchResponse extends BaseResponse {
 					perHitResultStylesheet = getPerHitStylesheet(getResults);
 
 				if(getResults) {
-					webservice = new QueryServiceHandler(this.servlet.getWebserviceUrl() + "result", 1);
+					webservice = new QueryServiceHandler(this.servlet.getWebserviceUrl() + "result");
 					parameters.put("id", new String[]{this.getParameter("key", "")});
 				}
 
@@ -146,12 +146,8 @@ public class SearchResponse extends BaseResponse {
 				this.getContext().put("searchResults", htmlResult);
 
 			} catch (IOException e) {
-				// if there's an error, do not cache it
-				webservice.removeRequestFromCache(parameters);
 				throw new RuntimeException(e);
 			} catch (TransformerException e) {
-				// if there is an error do not cache it
-				webservice.removeRequestFromCache(parameters);
 				throw new RuntimeException(e);
 			}
 		}
@@ -187,7 +183,7 @@ public class SearchResponse extends BaseResponse {
 					perDocResultStylesheet = getPerDocStylesheet(getResults);
 
 				if(getResults) {
-					webservice = new QueryServiceHandler(this.servlet.getWebserviceUrl() + "result", 1);
+					webservice = new QueryServiceHandler(this.servlet.getWebserviceUrl() + "result");
 					parameters.put("id", new String[]{this.getParameter("key", "")});
 				}
 
@@ -199,12 +195,8 @@ public class SearchResponse extends BaseResponse {
 				this.getContext().put("searchResults", htmlResult);
 
 			} catch (IOException e) {
-				// if there's an error, do not cache it
-				webservice.removeRequestFromCache(parameters);
 				throw new RuntimeException(e);
 			} catch (TransformerException e) {
-				// if there's an error, do not cache it
-				webservice.removeRequestFromCache(parameters);
 				throw new RuntimeException(e);
 			}
 		}
@@ -243,7 +235,7 @@ public class SearchResponse extends BaseResponse {
 						groupHitsResultStylesheet = getGroupHitsStylesheet(getResults);
 
 					if(getResults) {
-						webservice = new QueryServiceHandler(this.servlet.getWebserviceUrl() + "result", 1);
+						webservice = new QueryServiceHandler(this.servlet.getWebserviceUrl() + "result");
 						parameters.put("id", new String[]{this.getParameter("key", "")});
 					}
 
@@ -257,12 +249,8 @@ public class SearchResponse extends BaseResponse {
 					this.getContext().put("searchResults", htmlResult);
 
 				} catch (IOException e) {
-					// if there's an error, do not cache it
-					webservice.removeRequestFromCache(parameters);
 					throw new RuntimeException(e);
 				} catch (TransformerException e) {
-					// if there's an error, do not cache it
-					webservice.removeRequestFromCache(parameters);
 					throw new RuntimeException(e);
 				}
 			} else {
@@ -311,7 +299,7 @@ public class SearchResponse extends BaseResponse {
 						groupDocsResultStylesheet = getGroupDocsStylesheet(getResults);
 
 					if(getResults) {
-						webservice = new QueryServiceHandler(this.servlet.getWebserviceUrl() + "result", 1);
+						webservice = new QueryServiceHandler(this.servlet.getWebserviceUrl() + "result");
 						parameters.put("id", new String[]{this.getParameter("key", "")});
 					}
 
@@ -325,12 +313,8 @@ public class SearchResponse extends BaseResponse {
 					this.getContext().put("searchResults", htmlResult);
 
 				} catch (IOException e) {
-					// if there's an error, do not cache it
-					webservice.removeRequestFromCache(parameters);
 					throw new RuntimeException(e);
 				} catch (TransformerException e) {
-					// if there's an error, do not cache it
-					webservice.removeRequestFromCache(parameters);
 					throw new RuntimeException(e);
 				}
 			} else {

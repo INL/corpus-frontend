@@ -5,7 +5,9 @@
 	<xsl:param name="urlparamwithoutview" select="'#'"/>
 	<xsl:param name="urlparamwithoutsort" select="'#'"/>
 	<xsl:param name="webserviceurl" select="'#'"/>
+    <xsl:param name="backendRequestUrl" select="'#'"/>
 	<xsl:param name="urlparamquery" select="'#'"/>
+    <xsl:param name="query" select="'#'"/>
 	
 	<xsl:param name="pos_name" select="'#'"/>
 	<xsl:param name="lemma_name" select="'#'"/>
@@ -16,23 +18,27 @@
 	
 	<xsl:template match="error">
 		<h1>Error</h1>
-		<xsl:value-of select="." />
+        <xsl:value-of select="message" />
+        (Error code: <xsl:value-of select="code" />)
 	</xsl:template>
 	
-	<xsl:template match="SearchSummary">
+    <xsl:template match="" />
+    
+	<xsl:template match="summary">
 		<div class="pull-right">
-			<small>Query: <xsl:value-of select="Query" /></small>
+			<small>Query: <xsl:value-of select="$query" /></small>
 		</div>
 	</xsl:template>
 	
-	<xsl:template match="JobId">
-		<div class="span12 contentbox" id="results">			
+	<xsl:template match="blacklab-response">
+		<div class="span12 contentbox" id="results">
 			<div class="alert alert-info">
-  				Job <xsl:value-of select="." /> in progress: <strong id="status">SEARCHING...</strong>
-  				<p class="text-center"><i class="icon-spinner icon-spin xxlarge"></i></p> 
+  				Job in progress: <strong id="status">SEARCHING...</strong>
+  				<p class="text-center"><i class="icon-spinner icon-spin xxlarge"></i></p>
 			</div>
 			<script type="text/javascript">
-				doResults('<xsl:value-of select="$webserviceurl" />', '<xsl:value-of select="." />');
+                var backendRequestUrl = '<xsl:value-of select="$backendRequestUrl" />';
+				doResults(backendRequestUrl);
 			</script>
 		</div>
 	</xsl:template>

@@ -1,95 +1,129 @@
-function checkStatus(webservice, key, callbackMethod) {
-	// check status
+
+// Get the status of a search job
+function checkStatus(backendUrl, callbackMethod) {
+    // We just want the status, no actual results. Set max to 0.
+    if (backendUrl.indexOf("max=") >= 0) {
+        backendUrl = backendUrl.replace(/max=\d+/, "max=0");
+    } else {
+        backendUrl += "&max=0"; 
+    }
+
+	// Check status
 	$.ajax({
-	    type: "GET", 
-	    url: webservice + "status", 
-	    data: {id: key}, 
-	    cache: false
-	}).done(function (data) {
-		callbackMethod(webservice, key, data);
-	})
-	.fail(function (jqXHR, textStatus) {
-        alert("AJAX request failed (cross-origin error?); textStatus = " + textStatus);
+        type: "GET",
+        dataType: "xml",
+        url: backendUrl
+    }).done(function (data) {
+		callbackMethod(backendUrl, data);
+	}).fail(function (jqXHR, textStatus) {
+        alert("AJAX request " + backendUrl + " failed (cross-origin error?); textStatus = " + textStatus);
     });
 }
 
-function loadResults(webservice, key, data) {
+// If a job is finished, get the results, otherwise check again later.
+function loadResults(backendUrl, data) {
 	var status = getJobStatus(data);
 	
 	$("#status").text(status + "...");
 	debug("Status: " + status);
 	
-	if(status == "" || status.substring(0,6) == "No job")
-		showLoadingError();
-	else if(status == "COUNTING" || status == "FINISHED")
-		getResults(key);
-	else 
-		setTimeout( function() {checkStatus(webservice, key, loadResults);}, 1000); // check again 1 second from now		
+	if (status == "ERROR" || status == "" || status.substring(0,6) == "No job") {
+		showLoadingError(data);
+	} else if (status == "COUNTING" || status == "FINISHED") {
+		getResults();
+	} else {
+		setTimeout(function () {
+		    checkStatus(backendUrl, loadResults);
+		}, 1000); // check again 1 second from now
+	}		
 }
 
-function refreshStats(webservice, key, data) {
+// See if the result count is finished yet, and update if so. If not, check again later.
+function refreshStats(backendUrl, data) {
 	var status = getJobStatus(data);
 	
 	debug("Status: " + status);
 	
-	if(status == "" || status.substring(0,6) == "No job")
+	if (status == "" || status.substring(0,6) == "No job") {
 		showLoadingError();
-	else if(status == "FINISHED")
-		updateStats(webservice, key);
-	else
-		setTimeout( function() {checkStatus(webservice, key, refreshStats);}, 1000); // check again 1 second from now
-		
+	} else if (status == "FINISHED") {
+		updateStats(backendUrl);
+	} else {
+		setTimeout(function() {
+		  checkStatus(backendUrl, refreshStats);
+        }, 1000); // check again 1 second from now
+    }
 }
 
-function showLoadingError() {
-	debug("Error reading status response");
-	$("#status").text("Error reading status response");
+// An error occurred; signal it
+function showLoadingError(data) {
+    $xml = $(data);
+    
+    var errorMessage = $xml.find("error").text();
+    if (errorMessage.length > 0) {
+    	debug("Error: " + errorMessage);
+    	$("#status").text("Error: " + errorMessage);
+    } else {
+        debug("Error reading status response");
+        $("#status").text("Error reading status response");
+    }
 }
 
+// Get the job status from the result XML
 function getJobStatus(document) {	
 	$xml = $(document);
 	
-	return $xml.find("JobStatus").text();
+    if ($xml.find("error").text().length > 0)
+       return "ERROR";
+	if ($xml.find("check-again-ms").text().length > 0)
+	   return "BUSY";
+	if ($xml.find("still-counting").text() == "true")
+	   return "COUNTING";
+	return "FINISHED";
 }
 
-function getResults(key) {
-	window.location = window.location + "&key=" + key;
+// Reload the page with the getResults parameter added so we get the results instead of the "waiting" page.
+function getResults() {
+	window.location = window.location + "&getResults=yes";
 }
 
-function updateStats(webservice, key) {
-	var status = "";
-	//$.ajaxSetup({ cache: false });
-	$.ajax({
-	    type: "GET",
-	    url: webservice + "jobstats",
-	    data: {id: key},
-	    cache: false
-	}).done(function(data) {
-		debug("Updating stats");
-			
-		$xml = $(data);
-		var dur = $xml.find("Duration").text();
-		var hits = $xml.find("TotalHits").text();
-		var pages = $xml.find("TotalPages").text();
-			
-		$("#duration").text(dur);
-		$("#totalhits").text(hits);
-		$("#totalpages").text(pages);
-			
-		var max = $.url().param('max');
-		if(typeof max == 'undefined')
-			max = 50;
-			
-		var start = $.url().param('start');
-		if(typeof start == 'undefined')
-			start = 0;
-			
-		updatePagination(pages, max, start);
-	}).fail(function (jqXHR, textStatus) {
-        alert("AJAX request failed (cross-origin error?); textStatus = " + textStatus);
+// Update the total results counter (and other stats) after the search has completed.
+function updateStats(backendUrl) {
+    // We just want the stats, no actual results. Set max to 0.
+    if (backendUrl.indexOf("max=") >= 0) {
+        backendUrl = backendUrl.replace(/max=\d+/, "max=0");
+    } else {
+        backendUrl += "&max=0"; 
+    }
+
+    // Check stats
+    $.get(backendUrl).done(function (data) {
+        debug("Updating stats");
+            
+        $xml = $(data);
+        var dur = $xml.find("search-time").text();
+        var hits = $xml.find("number-of-hits").text();
+        var pages = Math.ceil(hits / $xml.find("window-size").text());
+            
+        $("#duration").text(dur);
+        $("#totalhits").text(hits);
+        $("#totalpages").text(pages);
+            
+        var max = $.url().param('max');
+        if (typeof max == 'undefined')
+            max = 50;
+            
+        var start = $.url().param('start');
+        if (typeof start == 'undefined')
+            start = 0;
+            
+        updatePagination(pages, max, start);
+    }).fail(function (jqXHR, textStatus) {
+        alert("AJAX request " + backendUrl + " failed (cross-origin error?); textStatus = " + textStatus);
     });
 }
 
+// (Re)create the HTML for the pagination buttons
 function updatePagination(totalPages, maxPerPage, startAtResult) {
 	var currentPage = Math.ceil(startAtResult / maxPerPage);
 	
@@ -98,35 +132,36 @@ function updatePagination(totalPages, maxPerPage, startAtResult) {
 	
 	$(".pagebuttons").empty();
 	
-	if(currentPage == 0)
+	if (currentPage == 0)
 		$(".pagebuttons").append( $("<li/>", {class: 'disabled'}).append($("<a/>", {text: 'Prev'})) );
 	else
 		$(".pagebuttons").append( $("<li/>").append($("<a/>", {text: 'Prev', href: setUrlParameter('start', 0)})) );
 	
-	if(startPage > 0)
+	if (startPage > 0)
 		$(".pagebuttons").append( $("<li/>", {class: 'disabled'}).append($("<a/>", {text: '...'})) );
 	
 	for(var i = startPage; i < endPage; i++) {
 		var page = i + 1;
-		if(i == currentPage)
+		if (i == currentPage)
 			$(".pagebuttons").append( $("<li/>", {class: 'active'}).append($("<a/>", {text: page, href: setUrlParameter('start', i * maxPerPage)})) );
 		else 
 			$(".pagebuttons").append( $("<li/>").append($("<a/>", {text: page, href: setUrlParameter('start', i * maxPerPage)})) );
 	}
 	
-	if(endPage < totalPages)
+	if (endPage < totalPages)
 		$(".pagebuttons").append( $("<li/>", {class: 'disabled'}).append($("<a/>", {text: '...'})) );
 	
-	if(currentPage == (totalPages - 1))
+	if (currentPage == (totalPages - 1))
 		$(".pagebuttons").append( $("<li/>", {class: 'disabled'}).append($("<a/>", {text: 'Next'})) );
 	else
 		$(".pagebuttons").append( $("<li/>").append($("<a/>", {text: 'Next', href: setUrlParameter('start', (currentPage + 1) * maxPerPage)})) );
 }
 
+// Add parameter to URL or replace a parameter value in a URL 
 function setUrlParameter(param, value) {
-	var url = $.url();
+	var url = $.url(); // use purl to get the current URL parameters
 	
-	if(url.param(param)) {
+	if (url.param(param)) {
 		var fullUrl = url.attr('source');
 		
 		var splitUrl = fullUrl.split(param + "=", 2);
@@ -142,17 +177,20 @@ function setUrlParameter(param, value) {
 	return url.attr('source') + "&" + param + "=" + value + "&";
 } 
 
-function doResults(webservice, key) {
-	checkStatus(webservice, key, loadResults);
+// Wait for search to complete and show the results
+function doResults(backendUrl) {
+	checkStatus(backendUrl, loadResults);
 }
 
-function doStats(webservice, key) {
-	checkStatus(webservice, key, refreshStats);
+// Wait for counting to complete and update stats
+function doStats(backendUrl) {
+	checkStatus(backendUrl, refreshStats);
 }
 
+// Debug logging
 var doDebug = false;
 function debug(string) {
-	if(window.console && doDebug) {
+	if (window.console && doDebug) {
 		console.log(string);
 	}
 }

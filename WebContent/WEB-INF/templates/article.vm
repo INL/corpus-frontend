@@ -3,5 +3,6 @@
 <div class="hitscroll">
 <a href="" onclick="gotoPreviousAnchor(); return false;"><b>&laquo; Previous hit</b></a> | <a href="" onclick="gotoNextAnchor(); return false;"><b>Next hit &raquo;</b></a>
 </div>
+$!article_meta
 $!article_content
 #parse("footer.vm")

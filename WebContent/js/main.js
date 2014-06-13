@@ -1,7 +1,12 @@
+// main.js:
+// Function to scroll to results and filter-related functions.
+
+// Scroll to the results area
 function scrollToResults() {
 	$('html, body').animate({scrollTop: $("#results").offset().top - 70}, 300);
 }
 
+// Make our multi-select dropdown lists work
 function addMultiSelectExpanders() {
 	var smallHeight = $(".multiselect").height();
 	var bigHeight = smallHeight * 4;
@@ -31,6 +36,7 @@ function addMultiSelectExpanders() {
 	});
 }
 
+// Make sure we always see an overview of our specified filters
 function addFilterOverview() {
 	$(".forminput").change(function () {
 		var element = $(this);
@@ -50,6 +56,7 @@ function addFilterOverview() {
 	updateFilterOverview();
 }
 
+// Add element to the list of filter elements
 function addToList(element) {	
 	removeFromFilterList(getElementName(element));
 	
@@ -60,6 +67,7 @@ function addToList(element) {
 	}
 }
 
+// Get filter element name, including the tab name
 function getElementName(element) {
 	var tab = element.closest(".tab-pane").attr("id");
 	
@@ -71,6 +79,7 @@ function getElementName(element) {
 	return  tab + element.attr("placeholder");
 }
 
+// Update the filter description using the active filter value list
 function updateFilterOverview() {
 	var overview = "";
 	for(var i = 0; i < ar_ActiveFilters.length; i++) 
@@ -79,6 +88,7 @@ function updateFilterOverview() {
 	$("#filteroverview").html("<small>" + overview + "</small>");
 }
 
+// Remove a filter from the filter list. Used when value changes.
 function removeFromFilterList(filter) {
 	var newArray = [];
 	for(var i = 0; i < ar_ActiveFilters.length; i++) {
@@ -89,4 +99,5 @@ function removeFromFilterList(filter) {
 	ar_ActiveFilters = newArray;
 }
 
+// Currently active filter values
 var ar_ActiveFilters = [];

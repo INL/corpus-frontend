@@ -1,14 +1,19 @@
+// AJAX-related functions
+
+// Constructor: takes the base URL and the operation we want to carry out
 function AjaxRetriever(webservice, webcall) {
 	this.webservice = webservice;
 	this.webcall = webcall;
 }
 
+// Perform AJAX call, transform response XML to HTML and add to the page
 AjaxRetriever.prototype.putAjaxResponse = function(element_id, parameters, append, xslSheet) {
 	var myself = this;
 
 	// check status
 	$.ajax({
         type: "GET",
+        dataType: "xml",
         url: this.webservice + this.webcall, 
         data: parameters, 
         cache: false
@@ -19,6 +24,7 @@ AjaxRetriever.prototype.putAjaxResponse = function(element_id, parameters, appen
 	});
 };
 
+// Transform response XML and add to / replace element content
 AjaxRetriever.prototype.addResponseToElement = function(data, element_id, append, xslSheet) {	
 	var html = this.transform(data, xslSheet);
 
@@ -28,6 +34,7 @@ AjaxRetriever.prototype.addResponseToElement = function(data, element_id, append
 	$(element_id).append(html);	
 };
 
+// Transform XML using XSLT
 AjaxRetriever.prototype.transform = function(xml, xslSheet) {	
 	// get stylesheet
 	xhttp = new XMLHttpRequest();

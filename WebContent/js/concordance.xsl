@@ -2,7 +2,9 @@
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 	<xsl:output method="html" omit-xml-declaration="yes" />
 	
-	<xsl:template match="Concordance">
-		<xsl:value-of select="Left" /><b><xsl:value-of select="Hit" /></b><xsl:value-of select="Right" />
+	<!-- How to transform a concordance (snippet) to HTML -->
+	
+	<xsl:template match="blacklab-response">
+		<xsl:value-of select="left" /><b><xsl:value-of select="match" /></b><xsl:value-of select="right" />
 	</xsl:template>
 </xsl:stylesheet>

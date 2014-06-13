@@ -39,6 +39,8 @@ import org.apache.velocity.app.Velocity;
  */
 public class MainServlet extends HttpServlet {
 
+	private static final boolean DEBUG = true;
+
 	/** Where to find the Velocity properties file */
 	private final String VELOCITY_PROPERTIES = "/WEB-INF/config/velocity.properties";
 
@@ -75,6 +77,7 @@ public class MainServlet extends HttpServlet {
 
 			// Get the name of the folder that contains our deployed war file
 			warExtractDir = new File(cfg.getServletContext().getRealPath("/"));
+			debugLog("WAR dir: " + warExtractDir);
 			contextPath = cfg.getServletContext().getContextPath();
 
 			// attempt to load a properties file with the same name as the folder
@@ -83,6 +86,7 @@ public class MainServlet extends HttpServlet {
 			if (!configFile.exists() || !configFile.canRead())
 				throw new ServletException("Config file not found or not readable: " + configFile);
 			loadProperties(configFile);
+			debugLog("Config file: " + configFile);
 
 			// Load the external properties file (for administration settings)
 			String adminPropFileName = warExtractDir.getName() + ".properties";
@@ -90,10 +94,13 @@ public class MainServlet extends HttpServlet {
 			if (adminPropFile == null)
 				throw new ServletException("File " + adminPropFileName + " (with webserviceInternal and webserviceExternal settings) not found in webapps or temp dir!");
 			adminProps = PropertiesUtil.readFromFile(adminPropFile);
+			debugLog("Admin prop file: " + adminPropFile);
 			if (getWebserviceUrl() == null)
 				throw new ServletException("Missing webserviceInternal setting in " + adminPropFile);
 			if (getExternalWebserviceUrl() == null)
 				throw new ServletException("Missing webserviceExternal setting in " + adminPropFile);
+			debugLog("webserviceInternal: " + getWebserviceUrl());
+			debugLog("webserviceExternal: " + getExternalWebserviceUrl());
 
 		} catch(ServletException e) {
 			throw e;
@@ -110,6 +117,11 @@ public class MainServlet extends HttpServlet {
 		responses.put(contextPath + "/page/article", new ArticleResponse());
 		responses.put("error", new ErrorResponse());
 
+	}
+
+	private static void debugLog(String msg) {
+		if (DEBUG)
+			System.out.println(msg);
 	}
 
 	/**

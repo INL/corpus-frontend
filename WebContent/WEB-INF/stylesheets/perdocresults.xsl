@@ -5,6 +5,7 @@
 	<xsl:param name="urlparamwithoutsort" select="'#'"/>
 	<xsl:param name="urlparamwithoutvieworgroup" select="'#'"/>
 	<xsl:param name="urlparamquery" select="'#'"/>
+    <xsl:param name="query" select="'#'"/>
 	
 	<xsl:param name="title_name" select="'#'"/>
 	<xsl:param name="author_name" select="'#'"/>
@@ -12,20 +13,22 @@
 	<xsl:param name="source_name" select="'#'"/>
 	
 	<xsl:param name="webserviceurl" select="'#'"/>
+    <xsl:param name="backendRequestUrl" select="'#'"/>
 	<xsl:param name="resultkey" select="'#'"/>
 	
 	<xsl:template match="error">
 		<h1>Error</h1>
-		<xsl:value-of select="." />
+        <xsl:value-of select="message" />
+        (Error code: <xsl:value-of select="code" />)
 	</xsl:template>
 	
-	<xsl:template match="SearchSummary">
+	<xsl:template match="summary">
 		<div class="pull-right">
-			<small>Query: <xsl:value-of select="Query" /> - Duration: <span id="duration"><xsl:value-of select="Duration" /></span>ms</small>
+			<small>Query: <xsl:value-of select="$query" /> - Duration: <span id="duration"><xsl:value-of select="search-time" /></span>ms</small>
 		</div>
 	</xsl:template>
 	
-	<xsl:template match="PerDocumentResults">
+	<xsl:template match="docs">
 		<xsl:variable name="totalHits" select="TotalDocs" />
 		<xsl:variable name="numberOfPages" select="ceiling($totalHits div MaxDocsPerPage)" />
 		<div class="span12 contentbox" id="results">
@@ -53,28 +56,28 @@
 						<tr class="tbl_head">
 							<th class="tbl_doct"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutsort" /><xsl:value-of select="'sortBy='" /><xsl:value-of select="$title_name" /></xsl:attribute>Document title</a></th>
 							<th class="tbl_year"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutsort" /><xsl:value-of select="'sortBy='" /><xsl:value-of select="$date_name" /></xsl:attribute>Year</a></th>
-							<th class="tbl_hits"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutsort" /><xsl:value-of select="'sortBy=hits'" /></xsl:attribute>Hits</a></th>
+							<th class="tbl_hits"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutsort" /><xsl:value-of select="'sortBy=size'" /></xsl:attribute>Hits</a></th>
 						</tr>
 					</thead>
 					<tbody>		
-					<xsl:for-each select="Documents/Document">						
+					<xsl:for-each select="doc">						
 						<tr>
 							<td>
-								<a target="_blank"><xsl:attribute name="href"><xsl:value-of select="'article?doc='" /><xsl:value-of select="DocId" /><xsl:value-of select="'&amp;query='" /><xsl:value-of select="$urlparamquery" /></xsl:attribute><xsl:value-of select="*[name()=$title_name]" /> by <xsl:value-of select="*[name()=$author_name]" /></a><br/>
-								... <xsl:value-of select="Concordances/Concordance[1]/ConcLeft" />&#160;<strong><xsl:value-of select="Concordances/Concordance[1]/ConcHit" /></strong>&#160;<xsl:value-of select="Concordances/Concordance[1]/ConcRight" /> ...<br/>
-								<div class="collapse"><xsl:attribute name="id"><xsl:value-of select="DocId" /></xsl:attribute>
-								<xsl:for-each select="Concordances/Concordance">
-									... <xsl:value-of select="ConcLeft" />&#160;<strong><xsl:value-of select="ConcHit" /></strong>&#160;<xsl:value-of select="ConcRight" /> ...<br/>
+								<a target="_blank"><xsl:attribute name="href"><xsl:value-of select="'article?doc='" /><xsl:value-of select="doc-pid" /><xsl:value-of select="'&amp;query='" /><xsl:value-of select="$urlparamquery" /></xsl:attribute><xsl:value-of select="doc-info/*[name()=$title_name]" /> by <xsl:value-of select="doc-info/*[name()=$author_name]" /></a><br/>
+								... <xsl:value-of select="snippets/snippet[1]/left" />&#160;<strong><xsl:value-of select="snippets/snippet[1]/match" /></strong>&#160;<xsl:value-of select="snippets/snippet[1]/right" /> ...<br/>
+								<div class="collapse"><xsl:attribute name="id"><xsl:value-of select="doc-pid" /></xsl:attribute>
+								<xsl:for-each select="snippets/snippet">
+									... <xsl:value-of select="left" />&#160;<strong><xsl:value-of select="match" /></strong>&#160;<xsl:value-of select="right" /> ...<br/>
 								</xsl:for-each>
 								<em>...</em>
 								</div>
-								<a class="btn btn-mini green" target="_blank"><xsl:attribute name="href"><xsl:value-of select="'article?doc='" /><xsl:value-of select="DocId" /><xsl:value-of select="'&amp;query='" /><xsl:value-of select="$urlparamquery" /></xsl:attribute>View document info</a> <!-- <a class="btn btn-mini green" data-toggle="collapse"><xsl:attribute name="data-target"><xsl:value-of select="'#'" /><xsl:value-of select="DocId" /></xsl:attribute>Show more concordances...</a>-->										
+								<a class="btn btn-mini green" target="_blank"><xsl:attribute name="href"><xsl:value-of select="'article?doc='" /><xsl:value-of select="doc-pid" /><xsl:value-of select="'&amp;query='" /><xsl:value-of select="$urlparamquery" /></xsl:attribute>View document info</a>										
 							</td>
 							<td>
-								<xsl:value-of select="*[name()=$date_name]" />
+								<xsl:value-of select="doc-info/*[name()=$date_name]" />
 							</td>
 							<td>
-								<xsl:value-of select="HitsInDoc" />
+								<xsl:value-of select="number-of-hits" />
 							</td>
 						</tr>
 					</xsl:for-each>
@@ -84,20 +87,22 @@
 			<xsl:call-template name="pagination" />
 		</div>
 		<script type="text/javascript">
+            var backendRequestUrl = '<xsl:value-of select="$backendRequestUrl" />';
+            
 			$(document).ready(function() {
 				scrollToResults();
 				<xsl:if test="$totalHits = -1">
-				doStats('<xsl:value-of select="$webserviceurl" />', '<xsl:value-of select="$resultkey" />');
+				doStats(backendRequestUrl);
 				</xsl:if>
-				});
+			});
 		</script>
 	</xsl:template>
 	
 	<xsl:template name="pagination">
 		<div class="pagination">
-		<xsl:variable name="resultsPerPage" select="MaxDocsPerPage" />
-		<xsl:variable name="totalHits" select="TotalDocs" />
-		<xsl:variable name="startResults" select="StartingDocs" />
+		<xsl:variable name="resultsPerPage" select="summary/window-size" />
+		<xsl:variable name="totalHits" select="number-of-docs" />
+		<xsl:variable name="startResults" select="window-first-result" />
 		<xsl:variable name="currentPage" select="floor( $startResults div $resultsPerPage ) + 1" />
 		<xsl:variable name="numberOfPages" select="ceiling($totalHits div $resultsPerPage)" />
 		<xsl:variable name="startPage">

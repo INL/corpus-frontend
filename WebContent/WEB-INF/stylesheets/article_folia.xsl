@@ -6,7 +6,8 @@
 
     <xsl:template match="error">
         <h1>Error</h1>
-        <xsl:value-of select="." />
+        <xsl:value-of select="message" />
+        (Error code: <xsl:value-of select="code" />)
     </xsl:template>
     
     <xsl:template match="SearchSummary" />

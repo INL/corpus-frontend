@@ -3,11 +3,16 @@
 	<xsl:output method="html" omit-xml-declaration="yes" />
 	<xsl:param name="urlparamwithoutstart" select="'#'"/>
 	<xsl:param name="urlparamwithoutview" select="'#'"/>
+    <xsl:param name="urlparamwithoutvieworgroup" select="'#'"/>
 	<xsl:param name="urlparamwithoutsort" select="'#'"/>
-	<xsl:param name="urlparamwithoutvieworgroup" select="'#'"/>
+    <xsl:param name="query" select="'#'"/>
 	
 	<xsl:param name="webserviceurl" select="'#'"/>
+    <xsl:param name="backendRequestUrl" select="'#'"/>
 	<xsl:param name="resultkey" select="'#'"/>
+	
+	
+	
 	
 	<xsl:param name="author_name" select="'#'"/>
 	<xsl:param name="date_name" select="'#'"/>
@@ -16,16 +21,17 @@
 	
 	<xsl:template match="error">
 		<h1>Error</h1>
-		<xsl:value-of select="." />
+        <xsl:value-of select="message" />
+        (Error code: <xsl:value-of select="code" />)
 	</xsl:template>
 	
-	<xsl:template match="SearchSummary">
+	<xsl:template match="summary">
 		<div class="pull-right">
-			<small>Query: <xsl:value-of select="Query" /> - Duration: <xsl:value-of select="Duration" />ms</small>
+			<small>Query: <xsl:value-of select="$query" /> - Duration: <xsl:value-of select="search-time" />ms</small>
 		</div>
 	</xsl:template>
 	
-	<xsl:template match="PerDocGroupResults">
+	<xsl:template match="groups">
 		<div class="span12 contentbox" id="results">
 			<ul class="nav nav-tabs" id="contentTabs">
 				<li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=1'" /></xsl:attribute>Per Hit</a></li>
@@ -35,33 +41,33 @@
 			</ul>
 			<select class="input" name="groupBy" onchange="document.searchform.submit();">
 				<option value="" disabled="true" selected="true">Group documents by...</option>
-				<option value="hits"><xsl:if test="'hits' = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group by number of hits</option>
-				<option><xsl:attribute name="value"><xsl:value-of select="$date_name" /></xsl:attribute><xsl:if test="$date_name = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group by year</option>
-				<option value="decade" disabled="true"><xsl:if test="'decade' = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group by decade</option>
-				<option><xsl:attribute name="value"><xsl:value-of select="$author_name" /></xsl:attribute><xsl:if test="$author_name = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group by author</option>
+				<option value="numhits"><xsl:if test="'numhits' = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group by number of hits</option>
+				<option><xsl:attribute name="value">field:<xsl:value-of select="$date_name" /></xsl:attribute><xsl:if test="$date_name = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group by year</option>
+				<option><xsl:attribute name="value">decade:<xsl:value-of select="$date_name" /></xsl:attribute><xsl:attribute name="disabled">true</xsl:attribute><xsl:if test="'decade' = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group by decade</option>
+				<option><xsl:attribute name="value">field:<xsl:value-of select="$author_name" /></xsl:attribute><xsl:if test="$author_name = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group by author</option>
 			</select> 
 			<div class="tab-pane active lightbg haspadding">
 				<table>
 					<thead>
 						<tr>
 							<th class="tbl_groupname"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutsort" /><xsl:value-of select="'sortBy=title'" /></xsl:attribute>Group</a></th>
-							<th><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutsort" /><xsl:value-of select="'sortBy=hits'" /></xsl:attribute>Hits</a></th>
+							<th><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutsort" /><xsl:value-of select="'sortBy=size'" /></xsl:attribute>Hits</a></th>
 						</tr>
 					</thead>
 					<tbody>		
-					<xsl:for-each select="Group">	
-						<xsl:variable name="width" select="Perm div 10" />
+					<xsl:for-each select="group">	
+						<xsl:variable name="width" select="size * 100 div /blacklab-response/summary/largest-group-size" />
 						<xsl:variable name="rowId" select="generate-id()"/>
 						<xsl:variable name="apos">'</xsl:variable>
 						<tr>
-							<td><xsl:value-of select="GroupName"/></td>
+							<td><xsl:value-of select="identity-display"/></td>
 							<td>
 								<div class="progress progress-warning" data-toggle="collapse"><xsl:attribute name="data-target"><xsl:value-of select="'.'"/><xsl:value-of select="$rowId"/></xsl:attribute>
-									<div class="bar"><xsl:attribute name="style"><xsl:value-of select="'width: '"/><xsl:value-of select="$width"/><xsl:value-of select="'%;'"/></xsl:attribute><xsl:value-of select="Freq"/></div>
+									<div class="bar"><xsl:attribute name="style"><xsl:value-of select="'width: '"/><xsl:value-of select="$width"/><xsl:value-of select="'%;'"/></xsl:attribute><xsl:value-of select="size"/></div>
 								</div>
-								<div><xsl:attribute name="class"><xsl:value-of select="$rowId"/><xsl:value-of select="' collapse groupcontent'"></xsl:value-of></xsl:attribute><xsl:attribute name="id"><xsl:value-of select="$rowId"/></xsl:attribute><xsl:attribute name="data-group"><xsl:value-of select="GroupId"/></xsl:attribute>
+								<div><xsl:attribute name="class"><xsl:value-of select="$rowId"/><xsl:value-of select="' collapse groupcontent'"></xsl:value-of></xsl:attribute><xsl:attribute name="id"><xsl:value-of select="$rowId"/></xsl:attribute><xsl:attribute name="data-group"><xsl:value-of select="identity"/></xsl:attribute>
 									<div class="inline-concordance">
-										<a class="btn btn-link"><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=2'" /><xsl:value-of select="'&#38;viewGroup='" /><xsl:value-of select="GroupId"/><xsl:value-of select="'&#38;groupBy='" /><xsl:value-of select="$groupBy_name"/></xsl:attribute>&#171; View detailed docs in this group</a> - <button class="btn btn-link nolink"><xsl:attribute name="onclick"><xsl:value-of select="'getGroupContent('"/><xsl:value-of select="$apos"/><xsl:value-of select="'#'"/><xsl:value-of select="$rowId"/><xsl:value-of select="$apos"/><xsl:value-of select="');'"/></xsl:attribute>Load more docs...</button> 
+										<a class="btn btn-link"><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=2'" /><xsl:value-of select="'&#38;viewGroup='" /><xsl:value-of select="identity"/><xsl:value-of select="'&#38;groupBy='" /><xsl:value-of select="$groupBy_name"/></xsl:attribute>&#171; View detailed docs in this group</a> - <button class="btn btn-link nolink"><xsl:attribute name="onclick"><xsl:value-of select="'getGroupContent('"/><xsl:value-of select="$apos"/><xsl:value-of select="'#'"/><xsl:value-of select="$rowId"/><xsl:value-of select="$apos"/><xsl:value-of select="');'"/></xsl:attribute>Load more docs...</button> 
 									</div>
 								
 								</div>
@@ -72,7 +78,10 @@
 				</table>
 			</div>
 		</div>
-		<script>$(document).ready(function() {
+		<script>
+        var backendRequestUrl = '<xsl:value-of select="$backendRequestUrl" />';
+            
+		$(document).ready(function() {
 			scrollToResults();
 			$('.nolink').click(function(event) { event.preventDefault();});
 			$('.groupcontent').on('show', function() { checkIfFirstTimeOpen('#' + $(this).attr('id'));});
@@ -91,7 +100,7 @@
 				
 			var retriever = new AjaxRetriever('<xsl:value-of select="$webserviceurl" />', 'group');
 			var groupid = decodeURIComponent($(element).attr('data-group'));
-			retriever.putAjaxResponse(element, {id: '<xsl:value-of select="$resultkey" />', groupId: groupid, start: start}, true, "../js/docgroup.xsl");
+			retriever.putAjaxResponse(element, {groupId: groupid, start: start}, true, "../js/docgroup.xsl");
 			
 			ar_loadFrom[element] = start + 20;
 			
@@ -99,7 +108,6 @@
 		}
 		
 		var ar_loadFrom = [];
-		
 		</script>
 	</xsl:template>
 </xsl:stylesheet>

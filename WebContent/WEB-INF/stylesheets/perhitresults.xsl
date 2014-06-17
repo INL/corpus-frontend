@@ -21,7 +21,6 @@
 	<xsl:template match="error">
 		<h1>Error</h1>
 		<xsl:value-of select="message" />
-		(Error code: <xsl:value-of select="code" />)
 	</xsl:template>
 	
 	<xsl:template match="summary">
@@ -30,9 +29,11 @@
 		</div>
 	</xsl:template>
 	
-	<xsl:template match="blacklab-response">
-		<xsl:variable name="totalHits" select="summary/number-of-hits" />
-		<xsl:variable name="numberOfPages" select="ceiling($totalHits div summary/window-size)" />
+    <xsl:template match="doc-infos" />
+    
+	<xsl:template match="hits">
+		<xsl:variable name="totalHits" select="../summary/number-of-hits" />
+		<xsl:variable name="numberOfPages" select="ceiling($totalHits div ../summary/window-size)" />
 		<div class="span12 contentbox" id="results">
 			<div class="pull-right">
 				<small>Total hits: <span id="totalhits">
@@ -83,7 +84,7 @@
 					</thead>
 					<tbody>
 									
-					<xsl:for-each select="hits/hit">
+					<xsl:for-each select="hit">
 					
 						<xsl:variable name="current_doc" select="doc-pid" />
 						<xsl:variable name="currentId" select="generate-id()" />
@@ -150,9 +151,9 @@
 	</xsl:template>
 	
 	<xsl:template name="pagination">
-		<xsl:variable name="resultsPerPage" select="summary/window-size" />
-		<xsl:variable name="totalHits" select="summary/number-of-hits" />
-		<xsl:variable name="startResults" select="summary/window-first-result" />
+		<xsl:variable name="resultsPerPage" select="../summary/window-size" />
+		<xsl:variable name="totalHits" select="../summary/number-of-hits" />
+		<xsl:variable name="startResults" select="../summary/window-first-result" />
 		<xsl:variable name="currentPage" select="floor( $startResults div $resultsPerPage ) + 1" />
 		<xsl:variable name="numberOfPages" select="ceiling($totalHits div $resultsPerPage)" />
 		<xsl:variable name="startPage">

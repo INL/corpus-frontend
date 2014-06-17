@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import nl.inl.util.FileUtil;
+import nl.inl.util.StringUtil;
 
 import org.apache.log4j.Logger;
 import org.apache.velocity.Template;
@@ -246,13 +247,7 @@ public abstract class BaseResponse {
 		if(pathToFile.exists()) {
 
 			List<String> lines = FileUtil.readLines(pathToFile);
-
-			StringBuilder sb = new StringBuilder();
-			for(String s : lines) {
-				sb.append(s).append("\n");
-			}
-
-			this.getContext().put(contextKey, sb.toString());
+			this.getContext().put(contextKey, StringUtil.join(lines, "\n"));
 		}
 	}
 

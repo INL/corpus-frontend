@@ -9,6 +9,7 @@ function checkStatus(backendUrl, callbackMethod) {
     }
 
 	// Check status
+    checkAgainMs = 1000; // reset to default value	
 	$.ajax({
         type: "GET",
         dataType: "xml",
@@ -20,11 +21,13 @@ function checkStatus(backendUrl, callbackMethod) {
     });
 }
 
+// Will be set to the latest suggested "check again time" by getJobStatus.
+var checkAgainMs = 200;
+
 // If a job is finished, get the results, otherwise check again later.
 function loadResults(backendUrl, data) {
 	var status = getJobStatus(data);
-	
-	$("#status").text(status + "...");
+	//$("#status").text(status + "...");
 	debug("Status: " + status);
 	
 	if (status == "ERROR" || status == "" || status.substring(0,6) == "No job") {
@@ -34,24 +37,23 @@ function loadResults(backendUrl, data) {
 	} else {
 		setTimeout(function () {
 		    checkStatus(backendUrl, loadResults);
-		}, 1000); // check again 1 second from now
-	}		
+		}, checkAgainMs); // check again after time suggested by BlackLab Server.
+	}
 }
 
 // See if the result count is finished yet, and update if so. If not, check again later.
 function refreshStats(backendUrl, data) {
 	var status = getJobStatus(data);
-	
 	debug("Status: " + status);
 	
-	if (status == "" || status.substring(0,6) == "No job") {
+	if (status == "ERROR" || status == "" || status.substring(0,6) == "No job") {
 		showLoadingError();
 	} else if (status == "FINISHED") {
 		updateStats(backendUrl);
 	} else {
 		setTimeout(function() {
 		  checkStatus(backendUrl, refreshStats);
-        }, 1000); // check again 1 second from now
+        }, checkAgainMs); // check again 1 second from now
     }
 }
 
@@ -67,16 +69,20 @@ function showLoadingError(data) {
         debug("Error reading status response");
         $("#status").text("Error reading status response");
     }
+    hideWaitDisplay(); // hide the wait message and animation
 }
 
 // Get the job status from the result XML
 function getJobStatus(document) {	
 	$xml = $(document);
 	
-    if ($xml.find("error").text().length > 0)
+    if ($xml.find("error") > 0)
        return "ERROR";
-	if ($xml.find("check-again-ms").text().length > 0)
+    var checkAgainMsText = $xml.find("check-again-ms").text();
+	if (checkAgainMsText.length > 0) {
+	   checkAgainMs = checkAgainMsText + 0; // use the suggested "check again time"
 	   return "BUSY";
+	}
 	if ($xml.find("still-counting").text() == "true")
 	   return "COUNTING";
 	return "FINISHED";

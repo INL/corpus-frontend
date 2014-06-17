@@ -22,7 +22,6 @@
 	<xsl:template match="error">
 		<h1>Error</h1>
         <xsl:value-of select="message" />
-        (Error code: <xsl:value-of select="code" />)
 	</xsl:template>
 	
 	<xsl:template match="summary">
@@ -40,12 +39,13 @@
 				<li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=16'" /></xsl:attribute>Documents grouped</a></li>
 			</ul>
 			<select class="input" name="groupBy" onchange="document.searchform.submit();">
-				<option value="" disabled="true" selected="true">Group hits by...</option>
-				<option><xsl:attribute name="value">field:<xsl:value-of select="$title_name" /></xsl:attribute><xsl:if test="$title_name = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group by document title</option>
+				<option value="" disabled="true"><xsl:if test="'' = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group hits by...</option>
+                <xsl:variable name="sortByTitleValue">field:<xsl:value-of select="$title_name" /></xsl:variable>
+				<option><xsl:attribute name="value"><xsl:value-of select="$sortByTitleValue" /></xsl:attribute><xsl:if test="$sortByTitleValue = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group by document title</option>
 				<option value="hit"><xsl:if test="'hit' = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group by hit text</option>
 				<option><xsl:attribute name="value">hit:<xsl:value-of select="$lemma_name" /></xsl:attribute><xsl:if test="$lemma_name = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group by lemma</option>
 				<option><xsl:attribute name="value">hit:<xsl:value-of select="$pos_name" /></xsl:attribute><xsl:if test="$pos_name = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group by hit pos</option>
-				<option value="hit:lemma,hit:pos"><xsl:if test="'lemmapos' = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group by lemma and PoS</option>
+				<option value="hit:lemma,hit:pos"><xsl:if test="'hit:lemma,hit:pos' = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group by lemma and PoS</option>
 				<option value="wordleft"><xsl:if test="'wordleft' = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group by word left</option>
 				<option value="wordright"><xsl:if test="'wordright' = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group by word right</option>
 				<option><xsl:attribute name="value">field:<xsl:value-of select="$date_name" /></xsl:attribute><xsl:if test="$date_name = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group by year</option>

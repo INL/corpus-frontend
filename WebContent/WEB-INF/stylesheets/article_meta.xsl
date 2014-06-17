@@ -21,7 +21,7 @@
 				<div class="span2">
 					<i>Hits in document:</i>
 				</div>
-				<div class="span7">
+				<div class="span7" id="divHitsInDocument">
 					<xsl:value-of select="$numhits" />
 				</div>
 			</div>

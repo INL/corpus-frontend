@@ -8,6 +8,10 @@ $(document).ready(function () {
 	
 	// Find all anchor names
 	initialiseAnchors();
+	
+	// Show number of hits at the top of the metadata
+	var numHits = $('a.hl').length;
+	$('#divHitsInDocument').text(numHits); 
 });
 
 // Names of anchors (elements with class anchor)

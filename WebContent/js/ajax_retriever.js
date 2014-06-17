@@ -20,6 +20,7 @@ AjaxRetriever.prototype.putAjaxResponse = function(element_id, parameters, appen
     }).done(function(data) {
 		myself.addResponseToElement(data, element_id, append, xslSheet);
 	}).fail(function(jqXHR, textStatus) {
+	    hideWaitDisplay();
         alert("AJAX request failed (cross-origin error?); textStatus = " + textStatus);
 	});
 };
@@ -60,10 +61,4 @@ AjaxRetriever.prototype.transform = function(xml, xslSheet) {
 	
 	return result;
 };
-
-
-
-
-
-
 

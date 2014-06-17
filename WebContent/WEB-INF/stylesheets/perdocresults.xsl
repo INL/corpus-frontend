@@ -19,7 +19,6 @@
 	<xsl:template match="error">
 		<h1>Error</h1>
         <xsl:value-of select="message" />
-        (Error code: <xsl:value-of select="code" />)
 	</xsl:template>
 	
 	<xsl:template match="summary">
@@ -28,9 +27,11 @@
 		</div>
 	</xsl:template>
 	
+    <xsl:template match="doc-infos" />
+    
 	<xsl:template match="docs">
-		<xsl:variable name="totalHits" select="TotalDocs" />
-		<xsl:variable name="numberOfPages" select="ceiling($totalHits div MaxDocsPerPage)" />
+		<xsl:variable name="totalHits" select="../summary/number-of-docs" />
+		<xsl:variable name="numberOfPages" select="ceiling($totalHits div ../summary/window-size)" />
 		<div class="span12 contentbox" id="results">
 			<div class="pull-right">
 				<small>Total documents: <span id="totalhits">
@@ -100,9 +101,9 @@
 	
 	<xsl:template name="pagination">
 		<div class="pagination">
-		<xsl:variable name="resultsPerPage" select="summary/window-size" />
-		<xsl:variable name="totalHits" select="number-of-docs" />
-		<xsl:variable name="startResults" select="window-first-result" />
+		<xsl:variable name="resultsPerPage" select="../summary/window-size" />
+		<xsl:variable name="totalHits" select="../summary/number-of-docs" />
+		<xsl:variable name="startResults" select="../summary/window-first-result" />
 		<xsl:variable name="currentPage" select="floor( $startResults div $resultsPerPage ) + 1" />
 		<xsl:variable name="numberOfPages" select="ceiling($totalHits div $resultsPerPage)" />
 		<xsl:variable name="startPage">

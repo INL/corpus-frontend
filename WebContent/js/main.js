@@ -1,6 +1,11 @@
 // main.js:
 // Function to scroll to results and filter-related functions.
 
+// Hide the waiting message and animation. Used if an error occurs.
+function hideWaitDisplay() {
+    $('#waitDisplay').hide();
+}
+
 // Scroll to the results area
 function scrollToResults() {
 	$('html, body').animate({scrollTop: $("#results").offset().top - 70}, 300);

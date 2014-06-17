@@ -19,7 +19,6 @@
 	<xsl:template match="error">
 		<h1>Error</h1>
         <xsl:value-of select="message" />
-        (Error code: <xsl:value-of select="code" />)
 	</xsl:template>
 	
     <xsl:template match="" />
@@ -32,8 +31,8 @@
 	
 	<xsl:template match="blacklab-response">
 		<div class="span12 contentbox" id="results">
-			<div class="alert alert-info">
-  				Job in progress: <strong id="status">SEARCHING...</strong>
+			<div id='waitDisplay' class="alert alert-info">
+  				Searching, please wait...
   				<p class="text-center"><i class="icon-spinner icon-spin xxlarge"></i></p>
 			</div>
 			<script type="text/javascript">

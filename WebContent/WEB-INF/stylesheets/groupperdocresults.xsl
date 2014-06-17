@@ -21,8 +21,8 @@
 	
 	<xsl:template match="error">
 		<h1>Error</h1>
-        <xsl:value-of select="message" />
-        (Error code: <xsl:value-of select="code" />)
+        <p><xsl:value-of select="message" /></p>
+        <p>(to report this problem and request a, please contact <a href='mailto:servicedesk@inl.nl'>servicedesk@inl.nl</a>)</p>
 	</xsl:template>
 	
 	<xsl:template match="summary">
@@ -40,11 +40,14 @@
 				<li class="active"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=16'" /></xsl:attribute>Documents grouped</a></li>
 			</ul>
 			<select class="input" name="groupBy" onchange="document.searchform.submit();">
-				<option value="" disabled="true" selected="true">Group documents by...</option>
+				<option value="" disabled="true"><xsl:if test="'' = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group documents by...</option>
 				<option value="numhits"><xsl:if test="'numhits' = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group by number of hits</option>
-				<option><xsl:attribute name="value">field:<xsl:value-of select="$date_name" /></xsl:attribute><xsl:if test="$date_name = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group by year</option>
-				<option><xsl:attribute name="value">decade:<xsl:value-of select="$date_name" /></xsl:attribute><xsl:attribute name="disabled">true</xsl:attribute><xsl:if test="'decade' = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group by decade</option>
-				<option><xsl:attribute name="value">field:<xsl:value-of select="$author_name" /></xsl:attribute><xsl:if test="$author_name = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group by author</option>
+				<xsl:variable name="sortByDateValue">field:<xsl:value-of select="$date_name" /></xsl:variable>
+				<option><xsl:attribute name="value"><xsl:value-of select="$sortByDateValue" /></xsl:attribute><xsl:if test="$sortByDateValue = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group by year</option>
+                <xsl:variable name="sortByDecadeValue">decade:<xsl:value-of select="$date_name" /></xsl:variable>
+				<option><xsl:attribute name="value"><xsl:value-of select="$sortByDecadeValue" /></xsl:attribute><xsl:attribute name="disabled">true</xsl:attribute><xsl:if test="$sortByDecadeValue = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group by decade</option>
+                <xsl:variable name="sortByAuthorValue">field:<xsl:value-of select="$author_name" /></xsl:variable>
+				<option><xsl:attribute name="value"><xsl:value-of select="$sortByAuthorValue" /></xsl:attribute><xsl:if test="$sortByAuthorValue = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group by author</option>
 			</select> 
 			<div class="tab-pane active lightbg haspadding">
 				<table>

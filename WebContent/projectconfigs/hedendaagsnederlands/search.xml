@@ -49,6 +49,28 @@
 				<Value value="BN">Dutch (Belgian)</Value>
 			</Values>
 		</Property>
+        <Property>
+            <Name>Medium</Name>
+            <SearchField>medium</SearchField>
+            <DisplayField>medium</DisplayField>
+            <Values multiple="false">
+                <Value value=""></Value>
+                <Value value="blog">Blog</Value>
+                <Value value="book">Book</Value>
+                <Value value="ephemera">Ephemera</Value>
+                <Value value="local">Local</Value>
+                <Value value="magazine">Magazine</Value>
+                <Value value="misc">Misc</Value>
+                <Value value="newspaper">Newspaper</Value>
+                <Value value="other">Other</Value>
+                <Value value="periodical">Periodical</Value>
+                <Value value="reported speech">Reported speech</Value>
+                <Value value="teletext">Teletext</Value>
+                <Value value="web snippet">Web snippet</Value>
+                <Value value="website">Website</Value>
+                <Value value="written to be spoken">Written to be spoken</Value>
+            </Values>
+        </Property>
 	</DocumentProperties>
 	<WordProperties>
 		<Property>

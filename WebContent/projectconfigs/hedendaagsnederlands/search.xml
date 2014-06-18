@@ -54,6 +54,7 @@
             <SearchField>medium</SearchField>
             <DisplayField>medium</DisplayField>
             <Values multiple="true">
+                <Value value="" />
                 <Value value="blog" />
                 <Value value="book" />
                 <Value value="misc\|ephemera" />

@@ -39,24 +39,6 @@ public class QueryServiceHandler {
 		lastRequestUrl = requestUrl;
 
 		System.out.println("Request: " + requestUrl);
-
-		// if not, send a request to the webserver
-		//URL webserviceRequest = new URL(requestUrl);
-		//BufferedReader reader = new BufferedReader(new InputStreamReader(webserviceRequest.openStream()));
-
-		// make url parameter string
-		//StringBuilder builder = new StringBuilder();
-		//String line;
-
-		// read the response from the webservice
-		//while( (line = reader.readLine()) != null )
-			//builder.append(line);
-
-		//reader.close();
-
-		//String response = builder.toString();
-
-		//return response;
 		return fetchXml(requestUrl);
 	}
 

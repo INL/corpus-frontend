@@ -29,7 +29,7 @@
 		</div>
 	</xsl:template>
 	
-	<xsl:template match="blacklab-response">
+	<xsl:template match="status">
 		<div class="span12 contentbox" id="results">
 			<div id='waitDisplay' class="alert alert-info">
   				Searching, please wait...
@@ -37,7 +37,13 @@
 			</div>
 			<script type="text/javascript">
                 var backendRequestUrl = '<xsl:value-of select="$backendRequestUrl" />';
-				doResults(backendRequestUrl);
+                var checkAgain = <xsl:choose>
+                    <xsl:when test="check-again-ms"><xsl:value-of select="check-again-ms" /></xsl:when>
+                    <xsl:otherwise>1000</xsl:otherwise>
+                </xsl:choose>;
+                setTimeout(function () {
+                    doResults(backendRequestUrl, checkAgain);
+                }, checkAgain);
 			</script>
 		</div>
 	</xsl:template>

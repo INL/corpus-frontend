@@ -88,9 +88,9 @@ function getJobStatus(document) {
 	return "FINISHED";
 }
 
-// Reload the page with the getResults parameter added so we get the results instead of the "waiting" page.
+// Reload the page to get the results.
 function getResults() {
-	window.location = window.location + "&getResults=yes";
+    location.reload();
 }
 
 // Update the total results counter (and other stats) after the search has completed.

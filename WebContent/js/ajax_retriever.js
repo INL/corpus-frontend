@@ -11,6 +11,8 @@ AjaxRetriever.prototype.putAjaxResponse = function(element_id, parameters, appen
 	var myself = this;
 
 	// check status
+    console.log(this.webservice + this.webcall);
+    console.log(parameters);
 	$.ajax({
         type: "GET",
         dataType: "xml",

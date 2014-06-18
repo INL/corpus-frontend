@@ -31,6 +31,25 @@
 		</div>
 	</xsl:template>
 	
+    <xsl:template match="status">
+        <div class="span12 contentbox" id="results">
+            <div id='waitDisplay' class="alert alert-info">
+                Searching, please wait...
+                <p class="text-center"><i class="icon-spinner icon-spin xxlarge"></i></p>
+            </div>
+            <script type="text/javascript">
+                var backendRequestUrl = '<xsl:value-of select="$backendRequestUrl" />';
+                var checkAgain = <xsl:choose>
+                    <xsl:when test="check-again-ms"><xsl:value-of select="check-again-ms" /></xsl:when>
+                    <xsl:otherwise>1000</xsl:otherwise>
+                </xsl:choose>;
+                setTimeout(function () {
+                    doResults(backendRequestUrl, checkAgain);
+                }, checkAgain);
+            </script>
+        </div>
+    </xsl:template>
+    
 	<xsl:template match="groups">
 		<div class="span12 contentbox" id="results">
 			<ul class="nav nav-tabs" id="contentTabs">
@@ -101,9 +120,12 @@
 			if(ar_loadFrom[element] != null)
 				var start = ar_loadFrom[element];
 				
-			var retriever = new AjaxRetriever('<xsl:value-of select="$webserviceurl" />', 'group');
+			var retriever = new AjaxRetriever(backendRequestUrl, '');
 			var groupid = decodeURIComponent($(element).attr('data-group'));
-			retriever.putAjaxResponse(element, {groupId: groupid, start: start}, true, "../js/docgroup.xsl");
+			retriever.putAjaxResponse(element, {
+                viewgroup: groupid,
+			    first: start
+			}, true, "../js/docgroup.xsl");
 			
 			ar_loadFrom[element] = start + 20;
 			

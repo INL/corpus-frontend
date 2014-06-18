@@ -125,7 +125,11 @@ public class WebsiteConfig {
 	    	for(Iterator<HierarchicalConfiguration> i = values.iterator(); i.hasNext();) {
 	    		HierarchicalConfiguration value = i.next();
 
-	    		fd.addValidValue(value.getString("[@value]", ""), value.getString("", ""));
+	    		String attrValue = value.getString("[@value]", "");
+				String description = value.getString("", "");
+				if (description.length() == 0)
+					description = attrValue;
+				fd.addValidValue(attrValue, description);
 
 	    		boolean isMultiple = sub.getBoolean("Values[@multiple]", false);
 	    		if(isMultiple)
@@ -146,7 +150,11 @@ public class WebsiteConfig {
 	    	for(Iterator<HierarchicalConfiguration> i = values.iterator(); i.hasNext();) {
 	    		HierarchicalConfiguration value = i.next();
 
-	    		fd.addValidValue(value.getString("[@value]", ""), value.getString("", ""));
+	    		String attrValue = value.getString("[@value]", "");
+				String description = value.getString("", "");
+				if (description.length() == 0)
+					description = attrValue;
+				fd.addValidValue(attrValue, description);
 	    	}
 
 		    properties.add(fd);

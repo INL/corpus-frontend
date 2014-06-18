@@ -44,11 +44,6 @@ public class SearchResponse extends BaseResponse {
 	protected void completeRequest() {
 		this.clearContext();
 
-		boolean getResults = false;
-		// if the getResults is set we only have to look up results
-		if (getParameter("getResults", "").length() > 0)
-			getResults = true;
-
 		if (this.request.getParameterMap().size() > 0) {
 			// if any parameters are set, we'll try to interpret the search request
 			int view = this.getParameter("view", VIEW_PER_HIT);
@@ -65,19 +60,16 @@ public class SearchResponse extends BaseResponse {
 
 			switch(view) {
 				case VIEW_PER_HIT:
-					doPerHitSearch(getResults);
+					doPerHitSearch();
 					break;
 				case VIEW_PER_DOC:
-					doPerDocSearch(getResults);
+					doPerDocSearch();
 					break;
-				/*case 4:
-					this.getContext().put("showCollocationResults", true);
-					break;*/
 				case VIEW_HITS_GROUPED:
-					doGroupPerHitSearch(getResults);
+					doGroupPerHitSearch();
 					break;
 				case VIEW_DOCS_GROUPED:
-					doGroupPerDocSearch(getResults);
+					doGroupPerDocSearch();
 					break;
 			}
 			this.getContext().put("view", view);
@@ -118,7 +110,7 @@ public class SearchResponse extends BaseResponse {
 		return (this.getQuery().length() <= 2) && hasFilter;
 	}
 
-	private void doPerHitSearch(boolean getResults) {
+	private void doPerHitSearch() {
 		String query = getQuery();
 
 		// if we managed to create a query from user input
@@ -135,17 +127,12 @@ public class SearchResponse extends BaseResponse {
 			Map<String, String[]> parameters = UrlParameterFactory.getSearchParameters(query, lang, max, start, groupBy, sortBy, viewGroup, sort);
 
 			addFilterParameters(parameters);
-			//parameters.put("outputformat", new String[] {"xml"});
 
 			try {
 				if (perHitResultStylesheet == null)
-					perHitResultStylesheet = getPerHitStylesheet(getResults);
+					perHitResultStylesheet = getPerHitStylesheet();
 
-//				if (getResults) {
-//					webservice = new QueryServiceHandler(this.servlet.getWebserviceUrl() + "result");
-//					//parameters.put("id", new String[]{this.getParameter("key", "")});
-//				}
-
+				parameters.put("block", new String[]{"no"});
 				String xmlResult = webservice.makeRequest(parameters);
 
 				setTransformerDisplayParameters(query);
@@ -161,7 +148,7 @@ public class SearchResponse extends BaseResponse {
 		}
 	}
 
-	private void doPerDocSearch(boolean getResults) {
+	private void doPerDocSearch() {
 		// TODO: refactor doPerDocSearch and doPerHitSearch to remove duplicate code
 		String query = getQuery();
 
@@ -185,17 +172,12 @@ public class SearchResponse extends BaseResponse {
 			Map<String, String[]> parameters = UrlParameterFactory.getSearchParameters(query, lang, max, start, groupBy, sortBy, viewGroup, sort);
 
 			addFilterParameters(parameters);
-			//parameters.put("outputformat", new String[] {"xml"});
 
 			try {
 				if (perDocResultStylesheet == null)
-					perDocResultStylesheet = getPerDocStylesheet(getResults);
+					perDocResultStylesheet = getPerDocStylesheet();
 
-//				if (getResults) {
-//					webservice = new QueryServiceHandler(this.servlet.getWebserviceUrl() + "result");
-//					//parameters.put("id", new String[]{this.getParameter("key", "")});
-//				}
-
+				parameters.put("block", new String[]{"no"});
 				String xmlResult = webservice.makeRequest(parameters);
 
 				setTransformerDisplayParameters(query);
@@ -211,7 +193,7 @@ public class SearchResponse extends BaseResponse {
 		}
 	}
 
-	private void doGroupPerHitSearch(boolean getResults) {
+	private void doGroupPerHitSearch() {
 		// TODO: refactor doPerDocSearch and doPerHitSearch to remove duplicate code
 		String query = getQuery();
 
@@ -238,17 +220,12 @@ public class SearchResponse extends BaseResponse {
 				Map<String, String[]> parameters = UrlParameterFactory.getSearchParameters(query, lang, max, start, groupBy, sortBy, null, sort);
 
 				addFilterParameters(parameters);
-				//parameters.put("outputformat", new String[] {"xml"});
 
 				try {
 					if (groupHitsResultStylesheet == null)
-						groupHitsResultStylesheet = getGroupHitsStylesheet(getResults);
+						groupHitsResultStylesheet = getGroupHitsStylesheet();
 
-//					if (getResults) {
-//						webservice = new QueryServiceHandler(this.servlet.getWebserviceUrl() + "result");
-//						//parameters.put("id", new String[]{this.getParameter("key", "")});
-//					}
-
+					parameters.put("block", new String[]{"no"});
 					String xmlResult = webservice.makeRequest(parameters);
 
 					setTransformerDisplayParameters(query);
@@ -287,7 +264,7 @@ public class SearchResponse extends BaseResponse {
 		}
 	}
 
-	private void doGroupPerDocSearch(boolean getResults) {
+	private void doGroupPerDocSearch() {
 		// TODO: refactor doPerDocSearch and doPerHitSearch to remove duplicate code
 		String query = getQuery();
 
@@ -314,17 +291,12 @@ public class SearchResponse extends BaseResponse {
 				Map<String, String[]> parameters = UrlParameterFactory.getSearchParameters(query, lang, max, start, groupBy, sortBy, null, sort);
 
 				addFilterParameters(parameters);
-				//parameters.put("outputformat", new String[] {"xml"});
 
 				try {
 					if (groupDocsResultStylesheet == null)
-						groupDocsResultStylesheet = getGroupDocsStylesheet(getResults);
+						groupDocsResultStylesheet = getGroupDocsStylesheet();
 
-//					if (getResults) {
-//						webservice = new QueryServiceHandler(this.servlet.getWebserviceUrl() + "result");
-//						//parameters.put("id", new String[]{this.getParameter("key", "")});
-//					}
-
+					parameters.put("block", new String[]{"no"});
 					String xmlResult = webservice.makeRequest(parameters);
 
 					setTransformerDisplayParameters(query);
@@ -400,17 +372,35 @@ public class SearchResponse extends BaseResponse {
 			String[] filterValues = this.getParameterValues(fd.getSearchField(), "");
 
 			if (fd.getType().equalsIgnoreCase("date")) {
-				String dateRange = "[" + this.getParameter(fd.getSearchField() + "__from", "0") + " TO " + this.getParameter(fd.getSearchField() + "__to", "3000") + "]";
+				String from = this.getParameter(fd.getSearchField() + "__from", "0");
+				String to = this.getParameter(fd.getSearchField() + "__to", "3000");
+				if (from.equals("0") && to.equals("3000"))
+					continue; // no date range submitted, so don't add one
+				String dateRange = "[" + from + " TO " + to + "]";
 				filterValues = new String[]{dateRange};
 			}
 
 			String fieldName = fd.getSearchField();
 			if (filterValues.length > 0) {
 				if (filter.length() > 0)
-					filter.append(" ");
-				String value = StringUtil.join(filterValues, " ").trim();
-				if (value.length() > 0)
-					filter.append(fieldName).append(":(").append(value).append(")");
+					filter.append(" AND ");
+				StringBuilder value = new StringBuilder();
+				int n = 0;
+				for (String filterValue: filterValues) {
+					filterValue = filterValue.trim();
+					if (filterValue.length() > 0) {
+						if (value.length() > 0)
+							value.append(" OR ");
+						value.append(filterValue);
+						n++;
+					}
+				}
+				if (n > 0) {
+					String strValue = value.toString();
+					if (n > 1)
+						strValue = "(" + strValue + ")";
+					filter.append(fieldName).append(":").append(strValue);
+				}
 			}
 		}
 		params.put("filter", new String[] {filter.toString()});
@@ -552,36 +542,20 @@ public class SearchResponse extends BaseResponse {
 		return "corpusql";
 	}
 
-	private String getPerHitStylesheet(boolean getResults) throws IOException {
-		if (getResults)
-			return getStylesheet("perhitresults.xsl");
-
-		return getSearchJobStylesheet();
+	private String getPerHitStylesheet() throws IOException {
+		return getStylesheet("perhitresults.xsl");
 	}
 
-	private String getPerDocStylesheet(boolean getResults) throws IOException {
-		if (getResults)
-			return getStylesheet("perdocresults.xsl");
-
-		return getSearchJobStylesheet();
+	private String getPerDocStylesheet() throws IOException {
+		return getStylesheet("perdocresults.xsl");
 	}
 
-	private String getGroupHitsStylesheet(boolean getResults) throws IOException {
-		if (getResults)
-			return getStylesheet("groupperhitresults.xsl");
-
-		return getSearchJobStylesheet();
+	private String getGroupHitsStylesheet() throws IOException {
+		return getStylesheet("groupperhitresults.xsl");
 	}
 
-	private String getGroupDocsStylesheet(boolean getResults) throws IOException {
-		if (getResults)
-			return getStylesheet("groupperdocresults.xsl");
-
-		return getSearchJobStylesheet();
-	}
-
-	private String getSearchJobStylesheet() throws IOException {
-		return getStylesheet("searchjobresults.xsl");
+	private String getGroupDocsStylesheet() throws IOException {
+		return getStylesheet("groupperdocresults.xsl");
 	}
 
 	/* (non-Javadoc)

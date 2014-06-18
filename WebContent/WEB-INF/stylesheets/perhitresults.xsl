@@ -31,6 +31,25 @@
 	
     <xsl:template match="doc-infos" />
     
+    <xsl:template match="status">
+        <div class="span12 contentbox" id="results">
+            <div id='waitDisplay' class="alert alert-info">
+                Searching, please wait...
+                <p class="text-center"><i class="icon-spinner icon-spin xxlarge"></i></p>
+            </div>
+            <script type="text/javascript">
+                var backendRequestUrl = '<xsl:value-of select="$backendRequestUrl" />';
+                var checkAgain = <xsl:choose>
+                    <xsl:when test="check-again-ms"><xsl:value-of select="check-again-ms" /></xsl:when>
+                    <xsl:otherwise>1000</xsl:otherwise>
+                </xsl:choose>;
+                setTimeout(function () {
+                    doResults(backendRequestUrl, checkAgain);
+                }, checkAgain);
+            </script>
+        </div>
+    </xsl:template>
+    
 	<xsl:template match="hits">
 		<xsl:variable name="totalHits" select="../summary/number-of-hits" />
 		<xsl:variable name="numberOfPages" select="ceiling($totalHits div ../summary/window-size)" />

@@ -52,15 +52,15 @@
     
 	<xsl:template match="hits">
 		<xsl:variable name="totalHits" select="../summary/number-of-hits" />
-		<xsl:variable name="numberOfPages" select="ceiling($totalHits div ../summary/window-size)" />
+		<xsl:variable name="numberOfPages" select="ceiling($totalHits div ../summary/requested-window-size)" />
 		<div class="span12 contentbox" id="results">
 			<div class="pull-right">
 				<small>Total hits: <span id="totalhits">
-					<xsl:call-template name="numberOrWaitingIndidcator">
+					<xsl:call-template name="numberOrWaitingIndicator">
 						<xsl:with-param name="number" select="$totalHits" />
 					</xsl:call-template>
 					</span><br/> Total pages: <span id="totalpages">
-					<xsl:call-template name="numberOrWaitingIndidcator">
+					<xsl:call-template name="numberOrWaitingIndicator">
 						<xsl:with-param name="number" select="$numberOfPages" />
 					</xsl:call-template></span>
 				</small>
@@ -71,7 +71,9 @@
 				<li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=8'" /></xsl:attribute>Hits grouped</a></li>
 				<li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=16'" /></xsl:attribute>Documents grouped</a></li>
 			</ul>
-			<xsl:call-template name="pagination" />
+            <xsl:call-template name="pagination">
+                <xsl:with-param name="totalHits" select="$totalHits" />
+            </xsl:call-template>
 			<div class="tab-pane active lightbg haspadding">
 				<table>
 					<thead>
@@ -170,8 +172,8 @@
 	</xsl:template>
 	
 	<xsl:template name="pagination">
-		<xsl:variable name="resultsPerPage" select="../summary/window-size" />
-		<xsl:variable name="totalHits" select="../summary/number-of-hits" />
+        <xsl:param name="totalHits" />
+		<xsl:variable name="resultsPerPage" select="../summary/requested-window-size" />
 		<xsl:variable name="startResults" select="../summary/window-first-result" />
 		<xsl:variable name="currentPage" select="floor( $startResults div $resultsPerPage ) + 1" />
 		<xsl:variable name="numberOfPages" select="ceiling($totalHits div $resultsPerPage)" />
@@ -273,7 +275,7 @@
         </xsl:choose>
     </xsl:template>
     
-    <xsl:template name="numberOrWaitingIndidcator">
+    <xsl:template name="numberOrWaitingIndicator">
     	<xsl:param name="number" />
     	
     	<xsl:choose>

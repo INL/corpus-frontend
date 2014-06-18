@@ -2,19 +2,21 @@
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 	<xsl:output method="html" omit-xml-declaration="yes" />
 	<xsl:param name="urlparamwithoutstart" select="'#'"/>
-	<xsl:param name="urlparamwithoutsort" select="'#'"/>
 	<xsl:param name="urlparamwithoutvieworgroup" select="'#'"/>
+	<xsl:param name="urlparamwithoutsort" select="'#'"/>
 	<xsl:param name="urlparamquery" select="'#'"/>
     <xsl:param name="query" select="'#'"/>
 	
+	<xsl:param name="webserviceurl" select="'#'"/>
+	<xsl:param name="backendRequestUrl" select="'#'"/>
+	<xsl:param name="resultkey" select="'#'"/>
+	
+	<xsl:param name="pos_name" select="'#'"/>
+	<xsl:param name="lemma_name" select="'#'"/>
 	<xsl:param name="title_name" select="'#'"/>
 	<xsl:param name="author_name" select="'#'"/>
 	<xsl:param name="date_name" select="'#'"/>
 	<xsl:param name="source_name" select="'#'"/>
-	
-	<xsl:param name="webserviceurl" select="'#'"/>
-    <xsl:param name="backendRequestUrl" select="'#'"/>
-	<xsl:param name="resultkey" select="'#'"/>
 	
 	<xsl:template match="error">
 		<h1>Error</h1>
@@ -50,15 +52,15 @@
     
 	<xsl:template match="docs">
 		<xsl:variable name="totalHits" select="../summary/number-of-docs" />
-		<xsl:variable name="numberOfPages" select="ceiling($totalHits div ../summary/window-size)" />
+		<xsl:variable name="numberOfPages" select="ceiling($totalHits div ../summary/requested-window-size)" />
 		<div class="span12 contentbox" id="results">
 			<div class="pull-right">
 				<small>Total documents: <span id="totalhits">
-					<xsl:call-template name="numberOrWaitingIndidcator">
+					<xsl:call-template name="numberOrWaitingIndicator">
 						<xsl:with-param name="number" select="$totalHits" />
 					</xsl:call-template>
 					</span><br/> Total pages: <span id="totalpages">
-					<xsl:call-template name="numberOrWaitingIndidcator">
+					<xsl:call-template name="numberOrWaitingIndicator">
 						<xsl:with-param name="number" select="$numberOfPages" />
 					</xsl:call-template></span>
 				</small>
@@ -69,7 +71,9 @@
 				<li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=8'" /></xsl:attribute>Hits grouped</a></li>
 				<li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=16'" /></xsl:attribute>Documents grouped</a></li>
 			</ul>
-			<xsl:call-template name="pagination" />
+			<xsl:call-template name="pagination">
+			    <xsl:with-param name="totalHits" select="$totalHits" />
+			</xsl:call-template>
 			<div class="tab-pane active lightbg haspadding">
 				<table class="documents">
 					<thead>
@@ -119,9 +123,8 @@
 	</xsl:template>
 	
 	<xsl:template name="pagination">
-		<div class="pagination">
-		<xsl:variable name="resultsPerPage" select="../summary/window-size" />
-		<xsl:variable name="totalHits" select="../summary/number-of-docs" />
+        <xsl:param name="totalHits" />
+		<xsl:variable name="resultsPerPage" select="../summary/requested-window-size" />
 		<xsl:variable name="startResults" select="../summary/window-first-result" />
 		<xsl:variable name="currentPage" select="floor( $startResults div $resultsPerPage ) + 1" />
 		<xsl:variable name="numberOfPages" select="ceiling($totalHits div $resultsPerPage)" />
@@ -137,6 +140,7 @@
                 <xsl:with-param name="num2" select="$numberOfPages"/>
             </xsl:call-template>
         </xsl:variable>
+		<div class="pagination">
 		<ul class="pagebuttons">
 			<xsl:choose>
 				<xsl:when test="$currentPage = 1">
@@ -166,10 +170,10 @@
 					<li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutstart" /><xsl:value-of select="'start='" /><xsl:value-of select="($currentPage * $resultsPerPage)" /></xsl:attribute>Next</a></li>
 				</xsl:otherwise>
 			</xsl:choose>
-			
 		</ul>
 		</div>
 	</xsl:template>
+	
 	<xsl:template name="makePagination">
 		<xsl:param name="active" />
 		<xsl:param name="total" />
@@ -221,7 +225,7 @@
         </xsl:choose>
     </xsl:template>
     
-    <xsl:template name="numberOrWaitingIndidcator">
+    <xsl:template name="numberOrWaitingIndicator">
     	<xsl:param name="number" />
     	
     	<xsl:choose>

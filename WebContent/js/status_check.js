@@ -109,7 +109,7 @@ function updateStats(backendUrl) {
         $xml = $(data);
         var dur = $xml.find("search-time").text();
         var hits = $xml.find("number-of-hits").text();
-        var pages = Math.ceil(hits / $xml.find("window-size").text());
+        var pages = Math.ceil(hits / $xml.find("requested-window-size").text());
             
         $("#duration").text(dur);
         $("#totalhits").text(hits);

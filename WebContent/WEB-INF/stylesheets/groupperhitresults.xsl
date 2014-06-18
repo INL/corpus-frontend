@@ -49,7 +49,7 @@
         </div>
     </xsl:template>
     
-	<xsl:template match="groups">
+	<xsl:template match="hitgroups">
 		<div class="span12 contentbox" id="results">
 			<ul class="nav nav-tabs" id="contentTabs">
 				<li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=1'" /></xsl:attribute>Per Hit</a></li>
@@ -79,7 +79,7 @@
 						</tr>
 					</thead>
 					<tbody>		
-					<xsl:for-each select="group">	
+					<xsl:for-each select="hitgroup">	
 						<xsl:variable name="width" select="size * 100 div /blacklab-response/summary/largest-group-size" />
 						<xsl:variable name="rowId" select="generate-id()"/>
 						<xsl:variable name="apos">'</xsl:variable>

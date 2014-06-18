@@ -97,7 +97,7 @@ public class WebsiteConfig {
 		    String location = sub.getString("[@value]", null);
 		    String name = sub.getString("");
 		    boolean newWindow = sub.getBoolean("[@newWindow]", false);
-		    if(location == null)
+		    if (location == null)
 		    	location = name;
 
 		    Map<String, Object> link = new HashMap<String, Object>();
@@ -125,10 +125,14 @@ public class WebsiteConfig {
 	    	for(Iterator<HierarchicalConfiguration> i = values.iterator(); i.hasNext();) {
 	    		HierarchicalConfiguration value = i.next();
 
-	    		fd.addValidValue(value.getString("[@value]", ""), value.getString("", ""));
+	    		String attrValue = value.getString("[@value]", "");
+				String description = value.getString("", "");
+				if (description.length() == 0)
+					description = attrValue;
+				fd.addValidValue(attrValue, description);
 
 	    		boolean isMultiple = sub.getBoolean("Values[@multiple]", false);
-	    		if(isMultiple)
+	    		if (isMultiple)
 	    			fd.setType("multiselect");
 	    	}
 
@@ -146,7 +150,11 @@ public class WebsiteConfig {
 	    	for(Iterator<HierarchicalConfiguration> i = values.iterator(); i.hasNext();) {
 	    		HierarchicalConfiguration value = i.next();
 
-	    		fd.addValidValue(value.getString("[@value]", ""), value.getString("", ""));
+	    		String attrValue = value.getString("[@value]", "");
+				String description = value.getString("", "");
+				if (description.length() == 0)
+					description = attrValue;
+				fd.addValidValue(attrValue, description);
 	    	}
 
 		    properties.add(fd);
@@ -158,10 +166,10 @@ public class WebsiteConfig {
 	 * @param tabGroup
 	 */
 	private void addToTabGroups(String tabGroup) {
-		if(tabGroup == null)
+		if (tabGroup == null)
 			return;
 
-		if(tabGroup.length() > 0)
+		if (tabGroup.length() > 0)
 			tabGroups.add(tabGroup);
 	}
 
@@ -173,7 +181,7 @@ public class WebsiteConfig {
 		List<FieldDescriptor> tabFields = new LinkedList<FieldDescriptor>();
 
 		for(FieldDescriptor fd : fields) {
-			if(fd.getTabGroup().equalsIgnoreCase(group) || group.equalsIgnoreCase(""))
+			if (fd.getTabGroup().equalsIgnoreCase(group) || group.equalsIgnoreCase(""))
 				tabFields.add(fd);
 		}
 
@@ -198,7 +206,7 @@ public class WebsiteConfig {
 
 	public String getPropertyForFunction(String function) {
 		for(FieldDescriptor fd : getWordProperties()) {
-			if(fd.getFunction().equalsIgnoreCase(function))
+			if (fd.getFunction().equalsIgnoreCase(function))
 				return fd.searchField;
 		}
 
@@ -211,7 +219,7 @@ public class WebsiteConfig {
 
 	public boolean containsSearchField(String fieldName) {
 		for(FieldDescriptor fd : getFilterFields()) {
-			if(fd.getSearchField().equalsIgnoreCase(fieldName))
+			if (fd.getSearchField().equalsIgnoreCase(fieldName))
 				return true;
 		}
 
@@ -220,7 +228,7 @@ public class WebsiteConfig {
 
 	public String getFieldIndexForFunction(String f) {
 		for(FieldDescriptor fd : getFilterFields()) {
-			if(fd.getFunction().equalsIgnoreCase(f))
+			if (fd.getFunction().equalsIgnoreCase(f))
 				return fd.getDisplayField();
 		}
 
@@ -228,7 +236,7 @@ public class WebsiteConfig {
 	}
 
 	public boolean hasTabGroups() {
-		if(tabGroups.size() > 0)
+		if (tabGroups.size() > 0)
 			return true;
 
 		return false;

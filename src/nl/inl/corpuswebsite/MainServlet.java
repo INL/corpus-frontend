@@ -6,7 +6,10 @@
  */
 package nl.inl.corpuswebsite;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -63,6 +66,12 @@ public class MainServlet extends HttpServlet {
 	private String contextPath;
 
 	private Properties adminProps;
+
+	private String resultsStylesheet = null;
+
+	private String articleStylesheet = null;
+
+	private String metadataStylesheet;
 
 	@Override
 	public void init(ServletConfig cfg) throws ServletException {
@@ -262,6 +271,60 @@ public class MainServlet extends HttpServlet {
 
 	public Object getGoogleAnalyticsKey() {
 		return adminProps.getProperty("googleAnalyticsKey", "");
+	}
+
+	public String getResultsStylesheet() {
+		if (resultsStylesheet == null) {
+			try {
+				resultsStylesheet = getStylesheet("results.xsl");
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		return resultsStylesheet;
+	}
+
+	public String getArticleStylesheet() {
+		if (articleStylesheet == null) {
+			String corpusDataFormat = getConfig().getCorpusDataFormat();
+			try {
+				articleStylesheet = getStylesheet("article_" + corpusDataFormat + ".xsl");
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		return articleStylesheet;
+	}
+
+	public String getMetadataStylesheet() {
+		if (metadataStylesheet == null) {
+			try {
+				metadataStylesheet = getStylesheet("article_meta.xsl");
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		return metadataStylesheet;
+	}
+
+	public String getStylesheet(String name) throws IOException {
+		// clear string builder
+		StringBuilder builder = new StringBuilder();
+
+		// Look for the stylesheet in the project config dir, or else in the stylesheets dir.
+		File pathToFile = new File(getWarExtractDir(), "WEB-INF/config/project/" + name);
+		if (!pathToFile.exists())
+			pathToFile = new File(getWarExtractDir(), "WEB-INF/stylesheets/" + name);
+		BufferedReader br = new BufferedReader(new FileReader(pathToFile));
+
+		// read the response from the webservice
+		String line;
+		while( (line = br.readLine()) != null )
+			builder.append(line);
+
+		br.close();
+
+		return builder.toString();
 	}
 
 

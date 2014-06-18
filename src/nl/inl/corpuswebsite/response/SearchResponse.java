@@ -10,9 +10,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.TransformerException;
 
 import nl.inl.corpuswebsite.BaseResponse;
+import nl.inl.corpuswebsite.MainServlet;
 import nl.inl.corpuswebsite.utils.FieldDescriptor;
 import nl.inl.corpuswebsite.utils.QueryServiceHandler;
 import nl.inl.corpuswebsite.utils.UrlParameterFactory;
@@ -35,10 +38,14 @@ public class SearchResponse extends BaseResponse {
 	private QueryServiceHandler webservice = null;
 	private XslTransformer transformer = new XslTransformer();
 	private StringBuilder builder = new StringBuilder();
-	private String perHitResultStylesheet = null;
-	private String perDocResultStylesheet = null;
-	private String groupHitsResultStylesheet = null;
-	private String groupDocsResultStylesheet = null;
+
+	private String resultsStylesheet = null;
+//	private String perHitResultStylesheet = null;
+//	private String perDocResultStylesheet = null;
+//	private String groupHitsResultStylesheet = null;
+//	private String groupDocsResultStylesheet = null;
+
+
 
 	@Override
 	protected void completeRequest() {
@@ -90,6 +97,13 @@ public class SearchResponse extends BaseResponse {
 		this.displayHtmlTemplate(this.servlet.getTemplate("search"));
 	}
 
+	@Override
+	public void init(HttpServletRequest argRequest, HttpServletResponse argResponse,
+			MainServlet argServlet) {
+		super.init(argRequest, argResponse, argServlet);
+		resultsStylesheet = argServlet.getResultsStylesheet();
+	}
+
 	private boolean isFilterQueryOnly() {
 		boolean hasFilter = false;
 		for(FieldDescriptor fd : this.servlet.getConfig().getFilterFields()) {
@@ -129,15 +143,12 @@ public class SearchResponse extends BaseResponse {
 			addFilterParameters(parameters);
 
 			try {
-				if (perHitResultStylesheet == null)
-					perHitResultStylesheet = getPerHitStylesheet();
-
 				parameters.put("block", new String[]{"no"});
 				String xmlResult = webservice.makeRequest(parameters);
 
 				setTransformerDisplayParameters(query);
 
-				String htmlResult = transformer.transform(xmlResult, perHitResultStylesheet);
+				String htmlResult = transformer.transform(xmlResult, resultsStylesheet);
 				this.getContext().put("searchResults", htmlResult);
 
 			} catch (IOException e) {
@@ -174,15 +185,12 @@ public class SearchResponse extends BaseResponse {
 			addFilterParameters(parameters);
 
 			try {
-				if (perDocResultStylesheet == null)
-					perDocResultStylesheet = getPerDocStylesheet();
-
 				parameters.put("block", new String[]{"no"});
 				String xmlResult = webservice.makeRequest(parameters);
 
 				setTransformerDisplayParameters(query);
 
-				String htmlResult = transformer.transform(xmlResult, perDocResultStylesheet);
+				String htmlResult = transformer.transform(xmlResult, resultsStylesheet);
 				this.getContext().put("searchResults", htmlResult);
 
 			} catch (IOException e) {
@@ -222,9 +230,6 @@ public class SearchResponse extends BaseResponse {
 				addFilterParameters(parameters);
 
 				try {
-					if (groupHitsResultStylesheet == null)
-						groupHitsResultStylesheet = getGroupHitsStylesheet();
-
 					parameters.put("block", new String[]{"no"});
 					String xmlResult = webservice.makeRequest(parameters);
 
@@ -232,7 +237,7 @@ public class SearchResponse extends BaseResponse {
 
 					transformer.addParameter("groupBy_name", groupBy);
 
-					String htmlResult = transformer.transform(xmlResult, groupHitsResultStylesheet);
+					String htmlResult = transformer.transform(xmlResult, resultsStylesheet);
 					this.getContext().put("searchResults", htmlResult);
 
 				} catch (IOException e) {
@@ -293,9 +298,6 @@ public class SearchResponse extends BaseResponse {
 				addFilterParameters(parameters);
 
 				try {
-					if (groupDocsResultStylesheet == null)
-						groupDocsResultStylesheet = getGroupDocsStylesheet();
-
 					parameters.put("block", new String[]{"no"});
 					String xmlResult = webservice.makeRequest(parameters);
 
@@ -303,7 +305,7 @@ public class SearchResponse extends BaseResponse {
 
 					transformer.addParameter("groupBy_name", groupBy);
 
-					String htmlResult = transformer.transform(xmlResult, groupDocsResultStylesheet);
+					String htmlResult = transformer.transform(xmlResult, resultsStylesheet);
 					this.getContext().put("searchResults", htmlResult);
 
 				} catch (IOException e) {
@@ -540,22 +542,6 @@ public class SearchResponse extends BaseResponse {
 
 	private String getLanguage() {
 		return "corpusql";
-	}
-
-	private String getPerHitStylesheet() throws IOException {
-		return getStylesheet("perhitresults.xsl");
-	}
-
-	private String getPerDocStylesheet() throws IOException {
-		return getStylesheet("perdocresults.xsl");
-	}
-
-	private String getGroupHitsStylesheet() throws IOException {
-		return getStylesheet("groupperhitresults.xsl");
-	}
-
-	private String getGroupDocsStylesheet() throws IOException {
-		return getStylesheet("groupperdocresults.xsl");
 	}
 
 	/* (non-Javadoc)

@@ -7,9 +7,12 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.TransformerException;
 
 import nl.inl.corpuswebsite.BaseResponse;
+import nl.inl.corpuswebsite.MainServlet;
 import nl.inl.corpuswebsite.utils.QueryServiceHandler;
 import nl.inl.corpuswebsite.utils.UrlParameterFactory;
 import nl.inl.corpuswebsite.utils.XslTransformer;
@@ -31,6 +34,14 @@ public class ArticleResponse extends BaseResponse {
 
 	private String metadataStylesheet;
 
+	@Override
+	public void init(HttpServletRequest argRequest, HttpServletResponse argResponse,
+			MainServlet argServlet) {
+		super.init(argRequest, argResponse, argServlet);
+		articleStylesheet = servlet.getArticleStylesheet();
+		metadataStylesheet = servlet.getMetadataStylesheet();
+	}
+
 	/* (non-Javadoc)
 	 * @see nl.inl.corpuswebsite.BaseResponse#completeRequest()
 	 */
@@ -48,11 +59,6 @@ public class ArticleResponse extends BaseResponse {
 
 			Map<String, String[]> parameters = UrlParameterFactory.getSourceParameters(query, null);
 			try {
-				if (articleStylesheet == null) {
-					String corpusDataFormat = this.servlet.getConfig().getCorpusDataFormat();
-					articleStylesheet = this.getStylesheet("article_" + corpusDataFormat + ".xsl");
-				}
-
 				String xmlResult = webservice.makeRequest(parameters);
 
 				transformer.clearParameters();
@@ -62,9 +68,6 @@ public class ArticleResponse extends BaseResponse {
 
 				this.getContext().put("article_content", htmlResult);
 
-				if (metadataStylesheet == null) {
-					metadataStylesheet = this.getStylesheet("article_meta.xsl");
-				}
 				Map<String, String[]> metaParam = new HashMap<String, String[]>();
 				//metaParam.put("outputformat", new String[] {"xml"});
 				xmlResult = webserviceMeta.makeRequest(metaParam);

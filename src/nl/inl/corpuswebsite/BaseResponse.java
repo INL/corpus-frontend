@@ -6,10 +6,7 @@
  */
 package nl.inl.corpuswebsite;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,7 +34,7 @@ public abstract class BaseResponse {
 	protected HttpServletResponse response;
 	protected MainServlet servlet;
 	private List<String> requiredParameters;
-	private StringBuilder builder = new StringBuilder();
+	//private StringBuilder builder = new StringBuilder();
 	private VelocityContext context = new VelocityContext();
 
 	protected BaseResponse() {
@@ -221,26 +218,6 @@ public abstract class BaseResponse {
 	 */
 	public boolean getParameter(String name, boolean defaultValue) {
 		return getParameter(name, defaultValue ? "on" : "").equals("on");
-	}
-
-	protected String getStylesheet(String name) throws IOException {
-		// clear string builder
-		builder.delete(0, builder.length());
-
-		// Look for the stylesheet in the project config dir, or else in the stylesheets dir.
-		File pathToFile = new File(this.servlet.getWarExtractDir(), "WEB-INF/config/project/" + name);
-		if (!pathToFile.exists())
-			pathToFile = new File(this.servlet.getWarExtractDir(), "WEB-INF/stylesheets/" + name);
-		BufferedReader br = new BufferedReader(new FileReader(pathToFile));
-
-		// read the response from the webservice
-		String line;
-		while( (line = br.readLine()) != null )
-			builder.append(line);
-
-		br.close();
-
-		return builder.toString();
 	}
 
 	protected void putFileContentIntoContext(String contextKey, File pathToFile) {

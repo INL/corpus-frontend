@@ -56,14 +56,14 @@
             <Values multiple="true">
                 <Value value="blog" />
                 <Value value="book" />
-                <Value value="misc|ephemera" />
-                <Value value="misc|other" />
-                <Value value="misc|teletext" />
-                <Value value="misc|web snippet" />
-                <Value value="misc|website" />
+                <Value value="misc\|ephemera" />
+                <Value value="misc\|other" />
+                <Value value="misc\|teletext" />
+                <Value value="misc\|web snippet" />
+                <Value value="misc\|website" />
                 <Value value="newspaper" />
-                <Value value="periodical|local" />
-                <Value value="periodical|magazine" />
+                <Value value="periodical\|local" />
+                <Value value="periodical\|magazine" />
                 <Value value="reported speech" />
                 <Value value="written to be spoken" />
             </Values>

@@ -1,6 +1,7 @@
 <style>
 p.spacer { height: 1cm; }
 p.endspacer { height: 5cm; }
+.internal { display: none; }
 </style>
 
 <h1>ABOUT THE CORPUS HEDENDAAGS NEDERLANDS</h2>
@@ -29,6 +30,7 @@ p.endspacer { height: 5cm; }
 
 <p>The first release of the CHN included material from the following sources:</p>
 
+<p class='internal'><b><u>Also available on chn.inl.nl</u></b></p>
 <p><b>Legal Corpus </b>(1814-2000)</p>
 
 <p>A collection of 5.856 texts that was available from the 80’s to 
@@ -112,16 +114,20 @@ politics and popular science.</p>
 includes linguistics, religion, society and politics.</li>
 </ul>
 
+<p class='internal'><b><u>Added to the above mentioned material, only internally available</u></b></p>
+<p class='internal'>The ANW corpora, the 50 miljoenen woordencorpus, the corpus Ewoud Sanders</p>
+
 <p><b>For the second release the following sources have been added:</b></p>
 
+<p class='internal'><b><u>Also available on chn.inl.nl</u></b></p>
 <p><b>Newspapers</b></p>
 
 <ul>
 <li>
-NRC Handelsblad (July 2013-) 
-De Standaard (July 2013-)
-Antilliaans Dagblad 
-De Ware Tijd (2010, 2012)
+NRC Handelsblad (July 2013-); 
+De Standaard (July 2013-);
+Antilliaans Dagblad (2012-2013); 
+De Ware Tijd (2010, 2012);
 Starnews</li> (2008-2013)
 </ul>
 
@@ -136,6 +142,9 @@ Starnews</li> (2008-2013)
 <li>Texts on the website of Schrijversgroep '77 (Oktober 2008-August 2011)
 Blog of Elodie Heloise (April 2007-February 2014)</li>
 </ul>
+
+<p class='internal'><b><u>Added to the above mentioned material, only internally available</u></b></p>
+<p class='internal'>The Twente News Corpus, consisting of newspapers, autocues and teletext from the Netherlands. See also http://hmi.ewi.utwente.nl/TwNC.</p>
 
 <h3>Metadata</h2>
 
@@ -663,3 +672,5 @@ GiGaNT-lexicon</a>.
 <p>This is a BETA release of the <i>Corpus Hedendaags Nederlands</i>. The search application gives access to prior and new corpus material of the INL. Development is still ongoing, so your <a href="mailto:servicedesk@inl.nl">feedback</a> is more than welcome.</p>
 <p>Envisaged for the coming period, apart from regular updates of the newspaper material, is improvement of the back end technology (performance), extension of the metadata search and improvements of the user interface.</p>
 <p class='endspacer'><a name='end'></a>&nbsp;</p>
+
+<script>if (location.href.substr(0, 5) == 'chn-i') $('.internal').show();</script>

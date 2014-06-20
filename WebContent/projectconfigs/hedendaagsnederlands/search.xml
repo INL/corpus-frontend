@@ -43,10 +43,12 @@
 			<Name>Language variant</Name>
 			<SearchField>languageVariant</SearchField>
 			<DisplayField>languageVariant</DisplayField>
-			<Values multiple="false">
+			<Values multiple="true">
 				<Value value=""></Value>
 				<Value value="NN">Dutch (Dutch)</Value>
-				<Value value="BN">Dutch (Belgian)</Value>
+                <Value value="BN">Dutch (Belgian)</Value>
+                <Value value="SN">Dutch (Surinam)</Value>
+                <Value value="AN">Dutch (Netherlands Antilles)</Value>
 			</Values>
 		</Property>
         <Property>

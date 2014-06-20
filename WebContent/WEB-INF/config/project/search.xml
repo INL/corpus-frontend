@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <SearchInterface>
     <InterfaceProperties>
-        <Name>Gysseling</Name>
+        <Name>Corpus Hedendaags Nederlands</Name>
         
         <!--
-        <WebserviceInternal>http://localhost:8080/gyscorpus/</WebserviceInternal>
-        <WebserviceExternal>http://svowmc01:8080/gyscorpus/</WebserviceExternal>
-        <HelpPage>/vol1/molechaser/servlet/gys_help.txt</HelpPage>
-        <AboutPage>/vol1/molechaser/servlet/gys_about.txt</AboutPage>
+        <WebserviceInternal>http://localhost:8080/corpus/</WebserviceInternal>
+        <WebserviceExternal>http://svowmc01:8080/corpus/</WebserviceExternal>
+        <HelpPage>/vol1/molechaser/servlet/mc_help.txt</HelpPage>
+        <AboutPage>/vol1/molechaser/servlet/mc_about.txt</AboutPage>
         <GoogleAnalyticsKey>UA-43624324-2</GoogleAnalyticsKey>
         -->
         
@@ -15,69 +15,60 @@
             <Link value="search">Home</Link>
             <Link value="http://www.inl.nl" newWindow="true">INL</Link>
             <Link value="http://www.clarin.eu" newWindow="true">CLARIN</Link>
-            <Link value="about">About the project</Link>
-            <Link value="help">How do I search?</Link>
+            <Link value="http://taalunie.org" newWindow="true">NTU</Link>
+            <Link value="help#help">How do I search?</Link>
+            <Link value="help#beta">BETA</Link>
         </NavLinks>
     </InterfaceProperties>
     <DocumentProperties>
         <Property>
             <Name>Title</Name>
-            <SearchField>title</SearchField>
+            <SearchField>titleCombined</SearchField>
             <DisplayField>title</DisplayField>
             <Function>title</Function>
         </Property>
         <Property>
             <Name>Author</Name>
-            <SearchField>author</SearchField>
+            <SearchField>authorCombined</SearchField>
             <DisplayField>author</DisplayField>
             <Function>author</Function>
-            <Values multiple="true">
-                <Value value=""></Value> 
-                <Value value="maerlant">Jacob van Maerlant</Value>
-                <Value value="affligem">Willem van Affligem</Value>
-                <Value value="veldeke">Heinric van Veldeke</Value>
-                <Value value="geraert">Broeder Geraert</Value> 
-                <Value value="onbekend">onbekend</Value> 
-            </Values>
         </Property>
         <Property type="date">
-            <Name>Date</Name>
-            <SearchField>yearFrom</SearchField>
-            <DisplayField>yearFrom</DisplayField>
+            <Name>Publication year</Name>
+            <SearchField>witnessYear_from</SearchField>
+            <DisplayField>witnessYear_from</DisplayField>
             <Function>date</Function>
         </Property>
         <Property>
-            <Name>Source</Name>
-            <SearchField>source</SearchField>
-            <DisplayField>source</DisplayField>
+            <Name>Language variant</Name>
+            <SearchField>languageVariant</SearchField>
+            <DisplayField>languageVariant</DisplayField>
             <Values multiple="true">
                 <Value value=""></Value>
-                <Value value="corpi">Corp.I</Value>
-                <Value value="moraalb">Nederrijns Moraalboek</Value>
-                <Value value="bern">Glossarium Bernense</Value>
-                <Value value="kerst">Sinte Kerstine</Value>
-                <Value value="diat">het Luikse Diatessaron</Value>
-                <Value value="natbl*">Der Naturen Bloeme</Value>
-                <Value value="rijmb">Rijmbijbel</Value>
-                <Value value="lutg*">Sente Lutgart</Value>
-                <Value value="floyr">Floyris ende Blantseflur</Value>
-                <Value value="gezreg">Noordlimburgse gezondheidsregels</Value>
-                <Value value="alexius">Alexiuslegende</Value>
-                <Value value="minned">Minnedichten uit Ter Doest</Value>
-                <Value value="reinout">Reinout van Montalbaen</Value>
-                <Value value="perch">Perchevael</Value>
-                <Value value="reine">Enaamse codex</Value>
-                <Value value="reing">Reinaert G</Value>
-                <Value value="nibel">Brabantse vertaling van het Nibelungenlied</Value>
-                <Value value="wrrag">Wrake van Ragise</Value>
-                <Value value="boeve">Boeve van Hamtone</Value>
-                <Value value="genrec">Nederbergse geneeskundige geneeskundige recepten</Value>
-                <Value value="trist">Tristant</Value>
-                <Value value="plgloss">Plantenglossarium uit Vlaams Artesi&#x000EB; of Frans&#x02013;Vlaanderen</Value>
-                <Value value="aiol">Aiol</Value>
-                <Value value="wiss">Wisselau</Value>
-                <Value value="obit">Antwerps Obituarium</Value>
-                <Value value="servas">Sente Servas</Value>
+                <Value value="NN">Dutch (Dutch)</Value>
+                <Value value="BN">Dutch (Belgian)</Value>
+                <Value value="SN">Dutch (Surinam)</Value>
+                <Value value="AN">Dutch (Netherlands Antilles)</Value>
+            </Values>
+        </Property>
+        <Property>
+            <Name>Medium</Name>
+            <SearchField>medium</SearchField>
+            <DisplayField>medium</DisplayField>
+            <Values multiple="true">
+                <Value value="" />
+                <Value value="blog" />
+                <Value value="book" />
+                <Value value="misc\|ephemera" />
+                <Value value="misc\|other" />
+                <Value value="misc\|teletext" />
+                <Value value="misc\|web snippet" />
+                <Value value="misc\|website" />
+                <Value value="newspaper" />
+                <Value value="periodical\|local" />
+                <Value value="periodical\|magazine" />
+                <Value value="reported speech" />
+                <Value value="written to be spoken" />
             </Values>
         </Property>
     </DocumentProperties>

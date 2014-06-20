@@ -1,6 +1,7 @@
 <style>
 p.spacer { height: 1cm; }
 p.endspacer { height: 5cm; }
+.internal { display: none; }
 </style>
 
 <h1>ABOUT THE CORPUS HEDENDAAGS NEDERLANDS</h2>
@@ -14,8 +15,7 @@ p.endspacer { height: 5cm; }
 
 <p class='spacer'><a name='intro'></a>&nbsp;</p>
 <h2>INTRODUCTION</h2>
-<p>Since 1994, <a href="http://www.inl.nl" target="_blank">The Instituut voor Nederlandse Lexicologie</a> has put online several corpora of contemporary Dutch: the 5, 27 and 38 million words corpora and the Dutch Parole Internet Corpus. The <i>Corpus Hedendaags Nederlands</i> in the current release is a first step towards a monitor corpus for contemporary Dutch. The material of the old corpora has been integrated. A considerable amount of more recent material has been
-added from two newspapers: <i>NRC Handelsblad</i> and <i>De Standaard</i> (until June 2013).</p>
+<p>Since 1994, <a href="http://www.inl.nl" target="_blank">The Instituut voor Nederlandse Lexicologie</a> has put online several corpora of contemporary Dutch: the 5, 27 and 38 million words corpora and the Dutch Parole Internet Corpus. The <i>Corpus Hedendaags Nederlands</i> in the current release is a first step towards a monitor corpus for contemporary Dutch. The material of the old corpora was integrated. For the first release (17 January 2014) a considerable amount of more recent material was added from two newspapers: <i>NRC Handelsblad</i> and <i>De Standaard</i> (until June 2013). For the second release (19 January 2014) more material from these two sources has been added from July 2014 onwards, as has other sources from Suriname and the Netherlands Antilles, such as newspapers, material published on internet (blog, website) and books written by Surinam authors.</p>
 
 <p>The software powering this website was developed at the INL with support from the <a href="http://www.taalunieversum.org" target="_blank">Dutch Language Union and the <a href="http://www.digitisation.eu">IMPACT</a> and <a href="http://www.clarin.nl">CLARIN</a> projects. The corpus search is powered by <a href="https://github.com/INL/BlackLab" target="_blank">BlackLab</a>, an open source Lucene-based corpus retrieval engine allowing fast and complex searches on large volumes of annotated text.</p>
 <p>This website is optimized for the latest versions of <a href="https://www.google.com/intl/en/chrome/browser/" target="_blank">Google Chrome</a> and <a href="http://www.mozilla.org/en-US/firefox/new/" target="_blank">Mozilla Firefox</a>; using either of these browsers is recommended. Microsoft Internet Explorer is supported from version 9 and upwards.<p>
@@ -28,8 +28,9 @@ added from two newspapers: <i>NRC Handelsblad</i> and <i>De Standaard</i> (until
 
 <h3>Description of included source material</h2>
 
-<p>The CHN includes material from the following sources:</p>
+<p>The first release of the CHN included material from the following sources:</p>
 
+<p class='internal'><b><u>Also available on chn.inl.nl</u></b></p>
 <p><b>Legal Corpus </b>(1814-2000)</p>
 
 <p>A collection of 5.856 texts that was available from the 80’s to 
@@ -113,23 +114,49 @@ politics and popular science.</p>
 includes linguistics, religion, society and politics.</li>
 </ul>
 
+<p class='internal'><b><u>Added to the above mentioned material, only internally available</u></b></p>
+<p class='internal'>The ANW corpora, the 50 miljoenen woordencorpus, the corpus Ewoud Sanders</p>
+
+<p><b>For the second release the following sources have been added:</b></p>
+
+<p class='internal'><b><u>Also available on chn.inl.nl</u></b></p>
+<p><b>Newspapers</b></p>
+
+<ul>
+<li>
+NRC Handelsblad (July 2013-); 
+De Standaard (July 2013-);
+Antilliaans Dagblad (2012-2013); 
+De Ware Tijd (2010, 2012);
+Starnews</li> (2008-2013)
+</ul>
+
+<p><b>Books</b></p>
+<ul>
+<li>A diverse collection of books by Surinam writers</li>
+</ul>
+
+<p><b>Texts on internet </b></p>
+
+<ul>
+<li>Texts on the website of Schrijversgroep '77 (Oktober 2008-August 2011)
+Blog of Elodie Heloise (April 2007-February 2014)</li>
+</ul>
+
+<p class='internal'><b><u>Added to the above mentioned material, only internally available</u></b></p>
+<p class='internal'>The Twente News Corpus, consisting of newspapers, autocues and teletext from the Netherlands. See also http://hmi.ewi.utwente.nl/TwNC.</p>
+
 <h3>Metadata</h2>
 
-<p>We list the available metadata categories below. These data have
-been gathered from the diverse sources and made uniform as far as possible.
-This is an ongoing process; we hope to improve the information in
-the future.</p>
+<p>For each document to be added to the CHN, the available metadata has been converted into one format. Harmonisation of the content of the metadatacategories is an ongoing process; we hope to improve the information in the future.  We have added to the already available metadata of each document information on the type of information carrier (medium), data witness (for the content of which for this corpus we used publication date) and language variant. Each document has also received a persistent identifier. The available metadata categories are listed below. 
 
-<p>One can <i>view</i> document metadata by clicking on the document
-title in the per hit or per document result view, or clicking “view document
-info” in the per document view.</p>
-
-<p>In the current version of the retrieval application, one can <i>search
-for</i> or <i>filter by</i> four criteria: title, author, year of publication
+<p>One can <i>view</i> document metadata by clicking on the document title in the per hit or per document result view, or clicking “view document info” in the per document view.</p>
+<p>In the current version of the retrieval application, one can now <i>search for</i> or <i>filter by</i> five criteria: title, author, year of publication, medium
 and language variety. The possible values for the last criterion are <i>NN</i>
-(Dutch from the Netherlands) and <i>BN</i> (Dutch from Belgium).</p>
+(Dutch from the Netherlands), <i>BN</i> (Dutch from Belgium), <i>SN</i> (Dutch from Suriname) and <i>AN</i> (Dutch from Netherlands Antilles).</p>
 
-<p><b>Metadata categories</b></p>
+
+ <p><b>Metadata categories</b></p>
 
 <p></p>
 
@@ -182,7 +209,7 @@ and language variety. The possible values for the last criterion are <i>NN</i>
   </td>
   <td valign=top >
   <p>Type of
-  information carrier. Possible values are book, journal, newspaper.</p>
+  information carrier. Possible values are book, newspaper, periodical magazine, periodical local, web snippet, blog, reported speech, written to be spoken, misc website, misc leaflets, misc other.</p>
   </td>
  </tr>
  <tr>
@@ -255,10 +282,10 @@ and language variety. The possible values for the last criterion are <i>NN</i>
  </tr>
  <tr>
   <td valign=top >
-  <p><i>idno</i></p>
+  <p><i>pid</i></p>
   </td>
   <td valign=top >
-  <p>Uniquely distinguishing text identifier (string)</p>
+  <p>Persistent identifier</p>
   </td>
  </tr>
  <tr>
@@ -338,7 +365,9 @@ quite some internal inconsistency as well).</p>
   <td valign=top >
   <p><i>keywords</i></p>
   </td>
-  <td valign=top ></td>
+  <td valign=top >
+  <p>Word or group of words taken out of a title or of a document characterizing its content</p>
+  </td>
  </tr>
  <tr>
   <td valign=top >
@@ -372,8 +401,7 @@ quite some internal inconsistency as well).</p>
   <p><i>languageVariant</i></p>
   </td>
   <td valign=top >
-  <p><i>NN</i> (Dutch
-  from the Netherlands) or <i>BN</i> (Dutch from Belgium).</p>
+  <p><i>NN</i> (Dutch from the Netherlands), <i>BN</i> (Dutch from Belgium), <i>SN</i> (Dutch from Suriname) and <i>AN</i> (Dutch from the Netherlands Antilles)</p>
   </td>
  </tr>
  <tr>
@@ -644,3 +672,5 @@ GiGaNT-lexicon</a>.
 <p>This is a BETA release of the <i>Corpus Hedendaags Nederlands</i>. The search application gives access to prior and new corpus material of the INL. Development is still ongoing, so your <a href="mailto:servicedesk@inl.nl">feedback</a> is more than welcome.</p>
 <p>Envisaged for the coming period, apart from regular updates of the newspaper material, is improvement of the back end technology (performance), extension of the metadata search and improvements of the user interface.</p>
 <p class='endspacer'><a name='end'></a>&nbsp;</p>
+
+<script>if (location.href.substr(0, 5) == 'chn-i') $('.internal').show();</script>

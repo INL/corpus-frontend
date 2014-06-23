@@ -503,8 +503,8 @@ public class SearchResponse extends BaseResponse {
 			if(isPreceded)
 				preceded += " & ";
 
-			if(!getCaseSensitivity(fd))
-				sensitive = "(?i)";
+			if(getCaseSensitivity(fd))
+				sensitive = "(?-i)"; // force case-sensitive search
 
 			return preceded + fd.getSearchField() + "=\"" + sensitive + words[index] + "\"";
 		}

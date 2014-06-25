@@ -1,15 +1,17 @@
 function checkStatus(webservice, key, callbackMethod) {
 	// check status
+	var parameters = {id: key};
+    logAjaxCall(this.webservice + "status", parameters);
 	$.ajax({
 	    type: "GET", 
 	    url: webservice + "status", 
-	    data: {id: key}, 
+	    data: parameters, 
 	    cache: false
 	}).done(function (data) {
 		callbackMethod(webservice, key, data);
 	})
 	.fail(function (jqXHR, textStatus) {
-        alert("AJAX request failed (cross-origin error?); textStatus = " + textStatus);
+	    showAjaxFail(textStatus, $("#status"));
     });
 }
 
@@ -19,7 +21,7 @@ function loadResults(webservice, key, data) {
 	$("#status").text(status + "...");
 	debug("Status: " + status);
 	
-	if(status == "" || status.substring(0,6) == "No job")
+	if(status == "" || status.substring(0, 7) == "ABORTED" || status.substring(0, 6) == "No job")
 		showLoadingError();
 	else if(status == "COUNTING" || status == "FINISHED")
 		getResults(key);
@@ -42,8 +44,9 @@ function refreshStats(webservice, key, data) {
 }
 
 function showLoadingError() {
-	debug("Error reading status response");
-	$("#status").text("Error reading status response");
+    $("#results .icon-spinner").hide();
+	debug("showLoadingError(): error reading status response");
+	$("#status").text("Your search produced an error. Please contact servicedesk@inl.nl.");
 }
 
 function getJobStatus(document) {	
@@ -58,11 +61,12 @@ function getResults(key) {
 
 function updateStats(webservice, key) {
 	var status = "";
-	//$.ajaxSetup({ cache: false });
+	var parameters = {id: key};
+    logAjaxCall(webservice + "jobstats", parameters);
 	$.ajax({
 	    type: "GET",
 	    url: webservice + "jobstats",
-	    data: {id: key},
+	    data: parameters,
 	    cache: false
 	}).done(function(data) {
 		debug("Updating stats");
@@ -86,7 +90,7 @@ function updateStats(webservice, key) {
 			
 		updatePagination(pages, max, start);
 	}).fail(function (jqXHR, textStatus) {
-        alert("AJAX request failed (cross-origin error?); textStatus = " + textStatus);
+	    showAjaxFail(textStatus, $("#duration"));
     });
 }
 

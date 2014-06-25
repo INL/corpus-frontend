@@ -60,7 +60,7 @@
 					<xsl:for-each select="Documents/Document">						
 						<tr>
 							<td>
-								<a target="_blank"><xsl:attribute name="href"><xsl:value-of select="'article?doc='" /><xsl:value-of select="DocId" /><xsl:value-of select="'&amp;query='" /><xsl:value-of select="$urlparamquery" /></xsl:attribute><xsl:value-of select="*[name()=$title_name]" /> by <xsl:value-of select="*[name()=$author_name]" /></a><br/>
+								<a target="_blank"><xsl:attribute name="href"><xsl:value-of select="'article?doc='" /><xsl:value-of select="DocId" /><xsl:value-of select="'&amp;query='" /><xsl:value-of select="$urlparamquery" /></xsl:attribute><xsl:value-of select="*[name()=$title_name]" /><xsl:if test="*[name()=$author_name]/text() != ''"> by <xsl:value-of select="*[name()=$author_name]" /></xsl:if></a><br/>
 								... <xsl:value-of select="Concordances/Concordance[1]/ConcLeft" />&#160;<strong><xsl:value-of select="Concordances/Concordance[1]/ConcHit" /></strong>&#160;<xsl:value-of select="Concordances/Concordance[1]/ConcRight" /> ...<br/>
 								<div class="collapse"><xsl:attribute name="id"><xsl:value-of select="DocId" /></xsl:attribute>
 								<xsl:for-each select="Concordances/Concordance">

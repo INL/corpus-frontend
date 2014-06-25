@@ -91,7 +91,7 @@
 						<xsl:if test="$current_doc != $previous_doc or not($previous_doc)">
 							<tr class="titlerow">
 								<td colspan="5">
-									<div class="doctitle collapse in"><a class="text-error" target="_blank"><xsl:attribute name="href"><xsl:value-of select="'article?doc='" /><xsl:value-of select="DocId" /><xsl:value-of select="'&amp;query='" /><xsl:value-of select="$urlparamquery" /></xsl:attribute><xsl:value-of select="*[name()=$title_name]" /> by <xsl:value-of select="*[name()=$author_name]" /> (<xsl:value-of select="*[name()=$date_name]" />)</a></div>
+									<div class="doctitle collapse in"><a class="text-error" target="_blank"><xsl:attribute name="href"><xsl:value-of select="'article?doc='" /><xsl:value-of select="DocId" /><xsl:value-of select="'&amp;query='" /><xsl:value-of select="$urlparamquery" /></xsl:attribute><xsl:value-of select="*[name()=$title_name]" /><xsl:if test="*[name()=$author_name]/text() != ''"> by <xsl:value-of select="*[name()=$author_name]" /></xsl:if><xsl:if test="*[name()=$date_name]/text() != ''"> (<xsl:value-of select="*[name()=$date_name]" />)</xsl:if></a></div>
 								</td>
 							</tr>
 							

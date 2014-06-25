@@ -46,7 +46,7 @@
 		<script src="../js/purl.js"></script>
 		<script src="../js/status_check.js"></script>
 		<script src="../js/ajax_retriever.js"></script>
-		<title>Corpus $title search</title>
+		<title>$title search</title>
     </head>
     <body>
         <!--[if lt IE 9]>

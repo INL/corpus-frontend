@@ -15,7 +15,7 @@ p.endspacer { height: 5cm; }
 
 <p class='spacer'><a name='intro'></a>&nbsp;</p>
 <h2>INTRODUCTION</h2>
-<p>Since 1994, <a href="http://www.inl.nl" target="_blank">The Instituut voor Nederlandse Lexicologie</a> has put online several corpora of contemporary Dutch: the 5, 27 and 38 million words corpora and the Dutch Parole Internet Corpus. The <i>Corpus Hedendaags Nederlands</i> in the current release is a first step towards a monitor corpus for contemporary Dutch. The material of the old corpora was integrated. For the first release (17 January 2014) a considerable amount of more recent material was added from two newspapers: <i>NRC Handelsblad</i> and <i>De Standaard</i> (until June 2013). For the second release (19 January 2014) more material from these two sources has been added from July 2014 onwards, as has other sources from Suriname and the Netherlands Antilles, such as newspapers, material published on internet (blog, website) and books written by Surinam authors.</p>
+<p>Since 1994, <a href="http://www.inl.nl" target="_blank">The Instituut voor Nederlandse Lexicologie</a> has put online several corpora of contemporary Dutch: the 5, 27 and 38 million words corpora and the Dutch Parole Internet Corpus. The <i>Corpus Hedendaags Nederlands</i> in the current release is a first step towards a monitor corpus for contemporary Dutch. The material of the old corpora was integrated. For the first release (17 January 2014) a considerable amount of more recent material was added from two newspapers: <i>NRC Handelsblad</i> and <i>De Standaard</i> (until June 2013). For the second release (June 2014) more material from these two sources has been added from July 2013 - December 2013, as has other sources from Suriname and the Netherlands Antilles, such as newspapers, material published on internet (blog, website) and books written by Surinam authors.</p>
 
 <p>The software powering this website was developed at the INL with support from the <a href="http://www.taalunieversum.org" target="_blank">Dutch Language Union and the <a href="http://www.digitisation.eu">IMPACT</a> and <a href="http://www.clarin.nl">CLARIN</a> projects. The corpus search is powered by <a href="https://github.com/INL/BlackLab" target="_blank">BlackLab</a>, an open source Lucene-based corpus retrieval engine allowing fast and complex searches on large volumes of annotated text.</p>
 <p>This website is optimized for the latest versions of <a href="https://www.google.com/intl/en/chrome/browser/" target="_blank">Google Chrome</a> and <a href="http://www.mozilla.org/en-US/firefox/new/" target="_blank">Mozilla Firefox</a>; using either of these browsers is recommended. Microsoft Internet Explorer is supported from version 9 and upwards.<p>
@@ -115,7 +115,7 @@ includes linguistics, religion, society and politics.</li>
 </ul>
 
 <p class='internal'><b><u>Added to the above mentioned material, only internally available</u></b></p>
-<p class='internal'>The ANW corpora, the 50 miljoenen woordencorpus, the corpus Ewoud Sanders</p>
+<p class='internal'>The ANW corpora, the 50 miljoen woordencorpus, the corpus Ewoud Sanders</p>
 
 <p><b>For the second release the following sources have been added:</b></p>
 
@@ -124,8 +124,8 @@ includes linguistics, religion, society and politics.</li>
 
 <ul>
 <li>
-NRC Handelsblad (July 2013-); 
-De Standaard (July 2013-);
+NRC Handelsblad (July 2013-December 2013); 
+De Standaard (July 2013-December 2013);
 Antilliaans Dagblad (2012-2013); 
 De Ware Tijd (2010, 2012);
 Starnews</li> (2008-2013)

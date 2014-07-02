@@ -78,6 +78,15 @@
 							</td>
 						</tr>
 					</xsl:for-each>
+					
+                    <xsl:if test="not (Documents/Document)">
+                       <tr class="citationrow">   
+                           <td colspan="5">
+                               <div class="no-results-found">No results were found. Please check your query and try again.</div>
+                           </td>
+                       </tr>
+                    </xsl:if>
+                    					
 					</tbody>
 				</table>
 			</div>

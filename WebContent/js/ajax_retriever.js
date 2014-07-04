@@ -1,3 +1,28 @@
+// If an AJAX call failed (didn't return 200 OK), show it on
+// the page and using an alert.
+function showAjaxFail(textStatus, element) {
+    $("#results .icon-spinner").hide();
+    var msg = "AJAX request failed (cross-origin error?); textStatus = " + textStatus;
+    var html = "<div class='error'>" + msg + "</div>";
+    $(element).html(html);
+    alert(msg);
+}
+
+// Log the URL and parameters of the AJAX call we're about to do
+function logAjaxCall(url, parameters) {
+    if (!parameters || parameters.length == 0) {
+        console.log(url);
+        return;
+    }
+    paramStr = "";
+    $(parameters).each(function (index) {
+        if (paramStr.length > 0)
+            paramStr += "&";
+        paramStr += encodeURIComponent(index) + "=" + encodeURIComponent(parameters[index]);
+    });
+    console.log(url + "?" + paramStr);
+}
+
 // AJAX-related functions
 
 // Constructor: takes the base URL and the operation we want to carry out
@@ -11,8 +36,7 @@ AjaxRetriever.prototype.putAjaxResponse = function(element_id, parameters, appen
 	var myself = this;
 
 	// check status
-    console.log(this.webservice + this.webcall);
-    console.log(parameters);
+	logAjaxCall(this.webservice + this.webcall, parameters);
 	$.ajax({
         type: "GET",
         dataType: "xml",
@@ -22,8 +46,7 @@ AjaxRetriever.prototype.putAjaxResponse = function(element_id, parameters, appen
     }).done(function(data) {
 		myself.addResponseToElement(data, element_id, append, xslSheet);
 	}).fail(function(jqXHR, textStatus) {
-	    hideWaitDisplay();
-        alert("AJAX request failed (cross-origin error?); textStatus = " + textStatus);
+	    showAjaxFail(textStatus, element_id);
 	});
 };
 

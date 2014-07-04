@@ -121,12 +121,7 @@
                             <xsl:variable name="docInfo" select="/blacklab-response/doc-infos/doc-info[@pid=$docPid]" />
                             <tr class="titlerow">
                                 <td colspan="5">
-                                    <div class="doctitle collapse in"><a class="text-error" target="_blank"><xsl:attribute name="href"><xsl:value-of select="'article?doc='" /><xsl:value-of select="doc-pid" /><xsl:value-of select="'&amp;query='" /><xsl:value-of select="$urlparamquery" /></xsl:attribute>
-                                     <xsl:value-of select="$docInfo/*[name()=$title_name]" />
-                                    by
-                                     <xsl:value-of select="$docInfo/*[name()=$author_name]" />
-                                    (<xsl:value-of select="$docInfo/*[name()=$date_name]" />)
-                                    </a></div>
+                                    <div class="doctitle collapse in"><a class="text-error" target="_blank"><xsl:attribute name="href"><xsl:value-of select="'article?doc='" /><xsl:value-of select="doc-pid" /><xsl:value-of select="'&amp;query='" /><xsl:value-of select="$urlparamquery" /></xsl:attribute><xsl:value-of select="$docInfo/*[name()=$title_name]" /><xsl:if test="$docInfo/*[name()=$author_name]/text() != ''"> by <xsl:value-of select="$docInfo/*[name()=$author_name]" /></xsl:if><xsl:if test="$docInfo/*[name()=$date_name]/text() != ''"> (<xsl:value-of select="$docInfo/*[name()=$date_name]" />)</xsl:if></a></div>
                                 </td>
                             </tr>
                             
@@ -146,6 +141,15 @@
                             </td>
                         </tr>
                     </xsl:for-each>
+
+					<xsl:if test="not hit">
+					   <tr class="citationrow">   
+					       <td colspan="5">
+					           <div class="no-results-found">No results were found. Please check your query and try again.</div>
+					       </td>
+					   </tr>
+					</xsl:if>
+                    
                     </tbody>
                 </table>
             </div>
@@ -216,7 +220,7 @@
                     <xsl:for-each select="doc">                     
                         <tr>
                             <td>
-                                <a target="_blank"><xsl:attribute name="href"><xsl:value-of select="'article?doc='" /><xsl:value-of select="doc-pid" /><xsl:value-of select="'&amp;query='" /><xsl:value-of select="$urlparamquery" /></xsl:attribute><xsl:value-of select="doc-info/*[name()=$title_name]" /> by <xsl:value-of select="doc-info/*[name()=$author_name]" /></a><br/>
+                                <a target="_blank"><xsl:attribute name="href"><xsl:value-of select="'article?doc='" /><xsl:value-of select="doc-pid" /><xsl:value-of select="'&amp;query='" /><xsl:value-of select="$urlparamquery" /></xsl:attribute><xsl:value-of select="doc-info/*[name()=$title_name]" /><xsl:if test="doc-info/*[name()=$author_name]/text() != ''"> by <xsl:value-of select="doc-info/*[name()=$author_name]" /></xsl:if></a><br/>
                                 ... <xsl:value-of select="snippets/snippet[1]/left" />&#160;<strong><xsl:value-of select="snippets/snippet[1]/match" /></strong>&#160;<xsl:value-of select="snippets/snippet[1]/right" /> ...<br/>
                                 <div class="collapse"><xsl:attribute name="id"><xsl:value-of select="doc-pid" /></xsl:attribute>
                                 <xsl:for-each select="snippets/snippet">
@@ -234,6 +238,15 @@
                             </td>
                         </tr>
                     </xsl:for-each>
+                    
+					<xsl:if test="not doc">
+					   <tr class="citationrow">   
+					       <td colspan="5">
+					           <div class="no-results-found">No results were found. Please check your query and try again.</div>
+					       </td>
+					   </tr>
+					</xsl:if>
+                    
                     </tbody>
                 </table>
             </div>
@@ -302,6 +315,15 @@
                             </td>
                         </tr>                   
                     </xsl:for-each>
+                    
+					<xsl:if test="not hitgroup">
+					   <tr class="citationrow">   
+					       <td colspan="5">
+					           <div class="no-results-found">No results were found. Please check your query and try again.</div>
+					       </td>
+					   </tr>
+					</xsl:if>
+                    
                     </tbody>
                 </table>
             </div>
@@ -388,6 +410,15 @@
                             </td>
                         </tr>                   
                     </xsl:for-each>
+                    
+					<xsl:if test="not docgroup">
+					   <tr class="citationrow">   
+					       <td colspan="5">
+					           <div class="no-results-found">No results were found. Please check your query and try again.</div>
+					       </td>
+					   </tr>
+					</xsl:if>
+                    
                     </tbody>
                 </table>
             </div>

@@ -4,6 +4,12 @@
 	
 	<!-- How to transform a concordance (snippet) to HTML -->
 	
+	<xsl:template match="error">
+	   <div class='error'>
+	       <xsl:apply-templates />
+	   </div>
+	</xsl:template>
+	
 	<xsl:template match="blacklab-response">
 		<xsl:value-of select="left" /><b><xsl:value-of select="match" /></b><xsl:value-of select="right" />
 	</xsl:template>

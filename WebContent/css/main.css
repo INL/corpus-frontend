@@ -216,3 +216,9 @@ span.word {
 	color: #aaaaaa;
 	font-weight: bold;
 }
+
+.no-results-found {
+    padding: 2cm;
+    text-align: center;
+    font-style: italic;
+}

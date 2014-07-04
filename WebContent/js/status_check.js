@@ -9,6 +9,7 @@ function checkStatus(backendUrl, callbackMethod) {
     }
 
 	// Check status
+    logAjaxCall(backendUrl);
     checkAgainMs = 1000; // reset to default value	
 	$.ajax({
         type: "GET",
@@ -17,7 +18,8 @@ function checkStatus(backendUrl, callbackMethod) {
     }).done(function (data) {
 		callbackMethod(backendUrl, data);
 	}).fail(function (jqXHR, textStatus) {
-        alert("AJAX request " + backendUrl + " failed (cross-origin error?); textStatus = " + textStatus);
+	    showAjaxFail(textStatus, $("#status"));
+        //alert("AJAX request " + backendUrl + " failed (cross-origin error?); textStatus = " + textStatus);
     });
 }
 
@@ -103,6 +105,7 @@ function updateStats(backendUrl) {
     }
 
     // Check stats
+    logAjaxCall(backendUrl);
     $.get(backendUrl).done(function (data) {
         debug("Updating stats");
             
@@ -125,7 +128,8 @@ function updateStats(backendUrl) {
             
         updatePagination(pages, max, start);
     }).fail(function (jqXHR, textStatus) {
-        alert("AJAX request " + backendUrl + " failed (cross-origin error?); textStatus = " + textStatus);
+	    showAjaxFail(textStatus, $("#duration"));
+        //alert("AJAX request " + backendUrl + " failed (cross-origin error?); textStatus = " + textStatus);
     });
 }
 

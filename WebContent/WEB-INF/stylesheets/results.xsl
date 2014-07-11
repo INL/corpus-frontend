@@ -23,7 +23,7 @@
     <xsl:template match="error">
         <h1>Error</h1>
         <p><xsl:value-of select="message" /></p>
-        <p>(to report this problem and request a, please contact <a href='mailto:servicedesk@inl.nl'>servicedesk@inl.nl</a>)</p>
+        <p>(for assistance, please contact <a href='mailto:servicedesk@inl.nl'>servicedesk@inl.nl</a>)</p>
     </xsl:template>
     
     <xsl:template match="summary">

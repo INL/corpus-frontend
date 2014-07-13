@@ -3,7 +3,6 @@
 	<name>corpus-frontend</name>
 	<comment></comment>
 	<projects>
-		<project>BlackLab</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

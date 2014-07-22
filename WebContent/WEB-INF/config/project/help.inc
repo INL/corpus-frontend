@@ -673,4 +673,4 @@ GiGaNT-lexicon</a>.
 <p>Envisaged for the coming period, apart from regular updates of the newspaper material, is improvement of the back end technology (performance), extension of the metadata search and improvements of the user interface.</p>
 <p class='endspacer'><a name='end'></a>&nbsp;</p>
 
-<script>if (location.href.substr(0, 5) == 'chn-i') $('.internal').show();</script>
+<script>if (location.toLowerCase().indexOf('chn-i') >= 0) $('.internal').show();</script>

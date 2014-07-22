@@ -418,7 +418,7 @@ public class SearchResponse extends BaseResponse {
 			}
 
 			// count the amount of words the user wants to search for
-			int wordCount = words.split(" " ).length;
+			int wordCount = words.split(" ").length;
 
 			// for each word...
 			for(int i = 0; i < wordCount; i++) {

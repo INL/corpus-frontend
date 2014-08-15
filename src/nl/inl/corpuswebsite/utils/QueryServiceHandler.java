@@ -68,7 +68,6 @@ public class QueryServiceHandler {
 		}
 	}
 
-
 	/**
 	 * Construct the GET url from the base URL and the parameter map
 	 * @param params the parameters to send

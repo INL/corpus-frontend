@@ -80,12 +80,12 @@ function getJobStatus(document) {
 	
     if ($xml.find("error") > 0)
        return "ERROR";
-    var checkAgainMsText = $xml.find("check-again-ms").text();
+    var checkAgainMsText = $xml.find("checkAgainMs").text();
 	if (checkAgainMsText.length > 0) {
 	   checkAgainMs = checkAgainMsText + 0; // use the suggested "check again time"
 	   return "BUSY";
 	}
-	if ($xml.find("still-counting").text() == "true")
+	if ($xml.find("stillCounting").text() == "true")
 	   return "COUNTING";
 	return "FINISHED";
 }
@@ -110,9 +110,9 @@ function updateStats(backendUrl) {
         debug("Updating stats");
             
         $xml = $(data);
-        var dur = $xml.find("search-time").text();
-        var hits = $xml.find("number-of-hits").text();
-        var pages = Math.ceil(hits / $xml.find("requested-window-size").text());
+        var dur = $xml.find("searchTime").text();
+        var hits = $xml.find("numberOfHits").text();
+        var pages = Math.ceil(hits / $xml.find("requestedWindowSize").text());
             
         $("#duration").text(dur);
         $("#totalhits").text(hits);

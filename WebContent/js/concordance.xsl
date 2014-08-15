@@ -10,7 +10,7 @@
 	   </div>
 	</xsl:template>
 	
-	<xsl:template match="blacklab-response">
+	<xsl:template match="blacklabResponse">
 		<xsl:value-of select="left" /><b><xsl:value-of select="match" /></b><xsl:value-of select="right" />
 	</xsl:template>
 </xsl:stylesheet>

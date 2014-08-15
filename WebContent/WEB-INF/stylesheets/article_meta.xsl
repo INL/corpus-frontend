@@ -9,9 +9,9 @@
         (Error code: <xsl:value-of select="code" />)
 	</xsl:template>
 	
-	<xsl:template match="doc-pid" />
+	<xsl:template match="docPid" />
 	
-	<xsl:template match="doc-info">
+	<xsl:template match="docInfo">
 		<xsl:variable name="numhits" select="../HitsInDocument" />
 		<div class="span12 contentbox">
 			<h2>
@@ -25,7 +25,7 @@
 					<xsl:value-of select="$numhits" />
 				</div>
 			</div>
-			<xsl:for-each select="child::*[name()!='may-view']">
+			<xsl:for-each select="child::*[name()!='mayView']">
 				<div class="span10">
 					<div class="span2">
 						<i><xsl:value-of select="local-name()" />:</i>

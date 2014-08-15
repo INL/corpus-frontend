@@ -28,11 +28,11 @@
     
     <xsl:template match="summary">
         <div class="pull-right">
-            <small>Query: <xsl:value-of select="$query" /> - Duration: <span id="duration"><xsl:value-of select="search-time" /></span>ms</small>
+            <small>Query: <xsl:value-of select="$query" /> - Duration: <span id="duration"><xsl:value-of select="searchTime" /></span>ms</small>
         </div>
     </xsl:template>
     
-    <xsl:template match="doc-infos" />
+    <xsl:template match="docInfos" />
     
     <xsl:template match="status">
         <div class="span12 contentbox" id="results">
@@ -43,7 +43,7 @@
             <script type="text/javascript">
                 var backendRequestUrl = '<xsl:value-of select="$backendRequestUrl" />';
                 var checkAgain = <xsl:choose>
-                    <xsl:when test="check-again-ms"><xsl:value-of select="check-again-ms" /></xsl:when>
+                    <xsl:when test="checkAgainMs"><xsl:value-of select="checkAgainMs" /></xsl:when>
                     <xsl:otherwise>1000</xsl:otherwise>
                 </xsl:choose>;
                 setTimeout(function () {
@@ -54,8 +54,8 @@
     </xsl:template>
     
     <xsl:template match="hits">
-        <xsl:variable name="totalHits" select="../summary/number-of-hits" />
-        <xsl:variable name="numberOfPages" select="ceiling($totalHits div ../summary/requested-window-size)" />
+        <xsl:variable name="totalHits" select="../summary/numberOfHits" />
+        <xsl:variable name="numberOfPages" select="ceiling($totalHits div ../summary/requestedWindowSize)" />
         <div class="span12 contentbox" id="results">
             <div class="pull-right">
                 <small>Total hits: <span id="totalhits">
@@ -111,24 +111,24 @@
                                     
                     <xsl:for-each select="hit">
                     
-                        <xsl:variable name="current_doc" select="doc-pid" />
+                        <xsl:variable name="current_doc" select="docPid" />
                         <xsl:variable name="currentId" select="generate-id()" />
                         <xsl:variable name="apos">'</xsl:variable>
-                        <xsl:variable name="previous_doc" select="preceding-sibling::hit[1]/doc-pid" />
+                        <xsl:variable name="previous_doc" select="preceding-sibling::hit[1]/docPid" />
                         
                         <xsl:if test="$current_doc != $previous_doc or not($previous_doc)">
-                            <xsl:variable name="docPid" select="doc-pid/text()" />
-                            <xsl:variable name="docInfo" select="/blacklab-response/doc-infos/doc-info[@pid=$docPid]" />
+                            <xsl:variable name="docPid" select="docPid/text()" />
+                            <xsl:variable name="docInfo" select="/blacklabResponse/docInfos/docInfo[@pid=$docPid]" />
                             <tr class="titlerow">
                                 <td colspan="5">
-                                    <div class="doctitle collapse in"><a class="text-error" target="_blank"><xsl:attribute name="href"><xsl:value-of select="'article?doc='" /><xsl:value-of select="doc-pid" /><xsl:value-of select="'&amp;query='" /><xsl:value-of select="$urlparamquery" /></xsl:attribute><xsl:value-of select="$docInfo/*[name()=$title_name]" /><xsl:if test="$docInfo/*[name()=$author_name]/text() != ''"> by <xsl:value-of select="$docInfo/*[name()=$author_name]" /></xsl:if><xsl:if test="$docInfo/*[name()=$date_name]/text() != ''"> (<xsl:value-of select="$docInfo/*[name()=$date_name]" />)</xsl:if></a></div>
+                                    <div class="doctitle collapse in"><a class="text-error" target="_blank"><xsl:attribute name="href"><xsl:value-of select="'article?doc='" /><xsl:value-of select="docPid" /><xsl:value-of select="'&amp;query='" /><xsl:value-of select="$urlparamquery" /></xsl:attribute><xsl:value-of select="$docInfo/*[name()=$title_name]" /><xsl:if test="$docInfo/*[name()=$author_name]/text() != ''"> by <xsl:value-of select="$docInfo/*[name()=$author_name]" /></xsl:if><xsl:if test="$docInfo/*[name()=$date_name]/text() != ''"> (<xsl:value-of select="$docInfo/*[name()=$date_name]" />)</xsl:if></a></div>
                                 </td>
                             </tr>
                             
                             
                         </xsl:if>
             
-                        <tr class="concordance"><xsl:attribute name="onclick">showCitation('#<xsl:value-of select="$currentId" />', '<xsl:value-of select="doc-pid" />', <xsl:value-of select="start" />, <xsl:value-of select="end" />);</xsl:attribute>
+                        <tr class="concordance"><xsl:attribute name="onclick">showCitation('#<xsl:value-of select="$currentId" />', '<xsl:value-of select="docPid" />', <xsl:value-of select="start" />, <xsl:value-of select="end" />);</xsl:attribute>
                             <td class="tbl_conc_left">...  <xsl:apply-templates select="left" /></td>
                             <td class="tbl_conc_hit"><xsl:value-of select="match" /></td>
                             <td><xsl:value-of select="right" /> ...</td>
@@ -183,8 +183,8 @@
     </xsl:template>
     
     <xsl:template match="docs">
-        <xsl:variable name="totalHits" select="../summary/number-of-docs" />
-        <xsl:variable name="numberOfPages" select="ceiling($totalHits div ../summary/requested-window-size)" />
+        <xsl:variable name="totalHits" select="../summary/numberOfDocs" />
+        <xsl:variable name="numberOfPages" select="ceiling($totalHits div ../summary/requestedWindowSize)" />
         <div class="span12 contentbox" id="results">
             <div class="pull-right">
                 <small>Total documents: <span id="totalhits">
@@ -220,21 +220,21 @@
                     <xsl:for-each select="doc">                     
                         <tr>
                             <td>
-                                <a target="_blank"><xsl:attribute name="href"><xsl:value-of select="'article?doc='" /><xsl:value-of select="doc-pid" /><xsl:value-of select="'&amp;query='" /><xsl:value-of select="$urlparamquery" /></xsl:attribute><xsl:value-of select="doc-info/*[name()=$title_name]" /><xsl:if test="doc-info/*[name()=$author_name]/text() != ''"> by <xsl:value-of select="doc-info/*[name()=$author_name]" /></xsl:if></a><br/>
+                                <a target="_blank"><xsl:attribute name="href"><xsl:value-of select="'article?doc='" /><xsl:value-of select="docPid" /><xsl:value-of select="'&amp;query='" /><xsl:value-of select="$urlparamquery" /></xsl:attribute><xsl:value-of select="docInfo/*[name()=$title_name]" /><xsl:if test="docInfo/*[name()=$author_name]/text() != ''"> by <xsl:value-of select="docInfo/*[name()=$author_name]" /></xsl:if></a><br/>
                                 ... <xsl:value-of select="snippets/snippet[1]/left" />&#160;<strong><xsl:value-of select="snippets/snippet[1]/match" /></strong>&#160;<xsl:value-of select="snippets/snippet[1]/right" /> ...<br/>
-                                <div class="collapse"><xsl:attribute name="id"><xsl:value-of select="doc-pid" /></xsl:attribute>
+                                <div class="collapse"><xsl:attribute name="id"><xsl:value-of select="docPid" /></xsl:attribute>
                                 <xsl:for-each select="snippets/snippet">
                                     ... <xsl:value-of select="left" />&#160;<strong><xsl:value-of select="match" /></strong>&#160;<xsl:value-of select="right" /> ...<br/>
                                 </xsl:for-each>
                                 <em>...</em>
                                 </div>
-                                <a class="btn btn-mini green" target="_blank"><xsl:attribute name="href"><xsl:value-of select="'article?doc='" /><xsl:value-of select="doc-pid" /><xsl:value-of select="'&amp;query='" /><xsl:value-of select="$urlparamquery" /></xsl:attribute>View document info</a>                                     
+                                <a class="btn btn-mini green" target="_blank"><xsl:attribute name="href"><xsl:value-of select="'article?doc='" /><xsl:value-of select="docPid" /><xsl:value-of select="'&amp;query='" /><xsl:value-of select="$urlparamquery" /></xsl:attribute>View document info</a>                                     
                             </td>
                             <td>
-                                <xsl:value-of select="doc-info/*[name()=$date_name]" />
+                                <xsl:value-of select="docInfo/*[name()=$date_name]" />
                             </td>
                             <td>
-                                <xsl:value-of select="number-of-hits" />
+                                <xsl:value-of select="numberOfHits" />
                             </td>
                         </tr>
                     </xsl:for-each>
@@ -267,7 +267,7 @@
         </script>
     </xsl:template>
     
-    <xsl:template match="hitgroups">
+    <xsl:template match="hitGroups">
         <div class="span12 contentbox" id="results">
             <ul class="nav nav-tabs" id="contentTabs">
                 <li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=1'" /></xsl:attribute>Per Hit</a></li>
@@ -298,11 +298,11 @@
                     </thead>
                     <tbody>     
                     <xsl:for-each select="hitgroup">    
-                        <xsl:variable name="width" select="size * 100 div /blacklab-response/summary/largest-group-size" />
+                        <xsl:variable name="width" select="size * 100 div /blacklabResponse/summary/largestGroupSize" />
                         <xsl:variable name="rowId" select="generate-id()"/>
                         <xsl:variable name="apos">'</xsl:variable>
                         <tr>
-                            <td><xsl:value-of select="identity-display"/></td>
+                            <td><xsl:value-of select="identityDisplay"/></td>
                             <td>
                                 <div class="progress progress-success" data-toggle="collapse"><xsl:attribute name="data-target"><xsl:value-of select="'.'"/><xsl:value-of select="$rowId"/></xsl:attribute>
                                     <div class="bar"><xsl:attribute name="style"><xsl:value-of select="'width: '"/><xsl:value-of select="$width"/><xsl:value-of select="'%;'"/></xsl:attribute><xsl:value-of select="size"/></div>
@@ -364,7 +364,7 @@
         </script>
     </xsl:template>
     
-    <xsl:template match="docgroups">
+    <xsl:template match="docGroups">
         <div class="span12 contentbox" id="results">
             <ul class="nav nav-tabs" id="contentTabs">
                 <li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=1'" /></xsl:attribute>Per Hit</a></li>
@@ -392,11 +392,11 @@
                     </thead>
                     <tbody>     
                     <xsl:for-each select="docgroup">    
-                        <xsl:variable name="width" select="size * 100 div /blacklab-response/summary/largest-group-size" />
+                        <xsl:variable name="width" select="size * 100 div /blacklabResponse/summary/largestGroupSize" />
                         <xsl:variable name="rowId" select="generate-id()"/>
                         <xsl:variable name="apos">'</xsl:variable>
                         <tr>
-                            <td><xsl:value-of select="identity-display"/></td>
+                            <td><xsl:value-of select="identityDisplay"/></td>
                             <td>
                                 <div class="progress progress-warning" data-toggle="collapse"><xsl:attribute name="data-target"><xsl:value-of select="'.'"/><xsl:value-of select="$rowId"/></xsl:attribute>
                                     <div class="bar"><xsl:attribute name="style"><xsl:value-of select="'width: '"/><xsl:value-of select="$width"/><xsl:value-of select="'%;'"/></xsl:attribute><xsl:value-of select="size"/></div>
@@ -462,8 +462,8 @@
     <xsl:template name="pagination">
         <xsl:param name="totalHits" />
         <xsl:param name="showToggleTitlesButton" />
-        <xsl:variable name="resultsPerPage" select="../summary/requested-window-size" />
-        <xsl:variable name="startResults" select="../summary/window-first-result" />
+        <xsl:variable name="resultsPerPage" select="../summary/requestedWindowSize" />
+        <xsl:variable name="startResults" select="../summary/windowFirstResult" />
         <xsl:variable name="currentPage" select="floor( $startResults div $resultsPerPage ) + 1" />
         <xsl:variable name="numberOfPages" select="ceiling($totalHits div $resultsPerPage)" />
         <xsl:variable name="startPage">

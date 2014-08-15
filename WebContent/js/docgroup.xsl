@@ -8,8 +8,8 @@
     
 	<xsl:template match="docs/doc">
 		<div class="row-fluid ">
-			<div class="span10 inline-concordance"><b><xsl:value-of select="doc-info/title" /></b></div>
-			<div class="span2 inline-concordance">Hits: <xsl:value-of select="number-of-hits" /></div>
+			<div class="span10 inline-concordance"><b><xsl:value-of select="docInfo/title" /></b></div>
+			<div class="span2 inline-concordance">Hits: <xsl:value-of select="numberOfHits" /></div>
 		</div>
 	</xsl:template>
 </xsl:stylesheet>

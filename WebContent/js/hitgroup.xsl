@@ -4,7 +4,7 @@
 	
     <!-- How to transform hit group results to HTML -->
     
-    <xsl:template match="summary|doc-infos" />
+    <xsl:template match="summary|docInfos" />
     
 	<xsl:template match="hits/hit">
 			<div class="row-fluid ">

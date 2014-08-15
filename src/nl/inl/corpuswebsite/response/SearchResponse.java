@@ -128,7 +128,7 @@ public class SearchResponse extends BaseResponse {
 		String query = getQuery();
 
 		// if we managed to create a query from user input
-		if (query.length() > 2) {
+		if (query.length() > 0) {
 			String lang = getLanguage();
 			Integer max = this.getParameter("max", 50);
 			Integer start = this.getParameter("start", 0);

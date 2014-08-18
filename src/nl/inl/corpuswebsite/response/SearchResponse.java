@@ -220,7 +220,7 @@ public class SearchResponse extends BaseResponse {
 				// if we're searching by year, automatically sort chronologically
 				if (sortBy.length() == 0) {
 					if (groupBy.equalsIgnoreCase(this.servlet.getConfig().getFieldIndexForFunction("date")))
-						sortBy = "title";
+						sortBy = "identity";
 					else
 						sortBy = "size";
 				}
@@ -288,7 +288,7 @@ public class SearchResponse extends BaseResponse {
 				// if we're searching by year, automatically sort chronologically
 				if (sortBy.length() == 0) {
 					if (groupBy.equalsIgnoreCase(this.servlet.getConfig().getFieldIndexForFunction("date")))
-						sortBy = "title";
+						sortBy = "identity";
 					else
 						sortBy = "size";
 				}

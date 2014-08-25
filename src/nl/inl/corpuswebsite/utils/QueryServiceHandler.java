@@ -12,6 +12,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Map;
 
+import nl.inl.corpuswebsite.MainServlet;
 import nl.inl.util.IoUtil;
 
 /**
@@ -24,8 +25,12 @@ public class QueryServiceHandler {
 	/** Last backend url requested, so we can pass it to the frontend for status checks */
 	private String lastRequestUrl;
 
-	public QueryServiceHandler(String url) {
+	/** The servlet, for converting internal URL to external URL for use by client */
+	private MainServlet servlet;
+
+	public QueryServiceHandler(String url, MainServlet servlet) {
 		webserviceBaseUrl = url;
+		this.servlet = servlet;
 	}
 
 	/**
@@ -107,7 +112,7 @@ public class QueryServiceHandler {
 		return this.webserviceBaseUrl;
 	}
 
-	public String getLastRequestUrl() {
-		return lastRequestUrl;
+	public String getLastRequestUrlForClient() {
+		return lastRequestUrl.replace(servlet.getWebserviceUrl(), servlet.getExternalWebserviceUrl());
 	}
 }

@@ -62,7 +62,7 @@ public class SearchResponse extends BaseResponse {
 
 			if (webservice == null) {
 				String searchType = (view == VIEW_PER_DOC || view == VIEW_DOCS_GROUPED) ? "docs" : "hits";
-				webservice = new QueryServiceHandler(this.servlet.getWebserviceUrl() + searchType);
+				webservice = new QueryServiceHandler(this.servlet.getWebserviceUrl() + searchType, this.servlet);
 			}
 
 			switch(view) {
@@ -342,7 +342,7 @@ public class SearchResponse extends BaseResponse {
 		transformer.addParameter("urlparamquery", URLEncoder.encode(query, "UTF-8"));
 		transformer.addParameter("query", query);
 		transformer.addParameter("webserviceurl", this.servlet.getExternalWebserviceUrl());
-		transformer.addParameter("backendRequestUrl", webservice.getLastRequestUrl());
+		transformer.addParameter("backendRequestUrl", webservice.getLastRequestUrlForClient());
 		//transformer.addParameter("resultkey", this.getParameter("key", ""));
 
 		// sometimes a pos field is called "function", sometimes "type", sometimes "pos

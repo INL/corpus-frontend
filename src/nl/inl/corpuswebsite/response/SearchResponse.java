@@ -384,8 +384,6 @@ public class SearchResponse extends BaseResponse {
 
 			String fieldName = fd.getSearchField();
 			if (filterValues.length > 0) {
-				if (filter.length() > 0)
-					filter.append(" AND ");
 				StringBuilder value = new StringBuilder();
 				int n = 0;
 				for (String filterValue: filterValues) {
@@ -401,6 +399,8 @@ public class SearchResponse extends BaseResponse {
 					String strValue = value.toString();
 					if (n > 1)
 						strValue = "(" + strValue + ")";
+					if (filter.length() > 0)
+						filter.append(" AND ");
 					filter.append(fieldName).append(":").append(strValue);
 				}
 			}

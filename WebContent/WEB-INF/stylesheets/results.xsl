@@ -87,12 +87,12 @@
                                     <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="left">Left context <b class="caret"></b></a>
                                     <ul class="dropdown-menu" role="menu" aria-labelledby="left">
                                         <li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutsort" /><xsl:value-of select="'sortBy=wordleft'" /></xsl:attribute>Word</a></li>
-                                        <li class="disabled"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutsort" /><xsl:value-of select="'sortBy=wordleft_lemma'" /></xsl:attribute>Lemma</a></li>
-                                        <li class="disabled"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutsort" /><xsl:value-of select="'sortBy=wordleft_pos'" /></xsl:attribute>P.o.S.</a></li>
+                                        <li class="disabled"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutsort" /><xsl:value-of select="'sortBy='" />wordleft:<xsl:value-of select="$lemma_name" /></xsl:attribute>Lemma</a></li>
+                                        <li class="disabled"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutsort" /><xsl:value-of select="'sortBy='" />wordright:<xsl:value-of select="$pos_name" /></xsl:attribute>P.o.S.</a></li>
                                     </ul>
                                 </div>
                             </th>
-                            <th class="tbl_conc_hit"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutsort" /><xsl:value-of select="'sortBy=hittext'" /></xsl:attribute>Hit text</a></th>
+                            <th class="tbl_conc_hit"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutsort" /><xsl:value-of select="'sortBy=hit'" /></xsl:attribute>Hit text</a></th>
                             <th class="tbl_conc_right">
                                 <div class="dropdown">
                                     <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="right">Right context <b class="caret"></b></a>
@@ -103,8 +103,8 @@
                                     </ul>
                                 </div>                          
                             </th>
-                            <th class="tbl_lemma"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutsort" /><xsl:value-of select="'sortBy='" /><xsl:value-of select="$lemma_name" /></xsl:attribute>Lemma</a></th>
-                            <th class="tbl_pos"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutsort" /><xsl:value-of select="'sortBy='" /><xsl:value-of select="$pos_name" /></xsl:attribute>Part of speech</a></th>
+                            <th class="tbl_lemma"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutsort" /><xsl:value-of select="'sortBy='" />hit:<xsl:value-of select="$lemma_name" /></xsl:attribute>Lemma</a></th>
+                            <th class="tbl_pos"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutsort" /><xsl:value-of select="'sortBy='" />hit:<xsl:value-of select="$pos_name" /></xsl:attribute>Part of speech</a></th>
                         </tr>
                     </thead>
                     <tbody>

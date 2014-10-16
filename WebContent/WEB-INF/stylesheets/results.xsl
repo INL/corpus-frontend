@@ -132,8 +132,8 @@
                             <td class="tbl_conc_left">...  <xsl:apply-templates select="left" /></td>
                             <td class="tbl_conc_hit"><xsl:value-of select="match" /></td>
                             <td><xsl:value-of select="right" /> ...</td>
-                            <td><xsl:value-of select="match/@*[name()=$lemma_name]" /></td>
-                            <td><xsl:value-of select="match/@*[name()=$pos_name]" /></td>
+                            <td><xsl:for-each select="match/w"><xsl:value-of select="@*[name()=$lemma_name]" /><xsl:text> </xsl:text></xsl:for-each></td>
+                            <td><xsl:for-each select="match/w"><xsl:value-of select="@*[name()=$pos_name]" /><xsl:text> </xsl:text></xsl:for-each></td>
                         </tr> 
                         <tr class="citationrow">
                             <td colspan="5">

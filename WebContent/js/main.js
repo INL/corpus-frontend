@@ -13,32 +13,42 @@ function scrollToResults() {
 
 // Make our multi-select dropdown lists work
 function addMultiSelectExpanders() {
-	var smallHeight = $(".multiselect").height();
-	var bigHeight = smallHeight * 4;
 	
-	$(".multiselect").focusout(function () {
-		var element = $(this);
-		
-		setTimeout(function() {
-			element.height(smallHeight);
-		}, 150);
-	});
-	
-	// consume mousedown event to avoid accidental
-	// selection changes when focusing on collapsed
-	// multiselect input boxes
-	$(".multiselect").mousedown(function (event) {		
-		if($(this).height() < bigHeight - 1) { // minus one to correct for element decimal differences
-			// set small/big height again to adjust for page zoom changes
-			smallHeight = $(this).height();
-			bigHeight = smallHeight * 4;
-			
-			$(this).height(bigHeight);
-			event.stopPropagation();
-			event.preventDefault();
-			$(this).focus();
-		}
-	});
+	// If the input gains focus, show and focus the multiselect instead
+	$('input.multiselect').focusin(function () {
+        var name = this.id.split(/-/)[0];
+        $('#' + name + '-select')
+            .show()
+            .focus();
+        $(this).hide();
+    });
+
+	// Update description of selected options in input field
+    function updateMultiselectDescription(name) {
+        var opts = $("#" + name + "-select option:selected");
+        var desc = "";
+        for (var i = 0; i < opts.length; i++) {
+            if (desc.length > 0)
+                desc += ", ";
+            desc += opts[i].innerHTML;
+        }
+        $('#' + name + '-input')
+        	.val(desc)
+        	.show();
+    }
+    
+	$('select.multiselect')
+		.focusout(function () {
+			// If the multiselect loses focus, hide it and update the input
+	        var name = this.id.split(/-/)[0];
+	        updateMultiselectDescription(name);
+	        $(this).hide();
+	    })
+	    .each(function (index, sel) {
+	    	// Set description of initially selected options
+	        var name = sel.id.split(/-/)[0];
+	    	updateMultiselectDescription(name);
+	    });
 }
 
 // Make sure we always see an overview of our specified filters

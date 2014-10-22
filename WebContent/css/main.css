@@ -194,8 +194,9 @@ small {
 	margin-left: 0px;
 }
 
+/* Hide select initially (show on focus) */
 select[multiple].multiselect {
-	height: 30px;
+	display: none;
 }
 
 .activeLink {

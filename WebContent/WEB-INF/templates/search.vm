@@ -5,15 +5,13 @@
         	<div class="span2">$docfield.getName()</div>
         	<div class="span3">
         		#if($docfield.restrictedInput())
-        			#if($docfield.getType() == "multiselect")
-        				#set($multiple = 'multiple class="multiselect forminput" size="1"')
-        			#else
-        				#set($multiple = 'class="forminput"')
-					#end
-					
 					#set ($quotechar = '"')
 					#set ($multivalues = $responseObject.getParameterValuesAsList($docfield.getSearchField(), ""))					
-        			<select name="$docfield.getSearchField()" placeholder="$docfield.getName()" $multiple>
+        			#if($docfield.getType() == "multiselect")
+	        		<select id="$docfield.getSearchField()-select" name="$docfield.getSearchField()" placeholder="$docfield.getName()" multiple class="multiselect forminput">
+        			#else
+	        		<select name="$docfield.getSearchField()" placeholder="$docfield.getName()" class="forminput">
+					#end
         			#foreach($pair in $docfield.getValidValues())
         				#set($selected = '')
 						
@@ -29,6 +27,9 @@
                         <option value="$selectvalue" $!selected>$pair.getDescription()</option>
         			#end
         			</select>
+        			#if($docfield.getType() == "multiselect")
+        			<input id="$docfield.getSearchField()-input" class='multiselect' type='text' />
+					#end
         		#else
         			#if($docfield.getType() == "date")
         				#set ($fieldName = $docfield.getSearchField())

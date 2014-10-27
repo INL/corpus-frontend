@@ -28,6 +28,7 @@
         			#end
         			</select>
         			#if($docfield.getType() == "multiselect")
+        			<div class='multiselect-hint' id="$docfield.getSearchField()-hint">(to select multiple options, use Ctrl+click)</div>
         			<input id="$docfield.getSearchField()-input" class='multiselect' type='text' />
 					#end
         		#else

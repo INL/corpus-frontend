@@ -20,6 +20,7 @@ function addMultiSelectExpanders() {
         $('#' + name + '-select')
             .show()
             .focus();
+        $('#' + name + '-hint').show();
         $(this).hide();
     });
 
@@ -43,6 +44,7 @@ function addMultiSelectExpanders() {
 	        var name = this.id.split(/-/)[0];
 	        updateMultiselectDescription(name);
 	        $(this).hide();
+	        $('#' + name + '-hint').hide();
 	    })
 	    .each(function (index, sel) {
 	    	// Set description of initially selected options
@@ -97,8 +99,11 @@ function getElementName(element) {
 // Update the filter description using the active filter value list
 function updateFilterOverview() {
 	var overview = "";
-	for(var i = 0; i < ar_ActiveFilters.length; i++) 
-		overview = overview + ar_ActiveFilters[i].filter + ": <i>" + ar_ActiveFilters[i].values + "</i>, ";
+	for(var i = 0; i < ar_ActiveFilters.length; i++) {
+		if (overview.length > 0)
+			overview += "; ";
+		overview += ar_ActiveFilters[i].filter + ": <i>" + ar_ActiveFilters[i].values + "</i>";
+	}
 	
 	$("#filteroverview").html("<small>" + overview + "</small>");
 }

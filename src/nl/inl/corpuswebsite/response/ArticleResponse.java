@@ -42,9 +42,6 @@ public class ArticleResponse extends BaseResponse {
 		metadataStylesheet = servlet.getMetadataStylesheet();
 	}
 
-	/* (non-Javadoc)
-	 * @see nl.inl.corpuswebsite.BaseResponse#completeRequest()
-	 */
 	@Override
 	protected void completeRequest() {
 		String pid = this.getParameter("doc", "");
@@ -60,20 +57,21 @@ public class ArticleResponse extends BaseResponse {
 			Map<String, String[]> parameters = UrlParameterFactory.getSourceParameters(query, null);
 			try {
 				String xmlResult = webservice.makeRequest(parameters);
-
-				transformer.clearParameters();
-				transformer.addParameter("source_images", this.servlet.getSourceImagesLocation());
-				transformer.addParameter("title_name", this.servlet.getConfig().getFieldIndexForFunction("title"));
-				String htmlResult = transformer.transform(xmlResult, articleStylesheet);
-
-				this.getContext().put("article_content", htmlResult);
+				if (xmlResult.contains("NOT_AUTHORIZED")) {
+					this.getContext().put("article_content", "");
+				} else {
+					transformer.clearParameters();
+					transformer.addParameter("source_images", this.servlet.getSourceImagesLocation());
+					transformer.addParameter("title_name", this.servlet.getConfig().getFieldIndexForFunction("title"));
+					this.getContext().put("article_content", transformer.transform(xmlResult, articleStylesheet));
+				}
 
 				Map<String, String[]> metaParam = new HashMap<String, String[]>();
 				//metaParam.put("outputformat", new String[] {"xml"});
 				xmlResult = webserviceMeta.makeRequest(metaParam);
 				transformer.clearParameters();
 				transformer.addParameter("title_name", this.servlet.getConfig().getFieldIndexForFunction("title"));
-				htmlResult = transformer.transform(xmlResult, metadataStylesheet);
+				String htmlResult = transformer.transform(xmlResult, metadataStylesheet);
 				this.getContext().put("article_meta", htmlResult);
 
 			} catch (IOException e) {

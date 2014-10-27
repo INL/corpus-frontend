@@ -10,15 +10,15 @@ function showAjaxFail(textStatus, element) {
 
 // Log the URL and parameters of the AJAX call we're about to do
 function logAjaxCall(url, parameters) {
-    if (!parameters || parameters.length == 0) {
+    if (!parameters) {
         console.log(url);
         return;
     }
     paramStr = "";
-    $(parameters).each(function (index) {
+    $.each(parameters, function (key, value) {
         if (paramStr.length > 0)
             paramStr += "&";
-        paramStr += encodeURIComponent(index) + "=" + encodeURIComponent(parameters[index]);
+        paramStr += encodeURIComponent(key) + "=" + encodeURIComponent(value);
     });
     console.log(url + "?" + paramStr);
 }
@@ -44,6 +44,13 @@ AjaxRetriever.prototype.putAjaxResponse = function(element_id, parameters, appen
         data: parameters, 
         cache: false
     }).done(function(data) {
+    	var errorElements = $(data).find("error"); 
+    	if (errorElements.length > 0) {
+    		var message = errorElements.find("message").text();
+    		alert("ERROR: " + message);
+    		return;
+    	}
+    		
 		myself.addResponseToElement(data, element_id, append, xslSheet);
 	}).fail(function(jqXHR, textStatus) {
 	    showAjaxFail(textStatus, element_id);
@@ -51,39 +58,82 @@ AjaxRetriever.prototype.putAjaxResponse = function(element_id, parameters, appen
 };
 
 // Transform response XML and add to / replace element content
-AjaxRetriever.prototype.addResponseToElement = function(data, element_id, append, xslSheet) {	
-	var html = this.transform(data, xslSheet);
-
-	if(!append)
-		$(element_id).html('');
-		
-	$(element_id).append(html);	
+AjaxRetriever.prototype.addResponseToElement = function(xmlResponse, element_id, append, xslSheetUrl) {
+	this.loadXslSheet(xslSheetUrl, function (xslSheet) {
+		var html = transformToHtmlText(xmlResponse, xslSheet);
+		if(!append)
+			$(element_id).html('');
+		$(element_id).append(html);	
+	});
 };
 
-// Transform XML using XSLT
-AjaxRetriever.prototype.transform = function(xml, xslSheet) {	
-	// get stylesheet
-	xhttp = new XMLHttpRequest();
-	xhttp.open("GET", xslSheet, false);
-	xhttp.send("");
+// FROM: http://stackoverflow.com/questions/12149410/object-doesnt-support-property-or-method-transformnode-in-internet-explorer-1
+// (By Stack Overflow user "The Alpha", License: CC-BY-SA 3.0)
+function transformToHtmlText(xmlDoc, xsltDoc) {
+    if (typeof (XSLTProcessor) != "undefined") { // FF, Safari, Chrome etc
+        var xsltProcessor = new XSLTProcessor();
+        xsltProcessor.importStylesheet(xsltDoc);
+        var xmlFragment = xsltProcessor.transformToFragment(xmlDoc, document);
+        return xmlFragment;
+    }
+
+    if (typeof (xmlDoc.transformNode) != "undefined") { // IE6, IE7, IE8
+        return xmlDoc.transformNode(xsltDoc);
+    }
+    else {
+        try { // IE9 and grater
+        	// Disabled check because IE11 reports ActiveXObject as undefined
+        	// (but we still need it to do client-side XSLT..)
+            //if (window.ActiveXObject) {
+                var xslt = new ActiveXObject("Msxml2.XSLTemplate");
+                var xslDoc = new ActiveXObject("Msxml2.FreeThreadedDOMDocument");
+                xslDoc.loadXML(xsltDoc.xml);
+                xslt.stylesheet = xslDoc;
+                var xslProc = xslt.createProcessor();
+                xslProc.input = xmlDoc;
+                xslProc.transform();
+                return xslProc.output;
+            //}
+        }
+        catch (e) {
+        	alert("Exception while doing XSLT transform: " + e.message);
+            //alert("The type [XSLTProcessor] and the function [XmlDocument.transformNode] are not supported by this browser, can't transform XML document to HTML string!");
+            return null;
+        }
+    }
+}
+
+AjaxRetriever.prototype.loadXslSheet = function(xslSheetUrl, successFunc) {
 	
-	var parser = new DOMParser();
-	var sheet = parser.parseFromString( xhttp.responseText, "text/xml");
-	
-	// apply translation
-	var result = "";
-	if(window.ActiveXObject) {
-		// Internet Explorer has to be the special child of the class -_-
-		sheet = new ActiveXObject("Microsoft.XMLDOM");
-		sheet.async = false;
-		sheet.loadXML(xhttp.responseText);
-		result = xml.transformNode(sheet);
+	var result;
+	if (typeof XMLHttpRequest !== 'undefined') {
+		// Firefox, Chrome and newer IE versions
+	    var xhr = new XMLHttpRequest();
+	    xhr.open("GET", xslSheetUrl, false);
+	    // request MSXML responseXML for IE
+	    try { xhr.responseType = 'msxml-document'; } catch(e) { }
+	    xhr.send();
+	    result = xhr.responseXML;
 	} else {
-		var processor = new XSLTProcessor();
-		processor.importStylesheet(sheet);
-		result = processor.transformToFragment(xml, document);
+		// Older IE versions: use ActiveXObject
+	    try {
+	        var xhr = new ActiveXObject('Msxml2.XMLHTTP.3.0');
+	        xhr.open('GET', xslSheetUrl, false);
+	        xhr.send();
+	        result = xhr.responseXML;
+	    }
+	    catch (e) {
+	        // handle case that neither XMLHttpRequest nor MSXML is supported
+	        alert("Could not load XSL sheet: " + e.message);
+	    }
 	}
 	
-	return result;
-};
+	var errorElements = $(result).find("error"); 
+	if (errorElements.length > 0) {
+		var message = errorElements.find("message").text();
+		alert("ERROR: " + message);
+		return;
+	}
+	successFunc(result);
+}
 

@@ -12,7 +12,6 @@
 	<xsl:template match="docPid" />
 	
 	<xsl:template match="docInfo">
-		<xsl:variable name="numhits" select="../HitsInDocument" />
 		<div class="span12 contentbox">
 			<h2>
 				<xsl:value-of select="*[name()=$title_name]" />
@@ -22,7 +21,7 @@
 					<i>Hits in document:</i>
 				</div>
 				<div class="span7" id="divHitsInDocument">
-					<xsl:value-of select="$numhits" />
+					<!-- will be filled in from article.js -->
 				</div>
 			</div>
 			<xsl:for-each select="child::*[name()!='mayView']">

@@ -10,38 +10,6 @@
         (Error code: <xsl:value-of select="code" />)
     </xsl:template>
     
-    <xsl:template match="SearchSummary" />
-    
-    <xsl:template match="HitsInDocument">   
-    </xsl:template>
-    
-    <xsl:template match="DocumentFields">
-        <xsl:variable name="numhits" select="../HitsInDocument" />
-        <div class="span12 contentbox">
-            <h2>
-                <xsl:value-of select="*[name()=$title_name]" />
-            </h2>
-            <div class="span10">
-                <div class="span2">
-                    <i>Hits in document:</i>
-                </div>
-                <div class="span7">
-                    <xsl:value-of select="$numhits" />
-                </div>
-            </div>
-            <xsl:for-each select="child::*">
-                <div class="span10">
-                    <div class="span2">
-                        <i><xsl:value-of select="local-name()" />:</i>
-                    </div>
-                    <div class="span7">
-                        <xsl:value-of select="."/>
-                    </div>
-                </div>
-            </xsl:for-each> 
-        </div>
-    </xsl:template>
-    
     <xsl:template match="folia:metadata" />
     
     <xsl:template match="text">

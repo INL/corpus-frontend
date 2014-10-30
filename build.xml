@@ -56,12 +56,6 @@
         <echo message="" />
         <echo message="######################################################" />
 	</target>
-	
-	<!--
-	<target name="build-blacklab">
-		<ant dir="${BlackLabDir}" inheritall="false" />
-	</target>
-	-->
 
 	<!-- Compileer de sources -->
 	<target name="compile" depends="init">
@@ -96,11 +90,6 @@
 		<delete dir="${build}/css" />
 		<delete dir="${build}/img" />
 		<delete dir="${build}/js" />
-	
-		<!-- Kopieer de resources uit de src boom
-		<copy todir="${build}/WEB-INF/lib">
-            <fileset dir="${BlackLabDir}/dist" includes="BlackLab.jar" />
-		</copy> -->
 		
 		<!-- Kopieer de resources uit de src boom -->
 		<copy todir="${build}">
@@ -119,12 +108,14 @@
 		
 	</target>
 	
-	<!-- Copy search.xml, help.inc and about.inc for our desired variant to 
-	     build/WEB-INF/config/project/ -->
+	<!-- Copy search.xml, help.inc, about.inc and any custom .xsl files for our
+	     desired variant to build/WEB-INF/config/project/ -->
 	<target name="copy-variant-files" depends="compile">
+		<delete dir="${build}/WEB-INF/config/project" />
+		<mkdir dir="${build}/WEB-INF/config/project" />
         <copy todir="${build}/WEB-INF/config/project">
             <fileset dir="WebContent/projectconfigs/${project-variant}" includes="*" />
-        </copy>		
+        </copy>
 	</target>
 
     <!-- Build .war file from the build directory -->

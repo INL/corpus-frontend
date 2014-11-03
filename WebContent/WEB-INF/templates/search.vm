@@ -189,12 +189,8 @@
 </div>
 <br><br>
 <script>
-$('a.querytype[data-toggle="tab"]').on('shown', function (e) {	
-	document.searchform.tab.value = e.target.hash;
-});
-
-addMultiSelectExpanders();
-addFilterOverview();
+	// Set up search type tabs, multiselect, filter overview
+	BLSEARCH.SEARCHPAGE.init();
 </script>
 #if($searchResults)
 	$searchResults

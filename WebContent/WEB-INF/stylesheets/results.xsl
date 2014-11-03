@@ -47,7 +47,7 @@
                     <xsl:otherwise>1000</xsl:otherwise>
                 </xsl:choose>;
                 setTimeout(function () {
-                    doResults(backendRequestUrl, checkAgain);
+                    BLSEARCH.SEARCHPAGE.doResults(backendRequestUrl, checkAgain);
                 }, checkAgain);
             </script>
         </div>
@@ -128,7 +128,7 @@
                             
                         </xsl:if>
             
-                        <tr class="concordance"><xsl:attribute name="onclick">showCitation('#<xsl:value-of select="$currentId" />', '<xsl:value-of select="docPid" />', <xsl:value-of select="start" />, <xsl:value-of select="end" />);</xsl:attribute>
+                        <tr class="concordance" onclick="BLSEARCH.SEARCHPAGE.showCitation('{$webserviceurl}','#{$currentId}','{docPid}',{start},{end});">
                             <td class="tbl_conc_left">...  <xsl:apply-templates select="left" /></td>
                             <td class="tbl_conc_hit"><xsl:value-of select="match" /></td>
                             <td><xsl:value-of select="right" /> ...</td>
@@ -162,23 +162,11 @@
             var backendRequestUrl = '<xsl:value-of select="$backendRequestUrl" />';
         
             $(document).ready(function() {
-                scrollToResults();
+                BLSEARCH.UTIL.scrollToResults();
                 <xsl:if test="$totalHits = -1">
-                doStats(backendRequestUrl);
+                BLSEARCH.SEARCHPAGE.doStats(backendRequestUrl);
                 </xsl:if>
             });
-
-            function showCitation(element, docPid, start, end) {
-                $(element).collapse('toggle');
-                var retriever = new AjaxRetriever('<xsl:value-of select="$webserviceurl" />', 'docs/' + docPid + '/snippet');
-                var param = {
-                    outputformat: "xml",
-                    hitstart: start,
-                    hitend: end,
-                    wordsaroundhit: 50
-                };
-                retriever.putAjaxResponse(element, param, false, "../js/concordance.xsl");
-            }
         </script>
     </xsl:template>
     
@@ -259,9 +247,9 @@
             var backendRequestUrl = '<xsl:value-of select="$backendRequestUrl" />';
             
             $(document).ready(function() {
-                scrollToResults();
+                BLSEARCH.UTIL.scrollToResults();
                 <xsl:if test="$totalHits = -1">
-                doStats(backendRequestUrl);
+                BLSEARCH.SEARCHPAGE.doStats(backendRequestUrl);
                 </xsl:if>
             });
         </script>
@@ -309,7 +297,8 @@
                                 </div>
                                 <div><xsl:attribute name="class"><xsl:value-of select="$rowId"/><xsl:value-of select="' collapse groupcontent'"></xsl:value-of></xsl:attribute><xsl:attribute name="id"><xsl:value-of select="$rowId"/></xsl:attribute><xsl:attribute name="data-group"><xsl:value-of select="identity"/></xsl:attribute>
                                     <div class="inline-concordance">
-                                        <a class="btn btn-link"><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=1'" /><xsl:value-of select="'&#38;viewGroup='" /><xsl:value-of select="identity"/><xsl:value-of select="'&#38;groupBy='" /><xsl:value-of select="$groupBy_name"/></xsl:attribute>&#171; View detailed concordances in this group</a> - <button class="btn btn-link nolink"><xsl:attribute name="onclick"><xsl:value-of select="'getGroupContent('"/><xsl:value-of select="$apos"/><xsl:value-of select="'#'"/><xsl:value-of select="$rowId"/><xsl:value-of select="$apos"/><xsl:value-of select="');'"/></xsl:attribute>Load more concordances...</button> 
+                                        <a class="btn btn-link"><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=1'" /><xsl:value-of select="'&#38;viewGroup='" /><xsl:value-of select="identity"/><xsl:value-of select="'&#38;groupBy='" /><xsl:value-of select="$groupBy_name"/></xsl:attribute>&#171; View detailed concordances in this group</a> -
+                                        <button class="btn btn-link nolink" onclick="BLSEARCH.SEARCHPAGE.getGroupContent(false, '#{$rowId}');">Load more concordances...</button> 
                                     </div>
                                 </div>
                             </td>
@@ -330,37 +319,7 @@
         </div>
         <script>
         var backendRequestUrl = '<xsl:value-of select="$backendRequestUrl" />';
-            
-        $(document).ready(function() {
-            scrollToResults();
-            $('.nolink').click(function(event) { event.preventDefault();});
-            $('.groupcontent').on('show', function() { checkIfFirstTimeOpen('#' + $(this).attr('id'));});
-        });
-        
-        function checkIfFirstTimeOpen(element) {
-            if(ar_loadFrom[element] == null) 
-                getGroupContent(element);
-        }
-        
-        function getGroupContent(element) {             
-            var start = 0;
-            
-            if(ar_loadFrom[element] != null)
-                var start = ar_loadFrom[element];
-                
-            var retriever = new AjaxRetriever(backendRequestUrl, '');
-            var groupid = decodeURIComponent($(element).attr('data-group'));
-            retriever.putAjaxResponse(element, {
-                viewgroup: groupid,
-                first: start
-            }, true, "../js/hitgroup.xsl");
-            
-            ar_loadFrom[element] = start + 20;
-            
-            return false;
-        }
-        
-        var ar_loadFrom = [];
+        BLSEARCH.SEARCHPAGE.initGroupedResultsPage(false);
         </script>
     </xsl:template>
     
@@ -403,12 +362,12 @@
                                 </div>
                                 <div><xsl:attribute name="class"><xsl:value-of select="$rowId"/><xsl:value-of select="' collapse groupcontent'"></xsl:value-of></xsl:attribute><xsl:attribute name="id"><xsl:value-of select="$rowId"/></xsl:attribute><xsl:attribute name="data-group"><xsl:value-of select="identity"/></xsl:attribute>
                                     <div class="inline-concordance">
-                                        <a class="btn btn-link"><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=2'" /><xsl:value-of select="'&#38;viewGroup='" /><xsl:value-of select="identity"/><xsl:value-of select="'&#38;groupBy='" /><xsl:value-of select="$groupBy_name"/></xsl:attribute>&#171; View detailed docs in this group</a> - <button class="btn btn-link nolink"><xsl:attribute name="onclick"><xsl:value-of select="'getGroupContent('"/><xsl:value-of select="$apos"/><xsl:value-of select="'#'"/><xsl:value-of select="$rowId"/><xsl:value-of select="$apos"/><xsl:value-of select="');'"/></xsl:attribute>Load more docs...</button> 
+                                        <a class="btn btn-link"><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=2'" /><xsl:value-of select="'&#38;viewGroup='" /><xsl:value-of select="identity"/><xsl:value-of select="'&#38;groupBy='" /><xsl:value-of select="$groupBy_name"/></xsl:attribute>&#171; View detailed docs in this group</a> - 
+                                        <button class="btn btn-link nolink" onclick="BLSEARCH.SEARCHPAGE.getGroupContent(true '#{$rowId}');">Load more docs...</button> 
                                     </div>
-                                
                                 </div>
                             </td>
-                        </tr>                   
+                        </tr>
                     </xsl:for-each>
                     
 					<xsl:if test="not (docgroup)">
@@ -425,37 +384,7 @@
         </div>
         <script>
         var backendRequestUrl = '<xsl:value-of select="$backendRequestUrl" />';
-            
-        $(document).ready(function() {
-            scrollToResults();
-            $('.nolink').click(function(event) { event.preventDefault();});
-            $('.groupcontent').on('show', function() { checkIfFirstTimeOpen('#' + $(this).attr('id'));});
-        });
-        
-        function checkIfFirstTimeOpen(element) {
-            if(ar_loadFrom[element] == null) 
-                getGroupContent(element);
-        }
-        
-        function getGroupContent(element) {
-            var start = 0;
-            
-            if(ar_loadFrom[element] != null)
-                var start = ar_loadFrom[element];
-                
-            var retriever = new AjaxRetriever(backendRequestUrl, '');
-            var groupid = decodeURIComponent($(element).attr('data-group'));
-            retriever.putAjaxResponse(element, {
-                viewgroup: groupid,
-                first: start
-            }, true, "../js/docgroup.xsl");
-            
-            ar_loadFrom[element] = start + 20;
-            
-            return false;
-        }
-        
-        var ar_loadFrom = [];
+        BLSEARCH.SEARCHPAGE.initGroupedResultsPage(true);
         </script>
     </xsl:template>
     

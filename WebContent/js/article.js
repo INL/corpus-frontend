@@ -6,72 +6,80 @@ $(document).ready(function () {
     // Create jQuery Tooltips from title attributes
 	$('span.word').tooltip();
 	
-	// Find all anchor names
-	initialiseAnchors();
-	
 	// Show number of hits at the top of the metadata
 	var numHits = $('a.hl').length;
 	$('#divHitsInDocument').text(numHits); 
 });
 
-// Names of anchors (elements with class anchor)
-var anchors = [];
 
-// Current anchor
-var position = 0;
+// For navigating through search hits within the article
+//--------------------------------------------------------------------
+var ANCHORS = {};
 
-// Find all anchor names
-function initialiseAnchors() {
-	$(".anchor").each(function(index) {
-		anchors.push($(this).attr("name"));
+(function () {
+	
+	// Names of anchors (elements with class anchor)
+	var anchors = [];
+
+	// Current anchor
+	var position = 0;
+
+	// Find all anchor names
+	$(document).ready(function () {
+		$(".anchor").each(function(index) {
+			anchors.push($(this).attr("name"));
+		});
+		
+		if(anchors.length == 0)
+			$(".hitscroll").hide();
 	});
-	
-	if(anchors.length == 0)
-		$(".hitscroll").hide();
-}
 
-// Go to next anchor and return name
-function getNextAnchorName() {
-	position++;
-	
-	if(position >= anchors.length)
-		position = 0;
-	
-	return anchors[position];
-}
+	// Highlight and scroll to previous anchor
+	ANCHORS.gotoPrevious = function () {
+		
+		// Go to previous anchor and return name
+		function getPreviousAnchorName() {
+			position--;
+			
+			if(position < 0)
+				position = anchors.length - 1;
+			
+			return anchors[position];
+		}
+		
+		var oldname = window.location.hash;
+		oldname = oldname.replace("#", "");
+		window.location.hash = "";
+		var myname = getPreviousAnchorName();
+		window.location.hash = myname; 
+		window.scrollBy(0,-150);
+		
+		$('a[name=' + oldname + ']').removeClass('activeLink');
+		$('a[name=' + myname + ']').addClass('activeLink');
+	};
 
-// Go to previous anchor and return name
-function getPreviousAnchorName() {
-	position--;
-	
-	if(position < 0)
-		position = anchors.length - 1;
-	
-	return anchors[position];
-}
+	// Highlight and scroll to next anchor
+	ANCHORS.gotoNext = function () {
+		
+		// Go to next anchor and return name
+		function getNextAnchorName() {
+			position++;
+			
+			if(position >= anchors.length)
+				position = 0;
+			
+			return anchors[position];
+		}
 
-// Highlight and scroll to previous anchor
-function gotoPreviousAnchor() {
-	var oldname = window.location.hash;
-	oldname = oldname.replace("#", "");
-	window.location.hash = "";
-	var myname = getPreviousAnchorName();
-	window.location.hash = myname; 
-	window.scrollBy(0,-150);
+		var oldname = window.location.hash;
+		oldname = oldname.replace("#", "");
+		window.location.hash = "";
+		var myname = getNextAnchorName();
+		window.location.hash = myname; 
+		window.scrollBy(0,-150);
+		
+		$('a[name=' + oldname + ']').removeClass('activeLink');
+		$('a[name=' + myname + ']').addClass('activeLink');
+	};
 	
-	$('a[name=' + oldname + ']').removeClass('activeLink');
-	$('a[name=' + myname + ']').addClass('activeLink');
-}
-
-// Highlight and scroll to next anchor
-function gotoNextAnchor() {
-	var oldname = window.location.hash;
-	oldname = oldname.replace("#", "");
-	window.location.hash = "";
-	var myname = getNextAnchorName();
-	window.location.hash = myname; 
-	window.scrollBy(0,-150);
-	
-	$('a[name=' + oldname + ']').removeClass('activeLink');
-	$('a[name=' + myname + ']').addClass('activeLink');
-}
+})();

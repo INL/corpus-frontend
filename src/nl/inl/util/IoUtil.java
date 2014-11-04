@@ -49,7 +49,7 @@ public class IoUtil {
 	 * @throws IOException
 	 */
 	public static String readStream(InputStream is) throws IOException {
-		BufferedReader reader = makeBuffered(new InputStreamReader(is));
+		BufferedReader reader = makeBuffered(new InputStreamReader(is, "utf-8"));
 		StringBuilder b = new StringBuilder();
 		while (true) {
 			String line = reader.readLine();

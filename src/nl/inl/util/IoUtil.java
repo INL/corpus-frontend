@@ -48,14 +48,14 @@ public class IoUtil {
 	 * @return the text read
 	 * @throws IOException
 	 */
-	public static String readStream(InputStream is) throws IOException {
+	public static String readTextStream(InputStream is) throws IOException {
 		BufferedReader reader = makeBuffered(new InputStreamReader(is, "utf-8"));
 		StringBuilder b = new StringBuilder();
 		while (true) {
 			String line = reader.readLine();
 			if (line == null)
 				break;
-			b.append(line);
+			b.append(line).append("\n");
 		}
 		return b.toString();
 	}

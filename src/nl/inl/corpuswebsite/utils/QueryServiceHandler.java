@@ -62,7 +62,7 @@ public class QueryServiceHandler {
 					throw new IOException(code + " " + reason);
 				}
 				InputStream response = connection.getInputStream();
-				return IoUtil.readStream(response);
+				return IoUtil.readTextStream(response);
 			} finally {
 				connection.disconnect();
 			}

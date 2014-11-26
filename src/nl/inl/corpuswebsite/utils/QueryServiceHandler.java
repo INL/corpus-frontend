@@ -112,7 +112,7 @@ public class QueryServiceHandler {
 		return this.webserviceBaseUrl;
 	}
 
-	public String getLastRequestUrlForClient() {
-		return lastRequestUrl.replace(servlet.getWebserviceUrl(), servlet.getExternalWebserviceUrl());
+	public String getLastRequestUrlForClient(String corpus) {
+		return lastRequestUrl.replace(servlet.getWebserviceUrl(corpus), servlet.getExternalWebserviceUrl(corpus));
 	}
 }

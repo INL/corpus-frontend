@@ -2,15 +2,6 @@
 <SearchInterface>
 	<InterfaceProperties>
 		<Name>Gysseling</Name>
-		
-		<!--
-		<WebserviceInternal>http://localhost:8080/gyscorpus/</WebserviceInternal>
-		<WebserviceExternal>http://svowmc01:8080/gyscorpus/</WebserviceExternal>
-		<HelpPage>/vol1/molechaser/servlet/gys_help.txt</HelpPage>
-		<AboutPage>/vol1/molechaser/servlet/gys_about.txt</AboutPage>
-		<GoogleAnalyticsKey>UA-43624324-2</GoogleAnalyticsKey>
-		-->
-		
 		<NavLinks>
             <Link value="search">Home</Link>
             <Link value="http://www.inl.nl" newWindow="true">INL</Link>

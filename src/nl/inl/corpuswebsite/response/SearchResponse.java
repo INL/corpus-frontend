@@ -62,7 +62,7 @@ public class SearchResponse extends BaseResponse {
 
 			if (webservice == null) {
 				String searchType = (view == VIEW_PER_DOC || view == VIEW_DOCS_GROUPED) ? "docs" : "hits";
-				webservice = new QueryServiceHandler(this.servlet.getWebserviceUrl() + searchType, this.servlet);
+				webservice = new QueryServiceHandler(this.servlet.getWebserviceUrl(corpus) + searchType, this.servlet);
 			}
 
 			switch(view) {
@@ -88,9 +88,9 @@ public class SearchResponse extends BaseResponse {
 		this.getContext().put("max", getParameter("max", 50));
 		this.getContext().put("responseObject", this);
 
-		this.getContext().put("title", this.servlet.getConfig().getCorpusName());
-		this.getContext().put("wordproperties", this.servlet.getConfig().getWordProperties());
-		this.getContext().put("websiteconfig", this.servlet.getConfig());
+		this.getContext().put("title", this.servlet.getConfig(corpus).getCorpusName());
+		this.getContext().put("wordproperties", this.servlet.getConfig(corpus).getWordProperties());
+		this.getContext().put("websiteconfig", this.servlet.getConfig(corpus));
 		this.getContext().put("googleAnalyticsKey", this.servlet.getGoogleAnalyticsKey());
 
 		// display template
@@ -101,12 +101,12 @@ public class SearchResponse extends BaseResponse {
 	public void init(HttpServletRequest argRequest, HttpServletResponse argResponse,
 			MainServlet argServlet) {
 		super.init(argRequest, argResponse, argServlet);
-		resultsStylesheet = argServlet.getResultsStylesheet();
+		resultsStylesheet = argServlet.getStylesheet(corpus, "results.xsl");
 	}
 
 	private boolean isFilterQueryOnly() {
 		boolean hasFilter = false;
-		for(FieldDescriptor fd : this.servlet.getConfig().getFilterFields()) {
+		for(FieldDescriptor fd : this.servlet.getConfig(corpus).getFilterFields()) {
 			String fieldName = fd.getSearchField();
 
 			if (fd.getType().equalsIgnoreCase("date")) {
@@ -219,7 +219,7 @@ public class SearchResponse extends BaseResponse {
 			if (groupBy.length() > 0) {
 				// if we're searching by year, automatically sort chronologically
 				if (sortBy.length() == 0) {
-					if (groupBy.equalsIgnoreCase(this.servlet.getConfig().getFieldIndexForFunction("date")))
+					if (groupBy.equalsIgnoreCase(this.servlet.getConfig(corpus).getFieldIndexForFunction("date")))
 						sortBy = "identity";
 					else
 						sortBy = "size";
@@ -255,14 +255,14 @@ public class SearchResponse extends BaseResponse {
 				"view=" + VIEW_DOCS_GROUPED + "\">Documents grouped</a></li></ul>" +
 				"<select class=\"input\" name=\"groupBy\" onchange=\"document.searchform.submit();\">" +
 				"<option value=\"\" disabled=\"true\" selected=\"true\">Group hits by...</option>" +
-				"<option value=\"field:"+ servlet.getConfig().getFieldIndexForFunction("title") + "\">Group by document title</option>" +
+				"<option value=\"field:"+ servlet.getConfig(corpus).getFieldIndexForFunction("title") + "\">Group by document title</option>" +
 				"<option value=\"hit\">Group by hit text</option>" +
-				"<option value=\"hit:"+ servlet.getConfig().getPropertyForFunction("lemma") + "\">Group by lemma</option>" +
-				"<option value=\"hit:"+ servlet.getConfig().getPropertyForFunction("pos") + "\">Group by hit pos</option>" +
+				"<option value=\"hit:"+ servlet.getConfig(corpus).getPropertyForFunction("lemma") + "\">Group by lemma</option>" +
+				"<option value=\"hit:"+ servlet.getConfig(corpus).getPropertyForFunction("pos") + "\">Group by hit pos</option>" +
 				"<option value=\"hit:lemma,hit:pos\">Group by lemma and PoS</option><option value=\"wordleft\">Group by word left</option>" +
 				"<option value=\"wordright\">Group by word right</option>" +
-				"<option value=\"field:" + servlet.getConfig().getFieldIndexForFunction("date") + "\">Group by year</option>" +
-				"<option value=\"decade:" + servlet.getConfig().getFieldIndexForFunction("date") + "\" disabled=\"true\">Group by decade</option>" +
+				"<option value=\"field:" + servlet.getConfig(corpus).getFieldIndexForFunction("date") + "\">Group by year</option>" +
+				"<option value=\"decade:" + servlet.getConfig(corpus).getFieldIndexForFunction("date") + "\" disabled=\"true\">Group by decade</option>" +
 				"</select></div>";
 				this.getContext().put("searchResults", htmlResult);
 			}
@@ -287,7 +287,7 @@ public class SearchResponse extends BaseResponse {
 
 				// if we're searching by year, automatically sort chronologically
 				if (sortBy.length() == 0) {
-					if (groupBy.equalsIgnoreCase(this.servlet.getConfig().getFieldIndexForFunction("date")))
+					if (groupBy.equalsIgnoreCase(this.servlet.getConfig(corpus).getFieldIndexForFunction("date")))
 						sortBy = "identity";
 					else
 						sortBy = "size";
@@ -324,9 +324,9 @@ public class SearchResponse extends BaseResponse {
 				"<select class=\"input\" name=\"groupBy\" onchange=\"document.searchform.submit();\">" +
 				"<option value=\"\" disabled=\"true\" selected=\"true\">Group documents by...</option>" +
 				"<option value=\"numhits\">Group by number of hits</option>" +
-				"<option value=\"field:" + servlet.getConfig().getFieldIndexForFunction("date") + "\">Group by year</option>" +
-				"<option value=\"decade:" + servlet.getConfig().getFieldIndexForFunction("date") + "\" disabled=\"true\">Group by decade</option>" +
-				"<option value=\"field:"+ servlet.getConfig().getFieldIndexForFunction("author") + "\">Group by author</option>" +
+				"<option value=\"field:" + servlet.getConfig(corpus).getFieldIndexForFunction("date") + "\">Group by year</option>" +
+				"<option value=\"decade:" + servlet.getConfig(corpus).getFieldIndexForFunction("date") + "\" disabled=\"true\">Group by decade</option>" +
+				"<option value=\"field:"+ servlet.getConfig(corpus).getFieldIndexForFunction("author") + "\">Group by author</option>" +
 				"</select></div>";
 				this.getContext().put("searchResults", htmlResult);
 			}
@@ -341,13 +341,13 @@ public class SearchResponse extends BaseResponse {
 		transformer.addParameter("urlparamwithoutvieworgroup", "?" + getUrlParameterStringExcept(new String[] {"view", "viewGroup", "groupBy"}, false));
 		transformer.addParameter("urlparamquery", URLEncoder.encode(query, "UTF-8"));
 		transformer.addParameter("query", query);
-		transformer.addParameter("webserviceurl", this.servlet.getExternalWebserviceUrl());
-		transformer.addParameter("backendRequestUrl", webservice.getLastRequestUrlForClient());
+		transformer.addParameter("webserviceurl", this.servlet.getExternalWebserviceUrl(corpus));
+		transformer.addParameter("backendRequestUrl", webservice.getLastRequestUrlForClient(corpus));
 		//transformer.addParameter("resultkey", this.getParameter("key", ""));
 
 		// sometimes a pos field is called "function", sometimes "type", sometimes "pos
 		// this code allows us to adjust for that
-		for(FieldDescriptor fd : this.servlet.getConfig().getWordProperties()) {
+		for(FieldDescriptor fd : this.servlet.getConfig(corpus).getWordProperties()) {
 			if (fd.getFunction().equalsIgnoreCase("pos"))
 				transformer.addParameter("pos_name", fd.getSearchField());
 			else if (fd.getFunction().equalsIgnoreCase("lemma"))
@@ -356,7 +356,7 @@ public class SearchResponse extends BaseResponse {
 
 		// sometimes a title field is called "title", sometimes "title.level1", etc
 		// this code allows us to adjust for that
-		for(FieldDescriptor fd : this.servlet.getConfig().getFilterFields()) {
+		for(FieldDescriptor fd : this.servlet.getConfig(corpus).getFilterFields()) {
 			if (fd.getFunction().equalsIgnoreCase("title"))
 				transformer.addParameter("title_name", fd.getDisplayField());
 			else if (fd.getFunction().equalsIgnoreCase("author"))
@@ -370,7 +370,7 @@ public class SearchResponse extends BaseResponse {
 
 	private void addFilterParameters(Map<String, String[]> params) {
 		StringBuilder filter = new StringBuilder();
-		for(FieldDescriptor fd : this.servlet.getConfig().getFilterFields()) {
+		for(FieldDescriptor fd : this.servlet.getConfig(corpus).getFilterFields()) {
 			String[] filterValues = this.getParameterValues(fd.getSearchField(), "");
 
 			if (fd.getType().equalsIgnoreCase("date")) {
@@ -421,7 +421,7 @@ public class SearchResponse extends BaseResponse {
 		// make sure that if there are multiple fields containing multiple words,
 		// each field contains the same number of words
 		if (checkSameNumberOfWordsOrEmpty()) {
-			List<FieldDescriptor> fds = this.servlet.getConfig().getWordProperties();
+			List<FieldDescriptor> fds = this.servlet.getConfig(corpus).getWordProperties();
 
 			// get a value for a FieldDescriptor that is not ""
 			String words = "";
@@ -477,7 +477,7 @@ public class SearchResponse extends BaseResponse {
 	private boolean checkSameNumberOfWordsOrEmpty() {
 		int numWords = -1;
 
-		for(FieldDescriptor fd : this.servlet.getConfig().getWordProperties()) {
+		for(FieldDescriptor fd : this.servlet.getConfig(corpus).getWordProperties()) {
 			String argument = this.getParameter(fd.getSearchField(), "").trim();
 
 			if (argument.length() > 0) {

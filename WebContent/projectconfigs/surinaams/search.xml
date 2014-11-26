@@ -2,15 +2,6 @@
 <SearchInterface>
     <InterfaceProperties>
         <Name>Corpus Surinaams Nederlands</Name>
-        
-        <!--
-        <WebserviceInternal>http://localhost:8080/corpussurinaams/</WebserviceInternal>
-        <WebserviceExternal>http://svowmc01:8080/corpussurinaams/</WebserviceExternal>
-        <HelpPage>/vol1/molechaser/servlet/mc_help.txt</HelpPage>
-        <AboutPage>/vol1/molechaser/servlet/mc_about.txt</AboutPage>
-        <GoogleAnalyticsKey>UA-43624324-2</GoogleAnalyticsKey>
-        -->
-        
         <NavLinks>
             <Link value="search">Home</Link>
             <Link value="http://www.inl.nl" newWindow="true">INL</Link>

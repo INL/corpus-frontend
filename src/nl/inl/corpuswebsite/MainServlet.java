@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -51,7 +53,7 @@ public class MainServlet extends HttpServlet {
 	private final String LOG4J_PROPERTIES = "/WEB-INF/config/";
 
 	/** Our configuration parameters (from search.xml) */
-	private WebsiteConfig config;
+	private Map<String, WebsiteConfig> configs = new HashMap<String, WebsiteConfig>();
 
 	/** Directory where the WAR was extracted to (i.e. $TOMCAT/webapps/mywar/) */
 	private File warExtractDir = null;
@@ -67,11 +69,13 @@ public class MainServlet extends HttpServlet {
 
 	private Properties adminProps;
 
-	private String resultsStylesheet = null;
+	private Map<String, String> stylesheets = new HashMap<String, String>();
 
-	private String articleStylesheet = null;
-
-	private String metadataStylesheet;
+	/** If the URL doesn't contain the corpus name, this is the default corpus
+	 *  we use. We determine this from the name of the .war file (i.e. zeebrieven.war
+	 *  defaults to zeebrieven, etc.)
+	 */
+	private String defaultCorpus = "chn";
 
 	@Override
 	public void init(ServletConfig cfg) throws ServletException {
@@ -80,41 +84,39 @@ public class MainServlet extends HttpServlet {
 		// initialise log4j
 		LogUtil.initLog4j(new File(cfg.getServletContext().getRealPath(LOG4J_PROPERTIES)));
 
-		File configFile = null;
 		try {
 			startVelocity(cfg);
 
 			// Get the name of the folder that contains our deployed war file
 			warExtractDir = new File(cfg.getServletContext().getRealPath("/"));
 			debugLog("WAR dir: " + warExtractDir);
+			String warName = warExtractDir.getName();
+			
+			// Determine default corpus name from the .war file name
+			// (this is the "old" way of doing it, with a separate war for each
+			//  corpus; the "new" way is one war for all corpora, dynamically
+			//  switching based on URL path)
+			if (warName.equals("zeebrieven") || warName.equals("gysseling") || warName.equals("surinaams"))
+				defaultCorpus = warName;
+			debugLog("Default corpus name: " + defaultCorpus);
 			contextPath = cfg.getServletContext().getContextPath();
 
-			// attempt to load a properties file with the same name as the folder
-					//new File(cfg.getServletContext().getRealPath("/../" + warFileName + ".xml"));
-			configFile = new File(warExtractDir, "WEB-INF/config/project/search.xml");
-			if (!configFile.exists() || !configFile.canRead())
-				throw new ServletException("Config file not found or not readable: " + configFile);
-			loadProperties(configFile);
-			debugLog("Config file: " + configFile);
-
 			// Load the external properties file (for administration settings)
-			String adminPropFileName = warExtractDir.getName() + ".properties";
+			String adminPropFileName = warName + ".properties";
 			File adminPropFile = findPropertiesFile(adminPropFileName);
 			if (adminPropFile == null)
-				throw new ServletException("File " + adminPropFileName + " (with webserviceInternal and webserviceExternal settings) not found in webapps or temp dir!");
+				throw new ServletException("File " + adminPropFileName + " (with blsUrl and blsUrlExternal settings) not found in webapps or temp dir!");
 			adminProps = PropertiesUtil.readFromFile(adminPropFile);
 			debugLog("Admin prop file: " + adminPropFile);
-			if (getWebserviceUrl() == null)
-				throw new ServletException("Missing webserviceInternal setting in " + adminPropFile);
-			if (getExternalWebserviceUrl() == null)
-				throw new ServletException("Missing webserviceExternal setting in " + adminPropFile);
-			debugLog("webserviceInternal: " + getWebserviceUrl());
-			debugLog("webserviceExternal: " + getExternalWebserviceUrl());
+			if (!adminProps.containsKey("blsUrl"))
+				throw new ServletException("Missing blsUrl setting in " + adminPropFile);
+			if (!adminProps.containsKey("blsUrlExternal"))
+				throw new ServletException("Missing blsUrlExternal setting in " + adminPropFile);
+			debugLog("blsUrl: " + adminProps.getProperty("blsUrl"));
+			debugLog("blsUrlExternal: " + adminProps.getProperty("blsUrlExternal"));
 
 		} catch(ServletException e) {
 			throw e;
-		} catch(ConfigurationException e) {
-			throw new ServletException("Error reading config file: " + configFile, e);
 		} catch (Exception e) {
 			throw new ServletException(e);
 		}
@@ -151,15 +153,6 @@ public class MainServlet extends HttpServlet {
 			return fileInTmpDir;
 
 		return null;
-	}
-
-	/**
-	 * Load the properties file of this webapp
-	 * @param configFile location of the config file
-	 * @throws ConfigurationException *
-	 */
-	private void loadProperties(File configFile) throws ConfigurationException {
-		config = new WebsiteConfig(configFile);
 	}
 
 	/**
@@ -211,10 +204,26 @@ public class MainServlet extends HttpServlet {
 
 	/**
 	 * Return the website config
+	 * @param corpus config for which corpus to read
 	 * @return the website config
 	 */
-	public WebsiteConfig getConfig() {
-		return config;
+	public WebsiteConfig getConfig(String corpus) {
+		File configFile = null;
+		try {
+			if (!configs.containsKey(corpus)) {
+				// attempt to load a properties file with the same name as the folder
+				//new File(cfg.getServletContext().getRealPath("/../" + warFileName + ".xml"));
+				configFile = getProjectFile(corpus, "search.xml", true);
+				if (!configFile.exists() || !configFile.canRead())
+					throw new RuntimeException("Config file not found or not readable: " + configFile);
+				configs.put(corpus, new WebsiteConfig(configFile));
+				debugLog("Config file: " + configFile);
+			}
+		} catch(ConfigurationException e) {
+			throw new RuntimeException("Error reading config file: " + configFile, e);
+		}
+
+		return configs.get(corpus);
 	}
 
 	@Override
@@ -230,15 +239,31 @@ public class MainServlet extends HttpServlet {
 	private void processRequest(HttpServletRequest request, HttpServletResponse response) {
 		BaseResponse br;
 
+		String requestUri = request.getRequestURI();
+		String corpus = defaultCorpus; // corpus to use if not in URL path
+		
+		// NEW STYLE: /contextpath/CORPUS/operation ?
+		Pattern p = Pattern.compile("^" + contextPath + "/([a-zA-Z0-9\\-_]+)/([a-zA-Z0-9\\-_]+)/?$");
+		Matcher m = p.matcher(requestUri);
+		if (m.matches() && !m.group(1).equals("page")) {
+			// Yes, corpus name specified. Use that.
+			corpus = m.group(1);
+			String operation = m.group(2);
+			// Translate back to old URI style.
+			requestUri = contextPath + "/page/" + operation;
+		}
+		
 		// get corresponding response object
-		if(responses.containsKey(request.getRequestURI())) {
-			br = responses.get(request.getRequestURI()).duplicate();
+		if(responses.containsKey(requestUri)) {
+			br = responses.get(requestUri).duplicate();
 		} else {
 			// if there is no corresponding response object
 			// display an error
 			br = responses.get("error");
-			br.getContext().put("error", "Response for '" + request.getRequestURI() + "' not found");
+			br.getContext().put("error", "Response for '" + requestUri + "' not found");
 		}
+		
+		br.setCorpus(corpus);
 
 		br.init(request, response, this);
 		br.processRequest();
@@ -248,83 +273,91 @@ public class MainServlet extends HttpServlet {
 	public File getWarExtractDir() {
 		return warExtractDir;
 	}
-
-	public File getHelpPage() {
-		return new File(warExtractDir, "WEB-INF/config/project/help.inc");
+	
+	/**
+	 * Look for project-specific version of file.
+	 * If not found, return a generic version.
+	 * 
+	 * @param corpus corpus we're searching
+	 * @param fileName file we're looking for
+	 * @param mustExist if true, throws an exception if not found; 
+	 *   otherwise just returns null
+	 * @return the appropriate instance of the file to use
+	 */
+	private File getProjectFile(String corpus, String fileName, boolean mustExist) {
+		if (corpus.length() > 0) {
+			System.out.println("* Corpus: " + corpus);
+			File file = new File(warExtractDir, "projectconfigs/" + corpus + "/" + fileName);
+			if (file.exists()) {
+				System.out.println("* File exists: " + file);
+				return file;
+			}
+			System.out.println("* File doesn't exist: " + file);
+		}
+		
+		if (mustExist)
+			throw new RuntimeException("Couldn't find file '" + fileName + "' for corpus '" + corpus + "'");
+		return null;
+		//return new File(warExtractDir, "WEB-INF/config/project/" + fileName);
 	}
 
-	public File getAboutPage() {
-		return new File(warExtractDir, "WEB-INF/config/project/about.inc");
+	public File getHelpPage(String corpus) {
+		return getProjectFile(corpus, "help.inc", true);
+	}
+
+	public File getAboutPage(String corpus) {
+		return getProjectFile(corpus, "about.inc", true);
 	}
 
 	public String getSourceImagesLocation() {
 		return adminProps.getProperty("sourceImagesLocation", "");
 	}
 
-	public String getWebserviceUrl() {
-		return adminProps.getProperty("webserviceInternal");
+	public String getWebserviceUrl(String corpus) {
+		String url = adminProps.getProperty("blsUrl");
+		if (!url.endsWith("/"))
+			url += "/";
+		url += corpus + "/";
+		return url;
 	}
 
-	public String getExternalWebserviceUrl() {
-		return adminProps.getProperty("webserviceExternal");
+	public String getExternalWebserviceUrl(String corpus) {
+		String url = adminProps.getProperty("blsUrlExternal");
+		if (!url.endsWith("/"))
+			url += "/";
+		url += corpus + "/";
+		return url;
 	}
 
 	public Object getGoogleAnalyticsKey() {
 		return adminProps.getProperty("googleAnalyticsKey", "");
 	}
 
-	public String getResultsStylesheet() {
-		if (resultsStylesheet == null) {
+	public String getStylesheet(String corpus, String stylesheetName) {
+		String key = corpus + "__" + stylesheetName;
+		String stylesheet = stylesheets.get(key);
+		if (stylesheet == null) {
+			// Look for the stylesheet in the project config dir, or else in the stylesheets dir.
+			File pathToFile = getProjectFile(corpus, stylesheetName, false);
+			if (pathToFile == null || !pathToFile.exists())
+				pathToFile = new File(getWarExtractDir(), "WEB-INF/stylesheets/" + stylesheetName);
 			try {
-				resultsStylesheet = getStylesheet("results.xsl");
-			} catch (IOException e) {
+				BufferedReader br = new BufferedReader(new FileReader(pathToFile));
+		
+				// read the response from the webservice
+				String line;
+				StringBuilder builder = new StringBuilder();
+				while( (line = br.readLine()) != null )
+					builder.append(line);
+		
+				br.close();
+				stylesheet = builder.toString();
+			} catch(IOException e) {
 				throw new RuntimeException(e);
 			}
+			stylesheets.put(key, stylesheet);
 		}
-		return resultsStylesheet;
-	}
-
-	public String getArticleStylesheet() {
-		if (articleStylesheet == null) {
-			String corpusDataFormat = getConfig().getCorpusDataFormat();
-			try {
-				articleStylesheet = getStylesheet("article_" + corpusDataFormat + ".xsl");
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
-		return articleStylesheet;
-	}
-
-	public String getMetadataStylesheet() {
-		if (metadataStylesheet == null) {
-			try {
-				metadataStylesheet = getStylesheet("article_meta.xsl");
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
-		return metadataStylesheet;
-	}
-
-	public String getStylesheet(String name) throws IOException {
-		// clear string builder
-		StringBuilder builder = new StringBuilder();
-
-		// Look for the stylesheet in the project config dir, or else in the stylesheets dir.
-		File pathToFile = new File(getWarExtractDir(), "WEB-INF/config/project/" + name);
-		if (!pathToFile.exists())
-			pathToFile = new File(getWarExtractDir(), "WEB-INF/stylesheets/" + name);
-		BufferedReader br = new BufferedReader(new FileReader(pathToFile));
-
-		// read the response from the webservice
-		String line;
-		while( (line = br.readLine()) != null )
-			builder.append(line);
-
-		br.close();
-
-		return builder.toString();
+		return stylesheet;
 	}
 
 

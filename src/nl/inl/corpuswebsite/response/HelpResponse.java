@@ -15,12 +15,11 @@ public class HelpResponse extends BaseResponse {
 	 */
 	@Override
 	protected void completeRequest() {
-		this.putFileContentIntoContext("content", this.servlet.getHelpPage());
-		this.getContext().put("title", this.servlet.getConfig().getCorpusName());
-		this.getContext().put("websiteconfig", this.servlet.getConfig());
+		this.putFileContentIntoContext("content", this.servlet.getHelpPage(corpus));
+		this.getContext().put("title", this.servlet.getConfig(corpus).getCorpusName());
+		this.getContext().put("websiteconfig", this.servlet.getConfig(corpus));
 		this.getContext().put("googleAnalyticsKey", this.servlet.getGoogleAnalyticsKey());
 		this.displayHtmlTemplate(this.servlet.getTemplate("contentpage"));
-
 	}
 
 	/* (non-Javadoc)

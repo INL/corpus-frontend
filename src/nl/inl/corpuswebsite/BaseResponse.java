@@ -36,6 +36,9 @@ public abstract class BaseResponse {
 	private List<String> requiredParameters;
 	//private StringBuilder builder = new StringBuilder();
 	private VelocityContext context = new VelocityContext();
+	
+	/** The corpus to use, if different from the "default" */
+	protected String corpus = "";
 
 	protected BaseResponse() {
 		requiredParameters = new ArrayList<String>();
@@ -239,5 +242,9 @@ public abstract class BaseResponse {
 	abstract protected void logRequest();
 
 	abstract public BaseResponse duplicate();
+
+	public void setCorpus(String corpus) {
+		this.corpus = corpus;
+	}
 
 }

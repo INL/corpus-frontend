@@ -2,16 +2,6 @@
 <SearchInterface>
 	<InterfaceProperties>
 		<Name>Brieven als Buit</Name>
-		
-		<!--
-		<WebserviceInternal>http://localhost:8080/zbcorpus/</WebserviceInternal>
-		<WebserviceExternal>http://svowmc01:8080/zbcorpus/</WebserviceExternal>
-		<SourceImagesLocation>http://brievenalsbuit.inl.nl/zeeplaatjes/</SourceImagesLocation>
-		<HelpPage>/vol1/molechaser/servlet/zb_help.txt</HelpPage>
-		<AboutPage>/vol1/molechaser/servlet/zb_about.txt</AboutPage>
-		<GoogleAnalyticsKey>UA-43624324-1</GoogleAnalyticsKey>
-		-->
-		
 		<BackgroundColor>rgba(228,200,200,0.3)</BackgroundColor>
 		<BackgroundImage>../img/bab_logo_700.png</BackgroundImage>
 		<LinkColor>#b10932</LinkColor>

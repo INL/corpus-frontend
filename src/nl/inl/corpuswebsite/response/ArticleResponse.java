@@ -35,11 +35,13 @@ public class ArticleResponse extends BaseResponse {
 	private String metadataStylesheet;
 
 	@Override
-	public void init(HttpServletRequest argRequest, HttpServletResponse argResponse,
-			MainServlet argServlet) {
-		super.init(argRequest, argResponse, argServlet);
-		String corpusDataFormat = servlet.getConfig(corpus).getCorpusDataFormat();
-		articleStylesheet = servlet.getStylesheet(corpus, "article_" + corpusDataFormat + ".xsl");
+	public void init(HttpServletRequest request, HttpServletResponse response,
+			MainServlet servlet) {
+		super.init(request, response, servlet);
+		String corpusDataFormat = servlet.getConfig(corpus)
+				.getCorpusDataFormat();
+		articleStylesheet = servlet.getStylesheet(corpus, "article_"
+				+ corpusDataFormat + ".xsl");
 		metadataStylesheet = servlet.getStylesheet(corpus, "article_meta.xsl");
 	}
 
@@ -47,33 +49,46 @@ public class ArticleResponse extends BaseResponse {
 	protected void completeRequest() {
 		String pid = this.getParameter("doc", "");
 		if (pid.length() > 0) {
-			webservice = new QueryServiceHandler(this.servlet.getWebserviceUrl(corpus) + "docs/" + pid + "/contents", this.servlet);
-			webserviceMeta = new QueryServiceHandler(this.servlet.getWebserviceUrl(corpus) + "docs/" + pid, this.servlet);
+			webservice = new QueryServiceHandler(
+					servlet.getWebserviceUrl(corpus) + "docs/" + pid
+							+ "/contents", servlet);
+			webserviceMeta = new QueryServiceHandler(
+					servlet.getWebserviceUrl(corpus) + "docs/" + pid, servlet);
 		}
 
-		if (this.request.getParameterMap().size() > 0) {
+		if (request.getParameterMap().size() > 0) {
 			// get parameter values
 			String query = this.getParameter("query", "");
 
-			Map<String, String[]> parameters = UrlParameterFactory.getSourceParameters(query, null);
+			Map<String, String[]> parameters = UrlParameterFactory
+					.getSourceParameters(query, null);
 			try {
 				String xmlResult = webservice.makeRequest(parameters);
 				if (xmlResult.contains("NOT_AUTHORIZED")) {
-					this.getContext().put("article_content", "");
+					getContext().put("article_content", "");
 				} else {
 					transformer.clearParameters();
-					transformer.addParameter("source_images", this.servlet.getSourceImagesLocation());
-					transformer.addParameter("title_name", this.servlet.getConfig(corpus).getFieldIndexForFunction("title"));
-					this.getContext().put("article_content", transformer.transform(xmlResult, articleStylesheet));
+					transformer.addParameter("source_images",
+							servlet.getSourceImagesLocation());
+					transformer.addParameter(
+							"title_name",
+							servlet.getConfig(corpus).getFieldIndexForFunction(
+									"title"));
+					getContext()
+							.put("article_content",
+									transformer.transform(xmlResult,
+											articleStylesheet));
 				}
 
 				Map<String, String[]> metaParam = new HashMap<String, String[]>();
-				//metaParam.put("outputformat", new String[] {"xml"});
+				// metaParam.put("outputformat", new String[] {"xml"});
 				xmlResult = webserviceMeta.makeRequest(metaParam);
 				transformer.clearParameters();
-				transformer.addParameter("title_name", this.servlet.getConfig(corpus).getFieldIndexForFunction("title"));
-				String htmlResult = transformer.transform(xmlResult, metadataStylesheet);
-				this.getContext().put("article_meta", htmlResult);
+				transformer.addParameter("title_name", servlet
+						.getConfig(corpus).getFieldIndexForFunction("title"));
+				String htmlResult = transformer.transform(xmlResult,
+						metadataStylesheet);
+				getContext().put("article_meta", htmlResult);
 
 			} catch (IOException e) {
 				throw new RuntimeException(e);
@@ -81,26 +96,15 @@ public class ArticleResponse extends BaseResponse {
 				throw new RuntimeException(e);
 			}
 		}
-		this.getContext().put("title", this.servlet.getConfig(corpus).getCorpusName());
-		this.getContext().put("websiteconfig", this.servlet.getConfig(corpus));
-		this.getContext().put("googleAnalyticsKey", this.servlet.getGoogleAnalyticsKey());
+		// this.getContext().put("title",
+		// this.servlet.getConfig(corpus).getCorpusName());
+		// this.getContext().put("websiteconfig",
+		// this.servlet.getConfig(corpus));
+		// this.getContext().put("googleAnalyticsKey",
+		// this.servlet.getGoogleAnalyticsKey());
 
 		// display template
-		this.displayHtmlTemplate(this.servlet.getTemplate("article"));
-	}
-
-	/* (non-Javadoc)
-	 * @see nl.inl.corpuswebsite.BaseResponse#logRequest()
-	 */
-	@Override
-	protected void logRequest() {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public BaseResponse duplicate() {
-		return new ArticleResponse();
+		displayHtmlTemplate(servlet.getTemplate("article"));
 	}
 
 }

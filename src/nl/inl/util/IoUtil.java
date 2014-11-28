@@ -1,4 +1,5 @@
 package nl.inl.util;
+
 /*******************************************************************************
  * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
  *
@@ -15,7 +16,6 @@ package nl.inl.util;
  * limitations under the License.
  *******************************************************************************/
 
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,7 +28,8 @@ import java.io.Reader;
 public class IoUtil {
 
 	/**
-	 * Wraps the specified reader in a BufferedReader for efficient and convenient access.
+	 * Wraps the specified reader in a BufferedReader for efficient and
+	 * convenient access.
 	 *
 	 * Does nothing if the reader is already a BufferedReader.
 	 *
@@ -44,7 +45,9 @@ public class IoUtil {
 
 	/**
 	 * Read text from an input stream.
-	 * @param is the input stream
+	 * 
+	 * @param is
+	 *            the input stream
 	 * @return the text read
 	 * @throws IOException
 	 */

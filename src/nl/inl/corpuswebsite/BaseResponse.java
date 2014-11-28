@@ -28,15 +28,20 @@ import org.apache.velocity.VelocityContext;
 public abstract class BaseResponse {
 	protected static final Logger logger = Logger.getLogger(BaseResponse.class);
 
-	private final String OUTPUT_ENCODING = "UTF-8";
+	private static final String OUTPUT_ENCODING = "UTF-8";
+
+	protected MainServlet servlet;
 
 	protected HttpServletRequest request;
+
 	protected HttpServletResponse response;
-	protected MainServlet servlet;
+
+	/** Required parameters for this operation */
 	private List<String> requiredParameters;
-	//private StringBuilder builder = new StringBuilder();
+
+	/** Velocity template variables */
 	private VelocityContext context = new VelocityContext();
-	
+
 	/** The corpus to use, if different from the "default" */
 	protected String corpus = "";
 
@@ -46,14 +51,25 @@ public abstract class BaseResponse {
 
 	/**
 	 * Initialise this object with
-	 * @param argRequest
-	 * @param argResponse
-	 * @param argServlet
+	 * 
+	 * @param request
+	 *            the HTTP request object
+	 * @param response
+	 *            the HTTP response object
+	 * @param servlet
+	 *            our servlet
 	 */
-	public void init(HttpServletRequest argRequest, HttpServletResponse argResponse, MainServlet argServlet) {
-		request = argRequest;
-		response = argResponse;
-		servlet = argServlet;
+	public void init(HttpServletRequest request, HttpServletResponse response,
+			MainServlet servlet) {
+		this.request = request;
+		this.response = response;
+		this.servlet = servlet;
+
+		VelocityContext context = getContext();
+		context.put("title", this.servlet.getConfig(corpus).getCorpusName());
+		context.put("websiteconfig", this.servlet.getConfig(corpus));
+		context.put("googleAnalyticsKey", this.servlet.getGoogleAnalyticsKey());
+		context.put("pathToTop", ".."); // correct for most pages, but for "list of corpora" it's "." 
 	}
 
 	/**
@@ -65,26 +81,25 @@ public abstract class BaseResponse {
 		return context;
 	}
 
-	protected void clearContext() {
-		context = new VelocityContext();
-	}
-
 	/**
 	 * Display a specific template, with specific mime type
 	 *
-	 * @param argT
-	 * @param mime
+	 * @param template
+	 *            template to display
+	 * @param mimeType
+	 *            mime type to set
 	 */
-	protected void displayTemplate(Template argT, String mime) {
+	protected void displayTemplate(Template template, String mimeType) {
 		// Set the content headers for the response
 		response.setCharacterEncoding(OUTPUT_ENCODING);
-		response.setContentType(mime);
+		response.setContentType(mimeType);
 
 		// Merge context into the page template and write to output stream
 		try {
-			OutputStreamWriter osw = new OutputStreamWriter(response.getOutputStream(), OUTPUT_ENCODING);
+			OutputStreamWriter osw = new OutputStreamWriter(
+					response.getOutputStream(), OUTPUT_ENCODING);
 			try {
-				argT.merge(getContext(), osw);
+				template.merge(context, osw);
 				osw.flush();
 			} finally {
 				osw.close();
@@ -96,10 +111,11 @@ public abstract class BaseResponse {
 
 	/**
 	 * Display a template with the XML mime type
-	 * @param argT
+	 * 
+	 * @param template
 	 */
-	protected void displayHtmlTemplate(Template argT) {
-		displayTemplate(argT, "text/html");
+	protected void displayHtmlTemplate(Template template) {
+		displayTemplate(template, "text/html");
 	}
 
 	/**
@@ -107,37 +123,39 @@ public abstract class BaseResponse {
 	 */
 	final public void processRequest() {
 		// if we have enough parameters to complete this request...
-		if(sufficientParameters()) {
+		if (sufficientParameters()) {
 			completeRequest();
-			logRequest();
 		} else {
 			// insufficient parameters supplied, return error
-			this.getContext().put("error", "Insufficient parameters");
-			this.displayHtmlTemplate(this.servlet.getTemplate("error"));
+			context.put("error", "Insufficient parameters");
+			displayHtmlTemplate(servlet.getTemplate("error"));
 		}
 	}
 
 	/**
-	 * Add a required parameter to the list
+	 * Add a required parameter to the list.
+	 * 
 	 * @param param
+	 *            parameter name
 	 */
 	protected void addRequiredParameter(String param) {
 		requiredParameters.add(param);
 	}
 
 	/**
-	 * Check if all parameters necessary to complete a search request exist
-	 * @return true/false
+	 * Check if all parameters necessary to complete a search request exist.
+	 * 
+	 * @return true if they do, false if not
 	 */
 	private boolean sufficientParameters() {
 		// for each parameter in the list
-		for(String p : requiredParameters) {
+		for (String p: requiredParameters) {
 			// if it is missing, return false
-			if(request.getParameter(p) == null)
+			if (request.getParameter(p) == null)
 				return false;
 
 			// if, after trimming, it is empty, return false
-			if(request.getParameter(p).trim().length() < 1)
+			if (request.getParameter(p).trim().length() < 1)
 				return false;
 		}
 
@@ -158,7 +176,7 @@ public abstract class BaseResponse {
 		// get the trimmed parameter value
 		String value = request.getParameter(name);
 
-		if(value != null) {
+		if (value != null) {
 			value = value.trim();
 
 			// if the parameter value is an empty string
@@ -185,22 +203,23 @@ public abstract class BaseResponse {
 		try {
 			return Integer.parseInt(stringToParse);
 		} catch (NumberFormatException e) {
-			logger.info("Could not parse parameter '" + name + "', value '" + stringToParse
-					+ "'. Using default (" + defaultValue + ")");
+			logger.info("Could not parse parameter '" + name + "', value '"
+					+ stringToParse + "'. Using default (" + defaultValue + ")");
 			return defaultValue;
 		}
 	}
 
 	public String[] getParameterValues(String name, String defaultValue) {
-		String[] values = this.request.getParameterValues(name);
+		String[] values = request.getParameterValues(name);
 
-		if(values == null)
-			values = new String[]{};
+		if (values == null)
+			values = new String[] {};
 
 		return values;
 	}
 
-	public List<String> getParameterValuesAsList(String name, String defaultValue) {
+	public List<String> getParameterValuesAsList(String name,
+			String defaultValue) {
 		return Arrays.asList(getParameterValues(name, defaultValue));
 	}
 
@@ -211,12 +230,10 @@ public abstract class BaseResponse {
 	}
 
 	/**
-	 * Returns the value of a servlet parameter, or the default value
+	 * Returns the value of a servlet parameter, or the default value.
 	 *
-	 * @param name
-	 *            name of the parameter
-	 * @param defaultValue
-	 *            default value
+	 * @param name name of the parameter
+	 * @param defaultValue default value
 	 * @return value of the paramater
 	 */
 	public boolean getParameter(String name, boolean defaultValue) {
@@ -224,10 +241,10 @@ public abstract class BaseResponse {
 	}
 
 	protected void putFileContentIntoContext(String contextKey, File pathToFile) {
-		if(pathToFile.exists()) {
+		if (pathToFile.exists()) {
 
 			List<String> lines = FileUtil.readLines(pathToFile);
-			this.getContext().put(contextKey, StringUtil.join(lines, "\n"));
+			context.put(contextKey, StringUtil.join(lines, "\n"));
 		}
 	}
 
@@ -235,13 +252,6 @@ public abstract class BaseResponse {
 	 * Complete the request - automatically called by processRequest()
 	 */
 	abstract protected void completeRequest();
-
-	/**
-	 * Log the request - automatically called by processRequest()
-	 */
-	abstract protected void logRequest();
-
-	abstract public BaseResponse duplicate();
 
 	public void setCorpus(String corpus) {
 		this.corpus = corpus;

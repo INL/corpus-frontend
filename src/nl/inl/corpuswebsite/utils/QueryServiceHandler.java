@@ -22,10 +22,16 @@ public class QueryServiceHandler {
 
 	private String webserviceBaseUrl;
 
-	/** Last backend url requested, so we can pass it to the frontend for status checks */
+	/**
+	 * Last backend url requested, so we can pass it to the frontend for status
+	 * checks
+	 */
 	private String lastRequestUrl;
 
-	/** The servlet, for converting internal URL to external URL for use by client */
+	/**
+	 * The servlet, for converting internal URL to external URL for use by
+	 * client
+	 */
 	private MainServlet servlet;
 
 	public QueryServiceHandler(String url, MainServlet servlet) {
@@ -35,7 +41,9 @@ public class QueryServiceHandler {
 
 	/**
 	 * Performs request to the webservice and returns the response.
-	 * @param params parameters to send
+	 * 
+	 * @param params
+	 *            parameters to send
 	 * @return the response
 	 * @throws IOException
 	 */
@@ -52,7 +60,8 @@ public class QueryServiceHandler {
 		String reason = null;
 		try {
 			URL urlObj = new URL(url);
-			HttpURLConnection connection = (HttpURLConnection) urlObj.openConnection();
+			HttpURLConnection connection = (HttpURLConnection) urlObj
+					.openConnection();
 			try {
 				connection.setRequestProperty("Accept", "application/xml");
 				connection.setRequestMethod("GET");
@@ -75,7 +84,9 @@ public class QueryServiceHandler {
 
 	/**
 	 * Construct the GET url from the base URL and the parameter map
-	 * @param params the parameters to send
+	 * 
+	 * @param params
+	 *            the parameters to send
 	 * @return the full GET url
 	 */
 	private String makeQueryString(Map<String, String[]> params) {
@@ -84,17 +95,18 @@ public class QueryServiceHandler {
 
 		if (params != null) {
 			try {
-				for(String key : params.keySet()) {
-					if(params.get(key).length > 0) {
+				for (String key: params.keySet()) {
+					if (params.get(key).length > 0) {
 						String[] values = params.get(key);
-						for(int i = 0; i < values.length; i++) {
+						for (int i = 0; i < values.length; i++) {
 							String value = values[i];
-							if(value.length() > 0) {
+							if (value.length() > 0) {
 								if (builder.length() > 0)
 									builder.append("&");
 								builder.append(key);
 								builder.append("=");
-								builder.append(URLEncoder.encode(value, "UTF-8"));
+								builder.append(URLEncoder
+										.encode(value, "UTF-8"));
 							}
 						}
 					}
@@ -109,10 +121,11 @@ public class QueryServiceHandler {
 	}
 
 	public String getBaseUrl() {
-		return this.webserviceBaseUrl;
+		return webserviceBaseUrl;
 	}
 
 	public String getLastRequestUrlForClient(String corpus) {
-		return lastRequestUrl.replace(servlet.getWebserviceUrl(corpus), servlet.getExternalWebserviceUrl(corpus));
+		return lastRequestUrl.replace(servlet.getWebserviceUrl(corpus),
+				servlet.getExternalWebserviceUrl(corpus));
 	}
 }

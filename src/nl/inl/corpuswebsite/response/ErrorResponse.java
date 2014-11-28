@@ -5,33 +5,16 @@ package nl.inl.corpuswebsite.response;
 
 import nl.inl.corpuswebsite.BaseResponse;
 
-/**
- *
- */
+/** Show an error page. */
 public class ErrorResponse extends BaseResponse {
 
-	/* (non-Javadoc)
-	 * @see nl.inl.corpuswebsite.BaseResponse#completeRequest()
-	 */
 	@Override
 	protected void completeRequest() {
-		if (!this.getContext().containsKey("error"))
-			this.getContext().put("error", "Unknown error occurred (invalid path?)");
-		this.displayHtmlTemplate(this.servlet.getTemplate("error"));
-	}
 
-	/* (non-Javadoc)
-	 * @see nl.inl.corpuswebsite.BaseResponse#logRequest()
-	 */
-	@Override
-	protected void logRequest() {
-		// TODO Auto-generated method stub
+		getContext().put("error",
+				"Response for '" + request.getRequestURI() + "' not found");
 
-	}
-
-	@Override
-	public BaseResponse duplicate() {
-		return new ErrorResponse();
+		displayHtmlTemplate(servlet.getTemplate("error"));
 	}
 
 }

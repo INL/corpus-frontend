@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<SearchInterface>
+    <InterfaceProperties>
+        <Name>BlackLab AutoSearch</Name>
+        <NavLinks>
+            <Link value="search">Home</Link>
+            <Link value="http://www.inl.nl" newWindow="true">INL</Link>
+            <Link value="http://www.clarin.eu" newWindow="true">CLARIN</Link>
+            <Link value="http://taalunie.org" newWindow="true">NTU</Link>
+            <Link value="help#help">How do I search?</Link>
+            <Link value="help#beta">BETA</Link>
+        </NavLinks>
+    </InterfaceProperties>
+    <DocumentProperties>
+    </DocumentProperties>
+    <WordProperties>
+        <Property>
+            <Name>Wordform</Name>
+            <Index>word</Index>
+            <Sensitive>True</Sensitive>
+            <Function>wordform</Function>
+        </Property>
+        <Property>
+            <Name>Lemma</Name>
+            <Index>lemma</Index>
+            <Function>lemma</Function>
+        </Property>
+        <Property>
+            <Name>P.o.S.</Name>
+            <Index>pos</Index>
+            <Function>pos</Function>
+        </Property>
+    </WordProperties>
+</SearchInterface>
+            

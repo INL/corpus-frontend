@@ -5,12 +5,12 @@
 		<meta http-equiv="content-type" content="text/html; charset=utf-8">
         <meta name="description" content="$title search provided by the INL in Leiden.">
         <meta name="viewport" content="width=device-width">
-		<meta property="og:image" content="../apple-touch-icon-144x144-precomposed.png" />
+		<meta property="og:image" content="$pathToTop/apple-touch-icon-144x144-precomposed.png" />
 		<meta property="og:description" content="$title search provided by the INL in Leiden."/>
-		<link title="Search" type="application/opensearchdescription+xml" rel="search" href="../opensearch.xml">
-        <link rel="stylesheet" href="../css/bootstrap.min.css">
-        <link rel="stylesheet" href="../css/bootstrap-responsive.min.css">
-        <link rel="stylesheet" href="../css/main.css">
+		<link title="Search" type="application/opensearchdescription+xml" rel="search" href="$pathToTop/opensearch.xml">
+        <link rel="stylesheet" href="$pathToTop/css/bootstrap.min.css">
+        <link rel="stylesheet" href="$pathToTop/css/bootstrap-responsive.min.css">
+        <link rel="stylesheet" href="$pathToTop/css/main.css">
 		<style>
             body {
                 padding-top: 60px;
@@ -36,16 +36,16 @@
 			}
 			#end
         </style>
-		<link rel="icon" type="image/png" href="../favicon.png">
-		<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+		<link rel="icon" type="image/png" href="$pathToTop/favicon.png">
+		<link rel="apple-touch-icon" href="$pathToTop/apple-touch-icon.png">
 		<link  href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/3.2.1/css/font-awesome.min.css" rel="stylesheet">
         <script src="//cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>		
         <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.2.1/bootstrap.min.js"></script>
-        <script src="../js/main.js"></script>
-		<script src="../js/purl.js"></script>
-		<script src="../js/status_check.js"></script>
-		<script src="../js/ajax_retriever.js"></script>
+        <script src="$pathToTop/js/main.js"></script>
+		<script src="$pathToTop/js/purl.js"></script>
+		<script src="$pathToTop/js/status_check.js"></script>
+		<script src="$pathToTop/js/ajax_retriever.js"></script>
 		<title>$title search</title>
     </head>
     <body>
@@ -67,7 +67,7 @@
 					#if($websiteconfig.getLogo().length() > 0)
 					<img src="$websiteconfig.getLogo()" class="booklogo" />
 					#else
-					<!-- <img src="../img/booklogo.png" class="booklogo" /> -->
+					<!-- <img src="$pathToTop/img/booklogo.png" class="booklogo" /> -->
 					#end
                     <div class="nav-collapse collapse">
                         <ul class="nav">

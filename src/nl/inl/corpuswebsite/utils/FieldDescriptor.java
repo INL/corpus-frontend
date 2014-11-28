@@ -41,18 +41,20 @@ public class FieldDescriptor {
 		}
 	}
 
-	public FieldDescriptor(String argName, boolean argNumeric, boolean argFuzzy, boolean argSensitive, String argSearchField, String argDisplayField, String argFunction) {
-		name = argName;
-		isNumeric = argNumeric;
-		isFuzzy = argFuzzy;
-		isSensitive = argSensitive;
-		searchField = argSearchField;
-		displayField = argDisplayField;
+	public FieldDescriptor(String name, boolean isNumeric, boolean isFuzzy,
+			boolean isSensitive, String searchField, String displayField,
+			String function) {
+		this.name = name;
+		this.isNumeric = isNumeric;
+		this.isFuzzy = isFuzzy;
+		this.isSensitive = isSensitive;
+		this.searchField = searchField;
+		this.displayField = displayField;
 
-		if(argFunction != null)
-			function = argFunction;
+		if (function != null)
+			this.function = function;
 		else
-			function = argSearchField;
+			this.function = searchField;
 	}
 
 	public String getName() {
@@ -84,10 +86,10 @@ public class FieldDescriptor {
 	}
 
 	public void addValidValue(String value, String description) {
-		if(value == null)
+		if (value == null)
 			value = "";
 
-		if(value.length() == 0)
+		if (value.length() == 0)
 			value = description;
 
 		validValues.add(new ValuePair(value, description));
@@ -102,24 +104,24 @@ public class FieldDescriptor {
 	}
 
 	public void setType(String type) {
-		if(type == null)
+		if (type == null)
 			type = "";
 
 		this.type = type;
 	}
 
 	public String getType() {
-		return this.type;
+		return type;
 	}
 
 	public String getTabGroup() {
-		return this.tabGroup;
+		return tabGroup;
 	}
 
 	public void setTabGroup(String group) {
-		if(group == null)
+		if (group == null)
 			group = "";
 
-		this.tabGroup = group;
+		tabGroup = group;
 	}
 }

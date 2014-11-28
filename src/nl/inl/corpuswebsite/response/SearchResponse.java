@@ -40,19 +40,19 @@ public class SearchResponse extends BaseResponse {
 	private StringBuilder builder = new StringBuilder();
 
 	private String resultsStylesheet = null;
-//	private String perHitResultStylesheet = null;
-//	private String perDocResultStylesheet = null;
-//	private String groupHitsResultStylesheet = null;
-//	private String groupDocsResultStylesheet = null;
 
-
+	// private String perHitResultStylesheet = null;
+	// private String perDocResultStylesheet = null;
+	// private String groupHitsResultStylesheet = null;
+	// private String groupDocsResultStylesheet = null;
 
 	@Override
 	protected void completeRequest() {
-		this.clearContext();
+		// this.clearContext();
 
-		if (this.request.getParameterMap().size() > 0) {
-			// if any parameters are set, we'll try to interpret the search request
+		if (request.getParameterMap().size() > 0) {
+			// if any parameters are set, we'll try to interpret the search
+			// request
 			int view = this.getParameter("view", VIEW_PER_HIT);
 
 			// if the user has only filled in document filters
@@ -61,52 +61,55 @@ public class SearchResponse extends BaseResponse {
 				view = VIEW_PER_DOC;
 
 			if (webservice == null) {
-				String searchType = (view == VIEW_PER_DOC || view == VIEW_DOCS_GROUPED) ? "docs" : "hits";
-				webservice = new QueryServiceHandler(this.servlet.getWebserviceUrl(corpus) + searchType, this.servlet);
+				String searchType = (view == VIEW_PER_DOC || view == VIEW_DOCS_GROUPED) ? "docs"
+						: "hits";
+				webservice = new QueryServiceHandler(
+						servlet.getWebserviceUrl(corpus) + searchType, servlet);
 			}
 
-			switch(view) {
-				case VIEW_PER_HIT:
-					doPerHitSearch();
-					break;
-				case VIEW_PER_DOC:
-					doPerDocSearch();
-					break;
-				case VIEW_HITS_GROUPED:
-					doGroupPerHitSearch();
-					break;
-				case VIEW_DOCS_GROUPED:
-					doGroupPerDocSearch();
-					break;
+			switch (view) {
+			case VIEW_PER_HIT:
+				doPerHitSearch();
+				break;
+			case VIEW_PER_DOC:
+				doPerDocSearch();
+				break;
+			case VIEW_HITS_GROUPED:
+				doGroupPerHitSearch();
+				break;
+			case VIEW_DOCS_GROUPED:
+				doGroupPerDocSearch();
+				break;
 			}
-			this.getContext().put("view", view);
+			getContext().put("view", view);
 		}
 
 		// put values back as they were
-		this.getContext().put("querybox", getParameter("querybox", ""));
-		this.getContext().put("tab", getParameter("tab", "#simple"));
-		this.getContext().put("max", getParameter("max", 50));
-		this.getContext().put("responseObject", this);
+		getContext().put("querybox", getParameter("querybox", ""));
+		getContext().put("tab", getParameter("tab", "#simple"));
+		getContext().put("max", getParameter("max", 50));
+		getContext().put("responseObject", this);
 
-		this.getContext().put("title", this.servlet.getConfig(corpus).getCorpusName());
-		this.getContext().put("wordproperties", this.servlet.getConfig(corpus).getWordProperties());
-		this.getContext().put("websiteconfig", this.servlet.getConfig(corpus));
-		this.getContext().put("googleAnalyticsKey", this.servlet.getGoogleAnalyticsKey());
+		getContext().put("title", servlet.getConfig(corpus).getCorpusName());
+		getContext().put("wordproperties",
+				servlet.getConfig(corpus).getWordProperties());
+		getContext().put("websiteconfig", servlet.getConfig(corpus));
+		getContext().put("googleAnalyticsKey", servlet.getGoogleAnalyticsKey());
 
 		// display template
-		this.displayHtmlTemplate(this.servlet.getTemplate("search"));
+		displayHtmlTemplate(servlet.getTemplate("search"));
 	}
 
 	@Override
-	public void init(HttpServletRequest argRequest, HttpServletResponse argResponse,
-			MainServlet argServlet) {
-		super.init(argRequest, argResponse, argServlet);
-		resultsStylesheet = argServlet.getStylesheet(corpus, "results.xsl");
+	public void init(HttpServletRequest request, HttpServletResponse response,
+			MainServlet servlet) {
+		super.init(request, response, servlet);
+		resultsStylesheet = servlet.getStylesheet(corpus, "results.xsl");
 	}
 
 	private boolean isFilterQueryOnly() {
 		boolean hasFilter = false;
-		for(FieldDescriptor fd : this.servlet.getConfig(corpus).getFilterFields()) {
+		for (FieldDescriptor fd: servlet.getConfig(corpus).getFilterFields()) {
 			String fieldName = fd.getSearchField();
 
 			if (fd.getType().equalsIgnoreCase("date")) {
@@ -121,7 +124,7 @@ public class SearchResponse extends BaseResponse {
 		}
 
 		// if our query is empty and we have at least one filter value
-		return (this.getQuery().length() <= 2) && hasFilter;
+		return (getQuery().length() <= 2) && hasFilter;
 	}
 
 	private void doPerHitSearch() {
@@ -133,23 +136,26 @@ public class SearchResponse extends BaseResponse {
 			Integer max = this.getParameter("max", 50);
 			Integer start = this.getParameter("start", 0);
 			String sortBy = this.getParameter("sortBy", "");
-//			String sessionId = this.request.getSession().getId();
+			// String sessionId = this.request.getSession().getId();
 			String groupBy = this.getParameter("groupBy", "");
 			String viewGroup = this.getParameter("viewGroup", "");
 			String sort = this.getParameter("sortasc", "1");
 
-			Map<String, String[]> parameters = UrlParameterFactory.getSearchParameters(query, lang, max, start, groupBy, sortBy, viewGroup, sort);
+			Map<String, String[]> parameters = UrlParameterFactory
+					.getSearchParameters(query, lang, max, start, groupBy,
+							sortBy, viewGroup, sort);
 
 			addFilterParameters(parameters);
 
 			try {
-				parameters.put("block", new String[]{"no"});
+				parameters.put("block", new String[] { "no" });
 				String xmlResult = webservice.makeRequest(parameters);
 
 				setTransformerDisplayParameters(query);
 
-				String htmlResult = transformer.transform(xmlResult, resultsStylesheet);
-				this.getContext().put("searchResults", htmlResult);
+				String htmlResult = transformer.transform(xmlResult,
+						resultsStylesheet);
+				getContext().put("searchResults", htmlResult);
 
 			} catch (IOException e) {
 				throw new RuntimeException(e);
@@ -160,7 +166,8 @@ public class SearchResponse extends BaseResponse {
 	}
 
 	private void doPerDocSearch() {
-		// TODO: refactor doPerDocSearch and doPerHitSearch to remove duplicate code
+		// TODO: refactor doPerDocSearch and doPerHitSearch to remove duplicate
+		// code
 		String query = getQuery();
 
 		// if we managed to create a query from user input
@@ -174,24 +181,27 @@ public class SearchResponse extends BaseResponse {
 			Integer max = this.getParameter("max", 50);
 			Integer start = this.getParameter("start", 0);
 			String sortBy = this.getParameter("sortBy", "");
-//			String sessionId = this.request.getSession().getId();
+			// String sessionId = this.request.getSession().getId();
 			String sort = this.getParameter("sortasc", "1");
 
 			String groupBy = this.getParameter("groupBy", "");
 			String viewGroup = this.getParameter("viewGroup", "");
 
-			Map<String, String[]> parameters = UrlParameterFactory.getSearchParameters(query, lang, max, start, groupBy, sortBy, viewGroup, sort);
+			Map<String, String[]> parameters = UrlParameterFactory
+					.getSearchParameters(query, lang, max, start, groupBy,
+							sortBy, viewGroup, sort);
 
 			addFilterParameters(parameters);
 
 			try {
-				parameters.put("block", new String[]{"no"});
+				parameters.put("block", new String[] { "no" });
 				String xmlResult = webservice.makeRequest(parameters);
 
 				setTransformerDisplayParameters(query);
 
-				String htmlResult = transformer.transform(xmlResult, resultsStylesheet);
-				this.getContext().put("searchResults", htmlResult);
+				String htmlResult = transformer.transform(xmlResult,
+						resultsStylesheet);
+				getContext().put("searchResults", htmlResult);
 
 			} catch (IOException e) {
 				throw new RuntimeException(e);
@@ -202,7 +212,8 @@ public class SearchResponse extends BaseResponse {
 	}
 
 	private void doGroupPerHitSearch() {
-		// TODO: refactor doPerDocSearch and doPerHitSearch to remove duplicate code
+		// TODO: refactor doPerDocSearch and doPerHitSearch to remove duplicate
+		// code
 		String query = getQuery();
 
 		// if we managed to create a query from user input
@@ -211,34 +222,39 @@ public class SearchResponse extends BaseResponse {
 			Integer max = this.getParameter("max", 50);
 			Integer start = this.getParameter("start", 0);
 			String sortBy = this.getParameter("sortBy", "");
-//			String sessionId = this.request.getSession().getId();
+			// String sessionId = this.request.getSession().getId();
 			String sort = this.getParameter("sortasc", "1");
 
 			String groupBy = this.getParameter("groupBy", "");
 
 			if (groupBy.length() > 0) {
-				// if we're searching by year, automatically sort chronologically
+				// if we're searching by year, automatically sort
+				// chronologically
 				if (sortBy.length() == 0) {
-					if (groupBy.equalsIgnoreCase(this.servlet.getConfig(corpus).getFieldIndexForFunction("date")))
+					if (groupBy.equalsIgnoreCase(servlet.getConfig(corpus)
+							.getFieldIndexForFunction("date")))
 						sortBy = "identity";
 					else
 						sortBy = "size";
 				}
 
-				Map<String, String[]> parameters = UrlParameterFactory.getSearchParameters(query, lang, max, start, groupBy, sortBy, null, sort);
+				Map<String, String[]> parameters = UrlParameterFactory
+						.getSearchParameters(query, lang, max, start, groupBy,
+								sortBy, null, sort);
 
 				addFilterParameters(parameters);
 
 				try {
-					parameters.put("block", new String[]{"no"});
+					parameters.put("block", new String[] { "no" });
 					String xmlResult = webservice.makeRequest(parameters);
 
 					setTransformerDisplayParameters(query);
 
 					transformer.addParameter("groupBy_name", groupBy);
 
-					String htmlResult = transformer.transform(xmlResult, resultsStylesheet);
-					this.getContext().put("searchResults", htmlResult);
+					String htmlResult = transformer.transform(xmlResult,
+							resultsStylesheet);
+					getContext().put("searchResults", htmlResult);
 
 				} catch (IOException e) {
 					throw new RuntimeException(e);
@@ -246,31 +262,60 @@ public class SearchResponse extends BaseResponse {
 					throw new RuntimeException(e);
 				}
 			} else {
-				//not the most elegant way but it works: display just a grouping selection drop down
+				// not the most elegant way but it works: display just a
+				// grouping selection drop down
 				String withoutview = "?" + getUrlParameterStringExcept("view");
-				String htmlResult = "<div class=\"span12 contentbox\" id=\"results\"><ul class=\"nav nav-tabs\" id=\"contentTabs\"><li><a href=\"" + withoutview +
-				"view=" + VIEW_PER_HIT + "\">Per Hit</a></li><li><a href=\"" + withoutview +
-				"view=" + VIEW_PER_DOC + "\">Per Document</a></li><li class=\"active\"><a href=\"" + withoutview +
-				"view=" + VIEW_HITS_GROUPED + "\">Hits grouped</a></li><li><a href=\"" + withoutview +
-				"view=" + VIEW_DOCS_GROUPED + "\">Documents grouped</a></li></ul>" +
-				"<select class=\"input\" name=\"groupBy\" onchange=\"document.searchform.submit();\">" +
-				"<option value=\"\" disabled=\"true\" selected=\"true\">Group hits by...</option>" +
-				"<option value=\"field:"+ servlet.getConfig(corpus).getFieldIndexForFunction("title") + "\">Group by document title</option>" +
-				"<option value=\"hit\">Group by hit text</option>" +
-				"<option value=\"hit:"+ servlet.getConfig(corpus).getPropertyForFunction("lemma") + "\">Group by lemma</option>" +
-				"<option value=\"hit:"+ servlet.getConfig(corpus).getPropertyForFunction("pos") + "\">Group by hit pos</option>" +
-				"<option value=\"hit:lemma,hit:pos\">Group by lemma and PoS</option><option value=\"wordleft\">Group by word left</option>" +
-				"<option value=\"wordright\">Group by word right</option>" +
-				"<option value=\"field:" + servlet.getConfig(corpus).getFieldIndexForFunction("date") + "\">Group by year</option>" +
-				"<option value=\"decade:" + servlet.getConfig(corpus).getFieldIndexForFunction("date") + "\" disabled=\"true\">Group by decade</option>" +
-				"</select></div>";
-				this.getContext().put("searchResults", htmlResult);
+				String htmlResult = "<div class=\"span12 contentbox\" id=\"results\"><ul class=\"nav nav-tabs\" id=\"contentTabs\"><li><a href=\""
+						+ withoutview
+						+ "view="
+						+ VIEW_PER_HIT
+						+ "\">Per Hit</a></li><li><a href=\""
+						+ withoutview
+						+ "view="
+						+ VIEW_PER_DOC
+						+ "\">Per Document</a></li><li class=\"active\"><a href=\""
+						+ withoutview
+						+ "view="
+						+ VIEW_HITS_GROUPED
+						+ "\">Hits grouped</a></li><li><a href=\""
+						+ withoutview
+						+ "view="
+						+ VIEW_DOCS_GROUPED
+						+ "\">Documents grouped</a></li></ul>"
+						+ "<select class=\"input\" name=\"groupBy\" onchange=\"document.searchform.submit();\">"
+						+ "<option value=\"\" disabled=\"true\" selected=\"true\">Group hits by...</option>"
+						+ "<option value=\"field:"
+						+ servlet.getConfig(corpus).getFieldIndexForFunction(
+								"title")
+						+ "\">Group by document title</option>"
+						+ "<option value=\"hit\">Group by hit text</option>"
+						+ "<option value=\"hit:"
+						+ servlet.getConfig(corpus).getPropertyForFunction(
+								"lemma")
+						+ "\">Group by lemma</option>"
+						+ "<option value=\"hit:"
+						+ servlet.getConfig(corpus).getPropertyForFunction(
+								"pos")
+						+ "\">Group by hit pos</option>"
+						+ "<option value=\"hit:lemma,hit:pos\">Group by lemma and PoS</option><option value=\"wordleft\">Group by word left</option>"
+						+ "<option value=\"wordright\">Group by word right</option>"
+						+ "<option value=\"field:"
+						+ servlet.getConfig(corpus).getFieldIndexForFunction(
+								"date")
+						+ "\">Group by year</option>"
+						+ "<option value=\"decade:"
+						+ servlet.getConfig(corpus).getFieldIndexForFunction(
+								"date")
+						+ "\" disabled=\"true\">Group by decade</option>"
+						+ "</select></div>";
+				getContext().put("searchResults", htmlResult);
 			}
 		}
 	}
 
 	private void doGroupPerDocSearch() {
-		// TODO: refactor doPerDocSearch and doPerHitSearch to remove duplicate code
+		// TODO: refactor doPerDocSearch and doPerHitSearch to remove duplicate
+		// code
 		String query = getQuery();
 
 		// if we managed to create a query from user input
@@ -280,33 +325,38 @@ public class SearchResponse extends BaseResponse {
 			Integer start = this.getParameter("start", 0);
 			String sortBy = this.getParameter("sortBy", "");
 			String groupBy = this.getParameter("groupBy", "");
-//			String sessionId = this.request.getSession().getId();
+			// String sessionId = this.request.getSession().getId();
 			String sort = this.getParameter("sortasc", "1");
 
 			if (groupBy.length() > 0) {
 
-				// if we're searching by year, automatically sort chronologically
+				// if we're searching by year, automatically sort
+				// chronologically
 				if (sortBy.length() == 0) {
-					if (groupBy.equalsIgnoreCase(this.servlet.getConfig(corpus).getFieldIndexForFunction("date")))
+					if (groupBy.equalsIgnoreCase(servlet.getConfig(corpus)
+							.getFieldIndexForFunction("date")))
 						sortBy = "identity";
 					else
 						sortBy = "size";
 				}
 
-				Map<String, String[]> parameters = UrlParameterFactory.getSearchParameters(query, lang, max, start, groupBy, sortBy, null, sort);
+				Map<String, String[]> parameters = UrlParameterFactory
+						.getSearchParameters(query, lang, max, start, groupBy,
+								sortBy, null, sort);
 
 				addFilterParameters(parameters);
 
 				try {
-					parameters.put("block", new String[]{"no"});
+					parameters.put("block", new String[] { "no" });
 					String xmlResult = webservice.makeRequest(parameters);
 
 					setTransformerDisplayParameters(query);
 
 					transformer.addParameter("groupBy_name", groupBy);
 
-					String htmlResult = transformer.transform(xmlResult, resultsStylesheet);
-					this.getContext().put("searchResults", htmlResult);
+					String htmlResult = transformer.transform(xmlResult,
+							resultsStylesheet);
+					getContext().put("searchResults", htmlResult);
 
 				} catch (IOException e) {
 					throw new RuntimeException(e);
@@ -314,49 +364,87 @@ public class SearchResponse extends BaseResponse {
 					throw new RuntimeException(e);
 				}
 			} else {
-				//not the most elegant way but it works: display just a grouping selection drop down
+				// not the most elegant way but it works: display just a
+				// grouping selection drop down
 				String withoutview = "?" + getUrlParameterStringExcept("view");
-				String htmlResult = "<div class=\"span12 contentbox\" id=\"results\"><ul class=\"nav nav-tabs\" id=\"contentTabs\"><li><a href=\"" + withoutview +
-				"view=" + VIEW_PER_HIT + "\">Per Hit</a></li><li><a href=\"" + withoutview +
-				"view=" + VIEW_PER_DOC + "\">Per Document</a></li><li><a href=\"" + withoutview +
-				"view=" + VIEW_HITS_GROUPED + "\">Hits grouped</a></li><li class=\"active\"><a href=\"" + withoutview +
-				"view=" + VIEW_DOCS_GROUPED + "\">Documents grouped</a></li></ul>" +
-				"<select class=\"input\" name=\"groupBy\" onchange=\"document.searchform.submit();\">" +
-				"<option value=\"\" disabled=\"true\" selected=\"true\">Group documents by...</option>" +
-				"<option value=\"numhits\">Group by number of hits</option>" +
-				"<option value=\"field:" + servlet.getConfig(corpus).getFieldIndexForFunction("date") + "\">Group by year</option>" +
-				"<option value=\"decade:" + servlet.getConfig(corpus).getFieldIndexForFunction("date") + "\" disabled=\"true\">Group by decade</option>" +
-				"<option value=\"field:"+ servlet.getConfig(corpus).getFieldIndexForFunction("author") + "\">Group by author</option>" +
-				"</select></div>";
-				this.getContext().put("searchResults", htmlResult);
+				String htmlResult = "<div class=\"span12 contentbox\" id=\"results\"><ul class=\"nav nav-tabs\" id=\"contentTabs\"><li><a href=\""
+						+ withoutview
+						+ "view="
+						+ VIEW_PER_HIT
+						+ "\">Per Hit</a></li><li><a href=\""
+						+ withoutview
+						+ "view="
+						+ VIEW_PER_DOC
+						+ "\">Per Document</a></li><li><a href=\""
+						+ withoutview
+						+ "view="
+						+ VIEW_HITS_GROUPED
+						+ "\">Hits grouped</a></li><li class=\"active\"><a href=\""
+						+ withoutview
+						+ "view="
+						+ VIEW_DOCS_GROUPED
+						+ "\">Documents grouped</a></li></ul>"
+						+ "<select class=\"input\" name=\"groupBy\" onchange=\"document.searchform.submit();\">"
+						+ "<option value=\"\" disabled=\"true\" selected=\"true\">Group documents by...</option>"
+						+ "<option value=\"numhits\">Group by number of hits</option>"
+						+ "<option value=\"field:"
+						+ servlet.getConfig(corpus).getFieldIndexForFunction(
+								"date")
+						+ "\">Group by year</option>"
+						+ "<option value=\"decade:"
+						+ servlet.getConfig(corpus).getFieldIndexForFunction(
+								"date")
+						+ "\" disabled=\"true\">Group by decade</option>"
+						+ "<option value=\"field:"
+						+ servlet.getConfig(corpus).getFieldIndexForFunction(
+								"author")
+						+ "\">Group by author</option>"
+						+ "</select></div>";
+				getContext().put("searchResults", htmlResult);
 			}
 		}
 	}
 
-	private void setTransformerDisplayParameters(String query) throws UnsupportedEncodingException {
+	private void setTransformerDisplayParameters(String query)
+			throws UnsupportedEncodingException {
 		transformer.clearParameters();
-		transformer.addParameter("urlparamwithoutstart", "?" + getUrlParameterStringExcept(new String[] {"start"}, false));
-		transformer.addParameter("urlparamwithoutvieworgroup", "?" + getUrlParameterStringExcept(new String[] {"view", "groupBy"}, false));
-		transformer.addParameter("urlparamwithoutsort", "?" + getUrlParameterStringExcept(new String[] {"sortBy"}, true));
-		transformer.addParameter("urlparamwithoutvieworgroup", "?" + getUrlParameterStringExcept(new String[] {"view", "viewGroup", "groupBy"}, false));
-		transformer.addParameter("urlparamquery", URLEncoder.encode(query, "UTF-8"));
+		transformer.addParameter("urlparamwithoutstart", "?"
+				+ getUrlParameterStringExcept(new String[] { "start" }, false));
+		transformer.addParameter(
+				"urlparamwithoutvieworgroup",
+				"?"
+						+ getUrlParameterStringExcept(new String[] { "view",
+								"groupBy" }, false));
+		transformer.addParameter("urlparamwithoutsort", "?"
+				+ getUrlParameterStringExcept(new String[] { "sortBy" }, true));
+		transformer.addParameter(
+				"urlparamwithoutvieworgroup",
+				"?"
+						+ getUrlParameterStringExcept(new String[] { "view",
+								"viewGroup", "groupBy" }, false));
+		transformer.addParameter("urlparamquery",
+				URLEncoder.encode(query, "UTF-8"));
 		transformer.addParameter("query", query);
-		transformer.addParameter("webserviceurl", this.servlet.getExternalWebserviceUrl(corpus));
-		transformer.addParameter("backendRequestUrl", webservice.getLastRequestUrlForClient(corpus));
-		//transformer.addParameter("resultkey", this.getParameter("key", ""));
+		transformer.addParameter("webserviceurl",
+				servlet.getExternalWebserviceUrl(corpus));
+		transformer.addParameter("backendRequestUrl",
+				webservice.getLastRequestUrlForClient(corpus));
+		// transformer.addParameter("resultkey", this.getParameter("key", ""));
 
-		// sometimes a pos field is called "function", sometimes "type", sometimes "pos
+		// sometimes a pos field is called "function", sometimes "type",
+		// sometimes "pos
 		// this code allows us to adjust for that
-		for(FieldDescriptor fd : this.servlet.getConfig(corpus).getWordProperties()) {
+		for (FieldDescriptor fd: servlet.getConfig(corpus).getWordProperties()) {
 			if (fd.getFunction().equalsIgnoreCase("pos"))
 				transformer.addParameter("pos_name", fd.getSearchField());
 			else if (fd.getFunction().equalsIgnoreCase("lemma"))
 				transformer.addParameter("lemma_name", fd.getSearchField());
 		}
 
-		// sometimes a title field is called "title", sometimes "title.level1", etc
+		// sometimes a title field is called "title", sometimes "title.level1",
+		// etc
 		// this code allows us to adjust for that
-		for(FieldDescriptor fd : this.servlet.getConfig(corpus).getFilterFields()) {
+		for (FieldDescriptor fd: servlet.getConfig(corpus).getFilterFields()) {
 			if (fd.getFunction().equalsIgnoreCase("title"))
 				transformer.addParameter("title_name", fd.getDisplayField());
 			else if (fd.getFunction().equalsIgnoreCase("author"))
@@ -370,16 +458,18 @@ public class SearchResponse extends BaseResponse {
 
 	private void addFilterParameters(Map<String, String[]> params) {
 		StringBuilder filter = new StringBuilder();
-		for(FieldDescriptor fd : this.servlet.getConfig(corpus).getFilterFields()) {
-			String[] filterValues = this.getParameterValues(fd.getSearchField(), "");
+		for (FieldDescriptor fd: servlet.getConfig(corpus).getFilterFields()) {
+			String[] filterValues = getParameterValues(fd.getSearchField(), "");
 
 			if (fd.getType().equalsIgnoreCase("date")) {
-				String from = this.getParameter(fd.getSearchField() + "__from", "0");
-				String to = this.getParameter(fd.getSearchField() + "__to", "3000");
+				String from = this.getParameter(fd.getSearchField() + "__from",
+						"0");
+				String to = this.getParameter(fd.getSearchField() + "__to",
+						"3000");
 				if (from.equals("0") && to.equals("3000"))
 					continue; // no date range submitted, so don't add one
 				String dateRange = "[" + from + " TO " + to + "]";
-				filterValues = new String[]{dateRange};
+				filterValues = new String[] { dateRange };
 			}
 
 			String fieldName = fd.getSearchField();
@@ -405,7 +495,7 @@ public class SearchResponse extends BaseResponse {
 				}
 			}
 		}
-		params.put("filter", new String[] {filter.toString()});
+		params.put("filter", new String[] { filter.toString() });
 	}
 
 	private String getQuery() {
@@ -418,28 +508,30 @@ public class SearchResponse extends BaseResponse {
 		// otherwise, attempt to make one from the input boxes
 		String query = "";
 
-		// make sure that if there are multiple fields containing multiple words,
+		// make sure that if there are multiple fields containing multiple
+		// words,
 		// each field contains the same number of words
 		if (checkSameNumberOfWordsOrEmpty()) {
-			List<FieldDescriptor> fds = this.servlet.getConfig(corpus).getWordProperties();
+			List<FieldDescriptor> fds = servlet.getConfig(corpus)
+					.getWordProperties();
 
 			// get a value for a FieldDescriptor that is not ""
 			String words = "";
-			for(FieldDescriptor fd : fds) {
+			for (FieldDescriptor fd: fds) {
 				if (getValueFor(fd).length() > 0)
 					words = getValueFor(fd);
 			}
 
 			// count the amount of words the user wants to search for
-			int wordCount = words.split(" " ).length;
+			int wordCount = words.split(" ").length;
 
 			// for each word...
-			for(int i = 0; i < wordCount; i++) {
+			for (int i = 0; i < wordCount; i++) {
 				String queryPart = "[";
 				String searchTerm = "";
 				boolean isPreceded = false;
 				// ...and each FieldDescriptor...
-				for(FieldDescriptor fd : fds) {
+				for (FieldDescriptor fd: fds) {
 					searchTerm = getSearchTerm(fd, i, isPreceded);
 					if (searchTerm.length() > 0) {
 						isPreceded = true;
@@ -455,15 +547,17 @@ public class SearchResponse extends BaseResponse {
 					query += queryPart + " ";
 			}
 		} else {
-			this.getContext().put("searcherror", "Unequal term count in search fields");
+			getContext().put("searcherror",
+					"Unequal term count in search fields");
 		}
 
-		//System.out.println("query: " + query);
+		// System.out.println("query: " + query);
 		return query.trim();
 	}
 
 	private String getValueFor(FieldDescriptor fd) {
-		return escapeBrackets(makeWildcardRegex(this.getParameter(fd.getSearchField(), "")));
+		return escapeBrackets(makeWildcardRegex(this.getParameter(
+				fd.getSearchField(), "")));
 	}
 
 	public String getParameterValue(String param) {
@@ -477,7 +571,7 @@ public class SearchResponse extends BaseResponse {
 	private boolean checkSameNumberOfWordsOrEmpty() {
 		int numWords = -1;
 
-		for(FieldDescriptor fd : this.servlet.getConfig(corpus).getWordProperties()) {
+		for (FieldDescriptor fd: servlet.getConfig(corpus).getWordProperties()) {
 			String argument = this.getParameter(fd.getSearchField(), "").trim();
 
 			if (argument.length() > 0) {
@@ -493,12 +587,14 @@ public class SearchResponse extends BaseResponse {
 		return true;
 	}
 
-	private String getSearchTerm(FieldDescriptor fd, int index, boolean isPreceded) {
+	private String getSearchTerm(FieldDescriptor fd, int index,
+			boolean isPreceded) {
 		String argument = getValueFor(fd);
 
 		String[] words = argument.split(" ");
 
-		// remove wildcard queries for words at the start or end of a query - as long as it is not
+		// remove wildcard queries for words at the start or end of a query - as
+		// long as it is not
 		if (index < words.length && words[index].equalsIgnoreCase(".*")) {
 			if ((index == 0 || index == words.length - 1) && words.length > 1) {
 				return "";
@@ -516,10 +612,11 @@ public class SearchResponse extends BaseResponse {
 			if (isPreceded)
 				preceded += " & ";
 
-			if(getCaseSensitivity(fd))
+			if (getCaseSensitivity(fd))
 				sensitive = "(?-i)"; // force case-sensitive search
 
-			return preceded + fd.getSearchField() + "=\"" + sensitive + words[index] + "\"";
+			return preceded + fd.getSearchField() + "=\"" + sensitive
+					+ words[index] + "\"";
 		}
 
 		return "";
@@ -544,16 +641,8 @@ public class SearchResponse extends BaseResponse {
 		return "corpusql";
 	}
 
-	/* (non-Javadoc)
-	* @see nl.inl.corpuswebsite.BaseResponse#logRequest()
-	*/
-	@Override
-	protected void logRequest() {
-		// TODO Auto-generated method stub
-
-	}
-
-	private String getUrlParameterStringExcept(String[] excludes, boolean flipSort) {
+	private String getUrlParameterStringExcept(String[] excludes,
+			boolean flipSort) {
 		String sortParameter = "sortasc";
 		// clear string builder
 		builder.delete(0, builder.length());
@@ -562,10 +651,10 @@ public class SearchResponse extends BaseResponse {
 		List<String> excludeList = Arrays.asList(excludes);
 
 		boolean containsSortingParameter = false;
-		for(String key : params.keySet()) {
+		for (String key: params.keySet()) {
 			if (!excludeList.contains(key)) {
 				String[] values = params.get(key);
-				for(int i = 0; i < values.length; i++) {
+				for (int i = 0; i < values.length; i++) {
 					String value = values[i];
 					if (value.trim().length() > 0) {
 						// flip sorting direction
@@ -576,14 +665,15 @@ public class SearchResponse extends BaseResponse {
 							containsSortingParameter = true;
 						}
 
-						try{
-							String encodedValue = URLEncoder.encode(value.trim(), "UTF-8");
+						try {
+							String encodedValue = URLEncoder.encode(
+									value.trim(), "UTF-8");
 
 							builder.append(key);
 							builder.append("=");
 							builder.append(encodedValue);
 							builder.append("&");
-						} catch(UnsupportedEncodingException e) {
+						} catch (UnsupportedEncodingException e) {
 							// left blank
 						}
 
@@ -592,11 +682,10 @@ public class SearchResponse extends BaseResponse {
 			}
 		}
 
-		if (!containsSortingParameter){
+		if (!containsSortingParameter) {
 			builder.append(sortParameter);
 			builder.append("=1&");
 		}
-
 
 		return builder.toString();
 	}
@@ -609,11 +698,7 @@ public class SearchResponse extends BaseResponse {
 	}
 
 	private String getUrlParameterStringExcept(String param) {
-		return getUrlParameterStringExcept(new String[] {param}, false);
+		return getUrlParameterStringExcept(new String[] { param }, false);
 	}
 
-	@Override
-	public BaseResponse duplicate() {
-		return new SearchResponse();
-	}
 }

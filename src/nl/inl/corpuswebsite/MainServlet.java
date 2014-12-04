@@ -24,10 +24,11 @@ import javax.servlet.http.HttpServletResponse;
 
 import nl.inl.corpuswebsite.response.AboutResponse;
 import nl.inl.corpuswebsite.response.ArticleResponse;
+import nl.inl.corpuswebsite.response.CorporaResponse;
 import nl.inl.corpuswebsite.response.ErrorResponse;
 import nl.inl.corpuswebsite.response.HelpResponse;
-import nl.inl.corpuswebsite.response.CorporaResponse;
 import nl.inl.corpuswebsite.response.SearchResponse;
+import nl.inl.corpuswebsite.response.SingleResponse;
 import nl.inl.corpuswebsite.utils.WebsiteConfig;
 import nl.inl.util.LogUtil;
 import nl.inl.util.OsUtil;
@@ -133,6 +134,7 @@ public class MainServlet extends HttpServlet {
 		}
 
 		// initialise responses
+		responses.put(contextPath + "/page/single", SingleResponse.class);
 		responses.put(contextPath + "/page/search", SearchResponse.class);
 		responses.put(contextPath + "/page/about", AboutResponse.class);
 		responses.put(contextPath + "/page/help", HelpResponse.class);
@@ -310,6 +312,9 @@ public class MainServlet extends HttpServlet {
 		}
 
 		br.setCorpus(corpus);
+		if (requestUri.endsWith("/single")) {
+			br.setSinglePageTest(true);
+		}
 
 		br.init(request, response, this);
 		br.processRequest();

@@ -58,6 +58,21 @@ var BLSEARCH = {};
 		$('html, body').animate({scrollTop: $("#results").offset().top - 70}, 300);
 	};
 
+	// Get a map of the GET URL variables
+	//--------------------------------------------------------------------
+    UTIL.getUrlVariables = function () {
+	    var query = window.location.search.substring(1);
+	    var vars = query.split("&");
+        var urlVariables = {};
+	    for (var i = 0; i < vars.length; i++) {
+	    	var pair = vars[i].split("=");
+	    	urlVariables[pair[0]] = decodeURIComponent(pair[1]);
+	    }
+	    return urlVariables;
+	};
+
+	var SEARCHPAGE = BLSEARCH.SEARCHPAGE = {};
+	
 	// Make our multi-select dropdown lists work
 	//--------------------------------------------------------------------
 	function setUpMultiSelectExpanders() {
@@ -85,6 +100,7 @@ var BLSEARCH = {};
 	        	.val(desc)
 	        	.show();
 	    }
+	    SEARCHPAGE.updateMultiselectDescription = updateMultiselectDescription;
 	    
 		$('select.multiselect')
 			.focusout(function () {
@@ -103,6 +119,8 @@ var BLSEARCH = {};
 
 	// Make sure we always see an overview of our specified filters
 	//--------------------------------------------------------------------
+	BLSEARCH.filters = {};
+	
 	function setUpFilterOverview() {
 		
 		// Currently active filter values
@@ -136,8 +154,12 @@ var BLSEARCH = {};
 			
 			removeFromFilterList(getElementName(element));
 			
-			if(element.val() != '' && element.val() != null) {
-				var filter = {filter: getElementName(element), values: element.val()};
+			if (element.val() != '' && element.val() != null) {
+				var filter = {
+					fieldName: element.attr('name'),
+					filter: getElementName(element),
+					values: element.val()
+				};
 			
 				ar_ActiveFilters.push(filter);
 			}
@@ -146,10 +168,33 @@ var BLSEARCH = {};
 		// Update the filter description using the active filter value list
 		function updateFilterOverview() {
 			var overview = "";
+			BLSEARCH.filters = {};
+			fromToDone = {};
 			for(var i = 0; i < ar_ActiveFilters.length; i++) {
 				if (overview.length > 0)
 					overview += "; ";
 				overview += ar_ActiveFilters[i].filter + ": <i>" + ar_ActiveFilters[i].values + "</i>";
+				
+				var fieldName = ar_ActiveFilters[i].fieldName;
+				var values = ar_ActiveFilters[i].values;
+				if (fieldName.match(/__(from|to)$/)) {
+				    var name = fieldName.replace(/__(from|to)$/, "");
+				    if (!fromToDone[name]) {
+				    	fromToDone[name] = true;
+					    var from = $("#" + name + "__from").val() || 0;
+					    var to = $("#" + name + "__to").val() || 3000;
+					    if (from != 0 || to != 3000)
+					    	BLSEARCH.filters[name] = "[" + from + " TO " + to + "]";
+				    }
+				} else if (typeof values === 'string') {
+					var name = ar_ActiveFilters[i].fieldName;
+					BLSEARCH.filters[name] = values;
+				} else {
+					// Array
+					if (values.length > 0) {
+						BLSEARCH.filters[fieldName] = values.join("||");
+					}
+				}
 			}
 			
 			$("#filteroverview").html("<small>" + overview + "</small>");
@@ -172,21 +217,30 @@ var BLSEARCH = {};
 		});
 		
 		updateFilterOverview();
+		SEARCHPAGE.updateFilterOverview = updateFilterOverview;
 	}
 	
-	var SEARCHPAGE = BLSEARCH.SEARCHPAGE = {};
-
+	// In SPA mode, the currently selected query tab (simple or query)
+	SEARCHPAGE.currentQueryType = "";
+	
 	// Set up search page stuff: search type tabs, multiselect, filter overview
 	//--------------------------------------------------------------------
 	SEARCHPAGE.init = function () {
 		
 		// Set the desired search type (hits, docs, hits grouped, docs grouped) when tab is shown
-		$('a.querytype[data-toggle="tab"]').on('shown', function (e) {	
-			document.searchform.tab.value = e.target.hash;
+		$('a.querytype[data-toggle="tab"]').on('shown', function (e) {
+			if (singlePageApplication) {
+				SEARCHPAGE.currentQueryType = e.target.hash.substr(1);
+			} else {
+				document.searchform.tab.value = e.target.hash;
+			}
 		});
 		
 		setUpMultiSelectExpanders();
 		setUpFilterOverview();
+		
+		if (singlePageApplication)
+			spaInit();
 	};
 	
 	// Init grouped results page
@@ -215,8 +269,6 @@ var BLSEARCH = {};
         retriever.putAjaxResponse(element, param, false, "../js/concordance.xsl");
     };
     
-	
-	
 	// Viewing single group's results in grouped view
 	//--------------------------------------------------------------------
     (function () {

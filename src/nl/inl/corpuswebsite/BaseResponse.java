@@ -257,4 +257,8 @@ public abstract class BaseResponse {
 		this.corpus = corpus;
 	}
 
+	public void setSinglePageTest(boolean b) {
+		context.put("singlePageTest", b);
+	}
+
 }

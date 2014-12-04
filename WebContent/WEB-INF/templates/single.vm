@@ -10,7 +10,7 @@
         			#if($docfield.getType() == "multiselect")
 	        		<select id="$docfield.getSearchField()-select" name="$docfield.getSearchField()" placeholder="$docfield.getName()" multiple class="multiselect forminput">
         			#else
-	        		<select name="$docfield.getSearchField()" placeholder="$docfield.getName()" class="forminput">
+	        		<select id="$docfield.getSearchField()" name="$docfield.getSearchField()" placeholder="$docfield.getName()" class="forminput">
 					#end
         			#foreach($pair in $docfield.getValidValues())
         				#set($selected = '')
@@ -35,10 +35,10 @@
         				#set ($fieldTo = "${fieldName}__to")
         				#set ($valueFrom = $responseObject.getParameterValue($fieldFrom))
         				#set ($valueTo = $responseObject.getParameterValue($fieldTo))
-        				<input type="text" name="$docfield.getSearchField()__from" value="$!valueFrom" placeholder="From" class="span1 forminput" />
-        				<input type="text" name="$docfield.getSearchField()__to" value="$!valueTo" placeholder="To" class="span1 forminput" />
+        				<input type="text" id="$docfield.getSearchField()__from" name="$docfield.getSearchField()__from" value="$!valueFrom" placeholder="From" class="span1 forminput" />
+        				<input type="text" id="$docfield.getSearchField()__to" name="$docfield.getSearchField()__to" value="$!valueTo" placeholder="To" class="span1 forminput" />
         			#else
-        				<input type="text" name="$docfield.getSearchField()" value="$!value" placeholder="$docfield.getName()" class="forminput" />
+        				<input type="text" id="$docfield.getSearchField()" name="$docfield.getSearchField()" value="$!value" placeholder="$docfield.getName()" class="forminput" />
         			#end
         		#end
         	</div>
@@ -47,6 +47,7 @@
 #end
 
 #parse("header.vm")
+<script src="$pathToTop/js/singlepage.js"></script>
 
 #if($max == 20)
 	#set ($twenty = "selected")
@@ -58,60 +59,37 @@
 	#set ($fifty = "selected") 
 #end
 
-<form method="get" action="" name="searchform">
+<form onsubmit="return spaDoSearch();">
 <div class="span12 contentbox">
 	<h2>$title</h2>
-#if($tab && $tab != "#simple")
-	#set ($tabCqlQuery = "active")
-#else
-	#set ($tabSimpleSearch = "active")
-#end
 	<ul class="nav nav-tabs" id="searchTabs">
-		<li class="$!tabSimpleSearch"><a href="#simple" data-toggle="tab" class="querytype">Simple</a></li>
-		<li class="$!tabCqlQuery"><a href="#query" data-toggle="tab" class="querytype">CQL query</a></li>
+		<li><a href="#simple" data-toggle="tab" class="querytype">Simple</a></li>
+		<li><a href="#query" data-toggle="tab" class="querytype">CQL query</a></li>
 	</ul>
-	#if($tabCqlQuery)
-		<input type="hidden" name="tab" value="#query" />
-	#else
-		<input type="hidden" name="tab" value="#simple" />
-	#end
-	#if($view)
-		<input type="hidden" name="view" value="$view"/>
-	#end
 	<div class="tab-content span5">
-		<div class="tab-pane $!tabSimpleSearch" id="simple">
+		<div class="tab-pane" id="simple">
 			<div>
 				<strong>Search for...</strong><br>
-				#if($searcherror)
-				<div class="alert alert-error">
+
+				<div class="alert alert-error" style='display: none;'>
 					<button type="button" class="close" data-dismiss="alert">&times;</button>
-					<b>Error!</b> $searcherror
+					<b>Error!</b> <span id='searchErrorText'>(text here)</span>
                 </div>
-				#end
+
+				<script>var wordProperties = [#foreach($wordfield in $wordproperties)#if($velocityCount > 1), #end"$wordfield.getSearchField()"#end];</script>
 				#foreach($wordfield in $wordproperties)
-					#set ($value = $responseObject.getParameterValue($wordfield.getSearchField()))
 					#set ($fieldid = $wordfield.getSearchField() + "_text")
 					#set ($fieldfuzzid = $wordfield.getSearchField() + "_fuzzy")
 					#set ($fieldcaseid = $wordfield.getSearchField() + "_case")
-					
-					#set ($casechecked = "")
-					#if ($responseObject.getParameterValue($fieldcaseid) == "on")
-						#set ($casechecked = "checked")
-					#end
-					
-					#set ($fuzzychecked = "")
-					#if ($responseObject.getParameterValue($fieldfuzzid) == "on")
-						#set ($fuzzychecked = "checked")
-					#end
 				<div class="span5">
 					<div class="span2">$wordfield.getName()</div>
-					<div class="span3"><input type="text" data-target="#$wordfield.getSearchField()" data-toggle="collapse" id="$fieldid" name="$wordfield.getSearchField()" value="$!value" placeholder="$wordfield.getName()"/>
+					<div class="span3"><input type="text" data-target="#$wordfield.getSearchField()" data-toggle="collapse" id="$fieldid" name="$wordfield.getSearchField()" placeholder="$wordfield.getName()"/>
 						<div class="collapse textchecks" id="$wordfield.getSearchField()">
 							#if($wordfield.isSensitive())
-							<label class="checkbox inline"><input type="checkbox" name="$fieldcaseid" $!casechecked> Case&nbsp;sensitive</label>
+							<label class="checkbox inline"><input type="checkbox" id="$fieldcaseid"> Case&nbsp;sensitive</label>
 							#end
 							#if($wordfield.isFuzzy())
-							<label class="checkbox inline"><input type="checkbox" name="$fieldfuzzid" disabled $!fuzzychecked> Fuzzy&nbsp;search</label>
+							<label class="checkbox inline"><input type="checkbox" id="$fieldfuzzid" disabled> Fuzzy&nbsp;search</label>
 							#end
 						</div>
 					</div>
@@ -119,39 +97,23 @@
 				#end
 			</div>
 		</div>
-		<div class="tab-pane $!tabCqlQuery" id="query">
-			<strong>Corpus Query Language:</strong><br><textarea class="span5" name="querybox" rows="7">$!querybox</textarea>
+		<div class="tab-pane" id="query">
+			<strong>Corpus Query Language:</strong><br><textarea class="span5" id="querybox" name="querybox" rows="7"></textarea>
 		</div>
 	</div>
 	<div class="span5 pull-right">
 		<strong>Filter search by</strong><br>
 		#if($websiteconfig.hasTabGroups())
     		<ul class="nav nav-tabs" id="filtertabs">
-    		#set($first = "0")
     		#foreach($tabname in $websiteconfig.getTabGroups())
     			#set($tabid = $tabname.replace(" ", ""))
-    			
-    			#if($first == "0")
-    				<li class="active">
-    				#set($first = "1")
-    			#else
-    				<li>
-    			#end
-    			
-    			<a href="#$tabid" data-toggle="tab">$tabname</a></li>
+    			<li><a href="#$tabid" data-toggle="tab">$tabname</a></li>
     		#end
     		</ul>
     		<div class="tab-content">
-    		#set($first = "0")
     		#foreach($tabname in $websiteconfig.getTabGroups())
     			#set($tabid = $tabname.replace(" ", ""))
-    			
-    			#if($first == "0")
-    				<div class="tab-pane active" id="$tabid">
-    				#set($first = "1")
-    			#else	
-    				<div class="tab-pane" id="$tabid">
-    			#end
+				<div class="tab-pane" id="$tabid">
     			#set($fields = $websiteconfig.getFieldsInTabGroup($tabname))
     			#filterfields($fields)
     			</div>
@@ -169,15 +131,15 @@
 			<input type="submit" class="btn btn-primary btn-large" value="Search" id="searchbutton">
 		</div>
 		<div class="span1">
-			<a href="search" class="btn btn-large" id="resetbutton">Reset</a>
+			<a href="" class="btn btn-large" id="resetbutton">Reset</a>
 		</div>
 		<div class="pull-right">
 			<strong class="vtop">Show me: </strong>
 			<select class="span2 vtop" name="max" onchange="document.searchform.submit();">
-				<option $!twenty value="20">20 results</option>
-				<option $!fifty value="50">50 results</option>
-				<option $!hundred value="100">100 results</option>
-				<option $!twohundred value="200">200 results</option>
+				<option value="20">20 results</option>
+				<option value="50">50 results</option>
+				<option value="100">100 results</option>
+				<option value="200">200 results</option>
 			</select> 
 		</div>
 	</div>
@@ -188,9 +150,29 @@
 	// Set up search type tabs, multiselect, filter overview
 	BLSEARCH.SEARCHPAGE.init();
 </script>
-#if($searchResults)
-	$searchResults
-#end
+
+<div class="span12 contentbox" id="results">
+	<ul class="nav nav-tabs" id="contentTabs">
+		<li><a data-toggle="tab" href="#tabHits">Per Hit</a></li>
+		<li><a data-toggle="tab" href="#tabDocs">Per Document</a></li>
+		<li><a data-toggle="tab" href="#tabHitsGrouped">Hits grouped</a></li>
+		<li><a data-toggle="tab" href="#tabDocsGrouped">Documents grouped</a></li>
+	</ul>
+	<div class="span12 tab-content">
+		<div class="tab-pane" id="tabHits">
+			HITS
+		</div>
+		<div class="tab-pane" id="tabDocs">
+			DOCS
+		</div>
+		<div class="tab-pane" id="tabHitsGrouped">
+			HITS GROUPED
+		</div>		
+		<div class="tab-pane" id="tabDocsGrouped">
+			DOCS GROUPED
+		</div>
+</div>
+
 </form>
 #parse("footer.vm")
 

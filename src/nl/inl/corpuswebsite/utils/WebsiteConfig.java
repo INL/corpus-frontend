@@ -169,7 +169,9 @@ public class WebsiteConfig {
 
 	}
 	
-	/** Generic config */
+	/** Create a generic config object, if there's no config file available. 
+	 * @param corpusName name of the corpus
+	 */
 	private WebsiteConfig(String corpusName) {
 		// TODO: get all this from index metadata!
 		this.corpusName = corpusName;

@@ -230,3 +230,12 @@ span.word {
     text-align: center;
     font-style: italic;
 }
+
+/* Corpora page */
+#header-public, #header-private, #corpora-private, #create-corpus {
+	display: none;
+}
+
+#corpora {
+	
+}

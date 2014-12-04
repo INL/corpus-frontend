@@ -155,7 +155,7 @@ public abstract class BaseResponse {
 				return false;
 
 			// if, after trimming, it is empty, return false
-			if (request.getParameter(p).trim().length() < 1)
+			if (request.getParameter(p).trim().length() == 0)
 				return false;
 		}
 

@@ -14,9 +14,9 @@
     
     <xsl:param name="pos_name" select="'#'"/>
     <xsl:param name="lemma_name" select="'#'"/>
-    <xsl:param name="title_name" select="'#'"/>
-    <xsl:param name="author_name" select="'#'"/>
-    <xsl:param name="date_name" select="'#'"/>
+    <xsl:param name="title_name" select="/blacklabResponse/summary/docFields/titleField/text()"/>
+    <xsl:param name="author_name" select="/blacklabResponse/summary/docFields/authorField/text()"/>
+    <xsl:param name="date_name" select="/blacklabResponse/summary/docFields/dateField/text()"/>
     <xsl:param name="source_name" select="'#'"/>
     <xsl:param name="groupBy_name" select="'#'"/>
     
@@ -69,10 +69,10 @@
                 </small>
             </div>
             <ul class="nav nav-tabs" id="contentTabs">
-                <li class="active"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=1'" /></xsl:attribute>Per Hit</a></li>
-                <li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=2'" /></xsl:attribute>Per Document</a></li>
-                <li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=8'" /></xsl:attribute>Hits grouped</a></li>
-                <li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=16'" /></xsl:attribute>Documents grouped</a></li>
+                <li class="active"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=hits'" /></xsl:attribute>Per Hit</a></li>
+                <li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=docs'" /></xsl:attribute>Per Document</a></li>
+                <li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=hitsgrouped'" /></xsl:attribute>Hits grouped</a></li>
+                <li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=docsgrouped'" /></xsl:attribute>Documents grouped</a></li>
             </ul>
             <xsl:call-template name="pagination">
                 <xsl:with-param name="totalHits" select="$totalHits" />
@@ -186,10 +186,10 @@
                 </small>
             </div>
             <ul class="nav nav-tabs" id="contentTabs">
-                <li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=1'" /></xsl:attribute>Per Hit</a></li>
-                <li class="active"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=2'" /></xsl:attribute>Per Document</a></li>
-                <li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=8'" /></xsl:attribute>Hits grouped</a></li>
-                <li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=16'" /></xsl:attribute>Documents grouped</a></li>
+                <li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=hits'" /></xsl:attribute>Per Hit</a></li>
+                <li class="active"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=docs'" /></xsl:attribute>Per Document</a></li>
+                <li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=hitsgrouped'" /></xsl:attribute>Hits grouped</a></li>
+                <li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=docsgrouped'" /></xsl:attribute>Documents grouped</a></li>
             </ul>
             <xsl:call-template name="pagination">
                 <xsl:with-param name="totalHits" select="$totalHits" />
@@ -258,10 +258,10 @@
     <xsl:template match="hitGroups">
         <div class="span12 contentbox" id="results">
             <ul class="nav nav-tabs" id="contentTabs">
-                <li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=1'" /></xsl:attribute>Per Hit</a></li>
-                <li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=2'" /></xsl:attribute>Per Document</a></li>
-                <li class="active"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=8'" /></xsl:attribute>Hits grouped</a></li>
-                <li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=16'" /></xsl:attribute>Documents grouped</a></li>
+                <li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=hits'" /></xsl:attribute>Per Hit</a></li>
+                <li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=docs'" /></xsl:attribute>Per Document</a></li>
+                <li class="active"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=hitsgrouped'" /></xsl:attribute>Hits grouped</a></li>
+                <li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=docsgrouped'" /></xsl:attribute>Documents grouped</a></li>
             </ul>
             <select class="input" name="groupBy" onchange="document.searchform.submit();">
                 <option value="" disabled="true"><xsl:if test="'' = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group hits by...</option>
@@ -297,7 +297,7 @@
                                 </div>
                                 <div><xsl:attribute name="class"><xsl:value-of select="$rowId"/><xsl:value-of select="' collapse groupcontent'"></xsl:value-of></xsl:attribute><xsl:attribute name="id"><xsl:value-of select="$rowId"/></xsl:attribute><xsl:attribute name="data-group"><xsl:value-of select="identity"/></xsl:attribute>
                                     <div class="inline-concordance">
-                                        <a class="btn btn-link"><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=1'" /><xsl:value-of select="'&#38;viewGroup='" /><xsl:value-of select="identity"/><xsl:value-of select="'&#38;groupBy='" /><xsl:value-of select="$groupBy_name"/></xsl:attribute>&#171; View detailed concordances in this group</a> -
+                                        <a class="btn btn-link"><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=hits'" /><xsl:value-of select="'&#38;viewGroup='" /><xsl:value-of select="identity"/><xsl:value-of select="'&#38;groupBy='" /><xsl:value-of select="$groupBy_name"/></xsl:attribute>&#171; View detailed concordances in this group</a> -
                                         <button class="btn btn-link nolink" onclick="BLSEARCH.SEARCHPAGE.getGroupContent(false, '#{$rowId}');">Load more concordances...</button> 
                                     </div>
                                 </div>
@@ -326,10 +326,10 @@
     <xsl:template match="docGroups">
         <div class="span12 contentbox" id="results">
             <ul class="nav nav-tabs" id="contentTabs">
-                <li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=1'" /></xsl:attribute>Per Hit</a></li>
-                <li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=2'" /></xsl:attribute>Per Document</a></li>
-                <li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=8'" /></xsl:attribute>Hits grouped</a></li>
-                <li class="active"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=16'" /></xsl:attribute>Documents grouped</a></li>
+                <li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=hits'" /></xsl:attribute>Per Hit</a></li>
+                <li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=docs'" /></xsl:attribute>Per Document</a></li>
+                <li><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=hitsgrouped'" /></xsl:attribute>Hits grouped</a></li>
+                <li class="active"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=docsgrouped'" /></xsl:attribute>Documents grouped</a></li>
             </ul>
             <select class="input" name="groupBy" onchange="document.searchform.submit();">
                 <option value="" disabled="true"><xsl:if test="'' = $groupBy_name"><xsl:attribute name="selected"><xsl:value-of select="'true'" /></xsl:attribute></xsl:if>Group documents by...</option>
@@ -362,7 +362,7 @@
                                 </div>
                                 <div><xsl:attribute name="class"><xsl:value-of select="$rowId"/><xsl:value-of select="' collapse groupcontent'"></xsl:value-of></xsl:attribute><xsl:attribute name="id"><xsl:value-of select="$rowId"/></xsl:attribute><xsl:attribute name="data-group"><xsl:value-of select="identity"/></xsl:attribute>
                                     <div class="inline-concordance">
-                                        <a class="btn btn-link"><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=2'" /><xsl:value-of select="'&#38;viewGroup='" /><xsl:value-of select="identity"/><xsl:value-of select="'&#38;groupBy='" /><xsl:value-of select="$groupBy_name"/></xsl:attribute>&#171; View detailed docs in this group</a> - 
+                                        <a class="btn btn-link"><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutvieworgroup" /><xsl:value-of select="'view=docs'" /><xsl:value-of select="'&#38;viewGroup='" /><xsl:value-of select="identity"/><xsl:value-of select="'&#38;groupBy='" /><xsl:value-of select="$groupBy_name"/></xsl:attribute>&#171; View detailed docs in this group</a> - 
                                         <button class="btn btn-link nolink" onclick="BLSEARCH.SEARCHPAGE.getGroupContent(true '#{$rowId}');">Load more docs...</button> 
                                     </div>
                                 </div>

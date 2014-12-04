@@ -1,0 +1,21 @@
+#parse("header.vm")
+
+<div class="span12 contentbox">
+
+<h1>Available corpora</h1>
+<h2 id='header-public'>Public corpora</h2>
+<ul id='corpora'>
+</ul>
+<h2 id='header-private'>Private corpora</h2>
+<ul id='corpora-private'>
+</ul>
+<input id='create-corpus' type='button' value='New corpus' />
+
+<script>
+var blsUrl = "$blsUrl";
+</script>
+<script src="$pathToTop/js/corpora.js"></script>
+
+</div>
+	
+#parse("footer.vm")

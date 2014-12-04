@@ -72,8 +72,7 @@ public class ArticleResponse extends BaseResponse {
 							servlet.getSourceImagesLocation());
 					transformer.addParameter(
 							"title_name",
-							servlet.getConfig(corpus).getFieldIndexForFunction(
-									"title"));
+							servlet.getSpecialField(corpus, "title"));
 					getContext()
 							.put("article_content",
 									transformer.transform(xmlResult,
@@ -84,8 +83,7 @@ public class ArticleResponse extends BaseResponse {
 				// metaParam.put("outputformat", new String[] {"xml"});
 				xmlResult = webserviceMeta.makeRequest(metaParam);
 				transformer.clearParameters();
-				transformer.addParameter("title_name", servlet
-						.getConfig(corpus).getFieldIndexForFunction("title"));
+				transformer.addParameter("title_name", servlet.getSpecialField(corpus, "title"));
 				String htmlResult = transformer.transform(xmlResult,
 						metadataStylesheet);
 				getContext().put("article_meta", htmlResult);

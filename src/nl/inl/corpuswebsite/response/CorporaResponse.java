@@ -12,9 +12,7 @@ import nl.inl.corpuswebsite.MainServlet;
 import org.apache.velocity.VelocityContext;
 
 /** Show the list of available corpora. */
-public class ListOfCorporaResponse extends BaseResponse {
-
-	
+public class CorporaResponse extends BaseResponse {
 	
 	@Override
 	public void init(HttpServletRequest request, HttpServletResponse response,
@@ -30,7 +28,7 @@ public class ListOfCorporaResponse extends BaseResponse {
 
 	@Override
 	protected void completeRequest() {
-		displayHtmlTemplate(servlet.getTemplate("list-of-corpora"));
+		displayHtmlTemplate(servlet.getTemplate("corpora"));
 	}
 
 }

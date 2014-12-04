@@ -14,13 +14,10 @@
 					#end
         			#foreach($pair in $docfield.getValidValues())
         				#set($selected = '')
-						
 						#set($selectvalue = '')
-						
 						#if($pair.getValue().length() > 0)
 							#set($selectvalue = "&quot;${pair.getValue()}&quot;")
 						#end
-						
         				#if($multivalues.contains("$quotechar${pair.getValue()}$quotechar"))
         					#set($selected = 'selected')
         				#end

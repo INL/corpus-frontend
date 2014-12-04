@@ -26,7 +26,7 @@ import nl.inl.corpuswebsite.response.AboutResponse;
 import nl.inl.corpuswebsite.response.ArticleResponse;
 import nl.inl.corpuswebsite.response.ErrorResponse;
 import nl.inl.corpuswebsite.response.HelpResponse;
-import nl.inl.corpuswebsite.response.ListOfCorporaResponse;
+import nl.inl.corpuswebsite.response.CorporaResponse;
 import nl.inl.corpuswebsite.response.SearchResponse;
 import nl.inl.corpuswebsite.utils.WebsiteConfig;
 import nl.inl.util.LogUtil;
@@ -137,7 +137,7 @@ public class MainServlet extends HttpServlet {
 		responses.put(contextPath + "/page/about", AboutResponse.class);
 		responses.put(contextPath + "/page/help", HelpResponse.class);
 		responses.put(contextPath + "/page/article", ArticleResponse.class);
-		responses.put(contextPath, ListOfCorporaResponse.class);
+		responses.put(contextPath, CorporaResponse.class);
 		responses.put("error", ErrorResponse.class);
 
 	}
@@ -418,6 +418,15 @@ public class MainServlet extends HttpServlet {
 
 	public String getApplicationTitle() {
 		return "AutoSearch";
+	}
+
+	public String getSpecialField(String corpus, String fieldType) {
+		String field = getConfig(corpus).getFieldIndexForFunction(fieldType);
+		if (field != null && field.length() > 0)
+			return field;
+		
+		// TODO: query BLS for the special fields title, date, author
+		return fieldType;
 	}
 
 }

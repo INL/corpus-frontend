@@ -27,13 +27,13 @@ import nl.inl.util.StringUtil;
  */
 public class SearchResponse extends BaseResponse {
 
-	final static public int VIEW_PER_HIT = 1;
+	final static private String VIEW_PER_HIT = "hits";
 
-	final static public int VIEW_PER_DOC = 2;
+	final static private String VIEW_PER_DOC = "docs";
 
-	final static public int VIEW_HITS_GROUPED = 8;
+	final static private String VIEW_HITS_GROUPED = "hitsgrouped";
 
-	final static public int VIEW_DOCS_GROUPED = 16;
+	final static private String VIEW_DOCS_GROUPED = "docsgrouped";
 
 	private QueryServiceHandler webservice = null;
 	private XslTransformer transformer = new XslTransformer();
@@ -53,7 +53,7 @@ public class SearchResponse extends BaseResponse {
 		if (request.getParameterMap().size() > 0) {
 			// if any parameters are set, we'll try to interpret the search
 			// request
-			int view = this.getParameter("view", VIEW_PER_HIT);
+			String view = this.getParameter("view", VIEW_PER_HIT);
 
 			// if the user has only filled in document filters
 			// switch to per doc view
@@ -61,26 +61,19 @@ public class SearchResponse extends BaseResponse {
 				view = VIEW_PER_DOC;
 
 			if (webservice == null) {
-				String searchType = (view == VIEW_PER_DOC || view == VIEW_DOCS_GROUPED) ? "docs"
-						: "hits";
+				String searchType = view.startsWith("docs") ? "docs" : "hits";
 				webservice = new QueryServiceHandler(
 						servlet.getWebserviceUrl(corpus) + searchType, servlet);
 			}
 
-			switch (view) {
-			case VIEW_PER_HIT:
+			if (view.equals(VIEW_PER_HIT))
 				doPerHitSearch();
-				break;
-			case VIEW_PER_DOC:
+			else if (view.equals(VIEW_PER_DOC))
 				doPerDocSearch();
-				break;
-			case VIEW_HITS_GROUPED:
+			else if (view.equals(VIEW_HITS_GROUPED))
 				doGroupPerHitSearch();
-				break;
-			case VIEW_DOCS_GROUPED:
+			else if (view.equals(VIEW_DOCS_GROUPED))
 				doGroupPerDocSearch();
-				break;
-			}
 			getContext().put("view", view);
 		}
 
@@ -109,7 +102,7 @@ public class SearchResponse extends BaseResponse {
 
 	private boolean isFilterQueryOnly() {
 		boolean hasFilter = false;
-		for (FieldDescriptor fd: servlet.getConfig(corpus).getFilterFields()) {
+		for (FieldDescriptor fd : servlet.getConfig(corpus).getFilterFields()) {
 			String fieldName = fd.getSearchField();
 
 			if (fd.getType().equalsIgnoreCase("date")) {
@@ -231,8 +224,7 @@ public class SearchResponse extends BaseResponse {
 				// if we're searching by year, automatically sort
 				// chronologically
 				if (sortBy.length() == 0) {
-					if (groupBy.equalsIgnoreCase(servlet.getConfig(corpus)
-							.getFieldIndexForFunction("date")))
+					if (groupBy.equalsIgnoreCase(servlet.getSpecialField(corpus, "date")))
 						sortBy = "identity";
 					else
 						sortBy = "size";
@@ -265,7 +257,8 @@ public class SearchResponse extends BaseResponse {
 				// not the most elegant way but it works: display just a
 				// grouping selection drop down
 				String withoutview = "?" + getUrlParameterStringExcept("view");
-				String htmlResult = "<div class=\"span12 contentbox\" id=\"results\"><ul class=\"nav nav-tabs\" id=\"contentTabs\"><li><a href=\""
+				String htmlResult = "<div class=\"span12 contentbox\" id=\"results\">"
+						+ "<ul class=\"nav nav-tabs\" id=\"contentTabs\"><li><a href=\""
 						+ withoutview
 						+ "view="
 						+ VIEW_PER_HIT
@@ -282,30 +275,24 @@ public class SearchResponse extends BaseResponse {
 						+ "view="
 						+ VIEW_DOCS_GROUPED
 						+ "\">Documents grouped</a></li></ul>"
-						+ "<select class=\"input\" name=\"groupBy\" onchange=\"document.searchform.submit();\">"
-						+ "<option value=\"\" disabled=\"true\" selected=\"true\">Group hits by...</option>"
+						+ "<select class=\"input\" name=\"groupBy\" "
+						+ "onchange=\"document.searchform.submit();\">"
+						+ "<option value=\"\" disabled=\"true\" selected=\"true\">"
+						+ "Group hits by...</option>"
 						+ "<option value=\"field:"
-						+ servlet.getConfig(corpus).getFieldIndexForFunction(
-								"title")
+						+ servlet.getSpecialField(corpus, "title")
 						+ "\">Group by document title</option>"
 						+ "<option value=\"hit\">Group by hit text</option>"
-						+ "<option value=\"hit:"
-						+ servlet.getConfig(corpus).getPropertyForFunction(
-								"lemma")
-						+ "\">Group by lemma</option>"
-						+ "<option value=\"hit:"
-						+ servlet.getConfig(corpus).getPropertyForFunction(
-								"pos")
-						+ "\">Group by hit pos</option>"
-						+ "<option value=\"hit:lemma,hit:pos\">Group by lemma and PoS</option><option value=\"wordleft\">Group by word left</option>"
+						+ "<option value=\"hit:lemma\">Group by lemma</option>"
+						+ "<option value=\"hit:pos\">Group by hit pos</option>"
+						+ "<option value=\"hit:lemma,hit:pos\">Group by lemma and PoS</option>"
+						+ "<option value=\"wordleft\">Group by word left</option>"
 						+ "<option value=\"wordright\">Group by word right</option>"
 						+ "<option value=\"field:"
-						+ servlet.getConfig(corpus).getFieldIndexForFunction(
-								"date")
+						+ servlet.getSpecialField(corpus, "date")
 						+ "\">Group by year</option>"
 						+ "<option value=\"decade:"
-						+ servlet.getConfig(corpus).getFieldIndexForFunction(
-								"date")
+						+ servlet.getSpecialField(corpus, "date")
 						+ "\" disabled=\"true\">Group by decade</option>"
 						+ "</select></div>";
 				getContext().put("searchResults", htmlResult);
@@ -333,8 +320,7 @@ public class SearchResponse extends BaseResponse {
 				// if we're searching by year, automatically sort
 				// chronologically
 				if (sortBy.length() == 0) {
-					if (groupBy.equalsIgnoreCase(servlet.getConfig(corpus)
-							.getFieldIndexForFunction("date")))
+					if (groupBy.equalsIgnoreCase(servlet.getSpecialField(corpus, "date")))
 						sortBy = "identity";
 					else
 						sortBy = "size";
@@ -388,16 +374,13 @@ public class SearchResponse extends BaseResponse {
 						+ "<option value=\"\" disabled=\"true\" selected=\"true\">Group documents by...</option>"
 						+ "<option value=\"numhits\">Group by number of hits</option>"
 						+ "<option value=\"field:"
-						+ servlet.getConfig(corpus).getFieldIndexForFunction(
-								"date")
+						+ servlet.getSpecialField(corpus, "date")
 						+ "\">Group by year</option>"
 						+ "<option value=\"decade:"
-						+ servlet.getConfig(corpus).getFieldIndexForFunction(
-								"date")
+						+ servlet.getSpecialField(corpus, "date")
 						+ "\" disabled=\"true\">Group by decade</option>"
 						+ "<option value=\"field:"
-						+ servlet.getConfig(corpus).getFieldIndexForFunction(
-								"author")
+						+ servlet.getSpecialField(corpus, "author")
 						+ "\">Group by author</option>"
 						+ "</select></div>";
 				getContext().put("searchResults", htmlResult);
@@ -434,7 +417,7 @@ public class SearchResponse extends BaseResponse {
 		// sometimes a pos field is called "function", sometimes "type",
 		// sometimes "pos
 		// this code allows us to adjust for that
-		for (FieldDescriptor fd: servlet.getConfig(corpus).getWordProperties()) {
+		for (FieldDescriptor fd : servlet.getConfig(corpus).getWordProperties()) {
 			if (fd.getFunction().equalsIgnoreCase("pos"))
 				transformer.addParameter("pos_name", fd.getSearchField());
 			else if (fd.getFunction().equalsIgnoreCase("lemma"))
@@ -444,7 +427,7 @@ public class SearchResponse extends BaseResponse {
 		// sometimes a title field is called "title", sometimes "title.level1",
 		// etc
 		// this code allows us to adjust for that
-		for (FieldDescriptor fd: servlet.getConfig(corpus).getFilterFields()) {
+		for (FieldDescriptor fd : servlet.getConfig(corpus).getFilterFields()) {
 			if (fd.getFunction().equalsIgnoreCase("title"))
 				transformer.addParameter("title_name", fd.getDisplayField());
 			else if (fd.getFunction().equalsIgnoreCase("author"))
@@ -458,7 +441,7 @@ public class SearchResponse extends BaseResponse {
 
 	private void addFilterParameters(Map<String, String[]> params) {
 		StringBuilder filter = new StringBuilder();
-		for (FieldDescriptor fd: servlet.getConfig(corpus).getFilterFields()) {
+		for (FieldDescriptor fd : servlet.getConfig(corpus).getFilterFields()) {
 			String[] filterValues = getParameterValues(fd.getSearchField(), "");
 
 			if (fd.getType().equalsIgnoreCase("date")) {
@@ -476,7 +459,7 @@ public class SearchResponse extends BaseResponse {
 			if (filterValues.length > 0) {
 				StringBuilder value = new StringBuilder();
 				int n = 0;
-				for (String filterValue: filterValues) {
+				for (String filterValue : filterValues) {
 					filterValue = filterValue.trim();
 					if (filterValue.length() > 0) {
 						if (value.length() > 0)
@@ -517,7 +500,7 @@ public class SearchResponse extends BaseResponse {
 
 			// get a value for a FieldDescriptor that is not ""
 			String words = "";
-			for (FieldDescriptor fd: fds) {
+			for (FieldDescriptor fd : fds) {
 				if (getValueFor(fd).length() > 0)
 					words = getValueFor(fd);
 			}
@@ -531,7 +514,7 @@ public class SearchResponse extends BaseResponse {
 				String searchTerm = "";
 				boolean isPreceded = false;
 				// ...and each FieldDescriptor...
-				for (FieldDescriptor fd: fds) {
+				for (FieldDescriptor fd : fds) {
 					searchTerm = getSearchTerm(fd, i, isPreceded);
 					if (searchTerm.length() > 0) {
 						isPreceded = true;
@@ -571,7 +554,7 @@ public class SearchResponse extends BaseResponse {
 	private boolean checkSameNumberOfWordsOrEmpty() {
 		int numWords = -1;
 
-		for (FieldDescriptor fd: servlet.getConfig(corpus).getWordProperties()) {
+		for (FieldDescriptor fd : servlet.getConfig(corpus).getWordProperties()) {
 			String argument = this.getParameter(fd.getSearchField(), "").trim();
 
 			if (argument.length() > 0) {
@@ -651,7 +634,7 @@ public class SearchResponse extends BaseResponse {
 		List<String> excludeList = Arrays.asList(excludes);
 
 		boolean containsSortingParameter = false;
-		for (String key: params.keySet()) {
+		for (String key : params.keySet()) {
 			if (!excludeList.contains(key)) {
 				String[] values = params.get(key);
 				for (int i = 0; i < values.length; i++) {

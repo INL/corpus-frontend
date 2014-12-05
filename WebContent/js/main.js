@@ -62,6 +62,8 @@ var BLSEARCH = {};
 	//--------------------------------------------------------------------
     UTIL.getUrlVariables = function () {
 	    var query = window.location.search.substring(1);
+	    if (query.length == 0)
+	    	return {};
 	    var vars = query.split("&");
         var urlVariables = {};
 	    for (var i = 0; i < vars.length; i++) {
@@ -70,6 +72,23 @@ var BLSEARCH = {};
 	    }
 	    return urlVariables;
 	};
+	
+	// Join an array of strings, escaping any glue characters that occur in the values 
+	UTIL.safeJoin = function (values) {
+		for (var i = 0; i < values.length; i++) {
+			values[i] = values[i].replace(/\$/, "$$").replace(/\|/, "$P");
+		}
+		return values.join("|");
+	}
+
+	// Split glued string into values and unescape any glue characters in the values 
+	UTIL.safeSplit = function (str) {
+		var values = str.split(/\|/);
+		for (var i = 0; i < values.length; i++) {
+			values[i] = values[i].replace(/\$P/, "|").replace(/\$\$/, "$");
+		}
+		return values;
+	}
 
 	var SEARCHPAGE = BLSEARCH.SEARCHPAGE = {};
 	
@@ -102,19 +121,26 @@ var BLSEARCH = {};
 	    }
 	    SEARCHPAGE.updateMultiselectDescription = updateMultiselectDescription;
 	    
+		// If the multiselect loses focus, hide it and update the input
 		$('select.multiselect')
 			.focusout(function () {
-				// If the multiselect loses focus, hide it and update the input
 		        var name = this.id.split(/-/)[0];
 		        updateMultiselectDescription(name);
 		        $(this).hide();
 		        $('#' + name + '-hint').hide();
 		    })
-		    .each(function (index, sel) {
-		    	// Set description of initially selected options
-		        var name = sel.id.split(/-/)[0];
-		    	updateMultiselectDescription(name);
-		    });
+		
+		// Update the text fields for all multiselects
+		function updateAllMultiselectDescriptions() {
+			$('select.multiselect')
+			    .each(function (index, sel) {
+			    	// Set description of initially selected options
+			        var name = sel.id.split(/-/)[0];
+			    	updateMultiselectDescription(name);
+			    });
+		}
+		updateAllMultiselectDescriptions();
+		SEARCHPAGE.updateAllMultiselectDescriptions = updateAllMultiselectDescriptions;
 	};
 
 	// Make sure we always see an overview of our specified filters
@@ -192,7 +218,7 @@ var BLSEARCH = {};
 				} else {
 					// Array
 					if (values.length > 0) {
-						BLSEARCH.filters[fieldName] = values.join("||");
+						BLSEARCH.filters[fieldName] = UTIL.safeJoin(values);
 					}
 				}
 			}
@@ -209,15 +235,19 @@ var BLSEARCH = {};
 			updateFilterOverview();
 		});
 		
-		// for each input item that already has items selected
-		$(".forminput").each(function (index) {
-			var element = $(this);
-			
-			addToList(element);
-		});
+		function checkAllFilters() {
+			// for each input item that already has items selected
+			$(".forminput").each(function (index) {
+				var element = $(this);
+				
+				addToList(element);
+			});
+			updateFilterOverview();
+		}
+		checkAllFilters();
 		
-		updateFilterOverview();
 		SEARCHPAGE.updateFilterOverview = updateFilterOverview;
+		SEARCHPAGE.checkAllFilters = checkAllFilters;
 	}
 	
 	// In SPA mode, the currently selected query tab (simple or query)
@@ -228,13 +258,11 @@ var BLSEARCH = {};
 	SEARCHPAGE.init = function () {
 		
 		// Set the desired search type (hits, docs, hits grouped, docs grouped) when tab is shown
-		$('a.querytype[data-toggle="tab"]').on('shown', function (e) {
-			if (singlePageApplication) {
-				SEARCHPAGE.currentQueryType = e.target.hash.substr(1);
-			} else {
+		if (!singlePageApplication) {
+			$('a.querytype[data-toggle="tab"]').on('shown', function (e) {
 				document.searchform.tab.value = e.target.hash;
-			}
-		});
+			});
+		}
 		
 		setUpMultiSelectExpanders();
 		setUpFilterOverview();

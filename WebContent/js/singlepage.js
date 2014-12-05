@@ -43,12 +43,91 @@ var SINGLEPAGE = {};
 // if this script is loaded.
 var singlePageApplication = true;
 
+// Are we currently updating the page?
+// If so, don't respond to change events like normally
+var updatingPage = false;
+
 // How to show the results for a URL
 SINGLEPAGE.setPageUpdateFunc(function () {
+	
+	updatingPage = true;
+	
 	var param = BLSEARCH.UTIL.getUrlVariables();
 	
-	// Update results area
-	$("#tabHits").html("Parameters: " + location.search);
+	// Results area
+	//----------------------------------------------------------------
+	
+	//$("#debugInfo").html(location.search);
+	BLS.search(param, function (data) {
+		
+		// Context of the hit is passed in arrays, per property
+	    // (word/lemma/PoS/punct). Right now we only want to display the 
+	    // words and punctuation. Join them together
+	    function words(context, doPunctBefore, addPunctAfter) {
+	    	var parts = [];
+	    	var n = context['word'].length;
+	    	for (var i = 0; i < n; i++) {
+	    		if ((i == 0 && doPunctBefore) || i > 0)
+	    			parts.push(context['punct'][i]);
+	    		parts.push(context['word'][i]);
+	    	}
+	    	parts.push(addPunctAfter);
+	        return parts.join("");
+	    }
+	    
+	    var ELLIPSIS = String.fromCharCode(8230);
+
+	    var html;
+		var hits = data['hits'];
+		var docs = data['docInfos'];
+	    if (hits.length > 0) {
+			html = [];
+			for (var i = 0; i < hits.length; i++) {
+				/*
+                        
+                            <td class="tbl_conc_left">...  LEFT</td>
+                            <td class="tbl_conc_hit">MATCH</td>
+                            <td>RIGHT ...</td>
+                            <td>MATCHLEMMA</td>
+                            <td>MATCHPOS</td>
+                        </tr> 
+
+				 */
+				var hit = hits[i];
+				// Add the document title and the hit information
+		        var doc = docs[hit['docPid']];
+		        var date = doc['yearFrom'];
+		        var punctAfterLeft = hit['match']['word'].length > 0 ? hit['match']['punct'][0] : "";
+		        var left = words(hit['left'], false, punctAfterLeft);
+		        var match = words(hit['match'], false, "");
+		        var right = words(hit['right'], true, "");
+		        html.push("<tr class='concordance'><td class='tbl_conc_left'>" + ELLIPSIS + " " + left +
+		            "</td><td class='tbl_conc_hit'>" + match + "<td>" + right + " " + ELLIPSIS +
+		            "</td><td>MATCHLEMMA</td><td>MATCHPOS</td></tr>");
+			}
+	    } else {
+	    	html = ["<tr><td>NO HITS</td></tr>"];
+	    }
+		$("#hitsTableBody").html(html.join(""));
+	});
+
+	viewingDocs = param["view"] == "docs";
+	viewingGrouped = !!param["group"];
+	if (viewingDocs) {
+		if (viewingGrouped)
+			$('#contentTabs li:eq(3) a').tab('show');
+		else
+			$('#contentTabs li:eq(1) a').tab('show');
+	} else {
+		if (viewingGrouped)
+			$('#contentTabs li:eq(2) a').tab('show');
+		else
+			$('#contentTabs li:eq(0) a').tab('show');
+	}
+	
+
+	// Word property fields
+	//----------------------------------------------------------------
 	
 	// Fill in word property fields
 	for (var i = 0; i < wordProperties.length; i++) {
@@ -74,12 +153,15 @@ SINGLEPAGE.setPageUpdateFunc(function () {
 		$("#" + prop + "_fuzzy").prop('checked', fuzzy);
 	}
 	
-	// Empty all metadata search fields
+	// Metadata fields
+	//----------------------------------------------------------------
+	
+	// Empty all fields
 	$("select.forminput option").prop("selected", false);
 	$("input[type='text'].forminput").val("");
 	$("input[type='checkbox'].forminput").prop("checked", false);
 	
-	// Fill in metadata search fields from URL
+	// Fill in fields from URL
 	for (key in param) {
 		// Metadatafields start with underscore
 		if (param.hasOwnProperty(key) && key.charAt(0) == '_') {
@@ -100,7 +182,7 @@ SINGLEPAGE.setPageUpdateFunc(function () {
 				$("#" + name + "__to").val(to);
 			} else if ($("#" + name + "-select").length > 0) {
 				// Multiselect
-				var values = value.split("||");
+				var values = BLSEARCH.UTIL.safeSplit(value);
 				var selOpts = {};
 				for (var i = 0; i < values.length; i++) {
 					selOpts[values[i]] = true;
@@ -117,11 +199,20 @@ SINGLEPAGE.setPageUpdateFunc(function () {
 		}
 	}
 	
-	// Show the filters
-	// TODO: active filter list isn't updated correctly;
-	//   maybe get rid of it altogether and just iterate over each
-	//   field each time.
-	BLSEARCH.SEARCHPAGE.updateFilterOverview();
+	// Show the filters for filled-in fields
+	BLSEARCH.SEARCHPAGE.checkAllFilters();
+	BLSEARCH.SEARCHPAGE.updateAllMultiselectDescriptions();
+	
+	// Preferred number of results
+	//----------------------------------------------------------------
+	
+	var resultsPerPage = param['number'] || 50;
+	if (resultsPerPage > 200)
+		resultsPerPage = 200;
+	$("#resultsPerPage").val(resultsPerPage);
+	
+	// Search tab selection
+	//----------------------------------------------------------------
 	
 	// Select the right tabs
 	if (param['patt']) {
@@ -132,13 +223,71 @@ SINGLEPAGE.setPageUpdateFunc(function () {
 		$('#searchTabs a:first').tab('show');
 	}
 	
-	// Results tab
-	$('#contentTabs a:first').tab('show')
+	updatingPage = false;
 	
 });
 
+// False: viewing (grouped) hits; true: viewing (grouped) docs
+var viewingDocs = false;
+
+// Are we looking at grouped results?
+var viewingGrouped = false;
+
+// Are we selecting what to group by?
+var selectingGroupBy = false;
+
+$(document).ready(function () {
+	// Set up search type tabs, multiselect, filter overview
+	BLSEARCH.SEARCHPAGE.init(); // also calls spaInit
+});
+
 function spaInit() {
-	// ...
+	
+	$("#resultsPerPage,#groupHitsBy,#groupDocsBy").change(function () {
+		if (!updatingPage) {
+			spaDoSearch();
+		}
+	});
+	
+	// Keep track of the current query type tab
+	$('a.querytype[data-toggle="tab"]').on('shown', function (e) {
+		BLSEARCH.SEARCHPAGE.currentQueryType = e.target.hash.substr(1);
+	});
+	
+	// React to the selected results tab
+	$('#contentTabs a[data-toggle="tab"]').on('shown', function (e) {
+		var tab = e.target.hash.substr(4).toLowerCase();
+		switch(tab) {
+		case "hits":
+			selectingGroupBy = false;
+			if (viewingDocs || viewingGrouped) {
+				viewingDocs = false;
+				viewingGrouped = false;
+				spaDoSearch();
+			}
+			break;
+		case "docs":
+			selectingGroupBy = false;
+			if (!viewingDocs || viewingGrouped) {
+				viewingDocs = true;
+				viewingGrouped = false;
+				spaDoSearch();
+			}
+			break;
+		case "hitsgrouped":
+			// Shows the "group by" select
+			$("#groupHitsBy").val("");
+			selectingGroupBy = true;
+			viewingDocs = false;
+			break;
+		case "docsgrouped":
+			// Shows the "group by" select
+			$("#groupDocsBy").val("");
+			selectingGroupBy = true;
+			viewingDocs = true;
+			break;
+		}
+	});
 }
 
 function makeQueryString(param) {
@@ -159,6 +308,9 @@ function spaDoSearch() {
 	for (var i = 0; i < wordProperties.length; i++) {
 		var prop = wordProperties[i];
 		
+		// Word property fields
+		//----------------------------------------------------------------
+		
 		if (BLSEARCH.SEARCHPAGE.currentQueryType == "simple") {
 			// Add parameters for the word property search fields
 			var value = $("#" + prop + "_text").val();
@@ -178,6 +330,9 @@ function spaDoSearch() {
 			param["patt"] = $("#querybox").val();
 		}
 		
+		// Metadata fields
+		//----------------------------------------------------------------
+		
 		// Add parameters for the metadata search fields
 		if (Object.keys(BLSEARCH.filters).length > 0) {
 			for (key in BLSEARCH.filters) {
@@ -188,7 +343,32 @@ function spaDoSearch() {
 			}
 		}
 		
+		// Type of results
+		//----------------------------------------------------------------
+		
+		var groupBySelect = "groupHitsBy";
+		if (viewingDocs) {
+			param["view"] = "docs";
+			groupBySelect = "groupDocsBy";
+		}
+		if (viewingGrouped || selectingGroupBy) {
+			var groupBy = $("#" + groupBySelect).val();
+			if (groupBy && groupBy.length > 0)
+				param["group"] = groupBy;
+		}
+		
+		// Preferred number of results
+		//----------------------------------------------------------------
+		
+		var resultsPerPage = $("#resultsPerPage").val();
+		if (resultsPerPage != 50) {
+			if (resultsPerPage > 200)
+				resultsPerPage = 200;
+			param["number"] = resultsPerPage;
+		}
+		
 	}
+	
 	SINGLEPAGE.goToUrl("?" + makeQueryString(param));
 	return false;
 }

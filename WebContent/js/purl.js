@@ -13,6 +13,9 @@
     }
 })(function() {
 
+	// To enable support for HTML5-History-API polyfill in your library
+	var location = window.history.location || window.location;
+	  
     var tag2attr = {
             a       : 'href',
             img     : 'src',
@@ -198,7 +201,7 @@
             url = undefined;
         }
         strictMode = strictMode || false;
-        url = url || window.location.toString();
+        url = url || location.toString();
 
         return {
 

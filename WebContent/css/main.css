@@ -239,3 +239,13 @@ span.word {
 #corpora {
 	
 }
+
+/* Single-page */
+#errorDiv {
+	display: none;
+}
+
+#searchSummary, #totalsReport {
+	color: #888;
+	font-size: 85%;
+}

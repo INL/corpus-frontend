@@ -4,11 +4,26 @@
 
 var BLS = {};
 
+// TODO: make configurable
+var BLS_URL = "http://localhost:8080/blacklab-server/gysseling/";
+
 (function () {
 	
-	var BLS_URL = "http://localhost:8080/blacklab-server/gysseling/";
+	function toggleWaitAnimation(b) {
+		$("#waitDisplay").toggle(b);
+		$("#resultsTabs").toggle(!b);
+	}
 	
 	BLS.search = function (param, callback) {
+
+		// Is the search still running?
+		var stillSearching = true;
+		
+		// Show wait animation only if searching takes some time
+		setTimeout(function () {
+			if (stillSearching)
+				toggleWaitAnimation(true);
+		}, 100);
 		
 		function filterQuery(name, value) {
 			// TODO: escape double quotes in values with \
@@ -69,7 +84,7 @@ var BLS = {};
 		}
 		
 		var blsParam = {
-			"number": 50
+			"number": 50 // default value
 		};
 		var filter = "";
 		var wordProp = {};
@@ -96,6 +111,18 @@ var BLS = {};
 		var patt = getPattern(wordProp);
 		if (patt.length > 0)
 			blsParam["patt"] = patt;
+		
+		if (!blsParam["patt"] || blsParam["patt"].length == 0) {
+			if (filter.length == 0) {
+				callback({
+					"error": {
+						"code": "NO_PATTERN_GIVEN ",
+						"message": "Text search pattern required."
+					}
+				});
+			}
+			operation = "docs";
+		}
 		if (filter.length > 0)
 			blsParam["filter"] = filter;
 		
@@ -109,97 +136,27 @@ var BLS = {};
 			}
 		}
 		var url = operation + "?" + decodeURIComponent(url);
-		$("#debugInfo").html("BLS/" + url);
+		//$("#debugInfo").html("BLS/" + url);
 		
 	    $.ajax({
 	    	url: BLS_URL + url,
 	    	dataType: "json",
 	    	success: function (response) {
+	    		stillSearching = false;
+	    		toggleWaitAnimation(false);
 	    		callback(response);
+	    	},
+	    	error: function (jqXHR, textStatus, errorThrown) {
+	    		stillSearching = false;
+	    		toggleWaitAnimation(false);
+	    		callback({
+	    			"error": {
+	    				"code": "WEBSERVICE_ERROR",
+	    				"message": "Error contacting webservice: " + textStatus
+	    			}
+	    		});
 	    	}
 	    });
 	};
 
 })();
-
-/*
-var corpusOutput = {};
-
-(function () {
-
-	//----------------------------------------------------------------
-
-	// Used for abbreviation and KWICs
-	var ELLIPSIS = String.fromCharCode(8230);
-
-	// Abbreviate a text
-	//----------------------------------------------------------------
-	function abbrev(text, maxChar) {
-		if (text.length <= maxChar)
-			return text;
-		var spaceIndex = text.lastIndexOf(' ', maxChar);
-		if (spaceIndex < 0)
-			return text.substr(0, maxChar) + ELLIPSIS;
-		return text.substr(0, spaceIndex) + " " + ELLIPSIS;
-	}
-
-	// Show an array of hits in a table
-	//----------------------------------------------------------------
-	corpusOutput.showHits = function (lemma, hits, docs) {
-
-	    // Context of the hit is passed in arrays, per property
-	    // (word/lemma/PoS/punct). Right now we only want to display the 
-	    // words and punctuation. Join them together
-	    function words(context, doPunctBefore, addPunctAfter) {
-	    	var parts = [];
-	    	var n = context['word'].length;
-	    	for (var i = 0; i < n; i++) {
-	    		if ((i == 0 && doPunctBefore) || i > 0)
-	    			parts.push(context['punct'][i]);
-	    		parts.push(context['word'][i]);
-	    	}
-	    	parts.push(addPunctAfter);
-	        return parts.join("");
-	    }
-
-	    var html;
-	    if (hits.length > 0) {
-		    // Iterate over the hits.
-		    // We'll add elements to the html array and join it later to produce our
-		    // final HTML.
-		    html = ["<table><tr><th class='kwic' colspan='2'>", messages['CONC_TH_KWIC'], " <a href='http://chn.inl.nl/'>CHN</a></th><th class='date'>", messages['CONC_TH_DATE'], "</th></tr>"];
-		    $.each(hits, function (index, hit) {
-
-		        // Add the document title and the hit information
-		        var doc = docs[hit['docPid']];
-		        var date = doc['witnessYear_from'];
-		        var punctAfterLeft = hit['match']['word'].length > 0 ? hit['match']['punct'][0] : "";
-		        var left = words(hit['left'], false, punctAfterLeft);
-		        var match = words(hit['match'], false, "");
-		        var right = words(hit['right'], true, "");
-		        html.push("<tr><td class='left'>" + ELLIPSIS + " " + left +
-		            "</td><td class='right'><b>" + match + "</b>" + right + " " + ELLIPSIS +
-		            "</td><td>" + date + "</td></tr>");
-		    });
-		    html.push("</table>");
-	    } else {
-	    	html = ["<table><tr><td>", messages['CONC_NO_HITS'], "</td></tr></table>"];
-	    }
-	    corpusOutput.output(html.join("\n")); // Join lines and append to output area
-		//corpusOutput.outputCorpusLink(lemma, hits.length > 0);
-	};
-
-	// Clear output area
-	//----------------------------------------------------------------
-	corpusOutput.clear = function () {
-	    $('#corpusResultsArea').html('');
-	};
-
-	// Add HTML to the output area
-	//----------------------------------------------------------------
-	corpusOutput.output = function (addHtml) {
-	    $('#corpusResultsArea').append(addHtml).append("\n");
-	};
-
-})();
-*/

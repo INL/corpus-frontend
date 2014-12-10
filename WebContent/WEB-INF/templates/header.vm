@@ -40,6 +40,7 @@
 		<link rel="apple-touch-icon" href="$pathToTop/apple-touch-icon.png">
 		<link  href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/3.2.1/css/font-awesome.min.css" rel="stylesheet">
         <script src="//cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+        <!-- <script src="//cdnjs.cloudflare.com/ajax/libs/html5-history-api/4.0.2/history.iegte8.min.js"></script> -->        
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>		
         <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.2.1/bootstrap.min.js"></script>
         <script src="$pathToTop/js/main.js"></script>

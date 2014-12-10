@@ -5,6 +5,9 @@ var BLSEARCH;
 
 (function () {
 	
+	// To enable support for HTML5-History-API polyfill in your library
+	var location = window.history.location || window.location;
+	
 	// Shortcuts
 	var DEBUG = BLSEARCH.DEBUG;
 	var SEARCHPAGE = BLSEARCH.SEARCHPAGE;
@@ -136,7 +139,7 @@ var BLSEARCH;
 	}
 	
 	// (Re)create the HTML for the pagination buttons
-	function updatePagination(totalPages, maxPerPage, startAtResult) {
+	SEARCHPAGE.updatePagination = function updatePagination(totalPages, maxPerPage, startAtResult) {
 		
 		// Add parameter to URL or replace a parameter value in a URL 
 		function setUrlParameter(param, value) {
@@ -189,7 +192,7 @@ var BLSEARCH;
 			$(".pagebuttons").append( $("<li/>", {class: 'disabled'}).append($("<a/>", {text: 'Next'})) );
 		else
 			$(".pagebuttons").append( $("<li/>").append($("<a/>", {text: 'Next', href: setUrlParameter('start', (currentPage + 1) * maxPerPage)})) );
-	}
+	};
 	
 	// Wait for search to complete and show the results
 	SEARCHPAGE.doResults = function (backendUrl) {

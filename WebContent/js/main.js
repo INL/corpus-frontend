@@ -8,6 +8,9 @@ var BLSEARCH = {};
 	
 	var DEBUG = BLSEARCH.DEBUG = {};
 	
+	// To enable support for HTML5-History-API polyfill in your library
+	var location = window.history.location || window.location;
+	  
 	// Debug logging
 	//----------------------------------------------------------------
 	(function () {
@@ -61,7 +64,7 @@ var BLSEARCH = {};
 	// Get a map of the GET URL variables
 	//--------------------------------------------------------------------
     UTIL.getUrlVariables = function () {
-	    var query = window.location.search.substring(1);
+	    var query = location.search.substring(1);
 	    if (query.length == 0)
 	    	return {};
 	    var vars = query.split("&");
@@ -125,9 +128,14 @@ var BLSEARCH = {};
 		$('select.multiselect')
 			.focusout(function () {
 		        var name = this.id.split(/-/)[0];
-		        updateMultiselectDescription(name);
-		        $(this).hide();
-		        $('#' + name + '-hint').hide();
+		        // We use a timeout because we want the click to register
+		        // before the page reflows
+		        var that = this;
+		        setTimeout(function () {
+			        updateMultiselectDescription(name);
+			        $(that).hide();
+			        $('#' + name + '-hint').hide();
+		        }, 100);
 		    })
 		
 		// Update the text fields for all multiselects
@@ -268,7 +276,7 @@ var BLSEARCH = {};
 		setUpFilterOverview();
 		
 		if (singlePageApplication)
-			spaInit();
+			SINGLEPAGE.init();
 	};
 	
 	// Init grouped results page

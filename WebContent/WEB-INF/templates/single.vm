@@ -49,7 +49,7 @@
 <script src="$pathToTop/js/singlepage.js"></script>
 <script src="$pathToTop/js/singlepage-bls.js"></script>
 
-<form onsubmit="return spaDoSearch();">
+<form onsubmit="return SINGLEPAGE.doSearch();">
 <div class="span12 contentbox">
 	<h2>$title</h2>
 	<ul class="nav nav-tabs" id="searchTabs">
@@ -137,14 +137,32 @@
 </div>
 <br><br>
 
+<div id="errorDiv">
+    <h1>Error</h1>
+    <p id="errorMessage"></p>
+    <p>(for assistance, please contact <a href='mailto:servicedesk@inl.nl'>servicedesk@inl.nl</a>)</p>
+</div>
+
+<div id="searchSummary" class="pull-right">
+</div>
+
 <div class="span12 contentbox" id="results">
+	<div id='totalsReport' class="pull-right"></div>
+	<div id='waitDisplay' class="alert alert-info">
+        Searching, please wait...
+        <p class="text-center"><i class="icon-spinner icon-spin xxlarge"></i></p>
+    </div>
 	<ul class="nav nav-tabs" id="contentTabs">
 		<li><a href="#tabHits" data-toggle="tab" class="resultstype">Per Hit</a></li>
 		<li><a href="#tabDocs" data-toggle="tab" class="resultstype">Per Document</a></li>
 		<li><a href="#tabHitsGrouped" data-toggle="tab" class="resultstype">Hits grouped</a></li>
 		<li><a href="#tabDocsGrouped" data-toggle="tab" class="resultstype">Documents grouped</a></li>
 	</ul>
-	<div class="span12 tab-content">
+    <div class="pagination">
+		<ul class="pagebuttons"></ul>
+		<button id="showHideTitles" type="button" class="btn btn-small btn-danger" data-toggle="collapse" data-target=".doctitle" style="vertical-align: top; margin-top: 2px;">Show/hide titles</button>
+	</div>
+	<div id='resultsTabs' class="span12 tab-content">
 		<div class="tab-pane lightbg haspadding" id="tabHits">
 			<div id="hitsPagination"></div>
             <table>
@@ -154,25 +172,25 @@
                             <div class="dropdown pull-right">
                                 <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="left">Left context <b class="caret"></b></a>
                                 <ul class="dropdown-menu" role="menu" aria-labelledby="left">
-                                    <li><a id='sortLeftWord'>Word</a></li>
-                                    <li><a id='sortLeftLemma'>Lemma</a></li>
-                                    <li><a id='sortLeftPos'>P.o.S.</a></li>
+                                    <li><a class='sortLeftWord'>Word</a></li>
+                                    <li><a class='sortLeftLemma'>Lemma</a></li>
+                                    <li><a class='sortLeftPos'>P.o.S.</a></li>
                                 </ul>
                             </div>
                         </th>
-                        <th class="tbl_conc_hit"><a id='sortHitWord'>Hit text</a></th>
+                        <th class="tbl_conc_hit"><a class='sortHitWord'>Hit text</a></th>
                         <th class="tbl_conc_right">
                             <div class="dropdown">
                                 <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="right">Right context <b class="caret"></b></a>
                                 <ul class="dropdown-menu" role="menu" aria-labelledby="right">
-                                    <li><a id='sortRightWord'>Word</a></li>
-                                    <li><a id='sortRightLemma'>Lemma</a></li>
-                                    <li><a id='sortRightPos'>P.o.S.</a></li>
+                                    <li><a class='sortRightWord'>Word</a></li>
+                                    <li><a class='sortRightLemma'>Lemma</a></li>
+                                    <li><a class='sortRightPos'>P.o.S.</a></li>
                                 </ul>
                             </div>                          
                         </th>
-                        <th class="tbl_lemma"><a id='sortHitLemma'>Lemma</a></th>
-                        <th class="tbl_pos"><a id='sortHitPos'>Part of speech</a></th>
+                        <th class="tbl_lemma"><a class='sortHitLemma'>Lemma</a></th>
+                        <th class="tbl_pos"><a class='sortHitPos'>Part of speech</a></th>
                     </tr>
                 </thead>
                 <tbody id="hitsTableBody">
@@ -182,10 +200,21 @@
 		</div>
 		
 		<div class="tab-pane lightbg haspadding" id="tabDocs">
-			DOCS
+	        <table class="documents">
+	            <thead>
+	                <tr class="tbl_head">
+	                    <th class="tbl_doct"><a href='#' class='sortTitle'>Document title</a></th>
+	                    <th class="tbl_year"><a href='#' class='sortDate'>Year</a></th>
+	                    <th class="tbl_hits"><a href='#' class='sortNumHits'>Hits</a></th>
+	                </tr>
+	            </thead>
+	            <tbody id="docsTableBody">
+	            	<tr><td>(empty)</td></tr>
+	            </tbody>
+	        </table>
 		</div>
 		
-		<div class="tab-pane lightbg haspadding" id="tabHitsGrouped">
+		<div class="tab-pane" id="tabHitsGrouped">
 			<select class="input" id="groupHitsBy">
 				<option value="" disabled="true" selected="true">Group hits by...</option>
 				<option value="field:title">Group by document title</option>
@@ -198,9 +227,13 @@
 				<option value="field:yearFrom">Group by year</option>
 				<option value="decade:yearFrom">Group by decade</option>
 			</select>
+			
+			<div id="resultsHitsGrouped lightbg haspadding">
+			</div>
+			
 		</div>		
 		
-		<div class="tab-pane lightbg haspadding" id="tabDocsGrouped">
+		<div class="tab-pane" id="tabDocsGrouped">
 			<select class="input" id="groupDocsBy">
 				<option value="" disabled="true" selected="true">Group documents by...</option>
 				<option value="numhits">Group by number of hits</option>
@@ -208,6 +241,10 @@
 				<option value="decade:yearFrom">Group by decade</option>
 				<option value="field:author">Group by author</option>
 			</select>
+			
+			<div id="resultsDocsGrouped lightbg haspadding">
+			</div>
+			
 		</div>
 		
 	</div>

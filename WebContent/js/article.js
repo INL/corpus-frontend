@@ -18,6 +18,9 @@ var ANCHORS = {};
 
 (function () {
 	
+	// To enable support for HTML5-History-API polyfill in your library
+	var location = window.history.location || window.location;
+	
 	// Names of anchors (elements with class anchor)
 	var anchors = [];
 
@@ -47,11 +50,11 @@ var ANCHORS = {};
 			return anchors[position];
 		}
 		
-		var oldname = window.location.hash;
+		var oldname = location.hash;
 		oldname = oldname.replace("#", "");
-		window.location.hash = "";
+		location.hash = "";
 		var myname = getPreviousAnchorName();
-		window.location.hash = myname; 
+		location.hash = myname; 
 		window.scrollBy(0,-150);
 		
 		$('a[name=' + oldname + ']').removeClass('activeLink');
@@ -71,11 +74,11 @@ var ANCHORS = {};
 			return anchors[position];
 		}
 
-		var oldname = window.location.hash;
+		var oldname = location.hash;
 		oldname = oldname.replace("#", "");
-		window.location.hash = "";
+		location.hash = "";
 		var myname = getNextAnchorName();
-		window.location.hash = myname; 
+		location.hash = myname; 
 		window.scrollBy(0,-150);
 		
 		$('a[name=' + oldname + ']').removeClass('activeLink');

@@ -266,7 +266,7 @@ var BLSEARCH = {};
 	SEARCHPAGE.init = function () {
 		
 		// Set the desired search type (hits, docs, hits grouped, docs grouped) when tab is shown
-		if (!singlePageApplication) {
+		if (!window.singlePageApplication) {
 			$('a.querytype[data-toggle="tab"]').on('shown', function (e) {
 				document.searchform.tab.value = e.target.hash;
 			});
@@ -275,8 +275,14 @@ var BLSEARCH = {};
 		setUpMultiSelectExpanders();
 		setUpFilterOverview();
 		
-		if (singlePageApplication)
+		if (window.singlePageApplication) {
 			SINGLEPAGE.init();
+			/*
+			var param = BLSEARCH.UTIL.getUrlVariables();
+			if (param['group'].length > 0) {
+				SEARCHPAGE.initGroupedResultsPage(viewingDocs);
+			}*/
+		}
 	};
 	
 	// Init grouped results page
@@ -285,8 +291,12 @@ var BLSEARCH = {};
         $(document).ready(function() {
             BLSEARCH.UTIL.scrollToResults();
             $('.nolink').click(function(event) { event.preventDefault();});
-            $('.groupcontent').on('show', function() { 
-            	BLSEARCH.SEARCHPAGE.ensureGroupResultsLoaded(isDocsGrouped, '#' + $(this).attr('id'));
+            $('.groupcontent').on('show', function() {
+            	/*if (singlePageApplication) {
+            		SINGLEPAGE.ensureGroupResultsLoaded(this);
+            	} else {*/
+            		BLSEARCH.SEARCHPAGE.ensureGroupResultsLoaded(isDocsGrouped, '#' + $(this).attr('id'));
+            	//}
             });
         });
     }

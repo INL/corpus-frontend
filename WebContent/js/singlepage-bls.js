@@ -10,8 +10,9 @@ var BLS_URL = "http://localhost:8080/blacklab-server/gysseling/";
 (function () {
 	
 	function toggleWaitAnimation(b) {
-		$("#waitDisplay").toggle(b);
-		$("#resultsTabs").toggle(!b);
+		$("#waitDisplay").hide();
+		//$("#waitDisplay").toggle(b);
+		//$("#resultsTabs").toggle(!b);
 	}
 	
 	BLS.search = function (param, callback) {

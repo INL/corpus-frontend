@@ -228,7 +228,18 @@
 				<option value="decade:yearFrom">Group by decade</option>
 			</select>
 			
-			<div id="resultsHitsGrouped lightbg haspadding">
+			<div id="resultsHitsGrouped" class="lightbg haspadding">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="tbl_groupname"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutsort" /><xsl:value-of select="'sortBy=title'" /></xsl:attribute>Group</a></th>
+                            <th><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutsort" /><xsl:value-of select="'sortBy=numhits'" /></xsl:attribute>Hits</a></th>
+                        </tr>
+                    </thead>
+                    <tbody id='hitsGroupedTableBody'>    
+		            	<tr><td>(empty)</td></tr>                     
+                    </tbody>
+                </table>
 			</div>
 			
 		</div>		
@@ -242,7 +253,7 @@
 				<option value="field:author">Group by author</option>
 			</select>
 			
-			<div id="resultsDocsGrouped lightbg haspadding">
+			<div id="resultsDocsGrouped" class="lightbg haspadding">
 			</div>
 			
 		</div>

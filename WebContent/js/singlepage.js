@@ -9,34 +9,27 @@ var SINGLEPAGE = {};
 // if this script is loaded.
 var singlePageApplication = true;
 
-// Are we currently updating the page?
-// If so, don't respond to change events like normally
-var updatingPage = false;
-
 // False: viewing (grouped) hits; true: viewing (grouped) docs
 var viewingDocs = false;
 
+// Are we on a group tab but haven't selected group by yet?
+var selectGroupBy = false;
+
 // Are we looking at grouped results?
-var viewingGrouped = false;
-
-// Are we selecting what to group by?
-var selectingGroupBy = false;
-
-// If non-null, a new sort criterium was requested,
-// or we're paging through a result set and want to keep the sort.
-var sortRequested = null;
+//var viewingGrouped = false;
+var groupBy = null;
 
 // How is current result set sorted (for paging)
-var currentSort = null;
+var sortBy = null;
+
+// Number of results per page
+var resultsPerPage = 50;
 
 // Is the current sort reversed from the default?
 var currentSortReverse = false;
 
 // First result to request (paging)
 var showFirstResult = 0;
-
-// Size of current results pages
-var pageSize = -1;
 
 // Total number of pages
 var totalPages = -1;
@@ -87,8 +80,7 @@ var corpusDocFields = null;
 	document.addEventListener('DOMContentLoaded', updatePageFromUrl);
 
 	SINGLEPAGE.goToPage = function (number) {
-		showFirstResult = pageSize * number;
-		sortRequested = currentSort; // maintain sort
+		showFirstResult = resultsPerPage * number;
 		SINGLEPAGE.doSearch();
 		return false;
 	};
@@ -96,7 +88,7 @@ var corpusDocFields = null;
 	// (Re)create the HTML for the pagination buttons
 	function updatePagination(startAtResult) {
 		
-		var currentPage = Math.ceil(startAtResult / pageSize);
+		var currentPage = Math.ceil(startAtResult / resultsPerPage);
 		var startPage = Math.max(currentPage - 10, 0);
 		var endPage = Math.min(currentPage + 10, totalPages);
 		
@@ -147,100 +139,22 @@ var corpusDocFields = null;
 	// How to show the results for a URL
 	SINGLEPAGE.setPageUpdateFunc(function () {
 		
-		updatingPage = true; // don't respond to change events like normally
-		
 		var param = BLSEARCH.UTIL.getUrlVariables();
 		
 		var hasSearch = location.search != null && location.search.length > 1;
 		
-		// Results area
-		//----------------------------------------------------------------
-		
-		$("#errorDiv").hide();
-		$("#searchSummary").html("");
-		$('#results').toggle(hasSearch);
-		$("#totalsReport").hide();
-		$(".pagination").hide();
-		$("#contentTabs").hide();
-		$("#showHideTitles").hide();
-		if (hasSearch) {
-			//$("#debugInfo").html(location.search);
-			BLS.search(param, function (data) {
-				if (data['error']) {
-					var error = data['error'];
-					$("#results").hide();
-					$("#errorDiv").show();
-					$("#errorMessage").text(error['message'] + "(" + error['code'] + ")");
-			        return;
-				}
-				
-				var summary = data['summary'];
-				pageSize = summary['requestedWindowSize'];
-				
-				var docFields = summary['docFields'] || {};
-				if (!corpusDocFields) {
-					// Use obvious guesses for any missing fields
-					corpusDocFields = {
-						"titleField": "title",
-						"authorField": "author",
-						"dateField": "date",
-						"pidField": "pid",
-					};
-					for (field in docFields) {
-						if (docFields.hasOwnProperty(field))
-							corpusDocFields[field] = docFields[field];
-					}
-				}
-				
-				var isGrouped = false;
-				if (data['hits']) {
-					updateHitsTable(data);
-					totalPages = Math.ceil(summary['numberOfHitsRetrieved'] / pageSize);
-					$("#totalsReport").show().html(
-						"Total hits: " + summary['numberOfHits'] + "<br/>" +
-						"Total pages: " + totalPages
-					);
-					$("#showHideTitles").show();
-				} else if (data['docs']) {
-					updateDocsTable(data);
-					totalPages = Math.ceil(summary['numberOfDocsRetrieved'] / pageSize);
-					$("#totalsReport").show().html(
-						"Total docs: " + summary['numberOfDocs'] + "<br/>" +
-						"Total pages: " + totalPages
-					);
-				} else if (data['hitGroups']) {
-					isGrouped = true;
-					//
-				} else if (data['docGroups']) {
-					isGrouped = true;
-					//
-				}
-				
-				// Summary, element visibility
-				var patt = summary['searchParam']['patt'];
-				var duration = summary['searchTime'] / 1000.0;
-				$("#searchSummary").html("Query: " + patt + " - Duration: " + duration + "</span> sec");
-				if (!isGrouped) {
-					updatePagination(summary['windowFirstResult']);
-					$(".pagination").show();
-				}
-				$("#contentTabs").show();
-				
-				BLSEARCH.UTIL.scrollToResults();
-			});
-		}
-		
 		viewingDocs = param["view"] == "docs";
-		viewingGrouped = !!param["group"];
+		//viewingGrouped = !!param["group"];
+		groupBy = param['group'] || null;
 		if (hasSearch) {
 			// Activate the right results tab
 			if (viewingDocs) {
-				if (viewingGrouped)
+				if (groupBy != null)
 					$('#contentTabs li:eq(3) a').tab('show');
 				else
 					$('#contentTabs li:eq(1) a').tab('show');
 			} else {
-				if (viewingGrouped)
+				if (groupBy != null)
 					$('#contentTabs li:eq(2) a').tab('show');
 				else
 					$('#contentTabs li:eq(0) a').tab('show');
@@ -331,17 +245,17 @@ var corpusDocFields = null;
 		// Sort/group
 		//----------------------------------------------------------------
 		
-		currentSort = param['sort'] || null;
+		sortBy = param['sort'] || null;
 		currentSortReverse = false;
-		if (currentSort && currentSort.length >= 1 && currentSort.charAt(0) == '-') {
+		if (sortBy && sortBy.length >= 1 && sortBy.charAt(0) == '-') {
 			currentSortReverse = true;
-			currentSort = currentSort.substr(1);
+			sortBy = sortBy.substr(1);
 		}
 		
 		// Preferred number of results
 		//----------------------------------------------------------------
 		
-		var resultsPerPage = param['number'] || 50;
+		resultsPerPage = param['number'] || 50;
 		if (resultsPerPage > 200)
 			resultsPerPage = 200;
 		$("#resultsPerPage").val(resultsPerPage);
@@ -358,7 +272,88 @@ var corpusDocFields = null;
 			$('#searchTabs a:first').tab('show');
 		}
 		
-		updatingPage = false;
+		// Results area
+		//----------------------------------------------------------------
+		
+		$("#errorDiv").hide();
+		//$("#searchSummary").html("&nbsp;");
+		//$("#totalsReport").hide();
+		$('#results').toggle(hasSearch);
+		if (hasSearch) {
+			//$("#debugInfo").html(location.search);
+			BLS.search(param, function (data) {
+				if (data['error']) {
+					var error = data['error'];
+					$("#results").hide();
+					$("#errorDiv").show();
+					$("#errorMessage").text(error['message'] + "(" + error['code'] + ")");
+			        return;
+				}
+				
+				var summary = data['summary'];
+				
+				var docFields = summary['docFields'] || {};
+				if (!corpusDocFields) {
+					// Use obvious guesses for any missing fields
+					corpusDocFields = {
+						"titleField": "title",
+						"authorField": "author",
+						"dateField": "date",
+						"pidField": "pid",
+					};
+					for (field in docFields) {
+						if (docFields.hasOwnProperty(field))
+							corpusDocFields[field] = docFields[field];
+					}
+				}
+				
+				var isGrouped = false;
+				$("#showHideTitles").toggle(!!data['hits']);
+				if (data['hits']) {
+					updateHitsTable(data);
+					totalPages = Math.ceil(summary['numberOfHitsRetrieved'] / resultsPerPage);
+					$("#totalsReport").show().html(
+						"Total hits: " + summary['numberOfHits'] + "<br/>" +
+						"Total pages: " + totalPages
+					);
+				} else if (data['docs']) {
+					updateDocsTable(data);
+					totalPages = Math.ceil(summary['numberOfDocsRetrieved'] / resultsPerPage);
+					$("#totalsReport").show().html(
+						"Total docs: " + summary['numberOfDocs'] + "<br/>" +
+						"Total pages: " + totalPages
+					);
+				} else if (data['hitGroups']) {
+					$("#totalsReport").hide();
+					isGrouped = true;
+					selectGroupBy = false;
+					updateHitsGroupedTable(data);
+				} else if (data['docGroups']) {
+					$("#totalsReport").hide();
+					isGrouped = true;
+					selectGroupBy = false;
+				}
+				
+				// Summary, element visibility
+				var patt = summary['searchParam']['patt'];
+				var duration = summary['searchTime'] / 1000.0;
+				$("#searchSummary").show().html("Query: " + patt + " - Duration: " + duration + "</span> sec");
+				if (!isGrouped) {
+					updatePagination(summary['windowFirstResult']);
+					$(".pagination").show();
+				} else {
+					$(".pagination").hide();
+				}
+				$("#contentTabs").show();
+				
+				setTimeout(function () { BLSEARCH.UTIL.scrollToResults(); }, 1);
+			});
+		} else {
+			// No search
+			$("#contentTabs").hide();
+			$("#searchSummary").hide();
+		}
+		
 		
 	});
 	
@@ -366,6 +361,92 @@ var corpusDocFields = null;
 		// Set up search type tabs, multiselect, filter overview
 		SEARCHPAGE.init(); // also calls SINGLEPAGE.init
 	});
+	
+	function updateHitsGroupedTable(data) {
+	    var html;
+		var summary = data['summary'];
+		var groups = data['hitGroups'];
+		var patt = summary['searchParam']['patt'];
+	    if (groups && groups.length > 0) {
+			html = [];
+			for (var i = 0; i < groups.length; i++) {
+				var group = groups[i];
+				// Add the document title and the hit information
+				var identity = group['identity'];
+				var idDisplay = group['identityDisplay'];
+				var size = group['size'];
+				var width = size * 100 / summary['largestGroupSize'];
+		        
+		        html.push("<tr><td>", idDisplay, "</td>",
+	                "<td><div class='progress progress-success' data-toggle='collapse' data-target='#g", i, "'>",
+	                "<div class='bar' style='width: ", width, "%;'>", size, "</div></div>",
+	                "<div class='collapse groupcontent' id='g", i, "' data-group='", identity, "'>",
+	                "<div class='inline-concordance'>",
+	                "<a class='btn btn-link' href='#'>&#171; View detailed concordances in this group</a> - ",
+	                "<button class='btn btn-link nolink' onclick='BLSEARCH.SEARCHPAGE.getGroupContent(false, '#{$rowId}');'>", 
+	                "Load more concordances...</button></div></div></td></tr>");
+			}
+	    } else {
+	    	html = [
+	    	    "<tr class='citationrow'><td colspan='5'><div class='no-results-found'>",
+	    	    "No results were found. Please check your query and try again.</div></td></tr>"
+	    	];
+	    }
+		$("#hitsGroupedTableBody").html(html.join(""));
+		$('.groupcontent').on('show', function() {
+    		SINGLEPAGE.ensureGroupResultsLoaded(this);
+        });
+	}
+	
+	(function () {
+		
+	    var numOfGroupResultsLoaded = [];
+		
+	    SINGLEPAGE.ensureGroupResultsLoaded = function (element) {
+	    	var id = element.id;
+	        if(numOfGroupResultsLoaded[id] == null) {
+	        	SINGLEPAGE.getGroupContent(element);
+	        } 
+	    };
+	    
+	    SINGLEPAGE.getGroupContent = function (element) {
+	    	var id = element.id;
+	        var start = 0;
+	        if(numOfGroupResultsLoaded[id] != null)
+	            start = numOfGroupResultsLoaded[id];
+
+	        var param = SINGLEPAGE.getParam();
+	        param['viewgroup'] = $(element).attr('data-group');
+	        param['first'] = start;
+	        
+	        BLS.search(param, function (data) {
+	        	// Update group results
+	    	    var html;
+	    		var hits = data['hits'];
+	    	    if (hits && hits.length > 0) {
+	    			html = [];
+	    			for (var i = 0; i < hits.length; i++) {
+	    				var hit = hits[i];
+	    		        var punctAfterLeft = hit['match']['word'].length > 0 ? hit['match']['punct'][0] : "";
+	    		        var left = words(hit['left'], "word", false, punctAfterLeft);
+	    		        var match = words(hit['match'], "word", false, "");
+	    		        var right = words(hit['right'], "word", true, "");
+	    		    	html.push("<div class='row-fluid '><div class='span5 text-right inline-concordance'>", 
+	    		    		ELLIPSIS, " ", left, "</div><div class='span2 text-center inline-concordance'><b>", match,
+	    		        	"</b></div><div class='span5 inline-concordance'>", right, " ", ELLIPSIS, "</div></div>");
+	    			}
+	    	    } else {
+	    	    	html = ["<div class='row-fluid'>ERROR</div>"];
+	    	    }
+	    		$(element).append(html.join(""));
+	        });
+
+	        numOfGroupResultsLoaded[element] = start + 20;
+	        
+	        return false;
+	    };
+		
+	})();
 	
 	function updateHitsTable(data) {
 	    var html;
@@ -414,7 +495,7 @@ var corpusDocFields = null;
 		        	docPid, "\", ", startPos, ", ", endPos,
 		        	");'><td class='tbl_conc_left'>",
 		        	ELLIPSIS, " ", left, "</td><td class='tbl_conc_hit'>", match,
-		        	"<td>", right, " ", ELLIPSIS, "</td><td>", matchLemma, 
+		        	"</td><td>", right, " ", ELLIPSIS, "</td><td>", matchLemma, 
 		        	"</td><td>", matchPos, "</td></tr>");
 		        
 		        // Snippet row
@@ -530,21 +611,37 @@ var corpusDocFields = null;
     
 	SINGLEPAGE.init = function () {
 		
-		$("#resultsPerPage,#groupHitsBy,#groupDocsBy").change(function () {
-			if (!updatingPage) {
+		function doGroup(newGroupBy, isDocs) {
+			if (newGroupBy && newGroupBy.length > 0 && newGroupBy != groupBy) {
+				viewingDocs = isDocs;
+				groupBy = newGroupBy;
+				sortBy = null;
+				showFirstResult = 0;
+				SINGLEPAGE.doSearch();
+			}
+		}
+		$("#groupHitsBy").change(function () { doGroup($(this).val(), false); });
+		$("#groupDocsBy").change(function () { doGroup($(this).val(), true); });
+		
+		$("#resultsPerPage").change(function () {
+			var rpp = $("#resultsPerPage").val();
+			if (rpp > 200)
+				rpp = 200;
+			if (rpp != resultsPerPage) {
+				resultsPerPage = rpp;
 				SINGLEPAGE.doSearch();
 			}
 		});
 		
 		function changeSort(newSort) {
 			var sortChanged = false;
-			if (currentSort != newSort) {
+			if (sortBy != newSort) {
 				// Different sort
-				sortRequested = newSort;
+				sortBy = newSort;
 				sortChanged = true;
 			} else if (newSort != null){
 				// Reverse sort
-				sortRequested = (currentSortReverse ? "" : "-") + newSort;
+				sortBy = (currentSortReverse ? "" : "-") + newSort;
 				sortChanged = true;
 			}
 			if (sortChanged)
@@ -576,37 +673,52 @@ var corpusDocFields = null;
 			var tab = e.target.hash.substr(4).toLowerCase();
 			switch(tab) {
 			case "hits":
-				selectingGroupBy = false;
-				if (viewingDocs || viewingGrouped) {
+				if (viewingDocs || groupBy != null) {
 					viewingDocs = false;
-					viewingGrouped = false;
+					groupBy = null;
+					sortBy = null;
+					showFirstResult = 0;
 					SINGLEPAGE.doSearch();
 				}
 				break;
 			case "docs":
-				selectingGroupBy = false;
-				if (!viewingDocs || viewingGrouped) {
+				if (!viewingDocs || groupBy != null) {
 					viewingDocs = true;
-					viewingGrouped = false;
+					groupBy = null;
+					sortBy = null;
+					showFirstResult = 0;
 					SINGLEPAGE.doSearch();
 				}
 				break;
 			case "hitsgrouped":
 				// Shows the "group by" select
 				$("#groupHitsBy").val("");
-				selectingGroupBy = true;
+				$("#hitsGroupedTableBody").html("");
+				selectGroupBy = true;
+				/*
 				viewingDocs = false;
+				groupBy = null;
+				sortBy = null;
+				showFirstResult = 0;
+				*/
 				break;
 			case "docsgrouped":
 				// Shows the "group by" select
 				$("#groupDocsBy").val("");
-				selectingGroupBy = true;
-				viewingDocs = true;
+				$("#docsGroupedTableBody").html("");
+				selectGroupBy = true;
+				/*
+				viewingDocs = false;
+				groupBy = null;
+				sortBy = null;
+				showFirstResult = 0;
+				*/
 				break;
 			}
 			$(".pagination").toggle(tab == "hits" || tab == "docs");
+
 		});
-	}
+	};
 	
 	function makeQueryString(param) {
 		var qs = "";
@@ -620,8 +732,13 @@ var corpusDocFields = null;
 		return qs;
 	}
 	
-	// Perform a search (search form submitted)
-	SINGLEPAGE.doSearch = function () {
+	/*
+	SINGLEPAGE.updateWordPropAndFilter = function () {
+		//@@@
+	}
+	*/
+	
+	SINGLEPAGE.getParam = function getParam() {
 		var param = {};
 		for (var i = 0; i < wordProperties.length; i++) {
 			var prop = wordProperties[i];
@@ -661,50 +778,38 @@ var corpusDocFields = null;
 				}
 			}
 			
-			// Type of results
-			//----------------------------------------------------------------
-			
-			var groupBySelect = "groupHitsBy";
-			if (viewingDocs) {
-				param["view"] = "docs";
-				groupBySelect = "groupDocsBy";
-			}
-			if (viewingGrouped || selectingGroupBy) {
-				var groupBy = $("#" + groupBySelect).val();
-				if (groupBy && groupBy.length > 0)
-					param["group"] = groupBy;
-			}
-			
-			// Sort
-			//----------------------------------------------------------------
-			
-			if (sortRequested) {
-				// A different sort was requested,
-				// or we're paging and want to keep the same sort.
-				param["sort"] = sortRequested;
-				sortRequested = null;
-			}
-			
-			// Page size / start
-			//----------------------------------------------------------------
-			
-			var resultsPerPage = $("#resultsPerPage").val();
-			if (resultsPerPage != 50) {
-				if (resultsPerPage > 200)
-					resultsPerPage = 200;
-				param["number"] = resultsPerPage;
-			}
-			
-			if (showFirstResult > 0)  {
-				param["first"] = showFirstResult;
-				showFirstResult = 0;
-			}
-			
 		}
 		
+		// Misc. parameters
+		//----------------------------------------------------------------
+
+		if (viewingDocs)
+			param["view"] = "docs";
+
+		if (groupBy)
+			param["group"] = groupBy;
+
+		if (sortBy)
+			param["sort"] = sortBy;
+
+		if (resultsPerPage != 50) {
+			if (resultsPerPage > 200)
+				resultsPerPage = 200;
+			param["number"] = resultsPerPage;
+		}
+
+		if (showFirstResult > 0)
+			param["first"] = showFirstResult;
+
+		return param;
+	};
+	
+	// Perform a search (search form submitted)
+	SINGLEPAGE.doSearch = function () {
+		var param = SINGLEPAGE.getParam();
 		SINGLEPAGE.goToUrl("?" + makeQueryString(param));
 		return false;
-	}
+	};
 	
 })();
 

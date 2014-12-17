@@ -219,8 +219,8 @@
 				<option value="hit:lemma">Group by lemma</option>
 				<option value="hit:pos">Group by hit pos</option>
 				<option value="hit:lemma,hit:pos">Group by lemma and PoS</option>
-				<option value="left">Group by word left</option>
-				<option value="right">Group by word right</option>
+				<option value="wordleft">Group by word left</option>
+				<option value="wordright">Group by word right</option>
 				<option value="field:yearFrom">Group by year</option>
 				<option value="decade:yearFrom">Group by decade</option>
 			</select>
@@ -237,7 +237,7 @@
                             </th>
                         </tr>
                     </thead>
-                    <tbody id='hitsGroupedTableBody'>                
+                    <tbody>                
                     </tbody>
                 </table>
 			</div>
@@ -254,14 +254,18 @@
 			</select>
 			
 			<div id="resultsDocsGrouped" class="lightbg haspadding">
-                <table id='hitsGroupedTable'>
+                <table id='docsGroupedTable'>
                     <thead>
                         <tr>
-                            <th class="tbl_groupname"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutsort" /><xsl:value-of select="'sortBy=title'" /></xsl:attribute>Group</a></th>
-                            <th><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutsort" /><xsl:value-of select="'sortBy=numhits'" /></xsl:attribute>Hits</a></th>
+                            <th class="tbl_groupname">
+                            	<a href='#' class="sortGroupIdentity">Group</a>
+                            </th>
+                            <th>
+                            	<a href='#' class='sortGroupNumHits'>Hits</a>
+                            </th>
                         </tr>
                     </thead>
-                    <tbody id='hitsGroupedTableBody'>                
+                    <tbody>
                     </tbody>
                 </table>
 			</div>

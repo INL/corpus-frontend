@@ -44,6 +44,7 @@ var SINGLEPAGE = {};
 
     var numOfGroupResultsLoaded = {};
     
+    var totalGroupResults = {};
 	
     var ELLIPSIS = String.fromCharCode(8230);
 	
@@ -328,11 +329,12 @@ var SINGLEPAGE = {};
 						$("#totalsReport").hide();
 						isGrouped = true;
 						selectGroupBy = false;
-						updateHitsGroupedTable(data);
+						updateGroupedTable(data, false);
 					} else if (data['docGroups']) {
 						$("#totalsReport").hide();
 						isGrouped = true;
 						selectGroupBy = false;
+						updateGroupedTable(data, true);
 					}
 					
 					// Summary, element visibility
@@ -363,29 +365,32 @@ var SINGLEPAGE = {};
 		}
 	}
 	
-	function updateHitsGroupedTable(data) {
+	function updateGroupedTable(data, isDocs) {
+		numOfGroupResultsLoaded = {};
+		totalGroupResults = {};
 	    var html;
 		var summary = data['summary'];
-		var groups = data['hitGroups'];
+		var groups = data[isDocs ? 'docGroups' : 'hitGroups'];
 		var patt = summary['searchParam']['patt'];
+		var idPrefix = isDocs ? 'dg' : 'hg';
+		var prCls = isDocs ? 'warning' : 'success'; // orange or green, resp.
 	    if (groups && groups.length > 0) {
 			html = [];
 			for (var i = 0; i < groups.length; i++) {
 				var group = groups[i];
-				// Add the document title and the hit information
 				var identity = group['identity'];
 				var idDisplay = group['identityDisplay'];
 				var size = group['size'];
 				var width = size * 100 / summary['largestGroupSize'];
 		        
 		        html.push("<tr><td>", idDisplay, "</td>",
-	                "<td><div class='progress progress-success' data-toggle='collapse' data-target='#g", i, "'>",
+	                "<td><div class='progress progress-", prCls, "' data-toggle='collapse' data-target='#", idPrefix, i, "'>",
 	                "<div class='bar' style='width: ", width, "%;'>", size, "</div></div>",
-	                "<div class='collapse groupcontent' id='g", i, "' data-group='", identity, "'>",
+	                "<div class='collapse groupcontent' id='", idPrefix, i, "' data-group='", identity, "'>",
 	                "<div class='inline-concordance'>",
-	                "<a class='btn btn-link' href='#' onclick=\"return SINGLEPAGE.showDetailedGroup('g", i, "');\">",
+	                "<a class='btn btn-link' href='#' onclick=\"return SINGLEPAGE.showDetailedGroup('", idPrefix, i, "');\">",
 	                "&#171; View detailed concordances in this group</a> - ",
-	                "<a class='btn btn-link' href='#' onclick=\"return SINGLEPAGE.getGroupContent('g", i, "');\">",
+	                "<a class='btn btn-link' href='#' onclick=\"return SINGLEPAGE.getGroupContent('", idPrefix, i, "');\">",
 	                "Load more concordances...</a></div></div></td></tr>");
 			}
 	    } else {
@@ -394,7 +399,8 @@ var SINGLEPAGE = {};
 	    	    "No results were found. Please check your query and try again.</div></td></tr>"
 	    	];
 	    }
-		$("#hitsGroupedTableBody").html(html.join(""));
+	    var tableId = isDocs ? "docsGroupedTable": "hitsGroupedTable";
+		$("#" + tableId + " tbody").html(html.join(""));
 		$('.groupcontent').on('show', function() {
     		ensureGroupResultsLoaded(this.id);
         });
@@ -747,7 +753,7 @@ var SINGLEPAGE = {};
 			case "hitsgrouped":
 				// Shows the "group by" select
 				$("#groupHitsBy").val("");
-				$("#hitsGroupedTableBody").html("");
+				$("#hitsGroupedTable tbody").html("");
 				selectGroupBy = true;
 				/*
 				viewingDocs = false;
@@ -761,7 +767,7 @@ var SINGLEPAGE = {};
 			case "docsgrouped":
 				// Shows the "group by" select
 				$("#groupDocsBy").val("");
-				$("#docsGroupedTableBody").html("");
+				$("#docsGroupedTable tbody").html("");
 				selectGroupBy = true;
 				/*
 				viewingDocs = false;
@@ -796,19 +802,19 @@ var SINGLEPAGE = {};
 			groupBy = null;
 			viewGroup = null;
 		}
-		SINGLEPAGE.doSearch();
+		doSearch();
 		return false;
 	};
 	
 	// Called to reset search form and results
 	SINGLEPAGE.resetPage = function () {
-		SINGLEPAGE.goToUrl("?");
+		goToUrl("?");
 	};
 	
 	// Called to view detailed concordances of group
     SINGLEPAGE.showDetailedGroup = function (id) {
         viewGroup = $("#" + id).attr('data-group');
-        SINGLEPAGE.doSearch();
+        doSearch();
         return false;
     };
 	
@@ -816,10 +822,13 @@ var SINGLEPAGE = {};
     SINGLEPAGE.getGroupContent = function (id) {
     	var element = $("#" + id);
         var start = 0;
-        if (numOfGroupResultsLoaded[id])
+        if (numOfGroupResultsLoaded[id]) {
             start = numOfGroupResultsLoaded[id];
+        	if (start >= totalGroupResults[id])
+        		return false; // whole group loaded
+        }
 
-        var param = SINGLEPAGE.getParam();
+        var param = getParam();
         param['viewgroup'] = element.attr('data-group');
         param['first'] = start;
         param['number'] = 20;
@@ -827,21 +836,40 @@ var SINGLEPAGE = {};
         BLS.search(param, function (data) {
         	// Update group results
     	    var html;
-    		var hits = data['hits'];
-    	    if (hits && hits.length > 0) {
-    			html = [];
-    			for (var i = 0; i < hits.length; i++) {
-    				var hit = hits[i];
-    		        var punctAfterLeft = hit['match']['word'].length > 0 ? hit['match']['punct'][0] : "";
-    		        var left = words(hit['left'], "word", false, punctAfterLeft);
-    		        var match = words(hit['match'], "word", false, "");
-    		        var right = words(hit['right'], "word", true, "");
-    		    	html.push("<div class='row-fluid '><div class='span5 text-right inline-concordance'>", 
-    		    		ELLIPSIS, " ", left, "</div><div class='span2 text-center inline-concordance'><b>", match,
-    		        	"</b></div><div class='span5 inline-concordance'>", right, " ", ELLIPSIS, "</div></div>");
-    			}
+    	    if (data['hits']) {
+    	    	totalGroupResults[id] = data['summary']['numberOfHitsRetrieved'];
+        		var hits = data['hits'];
+        	    if (hits && hits.length > 0) {
+        			html = [];
+        			for (var i = 0; i < hits.length; i++) {
+        				var hit = hits[i];
+        		        var punctAfterLeft = hit['match']['word'].length > 0 ? hit['match']['punct'][0] : "";
+        		        var left = words(hit['left'], "word", false, punctAfterLeft);
+        		        var match = words(hit['match'], "word", false, "");
+        		        var right = words(hit['right'], "word", true, "");
+        		    	html.push("<div class='row-fluid '><div class='span5 text-right inline-concordance'>", 
+        		    		ELLIPSIS, " ", left, "</div><div class='span2 text-center inline-concordance'><b>", match,
+        		        	"</b></div><div class='span5 inline-concordance'>", right, " ", ELLIPSIS, "</div></div>");
+        			}
+        	    } else {
+        	    	html = ["<div class='row-fluid'>ERROR</div>"];
+        	    }
     	    } else {
-    	    	html = ["<div class='row-fluid'>ERROR</div>"];
+    	    	totalGroupResults[id] = data['summary']['numberOfDocsRetrieved'];
+    	    	var docs = data['docs'];
+    	    	if (docs && docs.length > 0) {
+        			html = [];
+        			for (var i = 0; i < docs.length; i++) {
+        				var doc = docs[i];
+        				var title = doc['docInfo']['title']; //@@@ docFields
+        		        var hits = doc['numberOfHits'];
+        		    	html.push("<div class='row-fluid'><div class='span10 inline-concordance'>",
+        		    		"<b>", title, "</b></div><div class='span2 inline-concordance'>", hits,
+        		    		"</div></div>");
+        			}
+        	    } else {
+        	    	html = ["<div class='row-fluid'>ERROR</div>"];
+        	    }
     	    }
     	    element.append(html.join(""));
     		var val = start + 20;

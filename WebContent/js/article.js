@@ -57,8 +57,11 @@ var ANCHORS = {};
 		location.hash = myname; 
 		window.scrollBy(0,-150);
 		
-		$('a[name=' + oldname + ']').removeClass('activeLink');
+		if (oldname && oldname.length > 0)
+			$('a[name=' + oldname + ']').removeClass('activeLink');
 		$('a[name=' + myname + ']').addClass('activeLink');
+		
+		return false; // don't follow link
 	};
 
 	// Highlight and scroll to next anchor
@@ -81,8 +84,11 @@ var ANCHORS = {};
 		location.hash = myname; 
 		window.scrollBy(0,-150);
 		
-		$('a[name=' + oldname + ']').removeClass('activeLink');
+		if (oldname && oldname.length > 0)
+			$('a[name=' + oldname + ']').removeClass('activeLink');
 		$('a[name=' + myname + ']').addClass('activeLink');
+		
+		return false; // don't follow link
 	};
 	
 })();

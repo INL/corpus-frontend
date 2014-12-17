@@ -43,6 +43,7 @@
         <!-- <script src="//cdnjs.cloudflare.com/ajax/libs/html5-history-api/4.0.2/history.iegte8.min.js"></script> -->        
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>		
         <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.2.1/bootstrap.min.js"></script>
+        <script src="$pathToTop/js/search.js"></script>
         <script src="$pathToTop/js/main.js"></script>
 		<script src="$pathToTop/js/purl.js"></script>
 		<script src="$pathToTop/js/status_check.js"></script>

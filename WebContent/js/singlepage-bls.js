@@ -15,7 +15,7 @@ var BLS_URL = "http://localhost:8080/blacklab-server/gysseling/";
 			// TODO: escape double quotes in values with \
 			if ($("#" + name + "-select").length > 0) {
 				// Multiselect. Quote values and replace glue characters with spaces.
-				var values = BLSEARCH.UTIL.safeSplit(value)
+				var values = SINGLEPAGE.safeSplit(value)
 				if (values.length > 1)
 					return name + ":(\"" + values.join("\" \"") + "\")";
 			}

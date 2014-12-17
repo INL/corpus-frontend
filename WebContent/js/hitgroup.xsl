@@ -4,6 +4,8 @@
 	
     <!-- How to transform hit group results to HTML -->
     
+    <!-- NB can be removed when we go fully single-page. -->
+    
     <xsl:template match="summary|docInfos" />
     
 	<xsl:template match="hits/hit">

@@ -4,6 +4,8 @@
 	
 	<!-- How to transform a concordance (snippet) to HTML -->
 	
+    <!-- NB can be removed when we go fully single-page. -->
+    
 	<xsl:template match="error">
 	   <div class='error'>
 	       <xsl:apply-templates />

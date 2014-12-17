@@ -1,3 +1,6 @@
+
+// NB can be removed when we go fully single-page.
+
 /*
  * Purl (A JavaScript URL parser) v2.3.1
  * Developed and maintanined by Mark Perkins, mark@allmarkedup.com

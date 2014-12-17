@@ -162,7 +162,7 @@
             var backendRequestUrl = '<xsl:value-of select="$backendRequestUrl" />';
         
             $(document).ready(function() {
-                BLSEARCH.UTIL.scrollToResults();
+                BLSEARCH.scrollToResults();
                 <xsl:if test="$totalHits = -1">
                 BLSEARCH.SEARCHPAGE.doStats(backendRequestUrl);
                 </xsl:if>
@@ -247,7 +247,7 @@
             var backendRequestUrl = '<xsl:value-of select="$backendRequestUrl" />';
             
             $(document).ready(function() {
-                BLSEARCH.UTIL.scrollToResults();
+                BLSEARCH.scrollToResults();
                 <xsl:if test="$totalHits = -1">
                 BLSEARCH.SEARCHPAGE.doStats(backendRequestUrl);
                 </xsl:if>

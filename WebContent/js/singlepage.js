@@ -42,14 +42,17 @@ var SINGLEPAGE = {};
 	// (which may be wrong)
 	var corpusDocFields = null;
 
+	// The currently selected query tab (simple or query)
+	var currentQueryType = "";
+	
     var numOfGroupResultsLoaded = {};
     
     var totalGroupResults = {};
+    
+    // If tab was just shown, don't fade the results like we do otherwise
+    var skipResultsFade = false;
 	
     var ELLIPSIS = String.fromCharCode(8230);
-	
-	
-	var SEARCHPAGE = BLSEARCH.SEARCHPAGE;
 
 	// To enable support for HTML5-History-API polyfill in your library
 	var location = window.history.location || window.location;
@@ -123,11 +126,18 @@ var SINGLEPAGE = {};
         return parts.join("");
     }
     
+	function showBlsError(error) {
+		$("#results").hide();
+		$("#errorDiv").show();
+		$("#errorMessage").text(error['message'] + "(" + error['code'] + ")");
+		toggleWaitAnimation(false);
+	}
+    
 	// How to show the results for a URL
 	function updatePage() {
 		updatingPage = true;
 		try {
-			var param = BLSEARCH.UTIL.getUrlVariables();
+			var param = getUrlVariables();
 			
 			var hasSearch = location.search != null && location.search.length > 1;
 			
@@ -211,7 +221,7 @@ var SINGLEPAGE = {};
 						$("#" + name + "__to").val(to);
 					} else if ($("#" + name + "-select").length > 0) {
 						// Multiselect
-						var values = BLSEARCH.UTIL.safeSplit(value);
+						var values = SINGLEPAGE.safeSplit(value);
 						var selOpts = {};
 						for (var i = 0; i < values.length; i++) {
 							selOpts[values[i]] = true;
@@ -220,7 +230,7 @@ var SINGLEPAGE = {};
 							var b = !!selOpts[this.value];
 							$(this).prop("selected", b);
 						});
-						SEARCHPAGE.updateMultiselectDescription(name);
+						BLSEARCH.SEARCHPAGE.updateMultiselectDescription(name);
 					} else {
 						// Text or regular select
 						$("#" + name).val(value);
@@ -229,8 +239,8 @@ var SINGLEPAGE = {};
 			}
 			
 			// Show the filters for filled-in fields
-			SEARCHPAGE.checkAllFilters();
-			SEARCHPAGE.updateAllMultiselectDescriptions();
+			BLSEARCH.SEARCHPAGE.checkAllFilters();
+			BLSEARCH.SEARCHPAGE.updateAllMultiselectDescriptions();
 			
 			// Sort/group
 			//----------------------------------------------------------------
@@ -257,6 +267,7 @@ var SINGLEPAGE = {};
 			if (param['patt']) {
 				// CQL Query
 				$('#searchTabs li:eq(1) a').tab('show');
+				$('#querybox').val(param['patt']);
 			} else {
 				// Simple query
 				$('#searchTabs a:first').tab('show');
@@ -270,8 +281,6 @@ var SINGLEPAGE = {};
 			//$("#totalsReport").hide();
 			$('#results').toggle(hasSearch); // show waiting animation
 			if (hasSearch) {
-				//$("#debugInfo").html(location.search);
-				
 				// Is the search still running?
 				var stillSearching = true;
 				
@@ -284,11 +293,7 @@ var SINGLEPAGE = {};
 				BLS.search(param, function (data) {
 					$('#resultsTabs').show();
 					if (data['error']) {
-						var error = data['error'];
-						$("#results").hide();
-						$("#errorDiv").show();
-						$("#errorMessage").text(error['message'] + "(" + error['code'] + ")");
-						toggleWaitAnimation(false);
+						showBlsError(data['error']);
 				        return;
 					}
 					
@@ -352,7 +357,10 @@ var SINGLEPAGE = {};
 					
 		    		stillSearching = false; // don't show wait animation now.
 					toggleWaitAnimation(false);
-					setTimeout(function () { BLSEARCH.UTIL.scrollToResults(); }, 1);
+					setTimeout(function () {
+						// Scroll to results
+						$('html, body').animate({scrollTop: $("#results").offset().top - 70}, 300);
+					}, 1);
 				});
 			} else {
 				// No search
@@ -365,12 +373,34 @@ var SINGLEPAGE = {};
 		}
 	}
 	
+    function replaceTableBodyContent(id, html, fade, onComplete) {
+	    var table = $("#" + id);
+	    var tableBody = $("#" + id + " tbody");
+	    if (fade) {
+			table.fadeOut('fast', function () {
+				tableBody.html(html);
+				if (onComplete)
+					onComplete();
+				table.fadeIn('fast');
+			});
+	    } else {
+			tableBody.html(html);
+			if (onComplete)
+				onComplete();
+	    }
+    }
+    
 	function updateGroupedTable(data, isDocs) {
+		var type = isDocs ? 'doc' : 'hit';
+		var typeCap = isDocs ? 'Doc' : 'Hit';
+		
+		// No group results loaded yet
 		numOfGroupResultsLoaded = {};
 		totalGroupResults = {};
+		
 	    var html;
 		var summary = data['summary'];
-		var groups = data[isDocs ? 'docGroups' : 'hitGroups'];
+		var groups = data[type + 'Groups'];
 		var patt = summary['searchParam']['patt'];
 		var idPrefix = isDocs ? 'dg' : 'hg';
 		var prCls = isDocs ? 'warning' : 'success'; // orange or green, resp.
@@ -399,11 +429,14 @@ var SINGLEPAGE = {};
 	    	    "No results were found. Please check your query and try again.</div></td></tr>"
 	    	];
 	    }
-	    var tableId = isDocs ? "docsGroupedTable": "hitsGroupedTable";
-		$("#" + tableId + " tbody").html(html.join(""));
-		$('.groupcontent').on('show', function() {
-    		ensureGroupResultsLoaded(this.id);
-        });
+
+	    $('#results' + typeCap + 'sGrouped').show();
+	    skipResultsFade = false;
+	    replaceTableBodyContent(type + "sGroupedTable", html.join(""), !skipResultsFade, function () {
+			$('.groupcontent').on('show', function() {
+	    		ensureGroupResultsLoaded(this.id);
+	        });
+	    });
 	}
 	
 	function updateHitsTable(data) {
@@ -443,17 +476,14 @@ var SINGLEPAGE = {};
 		        
 		        // Concordance row
 		        var date = doc['yearFrom'];
-		        var punctAfterLeft = hit['match']['word'].length > 0 ? hit['match']['punct'][0] : "";
-		        var left = words(hit['left'], "word", false, punctAfterLeft);
-		        var match = words(hit['match'], "word", false, "");
-		        var right = words(hit['right'], "word", true, "");
+		        var parts = snippetParts(hit);
 		        var matchLemma = words(hit['match'], "lemma", false, "");
 			    var matchPos = words(hit['match'], "pos", false, "");
 		        html.push("<tr class='concordance' onclick='SINGLEPAGE.showCitation(this, \"",
 		        	docPid, "\", ", startPos, ", ", endPos,
 		        	");'><td class='tbl_conc_left'>",
-		        	ELLIPSIS, " ", left, "</td><td class='tbl_conc_hit'>", match,
-		        	"</td><td>", right, " ", ELLIPSIS, "</td><td>", matchLemma, 
+		        	ELLIPSIS, " ", parts[0], "</td><td class='tbl_conc_hit'>", parts[1],
+		        	"</td><td>", parts[2], " ", ELLIPSIS, "</td><td>", matchLemma, 
 		        	"</td><td>", matchPos, "</td></tr>");
 		        
 		        // Snippet row
@@ -468,18 +498,10 @@ var SINGLEPAGE = {};
 	    	];
 	    }
 	    
-	    replaceTableBodyContent('hitsTable', html.join(""));
+	    replaceTableBodyContent('hitsTable', html.join(""), !skipResultsFade);
+	    skipResultsFade = false;
 	}
 	
-    function replaceTableBodyContent(id, html) {
-	    //var table = $("#" + id);
-	    var tableBody = $("#" + id + " tbody");
-		//table.fadeOut('fast', function () {
-			tableBody.html(html);
-		//	table.fadeIn('fast');
-		//});
-    }
-    
 	function updateDocsTable(data) {
 	    var html;
 		var summary = data['summary'];
@@ -512,14 +534,8 @@ var SINGLEPAGE = {};
 			        var snippets = [];
 			        for (var j = 0; j < docSnippets.length; j++) {
 			        	var hit = docSnippets[j];
-				        var punctAfterLeft = hit['match']['word'].length > 0 ? hit['match']['punct'][0] : "";
-				        var left = words(hit['left'], "word", false, punctAfterLeft);
-				        var match = words(hit['match'], "word", false, "");
-				        var right = words(hit['right'], "word", true, "");
-				        var matchLemma = words(hit['match'], "lemma", false, "");
-					    var matchPos = words(hit['match'], "pos", false, "");
-			        	snippets.push(ELLIPSIS + " " + left + "<strong>" + match + "</strong>" + 
-			        			right + ELLIPSIS + "<br/>");
+			        	var parts = snippetParts(hit);
+			        	snippets.push(ELLIPSIS + " " + parts[0] + "<strong>" + parts[1] + "</strong>" + parts[2] + ELLIPSIS + "<br/>");
 			        	
 			        	break; // only need the first snippet for now
 			        }
@@ -539,15 +555,16 @@ var SINGLEPAGE = {};
 		    	    "No results were found. Please check your query and try again.</div></td></tr>"
 		    	];
 	    }
-	    replaceTableBodyContent('docsTable', html.join(""));
+	    replaceTableBodyContent('docsTable', html.join(""), !skipResultsFade);
+	    skipResultsFade = false;
 	}
 	
-	function snippetHtml(hit) {
+	function snippetParts(hit) {
         var punctAfterLeft = hit['match']['word'].length > 0 ? hit['match']['punct'][0] : "";
         var left = words(hit['left'], "word", false, punctAfterLeft);
         var match = words(hit['match'], "word", false, "");
         var right = words(hit['right'], "word", true, "");
-        return left + "<b>" + match + "</b>" + right;
+        return [left, match, right];
 	}
 	
 	function makeQueryString(param) {
@@ -576,7 +593,7 @@ var SINGLEPAGE = {};
 			// Word property fields
 			//----------------------------------------------------------------
 			
-			if (SEARCHPAGE.currentQueryType == "simple") {
+			if (currentQueryType == "simple") {
 				// Add parameters for the word property search fields
 				var value = $("#" + prop + "_text").val();
 				if (value.length > 0) {
@@ -599,15 +616,14 @@ var SINGLEPAGE = {};
 			//----------------------------------------------------------------
 			
 			// Add parameters for the metadata search fields
-			if (Object.keys(BLSEARCH.filters).length > 0) {
-				for (key in BLSEARCH.filters) {
-					if (BLSEARCH.filters.hasOwnProperty(key)) {
-						var value = BLSEARCH.filters[key];
+			if (Object.keys(BLSEARCH.filtersSinglePage).length > 0) {
+				for (key in BLSEARCH.filtersSinglePage) {
+					if (BLSEARCH.filtersSinglePage.hasOwnProperty(key)) {
+						var value = BLSEARCH.filtersSinglePage[key];
 						param["_" + key] = value;
 					}
 				}
 			}
-			
 		}
 		
 		// Misc. parameters
@@ -647,8 +663,7 @@ var SINGLEPAGE = {};
 	// Called when the page loads
 	$(document).ready(function () {
 
-		SEARCHPAGE.setUpMultiSelectExpanders();
-		SEARCHPAGE.setUpFilterOverview();
+		BLSEARCH.SEARCHPAGE.filtersSetup();
 		
 		// Before any searches are shown, hide all the results elements.
 		$('#resultsTabs').hide(); // No results yet, don't show the empty results tabs.
@@ -666,6 +681,7 @@ var SINGLEPAGE = {};
 				sortBy = null;
 				currentSortReverse = false;
 				showFirstResult = 0;
+				skipResultsFade = true;
 				doSearch();
 			}
 		}
@@ -717,7 +733,7 @@ var SINGLEPAGE = {};
 		
 		// Keep track of the current query type tab
 		$('a.querytype[data-toggle="tab"]').on('shown', function (e) {
-			SEARCHPAGE.currentQueryType = e.target.hash.substr(1);
+			currentQueryType = e.target.hash.substr(1);
 		});
 		
 		// React to the selected results tab
@@ -729,54 +745,52 @@ var SINGLEPAGE = {};
 			var tab = e.target.hash.substr(4).toLowerCase();
 			switch(tab) {
 			case "hits":
-				if (viewingDocs || groupBy != null) {
-					viewingDocs = false;
-					groupBy = null;
-					viewGroup = null;
-					sortBy = null;
-					currentSortReverse = false;
-					showFirstResult = 0;
-					doSearch();
-				}
+				$("#hitsTable tbody").html("");
+				viewingDocs = false;
+				groupBy = null;
+				viewGroup = null;
+				sortBy = null;
+				currentSortReverse = false;
+				showFirstResult = 0;
+				skipResultsFade = true;
+				doSearch();
 				break;
 			case "docs":
-				if (!viewingDocs || groupBy != null) {
-					viewingDocs = true;
-					groupBy = null;
-					viewGroup = null;
-					sortBy = null;
-					currentSortReverse = false;
-					showFirstResult = 0;
-					doSearch();
-				}
+				$("#docsTable tbody").html("");
+				viewingDocs = true;
+				groupBy = null;
+				viewGroup = null;
+				sortBy = null;
+				currentSortReverse = false;
+				showFirstResult = 0;
+				skipResultsFade = true;
+				doSearch();
 				break;
 			case "hitsgrouped":
 				// Shows the "group by" select
 				$("#groupHitsBy").val("");
 				$("#hitsGroupedTable tbody").html("");
+				$('#resultsHitsGrouped').hide();
 				selectGroupBy = true;
-				/*
 				viewingDocs = false;
 				groupBy = null;
 				viewGroup = null;
 				sortBy = null;
 				currentSortReverse = false;
 				showFirstResult = 0;
-				*/
 				break;
 			case "docsgrouped":
 				// Shows the "group by" select
 				$("#groupDocsBy").val("");
 				$("#docsGroupedTable tbody").html("");
+				$('#resultsDocsGrouped').hide();
 				selectGroupBy = true;
-				/*
 				viewingDocs = false;
 				groupBy = null;
 				viewGroup = null;
 				sortBy = null;
 				currentSortReverse = false;
 				showFirstResult = 0;
-				*/
 				break;
 			}
 			$(".pagination").toggle(tab == "hits" || tab == "docs");
@@ -790,10 +804,36 @@ var SINGLEPAGE = {};
         } 
     };
     
+	// Get a map of the GET URL variables
+	//--------------------------------------------------------------------
+    getUrlVariables = function () {
+	    var query = location.search.substring(1);
+	    if (query.length == 0)
+	    	return {};
+	    var vars = query.split("&");
+        var urlVariables = {};
+	    for (var i = 0; i < vars.length; i++) {
+	    	var pair = vars[i].split("=");
+	    	urlVariables[pair[0]] = decodeURIComponent(pair[1]);
+	    }
+	    return urlVariables;
+	};
+	
+    
 	//===========================
 	
+	// Split glued string into values and unescape any glue characters in the values 
+	SINGLEPAGE.safeSplit = function (str) {
+		var values = str.split(/\|/);
+		for (var i = 0; i < values.length; i++) {
+			values[i] = values[i].replace(/\$P/, "|").replace(/\$\$/, "$");
+		}
+		return values;
+	}
+
 	// Called when form is submitted
 	SINGLEPAGE.searchSubmit = function () {
+		showFirstResult = 0;
 		sortBy = null;
 		currentSortReverse = false;
 		if (viewGroup) {
@@ -824,8 +864,9 @@ var SINGLEPAGE = {};
         var start = 0;
         if (numOfGroupResultsLoaded[id]) {
             start = numOfGroupResultsLoaded[id];
-        	if (start >= totalGroupResults[id])
+        	if (start >= totalGroupResults[id]) {
         		return false; // whole group loaded
+        	}
         }
 
         var param = getParam();
@@ -834,6 +875,11 @@ var SINGLEPAGE = {};
         param['number'] = 20;
         
         BLS.search(param, function (data) {
+        	if (data['error']) {
+				showBlsError(data['error']);
+		        return;
+			}
+        	
         	// Update group results
     	    var html;
     	    if (data['hits']) {
@@ -843,13 +889,10 @@ var SINGLEPAGE = {};
         			html = [];
         			for (var i = 0; i < hits.length; i++) {
         				var hit = hits[i];
-        		        var punctAfterLeft = hit['match']['word'].length > 0 ? hit['match']['punct'][0] : "";
-        		        var left = words(hit['left'], "word", false, punctAfterLeft);
-        		        var match = words(hit['match'], "word", false, "");
-        		        var right = words(hit['right'], "word", true, "");
+        				var parts = snippetParts(hit);
         		    	html.push("<div class='row-fluid '><div class='span5 text-right inline-concordance'>", 
-        		    		ELLIPSIS, " ", left, "</div><div class='span2 text-center inline-concordance'><b>", match,
-        		        	"</b></div><div class='span5 inline-concordance'>", right, " ", ELLIPSIS, "</div></div>");
+        		    		ELLIPSIS, " ", parts[0], "</div><div class='span2 text-center inline-concordance'><b>", parts[1],
+        		        	"</b></div><div class='span5 inline-concordance'>", parts[2], " ", ELLIPSIS, "</div></div>");
         			}
         	    } else {
         	    	html = ["<div class='row-fluid'>ERROR</div>"];
@@ -903,7 +946,8 @@ var SINGLEPAGE = {};
 	    		if (response['error']) {
 		    		alert("Error: " + response['error']['message']);
 	    		} else {
-	    			$(element).html(snippetHtml(response));
+	    			var parts = snippetParts(response);
+	    			$(element).html(parts[0] + "<b>" + parts[1] + "</b>" + parts[2]);
 	    		}
 	    	},
 	    	error: function (jqXHR, textStatus, errorThrown) {

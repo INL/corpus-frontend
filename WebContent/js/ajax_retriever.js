@@ -1,5 +1,7 @@
 // ajax_retriever.js: Send request to backend, transform results with XSLT and update page. 
 
+// NB can be removed when we go fully single-page.
+
 var BLSEARCH;
 
 (function() {

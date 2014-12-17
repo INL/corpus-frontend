@@ -4,6 +4,8 @@
 	
 	<!-- How to transform doc results to HTML -->
 	
+    <!-- NB can be removed when we go fully single-page. -->
+    
     <xsl:template match="summary" />
     
 	<xsl:template match="docs/doc">

@@ -1,6 +1,8 @@
 
 // status_check.js: check if results are ready and update the total results counter
 
+// NB can be removed when we go fully single-page.
+
 var BLSEARCH;
 
 (function () {
@@ -139,7 +141,7 @@ var BLSEARCH;
 	}
 	
 	// (Re)create the HTML for the pagination buttons
-	SEARCHPAGE.updatePagination = function updatePagination(totalPages, maxPerPage, startAtResult) {
+	function updatePagination(totalPages, maxPerPage, startAtResult) {
 		
 		// Add parameter to URL or replace a parameter value in a URL 
 		function setUrlParameter(param, value) {

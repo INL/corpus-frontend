@@ -249,3 +249,28 @@ span.word {
 	color: #888;
 	font-size: 85%;
 }
+
+#results {
+	position: relative;
+	min-height: 200px;
+}
+
+#waitDisplay {
+	background: black;
+	color: white;
+	opacity: 0.25;
+	border-radius: 40px;
+	
+	position: fixed;
+	bottom: 20%;
+	width: 80px;
+	left: 0;
+	right: 0;
+	margin-left: auto;
+	margin-right: auto;
+	padding-top: 8px;
+}
+
+#waitDisplay i {
+	font-size: 60px;
+}

@@ -97,7 +97,7 @@ var BLSEARCH = {};
 	
 	// Make our multi-select dropdown lists work
 	//--------------------------------------------------------------------
-	function setUpMultiSelectExpanders() {
+	SEARCHPAGE.setUpMultiSelectExpanders = function () {
 		
 		// If the input gains focus, show and focus the multiselect instead
 		$('input.multiselect').focusin(function () {
@@ -155,7 +155,7 @@ var BLSEARCH = {};
 	//--------------------------------------------------------------------
 	BLSEARCH.filters = {};
 	
-	function setUpFilterOverview() {
+	SEARCHPAGE.setUpFilterOverview = function () {
 		
 		// Currently active filter values
 		var ar_ActiveFilters = [];
@@ -265,24 +265,16 @@ var BLSEARCH = {};
 	//--------------------------------------------------------------------
 	SEARCHPAGE.init = function () {
 		
+		// (non-SINGLEPAGE only)
+		
+		SEARCHPAGE.setUpMultiSelectExpanders();
+		SEARCHPAGE.setUpFilterOverview();
+		
 		// Set the desired search type (hits, docs, hits grouped, docs grouped) when tab is shown
-		if (!window.singlePageApplication) {
-			$('a.querytype[data-toggle="tab"]').on('shown', function (e) {
-				document.searchform.tab.value = e.target.hash;
-			});
-		}
+		$('a.querytype[data-toggle="tab"]').on('shown', function (e) {
+			document.searchform.tab.value = e.target.hash;
+		});
 		
-		setUpMultiSelectExpanders();
-		setUpFilterOverview();
-		
-		if (window.singlePageApplication) {
-			SINGLEPAGE.init();
-			/*
-			var param = BLSEARCH.UTIL.getUrlVariables();
-			if (param['group'].length > 0) {
-				SEARCHPAGE.initGroupedResultsPage(viewingDocs);
-			}*/
-		}
 	};
 	
 	// Init grouped results page
@@ -292,11 +284,7 @@ var BLSEARCH = {};
             BLSEARCH.UTIL.scrollToResults();
             $('.nolink').click(function(event) { event.preventDefault();});
             $('.groupcontent').on('show', function() {
-            	/*if (singlePageApplication) {
-            		SINGLEPAGE.ensureGroupResultsLoaded(this);
-            	} else {*/
-            		BLSEARCH.SEARCHPAGE.ensureGroupResultsLoaded(isDocsGrouped, '#' + $(this).attr('id'));
-            	//}
+        		BLSEARCH.SEARCHPAGE.ensureGroupResultsLoaded(isDocsGrouped, '#' + $(this).attr('id'));
             });
         });
     }

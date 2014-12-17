@@ -9,23 +9,8 @@ var BLS_URL = "http://localhost:8080/blacklab-server/gysseling/";
 
 (function () {
 	
-	function toggleWaitAnimation(b) {
-		$("#waitDisplay").hide();
-		//$("#waitDisplay").toggle(b);
-		//$("#resultsTabs").toggle(!b);
-	}
-	
 	BLS.search = function (param, callback) {
 
-		// Is the search still running?
-		var stillSearching = true;
-		
-		// Show wait animation only if searching takes some time
-		setTimeout(function () {
-			if (stillSearching)
-				toggleWaitAnimation(true);
-		}, 100);
-		
 		function filterQuery(name, value) {
 			// TODO: escape double quotes in values with \
 			if ($("#" + name + "-select").length > 0) {
@@ -143,13 +128,9 @@ var BLS_URL = "http://localhost:8080/blacklab-server/gysseling/";
 	    	url: BLS_URL + url,
 	    	dataType: "json",
 	    	success: function (response) {
-	    		stillSearching = false;
-	    		toggleWaitAnimation(false);
 	    		callback(response);
 	    	},
 	    	error: function (jqXHR, textStatus, errorThrown) {
-	    		stillSearching = false;
-	    		toggleWaitAnimation(false);
 	    		callback({
 	    			"error": {
 	    				"code": "WEBSERVICE_ERROR",

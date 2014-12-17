@@ -151,7 +151,8 @@ public class MainServlet extends HttpServlet {
 
 	/**
 	 * Looks for a property file with the specified name, either in the Tomcat
-	 * webapps dir or in the temp dir (/tmp on Unix, C:\\temp on Windows).
+	 * webapps dir, in /etc/blacklab on Unix or in the temp dir (/tmp on Unix, 
+	 * C:\\temp on Windows).
 	 *
 	 * @param fileName
 	 *            property file name
@@ -163,7 +164,12 @@ public class MainServlet extends HttpServlet {
 		if (fileInWebappsDir.exists())
 			return fileInWebappsDir;
 
-		File tmpDir = OsUtil.isWindows() ? new File("C:\\temp") : new File(
+		boolean isWindows = OsUtil.isWindows();
+		File fileInEtc = new File("/etc/blacklab", fileName);
+		if (!isWindows && fileInEtc.exists())
+			return fileInEtc;
+		
+		File tmpDir = isWindows ? new File("C:\\temp") : new File(
 				"/tmp");
 		File fileInTmpDir = new File(tmpDir, fileName);
 		if (fileInTmpDir.exists())

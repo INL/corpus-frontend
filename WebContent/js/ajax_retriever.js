@@ -30,16 +30,16 @@ var BLSEARCH;
 	        data: parameters, 
 	        cache: false
 	    }).done(function(data) {
-	    	var errorElements = $(data).find("error"); 
-	    	if (errorElements.length > 0) {
-	    		var message = errorElements.find("message").text();
-	    		alert("ERROR: " + message);
-	    		return;
-	    	}
-	    		
 			myself.addResponseToElement(data, element_id, append, xslSheet);
 		}).fail(function(jqXHR, textStatus) {
-			DEBUG.showAjaxFail(textStatus, element_id);
+			var data = jqXHR.responseXML;
+	    	var errorElements = data ? $(data).find("error") : null; 
+	    	if (errorElements && errorElements.length > 0) {
+	    		var message = errorElements.find("message").text();
+	    		alert("ERROR: " + message);
+			} else {
+				DEBUG.showAjaxFail(textStatus, element_id);
+			}
 		});
 	};
 	

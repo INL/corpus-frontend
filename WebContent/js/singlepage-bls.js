@@ -9,7 +9,7 @@ var BLS_URL = "http://localhost:8080/blacklab-server/gysseling/";
 
 (function () {
 	
-	BLS.search = function (param, callback) {
+	BLS.search = function (param, successFunc, failFunc) {
 
 		function filterQuery(name, value) {
 			// TODO: escape double quotes in values with \
@@ -100,11 +100,9 @@ var BLS_URL = "http://localhost:8080/blacklab-server/gysseling/";
 		
 		if (!blsParam["patt"] || blsParam["patt"].length == 0) {
 			if (filter.length == 0) {
-				callback({
-					"error": {
-						"code": "NO_PATTERN_GIVEN ",
-						"message": "Text search pattern required."
-					}
+				failFunc({
+					"code": "NO_PATTERN_GIVEN ",
+					"message": "Text search pattern required."
 				});
 			}
 			operation = "docs";
@@ -128,15 +126,18 @@ var BLS_URL = "http://localhost:8080/blacklab-server/gysseling/";
 	    	url: BLS_URL + url,
 	    	dataType: "json",
 	    	success: function (response) {
-	    		callback(response);
+	    		successFunc(response);
 	    	},
 	    	error: function (jqXHR, textStatus, errorThrown) {
-	    		callback({
-	    			"error": {
+	    		var data = jqXHR.responseJSON;
+				if (data && data['error']) {
+					failFunc(data['error']);
+				} else {
+					failFunc({
 	    				"code": "WEBSERVICE_ERROR",
-	    				"message": "Error contacting webservice: " + textStatus
-	    			}
-	    		});
+	    				"message": "Error contacting webservice: " + textStatus + "; " + errorThrown
+	    			});
+				}
 	    	}
 	    });
 	};

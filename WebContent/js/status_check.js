@@ -33,7 +33,12 @@ var BLSEARCH;
 	    }).done(function (data) {
 			callbackMethod(backendUrl, data);
 		}).fail(function (jqXHR, textStatus) {
-			DEBUG.showAjaxFail(textStatus, $("#status"));
+			var data = jqXHR.responseXML;
+			if (data) {
+				callbackMethod(backendUrl, data);
+			} else {
+				DEBUG.showAjaxFail(textStatus, $("#status"));
+			}
 	        //alert("AJAX request " + backendUrl + " failed (cross-origin error?); textStatus = " + textStatus);
 	    });
 	}
@@ -135,8 +140,15 @@ var BLSEARCH;
 	            
 	        updatePagination(pages, max, start);
 	    }).fail(function (jqXHR, textStatus) {
-	    	DEBUG.showAjaxFail(textStatus, $("#duration"));
-	        //alert("AJAX request " + backendUrl + " failed (cross-origin error?); textStatus = " + textStatus);
+	    	var data = jqXHR.responseXML;
+			var errorElements = data ? $(data).find("error") : null; 
+			if (errorElements && errorElements.length > 0) {
+	    		var message = errorElements.find("message").text();
+	    		DEBUG.showAjaxFail(message, $("#duration"));
+			} else {
+				DEBUG.showAjaxFail(textStatus, $("#duration"));
+				//alert("AJAX request " + backendUrl + " failed (cross-origin error?); textStatus = " + textStatus);
+			}
 	    });
 	}
 	

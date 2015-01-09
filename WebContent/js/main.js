@@ -22,7 +22,7 @@ var BLSEARCH;
 			}
 		};
 		
-		// If an AJAX call failed (didn't return 200 OK), show it on
+		// If an AJAX call failed (didn't return 200 OK, 201 created, etc.), show it on
 		// the page and using an alert.
 		DEBUG.showAjaxFail = function (textStatus, element) {
 			$("#results .icon-spinner").hide(); // hide the waiting animation

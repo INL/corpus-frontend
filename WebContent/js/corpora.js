@@ -36,14 +36,15 @@ function updateAvailableCorpora() {
 			"userid": "jan" // debug
 		},
 		"success": function (data) {
-			if (data['error'])
-				alert("Error for request: " + data['error']['message']);
-			else {
-				updateCorporaLists(data);
-			}
+			updateCorporaLists(data);
 		},
 		"error": function (jqXHR, textStatus, errorThrown) {
-			alert("Error for request: " + textStatus + "; " + errorThrown);
+			var data = jqXHR.responseXML;
+			if (data && data['error']) {
+				alert("Error for request: " + data['error']['message']);
+			} else {
+		    	alert("Error for request: " + textStatus + "; " + errorThrown);
+			}
 		},
 	});
 }

@@ -66,7 +66,7 @@ public class QueryServiceHandler {
 				connection.setRequestProperty("Accept", "application/xml");
 				connection.setRequestMethod("GET");
 				code = connection.getResponseCode();
-				if (code != 200) {
+				if (code < 200 || code > 299) { // Not an HTTP success (2xx) code?
 					reason = connection.getResponseMessage();
 					throw new IOException(code + " " + reason);
 				}

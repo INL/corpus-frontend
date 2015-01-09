@@ -126,6 +126,8 @@ var SINGLEPAGE = {};
         return parts.join("");
     }
     
+    // Shows an error that occurred when contacting BLS to the user.
+    // Expects an object with 'code' and 'message' properties.
 	function showBlsError(error) {
 		$("#results").hide();
 		$("#errorDiv").show();
@@ -290,12 +292,8 @@ var SINGLEPAGE = {};
 						toggleWaitAnimation(true);
 				}, 250);
 				
-				BLS.search(param, function (data) {
+				function updatePageWithBlsData(data) {
 					$('#resultsTabs').show();
-					if (data['error']) {
-						showBlsError(data['error']);
-				        return;
-					}
 					
 					var summary = data['summary'];
 					
@@ -361,7 +359,9 @@ var SINGLEPAGE = {};
 						// Scroll to results
 						$('html, body').animate({scrollTop: $("#results").offset().top - 70}, 300);
 					}, 1);
-				});
+				}
+				
+				BLS.search(param, updatePageWithBlsData, showBlsError);
 			} else {
 				// No search
 				$("#contentTabs").hide();
@@ -874,12 +874,7 @@ var SINGLEPAGE = {};
         param['first'] = start;
         param['number'] = 20;
         
-        BLS.search(param, function (data) {
-        	if (data['error']) {
-				showBlsError(data['error']);
-		        return;
-			}
-        	
+        function showGroupContent(data) {
         	// Update group results
     	    var html;
     	    if (data['hits']) {
@@ -917,7 +912,9 @@ var SINGLEPAGE = {};
     	    element.append(html.join(""));
     		var val = start + 20;
 	        numOfGroupResultsLoaded[id] = val;
-        });
+        }
+        
+        BLS.search(param, showGroupContent, showBlsError);
 
         return false;
     };
@@ -943,15 +940,16 @@ var SINGLEPAGE = {};
 	            wordsaroundhit: 50
 	        },
 	    	success: function (response) {
-	    		if (response['error']) {
-		    		alert("Error: " + response['error']['message']);
-	    		} else {
-	    			var parts = snippetParts(response);
-	    			$(element).html(parts[0] + "<b>" + parts[1] + "</b>" + parts[2]);
-	    		}
+	    		var parts = snippetParts(response);
+    			$(element).html(parts[0] + "<b>" + parts[1] + "</b>" + parts[2]);
 	    	},
 	    	error: function (jqXHR, textStatus, errorThrown) {
-	    		alert("Error: " + textStatus);
+	    		var data = jqXHR.responseJSON;
+				if (data && data['error']) {
+					alert("Error: " + data['error']['message']);
+				} else {
+					alert("Error: " + textStatus);
+				}
 	    	}
 	    });
     };

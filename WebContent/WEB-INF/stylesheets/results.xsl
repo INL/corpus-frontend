@@ -36,10 +36,14 @@
     
     <xsl:template match="status">
         <div class="span12 contentbox" id="results">
+			<div id='waitDisplay'>
+		        <p class="text-center"><i class="icon-spinner icon-spin"></i></p>
+		    </div>
+		    <!-- 
             <div id='waitDisplay' class="alert alert-info">
                 Searching, please wait...
                 <p class="text-center"><i class="icon-spinner icon-spin xxlarge"></i></p>
-            </div>
+            </div> -->
             <script type="text/javascript">
                 var backendRequestUrl = '<xsl:value-of select="$backendRequestUrl" />';
                 var checkAgain = <xsl:choose>

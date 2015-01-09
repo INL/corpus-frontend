@@ -4,8 +4,8 @@
 
 var BLS = {};
 
-// TODO: make configurable
-var BLS_URL = "http://localhost:8080/blacklab-server/gysseling/";
+// moved to single.vm
+//var BLS_URL = "http://localhost:8080/blacklab-server/gysseling/";
 
 (function () {
 	

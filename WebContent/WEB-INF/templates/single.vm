@@ -48,6 +48,10 @@
 #parse("header.vm")
 <script src="$pathToTop/js/singlepage.js"></script>
 <script src="$pathToTop/js/singlepage-bls.js"></script>
+<script>
+    var BLS_URL = "$blsUrl";
+    var wordProperties = [#foreach($wordfield in $wordproperties)#if($velocityCount > 1), #end"$wordfield.getSearchField()"#end];
+</script>
 
 <form onsubmit="return SINGLEPAGE.searchSubmit();">
 <div class="span12 contentbox">
@@ -66,7 +70,6 @@
 					<b>Error!</b> <span id='searchErrorText'>(text here)</span>
                 </div>
 
-				<script>var wordProperties = [#foreach($wordfield in $wordproperties)#if($velocityCount > 1), #end"$wordfield.getSearchField()"#end];</script>
 				#foreach($wordfield in $wordproperties)
 					#set ($fieldid = $wordfield.getSearchField() + "_text")
 					#set ($fieldfuzzid = $wordfield.getSearchField() + "_fuzzy")

@@ -13,15 +13,22 @@
 	<!-- Access environment variables with ${ENV.name} -->
 	<property environment="ENV" />
 	
-    <!-- Fail with an error if lib dir was not configured -->
+    <!-- Fail with an error if lib dir was not configured
     <fail unless="ENV.ANT_JAVA_LIB_DIR">
         Please set the ANT_JAVA_LIB_DIR environment variable!
         (Should point to the directory where Java libraries can be found,
          e.g. N:\Automatisering\Applicatieontwikkeling\javalibs).
     </fail>
 
+	<property name="lib" value="${ENV.ANT_JAVA_LIB_DIR}" /> -->
+	
 	<!-- Set lib dir from environment variable -->
-	<property name="lib" value="${ENV.ANT_JAVA_LIB_DIR}" />
+	<property name="lib" value="WebContent/WEB-INF/lib" />
+	
+	<!-- Make sure we know the current year, for the copyright clause in the javadocs -->
+	<tstamp>
+		<format property="TODAY" pattern="yyyy-MM-dd HH:mm:ss" />
+	</tstamp>
 	
 	<!-- Save timestamp and make the build directory -->
 	<target name="init">
@@ -37,18 +44,18 @@
 			<classpath>
 				<pathelement path="${java.class.path}/"/>
 				<pathelement path="${lib}/log4j-1.2.15.jar" />
-				<pathelement path="${lib}/tomcat-7.0/servlet-api.jar" />
-				<pathelement path="${lib}/tomcat-7.0/jsp-api.jar" />
-				<pathelement path="${lib}/tomcat-7.0/jasper.jar" />
+				<pathelement path="${lib}/tomcat7/servlet-api.jar" />
+				<pathelement path="${lib}/tomcat7/jsp-api.jar" />
+				<pathelement path="${lib}/tomcat7/jasper.jar" />
                 <pathelement path="${lib}/InlJavaLib-0.7.jar" />
-				<pathelement path="${lib}/velocity-1.5/velocity-1.5.jar" />
-				<pathelement path="${lib}/velocity-tools-1.4/velocity-tools-generic-1.4.jar" />
-				<pathelement path="${lib}/velocity-tools-1.4/velocity-tools-view-1.4.jar" />
-				<pathelement path="${lib}/velocity-1.5/lib/commons-collections-3.1.jar" />
-				<pathelement path="${lib}/velocity-1.5/lib/commons-lang-2.1.jar" />
-				<pathelement path="${lib}/commons-lang-2.6/commons-lang-2.6.jar" />
-                <pathelement path="${lib}/commons-configuration-1.9/commons-configuration-1.9.jar" />
-                <pathelement path="${lib}/commons-logging-1.1.1/commons-logging-1.1.1.jar" />
+				<pathelement path="${lib}/velocity-1.5.jar" />
+				<pathelement path="${lib}/velocity-tools-generic-1.4.jar" />
+				<pathelement path="${lib}/velocity-tools-view-1.4.jar" />
+				<pathelement path="${lib}/commons-collections-3.1.jar" />
+				<pathelement path="${lib}/commons-lang-2.6.jar" />
+                <pathelement path="${lib}/commons-configuration-1.9.jar" />
+                <pathelement path="${lib}/commons-logging-1.1.1.jar" />
+				
 				<!-- <pathelement path="${lib}/lucene-3.6.0/lucene-core-3.6.0.jar" />
 		        <pathelement path="${lib}/lucene-3.6.0/lucene-highlighter-3.6.0.jar" />
 		        <pathelement path="${lib}/lucene-3.6.0/lucene-queries-3.6.0.jar" />
@@ -84,7 +91,16 @@
     <!-- Build .war file from the build directory -->
     <target name="war" depends="compile">
         <mkdir dir="${dist}" />
-        <war warfile="${dist}/search.war" webxml="WebContent/WEB-INF/web.xml" basedir="${build}" />
+        <war warfile="${dist}/search.war" webxml="WebContent/WEB-INF/web.xml" basedir="${build}">
+        	
+			<!-- Generate the manifest file -->
+			<manifest>
+				<attribute name="Manifest-Version" value="1.0" />
+				<attribute name="Build-By" value="${user.name}" />
+				<attribute name="Build-Date" value="${TODAY}" />
+			</manifest>
+
+    	</war>
     </target>
 
     <!-- Build .war files for all project variants -->

@@ -7,6 +7,7 @@
         <meta name="viewport" content="width=device-width">
 		<meta property="og:image" content="$pathToTop/apple-touch-icon-144x144-precomposed.png" />
 		<meta property="og:description" content="$title search provided by the INL in Leiden."/>
+		<!-- Build time: $buildTime -->
 		<link title="Search" type="application/opensearchdescription+xml" rel="search" href="$pathToTop/opensearch.xml">
         <link rel="stylesheet" href="$pathToTop/css/bootstrap.min.css">
         <link rel="stylesheet" href="$pathToTop/css/bootstrap-responsive.min.css">

@@ -10,13 +10,17 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -81,9 +85,14 @@ public class MainServlet extends HttpServlet {
 	 */
 	private String defaultCorpus = "chn";
 
+	/**
+	 * Time the WAR was built.
+	 */
+	private String warBuildTime = null;
+
 	@Override
 	public void init(ServletConfig cfg) throws ServletException {
-		super.init();
+		super.init(cfg);
 
 		// initialise log4j
 		LogUtil.initLog4j(new File(cfg.getServletContext().getRealPath(
@@ -440,4 +449,31 @@ public class MainServlet extends HttpServlet {
 		return fieldType;
 	}
 
+	/**
+	 * Return a timestamp for when the application was built.
+	 *
+	 * @return build timestamp (format: yyyy-MM-dd HH:mm:ss), or UNKNOWN if
+	 *   the timestamp could not be found for some reason (i.e. not running from a
+	 *   JAR, or JAR was not created with the Ant buildscript).
+	 */
+	public String getWarBuildTime() {
+		if (warBuildTime == null) {
+			try {
+				ServletContext application = getServletContext();
+				InputStream inputStream = application.getResourceAsStream("/META-INF/MANIFEST.MF");
+				if (inputStream == null) {
+					warBuildTime = "(no manifest)";
+				} else {
+					Manifest manifest = new Manifest(inputStream);
+					Attributes atts = manifest.getMainAttributes();
+					String value = atts.getValue("Build-Date");
+					warBuildTime = (value == null ? "UNKNOWN" : value);
+				}
+			} catch (IOException e) {
+				throw new RuntimeException("Could not read build date from manifest", e);
+			}
+		}
+		return warBuildTime;
+	}
+	
 }

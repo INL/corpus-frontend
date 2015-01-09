@@ -42,7 +42,7 @@ public abstract class BaseResponse {
 	/** Velocity template variables */
 	private VelocityContext context = new VelocityContext();
 
-	/** The corpus to use, if different from the "default" */
+	/** The corpus to use */
 	protected String corpus = "";
 
 	protected BaseResponse() {
@@ -69,7 +69,8 @@ public abstract class BaseResponse {
 		context.put("title", this.servlet.getConfig(corpus).getCorpusName());
 		context.put("websiteconfig", this.servlet.getConfig(corpus));
 		context.put("googleAnalyticsKey", this.servlet.getGoogleAnalyticsKey());
-		context.put("pathToTop", ".."); // correct for most pages, but for "list of corpora" it's "." 
+		context.put("pathToTop", ".."); // correct for most pages, but for "list of corpora" it's "."
+		context.put("buildTime", servlet.getWarBuildTime());
 	}
 
 	/**

@@ -17,6 +17,7 @@ public class SingleResponse extends BaseResponse {
 	@Override
 	protected void completeRequest() {
 		
+		getContext().put("blsUrl", servlet.getExternalWebserviceUrl(corpus));
 		getContext().put("title", servlet.getConfig(corpus).getCorpusName());
 		getContext().put("wordproperties",
 				servlet.getConfig(corpus).getWordProperties());

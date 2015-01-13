@@ -131,7 +131,7 @@ var SINGLEPAGE = {};
 	function showBlsError(error) {
 		$("#results").hide();
 		$("#errorDiv").show();
-		$("#errorMessage").text(error['message'] + "(" + error['code'] + ")");
+		$("#errorMessage").text(error['message'] + " (" + error['code'] + ")");
 		toggleWaitAnimation(false);
 	}
     
@@ -313,7 +313,7 @@ var SINGLEPAGE = {};
 					}
 					
 					var isGrouped = false;
-					$("#showHideTitles").toggle(!!data['hits']);
+					$(".showHideTitles").toggle(!!data['hits']);
 					if (data['hits']) {
 						updateHitsTable(data);
 						totalPages = Math.ceil(summary['numberOfHitsRetrieved'] / resultsPerPage);
@@ -667,7 +667,7 @@ var SINGLEPAGE = {};
 		
 		// Before any searches are shown, hide all the results elements.
 		$('#resultsTabs').hide(); // No results yet, don't show the empty results tabs.
-		$('#showHideTitles').hide(); // Don't show this button until there are results.
+		$('.showHideTitles').hide(); // Don't show this button until there are results.
 		$("#contentTabs").hide();
 		$("#searchSummary").hide();
 		$('#results').hide();

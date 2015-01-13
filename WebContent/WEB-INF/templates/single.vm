@@ -55,7 +55,8 @@
 
 <form onsubmit="return SINGLEPAGE.searchSubmit();">
 <div class="span12 contentbox">
-	<h2>$title</h2>
+	#if($corpusOwner)<h3>$corpusOwner's private corpora</h3>#end
+	<h2>$corpusName</h2>
 	<ul class="nav nav-tabs" id="searchTabs">
 		<li><a href="#simple" data-toggle="tab" class="querytype">Simple</a></li>
 		<li><a href="#query" data-toggle="tab" class="querytype">CQL query</a></li>
@@ -152,7 +153,7 @@
 <div class="span12 contentbox" id="results">
 	<div id='totalsReport' class="pull-right"></div>
 	<div id='waitDisplay'>
-        <p class="text-center"><i class="icon-spinner icon-spin"></i></p>
+        <p class="text-center"><i class="fa fa-spinner fa-spin"></i></p>
     </div>
 	<ul class="nav nav-tabs" id="contentTabs">
 		<li><a href="#tabHits" data-toggle="tab" class="resultstype">Per Hit</a></li>
@@ -162,7 +163,7 @@
 	</ul>
     <div class="pagination">
 		<ul class="pagebuttons"></ul>
-		<button id="showHideTitles" type="button" class="btn btn-small btn-danger" data-toggle="collapse" data-target=".doctitle" style="vertical-align: top; margin-top: 2px;">Show/hide titles</button>
+		<button type="button" class="showHideTitles btn btn-small btn-danger" data-toggle="collapse" data-target=".doctitle" style="vertical-align: top; margin-top: 2px;">Show/hide titles</button>
 	</div>
 	<div id='resultsTabs' class="span12 tab-content">
 		<div class="tab-pane lightbg haspadding" id="tabHits">
@@ -276,6 +277,11 @@
 		</div>
 		
 	</div>
+    <div class="pagination">
+		<ul class="pagebuttons"></ul>
+		<button type="button" class="showHideTitles btn btn-small btn-danger" data-toggle="collapse" data-target=".doctitle" style="vertical-align: top; margin-top: 2px;">Show/hide titles</button>
+	</div>
+	
 </div>
 
 </form>

@@ -83,7 +83,7 @@ public class SearchResponse extends BaseResponse {
 		getContext().put("max", getParameter("max", 50));
 		getContext().put("responseObject", this);
 
-		getContext().put("title", servlet.getConfig(corpus).getCorpusName());
+		//getContext().put("title", servlet.getConfig(corpus).getCorpusName());
 		getContext().put("wordproperties",
 				servlet.getConfig(corpus).getWordProperties());
 		getContext().put("websiteconfig", servlet.getConfig(corpus));

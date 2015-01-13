@@ -3,13 +3,33 @@
 <div class="span12 contentbox">
 
 <h1>Available corpora</h1>
+
 <h2 id='header-public'>Public corpora</h2>
-<ul id='corpora'>
-</ul>
+<table class='corpora'>
+	<tbody id='corpora'></tbody>
+</table>
+
 <h2 id='header-private'>Private corpora</h2>
-<ul id='corpora-private'>
-</ul>
-<input id='create-corpus' type='button' value='New corpus' />
+
+<div id='successDiv' class="alert alert-success" role="alert">
+	<span id='successMessage'></span>
+</div>
+<div id='errorDiv' class="alert alert-danger" role="alert">
+	<span id='errorMessage'></span>
+</div>
+
+<table class='corpora'>
+	<tbody id='corpora-private'></tbody>
+</table>
+
+<input id='create-corpus' type='button' onclick='createIndex();' value='New corpus' />
+
+<form id="uploadForm" method="POST">
+	<h2>Add data to <span id='uploadCorpusName'>corpus</span>:</h2> 
+	<input type="file" id="uploadFile" name="data" />
+	<button type="submit" id="uploadSubmit">Upload</button>
+</form>
+
 
 <script>
 var blsUrl = "$blsUrl";

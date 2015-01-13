@@ -25,7 +25,7 @@ var BLSEARCH;
 		// If an AJAX call failed (didn't return 200 OK, 201 created, etc.), show it on
 		// the page and using an alert.
 		DEBUG.showAjaxFail = function (textStatus, element) {
-			$("#results .icon-spinner").hide(); // hide the waiting animation
+			$("#results .fa-spinner").hide(); // hide the waiting animation
 		    $('#waitDisplay').hide(); // make sure the (sometimes) accompanying text is hidden too 
 
 			var msg = "AJAX request failed (cross-origin error?); textStatus = " + textStatus;

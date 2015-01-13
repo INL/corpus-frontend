@@ -179,6 +179,11 @@ small {
 	color: #888888;
 }
 
+#filteroverview {
+	color: #888888;
+	font-size: 85%;
+}
+
 .progress .bar {
 	color: #333333;
 }
@@ -236,12 +241,44 @@ span.word {
 	display: none;
 }
 
-#corpora {
-	
+table.corpora {
+	width: auto;
+	margin-bottom: 1em;
+}
+
+table.corpora td {
+	font-size: 14pt;
+	padding: 3px;
+}
+
+table.corpora tr:hover {
+	background-color: inherit;
+}
+
+td.corpusName {
+	min-width: 120px;
+}
+
+td.corpusName a {
+	color: inherit;
+	text-decoration: none;
+}
+
+#uploadForm {
+	margin-top: 1em;
+	display: none;
+}
+
+table.corpora a.corpusLink {
+}
+
+table.corpora a.icon {
+	margin-left: 10px;
 }
 
 /* Single-page */
-#errorDiv {
+#errorDiv, #successDiv {
+	margin-top: 1em;
 	display: none;
 }
 

@@ -35,9 +35,9 @@ var BLSEARCH;
 		}).fail(function (jqXHR, textStatus) {
 			var data = jqXHR.responseXML;
 			if (data) {
-				callbackMethod(backendUrl, data);
+				callbackMethod(jqXHR, backendUrl, data);
 			} else {
-				DEBUG.showAjaxFail(textStatus, $("#status"));
+				DEBUG.showAjaxFail(jqXHR, textStatus, $("#status"));
 			}
 	        //alert("AJAX request " + backendUrl + " failed (cross-origin error?); textStatus = " + textStatus);
 	    });
@@ -47,13 +47,13 @@ var BLSEARCH;
 	var checkAgainMs = 200;
 	
 	// If a job is finished, get the results, otherwise check again later.
-	function loadResults(backendUrl, data) {
+	function loadResults(jqXHR, backendUrl, data) {
 		var status = getJobStatus(data);
 		//$("#status").text(status + "...");
 		DEBUG.log("Status: " + status);
 		
 		if (status == "ERROR" || status == "" || status.substring(0,6) == "No job") {
-			showLoadingError(data);
+			showLoadingError(jqXHR, data);
 		} else if (status == "COUNTING" || status == "FINISHED") {
 		    location.reload();
 		} else {
@@ -64,12 +64,12 @@ var BLSEARCH;
 	}
 	
 	// See if the result count is finished yet, and update if so. If not, check again later.
-	function refreshStats(backendUrl, data) {
+	function refreshStats(jqXHR, backendUrl, data) {
 		var status = getJobStatus(data);
 		DEBUG.log("Status: " + status);
 		
 		if (status == "ERROR" || status == "" || status.substring(0,6) == "No job") {
-			showLoadingError();
+			showLoadingError(jqXHR, data);
 		} else if (status == "FINISHED") {
 			updateStats(backendUrl);
 		} else {
@@ -80,14 +80,14 @@ var BLSEARCH;
 	}
 	
 	// An error occurred; signal it
-	function showLoadingError(data) {
+	function showLoadingError(jqXHR, data) {
 	    $xml = $(data);
 	    var errorMessage = $xml.find("error").text();
 	    var errorEl = $("#status");
 	    if (errorMessage.length > 0) {
-	    	DEBUG.showAjaxFail(errorMessage, errorEl);
+	    	DEBUG.showAjaxFail(jqXHR, errorMessage, errorEl);
 	    } else {
-	    	DEBUG.showAjaxFail("Error reading status response", errorEl);
+	    	DEBUG.showAjaxFail(jqXHR, "Error reading status response", errorEl);
 	    }
 	}
 	
@@ -144,9 +144,9 @@ var BLSEARCH;
 			var errorElements = data ? $(data).find("error") : null; 
 			if (errorElements && errorElements.length > 0) {
 	    		var message = errorElements.find("message").text();
-	    		DEBUG.showAjaxFail(message, $("#duration"));
+	    		DEBUG.showAjaxFail(jqXHR, message, $("#duration"));
 			} else {
-				DEBUG.showAjaxFail(textStatus, $("#duration"));
+				DEBUG.showAjaxFail(jqXHR, textStatus, $("#duration"));
 				//alert("AJAX request " + backendUrl + " failed (cross-origin error?); textStatus = " + textStatus);
 			}
 	    });

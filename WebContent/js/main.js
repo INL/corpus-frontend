@@ -23,16 +23,27 @@ var BLSEARCH;
 		};
 		
 		// If an AJAX call failed (didn't return 200 OK, 201 created, etc.), show it on
-		// the page and using an alert.
-		DEBUG.showAjaxFail = function (textStatus, element) {
+		// the page.
+		DEBUG.showAjaxFail = function (jqXHR, textStatus, element) {
 			$("#results .fa-spinner").hide(); // hide the waiting animation
 		    $('#waitDisplay').hide(); // make sure the (sometimes) accompanying text is hidden too 
 
-			var msg = "AJAX request failed (cross-origin error?); textStatus = " + textStatus;
+			var message = "";
+			if (jqXHR.status != 0 || jqXHR.statusText != "error") {
+				message = jqXHR.status + " " + jqXHR.statusText;
+			}
+			if (textStatus != "error") {
+				if (message.length > 0)
+					message += "; ";
+				message += textStatus;
+			}
+			if (message.length == 0) {
+				message = "unknown error, possibly Same Origin Policy violation";
+			}
+			var msg = "Unexpected response: " + message;
 			var html = "<div class='error'>" + msg + "</div>";
 			$(element).html(html);
 			DEBUG.log(msg);
-			alert(msg);
 		};
 
 		// Log the URL and parameters of the AJAX call we're about to do
@@ -80,7 +91,7 @@ var BLSEARCH;
         $(document).ready(function() {
             BLSEARCH.scrollToResults();
             $('.nolink').click(function(event) { event.preventDefault();});
-            $('.groupcontent').on('show', function() {
+            $('.groupconten').on('show', function() {
         		BLSEARCH.SEARCHPAGE.ensureGroupResultsLoaded(isDocsGrouped, '#' + $(this).attr('id'));
             });
         });

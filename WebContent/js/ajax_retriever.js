@@ -32,14 +32,13 @@ var BLSEARCH;
 	    }).done(function(data) {
 			myself.addResponseToElement(data, element_id, append, xslSheet);
 		}).fail(function(jqXHR, textStatus) {
+			var message = textStatus;
 			var data = jqXHR.responseXML;
-	    	var errorElements = data ? $(data).find("error") : null; 
-	    	if (errorElements && errorElements.length > 0) {
-	    		var message = errorElements.find("message").text();
-	    		alert("ERROR: " + message);
-			} else {
-				DEBUG.showAjaxFail(textStatus, element_id);
+			var errorElements = data ? $(data).find("error") : null; 
+			if (errorElements && errorElements.length > 0) {
+	    		message = errorElements.find("message").text();
 			}
+			DEBUG.showAjaxFail(jqXHR, message, element_id);
 		});
 	};
 	

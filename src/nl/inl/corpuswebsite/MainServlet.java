@@ -464,10 +464,14 @@ public class MainServlet extends HttpServlet {
 				if (inputStream == null) {
 					warBuildTime = "(no manifest)";
 				} else {
-					Manifest manifest = new Manifest(inputStream);
-					Attributes atts = manifest.getMainAttributes();
-					String value = atts.getValue("Build-Date");
-					warBuildTime = (value == null ? "UNKNOWN" : value);
+					try {
+						Manifest manifest = new Manifest(inputStream);
+						Attributes atts = manifest.getMainAttributes();
+						String value = atts.getValue("Build-Date");
+						warBuildTime = (value == null ? "UNKNOWN" : value);
+					} finally {
+						inputStream.close();
+					}
 				}
 			} catch (IOException e) {
 				throw new RuntimeException("Could not read build date from manifest", e);

@@ -1,20 +1,20 @@
-
 // class CorpusSearch
 //----------------------------------------------------------------
 
 var BLS = {};
 
 // moved to single.vm
-//var BLS_URL = "http://localhost:8080/blacklab-server/gysseling/";
+// var BLS_URL = "http://localhost:8080/blacklab-server/gysseling/";
 
-(function () {
-	
-	BLS.search = function (param, successFunc, failFunc) {
+(function() {
+
+	BLS.search = function(param, successFunc, failFunc) {
 
 		function filterQuery(name, value) {
 			// TODO: escape double quotes in values with \
 			if ($("#" + name + "-select").length > 0) {
-				// Multiselect. Quote values and replace glue characters with spaces.
+				// Multiselect. Quote values and replace glue characters with
+				// spaces.
 				var values = SINGLEPAGE.safeSplit(value)
 				if (values.length > 1)
 					return name + ":(\"" + values.join("\" \"") + "\")";
@@ -24,7 +24,7 @@ var BLS = {};
 			else
 				return name + ":" + value;
 		}
-		
+
 		function getPattern(wordProp) {
 			var tokens = [];
 			for (key in wordProp) {
@@ -33,7 +33,8 @@ var BLS = {};
 					for (var i = 0; i < propTokens.length; i++) {
 						if (!tokens[i])
 							tokens[i] = {};
-						if (propTokens[i] == "*" || propTokens[i] == ".*" || propTokens[i] == "[]")
+						if (propTokens[i] == "*" || propTokens[i] == ".*"
+								|| propTokens[i] == "[]")
 							continue;
 						tokens[i][key] = propTokens[i];
 					}
@@ -68,9 +69,10 @@ var BLS = {};
 			}
 			return cql;
 		}
-		
+
 		var blsParam = {
-			"number": 50 // default value
+			"number" : 50
+		// default value
 		};
 		var filter = "";
 		var wordProp = {};
@@ -89,7 +91,8 @@ var BLS = {};
 					// Word property. Use to construct BLS pattern later.
 					wordProp[key] = value;
 				} else {
-					// Something else. For now, assume we can just pass it to BLS.
+					// Something else. For now, assume we can just pass it to
+					// BLS.
 					blsParam[key] = value;
 				}
 			}
@@ -97,19 +100,19 @@ var BLS = {};
 		var patt = getPattern(wordProp);
 		if (patt.length > 0)
 			blsParam["patt"] = patt;
-		
+
 		if (!blsParam["patt"] || blsParam["patt"].length == 0) {
 			if (filter.length == 0) {
 				failFunc({
-					"code": "NO_PATTERN_GIVEN ",
-					"message": "Text search pattern required."
+					"code" : "NO_PATTERN_GIVEN ",
+					"message" : "Text search pattern required."
 				});
 			}
 			operation = "docs";
 		}
 		if (filter.length > 0)
 			blsParam["filter"] = filter;
-		
+
 		var url = "";
 		for (key in blsParam) {
 			if (blsParam.hasOwnProperty(key)) {
@@ -120,26 +123,27 @@ var BLS = {};
 			}
 		}
 		var url = operation + "?" + decodeURIComponent(url);
-		//$("#debugInfo").html("BLS/" + url);
-		
-	    $.ajax({
-	    	url: BLS_URL + url,
-	    	dataType: "json",
-	    	success: function (response) {
-	    		successFunc(response);
-	    	},
-	    	error: function (jqXHR, textStatus, errorThrown) {
-	    		var data = jqXHR.responseJSON;
-				if (data && data['error']) {
-					failFunc(data['error']);
+		// $("#debugInfo").html("BLS/" + url);
+
+		$.ajax({
+			url : BLS_URL + url,
+			dataType : "json",
+			success : function(response) {
+				successFunc(response);
+			},
+			error : function(jqXHR, textStatus, errorThrown) {
+				var data = jqXHR.responseJSON;
+				if (data && data.error) {
+					failFunc(data.error);
 				} else {
 					failFunc({
-	    				"code": "WEBSERVICE_ERROR",
-	    				"message": "Error contacting webservice: " + textStatus + "; " + errorThrown
-	    			});
+						"code" : "WEBSERVICE_ERROR",
+						"message" : "Error contacting webservice: "
+								+ textStatus + "; " + errorThrown
+					});
 				}
-	    	}
-	    });
+			}
+		});
 	};
 
 })();

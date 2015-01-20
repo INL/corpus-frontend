@@ -119,7 +119,7 @@ var SINGLEPAGE = {};
     	var n = context[prop].length;
     	for (var i = 0; i < n; i++) {
     		if ((i == 0 && doPunctBefore) || i > 0)
-    			parts.push(context['punct'][i]);
+    			parts.push(context.punct[i]);
     		parts.push(context[prop][i]);
     	}
     	parts.push(addPunctAfter);
@@ -129,9 +129,12 @@ var SINGLEPAGE = {};
     // Shows an error that occurred when contacting BLS to the user.
     // Expects an object with 'code' and 'message' properties.
 	function showBlsError(error) {
+		if (typeof error == "string")
+			error = {"message": error};
 		$("#results").hide();
 		$("#errorDiv").show();
-		$("#errorMessage").text(error['message'] + " (" + error['code'] + ")");
+		var code = error.code ? " (" + error.code + ")" : "";
+		$("#errorMessage").text(error.message + code);
 		toggleWaitAnimation(false);
 	}
     
@@ -145,8 +148,8 @@ var SINGLEPAGE = {};
 			
 			viewingDocs = param["view"] == "docs";
 			//viewingGrouped = !!param["group"];
-			groupBy = param['group'] || null;
-			viewGroup = param['viewgroup'] || null;
+			groupBy = param.group || null;
+			viewGroup = param.viewgroup || null;
 			var showingGroups = groupBy != null && viewGroup == null;
 			if (hasSearch) {
 				// Activate the right results tab
@@ -247,7 +250,7 @@ var SINGLEPAGE = {};
 			// Sort/group
 			//----------------------------------------------------------------
 			
-			sortBy = param['sort'] || null;
+			sortBy = param.sort || null;
 			currentSortReverse = false;
 			if (sortBy && sortBy.length >= 1 && sortBy.charAt(0) == '-') {
 				currentSortReverse = true;
@@ -257,7 +260,7 @@ var SINGLEPAGE = {};
 			// Preferred number of results
 			//----------------------------------------------------------------
 			
-			resultsPerPage = param['number'] || 50;
+			resultsPerPage = param.number || 50;
 			if (resultsPerPage > 200)
 				resultsPerPage = 200;
 			$("#resultsPerPage").val(resultsPerPage);
@@ -266,10 +269,10 @@ var SINGLEPAGE = {};
 			//----------------------------------------------------------------
 			
 			// Select the right tabs
-			if (param['patt']) {
+			if (param.patt) {
 				// CQL Query
 				$('#searchTabs li:eq(1) a').tab('show');
-				$('#querybox').val(param['patt']);
+				$('#querybox').val(param.patt);
 			} else {
 				// Simple query
 				$('#searchTabs a:first').tab('show');
@@ -295,9 +298,9 @@ var SINGLEPAGE = {};
 				function updatePageWithBlsData(data) {
 					$('#resultsTabs').show();
 					
-					var summary = data['summary'];
+					var summary = data.summary;
 					
-					var docFields = summary['docFields'] || {};
+					var docFields = summary.docFields || {};
 					if (!corpusDocFields) {
 						// Use obvious guesses for any missing fields
 						corpusDocFields = {
@@ -313,27 +316,27 @@ var SINGLEPAGE = {};
 					}
 					
 					var isGrouped = false;
-					$(".showHideTitles").toggle(!!data['hits']);
-					if (data['hits']) {
+					$(".showHideTitles").toggle(!!data.hits);
+					if (data.hits) {
 						updateHitsTable(data);
-						totalPages = Math.ceil(summary['numberOfHitsRetrieved'] / resultsPerPage);
+						totalPages = Math.ceil(summary.numberOfHitsRetrieved / resultsPerPage);
 						$("#totalsReport").show().html(
-							"Total hits: " + summary['numberOfHits'] + "<br/>" +
+							"Total hits: " + summary.numberOfHits + "<br/>" +
 							"Total pages: " + totalPages
 						);
-					} else if (data['docs']) {
+					} else if (data.docs) {
 						updateDocsTable(data);
-						totalPages = Math.ceil(summary['numberOfDocsRetrieved'] / resultsPerPage);
+						totalPages = Math.ceil(summary.numberOfDocsRetrieved / resultsPerPage);
 						$("#totalsReport").show().html(
-							"Total docs: " + summary['numberOfDocs'] + "<br/>" +
+							"Total docs: " + summary.numberOfDocs + "<br/>" +
 							"Total pages: " + totalPages
 						);
-					} else if (data['hitGroups']) {
+					} else if (data.hitGroups) {
 						$("#totalsReport").hide();
 						isGrouped = true;
 						selectGroupBy = false;
 						updateGroupedTable(data, false);
-					} else if (data['docGroups']) {
+					} else if (data.docGroups) {
 						$("#totalsReport").hide();
 						isGrouped = true;
 						selectGroupBy = false;
@@ -341,11 +344,11 @@ var SINGLEPAGE = {};
 					}
 					
 					// Summary, element visibility
-					var patt = summary['searchParam']['patt'];
-					var duration = summary['searchTime'] / 1000.0;
+					var patt = summary.searchParam.patt;
+					var duration = summary.searchTime / 1000.0;
 					$("#searchSummary").show().html("Query: " + patt + " - Duration: " + duration + "</span> sec");
 					if (!isGrouped) {
-						showFirstResult = summary['windowFirstResult'];
+						showFirstResult = summary.windowFirstResult;
 						updatePagination();
 						$(".pagination").show();
 					} else {
@@ -399,19 +402,19 @@ var SINGLEPAGE = {};
 		totalGroupResults = {};
 		
 	    var html;
-		var summary = data['summary'];
+		var summary = data.summary;
 		var groups = data[type + 'Groups'];
-		var patt = summary['searchParam']['patt'];
+		var patt = summary.searchParam.patt;
 		var idPrefix = isDocs ? 'dg' : 'hg';
 		var prCls = isDocs ? 'warning' : 'success'; // orange or green, resp.
 	    if (groups && groups.length > 0) {
 			html = [];
 			for (var i = 0; i < groups.length; i++) {
 				var group = groups[i];
-				var identity = group['identity'];
-				var idDisplay = group['identityDisplay'];
-				var size = group['size'];
-				var width = size * 100 / summary['largestGroupSize'];
+				var identity = group.identity;
+				var idDisplay = group.identityDisplay;
+				var size = group.size;
+				var width = size * 100 / summary.largestGroupSize;
 		        
 		        html.push("<tr><td>", idDisplay, "</td>",
 	                "<td><div class='progress progress-", prCls, "' data-toggle='collapse' data-target='#", idPrefix, i, "'>",
@@ -441,32 +444,32 @@ var SINGLEPAGE = {};
 	
 	function updateHitsTable(data) {
 	    var html;
-		var summary = data['summary'];
-	    var docFields = summary['docFields'] || {};
-		var hits = data['hits'];
-		var docs = data['docInfos'];
+		var summary = data.summary;
+	    var docFields = summary.docFields || {};
+		var hits = data.hits;
+		var docs = data.docInfos;
 		var prevDocPid = null;
-		var patt = summary['searchParam']['patt'];
+		var patt = summary.searchParam.patt;
 		var pattPart = patt ? "&query=" + encodeURIComponent(patt) : "";
 	    if (hits && hits.length > 0) {
 			html = [];
 			for (var i = 0; i < hits.length; i++) {
 				var hit = hits[i];
 				// Add the document title and the hit information
-				var docPid = hit['docPid'];
-				var startPos = hit['start'];
-				var endPos = hit['end'];
+				var docPid = hit.docPid;
+				var startPos = hit.start;
+				var endPos = hit.end;
 		        var doc = docs[docPid];
 		        var linkText = "UNKNOWN";
-		        if (docFields['titleField'] && doc[docFields['titleField']])
-		        	linkText = doc[docFields['titleField']];
-		        if (docFields['authorField'] && doc[docFields['authorField']])
-		        	linkText += " by " + doc[docFields['authorField']];
-		        if (docFields['dateField'] && doc[docFields['dateField']])
-		        	linkText += " (" + doc[docFields['dateField']] + ")";
-		        if (!prevDocPid || hit['docPid'] != prevDocPid) {
+		        if (docFields.titleField && doc[docFields.titleField])
+		        	linkText = doc[docFields.titleField];
+		        if (docFields.authorField && doc[docFields.authorField])
+		        	linkText += " by " + doc[docFields.authorField];
+		        if (docFields.dateField && doc[docFields.dateField])
+		        	linkText += " (" + doc[docFields.dateField] + ")";
+		        if (!prevDocPid || hit.docPid != prevDocPid) {
 		        	// Document title row 
-		        	prevDocPid = hit['docPid'];
+		        	prevDocPid = hit.docPid;
 		        	var url = "article?doc=" + encodeURIComponent(docPid) + pattPart;
                     html.push("<tr class='titlerow'><td colspan='5'>",
                     	"<div class='doctitle collapse in'>",
@@ -475,10 +478,10 @@ var SINGLEPAGE = {};
 		        }
 		        
 		        // Concordance row
-		        var date = doc['yearFrom'];
+		        var date = doc.yearFrom;
 		        var parts = snippetParts(hit);
-		        var matchLemma = words(hit['match'], "lemma", false, "");
-			    var matchPos = words(hit['match'], "pos", false, "");
+		        var matchLemma = words(hit.match, "lemma", false, "");
+			    var matchPos = words(hit.match, "pos", false, "");
 		        html.push("<tr class='concordance' onclick='SINGLEPAGE.showCitation(this, \"",
 		        	docPid, "\", ", startPos, ", ", endPos,
 		        	");'><td class='tbl_conc_left'>",
@@ -504,32 +507,32 @@ var SINGLEPAGE = {};
 	
 	function updateDocsTable(data) {
 	    var html;
-		var summary = data['summary'];
-	    var docFields = summary['docFields'] || {};
-		var docs = data['docs'];
-		var patt = summary['searchParam']['patt'];
+		var summary = data.summary;
+	    var docFields = summary.docFields || {};
+		var docs = data.docs;
+		var patt = summary.searchParam.patt;
 		var pattPart = patt ? "&query=" + encodeURIComponent(patt) : "";
 	    if (docs && docs.length > 0) {
 			html = [];
 			for (var i = 0; i < docs.length; i++) {
 				var doc = docs[i];
 				// Add the document title and the hit information
-				var docPid = doc['docPid'];
-				var numberOfHits = doc['numberOfHits'];
-		        var docInfo = doc['docInfo'];
+				var docPid = doc.docPid;
+				var numberOfHits = doc.numberOfHits;
+		        var docInfo = doc.docInfo;
 		        var linkText = "UNKNOWN";
-		        if (docFields['titleField'] && docInfo[docFields['titleField']])
-		        	linkText = docInfo[docFields['titleField']];
-		        if (docFields['authorField'] && docInfo[docFields['authorField']])
-		        	linkText += " by " + docInfo[docFields['authorField']];
-		        if (docFields['dateField'] && docInfo[docFields['dateField']])
-		        	linkText += " (" + docInfo[docFields['dateField']] + ")";
+		        if (docFields.titleField && docInfo[docFields.titleField])
+		        	linkText = docInfo[docFields.titleField];
+		        if (docFields.authorField && docInfo[docFields.authorField])
+		        	linkText += " by " + docInfo[docFields.authorField];
+		        if (docFields.dateField && docInfo[docFields.dateField])
+		        	linkText += " (" + docInfo[docFields.dateField] + ")";
 	        	var url = "article?doc=" + encodeURIComponent(docPid) + pattPart;
 		        
 		        // Concordance row
-		        var date = docInfo['yearFrom'];
+		        var date = docInfo.yearFrom;
 		        
-		        var docSnippets = doc['snippets'];
+		        var docSnippets = doc.snippets;
 		        if (docSnippets) {
 			        var snippets = [];
 			        for (var j = 0; j < docSnippets.length; j++) {
@@ -560,10 +563,10 @@ var SINGLEPAGE = {};
 	}
 	
 	function snippetParts(hit) {
-        var punctAfterLeft = hit['match']['word'].length > 0 ? hit['match']['punct'][0] : "";
-        var left = words(hit['left'], "word", false, punctAfterLeft);
-        var match = words(hit['match'], "word", false, "");
-        var right = words(hit['right'], "word", true, "");
+        var punctAfterLeft = hit.match.word.length > 0 ? hit.match.punct[0] : "";
+        var left = words(hit.left, "word", false, punctAfterLeft);
+        var match = words(hit.match, "word", false, "");
+        var right = words(hit.right, "word", true, "");
         return [left, match, right];
 	}
 	
@@ -659,9 +662,35 @@ var SINGLEPAGE = {};
 		goToUrl("?" + makeQueryString(param));
 		return false;
 	};
+	
+	// Information about the corpus we're searching
+	var corpusInfo;
+	
+	function getCorpusInfo() {
+	    $.ajax({
+	    	url: BLS_URL,
+	    	dataType: "json",
+	    	success: function (data) {
+	    		corpus = data;
+	    		document.title = corpus.displayName + " search";
+	    		$("#corpusNameTop").text(corpus.displayName);
+	    		$("#corpusNameMain").text(corpus.displayName);
+	    	},
+	    	error: function (jqXHR, textStatus, errorThrown) {
+	    		var data = jqXHR.responseJSON;
+				if (data && data.error) {
+					showBlsError(data.error);
+				} else {
+					showBlsError(textStatus);
+				}
+	    	}
+	    });
+	}
 
 	// Called when the page loads
 	$(document).ready(function () {
+		
+		getCorpusInfo();
 
 		BLSEARCH.SEARCHPAGE.filtersSetup();
 		
@@ -727,8 +756,8 @@ var SINGLEPAGE = {};
 		$(".sortHitWord").click(function () { return changeSort("hit"); });
 		$(".sortHitLemma").click(function () { return changeSort("hit:lemma"); });
 		$(".sortHitPos").click(function () { return changeSort("hit:pos"); });
-		$(".sortTitle").click(function () { return changeSort("field:" + corpusDocFields['titleField']); });
-		$(".sortDate").click(function () { return changeSort("field:" + corpusDocFields['dateField']); });
+		$(".sortTitle").click(function () { return changeSort("field:" + corpusDocFields.titleField); });
+		$(".sortDate").click(function () { return changeSort("field:" + corpusDocFields.dateField); });
 		$(".sortNumHits").click(function () { return changeSort("numhits"); });
 		
 		// Keep track of the current query type tab
@@ -870,16 +899,16 @@ var SINGLEPAGE = {};
         }
 
         var param = getParam();
-        param['viewgroup'] = element.attr('data-group');
-        param['first'] = start;
-        param['number'] = 20;
+        param.viewgroup = element.attr('data-group');
+        param.first = start;
+        param.number = 20;
         
         function showGroupContent(data) {
         	// Update group results
     	    var html;
-    	    if (data['hits']) {
-    	    	totalGroupResults[id] = data['summary']['numberOfHitsRetrieved'];
-        		var hits = data['hits'];
+    	    if (data.hits) {
+    	    	totalGroupResults[id] = data.summary.numberOfHitsRetrieved;
+        		var hits = data.hits;
         	    if (hits && hits.length > 0) {
         			html = [];
         			for (var i = 0; i < hits.length; i++) {
@@ -893,14 +922,14 @@ var SINGLEPAGE = {};
         	    	html = ["<div class='row-fluid'>ERROR</div>"];
         	    }
     	    } else {
-    	    	totalGroupResults[id] = data['summary']['numberOfDocsRetrieved'];
-    	    	var docs = data['docs'];
+    	    	totalGroupResults[id] = data.summary.numberOfDocsRetrieved;
+    	    	var docs = data.docs;
     	    	if (docs && docs.length > 0) {
         			html = [];
         			for (var i = 0; i < docs.length; i++) {
         				var doc = docs[i];
-        				var title = doc['docInfo']['title']; //@@@ docFields
-        		        var hits = doc['numberOfHits'];
+        				var title = doc.docInfo.title; //@@@ docFields
+        		        var hits = doc.numberOfHits;
         		    	html.push("<div class='row-fluid'><div class='span10 inline-concordance'>",
         		    		"<b>", title, "</b></div><div class='span2 inline-concordance'>", hits,
         		    		"</div></div>");
@@ -945,10 +974,10 @@ var SINGLEPAGE = {};
 	    	},
 	    	error: function (jqXHR, textStatus, errorThrown) {
 	    		var data = jqXHR.responseJSON;
-				if (data && data['error']) {
-					alert("Error: " + data['error']['message']);
+				if (data && data.error) {
+					showBlsError(data.error);
 				} else {
-					alert("Error: " + textStatus);
+					showBlsError(textStatus);
 				}
 	    	}
 	    });

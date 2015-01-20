@@ -237,6 +237,7 @@ span.word {
 }
 
 /* Corpora page */
+
 #header-public, #header-private, #corpora-private, #create-corpus {
 	display: none;
 }
@@ -269,7 +270,10 @@ td.corpusName a {
 	display: none;
 }
 
-table.corpora a.corpusLink {
+table.corpora a.disabled {
+   pointer-events: none;
+   cursor: default;
+   color: #bbb;
 }
 
 table.corpora a.icon {

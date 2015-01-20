@@ -75,7 +75,7 @@
                     <div class="nav-collapse collapse">
                         <ul class="nav">
 							<li class="dropdown">
-                                <a href="about" class="dropdown-toggle brand">$title<!-- <b class="caret"></b> --></a>
+                                <a id='corpusNameTop' href="about" class="dropdown-toggle brand">$title<!-- <b class="caret"></b> --></a>
                             </li>
                             #foreach($link in $websiteconfig.getLinks())
 								<li><a href="$link.get('href')"#if($link.get('newWindow')) target="_blank"#else#end>$link.get('name')</a></li>

@@ -4,28 +4,40 @@
 
 <h1>Available corpora</h1>
 
-<h2 id='header-public'>Public corpora</h2>
+<!-- NOTE: using a table because we'd like to automatically 
+     size width to longest corpus name. There's probably better ways. -->
 <table class='corpora'>
+	<tbody>
+		<tr>
+			<td colspan='2'><h2 id='header-public'>Public corpora</h2></td>
+		</tr>
+	</tbody>	
 	<tbody id='corpora'></tbody>
-</table>
-
-<h2 id='header-private'>Private corpora</h2>
-
-<div id='successDiv' class="alert alert-success" role="alert">
-	<span id='successMessage'></span>
-</div>
-<div id='errorDiv' class="alert alert-danger" role="alert">
-	<span id='errorMessage'></span>
-</div>
-
-<table class='corpora'>
+	<tbody>
+		<tr>
+			<td colspan='2'>
+				<h2 id='header-private'>Private corpora</h2>
+				
+				<div id='successDiv' class="alert alert-success" role="alert">
+					<span id='successMessage'></span>
+				</div>
+				<div id='errorDiv' class="alert alert-danger" role="alert">
+					<span id='errorMessage'></span>
+				</div>
+			</td>
+		</tr>
+	</tbody>	
 	<tbody id='corpora-private'></tbody>
 </table>
 
-<input id='create-corpus' type='button' onclick='createIndex();' value='New corpus' />
+<input id='create-corpus' type='button' value='New corpus' />
+
+<div id='waitDisplay'>
+    <p class="text-center"><i class="fa fa-spinner fa-spin"></i></p>
+</div>
 
 <form id="uploadForm" method="POST">
-	<h2>Add data to <span id='uploadCorpusName'>corpus</span>:</h2> 
+	<h2>Add <span id="uploadFormat"></span>data to <span id='uploadCorpusName'>corpus</span>:</h2> 
 	<input type="file" id="uploadFile" name="data" />
 	<button type="submit" id="uploadSubmit">Upload</button>
 </form>

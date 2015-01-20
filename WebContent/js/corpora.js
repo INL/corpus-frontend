@@ -16,7 +16,7 @@ var corpora = {};
 	
 	// Request the list of available corpora and
 	// update the corpora page with it.
-	function updateAvailableCorpora() {
+	function refreshCorporaList(functionToCallAfterwards) {
 
 		// Updates the lists of corpora HTML.
 		// Called with the response data of the AJAX request.
@@ -98,6 +98,9 @@ var corpora = {};
 			"success": function (data) {
 				$("#waitDisplay").hide();
 				updateCorporaLists(data);
+				if (functionToCallAfterwards) {
+					functionToCallAfterwards();
+				}
 			},
 			"error": function (jqXHR, textStatus, errorThrown) {
 				$("#waitDisplay").hide();
@@ -162,7 +165,7 @@ var corpora = {};
 			},
 			"success": function (data) {
 				$("#waitDisplay").hide();
-				updateAvailableCorpora();
+				refreshCorporaList();
 				showSuccess("Corpus \"" + displayName + "\" created.");
 			},
 			"error": function (jqXHR, textStatus, errorThrown) {
@@ -204,8 +207,9 @@ var corpora = {};
 			"dataType": "json",
 			"success": function (data) {
 				$("#waitDisplay").hide();
-				updateAvailableCorpora();
-				showSuccess("Corpus \"" + index.displayName + "\" deleted.");
+				refreshCorporaList(function () {
+					showSuccess("Corpus \"" + index.displayName + "\" deleted.");
+				});
 			},
 			"error": function (jqXHR, textStatus, errorThrown) {
 				$("#waitDisplay").hide();
@@ -267,8 +271,9 @@ var corpora = {};
 		        	// File(s) uploaded.
 					$("#waitDisplay").hide();
 					hideUploadForm();
-					updateAvailableCorpora();
-					showSuccess("Data added to \"" + uploadToCorpus.displayName + "\".");
+					refreshCorporaList(function () {
+						showSuccess("Data added to \"" + uploadToCorpus.displayName + "\".");
+					});
 		        },
 		        "error": function (jqXHR, textStatus, errorThrown) {
 					$("#waitDisplay").hide();
@@ -287,7 +292,7 @@ var corpora = {};
 
 	$(document).ready(function () {
 		// Get the list of corpora.
-		updateAvailableCorpora();
+		refreshCorporaList();
 		
 		// Wire up the AJAX uploading functionality.
 		initFileUpload();

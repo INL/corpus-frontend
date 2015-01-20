@@ -30,16 +30,17 @@
 	<tbody id='corpora-private'></tbody>
 </table>
 
-<input id='create-corpus' type='button' value='New corpus' />
+<input class="btn" id='create-corpus' type='button' value='New corpus' />
 
 <div id='waitDisplay'>
     <p class="text-center"><i class="fa fa-spinner fa-spin"></i></p>
 </div>
 
 <form id="uploadForm" method="POST">
-	<h2>Add <span id="uploadFormat"></span>data to <span id='uploadCorpusName'>corpus</span>:</h2> 
+	<h2>Add <span id="uploadFormat"></span>data to <span id='uploadCorpusName'>corpus</span>:</h2>
+	<p>(you may upload an .xml file, or a .zip or .tar.gz archive containing .xml files)</p> 
 	<input type="file" id="uploadFile" name="data" />
-	<button type="submit" id="uploadSubmit">Upload</button>
+	<button class="btn" type="submit" id="uploadSubmit">Upload</button>
 </form>
 
 

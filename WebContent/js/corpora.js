@@ -52,7 +52,7 @@ var corpora = {};
 					if (isPrivateIndex && !isBusy) {
 						delIcon = "<a class='icon' title='Delete \"" + dispName + "\" corpus' " +
 							"href='#' onclick='return CORPORA.deleteIndex(corpora[\"" + indexName + "\"]);'>" +
-							"<i class='fa fa-remove'></i></a>";
+							"<i class='fa fa-trash'></i></a>";
 						addIcon = "<a class='icon' title='Add data to \"" + dispName + "\" corpus' " +
 							"href='#' onclick='return CORPORA.showUploadForm(corpora[\"" + indexName + "\"]);'>" +
 							"<i class='fa fa-plus-square'></i></a>";
@@ -272,6 +272,7 @@ var corpora = {};
 		        },
 		        "error": function (jqXHR, textStatus, errorThrown) {
 					$("#waitDisplay").hide();
+					hideUploadForm();
 		        	var data = jqXHR.responseJSON;
 					var msg;
 					if (data && data.error)

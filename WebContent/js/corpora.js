@@ -104,12 +104,13 @@ var corpora = {};
 			},
 			"error": function (jqXHR, textStatus, errorThrown) {
 				$("#waitDisplay").hide();
-				var data = jqXHR.responseXML;
-				if (data && data.error) {
-					alert("Error for request: " + data.error.message);
-				} else {
-			    	alert("Error for request: " + textStatus + "; " + errorThrown);
-				}
+				var data = jqXHR.responseJSON;
+				var msg;
+				if (data && data.error)
+					msg = data.error.message;
+				else
+					msg = textStatus + "; " + errorThrown;
+				showError("Error retrieving corpus list: " + msg);
 			},
 		});
 	}

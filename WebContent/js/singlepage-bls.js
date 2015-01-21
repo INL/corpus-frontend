@@ -7,8 +7,14 @@ var BLS = {};
 // var BLS_URL = "http://localhost:8080/blacklab-server/gysseling/";
 
 (function() {
+	
+	// We increment this with each query, and use it to determine if
+	// we should keep updating totals for a query, or if a new query
+	// has been started and we shouldn't update the totals for the
+	// previous one anymore.
+	var currentQueryNumber = 0;
 
-	BLS.search = function(param, successFunc, failFunc) {
+	BLS.search = function(param, successFunc) {
 
 		function filterQuery(name, value) {
 			// TODO: escape double quotes in values with \
@@ -103,7 +109,7 @@ var BLS = {};
 
 		if (!blsParam["patt"] || blsParam["patt"].length == 0) {
 			if (filter.length == 0) {
-				failFunc({
+				SINGLEPAGE.showBlsError({
 					"code" : "NO_PATTERN_GIVEN ",
 					"message" : "Text search pattern required."
 				});
@@ -113,37 +119,105 @@ var BLS = {};
 		if (filter.length > 0)
 			blsParam["filter"] = filter;
 
-		var url = "";
+		var url = "", totalsUrl = "";
 		for (key in blsParam) {
 			if (blsParam.hasOwnProperty(key)) {
 				var value = blsParam[key];
 				if (url.length > 0)
 					url += "&";
 				url += key + "=" + encodeURIComponent(value);
+				
+				// Totals URL: same, but with number=0
+				if (key == "number")
+					value = 0; 
+				if (totalsUrl.length > 0)
+					totalsUrl += "&";
+				totalsUrl += key + "=" + encodeURIComponent(value);
 			}
 		}
-		var url = operation + "?" + decodeURIComponent(url);
+		url = operation + "?" + url;
+		totalsUrl = operation + "?" + totalsUrl;
 		// $("#debugInfo").html("BLS/" + url);
-
-		$.ajax({
-			url : BLS_URL + url,
-			dataType : "json",
-			success : function(response) {
-				successFunc(response);
-			},
-			error : function(jqXHR, textStatus, errorThrown) {
-				var data = jqXHR.responseJSON;
-				if (data && data.error) {
-					failFunc(data.error);
-				} else {
-					failFunc({
-						"code" : "WEBSERVICE_ERROR",
-						"message" : "Error contacting webservice: "
-								+ textStatus + "; " + errorThrown
-					});
-				}
+		
+		// Remember our query number. As long as our query number
+		// is equal to the current query number, keep updating totals
+		// for this query.
+		currentQueryNumber++;
+		var queryNumber = currentQueryNumber;
+		
+		function updateHitCount(data) {
+			if (queryNumber != currentQueryNumber) {
+				// The next query has been started. Stop updating
+				// totals for this query.
+				return;
 			}
-		});
+			
+			// Update the totals
+			var stillCounting = data.summary.stillCounting;
+			var optEllipsis = stillCounting ? "..." : "";
+			if (data.hits) {
+				SINGLEPAGE.totalPages = Math.ceil(data.summary.numberOfHitsRetrieved / SINGLEPAGE.resultsPerPage);
+				$("#totalsReport").show();
+				$("#totalsReportText").html(
+					"Total hits: " + data.summary.numberOfHits + optEllipsis + "<br/>" +
+					"Total pages: " + SINGLEPAGE.totalPages + optEllipsis
+				);
+			} else if (data.docs) {
+				SINGLEPAGE.totalPages = Math.ceil(data.summary.numberOfDocsRetrieved / SINGLEPAGE.resultsPerPage);
+				$("#totalsReport").show();
+				$("#totalsReportText").html(
+					"Total docs: " + data.summary.numberOfDocs + optEllipsis + "<br/>" +
+					"Total pages: " + SINGLEPAGE.totalPages + optEllipsis
+				);
+			} else {
+				return;
+			}
+			
+			// All hits/docs counted?
+			$("#totalsSpinner").toggle(stillCounting);
+			if (stillCounting) {
+				// No, keep checking and updating.
+				setTimeout(function () {
+					performAjaxSearchRequest(totalsUrl, null, false);
+				}, 1000);
+			}
+		}
+		
+		// Called to perform the search, update the
+		// total count, and call a success function.
+		function performAjaxSearchRequest(url, successFunc, cache) {
+			$.ajax({
+				url : BLS_URL + url,
+				dataType: "json",
+				cache: !!cache,
+				success: function (response) {
+					if (response.hits || response.docs) {
+						// Update the total hits/docs count and
+						// keep updating it until all hits have been
+						// counted.
+						updateHitCount(response);
+					}
+					if (successFunc)
+						successFunc(response);
+				},
+				error: function (jqXHR, textStatus, errorThrown) {
+					var data = jqXHR.responseJSON;
+					if (data && data.error) {
+						SINGLEPAGE.showBlsError(data.error);
+					} else {
+						SINGLEPAGE.showBlsError({
+							"code" : "WEBSERVICE_ERROR",
+							"message" : "Error contacting webservice: "
+									+ textStatus + "; " + errorThrown
+						});
+					}
+				}
+			});
+		}
+		
+		// Perform the actual search
+		performAjaxSearchRequest(url, successFunc);
+		
 	};
 
 })();

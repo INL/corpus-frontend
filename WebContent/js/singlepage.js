@@ -20,7 +20,7 @@ var SINGLEPAGE = {};
 	var sortBy = null;
 
 	// Number of results per page
-	var resultsPerPage = 50;
+	SINGLEPAGE.resultsPerPage = 50;
 
 	// Is the current sort reversed from the default?
 	var currentSortReverse = false;
@@ -29,7 +29,7 @@ var SINGLEPAGE = {};
 	var showFirstResult = 0;
 
 	// Total number of pages
-	var totalPages = 0;
+	SINGLEPAGE.totalPages = 0;
 	
 	// Are we updating the page from the URL at the moment?
 	// If so, switch off stuff that can only be initiated by user actions,
@@ -78,9 +78,9 @@ var SINGLEPAGE = {};
 	// (Re)create the HTML for the pagination buttons
 	function updatePagination() {
 		
-		var currentPage = Math.ceil(showFirstResult / resultsPerPage);
+		var currentPage = Math.ceil(showFirstResult / SINGLEPAGE.resultsPerPage);
 		var startPage = Math.max(currentPage - 10, 0);
-		var endPage = Math.min(currentPage + 10, totalPages);
+		var endPage = Math.min(currentPage + 10, SINGLEPAGE.totalPages);
 		
 		var html = [];
 		if (currentPage == 0)
@@ -99,10 +99,10 @@ var SINGLEPAGE = {};
 				html.push("<li><a href='#' onclick='return SINGLEPAGE.goToPage(", i, ");'>", showPageNumber, "</a></li>");
 		}
 		
-		if (endPage < totalPages)
+		if (endPage < SINGLEPAGE.totalPages)
 			html.push("<li class='disabled'><a>...</a></li>");
 		
-		if (currentPage == (totalPages - 1))
+		if (currentPage == (SINGLEPAGE.totalPages - 1))
 			html.push("<li class='disabled'><a>Next</a></li>");
 		else
 			html.push("<li><a href='#' onclick='return SINGLEPAGE.goToPage(", currentPage + 1, ")'>Next</a></li>");
@@ -128,7 +128,7 @@ var SINGLEPAGE = {};
     
     // Shows an error that occurred when contacting BLS to the user.
     // Expects an object with 'code' and 'message' properties.
-	function showBlsError(error) {
+    SINGLEPAGE.showBlsError = function showBlsError(error) {
 		if (typeof error == "string")
 			error = {"message": error};
 		$("#results").hide();
@@ -260,10 +260,10 @@ var SINGLEPAGE = {};
 			// Preferred number of results
 			//----------------------------------------------------------------
 			
-			resultsPerPage = param.number || 50;
-			if (resultsPerPage > 200)
-				resultsPerPage = 200;
-			$("#resultsPerPage").val(resultsPerPage);
+			SINGLEPAGE.resultsPerPage = param.number || 50;
+			if (SINGLEPAGE.resultsPerPage > 200)
+				SINGLEPAGE.resultsPerPage = 200;
+			$("#resultsPerPage").val(SINGLEPAGE.resultsPerPage);
 			
 			// Search tab selection
 			//----------------------------------------------------------------
@@ -319,18 +319,10 @@ var SINGLEPAGE = {};
 					$(".showHideTitles").toggle(!!data.hits);
 					if (data.hits) {
 						updateHitsTable(data);
-						totalPages = Math.ceil(summary.numberOfHitsRetrieved / resultsPerPage);
-						$("#totalsReport").show().html(
-							"Total hits: " + summary.numberOfHits + "<br/>" +
-							"Total pages: " + totalPages
-						);
+						// Totals is done in BLS.search();
 					} else if (data.docs) {
 						updateDocsTable(data);
-						totalPages = Math.ceil(summary.numberOfDocsRetrieved / resultsPerPage);
-						$("#totalsReport").show().html(
-							"Total docs: " + summary.numberOfDocs + "<br/>" +
-							"Total pages: " + totalPages
-						);
+						// Totals is done in BLS.search();
 					} else if (data.hitGroups) {
 						$("#totalsReport").hide();
 						isGrouped = true;
@@ -364,7 +356,7 @@ var SINGLEPAGE = {};
 					}, 1);
 				}
 				
-				BLS.search(param, updatePageWithBlsData, showBlsError);
+				BLS.search(param, updatePageWithBlsData);
 			} else {
 				// No search
 				$("#contentTabs").hide();
@@ -644,10 +636,10 @@ var SINGLEPAGE = {};
 		if (sortBy)
 			param["sort"] = sortBy;
 
-		if (resultsPerPage != 50) {
-			if (resultsPerPage > 200)
-				resultsPerPage = 200;
-			param["number"] = resultsPerPage;
+		if (SINGLEPAGE.resultsPerPage != 50) {
+			if (SINGLEPAGE.resultsPerPage > 200)
+				SINGLEPAGE.resultsPerPage = 200;
+			param["number"] = SINGLEPAGE.resultsPerPage;
 		}
 
 		if (showFirstResult > 0)
@@ -664,7 +656,7 @@ var SINGLEPAGE = {};
 	};
 	
 	// Information about the corpus we're searching
-	var corpusInfo;
+	var corpus;
 	
 	function getCorpusInfo() {
 	    $.ajax({
@@ -721,8 +713,8 @@ var SINGLEPAGE = {};
 			var rpp = $("#resultsPerPage").val();
 			if (rpp > 200)
 				rpp = 200;
-			if (rpp != resultsPerPage) {
-				resultsPerPage = rpp;
+			if (rpp != SINGLEPAGE.resultsPerPage) {
+				SINGLEPAGE.resultsPerPage = rpp;
 				showFirstResult = 0;
 				doSearch();
 			}
@@ -943,14 +935,14 @@ var SINGLEPAGE = {};
 	        numOfGroupResultsLoaded[id] = val;
         }
         
-        BLS.search(param, showGroupContent, showBlsError);
+        BLS.search(param, showGroupContent);
 
         return false;
     };
 	
     // Called to navigate to a different results page
 	SINGLEPAGE.goToPage = function (number) {
-		showFirstResult = resultsPerPage * number;
+		showFirstResult = SINGLEPAGE.resultsPerPage * number;
 		doSearch();
 		return false;
 	};

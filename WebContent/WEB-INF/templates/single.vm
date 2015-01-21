@@ -151,7 +151,11 @@
 </div>
 
 <div class="span12 contentbox" id="results">
-	<div id='totalsReport' class="pull-right"></div>
+	<div id='totalsReport'>
+		<div id='totalsReportText'>
+		</div>
+		<p id='totalsSpinner'><i class="fa fa-spinner fa-spin"></i></p>
+	</div>
 	<div id='waitDisplay'>
         <p class="text-center"><i class="fa fa-spinner fa-spin"></i></p>
     </div>

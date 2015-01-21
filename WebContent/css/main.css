@@ -291,6 +291,19 @@ table.corpora a.icon {
 	font-size: 85%;
 }
 
+#totalsReport {
+	position: absolute;
+    top: 1em;
+    right: 1em;
+}
+
+#totalsSpinner {
+	display: none;
+	position: absolute;
+	top: 1em;
+	left: -2em;
+}
+
 #results {
 	position: relative;
 	min-height: 200px;

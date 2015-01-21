@@ -62,10 +62,11 @@ var corpora = {};
 					// The index title and search icon (both clickable iff the index can be searched)
 					var indexTitle = dispName;
 					if (canSearch) {
-						searchIcon = "<a class='icon' title='Search \"" + dispName + "\" corpus' " +
-						"href='./" + indexName + "/single'><i class='fa fa-search'></i></a>";
-						indexTitle = "<a title='Search \"" + dispName + "\" corpus' href='./" + 
-							indexName + "/single'>" + dispName + "</a>";
+						var url = "./" + indexName + "/search";
+						searchIcon = "<a class='icon' title='Search \"" + dispName + 
+							"\" corpus' href='"+ url + "'><i class='fa fa-search'></i></a>";
+						indexTitle = "<a title='Search \"" + dispName + "\" corpus' href='" + 
+							url + "'>" + dispName + "</a>";
 					}
 					
 					// Add HTML for this corpus to the appropriate list.

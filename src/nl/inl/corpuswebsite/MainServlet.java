@@ -143,8 +143,8 @@ public class MainServlet extends HttpServlet {
 		}
 
 		// initialise responses
-		responses.put(contextPath + "/page/single", SingleResponse.class);
-		responses.put(contextPath + "/page/search", SearchResponse.class);
+		responses.put(contextPath + "/page/search", SingleResponse.class);
+		responses.put(contextPath + "/page/mpsearch", SearchResponse.class);
 		responses.put(contextPath + "/page/about", AboutResponse.class);
 		responses.put(contextPath + "/page/help", HelpResponse.class);
 		responses.put(contextPath + "/page/article", ArticleResponse.class);
@@ -327,9 +327,9 @@ public class MainServlet extends HttpServlet {
 		}
 
 		br.setCorpus(corpus);
-		if (requestUri.endsWith("/single")) {
-			br.setSinglePageTest(true);
-		}
+//		if (requestUri.endsWith("/search")) {
+//			br.setSinglePageTest(true);
+//		}
 
 		br.init(request, response, this);
 		br.processRequest();

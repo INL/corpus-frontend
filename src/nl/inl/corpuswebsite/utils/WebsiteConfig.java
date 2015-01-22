@@ -215,6 +215,10 @@ public class WebsiteConfig {
 	public Set<String> getTabGroups() {
 		return tabGroups;
 	}
+	
+	public boolean hasMetadataFields() {
+		return fields.size() > 0;
+	}
 
 	public List<FieldDescriptor> getFieldsInTabGroup(String group) {
 		List<FieldDescriptor> tabFields = new LinkedList<FieldDescriptor>();

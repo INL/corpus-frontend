@@ -96,6 +96,7 @@
 		</div>
 	</div>
 	<div class="span5 pull-right">
+		#if($websiteconfig.hasMetadataFields())
 		<strong>Filter search by</strong><br>
 		#if($websiteconfig.hasTabGroups())
     		<ul class="nav nav-tabs" id="filtertabs">
@@ -116,6 +117,7 @@
 		#else	
 			#set($fields = $websiteconfig.getFieldsInTabGroup(""))
 			#filterfields($fields)
+		#end
 		#end
 		<div id="filteroverview" class="span5"></div>
 	</div>	

@@ -19,6 +19,34 @@ var corpora = {};
 	// It includes the current user id, for example.
 	var serverInfo = null;
 	
+	// Abbreviate a number, i.e. 3426 becomes 3,4K,
+	// 2695798 becomes 2,6M, etc.
+	// TODO: use a number formatting library for this..
+	function abbrNumber(n) {
+		if (n === undefined)
+			return "";
+		var unit = "";
+		if (n >= 1e9) {
+			n = Math.round(n / 1e8) / 10;
+			unit = "G";
+		} else if (n >= 1e6) {
+			n = Math.round(n / 1e5) / 10;
+			unit = "M";
+		} else if (n >= 1e3) {
+			n = Math.round(n / 1e2) / 10;
+			unit = "K";
+		}
+		return String(n).replace(/\./, ",") + unit;
+	}
+	
+	// Return only the date part of a date/time string,
+	// and flip it around, e.g.:
+	// "1970-02-01 00:00:00" becomes "01-02-1970"
+	// TODO: use a date/time formatting library for this..
+	function dateOnly(dateTimeString) {
+		return dateTimeString.replace(/^(\d+)\-(\d+)\-(\d+) .*$/, "$3-$2-$1");
+	}
+	
 	// Request the list of available corpora and
 	// update the corpora page with it.
 	function refreshCorporaList(functionToCallAfterwards) {
@@ -30,8 +58,12 @@ var corpora = {};
 			if (serverInfo.user.loggedIn) {
 				$("#userId").text(serverInfo.user.id);
 			}
-			var publicCorpora = [];
-			var privateCorpora = [];
+			var publicCorpora = [
+			    "<tr><th></th><th></th><th>Size</th></tr>"
+			];
+			var privateCorpora = [
+  			    "<tr><th></th><th></th><th>Size</th><th>Format</th><th>Last modified</th></tr>"
+			];
 			var indices = data.indices;
 			for (var indexName in indices) {
 				if (indices.hasOwnProperty(indexName)) {
@@ -79,8 +111,18 @@ var corpora = {};
 					}
 					
 					// Add HTML for this corpus to the appropriate list.
-					addToList.push("<tr><td class='corpusName'>" + indexTitle + statusText + "</td><td>" + 
-						searchIcon + addIcon + delIcon + "</td></tr>");
+					var optColumns = "";
+					if (isPrivateIndex) {
+						optColumns = 
+							"<td>" + index.documentFormat + "</td>" +
+							"<td>" + dateOnly(index.timeModified) + "</td>";
+					}
+					addToList.push("<tr>" +
+						"<td class='corpusName'>" + indexTitle + statusText + "</td>" +
+						"<td>" + searchIcon + addIcon + delIcon + "</td>" +
+						"<td>" + abbrNumber(index.tokenCount) + "</td>" +
+						optColumns +
+						"</tr>");
 				}
 			}
 			

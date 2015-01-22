@@ -252,6 +252,13 @@ table.corpora td {
 	padding: 3px;
 }
 
+table.corpora th {
+	font-size: 11pt;
+	padding: 3px;
+	background-color: inherit;
+}
+
+/* Don't change color when hovering over row (as in results table) */
 table.corpora tr:hover {
 	background-color: inherit;
 }

@@ -238,7 +238,7 @@ span.word {
 
 /* Corpora page */
 
-#header-public, #header-private, #corpora-private, #create-corpus {
+#header-public, #header-private, #logged-in-as, #corpora-private, #create-corpus {
 	display: none;
 }
 
@@ -281,6 +281,11 @@ table.corpora a.icon {
 }
 
 /* Single-page */
+
+#corpusOwner {
+	font-size: 60%;
+}
+
 #errorDiv, #successDiv {
 	margin-top: 1em;
 	display: none;

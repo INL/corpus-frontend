@@ -55,8 +55,7 @@
 
 <form onsubmit="return SINGLEPAGE.searchSubmit();">
 <div class="span12 contentbox">
-	#if($corpusOwner)<h3>$corpusOwner's private corpora</h3>#end
-	<h2 id='corpusNameMain'>$corpusName</h2>
+	<h2><span id='corpusNameMain'></span> #if($corpusOwner)<span id='corpusOwner'>($corpusOwner)</span>#end</h2>
 	<ul class="nav nav-tabs" id="searchTabs">
 		<li><a href="#simple" data-toggle="tab" class="querytype">Simple</a></li>
 		<li><a href="#query" data-toggle="tab" class="querytype">CQL query</a></li>

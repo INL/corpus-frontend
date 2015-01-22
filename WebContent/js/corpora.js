@@ -27,6 +27,9 @@ var corpora = {};
 		// Called with the response data of the AJAX request.
 		function updateCorporaLists(data) {
 			serverInfo = data;
+			if (serverInfo.user.loggedIn) {
+				$("#userId").text(serverInfo.user.id);
+			}
 			var publicCorpora = [];
 			var privateCorpora = [];
 			var indices = data.indices;
@@ -92,7 +95,7 @@ var corpora = {};
 			var userLoggedIn = data.user.loggedIn;
 			var showPrivate = userLoggedIn && (privateCorpora.length > 0 || data.user.canCreateIndex);
 			$("#header-public").toggle(showPublic && showPrivate);
-			$("#header-private,#corpora-private").toggle(showPrivate);
+			$("#header-private,#logged-in-as,#corpora-private").toggle(showPrivate);
 			$("#create-corpus").toggle(data.user.canCreateIndex);
 		}
 		

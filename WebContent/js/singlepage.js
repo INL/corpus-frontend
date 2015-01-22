@@ -659,6 +659,9 @@ var SINGLEPAGE = {};
 	var corpus;
 	
 	function getCorpusInfo() {
+		$("#corpusNameTop").text("");
+		$("#corpusNameMain").text("");
+		$("#corpusOwner").hide();
 	    $.ajax({
 	    	url: BLS_URL,
 	    	dataType: "json",
@@ -667,6 +670,7 @@ var SINGLEPAGE = {};
 	    		document.title = corpus.displayName + " search";
 	    		$("#corpusNameTop").text(corpus.displayName);
 	    		$("#corpusNameMain").text(corpus.displayName);
+	    		$("#corpusOwner").show();
 	    	},
 	    	error: function (jqXHR, textStatus, errorThrown) {
 	    		var data = jqXHR.responseJSON;

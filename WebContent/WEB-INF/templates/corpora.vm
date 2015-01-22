@@ -16,7 +16,8 @@
 	<tbody>
 		<tr>
 			<td colspan='2'>
-				<h2 id='header-private'>Private corpora</h2>
+				<h2 id='header-private'>Your corpora</h2>
+				<p id='logged-in-as'>(logged in as <span id='userId'>...</span>)</p>
 				
 				<div id='successDiv' class="alert alert-success" role="alert">
 					<span id='successMessage'></span>
@@ -46,7 +47,6 @@
 
 <script>
 var blsUrl = "$blsUrl";
-#if($userId)var userId = "$userId";#end
 </script>
 <script src="$pathToTop/js/corpora.js"></script>
 

@@ -14,6 +14,11 @@ var corpora = {};
 // (avoid polluting the global namespace)
 (function() {
 	
+	// When we retrieve the corpora list, we actually get
+	// more than that. The whole server info JSON is stored here.
+	// It includes the current user id, for example.
+	var serverInfo = null;
+	
 	// Request the list of available corpora and
 	// update the corpora page with it.
 	function refreshCorporaList(functionToCallAfterwards) {
@@ -21,6 +26,7 @@ var corpora = {};
 		// Updates the lists of corpora HTML.
 		// Called with the response data of the AJAX request.
 		function updateCorporaLists(data) {
+			serverInfo = data;
 			var publicCorpora = [];
 			var privateCorpora = [];
 			var indices = data.indices;
@@ -116,10 +122,9 @@ var corpora = {};
 		});
 	}
 
-	// Get the currently logged-in user.
-	// (DEBUG STUB)
+	// Get the currently logged-in user, or the empty string if no user is logged in.
 	function getUserId() {
-		return "jan";
+		return serverInfo.user.loggedIn ? serverInfo.user.id : "";
 	}
 
 	// Show a success message.

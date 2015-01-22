@@ -294,9 +294,11 @@ public class MainServlet extends HttpServlet {
 		String requestUri = request.getRequestURI();
 		String corpus = defaultCorpus; // corpus to use if not in URL path
 
-		// NEW STYLE: /contextpath/CORPUS/operation ?
+		// URL: contextPath/corpusName/resource
+		// (corpusName is of the form [[userid]:]name), and userid usually
+		//  looks like an email address (though it may not BE one))
 		Pattern p = Pattern.compile("^" + contextPath
-				+ "/([a-zA-Z0-9\\-_:]+)/([a-zA-Z0-9\\-_]+)/?$");
+				+ "/([a-zA-Z0-9\\-\\._!\\$&'\\(\\)\\*\\+,;:=@]+)/([a-zA-Z0-9\\-_]+)/?$");
 		Matcher m = p.matcher(requestUri);
 		if (m.matches() && !m.group(1).equals("page")) {
 			// Yes, corpus name specified. Use that.

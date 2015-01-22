@@ -46,6 +46,7 @@
 
 <script>
 var blsUrl = "$blsUrl";
+#if($userId)var userId = "$userId";#end
 </script>
 <script src="$pathToTop/js/corpora.js"></script>
 

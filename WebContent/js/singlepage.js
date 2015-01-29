@@ -147,7 +147,7 @@ var SINGLEPAGE = {};
 		var code = error.code ? " (" + error.code + ")" : "";
 		$("#errorMessage").text(error.message + code);
 		toggleWaitAnimation(false);
-	}
+	};
     
 	// How to show the results for a URL
 	function updatePage() {
@@ -875,7 +875,7 @@ var SINGLEPAGE = {};
 			values[i] = values[i].replace(/\$P/, "|").replace(/\$\$/, "$");
 		}
 		return values;
-	}
+	};
 
 	// Called when form is submitted
 	SINGLEPAGE.searchSubmit = function () {

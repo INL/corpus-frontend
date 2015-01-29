@@ -54,7 +54,7 @@
 </script>
 
 <form onsubmit="return SINGLEPAGE.searchSubmit();">
-<div class="span12 contentbox">
+<div id='searchFormDiv' class="span12 contentbox">
 	<h2><span id='corpusNameMain'></span> #if($corpusOwner)<span id='corpusOwner'>($corpusOwner)</span>#end</h2>
 	<ul class="nav nav-tabs" id="searchTabs">
 		<li><a href="#simple" data-toggle="tab" class="querytype">Simple</a></li>
@@ -99,9 +99,18 @@
 		<strong>Filter search by</strong><br>
 		#if($websiteconfig.hasTabGroups())
     		<ul class="nav nav-tabs" id="filtertabs">
+    		#set($first = "0")
     		#foreach($tabname in $websiteconfig.getTabGroups())
     			#set($tabid = $tabname.replace(" ", ""))
-    			<li><a href="#$tabid" data-toggle="tab">$tabname</a></li>
+    			
+    			#if($first == "0")
+    				<li class="active">
+    				#set($first = "1")
+    			#else
+    				<li>
+    			#end
+    			
+    			<a href="#$tabid" data-toggle="tab">$tabname</a></li>
     		#end
     		</ul>
     		<div class="tab-content">
@@ -158,15 +167,16 @@
 <div id="searchSummary" class="pull-right">
 </div>
 
+<div id='waitDisplay'>
+    <p class="text-center"><i class="fa fa-spinner fa-spin"></i></p>
+</div>
+
 <div class="span12 contentbox" id="results">
 	<div id='totalsReport'>
 		<div id='totalsReportText'>
 		</div>
 		<p id='totalsSpinner'><i class="fa fa-spinner fa-spin"></i></p>
 	</div>
-	<div id='waitDisplay'>
-        <p class="text-center"><i class="fa fa-spinner fa-spin"></i></p>
-    </div>
 	<ul class="nav nav-tabs" id="contentTabs">
 		<li><a href="#tabHits" data-toggle="tab" class="resultstype">Per Hit</a></li>
 		<li><a href="#tabDocs" data-toggle="tab" class="resultstype">Per Document</a></li>

@@ -71,8 +71,19 @@ var SINGLEPAGE = {};
 	// Restore page when editing address bar manually, or using bookmark or emailed link
 	document.addEventListener('DOMContentLoaded', updatePage);
 
+	var doingRegularSearch = false;
+	
 	function toggleWaitAnimation(b) {
-		$("#waitDisplay").toggle(b);
+		doingRegularSearch = b;
+		//console.log("WAIT ANIM " + (b ? "ON" : "OFF"));
+		$("#waitDisplay").toggle(retrievingCorpusInfo || doingRegularSearch);
+	}
+	
+	var retrievingCorpusInfo = false;
+	
+	function toggleWaitAnimationCorpusInfo(b) {
+		retrievingCorpusInfo = b;
+		$("#waitDisplay").toggle(retrievingCorpusInfo || doingRegularSearch);
 	}
 	
 	// (Re)create the HTML for the pagination buttons
@@ -349,7 +360,8 @@ var SINGLEPAGE = {};
 					$("#contentTabs").show();
 					
 		    		stillSearching = false; // don't show wait animation now.
-					toggleWaitAnimation(false);
+		    		if (corpus) // if we're not still waiting for corpus information (title, etc.)
+		    			toggleWaitAnimation(false);
 					setTimeout(function () {
 						// Scroll to results
 						$('html, body').animate({scrollTop: $("#results").offset().top - 70}, 300);
@@ -582,16 +594,19 @@ var SINGLEPAGE = {};
 	
 	function getParam() {
 		var param = {};
-		for (var i = 0; i < wordProperties.length; i++) {
-			var prop = wordProperties[i];
 			
-			// Word property fields
-			//----------------------------------------------------------------
-			
-			if (currentQueryType == "simple") {
+		// Word property fields
+		//----------------------------------------------------------------
+		
+		var hasPattern = false;
+		if (currentQueryType == "simple") {
+			for (var i = 0; i < wordProperties.length; i++) {
+				var prop = wordProperties[i];
+				
 				// Add parameters for the word property search fields
 				var value = $("#" + prop + "_text").val();
 				if (value.length > 0) {
+					hasPattern = true;
 					var id = prop + "_case";
 					var caseSensitive = $("#" + id).prop('checked');
 					var fuzzy = $("#" + prop + "_fuzzy").prop('checked');
@@ -603,20 +618,21 @@ var SINGLEPAGE = {};
 						value = "(?c)" + value;
 					param[prop] = value;
 				}
-			} else {
-				param["patt"] = $("#querybox").val();
 			}
-			
-			// Metadata fields
-			//----------------------------------------------------------------
-			
-			// Add parameters for the metadata search fields
-			if (Object.keys(BLSEARCH.filtersSinglePage).length > 0) {
-				for (key in BLSEARCH.filtersSinglePage) {
-					if (BLSEARCH.filtersSinglePage.hasOwnProperty(key)) {
-						var value = BLSEARCH.filtersSinglePage[key];
-						param["_" + key] = value;
-					}
+		} else {
+			hasPattern = true;
+			param["patt"] = $("#querybox").val();
+		}
+		
+		// Metadata fields
+		//----------------------------------------------------------------
+		
+		// Add parameters for the metadata search fields
+		if (Object.keys(BLSEARCH.filtersSinglePage).length > 0) {
+			for (key in BLSEARCH.filtersSinglePage) {
+				if (BLSEARCH.filtersSinglePage.hasOwnProperty(key)) {
+					var value = BLSEARCH.filtersSinglePage[key];
+					param["_" + key] = value;
 				}
 			}
 		}
@@ -624,7 +640,7 @@ var SINGLEPAGE = {};
 		// Misc. parameters
 		//----------------------------------------------------------------
 
-		if (viewingDocs)
+		if (viewingDocs || !hasPattern)
 			param["view"] = "docs";
 
 		if (groupBy)
@@ -659,20 +675,25 @@ var SINGLEPAGE = {};
 	var corpus;
 	
 	function getCorpusInfo() {
-		$("#corpusNameTop").text("");
+		toggleWaitAnimationCorpusInfo(true);
+		$("#searchFormDiv").hide();
+		/*$("#corpusNameTop").text("");
 		$("#corpusNameMain").text("");
-		$("#corpusOwner").hide();
+		$("#corpusOwner").hide();*/
 	    $.ajax({
 	    	url: BLS_URL,
 	    	dataType: "json",
 	    	success: function (data) {
+	    		toggleWaitAnimationCorpusInfo(false);
 	    		corpus = data;
 	    		document.title = corpus.displayName + " search";
+	    		$("#searchFormDiv").show();
 	    		$("#corpusNameTop").text(corpus.displayName);
 	    		$("#corpusNameMain").text(corpus.displayName);
-	    		$("#corpusOwner").show();
+	    		//$("#corpusOwner").show();
 	    	},
 	    	error: function (jqXHR, textStatus, errorThrown) {
+	    		toggleWaitAnimationCorpusInfo(false);
 	    		var data = jqXHR.responseJSON;
 				if (data && data.error) {
 					showBlsError(data.error);
@@ -686,6 +707,7 @@ var SINGLEPAGE = {};
 	// Called when the page loads
 	$(document).ready(function () {
 		
+		toggleWaitAnimation(false);
 		getCorpusInfo();
 
 		BLSEARCH.SEARCHPAGE.filtersSetup();
@@ -696,7 +718,6 @@ var SINGLEPAGE = {};
 		$("#contentTabs").hide();
 		$("#searchSummary").hide();
 		$('#results').hide();
-		toggleWaitAnimation(false);
 		
 		function doGroup(newGroupBy, isDocs) {
 			if (newGroupBy && newGroupBy.length > 0 && newGroupBy != groupBy) {

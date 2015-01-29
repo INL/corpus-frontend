@@ -142,12 +142,14 @@ var corpora = {};
 		}
 		
 		// Perform the AJAX request to get the list of corpora.
+		$("#header-top").hide(); // hide "available corpora" heading
 		$("#waitDisplay").show();
 		$.ajax(blsUrl, {
 			"type": "GET",
 			"accept": "application/json",
 			"dataType": "json",
 			"success": function (data) {
+				$("#header-top").show(); // show "available corpora" heading
 				$("#waitDisplay").hide();
 				updateCorporaLists(data);
 				if (functionToCallAfterwards) {

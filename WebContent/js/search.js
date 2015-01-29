@@ -153,7 +153,7 @@ var BLSEARCH = {};
 				}
 			}
 			
-			$("#filteroverview").text(overview);
+			$("#filteroverview").html(overview);
 		}
 
 		// When form input changes, update filter overview

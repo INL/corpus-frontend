@@ -25,7 +25,7 @@ var BLS = {};
 				if (values.length > 1)
 					return name + ":(\"" + values.join("\" \"") + "\")";
 			}
-			if (value.match(/ /))
+			if (value.match(/ /) && !value.match(/\[\d+ TO \d+\]/))
 				return name + ":\"" + value + "\"";
 			else
 				return name + ":" + value;

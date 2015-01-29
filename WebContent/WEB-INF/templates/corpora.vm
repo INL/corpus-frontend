@@ -2,7 +2,7 @@
 
 <div class="span12 contentbox">
 
-<h1>Available corpora</h1>
+<h1 id='header-top'>Available corpora</h1>
 
 <!-- NOTE: using a table because we'd like to automatically 
      size width to longest corpus name. There's probably better ways. -->

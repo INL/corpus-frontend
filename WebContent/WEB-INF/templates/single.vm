@@ -105,9 +105,16 @@
     		#end
     		</ul>
     		<div class="tab-content">
+    		#set($first = "0")
     		#foreach($tabname in $websiteconfig.getTabGroups())
     			#set($tabid = $tabname.replace(" ", ""))
-				<div class="tab-pane" id="$tabid">
+    			
+    			#if($first == "0")
+    				<div class="tab-pane active" id="$tabid">
+    				#set($first = "1")
+    			#else	
+    				<div class="tab-pane" id="$tabid">
+    			#end
     			#set($fields = $websiteconfig.getFieldsInTabGroup($tabname))
     			#filterfields($fields)
     			</div>

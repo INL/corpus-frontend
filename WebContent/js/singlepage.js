@@ -696,7 +696,6 @@ var SINGLEPAGE = {};
 	    			$("#docGroupYear").attr("value", "field:" + corpus.fieldInfo.dateField);
 	    			$("#docGroupDecade").attr("value", "decade:" + corpus.fieldInfo.dateField);
 	    		} else {
-	    			alert(2);
 	    			$("#groupYear").attr("disabled", "disabled");
 	    			$("#groupDecade").attr("disabled", "disabled");
 	    			$("#docGroupYear").attr("disabled", "disabled");

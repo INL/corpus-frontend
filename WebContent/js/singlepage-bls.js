@@ -177,15 +177,19 @@ var BLS = {};
 			$("#totalsSpinner").toggle(stillCounting);
 			if (stillCounting) {
 				// No, keep checking and updating.
+				function onAbortQuery() {
+					$("#totalsReportText").html("Too busy; counting aborted. Please try again later.");
+				}
+				
 				setTimeout(function () {
-					performAjaxSearchRequest(totalsUrl, null, false);
+					performAjaxSearchRequest(totalsUrl, null, false, onAbortQuery);
 				}, 1000);
 			}
 		}
 		
 		// Called to perform the search, update the
 		// total count, and call a success function.
-		function performAjaxSearchRequest(url, successFunc, cache) {
+		function performAjaxSearchRequest(url, successFunc, cache, unavailableHandler) {
 			$.ajax({
 				url : BLS_URL + url,
 				dataType: "json",
@@ -203,7 +207,11 @@ var BLS = {};
 				error: function (jqXHR, textStatus, errorThrown) {
 					var data = jqXHR.responseJSON;
 					if (data && data.error) {
-						SINGLEPAGE.showBlsError(data.error);
+						if (data.error.code == "SERVER_BUSY" && unavailableHandler) {
+							unavailableHandler();
+						} else {
+							SINGLEPAGE.showBlsError(data.error);
+						}
 					} else {
 						SINGLEPAGE.showBlsError({
 							"code" : "WEBSERVICE_ERROR",

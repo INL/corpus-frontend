@@ -66,11 +66,18 @@ public class QueryServiceHandler {
 				connection.setRequestProperty("Accept", "application/xml");
 				connection.setRequestMethod("GET");
 				code = connection.getResponseCode();
-				if (code < 200 || code > 299) { // Not an HTTP success (2xx) code?
+				
+				// Not an HTTP success (2xx) code or 401 Unauthorized?
+				// (we use the 401 to test if we are allowed to view the document contents)
+				if ( (code < 200 || code > 299) && code != 401) { 
 					reason = connection.getResponseMessage();
 					throw new IOException(code + " " + reason);
 				}
-				InputStream response = connection.getInputStream();
+				InputStream response;
+				if (code == 401)
+					response = connection.getErrorStream();
+				else
+					response = connection.getInputStream();
 				return IoUtil.readTextStream(response);
 			} finally {
 				connection.disconnect();

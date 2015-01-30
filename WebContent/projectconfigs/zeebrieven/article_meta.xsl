@@ -10,7 +10,7 @@
         (Error code: <xsl:value-of select="code" />)
 	</xsl:template>
 	
-	<xsl:template match="docPid" />
+	<xsl:template match="docPid|docFields" />
 	
 	<xsl:template match="docInfo">
 		<div class="span12 contentbox">

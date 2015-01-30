@@ -746,7 +746,12 @@ var SINGLEPAGE = {};
 				viewingDocs = isDocs;
 				groupBy = newGroupBy;
 				viewGroup = null;
+				var i = groupBy.indexOf(":");
 				sortBy = null;
+				if (groupBy.substr(i + 1) == corpus.fieldInfo.dateField) {
+					// Grouping by year; automatically sort by group identity
+					sortBy = "identity";
+				}
 				currentSortReverse = false;
 				showFirstResult = 0;
 				skipResultsFade = true;

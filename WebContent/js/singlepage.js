@@ -529,12 +529,12 @@ var SINGLEPAGE = {};
 		        	linkText = docInfo[docFields.titleField];
 		        if (docFields.authorField && docInfo[docFields.authorField])
 		        	linkText += " by " + docInfo[docFields.authorField];
-		        if (docFields.dateField && docInfo[docFields.dateField])
-		        	linkText += " (" + docInfo[docFields.dateField] + ")";
+		        //if (docFields.dateField && docInfo[docFields.dateField])
+		        //	linkText += " (" + docInfo[docFields.dateField] + ")";
 	        	var url = "article?doc=" + encodeURIComponent(docPid) + pattPart;
 		        
 		        // Concordance row
-		        var date = docInfo.yearFrom;
+		        var date = docFields.dateField ? docInfo[docFields.dateField] : ""; //.yearFrom;
 		        
 		        var docSnippets = doc.snippets;
 		        if (docSnippets) {

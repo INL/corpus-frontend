@@ -240,15 +240,15 @@
 		<div class="tab-pane" id="tabHitsGrouped">
 			<select class="input" id="groupHitsBy">
 				<option value="" disabled="true" selected="true">Group hits by...</option>
-				<option value="field:title">Group by document title</option>
+				<option id="groupTitle" value="field:title">Group by document title</option>
 				<option value="hit">Group by hit text</option>
 				<option value="hit:lemma">Group by lemma</option>
 				<option value="hit:pos">Group by hit pos</option>
 				<option value="hit:lemma,hit:pos">Group by lemma and PoS</option>
 				<option value="wordleft">Group by word left</option>
 				<option value="wordright">Group by word right</option>
-				<option value="field:yearFrom">Group by year</option>
-				<option value="decade:yearFrom">Group by decade</option>
+				<option id="groupYear" value="field:yearFrom">Group by year</option>
+				<option id="groupDecade" value="decade:yearFrom">Group by decade</option>
 			</select>
 			
 			<div id="resultsHitsGrouped" class="lightbg haspadding">
@@ -274,9 +274,9 @@
 			<select class="input" id="groupDocsBy">
 				<option value="" disabled="true" selected="true">Group documents by...</option>
 				<option value="numhits">Group by number of hits</option>
-				<option value="field:yearFrom">Group by year</option>
-				<option value="decade:yearFrom">Group by decade</option>
-				<option value="field:author">Group by author</option>
+				<option id="docGroupYear" value="field:year">Group by year</option>
+				<option id="docGroupDecade" value="decade:year">Group by decade</option>
+				<option id="docGroupAuthor" value="field:author">Group by author</option>
 			</select>
 			
 			<div id="resultsDocsGrouped" class="lightbg haspadding">

@@ -690,6 +690,28 @@ var SINGLEPAGE = {};
 	    		$("#searchFormDiv").show();
 	    		$("#corpusNameTop").text(corpus.displayName);
 	    		$("#corpusNameMain").text(corpus.displayName);
+	    		if (corpus.fieldInfo.dateField) {
+	    			$("#groupYear").attr("value", "field:" + corpus.fieldInfo.dateField);
+	    			$("#groupDecade").attr("value", "decade:" + corpus.fieldInfo.dateField);
+	    			$("#docGroupYear").attr("value", "field:" + corpus.fieldInfo.dateField);
+	    			$("#docGroupDecade").attr("value", "decade:" + corpus.fieldInfo.dateField);
+	    		} else {
+	    			alert(2);
+	    			$("#groupYear").attr("disabled", "disabled");
+	    			$("#groupDecade").attr("disabled", "disabled");
+	    			$("#docGroupYear").attr("disabled", "disabled");
+	    			$("#docGroupDecade").attr("disabled", "disabled");
+	    		}
+	    		if (corpus.fieldInfo.titleField) {
+	    			$("#groupTitle").attr("value", "field:" + corpus.fieldInfo.titleField);
+	    		} else {
+	    			$("#groupTitle").attr("disabled", "disabled");
+	    		}
+	    		if (corpus.fieldInfo.authorField) {
+	    			$("#docGroupAuthor").attr("value", "field:" + corpus.fieldInfo.authorField);
+	    		} else {
+	    			$("#docGroupAuthor").attr("disabled", "disabled");
+	    		}
 	    		//$("#corpusOwner").show();
 	    	},
 	    	error: function (jqXHR, textStatus, errorThrown) {

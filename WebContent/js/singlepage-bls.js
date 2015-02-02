@@ -108,12 +108,13 @@ var BLS = {};
 			blsParam["patt"] = patt;
 
 		if (!blsParam["patt"] || blsParam["patt"].length == 0) {
-			if (filter.length == 0) {
+			/*if (filter.length == 0) {
 				SINGLEPAGE.showBlsError({
 					"code" : "NO_PATTERN_GIVEN ",
-					"message" : "Text search pattern required."
+					"message" : "Please specify a text pattern or metadata value(s)."
 				});
-			}
+				return;
+			}*/
 			operation = "docs";
 		}
 		if (filter.length > 0)

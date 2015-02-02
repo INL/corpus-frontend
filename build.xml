@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!DOCTYPE project>
-<project name="corpus-frontend" default="all" basedir=".">
+<project name="corpus-frontend" default="war" basedir=".">
 	<!-- Project info -->
 	<property name="project.name" value="corpus-frontend" />
 	<property name="project.version" value="1.0" />
@@ -10,19 +10,7 @@
 	<property name="build" value="antbuild" />
 	<property name="dist" value="dist" />
 	
-	<!-- Access environment variables with ${ENV.name} -->
-	<property environment="ENV" />
-	
-    <!-- Fail with an error if lib dir was not configured
-    <fail unless="ENV.ANT_JAVA_LIB_DIR">
-        Please set the ANT_JAVA_LIB_DIR environment variable!
-        (Should point to the directory where Java libraries can be found,
-         e.g. N:\Automatisering\Applicatieontwikkeling\javalibs).
-    </fail>
-
-	<property name="lib" value="${ENV.ANT_JAVA_LIB_DIR}" /> -->
-	
-	<!-- Set lib dir from environment variable -->
+	<!-- Set lib dir  -->
 	<property name="lib" value="WebContent/WEB-INF/lib" />
 	
 	<!-- Make sure we know the current year, for the copyright clause in the javadocs -->
@@ -101,11 +89,6 @@
 			</manifest>
 
     	</war>
-    </target>
-
-    <!-- Build .war files for all project variants -->
-    <target name="all" depends="war">
-    	<!-- NOP -->
     </target>
 
 	<!-- Remove all generated files. -->

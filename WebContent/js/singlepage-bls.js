@@ -14,7 +14,10 @@ var BLS = {};
 	// previous one anymore.
 	var currentQueryNumber = 0;
 
-	BLS.search = function(param, successFunc) {
+	BLS.search = function(param, successFunc, errorFunc) {
+		
+		if (!errorFunc)
+			errorFunc = SINGLEPAGE.showBlsError;
 
 		function filterQuery(name, value) {
 			// TODO: escape double quotes in values with \
@@ -109,7 +112,7 @@ var BLS = {};
 
 		if (!blsParam["patt"] || blsParam["patt"].length == 0) {
 			/*if (filter.length == 0) {
-				SINGLEPAGE.showBlsError({
+				errorFunc({
 					"code" : "NO_PATTERN_GIVEN ",
 					"message" : "Please specify a text pattern or metadata value(s)."
 				});
@@ -211,10 +214,10 @@ var BLS = {};
 						if (data.error.code == "SERVER_BUSY" && unavailableHandler) {
 							unavailableHandler();
 						} else {
-							SINGLEPAGE.showBlsError(data.error);
+							errorFunc(data.error);
 						}
 					} else {
-						SINGLEPAGE.showBlsError({
+						errorFunc({
 							"code" : "WEBSERVICE_ERROR",
 							"message" : "Error contacting webservice: "
 									+ textStatus + "; " + errorThrown

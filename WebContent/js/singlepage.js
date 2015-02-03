@@ -71,6 +71,11 @@ var SINGLEPAGE = {};
 	// Restore page when editing address bar manually, or using bookmark or emailed link
 	document.addEventListener('DOMContentLoaded', updatePage);
 
+	SINGLEPAGE.showWaitStatus = function () {
+		alert(doingRegularSearch);
+		alert(retrievingCorpusInfo);
+	};
+	
 	var doingRegularSearch = false;
 	
 	function toggleWaitAnimation(b) {
@@ -139,7 +144,7 @@ var SINGLEPAGE = {};
     
     // Shows an error that occurred when contacting BLS to the user.
     // Expects an object with 'code' and 'message' properties.
-    SINGLEPAGE.showBlsError = function showBlsError(error) {
+    SINGLEPAGE.showBlsError = function (error) {
 		if (typeof error == "string")
 			error = {"message": error};
 		$("#results").hide();
@@ -360,15 +365,17 @@ var SINGLEPAGE = {};
 					$("#contentTabs").show();
 					
 		    		stillSearching = false; // don't show wait animation now.
-		    		if (corpus) // if we're not still waiting for corpus information (title, etc.)
-		    			toggleWaitAnimation(false);
+		    		toggleWaitAnimation(false);
 					setTimeout(function () {
 						// Scroll to results
 						$('html, body').animate({scrollTop: $("#results").offset().top - 70}, 300);
 					}, 1);
 				}
 				
-				BLS.search(param, updatePageWithBlsData);
+				BLS.search(param, updatePageWithBlsData, function (error) {
+					stillSearching = false;
+					showBlsError(error);
+				});
 			} else {
 				// No search
 				$("#contentTabs").hide();
@@ -717,9 +724,9 @@ var SINGLEPAGE = {};
 	    		toggleWaitAnimationCorpusInfo(false);
 	    		var data = jqXHR.responseJSON;
 				if (data && data.error) {
-					showBlsError(data.error);
+					SINGLEPAGE.showBlsError(data.error);
 				} else {
-					showBlsError(textStatus);
+					SINGLEPAGE.showBlsError(textStatus);
 				}
 	    	}
 	    });
@@ -1018,9 +1025,9 @@ var SINGLEPAGE = {};
 	    	error: function (jqXHR, textStatus, errorThrown) {
 	    		var data = jqXHR.responseJSON;
 				if (data && data.error) {
-					showBlsError(data.error);
+					SINGLEPAGE.showBlsError(data.error);
 				} else {
-					showBlsError(textStatus);
+					SINGLEPAGE.showBlsError(textStatus);
 				}
 	    	}
 	    });

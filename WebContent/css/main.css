@@ -5,7 +5,12 @@
     	 url('../font/INLVRG__.TTF') format('truetype');
     
 }
-
+a:link,
+a:visited,
+a:active,
+a:hover {
+	text-decoration: none;
+}
 .navbar-inverse .navbar-inner {
 	background-image: -moz-linear-gradient(top, #333333, #111111);
 	background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#333333), to(#111111));

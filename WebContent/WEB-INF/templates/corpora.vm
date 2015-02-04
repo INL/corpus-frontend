@@ -1,55 +1,106 @@
 #parse("header.vm")
 
-<div class="span12 contentbox">
+<div class="span12 contentbox" data-bls-url="$blsUrl">
+	
+	<h1 id="header-top">Available corpora</h1>
+	
+	<div id="successDiv" class="alert alert-success" role="alert">
+		<span id="successMessage"></span>
+	</div>
+	<div id="errorDiv" class="alert alert-danger" role="alert">
+		<span id="errorMessage"></span>
+	</div>
+	
+	<h2 id="header-public">Public corpora</h2>
+	<!-- NOTE: using a table because we'd like to automatically 
+	     size width to longest corpus name. There's probably better ways. -->
+	<table class="corpora public">
+		<thead>
+			<tr>
+				<th></th>
+				<th></th>
+				<th>Size</th>
+			</tr>
+		</thead>
+		<tbody id="corpora"></tbody>
+	</table>
 
-<h1 id='header-top'>Available corpora</h1>
+	<h2 id="header-private">Your corpora</h2>
+	<p id="logged-in-as">(logged in as <span id="userId">...</span>)</p>
+	
+	<input class="btn" id="create-corpus" type="button" value="New corpus" data-toggle="modal" data-target="#new-corpus-modal" />
 
-<!-- NOTE: using a table because we'd like to automatically 
-     size width to longest corpus name. There's probably better ways. -->
-<table class='corpora'>
-	<tbody>
-		<tr>
-			<td colspan='2'><h2 id='header-public'>Public corpora</h2></td>
-		</tr>
-	</tbody>	
-	<tbody id='corpora'></tbody>
-	<tbody>
-		<tr>
-			<td colspan='2'>
-				<h2 id='header-private'>Your corpora</h2>
-				<p id='logged-in-as'>(logged in as <span id='userId'>...</span>)</p>
-				
-				<div id='successDiv' class="alert alert-success" role="alert">
-					<span id='successMessage'></span>
-				</div>
-				<div id='errorDiv' class="alert alert-danger" role="alert">
-					<span id='errorMessage'></span>
-				</div>
-			</td>
-		</tr>
-	</tbody>	
-	<tbody id='corpora-private'></tbody>
-</table>
-
-<input class="btn" id='create-corpus' type='button' value='New corpus' />
-
-<div id='waitDisplay'>
-    <p class="text-center"><i class="fa fa-spinner fa-spin"></i></p>
+	<table class="corpora private">
+		<thead>
+			<tr>
+				<th></th>
+				<th></th>
+				<th>Size</th>
+				<th>Format</th>
+				<th>Last modified</th>
+			</tr>
+		</thead>
+		<tbody id="corpora-private"></tbody>
+	</table>
+	
+	<div id="waitDisplay">
+	    <p class="text-center"><i class="fa fa-spinner fa-spin"></i></p>
+	</div>
+	
+	<form id="uploadForm" method="POST">
+		<h2>Add <span id="uploadFormat"></span>data to <span id='uploadCorpusName'>corpus</span>:</h2>
+		<p>(you may upload an .xml file, or a .zip or .tar.gz archive containing .xml files)</p> 
+		<input type="file" id="uploadFile" name="data" />
+		<button class="btn" type="submit" id="uploadSubmit">Upload</button>
+	</form>
+	
+	<div id="drop-zone"></div>
 </div>
 
-<form id="uploadForm" method="POST">
-	<h2>Add <span id="uploadFormat"></span>data to <span id='uploadCorpusName'>corpus</span>:</h2>
-	<p>(you may upload an .xml file, or a .zip or .tar.gz archive containing .xml files)</p> 
-	<input type="file" id="uploadFile" name="data" />
-	<button class="btn" type="submit" id="uploadSubmit">Upload</button>
-</form>
+<div class="modal modal-sm fade" id="new-corpus-modal" tabindex="-1" role="dialog" aria-labelledby="create-corpus" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+	            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+	            <h4 class="modal-title" id="myModalLabel">Create New Corpus</h4>
+            </div>
+            <div class="modal-body">
+                <label for="corpus_name">Corpus Name</label>
+                <input id="corpus_name" name="corpus_name" type="text" maxlength="80" />
+                <label for="corpus_document_type" title="The format of the documents that will be stored in the corpus">Document Format</label>
+                <select id="corpus_document_type" name="corpus_document_type">
+                	<option value="TEI">TEI</option>
+                	<option value="Alto">Alto</option>
+                	<option value="FoLiA">FoLiA</option>
+                	<option value="Sketch Engine">Sketch Engine</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal">Save</button>
+			</div>
+		</div>
+	</div>
+</div>
 
+<div class="modal modal-sm fade" id="confirm-delete-corpus" tabindex="-1" role="dialog" aria-labelledby="delete-corpus" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+	            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+	            <h4 class="modal-title" id="myModalLabel">Confirm Delete Corpus</h4>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete corpus <span id="corpus-delete-name"></span>?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">Delete</button>
+			</div>
+		</div>
+	</div>
+</div>
 
-<script>
-var blsUrl = "$blsUrl";
-</script>
 <script src="$pathToTop/js/corpora.js"></script>
-
-</div>
 	
 #parse("footer.vm")

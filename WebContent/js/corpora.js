@@ -5,7 +5,7 @@
 // and add data to them.
 
 
-// (we place publically accessible functions here)
+// (we place publicly accessible functions here)
 var CORPORA = {};
 
 // Per corpus, we store the document format (i.e. TEI, FoLiA, ...) here
@@ -44,7 +44,12 @@ var corpora = {};
 	// "1970-02-01 00:00:00" becomes "01-02-1970"
 	// TODO: use a date/time formatting library for this..
 	function dateOnly(dateTimeString) {
-		return dateTimeString.replace(/^(\d+)\-(\d+)\-(\d+) .*$/, "$3-$2-$1");
+		if (dateTimeString) {
+			return dateTimeString.replace(/^(\d+)\-(\d+)\-(\d+) .*$/, "$3-$2-$1");
+		}
+		else {
+			return "01-01-1970";
+		}
 	}
 	
 	// Request the list of available corpora and
@@ -55,15 +60,11 @@ var corpora = {};
 		// Called with the response data of the AJAX request.
 		function updateCorporaLists(data) {
 			serverInfo = data;
-			if (serverInfo.user.loggedIn) {
-				$("#userId").text(serverInfo.user.id);
-			}
-			var publicCorpora = [
-			    "<tr><th></th><th></th><th>Size</th></tr>"
-			];
-			var privateCorpora = [
-  			    "<tr><th></th><th></th><th>Size</th><th>Format</th><th>Last modified</th></tr>"
-			];
+/*			if (serverInfo.user.loggedIn) { */
+				$("#userId").text(getUserId()/*serverInfo.user.id*/);
+/*			}*/
+			var publicCorpora = [];
+			var privateCorpora = [];
 			var indices = data.indices;
 			for (var indexName in indices) {
 				if (indices.hasOwnProperty(indexName)) {
@@ -91,21 +92,23 @@ var corpora = {};
 					var isBusy = index.isBusy = index.status != 'available' && index.status != 'empty';
 					dispName = index.displayName;
 					if (isPrivateIndex && !isBusy) {
-						delIcon = "<a class='icon' title='Delete \"" + dispName + "\" corpus' " +
-							"href='#' onclick='return CORPORA.deleteIndex(corpora[\"" + indexName + "\"]);'>" +
-							"<i class='fa fa-trash'></i></a>";
-						addIcon = "<a class='icon' title='Add data to \"" + dispName + "\" corpus' " +
+//						delIcon = "<a class='icon fa fa-trash' title='Delete \"" + dispName + "\" corpus' " +
+//							"href='#' onclick='return CORPORA.deleteIndex(corpora[\"" + indexName + "\"]);'>" +
+//							"</a>";
+						delIcon = "<a class='icon fa fa-trash' title='Delete \"" + dispName + "\" corpus' " +
+							"data-toggle='modal' data-target='#confirm-delete-corpus' href='#'></a>";
+						addIcon = "<a class='icon fa fa-plus-square' title='Add data to \"" + dispName + "\" corpus' " +
 							"href='#' onclick='return CORPORA.showUploadForm(corpora[\"" + indexName + "\"]);'>" +
-							"<i class='fa fa-plus-square'></i></a>";
+							"</a>";
 					}
-					var searchIcon = "<a class='icon disabled'><i class='fa fa-search'></i></a>";
+					var searchIcon = "<a class='icon disabled fa fa-search'></a>";
 					
 					// The index title and search icon (both clickable iff the index can be searched)
 					var indexTitle = dispName;
 					if (canSearch) {
 						var url = "./" + indexName + "/search";
-						searchIcon = "<a class='icon' title='Search \"" + dispName + 
-							"\" corpus' href='"+ url + "'><i class='fa fa-search'></i></a>";
+						searchIcon = "<a class='icon fa fa-search' title='Search \"" + dispName + 
+							"\" corpus' href='"+ url + "'></a>";
 						indexTitle = "<a title='Search \"" + dispName + "\" corpus' href='" + 
 							url + "'>" + dispName + "</a>";
 					}
@@ -144,7 +147,7 @@ var corpora = {};
 		// Perform the AJAX request to get the list of corpora.
 		$("#header-top").hide(); // hide "available corpora" heading
 		$("#waitDisplay").show();
-		$.ajax(blsUrl, {
+		$.ajax(CORPORA.blsUrl, {
 			"type": "GET",
 			"accept": "application/json",
 			"dataType": "json",
@@ -188,27 +191,27 @@ var corpora = {};
 		$("#errorDiv").show();
 	}
 
-	// Prompt the user for information and
-	// create an index in their private user area.
-	function createIndex() {
+	/**
+	 *  Create the specified index in the private user area.
+	 *  
+	 *  @param displayName	string	Name to show for the index
+	 *  @param shortName	string	Internal, technical name that uniquely identifies the index
+	 *  @param format		string	Name of the format type for the documents in the index
+	 */
+	function createIndex(displayName, shortName, format) {
 		hideUploadForm();
 		
-		// Ask the desired index name
-		var shortName = prompt("Corpus name (letters and digits only):");
 		if (shortName == null || shortName.length == 0)
 			return;
-		var displayName = prompt("Display name (all characters allowed, max. 80 long):");
 		if (displayName == null)
 			return;
-		
-		var format = prompt("Format: ", "TEI");
 		
 		// Prefix the user name because it's a private index
 		indexName = getUserId() + ":" + shortName;
 		
 		// Create the index.
 		$("#waitDisplay").show();
-		$.ajax(blsUrl, {
+		$.ajax(CORPORA.blsUrl, {
 			"type": "POST",
 			"accept": "application/json",
 			"dataType": "json",
@@ -255,7 +258,7 @@ var corpora = {};
 			return false;
 		
 		$("#waitDisplay").show();
-		$.ajax(blsUrl + index.name, {
+		$.ajax(CORPORA.blsUrl + index.name, {
 			"type": "DELETE",
 			"accept": "application/json",
 			"dataType": "json",
@@ -289,7 +292,17 @@ var corpora = {};
 
 	// Initialise file uploading functionality.
 	function initFileUpload() {
-		
+		if (Modernizr.draganddrop && !!window.FileReader) {
+			$("#drop-zone").bind("drop", function(e) {
+				  var reader = new FileReader();
+				  reader.onload = function(evt) {
+				    $('img').src = evt.target.result;
+				  };
+
+				  reader.readAsDataURL(e.dataTransfer.files[0]);
+				}, false);
+		}
+
 		hideUploadForm();
 		var form = document.getElementById('uploadForm');
 		var fileSelect = document.getElementById('uploadFile');
@@ -304,7 +317,7 @@ var corpora = {};
 			uploadButton.disabled = 'disabled';
 			
 			// Open the connection.
-			var url = blsUrl + uploadToCorpus.name + "/docs/";
+			var url = CORPORA.blsUrl + uploadToCorpus.name + "/docs/";
 			
 		    // Upload the selected files
 			$("#waitDisplay").show();
@@ -344,15 +357,68 @@ var corpora = {};
 		}
 	}
 
+	function initNewCorpus() {
+		var $newCorpusModal = $("#new-corpus-modal");
+		var $corpusNameInput = $("#corpus_name");
+		var $corpusFormatSelect = $("#corpus_document_type");
+		var saveButtonClass = ".btn-primary";
+
+		$newCorpusModal.on("shown.bs.modal", function(event) {
+			$(saveButtonClass, $newCorpusModal).prop("disabled", true);
+			$corpusNameInput.val("");
+			$corpusFormatSelect.prop("selectedIndex", 0);
+			$corpusNameInput[0].focus();
+		});
+		$corpusNameInput.on("change, input", function(event) {
+			$(saveButtonClass, $newCorpusModal).prop("disabled", $(this).val().length <= 2);
+		});
+		// Enable submit through pressing the 'enter' key while a form element has the focus
+		$("input, select", $newCorpusModal).on("keydown", function(event) {
+			if (event.keyCode == 13 && !$(saveButtonClass, $newCorpusModal).prop("disabled")) {
+				event.preventDefault();
+				$(saveButtonClass, $newCorpusModal).click();
+			}
+			else {
+				return true;
+			}
+		});
+		$(saveButtonClass, $newCorpusModal).click(function(event) {
+			var corpusName = $corpusNameInput.val();
+			var format = $corpusFormatSelect.val();
+			$newCorpusModal.modal("hide");
+			createIndex(corpusName, generateShortName(corpusName), format);
+		});
+	}
+
+	function initDeleteCorpus() {
+		var deleteCorpusModal = $("#confirm-delete-corpus");
+		var corpusName = $("#corpus-delete-name")
+		var saveButtonClass = ".btn-primary";
+
+		newCorpusModal.on("shown.bs.modal", function(event) {
+			corpusName.text("XXX");
+		});
+		$(saveButtonClass, deleteCorpusModal).click(function(event) {
+			deleteCorpusModal.modal("hide");
+			deleteIndex(corpusName);
+		});
+	}
+
+	function generateShortName(name) {
+		return name.replace(/[^\w]|/g, "_");
+	}
+
 	$(document).ready(function () {
+		CORPORA.blsUrl = $(".contentbox").data("blsUrl");
+
 		// Get the list of corpora.
 		refreshCorporaList();
 		
 		// Wire up the AJAX uploading functionality.
 		initFileUpload();
 		
-		// Wire up the "create corpus" button.
-		$("#create-corpus").click(createIndex);
+		// Wire up the "new corpus" button.
+		initNewCorpus();
 	});
 
 })();

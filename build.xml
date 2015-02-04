@@ -4,6 +4,7 @@
 	<!-- Project info -->
 	<property name="project.name" value="corpus-frontend" />
 	<property name="project.version" value="1.0" />
+	<property name="war.name" value="corpora" />
 
 	<!-- Directories -->
 	<property name="src" value="src" />
@@ -79,7 +80,7 @@
     <!-- Build .war file from the build directory -->
     <target name="war" depends="compile">
         <mkdir dir="${dist}" />
-        <war warfile="${dist}/search.war" webxml="WebContent/WEB-INF/web.xml" basedir="${build}">
+        <war warfile="${dist}/${war.name}.war" webxml="WebContent/WEB-INF/web.xml" basedir="${build}">
         	
 			<!-- Generate the manifest file -->
 			<manifest>

@@ -63,8 +63,7 @@
 	<div class="tab-content span5">
 		<div class="tab-pane" id="simple">
 			<div>
-				<strong>Search for...</strong><br>
-
+				<h3>Search for &hellip;</h3>
 				<div class="alert alert-error" style='display: none;'>
 					<button type="button" class="close" data-dismiss="alert">&times;</button>
 					<b>Error!</b> <span id='searchErrorText'>(text here)</span>
@@ -91,7 +90,8 @@
 			</div>
 		</div>
 		<div class="tab-pane" id="query">
-			<strong>Corpus Query Language:</strong><br><textarea class="span5" id="querybox" name="querybox" rows="7"></textarea>
+			<h3>Corpus Query Language:</h3>
+			<textarea class="span5" id="querybox" name="querybox" rows="7"></textarea>
 		</div>
 	</div>
 	<div class="span5 pull-right">

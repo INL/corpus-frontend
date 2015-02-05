@@ -242,14 +242,13 @@ span.word {
 }
 
 /* Corpora page */
-
-#header-public, #header-private, #logged-in-as, #corpora-private, #create-corpus {
+#header-public, #header-private, #logged-in-as, .corpora.public, .corpora.private, #create-corpus {
 	display: none;
 }
 
 table.corpora {
 	width: auto;
-	margin-bottom: 1em;
+	margin: 1em 0;
 }
 
 table.corpora td {
@@ -267,12 +266,14 @@ table.corpora th {
 table.corpora tr:hover {
 	background-color: inherit;
 }
-
-td.corpusName {
-	min-width: 120px;
+col.corpus-name {
+	width: 24%;
+}
+col.delete {
+	width: 8%;
 }
 
-td.corpusName a {
+td.corpus-name a {
 	color: inherit;
 	text-decoration: none;
 }
@@ -289,11 +290,10 @@ table.corpora a.disabled {
 }
 
 table.corpora a.icon {
-	margin-left: 10px;
+	margin: 0 .8em;
 }
 
 /* Single-page */
-
 #corpusOwner {
 	font-size: 60%;
 }
@@ -341,7 +341,14 @@ table.corpora a.icon {
 	margin-right: auto;
 	padding-top: 8px;
 }
-
 #waitDisplay i {
 	font-size: 60px;
+}
+#userId,
+#corpus-delete-name {
+	font-style: italic;
+}
+
+#searchFormDiv h3 {
+	font-size: 1.4em;
 }

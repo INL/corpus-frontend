@@ -318,7 +318,7 @@ var SINGLEPAGE = {};
 					
 					var docFields = summary.docFields || {};
 					if (!corpusDocFields) {
-						// Use obvious guesses for any missing fields
+						// Use obvious guesses for any SINGLEPAGEmissing fields
 						corpusDocFields = {
 							"titleField": "title",
 							"authorField": "author",
@@ -374,7 +374,7 @@ var SINGLEPAGE = {};
 				
 				BLS.search(param, updatePageWithBlsData, function (error) {
 					stillSearching = false;
-					showBlsError(error);
+					SINGLEPAGE.showBlsError(error);
 				});
 			} else {
 				// No search

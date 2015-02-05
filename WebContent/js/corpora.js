@@ -4,7 +4,6 @@
 // Allows user to create and delete private corpora 
 // and add data to them.
 
-
 // (we place publicly accessible functions here)
 var CORPORA = {};
 
@@ -60,9 +59,7 @@ var corpora = {};
 		// Called with the response data of the AJAX request.
 		function updateCorporaLists(data) {
 			serverInfo = data;
-/*			if (serverInfo.user.loggedIn) { */
-				$("#userId").text(getUserId()/*serverInfo.user.id*/);
-/*			}*/
+			$("#userId").text(getUserId());
 			var publicCorpora = [];
 			var privateCorpora = [];
 			var indices = data.indices;
@@ -92,11 +89,8 @@ var corpora = {};
 					var isBusy = index.isBusy = index.status != 'available' && index.status != 'empty';
 					dispName = index.displayName;
 					if (isPrivateIndex && !isBusy) {
-//						delIcon = "<a class='icon fa fa-trash' title='Delete \"" + dispName + "\" corpus' " +
-//							"href='#' onclick='return CORPORA.deleteIndex(corpora[\"" + indexName + "\"]);'>" +
-//							"</a>";
 						delIcon = "<a class='icon fa fa-trash' title='Delete \"" + dispName + "\" corpus' " +
-							"data-toggle='modal' data-target='#confirm-delete-corpus' href='#'></a>";
+							"onclick='$(\"#confirm-delete-corpus\").data(\"indexName\", \"" + indexName + "\").modal(\"show\")' href='#'></a>";
 						addIcon = "<a class='icon fa fa-plus-square' title='Add data to \"" + dispName + "\" corpus' " +
 							"href='#' onclick='return CORPORA.showUploadForm(corpora[\"" + indexName + "\"]);'>" +
 							"</a>";
@@ -121,10 +115,12 @@ var corpora = {};
 							"<td>" + dateOnly(index.timeModified) + "</td>";
 					}
 					addToList.push("<tr>" +
-						"<td class='corpusName'>" + indexTitle + statusText + "</td>" +
-						"<td>" + searchIcon + addIcon + delIcon + "</td>" +
+						"<td class='corpus-name'>" + indexTitle + statusText + "</td>" +
+						"<td>" + delIcon + "</td>" +
 						"<td>" + abbrNumber(index.tokenCount) + "</td>" +
 						optColumns +
+						"<td>" + addIcon + "</td>" +
+						"<td>" + searchIcon + "</td>" +
 						"</tr>");
 				}
 			}
@@ -134,13 +130,15 @@ var corpora = {};
 			$("#corpora-private").html(privateCorpora.join(""));
 			
 			// Determine which headings and lists to show
-			// (we only show the private list to people who are authorized to do something there,
+			// (we only show the private list to people who are authorised to do something there,
 			//  and we only show the public list if there are any public corpora on the server)
 			var showPublic = publicCorpora.length > 0;
 			var userLoggedIn = data.user.loggedIn;
 			var showPrivate = userLoggedIn && (privateCorpora.length > 0 || data.user.canCreateIndex);
-			$("#header-public").toggle(showPublic && showPrivate);
-			$("#header-private,#logged-in-as,#corpora-private").toggle(showPrivate);
+			$("#header-top").toggle(showPublic && showPrivate);
+			$("#header-public, .corpora.public").toggle(showPublic);
+			$("#header-private, #logged-in-as").toggle(showPrivate);
+			$(".corpora.private").toggle(privateCorpora.length > 0);
 			$("#create-corpus").toggle(data.user.canCreateIndex);
 		}
 		
@@ -253,11 +251,8 @@ var corpora = {};
 	// Delete an index from your private user area
 	CORPORA.deleteIndex = function (index) {
 		hideUploadForm();
-		
-		if (!confirm("You are about to delete \"" + index.displayName + "\"; this cannot be undone! Are you sure?"))
-			return false;
-		
 		$("#waitDisplay").show();
+
 		$.ajax(CORPORA.blsUrl + index.name, {
 			"type": "DELETE",
 			"accept": "application/json",
@@ -363,10 +358,12 @@ var corpora = {};
 		var $corpusFormatSelect = $("#corpus_document_type");
 		var saveButtonClass = ".btn-primary";
 
-		$newCorpusModal.on("shown.bs.modal", function(event) {
+		$newCorpusModal.on("show.bs.modal", function(event) {
 			$(saveButtonClass, $newCorpusModal).prop("disabled", true);
 			$corpusNameInput.val("");
 			$corpusFormatSelect.prop("selectedIndex", 0);
+		});
+		$newCorpusModal.on("shown.bs.modal", function(event) {
 			$corpusNameInput[0].focus();
 		});
 		$corpusNameInput.on("change, input", function(event) {
@@ -374,12 +371,11 @@ var corpora = {};
 		});
 		// Enable submit through pressing the 'enter' key while a form element has the focus
 		$("input, select", $newCorpusModal).on("keydown", function(event) {
-			if (event.keyCode == 13 && !$(saveButtonClass, $newCorpusModal).prop("disabled")) {
+			if (event.keyCode == 13) {
 				event.preventDefault();
-				$(saveButtonClass, $newCorpusModal).click();
-			}
-			else {
-				return true;
+				if (!$(saveButtonClass, $newCorpusModal).prop("disabled")) {
+					$(saveButtonClass, $newCorpusModal).click();
+				}
 			}
 		});
 		$(saveButtonClass, $newCorpusModal).click(function(event) {
@@ -393,19 +389,20 @@ var corpora = {};
 	function initDeleteCorpus() {
 		var deleteCorpusModal = $("#confirm-delete-corpus");
 		var corpusName = $("#corpus-delete-name")
-		var saveButtonClass = ".btn-primary";
+		var deleteButtonClass = ".btn-primary";
 
-		newCorpusModal.on("shown.bs.modal", function(event) {
-			corpusName.text("XXX");
+		deleteCorpusModal.on("show.bs.modal", function(event) {
+			var indexName = deleteCorpusModal.data("indexName");
+			corpusName.text(corpora[indexName].name);
 		});
-		$(saveButtonClass, deleteCorpusModal).click(function(event) {
+		$(deleteButtonClass, deleteCorpusModal).click(function(event) {
 			deleteCorpusModal.modal("hide");
-			deleteIndex(corpusName);
+			CORPORA.deleteIndex(corpora[deleteCorpusModal.data("indexName")]);
 		});
 	}
 
 	function generateShortName(name) {
-		return name.replace(/[^\w]|/g, "_");
+		return name.replace(/[^\w]/g, "-").replace(/^[_\d]+/, "");
 	}
 
 	$(document).ready(function () {
@@ -417,9 +414,9 @@ var corpora = {};
 		// Wire up the AJAX uploading functionality.
 		initFileUpload();
 		
-		// Wire up the "new corpus" button.
+		// Wire up the "new corpus" and "delete corpus" buttons.
 		initNewCorpus();
+		initDeleteCorpus();
 	});
-
 })();
 

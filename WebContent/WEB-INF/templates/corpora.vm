@@ -31,13 +31,24 @@
 	<input class="btn" id="create-corpus" type="button" value="New corpus" data-toggle="modal" data-target="#new-corpus-modal" />
 
 	<table class="corpora private">
+		<colgroup>
+			<col class="corpus-name" />
+			<col class="delete" />
+			<col />
+			<col />
+			<col />
+			<col />
+			<col />
+		</colgroup>
 		<thead>
 			<tr>
-				<th></th>
+				<th>Corpus</th>
 				<th></th>
 				<th>Size</th>
 				<th>Format</th>
 				<th>Last modified</th>
+				<th></th>
+				<th></th>
 			</tr>
 		</thead>
 		<tbody id="corpora-private"></tbody>
@@ -91,7 +102,8 @@
 	            <h4 class="modal-title" id="myModalLabel">Confirm Delete Corpus</h4>
             </div>
             <div class="modal-body">
-                <p>Are you sure you want to delete corpus <span id="corpus-delete-name"></span>?</p>
+                <p>You are about to delete corpus <span id="corpus-delete-name">&hellip;</span>; this cannot be undone!</p>
+                <p>Are you sure?</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>

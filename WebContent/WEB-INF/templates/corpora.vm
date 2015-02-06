@@ -81,9 +81,7 @@
                 <label for="corpus_document_type" title="The format of the documents that will be stored in the corpus">Document Format</label>
                 <select id="corpus_document_type" name="corpus_document_type">
                 	<option value="TEI">TEI</option>
-                	<option value="Alto">Alto</option>
                 	<option value="FoLiA">FoLiA</option>
-                	<option value="Sketch Engine">Sketch Engine</option>
                 </select>
             </div>
             <div class="modal-footer">

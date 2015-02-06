@@ -288,14 +288,35 @@ var corpora = {};
 	// Initialise file uploading functionality.
 	function initFileUpload() {
 		if (Modernizr.draganddrop && !!window.FileReader) {
-			$("#drop-zone").bind("drop", function(e) {
-				  var reader = new FileReader();
-				  reader.onload = function(evt) {
-				    $('img').src = evt.target.result;
-				  };
+			$("#drop-zone").bind("drop", function(event) {
+				event.preventDefault();
+				event.stopPropagation();
+				$(this).removeClass("hover");
+				var reader = new FileReader();
+				reader.onload = function(event) {
+				    console.log(event.target);
+				    $('img').src = event.target.result;
+				};
 
-				  reader.readAsDataURL(e.dataTransfer.files[0]);
-				}, false);
+				var file = event.originalEvent.dataTransfer.files[0];
+				console.log("Will read file: " + file);
+				reader.readAsDataURL(file);
+			}, false);
+			$("#drop-zone").bind("dragover", function(event) {
+				console.log(event.originalEvent.dataTransfer);
+				if (event.originalEvent.dataTransfer.files) {
+					// Allow drop
+					event.preventDefault();
+					event.stopPropagation();
+					event.originalEvent.dataTransfer.dropEffect = "copy";
+					$(this).addClass("hover");
+				}
+			});
+			$("#drop-zone").bind("dragend, dragleave", function(event) {
+				event.preventDefault();
+				event.stopPropagation();
+				$(this).removeClass("hover");
+			});
 		}
 
 		hideUploadForm();

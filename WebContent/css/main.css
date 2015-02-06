@@ -352,3 +352,14 @@ table.corpora a.icon {
 #searchFormDiv h3 {
 	font-size: 1.4em;
 }
+#drop-zone {
+	display: block;
+	width: 12em;
+	height: 12em;
+	border: 4px dashed silver;
+	border-radius: 1.8em;
+}
+#drop-zone.hover {
+	background-color: rgba(0, 0, 0, 0.1);
+	border-color: #b0b0b0;
+}

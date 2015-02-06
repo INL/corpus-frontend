@@ -63,9 +63,9 @@
 		<p>(you may upload an .xml file, or a .zip or .tar.gz archive containing .xml files)</p> 
 		<input type="file" id="uploadFile" name="data" />
 		<button class="btn" type="submit" id="uploadSubmit">Upload</button>
-	</form>
 	
-	<div id="drop-zone"></div>
+		<div id="drop-zone"></div>
+	</form>
 </div>
 
 <div class="modal modal-sm fade" id="new-corpus-modal" tabindex="-1" role="dialog" aria-labelledby="create-corpus" aria-hidden="true">

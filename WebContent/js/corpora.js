@@ -409,12 +409,12 @@ var corpora = {};
 
 	function initDeleteCorpus() {
 		var deleteCorpusModal = $("#confirm-delete-corpus");
-		var corpusName = $("#corpus-delete-name")
+		var corpusName = $("#corpus-delete-name");
 		var deleteButtonClass = ".btn-primary";
 
 		deleteCorpusModal.on("show.bs.modal", function(event) {
 			var indexName = deleteCorpusModal.data("indexName");
-			corpusName.text(corpora[indexName].name);
+			corpusName.text(corpora[indexName].displayName);
 		});
 		$(deleteButtonClass, deleteCorpusModal).click(function(event) {
 			deleteCorpusModal.modal("hide");

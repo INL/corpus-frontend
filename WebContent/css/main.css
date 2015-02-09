@@ -387,8 +387,7 @@ table.corpora a.icon {
 }
 /* Extend 'jquery.fileupload.css */
 .fileinput-button input {
-	left: 0;
-	bottom: 0;
+	height: 100%;
 }
 .progress {
 	margin: 1.2em 0;

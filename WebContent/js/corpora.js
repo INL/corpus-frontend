@@ -342,16 +342,8 @@ var corpora = {};
 		var $corpusNameInput = $("#corpus_name");
 		var $corpusFormatSelect = $("#corpus_document_type");
 		var saveButtonClass = ".btn-primary";
-
-		// Make sure the dialog doesn't interfere with links
-		// when it's not visible (Bootstrap sets it to opacity: 0; but not hidden)
-		$newCorpusModal.hide();
-		$newCorpusModal.on("hidden.bs.modal", function(event) {
-			$newCorpusModal.hide();
-		});
 		
 		$newCorpusModal.on("show.bs.modal", function(event) {
-			$newCorpusModal.show(); // make visible again (see above)
 			$(saveButtonClass, $newCorpusModal).prop("disabled", true);
 			$corpusNameInput.val("");
 			$corpusFormatSelect.prop("selectedIndex", 0);
@@ -384,14 +376,7 @@ var corpora = {};
 		var corpusName = $("#corpus-delete-name");
 		var deleteButtonClass = ".btn-primary";
 
-		// Make sure the dialog doesn't interfere with links
-		// when it's not visible (Bootstrap sets it to opacity: 0; but not hidden)
-		deleteCorpusModal.hide();
-		deleteCorpusModal.on("hidden.bs.modal", function(event) {
-			deleteCorpusModal.hide();
-		});
 		deleteCorpusModal.on("show.bs.modal", function(event) {
-			deleteCorpusModal.show(); // make visible again (see above)
 			var indexName = deleteCorpusModal.data("indexName");
 			corpusName.text(corpora[indexName].displayName);
 		});

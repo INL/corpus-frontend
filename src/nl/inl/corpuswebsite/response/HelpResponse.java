@@ -3,6 +3,8 @@
  */
 package nl.inl.corpuswebsite.response;
 
+import org.apache.velocity.VelocityContext;
+
 import nl.inl.corpuswebsite.BaseResponse;
 
 /** Show help page. */
@@ -11,12 +13,10 @@ public class HelpResponse extends BaseResponse {
 	@Override
 	protected void completeRequest() {
 		putFileContentIntoContext("content", servlet.getHelpPage(corpus));
-		// this.getContext().put("title",
-		// this.servlet.getConfig(corpus).getCorpusName());
-		// this.getContext().put("websiteconfig",
-		// this.servlet.getConfig(corpus));
-		// this.getContext().put("googleAnalyticsKey",
-		// this.servlet.getGoogleAnalyticsKey());
+		
+		VelocityContext context = getContext();
+		context.put("pathToTop", "."); // correct for most pages, but for "list of corpora" it's "."
+
 		displayHtmlTemplate(servlet.getTemplate("contentpage"));
 	}
 

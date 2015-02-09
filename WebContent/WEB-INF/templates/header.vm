@@ -78,9 +78,12 @@
 					#end
                     <div class="nav-collapse collapse">
                         <ul class="nav">
-							<li class="dropdown">
-                                <a id='corpusNameTop' href="about" class="dropdown-toggle brand">$title<!-- <b class="caret"></b> --></a>
+							<li>
+                                <a href='$pathToTop' class='brand'>AutoSearch (DEMO)</a>
                             </li>
+                            <li>
+                                <a id='corpusLinkTop' href="search" class="brand"><i class="fa fa-caret-right" class='brand'></i> <span id='corpusNameTop'>$title</span></a>
+                           </li>
                             #foreach($link in $websiteconfig.getLinks())
 								<li><a href="$link.get('href')"#if($link.get('newWindow')) target="_blank"#else#end>$link.get('name')</a></li>
 							#end

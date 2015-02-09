@@ -3,12 +3,10 @@
     <InterfaceProperties>
         <Name>BlackLab AutoSearch</Name>
         <NavLinks>
-            <Link value="search">Home</Link>
+            <Link value="help">Help</Link>
             <Link value="http://www.inl.nl" newWindow="true">INL</Link>
             <Link value="http://www.clarin.eu" newWindow="true">CLARIN</Link>
             <Link value="http://taalunie.org" newWindow="true">NTU</Link>
-            <Link value="help#help">How do I search?</Link>
-            <Link value="help#beta">BETA</Link>
         </NavLinks>
     </InterfaceProperties>
     <DocumentProperties>

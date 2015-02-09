@@ -181,12 +181,10 @@ public class WebsiteConfig {
 		colorLink = "";
 		pathToLogo = "";
 		
-		linksInTopBar.add(new LinkInTopBar("Home", "search"));
+		linksInTopBar.add(new LinkInTopBar("Help", "../help"));
 		linksInTopBar.add(new LinkInTopBar("INL", "http://www.inl.nl/", true));
 		linksInTopBar.add(new LinkInTopBar("CLARIN", "http://www.clarin.eu/", true));
 		linksInTopBar.add(new LinkInTopBar("NTU", "http://taalunie.org/", true));
-		linksInTopBar.add(new LinkInTopBar("How do I search?", "help#help"));
-		linksInTopBar.add(new LinkInTopBar("BETA", "help#beta"));
 		
 		properties.add(new FieldDescriptor("Wordform", false, false, true, "word", "word", "wordform"));
 		properties.add(new FieldDescriptor("Lemma", false, false, false, "lemma", "lemma", "lemma"));

@@ -83,7 +83,7 @@ public class MainServlet extends HttpServlet {
 	 * use. We determine this from the name of the .war file (i.e.
 	 * zeebrieven.war defaults to zeebrieven, etc.)
 	 */
-	private String defaultCorpus = "chn";
+	private String defaultCorpus = "autosearch";
 
 	/**
 	 * Time the WAR was built.
@@ -148,6 +148,7 @@ public class MainServlet extends HttpServlet {
 		responses.put(contextPath + "/page/about", AboutResponse.class);
 		responses.put(contextPath + "/page/help", HelpResponse.class);
 		responses.put(contextPath + "/page/article", ArticleResponse.class);
+		responses.put(contextPath + "/help", HelpResponse.class);
 		responses.put(contextPath, CorporaResponse.class);
 		responses.put("error", ErrorResponse.class);
 
@@ -376,6 +377,8 @@ public class MainServlet extends HttpServlet {
 	}
 
 	public File getHelpPage(String corpus) {
+		if (corpus == null || corpus.length() == 0)
+			return getProjectFile("autosearch", "help.inc", true);
 		return getProjectFile(corpus, "help.inc", true);
 	}
 

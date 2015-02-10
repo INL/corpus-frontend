@@ -187,4 +187,3 @@ GiGaNT-lexicon</a>.
 representative of the final product.</p>
 <p class='endspacer'><a name='end'></a>&nbsp;</p>
 
-<script>$("#corpusLinkTop").hide();</script>

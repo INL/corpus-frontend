@@ -422,7 +422,6 @@ var corpora = {};
 
 	$(document).ready(function () {
 		CORPORA.blsUrl = $(".contentbox").data("blsUrl");
-		$("#corpusLinkTop").hide();
 
 		// Get the list of corpora.
 		refreshCorporaList();

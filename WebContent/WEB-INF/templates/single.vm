@@ -55,6 +55,7 @@
 
 <form onsubmit="return SINGLEPAGE.searchSubmit();">
 <div id='searchFormDiv' class="span12 contentbox">
+	#if($corpusOwner)<a href='..'><i class="fa fa-arrow-left"></i> back to my corpora</a>#end
 	<h2><span id='corpusNameMain'></span> #if($corpusOwner)<span id='corpusOwner'>($corpusOwner)</span>#end</h2>
 	<ul class="nav nav-tabs" id="searchTabs">
 		<li><a href="#simple" data-toggle="tab" class="querytype">Simple</a></li>

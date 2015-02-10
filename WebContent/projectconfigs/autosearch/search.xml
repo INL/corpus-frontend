@@ -7,6 +7,7 @@
             <Link value="http://www.inl.nl" newWindow="true">INL</Link>
             <Link value="http://www.clarin.eu" newWindow="true">CLARIN</Link>
             <Link value="http://taalunie.org" newWindow="true">NTU</Link>
+            <CorpusDataFormat>tei-or-folia</CorpusDataFormat>
         </NavLinks>
     </InterfaceProperties>
     <DocumentProperties>

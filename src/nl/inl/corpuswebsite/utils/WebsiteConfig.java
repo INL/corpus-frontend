@@ -175,7 +175,7 @@ public class WebsiteConfig {
 	private WebsiteConfig(String corpusName) {
 		// TODO: get all this from index metadata!
 		this.corpusName = corpusName;
-		corpusDataFormat = "tei";
+		corpusDataFormat = "tei-or-folia";
 		colorBackground = "";
 		pathToBackgroundImage = "";
 		colorLink = "";

@@ -11,6 +11,7 @@
 		<link title="Search" type="application/opensearchdescription+xml" rel="search" href="$pathToTop/opensearch.xml">
         <link rel="stylesheet" href="$pathToTop/css/bootstrap.min.css">
         <link rel="stylesheet" href="$pathToTop/css/bootstrap-responsive.min.css">
+        <link rel="stylesheet" href="$pathToTop/css/jquery.fileupload.css">
         <link rel="stylesheet" href="$pathToTop/css/main.css">
 		<style>
             body {
@@ -44,6 +45,9 @@
         <!-- <script src="//cdnjs.cloudflare.com/ajax/libs/html5-history-api/4.0.2/history.iegte8.min.js"></script> -->        
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>		
         <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.2/js/bootstrap.min.js"></script>
+		<script src="$pathToTop/js/vendor/jquery.ui.widget.js"></script>
+		<script src="$pathToTop/js/jquery.iframe-transport.js"></script>
+		<script src="$pathToTop/js/jquery.fileupload.js"></script>
         <script src="$pathToTop/js/search.js"></script>
         <script src="$pathToTop/js/main.js"></script>
 		<script src="$pathToTop/js/purl.js"></script>

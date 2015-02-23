@@ -117,7 +117,7 @@ var corpora = {};
 					addToList.push("<tr>" +
 						"<td class='corpus-name'>" + indexTitle + statusText + "</td>" +
 						"<td>" + delIcon + "</td>" +
-						"<td>" + abbrNumber(index.tokenCount) + "</td>" +
+						"<td class='size'>" + abbrNumber(index.tokenCount) + "</td>" +
 						optColumns +
 						"<td>" + addIcon + "</td>" +
 						"<td>" + searchIcon + "</td>" +
@@ -197,8 +197,6 @@ var corpora = {};
 	 *  @param format		string	Name of the format type for the documents in the index
 	 */
 	function createIndex(displayName, shortName, format) {
-		hideUploadForm();
-		
 		if (shortName == null || shortName.length == 0)
 			return;
 		if (displayName == null)
@@ -241,16 +239,20 @@ var corpora = {};
 
 	// Makes the upload form visible and sets the corpus we're uploading to
 	CORPORA.showUploadForm = function (index) {
-		$("#uploadForm").show();
+		if (uploadToCorpus == index) {
+			$("#upload-file-dialog").modal("toggle");
+		}
+		else {
+			$("#upload-file-dialog").modal("show");
+		}
 		$("#uploadCorpusName").text(index.displayName);
 		$("#uploadFormat").text(index.documentFormat + " ");
 		uploadToCorpus = index;
-		return false; // cancel link
+		return false; // Cancel default link behaviour
 	}
 
 	// Delete an index from your private user area
 	CORPORA.deleteIndex = function (index) {
-		hideUploadForm();
 		$("#waitDisplay").show();
 
 		$.ajax(CORPORA.blsUrl + index.name, {
@@ -277,79 +279,62 @@ var corpora = {};
 		return false; // cancel link
 	}
 
-	// Hide the upload form and reset for the next upload.
-	function hideUploadForm() {
-		var uploadButton = document.getElementById('uploadSubmit');
-		uploadButton.innerHTML = 'Upload';
-		uploadButton.removeAttribute('disabled');
-		$("#uploadForm").hide();
-	}
-
 	// Initialise file uploading functionality.
 	function initFileUpload() {
-		if (Modernizr.draganddrop && !!window.FileReader) {
-			$("#drop-zone").bind("drop", function(e) {
-				  var reader = new FileReader();
-				  reader.onload = function(evt) {
-				    $('img').src = evt.target.result;
-				  };
-
-				  reader.readAsDataURL(e.dataTransfer.files[0]);
-				}, false);
-		}
-
-		hideUploadForm();
-		var form = document.getElementById('uploadForm');
-		var fileSelect = document.getElementById('uploadFile');
-		var uploadButton = document.getElementById('uploadSubmit');
-		uploadButton.removeAttribute('disabled');
-		form.onsubmit = function (event) {
-			event.stopPropagation();
-			event.preventDefault();
-
-			// Update button text.
-			uploadButton.innerHTML = 'Uploading...';
-			uploadButton.disabled = 'disabled';
-			
-			// Open the connection.
-			var url = CORPORA.blsUrl + uploadToCorpus.name + "/docs/";
-			
-		    // Upload the selected files
-			$("#waitDisplay").show();
-		    var data = new FormData();
-		    $.each(fileSelect.files, function(i, file)
-		    {
-		        data.append('data', file, file.name);
-		    });
-		    $.ajax({
-		        "url": url,
-		        "type": "POST",
-		        "data": data,
-		        "cache": false,
-		        "dataType": "json",
-		        "processData": false, // Don't process the files
-		        "contentType": false, // Set content type to false as jQuery will tell the server its a query string request
-		        "success": function (data, textStatus, jqXHR) {
-		        	// File(s) uploaded.
-					$("#waitDisplay").hide();
-					hideUploadForm();
-					refreshCorporaList(function () {
-						showSuccess("Data added to \"" + uploadToCorpus.displayName + "\".");
-					});
-		        },
-		        "error": function (jqXHR, textStatus, errorThrown) {
-					$("#waitDisplay").hide();
-					hideUploadForm();
-		        	var data = jqXHR.responseJSON;
-					var msg;
-					if (data && data.error)
-						msg = data.error.message;
-					else
-						msg = textStatus + "; " + errorThrown;
-					showError("Could not add data to \"" + uploadToCorpus.displayName + "\": " + msg);
-		        }
-		    });
-		}
+		// Disable file drops on the document
+		$(document).bind("drop dragover", function (e) {
+			e.preventDefault();
+		});
+		// Enable file drops on a specific 'zone'
+	    $("#drop-zone").fileupload({
+	    	dropZone: $("#drop-zone"),
+	    	// This seems to have no effect!
+	    	acceptFileTypes: /(\.|\/)(xml|zip|gz)$/i,
+	    	maxFileSize: 4000000, // 4 MB
+	        dataType: "json",
+	        done: function(e, data) {
+	            $(".progress .bar").text("'" + data.files[0].name + "': Done");
+				refreshCorporaList(function () {
+					showSuccess("Data added to \"" + uploadToCorpus.displayName + "\".");
+				});
+	        },
+	        fail: function(e, data) {
+	        	var data = data.jqXHR.responseJSON;
+				var msg;
+				if (data && data.error)
+					msg = data.error.message;
+				else
+					msg = data.textStatus + "; " + data.errorThrown;
+				showError("Could not add data to \"" + uploadToCorpus.displayName + "\": " + msg);
+	        },
+	        always: function(e, data) {
+				$("#waitDisplay").hide();
+				$(".fileinput-button").removeClass("hover");
+	        },
+		    progressall: function(e, data) {
+		        var progress = parseInt(data.loaded / data.total * 100, 10);
+		        $(".progress .bar")
+		        	.css("width", progress + "%")
+		        	.attr("aria-valuenow", progress);
+	        	$(".progress .bar").text($(".progress .bar").text().replace(/(\([0-9]+%\) )?...$/, "(" + progress + "%) ..."));
+		    },
+	        add: function(e, data) {
+	        	$("#waitDisplay").show();
+	        	data.url = CORPORA.blsUrl + uploadToCorpus.name + "/docs/";
+	        	data.data = new FormData();
+   		        data.data.append("data", data.files[0], data.files[0].name);
+	            data.context = $(".progress .bar").css("width", "0%").attr("aria-valuenow", 0).
+	            	text("Uploading '" + data.files[0].name + "' ...");
+	            data.submit();
+	        },
+	        dragover: function(e, data) {
+	        	$(".fileinput-button").addClass("hover");
+	        }
+	    });
+	    $('#drop-zone').bind("dragleave dragend", function(e) {
+			e.preventDefault();
+	    	$(".fileinput-button").removeClass("hover");
+	    });
 	}
 
 	function initNewCorpus() {
@@ -357,16 +342,8 @@ var corpora = {};
 		var $corpusNameInput = $("#corpus_name");
 		var $corpusFormatSelect = $("#corpus_document_type");
 		var saveButtonClass = ".btn-primary";
-
-		// Make sure the dialog doesn't interfere with links
-		// when it's not visible (Bootstrap sets it to opacity: 0; but not hidden)
-		$newCorpusModal.hide();
-		$newCorpusModal.on("hidden.bs.modal", function(event) {
-			$newCorpusModal.hide();
-		});
 		
 		$newCorpusModal.on("show.bs.modal", function(event) {
-			$newCorpusModal.show(); // make visible again (see above)
 			$(saveButtonClass, $newCorpusModal).prop("disabled", true);
 			$corpusNameInput.val("");
 			$corpusFormatSelect.prop("selectedIndex", 0);
@@ -399,14 +376,7 @@ var corpora = {};
 		var corpusName = $("#corpus-delete-name");
 		var deleteButtonClass = ".btn-primary";
 
-		// Make sure the dialog doesn't interfere with links
-		// when it's not visible (Bootstrap sets it to opacity: 0; but not hidden)
-		deleteCorpusModal.hide();
-		deleteCorpusModal.on("hidden.bs.modal", function(event) {
-			deleteCorpusModal.hide();
-		});
 		deleteCorpusModal.on("show.bs.modal", function(event) {
-			deleteCorpusModal.show(); // make visible again (see above)
 			var indexName = deleteCorpusModal.data("indexName");
 			corpusName.text(corpora[indexName].displayName);
 		});

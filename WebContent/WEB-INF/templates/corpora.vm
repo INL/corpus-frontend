@@ -14,7 +14,7 @@
 	<h2 id="header-public">Public corpora</h2>
 	<!-- NOTE: using a table because we'd like to automatically 
 	     size width to longest corpus name. There's probably better ways. -->
-	<table class="corpora public">
+	<table class="corpora public table">
 		<thead>
 			<tr>
 				<th></th>
@@ -30,7 +30,7 @@
 	
 	<input class="btn" id="create-corpus" type="button" value="New corpus" data-toggle="modal" data-target="#new-corpus-modal" />
 
-	<table class="corpora private">
+	<table class="corpora private table">
 		<colgroup>
 			<col class="corpus-name" />
 			<col class="delete" />
@@ -44,7 +44,7 @@
 			<tr>
 				<th>Corpus</th>
 				<th></th>
-				<th>Size</th>
+				<th class="size">Size</th>
 				<th>Format</th>
 				<th>Last modified</th>
 				<th></th>
@@ -53,27 +53,14 @@
 		</thead>
 		<tbody id="corpora-private"></tbody>
 	</table>
-	
-	<div id="waitDisplay">
-	    <p class="text-center"><i class="fa fa-spinner fa-spin"></i></p>
-	</div>
-	
-	<form id="uploadForm" method="POST">
-		<h2>Add <span id="uploadFormat"></span>data to <span id='uploadCorpusName'>corpus</span>:</h2>
-		<p>(you may upload an .xml file, or a .zip or .tar.gz archive containing .xml files)</p> 
-		<input type="file" id="uploadFile" name="data" />
-		<button class="btn" type="submit" id="uploadSubmit">Upload</button>
-	</form>
-	
-	<div id="drop-zone"></div>
 </div>
 
-<div class="modal modal-sm fade" id="new-corpus-modal" tabindex="-1" role="dialog" aria-labelledby="create-corpus" aria-hidden="true">
+<div class="modal modal-sm hide fade" id="new-corpus-modal" tabindex="-1" role="dialog" aria-labelledby="create-corpus" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
 	            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-	            <h4 class="modal-title" id="myModalLabel">Create New Corpus</h4>
+	            <h4 class="modal-title">Create New Corpus</h4>
             </div>
             <div class="modal-body">
                 <label for="corpus_name">Corpus Name</label>
@@ -92,12 +79,12 @@
 	</div>
 </div>
 
-<div class="modal modal-sm fade" id="confirm-delete-corpus" tabindex="-1" role="dialog" aria-labelledby="delete-corpus" aria-hidden="true">
+<div class="modal modal-sm hide fade" id="confirm-delete-corpus" tabindex="-1" role="dialog" aria-labelledby="delete-corpus" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
 	            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-	            <h4 class="modal-title" id="myModalLabel">Confirm Delete Corpus</h4>
+	            <h4 class="modal-title">Confirm Delete Corpus</h4>
             </div>
             <div class="modal-body">
                 <p>You are about to delete corpus <span id="corpus-delete-name">&hellip;</span>; this cannot be undone!</p>
@@ -109,6 +96,42 @@
 			</div>
 		</div>
 	</div>
+</div>
+
+<div class="modal modal-sm hide fade" id="upload-file-dialog" tabindex="-1" role="dialog" aria-labelledby="upload-file" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+	            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+	            <h4 class="modal-title" id="upload-file-dialog-title">Add <span id="uploadFormat"></span>data to corpus <span id="uploadCorpusName">&hellip;</span></h4>
+            </div>
+            <div class="modal-body">
+				<p>You may upload:</p>
+				<ul>
+					<li><em>.xml</em> files</li>
+					<li><em>.zip</em> or <em>.tar.gz</em> archives containing <em>.xml</em> files</li>
+				</ul> 
+			    <!-- The fileinput-button span is used to style the file input field as button -->
+			    <span class="btn fileinput-button">
+			        <i class="icon icon-upload icon-white"></i>
+			        <span>Select files &hellip;</span>
+			        <span>Or drop files here &hellip;</span>
+			        <!-- The file input field used as target for the file upload widget -->
+			        <input id="drop-zone" type="file" name="files[]" data-url="upload" multiple>
+			    </span>
+				<div class="progress progress-info progress-striped">
+					<div class="bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 0%;">0%</div>
+				</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+			</div>
+		</div>
+	</div>
+</div>
+	
+<div id="waitDisplay">
+    <p class="text-center"><i class="fa fa-spinner fa-spin"></i></p>
 </div>
 
 <script src="$pathToTop/js/corpora.js"></script>

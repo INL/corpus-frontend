@@ -302,7 +302,7 @@ table.corpora a.icon {
 	font-size: 60%;
 }
 
-#errorDiv, #successDiv {
+#errorDiv, #successDiv, #uploadErrorDiv, #uploadSuccessDiv {
 	margin-top: 1em;
 	display: none;
 }

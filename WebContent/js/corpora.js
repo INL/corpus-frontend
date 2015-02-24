@@ -181,6 +181,7 @@ var corpora = {};
 			$("#uploadErrorDiv").hide();
 			$("#uploadSuccessMessage").html(msg);
 			$("#uploadSuccessDiv").show();
+			$(".progress").hide();
 		} else {
 			$("#errorDiv").hide();
 			$("#successMessage").html(msg);
@@ -194,6 +195,7 @@ var corpora = {};
 			$("#uploadSuccessDiv").hide();
 			$("#uploadErrorMessage").html(msg);
 			$("#uploadErrorDiv").show();
+			$(".progress").hide();
 		} else {
 			$("#successDiv").hide();
 			$("#errorMessage").html(msg).show();
@@ -260,6 +262,11 @@ var corpora = {};
 		$("#uploadCorpusName").text(index.displayName);
 		$("#uploadFormat").text(index.documentFormat + " ");
 		uploadToCorpus = index;
+		
+		$("#uploadErrorDiv").hide();
+		$("#uploadSuccessDiv").hide();
+		$(".progress").hide();
+		
 		return false; // Cancel default link behaviour
 	}
 
@@ -308,6 +315,7 @@ var corpora = {};
 	            $(".progress .bar").text("'" + data.files[0].name + "': Done");
 				refreshCorporaList(function () {
 					showSuccess("Data added to \"" + uploadToCorpus.displayName + "\".", true);
+		        	$("#upload-area").show();
 				});
 	        },
 	        fail: function(e, data) {
@@ -318,6 +326,7 @@ var corpora = {};
 				else
 					msg = data.textStatus + "; " + data.errorThrown;
 				showError("Could not add data to \"" + uploadToCorpus.displayName + "\": " + msg, true);
+	        	$("#upload-area").show();
 	        },
 	        always: function(e, data) {
 				$("#waitDisplay").hide();
@@ -325,16 +334,24 @@ var corpora = {};
 	        },
 		    progressall: function(e, data) {
 		        var progress = parseInt(data.loaded / data.total * 100, 10);
+		        var message = $(".progress .bar").text().replace(/(\([0-9]+%\) )?...$/, "(" + progress + "%) ...");
+		        if (progress >= 99) {
+		        	message = "Indexing data...";
+		        }
 		        $(".progress .bar")
 		        	.css("width", progress + "%")
 		        	.attr("aria-valuenow", progress);
-	        	$(".progress .bar").text($(".progress .bar").text().replace(/(\([0-9]+%\) )?...$/, "(" + progress + "%) ..."));
+	        	$(".progress .bar").text(message);
 		    },
 	        add: function(e, data) {
+	        	$("#upload-area").hide();
 	        	$("#waitDisplay").show();
 	        	data.url = CORPORA.blsUrl + uploadToCorpus.name + "/docs/";
 	        	data.data = new FormData();
    		        data.data.append("data", data.files[0], data.files[0].name);
+   		        $(".progress").show();
+   		        $("#uploadSuccessDiv").hide();
+   		        $("#uploadErrorDiv").hide();
 	            data.context = $(".progress .bar").css("width", "0%").attr("aria-valuenow", 0).
 	            	text("Uploading '" + data.files[0].name + "' ...");
 	            data.submit();

@@ -112,7 +112,7 @@
 					<li><em>.zip</em> or <em>.tar.gz</em> archives containing <em>.xml</em> files</li>
 				</ul> 
 			    <!-- The fileinput-button span is used to style the file input field as button -->
-			    <span class="btn fileinput-button">
+			    <span id="upload-area" class="btn fileinput-button">
 			        <i class="icon icon-upload icon-white"></i>
 			        <span>Select files &hellip;</span>
 			        <span>Or drop files here &hellip;</span>

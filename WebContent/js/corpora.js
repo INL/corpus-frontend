@@ -176,17 +176,29 @@ var corpora = {};
 	}
 
 	// Show a success message.
-	function showSuccess(msg) {
-		$("#errorDiv").hide();
-		$("#successMessage").html(msg);
-		$("#successDiv").show();
+	function showSuccess(msg, showInUploadDialog) {
+		if (showInUploadDialog) {
+			$("#uploadErrorDiv").hide();
+			$("#uploadSuccessMessage").html(msg);
+			$("#uploadSuccessDiv").show();
+		} else {
+			$("#errorDiv").hide();
+			$("#successMessage").html(msg);
+			$("#successDiv").show();
+		}
 	}
 
 	// Show an error message.
-	function showError(msg) {
-		$("#successDiv").hide();
-		$("#errorMessage").html(msg).show();
-		$("#errorDiv").show();
+	function showError(msg, showInUploadDialog) {
+		if (showInUploadDialog) {
+			$("#uploadSuccessDiv").hide();
+			$("#uploadErrorMessage").html(msg);
+			$("#uploadErrorDiv").show();
+		} else {
+			$("#successDiv").hide();
+			$("#errorMessage").html(msg).show();
+			$("#errorDiv").show();
+		}
 	}
 
 	/**
@@ -289,13 +301,13 @@ var corpora = {};
 	    $("#drop-zone").fileupload({
 	    	dropZone: $("#drop-zone"),
 	    	// This seems to have no effect!
-	    	acceptFileTypes: /(\.|\/)(xml|zip|gz)$/i,
+	    	acceptFileTypes: /(\.|\/)(xml|zip|t?gz)$/i,
 	    	maxFileSize: 4000000, // 4 MB
 	        dataType: "json",
 	        done: function(e, data) {
 	            $(".progress .bar").text("'" + data.files[0].name + "': Done");
 				refreshCorporaList(function () {
-					showSuccess("Data added to \"" + uploadToCorpus.displayName + "\".");
+					showSuccess("Data added to \"" + uploadToCorpus.displayName + "\".", true);
 				});
 	        },
 	        fail: function(e, data) {
@@ -305,7 +317,7 @@ var corpora = {};
 					msg = data.error.message;
 				else
 					msg = data.textStatus + "; " + data.errorThrown;
-				showError("Could not add data to \"" + uploadToCorpus.displayName + "\": " + msg);
+				showError("Could not add data to \"" + uploadToCorpus.displayName + "\": " + msg, true);
 	        },
 	        always: function(e, data) {
 				$("#waitDisplay").hide();

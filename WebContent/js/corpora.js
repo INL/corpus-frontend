@@ -111,7 +111,7 @@ var corpora = {};
 					var optColumns = "";
 					if (isPrivateIndex) {
 						optColumns = 
-							"<td>" + index.documentFormat + "</td>" +
+							"<td>" + friendlyDocFormat(index.documentFormat) + "</td>" +
 							"<td>" + dateOnly(index.timeModified) + "</td>";
 					}
 					addToList.push("<tr>" +
@@ -168,6 +168,16 @@ var corpora = {};
 				showError("Error retrieving corpus list: " + msg);
 			},
 		});
+	}
+	
+	function friendlyDocFormat(format) {
+		if (format.substr(0, 3).toLowerCase() == "tei") {
+			return "TEI";
+		}
+		if (format.substr(0, 5).toLowerCase() == "folia") {
+			return "FoLiA";
+		}
+		return format;
 	}
 
 	// Get the currently logged-in user, or the empty string if no user is logged in.
@@ -260,7 +270,7 @@ var corpora = {};
 			$("#upload-file-dialog").modal("show");
 		}
 		$("#uploadCorpusName").text(index.displayName);
-		$("#uploadFormat").text(index.documentFormat + " ");
+		$("#uploadFormat").text(friendlyDocFormat(index.documentFormat) + " ");
 		uploadToCorpus = index;
 		
 		$("#uploadErrorDiv").hide();

@@ -205,6 +205,7 @@ var SINGLEPAGE = {};
 						value = value.substr(4);
 					}
 				}
+				value = makeRegexWildcard(value);
 				$("#" + prop + "_text").val(value);
 				if (value.length > 0) {
 					// Only change checks if actually searched on this field
@@ -599,6 +600,23 @@ var SINGLEPAGE = {};
 	}
 	*/
 	
+	function makeWildcardRegex(original) {
+		return original.replace(/(\.|\(|\))/g, "\\$1").replace(/\*/g, ".*").replace(/\?/g, ".");
+	}
+	
+	function makeRegexWildcard(original) {
+		return original
+			.replace(/\\\./g, "_ESC_PERIOD_")
+			.replace(/\\\(/g, "_ESC_OPENPAR_")
+			.replace(/\\\)/g, "_ESC_CLOSEPAR_")
+			.replace(/\.\*/g, "*")
+			.replace(/\./g, "?")
+			.replace("_ESC_PERIOD_", ".")
+			.replace("_ESC_OPENPAR_", "(")
+			.replace("_ESC_CLOSEPAR_", ")")
+			;
+	}
+	
 	function getParam() {
 		var param = {};
 			
@@ -613,6 +631,7 @@ var SINGLEPAGE = {};
 				// Add parameters for the word property search fields
 				var value = $("#" + prop + "_text").val();
 				if (value.length > 0) {
+					value = makeWildcardRegex(value);
 					hasPattern = true;
 					var id = prop + "_case";
 					var caseSensitive = $("#" + id).prop('checked');

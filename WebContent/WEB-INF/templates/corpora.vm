@@ -67,8 +67,8 @@
                 <input id="corpus_name" name="corpus_name" type="text" maxlength="80" />
                 <label for="corpus_document_type" title="The format of the documents that will be stored in the corpus">Document Format</label>
                 <select id="corpus_document_type" name="corpus_document_type">
-                	<option value="tei-pos-function">TEI</option>
                 	<option value="folia">FoLiA</option>
+                	<option value="tei-pos-function">TEI</option>
                 </select>
             </div>
             <div class="modal-footer">

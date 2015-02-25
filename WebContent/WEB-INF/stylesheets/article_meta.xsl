@@ -27,14 +27,34 @@
 			<xsl:for-each select="child::*[name()!='mayView']">
 				<div class="span10">
 					<div class="span2">
-						<i><xsl:value-of select="local-name()" />:</i>
+						<i>
+						<!-- <xsl:value-of select="local-name()" /> -->
+						<xsl:call-template name="elementFriendlyName" />:
+						</i>
 					</div>
 					<div class="span7">
-						<xsl:value-of select="."/>
+						<xsl:value-of select="." />
+						<xsl:if test="../mayView/text() = 'true' and local-name() = 'lengthInTokens'">
+						(first 5000 tokens shown)
+						</xsl:if>
 					</div>
 				</div>
 			</xsl:for-each> 
 		</div>
+	</xsl:template>
+
+	<xsl:variable name="vLower" select="'abcdefghijklmnopqrstuvwxyz'"/>
+
+ 	<xsl:variable name="vUpper" select="'ABCDEFGHIJKLMNOPQRSTUVWXYZ'"/>
+ 
+	<xsl:template name = "elementFriendlyName" >
+		<xsl:choose>
+			<xsl:when test="local-name() = 'lengthInTokens'">Document length (tokens)</xsl:when>
+			<xsl:when test="local-name() = 'fromInputFile'">From input file</xsl:when>
+			<xsl:when test="local-name() = 'yearFrom'">Year (from)</xsl:when>
+			<xsl:when test="local-name() = 'yearTo'">Year (to)</xsl:when>
+			<xsl:otherwise><xsl:value-of select="concat(translate(substring(local-name(), 1, 1), $vLower, $vUpper), substring(local-name(), 2))" /></xsl:otherwise>
+		</xsl:choose>
 	</xsl:template>
 	
 </xsl:stylesheet>

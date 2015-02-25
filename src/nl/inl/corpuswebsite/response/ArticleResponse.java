@@ -62,6 +62,7 @@ public class ArticleResponse extends BaseResponse {
 
 			Map<String, String[]> parameters = UrlParameterFactory
 					.getSourceParameters(query, null);
+			parameters.put("wordend", new String[] {"5000"}); // show max. 5000 words of content (TODO: paging)
 			try {
 				String xmlResult = webservice.makeRequest(parameters);
 				if (xmlResult.contains("NOT_AUTHORIZED")) {

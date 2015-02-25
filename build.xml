@@ -59,6 +59,7 @@
 		<delete dir="${build}/css" />
 		<delete dir="${build}/img" />
 		<delete dir="${build}/js" />
+		<delete dir="${build}/doc" />
 		
 		<!-- Copy resources from src tree -->
 		<copy todir="${build}">
@@ -69,6 +70,7 @@
 			<fileset dir="WebContent" includes="WEB-INF/stylesheets/*" />
 			<fileset dir="WebContent" includes="font/*" />
 			<fileset dir="WebContent" includes="js/**" />
+			<fileset dir="WebContent" includes="doc/**" />
 			<fileset dir="WebContent" includes="css/*" />
 			<fileset dir="WebContent" includes="img/*" />
 			<fileset dir="WebContent" includes="projectconfigs/**" />

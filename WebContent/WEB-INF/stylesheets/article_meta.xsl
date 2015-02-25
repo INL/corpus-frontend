@@ -34,7 +34,7 @@
 					</div>
 					<div class="span7">
 						<xsl:value-of select="." />
-						<xsl:if test="../mayView/text() = 'true' and local-name() = 'lengthInTokens'">
+						<xsl:if test="../mayView/text() = 'true' and local-name() = 'lengthInTokens' and number(text()) > 5000">
 						(first 5000 tokens shown)
 						</xsl:if>
 					</div>

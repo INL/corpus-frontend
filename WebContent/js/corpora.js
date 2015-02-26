@@ -326,6 +326,7 @@ var corpora = {};
 				refreshCorporaList(function () {
 					showSuccess("Data added to \"" + uploadToCorpus.displayName + "\".", true);
 		        	$("#upload-area").show();
+		        	$("#uploadClose").show();
 				});
 	        },
 	        fail: function(e, data) {
@@ -337,6 +338,7 @@ var corpora = {};
 					msg = data.textStatus + "; " + data.errorThrown;
 				showError("Could not add data to \"" + uploadToCorpus.displayName + "\": " + msg, true);
 	        	$("#upload-area").show();
+	        	$("#uploadClose").show();
 	        },
 	        always: function(e, data) {
 				$("#waitDisplay").hide();
@@ -355,6 +357,7 @@ var corpora = {};
 		    },
 	        add: function(e, data) {
 	        	$("#upload-area").hide();
+	        	$("#uploadClose").hide();
 	        	$("#waitDisplay").show();
 	        	data.url = CORPORA.blsUrl + uploadToCorpus.name + "/docs/";
 	        	data.data = new FormData();

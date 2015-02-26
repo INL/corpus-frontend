@@ -8,7 +8,7 @@ p.endspacer { height: 5cm; }
 
 <p class='spacer'><a name='help'></a>&nbsp;</p>
 
-AutoSearch help is available in this <a href='doc/AutoSearch-manual.pdf'>PDF manual</a>.
+AutoSearch help is available in this <a target="_blank" href='doc/AutoSearch-manual.pdf'>PDF manual</a>.
 
 <p class='endspacer'><a name='end'></a>&nbsp;</p>
 

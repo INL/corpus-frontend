@@ -140,6 +140,10 @@ var corpora = {};
 			$("#header-private, #logged-in-as").toggle(showPrivate);
 			$(".corpora.private").toggle(privateCorpora.length > 0);
 			$("#create-corpus").toggle(data.user.canCreateIndex);
+			
+			if (!showPublic && !showPrivate) {
+				showError("Sorry, no corpora are available, and you are not authorized to create a corpus. Please contact <a href='mailto:servicedesk@inl.nl'>servicedesk@inl.nl</a> if this is an error.");
+			}
 		}
 		
 		// Perform the AJAX request to get the list of corpora.

@@ -389,6 +389,6 @@ table.corpora a.icon {
 .fileinput-button input {
 	height: 100%;
 }
-.progress {
+#upload-file-dialog .progress {
 	margin: 1.2em 0;
 }

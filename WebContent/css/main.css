@@ -26,8 +26,8 @@ img.booklogo {
 	position:relative;
 }
 
-.nav .dropdown .brand {
-	color: #dddddd;
+.nav .brand {
+	color: #dddddd !important;
 }
 
 .navbar-fixed-top  .navbar-inner {

@@ -15,7 +15,9 @@ public class HelpResponse extends BaseResponse {
 		putFileContentIntoContext("content", servlet.getHelpPage(corpus));
 		
 		VelocityContext context = getContext();
-		context.put("pathToTop", "."); // correct for most pages, but for "list of corpora" it's "."
+		String pathToTop = ".";
+		context.put("pathToTop", pathToTop); // correct for most pages, but for "list of corpora" it's "."
+		context.put("brandLink", corpus.equals("autosearch") ? pathToTop : "search");
 
 		displayHtmlTemplate(servlet.getTemplate("contentpage"));
 	}

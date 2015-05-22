@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <SearchInterface>
     <InterfaceProperties>
-        <Name>BlackLab AutoSearch</Name>
+        <Name>BlackLab AutoSearch Corpus Search</Name>
         <NavLinks>
             <Link value="help">Help</Link>
             <Link value="http://www.inl.nl" newWindow="true">INL</Link>

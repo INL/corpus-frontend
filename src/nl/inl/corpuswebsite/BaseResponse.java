@@ -69,7 +69,9 @@ public abstract class BaseResponse {
 		context.put("title", this.servlet.getConfig(corpus).getCorpusName());
 		context.put("websiteconfig", this.servlet.getConfig(corpus));
 		context.put("googleAnalyticsKey", this.servlet.getGoogleAnalyticsKey());
-		context.put("pathToTop", ".."); // correct for most pages, but for "list of corpora" it's "."
+		String pathToTop = "..";
+		context.put("pathToTop", pathToTop); // correct for most pages, but for "list of corpora" it's "."
+		context.put("brandLink", corpus.equals("autosearch") ? pathToTop : "./search");
 		context.put("buildTime", servlet.getWarBuildTime());
 	}
 

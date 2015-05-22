@@ -80,8 +80,8 @@ public class MainServlet extends HttpServlet {
 
 	/**
 	 * If the URL doesn't contain the corpus name, this is the default corpus we
-	 * use. We determine this from the name of the .war file (i.e.
-	 * zeebrieven.war defaults to zeebrieven, etc.)
+	 * use. If the .war file is named "zeebrieven", "gysseling" or "surinaams",
+	 * we use that as the default corpus.
 	 */
 	private String defaultCorpus = "autosearch";
 
@@ -378,7 +378,7 @@ public class MainServlet extends HttpServlet {
 
 	public File getHelpPage(String corpus) {
 		if (corpus == null || corpus.length() == 0)
-			return getProjectFile("autosearch", "help.inc", true);
+			return getProjectFile(defaultCorpus, "help.inc", true);
 		return getProjectFile(corpus, "help.inc", true);
 	}
 
@@ -439,10 +439,6 @@ public class MainServlet extends HttpServlet {
 			stylesheets.put(key, stylesheet);
 		}
 		return stylesheet;
-	}
-
-	public String getApplicationTitle() {
-		return "AutoSearch";
 	}
 
 	public String getSpecialField(String corpus, String fieldType) {

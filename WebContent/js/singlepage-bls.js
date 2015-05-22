@@ -28,10 +28,11 @@ var BLS = {};
 				if (values.length > 1)
 					return name + ":(\"" + values.join("\" \"") + "\")";
 			}
-			if (value.match(/ /) && !value.match(/\[\d+ TO \d+\]/))
+			if (value.match(/ /) && !value.match(/\[\d+ TO \d+\]/)) {
+				var words = value.split(/\s+/);
+				return name + ":(\"" + words.join("\" \"") + "\")";
+			} else
 				return name + ":\"" + value + "\"";
-			else
-				return name + ":" + value;
 		}
 
 		function getPattern(wordProp) {
@@ -80,8 +81,7 @@ var BLS = {};
 		}
 
 		var blsParam = {
-			"number" : 50
-		// default value
+			"number" : 50 // default value
 		};
 		var filter = "";
 		var wordProp = {};
@@ -95,7 +95,7 @@ var BLS = {};
 					// Metadata. Translate to BLS syntax.
 					if (filter.length > 0)
 						filter += " ";
-					filter += filterQuery(key.substr(1), value);
+					filter += "+" + filterQuery(key.substr(1), value);
 				} else if ($("#" + key + "_text").length > 0) {
 					// Word property. Use to construct BLS pattern later.
 					wordProp[key] = value;

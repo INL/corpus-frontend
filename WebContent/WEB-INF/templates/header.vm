@@ -79,7 +79,7 @@
                     <div class="nav-collapse collapse">
                         <ul class="nav">
 							<li>
-                                <a href='$pathToTop' class='brand'>AutoSearch (DEMO)</a>
+                                <a id='corpusLinkTop' href='$brandLink' class='brand'><span id='corpusNameTop'>$title</span></a>
                             </li>
                             #foreach($link in $websiteconfig.getLinks())
 								<li><a href="$link.get('href')"#if($link.get('newWindow')) target="_blank"#else#end>$link.get('name')</a></li>

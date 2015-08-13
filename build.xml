@@ -1,103 +1,13 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!DOCTYPE project>
-<project name="corpus-frontend" default="war" basedir=".">
-	<!-- Project info -->
-	<property name="project.name" value="corpus-frontend" />
-	<property name="project.version" value="1.0" />
-	<property name="war.name" value="corpora" />
-
-	<!-- Directories -->
-	<property name="src" value="src" />
-	<property name="build" value="antbuild" />
-	<property name="dist" value="dist" />
+<project name="corpus-frontend" default="dist" basedir=".">
 	
-	<!-- Set lib dir  -->
-	<property name="lib" value="WebContent/WEB-INF/lib" />
-	
-	<!-- Make sure we know the current year, for the copyright clause in the javadocs -->
-	<tstamp>
-		<format property="TODAY" pattern="yyyy-MM-dd HH:mm:ss" />
-	</tstamp>
-	
-	<!-- Save timestamp and make the build directory -->
-	<target name="init">
-		<echo message="----- Building ${project.name} -----" />
-		<tstamp />
-		<mkdir dir="${build}/WEB-INF/classes" />
-	</target>
-
-	<!-- Compile the sources -->
-	<target name="compile" depends="init">
-		<javac includeantruntime="false" source="1.6" target="1.6" encoding="utf-8" debug="true" debuglevel="lines,vars,source" srcdir="${src}" destdir="${build}/WEB-INF/classes">
-			<!-- Classpath to use for compilation -->
-			<classpath>
-				<pathelement path="${java.class.path}/"/>
-				<pathelement path="${lib}/log4j-1.2.15.jar" />
-				<pathelement path="${lib}/tomcat7/servlet-api.jar" />
-				<pathelement path="${lib}/tomcat7/jsp-api.jar" />
-				<pathelement path="${lib}/tomcat7/jasper.jar" />
-                <pathelement path="${lib}/InlJavaLib-0.7.jar" />
-				<pathelement path="${lib}/velocity-1.5.jar" />
-				<pathelement path="${lib}/velocity-tools-generic-1.4.jar" />
-				<pathelement path="${lib}/velocity-tools-view-1.4.jar" />
-				<pathelement path="${lib}/commons-collections-3.1.jar" />
-				<pathelement path="${lib}/commons-lang-2.6.jar" />
-                <pathelement path="${lib}/commons-configuration-1.9.jar" />
-                <pathelement path="${lib}/commons-logging-1.1.1.jar" />
-				
-				<!-- <pathelement path="${lib}/lucene-3.6.0/lucene-core-3.6.0.jar" />
-		        <pathelement path="${lib}/lucene-3.6.0/lucene-highlighter-3.6.0.jar" />
-		        <pathelement path="${lib}/lucene-3.6.0/lucene-queries-3.6.0.jar" />
-				<pathelement path="${BlackLabDir}/dist/BlackLab.jar" /> -->
-			</classpath>
-		</javac>
-		<!-- Remove old templates, libraries and config files -->
-		<delete dir="${build}/WEB-INF/lib" />
-		<delete dir="${build}/WEB-INF/templates" />
-		<delete dir="${build}/WEB-INF/config" />
-		<delete dir="${build}/WEB-INF/stylesheets" /> 
-		<delete dir="${build}/css" />
-		<delete dir="${build}/img" />
-		<delete dir="${build}/js" />
-		<delete dir="${build}/doc" />
-		
-		<!-- Copy resources from src tree -->
-		<copy todir="${build}">
-			<fileset dir="WebContent" includes="META-INF/*" />
-			<fileset dir="WebContent" includes="WEB-INF/lib/*" />
-			<fileset dir="WebContent" includes="WEB-INF/templates/*" />
-			<fileset dir="WebContent" includes="WEB-INF/config/*" />
-			<fileset dir="WebContent" includes="WEB-INF/stylesheets/*" />
-			<fileset dir="WebContent" includes="font/*" />
-			<fileset dir="WebContent" includes="js/**" />
-			<fileset dir="WebContent" includes="doc/**" />
-			<fileset dir="WebContent" includes="css/*" />
-			<fileset dir="WebContent" includes="img/*" />
-			<fileset dir="WebContent" includes="projectconfigs/**" />
-			<fileset dir="WebContent" includes="*" />
-		</copy>
-		
-	</target>
-	
-    <!-- Build .war file from the build directory -->
-    <target name="war" depends="compile">
-        <mkdir dir="${dist}" />
-        <war warfile="${dist}/${war.name}.war" webxml="WebContent/WEB-INF/web.xml" basedir="${build}">
-        	
-			<!-- Generate the manifest file -->
-			<manifest>
-				<attribute name="Manifest-Version" value="1.0" />
-				<attribute name="Build-By" value="${user.name}" />
-				<attribute name="Build-Date" value="${TODAY}" />
-			</manifest>
-
-    	</war>
+    <fail>
+        This project has switched over to Maven builds.
+        Please install Maven and type "mvn package".
+    </fail>
+    
+    <target name="dist">
     </target>
 
-	<!-- Remove all generated files. -->
-	<target name="clean">
-		<delete dir="${build}" />
-		<delete dir="${dist}" />
-	</target>
-	
 </project>

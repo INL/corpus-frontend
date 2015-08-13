@@ -468,7 +468,12 @@ public class MainServlet extends HttpServlet {
 					try {
 						Manifest manifest = new Manifest(inputStream);
 						Attributes atts = manifest.getMainAttributes();
-						String value = atts.getValue("Build-Date");
+						String value = null;
+						if (atts != null) {
+							value = atts.getValue("Build-Time");
+							if (value == null)
+								value = atts.getValue("Build-Date"); // Old name for this info
+						}
 						warBuildTime = (value == null ? "UNKNOWN" : value);
 					} finally {
 						inputStream.close();

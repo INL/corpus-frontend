@@ -12,3 +12,4 @@ target
 
 # vi temporary files
 *.swp
+/bin/

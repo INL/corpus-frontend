@@ -676,7 +676,7 @@ var SINGLEPAGE = {};
 			param["viewgroup"] = viewGroup;
 
 		if (sortBy)
-			param["sort"] = sortBy;
+			param["sort"] = (currentSortReverse ? "-" : "") + sortBy;
 
 		if (SINGLEPAGE.resultsPerPage != 50) {
 			if (SINGLEPAGE.resultsPerPage > 200)

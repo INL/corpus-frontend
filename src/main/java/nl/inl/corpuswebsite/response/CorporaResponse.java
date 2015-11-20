@@ -13,13 +13,13 @@ import org.apache.velocity.VelocityContext;
 
 /** Show the list of available corpora. */
 public class CorporaResponse extends BaseResponse {
-	
+
 	@Override
 	public void init(HttpServletRequest request, HttpServletResponse response,
 			MainServlet servlet) {
 		corpus = "autosearch"; // generic interface
 		super.init(request, response, servlet);
-		
+
 		VelocityContext context = getContext();
 		context.put("title", servlet.getConfig(corpus).getCorpusName() + ": Corpora");
 		String pathToTop = ".";

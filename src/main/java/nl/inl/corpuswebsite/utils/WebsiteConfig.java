@@ -28,7 +28,7 @@ public class WebsiteConfig {
 			put("href", href);
 			put("newWindow", newWindow);
 		}
-		
+
 		public LinkInTopBar(String name, String href) {
 			this(name, href, false);
 		}
@@ -168,8 +168,8 @@ public class WebsiteConfig {
 		}
 
 	}
-	
-	/** Create a generic config object, if there's no config file available. 
+
+	/** Create a generic config object, if there's no config file available.
 	 * @param corpusName name of the corpus
 	 */
 	private WebsiteConfig(String corpusName) {
@@ -180,12 +180,12 @@ public class WebsiteConfig {
 		pathToBackgroundImage = "";
 		colorLink = "";
 		pathToLogo = "";
-		
+
 		linksInTopBar.add(new LinkInTopBar("Help", "../help"));
 		linksInTopBar.add(new LinkInTopBar("INL", "http://www.inl.nl/", true));
 		linksInTopBar.add(new LinkInTopBar("CLARIN", "http://www.clarin.eu/", true));
 		linksInTopBar.add(new LinkInTopBar("NTU", "http://taalunie.org/", true));
-		
+
 		properties.add(new FieldDescriptor("Wordform", false, false, true, "word", "word", "wordform"));
 		properties.add(new FieldDescriptor("Lemma", false, false, false, "lemma", "lemma", "lemma"));
 		properties.add(new FieldDescriptor("P.o.S.", false, false, false, "pos", "pos", "pos"));
@@ -197,8 +197,8 @@ public class WebsiteConfig {
 	 */
 	public static WebsiteConfig generic(String corpus) {
 		return new WebsiteConfig(corpus);
-	}	
-	
+	}
+
 	/**
 	 * @param tabGroup
 	 */
@@ -213,7 +213,7 @@ public class WebsiteConfig {
 	public Set<String> getTabGroups() {
 		return tabGroups;
 	}
-	
+
 	public boolean hasMetadataFields() {
 		return fields.size() > 0;
 	}

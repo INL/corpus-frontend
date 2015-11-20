@@ -51,7 +51,7 @@ public abstract class BaseResponse {
 
 	/**
 	 * Initialise this object with
-	 * 
+	 *
 	 * @param request
 	 *            the HTTP request object
 	 * @param response
@@ -114,7 +114,7 @@ public abstract class BaseResponse {
 
 	/**
 	 * Display a template with the XML mime type
-	 * 
+	 *
 	 * @param template
 	 */
 	protected void displayHtmlTemplate(Template template) {
@@ -137,7 +137,7 @@ public abstract class BaseResponse {
 
 	/**
 	 * Add a required parameter to the list.
-	 * 
+	 *
 	 * @param param
 	 *            parameter name
 	 */
@@ -147,7 +147,7 @@ public abstract class BaseResponse {
 
 	/**
 	 * Check if all parameters necessary to complete a search request exist.
-	 * 
+	 *
 	 * @return true if they do, false if not
 	 */
 	private boolean sufficientParameters() {

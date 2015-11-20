@@ -41,7 +41,7 @@ public class QueryServiceHandler {
 
 	/**
 	 * Performs request to the webservice and returns the response.
-	 * 
+	 *
 	 * @param params
 	 *            parameters to send
 	 * @return the response
@@ -66,10 +66,10 @@ public class QueryServiceHandler {
 				connection.setRequestProperty("Accept", "application/xml");
 				connection.setRequestMethod("GET");
 				code = connection.getResponseCode();
-				
+
 				// Not an HTTP success (2xx) code or 401 Unauthorized?
 				// (we use the 401 to test if we are allowed to view the document contents)
-				if ( (code < 200 || code > 299) && code != 401) { 
+				if ( (code < 200 || code > 299) && code != 401) {
 					reason = connection.getResponseMessage();
 					throw new IOException(code + " " + reason);
 				}
@@ -91,7 +91,7 @@ public class QueryServiceHandler {
 
 	/**
 	 * Construct the GET url from the base URL and the parameter map
-	 * 
+	 *
 	 * @param params
 	 *            the parameters to send
 	 * @return the full GET url

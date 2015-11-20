@@ -16,15 +16,15 @@ public class SingleResponse extends BaseResponse {
 
 	@Override
 	protected void completeRequest() {
-		
+
 		String corpusName = servlet.getConfig(corpus).getCorpusName();
-		
+
 		String corpusNameTop = corpusName.replaceAll("^(.+):(.+)$", "$2 ($1)");
 		String corpusOwner = null;
 		if (corpusName.contains(":"))
 			corpusOwner = corpusName.replaceAll(":.+$", "");
 		corpusName = corpusName.replaceAll("^.+:", "");
-		
+
 		getContext().put("blsUrl", servlet.getExternalWebserviceUrl(corpus));
 		getContext().put("title", corpusNameTop);
 		getContext().put("corpusOwner", corpusOwner);

@@ -45,7 +45,7 @@ public class IoUtil {
 
 	/**
 	 * Read text from an input stream.
-	 * 
+	 *
 	 * @param is
 	 *            the input stream
 	 * @return the text read

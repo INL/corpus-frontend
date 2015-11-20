@@ -161,7 +161,7 @@ public class MainServlet extends HttpServlet {
 
 	/**
 	 * Looks for a property file with the specified name, either in the Tomcat
-	 * webapps dir, in /etc/blacklab on Unix or in the temp dir (/tmp on Unix, 
+	 * webapps dir, in /etc/blacklab on Unix or in the temp dir (/tmp on Unix,
 	 * C:\\temp on Windows).
 	 *
 	 * @param fileName
@@ -178,7 +178,7 @@ public class MainServlet extends HttpServlet {
 		File fileInEtc = new File("/etc/blacklab", fileName);
 		if (!isWindows && fileInEtc.exists())
 			return fileInEtc;
-		
+
 		File tmpDir = isWindows ? new File("C:\\temp") : new File(
 				"/tmp");
 		File fileInTmpDir = new File(tmpDir, fileName);
@@ -190,7 +190,7 @@ public class MainServlet extends HttpServlet {
 
 	/**
 	 * Start the templating engine
-	 * 
+	 *
 	 * @param servletConfig
 	 *            configuration object
 	 * @throws Exception
@@ -204,7 +204,7 @@ public class MainServlet extends HttpServlet {
 
 	/**
 	 * Get the velocity template
-	 * 
+	 *
 	 * @param templateName
 	 *            name of the template
 	 * @return velocity template
@@ -242,7 +242,7 @@ public class MainServlet extends HttpServlet {
 
 	/**
 	 * Return the website config
-	 * 
+	 *
 	 * @param corpus
 	 *            config for which corpus to read
 	 * @return the website config
@@ -445,7 +445,7 @@ public class MainServlet extends HttpServlet {
 		String field = getConfig(corpus).getFieldIndexForFunction(fieldType);
 		if (field != null && field.length() > 0)
 			return field;
-		
+
 		// TODO: query BLS for the special fields title, date, author
 		return fieldType;
 	}
@@ -485,5 +485,5 @@ public class MainServlet extends HttpServlet {
 		}
 		return warBuildTime;
 	}
-	
+
 }

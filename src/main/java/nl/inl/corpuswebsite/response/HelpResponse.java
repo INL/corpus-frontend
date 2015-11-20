@@ -13,7 +13,7 @@ public class HelpResponse extends BaseResponse {
 	@Override
 	protected void completeRequest() {
 		putFileContentIntoContext("content", servlet.getHelpPage(corpus));
-		
+
 		VelocityContext context = getContext();
 		String pathToTop = corpus.equals("autosearch") ? "." : "..";
 		context.put("pathToTop", pathToTop);

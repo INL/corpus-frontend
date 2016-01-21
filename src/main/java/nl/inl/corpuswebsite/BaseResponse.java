@@ -46,7 +46,7 @@ public abstract class BaseResponse {
 	protected String corpus = "";
 
 	protected BaseResponse() {
-		requiredParameters = new ArrayList<String>();
+		requiredParameters = new ArrayList<>();
 	}
 
 	/**

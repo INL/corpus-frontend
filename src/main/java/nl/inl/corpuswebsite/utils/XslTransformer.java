@@ -21,7 +21,7 @@ import javax.xml.transform.stream.StreamSource;
 public class XslTransformer {
 
 	private TransformerFactory tFactory;
-	private Map<String, String> params = new HashMap<String, String>();
+	private Map<String, String> params = new HashMap<>();
 
 	public XslTransformer() {
 		tFactory = TransformerFactory.newInstance();

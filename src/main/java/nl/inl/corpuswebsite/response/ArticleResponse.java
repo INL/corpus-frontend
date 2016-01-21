@@ -80,7 +80,7 @@ public class ArticleResponse extends BaseResponse {
 											articleStylesheet));
 				}
 
-				Map<String, String[]> metaParam = new HashMap<String, String[]>();
+				Map<String, String[]> metaParam = new HashMap<>();
 				// metaParam.put("outputformat", new String[] {"xml"});
 				xmlResult = webserviceMeta.makeRequest(metaParam);
 				transformer.clearParameters();

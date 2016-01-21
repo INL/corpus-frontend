@@ -38,13 +38,13 @@ public class WebsiteConfig {
 	private XMLConfiguration xmlConfig;
 
 	/** Search fields */
-	private List<FieldDescriptor> fields = new LinkedList<FieldDescriptor>();
+	private List<FieldDescriptor> fields = new LinkedList<>();
 
 	/** Properties for the contents field */
-	private List<FieldDescriptor> properties = new LinkedList<FieldDescriptor>();
+	private List<FieldDescriptor> properties = new LinkedList<>();
 
 	/** Tab groups for our search fields */
-	private Set<String> tabGroups = new LinkedHashSet<String>();
+	private Set<String> tabGroups = new LinkedHashSet<>();
 
 	/** Name of the corpus we're searching */
 	private String corpusName;
@@ -65,7 +65,7 @@ public class WebsiteConfig {
 	private String pathToLogo = null;
 
 	/** Link to put in the top bar */
-	private List<LinkInTopBar> linksInTopBar = new ArrayList<LinkInTopBar>();
+	private List<LinkInTopBar> linksInTopBar = new ArrayList<>();
 
 	public WebsiteConfig(File configFile) throws ConfigurationException {
 		// Load the specified config file
@@ -219,7 +219,7 @@ public class WebsiteConfig {
 	}
 
 	public List<FieldDescriptor> getFieldsInTabGroup(String group) {
-		List<FieldDescriptor> tabFields = new LinkedList<FieldDescriptor>();
+		List<FieldDescriptor> tabFields = new LinkedList<>();
 
 		for (FieldDescriptor fd: fields) {
 			if (fd.getTabGroup().equalsIgnoreCase(group)

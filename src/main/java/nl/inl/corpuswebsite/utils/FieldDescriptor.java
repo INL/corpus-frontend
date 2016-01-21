@@ -21,7 +21,7 @@ public class FieldDescriptor {
 
 	private String tabGroup = "";
 	private String type = "";
-	private List<ValuePair> validValues = new LinkedList<ValuePair>();
+	private List<ValuePair> validValues = new LinkedList<>();
 
 	public class ValuePair {
 		public final String value;

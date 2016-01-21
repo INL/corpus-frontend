@@ -26,7 +26,7 @@ public class UrlParameterFactory {
 			UrlParameterFactory.initSearchBaseMap();
 
 		// create map based on default map
-		Map<String, String[]> myMap = new HashMap<String, String[]>(
+		Map<String, String[]> myMap = new HashMap<>(
 				searchBaseMap);
 
 		// change non default values
@@ -67,7 +67,7 @@ public class UrlParameterFactory {
 			UrlParameterFactory.initSourceBaseMap();
 
 		// create map based on default map
-		Map<String, String[]> myMap = new HashMap<String, String[]>(
+		Map<String, String[]> myMap = new HashMap<>(
 				sourceBaseMap);
 
 		if (query != null)
@@ -81,12 +81,12 @@ public class UrlParameterFactory {
 
 	private static void initSearchBaseMap() {
 		// make map with default parameter values
-		searchBaseMap = new HashMap<String, String[]>();
+		searchBaseMap = new HashMap<>();
 		searchBaseMap.put("number", new String[] { "50" });
 	}
 
 	private static void initSourceBaseMap() {
 		// make map with default parameter values
-		sourceBaseMap = new HashMap<String, String[]>();
+		sourceBaseMap = new HashMap<>();
 	}
 }

@@ -58,16 +58,16 @@ public class MainServlet extends HttpServlet {
 	private final String LOG4J_PROPERTIES = "/WEB-INF/config/";
 
 	/** Our configuration parameters (from search.xml) */
-	private Map<String, WebsiteConfig> configs = new HashMap<String, WebsiteConfig>();
+	private Map<String, WebsiteConfig> configs = new HashMap<>();
 
 	/** Directory where the WAR was extracted to (i.e. $TOMCAT/webapps/mywar/) */
 	private File warExtractDir = null;
 
 	/** Our Velocity templates */
-	private Map<String, Template> templates = new HashMap<String, Template>();
+	private Map<String, Template> templates = new HashMap<>();
 
 	/** The response classes for our URI patterns */
-	private Map<String, Class<? extends BaseResponse>> responses = new HashMap<String, Class<? extends BaseResponse>>();
+	private Map<String, Class<? extends BaseResponse>> responses = new HashMap<>();
 
 	/** Our context path (first part of our URI path) */
 	private String contextPath;
@@ -76,7 +76,7 @@ public class MainServlet extends HttpServlet {
 	private Properties adminProps;
 
 	/** Our cached XSL stylesheets */
-	private Map<String, String> stylesheets = new HashMap<String, String>();
+	private Map<String, String> stylesheets = new HashMap<>();
 
 	/**
 	 * If the URL doesn't contain the corpus name, this is the default corpus we

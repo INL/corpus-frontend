@@ -612,15 +612,15 @@ public class SearchResponse extends BaseResponse {
 		return this.getParameter(fd.getSearchField() + "_case", false);
 	}
 
-	private String makeWildcardRegex(String original) {
+	private static String makeWildcardRegex(String original) {
 		return original.replaceAll("\\*", ".*");
 	}
 
-	private String escapeBrackets(String original) {
+	private static String escapeBrackets(String original) {
 		return original.replaceAll("\\(", "\\\\(").replaceAll("\\)", "\\\\)");
 	}
 
-	private String getLanguage() {
+	private static String getLanguage() {
 		return "corpusql";
 	}
 
@@ -673,7 +673,7 @@ public class SearchResponse extends BaseResponse {
 		return builder.toString();
 	}
 
-	private String flipBooleanValue(String value) {
+	private static String flipBooleanValue(String value) {
 		if (value.equalsIgnoreCase("1"))
 			return "0";
 

@@ -506,7 +506,7 @@ public class SearchResponse extends BaseResponse {
 			}
 
 			// count the amount of words the user wants to search for
-			int wordCount = words.split(" ").length;
+			int wordCount = words.split("\\s+").length;
 
 			// for each word...
 			for (int i = 0; i < wordCount; i++) {
@@ -525,9 +525,13 @@ public class SearchResponse extends BaseResponse {
 				// complete this part and add it to the query
 				queryPart += "]";
 
+				// TODO: don't generate parts of the form [property=".*"], use [] instead!
+				//  (recent BlackLab versions will recognize this and substitute [], however)
+
 				// make sure not to add empty word queries
-				if (!queryPart.equalsIgnoreCase("[]"))
-					query += queryPart + " ";
+				// JN: why not?
+				//if (!queryPart.equalsIgnoreCase("[]"))
+				query += queryPart + " ";
 			}
 		} else {
 			getContext().put("searcherror",
@@ -559,9 +563,9 @@ public class SearchResponse extends BaseResponse {
 
 			if (argument.length() > 0) {
 				if (numWords == -1)
-					numWords = argument.split(" ").length;
+					numWords = argument.split("\\s+").length;
 				else {
-					if (argument.split(" ").length != numWords)
+					if (argument.split("\\s+").length != numWords)
 						return false;
 				}
 			}
@@ -574,21 +578,25 @@ public class SearchResponse extends BaseResponse {
 			boolean isPreceded) {
 		String argument = getValueFor(fd);
 
-		String[] words = argument.split(" ");
+		String[] words = argument.split("\\s+");
 
 		// remove wildcard queries for words at the start or end of a query - as
 		// long as it is not
-		if (index < words.length && words[index].equalsIgnoreCase(".*")) {
-			if ((index == 0 || index == words.length - 1) && words.length > 1) {
-				return "";
-			}
-
-			if (isPreceded) {
-				return "";
-			}
-		}
+		// JN: not necessary anymore, BlackLab deals with this efficiently
+//		if (index < words.length && words[index].equalsIgnoreCase(".*")) {
+//			if ((index == 0 || index == words.length - 1) && words.length > 1) {
+//				return "";
+//			}
+//
+//			if (isPreceded) {
+//				return "";
+//			}
+//		}
 
 		if (index < words.length && argument.length() > 0) {
+			if (words[index].equals(".*"))
+				return ""; // doesn't add any restrictions
+
 			String sensitive = "";
 			String preceded = "";
 

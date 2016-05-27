@@ -8,9 +8,9 @@ package nl.inl.corpuswebsite;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -20,11 +20,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import org.apache.log4j.PropertyConfigurator;
+import org.apache.velocity.Template;
+import org.apache.velocity.app.Velocity;
 
 import nl.inl.corpuswebsite.response.AboutResponse;
 import nl.inl.corpuswebsite.response.ArticleResponse;
@@ -34,13 +37,8 @@ import nl.inl.corpuswebsite.response.HelpResponse;
 import nl.inl.corpuswebsite.response.SearchResponse;
 import nl.inl.corpuswebsite.response.SingleResponse;
 import nl.inl.corpuswebsite.utils.WebsiteConfig;
-import nl.inl.util.LogUtil;
 import nl.inl.util.OsUtil;
 import nl.inl.util.PropertiesUtil;
-
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.velocity.Template;
-import org.apache.velocity.app.Velocity;
 
 /**
  * Main servlet class for the corpus application.
@@ -60,8 +58,8 @@ public class MainServlet extends HttpServlet {
 	/** Our configuration parameters (from search.xml) */
 	private Map<String, WebsiteConfig> configs = new HashMap<>();
 
-	/** Directory where the WAR was extracted to (i.e. $TOMCAT/webapps/mywar/) */
-	private File warExtractDir = null;
+	///** Directory where the WAR was extracted to (i.e. $TOMCAT/webapps/mywar/) */
+	//private File warExtractDir = null;
 
 	/** Our Velocity templates */
 	private Map<String, Template> templates = new HashMap<>();
@@ -95,16 +93,22 @@ public class MainServlet extends HttpServlet {
 		super.init(cfg);
 
 		// initialise log4j
-		LogUtil.initLog4j(new File(cfg.getServletContext().getRealPath(
-				LOG4J_PROPERTIES)));
+		Properties p = new Properties();
+		try {
+			p.load(getServletContext().getResourceAsStream(LOG4J_PROPERTIES + "/log4j.properties"));
+			PropertyConfigurator.configure(p);
+			//LogUtil.initLog4j(new File(cfg.getServletContext().getRealPath(LOG4J_PROPERTIES)));
+		} catch (IOException e1) {
+			throw new RuntimeException(e1);
+		}
 
 		try {
 			startVelocity(cfg);
 
 			// Get the name of the folder that contains our deployed war file
-			warExtractDir = new File(cfg.getServletContext().getRealPath("/"));
-			debugLog("WAR dir: " + warExtractDir);
-			String warName = warExtractDir.getName();
+			//warExtractDir = new File(cfg.getServletContext().getRealPath("/"));
+			//debugLog("WAR dir: " + warExtractDir);
+			String warName = cfg.getServletContext().getContextPath().replaceAll("^/", ""); //warExtractDir.getName();
 
 			// Determine default corpus name from the .war file name
 			// (this is the "old" way of doing it, with a separate war for each
@@ -169,10 +173,14 @@ public class MainServlet extends HttpServlet {
 	 * @return the File or null if not found
 	 */
 	private File findPropertiesFile(String fileName) {
-		File fileInWebappsDir = new File(warExtractDir.getParentFile(),
-				fileName);
-		if (fileInWebappsDir.exists())
-			return fileInWebappsDir;
+		String warPath = getServletContext().getRealPath("/");
+		if (warPath != null) {
+			File fileInWebappsDir = new File(new File(warPath).getParentFile(), fileName);
+			if (fileInWebappsDir.exists())
+				return fileInWebappsDir;
+		} else {
+			System.out.println("(WAR was not extracted to file system; skip looking for " + fileName + " file in webapps dir)");
+		}
 
 		boolean isWindows = OsUtil.isWindows();
 		File fileInEtc = new File("/etc/blacklab", fileName);
@@ -198,8 +206,12 @@ public class MainServlet extends HttpServlet {
 	private void startVelocity(ServletConfig servletConfig) throws Exception {
 		Velocity.setApplicationAttribute("javax.servlet.ServletContext",
 				servletConfig.getServletContext());
-		Velocity.init(servletConfig.getServletContext().getRealPath(
-				VELOCITY_PROPERTIES));
+
+		Properties p = new Properties();
+		try (InputStream is = getServletContext().getResourceAsStream(VELOCITY_PROPERTIES)) {
+			p.load(is);
+		}
+		Velocity.init(p);
 	}
 
 	/**
@@ -248,29 +260,28 @@ public class MainServlet extends HttpServlet {
 	 * @return the website config
 	 */
 	public WebsiteConfig getConfig(String corpus) {
-		File configFile = null;
+		InputStream configFileInputStream = null;
 		try {
 			if (!configs.containsKey(corpus)) {
 				// attempt to load a properties file with the same name as the
 				// folder
 				// new File(cfg.getServletContext().getRealPath("/../" +
 				// warFileName + ".xml"));
-				configFile = getProjectFile(corpus, "search.xml", false);
-				if (configFile == null) {
+				configFileInputStream = getProjectFile(corpus, "search.xml", false);
+				if (configFileInputStream == null) {
 					// No corpus-specific config. Use generic for now (we'll detect stuff later)
 					configs.put(corpus, WebsiteConfig.generic(corpus));
 				} else {
-					if (!configFile.exists() || !configFile.canRead())
-						throw new RuntimeException(
-								"Config file not found or not readable: "
-										+ configFile);
-					configs.put(corpus, new WebsiteConfig(configFile));
-					debugLog("Config file: " + configFile);
+					try {
+						configs.put(corpus, new WebsiteConfig(configFileInputStream));
+						debugLog("Config file: " + configFileInputStream);
+					} finally {
+						configFileInputStream.close();
+					}
 				}
 			}
-		} catch (ConfigurationException e) {
-			throw new RuntimeException("Error reading config file: "
-					+ configFile, e);
+		} catch (Exception e) {
+			throw new RuntimeException("Error reading config file: " + configFileInputStream, e);
 		}
 
 		return configs.get(corpus);
@@ -339,9 +350,9 @@ public class MainServlet extends HttpServlet {
 
 	}
 
-	public File getWarExtractDir() {
-		return warExtractDir;
-	}
+//	public File getWarExtractDir() {
+//		return warExtractDir;
+//	}
 
 	/**
 	 * Look for project-specific version of file. If not found, return a generic
@@ -356,33 +367,32 @@ public class MainServlet extends HttpServlet {
 	 *            returns null
 	 * @return the appropriate instance of the file to use
 	 */
-	private File getProjectFile(String corpus, String fileName,
+	private InputStream getProjectFile(String corpus, String fileName,
 			boolean mustExist) {
 		if (corpus.length() > 0) {
 			System.out.println("* Corpus: " + corpus);
-			File file = new File(warExtractDir, "projectconfigs/" + corpus
-					+ "/" + fileName);
-			if (file.exists()) {
-				System.out.println("* File exists: " + file);
-				return file;
+			String fn = "/projectconfigs/" + corpus + "/" + fileName;
+			InputStream is = getServletContext().getResourceAsStream(fn);
+			if (is != null) {
+				System.out.println("* File exists: " + fn);
+				return is;
 			}
-			System.out.println("* File doesn't exist: " + file);
+			System.out.println("* File doesn't exist: " + fn);
 		}
 
 		if (mustExist)
-			throw new RuntimeException("Couldn't find file '" + fileName
-					+ "' for corpus '" + corpus + "'");
+			throw new RuntimeException("Couldn't find file '" + fileName + "' for corpus '" + corpus + "'");
 		return null;
 		// return new File(warExtractDir, "WEB-INF/config/project/" + fileName);
 	}
 
-	public File getHelpPage(String corpus) {
+	public InputStream getHelpPage(String corpus) {
 		if (corpus == null || corpus.length() == 0)
 			return getProjectFile(defaultCorpus, "help.inc", true);
 		return getProjectFile(corpus, "help.inc", true);
 	}
 
-	public File getAboutPage(String corpus) {
+	public InputStream getAboutPage(String corpus) {
 		return getProjectFile(corpus, "about.inc", true);
 	}
 
@@ -417,24 +427,24 @@ public class MainServlet extends HttpServlet {
 		if (stylesheet == null) {
 			// Look for the stylesheet in the project config dir, or else in the
 			// stylesheets dir.
-			File pathToFile = getProjectFile(corpus, stylesheetName, false);
-			if (pathToFile == null || !pathToFile.exists())
-				pathToFile = new File(getWarExtractDir(),
-						"WEB-INF/stylesheets/" + stylesheetName);
-			try {
-				BufferedReader br = new BufferedReader(new FileReader(
-						pathToFile));
-
+			InputStream is = getProjectFile(corpus, stylesheetName, false);
+			if (is == null)
+				is = getServletContext().getResourceAsStream("/WEB-INF/stylesheets/" + stylesheetName);
+			try (BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
 				// read the response from the webservice
 				String line;
 				StringBuilder builder = new StringBuilder();
 				while ((line = br.readLine()) != null)
 					builder.append(line);
-
-				br.close();
 				stylesheet = builder.toString();
 			} catch (IOException e) {
 				throw new RuntimeException(e);
+			} finally {
+				try {
+					is.close();
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
 			}
 			stylesheets.put(key, stylesheet);
 		}
@@ -460,8 +470,7 @@ public class MainServlet extends HttpServlet {
 	public String getWarBuildTime() {
 		if (warBuildTime == null) {
 			try {
-				ServletContext application = getServletContext();
-				InputStream inputStream = application.getResourceAsStream("/META-INF/MANIFEST.MF");
+				InputStream inputStream = getServletContext().getResourceAsStream("/META-INF/MANIFEST.MF");
 				if (inputStream == null) {
 					warBuildTime = "(no manifest)";
 				} else {

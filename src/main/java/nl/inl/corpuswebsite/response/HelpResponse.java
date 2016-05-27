@@ -3,16 +3,23 @@
  */
 package nl.inl.corpuswebsite.response;
 
-import nl.inl.corpuswebsite.BaseResponse;
+import java.io.IOException;
+import java.io.InputStream;
 
 import org.apache.velocity.VelocityContext;
+
+import nl.inl.corpuswebsite.BaseResponse;
 
 /** Show help page. */
 public class HelpResponse extends BaseResponse {
 
 	@Override
 	protected void completeRequest() {
-		putFileContentIntoContext("content", servlet.getHelpPage(corpus));
+		try (InputStream is = servlet.getHelpPage(corpus)) {
+			putFileContentIntoContext("content", is);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 
 		VelocityContext context = getContext();
 		String pathToTop = corpus.equals("autosearch") ? "." : "..";

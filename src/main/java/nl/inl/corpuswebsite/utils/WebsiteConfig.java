@@ -3,7 +3,7 @@
  */
 package nl.inl.corpuswebsite.utils;
 
-import java.io.File;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -67,7 +67,7 @@ public class WebsiteConfig {
 	/** Link to put in the top bar */
 	private List<LinkInTopBar> linksInTopBar = new ArrayList<>();
 
-	public WebsiteConfig(File configFile) throws ConfigurationException {
+	public WebsiteConfig(InputStream configFile) throws ConfigurationException {
 		// Load the specified config file
 		xmlConfig = new XMLConfiguration();
 		xmlConfig.setDelimiterParsingDisabled(true);

@@ -6,7 +6,7 @@
  */
 package nl.inl.corpuswebsite;
 
-import java.io.File;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,12 +15,12 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import nl.inl.util.FileUtil;
-import nl.inl.util.StringUtil;
-
 import org.apache.log4j.Logger;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
+
+import nl.inl.util.FileUtil;
+import nl.inl.util.StringUtil;
 
 /**
  *
@@ -243,10 +243,9 @@ public abstract class BaseResponse {
 		return getParameter(name, defaultValue ? "on" : "").equals("on");
 	}
 
-	protected void putFileContentIntoContext(String contextKey, File pathToFile) {
-		if (pathToFile.exists()) {
-
-			List<String> lines = FileUtil.readLines(pathToFile);
+	protected void putFileContentIntoContext(String contextKey, InputStream is) {
+		if (is != null) {
+			List<String> lines = FileUtil.readLines(is);
 			context.put(contextKey, StringUtil.join(lines, "\n"));
 		}
 	}

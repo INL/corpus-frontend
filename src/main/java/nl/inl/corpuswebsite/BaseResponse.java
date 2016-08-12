@@ -98,15 +98,9 @@ public abstract class BaseResponse {
 		response.setContentType(mimeType);
 
 		// Merge context into the page template and write to output stream
-		try {
-			OutputStreamWriter osw = new OutputStreamWriter(
-					response.getOutputStream(), OUTPUT_ENCODING);
-			try {
-				template.merge(context, osw);
-				osw.flush();
-			} finally {
-				osw.close();
-			}
+		try (OutputStreamWriter osw = new OutputStreamWriter(response.getOutputStream(), OUTPUT_ENCODING)) {
+			template.merge(context, osw);
+			osw.flush();
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

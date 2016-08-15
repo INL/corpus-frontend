@@ -12,8 +12,10 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Map;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+
 import nl.inl.corpuswebsite.MainServlet;
-import nl.inl.util.IoUtil;
 
 /**
  * Contacts the webservice and returns the response.
@@ -78,7 +80,7 @@ public class QueryServiceHandler {
 					response = connection.getErrorStream();
 				else
 					response = connection.getInputStream();
-				return IoUtil.readTextStream(response);
+				return StringUtils.join(IOUtils.readLines(response, "utf-8"), "\n");
 			} finally {
 				connection.disconnect();
 			}

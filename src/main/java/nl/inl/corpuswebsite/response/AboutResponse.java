@@ -6,6 +6,9 @@ package nl.inl.corpuswebsite.response;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+
 import nl.inl.corpuswebsite.BaseResponse;
 
 /** Show the about page. */
@@ -14,7 +17,9 @@ public class AboutResponse extends BaseResponse {
 	@Override
 	protected void completeRequest() {
 		try (InputStream is = servlet.getAboutPage(corpus)) {
-			putFileContentIntoContext("content", is);
+			if (is != null) {
+				context.put("content", StringUtils.join(IOUtils.readLines(is, "utf-8"), "\n"));
+			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

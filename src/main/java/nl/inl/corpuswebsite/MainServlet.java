@@ -8,9 +8,11 @@ package nl.inl.corpuswebsite;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -25,6 +27,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang.SystemUtils;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.velocity.Template;
 import org.apache.velocity.app.Velocity;
@@ -37,8 +40,6 @@ import nl.inl.corpuswebsite.response.HelpResponse;
 import nl.inl.corpuswebsite.response.SearchResponse;
 import nl.inl.corpuswebsite.response.SingleResponse;
 import nl.inl.corpuswebsite.utils.WebsiteConfig;
-import nl.inl.util.OsUtil;
-import nl.inl.util.PropertiesUtil;
 
 /**
  * Main servlet class for the corpus application.
@@ -128,7 +129,13 @@ public class MainServlet extends HttpServlet {
 						"File "
 								+ adminPropFileName
 								+ " (with blsUrl and blsUrlExternal settings) not found in webapps or temp dir!");
-			adminProps = PropertiesUtil.readFromFile(adminPropFile);
+			if (!adminPropFile.isFile()) {
+				throw new RuntimeException("Property file " + adminPropFile + " does not exist or is not a regular file!");
+			}
+			adminProps = new Properties();
+			try (Reader in = new BufferedReader(new FileReader(adminPropFile))) {
+				adminProps.load(in);
+			}
 			debugLog("Admin prop file: " + adminPropFile);
 			if (!adminProps.containsKey("blsUrl"))
 				throw new ServletException("Missing blsUrl setting in "
@@ -182,7 +189,7 @@ public class MainServlet extends HttpServlet {
 			System.out.println("(WAR was not extracted to file system; skip looking for " + fileName + " file in webapps dir)");
 		}
 
-		boolean isWindows = OsUtil.isWindows();
+		boolean isWindows = SystemUtils.IS_OS_WINDOWS;
 		File fileInEtc = new File("/etc/blacklab", fileName);
 		if (!isWindows && fileInEtc.exists())
 			return fileInEtc;

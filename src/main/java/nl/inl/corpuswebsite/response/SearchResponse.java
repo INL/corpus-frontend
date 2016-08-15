@@ -14,13 +14,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.TransformerException;
 
+import org.apache.commons.lang.StringEscapeUtils;
+
 import nl.inl.corpuswebsite.BaseResponse;
 import nl.inl.corpuswebsite.MainServlet;
 import nl.inl.corpuswebsite.utils.FieldDescriptor;
 import nl.inl.corpuswebsite.utils.QueryServiceHandler;
 import nl.inl.corpuswebsite.utils.UrlParameterFactory;
 import nl.inl.corpuswebsite.utils.XslTransformer;
-import nl.inl.util.StringUtil;
 
 /**
  *
@@ -549,9 +550,7 @@ public class SearchResponse extends BaseResponse {
 
 	public String getParameterValue(String param) {
 		String result = this.getParameter(param, "");
-
-		result = StringUtil.escapeXmlChars(result).replace("\"", "&quot;");
-
+		result = StringEscapeUtils.escapeXml(result);
 		return result;
 	}
 

@@ -6,7 +6,6 @@
  */
 package nl.inl.corpuswebsite;
 
-import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,9 +17,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
-
-import nl.inl.util.FileUtil;
-import nl.inl.util.StringUtil;
 
 /**
  *
@@ -40,7 +36,7 @@ public abstract class BaseResponse {
 	private List<String> requiredParameters;
 
 	/** Velocity template variables */
-	private VelocityContext context = new VelocityContext();
+	protected VelocityContext context = new VelocityContext();
 
 	/** The corpus to use */
 	protected String corpus = "";
@@ -241,13 +237,6 @@ public abstract class BaseResponse {
 	 */
 	public boolean getParameter(String name, boolean defaultValue) {
 		return getParameter(name, defaultValue ? "on" : "").equals("on");
-	}
-
-	protected void putFileContentIntoContext(String contextKey, InputStream is) {
-		if (is != null) {
-			List<String> lines = FileUtil.readLines(is);
-			context.put(contextKey, StringUtil.join(lines, "\n"));
-		}
 	}
 
 	/**

@@ -267,29 +267,27 @@ public class MainServlet extends HttpServlet {
 	 * @return the website config
 	 */
 	public WebsiteConfig getConfig(String corpus) {
-		InputStream configFileInputStream = null;
-		try {
 			if (!configs.containsKey(corpus)) {
 				// attempt to load a properties file with the same name as the
 				// folder
 				// new File(cfg.getServletContext().getRealPath("/../" +
 				// warFileName + ".xml"));
-				configFileInputStream = getProjectFile(corpus, "search.xml", false);
-				if (configFileInputStream == null) {
-					// No corpus-specific config. Use generic for now (we'll detect stuff later)
-					configs.put(corpus, WebsiteConfig.generic(corpus));
-				} else {
+				try (InputStream configFileInputStream = getProjectFile(corpus, "search.xml", false)) {
 					try {
-						configs.put(corpus, new WebsiteConfig(configFileInputStream));
-						debugLog("Config file: " + configFileInputStream);
-					} finally {
-						configFileInputStream.close();
+						if (configFileInputStream == null) {
+							// No corpus-specific config. Use generic for now (we'll detect stuff later)
+							configs.put(corpus, WebsiteConfig.generic(corpus));
+						} else {
+							configs.put(corpus, new WebsiteConfig(configFileInputStream));
+							debugLog("Config file: " + configFileInputStream);
+						}
+					} catch (Exception e) {
+						throw new RuntimeException("Error reading config file: " + configFileInputStream, e);
 					}
+				} catch (IOException e) {
+					throw new RuntimeException("Error reading config file for corpus " + corpus, e);
 				}
 			}
-		} catch (Exception e) {
-			throw new RuntimeException("Error reading config file: " + configFileInputStream, e);
-		}
 
 		return configs.get(corpus);
 	}
@@ -374,8 +372,7 @@ public class MainServlet extends HttpServlet {
 	 *            returns null
 	 * @return the appropriate instance of the file to use
 	 */
-	private InputStream getProjectFile(String corpus, String fileName,
-			boolean mustExist) {
+	private InputStream getProjectFile(String corpus, String fileName, boolean mustExist) {
 		if (corpus.length() > 0) {
 			System.out.println("* Corpus: " + corpus);
 			String fn = "/projectconfigs/" + corpus + "/" + fileName;
@@ -434,10 +431,8 @@ public class MainServlet extends HttpServlet {
 		if (stylesheet == null) {
 			// Look for the stylesheet in the project config dir, or else in the
 			// stylesheets dir.
-			InputStream is = getProjectFile(corpus, stylesheetName, false);
-			if (is == null)
-				is = getServletContext().getResourceAsStream("/WEB-INF/stylesheets/" + stylesheetName);
-			try (BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
+			try ( InputStream is = openStylesheet(corpus, stylesheetName);
+				  BufferedReader br = new BufferedReader(new InputStreamReader(is)) ) {
 				// read the response from the webservice
 				String line;
 				StringBuilder builder = new StringBuilder();
@@ -446,16 +441,17 @@ public class MainServlet extends HttpServlet {
 				stylesheet = builder.toString();
 			} catch (IOException e) {
 				throw new RuntimeException(e);
-			} finally {
-				try {
-					is.close();
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
 			}
 			stylesheets.put(key, stylesheet);
 		}
 		return stylesheet;
+	}
+
+	private InputStream openStylesheet(String corpus, String stylesheetName) {
+		InputStream is = getProjectFile(corpus, stylesheetName, false);
+		if (is == null)
+			is = getServletContext().getResourceAsStream("/WEB-INF/stylesheets/" + stylesheetName);
+		return is;
 	}
 
 	public String getSpecialField(String corpus, String fieldType) {
@@ -476,8 +472,7 @@ public class MainServlet extends HttpServlet {
 	 */
 	public String getWarBuildTime() {
 		if (warBuildTime == null) {
-			try {
-				InputStream inputStream = getServletContext().getResourceAsStream("/META-INF/MANIFEST.MF");
+			try (InputStream inputStream = getServletContext().getResourceAsStream("/META-INF/MANIFEST.MF")) {
 				if (inputStream == null) {
 					warBuildTime = "(no manifest)";
 				} else {

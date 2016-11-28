@@ -142,7 +142,7 @@ var corpora = {};
 			$("#create-corpus").toggle(data.user.canCreateIndex);
 			
 			if (!showPublic && !showPrivate) {
-				showError("Sorry, no corpora are available, and you are not authorized to create a corpus. Please contact <a href='mailto:servicedesk@inl.nl'>servicedesk@inl.nl</a> if this is an error.");
+				showError("Sorry, no corpora are available, and you are not authorized to create a corpus. Please contact <a href='mailto:servicedesk@ivdnt.org'>servicedesk@ivdnt.org</a> if this is an error.");
 			}
 		}
 		

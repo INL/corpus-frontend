@@ -14,13 +14,13 @@ p.endspacer { height: 5cm; }
 
 <p class='spacer'><a name='intro'></a>&nbsp;</p>
 <h2>INTRODUCTION</h2>
-<p>Since 1994, <a href="http://www.inl.nl" target="_blank">The Instituut voor Nederlandse Lexicologie</a> has put online several corpora of contemporary Dutch: the 5, 27 and 38 million words corpora and the Dutch Parole Internet Corpus. The <i>Corpus Hedendaags Nederlands</i> in the current release is a first step towards a monitor corpus for contemporary Dutch. The material of the old corpora has been integrated. A considerable amount of more recent material has been
+<p>Since 1994, <a href="http://ivdnt.org" target="_blank">The Instituut voor Nederlandse Lexicologie</a> has put online several corpora of contemporary Dutch: the 5, 27 and 38 million words corpora and the Dutch Parole Internet Corpus. The <i>Corpus Hedendaags Nederlands</i> in the current release is a first step towards a monitor corpus for contemporary Dutch. The material of the old corpora has been integrated. A considerable amount of more recent material has been
 added from two newspapers: <i>NRC Handelsblad</i> and <i>De Standaard</i> (until June 2013).</p>
 
-<p>The software powering this website was developed at the INL with support from the <a href="http://www.taalunieversum.org" target="_blank">Dutch Language Union and the <a href="http://www.digitisation.eu">IMPACT</a> and <a href="http://www.clarin.nl">CLARIN</a> projects. The corpus search is powered by <a href="https://github.com/INL/BlackLab" target="_blank">BlackLab</a>, an open source Lucene-based corpus retrieval engine allowing fast and complex searches on large volumes of annotated text.</p>
+<p>The software powering this website was developed at the Institute for the Dutch Language with support from the <a href="http://www.taalunieversum.org" target="_blank">Dutch Language Union and the <a href="http://www.digitisation.eu">IMPACT</a> and <a href="http://www.clarin.nl">CLARIN</a> projects. The corpus search is powered by <a href="https://github.com/INL/BlackLab" target="_blank">BlackLab</a>, an open source Lucene-based corpus retrieval engine allowing fast and complex searches on large volumes of annotated text.</p>
 <p>This website is optimized for the latest versions of <a href="https://www.google.com/intl/en/chrome/browser/" target="_blank">Google Chrome</a> and <a href="http://www.mozilla.org/en-US/firefox/new/" target="_blank">Mozilla Firefox</a>;using either of these browsers is recommended. Microsoft Internet Explorer is supported from version 9 and upwards.<p>
 
-<p>Both data and application are in <a href='#beta'>beta</a> version. Comments are welcome, please send an email to the <a href="mailto:servicedesk@inl.nl">INL service desk</a>.</p>
+<p>Both data and application are in <a href='#beta'>beta</a> version. Comments are welcome, please send an email to the <a href="mailto:servicedesk@ivdnt.org">IvdNT service desk</a>.</p>
 
 
 <p class='spacer'><a name='about'></a>&nbsp;</p>
@@ -494,7 +494,7 @@ quite some internal inconsistency as well).</p>
 		Searching for a <b>word group</b> is also possible by simply typing the word group in the search box. Typing <i>lief man</i> ('sweet husband/man') in the lemma search box will give you all occurrences of words with the lemma <i>lief</i> immediately followed by words with the lemma <i>man</i>. If you want to search for the combination <i>het leven</i> ('the life') where 'leven' is a noun, type the string <i>het leven</i> in the <b>lemma search box</b> and <i>PD* N*</i>  in the <b>Part of Speech search box</b>.
 	</p>
 	<p>
-		The part of speech tagset is documented in the INL working paper <a href="http://www.inl.nl/images/stories/onderzoek_en_onderwijs/publicaties/TaalbankWorkingpaper3.pdf">De 
+		The part of speech tagset is documented in the IvdNT working paper <a href="http://ivdnt.org/images/stories/onderzoek_en_onderwijs/publicaties/TaalbankWorkingpaper3.pdf">De 
 morfosyntactische 
 module van het 
 GiGaNT-lexicon</a>. 
@@ -641,7 +641,7 @@ GiGaNT-lexicon</a>.
 	
 <p class='spacer'><a name='beta'></a>&nbsp;</p>
 	<h2>BETA</h2>
-<p>This is a BETA release of the <i>Corpus Hedendaags Nederlands</i>. The search application gives access to prior and new corpus material of the INL. Development is still ongoing, so your <a href="mailto:servicedesk@inl.nl">feedback</a> is more than welcome.</p>
+<p>This is a BETA release of the <i>Corpus Hedendaags Nederlands</i>. The search application gives access to prior and new corpus material of the Institute for the Dutch Language. Development is still ongoing, so your <a href="mailto:servicedesk@ivdnt.org">feedback</a> is more than welcome.</p>
 <p>Envisaged for the coming period, apart from regular updates of the newspaper material, is improvement of the back end technology (performance), extension of the metadata search and improvements of the user interface.</p>
 <p class='endspacer'><a name='end'></a>&nbsp;</p>
 

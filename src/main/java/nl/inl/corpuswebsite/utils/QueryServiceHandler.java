@@ -57,7 +57,6 @@ public class QueryServiceHandler {
 		return fetchXml(requestUrl);
 	}
 
-	@SuppressWarnings("resource")
 	private static String fetchXml(String url) throws IOException {
 		int code = -1;
 		String reason = null;

@@ -182,7 +182,7 @@ public class WebsiteConfig {
 		pathToLogo = "";
 
 		linksInTopBar.add(new LinkInTopBar("Help", "../help"));
-		linksInTopBar.add(new LinkInTopBar("INL", "http://www.inl.nl/", true));
+		linksInTopBar.add(new LinkInTopBar("IvdNT", "http://www.ivdnt.org/", true));
 		linksInTopBar.add(new LinkInTopBar("CLARIN", "http://www.clarin.eu/", true));
 		linksInTopBar.add(new LinkInTopBar("NTU", "http://taalunie.org/", true));
 

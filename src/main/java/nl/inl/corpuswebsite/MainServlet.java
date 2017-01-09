@@ -191,6 +191,8 @@ public class MainServlet extends HttpServlet {
 
 		boolean isWindows = SystemUtils.IS_OS_WINDOWS;
 		File fileInEtc = new File("/etc/blacklab", fileName);
+		if (!isWindows && !fileInEtc.exists())
+			fileInEtc = new File("/vol1/etc/blacklab", fileName); // UGLY, will fix later
 		if (!isWindows && fileInEtc.exists())
 			return fileInEtc;
 
@@ -400,8 +402,14 @@ public class MainServlet extends HttpServlet {
 		return getProjectFile(corpus, "about.inc", true);
 	}
 
-	public String getSourceImagesLocation() {
-		return adminProps.getProperty("sourceImagesLocation", "");
+	public String getSourceImagesLocation(String corpus) {
+		String sourceImagesLocation = adminProps.getProperty("sourceImagesLocation", "");
+		String corpusSpecificImagesLocation = adminProps.getProperty("sourceImagesLocation_" + corpus, "");
+		if (corpusSpecificImagesLocation.length() > 0)
+			return corpusSpecificImagesLocation;
+		if (sourceImagesLocation.length() == 0)
+			return "";
+		return sourceImagesLocation + corpus + "/";
 	}
 
 	public String getWebserviceUrl(String corpus) {
@@ -421,8 +429,12 @@ public class MainServlet extends HttpServlet {
 		return url;
 	}
 
-	public Object getGoogleAnalyticsKey() {
-		return adminProps.getProperty("googleAnalyticsKey", "");
+	public String getGoogleAnalyticsKey(String corpus) {
+		String googleAnalyticsKey = adminProps.getProperty("googleAnalyticsKey", "");
+		String googleAnalyticsKeyThisCorpus = adminProps.getProperty("googleAnalyticsKey_" + corpus, "");
+		if (googleAnalyticsKeyThisCorpus.length() > 0)
+			return googleAnalyticsKeyThisCorpus;
+		return googleAnalyticsKey;
 	}
 
 	public String getStylesheet(String corpus, String stylesheetName) {

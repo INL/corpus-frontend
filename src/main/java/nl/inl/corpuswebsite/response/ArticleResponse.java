@@ -70,7 +70,7 @@ public class ArticleResponse extends BaseResponse {
 				} else {
 					transformer.clearParameters();
 					transformer.addParameter("source_images",
-							servlet.getSourceImagesLocation());
+							servlet.getSourceImagesLocation(corpus));
 					transformer.addParameter(
 							"title_name",
 							servlet.getSpecialField(corpus, "title"));

@@ -64,7 +64,7 @@ public abstract class BaseResponse {
 		VelocityContext context = getContext();
 		context.put("title", this.servlet.getConfig(corpus).getCorpusName());
 		context.put("websiteconfig", this.servlet.getConfig(corpus));
-		context.put("googleAnalyticsKey", this.servlet.getGoogleAnalyticsKey());
+		context.put("googleAnalyticsKey", this.servlet.getGoogleAnalyticsKey(corpus));
 		String pathToTop = "..";
 		context.put("pathToTop", pathToTop); // correct for most pages, but for "list of corpora" it's "."
 		context.put("brandLink", corpus.equals("autosearch") ? pathToTop : "./search");

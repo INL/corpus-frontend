@@ -88,7 +88,7 @@ public class SearchResponse extends BaseResponse {
 		getContext().put("wordproperties",
 				servlet.getConfig(corpus).getWordProperties());
 		getContext().put("websiteconfig", servlet.getConfig(corpus));
-		getContext().put("googleAnalyticsKey", servlet.getGoogleAnalyticsKey());
+		getContext().put("googleAnalyticsKey", servlet.getGoogleAnalyticsKey(corpus));
 
 		// display template
 		displayHtmlTemplate(servlet.getTemplate("search"));

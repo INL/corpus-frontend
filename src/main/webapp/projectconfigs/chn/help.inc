@@ -17,7 +17,7 @@ p.endspacer { height: 5cm; }
 <h2>INTRODUCTION</h2>
 <p>Since 1994, <a href="http://ivdnt.org" target="_blank">The Instituut voor Nederlandse Lexicologie</a> has put online several corpora of contemporary Dutch: the 5, 27 and 38 million words corpora and the Dutch Parole Internet Corpus. The <i>Corpus Hedendaags Nederlands</i> in the current release is a first step towards a monitor corpus for contemporary Dutch. The material of the old corpora was integrated. For the first release (17 January 2014) a considerable amount of more recent material was added from two newspapers: <i>NRC Handelsblad</i> and <i>De Standaard</i> (until June 2013). For the second release (June 2014) more material from these two sources has been added from July 2013 - December 2013, as has other sources from Suriname and the Netherlands Antilles, such as newspapers, material published on internet (blog, website) and books written by Surinam authors.</p>
 
-<p>The software powering this website was developed at the Institute for the Dutch Language with support from the <a href="http://www.taalunieversum.org" target="_blank">Dutch Language Union and the <a href="http://www.digitisation.eu">IMPACT</a> and <a href="http://www.clarin.nl">CLARIN</a> projects. The corpus search is powered by <a href="https://github.com/INL/BlackLab" target="_blank">BlackLab</a>, an open source Lucene-based corpus retrieval engine allowing fast and complex searches on large volumes of annotated text.</p>
+<p>The software powering this website was developed at the Dutch Language Institute with support from the <a href="http://www.taalunieversum.org" target="_blank">Dutch Language Union and the <a href="http://www.digitisation.eu">IMPACT</a> and <a href="http://www.clarin.nl">CLARIN</a> projects. The corpus search is powered by <a href="https://github.com/INL/BlackLab" target="_blank">BlackLab</a>, an open source Lucene-based corpus retrieval engine allowing fast and complex searches on large volumes of annotated text.</p>
 <p>This website is optimized for the latest versions of <a href="https://www.google.com/intl/en/chrome/browser/" target="_blank">Google Chrome</a> and <a href="http://www.mozilla.org/en-US/firefox/new/" target="_blank">Mozilla Firefox</a>; using either of these browsers is recommended. Microsoft Internet Explorer is supported from version 9 and upwards.<p>
 
 <p>Both data and application are in <a href='#beta'>beta</a> version. Comments are welcome, please send an email to the <a href="mailto:servicedesk@ivdnt.org">IvdNT service desk</a>.</p>
@@ -669,7 +669,7 @@ GiGaNT-lexicon</a>.
     
 <p class='spacer'><a name='beta'></a>&nbsp;</p>
     <h2>BETA</h2>
-<p>This is a BETA release of the <i>Corpus Hedendaags Nederlands</i>. The search application gives access to prior and new corpus material of the Institute for the Dutch Language. Development is still ongoing, so your <a href="mailto:servicedesk@ivdnt.org">feedback</a> is more than welcome.</p>
+<p>This is a BETA release of the <i>Corpus Hedendaags Nederlands</i>. The search application gives access to prior and new corpus material of the Dutch Language Institute. Development is still ongoing, so your <a href="mailto:servicedesk@ivdnt.org">feedback</a> is more than welcome.</p>
 <p>Envisaged for the coming period, apart from regular updates of the newspaper material, is improvement of the back end technology (performance), extension of the metadata search and improvements of the user interface.</p>
 <p class='endspacer'><a name='end'></a>&nbsp;</p>
 

@@ -376,14 +376,16 @@ public class MainServlet extends HttpServlet {
 	 */
 	private InputStream getProjectFile(String corpus, String fileName, boolean mustExist) {
 		if (corpus.length() > 0) {
-			System.out.println("* Corpus: " + corpus);
+			if (corpus.equals("chn-i"))
+				corpus = "chn"; // HACK
+			//System.out.println("* Corpus: " + corpus);
 			String fn = "/projectconfigs/" + corpus + "/" + fileName;
 			InputStream is = getServletContext().getResourceAsStream(fn);
 			if (is != null) {
-				System.out.println("* File exists: " + fn);
+				//System.out.println("* File exists: " + fn);
 				return is;
 			}
-			System.out.println("* File doesn't exist: " + fn);
+			//System.out.println("* File doesn't exist: " + fn);
 		}
 
 		if (mustExist)

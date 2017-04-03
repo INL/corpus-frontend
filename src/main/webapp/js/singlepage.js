@@ -802,10 +802,12 @@ var SINGLEPAGE = {};
 			if (sortBy != newSort) {
 				// Different sort
 				sortBy = newSort;
+				currentSortReverse = false;
 				sortChanged = true;
-			} else if (newSort != null){
+			} else if (newSort != null) {
 				// Reverse sort
-				sortBy = (currentSortReverse ? "" : "-") + newSort;
+				currentSortReverse = currentSortReverse ? false : true;
+				sortBy = newSort;
 				sortChanged = true;
 			}
 			if (sortChanged)

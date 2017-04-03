@@ -199,8 +199,8 @@
                                 <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="left">Left context <b class="caret"></b></a>
                                 <ul class="dropdown-menu" role="menu" aria-labelledby="left">
                                     <li><a class='sortLeftWord'>Word</a></li>
-                                    <li><a class='sortLeftLemma'>Lemma</a></li>
-                                    <li><a class='sortLeftPos'>P.o.S.</a></li>
+                                    <li class='disabled'><a class='sortLeftLemma'>Lemma</a></li>
+                                    <li class='disabled'><a class='sortLeftPos'>P.o.S.</a></li>
                                 </ul>
                             </div>
                         </th>
@@ -210,8 +210,8 @@
                                 <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="right">Right context <b class="caret"></b></a>
                                 <ul class="dropdown-menu" role="menu" aria-labelledby="right">
                                     <li><a class='sortRightWord'>Word</a></li>
-                                    <li><a class='sortRightLemma'>Lemma</a></li>
-                                    <li><a class='sortRightPos'>P.o.S.</a></li>
+                                    <li class='disabled'><a class='sortRightLemma'>Lemma</a></li>
+                                    <li class='disabled'><a class='sortRightPos'>P.o.S.</a></li>
                                 </ul>
                             </div>                          
                         </th>

@@ -20,7 +20,6 @@ var BLS = {};
 			errorFunc = SINGLEPAGE.showBlsError;
 
 		function filterQuery(name, value) {
-			// TODO: escape double quotes in values with \
 			if ($("#" + name + "-select").length > 0) {
 				// Multiselect. Quote values and replace glue characters with
 				// spaces.
@@ -29,9 +28,35 @@ var BLS = {};
 					return name + ":(\"" + values.join("\" \"") + "\")";
 			}
 			if (value.match(/ /) && !value.match(/\[\d+ TO \d+\]/)) {
-				var words = value.split(/\s+/);
-				return name + ":(\"" + words.join("\" \"") + "\")";
+				
+				// Convert to Lucene query, taking quoted phrases into account.
+				var resultParts = [];
+				var quotedParts = value.split(/"/);
+				var inQuotes = false;
+				for (var i = 0; i < quotedParts.length; i++) {
+					var part = quotedParts[i];
+					if (inQuotes) {
+						// Inside quotes. Add literally.
+						resultParts.push(" \"");
+						resultParts.push(part);
+						resultParts.push("\"");
+					} else {
+						// Outside quotes. Surround each word with quotes.
+						part = part.trim();
+						if (part.length > 0) {
+							var words = part.split(/\s+/);
+							resultParts.push(" \"");
+							resultParts.push(words.join("\" \""));
+							resultParts.push("\" ");
+						}
+					}
+					inQuotes = !inQuotes;
+				}
+				return name + ":(" + resultParts.join("").trim() + ")";
+				//var words = value.split(/\s+/);
+				//return name + ":(\"" + words.join("\" \"") + "\")";
 			} else
+				// Single word or date range; add literally.
 				return name + ":\"" + value + "\"";
 		}
 

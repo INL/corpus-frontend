@@ -5,20 +5,19 @@
         	<div class="span2">$docfield.getName()</div>
         	<div class="span3">
         		#if($docfield.restrictedInput())
-					#set ($quotechar = '"')
 					#set ($multivalues = $responseObject.getParameterValuesAsList($docfield.getSearchField(), ""))					
         			#if($docfield.getType() == "multiselect")
 	        		<select id="$docfield.getSearchField()-select" name="$docfield.getSearchField()" placeholder="$docfield.getName()" multiple class="multiselect forminput">
         			#else
-	        		<select name="$docfield.getSearchField()" placeholder="$docfield.getName()" class="forminput">
+	        		<select id="$docfield.getSearchField()" name="$docfield.getSearchField()" placeholder="$docfield.getName()" class="forminput">
 					#end
         			#foreach($pair in $docfield.getValidValues())
         				#set($selected = '')
 						#set($selectvalue = '')
 						#if($pair.getValue().length() > 0)
-							#set($selectvalue = "&quot;${pair.getValue()}&quot;")
+							#set($selectvalue = "${pair.getValue()}")
 						#end
-        				#if($multivalues.contains("$quotechar${pair.getValue()}$quotechar"))
+        				#if($multivalues.contains("${pair.getValue()}"))
         					#set($selected = 'selected')
         				#end
                         <option value="$selectvalue" $!selected>$pair.getDescription()</option>
@@ -35,10 +34,10 @@
         				#set ($fieldTo = "${fieldName}__to")
         				#set ($valueFrom = $responseObject.getParameterValue($fieldFrom))
         				#set ($valueTo = $responseObject.getParameterValue($fieldTo))
-        				<input type="text" name="$docfield.getSearchField()__from" value="$!valueFrom" placeholder="From" class="span1 forminput" />
-        				<input type="text" name="$docfield.getSearchField()__to" value="$!valueTo" placeholder="To" class="span1 forminput" />
+        				<input type="text" id="$docfield.getSearchField()__from" name="$docfield.getSearchField()__from" value="$!valueFrom" placeholder="From" class="span1 forminput" />
+        				<input type="text" id="$docfield.getSearchField()__to" name="$docfield.getSearchField()__to" value="$!valueTo" placeholder="To" class="span1 forminput" />
         			#else
-        				<input type="text" name="$docfield.getSearchField()" value="$!value" placeholder="$docfield.getName()" class="forminput" />
+        				<input type="text" id="$docfield.getSearchField()" name="$docfield.getSearchField()" value="$!value" placeholder="$docfield.getName()" class="forminput" />
         			#end
         		#end
         	</div>
@@ -47,71 +46,43 @@
 #end
 
 #parse("header.vm")
+<script src="$pathToTop/js/singlepage.js"></script>
+<script src="$pathToTop/js/singlepage-bls.js"></script>
+<script>
+    var BLS_URL = "$blsUrl";
+    var wordProperties = [#foreach($wordfield in $wordproperties)#if($velocityCount > 1), #end"$wordfield.getSearchField()"#end];
+</script>
 
-#if($max == 20)
-	#set ($twenty = "selected")
-#elseif($max == 100)
-	#set ($hundred = "selected") 
-#elseif($max == 200)
-	#set ($twohundred = "selected") 
-#else
-	#set ($fifty = "selected") 
-#end
-
-<form method="get" action="" name="searchform">
-<div class="span12 contentbox">
-	<h2>$title</h2>
-#if($tab && $tab != "#simple")
-	#set ($tabCqlQuery = "active")
-#else
-	#set ($tabSimpleSearch = "active")
-#end
+<form onsubmit="return SINGLEPAGE.searchSubmit();">
+<div id='searchFormDiv' class="span12 contentbox">
+	#if($corpusOwner)<a href='..'><i class="fa fa-arrow-left"></i> back to my corpora</a>#end
+	<h2><span id='corpusNameMain'></span> #if($corpusOwner)<span id='corpusOwner'>($corpusOwner)</span>#end</h2>
 	<ul class="nav nav-tabs" id="searchTabs">
-		<li class="$!tabSimpleSearch"><a href="#simple" data-toggle="tab" class="querytype">Simple</a></li>
-		<li class="$!tabCqlQuery"><a href="#query" data-toggle="tab" class="querytype">CQL query</a></li>
+		<li><a href="#simple" data-toggle="tab" class="querytype">Simple</a></li>
+		<li><a href="#query" data-toggle="tab" class="querytype">CQL query</a></li>
 	</ul>
-	#if($tabCqlQuery)
-		<input type="hidden" name="tab" value="#query" />
-	#else
-		<input type="hidden" name="tab" value="#simple" />
-	#end
-	#if($view)
-		<input type="hidden" name="view" value="$view"/>
-	#end
 	<div class="tab-content span5">
-		<div class="tab-pane $!tabSimpleSearch" id="simple">
+		<div class="tab-pane" id="simple">
 			<div>
-				<strong>Search for...</strong><br>
-				#if($searcherror)
-				<div class="alert alert-error">
+				<h3>Search for &hellip;</h3>
+				<div class="alert alert-error" style='display: none;'>
 					<button type="button" class="close" data-dismiss="alert">&times;</button>
-					<b>Error!</b> $searcherror
+					<b>Error!</b> <span id='searchErrorText'>(text here)</span>
                 </div>
-				#end
+
 				#foreach($wordfield in $wordproperties)
-					#set ($value = $responseObject.getParameterValue($wordfield.getSearchField()))
 					#set ($fieldid = $wordfield.getSearchField() + "_text")
 					#set ($fieldfuzzid = $wordfield.getSearchField() + "_fuzzy")
 					#set ($fieldcaseid = $wordfield.getSearchField() + "_case")
-					
-					#set ($casechecked = "")
-					#if ($responseObject.getParameterValue($fieldcaseid) == "on")
-						#set ($casechecked = "checked")
-					#end
-					
-					#set ($fuzzychecked = "")
-					#if ($responseObject.getParameterValue($fieldfuzzid) == "on")
-						#set ($fuzzychecked = "checked")
-					#end
 				<div class="span5">
 					<div class="span2">$wordfield.getName()</div>
-					<div class="span3"><input type="text" data-target="#$wordfield.getSearchField()" data-toggle="collapse" id="$fieldid" name="$wordfield.getSearchField()" value="$!value" placeholder="$wordfield.getName()"/>
+					<div class="span3"><input type="text" data-target="#$wordfield.getSearchField()" data-toggle="collapse" id="$fieldid" name="$wordfield.getSearchField()" placeholder="$wordfield.getName()"/>
 						<div class="collapse textchecks" id="$wordfield.getSearchField()">
 							#if($wordfield.isSensitive())
-							<label class="checkbox inline"><input type="checkbox" name="$fieldcaseid" $!casechecked> Case&nbsp;sensitive</label>
+							<label class="checkbox inline"><input type="checkbox" id="$fieldcaseid"> Case&nbsp;sensitive</label>
 							#end
 							#if($wordfield.isFuzzy())
-							<label class="checkbox inline"><input type="checkbox" name="$fieldfuzzid" disabled $!fuzzychecked> Fuzzy&nbsp;search</label>
+							<label class="checkbox inline"><input type="checkbox" id="$fieldfuzzid" disabled> Fuzzy&nbsp;search</label>
 							#end
 						</div>
 					</div>
@@ -119,11 +90,13 @@
 				#end
 			</div>
 		</div>
-		<div class="tab-pane $!tabCqlQuery" id="query">
-			<strong>Corpus Query Language:</strong><br><textarea class="span5" name="querybox" rows="7">$!querybox</textarea>
+		<div class="tab-pane" id="query">
+			<h3>Corpus Query Language:</h3>
+			<textarea class="span5" id="querybox" name="querybox" rows="7"></textarea>
 		</div>
 	</div>
 	<div class="span5 pull-right">
+		#if($websiteconfig.hasMetadataFields())
 		<strong>Filter search by</strong><br>
 		#if($websiteconfig.hasTabGroups())
     		<ul class="nav nav-tabs" id="filtertabs">
@@ -161,36 +134,181 @@
 			#set($fields = $websiteconfig.getFieldsInTabGroup(""))
 			#filterfields($fields)
 		#end
+		#end
 		<div id="filteroverview" class="span5"></div>
-	</div>
+	</div>	
+	
 	<div class="span12">
 		<hr>
 		<div class="span2">
 			<input type="submit" class="btn btn-primary btn-large" value="Search" id="searchbutton">
 		</div>
 		<div class="span1">
-			<a href="search" class="btn btn-large" id="resetbutton">Reset</a>
+			<a href="?" onclick="return SINGLEPAGE.resetPage();" class="btn btn-large" id="resetbutton">Reset</a>
 		</div>
 		<div class="pull-right">
 			<strong class="vtop">Show me: </strong>
-			<select class="span2 vtop" name="max" onchange="document.searchform.submit();">
-				<option $!twenty value="20">20 results</option>
-				<option $!fifty value="50">50 results</option>
-				<option $!hundred value="100">100 results</option>
-				<option $!twohundred value="200">200 results</option>
+			<select class="span2 vtop" id="resultsPerPage">
+				<option value="20">20 results</option>
+				<option value="50">50 results</option>
+				<option value="100">100 results</option>
+				<option value="200">200 results</option>
 			</select> 
 		</div>
 	</div>
-	
 </div>
 <br><br>
-<script>
-	// Set up search type tabs, multiselect, filter overview
-	BLSEARCH.SEARCHPAGE.init();
-</script>
-#if($searchResults)
-	$searchResults
-#end
+
+<div id="errorDiv">
+    <h1>Error</h1>
+    <p id="errorMessage"></p>
+    <p>(for assistance, please contact <a href='mailto:servicedesk@ivdnt.org'>servicedesk@ivdnt.org</a>)</p>
+</div>
+
+<div id="searchSummary" class="pull-right">
+</div>
+
+<div id='waitDisplay'>
+    <p class="text-center"><i class="fa fa-spinner fa-spin"></i></p>
+</div>
+
+<div class="span12 contentbox" id="results">
+	<div id='totalsReport'>
+		<div id='totalsReportText'>
+		</div>
+		<p id='totalsSpinner'><i class="fa fa-spinner fa-spin"></i></p>
+	</div>
+	<ul class="nav nav-tabs" id="contentTabs">
+		<li><a href="#tabHits" data-toggle="tab" class="resultstype">Per Hit</a></li>
+		<li><a href="#tabDocs" data-toggle="tab" class="resultstype">Per Document</a></li>
+		<li><a href="#tabHitsGrouped" data-toggle="tab" class="resultstype">Hits grouped</a></li>
+		<li><a href="#tabDocsGrouped" data-toggle="tab" class="resultstype">Documents grouped</a></li>
+	</ul>
+    <div class="pagination">
+		<ul class="pagebuttons"></ul>
+		<button type="button" class="showHideTitles btn btn-small btn-danger" data-toggle="collapse" data-target=".doctitle" style="vertical-align: top; margin-top: 2px;">Show/hide titles</button>
+	</div>
+	<div id='resultsTabs' class="span12 tab-content">
+		<div class="tab-pane lightbg haspadding" id="tabHits">
+			<div id="hitsPagination"></div>
+            <table id='hitsTable'>
+                <thead>
+                    <tr class="tbl_head">
+                        <th class="tbl_conc_left">
+                            <div class="dropdown pull-right">
+                                <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="left">Left context <b class="caret"></b></a>
+                                <ul class="dropdown-menu" role="menu" aria-labelledby="left">
+                                    <li><a class='sortLeftWord'>Word</a></li>
+                                    <li class='disabled'><a class='sortLeftLemma'>Lemma</a></li>
+                                    <li class='disabled'><a class='sortLeftPos'>P.o.S.</a></li>
+                                </ul>
+                            </div>
+                        </th>
+                        <th class="tbl_conc_hit"><a class='sortHitWord'>Hit text</a></th>
+                        <th class="tbl_conc_right">
+                            <div class="dropdown">
+                                <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="right">Right context <b class="caret"></b></a>
+                                <ul class="dropdown-menu" role="menu" aria-labelledby="right">
+                                    <li><a class='sortRightWord'>Word</a></li>
+                                    <li class='disabled'><a class='sortRightLemma'>Lemma</a></li>
+                                    <li class='disabled'><a class='sortRightPos'>P.o.S.</a></li>
+                                </ul>
+                            </div>                          
+                        </th>
+                        <th class="tbl_lemma"><a class='sortHitLemma'>Lemma</a></th>
+                        <th class="tbl_pos"><a class='sortHitPos'>Part of speech</a></th>
+                    </tr>
+                </thead>
+                <tbody id="hitsTableBody">
+                </tbody>
+            </table>
+		</div>
+		
+		<div class="tab-pane lightbg haspadding" id="tabDocs">
+	        <table id='docsTable' class="documents">
+	            <thead>
+	                <tr class="tbl_head">
+	                    <th class="tbl_doct"><a href='#' class='sortTitle'>Document title</a></th>
+	                    <th class="tbl_year"><a href='#' class='sortDate'>Year</a></th>
+	                    <th class="tbl_hits"><a href='#' class='sortNumHits'>Hits</a></th>
+	                </tr>
+	            </thead>
+	            <tbody id="docsTableBody">
+	            </tbody>
+	        </table>
+		</div>
+		
+		<div class="tab-pane" id="tabHitsGrouped">
+			<select class="input" id="groupHitsBy">
+				<option value="" disabled="true" selected="true">Group hits by...</option>
+				<option id="groupTitle" value="field:title">Group by document title</option>
+				<option value="hit">Group by hit text</option>
+				<option value="hit:lemma">Group by lemma</option>
+				<option value="hit:pos">Group by hit pos</option>
+				<option value="hit:lemma,hit:pos">Group by lemma and PoS</option>
+				<option value="wordleft">Group by word left</option>
+				<option value="wordright">Group by word right</option>
+				<option id="groupYear" value="field:yearFrom">Group by year</option>
+				<option id="groupDecade" value="decade:yearFrom">Group by decade</option>
+			</select>
+			
+			<div id="resultsHitsGrouped" class="lightbg haspadding">
+                <table id='hitsGroupedTable'>
+                    <thead>
+                        <tr>
+                            <th class="tbl_groupname">
+                            	<a href='#' class="sortGroupIdentity">Group</a>
+                            </th>
+                            <th>
+                            	<a href='#' class='sortGroupNumHits'>Hits</a>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>                
+                    </tbody>
+                </table>
+			</div>
+			
+		</div>		
+		
+		<div class="tab-pane" id="tabDocsGrouped">
+			<select class="input" id="groupDocsBy">
+				<option value="" disabled="true" selected="true">Group documents by...</option>
+				<option value="numhits">Group by number of hits</option>
+				<option id="docGroupYear" value="field:year">Group by year</option>
+				<option id="docGroupDecade" value="decade:year">Group by decade</option>
+				<option id="docGroupAuthor" value="field:author">Group by author</option>
+			</select>
+			
+			<div id="resultsDocsGrouped" class="lightbg haspadding">
+                <table id='docsGroupedTable'>
+                    <thead>
+                        <tr>
+                            <th class="tbl_groupname">
+                            	<a href='#' class="sortGroupIdentity">Group</a>
+                            </th>
+                            <th>
+                            	<a href='#' class='sortGroupNumHits'>Hits</a>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+			</div>
+			
+		</div>
+		
+	</div>
+    <div class="pagination">
+		<ul class="pagebuttons"></ul>
+		<button type="button" class="showHideTitles btn btn-small btn-danger" data-toggle="collapse" data-target=".doctitle" style="vertical-align: top; margin-top: 2px;">Show/hide titles</button>
+	</div>
+	
+</div>
+
 </form>
+
+<p id="debugInfo"></p>
 #parse("footer.vm")
 

@@ -1,0 +1,196 @@
+#macro( filterfields $fields)
+	#foreach($docfield in $fields)
+    	#set ($value = $responseObject.getParameterValue("${docfield.getSearchField()}"))
+        <div>
+        	<div class="span2">$docfield.getName()</div>
+        	<div class="span3">
+        		#if($docfield.restrictedInput())
+					#set ($quotechar = '"')
+					#set ($multivalues = $responseObject.getParameterValuesAsList($docfield.getSearchField(), ""))					
+        			#if($docfield.getType() == "multiselect")
+	        		<select id="$docfield.getSearchField()-select" name="$docfield.getSearchField()" placeholder="$docfield.getName()" multiple class="multiselect forminput">
+        			#else
+	        		<select name="$docfield.getSearchField()" placeholder="$docfield.getName()" class="forminput">
+					#end
+        			#foreach($pair in $docfield.getValidValues())
+        				#set($selected = '')
+						#set($selectvalue = '')
+						#if($pair.getValue().length() > 0)
+							#set($selectvalue = "&quot;${pair.getValue()}&quot;")
+						#end
+        				#if($multivalues.contains("$quotechar${pair.getValue()}$quotechar"))
+        					#set($selected = 'selected')
+        				#end
+                        <option value="$selectvalue" $!selected>$pair.getDescription()</option>
+        			#end
+        			</select>
+        			#if($docfield.getType() == "multiselect")
+        			<div class='multiselect-hint' id="$docfield.getSearchField()-hint">(to select multiple options, use Ctrl+click)</div>
+        			<input id="$docfield.getSearchField()-input" class='multiselect' type='text' />
+					#end
+        		#else
+        			#if($docfield.getType() == "date")
+        				#set ($fieldName = $docfield.getSearchField())
+        				#set ($fieldFrom = "${fieldName}__from")
+        				#set ($fieldTo = "${fieldName}__to")
+        				#set ($valueFrom = $responseObject.getParameterValue($fieldFrom))
+        				#set ($valueTo = $responseObject.getParameterValue($fieldTo))
+        				<input type="text" name="$docfield.getSearchField()__from" value="$!valueFrom" placeholder="From" class="span1 forminput" />
+        				<input type="text" name="$docfield.getSearchField()__to" value="$!valueTo" placeholder="To" class="span1 forminput" />
+        			#else
+        				<input type="text" name="$docfield.getSearchField()" value="$!value" placeholder="$docfield.getName()" class="forminput" />
+        			#end
+        		#end
+        	</div>
+        </div>
+    #end
+#end
+
+#parse("header.vm")
+
+#if($max == 20)
+	#set ($twenty = "selected")
+#elseif($max == 100)
+	#set ($hundred = "selected") 
+#elseif($max == 200)
+	#set ($twohundred = "selected") 
+#else
+	#set ($fifty = "selected") 
+#end
+
+<form method="get" action="" name="searchform">
+<div class="span12 contentbox">
+	<h2>$title</h2>
+#if($tab && $tab != "#simple")
+	#set ($tabCqlQuery = "active")
+#else
+	#set ($tabSimpleSearch = "active")
+#end
+	<ul class="nav nav-tabs" id="searchTabs">
+		<li class="$!tabSimpleSearch"><a href="#simple" data-toggle="tab" class="querytype">Simple</a></li>
+		<li class="$!tabCqlQuery"><a href="#query" data-toggle="tab" class="querytype">CQL query</a></li>
+	</ul>
+	#if($tabCqlQuery)
+		<input type="hidden" name="tab" value="#query" />
+	#else
+		<input type="hidden" name="tab" value="#simple" />
+	#end
+	#if($view)
+		<input type="hidden" name="view" value="$view"/>
+	#end
+	<div class="tab-content span5">
+		<div class="tab-pane $!tabSimpleSearch" id="simple">
+			<div>
+				<strong>Search for...</strong><br>
+				#if($searcherror)
+				<div class="alert alert-error">
+					<button type="button" class="close" data-dismiss="alert">&times;</button>
+					<b>Error!</b> $searcherror
+                </div>
+				#end
+				#foreach($wordfield in $wordproperties)
+					#set ($value = $responseObject.getParameterValue($wordfield.getSearchField()))
+					#set ($fieldid = $wordfield.getSearchField() + "_text")
+					#set ($fieldfuzzid = $wordfield.getSearchField() + "_fuzzy")
+					#set ($fieldcaseid = $wordfield.getSearchField() + "_case")
+					
+					#set ($casechecked = "")
+					#if ($responseObject.getParameterValue($fieldcaseid) == "on")
+						#set ($casechecked = "checked")
+					#end
+					
+					#set ($fuzzychecked = "")
+					#if ($responseObject.getParameterValue($fieldfuzzid) == "on")
+						#set ($fuzzychecked = "checked")
+					#end
+				<div class="span5">
+					<div class="span2">$wordfield.getName()</div>
+					<div class="span3"><input type="text" data-target="#$wordfield.getSearchField()" data-toggle="collapse" id="$fieldid" name="$wordfield.getSearchField()" value="$!value" placeholder="$wordfield.getName()"/>
+						<div class="collapse textchecks" id="$wordfield.getSearchField()">
+							#if($wordfield.isSensitive())
+							<label class="checkbox inline"><input type="checkbox" name="$fieldcaseid" $!casechecked> Case&nbsp;sensitive</label>
+							#end
+							#if($wordfield.isFuzzy())
+							<label class="checkbox inline"><input type="checkbox" name="$fieldfuzzid" disabled $!fuzzychecked> Fuzzy&nbsp;search</label>
+							#end
+						</div>
+					</div>
+				</div>	
+				#end
+			</div>
+		</div>
+		<div class="tab-pane $!tabCqlQuery" id="query">
+			<strong>Corpus Query Language:</strong><br><textarea class="span5" name="querybox" rows="7">$!querybox</textarea>
+		</div>
+	</div>
+	<div class="span5 pull-right">
+		<strong>Filter search by</strong><br>
+		#if($websiteconfig.hasTabGroups())
+    		<ul class="nav nav-tabs" id="filtertabs">
+    		#set($first = "0")
+    		#foreach($tabname in $websiteconfig.getTabGroups())
+    			#set($tabid = $tabname.replace(" ", ""))
+    			
+    			#if($first == "0")
+    				<li class="active">
+    				#set($first = "1")
+    			#else
+    				<li>
+    			#end
+    			
+    			<a href="#$tabid" data-toggle="tab">$tabname</a></li>
+    		#end
+    		</ul>
+    		<div class="tab-content">
+    		#set($first = "0")
+    		#foreach($tabname in $websiteconfig.getTabGroups())
+    			#set($tabid = $tabname.replace(" ", ""))
+    			
+    			#if($first == "0")
+    				<div class="tab-pane active" id="$tabid">
+    				#set($first = "1")
+    			#else	
+    				<div class="tab-pane" id="$tabid">
+    			#end
+    			#set($fields = $websiteconfig.getFieldsInTabGroup($tabname))
+    			#filterfields($fields)
+    			</div>
+    		#end
+    		</div>
+		#else	
+			#set($fields = $websiteconfig.getFieldsInTabGroup(""))
+			#filterfields($fields)
+		#end
+		<div id="filteroverview" class="span5"></div>
+	</div>
+	<div class="span12">
+		<hr>
+		<div class="span2">
+			<input type="submit" class="btn btn-primary btn-large" value="Search" id="searchbutton">
+		</div>
+		<div class="span1">
+			<a href="search" class="btn btn-large" id="resetbutton">Reset</a>
+		</div>
+		<div class="pull-right">
+			<strong class="vtop">Show me: </strong>
+			<select class="span2 vtop" name="max" onchange="document.searchform.submit();">
+				<option $!twenty value="20">20 results</option>
+				<option $!fifty value="50">50 results</option>
+				<option $!hundred value="100">100 results</option>
+				<option $!twohundred value="200">200 results</option>
+			</select> 
+		</div>
+	</div>
+	
+</div>
+<br><br>
+<script>
+	// Set up search type tabs, multiselect, filter overview
+	BLSEARCH.SEARCHPAGE.init();
+</script>
+#if($searchResults)
+	$searchResults
+#end
+</form>
+#parse("footer.vm")
+

@@ -38,7 +38,6 @@ import nl.inl.corpuswebsite.response.CorporaResponse;
 import nl.inl.corpuswebsite.response.ErrorResponse;
 import nl.inl.corpuswebsite.response.HelpResponse;
 import nl.inl.corpuswebsite.response.SearchResponse;
-import nl.inl.corpuswebsite.response.SingleResponse;
 import nl.inl.corpuswebsite.utils.WebsiteConfig;
 
 /**
@@ -154,8 +153,8 @@ public class MainServlet extends HttpServlet {
 		}
 
 		// initialise responses
-		responses.put(contextPath + "/page/search", SingleResponse.class);
-		responses.put(contextPath + "/page/mpsearch", SearchResponse.class);
+		responses.put(contextPath + "/page/search", SearchResponse.class);
+		//responses.put(contextPath + "/page/mpsearch", SearchResponse.class);
 		responses.put(contextPath + "/page/about", AboutResponse.class);
 		responses.put(contextPath + "/page/help", HelpResponse.class);
 		responses.put(contextPath + "/page/article", ArticleResponse.class);
@@ -196,7 +195,7 @@ public class MainServlet extends HttpServlet {
 		if (!isWindows && fileInEtc.exists())
 			return fileInEtc;
 
-		File tmpDir = isWindows ? new File("C:\\temp") : new File(
+		File tmpDir = isWindows ? new File(System.getProperty("java.io.tmpdir")) : new File(
 				"/tmp");
 		File fileInTmpDir = new File(tmpDir, fileName);
 		if (fileInTmpDir.exists())

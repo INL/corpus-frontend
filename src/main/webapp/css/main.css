@@ -11,27 +11,28 @@ a:active,
 a:hover {
 	text-decoration: none;
 }
-.navbar-inverse .navbar-inner {
-	background-image: -moz-linear-gradient(top, #333333, #111111);
-	background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#333333), to(#111111));
-	background-image: -webkit-linear-gradient(top, #333333, #111111);
-	background-image: -o-linear-gradient(top, #333333, #111111);
-	background-image: linear-gradient(to bottom, #333333, #111111);
-	border-color: #333333;
+
+div.booklogo {
+	float: left;
+	height: 1px;
+	overflow: visible;
 }
 
 img.booklogo {
-	float: left;
+	width:100px;
+	height:100px;
 	z-index: 9000;
-	position:relative;
 }
 
-.nav .brand {
+.navbar-collapse.booklogo-margin {
+	margin-left: 85px !important;
+}
+
+.navbar-brand {
 	color: #dddddd !important;
 }
 
-.navbar-fixed-top  .navbar-inner {
-	max-height: 41px;
+.navbar-fixed-top {
 	-webkit-box-shadow: 0 5px 10px rgba(0,0,0,0.2);
 	-moz-box-shadow: 0 5px 10px rgba(0,0,0,0.2);
 	box-shadow: 0 5px 10px rgba(0,0,0,0.2);
@@ -39,6 +40,10 @@ img.booklogo {
 
 .haspadding {
 	padding: 5px;
+}
+
+.tab-content {
+	margin: 15px 0px;
 }
 
 .contentbox {
@@ -83,9 +88,10 @@ select.medium {
 
 table {
 	width: 100%;
+	table-layout: fixed;
 }
 
-.tbl_doc {
+.tbl_doct {
 	width: 75%;
 }
 
@@ -105,6 +111,9 @@ th {
 	text-align: left;
 	background-color: #ffffff;
 }
+thead > tr {
+	border-bottom: 1px solid #aaaaaa;	
+}
 
 tr:hover {
 	background-color: rgba(0,0,0, 0.1);
@@ -112,10 +121,7 @@ tr:hover {
 
 tr.concordance {
 	border-bottom: 1px solid #ffffff;
-}
-
-tr.tbl_head {
-	border-bottom: 1px solid #aaaaaa;
+	cursor: pointer;
 }
 
 table.documents td {
@@ -124,20 +130,26 @@ table.documents td {
 
 .tbl_conc_left {
 	text-align: right;
-	min-width:300px;
+	width: 40px;
 }
 
 .tbl_conc_right {
-	min-width:300px;
+	width: 40px;
 }
 
 .tbl_conc_hit {
 	font-weight: bold;
 	text-align: center;
+	width: 20px;
+	
 }
 
 .tbl_lemma {
-	min-width:125px;
+	width: 15px;
+}
+
+.tbl_pos {
+	width: 11px;
 }
 
 .tbl_groupname {
@@ -302,6 +314,11 @@ table.corpora a.icon {
 	font-size: 60%;
 }
 
+#querybox {
+	width:100%;
+	resize: none;
+}
+
 #errorDiv, #successDiv, #uploadErrorDiv, #uploadSuccessDiv {
 	margin-top: 1em;
 	display: none;
@@ -325,9 +342,29 @@ table.corpora a.icon {
 	left: -2em;
 }
 
+#searchContainer, #filterContainer {
+	-webkit-transition: all 0.5s ease;
+    -moz-transition: all 0.5s ease;
+    -o-transition: all 0.5s ease;
+    transition: all 0.5s ease;
+}
+
+#querybuilder {
+	background-color: rgba(255, 255, 255, 0.7);
+}
+
+
 #results {
 	position: relative;
 	min-height: 200px;
+}
+
+.pagebuttons {
+	display: block;
+}
+
+.showHideTitles {
+	margin-left: 10px; 
 }
 
 #waitDisplay {

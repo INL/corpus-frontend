@@ -85,7 +85,7 @@
             <div class="tab-pane active lightbg haspadding">
                 <table>
                     <thead>
-                        <tr class="tbl_head">
+                        <tr>
                             <th class="tbl_conc_left">
                                 <div class="dropdown pull-right">
                                     <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="left">Left context <b class="caret"></b></a>
@@ -202,7 +202,7 @@
             <div class="tab-pane active lightbg haspadding">
                 <table class="documents">
                     <thead>
-                        <tr class="tbl_head">
+                        <tr>
                             <th class="tbl_doct"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutsort" /><xsl:value-of select="'sortBy='" /><xsl:value-of select="$title_name" /></xsl:attribute>Document title</a></th>
                             <th class="tbl_year"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutsort" /><xsl:value-of select="'sortBy='" /><xsl:value-of select="$date_name" /></xsl:attribute>Year</a></th>
                             <th class="tbl_hits"><a><xsl:attribute name="href"><xsl:value-of select="$urlparamwithoutsort" /><xsl:value-of select="'sortBy=numhits'" /></xsl:attribute>Hits</a></th>

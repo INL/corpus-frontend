@@ -99,7 +99,7 @@ public class OldSearchResponse extends BaseResponse {
 	public void init(HttpServletRequest request, HttpServletResponse response,
 			MainServlet servlet) {
 		super.init(request, response, servlet);
-		resultsStylesheet = servlet.getStylesheet(corpus, "results.xsl");
+		resultsStylesheet = servlet.getStylesheet(corpus, "old_results.xsl");
 	}
 
 	private boolean isFilterQueryOnly() {

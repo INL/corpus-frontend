@@ -74,7 +74,7 @@ var BLSEARCH;
 		SEARCHPAGE.filtersSetup();
 		
 		// Set the desired search type (hits, docs, hits grouped, docs grouped) when tab is shown
-		$('a.querytype[data-toggle="tab"]').on('shown', function (e) {
+		$('a.querytype[data-toggle="tab"]').on('shown.bs.tab', function (e) {
 			document.searchform.tab.value = e.target.hash;
 		});
 		
@@ -91,7 +91,7 @@ var BLSEARCH;
         $(document).ready(function() {
             BLSEARCH.scrollToResults();
             $('.nolink').click(function(event) { event.preventDefault();});
-            $('.groupconten').on('show', function() {
+            $('.groupcontent').on('show.bs.collapse', function() {
         		BLSEARCH.SEARCHPAGE.ensureGroupResultsLoaded(isDocsGrouped, '#' + $(this).attr('id'));
             });
         });

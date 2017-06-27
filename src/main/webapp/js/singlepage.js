@@ -429,13 +429,13 @@ var SINGLEPAGE = {};
 				var width = size * 100 / summary.largestGroupSize;
 		        
 		        html.push("<tr><td>", idDisplay, "</td>",
-	                "<td><div class='progress progress-", prCls, "' data-toggle='collapse' data-target='#", idPrefix, i, "'>",
-	                "<div class='bar' style='width: ", width, "%;'>", size, "</div></div>",
+	                "<td><div class='progress' data-toggle='collapse' data-target='#", idPrefix, i, "' style='cursor:pointer;'>",
+	                "<div class='progress-bar progress-bar-", prCls, "' style='width: ", width, "%;'>", size, "</div></div>",
 	                "<div class='collapse groupcontent' id='", idPrefix, i, "' data-group='", identity, "'>",
 	                "<div class='inline-concordance'>",
-	                "<a class='btn btn-link' href='#' onclick=\"return SINGLEPAGE.showDetailedGroup('", idPrefix, i, "');\">",
+	                "<a class='btn btn-sm btn-link' href='#' onclick=\"return SINGLEPAGE.showDetailedGroup('", idPrefix, i, "');\">",
 	                "&#171; View detailed concordances in this group</a> - ",
-	                "<a class='btn btn-link' href='#' onclick=\"return SINGLEPAGE.getGroupContent('", idPrefix, i, "');\">",
+	                "<a class='btn btn-sm btn-link' href='#' onclick=\"return SINGLEPAGE.getGroupContent('", idPrefix, i, "');\">",
 	                "Load more concordances...</a></div></div></td></tr>");
 			}
 	    } else {
@@ -448,7 +448,7 @@ var SINGLEPAGE = {};
 	    $('#results' + typeCap + 'sGrouped').show();
 	    skipResultsFade = false;
 	    replaceTableBodyContent(type + "sGroupedTable", html.join(""), !skipResultsFade, function () {
-			$('.groupcontent').on('show', function() {
+			$('.groupcontent').on('show.bs.collapse', function() {
 	    		ensureGroupResultsLoaded(this.id);
 	        });
 	    });
@@ -560,7 +560,7 @@ var SINGLEPAGE = {};
 		        
 		        html.push("<tr><td><a target='_blank' href='", url, "'>", linkText, "</a><br/>",
 		        		snippets[0],
-                        "<a class='btn btn-mini green' target='_blank' href='", url,
+                        "<a class='green btn btn-xs btn-default' target='_blank' href='", url,
                         "'>View document info</a>",
                         "</td><td>", date, "</td><td>", numberOfHits, "</td></tr>");
 			}
@@ -645,6 +645,9 @@ var SINGLEPAGE = {};
 					param[prop] = value;
 				}
 			}
+		} else if (currentQueryType == "advanced") {
+			hasPattern = true;
+			param["patt"] = $('#querybuilder').data('builder').getCql();
 		} else {
 			hasPattern = true;
 			param["patt"] = $("#querybox").val();
@@ -832,12 +835,17 @@ var SINGLEPAGE = {};
 		$(".sortNumHits").click(function () { return changeSort("numhits"); });
 		
 		// Keep track of the current query type tab
-		$('a.querytype[data-toggle="tab"]').on('shown', function (e) {
+		$('a.querytype[data-toggle="tab"]').on('shown.bs.tab', function (e) {
 			currentQueryType = e.target.hash.substr(1);
 		});
 		
+		// Rescale the querybuilder container when it's selected
+		$('a.querytype[href="#advanced"').on('shown.bs.tab hide.bs.tab', function(e) {
+			$('#searchContainer').toggleClass('col-md-6');			
+		});
+		
 		// React to the selected results tab
-		$('#contentTabs a[data-toggle="tab"]').on('shown', function (e) {
+		$('#contentTabs a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
 			if (updatingPage) {
 				//alert('ignore tab shown');
 				return;
@@ -895,6 +903,16 @@ var SINGLEPAGE = {};
 			}
 			$(".pagination").toggle(tab == "hits" || tab == "docs");
 
+		});
+		
+		// Init the querybuilder
+		var $queryBuilder = $('#querybuilder'); // querybuilder container
+		var queryBuilderInstance = querybuilder.createQueryBuilder($queryBuilder);
+
+		// And copy over the generated query to the manual field when changes happen
+		var $queryBox = $('#querybox'); //cql textfield
+		$queryBuilder.on('cql:modified', function(event) {
+			$queryBox.val(queryBuilderInstance.getCql()); 
 		});
 	});
 	
@@ -985,12 +1003,12 @@ var SINGLEPAGE = {};
         			for (var i = 0; i < hits.length; i++) {
         				var hit = hits[i];
         				var parts = snippetParts(hit);
-        		    	html.push("<div class='row-fluid '><div class='span5 text-right inline-concordance'>", 
-        		    		ELLIPSIS, " ", parts[0], "</div><div class='span2 text-center inline-concordance'><b>", parts[1],
-        		        	"</b></div><div class='span5 inline-concordance'>", parts[2], " ", ELLIPSIS, "</div></div>");
+        		    	html.push("<div class='clearfix'><div class='col-xs-5 text-right inline-concordance'>", 
+        		    		ELLIPSIS, " ", parts[0], "</div><div class='col-xs-2 text-center inline-concordance'><b>", parts[1],
+        		        	"</b></div><div class='col-xs-5 inline-concordance'>", parts[2], " ", ELLIPSIS, "</div></div>");
         			}
         	    } else {
-        	    	html = ["<div class='row-fluid'>ERROR</div>"];
+        	    	html = ["<div class='col-xs-12'>ERROR</div>"];
         	    }
     	    } else {
     	    	totalGroupResults[id] = data.summary.numberOfDocsRetrieved;
@@ -1001,12 +1019,12 @@ var SINGLEPAGE = {};
         				var doc = docs[i];
         				var title = doc.docInfo.title; //@@@ docFields
         		        var hits = doc.numberOfHits;
-        		    	html.push("<div class='row-fluid'><div class='span10 inline-concordance'>",
-        		    		"<b>", title, "</b></div><div class='span2 inline-concordance'>", hits,
+        		    	html.push("<div class='clearfix'><div class='col-xs-10 inline-concordance'>",
+        		    		"<b>", title, "</b></div><div class='col-xs-2 inline-concordance'>", hits,
         		    		"</div></div>");
         			}
         	    } else {
-        	    	html = ["<div class='row-fluid'>ERROR</div>"];
+        	    	html = ["<div class='clearfix'><div class='col-xs-12'>ERROR</div></div>"];
         	    }
     	    }
     	    element.append(html.join(""));

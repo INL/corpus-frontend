@@ -1,7 +1,9 @@
             </div>
             <hr>
 			
-			<footer>
+
+
+			     <footer class="pull-left"> 
                 <p>Dutch Language Institute Corpus Search Interface v1.1 &copy; <a href="http://www.ivdnt.org">IvdNT</a> 2013-2017</p>
             </footer>
 

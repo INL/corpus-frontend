@@ -6,6 +6,8 @@ var BLSEARCH = {};
 
 (function () {
 
+	"use strict";
+	
 	// Join an array of strings, escaping any glue characters that occur in the values
 	// (also see safeSplit in singlepage.js)
 	function safeJoin(values) {
@@ -125,7 +127,7 @@ var BLSEARCH = {};
 		function updateFilterOverview() {
 			var overview = "";
 			BLSEARCH.filtersSinglePage = {};
-			fromToDone = {};
+			var fromToDone = {};
 			for(var i = 0; i < ar_ActiveFilters.length; i++) {
 				if (overview.length > 0)
 					overview += "; ";

@@ -1,0 +1,108 @@
+.bl-selectpicker-hide-caret {
+	padding-right:10px!important;
+	padding-bottom: 3px;
+	border-bottom-width:3px;
+
+	border-bottom-color: black;
+	border-bottom-style: solid;
+}.bl-selectpicker-hide-caret:hover {
+	border-bottom-color: ghostwhite;
+}.bl-selectpicker-hide-caret .bs-caret {
+	display:none!important;
+}
+
+.bl-no-border-radius {
+	border-radius: 0px;
+}
+.bl-no-border-radius-right {
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+}
+.bl-no-border-radius-left {
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
+}
+
+.bl-token-container {
+	display: flex;
+	flex-direction: row;
+	overflow-x: auto;
+}
+
+.bl-token {
+	margin: 20px 20px 20px 0px;
+	min-width: 350px;
+	display: table;
+}.bl-token .panel-heading {
+	/* 	Use tables to make width derived from panel-body, 
+		so that text contents do not control the width of the entire panel */
+	display: table-caption;
+	border-bottom-width: 0px;
+}.bl-token .panel-body {
+	/* padding is controlled by the per-tab contents */
+	padding: 0px;
+}
+.bl-token-attribute-group {
+	padding: 0px;
+	/* 	No margin-top here, as the topmost group does not require spacing above it
+		Spacing is instead done in all subgroups, which also have the well class */
+	display: flex;
+	flex-direction: column;
+}
+.bl-token-attribute-group.well {
+	padding: 3px 8px 8px 8px;
+	margin-top: 6px;
+	margin-bottom: 0;
+	box-shadow: 0px 0.5px 2px black;
+}
+.bl-token-attribute {
+	margin-top: 6px;
+	display: flex;
+	align-items: center;
+}.bl-token-attribute .bootstrap-select {
+	/*width: auto!important;*/
+}
+.bl-token-attribute-group-label {
+	display: flex;
+	justify-content: center;
+	margin-top: 6px;
+	margin-left: auto;
+	margin-right: auto;
+	font-weight: 600;
+}
+
+.bl-token-attribute-group-create-token {
+	margin-top: 10px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.bl-token .nav-tabs>li:first-child>a {
+	border-left: none!important;
+}
+
+.bl-token-create {
+	height: 0%;
+	margin: 20px 20px 20px 0px;
+}
+
+.bl-sort-handle {
+	opacity: 0.5;
+}.bl-token .panel-heading>.bl-sort-handle {
+	vertical-align: middle;
+}
+.bl-sort-placeholder-token {
+	background-color: lightgrey;
+	margin: 0px 20px 0px 0px;
+	min-width: 345px;
+}
+
+/* Arrow up and down inside toggle collapse buttons */
+.bl-collapse-button.collapsed:before {
+	font-family: 'Glyphicons Halflings';
+	content: "\e259";
+}
+.bl-collapse-button:before {
+	font-family: 'Glyphicons Halflings';
+	content: "\e260";
+}

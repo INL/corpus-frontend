@@ -242,28 +242,25 @@ var SINGLEPAGE = {};
 							to = "";
 						$("#" + name + "__from").val(from);
 						$("#" + name + "__to").val(to);
-					} else if ($("#" + name + "-select").length > 0) {
-						// Multiselect
-						var values = SINGLEPAGE.safeSplit(value);
-						var selOpts = {};
-						for (var i = 0; i < values.length; i++) {
-							selOpts[values[i]] = true;
-						}
-						$("#" + name + "-select option").each(function () {
-							var b = !!selOpts[this.value];
-							$(this).prop("selected", b);
-						});
-						BLSEARCH.SEARCHPAGE.updateMultiselectDescription(name);
 					} else {
-						// Text or regular select
-						$("#" + name).val(value);
-					}
+						// It's a regular single-element input 
+						var $input = $('#' + name);
+						
+						// If it's a selectpicker we need to set values through their api, or the display won't update
+						if ($input.hasClass('selectpicker')) {
+							// Can always pass selected values as an array using selectpicker
+							var values = SINGLEPAGE.safeSplit(value);
+							$input.selectpicker('val', values)
+						} else {
+							// Regular input field, set as normal. This works even for for input type select
+							$input.val(value);
+						}
+					} 
 				}
 			}
 			
 			// Show the filters for filled-in fields
 			BLSEARCH.SEARCHPAGE.checkAllFilters();
-			BLSEARCH.SEARCHPAGE.updateAllMultiselectDescriptions();
 			
 			// Sort/group
 			//----------------------------------------------------------------

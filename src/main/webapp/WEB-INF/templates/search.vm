@@ -9,10 +9,10 @@
 					#set ($multivalues = $responseObject.getParameterValuesAsList($docfield.getSearchField(), ""))					
 	    			#if($docfield.getType() == "multiselect")
 				<div class="col-xs-12">
-	        		<select id="$docfield.getSearchField()-select" name="$docfield.getSearchField()" placeholder="$docfield.getName()" multiple class="multiselect forminput">
+	        		<select id="$docfield.getSearchField()" name="$docfield.getSearchField()" placeholder="$docfield.getName()" multiple class="selectpicker forminput">
 	    			#else
 	    		<div class="col-xs-5">
-	        		<select id="$docfield.getSearchField()" name="$docfield.getSearchField()" placeholder="$docfield.getName()" class="forminput form-control">
+	        		<select id="$docfield.getSearchField()" name="$docfield.getSearchField()" title="$docfield.getName()" class="selectpicker forminput">
 					#end
 
 	    			#foreach($pair in $docfield.getValidValues())
@@ -27,11 +27,6 @@
 	                    <option value="$selectvalue" $!selected>$pair.getDescription()</option>
 	    			#end
 	    			</select>
-
-	    			#if($docfield.getType() == "multiselect")
-	    			<div class='multiselect-hint' id="$docfield.getSearchField()-hint">(to select multiple options, use Ctrl+click)</div>
-	    			<input id="$docfield.getSearchField()-input" class='multiselect' type='text' />
-					#end
     			</div>
     		#else
     			#if($docfield.getType() == "date")

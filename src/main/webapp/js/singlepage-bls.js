@@ -20,7 +20,8 @@ var BLS = {};
 			errorFunc = SINGLEPAGE.showBlsError;
 
 		function filterQuery(name, value) {
-			if ($("#" + name + "-select").length > 0) {
+			var $element = $('#' + name); 
+			if ($element.hasClass('selectpicker') &&  typeof $element.attr('multiple') !== typeof undefined && $element.attr('multiple') !== false) {
 				// Multiselect. Quote values and replace glue characters with
 				// spaces.
 				var values = SINGLEPAGE.safeSplit(value)

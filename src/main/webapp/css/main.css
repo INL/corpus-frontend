@@ -216,18 +216,6 @@ small {
 	margin-left: 0px;
 }
 
-/* Hide select initially (show on focus) */
-select[multiple].multiselect {
-	display: none;
-	margin-bottom: 5px;
-}
-
-.multiselect-hint {
-	display: none;
-	font-style: italic;
-	font-size: 90%;
-}
-
 .activeLink {
 	background-color: #FFFF00;
 }

@@ -23,62 +23,6 @@ var BLSEARCH = {};
 	
 	// Lucene query filters for active metadata filter fields
 	BLSEARCH.filtersSinglePage = {};
-	
-	// Make our multi-select dropdown lists work
-	//--------------------------------------------------------------------
-	function setUpMultiSelectExpanders() {
-		
-		// If the input gains focus, show and focus the multiselect instead
-		$('input.multiselect').focusin(function () {
-	        var name = this.id.split(/-/)[0];
-	        $('#' + name + '-select')
-	            .show()
-	            .focus();
-	        $('#' + name + '-hint').show();
-	        $(this).hide();
-	    });
-
-		// Update description of selected options in input field
-	    function updateMultiselectDescription(name) {
-	        var opts = $("#" + name + "-select option:selected");
-	        var desc = "";
-	        for (var i = 0; i < opts.length; i++) {
-	            if (desc.length > 0)
-	                desc += ", ";
-	            desc += opts[i].innerHTML;
-	        }
-	        $('#' + name + '-input')
-	        	.val(desc)
-	        	.show();
-	    }
-	    SEARCHPAGE.updateMultiselectDescription = updateMultiselectDescription;
-	    
-		// If the multiselect loses focus, hide it and update the input
-		$('select.multiselect')
-			.focusout(function () {
-		        var name = this.id.split(/-/)[0];
-		        // We use a timeout because we want the click to register
-		        // before the page reflows
-		        var that = this;
-		        setTimeout(function () {
-			        updateMultiselectDescription(name);
-			        $(that).hide();
-			        $('#' + name + '-hint').hide();
-		        }, 100);
-		    })
-		
-		// Update the text fields for all multiselects
-		function updateAllMultiselectDescriptions() {
-			$('select.multiselect')
-			    .each(function (index, sel) {
-			    	// Set description of initially selected options
-			        var name = sel.id.split(/-/)[0];
-			    	updateMultiselectDescription(name);
-			    });
-		}
-		updateAllMultiselectDescriptions();
-		SEARCHPAGE.updateAllMultiselectDescriptions = updateAllMultiselectDescriptions;
-	}
 
 	// Make sure we always see an overview of our specified filters
 	//--------------------------------------------------------------------
@@ -192,7 +136,7 @@ var BLSEARCH = {};
 	}
     
 	SEARCHPAGE.filtersSetup = function () {
-		setUpMultiSelectExpanders();
+//		setUpMultiSelectExpanders();
 		setUpFilterOverview();
 	};
 	

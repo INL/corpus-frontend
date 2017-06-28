@@ -155,6 +155,7 @@ var SINGLEPAGE = {};
 	};
     
 	// How to show the results for a URL
+	// This is called whenever the URL has changed and we need to update the page contents to match the URL.
 	function updatePage() {
 		updatingPage = true;
 		try {
@@ -617,6 +618,7 @@ var SINGLEPAGE = {};
 			;
 	}
 	
+	// Get the URL parameters for the frontend URL.
 	function getParam() {
 		var param = {};
 			

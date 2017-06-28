@@ -10,6 +10,8 @@ var BLSEARCH = {};
 	
 	// Join an array of strings, escaping any glue characters that occur in the values
 	// (also see safeSplit in singlepage.js)
+	// This is done to make sure regex characters in metadata Lucene query values won't create problems
+	// The joined value is only used in frontend URLs and is split again before being sent to BLS.
 	function safeJoin(values) {
 		for (var i = 0; i < values.length; i++) {
 			values[i] = values[i].replace(/\$/, "$$").replace(/\|/, "$P");
@@ -19,6 +21,7 @@ var BLSEARCH = {};
 
 	var SEARCHPAGE = BLSEARCH.SEARCHPAGE = {};
 	
+	// Lucene query filters for active metadata filter fields
 	BLSEARCH.filtersSinglePage = {};
 	
 	// Make our multi-select dropdown lists work
@@ -85,7 +88,7 @@ var BLSEARCH = {};
 		var ar_ActiveFilters = [];
 
 		// Add/update element in the list of filter elements
-		function addToList(element) {
+		function addToActiveFilterList(element) {
 			
 			// Get filter element name, including the tab name
 			function getElementName(element) {
@@ -124,6 +127,8 @@ var BLSEARCH = {};
 		}
 		
 		// Update the filter description using the active filter value list
+		// NOTE: also updates BLSEARCH.filterSinglePage, which are Lucene queries that will
+		//       eventually be sent to BlackLab Server.
 		function updateFilterOverview() {
 			var overview = "";
 			BLSEARCH.filtersSinglePage = {};
@@ -162,17 +167,21 @@ var BLSEARCH = {};
 		$(".forminput").change(function () {
 			var element = $(this);
 			
-			addToList(element);
+			addToActiveFilterList(element);
 			
 			updateFilterOverview();
 		});
 		
+		// Check which metadata fields are filled in, and update the display
+		// and array of Lucene queries accordingly.
+		// Called when e.g. the user first arrives on the page, or uses the back/forward
+		// button, etc. because we don't know what fields are filled in at that time.
 		function checkAllFilters() {
 			// for each input item that already has items selected
 			$(".forminput").each(function (index) {
 				var element = $(this);
 				
-				addToList(element);
+				addToActiveFilterList(element);
 			});
 			updateFilterOverview();
 		}

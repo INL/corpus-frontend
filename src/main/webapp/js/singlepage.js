@@ -288,7 +288,7 @@ var SINGLEPAGE = {};
 			// Select the right tabs
 			if (param.patt) {
 				// CQL Query
-				$('#searchTabs li:eq(1) a').tab('show');
+				$('#searchTabs li:eq(2) a').tab('show');
 				$('#querybox').val(param.patt);
 			} else {
 				// Simple query

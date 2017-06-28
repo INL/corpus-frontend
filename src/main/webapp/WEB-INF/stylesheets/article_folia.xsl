@@ -13,7 +13,7 @@
     <xsl:template match="folia:metadata" />
     
     <xsl:template match="text">
-        <div class="span12 contentbox">
+        <div class="col-xs-12 contentbox">
             <ul class="nav nav-tabs" id="articletabs">
                 <li class="active">
                     <a href="#text" data-toggle="tab">Text</a>

@@ -90,7 +90,11 @@
 	                </button>
             	</div>
             	
+				#if($websiteconfig.getLogo().length() > 0)
             	<div class="navbar-collapse collapse booklogo-margin">
+				#else
+				<div class="navbar-collapse collapse">
+				#end        	
                     <ul class="nav navbar-nav">
                         #foreach($link in $websiteconfig.getLinks())
 							<li><a href="$link.get('href')"#if($link.get('newWindow')) target="_blank"#else#end>$link.get('name')</a></li>

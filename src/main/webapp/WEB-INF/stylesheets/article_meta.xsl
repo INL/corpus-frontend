@@ -12,34 +12,35 @@
 	<xsl:template match="docPid|docFields" />
 	
 	<xsl:template match="docInfo">
-		<div class="span12 contentbox">
+		<div class="col-xs-12 contentbox">
 			<h2>
 				<xsl:value-of select="*[name()=$title_name]" />
 			</h2>
-			<div class="span10">
-				<div class="span2">
+			
+			<div class="row">
+				<div class="col-xs-3 col-lg-2">
 					<i>Hits in document:</i>
 				</div>
-				<div class="span7" id="divHitsInDocument">
+				<div class="col-xs-9 col-lg-10" id="divHitsInDocument">
 					<!-- will be filled in from article.js -->
 				</div>
-			</div>
-			<xsl:for-each select="child::*[name()!='mayView']">
-				<div class="span10">
-					<div class="span2">
+
+				<xsl:for-each select="child::*[name()!='mayView']">
+					<div class="col-xs-3 col-lg-2">
 						<i>
 						<!-- <xsl:value-of select="local-name()" /> -->
 						<xsl:call-template name="elementFriendlyName" />:
 						</i>
 					</div>
-					<div class="span7">
+					<div class="col-xs-9 col-lg-10">
 						<xsl:value-of select="." />
 						<xsl:if test="../mayView/text() = 'true' and local-name() = 'lengthInTokens' and number(text()) > 5000">
 						(first 5000 tokens shown)
 						</xsl:if>
 					</div>
-				</div>
-			</xsl:for-each> 
+					<div class="clearfix"></div>
+				</xsl:for-each> 
+			</div>
 		</div>
 	</xsl:template>
 

@@ -323,10 +323,10 @@ var corpora = {};
 	    	dropZone: $("#drop-zone"),
 	    	// This seems to have no effect!
 	    	acceptFileTypes: /(\.|\/)(xml|zip|t?gz)$/i,
-	    	maxFileSize: 4000000, // 4 MB
+	    	maxFileSize: 40000000, // 4 MB
 	        dataType: "json",
 	        done: function(e, data) {
-	            $(".progress .bar").text("'" + data.files[0].name + "': Done");
+	            $(".progress .progress-bar").text("'" + data.files[0].name + "': Done");
 				refreshCorporaList(function () {
 					showSuccess("Data added to \"" + uploadToCorpus.displayName + "\".", true);
 		        	$("#upload-area").show();
@@ -334,9 +334,9 @@ var corpora = {};
 				});
 	        },
 	        fail: function(e, data) {
-	        	var data = data.jqXHR.responseJSON;
+	        	data = data.jqXHR.responseJSON || data;
 				var msg;
-				if (data && data.error)
+				if (data.error)
 					msg = data.error.message;
 				else
 					msg = data.textStatus + "; " + data.errorThrown;
@@ -350,14 +350,14 @@ var corpora = {};
 	        },
 		    progressall: function(e, data) {
 		        var progress = parseInt(data.loaded / data.total * 100, 10);
-		        var message = $(".progress .bar").text().replace(/(\([0-9]+%\) )?...$/, "(" + progress + "%) ...");
+		        var message = $(".progress .progress-bar").text().replace(/(\([0-9]+%\) )?...$/, "(" + progress + "%) ...");
 		        if (progress >= 99) {
 		        	message = "Indexing data...";
 		        }
-		        $(".progress .bar")
+		        $(".progress .progress-bar")
 		        	.css("width", progress + "%")
 		        	.attr("aria-valuenow", progress);
-	        	$(".progress .bar").text(message);
+	        	$(".progress .progress-bar").text(message);
 		    },
 	        add: function(e, data) {
 	        	$("#upload-area").hide();
@@ -365,11 +365,11 @@ var corpora = {};
 	        	$("#waitDisplay").show();
 	        	data.url = CORPORA.blsUrl + uploadToCorpus.name + "/docs/";
 	        	data.data = new FormData();
-   		        data.data.append("data", data.files[0], data.files[0].name);
+   		        data.data.append("data", data.files[0]/*, data.files[0].name*/);
    		        $(".progress").show();
    		        $("#uploadSuccessDiv").hide();
    		        $("#uploadErrorDiv").hide();
-	            data.context = $(".progress .bar").css("width", "0%").attr("aria-valuenow", 0).
+	            data.context = $(".progress .progress-bar").css("width", "0%").attr("aria-valuenow", 0).
 	            	text("Uploading '" + data.files[0].name + "' ...");
 	            data.submit();
 	        },

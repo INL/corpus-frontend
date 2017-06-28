@@ -85,7 +85,7 @@
 -->
 
 
-<form onsubmit="return SINGLEPAGE.searchSubmit();">
+<form onsubmit="return SINGLEPAGE.searchSubmit();" class="clearfix">
 <div id='searchFormDiv' class="col-xs-12 contentbox">
 	#if($corpusOwner)<a href='..'><i class="fa fa-arrow-left"></i> back to my corpora</a>#end
 	<h2><span id='corpusNameMain'></span> #if($corpusOwner)<span id='corpusOwner'>($corpusOwner)</span>#end</h2>
@@ -116,9 +116,8 @@
 							<div class="col-xs-12 col-md-9">
 								<input type="text" class="form-control" data-target="#$wordfield.getSearchField()" data-toggle="collapse" id="$fieldid" name="$wordfield.getSearchField()" placeholder="$wordfield.getName()"/>
 							</div>
-
-							<div class="clearfix visible-xs visible-sm visible-md visible-lg"></div>
-
+							
+							#if($wordfield.isSensitive() || $wordfield.isFuzzy())
 							<div class="collapse col-xs-12 col-sm-offset-3 col-sm-9" id="$wordfield.getSearchField()">
 								#if($wordfield.isSensitive())
 								<div class="checkbox"><label><input type="checkbox" id="$fieldcaseid"> Case&nbsp;sensitive</label></div>
@@ -127,6 +126,7 @@
 								<div class="checkbox"><label><input type="checkbox" id="$fieldfuzzid" disabled> Fuzzy&nbsp;search</label></div>
 								#end
 							</div>
+							#end
 						</div>
 					#end
 
@@ -201,7 +201,7 @@
 				</div>
 				<div class="col-xs-6 text-right">
 					<strong class="vtop">Show me: </strong>
-					<select class="span2 vtop" id="resultsPerPage">
+					<select class="vtop" id="resultsPerPage">
 						<option value="20">20 results</option>
 						<option value="50">50 results</option>
 						<option value="100">100 results</option>
@@ -212,9 +212,8 @@
 		</div>
 	</div>
 </div>
-<br><br>
 
-<div id="errorDiv">
+<div id="errorDiv" class="col-xs-12 alert alert-danger">
     <h1>Error</h1>
     <p id="errorMessage"></p>
     <p>(for assistance, please contact <a href='mailto:servicedesk@ivdnt.org'>servicedesk@ivdnt.org</a>)</p>

@@ -2,6 +2,7 @@
 var SINGLEPAGE = {};
 
 (function () {
+	"use strict";
 	
 	// False: viewing (grouped) hits; true: viewing (grouped) docs
 	var viewingDocs = false;
@@ -223,44 +224,13 @@ var SINGLEPAGE = {};
 			$("input[type='text'].forminput").val("");
 			$("input[type='checkbox'].forminput").prop("checked", false);
 			
-			// Fill in fields from URL
-			for (key in param) {
-				// Metadatafields start with underscore
-				if (param.hasOwnProperty(key) && key.charAt(0) == '_') {
-					var name = key.substr(1);
-					var value = param[key];
-					
-					// Is it a range?
-					var range = value.match(/^\s*\[(\S+)\s+TO\s+(\S+)\]\s*$/);
-					if (range) {
-						// Yes, set both from and to
-						var from = range[1];
-						if (from == 0)
-							from = "";
-						var to = range[2];
-						if (to == 3000)
-							to = "";
-						$("#" + name + "__from").val(from);
-						$("#" + name + "__to").val(to);
-					} else {
-						// It's a regular single-element input 
-						var $input = $('#' + name);
-						
-						// If it's a selectpicker we need to set values through their api, or the display won't update
-						if ($input.hasClass('selectpicker')) {
-							// Can always pass selected values as an array using selectpicker
-							var values = SINGLEPAGE.safeSplit(value);
-							$input.selectpicker('val', values)
-						} else {
-							// Regular input field, set as normal. This works even for for input type select
-							$input.val(value);
-						}
-					} 
+			for (var key in param) {
+				// Metadata fields in query param begin with _ to distinguish them
+				if (param.hasOwnProperty(key) && key.charAt(0) == '_') { 
+					var filterName = key.substr(1);
+					BLSEARCH.SEARCHPAGE.setFilterValues(filterName, param[key]);
 				}
 			}
-			
-			// Show the filters for filled-in fields
-			BLSEARCH.SEARCHPAGE.checkAllFilters();
 			
 			// Sort/group
 			//----------------------------------------------------------------
@@ -324,7 +294,7 @@ var SINGLEPAGE = {};
 							"dateField": "date",
 							"pidField": "pid",
 						};
-						for (field in docFields) {
+						for (var field in docFields) {
 							if (docFields.hasOwnProperty(field))
 								corpusDocFields[field] = docFields[field];
 						}
@@ -371,7 +341,7 @@ var SINGLEPAGE = {};
 					}, 1);
 				}
 				
-				BLS.search(param, updatePageWithBlsData, function (error) {
+				BLS.search(getParam(), updatePageWithBlsData, function (error) {
 					stillSearching = false;
 					SINGLEPAGE.showBlsError(error);
 				});
@@ -581,22 +551,16 @@ var SINGLEPAGE = {};
 	}
 	
 	function makeQueryString(param) {
-		var qs = "";
-		for (var key in param) {
-			if (param.hasOwnProperty(key)) {
-				if (qs.length > 0)
-					qs += "&";
-				qs += key + "=" + encodeURIComponent(param[key]);
-			}
-		}
-		return qs;
+		
+		var modifiedparams = $.extend(true, {}, param);
+		$.each(modifiedparams.filters, function(index, filter) {
+			modifiedparams["_" + filter.filterName] = filter.values;
+		});
+		
+		delete modifiedparams.filters;
+		
+		return new URI().search(modifiedparams).query();
 	}
-	
-	/*
-	function updateWordPropAndFilter() {
-		//@@@
-	}
-	*/
 	
 	function makeWildcardRegex(original) {
 		return original.replace(/(\.|\(|\))/g, "\\$1").replace(/\*/g, ".*").replace(/\?/g, ".");
@@ -615,7 +579,9 @@ var SINGLEPAGE = {};
 			;
 	}
 	
-	// Get the URL parameters for the frontend URL.
+	// Get url parameter description
+	// These paremeters are shared between frontend and blacklab-server 
+	// Though they need to be formatted into a query string still
 	function getParam() {
 		var param = {};
 			
@@ -655,15 +621,8 @@ var SINGLEPAGE = {};
 		// Metadata fields
 		//----------------------------------------------------------------
 		
-		// Add parameters for the metadata search fields
-		if (Object.keys(BLSEARCH.filtersSinglePage).length > 0) {
-			for (key in BLSEARCH.filtersSinglePage) {
-				if (BLSEARCH.filtersSinglePage.hasOwnProperty(key)) {
-					var value = BLSEARCH.filtersSinglePage[key];
-					param["_" + key] = value;
-				}
-			}
-		}
+		// Copy over metadata filters (copy so we don't accidentally modify originals)
+		$.extend(true, param, {"filters": BLSEARCH.SEARCHPAGE.getActiveFilters()});
 		
 		// Misc. parameters
 		//----------------------------------------------------------------
@@ -759,7 +718,7 @@ var SINGLEPAGE = {};
 		toggleWaitAnimation(false);
 		getCorpusInfo();
 
-		BLSEARCH.SEARCHPAGE.filtersSetup();
+		BLSEARCH.SEARCHPAGE.init();
 		
 		// Before any searches are shown, hide all the results elements.
 		$('#resultsTabs').hide(); // No results yet, don't show the empty results tabs.
@@ -923,17 +882,8 @@ var SINGLEPAGE = {};
     
 	// Get a map of the GET URL variables
 	//--------------------------------------------------------------------
-    getUrlVariables = function () {
-	    var query = location.search.substring(1);
-	    if (query.length == 0)
-	    	return {};
-	    var vars = query.split("&");
-        var urlVariables = {};
-	    for (var i = 0; i < vars.length; i++) {
-	    	var pair = vars[i].split("=");
-	    	urlVariables[pair[0]] = decodeURIComponent(pair[1]);
-	    }
-	    return urlVariables;
+    function getUrlVariables() {
+    	return new URI().search(true);
 	};
 	
     

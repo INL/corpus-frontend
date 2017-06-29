@@ -45,7 +45,6 @@
 			<SearchField>autograaf</SearchField>
 			<DisplayField>autograaf</DisplayField>
 			<Values multiple="true">
-				<Value value=""></Value>
 				<Value value="autograph">Autograph</Value>
 				<Value value="non-autograph">Non-autograph</Value>
 				<Value value="uncertain">Uncertain</Value>
@@ -71,7 +70,6 @@
 			<SearchField>afz_geslacht</SearchField>
 			<DisplayField>afz_geslacht</DisplayField>
 			<Values multiple="true">
-				<Value value=""></Value>
 				<Value>male</Value>
 				<Value>female</Value>
 				<Value>unknown</Value>
@@ -83,7 +81,6 @@
 			<SearchField>afz_klasse</SearchField>
 			<DisplayField>afz_klasse</DisplayField>
 			<Values multiple="true">
-				<Value value=""></Value>
 				<Value>low</Value>
 				<Value>middle-low</Value>
 				<Value>middle-high</Value>
@@ -97,7 +94,6 @@
 			<SearchField>afz_geb_lftcat</SearchField>
 			<DisplayField>afz_geb_lftcat</DisplayField>
 			<Values multiple="true">
-				<Value value=""></Value>
 				<Value>&lt;30</Value>
 				<Value>30-50</Value>
 				<Value>&gt;50</Value>
@@ -109,7 +105,6 @@
 			<SearchField>regiocode</SearchField>
 			<DisplayField>regiocode</DisplayField>
 			<Values multiple="true">
-				<Value value=""></Value>
 				<Value>Antwerpen</Value>
 				<Value>Cara&#xEF;bisch gebied</Value>
 				<Value>Denemarken</Value>
@@ -141,7 +136,6 @@
 			<SearchField>afz_rel_tot_adr</SearchField>
 			<DisplayField>afz_rel_tot_adr</DisplayField>
 			<Values multiple="true">
-				<Value value=""></Value>
 				<Value>(ex-)husband</Value>
 				<Value>(ex-)wife</Value>
 				<Value>acquaintance</Value>
@@ -180,7 +174,6 @@
 			<SearchField>adr_loc_plaats_norm</SearchField>
 			<DisplayField>adr_loc_plaats_norm</DisplayField>
 			<Values multiple="true">
-				<Value value=""></Value>
 				<Value>Aalsmeer</Value>
 				<Value>Aalst</Value>
 				<Value>Alkmaar</Value>
@@ -307,7 +300,6 @@
 			<SearchField>adr_loc_land_norm</SearchField>
 			<DisplayField>adr_loc_land_norm</DisplayField>
 			<Values multiple="true">
-				<Value value=""></Value>
 				<Value>Belgi&#xEB;</Value>
 				<Value>China</Value>
 				<Value>Cura&#xE7;ao</Value>
@@ -341,7 +333,6 @@
 			<SearchField>adr_loc_regio_norm</SearchField>
 			<DisplayField>adr_loc_regio_norm</DisplayField>
 			<Values multiple="true">
-				<Value value=""></Value>
 				<Value>Azi&#xEB;</Value>
 				<Value>Caraibisch gebied</Value>
 				<Value>Cara&#xEF;bisch gebied</Value>
@@ -369,7 +360,6 @@
 			<SearchField>adr_loc_schip_norm</SearchField>
 			<DisplayField>adr_loc_schip_norm</DisplayField>
 			<Values multiple="true">
-				<Value value=""></Value>
 				<Value>Alida</Value>
 				<Value>Ameljaar</Value>
 				<Value>Amerika</Value>
@@ -471,7 +461,6 @@
 			<SearchField>afz_loc_plaats_norm</SearchField>
 			<DisplayField>afz_loc_plaats_norm</DisplayField>
 			<Values multiple="true">
-				<Value value=""></Value>
 				<Value>Akersloot</Value>
 				<Value>Alkmaar</Value>
 				<Value>Amsterdam</Value>
@@ -574,7 +563,6 @@
 			<SearchField>afz_loc_land_norm</SearchField>
 			<DisplayField>afz_loc_land_norm</DisplayField>
 			<Values multiple="true">
-				<Value value=""></Value>
 				<Value>Belgi&#xEB;</Value>
 				<Value>China</Value>
 				<Value>Cuba</Value>
@@ -618,7 +606,6 @@
 			<SearchField>afz_loc_regio_norm</SearchField>
 			<DisplayField>afz_loc_regio_norm</DisplayField>
 			<Values multiple="true">
-				<Value value=""></Value>
 				<Value>Azi&#xEB;</Value>
 				<Value>Cara&#xEF;bisch gebied</Value>
 				<Value>Friesland</Value>
@@ -645,7 +632,6 @@
 			<SearchField>afz_loc_schip_norm</SearchField>
 			<DisplayField>afz_loc_schip_norm</DisplayField>
 			<Values multiple="true">
-				<Value value=""></Value>
 				<Value>Aardenburg</Value>
 				<Value>Amerika</Value>
 				<Value>Arend</Value>

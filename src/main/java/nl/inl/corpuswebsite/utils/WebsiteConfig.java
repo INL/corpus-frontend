@@ -121,6 +121,13 @@ public class WebsiteConfig {
 			List<HierarchicalConfiguration> values = sub
 					.configurationsAt("Values.Value");
 
+			if (!values.isEmpty()) {
+				if (sub.getBoolean("Values[@multiple]", false))
+					fd.setType("multiselect");
+				else
+					fd.setType("select");
+			}
+
 			for (Iterator<HierarchicalConfiguration> i = values.iterator(); i
 					.hasNext();) {
 				HierarchicalConfiguration value = i.next();
@@ -130,10 +137,6 @@ public class WebsiteConfig {
 				if (description.length() == 0)
 					description = attrValue;
 				fd.addValidValue(attrValue, description);
-
-				boolean isMultiple = sub.getBoolean("Values[@multiple]", false);
-				if (isMultiple)
-					fd.setType("multiselect");
 			}
 
 			fields.add(fd);

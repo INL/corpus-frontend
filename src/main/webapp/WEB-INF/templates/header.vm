@@ -55,7 +55,7 @@
 		<script src="$pathToTop/js/jquery.fileupload.js"></script>
         <script src="$pathToTop/js/search.js"></script>
         <script src="$pathToTop/js/main.js"></script>
-		<script src="$pathToTop/js/purl.js"></script>
+		<script src="$pathToTop/js/URI.js"></script>
 		<script src="$pathToTop/js/status_check.js"></script>
 		<script src="$pathToTop/js/ajax_retriever.js"></script>
 		<script src="$pathToTop/js/mustache.js"></script>

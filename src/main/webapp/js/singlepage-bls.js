@@ -8,6 +8,8 @@ var BLS = {};
 
 (function() {
 	
+	"use strict";
+	
 	// We increment this with each query, and use it to determine if
 	// we should keep updating totals for a query, or if a new query
 	// has been started and we shouldn't update the totals for the
@@ -19,47 +21,47 @@ var BLS = {};
 		if (!errorFunc)
 			errorFunc = SINGLEPAGE.showBlsError;
 
-		function filterQuery(name, value) {
-			var $element = $('#' + name); 
-			if ($element.hasClass('selectpicker') &&  typeof $element.attr('multiple') !== typeof undefined && $element.attr('multiple') !== false) {
-				// Multiselect. Quote values and replace glue characters with
-				// spaces.
-				var values = SINGLEPAGE.safeSplit(value)
-				if (values.length > 1)
-					return name + ":(\"" + values.join("\" \"") + "\")";
-			}
-			if (value.match(/ /) && !value.match(/\[\d+ TO \d+\]/)) {
-				
-				// Convert to Lucene query, taking quoted phrases into account.
-				var resultParts = [];
-				var quotedParts = value.split(/"/);
-				var inQuotes = false;
-				for (var i = 0; i < quotedParts.length; i++) {
-					var part = quotedParts[i];
-					if (inQuotes) {
-						// Inside quotes. Add literally.
-						resultParts.push(" \"");
-						resultParts.push(part);
-						resultParts.push("\"");
-					} else {
-						// Outside quotes. Surround each word with quotes.
-						part = part.trim();
-						if (part.length > 0) {
-							var words = part.split(/\s+/);
-							resultParts.push(" \"");
-							resultParts.push(words.join("\" \""));
-							resultParts.push("\" ");
-						}
-					}
-					inQuotes = !inQuotes;
-				}
-				return name + ":(" + resultParts.join("").trim() + ")";
-				//var words = value.split(/\s+/);
-				//return name + ":(\"" + words.join("\" \"") + "\")";
-			} else
-				// Single word or date range; add literally.
-				return name + ":\"" + value + "\"";
-		}
+//		function filterQuery(name, value) {
+//			var $element = $('#' + name); 
+//			if ($element.hasClass('selectpicker') &&  typeof $element.attr('multiple') !== typeof undefined && $element.attr('multiple') !== false) {
+//				// Multiselect. Quote values and replace glue characters with
+//				// spaces.
+//				var values = SINGLEPAGE.safeSplit(value)
+//				if (values.length > 1)
+//					return name + ":(\"" + values.join("\" \"") + "\")";
+//			}
+//			if (value.match(/ /) && !value.match(/\[\d+ TO \d+\]/)) {
+//				
+//				// Convert to Lucene query, taking quoted phrases into account.
+//				var resultParts = [];
+//				var quotedParts = value.split(/"/);
+//				var inQuotes = false;
+//				for (var i = 0; i < quotedParts.length; i++) {
+//					var part = quotedParts[i];
+//					if (inQuotes) {
+//						// Inside quotes. Add literally.
+//						resultParts.push(" \"");
+//						resultParts.push(part);
+//						resultParts.push("\"");
+//					} else {
+//						// Outside quotes. Surround each word with quotes.
+//						part = part.trim();
+//						if (part.length > 0) {
+//							var words = part.split(/\s+/);
+//							resultParts.push(" \"");
+//							resultParts.push(words.join("\" \""));
+//							resultParts.push("\" ");
+//						}
+//					}
+//					inQuotes = !inQuotes;
+//				}
+//				return name + ":(" + resultParts.join("").trim() + ")";
+//				//var words = value.split(/\s+/);
+//				//return name + ":(\"" + words.join("\" \"") + "\")";
+//			} else
+//				// Single word or date range; add literally.
+//				return name + ":\"" + value + "\"";
+//		}
 
 		function getPattern(wordProp) {
 			var tokens = [];
@@ -112,17 +114,64 @@ var BLS = {};
 		var filter = "";
 		var wordProp = {};
 		var operation = "hits";
-		for (key in param) {
+		for (var key in param) {
 			if (param.hasOwnProperty(key)) {
 				var value = param[key];
 				if (key == "view" && value == "docs") {
 					operation = "docs";
-				} else if (key.charAt(0) == '_') {
-					// Metadata. Translate to BLS syntax.
-					if (filter.length > 0)
-						filter += " ";
-					filter += "+" + filterQuery(key.substr(1), value);
-				} else if ($("#" + key + "_text").length > 0) {
+				} 
+				else if (key == "filters") {
+					$.each(param[key], function(index, element) {
+						if (element.filterType === "date") {
+							filter = filter + ("+" + element.filterName + ":[" + element.values[0] + " TO " + element.values[1] + "]");
+						} else if (element.filterType === "select" || element.filterType === "multiselect") {
+							// Surround all values by quotes
+							filter = filter + ("+" + element.filterName + ":(\"" + element.values.join("\" \"") + "\")");
+						} else {
+							// Regular input field(s)
+							// Preserve all parts surrounded by quotes, and add quotes around any word not within quotes already
+							// Effectively transform 
+							//	"quoted value" not quoted value
+							// into
+							// "quoted value" "not" "quoted" "value"
+							
+							var resultParts = [];
+							
+							$.each(element.values, function(index, value) {
+								var quotedParts = value.split(/"/);
+								var inQuotes = false;
+								for (var i = 0; i < quotedParts.length; i++) {
+									var part = quotedParts[i];
+									if (inQuotes) {
+										// Inside quotes. Add literally.
+										resultParts.push(" \"");
+										resultParts.push(part);
+										resultParts.push("\"");
+									} else {
+										// Outside quotes. Surround each word with quotes.
+										part = part.trim();
+										if (part.length > 0) {
+											var words = part.split(/\s+/);
+											resultParts.push(" \"");
+											resultParts.push(words.join("\" \""));
+											resultParts.push("\" ");
+										}
+									}
+									inQuotes = !inQuotes;
+								}
+							});
+							
+							filter = filter + ("+" + element.filterName + ":(" + resultParts.join("").trim() + ")");
+						}
+					});
+				}
+//				else if (key.charAt(0) == '_') {
+//					// Metadata. Translate to BLS syntax.
+//					if (filter.length > 0)
+//						filter += " ";
+//					filter += "+" + filterQuery(key.substr(1), value);
+//				} 
+				else if ($("#" + key + "_text").length > 0) {
 					// Word property. Use to construct BLS pattern later.
 					wordProp[key] = value;
 				} else {
@@ -150,7 +199,7 @@ var BLS = {};
 			blsParam["filter"] = filter;
 
 		var url = "", totalsUrl = "";
-		for (key in blsParam) {
+		for (var key in blsParam) {
 			if (blsParam.hasOwnProperty(key)) {
 				var value = blsParam[key];
 				if (url.length > 0)
@@ -256,6 +305,6 @@ var BLS = {};
 		// Perform the actual search
 		performAjaxSearchRequest(url, successFunc);
 		
-	};
+	}
 
 })();

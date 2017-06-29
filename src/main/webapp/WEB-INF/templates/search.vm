@@ -1,51 +1,34 @@
 #macro( filterfields $fields)
 	<div class="form-horizontal">
 	#foreach($docfield in $fields)
-    	#set ($value = $responseObject.getParameterValue("${docfield.getSearchField()}"))
-        <div class="form-group"> <!-- Behaves as a .row, so every child element should have some form of .col-* -->
+        <div class="form-group filterfield" id="$docfield.getSearchField()" data-filterfield-type="$docfield.getType()"> <!-- Behaves as a .row, so every child element should have some form of .col-* -->
         	<label class="col-xs-12">$docfield.getName()</label>
         	
     		#if($docfield.restrictedInput())
-					#set ($multivalues = $responseObject.getParameterValuesAsList($docfield.getSearchField(), ""))					
-	    			#if($docfield.getType() == "multiselect")
+
 				<div class="col-xs-12">
-	        		<select id="$docfield.getSearchField()" name="$docfield.getSearchField()" placeholder="$docfield.getName()" multiple class="selectpicker forminput">
+	    			#if($docfield.getType() == "multiselect")
+	        		<select name="$docfield.getSearchField()" title="$docfield.getName()" class="selectpicker form-control forminput" multiple>
 	    			#else
-	    		<div class="col-xs-5">
-	        		<select id="$docfield.getSearchField()" name="$docfield.getSearchField()" title="$docfield.getName()" class="selectpicker forminput">
+	        		<select name="$docfield.getSearchField()" title="$docfield.getName()" class="selectpicker form-control forminput">
 					#end
 
 	    			#foreach($pair in $docfield.getValidValues())
-	    				#set($selected = '')
-						#set($selectvalue = '')
-						#if($pair.getValue().length() > 0)
-							#set($selectvalue = "${pair.getValue()}")
-						#end
-	    				#if($multivalues.contains("${pair.getValue()}"))
-	    					#set($selected = 'selected')
-	    				#end
-	                    <option value="$selectvalue" $!selected>$pair.getDescription()</option>
+	                    <option value="$pair.getValue()">$pair.getDescription()</option>
 	    			#end
 	    			</select>
     			</div>
-    		#else
-    			#if($docfield.getType() == "date")
-    				#set ($fieldName = $docfield.getSearchField())
-    				#set ($fieldFrom = "${fieldName}__from")
-    				#set ($fieldTo = "${fieldName}__to")
-    				#set ($valueFrom = $responseObject.getParameterValue($fieldFrom))
-    				#set ($valueTo = $responseObject.getParameterValue($fieldTo))
-    				<div class="col-xs-4">
-    					<input type="text" id="$docfield.getSearchField()__from" name="$docfield.getSearchField()__from" value="$!valueFrom" placeholder="From" class="form-control forminput" />
-    				</div>
-    				<div class="col-xs-4">
-    					<input type="text" id="$docfield.getSearchField()__to" name="$docfield.getSearchField()__to" value="$!valueTo" placeholder="To" class="form-control forminput" />
-    				</div>
-    			#else
+    		#elseif($docfield.getType() == "date")
+				<div class="col-xs-4">
+					<input type="text" name="$docfield.getSearchField()__from" placeholder="From" class="form-control forminput" />
+				</div>
+				<div class="col-xs-4">
+					<input type="text" name="$docfield.getSearchField()__to" placeholder="To" class="form-control forminput" />
+				</div>
+			#else
     			<div class="col-xs-12">
-    				<input type="text" id="$docfield.getSearchField()" name="$docfield.getSearchField()" value="$!value" placeholder="$docfield.getName()" class="form-control forminput" />
+    				<input type="text" name="$docfield.getSearchField()" placeholder="$docfield.getName()" class="form-control forminput" />
     			</div>
-    			#end
     		#end
         	
         </div>
@@ -183,7 +166,7 @@
 			#end
 			#end
 			<div class="row">
-				<div id="filteroverview" class="col-xs-5"></div>
+				<div id="filteroverview" class="col-xs-6"></div>
 			</div>
 		</div>	
 		
@@ -195,13 +178,13 @@
 					<a href="?" onclick="return SINGLEPAGE.resetPage();" class="btn btn-default btn-lg" id="resetbutton">Reset</a>
 				</div>
 				<div class="col-xs-6 text-right">
-					<strong class="vtop">Show me: </strong>
-					<select class="vtop" id="resultsPerPage">
+					<label for="resultsPerPage">Show me:</label>
+					<select class="selectpicker" data-width="auto" id="resultsPerPage">
 						<option value="20">20 results</option>
 						<option value="50">50 results</option>
 						<option value="100">100 results</option>
 						<option value="200">200 results</option>
-					</select> 
+					</select>
 				</div>
 			</div>
 		</div>

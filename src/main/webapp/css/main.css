@@ -160,10 +160,6 @@ table.documents td {
 	margin-bottom: 2px;
 }
 
-.vtop, .checkbox.inline.vtop {
-	vertical-align: top;
-}
-
 .textchecks {
 	top: -15px;
 }

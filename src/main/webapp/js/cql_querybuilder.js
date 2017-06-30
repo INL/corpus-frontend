@@ -1,4 +1,5 @@
 // Probably need to name this properly instead of being so generic
+
 window.querybuilder = (function() {
 	"use strict";
 
@@ -12,111 +13,111 @@ window.querybuilder = (function() {
 
 		token: {
 			template: 
-				'<div class="panel panel-danger bl-token" id="{{currentId}}">\
-					{{>head_root}}\
-					{{>body_root}}\
-				</div>',
+				'<div class="panel panel-danger bl-token" id="{{currentId}}">' +
+					'{{>head_root}}' +
+					'{{>body_root}}' +
+				'</div>',
 
 			partials: {
 				head_root: 
-					'<div class="panel-heading clearfix">\
-						{{>head_handle}}\
-						{{>head_collapseButton}}\
-						{{>head_cqlPreview}}\
-					</div>',
+					'<div class="panel-heading clearfix">' +
+						'{{>head_handle}}' +
+						'{{>head_collapseButton}}' +
+						'{{>head_cqlPreview}}' +
+					'</div>',
 				head_handle:
 					'<span class="glyphicon glyphicon-sort bl-sort-handle" style="margin-right:5px;"></span>',
 				head_collapseButton:
 					'<button type="button" class="btn btn-default pull-right bl-collapse-button" data-toggle="collapse" data-target="#{{currentId}}_panel_body" style="margin-left:5px;"></button>',
 				head_cqlPreview:
-					'<span id="{{currentId}}_cql_preview">This is a long string to test width,\
-					but generated cql here [word="test" attribute="value"]{1,2}\
-					now with even more text so we span onto line number 3 or maybe even 4 and this will have to work</span>',
+					'<span id="{{currentId}}_cql_preview">This is a long string to test width,' +
+					'but generated cql here [word="test" attribute="value"]{1,2}' +
+					'now with even more text so we span onto line number 3 or maybe even 4 and this will have to work</span>',
 			
 
 				body_root:
-					'<div class="panel-body collapse in" id="{{currentId}}_panel_body">\
-						{{>body_tab_header}}\
-						{{>body_tab_container}}\
-					</div>',
+					'<div class="panel-body collapse in" id="{{currentId}}_panel_body">' +
+						'{{>body_tab_header}}' +
+						'{{>body_tab_container}}' +
+					'</div>',
 				
 				body_tab_header:
-					'<ul class="nav nav-tabs">\
-						<li class="active"><a data-toggle="tab" href="#{{currentId}}_tab_attributes">attributes</a></li>\
-						<li><a data-toggle="tab" href="#{{currentId}}_tab_properties">properties</a></li>\
-					</ul>',
+					'<ul class="nav nav-tabs">' +
+						'<li class="active"><a data-toggle="tab" href="#{{currentId}}_tab_attributes">attributes</a></li>' +
+						'<li><a data-toggle="tab" href="#{{currentId}}_tab_properties">properties</a></li>' +
+					'</ul>',
 				body_tab_container:
-					'<div class="tab-content">\
-						{{>body_tab_attributes}}\
-						{{>body_tab_properties}}\
-					</div>',
+					'<div class="tab-content">' +
+						'{{>body_tab_attributes}}' +
+						'{{>body_tab_properties}}' +
+					'</div>',
 
 				body_tab_attributes:
-					'<div id="{{currentId}}_tab_attributes" class="tab-pane active" style="padding: 25px 15px;">\
-					</div>',
+					'<div id="{{currentId}}_tab_attributes" class="tab-pane active" style="padding: 25px 15px;">' +
+					'</div>',
 
 				body_tab_properties:
-					'<div id="{{currentId}}_tab_properties" class="tab-pane" style="padding: 10px 15px 25px 15px;">\
-						<div class="checkbox">\
-							<label><input type="checkbox" id="{{currentId}}_property_optional">Optional</label>\
-						</div>\
-						<div class="checkbox">\
-							<label><input type="checkbox" id="{{currentId}}_property_sentence_start">Begin of sentence</label>\
-						</div>\
-						<div class="checkbox">\
-							<label><input type="checkbox" id="{{currentId}}_property_sentence_end">End of sentence</label>\
-						</div>\
-						<div class="input-group" style="width:318px;">\
-							<span class="input-group-addon">repeats</span>\
-							<input type="text" class="form-control" value="1" id="{{currentId}}_property_repeats_min">\
-							<span class="input-group-addon">to</span>\
-							<input type="text" class="form-control" value="1" id="{{currentId}}_property_repeats_max">\
-							<span class="input-group-addon">times</span>\
-						</div>\
-					</div>'
+					'<div id="{{currentId}}_tab_properties" class="tab-pane" style="padding: 10px 15px 25px 15px;">' +
+						'<div class="checkbox">' +
+							'<label><input type="checkbox" id="{{currentId}}_property_optional">Optional</label>' +
+						'</div>' +
+						'<div class="checkbox">' +
+							'<label><input type="checkbox" id="{{currentId}}_property_sentence_start">Begin of sentence</label>' +
+						'</div>' +
+						'<div class="checkbox">' +
+							'<label><input type="checkbox" id="{{currentId}}_property_sentence_end">End of sentence</label>' +
+						'</div>' +
+						'<div class="input-group" style="width:318px;">' +
+							'<span class="input-group-addon">repeats</span>' +
+							'<input type="text" class="form-control" value="1" id="{{currentId}}_property_repeats_min">' +
+							'<span class="input-group-addon">to</span>' +
+							'<input type="text" class="form-control" value="1" id="{{currentId}}_property_repeats_max">' +
+							'<span class="input-group-addon">times</span>' +
+						'</div>' +
+					'</div>'
 			}
 		},
 
 		attributeGroup: {
 			template: 
-				'<div class="well bl-token-attribute-group" id="{{currentId}}">\
-				</div>'
+				'<div class="well bl-token-attribute-group" id="{{currentId}}">' +
+				'</div>'
 		},
 
 		attribute: {
 			template:
-				'<div class="bl-token-attribute" id="{{currentId}}">\
-					{{>delete_attribute_button}}\
-					<select class="selectpicker" data-width="auto" data-style="btn btn-sm btn-default bl-no-border-radius-right" id="{{currentId}}_type" style="flex-grow:0;">\
-						{{#attributes}}\
-						<option value="{{.}}">{{.}}</option>\
-						{{/attributes}}\
-					</select>\
-					<select class="selectpicker" data-width="54px"; data-style="btn btn-sm btn-danger bl-selectpicker-hide-caret bl-no-border-radius" id="{{currentId}}_operator" style="flex-grow:0;">\
-						{{#comparators}}\
-						<optgroup>\
-							{{#.}}\
-							<option>{{.}}</option>\
-							{{/.}}\
-						</optgroup>\
-						{{/comparators}}\
-					</select>\
-					<input type="text" class="form-control input-sm bl-no-border-radius" id="{{currentId}}_value" style="flex-grow:1;flex-basis:1px;width:1px;min-width:110px;">\
-					{{>create_attribute_dropdown}}\
-				</div>',
+				'<div class="bl-token-attribute" id="{{currentId}}">' +
+					'{{>delete_attribute_button}}' +
+					'<select class="selectpicker" data-width="auto" data-style="btn btn-sm btn-default bl-no-border-radius-right" id="{{currentId}}_type" style="flex-grow:0;">' +
+						'{{#attributes}}' +
+						'<option value="{{.}}">{{.}}</option>' +
+						'{{/attributes}}' +
+					'</select>' +
+					'<select class="selectpicker" data-width="54px"; data-style="btn btn-sm btn-danger bl-selectpicker-hide-caret bl-no-border-radius" id="{{currentId}}_operator" style="flex-grow:0;">' +
+						'{{#comparators}}' +
+						'<optgroup>' +
+							'{{#.}}' +
+							'<option>{{.}}</option>' +
+							'{{/.}}' +
+						'</optgroup>' +
+						'{{/comparators}}' +
+					'</select>' +
+					'<input type="text" class="form-control input-sm bl-no-border-radius" id="{{currentId}}_value" style="flex-grow:1;flex-basis:1px;width:1px;min-width:110px;">' +
+					'{{>create_attribute_dropdown}}' +
+				'</div>',
 
 			partials: {
 				create_attribute_dropdown: 
-					'<div class="dropdown" style="flex-grow:0;">\
-						<button type="button" class="btn btn-sm btn-default dropdown-toggle bl-no-border-radius-left" data-toggle="dropdown" style="border-left:none;"><span class="glyphicon glyphicon-plus"></span>&#8203;</button>\
-						<ul class="dropdown-menu">\
-							{{#operators}}\
-								<li><a href="#" data-bl-token-attribute-group-operator="{{operator}}" data-bl-token-attribute-group-operator-label="{{label}}" onclick="return false;"><span class="glyphicon glyphicon-plus-sign text-success"></span> {{label}}</a></li>\
-							{{/operators}}\
-							<!--<li class="divider"></li>\
-							<li><a href="#" id="{{currentId}}_delete"><span class="glyphicon glyphicon-remove-sign text-danger" onclick="return false"></span></a></li>-->\
-						</ul>\
-					</div>',
+					'<div class="dropdown" style="flex-grow:0;">' +
+						'<button type="button" class="btn btn-sm btn-default dropdown-toggle bl-no-border-radius-left" data-toggle="dropdown" style="border-left:none;"><span class="glyphicon glyphicon-plus"></span>&#8203;</button>' +
+						'<ul class="dropdown-menu">' +
+							'{{#operators}}' +
+								'<li><a href="#" data-bl-token-attribute-group-operator="{{operator}}" data-bl-token-attribute-group-operator-label="{{label}}" onclick="return false;"><span class="glyphicon glyphicon-plus-sign text-success"></span> {{label}}</a></li>' +
+							'{{/operators}}' +
+							'<!--<li class="divider"></li>' +
+							'<li><a href="#" id="{{currentId}}_delete"><span class="glyphicon glyphicon-remove-sign text-danger" onclick="return false"></span></a></li>-->' +
+						'</ul>' +
+					'</div>',
 				delete_attribute_button:
 					'<span class="glyphicon glyphicon-remove text-danger" id="{{currentId}}_delete" style="flex-grow:0;cursor:pointer;"></span>'
 			}
@@ -124,9 +125,9 @@ window.querybuilder = (function() {
 
 		operatorLabel: {
 			template:
-				'<div class="bl-token-attribute-group-label">\
-					{{label}}\
-				</div>',
+				'<div class="bl-token-attribute-group-label">' +
+					'{{label}}' +
+				'</div>',
 
 			partials: {}
 		}
@@ -211,11 +212,11 @@ window.querybuilder = (function() {
 			}
         });
 
+        // Add a button to add a new token
         var $createTokenButton = $(Mustache.render(templates.createTokenButton.template, {}, templates.createTokenButton.partials));
-        var self = this;
         $createTokenButton.on('click', this.createToken.bind(this));
         $createTokenButton.appendTo($element);
-
+        
 		return $element;
 	};
 
@@ -237,7 +238,7 @@ window.querybuilder = (function() {
 		});
 		
 		return cqlParts.join(" ");
-	}
+	};
 
 	//----------
 	// Class Token
@@ -264,8 +265,6 @@ window.querybuilder = (function() {
 	};
 
 	Token.prototype._prepareElement = function($element) {
-		var rootId = '#' + $element.attr('id');
-
 		$element.data('token', this);
 		$element.find('input').on('change', function(event) {
 			$element.trigger('cql:modified');
@@ -381,8 +380,6 @@ window.querybuilder = (function() {
 	};
 
 	AttributeGroup.prototype._prepareElement = function($element) {
-		var baseId = '#' + $element.attr('id');
-
 		$element.data('attributeGroup', this);
 		$element.on('cql:modified', this._updateLabels.bind(this));
 
@@ -427,9 +424,7 @@ window.querybuilder = (function() {
 			$newLabel.insertAfter(element);
 		});
 		this.element.children('.bl-token-attribute-group-label').last().remove();
-		
-		
-		var self = this;
+				
 		// create button
 		var $createAttributeButton = $('<button type="button" class="btn btn-sm btn-default bl-token-attribute-group-create-token"><span class="glyphicon glyphicon-plus"></span></button>"');
 		$createAttributeButton.on('click', function(event) {
@@ -465,8 +460,6 @@ window.querybuilder = (function() {
 	};
 
 	AttributeGroup.prototype.getCql = function() {
-		var rootId = '#' + this.element.attr('id');
-		
 		var cqlStrings = [];
 			
 		this.element.children('.bl-token-attribute, .bl-token-attribute-group').each(function(index, element) {

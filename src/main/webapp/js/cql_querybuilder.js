@@ -26,7 +26,7 @@ window.querybuilder = (function() {
 						'{{>head_cqlPreview}}' +
 					'</div>',
 				head_handle:
-					'<span class="glyphicon glyphicon-sort bl-sort-handle" style="margin-right:5px;"></span>',
+					'<span class="glyphicon glyphicon-resize-horizontal bl-sort-handle" style="margin-right:5px;"></span>',
 				head_deleteButton:
 					'<button type="button" class="close" area-label="delete"><span aria-hidden="true">&times;</span></button>',
 					

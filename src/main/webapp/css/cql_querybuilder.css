@@ -92,6 +92,7 @@
 
 .bl-sort-handle {
 	opacity: 0.5;
+	cursor: pointer;
 }.bl-token .panel-heading>.bl-sort-handle {
 	vertical-align: middle;
 }

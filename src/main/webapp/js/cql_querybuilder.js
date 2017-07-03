@@ -87,24 +87,39 @@ window.querybuilder = (function() {
 		attribute: {
 			template:
 				'<div class="bl-token-attribute" id="{{currentId}}">' +
-					'{{>delete_attribute_button}}' +
-					'<select class="selectpicker" data-width="auto" data-style="btn btn-sm btn-default bl-no-border-radius-right" id="{{currentId}}_type" style="flex-grow:0;">' +
-						'{{#attributes}}' +
-						'<option value="{{.}}">{{.}}</option>' +
-						'{{/attributes}}' +
-					'</select>' +
-					'<select class="selectpicker" data-width="54px"; data-style="btn btn-sm btn-danger bl-selectpicker-hide-caret bl-no-border-radius" id="{{currentId}}_operator" style="flex-grow:0;">' +
-						'{{#comparators}}' +
-						'<optgroup>' +
-							'{{#.}}' +
-							'<option>{{.}}</option>' +
-							'{{/.}}' +
-						'</optgroup>' +
-						'{{/comparators}}' +
-					'</select>' +
-					'<input type="text" class="form-control input-sm bl-no-border-radius" id="{{currentId}}_value" style="flex-grow:1;flex-basis:1px;width:1px;min-width:110px;">' +
-					'{{>create_attribute_dropdown}}' +
-				'</div>',
+					'<div class="bl-token-attribute-main">' +
+						'{{>delete_attribute_button}}' +
+						'<select class="selectpicker" data-width="auto" data-style="btn btn-sm btn-default bl-no-border-radius-right" id="{{currentId}}_type" style="flex-grow:0;">' +
+							'{{#attributes}}' +
+							'<option value="{{attribute}}">{{label}}</option>' +
+							'{{/attributes}}' +
+						'</select>' +
+						'<select class="selectpicker" data-width="54px"; data-style="btn btn-sm btn-danger bl-selectpicker-hide-caret bl-no-border-radius" id="{{currentId}}_operator" style="flex-grow:0;">' +
+							'{{#comparators}}' +
+							'<optgroup>' +
+								'{{#.}}' +
+								'<option>{{.}}</option>' +
+								'{{/.}}' +
+							'</optgroup>' +
+							'{{/comparators}}' +
+						'</select>' +
+						'<input type="text" class="form-control input-sm bl-no-border-radius" id="{{currentId}}_value" style="flex-grow:1;flex-basis:1px;width:1px;min-width:110px;">' +
+						'{{>create_attribute_dropdown}}' +
+					'</div>' +
+					'{{#attributes}}' +
+						'<div data-attribute-type="{{attribute}}">' +
+						'{{#caseSensitive}}' +
+							'<div class="checkbox">' +
+								'<label>' +
+									'<input type="checkbox" data-attribute-role="case">' +
+									'Case&nbsp;sensitive' +
+								'</label>' +
+							'</div>' +
+						'{{/caseSensitive}}' +
+						'</div>' +
+					'{{/attributes}}' +
+				'</div>'
+				,
 
 			partials: {
 				create_attribute_dropdown: 
@@ -142,10 +157,21 @@ window.querybuilder = (function() {
 					['starts with', 'ends with']
 				],
 				attributes: [
-					'word',
-					'lemma',
-					'tag',
-					'pos'
+					{ 
+						attribute: 'word',
+						label: 'word',
+						caseSensitive: true,
+					},
+					{
+						attribute: 'lemma',
+						label: 'lemma',
+						caseSensitive: true,
+					},
+					{
+						attribute: 'pos',
+						label: 'Part of speech',
+						caseSensitive: false,
+					}
 				],
 				operators: [
 					{operator: '&', label: 'AND'},
@@ -269,6 +295,7 @@ window.querybuilder = (function() {
 		$element.find('input').on('change', function(event) {
 			$element.trigger('cql:modified');
 		});
+				
 		$element.on('cql:modified', this._updateCql.bind(this));
 	};
 
@@ -293,14 +320,12 @@ window.querybuilder = (function() {
 	Token.prototype.createAttribute = function() {
 		var attribute = new Attribute(this.builder);
 		this.rootAttributeGroup.addAttributeOrGroup(attribute);
-		//this._updateCql();
 		return attribute;
 	};
 
 	Token.prototype.createAttributeGroup = function(operator, operatorLabel) {
 		var attributeGroup = new AttributeGroup(this.builder, operator, operatorLabel);
 		this.rootAttributeGroup.addAttributeOrGroup(attributeGroup);
-		//this._updateCql();
 		return attributeGroup;
 	};
 
@@ -382,10 +407,6 @@ window.querybuilder = (function() {
 	AttributeGroup.prototype._prepareElement = function($element) {
 		$element.data('attributeGroup', this);
 		$element.on('cql:modified', this._updateLabels.bind(this));
-
-//		$element.find('input').on('change', function(event) {
-//        	$element.trigger('cql:modified');
-//        });
 	};
 
 	AttributeGroup.prototype._removeIfEmpty = function() {
@@ -424,7 +445,7 @@ window.querybuilder = (function() {
 			$newLabel.insertAfter(element);
 		});
 		this.element.children('.bl-token-attribute-group-label').last().remove();
-				
+		
 		// create button
 		var $createAttributeButton = $('<button type="button" class="btn btn-sm btn-default bl-token-attribute-group-create-token"><span class="glyphicon glyphicon-plus"></span></button>"');
 		$createAttributeButton.on('click', function(event) {
@@ -527,6 +548,14 @@ window.querybuilder = (function() {
 			}
 		});
 		
+		
+		// Show/hide elements for the selected attribute type
+		// Such as case-sensitivity checkbox or comboboxes for when there is a predefined set of valid values
+		$element.find(baseId + '_type').on('loaded.bs.select changed.bs.select', function(e) { 
+			var selectedValue = $(this).val();
+			self._updateShownOptions(selectedValue); 
+		});
+		
 		$element.find(baseId + '_delete').on('click', function() {
 			var parentGroup = self.element.parent().data('attributeGroup');
 			self.element.detach();
@@ -535,6 +564,12 @@ window.querybuilder = (function() {
 			parentGroup.element.trigger('cql:modified');
 		});
 	};
+	
+	Attribute.prototype._updateShownOptions = function(selectedValue) {
+		var search = '[data-attribute-type]';
+		
+		this.element.find(search).hide().filter('[data-attribute-type="' + selectedValue + '"]').show();
+	};
 
 	Attribute.prototype.getCql = function() {
 		var rootId = '#' + this.element.attr('id');
@@ -542,9 +577,15 @@ window.querybuilder = (function() {
 		var type 		= this.element.find(rootId + '_type').val();
 		var operator 	= this.element.find(rootId + '_operator').val();
 		var value 		= this.element.find(rootId + '_value').val();
-
-
-
+		
+		
+		var $optionsContainer = this.element.find('[data-attribute-type="' + type + '"]');
+		
+		// Apply modifiers such as case-sensitivity
+		var caseSensitive = $optionsContainer.find('[data-attribute-role="case"]').is(":checked") || false;
+		if (caseSensitive)
+			value = "(?-i)" + value;
+		
 		var callback = this.builder.settings.attribute.getCql;
 		if (typeof callback === "function") {
 			return callback(type, operator, value);

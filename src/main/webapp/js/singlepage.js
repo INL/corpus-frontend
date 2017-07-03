@@ -863,15 +863,46 @@ var SINGLEPAGE = {};
 
 		});
 		
-		// Init the querybuilder
-		var $queryBuilder = $('#querybuilder'); // querybuilder container
-		var queryBuilderInstance = querybuilder.createQueryBuilder($queryBuilder);
+		
+		// Init the querybuilder with the supported attributes/properties
+		$.ajax({
+	    	url: BLS_URL + 'fields/contents',
+	    	dataType: "json",
+	    	
+	    	success: function (response) {
+	    		// Init the querybuilder
+	    		var $queryBuilder = $('#querybuilder'); // querybuilder container
+	    		var queryBuilderInstance = querybuilder.createQueryBuilder($queryBuilder, {
+	    			attribute: {
+	    				view: {
+	    					attributes: $.map(response.properties, function(value, key) {
+	    						if (value.isInternal)
+	    							return null; // Ignore these fields
+	    						
+	    						// Transform the supported values to the querybuilder format 
+	    						return {
+	    							attribute: key,
+	    							label: value.displayName || key,
+	    							caseSensitive: (value.sensitivity === "SENSITIVE_AND_INSENSITIVE")
+	    						}
+	    					}),
+	    				}
+	    			}
+	    		});
 
-		// And copy over the generated query to the manual field when changes happen
-		var $queryBox = $('#querybox'); //cql textfield
-		$queryBuilder.on('cql:modified', function(event) {
-			$queryBox.val(queryBuilderInstance.getCql()); 
-		});
+	    		// And copy over the generated query to the manual field when changes happen
+	    		var $queryBox = $('#querybox'); //cql textfield
+	    		$queryBuilder.on('cql:modified', function(event) {
+	    			$queryBox.val(queryBuilderInstance.getCql()); 
+	    		});
+	    	},
+	    	error: function (jqXHR, textStatus, errorThrown) {
+	    		var $queryBuilder = $('#querybuilder');
+	    		$queryBuilder.text("Could not get supported values for querybuilder: " + textStatus);
+	    	}
+	    });
+		
+
 	});
 	
     function ensureGroupResultsLoaded(id) {

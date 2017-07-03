@@ -58,11 +58,14 @@
 }
 .bl-token-attribute {
 	margin-top: 6px;
+}.bl-token-attribute-main {
 	display: flex;
 	align-items: center;
-}.bl-token-attribute .bootstrap-select {
-	/*width: auto!important;*/
+}.bl-token-attribute .checkbox {
+	margin: 5px 0px 0px 19px;
 }
+
+
 .bl-token-attribute-group-label {
 	display: flex;
 	justify-content: center;

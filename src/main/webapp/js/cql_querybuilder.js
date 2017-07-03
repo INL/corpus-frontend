@@ -235,6 +235,9 @@ window.querybuilder = (function() {
 			start: function(e, ui ){
 				ui.placeholder.height(ui.helper.outerHeight());
 				ui.placeholder.width(ui.helper.outerWidth());
+			},
+			update: function(event, ui) {
+				$element.trigger('cql:modified');
 			}
         });
 

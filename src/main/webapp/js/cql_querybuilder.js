@@ -22,13 +22,14 @@ window.querybuilder = (function() {
 				head_root: 
 					'<div class="panel-heading clearfix">' +
 						'{{>head_handle}}' +
-						'{{>head_collapseButton}}' +
+						'{{>head_deleteButton}}' +
 						'{{>head_cqlPreview}}' +
 					'</div>',
 				head_handle:
 					'<span class="glyphicon glyphicon-sort bl-sort-handle" style="margin-right:5px;"></span>',
-				head_collapseButton:
-					'<button type="button" class="btn btn-default pull-right bl-collapse-button" data-toggle="collapse" data-target="#{{currentId}}_panel_body" style="margin-left:5px;"></button>',
+				head_deleteButton:
+					'<button type="button" class="close" area-label="delete"><span aria-hidden="true">&times;</span></button>',
+					
 				head_cqlPreview:
 					'<span id="{{currentId}}_cql_preview">This is a long string to test width,' +
 					'but generated cql here [word="test" attribute="value"]{1,2}' +
@@ -36,7 +37,7 @@ window.querybuilder = (function() {
 			
 
 				body_root:
-					'<div class="panel-body collapse in" id="{{currentId}}_panel_body">' +
+					'<div class="panel-body" id="{{currentId}}_panel_body">' +
 						'{{>body_tab_header}}' +
 						'{{>body_tab_container}}' +
 					'</div>',
@@ -298,6 +299,12 @@ window.querybuilder = (function() {
 		$element.find('input').on('change', function(event) {
 			$element.trigger('cql:modified');
 		});
+		
+		var self = this;
+		$element.find('.close').on('click', function(e){
+			$element.remove();
+			self.builder.element.trigger('cql:modified');
+		});
 				
 		$element.on('cql:modified', this._updateCql.bind(this));
 	};
@@ -423,7 +430,7 @@ window.querybuilder = (function() {
 		}
 
 		if ($children.length <= 1) {
-			
+			// Move children before removing this, so we can give them the correct index based on this
 			$children.each(function(index, element) {
 				var instance = $(element).data('attributeGroup') || $(element).data('attribute');
 				parentGroup.addAttributeOrGroup(instance, self);

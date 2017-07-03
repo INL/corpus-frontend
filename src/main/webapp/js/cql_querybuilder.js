@@ -107,7 +107,7 @@ window.querybuilder = (function() {
 						'{{>create_attribute_dropdown}}' +
 					'</div>' +
 					'{{#attributes}}' +
-						'<div data-attribute-type="{{attribute}}">' +
+						'<div data-attribute-type="{{attribute}}" style="display:none;">' +
 						'{{#caseSensitive}}' +
 							'<div class="checkbox">' +
 								'<label>' +
@@ -414,11 +414,8 @@ window.querybuilder = (function() {
 		var parentGroup = this.element.parent().data('attributeGroup');
 		var self = this;
 		
-
 		if (this.isRoot) {
-			if ($children.length == 0) {
-				this.element.closest('.bl-token').remove();
-			}
+			// Never hide root group, should be able to contain 0 members to indicate "[]" or any word
 			return;
 		}
 

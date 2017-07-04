@@ -601,7 +601,7 @@ var SINGLEPAGE = {};
 	*/
 	
 	function makeWildcardRegex(original) {
-		return original.replace(/(\.|\(|\))/g, "\\$1").replace(/\*/g, ".*").replace(/\?/g, ".");
+		return original.replace(/([\^$\-\\.(){}[\]+])/g, "\\$1").replace(/\*/g, ".*").replace(/\?/g, ".");
 	}
 	
 	function makeRegexWildcard(original) {

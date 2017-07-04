@@ -165,7 +165,7 @@ var BLS = {};
 						}
 					});
 				}
-				else if ($.inArray(key, wordProperties)) {
+				else if ($.inArray(key, wordProperties) >= 0) {
 					// Word property. Use to construct BLS pattern later.
 					wordProp[key] = value;
 				} else {

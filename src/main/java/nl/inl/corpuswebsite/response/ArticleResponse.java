@@ -63,6 +63,13 @@ public class ArticleResponse extends BaseResponse {
 			Map<String, String[]> parameters = UrlParameterFactory
 					.getSourceParameters(query, null);
 			parameters.put("wordend", new String[] {"5000"}); // show max. 5000 words of content (TODO: paging)
+            String userId = null;
+            if (this.corpus.contains(":")) {
+                userId = this.corpus.split(":")[0];
+            }
+            if (userId != null) {
+                parameters.put("userid", new String[] { userId });
+            }
 			try {
 				String xmlResult = webservice.makeRequest(parameters);
 				if (xmlResult.contains("NOT_AUTHORIZED")) {
@@ -82,6 +89,9 @@ public class ArticleResponse extends BaseResponse {
 
 				Map<String, String[]> metaParam = new HashMap<>();
 				// metaParam.put("outputformat", new String[] {"xml"});
+                if (userId != null) {
+                    metaParam.put("userid", new String[] { userId });
+                }
 				xmlResult = webserviceMeta.makeRequest(metaParam);
 				transformer.clearParameters();
 				transformer.addParameter("title_name", servlet.getSpecialField(corpus, "title"));

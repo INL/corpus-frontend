@@ -1,16 +1,16 @@
 #macro( filterfields $fields)
 	<div class="form-horizontal">
 	#foreach($docfield in $fields)
-        <div class="form-group filterfield" id="$docfield.getSearchField()" data-filterfield-type="$docfield.getType()"> <!-- Behaves as a .row, so every child element should have some form of .col-* -->
-        	<label class="col-xs-12">$docfield.getName()</label>
+        <div class="form-group filterfield" id="$docfield.getId()" data-filterfield-type="$docfield.getType()"> <!-- Behaves as a .row, so every child element should have some form of .col-* -->
+        	<label class="col-xs-12">$docfield.getDisplayName()</label>
         	
-    		#if($docfield.restrictedInput())
+    		#if($docfield.isRestrictedInput()) 
 
 				<div class="col-xs-12">
 	    			#if($docfield.getType() == "multiselect")
-	        		<select name="$docfield.getSearchField()" title="$docfield.getName()" class="selectpicker form-control forminput" multiple>
+	        		<select name="$docfield.getId()" title="$docfield.getDisplayName()" class="selectpicker form-control forminput" multiple>
 	    			#else
-	        		<select name="$docfield.getSearchField()" title="$docfield.getName()" class="selectpicker form-control forminput">
+	        		<select name="$docfield.getId()" title="$docfield.getDisplayName()" class="selectpicker form-control forminput">
 					#end
 
 	    			#foreach($pair in $docfield.getValidValues())
@@ -20,14 +20,14 @@
     			</div>
     		#elseif($docfield.getType() == "date")
 				<div class="col-xs-4">
-					<input type="text" name="$docfield.getSearchField()__from" placeholder="From" class="form-control forminput" />
+					<input type="text" name="$docfield.getName()__from" placeholder="From" class="form-control forminput" />
 				</div>
 				<div class="col-xs-4">
-					<input type="text" name="$docfield.getSearchField()__to" placeholder="To" class="form-control forminput" />
+					<input type="text" name="$docfield.getName()__to" placeholder="To" class="form-control forminput" />
 				</div>
 			#else
     			<div class="col-xs-12">
-    				<input type="text" name="$docfield.getSearchField()" placeholder="$docfield.getName()" class="form-control forminput" />
+    				<input type="text" name="$docfield.getName()" placeholder="$docfield.getDisplayName()" class="form-control forminput" />
     			</div>
     		#end
         	
@@ -45,7 +45,7 @@
 <script src="$pathToTop/js/singlepage-bls.js"></script>
 <script>
     var BLS_URL = "$blsUrl";
-    var wordProperties = [#foreach($wordfield in $wordproperties)#if($velocityCount > 1), #end"$wordfield.getSearchField()"#end];
+    var wordProperties = [#foreach($wordfield in $wordproperties)#if($velocityCount > 1), #end"$wordfield.getId()"#end];
 </script>
 
 <!--
@@ -85,26 +85,16 @@
 
 		            <div class="form-horizontal">
 					#foreach($wordfield in $wordproperties)
-						#set ($fieldid = $wordfield.getSearchField() + "_text")
-						#set ($fieldfuzzid = $wordfield.getSearchField() + "_fuzzy")
-						#set ($fieldcaseid = $wordfield.getSearchField() + "_case")
+						#set ($fieldcaseid = $wordfield.getName() + "_case")
 						
 						<div class="form-group"> <!-- behaves as .row when in .form-horizontal so .row may be omitted -->
-							<label for="#$fieldid" class="col-xs-12 col-md-3">$wordfield.getName()</label>
+							<label for="#$wordfield.getId()" class="col-xs-12 col-md-3">$wordfield.getDisplayName()</label>
 							<div class="col-xs-12 col-md-9">
-								<input type="text" class="form-control" data-target="#$wordfield.getSearchField()" data-toggle="collapse" id="$fieldid" name="$wordfield.getSearchField()" placeholder="$wordfield.getName()"/>
-							</div>
-							
-							#if($wordfield.isSensitive() || $wordfield.isFuzzy())
-							<div class="collapse col-xs-12 col-sm-offset-3 col-sm-9" id="$wordfield.getSearchField()">
-								#if($wordfield.isSensitive())
-								<div class="checkbox"><label><input type="checkbox" id="$fieldcaseid"> Case&nbsp;sensitive</label></div>
-								#end
-								#if($wordfield.isFuzzy())
-								<div class="checkbox"><label><input type="checkbox" id="$fieldfuzzid" disabled> Fuzzy&nbsp;search</label></div>
+								<input type="text" name="$wordfield.getId()" id="$wordfield.getId()" placeholder="$wordfield.getDisplayName()" class="form-control"/>
+								#if($wordfield.isCaseSensitive())
+								<div class="checkbox"><label><input type="checkbox" id="$wordfield.getId()_case"> Case&nbsp;sensitive</label></div>
 								#end
 							</div>
-							#end
 						</div>
 					#end
 
@@ -130,13 +120,11 @@
 			<h3>Filter search by</h3>
 			#if($websiteconfig.hasTabGroups())
 	    		<ul class="nav nav-tabs" id="filtertabs">
-	    		#set($first = "0")
 	    		#foreach($tabname in $websiteconfig.getTabGroups())
 	    			#set($tabid = $tabname.replace(" ", ""))
 	    			
-	    			#if($first == "0")
+	    			#if($velocityCount == "1")
 	    				<li class="active">
-	    				#set($first = "1")
 	    			#else
 	    				<li>
 	    			#end
@@ -145,13 +133,11 @@
 	    		#end
 	    		</ul>
 	    		<div class="tab-content">
-	    		#set($first = "0")
 	    		#foreach($tabname in $websiteconfig.getTabGroups())
 	    			#set($tabid = $tabname.replace(" ", ""))
 	    			
-	    			#if($first == "0")
+	    			#if($velocityCount == "1")
 	    				<div class="tab-pane active" id="$tabid">
-	    				#set($first = "1")
 	    			#else	
 	    				<div class="tab-pane" id="$tabid">
 	    			#end

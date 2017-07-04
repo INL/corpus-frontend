@@ -193,26 +193,17 @@ var SINGLEPAGE = {};
 				var prop = wordProperties[i];
 				var value = param[prop] ? param[prop] : "";
 				var caseSensitive = false;
-				var fuzzy = false;
 				if (value.length > 0 && value.match(/^\(\?c?f?\)/)) {
-					if (value.substr(2, 2) == "cf") {
-						fuzzy = true;
+					if (value.charAt(2) == 'c') {
 						caseSensitive = true;
-						value = value.substr(5);
-					} else if (value.charAt(2) == 'c') {
-						caseSensitive = true;
-						value = value.substr(4);
-					} else if (value.charAt(2) == 'f') {
-						fuzzy = true;
 						value = value.substr(4);
 					}
 				}
 				value = makeRegexWildcard(value);
-				$("#" + prop + "_text").val(value);
+				$("#" + prop).val(value);
 				if (value.length > 0) {
 					// Only change checks if actually searched on this field
 					$("#" + prop + "_case").prop('checked', caseSensitive);
-					$("#" + prop + "_fuzzy").prop('checked', fuzzy);
 				}
 			}
 			
@@ -594,18 +585,12 @@ var SINGLEPAGE = {};
 				var prop = wordProperties[i];
 				
 				// Add parameters for the word property search fields
-				var value = $("#" + prop + "_text").val();
+				var value = $("#" + prop).val();
 				if (value.length > 0) {
 					value = makeWildcardRegex(value);
 					hasPattern = true;
-					var id = prop + "_case";
-					var caseSensitive = $("#" + id).prop('checked');
-					var fuzzy = $("#" + prop + "_fuzzy").prop('checked');
-					if (caseSensitive && fuzzy)
-						value = "(?cf)" + value;
-					else if (fuzzy)
-						value = "(?f)" + value;
-					else if (caseSensitive)
+					var caseSensitive = $("#" + prop + "_case").is(':checked');
+					if (caseSensitive)
 						value = "(?c)" + value;
 					param[prop] = value;
 				}

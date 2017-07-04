@@ -69,24 +69,16 @@ public class ArticleResponse extends BaseResponse {
 					getContext().put("article_content", "");
 				} else {
 					transformer.clearParameters();
-					transformer.addParameter("source_images",
-							servlet.getSourceImagesLocation(corpus));
-					transformer.addParameter(
-							"title_name",
-							servlet.getSpecialField(corpus, "title"));
-					getContext()
-							.put("article_content",
-									transformer.transform(xmlResult,
-											articleStylesheet));
+					transformer.addParameter("source_images", servlet.getSourceImagesLocation(corpus));
+
+					getContext().put("article_content", transformer.transform(xmlResult, articleStylesheet));
 				}
 
 				Map<String, String[]> metaParam = new HashMap<>();
 				// metaParam.put("outputformat", new String[] {"xml"});
 				xmlResult = webserviceMeta.makeRequest(metaParam);
 				transformer.clearParameters();
-				transformer.addParameter("title_name", servlet.getSpecialField(corpus, "title"));
-				String htmlResult = transformer.transform(xmlResult,
-						metadataStylesheet);
+				String htmlResult = transformer.transform(xmlResult, metadataStylesheet);
 				getContext().put("article_meta", htmlResult);
 
 			} catch (IOException e) {

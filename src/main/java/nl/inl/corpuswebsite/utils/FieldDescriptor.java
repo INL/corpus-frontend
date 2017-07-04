@@ -7,20 +7,19 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- *
+ * Descriptor for all searchable parameters
+ * Shared between metadata and word properties
  */
 public class FieldDescriptor {
 
-	final public String name;
-	final public String searchField;
-	final public String displayField;
-	final public boolean isNumeric;
-	final public boolean isFuzzy;
-	final public boolean isSensitive;
-	final public String function;
-
+	private String id;
+	private String displayName;
+	private String type;
 	private String tabGroup = "";
-	private String type = "";
+
+	/* Never true for metadata fields */
+	private boolean isCaseSensitive = false;
+
 	private List<ValuePair> validValues = new LinkedList<>();
 
 	public class ValuePair {
@@ -41,50 +40,49 @@ public class FieldDescriptor {
 		}
 	}
 
-	public FieldDescriptor(String name, boolean isNumeric, boolean isFuzzy,
-			boolean isSensitive, String searchField, String displayField,
-			String function) {
-		this.name = name;
-		this.isNumeric = isNumeric;
-		this.isFuzzy = isFuzzy;
-		this.isSensitive = isSensitive;
-		this.searchField = searchField;
-		this.displayField = displayField;
+	public FieldDescriptor(String id, String displayName, String type) {
+		this.id = id;
+		this.displayName = displayName;
+		this.type = type;
+	}
 
-		if (function != null)
-			this.function = function;
+	public String getId() {
+		return id;
+	}
+
+	public String getDisplayName() {
+		return displayName;
+	}
+
+	public String getType() {
+		return type;
+	}
+
+	// TODO set on construction and remove setter
+	public void setType(String type) {
+		this.type = type;
+	}
+
+	public String getTabGroup() {
+		return tabGroup;
+	}
+
+	public void setTabGroup(String tabGroup) {
+		if (tabGroup != null)
+			this.tabGroup = tabGroup;
 		else
-			this.function = searchField;
+			this.tabGroup = "";
 	}
 
-	public String getName() {
-		return name;
+	public boolean isCaseSensitive() {
+		return isCaseSensitive;
 	}
 
-	public String getSearchField() {
-		return searchField;
+	public void setCaseSensitive(boolean caseSensitive) {
+		this.isCaseSensitive = caseSensitive;
 	}
 
-	public String getDisplayField() {
-		return displayField;
-	}
-
-	public boolean isNumeric() {
-		return isNumeric;
-	}
-
-	public boolean isSensitive() {
-		return isSensitive;
-	}
-
-	public boolean isFuzzy() {
-		return isFuzzy;
-	}
-
-	public String getFunction() {
-		return function;
-	}
-
+	// TODO: change when FieldDescriptors generated from blacklab-server info
 	public void addValidValue(String value, String description) {
 		if (value == null)
 			value = "";
@@ -95,33 +93,11 @@ public class FieldDescriptor {
 		validValues.add(new ValuePair(value, description));
 	}
 
-	public boolean restrictedInput() {
-		return (validValues.size() > 0);
-	}
-
 	public List<ValuePair> getValidValues() {
 		return validValues;
 	}
 
-	public void setType(String type) {
-		if (type == null)
-			type = "";
-
-		this.type = type;
-	}
-
-	public String getType() {
-		return type;
-	}
-
-	public String getTabGroup() {
-		return tabGroup;
-	}
-
-	public void setTabGroup(String group) {
-		if (group == null)
-			group = "";
-
-		tabGroup = group;
+	public boolean isRestrictedInput() {
+		return (validValues.size() > 0);
 	}
 }

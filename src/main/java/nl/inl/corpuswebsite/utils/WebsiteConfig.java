@@ -106,13 +106,7 @@ public class WebsiteConfig {
 				.hasNext();) {
 			HierarchicalConfiguration sub = it.next();
 
-			FieldDescriptor fd = new FieldDescriptor(sub.getString("Name"),
-					sub.getBoolean("Numeric", false), sub.getBoolean("Fuzzy",
-							false), sub.getBoolean("Sensitive", false),
-					sub.getString("SearchField"),
-					sub.getString("DisplayField"), sub.getString("Function"));
-
-			fd.setType(sub.getString("[@type]"));
+			FieldDescriptor fd = new FieldDescriptor(sub.getString("SearchField"), sub.getString("Name"), sub.getString("[@type]"));
 
 			String tabGroup = sub.getString("TabGroup");
 			addToTabGroups(tabGroup);
@@ -147,21 +141,19 @@ public class WebsiteConfig {
 		for (Iterator<HierarchicalConfiguration> it = myfields.iterator(); it
 				.hasNext();) {
 			HierarchicalConfiguration sub = it.next();
-			FieldDescriptor fd = new FieldDescriptor(sub.getString("Name"),
-					sub.getBoolean("Numeric", false), sub.getBoolean("Fuzzy",
-							false), sub.getBoolean("Sensitive", false),
-					sub.getString("Index"), sub.getString("Index"),
-					sub.getString("Function"));
+			// name and displayname are not swapped around, just a different naming convention in search.xml
+			FieldDescriptor fd = new FieldDescriptor(sub.getString("Index"), sub.getString("Name"), "");
 
-			List<HierarchicalConfiguration> values = sub
-					.configurationsAt("Values.Value");
+			fd.setCaseSensitive(sub.getBoolean("Sensitive", false));
 
-			for (Iterator<HierarchicalConfiguration> i = values.iterator(); i
-					.hasNext();) {
+			List<HierarchicalConfiguration> values = sub.configurationsAt("Values.Value");
+
+			for (Iterator<HierarchicalConfiguration> i = values.iterator(); i.hasNext();) {
 				HierarchicalConfiguration value = i.next();
 
 				String attrValue = value.getString("[@value]", "");
 				String description = value.getString("", "");
+
 				if (description.length() == 0)
 					description = attrValue;
 				fd.addValidValue(attrValue, description);
@@ -169,7 +161,6 @@ public class WebsiteConfig {
 
 			properties.add(fd);
 		}
-
 	}
 
 	/** Create a generic config object, if there's no config file available.
@@ -189,9 +180,10 @@ public class WebsiteConfig {
 		linksInTopBar.add(new LinkInTopBar("CLARIN", "http://www.clarin.eu/", true));
 		linksInTopBar.add(new LinkInTopBar("NTU", "http://taalunie.org/", true));
 
-		properties.add(new FieldDescriptor("Wordform", false, false, true, "word", "word", "wordform"));
-		properties.add(new FieldDescriptor("Lemma", false, false, false, "lemma", "lemma", "lemma"));
-		properties.add(new FieldDescriptor("P.o.S.", false, false, false, "pos", "pos", "pos"));
+		// TODO update to new version once FieldDescriptor format is stable
+		properties.add(new FieldDescriptor("word", "Wordform", "text"));
+		properties.add(new FieldDescriptor("lemma", "Lemma", "text"));
+		properties.add(new FieldDescriptor("pos", "P.o.S.", "text"));
 	}
 
 	/** Generic config
@@ -241,35 +233,8 @@ public class WebsiteConfig {
 		return properties;
 	}
 
-	public String getPropertyForFunction(String function) {
-		for (FieldDescriptor fd: getWordProperties()) {
-			if (fd.getFunction().equalsIgnoreCase(function))
-				return fd.searchField;
-		}
-
-		return "";
-	}
-
 	public List<FieldDescriptor> getFilterFields() {
 		return fields;
-	}
-
-	public boolean containsSearchField(String fieldName) {
-		for (FieldDescriptor fd: getFilterFields()) {
-			if (fd.getSearchField().equalsIgnoreCase(fieldName))
-				return true;
-		}
-
-		return false;
-	}
-
-	public String getFieldIndexForFunction(String f) {
-		for (FieldDescriptor fd: getFilterFields()) {
-			if (fd.getFunction().equalsIgnoreCase(f))
-				return fd.getDisplayField();
-		}
-
-		return "";
 	}
 
 	public boolean hasTabGroups() {

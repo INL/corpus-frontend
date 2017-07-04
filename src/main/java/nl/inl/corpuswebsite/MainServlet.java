@@ -26,11 +26,13 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.lang.SystemUtils;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.velocity.Template;
 import org.apache.velocity.app.Velocity;
+import org.xml.sax.SAXException;
 
 import nl.inl.corpuswebsite.response.AboutResponse;
 import nl.inl.corpuswebsite.response.ArticleResponse;
@@ -38,6 +40,8 @@ import nl.inl.corpuswebsite.response.CorporaResponse;
 import nl.inl.corpuswebsite.response.ErrorResponse;
 import nl.inl.corpuswebsite.response.HelpResponse;
 import nl.inl.corpuswebsite.response.SearchResponse;
+import nl.inl.corpuswebsite.utils.CorpusConfig;
+import nl.inl.corpuswebsite.utils.QueryServiceHandler;
 import nl.inl.corpuswebsite.utils.WebsiteConfig;
 
 /**
@@ -55,8 +59,12 @@ public class MainServlet extends HttpServlet {
 	/** Where to find the Log4j properties file */
 	private final String LOG4J_PROPERTIES = "/WEB-INF/config/";
 
-	/** Our configuration parameters (from search.xml) */
+	/** Our configuration parameters (from search.xml)
+	 *  Will eventually be merged with CorpusConfig */
 	private Map<String, WebsiteConfig> configs = new HashMap<>();
+
+	/** Our configuration parameters gotten from blacklab-server */
+	private Map<String, CorpusConfig> corpusConfigs = new HashMap<>();
 
 	///** Directory where the WAR was extracted to (i.e. $TOMCAT/webapps/mywar/) */
 	//private File warExtractDir = null;
@@ -268,29 +276,55 @@ public class MainServlet extends HttpServlet {
 	 * @return the website config
 	 */
 	public WebsiteConfig getConfig(String corpus) {
-			if (!configs.containsKey(corpus)) {
-				// attempt to load a properties file with the same name as the
-				// folder
-				// new File(cfg.getServletContext().getRealPath("/../" +
-				// warFileName + ".xml"));
-				try (InputStream configFileInputStream = getProjectFile(corpus, "search.xml", false)) {
-					try {
-						if (configFileInputStream == null) {
-							// No corpus-specific config. Use generic for now (we'll detect stuff later)
-							configs.put(corpus, WebsiteConfig.generic(corpus));
-						} else {
-							configs.put(corpus, new WebsiteConfig(configFileInputStream));
-							debugLog("Config file: " + configFileInputStream);
-						}
-					} catch (Exception e) {
-						throw new RuntimeException("Error reading config file: " + configFileInputStream, e);
+		if (!configs.containsKey(corpus)) {
+			// attempt to load a properties file with the same name as the
+			// folder
+			// new File(cfg.getServletContext().getRealPath("/../" +
+			// warFileName + ".xml"));
+			try (InputStream configFileInputStream = getProjectFile(corpus, "search.xml", false)) {
+				try {
+					if (configFileInputStream == null) {
+						// No corpus-specific config. Use generic for now (we'll detect stuff later)
+						configs.put(corpus, WebsiteConfig.generic(corpus));
+					} else {
+						configs.put(corpus, new WebsiteConfig(configFileInputStream));
+						debugLog("Config file: " + configFileInputStream);
 					}
-				} catch (IOException e) {
-					throw new RuntimeException("Error reading config file for corpus " + corpus, e);
+				} catch (Exception e) {
+					throw new RuntimeException("Error reading config file: " + configFileInputStream, e);
 				}
+			} catch (IOException e) {
+				throw new RuntimeException("Error reading config file for corpus " + corpus, e);
 			}
+		}
 
 		return configs.get(corpus);
+	}
+
+	/**
+	 * Get the corpus config (as returned from blacklab-server)
+	 *
+	 * @param corpus name of the corpus
+	 * @return the config
+	 */
+	public CorpusConfig getCorpusConfig(String corpus) {
+		if (!corpusConfigs.containsKey(corpus)) {
+			// Contact blacklab-server for the config xml file
+
+			QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(corpus), this);
+
+			Map<String, String[]> params = new HashMap<>();
+			params.put("outputformat", new String[] {"xml"});
+
+			try {
+				String xmlResult = handler.makeRequest(params);
+				corpusConfigs.put(corpus, new CorpusConfig(xmlResult));
+			} catch (IOException | SAXException | ParserConfigurationException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
+		return corpusConfigs.get(corpus);
 	}
 
 	@Override
@@ -465,15 +499,6 @@ public class MainServlet extends HttpServlet {
 		if (is == null)
 			is = getServletContext().getResourceAsStream("/WEB-INF/stylesheets/" + stylesheetName);
 		return is;
-	}
-
-	public String getSpecialField(String corpus, String fieldType) {
-		String field = getConfig(corpus).getFieldIndexForFunction(fieldType);
-		if (field != null && field.length() > 0)
-			return field;
-
-		// TODO: query BLS for the special fields title, date, author
-		return fieldType;
 	}
 
 	/**

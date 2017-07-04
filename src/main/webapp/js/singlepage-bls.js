@@ -165,13 +165,7 @@ var BLS = {};
 						}
 					});
 				}
-//				else if (key.charAt(0) == '_') {
-//					// Metadata. Translate to BLS syntax.
-//					if (filter.length > 0)
-//						filter += " ";
-//					filter += "+" + filterQuery(key.substr(1), value);
-//				} 
-				else if ($("#" + key + "_text").length > 0) {
+				else if ($.inArray(key, wordProperties)) {
 					// Word property. Use to construct BLS pattern later.
 					wordProp[key] = value;
 				} else {

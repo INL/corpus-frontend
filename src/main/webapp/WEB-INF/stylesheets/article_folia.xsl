@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:folia="http://ilk.uvt.nl/folia">
     <xsl:output encoding="utf-8" method="html" omit-xml-declaration="yes" />
-    <xsl:param name="title_name" select="'#'"/>
     <xsl:param name="source_images" select="''"/>
 
     <xsl:template match="error">

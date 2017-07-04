@@ -678,17 +678,14 @@
 			<Name>Wordform</Name>
 			<Index>word</Index>
 			<Sensitive>True</Sensitive>
-			<Function>wordform</Function>
 		</Property>
 		<Property>
 			<Name>Lemma</Name>
 			<Index>lemma</Index>
-			<Function>lemma</Function>
 		</Property>
 		<Property>
 			<Name>Part of Speech</Name>
 			<Index>pos</Index>
-			<Function>pos</Function>
 		</Property>
 	</WordProperties>
 </SearchInterface>

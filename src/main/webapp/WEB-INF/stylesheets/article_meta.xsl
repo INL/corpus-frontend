@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:tei="http://www.tei-c.org/ns/1.0" exclude-result-prefixes="tei">
 	<xsl:output encoding="utf-8" method="html" omit-xml-declaration="yes" />
-	<xsl:param name="title_name" select="'#'"/>
 
 	<xsl:template match="error">
 		<h1>Error</h1>
@@ -14,7 +13,7 @@
 	<xsl:template match="docInfo">
 		<div class="col-xs-12 contentbox">
 			<h2>
-				<xsl:value-of select="*[name()=$title_name]" />
+				<xsl:value-of select="*[name()=/*//titleField]" />
 			</h2>
 			
 			<div class="row">

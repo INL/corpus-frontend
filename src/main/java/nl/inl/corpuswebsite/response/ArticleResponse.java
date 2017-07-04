@@ -97,12 +97,6 @@ public class ArticleResponse extends BaseResponse {
 				throw new RuntimeException(e);
 			}
 		}
-		// this.getContext().put("title",
-		// this.servlet.getConfig(corpus).getCorpusName());
-		// this.getContext().put("websiteconfig",
-		// this.servlet.getConfig(corpus));
-		// this.getContext().put("googleAnalyticsKey",
-		// this.servlet.getGoogleAnalyticsKey());
 
 		// display template
 		displayHtmlTemplate(servlet.getTemplate("article"));

@@ -3,10 +3,10 @@ package nl.inl.corpuswebsite.utils;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -21,7 +21,7 @@ import org.xml.sax.SAXException;
 public class CorpusConfig {
 	private Document config;
 
-	private Set<FieldDescriptor> metadataFields = new LinkedHashSet<>();
+	private List<FieldDescriptor> metadataFields = new ArrayList<>();
 
 	public CorpusConfig(String xml) throws SAXException, IOException, ParserConfigurationException {
 		config = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new InputSource(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8))));
@@ -29,7 +29,7 @@ public class CorpusConfig {
 		parse();
 	}
 
-	public Set<FieldDescriptor> getMetadataFields() {
+	public List<FieldDescriptor> getMetadataFields() {
 		return metadataFields;
 	}
 

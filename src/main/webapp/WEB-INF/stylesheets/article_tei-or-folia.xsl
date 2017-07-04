@@ -129,6 +129,9 @@
         </b>
     </xsl:template>
     
+    <!-- We show w/t explicitly. Don't also show t elements for paragraphs or sentences --> 
+    <xsl:template match="folia:p/folia:t|folia:s/folia:t"></xsl:template>
+    
     <xsl:template match="folia:w">
         <xsl:variable name="lemma" select="folia:lemma/@class" />
         <span class="word" ref="tooltip">

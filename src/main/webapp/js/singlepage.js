@@ -38,10 +38,13 @@ var SINGLEPAGE = {};
 	var updatingPage = false;
 
 	// Special fields (titleField, authorField, dateField, pidField) in our corpus.
-	// Right now this is only valid AFTER the first search!
-	// Not all fields may be provided by BLS; we use simple guesses for the rest
-	// (which may be wrong)
-	var corpusDocFields = null;
+	// These are just some defaults, merged with actual values on load.
+	var corpusDocFields = {
+		"titleField": "title",
+		"authorField": "author",
+		"dateField": "date",
+		"pidField": "pid"
+	};
 
 	// The currently selected query tab (simple or query)
 	var currentQueryType = "";
@@ -276,21 +279,6 @@ var SINGLEPAGE = {};
 					
 					var summary = data.summary;
 					
-					var docFields = summary.docFields || {};
-					if (!corpusDocFields) {
-						// Use obvious guesses for any SINGLEPAGEmissing fields
-						corpusDocFields = {
-							"titleField": "title",
-							"authorField": "author",
-							"dateField": "date",
-							"pidField": "pid",
-						};
-						for (var field in docFields) {
-							if (docFields.hasOwnProperty(field))
-								corpusDocFields[field] = docFields[field];
-						}
-					}
-					
 					var isGrouped = false;
 					$(".showHideTitles").toggle(!!data.hits);
 					if (data.hits) {
@@ -416,7 +404,6 @@ var SINGLEPAGE = {};
 	function updateHitsTable(data) {
 	    var html;
 		var summary = data.summary;
-	    var docFields = summary.docFields || {};
 		var hits = data.hits;
 		var docs = data.docInfos;
 		var prevDocPid = null;
@@ -431,13 +418,11 @@ var SINGLEPAGE = {};
 				var startPos = hit.start;
 				var endPos = hit.end;
 		        var doc = docs[docPid];
-		        var linkText = "UNKNOWN";
-		        if (docFields.titleField && doc[docFields.titleField])
-		        	linkText = doc[docFields.titleField];
-		        if (docFields.authorField && doc[docFields.authorField])
-		        	linkText += " by " + doc[docFields.authorField];
-		        if (docFields.dateField && doc[docFields.dateField])
-		        	linkText += " (" + doc[docFields.dateField] + ")";
+		        var linkText = doc[corpusDocFields.titleField] || "UNKNOWN";
+		        if (doc[corpusDocFields.authorField])
+		        	linkText += " by " + doc[corpusDocFields.authorField];
+		        if (doc[corpusDocFields.dateField])
+		        	linkText += " (" + doc[corpusDocFields.dateField] + ")";
 		        if (!prevDocPid || hit.docPid != prevDocPid) {
 		        	// Document title row 
 		        	prevDocPid = hit.docPid;
@@ -479,7 +464,6 @@ var SINGLEPAGE = {};
 	function updateDocsTable(data) {
 	    var html;
 		var summary = data.summary;
-	    var docFields = summary.docFields || {};
 		var docs = data.docs;
 		var patt = summary.searchParam.patt;
 		var pattPart = patt ? "&query=" + encodeURIComponent(patt) : "";
@@ -491,17 +475,15 @@ var SINGLEPAGE = {};
 				var docPid = doc.docPid;
 				var numberOfHits = doc.numberOfHits;
 		        var docInfo = doc.docInfo;
-		        var linkText = "UNKNOWN";
-		        if (docFields.titleField && docInfo[docFields.titleField])
-		        	linkText = docInfo[docFields.titleField];
-		        if (docFields.authorField && docInfo[docFields.authorField])
-		        	linkText += " by " + docInfo[docFields.authorField];
-		        //if (docFields.dateField && docInfo[docFields.dateField])
-		        //	linkText += " (" + docInfo[docFields.dateField] + ")";
+		        var linkText = docInfo[corpusDocFields.titleField] || "UNKNOWN";
+		        if (docInfo[corpusDocFields.authorField])
+		        	linkText += " by " + docInfo[corpusDocFields.authorField];
+		        //if (docInfo[corpusDocFields.dateField])
+		        //	linkText += " (" + docInfo[corpusDocFields.dateField] + ")";
 	        	var url = "article?doc=" + encodeURIComponent(docPid) + pattPart;
 		        
 		        // Concordance row
-		        var date = docFields.dateField ? docInfo[docFields.dateField] : ""; //.yearFrom;
+		        var date = docInfo[corpusDocFields.dateField] || ""; //.yearFrom;
 		        
 		        var docSnippets = doc.snippets;
 		        if (docSnippets) {
@@ -658,6 +640,9 @@ var SINGLEPAGE = {};
 	    	success: function (data) {
 	    		toggleWaitAnimationCorpusInfo(false);
 	    		corpus = data;
+	    		// Copy dynamic field names, can't use $.extend as fields are empty strings when undefined and would overwrite the defaults
+	    		$.each(corpus.fieldInfo, function(key, val) { if (val) corpusDocFields[key] = val; });
+	    		
 	    		document.title = corpus.displayName + " search";
 	    		$("#searchFormDiv").show();
 	    		$("#corpusNameTop").text(corpus.displayName);
@@ -758,6 +743,9 @@ var SINGLEPAGE = {};
 			}
 			if (sortChanged)
 				doSearch();
+			
+			// This is an onClick handler for <a>, 
+			// so return false as to not propagate the click and follow the href by accident.
 			return false;
 		}
 		$(".sortLeftWord").click(function () { changeSort("left"); });
@@ -982,7 +970,7 @@ var SINGLEPAGE = {};
         			html = [];
         			for (var i = 0; i < docs.length; i++) {
         				var doc = docs[i];
-        				var title = doc.docInfo.title; //@@@ docFields
+        				var title = doc.docInfo[corpusDocFields.titleField];
         		        var hits = doc.numberOfHits;
         		    	html.push("<div class='clearfix'><div class='col-xs-10 inline-concordance'>",
         		    		"<b>", title, "</b></div><div class='col-xs-2 inline-concordance'>", hits,

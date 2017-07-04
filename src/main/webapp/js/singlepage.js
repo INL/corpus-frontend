@@ -601,19 +601,19 @@ var SINGLEPAGE = {};
 	*/
 	
 	function makeWildcardRegex(original) {
-		return original.replace(/([\^$\-\\.(){}[\]+])/g, "\\$1").replace(/\*/g, ".*").replace(/\?/g, ".");
+		return original
+			.replace(/([\^$\-\\.(){}[\]+])/g, "\\$1")  // add slashes for regex characters
+			.replace(/\*/g, ".*")                      // * -> .*
+			.replace(/\?/g, ".");                      // ? -> .
 	}
 	
 	function makeRegexWildcard(original) {
 		return original
-			.replace(/\\\./g, "_ESC_PERIOD_")
-			.replace(/\\\(/g, "_ESC_OPENPAR_")
-			.replace(/\\\)/g, "_ESC_CLOSEPAR_")
-			.replace(/\.\*/g, "*")
-			.replace(/\./g, "?")
-			.replace("_ESC_PERIOD_", ".")
-			.replace("_ESC_OPENPAR_", "(")
-			.replace("_ESC_CLOSEPAR_", ")")
+			.replace(/\\([\^$\-\\(){}[\]+])/g, "$1")  // remove most slashes
+			.replace(/\\\./g, "_ESC_PERIOD_")         // escape \.
+			.replace(/\.\*/g, "*")                    // restore *
+			.replace(/\./g, "?")                      // restore ?
+			.replace("_ESC_PERIOD_", ".")             // unescape \. to .
 			;
 	}
 	

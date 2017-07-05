@@ -11,7 +11,6 @@ var SINGLEPAGE = {};
 	var selectGroupBy = false;
 
 	// Are we looking at grouped results?
-	//var viewingGrouped = false;
 	var groupBy = null;
 	
 	// Are we viewing one specific group?
@@ -71,10 +70,7 @@ var SINGLEPAGE = {};
 
 	// Restore page when using back/forward
 	window.addEventListener("popstate", updatePage);
-
-	// Restore page when editing address bar manually, or using bookmark or emailed link
-	document.addEventListener('DOMContentLoaded', updatePage);
-
+	
 	SINGLEPAGE.showWaitStatus = function () {
 		alert(doingRegularSearch);
 		alert(retrievingCorpusInfo);
@@ -158,9 +154,13 @@ var SINGLEPAGE = {};
 		toggleWaitAnimation(false);
 	};
     
-	// How to show the results for a URL
-	// This is called whenever the URL has changed and we need to update the page contents to match the URL.
+	// Parse our url query parameters, synchronize form and page state with them
+	// Then execute a search based on the new page state.
+	// Reason for updating the page state prior to searching is to allow this function to be called on initial page load
 	function updatePage() {
+		if (!corpus)
+			throw new Error("Corpusinfo must be known prior to setting page state");
+		
 		updatingPage = true;
 		try {
 			var param = getUrlVariables();
@@ -168,22 +168,29 @@ var SINGLEPAGE = {};
 			var hasSearch = location.search != null && location.search.length > 1;
 			
 			viewingDocs = param["view"] == "docs";
-			//viewingGrouped = !!param["group"];
-			groupBy = param.group || null;
+			groupBy = param.group;
+			// Restore selectpickers indicating current grouping
+			if (groupBy) {
+				if (viewingDocs)
+					$("#groupDocsBy").selectpicker('val', groupBy.split(","));
+				else
+					$("#groupHitsBy").selectpicker('val', groupBy.split(","));				
+			}
+			
 			viewGroup = param.viewgroup || null;
 			var showingGroups = groupBy != null && viewGroup == null;
 			if (hasSearch) {
 				// Activate the right results tab
 				if (viewingDocs) {
 					if (showingGroups)
-						$('#contentTabs li:eq(3) a').tab('show');
+						$('#contentTabs a[href="#tabDocsGrouped"]').tab('show');
 					else
-						$('#contentTabs li:eq(1) a').tab('show');
+						$('#contentTabs a[href="#tabDocs"]').tab('show');
 				} else {
 					if (showingGroups)
-						$('#contentTabs li:eq(2) a').tab('show');
+						$('#contentTabs a[href="#tabHitsGrouped"]').tab('show');
 					else
-						$('#contentTabs li:eq(0) a').tab('show');
+						$('#contentTabs a[href="#tabHits"]').tab('show');
 				}
 			}
 			
@@ -667,7 +674,8 @@ var SINGLEPAGE = {};
 	    		} else {
 	    			$("#docGroupAuthor").attr("disabled", "disabled");
 	    		}
-	    		//$("#corpusOwner").show();
+	    		
+	    		updatePage();
 	    	},
 	    	error: function (jqXHR, textStatus, errorThrown) {
 	    		toggleWaitAnimationCorpusInfo(false);
@@ -686,7 +694,7 @@ var SINGLEPAGE = {};
 		
 		toggleWaitAnimation(false);
 		getCorpusInfo();
-
+		
 		BLSEARCH.SEARCHPAGE.init();
 		
 		// Before any searches are shown, hide all the results elements.
@@ -698,12 +706,12 @@ var SINGLEPAGE = {};
 		function doGroup(newGroupBy, isDocs) {
 			if (newGroupBy && newGroupBy.length > 0 && newGroupBy != groupBy) {
 				viewingDocs = isDocs;
-				groupBy = newGroupBy;
+				groupBy = newGroupBy.join(",");
 				viewGroup = null;
-				var i = groupBy.indexOf(":");
 				sortBy = null;
-				if (groupBy.substr(i + 1) == corpus.fieldInfo.dateField) {
+				if (groupBy.indexOf(corpusDocFields.dateField) !== -1) {
 					// Grouping by year; automatically sort by group identity
+					// Note: can't just see if value in newGroupBy array, values are not 1:1 with field names
 					sortBy = "identity";
 				}
 				currentSortReverse = false;
@@ -805,7 +813,7 @@ var SINGLEPAGE = {};
 				break;
 			case "hitsgrouped":
 				// Shows the "group by" select
-				$("#groupHitsBy").val("");
+				$("#groupHitsBy").selectpicker("val", []);
 				$("#hitsGroupedTable tbody").html("");
 				$('#resultsHitsGrouped').hide();
 				selectGroupBy = true;
@@ -818,7 +826,7 @@ var SINGLEPAGE = {};
 				break;
 			case "docsgrouped":
 				// Shows the "group by" select
-				$("#groupDocsBy").val("");
+				$("#groupDocsBy").selectpicker("val", []);
 				$("#docsGroupedTable tbody").html("");
 				$('#resultsDocsGrouped').hide();
 				selectGroupBy = true;

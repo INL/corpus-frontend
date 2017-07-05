@@ -263,7 +263,7 @@
 			</div>
 			
 			<div class="tab-pane" id="tabHitsGrouped">
-				<select class="input" id="groupHitsBy">
+				<select class="selectpicker" id="groupHitsBy">
 					<option value="" disabled="true" selected="true">Group hits by...</option>
 					<option id="groupTitle" value="field:title">Group by document title</option>
 					<option value="hit">Group by hit text</option>
@@ -295,7 +295,7 @@
 			</div>		
 			
 			<div class="tab-pane" id="tabDocsGrouped">
-				<select class="input" id="groupDocsBy">
+				<select class="selectpicker" id="groupDocsBy">
 					<option value="" disabled="true" selected="true">Group documents by...</option>
 					<option value="numhits">Group by number of hits</option>
 					<option id="docGroupYear" value="field:year">Group by year</option>

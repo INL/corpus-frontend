@@ -345,10 +345,13 @@ table.corpora a.icon {
 
 .pagebuttons {
 	display: block;
+	float: left;
+	margin: 20px 10px 0px 0px;
 }
 
 .showHideTitles {
-	margin-left: 10px; 
+	float: left;
+	margin-top: 20px;
 }
 
 #waitDisplay {

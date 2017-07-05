@@ -98,8 +98,7 @@
 							</div>
 						</div>
 					#end
-
-					</div> <!-- .form-horizontal -->
+					</div>
 
 				</div>
 				<div class="tab-pane" id="advanced">
@@ -200,10 +199,10 @@
     <div class="row">
 		<div class="col-xs-12">
 			<ul class="nav nav-tabs" id="contentTabs">
-				<li><a href="#tabHits" data-toggle="tab" class="resultstype">Per Hit</a></li>
-				<li><a href="#tabDocs" data-toggle="tab" class="resultstype">Per Document</a></li>
-				<li><a href="#tabHitsGrouped" data-toggle="tab" class="resultstype">Hits grouped</a></li>
-				<li><a href="#tabDocsGrouped" data-toggle="tab" class="resultstype">Documents grouped</a></li>
+				<li><a href="#tabHits" data-toggle="tab">Per Hit</a></li>
+				<li><a href="#tabDocs" data-toggle="tab">Per Document</a></li>
+				<li><a href="#tabHitsGrouped" data-toggle="tab">Hits grouped</a></li>
+				<li><a href="#tabDocsGrouped" data-toggle="tab">Documents grouped</a></li>
 			</ul>
 		</div>
     	

@@ -280,7 +280,6 @@ var SINGLEPAGE = {};
 					var summary = data.summary;
 					
 					var isGrouped = false;
-					$(".showHideTitles").toggle(!!data.hits);
 					if (data.hits) {
 						updateHitsTable(data);
 						// Totals is done in BLS.search();
@@ -692,7 +691,6 @@ var SINGLEPAGE = {};
 		
 		// Before any searches are shown, hide all the results elements.
 		$('#resultsTabs').hide(); // No results yet, don't show the empty results tabs.
-		$('.showHideTitles').hide(); // Don't show this button until there are results.
 		$("#contentTabs").hide();
 		$("#searchSummary").hide();
 		$('#results').hide();
@@ -833,7 +831,7 @@ var SINGLEPAGE = {};
 				break;
 			}
 			$(".pagination").toggle(tab == "hits" || tab == "docs");
-
+			$(".showHideTitles").toggle(tab == "hits");
 		});
 		
 		

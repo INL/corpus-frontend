@@ -54,42 +54,7 @@ public class CorpusConfig {
 			String displayName			= metadataFieldElement.getElementsByTagName("displayName").item(0).getTextContent();
 			String type					= metadataFieldElement.getElementsByTagName("uiType").item(0).getTextContent();
 			// Value : displayName map for allowed values
-			Map<String, String> allowedValues 	= new LinkedHashMap<>();
-
-			// Parse allowed values
-			if (metadataFieldElement.getElementsByTagName("valueListComplete").item(0).getTextContent().equalsIgnoreCase("true")) {
-				// Gather all values
-				Node fieldValuesNode = metadataFieldElement.getElementsByTagName("fieldValues").item(0);
-				if (fieldValuesNode instanceof Element) {
-					NodeList fieldValueNodeList = ((Element) fieldValuesNode).getElementsByTagName("value");
-					for (int ifv = 0; ifv < fieldValueNodeList.getLength(); ifv++) {
-						NamedNodeMap attributes = fieldValueNodeList.item(ifv).getAttributes();
-						if (attributes == null || attributes.getNamedItem("text") == null)
-							continue;
-
-						// Empty values are ignored as they are not searchable
-						String value = attributes.getNamedItem("text").getTextContent();
-						if (value == null || value.isEmpty())
-							continue;
-
-						allowedValues.put(value, null);
-					}
-				}
-
-				// Then set their display names where provided
-				Node displayValuesNode = metadataFieldElement.getElementsByTagName("displayValues").item(0);
-				if (displayValuesNode instanceof Element) {
-					NodeList displayValueNodeList = ((Element) displayValuesNode).getElementsByTagName("displayValue");
-					for (int idv = 0; idv < displayValueNodeList.getLength(); idv++) {
-						Node displayValueNode = displayValueNodeList.item(idv);
-
-						String value = displayValueNode.getAttributes().getNamedItem("value").getTextContent();
-						String valueDisplayName = displayValueNode.getTextContent();
-						if (allowedValues.containsKey(value))
-							allowedValues.put(value, valueDisplayName);
-					}
-				}
-			}
+			Map<String, String> allowedValues 	= parseValues(metadataFieldElement);
 
 			FieldDescriptor field = new FieldDescriptor(fieldName, displayName, type);
 			for (Map.Entry<String, String> valueWithDisplayName : allowedValues.entrySet())
@@ -124,6 +89,55 @@ public class CorpusConfig {
 		for (Map.Entry<String, FieldDescriptor> e : parsedFields.entrySet()) {
 			addMetadataField(e.getValue(), TAB_DEFAULT);
 		}
+	}
+
+	/**
+	 * Parse fieldValues if valueListComplete == true
+	 *
+	 * Note: displayName will be null if there is no value provided for a given fieldValue in the displayValues list
+	 * @param metadataFieldElement the fieldValues xml node
+	 * @return a map of values in the form of (value, displayName)
+	 */
+	private static Map<String, String> parseValues(Element metadataFieldElement) {
+		Map<String, String> values = new HashMap<>();
+
+		// If the list is not complete, don't bother parsing it
+		if (!metadataFieldElement.getElementsByTagName("valueListComplete").item(0).getTextContent().equalsIgnoreCase("true"))
+			return values;
+
+		// Gather all values
+		Node fieldValuesNode = metadataFieldElement.getElementsByTagName("fieldValues").item(0);
+		if (fieldValuesNode instanceof Element) {
+			NodeList fieldValueNodeList = ((Element) fieldValuesNode).getElementsByTagName("value");
+			for (int ifv = 0; ifv < fieldValueNodeList.getLength(); ifv++) {
+				NamedNodeMap attributes = fieldValueNodeList.item(ifv).getAttributes();
+				if (attributes == null || attributes.getNamedItem("text") == null)
+					continue;
+
+				// Empty values are ignored as they are not searchable
+				String value = attributes.getNamedItem("text").getTextContent();
+				if (value == null || value.isEmpty())
+					continue;
+
+				values.put(value, value);
+			}
+		}
+
+		// Then set their display names where provided
+		Node displayValuesNode = metadataFieldElement.getElementsByTagName("displayValues").item(0);
+		if (displayValuesNode instanceof Element) {
+			NodeList displayValueNodeList = ((Element) displayValuesNode).getElementsByTagName("displayValue");
+			for (int idv = 0; idv < displayValueNodeList.getLength(); idv++) {
+				Node displayValueNode = displayValueNodeList.item(idv);
+
+				String value = displayValueNode.getAttributes().getNamedItem("value").getTextContent();
+				String valueDisplayName = displayValueNode.getTextContent();
+				if (values.containsKey(value))
+					values.put(value, valueDisplayName);
+			}
+		}
+
+		return values;
 	}
 
 	private void addMetadataField(FieldDescriptor field, String tabName) {

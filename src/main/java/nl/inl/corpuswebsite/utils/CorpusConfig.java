@@ -25,8 +25,11 @@ public class CorpusConfig {
 
 	private Document config;
 
+	private List<FieldDescriptor> propertyFields = new ArrayList<>();
+
 	/** Keyed by tab name */
 	private Map<String, List<FieldDescriptor>> metadataFields = new LinkedHashMap<>();
+
 
 	public CorpusConfig(String xml) throws SAXException, IOException, ParserConfigurationException {
 		config = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new InputSource(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8))));
@@ -34,11 +37,43 @@ public class CorpusConfig {
 		parse();
 	}
 
+	public List<FieldDescriptor> getPropertyFields() {
+		return propertyFields;
+	}
+
 	public Map<String, List<FieldDescriptor>> getMetadataFields() {
 		return metadataFields;
 	}
 
 	private void parse() {
+		parsePropertyFields();
+		parseMetadataFields();
+	}
+
+	private void parsePropertyFields() {
+		// Since there's only one complexField at the moment, just get all <property> elements right away
+		// instead of going through complexFields->complexField->properties->property
+		NodeList propertyNodeList = config.getElementsByTagName("property");
+		for (int ip = 0; ip < propertyNodeList.getLength(); ip++) {
+			Node propertyNode = propertyNodeList.item(ip);
+			if (!(propertyNode instanceof Element))
+				continue;
+
+			Element propertyElement = (Element) propertyNode;
+			if (propertyElement.getElementsByTagName("isInternal").item(0).getTextContent().equalsIgnoreCase("true"))
+				continue;
+
+			String fieldName 		= propertyElement.getAttribute("name");
+			String displayName 		= propertyElement.getElementsByTagName("displayName").item(0).getTextContent();
+			boolean caseSensitive 	= propertyElement.getElementsByTagName("sensitivity").item(0).getTextContent().equals("SENSITIVE_AND_INSENSITIVE");
+
+			FieldDescriptor field = new FieldDescriptor(fieldName, displayName, null);
+			field.setCaseSensitive(caseSensitive);
+			this.propertyFields.add(field);
+		}
+	}
+
+	private void parseMetadataFields() {
 		// Keyed by name of field
 		Map<String, FieldDescriptor> parsedFields = new HashMap<>();
 
@@ -54,7 +89,7 @@ public class CorpusConfig {
 			String displayName			= metadataFieldElement.getElementsByTagName("displayName").item(0).getTextContent();
 			String type					= metadataFieldElement.getElementsByTagName("uiType").item(0).getTextContent();
 			// Value : displayName map for allowed values
-			Map<String, String> allowedValues 	= parseValues(metadataFieldElement);
+			Map<String, String> allowedValues 	= parseMetadataValues(metadataFieldElement);
 
 			FieldDescriptor field = new FieldDescriptor(fieldName, displayName, type);
 			for (Map.Entry<String, String> valueWithDisplayName : allowedValues.entrySet())
@@ -91,6 +126,7 @@ public class CorpusConfig {
 		}
 	}
 
+
 	/**
 	 * Parse fieldValues if valueListComplete == true
 	 *
@@ -98,7 +134,7 @@ public class CorpusConfig {
 	 * @param metadataFieldElement the fieldValues xml node
 	 * @return a map of values in the form of (value, displayName)
 	 */
-	private static Map<String, String> parseValues(Element metadataFieldElement) {
+	private static Map<String, String> parseMetadataValues(Element metadataFieldElement) {
 		Map<String, String> values = new HashMap<>();
 
 		// If the list is not complete, don't bother parsing it

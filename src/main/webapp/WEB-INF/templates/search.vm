@@ -45,7 +45,7 @@
 <script src="$pathToTop/js/singlepage-bls.js"></script>
 <script>
     var BLS_URL = "$blsUrl";
-    var wordProperties = [#foreach($wordfield in $wordproperties)#if($velocityCount > 1), #end"$wordfield.getId()"#end];
+    var wordProperties = [#foreach($propertyField in $propertyFields)#if($velocityCount > 1), #end"$propertyField.getId()"#end];
 </script>
 
 <!--
@@ -84,15 +84,16 @@
 		            </div>
 
 		            <div class="form-horizontal">
-					#foreach($wordfield in $wordproperties)
-						#set ($fieldcaseid = $wordfield.getName() + "_case")
+					#foreach($propertyField in $propertyFields)
+						#set ($propertyFieldId = $propertyField.getId())
+						#set ($fieldcaseid = $propertyFieldId + "_case")
 						
 						<div class="form-group"> <!-- behaves as .row when in .form-horizontal so .row may be omitted -->
-							<label for="#$wordfield.getId()" class="col-xs-12 col-md-3">$wordfield.getDisplayName()</label>
+							<label for="#$propertyFieldId" class="col-xs-12 col-md-3">$propertyField.getDisplayName()</label>
 							<div class="col-xs-12 col-md-9">
-								<input type="text" name="$wordfield.getId()" id="$wordfield.getId()" placeholder="$wordfield.getDisplayName()" class="form-control"/>
-								#if($wordfield.isCaseSensitive())
-								<div class="checkbox"><label><input type="checkbox" id="$wordfield.getId()_case"> Case&nbsp;sensitive</label></div>
+								<input type="text" name="$propertyFieldId" id="$propertyFieldId" placeholder="$propertyField.getDisplayName()" class="form-control"/>
+								#if($propertyField.isCaseSensitive())
+								<div class="checkbox"><label><input type="checkbox" id="$fieldcaseid"> Case&nbsp;sensitive</label></div>
 								#end
 							</div>
 						</div>
@@ -125,7 +126,7 @@
     			#set($tabId = $tabName.replace(" ", ""))
 				
 				##DefaultTab is always hidden, unless there are no other tabs
-				#if( !($tabName == $defaultTabName && $metadataFields.size() > 1))
+				#if( !($tabName == $defaultMetadataTabName && $metadataFields.size() > 1))
 	    			<li #if($firstTab == true) class="active" #end>
 	    				<a href="#$tabId" data-toggle="tab">$tabName</a>
 	    			</li>
@@ -141,7 +142,7 @@
     			#set($tabId = $tabName.replace(" ", ""))
 				
 				##DefaultTab is always hidden, unless there are no other tabs
-				#if( !($tabName == $defaultTabName && $metadataFields.size() > 1))
+				#if( !($tabName == $defaultMetadataTabName && $metadataFields.size() > 1))
 	    			<div class="tab-pane #if($firstTab == true) active #end" id="$tabId">
 	    				#filterfields($tab.value)
 	    			</div>

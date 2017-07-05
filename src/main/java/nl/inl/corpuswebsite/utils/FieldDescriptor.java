@@ -39,6 +39,12 @@ public class FieldDescriptor {
 	}
 
 	public FieldDescriptor(String id, String displayName, String type) {
+		if (id == null || id.isEmpty())
+			throw new RuntimeException("Empty id for FieldDescriptor");
+
+		if (displayName == null || displayName.isEmpty())
+			displayName = id;
+
 		this.id = id;
 		this.displayName = displayName;
 		this.type = type;
@@ -56,11 +62,6 @@ public class FieldDescriptor {
 		return type;
 	}
 
-	// TODO set on construction and remove setter
-	public void setType(String type) {
-		this.type = type;
-	}
-
 	public boolean isCaseSensitive() {
 		return isCaseSensitive;
 	}
@@ -73,7 +74,7 @@ public class FieldDescriptor {
 	public void addValidValue(String value, String description) {
 		if (value == null || value.isEmpty())
 			return;
-		
+
 		if (description == null || description.isEmpty())
 			description = value;
 

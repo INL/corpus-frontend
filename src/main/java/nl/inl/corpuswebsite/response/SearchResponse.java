@@ -30,9 +30,10 @@ public class SearchResponse extends BaseResponse {
 		getContext().put("title", corpusNameTop);
 		getContext().put("corpusOwner", corpusOwner);
 		getContext().put("corpusName", corpusName);
-		getContext().put("wordproperties", servlet.getConfig(corpus).getWordProperties());
+
+		getContext().put("propertyFields", servlet.getCorpusConfig(corpus).getPropertyFields());
 		getContext().put("metadataFields", servlet.getCorpusConfig(corpus).getMetadataFields());
-		getContext().put("defaultTabName", CorpusConfig.TAB_DEFAULT);
+		getContext().put("defaultMetadataTabName", CorpusConfig.TAB_DEFAULT);
 		// display template
 		displayHtmlTemplate(servlet.getTemplate("search"));
 	}

@@ -11,11 +11,9 @@ import java.util.List;
  * Shared between metadata and word properties
  */
 public class FieldDescriptor {
-
 	private String id;
 	private String displayName;
 	private String type;
-	private String tabGroup = "";
 
 	/* Never true for metadata fields */
 	private boolean isCaseSensitive = false;
@@ -63,17 +61,6 @@ public class FieldDescriptor {
 		this.type = type;
 	}
 
-	public String getTabGroup() {
-		return tabGroup;
-	}
-
-	public void setTabGroup(String tabGroup) {
-		if (tabGroup != null)
-			this.tabGroup = tabGroup;
-		else
-			this.tabGroup = "";
-	}
-
 	public boolean isCaseSensitive() {
 		return isCaseSensitive;
 	}
@@ -84,11 +71,11 @@ public class FieldDescriptor {
 
 	// TODO: change when FieldDescriptors generated from blacklab-server info
 	public void addValidValue(String value, String description) {
-		if (value == null)
-			value = "";
-
-		if (value.length() == 0)
-			value = description;
+		if (value == null || value.isEmpty())
+			return;
+		
+		if (description == null || description.isEmpty())
+			description = value;
 
 		validValues.add(new ValuePair(value, description));
 	}

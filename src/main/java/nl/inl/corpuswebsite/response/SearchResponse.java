@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import nl.inl.corpuswebsite.BaseResponse;
 import nl.inl.corpuswebsite.MainServlet;
+import nl.inl.corpuswebsite.utils.CorpusConfig;
 
 /**
  *
@@ -30,7 +31,8 @@ public class SearchResponse extends BaseResponse {
 		getContext().put("corpusOwner", corpusOwner);
 		getContext().put("corpusName", corpusName);
 		getContext().put("wordproperties", servlet.getConfig(corpus).getWordProperties());
-
+		getContext().put("metadataFields", servlet.getCorpusConfig(corpus).getMetadataFields());
+		getContext().put("defaultTabName", CorpusConfig.TAB_DEFAULT);
 		// display template
 		displayHtmlTemplate(servlet.getTemplate("search"));
 	}
@@ -40,5 +42,4 @@ public class SearchResponse extends BaseResponse {
 			MainServlet servlet) {
 		super.init(request, response, servlet);
 	}
-
 }

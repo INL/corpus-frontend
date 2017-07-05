@@ -4,15 +4,15 @@
         <div class="form-group filterfield" id="$docfield.getId()" data-filterfield-type="$docfield.getType()"> <!-- Behaves as a .row, so every child element should have some form of .col-* -->
         	<label class="col-xs-12">$docfield.getDisplayName()</label>
         	
-    		#if($docfield.isRestrictedInput()) 
-
+    		#if(($docfield.getType() == "select" || $docfield.getType() == "multiselect") && !$docfield.getValidValues().isEmpty())  
 				<div class="col-xs-12">
 	    			#if($docfield.getType() == "multiselect")
-	        		<select name="$docfield.getId()" title="$docfield.getDisplayName()" class="selectpicker form-control forminput" multiple>
+	        		<select name="$docfield.getId()" title="$docfield.getDisplayName()" class="selectpicker form-control forminput" data-size="10" multiple>
 	    			#else
-	        		<select name="$docfield.getId()" title="$docfield.getDisplayName()" class="selectpicker form-control forminput">
+	        		<select name="$docfield.getId()" title="$docfield.getDisplayName()" class="selectpicker form-control forminput" data-size="10">
+						<option value=""></option>
 					#end
-
+										
 	    			#foreach($pair in $docfield.getValidValues())
 	                    <option value="$pair.getValue()">$pair.getDescription()</option>
 	    			#end
@@ -116,40 +116,39 @@
 		</div>
 
 		<div class="col-xs-12 col-md-6" id="filterContainer">
-			#if($websiteconfig.hasMetadataFields())
+			#if(!$metadataFields.isEmpty())
 			<h3>Filter search by</h3>
-			#if($websiteconfig.hasTabGroups())
-	    		<ul class="nav nav-tabs" id="filtertabs">
-	    		#foreach($tabname in $websiteconfig.getTabGroups())
-	    			#set($tabid = $tabname.replace(" ", ""))
-	    			
-	    			#if($velocityCount == "1")
-	    				<li class="active">
-	    			#else
-	    				<li>
-	    			#end
-	    			
-	    			<a href="#$tabid" data-toggle="tab">$tabname</a></li>
-	    		#end
-	    		</ul>
-	    		<div class="tab-content">
-	    		#foreach($tabname in $websiteconfig.getTabGroups())
-	    			#set($tabid = $tabname.replace(" ", ""))
-	    			
-	    			#if($velocityCount == "1")
-	    				<div class="tab-pane active" id="$tabid">
-	    			#else	
-	    				<div class="tab-pane" id="$tabid">
-	    			#end
-	    			#set($fields = $websiteconfig.getFieldsInTabGroup($tabname))
-	    			#filterfields($fields)
+			<ul class="nav nav-tabs" id="filtertabs">
+			#set($firstTab = "true") ## need to keep track manually since the first tab in the list may be ignored
+    		#foreach($tab in $metadataFields.entrySet())
+    			#set($tabName = $tab.key)
+    			#set($tabId = $tabName.replace(" ", ""))
+				
+				##DefaultTab is always hidden, unless there are no other tabs
+				#if( !($tabName == $defaultTabName && $metadataFields.size() > 1))
+	    			<li #if($firstTab == true) class="active" #end>
+	    				<a href="#$tabId" data-toggle="tab">$tabName</a>
+	    			</li>
+	    			#set($firstTab = "false")					
+				#end    			
+    		#end
+    		</ul>
+    		
+    		<div class="tab-content">
+    		#set($firstTab = "true") ## need to keep track manually since the first tab in the list may be ignored
+    		#foreach($tab in $metadataFields.entrySet())
+    			#set($tabName = $tab.key)
+    			#set($tabId = $tabName.replace(" ", ""))
+				
+				##DefaultTab is always hidden, unless there are no other tabs
+				#if( !($tabName == $defaultTabName && $metadataFields.size() > 1))
+	    			<div class="tab-pane #if($firstTab == true) active #end" id="$tabId">
+	    				#filterfields($tab.value)
 	    			</div>
-	    		#end
-	    		</div>
-			#else	
-				#set($fields = $websiteconfig.getFieldsInTabGroup(""))
-				#filterfields($fields)
-			#end
+	    			#set($firstTab = "false")					
+				#end    			
+    		#end
+    		</div>
 			#end
 			<div class="row">
 				<div id="filteroverview" class="col-xs-6"></div>

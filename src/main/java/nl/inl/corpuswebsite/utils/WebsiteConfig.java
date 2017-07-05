@@ -7,10 +7,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.HierarchicalConfiguration;
@@ -37,14 +35,8 @@ public class WebsiteConfig {
 	/** The configuration read from the XML file */
 	private XMLConfiguration xmlConfig;
 
-	/** Search fields */
-	private List<FieldDescriptor> fields = new LinkedList<>();
-
 	/** Properties for the contents field */
 	private List<FieldDescriptor> properties = new LinkedList<>();
-
-	/** Tab groups for our search fields */
-	private Set<String> tabGroups = new LinkedHashSet<>();
 
 	/** Name of the corpus we're searching */
 	private String corpusName;
@@ -100,44 +92,8 @@ public class WebsiteConfig {
 			linksInTopBar.add(new LinkInTopBar(name, location, newWindow));
 		}
 
-		myfields = xmlConfig.configurationsAt("DocumentProperties.Property");
-
-		for (Iterator<HierarchicalConfiguration> it = myfields.iterator(); it
-				.hasNext();) {
-			HierarchicalConfiguration sub = it.next();
-
-			FieldDescriptor fd = new FieldDescriptor(sub.getString("SearchField"), sub.getString("Name"), sub.getString("[@type]"));
-
-			String tabGroup = sub.getString("TabGroup");
-			addToTabGroups(tabGroup);
-			fd.setTabGroup(tabGroup);
-
-			List<HierarchicalConfiguration> values = sub
-					.configurationsAt("Values.Value");
-
-			if (!values.isEmpty()) {
-				if (sub.getBoolean("Values[@multiple]", false))
-					fd.setType("multiselect");
-				else
-					fd.setType("select");
-			}
-
-			for (Iterator<HierarchicalConfiguration> i = values.iterator(); i
-					.hasNext();) {
-				HierarchicalConfiguration value = i.next();
-
-				String attrValue = value.getString("[@value]", "");
-				String description = value.getString("", "");
-				if (description.length() == 0)
-					description = attrValue;
-				fd.addValidValue(attrValue, description);
-			}
-
-			fields.add(fd);
-		}
 
 		myfields = xmlConfig.configurationsAt("WordProperties.Property");
-
 		for (Iterator<HierarchicalConfiguration> it = myfields.iterator(); it
 				.hasNext();) {
 			HierarchicalConfiguration sub = it.next();
@@ -194,54 +150,12 @@ public class WebsiteConfig {
 		return new WebsiteConfig(corpus);
 	}
 
-	/**
-	 * @param tabGroup
-	 */
-	private void addToTabGroups(String tabGroup) {
-		if (tabGroup == null)
-			return;
-
-		if (tabGroup.length() > 0)
-			tabGroups.add(tabGroup);
-	}
-
-	public Set<String> getTabGroups() {
-		return tabGroups;
-	}
-
-	public boolean hasMetadataFields() {
-		return fields.size() > 0;
-	}
-
-	public List<FieldDescriptor> getFieldsInTabGroup(String group) {
-		List<FieldDescriptor> tabFields = new LinkedList<>();
-
-		for (FieldDescriptor fd: fields) {
-			if (fd.getTabGroup().equalsIgnoreCase(group)
-					|| group.equalsIgnoreCase(""))
-				tabFields.add(fd);
-		}
-
-		return tabFields;
-	}
-
 	public String getCorpusName() {
 		return corpusName;
 	}
 
 	public List<FieldDescriptor> getWordProperties() {
 		return properties;
-	}
-
-	public List<FieldDescriptor> getFilterFields() {
-		return fields;
-	}
-
-	public boolean hasTabGroups() {
-		if (tabGroups.size() > 0)
-			return true;
-
-		return false;
 	}
 
 	public String getBackgroundColor() {

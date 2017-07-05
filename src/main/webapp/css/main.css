@@ -333,6 +333,12 @@ table.corpora a.icon {
     transition: all 0.5s ease;
 }
 
+#filterContainer > .tab-content {
+	max-height: 500px;
+	overflow-y: auto;
+	overflow-x: hidden; /* required due to negative margin-right of contents causing scrollbar otherwise */
+}
+
 #querybuilder {
 	background-color: rgba(255, 255, 255, 0.7);
 	border-radius: 6px;

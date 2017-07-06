@@ -190,6 +190,8 @@ var SINGLEPAGE = {};
 					else
 						$('#contentTabs a[href="#tabHits"]').tab('show');
 				}
+				// Show buttons only if current tab is correct
+				$('.showHideTitles').toggle($('#contentTabs .active a[href="#tabHits"]').length !== 0);
 			}
 			
 			// Word property fields

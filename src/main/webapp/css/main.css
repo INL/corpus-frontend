@@ -43,7 +43,7 @@ img.booklogo {
 }
 
 .tab-content {
-	margin: 15px 0px;
+	padding-top: 15px;
 }
 
 .contentbox {
@@ -351,13 +351,7 @@ table.corpora a.icon {
 
 .pagebuttons {
 	display: block;
-	float: left;
-	margin: 20px 10px 0px 0px;
-}
-
-.showHideTitles {
-	float: left;
-	margin-top: 20px;
+	margin: 0px 10px 0px 0px;
 }
 
 #waitDisplay {

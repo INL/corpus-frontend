@@ -116,7 +116,7 @@ var SINGLEPAGE = {};
 		if (endPage < SINGLEPAGE.totalPages)
 			html.push("<li class='disabled'><a>...</a></li>");
 		
-		if (currentPage == (SINGLEPAGE.totalPages - 1))
+		if (currentPage == (SINGLEPAGE.totalPages - 1) || SINGLEPAGE.totalPages == 0)
 			html.push("<li class='disabled'><a>Next</a></li>");
 		else
 			html.push("<li><a href='#' onclick='return SINGLEPAGE.goToPage(", currentPage + 1, ")'>Next</a></li>");
@@ -190,8 +190,6 @@ var SINGLEPAGE = {};
 					else
 						$('#contentTabs a[href="#tabHits"]').tab('show');
 				}
-				// Show buttons only if current tab is correct
-				$('.showHideTitles').toggle($('#contentTabs .active a[href="#tabHits"]').length !== 0);
 			}
 			
 			// Word property fields
@@ -252,7 +250,7 @@ var SINGLEPAGE = {};
 			
 			// Set number of options per page
 			// First verify value by setting it and seeing if any option became selected
-			$('#resultsPerPage').selectpicker('val', param.number);
+			$('#resultsPerPage').selectpicker('val', [param.number]); // Must be array or undefined is ignored.
 			if ($('#resultsPerPage').val()) { // Valid
 				SINGLEPAGE.resultsPerPage = $('#resultsPerPage').val();
 			} else { // Invalid, reset to default to default
@@ -294,7 +292,6 @@ var SINGLEPAGE = {};
 					
 					var summary = data.summary;
 					
-					var isGrouped = false;
 					if (data.hits) {
 						updateHitsTable(data);
 						// Showing+updating #totalsReport is done in BLS.search();
@@ -303,24 +300,17 @@ var SINGLEPAGE = {};
 						// Showing+updating #totalsReport is done in BLS.search();
 					} else if (data.hitGroups) {
 						$("#totalsReport").hide();
-						isGrouped = true;
 						updateGroupedTable(data, false);
 					} else if (data.docGroups) {
 						$("#totalsReport").hide();
-						isGrouped = true;
 						updateGroupedTable(data, true);
 					}
 					
 					// Summary, element visibility
 					var patt = summary.searchParam.patt;
 					var duration = summary.searchTime / 1000.0;
-					$("#searchSummary").show().html("Query: " + patt + " - Duration: " + duration + "</span> sec");
-					if (!isGrouped) {
-						updatePagination();
-						$(".pagination").show();
-					} else {
-						$(".pagination").hide();
-					}
+					updatePagination();
+					$("#searchSummary").html("Query: " + patt + " - Duration: " + duration + "</span> sec").show();
 					$("#contentTabs").show();
 					
 		    		stillSearching = false; // don't show wait animation now.
@@ -840,8 +830,6 @@ var SINGLEPAGE = {};
 				showFirstResult = 0;
 				break;
 			}
-			$(".pagination").toggle(tab == "hits" || tab == "docs");
-			$(".showHideTitles").toggle(tab == "hits");
 		});
 		
 		

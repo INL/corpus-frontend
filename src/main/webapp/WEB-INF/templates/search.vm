@@ -196,7 +196,7 @@
 		<p id='totalsSpinner'><i class="fa fa-spinner fa-spin"></i></p>
 	</div>
 
-    <div class="row">
+    <div id="resultsTabs" class="row">
 		<div class="col-xs-12">
 			<ul class="nav nav-tabs" id="contentTabs">
 				<li><a href="#tabHits" data-toggle="tab">Per Hit</a></li>
@@ -206,72 +206,93 @@
 			</ul>
 		</div>
     	
-    	<div class="col-xs-12">
-			<ul class="pagination pagination-sm pagebuttons"></ul>
-			<button type="button" class="showHideTitles btn btn-sm btn-danger pull-left" data-toggle="collapse" data-target=".doctitle">Show/hide titles</button>
-		</div>
-
-		<div id='resultsTabs' class="col-xs-12 tab-content">
-			
-			<div class="tab-pane lightbg haspadding" id="tabHits">
-	            <table id='hitsTable'>
-	                <thead>
-	                    <tr>
-	                        <th class="tbl_conc_left">
-	                            <div class="dropdown pull-right">
-	                                <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="left">Left context <b class="caret"></b></a>
-	                                <ul class="dropdown-menu" role="menu" aria-labelledby="left">
-	                                    <li><a class='sortLeftWord'>Word</a></li>
-	                                    <li class='disabled'><a class='sortLeftLemma'>Lemma</a></li>
-	                                    <li class='disabled'><a class='sortLeftPos'>P.o.S.</a></li>
-	                                </ul>
-	                            </div>
-	                        </th>
-	                        <th class="tbl_conc_hit"><a class='sortHitWord'>Hit text</a></th>
-	                        <th class="tbl_conc_right">
-	                            <div class="dropdown">
-	                                <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="right">Right context <b class="caret"></b></a>
-	                                <ul class="dropdown-menu" role="menu" aria-labelledby="right">
-	                                    <li><a class='sortRightWord'>Word</a></li>
-	                                    <li class='disabled'><a class='sortRightLemma'>Lemma</a></li>
-	                                    <li class='disabled'><a class='sortRightPos'>P.o.S.</a></li>
-	                                </ul>
-	                            </div>                          
-	                        </th>
-	                        <th class="tbl_lemma"><a class='sortHitLemma'>Lemma</a></th>
-	                        <th class="tbl_pos"><a class='sortHitPos'>Part of speech</a></th>
-	                    </tr>
-	                </thead>
-	                <tbody id="hitsTableBody">
-	                </tbody>
-	            </table>
-			</div>
+    	<div class="tab-content col-xs-12">
+	         
+			<div id="tabHits" class="tab-pane" >
+				
+				<div class="clearfix" style="margin:15px 0px;">
+					<ul class="pagination pagination-sm pagebuttons pull-left"></ul>
+					<button type="button" class="showHideTitles btn btn-sm btn-danger pull-left" data-toggle="collapse" data-target=".doctitle">Show/hide titles</button>
+				</div>
+				
+		   	    <div class="lightbg haspadding">
+	            	<table id="hitsTable">
+		                <thead>
+		                    <tr>
+		                        <th class="tbl_conc_left">
+		                            <div class="dropdown pull-right">
+		                                <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="left">Left context <b class="caret"></b></a>
+		                                <ul class="dropdown-menu" role="menu" aria-labelledby="left">
+		                                    <li><a class='sortLeftWord'>Word</a></li>
+		                                    <li class='disabled'><a class='sortLeftLemma'>Lemma</a></li>
+		                                    <li class='disabled'><a class='sortLeftPos'>P.o.S.</a></li>
+		                                </ul>
+		                            </div>
+		                        </th>
+		                        <th class="tbl_conc_hit"><a class='sortHitWord'>Hit text</a></th>
+		                        <th class="tbl_conc_right">
+		                            <div class="dropdown">
+		                                <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="right">Right context <b class="caret"></b></a>
+		                                <ul class="dropdown-menu" role="menu" aria-labelledby="right">
+		                                    <li><a class='sortRightWord'>Word</a></li>
+		                                    <li class='disabled'><a class='sortRightLemma'>Lemma</a></li>
+		                                    <li class='disabled'><a class='sortRightPos'>P.o.S.</a></li>
+		                                </ul>
+		                            </div>                          
+		                        </th>
+		                        <th class="tbl_lemma"><a class='sortHitLemma'>Lemma</a></th>
+		                        <th class="tbl_pos"><a class='sortHitPos'>Part of speech</a></th>
+		                    </tr>
+		                </thead>
+		                <tbody id="hitsTableBody">
+		                </tbody>
+		            </table>
+		   	    </div>
+		   	    
+		   	    <div class="clearfix" style="margin:15px 0px">
+					<ul class="pagination pagination-sm pagebuttons pull-left"></ul>
+					<button type="button" class="showHideTitles btn btn-sm btn-danger pull-left" data-toggle="collapse" data-target=".doctitle">Show/hide titles</button>
+				</div>		   	    
+		   	    
+			</div> <!-- tabHits -->
 		
-			<div class="tab-pane lightbg haspadding" id="tabDocs">
-		        <table id='docsTable' class="documents">
-		            <thead>
-		                <tr>
-		                    <th class="tbl_doct"><a href='#' class='sortTitle'>Document title</a></th>
-		                    <th class="tbl_year"><a href='#' class='sortDate'>Year</a></th>
-		                    <th class="tbl_hits"><a href='#' class='sortNumHits'>Hits</a></th>
-		                </tr>
-		            </thead>
-		            <tbody id="docsTableBody">
-		            </tbody>
-		        </table>
-			</div>
+			<div class="tab-pane" id="tabDocs">
+		   	    <div class="clearfix" style="margin:15px 0px">
+					<ul class="pagination pagination-sm pagebuttons pull-left"></ul>
+				</div>	
+		        
+		        <div class="lightbg haspadding">
+			        <table id='docsTable' class="documents">
+			            <thead>
+			                <tr>
+			                    <th class="tbl_doct"><a href='#' class='sortTitle'>Document title</a></th>
+			                    <th class="tbl_year"><a href='#' class='sortDate'>Year</a></th>
+			                    <th class="tbl_hits"><a href='#' class='sortNumHits'>Hits</a></th>
+			                </tr>
+			            </thead>
+			            <tbody id="docsTableBody">
+			            </tbody>
+			        </table>
+		        </div>
+		
+		   	    <div class="clearfix" style="margin:15px 0px">
+					<ul class="pagination pagination-sm pagebuttons pull-left"></ul>
+				</div>
+			</div> <!-- tabDocs -->
 			
 			<div class="tab-pane" id="tabHitsGrouped">
-				<select class="selectpicker" id="groupHitsBy" title="Group hits by..." multiple>
-					<option id="groupTitle" value="field:title">Group by document title</option>
-					<option value="hit">Group by hit text</option>
-					<option value="hit:lemma">Group by lemma</option>
-					<option value="hit:pos">Group by hit pos</option>
-					<option value="wordleft">Group by word left</option>
-					<option value="wordright">Group by word right</option>
-					<option id="groupYear" value="field:yearFrom">Group by year</option>
-					<option id="groupDecade" value="decade:yearFrom">Group by decade</option>
-				</select>
+				<div style="margin:15px 0px">
+					<select class="selectpicker" id="groupHitsBy" title="Group hits by..." multiple>
+						<option id="groupTitle" value="field:title">Group by document title</option>
+						<option value="hit">Group by hit text</option>
+						<option value="hit:lemma">Group by lemma</option>
+						<option value="hit:pos">Group by hit pos</option>
+						<option value="wordleft">Group by word left</option>
+						<option value="wordright">Group by word right</option>
+						<option id="groupYear" value="field:yearFrom">Group by year</option>
+						<option id="groupDecade" value="decade:yearFrom">Group by decade</option>
+					</select>
+				</div>
 				
 				<div id="resultsHitsGrouped" class="lightbg haspadding">
 	                <table id='hitsGroupedTable'>
@@ -289,15 +310,18 @@
 	                    </tbody>
 	                </table>
 				</div>
-			</div>		
+			</div> <!-- tabHitsGrouped -->
 			
 			<div class="tab-pane" id="tabDocsGrouped">
-				<select class="selectpicker" id="groupDocsBy" title="Group documents by..." multiple>
-					<option value="numhits">Group by number of hits</option>
-					<option id="docGroupYear" value="field:year">Group by year</option>
-					<option id="docGroupDecade" value="decade:year">Group by decade</option>
-					<option id="docGroupAuthor" value="field:author">Group by author</option>
-				</select>
+				<div style="padding: 15px 0px;">
+					
+					<select class="selectpicker" id="groupDocsBy" title="Group documents by..." multiple>
+						<option value="numhits">Group by number of hits</option>
+						<option id="docGroupYear" value="field:year">Group by year</option>
+						<option id="docGroupDecade" value="decade:year">Group by decade</option>
+						<option id="docGroupAuthor" value="field:author">Group by author</option>
+					</select>
+				</div>
 				
 				<div id="resultsDocsGrouped" class="lightbg haspadding">
 	                <table id='docsGroupedTable'>
@@ -318,11 +342,6 @@
 			</div>
 		
 		</div> <!-- .tab-content -->
-
-		<div class="col-xs-12">
-			<ul class="pagination pagination-sm pagebuttons"></ul>
-			<button type="button" class="showHideTitles btn btn-sm btn-danger" data-toggle="collapse" data-target=".doctitle">Show/hide titles</button>
-		</div>
 
 	</div>
 

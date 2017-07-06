@@ -7,9 +7,6 @@ var SINGLEPAGE = {};
 	// False: viewing (grouped) hits; true: viewing (grouped) docs
 	var viewingDocs = false;
 
-	// Are we on a group tab but haven't selected group by yet?
-	var selectGroupBy = false;
-
 	// Are we looking at grouped results?
 	var groupBy = null;
 	
@@ -296,12 +293,10 @@ var SINGLEPAGE = {};
 					} else if (data.hitGroups) {
 						$("#totalsReport").hide();
 						isGrouped = true;
-						selectGroupBy = false;
 						updateGroupedTable(data, false);
 					} else if (data.docGroups) {
 						$("#totalsReport").hide();
 						isGrouped = true;
-						selectGroupBy = false;
 						updateGroupedTable(data, true);
 					}
 					
@@ -816,7 +811,6 @@ var SINGLEPAGE = {};
 				$("#groupHitsBy").selectpicker("val", []);
 				$("#hitsGroupedTable tbody").html("");
 				$('#resultsHitsGrouped').hide();
-				selectGroupBy = true;
 				viewingDocs = false;
 				groupBy = null;
 				viewGroup = null;
@@ -829,7 +823,6 @@ var SINGLEPAGE = {};
 				$("#groupDocsBy").selectpicker("val", []);
 				$("#docsGroupedTable tbody").html("");
 				$('#resultsDocsGrouped').hide();
-				selectGroupBy = true;
 				viewingDocs = false;
 				groupBy = null;
 				viewGroup = null;

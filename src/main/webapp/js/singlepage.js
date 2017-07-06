@@ -364,7 +364,6 @@ var SINGLEPAGE = {};
 	    var html;
 		var summary = data.summary;
 		var groups = data[type + 'Groups'];
-		var patt = summary.searchParam.patt;
 		var idPrefix = isDocs ? 'dg' : 'hg';
 		var prCls = isDocs ? 'warning' : 'success'; // orange or green, resp.
 	    if (groups && groups.length > 0) {
@@ -435,7 +434,6 @@ var SINGLEPAGE = {};
 		        }
 		        
 		        // Concordance row
-		        var date = doc.yearFrom;
 		        var parts = snippetParts(hit);
 		        var matchLemma = words(hit.match, "lemma", false, "");
 			    var matchPos = words(hit.match, "pos", false, "");
@@ -487,12 +485,12 @@ var SINGLEPAGE = {};
 		        var date = docInfo[corpusDocFields.dateField] || ""; //.yearFrom;
 		        
 		        var docSnippets = doc.snippets;
+		        var snippets = [];
 		        if (docSnippets) {
-			        var snippets = [];
 			        for (var j = 0; j < docSnippets.length; j++) {
 			        	var hit = docSnippets[j];
 			        	var parts = snippetParts(hit);
-			        	snippets.push(ELLIPSIS + " " + parts[0] + "<strong>" + parts[1] + "</strong>" + parts[2] + ELLIPSIS + "<br/>");
+			        	snippets.push(ELLIPSIS, " ", parts[0], "<strong>", parts[1], "</strong>", parts[2], ELLIPSIS, "<br/>");
 			        	
 			        	break; // only need the first snippet for now
 			        }
@@ -501,7 +499,7 @@ var SINGLEPAGE = {};
 		        }
 		        
 		        html.push("<tr><td><a target='_blank' href='", url, "'>", linkText, "</a><br/>",
-		        		snippets[0],
+		        		snippets.join(""),
                         "<a class='green btn btn-xs btn-default' target='_blank' href='", url,
                         "'>View document info</a>",
                         "</td><td>", date, "</td><td>", numberOfHits, "</td></tr>");

@@ -23,6 +23,7 @@ var SINGLEPAGE = {};
 	var currentSortReverse = false;
 
 	// First result to request (paging)
+	// Also used for pagination ui state
 	var showFirstResult = 0;
 
 	// Total number of pages
@@ -191,7 +192,6 @@ var SINGLEPAGE = {};
 				}
 			}
 			
-		
 			// Word property fields
 			//----------------------------------------------------------------
 			
@@ -243,11 +243,20 @@ var SINGLEPAGE = {};
 			// Preferred number of results
 			//----------------------------------------------------------------
 			
-			SINGLEPAGE.resultsPerPage = param.number || 50;
-			if (SINGLEPAGE.resultsPerPage > 200)
-				SINGLEPAGE.resultsPerPage = 200;
-			$("#resultsPerPage").val(SINGLEPAGE.resultsPerPage);
 			
+			// Pagination, initial results will be requested starting at this index, 
+			// then pagination ui is updated when search results are placed in the page.
+			showFirstResult = param.first || 0;
+			
+			// Set number of options per page
+			// First verify value by setting it and seeing if any option became selected
+			$('#resultsPerPage').selectpicker('val', param.number);
+			if ($('#resultsPerPage').val()) { // Valid
+				SINGLEPAGE.resultsPerPage = $('#resultsPerPage').val();
+			} else { // Invalid, reset to default to default
+				$('#resultsPerPage').selectpicker('val', SINGLEPAGE.resultsPerPage);
+			}	
+	
 			// Search tab selection
 			//----------------------------------------------------------------
 			
@@ -286,10 +295,10 @@ var SINGLEPAGE = {};
 					var isGrouped = false;
 					if (data.hits) {
 						updateHitsTable(data);
-						// Totals is done in BLS.search();
+						// Showing+updating #totalsReport is done in BLS.search();
 					} else if (data.docs) {
 						updateDocsTable(data);
-						// Totals is done in BLS.search();
+						// Showing+updating #totalsReport is done in BLS.search();
 					} else if (data.hitGroups) {
 						$("#totalsReport").hide();
 						isGrouped = true;
@@ -305,7 +314,6 @@ var SINGLEPAGE = {};
 					var duration = summary.searchTime / 1000.0;
 					$("#searchSummary").show().html("Query: " + patt + " - Duration: " + duration + "</span> sec");
 					if (!isGrouped) {
-						showFirstResult = summary.windowFirstResult;
 						updatePagination();
 						$(".pagination").show();
 					} else {
@@ -710,7 +718,6 @@ var SINGLEPAGE = {};
 					sortBy = "identity";
 				}
 				currentSortReverse = false;
-				showFirstResult = 0;
 				skipResultsFade = true;
 				doSearch();
 			}

@@ -82,6 +82,7 @@ window.querybuilder = (function() {
 		attributeGroup: {
 			template: 
 				'<div class="well bl-token-attribute-group" id="{{currentId}}">' +
+					'{{>create_attribute_dropdown}}'+
 				'</div>'
 		},
 
@@ -90,12 +91,12 @@ window.querybuilder = (function() {
 				'<div class="bl-token-attribute" id="{{currentId}}">' +
 					'<div class="bl-token-attribute-main">' +
 						'{{>delete_attribute_button}}' +
-						'<select class="selectpicker" data-width="auto" data-style="btn btn-sm btn-default bl-no-border-radius-right" id="{{currentId}}_type" style="flex-grow:0;">' +
+						'<select class="selectpicker" data-width="auto" data-style="btn btn-sm btn-default bl-no-border-radius-right" id="{{currentId}}_type">' +
 							'{{#attributes}}' +
 							'<option value="{{attribute}}">{{label}}</option>' +
 							'{{/attributes}}' +
 						'</select>' +
-						'<select class="selectpicker" data-width="54px"; data-style="btn btn-sm btn-danger bl-selectpicker-hide-caret bl-no-border-radius" id="{{currentId}}_operator" style="flex-grow:0;">' +
+						'<select class="selectpicker" data-width="54px"; data-style="btn btn-sm btn-danger bl-selectpicker-hide-caret bl-no-border-radius" id="{{currentId}}_operator">' +
 							'{{#comparators}}' +
 							'<optgroup>' +
 								'{{#.}}' +
@@ -104,7 +105,7 @@ window.querybuilder = (function() {
 							'</optgroup>' +
 							'{{/comparators}}' +
 						'</select>' +
-						'<input type="text" class="form-control input-sm bl-no-border-radius" id="{{currentId}}_value" style="flex-grow:1;flex-basis:1px;width:1px;min-width:110px;">' +
+						'<input type="text" class="form-control input-sm bl-no-border-radius"  id="{{currentId}}_value" style="flex-grow:1;flex-basis:1px;width:1px;min-width:110px;">' +
 						'{{>create_attribute_dropdown}}' +
 					'</div>' +
 					'{{#attributes}}' +
@@ -119,26 +120,14 @@ window.querybuilder = (function() {
 						'{{/caseSensitive}}' +
 						'</div>' +
 					'{{/attributes}}' +
-				'</div>'
-				,
+				'</div>',
 
 			partials: {
-				create_attribute_dropdown: 
-					'<div class="dropdown" style="flex-grow:0;">' +
-						'<button type="button" class="btn btn-sm btn-default dropdown-toggle bl-no-border-radius-left" data-toggle="dropdown" style="border-left:none;"><span class="glyphicon glyphicon-plus"></span>&#8203;</button>' +
-						'<ul class="dropdown-menu">' +
-							'{{#operators}}' +
-								'<li><a href="#" data-bl-token-attribute-group-operator="{{operator}}" data-bl-token-attribute-group-operator-label="{{label}}" onclick="return false;"><span class="glyphicon glyphicon-plus-sign text-success"></span> {{label}}</a></li>' +
-							'{{/operators}}' +
-							'<!--<li class="divider"></li>' +
-							'<li><a href="#" id="{{currentId}}_delete"><span class="glyphicon glyphicon-remove-sign text-danger" onclick="return false"></span></a></li>-->' +
-						'</ul>' +
-					'</div>',
 				delete_attribute_button:
 					'<span class="glyphicon glyphicon-remove text-danger" id="{{currentId}}_delete" style="flex-grow:0;cursor:pointer;"></span>'
 			}
 		},
-
+		
 		operatorLabel: {
 			template:
 				'<div class="bl-token-attribute-group-label">' +
@@ -146,6 +135,21 @@ window.querybuilder = (function() {
 				'</div>',
 
 			partials: {}
+		},
+		
+		shared: {
+			partials: {
+				create_attribute_dropdown: 
+					'<div class="dropdown bl-create-attribute-dropdown">' +
+						'<button type="button" class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-plus"></span>&#8203;</button>' +
+						'<ul class="dropdown-menu">' +
+							'{{#operators}}' +
+							'<li><a href="#" onclick="$(this).trigger(\'cql:attribute:create\', { operator: \'{{operator}}\', operatorLabel: \'{{label}}\' }); return false;">'+
+								'<span class="glyphicon glyphicon-plus-sign text-success"></span> {{label}}</a></li>'+
+							'{{/operators}}'+
+						'</ul>'+
+					'</div>',
+			}
 		}
 	};
 
@@ -154,7 +158,7 @@ window.querybuilder = (function() {
 		attribute: {
 			view: {
 				comparators: [
-					['=', '!='],
+					['=', '≠'],
 					['starts with', 'ends with']
 				],
 				attributes: [
@@ -173,10 +177,6 @@ window.querybuilder = (function() {
 						label: 'Part of speech',
 						caseSensitive: false,
 					}
-				],
-				operators: [
-					{operator: '&', label: 'AND'},
-					{operator: '|', label: 'OR'}
 				]
 			},
 
@@ -186,6 +186,8 @@ window.querybuilder = (function() {
 						return attribute + " = " + "\"" + value + ".*\"";
 					case "ends with":
 						return attribute + " = " + "\".*" + value + "\"";
+					case "≠":
+						return attribute + " != \"" + value + "\""; 
 					default:
 						return attribute + " " + comparator + " \"" + value + "\"";
 				}
@@ -199,6 +201,15 @@ window.querybuilder = (function() {
 
 		attributeGroup: {
 			view: {}
+		},
+		
+		shared: {
+			view: {
+				operators: [
+					{operator: '&', label: 'AND'},
+					{operator: '|', label: 'OR'}
+				]
+			},
 		}
 	};
 
@@ -403,22 +414,78 @@ window.querybuilder = (function() {
 	};
 
 	AttributeGroup.prototype._createElement = function() {
-		var view = $.extend({}, this.builder.settings.attributeGroup.view, { 
-			currentId: generateId('attribute_group')
-		});
+		var view = $.extend({}, this.builder.settings.shared.view, this.builder.settings.attributeGroup.view, { currentId: generateId('attribute_group') });
+		var partials = $.extend({}, templates.shared.partials, templates.attributeGroup.partials);
 		
-		var $element = $(Mustache.render(templates.attributeGroup.template, view, templates.attributeGroup.partials));
-		
+		var $element = $(Mustache.render(templates.attributeGroup.template, view, partials));
 		this._prepareElement($element);
-		
 		return $element;
 	};
 
 	AttributeGroup.prototype._prepareElement = function($element) {
 		$element.data('attributeGroup', this);
 		$element.on('cql:modified', this._updateLabels.bind(this));
+		$element.on('cql:attribute:create', this._createAttribute.bind(this));
 	};
 
+	AttributeGroup.prototype._createAttribute = function(attributeCreateEvent, data) {
+		// The attribute for which the create button was clicked (if null, the button was our own button)
+		var originAttribute = $(attributeCreateEvent.target).parents(".bl-token-attribute").data('attribute');
+		
+		var newAttribute = new Attribute(this.builder);
+		var newGroup;
+		
+		/* 
+		 * If the new attribute was created at the bottom of the group, wrap all existing attributes inside a new group
+		 * then swap this group's operator to the new operator, and append the new attribute
+		 */
+		
+		// Construct a new group and put the new operator in there together with (
+		if (data.operator !== this.operator) {
+			newGroup = new AttributeGroup(this.builder, data.operator, data.operatorLabel);
+			if (originAttribute) {
+				// Create a new group with the original attribute and the new attribute
+				// at the position of the original attribute
+				this.addAttributeOrGroup(newGroup, originAttribute);
+				newGroup.addAttributeOrGroup(originAttribute);
+				newGroup.addAttributeOrGroup(newAttribute);
+			}
+			else {
+				// Create a new group, put in everything inside this group
+				// Then swap our operator and add the new attribute
+				$(this.element.children('.bl-token-attribute, .bl-token-attribute-group').get().reverse()).each(function(index, element) {
+					var instance = $(element).data('attribute') || $(element).data('attributeGroup');
+					newGroup.addAttributeOrGroup(instance);
+				});
+				
+				this.addAttributeOrGroup(newGroup);
+				this.addAttributeOrGroup(newAttribute, newGroup);
+				newGroup.operator = this.operator;
+				newGroup.operatorLabel = this.operatorLabel;
+				this.operator = data.operator;
+				this.operatorLabel = data.operatorLabel;
+			}
+		}
+		else {
+			if (originAttribute) { // Insert below existing attribute
+				this.addAttributeOrGroup(newAttribute, originAttribute);
+			}
+			else { // Append at end of this group
+				var $lastChild = this.element.children('.bl-token-attribute, .bl-token-attribute-group').last();
+				var lastChildData = $lastChild.data('attributeGroup') || $lastChild.data('attribute');
+				
+				this.addAttributeOrGroup(newAttribute, lastChildData);				
+			}
+		}
+		
+		this._updateLabels();
+		if (newGroup)
+			newGroup._updateLabels();
+		
+		this.element.trigger('cql:modified');
+		return false;
+	}
+	
 	AttributeGroup.prototype._removeIfEmpty = function() {
 		var $children = this.element.children('.bl-token-attribute, .bl-token-attribute-group');
 		var parentGroup = this.element.parent().data('attributeGroup');
@@ -444,7 +511,6 @@ window.querybuilder = (function() {
 
 	AttributeGroup.prototype._updateLabels = function() {
 		this.element.children('.bl-token-attribute-group-label').remove();
-		this.element.children('.bl-token-attribute-group-create-token').remove();
 
 		var self = this;
 		this.element.children('.bl-token-attribute, .bl-token-attribute-group').each(function(index, element) {
@@ -452,21 +518,9 @@ window.querybuilder = (function() {
 			$newLabel.insertAfter(element);
 		});
 		this.element.children('.bl-token-attribute-group-label').last().remove();
-		
-		// create button
-		var $createAttributeButton = $('<button type="button" class="btn btn-sm btn-default bl-token-attribute-group-create-token"><span class="glyphicon glyphicon-plus"></span></button>"');
-		$createAttributeButton.on('click', function(event) {
-			var $lastChild = self.element.children('.bl-token-attribute, .bl-token-attribute-group').last();
-			var lastChildData = $lastChild.data('attributeGroup') || $lastChild.data('attribute');
-			
-			self.addAttributeOrGroup(new Attribute(self.builder), lastChildData);
-			self.element.trigger('cql:modified');
-		});
-		
-		$createAttributeButton.appendTo(this.element);
 	};
 
-	// if no preciding attribute, insertion will be at the front of this group
+	// if no preceding attribute, insertion will be at the front of this group
 	AttributeGroup.prototype.addAttributeOrGroup = function(attributeOrGroup, precedingAttributeOrGroup) {
 		if (precedingAttributeOrGroup && precedingAttributeOrGroup.element.parent().index(0) !== this.element.index(0)) {
 			throw new Error("AttributeGroup.addAttributeOrGroup: precedingAttributeOrGroup is not a child of this group");
@@ -521,11 +575,11 @@ window.querybuilder = (function() {
 	};
 
 	Attribute.prototype._createElement = function(){
-		var view = $.extend({}, this.builder.settings.attribute.view, { currentId: generateId('attribute') });
-		var $element = $(Mustache.render(templates.attribute.template, view, templates.attribute.partials));
-
-		this._prepareElement($element);
+		var view = $.extend({}, this.builder.settings.shared.view, this.builder.settings.attribute.view, { currentId: generateId('attribute') });
+		var partials = $.extend({}, templates.shared.partials, templates.attribute.partials);
 		
+		var $element = $(Mustache.render(templates.attribute.template, view, partials));
+		this._prepareElement($element);
 		return $element;
 	};
 
@@ -537,27 +591,9 @@ window.querybuilder = (function() {
 		$element.find('.selectpicker').selectpicker();
 		$element.find('.selectpicker, input').on('change', function(event) {$element.trigger('cql:modified');});
 
-		var self = this;
-		$element.find("[data-bl-token-attribute-group-operator]").on('click', function(event) {
-			var parentGroup = self.element.parent().data('attributeGroup');
-			var requestedOperator = $(event.currentTarget).data('bl-token-attribute-group-operator');
-			var requestedLabel = $(event.currentTarget).data('bl-token-attribute-group-operator-label');
-
-			if (parentGroup.operator != requestedOperator) {
-				var newGroup = new AttributeGroup(self.builder, requestedOperator, requestedLabel);
-				parentGroup.addAttributeOrGroup(newGroup, self);
-				newGroup.addAttributeOrGroup(self);
-				newGroup.addAttributeOrGroup(new Attribute(self.builder), self);
-				//parentGroup.element.trigger('cql:modified');
-			} else {
-				parentGroup.addAttributeOrGroup(new Attribute(self.builder), self);
-				//parentGroup.element.trigger('cql:modified');
-			}
-		});
-		
-		
 		// Show/hide elements for the selected attribute type
 		// Such as case-sensitivity checkbox or comboboxes for when there is a predefined set of valid values
+		var self = this;
 		$element.find(baseId + '_type').on('loaded.bs.select changed.bs.select', function(e) { 
 			var selectedValue = $(this).val();
 			self._updateShownOptions(selectedValue); 
@@ -566,16 +602,15 @@ window.querybuilder = (function() {
 		$element.find(baseId + '_delete').on('click', function() {
 			var parentGroup = self.element.parent().data('attributeGroup');
 			self.element.detach();
-			//parentGroup._updateLabels();
 			parentGroup._removeIfEmpty();
 			parentGroup.element.trigger('cql:modified');
 		});
 	};
 	
 	Attribute.prototype._updateShownOptions = function(selectedValue) {
-		var search = '[data-attribute-type]';
-		
-		this.element.find(search).hide().filter('[data-attribute-type="' + selectedValue + '"]').show();
+		// First hide everything with a data-attribute-type value
+		// Then unhide the one for our new selectedValue
+		this.element.find('[data-attribute-type]').hide().filter('[data-attribute-type="' + selectedValue + '"]').show();
 	};
 
 	Attribute.prototype.getCql = function() {

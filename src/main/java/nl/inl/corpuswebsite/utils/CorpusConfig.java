@@ -21,7 +21,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 public class CorpusConfig {
-	public static final String TAB_DEFAULT = "unsorted";
+	public static final String TAB_DEFAULT = "Metadata";
 
 	private Document config;
 
@@ -29,6 +29,9 @@ public class CorpusConfig {
 
 	/** Keyed by tab name */
 	private Map<String, List<FieldDescriptor>> metadataFields = new LinkedHashMap<>();
+
+	/** titleField, pidField, etc */
+	private Map<String, String> fieldInfo = new LinkedHashMap<>();
 
 
 	public CorpusConfig(String xml) throws SAXException, IOException, ParserConfigurationException {
@@ -45,9 +48,14 @@ public class CorpusConfig {
 		return metadataFields;
 	}
 
+	public Map<String, String> getFieldInfo() {
+		return fieldInfo;
+	}
+
 	private void parse() {
 		parsePropertyFields();
 		parseMetadataFields();
+		parseFieldInfo();
 	}
 
 	private void parsePropertyFields() {
@@ -126,6 +134,18 @@ public class CorpusConfig {
 		}
 	}
 
+	private void parseFieldInfo() {
+		Node fieldInfoNode = this.config.getElementsByTagName("fieldInfo").item(0);
+		if (fieldInfoNode == null)
+			return;
+
+		NodeList fieldInfoChildren = fieldInfoNode.getChildNodes();
+		for (int i = 0; i < fieldInfoChildren.getLength(); i++) {
+			Node fieldInfoChildNode = fieldInfoChildren.item(i);
+			this.fieldInfo.put(fieldInfoChildNode.getNodeName(), fieldInfoChildNode.getTextContent());
+		}
+	}
+
 
 	/**
 	 * Parse fieldValues if valueListComplete == true
@@ -135,7 +155,8 @@ public class CorpusConfig {
 	 * @return a map of values in the form of (value, displayName)
 	 */
 	private static Map<String, String> parseMetadataValues(Element metadataFieldElement) {
-		Map<String, String> values = new HashMap<>();
+		// LinkedHashMap, it's important these values stay in the order in which we parse them
+		Map<String, String> values = new LinkedHashMap<>();
 
 		// If the list is not complete, don't bother parsing it
 		if (!metadataFieldElement.getElementsByTagName("valueListComplete").item(0).getTextContent().equalsIgnoreCase("true"))

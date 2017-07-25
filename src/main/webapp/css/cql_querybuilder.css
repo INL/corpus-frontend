@@ -34,6 +34,11 @@
 	margin: 0px 20px 0px 0px;
 	min-width: 350px;
 	display: table;
+
+	/* due to display: table, and our panel-heading being display:table-caption,
+		our border starts below the panel-heading, so curved corners look weird there */
+	border-top-right-radius: 0px;
+	border-top-left-radius: 0px;
 }.bl-token .panel-heading {
 	/* 	Use tables to make width derived from panel-body, 
 		so that wide text in the panel heading break onto the next line instead of stretching the entire panel width */
@@ -56,7 +61,9 @@
 	padding: 3px 8px 8px 8px;
 	margin-top: 6px;
 	margin-bottom: 0;
-	box-shadow: 2px 2px 6px darkgrey;
+	
+	box-shadow: 1px 1px 4px rgba(0,0,0,0.15);
+	border: 1px solid rgba(0,0,0,0.15);
 }
 .bl-token-attribute {
 	margin-top: 6px;

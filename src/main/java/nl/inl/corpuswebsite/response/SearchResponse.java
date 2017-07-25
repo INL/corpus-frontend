@@ -3,6 +3,8 @@
  */
 package nl.inl.corpuswebsite.response;
 
+import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -30,6 +32,10 @@ public class SearchResponse extends BaseResponse {
 		getContext().put("title", corpusNameTop);
 		getContext().put("corpusOwner", corpusOwner);
 		getContext().put("corpusName", corpusName);
+
+		for (Map.Entry<String, String> e : servlet.getCorpusConfig(corpus).getFieldInfo().entrySet()) {
+			getContext().put(e.getKey(), e.getValue());
+		}
 
 		getContext().put("propertyFields", servlet.getCorpusConfig(corpus).getPropertyFields());
 		getContext().put("metadataFields", servlet.getCorpusConfig(corpus).getMetadataFields());

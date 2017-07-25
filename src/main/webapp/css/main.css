@@ -12,6 +12,10 @@ a:hover {
 	text-decoration: none;
 }
 
+hr {
+	border-color: #ddd;
+}
+
 div.booklogo {
 	float: left;
 	height: 1px;
@@ -53,10 +57,13 @@ img.booklogo {
 	border: 1px solid #cccccc;
 }
 
+.resultcontainer {
+	margin: 20px 0px;
+}
+
 .lightbg {
 	background-color: rgba(255,255,255,0.6);
 	border: 1px solid #cccccc;
-	margin-bottom: 20px;
 }
 
 body {
@@ -64,14 +71,6 @@ body {
 	background-repeat:no-repeat;
 	background-position:-350px -310px;
 	background-attachment:scroll;
-}
-
-.span1, .span2, .span3, .span4, .span5, .span6, .span10, .span12 {
-	margin-left: 0px;
-}
-
-select.medium {
-	width: 170px;
 }
 
 #cqlfield {
@@ -89,18 +88,6 @@ select.medium {
 table {
 	width: 100%;
 	table-layout: fixed;
-}
-
-.tbl_doct {
-	width: 75%;
-}
-
-.tbl_year {
-	width: 15%;
-}
-
-.tbl_hits {
-	width: 15%;
 }
 
 td {
@@ -128,36 +115,16 @@ table.documents td {
 	padding-bottom: 15px;
 }
 
-.tbl_conc_left {
-	text-align: right;
-	width: 40px;
-}
-
-.tbl_conc_right {
-	width: 40px;
-}
-
-.tbl_conc_hit {
-	font-weight: bold;
-	text-align: center;
-	width: 20px;
-	
-}
-
-.tbl_lemma {
-	width: 15px;
-}
-
-.tbl_pos {
-	width: 11px;
-}
-
-.tbl_groupname {
-	width: 30%;
-}
-
-.progress {
+.group-progress {
 	margin-bottom: 2px;
+}.group-progress > .progress-bar {
+	/*  
+		Do not shrink smaller than the text inside the bar.
+		Greater widths are set using min-width.
+	*/
+	
+	width: initial; 
+	padding: 0px 2px;
 }
 
 .textchecks {
@@ -188,38 +155,13 @@ div.hitscroll a {
 	color: #dddddd; 
 }
 
-small {
-	color: #888888;
-}
-
 #filteroverview {
 	color: #888888;
 	font-size: 85%;
 }
 
-.progress .bar {
-	color: #333333;
-}
-
-.xxlarge {
-	font-size:100px;
-}
-
-.row-fluid .inline-concordance, .inline-concordance .btn, td .inline-concordance {
-	font-size: 12px;
-	min-height: 0px;
-	background-color: rgba(255,255,255,0.5);
-	margin-left: 0px;
-}
-
 .activeLink {
 	background-color: #FFFF00;
-}
-
-@media (max-width: 979px) {
-	.navbar-fixed-top, .navbar-fixed-bottom {
-		position: fixed;
-	}
 }
 
 span.word {
@@ -267,6 +209,13 @@ col.corpus-name {
 }
 col.delete {
 	width: 8%;
+}
+
+.inline-concordance .btn, td .inline-concordance {
+	font-size: 12px;
+	min-height: 0px;
+	background-color: rgba(255, 255, 255, 0.5);
+	margin-left: 0px;
 }
 
 td.corpus-name a {
@@ -341,37 +290,37 @@ table.corpora a.icon {
 
 #querybuilder {
 	background-color: rgba(255, 255, 255, 0.7);
-	border-radius: 6px;
+	border-radius: 4px;
+
+	box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+	border: 1px solid #ccc
 }
 
-#results {
-	position: relative;
-	min-height: 200px;
+.pagination {
+	margin: 0px;
+}.pagination > li > a {
+	/* No float shenanigans, they mess up the baseline of any container around pagination */
+	display: inline-block;
+	float: none;
 }
 
-.pagebuttons {
-	display: block;
-	margin: 0px 10px 0px 0px;
-}
-
-#waitDisplay {
-	background: black;
+.searchIndicator {
 	color: white;
-	opacity: 0.25;
-	border-radius: 40px;
-	
+	background-color: rgba(0,0,0,0.25);
+	border-radius: 1000px;
+
+	font-size: 80px;
+	padding: 10px;
+	margin-left: -50px;
+
+	display: none;
 	position: fixed;
-	bottom: 20%;
-	width: 80px;
-	left: 0;
-	right: 0;
-	margin-left: auto;
-	margin-right: auto;
-	padding-top: 8px;
+	z-index: 1000;
+
+	left: 50%;
+	top: 70%;
 }
-#waitDisplay i {
-	font-size: 60px;
-}
+
 #userId,
 #corpus-delete-name {
 	font-style: italic;

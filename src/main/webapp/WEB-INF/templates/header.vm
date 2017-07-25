@@ -8,6 +8,7 @@
 		<meta property="og:image" content="$pathToTop/img/apple-touch-icon-144x144-precomposed.png" />
 		<meta property="og:description" content="$title search provided by the Dutch Language Institute in Leiden."/>
 		<!-- Build time: $buildTime -->
+		## TODO set based on corpus info
 		<link title="Search" type="application/opensearchdescription+xml" rel="search" href="$pathToTop/opensearch.xml">
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 		<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/css/bootstrap-select.min.css">
@@ -43,19 +44,15 @@
 		<link rel="icon" type="image/png" href="$pathToTop/img/favicon.png">
 		<link rel="apple-touch-icon" href="$pathToTop/img/apple-touch-icon.png">
         
-        <script src="//cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.min.js"></script>
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
-        <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
-      	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>   
-        <script src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/js/bootstrap-select.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.js"></script>
+      	<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.js"></script>   
+        <script src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/js/bootstrap-select.js"></script>
         <script src="$pathToTop/js/vendor/jquery.ui.widget.js"></script>
 		<script src="$pathToTop/js/vendor/jQuery.extendext.js"></script>
 		<script src="$pathToTop/js/vendor/jquery.iframe-transport.js"></script>
 		<script src="$pathToTop/js/vendor/jquery.fileupload.js"></script>
-		<script src="$pathToTop/js/vendor/URI.js"></script>
-		<script src="$pathToTop/js/vendor/mustache.js"></script>
-        <script src="$pathToTop/js/search.js"></script>
-		<script src="$pathToTop/js/cql_querybuilder.js"></script>
 		<title>$title search</title>
     </head>
     <body>
@@ -77,7 +74,7 @@
 						#end 
 					</div>           	
 					
-				    <a id='corpusNameTop' href='$brandLink' class='navbar-brand'>$title</a>
+				    <a href='$brandLink' class='navbar-brand'>$title</a>
                     
 	                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
 	                    <span class="icon-bar"></span>

@@ -1,58 +1,60 @@
 #macro( filterfields $fields)
 	<div class="form-horizontal">
 	#foreach($docfield in $fields)
-        <div class="form-group filterfield" id="$docfield.getId()" data-filterfield-type="$docfield.getType()"> <!-- Behaves as a .row, so every child element should have some form of .col-* -->
-        	<label class="col-xs-12">$docfield.getDisplayName()</label>
-        	
-    		#if(($docfield.getType() == "select" || $docfield.getType() == "multiselect") && !$docfield.getValidValues().isEmpty())  
+		<div class="form-group filterfield" id="$docfield.getId()" data-filterfield-type="$docfield.getType()"> <!-- Behaves as a .row, so every child element should have some form of .col-* -->
+			<label class="col-xs-12">$docfield.getDisplayName()</label>
+
+			#if(($docfield.getType() == "select" || $docfield.getType() == "multiselect") && !$docfield.getValidValues().isEmpty())
 				<div class="col-xs-12">
-	    			#if($docfield.getType() == "multiselect")
-	        		<select name="$docfield.getId()" title="$docfield.getDisplayName()" class="selectpicker form-control forminput" data-size="10" multiple>
-	    			#else
-	        		<select name="$docfield.getId()" title="$docfield.getDisplayName()" class="selectpicker form-control forminput" data-size="10">
-						<option value=""></option>
+					#if($docfield.getType() == "multiselect")
+					<select title="$docfield.getDisplayName()" class="selectpicker form-control forminput" data-size="6" multiple>
+					#else
+					<select title="$docfield.getDisplayName()" class="selectpicker form-control forminput" data-size="6">
+						<option value=""></option> ## Always insert an empty value for regular selects so they can be deselected
 					#end
-										
-	    			#foreach($pair in $docfield.getValidValues())
-	                    <option value="$pair.getValue()">$pair.getDescription()</option>
-	    			#end
-	    			</select>
-    			</div>
-    		#elseif($docfield.getType() == "date")
+
+					#foreach($pair in $docfield.getValidValues())
+						<option value="$pair.getValue()">$pair.getDescription()</option>
+					#end
+					</select>
+				</div>
+			#elseif($docfield.getType() == "date")
 				<div class="col-xs-4">
-					<input type="text" name="$docfield.getName()__from" placeholder="From" class="form-control forminput" />
+					<input type="text" placeholder="From" class="form-control forminput" />
 				</div>
 				<div class="col-xs-4">
-					<input type="text" name="$docfield.getName()__to" placeholder="To" class="form-control forminput" />
+					<input type="text" placeholder="To" class="form-control forminput" />
 				</div>
 			#else
-    			<div class="col-xs-12">
-    				<input type="text" name="$docfield.getName()" placeholder="$docfield.getDisplayName()" class="form-control forminput" />
-    			</div>
-    		#end
-        	
-        </div>
-    #end
-    </div>
+				<div class="col-xs-12">
+					<input type="text" placeholder="$docfield.getDisplayName()" class="form-control forminput" />
+				</div>
+			#end
+
+		</div>
+	#end
+	</div>
 #end
 
 #parse("header.vm")
 
-
-
-
+<script src="$pathToTop/js/vendor/mustache.js"></script>
+<script src="$pathToTop/js/vendor/URI.js"></script>
 <script src="$pathToTop/js/singlepage.js"></script>
 <script src="$pathToTop/js/singlepage-bls.js"></script>
+<script src="$pathToTop/js/singlepage-form.js"></script>
+<script src="$pathToTop/js/singlepage-interface.js"></script>
+<script src="$pathToTop/js/cql_querybuilder.js"></script>
 <script>
-    var BLS_URL = "$blsUrl";
-    var wordProperties = [#foreach($propertyField in $propertyFields)#if($velocityCount > 1), #end"$propertyField.getId()"#end];
+	var BLS_URL = "$blsUrl";
+	var wordProperties = [#foreach($propertyField in $propertyFields)#if($velocityCount > 1), #end"$propertyField.getId()"#end];
 </script>
 
 <!--
 <div class="container">
 	<noscript>
 		<br/><br/><br/>
-		<div class="alert alert-error">	
+		<div class="alert alert-error">
 			<h1>Error: JavaScript disabled.</h1>
 			We notice that you have JavaScript disabled in your browser. This website requires JavaScript to be enabled. Please enable JavaScript to use this website.
 		</div>
@@ -63,37 +65,37 @@
 -->
 
 
-<form onsubmit="return SINGLEPAGE.searchSubmit();" class="clearfix">
+<form onsubmit="return SINGLEPAGE.CORE.searchSubmit();" class="clearfix">
 <div id='searchFormDiv' class="col-xs-12 contentbox">
 	#if($corpusOwner)<a href='..'><i class="fa fa-arrow-left"></i> back to my corpora</a>#end
-	<h2><span id='corpusNameMain'></span> #if($corpusOwner)<span id='corpusOwner'>($corpusOwner)</span>#end</h2>
-	
+	<h2>$corpusName #if($corpusOwner)<span id='corpusOwner'>($corpusOwner)</span>#end</h2>
+
 	<div class="row">
 		<div class="col-xs-12 col-md-6" id="searchContainer">
 			<h3>Search for &hellip;</h3>
 			<ul class="nav nav-tabs" id="searchTabs">
-				<li><a href="#simple" data-toggle="tab" class="querytype">Simple</a></li>
+				<li class="active"><a href="#simple" data-toggle="tab" class="querytype">Simple</a></li>
 				<li><a href="#advanced" data-toggle="tab" class="querytype">Advanced</a></li>
 				<li><a href="#query" data-toggle="tab" class="querytype">CQL query</a></li>
 			</ul>
 			<div class="tab-content haspadding-15">
-				<div class="tab-pane" id="simple">
+				<div class="tab-pane active" id="simple">
 					<div class="alert alert-error" style='display: none;'>
 						<button type="button" class="close" data-dismiss="alert">&times;</button>
 						<b>Error!</b> <span id='searchErrorText'>(text here)</span>
-		            </div>
+					</div>
 
-		            <div class="form-horizontal">
+					<div class="form-horizontal">
 					#foreach($propertyField in $propertyFields)
-						#set ($propertyFieldId = $propertyField.getId())
-						#set ($fieldcaseid = $propertyFieldId + "_case")
-						
-						<div class="form-group"> <!-- behaves as .row when in .form-horizontal so .row may be omitted -->
-							<label for="#$propertyFieldId" class="col-xs-12 col-md-3">$propertyField.getDisplayName()</label>
+						#set ($propertyFieldInputId = $propertyField.getId() + "_value")
+						#set ($propertyFieldCaseId = $propertyField.getId() + "_case")
+
+						<div class="form-group propertyfield" id="$propertyField.getId()"> <!-- behaves as .row when in .form-horizontal so .row may be omitted -->
+							<label for="#$propertyFieldInputId" class="col-xs-12 col-md-3">$propertyField.getDisplayName()</label>
 							<div class="col-xs-12 col-md-9">
-								<input type="text" name="$propertyFieldId" id="$propertyFieldId" placeholder="$propertyField.getDisplayName()" class="form-control"/>
+								<input type="text" id="$propertyFieldInputId" placeholder="$propertyField.getDisplayName()" class="form-control"/>
 								#if($propertyField.isCaseSensitive())
-								<div class="checkbox"><label><input type="checkbox" id="$fieldcaseid"> Case&nbsp;sensitive</label></div>
+								<div class="checkbox"><label><input type="checkbox" id="$propertyFieldCaseId"> Case&nbsp;sensitive</label></div>
 								#end
 							</div>
 						</div>
@@ -108,7 +110,7 @@
 					<h3>Corpus Query Language:</h3>
 					<div class="row">
 						<div class="col-xs-12">
-							<textarea id="querybox" name="querybox" rows="7"></textarea>
+							<textarea id="querybox" class="form-control" name="querybox" rows="7"></textarea>
 						</div>
 					</div>
 				</div>
@@ -120,74 +122,70 @@
 			<h3>Filter search by</h3>
 			<ul class="nav nav-tabs" id="filtertabs">
 			#set($firstTab = "true") ## need to keep track manually since the first tab in the list may be ignored
-    		#foreach($tab in $metadataFields.entrySet())
-    			#set($tabName = $tab.key)
-    			#set($tabId = $tabName.replace(" ", ""))
-				
+			#foreach($tab in $metadataFields.entrySet())
+				#set($tabName = $tab.key)
+				#set($tabId = $tabName.replace(" ", ""))
+
 				##DefaultTab is always hidden, unless there are no other tabs
 				#if( !($tabName == $defaultMetadataTabName && $metadataFields.size() > 1))
-	    			<li #if($firstTab == true) class="active" #end>
-	    				<a href="#$tabId" data-toggle="tab">$tabName</a>
-	    			</li>
-	    			#set($firstTab = "false")					
-				#end    			
-    		#end
-    		</ul>
-    		
-    		<div class="tab-content">
-    		#set($firstTab = "true") ## need to keep track manually since the first tab in the list may be ignored
-    		#foreach($tab in $metadataFields.entrySet())
-    			#set($tabName = $tab.key)
-    			#set($tabId = $tabName.replace(" ", ""))
-				
+					<li #if($firstTab == true) class="active" #end>
+						<a href="#$tabId" data-toggle="tab">$tabName</a>
+					</li>
+					#set($firstTab = "false")
+				#end
+			#end
+			</ul>
+
+			<div class="tab-content">
+			#set($firstTab = "true") ## need to keep track manually since the first tab in the list may be ignored
+			#foreach($tab in $metadataFields.entrySet())
+				#set($tabName = $tab.key)
+				#set($tabId = $tabName.replace(" ", ""))
+
 				##DefaultTab is always hidden, unless there are no other tabs
 				#if( !($tabName == $defaultMetadataTabName && $metadataFields.size() > 1))
-	    			<div class="tab-pane #if($firstTab == true) active #end" id="$tabId">
-	    				#filterfields($tab.value)
-	    			</div>
-	    			#set($firstTab = "false")					
-				#end    			
-    		#end
-    		</div>
+					<div class="tab-pane #if($firstTab == true) active #end" id="$tabId">
+						#filterfields($tab.value)
+					</div>
+					#set($firstTab = "false")
+				#end
+			#end
+			</div>
 			#end
 			<div class="row">
 				<div id="filteroverview" class="col-xs-6"></div>
 			</div>
-		</div>	
-		
+		</div>
+
 		<div class="col-xs-12">
 			<hr>
-			<div class="row">
-				<div class="col-xs-6">
-					<input type="submit" class="btn btn-primary btn-lg" value="Search" id="searchbutton">
-					<a href="?" onclick="return SINGLEPAGE.resetPage();" class="btn btn-default btn-lg" id="resetbutton">Reset</a>
-				</div>
-				<div class="col-xs-6 text-right">
-					<label for="resultsPerPage">Show me:</label>
-					<select class="selectpicker" data-width="auto" id="resultsPerPage">
-						<option value="20">20 results</option>
-						<option value="50">50 results</option>
-						<option value="100">100 results</option>
-						<option value="200">200 results</option>
-					</select>
-				</div>
+			<div style="display:inline-block; position: absolute; bottom: 0;">
+				<input type="submit" class="btn btn-primary btn-lg" value="Search" id="searchbutton">
+				<a href="?" onclick="return SINGLEPAGE.CORE.resetPage();" class="btn btn-default btn-lg" id="resetbutton">Reset</a>
+			</div>
+			<div class="text-right pull-right" style="display:inline-block">
+				<label for="resultsPerPage" style="display:block;">Show me:</label>
+				<select class="selectpicker" data-width="auto" data-style="btn-default btn-lg" id="resultsPerPage">
+					<option value="20">20 results</option>
+					<option value="50">50 results</option>
+					<option value="100">100 results</option>
+					<option value="200">200 results</option>
+				</select>
 			</div>
 		</div>
 	</div>
 </div>
 
 <div id="errorDiv" class="col-xs-12 alert alert-danger">
-    <h1>Error</h1>
-    <p id="errorMessage"></p>
-    <p>(for assistance, please contact <a href='mailto:servicedesk@ivdnt.org'>servicedesk@ivdnt.org</a>)</p>
+	<h1>Error</h1>
+	<p id="errorMessage"></p>
+	<p>(for assistance, please contact <a href='mailto:servicedesk@ivdnt.org'>servicedesk@ivdnt.org</a>)</p>
 </div>
 
 <div id="searchSummary" class="pull-right">
 </div>
 
-<div id='waitDisplay'>
-    <p class="text-center"><i class="fa fa-spinner fa-spin"></i></p>
-</div>
+<span class="fa fa-spinner fa-spin searchIndicator"></span>
 
 <div class="col-xs-12 contentbox" id="results">
 	<div id='totalsReport'>
@@ -196,152 +194,154 @@
 		<p id='totalsSpinner'><i class="fa fa-spinner fa-spin"></i></p>
 	</div>
 
-    <div id="resultsTabs" class="row">
-		<div class="col-xs-12">
-			<ul class="nav nav-tabs" id="contentTabs">
-				<li><a href="#tabHits" data-toggle="tab">Per Hit</a></li>
-				<li><a href="#tabDocs" data-toggle="tab">Per Document</a></li>
-				<li><a href="#tabHitsGrouped" data-toggle="tab">Hits grouped</a></li>
-				<li><a href="#tabDocsGrouped" data-toggle="tab">Documents grouped</a></li>
-			</ul>
-		</div>
-    	
-    	<div class="tab-content col-xs-12">
-	         
-			<div id="tabHits" class="tab-pane" >
-				
-				<div class="clearfix" style="margin:15px 0px;">
-					<ul class="pagination pagination-sm pagebuttons pull-left"></ul>
-					<button type="button" class="showHideTitles btn btn-sm btn-danger pull-left" data-toggle="collapse" data-target=".doctitle">Show/hide titles</button>
-				</div>
-				
-		   	    <div class="lightbg haspadding">
-	            	<table id="hitsTable">
-		                <thead>
-		                    <tr>
-		                        <th class="tbl_conc_left">
-		                            <div class="dropdown pull-right">
-		                                <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="left">Left context <b class="caret"></b></a>
-		                                <ul class="dropdown-menu" role="menu" aria-labelledby="left">
-		                                    <li><a class='sortLeftWord'>Word</a></li>
-		                                    <li class='disabled'><a class='sortLeftLemma'>Lemma</a></li>
-		                                    <li class='disabled'><a class='sortLeftPos'>P.o.S.</a></li>
-		                                </ul>
-		                            </div>
-		                        </th>
-		                        <th class="tbl_conc_hit"><a class='sortHitWord'>Hit text</a></th>
-		                        <th class="tbl_conc_right">
-		                            <div class="dropdown">
-		                                <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="right">Right context <b class="caret"></b></a>
-		                                <ul class="dropdown-menu" role="menu" aria-labelledby="right">
-		                                    <li><a class='sortRightWord'>Word</a></li>
-		                                    <li class='disabled'><a class='sortRightLemma'>Lemma</a></li>
-		                                    <li class='disabled'><a class='sortRightPos'>P.o.S.</a></li>
-		                                </ul>
-		                            </div>                          
-		                        </th>
-		                        <th class="tbl_lemma"><a class='sortHitLemma'>Lemma</a></th>
-		                        <th class="tbl_pos"><a class='sortHitPos'>Part of speech</a></th>
-		                    </tr>
-		                </thead>
-		                <tbody id="hitsTableBody">
-		                </tbody>
-		            </table>
-		   	    </div>
-		   	    
-		   	    <div class="clearfix" style="margin:15px 0px">
-					<ul class="pagination pagination-sm pagebuttons pull-left"></ul>
-					<button type="button" class="showHideTitles btn btn-sm btn-danger pull-left" data-toggle="collapse" data-target=".doctitle">Show/hide titles</button>
-				</div>		   	    
-		   	    
-			</div> <!-- tabHits -->
-		
-			<div class="tab-pane" id="tabDocs">
-		   	    <div class="clearfix" style="margin:15px 0px">
-					<ul class="pagination pagination-sm pagebuttons pull-left"></ul>
-				</div>	
-		        
-		        <div class="lightbg haspadding">
-			        <table id='docsTable' class="documents">
-			            <thead>
-			                <tr>
-			                    <th class="tbl_doct"><a href='#' class='sortTitle'>Document title</a></th>
-			                    <th class="tbl_year"><a href='#' class='sortDate'>Year</a></th>
-			                    <th class="tbl_hits"><a href='#' class='sortNumHits'>Hits</a></th>
-			                </tr>
-			            </thead>
-			            <tbody id="docsTableBody">
-			            </tbody>
-			        </table>
-		        </div>
-		
-		   	    <div class="clearfix" style="margin:15px 0px">
-					<ul class="pagination pagination-sm pagebuttons pull-left"></ul>
-				</div>
-			</div> <!-- tabDocs -->
-			
-			<div class="tab-pane" id="tabHitsGrouped">
-				<div style="margin:15px 0px">
-					<select class="selectpicker" id="groupHitsBy" title="Group hits by..." multiple>
-						<option id="groupTitle" value="field:title">Group by document title</option>
-						<option value="hit">Group by hit text</option>
-						<option value="hit:lemma">Group by lemma</option>
-						<option value="hit:pos">Group by hit pos</option>
-						<option value="wordleft">Group by word left</option>
-						<option value="wordright">Group by word right</option>
-						<option id="groupYear" value="field:yearFrom">Group by year</option>
-						<option id="groupDecade" value="decade:yearFrom">Group by decade</option>
-					</select>
-				</div>
-				
-				<div id="resultsHitsGrouped" class="lightbg haspadding">
-	                <table id='hitsGroupedTable'>
-	                    <thead>
-	                        <tr>
-	                            <th class="tbl_groupname">
-	                            	<a href='#' class="sortGroupIdentity">Group</a>
-	                            </th>
-	                            <th>
-	                            	<a href='#' class='sortGroupNumHits'>Hits</a>
-	                            </th>
-	                        </tr>
-	                    </thead>
-	                    <tbody>                
-	                    </tbody>
-	                </table>
-				</div>
-			</div> <!-- tabHitsGrouped -->
-			
-			<div class="tab-pane" id="tabDocsGrouped">
-				<div style="padding: 15px 0px;">
-					
-					<select class="selectpicker" id="groupDocsBy" title="Group documents by..." multiple>
-						<option value="numhits">Group by number of hits</option>
-						<option id="docGroupYear" value="field:year">Group by year</option>
-						<option id="docGroupDecade" value="decade:year">Group by decade</option>
-						<option id="docGroupAuthor" value="field:author">Group by author</option>
-					</select>
-				</div>
-				
-				<div id="resultsDocsGrouped" class="lightbg haspadding">
-	                <table id='docsGroupedTable'>
-	                    <thead>
-	                        <tr>
-	                            <th class="tbl_groupname">
-	                            	<a href='#' class="sortGroupIdentity">Group</a>
-	                            </th>
-	                            <th>
-	                            	<a href='#' class='sortGroupNumHits'>Hits</a>
-	                            </th>
-	                        </tr>
-	                    </thead>
-	                    <tbody>
-	                    </tbody>
-	                </table>
-				</div>
+	<!-- No initially active tab by design -->
+	<ul id="resultTabs" class="nav nav-tabs">
+		<li><a href="#tabHits" data-toggle="tab">Per Hit</a></li>
+		<li><a href="#tabDocs" data-toggle="tab">Per Document</a></li>
+		<li><a href="#tabHitsGrouped" data-toggle="tab">Hits grouped</a></li>
+		<li><a href="#tabDocsGrouped" data-toggle="tab">Documents grouped</a></li>
+	</ul>
+
+	<div id="resultTabsContent" class="tab-content">
+		<div id="tabHits" class="tab-pane">
+
+			<div class="clearfix resultcontrols">
+				<button type="button" class="btn btn-danger btn-sm" data-toggle="collapse" data-target=".doctitle">Show/hide titles</button>
+				<ul class="pagination pagination-sm"></ul>
+				<button type="button" class="btn btn-default btn-sm pull-right exportcsv">Export CSV</button>
 			</div>
-		
-		</div> <!-- .tab-content -->
+
+			<div class="lightbg haspadding resultcontainer">
+				<table id="hitsTable">
+					<thead>
+						<tr>
+							<th class="text-right" style="width:40px;">
+								<div class="dropdown">
+									<a class="dropdown-toggle" data-toggle="dropdown">Left context <span class="caret"></span></a>
+									<ul class="dropdown-menu" role="menu" aria-labelledby="left">
+										#foreach($propertyField in $propertyFields)
+										<li><a data-bls-sort="left:$propertyField.getId()">$propertyField.getDisplayName()</a></li>
+										#end
+									</ul>
+								</div>
+							</th>
+							<th class="text-center" style="width:20px;">
+								<a data-bls-sort="hit:word"><strong>Hit text<strong></a>
+							</th>
+							<th class="text-left" style="width:40px;">
+								<div class="dropdown">
+									<a class="dropdown-toggle" data-toggle="dropdown">Right context <span class="caret"></span></a>
+									<ul class="dropdown-menu" role="menu" aria-labelledby="right">
+										#foreach($propertyField in $propertyFields)
+										<li><a data-bls-sort="right:$propertyField.getId()">$propertyField.getDisplayName()</a></li>
+										#end
+									</ul>
+								</div>
+							</th>
+							## TODO these need to be dynamic based on propertyfields, so does hit text one
+							<th style="width:15px;"><a data-bls-sort="hit:lemma">Lemma</a></th>
+							<th style="width:11px;"><a data-bls-sort="hit:pos">Part of speech</a></th>
+						</tr>
+					</thead>
+					<tbody id="hitsTableBody">
+					</tbody>
+				</table>
+			</div>
+		</div> <!-- tabHits -->
+
+		<div id="tabDocs" class="tab-pane">
+			<div class="clearfix resultcontrols">
+				<ul class="pagination pagination-sm"></ul>
+			</div>
+
+			<div class="lightbg haspadding resultcontainer">
+				<table id='docsTable' class="documents">
+					<thead>
+						<tr>
+							<th style="width:70%;"><a href='#' data-bls-sort="field:$titleField">Document title</a></th>
+							<th style="width:15%;"><a href='#' data-bls-sort="field:$dateField">Year</a></th>
+							<th style="width:15%;"><a href='#' data-bls-sort="numhits">Hits</a></th>
+						</tr>
+					</thead>
+					<tbody id="docsTableBody">
+					</tbody>
+				</table>
+			</div>
+		</div> <!-- tabDocs -->
+
+		<div id="tabHitsGrouped" class="tab-pane">
+			<div>
+				<select class="selectpicker groupselect" title="Group hits by..." data-size="15" data-style="btn-default btn-sm" multiple>
+					<optgroup label="Left context">
+						#foreach($propertyField in $propertyFields)
+						<option value="wordleft:$propertyField.getId()">Group by $propertyField.getDisplayName()</option>
+						#end
+					</optgroup>
+					<optgroup label="Hit">
+						#foreach($propertyField in $propertyFields)
+						<option value="hit:$propertyField.getId()">Group by $propertyField.getDisplayName()</option>
+						#end
+					</optgroup>
+					<optgroup label="Right context">
+						#foreach($propertyField in $propertyFields)
+						<option value="wordright:$propertyField.getId()">Group by $propertyField.getDisplayName()</option>
+						#end
+					</optgroup>
+					#foreach($tab in $metadataFields.entrySet())
+					<optgroup label="$tab.key">
+						#foreach($metadataField in $tab.value)
+						<option value="field:$metadataField.getId()">Group by $metadataField.getDisplayName()</option>
+						#end
+					</optgroup>
+					#end
+				</select>
+
+				<ul class="pagination pagination-sm resultcontrols"></ul>
+			</div>
+
+			<div class="lightbg haspadding resultcontainer">
+				<table id='hitsGroupedTable'>
+					<thead>
+						<tr>
+							<th style="width:30%;"><a href='#' data-bls-sort="identity">Group</a></th>
+							<th style="width:70%;"><a href="#" data-bls-sort="numhits">Hits</a></th>
+						</tr>
+					</thead>
+					<tbody>
+					</tbody>
+				</table>
+			</div>
+		</div> <!-- tabHitsGrouped -->
+
+		<div id="tabDocsGrouped" class="tab-pane">
+			<div class="clearfix">
+				<select class="selectpicker groupselect" title="Group documents by..." data-size="15" data-style="btn-default btn-sm" multiple>
+					#foreach($tab in $metadataFields.entrySet())
+					<optgroup label="$tab.key">
+						#foreach($metadataField in $tab.value)
+						<option value="field:$metadataField.getId()">Group by $metadataField.getDisplayName()</option>
+						#end
+					</optgroup>
+					#end
+				</select>
+
+				<ul class="pagination pagination-sm resultcontrols"></ul>
+			</div>
+
+			<div class="lightbg haspadding resultcontainer">
+				<table id='docsGroupedTable'>
+					<thead>
+						<tr>
+							<th style="width:30%;"><a href='#' data-bls-sort="identity">Group</a></th>
+							<th style="width:70%;"><a href="#" data-bls-sort="numhits">Hits</a></th>
+						</tr>
+					</thead>
+					<tbody>
+					</tbody>
+				</table>
+			</div>
+		</div> <!-- tabDocsGrouped -->
+	</div>
 
 	</div>
 

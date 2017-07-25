@@ -13,3 +13,8 @@ target
 # vi temporary files
 *.swp
 /bin/
+
+# Visual Studio Code files
+.vscode
+.eslintrc.json
+jsconfig.json

@@ -143,9 +143,7 @@
 	</div>
 </div>
 	
-<div id="waitDisplay">
-    <p class="text-center"><i class="fa fa-spinner fa-spin"></i></p>
-</div>
+<span id="waitDisplay" class="fa fa-spinner fa-spin searchIndicator"></span>
 
 <script src="$pathToTop/js/corpora.js"></script>
 	

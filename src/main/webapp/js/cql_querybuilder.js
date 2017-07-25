@@ -1,3 +1,5 @@
+/* global Mustache */
+
 // Probably need to name this properly instead of being so generic
 
 window.querybuilder = (function() {
@@ -31,11 +33,8 @@ window.querybuilder = (function() {
 					'<button type="button" class="close" area-label="delete"><span aria-hidden="true">&times;</span></button>',
 					
 				head_cqlPreview:
-					'<span id="{{currentId}}_cql_preview">This is a long string to test width,' +
-					'but generated cql here [word="test" attribute="value"]{1,2}' +
-					'now with even more text so we span onto line number 3 or maybe even 4 and this will have to work</span>',
+					'<span id="{{currentId}}_cql_preview">Generated cql will appear here.</span>',
 			
-
 				body_root:
 					'<div class="panel-body" id="{{currentId}}_panel_body">' +
 						'{{>body_tab_header}}' +
@@ -140,7 +139,7 @@ window.querybuilder = (function() {
 		shared: {
 			partials: {
 				create_attribute_dropdown: 
-					'<div class="dropdown bl-create-attribute-dropdown">' +
+					'<div class="dropup bl-create-attribute-dropdown">' +
 						'<button type="button" class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-plus"></span>&#8203;</button>' +
 						'<ul class="dropdown-menu">' +
 							'{{#operators}}' +
@@ -235,29 +234,29 @@ window.querybuilder = (function() {
 		$element.data('builder', this);
 
 		// Enable sorting tokens within the root container
-        $element.sortable({
-        	items: '>*:not(.bl-prevent-sort)',
-        	handle: '.bl-sort-handle',
-        	placeholder: 'bl-sort-placeholder-token',
-        	forcePlaceholderSize: true,
+		$element.sortable({
+			items: '>*:not(.bl-prevent-sort)',
+			handle: '.bl-sort-handle',
+			placeholder: 'bl-sort-placeholder-token',
+			forcePlaceholderSize: true,
 
-        	cursor: 'move',
-        	tolerance: 'pointer',
+			cursor: 'move',
+			tolerance: 'pointer',
 			
 			start: function(e, ui ){
 				ui.placeholder.height(ui.helper.outerHeight());
 				ui.placeholder.width(ui.helper.outerWidth());
 			},
-			update: function(event, ui) {
+			update: function() {
 				$element.trigger('cql:modified');
 			}
-        });
+		});
 
-        // Add a button to add a new token
-        var $createTokenButton = $(Mustache.render(templates.createTokenButton.template, {}, templates.createTokenButton.partials));
-        $createTokenButton.on('click', this.createToken.bind(this));
-        $createTokenButton.appendTo($element);
-        
+		// Add a button to add a new token
+		var $createTokenButton = $(Mustache.render(templates.createTokenButton.template, {}, templates.createTokenButton.partials));
+		$createTokenButton.on('click', this.createToken.bind(this));
+		$createTokenButton.appendTo($element);
+		
 		return $element;
 	};
 
@@ -278,8 +277,13 @@ window.querybuilder = (function() {
 			cqlParts.push($(element).data('token').getCql());
 		});
 		
-		return cqlParts.join(" ");
+		return cqlParts.join(" ") || null;
 	};
+
+	QueryBuilder.prototype.reset = function() {
+		this.element.find('.bl-token').remove();
+		this.createToken();
+	}
 
 	//----------
 	// Class Token
@@ -307,12 +311,12 @@ window.querybuilder = (function() {
 
 	Token.prototype._prepareElement = function($element) {
 		$element.data('token', this);
-		$element.find('input').on('change', function(event) {
+		$element.find('input').on('change', function() {
 			$element.trigger('cql:modified');
 		});
 		
 		var self = this;
-		$element.find('.close').on('click', function(e){
+		$element.find('.close').on('click', function(){
 			$element.remove();
 			self.builder.element.trigger('cql:modified');
 		});
@@ -589,12 +593,12 @@ window.querybuilder = (function() {
 		$element.data('attribute', this);
 
 		$element.find('.selectpicker').selectpicker();
-		$element.find('.selectpicker, input').on('change', function(event) {$element.trigger('cql:modified');});
+		$element.find('.selectpicker, input').on('change', function() {$element.trigger('cql:modified');});
 
 		// Show/hide elements for the selected attribute type
 		// Such as case-sensitivity checkbox or comboboxes for when there is a predefined set of valid values
 		var self = this;
-		$element.find(baseId + '_type').on('loaded.bs.select changed.bs.select', function(e) { 
+		$element.find(baseId + '_type').on('loaded.bs.select changed.bs.select', function() { 
 			var selectedValue = $(this).val();
 			self._updateShownOptions(selectedValue); 
 		});

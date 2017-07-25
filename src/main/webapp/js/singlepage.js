@@ -130,15 +130,9 @@ SINGLEPAGE.CORE = (function () {
 		// Select a tab to display if there is enough information to perform a search
 		// The tab will then auto-refresh and display results.
 		if (searchParams.operation === 'hits') {
-			if (searchParams.groupByHits)
-				$('#resultTabs a[href="#tabHitsGrouped"]').tab('show');
-			else 
-				$('#resultTabs a[href="#tabHits"]').tab('show');
+			$('#resultTabs a[href="#tabHits"]').tab('show');
 		} else if (searchParams.operation === 'docs') {
-			if (searchParams.groupByDocs)
-				$('#resultTabs a[href="#tabDocsGrouped"]').tab('show');
-			else 
-				$('#resultTabs a[href="#tabDocs"]').tab('show');
+			$('#resultTabs a[href="#tabDocs"]').tab('show');
 		} 
 	}
 
@@ -171,9 +165,9 @@ SINGLEPAGE.CORE = (function () {
 			if (!$('#resultTabs .active').length) {
 				if (pattern) {
 					$('#resultTabs a[href="#tabHits"]').tab('show');
-				}
-				else 
+				} else {
 					$('#resultTabs a[href="#tabDocs"]').tab('show');
+				}
 			}
 
 			// May be used as click handler, so prevent event propagation

@@ -1,4 +1,4 @@
-/* global BLS_URL, URI */
+/* global BLS_URL, URI, wordProperties */
 
 var SINGLEPAGE = SINGLEPAGE || {};
 
@@ -11,7 +11,8 @@ SINGLEPAGE.INTERFACE = (function() {
    
 	var ELLIPSIS = String.fromCharCode(8230);
 
-
+	// Add a 'hide' function to bootstrap tabs
+	// Doesn't do more than remove classes and area and fire some events
 	$.fn.tab.Constructor.prototype.hide = function() {
 		var $this    = this.element
 		var selector = $this.data('target') || $this.attr('href');
@@ -74,15 +75,15 @@ SINGLEPAGE.INTERFACE = (function() {
 	}
 
 	/**
-	 * replace the table body's html, then call a function
+	 * Fade out the table, then replace its contents, and call a function.
 	 * 
 	 * @param {object} $table 
-	 * @param {string} html 
-	 * @param {function} onComplete callback, will be called in the context of $table
+	 * @param {string} html Table head and body
+	 * @param {function} [onComplete] callback, will be called in the context of $table
 	 */
-	function replaceTableBodyContent($table, html, onComplete) {
+	function replaceTableContent($table, html, onComplete) {
 		$table.animate({opacity: 0}, 200, function () {
-			$table.find('tbody').html(html);
+			$table.html(html);
 			if (onComplete)
 				onComplete.call($table);
 			$table.animate({opacity: 1}, 200);
@@ -171,7 +172,7 @@ SINGLEPAGE.INTERFACE = (function() {
    
 	function viewConcordances() {
 		// TODO this does not work as ungrouped tabs now need a group.
-		
+
 	/*
 		var $button = $(this);
 		var groupId = $button.data('groupId');
@@ -206,9 +207,10 @@ SINGLEPAGE.INTERFACE = (function() {
 				pageSize: 20,
 				page: currentConcordanceCount / 20,
 				viewGroup: groupId
-			}
+			},
+			$tab.data('constParameters')
 		);
-			
+
 		SINGLEPAGE.BLS.search(searchParams, function(data) {
 			var totalConcordances = data.hits ? data.summary.numberOfHitsRetrieved : data.summary.numberOfDocsRetrieved;
 			var loadedConcordances = data.summary.actualWindowSize;
@@ -246,125 +248,164 @@ SINGLEPAGE.INTERFACE = (function() {
 		});
 	}
 
-	function setResultsHitsTab(data) {
+	function formatHits(data) {
 		var html = [];
-		if(data.hits && data.hits.length > 0 ) {
-			var hitsByDocPid = {};
-			$.each(data.hits, function(index, hit) {
-				var arr = hitsByDocPid[hit.docPid] = hitsByDocPid[hit.docPid] || [];
-				arr.push(hit);
-			});
+		html.push(
+			"<thead><tr>",
+				"<th class='text-right' style='width:40px'>",
+					"<div class='dropdown'>",
+						"<a class='dropdown-toggle' data-toggle='dropdown'>Left context <span class='caret'></span></a>",
+						"<ul class='dropdown-menu' role='menu' aria-labelledby='left'>");
+						$.each(wordProperties, function(i, prop) {
+							html.push(
+							"<li><a data-bls-sort='left:" + prop.id + "'>" + prop.displayName + "</a></li>");
+						});
+						html.push(
+						"</ul>",
+					"</div>",
+				"</th>",
 
-			$.each(hitsByDocPid, function(docPid, hits) {
-				var doc = data.docInfos[docPid];
-				var docTitle = doc[data.summary.docFields.titleField] || "UNKNOWN";
-				var docAuthor = doc[data.summary.docFields.authorField] ? " by " + doc[data.summary.docFields.authorField] : "";
-				var docDate = doc[data.summary.docFields.dateField] ? " (" + doc[data.summary.docFields.dateField] + ")" : "";
+				"<th class='text-center' style='width:20px;'>",
+					"<a data-bls-sort='hit:word'><strong>Hit text<strong></a>",
+				"</th>",
+				
+				"<th class='text-left' style='width:40px;'>",
+					"<div class='dropdown'>",
+						"<a class='dropdown-toggle' data-toggle='dropdown'>Right context <span class='caret'></span></a>",
+						"<ul class='dropdown-menu' role='menu' aria-labelledby='right'>");
+						$.each(wordProperties, function(i, prop) {
+							html.push(
+							"<li><a data-bls-sort='right:" + prop.id + "'>" + prop.displayName + "</a></li>");
+						});
+						html.push(
+						"</ul>",
+					"</div>",
+				"</th>",
+				// TODO these need to be dynamic based on propertyfields in AutoSearch, so does hit word
+				"<th style='width:15px;'><a data-bls-sort='hit:lemma'>Lemma</a></th>",
+				"<th style='width:11px;'><a data-bls-sort='hit:pos'>Part of speech</a></th>",
+			"</tr></thead>"
+		);
 
-				var docUrl = new URI("article").search({
-					"doc": docPid,
-					"query": data.summary.searchParam.patt
-				}).toString();
 
+		// Group all hits by their originating document
+		var hitsByDocPid = {};
+		$.each(data.hits, function(index, hit) {
+			var arr = hitsByDocPid[hit.docPid] = hitsByDocPid[hit.docPid] || [];
+			arr.push(hit);
+		});
+
+
+		html.push("<tbody>");
+		$.each(hitsByDocPid, function(docPid, hits) {
+			var doc = data.docInfos[docPid];
+			var docTitle = doc[data.summary.docFields.titleField] || "UNKNOWN";
+			var docAuthor = doc[data.summary.docFields.authorField] ? " by " + doc[data.summary.docFields.authorField] : "";
+			var docDate = doc[data.summary.docFields.dateField] ? " (" + doc[data.summary.docFields.dateField] + ")" : "";
+
+			var docUrl = new URI("article").search({
+				"doc": docPid,
+				"query": data.summary.searchParam.patt
+			}).toString();
+
+			// Display some info about the document
+			html.push(
+				"<tr>",
+					"<td colspan='5'><div class='doctitle collapse in'>",
+						"<a class='text-error' target='_blank' href='", docUrl, "'>", docTitle, docAuthor, docDate, "</a>",
+					"</div></td>",
+				"</tr>");
+
+			// And display all hits for this document
+			$.each(hits, function(index, hit) {
+				var parts = snippetParts(hit);
+				var matchLemma = words(hit.match, "lemma", false, "");
+				var matchPos = words(hit.match, "pos", false, "");
+				
 				html.push(
-					"<tr class='titlerow'>",
-						"<td colspan='5'><div class='doctitle collapse in'>",
-							"<a class='text-error' target='_blank' href='", docUrl, "'>", docTitle, docAuthor, docDate, "</a>",
-						"</div></td>",
+					"<tr class='concordance' onclick='SINGLEPAGE.INTERFACE.showCitation(this, \"", docPid, "\", ", hit.start, ", ", hit.end,");'>",
+						"<td class='text-right'>",ELLIPSIS, " ", parts[0], "</td>",
+						"<td class='text-center'><strong>", parts[1],"</strong></td>",
+						"<td>", parts[2], " ", ELLIPSIS, "</td>",
+						"<td>", matchLemma, "</td>",
+						"<td>", matchPos, "</td>",
 					"</tr>");
 
-				// Concordance row
-				$.each(hits, function(index, hit) {
-					var parts = snippetParts(hit);
-					var matchLemma = words(hit.match, "lemma", false, "");
-					var matchPos = words(hit.match, "pos", false, "");
-					
-					html.push(
-						"<tr class='concordance' onclick='SINGLEPAGE.INTERFACE.showCitation(this, \"", docPid, "\", ", hit.start, ", ", hit.end,");'>",
-							"<td class='text-right'>",ELLIPSIS, " ", parts[0], "</td>",
-							"<td class='text-center'><strong>", parts[1],"</strong></td>",
-							"<td>", parts[2], " ", ELLIPSIS, "</td>",
-							"<td>", matchLemma, "</td>",
-							"<td>", matchPos, "</td>",
-						"</tr>");
-
-					// Snippet row (initially hidden)
-					html.push(
-						"<tr class='citationrow'>",
-							"<td colspan='5'><div class='collapse inline-concordance'>Loading...</div></td>",
-						"</tr>");
-				});
-			});
-		} else {
-			html = [
-				"<tr class='citationrow'><td colspan='5'><div class='no-results-found'>",
-				"No results were found. Please check your query and try again.</div></td></tr>"
-			];
-		}
-
-		var $tab = $('#tabHits');
-		updatePagination($tab.find('.pagination'), data);
-		replaceTableBodyContent($tab.find('.resultcontainer table'), html.join(""));
-		$tab.find('.resultcontrols, .resultcontainer').show();
-		$tab.data('results', data);
-	}
-
-	function setResultsDocsTab(data) {
-		var html = [];
-		if(data.docs && data.docs.length > 0 ) {
-			$.each(data.docs, function(index, doc) {
-				var docPid = doc.docPid;
-				
-				var docTitle = doc.docInfo[data.summary.docFields.titleField] || "UNKNOWN";
-				var docAuthor = doc.docInfo[data.summary.docFields.authorField] ? " by " + doc[data.summary.docFields.authorField] : "";
-				var docDate = doc.docInfo[data.summary.docFields.dateField] || ""; 
-				var docHits = doc.numberOfHits;
-
-				var snippetStrings = [];
-				$.each(doc.snippets, function(index, snippet) {
-					var parts = snippetParts(snippet);
-					snippetStrings.push(ELLIPSIS, " ", parts[0], "<strong>", parts[1], "</strong>", parts[2], ELLIPSIS);
-					return false; // only need the first snippet for now
-				});
-
-				var docUrl = new URI("article").search({
-					"doc": docPid,
-					"query": data.summary.searchParam.patt
-				}).toString();
-
+				// Snippet row (initially hidden)
 				html.push(
 					"<tr>",
-						"<td>",
-							"<a target='_blank' href='", docUrl, "'>", docTitle, docAuthor, "</a><br>",
-							snippetStrings.join(""), snippetStrings.length > 0 ? "<br>" : "", 
-							"<a class='green btn btn-xs btn-default' target='_blank' href='", docUrl,"'>View document info</a>",
-						"</td>",
-						"<td>", docDate, "</td>",
-						"<td>", docHits, "</td>",
+						"<td colspan='5'><div class='collapse inline-concordance'>Loading...</div></td>",
 					"</tr>");
 			});
-		} else {
-			html = [
-				"<tr class='citationrow'><td colspan='5'><div class='no-results-found'>",
-				"No results were found. Please check your query and try again.</div></td></tr>"
-			];
-		}
+		});
+		html.push("</tbody>");
 
-		// TODO factor out explicit id lookup here (and in other set- functions)
-		var $tab = $('#tabDocs');
-		updatePagination($tab.find('.pagination'), data);
-		replaceTableBodyContent($tab.find('.resultcontainer table'), html.join(""));
-		$tab.find('.resultcontrols, .resultcontainer').show();
-		$tab.data('results', data);
+		return html;
 	}
 
-	function setResultsGroupedTab($tab, data) {
+	function formatDocs(data) {
+		var html = [];
+
+		html.push(
+			"<thead><tr>",
+				"<th style='width:70%'><a data-bls-sort='field:", data.summary.docFields.titleField, "'>Document title</a></th>",
+				"<th style='width:15%'><a data-bls-sort='field:", data.summary.docFields.dateField, "'>Year</a></th>",
+				"<th style='width:15%'><a data-bls-sort='numhits'>Hits</a></th>",
+			"</tr></thead>"
+		);
 		
+		html.push("<tbody>");
+		$.each(data.docs, function(index, doc) {
+			var docPid = doc.docPid;
+			
+			var docTitle = doc.docInfo[data.summary.docFields.titleField] || "UNKNOWN";
+			var docAuthor = doc.docInfo[data.summary.docFields.authorField] ? " by " + doc[data.summary.docFields.authorField] : "";
+			var docDate = doc.docInfo[data.summary.docFields.dateField] || ""; 
+			var docHits = doc.numberOfHits;
+
+			var snippetStrings = [];
+			$.each(doc.snippets, function(index, snippet) {
+				var parts = snippetParts(snippet);
+				snippetStrings.push(ELLIPSIS, " ", parts[0], "<strong>", parts[1], "</strong>", parts[2], ELLIPSIS);
+				return false; // only need the first snippet for now
+			});
+
+			var docUrl = new URI("article").search({
+				"doc": docPid,
+				"query": data.summary.searchParam.patt
+			}).toString();
+
+			html.push(
+				"<tr class='documentrow'>",
+					"<td>",
+						"<a target='_blank' href='", docUrl, "'>", docTitle, docAuthor, "</a><br>",
+						snippetStrings.join(""), snippetStrings.length > 0 ? "<br>" : "", 
+						"<a class='green btn btn-xs btn-default' target='_blank' href='", docUrl,"'>View document info</a>",
+					"</td>",
+					"<td>", docDate, "</td>",
+					"<td>", docHits, "</td>",
+				"</tr>");
+		});
+		html.push("</tbody>");
+	
+		return html;
+	}
+
+	function formatGroups(data) {
+		var html = [];
+
+		html.push(
+			"<thead><tr>",
+				"<th style='width:30%;'><a data-bls-sort='identity'>Group</a></th>",
+				"<th style='width:70%;'><a data-bls-sort='numhits'>Hits</a></th>",
+			"</tr></thead>"
+		);
+
 		// give the display a different color based on whether we're showing hits or docs
 		var displayClass = data.hitGroups ? 'progress-bar-success' : 'progress-bar-warning';
 		var idPrefix = data.hitGroups ? 'hg' : 'dg'; // hitgroup : docgroup
 		
-		var html = [];
+		html.push("<tbody>");
 		var groups = data.hitGroups || data.docGroups;
 		$.each(groups, function(index, group) {
 			var groupId = group.identity;
@@ -377,7 +418,7 @@ SINGLEPAGE.INTERFACE = (function() {
 				"<tr>",
 					"<td>", displayName, "</td>",
 					"<td>",
-						"<div class='progress group-progress' data-toggle='collapse' data-target='#", htmlId, "' style='cursor:pointer;'>",
+						"<div class='progress group-size-indicator' data-toggle='collapse' data-target='#", htmlId, "' style='cursor:pointer;'>",
 							"<div class='progress-bar ", displayClass, "' style='min-width: ", displayWidth, "%;'>", group.size, "</div>",
 						"</div>",
 						"<div class='collapse' id='", htmlId, "'>",
@@ -389,11 +430,32 @@ SINGLEPAGE.INTERFACE = (function() {
 					"</td>",
 				"</tr>");
 		});
+		html.push("</tbody>");
 
-		if (groups == null || groups.length === 0) {
+		return html;
+	}
+
+	function setTabResults(data) {
+		var $tab = $(this);
+		var html;
+
+		// create the table
+		if (data.hits && data.hits.length)
+			html = formatHits(data);
+		else if (data.docs && data.docs.length)
+			html = formatDocs(data);
+		else if ((data.hitGroups && data.hitGroups.length) || (data.docGroups && data.docGroups.length))
+			html = formatGroups(data);
+		else {
 			html = [
-				"<tr class='citationrow'><td colspan='5'><div class='no-results-found'>",
-				"No results were found. Please check your query and try again.</div></td></tr>"
+				"<thead>",
+					"<tr><th><a>No results found</a></th></tr>",
+				"</thead>",
+				"<tbody>",
+					"<tr>",
+						"<td class='no-results-found'>No results were found. Please check your query and try again.</td>",
+					"</tr>",
+				"</tbody>"
 			];
 		}
 
@@ -405,9 +467,11 @@ SINGLEPAGE.INTERFACE = (function() {
 			$(this).find('.loadconcordances').on('click', loadConcordances);
 			$(this).find('.viewconcordances').on('click', viewConcordances);
 		}
-		
+
+		// Always do this, if an out-of-bounds request is made and no data is returned,
+		// the pagination will still be accurate, allowing the user to go back to a valid page.
 		updatePagination($tab.find('.pagination'), data);
-		replaceTableBodyContent($tab.find('.resultcontainer table'), html.join(""), onTableContentsReplaced);
+		replaceTableContent($tab.find('.resultcontainer table'), html.join(""), onTableContentsReplaced);
 		$tab.find('.resultcontrols, .resultcontainer').show();
 		$tab.data('results', data);
 	}
@@ -473,29 +537,17 @@ SINGLEPAGE.INTERFACE = (function() {
 		// and warn the user if we are
 		var parameters = $tab.data('parameters');
 		if (parameters.operation === 'hits' && parameters.pattern == null) {
-			replaceTableBodyContent($tab.find('.resultcontainer table'),
-				"<tr class='citationrow'><td colspan='5'><div class='no-results-found'>" + 
-				"No hits to display... (need at least one of lemma/pos/word).</div></td></tr>"
-			)
-			$tab.find('.resultcontainer').show();
-			$tab.find('.resultcontrols').hide();
-			$tab.data('results', {}); // Prevent refreshing search on next tab open
-			return;
-		}
-
-		// TODO merge groupby and regular view into same tab and remove restriction
-		// probably 
-		
-		// Do not search if we have GroupBy parameter but no selected GroupBY
-		// (this will not result in any results we can display)
-		var hasGroupBy = $tab.find('select.groupselect').length > 0;
-		var isGroupBySet = parameters.groupByDocs || parameters.groupByHits;
-
-		if (hasGroupBy && !isGroupBySet) {
-			replaceTableBodyContent($tab.find('.resultcontainer table'),
-				"<tr class='citationrow'><td colspan='5'><div class='no-results-found'>" + 
-				"No group(s) selected to display...</div></td></tr>"
-			)
+			replaceTableContent($tab.find('.resultcontainer table'),
+				["<thead>",
+					"<tr><th><a>No hits to display</a></th></tr>",
+				"</thead>",
+				"<tbody>",
+					"<tr>",
+						"<td class='no-results-found'>No hits to display... (one or more of Lemma/PoS/Word is required).</td>",
+					"</tr>",
+				"</tbody>"
+				].join("")
+			);
 			$tab.find('.resultcontainer').show();
 			$tab.find('.resultcontrols').hide();
 			$tab.data('results', {}); // Prevent refreshing search on next tab open
@@ -523,31 +575,14 @@ SINGLEPAGE.INTERFACE = (function() {
 					pattern: null,
 					filters: null,
 					sort: null,
-					viewGroup: null
-				})
-				.data('constParameters', {
-					operation: 'hits',
 					groupByHits: null,
-					groupBydocs: null,
-				})
-				.data('fnSetResults', setResultsHitsTab)
-
-			$('#tabHitsGrouped')
-				.data('parameters', {})
-				.data('defaultParameters', {
-					page: 0,
-					pageSize: 50,
-					pattern: null,
-					filters: null,
-					sort: null,
-					groupByHits: null,
-					viewGroup: null
+					viewGroup: null,
 				})
 				.data('constParameters', {
 					operation: 'hits',
 					groupByDocs: null,
 				})
-				.data('fnSetResults', setResultsGroupedTab.bind(undefined, $('#tabHitsGrouped')))
+				.data('fnSetResults', setTabResults.bind($('#tabHits')[0]))
 
 			$('#tabDocs')
 				.data('parameters', {})
@@ -557,45 +592,28 @@ SINGLEPAGE.INTERFACE = (function() {
 					pattern: null,
 					filters: null,
 					sort: null,
-				})
-				.data('constParameters', {
-					operation: 'docs',
-					groupByHits: null,
 					groupByDocs: null,
 					viewGroup: null,
 				})
-				.data('fnSetResults', setResultsDocsTab)
-
-			$('#tabDocsGrouped')
-				.data('parameters', {})
-				.data('defaultParameters', {
-					page: 0,
-					pageSize: 50,
-					pattern: null,
-					filters: null,
-					sort: null,
-					groupByDocs: null,
-				})
 				.data('constParameters', {
 					operation: 'docs',
 					groupByHits: null,
-					viewGroup: null
 				})
-				.data('fnSetResults', setResultsGroupedTab.bind(undefined, $('#tabDocsGrouped')))
-
+				.data('fnSetResults', setTabResults.bind($('#tabDocs')[0]))
 
 			$('#resultTabsContent .tab-pane').on('localParameterChange', onLocalParameterChange);
 			$('#resultTabsContent .tab-pane').on('tabOpen', onTabOpen);
-			
+
+			// Forward show/open event to tab content pane
 			$('#resultTabs a').on('show.bs.tab', function() {
 				$($(this).attr('href')).trigger('tabOpen');
 			});
 
-			// use indirect event capture as the sort headers might be replaced
+			// use indirect event capture for easy access to the tab content-pane
 			$('#resultTabsContent .tab-pane')
 				.on('click', '[data-bls-sort]', function(event) {
-					var invert = $(this).toggleClass('inverted').hasClass('inverted');
 					var sort = $(this).data('blsSort');
+					var invert = ($(event.delegateTarget).data('parameters').sort === sort);
 
 					$(this).trigger('localParameterChange', {
 						sort: invert ? "-" + sort : sort
@@ -609,7 +627,7 @@ SINGLEPAGE.INTERFACE = (function() {
 					event.preventDefault();
 				})
 				.on('change', 'select.groupselect', function(event) {
-					// Set both, whichever doesn't apply is nulled by the tab's constParameters anyway
+					// Set both, one of them is nulled by the tab's constParameters anyway
 					$(this).trigger('localParameterChange', {
 						groupByHits: $(this).selectpicker('val'),
 						groupByDocs: $(this).selectpicker('val')
@@ -654,7 +672,10 @@ SINGLEPAGE.INTERFACE = (function() {
 				var $tab = $(this);
 
 				clearTabResults($tab);
-				setTabParameters($tab, $.extend({}, $tab.data('defaultParameters')));
+				$tab.trigger('localParameterChange', $.extend({},
+					$tab.data('defaultParameters'),
+					$tab.data('constParameters')
+				));
 			});
 		}
 	}

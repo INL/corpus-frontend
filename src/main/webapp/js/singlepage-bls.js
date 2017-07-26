@@ -170,13 +170,13 @@ SINGLEPAGE.BLS = (function () {
 			var type;// = data.hits ? 'hits' : 'docs';
 			var total;// = (type === 'hits' ? data.summary.numberOfHitsRetrieved : data.summary.numberOfDocsRetrieved);
 			
-			if (data.summary.numberOfGroups) {
+			if (data.summary.numberOfGroups != null) {
 				type = "groups";
 				total = data.summary.numberOfGroups;
-			} else if (data.hits) {
+			} else if (data.hits != null) {
 				type = "hits";
 				total = data.summary.numberOfHitsRetrieved;
-			} else if (data.docs) {
+			} else if (data.docs != null) {
 				type = "docs";
 				total = data.summary.numberOfDocsRetrieved;
 			}
@@ -209,6 +209,7 @@ SINGLEPAGE.BLS = (function () {
 
 	return {
 		search: function (param, successFunc, errorFunc) {
+			var operation = param.operation;
 			var blsParam = {
 				// these are always present
 				number: param.pageSize,
@@ -223,10 +224,9 @@ SINGLEPAGE.BLS = (function () {
 				viewgroup: param.viewGroup || undefined
 			};
 			
-			var operation = param.operation;
-			
-			console.log(blsParam);
-
+			if (SINGLEPAGE.DEBUG) {
+				console.log(blsParam);
+			}
 
 			// Called to perform the search, update the
 			// total count, and call a success function.
@@ -235,7 +235,10 @@ SINGLEPAGE.BLS = (function () {
 				dataType: "json",
 				cache: false,
 				success: function(data) {
-					console.log(data);
+					if (SINGLEPAGE.DEBUG) {
+						console.log(data);
+					}
+
 					if (typeof successFunc === "function")
 						successFunc(data);
 				},

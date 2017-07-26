@@ -2,6 +2,8 @@
 
 var SINGLEPAGE = SINGLEPAGE || {};
 
+SINGLEPAGE.DEBUG = true;
+
 SINGLEPAGE.CORE = (function () {
 	"use strict";
 

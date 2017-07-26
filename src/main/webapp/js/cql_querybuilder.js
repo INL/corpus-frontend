@@ -70,7 +70,7 @@ window.querybuilder = (function() {
 						'<div class="input-group" style="width:318px;">' +
 							'<span class="input-group-addon">repeats</span>' +
 							'<input type="text" class="form-control" value="1" id="{{currentId}}_property_repeats_min">' +
-							'<span class="input-group-addon">to</span>' +
+							'<span class="input-group-addon" style="border-left-width:0px; border-right-width:0px;">to</span>' +
 							'<input type="text" class="form-control" value="1" id="{{currentId}}_property_repeats_max">' +
 							'<span class="input-group-addon">times</span>' +
 						'</div>' +

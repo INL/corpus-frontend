@@ -96,8 +96,9 @@ SINGLEPAGE.INTERFACE = (function() {
 
 	// Show a longer snippet when clicking on a hit
 	function showCitation(concRow, docPid, start, end) {
-		var element = $(concRow).next().find(".inline-concordance");
-		$(element).collapse('toggle');
+		// Open/close the collapsible in the next row
+		var $element = $(concRow).next().find(".collapse");
+		$element.collapse('toggle');
 
 		$.ajax({
 			url: BLS_URL + 'docs/' + docPid + '/snippet',
@@ -109,7 +110,7 @@ SINGLEPAGE.INTERFACE = (function() {
 			},
 			success: function (response) {
 				var parts = snippetParts(response);
-				$(element).html(parts[0] + "<b>" + parts[1] + "</b>" + parts[2]);
+				$element.html(parts[0] + "<b>" + parts[1] + "</b>" + parts[2]);
 			},
 			error: SINGLEPAGE.INTERFACE.showBlsError
 		});
@@ -253,9 +254,9 @@ SINGLEPAGE.INTERFACE = (function() {
 				var parts = snippetParts(hit);
 				html.push(
 					"<div class='clearfix'>",
-						"<div class='col-xs-5 text-right inline-concordance'>", ELLIPSIS, " ", parts[0], "</div>",
-						"<div class='col-xs-2 text-center inline-concordance'><b>", parts[1], "&nbsp;", "</b></div>",
-						"<div class='col-xs-5 inline-concordance'>", parts[2], " ", ELLIPSIS, "</div>",
+						"<div class='col-xs-5 text-right'>", ELLIPSIS, " ", parts[0], "</div>",
+						"<div class='col-xs-2 text-center'><b>", parts[1], "&nbsp;", "</b></div>",
+						"<div class='col-xs-5'>", parts[2], " ", ELLIPSIS, "</div>",
 					"</div>");
 			});
 
@@ -264,8 +265,8 @@ SINGLEPAGE.INTERFACE = (function() {
 					var hits = doc.numberOfHits;
 					html.push(
 						"<div class='clearfix'>",
-							"<div class='col-xs-10 inline-concordance'><b>", title, "&nbsp;", "</b></div>",
-							"<div class='col-xs-2 inline-concordance'>", hits, "&nbsp;", "</div>",
+							"<div class='col-xs-10'><b>", title, "&nbsp;", "</b></div>",
+							"<div class='col-xs-2'>", hits, "&nbsp;", "</div>",
 						"</div>");
 			})
 
@@ -309,7 +310,7 @@ SINGLEPAGE.INTERFACE = (function() {
 				"</th>",
 				// TODO these need to be dynamic based on propertyfields in AutoSearch, so does hit word
 				"<th style='width:15px;'><a data-bls-sort='hit:lemma'>Lemma</a></th>",
-				"<th style='width:11px;'><a data-bls-sort='hit:pos'>Part of speech</a></th>",
+				"<th style='width:25px;'><a data-bls-sort='hit:pos'>Part of speech</a></th>",
 			"</tr></thead>"
 		);
 
@@ -445,8 +446,8 @@ SINGLEPAGE.INTERFACE = (function() {
 						"<div class='progress group-size-indicator' data-toggle='collapse' data-target='#", htmlId, "' style='cursor:pointer;'>",
 							"<div class='progress-bar ", displayClass, "' style='min-width: ", displayWidth, "%;'>", group.size, "</div>",
 						"</div>",
-						"<div class='collapse' id='", htmlId, "'>",
-							"<div class='inline-concordance'>",
+						"<div class='collapse inline-concordance' id='", htmlId, "'>",
+							"<div>",
 								"<button type='button' class='btn btn-sm btn-link viewconcordances' data-group-name='", displayName, "' data-group-id='", groupId, "'>&#171; View detailed concordances in this group</button> - ",
 								"<button type='button' class='btn btn-sm btn-link loadconcordances' data-group-id='", groupId, "'>Load more concordances...</button>",
 							"</div>",

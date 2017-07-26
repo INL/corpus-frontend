@@ -60,6 +60,11 @@ img.booklogo {
 .resultcontainer {
 	margin-top: 5px;
 }
+.resultcontainer td, .resultcontainer th {
+	overflow: hidden;
+}.resultcontainer tr > *:first-child {
+	padding-left: 6px;
+}
 
 .lightbg {
 	background-color: rgba(255,255,255,0.6);
@@ -211,11 +216,11 @@ col.delete {
 	width: 8%;
 }
 
-.inline-concordance .btn, td .inline-concordance {
+.inline-concordance {
 	font-size: 12px;
-	min-height: 0px;
-	background-color: rgba(255, 255, 255, 0.5);
-	margin-left: 0px;
+	background-color: rgba(255, 255, 255, 0.7);
+	border-radius: 4px;
+	padding: 0px 8px;
 }
 
 td.corpus-name a {
@@ -372,6 +377,7 @@ a[data-bls-sort], a.dropdown-toggle {
 	margin-bottom: -5px;
 	max-width: 150px;
 	text-overflow: ellipsis;
+	padding-right: 1px; /* :after quote gets cut off sometimes due to overflow-hidden */
 }
 .resultgroupname:before {
 	content: "'";
@@ -382,6 +388,7 @@ a[data-bls-sort], a.dropdown-toggle {
 .clearviewgroup {
 	font-weight: 700;
 	text-decoration: underline!important;
+	padding-left: 2px;
 }
 
 #userId,

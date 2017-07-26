@@ -143,7 +143,7 @@
 	</div>
 </div>
 	
-<span id="waitDisplay" class="fa fa-spinner fa-spin searchIndicator"></span>
+<span id="waitDisplay" class="fa fa-spinner fa-spin searchIndicator" style="position: absolute; left: 50%;"></span>
 
 <script src="$pathToTop/js/corpora.js"></script>
 	

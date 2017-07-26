@@ -82,7 +82,11 @@ SINGLEPAGE.INTERFACE = (function() {
 	 * @param {function} [onComplete] callback, will be called in the context of $table
 	 */
 	function replaceTableContent($table, html, onComplete) {
-		$table.animate({opacity: 0}, 200, function () {
+		// skip the fadeout if the table is empty
+		// fixes annoying mini-delay when first viewing results
+		var fadeOutTime = $table.find('tr').length ? 200 : 0;
+		
+		$table.animate({opacity: 0}, fadeOutTime, function () {
 			$table.html(html);
 			if (onComplete)
 				onComplete.call($table);
@@ -127,7 +131,6 @@ SINGLEPAGE.INTERFACE = (function() {
 	}
 
 	// (Re)create the HTML for the pagination buttons
-	// TODO refactor pagination to be explicit instead of onclick SINGLEPAGE.gotopage
 	function updatePagination($pagination, data) {
 		var beginIndex = data.summary.windowFirstResult;
 		var pageSize = data.summary.requestedWindowSize;
@@ -136,6 +139,10 @@ SINGLEPAGE.INTERFACE = (function() {
 			totalResults = data.summary.numberOfGroups;
 		else 
 			totalResults = (data.hits ? data.summary.numberOfHitsRetrieved : data.summary.numberOfDocsRetrieved);
+
+		// when out of bounds results, draw at least the last few pages so the user can go back
+		if (totalResults < beginIndex)
+			beginIndex = totalResults+1;
 
 		var totalPages =  Math.ceil(totalResults / pageSize);
 		var currentPage = Math.ceil(beginIndex / pageSize);
@@ -169,24 +176,43 @@ SINGLEPAGE.INTERFACE = (function() {
 
 		$pagination.html(html.join(""));
 	}
+
+	function showSearchIndicator($tab) {
+		$tab.data('searchIndicatorTimeout', setTimeout(function() {
+			$tab.find('.searchIndicator').show();
+			clearTabResults($tab);
+		}, 500));
+	}
+
+	function hideSearchIndicator($tab) {
+		// hide spinner or prevent it from showing
+		clearTimeout($tab.data('searchIndicatorTimeout'));
+		$tab.removeData('searchIndicatorTimeout');
+		$tab.find('.searchIndicator').hide();
+	}
    
 	function viewConcordances() {
-		// TODO this does not work as ungrouped tabs now need a group.
-
-	/*
 		var $button = $(this);
 		var groupId = $button.data('groupId');
-
-		// Hide the current tab (to prevent an immidiate useless seach update)
-		$('#resultTabs li.active a').each(function() { $(this).tab('hide'); });
 		
-		SINGLEPAGE.INTERFACE.setParameters({
-			viewGroup: groupId
+		// this parameter is local to this tab, as the other tabs are probably displaying other groups.
+		$(this).trigger('localParameterChange', {
+			viewGroup: groupId,
+			page: 0
 		});
 
-		// Then show the hits tab
-		$('#resultTabs a[href="#tabHits"]').tab('show');
-	*/
+
+		// initialize the display indicating we're looking at a detailed group
+		
+		// Only set the text, don't show it yet
+		// (it should always be hidden, as this function is only available/called when you're not currently viewing contents of a group)
+		// This is a brittle solution, but better than nothing for now.
+		// TODO when blacklab-server echoes this data in the search request, set these values in setTabResults() and remove this here
+		var groupName = $button.data('groupName');
+		var $tab = $button.closest('.tab-pane');
+		var $resultgroupdetails = $tab.find('.resultgroupdetails');
+		var $resultgroupname = $resultgroupdetails.find('.resultgroupname');
+		$resultgroupname.text(groupName || "");
 	}
 
 	function loadConcordances() {
@@ -253,7 +279,7 @@ SINGLEPAGE.INTERFACE = (function() {
 		html.push(
 			"<thead><tr>",
 				"<th class='text-right' style='width:40px'>",
-					"<div class='dropdown'>",
+					"<span class='dropdown'>",
 						"<a class='dropdown-toggle' data-toggle='dropdown'>Left context <span class='caret'></span></a>",
 						"<ul class='dropdown-menu' role='menu' aria-labelledby='left'>");
 						$.each(wordProperties, function(i, prop) {
@@ -262,7 +288,7 @@ SINGLEPAGE.INTERFACE = (function() {
 						});
 						html.push(
 						"</ul>",
-					"</div>",
+					"</span>",
 				"</th>",
 
 				"<th class='text-center' style='width:20px;'>",
@@ -270,7 +296,7 @@ SINGLEPAGE.INTERFACE = (function() {
 				"</th>",
 				
 				"<th class='text-left' style='width:40px;'>",
-					"<div class='dropdown'>",
+					"<span class='dropdown'>", // Span as when it's div, and we're right aligning text, the dropdown doesn't align because the div extends all the way left
 						"<a class='dropdown-toggle' data-toggle='dropdown'>Right context <span class='caret'></span></a>",
 						"<ul class='dropdown-menu' role='menu' aria-labelledby='right'>");
 						$.each(wordProperties, function(i, prop) {
@@ -279,7 +305,7 @@ SINGLEPAGE.INTERFACE = (function() {
 						});
 						html.push(
 						"</ul>",
-					"</div>",
+					"</span>",
 				"</th>",
 				// TODO these need to be dynamic based on propertyfields in AutoSearch, so does hit word
 				"<th style='width:15px;'><a data-bls-sort='hit:lemma'>Lemma</a></th>",
@@ -287,14 +313,12 @@ SINGLEPAGE.INTERFACE = (function() {
 			"</tr></thead>"
 		);
 
-
 		// Group all hits by their originating document
 		var hitsByDocPid = {};
 		$.each(data.hits, function(index, hit) {
 			var arr = hitsByDocPid[hit.docPid] = hitsByDocPid[hit.docPid] || [];
 			arr.push(hit);
 		});
-
 
 		html.push("<tbody>");
 		$.each(hitsByDocPid, function(docPid, hits) {
@@ -423,7 +447,7 @@ SINGLEPAGE.INTERFACE = (function() {
 						"</div>",
 						"<div class='collapse' id='", htmlId, "'>",
 							"<div class='inline-concordance'>",
-								"<button type='button' class='btn btn-sm btn-link viewconcordances' data-group-id='", groupId, "'>&#171; View detailed concordances in this group</button> - ",
+								"<button type='button' class='btn btn-sm btn-link viewconcordances' data-group-name='", displayName, "' data-group-id='", groupId, "'>&#171; View detailed concordances in this group</button> - ",
 								"<button type='button' class='btn btn-sm btn-link loadconcordances' data-group-id='", groupId, "'>Load more concordances...</button>",
 							"</div>",
 						"</div>",
@@ -472,13 +496,31 @@ SINGLEPAGE.INTERFACE = (function() {
 		// the pagination will still be accurate, allowing the user to go back to a valid page.
 		updatePagination($tab.find('.pagination'), data);
 		replaceTableContent($tab.find('.resultcontainer table'), html.join(""), onTableContentsReplaced);
+		hideSearchIndicator($tab);
 		$tab.find('.resultcontrols, .resultcontainer').show();
 		$tab.data('results', data);
+
+		// Hide/show the group view identifier and reset button
+		// The values of these are set when the search is initiated in viewConcordances()
+		// TODO when blacklab-server echoes the friendly name of the group, display that here and don't set any data
+		// when initiating the search
+		// TODO we set the value as fallback when no value currently set, as when first loading page, there was no initial search
+		// where we know the group parameter.
+		var $resultgroupdetails = $tab.find('.resultgroupdetails');
+		if (data.summary.searchParam.viewgroup) {
+			$resultgroupdetails.show();
+			var $resultgroupname = $resultgroupdetails.find('.resultgroupname');
+			if (!$resultgroupname.text())
+				$resultgroupname.text(data.summary.searchParam.viewgroup)
+		} else {
+			$resultgroupdetails.hide();
+		}
 	}
 
 	function clearTabResults($tab) {
 		$tab.find('.resultcontrols').hide();
-		$tab.find('.resultcontainer').hide().find('tbody').empty();
+		$tab.find('.resultcontainer').hide().find('table thead, table tbody').empty();
+		$tab.find('.resultgroupdetails .resultgroupname').empty();
 		$tab.removeData('results');
 	}
 
@@ -491,6 +533,16 @@ SINGLEPAGE.INTERFACE = (function() {
 	 * @param {boolean} [toPageState = false] whether to copy the parameter values to their ui elements
 	 */
 	function setTabParameters($tab, newParameters, toPageState) {
+		
+		// make a copy of the new parameters without groupBy and viewGroup if the parameters were meant for 
+		// a tab with a different operation
+		if (newParameters.operation != null && newParameters.operation !== $tab.data('parameters').operation) {
+			newParameters = $.extend({}, newParameters);
+			// undefined so we don't overwrite our existing parameters
+			newParameters.groupBy = undefined;
+			newParameters.viewGroup = undefined;
+		}
+		
 		// write new values while preserving original values
 		var updatedParameters = $.extend($tab.data('parameters'), newParameters, $tab.data('constParameters'));
 
@@ -498,11 +550,8 @@ SINGLEPAGE.INTERFACE = (function() {
 		if (toPageState) {
 			var $groupSelect = $tab.find('select.groupselect');
 			
-			// If newParameters specified groupByHits for instance, and we are the docs tab
-			// this is ok, as our defaultParameters overwrote the groupByHits value in our parameters
-			// so we'll still write out groupByDocs from our parameters
 			if ($groupSelect.length)
-				$groupSelect.selectpicker('val', updatedParameters.groupByHits || updatedParameters.groupByDocs)
+				$groupSelect.selectpicker('val', updatedParameters.groupBy)
 		}
 	}
 
@@ -525,18 +574,24 @@ SINGLEPAGE.INTERFACE = (function() {
 	}
 
 	function onTabOpen(/*event, data*/) {
-		// Always ensure data is shown
+		// CORE does as little UI manipulation as possible, just shows a tab when required
+		// so we're responsible for showing the entire results area.
 		$('#results').show();
 
 		var $tab = $(this);
-		if ($tab.data('results'))
-			return; // Nothing to do, tab is already displaying data
+		var searchSettings = $.extend({}, $tab.data('defaultParameters'), $tab.data('parameters'));
+
+		if ($tab.data('results')) {
+			// Nothing to do, tab is already displaying data
+			// But still notify core so that when the url is copied out the current tab can be restored.
+			SINGLEPAGE.CORE.onSearchUpdated(searchSettings);
+			return; 
+		}
 
 		// Not all configurations of search parameters will result in a valid search
 		// Verify that we're not trying to view hits without a pattern to generate said hits
 		// and warn the user if we are
-		var parameters = $tab.data('parameters');
-		if (parameters.operation === 'hits' && parameters.pattern == null) {
+		if (searchSettings.operation === 'hits' && searchSettings.pattern == null) {
 			replaceTableContent($tab.find('.resultcontainer table'),
 				["<thead>",
 					"<tr><th><a>No hits to display</a></th></tr>",
@@ -555,9 +610,12 @@ SINGLEPAGE.INTERFACE = (function() {
 		}
 
 		// All is well, search!
-		var searchSettings = $.extend({}, $tab.data('defaultParameters'), $tab.data('parameters'));
+		showSearchIndicator($tab);
 		SINGLEPAGE.CORE.onSearchUpdated(searchSettings);
-		SINGLEPAGE.BLS.search(searchSettings, $tab.data('fnSetResults'), showBlsError);
+		SINGLEPAGE.BLS.search(searchSettings, $tab.data('fnSetResults'), function() {
+			hideSearchIndicator($tab);	
+			showBlsError.apply(undefined, (Array.prototype.slice.call(arguments,1))); // call with original args
+		});
 	}
 
 	return {
@@ -566,6 +624,7 @@ SINGLEPAGE.INTERFACE = (function() {
 			// Tabs are unhidden when a search is submitted.
 			$('#results').hide();
 			$('#resultTabs a').each(function() { $(this).tab('hide'); });
+			$('.searchIndicator').hide();
 
 			$('#tabHits')
 				.data('parameters', {})
@@ -575,12 +634,11 @@ SINGLEPAGE.INTERFACE = (function() {
 					pattern: null,
 					filters: null,
 					sort: null,
-					groupByHits: null,
+					groupBy: null,
 					viewGroup: null,
 				})
 				.data('constParameters', {
 					operation: 'hits',
-					groupByDocs: null,
 				})
 				.data('fnSetResults', setTabResults.bind($('#tabHits')[0]))
 
@@ -592,12 +650,11 @@ SINGLEPAGE.INTERFACE = (function() {
 					pattern: null,
 					filters: null,
 					sort: null,
-					groupByDocs: null,
+					groupBy: null,
 					viewGroup: null,
 				})
 				.data('constParameters', {
 					operation: 'docs',
-					groupByHits: null,
 				})
 				.data('fnSetResults', setTabResults.bind($('#tabDocs')[0]))
 
@@ -627,11 +684,18 @@ SINGLEPAGE.INTERFACE = (function() {
 					event.preventDefault();
 				})
 				.on('change', 'select.groupselect', function(event) {
-					// Set both, one of them is nulled by the tab's constParameters anyway
 					$(this).trigger('localParameterChange', {
-						groupByHits: $(this).selectpicker('val'),
-						groupByDocs: $(this).selectpicker('val')
-					})
+						groupBy: $(this).selectpicker('val'),
+						page: 0,
+						viewGroup: null, // Clear any group we may be currently viewing, as the available groups just changed
+					});
+					event.preventDefault();
+				})
+				.on('click', '.clearviewgroup', function(event) {
+					$(this).trigger('localParameterChange', {
+						page: 0,
+						viewGroup: null,
+					});
 					event.preventDefault();
 				})
 		},

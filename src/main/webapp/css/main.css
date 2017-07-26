@@ -242,6 +242,10 @@ table.corpora a.icon {
 	margin: 0 .8em;
 }
 
+a[data-bls-sort], a.dropdown-toggle {
+	cursor: pointer;
+}
+
 /* Single-page */
 #corpusOwner {
 	font-size: 60%;
@@ -275,6 +279,41 @@ table.corpora a.icon {
 	left: -2em;
 }
 
+.btn.nohover {
+	cursor: initial;
+	box-shadow: none;
+}
+
+.btn.btn-default.nohover {
+	background-color: white!important;
+	border-color: #ccc!important;
+}
+
+.btn.btn-info.nohover {
+	background-color: #5bc0de!important;
+	border-color: #46b8da!important;
+}
+
+.btn.btn-primary.nohover {
+	background-color: #337ab7!important;
+	border-color: #2e6da4!important;
+}
+
+.btn.btn-success.nohover {
+	background-color: #5cb85c!important;
+	border-color: #4cae4c!important;
+}
+
+.btn.btn-warning.nohover {
+	background-color: #f0ad4e!important;
+	border-color: #eea236!important;
+}
+
+.btn.btn-danger.nohover {
+	background-color: #d9534f!important;
+	border-color: #d43f3a!important;
+}
+
 #searchContainer, #filterContainer {
 	-webkit-transition: all 0.5s ease;
     -moz-transition: all 0.5s ease;
@@ -304,6 +343,12 @@ table.corpora a.icon {
 	float: none;
 }
 
+#resultTabsContent {
+	/* Important for position of the spinner */
+	position: relative;
+	min-height: 110px;
+}
+
 .searchIndicator {
 	color: white;
 	background-color: rgba(0,0,0,0.25);
@@ -313,12 +358,30 @@ table.corpora a.icon {
 	padding: 10px;
 	margin-left: -50px;
 
-	display: none;
-	position: fixed;
 	z-index: 1000;
+}
 
-	left: 50%;
-	top: 70%;
+.resultgroupdetails {
+	border-radius: 100px;
+}
+
+.resultgroupname {
+	font-style: italic;
+	display: inline-block;
+	overflow-x: hidden;
+	margin-bottom: -5px;
+	max-width: 150px;
+	text-overflow: ellipsis;
+}
+.resultgroupname:before {
+	content: "'";
+}.resultgroupname:after {
+	content: "'";
+}
+
+.clearviewgroup {
+	font-weight: 700;
+	text-decoration: underline!important;
 }
 
 #userId,

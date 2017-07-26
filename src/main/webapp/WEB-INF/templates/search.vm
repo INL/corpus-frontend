@@ -192,8 +192,6 @@
 <div id="searchSummary" class="pull-right">
 </div>
 
-<span class="fa fa-spinner fa-spin searchIndicator"></span>
-
 <div class="col-xs-12 contentbox" id="results">
 	<div id='totalsReport'>
 		<div id='totalsReportText'>
@@ -235,14 +233,22 @@
 					#end
 				</select>
 				
+				<div class="resultgroupdetails btn btn-sm btn-default nohover">
+					<span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span class="resultgroupname"></span> &mdash; <a class="clearviewgroup" href="javascript:void(0)">Go back</a></span>
+				</div>
+				
 				<button type="button" class="btn btn-default btn-sm pull-right exportcsv" style="margin-left: 5px;">Export CSV</button>
 				<button type="button" class="btn btn-danger btn-sm pull-right" data-toggle="collapse" data-target=".doctitle">Show/hide titles</button>
 				<br>
 				<ul class="pagination pagination-sm"></ul>
 			</div>
 
+			<span class="fa fa-spinner fa-spin searchIndicator" style="position:absolute; left: 50%; top:15px"></span>
+
 			<div class="lightbg haspadding resultcontainer">
 				<table>
+				<tbody>
+				</tbody>
 				</table>
 			</div>
 		</div> <!-- tabHits -->
@@ -259,14 +265,22 @@
 					#end
 				</select>
 
+				<div class="resultgroupdetails btn btn-sm btn-default nohover">
+					<span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span class="resultgroupname"></span> &mdash; <a class="clearviewgroup" href="javascript:void(0)">Go back</a></span>
+				</div>
+
 				<button type="button" class="btn btn-default btn-sm pull-right exportcsv">Export CSV</button>
 
 				<br>
 				<ul class="pagination pagination-sm"></ul>
 			</div>
 
+			<span class="fa fa-spinner fa-spin searchIndicator" style="position:absolute; left: 50%; top:15px"></span>
+
 			<div class="lightbg haspadding resultcontainer">
-				<table class="documents">
+				<table>
+				<tbody>
+				</tbody>
 				</table>
 			</div>
 		</div> <!-- tabDocs -->

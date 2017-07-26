@@ -167,8 +167,20 @@ SINGLEPAGE.BLS = (function () {
 		// TODO accurate group counting
 		// No need to update pagination here, happens when page is changed anyway
 		function updateTotalsDisplay(data) {
-			var type = data.hits ? 'hits' : 'docs';
-			var total = (type === 'hits' ? data.summary.numberOfHitsRetrieved : data.summary.numberOfDocsRetrieved);
+			var type;// = data.hits ? 'hits' : 'docs';
+			var total;// = (type === 'hits' ? data.summary.numberOfHitsRetrieved : data.summary.numberOfDocsRetrieved);
+			
+			if (data.summary.numberOfGroups) {
+				type = "groups";
+				total = data.summary.numberOfGroups;
+			} else if (data.hits) {
+				type = "hits";
+				total = data.summary.numberOfHitsRetrieved;
+			} else if (data.docs) {
+				type = "docs";
+				total = data.summary.numberOfDocsRetrieved;
+			}
+		
 			var totalPages = Math.ceil(total / curPageSize);
 			
 			var optEllipsis = data.summary.stillCounting ? "..." : "";
@@ -195,7 +207,6 @@ SINGLEPAGE.BLS = (function () {
 		}
 	})();
 
-	// TODO groupByHits, groupByDocs
 	return {
 		search: function (param, successFunc, errorFunc) {
 			var blsParam = {
@@ -205,7 +216,7 @@ SINGLEPAGE.BLS = (function () {
 				
 				// these are either undefined or valid (meaning no empty strings/arrays)
 				filter: getFilterString(param.filters), 
-				group: (param.groupByHits || param.groupByDocs || []).join(",") || undefined,
+				group: (param.groupBy || []).join(",") || undefined,
 				patt: getPatternString(param.pattern),
 			
 				sort: param.sort || undefined,

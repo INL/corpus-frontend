@@ -38,8 +38,8 @@ public class SearchResponse extends BaseResponse {
 		}
 
 		getContext().put("propertyFields", servlet.getCorpusConfig(corpus).getPropertyFields());
-		getContext().put("metadataFields", servlet.getCorpusConfig(corpus).getMetadataFields());
-		getContext().put("defaultMetadataTabName", CorpusConfig.TAB_DEFAULT);
+		getContext().put("metadataGroups", servlet.getCorpusConfig(corpus).getMetadataFieldGroups());
+		getContext().put("defaultMetadataGroupName", CorpusConfig.GROUP_DEFAULT);
 		// display template
 		displayHtmlTemplate(servlet.getTemplate("search"));
 	}

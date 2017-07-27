@@ -128,36 +128,36 @@
 		</div>
 
 		<div class="col-xs-12 col-md-6" id="filterContainer">
-			#if(!$metadataFields.isEmpty())
+			#if(!$metadataGroups.isEmpty())
 			<h3>Filter search by</h3>
 			<ul class="nav nav-tabs">
-			#set($firstTab = "true") ## need to keep track manually since the first tab in the list may be ignored
-			#foreach($tab in $metadataFields.entrySet())
-				#set($tabName = $tab.key)
-				#set($tabId = $tabName.replace(" ", ""))
+			#set($firstGroup = "true") ## need to keep track manually since the first tab in the list may be ignored
+			#foreach($group in $metadataGroups.entrySet())
+				#set($groupName = $group.key)
+				#set($groupId = $groupName.replace(" ", ""))
 
 				##DefaultTab is always hidden, unless there are no other tabs
-				#if( !($tabName == $defaultMetadataTabName && $metadataFields.size() > 1))
-					<li #if($firstTab == true) class="active" #end>
-						<a href="#$tabId" data-toggle="tab">$tabName</a>
+				#if( !($groupName == $defaultMetadataGroupName && $metadataGroups.size() > 1))
+					<li #if($firstGroup == true) class="active" #end>
+						<a href="#$groupId" data-toggle="tab">$groupName</a>
 					</li>
-					#set($firstTab = "false")
+					#set($firstGroup = "false")
 				#end
 			#end
 			</ul>
 
 			<div class="tab-content">
-			#set($firstTab = "true") ## need to keep track manually since the first tab in the list may be ignored
-			#foreach($tab in $metadataFields.entrySet())
-				#set($tabName = $tab.key)
-				#set($tabId = $tabName.replace(" ", ""))
+			#set($firstGroup = "true") ## need to keep track manually since the first tab in the list may be ignored
+			#foreach($group in $metadataGroups.entrySet())
+				#set($groupName = $group.key)
+				#set($groupId = $groupName.replace(" ", ""))
 
 				##DefaultTab is always hidden, unless there are no other tabs
-				#if( !($tabName == $defaultMetadataTabName && $metadataFields.size() > 1))
-					<div class="tab-pane #if($firstTab == true) active #end" id="$tabId">
-						#filterfields($tab.value)
+				#if( !($groupName == $defaultMetadataGroupName && $metadataGroups.size() > 1))
+					<div class="tab-pane #if($firstGroup == true) active #end" id="$groupId">
+						#filterfields($group.value)
 					</div>
-					#set($firstTab = "false")
+					#set($firstGroup = "false")
 				#end
 			#end
 			</div>
@@ -197,8 +197,7 @@
 
 <div class="col-xs-12 contentbox" id="results">
 	<div id='totalsReport'>
-		<div id='totalsReportText'>
-		</div>
+		<div id='totalsReportText'></div>
 		<p id='totalsSpinner'><i class="fa fa-spinner fa-spin"></i></p>
 	</div>
 
@@ -227,9 +226,9 @@
 						<option value="wordright:$propertyField.getId()">Group by $propertyField.getDisplayName()</option>
 						#end
 					</optgroup>
-					#foreach($tab in $metadataFields.entrySet())
-					<optgroup label="$tab.key">
-						#foreach($metadataField in $tab.value)
+					#foreach($group in $metadataGroups.entrySet())
+					<optgroup label="$group.key">
+						#foreach($metadataField in $group.value)
 						<option value="field:$metadataField.getId()">Group by $metadataField.getDisplayName()</option>
 						#end
 					</optgroup>
@@ -259,9 +258,9 @@
 		<div id="tabDocs" class="tab-pane">
 			<div class="clearfix resultcontrols">
 				<select class="selectpicker groupselect" title="Group documents by..." data-size="15" data-style="btn-default btn-sm" multiple>
-					#foreach($tab in $metadataFields.entrySet())
-					<optgroup label="$tab.key">
-						#foreach($metadataField in $tab.value)
+					#foreach($group in $metadataGroups.entrySet())
+					<optgroup label="$group.key">
+						#foreach($metadataField in $group.value)
 						<option value="field:$metadataField.getId()">Group by $metadataField.getDisplayName()</option>
 						#end
 					</optgroup>

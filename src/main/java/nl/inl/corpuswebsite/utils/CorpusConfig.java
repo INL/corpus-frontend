@@ -21,16 +21,17 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 public class CorpusConfig {
-	public static final String TAB_DEFAULT = "Metadata";
+	public static final String GROUP_DEFAULT = "Metadata";
 
 	private Document config;
 
 	private List<FieldDescriptor> propertyFields = new ArrayList<>();
 
 	/** Keyed by tab name */
-	private Map<String, List<FieldDescriptor>> metadataFields = new LinkedHashMap<>();
+	private Map<String, List<FieldDescriptor>> metadataFieldGroups = new LinkedHashMap<>();
 
-	/** titleField, pidField, etc */
+	/** Mapping between generic names for some properties of documents in this corpus (titleField, pidField, authorField, etc)
+	 * 	to their actual names */
 	private Map<String, String> fieldInfo = new LinkedHashMap<>();
 
 
@@ -44,8 +45,8 @@ public class CorpusConfig {
 		return propertyFields;
 	}
 
-	public Map<String, List<FieldDescriptor>> getMetadataFields() {
-		return metadataFields;
+	public Map<String, List<FieldDescriptor>> getMetadataFieldGroups() {
+		return metadataFieldGroups;
 	}
 
 	public Map<String, String> getFieldInfo() {
@@ -83,7 +84,7 @@ public class CorpusConfig {
 
 	private void parseMetadataFields() {
 		// Keyed by name of field
-	Map<String, FieldDescriptor> parsedFields = new HashMap<>();
+		Map<String, FieldDescriptor> parsedFields = new HashMap<>();
 
 		// Parse all metadata fields
 		NodeList metadataFieldNodeList = config.getElementsByTagName("metadataField");
@@ -128,14 +129,14 @@ public class CorpusConfig {
 				continue;
 			Element element = (Element) node;
 
-			String tabName = element.getElementsByTagName("name").item(0).getTextContent();
+			String groupName = element.getElementsByTagName("name").item(0).getTextContent();
 
-			NodeList fieldNodeList = element.getElementsByTagName("field");
+			NodeList fieldNodeList = element.getElementsByTagName("field"); // Fields in this group
 			for (int fieldIndex = 0; fieldIndex < fieldNodeList.getLength(); fieldIndex++) {
 				String fieldName = fieldNodeList.item(fieldIndex).getTextContent();
 
 				if (parsedFields.containsKey(fieldName)) {
-					addMetadataField(parsedFields.get(fieldName), tabName);
+					addMetadataField(parsedFields.get(fieldName), groupName);
 					// Remove the field now it has been added, so we don't also insert it into the default group later.
 					parsedFields.remove(fieldName);
 				}
@@ -144,7 +145,7 @@ public class CorpusConfig {
 
 		// Remaining fields go into the default groups
 		for (Map.Entry<String, FieldDescriptor> e : parsedFields.entrySet()) {
-			addMetadataField(e.getValue(), TAB_DEFAULT);
+			addMetadataField(e.getValue(), GROUP_DEFAULT);
 		}
 	}
 
@@ -212,11 +213,11 @@ public class CorpusConfig {
 		return values;
 	}
 
-	private void addMetadataField(FieldDescriptor field, String tabName) {
-		assert tabName != null && !tabName.isEmpty() : "Tab must be set";
+	private void addMetadataField(FieldDescriptor field, String groupName) {
+		assert groupName != null && !groupName.isEmpty() : "MetadataField group must be set";
 
-		if (!this.metadataFields.containsKey(tabName))
-			this.metadataFields.put(tabName, new ArrayList<FieldDescriptor>());
-		this.metadataFields.get(tabName).add(field);
+		if (!this.metadataFieldGroups.containsKey(groupName))
+			this.metadataFieldGroups.put(groupName, new ArrayList<FieldDescriptor>());
+		this.metadataFieldGroups.get(groupName).add(field);
 	}
 }

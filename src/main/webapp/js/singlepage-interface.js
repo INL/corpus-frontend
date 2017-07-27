@@ -35,22 +35,6 @@ SINGLEPAGE.INTERFACE = (function() {
 		$(selector).removeClass('active');
 	}
 
-	// var doingRegularSearch = false;
-
-	// function toggleWaitAnimation(b) {
-	// 	doingRegularSearch = b;
-	// 	//console.log("WAIT ANIM " + (b ? "ON" : "OFF"));
-	// 	$("#waitDisplay").toggle(retrievingCorpusInfo || doingRegularSearch);
-	// }
-
-	// var retrievingCorpusInfo = false;
-
-	// function toggleWaitAnimationCorpusInfo(b) {
-	// 	retrievingCorpusInfo = b;
-	// 	$("#waitDisplay").toggle(retrievingCorpusInfo || doingRegularSearch);
-	// }
-
-
 	// Context of the hit is passed in arrays, per property
 	// (word/lemma/PoS/punct). Right now we only want to display the 
 	// words and punctuation. Join them together

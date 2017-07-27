@@ -359,7 +359,7 @@ SINGLEPAGE.INTERFACE = (function() {
 				// Snippet row (initially hidden)
 				html.push(
 					"<tr>",
-						"<td colspan='5'><div class='collapse inline-concordance'>Loading...</div></td>",
+						"<td colspan='5' class='inline-concordance'><div class='collapse'>Loading...</div></td>",
 					"</tr>");
 			});
 		});

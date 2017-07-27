@@ -83,7 +83,7 @@ public class CorpusConfig {
 
 	private void parseMetadataFields() {
 		// Keyed by name of field
-		Map<String, FieldDescriptor> parsedFields = new HashMap<>();
+	Map<String, FieldDescriptor> parsedFields = new HashMap<>();
 
 		// Parse all metadata fields
 		NodeList metadataFieldNodeList = config.getElementsByTagName("metadataField");
@@ -93,11 +93,25 @@ public class CorpusConfig {
 				continue;
 			Element metadataFieldElement = (Element) metadataFieldNode;
 
-			String fieldName			= metadataFieldElement.getElementsByTagName("fieldName").item(0).getTextContent();
-			String displayName			= metadataFieldElement.getElementsByTagName("displayName").item(0).getTextContent();
-			String type					= metadataFieldElement.getElementsByTagName("uiType").item(0).getTextContent();
-			// Value : displayName map for allowed values
+			String fieldName					= metadataFieldElement.getElementsByTagName("fieldName").item(0).getTextContent();
+			String displayName					= metadataFieldElement.getElementsByTagName("displayName").item(0).getTextContent();
+			String type							= metadataFieldElement.getElementsByTagName("uiType").item(0).getTextContent();
 			Map<String, String> allowedValues 	= parseMetadataValues(metadataFieldElement);
+
+
+			// If the field type is not specified, infer it based on whether we have any or all or no known allowed values
+			// No values known == text
+			// All values known == select
+			// Some values known == combobox (has dropdown but also allows user-entered values)
+			if (type == null || type.isEmpty()) {
+				if (allowedValues.isEmpty())
+					type = "text";
+				else if (allValuesKnown(metadataFieldElement)) {
+					type = "select";
+				} else {
+					type = "combobox";
+				}
+			}
 
 			FieldDescriptor field = new FieldDescriptor(fieldName, displayName, type);
 			for (Map.Entry<String, String> valueWithDisplayName : allowedValues.entrySet())
@@ -147,20 +161,20 @@ public class CorpusConfig {
 	}
 
 
+	private static boolean allValuesKnown(Element metadataFieldElement) {
+		return Boolean.parseBoolean(metadataFieldElement.getElementsByTagName("valueListComplete").item(0).getTextContent());
+	}
+
 	/**
-	 * Parse fieldValues if valueListComplete == true
+	 * Parse all known fieldValues for this metadata field.
 	 *
-	 * Note: displayName will be null if there is no value provided for a given fieldValue in the displayValues list
+	 * Note: displayValue defaults to the raw value if it is not specified.
 	 * @param metadataFieldElement the fieldValues xml node
-	 * @return a map of values in the form of (value, displayName)
+	 * @return a map of values in the form of (value, displayValue)
 	 */
 	private static Map<String, String> parseMetadataValues(Element metadataFieldElement) {
 		// LinkedHashMap, it's important these values stay in the order in which we parse them
 		Map<String, String> values = new LinkedHashMap<>();
-
-		// If the list is not complete, don't bother parsing it
-		if (!metadataFieldElement.getElementsByTagName("valueListComplete").item(0).getTextContent().equalsIgnoreCase("true"))
-			return values;
 
 		// Gather all values
 		Node fieldValuesNode = metadataFieldElement.getElementsByTagName("fieldValues").item(0);
@@ -176,11 +190,12 @@ public class CorpusConfig {
 				if (value == null || value.isEmpty())
 					continue;
 
+				// Set the display value to be identical to the actual value for now
 				values.put(value, value);
 			}
 		}
 
-		// Then set their display names where provided
+		// Now set the displayValues where provided.
 		Node displayValuesNode = metadataFieldElement.getElementsByTagName("displayValues").item(0);
 		if (displayValuesNode instanceof Element) {
 			NodeList displayValueNodeList = ((Element) displayValuesNode).getElementsByTagName("displayValue");

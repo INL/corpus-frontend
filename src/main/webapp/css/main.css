@@ -12,6 +12,31 @@ a:hover {
 	text-decoration: none;
 }
 
+a.ui-state-active {
+	outline: 5px auto -webkit-focus-ring-color;
+	outline-offset: -2px;
+	background-color: #f5f5f5;
+}a.ui-state-active:hover {
+	outline: none;
+}
+
+a.ui-menu-item-wrapper {
+	cursor: pointer;
+}
+
+.ui-autocomplete.dropdown-menu:before {
+	content: "Example values";
+	background-color: #f3f3f3;
+	color: black;
+	font-weight: 700;
+	border-bottom: 1px solid #CCC;
+	padding: 3px 20px;
+	margin-bottom: 5px;
+	margin-top: -5px;
+	display: block;
+	box-shadow: 0px 0px 8px #DDD;
+}
+
 hr {
 	border-color: #ddd;
 }

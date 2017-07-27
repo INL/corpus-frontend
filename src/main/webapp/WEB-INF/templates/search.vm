@@ -4,15 +4,18 @@
 		<div class="form-group filterfield" id="$docfield.getId()" data-filterfield-type="$docfield.getType()"> <!-- Behaves as a .row, so every child element should have some form of .col-* -->
 			<label class="col-xs-12">$docfield.getDisplayName()</label>
 
-			#if(($docfield.getType() == "select" || $docfield.getType() == "multiselect") && !$docfield.getValidValues().isEmpty())
+			#if($docfield.getType() == "select" && !$docfield.getValidValues().isEmpty())
 				<div class="col-xs-12">
-					#if($docfield.getType() == "multiselect")
 					<select title="$docfield.getDisplayName()" class="selectpicker form-control forminput" data-size="6" multiple>
-					#else
-					<select title="$docfield.getDisplayName()" class="selectpicker form-control forminput" data-size="6">
-						<option value=""></option> ## Always insert an empty value for regular selects so they can be deselected
+				
+					#foreach($pair in $docfield.getValidValues())
+						<option value="$pair.getValue()">$pair.getDescription()</option>
 					#end
-
+					</select>
+				</div>
+			#elseif($docfield.getType() == "combobox")
+				<div class="col-xs-12">
+					<select data-placeholder="$docfield.getDisplayName()" class="autocomplete" data-class="form-control forminput"> 
 					#foreach($pair in $docfield.getValidValues())
 						<option value="$pair.getValue()">$pair.getDescription()</option>
 					#end

@@ -95,6 +95,57 @@ SINGLEPAGE.FORM = (function () {
 	return {
 		
 		init: function() {
+
+			// Inherit jQueryUI autocomplete widget and customize the rendering
+			$.widget('custom.autocomplete', $.ui.autocomplete, {
+				_renderMenu: function(ul, items) {
+					var self = this;
+					$.each(items, function(index, item){
+						self._renderItem(ul, item);
+					})
+				},
+				_renderItem: function(ul, item) {
+					$("<li></li>")
+						.attr('value', item.value)
+						.html("<a>" + item.label + "</a>")
+						.data('ui-autocomplete-item', item)
+						.appendTo(ul);
+				},
+				_resizeMenu: function() {
+					$(this.menu.element).css({
+						"max-height": "300px",
+						"overflow-y": "auto",
+						"overflow-x": "hidden",
+						"width": $(this.element).outerWidth()
+					});
+				}
+			})
+
+			// initialize autocompleters
+			$("select.autocomplete").each(function() {
+				var $select = $(this);
+				var values = $select.find("option").map(function(index, element) {
+					return  $(element).val();
+				}).get();
+
+				var $autocomplete = $("<input></input>")
+					.attr({
+						type: 'text',
+						class: $select.data('class'),
+						placeholder: $select.data('placeholder'),
+						style: $select.data('style')
+					});
+
+				$select.replaceWith($autocomplete);
+				
+				$autocomplete.autocomplete({
+					source: values,
+					classes: {
+						"ui-autocomplete": "dropdown-menu"
+					},
+				});
+			})
+			
 			// Register callbacks and sync with current state
 			$(".filterfield").on('change', function () {
 				updateFilterField($(this));

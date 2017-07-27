@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -136,9 +137,22 @@ public class CorpusConfig {
 				String fieldName = fieldNodeList.item(fieldIndex).getTextContent();
 
 				if (parsedFields.containsKey(fieldName)) {
-					addMetadataField(parsedFields.get(fieldName), groupName);
-					// Remove the field now it has been added, so we don't also insert it into the default group later.
+
+					FieldDescriptor field = parsedFields.get(fieldName);
+					// Remove the field from our running list so we don't also insert it into the default group later.
 					parsedFields.remove(fieldName);
+
+					// Strip the groupname from the displayname of the field
+					if (field.getDisplayName().length() > groupName.length() && field.getDisplayName().toLowerCase().startsWith(groupName.toLowerCase())) {
+						// Remove group
+						String newDisplayName = field.getDisplayName().substring(groupName.length()).trim();
+						// Capitalize first char
+						newDisplayName = newDisplayName.substring(0, 1).toUpperCase(Locale.ROOT) + newDisplayName.substring(1);
+
+						field.setDisplayName(newDisplayName);
+					}
+
+					addMetadataField(field, groupName);
 				}
 			}
 		}

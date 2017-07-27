@@ -77,7 +77,7 @@ SINGLEPAGE.BLS = (function () {
 		
 		var filterStrings = [];
 		$.each(filterArr, function (index, element) {
-			if (element.filterType === "date") {
+			if (element.filterType === "range") {
 				filterStrings.push(
 					"+", element.name, ":",
 					"[", element.values[0], " TO ", element.values[1], "]"

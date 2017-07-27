@@ -26,15 +26,15 @@ a.ui-menu-item-wrapper {
 
 .ui-autocomplete.dropdown-menu:before {
 	content: "Example values";
-	background-color: #f3f3f3;
-	color: black;
+	display: block;
+	color:white;
+	background-color: #337ab7;
+	border-bottom: 1px solid #2e6da4;
+	box-shadow: 0px 0px 8px #DDD;
 	font-weight: 700;
-	border-bottom: 1px solid #CCC;
 	padding: 3px 20px;
 	margin-bottom: 5px;
 	margin-top: -5px;
-	display: block;
-	box-shadow: 0px 0px 8px #DDD;
 }
 
 hr {
@@ -188,6 +188,7 @@ div.hitscroll a {
 #filteroverview {
 	color: #888888;
 	font-size: 85%;
+	padding-left: 1px;
 }
 
 .activeLink {

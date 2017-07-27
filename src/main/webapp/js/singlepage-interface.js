@@ -384,9 +384,9 @@ SINGLEPAGE.INTERFACE = (function() {
 			var docPid = doc.docPid;
 			
 			var docTitle = doc.docInfo[data.summary.docFields.titleField] || "UNKNOWN";
-			var docAuthor = doc.docInfo[data.summary.docFields.authorField] ? " by " + doc[data.summary.docFields.authorField] : "";
+			var docAuthor = doc.docInfo[data.summary.docFields.authorField] ? " by " + doc.docInfo[data.summary.docFields.authorField] : "";
 			var docDate = doc.docInfo[data.summary.docFields.dateField] || ""; 
-			var docHits = doc.numberOfHits;
+			var docHits = doc.numberOfHits || "";
 
 			var snippetStrings = [];
 			$.each(doc.snippets, function(index, snippet) {

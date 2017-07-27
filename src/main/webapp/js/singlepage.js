@@ -177,7 +177,14 @@ SINGLEPAGE.CORE = (function () {
 		},
 
 		onSearchUpdated: function(searchParams) {
-			history.pushState(null, null, toQueryString(searchParams));
+			// Only push new url if different
+			// Why? Because when the user goes back say, 10 pages, we reinit the page and do a search with the restored parameters
+			// this search would push a new history entry, popping the next 10 pages off the stack, which the url is the same because we just entered the page.
+			// So don't do that.
+			var newQueryString = toQueryString(searchParams);
+			var currentQueryString = new URI().search();
+			if (newQueryString !== currentQueryString)
+				history.pushState(null, null, newQueryString);
 		},
 
 		// Called to reset search form and results

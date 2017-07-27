@@ -21,7 +21,7 @@
 					#end
 					</select>
 				</div>
-			#elseif($docfield.getType() == "date")
+			#elseif($docfield.getType() == "range")
 				<div class="col-xs-4">
 					<input type="text" placeholder="From" class="form-control forminput" />
 				</div>
@@ -163,7 +163,7 @@
 			</div>
 			#end
 			<div class="row">
-				<div id="filteroverview" class="col-xs-8"></div>
+				<div class="col-xs-8"><span id="filteroverview"></span></div>
 			</div>
 		</div>
 

@@ -8,8 +8,8 @@
  /**
  * @typedef {Object} FilterField
  * @property {string} name - Unique ID of the filter
- * @property {string} filterType - Type of the filter, one of 'date', 'text', 'select', 'multiselect'
- * @property {Array.<string>} values - Values of the filter, for text, for selects, the selected values, for text, the text, for data the start and end date in indices [0][1]
+ * @property {string} filterType - Type of the filter, one of 'range', 'text', 'select', 'combobox'
+ * @property {Array.<string>} values - Values of the filter, for selects, the selected values, for text, the text, for ranges the min and max values in indices [0][1]
  */
 
 // Our global symbol
@@ -48,7 +48,7 @@ SINGLEPAGE.FORM = (function () {
 		var values = [];
 		
 		// Has two input fields, special treatment
-		if (filterType === "date") {
+		if (filterType === "range") {
 			var from = $($inputs[0]).val();
 			var to = $($inputs[1]).val();
 			
@@ -97,6 +97,7 @@ SINGLEPAGE.FORM = (function () {
 		init: function() {
 
 			// Inherit jQueryUI autocomplete widget and customize the rendering
+			// to apply some bootstrap classes and structure
 			$.widget('custom.autocomplete', $.ui.autocomplete, {
 				_renderMenu: function(ul, items) {
 					var self = this;
@@ -121,11 +122,16 @@ SINGLEPAGE.FORM = (function () {
 				}
 			})
 
-			// initialize autocompleters
+			// Now replace all of our autocomplete-marked selects with text inputs with attached autocomplete
 			$("select.autocomplete").each(function() {
 				var $select = $(this);
 				var values = $select.find("option").map(function(index, element) {
-					return  $(element).val();
+					var value = $(element).val();
+					return  {
+						label: value,
+						// Surround the value by quotes, as by default unquoted values are split on whitespace and treated as separate words.
+						value: '"' + value + '"', 
+					}
 				}).get();
 
 				var $autocomplete = $("<input></input>")
@@ -140,10 +146,21 @@ SINGLEPAGE.FORM = (function () {
 				
 				$autocomplete.autocomplete({
 					source: values,
+					minLength: 0, // show values even for empty strings
 					classes: {
 						"ui-autocomplete": "dropdown-menu"
 					},
+					create: function() {
+						// This element has a div appended every time an element is highlighted
+						// but they are never removed... remove this element for now
+						$('.ui-helper-hidden-accessible').remove();
+					}
 				});
+
+				// show values immediately when first focusing by performing a search directly
+				$autocomplete.on('focus', function() {
+					$(this).autocomplete('search', $(this).val() || "");
+				})
 			})
 			
 			// Register callbacks and sync with current state
@@ -188,10 +205,10 @@ SINGLEPAGE.FORM = (function () {
 			var filterType = $filterField.data('filterfield-type');
 			
 			// Determine how to process the value of this filter field, based on the type of this filter
-			if (filterType == "date") {
+			if (filterType == "range") {
 				$($inputs[0]).val(values[0]);
 				$($inputs[1]).val(values[1]);
-			} else if (filterType == "select" || filterType == "multiselect") {
+			} else if (filterType == "select") {
 				$inputs.first().selectpicker('val', values);
 			} else {
 				$inputs.first().val(values);

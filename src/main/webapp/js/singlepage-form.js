@@ -154,6 +154,13 @@ SINGLEPAGE.FORM = (function () {
 						// This element has a div appended every time an element is highlighted
 						// but they are never removed... remove this element for now
 						$('.ui-helper-hidden-accessible').remove();
+					},
+					// Manually fire dom change event as autocomplete doesn't fire it when user selects a value
+					// we lisen to this event 
+					select: function(event, ui) {
+						$(this).val(ui.item.value);
+						$(this).trigger('change');
+						return false;
 					}
 				});
 

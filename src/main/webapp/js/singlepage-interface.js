@@ -8,7 +8,7 @@ var SINGLEPAGE = SINGLEPAGE || {};
  * Does not manage the main search form.
  */
 SINGLEPAGE.INTERFACE = (function() {
-   
+
 	var ELLIPSIS = String.fromCharCode(8230);
 
 	// Add a 'hide' function to bootstrap tabs
@@ -36,7 +36,7 @@ SINGLEPAGE.INTERFACE = (function() {
 	}
 
 	// Context of the hit is passed in arrays, per property
-	// (word/lemma/PoS/punct). Right now we only want to display the 
+	// (word/lemma/PoS/punct). Right now we only want to display the
 	// words and punctuation. Join them together
 	function words(context, prop, doPunctBefore, addPunctAfter) {
 		var parts = [];
@@ -60,8 +60,8 @@ SINGLEPAGE.INTERFACE = (function() {
 
 	/**
 	 * Fade out the table, then replace its contents, and call a function.
-	 * 
-	 * @param {object} $table 
+	 *
+	 * @param {object} $table
 	 * @param {string} html Table head and body
 	 * @param {function} [onComplete] callback, will be called in the context of $table
 	 */
@@ -69,7 +69,7 @@ SINGLEPAGE.INTERFACE = (function() {
 		// skip the fadeout if the table is empty
 		// fixes annoying mini-delay when first viewing results
 		var fadeOutTime = $table.find('tr').length ? 200 : 0;
-		
+
 		$table.animate({opacity: 0}, fadeOutTime, function () {
 			$table.html(html);
 			if (onComplete)
@@ -96,23 +96,25 @@ SINGLEPAGE.INTERFACE = (function() {
 				var parts = snippetParts(response);
 				$element.html(parts[0] + "<b>" + parts[1] + "</b>" + parts[2]);
 			},
-			error: SINGLEPAGE.INTERFACE.showBlsError
+			error: function(jqXHR, textStatus, errorThrown) {
+				$element.text("Error retrieving data: " + (jqXHR.responseJSON && jqXHR.responseJSON.error) || textStatus);
+			}
 		});
 	}
 
 	// Shows an error that occurred when contacting BLS to the user.
 	// Expects an object with 'code' and 'message' properties.
 	function showBlsError(jqXHR, textStatus, errorThrown) {
-		
 		var errordata = (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.error) || {
 			"code": "WEBSERVICE_ERROR",
 			"message": "Error contacting webservice: " + textStatus + "; " + errorThrown
 		}
-		
+
 		$("#errorDiv").text(errordata.message + " (" + errordata.code + ") ").show();
-		
-		// TODO 
-		//toggleWaitAnimation(false);
+	}
+
+	function hideBlsError() {
+		$('#errorDiv').text('(error here)').hide();
 	}
 
 	// (Re)create the HTML for the pagination buttons
@@ -122,7 +124,7 @@ SINGLEPAGE.INTERFACE = (function() {
 		var totalResults;
 		if (data.summary.numberOfGroups != null)
 			totalResults = data.summary.numberOfGroups;
-		else 
+		else
 			totalResults = (data.hits ? data.summary.numberOfHitsRetrieved : data.summary.numberOfDocsRetrieved);
 
 		// when out of bounds results, draw at least the last few pages so the user can go back
@@ -175,11 +177,11 @@ SINGLEPAGE.INTERFACE = (function() {
 		$tab.removeData('searchIndicatorTimeout');
 		$tab.find('.searchIndicator').hide();
 	}
-   
+
 	function viewConcordances() {
 		var $button = $(this);
 		var groupId = $button.data('groupId');
-		
+
 		// this parameter is local to this tab, as the other tabs are probably displaying other groups.
 		$(this).trigger('localParameterChange', {
 			viewGroup: groupId,
@@ -188,7 +190,7 @@ SINGLEPAGE.INTERFACE = (function() {
 
 
 		// initialize the display indicating we're looking at a detailed group
-		
+
 		// Only set the text, don't show it yet
 		// (it should always be hidden, as this function is only available/called when you're not currently viewing contents of a group)
 		// This is a brittle solution, but better than nothing for now.
@@ -207,13 +209,13 @@ SINGLEPAGE.INTERFACE = (function() {
 		var currentConcordanceCount = $button.data('currentConcordanceCount') || 0;
 		var availableConcordanceCount = $button.data('availableConcordanceCount') || Number.MAX_VALUE;
 
-		if (currentConcordanceCount >= availableConcordanceCount) 
+		if (currentConcordanceCount >= availableConcordanceCount)
 			return;
 
 		var searchParams = $.extend(
 			{},
-			$tab.data('defaultParameters'), 
-			$tab.data('parameters'), 
+			$tab.data('defaultParameters'),
+			$tab.data('parameters'),
 			{
 				pageSize: 20,
 				page: currentConcordanceCount / 20,
@@ -229,7 +231,7 @@ SINGLEPAGE.INTERFACE = (function() {
 			// store new number of loaded elements
 			$button.data('currentConcordanceCount', currentConcordanceCount + loadedConcordances);
 			$button.data('availableConcordanceCount', totalConcordances);
-			
+
 			// And generate html to display
 			var html = [];
 			// Only one of these will run depending on what is present in the data
@@ -279,7 +281,7 @@ SINGLEPAGE.INTERFACE = (function() {
 				"<th class='text-center' style='width:20px;'>",
 					"<a data-bls-sort='hit:word'><strong>Hit text<strong></a>",
 				"</th>",
-				
+
 				"<th class='text-left' style='width:40px;'>",
 					"<span class='dropdown'>", // Span as when it's div, and we're right aligning text, the dropdown doesn't align because the div extends all the way left
 						"<a class='dropdown-toggle' data-toggle='dropdown'>Right context <span class='caret'></span></a>",
@@ -330,7 +332,7 @@ SINGLEPAGE.INTERFACE = (function() {
 				var parts = snippetParts(hit);
 				var matchLemma = words(hit.match, "lemma", false, "");
 				var matchPos = words(hit.match, "pos", false, "");
-				
+
 				html.push(
 					"<tr class='concordance' onclick='SINGLEPAGE.INTERFACE.showCitation(this, \"", docPid, "\", ", hit.start, ", ", hit.end,");'>",
 						"<td class='text-right'>",ELLIPSIS, " ", parts[0], "</td>",
@@ -362,14 +364,14 @@ SINGLEPAGE.INTERFACE = (function() {
 				"<th style='width:15%'><a data-bls-sort='numhits'>Hits</a></th>",
 			"</tr></thead>"
 		);
-		
+
 		html.push("<tbody>");
 		$.each(data.docs, function(index, doc) {
 			var docPid = doc.docPid;
-			
+
 			var docTitle = doc.docInfo[data.summary.docFields.titleField] || "UNKNOWN";
 			var docAuthor = doc.docInfo[data.summary.docFields.authorField] ? " by " + doc.docInfo[data.summary.docFields.authorField] : "";
-			var docDate = doc.docInfo[data.summary.docFields.dateField] || ""; 
+			var docDate = doc.docInfo[data.summary.docFields.dateField] || "";
 			var docHits = doc.numberOfHits || "";
 
 			var snippetStrings = [];
@@ -388,7 +390,7 @@ SINGLEPAGE.INTERFACE = (function() {
 				"<tr class='documentrow'>",
 					"<td>",
 						"<a target='_blank' href='", docUrl, "'>", docTitle, docAuthor, "</a><br>",
-						snippetStrings.join(""), snippetStrings.length > 0 ? "<br>" : "", 
+						snippetStrings.join(""), snippetStrings.length > 0 ? "<br>" : "",
 						"<a class='green btn btn-xs btn-default' target='_blank' href='", docUrl,"'>View document info</a>",
 					"</td>",
 					"<td>", docDate, "</td>",
@@ -396,7 +398,7 @@ SINGLEPAGE.INTERFACE = (function() {
 				"</tr>");
 		});
 		html.push("</tbody>");
-	
+
 		return html;
 	}
 
@@ -413,7 +415,7 @@ SINGLEPAGE.INTERFACE = (function() {
 		// give the display a different color based on whether we're showing hits or docs
 		var displayClass = data.hitGroups ? 'progress-bar-success' : 'progress-bar-warning';
 		var idPrefix = data.hitGroups ? 'hg' : 'dg'; // hitgroup : docgroup
-		
+
 		html.push("<tbody>");
 		var groups = data.hitGroups || data.docGroups;
 		$.each(groups, function(index, group) {
@@ -511,15 +513,15 @@ SINGLEPAGE.INTERFACE = (function() {
 
 	/**
 	 * Set new search parameters for this tab. Does not mark tab for refresh or remove existing data.
-	 * 
+	 *
 	 * NOTE: pagination is never updated based on parameters, but instead drawn based on search response.
 	 * @param {jquery} $tab - tab-pane containing all contents of tab
 	 * @param {any} newParameters - object containing any updated parameter keys
 	 * @param {boolean} [toPageState = false] whether to copy the parameter values to their ui elements
 	 */
 	function setTabParameters($tab, newParameters, toPageState) {
-		
-		// make a copy of the new parameters without groupBy and viewGroup if the parameters were meant for 
+
+		// make a copy of the new parameters without groupBy and viewGroup if the parameters were meant for
 		// a tab with a different operation
 		if (newParameters.operation != null && newParameters.operation !== $tab.data('parameters').operation) {
 			newParameters = $.extend({}, newParameters);
@@ -527,14 +529,14 @@ SINGLEPAGE.INTERFACE = (function() {
 			newParameters.groupBy = undefined;
 			newParameters.viewGroup = undefined;
 		}
-		
+
 		// write new values while preserving original values
 		var updatedParameters = $.extend($tab.data('parameters'), newParameters, $tab.data('constParameters'));
 
 		// copy parameter values to their selectors etc
 		if (toPageState) {
 			var $groupSelect = $tab.find('select.groupselect');
-			
+
 			if ($groupSelect.length)
 				$groupSelect.selectpicker('val', updatedParameters.groupBy)
 		}
@@ -542,10 +544,10 @@ SINGLEPAGE.INTERFACE = (function() {
 
 	/**
 	 * Updates the internal parameters for a tab and executes a search if the tab is currently active.
-	 * 
+	 *
 	 * Any currently shown results are not cleared.
 	 * Automatically unhides results containers and controls once search completes.
-	 * 
+	 *
 	 * @param {any} event where the data attribute holds all new parameters
 	 */
 	function onLocalParameterChange(event, parameters) {
@@ -570,7 +572,7 @@ SINGLEPAGE.INTERFACE = (function() {
 			// Nothing to do, tab is already displaying data
 			// But still notify core so that when the url is copied out the current tab can be restored.
 			SINGLEPAGE.CORE.onSearchUpdated(searchSettings);
-			return; 
+			return;
 		}
 
 		// Not all configurations of search parameters will result in a valid search
@@ -597,10 +599,16 @@ SINGLEPAGE.INTERFACE = (function() {
 		// All is well, search!
 		showSearchIndicator($tab);
 		SINGLEPAGE.CORE.onSearchUpdated(searchSettings);
-		SINGLEPAGE.BLS.search(searchSettings, $tab.data('fnSetResults'), function() {
-			hideSearchIndicator($tab);	
-			showBlsError.apply(undefined, (Array.prototype.slice.call(arguments,1))); // call with original args
-		});
+		SINGLEPAGE.BLS.search(searchSettings, 
+			function onSuccess() {
+				hideBlsError();
+				$tab.data('fnSetResults').apply(undefined, Array.prototype.slice.call(arguments)); // call with original args
+			},
+			function onError() {
+				hideSearchIndicator($tab);
+				showBlsError.apply(undefined, Array.prototype.slice.call(arguments)); // call with original args
+			}
+		);
 	}
 
 	return {
@@ -684,13 +692,12 @@ SINGLEPAGE.INTERFACE = (function() {
 					event.preventDefault();
 				})
 		},
-		
-		showBlsError: showBlsError,
+
 		showCitation: showCitation,
-		
+
 		/**
 		 * Set new search parameters and mark tabs for a refesh of data.
-		 * 
+		 *
 		 * The currently shown tab will auto-refresh.
 		 * Parameters with corresponding UI-elements within the tabs will update those elements with the new data.
 		 * NOTE: pagination is never updated based on parameters, but instead drawn based on search response.
@@ -709,7 +716,7 @@ SINGLEPAGE.INTERFACE = (function() {
 
 		/**
 		 * Clear all results, hide the result area and reset all search parameters within the tabs.
-		 * 
+		 *
 		 * Deactivates all tabs and hides the result area.
 		 */
 		reset: function() {

@@ -85,7 +85,7 @@ img.booklogo {
 .resultcontainer {
 	margin-top: 5px;
 }
-.resultcontainer td, .resultcontainer th {
+.resultcontainer td {
 	overflow: hidden;
 }.resultcontainer tr > *:first-child {
 	padding-left: 6px;
@@ -101,14 +101,6 @@ body {
 	background-repeat:no-repeat;
 	background-position:-350px -310px;
 	background-attachment:scroll;
-}
-
-#cqlfield {
-	display: none;
-}
-
-.nav-collapse {
-	background-color: #222222;
 }
 
 .green {
@@ -155,19 +147,6 @@ tr.concordance {
 	
 	width: initial; 
 	padding: 0px 2px;
-}
-
-.textchecks {
-	top: -15px;
-}
-
-hl {
-	font-weight: bold;
-}
-
-span.hl {
-	font-weight: bold;
-	background-color: #ffffff;
 }
 
 div.hitscroll {

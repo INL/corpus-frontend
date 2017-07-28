@@ -22,14 +22,13 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 public class CorpusConfig {
-	public static final String GROUP_DEFAULT = "Metadata";
-
 	private Document config;
 
 	private List<FieldDescriptor> propertyFields = new ArrayList<>();
 
 	/** Keyed by tab name */
 	private Map<String, List<FieldDescriptor>> metadataFieldGroups = new LinkedHashMap<>();
+	private List<FieldDescriptor> ungroupedMetadataFields = new ArrayList<>();
 
 	/** Mapping between generic names for some properties of documents in this corpus (titleField, pidField, authorField, etc)
 	 * 	to their actual names */
@@ -48,6 +47,10 @@ public class CorpusConfig {
 
 	public Map<String, List<FieldDescriptor>> getMetadataFieldGroups() {
 		return metadataFieldGroups;
+	}
+
+	public List<FieldDescriptor> getUngroupedMetadataFields() {
+		return ungroupedMetadataFields;
 	}
 
 	public Map<String, String> getFieldInfo() {
@@ -157,9 +160,9 @@ public class CorpusConfig {
 			}
 		}
 
-		// Remaining fields go into the default groups
+		// Remaining fields are ungrouped groups
 		for (Map.Entry<String, FieldDescriptor> e : parsedFields.entrySet()) {
-			addMetadataField(e.getValue(), GROUP_DEFAULT);
+			addMetadataField(e.getValue(), null);
 		}
 	}
 
@@ -228,10 +231,14 @@ public class CorpusConfig {
 	}
 
 	private void addMetadataField(FieldDescriptor field, String groupName) {
-		assert groupName != null && !groupName.isEmpty() : "MetadataField group must be set";
+		if (groupName != null) {
+			assert !groupName.isEmpty() : "MetadataField group must not be empty";
 
-		if (!this.metadataFieldGroups.containsKey(groupName))
-			this.metadataFieldGroups.put(groupName, new ArrayList<FieldDescriptor>());
-		this.metadataFieldGroups.get(groupName).add(field);
+			if (!this.metadataFieldGroups.containsKey(groupName))
+				this.metadataFieldGroups.put(groupName, new ArrayList<FieldDescriptor>());
+			this.metadataFieldGroups.get(groupName).add(field);
+		} else {
+			this.ungroupedMetadataFields.add(field);
+		}
 	}
 }

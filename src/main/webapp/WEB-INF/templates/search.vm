@@ -127,41 +127,39 @@
 			</div>
 		</div>
 
+		#if($metadataGroups.isEmpty()) ## Only display ungrouped fields if no other groups are present
+			#set($_ = $metadataGroups.put("Metadata", $ungroupedMetadataFields))
+		#end
+		#set($useFilterTabs = ($metadataGroups.size() > 1)) ##only use tabs when we have more than one group to display
 		<div class="col-xs-12 col-md-6" id="filterContainer">
-			#if(!$metadataGroups.isEmpty())
-			<h3>Filter search by</h3>
+			<h3>Filter search by &hellip;</h3>
+			
+		#if($useFilterTabs) 
 			<ul class="nav nav-tabs">
-			#set($firstGroup = "true") ## need to keep track manually since the first tab in the list may be ignored
 			#foreach($group in $metadataGroups.entrySet())
 				#set($groupName = $group.key)
 				#set($groupId = $groupName.replace(" ", ""))
-
-				##DefaultTab is always hidden, unless there are no other tabs
-				#if( !($groupName == $defaultMetadataGroupName && $metadataGroups.size() > 1))
-					<li #if($firstGroup == true) class="active" #end>
-						<a href="#$groupId" data-toggle="tab">$groupName</a>
-					</li>
-					#set($firstGroup = "false")
-				#end
+				<li #if($velocityCount == 1) class="active" #end>
+					<a href="#$groupId" data-toggle="tab">$groupName</a>
+				</li>
+				#set($firstGroup = "false")
 			#end
 			</ul>
-
 			<div class="tab-content">
-			#set($firstGroup = "true") ## need to keep track manually since the first tab in the list may be ignored
 			#foreach($group in $metadataGroups.entrySet())
 				#set($groupName = $group.key)
 				#set($groupId = $groupName.replace(" ", ""))
-
-				##DefaultTab is always hidden, unless there are no other tabs
-				#if( !($groupName == $defaultMetadataGroupName && $metadataGroups.size() > 1))
-					<div class="tab-pane #if($firstGroup == true) active #end" id="$groupId">
-						#filterfields($group.value)
-					</div>
-					#set($firstGroup = "false")
-				#end
+				<div class="tab-pane #if($velocityCount == 1) active #end" id="$groupId">
+					#filterfields($group.value)
+				</div>
+				#set($firstGroup = "false")			
 			#end
 			</div>
+		#else ## $useFilterTabs
+			#foreach($group in $metadataGroups.entrySet())
+				#filterfields($group.value)
 			#end
+		#end
 			<div class="row">
 				<div class="col-xs-8"><span id="filteroverview"></span></div>
 			</div>

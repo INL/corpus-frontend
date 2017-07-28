@@ -33,13 +33,15 @@ public class SearchResponse extends BaseResponse {
 		getContext().put("corpusOwner", corpusOwner);
 		getContext().put("corpusName", corpusName);
 
-		for (Map.Entry<String, String> e : servlet.getCorpusConfig(corpus).getFieldInfo().entrySet()) {
+		CorpusConfig config = servlet.getCorpusConfig(corpus);
+		for (Map.Entry<String, String> e : config.getFieldInfo().entrySet()) {
 			getContext().put(e.getKey(), e.getValue());
 		}
 
-		getContext().put("propertyFields", servlet.getCorpusConfig(corpus).getPropertyFields());
-		getContext().put("metadataGroups", servlet.getCorpusConfig(corpus).getMetadataFieldGroups());
-		getContext().put("defaultMetadataGroupName", CorpusConfig.GROUP_DEFAULT);
+		getContext().put("propertyFields", config.getPropertyFields());
+		getContext().put("metadataGroups", config.getMetadataFieldGroups());
+		getContext().put("ungroupedMetadataFields", config.getUngroupedMetadataFields());
+
 		// display template
 		displayHtmlTemplate(servlet.getTemplate("search"));
 	}

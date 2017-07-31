@@ -12,7 +12,7 @@ SINGLEPAGE.INTERFACE = (function() {
 	var ELLIPSIS = String.fromCharCode(8230);
 
 	// Add a 'hide' function to bootstrap tabs
-	// Doesn't do more than remove classes and area and fire some events
+	// Doesn't do more than remove classes and aria labels, and fire some events
 	$.fn.tab.Constructor.prototype.hide = function() {
 		var $this    = this.element
 		var selector = $this.data('target') || $this.attr('href');
@@ -78,7 +78,14 @@ SINGLEPAGE.INTERFACE = (function() {
 		});
 	}
 
-	// Show a longer snippet when clicking on a hit
+	/**
+	 * Request and display more preview text from a document.
+	 * 
+	 * @param {any} concRow the <tr> element for the current hit. The result will be displayed in the row following this row.
+	 * @param {any} docPid id/pid of the document
+	 * @param {any} start 
+	 * @param {any} end 
+	 */
 	function showCitation(concRow, docPid, start, end) {
 		// Open/close the collapsible in the next row
 		var $element = $(concRow).next().find(".collapse");
@@ -102,8 +109,15 @@ SINGLEPAGE.INTERFACE = (function() {
 		});
 	}
 
-	// Shows an error that occurred when contacting BLS to the user.
-	// Expects an object with 'code' and 'message' properties.
+	/**
+	 * Show the error reporting field and display any errors that occured when performing a search.
+	 * 
+	 * Can be directly used as callback fuction to $.ajax
+	 * 
+	 * @param {any} jqXHR 
+	 * @param {any} textStatus 
+	 * @param {any} errorThrown 
+	 */
 	function showBlsError(jqXHR, textStatus, errorThrown) {
 		var errordata = (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.error) || {
 			"code": "WEBSERVICE_ERROR",
@@ -113,11 +127,21 @@ SINGLEPAGE.INTERFACE = (function() {
 		$("#errorDiv").text(errordata.message + " (" + errordata.code + ") ").show();
 	}
 
+	/**
+	 * Hide the error field.
+	 */
 	function hideBlsError() {
 		$('#errorDiv').text('(error here)').hide();
 	}
 
-	// (Re)create the HTML for the pagination buttons
+	/**
+	 * Create pagination buttons based on a set of results.
+	 * 
+	 * Buttons contain a data-page attribute containing the page index they're displaying - 1.
+	 * 
+	 * @param {any} $pagination <ul> element where the generated pagination will be placed.
+	 * @param {any} data a blacklab-server search response containing either groups, docs, or hits.
+	 */
 	function updatePagination($pagination, data) {
 		var beginIndex = data.summary.windowFirstResult;
 		var pageSize = data.summary.requestedWindowSize;
@@ -164,6 +188,14 @@ SINGLEPAGE.INTERFACE = (function() {
 		$pagination.html(html.join(""));
 	}
 
+	/**
+	 * After a small delay, clear the tab's current data and show a spinner.
+	 * 
+	 * The delay exists because it's jarring when the user switches page and all content is removed
+	 * and then displayed again within a fraction of a second.
+	 * 
+	 * @param {any} $tab the tab content container.
+	 */
 	function showSearchIndicator($tab) {
 		$tab.data('searchIndicatorTimeout', setTimeout(function() {
 			$tab.find('.searchIndicator').show();
@@ -171,6 +203,11 @@ SINGLEPAGE.INTERFACE = (function() {
 		}, 500));
 	}
 
+	/**
+	 * Hide any currently displayed spinner within this tab, and remove any queued spinner (see showSearchIndicator).
+	 * 
+	 * @param {any} $tab the tab's main content container.
+	 */
 	function hideSearchIndicator($tab) {
 		// hide spinner or prevent it from showing
 		clearTimeout($tab.data('searchIndicatorTimeout'));
@@ -178,6 +215,15 @@ SINGLEPAGE.INTERFACE = (function() {
 		$tab.find('.searchIndicator').hide();
 	}
 
+	/**
+	 * Load and display results within a specific group of documents/hits.
+	 * 
+	 * This function should only be called when the containing tab currently has a groupBy clause,
+	 * otherwise an invalid search will be generated.
+	 * 
+	 * This function assumes it's being called in the context of a button/element containing a data-group-id attribute
+	 * specifiying a valid group id.
+	 */
 	function viewConcordances() {
 		var $button = $(this);
 		var groupId = $button.data('groupId');
@@ -202,6 +248,16 @@ SINGLEPAGE.INTERFACE = (function() {
 		$resultgroupname.text(groupName || "");
 	}
 
+	/**
+	 * Loads and displays a small amount of details about individual hits/documents within a specific group.
+	 * Some data is attached to the button to track how many concordances are already loaded/are available.
+	 * 
+	 * This function does not refresh the entire tab's contents, just inserts some extra data within a group's <tr>
+	 * For the version that loads the full result set and displays the extensive information, see {@link viewConcordances}
+	 * 
+	 * This function assumes it's being called within the context of a button element containing a data-group-id attribute.
+	 * Some assumptions are also made about the exact structure of the document regarding placement of the results.
+	 */
 	function loadConcordances() {
 		var $button = $(this);
 		var $tab = $button.parents('.tab-pane').first();
@@ -261,7 +317,15 @@ SINGLEPAGE.INTERFACE = (function() {
 		});
 	}
 
+	/**
+	 * Convert a blacklab-server reply containing information about hits into a table containing the results.
+	 * 
+	 * @param {any} data the blacklab-server response.
+	 * @returns An array of html strings containing the <thead> and <tbody>, but without the enclosing <table> element.
+	 */
 	function formatHits(data) {
+		// TODO use mustache.js
+		
 		var html = [];
 		html.push(
 			"<thead><tr>",
@@ -354,6 +418,12 @@ SINGLEPAGE.INTERFACE = (function() {
 		return html;
 	}
 
+	/**
+	 * Convert a blacklab-server reply containing information about documents into a table containing the results.
+	 *
+	 * @param {any} data the blacklab-server response.
+	 * @returns An array of html strings containing the <thead> and <tbody>, but without the enclosing <table> element.
+	 */
 	function formatDocs(data) {
 		var html = [];
 
@@ -402,6 +472,13 @@ SINGLEPAGE.INTERFACE = (function() {
 		return html;
 	}
 
+	/**
+	 * Convert a blacklab-server reply containing information about hit or document groups into a table containing the results.
+	 * Some minor styling is applied based on whether the results are hits or documents.
+	 * 
+	 * @param {any} data the blacklab-server response.
+	 * @returns An array of html strings containing the <thead> and <tbody>, but without the enclosing <table> element.
+	 */
 	function formatGroups(data) {
 		var html = [];
 
@@ -446,6 +523,11 @@ SINGLEPAGE.INTERFACE = (function() {
 		return html;
 	}
 
+	/**
+	 * Redraws the table, pagination, hides spinners, shows/hides group indicator, shows the pagination/group controls, etc.
+	 * 
+	 * @param {any} data the successful blacklab-server reply. 
+	 */
 	function setTabResults(data) {
 		var $tab = $(this);
 		var html;

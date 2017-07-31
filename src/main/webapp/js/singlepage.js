@@ -78,11 +78,25 @@ SINGLEPAGE.CORE = (function () {
 		toPageState(searchSettings || {});
 	});
 
+	/**
+	 * Parses a query string and returns the parameters contained within the 'search' key
+	 * 
+	 * @param {any} queryString query string beginning with ?
+	 * @returns object containing the parameters, or null.
+	 */
 	function fromQueryString(queryString) {
 		var decodedQuery = new URI().search(queryString).search(true);
 		return decodedQuery.search ? JSON.parse(decodedQuery.search) : null;
 	}
 
+	/**
+	 * Converts search parameters into a query string.
+	 * 
+	 * Removes any empty strings, arrays, null, undefineds prior to conversion, to shorten the resulting query string.
+	 * 
+	 * @param {any} searchParams the search parameters
+	 * @returns the query string, beginning with ?
+	 */
 	function toQueryString(searchParams) {
 		
 		var modifiedParams ={} 
@@ -101,6 +115,14 @@ SINGLEPAGE.CORE = (function () {
 		}).search();
 	}
 
+	/**
+	 * Completely resets all form and results information and controls, then repopulates the page with the parameters.
+	 * Also initiates a search if the parameters contain a valid search. (the 'operation' is valid).
+	 * 
+	 * NOTE: when called with a {} parameter, the entire page will be cleared.
+	 * 
+	 * @param {any} searchParams 
+	 */
 	function toPageState(searchParams) {
 		// reset and repopulate the main form
 		SINGLEPAGE.FORM.reset(); 

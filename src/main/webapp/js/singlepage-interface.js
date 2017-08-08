@@ -586,6 +586,11 @@ SINGLEPAGE.INTERFACE = (function() {
 		}
 	}
 
+	/**
+	 * Clears displayed data, hides pagination, group indicator, group control, cached results, etc.
+	 * 
+	 * @param {any} $tab 
+	 */
 	function clearTabResults($tab) {
 		$tab.find('.resultcontrols').hide();
 		$tab.find('.resultcontainer').hide().find('table thead, table tbody').empty();
@@ -701,6 +706,7 @@ SINGLEPAGE.INTERFACE = (function() {
 			$('#resultTabs a').each(function() { $(this).tab('hide'); });
 			$('.searchIndicator').hide();
 
+			// See parameters type documentation in singlepage-bls.js
 			$('#tabHits')
 				.data('parameters', {})
 				.data('defaultParameters', {

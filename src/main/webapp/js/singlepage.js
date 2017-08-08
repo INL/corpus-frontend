@@ -1,4 +1,4 @@
-/* global BLS_URL, URI, querybuilder */
+/* global BLS_URL, URI, QSON, querybuilder */
 
 var SINGLEPAGE = SINGLEPAGE || {};
 
@@ -81,12 +81,22 @@ SINGLEPAGE.CORE = (function () {
 	/**
 	 * Parses a query string and returns the parameters contained within the 'search' key
 	 * 
-	 * @param {any} queryString query string beginning with ?
-	 * @returns object containing the parameters, or null.
+	 * @param {any} queryString query string (leading "?" optional)
+	 * @returns object containing the parameters, or null if no parameters were found
 	 */
 	function fromQueryString(queryString) {
-		var decodedQuery = new URI().search(queryString).search(true);
-		return decodedQuery.search ? JSON.parse(decodedQuery.search) : null;
+		
+		if (queryString == null)
+			return null;
+		
+		var parsed = QSON.fromQueryString(queryString);
+		if (!$.isEmptyObject(parsed))
+			return parsed;
+		else
+			return null;
+
+		// var decodedQuery = new URI().search(queryString).search(true);
+		// return decodedQuery.search ? JSON.parse(decodedQuery.search) : null;
 	}
 
 	/**
@@ -110,9 +120,11 @@ SINGLEPAGE.CORE = (function () {
 			modifiedParams[key] = value;
 		});
 		
-		return new URI().search({
-			search: JSON.stringify(modifiedParams)
-		}).search();
+		return "?" + QSON.toQueryString(modifiedParams);
+
+		// return new URI().search({
+		// 	search: JSON.stringify(modifiedParams)
+		// }).search();
 	}
 
 	/**

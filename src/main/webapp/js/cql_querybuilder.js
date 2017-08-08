@@ -13,6 +13,30 @@ window.querybuilder = (function() {
 			partials: {}
 		},
 
+		modalEditor: {
+			
+			template: 
+				'<div class="bl-modal-editor modal fade" tabindex="-1" role="dialog">' +
+					'<div class="modal-dialog" role="document">' +
+						'<div class="modal-content">' +
+							'<div class="modal-header">' +
+								'<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>' +
+								'<h4 class="modal-title">Edit</h4>' +
+							'</div>' +
+							'<div class="modal-body">' +
+								'<textarea class="form-control" rows="10" style="width:100%;overflow:auto;resize:none;white-space:pre;"></textarea>' +
+							'</div>' +
+							'<div class="modal-footer">' +
+								'<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>' +
+								'<button type="button" class="btn btn-primary" data-dismiss="modal" data-save-edits>Save changes</button>' +
+							'</div>' +
+						'</div>' +
+					'</div>' +
+				'</div>',
+
+			partials: {}
+		},
+
 		token: {
 			template: 
 				'<div class="panel panel-danger bl-token" id="{{currentId}}">' +
@@ -104,7 +128,7 @@ window.querybuilder = (function() {
 							'</optgroup>' +
 							'{{/comparators}}' +
 						'</select>' +
-						'<input type="text" class="form-control input-sm bl-no-border-radius"  id="{{currentId}}_value" style="flex-grow:1;flex-basis:1px;width:1px;min-width:110px;">' +
+						'{{>main_input}}' +
 						'{{>create_attribute_dropdown}}' +
 					'</div>' +
 					'{{#attributes}}' +
@@ -123,7 +147,18 @@ window.querybuilder = (function() {
 
 			partials: {
 				delete_attribute_button:
-					'<span class="glyphicon glyphicon-remove text-danger" id="{{currentId}}_delete" style="flex-grow:0;cursor:pointer;"></span>'
+					'<span class="glyphicon glyphicon-remove text-danger" id="{{currentId}}_delete" style="flex-grow:0;cursor:pointer;"></span>',
+
+				main_input:
+					'<span class="bl-token-attribute-main-input">' +
+						'<textarea id="{{currentId}}_value_file" class="hidden"></textarea>' +
+						'<input id="{{currentId}}_value_simple" type="text" class="form-control input-sm bl-no-border-radius bl-hover-back bl-has-file-hidden" style="position:relative;">' +
+						'<button type="button" class="bl-token-attribute-file-edit btn btn-default btn-sm bl-no-border-radius bl-hover-back bl-has-file-shown">(filename)</button>' +
+						'<button type="button" class="btn btn-sm btn-default bl-no-border-radius-right bl-input-upload-button bl-hover-front">' +
+							'<input type="file" accept="text/*" class="bl-input-upload">' +
+							'<span class="glyphicon glyphicon-open"></span>' +
+						'</button>' +
+					'</span>'
 			}
 		},
 		
@@ -179,7 +214,9 @@ window.querybuilder = (function() {
 				]
 			},
 
-			getCql: function(attribute, comparator, value) {
+			getCql: function(attribute, comparator, caseSensitive, values) {
+				var value = (caseSensitive ? "(?-i)" : "") + values.join("|");
+
 				switch (comparator) {
 					case "starts with": 
 						return attribute + " = " + "\"" + value + ".*\"";
@@ -223,9 +260,12 @@ window.querybuilder = (function() {
 
 		// Use extendext so arrays in the defaults are replaced instead of merged with those in options
 		this.settings = $.extendext(true, 'replace', {}, DEFAULTS, options);
-		this.element = $rootElement;
 		this._prepareElement($rootElement);
+		
+		this.element = $rootElement;
 		this.createTokenButton = $rootElement.find('.bl-token-create');
+		this.modalEditor = this.element.find('.bl-modal-editor');
+		
 		this.createTokenButton.click();
 	};
 		
@@ -257,6 +297,9 @@ window.querybuilder = (function() {
 		$createTokenButton.on('click', this.createToken.bind(this));
 		$createTokenButton.appendTo($element);
 		
+		var $modalEditor = $(Mustache.render(templates.modalEditor.template, {}, templates.modalEditor.partials));
+		$modalEditor.appendTo($element);
+
 		return $element;
 	};
 
@@ -311,7 +354,7 @@ window.querybuilder = (function() {
 
 	Token.prototype._prepareElement = function($element) {
 		$element.data('token', this);
-		$element.find('input').on('change', function() {
+		$element.find('input, textarea').on('change', function() {
 			$element.trigger('cql:modified');
 		});
 		
@@ -325,20 +368,20 @@ window.querybuilder = (function() {
 	};
 
 	Token.prototype._createRootAttributeGroup = function() {
-		var rootId = '#' + this.element.attr('id');
+		var baseId = '#' + this.element.attr('id');
 
 		var group = new AttributeGroup(this.builder, this.builder.settings.token.rootOperator.operator, this.builder.settings.token.rootOperator.label);
 		group.element.removeClass('well');
-		group.element.appendTo(this.element.find(rootId + '_tab_attributes'));
+		group.element.appendTo(this.element.find(baseId + '_tab_attributes'));
 		group.isRoot = true;
 
 		return group;
 	};
 
 	Token.prototype._updateCql = function() {
-		var rootId = '#' + this.element.attr('id');
+		var baseId = '#' + this.element.attr('id');
 
-		var $cqlPreviewElement = this.element.find(rootId + '_cql_preview');
+		var $cqlPreviewElement = this.element.find(baseId + '_cql_preview');
 		$cqlPreviewElement.text(this.getCql());
 	};
 
@@ -593,7 +636,7 @@ window.querybuilder = (function() {
 		$element.data('attribute', this);
 
 		$element.find('.selectpicker').selectpicker();
-		$element.find('.selectpicker, input').on('change', function() {$element.trigger('cql:modified');});
+		$element.find('.selectpicker, input, textarea').on('change', function() {$element.trigger('cql:modified');});
 
 		// Show/hide elements for the selected attribute type
 		// Such as case-sensitivity checkbox or comboboxes for when there is a predefined set of valid values
@@ -609,6 +652,56 @@ window.querybuilder = (function() {
 			parentGroup._removeIfEmpty();
 			parentGroup.element.trigger('cql:modified');
 		});
+
+		$element.find('.bl-input-upload').on('change', this._onUploadChanged.bind(this));
+
+		$element.find('.bl-token-attribute-file-edit').on('click', this._showModalEditor.bind(this));
+	};
+
+	Attribute.prototype._showModalEditor = function(event) {
+		var baseId = "#" + this.element.attr('id');
+		var $fileText = this.element.find(baseId + "_value_file");
+		var $modalTextArea = this.builder.modalEditor.find('textarea');
+		
+		$modalTextArea.val($fileText.val()); //copy out current text to modal
+		this.builder.modalEditor.modal(); // show modal
+		this.builder.modalEditor.one('hide.bs.modal', function() { // copy out changes once closed
+			// A little dirty, to determine how the modal was closed, get the currently focused element
+			// If the modal was closed through a button click, the responsible button will have focus
+			// Only save the data if the clicked button as the data-save-edits attribute/property
+
+			if ($(document.activeElement).is('[data-dismiss][data-save-edits], [data-toggle][data-save-edits]')) {
+				$fileText
+					.val($modalTextArea.val())
+					.trigger('change');
+			}
+		});
+	}
+
+	Attribute.prototype._onUploadChanged = function(event) {
+		if (!(window.FileReader && window.File && window.FileList && window.Blob))
+			return;
+		
+		var baseId = '#' + this.element.attr('id');
+		var $inputContainer = this.element.find('.bl-token-attribute-main-input');
+		var $fileText = $inputContainer.find(baseId + '_value_file');
+		var $fileEditButton = $inputContainer.find('.bl-token-attribute-file-edit');
+
+		var file = event.target.files && event.target.files[0];
+		if (file == null) {
+			$inputContainer.removeAttr('data-has-file');
+			$fileEditButton.text("No file selected...");
+			$fileText.val("").trigger('change'); // trigger changed last
+		}
+		else {
+			var fr = new FileReader();
+			fr.onload = function() {
+				$inputContainer.attr('data-has-file', '');
+				$fileEditButton.text(file.name);
+				$fileText.val(fr.result).trigger('change'); // trigger changed last
+			}
+			fr.readAsText(file);
+		}
 	};
 	
 	Attribute.prototype._updateShownOptions = function(selectedValue) {
@@ -618,25 +711,32 @@ window.querybuilder = (function() {
 	};
 
 	Attribute.prototype.getCql = function() {
-		var rootId = '#' + this.element.attr('id');
+		var baseId = '#' + this.element.attr('id');
 
-		var type 		= this.element.find(rootId + '_type').val();
-		var operator 	= this.element.find(rootId + '_operator').val();
-		var value 		= this.element.find(rootId + '_value').val();
+		var hasFile		= this.element.find('.bl-token-attribute-main-input').is('[data-has-file]');
 		
+		var type 		= this.element.find(baseId + '_type').val();
+		var operator 	= this.element.find(baseId + '_operator').val();
 		
 		var $optionsContainer = this.element.find('[data-attribute-type="' + type + '"]');
-		
-		// Apply modifiers such as case-sensitivity
 		var caseSensitive = $optionsContainer.find('[data-attribute-role="case"]').is(":checked") || false;
-		if (caseSensitive)
-			value = "(?-i)" + value;
+		
+		var rawValue;
+		var values		= [];
+		if (hasFile) {
+			rawValue = this.element.find(baseId + "_value_file").val() || "";
+			var trimmedLines = rawValue.trim().split(/\s*[\r\n]+\s*/g); // split on line breaks, ignore empty lines.
+			values = values.concat(trimmedLines);
+		} else {
+			rawValue = this.element.find(baseId + "_value_simple").val() || "";
+			values = values.concat(rawValue);
+		}
 		
 		var callback = this.builder.settings.attribute.getCql;
 		if (typeof callback === "function") {
-			return callback(type, operator, value);
+			return callback(type, operator, caseSensitive, values);
 		} else {
-			return type + " " + operator + " " + "\"" + value + "\"";
+			return type + " " + operator + " " + "\"" + (caseSensitive ? "(?-i)" : "") + values.join("|") + "\"";
 		}
 	};
 

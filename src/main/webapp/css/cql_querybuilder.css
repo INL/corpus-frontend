@@ -74,6 +74,64 @@
 	margin: 5px 0px 0px 19px;
 }
 
+.bl-token-attribute-main-input {
+	flex-grow: 1;
+	flex-basis: 1px;
+	width: 1px;
+	min-width: 110px;
+	position: relative;
+}
+
+[data-has-file] .bl-has-file-hidden, .bl-has-file-shown {
+	display:none;
+}
+[data-has-file] .bl-has-file-shown, .bl-has-file-hidden {
+	display: block
+}
+
+.bl-hover-back {
+	z-index: 2;
+}.bl-hover-back:hover {
+	z-index: 0;
+}
+.bl-hover-front {
+	z-index: 1;
+}.bl-hover-front:hover {
+	z-index: 3;
+}
+
+.bl-input-upload-button {
+	position: absolute;
+	right: 0;
+	top: 0;
+	overflow: hidden;
+}
+
+.bl-token-attribute-file-edit {
+	background-color: rgb(255,255,200);
+	text-align: left;
+	min-width: 100%;
+	position: relative;
+}
+
+/* Some weirdness going on here, we essentially move the actual 
+element out of its parent, hide the overflow, and fill the entire container with padding 
+This fixes issues like browsers overriding the cursor etc.*/
+.bl-input-upload {
+	position:absolute;
+	width: 100%;
+	height: 100%;
+	margin: 0px;
+	padding: 0px;
+	padding-left: 100%;
+	opacity: 0;
+	left: 0;
+	top: 0;
+	z-index: 10; 
+	overflow: hidden;
+	cursor: pointer;
+}
+
 .bl-token-attribute-group-label {
 	display: flex;
 	justify-content: center;
@@ -111,4 +169,8 @@
 	background-color: lightgrey;
 	margin: 0px 20px 0px 0px;
 	min-width: 345px;
+}
+
+[data-has-file] {
+	background-color: rgb(255, 255, 200);
 }

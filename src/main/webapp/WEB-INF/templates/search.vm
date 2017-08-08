@@ -167,6 +167,10 @@
 				<input type="submit" class="btn btn-primary btn-lg" value="Search">
 				<a href="?" onclick="return SINGLEPAGE.CORE.resetPage();" class="btn btn-default btn-lg">Reset</a>
 			</div>
+			
+			<button type="button" class="btn btn-lg btn-default pull-right" data-toggle="modal" data-target="#settingsModal"><span class="glyphicon glyphicon-cog" style="vertical-align:text-top;"></span></button>
+
+			<!--
 			<div class="text-right pull-right" style="display:inline-block">
 				<label for="resultsPerPage" style="display:block;">Show me:</label>
 				<select class="selectpicker" data-width="auto" data-style="btn-default btn-lg" id="resultsPerPage">
@@ -176,9 +180,64 @@
 					<option value="200">200 results</option>
 				</select>
 			</div>
+			-->
 		</div>
 	</div>
 </div>
+
+
+<div id="settingsModal" class="modal fade" tabindex="-1" role="dialog">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title">Global settings</h4>
+			</div>
+			<div class="modal-body">
+				<div class="form-horizontal">
+
+					<div class="form-group"> <!-- behaves as .row when in .form-horizontal so .row may be omitted -->
+						<label class="col-xs-3">Results per page:</label>
+						<div class="col-xs-9">
+							<select class="selectpicker" data-width="auto" data-style="btn-default btn-lg" id="resultsPerPage">
+								<option value="20">20 results</option>
+								<option value="50">50 results</option>
+								<option value="100">100 results</option>
+								<option value="200">200 results</option>
+							</select>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label for="sampleSize" class="col-xs-3">Sample size:</label>
+						<div class="col-xs-9">
+							<div class="input-group">
+								<select  id="sampleMode" class="selectpicker" data-width="auto" data-style="btn-default btn-lg">
+									<option value="percentage" selected>percentage</option>
+									<option value="count">count</option>
+								</select>
+
+								<input id="sampleSize" type="number" class="form-control input-lg"/>
+							</div>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label for="sampleSeed" class="col-xs-3">Seed:</label>
+						<div class="col-xs-9">
+							<input id="sampleSeed" type="number" class="form-control input-lg">
+						</div>
+					</div>
+				</div>
+
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+			</div>
+		</div>
+	</div>
+</div>
+
 
 <div id="errorDiv" class="col-xs-12 alert alert-danger">
 	<h1>Error</h1>

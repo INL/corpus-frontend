@@ -60,7 +60,22 @@ SINGLEPAGE.CORE = (function () {
 				pageSize: $(this).selectpicker('val')
 			});
 		});
-
+		$('#sampleMode').on('change', function () {
+			SINGLEPAGE.INTERFACE.setParameters({
+				sampleMode: $(this).selectpicker('val')
+			});
+		});
+		$('#sampleSize').on('change', function () {
+			SINGLEPAGE.INTERFACE.setParameters({
+				sampleSize: $(this).val()
+			});
+		});
+		$('#sampleSeed').on('change', function () {
+			SINGLEPAGE.INTERFACE.setParameters({
+				sampleSeed: $(this).val()
+			});
+		});
+		
 		// now restore the page state from the query parameters
 		var searchSettings = fromQueryString(new URI().search());
 		if (searchSettings != null) {
@@ -155,8 +170,11 @@ SINGLEPAGE.CORE = (function () {
 			SINGLEPAGE.FORM.setFilterValues(element.name, element.values);
 		});
 
-		// Restore the results per page
+		// Restore the results per page, sample info, etc
 		$('#resultsPerPage').selectpicker('val', [searchParams.pageSize || 50]);
+		$('#sampleSize').val(searchParams.sampleSize || "");
+		$('#sampleMode').selectpicker('val', [searchParams.sampleMode || 'percentage']);
+		$('#sampleSeed').val(searchParams.sampleSeed || "");
 
 		// in some cases we want to show a tab here, in some cases we don't 
 		// determine when 

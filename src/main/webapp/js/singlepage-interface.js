@@ -712,6 +712,9 @@ SINGLEPAGE.INTERFACE = (function() {
 				.data('defaultParameters', {
 					page: 0,
 					pageSize: 50,
+					sampleMode: null,
+					sampleSize: null,
+					sampleSeed: null,
 					pattern: null,
 					filters: null,
 					sort: null,
@@ -728,6 +731,9 @@ SINGLEPAGE.INTERFACE = (function() {
 				.data('defaultParameters', {
 					page: 0,
 					pageSize: 50,
+					sampleMode: null,
+					sampleSize: null,
+					sampleSeed: null,
 					pattern: null,
 					filters: null,
 					sort: null,

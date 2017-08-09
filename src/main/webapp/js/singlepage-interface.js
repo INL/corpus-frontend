@@ -275,7 +275,10 @@ SINGLEPAGE.INTERFACE = (function() {
 			{
 				pageSize: 20,
 				page: currentConcordanceCount / 20,
-				viewGroup: groupId
+				viewGroup: groupId,
+				sampleSize: null,
+				sampleMode: null,
+				sampleSeed: null,
 			},
 			$tab.data('constParameters')
 		);

@@ -223,14 +223,20 @@ SINGLEPAGE.BLS = (function () {
 			}
 		}
 
-		return function(blsParam, operation) {
+		return function(data, blsParam, operation) {
+			
+			
 			// Store the requested page size (to do page number calculation)
 			// Then set request page size to 0 so we don't actually retrieve any results
 			curPageSize = blsParam.number;
 			curUrl = new URI(BLS_URL).segment(operation).addSearch($.extend({},blsParam, {number:0})).toString();
+			updateTotalsDisplay(data);
 
-			if (!running) // restart 
+			if (data.summary.stillCounting && !running) {
 				run();
+			} else {
+				running = false;
+			}
 		}
 	})();
 
@@ -275,13 +281,13 @@ SINGLEPAGE.BLS = (function () {
 						console.log(data);
 					}
 
+					countHits(data, blsParam, operation);
+
 					if (typeof successFunc === "function")
 						successFunc(data);
 				},
 				error: errorFunc
 			});
-
-			countHits(blsParam, operation);
 		}
 	}
 })();

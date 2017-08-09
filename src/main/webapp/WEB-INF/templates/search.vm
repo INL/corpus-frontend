@@ -97,11 +97,11 @@
 						#set ($propertyFieldCaseId = $propertyField.getId() + "_case")
 
 						<div class="form-group propertyfield" id="$propertyField.getId()"> <!-- behaves as .row when in .form-horizontal so .row may be omitted -->
-							<label for="#$propertyFieldInputId" class="col-xs-12 col-md-3">$propertyField.getDisplayName()</label>
+							<label for="$propertyFieldInputId" class="col-xs-12 col-md-3">$propertyField.getDisplayName()</label>
 							<div class="col-xs-12 col-md-9">
-								<input type="text" id="$propertyFieldInputId" placeholder="$propertyField.getDisplayName()" class="form-control"/>
+								<input type="text" id="$propertyFieldInputId" name="propertyFieldInputId" placeholder="$propertyField.getDisplayName()" class="form-control"/>
 								#if($propertyField.isCaseSensitive())
-								<div class="checkbox"><label><input type="checkbox" id="$propertyFieldCaseId"> Case&nbsp;sensitive</label></div>
+								<div class="checkbox"><label for="propertFieldCaseId"><input type="checkbox" id="$propertyFieldCaseId" name="$propertyFieldCaseId"> Case&nbsp;sensitive</label></div>
 								#end
 							</div>
 						</div>
@@ -197,9 +197,9 @@
 				<div class="form-horizontal">
 
 					<div class="form-group"> <!-- behaves as .row when in .form-horizontal so .row may be omitted -->
-						<label class="col-xs-3">Results per page:</label>
+						<label for="resultsPerPage" class="col-xs-3">Results per page:</label>
 						<div class="col-xs-9">
-							<select class="selectpicker" data-width="auto" data-style="btn-default btn-lg" id="resultsPerPage">
+							<select id="resultsPerPage" name="resultsPerPage" class="selectpicker" data-width="auto" data-style="btn-default">
 								<option value="20">20 results</option>
 								<option value="50">50 results</option>
 								<option value="100">100 results</option>
@@ -212,12 +212,12 @@
 						<label for="sampleSize" class="col-xs-3">Sample size:</label>
 						<div class="col-xs-9">
 							<div class="input-group">
-								<select  id="sampleMode" class="selectpicker" data-width="auto" data-style="btn-default btn-lg">
+								<select  id="sampleMode" name="sampleMode" class="selectpicker" data-width="auto" data-style="btn-default">
 									<option value="percentage" selected>percentage</option>
 									<option value="count">count</option>
 								</select>
 
-								<input id="sampleSize" type="number" class="form-control input-lg"/>
+								<input id="sampleSize" name="sampleSize" placeholder="sample size" type="number" class="form-control"/>
 							</div>
 						</div>
 					</div>
@@ -225,21 +225,21 @@
 					<div class="form-group">
 						<label for="sampleSeed" class="col-xs-3">Seed:</label>
 						<div class="col-xs-9">
-							<input id="sampleSeed" type="number" class="form-control input-lg">
+							<input id="sampleSeed" name="sampleSeed" placeholder="seed" type="number" class="form-control" >
 						</div>
 					</div>
 				</div>
 
 			</div>
 			<div class="modal-footer">
-				<button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+				<button type="button" name="closeSettings" class="btn btn-primary" data-dismiss="modal">Close</button>
 			</div>
 		</div>
 	</div>
 </div>
 
 
-<div id="errorDiv" class="col-xs-12 alert alert-danger">
+<div id="errorDiv" class="col-xs-12 alert alert-danger" style="display:none;">
 	<h1>Error</h1>
 	<p id="errorMessage"></p>
 	<p>(for assistance, please contact <a href='mailto:servicedesk@ivdnt.org'>servicedesk@ivdnt.org</a>)</p>

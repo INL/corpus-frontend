@@ -44,7 +44,6 @@
 		<link rel="icon" type="image/png" href="$pathToTop/img/favicon.png">
 		<link rel="apple-touch-icon" href="$pathToTop/img/apple-touch-icon.png">
         
-        <script src="//cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.min.js"></script>
         <script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
 		<!-- SKIP JQueryUI 1.12.1, has bug where event handlers on widgets are not cleaned up correctly, fixed in 1.12.2, but unavailable as of writing (28-07-1017) -->
 		<!-- See https://bugs.jqueryui.com/ticket/15082 -->

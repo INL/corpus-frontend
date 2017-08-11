@@ -47,6 +47,9 @@ SINGLEPAGE.CORE = (function () {
 				$queryBuilder.on('cql:modified', function () {
 					$queryBox.val(queryBuilderInstance.getCql());
 				});
+
+				if (searchSettings != null && populateQueryBuilder(searchSettings))
+					$('#searchTabs a[href="#advanced"]').tab('show');
 			},
 			error: function (jqXHR, textStatus) {
 				var $queryBuilder = $('#querybuilder');
@@ -143,6 +146,114 @@ SINGLEPAGE.CORE = (function () {
 	}
 
 	/**
+	 * Attempt to parse the query pattern and update the state of the query builder
+	 * to match it as much as possible.
+	 * 
+	 * @param {any} searchParams 
+	 * @returns True or false indicating success or failure respectively
+	 */
+	function populateQueryBuilder(searchParams) {
+		if (!searchParams || !searchParams.pattern)
+			return false;
+		
+		try {
+			var tokens = SINGLEPAGE.CQLPARSER.parse(searchParams.pattern);
+			if (tokens.length === 1) { // try and repopulate the simple parameters
+
+			}
+			var queryBuilder = $('#querybuilder').data('builder');
+			$.each(queryBuilder.getTokens(), function(i, e) {
+				e.element.remove();
+			});
+
+			$.each(tokens, function(index, token) {
+				var tokenInstance = queryBuilder.createToken();
+				
+				//clean the root group of all contents
+				$.each(tokenInstance.rootAttributeGroup.getAttributes(), function(i, el) {
+					el.element.remove();
+				});
+
+				$.each(tokenInstance.rootAttributeGroup.getAttributeGroups(), function(i, el) {
+					el.element.remove();
+				});
+
+				tokenInstance.set("beginOfSentence", !!token.leadingXmlTag && token.leadingXmlTag.name === "s");
+				tokenInstance.set("endOfSentence", !!token.trailingXmlTag && token.trailingXmlTag.name === "s");
+				tokenInstance.set("optional", token.optional || false);
+
+				if (token.repeats) {
+					tokenInstance.set("minRepeats", token.repeats.min);
+					tokenInstance.set("maxRepeats", token.repeats.max);
+				}
+
+				function doOp(op, parentAttributeGroup, level) {
+					if (op == null)
+						return;
+
+					if (op.type === "binaryOp") {
+						var label = op.operator === "&" ? "AND" : "OR"; // TODO get label internally in builder
+						if (op.operator != parentAttributeGroup.operator) {
+
+							if (level === 0) {
+								parentAttributeGroup.operator = op.operator;
+								parentAttributeGroup.label = label;
+							} else if (parentAttributeGroup.operator !== op.operator) {
+								parentAttributeGroup = parentAttributeGroup.createAttributeGroup(op.operator, label);
+							}
+						}
+						
+						//inverse order, since new elements are inserted at top..
+						doOp(op.right, parentAttributeGroup, level + 1);
+						doOp(op.left, parentAttributeGroup, level + 1);
+					} else if (op.type === "attribute") {
+						
+						var attributeInstance = parentAttributeGroup.createAttribute();
+
+						// case flag is always at the front, so check for that before checking
+						// for starts with/ends with flags
+						if (op.value.indexOf("(?-i)") === 0) {
+							attributeInstance.set("case", true, op.attributeType);
+							op.value = op.value.substr(5);
+						}
+						
+						if (op.operator === "=" && op.value.length >= 2 && op.value.indexOf("|") === -1) {
+							if (op.value.indexOf(".*") === 0) {
+								op.operator = "ends with";
+								op.value = op.value.substr(2);
+							}
+							else if (op.value.indexOf(".*") === op.value.length -2) {
+								op.operator = "starts with";
+								op.value = op.value.substr(0, op.value.length-2);
+							}
+						}
+
+
+						attributeInstance.set("operator", op.operator);
+						attributeInstance.set("type", op.attributeType);
+						
+						attributeInstance.set("val", op.value);
+					}
+				}
+
+				doOp(token.expression, tokenInstance.rootAttributeGroup, 0);
+				tokenInstance.element.trigger("cql:modified");
+			});
+		} catch (e) {
+			// couldn't decode query
+			if (SINGLEPAGE.DEBUG) {
+				console.log("Could not decode query pattern.")
+				console.log(e);
+				console.log(searchParams.pattern);
+			}
+			return false;
+		}
+
+		return true;
+	}
+
+
+	/**
 	 * Completely resets all form and results information and controls, then repopulates the page with the parameters.
 	 * Also initiates a search if the parameters contain a valid search. (the 'operation' is valid).
 	 * 
@@ -155,17 +266,26 @@ SINGLEPAGE.CORE = (function () {
 		SINGLEPAGE.FORM.reset(); 
 		$('#querybuilder').data('builder') && $('#querybuilder').data('builder').reset();
 		$('#querybox').val(undefined);
+		
 		if (searchParams.pattern) {
 			if (searchParams.pattern.constructor === Array) {
 				$.each(searchParams.pattern, function (index, element) {
 					SINGLEPAGE.FORM.setPropertyValues(element);
 				});
 			} else {
+
 				$("#querybox").val(searchParams.pattern);
-				$('#searchTabs a[href="#query"]').tab('show');
+				
+				// reconstruct querybuilder from pattern (if possible)
+				// and maybe populate the simple form too if possible
+				if ($('#querybuilder').data('builder') && populateQueryBuilder(searchParams))
+					$('#searchTabs a[href="#advanced"]').tab('show');
+				else 
+					$('#searchTabs a[href="#query"]').tab('show');
+
 			}
 		}
-
+		
 		$.each(searchParams.filters, function (index, element) {
 			SINGLEPAGE.FORM.setFilterValues(element.name, element.values);
 		});

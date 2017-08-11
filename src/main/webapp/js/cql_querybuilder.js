@@ -123,7 +123,7 @@ window.querybuilder = (function() {
 							'{{#comparators}}' +
 							'<optgroup>' +
 								'{{#.}}' +
-								'<option>{{.}}</option>' +
+								'<option value="{{value}}">{{label}}</option>' +
 								'{{/.}}' +
 							'</optgroup>' +
 							'{{/comparators}}' +
@@ -192,8 +192,14 @@ window.querybuilder = (function() {
 		attribute: {
 			view: {
 				comparators: [
-					['=', '≠'],
-					['starts with', 'ends with']
+					[
+						{value:'=', 	label:'='}, 
+						{value:'!=', 	label:'≠'}
+					],
+					[
+						{value:'starts with', 	label: 'starts with'}, 
+						{value:'ends with', 	label: 'ends with'}
+					]
 				],
 				attributes: [
 					{ 
@@ -215,18 +221,26 @@ window.querybuilder = (function() {
 			},
 
 			getCql: function(attribute, comparator, caseSensitive, values) {
-				var value = (caseSensitive ? "(?-i)" : "") + values.join("|");
+				// var value = (caseSensitive ? "(?-i)" : "") + values.join("|");
 
 				switch (comparator) {
-					case "starts with": 
-						return attribute + " = " + "\"" + value + ".*\"";
+					case "starts with":
+						comparator = "=";
+						values = $.map(values, function(elem, index) {
+							return elem + ".*";
+						});
+						break;
 					case "ends with":
-						return attribute + " = " + "\".*" + value + "\"";
-					case "≠":
-						return attribute + " != \"" + value + "\""; 
+						comparator = "=";
+						values = $.map(values, function(elem, index) {
+							return ".*" + elem;
+						});
+						break;
 					default:
-						return attribute + " " + comparator + " \"" + value + "\"";
+						break;
 				}
+
+				return attribute + " " + comparator + " \"" + (caseSensitive ? "(?-i)" : "") + values.join("|") + "\"";
 			}
 		},
 
@@ -268,7 +282,7 @@ window.querybuilder = (function() {
 		
 		this.createTokenButton.click();
 	};
-		
+
 	QueryBuilder.prototype._prepareElement = function($element) {
 		$element.addClass('bl-token-container');
 		$element.data('builder', this);
@@ -312,7 +326,13 @@ window.querybuilder = (function() {
 
 		return token;
 	};
-	
+
+	QueryBuilder.prototype.getTokens = function() {
+		return this.element.children('.bl-token').map(function(i, elem) {
+			return $(elem).data('token');
+		}).get();
+	}
+
 	QueryBuilder.prototype.getCql = function() {
 		var cqlParts = [];
 		
@@ -339,8 +359,19 @@ window.querybuilder = (function() {
 
 		this.builder = parentBuilder;
 		this.element = this._createElement();
+
+		// Init controls before adding any child elements
+		var baseId = '#' + this.element.attr('id');
+		this.$controls = {
+			"optional": this.element.find(baseId + "_property_optional"),
+			"minRepeats": this.element.find(baseId + "_property_repeats_min"),
+			"maxRepeats": this.element.find(baseId + "_property_repeats_max"),
+			"beginOfSentence": this.element.find(baseId + "_property_sentence_start"),
+			"endOfSentence": this.element.find(baseId + "_property_sentence_end")
+		}
+		
 		this.rootAttributeGroup = this._createRootAttributeGroup();
-		this.createAttribute();
+		this.rootAttributeGroup.createAttribute();
 	};
 
 	Token.prototype._createElement = function() {
@@ -385,28 +416,18 @@ window.querybuilder = (function() {
 		$cqlPreviewElement.text(this.getCql());
 	};
 
-	Token.prototype.createAttribute = function() {
-		var attribute = new Attribute(this.builder);
-		this.rootAttributeGroup.addAttributeOrGroup(attribute);
-		return attribute;
-	};
-
-	Token.prototype.createAttributeGroup = function(operator, operatorLabel) {
-		var attributeGroup = new AttributeGroup(this.builder, operator, operatorLabel);
-		this.rootAttributeGroup.addAttributeOrGroup(attributeGroup);
-		return attributeGroup;
-	};
+	Token.prototype.set = function(controlName, val) {
+		if (this.$controls[controlName])
+			setValue(this.$controls[controlName], val);
+	}
 
 	Token.prototype.getCql = function() {
-		var baseId ="#" + this.element.attr('id');
-			
-		var optional = this.element.find(baseId + "_property_optional").prop('checked');
-		var minRepeats = parseInt(this.element.find(baseId + "_property_repeats_min").val());
-		var maxRepeats = parseInt(this.element.find(baseId + "_property_repeats_max").val());
-		var beginOfSentence = this.element.find(baseId + "_property_sentence_start").prop('checked');
-		var endOfSentence = this.element.find(baseId + "_property_sentence_end").prop('checked');
+		var optional = this.$controls["optional"].prop('checked');
+		var minRepeats = parseInt(this.$controls["minRepeats"].val());
+		var maxRepeats = parseInt(this.$controls["maxRepeats"].val());
+		var beginOfSentence = this.$controls["beginOfSentence"].prop('checked');
+		var endOfSentence = this.$controls["endOfSentence"].prop('checked');
 		
-
 		var outputParts = [];
 		
 		if (beginOfSentence) {
@@ -439,7 +460,7 @@ window.querybuilder = (function() {
 		}
 
 		if (endOfSentence) {
-			outputParts.push(" <s>");
+			outputParts.push(" </s>");
 		}
 
 		return outputParts.join("");
@@ -487,7 +508,13 @@ window.querybuilder = (function() {
 		 * then swap this group's operator to the new operator, and append the new attribute
 		 */
 		
-		// Construct a new group and put the new operator in there together with (
+		// we can just swap the operator if this contains only 1 attribute
+		if (this.element.children(".bl-token-attribute, .bl-token-attribute-group").size() <= 1) {
+			this.operator = data.operator;
+			this.operatorLabel = data.operatorLabel;
+		}
+
+		// Construct a new group and put the new operator in there together with the one that trigger the creation (if any)
 		if (data.operator !== this.operator) {
 			newGroup = new AttributeGroup(this.builder, data.operator, data.operatorLabel);
 			if (originAttribute) {
@@ -567,6 +594,19 @@ window.querybuilder = (function() {
 		this.element.children('.bl-token-attribute-group-label').last().remove();
 	};
 
+	
+	AttributeGroup.prototype.createAttribute = function() {
+		var attribute = new Attribute(this.builder);
+		this.addAttributeOrGroup(attribute);
+		return attribute;
+	};
+
+	AttributeGroup.prototype.createAttributeGroup = function(operator, operatorLabel) {
+		var attributeGroup = new AttributeGroup(this.builder, operator, operatorLabel);
+		this.addAttributeOrGroup(attributeGroup);
+		return attributeGroup;
+	};
+
 	// if no preceding attribute, insertion will be at the front of this group
 	AttributeGroup.prototype.addAttributeOrGroup = function(attributeOrGroup, precedingAttributeOrGroup) {
 		if (precedingAttributeOrGroup && precedingAttributeOrGroup.element.parent().index(0) !== this.element.index(0)) {
@@ -587,6 +627,20 @@ window.querybuilder = (function() {
 			oldParentGroup.element.trigger('cql:modified');
 		}
 	};
+
+	/* Get the object instances for all direct child attributes */
+	AttributeGroup.prototype.getAttributes = function() {
+		return this.element.children('.bl-token-attribute').map(function(i, el) {
+			return $(el).data('attribute');
+		}).get();
+	}
+
+	/* Get the object instances for all direct child attribute groups */
+	AttributeGroup.prototype.getAttributeGroups = function() {
+		return this.element.children('.bl-token-attribute-group').map(function(i, el) {
+			return $(el).data('attributeGroup');
+		}).get();
+	}
 
 	AttributeGroup.prototype.getCql = function() {
 		var cqlStrings = [];
@@ -619,6 +673,14 @@ window.querybuilder = (function() {
 
 		this.builder = parentBuilder;
 		this.element = this._createElement();
+
+		var baseId = '#' + this.element.attr('id');
+		this.$controls = {
+			"type": this.element.find(baseId + '_type'),
+			"operator": this.element.find(baseId + '_operator'),
+			"value_simple": this.element.find(baseId + "_value_simple"),
+			"value_file": this.element.find(baseId + "_value_file"),
+		}
 	};
 
 	Attribute.prototype._createElement = function(){
@@ -691,32 +753,54 @@ window.querybuilder = (function() {
 		if (file == null) {
 			$inputContainer.removeAttr('data-has-file');
 			$fileEditButton.text("No file selected...");
-			$fileText.val("").trigger('change'); // trigger changed last
+			$fileText.val("").trigger('change');
 		}
 		else {
 			var fr = new FileReader();
 			fr.onload = function() {
 				$inputContainer.attr('data-has-file', '');
 				$fileEditButton.text(file.name);
-				$fileText.val(fr.result).trigger('change'); // trigger changed last
+				$fileText.val(fr.result).trigger('change');
 			}
 			fr.readAsText(file);
 		}
 	};
-	
+
 	Attribute.prototype._updateShownOptions = function(selectedValue) {
 		// First hide everything with a data-attribute-type value
 		// Then unhide the one for our new selectedValue
 		this.element.find('[data-attribute-type]').hide().filter('[data-attribute-type="' + selectedValue + '"]').show();
 	};
 
-	Attribute.prototype.getCql = function() {
-		var baseId = '#' + this.element.attr('id');
 
+	Attribute.prototype.set = function(controlName, val, additionalSelector) {
+		if (this.$controls[controlName])
+			setValue(this.$controls[controlName], val);
+		else if (controlName === "case") {
+			setValue(this.element.find('[data-attribute-type="' + additionalSelector + '"]')
+				.find('[data-attribute-role="case"]'), val);
+		} else if (controlName === "val") {
+			if (!additionalSelector) { // Write to whatever is in focus/use right now
+				var hasFile	= this.element.find('.bl-token-attribute-main-input').is('[data-has-file]');
+				if (hasFile)
+					setValue(this.$controls["value_file"], val);
+				else 
+					setValue(this.$controls["value_simple"], val);
+			} else {
+				if (additionalSelector === "file")
+					setValue(this.$controls["value_file"], val);
+				else if (additionalSelector === "simple")
+					setValue(this.$controls["value_simple"], val);
+			}
+		}
+	};
+
+	Attribute.prototype.getCql = function() {
+		
 		var hasFile		= this.element.find('.bl-token-attribute-main-input').is('[data-has-file]');
 		
-		var type 		= this.element.find(baseId + '_type').val();
-		var operator 	= this.element.find(baseId + '_operator').val();
+		var type 		= this.$controls["type"].val();
+		var operator 	= this.$controls["operator"].val();
 		
 		var $optionsContainer = this.element.find('[data-attribute-type="' + type + '"]');
 		var caseSensitive = $optionsContainer.find('[data-attribute-role="case"]').is(":checked") || false;
@@ -724,20 +808,16 @@ window.querybuilder = (function() {
 		var rawValue;
 		var values		= [];
 		if (hasFile) {
-			rawValue = this.element.find(baseId + "_value_file").val() || "";
+			rawValue = this.$controls["value_file"].val() || "";
 			var trimmedLines = rawValue.trim().split(/\s*[\r\n]+\s*/g); // split on line breaks, ignore empty lines.
 			values = values.concat(trimmedLines);
 		} else {
-			rawValue = this.element.find(baseId + "_value_simple").val() || "";
+			rawValue = this.$controls["value_simple"].val() || "";
 			values = values.concat(rawValue);
 		}
 		
 		var callback = this.builder.settings.attribute.getCql;
-		if (typeof callback === "function") {
-			return callback(type, operator, caseSensitive, values);
-		} else {
-			return type + " " + operator + " " + "\"" + (caseSensitive ? "(?-i)" : "") + values.join("|") + "\"";
-		}
+		return callback(type, operator, caseSensitive, values);
 	};
 
 	//------------------
@@ -750,6 +830,39 @@ window.querybuilder = (function() {
 			return prefix + '_' + nextId++;
 		};
 	}();
+
+	// Set values on input/select elements uniformly
+	var setValue = function($element, val) {
+		if (val != null) {
+			if (val.constructor !== Array)
+				val = [val];
+		} else {
+			val = [null];
+		}
+
+		if ($element.is(':checkbox')) {
+			$element.prop('checked', val[0]);
+		} else if ($element.is('select')) {
+			if ($element.hasClass('selectpicker'))
+				$element.selectpicker('val', val);
+			else {
+				// deal with selects that don't have the "multiple" property
+				var multiSelect = $element.prop("multiple");
+				var hasSelected = false;
+				$element.find("option").each(function(i, option) {
+					var canSelect = !hasSelected || multiSelect;
+					
+					var select = canSelect && ($.inArray($(option).val(), val) !== -1);
+
+					$(option).prop("selected", select);
+					hasSelected |= select;
+				})
+			}
+		} else if ($element.is(':input')) {
+			$element.val(val[0]);
+		}
+	}
+
 	
 	//---------------
 	// non-object api

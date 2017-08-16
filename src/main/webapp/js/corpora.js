@@ -87,7 +87,7 @@ var corpora = {};
 					// (only for private corpora that are not being written to at the moment)
 					var delIcon = "", addIcon = "";
 					var isBusy = index.isBusy = index.status != 'available' && index.status != 'empty';
-					dispName = index.displayName;
+					var dispName = index.displayName;
 					if (isPrivateIndex && !isBusy) {
 						delIcon = "<a class='icon fa fa-trash' title='Delete \"" + dispName + "\" corpus' " +
 							"onclick='$(\"#confirm-delete-corpus\").data(\"indexName\", \"" + indexName + "\").modal(\"show\")' href='#'></a>";
@@ -173,6 +173,55 @@ var corpora = {};
 			},
 		});
 	}
+
+	function refreshFormatList() {		
+		$.ajax(CORPORA.blsUrl + "/input-formats/", {
+			type: "GET",
+			accept: "application/json",
+			dataType: "json",
+			success: function(data) {
+				var $select = $('select[data-contains="format"]');
+				var $tbody = $('table[data-contains="format"]').children('tbody');
+
+				var $defaultFormatOptGroup = $('<optgroup label="Presets"></optgroup>');
+				var $userFormatOptGroup = $('<optgroup label="' + data.user.id + '"></optgroup>');
+				var $nonConfigBasedOptions = $();
+
+				$select.empty();
+				$tbody.empty();
+				$.each(data.supportedInputFormats, function(key, format) {
+					var $option = $('<option title="' + (format.description || format.displayName) + '" value="' + key + '">' + format.displayName + '</option>');
+					
+					var $tr = $([
+					'<tr>',
+						'<td>', key, '</td>',
+						'<td>', format.displayName, '</td>',
+						'<td><a class="fa fa-trash" data-format-operation="delete" label="Delete" href="javascript:void(0)"></a></td>',
+						'<td></td>',
+						// TODO
+						//'<td><a class="fa fa-pencil" data-format-operation="edit" label="Edit" href="javascript:void(0)"></a></td>',
+					'</tr>'].join(""));
+				
+					if (key.indexOf(data.user.id) === 0) {
+						$userFormatOptGroup.append($option);
+						$tbody.append($tr);
+					} else {
+						if (format.configurationBased)
+							$defaultFormatOptGroup.append($option);
+						else 
+							$nonConfigBasedOptions = $nonConfigBasedOptions.add($option);
+					}
+				});
+
+				$select.append($defaultFormatOptGroup).append($userFormatOptGroup)
+				.filter(":not(#format_preset)").children('optgroup:nth-child(1)').append($nonConfigBasedOptions);
+				$select.selectpicker('refresh');
+			},
+			error: function(jqXHR, textStatus, errorThrown) {
+				showError("Error retrieving input formats.");
+			}
+		});
+	}
 	
 	function friendlyDocFormat(format) {
 		if (format.substr(0, 3).toLowerCase() == "tei") {
@@ -231,7 +280,7 @@ var corpora = {};
 			return;
 		
 		// Prefix the user name because it's a private index
-		indexName = getUserId() + ":" + shortName;
+		var indexName = getUserId() + ":" + shortName;
 		
 		// Create the index.
 		$("#waitDisplay").show();
@@ -436,8 +485,109 @@ var corpora = {};
 		return name.replace(/[^\w]/g, "-").replace(/^[_\d]+/, "");
 	}
 
+	function initNewFormat() {
+		function showFormatError(text) {
+			$('#format_error').text(text).show();
+		}
+		function hideFormatError() {
+			$('#format_error').hide();
+		}
+
+		function uploadFormat(file) {
+			var formData = new FormData();
+			formData.append("data", file);
+
+			$.ajax(CORPORA.blsUrl + "/input-formats/", {
+				data: formData,
+				processData: false,
+				contentType: false,
+				type: 'POST',
+				accept: 'application/javascript',
+				dataType: 'json',
+				success: function (data) {
+					$('#new-format-modal').modal('hide');
+					refreshFormatList();
+					showSuccess(data.status.message);
+				},
+				error: function (jqXHR, textStatus, errorThrown) {
+					showFormatError(jqXHR.responseJSON.error.message);
+				}
+			});
+		}
+		
+		var $formatName = $("#format_name");
+		var $fileInput = $('#format_file');
+		var $presetSelect = $('#format_preset');
+		var $confirmButton = $('#format_save');
+
+		$fileInput.on('change', function() {
+			$presetSelect.prop('disabled', this.files[0] != null);
+			$presetSelect.selectpicker('refresh');
+		});
+
+
+		$confirmButton.on('click', function() {
+			if (!$formatName.val()) {
+				showFormatError("Please enter a name.");
+				return;
+			}
+			
+			if ($fileInput[0].files[0] != null) {
+				uploadFormat($fileInput[0].files[0]);
+			} else {
+				var presetName = $presetSelect.selectpicker('val');
+				if (!presetName) {
+					showFormatError("Please choose a file or preset.");
+					return;
+				}
+
+				$.ajax(CORPORA.blsUrl + "/input-formats/" + presetName,  {
+					"type": "GET",
+					"accept": "application/javascript",
+					"dataType": "json",
+					"success": function (data) {
+						
+						var fileContents = data.configFile;
+						var file = new File([new Blob([fileContents])], $formatName.val());
+
+						uploadFormat(file);
+					},
+					"error": function (jqXHR, textStatus, errorThrown) {
+						showFormatError(jqXHR.responseJSON.error.message);
+					},
+				});
+			}
+		});
+	}
+
+	function initDeleteFormat() {
+		
+		$('table[data-contains="format"]').on('click', '[data-format-operation="delete"]', function(event) {
+			event.preventDefault();
+	
+			var $tr = $(this).closest('tr');
+			var formatId = $tr.children('td').first().text().substring(getUserId.length);
+			$.ajax(CORPORA.blsUrl + "/input-formats/" + formatId, {
+				type: "DELETE",
+				accept: "application/javascript",
+				dataType: "json",
+				success: function(data) {
+					showSuccess(data.status.message);
+					refreshFormatList();
+				},
+				error: function(jqXHR) {
+					showError(jqXHR.responseJSON.error.message);
+				}
+			});
+		});
+
+	}
+
 	$(document).ready(function () {
 		CORPORA.blsUrl = $(".contentbox").data("blsUrl");
+
+
+		refreshFormatList();
 
 		// Get the list of corpora.
 		refreshCorporaList();
@@ -448,6 +598,9 @@ var corpora = {};
 		// Wire up the "new corpus" and "delete corpus" buttons.
 		initNewCorpus();
 		initDeleteCorpus();
+
+		initNewFormat();
+		initDeleteFormat();
 	});
 })();
 

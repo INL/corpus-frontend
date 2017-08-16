@@ -6,7 +6,7 @@
 
 			#if($docfield.getType() == "select" && !$docfield.getValidValues().isEmpty())
 				<div class="col-xs-12">
-					<select title="$docfield.getDisplayName()" class="selectpicker form-control forminput" data-size="6" multiple>
+					<select title="$docfield.getDisplayName()" class="selectpicker form-control forminput" data-container="body" multiple>
 				
 					#foreach($pair in $docfield.getValidValues())
 						<option value="$pair.getValue()">$pair.getDescription()</option>
@@ -41,6 +41,7 @@
 
 #parse("header.vm")
 
+<link rel="stylesheet" href="$pathToTop/css/cql_querybuilder.css">
 <script src="$pathToTop/js/vendor/mustache.js"></script>
 <script src="$pathToTop/js/vendor/URI.js"></script>
 <script src="$pathToTop/js/qson.js"></script>
@@ -170,18 +171,6 @@
 			</div>
 			
 			<button type="button" class="btn btn-lg btn-default pull-right" data-toggle="modal" data-target="#settingsModal"><span class="glyphicon glyphicon-cog" style="vertical-align:text-top;"></span></button>
-
-			<!--
-			<div class="text-right pull-right" style="display:inline-block">
-				<label for="resultsPerPage" style="display:block;">Show me:</label>
-				<select class="selectpicker" data-width="auto" data-style="btn-default btn-lg" id="resultsPerPage">
-					<option value="20">20 results</option>
-					<option value="50">50 results</option>
-					<option value="100">100 results</option>
-					<option value="200">200 results</option>
-				</select>
-			</div>
-			-->
 		</div>
 	</div>
 </div>
@@ -244,9 +233,6 @@
 	<h1>Error</h1>
 	<p id="errorMessage"></p>
 	<p>(for assistance, please contact <a href='mailto:servicedesk@ivdnt.org'>servicedesk@ivdnt.org</a>)</p>
-</div>
-
-<div id="searchSummary" class="pull-right">
 </div>
 
 <div class="col-xs-12 contentbox" id="results">
@@ -346,6 +332,5 @@
 
 </form>
 
-<p id="debugInfo"></p>
 #parse("footer.vm")
 

@@ -271,7 +271,7 @@ a[data-bls-sort], a.dropdown-toggle {
 	display: none;
 }
 
-#searchSummary, #totalsReport {
+#totalsReport {
 	color: #888;
 	font-size: 85%;
 }

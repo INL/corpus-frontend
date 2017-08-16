@@ -14,7 +14,6 @@
 		<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/css/bootstrap-select.min.css">
 		<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
         <link rel="stylesheet" href="$pathToTop/css/jquery.fileupload.css">
-        <link rel="stylesheet" href="$pathToTop/css/cql_querybuilder.css">
         <link rel="stylesheet" href="$pathToTop/css/main.css">
 		<style>
             body {

@@ -486,6 +486,24 @@ var corpora = {};
 	}
 
 	function initNewFormat() {
+		
+		var $modal = $('#new-format-modal');
+
+		var $fileInput = $('#format_file');
+		var $presetSelect = $('#format_preset');
+		var $downloadButton = $('#format_download');
+
+		var $formatName = $("#format_name");
+		var $formatType = $('#format_type');
+		var editor = CodeMirror.fromTextArea($('#format_editor')[0], {
+			mode: "yaml",
+			lineNumbers: true,
+			matchBrackets: true
+		});
+
+		var $confirmButton = $('#format_save');
+		
+
 		function showFormatError(text) {
 			$('#format_error').text(text).show();
 		}
@@ -505,7 +523,10 @@ var corpora = {};
 				accept: 'application/javascript',
 				dataType: 'json',
 				success: function (data) {
-					$('#new-format-modal').modal('hide');
+					$modal.modal('hide');
+					$formatName.val("");
+					editor.setValue("");
+
 					refreshFormatList();
 					showSuccess(data.status.message);
 				},
@@ -514,17 +535,62 @@ var corpora = {};
 				}
 			});
 		}
-		
-		var $formatName = $("#format_name");
-		var $fileInput = $('#format_file');
-		var $presetSelect = $('#format_preset');
-		var $confirmButton = $('#format_save');
 
-		$fileInput.on('change', function() {
-			$presetSelect.prop('disabled', this.files[0] != null);
-			$presetSelect.selectpicker('refresh');
+		$modal.on('shown.bs.modal', function() {
+			// Required to fix line-number display width being calculated incorrectly
+			// (something to do with initializing the editor when the element is invisible or has width 0)
+			editor.refresh();
 		});
 
+		$modal.on('hidden.bs.modal', function() {
+			hideFormatError();
+		});
+		
+		$formatType.on('change', function() {
+			var newMode = $(this).selectpicker('val');
+			if (newMode === "json") {
+				editor.setOption("mode", {
+					name: 'javascript',
+					json: true
+				});
+			} else {
+				editor.setOption('mode', newMode);
+			}
+		});
+
+		$fileInput.on('change', function() {
+			if (this.files[0] != null) {
+				var file = this.files[0];
+				var fr = new FileReader();
+				
+				fr.onload = function() {
+					editor.setValue(fr.result);
+				}
+				fr.readAsText(file);
+			}
+		});
+
+		$downloadButton.on('click', function() {
+			var presetName = $presetSelect.selectpicker('val');
+
+			$.ajax(CORPORA.blsUrl + "/input-formats/" + presetName,  {
+				"type": "GET",
+				"accept": "application/javascript",
+				"dataType": "json",
+				"success": function (data) {
+					var configFileType = data.configFileType.toLowerCase();
+					if (configFileType === "yml")
+						configFileType = "yaml";
+					
+					$formatType.selectpicker('val', configFileType);
+					$formatType.trigger('change');
+					editor.setValue(data.configFile);
+				},
+				"error": function (jqXHR, textStatus, errorThrown) {
+					showFormatError(jqXHR.responseJSON.error.message);
+				},
+			});
+		});
 
 		$confirmButton.on('click', function() {
 			if (!$formatName.val()) {
@@ -532,31 +598,11 @@ var corpora = {};
 				return;
 			}
 			
-			if ($fileInput[0].files[0] != null) {
-				uploadFormat($fileInput[0].files[0]);
-			} else {
-				var presetName = $presetSelect.selectpicker('val');
-				if (!presetName) {
-					showFormatError("Please choose a file or preset.");
-					return;
-				}
-
-				$.ajax(CORPORA.blsUrl + "/input-formats/" + presetName,  {
-					"type": "GET",
-					"accept": "application/javascript",
-					"dataType": "json",
-					"success": function (data) {
-						
-						var fileContents = data.configFile;
-						var file = new File([new Blob([fileContents])], $formatName.val());
-
-						uploadFormat(file);
-					},
-					"error": function (jqXHR, textStatus, errorThrown) {
-						showFormatError(jqXHR.responseJSON.error.message);
-					},
-				});
-			}
+			var fileContents = editor.getValue();
+			var fileName = $formatName.val() + "." + $formatType.selectpicker("val");
+			
+			var file = new File([new Blob([fileContents])], fileName);
+			uploadFormat(file);
 		});
 	}
 

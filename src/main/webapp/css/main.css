@@ -91,6 +91,24 @@ img.booklogo {
 	padding-left: 6px;
 }
 
+.modal-fullwidth {
+	width:100%;
+	padding-left:17px;
+	padding-right:17px;
+}
+.modal-fullwidth > .modal-dialog {
+	margin: 30px auto;
+	width: 100%;
+	max-width:1170px;
+}
+
+.cm-s-default {
+	border: 1px solid #CCC;
+	border-radius: 4px;
+	box-shadow: inset 0px 1px 1px rgba(0,0,0,0.075);
+}
+
+
 .lightbg {
 	background-color: rgba(255,255,255,0.6);
 	border: 1px solid #cccccc;

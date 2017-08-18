@@ -59,7 +59,7 @@ var corpora = {};
 		// Called with the response data of the AJAX request.
 		function updateCorporaLists(data) {
 			serverInfo = data;
-			$("#userId").text(getUserId());
+			$('[data-autoupdate="userId"]').text(getUserId());
 			var publicCorpora = [];
 			var privateCorpora = [];
 			var indices = data.indices;
@@ -90,7 +90,7 @@ var corpora = {};
 					var dispName = index.displayName;
 					if (isPrivateIndex && !isBusy) {
 						delIcon = "<a class='icon fa fa-trash' title='Delete \"" + dispName + "\" corpus' " +
-							"onclick='$(\"#confirm-delete-corpus\").data(\"indexName\", \"" + indexName + "\").modal(\"show\")' href='#'></a>";
+							"onclick=\"CORPORA.deleteCorpus('" + indexName + "')\" href='#'></a>";
 						addIcon = "<a class='icon fa fa-plus-square' title='Add data to \"" + dispName + "\" corpus' " +
 							"href='#' onclick='return CORPORA.showUploadForm(corpora[\"" + indexName + "\"]);'>" +
 							"</a>";
@@ -180,8 +180,8 @@ var corpora = {};
 			accept: "application/json",
 			dataType: "json",
 			success: function(data) {
-				var $select = $('select[data-contains="format"]');
-				var $tbody = $('table[data-contains="format"]').children('tbody');
+				var $select = $('select[data-autoupdate="format"]');
+				var $tbody = $('table[data-autoupdate="format"]').children('tbody');
 
 				var $defaultFormatOptGroup = $('<optgroup label="Presets"></optgroup>');
 				var $userFormatOptGroup = $('<optgroup label="' + data.user.id + '"></optgroup>');
@@ -190,7 +190,7 @@ var corpora = {};
 				$select.empty();
 				$tbody.empty();
 				$.each(data.supportedInputFormats, function(key, format) {
-					var $option = $('<option title="' + (format.description || format.displayName) + '" value="' + key + '">' + format.displayName + '</option>');
+					var $option = $('<option title="' + (format.description || format.displayName) + '" value="' + key + '" data-content="' + format.displayName + '">' + format.displayName + '</option>');
 					
 					var $tr = $([
 					'<tr>',
@@ -466,19 +466,42 @@ var corpora = {};
 		});
 	}
 
-	function initDeleteCorpus() {
-		var deleteCorpusModal = $("#confirm-delete-corpus");
-		var corpusName = $("#corpus-delete-name");
-		var deleteButtonClass = ".btn-primary";
 
-		deleteCorpusModal.on("show.bs.modal", function(event) {
-			var indexName = deleteCorpusModal.data("indexName");
-			corpusName.text(corpora[indexName].displayName);
-		});
-		$(deleteButtonClass, deleteCorpusModal).click(function(event) {
-			deleteCorpusModal.modal("hide");
-			CORPORA.deleteIndex(corpora[deleteCorpusModal.data("indexName")]);
-		});
+	/**
+	 * Show a dialog with custom message, title, and confirm button html
+	 * Call a callback, only if the confirm button is pressed. 
+	 * 
+	 * @param {any} title 
+	 * @param {any} message 
+	 * @param {any} buttontext 
+	 * @param {any} fnCallback 
+	 */
+	var confirmDialog = (function() { 
+		var $modal = $('#modal-confirm');
+		var $confirmButton = $modal.find("#modal-confirm-confirm");
+		var $title = $modal.find('#modal-confirm-title');
+		var $message = $modal.find('#modal-confirm-message');
+		
+		return function(title, message, buttontext, fnCallback) {
+			$title.html(title);
+			$message.html(message);
+			$confirmButton.html(buttontext);
+
+			$modal.modal('show');
+			$modal.one('hide.bs.modal', function() {
+				if (document.activeElement === $confirmButton[0])
+					fnCallback();
+			});
+		}
+	})();
+
+
+	CORPORA.deleteCorpus = function(indexName) {
+		confirmDialog(
+			"Delete format?", 
+			"You are about to delete corpus <i>" + indexName + "<i>. This cannot be undone! <br>Are you sure?",
+			"Delete",
+			CORPORA.deleteIndex.bind(null,  corpora[indexName]));
 	}
 
 	function generateShortName(name) {
@@ -531,7 +554,7 @@ var corpora = {};
 					showSuccess(data.status.message);
 				},
 				error: function (jqXHR, textStatus, errorThrown) {
-					showFormatError(jqXHR.responseJSON.error.message);
+					showFormatError(jqXHR.responseJSON && jqXHR.responseJSON.error.message || textStatus);
 				}
 			});
 		}
@@ -587,7 +610,7 @@ var corpora = {};
 					editor.setValue(data.configFile);
 				},
 				"error": function (jqXHR, textStatus, errorThrown) {
-					showFormatError(jqXHR.responseJSON.error.message);
+					showFormatError(jqXHR.responseJSON && jqXHR.responseJSON.error.message || textStatus);
 				},
 			});
 		});
@@ -608,43 +631,49 @@ var corpora = {};
 
 	function initDeleteFormat() {
 		
-		$('table[data-contains="format"]').on('click', '[data-format-operation="delete"]', function(event) {
+		$('table[data-autoupdate="format"]').on('click', '[data-format-operation="delete"]', function(event) {
 			event.preventDefault();
 	
 			var $tr = $(this).closest('tr');
 			var formatId = $tr.children('td').first().text().substring(getUserId.length);
-			$.ajax(CORPORA.blsUrl + "/input-formats/" + formatId, {
-				type: "DELETE",
-				accept: "application/javascript",
-				dataType: "json",
-				success: function(data) {
-					showSuccess(data.status.message);
-					refreshFormatList();
-				},
-				error: function(jqXHR) {
-					showError(jqXHR.responseJSON.error.message);
+			
+			confirmDialog(
+				"Delete import format?",
+				"You are about to delete the import format <i>" + formatId + "</i>.<br>Are you sure?",
+				"Delete", 
+				function() {
+					$.ajax(CORPORA.blsUrl + "/input-formats/" + formatId, {
+						type: "DELETE",
+						accept: "application/javascript",
+						dataType: "json",
+						success: function(data) {
+							showSuccess(data.status.message);
+							refreshFormatList();
+						},
+						error: function(jqXHR) {
+							showError(jqXHR.responseJSON.error.message);
+						}
+					});
 				}
-			});
+			);		
 		});
 
 	}
 
 	$(document).ready(function () {
 		CORPORA.blsUrl = $(".contentbox").data("blsUrl");
-
-
-		refreshFormatList();
-
+		
+		
 		// Get the list of corpora.
 		refreshCorporaList();
+		refreshFormatList();
 		
 		// Wire up the AJAX uploading functionality.
 		initFileUpload();
 		
 		// Wire up the "new corpus" and "delete corpus" buttons.
 		initNewCorpus();
-		initDeleteCorpus();
-
+		
 		initNewFormat();
 		initDeleteFormat();
 	});

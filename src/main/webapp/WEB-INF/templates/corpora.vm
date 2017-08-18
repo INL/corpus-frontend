@@ -7,7 +7,7 @@
 	<span id="errorMessage"></span>
 </div>
 
-<div class="col-xs-12 contentbox" data-bls-url="$blsUrl" style="position:relative;min-height:100px;">
+<div class="col-xs-12 contentbox" data-bls-url="$blsUrl" style="position:relative;min-height:150px;">
 
 	<span id="waitDisplay" class="fa fa-spinner fa-spin searchIndicator" style="position: absolute; left: 50%;"></span>
 	
@@ -15,9 +15,9 @@
 	<hr>						
 
 	<h2 id="header-public">Public corpora</h2>
-								
-	<!-- NOTE: using a table because we'd like to automatically 
-	     size width to longest corpus name. There's probably better ways. -->
+
+	<!-- 	NOTE: using a table because we'd like to automatically 
+    		size width to longest corpus name. There's probably better ways. -->
 	<table class="corpora public table">
 		<thead>
 			<tr>
@@ -28,12 +28,12 @@
 		</thead>
 		<tbody id="corpora"></tbody>
 	</table>
-	
-	<hr>	
-	
-	<h2 id="header-private">Your corpora</h2>
-	<p id="logged-in-as">(logged in as <span id="userId">...</span>)</p>
 
+	<hr>
+		
+	<h2 id="header-private">Your corpora</h2>
+	<p>(logged in as <i data-autoupdate="userId"></i>)</p>
+		
 	<table class="corpora private table">
 		<colgroup>
 			<col class="corpus-name" />
@@ -57,13 +57,15 @@
 		</thead>
 		<tbody id="corpora-private"></tbody>
 	</table>
-			
+
 	<input class="btn btn-default btn-lg" id="create-corpus" type="button" value="New corpus" data-toggle="modal" data-target="#new-corpus-modal" />
-	
+
 	<hr>
-	
+
 	<h2>Your import formats</h2>
-	<table class="table corpora" data-contains="format">
+	<p>(logged in as <i data-autoupdate="userId"></i>)</p>
+
+	<table class="table corpora" data-autoupdate="format">
 		<thead>
 			<th>Id</th>
 			<th>Name</th>
@@ -91,12 +93,12 @@
 					<input type="file" name="format_file" id="format_file" style="position:absolute;left:0;top:0;width:0px;height:100%;padding-left:100%;opacity:0;cursor:pointer;"/>
 					Open file...
 				</span>
-			
-				<select class="selectpicker" id="format_preset" data-contains="format">
+				
+				<select class="selectpicker" id="format_preset" data-autoupdate="format">
 					<!-- options filled in by clientside javascript -->
 				</select>
-				<button type="button" name="format_download" id="format_download" class="btn btn-primary" title="Download">Download</button>
-		
+				<button type="button" name="format_download" id="format_download" class="btn btn-primary" title="Load preset">Load preset</button>
+			
 				<hr>
 		
 				<div class="form-group">
@@ -111,8 +113,6 @@
 				</div>
 				
 				<textarea id="format_editor" style="width:100%;"></textarea>
-			
-				<hr>
 				
 				<div id="format_error" class="alert alert-danger" style="display:none; margin-top:20px;">
 				</div>
@@ -143,7 +143,7 @@
 	                </div>
 	                <div class="form-group">
 	                    <label for="corpus_document_type" title="The format of the documents that will be stored in the corpus">Document Format</label>
-		                <select id="corpus_document_type" name="corpus_document_type" class="selectpicker" data-contains="format">
+		                <select id="corpus_document_type" name="corpus_document_type" class="selectpicker" data-autoupdate="format">
 		                	<!-- filled in through clientside javascript -->
 		                </select>
 					</div>
@@ -152,25 +152,6 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" data-dismiss="modal">Save</button>
-			</div>
-		</div>
-	</div>
-</div>
-
-<div class="modal fade" id="confirm-delete-corpus" tabindex="-1" role="dialog" aria-labelledby="delete-corpus" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-	            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-	            <h4 class="modal-title">Confirm Delete Corpus</h4>
-            </div>
-            <div class="modal-body">
-                <p>You are about to delete corpus <span id="corpus-delete-name">&hellip;</span>; this cannot be undone!</p>
-                <p>Are you sure?</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary">Delete</button>
 			</div>
 		</div>
 	</div>
@@ -215,11 +196,30 @@
 </div>
 
 
+<div class="modal fade" id="modal-confirm" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+	            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+	            <h4 id="modal-confirm-title">Title</h4>
+            </div>
+            <div class="modal-body">
+                <p id="modal-confirm-message">Message</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal" id="modal-confirm-confirm">Confirm</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+
 <link rel="stylesheet" href="css/vendor/codemirror.css">
+
 <script src="js/vendor/codemirror/codemirror.min.js"></script>
 <script src="js/vendor/codemirror/yaml.js"></script>
 <script src="js/vendor/codemirror/javascript.js"></script>
-
 <script src="$pathToTop/js/corpora.js"></script>
 	
 #parse("footer.vm")

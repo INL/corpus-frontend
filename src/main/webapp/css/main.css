@@ -38,7 +38,8 @@ a.ui-menu-item-wrapper {
 }
 
 hr {
-	border-color: #ddd;
+	border-color: #000;
+	opacity: 0.1;
 }
 
 div.booklogo {
@@ -102,6 +103,7 @@ img.booklogo {
 	max-width:1170px;
 }
 
+/* CodeMirror editor */
 .cm-s-default {
 	border: 1px solid #CCC;
 	border-radius: 4px;
@@ -414,7 +416,6 @@ a[data-bls-sort], a.dropdown-toggle {
 	padding-left: 2px;
 }
 
-#userId,
 #corpus-delete-name {
 	font-style: italic;
 }
@@ -422,7 +423,6 @@ a[data-bls-sort], a.dropdown-toggle {
 #searchFormDiv h3 {
 	font-size: 1.4em;
 }
-
 #upload-file-dialog ul {
 	margin: 0 0 1.6em 1.1em;
 }

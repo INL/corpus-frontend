@@ -155,7 +155,9 @@
 			</div>
 		#else ## $useFilterTabs
 			#foreach($group in $metadataGroups.entrySet())
+				<div class="tab-content">
 				#filterfields($group.value)
+				</div>
 			#end
 		#end
 			<div class="row">

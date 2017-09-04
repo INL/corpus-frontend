@@ -40,7 +40,7 @@ SINGLEPAGE.INTERFACE = (function() {
 	// words and punctuation. Join them together
 	function words(context, prop, doPunctBefore, addPunctAfter) {
 		var parts = [];
-		var n = context[prop].length;
+		var n = context[prop] ? context[prop].length : 0;
 		for (var i = 0; i < n; i++) {
 			if ((i == 0 && doPunctBefore) || i > 0)
 				parts.push(context.punct[i]);

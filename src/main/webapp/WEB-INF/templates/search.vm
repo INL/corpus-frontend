@@ -103,7 +103,7 @@
 							<div class="col-xs-12 col-md-9">
 								<input type="text" id="$propertyFieldInputId" name="propertyFieldInputId" placeholder="$propertyField.getDisplayName()" class="form-control"/>
 								#if($propertyField.isCaseSensitive())
-								<div class="checkbox"><label for="propertFieldCaseId"><input type="checkbox" id="$propertyFieldCaseId" name="$propertyFieldCaseId"> Case&nbsp;sensitive</label></div>
+								<div class="checkbox"><label for="$propertyFieldCaseId"><input type="checkbox" id="$propertyFieldCaseId" name="$propertyFieldCaseId"> Case&nbsp;sensitive</label></div>
 								#end
 							</div>
 						</div>

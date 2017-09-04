@@ -1,9 +1,11 @@
 #parse("header.vm")
 
-<div id="successDiv" class="alert alert-success">
+<div id="successDiv" class="alert alert-success alert-dismissable">
+	<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
 	<span id="successMessage"></span>
 </div>
-<div id="errorDiv" class="alert alert-danger">
+<div id="errorDiv" class="alert alert-danger alert-dismissable">
+	<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
 	<span id="errorMessage"></span>
 </div>
 
@@ -11,72 +13,84 @@
 
 	<span id="waitDisplay" class="fa fa-spinner fa-spin searchIndicator" style="position: absolute; left: 50%;"></span>
 	
-	<h1 id="header-top">Available corpora</h1>
-	<hr>						
+	<div id="corpora-all-container">
 
-	<h2 id="header-public">Public corpora</h2>
+		<h1>Available corpora</h1>
+	
+		<div id="corpora-public-container">
+			<hr>
+			<h2>Public corpora</h2>
 
-	<!-- 	NOTE: using a table because we'd like to automatically 
+			<!-- 	NOTE: using a table because we'd like to automatically 
     		size width to longest corpus name. There's probably better ways. -->
-	<table class="corpora public table">
-		<thead>
-			<tr>
-				<th></th>
-				<th></th>
-				<th>Size</th>
-			</tr>
-		</thead>
-		<tbody id="corpora"></tbody>
-	</table>
+			<table class="corpora public table">
+				<thead>
+					<tr>
+						<th></th>
+						<th></th>
+						<th>Size</th>
+					</tr>
+				</thead>
+				<tbody id="corpora"></tbody>
+			</table>
 
-	<hr>
+		</div>
+
+		<div id="corpora-private-container">
+			<hr>
+			<h2 id="header-private">Your corpora</h2>
+			<p>(logged in as <i data-autoupdate="userId"></i>)</p>
+
+			<table class="corpora private table">
+				<colgroup>
+					<col class="corpus-name" />
+					<col class="delete" />
+					<col />
+					<col />
+					<col />
+					<col />
+					<col />
+				</colgroup>
+				<thead>
+					<tr>
+						<th>Corpus</th>
+						<th></th>
+						<th class="size">Size</th>
+						<th>Format</th>
+						<th>Last modified</th>
+						<th></th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody id="corpora-private"></tbody>
+			</table>
+			
+			<button class="btn btn-default btn-lg" id="create-corpus" type="button" data-toggle="modal" data-target="#new-corpus-modal" />New corpus</button>
 		
-	<h2 id="header-private">Your corpora</h2>
-	<p>(logged in as <i data-autoupdate="userId"></i>)</p>
-		
-	<table class="corpora private table">
-		<colgroup>
-			<col class="corpus-name" />
-			<col class="delete" />
-			<col />
-			<col />
-			<col />
-			<col />
-			<col />
-		</colgroup>
-		<thead>
-			<tr>
-				<th>Corpus</th>
-				<th></th>
-				<th class="size">Size</th>
-				<th>Format</th>
-				<th>Last modified</th>
+		</div>
+	
+	</div>
+
+	<div id="formats-all-container">
+		<hr>
+		<h2>Your import formats</h2>
+		<p>(logged in as <i data-autoupdate="userId"></i>)</p>
+	
+		<table class="table corpora" data-autoupdate="format">
+			<thead>
+				<th>Id</th>
+				<th>Name</th>
 				<th></th>
 				<th></th>
-			</tr>
-		</thead>
-		<tbody id="corpora-private"></tbody>
-	</table>
+			</thead>
+			<tbody>
+			<!-- filled by clientside js -->
+			</tbody>
+		</table>
+		<button type="button" class="btn btn-lg btn-default" data-toggle="modal" data-target="#new-format-modal">New format</button>
 
-	<input class="btn btn-default btn-lg" id="create-corpus" type="button" value="New corpus" data-toggle="modal" data-target="#new-corpus-modal" />
+	</div>
 
-	<hr>
-
-	<h2>Your import formats</h2>
-	<p>(logged in as <i data-autoupdate="userId"></i>)</p>
-
-	<table class="table corpora" data-autoupdate="format">
-		<thead>
-			<th>Id</th>
-			<th>Name</th>
-			<th></th>
-			<th></th>
-		</thead>
-		<tbody>
-		<!-- filled by clientside js -->
-		</tbody>
-	</table>
-	<button type="button" class="btn btn-lg btn-default" data-toggle="modal" data-target="#new-format-modal">New format</button>
 </div>
 
 <div class="modal fade modal-fullwidth" id="new-format-modal" role="dialog">
@@ -90,7 +104,7 @@
 			<div class="modal-body">
 				
 				<span class="btn btn-primary" style="position:relative;">
-					<input type="file" name="format_file" id="format_file" style="position:absolute;left:0;top:0;width:0px;height:100%;padding-left:100%;opacity:0;cursor:pointer;"/>
+					<input type="file" name="format_file" id="format_file" style="position:absolute;left:0;top:0;width:0px;height:100%;padding-left:100%;opacity:0;cursor:pointer;overflow:hidden;"/>
 					Open file...
 				</span>
 				
@@ -216,6 +230,7 @@
 
 
 <link rel="stylesheet" href="css/vendor/codemirror.css">
+<link rel="stylesheet" href="css/corpora.css">
 
 <script src="js/vendor/codemirror/codemirror.min.js"></script>
 <script src="js/vendor/codemirror/yaml.js"></script>

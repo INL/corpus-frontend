@@ -1,0 +1,71 @@
+/* page layout, hiding/showing portions */
+#corpora-all-container, 
+#corpora-public-container, 
+#corpora-private-container,
+#formats-all-container,
+#errorDiv,
+#successDiv,
+#uploadErrorDiv,
+#uploadSuccessDiv {
+    display: none;
+}
+
+
+/* styling */
+
+table.corpora {
+	width: auto;
+	margin: 1em 0;
+}
+
+table.corpora td {
+	font-size: 14pt;
+	padding: 3px;
+}
+
+table.corpora th {
+	font-size: 11pt;
+	padding: 3px;
+	background-color: inherit;
+}
+
+/* Don't change color when hovering over row (as in results table) */
+table.corpora tr:hover {
+	background-color: inherit;
+}
+col.corpus-name {
+	width: 24%;
+}
+col.delete {
+	width: 8%;
+}
+
+
+td.corpus-name a {
+	color: inherit;
+	text-decoration: none;
+}
+th.size,
+td.size {
+	text-align: right;
+}
+
+#uploadForm {
+	margin-top: 1em;
+	display: none;
+}
+
+table.corpora a.disabled {
+   pointer-events: none;
+   cursor: default;
+   color: #bbb;
+}
+
+table.corpora a.icon {
+	margin: 0 .8em;
+}
+
+
+.alert {
+    margin-top: 1em;
+}

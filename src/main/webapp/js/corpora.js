@@ -95,9 +95,9 @@ var corpora = {};
 							"href='#' onclick='return CORPORA.showUploadForm(corpora[\"" + indexName + "\"]);'>" +
 							"</a>";
 					}
-					var searchIcon = "<a class='icon disabled fa fa-search'></a>";
 					
 					// The index title and search icon (both clickable iff the index can be searched)
+					var searchIcon = "<a class='icon disabled fa fa-search'></a>";
 					var indexTitle = dispName;
 					if (canSearch) {
 						var url = "./" + indexName + "/search";
@@ -124,45 +124,41 @@ var corpora = {};
 						"</tr>");
 				}
 			}
-			
-			// Put the HTML in the two lists.
-			$("#corpora").html(publicCorpora.join(""));
-			$("#corpora-private").html(privateCorpora.join(""));
-			
+	
 			// Determine which headings and lists to show
 			// (we only show the private list to people who are authorised to do something there,
 			//  and we only show the public list if there are any public corpora on the server)
 			var showPublic = publicCorpora.length > 0;
-			var userLoggedIn = data.user.loggedIn;
-			var showPrivate = userLoggedIn && (privateCorpora.length > 0 || data.user.canCreateIndex);
-			$("#header-top").toggle(showPublic && showPrivate);
-			$("#header-public, .corpora.public").toggle(showPublic);
-			$("#header-private, #logged-in-as").toggle(showPrivate);
-			$(".corpora.private").toggle(privateCorpora.length > 0);
+			var showPrivate = data.user.loggedIn && (privateCorpora.length > 0 || data.user.canCreateIndex);
+
+			// Put the HTML in the two lists.
+			$("#corpora").html(publicCorpora.join(""));
+			$("#corpora-private").html(privateCorpora.join(""));
+
+			// Show/hide elements
+			$('#corpora-all-container').toggle(showPublic || showPrivate);
+			$('#corpora-public-container').toggle(showPublic);
+			$('#corpora-private-container').toggle(showPrivate);
 			$("#create-corpus").toggle(data.user.canCreateIndex);
 			
-			if (!showPublic && !showPrivate) {
+			if (!(showPublic || showPrivate)) {
 				showError("Sorry, no corpora are available, and you are not authorized to create a corpus. Please contact <a href='mailto:servicedesk@ivdnt.org'>servicedesk@ivdnt.org</a> if this is an error.");
 			}
 		}
 		
 		// Perform the AJAX request to get the list of corpora.
-		$("#header-top").hide(); // hide "available corpora" heading
 		$("#waitDisplay").show();
 		$.ajax(CORPORA.blsUrl, {
 			"type": "GET",
 			"accept": "application/json",
 			"dataType": "json",
 			"success": function (data) {
-				$("#header-top").show(); // show "available corpora" heading
-				$("#waitDisplay").hide();
 				updateCorporaLists(data);
 				if (functionToCallAfterwards) {
 					functionToCallAfterwards();
 				}
 			},
 			"error": function (jqXHR, textStatus, errorThrown) {
-				$("#waitDisplay").hide();
 				var data = jqXHR.responseJSON;
 				var msg;
 				if (data && data.error)
@@ -171,6 +167,9 @@ var corpora = {};
 					msg = textStatus + "; " + errorThrown;
 				showError("Error retrieving corpus list: " + msg);
 			},
+			complete: function() {
+				$('#waitDisplay').hide();
+			}
 		});
 	}
 
@@ -189,20 +188,26 @@ var corpora = {};
 
 				$select.empty();
 				$tbody.empty();
-				$.each(data.supportedInputFormats, function(key, format) {
-					var $option = $('<option title="' + (format.description || format.displayName) + '" value="' + key + '" data-content="' + format.displayName + '">' + format.displayName + '</option>');
+				$.each(data.supportedInputFormats, function(formatId, format) {
+					// Strip any usernames from the format id to extract a short name
+					var isUserFormat = formatId.indexOf(data.user.id) !== -1;
+					var shortName = isUserFormat ? formatId.substr(formatId.indexOf(data.user.id) + data.user.id.length + 1) : formatId;
+					
+
+					// we have title, >something?< and data-content
+					var $option = $('<option title="' + (format.description || format.displayName) + '" value="' + formatId + '">' + shortName + ' - ' + format.displayName + '</option>');
 					
 					var $tr = $([
 					'<tr>',
-						'<td>', key, '</td>',
+						'<td>', shortName, '</td>',
 						'<td>', format.displayName, '</td>',
-						'<td><a class="fa fa-trash" data-format-operation="delete" label="Delete" href="javascript:void(0)"></a></td>',
+						'<td><a class="fa fa-trash" data-format-operation="delete" data-format-id="'+formatId+'" title=\'Delete format "'+shortName+'"\' href="javascript:void(0)"></a></td>',
 						'<td></td>',
 						// TODO
 						//'<td><a class="fa fa-pencil" data-format-operation="edit" label="Edit" href="javascript:void(0)"></a></td>',
 					'</tr>'].join(""));
 				
-					if (key.indexOf(data.user.id) === 0) {
+					if (formatId.indexOf(data.user.id) === 0) {
 						$userFormatOptGroup.append($option);
 						$tbody.append($tr);
 					} else {
@@ -216,6 +221,8 @@ var corpora = {};
 				$select.append($defaultFormatOptGroup).append($userFormatOptGroup)
 				.filter(":not(#format_preset)").children('optgroup:nth-child(1)').append($nonConfigBasedOptions);
 				$select.selectpicker('refresh');
+
+				$('#formats-all-container').toggle(data.user.loggedIn && data.user.canCreateIndex);
 			},
 			error: function(jqXHR, textStatus, errorThrown) {
 				showError("Error retrieving input formats.");
@@ -635,7 +642,7 @@ var corpora = {};
 			event.preventDefault();
 	
 			var $tr = $(this).closest('tr');
-			var formatId = $tr.children('td').first().text().substring(getUserId.length);
+			var formatId = $(this).data('format-id');
 			
 			confirmDialog(
 				"Delete import format?",

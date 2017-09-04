@@ -190,6 +190,8 @@ div.hitscroll a {
 	padding-left: 1px;
 }
 
+/* article? */
+
 .activeLink {
 	background-color: #FFFF00;
 }
@@ -203,42 +205,12 @@ span.word {
 	font-weight: bold;
 }
 
+/* Single-page */
+
 .no-results-found {
     padding: 2cm;
     text-align: center;
     font-style: italic;
-}
-
-/* Corpora page */
-#header-public, #header-private, #logged-in-as, .corpora.public, .corpora.private, #create-corpus {
-	display: none;
-}
-
-table.corpora {
-	width: auto;
-	margin: 1em 0;
-}
-
-table.corpora td {
-	font-size: 14pt;
-	padding: 3px;
-}
-
-table.corpora th {
-	font-size: 11pt;
-	padding: 3px;
-	background-color: inherit;
-}
-
-/* Don't change color when hovering over row (as in results table) */
-table.corpora tr:hover {
-	background-color: inherit;
-}
-col.corpus-name {
-	width: 24%;
-}
-col.delete {
-	width: 8%;
 }
 
 .inline-concordance {
@@ -248,35 +220,11 @@ col.delete {
 	padding: 0px 8px;
 }
 
-td.corpus-name a {
-	color: inherit;
-	text-decoration: none;
-}
-th.size,
-td.size {
-	text-align: right;
-}
-
-#uploadForm {
-	margin-top: 1em;
-	display: none;
-}
-
-table.corpora a.disabled {
-   pointer-events: none;
-   cursor: default;
-   color: #bbb;
-}
-
-table.corpora a.icon {
-	margin: 0 .8em;
-}
 
 a[data-bls-sort], a.dropdown-toggle {
 	cursor: pointer;
 }
 
-/* Single-page */
 #corpusOwner {
 	font-size: 60%;
 }
@@ -284,11 +232,6 @@ a[data-bls-sort], a.dropdown-toggle {
 #querybox {
 	width:100%;
 	resize: none;
-}
-
-#errorDiv, #successDiv, #uploadErrorDiv, #uploadSuccessDiv {
-	margin-top: 1em;
-	display: none;
 }
 
 #totalsReport {
@@ -451,7 +394,7 @@ a[data-bls-sort], a.dropdown-toggle {
 .fileinput-button.hover > span {
 	color: #00ACEA;
 }
-/* Extend 'jquery.fileupload.css */
+/* Extend jquery.fileupload.css */
 .fileinput-button input {
 	height: 100%;
 }

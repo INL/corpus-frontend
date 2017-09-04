@@ -281,7 +281,7 @@
 					<span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span class="resultgroupname"></span> &mdash; <a class="clearviewgroup" href="javascript:void(0)">Go back</a></span>
 				</div>
 				
-				<button type="button" class="btn btn-default btn-sm pull-right exportcsv" style="margin-left: 5px;">Export CSV</button>
+				<!--<button type="button" class="btn btn-default btn-sm pull-right exportcsv" style="margin-left: 5px;">Export CSV</button>-->
 				<button type="button" class="btn btn-danger btn-sm pull-right" data-toggle="collapse" data-target=".doctitle">Show/hide titles</button>
 				<br>
 				<ul class="pagination pagination-sm"></ul>
@@ -313,7 +313,7 @@
 					<span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span class="resultgroupname"></span> &mdash; <a class="clearviewgroup" href="javascript:void(0)">Go back</a></span>
 				</div>
 
-				<button type="button" class="btn btn-default btn-sm pull-right exportcsv">Export CSV</button>
+				<!--<button type="button" class="btn btn-default btn-sm pull-right exportcsv">Export CSV</button>-->
 
 				<br>
 				<ul class="pagination pagination-sm"></ul>

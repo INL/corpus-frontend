@@ -278,7 +278,7 @@
 				</select>
 				
 				<div class="resultgroupdetails btn btn-sm btn-default nohover">
-					<span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span class="resultgroupname"></span> &mdash; <a class="clearviewgroup" href="javascript:void(0)">Go back</a></span>
+					<span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span class="resultgroupname"></span> &mdash; <a class="clearviewgroup" href="javascript:void(0)">Go back</a>
 				</div>
 				
 				<!--<button type="button" class="btn btn-default btn-sm pull-right exportcsv" style="margin-left: 5px;">Export CSV</button>-->
@@ -310,7 +310,7 @@
 				</select>
 
 				<div class="resultgroupdetails btn btn-sm btn-default nohover">
-					<span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span class="resultgroupname"></span> &mdash; <a class="clearviewgroup" href="javascript:void(0)">Go back</a></span>
+					<span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span class="resultgroupname"></span> &mdash; <a class="clearviewgroup" href="javascript:void(0)">Go back</a>
 				</div>
 
 				<!--<button type="button" class="btn btn-default btn-sm pull-right exportcsv">Export CSV</button>-->

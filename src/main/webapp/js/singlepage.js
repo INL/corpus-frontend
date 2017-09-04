@@ -158,14 +158,22 @@ SINGLEPAGE.CORE = (function () {
 		
 		try {
 			var tokens = SINGLEPAGE.CQLPARSER.parse(searchParams.pattern);
-			if (tokens.length === 1) { // try and repopulate the simple parameters
-
-			}
+			if (tokens === null) { 
+				return false;
+			} 
+			
 			var queryBuilder = $('#querybuilder').data('builder');
-			$.each(queryBuilder.getTokens(), function(i, e) {
-				e.element.remove();
-			});
-
+			if (tokens.length > 0) {
+				// only clear the querybuilder when we're putting something back in
+				$.each(queryBuilder.getTokens(), function(i, e) {
+					e.element.remove();
+				});
+			}
+			
+			
+			// TODO: try and repopulate the simple parameters
+			
+			
 			$.each(tokens, function(index, token) {
 				var tokenInstance = queryBuilder.createToken();
 				
@@ -242,7 +250,7 @@ SINGLEPAGE.CORE = (function () {
 		} catch (e) {
 			// couldn't decode query
 			if (SINGLEPAGE.DEBUG) {
-				console.log("Could not decode query pattern.")
+				console.log("Cql parser could not decode query pattern");
 				console.log(e);
 				console.log(searchParams.pattern);
 			}

@@ -241,12 +241,12 @@ SINGLEPAGE.BLS = (function () {
 	})();
 
 	return {
-		/**
+		/** 
 		 * Translate internal parameters to blacklab-server search parameters and perform a search.
 		 * 
 		 * @param {SearchParameters} param - Parameters, these must be in a valid configuration.
-		 * @param {any} successFunc 
-		 * @param {any} errorFunc 
+		 * @param {BLSSuccess} successFunc 
+		 * @param {BLSError} errorFunc 
 		 */
 		search: function (param, successFunc, errorFunc) {
 			var operation = param.operation;
@@ -286,7 +286,13 @@ SINGLEPAGE.BLS = (function () {
 					if (typeof successFunc === "function")
 						successFunc(data);
 				},
-				error: errorFunc
+				error: function() {
+					if (SINGLEPAGE.DEBUG)
+						console.log("Request failed: ", arguments);
+					
+					if (typeof errorFunc === "function")
+						errorFunc.apply(undefined, arguments);
+				}
 			});
 		}
 	}

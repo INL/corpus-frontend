@@ -5,7 +5,7 @@ SINGLEPAGE.CQLPARSER = (function() {
     var WHITESPACE = [' ', '\t', '\n', '\r'];
 
     function parse(input) {
-
+       
         var pos = 0;
         var cur = '';
 
@@ -227,7 +227,7 @@ SINGLEPAGE.CQLPARSER = (function() {
             return token;
         }
 
-        if (!input)
+        if (typeof input !== "string" || input.length === 0)
             return null;
         input = input.trim();
         if (!input)

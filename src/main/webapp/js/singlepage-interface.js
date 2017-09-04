@@ -317,6 +317,25 @@ SINGLEPAGE.INTERFACE = (function() {
 
 			// TODO tidy up
 			$button.parent().parent().append(html.join(""));
+		},
+		function(jqXHR, textStatus, errorThrown) {
+			var errordata = (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.error) || {
+				"code": "WEBSERVICE_ERROR",
+				"message": "Error contacting webservice: " + textStatus + "; " + errorThrown
+			}
+
+			var html = [];
+			html.push("<div>",
+				"<b>Could not retrieve concordances.</b><br>");
+	
+			if (jqXHR && jqXHR.status !== 0) // server is up
+				html.push("This is usually due to a misconfigured server, see ",
+				"<a href='https://github.com/INL/BlackLab/blob/be5b5be75c064e87cbfc2271fd19d073f80839af/core/src/site/markdown/blacklab-server-overview.md#installation' target='_blank'>here</a> for more information.");
+
+			html.push("<hr><b>", errordata.code, "</b><br>", errordata.message, "</div>");
+
+			// TODO tidy up
+			$button.parent().parent().html(html.join(""));
 		});
 	}
 

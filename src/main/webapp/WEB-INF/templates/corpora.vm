@@ -229,12 +229,12 @@
 </div>
 
 
-<link rel="stylesheet" href="css/vendor/codemirror.css">
-<link rel="stylesheet" href="css/corpora.css">
+<link rel="stylesheet" href="$pathToTop/css/vendor/codemirror.css">
+<link rel="stylesheet" href="$pathToTop/css/corpora.css">
 
-<script src="js/vendor/codemirror/codemirror.min.js"></script>
-<script src="js/vendor/codemirror/yaml.js"></script>
-<script src="js/vendor/codemirror/javascript.js"></script>
+<script src="$pathToTop/js/vendor/codemirror/codemirror.min.js"></script>
+<script src="$pathToTop/js/vendor/codemirror/yaml.js"></script>
+<script src="$pathToTop/js/vendor/codemirror/javascript.js"></script>
 <script src="$pathToTop/js/corpora.js"></script>
 	
 #parse("footer.vm")

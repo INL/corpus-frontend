@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:tei="http://www.tei-c.org/ns/1.0" exclude-result-prefixes="tei" xmlns:folia="http://ilk.uvt.nl/folia">
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:tei="http://www.tei-c.org/ns/1.0" xmlns:folia="http://ilk.uvt.nl/folia" exclude-result-prefixes="tei folia">
+
 	<xsl:output encoding="utf-8" method="html" omit-xml-declaration="yes" />
 	<xsl:param name="source_images" select="''"/>
 
@@ -9,7 +10,7 @@
         (Error code: <xsl:value-of select="code" />)
 	</xsl:template>
 
-  	<xsl:template match="hl|tei:hl">
+  	<xsl:template match="hl|tei:hl|folia:hl">
 		<a>
 			<xsl:attribute name="name">
 				<xsl:value-of select="generate-id()" />
@@ -28,9 +29,9 @@
 	
 	<!--  TEI -->
 	
-	<xsl:template match="teiHeader" />
+	<xsl:template match="teiHeader|tei:teiHeader" />
 	
-	<xsl:template match="body">
+	<xsl:template match="body|tei:body">
 		<div class="col-xs-12 contentbox">
 			<ul class="nav nav-tabs" id="articletabs">
 				<li class="active">
@@ -86,12 +87,11 @@
 	</xsl:template>  
 	
 	
-	
 	<!--  FOLIA -->
 	
     <xsl:template match="folia:metadata" />
     
-    <xsl:template match="text">
+    <xsl:template match="folia:text">
         <div class="col-xs-12 contentbox">
             <ul class="nav nav-tabs" id="articletabs">
                 <li class="active">
@@ -141,7 +141,5 @@
         </span>
         <xsl:text> </xsl:text>
     </xsl:template>
-	
-	
-	
+  
 </xsl:stylesheet>

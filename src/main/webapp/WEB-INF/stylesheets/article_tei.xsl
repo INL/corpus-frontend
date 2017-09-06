@@ -9,9 +9,9 @@
         (Error code: <xsl:value-of select="code" />)
 	</xsl:template>
 	
-	<xsl:template match="teiHeader" />
+	<xsl:template match="teiHeader|tei:teiHeader" />
 	
-	<xsl:template match="body">
+	<xsl:template match="body|tei:body">
 		<div class="col-xs-12 contentbox">
 			<ul class="nav nav-tabs" id="articletabs">
 				<li class="active">

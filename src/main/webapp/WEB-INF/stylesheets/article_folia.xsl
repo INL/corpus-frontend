@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:folia="http://ilk.uvt.nl/folia">
+
     <xsl:output encoding="utf-8" method="html" omit-xml-declaration="yes" />
     <xsl:param name="source_images" select="''"/>
 
-    <xsl:template match="error">
+    <xsl:template match="error|folia:error">
         <h1>Error</h1>
         <xsl:value-of select="message" />
         (Error code: <xsl:value-of select="code" />)
@@ -11,7 +12,7 @@
     
     <xsl:template match="folia:metadata" />
     
-    <xsl:template match="text">
+    <xsl:template match="folia:text">
         <div class="col-xs-12 contentbox">
             <ul class="nav nav-tabs" id="articletabs">
                 <li class="active">
@@ -68,7 +69,7 @@
         <xsl:text> </xsl:text>
     </xsl:template>
   
-    <xsl:template match="hl">
+    <xsl:template match="folia:hl">
         <a>
             <xsl:attribute name="name">
                 <xsl:value-of select="generate-id()" />

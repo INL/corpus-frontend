@@ -57,7 +57,7 @@ public class MainServlet extends HttpServlet {
 	private final String VELOCITY_PROPERTIES = "/WEB-INF/config/velocity.properties";
 
 	/** Where to find the Log4j properties file */
-	private final String LOG4J_PROPERTIES = "/WEB-INF/config/";
+	private final String LOG4J_PROPERTIES = "/WEB-INF/config/log4j.properties";
 
 	/** Our configuration parameters (from search.xml)
 	 *  Will eventually be merged with CorpusConfig */
@@ -103,9 +103,8 @@ public class MainServlet extends HttpServlet {
 		// initialise log4j
 		Properties p = new Properties();
 		try {
-			p.load(getServletContext().getResourceAsStream(LOG4J_PROPERTIES + "/log4j.properties"));
+			p.load(getServletContext().getResourceAsStream(LOG4J_PROPERTIES));
 			PropertyConfigurator.configure(p);
-			//LogUtil.initLog4j(new File(cfg.getServletContext().getRealPath(LOG4J_PROPERTIES)));
 		} catch (IOException e1) {
 			throw new RuntimeException(e1);
 		}
@@ -311,7 +310,7 @@ public class MainServlet extends HttpServlet {
 		if (!corpusConfigs.containsKey(corpus)) {
 			// Contact blacklab-server for the config xml file
 
-			QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(corpus), this);
+			QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(corpus));
 
 			Map<String, String[]> params = new HashMap<>();
 			params.put("outputformat", new String[] {"xml"});

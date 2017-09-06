@@ -15,8 +15,6 @@ import java.util.Map;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 
-import nl.inl.corpuswebsite.MainServlet;
-
 /**
  * Contacts the webservice and returns the response.
  */
@@ -24,21 +22,8 @@ public class QueryServiceHandler {
 
 	private String webserviceBaseUrl;
 
-	/**
-	 * Last backend url requested, so we can pass it to the frontend for status
-	 * checks
-	 */
-	private String lastRequestUrl;
-
-	/**
-	 * The servlet, for converting internal URL to external URL for use by
-	 * client
-	 */
-	private MainServlet servlet;
-
-	public QueryServiceHandler(String url, MainServlet servlet) {
+	public QueryServiceHandler(String url) {
 		webserviceBaseUrl = url;
-		this.servlet = servlet;
 	}
 
 	/**
@@ -51,7 +36,6 @@ public class QueryServiceHandler {
 	 */
 	public String makeRequest(Map<String, String[]> params) throws IOException {
 		String requestUrl = makeQueryString(params);
-		lastRequestUrl = requestUrl;
 
 		System.out.println("Request: " + requestUrl);
 		return fetchXml(requestUrl);
@@ -127,14 +111,5 @@ public class QueryServiceHandler {
 
 		return webserviceBaseUrl + "?" + builder.toString();
 
-	}
-
-	public String getBaseUrl() {
-		return webserviceBaseUrl;
-	}
-
-	public String getLastRequestUrlForClient(String corpus) {
-		return lastRequestUrl.replace(servlet.getWebserviceUrl(corpus),
-				servlet.getExternalWebserviceUrl(corpus));
 	}
 }

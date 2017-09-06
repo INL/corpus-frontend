@@ -51,9 +51,9 @@ public class ArticleResponse extends BaseResponse {
 		if (pid.length() > 0) {
 			webservice = new QueryServiceHandler(
 					servlet.getWebserviceUrl(corpus) + "docs/" + pid
-							+ "/contents", servlet);
+							+ "/contents");
 			webserviceMeta = new QueryServiceHandler(
-					servlet.getWebserviceUrl(corpus) + "docs/" + pid, servlet);
+					servlet.getWebserviceUrl(corpus) + "docs/" + pid);
 		}
 
 		if (request.getParameterMap().size() > 0) {

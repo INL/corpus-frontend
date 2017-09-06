@@ -1,7 +1,25 @@
 /* global Mustache */
 
-// Probably need to name this properly instead of being so generic
+/*
+ * The querybuilder is a visual editor for CQL queries (see http://inl.github.io/BlackLab/corpus-query-language.html#supported-features for an introduction to CQL)
+ * The querybuilder is a hierarchy of nested objects, where every object is represented by its own isolated container in the DOM.
+ * 
+ * At the top is the QueryBuilder itself, it contains/manages Tokens
+ * Every token representes a '[]' block within CQL, and contains one or more (potentially nested) AttributeGroups.
+ * An AttributeGroup is a nesting structure containing a mix of other AttributeGroups and Attributes.
+ *  It essentially represents a pair of brackets '()' in which Attributes are combined using OR/AND (though this is configurable)
+ *  It also contains a few buttons for adding/removing Attributes within the group.
+ * The Attribute is the real meat, it configures the requirements a single Token needs to meet to be matched by the query.
+ *  It contains a selector (usually for Part of Speech/Lemma/Word, though this is configurable), a comparator (like equals/not equals/starts with/ends with, also configurable)
+ *  and a value to compare it to.
+ *  
+ * Mustache.js is used to generate the DOM elements for the components, the templates are based on bootstrap.
+ * Every component attaches a reference to itself to the DOM element through $.data.
+ *  
+ * When genering a CQL query, the state of the builder is read from the DOM, so simply removing an element from the DOM removes it from the query.
+ */
 
+// Probably need to name this properly instead of being so generic
 window.querybuilder = (function() {
 	"use strict";
 
@@ -221,8 +239,6 @@ window.querybuilder = (function() {
 			},
 
 			getCql: function(attribute, comparator, caseSensitive, values) {
-				// var value = (caseSensitive ? "(?-i)" : "") + values.join("|");
-
 				switch (comparator) {
 					case "starts with":
 						comparator = "=";
@@ -514,11 +530,11 @@ window.querybuilder = (function() {
 			this.operatorLabel = data.operatorLabel;
 		}
 
-		// Construct a new group and put the new operator in there together with the one that trigger the creation (if any)
+		// Construct a new group and put the new operator in there together with the one that triggered the creation (if any)
 		if (data.operator !== this.operator) {
 			newGroup = new AttributeGroup(this.builder, data.operator, data.operatorLabel);
 			if (originAttribute) {
-				// Create a new group with the original attribute and the new attribute
+				// Create a new group with the original attribute, and the new attribute
 				// at the position of the original attribute
 				this.addAttributeOrGroup(newGroup, originAttribute);
 				newGroup.addAttributeOrGroup(originAttribute);

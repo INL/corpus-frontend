@@ -126,7 +126,7 @@
 		</div>
 
 		#if($metadataGroups.isEmpty()) ## Only display ungrouped fields if no other groups are present
-			#set($_ = $metadataGroups.put("Metadata", $ungroupedMetadataFields))
+			#set($_ = $metadataGroups.put("Metadata", $ungroupedMetadataFields)) ## silence return value of put() to stop it from ending up in the page.
 		#end
 		#set($useFilterTabs = ($metadataGroups.size() > 1)) ##only use tabs when we have more than one group to display
 		<div class="col-xs-12 col-md-6" id="filterContainer">

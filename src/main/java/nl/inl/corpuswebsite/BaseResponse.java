@@ -241,9 +241,4 @@ public abstract class BaseResponse {
 	public void setCorpus(String corpus) {
 		this.corpus = corpus;
 	}
-
-//	public void setSinglePageTest(boolean b) {
-//		context.put("singlePageTest", b);
-//	}
-
 }

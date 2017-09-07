@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<SearchInterface>
+    <InterfaceProperties>
+        <Name>BlackLab AutoSearch Corpus Search</Name>
+        
+        
+        <!--
+        <BackgroundColor>rgba(228,200,200,0.3)</BackgroundColor>
+		<BackgroundImage>./img/bab_logo_700.png</BackgroundImage>
+		<LinkColor>#b10932</LinkColor>
+		<Logo>../img/favicon.png</Logo>
+		-->
+        <NavLinks>
+            <Link value="../help">Help</Link>
+            <Link value="http://www.ivdnt.org/" newWindow="true">IvdNT</Link>
+            <Link value="http://www.clarin.eu/" newWindow="true">CLARIN</Link>
+            <Link value="http://taalunie.org/" newWindow="true">NTU</Link>
+        </NavLinks>
+	</InterfaceProperties>
+</SearchInterface>

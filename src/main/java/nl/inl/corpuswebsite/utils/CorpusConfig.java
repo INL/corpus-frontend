@@ -34,6 +34,7 @@ public class CorpusConfig {
 	 * 	to their actual names */
 	private Map<String, String> fieldInfo = new LinkedHashMap<>();
 
+	private String corpusDataFormat;
 
 	public CorpusConfig(String xml) throws SAXException, IOException, ParserConfigurationException {
 		config = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new InputSource(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8))));
@@ -53,14 +54,24 @@ public class CorpusConfig {
 		return ungroupedMetadataFields;
 	}
 
+	/* TEI, FoLiA, etc */
+	public String getCorpusDataFormat() {
+		return corpusDataFormat;
+	}
+
 	public Map<String, String> getFieldInfo() {
 		return fieldInfo;
 	}
 
 	private void parse() {
+		parseCorpusDataFormat();
 		parsePropertyFields();
 		parseMetadataFields();
 		parseFieldInfo();
+	}
+
+	private void parseCorpusDataFormat() {
+		this.corpusDataFormat = config.getElementsByTagName("documentFormat").item(0).getTextContent();
 	}
 
 	private void parsePropertyFields() {

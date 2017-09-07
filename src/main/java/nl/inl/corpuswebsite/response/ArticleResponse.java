@@ -38,8 +38,7 @@ public class ArticleResponse extends BaseResponse {
 	public void init(HttpServletRequest request, HttpServletResponse response,
 			MainServlet servlet) {
 		super.init(request, response, servlet);
-		String corpusDataFormat = servlet.getConfig(corpus)
-				.getCorpusDataFormat();
+		String corpusDataFormat = servlet.getCorpusConfig(corpus).getCorpusDataFormat();
 		articleStylesheet = servlet.getStylesheet(corpus, "article_"
 				+ corpusDataFormat + ".xsl");
 		metadataStylesheet = servlet.getStylesheet(corpus, "article_meta.xsl");

@@ -8,11 +8,16 @@ package nl.inl.corpuswebsite;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -59,15 +64,11 @@ public class MainServlet extends HttpServlet {
 	/** Where to find the Log4j properties file */
 	private final String LOG4J_PROPERTIES = "/WEB-INF/config/log4j.properties";
 
-	/** Our configuration parameters (from search.xml)
-	 *  Will eventually be merged with CorpusConfig */
+	/** Our configuration parameters (from search.xml) */
 	private Map<String, WebsiteConfig> configs = new HashMap<>();
 
 	/** Our configuration parameters gotten from blacklab-server */
 	private Map<String, CorpusConfig> corpusConfigs = new HashMap<>();
-
-	///** Directory where the WAR was extracted to (i.e. $TOMCAT/webapps/mywar/) */
-	//private File warExtractDir = null;
 
 	/** Our Velocity templates */
 	private Map<String, Template> templates = new HashMap<>();
@@ -86,8 +87,7 @@ public class MainServlet extends HttpServlet {
 
 	/**
 	 * If the URL doesn't contain the corpus name, this is the default corpus we
-	 * use. If the .war file is named "zeebrieven", "gysseling" or "surinaams",
-	 * we use that as the default corpus.
+	 * use.
 	 */
 	private String defaultCorpus = "autosearch";
 
@@ -112,19 +112,7 @@ public class MainServlet extends HttpServlet {
 		try {
 			startVelocity(cfg);
 
-			// Get the name of the folder that contains our deployed war file
-			//warExtractDir = new File(cfg.getServletContext().getRealPath("/"));
-			//debugLog("WAR dir: " + warExtractDir);
 			String warName = cfg.getServletContext().getContextPath().replaceAll("^/", ""); //warExtractDir.getName();
-
-			// Determine default corpus name from the .war file name
-			// (this is the "old" way of doing it, with a separate war for each
-			// corpus; the "new" way is one war for all corpora, dynamically
-			// switching based on URL path)
-			if (warName.equals("zeebrieven") || warName.equals("gysseling")
-					|| warName.equals("surinaams"))
-				defaultCorpus = warName;
-			debugLog("Default corpus name: " + defaultCorpus);
 			contextPath = cfg.getServletContext().getContextPath();
 
 			// Load the external properties file (for administration settings)
@@ -149,9 +137,17 @@ public class MainServlet extends HttpServlet {
 			if (!adminProps.containsKey("blsUrlExternal"))
 				throw new ServletException("Missing blsUrlExternal setting in "
 						+ adminPropFile);
+			if (!adminProps.containsKey("corporaInterfaceDataDir")) {
+				debugLog("Missing corporaInterfaceDataDir setting in " + adminPropFileName);
+				debugLog("Per-corpus data (such as icons, colors, backgrounds, images) will not be available!");
+			} else if (!Paths.get(adminProps.getProperty("corporaInterfaceDataDir")).isAbsolute()) {
+				throw new ServletException("corporaInterfaceDataDir should be an absolute path");
+			}
+
 			debugLog("blsUrl: " + adminProps.getProperty("blsUrl"));
-			debugLog("blsUrlExternal: "
-					+ adminProps.getProperty("blsUrlExternal"));
+			debugLog("blsUrlExternal: " + adminProps.getProperty("blsUrlExternal"));
+			if (adminProps.containsKey("corporaInterfaceDataDir"))
+				debugLog("corporaInterfaceDataDir: " + adminProps.getProperty("corporaInterfaceDataDir"));
 
 		} catch (ServletException e) {
 			throw e;
@@ -161,14 +157,12 @@ public class MainServlet extends HttpServlet {
 
 		// initialise responses
 		responses.put(contextPath + "/page/search", SearchResponse.class);
-		//responses.put(contextPath + "/page/mpsearch", SearchResponse.class);
 		responses.put(contextPath + "/page/about", AboutResponse.class);
 		responses.put(contextPath + "/page/help", HelpResponse.class);
 		responses.put(contextPath + "/page/article", ArticleResponse.class);
 		responses.put(contextPath + "/help", HelpResponse.class);
 		responses.put(contextPath, CorporaResponse.class);
 		responses.put("error", ErrorResponse.class);
-
 	}
 
 	private static void debugLog(String msg) {
@@ -179,7 +173,7 @@ public class MainServlet extends HttpServlet {
 	/**
 	 * Looks for a property file with the specified name, either in the Tomcat
 	 * webapps dir, in /etc/blacklab on Unix or in the temp dir (/tmp on Unix,
-	 * C:\\temp on Windows).
+	 * %temp% on Windows).
 	 *
 	 * @param fileName
 	 *            property file name
@@ -275,29 +269,12 @@ public class MainServlet extends HttpServlet {
 	 * @return the website config
 	 */
 	public WebsiteConfig getConfig(String corpus) {
-		if (!configs.containsKey(corpus)) {
-			// attempt to load a properties file with the same name as the
-			// folder
-			// new File(cfg.getServletContext().getRealPath("/../" +
-			// warFileName + ".xml"));
-			try (InputStream configFileInputStream = getProjectFile(corpus, "search.xml", false)) {
-				try {
-					if (configFileInputStream == null) {
-						// No corpus-specific config. Use generic for now (we'll detect stuff later)
-						configs.put(corpus, WebsiteConfig.generic(corpus));
-					} else {
-						configs.put(corpus, new WebsiteConfig(configFileInputStream));
-						debugLog("Config file: " + configFileInputStream);
-					}
-				} catch (Exception e) {
-					throw new RuntimeException("Error reading config file: " + configFileInputStream, e);
-				}
-			} catch (IOException e) {
-				throw new RuntimeException("Error reading config file for corpus " + corpus, e);
-			}
-		}
 
-		return configs.get(corpus);
+		try (InputStream configFileInputStream = getProjectFile(corpus, "search.xml", true)) {
+			return new WebsiteConfig(configFileInputStream);
+		} catch (Exception e) {
+			throw new RuntimeException("Error reading config file for corpus " + corpus, e);
+		}
 	}
 
 	/**
@@ -380,18 +357,11 @@ public class MainServlet extends HttpServlet {
 		}
 
 		br.setCorpus(corpus);
-//		if (requestUri.endsWith("/search")) {
-//			br.setSinglePageTest(true);
-//		}
 
 		br.init(request, response, this);
 		br.processRequest();
 
 	}
-
-//	public File getWarExtractDir() {
-//		return warExtractDir;
-//	}
 
 	/**
 	 * Look for project-specific version of file. If not found, return a generic
@@ -406,29 +376,72 @@ public class MainServlet extends HttpServlet {
 	 *            returns null
 	 * @return the appropriate instance of the file to use
 	 */
-	private InputStream getProjectFile(String corpus, String fileName, boolean mustExist) {
-		if (corpus.length() > 0) {
-			if (corpus.equals("chn-i"))
-				corpus = "chn"; // HACK
-			//System.out.println("* Corpus: " + corpus);
-			String fn = "/projectconfigs/" + corpus + "/" + fileName;
-			InputStream is = getServletContext().getResourceAsStream(fn);
-			if (is != null) {
-				//System.out.println("* File exists: " + fn);
-				return is;
-			}
-			//System.out.println("* File doesn't exist: " + fn);
-		}
+//	private InputStream getProjectFile(String corpus, String fileName, boolean mustExist) {
+//		if (corpus.length() > 0) {
+//			if (corpus.equals("chn-i"))
+//				corpus = "chn"; // HACK
+//
+//			String fn = "/projectconfigs/" + corpus + "/" + fileName;
+//			InputStream is = getServletContext().getResourceAsStream(fn);
+//			if (is != null) {
+//				//System.out.println("* File exists: " + fn);
+//				return is;
+//			}
+//			//System.out.println("* File doesn't exist: " + fn);
+//		}
+//
+//		if (mustExist)
+//			throw new RuntimeException("Couldn't find file '" + fileName + "' for corpus '" + corpus + "'");
+//		return null;
+//		// return new File(warExtractDir, "WEB-INF/config/project/" + fileName);
+//	}
 
-		if (mustExist)
-			throw new RuntimeException("Couldn't find file '" + fileName + "' for corpus '" + corpus + "'");
-		return null;
-		// return new File(warExtractDir, "WEB-INF/config/project/" + fileName);
+
+	//first check if file exists within configured folder
+	//then get fallback
+
+	/**
+	 *
+	 * @param corpus
+	 * @param fileName
+	 * @param mustExist
+	 * @return the file, the file returned will be the default file if the file cannot be found in the corpus specific folder
+	 */
+	// TODO: check if the corpus is a user corpus, and if it is, always return the default files.
+	private InputStream getProjectFile(String corpus, String fileName, boolean mustExist) {
+		if (!adminProps.containsKey("corporaInterfaceDataDir"))
+			return getDefaultProjectFile(fileName, mustExist);
+
+		// TODO solve the case where corpusname like corpus/../othercorpus will access file in dir 'othercorpus'
+
+		try {
+			Path baseDir = Paths.get(adminProps.getProperty("corporaInterfaceDataDir"));
+			Path corpusDir = baseDir.resolve(corpus).normalize();
+			Path filePath = corpusDir.resolve(fileName).normalize();
+			if (corpusDir.startsWith(baseDir) && filePath.startsWith(corpusDir))
+				return new FileInputStream(new File(filePath.toString()));
+
+			return getDefaultProjectFile(fileName, mustExist);
+		} catch (InvalidPathException | FileNotFoundException | SecurityException e) {
+			// TODO: remove InvalidPathException when we no longer attempt to serve custom files for user corpora
+			// (only user corpora contain
+			return getDefaultProjectFile(fileName, mustExist);
+		}
+	}
+
+	/**
+	 * @param fileName
+	 * @param mustExist
+	 * @return
+	 */
+	private InputStream getDefaultProjectFile(String fileName, boolean mustExist) {
+		InputStream stream = getServletContext().getResourceAsStream("/WEB-INF/interface-default/" + fileName);
+		if (mustExist && stream == null)
+			throw new RuntimeException("Required file " + fileName + " missing!");
+		return stream;
 	}
 
 	public InputStream getHelpPage(String corpus) {
-		if (corpus == null || corpus.length() == 0)
-			return getProjectFile(defaultCorpus, "help.inc", true);
 		return getProjectFile(corpus, "help.inc", true);
 	}
 
@@ -533,5 +546,4 @@ public class MainServlet extends HttpServlet {
 		}
 		return warBuildTime;
 	}
-
 }

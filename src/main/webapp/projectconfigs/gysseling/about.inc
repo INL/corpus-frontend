@@ -1,3 +1,0 @@
-<h2>About Gysseling</h2>
-<p>The software powering this website was developed at the <a href="http://ivdnt.org" target="_blank">Dutch Language Institute</a>. The corpus search is powered by <a href="https://github.com/INL/BlackLab" target="_blank">BlackLab</a>, an open source Lucene-based corpus retrieval engine allowing fast and complex searches on large volumes of annotated text.</p>
-<p>This website is optimized for the latest versions of <a href="https://www.google.com/intl/en/chrome/browser/" target="_blank">Google Chrome</a> and <a href="http://www.mozilla.org/en-US/firefox/new/" target="_blank">Mozilla Firefox</a>;using either of these browsers is recommended. Microsoft Internet Explorer is supported from version 9 and upwards.<p>

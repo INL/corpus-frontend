@@ -271,7 +271,7 @@ public class MainServlet extends HttpServlet {
 	public WebsiteConfig getConfig(String corpus) {
 
 		try (InputStream configFileInputStream = getProjectFile(corpus, "search.xml", true)) {
-			return new WebsiteConfig(configFileInputStream);
+			return new WebsiteConfig(configFileInputStream, corpus);
 		} catch (Exception e) {
 			throw new RuntimeException("Error reading config file for corpus " + corpus, e);
 		}

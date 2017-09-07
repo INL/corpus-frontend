@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <SearchInterface>
     <InterfaceProperties>
-        <Name>BlackLab AutoSearch Corpus Search</Name>
         
-        
+		<!-- Don't set a DisplayName, so the actual name of the corpus will be shown -->
         <!--
+        <DisplayName>BlackLab AutoSearch Corpus Search</DisplayName>
         <BackgroundColor>rgba(228,200,200,0.3)</BackgroundColor>
 		<BackgroundImage>./img/bab_logo_700.png</BackgroundImage>
 		<LinkColor>#b10932</LinkColor>

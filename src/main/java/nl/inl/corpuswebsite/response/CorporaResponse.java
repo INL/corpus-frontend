@@ -21,7 +21,7 @@ public class CorporaResponse extends BaseResponse {
 		super.init(request, response, servlet);
 
 		VelocityContext context = getContext();
-		context.put("title", servlet.getConfig(corpus).getCorpusName() + ": Corpora");
+		context.put("title", servlet.getConfig(corpus).getCorpusDisplayName() + ": Corpora");
 		String pathToTop = ".";
 		context.put("pathToTop", pathToTop); // correct for most pages, but for "list of corpora" it's "."
 		context.put("brandLink", corpus.equals("autosearch") ? pathToTop : "search");

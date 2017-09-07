@@ -62,7 +62,7 @@ public abstract class BaseResponse {
 		this.servlet = servlet;
 
 		VelocityContext context = getContext();
-		context.put("title", this.servlet.getConfig(corpus).getCorpusName());
+		context.put("title", this.servlet.getConfig(corpus).getCorpusDisplayName());
 		context.put("websiteconfig", this.servlet.getConfig(corpus));
 		context.put("googleAnalyticsKey", this.servlet.getGoogleAnalyticsKey(corpus));
 		String pathToTop = "..";

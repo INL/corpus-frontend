@@ -34,8 +34,8 @@ public class WebsiteConfig {
 	/** The configuration read from the XML file */
 	private XMLConfiguration xmlConfig;
 
-	/** Name of the corpus we're searching */
-	private String corpusName;
+	/** Name to display for this corpus */
+	private String displayName;
 
 	/** Background color to use */
 	private String colorBackground = null;
@@ -52,13 +52,13 @@ public class WebsiteConfig {
 	/** Link to put in the top bar */
 	private List<LinkInTopBar> linksInTopBar = new ArrayList<>();
 
-	public WebsiteConfig(InputStream configFile) throws ConfigurationException {
+	public WebsiteConfig(InputStream configFile, String corpusName) throws ConfigurationException {
 		// Load the specified config file
 		xmlConfig = new XMLConfiguration();
 		xmlConfig.setDelimiterParsingDisabled(true);
 		xmlConfig.load(configFile);
 
-		corpusName = xmlConfig.getString("InterfaceProperties.Name", "");
+		displayName = xmlConfig.getString("InterfaceProperties.DisplayName", corpusName);
 
 		colorBackground = xmlConfig.getString(
 				"InterfaceProperties.BackgroundColor", "");
@@ -82,8 +82,8 @@ public class WebsiteConfig {
 		}
 	}
 
-	public String getCorpusName() {
-		return corpusName;
+	public String getCorpusDisplayName() {
+		return displayName;
 	}
 
 	public String getBackgroundColor() {

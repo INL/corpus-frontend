@@ -89,9 +89,6 @@ SINGLEPAGE.CORE = (function () {
 
 	// Restore page when using back/forward
 	window.addEventListener("popstate", function() {
-		// TODO prevent clobbering page.next
-		// TODO fix
-		// right now prev->dosearch->overwrite future with new history entry
 		var searchSettings = fromQueryString(new URI().search());
 		toPageState(searchSettings || {});
 	});

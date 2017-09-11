@@ -42,20 +42,28 @@ hr {
 	opacity: 0.1;
 }
 
-div.booklogo {
+.navbar-logo-container {
 	float: left;
 	height: 1px;
 	overflow: visible;
+	margin-left: 15px;
 }
 
-img.booklogo {
+@media (min-width: 768px) {
+	.navbar-logo-container {
+		margin-right: 15px;
+		margin-left: 0px;
+	}	
+}
+
+.navbar-logo {
 	width:100px;
 	height:100px;
 	z-index: 9000;
 }
 
-.navbar-collapse.booklogo-margin {
-	margin-left: 85px !important;
+.navbar-collapse.navbar-logo-margin {
+	margin-left: 100px !important;
 }
 
 .navbar-brand {

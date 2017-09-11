@@ -25,13 +25,15 @@ public class CorporaDataResponse extends BaseResponse {
 	protected void completeRequest() {
 		try {
 
-			// we must decode every part of the path separately to avoid problems with url-encoded slashes and special characters
-			Path path = Paths.get(".");
+			// We must decode every part of the path separately to avoid problems with url-encoded slashes and special characters
+			// NOTE: the corpus-specific directory can be used to store both internal and external files.
+			// Internal files should be located in the root directory for the corpus interface-data directory
+			// while external files (those available through the browser) should be located in the 'static' subdirectory.
+			Path path = Paths.get("./static");
 			for (String s : StringUtils.split(uriRemainder, "/")) {
 				path = path.resolve(URLDecoder.decode(s, StandardCharsets.UTF_8.name()));
 			}
 
-			// TODO expose only specific subfolder of corpus folder and not root.
 			String pathString = path.toString();
 
 			try (InputStream is = servlet.getProjectFile(corpus, pathString, false)) {
@@ -40,13 +42,12 @@ public class CorporaDataResponse extends BaseResponse {
 					response.sendError(HttpServletResponse.SC_NOT_FOUND);
 					return;
 				}
+				// Headers must be set before writing the response.
 				String mime = servlet.getServletContext().getMimeType(pathString);
 				response.setHeader("Cache-Control", "public, max-age=604800" /* 7 days */);
 				response.setContentType(mime);
 
 				StreamUtils.copy(is, response.getOutputStream());
-				// TODO use filter
-//				response.setHeader("expires", DateUtils.addDays(new Date(), 1) );
 			}
 		} catch (IOException e) {
 			// This signifies an error writing the response, errors reading the file are handled at a higher level.

@@ -92,7 +92,7 @@ public abstract class BaseResponse {
 		this.corpus = corpus;
 		this.uriRemainder = uriRemainder;
 
-		context.put("websiteconfig", this.servlet.getConfig(corpus));
+		context.put("websiteconfig", this.servlet.getWebsiteConfig(corpus));
 		context.put("pathToTop", contextPathAbsolute);
 		context.put("googleAnalyticsKey", this.servlet.getGoogleAnalyticsKey());
 		// TODO this is nasty

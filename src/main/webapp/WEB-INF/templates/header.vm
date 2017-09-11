@@ -45,8 +45,8 @@
             <div class="container">
             	<div class="navbar-header">
 					#if($websiteconfig.getLogo().length() > 0)
-					<div class="booklogo">
-						<img src="$websiteconfig.getLogo()" class="booklogo" />
+					<div class="navbar-logo-container">
+						<img src="$websiteconfig.getLogo()" class="navbar-logo" />
 					</div>	
 					#end 
 					
@@ -60,7 +60,7 @@
             	</div>
             	
 				#if($websiteconfig.getLogo().length() > 0)
-            	<div class="navbar-collapse collapse booklogo-margin">
+            	<div class="navbar-collapse collapse navbar-logo-margin">
 				#else
 				<div class="navbar-collapse collapse">
 				#end        	

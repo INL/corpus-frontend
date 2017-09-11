@@ -29,6 +29,7 @@ public class ArticleResponse extends BaseResponse {
 	/** For getting metadata */
 	private QueryServiceHandler webserviceMeta;
 
+	// TODO add properties from search.xml
 	private XslTransformer transformer = new XslTransformer();
 
 	private String articleStylesheet;

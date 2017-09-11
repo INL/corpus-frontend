@@ -14,6 +14,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -257,18 +259,21 @@ public class MainServlet extends HttpServlet {
 	}
 
 	/**
-	 * Return the website config
+	 * Return the website config.
 	 *
-	 * @param corpus
-	 *            config for which corpus to read
+	 * @param corpus which corpus to read config for.
 	 * @return the website config
 	 */
-	public WebsiteConfig getConfig(String corpus) {
-		try (InputStream is = getProjectFile(corpus, "search.xml", true)) {
-			return new WebsiteConfig(is, this.contextPath, corpus);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
+	public WebsiteConfig getWebsiteConfig(String corpus) {
+		if (!configs.containsKey(corpus)) {
+			try (InputStream is = getProjectFile(corpus, "search.xml", true)) {
+				configs.put(corpus, new WebsiteConfig(is, this.contextPath, corpus));
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
 		}
+
+		return configs.get(corpus);
 	}
 
 	/**
@@ -340,9 +345,13 @@ public class MainServlet extends HttpServlet {
 		else if (pathParts.length == 1) // <page>
 			page = pathParts[0];
 		else if (pathParts.length >= 2) { // corpus>/<page>/...
-			corpus = pathParts[0];
-			page = pathParts[1];
-			remainder = StringUtils.join(pathParts, "/", 2, pathParts.length);
+			try {
+				corpus = URLDecoder.decode(pathParts[0], StandardCharsets.UTF_8.name());
+				page = pathParts[1];
+				remainder = StringUtils.join(pathParts, "/", 2, pathParts.length);
+			} catch (UnsupportedEncodingException e) {
+				throw new RuntimeException(e);
+			}
 		}
 
 		// Get response class
@@ -385,6 +394,7 @@ public class MainServlet extends HttpServlet {
 	 * @param fileName - path to the file relative to the directory for the corpus.
 	 * @param getDefaultIfMissing - attempt to retrieve the default file if the file was not found.
 	 * @return the file, or null if not found
+	 * @throws RuntimeException when getDefaultIfMissing is true, and the default file is missing.
 	 */
 	// TODO re-enable caching
 	public InputStream getProjectFile(String corpus, String fileName, boolean getDefaultIfMissing) {
@@ -406,8 +416,10 @@ public class MainServlet extends HttpServlet {
 	}
 
 	/**
-	 * @param fileName
-	 * @return
+	 *
+	 * @param fileName The file to get. This should NOT start with "/"
+	 * @return the InputStream for the file.
+	 * @throws RuntimeException when the file cannot be found.
 	 */
 	private InputStream getDefaultProjectFile(String fileName) {
 		InputStream stream = getServletContext().getResourceAsStream("/WEB-INF/interface-default/" + fileName);

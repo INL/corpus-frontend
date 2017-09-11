@@ -20,7 +20,7 @@ public class SearchResponse extends BaseResponse {
 	@Override
 	protected void completeRequest() {
 
-		String corpusName = servlet.getConfig(corpus).getCorpusDisplayName();
+		String corpusName = servlet.getWebsiteConfig(corpus).getCorpusDisplayName();
 
 		String corpusNameTop = corpusName.replaceAll("^(.+):(.+)$", "$2 ($1)");
 		String corpusOwner = null;

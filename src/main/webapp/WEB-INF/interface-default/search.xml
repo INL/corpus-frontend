@@ -22,6 +22,11 @@
             <Link value="help" relative="true">Help</Link>
         	<Link value="about" relative="true">About</Link>
         </NavLinks>
-        
 	</InterfaceProperties>
+	<XsltParameters>
+	<!-- 
+		The following values are provided automatically: 
+		<XsltParameter name="contextRoot" value="./corpus-frontent"/>
+	 -->
+	</XsltParameters>
 </SearchInterface>

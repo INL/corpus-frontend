@@ -6,6 +6,7 @@ package nl.inl.corpuswebsite.response;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -81,7 +82,11 @@ public class ArticleResponse extends BaseResponse {
 					context.put("article_content", "");
 				} else {
 					transformer.clearParameters();
-					transformer.addParameter("source_images", servlet.getSourceImagesLocation(corpus));
+					transformer.addParameter("contextRoot", servlet.getServletContext().getContextPath());
+
+					for (Entry<String, String> e : servlet.getWebsiteConfig(corpus).getXsltParameters().entrySet()) {
+						transformer.addParameter(e.getKey(), e.getValue());
+					}
 
 					context.put("article_content", transformer.transform(xmlResult, articleStylesheet));
 				}

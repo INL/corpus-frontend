@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.HierarchicalConfiguration;
@@ -29,7 +30,6 @@ public class WebsiteConfig {
 
 	private String absoluteContextPath;
 
-
 	/** The configuration read from the XML file */
 	private XMLConfiguration xmlConfig;
 
@@ -50,6 +50,8 @@ public class WebsiteConfig {
 
 	/** Link to put in the top bar */
 	private List<LinkInTopBar> linksInTopBar = new ArrayList<>();
+
+	private Map<String, String> xsltParameters = new HashMap<>();
 
 	/**
 	 *
@@ -105,6 +107,12 @@ public class WebsiteConfig {
 			linksInTopBar.add(new LinkInTopBar(name, location, newWindow));
 		}
 
+		myfields = xmlConfig.configurationsAt("XsltParameters");
+		for (Iterator<HierarchicalConfiguration> it = myfields.iterator(); it.hasNext();) {
+			HierarchicalConfiguration sub = it.next();
+
+			xsltParameters.put(sub.getString("[@name]"), sub.getString("[@value]"));
+		}
 	}
 
 	public String getCorpusDisplayName() {
@@ -129,6 +137,10 @@ public class WebsiteConfig {
 
 	public List<LinkInTopBar> getLinks() {
 		return linksInTopBar;
+	}
+
+	public Map<String, String> getXsltParameters() {
+		return xsltParameters;
 	}
 
 	// TODO centralize this

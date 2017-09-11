@@ -13,9 +13,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.file.InvalidPathException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -23,8 +22,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -33,6 +30,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.velocity.Template;
@@ -41,6 +40,7 @@ import org.xml.sax.SAXException;
 
 import nl.inl.corpuswebsite.response.AboutResponse;
 import nl.inl.corpuswebsite.response.ArticleResponse;
+import nl.inl.corpuswebsite.response.CorporaDataResponse;
 import nl.inl.corpuswebsite.response.CorporaResponse;
 import nl.inl.corpuswebsite.response.ErrorResponse;
 import nl.inl.corpuswebsite.response.HelpResponse;
@@ -57,6 +57,8 @@ import nl.inl.corpuswebsite.utils.WebsiteConfig;
 public class MainServlet extends HttpServlet {
 
 	private static final boolean DEBUG = true;
+
+	private static final String DEFAULT_PAGE = "corpora";
 
 	/** Where to find the Velocity properties file */
 	private final String VELOCITY_PROPERTIES = "/WEB-INF/config/velocity.properties";
@@ -84,12 +86,6 @@ public class MainServlet extends HttpServlet {
 
 	/** Our cached XSL stylesheets */
 	private Map<String, String> stylesheets = new HashMap<>();
-
-	/**
-	 * If the URL doesn't contain the corpus name, this is the default corpus we
-	 * use.
-	 */
-	private String defaultCorpus = "autosearch";
 
 	/**
 	 * Time the WAR was built.
@@ -156,12 +152,12 @@ public class MainServlet extends HttpServlet {
 		}
 
 		// initialise responses
-		responses.put(contextPath + "/page/search", SearchResponse.class);
-		responses.put(contextPath + "/page/about", AboutResponse.class);
-		responses.put(contextPath + "/page/help", HelpResponse.class);
-		responses.put(contextPath + "/page/article", ArticleResponse.class);
-		responses.put(contextPath + "/help", HelpResponse.class);
-		responses.put(contextPath, CorporaResponse.class);
+		responses.put(DEFAULT_PAGE, CorporaResponse.class);
+		responses.put("about", AboutResponse.class);
+		responses.put("help", HelpResponse.class);
+		responses.put("search", SearchResponse.class);
+		responses.put("article", ArticleResponse.class);
+		responses.put("static", CorporaDataResponse.class);
 		responses.put("error", ErrorResponse.class);
 	}
 
@@ -196,8 +192,7 @@ public class MainServlet extends HttpServlet {
 		if (!isWindows && fileInEtc.exists())
 			return fileInEtc;
 
-		File tmpDir = isWindows ? new File(System.getProperty("java.io.tmpdir")) : new File(
-				"/tmp");
+		File tmpDir = isWindows ? new File(System.getProperty("java.io.tmpdir")) : new File("/tmp");
 		File fileInTmpDir = new File(tmpDir, fileName);
 		if (fileInTmpDir.exists())
 			return fileInTmpDir;
@@ -269,11 +264,10 @@ public class MainServlet extends HttpServlet {
 	 * @return the website config
 	 */
 	public WebsiteConfig getConfig(String corpus) {
-
-		try (InputStream configFileInputStream = getProjectFile(corpus, "search.xml", true)) {
-			return new WebsiteConfig(configFileInputStream, corpus);
+		try (InputStream is = getProjectFile(corpus, "search.xml", true)) {
+			return new WebsiteConfig(is, this.contextPath, corpus);
 		} catch (Exception e) {
-			throw new RuntimeException("Error reading config file for corpus " + corpus, e);
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -315,104 +309,87 @@ public class MainServlet extends HttpServlet {
 		processRequest(request, response);
 	}
 
-	private void processRequest(HttpServletRequest request,
-			HttpServletResponse response) throws ServletException {
-		BaseResponse br;
+	private void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException {
 
+		/*
+		 * Map in the following way:
+		 * when the full uri contains at least 2 parts after the root (such as <root>/zeebrieven/search)
+		 * treat the first of those parts as the corpus, the second as the response to send,
+		 * and everything after that as arguments to build the response.
+		 * When only one part is present (such as <root>/help) treat the first part as the response to send.
+		 * When nothing is present, serve the default page.
+		 *
+		 * This does mean that pages outside the context of a corpus cannot have arguments in the form of extra parts in the URI
+		 * For instance <root>/help/searching would try to serve the nonexistant "searching" response in the context of the corpus "help"
+		 */
+
+		// First strip out any leading items like "/" and our root
 		String requestUri = request.getRequestURI();
-		String corpus = defaultCorpus; // corpus to use if not in URL path
-
-		// URL: contextPath/corpusName/resource
-		// (corpusName is of the form [[userid]:]name), and userid usually
-		//  looks like an email address (though it may not BE one))
-		Pattern p = Pattern.compile("^" + contextPath
-				+ "/([a-zA-Z0-9\\-\\._!\\$&'\\(\\)\\*\\+,;:=@]+)/([a-zA-Z0-9\\-_]+)/?$");
-		Matcher m = p.matcher(requestUri);
-		if (m.matches() && !m.group(1).equals("page")) {
-			// Yes, corpus name specified. Use that.
-			corpus = m.group(1);
-			String operation = m.group(2);
-			// Translate back to old URI style.
-			requestUri = contextPath + "/page/" + operation;
+		if (requestUri.startsWith(contextPath)) {
+			requestUri = requestUri.substring(contextPath.length());
 		}
 
-		// Strip trailing slash
-		if (requestUri.endsWith("/"))
-			requestUri = requestUri.substring(0, requestUri.length() - 1);
+		// Use apache stringutils split as it's much more sensible about omitting leading/trailing and empty strings.
+		String[] pathParts = StringUtils.split(requestUri, "/");
+
+		String corpus = null;
+		String page = null;
+		String remainder = null;
+		if (pathParts.length == 0) //
+			page = DEFAULT_PAGE;
+		else if (pathParts.length == 1) // <page>
+			page = pathParts[0];
+		else if (pathParts.length >= 2) { // corpus>/<page>/...
+			corpus = pathParts[0];
+			page = pathParts[1];
+			remainder = StringUtils.join(pathParts, "/", 2, pathParts.length);
+		}
 
 		// Get response class
-		Class<? extends BaseResponse> brClass;
-		if (responses.containsKey(requestUri)) {
-			brClass = responses.get(requestUri);
-		} else {
-			// If there is no corresponding response object, display an error
+		Class<? extends BaseResponse> brClass = responses.get(page);
+		if (brClass == null)
 			brClass = responses.get("error");
-		}
 
 		// Instantiate response class
+		BaseResponse br;
 		try {
 			br = brClass.getConstructor().newInstance();
 		} catch (Exception e) {
 			throw new ServletException(e);
 		}
 
-		br.setCorpus(corpus);
+		if (br.isCorpusRequired() && (corpus == null || corpus.isEmpty())) {
+			try {
+				response.sendError(HttpServletResponse.SC_NOT_FOUND);
+			} catch (IOException e) {
+				throw new ServletException(e);
+			}
 
-		br.init(request, response, this);
+			return;
+		}
+
+		br.init(request, response, this, corpus, contextPath, remainder);
 		br.processRequest();
-
 	}
 
 	/**
-	 * Look for project-specific version of file. If not found, return a generic
-	 * version.
+	 * Get a file from the directory belonging to this corpus.
 	 *
-	 * @param corpus
-	 *            corpus we're searching
-	 * @param fileName
-	 *            file we're looking for
-	 * @param mustExist
-	 *            if true, throws an exception if not found; otherwise just
-	 *            returns null
-	 * @return the appropriate instance of the file to use
-	 */
-//	private InputStream getProjectFile(String corpus, String fileName, boolean mustExist) {
-//		if (corpus.length() > 0) {
-//			if (corpus.equals("chn-i"))
-//				corpus = "chn"; // HACK
-//
-//			String fn = "/projectconfigs/" + corpus + "/" + fileName;
-//			InputStream is = getServletContext().getResourceAsStream(fn);
-//			if (is != null) {
-//				//System.out.println("* File exists: " + fn);
-//				return is;
-//			}
-//			//System.out.println("* File doesn't exist: " + fn);
-//		}
-//
-//		if (mustExist)
-//			throw new RuntimeException("Couldn't find file '" + fileName + "' for corpus '" + corpus + "'");
-//		return null;
-//		// return new File(warExtractDir, "WEB-INF/config/project/" + fileName);
-//	}
-
-
-	//first check if file exists within configured folder
-	//then get fallback
-
-	/**
+	 * If Corpus is null, the default file is returned.
+	 * If the file cannot be found (interface data directory not configured, or simply missing, or the corpus has no custom directory), the default file is returned.
 	 *
-	 * @param corpus
-	 * @param fileName
-	 * @param mustExist
-	 * @return the file, the file returned will be the default file if the file cannot be found in the corpus specific folder
+	 * The default file is only returned when getDefaultIfMissing is true. Null is returned otherwise.
+	 * Note that an exception is thrown if the default file is also missing, so for any files that might not have a default pass false for getDefaultIfMissing.
+	 *
+	 * @param corpus - corpus for which to get the file. If null, falls back to the default files.
+	 * @param fileName - path to the file relative to the directory for the corpus.
+	 * @param getDefaultIfMissing - attempt to retrieve the default file if the file was not found.
+	 * @return the file, or null if not found
 	 */
-	// TODO: check if the corpus is a user corpus, and if it is, always return the default files.
-	private InputStream getProjectFile(String corpus, String fileName, boolean mustExist) {
-		if (!adminProps.containsKey("corporaInterfaceDataDir"))
-			return getDefaultProjectFile(fileName, mustExist);
-
-		// TODO solve the case where corpusname like corpus/../othercorpus will access file in dir 'othercorpus'
+	// TODO re-enable caching
+	public InputStream getProjectFile(String corpus, String fileName, boolean getDefaultIfMissing) {
+		if (corpus == null || isUserCorpus(corpus) || !adminProps.containsKey("corporaInterfaceDataDir") )
+			return getDefaultIfMissing ? getDefaultProjectFile(fileName) : null;
 
 		try {
 			Path baseDir = Paths.get(adminProps.getProperty("corporaInterfaceDataDir"));
@@ -421,23 +398,21 @@ public class MainServlet extends HttpServlet {
 			if (corpusDir.startsWith(baseDir) && filePath.startsWith(corpusDir))
 				return new FileInputStream(new File(filePath.toString()));
 
-			return getDefaultProjectFile(fileName, mustExist);
-		} catch (InvalidPathException | FileNotFoundException | SecurityException e) {
-			// TODO: remove InvalidPathException when we no longer attempt to serve custom files for user corpora
-			// (only user corpora contain
-			return getDefaultProjectFile(fileName, mustExist);
+			// File path points outside the configured directory!
+			return getDefaultIfMissing ? getDefaultProjectFile(fileName) : null;
+		} catch (FileNotFoundException | SecurityException e) {
+			return getDefaultIfMissing ? getDefaultProjectFile(fileName) : null;
 		}
 	}
 
 	/**
 	 * @param fileName
-	 * @param mustExist
 	 * @return
 	 */
-	private InputStream getDefaultProjectFile(String fileName, boolean mustExist) {
+	private InputStream getDefaultProjectFile(String fileName) {
 		InputStream stream = getServletContext().getResourceAsStream("/WEB-INF/interface-default/" + fileName);
-		if (mustExist && stream == null)
-			throw new RuntimeException("Required file " + fileName + " missing!");
+		if (stream == null)
+			throw new RuntimeException("Default fallback for file " + fileName + " missing!");
 		return stream;
 	}
 
@@ -476,41 +451,22 @@ public class MainServlet extends HttpServlet {
 		return url;
 	}
 
-	public String getGoogleAnalyticsKey(String corpus) {
-		String googleAnalyticsKey = adminProps.getProperty("googleAnalyticsKey", "");
-		String googleAnalyticsKeyThisCorpus = adminProps.getProperty("googleAnalyticsKey_" + corpus, "");
-		if (googleAnalyticsKeyThisCorpus.length() > 0)
-			return googleAnalyticsKeyThisCorpus;
-		return googleAnalyticsKey;
+	public String getGoogleAnalyticsKey() {
+		return adminProps.getProperty("googleAnalyticsKey", "");
 	}
 
 	public String getStylesheet(String corpus, String stylesheetName) {
 		String key = corpus + "__" + stylesheetName;
 		String stylesheet = stylesheets.get(key);
 		if (stylesheet == null) {
-			// Look for the stylesheet in the project config dir, or else in the
-			// stylesheets dir.
-			try ( InputStream is = openStylesheet(corpus, stylesheetName);
-				  BufferedReader br = new BufferedReader(new InputStreamReader(is)) ) {
-				// read the response from the webservice
-				String line;
-				StringBuilder builder = new StringBuilder();
-				while ((line = br.readLine()) != null)
-					builder.append(line);
-				stylesheet = builder.toString();
+			try ( InputStream is = getProjectFile(corpus, stylesheetName, true)) {
+				stylesheet = IOUtils.toString(is, StandardCharsets.UTF_8);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
 			stylesheets.put(key, stylesheet);
 		}
 		return stylesheet;
-	}
-
-	private InputStream openStylesheet(String corpus, String stylesheetName) {
-		InputStream is = getProjectFile(corpus, stylesheetName, false);
-		if (is == null)
-			is = getServletContext().getResourceAsStream("/WEB-INF/stylesheets/" + stylesheetName);
-		return is;
 	}
 
 	/**
@@ -545,5 +501,9 @@ public class MainServlet extends HttpServlet {
 			}
 		}
 		return warBuildTime;
+	}
+
+	public static boolean isUserCorpus(String corpus) {
+		return corpus.indexOf(":") != -1;
 	}
 }

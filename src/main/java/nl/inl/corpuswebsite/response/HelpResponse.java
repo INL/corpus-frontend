@@ -8,12 +8,21 @@ import java.io.InputStream;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.velocity.VelocityContext;
 
 import nl.inl.corpuswebsite.BaseResponse;
 
 /** Show help page. */
 public class HelpResponse extends BaseResponse {
+
+	public HelpResponse() {
+		super(false, null);
+
+		// TODO fix for user corpora, those probably shouldn't show name
+		if (corpus != null)
+			context.put("title", corpus + ": help");
+		else
+			context.put("title", "AutoSearch: help");
+	}
 
 	@Override
 	protected void completeRequest() {
@@ -24,11 +33,6 @@ public class HelpResponse extends BaseResponse {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-
-		VelocityContext context = getContext();
-		String pathToTop = corpus.equals("autosearch") ? "." : "..";
-		context.put("pathToTop", pathToTop);
-		context.put("brandLink", corpus.equals("autosearch") ? pathToTop : "search");
 
 		displayHtmlTemplate(servlet.getTemplate("contentpage"));
 	}

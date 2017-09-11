@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.TransformerException;
@@ -34,10 +35,14 @@ public class ArticleResponse extends BaseResponse {
 
 	private String metadataStylesheet;
 
+
+	public ArticleResponse() {
+		super(true, null);
+	}
+
 	@Override
-	public void init(HttpServletRequest request, HttpServletResponse response,
-			MainServlet servlet) {
-		super.init(request, response, servlet);
+	public void init(HttpServletRequest request, HttpServletResponse response, MainServlet servlet, String corpus, String contextPathAbsolute, String uriRemainder) throws ServletException {
+		super.init(request, response, servlet, corpus, contextPathAbsolute, uriRemainder);
 		String corpusDataFormat = servlet.getCorpusConfig(corpus).getCorpusDataFormat();
 		articleStylesheet = servlet.getStylesheet(corpus, "article_"
 				+ corpusDataFormat + ".xsl");
@@ -72,12 +77,12 @@ public class ArticleResponse extends BaseResponse {
 			try {
 				String xmlResult = webservice.makeRequest(parameters);
 				if (xmlResult.contains("NOT_AUTHORIZED")) {
-					getContext().put("article_content", "");
+					context.put("article_content", "");
 				} else {
 					transformer.clearParameters();
 					transformer.addParameter("source_images", servlet.getSourceImagesLocation(corpus));
 
-					getContext().put("article_content", transformer.transform(xmlResult, articleStylesheet));
+					context.put("article_content", transformer.transform(xmlResult, articleStylesheet));
 				}
 
 				Map<String, String[]> metaParam = new HashMap<>();
@@ -88,7 +93,7 @@ public class ArticleResponse extends BaseResponse {
 				xmlResult = webserviceMeta.makeRequest(metaParam);
 				transformer.clearParameters();
 				String htmlResult = transformer.transform(xmlResult, metadataStylesheet);
-				getContext().put("article_meta", htmlResult);
+				context.put("article_meta", htmlResult);
 
 			} catch (IOException e) {
 				throw new RuntimeException(e);

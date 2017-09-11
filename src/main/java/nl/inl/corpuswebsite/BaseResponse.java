@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -32,52 +33,71 @@ public abstract class BaseResponse {
 
 	protected HttpServletResponse response;
 
-	/** Required parameters for this operation */
-	private List<String> requiredParameters;
-
 	/** Velocity template variables */
 	protected VelocityContext context = new VelocityContext();
 
-	/** The corpus to use */
-	protected String corpus = "";
+	/** Required parameters for this operation */
+	private List<String> requiredParameters = null;
 
-	protected BaseResponse() {
-		requiredParameters = new ArrayList<>();
+	/** Does this response require a corpus to be set? */
+	private boolean requiresCorpus = false;
+
+	/**
+	 * The corpus this response is being generated for.
+	 * When on contextRoot/zeebrieven/*, this response is in the context of the zeebrieven corpus.
+	 * When on contextRoot/*, this response is not in the context of any corpus.
+	 * If {@link #requiresCorpus} is true, this response will only be used in the context of a corpus.
+	 */
+	protected String corpus = null;
+
+	/**
+	 * Whatever uri followed after the page that cause this response to be served.
+	 * NOTE: is URL-encoded and contains forward slashes.
+	 */
+	protected String uriRemainder = null;
+
+	/**
+	 * @param requiresCorpus when set, causes an exception to be thrown when {@link BaseResponse#corpus} is not set when {@link #processRequest()} is called.
+	 * @param requiredParameters like {@link #requiresCorpus} but for parameters.
+	 */
+	protected BaseResponse(boolean requiresCorpus, List<String> requiredParameters) {
+		this.requiresCorpus = requiresCorpus;
+		this.requiredParameters = requiredParameters;
 	}
 
 	/**
-	 * Initialise this object with
+	 * Initialise this object with:
 	 *
-	 * @param request
-	 *            the HTTP request object
-	 * @param response
-	 *            the HTTP response object
-	 * @param servlet
-	 *            our servlet
+	 * NOTE: this function will throw an exception if corpus is required but not provided,
+	 * or when a required parameter is missing.
+	 *
+	 * @param request the HTTP request object.
+	 * @param response the HTTP response object.
+	 * @param servlet our servlet.
+	 * @param corpus the corpus for which this response is generated.
+	 * @param contextPathAbsolute absolute path to reach the application context root.
+	 * @param uriRemainder any trailing path in the original request uri, that this SHOULD be url-encoded.
+	 * @throws ServletException when corpus is required but missing.
 	 */
-	public void init(HttpServletRequest request, HttpServletResponse response,
-			MainServlet servlet) {
+	public void init(HttpServletRequest request, HttpServletResponse response, MainServlet servlet, String corpus, String contextPathAbsolute, String uriRemainder) throws ServletException {
+		if ((corpus == null || corpus.isEmpty()) && this.requiresCorpus)
+			throw new ServletException("Response requires a corpus");
+
+		if (!contextPathAbsolute.startsWith("/"))
+			throw new RuntimeException("contextPathAbsolute is not an absolute path");
+
 		this.request = request;
 		this.response = response;
 		this.servlet = servlet;
+		this.corpus = corpus;
+		this.uriRemainder = uriRemainder;
 
-		VelocityContext context = getContext();
-		context.put("title", this.servlet.getConfig(corpus).getCorpusDisplayName());
 		context.put("websiteconfig", this.servlet.getConfig(corpus));
-		context.put("googleAnalyticsKey", this.servlet.getGoogleAnalyticsKey(corpus));
-		String pathToTop = "..";
-		context.put("pathToTop", pathToTop); // correct for most pages, but for "list of corpora" it's "."
-		context.put("brandLink", corpus.equals("autosearch") ? pathToTop : "./search");
+		context.put("pathToTop", contextPathAbsolute);
+		context.put("googleAnalyticsKey", this.servlet.getGoogleAnalyticsKey());
+		// TODO this is nasty
+		context.put("brandLink", corpus == null ? contextPathAbsolute : contextPathAbsolute + "/" + corpus + "/" + "search");
 		context.put("buildTime", servlet.getWarBuildTime());
-	}
-
-	/**
-	 * Get the velocity context object
-	 *
-	 * @return velocity context
-	 */
-	protected VelocityContext getContext() {
-		return context;
 	}
 
 	/**
@@ -103,7 +123,7 @@ public abstract class BaseResponse {
 	}
 
 	/**
-	 * Display a template with the XML mime type
+	 * Display a template with the HTML mime type
 	 *
 	 * @param template
 	 */
@@ -132,6 +152,9 @@ public abstract class BaseResponse {
 	 *            parameter name
 	 */
 	protected void addRequiredParameter(String param) {
+		if (requiredParameters == null)
+			requiredParameters = new ArrayList<>();
+
 		requiredParameters.add(param);
 	}
 
@@ -141,6 +164,9 @@ public abstract class BaseResponse {
 	 * @return true if they do, false if not
 	 */
 	private boolean sufficientParameters() {
+		if (requiredParameters == null)
+			return true;
+
 		// for each parameter in the list
 		for (String p: requiredParameters) {
 			// if it is missing, return false
@@ -238,7 +264,7 @@ public abstract class BaseResponse {
 	 */
 	abstract protected void completeRequest();
 
-	public void setCorpus(String corpus) {
-		this.corpus = corpus;
+	public boolean isCorpusRequired() {
+		return requiresCorpus;
 	}
 }

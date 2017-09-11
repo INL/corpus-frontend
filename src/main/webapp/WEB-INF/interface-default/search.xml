@@ -3,18 +3,25 @@
     <InterfaceProperties>
         
 		<!-- Don't set a DisplayName, so the actual name of the corpus will be shown -->
+        <!--<DisplayName>BlackLab AutoSearch Corpus Search</DisplayName>-->
+        
         <!--
-        <DisplayName>BlackLab AutoSearch Corpus Search</DisplayName>
         <BackgroundColor>rgba(228,200,200,0.3)</BackgroundColor>
-		<BackgroundImage>./img/bab_logo_700.png</BackgroundImage>
 		<LinkColor>#b10932</LinkColor>
 		<Logo>../img/favicon.png</Logo>
 		-->
+		<BackgroundImage>img/background.jpg</BackgroundImage>
+        <Logo>img/logo.png</Logo>
+        
         <NavLinks>
-            <Link value="../help">Help</Link>
+        	<!-- Relative links will be relative to the currently open corpus, or the application root if on the home page,
+        	whereas absolute links will be placed in the bar as-is. -->
             <Link value="http://www.ivdnt.org/" newWindow="true">IvdNT</Link>
             <Link value="http://www.clarin.eu/" newWindow="true">CLARIN</Link>
             <Link value="http://taalunie.org/" newWindow="true">NTU</Link>
+            <Link value="help" relative="true">Help</Link>
+        	<Link value="about" relative="true">About</Link>
         </NavLinks>
+        
 	</InterfaceProperties>
 </SearchInterface>

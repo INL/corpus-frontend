@@ -5,17 +5,17 @@ package nl.inl.corpuswebsite.response;
 
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import nl.inl.corpuswebsite.BaseResponse;
-import nl.inl.corpuswebsite.MainServlet;
 import nl.inl.corpuswebsite.utils.CorpusConfig;
 
 /**
  *
  */
 public class SearchResponse extends BaseResponse {
+
+	public SearchResponse() {
+		super(true, null);
+	}
 
 	@Override
 	protected void completeRequest() {
@@ -28,27 +28,21 @@ public class SearchResponse extends BaseResponse {
 			corpusOwner = corpusName.replaceAll(":.+$", "");
 		corpusName = corpusName.replaceAll("^.+:", "");
 
-		getContext().put("blsUrl", servlet.getExternalWebserviceUrl(corpus));
-		getContext().put("title", corpusNameTop);
-		getContext().put("corpusOwner", corpusOwner);
-		getContext().put("corpusName", corpusName);
+		context.put("blsUrl", servlet.getExternalWebserviceUrl(corpus));
+		context.put("title", corpusNameTop);
+		context.put("corpusOwner", corpusOwner);
+		context.put("corpusName", corpusName);
 
 		CorpusConfig config = servlet.getCorpusConfig(corpus);
 		for (Map.Entry<String, String> e : config.getFieldInfo().entrySet()) {
-			getContext().put(e.getKey(), e.getValue());
+			context.put(e.getKey(), e.getValue());
 		}
 
-		getContext().put("propertyFields", config.getPropertyFields());
-		getContext().put("metadataGroups", config.getMetadataFieldGroups());
-		getContext().put("ungroupedMetadataFields", config.getUngroupedMetadataFields());
+		context.put("propertyFields", config.getPropertyFields());
+		context.put("metadataGroups", config.getMetadataFieldGroups());
+		context.put("ungroupedMetadataFields", config.getUngroupedMetadataFields());
 
 		// display template
 		displayHtmlTemplate(servlet.getTemplate("search"));
-	}
-
-	@Override
-	public void init(HttpServletRequest request, HttpServletResponse response,
-			MainServlet servlet) {
-		super.init(request, response, servlet);
 	}
 }

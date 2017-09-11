@@ -3,28 +3,25 @@
  */
 package nl.inl.corpuswebsite.response;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import nl.inl.corpuswebsite.BaseResponse;
 import nl.inl.corpuswebsite.MainServlet;
 
-import org.apache.velocity.VelocityContext;
-
 /** Show the list of available corpora. */
 public class CorporaResponse extends BaseResponse {
 
-	@Override
-	public void init(HttpServletRequest request, HttpServletResponse response,
-			MainServlet servlet) {
-		corpus = "autosearch"; // generic interface
-		super.init(request, response, servlet);
+	public CorporaResponse() {
+		super(false, null);
+	}
 
-		VelocityContext context = getContext();
-		context.put("title", servlet.getConfig(corpus).getCorpusDisplayName() + ": Corpora");
-		String pathToTop = ".";
-		context.put("pathToTop", pathToTop); // correct for most pages, but for "list of corpora" it's "."
-		context.put("brandLink", corpus.equals("autosearch") ? pathToTop : "search");
+	@Override
+	public void init(HttpServletRequest request, HttpServletResponse response, MainServlet servlet, String corpus, String contextPathAbsolute, String uriRemainder) throws ServletException {
+		super.init(request, response, servlet, corpus, contextPathAbsolute, uriRemainder);
+
+		context.put("title", "AutoSearch: Corpora");
 		context.put("blsUrl", servlet.getExternalWebserviceUrl(""));
 	}
 
@@ -32,5 +29,4 @@ public class CorporaResponse extends BaseResponse {
 	protected void completeRequest() {
 		displayHtmlTemplate(servlet.getTemplate("corpora"));
 	}
-
 }

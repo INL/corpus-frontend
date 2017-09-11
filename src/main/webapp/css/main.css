@@ -117,10 +117,8 @@ img.booklogo {
 }
 
 body {
-	background: url('../img/logo.jpg');
-	background-repeat:no-repeat;
-	background-position:-350px -310px;
-	background-attachment:scroll;
+	padding-top: 60px;
+    padding-bottom: 40px;
 }
 
 .green {

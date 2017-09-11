@@ -15,31 +15,9 @@
 		<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
         <link rel="stylesheet" href="$pathToTop/css/jquery.fileupload.css">
         <link rel="stylesheet" href="$pathToTop/css/main.css">
-		<style>
-            body {
-                padding-top: 60px;
-                padding-bottom: 40px;
-				
-				#if($websiteconfig.getBackgroundImage().length() > 0)
-				background: url('$websiteconfig.getBackgroundImage()');
-				background-repeat: no-repeat;
-                background-position: -350px -310px;
-                background-attachment: scroll;
-				#end
-            }
-			
-			#if($websiteconfig.getBackgroundColor().length() > 0)
-			.contentbox {
-				background-color: $websiteconfig.getBackgroundColor();
-			}
-			#end
-			
-			#if($websiteconfig.getLinkColor().length() > 0)
-			a {
-				color: $websiteconfig.getLinkColor();
-			}
-			#end
-        </style>
+
+       	#parse("custom-css.vm")
+
 		<link rel="icon" type="image/png" href="$pathToTop/img/favicon.png">
 		<link rel="apple-touch-icon" href="$pathToTop/img/apple-touch-icon.png">
         
@@ -66,11 +44,11 @@
         <div class="navbar navbar-inverse navbar-fixed-top">
             <div class="container">
             	<div class="navbar-header">
+					#if($websiteconfig.getLogo().length() > 0)
 					<div class="booklogo">
-						#if($websiteconfig.getLogo().length() > 0)
 						<img src="$websiteconfig.getLogo()" class="booklogo" />
-						#end 
 					</div>	
+					#end 
 					
 				    <a href='$brandLink' class='navbar-brand'>$title</a>
                     

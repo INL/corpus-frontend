@@ -14,18 +14,20 @@ import nl.inl.corpuswebsite.BaseResponse;
 /** Show the about page. */
 public class AboutResponse extends BaseResponse {
 
+	public AboutResponse() {
+		super(false, null);
+
+		context.put("title", corpus + ": about");
+	}
+
 	@Override
 	protected void completeRequest() {
 		try (InputStream is = servlet.getAboutPage(corpus)) {
-			if (is != null) {
-				context.put("content", StringUtils.join(IOUtils.readLines(is, "utf-8"), "\n"));
-			}
+			context.put("content", StringUtils.join(IOUtils.readLines(is, "utf-8"), "\n"));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 
 		displayHtmlTemplate(servlet.getTemplate("contentpage"));
-
 	}
-
 }

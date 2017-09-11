@@ -1,0 +1,17 @@
+<style>
+   	##todo only output if values are set 
+    body {
+		background: url('$websiteconfig.getBackgroundImage()');
+		background-repeat: no-repeat;
+        background-position: -350px -310px;
+        background-attachment: scroll;
+    }
+	
+	.contentbox {
+		background-color: $websiteconfig.getBackgroundColor();
+	}
+	
+	a {
+		color: $websiteconfig.getLinkColor();
+	}
+</style>

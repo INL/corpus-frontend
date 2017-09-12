@@ -21,7 +21,6 @@ public class CorporaResponse extends BaseResponse {
 	public void init(HttpServletRequest request, HttpServletResponse response, MainServlet servlet, String corpus, String contextPathAbsolute, String uriRemainder) throws ServletException {
 		super.init(request, response, servlet, corpus, contextPathAbsolute, uriRemainder);
 
-		context.put("title", "AutoSearch: Corpora");
 		context.put("blsUrl", servlet.getExternalWebserviceUrl(""));
 	}
 

@@ -74,7 +74,6 @@ public class FieldDescriptor {
 		this.isCaseSensitive = caseSensitive;
 	}
 
-	// TODO: change when FieldDescriptors generated from blacklab-server info
 	public void addValidValue(String value, String description) {
 		if (value == null || value.isEmpty())
 			return;

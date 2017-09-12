@@ -1,12 +1,21 @@
 <!DOCTYPE html>
 <html>
     <head>
+
 		<meta charset="utf-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-        <meta name="description" content="$title search provided by the Dutch Language Institute in Leiden.">
+        
+        #if ($websiteConfig.getCorpusDisplayName())
+		<meta property="og:description" content="$websiteConfig.getCorpusDisplayName() provided by the Dutch Language Institute in Leiden."/>
+        <meta name="description" content="$websiteConfig.getCorpusDisplayName() search provided by the Dutch Language Institute in Leiden.">
+		<title>$websiteConfig.getCorpusDisplayName() search</title>
+		#else
+		<meta property="og:description" content="AutoSearch provided by the Dutch Language Institute in Leiden."/>
+		<meta name="description" content="AutoSearch, provided by the Dutch Language Institute in Leiden.">
+		<title>Welcome to AutoSearch</title>
+		#end
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<meta property="og:image" content="$pathToTop/img/apple-touch-icon-144x144-precomposed.png" />
-		<meta property="og:description" content="$title search provided by the Dutch Language Institute in Leiden."/>
 		<!-- Build time: $buildTime -->
 		## TODO set based on corpus info
 		<link title="Search" type="application/opensearchdescription+xml" rel="search" href="$pathToTop/opensearch.xml">
@@ -31,7 +40,7 @@
 		<script src="$pathToTop/js/vendor/jQuery.extendext.js"></script>
 		<script src="$pathToTop/js/vendor/jquery.iframe-transport.js"></script>
 		<script src="$pathToTop/js/vendor/jquery.fileupload.js"></script>
-		<title>$title search</title>
+		
     </head>
     <body>
         <!--[if lt IE 9]>
@@ -44,13 +53,17 @@
         <div class="navbar navbar-inverse navbar-fixed-top">
             <div class="container">
             	<div class="navbar-header">
-					#if($websiteconfig.getLogo().length() > 0)
+					#if($websiteConfig.getLogo())
 					<div class="navbar-logo-container">
-						<img src="$websiteconfig.getLogo()" class="navbar-logo" />
+						<img src="$websiteConfig.getLogo()" class="navbar-logo" />
 					</div>	
 					#end 
 					
-				    <a href='$brandLink' class='navbar-brand'>$title</a>
+					#if($websiteConfig.getCorpusDisplayName())
+				    <a href='$brandLink' class='navbar-brand'>$websiteConfig.getCorpusDisplayName()</a>
+                    #else
+				    <a href='$brandLink' class='navbar-brand'>AutoSearch</a>
+                    #end
                     
 	                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
 	                    <span class="icon-bar"></span>
@@ -59,17 +72,17 @@
 	                </button>
             	</div>
             	
-				#if($websiteconfig.getLogo().length() > 0)
+				#if($websiteConfig.getLogo())
             	<div class="navbar-collapse collapse navbar-logo-margin">
 				#else
 				<div class="navbar-collapse collapse">
 				#end        	
                     <ul class="nav navbar-nav">
-                        #foreach($link in $websiteconfig.getLinks())
+                        #foreach($link in $websiteConfig.getLinks())
 							<li><a href="$link.get('href')"#if($link.get('newWindow')) target="_blank"#else#end>$link.get('name')</a></li>
 						#end
                     </ul>
-                </div><!--/.navbar-collapse -->
+                </div>
             </div>
         </div>
 		

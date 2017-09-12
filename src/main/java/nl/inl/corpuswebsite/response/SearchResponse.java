@@ -19,19 +19,7 @@ public class SearchResponse extends BaseResponse {
 
 	@Override
 	protected void completeRequest() {
-
-		String corpusName = servlet.getWebsiteConfig(corpus).getCorpusDisplayName();
-
-		String corpusNameTop = corpusName.replaceAll("^(.+):(.+)$", "$2 ($1)");
-		String corpusOwner = null;
-		if (corpusName.contains(":"))
-			corpusOwner = corpusName.replaceAll(":.+$", "");
-		corpusName = corpusName.replaceAll("^.+:", "");
-
 		context.put("blsUrl", servlet.getExternalWebserviceUrl(corpus));
-		context.put("title", corpusNameTop);
-		context.put("corpusOwner", corpusOwner);
-		context.put("corpusName", corpusName);
 
 		CorpusConfig config = servlet.getCorpusConfig(corpus);
 		for (Map.Entry<String, String> e : config.getFieldInfo().entrySet()) {

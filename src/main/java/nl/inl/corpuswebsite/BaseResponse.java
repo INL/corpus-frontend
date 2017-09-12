@@ -92,10 +92,10 @@ public abstract class BaseResponse {
 		this.corpus = corpus;
 		this.uriRemainder = uriRemainder;
 
-		context.put("websiteconfig", this.servlet.getWebsiteConfig(corpus));
+		context.put("websiteConfig", this.servlet.getWebsiteConfig(corpus));
 		context.put("pathToTop", contextPathAbsolute);
 		context.put("googleAnalyticsKey", this.servlet.getGoogleAnalyticsKey());
-		// TODO this is nasty
+		// TODO unify with processUrl in WebsiteConfig
 		context.put("brandLink", corpus == null ? contextPathAbsolute : contextPathAbsolute + "/" + corpus + "/" + "search");
 		context.put("buildTime", servlet.getWarBuildTime());
 	}

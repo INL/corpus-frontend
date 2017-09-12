@@ -14,6 +14,8 @@ import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.XMLConfiguration;
 
+import nl.inl.corpuswebsite.MainServlet;
+
 /**
  * Configuration read from an XML config file.
  */
@@ -33,8 +35,14 @@ public class WebsiteConfig {
 	/** The configuration read from the XML file */
 	private XMLConfiguration xmlConfig;
 
-	/** Name to display for this corpus */
-	private String displayName;
+	/** Name to display for this corpus, null if no corpus set. Falls back to the corpus name if not explicitly configured. */
+	private String corpusDisplayName;
+
+	/** Raw name for this corpus, null if no corpus set. */
+	private String corpusName;
+
+	/** User for this corpus, null if no corpus set or this corpus has no owner. */
+	private String corpusOwner;
 
 	/** Background color to use */
 	private String colorBackground;
@@ -69,16 +77,21 @@ public class WebsiteConfig {
 		load(configFile, corpus);
 	}
 
+	/**
+	 * Note that corpus may be null, when parsing the base config.
+	 * @param configFile
+	 * @param corpus raw name of the corpus, including the username (if applicable), might be null (when loading the config for the pages outside a corpus context, such as /about, /help, and / (root)))
+	 * @throws ConfigurationException
+	 */
 	private void load(InputStream configFile, String corpus) throws ConfigurationException {
 		// Load the specified config file
 		xmlConfig = new XMLConfiguration();
 		xmlConfig.setDelimiterParsingDisabled(true);
 		xmlConfig.load(configFile);
 
-		// TODO format the name for user corpora here instead of in javascript...
-		displayName = xmlConfig.getString("InterfaceProperties.DisplayName", corpus);
-		if (displayName == null) // no explicit displayname set and corpus was null as well, use a fallback
-			displayName = "AutoSearch";
+		corpusName = MainServlet.getCorpusName(corpus);
+		corpusOwner = MainServlet.getCorpusOwner(corpus);
+		corpusDisplayName = xmlConfig.getString("InterfaceProperties.DisplayName", corpusName);
 
 		colorBackground 		= xmlConfig.getString("InterfaceProperties.BackgroundColor");
 		colorLink 				= xmlConfig.getString("InterfaceProperties.LinkColor");
@@ -96,13 +109,8 @@ public class WebsiteConfig {
 			if (location == null)
 				location = name;
 
-			// TODO unify this with processUrl
-			if (relative) {
-				if (corpus != null)
-					location = absoluteContextPath + "/" + corpus + "/" + location;
-				else
-					location = absoluteContextPath + "/" + location;
-			}
+			if (relative)
+				location = processUrl(location);
 
 			linksInTopBar.add(new LinkInTopBar(name, location, newWindow));
 		}
@@ -116,7 +124,15 @@ public class WebsiteConfig {
 	}
 
 	public String getCorpusDisplayName() {
-		return displayName;
+		return corpusDisplayName;
+	}
+
+	public String getCorpusName() {
+		return corpusName;
+	}
+
+	public String getCorpusOwner() {
+		return corpusOwner;
 	}
 
 	public String getBackgroundColor() {

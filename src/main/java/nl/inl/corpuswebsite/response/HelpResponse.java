@@ -16,12 +16,6 @@ public class HelpResponse extends BaseResponse {
 
 	public HelpResponse() {
 		super(false, null);
-
-		// TODO fix for user corpora, those probably shouldn't show name
-		if (corpus != null)
-			context.put("title", corpus + ": help");
-		else
-			context.put("title", "AutoSearch: help");
 	}
 
 	@Override

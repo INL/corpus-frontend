@@ -30,7 +30,6 @@ public class ArticleResponse extends BaseResponse {
 	/** For getting metadata */
 	private QueryServiceHandler webserviceMeta;
 
-	// TODO add properties from search.xml
 	private XslTransformer transformer = new XslTransformer();
 
 	private String articleStylesheet;
@@ -46,8 +45,7 @@ public class ArticleResponse extends BaseResponse {
 	public void init(HttpServletRequest request, HttpServletResponse response, MainServlet servlet, String corpus, String contextPathAbsolute, String uriRemainder) throws ServletException {
 		super.init(request, response, servlet, corpus, contextPathAbsolute, uriRemainder);
 		String corpusDataFormat = servlet.getCorpusConfig(corpus).getCorpusDataFormat();
-		articleStylesheet = servlet.getStylesheet(corpus, "article_"
-				+ corpusDataFormat + ".xsl");
+		articleStylesheet = servlet.getStylesheet(corpus, "article_" + corpusDataFormat + ".xsl");
 		metadataStylesheet = servlet.getStylesheet(corpus, "article_meta.xsl");
 	}
 

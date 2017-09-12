@@ -153,7 +153,8 @@ public class MainServlet extends HttpServlet {
 			throw new ServletException(e);
 		}
 
-		// initialise responses
+		// Map responses, the majority of these can be served for a specific corpus, or as a general autosearch page
+		// E.G. the AboutResponse is mapped to /<root>/<corpus>/about and /<root>/about
 		responses.put(DEFAULT_PAGE, CorporaResponse.class);
 		responses.put("about", AboutResponse.class);
 		responses.put("help", HelpResponse.class);
@@ -261,7 +262,7 @@ public class MainServlet extends HttpServlet {
 	/**
 	 * Return the website config.
 	 *
-	 * @param corpus which corpus to read config for.
+	 * @param corpus which corpus to read config for, may be null for the default config.
 	 * @return the website config
 	 */
 	public WebsiteConfig getWebsiteConfig(String corpus) {
@@ -516,6 +517,28 @@ public class MainServlet extends HttpServlet {
 	}
 
 	public static boolean isUserCorpus(String corpus) {
-		return corpus.indexOf(":") != -1;
+		return corpus != null && corpus.indexOf(":") != -1;
+	}
+
+	public static String getCorpusName(String corpus) {
+		if (corpus == null)
+			return null;
+
+		int i = corpus.indexOf(":");
+		if (i != -1)
+			return corpus.substring(i+1);
+
+		return corpus;
+	}
+
+	public static String getCorpusOwner(String corpus) {
+		if (corpus == null)
+			return null;
+
+		int i = corpus.indexOf(":");
+		if (i != -1)
+			return corpus.substring(0, i);
+
+		return null;
 	}
 }

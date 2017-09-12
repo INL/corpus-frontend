@@ -16,8 +16,6 @@ public class AboutResponse extends BaseResponse {
 
 	public AboutResponse() {
 		super(false, null);
-
-		context.put("title", corpus + ": about");
 	}
 
 	@Override

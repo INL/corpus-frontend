@@ -18,7 +18,7 @@
         the url here would be 'zeebrieven/static/img/logo.png' 
         and the directory structure would be <>/<corpusname>/static/... -->
 		<BackgroundImage>img/background.jpg</BackgroundImage>
-        <Logo>img/logo.png</Logo>
+        <Logo>img/logo_100x100.png</Logo>
         
         <NavLinks>
         	<!-- Relative links will be made relative to the application root, 

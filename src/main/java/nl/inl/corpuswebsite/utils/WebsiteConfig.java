@@ -13,6 +13,7 @@ import java.util.Map;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.XMLConfiguration;
+import org.apache.commons.lang.StringUtils;
 
 import nl.inl.corpuswebsite.MainServlet;
 
@@ -115,11 +116,14 @@ public class WebsiteConfig {
 			linksInTopBar.add(new LinkInTopBar(name, location, newWindow));
 		}
 
-		myfields = xmlConfig.configurationsAt("XsltParameters");
+		myfields = xmlConfig.configurationsAt("XsltParameters.XsltParameter");
 		for (Iterator<HierarchicalConfiguration> it = myfields.iterator(); it.hasNext();) {
 			HierarchicalConfiguration sub = it.next();
 
-			xsltParameters.put(sub.getString("[@name]"), sub.getString("[@value]"));
+			String name = sub.getString("[@name]");
+			String value = sub.getString("[@value]");
+
+			xsltParameters.put(name, value);
 		}
 	}
 
@@ -159,14 +163,12 @@ public class WebsiteConfig {
 		return xsltParameters;
 	}
 
-	// TODO centralize this
-	// TODO sanity checking and fixing common errors
+	// TODO centralize normalizing/making relative of links (mainservlet static func?)
 	private String processUrl(String link) {
 		if (link == null)
 			return link;
 
-		if (link.startsWith("/"))
-			link = link.substring(1);
+		link = StringUtils.stripStart(link.trim(), "./");
 
 		return absoluteContextPath + "/" + link;
 	}

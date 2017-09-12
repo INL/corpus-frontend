@@ -355,10 +355,21 @@ public class MainServlet extends HttpServlet {
 			}
 		}
 
+
+
 		// Get response class
 		Class<? extends BaseResponse> brClass = responses.get(page);
 		if (brClass == null)
 			brClass = responses.get("error");
+
+		// TODO better error handling.
+		if (corpus != null) {
+			try {
+				getCorpusConfig(corpus);
+			} catch (Exception e) {
+				brClass = responses.get("error");
+			}
+		}
 
 		// Instantiate response class
 		BaseResponse br;

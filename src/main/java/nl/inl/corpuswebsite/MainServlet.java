@@ -448,16 +448,6 @@ public class MainServlet extends HttpServlet {
 		return getProjectFile(corpus, "about.inc", true);
 	}
 
-	public String getSourceImagesLocation(String corpus) {
-		String sourceImagesLocation = adminProps.getProperty("sourceImagesLocation", "");
-		String corpusSpecificImagesLocation = adminProps.getProperty("sourceImagesLocation_" + corpus, "");
-		if (corpusSpecificImagesLocation.length() > 0)
-			return corpusSpecificImagesLocation;
-		if (sourceImagesLocation.length() == 0)
-			return "";
-		return sourceImagesLocation + corpus + "/";
-	}
-
 	public String getWebserviceUrl(String corpus) {
 		String url = adminProps.getProperty("blsUrl");
 		if (!url.endsWith("/"))

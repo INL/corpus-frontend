@@ -543,7 +543,7 @@ var corpora = {};
 
 		function uploadFormat(file) {
 			var formData = new FormData();
-			formData.append("data", file);
+			formData.append("data", file, file.name);
 
 			$.ajax(CORPORA.blsUrl + "/input-formats/", {
 				data: formData,
@@ -631,7 +631,11 @@ var corpora = {};
 			var fileContents = editor.getValue();
 			var fileName = $formatName.val() + "." + $formatType.selectpicker("val");
 			
-			var file = new File([new Blob([fileContents])], fileName);
+			// IE11 does not support File constructor.
+			//var file = new File([new Blob([fileContents])], fileName);
+			var file = new Blob([fileContents]);
+			file.name = fileName;
+			file.lastModifiedDate = new Date();			
 			uploadFormat(file);
 		});
 	}

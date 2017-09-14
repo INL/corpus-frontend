@@ -59,12 +59,9 @@ public class QueryServiceHandler {
 					reason = connection.getResponseMessage();
 					throw new IOException(code + " " + reason);
 				}
-				InputStream response;
-				if (code == 401)
-					response = connection.getErrorStream();
-				else
-					response = connection.getInputStream();
-				return StringUtils.join(IOUtils.readLines(response, "utf-8"), "\n");
+				try (InputStream response = code == 401 ? connection.getErrorStream() : connection.getInputStream()) {
+				    return StringUtils.join(IOUtils.readLines(response, "utf-8"), "\n");
+				}
 			} finally {
 				connection.disconnect();
 			}

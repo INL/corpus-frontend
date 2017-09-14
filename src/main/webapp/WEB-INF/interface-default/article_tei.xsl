@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:tei="http://www.tei-c.org/ns/1.0" exclude-result-prefixes="tei">
+<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xpath-default-namespace="http://www.tei-c.org/ns/1.0">
 	<xsl:output encoding="utf-8" method="html" omit-xml-declaration="yes" />
 	<xsl:param name="source_images" select="''"/>
 
@@ -9,9 +9,9 @@
         (Error code: <xsl:value-of select="code" />)
 	</xsl:template>
 	
-	<xsl:template match="teiHeader|tei:teiHeader" />
+	<xsl:template match="teiHeader" />
 	
-	<xsl:template match="body|tei:body">
+	<xsl:template match="body">
 		<div class="col-xs-12 contentbox">
 			<ul class="nav nav-tabs" id="articletabs">
 				<li class="active">
@@ -42,13 +42,13 @@
 		</div>
 	</xsl:template>
 	
-	<xsl:template match="p|tei:p">
+	<xsl:template match="p">
 		<p>
 			<xsl:apply-templates />
 		</p>
 	</xsl:template>
 	
-	<xsl:template match="lb|tei:lb">
+	<xsl:template match="lb">
 		<br/>
 		
 		<xsl:variable name="number" select="@n" />
@@ -57,7 +57,7 @@
 		</xsl:if>
 	</xsl:template>
 	
-  	<xsl:template match="w|tei:w">
+  	<xsl:template match="w">
 		<xsl:variable name="lemma" select="@lemma" />
 		<span class="word" ref="tooltip">
 			<xsl:attribute name="title">
@@ -68,18 +68,14 @@
 		<xsl:text> </xsl:text>
 	</xsl:template>
 
-	<xsl:template match="del|tei:del">
+	<xsl:template match="del">
 	<span style="text-decoration:line-through"><xsl:apply-templates/></span>
 	</xsl:template>  
 
-  	<xsl:template match="hl|tei:hl">
-		<a>
-			<xsl:attribute name="name">
-				<xsl:value-of select="generate-id()" />
-			</xsl:attribute>
-			<xsl:attribute name="class">anchor hl</xsl:attribute>
+  	<xsl:template match="hl">
+		<span class="hl">
 			<xsl:apply-templates />
-		</a>
+		</span>
 	</xsl:template>
 	
 </xsl:stylesheet>

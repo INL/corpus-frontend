@@ -20,6 +20,26 @@ import org.apache.commons.lang.StringUtils;
  */
 public class QueryServiceHandler {
 
+
+
+	public static class QueryException extends Exception{
+		private int httpStatusCode;
+		private String reason;
+
+		public QueryException(int code, String reason) {
+			this.httpStatusCode = code;
+			this.reason = reason;
+		}
+
+		public int getHttpStatusCode() {
+			return httpStatusCode;
+		}
+
+		public String getReason() {
+			return reason;
+		}
+	}
+
 	private String webserviceBaseUrl;
 
 	public QueryServiceHandler(String url) {
@@ -33,21 +53,21 @@ public class QueryServiceHandler {
 	 *            parameters to send
 	 * @return the response
 	 * @throws IOException
+	 * @throws QueryException
 	 */
-	public String makeRequest(Map<String, String[]> params) throws IOException {
+	public String makeRequest(Map<String, String[]> params) throws IOException, QueryException {
 		String requestUrl = makeQueryString(params);
 
 		System.out.println("Request: " + requestUrl);
 		return fetchXml(requestUrl);
 	}
 
-	private static String fetchXml(String url) throws IOException {
+	private static String fetchXml(String url) throws IOException, QueryException {
 		int code = -1;
 		String reason = null;
 		try {
 			URL urlObj = new URL(url);
-			HttpURLConnection connection = (HttpURLConnection) urlObj
-					.openConnection();
+			HttpURLConnection connection = (HttpURLConnection) urlObj.openConnection();
 			try {
 				connection.setRequestProperty("Accept", "application/xml");
 				connection.setRequestMethod("GET");
@@ -57,8 +77,9 @@ public class QueryServiceHandler {
 				// (we use the 401 to test if we are allowed to view the document contents)
 				if ( (code < 200 || code > 299) && code != 401) {
 					reason = connection.getResponseMessage();
-					throw new IOException(code + " " + reason);
+					throw new QueryException(code, reason);
 				}
+
 				try (InputStream response = code == 401 ? connection.getErrorStream() : connection.getInputStream()) {
 				    return StringUtils.join(IOUtils.readLines(response, "utf-8"), "\n");
 				}
@@ -67,8 +88,6 @@ public class QueryServiceHandler {
 			}
 		} catch (MalformedURLException e) {
 			throw new IOException("Malformed URL", e);
-		} catch (Exception e) {
-			throw new IOException("Error fetching response", e);
 		}
 	}
 
@@ -95,8 +114,7 @@ public class QueryServiceHandler {
 									builder.append("&");
 								builder.append(key);
 								builder.append("=");
-								builder.append(URLEncoder
-										.encode(value, "UTF-8"));
+								builder.append(URLEncoder.encode(value, "UTF-8"));
 							}
 						}
 					}

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:tei="http://www.tei-c.org/ns/1.0" exclude-result-prefixes="tei">
+<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 	<xsl:output encoding="utf-8" method="html" omit-xml-declaration="yes" />
 
 	<xsl:template match="error">
@@ -11,35 +11,33 @@
 	<xsl:template match="docPid|docFields" />
 	
 	<xsl:template match="docInfo">
-		<div class="col-xs-12 contentbox">
-			<h2>
-				<xsl:value-of select="*[name()=/*//titleField]" />
-			</h2>
-			
-			<div class="row">
-				<div class="col-xs-3 col-lg-2">
-					<i>Hits in document:</i>
-				</div>
-				<div class="col-xs-9 col-lg-10" id="divHitsInDocument">
-					<!-- will be filled in from article.js -->
-				</div>
-
-				<xsl:for-each select="child::*[name()!='mayView']">
-					<div class="col-xs-3 col-lg-2">
-						<i>
-						<!-- <xsl:value-of select="local-name()" /> -->
-						<xsl:call-template name="elementFriendlyName" />:
-						</i>
-					</div>
-					<div class="col-xs-9 col-lg-10">
-						<xsl:value-of select="." />
-						<xsl:if test="../mayView/text() = 'true' and local-name() = 'lengthInTokens' and number(text()) > 5000">
-						(first 5000 tokens shown)
-						</xsl:if>
-					</div>
-					<div class="clearfix"></div>
-				</xsl:for-each> 
+		<h2 style="word-break:break-all;">
+			<xsl:value-of select="*[name()=/*//titleField]" />
+		</h2>
+		
+		<div class="row">
+			<div class="col-xs-3 col-lg-2">
+				<i>Hits in document:</i>
 			</div>
+			<div class="col-xs-9 col-lg-10" id="divHitsInDocument">
+				<!-- will be filled in from article.js -->
+			</div>
+
+			<xsl:for-each select="child::*[name()!='mayView']">
+				<div class="col-xs-3 col-lg-2">
+					<i>
+					<!-- <xsl:value-of select="local-name()" /> -->
+					<xsl:call-template name="elementFriendlyName" />:
+					</i>
+				</div>
+				<div class="col-xs-9 col-lg-10">
+					<xsl:value-of select="." />
+					<xsl:if test="../mayView/text() = 'true' and local-name() = 'lengthInTokens' and number(text()) > 5000">
+					(first 5000 tokens shown)
+					</xsl:if>
+				</div>
+				<div class="clearfix"></div>
+			</xsl:for-each> 
 		</div>
 	</xsl:template>
 

@@ -49,6 +49,7 @@ import nl.inl.corpuswebsite.response.HelpResponse;
 import nl.inl.corpuswebsite.response.SearchResponse;
 import nl.inl.corpuswebsite.utils.CorpusConfig;
 import nl.inl.corpuswebsite.utils.QueryServiceHandler;
+import nl.inl.corpuswebsite.utils.QueryServiceHandler.QueryException;
 import nl.inl.corpuswebsite.utils.WebsiteConfig;
 
 /**
@@ -300,7 +301,7 @@ public class MainServlet extends HttpServlet {
 				String jsonResult = handler.makeRequest(params);
 
 				corpusConfigs.put(corpus, new CorpusConfig(xmlResult, jsonResult));
-			} catch (IOException | SAXException | ParserConfigurationException e) {
+			} catch (IOException | SAXException | ParserConfigurationException | QueryException e) {
 				throw new RuntimeException(e);
 			}
 		}
@@ -399,24 +400,20 @@ public class MainServlet extends HttpServlet {
 	}
 
 	/**
-	 * Get a file from the directory belonging to this corpus.
-	 *
-	 * If Corpus is null, the default file is returned.
-	 * If the file cannot be found (interface data directory not configured, or simply missing, or the corpus has no custom directory), the default file is returned.
-	 *
-	 * The default file is only returned when getDefaultIfMissing is true. Null is returned otherwise.
-	 * Note that an exception is thrown if the default file is also missing, so for any files that might not have a default pass false for getDefaultIfMissing.
+	 * Get a file from the directory belonging to this corpus and return it, or return the default file if the corpus-specific file cannot be located.
+	 * The default file is returned when:
+	 * corpus is null, corpus is a user-uploaded corpus, the interface data directory is not configured, or the file is simply missing
+	 * This is provided the default file exists and getDefaultIfMissing is true, otherwise null will be returned.
 	 *
 	 * @param corpus - corpus for which to get the file. If null, falls back to the default files.
 	 * @param fileName - path to the file relative to the directory for the corpus.
-	 * @param getDefaultIfMissing - attempt to retrieve the default file if the file was not found.
+	 * @param getDefaultIfMissing try to get the default file if the corpus-specific file is missing?
 	 * @return the file, or null if not found
-	 * @throws RuntimeException when getDefaultIfMissing is true, and the default file is missing.
 	 */
 	// TODO re-enable caching
 	public InputStream getProjectFile(String corpus, String fileName, boolean getDefaultIfMissing) {
 		if (corpus == null || isUserCorpus(corpus) || !adminProps.containsKey("corporaInterfaceDataDir") )
-			return getDefaultIfMissing ? getDefaultProjectFile(fileName) : null;
+			return getDefaultProjectFile(fileName);
 
 		try {
 			Path baseDir = Paths.get(adminProps.getProperty("corporaInterfaceDataDir"));
@@ -426,23 +423,20 @@ public class MainServlet extends HttpServlet {
 				return new FileInputStream(new File(filePath.toString()));
 
 			// File path points outside the configured directory!
-			return getDefaultIfMissing ? getDefaultProjectFile(fileName) : null;
+			return getDefaultProjectFile(fileName);
 		} catch (FileNotFoundException | SecurityException e) {
-			return getDefaultIfMissing ? getDefaultProjectFile(fileName) : null;
+			return getDefaultProjectFile(fileName);
 		}
 	}
 
 	/**
+	 * Gets a file from the interface-default directory in the project.
 	 *
 	 * @param fileName The file to get. This should NOT start with "/"
-	 * @return the InputStream for the file.
-	 * @throws RuntimeException when the file cannot be found.
+	 * @return the InputStream for the file. Or null if this file cannot be found.
 	 */
 	private InputStream getDefaultProjectFile(String fileName) {
-		InputStream stream = getServletContext().getResourceAsStream("/WEB-INF/interface-default/" + fileName);
-		if (stream == null)
-			throw new RuntimeException("Default fallback for file " + fileName + " missing!");
-		return stream;
+		return getServletContext().getResourceAsStream("/WEB-INF/interface-default/" + fileName);
 	}
 
 	public InputStream getHelpPage(String corpus) {
@@ -453,11 +447,20 @@ public class MainServlet extends HttpServlet {
 		return getProjectFile(corpus, "about.inc", true);
 	}
 
+	/**
+	 * Get the url to blacklab-server for this corpus.
+	 * The url will always end in "/"
+	 *
+	 * @param corpus the corpus for which to generate the url, if null, the base blacklab-server url will be returned.
+	 * @return the url
+	 */
 	public String getWebserviceUrl(String corpus) {
 		String url = adminProps.getProperty("blsUrl");
 		if (!url.endsWith("/"))
 			url += "/";
-		url += corpus + "/";
+
+		if (corpus != null && !corpus.isEmpty())
+			url += corpus + "/";
 		return url;
 	}
 
@@ -474,18 +477,36 @@ public class MainServlet extends HttpServlet {
 		return adminProps.getProperty("googleAnalyticsKey", "");
 	}
 
-	public String getStylesheet(String corpus, String stylesheetName) {
-		String key = corpus + "__" + stylesheetName;
-		String stylesheet = stylesheets.get(key);
-		if (stylesheet == null) {
-			try ( InputStream is = getProjectFile(corpus, stylesheetName, true)) {
-				stylesheet = IOUtils.toString(is, StandardCharsets.UTF_8);
-			} catch (IOException e) {
-				throw new RuntimeException(e);
+	public String getStylesheet(String corpus, String corpusDataFormat) throws QueryException {
+
+		String fileName = "article_" + corpusDataFormat + ".xsl";
+		String key = corpus + "__" + fileName;
+
+		// Get from cache
+		if (stylesheets.containsKey(key))
+			return stylesheets.get(key);
+
+		// Get from explicitly defined xsl files for corpus or defaults.
+		try (InputStream is = getProjectFile(corpus, fileName, true)) {
+			if (is != null) {
+				String stylesheet = IOUtils.toString(is, StandardCharsets.UTF_8);
+				stylesheets.put(key, stylesheet);
+				return stylesheet;
 			}
-			stylesheets.put(key, stylesheet);
+		} catch (IOException e) {
+			log("Could not read xsl file from disk: " + fileName, e);
+			// Don't bail yet, can still try to get from blacklab-server
 		}
-		return stylesheet;
+
+		// Still nothing, get an autogenned xsl from blacklab-server
+		try {
+			QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(null) + "input-formats/" + corpusDataFormat + "/xslt");
+			String stylesheet = handler.makeRequest(null);
+			stylesheets.put(key, stylesheet);
+			return stylesheet;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**

@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:folia="http://ilk.uvt.nl/folia">
+<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xpath-default-namespace="http://ilk.uvt.nl/folia">
 
     <xsl:output encoding="utf-8" method="html" omit-xml-declaration="yes" />
     <xsl:param name="source_images" select="''"/>
 
-    <xsl:template match="error|folia:error">
+    <xsl:template match="error">
         <h1>Error</h1>
-        <xsl:value-of select="message|folia:message" />
-        (Error code: <xsl:value-of select="code|folia:code" />)
+        <xsl:value-of select="message" />
+        (Error code: <xsl:value-of select="code" />)
     </xsl:template>
     
-    <xsl:template match="metadata|folia:metadata" />
+    <xsl:template match="metadata" />
     
-    <xsl:template match="text|folia:text">
+    <xsl:template match="text">
         <div class="col-xs-12 contentbox">
             <ul class="nav nav-tabs" id="articletabs">
                 <li class="active">
@@ -31,8 +31,8 @@
                 </div>
                 <xsl:if test="$source_images != ''">
                 <div class="tab-pane" id="images">
-                    <xsl:for-each select="//interpGrp[@type='images']|//folia:interpGrp[@type='images']">
-                        <xsl:for-each select=".//interp|.//folia:interp">
+                    <xsl:for-each select="//interpGrp[@type='images']">
+                        <xsl:for-each select=".//interp">
                             <img class="img-polaroid"><xsl:attribute name="src"><xsl:value-of select="$source_images"/><xsl:value-of select="@value"/></xsl:attribute></img>
                             <br/>
                         </xsl:for-each>
@@ -43,40 +43,37 @@
         </div>
     </xsl:template>
     
-    <xsl:template match="head|folia:head">
+    <xsl:template match="head">
         <b>
             <xsl:apply-templates />
         </b>
     </xsl:template>
     
-    <xsl:template match="p|folia:p">
+    <xsl:template match="p">
         <p>
             <xsl:apply-templates />
         </p>
     </xsl:template>
     
     <!-- We show w/t explicitly. Don't also show t elements for paragraphs or sentences --> 
-    <xsl:template match="p/t|folia:p/folia:t|s/t|folia:s/folia:t"/>
+    <xsl:template match="p/t|s/t"/>
     
-    <xsl:template match="w|folia:w">
-        <xsl:variable name="lemma" select="lemma/@class|folia:lemma/@class" />
+    <xsl:template match="w">
+        <xsl:variable name="lemma" select="lemma/@class" />
         <span class="word" ref="tooltip">
             <xsl:attribute name="title">
                 <xsl:value-of select="$lemma" />
             </xsl:attribute>
-            <xsl:value-of select="folia:t" />
+            <xsl:value-of select="t" />
         </span>
         <xsl:text> </xsl:text>
     </xsl:template>
   
-    <xsl:template match="hl|folia:hl">
-        <a>
-            <xsl:attribute name="name">
-                <xsl:value-of select="generate-id()" />
-            </xsl:attribute>
-            <xsl:attribute name="class">anchor hl</xsl:attribute>
-            <xsl:apply-templates />
-        </a>
-    </xsl:template>
+
+  	<xsl:template match="hl">
+		<span class="hl">
+			<xsl:apply-templates />
+		</span>
+	</xsl:template>
     
 </xsl:stylesheet>

@@ -24,7 +24,7 @@ public class XslTransformer {
 	private Map<String, String> params = new HashMap<>();
 
 	public XslTransformer() {
-		tFactory = TransformerFactory.newInstance();
+		tFactory = TransformerFactory.newInstance("net.sf.saxon.TransformerFactoryImpl", this.getClass().getClassLoader());
 	}
 
 	public String transform(String source, String stylesheet)
@@ -41,6 +41,7 @@ public class XslTransformer {
 			optimusPrime.setParameter(key, params.get(key));
 
 		optimusPrime.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+		optimusPrime.setOutputProperty(OutputKeys.INDENT, "yes");
 		optimusPrime.transform(ssSource, streamResult);
 
 		return result.toString();

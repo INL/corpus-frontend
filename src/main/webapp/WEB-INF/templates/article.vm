@@ -4,6 +4,11 @@
 <a href="#" onclick="return ANCHORS.gotoPrevious();"><b>&laquo; Previous hit</b></a> | 
 <a href="#" onclick="return ANCHORS.gotoNext();"><b>Next hit &raquo;</b></a>
 </div>
+<div class="col-xs-12 contentbox">
 $!article_meta
+</div>
+<div class="col-xs-12 contentbox">
 $!article_content
+</div>
+
 #parse("footer.vm")

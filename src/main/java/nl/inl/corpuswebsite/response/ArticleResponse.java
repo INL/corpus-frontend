@@ -16,6 +16,7 @@ import javax.xml.transform.TransformerException;
 import nl.inl.corpuswebsite.BaseResponse;
 import nl.inl.corpuswebsite.MainServlet;
 import nl.inl.corpuswebsite.utils.QueryServiceHandler;
+import nl.inl.corpuswebsite.utils.QueryServiceHandler.QueryException;
 import nl.inl.corpuswebsite.utils.UrlParameterFactory;
 import nl.inl.corpuswebsite.utils.XslTransformer;
 
@@ -25,10 +26,10 @@ import nl.inl.corpuswebsite.utils.XslTransformer;
 public class ArticleResponse extends BaseResponse {
 
 	/** For getting article */
-	private QueryServiceHandler webservice = null;
+	private QueryServiceHandler articleContentRequest = null;
 
 	/** For getting metadata */
-	private QueryServiceHandler webserviceMeta;
+	private QueryServiceHandler articleMetadataRequest;
 
 	private XslTransformer transformer = new XslTransformer();
 
@@ -44,38 +45,67 @@ public class ArticleResponse extends BaseResponse {
 	@Override
 	public void init(HttpServletRequest request, HttpServletResponse response, MainServlet servlet, String corpus, String contextPathAbsolute, String uriRemainder) throws ServletException {
 		super.init(request, response, servlet, corpus, contextPathAbsolute, uriRemainder);
-		String corpusDataFormat = servlet.getCorpusConfig(corpus).getCorpusDataFormat();
-		articleStylesheet = servlet.getStylesheet(corpus, "article_" + corpusDataFormat + ".xsl");
-		metadataStylesheet = servlet.getStylesheet(corpus, "article_meta.xsl");
 	}
 
 	@Override
 	protected void completeRequest() {
-		String pid = this.getParameter("doc", "");
-		if (pid.length() > 0) {
-			webservice = new QueryServiceHandler(
-					servlet.getWebserviceUrl(corpus) + "docs/" + pid
-							+ "/contents");
-			webserviceMeta = new QueryServiceHandler(
-					servlet.getWebserviceUrl(corpus) + "docs/" + pid);
+		try {
+			String corpusDataFormat = servlet.getCorpusConfig(corpus).getCorpusDataFormat();
+			articleStylesheet = servlet.getStylesheet(corpus, corpusDataFormat);
+			metadataStylesheet = servlet.getStylesheet(corpus, "meta");
+		} catch (QueryException e) {
+			// this might happen if the import format is deleted after a corpus was created.
+			// then blacklab-server can obviously no longer generate the xslt based on the import format.
+			// TODO clean this up, response should not have to clean up obscure errors from MainServlet.
+			if (e.getHttpStatusCode() == 404) {
+				// use a default xslt that just outputs all text
+				articleStylesheet = metadataStylesheet =
+				"<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+				"<xsl:stylesheet version=\"2.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">" +
+				"<xsl:output encoding=\"utf-8\" method=\"html\" omit-xml-declaration=\"yes\" />" +
+				"</xsl:stylesheet>";
+			} else {
+				throw new RuntimeException(e);
+			}
 		}
+
+
+		String pid = this.getParameter("doc", "");
+
+		if (pid == null || pid.isEmpty()) {
+			try {
+				response.sendError(HttpServletResponse.SC_NOT_FOUND);
+				return;
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
+		articleContentRequest = new QueryServiceHandler(servlet.getWebserviceUrl(corpus) + "docs/" + pid + "/contents");
+		articleMetadataRequest = new QueryServiceHandler(servlet.getWebserviceUrl(corpus) + "docs/" + pid);
 
 		if (request.getParameterMap().size() > 0) {
 			// get parameter values
 			String query = this.getParameter("query", "");
+			String userId = MainServlet.getCorpusOwner(corpus);
 
-			Map<String, String[]> parameters = UrlParameterFactory
-					.getSourceParameters(query, null);
-			parameters.put("wordend", new String[] {"5000"}); // show max. 5000 words of content (TODO: paging)
-            String userId = null;
-            if (this.corpus.contains(":")) {
-                userId = this.corpus.split(":")[0];
-            }
-            if (userId != null) {
-                parameters.put("userid", new String[] { userId });
-            }
+			Map<String, String[]> contentRequestParameters = UrlParameterFactory.getSourceParameters(query, null);
+			Map<String, String[]> metadataRequestParameters = new HashMap<>();
+			if (userId != null) {
+				contentRequestParameters.put("userid", new String[] { userId });
+                metadataRequestParameters.put("userid", new String[] { userId });
+			}
+
+			// show max. 5000 words of content (TODO: paging)
+			// paging will also need edits in blacklab,
+			// since when you only get a subset of the document without begin and ending, the top of the xml tree will be missing
+			// and xslt will not match anything (or match the wrong elements)
+			// so blacklab will have to walk the tree and insert those tags in some manner.
+			contentRequestParameters.put("wordend", new String[] {"5000"});
+
+
 			try {
-				String xmlResult = webservice.makeRequest(parameters);
+				String xmlResult = articleContentRequest.makeRequest(contentRequestParameters);
 				if (xmlResult.contains("NOT_AUTHORIZED")) {
 					context.put("article_content", "");
 				} else {
@@ -89,12 +119,7 @@ public class ArticleResponse extends BaseResponse {
 					context.put("article_content", transformer.transform(xmlResult, articleStylesheet));
 				}
 
-				Map<String, String[]> metaParam = new HashMap<>();
-				// metaParam.put("outputformat", new String[] {"xml"});
-                if (userId != null) {
-                    metaParam.put("userid", new String[] { userId });
-                }
-				xmlResult = webserviceMeta.makeRequest(metaParam);
+				xmlResult = articleMetadataRequest.makeRequest(metadataRequestParameters);
 				transformer.clearParameters();
 				String htmlResult = transformer.transform(xmlResult, metadataStylesheet);
 				context.put("article_meta", htmlResult);
@@ -102,7 +127,17 @@ public class ArticleResponse extends BaseResponse {
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			} catch (TransformerException e) {
+				// TODO handle this, can be caused by faulty xslt generated by blacklab-server
 				throw new RuntimeException(e);
+			} catch (QueryException e) {
+				if (e.getHttpStatusCode() == 404) {
+					try {
+						response.sendError(HttpServletResponse.SC_NOT_FOUND);
+						return;
+					} catch (IOException e1) {
+						throw new RuntimeException(e1);
+					}
+				}
 			}
 		}
 

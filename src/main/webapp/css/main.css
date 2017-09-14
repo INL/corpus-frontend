@@ -176,6 +176,7 @@ tr.concordance {
 }
 
 div.hitscroll {
+	display:none; /* unhide with js */
 	position: fixed;
 	top: 100px;
 	left: 60%;
@@ -187,7 +188,7 @@ div.hitscroll {
 }
 
 div.hitscroll a {
-	color: #dddddd; 
+	color: #eeeeee; 
 }
 
 #filteroverview {
@@ -198,7 +199,11 @@ div.hitscroll a {
 
 /* article? */
 
-.activeLink {
+.hl {
+	font-weight: bold;
+}
+
+.hl.active {
 	background-color: #FFFF00;
 }
 

@@ -104,35 +104,50 @@
 			</div>
 			
 			<div class="modal-body">
+				<ul class="nav nav-tabs" id="searchTabs">
+					<li class="active"><a href="#format-editor" data-toggle="tab">Simple</a></li>
+					<li><a href="#format-wizard" data-toggle="tab">Advanced</a></li>
+				</ul>
+				<div class="tab-content">
+					<div class="tab-pane active" id="format-editor">
+						
+						<div style="display:flex; align-items: flex-end; justify-content: space-between;">
+							<div class="form-group" style="margin-right: 50px; flex: 1 1 auto;">
+								<label for="format_name">Format name</label>
+					            <div class="input-group" style="width:100%">
+						            <input type="text" id="format_name" name="format_name" class="form-control" />
+						            <select id="format_type" class="selectpicker" data-width="auto" data-style="btn-primary">
+						            	<option label="YAML" value="yaml" selected>YAML</option>
+						            	<option label="JSON" value="json">JSON</option>
+						            </select>
+					            </div>
+							</div>
+	
+							<div class="form-group" style="flex: 0 0 auto;">
+								<label style="display:block;">Load a file</label>
+							
+								<span class="btn btn-primary" style="position:relative;">
+									<input type="file" name="format_file" id="format_file" style="position:absolute;left:0;top:0;width:0px;height:100%;padding-left:100%;opacity:0;cursor:pointer;overflow:hidden;"/>
+									Open file...
+								</span>
+								
+								<select class="selectpicker" id="format_preset" data-autoupdate="format">
+									<!-- options filled in by clientside javascript -->
+								</select>
+								
+								<button type="button" name="format_download" id="format_download" class="btn btn-primary" title="Load preset">Load preset</button>
+							</div>
+						</div>
+						
 				
-				<span class="btn btn-primary" style="position:relative;">
-					<input type="file" name="format_file" id="format_file" style="position:absolute;left:0;top:0;width:0px;height:100%;padding-left:100%;opacity:0;cursor:pointer;overflow:hidden;"/>
-					Open file...
-				</span>
-				
-				<select class="selectpicker" id="format_preset" data-autoupdate="format">
-					<!-- options filled in by clientside javascript -->
-				</select>
-				<button type="button" name="format_download" id="format_download" class="btn btn-primary" title="Load preset">Load preset</button>
-			
-				<hr>
-		
-				<div class="form-group">
-					<label for="format_name">Format name</label>
-		            <div class="input-group" style="width:100%;">
-			            <input type="text" id="format_name" name="format_name" class="form-control" />
-			            <select id="format_type" class="selectpicker" data-width="auto" data-style="btn-primary">
-			            	<option label="YAML" value="yaml" selected>YAML</option>
-			            	<option label="JSON" value="json">JSON</option>
-			            </select>
-		            </div>
+						<textarea id="format_editor" style="width:100%;"></textarea>
+					</div>
+					<div class="tab-pane" id="format-wizard">
+						<div id="configwizard-root"></div>
+					</div>
 				</div>
 				
-				<textarea id="format_editor" style="width:100%;"></textarea>
-				
-				<div id="format_error" class="alert alert-danger" style="display:none; margin-top:20px;">
-				</div>
-				
+				<div id="format_error" class="alert alert-danger" style="display:none; margin-top:20px;"></div>
 			</div>
 			
 			<div class="modal-footer">
@@ -231,6 +246,7 @@
 </div>
 
 
+<link rel="stylesheet" href="$pathToTop/configwizard/main.css">
 <link rel="stylesheet" href="$pathToTop/css/vendor/codemirror.css">
 <link rel="stylesheet" href="$pathToTop/css/corpora.css">
 
@@ -238,5 +254,6 @@
 <script src="$pathToTop/js/vendor/codemirror/yaml.js"></script>
 <script src="$pathToTop/js/vendor/codemirror/javascript.js"></script>
 <script src="$pathToTop/js/corpora.js"></script>
+<script src="$pathToTop/configwizard/main.js"></script>
 	
 #parse("footer.vm")

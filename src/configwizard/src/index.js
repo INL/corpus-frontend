@@ -23,7 +23,7 @@ const renderApp = () => {
             <App/>
         </Provider>,
         
-        document.getElementById('root')
+        document.getElementById('configwizard-root')
     );
 }
 if (module.hot) {

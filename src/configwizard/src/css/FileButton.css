@@ -1,0 +1,33 @@
+.button-file {
+    /* font-size: 1em; */
+    position: relative;
+    background-color: rgb(35, 170, 240);
+    border: 1px solid rgb(0, 152, 215);
+    /* margin-top: 15px; */
+    /* border-radius: 4px; */
+    
+    /* padding: 6px 10px; */
+    /* color: rgba(255,255,255,0.95); */
+    font-weight: bold;
+    /* text-shadow: 0.05em 0.05em rgba(0,0,0,0.15); */
+    /* margin: 10px auto 10px auto; */
+    /* display: block;   */
+}
+
+.button-file:hover {
+  background-color: rgb(24, 152, 218);
+  border: 1px solid rgb(0, 135, 192);
+}
+
+
+.button-file input {
+  position: absolute;
+  top:0;
+  left: 0;
+  width: 0px;
+  height: 100%;
+  padding-left:100%;
+  opacity:0;
+  cursor:pointer;
+  overflow: hidden;
+}

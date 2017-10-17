@@ -1,0 +1,125 @@
+.xml-tree {
+    padding-left: 0.5em; /* sync with .node negative margin-left */
+    position: relative;
+}
+
+.xml-tree-dropdown-wrapper {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 0px;
+    width: 0px;
+    overflow: visible;
+    z-index: 1000;
+}
+
+/********/
+/* node */
+/********/
+
+.node {
+    text-align: left;
+    padding-left: 1.6em;
+    margin-left: -0.5em; /* sync with .xml-tree padding-left */
+    margin-top:6px;
+}
+
+.node > button {
+    margin-top: inherit;
+}
+
+.node-expand {
+    cursor: pointer;
+    background-color: #B1B1B1;
+    color: rgba(255,255,255,0.95);
+    border-radius: 1px;
+    font-weight: 600;
+    display: inline-block;
+    text-align: center;
+
+    position: relative;
+    width: 1.25em;
+    height: 1.25em;
+    left: -1.6em; /* sync with node padding-left */
+    margin-right: -1.25em; /* sync with width */
+}
+
+/*****************/
+/* node-property */
+/*****************/
+
+.node-property {
+    margin-right: 8px;
+    white-space: nowrap;
+    color: #515151;
+    /* color: pink; */
+    /* line-height: 125%;     */
+    display: inline-block;
+}
+
+.node-property > .highlight {
+    outline: 1px solid blue;
+}
+
+.node-property > .name, 
+.node-property > .value {
+    display: inherit;
+
+    border-radius: 100px;
+    background-color: white;
+    border: none;
+    margin-right: 4px;
+
+    cursor: pointer;
+}
+
+.node-property > .name {
+    padding-right: 4px;
+}
+
+.node-property > .name:before {
+    display: inherit;
+    
+    color: rgba(255,255,255,0.95);
+    text-shadow: 1px 1px rgba(0,0,0,0.5);
+    
+    font-weight: 600;
+    padding: 0em 0.1em;
+    min-width: 0.4em;
+    text-align: center;
+    
+    margin-right: 4px;
+
+    border-top-left-radius: inherit;
+    border-bottom-left-radius: inherit;
+}
+
+
+.node-property > .value {
+    border-left: 4px solid;
+    padding: 0px 4px;
+}
+
+.node-property.element > .value {
+    border-color: rgb(190, 0, 0);
+}
+.node-property.element > .name:before {
+    background-color: rgb(190, 0, 0);
+    content: "<>";
+}
+
+.node-property.text > .value {
+    border-color: #696969;
+}
+.node-property.text > .name:before {
+    background-color: #696969;
+    content: "#";
+}
+
+.node-property.attribute > .value {
+    border-color: rgb(130, 80, 255);
+}
+.node-property.attribute > .name:before {
+    background-color: rgb(130, 80, 255);
+    content: "@";
+}

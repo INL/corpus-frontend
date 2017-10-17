@@ -1,0 +1,26 @@
+{
+  "name": "xpathbuilder-test",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "fs-extra": "^4.0.2",
+    "react": "^15.6.1",
+    "react-bootstrap": "^0.31.3",
+    "react-dom": "^15.6.1",
+    "react-redux": "^5.0.6",
+    "react-redux-form": "^1.14.2",
+    "react-scripts": "1.0.11",
+    "redux": "^3.7.2",
+    "redux-freeze": "^0.1.5",
+    "redux-thunk": "^2.2.0",
+    "reselect": "^3.0.1"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "postbuild": "node ./scripts/post-build.js ../main/webapp/configwizard",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  },
+  "devDependencies": {}
+}

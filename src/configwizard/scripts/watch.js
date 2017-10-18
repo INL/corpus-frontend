@@ -1,11 +1,11 @@
 process.env.BABEL_ENV = 'production';
 process.env.NODE_ENV = 'production';
 
-require('react-scripts/config/env');
+require('../config/env');
 
 const util = require('util'); // for object logging
 const webpack = require('webpack');
-const config = require('react-scripts/config/webpack.config.prod');
+const config = require('../config/webpack.config.prod');
 
 config.watch = true;
 
@@ -30,16 +30,23 @@ const watcher = webpack(config).watch({
         console.warn(info.warnings)
     }
 
-    console.log("Did a recompile!");
+    console.log("Finished compiling.");
 });
 
-console.log("compiler should be watching now?");
+console.log("File watcher has been started.");
 
 const exitHandler = () => {
-    console.log("exithandler running");
-
-    watcher.close(() => console.log("closed watcher"));
-    process.exit();
+    new Promise((resolve, reject) => {
+        console.log("Stopping file watcher...");
+        watcher.close(resolve)
+    })
+    .then(() => {
+        console.log("File watcher stopped.")
+    })
+    .catch(error => {
+        console.warn("Could not stop file watcher!");
+    })
+    .then(() => process.exit());
 }
 
 process.on('SIGINT', exitHandler);

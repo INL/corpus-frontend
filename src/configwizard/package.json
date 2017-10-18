@@ -20,7 +20,8 @@
     "build": "react-scripts build",
     "postbuild": "node ./scripts/post-build.js ../main/webapp/configwizard",
     "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+	"watch": "node ./scripts/watch.js"
   },
   "devDependencies": {}
 }

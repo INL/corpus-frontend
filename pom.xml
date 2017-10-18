@@ -147,9 +147,11 @@
 			<!-- 
 				Execute the build of the config wizard project. 
 				This is simply "npm run build" in the main directory of the configwizard.
-				Note that built files are copied out to the main/webapp directory afterwards.
+				This only runs when executing "mvn package" to build the actual war.
+				To get incremental compilation run "npm run watch" in the configwizard directory from an external terminal.
+				This will recompile the files as edits are made.
+				N.B. it might be required to manually "refresh" the eclipse project before newly built sources are picked up by tomcat.
 			-->
-<!-- 
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>exec-maven-plugin</artifactId>
@@ -164,17 +166,13 @@
 				</executions>
 				<configuration>
 					<executable>npm</executable>
- -->
 					<!-- build needs to run in the main directory for the configwizard project -->
-<!-- 
 					<workingDirectory>./src/configwizard</workingDirectory>
 					<arguments>
-						<argument>run</argument>
-						<argument>build</argument>
+						<argument>npm install &amp;&amp; npm run build</argument>
 					</arguments>
 				</configuration>
 			</plugin>
--->
 		</plugins>
 
 		<pluginManagement>

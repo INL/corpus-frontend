@@ -105,6 +105,10 @@ hr {
 	padding-left:17px;
 	padding-right:17px;
 }
+.modal-fullwidth.in {
+	display: flex!important;	
+}
+
 .modal-fullwidth > .modal-dialog {
 	margin: 30px auto;
 	width: 100%;

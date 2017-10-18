@@ -75,6 +75,14 @@
 						</manifestEntries>
 					</archive>
 					
+					<webResources>
+						<resource>
+							<!-- relative to this file -->
+							<directory>src/configwizard/build/static</directory>
+							<targetPath>configwizard</targetPath>
+						</resource>
+					</webResources>
+					
 				</configuration>
 			</plugin>
 
@@ -141,6 +149,7 @@
 				This is simply "npm run build" in the main directory of the configwizard.
 				Note that built files are copied out to the main/webapp directory afterwards.
 			-->
+<!-- 
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>exec-maven-plugin</artifactId>
@@ -155,7 +164,9 @@
 				</executions>
 				<configuration>
 					<executable>npm</executable>
-					<!-- build needs to run in the main -->
+ -->
+					<!-- build needs to run in the main directory for the configwizard project -->
+<!-- 
 					<workingDirectory>./src/configwizard</workingDirectory>
 					<arguments>
 						<argument>run</argument>
@@ -163,7 +174,7 @@
 					</arguments>
 				</configuration>
 			</plugin>
-
+-->
 		</plugins>
 
 		<pluginManagement>

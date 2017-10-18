@@ -1,4 +1,3 @@
-import "../../css/bootstrap.css";
 import "../../css/TestForm.css";
 
 import React from 'react';

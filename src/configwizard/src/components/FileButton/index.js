@@ -1,5 +1,4 @@
 import '../../css/FileButton.css';
-import "../../css/bootstrap.css";
 
 import React from 'react';
 

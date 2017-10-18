@@ -96,19 +96,18 @@
 </div>
 
 <div class="modal fade modal-fullwidth" id="new-format-modal" role="dialog">
-	<div class="modal-dialog">
-		<div class="modal-content">
-			<div class="modal-header">
+	<div class="modal-dialog" style="display: flex; align-items: start;">
+		<div class="modal-content" style="display: flex; flex: auto; flex-direction: column; max-height: 100%;">
+			<div class="modal-header" style="flex: none;">
 				<h3>New import format</h3>
-				
 			</div>
 			
-			<div class="modal-body">
-				<ul class="nav nav-tabs" id="searchTabs">
+			<div class="modal-body" style="display: flex; flex-direction: column;">
+				<ul class="nav nav-tabs" id="searchTabs" style="flex: none;">
 					<li class="active"><a href="#format-editor" data-toggle="tab">Simple</a></li>
 					<li><a href="#format-wizard" data-toggle="tab">Advanced</a></li>
 				</ul>
-				<div class="tab-content">
+				<div class="tab-content" style="overflow-y: auto;">
 					<div class="tab-pane active" id="format-editor">
 						
 						<div style="display:flex; align-items: flex-end; justify-content: space-between;">
@@ -146,7 +145,7 @@
 					</div>
 				</div>
 				
-				<div id="format_error" class="alert alert-danger" style="display:none; margin-top:20px;"></div>
+				<div id="format_error" class="alert alert-danger" style="display:none; margin-top:20px; flex: none;"></div>
 			</div>
 			
 			<div class="modal-footer">
@@ -244,9 +243,7 @@
 	</div>
 </div>
 
-<!--
-<link rel="stylesheet" href="$pathToTop/configwizard/main.css">
--->
+<link rel="stylesheet" href="$pathToTop/configwizard/css/main.css">
 <link rel="stylesheet" href="$pathToTop/css/vendor/codemirror.css">
 <link rel="stylesheet" href="$pathToTop/css/corpora.css">
 
@@ -254,6 +251,6 @@
 <script src="$pathToTop/js/vendor/codemirror/yaml.js"></script>
 <script src="$pathToTop/js/vendor/codemirror/javascript.js"></script>
 <script src="$pathToTop/js/corpora.js"></script>
-<script src="$pathToTop/configwizard/main.js"></script>
+<script src="$pathToTop/configwizard/js/main.js"></script>
 	
 #parse("footer.vm")

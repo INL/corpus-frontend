@@ -22,7 +22,7 @@ const mapDispatchToProps = ({
 let XpathModal = ({open, handleConfirm, handleCancel, handleFileChange}) => (
     <Modal show={open} onHide={handleCancel}>
         <Modal.Header closeButton>
-            <Modal.Title>Modal heading</Modal.Title>
+            <Modal.Title>Modal heading edited</Modal.Title>
         </Modal.Header>
         <Modal.Body>
             <div style={ { minHeight: "500px", maxHeight: "500px", height: "500px", overflow: "auto" } }>

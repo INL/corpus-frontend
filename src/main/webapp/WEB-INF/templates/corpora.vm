@@ -139,7 +139,6 @@
 							</div>
 						</div>
 						
-				
 						<textarea id="format_editor" style="width:100%;"></textarea>
 					</div>
 					<div class="tab-pane" id="format-wizard">
@@ -245,8 +244,9 @@
 	</div>
 </div>
 
-
+<!--
 <link rel="stylesheet" href="$pathToTop/configwizard/main.css">
+-->
 <link rel="stylesheet" href="$pathToTop/css/vendor/codemirror.css">
 <link rel="stylesheet" href="$pathToTop/css/corpora.css">
 

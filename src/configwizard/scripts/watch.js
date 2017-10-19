@@ -5,9 +5,12 @@ require('../config/env');
 
 const util = require('util'); // for object logging
 const webpack = require('webpack');
-const config = require('../config/webpack.config.prod');
+const config = require('../config/webpack.config.prod'); //dev version does not write out css files, needs more research.
 
 config.watch = true;
+config.plugins.push(new webpack.ProgressPlugin({ profile: false }));
+
+console.log("\nStarting file watcher...");
 
 const watcher = webpack(config).watch({
     ignored: /node_modules/
@@ -33,20 +36,22 @@ const watcher = webpack(config).watch({
     console.log("Finished compiling.");
 });
 
-console.log("File watcher has been started.");
+console.log("\nFile watcher has been started.");
 
 const exitHandler = () => {
     new Promise((resolve, reject) => {
-        console.log("Stopping file watcher...");
+        console.log("\nStopping file watcher...");
         watcher.close(resolve)
     })
     .then(() => {
-        console.log("File watcher stopped.")
+        console.log("\nFile watcher stopped.")
+        return 0;
     })
     .catch(error => {
-        console.warn("Could not stop file watcher!");
+        console.warn("\nCould not stop file watcher!");
+        return 1;
     })
-    .then(() => process.exit());
+    .then(code => process.exit(code));
 }
 
 process.on('SIGINT', exitHandler);

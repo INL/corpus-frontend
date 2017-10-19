@@ -3,6 +3,8 @@ import {connect} from 'react-redux';
 
 import {Modal, Button} from 'react-bootstrap';
 
+import Sidebar from 'react-sidebar';
+
 import XmlTree from './XmlTree';
 import FileButton from './FileButton';
 
@@ -19,26 +21,49 @@ const mapDispatchToProps = ({
     handleFileChange: changeAndParseFile
 })
 
-let XpathModal = ({open, handleConfirm, handleCancel, handleFileChange}) => (
-    <Modal show={open} onHide={handleCancel}>
+let XpathModal = ({open, handleConfirm, handleCancel, handleFileChange, container}) => (
+    <Modal show={open} onHide={handleCancel} container={container}>
         <Modal.Header closeButton>
             <Modal.Title>Modal heading edited</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
-            <div style={ { minHeight: "500px", maxHeight: "500px", height: "500px", overflow: "auto" } }>
-                <XmlTree/>  
-            </div>
-            <div className="text-center">
-                <FileButton onChange={handleFileChange}/>
-            </div>
-
+        <Modal.Body style={{
+            maxHeight: "500px",
+            overflowY: "auto"
+        }}>
+            <XmlTree/>  
         </Modal.Body>
         <Modal.Footer>
-            <Button onClick={handleCancel}>Close</Button>
-            <Button onClick={handleConfirm}>Save</Button>
+            
+            <div className="text-center" style={{position: "relative"}}>
+                <FileButton onChange={handleFileChange}/>
+
+                <div style={{position:"absolute", right:0, top:0}}>
+                    <Button onClick={handleCancel}>Close</Button>
+                    <Button onClick={handleConfirm}>Save</Button>
+                </div>
+            </div>
         </Modal.Footer>
     </Modal>
 )
 
 
 export default connect(mapStateToProps, mapDispatchToProps)(XpathModal);
+
+
+class XpathSidebar extends React.Component {
+    onSetSidebarOpen = () => {
+
+    }
+
+    render = () => {
+        return (
+            <Sidebar sidebar={this.props.content} open={this.props.open} onSetOpen={this.onSetSidebarOpen}>
+            blah?
+            </Sidebar>
+        )
+    }
+}
+
+XpathSidebar = connect(mapStateToProps, mapDispatchToProps)(XpathSidebar);
+
+export {XpathSidebar}

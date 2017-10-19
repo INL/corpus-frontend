@@ -1,6 +1,7 @@
 .xml-tree {
     padding-left: 0.5em; /* sync with .node negative margin-left */
     position: relative;
+    min-height: 400px;
 }
 
 .xml-tree-dropdown-wrapper {

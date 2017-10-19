@@ -52,7 +52,6 @@
   "scripts": {
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
-    "postbuild_no_auto_run": "node ./scripts/post-build.js ../main/webapp/configwizard",
     "test": "node scripts/test.js --env=jsdom",
     "watch": "node ./scripts/watch.js"
   },

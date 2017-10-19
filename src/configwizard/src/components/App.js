@@ -138,12 +138,18 @@ const mapDispatchToProps = ({
     handleOpenEditor: openModal
 })
 
-const App = ({handleOpenEditor}) => (
-    
-    <div>
-        <ConfigForm model="forms.configForm" fieldDescriptors={fieldDescriptors} onEditorOpen={handleOpenEditor}/>
-        <XpathModal/>
-    </div>
-)
+
+class App extends React.Component {
+    render = () => {
+        const {handleOpenEditor} = this.props;
+
+        return (
+            <div className="modal-container">
+                <ConfigForm model="forms.configForm" fieldDescriptors={fieldDescriptors} onEditorOpen={handleOpenEditor} container={this}/>
+                <XpathModal container={this}/>
+            </div>
+        )
+    }
+}
 
 export default connect(mapStateToProps, mapDispatchToProps)(App);

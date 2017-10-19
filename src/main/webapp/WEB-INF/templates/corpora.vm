@@ -96,18 +96,18 @@
 </div>
 
 <div class="modal fade modal-fullwidth" id="new-format-modal" role="dialog">
-	<div class="modal-dialog" style="display: flex; align-items: start;">
-		<div class="modal-content" style="display: flex; flex: auto; flex-direction: column; max-height: 100%;">
-			<div class="modal-header" style="flex: none;">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
 				<h3>New import format</h3>
 			</div>
 			
-			<div class="modal-body" style="display: flex; flex-direction: column;">
-				<ul class="nav nav-tabs" id="searchTabs" style="flex: none;">
+			<div class="modal-body">
+				<ul class="nav nav-tabs" id="searchTabs">
 					<li class="active"><a href="#format-editor" data-toggle="tab">Simple</a></li>
 					<li><a href="#format-wizard" data-toggle="tab">Advanced</a></li>
 				</ul>
-				<div class="tab-content" style="overflow-y: auto;">
+				<div class="tab-content">
 					<div class="tab-pane active" id="format-editor">
 						
 						<div style="display:flex; align-items: flex-end; justify-content: space-between;">

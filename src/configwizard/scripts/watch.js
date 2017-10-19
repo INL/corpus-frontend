@@ -33,7 +33,7 @@ const watcher = webpack(config).watch({
     }
 
     if (stats.hasWarnings()) {
-        console.log(chalk.bgYellow('Warnings were found:'));
+        console.log(chalk.yellow('Warnings were found:'));
         info.warnings.forEach(warning => console.log(warning));
     }
 

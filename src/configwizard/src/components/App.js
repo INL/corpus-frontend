@@ -2,6 +2,7 @@ import React from 'react';
 import {connect} from 'react-redux';
 
 import ConfigForm, {FieldTypes} from './Form';
+import {XpathTypes} from '../reducers/xpath';
 import XpathModal from './XpathModal';
 import {openModal} from '../reducers/ui/xpathModal';
 
@@ -29,12 +30,14 @@ const fieldDescriptors = [{
     description: "The xml element that starts a new document within your file. For example <document>.",
 
     fieldType: FieldTypes.XPATH,
+    xpathType: XpathTypes.NODES
 }, {
     id: ".wordPath",
     name: "Word Path",
     description: "The xml element that starts a new word within a document",
 
-    fieldType: FieldTypes.XPATH,       
+    fieldType: FieldTypes.XPATH,
+    xpathType: XpathTypes.NODES
 }, {
     id: ".annotations",
     name: "Annotations (word properties)",
@@ -53,6 +56,7 @@ const fieldDescriptors = [{
         description: "The xml element that contains the value for this property.",
 
         fieldType: FieldTypes.XPATH,
+        xpathType: XpathTypes.VALUES
     }]
 }, {
     id: ".inlineTags",
@@ -67,6 +71,7 @@ const fieldDescriptors = [{
         description: "The xml element that should be indexed.",
 
         fieldType: FieldTypes.XPATH,
+        xpathType: XpathTypes.NODES
     }, {
         id: ".description",
         name: "Description",
@@ -86,6 +91,7 @@ const fieldDescriptors = [{
         description: "The top level xml element(s) that contains all the metadata for a document.",
 
         fieldType: FieldTypes.XPATH,
+        xpathType: XpathTypes.NODES
     }, {
         id: ".singlePaths",
         name: "Single tag",
@@ -104,6 +110,7 @@ const fieldDescriptors = [{
             description: "The xml element containing this piece of metadata.",
 
             fieldType: FieldTypes.XPATH,
+            xpathType: XpathTypes.VALUES
         }]
     }, {
         id: ".forEachPaths",
@@ -117,18 +124,21 @@ const fieldDescriptors = [{
             description: "Path to the element for a single metadata value.",
 
             fieldType: FieldTypes.XPATH,
+            xpathType: XpathTypes.NODES
         }, {
             id: ".namePath",
             name: "Name path",
             description: "Within the metadata element, what contains the name for the metadata.",
 
             fieldType: FieldTypes.XPATH,
+            xpathType: XpathTypes.VALUES
         }, {
             id: ".valuePath",
             name: "Value path",
             description: "Within the metadata element, what contains the value for the metadata.",
 
             fieldType: FieldTypes.XPATH,
+            xpathType: XpathTypes.VALUES
         }]
     }]
 }]

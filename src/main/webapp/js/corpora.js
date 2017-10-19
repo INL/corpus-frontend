@@ -528,7 +528,9 @@ var corpora = {};
 		var editor = CodeMirror.fromTextArea($('#format_editor')[0], {
 			mode: "yaml",
 			lineNumbers: true,
-			matchBrackets: true
+			matchBrackets: true,
+			
+			viewportMargin: 100 // render 100 lines above and below the visible editor window
 		});
 
 		var $confirmButton = $('#format_save');

@@ -69,3 +69,7 @@ table.corpora a.icon {
 .alert {
     margin-top: 1em;
 }
+
+.CodeMirror {
+	height: 500px;
+}

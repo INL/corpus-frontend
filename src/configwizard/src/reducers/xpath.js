@@ -192,6 +192,11 @@ export const selectors = {
 //  Util
 //------
 
+export const XpathTypes = {
+    NODES: 'XPATH_TYPE_NODES',
+    VALUES: 'XPATH_TYPE_VALUES'
+}
+
 const contextOptions = {
     XPATH_SELECT_NODE_WITH_NAME: {
         id: 'XPATH_SELECT_NODE_WITH_NAME',

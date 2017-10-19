@@ -3,3 +3,13 @@ body {
   padding-bottom: 50px;
   font-family: sans-serif;
 }
+
+/* react-bootstrap modal */
+/* see contained modal: https://react-bootstrap.github.io/components.html#modals */
+.modal-container {
+  position: relative;
+}
+.modal-container .modal, 
+.modal-container .modal-backdrop {
+  position: absolute;
+}

@@ -23,7 +23,7 @@ const renderInput = ({descriptor, onEditorOpen, ...inputProps}) => {
             <div className="input-group">
                 {inputElement}
                 <span className="input-group-btn">
-                    <button className="btn btn-default" type="button" onClick={event => onEditorOpen(inputProps.name)}>Pick a node</button>
+                    <button className="btn btn-default" type="button" onClick={event => onEditorOpen(inputProps.name, descriptor)}>Pick a node</button>
                 </span>
             </div>
         )

@@ -1,8 +1,9 @@
 export const MODAL_OPEN = 'MODAL_OPEN';
-export const openModal = (target) => ({
+export const openModal = (target, targetDescriptor) => ({
     type: MODAL_OPEN,
 
-    target
+    target,
+    descriptor: targetDescriptor
 })
 
 export const MODAL_CLOSE = 'MODAL_CLOSE';

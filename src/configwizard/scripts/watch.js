@@ -3,9 +3,11 @@ process.env.NODE_ENV = 'production';
 
 require('../config/env');
 
+const chalk = require('chalk');
 const util = require('util'); // for object logging
 const webpack = require('webpack');
 const config = require('../config/webpack.config.prod'); //dev version does not write out css files, needs more research.
+
 
 config.watch = true;
 config.plugins.push(new webpack.ProgressPlugin({ profile: false }));
@@ -26,11 +28,13 @@ const watcher = webpack(config).watch({
     const info = stats.toJson();
 
     if (stats.hasErrors()) {
-        console.error(info.errors);
+        console.log(chalk.bgRed('Errors were found:'));
+        info.errors.forEach(error => console.log(error));
     }
 
     if (stats.hasWarnings()) {
-        console.warn(info.warnings)
+        console.log(chalk.bgYellow('Warnings were found:'));
+        info.warnings.forEach(warning => console.log(warning));
     }
 
     console.log("Finished compiling.");

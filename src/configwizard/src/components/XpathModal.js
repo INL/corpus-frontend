@@ -44,24 +44,4 @@ let XpathModal = ({open, handleConfirm, handleCancel, handleFileChange, containe
     </Modal>
 )
 
-
 export default connect(mapStateToProps, mapDispatchToProps)(XpathModal);
-
-
-class XpathSidebar extends React.Component {
-    onSetSidebarOpen = () => {
-
-    }
-
-    render = () => {
-        return (
-            <Sidebar sidebar={this.props.content} open={this.props.open} onSetOpen={this.onSetSidebarOpen}>
-            blah?
-            </Sidebar>
-        )
-    }
-}
-
-XpathSidebar = connect(mapStateToProps, mapDispatchToProps)(XpathSidebar);
-
-export {XpathSidebar}

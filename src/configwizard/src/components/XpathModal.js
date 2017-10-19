@@ -3,8 +3,6 @@ import {connect} from 'react-redux';
 
 import {Modal, Button} from 'react-bootstrap';
 
-import Sidebar from 'react-sidebar';
-
 import XmlTree from './XmlTree';
 import FileButton from './FileButton';
 

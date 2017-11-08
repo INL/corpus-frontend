@@ -21,7 +21,7 @@ const mapDispatchToProps = ({
 let XmlTree = ({rootNodeId, handleFileChange}) => rootNodeId != null && (
     <div className="xml-tree">
         <Dropdown/>
-        {rootNodeId != null && <Node nodeId={rootNodeId}/>}
+        <Node nodeId={rootNodeId}/>
     </div>
 )
 

@@ -61,5 +61,5 @@ export default (state = initialDropdownState, action) => {
 export const selectors = {
     isDropdownShown: (state) => state.open,
     getDropdownPosition: (state) => state.coordinates,
-    getDropdownTargetNode: (state) => state.nodeId,
+    getDropdownTargetNodeId: (state) => state.nodeId,
 }

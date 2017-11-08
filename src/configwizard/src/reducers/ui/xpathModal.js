@@ -11,20 +11,25 @@ export const closeModal = () => ({
     type: MODAL_CLOSE,
 })
 
-export default (state = null, action) => {
+export default (state = {}, action) => {
     switch (action.type) {
         case MODAL_OPEN:
-            return action.target;
+            return {
+                ...state,
+                target: action.target,
+                descriptor: action.descriptor
+            }
         case MODAL_CLOSE: 
-            return null;
+            return {};
         default:
             return state;
     }
 }
 
 const selectors = {
-    isModalShown: (state) => state != null,
-    getModalTarget: (state) => state
+    isModalShown: (state) => state.target != null,
+    getModalTarget: (state) => state.target,
+    getModalTargetDescriptor: (state) => state.descriptor
 }
 
 export {selectors};

@@ -2,6 +2,8 @@ import KeyedReducer from './creators/KeyedReducer';
 
 import {FILE_CHANGED} from './xmlDocument';
 
+const KEY_NAME = "nodeId";
+
 export const NODES_PARSED = 'NODES_PARSED';
 export const nodesParsed = (xmlDocument, ...nodes) => ({
     type: NODES_PARSED,
@@ -14,7 +16,7 @@ export const NODE_EXPAND = 'NODE_EXPAND';
 export const setNodeExpanded = (nodeId, expanded) => ({
     type: NODE_EXPAND,
     
-    nodeId,
+    [KEY_NAME]: nodeId,
     expanded
 })
 
@@ -22,7 +24,7 @@ export const NODE_MORE_CHILDREN = 'NODE_MORE_CHILDREN';
 export const showMoreChildren = (nodeId) => ({
     type: NODE_MORE_CHILDREN,
 
-    nodeId,
+    [KEY_NAME]: nodeId,
 })
 
 // The core node reducer
@@ -44,7 +46,7 @@ let node = (state, action) => {
     }
 }
 // nodes are kept in a map, the node an action targets is determined by the nodeId property of the action.
-node = KeyedReducer(node, "nodeId");
+node = KeyedReducer(node, KEY_NAME);
 
 // Finally, that map is wrapped and cleared/filled on some specific actions.
 export default (state = new Map(), action, xmlDocument) => {

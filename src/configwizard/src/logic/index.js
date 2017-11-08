@@ -1,12 +1,14 @@
-import {actions} from 'react-redux-form';
-
 import {nodesParsed} from '../reducers/nodesById';
 import {rootNodeParsed} from '../reducers/rootNodeId';
 
 import {selectors} from '../reducers/';
 
 import {changeFile, documentParseBegin, documentParseEnd, documentParseAbort} from '../reducers/xmlDocument';
-import {closeModal} from '../reducers/ui/xpathModal';
+import {closeModal, openModal} from '../reducers/ui/xpathModal';
+
+import * as xpath from '../reducers/xpath';
+import {updateXpathContext, setValue} from '../reducers/ui/simpleForm';
+
 // import {changeConfigFormField} from '../reducers';
 
 export const parseRoot = (xmlDocument) => (dispatch) => {
@@ -82,7 +84,6 @@ export const parseVisibleNodes = (...nodeIds) => (dispatch, getState) => {
     return Promise.all(promises);
 }
 
-
 export const parseNode = (documentNode, parentNodeId) => {
     
     let type = null;
@@ -105,24 +106,6 @@ export const parseNode = (documentNode, parentNodeId) => {
     } else  {
         return null;
     }
-    
-    // switch (documentNode.nodeType) {
-    //     case Node.ELEMENT_NODE:
-    //     case Node.DOCUMENT_NODE:
-    //         type = 'element';
-    //         name = documentNode.nodeName;
-    //         break;
-    //     case Node.TEXT_NODE: 
-    //         type = 'text';
-    //         data = documentNode.data && documentNode.data.trim();
-    //         if (data === "")
-    //             return null; // ignore this node, it's just whitespace from the document layout
-    //         break;
-    //     case Node.ATTRIBUTE_NODE:
-    //         break;
-    //     default:
-    //         return null;
-    // }
 
     return {
         id: documentNode,
@@ -139,7 +122,6 @@ export const parseNode = (documentNode, parentNodeId) => {
         expanded: false
     }
 }
-
 
 export const changeAndParseFile = (file) => (dispatch) => {
     dispatch(changeFile(file));
@@ -170,7 +152,46 @@ export const changeAndParseFile = (file) => (dispatch) => {
 export const setConfigFormFieldAndCloseModal = () => (dispatch, getState) => {
     // Keep reference to original state
     const state = getState();
+    const model = selectors.getXpathModalTarget(state);
+    const expression = selectors.getXpathExpression(state, model);
     
     dispatch(closeModal());
-    dispatch(actions.change(selectors.getXpathModalTarget(state), selectors.getXpathExpression(state)));
+    dispatch(setValue(model, expression));
+}
+
+export const changeXpathConfigAndRecalculateXpath = (option, nodeId) => (dispatch, getState) => {
+    const state = getState();
+
+    const model = selectors.getXpathModalTarget(state);
+
+    dispatch(updateXpathContext(model, option, nodeId));
+    dispatch(recalculateXpath());
+}
+
+export const openModalAndRefreshXpath = (model) => (dispatch, getState) => {
+    dispatch(openModal(model));
+    dispatch(recalculateXpath());
+}
+
+export const recalculateXpath = () => (dispatch, getState) => {
+    const state = getState();
+    const model = selectors.getXpathModalTarget(state);
+    const expression = selectors.getInternalXpathExpression(state, model);
+    // TODO compare with current expression to see if recalc is required.
+    const xmlDocument = selectors.getXmlDocument(state);
+    
+    return Promise.resolve()
+        .then(() => {
+            dispatch(xpath.calculateXpathBegin(expression));
+
+            let result = new Set();
+            const nodeIterator = xmlDocument.evaluate(expression, xmlDocument, xmlDocument.createNSResolver( xmlDocument.documentElement ), XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null); 
+            for (let cur = nodeIterator.iterateNext(); cur != null; cur = nodeIterator.iterateNext()) {
+                result.add(cur);
+            }
+
+            return result;
+        })
+        .then((result) => dispatch(xpath.calculateXpathEnded(expression, result)))
+        .catch((error) => dispatch(xpath.calculateXpathAborted(expression, error)));
 }

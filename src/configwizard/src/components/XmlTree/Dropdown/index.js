@@ -4,17 +4,17 @@ import {connect} from 'react-redux';
 import {Dropdown, MenuItem} from 'react-bootstrap';
 
 import {selectors} from '../../../reducers';
-import {changeXpathConfig} from '../../../reducers/xpath';
+import {changeXpathConfigAndRecalculateXpath} from '../../../logic';
 import {closeDropdown} from '../../../reducers/ui/xpathDropdown';
 
 const mapStateToProps = (state) => ({
     position: selectors.getXpathDropdownPosition(state),
     shown: selectors.isXpathDropdownShown(state),
-    options: selectors.getXpathDropdownTargetNode(state) != null ? selectors.getXpathDropdownOptions(state, selectors.getXpathDropdownTargetNode(state)) : [],
-    nodeId: selectors.getXpathDropdownTargetNode(state)
+    options: selectors.getXpathDropdownOptions(state),
+    nodeId: selectors.getXpathDropdownTargetNodeId(state)
 })
 const mapDispatchToProps = (dispatch) => ({
-    handleOptionClicked: (option, nodeId) => dispatch(changeXpathConfig(option, nodeId)),
+    handleOptionClicked: (option, nodeId) => dispatch(changeXpathConfigAndRecalculateXpath(option, nodeId)),
     handleToggleOpen: (requestedOpenState, event, source) => {
         if (requestedOpenState === true)
             return; //only ever open from outside influences

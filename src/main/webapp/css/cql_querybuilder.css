@@ -80,6 +80,7 @@
 	width: 1px;
 	min-width: 110px;
 	position: relative;
+	overflow: hidden;
 }
 
 [data-has-file] .bl-has-file-hidden, .bl-has-file-shown {

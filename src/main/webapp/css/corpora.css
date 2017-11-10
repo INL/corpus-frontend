@@ -61,11 +61,6 @@ table.corpora a.disabled {
    color: #bbb;
 }
 
-table.corpora a.icon {
-	margin: 0 .8em;
-}
-
-
 .alert {
     margin-top: 1em;
 }

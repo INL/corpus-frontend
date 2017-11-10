@@ -172,6 +172,7 @@
 	                </div>
 	                <div class="form-group">
 	                    <label for="corpus_document_type" title="The format of the documents that will be stored in the corpus">Document Format</label>
+		                <br/>
 		                <select id="corpus_document_type" name="corpus_document_type" class="selectpicker" data-autoupdate="format">
 		                	<!-- filled in through clientside javascript -->
 		                </select>

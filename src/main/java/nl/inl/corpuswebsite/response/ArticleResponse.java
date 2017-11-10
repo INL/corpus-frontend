@@ -57,6 +57,7 @@ public class ArticleResponse extends BaseResponse {
 			// this might happen if the import format is deleted after a corpus was created.
 			// then blacklab-server can obviously no longer generate the xslt based on the import format.
 			// TODO clean this up, response should not have to clean up obscure errors from MainServlet.
+			// Maybe just handle it in mainservlet
 			if (e.getHttpStatusCode() == 404) {
 				// use a default xslt that just outputs all text
 				articleStylesheet = metadataStylesheet =
@@ -133,11 +134,15 @@ public class ArticleResponse extends BaseResponse {
 				if (e.getHttpStatusCode() == 404) {
 					try {
 						response.sendError(HttpServletResponse.SC_NOT_FOUND);
-						return;
 					} catch (IOException e1) {
 						throw new RuntimeException(e1);
 					}
+				} else {
+					response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+					context.put("error", e.getMessage());
+					displayHtmlTemplate(servlet.getTemplate("error"));
 				}
+				return;
 			}
 		}
 

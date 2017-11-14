@@ -49,28 +49,9 @@ public class ArticleResponse extends BaseResponse {
 
 	@Override
 	protected void completeRequest() {
-		try {
-			String corpusDataFormat = servlet.getCorpusConfig(corpus).getCorpusDataFormat();
-			articleStylesheet = servlet.getStylesheet(corpus, corpusDataFormat);
-			metadataStylesheet = servlet.getStylesheet(corpus, "meta");
-		} catch (QueryException e) {
-			// this might happen if the import format is deleted after a corpus was created.
-			// then blacklab-server can obviously no longer generate the xslt based on the import format.
-			// TODO clean this up, response should not have to clean up obscure errors from MainServlet.
-			// Maybe just handle it in mainservlet
-			if (e.getHttpStatusCode() == 404) {
-				// use a default xslt that just outputs all text
-				articleStylesheet = metadataStylesheet =
-				"<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
-				"<xsl:stylesheet version=\"2.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">" +
-				"<xsl:output encoding=\"utf-8\" method=\"html\" omit-xml-declaration=\"yes\" />" +
-				"</xsl:stylesheet>";
-			} else {
-				throw new RuntimeException(e);
-			}
-		}
-
-
+		String corpusDataFormat = servlet.getCorpusConfig(corpus).getCorpusDataFormat();
+		articleStylesheet = servlet.getStylesheet(corpus, corpusDataFormat);
+		metadataStylesheet = servlet.getStylesheet(corpus, "meta");
 		String pid = this.getParameter("doc", "");
 
 		if (pid == null || pid.isEmpty()) {

@@ -18,6 +18,3 @@ target
 .vscode
 .eslintrc.json
 jsconfig.json
-
-# Generated files for the configwizard
-/src/main/webapp/configwizard

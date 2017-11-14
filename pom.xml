@@ -75,14 +75,6 @@
 						</manifestEntries>
 					</archive>
 					
-					<webResources>
-						<resource>
-							<!-- relative to this file -->
-							<directory>src/configwizard/build/static</directory>
-							<targetPath>configwizard</targetPath>
-						</resource>
-					</webResources>
-					
 				</configuration>
 			</plugin>
 
@@ -143,87 +135,7 @@
 					<tagNameFormat>v@{project.version}</tagNameFormat>
 				</configuration>
 			</plugin>
-			
-			<!-- 
-				Execute the build of the config wizard project. 
-				This is simply "npm run build" in the main directory of the configwizard.
-				This only runs when executing "mvn package" to build the actual war.
-				To get incremental compilation run "npm run watch" in the configwizard directory from an external terminal.
-				This will recompile the files as edits are made.
-				N.B. it might be required to manually "refresh" the eclipse project before newly built sources are picked up by tomcat.
-			-->
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>exec-maven-plugin</artifactId>
-				<version>1.6.0</version>
-				<executions>
-					<execution>
-						<id>id1</id>
-						<phase>generate-sources</phase>
-						<goals>
-							<goal>exec</goal>
-						</goals>
-						<configuration>
-							<executable>npm</executable>
-							<!-- build needs to run in the main directory for the configwizard project -->
-							<workingDirectory>./src/configwizard</workingDirectory>
-							<arguments>
-								<argument>install</argument>
-							</arguments>
-						</configuration>
-					</execution>
-					<execution>
-						<id>id2</id>
-						<phase>generate-sources</phase>
-						<goals>
-							<goal>exec</goal>
-						</goals>
-						<configuration>
-							<executable>npm</executable>
-							<!-- build needs to run in the main directory for the configwizard project -->
-							<workingDirectory>./src/configwizard</workingDirectory>
-							<arguments>
-								<argument>run</argument>
-								<argument>build</argument>
-							</arguments>
-						</configuration>
-					</execution>
-				</executions>
-				
-			</plugin>
 		</plugins>
-
-		<pluginManagement>
-			<plugins>
-				<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
-				<plugin>
-					<groupId>org.eclipse.m2e</groupId>
-					<artifactId>lifecycle-mapping</artifactId>
-					<version>1.0.0</version>
-					<configuration>
-						<lifecycleMappingMetadata>
-							<pluginExecutions>
-								<pluginExecution>
-									<pluginExecutionFilter>
-										<groupId>org.codehaus.mojo</groupId>
-										<artifactId>exec-maven-plugin</artifactId>
-										<versionRange>[1.6.0,)</versionRange>
-										<goals>
-											<goal>exec</goal>
-										</goals>
-									</pluginExecutionFilter>
-									<action>
-										<execute>
-							                 <runOnIncremental>false</runOnIncremental>			
-										</execute>
-									</action>
-								</pluginExecution>
-							</pluginExecutions>
-						</lifecycleMappingMetadata>
-					</configuration>
-				</plugin>
-			</plugins>
-		</pluginManagement>
 	</build>
 
 	<properties>

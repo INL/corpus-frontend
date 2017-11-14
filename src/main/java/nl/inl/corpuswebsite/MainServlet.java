@@ -410,7 +410,6 @@ public class MainServlet extends HttpServlet {
 	 * @param getDefaultIfMissing try to get the default file if the corpus-specific file is missing?
 	 * @return the file, or null if not found
 	 */
-	// TODO re-enable caching
 	public InputStream getProjectFile(String corpus, String fileName, boolean getDefaultIfMissing) {
 		if (corpus == null || isUserCorpus(corpus) || !adminProps.containsKey("corporaInterfaceDataDir") )
 			return getDefaultProjectFile(fileName);

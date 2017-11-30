@@ -443,29 +443,30 @@ var corpora = {};
 		var $newCorpusModal = $("#new-corpus-modal");
 		var $corpusNameInput = $("#corpus_name");
 		var $corpusFormatSelect = $("#corpus_document_type");
-		var saveButtonClass = ".btn-primary";
+		var $saveButton = $("#new-corpus-modal .btn-primary");
 		
-		$newCorpusModal.on("show.bs.modal", function(event) {
-			$(saveButtonClass, $newCorpusModal).prop("disabled", true);
-			$corpusNameInput.val("");
-			$corpusFormatSelect.prop("selectedIndex", 0);
-		});
 		$newCorpusModal.on("shown.bs.modal", function(event) {
+			$corpusNameInput.val("");
+			$saveButton.prop("disabled", true);
 			$corpusNameInput[0].focus();
 		});
 		$corpusNameInput.on("change, input", function(event) {
-			$(saveButtonClass, $newCorpusModal).prop("disabled", $(this).val().length <= 2);
+			$saveButton.prop("disabled", $(this).val().length <= 2);
 		});
 		// Enable submit through pressing the 'enter' key while a form element has the focus
 		$("input, select", $newCorpusModal).on("keydown", function(event) {
 			if (event.keyCode == 13) {
 				event.preventDefault();
-				if (!$(saveButtonClass, $newCorpusModal).prop("disabled")) {
-					$(saveButtonClass, $newCorpusModal).click();
+				if (!$saveButton.prop("disabled")) {
+					$saveButton.click();
 				}
 			}
 		});
-		$(saveButtonClass, $newCorpusModal).click(function(event) {
+		$saveButton.on('click', function(event) {
+			event.preventDefault();
+			if ($(this).prop("disabled"))
+				return;
+			
 			var corpusName = $corpusNameInput.val();
 			var format = $corpusFormatSelect.val();
 			$newCorpusModal.modal("hide");

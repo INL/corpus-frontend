@@ -289,9 +289,10 @@ SINGLEPAGE.INTERFACE = (function() {
 			var loadedConcordances = data.summary.actualWindowSize;
 
 			// store new number of loaded elements
-			$button.data('currentConcordanceCount', currentConcordanceCount + loadedConcordances);
-			$button.data('availableConcordanceCount', totalConcordances);
-			
+			$button.data('currentConcordanceCount', currentConcordanceCount + loadedConcordances)
+				.data('availableConcordanceCount', totalConcordances)
+				.toggle(currentConcordanceCount + loadedConcordances < totalConcordances);
+
 			// And generate html to display
 			var html = [];
 			// Only one of these will run depending on what is present in the data

@@ -1,6 +1,6 @@
 /* global BLS_URL, URI */
 
- /**
+/**
  * @typedef {Object} SearchParameters
  * 
  * @property {('hits' | 'docs')} operation - The main type of data to request, is transformed to the path of the search url, as in blacklab-server/corpusId/<operation>?parameters
@@ -24,22 +24,22 @@ var SINGLEPAGE = SINGLEPAGE || {};
  */
 SINGLEPAGE.BLS = (function () {
 
-	"use strict";
+	'use strict';
 	
 	function makeWildcardRegex(original) {
 		return original
-			.replace(/([\^$\-\\.(){}[\]+])/g, "\\$1") // add slashes for regex characters
-			.replace(/\*/g, ".*") // * -> .*
-			.replace(/\?/g, "."); // ? -> .
+			.replace(/([\^$\-\\.(){}[\]+])/g, '\\$1') // add slashes for regex characters
+			.replace(/\*/g, '.*') // * -> .*
+			.replace(/\?/g, '.'); // ? -> .
 	}
 
 	function makeRegexWildcard(original) {
 		return original
-			.replace(/\\([\^$\-\\(){}[\]+])/g, "$1") // remove most slashes
-			.replace(/\\\./g, "_ESC_PERIOD_") // escape \.
-			.replace(/\.\*/g, "*") // restore *
-			.replace(/\./g, "?") // restore ?
-			.replace("_ESC_PERIOD_", ".") // unescape \. to .
+			.replace(/\\([\^$\-\\(){}[\]+])/g, '$1') // remove most slashes
+			.replace(/\\\./g, '_ESC_PERIOD_') // escape \.
+			.replace(/\.\*/g, '*') // restore *
+			.replace(/\./g, '?') // restore ?
+			.replace('_ESC_PERIOD_', '.') // unescape \. to .
 		;
 	}
 
@@ -67,7 +67,7 @@ SINGLEPAGE.BLS = (function () {
 				if (!tokens[i])
 					tokens[i] = {};
 
-				tokens[i][propertyField.name] = (propertyField["case"] ? "(?c)" : "") + makeWildcardRegex(words[i]);
+				tokens[i][propertyField.name] = (propertyField['case'] ? '(?c)' : '') + makeWildcardRegex(words[i]);
 			}
 		});
 
@@ -77,13 +77,13 @@ SINGLEPAGE.BLS = (function () {
 			// push all attributes in this token
 			var attributesStrings = [];
 			$.each(value, function (key, value) {
-				attributesStrings.push(key + "=" + '"' + value + '"');
+				attributesStrings.push(key + '=' + '"' + value + '"');
 			});
 
-			tokenStrings.push("[", attributesStrings.join(" & "), "]");
+			tokenStrings.push('[', attributesStrings.join(' & '), ']');
 		});
 		
-		return tokenStrings.join("");
+		return tokenStrings.join('');
 	}
 
 	/**
@@ -110,15 +110,15 @@ SINGLEPAGE.BLS = (function () {
 		
 		var filterStrings = [];
 		$.each(filterArr, function (index, element) {
-			if (element.filterType === "range") {
+			if (element.filterType === 'range') {
 				filterStrings.push(
-					"+", element.name, ":",
-					"[", element.values[0], " TO ", element.values[1], "]"
+					'+', element.name, ':',
+					'[', element.values[0], ' TO ', element.values[1], ']'
 				);
-			} else if (element.filterType === "select" || element.filterType === "multiselect") {
+			} else if (element.filterType === 'select' || element.filterType === 'multiselect') {
 				// Surround each individual value with quotes, and surround the total with brackets  
 				filterStrings.push(
-					"+", element.name, ":",
+					'+', element.name, ':',
 					'("', element.values.join('" "'), '")'
 				);
 			} else {
@@ -133,17 +133,17 @@ SINGLEPAGE.BLS = (function () {
 						var part = quotedParts[i];
 						if (inQuotes) {
 							// Inside quotes. Add literally.
-							resultParts.push(" \"");
+							resultParts.push(' "');
 							resultParts.push(part);
-							resultParts.push("\"");
+							resultParts.push('"');
 						} else {
 							// Outside quotes. Surround each word with quotes.
 							part = part.trim();
 							if (part.length > 0) {
 								var words = part.split(/\s+/);
-								resultParts.push(" \"");
-								resultParts.push(words.join("\" \""));
-								resultParts.push("\" ");
+								resultParts.push(' "');
+								resultParts.push(words.join('" "'));
+								resultParts.push('" ');
 							}
 						}
 						inQuotes = !inQuotes;
@@ -151,13 +151,13 @@ SINGLEPAGE.BLS = (function () {
 				});
 
 				filterStrings.push(
-					"+", element.name, ":",
-					"(" + resultParts.join("").trim(), ")"
+					'+', element.name, ':',
+					'(' + resultParts.join('').trim(), ')'
 				);
 			}
 		});
 
-		return filterStrings.join("");
+		return filterStrings.join('');
 	}
 
 	/**
@@ -175,7 +175,7 @@ SINGLEPAGE.BLS = (function () {
 		function scheduleRequest() {
 			inflightRequest = $.ajax({
 				url: curUrl,
-				dataType: "json",
+				dataType: 'json',
 				cache: false,
 				success: function(data) {
 					updateTotalsDisplay(data);
@@ -207,26 +207,26 @@ SINGLEPAGE.BLS = (function () {
 			var total;
 			
 			if (data.summary.numberOfGroups != null) {
-				type = "groups";
+				type = 'groups';
 				total = data.summary.numberOfGroups;
 			} else if (data.hits != null) {
-				type = "hits";
+				type = 'hits';
 				total = data.summary.numberOfHitsRetrieved;
 			} else if (data.docs != null) {
-				type = "docs";
+				type = 'docs';
 				total = data.summary.numberOfDocsRetrieved;
 			}
 		
 			var totalPages = Math.ceil(total / curPageSize);
 			
-			var optEllipsis = data.summary.stillCounting ? "..." : "";
-			$("#totalsReport").show();
-			$("#totalsReportText").html(
-				"Total " + type + ": " + total + optEllipsis + "<br>" + 
-				"Total pages: " + totalPages + optEllipsis
+			var optEllipsis = data.summary.stillCounting ? '...' : '';
+			$('#totalsReport').show();
+			$('#totalsReportText').html(
+				'Total ' + type + ': ' + total + optEllipsis + '<br>' + 
+				'Total pages: ' + totalPages + optEllipsis
 			);
 			
-			$("#totalsSpinner").toggle(data.summary.stillCounting);
+			$('#totalsSpinner').toggle(data.summary.stillCounting);
 		}
 
 		return {
@@ -275,26 +275,26 @@ SINGLEPAGE.BLS = (function () {
 					number: param.pageSize,
 					first: param.page * param.pageSize,
 				
-					sample: (param.sampleMode === "percentage" && param.sampleSize) ? parseFloat(param.sampleSize) || undefined : undefined,
-					samplenum: (param.sampleMode === "count" && param.sampleSize) ? parseInt(param.sampleSize) || undefined : undefined,
+					sample: (param.sampleMode === 'percentage' && param.sampleSize) ? parseFloat(param.sampleSize) || undefined : undefined,
+					samplenum: (param.sampleMode === 'count' && param.sampleSize) ? parseInt(param.sampleSize) || undefined : undefined,
 					sampleseed: (param.sampleSeed != null && param.sampleMode && param.sampleSize) ? parseInt(param.sampleSeed) || undefined : undefined,
 
 					// these are either undefined or valid (meaning no empty strings/arrays)
 					filter: getFilterString(param.filters), 
-					group: (param.groupBy || []).join(",") || undefined,
+					group: (param.groupBy || []).join(',') || undefined,
 					patt: getPatternString(param.pattern),
 			
 					sort: param.sort || undefined,
 					viewgroup: param.viewGroup || undefined
 				};
-				
+			
 				if (SINGLEPAGE.DEBUG) {
 					console.log(blsParam);
 				}
-				
+
 				inflightRequest = $.ajax({
 					url: new URI(BLS_URL).segment(operation).addSearch(blsParam).toString(),
-					dataType: "json",
+					dataType: 'json',
 					cache: false,
 					success: function(data) {
 						if (SINGLEPAGE.DEBUG) {
@@ -303,22 +303,22 @@ SINGLEPAGE.BLS = (function () {
 						
 						totalsCounter.start(data, blsParam, operation);
 						
-						if (typeof successFunc === "function")
+						if (typeof successFunc === 'function')
 							successFunc(data);
 					},
 					error: function() {
 						if (SINGLEPAGE.DEBUG)
-							console.log("Request failed: ", arguments);
+							console.log('Request failed: ', arguments);
 						
-						if (typeof errorFunc === "function")
+						if (typeof errorFunc === 'function')
 							errorFunc.apply(undefined, arguments);
 					},
-					always: function() {
+					complete: function() {
 						inflightRequest = null;
 					}
 				});
 			},
-					
+
 			cancelSearch: function() {
 				inflightRequest != null && inflightRequest.abort();
 				inflightRequest = null;

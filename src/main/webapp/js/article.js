@@ -1,9 +1,11 @@
+
+
 // Article-related functions.
 // Takes care of tooltips and highlighting/scrolling to anchors.
 
 $(document).ready(function () {
 
-    // Create jQuery Tooltips from title attributes
+	// Create jQuery Tooltips from title attributes
 	$('span.word').tooltip();
 	
 	// Show number of hits at the top of the metadata
@@ -30,10 +32,10 @@ var ANCHORS = {};
 		$hits = $('.hl');
 		
 		if($hits.length > 0)
-			$(".hitscroll").show();
+			$('.hitscroll').show();
 		
 
-		if (location.hash != null && location.hash !== "")
+		if (location.hash != null && location.hash !== '')
 			ANCHORS.gotoHit(parseInt(location.hash.substring(1))); // skip leading #
 		else 
 			ANCHORS.gotoHit(0);
@@ -45,7 +47,7 @@ var ANCHORS = {};
 			return;
 		
 		$($hits[currentHit]).removeClass('active');
-		location.hash = "";
+		location.hash = '';
 	
 		// invalid index -> no hit made active
 		if (position != null && position >= 0 && position < $hits.length) {
@@ -61,7 +63,7 @@ var ANCHORS = {};
 		}
 
 		currentHit = position;
-	}
+	};
 	
 	// Highlight and scroll to previous anchor
 	ANCHORS.gotoPrevious = function () {
@@ -72,59 +74,11 @@ var ANCHORS = {};
 			ANCHORS.gotoHit(currentHit-1);
 			
 		return false;
-		
-//		// Go to previous anchor and return name
-//		function getPreviousAnchorName() {
-//			position--;
-//			
-//			if(position < 0)
-//				position = anchors.length - 1;
-//			
-//			return anchors[position];
-//		}
-//		
-//		var oldname = location.hash;
-//		oldname = oldname.replace("#", "");
-//		location.hash = "";
-//		var myname = getPreviousAnchorName();
-//		location.hash = myname; 
-//		window.scrollBy(0,-150);
-//		
-//		if (oldname && oldname.length > 0)
-//			$('a[name=' + oldname + ']').removeClass('activeLink');
-//		$('a[name=' + myname + ']').addClass('activeLink');
-//		
-//		return false; // don't follow link
 	};
 
 	// Highlight and scroll to next anchor
 	ANCHORS.gotoNext = function () {
-		
-		
-		
 		ANCHORS.gotoHit((currentHit + 1) % $hits.length);
-		
-		// Go to next anchor and return name
-//		function getNextAnchorName() {
-//			position++;
-//			
-//			if(position >= anchors.length)
-//				position = 0;
-//			
-//			return anchors[position];
-//		}
-//
-//		var oldname = location.hash;
-//		oldname = oldname.replace("#", "");
-//		location.hash = "";
-//		var myname = getNextAnchorName();
-//		location.hash = myname; 
-//		window.scrollBy(0,-150);
-//		
-//		if (oldname && oldname.length > 0)
-//			$('a[name=' + oldname + ']').removeClass('activeLink');
-//		$('a[name=' + myname + ']').addClass('activeLink');
-		
 		return false; // don't follow link
 	};
 	

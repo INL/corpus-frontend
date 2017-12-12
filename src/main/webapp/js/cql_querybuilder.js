@@ -1,6 +1,6 @@
 /* global Mustache */
 
-/*
+/**
  * The querybuilder is a visual editor for CQL queries (see http://inl.github.io/BlackLab/corpus-query-language.html#supported-features for an introduction to CQL)
  * The querybuilder is a hierarchy of nested objects, where every object is represented by its own isolated container in the DOM.
  * 
@@ -15,14 +15,34 @@
  *  
  * Mustache.js is used to generate the DOM elements for the components, the templates are based on bootstrap.
  * Every component attaches a reference to itself to the DOM element through $.data.
+ * 
+ * Every object defines the functions _createElement() and _prepareElement(), these are used to generate the dom structure and attach event handlers respectively.
+ * Also present is a getCql() function that recurses into all child elements, calls getCql on them, and 
+ * combines their parts of the query to gradually build up the complete query.
+ * 
  *  
  * When genering a CQL query, the state of the builder is read from the DOM, so simply removing an element from the DOM removes it from the query.
  */
 
 // Probably need to name this properly instead of being so generic
 window.querybuilder = (function() {
-	"use strict";
+	'use strict';
 
+	/**
+	 * These are the mustache.js templates.
+	 * They are grouped at the top by the component type: token, attributeGroup, attribute, operatorLabel (the OR/AND labels in between attributes)
+	 * When rendering the component, 3 parts are required, the "template", "partials", and the "view", the template is the entry point for rendering.
+	 * It can render sub elements defined in the "partials" object using {{>key_in_partial_object}}.
+	 * Finally dynamic values can be inserted from the "view" object using {{key_in_view_object}}.
+	 * Some partials and view data is used in several different components, rather than copying it, these shared 
+	 * partials and view data are defined in the "shared" key in the templates and view objects here, 
+	 * and are merged into the element-specific partials and views in the _createElement function for the element in question.
+	 * 
+	 * Since the view is dynamic data (labels, supported operators, supported word attributes etc.),
+	 * it can be overridden externally.
+	 * To support this, a custom settings object can be passed when initially creating the querybuilder instance.
+	 * This object must follow the structure of "DEFAULTS", the custom settings object will override properties with the same name in DEFAULTS, including the mustache view data object.
+	 */
 	var templates = {
 		createTokenButton: {
 			template:
@@ -240,23 +260,23 @@ window.querybuilder = (function() {
 
 			getCql: function(attribute, comparator, caseSensitive, values) {
 				switch (comparator) {
-					case "starts with":
-						comparator = "=";
-						values = $.map(values, function(elem, index) {
-							return elem + ".*";
-						});
-						break;
-					case "ends with":
-						comparator = "=";
-						values = $.map(values, function(elem, index) {
-							return ".*" + elem;
-						});
-						break;
-					default:
-						break;
+				case 'starts with':
+					comparator = '=';
+					values = $.map(values, function(elem/*, index*/) {
+						return elem + '.*';
+					});
+					break;
+				case 'ends with':
+					comparator = '=';
+					values = $.map(values, function(elem/*, index*/) {
+						return '.*' + elem;
+					});
+					break;
+				default:
+					break;
 				}
 
-				return attribute + " " + comparator + " \"" + (caseSensitive ? "(?-i)" : "") + values.join("|") + "\"";
+				return attribute + ' ' + comparator + ' "' + (caseSensitive ? '(?-i)' : '') + values.join('|') + '"';
 			}
 		},
 
@@ -284,7 +304,7 @@ window.querybuilder = (function() {
 	//-------------------
 		
 	var QueryBuilder = function($rootElement, options) {
-		if (!(this instanceof QueryBuilder)) {
+		if (!(this instanceof QueryBuilder)) { // not called using "new"
 			return new QueryBuilder($rootElement, options);
 		}
 
@@ -347,7 +367,7 @@ window.querybuilder = (function() {
 		return this.element.children('.bl-token').map(function(i, elem) {
 			return $(elem).data('token');
 		}).get();
-	}
+	};
 
 	QueryBuilder.prototype.getCql = function() {
 		var cqlParts = [];
@@ -356,20 +376,20 @@ window.querybuilder = (function() {
 			cqlParts.push($(element).data('token').getCql());
 		});
 		
-		return cqlParts.join(" ") || null;
+		return cqlParts.join(' ') || null;
 	};
 
 	QueryBuilder.prototype.reset = function() {
 		this.element.find('.bl-token').remove();
 		this.createToken();
-	}
+	};
 
 	//----------
 	// Class Token
 	//----------
 
 	var Token = function(parentBuilder) {
-		if (!(this instanceof Token)) {
+		if (!(this instanceof Token)) { // not called using "new"
 			return new Token(parentBuilder);
 		}
 
@@ -379,12 +399,12 @@ window.querybuilder = (function() {
 		// Init controls before adding any child elements
 		var baseId = '#' + this.element.attr('id');
 		this.$controls = {
-			"optional": this.element.find(baseId + "_property_optional"),
-			"minRepeats": this.element.find(baseId + "_property_repeats_min"),
-			"maxRepeats": this.element.find(baseId + "_property_repeats_max"),
-			"beginOfSentence": this.element.find(baseId + "_property_sentence_start"),
-			"endOfSentence": this.element.find(baseId + "_property_sentence_end")
-		}
+			'optional': this.element.find(baseId + '_property_optional'),
+			'minRepeats': this.element.find(baseId + '_property_repeats_min'),
+			'maxRepeats': this.element.find(baseId + '_property_repeats_max'),
+			'beginOfSentence': this.element.find(baseId + '_property_sentence_start'),
+			'endOfSentence': this.element.find(baseId + '_property_sentence_end')
+		};
 		
 		this.rootAttributeGroup = this._createRootAttributeGroup();
 		this.rootAttributeGroup.createAttribute();
@@ -435,24 +455,24 @@ window.querybuilder = (function() {
 	Token.prototype.set = function(controlName, val) {
 		if (this.$controls[controlName])
 			setValue(this.$controls[controlName], val);
-	}
+	};
 
 	Token.prototype.getCql = function() {
-		var optional = this.$controls["optional"].prop('checked');
-		var minRepeats = parseInt(this.$controls["minRepeats"].val());
-		var maxRepeats = parseInt(this.$controls["maxRepeats"].val());
-		var beginOfSentence = this.$controls["beginOfSentence"].prop('checked');
-		var endOfSentence = this.$controls["endOfSentence"].prop('checked');
+		var optional = this.$controls['optional'].prop('checked');
+		var minRepeats = parseInt(this.$controls['minRepeats'].val());
+		var maxRepeats = parseInt(this.$controls['maxRepeats'].val());
+		var beginOfSentence = this.$controls['beginOfSentence'].prop('checked');
+		var endOfSentence = this.$controls['endOfSentence'].prop('checked');
 		
 		var outputParts = [];
 		
 		if (beginOfSentence) {
-			outputParts.push("<s> ");
+			outputParts.push('<s> ');
 		}
 
-		outputParts.push("[ ");
+		outputParts.push('[ ');
 		outputParts.push(this.rootAttributeGroup.getCql());
-		outputParts.push(" ]");
+		outputParts.push(' ]');
 
 
 		if (!isNaN(minRepeats) || !isNaN(maxRepeats)) { // Only output when at least one of them is entered
@@ -461,25 +481,25 @@ window.querybuilder = (function() {
 
 			if (minRepeats < maxRepeats) {  
 				if (maxRepeats != Infinity) { // infinite is empty field instead of max value
-					outputParts.push("{"+minRepeats+","+maxRepeats+"}");
+					outputParts.push('{'+minRepeats+','+maxRepeats+'}');
 				} else {
-					outputParts.push("{"+minRepeats+", }");
+					outputParts.push('{'+minRepeats+', }');
 				}
 			} 
 			else if (minRepeats == maxRepeats && minRepeats != 1) { // 1 is the default so if min == max == 1 then we don't need to do anything
-				outputParts.push("{"+minRepeats+"}");
+				outputParts.push('{'+minRepeats+'}');
 			}
 		}
 
 		if (optional) {
-			outputParts.push("?");
+			outputParts.push('?');
 		}
 
 		if (endOfSentence) {
-			outputParts.push(" </s>");
+			outputParts.push(' </s>');
 		}
 
-		return outputParts.join("");
+		return outputParts.join('');
 	};
 
 	//---------------------
@@ -487,7 +507,7 @@ window.querybuilder = (function() {
 	//---------------------
 
 	var AttributeGroup = function(parentBuilder, operator, operatorLabel) {
-		if (!(this instanceof AttributeGroup)) {
+		if (!(this instanceof AttributeGroup)) { // not called using "new"
 			return new AttributeGroup(parentBuilder, operator, operatorLabel);
 		}
 
@@ -514,7 +534,7 @@ window.querybuilder = (function() {
 
 	AttributeGroup.prototype._createAttribute = function(attributeCreateEvent, data) {
 		// The attribute for which the create button was clicked (if null, the button was our own button)
-		var originAttribute = $(attributeCreateEvent.target).parents(".bl-token-attribute").data('attribute');
+		var originAttribute = $(attributeCreateEvent.target).parents('.bl-token-attribute').data('attribute');
 		
 		var newAttribute = new Attribute(this.builder);
 		var newGroup;
@@ -525,7 +545,7 @@ window.querybuilder = (function() {
 		 */
 		
 		// we can just swap the operator if this contains only 1 attribute
-		if (this.element.children(".bl-token-attribute, .bl-token-attribute-group").size() <= 1) {
+		if (this.element.children('.bl-token-attribute, .bl-token-attribute-group').size() <= 1) {
 			this.operator = data.operator;
 			this.operatorLabel = data.operatorLabel;
 		}
@@ -574,7 +594,7 @@ window.querybuilder = (function() {
 		
 		this.element.trigger('cql:modified');
 		return false;
-	}
+	};
 	
 	AttributeGroup.prototype._removeIfEmpty = function() {
 		var $children = this.element.children('.bl-token-attribute, .bl-token-attribute-group');
@@ -582,7 +602,7 @@ window.querybuilder = (function() {
 		var self = this;
 		
 		if (this.isRoot) {
-			// Never hide root group, should be able to contain 0 members to indicate "[]" or any word
+			// Never hide root group, should be able to contain 0 members to indicate "[]", or any word
 			return;
 		}
 
@@ -626,7 +646,7 @@ window.querybuilder = (function() {
 	// if no preceding attribute, insertion will be at the front of this group
 	AttributeGroup.prototype.addAttributeOrGroup = function(attributeOrGroup, precedingAttributeOrGroup) {
 		if (precedingAttributeOrGroup && precedingAttributeOrGroup.element.parent().index(0) !== this.element.index(0)) {
-			throw new Error("AttributeGroup.addAttributeOrGroup: precedingAttributeOrGroup is not a child of this group");
+			throw new Error('AttributeGroup.addAttributeOrGroup: precedingAttributeOrGroup is not a child of this group');
 		}
 
 		var oldParentGroup = attributeOrGroup.element.parent().data('attributeGroup');
@@ -649,14 +669,14 @@ window.querybuilder = (function() {
 		return this.element.children('.bl-token-attribute').map(function(i, el) {
 			return $(el).data('attribute');
 		}).get();
-	}
+	};
 
 	/* Get the object instances for all direct child attribute groups */
 	AttributeGroup.prototype.getAttributeGroups = function() {
 		return this.element.children('.bl-token-attribute-group').map(function(i, el) {
 			return $(el).data('attributeGroup');
 		}).get();
-	}
+	};
 
 	AttributeGroup.prototype.getCql = function() {
 		var cqlStrings = [];
@@ -665,16 +685,16 @@ window.querybuilder = (function() {
 			var instance = $(element).data('attributeGroup') || $(element).data('attribute');
 			var elemCql = instance.getCql();
 			
-			if (elemCql && elemCql !== "") { // Do not push null, undefined or empty strings
+			if (elemCql && elemCql !== '') { // Do not push null, undefined or empty strings
 				cqlStrings.push(elemCql);
 			}
 		});
 
-		var joinedCql = cqlStrings.join(" " + this.operator + " ");
+		var joinedCql = cqlStrings.join(' ' + this.operator + ' ');
 		if (this.isRoot) {
 			return joinedCql;
 		} else {
-			return "(" + joinedCql  + ")";
+			return '(' + joinedCql  + ')';
 		}
 	};
 
@@ -683,7 +703,7 @@ window.querybuilder = (function() {
 	//----------------
 
 	var Attribute = function(parentBuilder) {
-		if (!(this instanceof Attribute)) {
+		if (!(this instanceof Attribute)) { // not called using "new"
 			return new Attribute(parentBuilder);
 		}
 
@@ -692,11 +712,11 @@ window.querybuilder = (function() {
 
 		var baseId = '#' + this.element.attr('id');
 		this.$controls = {
-			"type": this.element.find(baseId + '_type'),
-			"operator": this.element.find(baseId + '_operator'),
-			"value_simple": this.element.find(baseId + "_value_simple"),
-			"value_file": this.element.find(baseId + "_value_file"),
-		}
+			'type': this.element.find(baseId + '_type'),
+			'operator': this.element.find(baseId + '_operator'),
+			'value_simple': this.element.find(baseId + '_value_simple'),
+			'value_file': this.element.find(baseId + '_value_file'),
+		};
 	};
 
 	Attribute.prototype._createElement = function(){
@@ -709,7 +729,7 @@ window.querybuilder = (function() {
 	};
 
 	Attribute.prototype._prepareElement = function($element) {
-		var baseId = "#" + $element.attr('id');
+		var baseId = '#' + $element.attr('id');
 		
 		$element.data('attribute', this);
 
@@ -736,9 +756,9 @@ window.querybuilder = (function() {
 		$element.find('.bl-token-attribute-file-edit').on('click', this._showModalEditor.bind(this));
 	};
 
-	Attribute.prototype._showModalEditor = function(event) {
-		var baseId = "#" + this.element.attr('id');
-		var $fileText = this.element.find(baseId + "_value_file");
+	Attribute.prototype._showModalEditor = function(/*event*/) {
+		var baseId = '#' + this.element.attr('id');
+		var $fileText = this.element.find(baseId + '_value_file');
 		var $modalTextArea = this.builder.modalEditor.find('textarea');
 		
 		$modalTextArea.val($fileText.val()); //copy out current text to modal
@@ -754,7 +774,7 @@ window.querybuilder = (function() {
 					.trigger('change');
 			}
 		});
-	}
+	};
 
 	Attribute.prototype._onUploadChanged = function(event) {
 		if (!(window.FileReader && window.File && window.FileList && window.Blob))
@@ -768,8 +788,8 @@ window.querybuilder = (function() {
 		var file = event.target.files && event.target.files[0];
 		if (file == null) {
 			$inputContainer.removeAttr('data-has-file');
-			$fileEditButton.text("No file selected...");
-			$fileText.val("").trigger('change');
+			$fileEditButton.text('No file selected...');
+			$fileText.val('').trigger('change');
 		}
 		else {
 			var fr = new FileReader();
@@ -777,7 +797,7 @@ window.querybuilder = (function() {
 				$inputContainer.attr('data-has-file', '');
 				$fileEditButton.text(file.name);
 				$fileText.val(fr.result).trigger('change');
-			}
+			};
 			fr.readAsText(file);
 		}
 	};
@@ -792,21 +812,21 @@ window.querybuilder = (function() {
 	Attribute.prototype.set = function(controlName, val, additionalSelector) {
 		if (this.$controls[controlName])
 			setValue(this.$controls[controlName], val);
-		else if (controlName === "case") {
+		else if (controlName === 'case') {
 			setValue(this.element.find('[data-attribute-type="' + additionalSelector + '"]')
 				.find('[data-attribute-role="case"]'), val);
-		} else if (controlName === "val") {
+		} else if (controlName === 'val') {
 			if (!additionalSelector) { // Write to whatever is in focus/use right now
 				var hasFile	= this.element.find('.bl-token-attribute-main-input').is('[data-has-file]');
 				if (hasFile)
-					setValue(this.$controls["value_file"], val);
+					setValue(this.$controls['value_file'], val);
 				else 
-					setValue(this.$controls["value_simple"], val);
+					setValue(this.$controls['value_simple'], val);
 			} else {
-				if (additionalSelector === "file")
-					setValue(this.$controls["value_file"], val);
-				else if (additionalSelector === "simple")
-					setValue(this.$controls["value_simple"], val);
+				if (additionalSelector === 'file')
+					setValue(this.$controls['value_file'], val);
+				else if (additionalSelector === 'simple')
+					setValue(this.$controls['value_simple'], val);
 			}
 		}
 	};
@@ -815,20 +835,20 @@ window.querybuilder = (function() {
 		
 		var hasFile		= this.element.find('.bl-token-attribute-main-input').is('[data-has-file]');
 		
-		var type 		= this.$controls["type"].val();
-		var operator 	= this.$controls["operator"].val();
+		var type 		= this.$controls['type'].val();
+		var operator 	= this.$controls['operator'].val();
 		
 		var $optionsContainer = this.element.find('[data-attribute-type="' + type + '"]');
-		var caseSensitive = $optionsContainer.find('[data-attribute-role="case"]').is(":checked") || false;
+		var caseSensitive = $optionsContainer.find('[data-attribute-role="case"]').is(':checked') || false;
 		
 		var rawValue;
 		var values		= [];
 		if (hasFile) {
-			rawValue = this.$controls["value_file"].val() || "";
+			rawValue = this.$controls['value_file'].val() || '';
 			var trimmedLines = rawValue.trim().split(/\s*[\r\n]+\s*/g); // split on line breaks, ignore empty lines.
 			values = values.concat(trimmedLines);
 		} else {
-			rawValue = this.$controls["value_simple"].val() || "";
+			rawValue = this.$controls['value_simple'].val() || '';
 			values = values.concat(rawValue);
 		}
 		
@@ -863,21 +883,21 @@ window.querybuilder = (function() {
 				$element.selectpicker('val', val);
 			else {
 				// deal with selects that don't have the "multiple" property
-				var multiSelect = $element.prop("multiple");
+				var multiSelect = $element.prop('multiple');
 				var hasSelected = false;
-				$element.find("option").each(function(i, option) {
+				$element.find('option').each(function(i, option) {
 					var canSelect = !hasSelected || multiSelect;
 					
 					var select = canSelect && ($.inArray($(option).val(), val) !== -1);
 
-					$(option).prop("selected", select);
+					$(option).prop('selected', select);
 					hasSelected |= select;
-				})
+				});
 			}
 		} else if ($element.is(':input')) {
 			$element.val(val[0]);
 		}
-	}
+	};
 
 	
 	//---------------

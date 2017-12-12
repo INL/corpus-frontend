@@ -5,7 +5,7 @@ var SINGLEPAGE = SINGLEPAGE || {};
 SINGLEPAGE.DEBUG = true;
 
 SINGLEPAGE.CORE = (function () {
-	"use strict";
+	'use strict';
 
 	$(document).ready(function () {
 		SINGLEPAGE.FORM.init();
@@ -85,7 +85,7 @@ SINGLEPAGE.CORE = (function () {
 
 
 	// Restore page when using back/forward
-	window.addEventListener("popstate", function() {
+	window.addEventListener('popstate', function() {
 		var searchSettings = fromQueryString(new URI().search());
 		toPageState(searchSettings || {});
 	});
@@ -121,7 +121,7 @@ SINGLEPAGE.CORE = (function () {
 	 */
 	function toQueryString(searchParams) {
 		
-		var modifiedParams ={} 
+		var modifiedParams ={}; 
 		
 		// remove null, undefined, empty strings and empty arrays
 		$.each(searchParams, function(key, value) {
@@ -132,7 +132,7 @@ SINGLEPAGE.CORE = (function () {
 			modifiedParams[key] = value;
 		});
 		
-		return "?" + QSON.toQueryString(modifiedParams);
+		return '?' + QSON.toQueryString(modifiedParams);
 
 		// return new URI().search({
 		// 	search: JSON.stringify(modifiedParams)
@@ -180,21 +180,21 @@ SINGLEPAGE.CORE = (function () {
 					el.element.remove();
 				});
 
-				tokenInstance.set("beginOfSentence", !!token.leadingXmlTag && token.leadingXmlTag.name === "s");
-				tokenInstance.set("endOfSentence", !!token.trailingXmlTag && token.trailingXmlTag.name === "s");
-				tokenInstance.set("optional", token.optional || false);
+				tokenInstance.set('beginOfSentence', !!token.leadingXmlTag && token.leadingXmlTag.name === 's');
+				tokenInstance.set('endOfSentence', !!token.trailingXmlTag && token.trailingXmlTag.name === 's');
+				tokenInstance.set('optional', token.optional || false);
 
 				if (token.repeats) {
-					tokenInstance.set("minRepeats", token.repeats.min);
-					tokenInstance.set("maxRepeats", token.repeats.max);
+					tokenInstance.set('minRepeats', token.repeats.min);
+					tokenInstance.set('maxRepeats', token.repeats.max);
 				}
 
 				function doOp(op, parentAttributeGroup, level) {
 					if (op == null)
 						return;
 
-					if (op.type === "binaryOp") {
-						var label = op.operator === "&" ? "AND" : "OR"; // TODO get label internally in builder
+					if (op.type === 'binaryOp') {
+						var label = op.operator === '&' ? 'AND' : 'OR'; // TODO get label internally in builder
 						if (op.operator != parentAttributeGroup.operator) {
 
 							if (level === 0) {
@@ -208,43 +208,43 @@ SINGLEPAGE.CORE = (function () {
 						//inverse order, since new elements are inserted at top..
 						doOp(op.right, parentAttributeGroup, level + 1);
 						doOp(op.left, parentAttributeGroup, level + 1);
-					} else if (op.type === "attribute") {
+					} else if (op.type === 'attribute') {
 						
 						var attributeInstance = parentAttributeGroup.createAttribute();
 
 						// case flag is always at the front, so check for that before checking
 						// for starts with/ends with flags
-						if (op.value.indexOf("(?-i)") === 0) {
-							attributeInstance.set("case", true, op.attributeType);
+						if (op.value.indexOf('(?-i)') === 0) {
+							attributeInstance.set('case', true, op.attributeType);
 							op.value = op.value.substr(5);
 						}
 						
-						if (op.operator === "=" && op.value.length >= 2 && op.value.indexOf("|") === -1) {
-							if (op.value.indexOf(".*") === 0) {
-								op.operator = "ends with";
+						if (op.operator === '=' && op.value.length >= 2 && op.value.indexOf('|') === -1) {
+							if (op.value.indexOf('.*') === 0) {
+								op.operator = 'ends with';
 								op.value = op.value.substr(2);
 							}
-							else if (op.value.indexOf(".*") === op.value.length -2) {
-								op.operator = "starts with";
+							else if (op.value.indexOf('.*') === op.value.length -2) {
+								op.operator = 'starts with';
 								op.value = op.value.substr(0, op.value.length-2);
 							}
 						}
 
 
-						attributeInstance.set("operator", op.operator);
-						attributeInstance.set("type", op.attributeType);
+						attributeInstance.set('operator', op.operator);
+						attributeInstance.set('type', op.attributeType);
 						
-						attributeInstance.set("val", op.value);
+						attributeInstance.set('val', op.value);
 					}
 				}
 
 				doOp(token.expression, tokenInstance.rootAttributeGroup, 0);
-				tokenInstance.element.trigger("cql:modified");
+				tokenInstance.element.trigger('cql:modified');
 			});
 		} catch (e) {
 			// couldn't decode query
 			if (SINGLEPAGE.DEBUG) {
-				console.log("Cql parser could not decode query pattern");
+				console.log('Cql parser could not decode query pattern');
 				console.log(e);
 				console.log(searchParams.pattern);
 			}
@@ -293,9 +293,9 @@ SINGLEPAGE.CORE = (function () {
 
 		// Restore the results per page, sample info, etc
 		$('#resultsPerPage').selectpicker('val', [searchParams.pageSize || 50]);
-		$('#sampleSize').val(searchParams.sampleSize || "");
+		$('#sampleSize').val(searchParams.sampleSize || '');
 		$('#sampleMode').selectpicker('val', [searchParams.sampleMode || 'percentage']);
-		$('#sampleSeed').val(searchParams.sampleSeed || "");
+		$('#sampleSeed').val(searchParams.sampleSeed || '');
 
 		// in some cases we want to show a tab here, in some cases we don't 
 		// determine when 
@@ -319,12 +319,12 @@ SINGLEPAGE.CORE = (function () {
 			
 			// Get the correct pattern based on selected tab
 			var queryType = $('#searchTabs li.active .querytype').attr('href');
-			if (queryType === "#simple") {
+			if (queryType === '#simple') {
 				pattern = SINGLEPAGE.FORM.getActiveProperties();
-			} else if (queryType === "#advanced") {
+			} else if (queryType === '#advanced') {
 				pattern = $('#querybuilder').data('builder').getCql();
 			} else {
-				pattern = $("#querybox").val();
+				pattern = $('#querybox').val();
 			}
 
 			SINGLEPAGE.INTERFACE.setParameters({
@@ -363,7 +363,7 @@ SINGLEPAGE.CORE = (function () {
 
 		// Called to reset search form and results
 		resetPage: function() {
-			history.pushState(null, null, "?");
+			history.pushState(null, null, '?');
 			toPageState({});
 			SINGLEPAGE.BLS.cancelSearch();
 			return false;

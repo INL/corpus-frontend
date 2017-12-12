@@ -2,7 +2,7 @@
 
 var SINGLEPAGE = SINGLEPAGE || {};
 
- /**
+/**
  * Responsible for converting search results to html.
  * Also contains functions to clear old results from the page.
  * Does not manage the main search form.
@@ -14,12 +14,12 @@ SINGLEPAGE.INTERFACE = (function() {
 	// Add a 'hide' function to bootstrap tabs
 	// Doesn't do more than remove classes and aria labels, and fire some events
 	$.fn.tab.Constructor.prototype.hide = function() {
-		var $this    = this.element
+		var $this    = this.element;
 		var selector = $this.data('target') || $this.attr('href');
 
 		var hideEvent = $.Event('hide.bs.tab', {
 			relatedTarget: $this[0]
-		})
+		});
 
 		$this.trigger(hideEvent);
 		if (hideEvent.isDefaultPrevented())
@@ -31,9 +31,9 @@ SINGLEPAGE.INTERFACE = (function() {
 			.trigger({
 				type: 'hidden.bs.tab',
 				relatedTarget: this[0]
-			})
+			});
 		$(selector).removeClass('active');
-	}
+	};
 
 	// Context of the hit is passed in arrays, per property
 	// (word/lemma/PoS/punct). Right now we only want to display the
@@ -47,14 +47,14 @@ SINGLEPAGE.INTERFACE = (function() {
 			parts.push(context[prop][i]);
 		}
 		parts.push(addPunctAfter);
-		return parts.join("");
+		return parts.join('');
 	}
 
 	function snippetParts(hit) {
-		var punctAfterLeft = hit.match.word.length > 0 ? hit.match.punct[0] : "";
-		var before = words(hit.left, "word", false, punctAfterLeft);
-		var match = words(hit.match, "word", false, "");
-		var after = words(hit.right, "word", true, "");
+		var punctAfterLeft = hit.match.word.length > 0 ? hit.match.punct[0] : '';
+		var before = words(hit.left, 'word', false, punctAfterLeft);
+		var match = words(hit.match, 'word', false, '');
+		var after = words(hit.right, 'word', true, '');
 		return [before, match, after];
 	}
 
@@ -88,12 +88,12 @@ SINGLEPAGE.INTERFACE = (function() {
 	 */
 	function showCitation(concRow, docPid, start, end, textDirection) {
 		// Open/close the collapsible in the next row
-		var $element = $(concRow).next().find(".collapse");
+		var $element = $(concRow).next().find('.collapse');
 		$element.collapse('toggle');
 
 		$.ajax({
 			url: BLS_URL + 'docs/' + docPid + '/snippet',
-			dataType: "json",
+			dataType: 'json',
 			data: {
 				hitstart: start,
 				hitend: end,
@@ -101,10 +101,10 @@ SINGLEPAGE.INTERFACE = (function() {
 			},
 			success: function (response) {
 				var parts = snippetParts(response);
-				$element.html('<span dir="'+ textDirection+'">'+ parts[0] + "<b>" + parts[1] + "</b>" + parts[2]+ "</span>");
+				$element.html('<span dir="'+ textDirection+'">'+ parts[0] + '<b>' + parts[1] + '</b>' + parts[2]+ '</span>');
 			},
 			error: function(jqXHR, textStatus, errorThrown) {
-				$element.text("Error retrieving data: " + (jqXHR.responseJSON && jqXHR.responseJSON.error) || textStatus);
+				$element.text('Error retrieving data: ' + (jqXHR.responseJSON && jqXHR.responseJSON.error) || textStatus);
 			}
 		});
 	}
@@ -120,11 +120,11 @@ SINGLEPAGE.INTERFACE = (function() {
 	 */
 	function showBlsError(jqXHR, textStatus, errorThrown) {
 		var errordata = (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.error) || {
-			"code": "WEBSERVICE_ERROR",
-			"message": "Error contacting webservice: " + textStatus + "; " + errorThrown
-		}
+			'code': 'WEBSERVICE_ERROR',
+			'message': 'Error contacting webservice: ' + textStatus + '; ' + errorThrown
+		};
 
-		$("#errorDiv").text(errordata.message + " (" + errordata.code + ") ").show();
+		$('#errorDiv').text(errordata.message + ' (' + errordata.code + ') ').show();
 	}
 
 	/**
@@ -162,30 +162,30 @@ SINGLEPAGE.INTERFACE = (function() {
 
 		var html = [];
 		if (currentPage == 0)
-			html.push("<li class='disabled'><a>Prev</a></li>");
+			html.push('<li class="disabled"><a>Prev</a></li>');
 		else
-			html.push("<li><a href='javascript:void(0)' data-page='", currentPage-1, "'>Prev</a></li>");
+			html.push('<li><a href="javascript:void(0)" data-page="', currentPage-1, '">Prev</a></li>');
 
 		if (startPage > 0)
-			html.push("<li class='disabled'><a>...</a></li>");
+			html.push('<li class="disabled"><a>...</a></li>');
 
 		for (var i = startPage; i < endPage; i++) {
 			var showPageNumber = i + 1;
 			if (i == currentPage)
-				html.push("<li class='active'><a>", showPageNumber, "</a></li>");
+				html.push('<li class="active"><a>', showPageNumber, '</a></li>');
 			else
-				html.push("<li><a href='javascript:void(0)' data-page='", i, "'>", showPageNumber, "</a></li>");
+				html.push('<li><a href="javascript:void(0)" data-page="', i, '">', showPageNumber, '</a></li>');
 		}
 
 		if (endPage < totalPages)
-			html.push("<li class='disabled'><a>...</a></li>");
+			html.push('<li class="disabled"><a>...</a></li>');
 
 		if (currentPage == (totalPages - 1) || totalPages == 0)
-			html.push("<li class='disabled'><a>Next</a></li>");
+			html.push('<li class="disabled"><a>Next</a></li>');
 		else
-			html.push("<li><a href='javascript:void(0)' data-page='", currentPage + 1, "'>Next</a></li>");
+			html.push('<li><a href="javascript:void(0)" data-page="', currentPage + 1, '">Next</a></li>');
 
-		$pagination.html(html.join(""));
+		$pagination.html(html.join(''));
 	}
 
 	/**
@@ -245,7 +245,7 @@ SINGLEPAGE.INTERFACE = (function() {
 		var $tab = $button.closest('.tab-pane');
 		var $resultgroupdetails = $tab.find('.resultgroupdetails');
 		var $resultgroupname = $resultgroupdetails.find('.resultgroupname');
-		$resultgroupname.text(groupName || "");
+		$resultgroupname.text(groupName || '');
 	}
 
 	/**
@@ -301,44 +301,44 @@ SINGLEPAGE.INTERFACE = (function() {
 				var left = textDirection=='ltr'? parts[0] : parts[2]; 
 				var right = textDirection=='ltr'? parts[2] : parts[0]; 
 				html.push(
-					"<div class='clearfix'>",
-						"<div class='col-xs-5 text-right'>", ELLIPSIS, " ", left, "</div>",
-						"<div class='col-xs-2 text-center'><b>", parts[1], "&nbsp;", "</b></div>",
-						"<div class='col-xs-5'>", right, " ", ELLIPSIS, "</div>",
-					"</div>");
+					'<div class="clearfix">',
+						'<div class="col-xs-5 text-right">', ELLIPSIS, ' ', left, '</div>',
+						'<div class="col-xs-2 text-center"><b>', parts[1], '&nbsp;', '</b></div>',
+						'<div class="col-xs-5">', right, ' ', ELLIPSIS, '</div>',
+					'</div>');
 			});
 
 			$.each(data.docs, function(index, doc) {
-					var title = doc.docInfo[data.summary.docFields.titleField];
-					var hits = doc.numberOfHits;
-					html.push(
-						"<div class='clearfix'>",
-							"<div class='col-xs-10'><b>", title, "&nbsp;", "</b></div>",
-							"<div class='col-xs-2'>", hits, "&nbsp;", "</div>",
-						"</div>");
-			})
+				var title = doc.docInfo[data.summary.docFields.titleField];
+				var hits = doc.numberOfHits;
+				html.push(
+					'<div class="clearfix">',
+						'<div class="col-xs-10"><b>', title, '&nbsp;', '</b></div>',
+						'<div class="col-xs-2">', hits, '&nbsp;', '</div>',
+					'</div>');
+			});
 
 			// TODO tidy up
-			$button.parent().parent().append(html.join(""));
+			$button.parent().parent().append(html.join(''));
 		},
 		function(jqXHR, textStatus, errorThrown) {
 			var errordata = (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.error) || {
-				"code": "WEBSERVICE_ERROR",
-				"message": "Error contacting webservice: " + textStatus + "; " + errorThrown
-			}
+				'code': 'WEBSERVICE_ERROR',
+				'message': 'Error contacting webservice: ' + textStatus + '; ' + errorThrown
+			};
 
 			var html = [];
-			html.push("<div>",
-				"<b>Could not retrieve concordances.</b><br>");
+			html.push('<div>',
+				'<b>Could not retrieve concordances.</b><br>');
 	
 			if (jqXHR && jqXHR.status !== 0) // server is up
-				html.push("This is usually due to a misconfigured server, see ",
-				"<a href='https://github.com/INL/BlackLab/blob/be5b5be75c064e87cbfc2271fd19d073f80839af/core/src/site/markdown/blacklab-server-overview.md#installation' target='_blank'>here</a> for more information.");
+				html.push('This is usually due to a misconfigured server, see ',
+					'<a href="https://github.com/INL/BlackLab/blob/be5b5be75c064e87cbfc2271fd19d073f80839af/core/src/site/markdown/blacklab-server-overview.md#installation" target="_blank">here</a> for more information.');
 
-			html.push("<hr><b>", errordata.code, "</b><br>", errordata.message, "</div>");
+			html.push('<hr><b>', errordata.code, '</b><br>', errordata.message, '</div>');
 
 			// TODO tidy up
-			$button.parent().parent().html(html.join(""));
+			$button.parent().parent().html(html.join(''));
 		});
 	}
 
@@ -352,47 +352,47 @@ SINGLEPAGE.INTERFACE = (function() {
 		// TODO use mustache.js
 		var html = [];
 		html.push(
-			"<thead><tr>",
-				"<th class='text-right' style='width:40px'>",
-					"<span class='dropdown'>",
-						"<a class='dropdown-toggle' data-toggle='dropdown'>", 
-						textDirection=='ltr'? "Before hit " : "After hit ",
-						"<span class='caret'></span></a>",
-						"<ul class='dropdown-menu' role='menu' aria-labelledby='left'>");
+			'<thead><tr>',
+				'<th class="text-right" style="width:40px">',
+					'<span class="dropdown">',
+						'<a class="dropdown-toggle" data-toggle="dropdown">', 
+						textDirection=='ltr'? 'Before hit ' : 'After hit ',
+						'<span class="caret"></span></a>',
+						'<ul class="dropdown-menu" role="menu" aria-labelledby="left">');
 						$.each(wordProperties, function(i, prop) {
 							html.push(
-							"<li><a data-bls-sort='left:" + prop.id + "'>" + prop.displayName + "</a></li>");
+								'<li><a data-bls-sort="left:' + prop.id + '">' + prop.displayName + '</a></li>');
 						});
 						html.push(
-						"</ul>",
-					"</span>",
-				"</th>",
+						'</ul>',
+					'</span>',
+				'</th>',
 
-				"<th class='text-center' style='width:20px;'>",
-					"<a data-bls-sort='hit:word'><strong>Hit text<strong></a>",
-				"</th>",
+				'<th class="text-center" style="width:20px;">',
+					'<a data-bls-sort="hit:word"><strong>Hit text<strong></a>',
+				'</th>',
 
-				"<th class='text-left' style='width:40px;'>",
-					"<span class='dropdown'>", // Span as when it's div, and we're right aligning text, the dropdown doesn't align because the div extends all the way left
-						"<a class='dropdown-toggle' data-toggle='dropdown'>",
-						textDirection=='ltr'? "After hit " : "Before hit ",
-						"<span class='caret'></span></a>",
-						"<ul class='dropdown-menu' role='menu' aria-labelledby='right'>");
+				'<th class="text-left" style="width:40px;">',
+					'<span class="dropdown">', // Span as when it's div, and we're right aligning text, the dropdown doesn't align because the div extends all the way left
+						'<a class="dropdown-toggle" data-toggle="dropdown">',
+						textDirection=='ltr'? 'After hit ' : 'Before hit ',
+						'<span class="caret"></span></a>',
+						'<ul class="dropdown-menu" role="menu" aria-labelledby="right">');
 						$.each(wordProperties, function(i, prop) {
 							html.push(
-							"<li><a data-bls-sort='right:" + prop.id + "'>" + prop.displayName + "</a></li>");
+							'<li><a data-bls-sort="right:' + prop.id + '">' + prop.displayName + '</a></li>');
 						});
 						html.push(
-						"</ul>",
-					"</span>",
-				"</th>",
+						'</ul>',
+					'</span>',
+				'</th>',
 				// TODO these need to be dynamic based on propertyfields in AutoSearch, so does hit word
-				"<th style='width:15px;'><a data-bls-sort='hit:lemma'>Lemma</a></th>",
-				"<th style='width:25px;'><a data-bls-sort='hit:pos'>Part of speech</a></th>",
-			"</tr></thead>"
+				'<th style="width:15px;"><a data-bls-sort="hit:lemma">Lemma</a></th>',
+				'<th style="width:25px;"><a data-bls-sort="hit:pos">Part of speech</a></th>',
+			'</tr></thead>'
 		);
 						
-		html.push("<tbody>");
+		html.push('<tbody>');
 		var prevHitDocPid = null;
 		$.each(data.hits, function(index, hit) {
 			// Render a row for this hit's document, if this hit didn't occurred in a new document
@@ -400,48 +400,48 @@ SINGLEPAGE.INTERFACE = (function() {
 			if (docPid !== prevHitDocPid) {
 				prevHitDocPid = docPid;
 				var doc = data.docInfos[docPid];
-				var docTitle = doc[data.summary.docFields.titleField] || "UNKNOWN";
-				var docAuthor = doc[data.summary.docFields.authorField] ? " by " + doc[data.summary.docFields.authorField] : "";
-				var docDate = doc[data.summary.docFields.dateField] ? " (" + doc[data.summary.docFields.dateField] + ")" : "";
+				var docTitle = doc[data.summary.docFields.titleField] || 'UNKNOWN';
+				var docAuthor = doc[data.summary.docFields.authorField] ? ' by ' + doc[data.summary.docFields.authorField] : '';
+				var docDate = doc[data.summary.docFields.dateField] ? ' (' + doc[data.summary.docFields.dateField] + ')' : '';
 				
-				var docUrl = new URI("article").search({
-					"doc": docPid,
-					"query": data.summary.searchParam.patt
+				var docUrl = new URI('article').search({
+					'doc': docPid,
+					'query': data.summary.searchParam.patt
 				}).toString();
 
 				// Display some info about the document
 				html.push(
-					"<tr>",
-						"<td colspan='5'><div class='doctitle collapse in'>",
-							"<a class='text-error' target='_blank' href='", docUrl, "'>", docTitle, docAuthor, docDate, "</a>",
-						"</div></td>",
-					"</tr>");
+					'<tr>',
+						'<td colspan="5"><div class="doctitle collapse in">',
+							'<a class="text-error" target="_blank" href="', docUrl, '">', docTitle, docAuthor, docDate, '</a>',
+						'</div></td>',
+					'</tr>');
 			}
 			
 			// And display the hit itself
 			var parts = snippetParts(hit);
 			var left = textDirection=='ltr'? parts[0] : parts[2]; 
 			var right = textDirection=='ltr'? parts[2] : parts[0]; 
-			var matchLemma = words(hit.match, "lemma", false, "");
-			var matchPos = words(hit.match, "pos", false, "");
+			var matchLemma = words(hit.match, 'lemma', false, '');
+			var matchPos = words(hit.match, 'pos', false, '');
 
 			html.push(
-					"<tr class='concordance'  onclick='SINGLEPAGE.INTERFACE.showCitation(this, \"", docPid, "\", ", hit.start, ", ", hit.end, ", \"", textDirection,"\");'>",
-						"<td class='text-right'>",ELLIPSIS, " <span dir='", textDirection, "'>", left, "</span></td>",
-						"<td class='text-center'><span dir='", textDirection, "'><strong>", parts[1],"</strong></span></td>",
-						"<td><span dir='", textDirection, "'>", right, "</span> ", ELLIPSIS, "</td>",
-						"<td>", matchLemma, "</td>",
-						"<td>", matchPos, "</td>",
-					"</tr>");
+				'<tr class="concordance" onclick="SINGLEPAGE.INTERFACE.showCitation(this, \'', docPid, '\', ', hit.start, ', ', hit.end,');">',
+					'<td class="text-right">',ELLIPSIS, ' <span dir="', textDirection, '">', left, '</span></td>',
+					'<td class="text-center"><span dir="', textDirection, '"><strong>', parts[1],'</strong></span></td>',
+					'<td><span dir="', textDirection, '">', right, '</span> ', ELLIPSIS, '</td>',
+					'<td>', matchLemma, '</td>',
+					'<td>', matchPos, '</td>',
+				'</tr>');
 
 			// Snippet row (initially hidden)
 			html.push(
-				"<tr>",
-					"<td colspan='5' class='inline-concordance'><div class='collapse'>Loading...</div></td>",
-				"</tr>");
+				'<tr>',
+					'<td colspan="5" class="inline-concordance"><div class="collapse">Loading...</div></td>',
+				'</tr>');
 
 		});
-		html.push("</tbody>");
+		html.push('</tbody>');
 		return html;
 	}
 
@@ -455,45 +455,45 @@ SINGLEPAGE.INTERFACE = (function() {
 		var html = [];
 
 		html.push(
-			"<thead><tr>",
-				"<th style='width:70%'><a data-bls-sort='field:", data.summary.docFields.titleField, "'>Document title</a></th>",
-				"<th style='width:15%'><a data-bls-sort='field:", data.summary.docFields.dateField, "'>Year</a></th>",
-				"<th style='width:15%'><a data-bls-sort='numhits'>Hits</a></th>",
-			"</tr></thead>"
+			'<thead><tr>',
+				'<th style="width:70%"><a data-bls-sort="field:', data.summary.docFields.titleField, '">Document title</a></th>',
+				'<th style="width:15%"><a data-bls-sort="field:', data.summary.docFields.dateField, '">Year</a></th>',
+				'<th style="width:15%"><a data-bls-sort="numhits">Hits</a></th>',
+			'</tr></thead>'
 		);
 
-		html.push("<tbody>");
+		html.push('<tbody>');
 		$.each(data.docs, function(index, doc) {
 			var docPid = doc.docPid;
 
-			var docTitle = doc.docInfo[data.summary.docFields.titleField] || "UNKNOWN";
-			var docAuthor = doc.docInfo[data.summary.docFields.authorField] ? " by " + doc.docInfo[data.summary.docFields.authorField] : "";
-			var docDate = doc.docInfo[data.summary.docFields.dateField] || "";
-			var docHits = doc.numberOfHits || "";
+			var docTitle = doc.docInfo[data.summary.docFields.titleField] || 'UNKNOWN';
+			var docAuthor = doc.docInfo[data.summary.docFields.authorField] ? ' by ' + doc.docInfo[data.summary.docFields.authorField] : '';
+			var docDate = doc.docInfo[data.summary.docFields.dateField] || '';
+			var docHits = doc.numberOfHits || '';
 
 			var snippetStrings = [];
 			$.each(doc.snippets, function(index, snippet) {
 				var parts = snippetParts(snippet);
-				snippetStrings.push(ELLIPSIS, " ", parts[0], "<strong>", parts[1], "</strong>", parts[2], ELLIPSIS);
+				snippetStrings.push(ELLIPSIS, ' ', parts[0], '<strong>', parts[1], '</strong>', parts[2], ELLIPSIS);
 				return false; // only need the first snippet for now
 			});
 
-			var docUrl = new URI("article").search({
-				"doc": docPid,
-				"query": data.summary.searchParam.patt
+			var docUrl = new URI('article').search({
+				'doc': docPid,
+				'query': data.summary.searchParam.patt
 			}).toString();
 			html.push(
-				"<tr class='documentrow'>",
-					"<td>",
-						"<a target='_blank' href='", docUrl, "'>", docTitle, docAuthor, "</a><br>", '<span dir="', textDirection, '">',
-						snippetStrings.join(""), snippetStrings.length > 0 ? "<br>" : "", "</span>",
-						"<a class='green btn btn-xs btn-default' target='_blank' href='", docUrl,"'>View document info</a>",
-					"</td>",
-					"<td>", docDate, "</td>",
-					"<td>", docHits, "</td>",
-				"</tr>");
+				'<tr class="documentrow">',
+					'<td>',
+						'<a target="_blank" href="', docUrl, '">', docTitle, docAuthor, '</a><br>',
+						snippetStrings.join(''), snippetStrings.length > 0 ? '<br>' : '',
+						'<a class="green btn btn-xs btn-default" target="_blank" href="', docUrl,'">View document info</a>',
+					'</td>',
+					'<td>', docDate, '</td>',
+					'<td>', docHits, '</td>',
+				'</tr>');
 		});
-		html.push("</tbody>");
+		html.push('</tbody>');
 
 		return html;
 	}
@@ -509,17 +509,17 @@ SINGLEPAGE.INTERFACE = (function() {
 		var html = [];
 
 		html.push(
-			"<thead><tr>",
-				"<th style='width:30%;'><a data-bls-sort='identity'>Group</a></th>",
-				"<th style='width:70%;'><a data-bls-sort='numhits'>Hits</a></th>",
-			"</tr></thead>"
+			'<thead><tr>',
+				'<th style="width:30%;"><a data-bls-sort="identity">Group</a></th>',
+				'<th style="width:70%;"><a data-bls-sort="numhits">Hits</a></th>',
+			'</tr></thead>'
 		);
 
 		// give the display a different color based on whether we're showing hits or docs
 		var displayClass = data.hitGroups ? 'progress-bar-success' : 'progress-bar-warning';
 		var idPrefix = data.hitGroups ? 'hg' : 'dg'; // hitgroup : docgroup
 
-		html.push("<tbody>");
+		html.push('<tbody>');
 		var groups = data.hitGroups || data.docGroups;
 		$.each(groups, function(index, group) {
 			var groupId = group.identity;
@@ -529,26 +529,25 @@ SINGLEPAGE.INTERFACE = (function() {
 			var displayWidth = (group.size / data.summary.largestGroupSize) * 100;
 
 			html.push(
-				"<tr>",
-					"<td>", displayName, "</td>",
-					"<td>",
-						"<div class='progress group-size-indicator' data-toggle='collapse' data-target='#", htmlId, "' style='cursor:pointer;'>",
-							"<div class='progress-bar ", displayClass, "' style='min-width: ", displayWidth, "%;'>", group.size, "</div>",
-						"</div>",
-						"<div class='collapse inline-concordance' id='", htmlId, "'>",
-							"<div>",
-								"<button type='button' class='btn btn-sm btn-link viewconcordances' data-group-name='", displayName, "' data-group-id='", groupId, "'>&#171; View detailed concordances in this group</button> - ",
-								"<button type='button' class='btn btn-sm btn-link loadconcordances' data-group-id='", groupId, "'>Load more concordances...</button>",
-							"</div>",
-						"</div>",
-					"</td>",
-				"</tr>");
+				'<tr>',
+					'<td>', displayName, '</td>',
+					'<td>',
+						'<div class="progress group-size-indicator" data-toggle="collapse" data-target="#', htmlId, '" style="cursor:pointer;">',
+							'<div class="progress-bar ', displayClass, '" style="min-width: ', displayWidth, '%;">', group.size, '</div>',
+						'</div>',
+						'<div class="collapse inline-concordance" id="', htmlId, '">',
+							'<div>',
+								'<button type="button" class="btn btn-sm btn-link viewconcordances" data-group-name="', displayName, '" data-group-id="', groupId, '">&#171; View detailed concordances in this group</button> - ',
+								'<button type="button" class="btn btn-sm btn-link loadconcordances" data-group-id="', groupId, '">Load more concordances...</button>',
+							'</div>',
+						'</div>',
+					'</td>',
+				'</tr>');
 		});
-		html.push("</tbody>");
+		html.push('</tbody>');
 
 		return html;
 	}
-	
 
 	/**
 	 * Redraws the table, pagination, hides spinners, shows/hides group indicator, shows the pagination/group controls, etc.
@@ -568,14 +567,14 @@ SINGLEPAGE.INTERFACE = (function() {
 			html = formatGroups(data);
 		else {
 			html = [
-				"<thead>",
-					"<tr><th><a>No results found</a></th></tr>",
-				"</thead>",
-				"<tbody>",
-					"<tr>",
-						"<td class='no-results-found'>No results were found. Please check your query and try again.</td>",
-					"</tr>",
-				"</tbody>"
+				'<thead>',
+					'<tr><th><a>No results found</a></th></tr>',
+				'</thead>',
+				'<tbody>',
+					'<tr>',
+						'<td class="no-results-found">No results were found. Please check your query and try again.</td>',
+					'</tr>',
+				'</tbody>'
 			];
 		}
 
@@ -591,7 +590,7 @@ SINGLEPAGE.INTERFACE = (function() {
 		// Always do this, if an out-of-bounds request is made and no data is returned,
 		// the pagination will still be accurate, allowing the user to go back to a valid page.
 		updatePagination($tab.find('.pagination'), data);
-		replaceTableContent($tab.find('.resultcontainer table'), html.join(""), onTableContentsReplaced);
+		replaceTableContent($tab.find('.resultcontainer table'), html.join(''), onTableContentsReplaced);
 		hideSearchIndicator($tab);
 		$tab.find('.resultcontrols, .resultcontainer').show();
 		$tab.data('results', data);
@@ -607,7 +606,7 @@ SINGLEPAGE.INTERFACE = (function() {
 			$resultgroupdetails.show();
 			var $resultgroupname = $resultgroupdetails.find('.resultgroupname');
 			if (!$resultgroupname.text())
-				$resultgroupname.text(data.summary.searchParam.viewgroup)
+				$resultgroupname.text(data.summary.searchParam.viewgroup);
 		} else {
 			$resultgroupdetails.hide();
 		}
@@ -652,7 +651,7 @@ SINGLEPAGE.INTERFACE = (function() {
 			var $groupSelect = $tab.find('select.groupselect');
 
 			if ($groupSelect.length)
-				$groupSelect.selectpicker('val', updatedParameters.groupBy)
+				$groupSelect.selectpicker('val', updatedParameters.groupBy);
 		}
 	}
 
@@ -694,15 +693,15 @@ SINGLEPAGE.INTERFACE = (function() {
 		// and warn the user if we are
 		if (searchSettings.operation === 'hits' && searchSettings.pattern == null) {
 			replaceTableContent($tab.find('.resultcontainer table'),
-				["<thead>",
-					"<tr><th><a>No hits to display</a></th></tr>",
-				"</thead>",
-				"<tbody>",
-					"<tr>",
-						"<td class='no-results-found'>No hits to display... (one or more of Lemma/PoS/Word is required).</td>",
-					"</tr>",
-				"</tbody>"
-				].join("")
+				['<thead>',
+					'<tr><th><a>No hits to display</a></th></tr>',
+				'</thead>',
+				'<tbody>',
+					'<tr>',
+						'<td class="no-results-found">No hits to display... (one or more of Lemma/PoS/Word is required).</td>',
+					'</tr>',
+				'</tbody>'
+				].join('')
 			);
 			$tab.find('.resultcontainer').show();
 			$tab.find('.resultcontrols').hide();
@@ -724,7 +723,6 @@ SINGLEPAGE.INTERFACE = (function() {
 			}
 		);
 	}
-	
 
 	return {
 		init: function() {
@@ -733,8 +731,7 @@ SINGLEPAGE.INTERFACE = (function() {
 			$('#results').hide();
 			$('#resultTabs a').each(function() { $(this).tab('hide'); });
 			$('.searchIndicator').hide();
-			
-			
+
 			// See parameters type documentation in singlepage-bls.js
 			$('#tabHits')
 				.data('parameters', {})
@@ -753,7 +750,7 @@ SINGLEPAGE.INTERFACE = (function() {
 				.data('constParameters', {
 					operation: 'hits',
 				})
-				.data('fnSetResults', setTabResults.bind($('#tabHits')[0]))
+				.data('fnSetResults', setTabResults.bind($('#tabHits')[0]));
 
 			$('#tabDocs')
 				.data('parameters', {})
@@ -772,7 +769,7 @@ SINGLEPAGE.INTERFACE = (function() {
 				.data('constParameters', {
 					operation: 'docs',
 				})
-				.data('fnSetResults', setTabResults.bind($('#tabDocs')[0]))
+				.data('fnSetResults', setTabResults.bind($('#tabDocs')[0]));
 
 			$('#resultTabsContent .tab-pane').on('localParameterChange', onLocalParameterChange);
 			$('#resultTabsContent .tab-pane').on('tabOpen', onTabOpen);
@@ -789,7 +786,7 @@ SINGLEPAGE.INTERFACE = (function() {
 					var invert = ($(event.delegateTarget).data('parameters').sort === sort);
 
 					$(this).trigger('localParameterChange', {
-						sort: invert ? "-" + sort : sort
+						sort: invert ? '-' + sort : sort
 					});
 					event.preventDefault();
 				})
@@ -813,7 +810,7 @@ SINGLEPAGE.INTERFACE = (function() {
 						viewGroup: null,
 					});
 					event.preventDefault();
-				})
+				});
 		},
 
 		showCitation: showCitation,
@@ -857,5 +854,5 @@ SINGLEPAGE.INTERFACE = (function() {
 				));
 			});
 		}
-	}
+	};
 })();

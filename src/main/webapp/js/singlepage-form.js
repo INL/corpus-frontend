@@ -5,7 +5,7 @@
  * @property {boolean} case - Should the property match using case sensitivity
  */
 
- /**
+/**
  * @typedef {Object} FilterField
  * @property {string} name - Unique ID of the filter
  * @property {string} filterType - Type of the filter, one of 'range', 'text', 'select', 'combobox'
@@ -13,10 +13,10 @@
  */
 
 // Our global symbol
-var SINGLEPAGE = SINGLEPAGE || {}
+var SINGLEPAGE = SINGLEPAGE || {};
 SINGLEPAGE.FORM = (function () {
 
-	"use strict";
+	'use strict';
 
 	// Filters with currently valid values, values will need to be processed prior to search
 	var activeFilters = [];
@@ -27,10 +27,10 @@ SINGLEPAGE.FORM = (function () {
 		
 		var displayHtml = [];
 		$.each(activeFilters, function(index, element) {
-			displayHtml.push(element.name, ": ", "<i>", element.values.join(", "), " </i>");
+			displayHtml.push(element.name, ': ', '<i>', element.values.join(', '), ' </i>');
 		});
 		
-		$("#filteroverview").html(displayHtml.join(""));
+		$('#filteroverview').html(displayHtml.join(''));
 	};
 	
 	// Add or update the filter in the list when it has a value.
@@ -39,7 +39,7 @@ SINGLEPAGE.FORM = (function () {
 	var updateFilterField = function($filterfield) {
 		
 		function removeFromFilterList(filterName) {
-			activeFilters = $.grep(activeFilters, function(elem) { return elem.name === filterName}, true);
+			activeFilters = $.grep(activeFilters, function(elem) { return elem.name === filterName;}, true);
 		} 
 		
 		var filterName = $filterfield.attr('id');
@@ -48,7 +48,7 @@ SINGLEPAGE.FORM = (function () {
 		var values = [];
 		
 		// Has two input fields, special treatment
-		if (filterType === "range") {
+		if (filterType === 'range') {
 			var from = $($inputs[0]).val();
 			var to = $($inputs[1]).val();
 			
@@ -77,20 +77,20 @@ SINGLEPAGE.FORM = (function () {
 	
 	var updatePropertyField = function($propertyField) {
 		function removeFromPropertyList(propertyName) {
-			activeProperties = $.grep(activeProperties, function(elem) { return elem.name === propertyName}, true);
+			activeProperties = $.grep(activeProperties, function(elem) { return elem.name === propertyName;}, true);
 		}
 
 		var propertyName = $propertyField.attr('id');
 		var prop = {
 			name: propertyName,
-			value: $propertyField.find('#' + propertyName + "_value").val(),
-			case: $propertyField.find('#' + propertyName + "_case").is(':checked')
+			value: $propertyField.find('#' + propertyName + '_value').val(),
+			case: $propertyField.find('#' + propertyName + '_case').is(':checked')
 		};
 
 		removeFromPropertyList(prop.name);
 		if (prop.value)
 			activeProperties.push(prop);
-	}
+	};
 
 	return {
 		
@@ -103,38 +103,38 @@ SINGLEPAGE.FORM = (function () {
 					var self = this;
 					$.each(items, function(index, item){
 						self._renderItem(ul, item);
-					})
+					});
 				},
 				_renderItem: function(ul, item) {
-					$("<li></li>")
+					$('<li></li>')
 						.attr('value', item.value)
-						.html("<a>" + item.label + "</a>")
+						.html('<a>' + item.label + '</a>')
 						.data('ui-autocomplete-item', item)
 						.appendTo(ul);
 				},
 				_resizeMenu: function() {
 					$(this.menu.element).css({
-						"max-height": "300px",
-						"overflow-y": "auto",
-						"overflow-x": "hidden",
-						"width": $(this.element).outerWidth()
+						'max-height': '300px',
+						'overflow-y': 'auto',
+						'overflow-x': 'hidden',
+						'width': $(this.element).outerWidth()
 					});
 				}
-			})
+			});
 
 			// Now replace all of our autocomplete-marked selects with text inputs with attached autocomplete
-			$("select.autocomplete").each(function() {
+			$('select.autocomplete').each(function() {
 				var $select = $(this);
-				var values = $select.find("option").map(function(index, element) {
+				var values = $select.find('option').map(function(index, element) {
 					var value = $(element).val();
 					return  {
 						label: value,
 						// Surround the value by quotes, as by default unquoted values are split on whitespace and treated as separate words.
 						value: '"' + value + '"', 
-					}
+					};
 				}).get();
 
-				var $autocomplete = $("<input></input>")
+				var $autocomplete = $('<input></input>')
 					.attr({
 						type: 'text',
 						class: $select.data('class'),
@@ -148,7 +148,7 @@ SINGLEPAGE.FORM = (function () {
 					source: values,
 					minLength: 0, // show values even for empty strings
 					classes: {
-						"ui-autocomplete": "dropdown-menu"
+						'ui-autocomplete': 'dropdown-menu'
 					},
 					create: function() {
 						// This element has a div appended every time an element is highlighted
@@ -166,12 +166,12 @@ SINGLEPAGE.FORM = (function () {
 
 				// show values immediately when first focusing by performing a search directly
 				$autocomplete.on('focus', function() {
-					$(this).autocomplete('search', $(this).val() || "");
-				})
-			})
+					$(this).autocomplete('search', $(this).val() || '');
+				});
+			});
 			
 			// Register callbacks and sync with current state
-			$(".filterfield").on('change', function () {
+			$('.filterfield').on('change', function () {
 				updateFilterField($(this));
 			}).each(function () {
 				updateFilterField($(this));
@@ -186,11 +186,11 @@ SINGLEPAGE.FORM = (function () {
 		
 		// Clear all fields
 		reset: function() {
-			$(".filterfield").each(function() {
+			$('.filterfield').each(function() {
 				SINGLEPAGE.FORM.setFilterValues($(this).attr('id'), []);
 			});
 
-			$(".propertyfield").each(function() {
+			$('.propertyfield').each(function() {
 				// Pass object where every value apart from name is undefined to clear all values
 				SINGLEPAGE.FORM.setPropertyValues({name: $(this).attr('id')});
 			});
@@ -212,10 +212,10 @@ SINGLEPAGE.FORM = (function () {
 			var filterType = $filterField.data('filterfield-type');
 			
 			// Determine how to process the value of this filter field, based on the type of this filter
-			if (filterType == "range") {
+			if (filterType == 'range') {
 				$($inputs[0]).val(values[0]);
 				$($inputs[1]).val(values[1]);
-			} else if (filterType == "select") {
+			} else if (filterType == 'select') {
 				$inputs.first().selectpicker('val', values);
 			} else {
 				$inputs.first().val(values);
@@ -226,10 +226,10 @@ SINGLEPAGE.FORM = (function () {
 
 		setPropertyValues: function(property) {
 			var $propertyField = $('#' + property.name);
-			$propertyField.find('#' + property.name + "_value").val(property.value);
-			$propertyField.find('#' + property.name + "_case").prop('checked', property.case);
+			$propertyField.find('#' + property.name + '_value').val(property.value);
+			$propertyField.find('#' + property.name + '_case').prop('checked', property.case);
 		
 			updatePropertyField($propertyField);
 		}
-	}
+	};
 })();

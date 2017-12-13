@@ -50,7 +50,126 @@ var corpora = {};
 			return '01-01-1970';
 		}
 	}
+
+	/**
+	 * Keep requesting the status of the current index until it's no longer indexing.
+	 * The update handler will be called periodically while the status is "indexing", and then once more when the status has changed to something other than "indexing".
+	 * 
+	 * @param fnUpdateHandler called with the up-to-date index data
+	 * @param fnErrorHander called with the error string
+	 */
+	function refreshIndexStatusWhileIndexing(indexId, fnUpdateHandler, fnErrorHandler) {
+		var statusUrl = CORPORA.blsUrl + indexId + "/status/"
+		
+		var intervalId;
+		
+		function success(index) {
+			normalizeIndexData(indexId, index);
+			fnUpdateHandler(index);
+
+			if (index.status !== 'indexing')
+				clearInterval(intervalId);
+		}
+
+		function error(jqXHR, textStatus, errorThrown) {
+			var indexName = indexId.indexOf(':') !== -1 ? indexId.substr(indexId.indexOf(':')+1) : indexId;
+			
+			var data = jqXHR.responseJSON;
+			var msg;
+			if (data && data.error)
+			msg = data.error.message;
+			else
+			msg = textStatus + '; ' + errorThrown;
+			
+			fnErrorHandler('Error retrieving status for corpus \''+indexName+'\': ' + msg);
+			clearInterval(intervalId);
+		}
+
+		
+		function run() {
+			$.ajax(statusUrl, {
+				'type': 'GET',
+				'accept': 'application/json',
+				'dataType': 'json',
+				'success': success,
+				'error': error
+			});
+		}
+
+		intervalId = setInterval(run, 2000);
+	}
 	
+	function normalizeIndexData(indexId, index) {
+		index.id = indexId;
+		index.documentFormat = index.documentFormat || '';
+		index.canSearch = index.status === 'available';
+		index.isBusy = index.status !== 'available' && index.status !== 'empty';
+		index.isPrivate = indexId.indexOf(':') >= 0;
+	}
+
+	/**
+	 * Create or update a table row with the status of the index/corpus.
+	 * 
+	 * @param {*} index the normalized index object
+	 * @param {*} $tr if set, the table row where the <td/> elements will be placed. If null a new <tr/> will be created and returned.
+	 */
+	function drawCorpusRow(index, $tr) {
+		$tr = $tr || $('<tr></tr>');
+		
+		// Can we search this index?
+		// If not, we'll show the current index status after the name.
+		var statusText;
+		if (index.status === 'indexing') {
+			statusText = ' (indexing) - '
+			+ index.indexProgress.filesProcessed + ' files, '
+			+ index.indexProgress.docsDone + ' documents, and '
+			+ index.indexProgress.tokensProcessed + ' tokens indexed so far...';
+		} else if (index.status != 'available') {
+			statusText = ' (' + index.status + ')';
+		} else {
+			statusText = '';
+		}
+		
+		// Show the add data / delete corpus icons?
+		// (only for private corpora that are not being written to at the moment)
+		var delIcon = '', addIcon = '';
+		if (index.isPrivate && !index.isBusy) {
+			delIcon = '<a class="icon fa fa-trash" title="Delete \'' + index.displayName + '\' corpus" ' +
+				'onclick="CORPORA.deleteCorpus(\'' + index.id + '\')" href="#"></a>';
+			addIcon = '<a class="icon fa fa-plus-square" title="Add data to \'' + index.displayName + '\' corpus" ' +
+				'href="#" onclick="return CORPORA.showUploadForm(corpora[\'' + index.id + '\']);">' +
+				'</a>';
+		}
+		
+		// The index title and search icon (both clickable iff the index can be searched)
+		var searchIcon = '<a class="icon disabled fa fa-search"></a>';
+		var indexTitle = index.displayName;
+		if (index.canSearch) {
+			var url = './' + index.id + '/search';
+			searchIcon = '<a class="icon fa fa-search" title="Search \'' + index.displayName + 
+				'\' corpus" href="'+ url + '"></a>';
+			indexTitle = '<a title="Search \'' + index.displayName + '\' corpus" href="' + 
+				url + '">' + index.displayName + '</a>';
+		}
+		
+		// Add HTML for this corpus to the appropriate list.
+		var optColumns = '';
+		if (index.isPrivate) {
+			optColumns = 
+				'<td>' + friendlyDocFormat(index.documentFormat) + '</td>' +
+				'<td>' + dateOnly(index.timeModified) + '</td>';
+		}
+		$tr.html(
+			'<td class="corpus-name">' + indexTitle + statusText + '</td>' +
+			'<td>' + delIcon + '</td>' +
+			'<td class="size">' + abbrNumber(index.tokenCount) + '</td>' +
+			optColumns +
+			'<td>' + addIcon + '</td>' +
+			'<td>' + searchIcon + '</td>');
+
+		return $tr;
+	}
+
 	// Request the list of available corpora and
 	// update the corpora page with it.
 	function refreshCorporaList(functionToCallAfterwards) {
@@ -60,70 +179,26 @@ var corpora = {};
 		function updateCorporaLists(data) {
 			serverInfo = data;
 			$('[data-autoupdate="userId"]').text(getUserId());
+			
 			var publicCorpora = [];
 			var privateCorpora = [];
-			var indices = data.indices;
-			for (var indexName in indices) {
-				if (indices.hasOwnProperty(indexName)) {
-					// Found an index. Determine how to display it.
-					var index = corpora[indexName] = indices[indexName];
-					index.name = indexName;
-					index.documentFormat = index.documentFormat || '';
+			
 
-					// Can we search this index?
-					// If not, we'll show the current index status after the name.
-					var statusText = '';
-					var canSearch = index.canSearch = true;
-					if (index.status != 'available') {
-						statusText = ' (' + index.status + ')';
-						canSearch = false;
-					}
-					
-					// What type of index is this, public or private?
-					var isPrivateIndex = index.isPrivate = indexName.indexOf(':') >= 0;
-					var addToList = isPrivateIndex ? privateCorpora : publicCorpora;
-					
-					// Show the add data / delete corpus icons?
-					// (only for private corpora that are not being written to at the moment)
-					var delIcon = '', addIcon = '';
-					var isBusy = index.isBusy = index.status != 'available' && index.status != 'empty';
-					var dispName = index.displayName;
-					if (isPrivateIndex && !isBusy) {
-						delIcon = '<a class="icon fa fa-trash" title="Delete \'' + dispName + '\' corpus"' +
-							'onclick="CORPORA.deleteCorpus(\'' + indexName + '\')" href="#"></a>';
-						addIcon = '<a class="icon fa fa-plus-square" title="Add data to \'' + dispName + '\' corpus" ' +
-							'href="#" onclick="return CORPORA.showUploadForm(corpora[\'' + indexName + '\']);">' +
-							'</a>';
-					}
-					
-					// The index title and search icon (both clickable iff the index can be searched)
-					var searchIcon = '<a class="icon disabled fa fa-search"></a>';
-					var indexTitle = dispName;
-					if (canSearch) {
-						var url = './' + indexName + '/search';
-						searchIcon = '<a class="icon fa fa-search" title="Search \'' + dispName + 
-							'\' corpus" href="'+ url + '"></a>';
-						indexTitle = '<a title="Search \'' + dispName + '\' corpus" href="' + 
-							url + '">' + dispName + '</a>';
-					}
-					
-					// Add HTML for this corpus to the appropriate list.
-					var optColumns = '';
-					if (isPrivateIndex) {
-						optColumns = 
-							'<td>' + friendlyDocFormat(index.documentFormat) + '</td>' +
-							'<td>' + dateOnly(index.timeModified) + '</td>';
-					}
-					addToList.push('<tr>' +
-						'<td class="corpus-name">' + indexTitle + statusText + '</td>' +
-						'<td>' + delIcon + '</td>' +
-						'<td class="size">' + abbrNumber(index.tokenCount) + '</td>' +
-						optColumns +
-						'<td>' + addIcon + '</td>' +
-						'<td>' + searchIcon + '</td>' +
-						'</tr>');
-				}
-			}
+			$.each(data.indices, function(indexId, index) {
+				normalizeIndexData(indexId, index);
+				corpora[indexId] = index;
+
+				var $tr = drawCorpusRow(index, null);
+
+				if (index.isPrivate)
+					privateCorpora.push($tr);
+				else 
+					publicCorpora.push($tr);
+
+				if (index.status === 'indexing')
+					refreshIndexStatusWhileIndexing(indexId, function(index) { drawCorpusRow(index, $tr) }, function(errorMsg) {$tr.children().first().text(errorMsg)});
+			});
+		
 	
 			// Determine which headings and lists to show
 			// (we only show the private list to people who are authorised to do something there,
@@ -132,8 +207,8 @@ var corpora = {};
 			var showPrivate = data.user.loggedIn && (privateCorpora.length > 0 || data.user.canCreateIndex);
 
 			// Put the HTML in the two lists.
-			$('#corpora').html(publicCorpora.join(''));
-			$('#corpora-private').html(privateCorpora.join(''));
+			$('#corpora').empty().append(publicCorpora);
+			$('#corpora-private').empty().append(privateCorpora);
 
 			// Show/hide elements
 			$('#corpora-all-container').toggle(showPublic || showPrivate);
@@ -144,6 +219,7 @@ var corpora = {};
 			if (!(showPublic || showPrivate)) {
 				showError('Sorry, no corpora are available, and you are not authorized to create a corpus. Please contact <a href="mailto:servicedesk@ivdnt.org">servicedesk@ivdnt.org</a> if this is an error.');
 			}
+
 		}
 		
 		// Perform the AJAX request to get the list of corpora.
@@ -344,7 +420,7 @@ var corpora = {};
 	CORPORA.deleteIndex = function (index) {
 		$('#waitDisplay').show();
 
-		$.ajax(CORPORA.blsUrl + index.name, {
+		$.ajax(CORPORA.blsUrl + index.id, {
 			'type': 'DELETE',
 			'accept': 'application/json',
 			'dataType': 'json',
@@ -405,21 +481,38 @@ var corpora = {};
 				$('.fileinput-button').removeClass('hover');
 			},
 			progressall: function(e, data) {
-				var progress = parseInt(data.loaded / data.total * 100, 10);
-				var message = $('.progress .progress-bar').text().replace(/(\([0-9]+%\) )?...$/, '(' + progress + '%) ...');
-				if (progress >= 99) {
-					message = 'Indexing data...';
-				}
-				$('.progress .progress-bar')
+				var $progressBar = $('#uploadProgress');
+				if (data.loader < data.total) {
+					var progress = parseInt(data.loaded / data.total * 100, 10);
+					$progressBar
+					.text('Uploading... (' +  progress + "%)")
 					.css('width', progress + '%')
 					.attr('aria-valuenow', progress);
-				$('.progress .progress-bar').text(message);
+				}
+				else {
+					$progressBar.css('width', '100%');
+					refreshIndexStatusWhileIndexing(uploadToCorpus.id, function(index) { 
+						var statusText = '';
+						if (index.status === 'indexing'){
+							statusText = 'Indexing in progress... - '
+							+ index.indexProgress.filesProcessed + ' files, '
+							+ index.indexProgress.docsDone + ' documents, and '
+							+ index.indexProgress.tokensProcessed + ' tokens indexed so far...';
+						} else {
+							statusText = 'Finished indexing!';
+						}
+						$progressBar.text( statusText);
+					},
+					function(errorMsg) {
+						$progressBar.text(errorMsg);
+					})
+				}
 			},
 			add: function(e, data) {
 				$('#upload-area').hide();
 				$('#uploadClose').hide();
 				$('#waitDisplay').show();
-				data.url = CORPORA.blsUrl + uploadToCorpus.name + '/docs/';
+				data.url = CORPORA.blsUrl + uploadToCorpus.id + '/docs/';
 				data.data = new FormData();
 				data.data.append('data', data.files[0]/*, data.files[0].name*/);
 				$('.progress').show();
@@ -504,12 +597,12 @@ var corpora = {};
 	})();
 
 
-	CORPORA.deleteCorpus = function(indexName) {
+	CORPORA.deleteCorpus = function(indexId) {
 		confirmDialog(
 			'Delete format?', 
-			'You are about to delete corpus <i>' + indexName + '<i>. This cannot be undone! <br>Are you sure?',
+			'You are about to delete corpus <i>' + indexId + '<i>. This cannot be undone! <br>Are you sure?',
 			'Delete',
-			CORPORA.deleteIndex.bind(null,  corpora[indexName]));
+			CORPORA.deleteIndex.bind(null,  corpora[indexId]));
 	};
 
 	function generateShortName(name) {

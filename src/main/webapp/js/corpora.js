@@ -450,12 +450,19 @@ var corpora = {};
 		$(document).bind('drop dragover', function (e) {
 			e.preventDefault();
 		});
+		$('#drop-zone').bind('dragleave dragend', function(e) {
+			e.preventDefault();
+			$('.fileinput-button').removeClass('hover');
+		});
+
 		// Enable file drops on a specific 'zone'
+		var $progressBar = $('#uploadProgress');
+		
 		$('#drop-zone').fileupload({
 			dropZone: $('#drop-zone'),
 			// This seems to have no effect!
 			acceptFileTypes: /(\.|\/)(xml|zip|t?gz)$/i,
-			maxFileSize: 40000000, // 4 MB
+			maxFileSize: 40000000, // 40 MB
 			dataType: 'json',
 			done: function(e, data) {
 				$('.progress .progress-bar').text('\'' + data.files[0].name + '\': Done');
@@ -463,6 +470,7 @@ var corpora = {};
 					showSuccess('Data added to "' + uploadToCorpus.displayName + '".', true);
 					$('#upload-area').show();
 					$('#uploadClose').show();
+					$progressBar.data('isIndexing', false);					
 				});
 			},
 			fail: function(e, data) {
@@ -475,13 +483,14 @@ var corpora = {};
 				showError('Could not add data to "' + uploadToCorpus.displayName + '": ' + msg, true);
 				$('#upload-area').show();
 				$('#uploadClose').show();
+				$progressBar.data('isIndexing', false);
 			},
 			always: function(/*e, data*/) {
 				$('#waitDisplay').hide();
 				$('.fileinput-button').removeClass('hover');
 			},
 			progressall: function(e, data) {
-				var $progressBar = $('#uploadProgress');
+				
 				if (data.loader < data.total) {
 					var progress = parseInt(data.loaded / data.total * 100, 10);
 					$progressBar
@@ -490,7 +499,12 @@ var corpora = {};
 					.attr('aria-valuenow', progress);
 				}
 				else {
-					$progressBar.css('width', '100%');
+					if ($progressBar.data('isIndexing'))
+						return;
+	
+					$progressBar.css('width', '100%')
+					.data('isIndexing', true);
+	
 					refreshIndexStatusWhileIndexing(uploadToCorpus.id, function(index) { 
 						var statusText = '';
 						if (index.status === 'indexing'){
@@ -500,11 +514,13 @@ var corpora = {};
 							+ index.indexProgress.tokensProcessed + ' tokens indexed so far...';
 						} else {
 							statusText = 'Finished indexing!';
+							$progressBar.data('isIndexing', false);
 						}
 						$progressBar.text( statusText);
 					},
 					function(errorMsg) {
 						$progressBar.text(errorMsg);
+						$progressBar.data('isIndexing', false);						
 					})
 				}
 			},
@@ -525,10 +541,6 @@ var corpora = {};
 			dragover: function(/*e, data*/) {
 				$('.fileinput-button').addClass('hover');
 			}
-		});
-		$('#drop-zone').bind('dragleave dragend', function(e) {
-			e.preventDefault();
-			$('.fileinput-button').removeClass('hover');
 		});
 	}
 

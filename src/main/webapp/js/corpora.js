@@ -61,14 +61,16 @@ var corpora = {};
 	function refreshIndexStatusWhileIndexing(indexId, fnUpdateHandler, fnErrorHandler) {
 		var statusUrl = CORPORA.blsUrl + indexId + "/status/"
 		
-		var intervalId;
+		var timeoutHandle;
 		
 		function success(index) {
 			normalizeIndexData(indexId, index);
 			fnUpdateHandler(index);
 
 			if (index.status !== 'indexing')
-				clearInterval(intervalId);
+				clearTimeout(timeoutHandle);
+			else
+				setTimeout(run, 2000);
 		}
 
 		function error(jqXHR, textStatus, errorThrown) {
@@ -82,7 +84,7 @@ var corpora = {};
 			msg = textStatus + '; ' + errorThrown;
 			
 			fnErrorHandler('Error retrieving status for corpus \''+indexName+'\': ' + msg);
-			clearInterval(intervalId);
+			clearTimeout(timeoutHandle);
 		}
 
 		
@@ -96,7 +98,7 @@ var corpora = {};
 			});
 		}
 
-		intervalId = setInterval(run, 2000);
+		timeoutHandle = setTimeout(run, 2000);
 	}
 	
 	function normalizeIndexData(indexId, index) {

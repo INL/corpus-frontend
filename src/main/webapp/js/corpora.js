@@ -280,9 +280,7 @@ var corpora = {};
 						'<td>', shortName, '</td>',
 						'<td>', format.displayName, '</td>',
 						'<td><a class="fa fa-trash" data-format-operation="delete" data-format-id="'+formatId+'" title="Delete format \''+shortName+'\'" href="javascript:void(0)"></a></td>',
-						'<td></td>',
-						// TODO
-						//'<td><a class="fa fa-pencil" data-format-operation="edit" label="Edit" href="javascript:void(0)"></a></td>',
+						'<td><a class="fa fa-pencil" data-format-operation="edit" data-format-id="'+formatId+'" title="Edit format \''+shortName+'\'" href="javascript:void(0)"></a></td>',
 						'</tr>'].join(''));
 				
 					if (formatId.indexOf(data.user.id) === 0) {
@@ -780,6 +778,25 @@ var corpora = {};
 
 	}
 
+	function initEditFormat() {
+		$('table[data-autoupdate="format"]').on('click', '[data-format-operation="edit"]', function(event) {
+			event.preventDefault();
+			var formatId = $(this).data('format-id');
+			
+			var $modal = $('#new-format-modal');
+			var $presetSelect = $('#format_preset');
+			var $downloadButton = $('#format_download');
+			var $formatName = $('#format_name');
+			// formattype determined after download succeeds			
+			
+			$presetSelect.selectpicker('val', formatId);
+			$downloadButton.click();
+			$formatName.val(formatId.substr(Math.max(formatId.indexOf(':')+1, 0))); // strip username portion from formatId as username:formatname, if preset
+			
+			$modal.modal('show');
+		})
+	}
+
 	$(document).ready(function () {
 		CORPORA.blsUrl = $('.contentbox').data('blsUrl');
 		
@@ -796,6 +813,7 @@ var corpora = {};
 		
 		initNewFormat();
 		initDeleteFormat();
+		initEditFormat();
 	});
 })();
 

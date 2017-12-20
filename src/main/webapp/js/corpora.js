@@ -101,6 +101,12 @@ var corpora = {};
 		timeoutHandle = setTimeout(run, 2000);
 	}
 	
+	/**
+	 * Add some calculated properties to the index object (such as if it's a private index) and normalize some optional data to empty strings if missing.
+	 * 
+	 * @param {String} indexId full id of the index, including username portion (if applicable)
+	 * @param {Object} index the index json object as received from blacklab-server
+	 */
 	function normalizeIndexData(indexId, index) {
 		index.id = indexId;
 		index.documentFormat = index.documentFormat || '';
@@ -710,6 +716,7 @@ var corpora = {};
 
 		$downloadButton.on('click', function() {
 			var presetName = $presetSelect.selectpicker('val');
+			var $formatName = $('#format_name')
 
 			$.ajax(CORPORA.blsUrl + '/input-formats/' + presetName,  {
 				'type': 'GET',
@@ -723,6 +730,11 @@ var corpora = {};
 					$formatType.selectpicker('val', configFileType);
 					$formatType.trigger('change');
 					editor.setValue(data.configFile);
+
+					// is a user-owned format and no name for the format has been given yet
+					// set the format name to this format so the user can easily save over it
+					if (!$formatName.val() && presetName.indexOf(':') > 0) 
+						$formatName.val(presetName.substr(presetName.indexOf(':')+1));
 				},
 				'error': function (jqXHR, textStatus/*, errorThrown*/) {
 					showFormatError(jqXHR.responseJSON && jqXHR.responseJSON.error.message || textStatus);
@@ -799,7 +811,6 @@ var corpora = {};
 
 	$(document).ready(function () {
 		CORPORA.blsUrl = $('.contentbox').data('blsUrl');
-		
 		
 		// Get the list of corpora.
 		refreshCorporaList();

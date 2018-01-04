@@ -120,6 +120,7 @@ var corpora = {};
 	 * 
 	 * @param {*} index the normalized index object
 	 * @param {*} $tr if set, the table row where the <td/> elements will be placed. If null a new <tr/> will be created and returned.
+	 * @return {JQuery} the table row that was updated or generated, as a jquery object
 	 */
 	function drawCorpusRow(index, $tr) {
 		$tr = $tr || $('<tr></tr>');
@@ -616,9 +617,12 @@ var corpora = {};
 
 
 	CORPORA.deleteCorpus = function(indexId) {
+		// strip username portion from indexId (indexId has the format username:indexname)
+		var indexName = indexId.substr(Math.max(indexId.indexOf(':')+1, 0)); 
+
 		confirmDialog(
-			'Delete format?', 
-			'You are about to delete corpus <i>' + indexId + '<i>. This cannot be undone! <br>Are you sure?',
+			'Delete corpus?', 
+			'You are about to delete corpus <b>' + indexName + '</b>. <i>This cannot be undone!</i> <br><br>Are you sure?',
 			'Delete',
 			CORPORA.deleteIndex.bind(null,  corpora[indexId]));
 	};

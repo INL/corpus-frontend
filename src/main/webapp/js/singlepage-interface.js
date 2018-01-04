@@ -692,7 +692,7 @@ SINGLEPAGE.INTERFACE = (function() {
 		// Not all configurations of search parameters will result in a valid search
 		// Verify that we're not trying to view hits without a pattern to generate said hits
 		// and warn the user if we are
-		if (searchSettings.operation === 'hits' && searchSettings.pattern == null) {
+		if (searchSettings.operation === 'hits' && (searchSettings.pattern == null || searchSettings.pattern.length === 0)) {
 			replaceTableContent($tab.find('.resultcontainer table'),
 				['<thead>',
 					'<tr><th><a>No hits to display</a></th></tr>',

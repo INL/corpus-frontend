@@ -243,10 +243,6 @@ a[data-bls-sort], a.dropdown-toggle {
 	cursor: pointer;
 }
 
-#corpusOwner {
-	font-size: 60%;
-}
-
 #querybox {
 	width:100%;
 	resize: none;
@@ -382,45 +378,22 @@ a[data-bls-sort], a.dropdown-toggle {
 	padding-left: 2px;
 }
 
-#corpus-delete-name {
-	font-style: italic;
-}
-
 #searchFormDiv h3 {
 	font-size: 1.4em;
 }
-#upload-file-dialog ul {
-	margin: 0 0 1.6em 1.1em;
+
+/* header for when search for is hidden */
+
+#searchFormDivHeader {
+	width: 100%;
+	margin: 50px 0px 20px 0px;
+	text-align: left;
+	display: flex;
+	align-items: center;
 }
-.fileinput-button {
-	display: block;
-	height: 12em;
-	border: 4px dashed #00ACEA;
-	border-radius: 1.8em;
-	/* Override Bootstrap background gradiant for button */
-	background-image: initial;
-	background-color: rgba(0, 150, 204, 0.5);
-}
-/* Override Bootstrap button styling */
-.btn.fileinput-button:hover,
-.fileinput-button.hover {
-	background-color: rgba(128, 207, 255, 0.5);
-	border-color: #00C9F8;
-}
-.btn.fileinput-button > span {
-	color: white;
-}
-.btn.fileinput-button > span + span {
-	display: block;
-}
-.btn.fileinput-button:hover > span,
-.fileinput-button.hover > span {
-	color: #00ACEA;
-}
-/* Extend jquery.fileupload.css */
-.fileinput-button input {
-	height: 100%;
-}
-#upload-file-dialog .progress {
-	margin: 1.2em 0;
+
+#querySummary {
+	flex-grow: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }

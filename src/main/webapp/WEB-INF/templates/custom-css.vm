@@ -15,7 +15,9 @@
 	#end
 	
 	#if($websiteConfig.getLinkColor().length() > 0)
-	a {
+	a,
+	a:hover,
+	a:active {
 		color: $websiteConfig.getLinkColor();
 	}
 	#end

@@ -837,7 +837,7 @@ SINGLEPAGE.INTERFACE = (function() {
 		 * Deactivates all tabs and hides the result area.
 		 */
 		reset: function() {
-			// Hide the results area and deactivate all tabs to prevent accidental refreshes later.
+			// Hide the results area and deactivate all tabs to prevent accidental refreshes later (search is executed when tab is opened (if search parameters are valid))
 			$('#results').hide();
 			$('#resultTabs a').each(function() { $(this).tab('hide'); });
 

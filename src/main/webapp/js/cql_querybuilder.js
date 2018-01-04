@@ -46,7 +46,7 @@ window.querybuilder = (function() {
 	var templates = {
 		createTokenButton: {
 			template:
-				'<button type="button" class="btn btn-danger bl-token-create bl-prevent-sort"><span class="glyphicon glyphicon-plus"></span></button>',
+				'<button type="button" class="btn btn-danger bl-token-create bl-prevent-sort" title="Insert another token"><span class="glyphicon glyphicon-plus"></span></button>',
 
 			partials: {}
 		},
@@ -90,9 +90,9 @@ window.querybuilder = (function() {
 						'{{>head_cqlPreview}}' +
 					'</div>',
 				head_handle:
-					'<span class="glyphicon glyphicon-resize-horizontal bl-sort-handle" style="margin-right:5px;"></span>',
+					'<span class="glyphicon glyphicon-resize-horizontal bl-sort-handle" style="margin-right:5px;" title="Drag here to move this token"></span>',
 				head_deleteButton:
-					'<button type="button" class="close" area-label="delete"><span aria-hidden="true">&times;</span></button>',
+					'<button type="button" class="close" area-label="delete" title="remove token"><span aria-hidden="true">&times;</span></button>',
 					
 				head_cqlPreview:
 					'<span id="{{currentId}}_cql_preview">Generated cql will appear here.</span>',
@@ -121,13 +121,13 @@ window.querybuilder = (function() {
 				body_tab_properties:
 					'<div id="{{currentId}}_tab_properties" class="tab-pane" style="padding: 10px 15px 25px 15px;">' +
 						'<div class="checkbox">' +
-							'<label><input type="checkbox" id="{{currentId}}_property_optional">Optional</label>' +
+							'<label title="Token is optional"><input type="checkbox" id="{{currentId}}_property_optional">Optional</label>' +
 						'</div>' +
 						'<div class="checkbox">' +
-							'<label><input type="checkbox" id="{{currentId}}_property_sentence_start">Begin of sentence</label>' +
+							'<label title="Token must occur at beginning of sentence"><input type="checkbox" id="{{currentId}}_property_sentence_start">Begin of sentence</label>' +
 						'</div>' +
 						'<div class="checkbox">' +
-							'<label><input type="checkbox" id="{{currentId}}_property_sentence_end">End of sentence</label>' +
+							'<label title="Token must occur at end of sentence"><input type="checkbox" id="{{currentId}}_property_sentence_end">End of sentence</label>' +
 						'</div>' +
 						'<div class="input-group" style="width:318px;">' +
 							'<span class="input-group-addon">repeats</span>' +
@@ -185,14 +185,14 @@ window.querybuilder = (function() {
 
 			partials: {
 				delete_attribute_button:
-					'<span class="glyphicon glyphicon-remove text-danger" id="{{currentId}}_delete" style="flex-grow:0;cursor:pointer;"></span>',
+					'<span class="glyphicon glyphicon-remove text-danger" id="{{currentId}}_delete" style="flex-grow:0;cursor:pointer;" title="Remove this attribute"></span>',
 
 				main_input:
 					'<span class="bl-token-attribute-main-input">' +
 						'<textarea id="{{currentId}}_value_file" class="hidden"></textarea>' +
 						'<input id="{{currentId}}_value_simple" type="text" class="form-control input-sm bl-no-border-radius bl-hover-back bl-has-file-hidden" style="position:relative;">' +
-						'<button type="button" class="bl-token-attribute-file-edit btn btn-default btn-sm bl-no-border-radius bl-hover-back bl-has-file-shown">(filename)</button>' +
-						'<button type="button" class="btn btn-sm btn-default bl-no-border-radius-right bl-input-upload-button bl-hover-front">' +
+						'<button type="button" class="bl-token-attribute-file-edit btn btn-default btn-sm bl-no-border-radius bl-hover-back bl-has-file-shown" title="Edit your uploaded values">(filename)</button>' +
+						'<button type="button" class="btn btn-sm btn-default bl-no-border-radius-right bl-input-upload-button bl-hover-front" title="Upload a list of values">' +
 							'<input type="file" accept="text/*" class="bl-input-upload">' +
 							'<span class="glyphicon glyphicon-open"></span>' +
 						'</button>' +
@@ -449,7 +449,26 @@ window.querybuilder = (function() {
 		var baseId = '#' + this.element.attr('id');
 
 		var $cqlPreviewElement = this.element.find(baseId + '_cql_preview');
-		$cqlPreviewElement.text(this.getCql());
+		var $tokenPanelHeading = this.element.find('.panel-heading');
+		var $tokenPanelBody = this.element.find('.panel-body');
+		
+		var cqlString = this.getCql();
+		if (cqlString.length > 250)
+			cqlString = cqlString.slice(0, 245) + '…';
+		$cqlPreviewElement.text(cqlString);
+		
+		// Set an explicit max-width to our header (containing the CQL preview string)
+		// Why? because otherwise text won't wrap and the token could become very wide for long queries.
+		// We want the token body to control the width of the entire token, and the token head to expand and contract together with the token body.
+		// There is no way to do this cleanly in pure css currently.
+		// We also need to take care to set a default when this code runs while the element isn't visible, or isn't attached to the DOM. 
+		// When this happens, jquery doesn't return a sensible outerWidth value for our body. 
+		// we can't know if the token body is wider than this default (currently 348px), so it will be wrong if the token body is wider than a usual empty token, but this is rare.
+		var width = Number.parseInt($tokenPanelBody.outerWidth()) || 0;
+		$tokenPanelHeading.css({
+			'width': '100%',
+			'max-width': Math.max(width, 348) + 'px'
+		})	
 	};
 
 	Token.prototype.set = function(controlName, val) {

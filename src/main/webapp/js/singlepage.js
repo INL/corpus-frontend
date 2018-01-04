@@ -10,11 +10,48 @@ SINGLEPAGE.CORE = (function () {
 	$(document).ready(function () {
 		SINGLEPAGE.FORM.init();
 		SINGLEPAGE.INTERFACE.init();
+
+		// register click handlers in the main search form (data irrespective or currently viewed tab)
+		$('#resultsPerPage').on('change', function () {
+			SINGLEPAGE.INTERFACE.setParameters({
+				pageSize: $(this).selectpicker('val')
+			});
+		});
+		$('#sampleMode').on('change', function () {
+			SINGLEPAGE.INTERFACE.setParameters({
+				sampleMode: $(this).selectpicker('val')
+			});
+		});
+		$('#sampleSize').on('change', function () {
+			SINGLEPAGE.INTERFACE.setParameters({
+				sampleSize: $(this).val()
+			});
+		});
+		$('#sampleSeed').on('change', function () {
+			SINGLEPAGE.INTERFACE.setParameters({
+				sampleSeed: $(this).val()
+			});
+		});
 		
+		// now restore the page state from the query parameters
+		var searchSettings = fromQueryString(new URI().search());
+		if (searchSettings != null) {
+			toPageState(searchSettings);
+		}
+	
 		// Rescale the querybuilder container when it's selected
 		$('a.querytype[href="#advanced"]').on('shown.bs.tab hide.bs.tab', function () {
 			$('#searchContainer').toggleClass('col-md-6');
 		});
+
+		// Attempt to parse the query from the cql editor into the querybuilder
+		$('#parseQuery').on('click', function() {
+			var pattern = $('#querybox').val();
+			if (populateQueryBuilder(pattern))
+				$('#searchTabs a[href="#advanced"]').tab('show') && $('#parseQueryError').hide();
+			else 
+				$('#parseQueryError').show();
+		})
 
 		// Init the querybuilder with the supported attributes/properties
 		$.ajax({
@@ -48,7 +85,11 @@ SINGLEPAGE.CORE = (function () {
 					$queryBox.val(queryBuilderInstance.getCql());
 				});
 
-				if (searchSettings != null && populateQueryBuilder(searchSettings))
+				// Finally, load the searchSettings query our found pattern
+				// It does this automatically in the toPageState function, but
+				// since it hadn't been created yet when we called that earlier, 
+				// we need to also attempt to do so here.
+				if (searchSettings != null && populateQueryBuilder(searchSettings.pattern))
 					$('#searchTabs a[href="#advanced"]').tab('show');
 			},
 			error: function (jqXHR, textStatus) {
@@ -56,34 +97,6 @@ SINGLEPAGE.CORE = (function () {
 				$queryBuilder.text('Could not get supported values for querybuilder: ' + textStatus);
 			}
 		});
-
-		// register click handlers in the main search form (data irrespective or currently viewed tab)
-		$('#resultsPerPage').on('change', function () {
-			SINGLEPAGE.INTERFACE.setParameters({
-				pageSize: $(this).selectpicker('val')
-			});
-		});
-		$('#sampleMode').on('change', function () {
-			SINGLEPAGE.INTERFACE.setParameters({
-				sampleMode: $(this).selectpicker('val')
-			});
-		});
-		$('#sampleSize').on('change', function () {
-			SINGLEPAGE.INTERFACE.setParameters({
-				sampleSize: $(this).val()
-			});
-		});
-		$('#sampleSeed').on('change', function () {
-			SINGLEPAGE.INTERFACE.setParameters({
-				sampleSeed: $(this).val()
-			});
-		});
-		
-		// now restore the page state from the query parameters
-		var searchSettings = fromQueryString(new URI().search());
-		if (searchSettings != null) {
-			toPageState(searchSettings);
-		}
 	});
 
 
@@ -149,12 +162,12 @@ SINGLEPAGE.CORE = (function () {
 	 * @param {any} searchParams 
 	 * @returns True or false indicating success or failure respectively
 	 */
-	function populateQueryBuilder(searchParams) {
-		if (!searchParams || !searchParams.pattern)
+	function populateQueryBuilder(pattern) {
+		if (!pattern)
 			return false;
 		
 		try {
-			var tokens = SINGLEPAGE.CQLPARSER.parse(searchParams.pattern);
+			var tokens = SINGLEPAGE.CQLPARSER.parse(pattern);
 			if (tokens === null) { 
 				return false;
 			} 
@@ -166,10 +179,8 @@ SINGLEPAGE.CORE = (function () {
 					e.element.remove();
 				});
 			}
-			
-			
-			// TODO: try and repopulate the simple parameters
-			
+						
+			// TODO: try and repopulate the "simple" tab
 			
 			$.each(tokens, function(index, token) {
 				var tokenInstance = queryBuilder.createToken();
@@ -249,7 +260,7 @@ SINGLEPAGE.CORE = (function () {
 			if (SINGLEPAGE.DEBUG) {
 				console.log('Cql parser could not decode query pattern');
 				console.log(e);
-				console.log(searchParams.pattern);
+				console.log(pattern);
 			}
 			return false;
 		}
@@ -283,7 +294,9 @@ SINGLEPAGE.CORE = (function () {
 				
 				// reconstruct querybuilder from pattern (if possible)
 				// and maybe populate the simple form too if possible
-				if ($('#querybuilder').data('builder') && populateQueryBuilder(searchParams))
+				// Because the querybuilder is instanced asynchronously, 
+				// it might not exist yet, so check whether the instance exists first
+				if ($('#querybuilder').data('builder') && populateQueryBuilder(searchParams.pattern))
 					$('#searchTabs a[href="#advanced"]').tab('show');
 				else 
 					$('#searchTabs a[href="#query"]').tab('show');

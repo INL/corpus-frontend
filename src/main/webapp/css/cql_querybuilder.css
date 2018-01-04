@@ -26,24 +26,20 @@
 .bl-token-container {
 	display: flex;
 	flex-direction: row;
+	align-items: start;
 	overflow-x: auto;
 	padding: 20px;
+	position: relative;
 }
 
 .bl-token {
 	margin: 0px 20px 0px 0px;
-	min-width: 350px;
-	display: table;
-
-	/* due to display: table, and our panel-heading being display:table-caption,
-		our border starts below the panel-heading, so curved corners look weird there */
-	border-top-right-radius: 0px;
-	border-top-left-radius: 0px;
+	display: flex;
+	flex-direction: column;
+	align-items: start;
 }.bl-token .panel-heading {
-	/* 	Use tables to make width derived from panel-body, 
-		so that wide text in the panel heading break onto the next line instead of stretching the entire panel width */
-	display: table-caption;
 	border-bottom-width: 0px;
+	word-wrap: break-word;
 }.bl-token .panel-body {
 	/* padding is controlled by the per-tab contents */
 	padding: 0px;

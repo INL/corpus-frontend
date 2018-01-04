@@ -31,6 +31,7 @@
 		<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/css/bootstrap-select.min.css">
 		<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
         <link rel="stylesheet" href="$pathToTop/css/vendor/jquery.fileupload.css">
+        <link rel="stylesheet" href="$pathToTop/css/vendor/pageguide.min.css">
         <link rel="stylesheet" href="$pathToTop/css/main.css">
 
        	#parse("custom-css.vm")
@@ -48,6 +49,8 @@
 		<script src="$pathToTop/js/vendor/jQuery.extendext.js"></script>
 		<script src="$pathToTop/js/vendor/jquery.iframe-transport.js"></script>
 		<script src="$pathToTop/js/vendor/jquery.fileupload.js"></script>
+		<script src="$pathToTop/js/vendor/pageguide.min.js"></script>
+		<script src="$pathToTop/js/tutorial.js"></script>
 		
     </head>
     <body>

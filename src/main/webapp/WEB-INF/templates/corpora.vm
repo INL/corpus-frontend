@@ -92,7 +92,6 @@
 		<button type="button" class="btn btn-lg btn-default" data-toggle="modal" data-target="#new-format-modal">New format</button>
 
 	</div>
-
 </div>
 
 <div class="modal fade modal-fullwidth" id="new-format-modal" role="dialog">
@@ -120,7 +119,12 @@
 						<label style="display:block;">Load a file</label>
 					
 						<span class="btn btn-primary" style="position:relative;">
-							<input type="file" name="format_file" id="format_file" style="position:absolute;left:0;top:0;width:0px;height:100%;padding-left:100%;opacity:0;cursor:pointer;overflow:hidden;"/>
+							<input 
+							type="file" 
+							name="format_file" 
+							id="format_file" 
+							title="Open a file from your computer"
+							style="position:absolute;left:0;top:0;width:0px;height:100%;padding-left:100%;opacity:0;cursor:pointer;overflow:hidden;"/>
 							Open file...
 						</span>
 						
@@ -128,7 +132,13 @@
 							<!-- options filled in by clientside javascript -->
 						</select>
 						
-						<button type="button" name="format_download" id="format_download" class="btn btn-primary" title="Load preset">Load preset</button>
+						<button 
+						type="button" 
+						name="format_download" 
+						id="format_download" 
+						title="Download this format from the server"
+						class="btn btn-primary" 
+						title="Load preset">Load preset</button>
 					</div>
 				</div>
 				
@@ -232,6 +242,96 @@
 		</div>
 	</div>
 </div>
+
+<ul id="tlyPageGuide" data-tourtitle="Creating your own corpus">
+	<li class="tlypageguide_right" data-tourtarget=".btn[data-target='#new-corpus-modal']">
+		<div>
+			<p>
+				Here you can create a new private corpus.<br>
+			</p>
+			<p>
+				A private corpus allows you to upload and search through your own data.<br>
+				Corpora you create will not be visible to others, and are restricted in their maximum size.<br>
+				Any corpora you create will remain accessible until you explicitly delete it.
+			</p>
+		</div>
+	</li>
+	<li class="tlypageguide_right" data-tourtarget="button[data-id='corpus_document_type']">
+		<div>
+			<p>
+				Select the format of the data you intend to upload to this corpus here.
+			</p>
+			<p>
+				Because annotated data can be structured in many different ways, you will need to define how the data you intend to upload to this corpus should be indexed.<br>
+				Some of the more well-known types, such as <code>TEI</code> and <code>FoLiA</code> are already pre-supported.<br>
+			</p> 
+			<p>
+				If your data is in a format that's not in this list, it's possible to create your own custom format definition by clicking the <code>new format</code> button at the bottom of the page.<br>
+				The new format will then appear for selection in this list.
+			</p>
+		</div>
+	</li>
+	<li class="tlypageguide_top" data-tourtarget=".fa.fa-plus-square">
+		<div>
+			Click here to add some data to your corpus. The corpus will become searchable once some data has been added.<br>
+			It's not possible to remove data that's been added to a corpus.<br>
+			The data will immediately be searchable once the indexing has completed. 
+		</div>
+	</li>
+	<li class="tlypageguide_top" data-tourtarget=".fa.fa-plus-square">
+		<div>
+			Click here to delete this corpus. You can only delete corpora you have created yourself.
+		</div>
+	</li>
+	<li class="tlypageguide_right" data-tourtarget="#upload-area">
+		<div>
+			Select the file(s) you want to add to the corpus, and they will be indexed.<br>
+			Remember that the documents you upload here need to be in the format you selected when you first created the corpus in order to be picked up.  
+		</div>
+	</li>
+	<li class="tlypageguide_right" data-tourtarget="button[data-target='#new-format-modal']">
+		<div>
+			If your corpus material is in a format that we don't support (yet), you can create your own format here.
+		</div>
+	</li>
+	<li class="tlypageguide_top" data-tourtarget="button[data-id='format_type']">
+		<div>
+			Formats can be written in either Json or Yaml.<br>
+			Changing this setting will also change the syntax highlighting so you can more easily spot mistakes.
+		</div>
+	</li>
+
+	<li class="tlypageguide_bottom" data-tourtarget="#format_download">
+		<div>
+			A good place to start writing a format is usually to download one of our presets, and edit it until it matches the structure of your corpus material.<br>
+			Select a format to start with in the dropdown then click here button to download it and show it in the editor.<br>
+			<br>
+			Formats you own are listed at the bottom, when you load any of your own formats, the name will automatically be filled in, so you can easily overwrite it with any new edits you made.
+		</div>
+	</li>
+	<li class="tlypageguide_bottom" data-tourtarget="#format_save">
+		<div>
+			<p>
+				When you're done editing your format, save it by clicking here.<br>
+			</p>
+			<p>
+				The format will be saved using the name you entered at the top.<br>
+			</p>
+			<p>
+				If you already own a format with this name, <i>the format will be overwitten.</i><br>
+				If you save over a format that's already being used in one of your corpora, 
+				then any new data you upload to that corpus will be indexed according to the updated format 
+			</p>
+		</div>
+	</li>
+	<li class="tlypageguide_bottom" data-tourtarget=".CodeMirror">
+		<div>
+			Edit your format here.<br>
+			<br>
+			Information on how to write a format can be found <a style="text-decoration: underline;color:#337ab7;" target="_blank" href="https://github.com/INL/BlackLab/blob/d20eb71b25137facf10f7d2681242de34ab1fa54/core/src/site/markdown/how-to-configure-indexing.md">here</a>.
+		</div>
+	</li>
+</ul>
 
 <link rel="stylesheet" href="$pathToTop/css/vendor/codemirror.css">
 <link rel="stylesheet" href="$pathToTop/css/corpora.css">

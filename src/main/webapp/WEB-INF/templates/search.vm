@@ -1,42 +1,42 @@
 #macro( filterfields $fields)
 	<div class="form-horizontal">
-	#foreach($docfield in $fields)
+#foreach($docfield in $fields)
 		<div class="form-group filterfield" id="$docfield.getId()" data-filterfield-type="$docfield.getType()"> <!-- Behaves as a .row, so every child element should have some form of .col-* -->
-			<label class="col-xs-12">$docfield.getDisplayName()</label>
+		<label class="col-xs-12">$docfield.getDisplayName()</label>
 
-			#if($docfield.getType() == "select" && !$docfield.getValidValues().isEmpty())
-				<div class="col-xs-12">
-					<select title="$docfield.getDisplayName()" class="selectpicker form-control forminput" data-container="body" multiple>
-				
-					#foreach($pair in $docfield.getValidValues())
-						<option value="$pair.getValue()">$pair.getDescription()</option>
-					#end
-					</select>
-				</div>
-			#elseif($docfield.getType() == "combobox")
-				<div class="col-xs-12">
-					<select data-placeholder="$docfield.getDisplayName()" class="autocomplete" data-class="form-control forminput"> 
-					#foreach($pair in $docfield.getValidValues())
-						<option value="$pair.getValue()">$pair.getDescription()</option>
-					#end
-					</select>
-				</div>
-			#elseif($docfield.getType() == "range")
-				<div class="col-xs-4">
-					<input type="text" placeholder="From" class="form-control forminput" />
-				</div>
-				<div class="col-xs-4">
-					<input type="text" placeholder="To" class="form-control forminput" />
-				</div>
-			#else
-				<div class="col-xs-12">
-					<input type="text" placeholder="$docfield.getDisplayName()" class="form-control forminput" />
-				</div>
-			#end
+		#if($docfield.getType() == "select" && !$docfield.getValidValues().isEmpty())
+			<div class="col-xs-12">
+				<select title="$docfield.getDisplayName()" class="selectpicker form-control forminput" data-container="body" multiple>
+			
+				#foreach($pair in $docfield.getValidValues())
+					<option value="$pair.getValue()">$pair.getDescription()</option>
+				#end
+				</select>
+			</div>
+		#elseif($docfield.getType() == "combobox")
+			<div class="col-xs-12">
+				<select data-placeholder="$docfield.getDisplayName()" class="autocomplete" data-class="form-control forminput"> 
+				#foreach($pair in $docfield.getValidValues())
+					<option value="$pair.getValue()">$pair.getDescription()</option>
+				#end
+				</select>
+			</div>
+		#elseif($docfield.getType() == "range")
+			<div class="col-xs-4">
+				<input type="text" placeholder="From" class="form-control forminput" />
+			</div>
+			<div class="col-xs-4">
+				<input type="text" placeholder="To" class="form-control forminput" />
+			</div>
+		#else
+			<div class="col-xs-12">
+				<input type="text" placeholder="$docfield.getDisplayName()" class="form-control forminput" />
+			</div>
+		#end
 
-		</div>
-	#end
 	</div>
+#end
+</div>
 #end
 
 #parse("header.vm")
@@ -75,9 +75,16 @@
 
 
 <form onsubmit="return SINGLEPAGE.CORE.searchSubmit();" class="clearfix">
-<div id='searchFormDiv' class="col-xs-12 contentbox">
+
+<div id="searchFormDivHeader" style="display:none;" class="btn btn-default btn-lg nohover">
+	Results for: <span id="querySummary" class="small text-muted"></span> 
+	<label class="checkbox-inline small" for="disableCollapseForm"><input name="disableCollapseForm" id="disableCollapseForm" type="checkbox"> Don't show again</label>
+	<button type="button" class="btn btn-sm btn-danger" style="margin-left: 10px;"><span class="glyphicon glyphicon-pencil"></span> edit</button>
+</div>
+
+<div id='searchFormDiv' class="col-xs-12 contentbox collapse in">
 	#if($websiteConfig.getCorpusOwner())<a href="$pathToTop" #if($websiteConfig.getLogo())style="margin-left: 100px;"#end><i class="fa fa-arrow-left"></i> back to my corpora</a>#end
-	<h2>$websiteConfig.getCorpusDisplayName() #if($websiteConfig.getCorpusOwner())<span id='corpusOwner'>($websiteConfig.getCorpusOwner())</span>#end</h2>
+	<h2>$websiteConfig.getCorpusDisplayName() #if($websiteConfig.getCorpusOwner())<span class="small">($websiteConfig.getCorpusOwner())</span>#end</h2>
 
 	<div class="row">
 		<div class="col-xs-12 col-md-6" id="searchContainer">
@@ -90,21 +97,22 @@
 			<div class="tab-content haspadding-15">
 				<div class="tab-pane active" id="simple">
 					<div class="form-horizontal">
-					#foreach($propertyField in $propertyFields)
-						#set ($propertyFieldInputId = $propertyField.getId() + "_value")
-						#set ($propertyFieldCaseId = $propertyField.getId() + "_case")
+				#foreach($propertyField in $propertyFields)
+					#set ($propertyFieldInputId = $propertyField.getId() + "_value")
+					#set ($propertyFieldCaseId = $propertyField.getId() + "_case")
 
 						<div class="form-group propertyfield" id="$propertyField.getId()"> <!-- behaves as .row when in .form-horizontal so .row may be omitted -->
-							<label for="$propertyFieldInputId" class="col-xs-12 col-md-3">$propertyField.getDisplayName()</label>
-							<div class="col-xs-12 col-md-9">
-								<input type="text" id="$propertyFieldInputId" name="propertyFieldInputId" placeholder="$propertyField.getDisplayName()" class="form-control"/>
-								#if($propertyField.isCaseSensitive())
-								<div class="checkbox"><label for="$propertyFieldCaseId"><input type="checkbox" id="$propertyFieldCaseId" name="$propertyFieldCaseId"> Case&nbsp;sensitive</label></div>
-								#end
-							</div>
+						<label for="$propertyFieldInputId" class="col-xs-12 col-md-3">$propertyField.getDisplayName()</label>
+						<div class="col-xs-12 col-md-9">
+							<input type="text" id="$propertyFieldInputId" name="propertyFieldInputId" placeholder="$propertyField.getDisplayName()" class="form-control"/>
+							#if($propertyField.isCaseSensitive())
+							<div class="checkbox"><label for="$propertyFieldCaseId"><input type="checkbox" id="$propertyFieldCaseId" name="$propertyFieldCaseId"> Case&nbsp;sensitive</label></div>
+							#end
 						</div>
-					#end
 					</div>
+				#end
+				</div>
+					
 
 				</div>
 				<div class="tab-pane" id="advanced">

@@ -2,7 +2,7 @@
 
 var SINGLEPAGE = SINGLEPAGE || {};
 
-SINGLEPAGE.DEBUG = true;
+SINGLEPAGE.DEBUG = false;
 
 SINGLEPAGE.CORE = (function () {
 	'use strict';
@@ -352,14 +352,31 @@ SINGLEPAGE.CORE = (function () {
 				filters: SINGLEPAGE.FORM.getActiveFilters(),
 			}, true);
 
-			// Setting parameters refreshes the active tab, 
-			// but when there is no tab, activate one manually
+			// Setting parameters refreshes the shown results (if a result tab is opened), 
+			// but when there are no results shown, activate one of the tabs manually (this also triggers a refresh of the results in that tab)
 			if (!$('#resultTabs .active').length) {
 				if (pattern) {
 					$('#resultTabs a[href="#tabHits"]').tab('show');
 				} else {
 					$('#resultTabs a[href="#tabDocs"]').tab('show');
 				}
+			}
+
+			// Hide the search form, if allowed by the config
+			if (!$('#disableCollapseForm').is(':checked')) {
+				var $searchFormDiv = $('#searchFormDiv');
+				var $searchFormDivHeader = $('#searchFormDivHeader');
+				var $querySummary = $('#querySummary');
+				
+				$searchFormDiv.hide();
+				$searchFormDivHeader.show();
+
+				$querySummary.text(SINGLEPAGE.BLS.getQuerySummary(pattern, SINGLEPAGE.FORM.getActiveFilters()));
+
+				$searchFormDivHeader.find('button').one('click', function() {
+					$searchFormDiv.show();
+					$searchFormDivHeader.hide();
+				})
 			}
 
 			// May be used as click handler, so prevent event propagation

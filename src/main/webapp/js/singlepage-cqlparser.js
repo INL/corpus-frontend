@@ -75,6 +75,7 @@ SINGLEPAGE.CQLPARSER = (function() {
 		// Continue until one of the symbols is encountered, 
 		// then stop at the encountered symbol and return a substring from where we started and ending at that symbol (exclusive)
 		function until(symbols) {
+			symbols = [symbols, null]; // always test for end of string
 			try {
 				var startPos = pos;
 				while (!test(symbols, true))
@@ -105,7 +106,7 @@ SINGLEPAGE.CQLPARSER = (function() {
 		}
 
 		function parseAttribute() {
-			var name = until(['=', '!']).trim();
+			var name = until(['=', '!']).trim(); // This should really be "until anything BUT a-zA-z" but eh
 			var operator = until('"').trim();
 			expect('"');
 			var test = until('"'); // don't trim whitespace

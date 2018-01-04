@@ -146,12 +146,12 @@ SINGLEPAGE.CORE = (function () {
 	 * @param {any} searchParams 
 	 * @returns True or false indicating success or failure respectively
 	 */
-	function populateQueryBuilder(searchParams) {
-		if (!searchParams || !searchParams.pattern)
+	function populateQueryBuilder(pattern) {
+		if (!pattern)
 			return false;
 		
 		try {
-			var tokens = SINGLEPAGE.CQLPARSER.parse(searchParams.pattern);
+			var tokens = SINGLEPAGE.CQLPARSER.parse(pattern);
 			if (tokens === null) { 
 				return false;
 			} 
@@ -163,10 +163,8 @@ SINGLEPAGE.CORE = (function () {
 					e.element.remove();
 				});
 			}
-			
-			
-			// TODO: try and repopulate the simple parameters
-			
+						
+			// TODO: try and repopulate the "simple" tab
 			
 			$.each(tokens, function(index, token) {
 				var tokenInstance = queryBuilder.createToken();
@@ -246,7 +244,7 @@ SINGLEPAGE.CORE = (function () {
 			if (SINGLEPAGE.DEBUG) {
 				console.log('Cql parser could not decode query pattern');
 				console.log(e);
-				console.log(searchParams.pattern);
+				console.log(pattern);
 			}
 			return false;
 		}

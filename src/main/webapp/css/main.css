@@ -53,7 +53,12 @@ hr {
 	.navbar-logo-container {
 		margin-right: 15px;
 		margin-left: 0px;
-	}	
+	}
+}
+@media (max-width: 992px) {
+	.navbar > .container {
+		width: auto;
+	}
 }
 
 .navbar-logo {
@@ -176,6 +181,14 @@ tr.concordance {
 	padding: 0px 2px;
 }
 
+#filteroverview {
+	color: #888888;
+	font-size: 85%;
+	padding-left: 1px;
+}
+
+/* article */
+
 div.hitscroll {
 	display:none; /* unhide with js */
 	position: fixed;
@@ -192,13 +205,6 @@ div.hitscroll a {
 	color: #eeeeee; 
 }
 
-#filteroverview {
-	color: #888888;
-	font-size: 85%;
-	padding-left: 1px;
-}
-
-/* article? */
 
 .hl {
 	font-weight: bold;
@@ -244,6 +250,7 @@ a[data-bls-sort], a.dropdown-toggle {
 #querybox {
 	width:100%;
 	resize: none;
+	margin-bottom: 10px;
 }
 
 #totalsReport {

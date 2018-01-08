@@ -31,9 +31,15 @@ SINGLEPAGE.CQLPARSER = (function() {
 						if (test(symbol[j]))
 							return true;
 					}
-				} else if (symbol === cur) {
-					return true;
+				} else if (typeof symbol === 'string') { // 'string' instanceof String === false (go javascript!)
+					for (var k = 0; k < symbol.length; k++) {
+						if (pos + k >= input.length || input[pos + k] !== symbol[k])
+							return false;
+					}
+					return true
 				}
+				else 
+					return (symbol === cur);
 			}
 			return false;
 		}
@@ -52,8 +58,10 @@ SINGLEPAGE.CQLPARSER = (function() {
             
 			var accepted = test(sym);
 			if (accepted) {
-				nextSym();
-
+				// Don't use nextSym(), sym.length might be >1
+				pos += sym.length;
+				cur = input[pos];
+				
 				if (!keepWhitespace) {
 					while (test(WHITESPACE))
 						nextSym();
@@ -94,7 +102,7 @@ SINGLEPAGE.CQLPARSER = (function() {
 
 			var isClosingTag = accept('/');
 
-			// keep going until we meet the end of the tag, also break on whitespac as it's not allowed
+			// keep going until we meet the end of the tag, also break on whitespace as it's not allowed
 			var tagName = until([WHITESPACE, '>']);
 			expect('>');
 
@@ -228,6 +236,16 @@ SINGLEPAGE.CQLPARSER = (function() {
 			return token;
 		}
 
+		function parseWithin() {
+			expect('within');
+				
+			expect('<');
+			var elementName = until(['/', WHITESPACE]); // break on whitespace, since whitespace in the <tag name/> is illegal
+			expect('/') // self closing tag (<tag/>)
+			expect('>');
+			return elementName;
+		}
+
 		if (typeof input !== 'string' || input.length === 0)
 			return null;
 		input = input.trim();
@@ -238,11 +256,23 @@ SINGLEPAGE.CQLPARSER = (function() {
 		cur = input[0];
 
 		var tokens = [];
+		var within = null;
 
-		while (pos < input.length)
-			tokens.push(parseToken());
-        
-		return tokens;
+		
+		// we always start with a token
+		tokens.push(parseToken());
+		while (pos < input.length) {
+			if (test('within')) {
+				within = parseWithin();
+			} else {
+				tokens.push(parseToken());
+			}
+		}
+
+		return {
+			tokens: tokens,
+			within: within
+		}
 	}
 
 	return {

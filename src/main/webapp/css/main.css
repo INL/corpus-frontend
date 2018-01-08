@@ -392,4 +392,5 @@ a[data-bls-sort], a.dropdown-toggle {
 	flex-grow: 1;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	margin-left: 0.35em;
 }

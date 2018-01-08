@@ -167,19 +167,24 @@ SINGLEPAGE.CORE = (function () {
 			return false;
 		
 		try {
-			var tokens = SINGLEPAGE.CQLPARSER.parse(pattern);
+			var parsedCql = SINGLEPAGE.CQLPARSER.parse(pattern);
+			var tokens = parsedCql.tokens;
+			var within = parsedCql.within;
 			if (tokens === null) { 
 				return false;
 			} 
 			
 			var queryBuilder = $('#querybuilder').data('builder');
+			queryBuilder.reset();
 			if (tokens.length > 0) {
 				// only clear the querybuilder when we're putting something back in
 				$.each(queryBuilder.getTokens(), function(i, e) {
 					e.element.remove();
 				});
 			}
-						
+			if (within)
+				queryBuilder.set('within', within);
+
 			// TODO: try and repopulate the "simple" tab
 			
 			$.each(tokens, function(index, token) {

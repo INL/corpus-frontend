@@ -44,35 +44,48 @@ window.querybuilder = (function() {
 	 * This object must follow the structure of "DEFAULTS", the custom settings object will override properties with the same name in DEFAULTS, including the mustache view data object.
 	 */
 	var templates = {
-		createTokenButton: {
-			template:
-				'<button type="button" class="btn btn-danger bl-token-create bl-prevent-sort" title="Insert another token"><span class="glyphicon glyphicon-plus"></span></button>',
 
-			partials: {}
-		},
-
-		modalEditor: {
-			
+		queryBuilder: {
 			template: 
-				'<div class="bl-modal-editor modal fade" tabindex="-1" role="dialog">' +
-					'<div class="modal-dialog" role="document">' +
-						'<div class="modal-content">' +
-							'<div class="modal-header">' +
-								'<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>' +
-								'<h4 class="modal-title">Edit</h4>' +
-							'</div>' +
-							'<div class="modal-body">' +
-								'<textarea class="form-control" rows="10" style="width:100%;overflow:auto;resize:none;white-space:pre;"></textarea>' +
-							'</div>' +
-							'<div class="modal-footer">' +
-								'<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>' +
-								'<button type="button" class="btn btn-primary" data-dismiss="modal" data-save-edits>Save changes</button>' +
+				'<div class="bl-token-container">' +
+					'{{>createTokenButton}}' +
+				'</div>' +
+				'{{>withinSelect}}' +
+				'{{>modalEditor}}',
+			
+			partials: {
+				createTokenButton:
+					'<button type="button" class="btn btn-danger bl-token-create bl-prevent-sort" title="Insert another token"><span class="glyphicon glyphicon-plus"></span></button>',
+				
+				modalEditor: 
+					'<div class="bl-modal-editor modal fade" tabindex="-1" role="dialog">' +
+						'<div class="modal-dialog" role="document">' +
+							'<div class="modal-content">' +
+								'<div class="modal-header">' +
+									'<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>' +
+									'<h4 class="modal-title">Edit</h4>' +
+								'</div>' +
+								'<div class="modal-body">' +
+									'<textarea class="form-control" rows="10" style="width:100%;overflow:auto;resize:none;white-space:pre;"></textarea>' +
+								'</div>' +
+								'<div class="modal-footer">' +
+									'<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>' +
+									'<button type="button" class="btn btn-primary" data-dismiss="modal" data-save-edits>Save changes</button>' +
+								'</div>' +
 							'</div>' +
 						'</div>' +
-					'</div>' +
-				'</div>',
+					'</div>',
 
-			partials: {}
+				withinSelect: 
+					'<label>Within:</label>' +
+					'<div class="btn-group bl-within-select clearfix" data-toggle="buttons" id="within_select" style="display:block;">' +
+						'{{#withinSelectOptions}}' +
+							'<label class="btn btn-default">' +
+								'<input type="radio" autocomplete="off" name="within" value="{{value}}">{{label}}' +
+							'</label>' +
+						'{{/withinSelectOptions}}' +
+					'</div>',
+			},
 		},
 
 		token: {
@@ -227,6 +240,19 @@ window.querybuilder = (function() {
 
 	var DEFAULTS = {
 		
+		queryBuilder: {
+			view: {
+				// The first option is automatically selected on init
+				// Empty value will omit the "within" tag from the query, essentially serving as a default option
+				// Syntax to transform the value into <value/> is inserted when the query is generated
+				withinSelectOptions: [
+					{value:'', 		label:'document'},
+					{value:'p', 	label:'paragraph'},
+					{value:'s', 	label:'sentence'},
+				]
+			}
+		},
+
 		attribute: {
 			view: {
 				comparators: [
@@ -315,21 +341,24 @@ window.querybuilder = (function() {
 		this.element = $rootElement;
 		this.createTokenButton = $rootElement.find('.bl-token-create');
 		this.modalEditor = this.element.find('.bl-modal-editor');
+		this.withinSelect = this.element.find('#within_select');
 		
 		this.createTokenButton.click();
 	};
 
 	QueryBuilder.prototype._prepareElement = function($element) {
-		$element.addClass('bl-token-container');
-		$element.data('builder', this);
-
-		// Enable sorting tokens within the root container
-		$element.sortable({
+		$element
+		.html(Mustache.render(templates.queryBuilder.template, this.settings.queryBuilder.view, templates.queryBuilder.partials))
+		.data('builder', this)
+		.addClass('bl-querybuilder-root');
+		
+		// Enable sorting tokens within the container
+		$element.find('.bl-token-container').sortable({
 			items: '>*:not(.bl-prevent-sort)',
 			handle: '.bl-sort-handle',
 			placeholder: 'bl-sort-placeholder-token',
 			forcePlaceholderSize: true,
-
+	
 			cursor: 'move',
 			tolerance: 'pointer',
 			
@@ -340,16 +369,14 @@ window.querybuilder = (function() {
 			update: function() {
 				$element.trigger('cql:modified');
 			}
-		});
+		})
 
-		// Add a button to add a new token
-		var $createTokenButton = $(Mustache.render(templates.createTokenButton.template, {}, templates.createTokenButton.partials));
-		$createTokenButton.on('click', this.createToken.bind(this));
-		$createTokenButton.appendTo($element);
+		$element.find('.bl-token-create').on('click', this.createToken.bind(this));
+		$element.find('#within_select')
+			.on('change', function() { $element.trigger('cql:modified'); })
+			.find('input').first().attr('checked', 'checked')
+			.parent().addClass('active');
 		
-		var $modalEditor = $(Mustache.render(templates.modalEditor.template, {}, templates.modalEditor.partials));
-		$modalEditor.appendTo($element);
-
 		return $element;
 	};
 
@@ -364,7 +391,7 @@ window.querybuilder = (function() {
 	};
 
 	QueryBuilder.prototype.getTokens = function() {
-		return this.element.children('.bl-token').map(function(i, elem) {
+		return this.element.children('.bl-token-container').children('.bl-token').map(function(i, elem) {
 			return $(elem).data('token');
 		}).get();
 	};
@@ -375,13 +402,32 @@ window.querybuilder = (function() {
 		this.element.find('.bl-token').each(function(index, element){
 			cqlParts.push($(element).data('token').getCql());
 		});
+
+		var within = this.withinSelect.find('input:checked').first().val();
+		if (within != null && within.length) // ignore empty and null 
+			cqlParts.push('within', '<'+ within+'/>');
 		
 		return cqlParts.join(' ') || null;
 	};
 
+	// When setting 'within', val should only be the name, without surrounding </>
+	QueryBuilder.prototype.set = function(controlName, val) {
+		switch (controlName) {
+			case 'within': {
+				// Parent because bootstrap is expects us to call .button on the wrapper label...
+				this.withinSelect.find('input[value="'+val+'"]').parent().button('toggle');
+				break;
+			}
+			default: 
+				break;
+		}
+	}
+
+
 	QueryBuilder.prototype.reset = function() {
 		this.element.find('.bl-token').remove();
 		this.createToken();
+		this.withinSelect.find('input').first().parent().button('toggle');
 	};
 
 	//----------

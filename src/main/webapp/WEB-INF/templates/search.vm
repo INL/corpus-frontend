@@ -97,23 +97,39 @@
 			<div class="tab-content haspadding-15">
 				<div class="tab-pane active" id="simple">
 					<div class="form-horizontal">
-				#foreach($propertyField in $propertyFields)
-					#set ($propertyFieldInputId = $propertyField.getId() + "_value")
-					#set ($propertyFieldCaseId = $propertyField.getId() + "_case")
-
+					#foreach($propertyField in $propertyFields)
+						#set ($propertyFieldInputId = $propertyField.getId() + "_value")
+						#set ($propertyFieldCaseId = $propertyField.getId() + "_case")
+	
 						<div class="form-group propertyfield" id="$propertyField.getId()"> <!-- behaves as .row when in .form-horizontal so .row may be omitted -->
-						<label for="$propertyFieldInputId" class="col-xs-12 col-md-3">$propertyField.getDisplayName()</label>
-						<div class="col-xs-12 col-md-9">
-							<input type="text" id="$propertyFieldInputId" name="propertyFieldInputId" placeholder="$propertyField.getDisplayName()" class="form-control"/>
-							#if($propertyField.isCaseSensitive())
-							<div class="checkbox"><label for="$propertyFieldCaseId"><input type="checkbox" id="$propertyFieldCaseId" name="$propertyFieldCaseId"> Case&nbsp;sensitive</label></div>
-							#end
+							<label for="$propertyFieldInputId" class="col-xs-12 col-md-3">$propertyField.getDisplayName()</label>
+							<div class="col-xs-12 col-md-9">
+								<input type="text" id="$propertyFieldInputId" name="propertyFieldInputId" placeholder="$propertyField.getDisplayName()" class="form-control"/>
+								#if($propertyField.isCaseSensitive())
+								<div class="checkbox"><label for="$propertyFieldCaseId"><input type="checkbox" id="$propertyFieldCaseId" name="$propertyFieldCaseId"> Case&nbsp;sensitive</label></div>
+								#end
+							</div>
 						</div>
-					</div>
-				#end
-				</div>
+					#end
 					
-
+						<div class="form-group">
+							## TODO extract available options from blacklab
+							<label class="col-xs-12 col-md-3">Within:</label>
+							
+							<div class="btn-group col-xs-12 col-md-9" data-toggle="buttons" id="simplesearch_within" style="display:block;">
+								<label class="btn btn-default active">
+									<input type="radio" autocomplete="off" name="within" value="" checked="checked">document
+								</label>
+								<label class="btn btn-default">
+									<input type="radio" autocomplete="off" name="within" value="p">paragraph
+								</label>
+								<label class="btn btn-default">
+									<input type="radio" autocomplete="off" name="within" value="s">sentence
+								</label>
+							</div>
+						</div>
+						
+					</div>
 				</div>
 				<div class="tab-pane" id="advanced">
 					<div id="querybuilder"></div>

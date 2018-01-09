@@ -272,6 +272,10 @@ SINGLEPAGE.CORE = (function () {
 		$('#querybuilder').data('builder').reset();
 		$('#querybox').val(undefined);
 		
+		// This will hide the search summary and show the form, if it's hidden
+		// See searchSubmit
+		$('#searchFormDivHeader button').click();
+
 		if (searchParams.pattern) {
 			// In the case of an array as search pattern,  it contains the basic/simple search parameters
 			if (searchParams.pattern.constructor === Array) {
@@ -293,6 +297,8 @@ SINGLEPAGE.CORE = (function () {
 		$.each(searchParams.filters, function (index, element) {
 			SINGLEPAGE.FORM.setFilterValues(element.name, element.values);
 		});
+
+		SINGLEPAGE.FORM.setWithin(searchParams.within);
 
 		// Restore the results per page, sample info, etc
 		$('#resultsPerPage').selectpicker('val', [searchParams.pageSize || 50]);
@@ -319,11 +325,13 @@ SINGLEPAGE.CORE = (function () {
 		searchSubmit: function() {
 			
 			var pattern;
+			var within = null; // explicitly set to null to clear any previous value if queryType != simple
 			
 			// Get the correct pattern based on selected tab
 			var queryType = $('#searchTabs li.active .querytype').attr('href');
 			if (queryType === '#simple') {
 				pattern = SINGLEPAGE.FORM.getActiveProperties();
+				within = SINGLEPAGE.FORM.getWithin();
 			} else if (queryType === '#advanced') {
 				pattern = $('#querybuilder').data('builder').getCql();
 			} else {
@@ -335,6 +343,7 @@ SINGLEPAGE.CORE = (function () {
 				viewGroup: null, // reset, as we might be looking at a detailed group currently, and the new search should not display within a specific group
 				pageSize: $('#resultsPerPage').selectpicker('val'),
 				pattern: pattern,
+				within: within,
 				filters: SINGLEPAGE.FORM.getActiveFilters(),
 				// Other parameters are automatically updated on interaction and thus always up-to-date
 			}, true);
@@ -350,6 +359,7 @@ SINGLEPAGE.CORE = (function () {
 			}
 
 			// Hide the search form, if allowed by the config
+			// TODO tidy up: this code is also called in toPageState (to show search form when navigating back/forward)
 			if (!$('#disableCollapseForm').is(':checked')) {
 				var $searchFormDiv = $('#searchFormDiv');
 				var $searchFormDivHeader = $('#searchFormDivHeader');
@@ -358,7 +368,9 @@ SINGLEPAGE.CORE = (function () {
 				$searchFormDiv.hide();
 				$searchFormDivHeader.show();
 
-				$querySummary.text(SINGLEPAGE.BLS.getQuerySummary(pattern, SINGLEPAGE.FORM.getActiveFilters()));
+				var summaryText = SINGLEPAGE.BLS.getQuerySummary(pattern, within, SINGLEPAGE.FORM.getActiveFilters());
+				$querySummary.text(summaryText).attr('title', summaryText);
+
 
 				$searchFormDivHeader.find('button').one('click', function() {
 					$searchFormDiv.show();

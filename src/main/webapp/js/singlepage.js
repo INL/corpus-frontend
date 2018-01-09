@@ -369,7 +369,7 @@ SINGLEPAGE.CORE = (function () {
 				$searchFormDivHeader.show();
 
 				var summaryText = SINGLEPAGE.BLS.getQuerySummary(pattern, within, SINGLEPAGE.FORM.getActiveFilters());
-				$querySummary.text(summaryText).attr('title', summaryText);
+				$querySummary.text(summaryText).attr('title', summaryText.substr(0, Math.min(1000, summaryText.length)));
 
 
 				$searchFormDivHeader.find('button').one('click', function() {

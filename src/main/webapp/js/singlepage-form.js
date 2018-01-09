@@ -21,6 +21,7 @@ SINGLEPAGE.FORM = (function () {
 	// Filters with currently valid values, values will need to be processed prior to search
 	var activeFilters = [];
 	var activeProperties = [];
+	var within = null;
 	
 	// Update the filter description using the active filter value list
 	var updateFilterDisplay = function() {
@@ -90,6 +91,11 @@ SINGLEPAGE.FORM = (function () {
 		removeFromPropertyList(prop.name);
 		if (prop.value)
 			activeProperties.push(prop);
+	};
+
+	var updateWithin = function($radioButtonContainer) {
+		// explicitly set to null for empty strings
+		within = $radioButtonContainer.find('input:checked').val() || null;
 	};
 
 	return {
@@ -182,6 +188,12 @@ SINGLEPAGE.FORM = (function () {
 			}).each(function() {
 				updatePropertyField($(this));
 			});
+
+			$('#simplesearch_within').on('change', function() {
+				updateWithin($(this));
+			}).each(function() {
+				updateWithin($(this));
+			});
 		},
 		
 		// Clear all fields
@@ -194,6 +206,10 @@ SINGLEPAGE.FORM = (function () {
 				// Pass object where every value apart from name is undefined to clear all values
 				SINGLEPAGE.FORM.setPropertyValues({name: $(this).attr('id')});
 			});
+
+			$('#simplesearch_within input').first().parent().button('toggle');
+			$('#simplesearch_within').trigger('change');
+
 		},
 
 		getActiveFilters: function() {
@@ -202,6 +218,10 @@ SINGLEPAGE.FORM = (function () {
 		
 		getActiveProperties: function() {
 			return activeProperties.length ? activeProperties.concat() : null; // Return a copy 
+		},
+
+		getWithin: function() {
+			return within;
 		},
 		
 		// Update the values for a filter
@@ -230,6 +250,13 @@ SINGLEPAGE.FORM = (function () {
 			$propertyField.find('#' + property.name + '_case').prop('checked', property.case);
 		
 			updatePropertyField($propertyField);
+		},
+
+		// value should be the raw name, not enclosed in </>
+		setWithin: function(value) {
+			value = value || '';
+			// Bootstrap needs us to call toggle on the containing label...
+			$('#simplesearch_within input[value="'+value+'"]').parent().button('toggle');
 		}
 	};
 })();

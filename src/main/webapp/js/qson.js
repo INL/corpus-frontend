@@ -34,7 +34,7 @@ var QSON = {};
     var START_COMPOUND = "(";  // start a QSON compound value (object or array)
     var END_COMPOUND   = ")";  // end of QSON compound value (object or array)
     var KEY_VAL_SEP    = "~";  // QSON key/value separator
-    var ENTRY_SEP      = "'";  // QSON entry separator / "end of value" signal
+    var ENTRY_SEP      = ".";  // QSON entry separator / "end of value" signal
     var FORCE_STRING   = "_";  // force value to be parsed as a string
     var ESCAPE         = "!";  // escape character, similar to \ in many languages
 
@@ -131,11 +131,11 @@ var QSON = {};
         } else if (typeof value === "boolean") {
             output.push(value ? "true" : "false");
         } else if (typeof value === "number") {
-            output.push(String(value));
+            output.push(escapeSpecialChars(String(value)));
         } else {
             var str = String(value); // make sure it's a string
             if (str === "null" || str === "true" || str === "false" || isNumberString(str)) {
-                return FORCE_STRING + str; // FORCE_STRING (_) means: parse this as a string even if it looks like a number, etc.
+                return FORCE_STRING + escapeSpecialChars(str); // FORCE_STRING (_) means: parse this as a string even if it looks like a number, etc.
             }
 
             // String value. Escape QSON special characters.

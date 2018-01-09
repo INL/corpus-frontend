@@ -99,12 +99,20 @@
 					<div class="form-horizontal">
 					#foreach($propertyField in $propertyFields)
 						#set ($propertyFieldInputId = $propertyField.getId() + "_value")
+						#set ($propertyFieldFileInputId = $propertyField.getId() + "_file")
 						#set ($propertyFieldCaseId = $propertyField.getId() + "_case")
 	
 						<div class="form-group propertyfield" id="$propertyField.getId()"> <!-- behaves as .row when in .form-horizontal so .row may be omitted -->
 							<label for="$propertyFieldInputId" class="col-xs-12 col-md-3">$propertyField.getDisplayName()</label>
-							<div class="col-xs-12 col-md-9">
-								<input type="text" id="$propertyFieldInputId" name="propertyFieldInputId" placeholder="$propertyField.getDisplayName()" class="form-control"/>
+							<div class="col-xs-12 col-md-9 upload-button-container">
+									
+								<input type="text" id="$propertyFieldInputId" name="$propertyFieldInputId" placeholder="$propertyField.getDisplayName()" class="form-control"/>
+									
+								<button class="btn btn-default upload-button">
+									<input type="file" id="$propertyFieldFileInputId" title="Upload a list of values">
+									<span class="glyphicon glyphicon-open"> 
+								</button>
+									
 								#if($propertyField.isCaseSensitive())
 								<div class="checkbox"><label for="$propertyFieldCaseId"><input type="checkbox" id="$propertyFieldCaseId" name="$propertyFieldCaseId"> Case&nbsp;sensitive</label></div>
 								#end

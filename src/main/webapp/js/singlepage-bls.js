@@ -79,7 +79,8 @@ SINGLEPAGE.BLS = (function () {
 			// push all attributes in this token
 			var attributesStrings = [];
 			$.each(value, function (key, value) {
-				attributesStrings.push(key + '=' + '"' + value + '"');
+				if (value) // don't push empty attributes
+					attributesStrings.push(key + '=' + '"' + value + '"');
 			});
 
 			tokenStrings.push('[', attributesStrings.join(' & '), ']');

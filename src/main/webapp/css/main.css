@@ -386,6 +386,10 @@ a[data-bls-sort], a.dropdown-toggle {
 	text-align: left;
 	display: flex;
 	align-items: center;
+	-webkit-user-select: initial;
+	-moz-user-select: initial;
+	-ms-user-select: initial;
+	user-select: initial;
 }
 
 #querySummary {
@@ -394,3 +398,37 @@ a[data-bls-sort], a.dropdown-toggle {
 	text-overflow: ellipsis;
 	margin-left: 0.35em;
 }
+
+/* simple search upload buttons */
+.upload-button-container {
+	position: relative;
+}
+.upload-button {
+	position: absolute;
+	overflow: hidden;
+	right: 15px;
+	top: 0px;
+	border-top-left-radius: 0px;
+	border-bottom-left-radius: 0px;
+}
+.upload-button input {
+	position: absolute;
+	left: 0;
+	top: 0;
+	height: 100%;
+	width: 0px;
+	padding-left: 100%;
+	overflow: hidden;
+	opacity: 0;
+	background: transparent;
+	z-index: 2;
+}
+
+.upload-button-container .upload-button {
+	display:none;
+}
+.upload-button-container:hover .upload-button,
+.upload-button.has-file {
+	display: block;
+}
+

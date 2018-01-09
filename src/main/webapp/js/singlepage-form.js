@@ -76,21 +76,40 @@ SINGLEPAGE.FORM = (function () {
 		updateFilterDisplay();
 	};
 	
-	var updatePropertyField = function($propertyField) {
-		function removeFromPropertyList(propertyName) {
-			activeProperties = $.grep(activeProperties, function(elem) { return elem.name === propertyName;}, true);
-		}
-
+	// TODO tidy up
+	var updatePropertyField = function($propertyField, event) {
 		var propertyName = $propertyField.attr('id');
-		var prop = {
-			name: propertyName,
-			value: $propertyField.find('#' + propertyName + '_value').val(),
-			case: $propertyField.find('#' + propertyName + '_case').is(':checked')
-		};
-
-		removeFromPropertyList(prop.name);
-		if (prop.value)
-			activeProperties.push(prop);
+		var $textInput = $propertyField.find('#' + propertyName + '_value');
+		var $fileInput = $propertyField.find('#' + propertyName + '_file')
+		var $caseInput = $propertyField.find('#' + propertyName + '_case');
+		var $changedInput = event ? $(event.target) : $textInput; // no event means we're initializing, so read from the input field
+		
+		var prop = $.grep(activeProperties, function(elem) { return elem.name === propertyName; })[0] || {};
+		if (prop.name === undefined) activeProperties.push(prop);
+		prop.name = propertyName;
+		prop.case = $caseInput.is(':checked');
+		prop.value = prop.value || ''; // init in case of new prop
+		
+		if ($changedInput.is($textInput[0])) {
+			prop.value = $textInput.val();
+			$fileInput[0].value = '';
+		} else if ($changedInput.is($fileInput[0])) {
+			var file = $fileInput[0].files && $fileInput[0].files[0];
+			if (file != null) {
+				var fr = new FileReader();
+				fr.onload = function() {
+					// Replace all whitespace with pipes, 
+					// this is due to the rather specific way whitespace in the simple search property fields is treated (see singlepage-bls.js:getPatternString)
+					// TODO discuss how we treat these fields with Jan/Katrien, see https://github.com/INL/corpus-frontend/issues/18
+					prop.value = fr.result.replace(/\s+/g, '|');
+					$textInput.val(prop.value);
+				};
+				fr.readAsText(file);
+			} else {
+				prop.value = '';
+				$textInput.val('');
+			}
+		} 
 	};
 
 	var updateWithin = function($radioButtonContainer) {
@@ -183,10 +202,10 @@ SINGLEPAGE.FORM = (function () {
 				updateFilterField($(this));
 			});
 
-			$('.propertyfield').on('change', function() {
-				updatePropertyField($(this));
+			$('.propertyfield').on('change', function(event) {
+				updatePropertyField($(this), event);
 			}).each(function() {
-				updatePropertyField($(this));
+				updatePropertyField($(this), null);
 			});
 
 			$('#simplesearch_within').on('change', function() {

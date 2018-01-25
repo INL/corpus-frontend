@@ -304,9 +304,9 @@
 	<li class="tlypageguide_bottom" data-tourtarget="#format_download">
 		<div>
 			A good place to start writing a format is usually to download one of our presets, and edit it until it matches the structure of your corpus material.<br>
-			Select a format to start with in the dropdown then click here button to download it and show it in the editor.<br>
+			Select a format to start with in the dropdown then click this button to download it and show it in the editor.<br>
 			<br>
-			Formats you own are listed at the bottom, when you load any of your own formats, the name will automatically be filled in, so you can easily overwrite it with any new edits you made.
+			Formats you own are listed at the bottom, when you load any of your own formats, the name will automatically be filled in, so you can easily overwrite it with any new edits you make.
 		</div>
 	</li>
 	<li class="tlypageguide_bottom" data-tourtarget="#format_save">

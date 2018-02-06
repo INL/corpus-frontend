@@ -193,13 +193,19 @@ public class MainServlet extends HttpServlet {
 		File fileInEtc = new File("/etc/blacklab", fileName);
 		if (!isWindows && !fileInEtc.exists())
 			fileInEtc = new File("/vol1/etc/blacklab", fileName); // UGLY, will fix later
-		if (!isWindows && fileInEtc.exists())
+		if (!isWindows && fileInEtc.exists()) {
+            if (!fileInEtc.canRead())
+                log("Found " + fileInEtc + " but cannot read; check permissions and SELinux context.");
 			return fileInEtc;
+		}
 
 		File tmpDir = isWindows ? new File(System.getProperty("java.io.tmpdir")) : new File("/tmp");
 		File fileInTmpDir = new File(tmpDir, fileName);
-		if (fileInTmpDir.exists())
-			return fileInTmpDir;
+		if (fileInTmpDir.exists()) {
+		    if (!fileInTmpDir.canRead())
+		        log("Found " + fileInTmpDir + " but cannot read; check permissions and SELinux context.");
+            return fileInTmpDir;
+		}
 
 		return null;
 	}

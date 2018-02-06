@@ -1,8 +1,8 @@
 # BlackLab AutoSearch
 
-This is a corpus search application that works with BlackLab Server. At the Dutch Language Institute, we use it to publish our corpora such as [CHN](http://chn.inl.nl/) (CLARIN login required), [Letters as Loot](http://brievenalsbuit.inl.nl/) and [AutoSearch](http://portal.clarin.inl.nl/autocorp/) (CLARIN login required).
+This is a corpus search application that works with BlackLab Server (NOTE: right now, it only works with the version on the dev branch, or <a href='https://github.com/INL/BlackLab/releases/tag/v1.7.0-ALPHA'>prerelease 1.7.0-ALPHA</a>). At the Dutch Language Institute, we use it to publish our corpora such as [CHN](http://chn.inl.nl/) (CLARIN login required), [Letters as Loot](http://brievenalsbuit.inl.nl/) and [AutoSearch](http://portal.clarin.inl.nl/autocorp/) (CLARIN login required).
 
-To use it, index a corpus using BlackLab and install BlackLab Server (see the [BlackLab project page](http://inl.github.io/Blacklab/)).
+To use it, index a corpus using BlackLab and install BlackLab Server (see the [BlackLab project page](http://inl.github.io/Blacklab/)). Again, you need either 1.7.0-ALPHA or the dev version at this time.
 
 Clone this repository, use `mvn package` to build the WAR file (or download the .war from the latest release) and add corpus-frontend.war to Tomcat's webapps directory.
 

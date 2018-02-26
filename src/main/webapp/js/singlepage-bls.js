@@ -64,12 +64,14 @@ SINGLEPAGE.BLS = (function () {
 		// First split the properties into individual words and pair them 
 		var tokens = [];
 		$.each(pattern, function (propIndex, propertyField) {
-			var words = propertyField.value.split(/\s+/);
-			for (var i = 0; i < words.length; i++) {
-				if (!tokens[i])
-					tokens[i] = {};
-
-				tokens[i][propertyField.name] = (propertyField['case'] ? '(?c)' : '') + makeWildcardRegex(words[i]);
+			if (propertyField.value.length > 0) { // skip empty fields
+				var words = propertyField.value.split(/\s+/);
+				for (var i = 0; i < words.length; i++) {
+					if (!tokens[i])
+						tokens[i] = {};
+	
+					tokens[i][propertyField.name] = (propertyField['case'] ? '(?c)' : '') + makeWildcardRegex(words[i]);
+				}
 			}
 		});
 
@@ -86,7 +88,7 @@ SINGLEPAGE.BLS = (function () {
 			tokenStrings.push('[', attributesStrings.join(' & '), ']');
 		});
 
-		if (within)
+		if (tokenStrings.length > 0 && within)
 			tokenStrings.push(' within ', '<'+ within+'/>');
 		
 		return tokenStrings.join('');

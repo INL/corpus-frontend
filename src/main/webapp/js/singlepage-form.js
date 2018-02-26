@@ -78,21 +78,32 @@ SINGLEPAGE.FORM = (function () {
 	
 	// TODO tidy up
 	var updatePropertyField = function($propertyField, event) {
+		function removeFromPropertyList(propertyName) {
+			activeProperties = $.grep(activeProperties, function(elem) { return elem.name === propertyName;}, true);
+		}
+		
 		var propertyName = $propertyField.attr('id');
 		var $textInput = $propertyField.find('#' + propertyName + '_value');
 		var $fileInput = $propertyField.find('#' + propertyName + '_file')
 		var $caseInput = $propertyField.find('#' + propertyName + '_case');
 		var $changedInput = event ? $(event.target) : $textInput; // no event means we're initializing, so read from the input field
 		
+		// Fetch the current state, or init the new property (if it wasn't in the list)
 		var prop = $.grep(activeProperties, function(elem) { return elem.name === propertyName; })[0] || {};
-		if (prop.name === undefined) activeProperties.push(prop);
 		prop.name = propertyName;
 		prop.case = $caseInput.is(':checked');
 		prop.value = prop.value || ''; // init in case of new prop
 		
+		// Now temporarily remove the property from the active list (even if it actually has a value)
+		// and only put it back once we've read its new value
+		removeFromPropertyList();
+		
+		// Then set the new value, and once it's resolved, put it back in the list if the value is valid
 		if ($changedInput.is($textInput[0])) {
 			prop.value = $textInput.val();
 			$fileInput[0].value = '';
+			if (prop.value)
+				activeProperties.push(prop);
 		} else if ($changedInput.is($fileInput[0])) {
 			var file = $fileInput[0].files && $fileInput[0].files[0];
 			if (file != null) {
@@ -103,11 +114,15 @@ SINGLEPAGE.FORM = (function () {
 					// TODO discuss how we treat these fields with Jan/Katrien, see https://github.com/INL/corpus-frontend/issues/18
 					prop.value = fr.result.replace(/\s+/g, '|');
 					$textInput.val(prop.value);
+					
+					if (prop.value)
+						activeProperties.push(prop);
 				};
 				fr.readAsText(file);
 			} else {
 				prop.value = '';
 				$textInput.val('');
+				// Don't push back into active props, we've just cleared the value
 			}
 		} 
 	};

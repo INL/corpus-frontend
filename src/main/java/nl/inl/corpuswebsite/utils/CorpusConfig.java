@@ -36,7 +36,7 @@ public class CorpusConfig {
 	 * 	to their actual names */
 	private Map<String, String> fieldInfo = new LinkedHashMap<>();
 
-	private String corpusDataFormat;
+	private String corpusDataFormat = "UNKNOWN";
 
 	public CorpusConfig(String xml, String jsonUnescaped) throws SAXException, IOException, ParserConfigurationException {
 		config = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new InputSource(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8))));
@@ -77,7 +77,10 @@ public class CorpusConfig {
 	}
 
 	private void parseCorpusDataFormat() {
-		this.corpusDataFormat = config.getElementsByTagName("documentFormat").item(0).getTextContent();
+		NodeList documentFormatTags = config.getElementsByTagName("documentFormat");
+		if (documentFormatTags.getLength() > 0)
+		    this.corpusDataFormat = documentFormatTags.item(0).getTextContent();
+		this.corpusDataFormat = "UNKNOWN";
 	}
 
 	private void parsePropertyFields() {

@@ -379,7 +379,8 @@ public class MainServlet extends HttpServlet {
 			try {
 				getCorpusConfig(corpus);
 			} catch (Exception e) {
-				brClass = responses.get("error");
+                //brClass = responses.get("error");
+			    throw new ServletException(e);
 			}
 		}
 

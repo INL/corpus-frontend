@@ -49,12 +49,27 @@ SINGLEPAGE.INTERFACE = (function() {
 		parts.push(addPunctAfter);
 		return parts.join("");
 	}
+	
+	/**
+	 * Check whether a character string is right to left
+	 */
+	function isRTL(s){
+		var rtlChars = '\u0591-\u07FF\uFB1D-\uFDFF\uFE70-\uFEFC';
+		var ltrChars = 'A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02B8\u0300-\u0590\u0800-\u1FFF\u2C00-\uFB1C\uFDFE-\uFE6F\uFEFD-\uFFFF';
+		rtlDirCheck = new RegExp('^[^'+ltrChars+']*['+rtlChars+']');
+		return rtlDirCheck.test(s);
+	}
 
 	function snippetParts(hit) {
 		var punctAfterLeft = hit.match.word.length > 0 ? hit.match.punct[0] : "";
-		var left = words(hit.left, "word", false, punctAfterLeft);
+		var before = words(hit.left, "word", false, punctAfterLeft);
 		var match = words(hit.match, "word", false, "");
-		var right = words(hit.right, "word", true, "");
+		var after = words(hit.right, "word", true, "");
+		
+		// Check if the match is a right-to-left word
+		var rightToLeft = isRTL(match);
+		var left = rightToLeft? after : before;
+		var right = rightToLeft? before : after;
 		return [left, match, right];
 	}
 

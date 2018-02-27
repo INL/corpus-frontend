@@ -49,25 +49,15 @@ SINGLEPAGE.INTERFACE = (function() {
 		parts.push(addPunctAfter);
 		return parts.join("");
 	}
-	
-	/**
-	 * Check whether a character string is right to left
-	 */
-	function isRTL(s){
-		var rtlChars = '\u0591-\u07FF\uFB1D-\uFDFF\uFE70-\uFEFC';
-		var ltrChars = 'A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02B8\u0300-\u0590\u0800-\u1FFF\u2C00-\uFB1C\uFDFE-\uFE6F\uFEFD-\uFFFF';
-		rtlDirCheck = new RegExp('^[^'+ltrChars+']*['+rtlChars+']');
-		return rtlDirCheck.test(s);
-	}
 
-	function snippetParts(hit) {
+	function snippetParts(hit, textDirection) {
 		var punctAfterLeft = hit.match.word.length > 0 ? hit.match.punct[0] : "";
 		var before = words(hit.left, "word", false, punctAfterLeft);
 		var match = words(hit.match, "word", false, "");
 		var after = words(hit.right, "word", true, "");
-		
+		console.log('SnippetParts', textDirection);
 		// Check if the match is a right-to-left word
-		var rightToLeft = isRTL(match);
+		var rightToLeft = textDirection == 'rtl';
 		var left = rightToLeft? after : before;
 		var right = rightToLeft? before : after;
 		return [left, match, right];
@@ -102,6 +92,8 @@ SINGLEPAGE.INTERFACE = (function() {
 	 * @param {any} end 
 	 */
 	function showCitation(concRow, docPid, start, end) {
+		// TODO: get textDirection from somewhere
+		var textDirection = 'ltr';
 		// Open/close the collapsible in the next row
 		var $element = $(concRow).next().find(".collapse");
 		$element.collapse('toggle');
@@ -115,7 +107,7 @@ SINGLEPAGE.INTERFACE = (function() {
 				wordsaroundhit: 50
 			},
 			success: function (response) {
-				var parts = snippetParts(response);
+				var parts = snippetParts(response, textDirection);
 				$element.html(parts[0] + "<b>" + parts[1] + "</b>" + parts[2]);
 			},
 			error: function(jqXHR, textStatus, errorThrown) {
@@ -276,6 +268,8 @@ SINGLEPAGE.INTERFACE = (function() {
 	function loadConcordances() {
 		var $button = $(this);
 		var $tab = $button.parents('.tab-pane').first();
+		var textDirection = $tab.data('textDirection') | 'ltr';
+		console.log(textDirection);
 		var groupId = $button.data('groupId');
 		var currentConcordanceCount = $button.data('currentConcordanceCount') || 0;
 		var availableConcordanceCount = $button.data('availableConcordanceCount') || Number.MAX_VALUE;
@@ -305,13 +299,13 @@ SINGLEPAGE.INTERFACE = (function() {
 			// store new number of loaded elements
 			$button.data('currentConcordanceCount', currentConcordanceCount + loadedConcordances);
 			$button.data('availableConcordanceCount', totalConcordances);
-
+			
 			// And generate html to display
 			var html = [];
 			// Only one of these will run depending on what is present in the data
 			// And what is present in the data depends on the current view, so all works out
 			$.each(data.hits, function(index, hit) {
-				var parts = snippetParts(hit);
+				var parts = snippetParts(hit, textDirection);
 				html.push(
 					"<div class='clearfix'>",
 						"<div class='col-xs-5 text-right'>", ELLIPSIS, " ", parts[0], "</div>",
@@ -360,9 +354,8 @@ SINGLEPAGE.INTERFACE = (function() {
 	 * @param {any} data the blacklab-server response.
 	 * @returns An array of html strings containing the <thead> and <tbody>, but without the enclosing <table> element.
 	 */
-	function formatHits(data) {
+	function formatHits(data, textDirection) {
 		// TODO use mustache.js
-		
 		var html = [];
 		html.push(
 			"<thead><tr>",
@@ -430,7 +423,7 @@ SINGLEPAGE.INTERFACE = (function() {
 
 			// And display all hits for this document
 			$.each(hits, function(index, hit) {
-				var parts = snippetParts(hit);
+				var parts = snippetParts(hit, textDirection);
 				var matchLemma = words(hit.match, "lemma", false, "");
 				var matchPos = words(hit.match, "pos", false, "");
 
@@ -461,7 +454,7 @@ SINGLEPAGE.INTERFACE = (function() {
 	 * @param {any} data the blacklab-server response.
 	 * @returns An array of html strings containing the <thead> and <tbody>, but without the enclosing <table> element.
 	 */
-	function formatDocs(data) {
+	function formatDocs(data, textDirection) {
 		var html = [];
 
 		html.push(
@@ -483,7 +476,7 @@ SINGLEPAGE.INTERFACE = (function() {
 
 			var snippetStrings = [];
 			$.each(doc.snippets, function(index, snippet) {
-				var parts = snippetParts(snippet);
+				var parts = snippetParts(snippet, textDirection);
 				snippetStrings.push(ELLIPSIS, " ", parts[0], "<strong>", parts[1], "</strong>", parts[2], ELLIPSIS);
 				return false; // only need the first snippet for now
 			});
@@ -559,6 +552,7 @@ SINGLEPAGE.INTERFACE = (function() {
 
 		return html;
 	}
+	
 
 	/**
 	 * Redraws the table, pagination, hides spinners, shows/hides group indicator, shows the pagination/group controls, etc.
@@ -568,10 +562,11 @@ SINGLEPAGE.INTERFACE = (function() {
 	function setTabResults(data) {
 		var $tab = $(this);
 		var html;
-
+		var textDirection = $tab.data('textDirection');
+		console.log(textDirection);
 		// create the table
 		if (data.hits && data.hits.length)
-			html = formatHits(data);
+			html = formatHits(data, textDirection);
 		else if (data.docs && data.docs.length)
 			html = formatDocs(data);
 		else if ((data.hitGroups && data.hitGroups.length) || (data.docGroups && data.docGroups.length))
@@ -734,6 +729,7 @@ SINGLEPAGE.INTERFACE = (function() {
 			}
 		);
 	}
+	
 
 	return {
 		init: function() {
@@ -742,7 +738,22 @@ SINGLEPAGE.INTERFACE = (function() {
 			$('#results').hide();
 			$('#resultTabs a').each(function() { $(this).tab('hide'); });
 			$('.searchIndicator').hide();
+			
 
+			// Retrieve text direction
+			$.ajax({
+				url: BLS_URL ,
+				dataType: "json",
+				success: function (response) {
+					var textDirection = response.textDirection || 'ltr';
+					$('#tabHits').data('textDirection', textDirection);
+				},
+				error: function(jqXHR, textStatus, errorThrown) {
+					console.log(jqXHR.responseJSON, jqXHR.responseJSON.error, textStatus);
+				}
+			});	
+			
+			
 			// See parameters type documentation in singlepage-bls.js
 			$('#tabHits')
 				.data('parameters', {})

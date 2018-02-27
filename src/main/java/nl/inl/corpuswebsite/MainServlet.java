@@ -35,6 +35,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
+import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.velocity.Template;
 import org.apache.velocity.app.Velocity;
@@ -58,8 +59,7 @@ import nl.inl.corpuswebsite.utils.WebsiteConfig;
  * Reads the config, initializes stuff and dispatches requests.
  */
 public class MainServlet extends HttpServlet {
-
-	private static final boolean DEBUG = true;
+    protected static final Logger logger = Logger.getLogger(MainServlet.class);
 
 	private static final String DEFAULT_PAGE = "corpora";
 
@@ -105,7 +105,7 @@ public class MainServlet extends HttpServlet {
 			p.load(getServletContext().getResourceAsStream(LOG4J_PROPERTIES));
 			PropertyConfigurator.configure(p);
 		} catch (IOException e1) {
-			throw new RuntimeException(e1);
+			throw new ServletException(e1);
 		}
 
 		try {
@@ -117,25 +117,39 @@ public class MainServlet extends HttpServlet {
 			// Load the external properties file (for administration settings)
 			String adminPropFileName = warName + ".properties";
 			File adminPropFile = findPropertiesFile(adminPropFileName);
-			if (adminPropFile == null)
-				throw new ServletException(
-						"File "
-								+ adminPropFileName
-								+ " (with blsUrl and blsUrlExternal settings) not found in webapps or temp dir!");
-			if (!adminPropFile.isFile()) {
-				throw new RuntimeException("Property file " + adminPropFile + " does not exist or is not a regular file!");
+            adminProps = new Properties();
+			if (adminPropFile == null || !adminPropFile.exists()) {
+				logger.debug("File " + adminPropFileName + " (with blsUrl and blsUrlExternal settings) " +
+				        "not found in webapps, /etc/blacklab/ or temp dir; will use defaults");
+            } else if (!adminPropFile.isFile()) {
+				throw new ServletException("Property file " + adminPropFile + " is not a regular file!");
+			} else if (!adminPropFile.canRead()) {
+			    throw new ServletException("Property file " + adminPropFile + " exists but is unreadable!");
+			} else {
+			    // File exists and can be read. Read it.
+                debugLog("Reading corpus-frontend property file: " + adminPropFile);
+	            try (Reader in = new BufferedReader(new FileReader(adminPropFile))) {
+	                adminProps.load(in);
+	            }
 			}
-			adminProps = new Properties();
-			try (Reader in = new BufferedReader(new FileReader(adminPropFile))) {
-				adminProps.load(in);
+			if (!adminProps.containsKey("blsUrl")) {
+				//throw new ServletException("Missing blsUrl setting in " + adminPropFile);
+			    adminProps.put("blsUrl", "http://localhost:8080/blacklab-server/");
+			    logger.debug("blsUrl setting missing in corpus-frontend property file, using " + adminProps.getProperty("blsUrl"));
 			}
-			debugLog("Admin prop file: " + adminPropFile);
-			if (!adminProps.containsKey("blsUrl"))
-				throw new ServletException("Missing blsUrl setting in "
-						+ adminPropFile);
-			if (!adminProps.containsKey("blsUrlExternal"))
-				throw new ServletException("Missing blsUrlExternal setting in "
-						+ adminPropFile);
+			if (!adminProps.containsKey("blsUrlExternal")) {
+                //throw new ServletException("Missing blsUrlExternal setting in " + adminPropFile);
+                adminProps.put("blsUrlExternal", "/blacklab-server/");
+                logger.debug("blsUrlExternal setting missing in corpus-frontend property, using " + adminProps.getProperty("blsUrl"));
+			}
+			if (!adminProps.containsKey("corporaInterfaceDataDir")) {
+			    // Try a default location.
+			    File defaultDir = new File("/etc/blacklab/projectconfigs");
+			    if (defaultDir.exists()) {
+			        logger.debug("corporaInterfaceDataDir not explicitly specified; using default dir (which exists): " + defaultDir);
+			        adminProps.put("corporaInterfaceDataDir", defaultDir.toString());
+			    }
+			}
 			if (!adminProps.containsKey("corporaInterfaceDataDir")) {
 				debugLog("Missing corporaInterfaceDataDir setting in " + adminPropFileName);
 				debugLog("Per-corpus data (such as icons, colors, backgrounds, images) will not be available!");
@@ -166,8 +180,7 @@ public class MainServlet extends HttpServlet {
 	}
 
 	private static void debugLog(String msg) {
-		if (DEBUG)
-			System.out.println(msg);
+		logger.debug(msg);
 	}
 
 	/**
@@ -413,21 +426,34 @@ public class MainServlet extends HttpServlet {
 	 * @return the file, or null if not found
 	 */
 	public InputStream getProjectFile(String corpus, String fileName, boolean getDefaultIfMissing) {
-		if (corpus == null || isUserCorpus(corpus) || !adminProps.containsKey("corporaInterfaceDataDir") )
-			return getDefaultProjectFile(fileName);
+		if (corpus == null || isUserCorpus(corpus) || !adminProps.containsKey("corporaInterfaceDataDir") ) {
+		    if (!adminProps.containsKey("corporaInterfaceDataDir"))
+		        logger.debug("corporaInterfaceDataDir not set, couldn't find project file " + fileName + " for corpus " + corpus + (getDefaultIfMissing ? "; using default" : "; returning null"));
+		    return getDefaultIfMissing ? getDefaultProjectFile(fileName) : null;
+        }
 
+		File projectFile = null;
 		try {
 			Path baseDir = Paths.get(adminProps.getProperty("corporaInterfaceDataDir"));
 			Path corpusDir = baseDir.resolve(corpus).normalize();
 			Path filePath = corpusDir.resolve(fileName).normalize();
-			if (corpusDir.startsWith(baseDir) && filePath.startsWith(corpusDir))
-				return new FileInputStream(new File(filePath.toString()));
+            projectFile = new File(filePath.toString());
+            if (!projectFile.exists() && !projectFile.canRead()) {
+                // Problem with file permissions (possibly SELinux?)
+                logger.warn("File " + projectFile + " exists but is unreadable!");
+            }
+			if (corpusDir.startsWith(baseDir) && filePath.startsWith(corpusDir)) {
+                return new FileInputStream(projectFile);
+            }
 
 			// File path points outside the configured directory!
-			return getDefaultProjectFile(fileName);
-		} catch (FileNotFoundException | SecurityException e) {
-			return getDefaultProjectFile(fileName);
+            logger.warn("Disallowing project file outside configured directory: " + fileName + " for corpus " + corpus + (getDefaultIfMissing ? "; using default" : "; returning null"));
+		} catch (FileNotFoundException e) {
+            // This is "normal", just means we want to use the generic version of this file or are checking to see if it exists.
+		} catch (SecurityException e) {
+            logger.debug("SecurityException finding project file " + fileName + " for corpus " + corpus + " as file " + projectFile.toString() + (getDefaultIfMissing ? "; using default" : "; returning null"));
 		}
+        return getDefaultIfMissing ? getDefaultProjectFile(fileName) : null;
 	}
 
 	/**

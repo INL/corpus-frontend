@@ -86,8 +86,7 @@ SINGLEPAGE.INTERFACE = (function() {
 	 * @param {any} start 
 	 * @param {any} end 
 	 */
-	function showCitation(concRow, docPid, start, end) {
-		// TODO: Do we need to specify the textDirection here?
+	function showCitation(concRow, docPid, start, end, textDirection) {
 		// Open/close the collapsible in the next row
 		var $element = $(concRow).next().find(".collapse");
 		$element.collapse('toggle');
@@ -98,11 +97,11 @@ SINGLEPAGE.INTERFACE = (function() {
 			data: {
 				hitstart: start,
 				hitend: end,
-				wordsaroundhit: 50
+				wordsaroundhit: 48
 			},
 			success: function (response) {
 				var parts = snippetParts(response);
-				$element.html(parts[0] + "<b>" + parts[1] + "</b>" + parts[2]);
+				$element.html('<span dir="'+ textDirection+'">'+ parts[0] + "<b>" + parts[1] + "</b>" + parts[2]+ "</span>");
 			},
 			error: function(jqXHR, textStatus, errorThrown) {
 				$element.text("Error retrieving data: " + (jqXHR.responseJSON && jqXHR.responseJSON.error) || textStatus);
@@ -263,7 +262,6 @@ SINGLEPAGE.INTERFACE = (function() {
 		var $button = $(this);
 		var $tab = $button.parents('.tab-pane').first();
 		var textDirection = $tab.data('textDirection') | 'ltr';
-		console.log(textDirection);
 		var groupId = $button.data('groupId');
 		var currentConcordanceCount = $button.data('currentConcordanceCount') || 0;
 		var availableConcordanceCount = $button.data('availableConcordanceCount') || Number.MAX_VALUE;
@@ -427,7 +425,7 @@ SINGLEPAGE.INTERFACE = (function() {
 				var matchPos = words(hit.match, "pos", false, "");
 
 				html.push(
-					"<tr class='concordance' onclick='SINGLEPAGE.INTERFACE.showCitation(this, \"", docPid, "\", ", hit.start, ", ", hit.end,");'>",
+					"<tr class='concordance' onclick='SINGLEPAGE.INTERFACE.showCitation(this, \"", docPid, "\", ", hit.start, ", ", hit.end, ", \"", textDirection,"\");'>",
 						"<td class='text-right'>",ELLIPSIS, " ", left, "</td>",
 						"<td class='text-center'><strong>", parts[1],"</strong></td>",
 						"<td>", right, " ", ELLIPSIS, "</td>",
@@ -484,12 +482,11 @@ SINGLEPAGE.INTERFACE = (function() {
 				"doc": docPid,
 				"query": data.summary.searchParam.patt
 			}).toString();
-			// TODO: use textDirection in html element
 			html.push(
 				"<tr class='documentrow'>",
 					"<td>",
-						"<a target='_blank' href='", docUrl, "'>", docTitle, docAuthor, "</a><br>",
-						snippetStrings.join(""), snippetStrings.length > 0 ? "<br>" : "",
+						"<a target='_blank' href='", docUrl, "'>", docTitle, docAuthor, "</a><br>", '<span dir="', textDirection, '">',
+						snippetStrings.join(""), snippetStrings.length > 0 ? "<br>" : "", "</span>",
 						"<a class='green btn btn-xs btn-default' target='_blank' href='", docUrl,"'>View document info</a>",
 					"</td>",
 					"<td>", docDate, "</td>",
@@ -561,8 +558,7 @@ SINGLEPAGE.INTERFACE = (function() {
 	function setTabResults(data) {
 		var $tab = $(this);
 		var html;
-		var textDirection = $tab.data('textDirection');
-		console.log($tab, textDirection);
+		var textDirection = $tab.data('textDirection') || 'ltr';
 		// create the table
 		if (data.hits && data.hits.length)
 			html = formatHits(data, textDirection);

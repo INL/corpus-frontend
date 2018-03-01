@@ -97,7 +97,7 @@ SINGLEPAGE.INTERFACE = (function() {
 			data: {
 				hitstart: start,
 				hitend: end,
-				wordsaroundhit: 48
+				wordsaroundhit: 50
 			},
 			success: function (response) {
 				var parts = snippetParts(response);

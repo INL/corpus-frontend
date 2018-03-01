@@ -50,17 +50,12 @@ SINGLEPAGE.INTERFACE = (function() {
 		return parts.join("");
 	}
 
-	function snippetParts(hit, textDirection) {
+	function snippetParts(hit) {
 		var punctAfterLeft = hit.match.word.length > 0 ? hit.match.punct[0] : "";
 		var before = words(hit.left, "word", false, punctAfterLeft);
 		var match = words(hit.match, "word", false, "");
 		var after = words(hit.right, "word", true, "");
-		console.log('SnippetParts', textDirection);
-		// Check if the match is a right-to-left word
-		var rightToLeft = textDirection == 'rtl';
-		var left = rightToLeft? after : before;
-		var right = rightToLeft? before : after;
-		return [left, match, right];
+		return [before, match, after];
 	}
 
 	/**
@@ -92,8 +87,7 @@ SINGLEPAGE.INTERFACE = (function() {
 	 * @param {any} end 
 	 */
 	function showCitation(concRow, docPid, start, end) {
-		// TODO: get textDirection from somewhere
-		var textDirection = 'ltr';
+		// TODO: Do we need to specify the textDirection here?
 		// Open/close the collapsible in the next row
 		var $element = $(concRow).next().find(".collapse");
 		$element.collapse('toggle');
@@ -107,7 +101,7 @@ SINGLEPAGE.INTERFACE = (function() {
 				wordsaroundhit: 50
 			},
 			success: function (response) {
-				var parts = snippetParts(response, textDirection);
+				var parts = snippetParts(response);
 				$element.html(parts[0] + "<b>" + parts[1] + "</b>" + parts[2]);
 			},
 			error: function(jqXHR, textStatus, errorThrown) {
@@ -305,12 +299,14 @@ SINGLEPAGE.INTERFACE = (function() {
 			// Only one of these will run depending on what is present in the data
 			// And what is present in the data depends on the current view, so all works out
 			$.each(data.hits, function(index, hit) {
-				var parts = snippetParts(hit, textDirection);
+				var parts = snippetParts(hit);
+				var left = textDirection=='ltr'? parts[0] : parts[2]; 
+				var right = textDirection=='ltr'? parts[2] : parts[0]; 
 				html.push(
 					"<div class='clearfix'>",
-						"<div class='col-xs-5 text-right'>", ELLIPSIS, " ", parts[0], "</div>",
+						"<div class='col-xs-5 text-right'>", ELLIPSIS, " ", left, "</div>",
 						"<div class='col-xs-2 text-center'><b>", parts[1], "&nbsp;", "</b></div>",
-						"<div class='col-xs-5'>", parts[2], " ", ELLIPSIS, "</div>",
+						"<div class='col-xs-5'>", right, " ", ELLIPSIS, "</div>",
 					"</div>");
 			});
 
@@ -423,15 +419,18 @@ SINGLEPAGE.INTERFACE = (function() {
 
 			// And display all hits for this document
 			$.each(hits, function(index, hit) {
-				var parts = snippetParts(hit, textDirection);
+				var parts = snippetParts(hit);
+				var left = textDirection=='ltr'? parts[0] : parts[2]; 
+				var right = textDirection=='ltr'? parts[2] : parts[0]; 
+				
 				var matchLemma = words(hit.match, "lemma", false, "");
 				var matchPos = words(hit.match, "pos", false, "");
 
 				html.push(
 					"<tr class='concordance' onclick='SINGLEPAGE.INTERFACE.showCitation(this, \"", docPid, "\", ", hit.start, ", ", hit.end,");'>",
-						"<td class='text-right'>",ELLIPSIS, " ", parts[0], "</td>",
+						"<td class='text-right'>",ELLIPSIS, " ", left, "</td>",
 						"<td class='text-center'><strong>", parts[1],"</strong></td>",
-						"<td>", parts[2], " ", ELLIPSIS, "</td>",
+						"<td>", right, " ", ELLIPSIS, "</td>",
 						"<td>", matchLemma, "</td>",
 						"<td>", matchPos, "</td>",
 					"</tr>");
@@ -476,7 +475,7 @@ SINGLEPAGE.INTERFACE = (function() {
 
 			var snippetStrings = [];
 			$.each(doc.snippets, function(index, snippet) {
-				var parts = snippetParts(snippet, textDirection);
+				var parts = snippetParts(snippet);
 				snippetStrings.push(ELLIPSIS, " ", parts[0], "<strong>", parts[1], "</strong>", parts[2], ELLIPSIS);
 				return false; // only need the first snippet for now
 			});
@@ -485,7 +484,7 @@ SINGLEPAGE.INTERFACE = (function() {
 				"doc": docPid,
 				"query": data.summary.searchParam.patt
 			}).toString();
-
+			// TODO: use textDirection in html element
 			html.push(
 				"<tr class='documentrow'>",
 					"<td>",
@@ -563,12 +562,12 @@ SINGLEPAGE.INTERFACE = (function() {
 		var $tab = $(this);
 		var html;
 		var textDirection = $tab.data('textDirection');
-		console.log(textDirection);
+		console.log($tab, textDirection);
 		// create the table
 		if (data.hits && data.hits.length)
 			html = formatHits(data, textDirection);
 		else if (data.docs && data.docs.length)
-			html = formatDocs(data);
+			html = formatDocs(data, textDirection);
 		else if ((data.hitGroups && data.hitGroups.length) || (data.docGroups && data.docGroups.length))
 			html = formatGroups(data);
 		else {
@@ -747,6 +746,7 @@ SINGLEPAGE.INTERFACE = (function() {
 				success: function (response) {
 					var textDirection = response.textDirection || 'ltr';
 					$('#tabHits').data('textDirection', textDirection);
+					$('#tabDocs').data('textDirection', textDirection);
 				},
 				error: function(jqXHR, textStatus, errorThrown) {
 					console.log(jqXHR.responseJSON, jqXHR.responseJSON.error, textStatus);

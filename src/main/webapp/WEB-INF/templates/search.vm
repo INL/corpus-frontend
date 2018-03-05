@@ -52,6 +52,9 @@
 <script src="$pathToTop/js/cql_querybuilder.js"></script>
 <script src="$pathToTop/js/singlepage-cqlparser.js"></script>
 <script>
+	var SINGLEPAGE = SINGLEPAGE || {};
+	SINGLEPAGE.INDEX = JSON.parse("$esc.javascript($indexStructureJson)");
+
 	var BLS_URL = "$blsUrl";
 	var wordProperties = [
 	#foreach($propertyField in $propertyFields)

@@ -252,7 +252,7 @@
 		<div id="tabHits" class="tab-pane">
 			<div class="clearfix resultcontrols">
 				<select class="selectpicker groupselect" title="Group hits by..." data-size="15" data-style="btn-default btn-sm" multiple>
-					<optgroup label="Left context">
+					<optgroup label="Before hit">
 						#foreach($propertyField in $propertyFields)
 						<option value="wordleft:$propertyField.getId()">Group by $propertyField.getDisplayName()</option>
 						#end
@@ -262,7 +262,7 @@
 						<option value="hit:$propertyField.getId()">Group by $propertyField.getDisplayName()</option>
 						#end
 					</optgroup>
-					<optgroup label="Right context">
+					<optgroup label="After hit">
 						#foreach($propertyField in $propertyFields)
 						<option value="wordright:$propertyField.getId()">Group by $propertyField.getDisplayName()</option>
 						#end

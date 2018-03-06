@@ -355,7 +355,9 @@ SINGLEPAGE.INTERFACE = (function() {
 			"<thead><tr>",
 				"<th class='text-right' style='width:40px'>",
 					"<span class='dropdown'>",
-						"<a class='dropdown-toggle' data-toggle='dropdown'>Before hit <span class='caret'></span></a>",
+						"<a class='dropdown-toggle' data-toggle='dropdown'>", 
+						textDirection=='ltr'? "Before hit " : "After hit ",
+						"<span class='caret'></span></a>",
 						"<ul class='dropdown-menu' role='menu' aria-labelledby='left'>");
 						$.each(wordProperties, function(i, prop) {
 							html.push(
@@ -372,7 +374,9 @@ SINGLEPAGE.INTERFACE = (function() {
 
 				"<th class='text-left' style='width:40px;'>",
 					"<span class='dropdown'>", // Span as when it's div, and we're right aligning text, the dropdown doesn't align because the div extends all the way left
-						"<a class='dropdown-toggle' data-toggle='dropdown'>After hit <span class='caret'></span></a>",
+						"<a class='dropdown-toggle' data-toggle='dropdown'>",
+						textDirection=='ltr'? "After hit " : "Before hit ",
+						"<span class='caret'></span></a>",
 						"<ul class='dropdown-menu' role='menu' aria-labelledby='right'>");
 						$.each(wordProperties, function(i, prop) {
 							html.push(

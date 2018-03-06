@@ -261,7 +261,7 @@ SINGLEPAGE.INTERFACE = (function() {
 	function loadConcordances() {
 		var $button = $(this);
 		var $tab = $button.parents('.tab-pane').first();
-		var textDirection = $tab.data('textDirection') | 'ltr';
+		var textDirection = $tab.data('textDirection') || 'ltr';
 		var groupId = $button.data('groupId');
 		var currentConcordanceCount = $button.data('currentConcordanceCount') || 0;
 		var availableConcordanceCount = $button.data('availableConcordanceCount') || Number.MAX_VALUE;

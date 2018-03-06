@@ -429,10 +429,10 @@ SINGLEPAGE.INTERFACE = (function() {
 				var matchPos = words(hit.match, "pos", false, "");
 
 				html.push(
-					"<tr class='concordance' onclick='SINGLEPAGE.INTERFACE.showCitation(this, \"", docPid, "\", ", hit.start, ", ", hit.end, ", \"", textDirection,"\");'>",
-						"<td class='text-right'>",ELLIPSIS, " ", left, "</td>",
-						"<td class='text-center'><strong>", parts[1],"</strong></td>",
-						"<td>", right, " ", ELLIPSIS, "</td>",
+					"<tr class='concordance'  onclick='SINGLEPAGE.INTERFACE.showCitation(this, \"", docPid, "\", ", hit.start, ", ", hit.end, ", \"", textDirection,"\");'>",
+						"<td class='text-right'>",ELLIPSIS, " <span dir='", textDirection, "'>", left, "</span></td>",
+						"<td class='text-center'><span dir='", textDirection, "'><strong>", parts[1],"</strong></span></td>",
+						"<td><span dir='", textDirection, "'>", right, "</span> ", ELLIPSIS, "</td>",
 						"<td>", matchLemma, "</td>",
 						"<td>", matchPos, "</td>",
 					"</tr>");

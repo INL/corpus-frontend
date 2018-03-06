@@ -261,7 +261,7 @@ SINGLEPAGE.INTERFACE = (function() {
 	function loadConcordances() {
 		var $button = $(this);
 		var $tab = $button.parents('.tab-pane').first();
-		var textDirection = $tab.data('textDirection') || 'ltr';
+		var textDirection = SINGLEPAGE.INDEX.textDirection || 'ltr';
 		var groupId = $button.data('groupId');
 		var currentConcordanceCount = $button.data('currentConcordanceCount') || 0;
 		var availableConcordanceCount = $button.data('availableConcordanceCount') || Number.MAX_VALUE;
@@ -558,7 +558,7 @@ SINGLEPAGE.INTERFACE = (function() {
 	function setTabResults(data) {
 		var $tab = $(this);
 		var html;
-		var textDirection = $tab.data('textDirection') || 'ltr';
+		var textDirection = SINGLEPAGE.INDEX.textDirection || 'ltr';
 		// create the table
 		if (data.hits && data.hits.length)
 			html = formatHits(data, textDirection);
@@ -733,21 +733,6 @@ SINGLEPAGE.INTERFACE = (function() {
 			$('#results').hide();
 			$('#resultTabs a').each(function() { $(this).tab('hide'); });
 			$('.searchIndicator').hide();
-			
-
-			// Retrieve text direction
-			$.ajax({
-				url: BLS_URL ,
-				dataType: "json",
-				success: function (response) {
-					var textDirection = response.textDirection || 'ltr';
-					$('#tabHits').data('textDirection', textDirection);
-					$('#tabDocs').data('textDirection', textDirection);
-				},
-				error: function(jqXHR, textStatus, errorThrown) {
-					console.log(jqXHR.responseJSON, jqXHR.responseJSON.error, textStatus);
-				}
-			});	
 			
 			
 			// See parameters type documentation in singlepage-bls.js

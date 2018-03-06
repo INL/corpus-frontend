@@ -11,49 +11,26 @@ SINGLEPAGE.CORE = (function () {
 		SINGLEPAGE.FORM.init();
 		SINGLEPAGE.INTERFACE.init();
 		
-		// Rescale the querybuilder container when it's selected
-		$('a.querytype[href="#advanced"]').on('shown.bs.tab hide.bs.tab', function () {
-			$('#searchContainer').toggleClass('col-md-6');
-		});
-
 		// Init the querybuilder with the supported attributes/properties
-		$.ajax({
-			url: BLS_URL + 'fields/contents',
-			dataType: "json",
-
-			success: function (response) {
-				// Init the querybuilder
-				var $queryBuilder = $('#querybuilder'); // querybuilder container
-				var queryBuilderInstance = querybuilder.createQueryBuilder($queryBuilder, {
-					attribute: {
-						view: {
-							attributes: $.map(response.properties, function (value, key) {
-								if (value.isInternal)
-									return null; // Ignore these fields
-
-								// Transform the supported values to the querybuilder format 
-								return {
-									attribute: key,
-									label: value.displayName || key,
-									caseSensitive: (value.sensitivity === "SENSITIVE_AND_INSENSITIVE")
-								}
-							}),
-						}
-					}
-				});
-
-				// And copy over the generated query to the manual field when changes happen
-				var $queryBox = $('#querybox'); //cql textfield
-				$queryBuilder.on('cql:modified', function () {
-					$queryBox.val(queryBuilderInstance.getCql());
-				});
-
-				if (searchSettings != null && populateQueryBuilder(searchSettings))
-					$('#searchTabs a[href="#advanced"]').tab('show');
-			},
-			error: function (jqXHR, textStatus) {
-				var $queryBuilder = $('#querybuilder');
-				$queryBuilder.text("Could not get supported values for querybuilder: " + textStatus);
+		var $queryBuilder = $('#querybuilder'); // container
+		var queryBuilderInstance = querybuilder.createQueryBuilder($queryBuilder, {
+			attribute: {
+				view: { 
+					// Pass the available properties of tokens in this corpus (PoS, Lemma, Word, etc..) to the querybuilder 
+					attributes: $.map(SINGLEPAGE.INDEX.complexFields, function (complexField, complexFieldName) {
+						return $.map(complexField.properties, function(property, propertyId) {
+							if (property.isInternal)
+								return null; // Don't show internal fields in the queryBuilder; leave this out of the list.
+							
+							// Transform the supported values to the querybuilder format 
+							return {
+								attribute: propertyId,
+								label: property.displayName || propertyId,
+								caseSensitive: (property.sensitivity === 'SENSITIVE_AND_INSENSITIVE')
+							};
+						});
+					}),
+				}
 			}
 		});
 
@@ -77,6 +54,26 @@ SINGLEPAGE.CORE = (function () {
 			SINGLEPAGE.INTERFACE.setParameters({
 				sampleSeed: $(this).val()
 			});
+		});
+		
+		// Rescale the querybuilder container when it's shown
+		$('a.querytype[href="#advanced"]').on('shown.bs.tab hide.bs.tab', function () {
+			$('#searchContainer').toggleClass('col-md-6');
+		});
+
+		// Attempt to parse the query from the cql editor into the querybuilder
+		$('#parseQuery').on('click', function() {
+			var pattern = $('#querybox').val();
+			if (populateQueryBuilder(pattern))
+				$('#searchTabs a[href="#advanced"]').tab('show') && $('#parseQueryError').hide();
+			else 
+				$('#parseQueryError').show();
+		});
+
+		// And copy over the generated query to the manual field when changes happen
+		var $queryBox = $('#querybox'); //cql textfield
+		$queryBuilder.on('cql:modified', function () {
+			$queryBox.val(queryBuilderInstance.getCql());
 		});
 		
 		// now restore the page state from the query parameters
@@ -269,21 +266,20 @@ SINGLEPAGE.CORE = (function () {
 	function toPageState(searchParams) {
 		// reset and repopulate the main form
 		SINGLEPAGE.FORM.reset(); 
-		$('#querybuilder').data('builder') && $('#querybuilder').data('builder').reset();
+		$('#querybuilder').data('builder').reset();
 		$('#querybox').val(undefined);
 		
 		if (searchParams.pattern) {
+			// In the case of an array as search pattern,  it contains the basic/simple search parameters
 			if (searchParams.pattern.constructor === Array) {
 				$.each(searchParams.pattern, function (index, element) {
 					SINGLEPAGE.FORM.setPropertyValues(element);
 				});
-			} else {
-
-				$("#querybox").val(searchParams.pattern);
-				
-				// reconstruct querybuilder from pattern (if possible)
-				// and maybe populate the simple form too if possible
-				if ($('#querybuilder').data('builder') && populateQueryBuilder(searchParams))
+			} else { 
+				// We have a raw cql query string, attempt to parse it using the querybuilder, 
+				// otherwise fall back to the raw cql view
+				$('#querybox').val(searchParams.pattern);
+				if (populateQueryBuilder(searchParams.pattern))
 					$('#searchTabs a[href="#advanced"]').tab('show');
 				else 
 					$('#searchTabs a[href="#query"]').tab('show');

@@ -289,12 +289,17 @@ public class MainServlet extends HttpServlet {
 
 			QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(corpus));
 
-			Map<String, String[]> params = new HashMap<>();
-			params.put("outputformat", new String[] {"xml"});
 
 			try {
+				Map<String, String[]> params = new HashMap<>();
+
+				params.put("outputformat", new String[] {"xml"});
 				String xmlResult = handler.makeRequest(params);
-				corpusConfigs.put(corpus, new CorpusConfig(xmlResult));
+
+				params.put("outputformat", new String[] {"json"});
+				String jsonResult = handler.makeRequest(params);
+
+				corpusConfigs.put(corpus, new CorpusConfig(xmlResult, jsonResult));
 			} catch (IOException | SAXException | ParserConfigurationException e) {
 				throw new RuntimeException(e);
 			}

@@ -26,6 +26,7 @@ public class SearchResponse extends BaseResponse {
 			context.put(e.getKey(), e.getValue());
 		}
 
+		context.put("indexStructureJson", config.getJsonUnescaped());
 		context.put("propertyFields", config.getPropertyFields());
 		context.put("metadataGroups", config.getMetadataFieldGroups());
 		context.put("ungroupedMetadataFields", config.getUngroupedMetadataFields());

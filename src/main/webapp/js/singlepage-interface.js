@@ -675,7 +675,7 @@ SINGLEPAGE.INTERFACE = (function() {
 		$('#results').show();
 
 		var $tab = $(this);
-		var searchSettings = $.extend({}, $tab.data('defaultParameters'), $tab.data('parameters'));
+		var searchSettings = $.extend({}, $tab.data('defaultParameters'), $tab.data('parameters'), $tab.data('constParameters'));
 
 		if ($tab.data('results')) {
 			// Nothing to do, tab is already displaying data

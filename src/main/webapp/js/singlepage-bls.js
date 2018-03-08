@@ -161,36 +161,45 @@ SINGLEPAGE.BLS = (function () {
 	}
 
 	/**
-	 * Polls blacklab for the number of results in the query and updates the UI.
-	 * Continues to poll until either all results are known, or a new search is executed.
-	 * 
-	 * @param {any} blsParam - The final (processed) blacklab search parameters.
-	 * @param {string} operation - The search operation, must not be 'hits' if no pattern supplied.
+	 * Central handler for updating the totals display
 	 */
-	var countHits = (function(){
-		
+	var totalsCounter = (function(){
+		// Parameters used in the next update request
 		var curUrl;
 		var curPageSize;
-
-		var running = false;
 		
-		function run() {
-			running = true;
-			
-			$.ajax({
+		// Handles to the current request/scheduled request
+		var timeoutHandle = null;
+		var inflightRequest = null;
+		
+		function scheduleRequest() {
+			inflightRequest = $.ajax({
 				url: curUrl,
 				dataType: "json",
 				cache: false,
 				success: function(data) {
-					
 					updateTotalsDisplay(data);
 					if (data.summary.stillCounting) {
-						setTimeout(run, 1000);
+						timeoutHandle = setTimeout(scheduleRequest, 1000);
 					} else {
-						running = false;
+						timeoutHandle = null;
 					}
+				},
+				fail: function() {
+					timeoutHandle = null;
+				},
+				always: function() {
+					inflightRequest = null;
 				}
 			});
+		}
+		
+		function cancelRequest() {
+			timeoutHandle != null && clearTimeout(timeoutHandle);
+			timeoutHandle = null;
+			
+			inflightRequest != null && inflightRequest.abort();
+			inflightRequest = null;
 		}
 		
 		function updateTotalsDisplay(data) {
@@ -216,84 +225,105 @@ SINGLEPAGE.BLS = (function () {
 				"Total " + type + ": " + total + optEllipsis + "<br>" + 
 				"Total pages: " + totalPages + optEllipsis
 			);
-			if (data.summary.stillCounting) {
-				$("#totalsSpinner").show();
-			} else {
-				$("#totalsSpinner").hide();
-			}
+			
+			$("#totalsSpinner").toggle(data.summary.stillCounting);
 		}
 
-		return function(data, blsParam, operation) {
+		return {
+			/**
+			 * Cancel any pending updates from previous requests, 
+			 * then immediately update the totals display with the results so far.
+			 * Starts a background counter that continues updating the display until all results have been counted.
+			 * 
+			 * @param {any} data - the data returned from blacklab-server with the initial request 
+			 * @param {any} blsParam - The final (processed) blacklab search parameters.
+			 * @param {string} operation - The search operation, must not be 'hits' if no pattern supplied.
+			 */
+			start: function(data, blsParam, operation) {
+				cancelRequest();
+				
+				// Store the requested page size (to do page number calculation)
+				// Then set request page size to 0 so we don't actually retrieve any results
+				curPageSize = blsParam.number;
+				curUrl = new URI(BLS_URL).segment(operation).addSearch($.extend({},blsParam, {number:0})).toString();
+				updateTotalsDisplay(data);
+				
+				if (data.summary.stillCounting)
+					scheduleRequest();
+			},
 			
-			
-			// Store the requested page size (to do page number calculation)
-			// Then set request page size to 0 so we don't actually retrieve any results
-			curPageSize = blsParam.number;
-			curUrl = new URI(BLS_URL).segment(operation).addSearch($.extend({},blsParam, {number:0})).toString();
-			updateTotalsDisplay(data);
-
-			if (data.summary.stillCounting && !running) {
-				run();
-			} else {
-				running = false;
-			}
+			stop: cancelRequest
 		}
 	})();
 
-	return {
-		/** 
-		 * Translate internal parameters to blacklab-server search parameters and perform a search.
-		 * 
-		 * @param {SearchParameters} param - Parameters, these must be in a valid configuration.
-		 * @param {BLSSuccess} successFunc 
-		 * @param {BLSError} errorFunc 
-		 */
-		search: function (param, successFunc, errorFunc) {
-			var operation = param.operation;
-			var blsParam = {
-				// these are always present
-				number: param.pageSize,
-				first: param.page * param.pageSize,
+	// Return a closure with some request caching variables
+	return (function() {
+		var inflightRequest = null;
+		
+		return {
+			/** 
+			 * Translate internal parameters to blacklab-server search parameters and perform a search.
+			 * 
+			 * @param {SearchParameters} param - Parameters, these must be in a valid configuration.
+			 * @param {BLSSuccess} successFunc 
+			 * @param {BLSError} errorFunc 
+			 */
+			search: function (param, successFunc, errorFunc) {
+				var operation = param.operation;
+				var blsParam = {
+					// these are always present
+					number: param.pageSize,
+					first: param.page * param.pageSize,
 				
-				sample: (param.sampleMode === "percentage" && param.sampleSize) ? parseFloat(param.sampleSize) || undefined : undefined,
-				samplenum: (param.sampleMode === "count" && param.sampleSize) ? parseInt(param.sampleSize) || undefined : undefined,
-				sampleseed: (param.sampleSeed != null && param.sampleMode && param.sampleSize) ? parseInt(param.sampleSeed) || undefined : undefined,
+					sample: (param.sampleMode === "percentage" && param.sampleSize) ? parseFloat(param.sampleSize) || undefined : undefined,
+					samplenum: (param.sampleMode === "count" && param.sampleSize) ? parseInt(param.sampleSize) || undefined : undefined,
+					sampleseed: (param.sampleSeed != null && param.sampleMode && param.sampleSize) ? parseInt(param.sampleSeed) || undefined : undefined,
 
-				// these are either undefined or valid (meaning no empty strings/arrays)
-				filter: getFilterString(param.filters), 
-				group: (param.groupBy || []).join(",") || undefined,
-				patt: getPatternString(param.pattern),
+					// these are either undefined or valid (meaning no empty strings/arrays)
+					filter: getFilterString(param.filters), 
+					group: (param.groupBy || []).join(",") || undefined,
+					patt: getPatternString(param.pattern),
 			
-				sort: param.sort || undefined,
-				viewgroup: param.viewGroup || undefined
-			};
-			
-			if (SINGLEPAGE.DEBUG) {
-				console.log(blsParam);
-			}
-
-			$.ajax({
-				url: new URI(BLS_URL).segment(operation).addSearch(blsParam).toString(),
-				dataType: "json",
-				cache: false,
-				success: function(data) {
-					if (SINGLEPAGE.DEBUG) {
-						console.log(data);
-					}
-
-					countHits(data, blsParam, operation);
-
-					if (typeof successFunc === "function")
-						successFunc(data);
-				},
-				error: function() {
-					if (SINGLEPAGE.DEBUG)
-						console.log("Request failed: ", arguments);
-					
-					if (typeof errorFunc === "function")
-						errorFunc.apply(undefined, arguments);
+					sort: param.sort || undefined,
+					viewgroup: param.viewGroup || undefined
+				};
+				
+				if (SINGLEPAGE.DEBUG) {
+					console.log(blsParam);
 				}
-			});
+				
+				inflightRequest = $.ajax({
+					url: new URI(BLS_URL).segment(operation).addSearch(blsParam).toString(),
+					dataType: "json",
+					cache: false,
+					success: function(data) {
+						if (SINGLEPAGE.DEBUG) {
+							console.log(data);
+						}
+						
+						totalsCounter.start(data, blsParam, operation);
+						
+						if (typeof successFunc === "function")
+							successFunc(data);
+					},
+					error: function() {
+						if (SINGLEPAGE.DEBUG)
+							console.log("Request failed: ", arguments);
+						
+						if (typeof errorFunc === "function")
+							errorFunc.apply(undefined, arguments);
+					},
+					always: function() {
+						inflightRequest = null;
+					}
+				});
+			},
+					
+			cancelSearch: function() {
+				inflightRequest != null && inflightRequest.abort();
+				inflightRequest = null;
+				totalsCounter.stop();
+			}
 		}
-	}
+	})();
 })();

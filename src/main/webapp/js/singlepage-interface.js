@@ -1,4 +1,4 @@
-/* global BLS_URL, URI, wordProperties */
+/* global BLS_URL, URI */
 
 var SINGLEPAGE = SINGLEPAGE || {};
 
@@ -197,10 +197,12 @@ SINGLEPAGE.INTERFACE = (function() {
 	 * @param {any} $tab the tab content container.
 	 */
 	function showSearchIndicator($tab) {
-		$tab.data('searchIndicatorTimeout', setTimeout(function() {
-			$tab.find('.searchIndicator').show();
-			clearTabResults($tab);
-		}, 500));
+		if ($tab.data('searchIndicatorTimeout') == null) {
+			$tab.data('searchIndicatorTimeout', setTimeout(function() {
+				$tab.find('.searchIndicator').show();
+				clearTabResults($tab);
+			}, 500));
+		}
 	}
 
 	/**
@@ -209,9 +211,10 @@ SINGLEPAGE.INTERFACE = (function() {
 	 * @param {any} $tab the tab's main content container.
 	 */
 	function hideSearchIndicator($tab) {
-		// hide spinner or prevent it from showing
-		clearTimeout($tab.data('searchIndicatorTimeout'));
-		$tab.removeData('searchIndicatorTimeout');
+		if ($tab.data('searchIndicatorTimeout') != null) {
+			clearTimeout($tab.data('searchIndicatorTimeout'));
+			$tab.removeData('searchIndicatorTimeout');
+		}
 		$tab.find('.searchIndicator').hide();
 	}
 
@@ -351,6 +354,19 @@ SINGLEPAGE.INTERFACE = (function() {
 	 */
 	function formatHits(data, textDirection) {
 		// TODO use mustache.js
+		// Gather up all relevant properties of words in this index
+		var props = $.map(SINGLEPAGE.INDEX.complexFields, function(complexField) {
+			return $.map(complexField.properties, function(prop, propId) {
+				if (prop.isInternal)
+					return null; // skip prop
+				return {
+					id: propId,
+					displayName: prop.displayName,
+					isMainProp: propId === complexField.mainProperty
+				}
+			})
+		});
+		
 		var html = [];
 		html.push(
 			'<thead><tr>',
@@ -360,7 +376,7 @@ SINGLEPAGE.INTERFACE = (function() {
 							textDirection=='ltr'? 'Before hit ' : 'After hit ',
 							'<span class="caret"></span></a>',
 						'<ul class="dropdown-menu" role="menu" aria-labelledby="left">');
-						$.each(wordProperties, function(i, prop) {
+						$.each(props, function(i, prop) {
 							html.push(
 							'<li><a data-bls-sort="left:' + prop.id + '">' + prop.displayName + '</a></li>');
 						});
@@ -379,7 +395,7 @@ SINGLEPAGE.INTERFACE = (function() {
 							textDirection=='ltr'? 'After hit ' : 'Before hit ',
 							'<span class="caret"></span></a>',
 						'<ul class="dropdown-menu" role="menu" aria-labelledby="right">');
-						$.each(wordProperties, function(i, prop) {
+						$.each(props, function(i, prop) {
 							html.push(
 							'<li><a data-bls-sort="right:' + prop.id + '">' + prop.displayName + '</a></li>');
 						});
@@ -427,7 +443,7 @@ SINGLEPAGE.INTERFACE = (function() {
 			var matchPos = words(hit.match, 'pos', false, '');
 
 			html.push(
-				'<tr class="concordance" onclick="SINGLEPAGE.INTERFACE.showCitation(this', ', "', docPid, '", "', hit.start, '", "', hit.end, '", "', textDirection,'");>',
+				'<tr class="concordance" onclick="SINGLEPAGE.INTERFACE.showCitation(this, \'' + docPid + '\', '+ hit.start + ', '+ hit.end + ', \'' + textDirection + '\');">',
 					'<td class="text-right">', ELLIPSIS, ' <span dir="', textDirection, '">', left, '</span></td>',
 					'<td class="text-center"><span dir="', textDirection, '"><strong>', parts[1], '</strong></span></td>',
 					'<td><span dir="', textDirection, '">', right, '</span> ', ELLIPSIS, '</td>',
@@ -484,6 +500,7 @@ SINGLEPAGE.INTERFACE = (function() {
 				'doc': docPid,
 				'query': data.summary.searchParam.patt
 			}).toString();
+
 			html.push(
 				'<tr class="documentrow">',
 					'<td>',
@@ -549,6 +566,56 @@ SINGLEPAGE.INTERFACE = (function() {
 		html.push('</tbody>');
 
 		return html;
+	}
+
+	/**
+	 * Request the currently shown results as a CSV file, and save it.
+	 * 
+	 * 'this' should be the tab containing the results to export.
+	 * 'event.target' should be the element that was clicked.
+	 * 
+	 * @param {Jquery.Event} event 
+	 */
+	function onExportCsv(event) {
+		var $tab = $(event.delegateTarget);
+		 
+		var $button = $(event.target);
+		if ($button.hasClass('disabled'))
+			return;
+
+		var pageParam = $.extend({}, 
+			$tab.data('defaultParameters'),
+			$tab.data('parameters'),
+			$tab.data('constParameters'));
+
+		var blsParam = SINGLEPAGE.BLS.getBlsParam(pageParam);
+		
+		blsParam.outputformat = 'csv';
+		delete blsParam.number;
+		delete blsParam.first;
+		
+		var url = new URI(BLS_URL).segment(pageParam.operation).addSearch(blsParam).toString();
+		if (SINGLEPAGE.DEBUG) {
+			console.log('CSV download url', url, blsParam);
+		}
+
+		$button.addClass('disabled').attr('disabled', true);
+		$.ajax(url, {
+			accepts: 'application/csv',
+			cache: 'false',
+			data: 'text',
+			error: function(jqXHR, textStatus, errorThrown) {
+
+			},
+			success: function(data) {
+				const b = new Blob([data], { type: 'application/csv' });
+				saveAs(b, 'data.csv'); // FileSaver.js
+			},
+			complete: function() {
+				console.log('test');
+				$button.removeClass('disabled').attr('disabled', false);
+			}
+		});
 	}
 
 	/**
@@ -777,6 +844,7 @@ SINGLEPAGE.INTERFACE = (function() {
 
 			$('#resultTabsContent .tab-pane').on('localParameterChange', onLocalParameterChange);
 			$('#resultTabsContent .tab-pane').on('tabOpen', onTabOpen);
+			$('#resultTabsContent .tab-pane').on('click', '.exportcsv', onExportCsv);
 
 			// Forward show/open event to tab content pane
 			$('#resultTabs a').on('show.bs.tab', function() {

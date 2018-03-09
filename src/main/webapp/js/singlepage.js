@@ -49,12 +49,24 @@ SINGLEPAGE.CORE = (function () {
 			SINGLEPAGE.INTERFACE.setParameters({
 				sampleSize: $(this).val()
 			});
-		});
+		}).on('keypress', function(event) { 
+			// prevent enter submitting form and initiating a search, should only update existing searches
+			if (event.keyCode === 13) {
+				$(this).trigger('change');
+				event.preventDefault();
+			}
+		}); 
 		$('#sampleSeed').on('change', function () {
 			SINGLEPAGE.INTERFACE.setParameters({
 				sampleSeed: $(this).val()
 			});
-		});
+		}).on('keypress', function(event) { 
+			// prevent enter submitting form and initiating a search, should only update existing searches
+			if (event.keyCode === 13) {
+				$(this).trigger('change');
+				event.preventDefault();
+			}
+		}); 
 		
 		// Rescale the querybuilder container when it's shown
 		$('a.querytype[href="#advanced"]').on('shown.bs.tab hide.bs.tab', function () {
@@ -306,8 +318,7 @@ SINGLEPAGE.CORE = (function () {
 		$('#sampleMode').selectpicker('val', [searchParams.sampleMode || 'percentage']);
 		$('#sampleSeed').val(searchParams.sampleSeed || '');
 
-		// in some cases we want to show a tab here, in some cases we don't 
-		// determine when 
+		// Clear the results area, then actually run the search
 		SINGLEPAGE.INTERFACE.reset();
 		SINGLEPAGE.INTERFACE.setParameters(searchParams);
 

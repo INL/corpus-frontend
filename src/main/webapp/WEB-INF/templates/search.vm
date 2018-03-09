@@ -85,6 +85,7 @@
 <link rel="stylesheet" href="$pathToTop/css/cql_querybuilder.css">
 <script src="$pathToTop/js/vendor/mustache.js"></script>
 <script src="$pathToTop/js/vendor/URI.js"></script>
+<script src="$pathToTop/js/vendor/FileSaver.js"></script>
 <script src="$pathToTop/js/qson.js"></script>
 <script src="$pathToTop/js/singlepage.js"></script>
 <script src="$pathToTop/js/singlepage-bls.js"></script>
@@ -95,16 +96,7 @@
 <script>
 	var SINGLEPAGE = SINGLEPAGE || {};
 	SINGLEPAGE.INDEX = JSON.parse("$esc.javascript($indexStructureJson)");
-
 	var BLS_URL = "$blsUrl";
-	var wordProperties = [
-	#foreach($propertyField in $propertyFields)
-		{
-			id: "$propertyField.getId()",
-			displayName: "$propertyField.getDisplayName()"
-		},
-	#end
-	];
 </script>
 
 <!--
@@ -332,7 +324,7 @@
 					<span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span class="resultgroupname"></span> &mdash; <a class="clearviewgroup" href="javascript:void(0)">Go back</a>
 				</div>
 				
-				<!--<button type="button" class="btn btn-default btn-sm pull-right exportcsv" style="margin-left: 5px;">Export CSV</button>-->
+				<button type="button" class="btn btn-default btn-sm pull-right exportcsv" style="margin-left: 5px;">Export CSV</button>
 				<button type="button" class="btn btn-danger btn-sm pull-right" data-toggle="collapse" data-target=".doctitle">Show/hide titles</button>
 				<br>
 				<ul class="pagination pagination-sm"></ul>
@@ -364,7 +356,7 @@
 					<span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span class="resultgroupname"></span> &mdash; <a class="clearviewgroup" href="javascript:void(0)">Go back</a>
 				</div>
 
-				<!--<button type="button" class="btn btn-default btn-sm pull-right exportcsv">Export CSV</button>-->
+				<button type="button" class="btn btn-default btn-sm pull-right exportcsv">Export CSV</button>
 
 				<br>
 				<ul class="pagination pagination-sm"></ul>

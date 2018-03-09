@@ -309,15 +309,19 @@ public class MainServlet extends HttpServlet {
 
 			QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(corpus));
 
+			String listvalues = adminProps.getProperty("listvalues");
+
 			try {
 				Map<String, String[]> params = new HashMap<>();
+
 				params.put("outputformat", new String[] {"xml"});
-				String listvalues = adminProps.getProperty("listvalues");
 				if (listvalues != null && !listvalues.isEmpty()) {
 					params.put("listvalues", new String[] {listvalues});
 				}
 				String xmlResult = handler.makeRequest(params);
 
+				// TODO tidy this up, the json is only used to embed the index data in the search page.
+				// We might not need the xml data to begin with.
 				params.clear();
 				params.put("outputformat", new String[] {"json"});
 				String jsonResult = handler.makeRequest(params);

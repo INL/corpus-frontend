@@ -154,7 +154,11 @@ var corpora = {};
 		var searchIcon = '<a class="icon disabled fa fa-search"></a>';
 		var indexTitle = index.displayName;
 		if (index.canSearch) {
-			var url = './' + index.id + '/search';
+                        var pageURL = window.location.href;
+                        if (!pageURL.endsWith('/')) {
+                            pageURL += '/';
+                        }
+			var url = pageURL + index.id + '/search';
 			searchIcon = '<a class="icon fa fa-search" title="Search \'' + index.displayName + 
 				'\' corpus" href="'+ url + '"></a>';
 			indexTitle = '<a title="Search \'' + index.displayName + '\' corpus" href="' + 

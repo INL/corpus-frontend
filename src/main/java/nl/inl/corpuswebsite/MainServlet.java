@@ -337,17 +337,23 @@ public class MainServlet extends HttpServlet {
 
 	private void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException {
 
-		/*
-		 * Map in the following way:
-		 * when the full uri contains at least 2 parts after the root (such as <root>/zeebrieven/search)
-		 * treat the first of those parts as the corpus, the second as the response to send,
-		 * and everything after that as arguments to build the response.
-		 * When only one part is present (such as <root>/help) treat the first part as the response to send.
-		 * When nothing is present, serve the default page.
-		 *
-		 * This does mean that pages outside the context of a corpus cannot have arguments in the form of extra parts in the URI
-		 * For instance <root>/help/searching would try to serve the nonexistant "searching" response in the context of the corpus "help"
-		 */
+            try {
+                request.setCharacterEncoding("utf-8");
+            } catch (UnsupportedEncodingException ex) {
+                logger.warn(ex.getMessage(),ex);
+            }
+
+            /*
+            * Map in the following way:
+            * when the full uri contains at least 2 parts after the root (such as <root>/zeebrieven/search)
+            * treat the first of those parts as the corpus, the second as the response to send,
+            * and everything after that as arguments to build the response.
+            * When only one part is present (such as <root>/help) treat the first part as the response to send.
+            * When nothing is present, serve the default page.
+            *
+            * This does mean that pages outside the context of a corpus cannot have arguments in the form of extra parts in the URI
+            * For instance <root>/help/searching would try to serve the nonexistant "searching" response in the context of the corpus "help"
+            */
 
 		// First strip out any leading items like "/" and our root
 		String requestUri = request.getRequestURI();

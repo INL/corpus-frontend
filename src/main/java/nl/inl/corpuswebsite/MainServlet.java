@@ -309,13 +309,14 @@ public class MainServlet extends HttpServlet {
 
 			QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(corpus));
 
-
 			try {
 				Map<String, String[]> params = new HashMap<>();
 
 				params.put("outputformat", new String[] {"xml"});
+				params.put("listvalues", new String[] {"pos,person,case,tense,gender,number,prontype"});
 				String xmlResult = handler.makeRequest(params);
 
+				params.clear();
 				params.put("outputformat", new String[] {"json"});
 				String jsonResult = handler.makeRequest(params);
 

@@ -311,7 +311,10 @@ public class MainServlet extends HttpServlet {
 
 			Map<String, String[]> params = new HashMap<>();
 			params.put("outputformat", new String[] {"xml"});
-			params.put("listvalues", new String[] {"pos,person,case,tense,gender,number,prontype"});
+                        String listvalues = adminProps.getProperty("listvalues");
+                        if (listvalues!=null&&!listvalues.isEmpty()) {
+                            params.put("listvalues", new String[] {listvalues});
+                        }
 
 			try {
 				String xmlResult = handler.makeRequest(params);

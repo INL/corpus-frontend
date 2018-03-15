@@ -47,6 +47,12 @@
                 <option value="$pair.getValue()">$pair.getDescription()</option>
         #end
         </select>
+    #elseif($field.getType() == "combobox")
+        <select data-placeholder="$field.getDisplayName()" class="autocomplete" data-class="form-control forminput"> 
+        #foreach($pair in $field.getValidValues())
+                <option value="$pair.getValue()">$pair.getDescription()</option>
+        #end
+        </select>
     #else
         <input type="text" id="$propertyFieldInputId" name="$propertyFieldInputId" placeholder="$propertyField.getDisplayName()" class="form-control"/>
     #end

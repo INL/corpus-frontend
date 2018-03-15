@@ -41,16 +41,18 @@
 
 #macro( propfield $field $propertyFieldInputId)
     #if($field.getType() == "select" && !$field.getValidValues().isEmpty())
-        <select title="$field.getDisplayName()" class="selectpicker form-control forminput" data-container="body">
+        <select id="$propertyFieldInputId" title="$field.getDisplayName()" class="selectpicker form-control forminput" data-container="body">
 
+            <option value="">choose value</option>
         #foreach($pair in $field.getValidValues())
-                <option value="$pair.getValue()">$pair.getDescription()</option>
+            <option value="$pair.getValue()">$pair.getDescription()</option>
         #end
         </select>
     #elseif($field.getType() == "combobox")
-        <select data-placeholder="$field.getDisplayName()" class="autocomplete" data-class="form-control forminput"> 
+        <select id="$propertyFieldInputId" data-placeholder="$field.getDisplayName()" class="autocomplete" data-class="form-control forminput"> 
+            <option value="">choose value</option>
         #foreach($pair in $field.getValidValues())
-                <option value="$pair.getValue()">$pair.getDescription()</option>
+            <option value="$pair.getValue()">$pair.getDescription()</option>
         #end
         </select>
     #else
@@ -125,7 +127,7 @@
 							<label for="$propertyFieldInputId" class="col-xs-12 col-md-3">$propertyField.getDisplayName()</label>
 							<div class="col-xs-12 col-md-9 upload-button-container">
 									
-								#propfield($propertyField,$propertyFieldInputId)
+								#propfield($propertyField $propertyFieldInputId)
 									
 								<button class="btn btn-default upload-button">
 									<input type="file" id="$propertyFieldFileInputId" title="Upload a list of values">

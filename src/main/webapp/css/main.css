@@ -247,15 +247,19 @@ a[data-bls-sort], a.dropdown-toggle {
 
 #totalsReport {
 	position: absolute;
-    top: 1em;
-    right: 1em;
+    top: 20px; /* align with padding of #results */
+    right: 20px;
+    display: flex;
+    align-items: center;
+}
+
+#totalsReportText {
+	order: 2;
 }
 
 #totalsSpinner {
 	display: none;
-	position: absolute;
-	top: 1em;
-	left: -2em;
+	order: 1
 }
 
 .btn.nohover {

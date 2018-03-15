@@ -329,10 +329,11 @@ SINGLEPAGE.CORE = (function () {
 
 			SINGLEPAGE.INTERFACE.setParameters({
 				page: 0,
-				viewGroup: null, // reset, as we might be looking at a detailed group
+				viewGroup: null, // reset, as we might be looking at a detailed group currently, and the new search should not display within a specific group
 				pageSize: $('#resultsPerPage').selectpicker('val'),
 				pattern: pattern,
 				filters: SINGLEPAGE.FORM.getActiveFilters(),
+				// Other parameters are automatically updated on interaction and thus always up-to-date
 			}, true);
 
 			// Setting parameters refreshes the active tab, 
@@ -364,6 +365,7 @@ SINGLEPAGE.CORE = (function () {
 		resetPage: function() {
 			history.pushState(null, null, "?");
 			toPageState({});
+			SINGLEPAGE.BLS.cancelSearch();
 			return false;
 		},
 	};

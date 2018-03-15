@@ -391,44 +391,40 @@ SINGLEPAGE.INTERFACE = (function() {
 				"<th style='width:25px;'><a data-bls-sort='hit:pos'>Part of speech</a></th>",
 			"</tr></thead>"
 		);
-
-		// Group all hits by their originating document
-		var hitsByDocPid = {};
-		$.each(data.hits, function(index, hit) {
-			var arr = hitsByDocPid[hit.docPid] = hitsByDocPid[hit.docPid] || [];
-			arr.push(hit);
-		});
-
+						
 		html.push("<tbody>");
-		$.each(hitsByDocPid, function(docPid, hits) {
-			var doc = data.docInfos[docPid];
-			var docTitle = doc[data.summary.docFields.titleField] || "UNKNOWN";
-			var docAuthor = doc[data.summary.docFields.authorField] ? " by " + doc[data.summary.docFields.authorField] : "";
-			var docDate = doc[data.summary.docFields.dateField] ? " (" + doc[data.summary.docFields.dateField] + ")" : "";
-
-			var docUrl = new URI("article").search({
-				"doc": docPid,
-				"query": data.summary.searchParam.patt
-			}).toString();
-
-			// Display some info about the document
-			html.push(
-				"<tr>",
-					"<td colspan='5'><div class='doctitle collapse in'>",
-						"<a class='text-error' target='_blank' href='", docUrl, "'>", docTitle, docAuthor, docDate, "</a>",
-					"</div></td>",
-				"</tr>");
-
-			// And display all hits for this document
-			$.each(hits, function(index, hit) {
-				var parts = snippetParts(hit);
-				var left = textDirection=='ltr'? parts[0] : parts[2]; 
-				var right = textDirection=='ltr'? parts[2] : parts[0]; 
+		var prevHitDocPid = null;
+		$.each(data.hits, function(index, hit) {
+			// Render a row for this hit's document, if this hit didn't occurred in a new document
+			if (hit.docPid !== prevHitDocPid) {
+				var docPid = prevHitDocPid = hit.docPid;
+				var doc = data.docInfos[docPid];
+				var docTitle = doc[data.summary.docFields.titleField] || "UNKNOWN";
+				var docAuthor = doc[data.summary.docFields.authorField] ? " by " + doc[data.summary.docFields.authorField] : "";
+				var docDate = doc[data.summary.docFields.dateField] ? " (" + doc[data.summary.docFields.dateField] + ")" : "";
 				
-				var matchLemma = words(hit.match, "lemma", false, "");
-				var matchPos = words(hit.match, "pos", false, "");
+				var docUrl = new URI("article").search({
+					"doc": docPid,
+					"query": data.summary.searchParam.patt
+				}).toString();
 
+				// Display some info about the document
 				html.push(
+					"<tr>",
+						"<td colspan='5'><div class='doctitle collapse in'>",
+							"<a class='text-error' target='_blank' href='", docUrl, "'>", docTitle, docAuthor, docDate, "</a>",
+						"</div></td>",
+					"</tr>");
+			}
+			
+			// And display the hit itself
+			var parts = snippetParts(hit);
+			var left = textDirection=='ltr'? parts[0] : parts[2]; 
+			var right = textDirection=='ltr'? parts[2] : parts[0]; 
+			var matchLemma = words(hit.match, "lemma", false, "");
+			var matchPos = words(hit.match, "pos", false, "");
+
+			html.push(
 					"<tr class='concordance'  onclick='SINGLEPAGE.INTERFACE.showCitation(this, \"", docPid, "\", ", hit.start, ", ", hit.end, ", \"", textDirection,"\");'>",
 						"<td class='text-right'>",ELLIPSIS, " <span dir='", textDirection, "'>", left, "</span></td>",
 						"<td class='text-center'><span dir='", textDirection, "'><strong>", parts[1],"</strong></span></td>",
@@ -437,15 +433,14 @@ SINGLEPAGE.INTERFACE = (function() {
 						"<td>", matchPos, "</td>",
 					"</tr>");
 
-				// Snippet row (initially hidden)
-				html.push(
-					"<tr>",
-						"<td colspan='5' class='inline-concordance'><div class='collapse'>Loading...</div></td>",
-					"</tr>");
-			});
+			// Snippet row (initially hidden)
+			html.push(
+				"<tr>",
+					"<td colspan='5' class='inline-concordance'><div class='collapse'>Loading...</div></td>",
+				"</tr>");
+
 		});
 		html.push("</tbody>");
-
 		return html;
 	}
 
@@ -684,7 +679,7 @@ SINGLEPAGE.INTERFACE = (function() {
 		$('#results').show();
 
 		var $tab = $(this);
-		var searchSettings = $.extend({}, $tab.data('defaultParameters'), $tab.data('parameters'));
+		var searchSettings = $.extend({}, $tab.data('defaultParameters'), $tab.data('parameters'), $tab.data('constParameters'));
 
 		if ($tab.data('results')) {
 			// Nothing to do, tab is already displaying data

@@ -17,4 +17,5 @@ target
 # Visual Studio Code files
 .vscode
 .eslintrc.json
+.eslintrc.js
 jsconfig.json

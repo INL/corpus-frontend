@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -73,7 +74,7 @@ public class CorpusConfig {
 	private void parseCorpusDataFormat() {
 		NodeList documentFormatTags = config.getElementsByTagName("documentFormat");
 		if (documentFormatTags.getLength() > 0)
-		    this.corpusDataFormat = documentFormatTags.item(0).getTextContent();
+			this.corpusDataFormat = documentFormatTags.item(0).getTextContent();
 		this.corpusDataFormat = "UNKNOWN";
 	}
 
@@ -93,8 +94,15 @@ public class CorpusConfig {
 			String fieldName 		= propertyElement.getAttribute("name");
 			String displayName 		= propertyElement.getElementsByTagName("displayName").item(0).getTextContent();
 			boolean caseSensitive 	= propertyElement.getElementsByTagName("sensitivity").item(0).getTextContent().equals("SENSITIVE_AND_INSENSITIVE");
+			String type = null;
+			List<String> allowedValues 	= parsePropertyValues(propertyElement);
 
-			FieldDescriptor field = new FieldDescriptor(fieldName, displayName, null);
+			type = inferType(type, allowedValues, propertyElement);
+
+			FieldDescriptor field = new FieldDescriptor(fieldName, displayName, type);
+			for (String allowedValue : allowedValues) {
+				field.addValidValue(allowedValue, allowedValue);
+			}
 			field.setCaseSensitive(caseSensitive);
 			this.propertyFields.add(field);
 		}
@@ -118,19 +126,7 @@ public class CorpusConfig {
 			Map<String, String> allowedValues 	= parseMetadataValues(metadataFieldElement);
 
 
-			// If the field type is not specified, infer it based on whether we have any or all or no known allowed values
-			// No values known == text
-			// All values known == select
-			// Some values known == combobox (has dropdown but also allows user-entered values)
-			if (type == null || type.isEmpty()) {
-				if (allowedValues.isEmpty())
-					type = "text";
-				else if (allValuesKnown(metadataFieldElement)) {
-					type = "select";
-				} else {
-					type = "combobox";
-				}
-			}
+			type = inferType(type, allowedValues.keySet(), metadataFieldElement);
 
 			FieldDescriptor field = new FieldDescriptor(fieldName, displayName, type);
 			for (Map.Entry<String, String> valueWithDisplayName : allowedValues.entrySet())
@@ -178,6 +174,30 @@ public class CorpusConfig {
 		for (Map.Entry<String, FieldDescriptor> e : parsedFields.entrySet()) {
 			addMetadataField(e.getValue(), null);
 		}
+	}
+
+	/**
+	 * If type is not specified, infer it based on whether we have any or all or no known allowed values
+	 * No values known == text
+	 * All values known == select
+	 * Some values known == combobox (has dropdown but also allows user-entered values)
+	 *
+	 * @param type
+	 * @param allowedValues
+	 * @param metadataFieldElement
+	 * @return
+	 */
+	private static String inferType(String type, Collection<String> allowedValues, Element metadataFieldElement) {
+		if (type == null || type.isEmpty()) {
+			if (allowedValues.isEmpty())
+				type = "text";
+			else if (allValuesKnown(metadataFieldElement)) {
+				type = "select";
+			} else {
+				type = "combobox";
+			}
+		}
+		return type;
 	}
 
 	private void parseFieldInfo() {
@@ -241,6 +261,31 @@ public class CorpusConfig {
 			}
 		}
 
+		return values;
+	}
+	/**
+	 * Parse all known fieldValues for this property field.
+	 *
+	 * @param propertyFieldElement the fieldValues xml node
+	 * @return a map of values in the form of (value, displayValue)
+	 */
+	private static List<String> parsePropertyValues(Element propertyFieldElement) {
+		List<String> values = new ArrayList<>();
+
+		// Gather all values
+		Node fieldValuesNode = propertyFieldElement.getElementsByTagName("values").item(0);
+		if (fieldValuesNode instanceof Element) {
+			NodeList fieldValueNodeList = ((Element) fieldValuesNode).getElementsByTagName("value");
+			for (int ifv = 0; ifv < fieldValueNodeList.getLength(); ifv++) {
+				Node item = fieldValueNodeList.item(ifv);
+				// Empty values are ignored as they are not searchable
+				String value = item.getTextContent();
+				if (value == null || value.isEmpty())
+					continue;
+
+				values.add(value);
+			}
+		}
 		return values;
 	}
 

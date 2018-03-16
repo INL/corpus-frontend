@@ -435,7 +435,3 @@ a[data-bls-sort], a.dropdown-toggle {
 .upload-button.has-file {
 	display: block;
 }
-#searchContainer .upload-button-container .bootstrap-select,
-#searchContainer .upload-button-container .filterfield {
-	width: 90%
-}

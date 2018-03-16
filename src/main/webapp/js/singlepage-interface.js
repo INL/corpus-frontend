@@ -52,10 +52,10 @@ SINGLEPAGE.INTERFACE = (function() {
 
 	function snippetParts(hit) {
 		var punctAfterLeft = hit.match.word.length > 0 ? hit.match.punct[0] : "";
-		var left = words(hit.left, "word", false, punctAfterLeft);
+		var before = words(hit.left, "word", false, punctAfterLeft);
 		var match = words(hit.match, "word", false, "");
-		var right = words(hit.right, "word", true, "");
-		return [left, match, right];
+		var after = words(hit.right, "word", true, "");
+		return [before, match, after];
 	}
 
 	/**
@@ -86,7 +86,7 @@ SINGLEPAGE.INTERFACE = (function() {
 	 * @param {any} start 
 	 * @param {any} end 
 	 */
-	function showCitation(concRow, docPid, start, end) {
+	function showCitation(concRow, docPid, start, end, textDirection) {
 		// Open/close the collapsible in the next row
 		var $element = $(concRow).next().find(".collapse");
 		$element.collapse('toggle');
@@ -101,7 +101,7 @@ SINGLEPAGE.INTERFACE = (function() {
 			},
 			success: function (response) {
 				var parts = snippetParts(response);
-				$element.html(parts[0] + "<b>" + parts[1] + "</b>" + parts[2]);
+				$element.html('<span dir="'+ textDirection+'">'+ parts[0] + "<b>" + parts[1] + "</b>" + parts[2]+ "</span>");
 			},
 			error: function(jqXHR, textStatus, errorThrown) {
 				$element.text("Error retrieving data: " + (jqXHR.responseJSON && jqXHR.responseJSON.error) || textStatus);
@@ -261,6 +261,7 @@ SINGLEPAGE.INTERFACE = (function() {
 	function loadConcordances() {
 		var $button = $(this);
 		var $tab = $button.parents('.tab-pane').first();
+		var textDirection = SINGLEPAGE.INDEX.textDirection || 'ltr';
 		var groupId = $button.data('groupId');
 		var currentConcordanceCount = $button.data('currentConcordanceCount') || 0;
 		var availableConcordanceCount = $button.data('availableConcordanceCount') || Number.MAX_VALUE;
@@ -290,18 +291,20 @@ SINGLEPAGE.INTERFACE = (function() {
 			// store new number of loaded elements
 			$button.data('currentConcordanceCount', currentConcordanceCount + loadedConcordances);
 			$button.data('availableConcordanceCount', totalConcordances);
-
+			
 			// And generate html to display
 			var html = [];
 			// Only one of these will run depending on what is present in the data
 			// And what is present in the data depends on the current view, so all works out
 			$.each(data.hits, function(index, hit) {
 				var parts = snippetParts(hit);
+				var left = textDirection=='ltr'? parts[0] : parts[2]; 
+				var right = textDirection=='ltr'? parts[2] : parts[0]; 
 				html.push(
 					"<div class='clearfix'>",
-						"<div class='col-xs-5 text-right'>", ELLIPSIS, " ", parts[0], "</div>",
+						"<div class='col-xs-5 text-right'>", ELLIPSIS, " ", left, "</div>",
 						"<div class='col-xs-2 text-center'><b>", parts[1], "&nbsp;", "</b></div>",
-						"<div class='col-xs-5'>", parts[2], " ", ELLIPSIS, "</div>",
+						"<div class='col-xs-5'>", right, " ", ELLIPSIS, "</div>",
 					"</div>");
 			});
 
@@ -345,15 +348,16 @@ SINGLEPAGE.INTERFACE = (function() {
 	 * @param {any} data the blacklab-server response.
 	 * @returns An array of html strings containing the <thead> and <tbody>, but without the enclosing <table> element.
 	 */
-	function formatHits(data) {
+	function formatHits(data, textDirection) {
 		// TODO use mustache.js
-		
 		var html = [];
 		html.push(
 			"<thead><tr>",
 				"<th class='text-right' style='width:40px'>",
 					"<span class='dropdown'>",
-						"<a class='dropdown-toggle' data-toggle='dropdown'>Before hit <span class='caret'></span></a>",
+						"<a class='dropdown-toggle' data-toggle='dropdown'>", 
+						textDirection=='ltr'? "Before hit " : "After hit ",
+						"<span class='caret'></span></a>",
 						"<ul class='dropdown-menu' role='menu' aria-labelledby='left'>");
 						$.each(wordProperties, function(i, prop) {
 							html.push(
@@ -370,7 +374,9 @@ SINGLEPAGE.INTERFACE = (function() {
 
 				"<th class='text-left' style='width:40px;'>",
 					"<span class='dropdown'>", // Span as when it's div, and we're right aligning text, the dropdown doesn't align because the div extends all the way left
-						"<a class='dropdown-toggle' data-toggle='dropdown'>After hit <span class='caret'></span></a>",
+						"<a class='dropdown-toggle' data-toggle='dropdown'>",
+						textDirection=='ltr'? "After hit " : "Before hit ",
+						"<span class='caret'></span></a>",
 						"<ul class='dropdown-menu' role='menu' aria-labelledby='right'>");
 						$.each(wordProperties, function(i, prop) {
 							html.push(
@@ -413,23 +419,26 @@ SINGLEPAGE.INTERFACE = (function() {
 			
 			// And display the hit itself
 			var parts = snippetParts(hit);
+			var left = textDirection=='ltr'? parts[0] : parts[2]; 
+			var right = textDirection=='ltr'? parts[2] : parts[0]; 
 			var matchLemma = words(hit.match, "lemma", false, "");
 			var matchPos = words(hit.match, "pos", false, "");
 
 			html.push(
-				"<tr class='concordance' onclick='SINGLEPAGE.INTERFACE.showCitation(this, \"", docPid, "\", ", hit.start, ", ", hit.end,");'>",
-					"<td class='text-right'>",ELLIPSIS, " ", parts[0], "</td>",
-					"<td class='text-center'><strong>", parts[1],"</strong></td>",
-					"<td>", parts[2], " ", ELLIPSIS, "</td>",
-					"<td>", matchLemma, "</td>",
-					"<td>", matchPos, "</td>",
-				"</tr>");
+					"<tr class='concordance'  onclick='SINGLEPAGE.INTERFACE.showCitation(this, \"", docPid, "\", ", hit.start, ", ", hit.end, ", \"", textDirection,"\");'>",
+						"<td class='text-right'>",ELLIPSIS, " <span dir='", textDirection, "'>", left, "</span></td>",
+						"<td class='text-center'><span dir='", textDirection, "'><strong>", parts[1],"</strong></span></td>",
+						"<td><span dir='", textDirection, "'>", right, "</span> ", ELLIPSIS, "</td>",
+						"<td>", matchLemma, "</td>",
+						"<td>", matchPos, "</td>",
+					"</tr>");
 
 			// Snippet row (initially hidden)
 			html.push(
 				"<tr>",
 					"<td colspan='5' class='inline-concordance'><div class='collapse'>Loading...</div></td>",
 				"</tr>");
+
 		});
 		html.push("</tbody>");
 		return html;
@@ -441,7 +450,7 @@ SINGLEPAGE.INTERFACE = (function() {
 	 * @param {any} data the blacklab-server response.
 	 * @returns An array of html strings containing the <thead> and <tbody>, but without the enclosing <table> element.
 	 */
-	function formatDocs(data) {
+	function formatDocs(data, textDirection) {
 		var html = [];
 
 		html.push(
@@ -472,12 +481,11 @@ SINGLEPAGE.INTERFACE = (function() {
 				"doc": docPid,
 				"query": data.summary.searchParam.patt
 			}).toString();
-
 			html.push(
 				"<tr class='documentrow'>",
 					"<td>",
-						"<a target='_blank' href='", docUrl, "'>", docTitle, docAuthor, "</a><br>",
-						snippetStrings.join(""), snippetStrings.length > 0 ? "<br>" : "",
+						"<a target='_blank' href='", docUrl, "'>", docTitle, docAuthor, "</a><br>", '<span dir="', textDirection, '">',
+						snippetStrings.join(""), snippetStrings.length > 0 ? "<br>" : "", "</span>",
 						"<a class='green btn btn-xs btn-default' target='_blank' href='", docUrl,"'>View document info</a>",
 					"</td>",
 					"<td>", docDate, "</td>",
@@ -539,6 +547,7 @@ SINGLEPAGE.INTERFACE = (function() {
 
 		return html;
 	}
+	
 
 	/**
 	 * Redraws the table, pagination, hides spinners, shows/hides group indicator, shows the pagination/group controls, etc.
@@ -548,12 +557,12 @@ SINGLEPAGE.INTERFACE = (function() {
 	function setTabResults(data) {
 		var $tab = $(this);
 		var html;
-
+		var textDirection = SINGLEPAGE.INDEX.textDirection || 'ltr';
 		// create the table
 		if (data.hits && data.hits.length)
-			html = formatHits(data);
+			html = formatHits(data, textDirection);
 		else if (data.docs && data.docs.length)
-			html = formatDocs(data);
+			html = formatDocs(data, textDirection);
 		else if ((data.hitGroups && data.hitGroups.length) || (data.docGroups && data.docGroups.length))
 			html = formatGroups(data);
 		else {
@@ -714,6 +723,7 @@ SINGLEPAGE.INTERFACE = (function() {
 			}
 		);
 	}
+	
 
 	return {
 		init: function() {
@@ -722,7 +732,8 @@ SINGLEPAGE.INTERFACE = (function() {
 			$('#results').hide();
 			$('#resultTabs a').each(function() { $(this).tab('hide'); });
 			$('.searchIndicator').hide();
-
+			
+			
 			// See parameters type documentation in singlepage-bls.js
 			$('#tabHits')
 				.data('parameters', {})

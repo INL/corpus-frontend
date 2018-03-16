@@ -396,8 +396,9 @@ SINGLEPAGE.INTERFACE = (function() {
 		var prevHitDocPid = null;
 		$.each(data.hits, function(index, hit) {
 			// Render a row for this hit's document, if this hit didn't occurred in a new document
-			if (hit.docPid !== prevHitDocPid) {
-				var docPid = prevHitDocPid = hit.docPid;
+			var docPid = hit.docPid;
+			if (docPid !== prevHitDocPid) {
+				prevHitDocPid = docPid;
 				var doc = data.docInfos[docPid];
 				var docTitle = doc[data.summary.docFields.titleField] || "UNKNOWN";
 				var docAuthor = doc[data.summary.docFields.authorField] ? " by " + doc[data.summary.docFields.authorField] : "";

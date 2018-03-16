@@ -39,25 +39,45 @@
 </div>
 #end
 
-#macro( propfield $field $propertyFieldInputId)
-    #if($field.getType() == "select" && !$field.getValidValues().isEmpty())
-        <select id="$propertyFieldInputId" title="$field.getDisplayName()" class="selectpicker form-control forminput" data-container="body">
+#macro( propfield $field)
+  	#set ($propertyFieldInputId = $propertyField.getId() + "_value")
+	#set ($propertyFieldFileInputId = $propertyField.getId() + "_file")
+	#set ($propertyFieldCaseId = $propertyField.getId() + "_case")
 
-            <option value="">choose value</option>
-        #foreach($pair in $field.getValidValues())
-            <option value="$pair.getValue()">$pair.getDescription()</option>
-        #end
-        </select>
-    #elseif($field.getType() == "combobox")
-        <select id="$propertyFieldInputId" data-placeholder="$field.getDisplayName()" class="autocomplete" data-class="form-control forminput"> 
-            <option value="">choose value</option>
-        #foreach($pair in $field.getValidValues())
-            <option value="$pair.getValue()">$pair.getDescription()</option>
-        #end
-        </select>
-    #else
-        <input type="text" id="$propertyFieldInputId" name="$propertyFieldInputId" placeholder="$propertyField.getDisplayName()" class="form-control"/>
-    #end
+	<div class="form-group propertyfield" id="$propertyField.getId()"> <!-- behaves as .row when in .form-horizontal so .row may be omitted -->
+		<label for="$propertyFieldInputId" class="col-xs-12 col-md-3">$propertyField.getDisplayName()</label>
+		<div class="col-xs-12 col-md-9 upload-button-container">
+			
+		    #if($field.getType() == "select" && !$field.getValidValues().isEmpty())
+		        <select id="$propertyFieldInputId" title="$field.getDisplayName()" class="selectpicker form-control forminput" data-container="body">
+		            <option value="">choose value</option>
+		        #foreach($pair in $field.getValidValues())
+		            <option value="$pair.getValue()">$pair.getDescription()</option>
+		        #end
+		        </select>
+		    #else
+			    #if($field.getType() == "combobox")
+			        <select id="$propertyFieldInputId" data-placeholder="$field.getDisplayName()" class="autocomplete" data-class="form-control forminput"> 
+			        #foreach($pair in $field.getValidValues())
+			            <option value="$pair.getValue()">$pair.getDescription()</option>
+			        #end
+			        </select>
+			    #else
+			        <input type="text" id="$propertyFieldInputId" name="$propertyFieldInputId" placeholder="$propertyField.getDisplayName()" class="form-control"/>
+			    #end
+			    
+		    	## uploadbutton only for text inputs (combobox is replaced by text input clientside)
+		    	<button class="btn btn-default upload-button">
+					<input type="file" id="$propertyFieldFileInputId" title="Upload a list of values">
+					<span class="glyphicon glyphicon-open"> 
+				</button>
+		    #end
+
+			#if($propertyField.isCaseSensitive())
+			<div class="checkbox"><label for="$propertyFieldCaseId"><input type="checkbox" id="$propertyFieldCaseId" name="$propertyFieldCaseId"> Case&nbsp;sensitive</label></div>
+			#end
+		</div>
+	</div>
 #end
 
 #parse("header.vm")
@@ -119,26 +139,7 @@
 				<div class="tab-pane active" id="simple">
 					<div class="form-horizontal">
 					#foreach($propertyField in $propertyFields)
-						#set ($propertyFieldInputId = $propertyField.getId() + "_value")
-						#set ($propertyFieldFileInputId = $propertyField.getId() + "_file")
-						#set ($propertyFieldCaseId = $propertyField.getId() + "_case")
-	
-						<div class="form-group propertyfield" id="$propertyField.getId()"> <!-- behaves as .row when in .form-horizontal so .row may be omitted -->
-							<label for="$propertyFieldInputId" class="col-xs-12 col-md-3">$propertyField.getDisplayName()</label>
-							<div class="col-xs-12 col-md-9 upload-button-container">
-									
-								#propfield($propertyField $propertyFieldInputId)
-									
-								<button class="btn btn-default upload-button">
-									<input type="file" id="$propertyFieldFileInputId" title="Upload a list of values">
-									<span class="glyphicon glyphicon-open"> 
-								</button>
-									
-								#if($propertyField.isCaseSensitive())
-								<div class="checkbox"><label for="$propertyFieldCaseId"><input type="checkbox" id="$propertyFieldCaseId" name="$propertyFieldCaseId"> Case&nbsp;sensitive</label></div>
-								#end
-							</div>
-						</div>
+						#propfield($propertyField)
 					#end
 					
 						<div class="form-group">

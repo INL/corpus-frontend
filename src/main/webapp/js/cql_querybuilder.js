@@ -188,7 +188,7 @@ window.querybuilder = (function() {
 							'<div class="checkbox">' +
 								'<label>' +
 									'<input type="checkbox" data-attribute-role="case">' +
-									'Case&nbsp;sensitive' +
+									'Case&nbsp;and&nbsp;diacritics&nbsp;sensitive' +
 								'</label>' +
 							'</div>' +
 						'{{/caseSensitive}}' +

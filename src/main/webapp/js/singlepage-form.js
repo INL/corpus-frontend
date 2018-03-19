@@ -166,14 +166,6 @@ SINGLEPAGE.FORM = (function () {
 			// Now replace all of our autocomplete-marked selects with text inputs with attached autocomplete
 			$('select.autocomplete').each(function() {
 				var $select = $(this);
-				var values = $select.find('option').map(function(index, element) {
-					var value = $(element).val();
-					return  {
-						label: value,
-						// Surround the value by quotes, as by default unquoted values are split on whitespace and treated as separate words.
-						value: '"' + value + '"', 
-					};
-				}).get();
 
 				var $autocomplete = $('<input></input>')
 					.attr({
@@ -183,10 +175,13 @@ SINGLEPAGE.FORM = (function () {
 						style: $select.data('style')
 					});
 
-				$select.replaceWith($autocomplete);
-				
+                                var name = $select.closest("div[id]").attr('id');
+
+                                $select.replaceWith($autocomplete);
+                                
 				$autocomplete.autocomplete({
-					source: values,
+                                    // zoek eerste ancestor div met id
+					source: BLS_URL + "/autocomplete/"+name,
 					minLength: 0, // show values even for empty strings
 					classes: {
 						'ui-autocomplete': 'dropdown-menu'

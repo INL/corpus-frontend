@@ -200,10 +200,6 @@ SINGLEPAGE.FORM = (function () {
 					}
 				});
 
-				// show values immediately when first focusing by performing a search directly
-				$autocomplete.on('focus', function() {
-					$(this).autocomplete('search', $(this).val() || '');
-				});
 			});
 			
 			// Register callbacks and sync with current state

@@ -96,7 +96,7 @@ SINGLEPAGE.FORM = (function () {
 		
 		// Now temporarily remove the property from the active list (even if it actually has a value)
 		// and only put it back once we've read its new value
-		removeFromPropertyList();
+		removeFromPropertyList(prop.name);
 		
 		// Then set the new value, and once it's resolved, put it back in the list if the value is valid
 		if ($changedInput.is($textInput[0])) {

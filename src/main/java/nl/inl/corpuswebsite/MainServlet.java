@@ -134,8 +134,8 @@ public class MainServlet extends HttpServlet {
 			}
 			if (!adminProps.containsKey("blsUrl")) {
 				//throw new ServletException("Missing blsUrl setting in " + adminPropFile);
-			    adminProps.put("blsUrl", "http://localhost:8080/blacklab-server/");
-			    logger.debug("blsUrl setting missing in corpus-frontend property file, using " + adminProps.getProperty("blsUrl"));
+				adminProps.put("blsUrl", "http://localhost:8080/blacklab-server/");
+				logger.debug("blsUrl setting missing in corpus-frontend property file, using " + adminProps.getProperty("blsUrl"));
 			}
 			if (!adminProps.containsKey("blsUrlExternal")) {
 				//throw new ServletException("Missing blsUrlExternal setting in " + adminPropFile);
@@ -232,7 +232,7 @@ public class MainServlet extends HttpServlet {
 	 */
 	private void startVelocity(ServletConfig servletConfig) throws Exception {
 		Velocity.setApplicationAttribute("javax.servlet.ServletContext",
-				servletConfig.getServletContext());
+		                                 servletConfig.getServletContext());
 
 		Properties p = new Properties();
 		try (InputStream is = getServletContext().getResourceAsStream(VELOCITY_PROPERTIES)) {
@@ -309,6 +309,12 @@ public class MainServlet extends HttpServlet {
 
 			QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(corpus));
 
+			Map<String, String[]> params = new HashMap<>();
+			params.put("outputformat", new String[] {"xml"});
+			String listvalues = adminProps.getProperty("listvalues");
+			if (listvalues!=null&&!listvalues.isEmpty()) {
+				params.put("listvalues", new String[] {listvalues});
+			}
 
 			try {
 				Map<String, String[]> params = new HashMap<>();
@@ -341,6 +347,12 @@ public class MainServlet extends HttpServlet {
 	}
 
 	private void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException {
+
+		try {
+			request.setCharacterEncoding("utf-8");
+		} catch (UnsupportedEncodingException ex) {
+			logger.warn(ex.getMessage(),ex);
+		}
 
 		/*
 		 * Map in the following way:
@@ -553,9 +565,9 @@ public class MainServlet extends HttpServlet {
 				// this might happen if the import format is deleted after a corpus was created.
 				// then blacklab-server can obviously no longer generate the xslt based on the import format.
 				stylesheet = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
-					"<xsl:stylesheet version=\"2.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">" +
-					"<xsl:output encoding=\"utf-8\" method=\"html\" omit-xml-declaration=\"yes\" />" +
-					"</xsl:stylesheet>";
+						"<xsl:stylesheet version=\"2.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">" +
+						"<xsl:output encoding=\"utf-8\" method=\"html\" omit-xml-declaration=\"yes\" />" +
+						"</xsl:stylesheet>";
 			} else {
 				throw new RuntimeException(e); // blacklab internal server error or the like, abort the request.
 			}

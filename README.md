@@ -12,9 +12,12 @@ Optionally, also create a file `corpus-frontend.properties` (name must be the sa
 blsUrl=http://localhost:8080/blacklab-server/
 blsUrlExternal=/blacklab-server/
 corporaInterfaceDataDir=/etc/blacklab/projectconfigs/
+listvalues=
 ```
 
 NOTE: the corporaInterfaceDataDir is an optional directory in which you can place a subdirectory for each corpus with files search.xml, about.inc and help.inc, and XSLT files, to customize the look of the application for that corpus. Have a look at src/main/webapp/WEB-INF/interface-default for examples of these files. The files in that directory is are used if no corpus-specific ones are found.
+
+NOTE: listvalues can contain a comma separated list of properties (such as pos) for which the values will be retrieved. Values will be shown as a select or combo box depending on the completeness of the list.
 
 Navigate to http://SERVERNAME:8080/corpus-frontend/ and you will see a list of available corpora you can search.
 

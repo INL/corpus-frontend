@@ -83,10 +83,10 @@ SINGLEPAGE.FORM = (function () {
 		}
 		
 		var propertyName = $propertyField.attr('id');
-		var $textInput = $propertyField.find('#' + propertyName + '_value');
-		var $fileInput = $propertyField.find('#' + propertyName + '_file')
+		var $textOrSelect = $propertyField.find('#' + propertyName + '_value');
+		var fileInput = $propertyField.find('#' + propertyName + '_file')[0]; // NOTE: not always available
 		var $caseInput = $propertyField.find('#' + propertyName + '_case');
-		var $changedInput = event ? $(event.target) : $textInput; // no event means we're initializing, so read from the input field
+		var $changedInput = event ? $(event.target) : $textOrSelect; // no event means we're initializing, so read from the input field
 		
 		// Fetch the current state, or init the new property (if it wasn't in the list)
 		var prop = $.grep(activeProperties, function(elem) { return elem.name === propertyName; })[0] || {};
@@ -99,13 +99,14 @@ SINGLEPAGE.FORM = (function () {
 		removeFromPropertyList(prop.name);
 		
 		// Then set the new value, and once it's resolved, put it back in the list if the value is valid
-		if ($changedInput.is($textInput[0])) {
-			prop.value = $textInput.val();
-			$fileInput[0].value = '';
+		if ($changedInput.is($textOrSelect[0])) {
+			prop.value = $textOrSelect.val();
+			if (fileInput != null) 
+				fileInput.value = '';
 			if (prop.value)
 				activeProperties.push(prop);
-		} else if ($changedInput.is($fileInput[0])) {
-			var file = $fileInput[0].files && $fileInput[0].files[0];
+		} else if ($changedInput.is(fileInput)) {
+			var file = fileInput.files && fileInput.files[0];
 			if (file != null) {
 				var fr = new FileReader();
 				fr.onload = function() {
@@ -113,7 +114,7 @@ SINGLEPAGE.FORM = (function () {
 					// this is due to the rather specific way whitespace in the simple search property fields is treated (see singlepage-bls.js:getPatternString)
 					// TODO discuss how we treat these fields with Jan/Katrien, see https://github.com/INL/corpus-frontend/issues/18
 					prop.value = fr.result.replace(/\s+/g, '|');
-					$textInput.val(prop.value);
+					$textOrSelect.val(prop.value);
 					
 					if (prop.value)
 						activeProperties.push(prop);
@@ -121,7 +122,7 @@ SINGLEPAGE.FORM = (function () {
 				fr.readAsText(file);
 			} else {
 				prop.value = '';
-				$textInput.val('');
+				$textOrSelect.val('');
 				// Don't push back into active props, we've just cleared the value
 			}
 		} 

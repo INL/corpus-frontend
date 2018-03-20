@@ -198,7 +198,13 @@ SINGLEPAGE.FORM = (function () {
 						$(this).trigger('change');
 						return false;
 					}
+                                        
 				});
+                                $autocomplete.keypress(function( event ) {
+                                    if ( event.which == 13 ) {
+                                       $autocomplete.autocomplete("close");
+                                    }
+                                });
 
 			});
 			

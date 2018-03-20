@@ -25,7 +25,7 @@ a.ui-menu-item-wrapper {
 }
 
 .ui-autocomplete.dropdown-menu:before {
-	content: "Example values";
+	content: "Values found";
 	display: block;
 	color:white;
 	background-color: #337ab7;

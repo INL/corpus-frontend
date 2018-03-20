@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
+import org.apache.velocity.tools.generic.EscapeTool;
 
 /**
  *
@@ -92,6 +93,7 @@ public abstract class BaseResponse {
 		this.corpus = corpus;
 		this.uriRemainder = uriRemainder;
 
+		context.put("esc", new EscapeTool());
 		context.put("websiteConfig", this.servlet.getWebsiteConfig(corpus));
 		context.put("pathToTop", contextPathAbsolute);
 		context.put("googleAnalyticsKey", this.servlet.getGoogleAnalyticsKey());

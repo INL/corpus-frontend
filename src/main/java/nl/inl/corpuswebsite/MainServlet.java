@@ -120,14 +120,14 @@ public class MainServlet extends HttpServlet {
 			adminProps = new Properties();
 			if (adminPropFile == null || !adminPropFile.exists()) {
 				logger.debug("File " + adminPropFileName + " (with blsUrl and blsUrlExternal settings) " +
-						"not found in webapps, /etc/blacklab/ or temp dir; will use defaults");
+					"not found in webapps, /etc/blacklab/ or temp dir; will use defaults");
 			} else if (!adminPropFile.isFile()) {
 				throw new ServletException("Property file " + adminPropFile + " is not a regular file!");
 			} else if (!adminPropFile.canRead()) {
 				throw new ServletException("Property file " + adminPropFile + " exists but is unreadable!");
 			} else {
 				// File exists and can be read. Read it.
-				debugLog("Reading corpus-frontend property file: " + adminPropFile);
+				logger.debug("Reading corpus-frontend property file: " + adminPropFile);
 				try (Reader in = new BufferedReader(new FileReader(adminPropFile))) {
 					adminProps.load(in);
 				}
@@ -309,16 +309,24 @@ public class MainServlet extends HttpServlet {
 
 			QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(corpus));
 
-			Map<String, String[]> params = new HashMap<>();
-			params.put("outputformat", new String[] {"xml"});
 			String listvalues = adminProps.getProperty("listvalues");
-			if (listvalues!=null&&!listvalues.isEmpty()) {
-				params.put("listvalues", new String[] {listvalues});
-			}
 
 			try {
+				Map<String, String[]> params = new HashMap<>();
+
+				params.put("outputformat", new String[] {"xml"});
+				if (listvalues != null && !listvalues.isEmpty()) {
+					params.put("listvalues", new String[] {listvalues});
+				}
 				String xmlResult = handler.makeRequest(params);
-				corpusConfigs.put(corpus, new CorpusConfig(xmlResult));
+
+				// TODO tidy this up, the json is only used to embed the index data in the search page.
+				// We might not need the xml data to begin with.
+				params.clear();
+				params.put("outputformat", new String[] {"json"});
+				String jsonResult = handler.makeRequest(params);
+
+				corpusConfigs.put(corpus, new CorpusConfig(xmlResult, jsonResult));
 			} catch (IOException | SAXException | ParserConfigurationException | QueryException e) {
 				throw new RuntimeException(e);
 			}

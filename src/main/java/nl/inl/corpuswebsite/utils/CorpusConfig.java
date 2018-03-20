@@ -23,6 +23,8 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 public class CorpusConfig {
+	private String jsonUnescaped;
+
 	private Document config;
 
 	private List<FieldDescriptor> propertyFields = new ArrayList<>();
@@ -37,10 +39,14 @@ public class CorpusConfig {
 
 	private String corpusDataFormat = "UNKNOWN";
 
-	public CorpusConfig(String xml) throws SAXException, IOException, ParserConfigurationException {
+	public CorpusConfig(String xml, String jsonUnescaped) throws SAXException, IOException, ParserConfigurationException {
 		config = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new InputSource(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8))));
-
+		this.jsonUnescaped = jsonUnescaped;
 		parse();
+	}
+
+	public String getJsonUnescaped() {
+		return jsonUnescaped;
 	}
 
 	public List<FieldDescriptor> getPropertyFields() {

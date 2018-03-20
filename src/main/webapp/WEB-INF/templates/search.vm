@@ -85,6 +85,7 @@
 <link rel="stylesheet" href="$pathToTop/css/cql_querybuilder.css">
 <script src="$pathToTop/js/vendor/mustache.js"></script>
 <script src="$pathToTop/js/vendor/URI.js"></script>
+<script src="$pathToTop/js/vendor/FileSaver.js"></script>
 <script src="$pathToTop/js/qson.js"></script>
 <script src="$pathToTop/js/singlepage.js"></script>
 <script src="$pathToTop/js/singlepage-bls.js"></script>
@@ -93,15 +94,9 @@
 <script src="$pathToTop/js/cql_querybuilder.js"></script>
 <script src="$pathToTop/js/singlepage-cqlparser.js"></script>
 <script>
+	var SINGLEPAGE = SINGLEPAGE || {};
+	SINGLEPAGE.INDEX = JSON.parse("$esc.javascript($indexStructureJson)");
 	var BLS_URL = "$blsUrl";
-	var wordProperties = [
-	#foreach($propertyField in $propertyFields)
-		{
-			id: "$propertyField.getId()",
-			displayName: "$propertyField.getDisplayName()"
-		},
-	#end
-	];
 </script>
 
 <!--
@@ -301,7 +296,7 @@
 		<div id="tabHits" class="tab-pane">
 			<div class="clearfix resultcontrols">
 				<select class="selectpicker groupselect" title="Group hits by..." data-size="15" data-style="btn-default btn-sm" multiple>
-					<optgroup label="Left context">
+					<optgroup label="Before hit">
 						#foreach($propertyField in $propertyFields)
 						<option value="wordleft:$propertyField.getId()">Group by $propertyField.getDisplayName()</option>
 						#end
@@ -311,7 +306,7 @@
 						<option value="hit:$propertyField.getId()">Group by $propertyField.getDisplayName()</option>
 						#end
 					</optgroup>
-					<optgroup label="Right context">
+					<optgroup label="After hit">
 						#foreach($propertyField in $propertyFields)
 						<option value="wordright:$propertyField.getId()">Group by $propertyField.getDisplayName()</option>
 						#end
@@ -329,7 +324,7 @@
 					<span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span class="resultgroupname"></span> &mdash; <a class="clearviewgroup" href="javascript:void(0)">Go back</a>
 				</div>
 				
-				<!--<button type="button" class="btn btn-default btn-sm pull-right exportcsv" style="margin-left: 5px;">Export CSV</button>-->
+				<button type="button" class="btn btn-default btn-sm pull-right exportcsv" style="margin-left: 5px;">Export CSV</button>
 				<button type="button" class="btn btn-danger btn-sm pull-right" data-toggle="collapse" data-target=".doctitle">Show/hide titles</button>
 				<br>
 				<ul class="pagination pagination-sm"></ul>
@@ -361,7 +356,7 @@
 					<span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span class="resultgroupname"></span> &mdash; <a class="clearviewgroup" href="javascript:void(0)">Go back</a>
 				</div>
 
-				<!--<button type="button" class="btn btn-default btn-sm pull-right exportcsv">Export CSV</button>-->
+				<button type="button" class="btn btn-default btn-sm pull-right exportcsv">Export CSV</button>
 
 				<br>
 				<ul class="pagination pagination-sm"></ul>

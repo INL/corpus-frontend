@@ -11,6 +11,29 @@ SINGLEPAGE.CORE = (function () {
 		SINGLEPAGE.FORM.init();
 		SINGLEPAGE.INTERFACE.init();
 
+		// Init the querybuilder with the supported attributes/properties
+		var $queryBuilder = $('#querybuilder'); // container
+		var queryBuilderInstance = querybuilder.createQueryBuilder($queryBuilder, {
+			attribute: {
+				view: { 
+					// Pass the available properties of tokens in this corpus (PoS, Lemma, Word, etc..) to the querybuilder 
+					attributes: $.map(SINGLEPAGE.INDEX.complexFields, function (complexField, complexFieldName) {
+						return $.map(complexField.properties, function(property, propertyId) {
+							if (property.isInternal)
+								return null; // Don't show internal fields in the queryBuilder; leave this out of the list.
+							
+							// Transform the supported values to the querybuilder format 
+							return {
+								attribute: propertyId,
+								label: property.displayName || propertyId,
+								caseSensitive: (property.sensitivity === 'SENSITIVE_AND_INSENSITIVE')
+							};
+						});
+					}),
+				}
+			}
+		});
+
 		// register click handlers in the main search form (data irrespective or currently viewed tab)
 		$('#resultsPerPage').on('change', function () {
 			SINGLEPAGE.INTERFACE.setParameters({
@@ -26,20 +49,26 @@ SINGLEPAGE.CORE = (function () {
 			SINGLEPAGE.INTERFACE.setParameters({
 				sampleSize: $(this).val()
 			});
-		});
+		}).on('keypress', function(event) { 
+			// prevent enter submitting form and initiating a search, should only update existing searches
+			if (event.keyCode === 13) {
+				$(this).trigger('change');
+				event.preventDefault();
+			}
+		}); 
 		$('#sampleSeed').on('change', function () {
 			SINGLEPAGE.INTERFACE.setParameters({
 				sampleSeed: $(this).val()
 			});
-		});
+		}).on('keypress', function(event) { 
+			// prevent enter submitting form and initiating a search, should only update existing searches
+			if (event.keyCode === 13) {
+				$(this).trigger('change');
+				event.preventDefault();
+			}
+		}); 
 		
-		// now restore the page state from the query parameters
-		var searchSettings = fromQueryString(new URI().search());
-		if (searchSettings != null) {
-			toPageState(searchSettings);
-		}
-	
-		// Rescale the querybuilder container when it's selected
+		// Rescale the querybuilder container when it's shown
 		$('a.querytype[href="#advanced"]').on('shown.bs.tab hide.bs.tab', function () {
 			$('#searchContainer').toggleClass('col-md-6');
 		});
@@ -51,52 +80,19 @@ SINGLEPAGE.CORE = (function () {
 				$('#searchTabs a[href="#advanced"]').tab('show') && $('#parseQueryError').hide();
 			else 
 				$('#parseQueryError').show();
-		})
-
-		// Init the querybuilder with the supported attributes/properties
-		$.ajax({
-			url: BLS_URL + 'fields/contents',
-			dataType: 'json',
-
-			success: function (response) {
-				// Init the querybuilder
-				var $queryBuilder = $('#querybuilder'); // querybuilder container
-				var queryBuilderInstance = querybuilder.createQueryBuilder($queryBuilder, {
-					attribute: {
-						view: {
-							attributes: $.map(response.properties, function (value, key) {
-								if (value.isInternal)
-									return null; // Ignore these fields
-
-								// Transform the supported values to the querybuilder format 
-								return {
-									attribute: key,
-									label: value.displayName || key,
-									caseSensitive: (value.sensitivity === 'SENSITIVE_AND_INSENSITIVE')
-								};
-							}),
-						}
-					}
-				});
-
-				// And copy over the generated query to the manual field when changes happen
-				var $queryBox = $('#querybox'); //cql textfield
-				$queryBuilder.on('cql:modified', function () {
-					$queryBox.val(queryBuilderInstance.getCql());
-				});
-
-				// Finally, load the searchSettings query our found pattern
-				// It does this automatically in the toPageState function, but
-				// since it hadn't been created yet when we called that earlier, 
-				// we need to also attempt to do so here.
-				if (searchSettings != null && populateQueryBuilder(searchSettings.pattern))
-					$('#searchTabs a[href="#advanced"]').tab('show');
-			},
-			error: function (jqXHR, textStatus) {
-				var $queryBuilder = $('#querybuilder');
-				$queryBuilder.text('Could not get supported values for querybuilder: ' + textStatus);
-			}
 		});
+
+		// And copy over the generated query to the manual field when changes happen
+		var $queryBox = $('#querybox'); //cql textfield
+		$queryBuilder.on('cql:modified', function () {
+			$queryBox.val(queryBuilderInstance.getCql());
+		});
+		
+		// now restore the page state from the query parameters
+		var searchSettings = fromQueryString(new URI().search());
+		if (searchSettings != null) {
+			toPageState(searchSettings);
+		}
 	});
 
 
@@ -285,7 +281,7 @@ SINGLEPAGE.CORE = (function () {
 	function toPageState(searchParams) {
 		// reset and repopulate the main form
 		SINGLEPAGE.FORM.reset(); 
-		$('#querybuilder').data('builder') && $('#querybuilder').data('builder').reset();
+		$('#querybuilder').data('builder').reset();
 		$('#querybox').val(undefined);
 		
 		// This will hide the search summary and show the form, if it's hidden
@@ -293,23 +289,19 @@ SINGLEPAGE.CORE = (function () {
 		$('#searchFormDivHeader button').click();
 
 		if (searchParams.pattern) {
+			// In the case of an array as search pattern,  it contains the basic/simple search parameters
 			if (searchParams.pattern.constructor === Array) {
 				$.each(searchParams.pattern, function (index, element) {
 					SINGLEPAGE.FORM.setPropertyValues(element);
 				});
-			} else {
-
+			} else { 
+				// We have a raw cql query string, attempt to parse it using the querybuilder, 
+				// otherwise fall back to the raw cql view
 				$('#querybox').val(searchParams.pattern);
-				
-				// reconstruct querybuilder from pattern (if possible)
-				// and maybe populate the simple form too if possible
-				// Because the querybuilder is instanced asynchronously, 
-				// it might not exist yet, so check whether the instance exists first
-				if ($('#querybuilder').data('builder') && populateQueryBuilder(searchParams.pattern))
+				if (populateQueryBuilder(searchParams.pattern))
 					$('#searchTabs a[href="#advanced"]').tab('show');
-				else 
+				else
 					$('#searchTabs a[href="#query"]').tab('show');
-
 			}
 		}
 		
@@ -325,8 +317,7 @@ SINGLEPAGE.CORE = (function () {
 		$('#sampleMode').selectpicker('val', [searchParams.sampleMode || 'percentage']);
 		$('#sampleSeed').val(searchParams.sampleSeed || '');
 
-		// in some cases we want to show a tab here, in some cases we don't 
-		// determine when 
+		// Clear the results area, then actually run the search
 		SINGLEPAGE.INTERFACE.reset();
 		SINGLEPAGE.INTERFACE.setParameters(searchParams);
 
@@ -359,11 +350,12 @@ SINGLEPAGE.CORE = (function () {
 
 			SINGLEPAGE.INTERFACE.setParameters({
 				page: 0,
-				viewGroup: null, // reset, as we might be looking at a detailed group
+				viewGroup: null, // reset, as we might be looking at a detailed group currently, and the new search should not display within a specific group
 				pageSize: $('#resultsPerPage').selectpicker('val'),
 				pattern: pattern,
 				within: within,
 				filters: SINGLEPAGE.FORM.getActiveFilters(),
+				// Other parameters are automatically updated on interaction and thus always up-to-date
 			}, true);
 
 			// Setting parameters refreshes the shown results (if a result tab is opened), 
@@ -415,6 +407,7 @@ SINGLEPAGE.CORE = (function () {
 		resetPage: function() {
 			history.pushState(null, null, '?');
 			toPageState({});
+			SINGLEPAGE.BLS.cancelSearch();
 			return false;
 		},
 	};

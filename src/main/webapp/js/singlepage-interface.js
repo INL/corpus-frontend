@@ -1,4 +1,4 @@
-/* global BLS_URL, URI */
+/* global BLS_URL, URI, saveAs */
 
 var SINGLEPAGE = SINGLEPAGE || {};
 
@@ -8,6 +8,7 @@ var SINGLEPAGE = SINGLEPAGE || {};
  * Does not manage the main search form.
  */
 SINGLEPAGE.INTERFACE = (function() {
+	'use strict';
 
 	var ELLIPSIS = String.fromCharCode(8230);
 
@@ -58,6 +59,18 @@ SINGLEPAGE.INTERFACE = (function() {
 		return [before, match, after];
 	}
 
+	function properties(context) {
+		var props = [];
+		for (var key in context) {
+			if (context.hasOwnProperty(key)) {
+				var val = $.trim(context[key]);
+				if (!val) continue;
+				props.push(key+": "+val);
+			}
+		}
+		return props.join(', ');
+	}
+
 	/**
 	 * Fade out the table, then replace its contents, and call a function.
 	 *
@@ -83,8 +96,9 @@ SINGLEPAGE.INTERFACE = (function() {
 	 * 
 	 * @param {any} concRow the <tr> element for the current hit. The result will be displayed in the row following this row.
 	 * @param {any} docPid id/pid of the document
-	 * @param {any} start 
-	 * @param {any} end 
+	 * @param {number} start 
+	 * @param {number} end
+	 * @param {('ltr' | 'rtl')} textDirection - to determine whether to specify text direction on the preview text
 	 */
 	function showCitation(concRow, docPid, start, end, textDirection) {
 		// Open/close the collapsible in the next row
@@ -101,7 +115,7 @@ SINGLEPAGE.INTERFACE = (function() {
 			},
 			success: function (response) {
 				var parts = snippetParts(response);
-				$element.html('<span dir="'+ textDirection+'">'+ parts[0] + '<b>' + parts[1] + '</b>' + parts[2]+ '</span>');
+				$element.html('<span dir="'+ textDirection+'"><b>Kwic: </b>'+ parts[0] + '<b>' + parts[1] + '</b>' + parts[2]+ '</span>');
 			},
 			error: function(jqXHR, textStatus, errorThrown) {
 				$element.text('Error retrieving data: ' + (jqXHR.responseJSON && jqXHR.responseJSON.error) || textStatus);
@@ -109,6 +123,19 @@ SINGLEPAGE.INTERFACE = (function() {
 		});
 	}
 
+	/**
+	 * Request and display properties of the matched word.
+	 * 
+	 * @param {any} propRow the <tr> element for the current hit. The result will be displayed in the second row following this row.
+	 * @param {any} props the properties to show
+	 */
+	function showProperties(propRow, props) {
+		// Open/close the collapsible in the next row
+		var $element = $(propRow).next().next().find('.collapse');
+		$element.collapse('toggle');
+
+		$element.html('<span><b>Properties: </b>' + props+ '</span>');
+	}
 	/**
 	 * Show the error reporting field and display any errors that occured when performing a search.
 	 * 
@@ -417,9 +444,9 @@ SINGLEPAGE.INTERFACE = (function() {
 			if (docPid !== prevHitDocPid) {
 				prevHitDocPid = docPid;
 				var doc = data.docInfos[docPid];
-				var docTitle = doc[data.summary.docFields.titleField] || "UNKNOWN";
-				var docAuthor = doc[data.summary.docFields.authorField] ? " by " + doc[data.summary.docFields.authorField] : "";
-				var docDate = doc[data.summary.docFields.dateField] ? " (" + doc[data.summary.docFields.dateField] + ")" : "";
+				var docTitle = doc[data.summary.docFields.titleField] || 'UNKNOWN';
+				var docAuthor = doc[data.summary.docFields.authorField] ? ' by ' + doc[data.summary.docFields.authorField] : '';
+				var docDate = doc[data.summary.docFields.dateField] ? ' (' + doc[data.summary.docFields.dateField] + ')' : '';
 				
 				var docUrl = new URI('article').search({
 					'doc': docPid,
@@ -441,9 +468,11 @@ SINGLEPAGE.INTERFACE = (function() {
 			var right = textDirection=='ltr'? parts[2] : parts[0]; 
 			var matchLemma = words(hit.match, 'lemma', false, '');
 			var matchPos = words(hit.match, 'pos', false, '');
+			var props = properties(hit.match);
 
 			html.push(
-				'<tr class="concordance" onclick="SINGLEPAGE.INTERFACE.showCitation(this, \'' + docPid + '\', '+ hit.start + ', '+ hit.end + ', \'' + textDirection + '\');">',
+				'<tr class="concordance" onclick="SINGLEPAGE.INTERFACE.showCitation(this, \''
+				+ docPid + '\', '+ hit.start + ', '+ hit.end + ', \'' + textDirection + '\');SINGLEPAGE.INTERFACE.showProperties(this, \''+props+'\');">',
 					'<td class="text-right">', ELLIPSIS, ' <span dir="', textDirection, '">', left, '</span></td>',
 					'<td class="text-center"><span dir="', textDirection, '"><strong>', parts[1], '</strong></span></td>',
 					'<td><span dir="', textDirection, '">', right, '</span> ', ELLIPSIS, '</td>',
@@ -453,6 +482,11 @@ SINGLEPAGE.INTERFACE = (function() {
 
 
 			// Snippet row (initially hidden)
+			html.push(
+				'<tr>',
+					'<td colspan="5" class="inline-concordance"><div class="collapse">Loading...</div></td>',
+				'</tr>');
+			// Properties row (initially hidden)
 			html.push(
 				'<tr>',
 					'<td colspan="5" class="inline-concordance"><div class="collapse">Loading...</div></td>',
@@ -578,7 +612,7 @@ SINGLEPAGE.INTERFACE = (function() {
 	 */
 	function onExportCsv(event) {
 		var $tab = $(event.delegateTarget);
-		 
+		
 		var $button = $(event.target);
 		if ($button.hasClass('disabled'))
 			return;
@@ -608,11 +642,10 @@ SINGLEPAGE.INTERFACE = (function() {
 
 			},
 			success: function(data) {
-				const b = new Blob([data], { type: 'application/csv' });
+				var b = new Blob([data], { type: 'application/csv' });
 				saveAs(b, 'data.csv'); // FileSaver.js
 			},
 			complete: function() {
-				console.log('test');
 				$button.removeClass('disabled').attr('disabled', false);
 			}
 		});
@@ -886,6 +919,7 @@ SINGLEPAGE.INTERFACE = (function() {
 		},
 
 		showCitation: showCitation,
+		showProperties: showProperties,
 
 		/**
 		 * Set new search parameters and mark tabs for a refesh of data.

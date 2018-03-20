@@ -1,3 +1,5 @@
+/* global BLS_URL */
+
 /**
  * @typedef {Object} PropertyField
  * @property {string} name - Unique ID of the property
@@ -163,31 +165,13 @@ SINGLEPAGE.FORM = (function () {
 				}
 			});
 
-			// Now replace all of our autocomplete-marked selects with text inputs with attached autocomplete
-			$('select.autocomplete').each(function() {
-				var $select = $(this);
-				var values = $select.find('option').map(function(index, element) {
-					var value = $(element).val();
-					return  {
-						label: value,
-						// Surround the value by quotes, as by default unquoted values are split on whitespace and treated as separate words.
-						value: '"' + value + '"', 
-					};
-				}).get();
-
-				var $autocomplete = $('<input></input>')
-					.attr({
-						type: 'text',
-						class: $select.data('class'),
-						placeholder: $select.data('placeholder'),
-						style: $select.data('style')
-					});
-
-				$select.replaceWith($autocomplete);
+			// Now enable autocompletion on our marked fields 
+			$('input[data-autocomplete]').each(function() {
+				var propertyId = $(this).data('autocomplete');
 				
-				$autocomplete.autocomplete({
-					source: values,
-					minLength: 0, // show values even for empty strings
+				$(this).autocomplete({
+					source: BLS_URL + '/autocomplete/' + propertyId,
+					minLength: 1, // Show values when at least 1 letter is present
 					classes: {
 						'ui-autocomplete': 'dropdown-menu'
 					},
@@ -197,17 +181,17 @@ SINGLEPAGE.FORM = (function () {
 						$('.ui-helper-hidden-accessible').remove();
 					},
 					// Manually fire dom change event as autocomplete doesn't fire it when user selects a value
-					// we lisen to this event 
+					// and we require change events in other parts of the code.
 					select: function(event, ui) {
 						$(this).val(ui.item.value);
 						$(this).trigger('change');
 						return false;
 					}
 				});
-
-				// show values immediately when first focusing by performing a search directly
-				$autocomplete.on('focus', function() {
-					$(this).autocomplete('search', $(this).val() || '');
+				$autocomplete.keypress(function( event ) {
+					if ( event.which == 13 ) {
+						$autocomplete.autocomplete('close');
+					}
 				});
 			});
 			

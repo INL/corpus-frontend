@@ -85,32 +85,35 @@ public class CorpusConfig {
 	}
 
 	private void parsePropertyFields() {
-		// Since there's only one complexField at the moment, just get all <property> elements right away
-		// instead of going through complexFields->complexField->properties->property
-		NodeList propertyNodeList = config.getElementsByTagName("property");
-		for (int ip = 0; ip < propertyNodeList.getLength(); ip++) {
-			Node propertyNode = propertyNodeList.item(ip);
-			if (!(propertyNode instanceof Element))
-				continue;
 
-			Element propertyElement = (Element) propertyNode;
-			if (propertyElement.getElementsByTagName("isInternal").item(0).getTextContent().equalsIgnoreCase("true"))
-				continue;
+		NodeList complexFieldElements = config.getElementsByTagName("complexField");
+		for (int cfi = 0; cfi < complexFieldElements.getLength(); cfi++) {
+			Element complexFieldElement = (Element) complexFieldElements.item(cfi);
+			String complexFieldName = complexFieldElement.getAttribute("name");
+			NodeList propertyElements = complexFieldElement.getElementsByTagName("property");
+			for (int ip = 0; ip < propertyElements.getLength(); ++ip) {
+				Node propertyNode = propertyElements.item(ip);
+				if (!(propertyNode instanceof Element))
+					continue;
 
-			String fieldName 		= propertyElement.getAttribute("name");
-			String displayName 		= propertyElement.getElementsByTagName("displayName").item(0).getTextContent();
-			boolean caseSensitive 	= propertyElement.getElementsByTagName("sensitivity").item(0).getTextContent().equals("SENSITIVE_AND_INSENSITIVE");
-			String type = null;
-			List<String> allowedValues 	= parsePropertyValues(propertyElement);
+				Element propertyElement = (Element) propertyNode;
+				if (propertyElement.getElementsByTagName("isInternal").item(0).getTextContent().equalsIgnoreCase("true"))
+					continue;
 
-			type = inferType(type, allowedValues, propertyElement);
+				String fieldName 		= propertyElement.getAttribute("name");
+				String displayName 		= propertyElement.getElementsByTagName("displayName").item(0).getTextContent();
+				boolean caseSensitive 	= propertyElement.getElementsByTagName("sensitivity").item(0).getTextContent().equals("SENSITIVE_AND_INSENSITIVE");
+				List<String> allowedValues 	= parsePropertyValues(propertyElement);
+				String type = inferType(null, allowedValues, propertyElement);
 
-			FieldDescriptor field = new FieldDescriptor(fieldName, displayName, type);
-			for (String allowedValue : allowedValues) {
-				field.addValidValue(allowedValue, allowedValue);
+				FieldDescriptor field = new FieldDescriptor(fieldName, displayName, type);
+				for (String allowedValue : allowedValues) {
+					field.addValidValue(allowedValue, allowedValue);
+				}
+				field.setCaseSensitive(caseSensitive);
+				field.setComplexFieldName(complexFieldName);
+				this.propertyFields.add(field);
 			}
-			field.setCaseSensitive(caseSensitive);
-			this.propertyFields.add(field);
 		}
 	}
 

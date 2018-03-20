@@ -1,21 +1,13 @@
 #macro( filterfields $fields)
 	<div class="form-horizontal">
 #foreach($docfield in $fields)
-		<div class="form-group filterfield" id="$docfield.getId()" data-filterfield-type="$docfield.getType()"> <!-- Behaves as a .row, so every child element should have some form of .col-* -->
+		<div class="form-group filterfield" id="$docfield.getId()" data-filterfield-type="$docfield.getType()"> ##- Behaves as a .row, so every child element should have some form of .col-*
 		<label class="col-xs-12">$docfield.getDisplayName()</label>
 
 		#if($docfield.getType() == "select" && !$docfield.getValidValues().isEmpty())
 			<div class="col-xs-12">
-				<select title="$docfield.getDisplayName()" class="selectpicker form-control forminput" data-container="body" multiple>
+				<select title="$docfield.getDisplayName()" class="selectpicker form-control" data-container="body" multiple>
 			
-				#foreach($pair in $docfield.getValidValues())
-					<option value="$pair.getValue()">$pair.getDescription()</option>
-				#end
-				</select>
-			</div>
-		#elseif($docfield.getType() == "combobox")
-			<div class="col-xs-12">
-				<select data-placeholder="$docfield.getDisplayName()" class="autocomplete" data-class="form-control forminput"> 
 				#foreach($pair in $docfield.getValidValues())
 					<option value="$pair.getValue()">$pair.getDescription()</option>
 				#end
@@ -23,17 +15,20 @@
 			</div>
 		#elseif($docfield.getType() == "range")
 			<div class="col-xs-4">
-				<input type="text" placeholder="From" class="form-control forminput" />
+				<input type="text" placeholder="From" class="form-control" />
 			</div>
 			<div class="col-xs-4">
-				<input type="text" placeholder="To" class="form-control forminput" />
+				<input type="text" placeholder="To" class="form-control" />
 			</div>
 		#else
 			<div class="col-xs-12">
-				<input type="text" placeholder="$docfield.getDisplayName()" class="form-control forminput" />
+				<input type="text" placeholder="$docfield.getDisplayName()" class="form-control" 
+					#if($docfield.getType() == "combobox")
+						data-autocomplete="$docfield.getId()" 
+					#end
+				/>
 			</div>
-		#end
-
+	    #end
 	</div>
 #end
 </div>
@@ -44,29 +39,27 @@
 	#set ($propertyFieldFileInputId = $propertyField.getId() + "_file")
 	#set ($propertyFieldCaseId = $propertyField.getId() + "_case")
 
-	<div class="form-group propertyfield" id="$propertyField.getId()"> <!-- behaves as .row when in .form-horizontal so .row may be omitted -->
+	<div class="form-group propertyfield" id="$propertyField.getId()"> ## behaves as .row when in .form-horizontal so .row may be omitted
 		<label for="$propertyFieldInputId" class="col-xs-12 col-md-3">$propertyField.getDisplayName()</label>
 		<div class="col-xs-12 col-md-9 upload-button-container">
 			
 		    #if($field.getType() == "select" && !$field.getValidValues().isEmpty())
-		        <select id="$propertyFieldInputId" title="$field.getDisplayName()" class="selectpicker form-control forminput" data-container="body">
+		        <select id="$propertyFieldInputId" title="$field.getDisplayName()" class="selectpicker form-control" data-container="body">
 		            <option value="">choose value</option>
 		        #foreach($pair in $field.getValidValues())
 		            <option value="$pair.getValue()">$pair.getDescription()</option>
 		        #end
 		        </select>
 		    #else
-			    #if($field.getType() == "combobox")
-			        <select id="$propertyFieldInputId" data-placeholder="$field.getDisplayName()" class="autocomplete" data-class="form-control forminput"> 
-			        #foreach($pair in $field.getValidValues())
-			            <option value="$pair.getValue()">$pair.getDescription()</option>
-			        #end
-			        </select>
-			    #else
-			        <input type="text" id="$propertyFieldInputId" name="$propertyFieldInputId" placeholder="$propertyField.getDisplayName()" class="form-control"/>
-			    #end
+				<input type="text" id="$propertyFieldInputId" name="$propertyFieldInputId" placeholder="$propertyField.getDisplayName()" class="form-control" 
+					#if($field.getType() == "combobox") 
+						## when autocompleting word properties, blacklab needs to know the complex field from which they originate
+						## the format is complexfield/property?term=searchterm
+						data-autocomplete="$propertyField.getComplexFieldName()/$propertyField.getId()" 
+					#end
+				/>
 			    
-		    	## uploadbutton only for text inputs (combobox is replaced by text input clientside)
+		    	## word-list upload-button only for text inputs
 		    	<button class="btn btn-default upload-button">
 					<input type="file" id="$propertyFieldFileInputId" title="Upload a list of values">
 					<span class="glyphicon glyphicon-open"> 

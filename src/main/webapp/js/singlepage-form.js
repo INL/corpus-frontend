@@ -1,3 +1,5 @@
+/* global BLS_URL */
+
 /**
  * @typedef {Object} PropertyField
  * @property {string} name - Unique ID of the property
@@ -167,21 +169,19 @@ SINGLEPAGE.FORM = (function () {
 			$('select.autocomplete').each(function() {
 				var $select = $(this);
 
-				var $autocomplete = $('<input></input>')
-					.attr({
-						type: 'text',
-						class: $select.data('class'),
-						placeholder: $select.data('placeholder'),
-						style: $select.data('style')
-					});
+				var $autocomplete = $('<input></input>').attr({
+					type: 'text',
+					class: $select.data('class'),
+					placeholder: $select.data('placeholder'),
+					style: $select.data('style')
+				});
 
-                                var name = $select.closest("div[id]").attr('id');
+				// zoek eerste ancestor div met id
+				var propId = $select.closest('.propertyfield, .filterfield').attr('id');
+				$select.replaceWith($autocomplete);
 
-                                $select.replaceWith($autocomplete);
-                                
 				$autocomplete.autocomplete({
-                                    // zoek eerste ancestor div met id
-					source: BLS_URL + "/autocomplete/"+name,
+					source: BLS_URL + '/autocomplete/' + propId,
 					minLength: 0, // show values even for empty strings
 					classes: {
 						'ui-autocomplete': 'dropdown-menu'
@@ -198,14 +198,12 @@ SINGLEPAGE.FORM = (function () {
 						$(this).trigger('change');
 						return false;
 					}
-                                        
 				});
-                                $autocomplete.keypress(function( event ) {
-                                    if ( event.which == 13 ) {
-                                       $autocomplete.autocomplete("close");
-                                    }
-                                });
-
+				$autocomplete.keypress(function( event ) {
+					if ( event.which == 13 ) {
+						$autocomplete.autocomplete('close');
+					}
+				});
 			});
 			
 			// Register callbacks and sync with current state

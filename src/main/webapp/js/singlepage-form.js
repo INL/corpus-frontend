@@ -1,3 +1,5 @@
+/* global BLS_URL */
+
 /**
  * @typedef {Object} PropertyField
  * @property {string} name - Unique ID of the property
@@ -163,26 +165,12 @@ SINGLEPAGE.FORM = (function () {
 				}
 			});
 
-			// Now replace all of our autocomplete-marked selects with text inputs with attached autocomplete
-			$('select.autocomplete').each(function() {
-				var $select = $(this);
-
-				var $autocomplete = $('<input></input>')
-					.attr({
-						type: 'text',
-						class: $select.data('class'),
-						placeholder: $select.data('placeholder'),
-						style: $select.data('style')
-					});
-
-                                var name = $select.closest("div[id]").attr('id');
-
-                                $select.replaceWith($autocomplete);
-                                
-				$autocomplete.autocomplete({
-                                    // zoek eerste ancestor div met id
-					source: BLS_URL + "/autocomplete/"+name,
-					minLength: 0, // show values even for empty strings
+			// Now enable autocompletion on our marked fields 
+			$('input[data-autocomplete]').each(function() {
+				var propertyId = $(this).data('autocomplete');
+				$(this).autocomplete({
+					source: BLS_URL + '/autocomplete/' + propertyId,
+					minLength: 1, // Show values when at least 1 letter is present
 					classes: {
 						'ui-autocomplete': 'dropdown-menu'
 					},
@@ -192,7 +180,7 @@ SINGLEPAGE.FORM = (function () {
 						$('.ui-helper-hidden-accessible').remove();
 					},
 					// Manually fire dom change event as autocomplete doesn't fire it when user selects a value
-					// we lisen to this event 
+					// and we require change events in other parts of the code.
 					select: function(event, ui) {
 						$(this).val(ui.item.value);
 						$(this).trigger('change');
@@ -200,12 +188,11 @@ SINGLEPAGE.FORM = (function () {
 					}
                                         
 				});
-                                $autocomplete.keypress(function( event ) {
-                                    if ( event.which == 13 ) {
-                                       $autocomplete.autocomplete("close");
-                                    }
-                                });
-
+				$autocomplete.keypress(function( event ) {
+					if ( event.which == 13 ) {
+						$autocomplete.autocomplete('close');
+					}
+				});
 			});
 			
 			// Register callbacks and sync with current state

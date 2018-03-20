@@ -113,7 +113,7 @@ SINGLEPAGE.INTERFACE = (function() {
 			},
 			success: function (response) {
 				var parts = snippetParts(response);
-				$element.html('<span dir="'+ textDirection+'">'+ parts[0] + '<b>' + parts[1] + '</b>' + parts[2]+ '</span>');
+				$element.html('<span dir="'+ textDirection+'"><b>Kwic: </b>'+ parts[0] + '<b>' + parts[1] + '</b>' + parts[2]+ '</span>');
 			},
 			error: function(jqXHR, textStatus, errorThrown) {
 				$element.text('Error retrieving data: ' + (jqXHR.responseJSON && jqXHR.responseJSON.error) || textStatus);
@@ -132,7 +132,7 @@ SINGLEPAGE.INTERFACE = (function() {
 		var $element = $(propRow).next().next().find('.collapse');
 		$element.collapse('toggle');
 
-                $element.html('<span>' + '<b>Properties: </b>' + + props+ '</span>');
+                $element.html('<span><b>Properties: </b>' + props+ '</span>');
 	}
 	/**
 	 * Show the error reporting field and display any errors that occured when performing a search.

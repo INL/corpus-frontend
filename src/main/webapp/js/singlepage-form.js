@@ -165,24 +165,13 @@ SINGLEPAGE.FORM = (function () {
 				}
 			});
 
-			// Now replace all of our autocomplete-marked selects with text inputs with attached autocomplete
-			$('select.autocomplete').each(function() {
-				var $select = $(this);
-
-				var $autocomplete = $('<input></input>').attr({
-					type: 'text',
-					class: $select.data('class'),
-					placeholder: $select.data('placeholder'),
-					style: $select.data('style')
-				});
-
-				// zoek eerste ancestor div met id
-				var propId = $select.closest('.propertyfield, .filterfield').attr('id');
-				$select.replaceWith($autocomplete);
-
-				$autocomplete.autocomplete({
-					source: BLS_URL + '/autocomplete/' + propId,
-					minLength: 0, // show values even for empty strings
+			// Now enable autocompletion on our marked fields 
+			$('input[data-autocomplete]').each(function() {
+				var propertyId = $(this).data('autocomplete');
+				
+				$(this).autocomplete({
+					source: BLS_URL + '/autocomplete/' + propertyId,
+					minLength: 1, // Show values when at least 1 letter is present
 					classes: {
 						'ui-autocomplete': 'dropdown-menu'
 					},
@@ -192,7 +181,7 @@ SINGLEPAGE.FORM = (function () {
 						$('.ui-helper-hidden-accessible').remove();
 					},
 					// Manually fire dom change event as autocomplete doesn't fire it when user selects a value
-					// we lisen to this event 
+					// and we require change events in other parts of the code.
 					select: function(event, ui) {
 						$(this).val(ui.item.value);
 						$(this).trigger('change');

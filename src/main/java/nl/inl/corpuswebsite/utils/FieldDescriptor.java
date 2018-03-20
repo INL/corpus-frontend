@@ -15,8 +15,11 @@ public class FieldDescriptor {
 	private String displayName;
 	private String type;
 
-	/* Never true for metadata fields */
+	/** Never true for metadata fields */
 	private boolean isCaseSensitive = false;
+
+	/** Which complex field did this field/property originate from - Never set for metadata fields */
+	private String complexFieldName = null;
 
 	private List<ValuePair> validValues = new LinkedList<>();
 
@@ -72,6 +75,14 @@ public class FieldDescriptor {
 
 	public void setCaseSensitive(boolean caseSensitive) {
 		this.isCaseSensitive = caseSensitive;
+	}
+
+	public void setComplexFieldName(String complexFieldName) {
+		this.complexFieldName = complexFieldName;
+	}
+
+	public String getComplexFieldName() {
+		return complexFieldName;
 	}
 
 	public void addValidValue(String value, String description) {

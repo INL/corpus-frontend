@@ -1,4 +1,4 @@
-/* global BLS_URL, URI */
+/* global BLS_URL, URI, saveAs */
 
 var SINGLEPAGE = SINGLEPAGE || {};
 
@@ -8,6 +8,7 @@ var SINGLEPAGE = SINGLEPAGE || {};
  * Does not manage the main search form.
  */
 SINGLEPAGE.INTERFACE = (function() {
+	'use strict';
 
 	var ELLIPSIS = String.fromCharCode(8230);
 
@@ -58,16 +59,16 @@ SINGLEPAGE.INTERFACE = (function() {
 		return [before, match, after];
 	}
 
-        function properties(context) {
-            var props = [];
-            for (var key in context) {
-                if (context.hasOwnProperty(key)) {
-                    var val = $.trim(context[key]);
-                    if (!val) continue;
-                    props.push(key+": "+val);
-                }
-            }
-            return props.join(', ');
+	function properties(context) {
+		var props = [];
+		for (var key in context) {
+			if (context.hasOwnProperty(key)) {
+				var val = $.trim(context[key]);
+				if (!val) continue;
+				props.push(key+": "+val);
+			}
+		}
+		return props.join(', ');
 	}
 
 	/**
@@ -95,8 +96,9 @@ SINGLEPAGE.INTERFACE = (function() {
 	 * 
 	 * @param {any} concRow the <tr> element for the current hit. The result will be displayed in the row following this row.
 	 * @param {any} docPid id/pid of the document
-	 * @param {any} start 
-	 * @param {any} end 
+	 * @param {number} start 
+	 * @param {number} end
+	 * @param {('ltr' | 'rtl')} textDirection - to determine whether to specify text direction on the preview text
 	 */
 	function showCitation(concRow, docPid, start, end, textDirection) {
 		// Open/close the collapsible in the next row
@@ -132,7 +134,7 @@ SINGLEPAGE.INTERFACE = (function() {
 		var $element = $(propRow).next().next().find('.collapse');
 		$element.collapse('toggle');
 
-                $element.html('<span><b>Properties: </b>' + props+ '</span>');
+		$element.html('<span><b>Properties: </b>' + props+ '</span>');
 	}
 	/**
 	 * Show the error reporting field and display any errors that occured when performing a search.
@@ -466,11 +468,11 @@ SINGLEPAGE.INTERFACE = (function() {
 			var right = textDirection=='ltr'? parts[2] : parts[0]; 
 			var matchLemma = words(hit.match, 'lemma', false, '');
 			var matchPos = words(hit.match, 'pos', false, '');
-                        var props = properties(hit.match);
+			var props = properties(hit.match);
 
 			html.push(
 				'<tr class="concordance" onclick="SINGLEPAGE.INTERFACE.showCitation(this, \''
-                                + docPid + '\', '+ hit.start + ', '+ hit.end + ', \'' + textDirection + '\');SINGLEPAGE.INTERFACE.showProperties(this, \''+props+'\');">',
+				+ docPid + '\', '+ hit.start + ', '+ hit.end + ', \'' + textDirection + '\');SINGLEPAGE.INTERFACE.showProperties(this, \''+props+'\');">',
 					'<td class="text-right">', ELLIPSIS, ' <span dir="', textDirection, '">', left, '</span></td>',
 					'<td class="text-center"><span dir="', textDirection, '"><strong>', parts[1], '</strong></span></td>',
 					'<td><span dir="', textDirection, '">', right, '</span> ', ELLIPSIS, '</td>',
@@ -609,7 +611,7 @@ SINGLEPAGE.INTERFACE = (function() {
 	 */
 	function onExportCsv(event) {
 		var $tab = $(event.delegateTarget);
-		 
+		
 		var $button = $(event.target);
 		if ($button.hasClass('disabled'))
 			return;
@@ -639,11 +641,10 @@ SINGLEPAGE.INTERFACE = (function() {
 
 			},
 			success: function(data) {
-				const b = new Blob([data], { type: 'application/csv' });
+				var b = new Blob([data], { type: 'application/csv' });
 				saveAs(b, 'data.csv'); // FileSaver.js
 			},
 			complete: function() {
-				console.log('test');
 				$button.removeClass('disabled').attr('disabled', false);
 			}
 		});

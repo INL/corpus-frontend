@@ -1,3 +1,5 @@
+/* global CodeMirror */
+
 // (Private) corpora management page.
 //
 // Show a list of public and private corpora;
@@ -12,6 +14,7 @@ var corpora = {};
 
 // (avoid polluting the global namespace)
 (function() {
+	'use strict';
 	
 	// When we retrieve the corpora list, we actually get
 	// more than that. The whole server info JSON is stored here.
@@ -59,7 +62,7 @@ var corpora = {};
 	 * @param fnErrorHander called with the error string
 	 */
 	function refreshIndexStatusWhileIndexing(indexId, fnUpdateHandler, fnErrorHandler) {
-		var statusUrl = CORPORA.blsUrl + indexId + "/status/"
+		var statusUrl = CORPORA.blsUrl + indexId + '/status/';
 		
 		var timeoutHandle;
 		
@@ -79,9 +82,9 @@ var corpora = {};
 			var data = jqXHR.responseJSON;
 			var msg;
 			if (data && data.error)
-			msg = data.error.message;
+				msg = data.error.message;
 			else
-			msg = textStatus + '; ' + errorThrown;
+				msg = textStatus + '; ' + errorThrown;
 			
 			fnErrorHandler('Error retrieving status for corpus \''+indexName+'\': ' + msg);
 			clearTimeout(timeoutHandle);
@@ -154,10 +157,10 @@ var corpora = {};
 		var searchIcon = '<a class="icon disabled fa fa-search"></a>';
 		var indexTitle = index.displayName;
 		if (index.canSearch) {
-                        var pageURL = window.location.href;
-                        if (!pageURL.endsWith('/')) {
-                            pageURL += '/';
-                        }
+			var pageURL = window.location.href;
+			if (!pageURL.endsWith('/')) {
+				pageURL += '/';
+			}
 			var url = pageURL + index.id + '/search';
 			searchIcon = '<a class="icon fa fa-search" title="Search \'' + index.displayName + 
 				'\' corpus" href="'+ url + '"></a>';
@@ -505,7 +508,7 @@ var corpora = {};
 				if (data.loader < data.total) {
 					var progress = parseInt(data.loaded / data.total * 100, 10);
 					$progressBar
-					.text('Uploading... (' +  progress + "%)")
+					.text('Uploading... (' +  progress + '%)')
 					.css('width', progress + '%')
 					.attr('aria-valuenow', progress);
 				}
@@ -532,7 +535,7 @@ var corpora = {};
 					function(errorMsg) {
 						$progressBar.text(errorMsg);
 						$progressBar.data('isIndexing', false);						
-					})
+					});
 				}
 			},
 			add: function(e, data) {
@@ -724,7 +727,7 @@ var corpora = {};
 
 		$downloadButton.on('click', function() {
 			var presetName = $presetSelect.selectpicker('val');
-			var $formatName = $('#format_name')
+			var $formatName = $('#format_name');
 
 			$.ajax(CORPORA.blsUrl + '/input-formats/' + presetName,  {
 				'type': 'GET',
@@ -814,7 +817,7 @@ var corpora = {};
 			$formatName.val(formatId.substr(Math.max(formatId.indexOf(':')+1, 0))); // strip username portion from formatId as username:formatname, if preset
 			
 			$modal.modal('show');
-		})
+		});
 	}
 
 	$(document).ready(function () {

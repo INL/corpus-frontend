@@ -58,6 +58,18 @@ SINGLEPAGE.INTERFACE = (function() {
 		return [before, match, after];
 	}
 
+        function properties(context) {
+            var props = [];
+            for (var key in context) {
+                if (context.hasOwnProperty(key)) {
+                    var val = $.trim(context[key]);
+                    if (!val) continue;
+                    props.push(key+": "+val);
+                }
+            }
+            return props.join(', ');
+	}
+
 	/**
 	 * Fade out the table, then replace its contents, and call a function.
 	 *
@@ -109,6 +121,19 @@ SINGLEPAGE.INTERFACE = (function() {
 		});
 	}
 
+	/**
+	 * Request and display properties of the matched word.
+	 * 
+	 * @param {any} propRow the <tr> element for the current hit. The result will be displayed in the second row following this row.
+	 * @param {any} props the properties to show
+	 */
+	function showProperties(propRow, props) {
+		// Open/close the collapsible in the next row
+		var $element = $(propRow).next().next().find('.collapse');
+		$element.collapse('toggle');
+
+                $element.html('<span>' + '<b>Properties: </b>' + + props+ '</span>');
+	}
 	/**
 	 * Show the error reporting field and display any errors that occured when performing a search.
 	 * 
@@ -441,9 +466,11 @@ SINGLEPAGE.INTERFACE = (function() {
 			var right = textDirection=='ltr'? parts[2] : parts[0]; 
 			var matchLemma = words(hit.match, 'lemma', false, '');
 			var matchPos = words(hit.match, 'pos', false, '');
+                        var props = properties(hit.match);
 
 			html.push(
-				'<tr class="concordance" onclick="SINGLEPAGE.INTERFACE.showCitation(this, \'' + docPid + '\', '+ hit.start + ', '+ hit.end + ', \'' + textDirection + '\');">',
+				'<tr class="concordance" onclick="SINGLEPAGE.INTERFACE.showCitation(this, \''
+                                + docPid + '\', '+ hit.start + ', '+ hit.end + ', \'' + textDirection + '\');SINGLEPAGE.INTERFACE.showProperties(this, \''+props+'\');">',
 					'<td class="text-right">', ELLIPSIS, ' <span dir="', textDirection, '">', left, '</span></td>',
 					'<td class="text-center"><span dir="', textDirection, '"><strong>', parts[1], '</strong></span></td>',
 					'<td><span dir="', textDirection, '">', right, '</span> ', ELLIPSIS, '</td>',
@@ -452,6 +479,11 @@ SINGLEPAGE.INTERFACE = (function() {
 				'</tr>');
 
 			// Snippet row (initially hidden)
+			html.push(
+				'<tr>',
+					'<td colspan="5" class="inline-concordance"><div class="collapse">Loading...</div></td>',
+				'</tr>');
+			// Properties row (initially hidden)
 			html.push(
 				'<tr>',
 					'<td colspan="5" class="inline-concordance"><div class="collapse">Loading...</div></td>',
@@ -885,6 +917,7 @@ SINGLEPAGE.INTERFACE = (function() {
 		},
 
 		showCitation: showCitation,
+		showProperties: showProperties,
 
 		/**
 		 * Set new search parameters and mark tabs for a refesh of data.

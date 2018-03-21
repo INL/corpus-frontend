@@ -94,20 +94,17 @@ SINGLEPAGE.FORM = (function () {
 		var prop = $.grep(activeProperties, function(elem) { return elem.name === propertyName; })[0] || {};
 		prop.name = propertyName;
 		prop.case = $caseInput.is(':checked');
-		prop.value = prop.value || ''; // init in case of new prop
+		prop.value = $textOrSelect.val();
 		
 		// Now temporarily remove the property from the active list (even if it actually has a value)
 		// and only put it back once we've read its new value
+		// This has the added benefit we can never push the prop twice by accident
 		removeFromPropertyList(prop.name);
+
+		if ($changedInput.is($textOrSelect[0]) && fileInput != null)
+			fileInput.value = '';
 		
-		// Then set the new value, and once it's resolved, put it back in the list if the value is valid
-		if ($changedInput.is($textOrSelect[0])) {
-			prop.value = $textOrSelect.val();
-			if (fileInput != null) 
-				fileInput.value = '';
-			if (prop.value)
-				activeProperties.push(prop);
-		} else if ($changedInput.is(fileInput)) {
+		if ($changedInput.is(fileInput)) {
 			var file = fileInput.files && fileInput.files[0];
 			if (file != null) {
 				var fr = new FileReader();
@@ -127,7 +124,13 @@ SINGLEPAGE.FORM = (function () {
 				$textOrSelect.val('');
 				// Don't push back into active props, we've just cleared the value
 			}
-		} 
+		} else {
+			if (prop.value)
+				activeProperties.push(prop);
+		}
+
+
+		// Then set the new value, and once it's resolved, put it back in the list if the value is valid
 	};
 
 	var updateWithin = function($radioButtonContainer) {
@@ -167,9 +170,10 @@ SINGLEPAGE.FORM = (function () {
 
 			// Now enable autocompletion on our marked fields 
 			$('input[data-autocomplete]').each(function() {
-				var propertyId = $(this).data('autocomplete');
+				var $this = $(this);
+				var propertyId = $this.data('autocomplete');
 				
-				$(this).autocomplete({
+				$this.autocomplete({
 					source: BLS_URL + '/autocomplete/' + propertyId,
 					minLength: 1, // Show values when at least 1 letter is present
 					classes: {
@@ -188,9 +192,9 @@ SINGLEPAGE.FORM = (function () {
 						return false;
 					}
 				});
-				$autocomplete.keypress(function( event ) {
+				$this.keypress(function( event ) {
 					if ( event.which == 13 ) {
-						$autocomplete.autocomplete('close');
+						$this.autocomplete('close');
 					}
 				});
 			});

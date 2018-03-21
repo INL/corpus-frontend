@@ -147,7 +147,7 @@ var corpora = {};
 		var delIcon = '', addIcon = '';
 		if (index.isPrivate && !index.isBusy) {
 			delIcon = '<a class="icon fa fa-trash" title="Delete \'' + index.displayName + '\' corpus" ' +
-				'onclick="CORPORA.deleteCorpus(\'' + index.id + '\')" href="#"></a>';
+				'href="#" onclick="return CORPORA.deleteCorpus(\'' + index.id + '\');"></a>';
 			addIcon = '<a class="icon fa fa-plus-square" title="Add data to \'' + index.displayName + '\' corpus" ' +
 				'href="#" onclick="return CORPORA.showUploadForm(corpora[\'' + index.id + '\']);">' +
 				'</a>';
@@ -427,7 +427,7 @@ var corpora = {};
 		$('#uploadSuccessDiv').hide();
 		$('.progress').hide();
 		
-		return false; // Cancel default link behaviour
+		return false; // prevent event bubbling
 	};
 
 	// Delete an index from your private user area
@@ -455,7 +455,8 @@ var corpora = {};
 				showError('Could not delete corpus "' + index.displayName + '": ' + msg);
 			},
 		});
-		return false; // cancel link
+		
+		return false; // prevent event bubbling
 	};
 
 	// Initialise file uploading functionality.
@@ -631,7 +632,10 @@ var corpora = {};
 			'Delete corpus?', 
 			'You are about to delete corpus <b>' + indexName + '</b>. <i>This cannot be undone!</i> <br><br>Are you sure?',
 			'Delete',
-			CORPORA.deleteIndex.bind(null,  corpora[indexId]));
+			CORPORA.deleteIndex.bind(null,  corpora[indexId])
+		);
+
+		return false; // prevent event bubbling
 	};
 
 	function generateShortName(name) {

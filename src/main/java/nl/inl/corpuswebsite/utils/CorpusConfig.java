@@ -79,9 +79,11 @@ public class CorpusConfig {
 
 	private void parseCorpusDataFormat() {
 		NodeList documentFormatTags = config.getElementsByTagName("documentFormat");
-		if (documentFormatTags.getLength() > 0)
+		if (documentFormatTags.getLength() > 0) {
 			this.corpusDataFormat = documentFormatTags.item(0).getTextContent();
-		this.corpusDataFormat = "UNKNOWN";
+        } else {
+            this.corpusDataFormat = "UNKNOWN";
+        }
 	}
 
 	private void parsePropertyFields() {

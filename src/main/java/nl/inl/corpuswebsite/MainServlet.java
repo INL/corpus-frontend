@@ -468,7 +468,7 @@ public class MainServlet extends HttpServlet {
      * corpus-specific file is missing?
      * @return the file, or null if not found
      */
-    public InputStream getProjectFile(String corpus, String fileName, boolean getDefaultIfMissing) {
+    public final InputStream getProjectFile(String corpus, String fileName, boolean getDefaultIfMissing) {
         if (corpus == null || isUserCorpus(corpus) || !adminProps.containsKey("corporaInterfaceDataDir")) {
             if (!adminProps.containsKey("corporaInterfaceDataDir")) {
                 logger.debug("corporaInterfaceDataDir not set, couldn't find project file " + fileName + " for corpus " + corpus + (getDefaultIfMissing ? "; using default" : "; returning null"));
@@ -486,7 +486,7 @@ public class MainServlet extends HttpServlet {
             // File path points outside the configured directory!
             logger.warn("File: " + fileName + " is null for corpus " + corpus + (getDefaultIfMissing ? "; using default" : "; returning null"));
         } catch (FileNotFoundException e) {
-            // This is "normal", just means we want to use the generic version of this file or are checking to see if it exists.
+            throw new RuntimeException(fileName + " exists but still not found?", e);
         } catch (SecurityException e) {
             logger.debug("SecurityException finding project file " + fileName + " for corpus " + corpus + " as file " + projectFile.toString() + (getDefaultIfMissing ? "; using default" : "; returning null"));
         }
@@ -494,12 +494,13 @@ public class MainServlet extends HttpServlet {
     }
     
     /**
-     * return a file from the corporaInterfaceDataDir/corpus
+     * return a file from the corporaInterfaceDataDir/corpus. Return null when file does not exist, cannot be read or is
+     * outside of corporaInterfaceDataDir/corpus.
      * @param corpus
      * @param fileName
      * @return 
      */
-    public File getProjectFileFromIFDir(String corpus, String fileName) {
+    public final File getProjectFileFromIFDir(String corpus, String fileName) {
         Path baseDir = Paths.get(adminProps.getProperty("corporaInterfaceDataDir"));
         Path corpusDir = baseDir.resolve(corpus).normalize();
         Path filePath = corpusDir.resolve(fileName).normalize();
@@ -516,7 +517,7 @@ public class MainServlet extends HttpServlet {
         if (corpusDir.startsWith(baseDir) && filePath.startsWith(corpusDir)) {
             return projectFile;
         } else {
-            logger.warn("File " + projectFile + " outside of corporaInterfaceDataDir!");
+            logger.warn("File " + projectFile + " outside of corporaInterfaceDataDir/"+corpus+"!");
             return null;
         }
     }
@@ -588,9 +589,9 @@ public class MainServlet extends HttpServlet {
      *
      * @param corpus
      * @param corpusDataFormat
-     * @return the xsl file's contents as a string.
+     * @return the xsl transformer to use for transformation
      */
-    public XslTransformer getStylesheet(String corpus, String corpusDataFormat) {
+    public final XslTransformer getStylesheet(String corpus, String corpusDataFormat) {
 
         String fileName = "article_" + corpusDataFormat + ".xsl";
         String key = corpus + "__" + fileName;
@@ -609,7 +610,7 @@ public class MainServlet extends HttpServlet {
                 return new XslTransformer(is);
             }
         } catch (IOException | TransformerConfigurationException e) {
-            log("Could not read xsl file from disk: " + fileName, e);
+            log("Problem loading xsl file: " + fileName, e);
             // Don't bail yet, can still try to get from blacklab-server
         }
 

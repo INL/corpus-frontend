@@ -471,7 +471,7 @@ SINGLEPAGE.INTERFACE = (function() {
 			var right = textDirection=='ltr'? parts[2] : parts[0]; 
 			var matchLemma = words(hit.match, 'lemma', false, '');
 			var matchPos = words(hit.match, 'pos', false, '');
-			var props = properties(hit.match).replace("&apos;","\\'");
+			var props = properties(hit.match).replace("'","\\'").replace("&apos;","\\'");
 
 			html.push(
 				'<tr class="concordance" onclick="SINGLEPAGE.INTERFACE.showCitation(this, \''

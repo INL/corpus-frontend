@@ -244,8 +244,13 @@ SINGLEPAGE.FORM = (function () {
 			return within;
 		},
 		
-		// Update the values for a filter
-		// Automatically updates the preview and internal list as well
+		/**
+		 * Update the values for a filter
+		 * Automatically updates the preview and internal list as well
+		 * Passing null/undefined/[] as values will clear the values
+		 * @param {string} filterName
+		 * @param {Array.<string>} values - for 'range' type filters, index 0 and 1 are 'from' and 'to' respectively, for 'select' values, all values are selected, for all others: values are concatenated
+		 */
 		setFilterValues: function(filterName, values) {
 			var $filterField = $('#' + filterName);
 			var $inputs = $filterField.find('input, select');
@@ -257,8 +262,17 @@ SINGLEPAGE.FORM = (function () {
 				$($inputs[1]).val(values[1]);
 			} else if (filterType == 'select') {
 				$inputs.first().selectpicker('val', values);
-			} else {
-				$inputs.first().val(values);
+			} else { 
+				var processed  = [];
+				$.each(values, function(index, val) {
+					var withoutQuotes = val.replace(/^"+|"+$/g, '');
+					if (withoutQuotes.match(/\s/)) // contains whitespace -> keep quotes
+						processed.push('"' + withoutQuotes + '"');
+					else 
+						processed.push(withoutQuotes);
+				});
+
+				$inputs.first().val(processed.join(' '));
 			}
 			
 			updateFilterField($filterField);

@@ -89,8 +89,8 @@ SINGLEPAGE.CORE = (function () {
 			$queryBox.val(queryBuilderInstance.getCql());
 		});
 		
-		// now restore the page state from the query parameters
-		var searchSettings = fromQueryString(new URI().search());
+		// now restore the page state from the used url
+		var searchSettings = fromPageUrl();
 		if (searchSettings != null) {
 			toPageState(searchSettings);
 		}
@@ -99,44 +99,62 @@ SINGLEPAGE.CORE = (function () {
 
 	// Restore page when using back/forward
 	window.addEventListener('popstate', function() {
-		var searchSettings = fromQueryString(new URI().search());
+		var searchSettings = fromPageUrl();
 		toPageState(searchSettings || {});
 	});
 
 	/**
-	 * Parses a query string and returns the parameters contained within the 'search' key
+	 * Decode the current page url in the format of /<contextRoot>/<corpus>/search/[hits|docs][/]?query=...
+	 * into a SearchParameters object
 	 * 
-	 * @param {any} queryString query string (leading "?" optional)
-	 * @returns object containing the parameters, or null if no parameters were found
+	 * @param {string} url - full page url, the querystring (if present) should encode a BlackLabParameters object
+	 * @returns {SearchParameters} object containing the decoded and translated parameters, or null if no parameters were found
 	 */
-	function fromQueryString(queryString) {
-		
-		if (queryString == null)
-			return null;
-		
-		var parsed = QSON.fromQueryString(queryString);
-		if (!$.isEmptyObject(parsed))
-			return parsed;
-		else
-			return null;
+	function fromPageUrl() {
+		var uri = new URI();
+		var paths = uri.segmentCoded();
 
-		// var decodedQuery = new URI().search(queryString).search(true);
-		// return decodedQuery.search ? JSON.parse(decodedQuery.search) : null;
+		// operation is (usually) contained in the path, the other parameters are contained in the query parameters
+		var operation = paths[paths.lastIndexOf('search') + 1];
+		
+		var blsParam = new URI().search(true);
+		if ($.isEmptyObject(blsParam))
+			return null; 
+		
+		var pageParam = SINGLEPAGE.BLS.getPageParam(blsParam);
+		if (operation) 
+			pageParam.operation = operation;
+
+		return pageParam;
 	}
 
 	/**
-	 * Converts search parameters into a query string.
+	 * Encodes search parameters into a page url as understood by fromPageUrl().
+	 * N.B. we assume we're mounted under /<contextRoot>/<corpus>/search/[hits|docs][/]?query=...
+	 * The contextRoot can be anything, even multiple segments (due to reverse proxy, different WAR deploy path, etc)
+	 * But we assume the /search/ part still exists.
 	 * 
 	 * Removes any empty strings, arrays, null, undefineds prior to conversion, to shorten the resulting query string.
 	 * 
-	 * @param {any} searchParams the search parameters
-	 * @returns the query string, beginning with ?
+	 * @param {SearchParameters} searchParams the search parameters
+	 * @returns the query string, beginning with ?, or an empty string when no searchParams with a proper value
 	 */
-	function toQueryString(searchParams) {
+	function toPageUrl(searchParams) {
+		var operation = searchParams && searchParams.operation; // store, as blsParams doesn't contain it: 'hits' or 'docs' or undefined
+		searchParams = SINGLEPAGE.BLS.getBlsParam(searchParams); 
 		
-		var modifiedParams ={}; 
+		var uri = new URI();
+		var paths = uri.segmentCoded();
+		var basePath = paths.slice(0, paths.lastIndexOf('search')+1);
+		// basePath now contains our url path, up to and including /search/
 		
-		// remove null, undefined, empty strings and empty arrays
+		// If we're not searching, return a bare url pointing to /search/
+		if (searchParams == null) {
+			return uri.directory(basePath).search(null).toString();
+		}
+
+		// remove null, undefined, empty strings and empty arrays from our query params
+		var modifiedParams = {};
 		$.each(searchParams, function(key, value) {
 			if (value == null)
 				return true;
@@ -145,11 +163,8 @@ SINGLEPAGE.CORE = (function () {
 			modifiedParams[key] = value;
 		});
 		
-		return '?' + QSON.toQueryString(modifiedParams);
-
-		// return new URI().search({
-		// 	search: JSON.stringify(modifiedParams)
-		// }).search();
+		// Append the operation, query params, etc, and return.
+		return uri.segmentCoded(basePath).segmentCoded(operation).search(searchParams).toString();
 	}
 
 	/**
@@ -378,10 +393,10 @@ SINGLEPAGE.CORE = (function () {
 			// Why? Because when the user goes back say, 10 pages, we reinit the page and do a search with the restored parameters
 			// this search would push a new history entry, popping the next 10 pages off the stack, which the url is the same because we just entered the page.
 			// So don't do that.
-			var newQueryString = toQueryString(searchParams);
-			var currentQueryString = new URI().search();
-			if (newQueryString !== currentQueryString)
-				history.pushState(null, null, newQueryString);
+			var newUrl = toPageUrl(searchParams);
+			var currentUrl = new URI().toString();
+			if (newUrl !== currentUrl)
+				history.pushState(null, null, newUrl);
 		},
 
 		// Called to reset search form and results

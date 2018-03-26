@@ -23,10 +23,10 @@
   * @typedef {Object} BlackLabParameters 
   * 
   * @property {number} number - number of results to request
-  * @property {first} number - index of first result to request
-  * @property {sample} [number] - percentage of results to return (0-100), mutually exclusive with 'samplenum'
-  * @property {samplenum} [number] - how many results to return, mutually exclusive with 'sample'
-  * @property {sampleseed} [number] - seed from which the samples are generated
+  * @property {number} first - index of first result to request
+  * @property {number} [sample] - percentage of results to return (0-100), mutually exclusive with 'samplenum'
+  * @property {number} [samlenum] - how many results to return, mutually exclusive with 'sample'
+  * @property {number} [sampleseed] - seed from which the samples are generated
   * @property {string} [filter] 
   * @property {string} [group] - how to group results
   * @property {string} [patt] - CQL query 
@@ -139,7 +139,7 @@ SINGLEPAGE.BLS = (function () {
 					'+', element.name, ':',
 					'[', element.values[0], ' TO ', element.values[1], ']'
 				);
-			} else if (element.filterType === 'select' || element.filterType === 'multiselect') {
+			} else if (element.filterType === 'select') {
 				// Surround each individual value with quotes, and surround the total with brackets  
 				filterStrings.push(
 					'+', element.name, ':',
@@ -339,6 +339,7 @@ SINGLEPAGE.BLS = (function () {
 			
 			/**
 			 * Translate SearchParameters to blacklab-server parameters.
+			 * 
 			 * @param {SearchParameters} param - the page parameters.
 			 * @returns {BlackLabParameters}
 			 */
@@ -360,6 +361,92 @@ SINGLEPAGE.BLS = (function () {
 					sort: param.sort || undefined,
 					viewgroup: param.viewGroup || undefined
 				};
+			},
+
+			/**
+			 * Transform BlackLabParameters into SearchParamers (where supported, blacklab server supports more options than the frontend in some options, so not all options may be mapped cleanly)
+			 * 
+			 * @param {BlackLabParameters} blsParam - (optional) the blacklab search object
+			 * @returns {SearchParameters|null} - null if empty or null blsParam
+			 */
+			getPageParam: function(blsParam) {
+				var pageParams = {};
+				if (blsParam == null || $.isEmptyObject(blsParam))
+					return null;
+
+				pageParams.operation  = blsParam.patt ? 'hits' : 'docs';
+				pageParams.pattern    = blsParam.patt || null; // restoring a simple search pattern from a query is not supported for now
+				// restoring WITHIN must be done by parsing the query, we can either do that here and use a sort of AST for the query in the rest of the application
+				// (see singlepate-cqlParser.js for what that data would look like)
+				// but doing this requires rewriting the parts of that currently rely on the raw cql query string
+				// This is the restoring of the querybuilder and the populating of the raw CQL input field
+				// pageParams.within   =  
+				pageParams.sampleSize = blsParam.sample != null ? blsParam.sample : blsParam.samplenum;
+				pageParams.sampleMode = blsParam.sample != null ? 'percentage' : blsParam.samplenum != null ? 'count' : undefined;
+				pageParams.sampleSeed = blsParam.sampleseed;
+				pageParams.page       = blsParam.number != null ? Math.floor((blsParam.first || 0) / blsParam.number) : undefined;
+				pageParams.pageSize   = blsParam.number || undefined;
+				pageParams.filters    = (function() {
+					if (!blsParam.filter)
+						return null;
+
+					if (SINGLEPAGE.DEBUG)
+						console.log('parsing filter string');
+					
+					// +type_brief:("business")
+					// +regiocode:("Friesland" "Noord-Holland, Amsterdam" "Sri Lanka")
+					// +afz_rel_tot_adr:("friend (m)")
+					// +signatuur:("dit" "is"  "een test")
+					
+					/**
+					 * Very rudimentary support, though blacklab supports full lucene query language
+					 * the frontend (currently) only supports AND'ing all values,
+					 * and so we won't make an attempt to correctly parse any value that we can't display
+					 * 
+					 * @returns {Array.<FilterField>}
+					 */
+					return $.map(blsParam.filter.split('+'), function(filterString) {
+						if (!filterString)
+							return null; // omit this item; split can result in empty strings at begin and end of array
+						
+						var reg = /\s*(\w+):([\w\s'"[\]()]+)/g;
+						var val = reg.exec(filterString);
+						
+						if (val == null) {
+							if (SINGLEPAGE.DEBUG)
+								console.log('Filter string ' + filterString + ' did not match regex - skipping (should not happend except on filters generated externally)');
+							return null;
+						}
+
+						var filterName = val[1];
+						var filterValString = val[2].substr(1, val[2].length - 2); // strip leading/trailing brackets
+						var filterValArray = [];
+						var filterType = val[2][0] === '[' && val[2].indexOf('TO') !== -1 ? 'range' : 'select';
+												
+						if (filterType === 'range') {
+							filterValArray = filterValString.split('TO');
+							filterValArray = [parseFloat(filterValArray[0]), parseFloat(filterValArray[1])];
+						} else {
+							// split all quoted values
+							reg = /"(.+?)"/g;
+
+							while ((val = reg.exec(filterValString)) != null) {
+								filterValArray.push(val[1]);
+							}
+						}
+
+						return {
+							name: filterName,
+							values: filterValArray,
+							filterType: filterType
+						};
+					});
+				})();
+				pageParams.groupBy    = blsParam.group ? blsParam.group.split(',') : undefined;
+				pageParams.viewGroup  = blsParam.viewgroup;
+				pageParams.sort       = blsParam.sort;
+
+				return pageParams;
 			},
 
 			/**

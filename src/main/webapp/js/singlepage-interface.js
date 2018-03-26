@@ -133,9 +133,12 @@ SINGLEPAGE.INTERFACE = (function() {
 		// Open/close the collapsible in the next row
 		var $element = $(propRow).next().next().find('.collapse');
 		$element.collapse('toggle');
+        
+        var $p = $("<div/>").text(props).html();
 
-		$element.html('<span><b>Properties: </b>' + props+ '</span>');
+		$element.html('<span><b>Properties: </b>' + $p + '</span>');
 	}
+    
 	/**
 	 * Show the error reporting field and display any errors that occured when performing a search.
 	 * 
@@ -468,7 +471,7 @@ SINGLEPAGE.INTERFACE = (function() {
 			var right = textDirection=='ltr'? parts[2] : parts[0]; 
 			var matchLemma = words(hit.match, 'lemma', false, '');
 			var matchPos = words(hit.match, 'pos', false, '');
-			var props = properties(hit.match);
+			var props = properties(hit.match).replace("&apos;","\\'");
 
 			html.push(
 				'<tr class="concordance" onclick="SINGLEPAGE.INTERFACE.showCitation(this, \''

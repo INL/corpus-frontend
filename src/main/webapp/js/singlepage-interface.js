@@ -429,12 +429,14 @@ SINGLEPAGE.INTERFACE = (function() {
 						html.push(
 						'</ul>',
 					'</span>',
-				'</th>',
-				// TODO these need to be dynamic based on propertyfields in AutoSearch, so does hit word
-				'<th style="width:15px;"><a data-bls-sort="hit:lemma">Lemma</a></th>',
-				'<th style="width:25px;"><a data-bls-sort="hit:pos">Part of speech</a></th>',
-			'</tr></thead>'
-		);
+				'</th>');
+				
+				$.each(props, function(i, prop) {
+					html.push(
+					'<th style="width:15px;"><a data-bls-sort="hit:'+prop.id+'">'+prop.displayName+'</a></th>');
+				});
+			html.push('</tr></thead>');
+		
 
 		html.push('<tbody>');
 		var prevHitDocPid = null;
@@ -466,18 +468,20 @@ SINGLEPAGE.INTERFACE = (function() {
 			var parts = snippetParts(hit);
 			var left = textDirection=='ltr'? parts[0] : parts[2]; 
 			var right = textDirection=='ltr'? parts[2] : parts[0]; 
-			var matchLemma = words(hit.match, 'lemma', false, '');
-			var matchPos = words(hit.match, 'pos', false, '');
-			var props = properties(hit.match);
+			
+			var propsWord = properties(hit.match);
 
 			html.push(
 				'<tr class="concordance" onclick="SINGLEPAGE.INTERFACE.showCitation(this, \''
-				+ docPid + '\', '+ hit.start + ', '+ hit.end + ', \'' + textDirection + '\');SINGLEPAGE.INTERFACE.showProperties(this, \''+props+'\');">',
+				+ docPid + '\', '+ hit.start + ', '+ hit.end + ', \'' + textDirection + '\');SINGLEPAGE.INTERFACE.showProperties(this, \''+propsWord+'\');">',
 					'<td class="text-right">', ELLIPSIS, ' <span dir="', textDirection, '">', left, '</span></td>',
 					'<td class="text-center"><span dir="', textDirection, '"><strong>', parts[1], '</strong></span></td>',
-					'<td><span dir="', textDirection, '">', right, '</span> ', ELLIPSIS, '</td>',
-					'<td>', matchLemma, '</td>',
-					'<td>', matchPos, '</td>',
+					'<td><span dir="', textDirection, '">', right, '</span> ', ELLIPSIS, '</td>');
+			$.each(props, function(i, prop) {
+				html.push(
+				'<td>', words(hit.match, prop.id, false, ''), '</td>');
+			});
+			html.push(
 				'</tr>');
 
 			// Snippet row (initially hidden)

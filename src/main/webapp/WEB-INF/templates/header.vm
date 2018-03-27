@@ -33,6 +33,9 @@
         <link rel="stylesheet" href="$pathToTop/css/vendor/jquery.fileupload.css">
         <link rel="stylesheet" href="$pathToTop/css/vendor/pageguide.min.css">
         <link rel="stylesheet" href="$pathToTop/css/main.css">
+        #if ($websiteConfig.getPathToCustomCss())
+            <link rel="stylesheet" href="$websiteConfig.getPathToCustomCss()">
+        #end
 
        	#parse("custom-css.vm")
 
@@ -51,6 +54,9 @@
 		<script src="$pathToTop/js/vendor/jquery.fileupload.js"></script>
 		<script src="$pathToTop/js/vendor/pageguide.min.js"></script>
 		<script src="$pathToTop/js/tutorial.js"></script>
+        #if ($websiteConfig.getPathToCustomJs())
+            <script src="$websiteConfig.getPathToCustomJs()"></script>
+        #end
 		
     </head>
     <body>

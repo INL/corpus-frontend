@@ -433,9 +433,12 @@ public class MainServlet extends HttpServlet {
 	}
 
 	/**
-	 * Get a file from the directory belonging to this corpus and return it, or return the default file if the corpus-specific file cannot be located.
+	 * Get a file from the directory belonging to this corpus and return it, or return the default file for this project if there is no corpus-specific file
+	 *  or return the default file if the project-specific file cannot be located.
+	 * The project specific default file (located in the root of corporaInterfaceDataDir) is returned when:
+	 * corpus is null, corpus is a user-uploaded corpus 
 	 * The default file is returned when:
-	 * corpus is null, corpus is a user-uploaded corpus, the interface data directory is not configured, or the file is simply missing
+	 * the interface data directory is not configured, or the file is simply missing
 	 * This is provided the default file exists and getDefaultIfMissing is true, otherwise null will be returned.
 	 *
 	 * @param corpus - corpus for which to get the file. If null, falls back to the default files.
@@ -444,34 +447,61 @@ public class MainServlet extends HttpServlet {
 	 * @return the file, or null if not found
 	 */
 	public InputStream getProjectFile(String corpus, String fileName, boolean getDefaultIfMissing) {
-		if (corpus == null || isUserCorpus(corpus) || !adminProps.containsKey("corporaInterfaceDataDir") ) {
-			if (!adminProps.containsKey("corporaInterfaceDataDir"))
-				logger.debug("corporaInterfaceDataDir not set, couldn't find project file " + fileName + " for corpus " + corpus + (getDefaultIfMissing ? "; using default" : "; returning null"));
+		if (!adminProps.containsKey("corporaInterfaceDataDir") ) {
+			logger.debug("corporaInterfaceDataDir not set, couldn't find project file " + fileName + " for corpus " + corpus + (getDefaultIfMissing ? "; using default" : "; returning null"));
 			return getDefaultIfMissing ? getDefaultProjectFile(fileName) : null;
 		}
 
+		InputStream projectFile = null;
+		Path baseDir = Paths.get(adminProps.getProperty("corporaInterfaceDataDir"));
+		// First try the corpus specific
+		if(corpus != null && !isUserCorpus(corpus)) {
+			Path corpusDir = baseDir.resolve(corpus).normalize();
+			projectFile = getProjectSpecificFile(fileName, corpusDir);
+			if (projectFile != null) {
+				return projectFile;
+			}
+		}
+		
+		// Then try configured 
+		projectFile = getProjectSpecificFile(fileName, baseDir);
+		if (projectFile != null) {
+			logger.debug("Using project file from configured default");
+			return projectFile;
+		}
+		
+		logger.debug("Couldn't find project file " + fileName + " for corpus " + corpus + (getDefaultIfMissing ? "; using default" : "; returning null"));
+		return getDefaultIfMissing ? getDefaultProjectFile(fileName) : null;
+	}
+	
+	/**
+	 * Gets a file from the interface-default directory in the project.
+	 *
+	 * @param fileName The file to get. This should NOT start with "/"
+	 * @param corpusDir The directory where the file should be found
+	 * @return the InputStream for the file. Or null if this file cannot be found.
+	 */
+	private InputStream getProjectSpecificFile(String fileName, Path corpusDir) {
 		File projectFile = null;
 		try {
-			Path baseDir = Paths.get(adminProps.getProperty("corporaInterfaceDataDir"));
-			Path corpusDir = baseDir.resolve(corpus).normalize();
 			Path filePath = corpusDir.resolve(fileName).normalize();
 			projectFile = new File(filePath.toString());
-			if (!projectFile.exists() && !projectFile.canRead()) {
+			if (projectFile.exists() && !projectFile.canRead()) {
 				// Problem with file permissions (possibly SELinux?)
 				logger.warn("File " + projectFile + " exists but is unreadable!");
 			}
-			if (corpusDir.startsWith(baseDir) && filePath.startsWith(corpusDir)) {
+			if (filePath.startsWith(corpusDir)) {
 				return new FileInputStream(projectFile);
 			}
 
 			// File path points outside the configured directory!
-			logger.warn("Disallowing project file outside configured directory: " + fileName + " for corpus " + corpus + (getDefaultIfMissing ? "; using default" : "; returning null"));
+			logger.warn("Disallowing project file outside configured directory: " + fileName);
 		} catch (FileNotFoundException e) {
 			// This is "normal", just means we want to use the generic version of this file or are checking to see if it exists.
 		} catch (SecurityException e) {
-			logger.debug("SecurityException finding project file " + fileName + " for corpus " + corpus + " as file " + projectFile.toString() + (getDefaultIfMissing ? "; using default" : "; returning null"));
+			logger.debug("SecurityException finding project file " + fileName + " as file " + projectFile.toString() );
 		}
-		return getDefaultIfMissing ? getDefaultProjectFile(fileName) : null;
+		return null;
 	}
 
 	/**

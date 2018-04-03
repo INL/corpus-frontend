@@ -283,18 +283,17 @@ var corpora = {};
 				$.each(data.supportedInputFormats, function(formatId, format) {
 					// Strip any usernames from the format id to extract a short name
 					var isUserFormat = formatId.indexOf(data.user.id) !== -1;
-					var shortName = isUserFormat ? formatId.substr(formatId.indexOf(data.user.id) + data.user.id.length + 1) : formatId;
+					var shortId = isUserFormat ? formatId.substr(formatId.indexOf(data.user.id) + data.user.id.length + 1) : formatId;
 					
-
 					// we have title, >something?< and data-content
-					var $option = $('<option title="' + (format.description || format.displayName) + '" value="' + formatId + '">' + shortName + ' - ' + format.displayName + '</option>');
+					var $option = $('<option title="' + (format.description || format.displayName) + '" value="' + formatId + '" data-content="'+format.displayName+' <small>('+shortId+')</small>" >'+format.displayName+'</option>');
 					
 					var $tr = $([
 						'<tr>',
-						'<td>', shortName, '</td>',
+						'<td>', shortId, '</td>',
 						'<td>', format.displayName, '</td>',
-						'<td><a class="fa fa-trash" data-format-operation="delete" data-format-id="'+formatId+'" title="Delete format \''+shortName+'\'" href="javascript:void(0)"></a></td>',
-						'<td><a class="fa fa-pencil" data-format-operation="edit" data-format-id="'+formatId+'" title="Edit format \''+shortName+'\'" href="javascript:void(0)"></a></td>',
+						'<td><a class="fa fa-trash" data-format-operation="delete" data-format-id="'+formatId+'" title="Delete format \''+shortId+'\'" href="javascript:void(0)"></a></td>',
+						'<td><a class="fa fa-pencil" data-format-operation="edit" data-format-id="'+formatId+'" title="Edit format \''+shortId+'\'" href="javascript:void(0)"></a></td>',
 						'</tr>'].join(''));
 				
 					if (formatId.indexOf(data.user.id) === 0) {

@@ -119,7 +119,7 @@ public class CorpusConfig {
 
 	private void parseMetadataFields() {
 		// Keyed by name of field
-		Map<String, FieldDescriptor> parsedFields = new HashMap<>();
+		Map<String, FieldDescriptor> parsedFields = new LinkedHashMap<>();
 
 		// Parse all metadata fields
 		NodeList metadataFieldNodeList = config.getElementsByTagName("metadataField");

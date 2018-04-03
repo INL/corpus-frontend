@@ -568,6 +568,7 @@ public class MainServlet extends HttpServlet {
 				stylesheet = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
 						"<xsl:stylesheet version=\"2.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">" +
 						"<xsl:output encoding=\"utf-8\" method=\"html\" omit-xml-declaration=\"yes\" />" +
+						"<xsl:template match='/'>ERROR: no XSLT configured for corpus " + corpus + " (format " + corpusDataFormat + "), and cannot auto-generate.</xsl:template>" +
 						"</xsl:stylesheet>";
 			} else {
 				throw new RuntimeException(e); // blacklab internal server error or the like, abort the request.

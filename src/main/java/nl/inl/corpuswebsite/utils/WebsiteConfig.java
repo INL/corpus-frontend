@@ -57,12 +57,19 @@ public class WebsiteConfig {
 	/** Logo image to use */
 	private String pathToLogo;
 
-	/** Link to put in the top bar */
+	/** Custom css to use */
+	private String pathToCustomCss;
+    
+	/** Custom js to use */
+	private String pathToCustomJs;
+
+    /** Link to put in the top bar */
 	private List<LinkInTopBar> linksInTopBar = new ArrayList<>();
 
 	private Map<String, String> xsltParameters = new HashMap<>();
 
-	/**
+
+    /**
 	 *
 	 * @param configFile
 	 * @param absoluteContextPath
@@ -96,6 +103,8 @@ public class WebsiteConfig {
 
 		colorBackground 		= xmlConfig.getString("InterfaceProperties.BackgroundColor");
 		colorLink 				= xmlConfig.getString("InterfaceProperties.LinkColor");
+		pathToCustomJs 	= processUrl(xmlConfig.getString("InterfaceProperties.CustomJs"));
+		pathToCustomCss 	= processUrl(xmlConfig.getString("InterfaceProperties.CustomCss"));
 		pathToBackgroundImage 	= processUrl(xmlConfig.getString("InterfaceProperties.BackgroundImage"));
 		pathToLogo 				= processUrl(xmlConfig.getString("InterfaceProperties.Logo"));
 
@@ -163,6 +172,14 @@ public class WebsiteConfig {
 		return xsltParameters;
 	}
 
+    public String getPathToCustomCss() {
+        return pathToCustomCss;
+    }
+
+    public String getPathToCustomJs() {
+        return pathToCustomJs;
+    }
+    
 	// TODO centralize normalizing/making relative of links (mainservlet static func?)
 	private String processUrl(String link) {
 		if (link == null)

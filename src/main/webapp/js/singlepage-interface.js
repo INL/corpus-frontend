@@ -135,7 +135,6 @@ SINGLEPAGE.INTERFACE = (function() {
 		$element.collapse('toggle');
         
         var $p = $("<div/>").text(props).html();
-
 		$element.html('<span><b>Properties: </b>' + $p + '</span>');
 	}
     
@@ -407,16 +406,24 @@ SINGLEPAGE.INTERFACE = (function() {
 						'<span class="caret"></span></a>',
 						'<ul class="dropdown-menu" role="menu" aria-labelledby="left">');
 						$.each(props, function(i, prop) {
-							html.push(
-								'<li><a data-bls-sort="left:' + prop.id + '">' + prop.displayName + '</a></li>');
+							if(!prop.isMainProp){
+								html.push(
+										'<li><a data-bls-sort="left:' + prop.id + '">' + prop.displayName + '</a></li>');
+							}
 						});
 						html.push(
 						'</ul>',
 					'</span>',
 				'</th>',
 
-				'<th class="text-center" style="width:20px;">',
-					'<a data-bls-sort="hit:word"><strong>Hit text<strong></a>',
+				'<th class="text-center" style="width:20px;">');
+						$.each(props, function(i, prop) {
+							if(prop.isMainProp){
+								html.push(
+										'<a data-bls-sort="hit:' + prop.id + '"><strong>' + prop.displayName + '<strong></a>');
+							}
+						});
+						html.push(
 				'</th>',
 
 				'<th class="text-left" style="width:40px;">',
@@ -426,18 +433,24 @@ SINGLEPAGE.INTERFACE = (function() {
 						'<span class="caret"></span></a>',
 						'<ul class="dropdown-menu" role="menu" aria-labelledby="right">');
 						$.each(props, function(i, prop) {
-							html.push(
-							'<li><a data-bls-sort="right:' + prop.id + '">' + prop.displayName + '</a></li>');
+							if(!prop.isMainProp){
+								html.push(
+								'<li><a data-bls-sort="right:' + prop.id + '">' + prop.displayName + '</a></li>');
+							}
 						});
 						html.push(
 						'</ul>',
 					'</span>',
-				'</th>',
-				// TODO these need to be dynamic based on propertyfields in AutoSearch, so does hit word
-				'<th style="width:15px;"><a data-bls-sort="hit:lemma">Lemma</a></th>',
-				'<th style="width:25px;"><a data-bls-sort="hit:pos">Part of speech</a></th>',
-			'</tr></thead>'
-		);
+				'</th>');
+				
+				$.each(props, function(i, prop) {
+					if(!prop.isMainProp){
+						html.push(
+						'<th style="width:15px;"><a data-bls-sort="hit:'+prop.id+'">'+prop.displayName+'</a></th>');
+					}
+				});
+			html.push('</tr></thead>');
+		
 
 		html.push('<tbody>');
 		var prevHitDocPid = null;
@@ -468,19 +481,20 @@ SINGLEPAGE.INTERFACE = (function() {
 			// And display the hit itself
 			var parts = snippetParts(hit);
 			var left = textDirection=='ltr'? parts[0] : parts[2]; 
-			var right = textDirection=='ltr'? parts[2] : parts[0]; 
-			var matchLemma = words(hit.match, 'lemma', false, '');
-			var matchPos = words(hit.match, 'pos', false, '');
-			var props = properties(hit.match).replace("'","\\'").replace("&apos;","\\'");
+			var right = textDirection=='ltr'? parts[2] : parts[0];
+			var propsWord = properties(hit.match).replace("'","\\'").replace("&apos;","\\'").replace('"', '&quot;');
 
 			html.push(
 				'<tr class="concordance" onclick="SINGLEPAGE.INTERFACE.showCitation(this, \''
-				+ docPid + '\', '+ hit.start + ', '+ hit.end + ', \'' + textDirection + '\');SINGLEPAGE.INTERFACE.showProperties(this, \''+props+'\');">',
+				+ docPid + '\', '+ hit.start + ', '+ hit.end + ', \'' + textDirection + '\');SINGLEPAGE.INTERFACE.showProperties(this, \''+propsWord+'\');">',
 					'<td class="text-right">', ELLIPSIS, ' <span dir="', textDirection, '">', left, '</span></td>',
 					'<td class="text-center"><span dir="', textDirection, '"><strong>', parts[1], '</strong></span></td>',
-					'<td><span dir="', textDirection, '">', right, '</span> ', ELLIPSIS, '</td>',
-					'<td>', matchLemma, '</td>',
-					'<td>', matchPos, '</td>',
+					'<td><span dir="', textDirection, '">', right, '</span> ', ELLIPSIS, '</td>');
+					$.each(props, function(i, prop) { if(!prop.isMainProp) {
+					html.push(
+					'<td>', words(hit.match, prop.id, false, ''), '</td>');
+					}});
+					html.push(
 				'</tr>');
 
 			// Snippet row (initially hidden)

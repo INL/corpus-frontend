@@ -63,9 +63,6 @@ table.corpora a.disabled {
 
 /* upload modal */
 
-#upload-file-dialog ul {
-	margin: 0 0 1.6em 1.1em;
-}
 .fileinput-button {
 	display: block;
 	height: 12em;
@@ -97,10 +94,4 @@ table.corpora a.disabled {
 }
 #upload-file-dialog .progress {
 	margin: 1.2em 0;
-}
-body {
-    /* default settings for background image of IVDNT, should and can be customized when other image used for corpus */
-		background-repeat: no-repeat;
-        background-position: -350px -310px;
-        background-attachment: scroll;
 }

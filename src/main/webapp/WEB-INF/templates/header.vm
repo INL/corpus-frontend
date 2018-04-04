@@ -2,34 +2,34 @@
 <html>
     <head>
 
-		<meta charset="utf-8">
-		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
         
         #if ($websiteConfig.getCorpusDisplayName())
-		<meta property="og:description" content="$websiteConfig.getCorpusDisplayName() provided by the Dutch Language Institute in Leiden."/>
+        <meta property="og:description" content="$websiteConfig.getCorpusDisplayName() provided by the Dutch Language Institute in Leiden."/>
         <meta name="description" content="$websiteConfig.getCorpusDisplayName() search provided by the Dutch Language Institute in Leiden.">
-		<title>$websiteConfig.getCorpusDisplayName() search</title>
-		#else
-		<meta property="og:description" content="AutoSearch provided by the Dutch Language Institute in Leiden."/>
-		<meta name="description" content="AutoSearch, provided by the Dutch Language Institute in Leiden.">
-		<title>Welcome to AutoSearch</title>
-		#end
+        <title>$websiteConfig.getCorpusDisplayName() search</title>
+        #else
+        <meta property="og:description" content="AutoSearch provided by the Dutch Language Institute in Leiden."/>
+        <meta name="description" content="AutoSearch, provided by the Dutch Language Institute in Leiden.">
+        <title>Welcome to AutoSearch</title>
+        #end
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-		
-		<link rel="icon" type="image/png" sizes="32x32" href="$pathToTop/img/favicon-32x32.png">
-		<link rel="icon" type="image/png" sizes="16x16" href="$pathToTop/img/favicon-16x16.png">
-		<link rel="manifest" href="$pathToTop/img/manifest.json">
-		<link rel="mask-icon" href="$pathToTop/img/safari-pinned-tab.svg" color="#3b3b3b">
-		<link rel="shortcut icon" href="$pathToTop/img/favicon.ico">
-		<meta name="msapplication-config" content="$pathToTop/img/browserconfig.xml">
-		<meta name="theme-color" content="#ffffff">
-		
-		<!-- Build time: $buildTime -->
-		## TODO set based on corpus info
-		<link title="Search" type="application/opensearchdescription+xml" rel="search" href="$pathToTop/opensearch.xml">
-		<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-		<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/css/bootstrap-select.min.css">
-		<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
+        
+        <link rel="icon" type="image/png" sizes="32x32" href="$pathToTop/img/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="$pathToTop/img/favicon-16x16.png">
+        <link rel="manifest" href="$pathToTop/img/manifest.json">
+        <link rel="mask-icon" href="$pathToTop/img/safari-pinned-tab.svg" color="#3b3b3b">
+        <link rel="shortcut icon" href="$pathToTop/img/favicon.ico">
+        <meta name="msapplication-config" content="$pathToTop/img/browserconfig.xml">
+        <meta name="theme-color" content="#ffffff">
+        
+        <!-- Build time: $buildTime -->
+        ## TODO set based on corpus info
+        <link title="Search" type="application/opensearchdescription+xml" rel="search" href="$pathToTop/opensearch.xml">
+        <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/css/bootstrap-select.min.css">
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
         <link rel="stylesheet" href="$pathToTop/css/vendor/jquery.fileupload.css">
         <link rel="stylesheet" href="$pathToTop/css/vendor/pageguide.min.css">
         <link rel="stylesheet" href="$pathToTop/css/main.css">
@@ -37,78 +37,70 @@
             <link rel="stylesheet" href="$websiteConfig.getPathToCustomCss()">
         #end
 
-       	#parse("custom-css.vm")
-
-		<link rel="icon" type="image/png" href="$pathToTop/img/favicon.png">
-		<link rel="apple-touch-icon" href="$pathToTop/img/apple-touch-icon.png">
+        <link rel="icon" type="image/png" href="$pathToTop/img/favicon.png">
+        <link rel="apple-touch-icon" href="$pathToTop/img/apple-touch-icon.png">
         
         <script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
-		<!-- SKIP JQueryUI 1.12.1, has bug where event handlers on widgets are not cleaned up correctly, fixed in 1.12.2, but unavailable as of writing (28-07-1017) -->
-		<!-- See https://bugs.jqueryui.com/ticket/15082 -->
+        <!-- SKIP JQueryUI 1.12.1, has bug where event handlers on widgets are not cleaned up correctly, fixed in 1.12.2, but unavailable as of writing (28-07-1017) -->
+        <!-- See https://bugs.jqueryui.com/ticket/15082 -->
         <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.12.0/jquery-ui.min.js"></script>
-      	<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>   
+          <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>   
         <script src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/js/bootstrap-select.min.js"></script>
         <script src="$pathToTop/js/vendor/jquery.ui.widget.js"></script>
-		<script src="$pathToTop/js/vendor/jQuery.extendext.js"></script>
-		<script src="$pathToTop/js/vendor/jquery.iframe-transport.js"></script>
-		<script src="$pathToTop/js/vendor/jquery.fileupload.js"></script>
-		<script src="$pathToTop/js/vendor/pageguide.min.js"></script>
-		<script src="$pathToTop/js/tutorial.js"></script>
+        <script src="$pathToTop/js/vendor/jQuery.extendext.js"></script>
+        <script src="$pathToTop/js/vendor/jquery.iframe-transport.js"></script>
+        <script src="$pathToTop/js/vendor/jquery.fileupload.js"></script>
+        <script src="$pathToTop/js/vendor/pageguide.min.js"></script>
+        <script src="$pathToTop/js/tutorial.js"></script>
         #if ($websiteConfig.getPathToCustomJs())
             <script src="$websiteConfig.getPathToCustomJs()"></script>
         #end
-		
+        
     </head>
     <body>
         <!--[if lt IE 9]>
-			<br/><br/><br/>
-			<div class="alert alert-warning">
-			<h1>Error: Incompatible browser.</h1>
+            <br/><br/><br/>
+            <div class="alert alert-warning">
+            <h1>Error: Incompatible browser.</h1>
             <p>You are using an <strong>outdated</strong> browser which cannot display this website correctly. Please use the latest version of <a href="http://www.mozilla.org/en-US/firefox/new/">Mozilla Firefox</a> or <a href="https://www.google.com/intl/en/chrome/browser/">Google Chrome</a> instead.</p>
-			</div>
+            </div>
         <![endif]-->
         <div class="navbar navbar-inverse navbar-fixed-top">
             <div class="container">
-            	<div class="navbar-header">
-					#if($websiteConfig.getLogo())
-					<div class="navbar-logo-container">
-						<img src="$websiteConfig.getLogo()" class="navbar-logo" />
-					</div>	
-					#end 
-					
-					#if($websiteConfig.getCorpusDisplayName())
-				    <a href='$brandLink' class='navbar-brand'>$websiteConfig.getCorpusDisplayName()</a>
+                <div class="navbar-header">
+                    <div class="navbar-logo-container">
+                        <div class="navbar-logo"></div>
+                    </div> 
+                    
+                    #if($websiteConfig.getCorpusDisplayName())
+                    <a href='$brandLink' class='navbar-brand'>$websiteConfig.getCorpusDisplayName()</a>
                     #else
-				    <a href='$brandLink' class='navbar-brand'>AutoSearch</a>
+                    <a href='$brandLink' class='navbar-brand'>AutoSearch</a>
                     #end
                     
-	                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-	                    <span class="icon-bar"></span>
-	                    <span class="icon-bar"></span>
-	                    <span class="icon-bar"></span>
-	                </button>
-            	</div>
-            	
-				#if($websiteConfig.getLogo())
-            	<div class="navbar-collapse collapse navbar-logo-margin">
-				#else
-				<div class="navbar-collapse collapse">
-				#end        	
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                </div>
+                
+                <div class="navbar-collapse collapse navbar-logo-margin">
                     <ul class="nav navbar-nav">
                         #foreach($link in $websiteConfig.getLinks())
-							<li><a href="$link.get('href')"#if($link.get('newWindow')) target="_blank"#else#end>$link.get('name')</a></li>
-						#end
+                            <li><a href="$link.get('href')"#if($link.get('newWindow')) target="_blank"#else#end>$link.get('name')</a></li>
+                        #end
                     </ul>
                 </div>
             </div>
         </div>
-		
+        
         <div class="container">
-			<noscript>
-				<br/><br/><br/>
-				<div class="alert alert-error">	
-        			<h1>Error: JavaScript disabled.</h1>
-        			We notice that you have JavaScript disabled in your browser. This website requires JavaScript to be enabled. Please enable JavaScript to use this website.
-				</div>
-    		</noscript>
-			<div class="row">
+            <noscript>
+                <br/><br/><br/>
+                <div class="alert alert-error">    
+                    <h1>Error: JavaScript disabled.</h1>
+                    We notice that you have JavaScript disabled in your browser. This website requires JavaScript to be enabled. Please enable JavaScript to use this website.
+                </div>
+            </noscript>
+            <div class="row">

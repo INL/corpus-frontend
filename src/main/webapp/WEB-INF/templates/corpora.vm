@@ -1,227 +1,227 @@
 #parse("header.vm")
 
 <div id="successDiv" class="alert alert-success alert-dismissable">
-	<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
-	<span id="successMessage"></span>
+    <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+    <span id="successMessage"></span>
 </div>
 <div id="errorDiv" class="alert alert-danger alert-dismissable">
-	<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
-	<span id="errorMessage"></span>
+    <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+    <span id="errorMessage"></span>
 </div>
 
 <div class="col-xs-12 contentbox" data-bls-url="$blsUrl" style="position:relative;min-height:150px;">
 
-	<span id="waitDisplay" class="fa fa-spinner fa-spin searchIndicator" style="position: absolute; left: 50%;"></span>
-	
-	<div id="corpora-all-container">
+    <span id="waitDisplay" class="fa fa-spinner fa-spin searchIndicator" style="position: absolute; left: 50%;"></span>
+    
+    <div id="corpora-all-container">
 
-		<h1>Available corpora</h1>
-	
-		<div id="corpora-public-container">
-			<hr>
-			<h2>Public corpora</h2>
+        <h1>Available corpora</h1>
+    
+        <div id="corpora-public-container">
+            <hr>
+            <h2>Public corpora</h2>
 
-			<!-- 	NOTE: using a table because we'd like to automatically 
-    		size width to longest corpus name. There's probably better ways. -->
-			<table class="corpora public table">
-				<thead>
-					<tr>
-						<th></th>
-						<th></th>
-						<th>Size</th>
-					</tr>
-				</thead>
-				<tbody id="corpora"></tbody>
-			</table>
+            <!--     NOTE: using a table because we'd like to automatically 
+            size width to longest corpus name. There's probably better ways. -->
+            <table class="corpora public table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th></th>
+                        <th>Size</th>
+                    </tr>
+                </thead>
+                <tbody id="corpora"></tbody>
+            </table>
 
-		</div>
+        </div>
 
-		<div id="corpora-private-container">
-			<hr>
-			<h2 id="header-private">Your corpora</h2>
-			<p>(logged in as <i data-autoupdate="userId"></i>)</p>
+        <div id="corpora-private-container">
+            <hr>
+            <h2 id="header-private">Your corpora</h2>
+            <p>(logged in as <i data-autoupdate="userId"></i>)</p>
 
-			<table class="corpora private table">
-				<colgroup>
-					<col class="corpus-name" />
-					<col class="delete" />
-					<col />
-					<col />
-					<col />
-					<col />
-					<col />
-				</colgroup>
-				<thead>
-					<tr>
-						<th>Corpus</th>
-						<th></th>
-						<th class="size">Size</th>
-						<th>Format</th>
-						<th>Last modified</th>
-						<th></th>
-						<th></th>
-					</tr>
-				</thead>
-				<tbody id="corpora-private"></tbody>
-			</table>
-			
-			<button class="btn btn-default btn-lg" id="create-corpus" type="button" data-toggle="modal" data-target="#new-corpus-modal">New corpus</button>
-		
-		</div>
-	
-	</div>
+            <table class="corpora private table">
+                <colgroup>
+                    <col class="corpus-name" />
+                    <col class="delete" />
+                    <col />
+                    <col />
+                    <col />
+                    <col />
+                    <col />
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th>Corpus</th>
+                        <th></th>
+                        <th class="size">Size</th>
+                        <th>Format</th>
+                        <th>Last modified</th>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="corpora-private"></tbody>
+            </table>
+            
+            <button class="btn btn-default btn-lg" id="create-corpus" type="button" data-toggle="modal" data-target="#new-corpus-modal">New corpus</button>
+        
+        </div>
+    
+    </div>
 
-	<div id="formats-all-container">
-		<hr>
-		<h2>Your import formats</h2>
-		<p>(logged in as <i data-autoupdate="userId"></i>)</p>
-	
-		<table class="table corpora" data-autoupdate="format">
-			<thead>
-				<tr>
-					<th>Id</th>
-					<th>Name</th>
-					<th></th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody>
-			<!-- filled by clientside js -->
-			</tbody>
-		</table>
-		<button type="button" class="btn btn-lg btn-default" data-toggle="modal" data-target="#new-format-modal">New format</button>
+    <div id="formats-all-container">
+        <hr>
+        <h2>Your import formats</h2>
+        <p>(logged in as <i data-autoupdate="userId"></i>)</p>
+    
+        <table class="table corpora" data-autoupdate="format">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Name</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            <!-- filled by clientside js -->
+            </tbody>
+        </table>
+        <button type="button" class="btn btn-lg btn-default" data-toggle="modal" data-target="#new-format-modal">New format</button>
 
-	</div>
+    </div>
 </div>
 
 <div class="modal fade modal-fullwidth" id="new-format-modal" role="dialog">
-	<div class="modal-dialog">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h3>New import format</h3>
-			</div>
-			
-			<div class="modal-body">
-						
-				<div style="display:flex; align-items: flex-end; justify-content: space-between;">
-					<div class="form-group" style="margin-right: 50px; flex: 1 1 auto;">
-						<label for="format_name">Format name</label>
-			            <div class="input-group" style="width:100%">
-				            <input type="text" id="format_name" name="format_name" class="form-control" />
-				            <select id="format_type" class="selectpicker" data-width="auto" data-style="btn-primary">
-				            	<option label="YAML" value="yaml" selected>YAML</option>
-				            	<option label="JSON" value="json">JSON</option>
-				            </select>
-			            </div>
-					</div>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>New import format</h3>
+            </div>
+            
+            <div class="modal-body">
+                        
+                <div style="display:flex; align-items: flex-end; justify-content: space-between;">
+                    <div class="form-group" style="margin-right: 50px; flex: 1 1 auto;">
+                        <label for="format_name">Format name</label>
+                        <div class="input-group" style="width:100%">
+                            <input type="text" id="format_name" name="format_name" class="form-control" />
+                            <select id="format_type" class="selectpicker" data-width="auto" data-style="btn-primary">
+                                <option label="YAML" value="yaml" selected>YAML</option>
+                                <option label="JSON" value="json">JSON</option>
+                            </select>
+                        </div>
+                    </div>
 
-					<div class="form-group" style="flex: 0 0 auto;">
-						<label style="display:block;">Load a file</label>
-					
-						<span class="btn btn-primary" style="position:relative;">
-							<input 
-							type="file" 
-							name="format_file" 
-							id="format_file" 
-							title="Open a file from your computer"
-							style="position:absolute;left:0;top:0;width:0px;height:100%;padding-left:100%;opacity:0;cursor:pointer;overflow:hidden;"/>
-							Open file...
-						</span>
-						
-						<select class="selectpicker" id="format_preset" data-autoupdate="format">
-							<!-- options filled in by clientside javascript -->
-						</select>
-						
-						<button 
-						type="button" 
-						name="format_download" 
-						id="format_download" 
-						title="Download this format from the server"
-						class="btn btn-primary" 
-						title="Load preset">Load preset</button>
-					</div>
-				</div>
-				
-				<textarea id="format_editor" style="width:100%;"></textarea>
-			
-				<div id="format_error" class="alert alert-danger" style="display:none; margin-top:20px; flex: none;"></div>
-			</div>
-			
-			<div class="modal-footer">
-				<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-				<button type="button" class="btn btn-primary" id="format_save">Save</button>			
-			</div>
-			
-		</div>
-	</div>
+                    <div class="form-group" style="flex: 0 0 auto;">
+                        <label style="display:block;">Load a file</label>
+                    
+                        <span class="btn btn-primary" style="position:relative;">
+                            <input 
+                            type="file" 
+                            name="format_file" 
+                            id="format_file" 
+                            title="Open a file from your computer"
+                            style="position:absolute;left:0;top:0;width:0px;height:100%;padding-left:100%;opacity:0;cursor:pointer;overflow:hidden;"/>
+                            Open file...
+                        </span>
+                        
+                        <select class="selectpicker" id="format_preset" data-autoupdate="format">
+                            <!-- options filled in by clientside javascript -->
+                        </select>
+                        
+                        <button 
+                        type="button" 
+                        name="format_download" 
+                        id="format_download" 
+                        title="Download this format from the server"
+                        class="btn btn-primary" 
+                        title="Load preset">Load preset</button>
+                    </div>
+                </div>
+                
+                <textarea id="format_editor" style="width:100%;"></textarea>
+            
+                <div id="format_error" class="alert alert-danger" style="display:none; margin-top:20px; flex: none;"></div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="format_save">Save</button>            
+            </div>
+            
+        </div>
+    </div>
 </div>
 
 <div class="modal fade" id="new-corpus-modal" tabindex="-1" role="dialog" aria-labelledby="create-corpus" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-	            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-	            <h4 class="modal-title">Create New Corpus</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title">Create New Corpus</h4>
             </div>
             <div class="modal-body">
                 <div class="container-fluid">
-	                <div class="form-group">
-		                <label for="corpus_name">Corpus Name</label>
-		                <input type="text" id="corpus_name" name="corpus_name" maxlength="80" class="form-control" />
-	                </div>
-	                <div class="form-group">
-	                    <label for="corpus_document_type" title="The format of the documents that will be stored in the corpus">Document Format</label>
-		                <br/>
-		                <select id="corpus_document_type" name="corpus_document_type" class="selectpicker" data-autoupdate="format">
-		                	<!-- filled in through clientside javascript -->
-		                </select>
-					</div>
-				</div>
+                    <div class="form-group">
+                        <label for="corpus_name">Corpus Name</label>
+                        <input type="text" id="corpus_name" name="corpus_name" maxlength="80" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label for="corpus_document_type" title="The format of the documents that will be stored in the corpus">Document Format</label>
+                        <br/>
+                        <select id="corpus_document_type" name="corpus_document_type" class="selectpicker" data-autoupdate="format">
+                            <!-- filled in through clientside javascript -->
+                        </select>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" data-dismiss="modal">Save</button>
-			</div>
-		</div>
-	</div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="modal fade" id="upload-file-dialog" tabindex="-1" role="dialog" aria-labelledby="upload-file" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-	            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-	            <h4 class="modal-title" id="upload-file-dialog-title">Add <span id="uploadFormat"></span>data to corpus <span id="uploadCorpusName">&hellip;</span></h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="upload-file-dialog-title">Add <span id="uploadFormat"></span>data to corpus <span id="uploadCorpusName">&hellip;</span></h4>
             </div>
             <div class="modal-body">
-				<p>You may upload:</p>
-				<ul>
-					<li><em>.xml</em> files</li>
-					<li><em>.zip</em> or <em>.tar.gz</em> archives containing <em>.xml</em> files</li>
-				</ul> 
-			    <!-- The fileinput-button span is used to style the file input field as button -->
-			    <span id="upload-area" class="btn fileinput-button">
-			        <i class="icon icon-upload icon-white"></i>
-			        <span>Select files &hellip;</span>
-			        <span>Or drop files here &hellip;</span>
-			        <!-- The file input field used as target for the file upload widget -->
-			        <input id="drop-zone" type="file" name="files[]" data-url="upload" multiple>
-			    </span>
-				<div class="progress">
-					<div id="uploadProgress" class="progress-bar progress-bar-info progress-bar-striped" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 0%;">0%</div>
-				</div>
-				<div id="uploadSuccessDiv" class="alert alert-success">
-					<span id="uploadSuccessMessage"></span>
-				</div>
-				<div id="uploadErrorDiv" class="alert alert-danger">
-					<span id="uploadErrorMessage"></span>
-				</div>
+                <p>You may upload:</p>
+                <ul>
+                    <li><em>.xml</em> files</li>
+                    <li><em>.zip</em> or <em>.tar.gz</em> archives containing <em>.xml</em> files</li>
+                </ul> 
+                <!-- The fileinput-button span is used to style the file input field as button -->
+                <span id="upload-area" class="btn fileinput-button">
+                    <i class="icon icon-upload icon-white"></i>
+                    <span>Select files &hellip;</span>
+                    <span>Or drop files here &hellip;</span>
+                    <!-- The file input field used as target for the file upload widget -->
+                    <input id="drop-zone" type="file" name="files[]" data-url="upload" multiple>
+                </span>
+                <div class="progress">
+                    <div id="uploadProgress" class="progress-bar progress-bar-info progress-bar-striped" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 0%;">0%</div>
+                </div>
+                <div id="uploadSuccessDiv" class="alert alert-success">
+                    <span id="uploadSuccessMessage"></span>
+                </div>
+                <div id="uploadErrorDiv" class="alert alert-danger">
+                    <span id="uploadErrorMessage"></span>
+                </div>
             </div>
             <div class="modal-footer">
                 <button id='uploadClose' type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-			</div>
-		</div>
-	</div>
+            </div>
+        </div>
+    </div>
 </div>
 
 
@@ -229,8 +229,8 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-	            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-	            <h4 id="modal-confirm-title">Title</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 id="modal-confirm-title">Title</h4>
             </div>
             <div class="modal-body">
                 <p id="modal-confirm-message">Message</p>
@@ -238,99 +238,99 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" data-dismiss="modal" id="modal-confirm-confirm">Confirm</button>
-			</div>
-		</div>
-	</div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <ul id="tlyPageGuide" data-tourtitle="Creating your own corpus">
-	<li class="tlypageguide_right" data-tourtarget=".btn[data-target='#new-corpus-modal']">
-		<div>
-			<p>
-				Here you can create a new private corpus.<br>
-			</p>
-			<p>
-				A private corpus allows you to upload and search through your own data.<br>
-				Corpora you create will not be visible to others, and are restricted in their maximum size.<br>
-				Any corpora you create will remain accessible until you explicitly delete it.
-			</p>
-		</div>
-	</li>
-	<li class="tlypageguide_right" data-tourtarget="button[data-id='corpus_document_type']">
-		<div>
-			<p>
-				Select the format of the data you intend to upload to this corpus here.
-			</p>
-			<p>
-				Because annotated data can be structured in many different ways, you will need to define how the data you intend to upload to this corpus should be indexed.<br>
-				Some of the more well-known types, such as <code>TEI</code> and <code>FoLiA</code> are already pre-supported.<br>
-			</p> 
-			<p>
-				If your data is in a format that's not in this list, it's possible to create your own custom format definition by clicking the <code>new format</code> button at the bottom of the page.<br>
-				The new format will then appear for selection in this list.
-			</p>
-		</div>
-	</li>
-	<li class="tlypageguide_top" data-tourtarget=".fa.fa-plus-square">
-		<div>
-			Click here to add some data to your corpus. The corpus will become searchable once some data has been added.<br>
-			It's not possible to remove data that's been added to a corpus.<br>
-			The data will immediately be searchable once the indexing has completed. 
-		</div>
-	</li>
-	<li class="tlypageguide_top" data-tourtarget=".fa.fa-plus-square">
-		<div>
-			Click here to delete this corpus. You can only delete corpora you have created yourself.
-		</div>
-	</li>
-	<li class="tlypageguide_right" data-tourtarget="#upload-area">
-		<div>
-			Select the file(s) you want to add to the corpus, and they will be indexed.<br>
-			Remember that the documents you upload here need to be in the format you selected when you first created the corpus in order to be picked up.  
-		</div>
-	</li>
-	<li class="tlypageguide_right" data-tourtarget="button[data-target='#new-format-modal']">
-		<div>
-			If your corpus material is in a format that we don't support (yet), you can create your own format here.
-		</div>
-	</li>
-	<li class="tlypageguide_top" data-tourtarget="button[data-id='format_type']">
-		<div>
-			Formats can be written in either Json or Yaml.<br>
-			Changing this setting will also change the syntax highlighting so you can more easily spot mistakes.
-		</div>
-	</li>
+    <li class="tlypageguide_right" data-tourtarget=".btn[data-target='#new-corpus-modal']">
+        <div>
+            <p>
+                Here you can create a new private corpus.<br>
+            </p>
+            <p>
+                A private corpus allows you to upload and search through your own data.<br>
+                Corpora you create will not be visible to others, and are restricted in their maximum size.<br>
+                Any corpora you create will remain accessible until you explicitly delete it.
+            </p>
+        </div>
+    </li>
+    <li class="tlypageguide_right" data-tourtarget="button[data-id='corpus_document_type']">
+        <div>
+            <p>
+                Select the format of the data you intend to upload to this corpus here.
+            </p>
+            <p>
+                Because annotated data can be structured in many different ways, you will need to define how the data you intend to upload to this corpus should be indexed.<br>
+                Some of the more well-known types, such as <code>TEI</code> and <code>FoLiA</code> are already pre-supported.<br>
+            </p> 
+            <p>
+                If your data is in a format that's not in this list, it's possible to create your own custom format definition by clicking the <code>new format</code> button at the bottom of the page.<br>
+                The new format will then appear for selection in this list.
+            </p>
+        </div>
+    </li>
+    <li class="tlypageguide_top" data-tourtarget=".fa.fa-plus-square">
+        <div>
+            Click here to add some data to your corpus. The corpus will become searchable once some data has been added.<br>
+            It's not possible to remove data that's been added to a corpus.<br>
+            The data will immediately be searchable once the indexing has completed. 
+        </div>
+    </li>
+    <li class="tlypageguide_top" data-tourtarget=".fa.fa-plus-square">
+        <div>
+            Click here to delete this corpus. You can only delete corpora you have created yourself.
+        </div>
+    </li>
+    <li class="tlypageguide_right" data-tourtarget="#upload-area">
+        <div>
+            Select the file(s) you want to add to the corpus, and they will be indexed.<br>
+            Remember that the documents you upload here need to be in the format you selected when you first created the corpus in order to be picked up.  
+        </div>
+    </li>
+    <li class="tlypageguide_right" data-tourtarget="button[data-target='#new-format-modal']">
+        <div>
+            If your corpus material is in a format that we don't support (yet), you can create your own format here.
+        </div>
+    </li>
+    <li class="tlypageguide_top" data-tourtarget="button[data-id='format_type']">
+        <div>
+            Formats can be written in either Json or Yaml.<br>
+            Changing this setting will also change the syntax highlighting so you can more easily spot mistakes.
+        </div>
+    </li>
 
-	<li class="tlypageguide_bottom" data-tourtarget="#format_download">
-		<div>
-			A good place to start writing a format is usually to download one of our presets, and edit it until it matches the structure of your corpus material.<br>
-			Select a format to start with in the dropdown then click this button to download it and show it in the editor.<br>
-			<br>
-			Formats you own are listed at the bottom, when you load any of your own formats, the name will automatically be filled in, so you can easily overwrite it with any new edits you make.
-		</div>
-	</li>
-	<li class="tlypageguide_bottom" data-tourtarget="#format_save">
-		<div>
-			<p>
-				When you're done editing your format, save it by clicking here.<br>
-			</p>
-			<p>
-				The format will be saved using the name you entered at the top.<br>
-			</p>
-			<p>
-				If you already own a format with this name, <i>the format will be overwitten.</i><br>
-				If you save over a format that's already being used in one of your corpora, 
-				then any new data you upload to that corpus will be indexed according to the updated format 
-			</p>
-		</div>
-	</li>
-	<li class="tlypageguide_bottom" data-tourtarget=".CodeMirror">
-		<div>
-			Edit your format here.<br>
-			<br>
-			Information on how to write a format can be found <a style="text-decoration: underline;color:#337ab7;" target="_blank" href="https://github.com/INL/BlackLab/blob/d20eb71b25137facf10f7d2681242de34ab1fa54/core/src/site/markdown/how-to-configure-indexing.md">here</a>.
-		</div>
-	</li>
+    <li class="tlypageguide_bottom" data-tourtarget="#format_download">
+        <div>
+            A good place to start writing a format is usually to download one of our presets, and edit it until it matches the structure of your corpus material.<br>
+            Select a format to start with in the dropdown then click this button to download it and show it in the editor.<br>
+            <br>
+            Formats you own are listed at the bottom, when you load any of your own formats, the name will automatically be filled in, so you can easily overwrite it with any new edits you make.
+        </div>
+    </li>
+    <li class="tlypageguide_bottom" data-tourtarget="#format_save">
+        <div>
+            <p>
+                When you're done editing your format, save it by clicking here.<br>
+            </p>
+            <p>
+                The format will be saved using the name you entered at the top.<br>
+            </p>
+            <p>
+                If you already own a format with this name, <i>the format will be overwitten.</i><br>
+                If you save over a format that's already being used in one of your corpora, 
+                then any new data you upload to that corpus will be indexed according to the updated format 
+            </p>
+        </div>
+    </li>
+    <li class="tlypageguide_bottom" data-tourtarget=".CodeMirror">
+        <div>
+            Edit your format here.<br>
+            <br>
+            Information on how to write a format can be found <a style="text-decoration: underline;color:#337ab7;" target="_blank" href="https://github.com/INL/BlackLab/blob/d20eb71b25137facf10f7d2681242de34ab1fa54/core/src/site/markdown/how-to-configure-indexing.md">here</a>.
+        </div>
+    </li>
 </ul>
 
 <link rel="stylesheet" href="$pathToTop/css/vendor/codemirror.css">
@@ -340,5 +340,5 @@
 <script src="$pathToTop/js/vendor/codemirror/yaml.js"></script>
 <script src="$pathToTop/js/vendor/codemirror/javascript.js"></script>
 <script src="$pathToTop/js/corpora.js"></script>
-	
+    
 #parse("footer.vm")

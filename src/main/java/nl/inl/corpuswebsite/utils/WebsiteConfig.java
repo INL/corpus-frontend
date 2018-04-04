@@ -33,9 +33,6 @@ public class WebsiteConfig {
 
 	private String absoluteContextPath;
 
-	/** The configuration read from the XML file */
-	private XMLConfiguration xmlConfig;
-
 	/** Name to display for this corpus, null if no corpus set. Falls back to the corpus name if not explicitly configured. */
 	private String corpusDisplayName;
 
@@ -45,21 +42,9 @@ public class WebsiteConfig {
 	/** User for this corpus, null if no corpus set or this corpus has no owner. */
 	private String corpusOwner;
 
-	/** Background color to use */
-	private String colorBackground;
-
-	/** Link color to use */
-	private String colorLink;
-
-	/** Background image to use */
-	private String pathToBackgroundImage;
-
-	/** Logo image to use */
-	private String pathToLogo;
-
 	/** Custom css to use */
 	private String pathToCustomCss;
-    
+
 	/** Custom js to use */
 	private String pathToCustomJs;
 
@@ -93,7 +78,7 @@ public class WebsiteConfig {
 	 */
 	private void load(InputStream configFile, String corpus) throws ConfigurationException {
 		// Load the specified config file
-		xmlConfig = new XMLConfiguration();
+		XMLConfiguration xmlConfig = new XMLConfiguration();
 		xmlConfig.setDelimiterParsingDisabled(true);
 		xmlConfig.load(configFile);
 
@@ -101,12 +86,8 @@ public class WebsiteConfig {
 		corpusOwner = MainServlet.getCorpusOwner(corpus);
 		corpusDisplayName = xmlConfig.getString("InterfaceProperties.DisplayName", corpusName);
 
-		colorBackground 		= xmlConfig.getString("InterfaceProperties.BackgroundColor");
-		colorLink 				= xmlConfig.getString("InterfaceProperties.LinkColor");
-		pathToCustomJs 	= processUrl(xmlConfig.getString("InterfaceProperties.CustomJs"));
-		pathToCustomCss 	= processUrl(xmlConfig.getString("InterfaceProperties.CustomCss"));
-		pathToBackgroundImage 	= processUrl(xmlConfig.getString("InterfaceProperties.BackgroundImage"));
-		pathToLogo 				= processUrl(xmlConfig.getString("InterfaceProperties.Logo"));
+		pathToCustomJs          = processUrl(xmlConfig.getString("InterfaceProperties.CustomJs"));
+		pathToCustomCss         = processUrl(xmlConfig.getString("InterfaceProperties.CustomCss"));
 
 		List<HierarchicalConfiguration> myfields = xmlConfig.configurationsAt("InterfaceProperties.NavLinks.Link");
 		for (Iterator<HierarchicalConfiguration> it = myfields.iterator(); it.hasNext();) {
@@ -148,22 +129,6 @@ public class WebsiteConfig {
 		return corpusOwner;
 	}
 
-	public String getBackgroundColor() {
-		return colorBackground;
-	}
-
-	public String getBackgroundImage() {
-		return pathToBackgroundImage;
-	}
-
-	public String getLinkColor() {
-		return colorLink;
-	}
-
-	public String getLogo() {
-		return pathToLogo;
-	}
-
 	public List<LinkInTopBar> getLinks() {
 		return linksInTopBar;
 	}
@@ -179,7 +144,7 @@ public class WebsiteConfig {
     public String getPathToCustomJs() {
         return pathToCustomJs;
     }
-    
+
 	// TODO centralize normalizing/making relative of links (mainservlet static func?)
 	private String processUrl(String link) {
 		if (link == null)

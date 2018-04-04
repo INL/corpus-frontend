@@ -6,10 +6,6 @@
 		If omitted, the internal corpus name will be shown. -->
         <!--<DisplayName>BlackLab AutoSearch Corpus Search</DisplayName>-->
        
-        <!-- These properties may be set to any valid css color. -->
-        <!--<BackgroundColor>rgba(228,200,200,0.3)</BackgroundColor>-->
-        <!--<LinkColor>#b10932</LinkColor>-->
-        
         <!-- These links will always be made relative to the application root 
         Custom files can be made available by placing them in a ./static directory
         within the corpus data directory (the exact location of that directory is configured in the .properties file for AutoSearch. 
@@ -17,13 +13,10 @@
         So when you create a /img directory containing logo.png for the 'zeebrieven' corpus, 
         the url here would be 'zeebrieven/static/img/logo.png' 
         and the directory structure would be <>/<corpusname>/static/... -->
-<!--        
-        You can include custom js and css in your corpus interface directory
-        <CustomCss>corpusname/static/your.css</CustomCss>
-        <CustomJs>corpusname/static/your.js</CustomJs>-->
-		<BackgroundImage>img/background.jpg</BackgroundImage>
-		<BackgroundImage>img/background.jpg</BackgroundImage>
-        <Logo>img/logo_100x100.png</Logo>
+        
+        <!-- You can include custom js and css in your corpus interface directory -->
+        <!--<CustomJs>corpusname/static/your.js</CustomJs>-->
+        <!--<CustomCss>corpusname/static/your.css</CustomCss>-->
         
         <NavLinks>
         	<!-- Relative links will be made relative to the application root, 

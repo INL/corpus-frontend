@@ -79,11 +79,8 @@ public class CorpusConfig {
 
 	private void parseCorpusDataFormat() {
 		NodeList documentFormatTags = config.getElementsByTagName("documentFormat");
-		if (documentFormatTags.getLength() > 0) {
+		if (documentFormatTags.getLength() > 0)
 			this.corpusDataFormat = documentFormatTags.item(0).getTextContent();
-        } else {
-            this.corpusDataFormat = "UNKNOWN";
-        }
 	}
 
 	private void parsePropertyFields() {
@@ -121,7 +118,7 @@ public class CorpusConfig {
 
 	private void parseMetadataFields() {
 		// Keyed by name of field
-		Map<String, FieldDescriptor> parsedFields = new HashMap<>();
+		Map<String, FieldDescriptor> parsedFields = new LinkedHashMap<>();
 
 		// Parse all metadata fields
 		NodeList metadataFieldNodeList = config.getElementsByTagName("metadataField");

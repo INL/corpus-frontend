@@ -98,3 +98,9 @@ table.corpora a.disabled {
 #upload-file-dialog .progress {
 	margin: 1.2em 0;
 }
+body {
+    /* default settings for background image of IVDNT, should and can be customized when other image used for corpus */
+		background-repeat: no-repeat;
+        background-position: -350px -310px;
+        background-attachment: scroll;
+}

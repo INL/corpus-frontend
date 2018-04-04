@@ -17,6 +17,11 @@
         So when you create a /img directory containing logo.png for the 'zeebrieven' corpus, 
         the url here would be 'zeebrieven/static/img/logo.png' 
         and the directory structure would be <>/<corpusname>/static/... -->
+<!--        
+        You can include custom js and css in your corpus interface directory
+        <CustomCss>corpusname/static/your.css</CustomCss>
+        <CustomJs>corpusname/static/your.js</CustomJs>-->
+		<BackgroundImage>img/background.jpg</BackgroundImage>
 		<BackgroundImage>img/background.jpg</BackgroundImage>
         <Logo>img/logo_100x100.png</Logo>
         

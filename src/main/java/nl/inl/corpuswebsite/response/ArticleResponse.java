@@ -31,11 +31,9 @@ public class ArticleResponse extends BaseResponse {
 	/** For getting metadata */
 	private QueryServiceHandler articleMetadataRequest;
 
-	private XslTransformer transformer = new XslTransformer();
+	private XslTransformer articleStylesheet;
 
-	private String articleStylesheet;
-
-	private String metadataStylesheet;
+	private XslTransformer metadataStylesheet;
 
 
 	public ArticleResponse() {
@@ -89,21 +87,21 @@ public class ArticleResponse extends BaseResponse {
 			try {
 				String xmlResult = articleContentRequest.makeRequest(contentRequestParameters);
 				if (xmlResult.contains("NOT_AUTHORIZED")) {
-					context.put("article_content", "");
+					context.put("article_content", "content restricted");
 				} else {
-					transformer.clearParameters();
-					transformer.addParameter("contextRoot", servlet.getServletContext().getContextPath());
+					articleStylesheet.clearParameters();
+					articleStylesheet.addParameter("contextRoot", servlet.getServletContext().getContextPath());
 
 					for (Entry<String, String> e : servlet.getWebsiteConfig(corpus).getXsltParameters().entrySet()) {
-						transformer.addParameter(e.getKey(), e.getValue());
+						articleStylesheet.addParameter(e.getKey(), e.getValue());
 					}
 
-					context.put("article_content", transformer.transform(xmlResult, articleStylesheet));
+					context.put("article_content", articleStylesheet.transform(xmlResult));
 				}
 
 				xmlResult = articleMetadataRequest.makeRequest(metadataRequestParameters);
-				transformer.clearParameters();
-				String htmlResult = transformer.transform(xmlResult, metadataStylesheet);
+				metadataStylesheet.clearParameters();
+				String htmlResult = metadataStylesheet.transform(xmlResult);
 				context.put("article_meta", htmlResult);
 
 			} catch (IOException e) {

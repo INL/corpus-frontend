@@ -1,16 +1,16 @@
             </div> <!-- /row -->
 
             <div class="row">
-                <hr>    
+                <hr>
                 
                 <footer class="col-xs-12"> 
                     <p>Dutch Language Institute Corpus Search Interface v1.1 &copy; <a href="http://www.ivdnt.org">IvdNT</a> 2013-2017</p>
                 </footer>
             </div>
         </div> <!-- /container -->
-		
-		#if($googleAnalyticsKey.length() > 0)
-		<script type="text/javascript">
+        
+        #if($googleAnalyticsKey.length() > 0)
+        <script type="text/javascript">
           var _gaq = _gaq || [];
           _gaq.push(['_setAccount', '$googleAnalyticsKey']);
           _gaq.push(['_trackPageview']);
@@ -20,7 +20,7 @@
             ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
             var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
           })();
-		</script>
-		#end
+        </script>
+        #end
     </body>
 </html>

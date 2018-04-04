@@ -5,6 +5,17 @@
     	 url('../font/INLVRG__.TTF') format('truetype');
     
 }
+
+body {
+    background-image: url(../img/background.jpg);
+    background-repeat: no-repeat;
+    background-position: -350px -310px;
+    background-attachment: scroll;
+    
+    padding-top: 60px;
+    padding-bottom: 40px;
+}
+
 a:link,
 a:visited,
 a:active,
@@ -65,9 +76,10 @@ hr {
 	width:100px;
 	height:100px;
 	z-index: 9000;
+	background-image: url(../img/logo_100x100.png)
 }
 
-.navbar-collapse.navbar-logo-margin {
+.navbar-logo-margin {
 	margin-left: 100px !important;
 }
 
@@ -128,11 +140,6 @@ hr {
 .lightbg {
 	background-color: rgba(255,255,255,0.6);
 	border: 1px solid #cccccc;
-}
-
-body {
-	padding-top: 60px;
-    padding-bottom: 40px;
 }
 
 .green {

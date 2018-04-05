@@ -90,6 +90,7 @@
     var SINGLEPAGE = SINGLEPAGE || {};
     SINGLEPAGE.INDEX = JSON.parse("$esc.javascript($indexStructureJson)");
     var BLS_URL = "$blsUrl";
+    var PROPS_IN_COLUMNS = "$websiteConfig.getPropColumns()".split(',');
 </script>
 
 <!--

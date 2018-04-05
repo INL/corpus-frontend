@@ -48,6 +48,9 @@ public class WebsiteConfig {
 	/** Custom js to use */
 	private String pathToCustomJs;
 
+    /** properties to show in columns */
+	private String[] propColumns = new String[] {"lemma","pos"};
+
     /** Link to put in the top bar */
 	private List<LinkInTopBar> linksInTopBar = new ArrayList<>();
 
@@ -88,6 +91,11 @@ public class WebsiteConfig {
 
 		pathToCustomJs          = processUrl(xmlConfig.getString("InterfaceProperties.CustomJs"));
 		pathToCustomCss         = processUrl(xmlConfig.getString("InterfaceProperties.CustomCss"));
+		String props         = xmlConfig.getString("InterfaceProperties.PropColumns");
+        if (props!=null&&!props.isEmpty()) {
+            propColumns = StringUtils.split(props);
+        }
+        
 
 		List<HierarchicalConfiguration> myfields = xmlConfig.configurationsAt("InterfaceProperties.NavLinks.Link");
 		for (Iterator<HierarchicalConfiguration> it = myfields.iterator(); it.hasNext();) {
@@ -154,4 +162,9 @@ public class WebsiteConfig {
 
 		return absoluteContextPath + "/" + link;
 	}
+
+    public String getPropColumns() {
+        return StringUtils.join(propColumns, ",");
+    }
+    
 }

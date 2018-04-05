@@ -288,10 +288,10 @@
     <div id="resultTabsContent" class="tab-content">
         <div id="tabHits" class="tab-pane">
             <div class="clearfix resultcontrols">
-                <select class="selectpicker groupselect" title="Group hits by..." data-size="15" data-style="btn-default btn-sm" multiple>
+                <select class="selectpicker groupselect" title="Group hits by..." data-size="15" data-actions-box="true" data-deselect-all-text="reset" data-show-subtext="true" data-style="btn-default btn-sm" multiple>
                     <optgroup label="Before hit">
                         #foreach($propertyField in $propertyFields)
-                        <option value="wordleft:$propertyField.getId()">Group by $propertyField.getDisplayName()</option>
+                        <option value="wordleft:$propertyField.getId()" data-content="Group by $propertyField.getDisplayName() <small class=&quot;text-muted&quot;>before</small>">Group by $propertyField.getDisplayName()</option>
                         #end
                     </optgroup>
                     <optgroup label="Hit">
@@ -301,7 +301,7 @@
                     </optgroup>
                     <optgroup label="After hit">
                         #foreach($propertyField in $propertyFields)
-                        <option value="wordright:$propertyField.getId()">Group by $propertyField.getDisplayName()</option>
+                        <option value="wordright:$propertyField.getId()" data-content="Group by $propertyField.getDisplayName() <small class=&quot;text-muted&quot;>after</small>">Group by $propertyField.getDisplayName()</option>
                         #end
                     </optgroup>
                     #foreach($group in $metadataGroups.entrySet())
@@ -335,7 +335,7 @@
 
         <div id="tabDocs" class="tab-pane">
             <div class="clearfix resultcontrols">
-                <select class="selectpicker groupselect" title="Group documents by..." data-size="15" data-style="btn-default btn-sm" multiple>
+                <select class="selectpicker groupselect" title="Group documents by..." data-size="15" data-actions-box="true" data-deselect-all-text="reset" data-style="btn-default btn-sm" multiple>
                     #foreach($group in $metadataGroups.entrySet())
                     <optgroup label="$group.key">
                         #foreach($metadataField in $group.value)

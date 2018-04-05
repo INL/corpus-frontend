@@ -445,6 +445,7 @@ SINGLEPAGE.INTERFACE = (function() {
 				
 				$.each(props, function(i, prop) {
 					if(!prop.isMainProp){
+                        if (PROPS_IN_COLUMNS.indexOf(prop.id) != -1)
 						html.push(
 						'<th style="width:15px;"><a data-bls-sort="hit:'+prop.id+'">'+prop.displayName+'</a></th>');
 					}
@@ -491,6 +492,7 @@ SINGLEPAGE.INTERFACE = (function() {
 					'<td class="text-center"><span dir="', textDirection, '"><strong>', parts[1], '</strong></span></td>',
 					'<td><span dir="', textDirection, '">', right, '</span> ', ELLIPSIS, '</td>');
 					$.each(props, function(i, prop) { if(!prop.isMainProp) {
+                    if (PROPS_IN_COLUMNS.indexOf(prop.id) != -1)
 					html.push(
 					'<td>', words(hit.match, prop.id, false, ''), '</td>');
 					}});

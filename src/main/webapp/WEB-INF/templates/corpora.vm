@@ -251,8 +251,7 @@
             </p>
             <p>
                 A private corpus allows you to upload and search through your own data.<br>
-                Corpora you create will not be visible to others, and are restricted in their maximum size.<br>
-                Any corpora you create will remain accessible until you explicitly delete it.
+                Corpora you create are not visible to others and are restricted in their maximum size.<br>
             </p>
         </div>
     </li>
@@ -267,20 +266,19 @@
             </p> 
             <p>
                 If your data is in a format that's not in this list, it's possible to create your own custom format definition by clicking the <code>new format</code> button at the bottom of the page.<br>
-                The new format will then appear for selection in this list.
+                The new format will then become available in this list.
             </p>
         </div>
     </li>
     <li class="tlypageguide_top" data-tourtarget=".fa.fa-plus-square">
         <div>
-            Click here to add some data to your corpus. The corpus will become searchable once some data has been added.<br>
-            It's not possible to remove data that's been added to a corpus.<br>
-            The data will immediately be searchable once the indexing has completed. 
+            Click here to add some data to your corpus. It is currently not possible to remove data from the corpus.<br>
+            Once indexing is finished, the new data is immediately available for searching. 
         </div>
     </li>
     <li class="tlypageguide_top" data-tourtarget=".fa.fa-plus-square">
         <div>
-            Click here to delete this corpus. You can only delete corpora you have created yourself.
+            Click here to delete this corpus. You can only delete your own corpora.
         </div>
     </li>
     <li class="tlypageguide_right" data-tourtarget="#upload-area">
@@ -306,7 +304,8 @@
             A good place to start writing a format is usually to download one of our presets, and edit it until it matches the structure of your corpus material.<br>
             Select a format to start with in the dropdown then click this button to download it and show it in the editor.<br>
             <br>
-            Formats you own are listed at the bottom, when you load any of your own formats, the name will automatically be filled in, so you can easily overwrite it with any new edits you make.
+            Formats you've created yourself are listed at the bottom.<br>
+            When you load a format, its name will automatically be filled in, so any changes you save will overwrite the format.
         </div>
     </li>
     <li class="tlypageguide_bottom" data-tourtarget="#format_save">
@@ -315,12 +314,12 @@
                 When you're done editing your format, save it by clicking here.<br>
             </p>
             <p>
-                The format will be saved using the name you entered at the top.<br>
+                The format will be saved using the name you entered to the left.<br>
             </p>
             <p>
                 If you already own a format with this name, <i>the format will be overwitten.</i><br>
                 If you save over a format that's already being used in one of your corpora, 
-                then any new data you upload to that corpus will be indexed according to the updated format 
+                then any new data you upload to that corpus will be indexed according to the updated format.
             </p>
         </div>
     </li>

@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
     <head>
-
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
         
@@ -30,7 +29,6 @@
         <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
         <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/css/bootstrap-select.min.css">
         <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
-        <link rel="stylesheet" href="$pathToTop/css/vendor/jquery.fileupload.css">
         <link rel="stylesheet" href="$pathToTop/css/vendor/pageguide.min.css">
         <link rel="stylesheet" href="$pathToTop/css/main.css">
         #if ($websiteConfig.getPathToCustomCss())
@@ -41,15 +39,13 @@
         <link rel="apple-touch-icon" href="$pathToTop/img/apple-touch-icon.png">
         
         <script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
-        <!-- SKIP JQueryUI 1.12.1, has bug where event handlers on widgets are not cleaned up correctly, fixed in 1.12.2, but unavailable as of writing (28-07-1017) -->
+        <!-- SKIP JQueryUI 1.12.1, has bug where event handlers on widgets are not cleaned up correctly, fixed in 1.12.2, but unavailable as of writing (28-07-2017) -->
         <!-- See https://bugs.jqueryui.com/ticket/15082 -->
         <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.12.0/jquery-ui.min.js"></script>
         <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>   
         <script src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/js/bootstrap-select.min.js"></script>
         <script src="$pathToTop/js/vendor/jquery.ui.widget.js"></script>
         <script src="$pathToTop/js/vendor/jQuery.extendext.js"></script>
-        <script src="$pathToTop/js/vendor/jquery.iframe-transport.js"></script>
-        <script src="$pathToTop/js/vendor/jquery.fileupload.js"></script>
         <script src="$pathToTop/js/vendor/pageguide.min.js"></script>
         <script src="$pathToTop/js/tutorial.js"></script>
         #if ($websiteConfig.getPathToCustomJs())

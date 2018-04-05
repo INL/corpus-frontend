@@ -62,36 +62,55 @@ table.corpora a.disabled {
 }
 
 /* upload modal */
+#document-upload-form {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+}
 
-.fileinput-button {
-	display: block;
-	height: 12em;
-	border: 4px dashed #00ACEA;
-	border-radius: 1.8em;
-	/* Override Bootstrap background gradiant for button */
-	background-image: initial;
-	background-color: rgba(0, 150, 204, 0.5);
+#document-upload-form > label {
+	flex-shrink: 0;
+	font-size: 24px;
+	height: 100px;
+	margin-bottom: 15px;
+	overflow: hidden;
+	position: relative; 
+	width: 200px;
+	white-space: normal;
 }
-/* Override Bootstrap button styling */
-.btn.fileinput-button:hover,
-.fileinput-button.hover {
-	background-color: rgba(128, 207, 255, 0.5);
-	border-color: #00C9F8;
+#upload-docs-label,
+#upload-metadata-label {
+	/* one word per line*/
+	display: table-caption;
+	left: 50%;
+	position: absolute;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	width: 100%;
+	word-spacing: 9999em;
 }
-.btn.fileinput-button > span {
-	color: white;
-}
-.btn.fileinput-button > span + span {
-	display: block;
-}
-.btn.fileinput-button:hover > span,
-.fileinput-button.hover > span {
-	color: #00ACEA;
-}
-/* Extend jquery.fileupload.css */
-.fileinput-button input {
+
+#document-upload-form > label > input {
+	font-size: 100px;
 	height: 100%;
+	left: 0;
+	opacity: 0;
+	overflow: hidden;
+	position: absolute;
+	top: 0;
+	width: 100%;
 }
-#upload-file-dialog .progress {
-	margin: 1.2em 0;
+#document-upload-form .fa-upload {
+	color: black;
+	font-size: 80px;
+	left: 50%;
+	opacity: 0.08;
+	position: absolute;
+	top: 50%;
+	transform: translate(-50%, -50%);
+}
+
+#document-upload-submit-wrapper {
+	flex: none;
+	width: 100%;
 }

@@ -93,6 +93,10 @@ hr {
 	box-shadow: 0 5px 10px rgba(0,0,0,0.2);
 }
 
+.progress-bar {
+	text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
+}
+
 .haspadding {
 	padding: 5px;
 }

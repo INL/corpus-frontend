@@ -158,7 +158,7 @@ var corpora = {};
 		var indexTitle = index.displayName;
 		if (index.canSearch) {
 			var pageURL = window.location.href;
-			if (!pageURL.endsWith('/')) {
+			if (pageURL[pageURL.length-1] !== '/') {
 				pageURL += '/';
 			}
 			var url = pageURL + index.id + '/search';
@@ -285,7 +285,6 @@ var corpora = {};
 					var isUserFormat = formatId.indexOf(data.user.id) !== -1;
 					var shortId = isUserFormat ? formatId.substr(formatId.indexOf(data.user.id) + data.user.id.length + 1) : formatId;
 					
-					// we have title, >something?< and data-content
 					var $option = $('<option title="' + (format.description || format.displayName) + '" value="' + formatId + '" data-content="'+format.displayName+' <small>('+shortId+')</small>" >'+format.displayName+'</option>');
 					
 					var $tr = $([
@@ -334,32 +333,19 @@ var corpora = {};
 		return serverInfo.user.loggedIn ? serverInfo.user.id : '';
 	}
 
-	// Show a success message.
-	function showSuccess(msg, showInUploadDialog) {
-		if (showInUploadDialog) {
-			$('#uploadErrorDiv').hide();
-			$('#uploadSuccessMessage').html(msg);
-			$('#uploadSuccessDiv').show();
-			$('.progress').hide();
-		} else {
-			$('#errorDiv').hide();
-			$('#successMessage').html(msg);
-			$('#successDiv').show();
-		}
+	// Show success message at the top of the page.
+	function showSuccess(msg) {
+		$('#errorDiv').hide();
+		$('#successMessage').html(msg);
+		$('#successDiv').show();
+	
 	}
 
-	// Show an error message.
-	function showError(msg, showInUploadDialog) {
-		if (showInUploadDialog) {
-			$('#uploadSuccessDiv').hide();
-			$('#uploadErrorMessage').html(msg);
-			$('#uploadErrorDiv').show();
-			$('.progress').hide();
-		} else {
-			$('#successDiv').hide();
-			$('#errorMessage').html(msg).show();
-			$('#errorDiv').show();
-		}
+	// Show error at the top of the page.
+	function showError(msg) {
+		$('#successDiv').hide();
+		$('#errorMessage').html(msg).show();
+		$('#errorDiv').show();
 	}
 
 	/**
@@ -458,104 +444,135 @@ var corpora = {};
 		return false; // prevent event bubbling
 	};
 
-	// Initialise file uploading functionality.
 	function initFileUpload() {
-		// Disable file drops on the document
-		$(document).bind('drop dragover', function (e) {
-			e.preventDefault();
-		});
-		$('#drop-zone').bind('dragleave dragend', function(e) {
-			e.preventDefault();
-			$('.fileinput-button').removeClass('hover');
+		var $progress = $('#uploadProgress');
+		var $success = $('#uploadSuccessDiv');
+		var $error = $('#uploadErrorDiv');
+
+		var	$docInput = $('#upload-docs-input');
+		var $metadataInput = $('#upload-metadata-input');
+		var $form = $('#document-upload-form');
+
+		$form.find('input').on('change', function() {
+			var $this = $(this);
+			var text;
+			if (this.files && this.files.length)
+				text = this.files.length + $this.data('labelWithValue');
+			else 
+				text = $this.data('labelWithoutValue');
+
+			$($this.data('labelId')).text(text);
+		}).trigger('change'); // init labels
+		
+		function handleUploadProgress(event) {
+			var progress = event.loaded / event.total * 100;
+			$progress
+				.text('Uploading... (' +  Math.floor(progress) + '%)')
+				.css('width', progress + '%')
+				.attr('aria-valuenow', progress);
+
+			if (event.loaded >= event.total)
+				handleUploadComplete.call(this, event);
+		}
+
+		function handleUploadComplete(event) {
+			$progress.css('width', '100%');
+
+			refreshIndexStatusWhileIndexing(uploadToCorpus.id, 
+				function(index) { 
+					var statusText = '';
+					if (index.status === 'indexing'){
+						statusText = 'Indexing in progress... - '
+						+ index.indexProgress.filesProcessed + ' files, '
+						+ index.indexProgress.docsDone + ' documents, and '
+						+ index.indexProgress.tokensProcessed + ' tokens indexed so far...';
+					} else {
+						statusText = 'Finished indexing!';
+					}
+					$progress.text( statusText);
+				},
+				function(errorMsg) {
+					$progress.text(errorMsg);
+				}
+			);
+		}
+
+		function handleIndexingComplete(event) {
+			if (this.status != 200)
+				return handleError.call(this, event);
+			
+			var message = 'Data added to "' + uploadToCorpus.displayName + '".';
+			
+			refreshCorporaList();
+	
+			$progress.parent().hide();
+			$form.show();
+			$error.hide();
+			$success.text(message).show();
+			
+			$docInput.val(undefined).trigger('change');
+			$metadataInput.val(undefined).trigger('change');
+		}
+		
+		function handleError(event) {
+			var msg = 'Could not add data to "' + uploadToCorpus.displayName + '"';
+			if (this.responseText) 
+				msg += ': ' + JSON.parse(this.responseText).error.message;
+			else if (this.textStatus)
+				msg += ': ' + this.textStatus;
+			else 
+				msg += ': unknown error (are you trying to upload too much data?)';
+			
+			$progress.parent().hide();
+			$form.show();
+			$success.hide();
+			$error.text(msg).show();
+		}
+
+		function verifyInput() {
+			if(!$docInput[0].files || $docInput[0].files.length == 0) {
+				$error.text('You must select at least 1 document').show();
+				$success.hide();
+				return false;
+			} 
+			return true;
+		}
+
+		$form.on('submit', function(event) {
+			event.preventDefault();
+			if (!verifyInput())
+				return false;
+
+			$form.hide();
+			$progress.text('Connecting...').css('width', '0%').parent().show();
+			$error.hide();
+			$success.hide();
+			
+			var formData = new FormData();
+			$.each($docInput[0].files, function(index, file) {
+				formData.append('data[]', file, file.name);
+			});
+			$.each($metadataInput[0].files, function(index, file) {
+				formData.append('metadata[]', file, file.name);
+			});
+
+			var xhr = new XMLHttpRequest();
+			
+			xhr.upload.addEventListener('progress', handleUploadProgress.bind(xhr));
+			xhr.upload.addEventListener('error', handleError.bind(xhr));
+			xhr.upload.addEventListener('abort', handleError.bind(xhr));
+			// Don't bother attaching event listener 'load' on xhr.upload - it's broken in IE and Firefox
+			// Instead manually trigger uploadcomplete when we reach 100%
+			xhr.addEventListener('load', handleIndexingComplete.bind(xhr));
+			xhr.addEventListener('error', handleError.bind(xhr));
+			xhr.addEventListener('abort', handleError.bind(xhr));
+
+			xhr.open('POST', CORPORA.blsUrl + uploadToCorpus.id + '/docs?outputformat=json', true);
+			xhr.send(formData);
+
+			return false;
 		});
 
-		// Enable file drops on a specific 'zone'
-		var $progressBar = $('#uploadProgress');
-		
-		$('#drop-zone').fileupload({
-			dropZone: $('#drop-zone'),
-			// This seems to have no effect!
-			acceptFileTypes: /(\.|\/)(xml|zip|t?gz)$/i,
-			maxFileSize: 40000000, // 40 MB
-			dataType: 'json',
-			done: function(e, data) {
-				$('.progress .progress-bar').text('\'' + data.files[0].name + '\': Done');
-				refreshCorporaList(function () {
-					showSuccess('Data added to "' + uploadToCorpus.displayName + '".', true);
-					$('#upload-area').show();
-					$('#uploadClose').show();
-					$progressBar.data('isIndexing', false);					
-				});
-			},
-			fail: function(e, data) {
-				data = data.jqXHR.responseJSON || data;
-				var msg;
-				if (data.error)
-					msg = data.error.message;
-				else
-					msg = data.textStatus + '; ' + data.errorThrown;
-				showError('Could not add data to "' + uploadToCorpus.displayName + '": ' + msg, true);
-				$('#upload-area').show();
-				$('#uploadClose').show();
-				$progressBar.data('isIndexing', false);
-			},
-			always: function(/*e, data*/) {
-				$('#waitDisplay').hide();
-				$('.fileinput-button').removeClass('hover');
-			},
-			progressall: function(e, data) {
-				
-				if (data.loader < data.total) {
-					var progress = parseInt(data.loaded / data.total * 100, 10);
-					$progressBar
-					.text('Uploading... (' +  progress + '%)')
-					.css('width', progress + '%')
-					.attr('aria-valuenow', progress);
-				}
-				else {
-					if ($progressBar.data('isIndexing'))
-						return;
-	
-					$progressBar.css('width', '100%')
-					.data('isIndexing', true);
-	
-					refreshIndexStatusWhileIndexing(uploadToCorpus.id, function(index) { 
-						var statusText = '';
-						if (index.status === 'indexing'){
-							statusText = 'Indexing in progress... - '
-							+ index.indexProgress.filesProcessed + ' files, '
-							+ index.indexProgress.docsDone + ' documents, and '
-							+ index.indexProgress.tokensProcessed + ' tokens indexed so far...';
-						} else {
-							statusText = 'Finished indexing!';
-							$progressBar.data('isIndexing', false);
-						}
-						$progressBar.text( statusText);
-					},
-					function(errorMsg) {
-						$progressBar.text(errorMsg);
-						$progressBar.data('isIndexing', false);						
-					});
-				}
-			},
-			add: function(e, data) {
-				$('#upload-area').hide();
-				$('#uploadClose').hide();
-				$('#waitDisplay').show();
-				data.url = CORPORA.blsUrl + uploadToCorpus.id + '/docs/';
-				data.data = new FormData();
-				data.data.append('data', data.files[0]/*, data.files[0].name*/);
-				$('.progress').show();
-				$('#uploadSuccessDiv').hide();
-				$('#uploadErrorDiv').hide();
-				data.context = $('.progress .progress-bar').css('width', '0%').attr('aria-valuenow', 0).
-					text('Uploading \'' + data.files[0].name + '\' ...');
-				data.submit();
-			},
-			dragover: function(/*e, data*/) {
-				$('.fileinput-button').addClass('hover');
-			}
-		});
 	}
 
 	function initNewCorpus() {

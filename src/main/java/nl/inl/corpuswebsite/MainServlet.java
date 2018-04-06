@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
-import java.util.logging.Level;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -594,7 +593,6 @@ public class MainServlet extends HttpServlet {
     public final XslTransformer getStylesheet(String corpus, String corpusDataFormat) {
 
         String fileName = "article_" + corpusDataFormat + ".xsl";
-        String key = corpus + "__" + fileName;
 
         File f = getProjectFileFromIFDir(corpus, fileName);
         if (f!=null) {

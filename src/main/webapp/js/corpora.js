@@ -449,19 +449,20 @@ var corpora = {};
 		var $success = $('#uploadSuccessDiv');
 		var $error = $('#uploadErrorDiv');
 
-		var	$docInput = $('#upload-docs-input');
-		var $metadataInput = $('#upload-metadata-input');
 		var $form = $('#document-upload-form');
+		var	$fileInputs = $form.find('input[type="file"]');
 
-		$form.find('input').on('change', function() {
+		$fileInputs.each(function() {
 			var $this = $(this);
-			var text;
-			if (this.files && this.files.length)
-				text = this.files.length + $this.data('labelWithValue');
-			else 
-				text = $this.data('labelWithoutValue');
+			$this.on('change', function() {
+				var text;
+				if (this.files && this.files.length)
+					text = this.files.length + $this.data('labelWithValue');
+				else 
+					text = $this.data('labelWithoutValue');
 
-			$($this.data('labelId')).text(text);
+				$($this.data('labelId')).text(text);
+			});
 		}).trigger('change'); // init labels
 		
 		function handleUploadProgress(event) {
@@ -510,8 +511,10 @@ var corpora = {};
 			$error.hide();
 			$success.text(message).show();
 			
-			$docInput.val(undefined).trigger('change');
-			$metadataInput.val(undefined).trigger('change');
+			// clear values
+			$fileInputs.each(function() {
+				$(this).val(undefined).trigger('change');
+			});
 		}
 		
 		function handleError(event) {
@@ -529,19 +532,8 @@ var corpora = {};
 			$error.text(msg).show();
 		}
 
-		function verifyInput() {
-			if(!$docInput[0].files || $docInput[0].files.length == 0) {
-				$error.text('You must select at least 1 document').show();
-				$success.hide();
-				return false;
-			} 
-			return true;
-		}
-
 		$form.on('submit', function(event) {
 			event.preventDefault();
-			if (!verifyInput())
-				return false;
 
 			$form.hide();
 			$progress.text('Connecting...').css('width', '0%').parent().show();
@@ -549,13 +541,13 @@ var corpora = {};
 			$success.hide();
 			
 			var formData = new FormData();
-			$.each($docInput[0].files, function(index, file) {
-				formData.append('data[]', file, file.name);
-			});
-			$.each($metadataInput[0].files, function(index, file) {
-				formData.append('metadata[]', file, file.name);
-			});
-
+			$fileInputs.each(function() {
+				var self = this;
+				$.each(this.files, function(index, file) {
+					formData.append(self.name, file, file.name);
+				});
+			})
+			
 			var xhr = new XMLHttpRequest();
 			
 			xhr.upload.addEventListener('progress', handleUploadProgress.bind(xhr));
@@ -572,7 +564,6 @@ var corpora = {};
 
 			return false;
 		});
-
 	}
 
 	function initNewCorpus() {

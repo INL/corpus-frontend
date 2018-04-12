@@ -68,7 +68,7 @@ table.corpora a.disabled {
 	justify-content: space-between;
 }
 
-#document-upload-form > label {
+.document-upload-button {
 	flex-shrink: 0;
 	font-size: 24px;
 	height: 100px;
@@ -78,9 +78,21 @@ table.corpora a.disabled {
 	width: 200px;
 	white-space: normal;
 }
-#upload-docs-label,
-#upload-metadata-label {
+.document-upload-button:before {
+	content: "\f093";
+	color: black;
+    font: normal normal normal 14px/1 FontAwesome;
+    font-size: 80px;
+    left: 50%;
+    opacity: 0.08;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.document-upload-button-text {
 	/* one word per line*/
+	color: inherit;
 	display: table-caption;
 	left: 50%;
 	position: absolute;
@@ -90,7 +102,7 @@ table.corpora a.disabled {
 	word-spacing: 9999em;
 }
 
-#document-upload-form > label > input {
+.document-upload-button > input[type=file] {
 	font-size: 100px;
 	height: 100%;
 	left: 0;
@@ -99,15 +111,6 @@ table.corpora a.disabled {
 	position: absolute;
 	top: 0;
 	width: 100%;
-}
-#document-upload-form .fa-upload {
-	color: black;
-	font-size: 80px;
-	left: 50%;
-	opacity: 0.08;
-	position: absolute;
-	top: 50%;
-	transform: translate(-50%, -50%);
 }
 
 #document-upload-submit-wrapper {

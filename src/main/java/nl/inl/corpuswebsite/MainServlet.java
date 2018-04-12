@@ -307,7 +307,7 @@ public class MainServlet extends HttpServlet {
     public WebsiteConfig getWebsiteConfig(String corpus) {
         if (!configs.containsKey(corpus)) {
             try (InputStream is = getProjectFile(corpus, "search.xml", true)) {
-                configs.put(corpus, new WebsiteConfig(is, this.contextPath, corpus));
+                configs.put(corpus, new WebsiteConfig(is, this.contextPath, corpus, getCorpusConfig(corpus)));
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

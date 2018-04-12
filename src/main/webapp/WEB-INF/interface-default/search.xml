@@ -3,7 +3,8 @@
     <InterfaceProperties>
         
 		<!-- When a DisplayName has been set, it will be shown in stead of the raw corpus name. 
-		If omitted, the internal corpus name will be shown. -->
+		If omitted, we will fall back to the displayName configured in BlackLab-Server, 
+		if that is not configured either the internal corpus name is shown. -->
         <!--<DisplayName>BlackLab AutoSearch Corpus Search</DisplayName>-->
        
         <!-- These links will always be made relative to the application root 

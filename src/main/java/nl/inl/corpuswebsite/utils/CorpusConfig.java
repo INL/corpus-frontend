@@ -26,6 +26,8 @@ public class CorpusConfig {
 
 	private Document config;
 
+	private String displayName;
+
 	private List<FieldDescriptor> propertyFields = new ArrayList<>();
 
 	/** Keyed by tab name */
@@ -46,6 +48,13 @@ public class CorpusConfig {
 
 	public String getJsonUnescaped() {
 		return jsonUnescaped;
+	}
+
+	/**
+	 * @return the displayName for this corpus as configured in BlackLab-Server, may be null if not configured.
+	 */
+	public String getDisplayName() {
+	    return displayName;
 	}
 
 	public List<FieldDescriptor> getPropertyFields() {
@@ -70,10 +79,23 @@ public class CorpusConfig {
 	}
 
 	private void parse() {
+	    parseDisplayName();
 		parseCorpusDataFormat();
 		parsePropertyFields();
 		parseMetadataFields();
 		parseFieldInfo();
+	}
+
+	private void parseDisplayName() {
+        Element root = (Element) config.getElementsByTagName("blacklabResponse").item(0);
+        NodeList l = root.getChildNodes();
+        for (int i = 0; i < l.getLength(); ++i) {
+            Node n = l.item(i);
+            if (n.getNodeName().equals("displayName")) {
+                displayName = n.getTextContent();
+                return;
+            }
+        }
 	}
 
 	private void parseCorpusDataFormat() {

@@ -48,26 +48,34 @@ public class WebsiteConfig {
 	/** Custom js to use */
 	private String pathToCustomJs;
 
-    /** Link to put in the top bar */
+	/** Link to put in the top bar */
 	private List<LinkInTopBar> linksInTopBar = new ArrayList<>();
 
 	private Map<String, String> xsltParameters = new HashMap<>();
 
 
-    /**
+	/**
 	 *
 	 * @param configFile
 	 * @param absoluteContextPath
 	 * @param corpus
 	 * @throws ConfigurationException
 	 */
-	public WebsiteConfig(InputStream configFile, String absoluteContextPath, String corpus) throws ConfigurationException {
+	public WebsiteConfig(InputStream configFile, String absoluteContextPath, String corpus, CorpusConfig corpusConfig) throws ConfigurationException {
 		if (!absoluteContextPath.startsWith("/"))
 			throw new RuntimeException("AbsoluteContextPath is not absolute");
 
 		this.absoluteContextPath = absoluteContextPath;
 
 		load(configFile, corpus);
+
+		if (corpusDisplayName == null) { // no displayName set
+		    String backendDisplayName = corpusConfig.getDisplayName();
+		    if (backendDisplayName != null && !backendDisplayName.isEmpty() && !backendDisplayName.equals(corpus))
+		        corpusDisplayName = backendDisplayName;
+		    else
+		        corpusDisplayName = MainServlet.getCorpusName(corpus); // strip username prefix from corpus ID, and use remainder
+		}
 	}
 
 	/**
@@ -84,7 +92,7 @@ public class WebsiteConfig {
 
 		corpusName = MainServlet.getCorpusName(corpus);
 		corpusOwner = MainServlet.getCorpusOwner(corpus);
-		corpusDisplayName = xmlConfig.getString("InterfaceProperties.DisplayName", corpusName);
+		corpusDisplayName = xmlConfig.getString("InterfaceProperties.DisplayName", null);
 
 		pathToCustomJs          = processUrl(xmlConfig.getString("InterfaceProperties.CustomJs"));
 		pathToCustomCss         = processUrl(xmlConfig.getString("InterfaceProperties.CustomCss"));
@@ -137,13 +145,13 @@ public class WebsiteConfig {
 		return xsltParameters;
 	}
 
-    public String getPathToCustomCss() {
-        return pathToCustomCss;
-    }
+	public String getPathToCustomCss() {
+		return pathToCustomCss;
+	}
 
-    public String getPathToCustomJs() {
-        return pathToCustomJs;
-    }
+	public String getPathToCustomJs() {
+		return pathToCustomJs;
+	}
 
 	// TODO centralize normalizing/making relative of links (mainservlet static func?)
 	private String processUrl(String link) {

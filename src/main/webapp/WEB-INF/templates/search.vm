@@ -35,7 +35,7 @@
 #end
 
 #macro( propfield $field)
-      #set ($propertyFieldInputId = $propertyField.getId() + "_value")
+    #set ($propertyFieldInputId = $propertyField.getId() + "_value")
     #set ($propertyFieldFileInputId = $propertyField.getId() + "_file")
     #set ($propertyFieldCaseId = $propertyField.getId() + "_case")
 

@@ -7,7 +7,6 @@
 package nl.inl.corpuswebsite;
 
 import java.io.OutputStreamWriter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -20,9 +19,6 @@ import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.tools.generic.EscapeTool;
 
-/**
- *
- */
 public abstract class BaseResponse {
 	protected static final Logger logger = Logger.getLogger(BaseResponse.class);
 
@@ -36,9 +32,6 @@ public abstract class BaseResponse {
 
 	/** Velocity template variables */
 	protected VelocityContext context = new VelocityContext();
-
-	/** Required parameters for this operation */
-	private List<String> requiredParameters = null;
 
 	/** Does this response require a corpus to be set? */
 	private boolean requiresCorpus = false;
@@ -59,11 +52,9 @@ public abstract class BaseResponse {
 
 	/**
 	 * @param requiresCorpus when set, causes an exception to be thrown when {@link BaseResponse#corpus} is not set when {@link #processRequest()} is called.
-	 * @param requiredParameters like {@link #requiresCorpus} but for parameters.
 	 */
-	protected BaseResponse(boolean requiresCorpus, List<String> requiredParameters) {
+	protected BaseResponse(boolean requiresCorpus) {
 		this.requiresCorpus = requiresCorpus;
-		this.requiredParameters = requiredParameters;
 	}
 
 	/**
@@ -131,57 +122,6 @@ public abstract class BaseResponse {
 	 */
 	protected void displayHtmlTemplate(Template template) {
 		displayTemplate(template, "text/html");
-	}
-
-	/**
-	 * Calls the completeRequest and logRequest implementations
-	 */
-	final public void processRequest() {
-		// if we have enough parameters to complete this request...
-		if (sufficientParameters()) {
-			completeRequest();
-		} else {
-			// insufficient parameters supplied, return error
-			context.put("error", "Insufficient parameters");
-			displayHtmlTemplate(servlet.getTemplate("error"));
-		}
-	}
-
-	/**
-	 * Add a required parameter to the list.
-	 *
-	 * @param param
-	 *            parameter name
-	 */
-	protected void addRequiredParameter(String param) {
-		if (requiredParameters == null)
-			requiredParameters = new ArrayList<>();
-
-		requiredParameters.add(param);
-	}
-
-	/**
-	 * Check if all parameters necessary to complete a search request exist.
-	 *
-	 * @return true if they do, false if not
-	 */
-	private boolean sufficientParameters() {
-		if (requiredParameters == null)
-			return true;
-
-		// for each parameter in the list
-		for (String p: requiredParameters) {
-			// if it is missing, return false
-			if (request.getParameter(p) == null)
-				return false;
-
-			// if, after trimming, it is empty, return false
-			if (request.getParameter(p).trim().length() == 0)
-				return false;
-		}
-
-		// everything is accounted for, return true!
-		return true;
 	}
 
 	/**

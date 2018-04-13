@@ -641,6 +641,14 @@ public class MainServlet extends HttpServlet {
         return adminProps.getProperty("googleAnalyticsKey", "");
     }
 
+    public int getWordsToShow() {
+    	try {
+    		return Integer.parseInt(adminProps.getProperty("wordend", "5000"));
+    	} catch (NumberFormatException e) {
+    		return 5000;
+    	}
+    }
+
     /**
      * Return a timestamp for when the application was built.
      *

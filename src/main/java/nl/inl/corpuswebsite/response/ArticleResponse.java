@@ -76,13 +76,12 @@ public class ArticleResponse extends BaseResponse {
                 metadataRequestParameters.put("userid", new String[] { userId });
 			}
 
-			// show max. 5000 words of content (TODO: paging)
+			// show max. 5000 (or as requested/configured) words of content (TODO: paging)
 			// paging will also need edits in blacklab,
 			// since when you only get a subset of the document without begin and ending, the top of the xml tree will be missing
 			// and xslt will not match anything (or match the wrong elements)
 			// so blacklab will have to walk the tree and insert those tags in some manner.
-			contentRequestParameters.put("wordend", new String[] {"5000"});
-
+			contentRequestParameters.put("wordend", new String[] { Integer.toString(getWordsToShow()) });
 
 			try {
 				String xmlResult = articleContentRequest.makeRequest(contentRequestParameters);
@@ -129,4 +128,9 @@ public class ArticleResponse extends BaseResponse {
 		displayHtmlTemplate(servlet.getTemplate("article"));
 	}
 
+	private int getWordsToShow() {
+	    int maxWordCount = servlet.getWordsToShow();
+	    int requestedWordCount = getParameter("wordend", maxWordCount);
+	    return Math.min(requestedWordCount, maxWordCount);
+	}
 }

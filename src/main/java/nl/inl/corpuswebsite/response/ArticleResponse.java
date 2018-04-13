@@ -37,7 +37,7 @@ public class ArticleResponse extends BaseResponse {
 
 
 	public ArticleResponse() {
-		super(true, null);
+		super(true);
 	}
 
 	@Override
@@ -129,8 +129,9 @@ public class ArticleResponse extends BaseResponse {
 	}
 
 	private int getWordsToShow() {
-	    int maxWordCount = servlet.getWordsToShow();
-	    int requestedWordCount = getParameter("wordend", maxWordCount);
-	    return Math.min(requestedWordCount, maxWordCount);
+		int maxWordCount = servlet.getWordsToShow();
+
+		int requestedWordCount = getParameter("wordend", maxWordCount);
+		return Math.min(requestedWordCount, maxWordCount);
 	}
 }

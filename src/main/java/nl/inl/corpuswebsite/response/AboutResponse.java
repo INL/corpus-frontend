@@ -15,7 +15,7 @@ import nl.inl.corpuswebsite.BaseResponse;
 public class AboutResponse extends BaseResponse {
 
 	public AboutResponse() {
-		super(false, null);
+		super(false);
 	}
 
 	@Override

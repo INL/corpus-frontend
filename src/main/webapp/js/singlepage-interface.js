@@ -651,7 +651,10 @@ SINGLEPAGE.INTERFACE = (function() {
 			console.log('CSV download url', url, blsParam);
 		}
 
-		$button.addClass('disabled').attr('disabled', true);
+		$button
+			.addClass('disabled')
+			.attr('disabled', true)
+			.prepend('<span class="fa fa-spinner fa-spin"></span>');
 		$.ajax(url, {
 			accepts: 'application/csv',
 			cache: 'false',
@@ -664,7 +667,10 @@ SINGLEPAGE.INTERFACE = (function() {
 				saveAs(b, 'data.csv'); // FileSaver.js
 			},
 			complete: function() {
-				$button.removeClass('disabled').attr('disabled', false);
+				$button
+					.removeClass('disabled')
+					.attr('disabled', false)
+					.find('.fa-spinner').remove();
 			}
 		});
 	}

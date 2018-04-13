@@ -193,28 +193,34 @@
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                 <h4 class="modal-title" id="upload-file-dialog-title">Add <span id="uploadFormat"></span>data to corpus <span id="uploadCorpusName">&hellip;</span></h4>
             </div>
-            <div class="modal-body">
+           <div class="modal-body">
                 <p>You may upload:</p>
                 <ul>
-                    <li><em>.xml</em> files</li>
-                    <li><em>.zip</em> or <em>.tar.gz</em> archives containing <em>.xml</em> files</li>
-                </ul> 
-                <!-- The fileinput-button span is used to style the file input field as button -->
-                <span id="upload-area" class="btn fileinput-button">
-                    <i class="icon icon-upload icon-white"></i>
-                    <span>Select files &hellip;</span>
-                    <span>Or drop files here &hellip;</span>
-                    <!-- The file input field used as target for the file upload widget -->
-                    <input id="drop-zone" type="file" name="files[]" data-url="upload" multiple>
-                </span>
-                <div class="progress">
-                    <div id="uploadProgress" class="progress-bar progress-bar-info progress-bar-striped" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 0%;">0%</div>
-                </div>
-                <div id="uploadSuccessDiv" class="alert alert-success">
-                    <span id="uploadSuccessMessage"></span>
-                </div>
-                <div id="uploadErrorDiv" class="alert alert-danger">
-                    <span id="uploadErrorMessage"></span>
+                    <li>Normal files to be indexed</li>
+                    <li><em>.zip</em> or <em>.tar.gz</em> archives containing multiple files at once. Archives should not contain files that cannot be indexed!</li>
+                    <li>External metadata files separately</li>
+                </ul>
+                
+                <div style="padding: 10px 25px 0px;">
+                    <form id="document-upload-form">
+                        <label for="data[]" class="btn btn-info document-upload-button">
+                            <span id="upload-docs-label" class="document-upload-button-text"></span>
+                            <input id="upload-docs-input" name="data[]" type="file" multiple data-label-id="#upload-docs-label" data-label-without-value="Select documents" data-label-with-value="&#8200;document file(s)">
+                        </label>
+    
+                        <label for="linkeddata[]" class="btn btn-default document-upload-button">
+                            <span id="upload-metadata-label" class="document-upload-button-text"></span>
+                            <input id="upload-metadata-input" name="linkeddata[]" type="file" multiple data-label-id="#upload-metadata-label" data-label-without-value="Select linked&#8200;files" data-label-with-value="&#8200;linked file(s)">
+                        </label>
+    
+                        <div id="document-upload-submit-wrapper"><button id="document-upload-submit" type="submit" class="btn btn-primary">upload</button></div>
+                    </form>
+    
+                    <div class="progress">
+                        <div id="uploadProgress" class="progress-bar progress-bar-info progress-bar-striped" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%;">0%</div>
+                    </div>
+                    <div id="uploadSuccessDiv" class="alert alert-success"></div>
+                    <div id="uploadErrorDiv" class="alert alert-danger"></div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -298,7 +304,6 @@
             Changing this setting will also change the syntax highlighting so you can more easily spot mistakes.
         </div>
     </li>
-
     <li class="tlypageguide_bottom" data-tourtarget="#format_download">
         <div>
             A good place to start writing a format is usually to download one of our presets, and edit it until it matches the structure of your corpus material.<br>

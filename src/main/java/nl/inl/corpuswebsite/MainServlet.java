@@ -20,6 +20,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -69,20 +70,20 @@ public class MainServlet extends HttpServlet {
     /**
      * Where to find the Velocity properties file
      */
-    private final String VELOCITY_PROPERTIES = "/WEB-INF/config/velocity.properties";
+    private static final String VELOCITY_PROPERTIES = "/WEB-INF/config/velocity.properties";
 
     /**
      * Where to find the Log4j properties file
      */
-    private final String LOG4J_PROPERTIES = "/WEB-INF/config/log4j.properties";
+    private static final String LOG4J_PROPERTIES = "/WEB-INF/config/log4j.properties";
 
     /**
-     * Our configuration parameters (from search.xml)
+     * Per-corpus configuration parameters (from search.xml)
      */
     private Map<String, WebsiteConfig> configs = new HashMap<>();
 
     /**
-     * Our configuration parameters gotten from blacklab-server
+     * Per-corpus structure and configuration gotten from blacklab-server
      */
     private Map<String, CorpusConfig> corpusConfigs = new HashMap<>();
 
@@ -101,24 +102,49 @@ public class MainServlet extends HttpServlet {
      */
     private String contextPath;
 
+    /** Word properties (like word, lemma, pos) that should be autocompleted by blacklab-server */
+    public static final String PROP_AUTOCOMPLETE_PROPS     = "listvalues";
+    public static final String PROP_ANALYTICS_KEY          = "googleAnalyticsKey";
+    /** Url to reach blacklab-server from this application */
+    public static final String PROP_BLS_CLIENTSIDE         = "blsUrlExternal";
+    /** Url to reach blacklab-server from the browser */
+    public static final String PROP_BLS_SERVERSIDE         = "blsUrl";
+    /** Where static content, custom xslt and other per-corpus data is stored */
+    public static final String PROP_DATA_PATH              = "corporaInterfaceDataDir";
+    /** Number of words displayed by default on the /article/ page, also is a hard limit on the number */
+    public static final String PROP_DOCUMENT_PAGE_LENGTH   = "wordend";
+
     /**
      * Properties from the external config file, e.g. BLS URLs, Google Analytics
      * key, etc.
+     * Several of these properties have defaults, take care to use getProperty() instead of direct get()
      */
-    private Properties adminProps;
+    private Properties adminProps = new Properties();
 
     /**
      * Time the WAR was built.
      */
     private String warBuildTime = null;
 
+    private static Properties getDefaultProps() {
+        Properties p = new Properties();
+        p.setProperty(PROP_AUTOCOMPLETE_PROPS,      "");
+        p.setProperty(PROP_BLS_CLIENTSIDE,          "/blacklab-server"); // no domain to account for proxied servers
+        p.setProperty(PROP_BLS_SERVERSIDE,          "http://localhost:8080/blacklab-server/");
+        p.setProperty(PROP_DATA_PATH,               "/etc/blacklab/projectconfigs");
+        p.setProperty(PROP_DOCUMENT_PAGE_LENGTH,    "5000");
+        // not all properties may need defaults
+
+        return p;
+    }
+
     @Override
     public void init(ServletConfig cfg) throws ServletException {
         super.init(cfg);
 
         // initialise log4j
-        Properties p = new Properties();
         try {
+            Properties p = new Properties();
             p.load(getServletContext().getResourceAsStream(LOG4J_PROPERTIES));
             PropertyConfigurator.configure(p);
         } catch (IOException e1) {
@@ -128,13 +154,14 @@ public class MainServlet extends HttpServlet {
         try {
             startVelocity(cfg);
 
-            String warName = cfg.getServletContext().getContextPath().replaceAll("^/", ""); //warExtractDir.getName();
+            String warName = cfg.getServletContext().getContextPath().replaceAll("^/", "");
             contextPath = cfg.getServletContext().getContextPath();
 
             // Load the external properties file (for administration settings)
             String adminPropFileName = warName + ".properties";
             File adminPropFile = findPropertiesFile(adminPropFileName);
-            adminProps = new Properties();
+            adminProps = new Properties(getDefaultProps());
+
             if (adminPropFile == null || !adminPropFile.exists()) {
                 logger.debug("File " + adminPropFileName + " (with blsUrl and blsUrlExternal settings) "
                         + "not found in webapps, /etc/blacklab/ or temp dir; will use defaults");
@@ -144,42 +171,21 @@ public class MainServlet extends HttpServlet {
                 throw new ServletException("Property file " + adminPropFile + " exists but is unreadable!");
             } else {
                 // File exists and can be read. Read it.
-                debugLog("Reading corpus-frontend property file: " + adminPropFile);
+                logger.debug("Reading corpus-frontend property file: " + adminPropFile);
                 try (Reader in = new BufferedReader(new FileReader(adminPropFile))) {
                     adminProps.load(in);
                 }
             }
-            if (!adminProps.containsKey("blsUrl")) {
-                //throw new ServletException("Missing blsUrl setting in " + adminPropFile);
-                adminProps.put("blsUrl", "http://localhost:8080/blacklab-server/");
-                logger.debug("blsUrl setting missing in corpus-frontend property file, using " + adminProps.getProperty("blsUrl"));
-            }
-            if (!adminProps.containsKey("blsUrlExternal")) {
-                //throw new ServletException("Missing blsUrlExternal setting in " + adminPropFile);
-                adminProps.put("blsUrlExternal", "/blacklab-server/");
-                logger.debug("blsUrlExternal setting missing in corpus-frontend property, using " + adminProps.getProperty("blsUrl"));
-            }
-            if (!adminProps.containsKey("corporaInterfaceDataDir")) {
-                // Try a default location.
-                File defaultDir = new File("/etc/blacklab/projectconfigs");
-                if (defaultDir.exists()) {
-                    logger.debug("corporaInterfaceDataDir not explicitly specified; using default dir (which exists): " + defaultDir);
-                    adminProps.put("corporaInterfaceDataDir", defaultDir.toString());
-                }
-            }
-            if (!adminProps.containsKey("corporaInterfaceDataDir")) {
-                debugLog("Missing corporaInterfaceDataDir setting in " + adminPropFileName);
-                debugLog("Per-corpus data (such as icons, colors, backgrounds, images) will not be available!");
-            } else if (!Paths.get(adminProps.getProperty("corporaInterfaceDataDir")).isAbsolute()) {
-                throw new ServletException("corporaInterfaceDataDir should be an absolute path");
-            }
 
-            debugLog("blsUrl: " + adminProps.getProperty("blsUrl"));
-            debugLog("blsUrlExternal: " + adminProps.getProperty("blsUrlExternal"));
-            if (adminProps.containsKey("corporaInterfaceDataDir")) {
-                debugLog("corporaInterfaceDataDir: " + adminProps.getProperty("corporaInterfaceDataDir"));
+            Enumeration<?> propKeys = adminProps.propertyNames();
+            while (propKeys.hasMoreElements()) {
+                String key = (String) propKeys.nextElement();
+                if (!adminProps.containsKey(key))
+                    logger.debug("Property " + key + " not configured, using default: " + adminProps.getProperty(key));
             }
-
+            if (!Paths.get(adminProps.getProperty(PROP_DATA_PATH)).isAbsolute()) {
+                throw new ServletException(PROP_DATA_PATH + " setting should be an absolute path");
+            }
         } catch (ServletException e) {
             throw e;
         } catch (Exception e) {
@@ -194,11 +200,6 @@ public class MainServlet extends HttpServlet {
         responses.put("search", SearchResponse.class);
         responses.put("article", ArticleResponse.class);
         responses.put("static", CorporaDataResponse.class);
-        responses.put("error", ErrorResponse.class);
-    }
-
-    private static void debugLog(String msg) {
-        logger.debug(msg);
     }
 
     /**
@@ -264,31 +265,24 @@ public class MainServlet extends HttpServlet {
     /**
      * Get the velocity template
      *
-     * @param templateName name of the template
+     * @param templateName name of the template, excluding filename (.vm) suffix
      * @return velocity template
      */
     public synchronized Template getTemplate(String templateName) {
         templateName = templateName + ".vm";
 
-        // if the template exists
         if (Velocity.resourceExists(templateName)) {
-            // if the template was already loaded
             if (templates.containsKey(templateName)) {
                 return templates.get(templateName);
             }
 
-            // template wasn't loaded yet - try to load it now
             try {
-                // load the template
                 Template t = Velocity.getTemplate(templateName, "utf-8");
-                // store it
                 templates.put(templateName, t);
                 return t;
             } catch (Exception e) {
-                // Something went wrong, we die
                 throw new RuntimeException(e);
             }
-
         }
 
         // The template doesn't exist so we'll display an error page
@@ -325,11 +319,9 @@ public class MainServlet extends HttpServlet {
     public CorpusConfig getCorpusConfig(String corpus) {
         if (!corpusConfigs.containsKey(corpus)) {
             // Contact blacklab-server for the config xml file
-
             QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(corpus));
 
-            String listvalues = adminProps.getProperty("listvalues");
-
+            String listvalues = adminProps.getProperty(PROP_AUTOCOMPLETE_PROPS);
             try {
                 Map<String, String[]> params = new HashMap<>();
 
@@ -397,11 +389,9 @@ public class MainServlet extends HttpServlet {
         String corpus = null;
         String page = null;
         String remainder = null;
-        if (pathParts.length == 0) //
-        {
+        if (pathParts.length == 0) { //
             page = DEFAULT_PAGE;
-        } else if (pathParts.length == 1) // <page>
-        {
+        } else if (pathParts.length == 1) { // <page>
             page = pathParts[0];
         } else if (pathParts.length >= 2) { // corpus>/<page>/...
             try {
@@ -414,20 +404,7 @@ public class MainServlet extends HttpServlet {
         }
 
         // Get response class
-        Class<? extends BaseResponse> brClass = responses.get(page);
-        if (brClass == null) {
-            brClass = responses.get("error");
-        }
-
-        // TODO better error handling.
-        if (corpus != null) {
-            try {
-                getCorpusConfig(corpus);
-            } catch (Exception e) {
-                //brClass = responses.get("error");
-                throw new ServletException(e);
-            }
-        }
+        Class<? extends BaseResponse> brClass = responses.getOrDefault(page, ErrorResponse.class);
 
         // Instantiate response class
         BaseResponse br;
@@ -448,7 +425,7 @@ public class MainServlet extends HttpServlet {
         }
 
         br.init(request, response, this, corpus, contextPath, remainder);
-        br.processRequest();
+        br.completeRequest();
     }
 
     /**
@@ -468,9 +445,9 @@ public class MainServlet extends HttpServlet {
      * @return the file, or null if not found
      */
     public final InputStream getProjectFile(String corpus, String fileName, boolean getDefaultIfMissing) {
-        if (corpus == null || isUserCorpus(corpus) || !adminProps.containsKey("corporaInterfaceDataDir")) {
-            if (!adminProps.containsKey("corporaInterfaceDataDir")) {
-                logger.debug("corporaInterfaceDataDir not set, couldn't find project file " + fileName + " for corpus " + corpus + (getDefaultIfMissing ? "; using default" : "; returning null"));
+        if (corpus == null || isUserCorpus(corpus) || !adminProps.containsKey(PROP_DATA_PATH)) {
+            if (!adminProps.containsKey(PROP_DATA_PATH)) {
+                logger.debug(PROP_DATA_PATH + " not set, couldn't find project file " + fileName + " for corpus " + corpus + (getDefaultIfMissing ? "; using default" : "; returning null"));
             }
             return getDefaultIfMissing ? getDefaultProjectFile(fileName) : null;
         }
@@ -500,7 +477,7 @@ public class MainServlet extends HttpServlet {
      * @return
      */
     public final File getProjectFileFromIFDir(String corpus, String fileName) {
-        Path baseDir = Paths.get(adminProps.getProperty("corporaInterfaceDataDir"));
+        Path baseDir = Paths.get(adminProps.getProperty(PROP_DATA_PATH));
         Path corpusDir = baseDir.resolve(corpus).normalize();
         Path filePath = corpusDir.resolve(fileName).normalize();
         File projectFile = new File(filePath.toString());
@@ -615,7 +592,7 @@ public class MainServlet extends HttpServlet {
      * @return the url
      */
     public String getWebserviceUrl(String corpus) {
-        String url = adminProps.getProperty("blsUrl");
+        String url = adminProps.getProperty(PROP_BLS_SERVERSIDE);
         if (!url.endsWith("/")) {
             url += "/";
         }
@@ -627,7 +604,7 @@ public class MainServlet extends HttpServlet {
     }
 
     public String getExternalWebserviceUrl(String corpus) {
-        String url = adminProps.getProperty("blsUrlExternal");
+        String url = adminProps.getProperty(PROP_BLS_CLIENTSIDE);
         if (!url.endsWith("/")) {
             url += "/";
         }
@@ -638,7 +615,15 @@ public class MainServlet extends HttpServlet {
     }
 
     public String getGoogleAnalyticsKey() {
-        return adminProps.getProperty("googleAnalyticsKey", "");
+        return adminProps.getProperty(PROP_ANALYTICS_KEY, "");
+    }
+
+    public int getWordsToShow() {
+    	try {
+    		return Integer.parseInt(adminProps.getProperty(PROP_DOCUMENT_PAGE_LENGTH));
+    	} catch (NumberFormatException e) {
+    		return 5000;
+    	}
     }
 
     /**
@@ -674,6 +659,10 @@ public class MainServlet extends HttpServlet {
             }
         }
         return warBuildTime;
+    }
+
+    public Properties getAdminProps() {
+        return adminProps;
     }
 
     public static boolean isUserCorpus(String corpus) {

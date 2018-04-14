@@ -49,12 +49,14 @@ public class WebsiteConfig {
 	private String pathToCustomJs;
 
     /** properties to show in columns */
-	private String[] propColumns = new String[] {"lemma","pos"};
+	private String[] propColumns = new String[] {};
 
 	/** Link to put in the top bar */
 	private List<LinkInTopBar> linksInTopBar = new ArrayList<>();
 
 	private Map<String, String> xsltParameters = new HashMap<>();
+    
+    
 
 
 	/**
@@ -62,6 +64,7 @@ public class WebsiteConfig {
 	 * @param configFile
 	 * @param absoluteContextPath
 	 * @param corpus
+     * @param corpusConfig the blacklab configuration for the corpus
 	 * @throws ConfigurationException
 	 */
 	public WebsiteConfig(InputStream configFile, String absoluteContextPath, String corpus, CorpusConfig corpusConfig) throws ConfigurationException {
@@ -69,6 +72,8 @@ public class WebsiteConfig {
 			throw new RuntimeException("AbsoluteContextPath is not absolute");
 
 		this.absoluteContextPath = absoluteContextPath;
+        
+        initProps(corpusConfig);
 
 		load(configFile, corpus);
 
@@ -80,6 +85,37 @@ public class WebsiteConfig {
 		        corpusDisplayName = MainServlet.getCorpusName(corpus); // strip username prefix from corpus ID, and use remainder
 		}
 	}
+
+    /**
+     * 
+     * initializes the max 3 properties to show in columns, lemma and pos, when present, will be in these 3.
+     * @param corpusConfig 
+     */
+    private void initProps(CorpusConfig corpusConfig) {
+        List<FieldDescriptor> fd = new ArrayList<>(3);
+        
+        corpusConfig.getPropertyFields().stream()
+                .filter((pf) -> ("lemma".equals(pf.getId()) || "pos".equals(pf.getId())))
+                .forEach((pf) -> {
+                    fd.add(pf);
+                });
+        
+        corpusConfig.getPropertyFields().stream()
+                .filter((pf) -> (fd.size()<3))
+                .filter((pf) -> (!fd.contains(pf)))
+                .filter((pf) -> (!"word".equals(pf.getId()))) // TODO hardcoded string, other check for main prop
+                .forEach((pf) -> {
+                    fd.add(pf);
+                });
+        if (fd.size()>0) {
+            propColumns = new String[fd.size()];
+            short i = 0;
+            for (FieldDescriptor f : fd) {
+                propColumns[i] = f.getId();
+                i++;
+            }
+        }
+    }
 
 	/**
 	 * Note that corpus may be null, when parsing the base config.

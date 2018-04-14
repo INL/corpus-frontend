@@ -5,6 +5,7 @@ package nl.inl.corpuswebsite.utils;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Descriptor for all searchable parameters
@@ -102,4 +103,31 @@ public class FieldDescriptor {
 	public boolean isRestrictedInput() {
 		return (validValues.size() > 0);
 	}
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 79 * hash + Objects.hashCode(this.id);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final FieldDescriptor other = (FieldDescriptor) obj;
+        if (!Objects.equals(this.id, other.id)) {
+            return false;
+        }
+        return true;
+    }
+    
+    
 }

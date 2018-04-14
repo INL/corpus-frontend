@@ -307,8 +307,9 @@ var corpora = {};
 				});
 
 				$select.append($defaultFormatOptGroup).append($userFormatOptGroup)
-					.filter(':not(#format_preset)').children('optgroup:nth-child(1)').append($nonConfigBasedOptions);
+					.filter(':not(#format_select)').children('optgroup:nth-child(1)').append($nonConfigBasedOptions);
 				$select.selectpicker('refresh');
+				$select.trigger('change');
 
 				$('#formats-all-container').toggle(data.user.loggedIn && data.user.canCreateIndex);
 			},
@@ -650,11 +651,11 @@ var corpora = {};
 	}
 
 	function initNewFormat() {
-		
 		var $modal = $('#new-format-modal');
 
 		var $fileInput = $('#format_file');
-		var $presetSelect = $('#format_preset');
+		var $presetSelect = $('#format_select');
+		var $presetInput = $('#format_preset');
 		var $downloadButton = $('#format_download');
 
 		var $formatName = $('#format_name');
@@ -669,7 +670,6 @@ var corpora = {};
 
 		var $confirmButton = $('#format_save');
 		
-
 		function showFormatError(text) {
 			$('#format_error').text(text).show();
 		}
@@ -711,6 +711,10 @@ var corpora = {};
 		$modal.on('hidden.bs.modal', function() {
 			hideFormatError();
 		});
+
+		$presetSelect.on('change', function() {
+			$presetInput.val($presetSelect.selectpicker('val'));
+		});
 		
 		$formatType.on('change', function() {
 			var newMode = $(this).selectpicker('val');
@@ -737,10 +741,16 @@ var corpora = {};
 		});
 
 		$downloadButton.on('click', function() {
-			var presetName = $presetSelect.selectpicker('val');
+			var $this = $(this);
+			var presetName = $presetInput.val();
 			var $formatName = $('#format_name');
+			
+			if (!presetName || $this.prop('disabled'))
+				return;
 
-			$.ajax(CORPORA.blsUrl + '/input-formats/' + presetName,  {
+			$this.prop('disabled', true).append('<span class="fa fa-spinner fa-spin"></span>');
+			hideFormatError();
+			$.ajax(CORPORA.blsUrl + '/input-formats/' + presetName, {
 				'type': 'GET',
 				'accept': 'application/javascript',
 				'dataType': 'json',
@@ -757,10 +767,15 @@ var corpora = {};
 					// set the format name to this format so the user can easily save over it
 					if (!$formatName.val() && presetName.indexOf(':') > 0) 
 						$formatName.val(presetName.substr(presetName.indexOf(':')+1));
+
+					$this.closest('.collapse').collapse('hide');
 				},
 				'error': function (jqXHR, textStatus/*, errorThrown*/) {
 					showFormatError(jqXHR.responseJSON && jqXHR.responseJSON.error.message || textStatus);
 				},
+				'complete': function() {
+					$this.prop('disabled', false).find('.fa-spinner').remove();
+				}
 			});
 		});
 
@@ -818,12 +833,12 @@ var corpora = {};
 			var formatId = $(this).data('format-id');
 			
 			var $modal = $('#new-format-modal');
-			var $presetSelect = $('#format_preset');
+			var $presetSelect = $('#format_select');
 			var $downloadButton = $('#format_download');
 			var $formatName = $('#format_name');
 			// formattype determined after download succeeds			
 			
-			$presetSelect.selectpicker('val', formatId);
+			$presetSelect.selectpicker('val', formatId).trigger('change');
 			$downloadButton.click();
 			$formatName.val(formatId.substr(Math.max(formatId.indexOf(':')+1, 0))); // strip username portion from formatId as username:formatname, if preset
 			

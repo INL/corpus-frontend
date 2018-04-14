@@ -14,7 +14,7 @@ import nl.inl.corpuswebsite.utils.CorpusConfig;
 public class SearchResponse extends BaseResponse {
 
 	public SearchResponse() {
-		super(true, null);
+		super(true);
 	}
 
 	@Override

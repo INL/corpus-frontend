@@ -443,13 +443,14 @@ SINGLEPAGE.INTERFACE = (function() {
 					'</span>',
 				'</th>');
 				
-				$.each(props, function(i, prop) {
-					if(!prop.isMainProp){
-                        if (PROPS_IN_COLUMNS.indexOf(prop.id) != -1)
-						html.push(
-						'<th style="width:15px;"><a data-bls-sort="hit:'+prop.id+'">'+prop.displayName+'</a></th>');
-					}
-				});
+                $.each(PROPS_IN_COLUMNS, function(i,pc) {
+                    $.each(props, function(i, prop) {
+                        if(!prop.isMainProp&&prop.id==pc){
+                            html.push(
+                            '<th style="width:15px;"><a data-bls-sort="hit:'+prop.id+'">'+prop.displayName+'</a></th>');
+                        }
+                    });
+                });
 			html.push('</tr></thead>');
 		
 
@@ -491,11 +492,14 @@ SINGLEPAGE.INTERFACE = (function() {
 					'<td class="text-right">', ELLIPSIS, ' <span dir="', textDirection, '">', left, '</span></td>',
 					'<td class="text-center"><span dir="', textDirection, '"><strong>', parts[1], '</strong></span></td>',
 					'<td><span dir="', textDirection, '">', right, '</span> ', ELLIPSIS, '</td>');
-					$.each(props, function(i, prop) { if(!prop.isMainProp) {
-                    if (PROPS_IN_COLUMNS.indexOf(prop.id) != -1)
-					html.push(
-					'<td>', words(hit.match, prop.id, false, ''), '</td>');
-					}});
+                    $.each(PROPS_IN_COLUMNS, function(i,pc) {
+                        $.each(props, function(i, prop) {
+                            if(!prop.isMainProp&&prop.id==pc) {
+                                html.push(
+                                '<td>', words(hit.match, prop.id, false, ''), '</td>');
+                            }
+                        });
+                    });
 					html.push(
 				'</tr>');
 

@@ -12,97 +12,104 @@ import java.util.Objects;
  * Shared between metadata and word properties
  */
 public class FieldDescriptor {
-	private String id;
-	private String displayName;
-	private String type;
+    private String id;
+    private String displayName;
+    private String type;
 
-	/** Never true for metadata fields */
-	private boolean isCaseSensitive = false;
+    /** Never true for metadata fields */
+    private boolean isCaseSensitive = false;
 
-	/** Which complex field did this field/property originate from - Never set for metadata fields */
-	private String complexFieldName = null;
+    /** Which complex field did this field/property originate from - Never set for metadata fields */
+    private String complexFieldName = null;
 
-	private List<ValuePair> validValues = new LinkedList<>();
+    /** is this a "main" property - e.g. for cql query "word" is this property the one that's used. Always false for metadata/"document" fields */
+    private boolean isMainProperty = false;
 
-	public class ValuePair {
-		public final String value;
-		public final String description;
+    private List<ValuePair> validValues = new LinkedList<>();
 
-		public ValuePair(String value, String description) {
-			this.value = value;
-			this.description = description;
-		}
+    public class ValuePair {
+        public final String value;
+        public final String description;
 
-		public String getValue() {
-			return value;
-		}
+        public ValuePair(String value, String description) {
+            this.value = value;
+            this.description = description;
+        }
 
-		public String getDescription() {
-			return description;
-		}
-	}
+        public String getValue() {
+            return value;
+        }
 
-	public FieldDescriptor(String id, String displayName, String type) {
-		if (id == null || id.isEmpty())
-			throw new RuntimeException("Empty id for FieldDescriptor");
+        public String getDescription() {
+            return description;
+        }
+    }
 
-		if (displayName == null || displayName.isEmpty())
-			displayName = id;
+    public FieldDescriptor(String id, String displayName, String type) {
+        if (id == null || id.isEmpty())
+            throw new IllegalArgumentException("Empty id for FieldDescriptor");
 
-		this.id = id;
-		this.displayName = displayName;
-		this.type = type;
-	}
+        if (displayName == null || displayName.isEmpty())
+            displayName = id;
 
-	public String getId() {
-		return id;
-	}
+        this.id = id;
+        this.displayName = displayName;
+        this.type = type;
+    }
 
-	public String getDisplayName() {
-		return displayName;
-	}
+    public String getId() {
+        return id;
+    }
 
-	public void setDisplayName(String displayName) {
-		this.displayName = displayName;
-	}
+    public String getDisplayName() {
+        return displayName;
+    }
 
-	public String getType() {
-		return type;
-	}
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
 
-	public boolean isCaseSensitive() {
-		return isCaseSensitive;
-	}
+    public String getType() {
+        return type;
+    }
 
-	public void setCaseSensitive(boolean caseSensitive) {
-		this.isCaseSensitive = caseSensitive;
-	}
+    public boolean isCaseSensitive() {
+        return isCaseSensitive;
+    }
 
-	public void setComplexFieldName(String complexFieldName) {
-		this.complexFieldName = complexFieldName;
-	}
+    public void setCaseSensitive(boolean caseSensitive) {
+        this.isCaseSensitive = caseSensitive;
+    }
 
-	public String getComplexFieldName() {
-		return complexFieldName;
-	}
+    public void setComplexFieldName(String complexFieldName) {
+        this.complexFieldName = complexFieldName;
+    }
 
-	public void addValidValue(String value, String description) {
-		if (value == null || value.isEmpty())
-			return;
+    public String getComplexFieldName() {
+        return complexFieldName;
+    }
 
-		if (description == null || description.isEmpty())
-			description = value;
+    public void setMainProperty(boolean mainProperty) {
+        this.isMainProperty = mainProperty;
+    }
 
-		validValues.add(new ValuePair(value, description));
-	}
+    public boolean isMainProperty() {
+        return isMainProperty;
+    }
 
-	public List<ValuePair> getValidValues() {
-		return validValues;
-	}
+    public void addValidValue(String value, String description) {
+        if (value == null || value.isEmpty())
+            return;
 
-	public boolean isRestrictedInput() {
-		return (validValues.size() > 0);
-	}
+        if (description == null || description.isEmpty())
+            description = value;
+
+        validValues.add(new ValuePair(value, description));
+    }
+
+    public List<ValuePair> getValidValues() {
+        return validValues;
+    }
 
     @Override
     public int hashCode() {
@@ -123,11 +130,6 @@ public class FieldDescriptor {
             return false;
         }
         final FieldDescriptor other = (FieldDescriptor) obj;
-        if (!Objects.equals(this.id, other.id)) {
-            return false;
-        }
-        return true;
+        return Objects.equals(this.id, other.id);
     }
-    
-    
 }

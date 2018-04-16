@@ -75,6 +75,13 @@
 
 #parse("header.vm")
 
+<script>
+    var SINGLEPAGE = SINGLEPAGE || {};
+    SINGLEPAGE.INDEX = JSON.parse("$esc.javascript($indexStructureJson)");
+    var BLS_URL = "$blsUrl";
+    var PROPS_IN_COLUMNS = "$websiteConfig.getPropColumns()".split(',');
+</script>
+
 <link rel="stylesheet" href="$pathToTop/css/cql_querybuilder.css">
 <script src="$pathToTop/js/vendor/mustache.js"></script>
 <script src="$pathToTop/js/vendor/URI.js"></script>
@@ -86,11 +93,6 @@
 <script src="$pathToTop/js/singlepage-interface.js"></script>
 <script src="$pathToTop/js/cql_querybuilder.js"></script>
 <script src="$pathToTop/js/singlepage-cqlparser.js"></script>
-<script>
-    var SINGLEPAGE = SINGLEPAGE || {};
-    SINGLEPAGE.INDEX = JSON.parse("$esc.javascript($indexStructureJson)");
-    var BLS_URL = "$blsUrl";
-</script>
 
 <!--
 <noscript>

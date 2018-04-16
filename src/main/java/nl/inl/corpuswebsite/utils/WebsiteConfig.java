@@ -1,6 +1,3 @@
-/**
- *
- */
 package nl.inl.corpuswebsite.utils;
 
 import java.io.InputStream;
@@ -22,144 +19,178 @@ import nl.inl.corpuswebsite.MainServlet;
  */
 public class WebsiteConfig {
 
-	/** One of the links shown in the top bar */
-	static class LinkInTopBar extends HashMap<String, Object> {
-		public LinkInTopBar(String name, String href, boolean newWindow) {
-			put("name", name);
-			put("href", href);
-			put("newWindow", newWindow);
-		}
-	}
+    /** One of the links shown in the top bar */
+    static class LinkInTopBar extends HashMap<String, Object> {
+        public LinkInTopBar(String name, String href, boolean newWindow) {
+            put("name", name);
+            put("href", href);
+            put("newWindow", newWindow);
+        }
+    }
 
-	private String absoluteContextPath;
+    private String absoluteContextPath;
 
-	/** Name to display for this corpus, null if no corpus set. Falls back to the corpus name if not explicitly configured. */
-	private String corpusDisplayName;
+    /** Name to display for this corpus, null if no corpus set. Falls back to the corpus name if not explicitly configured. */
+    private String corpusDisplayName;
 
-	/** Raw name for this corpus, null if no corpus set. */
-	private String corpusName;
+    /** Raw name for this corpus, null if no corpus set. */
+    private String corpusName;
 
-	/** User for this corpus, null if no corpus set or this corpus has no owner. */
-	private String corpusOwner;
+    /** User for this corpus, null if no corpus set or this corpus has no owner. */
+    private String corpusOwner;
 
-	/** Custom css to use */
-	private String pathToCustomCss;
+    /** Custom css to use */
+    private String pathToCustomCss;
 
-	/** Custom js to use */
-	private String pathToCustomJs;
+    /** Custom js to use */
+    private String pathToCustomJs;
 
-	/** Link to put in the top bar */
-	private List<LinkInTopBar> linksInTopBar = new ArrayList<>();
+    /** properties to show in result columns */
+    private String[] propColumns = new String[] {};
 
-	private Map<String, String> xsltParameters = new HashMap<>();
+    /** Link to put in the top bar */
+    private List<LinkInTopBar> linksInTopBar = new ArrayList<>();
 
+    private Map<String, String> xsltParameters = new HashMap<>();
 
-	/**
-	 *
-	 * @param configFile
-	 * @param absoluteContextPath
-	 * @param corpus
-	 * @throws ConfigurationException
-	 */
-	public WebsiteConfig(InputStream configFile, String absoluteContextPath, String corpus, CorpusConfig corpusConfig) throws ConfigurationException {
-		if (!absoluteContextPath.startsWith("/"))
-			throw new RuntimeException("AbsoluteContextPath is not absolute");
+    /**
+     *
+     * @param configFile
+     * @param absoluteContextPath
+     * @param corpus
+     * @param corpusConfig the blacklab configuration for the corpus
+     * @throws ConfigurationException
+     */
+    public WebsiteConfig(InputStream configFile, String absoluteContextPath, String corpus, CorpusConfig corpusConfig) throws ConfigurationException {
+        if (!absoluteContextPath.startsWith("/"))
+            throw new RuntimeException("AbsoluteContextPath is not absolute");
 
-		this.absoluteContextPath = absoluteContextPath;
+        this.absoluteContextPath = absoluteContextPath;
 
-		load(configFile, corpus);
+        initProps(corpusConfig);
 
-		if (corpusDisplayName == null) { // no displayName set
-		    String backendDisplayName = corpusConfig.getDisplayName();
-		    if (backendDisplayName != null && !backendDisplayName.isEmpty() && !backendDisplayName.equals(corpus))
-		        corpusDisplayName = backendDisplayName;
-		    else
-		        corpusDisplayName = MainServlet.getCorpusName(corpus); // strip username prefix from corpus ID, and use remainder
-		}
-	}
+        load(configFile, corpus);
 
-	/**
-	 * Note that corpus may be null, when parsing the base config.
-	 * @param configFile
-	 * @param corpus raw name of the corpus, including the username (if applicable), might be null (when loading the config for the pages outside a corpus context, such as /about, /help, and / (root)))
-	 * @throws ConfigurationException
-	 */
-	private void load(InputStream configFile, String corpus) throws ConfigurationException {
-		// Load the specified config file
-		XMLConfiguration xmlConfig = new XMLConfiguration();
-		xmlConfig.setDelimiterParsingDisabled(true);
-		xmlConfig.load(configFile);
+        if (corpusDisplayName == null) { // no displayName set
+            String backendDisplayName = corpusConfig.getDisplayName();
+            if (backendDisplayName != null && !backendDisplayName.isEmpty() && !backendDisplayName.equals(corpus))
+                corpusDisplayName = backendDisplayName;
+            else
+                corpusDisplayName = MainServlet.getCorpusName(corpus); // strip username prefix from corpus ID, and use remainder
+        }
+    }
 
-		corpusName = MainServlet.getCorpusName(corpus);
-		corpusOwner = MainServlet.getCorpusOwner(corpus);
-		corpusDisplayName = xmlConfig.getString("InterfaceProperties.DisplayName", null);
+    /**
+     * Initializes the max 3 properties to show in columns, lemma and pos, when present, will be in these 3.
+     *
+     * @param corpusConfig
+     */
+    private void initProps(CorpusConfig corpusConfig) {
+        List<FieldDescriptor> fd = new ArrayList<>(3);
 
-		pathToCustomJs          = processUrl(xmlConfig.getString("InterfaceProperties.CustomJs"));
-		pathToCustomCss         = processUrl(xmlConfig.getString("InterfaceProperties.CustomCss"));
+        corpusConfig.getPropertyFields().stream()
+        .filter(pf -> ("lemma".equals(pf.getId()) || "pos".equals(pf.getId())))
+        .forEach(fd::add);
 
-		List<HierarchicalConfiguration> myfields = xmlConfig.configurationsAt("InterfaceProperties.NavLinks.Link");
-		for (Iterator<HierarchicalConfiguration> it = myfields.iterator(); it.hasNext();) {
-			HierarchicalConfiguration sub = it.next();
+        // Add all others in order until we hit 3 properties
+        corpusConfig.getPropertyFields().stream()
+        .filter(pf -> fd.size() < 3 && !fd.contains(pf) && !pf.isMainProperty())
+        .forEach(fd::add);
 
-			String location = sub.getString("[@value]", null);
-			String name = sub.getString("");
-			boolean newWindow = sub.getBoolean("[@newWindow]", false);
-			boolean relative = sub.getBoolean("[@relative]", false);
-			if (location == null)
-				location = name;
+        propColumns = fd.stream().map(FieldDescriptor::getId).toArray(String[]::new);
+    }
 
-			if (relative)
-				location = processUrl(location);
+    /**
+     * Note that corpus may be null, when parsing the base config.
+     * @param configFile
+     * @param corpus raw name of the corpus, including the username (if applicable), might be null (when loading the config for the pages outside a corpus context, such as /about, /help, and / (root)))
+     * @throws ConfigurationException
+     */
+    private void load(InputStream configFile, String corpus) throws ConfigurationException {
+        // Load the specified config file
+        XMLConfiguration xmlConfig = new XMLConfiguration();
+        xmlConfig.setDelimiterParsingDisabled(true);
+        xmlConfig.load(configFile);
 
-			linksInTopBar.add(new LinkInTopBar(name, location, newWindow));
-		}
+        corpusName = MainServlet.getCorpusName(corpus);
+        corpusOwner = MainServlet.getCorpusOwner(corpus);
+        corpusDisplayName = xmlConfig.getString("InterfaceProperties.DisplayName", null);
 
-		myfields = xmlConfig.configurationsAt("XsltParameters.XsltParameter");
-		for (Iterator<HierarchicalConfiguration> it = myfields.iterator(); it.hasNext();) {
-			HierarchicalConfiguration sub = it.next();
+        pathToCustomJs = processUrl(xmlConfig.getString("InterfaceProperties.CustomJs"));
+        pathToCustomCss = processUrl(xmlConfig.getString("InterfaceProperties.CustomCss"));
+        String props = xmlConfig.getString("InterfaceProperties.PropColumns");
+        if (props!=null&&!props.isEmpty()) {
+            propColumns = StringUtils.split(props);
+        }
 
-			String name = sub.getString("[@name]");
-			String value = sub.getString("[@value]");
+        List<HierarchicalConfiguration> myfields = xmlConfig.configurationsAt("InterfaceProperties.NavLinks.Link");
+        for (Iterator<HierarchicalConfiguration> it = myfields.iterator(); it.hasNext();) {
+            HierarchicalConfiguration sub = it.next();
 
-			xsltParameters.put(name, value);
-		}
-	}
+            String location = sub.getString("[@value]", null);
+            String name = sub.getString("");
+            boolean newWindow = sub.getBoolean("[@newWindow]", false);
+            boolean relative = sub.getBoolean("[@relative]", false);
+            if (location == null)
+                location = name;
 
-	public String getCorpusDisplayName() {
-		return corpusDisplayName;
-	}
+            if (relative)
+                location = processUrl(location);
 
-	public String getCorpusName() {
-		return corpusName;
-	}
+            linksInTopBar.add(new LinkInTopBar(name, location, newWindow));
+        }
 
-	public String getCorpusOwner() {
-		return corpusOwner;
-	}
+        myfields = xmlConfig.configurationsAt("XsltParameters.XsltParameter");
+        for (Iterator<HierarchicalConfiguration> it = myfields.iterator(); it.hasNext();) {
+            HierarchicalConfiguration sub = it.next();
 
-	public List<LinkInTopBar> getLinks() {
-		return linksInTopBar;
-	}
+            String name = sub.getString("[@name]");
+            String value = sub.getString("[@value]");
 
-	public Map<String, String> getXsltParameters() {
-		return xsltParameters;
-	}
+            xsltParameters.put(name, value);
+        }
+    }
 
-	public String getPathToCustomCss() {
-		return pathToCustomCss;
-	}
+    public String getCorpusDisplayName() {
+        return corpusDisplayName;
+    }
 
-	public String getPathToCustomJs() {
-		return pathToCustomJs;
-	}
+    public String getCorpusName() {
+        return corpusName;
+    }
 
-	// TODO centralize normalizing/making relative of links (mainservlet static func?)
-	private String processUrl(String link) {
-		if (link == null)
-			return link;
+    public String getCorpusOwner() {
+        return corpusOwner;
+    }
 
-		link = StringUtils.stripStart(link.trim(), "./");
+    public List<LinkInTopBar> getLinks() {
+        return linksInTopBar;
+    }
 
-		return absoluteContextPath + "/" + link;
-	}
+    public Map<String, String> getXsltParameters() {
+        return xsltParameters;
+    }
+
+    public String getPathToCustomCss() {
+        return pathToCustomCss;
+    }
+
+    public String getPathToCustomJs() {
+        return pathToCustomJs;
+    }
+
+    // TODO centralize normalizing/making relative of links (mainservlet static func?)
+    private String processUrl(String link) {
+        if (link == null)
+            return link;
+
+        link = StringUtils.stripStart(link.trim(), "./");
+
+        return absoluteContextPath + "/" + link;
+    }
+
+    public String getPropColumns() {
+        return StringUtils.join(propColumns, ",");
+    }
+
 }

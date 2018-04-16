@@ -18,6 +18,10 @@
         <!-- You can include custom js and css in your corpus interface directory -->
         <!--<CustomJs>corpusname/static/your.js</CustomJs>-->
         <!--<CustomCss>corpusname/static/your.css</CustomCss>-->
+        <!-- You can define which properties to show as colummns in the results table-->
+        <!--
+        <PropColumns>lemma,pos,tense, person,number</PropColumns>
+        -->
         
         <NavLinks>
         	<!-- Relative links will be made relative to the application root, 

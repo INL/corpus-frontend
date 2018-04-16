@@ -111,6 +111,7 @@ public class CorpusConfig {
 			Element complexFieldElement = (Element) complexFieldElements.item(cfi);
 			String complexFieldName = complexFieldElement.getAttribute("name");
 			NodeList propertyElements = complexFieldElement.getElementsByTagName("property");
+			String mainPropertyName = complexFieldElement.getElementsByTagName("mainProperty").item(0).getTextContent();
 			for (int ip = 0; ip < propertyElements.getLength(); ++ip) {
 				Node propertyNode = propertyElements.item(ip);
 				if (!(propertyNode instanceof Element))
@@ -132,6 +133,7 @@ public class CorpusConfig {
 				}
 				field.setCaseSensitive(caseSensitive);
 				field.setComplexFieldName(complexFieldName);
+				field.setMainProperty(fieldName.equals(mainPropertyName));
 				this.propertyFields.add(field);
 			}
 		}

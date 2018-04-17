@@ -31,15 +31,13 @@ public class ArticleResponse extends BaseResponse {
 	/** For getting metadata */
 	private QueryServiceHandler articleMetadataRequest;
 
-	private XslTransformer transformer = new XslTransformer();
+	private XslTransformer articleStylesheet;
 
-	private String articleStylesheet;
-
-	private String metadataStylesheet;
+	private XslTransformer metadataStylesheet;
 
 
 	public ArticleResponse() {
-		super(true, null);
+		super(true);
 	}
 
 	@Override
@@ -78,32 +76,31 @@ public class ArticleResponse extends BaseResponse {
                 metadataRequestParameters.put("userid", new String[] { userId });
 			}
 
-			// show max. 5000 words of content (TODO: paging)
+			// show max. 5000 (or as requested/configured) words of content (TODO: paging)
 			// paging will also need edits in blacklab,
 			// since when you only get a subset of the document without begin and ending, the top of the xml tree will be missing
 			// and xslt will not match anything (or match the wrong elements)
 			// so blacklab will have to walk the tree and insert those tags in some manner.
-			contentRequestParameters.put("wordend", new String[] {"5000"});
-
+			contentRequestParameters.put("wordend", new String[] { Integer.toString(getWordsToShow()) });
 
 			try {
 				String xmlResult = articleContentRequest.makeRequest(contentRequestParameters);
 				if (xmlResult.contains("NOT_AUTHORIZED")) {
-					context.put("article_content", "");
+					context.put("article_content", "content restricted");
 				} else {
-					transformer.clearParameters();
-					transformer.addParameter("contextRoot", servlet.getServletContext().getContextPath());
+					articleStylesheet.clearParameters();
+					articleStylesheet.addParameter("contextRoot", servlet.getServletContext().getContextPath());
 
 					for (Entry<String, String> e : servlet.getWebsiteConfig(corpus).getXsltParameters().entrySet()) {
-						transformer.addParameter(e.getKey(), e.getValue());
+						articleStylesheet.addParameter(e.getKey(), e.getValue());
 					}
 
-					context.put("article_content", transformer.transform(xmlResult, articleStylesheet));
+					context.put("article_content", articleStylesheet.transform(xmlResult));
 				}
 
 				xmlResult = articleMetadataRequest.makeRequest(metadataRequestParameters);
-				transformer.clearParameters();
-				String htmlResult = transformer.transform(xmlResult, metadataStylesheet);
+				metadataStylesheet.clearParameters();
+				String htmlResult = metadataStylesheet.transform(xmlResult);
 				context.put("article_meta", htmlResult);
 
 			} catch (IOException e) {
@@ -131,4 +128,10 @@ public class ArticleResponse extends BaseResponse {
 		displayHtmlTemplate(servlet.getTemplate("article"));
 	}
 
+	private int getWordsToShow() {
+		int maxWordCount = servlet.getWordsToShow();
+
+		int requestedWordCount = getParameter("wordend", maxWordCount);
+		return Math.min(requestedWordCount, maxWordCount);
+	}
 }

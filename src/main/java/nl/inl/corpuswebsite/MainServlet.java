@@ -111,6 +111,8 @@ public class MainServlet extends HttpServlet {
     public static final String PROP_BLS_SERVERSIDE         = "blsUrl";
     /** Where static content, custom xslt and other per-corpus data is stored */
     public static final String PROP_DATA_PATH              = "corporaInterfaceDataDir";
+    /** Name of the default 'corpus' if thhe datapath if not specified for the corpus */
+    public static final String PROP_DATA_DEFAULT              = "corporaInterfaceDefault";
     /** Number of words displayed by default on the /article/ page, also is a hard limit on the number */
     public static final String PROP_DOCUMENT_PAGE_LENGTH   = "wordend";
 
@@ -132,6 +134,7 @@ public class MainServlet extends HttpServlet {
         p.setProperty(PROP_BLS_CLIENTSIDE,          "/blacklab-server"); // no domain to account for proxied servers
         p.setProperty(PROP_BLS_SERVERSIDE,          "http://localhost:8080/blacklab-server/");
         p.setProperty(PROP_DATA_PATH,               "/etc/blacklab/projectconfigs");
+        p.setProperty(PROP_DATA_DEFAULT,            "default");
         p.setProperty(PROP_DOCUMENT_PAGE_LENGTH,    "5000");
         // not all properties may need defaults
 
@@ -445,14 +448,26 @@ public class MainServlet extends HttpServlet {
      * @return the file, or null if not found
      */
     public final InputStream getProjectFile(String corpus, String fileName, boolean getDefaultIfMissing) {
-        if (corpus == null || isUserCorpus(corpus) || !adminProps.containsKey(PROP_DATA_PATH)) {
+        if (isUserCorpus(corpus) || !adminProps.containsKey(PROP_DATA_PATH)) {
             if (!adminProps.containsKey(PROP_DATA_PATH)) {
                 logger.debug(PROP_DATA_PATH + " not set, couldn't find project file " + fileName + " for corpus " + corpus + (getDefaultIfMissing ? "; using default" : "; returning null"));
             }
             return getDefaultIfMissing ? getDefaultProjectFile(fileName) : null;
         }
 
-        File projectFile = null;
+        FileInputStream fs = null;
+        if(corpus != null)
+        	fs = getProjectFileCorpus(corpus, fileName, getDefaultIfMissing);
+        if(fs == null) 
+        	fs = getProjectFileCorpus(adminProps.getProperty(PROP_DATA_DEFAULT), fileName, getDefaultIfMissing);
+        if(fs !=null)
+        	return fs;
+        
+        return getDefaultIfMissing ? getDefaultProjectFile(fileName) : null;
+    }
+
+	private FileInputStream getProjectFileCorpus(String corpus, String fileName, boolean getDefaultIfMissing) {
+		File projectFile = null;
         try {
             projectFile = getProjectFileFromIFDir(corpus, fileName);
             if (projectFile!=null) {
@@ -466,8 +481,8 @@ public class MainServlet extends HttpServlet {
         } catch (SecurityException e) {
             logger.debug("SecurityException finding project file " + fileName + " for corpus " + corpus + " as file " + projectFile.toString() + (getDefaultIfMissing ? "; using default" : "; returning null"));
         }
-        return getDefaultIfMissing ? getDefaultProjectFile(fileName) : null;
-    }
+        return null;
+	}
 
     /**
      * return a file from the corporaInterfaceDataDir/corpus. Return null when file does not exist, cannot be read or is

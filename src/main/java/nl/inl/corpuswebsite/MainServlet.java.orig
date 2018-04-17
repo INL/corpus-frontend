@@ -376,6 +376,312 @@ public class MainServlet extends HttpServlet {
 		 *
 		 * This does mean that pages outside the context of a corpus cannot have arguments in the form of extra parts in the URI
 		 * For instance <root>/help/searching would try to serve the nonexistant "searching" response in the context of the corpus "help"
+<<<<<<< HEAD
+		 */
+
+		// First strip out any leading items like "/" and our root
+		String requestUri = request.getRequestURI();
+		if (requestUri.startsWith(contextPath)) {
+			requestUri = requestUri.substring(contextPath.length());
+		}
+
+		// Use apache stringutils split as it's much more sensible about omitting leading/trailing and empty strings.
+		String[] pathParts = StringUtils.split(requestUri, "/");
+
+		String corpus = null;
+		String page = null;
+		String remainder = null;
+		if (pathParts.length == 0) //
+			page = DEFAULT_PAGE;
+		else if (pathParts.length == 1) // <page>
+			page = pathParts[0];
+		else if (pathParts.length >= 2) { // corpus>/<page>/...
+			try {
+				corpus = URLDecoder.decode(pathParts[0], StandardCharsets.UTF_8.name());
+				page = pathParts[1];
+				remainder = StringUtils.join(pathParts, "/", 2, pathParts.length);
+			} catch (UnsupportedEncodingException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
+
+
+		// Get response class
+		Class<? extends BaseResponse> brClass = responses.get(page);
+		if (brClass == null)
+			brClass = responses.get("error");
+
+		// TODO better error handling.
+		if (corpus != null) {
+			try {
+				getCorpusConfig(corpus);
+			} catch (Exception e) {
+				//brClass = responses.get("error");
+				throw new ServletException(e);
+			}
+		}
+
+		// Instantiate response class
+		BaseResponse br;
+		try {
+			br = brClass.getConstructor().newInstance();
+		} catch (Exception e) {
+			throw new ServletException(e);
+		}
+
+		if (br.isCorpusRequired() && (corpus == null || corpus.isEmpty())) {
+			try {
+				response.sendError(HttpServletResponse.SC_NOT_FOUND);
+			} catch (IOException e) {
+				throw new ServletException(e);
+			}
+
+			return;
+		}
+
+		br.init(request, response, this, corpus, contextPath, remainder);
+		br.processRequest();
+	}
+
+	/**
+	 * Get a file from the directory belonging to this corpus and return it, or return the default file for this project if there is no corpus-specific file
+	 *  or return the default file if the project-specific file cannot be located.
+	 * The project specific default file (located in the root of corporaInterfaceDataDir) is returned when:
+	 * corpus is null, corpus is a user-uploaded corpus 
+	 * The default file is returned when:
+	 * the interface data directory is not configured, or the file is simply missing
+	 * This is provided the default file exists and getDefaultIfMissing is true, otherwise null will be returned.
+	 *
+	 * @param corpus - corpus for which to get the file. If null, falls back to the default files.
+	 * @param fileName - path to the file relative to the directory for the corpus.
+	 * @param getDefaultIfMissing try to get the default file if the corpus-specific file is missing?
+	 * @return the file, or null if not found
+	 */
+	public InputStream getProjectFile(String corpus, String fileName, boolean getDefaultIfMissing) {
+		if (!adminProps.containsKey("corporaInterfaceDataDir") ) {
+			logger.debug("corporaInterfaceDataDir not set, couldn't find project file " + fileName + " for corpus " + corpus + (getDefaultIfMissing ? "; using default" : "; returning null"));
+			return getDefaultIfMissing ? getDefaultProjectFile(fileName) : null;
+		}
+
+		InputStream projectFile = null;
+		Path baseDir = Paths.get(adminProps.getProperty("corporaInterfaceDataDir"));
+		// First try the corpus specific
+		if(corpus != null && !isUserCorpus(corpus)) {
+			Path corpusDir = baseDir.resolve(corpus).normalize();
+			projectFile = getProjectSpecificFile(fileName, corpusDir);
+			if (projectFile != null) {
+				return projectFile;
+			}
+		}
+		
+		// Then try configured 
+		projectFile = getProjectSpecificFile(fileName, baseDir);
+		if (projectFile != null) {
+			logger.debug("Using project file from configured default");
+			return projectFile;
+		}
+		
+		logger.debug("Couldn't find project file " + fileName + " for corpus " + corpus + (getDefaultIfMissing ? "; using default" : "; returning null"));
+		return getDefaultIfMissing ? getDefaultProjectFile(fileName) : null;
+	}
+	
+	/**
+	 * Gets a file from the interface-default directory in the project.
+	 *
+	 * @param fileName The file to get. This should NOT start with "/"
+	 * @param corpusDir The directory where the file should be found
+	 * @return the InputStream for the file. Or null if this file cannot be found.
+	 */
+	private InputStream getProjectSpecificFile(String fileName, Path corpusDir) {
+		File projectFile = null;
+		try {
+			Path filePath = corpusDir.resolve(fileName).normalize();
+			projectFile = new File(filePath.toString());
+			if (projectFile.exists() && !projectFile.canRead()) {
+				// Problem with file permissions (possibly SELinux?)
+				logger.warn("File " + projectFile + " exists but is unreadable!");
+			}
+			if (filePath.startsWith(corpusDir)) {
+				return new FileInputStream(projectFile);
+			}
+
+			// File path points outside the configured directory!
+			logger.warn("Disallowing project file outside configured directory: " + fileName);
+		} catch (FileNotFoundException e) {
+			// This is "normal", just means we want to use the generic version of this file or are checking to see if it exists.
+		} catch (SecurityException e) {
+			logger.debug("SecurityException finding project file " + fileName + " as file " + projectFile.toString() );
+		}
+		return null;
+	}
+
+	/**
+	 * Gets a file from the interface-default directory in the project.
+	 *
+	 * @param fileName The file to get. This should NOT start with "/"
+	 * @return the InputStream for the file. Or null if this file cannot be found.
+	 */
+	private InputStream getDefaultProjectFile(String fileName) {
+		return getServletContext().getResourceAsStream("/WEB-INF/interface-default/" + fileName);
+	}
+
+	public InputStream getHelpPage(String corpus) {
+		return getProjectFile(corpus, "help.inc", true);
+	}
+
+	public InputStream getAboutPage(String corpus) {
+		return getProjectFile(corpus, "about.inc", true);
+	}
+
+	/**
+	 * Get the url to blacklab-server for this corpus.
+	 * The url will always end in "/"
+	 *
+	 * @param corpus the corpus for which to generate the url, if null, the base blacklab-server url will be returned.
+	 * @return the url
+	 */
+	public String getWebserviceUrl(String corpus) {
+		String url = adminProps.getProperty("blsUrl");
+		if (!url.endsWith("/"))
+			url += "/";
+
+		if (corpus != null && !corpus.isEmpty())
+			url += corpus + "/";
+		return url;
+	}
+
+	public String getExternalWebserviceUrl(String corpus) {
+		String url = adminProps.getProperty("blsUrlExternal");
+		if (!url.endsWith("/"))
+			url += "/";
+		if (corpus != null && corpus.length() > 0)
+			url += corpus + "/";
+		return url;
+	}
+
+	public String getGoogleAnalyticsKey() {
+		return adminProps.getProperty("googleAnalyticsKey", "");
+	}
+
+	/**
+	 * Get the stylesheet to convert an article from this corpus into an html snippet suitable for inseting in the article.vm page.
+	 *
+	 * Resolves in 3 steps:
+	 * first see if we have a configured dataDir for this specific corpus, and attempt to retrieve the article_<corpusDataFormat> xsl from that directory.
+	 * If that fails, see if an xsl file with that name exists in the provided WEB-INF/interface-default directory.
+	 * If that fails, contact blacklab-server for an autogenerated best-effort xsl file.
+	 * If that fails, return a default xsl file that just outputs all text.
+	 *
+	 * @param corpus
+	 * @param corpusDataFormat
+	 * @return the xsl file's contents as a string.
+	 */
+	public String getStylesheet(String corpus, String corpusDataFormat) {
+
+		String fileName = "article_" + corpusDataFormat + ".xsl";
+		String key = corpus + "__" + fileName;
+
+		// Get from cache
+		if (stylesheets.containsKey(key))
+			return stylesheets.get(key);
+
+		// Get from explicitly defined xsl files for corpus or defaults.
+		try (InputStream is = getProjectFile(corpus, fileName, true)) {
+			if (is != null) {
+				String stylesheet = IOUtils.toString(is, StandardCharsets.UTF_8);
+				stylesheets.put(key, stylesheet);
+				return stylesheet;
+			}
+		} catch (IOException e) {
+			log("Could not read xsl file from disk: " + fileName, e);
+			// Don't bail yet, can still try to get from blacklab-server
+		}
+
+		String stylesheet = null;
+		// Still nothing, get an autogenned xsl from blacklab-server
+		try {
+			QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(null) + "input-formats/" + corpusDataFormat + "/xslt");
+			stylesheet = handler.makeRequest(null);
+		} catch (QueryException e)  {
+			if (e.getHttpStatusCode() == 404) {
+				// this might happen if the import format is deleted after a corpus was created.
+				// then blacklab-server can obviously no longer generate the xslt based on the import format.
+				stylesheet = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+						"<xsl:stylesheet version=\"2.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">" +
+						"<xsl:output encoding=\"utf-8\" method=\"html\" omit-xml-declaration=\"yes\" />" +
+						"</xsl:stylesheet>";
+			} else {
+				throw new RuntimeException(e); // blacklab internal server error or the like, abort the request.
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+
+		stylesheets.put(key, stylesheet);
+		return stylesheet;
+	}
+
+	/**
+	 * Return a timestamp for when the application was built.
+	 *
+	 * @return build timestamp (format: yyyy-MM-dd HH:mm:ss), or UNKNOWN if
+	 *   the timestamp could not be found for some reason (i.e. not running from a
+	 *   JAR, or JAR was not created with the Ant buildscript).
+	 */
+	public String getWarBuildTime() {
+		if (warBuildTime == null) {
+			try (InputStream inputStream = getServletContext().getResourceAsStream("/META-INF/MANIFEST.MF")) {
+				if (inputStream == null) {
+					warBuildTime = "(no manifest)";
+				} else {
+					try {
+						Manifest manifest = new Manifest(inputStream);
+						Attributes atts = manifest.getMainAttributes();
+						String value = null;
+						if (atts != null) {
+							value = atts.getValue("Build-Time");
+							if (value == null)
+								value = atts.getValue("Build-Date"); // Old name for this info
+						}
+						warBuildTime = (value == null ? "UNKNOWN" : value);
+					} finally {
+						inputStream.close();
+					}
+				}
+			} catch (IOException e) {
+				throw new RuntimeException("Could not read build date from manifest", e);
+			}
+		}
+		return warBuildTime;
+	}
+
+	public static boolean isUserCorpus(String corpus) {
+		return corpus != null && corpus.indexOf(":") != -1;
+	}
+
+	public static String getCorpusName(String corpus) {
+		if (corpus == null)
+			return null;
+
+		int i = corpus.indexOf(":");
+		if (i != -1)
+			return corpus.substring(i+1);
+
+		return corpus;
+	}
+
+	public static String getCorpusOwner(String corpus) {
+		if (corpus == null)
+			return null;
+
+		int i = corpus.indexOf(":");
+		if (i != -1)
+			return corpus.substring(0, i);
+
+		return null;
+	}
+=======
          */
         // First strip out any leading items like "/" and our root
         String requestUri = request.getRequestURI();
@@ -694,4 +1000,5 @@ public class MainServlet extends HttpServlet {
 
         return null;
     }
+>>>>>>> dev
 }

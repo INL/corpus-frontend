@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -27,6 +26,8 @@ public class CorpusConfig {
 
 	private Document config;
 
+	private String displayName;
+
 	private List<FieldDescriptor> propertyFields = new ArrayList<>();
 
 	/** Keyed by tab name */
@@ -47,6 +48,13 @@ public class CorpusConfig {
 
 	public String getJsonUnescaped() {
 		return jsonUnescaped;
+	}
+
+	/**
+	 * @return the displayName for this corpus as configured in BlackLab-Server, may be null if not configured.
+	 */
+	public String getDisplayName() {
+	    return displayName;
 	}
 
 	public List<FieldDescriptor> getPropertyFields() {
@@ -71,17 +79,29 @@ public class CorpusConfig {
 	}
 
 	private void parse() {
+	    parseDisplayName();
 		parseCorpusDataFormat();
 		parsePropertyFields();
 		parseMetadataFields();
 		parseFieldInfo();
 	}
 
+	private void parseDisplayName() {
+        Element root = (Element) config.getElementsByTagName("blacklabResponse").item(0);
+        NodeList l = root.getChildNodes();
+        for (int i = 0; i < l.getLength(); ++i) {
+            Node n = l.item(i);
+            if (n.getNodeName().equals("displayName")) {
+                displayName = n.getTextContent();
+                return;
+            }
+        }
+	}
+
 	private void parseCorpusDataFormat() {
 		NodeList documentFormatTags = config.getElementsByTagName("documentFormat");
 		if (documentFormatTags.getLength() > 0)
 			this.corpusDataFormat = documentFormatTags.item(0).getTextContent();
-		this.corpusDataFormat = "UNKNOWN";
 	}
 
 	private void parsePropertyFields() {
@@ -91,6 +111,7 @@ public class CorpusConfig {
 			Element complexFieldElement = (Element) complexFieldElements.item(cfi);
 			String complexFieldName = complexFieldElement.getAttribute("name");
 			NodeList propertyElements = complexFieldElement.getElementsByTagName("property");
+			String mainPropertyName = complexFieldElement.getElementsByTagName("mainProperty").item(0).getTextContent();
 			for (int ip = 0; ip < propertyElements.getLength(); ++ip) {
 				Node propertyNode = propertyElements.item(ip);
 				if (!(propertyNode instanceof Element))
@@ -112,6 +133,7 @@ public class CorpusConfig {
 				}
 				field.setCaseSensitive(caseSensitive);
 				field.setComplexFieldName(complexFieldName);
+				field.setMainProperty(fieldName.equals(mainPropertyName));
 				this.propertyFields.add(field);
 			}
 		}

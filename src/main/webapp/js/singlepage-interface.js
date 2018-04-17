@@ -1,4 +1,24 @@
-/* global BLS_URL, URI, saveAs */
+/* global BLS_URL, URI, PROPS_IN_COLUMNS saveAs */
+
+/**
+ * Dictionary where key == propertyId and value is array of containing the values for that id, in order of occurance.
+ * Available properties are contained in SINGLEPAGE.INDEX.complexFields['complexFieldId'].properties['propertyId']
+ * 
+ * The 'punct' property is always available.
+ * 
+ * @typedef {Object.<string, Array.<string>} BLHitContext
+ */
+
+/**
+ * @typedef {Object} BLHit
+ * 
+ * @property {string} docPid - id of the document from which the hit originated
+ * @property {number} start - index of first token in hit, inclusive
+ * @property {number} end - index of last token in hit, exclusive
+ * @property {BLHitContext} left - context before the hit
+ * @property {BLHitContext} match - context of the hit, may contain more than 1 value per property if query matched multiple tokens
+ * @property {BLHitContext} right - context after the hit
+ */
 
 var SINGLEPAGE = SINGLEPAGE || {};
 
@@ -11,6 +31,33 @@ SINGLEPAGE.INTERFACE = (function() {
 	'use strict';
 
 	var ELLIPSIS = String.fromCharCode(8230);
+
+	var PROPS = {};
+	// Gather up all relevant properties of words in this index
+	PROPS.all = $.map(SINGLEPAGE.INDEX.complexFields, function(complexField) {
+		return $.map(complexField.properties, function(prop, propId) {
+			if (prop.isInternal)
+				return null; // skip prop
+			return {
+				id: propId,
+				displayName: prop.displayName,
+				isMainProp: propId === complexField.mainProperty
+			};
+		});
+	});
+	
+	/** Columns configured in PROPS_IN_COLUMNS, can contain duplicates */
+	PROPS.shown = $.map(PROPS_IN_COLUMNS, function(propId) {
+		return $.map(PROPS.all, function(prop) {
+			return (prop.id === propId) ? prop : undefined;
+		});
+	});
+	
+	// There is always at least a single main property.
+	// TODO this shouldn't be required, mainProperties from multiple complexFields should be handled properly
+	// but this has some challenges in the hits table view, such as that it would show mulitple columns for the before/hit/after contexts
+	PROPS.firstMainProp = PROPS.all.filter(function(prop) { return prop.isMainProp; })[0];	
+
 
 	// Add a 'hide' function to bootstrap tabs
 	// Doesn't do more than remove classes and aria labels, and fire some events
@@ -36,9 +83,13 @@ SINGLEPAGE.INTERFACE = (function() {
 		$(selector).removeClass('active');
 	};
 
-	// Context of the hit is passed in arrays, per property
-	// (word/lemma/PoS/punct). Right now we only want to display the
-	// words and punctuation. Join them together
+	/**
+	 * @param {BLHitContext} context 
+	 * @param {string} prop - property to retrieve
+	 * @param {boolean} doPunctBefore - add the leading punctuation?
+	 * @param {string} addPunctAfter - trailing punctuation to append
+	 * @returns {string} concatenated values of the property, interleaved with punctuation from context['punt']
+	 */
 	function words(context, prop, doPunctBefore, addPunctAfter) {
 		var parts = [];
 		var n = context[prop] ? context[prop].length : 0;
@@ -51,21 +102,35 @@ SINGLEPAGE.INTERFACE = (function() {
 		return parts.join('');
 	}
 
-	function snippetParts(hit) {
+	/**
+	 * @param {BLHit} hit - the hit 
+	 * @param {string} [prop] - property of the context to retrieve, defaults to PROPS.firstMainProp (usually 'word')
+	 * @returns {Array.<string>} - string[3] where [0] == before, [1] == hit and [2] == after, values are strings created by 
+	 * concatenating and alternating the punctuation and values itself
+	 */
+	function snippetParts(hit, prop) {
+		prop = prop || PROPS.firstMainProp.id;
+
 		var punctAfterLeft = hit.match.word.length > 0 ? hit.match.punct[0] : '';
-		var before = words(hit.left, 'word', false, punctAfterLeft);
-		var match = words(hit.match, 'word', false, '');
-		var after = words(hit.right, 'word', true, '');
+		var before = words(hit.left, prop, false, punctAfterLeft);
+		var match = words(hit.match, prop, false, '');
+		var after = words(hit.right, prop, true, '');
 		return [before, match, after];
 	}
 
+	/**
+	 * Concat all properties in the context into a large string
+	 * 
+	 * @param {BLHitContext} context 
+	 * @returns {string} 
+	 */
 	function properties(context) {
 		var props = [];
 		for (var key in context) {
 			if (context.hasOwnProperty(key)) {
 				var val = $.trim(context[key]);
 				if (!val) continue;
-				props.push(key+": "+val);
+				props.push(key+': '+val);
 			}
 		}
 		return props.join(', ');
@@ -117,7 +182,7 @@ SINGLEPAGE.INTERFACE = (function() {
 				var parts = snippetParts(response);
 				$element.html('<span dir="'+ textDirection+'"><b>Kwic: </b>'+ parts[0] + '<b>' + parts[1] + '</b>' + parts[2]+ '</span>');
 			},
-			error: function(jqXHR, textStatus, errorThrown) {
+			error: function(jqXHR, textStatus/*, errorThrown*/) {
 				$element.text('Error retrieving data: ' + (jqXHR.responseJSON && jqXHR.responseJSON.error) || textStatus);
 			}
 		});
@@ -133,9 +198,11 @@ SINGLEPAGE.INTERFACE = (function() {
 		// Open/close the collapsible in the next row
 		var $element = $(propRow).next().next().find('.collapse');
 		$element.collapse('toggle');
-
-		$element.html('<span><b>Properties: </b>' + props+ '</span>');
+        
+		var $p = $('<div/>').text(props).html();
+		$element.html('<span><b>Properties: </b>' + $p + '</span>');
 	}
+    
 	/**
 	 * Show the error reporting field and display any errors that occured when performing a search.
 	 * 
@@ -381,18 +448,6 @@ SINGLEPAGE.INTERFACE = (function() {
 	 */
 	function formatHits(data, textDirection) {
 		// TODO use mustache.js
-		// Gather up all relevant properties of words in this index
-		var props = $.map(SINGLEPAGE.INDEX.complexFields, function(complexField) {
-			return $.map(complexField.properties, function(prop, propId) {
-				if (prop.isInternal)
-					return null; // skip prop
-				return {
-					id: propId,
-					displayName: prop.displayName,
-					isMainProp: propId === complexField.mainProperty
-				}
-			})
-		});
 		
 		var html = [];
 		html.push(
@@ -403,55 +458,41 @@ SINGLEPAGE.INTERFACE = (function() {
 						textDirection=='ltr'? 'Before hit ' : 'After hit ',
 						'<span class="caret"></span></a>',
 						'<ul class="dropdown-menu" role="menu" aria-labelledby="left">');
-						$.each(props, function(i, prop) {
-							if(!prop.isMainProp){
-								html.push(
-										'<li><a data-bls-sort="left:' + prop.id + '">' + prop.displayName + '</a></li>');
-							}
+						PROPS.all.forEach(function(prop) { html.push(
+							'<li><a data-bls-sort="left:' + prop.id + '">' + prop.displayName + '</a></li>');
 						});
 						html.push(
 						'</ul>',
 					'</span>',
 				'</th>',
 
-				'<th class="text-center" style="width:20px;">');
-						$.each(props, function(i, prop) {
-							if(prop.isMainProp){
-								html.push(
-										'<a data-bls-sort="hit:' + prop.id + '"><strong>' + prop.displayName + '<strong></a>');
-							}
-						});
-						html.push(
+				'<th class="text-center" style="width:20px;">',
+					'<a data-bls-sort="hit:' + PROPS.firstMainProp.id + '"><strong>' + PROPS.firstMainProp.displayName + '<strong></a>',
 				'</th>',
-
+				
 				'<th class="text-left" style="width:40px;">',
 					'<span class="dropdown">', // Span as when it's div, and we're right aligning text, the dropdown doesn't align because the div extends all the way left
 						'<a class="dropdown-toggle" data-toggle="dropdown">',
 						textDirection=='ltr'? 'After hit ' : 'Before hit ',
 						'<span class="caret"></span></a>',
 						'<ul class="dropdown-menu" role="menu" aria-labelledby="right">');
-						$.each(props, function(i, prop) {
-							if(!prop.isMainProp){
-								html.push(
-								'<li><a data-bls-sort="right:' + prop.id + '">' + prop.displayName + '</a></li>');
-							}
+						PROPS.all.forEach(function(prop) { html.push(
+							'<li><a data-bls-sort="right:' + prop.id + '">' + prop.displayName + '</a></li>');
 						});
 						html.push(
 						'</ul>',
 					'</span>',
 				'</th>');
 				
-				$.each(props, function(i, prop) {
-					if(!prop.isMainProp){
-						html.push(
-						'<th style="width:15px;"><a data-bls-sort="hit:'+prop.id+'">'+prop.displayName+'</a></th>');
-					}
-				});
-			html.push('</tr></thead>');
+			// Not all properties have their own table columns
+			PROPS.shown.forEach(function(prop) { html.push(
+				'<th style="width:15px;"><a data-bls-sort="hit:' + prop.id + '">' + prop.displayName + '</a></th>');	
+			});
+		html.push('</tr></thead>');
 		
-
 		html.push('<tbody>');
 		var prevHitDocPid = null;
+		var numColumns = 3 + PROPS.shown.length; // before context - hit context - after context - remaining properties
 		$.each(data.hits, function(index, hit) {
 			// Render a row for this hit's document, if this hit didn't occurred in a new document
 			var docPid = hit.docPid;
@@ -470,7 +511,7 @@ SINGLEPAGE.INTERFACE = (function() {
 				// Display some info about the document
 				html.push(
 					'<tr>',
-						'<td colspan="5"><div class="doctitle collapse in">',
+						'<td colspan="', numColumns, '"><div class="doctitle collapse in">',
 							'<a class="text-error" target="_blank" href="', docUrl, '">', docTitle, docAuthor, docDate, '</a>',
 						'</div></td>',
 					'</tr>');
@@ -479,9 +520,8 @@ SINGLEPAGE.INTERFACE = (function() {
 			// And display the hit itself
 			var parts = snippetParts(hit);
 			var left = textDirection=='ltr'? parts[0] : parts[2]; 
-			var right = textDirection=='ltr'? parts[2] : parts[0]; 
-			
-			var propsWord = properties(hit.match);
+			var right = textDirection=='ltr'? parts[2] : parts[0];
+			var propsWord = properties(hit.match).replace("'","\\'").replace("&apos;","\\'").replace('"', '&quot;');
 
 			html.push(
 				'<tr class="concordance" onclick="SINGLEPAGE.INTERFACE.showCitation(this, \''
@@ -489,24 +529,21 @@ SINGLEPAGE.INTERFACE = (function() {
 					'<td class="text-right">', ELLIPSIS, ' <span dir="', textDirection, '">', left, '</span></td>',
 					'<td class="text-center"><span dir="', textDirection, '"><strong>', parts[1], '</strong></span></td>',
 					'<td><span dir="', textDirection, '">', right, '</span> ', ELLIPSIS, '</td>');
-			$.each(props, function(i, prop) {
-				if(!prop.isMainProp){
+					PROPS.shown.forEach(function(prop) { html.push(
+						'<td>', words(hit.match, prop.id, false, ''), '</td>');
+					});
 					html.push(
-					'<td>', words(hit.match, prop.id, false, ''), '</td>');
-				}
-			});
-			html.push(
 				'</tr>');
 
 			// Snippet row (initially hidden)
 			html.push(
 				'<tr>',
-					'<td colspan="5" class="inline-concordance"><div class="collapse">Loading...</div></td>',
+					'<td colspan="', numColumns, '" class="inline-concordance"><div class="collapse">Loading...</div></td>',
 				'</tr>');
 			// Properties row (initially hidden)
 			html.push(
 				'<tr>',
-					'<td colspan="5" class="inline-concordance"><div class="collapse">Loading...</div></td>',
+					'<td colspan="', numColumns, '" class="inline-concordance"><div class="collapse">Loading...</div></td>',
 				'</tr>');
 		});
 
@@ -650,7 +687,10 @@ SINGLEPAGE.INTERFACE = (function() {
 			console.log('CSV download url', url, blsParam);
 		}
 
-		$button.addClass('disabled').attr('disabled', true);
+		$button
+			.addClass('disabled')
+			.attr('disabled', true)
+			.prepend('<span class="fa fa-spinner fa-spin"></span>');
 		$.ajax(url, {
 			accepts: 'application/csv',
 			cache: 'false',
@@ -663,7 +703,10 @@ SINGLEPAGE.INTERFACE = (function() {
 				saveAs(b, 'data.csv'); // FileSaver.js
 			},
 			complete: function() {
-				$button.removeClass('disabled').attr('disabled', false);
+				$button
+					.removeClass('disabled')
+					.attr('disabled', false)
+					.find('.fa-spinner').remove();
 			}
 		});
 	}

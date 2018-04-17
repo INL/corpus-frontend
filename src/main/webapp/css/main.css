@@ -5,6 +5,17 @@
     	 url('../font/INLVRG__.TTF') format('truetype');
     
 }
+
+body {
+    background-image: url(../img/background.jpg);
+    background-repeat: no-repeat;
+    background-position: -350px -310px;
+    background-attachment: scroll;
+    
+    padding-top: 60px;
+    padding-bottom: 40px;
+}
+
 a:link,
 a:visited,
 a:active,
@@ -65,9 +76,10 @@ hr {
 	width:100px;
 	height:100px;
 	z-index: 9000;
+	background-image: url(../img/logo_100x100.png)
 }
 
-.navbar-collapse.navbar-logo-margin {
+.navbar-logo-margin {
 	margin-left: 100px !important;
 }
 
@@ -79,6 +91,10 @@ hr {
 	-webkit-box-shadow: 0 5px 10px rgba(0,0,0,0.2);
 	-moz-box-shadow: 0 5px 10px rgba(0,0,0,0.2);
 	box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+}
+
+.progress-bar {
+	text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
 }
 
 .haspadding {
@@ -128,11 +144,6 @@ hr {
 .lightbg {
 	background-color: rgba(255,255,255,0.6);
 	border: 1px solid #cccccc;
-}
-
-body {
-	padding-top: 60px;
-    padding-bottom: 40px;
 }
 
 .green {
@@ -434,4 +445,24 @@ a[data-bls-sort], a.dropdown-toggle {
 .upload-button-container:hover .upload-button,
 .upload-button.has-file {
 	display: block;
+}
+
+/* 
+	Minor bootstrap-select overrides.
+	Do not display the select all button,
+	as it causes a massive query to be fired off when used on grouping.
+	This can be removed if https://github.com/silviomoreto/bootstrap-select/issues/1614 is ever fixed
+*/
+
+.bs-select-all {
+	display: none!important;
+}
+.bs-deselect-all {
+	/* pretend we're the only button there */
+	border-radius: 3px!important;
+	width: 100%!important;
+	font-weight: bold;
+}
+.bootstrap-select small.text-muted {
+	padding-left: 0px!important;
 }

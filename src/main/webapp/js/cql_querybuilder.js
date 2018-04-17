@@ -510,7 +510,7 @@ window.querybuilder = (function() {
 		// We also need to take care to set a default when this code runs while the element isn't visible, or isn't attached to the DOM. 
 		// When this happens, jquery doesn't return a sensible outerWidth value for our body. 
 		// we can't know if the token body is wider than this default (currently 348px), so it will be wrong if the token body is wider than a usual empty token, but this is rare.
-		var width = Number.parseInt($tokenPanelBody.outerWidth()) || 0;
+		var width = parseInt($tokenPanelBody.outerWidth()) || 0;
 		$tokenPanelHeading.css({
 			'width': '100%',
 			'max-width': Math.max(width, 348) + 'px'

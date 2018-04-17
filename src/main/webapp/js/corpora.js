@@ -158,7 +158,7 @@ var corpora = {};
 		var indexTitle = index.displayName;
 		if (index.canSearch) {
 			var pageURL = window.location.href;
-			if (!pageURL.endsWith('/')) {
+			if (pageURL[pageURL.length-1] !== '/') {
 				pageURL += '/';
 			}
 			var url = pageURL + index.id + '/search';
@@ -285,7 +285,6 @@ var corpora = {};
 					var isUserFormat = formatId.indexOf(data.user.id) !== -1;
 					var shortId = isUserFormat ? formatId.substr(formatId.indexOf(data.user.id) + data.user.id.length + 1) : formatId;
 					
-					// we have title, >something?< and data-content
 					var $option = $('<option title="' + (format.description || format.displayName) + '" value="' + formatId + '" data-content="'+format.displayName+' <small>('+shortId+')</small>" >'+format.displayName+'</option>');
 					
 					var $tr = $([
@@ -308,8 +307,9 @@ var corpora = {};
 				});
 
 				$select.append($defaultFormatOptGroup).append($userFormatOptGroup)
-					.filter(':not(#format_preset)').children('optgroup:nth-child(1)').append($nonConfigBasedOptions);
+					.filter(':not(#format_select)').children('optgroup:nth-child(1)').append($nonConfigBasedOptions);
 				$select.selectpicker('refresh');
+				$select.trigger('change');
 
 				$('#formats-all-container').toggle(data.user.loggedIn && data.user.canCreateIndex);
 			},
@@ -334,32 +334,19 @@ var corpora = {};
 		return serverInfo.user.loggedIn ? serverInfo.user.id : '';
 	}
 
-	// Show a success message.
-	function showSuccess(msg, showInUploadDialog) {
-		if (showInUploadDialog) {
-			$('#uploadErrorDiv').hide();
-			$('#uploadSuccessMessage').html(msg);
-			$('#uploadSuccessDiv').show();
-			$('.progress').hide();
-		} else {
-			$('#errorDiv').hide();
-			$('#successMessage').html(msg);
-			$('#successDiv').show();
-		}
+	// Show success message at the top of the page.
+	function showSuccess(msg) {
+		$('#errorDiv').hide();
+		$('#successMessage').html(msg);
+		$('#successDiv').show();
+	
 	}
 
-	// Show an error message.
-	function showError(msg, showInUploadDialog) {
-		if (showInUploadDialog) {
-			$('#uploadSuccessDiv').hide();
-			$('#uploadErrorMessage').html(msg);
-			$('#uploadErrorDiv').show();
-			$('.progress').hide();
-		} else {
-			$('#successDiv').hide();
-			$('#errorMessage').html(msg).show();
-			$('#errorDiv').show();
-		}
+	// Show error at the top of the page.
+	function showError(msg) {
+		$('#successDiv').hide();
+		$('#errorMessage').html(msg).show();
+		$('#errorDiv').show();
 	}
 
 	/**
@@ -458,103 +445,125 @@ var corpora = {};
 		return false; // prevent event bubbling
 	};
 
-	// Initialise file uploading functionality.
 	function initFileUpload() {
-		// Disable file drops on the document
-		$(document).bind('drop dragover', function (e) {
-			e.preventDefault();
-		});
-		$('#drop-zone').bind('dragleave dragend', function(e) {
-			e.preventDefault();
-			$('.fileinput-button').removeClass('hover');
-		});
+		var $progress = $('#uploadProgress');
+		var $success = $('#uploadSuccessDiv');
+		var $error = $('#uploadErrorDiv');
 
-		// Enable file drops on a specific 'zone'
-		var $progressBar = $('#uploadProgress');
+		var $form = $('#document-upload-form');
+		var	$fileInputs = $form.find('input[type="file"]');
+
+		$fileInputs.each(function() {
+			var $this = $(this);
+			$this.on('change', function() {
+				var text;
+				if (this.files && this.files.length)
+					text = this.files.length + $this.data('labelWithValue');
+				else 
+					text = $this.data('labelWithoutValue');
+
+				$($this.data('labelId')).text(text);
+			});
+		}).trigger('change'); // init labels
 		
-		$('#drop-zone').fileupload({
-			dropZone: $('#drop-zone'),
-			// This seems to have no effect!
-			acceptFileTypes: /(\.|\/)(xml|zip|t?gz)$/i,
-			maxFileSize: 40000000, // 40 MB
-			dataType: 'json',
-			done: function(e, data) {
-				$('.progress .progress-bar').text('\'' + data.files[0].name + '\': Done');
-				refreshCorporaList(function () {
-					showSuccess('Data added to "' + uploadToCorpus.displayName + '".', true);
-					$('#upload-area').show();
-					$('#uploadClose').show();
-					$progressBar.data('isIndexing', false);					
+		function handleUploadProgress(event) {
+			var progress = event.loaded / event.total * 100;
+			$progress
+				.text('Uploading... (' +  Math.floor(progress) + '%)')
+				.css('width', progress + '%')
+				.attr('aria-valuenow', progress);
+
+			if (event.loaded >= event.total)
+				handleUploadComplete.call(this, event);
+		}
+
+		function handleUploadComplete(event) {
+			$progress.css('width', '100%');
+
+			refreshIndexStatusWhileIndexing(uploadToCorpus.id, 
+				function(index) { 
+					var statusText = '';
+					if (index.status === 'indexing'){
+						statusText = 'Indexing in progress... - '
+						+ index.indexProgress.filesProcessed + ' files, '
+						+ index.indexProgress.docsDone + ' documents, and '
+						+ index.indexProgress.tokensProcessed + ' tokens indexed so far...';
+					} else {
+						statusText = 'Finished indexing!';
+					}
+					$progress.text( statusText);
+				},
+				function(errorMsg) {
+					$progress.text(errorMsg);
+				}
+			);
+		}
+
+		function handleIndexingComplete(event) {
+			if (this.status != 200)
+				return handleError.call(this, event);
+			
+			var message = 'Data added to "' + uploadToCorpus.displayName + '".';
+			
+			refreshCorporaList();
+	
+			$progress.parent().hide();
+			$form.show();
+			$error.hide();
+			$success.text(message).show();
+			
+			// clear values
+			$fileInputs.each(function() {
+				$(this).val(undefined).trigger('change');
+			});
+		}
+		
+		function handleError(event) {
+			var msg = 'Could not add data to "' + uploadToCorpus.displayName + '"';
+			if (this.responseText) 
+				msg += ': ' + JSON.parse(this.responseText).error.message;
+			else if (this.textStatus)
+				msg += ': ' + this.textStatus;
+			else 
+				msg += ': unknown error (are you trying to upload too much data?)';
+			
+			$progress.parent().hide();
+			$form.show();
+			$success.hide();
+			$error.text(msg).show();
+		}
+
+		$form.on('submit', function(event) {
+			event.preventDefault();
+
+			$form.hide();
+			$progress.text('Connecting...').css('width', '0%').parent().show();
+			$error.hide();
+			$success.hide();
+			
+			var formData = new FormData();
+			$fileInputs.each(function() {
+				var self = this;
+				$.each(this.files, function(index, file) {
+					formData.append(self.name, file, file.name);
 				});
-			},
-			fail: function(e, data) {
-				data = data.jqXHR.responseJSON || data;
-				var msg;
-				if (data.error)
-					msg = data.error.message;
-				else
-					msg = data.textStatus + '; ' + data.errorThrown;
-				showError('Could not add data to "' + uploadToCorpus.displayName + '": ' + msg, true);
-				$('#upload-area').show();
-				$('#uploadClose').show();
-				$progressBar.data('isIndexing', false);
-			},
-			always: function(/*e, data*/) {
-				$('#waitDisplay').hide();
-				$('.fileinput-button').removeClass('hover');
-			},
-			progressall: function(e, data) {
-				
-				if (data.loader < data.total) {
-					var progress = parseInt(data.loaded / data.total * 100, 10);
-					$progressBar
-					.text('Uploading... (' +  progress + '%)')
-					.css('width', progress + '%')
-					.attr('aria-valuenow', progress);
-				}
-				else {
-					if ($progressBar.data('isIndexing'))
-						return;
-	
-					$progressBar.css('width', '100%')
-					.data('isIndexing', true);
-	
-					refreshIndexStatusWhileIndexing(uploadToCorpus.id, function(index) { 
-						var statusText = '';
-						if (index.status === 'indexing'){
-							statusText = 'Indexing in progress... - '
-							+ index.indexProgress.filesProcessed + ' files, '
-							+ index.indexProgress.docsDone + ' documents, and '
-							+ index.indexProgress.tokensProcessed + ' tokens indexed so far...';
-						} else {
-							statusText = 'Finished indexing!';
-							$progressBar.data('isIndexing', false);
-						}
-						$progressBar.text( statusText);
-					},
-					function(errorMsg) {
-						$progressBar.text(errorMsg);
-						$progressBar.data('isIndexing', false);						
-					});
-				}
-			},
-			add: function(e, data) {
-				$('#upload-area').hide();
-				$('#uploadClose').hide();
-				$('#waitDisplay').show();
-				data.url = CORPORA.blsUrl + uploadToCorpus.id + '/docs/';
-				data.data = new FormData();
-				data.data.append('data', data.files[0]/*, data.files[0].name*/);
-				$('.progress').show();
-				$('#uploadSuccessDiv').hide();
-				$('#uploadErrorDiv').hide();
-				data.context = $('.progress .progress-bar').css('width', '0%').attr('aria-valuenow', 0).
-					text('Uploading \'' + data.files[0].name + '\' ...');
-				data.submit();
-			},
-			dragover: function(/*e, data*/) {
-				$('.fileinput-button').addClass('hover');
-			}
+			})
+			
+			var xhr = new XMLHttpRequest();
+			
+			xhr.upload.addEventListener('progress', handleUploadProgress.bind(xhr));
+			xhr.upload.addEventListener('error', handleError.bind(xhr));
+			xhr.upload.addEventListener('abort', handleError.bind(xhr));
+			// Don't bother attaching event listener 'load' on xhr.upload - it's broken in IE and Firefox
+			// Instead manually trigger uploadcomplete when we reach 100%
+			xhr.addEventListener('load', handleIndexingComplete.bind(xhr));
+			xhr.addEventListener('error', handleError.bind(xhr));
+			xhr.addEventListener('abort', handleError.bind(xhr));
+
+			xhr.open('POST', CORPORA.blsUrl + uploadToCorpus.id + '/docs?outputformat=json', true);
+			xhr.send(formData);
+
+			return false;
 		});
 	}
 
@@ -642,11 +651,11 @@ var corpora = {};
 	}
 
 	function initNewFormat() {
-		
 		var $modal = $('#new-format-modal');
 
 		var $fileInput = $('#format_file');
-		var $presetSelect = $('#format_preset');
+		var $presetSelect = $('#format_select');
+		var $presetInput = $('#format_preset');
 		var $downloadButton = $('#format_download');
 
 		var $formatName = $('#format_name');
@@ -661,7 +670,6 @@ var corpora = {};
 
 		var $confirmButton = $('#format_save');
 		
-
 		function showFormatError(text) {
 			$('#format_error').text(text).show();
 		}
@@ -703,6 +711,10 @@ var corpora = {};
 		$modal.on('hidden.bs.modal', function() {
 			hideFormatError();
 		});
+
+		$presetSelect.on('change', function() {
+			$presetInput.val($presetSelect.selectpicker('val'));
+		});
 		
 		$formatType.on('change', function() {
 			var newMode = $(this).selectpicker('val');
@@ -729,10 +741,16 @@ var corpora = {};
 		});
 
 		$downloadButton.on('click', function() {
-			var presetName = $presetSelect.selectpicker('val');
+			var $this = $(this);
+			var presetName = $presetInput.val();
 			var $formatName = $('#format_name');
+			
+			if (!presetName || $this.prop('disabled'))
+				return;
 
-			$.ajax(CORPORA.blsUrl + '/input-formats/' + presetName,  {
+			$this.prop('disabled', true).append('<span class="fa fa-spinner fa-spin"></span>');
+			hideFormatError();
+			$.ajax(CORPORA.blsUrl + '/input-formats/' + presetName, {
 				'type': 'GET',
 				'accept': 'application/javascript',
 				'dataType': 'json',
@@ -749,10 +767,15 @@ var corpora = {};
 					// set the format name to this format so the user can easily save over it
 					if (!$formatName.val() && presetName.indexOf(':') > 0) 
 						$formatName.val(presetName.substr(presetName.indexOf(':')+1));
+
+					$this.closest('.collapse').collapse('hide');
 				},
 				'error': function (jqXHR, textStatus/*, errorThrown*/) {
 					showFormatError(jqXHR.responseJSON && jqXHR.responseJSON.error.message || textStatus);
 				},
+				'complete': function() {
+					$this.prop('disabled', false).find('.fa-spinner').remove();
+				}
 			});
 		});
 
@@ -810,12 +833,12 @@ var corpora = {};
 			var formatId = $(this).data('format-id');
 			
 			var $modal = $('#new-format-modal');
-			var $presetSelect = $('#format_preset');
+			var $presetSelect = $('#format_select');
 			var $downloadButton = $('#format_download');
 			var $formatName = $('#format_name');
 			// formattype determined after download succeeds			
 			
-			$presetSelect.selectpicker('val', formatId);
+			$presetSelect.selectpicker('val', formatId).trigger('change');
 			$downloadButton.click();
 			$formatName.val(formatId.substr(Math.max(formatId.indexOf(':')+1, 0))); // strip username portion from formatId as username:formatname, if preset
 			

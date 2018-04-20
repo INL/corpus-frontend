@@ -47,7 +47,8 @@ SINGLEPAGE.CORE = (function () {
 		});
 		$('#sampleSize').on('change', function () {
 			SINGLEPAGE.INTERFACE.setParameters({
-				sampleSize: $(this).val()
+				sampleSize: $(this).val(),
+				sampleMode: $('#sampleMode').selectpicker('val') // in case it hasn't been initialized
 			});
 		}).on('keypress', function(event) { 
 			// prevent enter submitting form and initiating a search, should only update existing searches

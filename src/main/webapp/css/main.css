@@ -229,6 +229,27 @@ span.word {
 	font-family: "Inl vmnw wnt", "Helvetica Neue", "Helvetica", "Arial,sans-serif";
 }
 
+span.p, span.paragraph {
+	display: block;
+	margin: 0 0 10px;
+}
+
+span.s, span.sentence {
+	/* No special layout (yet) */
+}
+
+/* e.g. TEI lb element (insert line break) */
+span.lb:after, span.line-beginning:after {
+	content: '\A';
+}
+
+/* e.g. TEI pb element (insert horizontal rule) */
+span.pb, span.page-beginning {
+    display: block;
+    border-top: 1px solid black;
+    margin: 10px 0;
+}
+
 .linenumber {
 	color: #aaaaaa;
 	font-weight: bold;

@@ -329,12 +329,17 @@ public class MainServlet extends HttpServlet {
                 if (listvalues != null && !listvalues.isEmpty()) {
                     params.put("listvalues", new String[]{listvalues});
                 }
+                String userId = getCorpusOwner(corpus);
+                if (userId != null)
+                	params.put("userid", new String[] { userId });
                 String xmlResult = handler.makeRequest(params);
 
                 // TODO tidy this up, the json is only used to embed the index data in the search page.
                 // We might not need the xml data to begin with.
                 params.clear();
                 params.put("outputformat", new String[]{"json"});
+                if (userId != null)
+                	params.put("userid", new String[] { userId });
                 String jsonResult = handler.makeRequest(params);
 
                 corpusConfigs.put(corpus, new CorpusConfig(xmlResult, jsonResult));
@@ -540,7 +545,11 @@ public class MainServlet extends HttpServlet {
         // Still nothing, get an autogenned xsl from blacklab-server
         try {
             QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(null) + "input-formats/" + corpusDataFormat + "/xslt");
-            String sheet = handler.makeRequest(null);
+            Map<String, String[]> params = new HashMap<>();
+            String userId = getCorpusOwner(corpus);
+            if (userId != null)
+            	params.put("userid", new String[] { userId });
+            String sheet = handler.makeRequest(params);
             stylesheet = new XslTransformer(new StringReader(sheet));
         } catch (QueryException e) {
             if (e.getHttpStatusCode() == 404) {

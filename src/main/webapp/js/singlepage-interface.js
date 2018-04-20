@@ -961,7 +961,8 @@ SINGLEPAGE.INTERFACE = (function() {
 					});
 					event.preventDefault();
 				})
-				.on('change', 'select.groupselect', function(event) {
+				// don't attach to 'changed', as that fires every time a single option is toggled, instead wait for the menu to close
+				.on('hide.bs.select', 'select.groupselect', function(event) { 
 					$(this).trigger('localParameterChange', {
 						groupBy: $(this).selectpicker('val'),
 						page: 0,

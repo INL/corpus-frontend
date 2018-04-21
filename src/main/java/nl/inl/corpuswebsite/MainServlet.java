@@ -111,6 +111,8 @@ public class MainServlet extends HttpServlet {
     public static final String PROP_BLS_SERVERSIDE         = "blsUrl";
     /** Where static content, custom xslt and other per-corpus data is stored */
     public static final String PROP_DATA_PATH              = "corporaInterfaceDataDir";
+    /** Name of the default 'corpus' if thhe datapath if not specified for the corpus */
+    public static final String PROP_DATA_DEFAULT              = "corporaInterfaceDefault";
     /** Number of words displayed by default on the /article/ page, also is a hard limit on the number */
     public static final String PROP_DOCUMENT_PAGE_LENGTH   = "wordend";
 
@@ -132,6 +134,7 @@ public class MainServlet extends HttpServlet {
         p.setProperty(PROP_BLS_CLIENTSIDE,          "/blacklab-server"); // no domain to account for proxied servers
         p.setProperty(PROP_BLS_SERVERSIDE,          "http://localhost:8080/blacklab-server/");
         p.setProperty(PROP_DATA_PATH,               "/etc/blacklab/projectconfigs");
+        p.setProperty(PROP_DATA_DEFAULT,            "default");
         p.setProperty(PROP_DOCUMENT_PAGE_LENGTH,    "5000");
         // not all properties may need defaults
 
@@ -436,9 +439,10 @@ public class MainServlet extends HttpServlet {
     /**
      * Get a file from the directory belonging to this corpus and return it, or
      * return the default file if the corpus-specific file cannot be located.
-     * The default file is returned when: corpus is null, corpus is a
-     * user-uploaded corpus, the interface data directory is not configured, or
-     * the file is simply missing This is provided the default file exists and
+     * If the corpus is null or the corpus is a user-uploaded corpus,or the file does not exist for this corpus,
+     * try to load the project-default file.
+     * If also the project-default file does not exist, or the interface data directory is not configured, the defaulft file is used.
+     * This is provided the default file exists and
      * getDefaultIfMissing is true, otherwise null will be returned.
      *
      * @param corpus - corpus for which to get the file. If null, falls back to
@@ -450,14 +454,31 @@ public class MainServlet extends HttpServlet {
      * @return the file, or null if not found
      */
     public final InputStream getProjectFile(String corpus, String fileName, boolean getDefaultIfMissing) {
-        if (corpus == null || isUserCorpus(corpus) || !adminProps.containsKey(PROP_DATA_PATH)) {
-            if (!adminProps.containsKey(PROP_DATA_PATH)) {
-                logger.debug(PROP_DATA_PATH + " not set, couldn't find project file " + fileName + " for corpus " + corpus + (getDefaultIfMissing ? "; using default" : "; returning null"));
-            }
+        if (!adminProps.containsKey(PROP_DATA_PATH)) {
+            logger.debug(PROP_DATA_PATH + " not set, couldn't find project file " + fileName + " for corpus " + corpus + (getDefaultIfMissing ? "; using default" : "; returning null"));
             return getDefaultIfMissing ? getDefaultProjectFile(fileName) : null;
         }
 
-        File projectFile = null;
+        InputStream fs = null;
+        if(corpus != null && !isUserCorpus(corpus))
+        	fs = getProjectFilestreamFromIFDir(corpus, fileName);
+        if(fs == null) 
+        	fs = getProjectFilestreamFromIFDir(adminProps.getProperty(PROP_DATA_DEFAULT), fileName);
+        if(fs !=null)
+        	return fs;
+        
+        return getDefaultIfMissing ? getDefaultProjectFile(fileName) : null;
+    }
+
+    /**
+     * Wrapper around the getProjectFileFromIFDir method that tries reading the file into an Inputstream,
+     *  and returns null on read exceptions.
+     * @param corpus
+     * @param fileName
+     * @return
+     */
+	public final InputStream getProjectFilestreamFromIFDir(String corpus, String fileName) {
+		File projectFile = null;
         try {
             projectFile = getProjectFileFromIFDir(corpus, fileName);
             if (projectFile!=null) {
@@ -465,14 +486,14 @@ public class MainServlet extends HttpServlet {
             }
 
             // File path points outside the configured directory!
-            logger.warn("File: " + fileName + " is null for corpus " + corpus + (getDefaultIfMissing ? "; using default" : "; returning null"));
+            logger.warn("File: " + fileName + " is null for corpus " + corpus );
         } catch (FileNotFoundException e) {
             throw new RuntimeException(fileName + " exists but still not found?", e);
         } catch (SecurityException e) {
-            logger.debug("SecurityException finding project file " + fileName + " for corpus " + corpus + " as file " + projectFile.toString() + (getDefaultIfMissing ? "; using default" : "; returning null"));
+            logger.debug("SecurityException finding project file " + fileName + " for corpus " + corpus + " as file " + projectFile.toString());
         }
-        return getDefaultIfMissing ? getDefaultProjectFile(fileName) : null;
-    }
+        return null;
+	}
 
     /**
      * return a file from the corporaInterfaceDataDir/corpus. Return null when file does not exist, cannot be read or is
@@ -507,8 +528,9 @@ public class MainServlet extends HttpServlet {
      * Get the stylesheet to convert an article from this corpus into an html
      * snippet suitable for inseting in the article.vm page.
      *
-     * Resolves in 3 steps:
+     * Resolves in 4 steps:
      * first see if we have a configured dataDir for this specific corpus, and attempt to retrieve the article_<corpusDataFormat> xsl from that directory.
+     * If that fails, check if the file exists in the project default directory.
      * If that fails, see if an xsl file with that name exists in the provided WEB-INF/interface-default directory.
      * If that fails, contact blacklab-server for an autogenerated best-effort xsl file.
      * If that fails, return a default xsl file that just outputs all text.
@@ -523,7 +545,10 @@ public class MainServlet extends HttpServlet {
         File f = null;
         if (!isUserCorpus(corpus))
         	f = getProjectFileFromIFDir(corpus, fileName);
-
+    	
+        if(f==null)
+        	f = getProjectFileFromIFDir(adminProps.getProperty(PROP_DATA_DEFAULT), fileName);
+        
         if (f!=null) {
             try {
                 return new XslTransformer(f);

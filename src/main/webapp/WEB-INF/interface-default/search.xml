@@ -15,7 +15,9 @@
         the url here would be 'zeebrieven/static/img/logo.png' 
         and the directory structure would be <>/<corpusname>/static/... -->
         
-        <!-- You can include custom js and css in your corpus interface directory -->
+        <!-- You can include custom js and css in your corpus interface directory 
+             These will always be made relative to the application root, so including js and css from external servers is not supported 
+             You should use the static/ directory for your corpus -->
         <!--<CustomJs>corpusname/static/your.js</CustomJs>-->
         <!--<CustomCss>corpusname/static/your.css</CustomCss>-->
         <!-- You can define which properties to show as colummns in the results table-->

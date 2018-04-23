@@ -20,6 +20,9 @@ import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.tools.generic.EscapeTool;
 
+import nl.inl.corpuswebsite.response.CorporaDataResponse;
+import nl.inl.corpuswebsite.utils.WebsiteConfig;
+
 public abstract class BaseResponse {
 	protected static final Logger logger = LogManager.getLogger(BaseResponse.class);
 
@@ -85,22 +88,19 @@ public abstract class BaseResponse {
 		this.corpus = corpus;
 		this.uriRemainder = uriRemainder;
 
-		context.put("esc", new EscapeTool());
-		context.put("websiteConfig", this.servlet.getWebsiteConfig(corpus));
-		context.put("pathToTop", contextPathAbsolute);
-		context.put("googleAnalyticsKey", this.servlet.getGoogleAnalyticsKey());
-		// TODO unify with processUrl in WebsiteConfig
-		context.put("brandLink", corpus == null ? contextPathAbsolute : contextPathAbsolute + "/" + corpus + "/" + "search");
-		context.put("buildTime", servlet.getWarBuildTime());
+	    context.put("esc", new EscapeTool());
+	    context.put("websiteConfig", this.servlet.getWebsiteConfig(corpus));
+	    context.put("pathToTop", MainServlet.getRelativeUrl("/", request)); // use a relative url to gracefully handle reverse proxy (clientside sees different url path than server)
+	    context.put("googleAnalyticsKey", this.servlet.getGoogleAnalyticsKey());
+	    context.put("brandLink", corpus == null ? "" : corpus + "/" + "search");
+	    context.put("buildTime", servlet.getWarBuildTime());
 	}
 
 	/**
 	 * Display a specific template, with specific mime type
 	 *
-	 * @param template
-	 *            template to display
-	 * @param mimeType
-	 *            mime type to set
+	 * @param template template to display
+	 * @param mimeType mime type to set
 	 */
 	protected void displayTemplate(Template template, String mimeType) {
 		// Set the content headers for the response
@@ -128,10 +128,8 @@ public abstract class BaseResponse {
 	/**
 	 * Returns the value of a servlet parameter, or the default value
 	 *
-	 * @param name
-	 *            name of the parameter
-	 * @param defaultValue
-	 *            default value
+	 * @param name name of the parameter
+	 * @param defaultValue default value
 	 * @return value of the paramater
 	 */
 	public String getParameter(String name, String defaultValue) {
@@ -154,10 +152,8 @@ public abstract class BaseResponse {
 	/**
 	 * Returns the value of a servlet parameter, or the default value
 	 *
-	 * @param name
-	 *            name of the parameter
-	 * @param defaultValue
-	 *            default value
+	 * @param name name of the parameter
+	 * @param defaultValue default value
 	 * @return value of the paramater
 	 */
 	public int getParameter(String name, int defaultValue) {

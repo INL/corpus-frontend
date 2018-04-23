@@ -20,15 +20,50 @@ import nl.inl.corpuswebsite.MainServlet;
 public class WebsiteConfig {
 
     /** One of the links shown in the top bar */
-    static class LinkInTopBar extends HashMap<String, Object> {
-        public LinkInTopBar(String name, String href, boolean newWindow) {
-            put("name", name);
-            put("href", href);
-            put("newWindow", newWindow);
+    public static class LinkInTopBar {
+        private final String label;
+        private final String href;
+        private final boolean openInNewWindow;
+        private final boolean relative;
+
+        /**
+         *
+         * @param label display text
+         * @param href address of the link, this should be an absolute path
+         * @param openInNewWindow
+         * @param relative does the url point within our own web application (e.g. starts with our context path)
+         *        We need to track this to know if we should make this link relative to the current page, or whether it's an absolute url
+         */
+        public LinkInTopBar(String label, String href, boolean openInNewWindow, boolean isExternal) {
+            super();
+            this.label = label;
+            this.href = href;
+            this.openInNewWindow = openInNewWindow;
+            this.relative = isExternal;
+        }
+
+        // Getters required for velicity
+        public String getLabel() {
+            return label;
+        }
+
+        public String getHref() {
+            return href;
+        }
+
+        public boolean isOpenInNewWindow() {
+            return openInNewWindow;
+        }
+
+        public boolean isRelative() {
+            return relative;
+        }
+
+        @Override
+        public String toString() {
+            return label;
         }
     }
-
-    private String absoluteContextPath;
 
     /** Name to display for this corpus, null if no corpus set. Falls back to the corpus name if not explicitly configured. */
     private String corpusDisplayName;
@@ -56,17 +91,11 @@ public class WebsiteConfig {
     /**
      *
      * @param configFile
-     * @param absoluteContextPath
      * @param corpus
      * @param corpusConfig the blacklab configuration for the corpus
      * @throws ConfigurationException
      */
-    public WebsiteConfig(InputStream configFile, String absoluteContextPath, String corpus, CorpusConfig corpusConfig) throws ConfigurationException {
-        if (!absoluteContextPath.startsWith("/"))
-            throw new RuntimeException("AbsoluteContextPath is not absolute");
-
-        this.absoluteContextPath = absoluteContextPath;
-
+    public WebsiteConfig(InputStream configFile, String corpus, CorpusConfig corpusConfig) throws ConfigurationException {
         initProps(corpusConfig);
 
         load(configFile, corpus);
@@ -115,9 +144,9 @@ public class WebsiteConfig {
         corpusName = MainServlet.getCorpusName(corpus);
         corpusOwner = MainServlet.getCorpusOwner(corpus);
         corpusDisplayName = xmlConfig.getString("InterfaceProperties.DisplayName", null);
+        pathToCustomJs = xmlConfig.getString("InterfaceProperties.CustomJs");
+        pathToCustomCss = xmlConfig.getString("InterfaceProperties.CustomCss");
 
-        pathToCustomJs = processUrl(xmlConfig.getString("InterfaceProperties.CustomJs"));
-        pathToCustomCss = processUrl(xmlConfig.getString("InterfaceProperties.CustomCss"));
         String props = xmlConfig.getString("InterfaceProperties.PropColumns");
         if (props!=null&&!props.isEmpty()) {
             propColumns = StringUtils.split(props);
@@ -127,17 +156,14 @@ public class WebsiteConfig {
         for (Iterator<HierarchicalConfiguration> it = myfields.iterator(); it.hasNext();) {
             HierarchicalConfiguration sub = it.next();
 
-            String location = sub.getString("[@value]", null);
-            String name = sub.getString("");
+            String href = sub.getString("[@value]", null);
+            String label = sub.getString("");
             boolean newWindow = sub.getBoolean("[@newWindow]", false);
             boolean relative = sub.getBoolean("[@relative]", false);
-            if (location == null)
-                location = name;
+            if (href == null)
+                href = label;
 
-            if (relative)
-                location = processUrl(location);
-
-            linksInTopBar.add(new LinkInTopBar(name, location, newWindow));
+            linksInTopBar.add(new LinkInTopBar(label, href, newWindow, relative));
         }
 
         myfields = xmlConfig.configurationsAt("XsltParameters.XsltParameter");
@@ -163,9 +189,19 @@ public class WebsiteConfig {
         return corpusOwner;
     }
 
+    /**
+     * Get the links for use in the navbar
+     * Note that links where {@link LinkInTopBar#isRelative()} is true assume that the current page is
+     * the context root (by default /corpus-frontend/)
+     * Usually this is not the case (when looking at e.g. /corpus-frontend/my-corpus/search), so they will need to be prefixed
+     * by some ../../ segments first, this is done using the pathToTop variable in the velocity templates.
+     *
+     * @return the list of links
+     */
     public List<LinkInTopBar> getLinks() {
         return linksInTopBar;
     }
+
 
     public Map<String, String> getXsltParameters() {
         return xsltParameters;
@@ -179,18 +215,7 @@ public class WebsiteConfig {
         return pathToCustomJs;
     }
 
-    // TODO centralize normalizing/making relative of links (mainservlet static func?)
-    private String processUrl(String link) {
-        if (link == null)
-            return link;
-
-        link = StringUtils.stripStart(link.trim(), "./");
-
-        return absoluteContextPath + "/" + link;
-    }
-
     public String getPropColumns() {
         return StringUtils.join(propColumns, ",");
     }
-
 }

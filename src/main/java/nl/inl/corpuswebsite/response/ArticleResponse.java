@@ -8,8 +8,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.TransformerException;
 
@@ -38,11 +36,6 @@ public class ArticleResponse extends BaseResponse {
 
 	public ArticleResponse() {
 		super(true);
-	}
-
-	@Override
-	public void init(HttpServletRequest request, HttpServletResponse response, MainServlet servlet, String corpus, String contextPathAbsolute, String uriRemainder) throws ServletException {
-		super.init(request, response, servlet, corpus, contextPathAbsolute, uriRemainder);
 	}
 
 	@Override

@@ -32,7 +32,7 @@
         <link rel="stylesheet" href="$pathToTop/css/vendor/pageguide.min.css">
         <link rel="stylesheet" href="$pathToTop/css/main.css">
         #if ($websiteConfig.getPathToCustomCss())
-            <link rel="stylesheet" href="$websiteConfig.getPathToCustomCss()">
+            <link rel="stylesheet" href="$pathToTop/$websiteConfig.getPathToCustomCss()">
         #end
 
         <link rel="icon" type="image/png" href="$pathToTop/img/favicon.png">
@@ -49,7 +49,7 @@
         <script src="$pathToTop/js/vendor/pageguide.min.js"></script>
         <script src="$pathToTop/js/tutorial.js"></script>
         #if ($websiteConfig.getPathToCustomJs())
-            <script src="$websiteConfig.getPathToCustomJs()"></script>
+            <link rel="stylesheet" href="$pathToTop/$websiteConfig.getPathToCustomJs()">
         #end
         
     </head>
@@ -84,7 +84,7 @@
                 <div class="navbar-collapse collapse navbar-logo-margin">
                     <ul class="nav navbar-nav">
                         #foreach($link in $websiteConfig.getLinks())
-                            <li><a href="$link.get('href')"#if($link.get('newWindow')) target="_blank"#else#end>$link.get('name')</a></li>
+                            <li><a href="#if($link.relative)$pathToTop/#end$link.href" #if($link.openInNewWindow) target="_blank" #end>$link</a></li>
                         #end
                     </ul>
                 </div>

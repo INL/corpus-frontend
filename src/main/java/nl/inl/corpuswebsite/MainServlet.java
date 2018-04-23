@@ -37,8 +37,8 @@ import javax.xml.transform.TransformerConfigurationException;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.velocity.Template;
 import org.apache.velocity.app.Velocity;
 import org.xml.sax.SAXException;
@@ -63,7 +63,7 @@ import nl.inl.corpuswebsite.utils.XslTransformer;
  */
 public class MainServlet extends HttpServlet {
 
-    protected static final Logger logger = Logger.getLogger(MainServlet.class);
+    private static final Logger logger = LogManager.getLogger(MainServlet.class);
 
     private static final String DEFAULT_PAGE = "corpora";
 
@@ -71,11 +71,6 @@ public class MainServlet extends HttpServlet {
      * Where to find the Velocity properties file
      */
     private static final String VELOCITY_PROPERTIES = "/WEB-INF/config/velocity.properties";
-
-    /**
-     * Where to find the Log4j properties file
-     */
-    private static final String LOG4J_PROPERTIES = "/WEB-INF/config/log4j.properties";
 
     /**
      * Per-corpus configuration parameters (from search.xml)
@@ -142,15 +137,6 @@ public class MainServlet extends HttpServlet {
     public void init(ServletConfig cfg) throws ServletException {
         super.init(cfg);
 
-        // initialise log4j
-        try {
-            Properties p = new Properties();
-            p.load(getServletContext().getResourceAsStream(LOG4J_PROPERTIES));
-            PropertyConfigurator.configure(p);
-        } catch (IOException e1) {
-            throw new ServletException(e1);
-        }
-
         try {
             startVelocity(cfg);
 
@@ -163,7 +149,7 @@ public class MainServlet extends HttpServlet {
             adminProps = new Properties(getDefaultProps());
 
             if (adminPropFile == null || !adminPropFile.exists()) {
-                logger.debug("File " + adminPropFileName + " (with blsUrl and blsUrlExternal settings) "
+                logger.info("File " + adminPropFileName + " (with blsUrl and blsUrlExternal settings) "
                         + "not found in webapps, /etc/blacklab/ or temp dir; will use defaults");
             } else if (!adminPropFile.isFile()) {
                 throw new ServletException("Property file " + adminPropFile + " is not a regular file!");
@@ -171,7 +157,7 @@ public class MainServlet extends HttpServlet {
                 throw new ServletException("Property file " + adminPropFile + " exists but is unreadable!");
             } else {
                 // File exists and can be read. Read it.
-                logger.debug("Reading corpus-frontend property file: " + adminPropFile);
+                logger.info("Reading corpus-frontend property file: " + adminPropFile);
                 try (Reader in = new BufferedReader(new FileReader(adminPropFile))) {
                     adminProps.load(in);
                 }
@@ -218,7 +204,7 @@ public class MainServlet extends HttpServlet {
                 return fileInWebappsDir;
             }
         } else {
-            System.out.println("(WAR was not extracted to file system; skip looking for " + fileName + " file in webapps dir)");
+            logger.info("(WAR was not extracted to file system; skip looking for " + fileName + " file in webapps dir)");
         }
 
         boolean isWindows = SystemUtils.IS_OS_WINDOWS;

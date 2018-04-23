@@ -10,8 +10,8 @@ import java.nio.file.Paths;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.lf5.util.StreamUtils;
 
 import nl.inl.corpuswebsite.BaseResponse;
 
@@ -47,7 +47,7 @@ public class CorporaDataResponse extends BaseResponse {
 				response.setHeader("Cache-Control", "public, max-age=604800" /* 7 days */);
 				response.setContentType(mime);
 
-				StreamUtils.copy(is, response.getOutputStream());
+				IOUtils.copy(is, response.getOutputStream());
 			}
 		} catch (IOException e) {
 			// This signifies an error writing the response, errors reading the file are handled at a higher level.

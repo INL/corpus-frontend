@@ -8,9 +8,6 @@ import java.util.Map;
 import nl.inl.corpuswebsite.BaseResponse;
 import nl.inl.corpuswebsite.utils.CorpusConfig;
 
-/**
- *
- */
 public class SearchResponse extends BaseResponse {
 
 	public SearchResponse() {

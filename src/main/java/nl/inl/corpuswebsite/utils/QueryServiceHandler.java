@@ -14,13 +14,15 @@ import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Contacts the webservice and returns the response.
  */
 public class QueryServiceHandler {
 
-
+    private static final Logger logger = LogManager.getLogger(QueryServiceHandler.class);
 
 	public static class QueryException extends Exception{
 		private int httpStatusCode;
@@ -58,7 +60,7 @@ public class QueryServiceHandler {
 	public String makeRequest(Map<String, String[]> params) throws IOException, QueryException {
 		String requestUrl = makeQueryString(params);
 
-		System.out.println("Request: " + requestUrl);
+		logger.debug("Request: {}", requestUrl);
 		return fetchXml(requestUrl);
 	}
 
@@ -125,6 +127,5 @@ public class QueryServiceHandler {
 		}
 
 		return webserviceBaseUrl + "?" + builder.toString();
-
 	}
 }

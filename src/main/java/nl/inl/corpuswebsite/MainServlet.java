@@ -20,8 +20,10 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.jar.Attributes;
@@ -287,7 +289,7 @@ public class MainServlet extends HttpServlet {
     public WebsiteConfig getWebsiteConfig(String corpus) {
         if (!configs.containsKey(corpus)) {
             try (InputStream is = getProjectFile(corpus, "search.xml", true)) {
-                configs.put(corpus, new WebsiteConfig(is, this.contextPath, corpus, getCorpusConfig(corpus)));
+                configs.put(corpus, new WebsiteConfig(is, corpus, getCorpusConfig(corpus)));
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -660,8 +662,37 @@ public class MainServlet extends HttpServlet {
         return adminProps;
     }
 
+    /**
+     *
+     * @param url
+     * @param request used to get the path for the current page
+     * @return relativized url
+     */
+    public static String getRelativeUrl(String url, HttpServletRequest request) {
+        String fromUrl = request.getServletPath();
+        boolean trailingSegment = fromUrl.endsWith("/"); // when source url does not end in '/' we need to do one less '../'
+
+        String[] from = StringUtils.split(fromUrl, "/");
+        String[] to = StringUtils.split(url, "/");
+
+        int i = 0;
+        while (i < from.length && i < to.length && from[i].equals(to[i]) )
+            ++i;
+
+        List<String> parts = new ArrayList<>();
+        parts.add("."); // allows us to concat stuff to the return url beginning with '/' without inadvertantly creating an absolute url when the returned url would be empty
+
+        for (int j = i; j < from.length - (trailingSegment ? 0 : 1); ++j)
+            parts.add("..");
+
+        for (int j = i; j < to.length; ++j)
+            parts.add(to[j]);
+
+       return StringUtils.join(parts, "/");
+    }
+
     public static boolean isUserCorpus(String corpus) {
-        return corpus != null && corpus.indexOf(":") != -1;
+        return corpus != null && corpus.indexOf(':') != -1;
     }
 
     public static String getCorpusName(String corpus) {

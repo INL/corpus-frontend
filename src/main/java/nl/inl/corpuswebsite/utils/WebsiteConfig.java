@@ -34,12 +34,12 @@ public class WebsiteConfig {
          * @param relative does the url point within our own web application (e.g. starts with our context path)
          *        We need to track this to know if we should make this link relative to the current page, or whether it's an absolute url
          */
-        public LinkInTopBar(String label, String href, boolean openInNewWindow, boolean isExternal) {
+        public LinkInTopBar(String label, String href, boolean openInNewWindow, boolean relative) {
             super();
             this.label = label;
             this.href = href;
             this.openInNewWindow = openInNewWindow;
-            this.relative = isExternal;
+            this.relative = relative;
         }
 
         // Getters required for velicity
@@ -91,8 +91,8 @@ public class WebsiteConfig {
     /**
      *
      * @param configFile
-     * @param corpus
-     * @param corpusConfig the blacklab configuration for the corpus
+     * @param corpus (optional) id of the corpus
+     * @param corpusConfig (optional) the blacklab configuration for the corpus
      * @throws ConfigurationException
      */
     public WebsiteConfig(InputStream configFile, String corpus, CorpusConfig corpusConfig) throws ConfigurationException {
@@ -205,7 +205,6 @@ public class WebsiteConfig {
     public List<LinkInTopBar> getLinks() {
         return linksInTopBar;
     }
-
 
     public Map<String, String> getXsltParameters() {
         return xsltParameters;

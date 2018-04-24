@@ -297,14 +297,18 @@ public class MainServlet extends HttpServlet {
     /**
      * Return the website config.
      *
-     * @param corpus which corpus to read config for, may be null for the
+     * @param corpus which corpus to read config for, may be null or equal to PROP_DATA_DEFAULT for the
      * default config.
      * @return the website config
      */
     public WebsiteConfig getWebsiteConfig(String corpus) {
         if (!configs.containsKey(corpus)) {
+        	logger.debug("Retrieving config for corpus: "+ corpus);
             try (InputStream is = getProjectFile(corpus, "search.xml", true)) {
-                configs.put(corpus, new WebsiteConfig(is, this.contextPath, corpus, getCorpusConfig(corpus)));
+            	if(adminProps.getProperty(PROP_DATA_DEFAULT).equals(corpus))
+            		configs.put(corpus, new WebsiteConfig(is, this.contextPath, null, getCorpusConfig(null)));
+            	else
+            		configs.put(corpus, new WebsiteConfig(is, this.contextPath, corpus, getCorpusConfig(corpus)));
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

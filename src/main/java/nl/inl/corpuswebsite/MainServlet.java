@@ -16,16 +16,21 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
+import java.util.stream.Stream;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -111,8 +116,8 @@ public class MainServlet extends HttpServlet {
     public static final String PROP_BLS_SERVERSIDE         = "blsUrl";
     /** Where static content, custom xslt and other per-corpus data is stored */
     public static final String PROP_DATA_PATH              = "corporaInterfaceDataDir";
-    /** Name of the default 'corpus' if thhe datapath if not specified for the corpus */
-    public static final String PROP_DATA_DEFAULT              = "corporaInterfaceDefault";
+    /** Name of the default fallback directory/corpus in the PROP_DATA_PATH */
+    public static final String PROP_DATA_DEFAULT           = "corporaInterfaceDefault";
     /** Number of words displayed by default on the /article/ page, also is a hard limit on the number */
     public static final String PROP_DOCUMENT_PAGE_LENGTH   = "wordend";
 
@@ -302,15 +307,14 @@ public class MainServlet extends HttpServlet {
      * @return the website config
      */
     public WebsiteConfig getWebsiteConfig(String corpus) {
-        if (!configs.containsKey(corpus)) {
-            try (InputStream is = getProjectFile(corpus, "search.xml", true)) {
-                configs.put(corpus, new WebsiteConfig(is, this.contextPath, corpus, getCorpusConfig(corpus)));
+        return configs.computeIfAbsent(corpus, c -> {
+            File f = getProjectFile(corpus, "search.xml").orElseThrow(() -> new IllegalStateException("No search.xml, and no default in jar either"));
+            try (InputStream is = new FileInputStream(f)) {
+                return new WebsiteConfig(is, corpus, contextPath, getCorpusConfig(corpus));
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException("Could not read search.xml " + f);
             }
-        }
-
-        return configs.get(corpus);
+        });
     }
 
     /**
@@ -342,7 +346,7 @@ public class MainServlet extends HttpServlet {
 
                 corpusConfigs.put(corpus, new CorpusConfig(xmlResult, jsonResult));
             } catch (IOException | SAXException | ParserConfigurationException | QueryException e) {
-                throw new RuntimeException(e);
+                return null;
             }
         }
 
@@ -396,11 +400,13 @@ public class MainServlet extends HttpServlet {
             page = DEFAULT_PAGE;
         } else if (pathParts.length == 1) { // <page>
             page = pathParts[0];
-        } else if (pathParts.length >= 2) { // corpus>/<page>/...
+        } else if (pathParts.length >= 2) { // <corpus>/<page>/...
             try {
                 corpus = URLDecoder.decode(pathParts[0], StandardCharsets.UTF_8.name());
                 page = pathParts[1];
                 remainder = StringUtils.join(pathParts, "/", 2, pathParts.length);
+                if (corpus.equals(adminProps.getProperty(PROP_DATA_DEFAULT)))
+                    corpus = null;
             } catch (UnsupportedEncodingException e) {
                 throw new RuntimeException(e);
             }
@@ -432,90 +438,78 @@ public class MainServlet extends HttpServlet {
     }
 
     /**
-     * Get a file from the directory belonging to this corpus and return it, or
-     * return the default file if the corpus-specific file cannot be located.
-     * If the corpus is null or the corpus is a user-uploaded corpus,or the file does not exist for this corpus,
-     * try to load the project-default file.
-     * If also the project-default file does not exist, or the interface data directory is not configured, the defaulft file is used.
-     * This is provided the default file exists and
-     * getDefaultIfMissing is true, otherwise null will be returned.
+     * Get a file from the directory belonging to this corpus and return it, attempting to get a default if that fails.
+     * User corpora never have their own directory, and so will only use the locations for the defaults.
      *
-     * @param corpus - corpus for which to get the file. If null, falls back to
-     * the default files.
-     * @param fileName - path to the file relative to the directory for the
-     * corpus.
-     * @param getDefaultIfMissing try to get the default file if the
-     * corpus-specific file is missing?
-     * @return the file, or null if not found
+     * <pre>
+     * Tries in several locations:
+     * - First try PROP_DATA_PATH/corpus/ directory (if configured, and this is not a user corpus)
+     * - Then try PROP_DATA_PATH/PROP_DATA_DEFAULT directory (if configured)
+     * - Finally try WEB-INF/interface-default
+     *</pre>
+     *
+     * @param corpus - corpus for which to get the file. If null or a user-defined corpus only the default locations are checked.
+     * @param filePath - path to the file relative to the directory for the corpus.
+     * @return the file, if found
      */
-    public final InputStream getProjectFile(String corpus, String fileName, boolean getDefaultIfMissing) {
-        if (!adminProps.containsKey(PROP_DATA_PATH)) {
-            logger.debug(PROP_DATA_PATH + " not set, couldn't find project file " + fileName + " for corpus " + corpus + (getDefaultIfMissing ? "; using default" : "; returning null"));
-            return getDefaultIfMissing ? getDefaultProjectFile(fileName) : null;
-        }
+    public final Optional<File> getProjectFile(String corpus, String filePath) {
+        Optional<Path> dataDir = getIfValid(adminProps.getProperty(PROP_DATA_PATH));
 
-        InputStream fs = null;
-        if(corpus != null && !isUserCorpus(corpus))
-        	fs = getProjectFilestreamFromIFDir(corpus, fileName);
-        if(fs == null) 
-        	fs = getProjectFilestreamFromIFDir(adminProps.getProperty(PROP_DATA_DEFAULT), fileName);
-        if(fs !=null)
-        	return fs;
-        
-        return getDefaultIfMissing ? getDefaultProjectFile(fileName) : null;
+        // Path the file in the corpus' data directory, only when a valid non-user corpus
+        Optional<Path> corpusFile = dataDir
+            .filter(path -> corpus != null && !corpus.isEmpty() && !isUserCorpus(corpus))
+            .flatMap(p -> resolveIfValid(p, corpus))
+            .flatMap(p -> resolveIfValid(p, filePath));
+
+        // Path to the file in the default data directory, always available if configured correctly, even when getDefaultIfMissing is false
+        // see https://github.com/INL/corpus-frontend/pull/69
+        Optional<Path> corpusFileDefault = dataDir
+            .flatMap(p -> resolveIfValid(p, adminProps.getProperty(PROP_DATA_DEFAULT)))
+            .flatMap(p -> resolveIfValid(p, filePath));
+
+        File file = Stream.of(corpusFile, corpusFileDefault)
+            .map(o -> o.map(Path::toFile).orElse(null))
+            .filter(f -> f != null && f.exists() && f.canRead() && f.isFile())
+            .findFirst()
+            .orElseGet(() -> {
+                // both the regular data directories didn't contain the file (or aren't configured, etc),
+                // as a last resort, find a fallback file in the the jar directly
+                try {
+                    URL fileInJar = MainServlet.class.getResource("/interface-default/" + filePath);
+                    return fileInJar != null ? new File(fileInJar.toURI()) : null;
+                } catch (URISyntaxException e) {
+                    return null;
+                }
+            });
+
+        return Optional.ofNullable(file);
+    }
+
+    private static Optional<Path> getIfValid(String path) {
+        if (path == null || path.isEmpty())
+            return Optional.empty();
+
+        try {
+            return Optional.of(Paths.get(path));
+        } catch (InvalidPathException e) {
+            return Optional.empty();
+        }
     }
 
     /**
-     * Wrapper around the getProjectFileFromIFDir method that tries reading the file into an Inputstream,
-     *  and returns null on read exceptions.
-     * @param corpus
-     * @param fileName
-     * @return
+     * Resolve the child again the parent and verify that the child is indeed a descendant.
+     * Also handle null, illegal paths, empty strings and other such things.
+     *
+     * @param parent
+     * @param child
+     * @return the new path if everything is alright
      */
-	public final InputStream getProjectFilestreamFromIFDir(String corpus, String fileName) {
-		File projectFile = null;
+    private static Optional<Path> resolveIfValid(Path parent, String child) {
         try {
-            projectFile = getProjectFileFromIFDir(corpus, fileName);
-            if (projectFile!=null) {
-                return new FileInputStream(projectFile);
-            }
-
-            // File path points outside the configured directory!
-            logger.warn("File: " + fileName + " is null for corpus " + corpus );
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(fileName + " exists but still not found?", e);
-        } catch (SecurityException e) {
-            logger.debug("SecurityException finding project file " + fileName + " for corpus " + corpus + " as file " + projectFile.toString());
-        }
-        return null;
-	}
-
-    /**
-     * return a file from the corporaInterfaceDataDir/corpus. Return null when file does not exist, cannot be read or is
-     * outside of corporaInterfaceDataDir/corpus.
-     * @param corpus
-     * @param fileName
-     * @return
-     */
-    public final File getProjectFileFromIFDir(String corpus, String fileName) {
-        Path baseDir = Paths.get(adminProps.getProperty(PROP_DATA_PATH));
-        Path corpusDir = baseDir.resolve(corpus).normalize();
-        Path filePath = corpusDir.resolve(fileName).normalize();
-        File projectFile = new File(filePath.toString());
-        if (!projectFile.exists()) {
-            // Problem with file permissions (possibly SELinux?)
-            logger.warn("File " + projectFile + " does not exist!");
-            return null;
-        } else if (!projectFile.canRead()) {
-            // Problem with file permissions (possibly SELinux?)
-            logger.warn("File " + projectFile + " is unreadable!");
-            return null;
-        }
-        if (corpusDir.startsWith(baseDir) && filePath.startsWith(corpusDir)) {
-            return projectFile;
-        } else {
-            logger.warn("File " + projectFile + " outside of corporaInterfaceDataDir/"+corpus+"!");
-            return null;
+            return Optional.of(parent.resolve(child))
+            .filter(resolved -> resolved.startsWith(parent) && !resolved.equals(parent)); // prevent upward directory traversal - child must be in parent
+        } catch (Exception e) { // catch anything, a bit lazy but allows passing in null and empty strings etc
+            return Optional.empty();
         }
     }
 
@@ -523,89 +517,71 @@ public class MainServlet extends HttpServlet {
      * Get the stylesheet to convert an article from this corpus into an html
      * snippet suitable for inseting in the article.vm page.
      *
-     * Resolves in 4 steps:
-     * first see if we have a configured dataDir for this specific corpus, and attempt to retrieve the article_<corpusDataFormat> xsl from that directory.
-     * If that fails, check if the file exists in the project default directory.
-     * If that fails, see if an xsl file with that name exists in the provided WEB-INF/interface-default directory.
-     * If that fails, contact blacklab-server for an autogenerated best-effort xsl file.
-     * If that fails, return a default xsl file that just outputs all text.
+     * Looks for a file by the name of "article_corpusDataFormat.xsl", so "article_tei" for tei, etc.
      *
+     * <pre>
+     * Looks in several locations:
+     * - First retrieve using {@link #getProjectFile(String, String, boolean)}
+     * - If that fails, contact blacklab-server for an autogenerated best-effort xsl file.
+     * - If that fails, return a default xsl file that just outputs all text.
+     *</pre>
      * @param corpus
      * @param corpusDataFormat
      * @return the xsl transformer to use for transformation
      */
     public final XslTransformer getStylesheet(String corpus, String corpusDataFormat) {
         String fileName = "article_" + corpusDataFormat + ".xsl";
+        Optional<File> file = getProjectFile(corpus, fileName);
 
-        File f = null;
-        if (!isUserCorpus(corpus))
-        	f = getProjectFileFromIFDir(corpus, fileName);
-    	
-        if(f==null)
-        	f = getProjectFileFromIFDir(adminProps.getProperty(PROP_DATA_DEFAULT), fileName);
-        
-        if (f!=null) {
+        if (file.isPresent()) {
             try {
-                return new XslTransformer(f);
-            } catch (TransformerConfigurationException ex) {
-                throw new RuntimeException(ex);
+                return new XslTransformer(file.get());
+            } catch (TransformerConfigurationException e) {
+                System.out.println("Error loading stylesheet "+file.get()+" for corpus "+corpus+" : "+e.getMessage());
             }
-        }
-        // Get from explicitly defined xsl files for corpus or defaults.
-        try (InputStream is = getProjectFile(corpus, fileName, true)) {
-            if (is != null) {
-                return new XslTransformer(is);
-            }
-        } catch (IOException | TransformerConfigurationException e) {
-            log("Problem loading xsl file: " + fileName, e);
-            // Don't bail yet, can still try to get from blacklab-server
+        } else {
+            System.out.println("Stylesheet "+fileName+" for corpus "+corpus+" not found and no default, getting from blacklab...");
         }
 
-        XslTransformer stylesheet = null;
-        // Still nothing, get an autogenned xsl from blacklab-server
+        // couldn't find file on disk, try blacklab
         try {
             QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(null) + "input-formats/" + corpusDataFormat + "/xslt");
-            String sheet = handler.makeRequest(null);
-            stylesheet = new XslTransformer(new StringReader(sheet));
-        } catch (QueryException e) {
-            if (e.getHttpStatusCode() == 404) {
-                try {
-                    // this might happen if the import format is deleted after a corpus was created.
-                    // then blacklab-server can obviously no longer generate the xslt based on the import format.
-                    stylesheet = new XslTransformer(new StringReader("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                            + "<xsl:stylesheet version=\"2.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">"
-                            + "<xsl:output encoding=\"utf-8\" method=\"html\" omit-xml-declaration=\"yes\" />"
-                            + "</xsl:stylesheet>"));
-                } catch (TransformerConfigurationException ex) {
-                    throw new RuntimeException(ex);
-                }
-            } else {
-                throw new RuntimeException(e); // blacklab internal server error or the like, abort the request.
-            }
-        } catch (IOException | TransformerConfigurationException e) {
-            throw new RuntimeException(e);
+            Map<String, String[]> params = new HashMap<>();
+            String userId = getCorpusOwner(corpus);
+            if (userId != null)
+                params.put("userid", new String[] { userId });
+            String sheet = handler.makeRequest(params);
+            return new XslTransformer(new StringReader(sheet));
+        } catch (TransformerConfigurationException | IOException | QueryException e) {
+            System.out.println("Error getting or using stylesheet for format "+corpusDataFormat+" from blacklab : " + e.getMessage());
         }
 
-        return stylesheet;
-    }
-
-    /**
-     * Gets a file from the interface-default directory in the project.
-     *
-     * @param fileName The file to get. This should NOT start with "/"
-     * @return the InputStream for the file. Or null if this file cannot be
-     * found.
-     */
-    private InputStream getDefaultProjectFile(String fileName) {
-        return getServletContext().getResourceAsStream("/WEB-INF/interface-default/" + fileName);
+        // this might happen if the import format is deleted after a corpus was created.
+        // then blacklab-server can obviously no longer generate the xslt based on the import format.
+        try {
+            return new XslTransformer(new StringReader("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                + "<xsl:stylesheet version=\"2.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">"
+                + "<xsl:output encoding=\"utf-8\" method=\"html\" omit-xml-declaration=\"yes\" />"
+                + "</xsl:stylesheet>"));
+        } catch (TransformerConfigurationException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     public InputStream getHelpPage(String corpus) {
-        return getProjectFile(corpus, "help.inc", true);
+        try {
+            return new FileInputStream(getProjectFile(corpus, "help.inc").get());
+        } catch (FileNotFoundException e) {
+            throw new IllegalStateException(e); // this file always exists
+        }
     }
 
     public InputStream getAboutPage(String corpus) {
-        return getProjectFile(corpus, "about.inc", true);
+        try {
+            return new FileInputStream(getProjectFile(corpus, "help.inc").get());
+        } catch (FileNotFoundException e) {
+            throw new IllegalStateException(e); // this file always exists
+        }
     }
 
     /**

@@ -7,15 +7,17 @@
 		if that is not configured either the internal corpus name is shown. -->
         <!--<DisplayName>BlackLab AutoSearch Corpus Search</DisplayName>-->
        
-        <!-- These links will always be made relative to the application root 
+        <!-- These links are always resolved relative to the application root
         Custom files can be made available by placing them in a ./static directory
         within the corpus data directory (the exact location of that directory is configured in the .properties file for AutoSearch. 
         These resources are then made available through <corpus>/static/...<file> 
-        So when you create a /img directory containing logo.png for the 'zeebrieven' corpus, 
+        So when you create a static/img/ directory containing logo.png for the 'zeebrieven' corpus, 
         the url here would be 'zeebrieven/static/img/logo.png' 
         and the directory structure would be <>/<corpusname>/static/... -->
         
-        <!-- You can include custom js and css in your corpus interface directory -->
+        <!-- You can include custom js and css from your corpus interface directory 
+             These are always evaluated from the application root (normally /corpus-frontend/), so including js and css from external servers is not supported 
+             You should use the static/ directory for your corpus -->
         <!--<CustomJs>corpusname/static/your.js</CustomJs>-->
         <!--<CustomCss>corpusname/static/your.css</CustomCss>-->
         <!-- You can define which properties to show as colummns in the results table-->

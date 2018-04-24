@@ -20,9 +20,6 @@ import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.tools.generic.EscapeTool;
 
-import nl.inl.corpuswebsite.response.CorporaDataResponse;
-import nl.inl.corpuswebsite.utils.WebsiteConfig;
-
 public abstract class BaseResponse {
 	protected static final Logger logger = LogManager.getLogger(BaseResponse.class);
 
@@ -70,17 +67,13 @@ public abstract class BaseResponse {
 	 * @param request the HTTP request object.
 	 * @param response the HTTP response object.
 	 * @param servlet our servlet.
-	 * @param corpus the corpus for which this response is generated.
-	 * @param contextPathAbsolute absolute path to reach the application context root.
-	 * @param uriRemainder any trailing path in the original request uri, that this SHOULD be url-encoded.
+	 * @param corpus (optional) the corpus for which this response is generated.
+	 * @param uriRemainder url-encoded trailing path in the original request uri, so the part behind the response's path
 	 * @throws ServletException when corpus is required but missing.
 	 */
-	public void init(HttpServletRequest request, HttpServletResponse response, MainServlet servlet, String corpus, String contextPathAbsolute, String uriRemainder) throws ServletException {
+	public void init(HttpServletRequest request, HttpServletResponse response, MainServlet servlet, String corpus, String uriRemainder) throws ServletException {
 		if ((corpus == null || corpus.isEmpty()) && this.requiresCorpus)
 			throw new ServletException("Response requires a corpus");
-
-		if (!contextPathAbsolute.startsWith("/"))
-			throw new RuntimeException("contextPathAbsolute is not an absolute path");
 
 		this.request = request;
 		this.response = response;

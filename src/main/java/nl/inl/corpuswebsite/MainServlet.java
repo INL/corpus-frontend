@@ -298,7 +298,7 @@ public class MainServlet extends HttpServlet {
         return configs.computeIfAbsent(corpus, c -> {
             File f = getProjectFile(corpus, "search.xml").orElseThrow(() -> new IllegalStateException("No search.xml, and no default in jar either"));
             try (InputStream is = new FileInputStream(f)) {
-                return new WebsiteConfig(is, corpus, contextPath, getCorpusConfig(corpus));
+                return new WebsiteConfig(is, corpus, getCorpusConfig(corpus));
             } catch (Exception e) {
                 throw new RuntimeException("Could not read search.xml " + f);
             }
@@ -306,7 +306,7 @@ public class MainServlet extends HttpServlet {
     }
 
     /**
-     * Get the corpus config (as returned from blacklab-server)
+     * Get the corpus config (as returned from blacklab-server), if this is a valid corpus
      *
      * @param corpus name of the corpus
      * @return the config
@@ -426,7 +426,7 @@ public class MainServlet extends HttpServlet {
             return;
         }
 
-        br.init(request, response, this, corpus, contextPath, remainder);
+        br.init(request, response, this, corpus, remainder);
         br.completeRequest();
     }
 
@@ -530,10 +530,10 @@ public class MainServlet extends HttpServlet {
             try {
                 return new XslTransformer(file.get());
             } catch (TransformerConfigurationException e) {
-                System.out.println("Error loading stylesheet "+file.get()+" for corpus "+corpus+" : "+e.getMessage());
+                logger.debug("Error loading stylesheet {} for corpus {} : {}", file.get(), corpus, e.getMessage());
             }
         } else {
-            System.out.println("Stylesheet "+fileName+" for corpus "+corpus+" not found and no default, getting from blacklab...");
+            logger.debug("Stylesheet {} for corpus {} not found and no default, getting from blacklab...", fileName, corpus);
         }
 
         // couldn't find file on disk, try blacklab
@@ -542,26 +542,11 @@ public class MainServlet extends HttpServlet {
             Map<String, String[]> params = new HashMap<>();
             String userId = getCorpusOwner(corpus);
             if (userId != null)
-            	params.put("userid", new String[] { userId });
+                params.put("userid", new String[] { userId });
             String sheet = handler.makeRequest(params);
-            stylesheet = new XslTransformer(new StringReader(sheet));
-        } catch (QueryException e) {
-            if (e.getHttpStatusCode() == 404) {
-                try {
-                    // this might happen if the import format is deleted after a corpus was created.
-                    // then blacklab-server can obviously no longer generate the xslt based on the import format.
-                    stylesheet = new XslTransformer(new StringReader("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                            + "<xsl:stylesheet version=\"2.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">"
-                            + "<xsl:output encoding=\"utf-8\" method=\"html\" omit-xml-declaration=\"yes\" />"
-                            + "</xsl:stylesheet>"));
-                } catch (TransformerConfigurationException ex) {
-                    throw new RuntimeException(ex);
-                }
-            } else {
-                throw new RuntimeException(e); // blacklab internal server error or the like, abort the request.
-            }
-        } catch (IOException | TransformerConfigurationException e) {
-            throw new RuntimeException(e);
+            return new XslTransformer(new StringReader(sheet));
+        } catch (TransformerConfigurationException | IOException | QueryException e) {
+            logger.debug("Error getting or using stylesheet for format {} from blacklab : {}", corpusDataFormat, e.getMessage());
         }
 
         // this might happen if the import format is deleted after a corpus was created.
@@ -692,7 +677,7 @@ public class MainServlet extends HttpServlet {
             ++i;
 
         List<String> parts = new ArrayList<>();
-        parts.add("."); // allows us to concat stuff to the return url beginning with '/' without inadvertantly creating an absolute url when the returned url would be empty
+        parts.add("."); // handle the case of empty urls
 
         for (int j = i; j < from.length - (trailingSegment ? 0 : 1); ++j)
             parts.add("..");

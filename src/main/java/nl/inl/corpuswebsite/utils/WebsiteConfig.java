@@ -80,7 +80,7 @@ public class WebsiteConfig {
     /** Custom js to use */
     private String pathToCustomJs;
 
-    /** properties to show in result columns */
+    /** properties to show in result columns, empty if no corpus set */
     private String[] propColumns = new String[] {};
 
     /** Link to put in the top bar */
@@ -96,12 +96,13 @@ public class WebsiteConfig {
      * @throws ConfigurationException
      */
     public WebsiteConfig(InputStream configFile, String corpus, CorpusConfig corpusConfig) throws ConfigurationException {
-        initProps(corpusConfig);
+        if (corpusConfig != null)        
+            initProps(corpusConfig);
 
         load(configFile, corpus);
 
         if (corpusDisplayName == null) { // no displayName set
-            String backendDisplayName = corpusConfig.getDisplayName();
+            String backendDisplayName = (corpusConfig != null) ? corpusConfig.getDisplayName() : null;
             if (backendDisplayName != null && !backendDisplayName.isEmpty() && !backendDisplayName.equals(corpus))
                 corpusDisplayName = backendDisplayName;
             else
@@ -115,6 +116,9 @@ public class WebsiteConfig {
      * @param corpusConfig
      */
     private void initProps(CorpusConfig corpusConfig) {
+        if (corpusConfig == null)
+            return;
+
         List<FieldDescriptor> fd = new ArrayList<>(3);
 
         corpusConfig.getPropertyFields().stream()
@@ -132,7 +136,7 @@ public class WebsiteConfig {
     /**
      * Note that corpus may be null, when parsing the base config.
      * @param configFile
-     * @param corpus raw name of the corpus, including the username (if applicable), might be null (when loading the config for the pages outside a corpus context, such as /about, /help, and / (root)))
+     * @param corpus (optional) raw name of the corpus, including the username (if applicable), (null when loading the config for the pages outside a corpus context, such as /about, /help, and / (root)))
      * @throws ConfigurationException
      */
     private void load(InputStream configFile, String corpus) throws ConfigurationException {

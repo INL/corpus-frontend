@@ -3,6 +3,7 @@
  */
 package nl.inl.corpuswebsite.response;
 
+import java.io.IOException;
 import java.util.Map;
 
 import nl.inl.corpuswebsite.BaseResponse;
@@ -22,6 +23,15 @@ public class SearchResponse extends BaseResponse {
 		context.put("blsUrl", servlet.getExternalWebserviceUrl(corpus));
 
 		CorpusConfig config = servlet.getCorpusConfig(corpus);
+		if (config == null) {
+			try {
+				response.sendError(404);
+				return;
+			} catch (IOException e) {
+				// ...
+			}
+		}
+
 		for (Map.Entry<String, String> e : config.getFieldInfo().entrySet()) {
 			context.put(e.getKey(), e.getValue());
 		}

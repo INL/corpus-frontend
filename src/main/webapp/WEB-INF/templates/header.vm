@@ -49,7 +49,7 @@
         <script src="$pathToTop/js/vendor/pageguide.min.js"></script>
         <script src="$pathToTop/js/tutorial.js"></script>
         #if ($websiteConfig.getPathToCustomJs())
-            <link rel="stylesheet" href="$pathToTop/$websiteConfig.getPathToCustomJs()">
+            <script src="$pathToTop/$websiteConfig.getPathToCustomJs()"></script>
         #end
         
     </head>

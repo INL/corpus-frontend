@@ -69,9 +69,9 @@
                     </div> 
                     
                     #if($websiteConfig.getCorpusDisplayName())
-                    <a href='$brandLink' class='navbar-brand'>$websiteConfig.getCorpusDisplayName()</a>
+                    <a href='$pathToTop/$brandLink' class='navbar-brand'>$websiteConfig.getCorpusDisplayName()</a>
                     #else
-                    <a href='$brandLink' class='navbar-brand'>AutoSearch</a>
+                    <a href='$pathToTop/$brandLink' class='navbar-brand'>AutoSearch</a>
                     #end
                     
                     <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">

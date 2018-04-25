@@ -1,4 +1,4 @@
-/* global CodeMirror */
+/* global CodeMirror, Mustache */
 
 // (Private) corpora management page.
 //
@@ -15,6 +15,57 @@ var corpora = {};
 // (avoid polluting the global namespace)
 (function() {
 	'use strict';
+
+	var $root = $(document);
+	function createTrigger(eventType, $target) {
+		return function(payload) {
+			($target || $root).trigger(eventType, payload);
+		};
+	}
+
+	var events = {
+		SERVER_REFRESH: 'server/refresh',
+		FORMATS_REFRESH: 'formats/refresh',
+	};
+
+	var triggers = {
+		updateFormats: createTrigger(events.FORMATS_REFRESH),
+		updateServer: createTrigger(events.SERVER_REFRESH)
+	};
+
+	/**
+	 * 
+	 * @param {string} [selector] - jquery, can be omitted
+	 * @param {string} eventType - from events object, or custom
+	 * @param {Function} handler - callback function, if selector was provided 'this' will point to $(selector), otherwise 'this' will be undefined
+	 */
+	function createHandler(a, b, c) {
+		var handlerContext = (typeof b === 'function') ? undefined : $(a);
+		var eventType = handlerContext ? b : a;
+		var handler = handlerContext ? c : b;
+
+		$root.on(eventType, function(event, payload) {
+			if (handlerContext) {
+				handlerContext.each(function () {
+					handler.call($(this), payload);
+				});
+			} else {
+				handler.call(undefined, payload);
+			}
+		});
+	}
+	function createHandlerOnce(a,b,c) {
+		// we need to be able to unsub on element to a 
+		
+		var selector = (typeof b === 'function') ? undefined : a;
+		var eventType = selector ? b : a;
+		var handler = selector ? c : b;
+
+		$root.one(eventType, function(event, payload) {
+			handler.call( selector ? $(selector) : undefined, payload);
+		});
+	}
+
 	
 	// When we retrieve the corpora list, we actually get
 	// more than that. The whole server info JSON is stored here.
@@ -212,7 +263,7 @@ var corpora = {};
 					publicCorpora.push($tr);
 
 				if (index.status === 'indexing')
-					refreshIndexStatusWhileIndexing(indexId, function(index) { drawCorpusRow(index, $tr) }, function(errorMsg) {$tr.children().first().text(errorMsg)});
+					refreshIndexStatusWhileIndexing(indexId, function(index) { drawCorpusRow(index, $tr); }, function(errorMsg) {$tr.children().first().text(errorMsg)});
 			});
 		
 	
@@ -265,53 +316,89 @@ var corpora = {};
 		});
 	}
 
+	createHandler(events.SERVER_REFRESH, function(serverInfo_) {
+		serverInfo = serverInfo_;
+	});
+
+	createHandler('#formats-all-container', events.SERVER_REFRESH, function(serverInfo) {
+		this.toggle(serverInfo.user.loggedIn && serverInfo.user.canCreateIndex);
+	});
+
+	createHandler('tbody[data-autoupdate="format"]', events.FORMATS_REFRESH, function(formats) {
+		// convert to array, removing non-config based and normalizing some data
+		formats = $.map(formats, function(format, formatId) { 
+			if (formatId.indexOf(':') === -1) // ignore builtin formats formats
+				return undefined;
+			
+			format.id = formatId;
+			format.shortId = formatId.substr(formatId.indexOf(':') + 1); // strip username prefix from the id for display purposes
+			return format;
+		})
+		.sort(function(a, b) { // sort by id
+			return a.id.localeCompare(b.id);
+		});
+
+		var template = 
+		'{{#formats}}'+
+		'<tr>'+
+			'<td>{{shortId}}</td>'+
+			'<td>{{displayName}}</td>'+
+			'<td><a class="fa fa-trash" data-format-operation="delete" data-format-id="{{id}}" title="Delete format \'{{shortId}}\'" href="javascript:void(0)"></a></td>'+
+			'<td><a class="fa fa-pencil" data-format-operation="edit" data-format-id="{{id}}" title="Edit format \'{{shortId}}\'" href="javascript:void(0)"></a></td>'+
+		'</tr>'+
+		'{{/formats}}';
+
+		this.html(Mustache.render(template, {
+			formats: formats,
+		}));
+	});
+
+	createHandler('select[data-autoupdate="format"]', events.FORMATS_REFRESH, function(formats) {
+		var showNonConfigBased = this.data('filter') !== 'configBased';
+
+		// convert to array, removing non-config based and normalizing some data
+		formats = $.map(formats, function(format, formatId) { 
+			if (!format.configurationBased && !showNonConfigBased)
+				return undefined;
+
+			format.id = formatId;
+			format.shortId = formatId.substr(formatId.indexOf(':') + 1); // strip username prefix from the id for display purposes
+			return format;
+		})
+		.sort(function(a, b) { // sort by id
+			return a.id.localeCompare(b.id);
+		});
+
+		var template = 
+		'<optgroup label="Presets">' +
+			'{{#builtinFormats}}' +
+			'<option title="{{description}}" value="{{id}}" data-content="{{displayName}} <small>({{shortId}})</small>">{{displayName}}</option>' +
+			'{{/builtinFormats}}' +
+		'</optgroup>' +
+		'<optgroup label="{{userName}}">' +
+			'{{#userFormats}}' +
+			'<option title="{{description}}" value="{{id}}" data-content="{{displayName}} <small>({{shortId}})</small>">{{displayName}}</option>' +
+			'{{/userFormats}}' +
+		'</optgroup>';
+
+		this.html(Mustache.render(template, {
+			userName: serverInfo.user.id,
+			builtinFormats: formats.filter(function(format) { return format.id === format.shortId; }),
+			userFormats: formats.filter(function(format) { return format.id !== format.shortId; })
+		}))
+		.selectpicker('refresh');
+	});
+
 	function refreshFormatList() {		
 		$.ajax(CORPORA.blsUrl + '/input-formats/', {
 			type: 'GET',
 			accept: 'application/json',
 			dataType: 'json',
 			success: function(data) {
-				var $select = $('select[data-autoupdate="format"]');
-				var $tbody = $('table[data-autoupdate="format"]').children('tbody');
-
-				var $defaultFormatOptGroup = $('<optgroup label="Presets"></optgroup>');
-				var $userFormatOptGroup = $('<optgroup label="' + data.user.id + '"></optgroup>');
-				var $nonConfigBasedOptions = $();
-
-				$select.empty();
-				$tbody.empty();
-				$.each(data.supportedInputFormats, function(formatId, format) {
-					// Strip any usernames from the format id to extract a short name
-					var isUserFormat = formatId.indexOf(data.user.id) !== -1;
-					var shortId = isUserFormat ? formatId.substr(formatId.indexOf(data.user.id) + data.user.id.length + 1) : formatId;
-					
-					var $option = $('<option title="' + (format.description || format.displayName) + '" value="' + formatId + '" data-content="'+format.displayName+' <small>('+shortId+')</small>" >'+format.displayName+'</option>');
-					
-					var $tr = $([
-						'<tr>',
-						'<td>', shortId, '</td>',
-						'<td>', format.displayName, '</td>',
-						'<td><a class="fa fa-trash" data-format-operation="delete" data-format-id="'+formatId+'" title="Delete format \''+shortId+'\'" href="javascript:void(0)"></a></td>',
-						'<td><a class="fa fa-pencil" data-format-operation="edit" data-format-id="'+formatId+'" title="Edit format \''+shortId+'\'" href="javascript:void(0)"></a></td>',
-						'</tr>'].join(''));
-				
-					if (formatId.indexOf(data.user.id) === 0) {
-						$userFormatOptGroup.append($option);
-						$tbody.append($tr);
-					} else {
-						if (format.configurationBased)
-							$defaultFormatOptGroup.append($option);
-						else 
-							$nonConfigBasedOptions = $nonConfigBasedOptions.add($option);
-					}
+				triggers.updateServer({
+					user: data.user
 				});
-
-				$select.append($defaultFormatOptGroup).append($userFormatOptGroup)
-					.filter(':not(#format_select)').children('optgroup:nth-child(1)').append($nonConfigBasedOptions);
-				$select.selectpicker('refresh');
-				$select.trigger('change');
-
-				$('#formats-all-container').toggle(data.user.loggedIn && data.user.canCreateIndex);
+				triggers.updateFormats(data.supportedInputFormats);
 			},
 			error: function(/*jqXHR, textStatus, errorThrown*/) {
 				showError('Error retrieving input formats.');
@@ -571,6 +658,7 @@ var corpora = {};
 		var $newCorpusModal = $('#new-corpus-modal');
 		var $corpusNameInput = $('#corpus_name');
 		var $corpusFormatSelect = $('#corpus_document_type');
+		var $corpusFormatDescription = $('#corpus_document_type_description');
 		var $saveButton = $('#new-corpus-modal .btn-primary');
 		
 		$newCorpusModal.on('shown.bs.modal', function(/*event*/) {
@@ -599,6 +687,10 @@ var corpora = {};
 			var format = $corpusFormatSelect.val();
 			$newCorpusModal.modal('hide');
 			createIndex(corpusName, generateShortName(corpusName), format);
+		});
+
+		$corpusFormatSelect.on('changed.bs.select', function() {
+			$corpusFormatDescription.text($corpusFormatSelect.selectpicker('val'));
 		});
 	}
 
@@ -799,7 +891,7 @@ var corpora = {};
 
 	function initDeleteFormat() {
 		
-		$('table[data-autoupdate="format"]').on('click', '[data-format-operation="delete"]', function(event) {
+		$('tbody[data-autoupdate="format"]').on('click', '[data-format-operation="delete"]', function(event) {
 			event.preventDefault();
 	
 			var formatId = $(this).data('format-id');
@@ -828,7 +920,7 @@ var corpora = {};
 	}
 
 	function initEditFormat() {
-		$('table[data-autoupdate="format"]').on('click', '[data-format-operation="edit"]', function(event) {
+		$('tbody[data-autoupdate="format"]').on('click', '[data-format-operation="edit"]', function(event) {
 			event.preventDefault();
 			var formatId = $(this).data('format-id');
 			

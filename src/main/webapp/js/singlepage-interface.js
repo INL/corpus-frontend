@@ -983,7 +983,7 @@ SINGLEPAGE.INTERFACE = (function() {
 		showProperties: showProperties,
 
 		/**
-		 * Set new search parameters and mark tabs for a refesh of data.
+		 * Set new search parameters and mark tabs for a refresh of data.
 		 *
 		 * The currently shown tab will auto-refresh.
 		 * Parameters with corresponding UI-elements within the tabs will update those elements with the new data.

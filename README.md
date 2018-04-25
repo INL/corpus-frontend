@@ -7,13 +7,13 @@ Requirements:
 - Java 1.8 
 - A java servlet container such as [Apache Tomcat](http://tomcat.apache.org/)
 - An instance of [BlackLab-Server](https://github.com/INL/BlackLab/).  
-**Currently requires [prerelease 1.7.0-ALPHA](releases/tag/v1.7.0-ALPHA)) or newer, CSV exports requires the dev branch.**
+**Currently requires [prerelease 1.7.0-ALPHA](releases/tag/v1.7.0-ALPHA)) or newer, CSV export requires the dev branch of blacklab.**
 
 Getting started
 ----
 - Clone this repository, use `mvn package` to build the WAR file (or download the .war from the latest release) and add corpus-frontend.war to Tomcat's webapps directory.
 - Optionally, create a file `corpus-frontend.properties` (name must be the same as the .war file) in the same directory as the BlackLab Server config file (e.g. `/etc/blacklab/`).
-- Navigate to http://SERVERNAME:8080/corpus-frontend/ and you will see a list of the available you can search.
+- Navigate to `http://localhost:8080/corpus-frontend/` and you will see a list of the available you can search.
 
 # Options 
 
@@ -23,6 +23,7 @@ Getting started
 blsUrl=http://localhost:8080/blacklab-server/
 blsUrlExternal=/blacklab-server/
 corporaInterfaceDataDir=/etc/blacklab/projectconfigs/
+corporaInterfaceDefault=default
 listvalues= (empty)
 wordend=5000
 ```
@@ -33,11 +34,12 @@ Address where the Corpus-Frontend server can reach BlackLab-Server.
 Address where the browser javascript can reach BlackLab-Server.
 - `corporaInterfaceDataDir`  
 Optional directory where you can place files to further configure and customize the interface on a per-corpus basis.  
-Files should be placed in a directory with the name of your corpus, e.g. files for a corpus `MyCorpus` should be placed under `corporaInterfaceDataDir/MyCorpus/...`  
+Files should be placed in a directory with the name of your corpus, e.g. files for a corpus `MyCorpus` should be placed under `corporaInterfaceDataDir/MyCorpus/...`
+- `corporaInterfaceDefault`  
+Optional default directory that's used as a fallback if a file cannot be found in the `corporaInterfaceDataDir/MyCorpus/...` directory.
 - `listvalues`  
 A comma-separated list of word properties (such as lemma and pos) that should have be autocompletion enabled in the interface. A select or combo box is shown depending on the amount of possible values. This setting will be moved to BlackLab iteself in the near future. 
 - `wordend`  
-**This setting is currently only available in the `dev` branch**  
 The (maximum) amount of words displayed when viewing documents within a corpus.  
 
 ## Per corpus options
@@ -49,6 +51,7 @@ Files must be placed in a subdirectory with the same name as the corpus; files f
 May contain the following files and directories:
 
 - `Search.xml`  
+Allows you to (among other things) set the navbar links and inject custom css/js.
 See [the default configuration](https://github.com/INL/corpus-frontend/blob/dev/src/main/webapp/WEB-INF/interface-default/search.xml).
 - `help.inc`  
 Html content placed in the body of the `MyCorpus/help/` page. 

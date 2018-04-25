@@ -187,7 +187,7 @@
                         <select id="corpus_document_type" name="corpus_document_type" class="selectpicker" data-autoupdate="format">
                             <!-- filled in through clientside javascript -->
                         </select>
-                        <small class="text-muted" id="corpus_document_type_description"></small>
+                        <small class="text-muted" id="corpus_document_type_description" style="display: block; padding: 8px 8px 0px;"></small>
                     </div>
                 </div>
             </div>
@@ -226,6 +226,7 @@
                             <input id="upload-metadata-input" name="linkeddata[]" type="file" multiple data-label-id="#upload-metadata-label" data-label-without-value="Select linked&#8200;files" data-label-with-value="&#8200;linked file(s)">
                         </label>
     
+                        <small id="uploadFormatDescription" class="text-muted" style="display: block; margin: 12px 0px;"></small>
                         <div id="document-upload-submit-wrapper"><button id="document-upload-submit" type="submit" class="btn btn-primary">upload</button></div>
                     </form>
     

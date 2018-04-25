@@ -12,6 +12,9 @@ var CORPORA = {};
 // Per corpus, we store the document format (i.e. TEI, FoLiA, ...) here
 var corpora = {};
 
+// Corpus formats, with some additional data
+var formats = {};
+
 // (avoid polluting the global namespace)
 (function() {
 	'use strict';
@@ -316,8 +319,18 @@ var corpora = {};
 		});
 	}
 
+	// Attach this handler first, so that we can store data before other handlers run
 	createHandler(events.SERVER_REFRESH, function(serverInfo_) {
 		serverInfo = serverInfo_;
+	});
+
+	// Attach this handler first, so that we can store data before other handlers run
+	createHandler(events.FORMATS_REFRESH, function(formats_) {
+		formats = $.map(formats_, function(format, formatId) {
+			format.id = formatId;
+			format.shortId = formatId.substr(formatId.indexOf(':') + 1); // strip username prefix from the id for display purposes
+			return format;
+		});
 	});
 
 	createHandler('#formats-all-container', events.SERVER_REFRESH, function(serverInfo) {
@@ -486,15 +499,19 @@ var corpora = {};
 
 	// Makes the upload form visible and sets the corpus we're uploading to
 	CORPORA.showUploadForm = function (index) {
-		if (uploadToCorpus == index) {
+		if (uploadToCorpus == index) 
 			$('#upload-file-dialog').modal('toggle');
-		}
-		else {
+		else 
 			$('#upload-file-dialog').modal('show');
-		}
+		
 		$('#uploadCorpusName').text(index.displayName);
 		$('#uploadFormat').text(friendlyDocFormat(index.documentFormat) + ' ');
+		var format = formats.find(function(format) {return format.id === index.documentFormat;});
+		$('#uploadFormatDescription').text(format ? (format.description || format.displayName) : 'Unknown format, uploads might fail');
 		uploadToCorpus = index;
+		
+		//clear selected files
+		$('#document-upload-form input[type="file"]').each(function() { $(this).val(undefined); }).trigger('change');
 		
 		$('#uploadErrorDiv').hide();
 		$('#uploadSuccessDiv').hide();
@@ -564,7 +581,7 @@ var corpora = {};
 				handleUploadComplete.call(this, event);
 		}
 
-		function handleUploadComplete(event) {
+		function handleUploadComplete(/*event*/) {
 			$progress.css('width', '100%');
 
 			refreshIndexStatusWhileIndexing(uploadToCorpus.id, 
@@ -605,7 +622,7 @@ var corpora = {};
 			});
 		}
 		
-		function handleError(event) {
+		function handleError(/*event*/) {
 			var msg = 'Could not add data to "' + uploadToCorpus.displayName + '"';
 			if (this.responseText) 
 				msg += ': ' + JSON.parse(this.responseText).error.message;
@@ -634,7 +651,7 @@ var corpora = {};
 				$.each(this.files, function(index, file) {
 					formData.append(self.name, file, file.name);
 				});
-			})
+			});
 			
 			var xhr = new XMLHttpRequest();
 			
@@ -689,11 +706,10 @@ var corpora = {};
 			createIndex(corpusName, generateShortName(corpusName), format);
 		});
 
-		$corpusFormatSelect.on('changed.bs.select', function() {
-			$corpusFormatDescription.text($corpusFormatSelect.selectpicker('val'));
+		$corpusFormatSelect.on('changed.bs.select, refreshed.bs.select, loaded.bs.select', function() {
+			$corpusFormatDescription.text($corpusFormatSelect.find('option:selected').attr('title'));
 		});
 	}
-
 
 	/**
 	 * Show a dialog with custom message, title, and confirm button html

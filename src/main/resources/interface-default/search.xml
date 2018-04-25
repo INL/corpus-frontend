@@ -28,7 +28,7 @@
         <NavLinks>
         	<!-- Relative links will be made relative to the application root, 
         	whereas absolute links will be placed in the bar as-is. -->
-            <Link value="http://www.ivdnt.org/" newWindow="true">IvdNT</Link>
+            <Link value="http://www.ivdnt.org/" newWindow="true">INT</Link>
             <Link value="http://www.clarin.eu/" newWindow="true">CLARIN</Link>
             <Link value="http://taalunie.org/" newWindow="true">NTU</Link>
             <Link value="help" relative="true">Help</Link>

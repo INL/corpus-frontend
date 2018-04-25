@@ -454,7 +454,7 @@ public class MainServlet extends HttpServlet {
             .flatMap(p -> resolveIfValid(p, corpus))
             .flatMap(p -> resolveIfValid(p, filePath));
 
-        // Path to the file in the default data directory, always available if configured correctly, even when getDefaultIfMissing is false
+        // Path to the file in the default data directory, always available if configured correctly
         // see https://github.com/INL/corpus-frontend/pull/69
         Optional<Path> corpusFileDefault = dataDir
             .flatMap(p -> resolveIfValid(p, adminProps.getProperty(PROP_DATA_DEFAULT)))

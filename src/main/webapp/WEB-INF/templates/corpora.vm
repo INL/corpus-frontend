@@ -76,7 +76,7 @@
         <h2>Your import formats</h2>
         <p>(logged in as <i data-autoupdate="userId"></i>)</p>
     
-        <table class="table corpora" data-autoupdate="format">
+        <table class="table corpora">
             <thead>
                 <tr>
                     <th>Id</th>
@@ -85,9 +85,9 @@
                     <th></th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody data-autoupdate="format">
             <!-- filled by clientside js -->
-            </tbody>
+            </tbody >
         </table>
         <button type="button" class="btn btn-lg btn-default" data-toggle="modal" data-target="#new-format-modal">New format</button>
 
@@ -131,7 +131,7 @@
                         
                         <div id="format-download-container" class="collapse" style="margin-top:10px;">
                             <div class="well" style="padding: 12px 8px; margin: 0;">
-                                <select class="selectpicker" id="format_select" data-autoupdate="format" data-width="100%">
+                                <select class="selectpicker" id="format_select" data-autoupdate="format" data-filter="configBased" data-width="100%">
                                     <!-- options filled in by clientside javascript -->
                                 </select>
                                 
@@ -187,6 +187,7 @@
                         <select id="corpus_document_type" name="corpus_document_type" class="selectpicker" data-autoupdate="format">
                             <!-- filled in through clientside javascript -->
                         </select>
+                        <small class="text-muted" id="corpus_document_type_description"></small>
                     </div>
                 </div>
             </div>
@@ -203,7 +204,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 class="modal-title" id="upload-file-dialog-title">Add <span id="uploadFormat"></span>data to corpus <span id="uploadCorpusName">&hellip;</span></h4>
+                <h4 class="modal-title">Add new data to corpus <span id="uploadCorpusName">&hellip;</span></h4>
             </div>
            <div class="modal-body">
                 <p>You may upload:</p>
@@ -351,7 +352,7 @@
 
 <link rel="stylesheet" href="$pathToTop/css/vendor/codemirror.css">
 <link rel="stylesheet" href="$pathToTop/css/corpora.css">
-
+<script src="$pathToTop/js/vendor/mustache.js"></script>
 <script src="$pathToTop/js/vendor/codemirror/codemirror.min.js"></script>
 <script src="$pathToTop/js/vendor/codemirror/yaml.js"></script>
 <script src="$pathToTop/js/vendor/codemirror/javascript.js"></script>

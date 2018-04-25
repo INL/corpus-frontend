@@ -1,109 +1,129 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
 	http://maven.apache.org/maven-v4_0_0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
-	<groupId>nl.inl.blacklab</groupId>
-	<artifactId>corpus-frontend</artifactId>
-	<version>1.1-SNAPSHOT</version>
-	<packaging>war</packaging>
+    <groupId>nl.inl.blacklab</groupId>
+    <artifactId>corpus-frontend</artifactId>
+    <version>1.1-SNAPSHOT</version>
+    <packaging>war</packaging>
 
-	<name>INL Corpus Frontend</name>
-	<description>A web application to search corpora through the BlackLab Server web service.</description>
-	<url>https://github.com/INL/corpus-frontend</url>
+    <name>INT Corpus Frontend</name>
+    <description>A web application to search corpora through the BlackLab Server web service.</description>
+    <url>https://github.com/INL/corpus-frontend</url>
 
-	<scm>
-		<url>https://git.inl.loc/git/corpus-frontend</url>
-		<connection>scm:git:git://git.inl.loc/git/corpus-frontend.git</connection>
-		<developerConnection>scm:git:git@git.inl.loc/git/corpus-frontend.git</developerConnection>
-	</scm>
+    <organization>
+        <url>https://www.ivdnt.org/</url>
+        <name>Dutch Language Institute</name>
+    </organization>
 
-	<organization>
-		<name>INL</name>
-		<url>http://www.inl.nl</url>
-	</organization>
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+            <comments>A business-friendly OSS license</comments>
+        </license>
+    </licenses>
 
-	<developers>
-		<developer>
-			<id>jan-niestadt</id>
-			<name>Jan Niestadt</name>
-			<email>jan.niestadt@inl.nl</email>
-			<url>https://github.com/jan-niestadt</url>
-			<organization>INL</organization>
-			<organizationUrl>http://www.inl.nl</organizationUrl>
-			<roles>
-				<role>developer</role>
-			</roles>
-			<timezone>Europe/Amsterdam</timezone>
-		</developer>
-	</developers>
+    <scm>
+        <url>https://git.inl.loc/git/corpus-frontend</url>
+        <connection>scm:git:git://git.inl.loc/git/corpus-frontend.git</connection>
+        <developerConnection>scm:git:git@git.inl.loc/git/corpus-frontend.git</developerConnection>
+    </scm>
 
-	<issueManagement>
-		<url>https://github.com/INL/corpus-frontend/issues</url>
-		<system>GitHub Issues</system>
-	</issueManagement>
+    <issueManagement>
+        <url>https://github.com/INL/corpus-frontend/issues</url>
+        <system>GitHub Issues</system>
+    </issueManagement>
 
-	<build>
+    <developers>
+        <developer>
+            <id>jan-niestadt</id>
+            <name>Jan Niestadt</name>
+            <email>jan.niestadt@ivdnt.org</email>
+            <url>https://github.com/jan-niestadt</url>
+            <organization>INT</organization>
+            <organizationUrl>https://www.ivdnt.org/</organizationUrl>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <timezone>Europe/Amsterdam</timezone>
+        </developer>
+        <developer>
+            <id>KCMertens</id>
+            <name>Koen Mertens</name>
+            <email>koen.mertens@ivdnt.org</email>
+            <url>https://github.com/KCMertens</url>
+            <organization>INT</organization>
+            <organizationUrl>https://www.ivdnt.org/</organizationUrl>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <timezone>Europe/Amsterdam</timezone>
+        </developer>
+    </developers>
 
-		<plugins>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                    <showWarnings>true</showWarnings>
+                </configuration>
+            </plugin>
 
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>2.3.2</version>
-				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
-				</configuration>
-			</plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>2.6</version>
+                <configuration>
+                    <useDefaultManifestFile>true</useDefaultManifestFile>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>lib/</classpathPrefix>
+                        </manifest>
+                        <manifestEntries>
+                            <Build-Time>${buildNumber}</Build-Time>
+                        </manifestEntries>
+                    </archive>
 
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-war-plugin</artifactId>
-				<version>2.6</version>
-				<configuration>
-					<useDefaultManifestFile>true</useDefaultManifestFile>
-					<archive>
-						<manifest>
-							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-							<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-							<addClasspath>true</addClasspath>
-							<classpathPrefix>lib/</classpathPrefix>
-						</manifest>
-						<manifestEntries>
-							<Build-Time>${buildNumber}</Build-Time>
-						</manifestEntries>
-					</archive>
-					
-				</configuration>
-			</plugin>
+                </configuration>
+            </plugin>
 
-			<plugin>
-				<groupId>org.mortbay.jetty</groupId>
-				<artifactId>maven-jetty-plugin</artifactId>
-				<version>6.1.10</version>
-			</plugin>
+            <plugin>
+                <groupId>org.mortbay.jetty</groupId>
+                <artifactId>maven-jetty-plugin</artifactId>
+                <version>6.1.10</version>
+            </plugin>
 
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-site-plugin</artifactId>
-				<version>3.4</version>
-				<dependencies>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>3.4</version>
+                <dependencies>
 
 					<!-- SSH/SCP (copy to local server) -->
-					<dependency>
-						<groupId>org.apache.maven.wagon</groupId>
-						<artifactId>wagon-ssh</artifactId>
-						<version>2.9</version>
-					</dependency>
-					<dependency><!-- use external ssh (ssh or putty/pageant on windows) -->
-						<groupId>org.apache.maven.wagon</groupId>
-						<artifactId>wagon-ssh-external</artifactId>
-						<version>2.9</version>
-					</dependency>
+                    <dependency>
+                        <groupId>org.apache.maven.wagon</groupId>
+                        <artifactId>wagon-ssh</artifactId>
+                        <version>2.9</version>
+                    </dependency>
+                    <dependency><!-- use external ssh (ssh or putty/pageant on windows) -->
+                        <groupId>org.apache.maven.wagon</groupId>
+                        <artifactId>wagon-ssh-external</artifactId>
+                        <version>2.9</version>
+                    </dependency>
 
-				</dependencies>
-			</plugin>
+                </dependencies>
+            </plugin>
 
 			<!-- Generates a "build number" (just a timestamp in our case) to put 
 				in the manifest -->
@@ -135,8 +155,19 @@
 					<tagNameFormat>v@{project.version}</tagNameFormat>
 				</configuration>
 			</plugin>
+            <plugin>
+                <groupId>net.revelc.code.formatter</groupId>
+                <artifactId>formatter-maven-plugin</artifactId>
+                <version>2.7.2</version>
+                <configuration>
+                    <lineEnding>LF</lineEnding>
+                    <configFile>${project.basedir}/src/data/formatter/Eclipse_format_INT_google.xml</configFile>
+                    <overrideConfigCompilerVersion>true</overrideConfigCompilerVersion><!-- use pom.xml compiler version --> 
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
 		</plugins>
-	</build>
+    </build>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -225,137 +256,138 @@
 		<plugins>
 
 			<!-- Unit test reports -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-report-plugin</artifactId>
-				<version>2.18.1</version>
-			</plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-report-plugin</artifactId>
+                <version>2.18.1</version>
+            </plugin>
 
 			<!-- Javadoc -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>2.10.3</version>
-				<configuration>
-					<notimestamp>true</notimestamp>
-				</configuration>
-				<reportSets>
-					<reportSet>
-						<id>html</id>
-						<reports>
-							<report>javadoc</report>
-						</reports>
-					</reportSet>
-				</reportSets>
-			</plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.10.3</version>
+                <configuration>
+                    <notimestamp>true</notimestamp>
+                </configuration>
+                <reportSets>
+                    <reportSet>
+                        <id>html</id>
+                        <reports>
+                            <report>javadoc</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
 
 			<!-- Linkable source code -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jxr-plugin</artifactId>
-				<version>2.5</version>
-			</plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jxr-plugin</artifactId>
+                <version>2.5</version>
+            </plugin>
 
 			<!-- Report on (possible) bugs -->
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>findbugs-maven-plugin</artifactId>
-				<version>3.0.1</version>
-			</plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>findbugs-maven-plugin</artifactId>
+                <version>3.0.1</version>
+            </plugin>
 
 			<!-- Report on possible bugs/style problems -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-pmd-plugin</artifactId>
-				<version>3.5</version>
-				<configuration>
-					<linkXref>true</linkXref>
-					<sourceEncoding>utf-8</sourceEncoding>
-					<minimumTokens>100</minimumTokens>
-					<targetJdk>1.7</targetJdk>
-				</configuration>
-			</plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <version>3.5</version>
+                <configuration>
+                    <linkXref>true</linkXref>
+                    <sourceEncoding>utf-8</sourceEncoding>
+                    <minimumTokens>100</minimumTokens>
+                    <targetJdk>1.8</targetJdk>
+                </configuration>
+            </plugin>
 
 			<!-- Report on style problems -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-checkstyle-plugin</artifactId>
-				<version>2.16</version>
-				<configuration>
-					<configLocation>checkstyle.xml</configLocation>
-				</configuration>
-				<reportSets>
-					<reportSet>
-						<reports>
-							<report>checkstyle</report>
-						</reports>
-					</reportSet>
-				</reportSets>
-			</plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>3.0.0</version>
+                <configuration>
+                    <configLocation>checkstyle.xml</configLocation>
+                </configuration>
+
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>checkstyle</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
 
 			<!-- Report on tags like TODO, etc. -->
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>taglist-maven-plugin</artifactId>
-				<version>2.4</version>
-				<configuration>
-					<tagListOptions>
-						<tagClasses>
-							<tagClass>
-								<displayName>Bug or serious issue</displayName>
-								<tags>
-									<tag>
-										<matchString>FIXME</matchString>
-										<matchType>exact</matchType>
-									</tag>
-									<tag>
-										<matchString>hack</matchString>
-										<matchType>ignoreCase</matchType>
-									</tag>
-								</tags>
-							</tagClass>
-							<tagClass>
-								<displayName>Todo Work</displayName>
-								<tags>
-									<tag>
-										<matchString>todo</matchString>
-										<matchType>ignoreCase</matchType>
-									</tag>
-									<tag>
-										<matchString>TO DO</matchString>
-										<matchType>exact</matchType>
-									</tag>
-								</tags>
-							</tagClass>
-							<tagClass>
-								<displayName>Possible optimization</displayName>
-								<tags>
-									<tag>
-										<matchString>OPT</matchString>
-										<matchType>exact</matchType>
-									</tag>
-								</tags>
-							</tagClass>
-						</tagClasses>
-					</tagListOptions>
-				</configuration>
-			</plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>taglist-maven-plugin</artifactId>
+                <version>2.4</version>
+                <configuration>
+                    <tagListOptions>
+                        <tagClasses>
+                            <tagClass>
+                                <displayName>Bug or serious issue</displayName>
+                                <tags>
+                                    <tag>
+                                        <matchString>FIXME</matchString>
+                                        <matchType>exact</matchType>
+                                    </tag>
+                                    <tag>
+                                        <matchString>hack</matchString>
+                                        <matchType>ignoreCase</matchType>
+                                    </tag>
+                                </tags>
+                            </tagClass>
+                            <tagClass>
+                                <displayName>Todo Work</displayName>
+                                <tags>
+                                    <tag>
+                                        <matchString>todo</matchString>
+                                        <matchType>ignoreCase</matchType>
+                                    </tag>
+                                    <tag>
+                                        <matchString>TO DO</matchString>
+                                        <matchType>exact</matchType>
+                                    </tag>
+                                </tags>
+                            </tagClass>
+                            <tagClass>
+                                <displayName>Possible optimization</displayName>
+                                <tags>
+                                    <tag>
+                                        <matchString>OPT</matchString>
+                                        <matchType>exact</matchType>
+                                    </tag>
+                                </tags>
+                            </tagClass>
+                        </tagClasses>
+                    </tagListOptions>
+                </configuration>
+            </plugin>
 
 			<!-- Report on dependency versions -->
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>versions-maven-plugin</artifactId>
-				<version>2.2</version>
-				<reportSets>
-					<reportSet>
-						<reports>
-							<report>dependency-updates-report</report>
-							<report>plugin-updates-report</report>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>versions-maven-plugin</artifactId>
+                <version>2.2</version>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>dependency-updates-report</report>
+                            <report>plugin-updates-report</report>
 							<!-- <report>property-updates-report</report> -->
-						</reports>
-					</reportSet>
-				</reportSets>
-			</plugin>
-		</plugins>
-	</reporting>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+        </plugins>
+    </reporting>
 </project>

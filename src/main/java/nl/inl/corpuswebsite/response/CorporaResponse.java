@@ -1,6 +1,3 @@
-/**
- *
- */
 package nl.inl.corpuswebsite.response;
 
 import javax.servlet.ServletException;
@@ -13,19 +10,20 @@ import nl.inl.corpuswebsite.MainServlet;
 /** Show the list of available corpora. */
 public class CorporaResponse extends BaseResponse {
 
-	public CorporaResponse() {
-		super(false);
-	}
+    public CorporaResponse() {
+        super(false);
+    }
 
-	@Override
-	public void init(HttpServletRequest request, HttpServletResponse response, MainServlet servlet, String corpus, String uriRemainder) throws ServletException {
-		super.init(request, response, servlet, corpus, uriRemainder);
+    @Override
+    public void init(HttpServletRequest request, HttpServletResponse response, MainServlet servlet, String corpus, String uriRemainder)
+        throws ServletException {
+        super.init(request, response, servlet, corpus, uriRemainder);
 
-		context.put("blsUrl", servlet.getExternalWebserviceUrl(""));
-	}
+        context.put("blsUrl", servlet.getExternalWebserviceUrl(""));
+    }
 
-	@Override
-	protected void completeRequest() {
-		displayHtmlTemplate(servlet.getTemplate("corpora"));
-	}
+    @Override
+    protected void completeRequest() {
+        displayHtmlTemplate(servlet.getTemplate("corpora"));
+    }
 }

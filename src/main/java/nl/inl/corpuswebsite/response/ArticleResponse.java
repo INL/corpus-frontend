@@ -1,6 +1,3 @@
-/**
- *
- */
 package nl.inl.corpuswebsite.response;
 
 import java.io.IOException;
@@ -15,116 +12,104 @@ import nl.inl.corpuswebsite.BaseResponse;
 import nl.inl.corpuswebsite.MainServlet;
 import nl.inl.corpuswebsite.utils.QueryServiceHandler;
 import nl.inl.corpuswebsite.utils.QueryServiceHandler.QueryException;
-import nl.inl.corpuswebsite.utils.UrlParameterFactory;
 import nl.inl.corpuswebsite.utils.XslTransformer;
 
-/**
- *
- */
 public class ArticleResponse extends BaseResponse {
 
-	/** For getting article */
-	private QueryServiceHandler articleContentRequest = null;
-
-	/** For getting metadata */
-	private QueryServiceHandler articleMetadataRequest;
-
-	private XslTransformer articleStylesheet;
-
-	private XslTransformer metadataStylesheet;
 
 
-	public ArticleResponse() {
-		super(true);
-	}
+    public ArticleResponse() {
+        super(true);
+    }
 
-	@Override
-	protected void completeRequest() {
-		String corpusDataFormat = servlet.getCorpusConfig(corpus).getCorpusDataFormat();
-		articleStylesheet = servlet.getStylesheet(corpus, corpusDataFormat);
-		metadataStylesheet = servlet.getStylesheet(corpus, "meta");
-		String pid = this.getParameter("doc", "");
+    @Override
+    protected void completeRequest() {
+        String corpusDataFormat = servlet.getCorpusConfig(corpus).getCorpusDataFormat();
+        XslTransformer articleStylesheet = servlet.getStylesheet(corpus, corpusDataFormat);
+        XslTransformer metadataStylesheet = servlet.getStylesheet(corpus, "meta");
+        String pid = this.getParameter("doc", "");
 
-		if (pid == null || pid.isEmpty()) {
-			try {
-				response.sendError(HttpServletResponse.SC_NOT_FOUND);
-				return;
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
+        if (pid == null || pid.isEmpty()) {
+            try {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                return;
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
-		articleContentRequest = new QueryServiceHandler(servlet.getWebserviceUrl(corpus) + "docs/" + pid + "/contents");
-		articleMetadataRequest = new QueryServiceHandler(servlet.getWebserviceUrl(corpus) + "docs/" + pid);
+        QueryServiceHandler articleContentRequest = new QueryServiceHandler(servlet.getWebserviceUrl(corpus) + "docs/" + pid + "/contents");
+        QueryServiceHandler articleMetadataRequest = new QueryServiceHandler(servlet.getWebserviceUrl(corpus) + "docs/" + pid);
 
-		if (request.getParameterMap().size() > 0) {
-			// get parameter values
-			String query = this.getParameter("query", "");
-			String userId = MainServlet.getCorpusOwner(corpus);
+        if (request.getParameterMap().size() > 0) {
+            // get parameter values
+            String query = this.getParameter("query", "");
+            String userId = MainServlet.getCorpusOwner(corpus);
 
-			Map<String, String[]> contentRequestParameters = UrlParameterFactory.getSourceParameters(query, null);
-			Map<String, String[]> metadataRequestParameters = new HashMap<>();
-			if (userId != null) {
-				contentRequestParameters.put("userid", new String[] { userId });
+            Map<String, String[]> contentRequestParameters = new HashMap<>();
+            Map<String, String[]> metadataRequestParameters = new HashMap<>();
+            contentRequestParameters.put("patt", new String[] { query });
+            if (userId != null) {
+                contentRequestParameters.put("userid", new String[] { userId });
                 metadataRequestParameters.put("userid", new String[] { userId });
-			}
+            }
 
-			// show max. 5000 (or as requested/configured) words of content (TODO: paging)
-			// paging will also need edits in blacklab,
-			// since when you only get a subset of the document without begin and ending, the top of the xml tree will be missing
-			// and xslt will not match anything (or match the wrong elements)
-			// so blacklab will have to walk the tree and insert those tags in some manner.
-			contentRequestParameters.put("wordend", new String[] { Integer.toString(getWordsToShow()) });
+            // show max. 5000 (or as requested/configured) words of content (TODO: paging)
+            // paging will also need edits in blacklab,
+            // since when you only get a subset of the document without begin and ending, the top of the xml tree will be missing
+            // and xslt will not match anything (or match the wrong elements)
+            // so blacklab will have to walk the tree and insert those tags in some manner.
+            contentRequestParameters.put("wordend", new String[] { Integer.toString(getWordsToShow()) });
 
-			try {
-				String xmlResult = articleContentRequest.makeRequest(contentRequestParameters);
-				if (xmlResult.contains("NOT_AUTHORIZED")) {
-					context.put("article_content", "content restricted");
-				} else {
-					articleStylesheet.clearParameters();
-					articleStylesheet.addParameter("contextRoot", servlet.getServletContext().getContextPath());
+            try {
+                String xmlResult = articleContentRequest.makeRequest(contentRequestParameters);
+                if (xmlResult.contains("NOT_AUTHORIZED")) {
+                    context.put("article_content", "content restricted");
+                } else {
+                    articleStylesheet.clearParameters();
+                    articleStylesheet.addParameter("contextRoot", servlet.getServletContext().getContextPath());
 
-					for (Entry<String, String> e : servlet.getWebsiteConfig(corpus).getXsltParameters().entrySet()) {
-						articleStylesheet.addParameter(e.getKey(), e.getValue());
-					}
+                    for (Entry<String, String> e : servlet.getWebsiteConfig(corpus).getXsltParameters().entrySet()) {
+                        articleStylesheet.addParameter(e.getKey(), e.getValue());
+                    }
 
-					context.put("article_content", articleStylesheet.transform(xmlResult));
-				}
+                    context.put("article_content", articleStylesheet.transform(xmlResult));
+                }
 
-				xmlResult = articleMetadataRequest.makeRequest(metadataRequestParameters);
-				metadataStylesheet.clearParameters();
-				String htmlResult = metadataStylesheet.transform(xmlResult);
-				context.put("article_meta", htmlResult);
+                xmlResult = articleMetadataRequest.makeRequest(metadataRequestParameters);
+                metadataStylesheet.clearParameters();
+                String htmlResult = metadataStylesheet.transform(xmlResult);
+                context.put("article_meta", htmlResult);
 
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			} catch (TransformerException e) {
-				// TODO handle this, can be caused by faulty xslt generated by blacklab-server
-				throw new RuntimeException(e);
-			} catch (QueryException e) {
-				if (e.getHttpStatusCode() == 404) {
-					try {
-						response.sendError(HttpServletResponse.SC_NOT_FOUND);
-					} catch (IOException e1) {
-						throw new RuntimeException(e1);
-					}
-				} else {
-					response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-					context.put("error", e.getMessage());
-					displayHtmlTemplate(servlet.getTemplate("error"));
-				}
-				return;
-			}
-		}
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } catch (TransformerException e) {
+                // TODO handle this, can be caused by faulty xslt generated by blacklab-server
+                throw new RuntimeException(e);
+            } catch (QueryException e) {
+                if (e.getHttpStatusCode() == 404) {
+                    try {
+                        response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                    } catch (IOException e1) {
+                        throw new RuntimeException(e1);
+                    }
+                } else {
+                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                    context.put("error", e.getMessage());
+                    displayHtmlTemplate(servlet.getTemplate("error"));
+                }
+                return;
+            }
+        }
 
-		// display template
-		displayHtmlTemplate(servlet.getTemplate("article"));
-	}
+        // display template
+        displayHtmlTemplate(servlet.getTemplate("article"));
+    }
 
-	private int getWordsToShow() {
-		int maxWordCount = servlet.getWordsToShow();
+    private int getWordsToShow() {
+        int maxWordCount = servlet.getWordsToShow();
 
-		int requestedWordCount = getParameter("wordend", maxWordCount);
-		return Math.min(requestedWordCount, maxWordCount);
-	}
+        int requestedWordCount = getParameter("wordend", maxWordCount);
+        return Math.min(requestedWordCount, maxWordCount);
+    }
 }

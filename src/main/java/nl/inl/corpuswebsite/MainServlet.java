@@ -82,41 +82,43 @@ public class MainServlet extends HttpServlet {
     /**
      * Per-corpus configuration parameters (from search.xml)
      */
-    private Map<String, WebsiteConfig> configs = new HashMap<>();
+    private static final Map<String, WebsiteConfig> configs = new HashMap<>();
 
     /**
      * Per-corpus structure and configuration gotten from blacklab-server
      */
-    private Map<String, CorpusConfig> corpusConfigs = new HashMap<>();
+    private static final Map<String, CorpusConfig> corpusConfigs = new HashMap<>();
 
     /**
      * Our Velocity templates
      */
-    private Map<String, Template> templates = new HashMap<>();
+    private static final Map<String, Template> templates = new HashMap<>();
 
     /**
      * The response classes for our URI patterns
      */
-    private Map<String, Class<? extends BaseResponse>> responses = new HashMap<>();
+    private static final Map<String, Class<? extends BaseResponse>> responses = new HashMap<>();
 
     /**
      * Our context path (first part of our URI path)
      */
     private String contextPath;
 
+    // @formatter:off
     /** Word properties (like word, lemma, pos) that should be autocompleted by blacklab-server */
-    public static final String PROP_AUTOCOMPLETE_PROPS     = "listvalues";
-    public static final String PROP_ANALYTICS_KEY          = "googleAnalyticsKey";
+    public static final String PROP_AUTOCOMPLETE_PROPS      = "listvalues";
+    public static final String PROP_ANALYTICS_KEY           = "googleAnalyticsKey";
     /** Url to reach blacklab-server from this application */
-    public static final String PROP_BLS_CLIENTSIDE         = "blsUrlExternal";
+    public static final String PROP_BLS_CLIENTSIDE          = "blsUrlExternal";
     /** Url to reach blacklab-server from the browser */
-    public static final String PROP_BLS_SERVERSIDE         = "blsUrl";
+    public static final String PROP_BLS_SERVERSIDE          = "blsUrl";
     /** Where static content, custom xslt and other per-corpus data is stored */
-    public static final String PROP_DATA_PATH              = "corporaInterfaceDataDir";
+    public static final String PROP_DATA_PATH               = "corporaInterfaceDataDir";
     /** Name of the default fallback directory/corpus in the PROP_DATA_PATH */
-    public static final String PROP_DATA_DEFAULT           = "corporaInterfaceDefault";
+    public static final String PROP_DATA_DEFAULT            = "corporaInterfaceDefault";
     /** Number of words displayed by default on the /article/ page, also is a hard limit on the number */
-    public static final String PROP_DOCUMENT_PAGE_LENGTH   = "wordend";
+    public static final String PROP_DOCUMENT_PAGE_LENGTH    = "wordend";
+    // @formatter:on
 
     /**
      * Properties from the external config file, e.g. BLS URLs, Google Analytics
@@ -128,9 +130,10 @@ public class MainServlet extends HttpServlet {
     /**
      * Time the WAR was built.
      */
-    private String warBuildTime = null;
+    private static String warBuildTime = null;
 
     private static Properties getDefaultProps() {
+        // @formatter:off
         Properties p = new Properties();
         p.setProperty(PROP_AUTOCOMPLETE_PROPS,      "");
         p.setProperty(PROP_BLS_CLIENTSIDE,          "/blacklab-server"); // no domain to account for proxied servers
@@ -139,6 +142,7 @@ public class MainServlet extends HttpServlet {
         p.setProperty(PROP_DATA_DEFAULT,            "default");
         p.setProperty(PROP_DOCUMENT_PAGE_LENGTH,    "5000");
         // not all properties may need defaults
+        // @formatter:on
 
         return p;
     }
@@ -159,15 +163,16 @@ public class MainServlet extends HttpServlet {
             adminProps = new Properties(getDefaultProps());
 
             if (adminPropFile == null || !adminPropFile.exists()) {
-                logger.info("File " + adminPropFileName + " (with blsUrl and blsUrlExternal settings) "
-                        + "not found in webapps, /etc/blacklab/ or temp dir; will use defaults");
+                logger
+                    .info("File {} (with blsUrl and blsUrlExternal settings) not found in webapps, /etc/blacklab/ or temp dir; will use defaults",
+                          adminPropFile);
             } else if (!adminPropFile.isFile()) {
                 throw new ServletException("Property file " + adminPropFile + " is not a regular file!");
             } else if (!adminPropFile.canRead()) {
                 throw new ServletException("Property file " + adminPropFile + " exists but is unreadable!");
             } else {
                 // File exists and can be read. Read it.
-                logger.info("Reading corpus-frontend property file: " + adminPropFile);
+                logger.info("Reading corpus-frontend property file: {}", adminPropFile);
                 try (Reader in = new BufferedReader(new FileReader(adminPropFile))) {
                     adminProps.load(in);
                 }
@@ -177,7 +182,7 @@ public class MainServlet extends HttpServlet {
             while (propKeys.hasMoreElements()) {
                 String key = (String) propKeys.nextElement();
                 if (!adminProps.containsKey(key))
-                    logger.debug("Property " + key + " not configured, using default: " + adminProps.getProperty(key));
+                    logger.debug("Property {} not configured, using default: {}", key, adminProps.getProperty(key));
             }
             if (!Paths.get(adminProps.getProperty(PROP_DATA_PATH)).isAbsolute()) {
                 throw new ServletException(PROP_DATA_PATH + " setting should be an absolute path");
@@ -214,7 +219,7 @@ public class MainServlet extends HttpServlet {
                 return fileInWebappsDir;
             }
         } else {
-            logger.info("(WAR was not extracted to file system; skip looking for " + fileName + " file in webapps dir)");
+            logger.info("(WAR was not extracted to file system; skip looking for {} file in webapps dir)", fileName);
         }
 
         boolean isWindows = SystemUtils.IS_OS_WINDOWS;
@@ -248,8 +253,7 @@ public class MainServlet extends HttpServlet {
      * @throws Exception
      */
     private void startVelocity(ServletConfig servletConfig) throws Exception {
-        Velocity.setApplicationAttribute("javax.servlet.ServletContext",
-                servletConfig.getServletContext());
+        Velocity.setApplicationAttribute("javax.servlet.ServletContext", servletConfig.getServletContext());
 
         Properties p = new Properties();
         try (InputStream is = getServletContext().getResourceAsStream(VELOCITY_PROPERTIES)) {
@@ -290,13 +294,14 @@ public class MainServlet extends HttpServlet {
     /**
      * Return the website config.
      *
-     * @param corpus which corpus to read config for, may be null for the
-     * default config.
+     * @param corpus which corpus to read config for, may be null for the default config.
      * @return the website config
      */
     public WebsiteConfig getWebsiteConfig(String corpus) {
         return configs.computeIfAbsent(corpus, c -> {
-            File f = getProjectFile(corpus, "search.xml").orElseThrow(() -> new IllegalStateException("No search.xml, and no default in jar either"));
+            File f =
+                getProjectFile(corpus, "search.xml")
+                    .orElseThrow(() -> new IllegalStateException("No search.xml, and no default in jar either"));
             try (InputStream is = new FileInputStream(f)) {
                 return new WebsiteConfig(is, corpus, getCorpusConfig(corpus));
             } catch (Exception e) {
@@ -320,21 +325,21 @@ public class MainServlet extends HttpServlet {
             try {
                 Map<String, String[]> params = new HashMap<>();
 
-                params.put("outputformat", new String[]{"xml"});
+                params.put("outputformat", new String[] { "xml" });
                 if (listvalues != null && !listvalues.isEmpty()) {
-                    params.put("listvalues", new String[]{listvalues});
+                    params.put("listvalues", new String[] { listvalues });
                 }
                 String userId = getCorpusOwner(corpus);
                 if (userId != null)
-                	params.put("userid", new String[] { userId });
+                    params.put("userid", new String[] { userId });
                 String xmlResult = handler.makeRequest(params);
 
                 // TODO tidy this up, the json is only used to embed the index data in the search page.
                 // We might not need the xml data to begin with.
                 params.clear();
-                params.put("outputformat", new String[]{"json"});
+                params.put("outputformat", new String[] { "json" });
                 if (userId != null)
-                	params.put("userid", new String[] { userId });
+                    params.put("userid", new String[] { userId });
                 String jsonResult = handler.makeRequest(params);
 
                 corpusConfigs.put(corpus, new CorpusConfig(xmlResult, jsonResult));
@@ -347,14 +352,12 @@ public class MainServlet extends HttpServlet {
     }
 
     @Override
-    protected void doGet(HttpServletRequest request,
-            HttpServletResponse response) throws ServletException {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException {
         processRequest(request, response);
     }
 
     @Override
-    protected void doPost(HttpServletRequest request,
-            HttpServletResponse response) throws ServletException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException {
         processRequest(request, response);
     }
 
@@ -367,15 +370,15 @@ public class MainServlet extends HttpServlet {
         }
 
         /*
-		 * Map in the following way:
-		 * when the full uri contains at least 2 parts after the root (such as <root>/zeebrieven/search)
-		 * treat the first of those parts as the corpus, the second as the response to send,
-		 * and everything after that as arguments to build the response.
-		 * When only one part is present (such as <root>/help) treat the first part as the response to send.
-		 * When nothing is present, serve the default page.
-		 *
-		 * This does mean that pages outside the context of a corpus cannot have arguments in the form of extra parts in the URI
-		 * For instance <root>/help/searching would try to serve the nonexistant "searching" response in the context of the corpus "help"
+         * Map in the following way:
+         * when the full uri contains at least 2 parts after the root (such as <root>/zeebrieven/search)
+         * treat the first of those parts as the corpus, the second as the response to send,
+         * and everything after that as arguments to build the response.
+         * When only one part is present (such as <root>/help) treat the first part as the response to send.
+         * When nothing is present, serve the default page.
+         *
+         * This does mean that pages outside the context of a corpus cannot have arguments in the form of extra parts in the URI
+         * For instance <root>/help/searching would try to serve the nonexistant "searching" response in the context of the corpus "help"
          */
         // First strip out any leading items like "/" and our root
         String requestUri = request.getRequestURI();
@@ -439,9 +442,10 @@ public class MainServlet extends HttpServlet {
      * - First try PROP_DATA_PATH/corpus/ directory (if configured, and this is not a user corpus)
      * - Then try PROP_DATA_PATH/PROP_DATA_DEFAULT directory (if configured)
      * - Finally try WEB-INF/interface-default
-     *</pre>
+     * </pre>
      *
-     * @param corpus - corpus for which to get the file. If null or a user-defined corpus only the default locations are checked.
+     * @param corpus - corpus for which to get the file. If null or a user-defined corpus only the default locations are
+     *        checked.
      * @param filePath - path to the file relative to the directory for the corpus.
      * @return the file, if found
      */
@@ -499,8 +503,7 @@ public class MainServlet extends HttpServlet {
      */
     private static Optional<Path> resolveIfValid(Path parent, String child) {
         try {
-            return Optional.of(parent.resolve(child))
-            .filter(resolved -> resolved.startsWith(parent) && !resolved.equals(parent)); // prevent upward directory traversal - child must be in parent
+            return Optional.of(parent.resolve(child)).filter(resolved -> resolved.startsWith(parent) && !resolved.equals(parent)); // prevent upward directory traversal - child must be in parent
         } catch (Exception e) { // catch anything, a bit lazy but allows passing in null and empty strings etc
             return Optional.empty();
         }
@@ -517,7 +520,8 @@ public class MainServlet extends HttpServlet {
      * - First retrieve using {@link #getProjectFile(String, String, boolean)}
      * - If that fails, contact blacklab-server for an autogenerated best-effort xsl file.
      * - If that fails, return a default xsl file that just outputs all text.
-     *</pre>
+     * </pre>
+     *
      * @param corpus
      * @param corpusDataFormat
      * @return the xsl transformer to use for transformation
@@ -552,10 +556,10 @@ public class MainServlet extends HttpServlet {
         // this might happen if the import format is deleted after a corpus was created.
         // then blacklab-server can obviously no longer generate the xslt based on the import format.
         try {
-            return new XslTransformer(new StringReader("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                + "<xsl:stylesheet version=\"2.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">"
-                + "<xsl:output encoding=\"utf-8\" method=\"html\" omit-xml-declaration=\"yes\" />"
-                + "</xsl:stylesheet>"));
+            return new XslTransformer(new StringReader("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+                "<xsl:stylesheet version=\"2.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">" +
+                "<xsl:output encoding=\"utf-8\" method=\"html\" omit-xml-declaration=\"yes\" />" +
+                "</xsl:stylesheet>"));
         } catch (TransformerConfigurationException ex) {
             throw new RuntimeException(ex);
         }
@@ -582,7 +586,7 @@ public class MainServlet extends HttpServlet {
      * in "/"
      *
      * @param corpus the corpus for which to generate the url, if null, the base
-     * blacklab-server url will be returned.
+     *        blacklab-server url will be returned.
      * @return the url
      */
     public String getWebserviceUrl(String corpus) {
@@ -613,19 +617,19 @@ public class MainServlet extends HttpServlet {
     }
 
     public int getWordsToShow() {
-    	try {
-    		return Integer.parseInt(adminProps.getProperty(PROP_DOCUMENT_PAGE_LENGTH));
-    	} catch (NumberFormatException e) {
-    		return 5000;
-    	}
+        try {
+            return Integer.parseInt(adminProps.getProperty(PROP_DOCUMENT_PAGE_LENGTH));
+        } catch (NumberFormatException e) {
+            return 5000;
+        }
     }
 
     /**
      * Return a timestamp for when the application was built.
      *
      * @return build timestamp (format: yyyy-MM-dd HH:mm:ss), or UNKNOWN if the
-     * timestamp could not be found for some reason (i.e. not running from a
-     * JAR, or JAR was not created with the Ant buildscript).
+     *         timestamp could not be found for some reason (i.e. not running from a
+     *         JAR, or JAR was not created with the Ant buildscript).
      */
     public String getWarBuildTime() {
         if (warBuildTime == null) {
@@ -633,20 +637,16 @@ public class MainServlet extends HttpServlet {
                 if (inputStream == null) {
                     warBuildTime = "(no manifest)";
                 } else {
-                    try {
-                        Manifest manifest = new Manifest(inputStream);
-                        Attributes atts = manifest.getMainAttributes();
-                        String value = null;
-                        if (atts != null) {
-                            value = atts.getValue("Build-Time");
-                            if (value == null) {
-                                value = atts.getValue("Build-Date"); // Old name for this info
-                            }
+                    Manifest manifest = new Manifest(inputStream);
+                    Attributes atts = manifest.getMainAttributes();
+                    String value = null;
+                    if (atts != null) {
+                        value = atts.getValue("Build-Time");
+                        if (value == null) {
+                            value = atts.getValue("Build-Date"); // Old name for this info
                         }
-                        warBuildTime = (value == null ? "UNKNOWN" : value);
-                    } finally {
-                        inputStream.close();
                     }
+                    warBuildTime = (value == null ? "UNKNOWN" : value);
                 }
             } catch (IOException e) {
                 throw new RuntimeException("Could not read build date from manifest", e);
@@ -673,7 +673,7 @@ public class MainServlet extends HttpServlet {
         String[] to = StringUtils.split(url, "/");
 
         int i = 0;
-        while (i < from.length && i < to.length && from[i].equals(to[i]) )
+        while (i < from.length && i < to.length && from[i].equals(to[i]))
             ++i;
 
         List<String> parts = new ArrayList<>();
@@ -685,7 +685,7 @@ public class MainServlet extends HttpServlet {
         for (int j = i; j < to.length; ++j)
             parts.add(to[j]);
 
-       return StringUtils.join(parts, "/");
+        return StringUtils.join(parts, "/");
     }
 
     public static boolean isUserCorpus(String corpus) {
@@ -697,7 +697,7 @@ public class MainServlet extends HttpServlet {
             return null;
         }
 
-        int i = corpus.indexOf(":");
+        int i = corpus.indexOf(':');
         if (i != -1) {
             return corpus.substring(i + 1);
         }
@@ -710,7 +710,7 @@ public class MainServlet extends HttpServlet {
             return null;
         }
 
-        int i = corpus.indexOf(":");
+        int i = corpus.indexOf(':');
         if (i != -1) {
             return corpus.substring(0, i);
         }

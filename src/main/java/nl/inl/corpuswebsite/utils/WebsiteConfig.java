@@ -32,7 +32,8 @@ public class WebsiteConfig {
          * @param href address of the link, this should be an absolute path
          * @param openInNewWindow
          * @param relative does the url point within our own web application (e.g. starts with our context path)
-         *        We need to track this to know if we should make this link relative to the current page, or whether it's an absolute url
+         *        We need to track this to know if we should make this link relative to the current page, or whether it's an
+         *        absolute url
          */
         public LinkInTopBar(String label, String href, boolean openInNewWindow, boolean relative) {
             super();
@@ -65,7 +66,9 @@ public class WebsiteConfig {
         }
     }
 
-    /** Name to display for this corpus, null if no corpus set. Falls back to the corpus name if not explicitly configured. */
+    /**
+     * Name to display for this corpus, null if no corpus set. Falls back to the corpus name if not explicitly configured.
+     */
     private String corpusDisplayName;
 
     /** Raw name for this corpus, null if no corpus set. */
@@ -93,10 +96,10 @@ public class WebsiteConfig {
      * @param configFile
      * @param corpus (optional) id of the corpus
      * @param corpusConfig (optional) the blacklab configuration for the corpus
-     * @throws ConfigurationException
+     * @throws ConfigurationException when the configFile can't be parsed.
      */
     public WebsiteConfig(InputStream configFile, String corpus, CorpusConfig corpusConfig) throws ConfigurationException {
-        if (corpusConfig != null)        
+        if (corpusConfig != null)
             initProps(corpusConfig);
 
         load(configFile, corpus);
@@ -121,22 +124,26 @@ public class WebsiteConfig {
 
         List<FieldDescriptor> fd = new ArrayList<>(3);
 
-        corpusConfig.getPropertyFields().stream()
-        .filter(pf -> ("lemma".equals(pf.getId()) || "pos".equals(pf.getId())))
-        .forEach(fd::add);
+        corpusConfig.getPropertyFields()
+                    .stream()
+                    .filter(pf -> ("lemma".equals(pf.getId()) || "pos".equals(pf.getId())))
+                    .forEach(fd::add);
 
         // Add all others in order until we hit 3 properties
-        corpusConfig.getPropertyFields().stream()
-        .filter(pf -> fd.size() < 3 && !fd.contains(pf) && !pf.isMainProperty())
-        .forEach(fd::add);
+        corpusConfig.getPropertyFields()
+                    .stream()
+                    .filter(pf -> fd.size() < 3 && !fd.contains(pf) && !pf.isMainProperty())
+                    .forEach(fd::add);
 
         propColumns = fd.stream().map(FieldDescriptor::getId).toArray(String[]::new);
     }
 
     /**
      * Note that corpus may be null, when parsing the base config.
+     *
      * @param configFile
-     * @param corpus (optional) raw name of the corpus, including the username (if applicable), (null when loading the config for the pages outside a corpus context, such as /about, /help, and / (root)))
+     * @param corpus (optional) raw name of the corpus, including the username (if applicable), (null when loading the
+     *        config for the pages outside a corpus context, such as /about, /help, and / (root)))
      * @throws ConfigurationException
      */
     private void load(InputStream configFile, String corpus) throws ConfigurationException {
@@ -152,7 +159,7 @@ public class WebsiteConfig {
         pathToCustomCss = xmlConfig.getString("InterfaceProperties.CustomCss");
 
         String props = xmlConfig.getString("InterfaceProperties.PropColumns");
-        if (props!=null&&!props.isEmpty()) {
+        if (props != null && !props.isEmpty()) {
             propColumns = StringUtils.split(props);
         }
 
@@ -197,8 +204,9 @@ public class WebsiteConfig {
      * Get the links for use in the navbar
      * Note that links where {@link LinkInTopBar#isRelative()} is true assume that the current page is
      * the context root (by default /corpus-frontend/)
-     * Usually this is not the case (when looking at e.g. /corpus-frontend/my-corpus/search), so they will need to be prefixed
-     * by some ../../ segments first, this is done using the pathToTop variable in the velocity templates.
+     * Usually this is not the case (when looking at e.g. /corpus-frontend/my-corpus/search),
+     * so they will need to be prefixed by some ../../ segments first,
+     * this is done using the pathToTop variable in the velocity templates.
      *
      * @return the list of links
      */

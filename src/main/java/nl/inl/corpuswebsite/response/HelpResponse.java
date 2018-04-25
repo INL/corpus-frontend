@@ -1,6 +1,3 @@
-/**
- *
- */
 package nl.inl.corpuswebsite.response;
 
 import java.io.IOException;
@@ -14,21 +11,21 @@ import nl.inl.corpuswebsite.BaseResponse;
 /** Show help page. */
 public class HelpResponse extends BaseResponse {
 
-	public HelpResponse() {
-		super(false);
-	}
+    public HelpResponse() {
+        super(false);
+    }
 
-	@Override
-	protected void completeRequest() {
-		try (InputStream is = servlet.getHelpPage(corpus)) {
-			if (is != null) {
-				context.put("content", StringUtils.join(IOUtils.readLines(is, "utf-8"), "\n"));
-			}
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+    @Override
+    protected void completeRequest() {
+        try (InputStream is = servlet.getHelpPage(corpus)) {
+            if (is != null) {
+                context.put("content", StringUtils.join(IOUtils.readLines(is, "utf-8"), "\n"));
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
-		displayHtmlTemplate(servlet.getTemplate("contentpage"));
-	}
+        displayHtmlTemplate(servlet.getTemplate("contentpage"));
+    }
 
 }

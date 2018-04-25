@@ -1,6 +1,3 @@
-/**
- *
- */
 package nl.inl.corpuswebsite.utils;
 
 import java.util.LinkedList;
@@ -22,12 +19,15 @@ public class FieldDescriptor {
     /** Which complex field did this field/property originate from - Never set for metadata fields */
     private String complexFieldName = null;
 
-    /** is this a "main" property - e.g. for cql query "word" is this property the one that's used. Always false for metadata/"document" fields */
+    /**
+     * is this a "main" property - e.g. for cql query "word" is this property the one that's used. Always false for
+     * metadata/"document" fields
+     */
     private boolean isMainProperty = false;
 
     private List<ValuePair> validValues = new LinkedList<>();
 
-    public class ValuePair {
+    public static class ValuePair {
         public final String value;
         public final String description;
 

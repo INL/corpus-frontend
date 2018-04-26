@@ -835,17 +835,25 @@ SINGLEPAGE.INTERFACE = (function() {
 			$tab.trigger('tabOpen');
 	}
 
+	/**
+	 * The core search trigger, named a little awkwardly because it autotriggers when a tab is made active/opens.
+	 * We emulate the tab reopening to update the displayed search results when new search parameters are set/selected.
+	 */
 	function onTabOpen(/*event, data*/) {
+		
+		var $tab = $(this);
+		var searchSettings = $.extend({}, $tab.data('defaultParameters'), $tab.data('parameters'), $tab.data('constParameters'));
+		
 		// CORE does as little UI manipulation as possible, just shows a tab when required
 		// so we're responsible for showing the entire results area.
 		$('#results').show();
-
-		var $tab = $(this);
-		var searchSettings = $.extend({}, $tab.data('defaultParameters'), $tab.data('parameters'), $tab.data('constParameters'));
+		var querySummary = SINGLEPAGE.BLS.getQuerySummary(searchSettings.pattern, searchSettings.within, SINGLEPAGE.FORM.getActiveFilters());
+		$('#searchFormDivHeader').show()
+		.find('#querySummary').text(querySummary).attr('title', querySummary.substr(0, 1000));
 
 		if ($tab.data('results')) {
-			// Nothing to do, tab is already displaying data
-			// But still notify core so that when the url is copied out the current tab can be restored.
+			// Nothing to do, tab is already displaying data (this happens when you go back and forth between tabs without changing your query in between)
+			// Still notify core so that when the url is copied out the current tab can be restored.
 			SINGLEPAGE.CORE.onSearchUpdated(searchSettings);
 			return;
 		}
@@ -1010,6 +1018,8 @@ SINGLEPAGE.INTERFACE = (function() {
 			// Hide the results area and deactivate all tabs to prevent accidental refreshes later (search is executed when tab is opened (if search parameters are valid))
 			$('#results').hide();
 			$('#resultTabs a').each(function() { $(this).tab('hide'); });
+
+			$('#searchFormDivHeader').hide();
 
 			$('#resultTabsContent .tab-pane').each(function() {
 				var $tab = $(this);

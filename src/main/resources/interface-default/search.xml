@@ -30,7 +30,7 @@
         	whereas absolute links will be placed in the bar as-is. -->
             <Link value="http://www.ivdnt.org/" newWindow="true">INT</Link>
             <Link value="http://www.clarin.eu/" newWindow="true">CLARIN</Link>
-            <Link value="http://taalunie.org/" newWindow="true">NTU</Link>
+            <Link value="https://www.clariah.nl/" newWindow="true">CLARIAH</Link>
             <Link value="help" relative="true">Help</Link>
         	<Link value="about" relative="true">About</Link>
         </NavLinks>

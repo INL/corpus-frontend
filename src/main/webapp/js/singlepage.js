@@ -284,10 +284,6 @@ SINGLEPAGE.CORE = (function () {
 		SINGLEPAGE.FORM.reset(); 
 		$('#querybuilder').data('builder').reset();
 		$('#querybox').val(undefined);
-		
-		// This will hide the search summary and show the form, if it's hidden
-		// See searchSubmit
-		$('#searchFormDivHeader button').click();
 
 		if (searchParams.pattern) {
 			// In the case of an array as search pattern,  it contains the basic/simple search parameters
@@ -335,7 +331,6 @@ SINGLEPAGE.CORE = (function () {
 	return {
 		// Called when form is submitted
 		searchSubmit: function() {
-			
 			var pattern;
 			var within = null; // explicitly set to null to clear any previous value if queryType != simple
 			
@@ -368,26 +363,6 @@ SINGLEPAGE.CORE = (function () {
 				} else {
 					$('#resultTabs a[href="#tabDocs"]').tab('show');
 				}
-			}
-
-			// Hide the search form, if allowed by the config
-			// TODO tidy up: this code is also called in toPageState (to show search form when navigating back/forward)
-			if (!$('#disableCollapseForm').is(':checked')) {
-				var $searchFormDiv = $('#searchFormDiv');
-				var $searchFormDivHeader = $('#searchFormDivHeader');
-				var $querySummary = $('#querySummary');
-				
-				$searchFormDiv.hide();
-				$searchFormDivHeader.show();
-
-				var summaryText = SINGLEPAGE.BLS.getQuerySummary(pattern, within, SINGLEPAGE.FORM.getActiveFilters());
-				$querySummary.text(summaryText).attr('title', summaryText.substr(0, Math.min(1000, summaryText.length)));
-
-
-				$searchFormDivHeader.find('button').one('click', function() {
-					$searchFormDiv.show();
-					$searchFormDivHeader.hide();
-				})
 			}
 
 			// May be used as click handler, so prevent event propagation

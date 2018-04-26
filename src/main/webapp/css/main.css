@@ -418,15 +418,12 @@ a[data-bls-sort], a.dropdown-toggle {
 /* header for when search for is hidden */
 
 #searchFormDivHeader {
-	width: 100%;
-	margin: 50px 0px 20px 0px;
-	text-align: left;
-	display: flex;
-	align-items: center;
-	-webkit-user-select: initial;
-	-moz-user-select: initial;
-	-ms-user-select: initial;
-	user-select: initial;
+	background: white;
+	font-size: 18px;
+	padding: 8px 20px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 #querySummary {

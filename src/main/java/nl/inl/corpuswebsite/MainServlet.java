@@ -144,6 +144,9 @@ public class MainServlet extends HttpServlet {
         // not all properties may need defaults
         // @formatter:on
 
+        if (SystemUtils.IS_OS_WINDOWS)
+        	p.setProperty(PROP_DATA_PATH, "C:\\etc\\blacklab\\projectconfigs");
+        
         return p;
     }
 

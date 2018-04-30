@@ -1,4 +1,4 @@
-/* global CodeMirror, Mustache */
+/* global CodeMirror, Mustache, $ */
 
 // (Private) corpora management page.
 //
@@ -376,6 +376,8 @@ var formats = {};
 
 			format.id = formatId;
 			format.shortId = formatId.substr(formatId.indexOf(':') + 1); // strip username prefix from the id for display purposes
+			format.displayName = format.displayName || format.shortId;
+			format.description = format.description || format.displayName;
 			return format;
 		})
 		.sort(function(a, b) { // sort by id
@@ -399,7 +401,8 @@ var formats = {};
 			builtinFormats: formats.filter(function(format) { return format.id === format.shortId; }),
 			userFormats: formats.filter(function(format) { return format.id !== format.shortId; })
 		}))
-		.selectpicker('refresh');
+		.selectpicker('refresh')
+		.trigger('change');
 	});
 
 	function refreshFormatList() {		
@@ -413,8 +416,17 @@ var formats = {};
 				});
 				triggers.updateFormats(data.supportedInputFormats);
 			},
-			error: function(/*jqXHR, textStatus, errorThrown*/) {
-				showError('Error retrieving input formats.');
+			error: function(jqXHR, textStatus, errorThrown) {
+				if (jqXHR.status != 404) { // blacklab returns internal errors as xml(?)
+					var xmlDoc = $.parseXML( jqXHR.responseText );
+					var $xml = $( xmlDoc );
+					var error = $xml.find( 'error code' ).text();
+					var message = $xml.find(' error message ').text();
+					
+					showError('Error retrieving input formats: ' + error + '; ' + message);
+				} else {
+					showError('Error retrieving input formats: ' + jqXHR.status + ' ' + errorThrown);
+				}
 			}
 		});
 	}
@@ -820,7 +832,8 @@ var formats = {};
 			hideFormatError();
 		});
 
-		$presetSelect.on('change', function() {
+		$presetInput.val($presetSelect.selectpicker('val')); // init with current value
+		$presetSelect.on('changed.bs.select, refreshed.bs.select, loaded.bs.select, change', function() {
 			$presetInput.val($presetSelect.selectpicker('val'));
 		});
 		

@@ -219,10 +219,11 @@ div.hitscroll a {
 
 .hl {
 	font-weight: bold;
+    color: #b10932;
 }
 
 .hl.active {
-	background-color: #FFFF00;
+    background-color: #DDDDDD;
 }
 
 span.word {

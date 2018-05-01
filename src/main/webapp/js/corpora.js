@@ -168,16 +168,16 @@
 
 	createHandlerOnce(events.SERVER_REFRESH, function(serverInfo) {
 		if (serverInfo.user.canCreateIndex)
-			$('#corpora-all-container, #corpora-private-container, #formats-all-container').show();
+			$('#corpora-private-container, #formats-all-container').show();
 	});
 
 	createHandlerOnce(events.CORPORA_REFRESH, function(corpora) {
 		if (corpora.find(function(corpus) { return !corpus.isPrivate; }) != null)
-			$('#corpora-all-container, #corpora-public-container').show();
+			$('#corpora-public-container').show();
 	});
 
-	createHandlerOnce('*[data-autoupdate="userName"]', events.SERVER_REFRESH, function(serverInfo) {
-		this.text(serverInfo.user.id);
+	createHandlerOnce('*[data-autoupdate="username"]', events.SERVER_REFRESH, function(serverInfo) {
+		this.show().html(serverInfo.user.loggedIn ? 'Logged in as <em>'+serverInfo.user.id+'</em>' : 'Not logged in');
 	});
 
 	createHandler('tbody[data-autoupdate="format"]', events.FORMATS_REFRESH, function(formats) {

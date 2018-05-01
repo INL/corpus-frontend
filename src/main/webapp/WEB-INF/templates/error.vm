@@ -4,6 +4,7 @@
 	</head>
 	<body>
 		<h1>Error</h1>
-		$error
+		#set($unescaped = $error) ## see BaseResponse.java
+		$!error
 	</body>
 </html>

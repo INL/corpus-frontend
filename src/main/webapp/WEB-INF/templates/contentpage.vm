@@ -1,7 +1,8 @@
 #parse("header.vm")
 
 <div class="col-xs-12 contentbox">
-$!content	
+#set($unescaped = $content) ## see BaseResponse.java
+$!unescaped
 </div>
 
 #parse("footer.vm")

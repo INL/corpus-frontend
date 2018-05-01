@@ -4,11 +4,14 @@
 <a href="#" onclick="return ANCHORS.gotoPrevious();"><b>&laquo; Previous hit</b></a> | 
 <a href="#" onclick="return ANCHORS.gotoNext();"><b>Next hit &raquo;</b></a>
 </div>
+
 <div class="col-xs-12 contentbox">
-$!article_meta
+#set($unescaped = $article_meta) ## see BaseResponse.java
+$!unescaped
 </div>
 <div class="col-xs-12 contentbox">
-$!article_content
+#set($unescaped = $article_content) ## see BaseResponse.java
+$!unescaped
 </div>
 
 #parse("footer.vm")

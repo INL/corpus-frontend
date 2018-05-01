@@ -10,9 +10,10 @@
         </div> <!-- /container -->
         
         #if($googleAnalyticsKey.length() > 0)
+        #set($unescaped = $googleAnalyticsKey) ## see BaseResponse.java
         <script type="text/javascript">
           var _gaq = _gaq || [];
-          _gaq.push(['_setAccount', '$googleAnalyticsKey']);
+          _gaq.push(['_setAccount', '$unescaped']);
           _gaq.push(['_trackPageview']);
         
           (function() {

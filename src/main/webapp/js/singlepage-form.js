@@ -1,4 +1,4 @@
-/* global BLS_URL */
+/* global BLS_URL, $ */
 
 /**
  * @typedef {Object} PropertyField
@@ -128,9 +128,6 @@ SINGLEPAGE.FORM = (function () {
 			if (prop.value)
 				activeProperties.push(prop);
 		}
-
-
-		// Then set the new value, and once it's resolved, put it back in the list if the value is valid
 	};
 
 	var updateWithin = function($radioButtonContainer) {

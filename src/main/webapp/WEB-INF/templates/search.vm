@@ -57,13 +57,12 @@
                         ## the format is complexfield/property?term=searchterm
                         data-autocomplete="$propertyField.getComplexFieldName()/$propertyField.getId()" 
                     #end
-                />
-                
+                >
                 ## word-list upload-button only for text inputs
-                <button class="btn btn-default upload-button">
+                <span class="btn btn-default upload-button">
                     <input type="file" id="$propertyFieldFileInputId" title="Upload a list of values">
-                    <span class="glyphicon glyphicon-open"> 
-                </button>
+                    <span class="glyphicon glyphicon-open"></span> 
+                </span>
             #end
 
             #if($propertyField.isCaseSensitive())
@@ -75,9 +74,11 @@
 
 #parse("header.vm")
 
+#set($unescapedIndexStructureJson = $indexStructureJson); ## variables with 'unescaped' in the name are not html-escaped, see BaseResponse.java
+
 <script>
     var SINGLEPAGE = SINGLEPAGE || {};
-    SINGLEPAGE.INDEX = JSON.parse("$esc.javascript($indexStructureJson)");
+    SINGLEPAGE.INDEX = JSON.parse("$esc.javascript($unescapedIndexStructureJson)");
     var BLS_URL = "$blsUrl";
     var PROPS_IN_COLUMNS = "$websiteConfig.getPropColumns()".split(',');
 </script>
@@ -376,7 +377,7 @@
                 The <code>simple</code> search allows you to quickly find all occurrences of <code>tokens</code> with specific <code>attributes</code> in this corpus.<br>
             </p>
             <p>
-                <code>Tokens</code> are the smallest unit within a corpus, usually just a single word.</br>
+                <code>Tokens</code> are the smallest unit within a corpus, usually just a single word.<br>
                 <code>Attributes</code> are the different values that together make up a <code>token</code>.<br>
                  The most commonly available attributes are <code>Lemma</code>, <code>Part of Speech</code> and <code>Word</code>,
                 however this can differ on a corpus by corpus basis.<br>
@@ -477,7 +478,7 @@
                 The <code>OR</code> largely performs the same role, with the change that a token will now be matched whenever it has the original attribute <i>or</i> the new attribute.<br>
                 As an example: you have an attribute <code>lemma = "bee"</code>, and you select <code>AND</code>.<br>
                 Now you have <code>lemma = "bee"</code> AND <code>some other attribute</code>, and both of these must be true for a token to be found.<br>
-                If you had selected code>OR</code> it would find all tokens with either <code>lemma = "bee"</code> or that have your new attribute<br>
+                If you had selected <code>OR</code> it would find all tokens with either <code>lemma = "bee"</code> or that have your new attribute<br>
             </p>
             <p>            
                 It's also possible to upload a list of values, to do so, click the upload button that appears when you hover the mouse over the text input for this attribute and select a text file.

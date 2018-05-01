@@ -18,12 +18,16 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
+import org.apache.velocity.app.event.EventCartridge;
+import org.apache.velocity.app.event.ReferenceInsertionEventHandler;
 import org.apache.velocity.tools.generic.EscapeTool;
 
 public abstract class BaseResponse {
     protected static final Logger logger = LogManager.getLogger(BaseResponse.class);
 
     private static final String OUTPUT_ENCODING = "UTF-8";
+
+    protected static final EscapeTool esc = new EscapeTool();
 
     protected MainServlet servlet;
 
@@ -83,12 +87,33 @@ public abstract class BaseResponse {
         this.corpus = corpus;
         this.uriRemainder = uriRemainder;
 
-        context.put("esc", new EscapeTool());
+        context.put("esc", esc);
         context.put("websiteConfig", this.servlet.getWebsiteConfig(corpus));
         context.put("pathToTop", MainServlet.getRelativeUrl("/", request)); // use a relative url to gracefully handle reverse proxy (clientside sees different url path than server)
         context.put("googleAnalyticsKey", this.servlet.getGoogleAnalyticsKey());
         context.put("brandLink", corpus == null ? "" : corpus + "/" + "search");
         context.put("buildTime", servlet.getWarBuildTime());
+        
+        // Escape all data written into the velocity templates by default
+        // Only allow access to the raw string if the expression contains the word "unescaped"
+        EventCartridge cartridge = context.getEventCartridge();
+        if (cartridge == null)
+            cartridge = new EventCartridge();
+        cartridge.addReferenceInsertionEventHandler(new ReferenceInsertionEventHandler() {
+            /**
+             * @param expression string as in the .vm template, such as "$object.value()"
+             * @param value the resolved value
+             */
+            @Override
+            public Object referenceInsert(String expression, Object value) {
+                boolean escape = !expression.toLowerCase().contains("unescaped"); 
+                String val = value.toString();
+                
+                return escape ? esc.html(val) : val;
+            }
+        });
+        
+        context.attachEventCartridge(cartridge);
     }
 
     /**

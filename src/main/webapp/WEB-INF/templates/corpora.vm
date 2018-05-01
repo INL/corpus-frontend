@@ -10,57 +10,50 @@
 </div>
 
 <div class="col-xs-12 contentbox" data-bls-url="$blsUrl" style="position:relative;min-height:150px;">
-
     <span id="waitDisplay" class="fa fa-spinner fa-spin searchIndicator" style="position: absolute; left: 50%;"></span>
     
-    <div id="corpora-all-container">
+    <p data-autoupdate="username" class="text-right" style="display: none;"></p>
 
-        <h1>Available corpora</h1>
-    
-        <div id="corpora-public-container">
-            <hr>
-            <h2>Public corpora</h2>
+    <div id="corpora-public-container">
+        <hr>
+        <h2>Public corpora</h2>
 
-            <!--     NOTE: using a table because we'd like to automatically 
-            size width to longest corpus name. There's probably better ways. -->
-            <table class="corpora public table">
-                <thead>
-                    <tr>
-                        <th>Corpus</th>
-                        <th></th> ##search button
-                        <th>Size</th>
-                    </tr>
-                </thead>
-                <tbody data-autoupdate="corpora" data-filter="public"></tbody>
-            </table>
-        </div>
+        <table class="corpora public table">
+            <thead>
+                <tr>
+                    <th>Corpus</th>
+                    <th></th> ##search button
+                    <th>Size</th>
+                </tr>
+            </thead>
+            <tbody data-autoupdate="corpora" data-filter="public"></tbody>
+        </table>
+    </div>
 
-        <div id="corpora-private-container">
-            <hr>
-            <h2 id="header-private">Your corpora</h2>
-            <p>(logged in as <i data-autoupdate="userName"></i>)</p>
-
-            <table class="table corpora">
-                <thead>
-                    <tr>
-                        <th>Corpus</th>
-                        <th></th> ##search button
-                        <th>Size</th>
-                        <th>Format</th>
-                        <th>Last modified</th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody data-autoupdate="corpora" data-filter="private"></tbody>
-            </table>
-            
-            <button class="btn btn-default btn-lg" id="create-corpus" type="button" data-toggle="modal" data-target="#new-corpus-modal">New corpus</button>
+    <div id="corpora-private-container">
+        <hr>
+        <h2 id="header-private">Your corpora</h2>
         
-        </div>
+        <table class="table corpora">
+            <thead>
+                <tr>
+                    <th>Corpus</th>
+                    <th></th> ##search button
+                    <th>Size</th>
+                    <th>Format</th>
+                    <th>Last modified</th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody data-autoupdate="corpora" data-filter="private"></tbody>
+        </table>
+        
+        <button class="btn btn-default btn-lg" id="create-corpus" type="button" data-toggle="modal" data-target="#new-corpus-modal">New corpus</button>
     
     </div>
+    
 
     <div id="formats-all-container">
         <hr>

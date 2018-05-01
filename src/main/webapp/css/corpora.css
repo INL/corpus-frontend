@@ -42,10 +42,6 @@ td.corpus-name a {
 	color: inherit;
 	text-decoration: none;
 }
-th.size,
-td.size {
-	text-align: right;
-}
 
 table.corpora a.disabled {
    pointer-events: none;

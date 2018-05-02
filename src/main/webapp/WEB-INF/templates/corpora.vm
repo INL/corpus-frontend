@@ -167,10 +167,11 @@
                     <div class="form-group">
                         <label for="corpus_document_type" title="The format of the documents that will be stored in the corpus">Document Format</label>
                         <br/>
-                        <select id="corpus_document_type" name="corpus_document_type" class="selectpicker" data-autoupdate="format">
+                        <select id="corpus_document_type" name="corpus_document_type" class="selectpicker" data-autoupdate="format" data-width="100%">
                             <!-- filled in through clientside javascript -->
                         </select>
                         <small class="text-muted" id="corpus_document_type_description" style="display: block; padding: 8px 8px 0px;"></small>
+                        <small style="display: block; padding: 8px 8px 0px;"><a id="corpus_document_type_help_url" target="_blank"></a></small>
                     </div>
                 </div>
             </div>

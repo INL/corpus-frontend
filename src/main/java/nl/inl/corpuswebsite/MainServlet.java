@@ -212,6 +212,15 @@ public class MainServlet extends HttpServlet {
      * @return the File or null if not found
      */
     private File findPropertiesFile(String fileName) {
+        String configDir = System.getenv("AUTOSEARCH_CONFIG_DIR");
+        if (configDir != null) {
+            File fileInConfigDir = new File(configDir, fileName);
+            if (fileInConfigDir.exists() && fileInConfigDir.canRead() && fileInConfigDir.isFile())
+                return fileInConfigDir;
+            else
+                logger.info("AUTOSEARCH_CONFIG_DIR specifies file {} but it cannot be read", fileInConfigDir);
+        }
+
         String warPath = getServletContext().getRealPath("/");
         if (warPath != null) {
             File fileInWebappsDir = new File(new File(warPath).getParentFile(), fileName);

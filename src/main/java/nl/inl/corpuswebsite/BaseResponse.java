@@ -89,11 +89,18 @@ public abstract class BaseResponse {
 
         context.put("esc", esc);
         context.put("websiteConfig", this.servlet.getWebsiteConfig(corpus));
-        context.put("pathToTop", MainServlet.getRelativeUrl("/", request)); // use a relative url to gracefully handle reverse proxy (clientside sees different url path than server)
+        /*
+         * TODO this doesn't work if the client lands on server.com/corpus-frontend without trailing slash,
+         * we'd need to insert the context root in the relative url, which we don't know in a reverse proxy situation.
+         * Instead..for the time being use an absolute url.
+         * context.put("pathToTop", MainServlet.getRelativeUrl("/", request));
+         */
+        context.put("pathToTop", servlet.getServletContext().getContextPath());
+
         context.put("googleAnalyticsKey", this.servlet.getGoogleAnalyticsKey());
         context.put("brandLink", corpus == null ? "" : corpus + "/" + "search");
         context.put("buildTime", servlet.getWarBuildTime());
-        
+
         // Escape all data written into the velocity templates by default
         // Only allow access to the raw string if the expression contains the word "unescaped"
         EventCartridge cartridge = context.getEventCartridge();
@@ -106,13 +113,13 @@ public abstract class BaseResponse {
              */
             @Override
             public Object referenceInsert(String expression, Object value) {
-                boolean escape = !expression.toLowerCase().contains("unescaped"); 
+                boolean escape = !expression.toLowerCase().contains("unescaped");
                 String val = value.toString();
-                
+
                 return escape ? esc.html(val) : val;
             }
         });
-        
+
         context.attachEventCartridge(cartridge);
     }
 

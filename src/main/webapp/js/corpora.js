@@ -254,10 +254,17 @@
 				pageURL += '/';
 			}
 
+			var user__format = corpus.documentFormat.split(':');
+			var isUserFormat = user__format.length === 2;
+			var documentFormatShortId = user__format[isUserFormat ? 1 : 0];
+			var documentFormatOwner = isUserFormat ? user__format[0] : null;
+
 			return $.extend({}, corpus, {
 				status: status,
 				sizeString: abbrNumber(corpus.tokenCount),
-				documentFormat: friendlyDocFormat(corpus.documentFormat),
+				isUserFormat: isUserFormat,
+				documentFormatShortId: documentFormatShortId,
+				documentFormatOwner: documentFormatOwner,
 				searchUrl: pageURL + corpus.id + '/search',
 				timeModified: dateOnly(corpus.timeModified)
 			});
@@ -266,11 +273,11 @@
 		var template =
 		'{{#corpora}} \
 		<tr> \
-			<td class="corpus-name">{{displayName}} {{status}}</td>\
 			<td><a title="Search the \'{{displayName}}\' corpus" class="icon fa fa-search {{^canSearch}}disabled{{/canSearch}}" {{#canSearch}}href="{{searchUrl}}"{{/canSearch}}></a></td> \
+			<td class="corpus-name">{{displayName}} {{status}}</td>\
 			<td>{{sizeString}}</td>\
 			{{#isPrivate}} \
-				<td>{{documentFormat}}</td>\
+				<td {{#isUserFormat}}title="Format owned by {{documentFormatOwner}}"{{/isUserFormat}}>{{#isUserFormat}}*{{/isUserFormat}}{{documentFormatShortId}}</td>\
 				<td>{{timeModified}}</td>\
 				<td><a data-corpus-action="delete" data-id="{{id}}" title="Delete the \'{{displayName}}\' corpus" class="icon fa fa-trash {{#isBusy}}disabled{{/isBusy}}" href="javascript:void(0)"></a></td> \
 				<td><a data-corpus-action="upload" data-id="{{id}}" title="Upload documents to the \'{{displayName}}\' corpus" class="icon fa fa-plus-square {{#isBusy}}disabled{{/isBusy}}" href="javascript:void(0)"></a></td>\
@@ -338,7 +345,7 @@
 		var format = formats.find(function(format) {return format.id === corpus.documentFormat;});
 
 		$('#uploadCorpusName').text(corpus.displayName);
-		$('#uploadFormat').text(friendlyDocFormat(corpus.documentFormat) + ' ');
+		$('#uploadFormat').text(corpus.documentFormat + ' ');
 		$('#uploadFormatDescription').text(format ? format.description : 'Unknown format (it may have been deleted from the server), uploads might fail');
 
 		//clear selected files
@@ -591,16 +598,6 @@
 				}
 			}
 		});
-	}
-
-	function friendlyDocFormat(format) {
-		if (format.substr(0, 3).toLowerCase() == 'tei') {
-			return 'TEI';
-		}
-		if (format.substr(0, 5).toLowerCase() == 'folia') {
-			return 'FoLiA';
-		}
-		return format;
 	}
 
 	// Get the currently logged-in user, or the empty string if no user is logged in.

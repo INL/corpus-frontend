@@ -805,6 +805,7 @@
 		var $corpusNameInput = $('#corpus_name');
 		var $corpusFormatSelect = $('#corpus_document_type');
 		var $corpusFormatDescription = $('#corpus_document_type_description');
+		var $corpusFormatHelpUrl = $('#corpus_document_type_help_url');
 		var $saveButton = $('#new-corpus-modal .btn-primary');
 
 		$newCorpusModal.on('shown.bs.modal', function(/*event*/) {
@@ -841,6 +842,7 @@
 			// format always exists if it's present in the select to begin with
 			
 			$corpusFormatDescription.text(format.description);
+			$corpusFormatHelpUrl.attr('href', format.helpUrl || undefined).text(format.helpUrl || 'No details available');
 		});
 	}
 

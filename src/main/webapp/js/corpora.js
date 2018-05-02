@@ -211,12 +211,12 @@
 		var template =
 		'<optgroup label="Presets">' +
 			'{{#builtinFormats}}' +
-			'<option title="{{description}}" value="{{id}}" data-content="{{displayName}} <small>({{shortId}})</small>">{{displayName}}</option>' +
+			'<option title="{{displayName}}" value="{{id}}" data-content="{{displayName}} <small>({{shortId}})</small>">{{displayName}}</option>' +
 			'{{/builtinFormats}}' +
 		'</optgroup>' +
 		'<optgroup label="{{userName}}">' +
 			'{{#userFormats}}' +
-			'<option title="{{description}}" value="{{id}}" data-content="{{displayName}} <small>({{shortId}})</small>">{{displayName}}</option>' +
+			'<option title="{{displayName}}" value="{{id}}" data-content="{{displayName}} <small>({{shortId}})</small>">{{displayName}}</option>' +
 			'{{/userFormats}}' +
 		'</optgroup>';
 
@@ -836,7 +836,11 @@
 		});
 
 		$corpusFormatSelect.on('changed.bs.select, refreshed.bs.select, loaded.bs.select, change', function() {
-			$corpusFormatDescription.text($corpusFormatSelect.find('option:selected').attr('title'));
+			var formatId = $(this).selectpicker('val');
+			var format = formats.find(function(format) { return format.id === formatId; });
+			// format always exists if it's present in the select to begin with
+			
+			$corpusFormatDescription.text(format.description);
 		});
 	}
 

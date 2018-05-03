@@ -223,7 +223,8 @@ div.hitscroll a {
 }
 
 .hl.active {
-    background-color: #DDDDDD;
+    text-decoration: underline;
+    background: #FFF;
 }
 
 span.word {

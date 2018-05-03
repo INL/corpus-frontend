@@ -6,6 +6,7 @@
  */
 package nl.inl.corpuswebsite;
 
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.Arrays;
 import java.util.List;
@@ -223,7 +224,7 @@ public abstract class BaseResponse {
         return Arrays.asList(getParameterValues(name, defaultValue));
     }
 
-    protected abstract void completeRequest();
+    protected abstract void completeRequest() throws IOException;
 
     public boolean isCorpusRequired() {
         return requiresCorpus;

@@ -365,6 +365,10 @@ SINGLEPAGE.CORE = (function () {
 				}
 			}
 
+			$('html, body').animate({
+				scrollTop: $('#searchFormDivHeader').offset().top - 75 // navbar
+			}, 500);
+
 			// May be used as click handler, so prevent event propagation
 			return false;
 		},

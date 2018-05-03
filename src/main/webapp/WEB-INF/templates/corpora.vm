@@ -110,7 +110,7 @@
                             style="position:absolute;left:0;top:0;width:0px;height:100%;padding-left:100%;opacity:0;cursor:pointer;overflow:hidden;"/>
                             Open file...
                         </label>
-                        <button type="button" class="btn btn-primary tutorial-download" data-toggle="collapse" data-target="#format-download-container">Download preset...<span class="fa fa-caret-down"></span></button>
+                        <button type="button" class="btn btn-primary pull-right tutorial-download" data-toggle="collapse" data-target="#format-download-container">Download preset...<span class="fa fa-caret-down"></span></button>
                         
                         <div id="format-download-container" class="collapse" style="margin-top:10px;">
                             <div class="well" style="padding: 12px 8px; margin: 0;">

@@ -610,7 +610,9 @@
 		$('#errorDiv').hide();
 		$('#successMessage').html(msg);
 		$('#successDiv').show();
-
+		$('html, body').animate({
+			scrollTop: $('#successDiv').offset().top - 75 // navbar
+		}, 500);
 	}
 
 	// Show error at the top of the page.
@@ -618,6 +620,9 @@
 		$('#successDiv').hide();
 		$('#errorMessage').html(msg).show();
 		$('#errorDiv').show();
+		$('html, body').animate({
+			scrollTop: $('#errorDiv').offset().top - 75 // navbar
+		}, 500);
 	}
 
 	/**

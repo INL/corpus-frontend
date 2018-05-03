@@ -371,7 +371,7 @@
 </form>
 
 <ul id="tlyPageGuide" data-tourtitle="Searching the corpus">
-    <li class="tlypageguide_top" data-tourtarget="a[href='#simple']">
+    <li class="tlypageguide_left" data-tourtarget="a[href='#simple']">
         <div>
             <p>
                 The <code>simple</code> search allows you to quickly find all occurrences of <code>tokens</code> with specific <code>attributes</code> in this corpus.<br>
@@ -411,6 +411,15 @@
                 will find all <code>nouns</code> starting with the letter <code>a</code> as you would expect, while searching for <code>pos</code> <code>ADJ NOU</code> together with <code>lemma</code> <code>a* b*</code> 
                 will find all <code>adjectives</code> starting with the letter <code>a</code>, <i>followed by</i> a <code>noun</code> starting with the letter <code>b</code>.<br>
             </p>  
+        </div>
+    </li>
+    
+     <li class="tlypageguide_left" data-tourtarget=".propertyfield .upload-button">
+        <div>
+            Click here to upload a list of values to search for.<br>
+            Every word in the file will be added to the list of values to search for.<br>
+            To remove the wordlist, click the button again, then press <code>cancel</code> when presented with the file selection (only works in chrome),
+            or simply delete all text in the field.
         </div>
     </li>
     

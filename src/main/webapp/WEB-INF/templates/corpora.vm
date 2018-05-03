@@ -110,7 +110,7 @@
                             style="position:absolute;left:0;top:0;width:0px;height:100%;padding-left:100%;opacity:0;cursor:pointer;overflow:hidden;"/>
                             Open file...
                         </label>
-                        <button type="button" class="btn btn-primary" data-toggle="collapse" data-target="#format-download-container">Download preset...<span class="fa fa-caret-down"></span></button>
+                        <button type="button" class="btn btn-primary tutorial-download" data-toggle="collapse" data-target="#format-download-container">Download preset...<span class="fa fa-caret-down"></span></button>
                         
                         <div id="format-download-container" class="collapse" style="margin-top:10px;">
                             <div class="well" style="padding: 12px 8px; margin: 0;">
@@ -277,7 +277,7 @@
             </p>
             <p>
                 A private corpus allows you to upload and search through your own data.<br>
-                Corpora you create are not visible to others and are restricted in their maximum size.<br>
+                Corpora you create are not visible to others unless you explictly share them, and they are restricted in their maximum size.<br>
             </p>
         </div>
     </li>
@@ -296,26 +296,41 @@
             </p>
         </div>
     </li>
+    <li class="tlypageguide_top" data-tourtarget=".fa.fa-trash">
+        <div>
+            Click here to delete this corpus. You can only delete your own corpora.
+        </div>
+    </li>
     <li class="tlypageguide_top" data-tourtarget=".fa.fa-plus-square">
         <div>
             Click here to add some data to your corpus. It is currently not possible to remove data from the corpus.<br>
             Once indexing is finished, the new data is immediately available for searching. 
         </div>
     </li>
-    <li class="tlypageguide_top" data-tourtarget=".fa.fa-plus-square">
+    <li class="tlypageguide_top" data-tourtarget=".fa.fa-user-plus">
         <div>
-            Click here to delete this corpus. You can only delete your own corpora.
+            Click here to share your corpus with other users. You will have to know their usernames.
         </div>
     </li>
-    <li class="tlypageguide_right" data-tourtarget="#upload-area">
+    <li class="tlypageguide_right" data-tourtarget="#upload-docs-input">
         <div>
-            Select the file(s) you want to add to the corpus, and they will be indexed.<br>
-            Remember that the documents you upload here need to be in the format you selected when you first created the corpus in order to be picked up.  
+            Select the file(s) you want to add to the corpus here.<br>
+            You should only select files appropriate for the corpus. Invalid files will cause the whole lot to be rejected.<br>
+            See the hint below this button for a reminder of the type(s) of files that can be added to this corpus.  
+        </div>
+    </li>
+    <li class="tlypageguide_right" data-tourtarget="#upload-metadata-input"]">
+        <div>
+            If your files link to external metadata in different files, you should also upload those files here.
+            Support for external data has to be configured in a custom import format, so you usually won't need this option.<br>
+            For more information on how to configure a format for using linked/external files, 
+            <a style="text-decoration: underline;color:#337ab7;" target="_blank" href="https://github.com/INL/BlackLab/blob/d20eb71b25137facf10f7d2681242de34ab1fa54/core/src/site/markdown/how-to-configure-indexing.md#metadata-external">see here</a>.
         </div>
     </li>
     <li class="tlypageguide_right" data-tourtarget="button[data-target='#new-format-modal']">
         <div>
-            If your corpus material is in a format that we don't support (yet), you can create your own format here.
+            If your corpus material is in a format that we don't support out of the box (yet), you can customize how your data is treated by creating a new format here.<br>
+            After you've done so, you will need to create a new corpus that uses the format and add some files to it.
         </div>
     </li>
     <li class="tlypageguide_top" data-tourtarget="button[data-id='format_type']">
@@ -324,13 +339,14 @@
             Changing this setting will also change the syntax highlighting so you can more easily spot mistakes.
         </div>
     </li>
-    <li class="tlypageguide_bottom" data-tourtarget="#format_download">
+    <li class="tlypageguide_top" data-tourtarget=".tutorial-download">
         <div>
             A good place to start writing a format is usually to download one of our presets, and edit it until it matches the structure of your corpus material.<br>
-            Select a format to start with in the dropdown then click this button to download it and show it in the editor.<br>
+            Select a format to start with in the dropdown then click <code>download</code> to open it in in the editor.<br>
+            You can also download another user's format, if you know the name.<br>
+            To do so, enter their username followed by ':', followed by the name of the format <code>username:format</code> in the box next to the download button.<br>
             <br>
-            Formats you've created yourself are listed at the bottom.<br>
-            When you load a format, its name will automatically be filled in, so any changes you save will overwrite the format.
+            When you load one of your own formats, its name will automatically be filled in, so any changes you save will overwrite the format.
         </div>
     </li>
     <li class="tlypageguide_bottom" data-tourtarget="#format_save">

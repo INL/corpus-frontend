@@ -224,6 +224,8 @@ SINGLEPAGE.BLS = (function () {
 			
 			inflightRequest != null && inflightRequest.abort();
 			inflightRequest = null;
+			
+			$('#totalsReport').hide();
 		}
 		
 		function updateTotalsDisplay(data) {
@@ -276,7 +278,7 @@ SINGLEPAGE.BLS = (function () {
 					scheduleRequest();
 			},
 			
-			stop: cancelRequest
+			stop: cancelRequest,
 		};
 	})();
 
@@ -309,6 +311,8 @@ SINGLEPAGE.BLS = (function () {
 							console.log(data);
 						}
 						
+						// only start when we get the first bit of data back
+						// or we would fire off two nearly identical requests for nothing
 						totalsCounter.start(data, blsParam, operation);
 						
 						if (typeof successFunc === 'function')

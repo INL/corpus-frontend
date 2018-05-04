@@ -87,6 +87,7 @@
 <script src="$pathToTop/js/vendor/mustache.js"></script>
 <script src="$pathToTop/js/vendor/URI.js"></script>
 <script src="$pathToTop/js/vendor/FileSaver.js"></script>
+<script src="$pathToTop/js/vendor/lucene-query-parser.js"></script> ## https://github.com/thoward/lucene-query-parser.js
 <script src="$pathToTop/js/singlepage.js"></script>
 <script src="$pathToTop/js/singlepage-bls.js"></script>
 <script src="$pathToTop/js/singlepage-form.js"></script>

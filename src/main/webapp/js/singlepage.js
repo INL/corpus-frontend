@@ -10,19 +10,19 @@ SINGLEPAGE.CORE = (function () {
 	$(document).ready(function () {
 		SINGLEPAGE.FORM.init();
 		SINGLEPAGE.INTERFACE.init();
-		
+
 		// Init the querybuilder with the supported attributes/properties
 		var $queryBuilder = $('#querybuilder'); // container
 		var queryBuilderInstance = querybuilder.createQueryBuilder($queryBuilder, {
 			attribute: {
-				view: { 
-					// Pass the available properties of tokens in this corpus (PoS, Lemma, Word, etc..) to the querybuilder 
+				view: {
+					// Pass the available properties of tokens in this corpus (PoS, Lemma, Word, etc..) to the querybuilder
 					attributes: $.map(SINGLEPAGE.INDEX.complexFields, function (complexField, complexFieldName) {
 						return $.map(complexField.properties, function(property, propertyId) {
 							if (property.isInternal)
 								return null; // Don't show internal fields in the queryBuilder; leave this out of the list.
-							
-							// Transform the supported values to the querybuilder format 
+
+							// Transform the supported values to the querybuilder format
 							return {
 								attribute: propertyId,
 								label: property.displayName || propertyId,
@@ -50,25 +50,25 @@ SINGLEPAGE.CORE = (function () {
 				sampleSize: $(this).val(),
 				sampleMode: $('#sampleMode').selectpicker('val') // in case it hasn't been initialized
 			});
-		}).on('keypress', function(event) { 
+		}).on('keypress', function(event) {
 			// prevent enter submitting form and initiating a search, should only update existing searches
 			if (event.keyCode === 13) {
 				$(this).trigger('change');
 				event.preventDefault();
 			}
-		}); 
+		});
 		$('#sampleSeed').on('change', function () {
 			SINGLEPAGE.INTERFACE.setParameters({
 				sampleSeed: $(this).val()
 			});
-		}).on('keypress', function(event) { 
+		}).on('keypress', function(event) {
 			// prevent enter submitting form and initiating a search, should only update existing searches
 			if (event.keyCode === 13) {
 				$(this).trigger('change');
 				event.preventDefault();
 			}
-		}); 
-		
+		});
+
 		// Rescale the querybuilder container when it's shown
 		$('a.querytype[href="#advanced"]').on('shown.bs.tab hide.bs.tab', function () {
 			$('#searchContainer').toggleClass('col-md-6');
@@ -79,7 +79,7 @@ SINGLEPAGE.CORE = (function () {
 			var pattern = $('#querybox').val();
 			if (populateQueryBuilder(pattern))
 				$('#searchTabs a[href="#advanced"]').tab('show') && $('#parseQueryError').hide();
-			else 
+			else
 				$('#parseQueryError').show();
 		});
 
@@ -88,7 +88,7 @@ SINGLEPAGE.CORE = (function () {
 		$queryBuilder.on('cql:modified', function () {
 			$queryBox.val(queryBuilderInstance.getCql());
 		});
-		
+
 		// now restore the page state from the used url
 		var searchSettings = fromPageUrl();
 		if (searchSettings != null) {
@@ -106,7 +106,7 @@ SINGLEPAGE.CORE = (function () {
 	/**
 	 * Decode the current page url in the format of /<contextRoot>/<corpus>/search/[hits|docs][/]?query=...
 	 * into a SearchParameters object
-	 * 
+	 *
 	 * @param {string} url - full page url, the querystring (if present) should encode a BlackLabParameters object
 	 * @returns {SearchParameters} object containing the decoded and translated parameters, or null if no parameters were found
 	 */
@@ -116,13 +116,13 @@ SINGLEPAGE.CORE = (function () {
 
 		// operation is (usually) contained in the path, the other parameters are contained in the query parameters
 		var operation = paths[paths.lastIndexOf('search') + 1];
-		
+
 		var blsParam = new URI().search(true);
 		if ($.isEmptyObject(blsParam))
-			return null; 
-		
+			return null;
+
 		var pageParam = SINGLEPAGE.BLS.getPageParam(blsParam);
-		if (operation) 
+		if (operation)
 			pageParam.operation = operation;
 
 		return pageParam;
@@ -133,21 +133,21 @@ SINGLEPAGE.CORE = (function () {
 	 * N.B. we assume we're mounted under /<contextRoot>/<corpus>/search/[hits|docs][/]?query=...
 	 * The contextRoot can be anything, even multiple segments (due to reverse proxy, different WAR deploy path, etc)
 	 * But we assume the /search/ part still exists.
-	 * 
+	 *
 	 * Removes any empty strings, arrays, null, undefineds prior to conversion, to shorten the resulting query string.
-	 * 
+	 *
 	 * @param {SearchParameters} searchParams the search parameters
 	 * @returns the query string, beginning with ?, or an empty string when no searchParams with a proper value
 	 */
 	function toPageUrl(searchParams) {
 		var operation = searchParams && searchParams.operation; // store, as blsParams doesn't contain it: 'hits' or 'docs' or undefined
-		searchParams = SINGLEPAGE.BLS.getBlsParam(searchParams); 
-		
+		searchParams = SINGLEPAGE.BLS.getBlsParam(searchParams);
+
 		var uri = new URI();
 		var paths = uri.segmentCoded();
 		var basePath = paths.slice(0, paths.lastIndexOf('search')+1);
 		// basePath now contains our url path, up to and including /search/
-		
+
 		// If we're not searching, return a bare url pointing to /search/
 		if (searchParams == null) {
 			return uri.directory(basePath).search(null).toString();
@@ -162,7 +162,7 @@ SINGLEPAGE.CORE = (function () {
 				return true;
 			modifiedParams[key] = value;
 		});
-		
+
 		// Append the operation, query params, etc, and return.
 		return uri.segmentCoded(basePath).segmentCoded(operation).search(searchParams).toString();
 	}
@@ -170,22 +170,22 @@ SINGLEPAGE.CORE = (function () {
 	/**
 	 * Attempt to parse the query pattern and update the state of the query builder
 	 * to match it as much as possible.
-	 * 
-	 * @param {any} searchParams 
+	 *
+	 * @param {any} searchParams
 	 * @returns True or false indicating success or failure respectively
 	 */
 	function populateQueryBuilder(pattern) {
 		if (!pattern)
 			return false;
-		
+
 		try {
 			var parsedCql = SINGLEPAGE.CQLPARSER.parse(pattern);
 			var tokens = parsedCql.tokens;
 			var within = parsedCql.within;
-			if (tokens === null) { 
+			if (tokens === null) {
 				return false;
-			} 
-			
+			}
+
 			var queryBuilder = $('#querybuilder').data('builder');
 			queryBuilder.reset();
 			if (tokens.length > 0) {
@@ -198,10 +198,10 @@ SINGLEPAGE.CORE = (function () {
 				queryBuilder.set('within', within);
 
 			// TODO: try and repopulate the "simple" tab
-			
+
 			$.each(tokens, function(index, token) {
 				var tokenInstance = queryBuilder.createToken();
-				
+
 				//clean the root group of all contents
 				$.each(tokenInstance.rootAttributeGroup.getAttributes(), function(i, el) {
 					el.element.remove();
@@ -235,12 +235,12 @@ SINGLEPAGE.CORE = (function () {
 								parentAttributeGroup = parentAttributeGroup.createAttributeGroup(op.operator, label);
 							}
 						}
-						
+
 						//inverse order, since new elements are inserted at top..
 						doOp(op.right, parentAttributeGroup, level + 1);
 						doOp(op.left, parentAttributeGroup, level + 1);
 					} else if (op.type === 'attribute') {
-						
+
 						var attributeInstance = parentAttributeGroup.createAttribute();
 
 						// case flag is always at the front, so check for that before checking
@@ -249,7 +249,7 @@ SINGLEPAGE.CORE = (function () {
 							attributeInstance.set('case', true, op.attributeType);
 							op.value = op.value.substr(5);
 						}
-						
+
 						if (op.operator === '=' && op.value.length >= 2 && op.value.indexOf('|') === -1) {
 							if (op.value.indexOf('.*') === 0) {
 								op.operator = 'ends with';
@@ -264,7 +264,7 @@ SINGLEPAGE.CORE = (function () {
 
 						attributeInstance.set('operator', op.operator);
 						attributeInstance.set('type', op.attributeType);
-						
+
 						attributeInstance.set('val', op.value);
 					}
 				}
@@ -289,14 +289,14 @@ SINGLEPAGE.CORE = (function () {
 	/**
 	 * Completely resets all form and results information and controls, then repopulates the page with the parameters.
 	 * Also initiates a search if the parameters contain a valid search. (the 'operation' is valid).
-	 * 
+	 *
 	 * NOTE: when called with a {} parameter, the entire page will be cleared.
-	 * 
-	 * @param {any} searchParams 
+	 *
+	 * @param {any} searchParams
 	 */
 	function toPageState(searchParams) {
 		// reset and repopulate the main form
-		SINGLEPAGE.FORM.reset(); 
+		SINGLEPAGE.FORM.reset();
 		$('#querybuilder').data('builder').reset();
 		$('#querybox').val(undefined);
 
@@ -306,18 +306,18 @@ SINGLEPAGE.CORE = (function () {
 				$.each(searchParams.pattern, function (index, element) {
 					SINGLEPAGE.FORM.setPropertyValues(element);
 				});
-			} else { 
-				// We have a raw cql query string, attempt to parse it using the querybuilder, 
+			} else {
+				// We have a raw cql query string, attempt to parse it using the querybuilder,
 				// otherwise fall back to the raw cql view
 				$('#querybox').val(searchParams.pattern);
 				if (populateQueryBuilder(searchParams.pattern))
 					$('#searchTabs a[href="#advanced"]').tab('show');
-				else 
+				else
 					$('#searchTabs a[href="#query"]').tab('show');
 
 			}
 		}
-		
+
 		$.each(searchParams.filters, function (index, element) {
 			SINGLEPAGE.FORM.setFilterValues(element.name, element.values);
 		});
@@ -340,7 +340,7 @@ SINGLEPAGE.CORE = (function () {
 			$('#resultTabs a[href="#tabHits"]').tab('show');
 		} else if (searchParams.operation === 'docs') {
 			$('#resultTabs a[href="#tabDocs"]').tab('show');
-		} 
+		}
 	}
 
 	return {
@@ -348,7 +348,7 @@ SINGLEPAGE.CORE = (function () {
 		searchSubmit: function() {
 			var pattern;
 			var within = null; // explicitly set to null to clear any previous value if queryType != simple
-			
+
 			// Get the correct pattern based on selected tab
 			var queryType = $('#searchTabs li.active .querytype').attr('href');
 			if (queryType === '#simple') {
@@ -370,7 +370,7 @@ SINGLEPAGE.CORE = (function () {
 				// Other parameters are automatically updated on interaction and thus always up-to-date
 			}, true);
 
-			// Setting parameters refreshes the shown results (if a result tab is opened), 
+			// Setting parameters refreshes the shown results (if a result tab is opened),
 			// but when there are no results shown, activate one of the tabs manually (this also triggers a refresh of the results in that tab)
 			if (!$('#resultTabs .active').length) {
 				if (pattern) {

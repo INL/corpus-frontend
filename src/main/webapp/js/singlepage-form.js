@@ -10,7 +10,7 @@
 /**
  * @typedef {Object} FilterField
  * @property {string} name - Unique ID of the filter
- * @property {string} filterType - Type of the filter, one of 'range', 'text', 'select', 'combobox'
+ * @property {('text' | 'range' | 'select')} filterType - Type of the filter, determines how the values are interpreted
  * @property {Array.<string>} values - Values of the filter, for selects, the selected values, for text, the text, for ranges the min and max values in indices [0][1]
  */
 
@@ -24,37 +24,37 @@ SINGLEPAGE.FORM = (function () {
 	var activeFilters = [];
 	var activeProperties = [];
 	var within = null;
-	
+
 	// Update the filter description using the active filter value list
-	var updateFilterDisplay = function() {
-		
+	function updateFilterDisplay() {
+
 		var displayHtml = [];
 		$.each(activeFilters, function(index, element) {
 			displayHtml.push(element.name, ': ', '<i>', element.values.join(', '), ' </i>');
 		});
-		
+
 		$('#filteroverview').html(displayHtml.join(''));
-	};
-	
+	}
+
 	// Add or update the filter in the list when it has a value.
 	// Remove the filter from the list when the value is undefined/invalid.
 	// Finally update the preview display with the new value
-	var updateFilterField = function($filterfield) {
-		
+	function updateFilterField($filterfield) {
+
 		function removeFromFilterList(filterName) {
 			activeFilters = $.grep(activeFilters, function(elem) { return elem.name === filterName;}, true);
-		} 
-		
+		}
+
 		var filterName = $filterfield.attr('id');
 		var filterType = $filterfield.data('filterfield-type');
 		var $inputs = $filterfield.find('input, select');
 		var values = [];
-		
+
 		// Has two input fields, special treatment
 		if (filterType === 'range') {
 			var from = $($inputs[0]).val();
 			var to = $($inputs[1]).val();
-			
+
 			if (from && to) // Since these are text inputs, any falsy value ('', undefined, null) is invalid
 				values.push(from, to);
 		} else {
@@ -65,37 +65,37 @@ SINGLEPAGE.FORM = (function () {
 			if (firstVal != null && firstVal != '')
 				values = values.concat(firstVal);
 		}
-		
+
 		removeFromFilterList(filterName);
 		if (values.length >= 1) {
 			activeFilters.push({
 				name: filterName,
 				filterType: filterType,
-				values: values					
+				values: values
 			});
 		}
-		
+
 		updateFilterDisplay();
-	};
-	
+	}
+
 	// TODO tidy up
-	var updatePropertyField = function($propertyField, event) {
+	function updatePropertyField($propertyField, event) {
 		function removeFromPropertyList(propertyName) {
 			activeProperties = $.grep(activeProperties, function(elem) { return elem.name === propertyName;}, true);
 		}
-		
+
 		var propertyName = $propertyField.attr('id');
 		var $textOrSelect = $propertyField.find('#' + propertyName + '_value');
 		var fileInput = $propertyField.find('#' + propertyName + '_file')[0]; // NOTE: not always available
 		var $caseInput = $propertyField.find('#' + propertyName + '_case');
 		var $changedInput = event ? $(event.target) : $textOrSelect; // no event means we're initializing, so read from the input field
-		
+
 		// Fetch the current state, or init the new property (if it wasn't in the list)
 		var prop = $.grep(activeProperties, function(elem) { return elem.name === propertyName; })[0] || {};
 		prop.name = propertyName;
 		prop.case = $caseInput.is(':checked');
 		prop.value = $textOrSelect.val();
-		
+
 		// Now temporarily remove the property from the active list (even if it actually has a value)
 		// and only put it back once we've read its new value
 		// This has the added benefit we can never push the prop twice by accident
@@ -103,18 +103,18 @@ SINGLEPAGE.FORM = (function () {
 
 		if ($changedInput.is($textOrSelect[0]) && fileInput != null)
 			fileInput.value = '';
-		
+
 		if ($changedInput.is(fileInput)) {
 			var file = fileInput.files && fileInput.files[0];
 			if (file != null) {
 				var fr = new FileReader();
 				fr.onload = function() {
-					// Replace all whitespace with pipes, 
+					// Replace all whitespace with pipes,
 					// this is due to the rather specific way whitespace in the simple search property fields is treated (see singlepage-bls.js:getPatternString)
 					// TODO discuss how we treat these fields with Jan/Katrien, see https://github.com/INL/corpus-frontend/issues/18
 					prop.value = fr.result.replace(/\s+/g, '|');
 					$textOrSelect.val(prop.value);
-					
+
 					if (prop.value)
 						activeProperties.push(prop);
 				};
@@ -128,15 +128,15 @@ SINGLEPAGE.FORM = (function () {
 			if (prop.value)
 				activeProperties.push(prop);
 		}
-	};
+	}
 
-	var updateWithin = function($radioButtonContainer) {
+	function updateWithin($radioButtonContainer) {
 		// explicitly set to null for empty strings
 		within = $radioButtonContainer.find('input:checked').val() || null;
-	};
+	}
 
 	return {
-		
+
 		init: function() {
 
 			// Inherit jQueryUI autocomplete widget and customize the rendering
@@ -165,11 +165,11 @@ SINGLEPAGE.FORM = (function () {
 				}
 			});
 
-			// Now enable autocompletion on our marked fields 
+			// Now enable autocompletion on our marked fields
 			$('input[data-autocomplete]').each(function() {
 				var $this = $(this);
 				var propertyId = $this.data('autocomplete');
-				
+
 				$this.autocomplete({
 					source: BLS_URL + '/autocomplete/' + propertyId,
 					minLength: 1, // Show values when at least 1 letter is present
@@ -195,7 +195,7 @@ SINGLEPAGE.FORM = (function () {
 					}
 				});
 			});
-			
+
 			// Register callbacks and sync with current state
 			$('.filterfield').on('change', function () {
 				updateFilterField($(this));
@@ -215,7 +215,7 @@ SINGLEPAGE.FORM = (function () {
 				updateWithin($(this));
 			});
 		},
-		
+
 		// Clear all fields
 		reset: function() {
 			$('.filterfield').each(function() {
@@ -235,15 +235,15 @@ SINGLEPAGE.FORM = (function () {
 		getActiveFilters: function() {
 			return activeFilters.length ? activeFilters.concat() : null; // Return a copy
 		},
-		
+
 		getActiveProperties: function() {
-			return activeProperties.length ? activeProperties.concat() : null; // Return a copy 
+			return activeProperties.length ? activeProperties.concat() : null; // Return a copy
 		},
 
 		getWithin: function() {
 			return within;
 		},
-		
+
 		/**
 		 * Update the values for a filter
 		 * Automatically updates the preview and internal list as well
@@ -255,26 +255,26 @@ SINGLEPAGE.FORM = (function () {
 			var $filterField = $('#' + filterName);
 			var $inputs = $filterField.find('input, select');
 			var filterType = $filterField.data('filterfield-type');
-			
+
 			// Determine how to process the value of this filter field, based on the type of this filter
 			if (filterType == 'range') {
 				$($inputs[0]).val(values[0]);
 				$($inputs[1]).val(values[1]);
 			} else if (filterType == 'select') {
 				$inputs.first().selectpicker('val', values);
-			} else { 
+			} else {
 				var processed  = [];
 				$.each(values, function(index, val) {
 					var withoutQuotes = val.replace(/^"+|"+$/g, '');
 					if (withoutQuotes.match(/\s/)) // contains whitespace -> keep quotes
 						processed.push('"' + withoutQuotes + '"');
-					else 
+					else
 						processed.push(withoutQuotes);
 				});
 
 				$inputs.first().val(processed.join(' '));
 			}
-			
+
 			updateFilterField($filterField);
 		},
 
@@ -282,7 +282,7 @@ SINGLEPAGE.FORM = (function () {
 			var $propertyField = $('#' + property.name);
 			$propertyField.find('#' + property.name + '_value').val(property.value);
 			$propertyField.find('#' + property.name + '_case').prop('checked', property.case);
-		
+
 			updatePropertyField($propertyField);
 		},
 

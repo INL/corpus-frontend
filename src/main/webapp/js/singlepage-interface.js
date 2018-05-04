@@ -3,15 +3,15 @@
 /**
  * Dictionary where key == propertyId and value is array of containing the values for that id, in order of occurance.
  * Available properties are contained in SINGLEPAGE.INDEX.complexFields['complexFieldId'].properties['propertyId']
- * 
+ *
  * The 'punct' property is always available.
- * 
+ *
  * @typedef {Object.<string, Array.<string>} BLHitContext
  */
 
 /**
  * @typedef {Object} BLHit
- * 
+ *
  * @property {string} docPid - id of the document from which the hit originated
  * @property {number} start - index of first token in hit, inclusive
  * @property {number} end - index of last token in hit, exclusive
@@ -45,18 +45,18 @@ SINGLEPAGE.INTERFACE = (function() {
 			};
 		});
 	});
-	
+
 	/** Columns configured in PROPS_IN_COLUMNS, can contain duplicates */
 	PROPS.shown = $.map(PROPS_IN_COLUMNS, function(propId) {
 		return $.map(PROPS.all, function(prop) {
 			return (prop.id === propId) ? prop : undefined;
 		});
 	});
-	
+
 	// There is always at least a single main property.
 	// TODO this shouldn't be required, mainProperties from multiple complexFields should be handled properly
 	// but this has some challenges in the hits table view, such as that it would show mulitple columns for the before/hit/after contexts
-	PROPS.firstMainProp = PROPS.all.filter(function(prop) { return prop.isMainProp; })[0];	
+	PROPS.firstMainProp = PROPS.all.filter(function(prop) { return prop.isMainProp; })[0];
 
 
 	// Add a 'hide' function to bootstrap tabs
@@ -84,7 +84,7 @@ SINGLEPAGE.INTERFACE = (function() {
 	};
 
 	/**
-	 * @param {BLHitContext} context 
+	 * @param {BLHitContext} context
 	 * @param {string} prop - property to retrieve
 	 * @param {boolean} doPunctBefore - add the leading punctuation?
 	 * @param {string} addPunctAfter - trailing punctuation to append
@@ -103,9 +103,9 @@ SINGLEPAGE.INTERFACE = (function() {
 	}
 
 	/**
-	 * @param {BLHit} hit - the hit 
+	 * @param {BLHit} hit - the hit
 	 * @param {string} [prop] - property of the context to retrieve, defaults to PROPS.firstMainProp (usually 'word')
-	 * @returns {Array.<string>} - string[3] where [0] == before, [1] == hit and [2] == after, values are strings created by 
+	 * @returns {Array.<string>} - string[3] where [0] == before, [1] == hit and [2] == after, values are strings created by
 	 * concatenating and alternating the punctuation and values itself
 	 */
 	function snippetParts(hit, prop) {
@@ -120,9 +120,9 @@ SINGLEPAGE.INTERFACE = (function() {
 
 	/**
 	 * Concat all properties in the context into a large string
-	 * 
-	 * @param {BLHitContext} context 
-	 * @returns {string} 
+	 *
+	 * @param {BLHitContext} context
+	 * @returns {string}
 	 */
 	function properties(context) {
 		var props = [];
@@ -158,10 +158,10 @@ SINGLEPAGE.INTERFACE = (function() {
 
 	/**
 	 * Request and display more preview text from a document.
-	 * 
+	 *
 	 * @param {any} concRow the <tr> element for the current hit. The result will be displayed in the row following this row.
 	 * @param {any} docPid id/pid of the document
-	 * @param {number} start 
+	 * @param {number} start
 	 * @param {number} end
 	 * @param {('ltr' | 'rtl')} textDirection - to determine whether to specify text direction on the preview text
 	 */
@@ -190,7 +190,7 @@ SINGLEPAGE.INTERFACE = (function() {
 
 	/**
 	 * Request and display properties of the matched word.
-	 * 
+	 *
 	 * @param {any} propRow the <tr> element for the current hit. The result will be displayed in the second row following this row.
 	 * @param {any} props the properties to show
 	 */
@@ -198,19 +198,19 @@ SINGLEPAGE.INTERFACE = (function() {
 		// Open/close the collapsible in the next row
 		var $element = $(propRow).next().next().find('.collapse');
 		$element.collapse('toggle');
-        
+
 		var $p = $('<div/>').text(props).html();
 		$element.html('<span><b>Properties: </b>' + $p + '</span>');
 	}
-    
+
 	/**
 	 * Show the error reporting field and display any errors that occured when performing a search.
-	 * 
+	 *
 	 * Can be directly used as callback fuction to $.ajax
-	 * 
-	 * @param {any} jqXHR 
-	 * @param {any} textStatus 
-	 * @param {any} errorThrown 
+	 *
+	 * @param {any} jqXHR
+	 * @param {any} textStatus
+	 * @param {any} errorThrown
 	 */
 	function showBlsError(jqXHR, textStatus, errorThrown) {
 		var errordata = (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.error) || {
@@ -230,9 +230,9 @@ SINGLEPAGE.INTERFACE = (function() {
 
 	/**
 	 * Create pagination buttons based on a set of results.
-	 * 
+	 *
 	 * Buttons contain a data-page attribute containing the page index they're displaying - 1.
-	 * 
+	 *
 	 * @param {any} $pagination <ul> element where the generated pagination will be placed.
 	 * @param {any} data a blacklab-server search response containing either groups, docs, or hits.
 	 */
@@ -284,10 +284,10 @@ SINGLEPAGE.INTERFACE = (function() {
 
 	/**
 	 * After a small delay, clear the tab's current data and show a spinner.
-	 * 
+	 *
 	 * The delay exists because it's jarring when the user switches page and all content is removed
 	 * and then displayed again within a fraction of a second.
-	 * 
+	 *
 	 * @param {any} $tab the tab content container.
 	 */
 	function showSearchIndicator($tab) {
@@ -301,7 +301,7 @@ SINGLEPAGE.INTERFACE = (function() {
 
 	/**
 	 * Hide any currently displayed spinner within this tab, and remove any queued spinner (see showSearchIndicator).
-	 * 
+	 *
 	 * @param {any} $tab the tab's main content container.
 	 */
 	function hideSearchIndicator($tab) {
@@ -314,10 +314,10 @@ SINGLEPAGE.INTERFACE = (function() {
 
 	/**
 	 * Load and display results within a specific group of documents/hits.
-	 * 
+	 *
 	 * This function should only be called when the containing tab currently has a groupBy clause,
 	 * otherwise an invalid search will be generated.
-	 * 
+	 *
 	 * This function assumes it's being called in the context of a button/element containing a data-group-id attribute
 	 * specifiying a valid group id.
 	 */
@@ -348,10 +348,10 @@ SINGLEPAGE.INTERFACE = (function() {
 	/**
 	 * Loads and displays a small amount of details about individual hits/documents within a specific group.
 	 * Some data is attached to the button to track how many concordances are already loaded/are available.
-	 * 
+	 *
 	 * This function does not refresh the entire tab's contents, just inserts some extra data within a group's <tr>
 	 * For the version that loads the full result set and displays the extensive information, see {@link viewConcordances}
-	 * 
+	 *
 	 * This function assumes it's being called within the context of a button element containing a data-group-id attribute.
 	 * Some assumptions are also made about the exact structure of the document regarding placement of the results.
 	 */
@@ -396,8 +396,8 @@ SINGLEPAGE.INTERFACE = (function() {
 			// And what is present in the data depends on the current view, so all works out
 			$.each(data.hits, function(index, hit) {
 				var parts = snippetParts(hit);
-				var left = textDirection=='ltr'? parts[0] : parts[2]; 
-				var right = textDirection=='ltr'? parts[2] : parts[0]; 
+				var left = textDirection=='ltr'? parts[0] : parts[2];
+				var right = textDirection=='ltr'? parts[2] : parts[0];
 				html.push(
 					'<div class="clearfix">',
 						'<div class="col-xs-5 text-right">', ELLIPSIS, ' ', left, '</div>',
@@ -428,7 +428,7 @@ SINGLEPAGE.INTERFACE = (function() {
 			var html = [];
 			html.push('<div>',
 				'<b>Could not retrieve concordances.</b><br>');
-	
+
 			if (jqXHR && jqXHR.status !== 0) // server is up
 				html.push('This is usually due to a misconfigured server, see ',
 					'<a href="https://github.com/INL/BlackLab/blob/be5b5be75c064e87cbfc2271fd19d073f80839af/core/src/site/markdown/blacklab-server-overview.md#installation" target="_blank">here</a> for more information.');
@@ -442,19 +442,19 @@ SINGLEPAGE.INTERFACE = (function() {
 
 	/**
 	 * Convert a blacklab-server reply containing information about hits into a table containing the results.
-	 * 
+	 *
 	 * @param {any} data the blacklab-server response.
 	 * @returns An array of html strings containing the <thead> and <tbody>, but without the enclosing <table> element.
 	 */
 	function formatHits(data, textDirection) {
 		// TODO use mustache.js
-		
+
 		var html = [];
 		html.push(
 			'<thead><tr>',
 				'<th class="text-right" style="width:40px">',
 					'<span class="dropdown">',
-						'<a class="dropdown-toggle" data-toggle="dropdown">', 
+						'<a class="dropdown-toggle" data-toggle="dropdown">',
 						textDirection=='ltr'? 'Before hit ' : 'After hit ',
 						'<span class="caret"></span></a>',
 						'<ul class="dropdown-menu" role="menu" aria-labelledby="left">');
@@ -469,7 +469,7 @@ SINGLEPAGE.INTERFACE = (function() {
 				'<th class="text-center" style="width:20px;">',
 					'<a data-bls-sort="hit:' + PROPS.firstMainProp.id + '"><strong>' + PROPS.firstMainProp.displayName + '<strong></a>',
 				'</th>',
-				
+
 				'<th class="text-left" style="width:40px;">',
 					'<span class="dropdown">', // Span as when it's div, and we're right aligning text, the dropdown doesn't align because the div extends all the way left
 						'<a class="dropdown-toggle" data-toggle="dropdown">',
@@ -483,13 +483,13 @@ SINGLEPAGE.INTERFACE = (function() {
 						'</ul>',
 					'</span>',
 				'</th>');
-				
+
 			// Not all properties have their own table columns
 			PROPS.shown.forEach(function(prop) { html.push(
-				'<th style="width:15px;"><a data-bls-sort="hit:' + prop.id + '">' + prop.displayName + '</a></th>');	
+				'<th style="width:15px;"><a data-bls-sort="hit:' + prop.id + '">' + prop.displayName + '</a></th>');
 			});
 		html.push('</tr></thead>');
-		
+
 		html.push('<tbody>');
 		var prevHitDocPid = null;
 		var numColumns = 3 + PROPS.shown.length; // before context - hit context - after context - remaining properties
@@ -502,7 +502,7 @@ SINGLEPAGE.INTERFACE = (function() {
 				var docTitle = doc[data.summary.docFields.titleField] || 'UNKNOWN';
 				var docAuthor = doc[data.summary.docFields.authorField] ? ' by ' + doc[data.summary.docFields.authorField] : '';
 				var docDate = doc[data.summary.docFields.dateField] ? ' (' + doc[data.summary.docFields.dateField] + ')' : '';
-				
+
 				var docUrl = new URI('article').search({
 					'doc': docPid,
 					'query': data.summary.searchParam.patt
@@ -516,10 +516,10 @@ SINGLEPAGE.INTERFACE = (function() {
 						'</div></td>',
 					'</tr>');
 			}
-			
+
 			// And display the hit itself
 			var parts = snippetParts(hit);
-			var left = textDirection=='ltr'? parts[0] : parts[2]; 
+			var left = textDirection=='ltr'? parts[0] : parts[2];
 			var right = textDirection=='ltr'? parts[2] : parts[0];
 			var propsWord = properties(hit.match).replace("'","\\'").replace("&apos;","\\'").replace('"', '&quot;');
 
@@ -608,7 +608,7 @@ SINGLEPAGE.INTERFACE = (function() {
 	/**
 	 * Convert a blacklab-server reply containing information about hit or document groups into a table containing the results.
 	 * Some minor styling is applied based on whether the results are hits or documents.
-	 * 
+	 *
 	 * @param {any} data the blacklab-server response.
 	 * @returns An array of html strings containing the <thead> and <tbody>, but without the enclosing <table> element.
 	 */
@@ -658,30 +658,30 @@ SINGLEPAGE.INTERFACE = (function() {
 
 	/**
 	 * Request the currently shown results as a CSV file, and save it.
-	 * 
+	 *
 	 * 'this' should be the tab containing the results to export.
 	 * 'event.target' should be the element that was clicked.
-	 * 
-	 * @param {Jquery.Event} event 
+	 *
+	 * @param {Jquery.Event} event
 	 */
 	function onExportCsv(event) {
 		var $tab = $(event.delegateTarget);
-		
+
 		var $button = $(event.target);
 		if ($button.hasClass('disabled'))
 			return;
 
-		var pageParam = $.extend({}, 
+		var pageParam = $.extend({},
 			$tab.data('defaultParameters'),
 			$tab.data('parameters'),
 			$tab.data('constParameters'));
 
 		var blsParam = SINGLEPAGE.BLS.getBlsParam(pageParam);
-		
+
 		blsParam.outputformat = 'csv';
 		delete blsParam.number;
 		delete blsParam.first;
-		
+
 		var url = new URI(BLS_URL).segment(pageParam.operation).addSearch(blsParam).toString();
 		if (SINGLEPAGE.DEBUG) {
 			console.log('CSV download url', url, blsParam);
@@ -713,8 +713,8 @@ SINGLEPAGE.INTERFACE = (function() {
 
 	/**
 	 * Redraws the table, pagination, hides spinners, shows/hides group indicator, shows the pagination/group controls, etc.
-	 * 
-	 * @param {any} data the successful blacklab-server reply. 
+	 *
+	 * @param {any} data the successful blacklab-server reply.
 	 */
 	function setTabResults(data) {
 		var $tab = $(this);
@@ -776,8 +776,8 @@ SINGLEPAGE.INTERFACE = (function() {
 
 	/**
 	 * Clears displayed data, hides pagination, group indicator, group control, cached results, etc.
-	 * 
-	 * @param {any} $tab 
+	 *
+	 * @param {any} $tab
 	 */
 	function clearTabResults($tab) {
 		$tab.find('.resultcontrols').hide();
@@ -840,10 +840,10 @@ SINGLEPAGE.INTERFACE = (function() {
 	 * We emulate the tab reopening to update the displayed search results when new search parameters are set/selected.
 	 */
 	function onTabOpen(/*event, data*/) {
-		
+
 		var $tab = $(this);
 		var searchSettings = $.extend({}, $tab.data('defaultParameters'), $tab.data('parameters'), $tab.data('constParameters'));
-		
+
 		// CORE does as little UI manipulation as possible, just shows a tab when required
 		// so we're responsible for showing the entire results area.
 		$('#results').show();
@@ -882,7 +882,7 @@ SINGLEPAGE.INTERFACE = (function() {
 		// All is well, search!
 		showSearchIndicator($tab);
 		SINGLEPAGE.CORE.onSearchUpdated(searchSettings);
-		SINGLEPAGE.BLS.search(searchSettings, 
+		SINGLEPAGE.BLS.search(searchSettings,
 			function onSuccess() {
 				hideBlsError();
 				$tab.data('fnSetResults').apply(undefined, Array.prototype.slice.call(arguments)); // call with original args
@@ -970,7 +970,7 @@ SINGLEPAGE.INTERFACE = (function() {
 					event.preventDefault();
 				})
 				// don't attach to 'changed', as that fires every time a single option is toggled, instead wait for the menu to close
-				.on('hide.bs.select', 'select.groupselect', function(event) { 
+				.on('hide.bs.select', 'select.groupselect', function(event) {
 					$(this).trigger('localParameterChange', {
 						groupBy: $(this).selectpicker('val'),
 						page: 0,

@@ -5,7 +5,7 @@ SINGLEPAGE.CQLPARSER = (function() {
 	var WHITESPACE = [' ', '\t', '\n', '\r'];
 
 	function parse(input) {
-		
+
 		var pos = 0;
 		var cur = '';
 
@@ -16,7 +16,7 @@ SINGLEPAGE.CQLPARSER = (function() {
 		function nextSym() {
 			if (++pos >= input.length)
 				cur = null;
-			else 
+			else
 				cur = input[pos];
 		}
 
@@ -25,7 +25,7 @@ SINGLEPAGE.CQLPARSER = (function() {
 		function test() {
 			for (var i = 0; i < arguments.length; i++) {
 				var symbol = arguments[i];
-                
+
 				if (symbol instanceof Array) {
 					for (var j = 0; j < symbol.length; j++) {
 						if (test(symbol[j]))
@@ -36,9 +36,9 @@ SINGLEPAGE.CQLPARSER = (function() {
 						if (pos + k >= input.length || input[pos + k] !== symbol[k])
 							return false;
 					}
-					return true
+					return true;
 				}
-				else 
+				else
 					return (symbol === cur);
 			}
 			return false;
@@ -50,18 +50,18 @@ SINGLEPAGE.CQLPARSER = (function() {
 		function accept(sym, keepWhitespace) {
 			var originalPos = pos;
 			var originalCur = cur;
-           
+
 			if (!keepWhitespace) {
 				while (test(WHITESPACE))
 					nextSym();
 			}
-            
+
 			var accepted = test(sym);
 			if (accepted) {
 				// Don't use nextSym(), sym.length might be >1
 				pos += sym.length;
 				cur = input[pos];
-				
+
 				if (!keepWhitespace) {
 					while (test(WHITESPACE))
 						nextSym();
@@ -80,7 +80,7 @@ SINGLEPAGE.CQLPARSER = (function() {
 				throw errorMsg('Expected one of [' + sym + '] but found ' + input[pos]);
 		}
 
-		// Continue until one of the symbols is encountered, 
+		// Continue until one of the symbols is encountered,
 		// then stop at the encountered symbol and return a substring from where we started and ending at that symbol (exclusive)
 		function until(symbols) {
 			symbols = [symbols, null]; // always test for end of string
@@ -107,7 +107,7 @@ SINGLEPAGE.CQLPARSER = (function() {
 			expect('>');
 
 			return {
-				type: 'xml', 
+				type: 'xml',
 				name: tagName, // todo validate
 				isClosingTag: isClosingTag
 			};
@@ -136,7 +136,7 @@ SINGLEPAGE.CQLPARSER = (function() {
 				var exp = parseExpression();
 				expect(')');
 				return exp;
-			} else { 
+			} else {
 				return parseAttribute();
 			}
 		}
@@ -160,7 +160,7 @@ SINGLEPAGE.CQLPARSER = (function() {
 		}
 
 		function parseToken() {
-            
+
 			var token = {
 				leadingXmlTag: null,
 				trailingXmlTag: null,
@@ -174,11 +174,11 @@ SINGLEPAGE.CQLPARSER = (function() {
 			if (test('<')) {
 				token.leadingXmlTag = parseXmlTag();
 			}
-            
+
 			if (accept('[')) {
 
 				token.expression = parseExpression();
-				expect(']');    
+				expect(']');
 
 			} else { // shorthand is just a single word
 				expect('"');
@@ -192,32 +192,32 @@ SINGLEPAGE.CQLPARSER = (function() {
 					value: word
 				};
 			}
-            
+
 			if (accept('{')) { // range
-                
+
 				var minRep = parseInt(until([',', '}']));
 				var maxRep = null;
 
 				if (accept(',')) {
-                    
+
 					var maxRepString = until('}').trim();
 					// {n, } is valid syntax for unbounded repetitions starting at n times
 					// signal this by leaving maxRep as null
-					if (maxRepString.length > 0) 
+					if (maxRepString.length > 0)
 						maxRep = parseInt(maxRepString);
-                    
+
 					expect('}');
 				}
 				else {
 					maxRep = minRep;
 					expect('}');
 				}
-                
+
 				if (isNaN(minRep))
 					throw new errorMsg('minRepeats is not a number');
 				if (maxRep !== null && isNaN(maxRep))
 					throw new errorMsg('maxRepeats is not a number');
-                 
+
 				token.repeats = {
 					min: minRep,
 					max: maxRep,
@@ -238,10 +238,10 @@ SINGLEPAGE.CQLPARSER = (function() {
 
 		function parseWithin() {
 			expect('within');
-				
+
 			expect('<');
 			var elementName = until(['/', WHITESPACE]); // break on whitespace, since whitespace in the <tag name/> is illegal
-			expect('/') // self closing tag (<tag/>)
+			expect('/'); // self closing tag (<tag/>)
 			expect('>');
 			return elementName;
 		}
@@ -258,7 +258,7 @@ SINGLEPAGE.CQLPARSER = (function() {
 		var tokens = [];
 		var within = null;
 
-		
+
 		// we always start with a token
 		tokens.push(parseToken());
 		while (pos < input.length) {
@@ -272,11 +272,11 @@ SINGLEPAGE.CQLPARSER = (function() {
 		return {
 			tokens: tokens,
 			within: within
-		}
+		};
 	}
 
 	return {
 		parse: parse
 	};
-    
+
 })();

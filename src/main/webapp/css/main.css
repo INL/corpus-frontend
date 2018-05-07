@@ -486,3 +486,8 @@ a[data-bls-sort], a.dropdown-toggle {
 .bootstrap-select small.text-muted {
 	padding-left: 0px!important;
 }
+
+.groupselect {
+	width: auto!important;
+	max-width: 100%!important;
+}

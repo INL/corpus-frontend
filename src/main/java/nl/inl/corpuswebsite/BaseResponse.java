@@ -51,10 +51,10 @@ public abstract class BaseResponse {
     protected String corpus = null;
 
     /**
-     * Whatever uri followed after the page that cause this response to be served.
-     * NOTE: is URL-encoded and contains forward slashes.
+     * Whatever path/url segments followed after the page that cause this response to be served.
+     * Has been split on '/' and decoded
      */
-    protected String uriRemainder = null;
+    protected List<String> pathParameters = null;
 
     /**
      * @param requiresCorpus when set, causes an exception to be thrown when {@link BaseResponse#corpus} is not set when
@@ -74,10 +74,10 @@ public abstract class BaseResponse {
      * @param response the HTTP response object.
      * @param servlet our servlet.
      * @param corpus (optional) the corpus for which this response is generated.
-     * @param uriRemainder url-encoded trailing path in the original request uri, so the part behind the response's path
+     * @param pathParameters trailing path segments in the original request uri, so the part behind the response's path
      * @throws ServletException when corpus is required but missing.
      */
-    public void init(HttpServletRequest request, HttpServletResponse response, MainServlet servlet, String corpus, String uriRemainder)
+    public void init(HttpServletRequest request, HttpServletResponse response, MainServlet servlet, String corpus, List<String> pathParameters)
         throws ServletException {
         if ((corpus == null || corpus.isEmpty()) && this.requiresCorpus)
             throw new ServletException("Response requires a corpus");
@@ -86,7 +86,7 @@ public abstract class BaseResponse {
         this.response = response;
         this.servlet = servlet;
         this.corpus = corpus;
-        this.uriRemainder = uriRemainder;
+        this.pathParameters = pathParameters;
 
         context.put("esc", esc);
         context.put("websiteConfig", this.servlet.getWebsiteConfig(corpus));
@@ -105,23 +105,24 @@ public abstract class BaseResponse {
         // Escape all data written into the velocity templates by default
         // Only allow access to the raw string if the expression contains the word "unescaped"
         EventCartridge cartridge = context.getEventCartridge();
-        if (cartridge == null)
+        if (cartridge == null) {
             cartridge = new EventCartridge();
-        cartridge.addReferenceInsertionEventHandler(new ReferenceInsertionEventHandler() {
-            /**
-             * @param expression string as in the .vm template, such as "$object.value()"
-             * @param value the resolved value
-             */
-            @Override
-            public Object referenceInsert(String expression, Object value) {
-                boolean escape = !expression.toLowerCase().contains("unescaped");
-                String val = value.toString();
+            cartridge.addReferenceInsertionEventHandler(new ReferenceInsertionEventHandler() {
+                /**
+                 * @param expression string as in the .vm template, such as "$object.value()"
+                 * @param value the resolved value
+                 */
+                @Override
+                public Object referenceInsert(String expression, Object value) {
+                    boolean escape = !expression.toLowerCase().contains("unescaped");
+                    String val = value != null ? value.toString() : "";
 
-                return escape ? esc.html(val) : val;
-            }
-        });
+                    return escape ? esc.html(val) : val;
+                }
+            });
+            context.attachEventCartridge(cartridge);
+        }
 
-        context.attachEventCartridge(cartridge);
     }
 
     /**

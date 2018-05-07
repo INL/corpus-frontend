@@ -503,10 +503,31 @@ SINGLEPAGE.INTERFACE = (function() {
 				var docAuthor = doc[data.summary.docFields.authorField] ? ' by ' + doc[data.summary.docFields.authorField] : '';
 				var docDate = doc[data.summary.docFields.dateField] ? ' (' + doc[data.summary.docFields.dateField] + ')' : '';
 
-				var docUrl = new URI('article').search({
-					'doc': docPid,
+				// TODO the clientside url generation story... https://github.com/INL/corpus-frontend/issues/95
+				// Ideally use absolute urls everywhere, if the application needs to be proxied, let the proxy server handle it.
+				// Have a configurable url in the backend that's made available on the client that we can use here.
+				var docUrl;
+				switch (new URI().filename()) {
+					case '':
+						docUrl = new URI('../../docs/'); 
+						break;
+					case 'docs':
+					case 'hits':
+						docUrl = new URI('../docs/');
+						break;
+					case 'search':
+					default: // some weird proxy?
+						docUrl = new URI('./docs/');
+						break;
+				}
+
+				docUrl = docUrl
+				.absoluteTo(new URI().toString())
+				.filename(docPid)
+				.search({
 					'query': data.summary.searchParam.patt
-				}).toString();
+				})
+				.toString();
 
 				// Display some info about the document
 				html.push(
@@ -584,10 +605,31 @@ SINGLEPAGE.INTERFACE = (function() {
 				return false; // only need the first snippet for now
 			});
 
-			var docUrl = new URI('article').search({
-				'doc': docPid,
+			// TODO the clientside url generation story... https://github.com/INL/corpus-frontend/issues/95
+			// Ideally use absolute urls everywhere, if the application needs to be proxied, let the proxy server handle it.
+			// Have a configurable url in the backend that's made available on the client that we can use here.
+			var docUrl;
+			switch (new URI().filename()) {
+				case '':
+					docUrl = new URI('../../docs/'); 
+					break;
+				case 'docs':
+				case 'hits':
+					docUrl = new URI('../docs/');
+					break;
+				case 'search':
+				default: // some weird proxy?
+					docUrl = new URI('./docs/');
+					break;
+			}
+
+			docUrl = docUrl
+			.absoluteTo(new URI().toString())
+			.filename(docPid)
+			.search({
 				'query': data.summary.searchParam.patt
-			}).toString();
+			})
+			.toString();
 
 			html.push(
 				'<tr class="documentrow">',

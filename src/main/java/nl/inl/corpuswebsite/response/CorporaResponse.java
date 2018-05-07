@@ -1,5 +1,7 @@
 package nl.inl.corpuswebsite.response;
 
+import java.util.List;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -15,9 +17,9 @@ public class CorporaResponse extends BaseResponse {
     }
 
     @Override
-    public void init(HttpServletRequest request, HttpServletResponse response, MainServlet servlet, String corpus, String uriRemainder)
+    public void init(HttpServletRequest request, HttpServletResponse response, MainServlet servlet, String corpus, List<String> pathParameters)
         throws ServletException {
-        super.init(request, response, servlet, corpus, uriRemainder);
+        super.init(request, response, servlet, corpus, pathParameters);
 
         context.put("blsUrl", servlet.getExternalWebserviceUrl(""));
     }

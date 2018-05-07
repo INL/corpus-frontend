@@ -4,12 +4,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Optional;
 
 import javax.servlet.ServletException;
@@ -17,7 +15,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
 
 import nl.inl.corpuswebsite.BaseResponse;
 import nl.inl.corpuswebsite.MainServlet;
@@ -29,7 +26,7 @@ public class CorporaDataResponse extends BaseResponse {
     }
 
     @Override
-    public void init(HttpServletRequest request, HttpServletResponse response, MainServlet servlet, String corpus, String uriRemainder)
+    public void init(HttpServletRequest request, HttpServletResponse response, MainServlet servlet, String corpus, List<String> pathParameters)
         throws ServletException {
 
         // Don't call super(), we don't always have a corpus to work with, and even if we do, it's not guaranteed to be valid
@@ -39,31 +36,27 @@ public class CorporaDataResponse extends BaseResponse {
         this.response = response;
         this.servlet = servlet;
         this.corpus = corpus;
-        this.uriRemainder = uriRemainder;
+        this.pathParameters = pathParameters;
     }
 
     @Override
-    protected void completeRequest() {
+    protected void completeRequest() throws IOException {
         try {
-            // We must decode every part of the path separately to avoid problems with url-encoded slashes and special characters
             // NOTE: the corpus-specific directory can be used to store both internal and external files.
             // Internal files should be located in the root directory for the corpus interface-data directory
             // while external files (those available through the browser) should be located in the 'static' subdirectory.
+            // This is why we begin with the 'static' directory
             Path path = Paths.get("./static");
-            for (String s : StringUtils.split(uriRemainder, "/")) {
-                path = path.resolve(URLDecoder.decode(s, StandardCharsets.UTF_8.name()));
+            for (String s : pathParameters) {
+                path = path.resolve(s);
             }
 
             String pathString = path.toString();
             Optional<File> file = servlet.getProjectFile(corpus, pathString);
 
             if (!file.isPresent()) {
-                try {
-                    response.sendError(HttpServletResponse.SC_NOT_FOUND);
-                    return;
-                } catch (IOException e1) {
-                    throw new RuntimeException(e1);
-                }
+                response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                return;
             }
 
             try (InputStream is = new FileInputStream(file.get())) {
@@ -73,19 +66,10 @@ public class CorporaDataResponse extends BaseResponse {
                 response.setContentType(mime);
 
                 IOUtils.copy(is, response.getOutputStream());
-            } catch (IOException e) {
-                // This signifies an error writing the response, errors reading the file are handled at a higher level.
-                throw new RuntimeException(e);
             }
         } catch (InvalidPathException e1) { // runtimeException from Path.resolve; when weird paths are being requested
-            try {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND);
-                return;
-            } catch (IOException e2) {
-                throw new RuntimeException(e2);
-            }
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
         }
     }
 }

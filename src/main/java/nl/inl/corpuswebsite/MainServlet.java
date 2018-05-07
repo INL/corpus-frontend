@@ -24,6 +24,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +33,7 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.servlet.ServletConfig;
@@ -207,7 +209,7 @@ public class MainServlet extends HttpServlet {
         responses.put("about", AboutResponse.class);
         responses.put("help", HelpResponse.class);
         responses.put("search", SearchResponse.class);
-        responses.put("article", ArticleResponse.class);
+        responses.put("docs", ArticleResponse.class);
         responses.put("static", CorporaDataResponse.class);
     }
 
@@ -404,25 +406,28 @@ public class MainServlet extends HttpServlet {
         }
 
         // Use apache stringutils split as it's much more sensible about omitting leading/trailing and empty strings.
-        String[] pathParts = StringUtils.split(requestUri, "/");
+        List<String> pathParts = Arrays.stream(StringUtils.split(requestUri, '/'))
+            .map(s -> {
+                try {
+                    return URLDecoder.decode(s, StandardCharsets.UTF_8.name());
+                } catch (UnsupportedEncodingException e) {
+                    throw new IllegalStateException(e);
+                }
+            })
+            .collect(Collectors.toList());
 
         String corpus = null;
         String page = null;
-        String remainder = null;
-        if (pathParts.length == 0) { //
+        List<String> pathParameters = pathParts.subList(Math.min(pathParts.size(), 2), pathParts.size()); // remainder of the url after the context root and page url, split on '/' and decoded.
+        if (pathParts.isEmpty()) { // requested application root
             page = DEFAULT_PAGE;
-        } else if (pathParts.length == 1) { // <page>
-            page = pathParts[0];
-        } else if (pathParts.length >= 2) { // <corpus>/<page>/...
-            try {
-                corpus = URLDecoder.decode(pathParts[0], StandardCharsets.UTF_8.name());
-                page = pathParts[1];
-                remainder = StringUtils.join(pathParts, "/", 2, pathParts.length);
-                if (corpus.equals(adminProps.getProperty(PROP_DATA_DEFAULT)))
-                    corpus = null;
-            } catch (UnsupportedEncodingException e) {
-                throw new RuntimeException(e);
-            }
+        } else if (pathParts.size() == 1) { // <page>
+            page = pathParts.get(0);
+        } else if (pathParts.size() >= 2) { // <corpus>/<page>/...
+            corpus = pathParts.get(0);
+            page = pathParts.get(1);
+            if (corpus.equals(adminProps.getProperty(PROP_DATA_DEFAULT)))
+                corpus = null;
         }
 
         // Get response class
@@ -446,7 +451,7 @@ public class MainServlet extends HttpServlet {
             return;
         }
 
-        br.init(request, response, this, corpus, remainder);
+        br.init(request, response, this, corpus, pathParameters);
         try {
             br.completeRequest();
         } catch (IOException e) {

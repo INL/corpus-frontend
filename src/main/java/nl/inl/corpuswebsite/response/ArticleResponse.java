@@ -51,7 +51,12 @@ public class ArticleResponse extends BaseResponse {
 
     @Override
     protected void completeRequest() throws IOException {
-        String pid = this.getParameter("doc", "");
+        if (pathParameters.size() != 1) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid document id format " + StringUtils.join(pathParameters, '/'));
+            return;
+        }
+
+        String pid = pathParameters.get(0);
         if (pid == null || pid.isEmpty()) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
@@ -63,89 +68,86 @@ public class ArticleResponse extends BaseResponse {
         QueryServiceHandler articleContentRequest = new QueryServiceHandler(servlet.getWebserviceUrl(corpus) + "docs/" + pid + "/contents");
         QueryServiceHandler articleMetadataRequest = new QueryServiceHandler(servlet.getWebserviceUrl(corpus) + "docs/" + pid);
 
-        if (request.getParameterMap().size() > 0) {
-            // get parameter values
-            String query = this.getParameter("query", "");
-            String userId = MainServlet.getCorpusOwner(corpus);
+        // get parameter values
+        String query = this.getParameter("query", "");
+        String userId = MainServlet.getCorpusOwner(corpus);
 
-            Map<String, String[]> contentRequestParameters = new HashMap<>();
-            Map<String, String[]> metadataRequestParameters = new HashMap<>();
+        Map<String, String[]> contentRequestParameters = new HashMap<>();
+        Map<String, String[]> metadataRequestParameters = new HashMap<>();
+
+        if (query != null && !query.isEmpty()) {
             contentRequestParameters.put("patt", new String[] { query });
-            if (userId != null) {
-                contentRequestParameters.put("userid", new String[] { userId });
-                metadataRequestParameters.put("userid", new String[] { userId });
-            }
+        }
+        if (userId != null && !userId.isEmpty()) {
+            contentRequestParameters.put("userid", new String[] { userId });
+            metadataRequestParameters.put("userid", new String[] { userId });
+        }
 
-            // show max. 5000 (or as requested/configured) words of content (TODO: paging)
-            // paging will also need edits in blacklab,
-            // since when you only get a subset of the document without begin and ending, the top of the xml tree will be missing
-            // and xslt will not match anything (or match the wrong elements)
-            // so blacklab will have to walk the tree and insert those tags in some manner.
-            contentRequestParameters.put("wordend", new String[] { Integer.toString(getWordsToShow()) });
+        // show max. 5000 (or as requested/configured) words of content (TODO: paging)
+        // paging will also need edits in blacklab,
+        // since when you only get a subset of the document without begin and ending, the top of the xml tree will be missing
+        // and xslt will not match anything (or match the wrong elements)
+        // so blacklab will have to walk the tree and insert those tags in some manner.
+        contentRequestParameters.put("wordend", new String[] { Integer.toString(getWordsToShow()) });
 
-            try {
-                // NOTE: document not necessarily xml, though it might have some <hl/> tags injected to mark query hits
-                String documentContents = articleContentRequest.makeRequest(contentRequestParameters);
-                if (documentContents.contains("NOT_AUTHORIZED")) {
-                    context.put("article_content", "content restricted");
-                } else {
-                    context.put("article_content",
-                        articleStylesheet.map(t -> {  // probably xml, or we wouldn't have a stylesheet
-                            t.clearParameters();
-                            t.addParameter("contextRoot", servlet.getServletContext().getContextPath());
-                            servlet.getWebsiteConfig(corpus).getXsltParameters().forEach(t::addParameter);
+        try {
+            // NOTE: document not necessarily xml, though it might have some <hl/> tags injected to mark query hits
+            String documentContents = articleContentRequest.makeRequest(contentRequestParameters);
+            if (documentContents.contains("NOT_AUTHORIZED")) {
+                context.put("article_content", "content restricted");
+            } else {
+                context.put("article_content",
+                    articleStylesheet.map(t -> {  // probably xml, or we wouldn't have a stylesheet
+                        t.clearParameters();
+                        t.addParameter("contextRoot", servlet.getServletContext().getContextPath());
+                        servlet.getWebsiteConfig(corpus).getXsltParameters().forEach(t::addParameter);
 
-                            try {
-                                return t.transform(documentContents);
-                            } catch (TransformerException e) {
-                                return null; // proceed to orElseGet
-                            }
-                        })
-                        .orElseGet(() -> {
-                            if (!XML_TAG_PATTERN.matcher(documentContents).find()) {
-                                // not xml, just replace the inserted hl tags and pass on
-                               return "<pre>" + StringUtils.replaceEach(documentContents,
-                                                               new String[] {"<hl>", "</hl>"},
-                                                               new String[] { "<span class=\"hl\">", "</span>"}) +
-                               "</pre>";
-                            }
-
-                            // seems to contain at least one xml opening/self-closing tag, process using default xslt
-                            try {
-                                return defaultTransformer.transform(documentContents);
-                            } catch (TransformerException e) {
-                                // Document seems to be xml, but probably not valid, we tried...
-                                return "Could not prepare document for viewing (it might be malformed xml) - " + e.getMessage();
-                            }
-                        })
-                    );
-                }
-
-                context.put("article_meta", metadataStylesheet
-                    .map(t -> {
                         try {
-                            return t.transform(articleMetadataRequest.makeRequest(metadataRequestParameters));
-                        } catch (TransformerException | IOException | QueryException e) {
-                            return null;
+                            return t.transform(documentContents);
+                        } catch (TransformerException e) {
+                            return null; // proceed to orElseGet
                         }
                     })
-                    .orElse("")
+                    .orElseGet(() -> {
+                        if (!XML_TAG_PATTERN.matcher(documentContents).find()) {
+                            // not xml, just replace the inserted hl tags and pass on
+                           return "<pre>" + StringUtils.replaceEach(documentContents,
+                                                           new String[] {"<hl>", "</hl>"},
+                                                           new String[] { "<span class=\"hl\">", "</span>"}) +
+                           "</pre>";
+                        }
+
+                        // seems to contain at least one xml opening/self-closing tag, process using default xslt
+                        try {
+                            return defaultTransformer.transform(documentContents);
+                        } catch (TransformerException e) {
+                            // Document seems to be xml, but probably not valid, we tried...
+                            return "Could not prepare document for viewing (it might be malformed xml) - " + e.getMessage();
+                        }
+                    })
                 );
-            } catch (QueryException e) {
-                if (e.getHttpStatusCode() == 404) {
+            }
+
+            context.put("article_meta", metadataStylesheet
+                .map(t -> {
                     try {
-                        response.sendError(HttpServletResponse.SC_NOT_FOUND);
-                    } catch (IOException e1) {
-                        throw new RuntimeException(e1);
+                        return t.transform(articleMetadataRequest.makeRequest(metadataRequestParameters));
+                    } catch (TransformerException | IOException | QueryException e) {
+                        return null;
                     }
-                } else {
-                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                    context.put("error", e.getMessage());
-                    displayHtmlTemplate(servlet.getTemplate("error"));
-                }
+                })
+                .orElse("")
+            );
+        } catch (QueryException e) {
+            if (e.getHttpStatusCode() == 404) {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND);
                 return;
             }
+
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+            return;
         }
+
 
         // display template
         displayHtmlTemplate(servlet.getTemplate("article"));

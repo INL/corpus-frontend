@@ -847,7 +847,7 @@ SINGLEPAGE.INTERFACE = (function() {
 		// CORE does as little UI manipulation as possible, just shows a tab when required
 		// so we're responsible for showing the entire results area.
 		$('#results').show();
-		var querySummary = SINGLEPAGE.BLS.getQuerySummary(searchSettings.pattern, searchSettings.within, SINGLEPAGE.FORM.getActiveFilters());
+		var querySummary = SINGLEPAGE.BLS.getQuerySummary(searchSettings.pattern, searchSettings.within, searchSettings.filters);
 		$('#searchFormDivHeader').show()
 		.find('#querySummary').text(querySummary).attr('title', querySummary.substr(0, 1000));
 

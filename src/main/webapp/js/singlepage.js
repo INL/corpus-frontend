@@ -247,10 +247,10 @@ SINGLEPAGE.CORE = (function () {
 						// case flag is always at the front, so check for that before checking
 						// for starts with/ends with flags
 						if (op.value.indexOf('(?-i)') === 0) {
-							attributeInstance.set('case', true, op.attributeType);
+							attributeInstance.set('case', true, op.name);
 							op.value = op.value.substr(5);
 						} else if (op.value.indexOf('(?c)') === 0) {
-							attributeInstance.set('case', true, op.attributeType);
+							attributeInstance.set('case', true, op.name);
 							op.value = op.value.substr(4);
 						}
 
@@ -267,7 +267,7 @@ SINGLEPAGE.CORE = (function () {
 
 
 						attributeInstance.set('operator', op.operator);
-						attributeInstance.set('type', op.attributeType);
+						attributeInstance.set('type', op.name);
 
 						attributeInstance.set('val', op.value);
 					}

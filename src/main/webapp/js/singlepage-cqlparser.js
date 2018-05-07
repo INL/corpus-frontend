@@ -32,7 +32,7 @@
 /**
  * @typedef Attribute
  * @property {'attribute'} type
- * @property {string} attributeType - a word property, such as lemma, pos, word etc...
+ * @property {string} name - a word property name, such as lemma, pos, word etc...
  * @property {string} operator - equality type, usually '=' or '!='
  * @property {string} value - regex to compare with
  */
@@ -168,7 +168,7 @@ SINGLEPAGE.CQLPARSER = (function() {
 
 			return {
 				type: 'attribute',
-				attributeType: name,
+				name: name,
 				operator: operator,
 				value: test
 			};
@@ -230,7 +230,7 @@ SINGLEPAGE.CQLPARSER = (function() {
 
 				token.expression = {
 					type: 'attribute',
-					attributeType: 'word', // or whatever the default is
+					name: 'word', // or whatever the default in blacklab is TODO use 'implicit' or something
 					operator: '=',
 					value: word
 				};

@@ -514,7 +514,7 @@ window.querybuilder = (function() {
 		$tokenPanelHeading.css({
 			'width': '100%',
 			'max-width': Math.max(width, 348) + 'px'
-		})	
+		});
 	};
 
 	Token.prototype.set = function(controlName, val) {

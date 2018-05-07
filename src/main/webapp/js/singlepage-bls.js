@@ -51,13 +51,13 @@ SINGLEPAGE.BLS = (function () {
 	}
 
 	function makeRegexWildcard(original) {
-		return original
-			.replace(/\\([\^$\-\\(){}[\]+])/g, '$1') // remove most slashes
-			.replace(/\\\./g, '_ESC_PERIOD_') // escape \.
-			.replace(/\.\*/g, '*') // restore *
-			.replace(/\./g, '?') // restore ?
-			.replace('_ESC_PERIOD_', '.') // unescape \. to .
-		;
+		var a = original;
+		a=a.replace(/\\([\^$\-\\(){}[\]+])/g, '$1'); // remove most slashes
+		a=a.replace(/\\\./g, '_ESC_PERIOD_'); // escape \.
+		a=a.replace(/\.\*/g, '*'); // restore *
+		a=a.replace(/\./g, '?'); // restore ?
+		a=a.replace(/_ESC_PERIOD_/g, '.'); // unescape \. to .
+		return a;
 	}
 
 	/**
@@ -86,7 +86,7 @@ SINGLEPAGE.BLS = (function () {
 					if (!tokens[i])
 						tokens[i] = {};
 
-					tokens[i][propertyField.name] = (propertyField['case'] ? '(?c)' : '') + makeWildcardRegex(words[i]);
+					tokens[i][propertyField.name] = (propertyField['case'] ? '(?-i)' : '') + makeWildcardRegex(words[i]);
 				}
 			}
 		});
@@ -217,7 +217,7 @@ SINGLEPAGE.BLS = (function () {
 
 			inflightRequest != null && inflightRequest.abort();
 			inflightRequest = null;
-			
+
 			$('#totalsReport').hide();
 		}
 
@@ -302,7 +302,7 @@ SINGLEPAGE.BLS = (function () {
 						if (SINGLEPAGE.DEBUG) {
 							console.log(data);
 						}
-						
+
 						// only start when we get the first bit of data back
 						// or we would fire off two nearly identical requests for nothing
 						totalsCounter.start(data, blsParam, operation);
@@ -367,12 +367,6 @@ SINGLEPAGE.BLS = (function () {
 					return null;
 
 				pageParams.operation  = blsParam.patt ? 'hits' : 'docs';
-				pageParams.pattern    = blsParam.patt || null; // restoring a simple search pattern from a query is not supported for now
-				// restoring WITHIN must be done by parsing the query, we can either do that here and use a sort of AST for the query in the rest of the application
-				// (see singlepate-cqlParser.js for what that data would look like)
-				// but doing this requires rewriting the parts of that currently rely on the raw cql query string
-				// This is the restoring of the querybuilder and the populating of the raw CQL input field
-				// pageParams.within   =
 				pageParams.sampleSize = blsParam.sample != null ? blsParam.sample : blsParam.samplenum;
 				pageParams.sampleMode = blsParam.sample != null ? 'percentage' : blsParam.samplenum != null ? 'count' : undefined;
 				pageParams.sampleSeed = blsParam.sampleseed;
@@ -381,15 +375,16 @@ SINGLEPAGE.BLS = (function () {
 				pageParams.groupBy    = blsParam.group ? blsParam.group.split(',') : undefined;
 				pageParams.viewGroup  = blsParam.viewgroup;
 				pageParams.sort       = blsParam.sort;
-				pageParams.filters    = (function() {
+
+				// Parse the FilterFields from the lucene query, this is rather involved.
+				// But rather concentrate the uglyness in one spot instead and simplify the structure instead of using a sort of AST everywhere else in the code.
+				pageParams.filters = (function() {
 					if (!blsParam.filter)
 						return null;
 
 					if (SINGLEPAGE.DEBUG)
 						console.log('parsing filter string', blsParam.filter);
 
-					// value returned by the parser - NOTE autosearch interface only supports AND, and all fields are implicitly required
-					// so we need to process the results somewhat to discard values we don't understand.
 					/**
 					 * @typedef Node
 					 * @property {(Node|Field|Range)} left
@@ -418,15 +413,17 @@ SINGLEPAGE.BLS = (function () {
 					 * @property {boolean} inclusive_max - inclusive upper bound
 					 */
 
-					// contains our current FilterField if applicable
+					// Contains our current FilterField (if we have one)
+					// Because a single filterField can be an expression like field:("value1" OR ("value3" OR "value4")) and the like
+					// we need recursion to parse the values, this var lets us write values to the current field in all levels of the recursion
 					/** @type {FilterField} */
 					var context = null;
-					// Collection of all parsed filterfields
+					// All already parsed filterfields, excluding the current context field.
+					// The context field is added to this list and then nulled when we've finished parsing all its values.
+					/** @type {Array.<FilterField>} */
 					var parsedValues = [];
 
-					/**
-					 * @param {Node} val
-					 */
+					/** @param {Node} val */
 					function node(val) {
 						if (val == null)
 							return;
@@ -458,8 +455,14 @@ SINGLEPAGE.BLS = (function () {
 						else if ('term' in cur) field(cur);
 						else if ('term_min' in cur) range(cur);
 
-						// if we're using other operators than AND, discard the righthand side.. we can't handle them
-						if (val.operator === 'AND' || val.operator === '<implicit>') {
+						// if we're using other operators than OR, discard the righthand side.. interface can't handle them
+						// we should handle rhs only
+						// - when we're inside a context with a field and operator is OR (left and right are both values for the same field)
+						// - when we're outside a context and the operator is AND (left and right are both fields)
+						if (val.right && 
+							((context == null && !(val.operator === 'OR' || val.operator === '<implicit>')) || // (going to be) parsing field expression, can't handle OR between fields
+							(context != null && !(val.operator == 'AND' )))
+						 ) { // (going to be) parsing term expression, can't handle AND between terms on the same field
 							cur = val.right;
 							if ('left' in cur) node(cur);
 							else if ('term' in cur) field(cur);
@@ -477,7 +480,7 @@ SINGLEPAGE.BLS = (function () {
 								context = null;
 							}
 						}
-						// else inside an existing context, push lower in the stack
+						// else we're already inside inside an existing context and are just joining values
 					}
 
 					/**
@@ -532,19 +535,11 @@ SINGLEPAGE.BLS = (function () {
 							return;
 
 						// Ignore in/exclusivity
-						var lower = parseFloat(val.term_min);
-						var upper = parseFloat(val.term_max);
-
-						if (!isNaN(lower) && !isNaN(upper)) {
-							parsedValues.push({
-								name: val.field,
-								filterType: 'range',
-								values: [lower, upper]
-							});
-						} else {
-							if (SINGLEPAGE.DEBUG)
-								console.log('encountered non-numeric range for field, ignoring.', val);
-						}
+						parsedValues.push({
+							name: val.field,
+							filterType: 'range',
+							values: [val.term_min, val.term_max]
+						});
 					}
 
 					try {
@@ -557,6 +552,77 @@ SINGLEPAGE.BLS = (function () {
 							console.log('reason: ', error);
 						}
 						return null;
+					}
+				})();
+
+				// restoring WITHIN must be done by parsing the query, we can either do that here and use a sort of AST for the query in the rest of the application
+				// (see singlepate-cqlParser.js for what that data would look like)
+				// but doing this requires rewriting the parts of that currently rely on the raw cql query string
+				// This is the restoring of the querybuilder and the populating of the raw CQL input field
+				// pageParams.within   =
+				// NOTE: we set the pageParams.within parameter in this function, because it's part of the cql query
+				pageParams.pattern = (function() {
+					function isCase(value) { return value.startsWith('(?-i)') || value.startsWith('(?c)'); }
+					function stripCase(value) { return value.substr(value.startsWith('(?-i)') ? 5 : 4); }
+					
+					try {
+						var result = SINGLEPAGE.CQLPARSER.parse(blsParam.patt);
+						pageParams.within = result.within;
+
+						// only used if parsing succeeds.
+						// contains arrays with the values at their respecitive indices
+						// the idea is that there are no empty elements, though they don't all have to be the same length
+						/** @type Object.<string, Array.<String>> */
+						var attributeValues = {};
+
+						for (var i = 0; i < result.tokens.length; ++i) {
+							/** @type {Token} */
+							var token = result.tokens[i];
+
+							if (token.leadingXmlTag || token.optional || token.repeats || token.trailingXmlTag)
+								throw new Error('Token contains settings too complex for simple search');
+
+							// Recursion stack
+							var stack = [token.expression];
+							while (stack.length) {
+								var expr = stack.shift();
+								if (expr.type === 'attribute') {
+									var name = expr.attributeType;
+									var values = attributeValues[name] = attributeValues[name] || [];
+									if (expr.operator != '=')
+										throw new Error('Unsupported comparator, only "=" is supported.');
+									if (values.length !== i)
+										throw new Error('Duplicate or missing values on property');
+									values.push(expr.value);
+								} else if (expr.type === 'binaryOp') {
+									if (!(expr.operator === '&' || expr.operator === 'AND'))
+										throw new Error('Multiple properties on token must use AND operator');
+
+									stack.push(expr.left, expr.right);
+								}
+							}
+						}
+
+						/** @type {Array.<PropertyField>} */
+						var propertyFields = [];
+						$.each(attributeValues, function(attrName, attrValues) {
+							var caseSensitive = attrValues.every(isCase);
+							if (caseSensitive)
+								attrValues = attrValues.map(stripCase);
+							
+							propertyFields.push({
+								name: attrName,
+								case: caseSensitive,
+								value: makeRegexWildcard(attrValues.join(' '))
+							});
+						});
+
+						return propertyFields;
+					} catch (error) {
+						if (SINGLEPAGE.DEBUG)
+							console.log('Coult not parse cql query', blsParam.patt);
+						pageParams.within = null; // couldn't parse
+						return blsParam.patt; // just pass on the cql-query, we can't parse it, or it's too complex
 					}
 				})();
 

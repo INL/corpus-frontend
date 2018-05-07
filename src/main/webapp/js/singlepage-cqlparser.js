@@ -1,9 +1,52 @@
+
+/**
+ * @typedef Result
+ * @property {Array.<Token>} [tokens]
+ * @property {string} [within] - xml token name excluding namespace, brackets, attributes etc
+ */
+
+/**
+ * @typedef Token
+ * @property {XmlTag} [leadingXmlTag]
+ * @property {XmlTag} [trailingXmlTag]
+ * @property {(BinaryOp | Attribute)} expression
+ * @property {boolean} optional
+ * @property {Repeats} [repeats]
+ */
+
+/**
+ * @typedef XmlTag
+ * @property {'xml'} type
+ * @property {string} tagName - xml token name excluding namespace, brackets, attributes etc
+ * @property {boolean} isClosingTag
+ */
+
+/**
+ * @typedef BinaryOp
+ * @property {'binaryOp'} type
+ * @property {('OR' | 'AND')} operator
+ * @property {(BinaryOp | Attribute)} left
+ * @property {(BinaryOp | Attribute)} right
+ */
+
+/**
+ * @typedef Attribute
+ * @property {'attribute'} type
+ * @property {string} attributeType - a word property, such as lemma, pos, word etc...
+ * @property {string} operator - equality type, usually '=' or '!='
+ * @property {string} value - regex to compare with
+ */
+
 var SINGLEPAGE = SINGLEPAGE || {};
 
 SINGLEPAGE.CQLPARSER = (function() {
 
 	var WHITESPACE = [' ', '\t', '\n', '\r'];
 
+	/**
+	 * @param {string} [input] - a cql query
+	 * @return {Result}
+	 */
 	function parse(input) {
 
 		var pos = 0;

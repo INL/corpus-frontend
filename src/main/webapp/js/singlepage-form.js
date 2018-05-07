@@ -253,6 +253,8 @@ SINGLEPAGE.FORM = (function () {
 		 */
 		setFilterValues: function(filterName, values) {
 			var $filterField = $('#' + filterName);
+			if (!$filterField.length) // Might happen when loading external queries?
+				return;
 			var $inputs = $filterField.find('input, select');
 			var filterType = $filterField.data('filterfield-type');
 
@@ -278,9 +280,24 @@ SINGLEPAGE.FORM = (function () {
 			updateFilterField($filterField);
 		},
 
+		/**
+		 * Sets the property to the specified value and case sensitivity.
+		 * Updates both the UI and the getActiveProperties list.
+		 * Missing property.value or property.case will clear those values.
+		 * 
+		 * @param {PropertyField} property
+		 */
 		setPropertyValues: function(property) {
 			var $propertyField = $('#' + property.name);
-			$propertyField.find('#' + property.name + '_value').val(property.value);
+			if (!$propertyField.length) // Might happen when loading external queries
+				return;
+
+			if (typeof property.value === 'undefined')
+				property.value = null; // bootstrap-select doesn't do anything when setting to undefined, so instead set null
+			property.case = property.case || false;
+
+			var $input = $propertyField.find('#' + property.name + '_value');
+			$input.is('select') ? $input.selectpicker('val', property.value) : $input.val(property.value);
 			$propertyField.find('#' + property.name + '_case').prop('checked', property.case);
 
 			updatePropertyField($propertyField);

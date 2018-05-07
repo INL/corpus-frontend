@@ -1,4 +1,4 @@
-/* global BLS_URL, URI, QSON, querybuilder */
+/* global URI, querybuilder */
 
 var SINGLEPAGE = SINGLEPAGE || {};
 
@@ -75,6 +75,7 @@ SINGLEPAGE.CORE = (function () {
 		});
 
 		// Attempt to parse the query from the cql editor into the querybuilder
+		// when the user asks to
 		$('#parseQuery').on('click', function() {
 			var pattern = $('#querybox').val();
 			if (populateQueryBuilder(pattern))
@@ -171,7 +172,7 @@ SINGLEPAGE.CORE = (function () {
 	 * Attempt to parse the query pattern and update the state of the query builder
 	 * to match it as much as possible.
 	 *
-	 * @param {any} searchParams
+	 * @param {string} pattern - cql query
 	 * @returns True or false indicating success or failure respectively
 	 */
 	function populateQueryBuilder(pattern) {
@@ -248,6 +249,9 @@ SINGLEPAGE.CORE = (function () {
 						if (op.value.indexOf('(?-i)') === 0) {
 							attributeInstance.set('case', true, op.attributeType);
 							op.value = op.value.substr(5);
+						} else if (op.value.indexOf('(?c)') === 0) {
+							attributeInstance.set('case', true, op.attributeType);
+							op.value = op.value.substr(4);
 						}
 
 						if (op.operator === '=' && op.value.length >= 2 && op.value.indexOf('|') === -1) {
@@ -285,7 +289,6 @@ SINGLEPAGE.CORE = (function () {
 		return true;
 	}
 
-
 	/**
 	 * Completely resets all form and results information and controls, then repopulates the page with the parameters.
 	 * Also initiates a search if the parameters contain a valid search. (the 'operation' is valid).
@@ -310,11 +313,10 @@ SINGLEPAGE.CORE = (function () {
 				// We have a raw cql query string, attempt to parse it using the querybuilder,
 				// otherwise fall back to the raw cql view
 				$('#querybox').val(searchParams.pattern);
+				$('#searchTabs a[href="#query"]').tab('show');
+
 				if (populateQueryBuilder(searchParams.pattern))
 					$('#searchTabs a[href="#advanced"]').tab('show');
-				else
-					$('#searchTabs a[href="#query"]').tab('show');
-
 			}
 		}
 
@@ -388,6 +390,10 @@ SINGLEPAGE.CORE = (function () {
 			return false;
 		},
 
+		/**
+		 * Callback from when a search is executed (not neccesarily by the user, could also just be pagination and the like)
+		 * @param {SearchParameters} searchParams
+		 */
 		onSearchUpdated: function(searchParams) {
 			// Only push new url if different
 			// Why? Because when the user goes back say, 10 pages, we reinit the page and do a search with the restored parameters

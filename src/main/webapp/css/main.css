@@ -362,7 +362,7 @@ a[data-bls-sort], a.dropdown-toggle {
 }
 
 .pagination {
-	margin: 15px 0px 0px 0px;
+	margin: 0px;
 }.pagination > li > a {
 	/* No float shenanigans, they mess up the baseline of any container around pagination */
 	display: inline-block;
@@ -387,8 +387,33 @@ a[data-bls-sort], a.dropdown-toggle {
 	z-index: 1000;
 }
 
+.groupselect-container {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    max-width:100%;
+    margin-bottom: 15px;
+}
+.groupselect-container div.groupselect {
+    flex: 1 1 auto;
+    width: auto!important;
+    min-width: 0px!important;
+}
+.groupselect-container .groupselect button {    
+    border-top-right-radius: 0px;
+    border-bottom-right-radius: 0px;
+    border-right: 0px;
+}
+.groupselect-container .dummybutton {
+	flex: none;
+	border-top-left-radius: 0px;
+	border-bottom-left-radius: 0px;
+}
+
+
 .resultgroupdetails {
 	border-radius: 100px;
+	vertical-align:top;
+	margin-bottom: 15px;
 }
 
 .resultgroupname {
@@ -485,9 +510,4 @@ a[data-bls-sort], a.dropdown-toggle {
 }
 .bootstrap-select small.text-muted {
 	padding-left: 0px!important;
-}
-
-.groupselect {
-	width: auto!important;
-	max-width: 100%!important;
 }

@@ -1013,11 +1013,18 @@ SINGLEPAGE.INTERFACE = (function() {
 				})
 				// don't attach to 'changed', as that fires every time a single option is toggled, instead wait for the menu to close
 				.on('hide.bs.select', 'select.groupselect', function(event) {
-					$(this).trigger('localParameterChange', {
-						groupBy: $(this).selectpicker('val'),
-						page: 0,
-						viewGroup: null, // Clear any group we may be currently viewing, as the available groups just changed
-					});
+					var prev = $(event.delegateTarget).data('parameters').groupBy || [];
+					var cur = $(this).selectpicker('val') || [];
+					// Don't fire search if options didn't change
+					
+					if (prev.length != cur.length || !prev.every(function(elem) { return cur.includes(elem); })) {
+						$(this).trigger('localParameterChange', {
+							groupBy: cur,
+							page: 0,
+							viewGroup: null, // Clear any group we may be currently viewing, as the available groups just changed
+						});
+					}
+
 					event.preventDefault();
 				})
 				.on('click', '.clearviewgroup', function(event) {

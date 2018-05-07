@@ -376,14 +376,16 @@ SINGLEPAGE.BLS = (function () {
 				pageParams.viewGroup  = blsParam.viewgroup;
 				pageParams.sort       = blsParam.sort;
 
-				// Parse the FilterFields from the lucene query, this is rather involved.
-				// But rather concentrate the uglyness in one spot instead and simplify the structure instead of using a sort of AST everywhere else in the code.
+				// Parse the FilterFields from the lucene query, this is a bit involved.
+				// TODO factor into module and add tests.
 				pageParams.filters = (function() {
 					if (!blsParam.filter)
 						return null;
 
 					if (SINGLEPAGE.DEBUG)
 						console.log('parsing filter string', blsParam.filter);
+
+					// First define some structures returned by the lib so we actually know what we're working with
 
 					/**
 					 * @typedef Node
@@ -395,7 +397,7 @@ SINGLEPAGE.BLS = (function () {
 
 					/**
 					 * @typedef Field
-					 * @property {string} field - field name, '<implicit>' if unspecified
+					 * @property {string} field - field name, '<implicit>' if unspecified (then use field of nearest ancestor that defines it, if there's none, it's the default lucene field)
 					 * @property {string} term
 					 * @property {('+' | '-')} [prefix]
 					 * @property {number} [boost]
@@ -413,17 +415,35 @@ SINGLEPAGE.BLS = (function () {
 					 * @property {boolean} inclusive_max - inclusive upper bound
 					 */
 
-					// Contains our current FilterField (if we have one)
-					// Because a single filterField can be an expression like field:("value1" OR ("value3" OR "value4")) and the like
-					// we need recursion to parse the values, this var lets us write values to the current field in all levels of the recursion
-					/** @type {FilterField} */
+					/**
+					 * Since the parsed query is a tree-like structure (to allow expression like 'field:("value1" OR ("value3" OR "value4"))' )
+					 * We need to recurse to extract all the values.
+					 * To simplify keeping track of what part of the query we're parsing, we store the current field here.
+					 * @type {FilterField}
+					 */
 					var context = null;
-					// All already parsed filterfields, excluding the current context field.
-					// The context field is added to this list and then nulled when we've finished parsing all its values.
-					/** @type {Array.<FilterField>} */
+					/** 
+					 * Once we're done with a field, we store it here and clear the context.
+					 * @type {Array.<FilterField>} 
+					 */
 					var parsedValues = [];
 
-					/** @param {Node} val */
+					/** 
+					 * Process a Node. A Field object is always contained within a Node (as far as I can tell).
+					 * So for a simple query like 'field:value', the library returns a structure like:
+					 * ```
+					 * { // Node
+					 *   field: 'field',
+					 *   left: { // Field
+					 *     field: '<implicit>', // referring to property 'field' in the enclosing Node structure
+					 *     term: 'value'
+					 *    }
+					 * }
+					 * ```
+					 * So if the Node contains a 'field' property we know all children will be Field instances defining the values
+					 * and we can open a new context that we can store the values in later parsing steps.
+					 * @param {Node} val 
+					 */
 					function node(val) {
 						if (val == null)
 							return;
@@ -455,14 +475,20 @@ SINGLEPAGE.BLS = (function () {
 						else if ('term' in cur) field(cur);
 						else if ('term_min' in cur) range(cur);
 
-						// if we're using other operators than OR, discard the righthand side.. interface can't handle them
-						// we should handle rhs only
-						// - when we're inside a context with a field and operator is OR (left and right are both values for the same field)
-						// - when we're outside a context and the operator is AND (left and right are both fields)
+						/**
+						 * We need to know what the right side contains if we're to handle it.
+						 * - If have a context, that means both left and right are values for a specific field (or Nodes containg a subtree of multiple values).
+						 * The current Node is the OR/AND token in a query like 'field:("value" OR "value2")'
+						 * The interface can only handle OR'ing all values for a field, so check that the query doesn't specify AND,
+						 * and if it does then skip processing the right side of the tree. 
+						 * - If we _don't_ have a context, then left and right define the Fields themselves 
+						 * The current Node is then the OR/AND token in a query like 'field1:value1 AND field2:value2'
+						 * In thise case, the interface can only handle AND'ing all the different fields, so check that too.
+						 */
 						if (val.right && 
-							((context == null && !(val.operator === 'OR' || val.operator === '<implicit>')) || // (going to be) parsing field expression, can't handle OR between fields
+							((context == null && !(val.operator === 'OR' || val.operator === '<implicit>')) || // implicit operator between field means OR
 							(context != null && !(val.operator == 'AND' )))
-						 ) { // (going to be) parsing term expression, can't handle AND between terms on the same field
+						) { 
 							cur = val.right;
 							if ('left' in cur) node(cur);
 							else if ('term' in cur) field(cur);
@@ -480,7 +506,7 @@ SINGLEPAGE.BLS = (function () {
 								context = null;
 							}
 						}
-						// else we're already inside inside an existing context and are just joining values
+						// else we're already inside inside an existing context and are just recursing over the values
 					}
 
 					/**
@@ -492,7 +518,7 @@ SINGLEPAGE.BLS = (function () {
 
 						var createdContext = false;
 						if (context == null) {
-							if (val.field === '<implicit>') // default value, basically parsing "term", interface can't handle this
+							if (val.field === '<implicit>') // default field name, query only specifies a value but no field, such as the query 'value', interface can't display this
 								return;
 
 							context = {
@@ -501,7 +527,7 @@ SINGLEPAGE.BLS = (function () {
 								values: []
 							};
 							createdContext = true;
-						} else if (context != null && val.field && val.field !== '<implicit>' /* && val.field !== context.filterName */) {
+						} else if (context != null && val.field && val.field !== '<implicit>') {
 							if (SINGLEPAGE.DEBUG) {
 								console.log('Got field', field, ' with an explicit name, but we already have a context?');
 								debugger;
@@ -531,7 +557,7 @@ SINGLEPAGE.BLS = (function () {
 							}
 							return;
 						}
-						if (val.field === '<implicit>') // default value, basically parsing "[from TO to]", interface can't handle this
+						if (val.field === '<implicit>') // default value, basically parsing "[from TO to]" without the name of field to which to apply the range, interface can't handle this
 							return;
 
 						// Ignore in/exclusivity
@@ -555,12 +581,15 @@ SINGLEPAGE.BLS = (function () {
 					}
 				})();
 
-				// restoring WITHIN must be done by parsing the query, we can either do that here and use a sort of AST for the query in the rest of the application
-				// (see singlepate-cqlParser.js for what that data would look like)
-				// but doing this requires rewriting the parts of that currently rely on the raw cql query string
-				// This is the restoring of the querybuilder and the populating of the raw CQL input field
-				// pageParams.within   =
-				// NOTE: we set the pageParams.within parameter in this function, because it's part of the cql query
+				/**
+				 * Attempt to parse the cql-query into an array of PropertyFields as used by the simple search tab.
+				 * This only works for the most simple of queries.
+				 * Essentially do the inverse of getPatternString.
+				 * 
+				 * Also sets the pageParams.within, since it's encoded in the cql query.
+				 * 
+				 * If parsing fails, or the query is too complex, we just return the raw query, it can still be displayed/used elsewhere.
+				 */
 				pageParams.pattern = (function() {
 					function isCase(value) { return value.startsWith('(?-i)') || value.startsWith('(?c)'); }
 					function stripCase(value) { return value.substr(value.startsWith('(?-i)') ? 5 : 4); }
@@ -569,10 +598,24 @@ SINGLEPAGE.BLS = (function () {
 						var result = SINGLEPAGE.CQLPARSER.parse(blsParam.patt);
 						pageParams.within = result.within;
 
-						// only used if parsing succeeds.
-						// contains arrays with the values at their respecitive indices
-						// the idea is that there are no empty elements, though they don't all have to be the same length
-						/** @type Object.<string, Array.<String>> */
+						/**
+						 * A requirement of the PropertyFields is that there are no gaps in the values
+						 * So a valid config is 
+						 * ```
+						 * lemma: [these, are, words]
+						 * word: [these, are, other, words]
+						 * ```
+						 * And an invalid config is
+						 * ```
+						 * lemma: [gaps, are, , not, allowed]
+						 * ```
+						 * Not all properties need to have the same number of values though, 
+						 * shorter lists are implicitly treated as having wildcards for the remainder of values. (see getPatternString())
+						 * 
+						 * Store the values here while parsing.
+						 * 
+						 * @type Object.<string, Array.<String>> 
+						 */
 						var attributeValues = {};
 
 						for (var i = 0; i < result.tokens.length; ++i) {
@@ -582,12 +625,12 @@ SINGLEPAGE.BLS = (function () {
 							if (token.leadingXmlTag || token.optional || token.repeats || token.trailingXmlTag)
 								throw new Error('Token contains settings too complex for simple search');
 
-							// Recursion stack
+							// Use a stack instead of direct recursion to simplify code
 							var stack = [token.expression];
 							while (stack.length) {
 								var expr = stack.shift();
 								if (expr.type === 'attribute') {
-									var name = expr.attributeType;
+									var name = expr.name;
 									var values = attributeValues[name] = attributeValues[name] || [];
 									if (expr.operator != '=')
 										throw new Error('Unsupported comparator, only "=" is supported.');
@@ -603,7 +646,12 @@ SINGLEPAGE.BLS = (function () {
 							}
 						}
 
-						/** @type {Array.<PropertyField>} */
+						/**
+						 * Build the actuals PropertyFields.
+						 * Convert from regex back into pattern globs, extract case sensitivity.
+						 * 
+						 * @type {Array.<PropertyField>} 
+						 */
 						var propertyFields = [];
 						$.each(attributeValues, function(attrName, attrValues) {
 							var caseSensitive = attrValues.every(isCase);

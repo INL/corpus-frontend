@@ -847,7 +847,7 @@
 			// format always exists if it's present in the select to begin with
 			
 			$corpusFormatDescription.text(format.description);
-			$corpusFormatHelpUrl.attr('href', format.helpUrl || undefined).text(format.helpUrl || 'No details available');
+			$corpusFormatHelpUrl.attr('href', format.helpUrl || undefined).toggle(!!format.helpUrl);
 		});
 	}
 

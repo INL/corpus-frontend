@@ -17,9 +17,11 @@
         
         <link rel="icon" type="image/png" sizes="32x32" href="$pathToTop/img/favicon-32x32.png">
         <link rel="icon" type="image/png" sizes="16x16" href="$pathToTop/img/favicon-16x16.png">
+        <link rel="icon" type="image/png" href="$pathToTop/img/favicon.png">
         <link rel="manifest" href="$pathToTop/img/manifest.json">
         <link rel="mask-icon" href="$pathToTop/img/safari-pinned-tab.svg" color="#3b3b3b">
         <link rel="shortcut icon" href="$pathToTop/img/favicon.ico">
+        <link rel="apple-touch-icon" href="$pathToTop/img/apple-touch-icon.png">
         <meta name="msapplication-config" content="$pathToTop/img/browserconfig.xml">
         <meta name="theme-color" content="#ffffff">
         
@@ -29,14 +31,12 @@
         <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
         <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/css/bootstrap-select.min.css">
         <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
-        <link rel="stylesheet" href="$pathToTop/css/vendor/pageguide.min.css">
-        <link rel="stylesheet" href="$pathToTop/css/main.css">
+        <link rel="stylesheet" href="$pathToTop/css/vendor/pageguide.min.css?_$cache">
+        <link rel="stylesheet" href="$pathToTop/css/main.css?_$cache">
         #if ($websiteConfig.getPathToCustomCss())
-            <link rel="stylesheet" href="$pathToTop/$websiteConfig.getPathToCustomCss()">
+            <link rel="stylesheet" href="$pathToTop/$websiteConfig.getPathToCustomCss()?_$cache">
         #end
 
-        <link rel="icon" type="image/png" href="$pathToTop/img/favicon.png">
-        <link rel="apple-touch-icon" href="$pathToTop/img/apple-touch-icon.png">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/6.26.0/polyfill.min.js"></script>
         <script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
         <!-- SKIP JQueryUI 1.12.1, has bug where event handlers on widgets are not cleaned up correctly, fixed in 1.12.2, but unavailable as of writing (28-07-2017) -->
@@ -44,12 +44,12 @@
         <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.12.0/jquery-ui.min.js"></script>
         <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>   
         <script src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/js/bootstrap-select.min.js"></script>
-        <script src="$pathToTop/js/vendor/jquery.ui.widget.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/2.3.0/mustache.min.js" integrity="sha256-iaqfO5ue0VbSGcEiQn+OeXxnxAMK2+QgHXIDA5bWtGI=" crossorigin="anonymous"></script>
         <script src="$pathToTop/js/vendor/jQuery.extendext.js"></script>
         <script src="$pathToTop/js/vendor/pageguide.min.js"></script>
         <script src="$pathToTop/js/tutorial.js"></script>
         #if ($websiteConfig.getPathToCustomJs())
-            <script src="$pathToTop/$websiteConfig.getPathToCustomJs()"></script>
+            <script src="$pathToTop/$websiteConfig.getPathToCustomJs()?_$cache"></script>
         #end
         
     </head>

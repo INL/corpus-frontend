@@ -1,7 +1,7 @@
 #macro( filterfields $fields)
-    <div class="form-horizontal">
+<div class="form-horizontal">
 #foreach($docfield in $fields)
-        <div class="form-group filterfield" id="$docfield.getId()" data-filterfield-type="$docfield.getType()"> ##- Behaves as a .row, so every child element should have some form of .col-*
+    <div class="form-group filterfield" id="$docfield.getId()" data-filterfield-type="$docfield.getType()"> ##- Behaves as a .row, so every child element should have some form of .col-*
         <label class="col-xs-12">$docfield.getDisplayName()</label>
 
         #if($docfield.getType() == "select" && !$docfield.getValidValues().isEmpty())
@@ -15,10 +15,10 @@
             </div>
         #elseif($docfield.getType() == "range")
             <div class="col-xs-4">
-                <input type="text" placeholder="From" class="form-control" />
+                <input type="text" placeholder="From" class="form-control" >
             </div>
             <div class="col-xs-4">
-                <input type="text" placeholder="To" class="form-control" />
+                <input type="text" placeholder="To" class="form-control" >
             </div>
         #else
             <div class="col-xs-12">
@@ -84,16 +84,16 @@
 </script>
 
 <link rel="stylesheet" href="$pathToTop/css/cql_querybuilder.css">
-<script src="$pathToTop/js/vendor/mustache.js"></script>
-<script src="$pathToTop/js/vendor/URI.js"></script>
-<script src="$pathToTop/js/vendor/FileSaver.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/URI.js/1.19.1/URI.min.js" integrity="sha256-D3tK9Rf/fVqBf6YDM8Q9NCNf/6+F2NOKnYSXHcl0keU=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.8/FileSaver.min.js" integrity="sha256-FPJJt8nA+xL4RU6/gsriA8p8xAeLGatoyTjldvQKGdE=" crossorigin="anonymous"></script>
 <script src="$pathToTop/js/vendor/lucene-query-parser.js"></script> ## https://github.com/thoward/lucene-query-parser.js
-<script src="$pathToTop/js/singlepage.js"></script>
-<script src="$pathToTop/js/singlepage-bls.js"></script>
-<script src="$pathToTop/js/singlepage-form.js"></script>
-<script src="$pathToTop/js/singlepage-interface.js"></script>
-<script src="$pathToTop/js/cql_querybuilder.js"></script>
-<script src="$pathToTop/js/singlepage-cqlparser.js"></script>
+
+<script src="$pathToTop/js/singlepage.js?_$cache"></script>
+<script src="$pathToTop/js/singlepage-bls.js?_$cache"></script>
+<script src="$pathToTop/js/singlepage-form.js?_$cache"></script>
+<script src="$pathToTop/js/singlepage-interface.js?_$cache"></script>
+<script src="$pathToTop/js/cql_querybuilder.js?_$cache"></script>
+<script src="$pathToTop/js/singlepage-cqlparser.js?_$cache"></script>
 
 <!--
 <noscript>

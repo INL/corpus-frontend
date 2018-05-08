@@ -373,12 +373,12 @@
     </li>
 </ul>
 
-<link rel="stylesheet" href="$pathToTop/css/vendor/codemirror.css">
-<link rel="stylesheet" href="$pathToTop/css/corpora.css">
-<script src="$pathToTop/js/vendor/mustache.js"></script>
-<script src="$pathToTop/js/vendor/codemirror/codemirror.min.js"></script>
-<script src="$pathToTop/js/vendor/codemirror/yaml.js"></script>
-<script src="$pathToTop/js/vendor/codemirror/javascript.js"></script>
-<script src="$pathToTop/js/corpora.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/codemirror.min.css" integrity="sha256-I8NyGs4wjbMuBSUE40o55W6k6P7tu/7G28/JGUUYCIs=" crossorigin="anonymous" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/codemirror.min.js" integrity="sha256-U/4XQwZXDFDdAHjIZt1Lm7sFfmMiFDZzFYprq6XJ0gk=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/mode/yaml/yaml.min.js" integrity="sha256-kDhSuX8q/IuvrvcSRAv9HzdC6NHqQsvZtCMnvSBQO+Q=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/mode/javascript/javascript.min.js" integrity="sha256-MyRbKGolllWYWwxW8jH3jYdhK0p0LpgNjR8PqCa/UNQ=" crossorigin="anonymous"></script>
+
+<link  href="$pathToTop/css/corpora.css?_$cache" rel="stylesheet">
+<script src="$pathToTop/js/corpora.js?_$cache"></script>
     
 #parse("footer.vm")

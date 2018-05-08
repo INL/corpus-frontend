@@ -5,7 +5,8 @@ This is a corpus search application that works with BlackLab Server. At the Dutc
 Requirements: 
 ----
 - Java 1.8 
-- A java servlet container such as [Apache Tomcat](http://tomcat.apache.org/)
+- A java servlet container such as [Apache Tomcat](http://tomcat.apache.org/).  
+Use Tomcat 7 version `7.0.76` or newer or Tomcat 8 version `8.0.42` or newer. Using older versions will cause some [warnings from dependencies](https://bz.apache.org/bugzilla/show_bug.cgi?id=60688).
 - An instance of [BlackLab-Server](https://github.com/INL/BlackLab/).  
 **Currently requires [prerelease 1.7.0-ALPHA](releases/tag/v1.7.0-ALPHA)) or newer, CSV export requires the dev branch of blacklab.**
 

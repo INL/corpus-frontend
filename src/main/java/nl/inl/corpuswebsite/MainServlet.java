@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -135,7 +134,7 @@ public class MainServlet extends HttpServlet {
     private Properties adminProps = new Properties();
 
     /**
-     * Time the WAR was built.
+     * Time the WAR was built. "UNKNOWN" if no WAR or some error occurs.
      */
     private static String warBuildTime = null;
 
@@ -662,27 +661,19 @@ public class MainServlet extends HttpServlet {
      *         JAR, or JAR was not created with the Ant buildscript).
      */
     public String getWarBuildTime() {
-        if (warBuildTime == null) {
-            try (InputStream inputStream = getServletContext().getResourceAsStream("/META-INF/MANIFEST.MF")) {
-                if (inputStream == null) {
-                    warBuildTime = "(no manifest)";
-                } else {
-                    Manifest manifest = new Manifest(inputStream);
-                    Attributes atts = manifest.getMainAttributes();
-                    String value = null;
-                    if (atts != null) {
-                        value = atts.getValue("Build-Time");
-                        if (value == null) {
-                            value = atts.getValue("Build-Date"); // Old name for this info
-                        }
-                    }
-                    warBuildTime = (value == null ? "UNKNOWN" : value);
-                }
-            } catch (IOException e) {
-                throw new RuntimeException("Could not read build date from manifest", e);
-            }
+        if (warBuildTime != null)
+            return warBuildTime;
+
+        try (InputStream inputStream = getServletContext().getResourceAsStream("/META-INF/MANIFEST.MF")) {
+            return warBuildTime = Optional.ofNullable(inputStream)
+                .map(is -> { try { return new Manifest(is); } catch (IOException e) { return null; } })
+                .map(Manifest::getMainAttributes)
+                .map(a -> a.getValue("Build-Time"))
+                .filter(s -> !s.isEmpty())
+                .orElse("UNKNOWN");
+        } catch (IOException e) {
+            return warBuildTime = "UNKNOWN";
         }
-        return warBuildTime;
     }
 
     public Properties getAdminProps() {

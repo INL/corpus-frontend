@@ -1,5 +1,5 @@
 #parse("header.vm")
-<script src="$pathToTop/js/article.js"></script>
+<script src="$pathToTop/js/article.js?_$cache"></script>
 <div class="hitscroll">
 <a href="#" onclick="return ANCHORS.gotoPrevious();"><b>&laquo; Previous hit</b></a> | 
 <a href="#" onclick="return ANCHORS.gotoNext();"><b>Next hit &raquo;</b></a>

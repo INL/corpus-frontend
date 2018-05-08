@@ -580,7 +580,7 @@
 				triggers.updateFormats(
 					$.map(data.supportedInputFormats, normalizeFormatData)
 						.sort(function(a, b) {
-							return a.id.localeCompare(b.id); // sort alphabetically by id
+							return a.displayName.localeCompare(b.displayName); // sort alphabetically by id
 						})
 				);
 			},

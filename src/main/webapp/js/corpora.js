@@ -144,13 +144,25 @@
 	};
 
 	var triggers = {
-		/** @param {Array.<Format>} payload - data passed into the handler */
+		/**
+		 * @type {Function} 
+		 * @param {Array.<Format>} payload data passed into the handler 
+		 */
 		updateFormats: createTrigger(events.FORMATS_REFRESH),
-		/** @param {ServerInfo} payload - server status from blacklab-server */
+		/** 
+		 * @type {Function}
+		 * @param {ServerInfo} payload server status from blacklab-server 
+		 */
 		updateServer: createTrigger(events.SERVER_REFRESH),
-		/** @param {Array.<Index>} payload - normalized index data */
+		/** 
+		 * @type {Function}
+		 * @param {Array.<Index>} payload normalized index data 
+		 */
 		updateCorpora: createTrigger(events.CORPORA_REFRESH),
-		/** @param {Index} payload - normalized index data */
+		/** 
+		 * @type {Function} 
+		 * @param {Index} payload normalized index data 
+		 */
 		updateCorpus: createTrigger(events.CORPUS_REFRESH)
 	};
 
@@ -191,8 +203,8 @@
 		'<tr>'+
 			'<td>{{shortId}}</td>'+
 			'<td>{{displayName}}</td>'+
-			'<td><a class="fa fa-trash" data-format-operation="delete" data-format-id="{{id}}" title="Delete format \'{{displayName}}\'" href="javascript:void(0)"></a></td>'+
-			'<td><a class="fa fa-pencil" data-format-operation="edit" data-format-id="{{id}}" title="Edit format \'{{displayName}}\'" href="javascript:void(0)"></a></td>'+
+			'<td><a data-format-operation="edit" class="fa fa-pencil" data-format-id="{{id}}" title="Edit format \'{{displayName}}\'" href="javascript:void(0)"></a></td>'+
+			'<td><a data-format-operation="delete" class="fa fa-trash" data-format-id="{{id}}" title="Delete format \'{{displayName}}\'" href="javascript:void(0)"></a></td>'+
 		'</tr>'+
 		'{{/formats}}';
 
@@ -274,14 +286,14 @@
 		'{{#corpora}} \
 		<tr> \
 			<td><a title="Search the \'{{displayName}}\' corpus" class="icon fa fa-search {{^canSearch}}disabled{{/canSearch}}" {{#canSearch}}href="{{searchUrl}}"{{/canSearch}}></a></td> \
-			<td class="corpus-name">{{displayName}} {{status}}</td>\
+			<td class="corpus-name"><a title="Search the \'{{displayName}}\' corpus" class="{{^canSearch}}disabled{{/canSearch}}" {{#canSearch}}href="{{searchUrl}}"{{/canSearch}}>{{displayName}} {{status}}</a></td>\
 			<td>{{sizeString}}</td>\
 			{{#isPrivate}} \
 				<td {{#isUserFormat}}title="Format owned by {{documentFormatOwner}}"{{/isUserFormat}}>{{#isUserFormat}}*{{/isUserFormat}}{{documentFormatShortId}}</td>\
 				<td>{{timeModified}}</td>\
-				<td><a data-corpus-action="delete" data-id="{{id}}" title="Delete the \'{{displayName}}\' corpus" class="icon fa fa-trash {{#isBusy}}disabled{{/isBusy}}" href="javascript:void(0)"></a></td> \
 				<td><a data-corpus-action="upload" data-id="{{id}}" title="Upload documents to the \'{{displayName}}\' corpus" class="icon fa fa-plus-square {{#isBusy}}disabled{{/isBusy}}" href="javascript:void(0)"></a></td>\
 				<td><a data-corpus-action="share" data-id="{{id}}" title="Share the \'{{displayName}}\' corpus" class="icon fa fa-user-plus" href="javascript:void(0)"></a></td>\
+				<td><a data-corpus-action="delete" data-id="{{id}}" title="Delete the \'{{displayName}}\' corpus" class="icon fa fa-trash {{#isBusy}}disabled{{/isBusy}}" href="javascript:void(0)"></a></td> \
 			{{/isPrivate}} \
 		</tr>\
 		{{/corpora}}';

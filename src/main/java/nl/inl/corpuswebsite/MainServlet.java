@@ -604,7 +604,7 @@ public class MainServlet extends HttpServlet {
 
     public InputStream getAboutPage(String corpus) {
         try {
-            return new FileInputStream(getProjectFile(corpus, "help.inc").get());
+            return new FileInputStream(getProjectFile(corpus, "about.inc").get());
         } catch (FileNotFoundException e) {
             throw new IllegalStateException(e); // this file always exists
         }

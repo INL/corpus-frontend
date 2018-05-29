@@ -194,7 +194,7 @@
 
 	createHandler('tbody[data-autoupdate="format"]', events.FORMATS_REFRESH, function(formats) {
 		formats = formats.filter(function(format) {
-			// only let through through user formats
+			// Always show user's own formats, even if isVisible == false
 			return format.id.indexOf(serverInfo.user.id) === 0;
 		});
 
@@ -235,8 +235,8 @@
 		this
 			.html(Mustache.render(template, {
 				userName: serverInfo.user.id,
-				builtinFormats: formats.filter(function(format) { return format.id === format.shortId; }),
-				userFormats: formats.filter(function(format) { return format.id !== format.shortId; })
+				builtinFormats: formats.filter(function(format) { return format.id === format.shortId && (format.isVisible == null /* temporary, for when bls does not support the property yet */ || format.isVisible); }),
+				userFormats: formats.filter(function(format) { return format.id !== format.shortId; }) // Always show user's own formats, even if isVisible == false
 			}))
 			.selectpicker('refresh')
 			.trigger('change');

@@ -205,10 +205,10 @@ window.querybuilder = (function() {
 						'<textarea id="{{currentId}}_value_file" class="hidden"></textarea>' +
 						'<input id="{{currentId}}_value_simple" type="text" class="form-control input-sm bl-no-border-radius bl-hover-back bl-has-file-hidden" style="position:relative;">' +
 						'<button type="button" class="bl-token-attribute-file-edit btn btn-default btn-sm bl-no-border-radius bl-hover-back bl-has-file-shown" title="Edit your uploaded values">(filename)</button>' +
-						'<button type="button" class="btn btn-sm btn-default bl-no-border-radius-right bl-input-upload-button bl-hover-front" title="Upload a list of values">' +
-							'<input type="file" accept="text/*" class="bl-input-upload">' +
+						'<span class="btn btn-sm btn-default bl-no-border-radius-right bl-input-upload-button bl-hover-front" title="Upload a list of values">' +
+							'<input type="file" accept="text/*" class="bl-input-upload" title="Upload a list of values">' +
 							'<span class="glyphicon glyphicon-open"></span>' +
-						'</button>' +
+						'</span>' +
 					'</span>'
 			}
 		},

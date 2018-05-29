@@ -40,7 +40,7 @@ SINGLEPAGE.INTERFACE = (function() {
 				return null; // skip prop
 			return {
 				id: propId,
-				displayName: prop.displayName,
+				displayName: prop.displayName || propId,
 				isMainProp: propId === complexField.mainProperty
 			};
 		});

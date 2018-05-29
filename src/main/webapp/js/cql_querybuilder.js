@@ -69,6 +69,7 @@ window.querybuilder = (function() {
 									'<textarea class="form-control" rows="10" style="width:100%;overflow:auto;resize:none;white-space:pre;"></textarea>' +
 								'</div>' +
 								'<div class="modal-footer">' +
+									'<button type="button" class="btn btn-danger pull-left" data-dismiss="modal" data-discard-value>Clear</button>' +
 									'<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>' +
 									'<button type="button" class="btn btn-primary" data-dismiss="modal" data-save-edits>Save changes</button>' +
 								'</div>' +
@@ -203,9 +204,9 @@ window.querybuilder = (function() {
 				main_input:
 					'<span class="bl-token-attribute-main-input">' +
 						'<textarea id="{{currentId}}_value_file" class="hidden"></textarea>' +
-						'<input id="{{currentId}}_value_simple" type="text" class="form-control input-sm bl-no-border-radius bl-hover-back bl-has-file-hidden" style="position:relative;">' +
-						'<button type="button" class="bl-token-attribute-file-edit btn btn-default btn-sm bl-no-border-radius bl-hover-back bl-has-file-shown" title="Edit your uploaded values">(filename)</button>' +
-						'<span class="btn btn-sm btn-default bl-no-border-radius-right bl-input-upload-button bl-hover-front" title="Upload a list of values">' +
+						'<input id="{{currentId}}_value_simple" type="text" class="form-control input-sm bl-no-border-radius bl-has-file-hidden" style="position:relative;">' +
+						'<button type="button" class="bl-token-attribute-file-edit btn btn-default btn-sm bl-no-border-radius bl-has-file-shown" title="Edit your uploaded values">(filename)</button>' +
+						'<span class="btn btn-sm btn-default bl-no-border-radius-right bl-input-upload-button title="Upload a list of values">' +
 							'<input type="file" accept="text/*" class="bl-input-upload" title="Upload a list of values">' +
 							'<span class="glyphicon glyphicon-open"></span>' +
 						'</span>' +
@@ -226,7 +227,7 @@ window.querybuilder = (function() {
 			partials: {
 				create_attribute_dropdown: 
 					'<div class="dropup bl-create-attribute-dropdown">' +
-						'<button type="button" class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-plus"></span>&#8203;</button>' +
+						'<button type="button" class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown" title="Add another attribute"><span class="glyphicon glyphicon-plus"></span>&#8203;</button>' +
 						'<ul class="dropdown-menu">' +
 							'{{#operators}}' +
 							'<li><a href="#" onclick="$(this).trigger(\'cql:attribute:create\', { operator: \'{{operator}}\', operatorLabel: \'{{label}}\' }); return false;">'+
@@ -811,6 +812,8 @@ window.querybuilder = (function() {
 		
 		$element.find(baseId + '_delete').on('click', function() {
 			var parentGroup = self.element.parent().data('attributeGroup');
+			// Remove the selectpickers first so they can gracefully tear down, prevents unclosable menu when deleting attribute with a dropdown open
+			self.element.find('.selectpicker').each(function() { $(this).selectpicker('destroy'); });
 			self.element.detach();
 			parentGroup._removeIfEmpty();
 			parentGroup.element.trigger('cql:modified');
@@ -822,6 +825,7 @@ window.querybuilder = (function() {
 	};
 
 	Attribute.prototype._showModalEditor = function(/*event*/) {
+		var self = this;
 		var baseId = '#' + this.element.attr('id');
 		var $fileText = this.element.find(baseId + '_value_file');
 		var $modalTextArea = this.builder.modalEditor.find('textarea');
@@ -837,6 +841,8 @@ window.querybuilder = (function() {
 				$fileText
 					.val($modalTextArea.val())
 					.trigger('change');
+			} else if ($(document.activeElement).is('[data-dismiss][data-discard-value], [data-toggle][data-discard-value]')) {
+				self.element.find('.bl-input-upload').val(null).trigger('change');
 			}
 		});
 	};

@@ -484,14 +484,6 @@ a[data-bls-sort], a.dropdown-toggle {
 	z-index: 2;
 }
 
-.upload-button-container .upload-button {
-	display:none;
-}
-.upload-button-container:hover .upload-button,
-.upload-button.has-file {
-	display: block;
-}
-
 /* 
 	Minor bootstrap-select overrides.
 	Do not display the select all button,

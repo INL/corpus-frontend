@@ -581,7 +581,6 @@ public class MainServlet extends HttpServlet {
                     QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(null) + "input-formats/" + corpusDataFormat + "/xslt");
                     Map<String, String[]> params = new HashMap<>();
                     String sheet = handler.makeRequest(params);
-                    System.out.println(sheet);
                     return new XslTransformer(new StringReader(sheet));
                 } catch (TransformerConfigurationException | IOException | QueryException e) {
                     logger.debug("Error getting or using stylesheet for format {} from blacklab : {}", corpusDataFormat, e.getMessage());

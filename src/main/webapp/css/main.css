@@ -36,7 +36,7 @@ a.ui-menu-item-wrapper {
 }
 
 .ui-autocomplete.dropdown-menu:before {
-	content: "Values found";
+	/*content: "Values found";*/
 	display: block;
 	color:white;
 	background-color: #337ab7;
@@ -46,6 +46,16 @@ a.ui-menu-item-wrapper {
 	padding: 3px 12px;
 	margin-bottom: 5px;
 	margin-top: -5px;
+}
+.dropdown-menu > li > a:active,
+.dropdown-menu > li > a:focus,
+.dropdown-menu > li > a:hover,
+.ui-menu .ui-menu-item .ui-state-hover,
+.ui-menu .ui-menu-item .ui-state-active
+ {
+	color: #262626;
+	text-decoration: none;
+	background-color: #ddd;
 }
 
 hr {

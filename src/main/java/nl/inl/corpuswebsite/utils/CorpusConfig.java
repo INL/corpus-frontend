@@ -129,8 +129,9 @@ public class CorpusConfig {
                     propertyElement.getElementsByTagName("sensitivity").item(0).getTextContent().equals("SENSITIVE_AND_INSENSITIVE");
                 List<String> allowedValues = parsePropertyValues(propertyElement);
                 String configType = propertyElement.getElementsByTagName("uiType").getLength()==1 ?
-                    propertyElement.getElementsByTagName("uiType").item(0).getTextContent() : null;
+                    propertyElement.getElementsByTagName("uiType").item(0).getTextContent() : "";
                 String type = inferType(configType, allowedValues, propertyElement);
+System.out.println(configType + ": " +type);
 
                 FieldDescriptor field = new FieldDescriptor(fieldName, displayName, type);
                 for (String allowedValue : allowedValues) {

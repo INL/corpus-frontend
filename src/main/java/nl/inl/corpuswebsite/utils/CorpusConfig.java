@@ -9,10 +9,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -130,7 +128,9 @@ public class CorpusConfig {
                 boolean caseSensitive =
                     propertyElement.getElementsByTagName("sensitivity").item(0).getTextContent().equals("SENSITIVE_AND_INSENSITIVE");
                 List<String> allowedValues = parsePropertyValues(propertyElement);
-                String type = inferType(null, allowedValues, propertyElement);
+                String configType = propertyElement.getElementsByTagName("uiType").getLength()==1 ?
+                    propertyElement.getElementsByTagName("uiType").item(0).getTextContent() : null;
+                String type = inferType(configType, allowedValues, propertyElement);
 
                 FieldDescriptor field = new FieldDescriptor(fieldName, displayName, type);
                 for (String allowedValue : allowedValues) {

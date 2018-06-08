@@ -403,12 +403,12 @@ a[data-bls-sort], a.dropdown-toggle {
     max-width:100%;
     margin-bottom: 15px;
 }
-.groupselect-container div.groupselect {
+.groupselect-container > .groupselect {
     flex: 1 1 auto;
     width: auto!important;
     min-width: 0px!important;
 }
-.groupselect-container .groupselect button {    
+.groupselect-container > .groupselect > button {    
     border-top-right-radius: 0px;
     border-bottom-right-radius: 0px;
     border-right: 0px;

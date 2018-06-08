@@ -339,19 +339,21 @@ public class MainServlet extends HttpServlet {
             // Contact blacklab-server for the config xml file
             QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(corpus));
 
-            String listvalues = adminProps.getProperty(PROP_AUTOCOMPLETE_PROPS);
             try {
-                Map<String, String[]> params = new HashMap<>();
-
-                params.put("outputformat", new String[] { "xml" });
-                if (listvalues != null && !listvalues.isEmpty()) {
-                    params.put("listvalues", new String[] { listvalues });
-                }
                 String userId = getCorpusOwner(corpus);
-                if (userId != null)
-                    params.put("userid", new String[] { userId });
-                String xmlResult = handler.makeRequest(params);
-
+                Map<String, String[]> params = new HashMap<>();
+                
+                String xmlConfig = getXml(userId, handler, params);
+                
+                String selectProperties = CorpusConfig.getSelectProperties(xmlConfig);
+                
+                if (!selectProperties.isEmpty()) {
+                    // again retrieve config with values for props with uitype select
+                    params.clear();
+                    params.put("listvalues", new String[] {selectProperties});
+                    xmlConfig = getXml(corpus, handler, params);
+                }
+                
                 // TODO tidy this up, the json is only used to embed the index data in the search page.
                 // We might not need the xml data to begin with.
                 params.clear();
@@ -360,13 +362,22 @@ public class MainServlet extends HttpServlet {
                     params.put("userid", new String[] { userId });
                 String jsonResult = handler.makeRequest(params);
 
-                corpusConfigs.put(corpus, new CorpusConfig(xmlResult, jsonResult));
+
+                corpusConfigs.put(corpus, new CorpusConfig(xmlConfig, jsonResult));
             } catch (IOException | SAXException | ParserConfigurationException | QueryException e) {
                 return null;
             }
         }
 
         return corpusConfigs.get(corpus);
+    }
+    
+
+    private String getXml(String userId, QueryServiceHandler handler, Map<String, String[]> params) throws IOException, QueryException {
+        params.put("outputformat", new String[] { "xml" });
+        if (userId != null)
+            params.put("userid", new String[] { userId });
+        return handler.makeRequest(params);
     }
 
     @Override

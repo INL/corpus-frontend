@@ -41,11 +41,15 @@ public class CorpusConfig {
     private String corpusDataFormat = "UNKNOWN";
 
     public CorpusConfig(String xml, String jsonUnescaped) throws SAXException, IOException, ParserConfigurationException {
-        config = DocumentBuilderFactory.newInstance()
-            .newDocumentBuilder()
-            .parse(new InputSource(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8))));
+        config = fromXml(xml);
         this.jsonUnescaped = jsonUnescaped;
         parse();
+    }
+    
+    public static Document fromXml(String xml) throws ParserConfigurationException, SAXException, IOException {
+        return DocumentBuilderFactory.newInstance()
+            .newDocumentBuilder()
+            .parse(new InputSource(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8))));
     }
 
     public String getJsonUnescaped() {
@@ -106,8 +110,8 @@ public class CorpusConfig {
             this.corpusDataFormat = documentFormatTags.item(0).getTextContent();
     }
     
-    public static String getSelectProperties(CorpusConfig corpusConfig) {
-        Document config = corpusConfig.config;
+    public static String getSelectProperties(String xml) throws ParserConfigurationException, SAXException, IOException {
+        Document config = fromXml(xml);
         String selects = "";
         NodeList complexFieldElements = config.getElementsByTagName("complexField");
         for (int cfi = 0; cfi < complexFieldElements.getLength(); cfi++) {

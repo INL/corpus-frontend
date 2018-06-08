@@ -341,17 +341,18 @@ public class MainServlet extends HttpServlet {
 
             try {
                 Map<String, String[]> params = new HashMap<>();
-
-                CorpusConfig corpusConfig = getConfig(corpus, handler, params);
                 
-                String selectProperties = CorpusConfig.getSelectProperties(corpusConfig);
+                String xmlConfig = getXml(getCorpusOwner(corpus), handler, params);
+                
+                String selectProperties = CorpusConfig.getSelectProperties(xmlConfig);
+                
                 if (!selectProperties.isEmpty()) {
                     params.clear();
                     params.put("listvalues", new String[] {selectProperties});
-                    corpusConfig = getConfig(corpus, handler, params);
+                    xmlConfig = getXml(corpus, handler, params);
                 }
 
-                corpusConfigs.put(corpus, corpusConfig);
+                corpusConfigs.put(corpus, getConfig(xmlConfig, corpus, handler, params));
             } catch (IOException | SAXException | ParserConfigurationException | QueryException e) {
                 return null;
             }
@@ -360,13 +361,16 @@ public class MainServlet extends HttpServlet {
         return corpusConfigs.get(corpus);
     }
     
-    private CorpusConfig getConfig(String corpus, QueryServiceHandler handler, Map<String, String[]> params) throws SAXException, IOException, ParserConfigurationException, QueryException {
 
+    private String getXml(String userId, QueryServiceHandler handler, Map<String, String[]> params) throws IOException, QueryException {
         params.put("outputformat", new String[] { "xml" });
-        String userId = getCorpusOwner(corpus);
         if (userId != null)
             params.put("userid", new String[] { userId });
-        String xmlResult = handler.makeRequest(params);
+        return handler.makeRequest(params);
+    }
+    
+    private CorpusConfig getConfig(String xmlConfig, String corpus, QueryServiceHandler handler, Map<String, String[]> params) throws SAXException, IOException, ParserConfigurationException, QueryException {
+        String userId = getCorpusOwner(corpus);
 
         // TODO tidy this up, the json is only used to embed the index data in the search page.
         // We might not need the xml data to begin with.
@@ -376,7 +380,7 @@ public class MainServlet extends HttpServlet {
             params.put("userid", new String[] { userId });
         String jsonResult = handler.makeRequest(params);
 
-        return new CorpusConfig(xmlResult, jsonResult);
+        return new CorpusConfig(xmlConfig, jsonResult);
     }
 
     @Override

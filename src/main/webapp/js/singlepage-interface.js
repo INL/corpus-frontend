@@ -814,6 +814,9 @@ SINGLEPAGE.INTERFACE = (function() {
 		} else {
 			$resultgroupdetails.hide();
 		}
+
+		var showWarning = data.summary.stoppedRetrievingHits && !data.summary.stillCounting;
+		$tab.find('.results-incomplete-warning').toggle(showWarning);
 	}
 
 	/**

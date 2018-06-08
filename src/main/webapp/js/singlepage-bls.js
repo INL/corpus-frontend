@@ -182,28 +182,36 @@ SINGLEPAGE.BLS = (function () {
 	 */
 	var totalsCounter = (function(){
 		// Parameters used in the next update request
-		var curUrl;
-		var curPageSize;
+		var blsParam;
+		var operation;
+		var data;
 
 		// Handles to the current request/scheduled request
 		var timeoutHandle = null;
 		var inflightRequest = null;
 
 		function scheduleRequest() {
+			// Don't request an actual window
+			// But keep window size intact in blsParam, we need it to calculate number of pages.
+			var url = new URI(BLS_URL).segment(operation).addSearch($.extend({}, blsParam, {number:0})).toString();
+		
 			inflightRequest = $.ajax({
-				url: curUrl,
+				url: url,
 				dataType: 'json',
 				cache: false,
-				success: function(data) {
-					updateTotalsDisplay(data);
+				success: function(responseData) {
+					data = responseData;
+					updateTotalsDisplay();
 					if (data.summary.stillCounting) {
 						timeoutHandle = setTimeout(scheduleRequest, 1000);
 					} else {
 						timeoutHandle = null;
 					}
 				},
-				fail: function() {
+				error: function() {
 					timeoutHandle = null;
+					$('#totalsSpinner').hide();
+					$('#totalsReportText').text('Network Error');
 				},
 				complete: function() {
 					inflightRequest = null;
@@ -221,7 +229,7 @@ SINGLEPAGE.BLS = (function () {
 			$('#totalsReport').hide();
 		}
 
-		function updateTotalsDisplay(data) {
+		function updateTotalsDisplay() {
 			var type;
 			var total;
 
@@ -230,13 +238,13 @@ SINGLEPAGE.BLS = (function () {
 				total = data.summary.numberOfGroups;
 			} else if (data.hits != null) {
 				type = 'hits';
-				total = data.summary.numberOfHitsRetrieved;
+				total = data.summary.numberOfHits;
 			} else if (data.docs != null) {
 				type = 'docs';
-				total = data.summary.numberOfDocsRetrieved;
+				total = data.summary.numberOfDocs;
 			}
 
-			var totalPages = Math.ceil(total / curPageSize);
+			var totalPages = Math.ceil(total / blsParam.number);
 
 			var optEllipsis = data.summary.stillCounting ? '...' : '';
 			$('#totalsReport').show();
@@ -245,9 +253,10 @@ SINGLEPAGE.BLS = (function () {
 				'Total pages: ' + totalPages + optEllipsis
 			);
 
+			$('#totalsLimitedWarning').toggle(data.summary.stillCounting === false && data.summary.stoppedCountingHits)
 			$('#totalsSpinner').toggle(data.summary.stillCounting);
 		}
-
+		
 		return {
 			/**
 			 * Cancel any pending updates from previous requests,
@@ -258,15 +267,14 @@ SINGLEPAGE.BLS = (function () {
 			 * @param {any} blsParam - The final (processed) blacklab search parameters.
 			 * @param {string} operation - The search operation, must not be 'hits' if no pattern supplied.
 			 */
-			start: function(data, blsParam, operation) {
+			start: function(data_, blsParam_, operation_) {
 				cancelRequest();
 
-				// Store the requested page size (to do page number calculation)
-				// Then set request page size to 0 so we don't actually retrieve any results
-				curPageSize = blsParam.number;
-				curUrl = new URI(BLS_URL).segment(operation).addSearch($.extend({},blsParam, {number:0})).toString();
-				updateTotalsDisplay(data);
-
+				data = data_;
+				operation = operation_;
+				blsParam = blsParam_;
+				
+				updateTotalsDisplay();
 				if (data.summary.stillCounting)
 					scheduleRequest();
 			},

@@ -420,7 +420,8 @@ a[data-bls-sort], a.dropdown-toggle {
 }
 
 
-.resultgroupdetails {
+.resultgroupdetails,
+.results-incomplete-warning {
 	border-radius: 100px;
 	vertical-align:top;
 	margin-bottom: 15px;

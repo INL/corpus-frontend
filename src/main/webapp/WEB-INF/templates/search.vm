@@ -276,7 +276,12 @@
 <div class="col-xs-12 contentbox" id="results">
     <div id='totalsReport'>
         <div id="totalsReportText" class="pull-right"></div>
-        <span id='totalsSpinner' class="fa fa-spinner fa-spin searchIndicator" style="font-size:20px; padding: 4px; margin: 0px 10px;"></span>
+        <span id='totalsSpinner' class="fa fa-spinner fa-spin searchIndicator" style="font-size:16px; padding: 4px; margin: 0px 10px;"></span>
+        <div id="totalsLimitedWarning" class="text-danger text-center" style="margin: 0px 10px;">
+            <span class="fa fa-exclamation-triangle text-danger" style="font-size: 20px;"></span>
+            <br>
+            Too many results!
+        </div>
     </div>
 
     <!-- No initially active tab by design -->
@@ -320,6 +325,10 @@
                     <span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span class="resultgroupname"></span> &mdash; <a class="clearviewgroup" href="javascript:void(0)">Go back</a>
                 </div>
                 
+                <div class="results-incomplete-warning btn btn-sm btn-default nohover">
+                    <span class="fa fa-exclamation-triangle text-danger"></span> Too many results! &mdash; your query was limited
+                </div>
+                
                 <button type="button" class="btn btn-default btn-sm pull-right exportcsv" style="margin-left: 5px;">Export CSV</button>
                 <button type="button" class="btn btn-danger btn-sm pull-right" data-toggle="collapse" data-target=".doctitle">Show/hide titles</button>
                 <br>
@@ -353,6 +362,9 @@
 
                 <div class="resultgroupdetails btn btn-sm btn-default nohover">
                     <span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span class="resultgroupname"></span> &mdash; <a class="clearviewgroup" href="javascript:void(0)">Go back</a>
+                </div>
+                <div class="results-incomplete-warning btn btn-sm btn-default nohover">
+                    <span class="fa fa-exclamation-triangle text-danger"></span> Too many results! &mdash; your query was limited
                 </div>
 
                 <button type="button" class="btn btn-default btn-sm pull-right exportcsv">Export CSV</button>

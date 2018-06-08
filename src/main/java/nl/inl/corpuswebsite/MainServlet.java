@@ -348,6 +348,7 @@ public class MainServlet extends HttpServlet {
                 String selectProperties = CorpusConfig.getSelectProperties(xmlConfig);
                 
                 if (!selectProperties.isEmpty()) {
+                    // again retrieve config with values for props with uitype select
                     params.clear();
                     params.put("listvalues", new String[] {selectProperties});
                     xmlConfig = getXml(corpus, handler, params);

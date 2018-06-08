@@ -105,6 +105,35 @@ public class CorpusConfig {
         if (documentFormatTags.getLength() > 0)
             this.corpusDataFormat = documentFormatTags.item(0).getTextContent();
     }
+    
+    public static String getSelectProperties(CorpusConfig corpusConfig) {
+        Document config = corpusConfig.config;
+        String selects = "";
+        NodeList complexFieldElements = config.getElementsByTagName("complexField");
+        for (int cfi = 0; cfi < complexFieldElements.getLength(); cfi++) {
+            Element complexFieldElement = (Element) complexFieldElements.item(cfi);
+            NodeList propertyElements = complexFieldElement.getElementsByTagName("property");
+            for (int ip = 0; ip < propertyElements.getLength(); ++ip) {
+                Node propertyNode = propertyElements.item(ip);
+                if (!(propertyNode instanceof Element))
+                    continue;
+
+                Element propertyElement = (Element) propertyNode;
+                if (propertyElement.getElementsByTagName("isInternal").item(0).getTextContent().equalsIgnoreCase("true"))
+                    continue;
+
+                List<String> allowedValues = parsePropertyValues(propertyElement);
+                if (allowedValues.isEmpty()) {
+                    String configType = propertyElement.getElementsByTagName("uiType").getLength()==1 ?
+                        propertyElement.getElementsByTagName("uiType").item(0).getTextContent() : "";
+                    if ("select".equals(configType)) {
+                        selects += selects.isEmpty() ? propertyElement.getAttribute("name") : "," + propertyElement.getAttribute("name");
+                    }
+                }
+            }
+        }
+        return selects;
+    }
 
     private void parsePropertyFields() {
 
@@ -131,7 +160,6 @@ public class CorpusConfig {
                 String configType = propertyElement.getElementsByTagName("uiType").getLength()==1 ?
                     propertyElement.getElementsByTagName("uiType").item(0).getTextContent() : "";
                 String type = inferType(configType, allowedValues, propertyElement);
-System.out.println(configType + ": " +type);
 
                 FieldDescriptor field = new FieldDescriptor(fieldName, displayName, type);
                 for (String allowedValue : allowedValues) {

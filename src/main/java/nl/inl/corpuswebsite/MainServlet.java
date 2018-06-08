@@ -340,9 +340,10 @@ public class MainServlet extends HttpServlet {
             QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(corpus));
 
             try {
+                String userId = getCorpusOwner(corpus);
                 Map<String, String[]> params = new HashMap<>();
                 
-                String xmlConfig = getXml(getCorpusOwner(corpus), handler, params);
+                String xmlConfig = getXml(userId, handler, params);
                 
                 String selectProperties = CorpusConfig.getSelectProperties(xmlConfig);
                 
@@ -351,8 +352,17 @@ public class MainServlet extends HttpServlet {
                     params.put("listvalues", new String[] {selectProperties});
                     xmlConfig = getXml(corpus, handler, params);
                 }
+                
+                // TODO tidy this up, the json is only used to embed the index data in the search page.
+                // We might not need the xml data to begin with.
+                params.clear();
+                params.put("outputformat", new String[] { "json" });
+                if (userId != null)
+                    params.put("userid", new String[] { userId });
+                String jsonResult = handler.makeRequest(params);
 
-                corpusConfigs.put(corpus, getConfig(xmlConfig, corpus, handler, params));
+
+                corpusConfigs.put(corpus, new CorpusConfig(xmlConfig, jsonResult));
             } catch (IOException | SAXException | ParserConfigurationException | QueryException e) {
                 return null;
             }
@@ -367,20 +377,6 @@ public class MainServlet extends HttpServlet {
         if (userId != null)
             params.put("userid", new String[] { userId });
         return handler.makeRequest(params);
-    }
-    
-    private CorpusConfig getConfig(String xmlConfig, String corpus, QueryServiceHandler handler, Map<String, String[]> params) throws SAXException, IOException, ParserConfigurationException, QueryException {
-        String userId = getCorpusOwner(corpus);
-
-        // TODO tidy this up, the json is only used to embed the index data in the search page.
-        // We might not need the xml data to begin with.
-        params.clear();
-        params.put("outputformat", new String[] { "json" });
-        if (userId != null)
-            params.put("userid", new String[] { userId });
-        String jsonResult = handler.makeRequest(params);
-
-        return new CorpusConfig(xmlConfig, jsonResult);
     }
 
     @Override

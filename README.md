@@ -25,7 +25,6 @@ blsUrl=http://localhost:8080/blacklab-server/
 blsUrlExternal=/blacklab-server/
 corporaInterfaceDataDir=/etc/blacklab/projectconfigs/
 corporaInterfaceDefault=default
-listvalues= (empty)
 wordend=5000
 ```
 
@@ -38,8 +37,6 @@ Optional directory where you can place files to further configure and customize 
 Files should be placed in a directory with the name of your corpus, e.g. files for a corpus `MyCorpus` should be placed under `corporaInterfaceDataDir/MyCorpus/...`
 - `corporaInterfaceDefault`  
 Optional default directory that's used as a fallback if a file cannot be found in the `corporaInterfaceDataDir/MyCorpus/...` directory.
-- `listvalues`  
-A comma-separated list of word properties (such as lemma and pos) that should have be autocompletion enabled in the interface. A select or combo box is shown depending on the amount of possible values. This setting will be moved to BlackLab iteself in the near future. 
 - `wordend`  
 The (maximum) amount of words displayed when viewing documents within a corpus.  
 

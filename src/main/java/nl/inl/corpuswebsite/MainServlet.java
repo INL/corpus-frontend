@@ -111,8 +111,6 @@ public class MainServlet extends HttpServlet {
     private String contextPath;
 
     // @formatter:off
-    /** Word properties (like word, lemma, pos) that should be autocompleted by blacklab-server */
-    public static final String PROP_AUTOCOMPLETE_PROPS      = "listvalues";
     public static final String PROP_ANALYTICS_KEY           = "googleAnalyticsKey";
     /** Url to reach blacklab-server from this application */
     public static final String PROP_BLS_CLIENTSIDE          = "blsUrlExternal";
@@ -141,7 +139,6 @@ public class MainServlet extends HttpServlet {
     private static Properties getDefaultProps() {
         // @formatter:off
         Properties p = new Properties();
-        p.setProperty(PROP_AUTOCOMPLETE_PROPS,      "");
         p.setProperty(PROP_BLS_CLIENTSIDE,          "/blacklab-server"); // no domain to account for proxied servers
         p.setProperty(PROP_BLS_SERVERSIDE,          "http://localhost:8080/blacklab-server/");
         p.setProperty(PROP_DATA_PATH,               "/etc/blacklab/projectconfigs");

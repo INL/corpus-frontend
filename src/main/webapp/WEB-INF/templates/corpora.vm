@@ -140,13 +140,14 @@
                 <textarea id="format_editor" style="width:100%;"></textarea>
             
                 <div id="format_error" class="alert alert-danger" style="display:none; margin-top:20px; flex: none;"></div>
+                
             </div>
             
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="format_save">Save</button>            
+                <button type="button" class="btn btn-primary" id="format_save">Save</button>
+                <h5 class="pull-left"><span class="fa fa-question-circle text-muted"></span> <a href="http://inl.github.io/BlackLab/how-to-configure-indexing.html" target="_blank" style="font-weight: bold">How to write your own format</a></h5>
             </div>
-            
         </div>
     </div>
 </div>
@@ -368,7 +369,7 @@
         <div>
             Edit your format here.<br>
             <br>
-            Information on how to write a format can be found <a style="text-decoration: underline;color:#337ab7;" target="_blank" href="https://github.com/INL/BlackLab/blob/d20eb71b25137facf10f7d2681242de34ab1fa54/core/src/site/markdown/how-to-configure-indexing.md">here</a>.
+            Information on how to write a format can be found <a style="text-decoration: underline;color:#337ab7;" target="_blank" href="http://inl.github.io/BlackLab/how-to-configure-indexing.html">here</a>.
         </div>
     </li>
 </ul>

@@ -109,16 +109,16 @@
 	/**
 	 * @param {string} [selector] - jquery, may be omitted, in which case the signature becomes (eventType, handler)
 	 * @param {string} eventType - from events object, or custom
-	 * @param {Function} handler - callback function, 'this' is set to a single jquery element in selector (undefined if selector omitted)
+	 * @param {Function} handler - callback function, called once for every matched element, once - without an element- if no selector was provided
 	 */
 	function createHandler(a, b, c) {
-		var handlerContext = (typeof b === 'function') ? undefined : $(a);
-		var eventType = handlerContext ? b : a;
-		var handler = handlerContext ? c : b;
+		var $elements = (typeof b === 'function') ? undefined : $(a);
+		var eventType = $elements ? b : a;
+		var handler = $elements ? c : b;
 
 		$root.on(eventType, function(event, payload) {
-			if (handlerContext) {
-				handlerContext.each(function () {
+			if ($elements) {
+				$elements.each(function () {
 					handler.call($(this), payload);
 				});
 			} else {
@@ -127,12 +127,18 @@
 		});
 	}
 	function createHandlerOnce(a,b,c) {
-		var selector = (typeof b === 'function') ? undefined : a;
-		var eventType = selector ? b : a;
-		var handler = selector ? c : b;
+		var $elements = (typeof b === 'function') ? undefined : $(a);
+		var eventType = $elements ? b : a;
+		var handler = $elements ? c : b;
 
 		$root.one(eventType, function(event, payload) {
-			handler.call( selector ? $(selector) : undefined, payload);
+			if ($elements) {
+				$elements.each(function() {
+					handler.call($(this), payload);
+				});
+			} else {
+				handler.call(undefined, payload);
+			}
 		});
 	}
 
@@ -329,16 +335,9 @@
 						showSuccess('Corpus "' + corpus.displayName + '" deleted.');
 						refreshCorporaList();
 					},
-					'error': function (jqXHR, textStatus, errorThrown) {
+					'error': showXHRError('Could not delete corpus "' + corpus.displayName + '"', function() {
 						$('#waitDisplay').hide();
-						var data = jqXHR.responseJSON;
-						var msg;
-						if (data && data.error)
-							msg = data.error.message;
-						else
-							msg = textStatus + '; ' + errorThrown;
-						showError('Could not delete corpus "' + corpus.displayName + '": ' + msg);
-					},
+					})
 				});
 
 			}
@@ -379,7 +378,7 @@
 		var corpusId = $this.data('id');
 		var corpus = corpora.find(function(corpus) { return corpus.id === corpusId; });
 		if (corpus == null)
-			return;
+			showError('Unknown corpus, please refresh the page.'); // should never happen (except maybe before page is fully loaded) but whatever
 
 		$.ajax(blsUrl + '/' + corpusId + '/sharing', {
 			'type': 'GET',
@@ -392,11 +391,7 @@
 				$('#share-corpus-name').text(corpus.displayName);
 				$('#share-corpus-modal').modal('show');
 			},
-			'error': function (jqXHR, textStatus, errorThrown) {
-				console.log(arguments);
-			},
-			// 'complete': function() {
-			// }
+			'error': showXHRError('Could not retrieve share list'),
 		});
 	});
 
@@ -418,15 +413,7 @@
 			success: function (data) {
 				showSuccess(data.status.message);
 			},
-			error: function (jqXHR, textStatus, errorThrown) {
-				var data = jqXHR.responseJSON;
-				var msg;
-				if (data && data.error)
-					msg = data.error.message;
-				else
-					msg = textStatus + '; ' + errorThrown;
-				showError('Could not share corpus "' + corpus.displayName + '": ' + msg);
-			},
+			error: showXHRError('Could not share corpus "' + corpus.displayName + '"'),
 			complete: function() {
 				$editor.val(undefined);
 				$modal.modal('hide');
@@ -469,8 +456,7 @@
 	 * Keep requesting the status of the current index until it's no longer indexing.
 	 * The update handler will be called periodically while the status is "indexing", and then once more when the status has changed to something other than "indexing".
 	 *
-	 * @param fnUpdateHandler called with the up-to-date index data
-	 * @param fnErrorHander called with the error string
+	 * @param {string} indexId full id including any username
 	 */
 	function refreshIndexStatusWhileIndexing(indexId) {
 		var statusUrl = blsUrl + indexId + '/status/';
@@ -485,28 +471,19 @@
 			else
 				setTimeout(run, 2000);
 		}
-
-		function error(jqXHR, textStatus, errorThrown) {
-			var indexName = indexId.substr(indexId.indexOf(':')+1);
-
-			var data = jqXHR.responseJSON;
-			var msg;
-			if (data && data.error)
-				msg = data.error.message;
-			else
-				msg = textStatus + '; ' + errorThrown;
-
-			showError('Error retrieving status for corpus \''+indexName+'\': ' + msg);
-			clearTimeout(timeoutHandle);
-		}
-
+		
 		function run() {
 			$.ajax(statusUrl, {
 				'type': 'GET',
 				'accept': 'application/json',
 				'dataType': 'json',
 				'success': success,
-				'error': error
+				'error': showXHRError(
+					'Could not retrieve status for corpus "' + indexId.substr(indexId.indexOf(':')+1) + '"', 
+					function() {
+						clearTimeout(timeoutHandle);
+					}
+				)
 			});
 		}
 
@@ -565,15 +542,7 @@
 					.filter(function(corpus) { return corpus.status === 'indexing'; })
 					.forEach(function(corpus) { refreshIndexStatusWhileIndexing(corpus.id); });
 			},
-			'error': function (jqXHR, textStatus, errorThrown) {
-				var data = jqXHR.responseJSON;
-				var msg;
-				if (data && data.error)
-					msg = data.error.message;
-				else
-					msg = textStatus + '; ' + errorThrown;
-				showError('Error retrieving corpus list: ' + msg);
-			},
+			'error': showXHRError('Could not retrieve corpora'),
 			complete: function() {
 				$('#waitDisplay').hide();
 			}
@@ -596,19 +565,7 @@
 						})
 				);
 			},
-			error: function(jqXHR, textStatus, errorThrown) {
-				// TODO centralize error reporting, json, xml and generic network
-				if (jqXHR.status != 404) { // blacklab returns internal errors as xml(?)
-					var xmlDoc = $.parseXML( jqXHR.responseText );
-					var $xml = $( xmlDoc );
-					var error = $xml.find( 'error code' ).text();
-					var message = $xml.find(' error message ').text();
-
-					showError('Error retrieving input formats: ' + error + '; ' + message);
-				} else {
-					showError('Error retrieving input formats: ' + jqXHR.status + ' ' + errorThrown);
-				}
-			}
+			error: showXHRError('Could not retrieve formats'),
 		});
 	}
 
@@ -635,6 +592,36 @@
 		$('html, body').animate({
 			scrollTop: $('#errorDiv').offset().top - 75 // navbar
 		}, 500);
+	}
+
+	function showXHRError(message, callback) {
+		return function(jqXHR, textStatus, errorThrown) {
+			var errorMsg;
+			
+			if (jqXHR.readyState === 0)
+				errorMsg = 'Cannot connect to server.';
+			else if (jqXHR.readyState === 4) {
+				var data = jqXHR.responseJSON;
+				if (data && data.error)
+					errorMsg = data.error.message;
+				else try { // not json? try xml.
+					var xmlDoc = $.parseXML( jqXHR.responseText );
+					var $xml = $( xmlDoc );
+					errorMsg = $xml.find( 'error code' ).text() + ' - ' +  $xml.find(' error message ').text();
+				} catch (error) {
+					if (textStatus && errorThrown)
+						errorMsg = textStatus + ' - ' + errorThrown;
+					else 
+						errorMsg = 'Unknown error.';
+				}
+			} else {
+				errorMsg = 'Unknown error.';
+			}
+			
+			showError(message + ': ' + errorMsg);
+			if (typeof callback === 'function')
+				callback();
+		};
 	}
 
 	/**
@@ -665,20 +652,13 @@
 				'format': format
 			},
 			'success': function (/*data*/) {
-				$('#waitDisplay').hide();
 				refreshCorporaList();
 				showSuccess('Corpus "' + displayName + '" created.');
 			},
-			'error': function (jqXHR, textStatus, errorThrown) {
+			'error': showXHRError('Could not create corpus "' + shortName + '"'),
+			'complete': function() {
 				$('#waitDisplay').hide();
-				var data = jqXHR.responseJSON;
-				var msg;
-				if (data && data.error)
-					msg = data.error.message;
-				else
-					msg = textStatus + '; ' + errorThrown;
-				showError('Could not create corpus "' + shortName + '": ' + msg);
-			},
+			}
 		});
 	}
 
@@ -709,6 +689,8 @@
 
 	function initFileUpload() {
 
+		var $modal = $('#upload-file-dialog');
+
 		var $progress = $('#uploadProgress');
 		var $success = $('#uploadSuccessDiv');
 		var $error = $('#uploadErrorDiv');
@@ -728,6 +710,12 @@
 				$($this.data('labelId')).text(text);
 			});
 		}).trigger('change'); // init labels
+
+		function preventModalCloseEvent(event) {
+			event.preventDefault();
+			event.stopPropagation();
+			return false;
+		}
 
 		function handleUploadProgress(event) {
 			var progress = event.loaded / event.total * 100;
@@ -753,7 +741,9 @@
 				return handleError.call(this, event);
 
 			var message = 'Data added to "' + uploadToCorpus.displayName + '".';
-
+			
+			$modal.off('hide.bs.modal', preventModalCloseEvent);
+			$modal.find('[data-dismiss="modal"]').attr('disabled', false).toggleClass('disabled', false);
 			$progress.parent().hide();
 			$form.show();
 			$error.hide();
@@ -766,14 +756,17 @@
 		}
 
 		function handleError(/*event*/) {
+			
 			var msg = 'Could not add data to "' + uploadToCorpus.displayName + '"';
 			if (this.responseText)
-				msg += ': ' + JSON.parse(this.responseText).error.message;
+			msg += ': ' + JSON.parse(this.responseText).error.message;
 			else if (this.textStatus)
-				msg += ': ' + this.textStatus;
+			msg += ': ' + this.textStatus;
 			else
-				msg += ': unknown error (are you trying to upload too much data?)';
-
+			msg += ': unknown error (are you trying to upload too much data?)';
+			
+			$modal.off('hide.bs.modal', preventModalCloseEvent);
+			$modal.find('[data-dismiss="modal"]').attr('disabled', false).toggleClass('disabled', false);
 			$progress.parent().hide();
 			$form.show();
 			$success.hide();
@@ -783,6 +776,8 @@
 		$form.on('submit', function(event) {
 			event.preventDefault();
 
+			$modal.on('hide.bs.modal', preventModalCloseEvent);
+			$modal.find('[data-dismiss="modal"]').attr('disabled', true).toggleClass('disabled', true);
 			$form.hide();
 			$error.hide();
 			$success.hide();
@@ -1063,9 +1058,7 @@
 							showSuccess(data.status.message);
 							refreshFormatList();
 						},
-						error: function(jqXHR) {
-							showError(jqXHR.responseJSON.error.message);
-						}
+						error: showXHRError('Could not delete format'),
 					});
 				}
 			);

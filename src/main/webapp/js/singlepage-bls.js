@@ -253,7 +253,7 @@ SINGLEPAGE.BLS = (function () {
 				'Total pages: ' + totalPages + optEllipsis
 			);
 
-			$('#totalsLimitedWarning').toggle(data.summary.stillCounting === false && data.summary.stoppedCountingHits)
+			$('#totalsLimitedWarning').toggle(!!(data.summary.stillCounting === false && data.summary.stoppedCountingHits));
 			$('#totalsSpinner').toggle(data.summary.stillCounting);
 		}
 		

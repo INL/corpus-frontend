@@ -256,6 +256,11 @@
                             <input id="sampleSeed" name="sampleSeed" placeholder="seed" type="number" class="form-control" >
                         </div>
                     </div>
+                    
+                    <hr>
+                   
+                    <div class="checkbox-inline"><label for="wide-view"><input type="checkbox" id="wide-view" name="wide-view" data-persistent 
+                    onChange="$('.container, .container-fluid').toggleClass('container', !$(this).is(':checked')).toggleClass('container-fluid', $(this).is(':checked'));"> Wide View</label></div>
                 </div>
 
             </div>

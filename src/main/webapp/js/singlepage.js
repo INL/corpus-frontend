@@ -11,6 +11,22 @@ SINGLEPAGE.CORE = (function () {
 		SINGLEPAGE.FORM.init();
 		SINGLEPAGE.INTERFACE.init();
 
+		if (window.localStorage) {
+			$('input[data-persistent][id != ""]').each(function(i, elem) {
+				var $this = $(elem);
+				var key = 'input_' + $this.attr('id');
+				$this.on('change', function() {
+					var curVal = $this.is(':checkbox') ? $this.is(':checked') : $this.val();
+					window.localStorage.setItem(key, curVal);
+				});
+
+				var storedVal = window.localStorage.getItem(key);
+				if (storedVal != null)
+					$this.is(':checkbox') ? $this.attr('checked', storedVal.toLowerCase() === 'true') : $this.val(storedVal);
+				$this.trigger('change'); // run handler once, init localstorage if required
+			});
+		}
+
 		// Init the querybuilder with the supported attributes/properties
 		var $queryBuilder = $('#querybuilder'); // container
 		var queryBuilderInstance = querybuilder.createQueryBuilder($queryBuilder, {

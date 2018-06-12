@@ -9,8 +9,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -45,7 +47,7 @@ public class CorpusConfig {
         this.jsonUnescaped = jsonUnescaped;
         parse();
     }
-    
+
     public static Document fromXml(String xml) throws ParserConfigurationException, SAXException, IOException {
         return DocumentBuilderFactory.newInstance()
             .newDocumentBuilder()
@@ -109,7 +111,7 @@ public class CorpusConfig {
         if (documentFormatTags.getLength() > 0)
             this.corpusDataFormat = documentFormatTags.item(0).getTextContent();
     }
-    
+
     public static String getSelectProperties(String xml) throws ParserConfigurationException, SAXException, IOException {
         Document config = fromXml(xml);
         String selects = "";
@@ -126,13 +128,10 @@ public class CorpusConfig {
                 if (propertyElement.getElementsByTagName("isInternal").item(0).getTextContent().equalsIgnoreCase("true"))
                     continue;
 
-                List<String> allowedValues = parsePropertyValues(propertyElement);
-                if (allowedValues.isEmpty()) {
-                    String configType = propertyElement.getElementsByTagName("uiType").getLength()==1 ?
-                        propertyElement.getElementsByTagName("uiType").item(0).getTextContent() : "";
-                    if ("select".equals(configType)) {
-                        selects += selects.isEmpty() ? propertyElement.getAttribute("name") : "," + propertyElement.getAttribute("name");
-                    }
+                String configType = propertyElement.getElementsByTagName("uiType").getLength()==1 ?
+                    propertyElement.getElementsByTagName("uiType").item(0).getTextContent() : "";
+                if ("select".equals(configType)) {
+                    selects += selects.isEmpty() ? propertyElement.getAttribute("name") : "," + propertyElement.getAttribute("name");
                 }
             }
         }

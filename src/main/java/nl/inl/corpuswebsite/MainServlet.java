@@ -111,8 +111,6 @@ public class MainServlet extends HttpServlet {
     private String contextPath;
 
     // @formatter:off
-    /** Word properties (like word, lemma, pos) that should be autocompleted by blacklab-server */
-    public static final String PROP_AUTOCOMPLETE_PROPS      = "listvalues";
     public static final String PROP_ANALYTICS_KEY           = "googleAnalyticsKey";
     /** Url to reach blacklab-server from this application */
     public static final String PROP_BLS_CLIENTSIDE          = "blsUrlExternal";
@@ -141,7 +139,6 @@ public class MainServlet extends HttpServlet {
     private static Properties getDefaultProps() {
         // @formatter:off
         Properties p = new Properties();
-        p.setProperty(PROP_AUTOCOMPLETE_PROPS,      "");
         p.setProperty(PROP_BLS_CLIENTSIDE,          "/blacklab-server"); // no domain to account for proxied servers
         p.setProperty(PROP_BLS_SERVERSIDE,          "http://localhost:8080/blacklab-server/");
         p.setProperty(PROP_DATA_PATH,               "/etc/blacklab/projectconfigs");
@@ -339,19 +336,21 @@ public class MainServlet extends HttpServlet {
             // Contact blacklab-server for the config xml file
             QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(corpus));
 
-            String listvalues = adminProps.getProperty(PROP_AUTOCOMPLETE_PROPS);
             try {
-                Map<String, String[]> params = new HashMap<>();
-
-                params.put("outputformat", new String[] { "xml" });
-                if (listvalues != null && !listvalues.isEmpty()) {
-                    params.put("listvalues", new String[] { listvalues });
-                }
                 String userId = getCorpusOwner(corpus);
-                if (userId != null)
-                    params.put("userid", new String[] { userId });
-                String xmlResult = handler.makeRequest(params);
-
+                Map<String, String[]> params = new HashMap<>();
+                
+                String xmlConfig = getXml(userId, handler, params);
+                
+                String selectProperties = CorpusConfig.getSelectProperties(xmlConfig);
+                
+                if (!selectProperties.isEmpty()) {
+                    // again retrieve config with values for props with uitype select
+                    params.clear();
+                    params.put("listvalues", new String[] {selectProperties});
+                    xmlConfig = getXml(corpus, handler, params);
+                }
+                
                 // TODO tidy this up, the json is only used to embed the index data in the search page.
                 // We might not need the xml data to begin with.
                 params.clear();
@@ -360,13 +359,22 @@ public class MainServlet extends HttpServlet {
                     params.put("userid", new String[] { userId });
                 String jsonResult = handler.makeRequest(params);
 
-                corpusConfigs.put(corpus, new CorpusConfig(xmlResult, jsonResult));
+
+                corpusConfigs.put(corpus, new CorpusConfig(xmlConfig, jsonResult));
             } catch (IOException | SAXException | ParserConfigurationException | QueryException e) {
                 return null;
             }
         }
 
         return corpusConfigs.get(corpus);
+    }
+    
+
+    private String getXml(String userId, QueryServiceHandler handler, Map<String, String[]> params) throws IOException, QueryException {
+        params.put("outputformat", new String[] { "xml" });
+        if (userId != null)
+            params.put("userid", new String[] { userId });
+        return handler.makeRequest(params);
     }
 
     @Override

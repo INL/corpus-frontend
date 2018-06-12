@@ -9,10 +9,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -43,11 +41,15 @@ public class CorpusConfig {
     private String corpusDataFormat = "UNKNOWN";
 
     public CorpusConfig(String xml, String jsonUnescaped) throws SAXException, IOException, ParserConfigurationException {
-        config = DocumentBuilderFactory.newInstance()
-            .newDocumentBuilder()
-            .parse(new InputSource(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8))));
+        config = fromXml(xml);
         this.jsonUnescaped = jsonUnescaped;
         parse();
+    }
+    
+    public static Document fromXml(String xml) throws ParserConfigurationException, SAXException, IOException {
+        return DocumentBuilderFactory.newInstance()
+            .newDocumentBuilder()
+            .parse(new InputSource(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8))));
     }
 
     public String getJsonUnescaped() {
@@ -107,6 +109,35 @@ public class CorpusConfig {
         if (documentFormatTags.getLength() > 0)
             this.corpusDataFormat = documentFormatTags.item(0).getTextContent();
     }
+    
+    public static String getSelectProperties(String xml) throws ParserConfigurationException, SAXException, IOException {
+        Document config = fromXml(xml);
+        String selects = "";
+        NodeList complexFieldElements = config.getElementsByTagName("complexField");
+        for (int cfi = 0; cfi < complexFieldElements.getLength(); cfi++) {
+            Element complexFieldElement = (Element) complexFieldElements.item(cfi);
+            NodeList propertyElements = complexFieldElement.getElementsByTagName("property");
+            for (int ip = 0; ip < propertyElements.getLength(); ++ip) {
+                Node propertyNode = propertyElements.item(ip);
+                if (!(propertyNode instanceof Element))
+                    continue;
+
+                Element propertyElement = (Element) propertyNode;
+                if (propertyElement.getElementsByTagName("isInternal").item(0).getTextContent().equalsIgnoreCase("true"))
+                    continue;
+
+                List<String> allowedValues = parsePropertyValues(propertyElement);
+                if (allowedValues.isEmpty()) {
+                    String configType = propertyElement.getElementsByTagName("uiType").getLength()==1 ?
+                        propertyElement.getElementsByTagName("uiType").item(0).getTextContent() : "";
+                    if ("select".equals(configType)) {
+                        selects += selects.isEmpty() ? propertyElement.getAttribute("name") : "," + propertyElement.getAttribute("name");
+                    }
+                }
+            }
+        }
+        return selects;
+    }
 
     private void parsePropertyFields() {
 
@@ -130,7 +161,9 @@ public class CorpusConfig {
                 boolean caseSensitive =
                     propertyElement.getElementsByTagName("sensitivity").item(0).getTextContent().equals("SENSITIVE_AND_INSENSITIVE");
                 List<String> allowedValues = parsePropertyValues(propertyElement);
-                String type = inferType(null, allowedValues, propertyElement);
+                String configType = propertyElement.getElementsByTagName("uiType").getLength()==1 ?
+                    propertyElement.getElementsByTagName("uiType").item(0).getTextContent() : "";
+                String type = inferType(configType, allowedValues, propertyElement);
 
                 FieldDescriptor field = new FieldDescriptor(fieldName, displayName, type);
                 for (String allowedValue : allowedValues) {

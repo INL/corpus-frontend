@@ -62,6 +62,52 @@ The xslt file that is used has the name `article_<formatName>.xsl`, so `article_
 A sandbox where you can place whatever other files you may need, such as custom js, css, fonts, logo's etc.  
 These files are public, and can be accessed through `MyCorpus/static/path/to/my.file`
 
+## Other options
+There are some other small ways the interface can be configured.
+- `uiType`  
+When defining your own corpus format, you can optionally attach a `uiType` to complexField properties and metadata fields.  
+It should roughly look like this in your config file:
+    ```yaml
+    # For a normal word property, the uiType should be defined at the annotation level
+    annotatedFields:
+        contents:
+            ...
+
+            annotations:
+            - name: ...
+              valuePath: ...
+              uiType: 
+
+    # For a metadata field, the uiType should be defined at the field level
+    metadata:
+        ...
+
+        fields:
+        - name: ...
+          valuePath: ...
+          uiType: 
+    ```
+The uiType determines how input fields are shown in the search form.
+
+### For word properties
+- `text` _(default)_  
+Shows the field as a regular text box.  
+- `select`  
+Will force the field to show as a dropdown menu showing all values for the property. 
+Note that this will remove the option to enter wildcards or multiple words, and will disable the wordlist upload for that field.  
+**Warning: select is limited to 500 values!**  
+- `combobox`  
+Will enable autocompletion on the field, but still allow you to enter any value.  
+
+### For metadata properties
+The same options apply, but unlike normal property fields, we will autodetect the best setting when no uiType has been set for the field.
+Fields with only a couple of values will be set to `select`, other fields will typically be set to `combobox`.  
+
+- `text/select/combobox`  
+**Warning: select is limited to 50 (not 500) values!**
+- `range`  
+This will split the field into two inputs, this can be useful for things like dates and ages.
+
 -----------
 
 We will expand on this documentation soon, and also cover how to set up the application so users can log in upload their own corpora (disabled by default).

@@ -111,3 +111,21 @@ table.corpora a.disabled {
 	flex: none;
 	width: 100%;
 }
+
+#uploadProgress {
+	white-space: nowrap;
+	padding-left: 6px;
+}
+
+@keyframes grow {
+	0%   { width: 0%; }
+	100% { width: 95%; }
+}
+
+#uploadProgress.indexing {
+	animation: 40s grow;
+	-webkit-transition-timing-function: cubic-bezier(0.050, 0.895, 0.000, 0.995); 
+	   -moz-transition-timing-function: cubic-bezier(0.050, 0.895, 0.000, 0.995); 
+		 -o-transition-timing-function: cubic-bezier(0.050, 0.895, 0.000, 0.995); 
+			transition-timing-function: cubic-bezier(0.050, 0.895, 0.000, 0.995);
+}

@@ -377,8 +377,10 @@
 		var $this = $(event.target);
 		var corpusId = $this.data('id');
 		var corpus = corpora.find(function(corpus) { return corpus.id === corpusId; });
-		if (corpus == null)
+		if (corpus == null) {
 			showError('Unknown corpus, please refresh the page.'); // should never happen (except maybe before page is fully loaded) but whatever
+			return;
+		}
 
 		$.ajax(blsUrl + '/' + corpusId + '/sharing', {
 			'type': 'GET',
@@ -679,6 +681,7 @@
 			+ corpus.indexProgress.tokensProcessed + ' tokens indexed so far...';
 		} else {
 			statusText = 'Finished indexing!';
+			this.toggleClass('indexing', false);
 		}
 		this.text(statusText);
 	});
@@ -730,7 +733,8 @@
 
 		function handleUploadComplete(/*event*/) {
 			$progress
-				.css('width', '100%')
+				.css('width', '')
+				.toggleClass('indexing', true)
 				.data('corpus-id', uploadToCorpus.id);
 
 			refreshIndexStatusWhileIndexing(uploadToCorpus.id);
@@ -744,7 +748,7 @@
 			
 			$modal.off('hide.bs.modal', preventModalCloseEvent);
 			$modal.find('[data-dismiss="modal"]').attr('disabled', false).toggleClass('disabled', false);
-			$progress.parent().hide();
+			$progress.toggleClass('indexing', false).parent().hide();
 			$form.show();
 			$error.hide();
 			$success.text(message).show();
@@ -767,7 +771,7 @@
 			
 			$modal.off('hide.bs.modal', preventModalCloseEvent);
 			$modal.find('[data-dismiss="modal"]').attr('disabled', false).toggleClass('disabled', false);
-			$progress.parent().hide();
+			$progress.toggleClass('indexing', false).parent().hide();
 			$form.show();
 			$success.hide();
 			$error.text(msg).show();

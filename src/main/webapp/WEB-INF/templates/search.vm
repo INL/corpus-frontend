@@ -343,7 +343,7 @@
             <span class="fa fa-spinner fa-spin searchIndicator" style="position:absolute; left: 50%; top:15px"></span>
 
             <div class="lightbg haspadding resultcontainer">
-                <table>
+                <table class="resultstable">
                 <tbody>
                 </tbody>
                 </table>
@@ -381,7 +381,7 @@
             <span class="fa fa-spinner fa-spin searchIndicator" style="position:absolute; left: 50%; top:15px"></span>
 
             <div class="lightbg haspadding resultcontainer">
-                <table>
+                <table class="resultstable">
                 <tbody>
                 </tbody>
                 </table>

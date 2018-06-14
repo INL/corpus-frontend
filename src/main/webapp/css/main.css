@@ -130,6 +130,10 @@ hr {
 }.resultcontainer tr > *:first-child {
 	padding-left: 6px;
 }
+.resultstable th, 
+.resultstable td {
+	padding: 0 0.4em;
+}
 
 .modal-fullwidth {
 	width:100%;

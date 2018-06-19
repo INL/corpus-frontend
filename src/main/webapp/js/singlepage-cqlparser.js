@@ -129,7 +129,7 @@ SINGLEPAGE.CQLPARSER = (function() {
 			symbols = [symbols, null]; // always test for end of string
 			try {
 				var startPos = pos;
-				while (!test(symbols, true))
+				while (!test(symbols))
 					nextSym();
 				var endPos = pos;
 
@@ -159,9 +159,9 @@ SINGLEPAGE.CQLPARSER = (function() {
 		function parseAttribute() {
 			var name = until(['=', '!']).trim(); // This should really be "until anything BUT a-zA-z" but eh
 			var operator = until('"').trim();
-			expect('"');
+			expect('"', true); // keep all whtiespace after the opening quote
 			var test = until('"'); // don't trim whitespace
-			expect('"');
+			expect('"', true); // also keep all whitespace before and after the quote
 
 			if (operator !== '=' && operator !== '!=')
 				throw new errorMsg('Unknown operator ' + operator);

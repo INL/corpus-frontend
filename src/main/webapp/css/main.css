@@ -319,6 +319,10 @@ a[data-bls-sort], a.dropdown-toggle {
 	order: 1
 }
 
+#totalsLimitedWarning {
+	display: none; /* toggled in css */
+}
+
 .btn.nohover {
 	cursor: initial;
 	box-shadow: none;

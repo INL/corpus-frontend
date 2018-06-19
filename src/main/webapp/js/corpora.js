@@ -735,6 +735,7 @@
 			$progress
 				.css('width', '')
 				.toggleClass('indexing', true)
+				.text('indexing...')
 				.data('corpus-id', uploadToCorpus.id);
 
 			refreshIndexStatusWhileIndexing(uploadToCorpus.id);

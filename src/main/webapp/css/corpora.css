@@ -124,6 +124,7 @@ table.corpora a.disabled {
 
 #uploadProgress.indexing {
 	animation: 40s grow;
+	width: 95%; /* stay wide at end of animation */
 	-webkit-transition-timing-function: cubic-bezier(0.050, 0.895, 0.000, 0.995); 
 	   -moz-transition-timing-function: cubic-bezier(0.050, 0.895, 0.000, 0.995); 
 		 -o-transition-timing-function: cubic-bezier(0.050, 0.895, 0.000, 0.995); 

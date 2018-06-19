@@ -202,7 +202,7 @@ tr.concordance {
 		Greater widths are set using min-width.
 	*/
 	
-	width: initial; 
+	width: auto; 
 	padding: 0px 2px;
 }
 

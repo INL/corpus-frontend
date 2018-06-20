@@ -51,6 +51,8 @@ SINGLEPAGE.CORE = (function () {
 		});
 
 		// register click handlers in the main search form (data irrespective or currently viewed tab)
+		// Parsing and validation of the values is performed in singlepage-bls when the search is executed
+		// and in toPageState when the values are written from the query
 		$('#resultsPerPage').on('change', function () {
 			SINGLEPAGE.INTERFACE.setParameters({
 				pageSize: $(this).selectpicker('val')
@@ -58,27 +60,29 @@ SINGLEPAGE.CORE = (function () {
 		});
 		$('#sampleMode').on('change', function () {
 			SINGLEPAGE.INTERFACE.setParameters({
-				sampleMode: $(this).selectpicker('val')
+				sampleMode: $(this).selectpicker('val') 
 			});
 		});
 		$('#sampleSize').on('change', function () {
 			SINGLEPAGE.INTERFACE.setParameters({
-				sampleSize: $(this).val(),
+				sampleSize: $(this).val(), 
 				sampleMode: $('#sampleMode').selectpicker('val') // in case it hasn't been initialized
 			});
-		}).on('keypress', function(event) {
-			// prevent enter submitting form and initiating a search, should only update existing searches
-			if (event.keyCode === 13) {
-				$(this).trigger('change');
-				event.preventDefault();
-			}
 		});
 		$('#sampleSeed').on('change', function () {
 			SINGLEPAGE.INTERFACE.setParameters({
-				sampleSeed: $(this).val()
+				sampleSeed: $(this).val() 
 			});
-		}).on('keypress', function(event) {
-			// prevent enter submitting form and initiating a search, should only update existing searches
+		});
+		$('#wordsAroundHit').on('change', function() {
+			SINGLEPAGE.INTERFACE.setParameters({
+				wordsAroundHit: $(this).val() // validation/parsing performed in singlepage-bls 
+			});
+		});
+
+		// Prevent enter from submitting the form and initiating a search, 
+		// these settings should only update existing searches
+		$('#sampleSize, #sampleSeed, #wordsAroundHit').on('keypress', function(event) {
 			if (event.keyCode === 13) {
 				$(this).trigger('change');
 				event.preventDefault();
@@ -107,6 +111,7 @@ SINGLEPAGE.CORE = (function () {
 		});
 
 		// now restore the page state from the used url
+		// This will automatically start a search if the settings indicate it
 		var searchSettings = fromPageUrl();
 		if (searchSettings != null) {
 			toPageState(searchSettings);
@@ -347,6 +352,7 @@ SINGLEPAGE.CORE = (function () {
 		$('#sampleSize').val(searchParams.sampleSize || '');
 		$('#sampleMode').selectpicker('val', [searchParams.sampleMode || 'percentage']);
 		$('#sampleSeed').val(searchParams.sampleSeed || '');
+		$('#wordsAroundHit').val(searchParams.wordsAroundHit || '');
 
 		// Clear the results area, then actually run the search
 		SINGLEPAGE.INTERFACE.reset();

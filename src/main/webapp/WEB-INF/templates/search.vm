@@ -257,6 +257,13 @@
                         </div>
                     </div>
                     
+                    <div class="form-group">
+                        <label for="wordsAroundHit" class="col-xs-3">Context size:</label>
+                        <div class="col-xs-9">
+                            <input id="wordsAroundHit" name="wordsAroundHit" placeholder="context Size" type="number" class="form-control" >
+                        </div>
+                    </div>
+                    
                     <hr>
                    
                     <div class="checkbox-inline"><label for="wide-view"><input type="checkbox" id="wide-view" name="wide-view" data-persistent 

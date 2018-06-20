@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -99,8 +98,8 @@ public abstract class BaseResponse {
          */
         context.put("pathToTop", servlet.getServletContext().getContextPath());
         // For use in queryParameters to ensure clients don't cache old css/js when the application has updated.
-        // During development, there's usually no WAR, so no build time either, so we use rand() to ensure we never cache.
-        context.put("cache", servlet.getWarBuildTime().equals("UNKNOWN") ? new Random().nextInt() : servlet.getWarBuildTime().hashCode());
+        // During development, there's usually no WAR, so no build time either, but we assume the developer knows to ctrl+f5
+        context.put("cache", servlet.getWarBuildTime().hashCode());
         context.put("googleAnalyticsKey", this.servlet.getGoogleAnalyticsKey());
         context.put("brandLink", corpus == null ? "" : corpus + "/" + "search");
         context.put("buildTime", servlet.getWarBuildTime());

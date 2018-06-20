@@ -741,7 +741,8 @@ SINGLEPAGE.INTERFACE = (function() {
 
 			},
 			success: function(data) {
-				var b = new Blob([data], { type: 'application/csv' });
+				// NOTE: Excel <=2010 seems to ignore the BOM altogether, see https://stackoverflow.com/a/19516038
+				var b = new Blob([data], { type: 'text/plain;charset=utf-8' });
 				saveAs(b, 'data.csv'); // FileSaver.js
 			},
 			complete: function() {

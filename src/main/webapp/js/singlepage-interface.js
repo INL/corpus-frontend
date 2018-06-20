@@ -32,6 +32,15 @@ SINGLEPAGE.INTERFACE = (function() {
 
 	var ELLIPSIS = String.fromCharCode(8230);
 
+
+	/**
+	 * @typedef {Object} Property
+	 * @property {string} id
+	 * @property {string} displayName
+	 * @property {boolean} isMainProp
+	 */
+
+	/** @type {{all: Property[], shown: Property[], firstMainProp: Property  }} */
 	var PROPS = {};
 	// Gather up all relevant properties of words in this index
 	PROPS.all = $.map(SINGLEPAGE.INDEX.complexFields, function(complexField) {
@@ -55,7 +64,7 @@ SINGLEPAGE.INTERFACE = (function() {
 
 	// There is always at least a single main property.
 	// TODO this shouldn't be required, mainProperties from multiple complexFields should be handled properly
-	// but this has some challenges in the hits table view, such as that it would show mulitple columns for the before/hit/after contexts
+	// but this has some challenges in the hits table view, such as that it would show multiple columns for the before/hit/after contexts
 	PROPS.firstMainProp = PROPS.all.filter(function(prop) { return prop.isMainProp; })[0];
 
 
@@ -471,7 +480,7 @@ SINGLEPAGE.INTERFACE = (function() {
 				'</th>',
 
 				'<th class="text-left" style="width:40px;">',
-					'<span class="dropdown">', // Span as when it's div, and we're right aligning text, the dropdown doesn't align because the div extends all the way left
+					'<span class="dropdown">', // span instead of div or the menu won't align with the toggle text, as the toggle container is wider than the toggle's text
 						'<a class="dropdown-toggle" data-toggle="dropdown">',
 						textDirection=='ltr'? 'After hit ' : 'Before hit ',
 						'<span class="caret"></span></a>',
@@ -494,7 +503,7 @@ SINGLEPAGE.INTERFACE = (function() {
 		var prevHitDocPid = null;
 		var numColumns = 3 + PROPS.shown.length; // before context - hit context - after context - remaining properties
 		$.each(data.hits, function(index, hit) {
-			// Render a row for this hit's document, if this hit didn't occurred in a new document
+			// Render a row for this hit's document, if this hit occurred in a different document than the previous
 			var docPid = hit.docPid;
 			if (docPid !== prevHitDocPid) {
 				prevHitDocPid = docPid;
@@ -525,6 +534,7 @@ SINGLEPAGE.INTERFACE = (function() {
 				.absoluteTo(new URI().toString())
 				.filename(docPid)
 				.search({
+					// parameter 'query' controls the hits that are highlighted in the document when it's opened
 					'query': data.summary.searchParam.patt
 				})
 				.toString();

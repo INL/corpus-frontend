@@ -181,7 +181,7 @@ SINGLEPAGE.CORE = (function () {
 		});
 
 		// Append the operation, query params, etc, and return.
-		return uri.segmentCoded(basePath).segmentCoded(operation).search(searchParams).toString();
+		return uri.segmentCoded(basePath).segmentCoded(operation).search(modifiedParams).toString();
 	}
 
 	/**

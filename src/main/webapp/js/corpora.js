@@ -184,14 +184,22 @@
 		triggers.updateCorpora(corpora);
 	});
 
-	createHandlerOnce(events.SERVER_REFRESH, function(serverInfo) {
+	createHandler(events.SERVER_REFRESH, function(serverInfo) {
+		// Don't hide when !canCreateIndex, user may have just hit the limit
+		// (in this case it should be unhidden when a private corpus exists)
 		if (serverInfo.user.canCreateIndex)
-			$('#corpora-private-container, #formats-all-container').show();
+			$('#corpora-private-container').show();
+		
+		$('#create-corpus').toggle(serverInfo.user.canCreateIndex);
+		$('#formats-all-container').toggle(serverInfo.user.loggedIn);
 	});
 
-	createHandlerOnce(events.CORPORA_REFRESH, function(corpora) {
+	createHandler(events.CORPORA_REFRESH, function(corpora) {
 		if (corpora.find(function(corpus) { return !corpus.isPrivate; }) != null)
 			$('#corpora-public-container').show();
+
+		if (corpora.find(function(corpus) { return corpus.isPrivate; }) != null)
+			$('#corpora-private-container').show();
 	});
 
 	createHandlerOnce('*[data-autoupdate="username"]', events.SERVER_REFRESH, function(serverInfo) {
@@ -538,9 +546,10 @@
 			'accept': 'application/json',
 			'dataType': 'json',
 			'success': function (data) {
-				data = $.map(data.indices, normalizeIndexData);
-				triggers.updateCorpora(data);
-				data
+				var indices = $.map(data.indices, normalizeIndexData);
+				triggers.updateServer(data);
+				triggers.updateCorpora(indices);
+				indices
 					.filter(function(corpus) { return corpus.status === 'indexing'; })
 					.forEach(function(corpus) { refreshIndexStatusWhileIndexing(corpus.id); });
 			},

@@ -100,8 +100,10 @@ SINGLEPAGE.CORE = (function () {
 			var pattern = $('#querybox').val();
 			if (populateQueryBuilder(pattern))
 				$('#searchTabs a[href="#advanced"]').tab('show') && $('#parseQueryError').hide();
-			else
+			else {
 				$('#parseQueryError').show();
+				$('#querybox').val(pattern);
+			}
 		});
 
 		// And copy over the generated query to the manual field when changes happen
@@ -333,11 +335,17 @@ SINGLEPAGE.CORE = (function () {
 			} else {
 				// We have a raw cql query string, attempt to parse it using the querybuilder,
 				// otherwise fall back to the raw cql view
-				$('#querybox').val(searchParams.pattern);
-				$('#searchTabs a[href="#query"]').tab('show');
-
-				if (populateQueryBuilder(searchParams.pattern))
+				if (populateQueryBuilder(searchParams.pattern)) {
 					$('#searchTabs a[href="#advanced"]').tab('show');
+				} else  {
+					$('#querybuilder').data('builder').reset(); // clear potential half-parsed state
+					$('#searchTabs a[href="#query"]').tab('show');
+					// only set after attempting to populate querybuilder, 
+					// or querybuilder will overwrite the value immediately when we populate it
+					// (this is usually not a problem, but it is when the query is malformed or too 
+					// advanced for the builder to use - a half parsed query could then be written)
+					$('#querybox').val(searchParams.pattern);
+				}
 			}
 		}
 

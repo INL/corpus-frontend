@@ -950,9 +950,13 @@ window.querybuilder = (function() {
 		if ($element.is(':checkbox')) {
 			$element.prop('checked', val[0]);
 		} else if ($element.is('select')) {
-			if ($element.hasClass('selectpicker'))
+			if ($element.hasClass('selectpicker')) {
 				$element.selectpicker('val', val);
-			else {
+				
+				var actualValues = [].concat($element.selectpicker('val')); // might not always be array
+				if (val.filter(function(v){return v!=null && !actualValues.includes(v);}).length)
+					throw new Error('Could not set value(s) ' + val.join() + ' on selectpicker - list contains invalid values (use null to clear)');
+			} else {
 				// deal with selects that don't have the "multiple" property
 				var multiSelect = $element.prop('multiple');
 				var hasSelected = false;

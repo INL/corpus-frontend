@@ -682,7 +682,7 @@ SINGLEPAGE.BLS = (function () {
 						return propertyFields;
 					} catch (error) {
 						if (SINGLEPAGE.DEBUG)
-							console.log('Coult not parse cql query', blsParam.patt);
+							console.log('Could not parse cql query', blsParam.patt);
 						pageParams.within = null; // couldn't parse
 						return blsParam.patt; // just pass on the cql-query, we can't parse it, or it's too complex
 					}

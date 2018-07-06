@@ -219,10 +219,10 @@ SINGLEPAGE.CQLPARSER = (function() {
 			}
 
 			if (accept('[')) {
-
-				token.expression = parseExpression();
-				expect(']');
-
+				if (!accept(']')) {
+					token.expression = parseExpression();
+					expect(']');
+				}
 			} else { // shorthand is just a single word
 				expect('"');
 				var word = until('"');

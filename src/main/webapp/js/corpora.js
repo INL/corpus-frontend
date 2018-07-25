@@ -191,6 +191,7 @@
 			$('#corpora-private-container').show();
 		
 		$('#create-corpus').toggle(serverInfo.user.canCreateIndex);
+		$('#create-corpus-limited').toggle(!serverInfo.user.canCreateIndex);
 		$('#formats-all-container').toggle(serverInfo.user.loggedIn);
 	});
 

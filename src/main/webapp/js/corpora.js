@@ -14,7 +14,7 @@
  * @property {string} displayName
  * @property {string} [documentFormat] - id of the document format of the corpus, not always set per se, also in the format of username:formatname
  * @property {string} timeModified
- * @property {('available'|'empty'|'indexing')} indexStatus
+ * @property {('available'|'empty'|'indexing')} status
  * @property {number} tokenCount - number of tokens in the corpus (not accurate while indexing)
  * @property {IndexProgress} [indexProgress] - data about the indexing progress if indexState === 'indexing'
  */

@@ -16,8 +16,8 @@ public class FieldDescriptor {
     /** Never true for metadata fields */
     private boolean isCaseSensitive = false;
 
-    /** Which complex field did this field/property originate from - Never set for metadata fields */
-    private String complexFieldName = null;
+    /** Which annotated field did this field/property originate from - Never set for metadata fields */
+    private String annotatedFieldName = null;
 
     /**
      * is this a "main" property - e.g. for cql query "word" is this property the one that's used. Always false for
@@ -81,12 +81,12 @@ public class FieldDescriptor {
         this.isCaseSensitive = caseSensitive;
     }
 
-    public void setComplexFieldName(String complexFieldName) {
-        this.complexFieldName = complexFieldName;
+    public void setAnnotatedFieldName(String annotatedFieldName) {
+        this.annotatedFieldName = annotatedFieldName;
     }
 
-    public String getComplexFieldName() {
-        return complexFieldName;
+    public String getAnnotatedFieldName() {
+        return annotatedFieldName;
     }
 
     public void setMainProperty(boolean mainProperty) {

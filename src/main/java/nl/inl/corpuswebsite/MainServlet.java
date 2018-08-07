@@ -173,9 +173,9 @@ public class MainServlet extends HttpServlet {
                     .info("File {} (with blsUrl and blsUrlExternal settings) not found in webapps, /etc/blacklab/ or temp dir; will use defaults",
                           adminPropFile);
             } else if (!adminPropFile.isFile()) {
-                throw new ServletException("Property file " + adminPropFile + " is not a regular file!");
+                throw new ServletException("Annotation file " + adminPropFile + " is not a regular file!");
             } else if (!adminPropFile.canRead()) {
-                throw new ServletException("Property file " + adminPropFile + " exists but is unreadable!");
+                throw new ServletException("Annotation file " + adminPropFile + " exists but is unreadable!");
             } else {
                 // File exists and can be read. Read it.
                 logger.info("Reading corpus-frontend property file: {}", adminPropFile);
@@ -188,7 +188,7 @@ public class MainServlet extends HttpServlet {
             while (propKeys.hasMoreElements()) {
                 String key = (String) propKeys.nextElement();
                 if (!adminProps.containsKey(key))
-                    logger.debug("Property {} not configured, using default: {}", key, adminProps.getProperty(key));
+                    logger.debug("Annotation {} not configured, using default: {}", key, adminProps.getProperty(key));
             }
             if (!Paths.get(adminProps.getProperty(PROP_DATA_PATH)).isAbsolute()) {
                 throw new ServletException(PROP_DATA_PATH + " setting should be an absolute path");

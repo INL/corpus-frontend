@@ -115,10 +115,10 @@ public class CorpusConfig {
     public static String getSelectProperties(String xml) throws ParserConfigurationException, SAXException, IOException {
         Document config = fromXml(xml);
         String selects = "";
-        NodeList complexFieldElements = config.getElementsByTagName("complexField");
-        for (int cfi = 0; cfi < complexFieldElements.getLength(); cfi++) {
-            Element complexFieldElement = (Element) complexFieldElements.item(cfi);
-            NodeList propertyElements = complexFieldElement.getElementsByTagName("property");
+        NodeList annotatedFieldElements = config.getElementsByTagName("complexField");
+        for (int cfi = 0; cfi < annotatedFieldElements.getLength(); cfi++) {
+            Element annotatedFieldElement = (Element) annotatedFieldElements.item(cfi);
+            NodeList propertyElements = annotatedFieldElement.getElementsByTagName("property");
             for (int ip = 0; ip < propertyElements.getLength(); ++ip) {
                 Node propertyNode = propertyElements.item(ip);
                 if (!(propertyNode instanceof Element))
@@ -140,12 +140,12 @@ public class CorpusConfig {
 
     private void parsePropertyFields() {
 
-        NodeList complexFieldElements = config.getElementsByTagName("complexField");
-        for (int cfi = 0; cfi < complexFieldElements.getLength(); cfi++) {
-            Element complexFieldElement = (Element) complexFieldElements.item(cfi);
-            String complexFieldName = complexFieldElement.getAttribute("name");
-            NodeList propertyElements = complexFieldElement.getElementsByTagName("property");
-            String mainPropertyName = complexFieldElement.getElementsByTagName("mainProperty").item(0).getTextContent();
+        NodeList annotatedFieldElements = config.getElementsByTagName("complexField");
+        for (int cfi = 0; cfi < annotatedFieldElements.getLength(); cfi++) {
+            Element annotatedFieldElement = (Element) annotatedFieldElements.item(cfi);
+            String annotatedFieldName = annotatedFieldElement.getAttribute("name");
+            NodeList propertyElements = annotatedFieldElement.getElementsByTagName("property");
+            String mainPropertyName = annotatedFieldElement.getElementsByTagName("mainProperty").item(0).getTextContent();
             for (int ip = 0; ip < propertyElements.getLength(); ++ip) {
                 Node propertyNode = propertyElements.item(ip);
                 if (!(propertyNode instanceof Element))
@@ -169,7 +169,7 @@ public class CorpusConfig {
                     field.addValidValue(allowedValue, allowedValue);
                 }
                 field.setCaseSensitive(caseSensitive);
-                field.setComplexFieldName(complexFieldName);
+                field.setAnnotatedFieldName(annotatedFieldName);
                 field.setMainProperty(fieldName.equals(mainPropertyName));
                 this.propertyFields.add(field);
             }

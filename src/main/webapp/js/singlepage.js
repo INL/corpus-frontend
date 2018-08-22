@@ -429,7 +429,16 @@ SINGLEPAGE.CORE = (function () {
 			// Why? Because when the user goes back say, 10 pages, we reinit the page and do a search with the restored parameters
 			// this search would push a new history entry, popping the next 10 pages off the stack, which the url is the same because we just entered the page.
 			// So don't do that.
+
+			
+			// If we generate very long page urls, tomcat cannot parse our requests (referrer header too long)
+			// So omit the query from the page url in these cases
+			// TODO this breaks history-based navigation
 			var newUrl = toPageUrl(searchParams);
+			if (newUrl.length > 4000) {
+				newUrl = toPageUrl($.extend({}, searchParams, { pattern: null }));
+			}
+			
 			var currentUrl = new URI().toString();
 			if (newUrl !== currentUrl)
 				history.pushState(null, null, newUrl);

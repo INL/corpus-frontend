@@ -409,7 +409,7 @@ a[data-bls-sort], a.dropdown-toggle {
     display: inline-flex;
     flex-wrap: nowrap;
     max-width:100%;
-    margin-bottom: 15px;
+    margin-bottom: 5px;
 }
 .groupselect-container > .groupselect {
     flex: 1 1 auto;
@@ -431,8 +431,7 @@ a[data-bls-sort], a.dropdown-toggle {
 .resultgroupdetails,
 .results-incomplete-warning {
 	border-radius: 100px;
-	vertical-align:top;
-	margin-bottom: 15px;
+	margin-bottom: 5px;
 }
 
 .resultgroupname {

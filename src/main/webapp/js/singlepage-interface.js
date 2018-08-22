@@ -868,10 +868,8 @@ SINGLEPAGE.INTERFACE = (function() {
 
 		// copy parameter values to their selectors etc
 		if (toPageState) {
-			var $groupSelect = $tab.find('select.groupselect');
-
-			if ($groupSelect.length)
-				$groupSelect.selectpicker('val', updatedParameters.groupBy);
+			$tab.find('select.groupselect').selectpicker('val', updatedParameters.groupBy);
+			$tab.find('.casesensitive').prop('checked', updatedParameters.caseSensitive);
 		}
 	}
 
@@ -976,6 +974,7 @@ SINGLEPAGE.INTERFACE = (function() {
 					sort: null,
 					groupBy: null,
 					viewGroup: null,
+					caseSensitive: null,
 				})
 				.data('constParameters', {
 					operation: 'hits',
@@ -997,6 +996,7 @@ SINGLEPAGE.INTERFACE = (function() {
 					sort: null,
 					groupBy: null,
 					viewGroup: null,
+					caseSensitive: null,
 				})
 				.data('constParameters', {
 					operation: 'docs',
@@ -1026,6 +1026,12 @@ SINGLEPAGE.INTERFACE = (function() {
 				.on('click', '[data-page]', function(event) {
 					$(this).trigger('localParameterChange', {
 						page: $(this).data('page')
+					});
+					event.preventDefault();
+				})
+				.on('change', '.casesensitive', function(event) {
+					$(this).trigger('localParameterChange', {
+						caseSensitive: $(this).is(':checked') || null
 					});
 					event.preventDefault();
 				})

@@ -304,49 +304,64 @@
 
     <div id="resultTabsContent" class="tab-content">
         <div id="tabHits" class="tab-pane">
-            <div class="clearfix resultcontrols">
-                <div class="groupselect-container">
-                    <select class="selectpicker groupselect" title="Group hits by..." data-size="15" data-actions-box="true" data-deselect-all-text="reset" data-show-subtext="true" data-style="btn-default btn-sm" multiple>
-                        <optgroup label="Before hit">
-                            #foreach($propertyField in $propertyFields)
-                            <option value="wordleft:$propertyField.getId()" data-content="Group by $propertyField.getDisplayName() <small class=&quot;text-muted&quot;>before</small>">Group by $propertyField.getDisplayName()</option>
-                            #end
-                        </optgroup>
-                        <optgroup label="Hit">
-                            #foreach($propertyField in $propertyFields)
-                            <option value="hit:$propertyField.getId()">Group by $propertyField.getDisplayName()</option>
-                            #end
-                        </optgroup>
-                        <optgroup label="After hit">
-                            #foreach($propertyField in $propertyFields)
-                            <option value="wordright:$propertyField.getId()" data-content="Group by $propertyField.getDisplayName() <small class=&quot;text-muted&quot;>after</small>">Group by $propertyField.getDisplayName()</option>
-                            #end
-                        </optgroup>
-                        #foreach($group in $metadataGroups.entrySet())
-                        <optgroup label="$group.key">
-                            #foreach($metadataField in $group.value)
-                            <option value="field:$metadataField.getId()">Group by $metadataField.getDisplayName()</option>
-                            #end
-                        </optgroup>
-                        #end
-                    </select>
-                    <button type="button" class="btn btn-sm btn-default dummybutton">update</button> ## dummy button... https://github.com/INL/corpus-frontend/issues/88
-                </div>
+               ## control header
+            <div class="resultcontrols">
+                
+                ## main controls
+                <div style="display: flex;justify-content: space-between;align-items: flex-start;">
+                    <div style="display: flex; flex-wrap: wrap; min-width: 220px; max-width: 100%;"> ## grouping + warnings  
+                        
+                        <div class="groupselect-container" style="display:flex;align-items:center;flex-wrap:nowrap;">
+                            <select class="selectpicker groupselect" title="Group hits by..." data-size="15" data-actions-box="true" data-deselect-all-text="reset" data-show-subtext="true" data-style="btn-default btn-sm" multiple>
+                                <optgroup label="Before hit">
+                                    #foreach($propertyField in $propertyFields)
+                                    <option value="wordleft:$propertyField.getId()" data-content="Group by $propertyField.getDisplayName() <small class=&quot;text-muted&quot;>before</small>">Group by $propertyField.getDisplayName()</option>
+                                    #end
+                                </optgroup>
+                                <optgroup label="Hit">
+                                    #foreach($propertyField in $propertyFields)
+                                    <option value="hit:$propertyField.getId()">Group by $propertyField.getDisplayName()</option>
+                                    #end
+                                </optgroup>
+                                <optgroup label="After hit">
+                                    #foreach($propertyField in $propertyFields)
+                                    <option value="wordright:$propertyField.getId()" data-content="Group by $propertyField.getDisplayName() <small class=&quot;text-muted&quot;>after</small>">Group by $propertyField.getDisplayName()</option>
+                                    #end
+                                </optgroup>
+                                #foreach($group in $metadataGroups.entrySet())
+                                <optgroup label="$group.key">
+                                    #foreach($metadataField in $group.value)
+                                    <option value="field:$metadataField.getId()">Group by $metadataField.getDisplayName()</option>
+                                    #end
+                                </optgroup>
+                                #end
+                            </select>
+                            <button type="button" class="btn btn-sm btn-default dummybutton">update</button> ## dummy button... https://github.com/INL/corpus-frontend/issues/88
+                            <div class="checkbox-inline" style="margin-left: 5px;">
+                                <label style="white-space: nowrap; margin: 0;" for="casesensitive-groups-hits"><input type="checkbox" class="casesensitive" id="casesensitive-groups-hits" name="casesensitive-groups-hits">Case sensitive</label>
+                            </div>
+                        </div>
+                               
+                        <div class="resultgroupdetails btn btn-sm btn-default nohover" style="margin-right: 5px">
+                            <span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span class="resultgroupname"></span> &mdash; <a class="clearviewgroup" href="javascript:void(0)">Go back</a>
+                        </div>
+                        
+                        <div class="results-incomplete-warning btn btn-sm btn-default nohover">
+                            <span class="fa fa-exclamation-triangle text-danger"></span> Too many results! &mdash; your query was limited
+                        </div>
+                    </div>
+                    
+                    <div style="flex: 0 1000 auto"> ## buttons
+                        <button type="button" class="btn btn-default btn-sm pull-right exportcsv" style="margin-left: 5px;margin-bottom: 5px;">Export CSV</button>
+                        <button type="button" class="btn btn-danger btn-sm pull-right" data-toggle="collapse" data-target=".doctitle" style="margin-left: 5px;margin-bottom: 5px;">Show/hide titles</button>
+                    </div>
+                                        
+                </div> 
 
-                <div class="resultgroupdetails btn btn-sm btn-default nohover">
-                    <span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span class="resultgroupname"></span> &mdash; <a class="clearviewgroup" href="javascript:void(0)">Go back</a>
-                </div>
-                
-                <div class="results-incomplete-warning btn btn-sm btn-default nohover">
-                    <span class="fa fa-exclamation-triangle text-danger"></span> Too many results! &mdash; your query was limited
-                </div>
-                
-                <button type="button" class="btn btn-default btn-sm pull-right exportcsv" style="margin-left: 5px;">Export CSV</button>
-                <button type="button" class="btn btn-danger btn-sm pull-right" data-toggle="collapse" data-target=".doctitle">Show/hide titles</button>
-                <br>
+                ## pagination
                 <ul class="pagination pagination-sm"></ul>
             </div>
-
+     
             <span class="fa fa-spinner fa-spin searchIndicator" style="position:absolute; left: 50%; top:15px"></span>
 
             <div class="lightbg haspadding resultcontainer">
@@ -358,30 +373,43 @@
         </div> <!-- tabHits -->
 
         <div id="tabDocs" class="tab-pane">
-            <div class="clearfix resultcontrols">
-                <div class="groupselect-container">
-                    <select class="selectpicker groupselect" title="Group documents by..." data-size="15" data-actions-box="true" data-deselect-all-text="reset" data-style="btn-default btn-sm" multiple>
-                        #foreach($group in $metadataGroups.entrySet())
-                        <optgroup label="$group.key">
-                            #foreach($metadataField in $group.value)
-                            <option value="field:$metadataField.getId()">Group by $metadataField.getDisplayName()</option>
-                            #end
-                        </optgroup>
-                        #end
-                    </select>
-                    <button type="button" class="btn btn-sm btn-default dummybutton">update</button> ## dummy button... https://github.com/INL/corpus-frontend/issues/88
-                </div>
+            
+            ## control header
+            <div class="resultcontrols">
+                
+                ## main controls
+                <div style="display: flex;justify-content: space-between;align-items: flex-start;">
+                    <div style="display: flex; flex-wrap: wrap; min-width: 220px; max-width: 100%;"> ## grouping + warnings  
+                        <div class="groupselect-container" style="display:flex;align-items:center;flex-wrap:nowrap;">
+                            <select class="selectpicker groupselect" title="Group documents by..." data-size="15" data-actions-box="true" data-deselect-all-text="reset" data-style="btn-default btn-sm" multiple>
+                                #foreach($group in $metadataGroups.entrySet())
+                                <optgroup label="$group.key">
+                                    #foreach($metadataField in $group.value)
+                                    <option value="field:$metadataField.getId()">Group by $metadataField.getDisplayName()</option>
+                                    #end
+                                </optgroup>
+                                #end
+                            </select>
+                            <button type="button" class="btn btn-sm btn-default dummybutton">update</button> ## dummy button... https://github.com/INL/corpus-frontend/issues/88
+                            <div class="checkbox-inline" style="margin-left: 5px;">
+                                <label style="white-space: nowrap; margin: 0;" for="casesensitive-groups-docs"><input type="checkbox" class="casesensitive" id="casesensitive-groups-docs" name="casesensitive-groups-docs">Case sensitive</label>
+                            </div>
+                        </div>
+                    
+                        <div class="resultgroupdetails btn btn-sm btn-default nohover" style="margin-right: 5px;>
+                            <span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span class="resultgroupname"></span> &mdash; <a class="clearviewgroup" href="javascript:void(0)">Go back</a>
+                        </div>
+                        <div class="results-incomplete-warning btn btn-sm btn-default nohover">
+                            <span class="fa fa-exclamation-triangle text-danger"></span> Too many results! &mdash; your query was limited
+                        </div>
+                    </div>
+                    <div style="flex: 0 1000 auto"> ## buttons
+                        <button type="button" class="btn btn-default btn-sm pull-right exportcsv" style="margin-left: 5px;margin-bottom: 5px;">Export CSV</button>
+                    </div>
+                    
+                </div> 
 
-                <div class="resultgroupdetails btn btn-sm btn-default nohover">
-                    <span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span class="resultgroupname"></span> &mdash; <a class="clearviewgroup" href="javascript:void(0)">Go back</a>
-                </div>
-                <div class="results-incomplete-warning btn btn-sm btn-default nohover">
-                    <span class="fa fa-exclamation-triangle text-danger"></span> Too many results! &mdash; your query was limited
-                </div>
-
-                <button type="button" class="btn btn-default btn-sm pull-right exportcsv">Export CSV</button>
-
-                <br>
+                ## pagination
                 <ul class="pagination pagination-sm"></ul>
             </div>
 

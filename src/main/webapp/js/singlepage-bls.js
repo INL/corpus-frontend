@@ -16,6 +16,7 @@
  * @property {Array.<string>} [groupBy] - Array of valid group types, will be sent as a comma-separated list.
  * @property {string} [viewGroup] - Get results of a specific group instead of an overview of all groups. groupBy MUST be set when this parameter is set.
  * @property {string} [sort] - what fields to sort by.
+ * @property {boolean} [caseSensitive] - Is grouping/sorting case-sensitive
  */
 
 /**
@@ -360,7 +361,7 @@ SINGLEPAGE.BLS = (function () {
 
 					// these are either undefined or valid (meaning no empty strings/arrays)
 					filter: getFilterString(param.filters),
-					group: (param.groupBy || []).join(',') || undefined,
+					group: (param.groupBy || []).map(function(group) { return group + (param.caseSensitive ? ':s' : ':i'); }).join(',') || undefined,
 					patt: getPatternString(param.pattern),
 
 					sort: param.sort || undefined,
@@ -375,6 +376,7 @@ SINGLEPAGE.BLS = (function () {
 			 * @returns {SearchParameters|null} - null if empty or null blsParam
 			 */
 			getPageParam: function(blsParam) {
+				/** @type SearchParameters */
 				var pageParams = {};
 				if (blsParam == null || $.isEmptyObject(blsParam))
 					return null;
@@ -386,9 +388,10 @@ SINGLEPAGE.BLS = (function () {
 				pageParams.wordsAroundHit   = blsParam.wordsaroundhit || undefined;
 				pageParams.page             = blsParam.number != null ? Math.floor((blsParam.first || 0) / blsParam.number) : undefined;
 				pageParams.pageSize         = blsParam.number || undefined;
-				pageParams.groupBy          = blsParam.group ? blsParam.group.split(',') : undefined;
+				pageParams.groupBy          = blsParam.group ? blsParam.group.split(',').map(function(group) { return group.replace(/:s$/, ''); }) : undefined;
 				pageParams.viewGroup        = blsParam.viewgroup;
 				pageParams.sort             = blsParam.sort;
+				pageParams.caseSensitive    = blsParam.group && blsParam.group.split(',').every(function(group) { return group.endsWith(':s'); }) || undefined;
 
 				// Parse the FilterFields from the lucene query, this is a bit involved.
 				// TODO factor into module and add tests.

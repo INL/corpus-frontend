@@ -306,7 +306,9 @@ SINGLEPAGE.BLS = (function () {
 				}
 
 				inflightRequest = $.ajax({
-					url: new URI(BLS_URL).segment(operation).addSearch(blsParam).toString(),
+					url: new URI(BLS_URL).segment(operation),
+					method: 'POST',
+					data: blsParam,
 					dataType: 'json',
 					cache: false,
 					success: function(data) {

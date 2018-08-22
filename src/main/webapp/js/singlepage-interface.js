@@ -337,7 +337,8 @@ SINGLEPAGE.INTERFACE = (function() {
 		// this parameter is local to this tab, as the other tabs are probably displaying other groups.
 		$(this).trigger('localParameterChange', {
 			viewGroup: groupId,
-			page: 0
+			page: 0,
+			sort: null,
 		});
 
 
@@ -386,6 +387,7 @@ SINGLEPAGE.INTERFACE = (function() {
 				sampleSize: null,
 				sampleMode: null,
 				sampleSeed: null,
+				sort: null
 			},
 			$tab.data('constParameters')
 		);
@@ -1038,6 +1040,7 @@ SINGLEPAGE.INTERFACE = (function() {
 							groupBy: cur,
 							page: 0,
 							viewGroup: null, // Clear any group we may be currently viewing, as the available groups just changed
+							sort:null,
 						});
 					}
 
@@ -1047,6 +1050,7 @@ SINGLEPAGE.INTERFACE = (function() {
 					$(this).trigger('localParameterChange', {
 						page: 0,
 						viewGroup: null,
+						sort:null,
 					});
 					event.preventDefault();
 				});

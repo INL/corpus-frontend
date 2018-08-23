@@ -84,6 +84,7 @@
 </script>
 
 <link rel="stylesheet" href="$pathToTop/css/cql_querybuilder.css">
+#if(!$jspath) 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/URI.js/1.19.1/URI.min.js" integrity="sha256-D3tK9Rf/fVqBf6YDM8Q9NCNf/6+F2NOKnYSXHcl0keU=" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.8/FileSaver.min.js" integrity="sha256-FPJJt8nA+xL4RU6/gsriA8p8xAeLGatoyTjldvQKGdE=" crossorigin="anonymous"></script>
 <script src="$pathToTop/js/vendor/lucene-query-parser.js"></script> ## https://github.com/thoward/lucene-query-parser.js
@@ -94,6 +95,10 @@
 <script src="$pathToTop/js/singlepage-interface.js?_$cache"></script>
 <script src="$pathToTop/js/cql_querybuilder.js?_$cache"></script>
 <script src="$pathToTop/js/singlepage-cqlparser.js?_$cache"></script>
+#else
+<script src="$jspath/singlepage.js?_$cache"></script>
+#end
+
 
 <!--
 <noscript>

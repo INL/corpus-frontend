@@ -77,7 +77,8 @@ public abstract class BaseResponse {
      * @param pathParameters trailing path segments in the original request uri, so the part behind the response's path
      * @throws ServletException when corpus is required but missing.
      */
-    public void init(HttpServletRequest request, HttpServletResponse response, MainServlet servlet, String corpus, List<String> pathParameters)
+    public void init(HttpServletRequest request, HttpServletResponse response, MainServlet servlet, String corpus,
+                     List<String> pathParameters)
         throws ServletException {
         if ((corpus == null || corpus.isEmpty()) && this.requiresCorpus)
             throw new ServletException("Response requires a corpus");
@@ -103,6 +104,9 @@ public abstract class BaseResponse {
         context.put("googleAnalyticsKey", this.servlet.getGoogleAnalyticsKey());
         context.put("brandLink", corpus == null ? "" : corpus + "/" + "search");
         context.put("buildTime", servlet.getWarBuildTime());
+        context.put("jspath", servlet.getAdminProps().get(MainServlet.PROP_JSPATH));
+        logger.info("jspath {}", servlet.getAdminProps().get(MainServlet.PROP_JSPATH));
+
 
         // Escape all data written into the velocity templates by default
         // Only allow access to the raw string if the expression contains the word "unescaped"

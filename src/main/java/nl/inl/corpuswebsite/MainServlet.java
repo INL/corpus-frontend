@@ -122,6 +122,8 @@ public class MainServlet extends HttpServlet {
     public static final String PROP_DATA_DEFAULT            = "corporaInterfaceDefault";
     /** Number of words displayed by default on the /article/ page, also is a hard limit on the number */
     public static final String PROP_DOCUMENT_PAGE_LENGTH    = "wordend";
+    /** Development mode, allow script tags to load load js from an external server (webpack-dev-server) instead of from the static /js/ dir */
+    public static final String PROP_JSPATH					= "jspath";
     // @formatter:on
 
     /**
@@ -347,7 +349,7 @@ public class MainServlet extends HttpServlet {
                 if (!selectProperties.isEmpty()) {
                     // again retrieve config with values for props with uitype select
                     params.clear();
-                    params.put("listvalues", new String[] {selectProperties});
+                    params.put("listvalues", new String[] { selectProperties });
                     xmlConfig = getXml(userId, handler, params);
                 }
 
@@ -368,7 +370,8 @@ public class MainServlet extends HttpServlet {
         return corpusConfigs.get(corpus);
     }
 
-    private static String getXml(String userId, QueryServiceHandler handler, Map<String, String[]> params) throws IOException, QueryException {
+    private static String getXml(String userId, QueryServiceHandler handler, Map<String, String[]> params)
+        throws IOException, QueryException {
         params.put("outputformat", new String[] { "xml" });
         if (userId != null)
             params.put("userid", new String[] { userId });
@@ -545,7 +548,7 @@ public class MainServlet extends HttpServlet {
      * snippet suitable for inseting in the article.vm page.
      *
      * Looks for a file by the name of "article_corpusDataFormat.xsl", so "article_tei" for tei, etc.
-     * Separate xslt  is used for metadata, see {@link ArticleResponse#completeRequest()}
+     * Separate xslt is used for metadata, see {@link ArticleResponse#completeRequest()}
      *
      * <pre>
      * First tries retrieving the file using {@link #getProjectFile(String, String)}
@@ -671,7 +674,13 @@ public class MainServlet extends HttpServlet {
 
         try (InputStream inputStream = getServletContext().getResourceAsStream("/META-INF/MANIFEST.MF")) {
             return warBuildTime = Optional.ofNullable(inputStream)
-                .map(is -> { try { return new Manifest(is); } catch (IOException e) { return null; } })
+                .map(is -> {
+                    try {
+                        return new Manifest(is);
+                    } catch (IOException e) {
+                        return null;
+                    }
+                })
                 .map(Manifest::getMainAttributes)
                 .map(a -> a.getValue("Build-Time"))
                 .filter(s -> !s.isEmpty())

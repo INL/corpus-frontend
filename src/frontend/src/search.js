@@ -1,3 +1,5 @@
+import './vendor'; // configure jquery etc
+
 import * as singlepage from './modules/singlepage';
 import * as singlepage_bls from './modules/singlepage-bls';
 import * as singlepage_form from './modules/singlepage-bls';

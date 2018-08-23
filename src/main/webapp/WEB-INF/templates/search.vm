@@ -338,7 +338,7 @@
                             </select>
                             <button type="button" class="btn btn-sm btn-default dummybutton">update</button> ## dummy button... https://github.com/INL/corpus-frontend/issues/88
                             <div class="checkbox-inline" style="margin-left: 5px;">
-                                <label style="white-space: nowrap; margin: 0;" for="casesensitive-groups-hits"><input type="checkbox" class="casesensitive" id="casesensitive-groups-hits" name="casesensitive-groups-hits">Case sensitive</label>
+                                <label title="Separate groups for differently cased values" style="white-space: nowrap; margin: 0;" for="casesensitive-groups-hits"><input type="checkbox" class="casesensitive" id="casesensitive-groups-hits" name="casesensitive-groups-hits">Case sensitive</label>
                             </div>
                         </div>
                                
@@ -392,7 +392,7 @@
                             </select>
                             <button type="button" class="btn btn-sm btn-default dummybutton">update</button> ## dummy button... https://github.com/INL/corpus-frontend/issues/88
                             <div class="checkbox-inline" style="margin-left: 5px;">
-                                <label style="white-space: nowrap; margin: 0;" for="casesensitive-groups-docs"><input type="checkbox" class="casesensitive" id="casesensitive-groups-docs" name="casesensitive-groups-docs">Case sensitive</label>
+                                <label title="Separate groups for differently cased values" style="white-space: nowrap; margin: 0;" for="casesensitive-groups-docs"><input type="checkbox" class="casesensitive" id="casesensitive-groups-docs" name="casesensitive-groups-docs">Case sensitive</label>
                             </div>
                         </div>
                     

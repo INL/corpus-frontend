@@ -376,7 +376,7 @@
 </ul>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/codemirror.min.css" integrity="sha256-I8NyGs4wjbMuBSUE40o55W6k6P7tu/7G28/JGUUYCIs=" crossorigin="anonymous" />
-<link  href="$pathToTop/css/corpora.css?_$cache" rel="stylesheet">
+<link rel="stylesheet" href="$pathToTop/css/corpora.css?_$cache" >
 
 #if($jspath)
 <script src="$jspath/corpora.js?_$cache"></script>

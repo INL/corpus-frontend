@@ -123,7 +123,7 @@ public class MainServlet extends HttpServlet {
     /** Number of words displayed by default on the /article/ page, also is a hard limit on the number */
     public static final String PROP_DOCUMENT_PAGE_LENGTH    = "wordend";
     /** Development mode, allow script tags to load load js from an external server (webpack-dev-server) instead of from the static /js/ dir */
-    public static final String PROP_JSPATH					= "jspath";
+    public static final String PROP_JSPATH					= "jspath"; // usually set to http://127.0.0.1/dist/
     // @formatter:on
 
     /**

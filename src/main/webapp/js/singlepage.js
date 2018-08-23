@@ -402,16 +402,19 @@ SINGLEPAGE.CORE = (function () {
 				// Other parameters are automatically updated on interaction and thus always up-to-date
 			}, true);
 
-			// Setting parameters refreshes the shown results (if a result tab is opened),
-			// but when there are no results shown, activate one of the tabs manually (this also triggers a refresh of the results in that tab)
-			if (!$('#resultTabs .active').length) {
+			// Setting parameters refreshes the open result tab (if a result tab is opened),
+			// but when there is no tab open, activate one of the tabs manually 
+			// (this triggers a refresh of the results in that tab)
+			// Also switch to the document tab if the query won't result in hits (no pattern supplied)
+			var $activeTab = $('#resultTabs .active');
+			if (!$activeTab.length || (!pattern && $activeTab.has('a[href="#tabHits"]'))) {
 				if (pattern) {
 					$('#resultTabs a[href="#tabHits"]').tab('show');
 				} else {
 					$('#resultTabs a[href="#tabDocs"]').tab('show');
 				}
 			}
-
+			
 			$('html, body').animate({
 				scrollTop: $('#searchFormDivHeader').offset().top - 75 // navbar
 			}, 500);

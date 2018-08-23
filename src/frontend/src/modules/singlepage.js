@@ -1,4 +1,5 @@
-/* global URI, querybuilder */
+import $ from 'jquery';
+import URI from 'urijs';
 
 var SINGLEPAGE = SINGLEPAGE || {};
 

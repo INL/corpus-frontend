@@ -11,6 +11,7 @@ import 'bootstrap-select';
 
 // Same for jqueryui
 import 'jquery-ui';
+import 'jquery-extendext';
 
 // Whereas these augment codemirror
 import 'codemirror/mode/javascript/javascript.js';

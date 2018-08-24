@@ -5,7 +5,7 @@ import URI from 'urijs';
 import {saveAs} from 'file-saver';
 
 import {getBlsParam, search, getQuerySummary} from './singlepage-bls';
-import {onSearchUpdated} from './singlepage';
+import {onSearchUpdated} from '../search';
 
 // TODO
 // showCitation showProperties onClick handlers

@@ -1,5 +1,14 @@
-import './vendor';
+// Bootstrap and bootstrap-select augment jquery
+import 'bootstrap';
+import 'bootstrap-select';
 
+// Whereas these register new highlighters for codemirror
+import 'codemirror/mode/javascript/javascript.js';
+import 'codemirror/mode/yaml/yaml.js';
+
+import './modules/tutorial';
+
+// Now import the augmented modules (though import order shouldn't matter)
 import Mustache from 'mustache';
 import CodeMirror from 'codemirror';
 import $ from 'jquery';
@@ -150,23 +159,23 @@ var events = {
 
 var triggers = {
 	/**
-	 * @type {Function} 
-	 * @param {Array.<Format>} payload data passed into the handler 
+	 * @type {Function}
+	 * @param {Array.<Format>} payload data passed into the handler
 	 */
 	updateFormats: createTrigger(events.FORMATS_REFRESH),
-	/** 
+	/**
 	 * @type {Function}
-	 * @param {ServerInfo} payload server status from blacklab-server 
+	 * @param {ServerInfo} payload server status from blacklab-server
 	 */
 	updateServer: createTrigger(events.SERVER_REFRESH),
-	/** 
+	/**
 	 * @type {Function}
-	 * @param {Array.<Index>} payload normalized index data 
+	 * @param {Array.<Index>} payload normalized index data
 	 */
 	updateCorpora: createTrigger(events.CORPORA_REFRESH),
-	/** 
-	 * @type {Function} 
-	 * @param {Index} payload normalized index data 
+	/**
+	 * @type {Function}
+	 * @param {Index} payload normalized index data
 	 */
 	updateCorpus: createTrigger(events.CORPUS_REFRESH)
 };
@@ -188,7 +197,7 @@ createHandler(events.SERVER_REFRESH, function(serverInfo) {
 	// (in this case it should be unhidden when a private corpus exists)
 	if (serverInfo.user.canCreateIndex)
 		$('#corpora-private-container').show();
-	
+
 	$('#create-corpus').toggle(serverInfo.user.canCreateIndex);
 	$('#create-corpus-limited').toggle(!serverInfo.user.canCreateIndex);
 	$('#formats-all-container').toggle(serverInfo.user.loggedIn);
@@ -481,7 +490,7 @@ function refreshIndexStatusWhileIndexing(indexId) {
 		else
 			setTimeout(run, 2000);
 	}
-	
+
 	function run() {
 		$.ajax(statusUrl, {
 			'type': 'GET',
@@ -489,7 +498,7 @@ function refreshIndexStatusWhileIndexing(indexId) {
 			'dataType': 'json',
 			'success': success,
 			'error': showXHRError(
-				'Could not retrieve status for corpus "' + indexId.substr(indexId.indexOf(':')+1) + '"', 
+				'Could not retrieve status for corpus "' + indexId.substr(indexId.indexOf(':')+1) + '"',
 				function() {
 					clearTimeout(timeoutHandle);
 				}
@@ -608,7 +617,7 @@ function showError(msg) {
 function showXHRError(message, callback) {
 	return function(jqXHR, textStatus, errorThrown) {
 		var errorMsg;
-		
+
 		if (jqXHR.readyState === 0)
 			errorMsg = 'Cannot connect to server.';
 		else if (jqXHR.readyState === 4) {
@@ -622,13 +631,13 @@ function showXHRError(message, callback) {
 			} catch (error) {
 				if (textStatus && errorThrown)
 					errorMsg = textStatus + ' - ' + errorThrown;
-				else 
+				else
 					errorMsg = 'Unknown error.';
 			}
 		} else {
 			errorMsg = 'Unknown error.';
 		}
-		
+
 		showError(message + ': ' + errorMsg);
 		if (typeof callback === 'function')
 			callback();
@@ -755,7 +764,7 @@ function initFileUpload() {
 			return handleError.call(this, event);
 
 		var message = 'Data added to "' + uploadToCorpus.displayName + '".';
-		
+
 		$modal.off('hide.bs.modal', preventModalCloseEvent);
 		$modal.find('[data-dismiss="modal"]').attr('disabled', false).toggleClass('disabled', false);
 		$progress.toggleClass('indexing', false).parent().hide();
@@ -770,15 +779,14 @@ function initFileUpload() {
 	}
 
 	function handleError(/*event*/) {
-		
 		var msg = 'Could not add data to "' + uploadToCorpus.displayName + '"';
 		if (this.responseText)
-		msg += ': ' + JSON.parse(this.responseText).error.message;
+			msg += ': ' + JSON.parse(this.responseText).error.message;
 		else if (this.textStatus)
-		msg += ': ' + this.textStatus;
+			msg += ': ' + this.textStatus;
 		else
-		msg += ': unknown error (are you trying to upload too much data?)';
-		
+			msg += ': unknown error (are you trying to upload too much data?)';
+
 		$modal.off('hide.bs.modal', preventModalCloseEvent);
 		$modal.find('[data-dismiss="modal"]').attr('disabled', false).toggleClass('disabled', false);
 		$progress.toggleClass('indexing', false).parent().hide();
@@ -866,7 +874,7 @@ function initNewCorpus() {
 		var formatId = $(this).selectpicker('val');
 		var format = formats.find(function(format) { return format.id === formatId; });
 		// format always exists if it's present in the select to begin with
-		
+
 		$corpusFormatDescription.text(format.description);
 		$corpusFormatHelpUrl.attr('href', format.helpUrl || undefined).toggle(!!format.helpUrl);
 	});

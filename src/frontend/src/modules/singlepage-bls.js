@@ -4,6 +4,8 @@
 import $ from 'jquery';
 import URI from 'urijs';
 
+import parseCql from '../utils/cqlparser';
+
 /**
  * Converts search parameters into a query for blacklab-server and executes it.
  * Also handles getting data such as longer snippets, concordances, etc.
@@ -46,7 +48,7 @@ import URI from 'urijs';
   * @property {string} [viewgroup] - also return results within this specific group (only when 'group' specified)
   */
 
-var SINGLEPAGE = window.SINGLEPAGE;
+// var SINGLEPAGE = window.SINGLEPAGE;
 
 function makeWildcardRegex(original) {
 	return original
@@ -300,7 +302,7 @@ var inflightRequest = null;
  */
 export function search(param, successFunc, errorFunc) {
 	var operation = param.operation;
-	var blsParam = SINGLEPAGE.BLS.getBlsParam(param);
+	var blsParam = getBlsParam(param);
 
 	if (SINGLEPAGE.DEBUG) {
 		console.log(blsParam);
@@ -612,7 +614,7 @@ export function getPageParam(blsParam) {
 		function stripCase(value) { return value.substr(value.startsWith('(?-i)') ? 5 : 4); }
 
 		try {
-			var result = SINGLEPAGE.CQLPARSER.parse(blsParam.patt);
+			var result = parseCql(blsParam.patt);
 			pageParams.within = result.within;
 
 			/**

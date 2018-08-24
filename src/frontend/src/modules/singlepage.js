@@ -12,7 +12,9 @@ import createQueryBuilder from './cql_querybuilder';
 import './singlepage-interface';
 import * as mainForm from './singlepage-form';
 import * as searcher from './singlepage-interface';
-import {getPageParam} from './singlepage-bls';
+import {getPageParam, getBlsParam, cancelSearch} from './singlepage-bls';
+
+import parseCql from '../utils/cqlparser';
 
 // var SINGLEPAGE = window.SINGLEPAGE;
 // SINGLEPAGE.DEBUG = false;
@@ -64,28 +66,28 @@ $(document).ready(function () {
 	// Parsing and validation of the values is performed in singlepage-bls when the search is executed
 	// and in toPageState when the values are written from the query
 	$('#resultsPerPage').on('change', function () {
-		SINGLEPAGE.INTERFACE.setParameters({
+		searcher.setParameters({
 			pageSize: $(this).selectpicker('val')
 		});
 	});
 	$('#sampleMode').on('change', function () {
-		SINGLEPAGE.INTERFACE.setParameters({
+		searcher.setParameters({
 			sampleMode: $(this).selectpicker('val')
 		});
 	});
 	$('#sampleSize').on('change', function () {
-		SINGLEPAGE.INTERFACE.setParameters({
+		searcher.setParameters({
 			sampleSize: $(this).val(),
 			sampleMode: $('#sampleMode').selectpicker('val') // in case it hasn't been initialized
 		});
 	});
 	$('#sampleSeed').on('change', function () {
-		SINGLEPAGE.INTERFACE.setParameters({
+		searcher.setParameters({
 			sampleSeed: $(this).val()
 		});
 	});
 	$('#wordsAroundHit').on('change', function() {
-		SINGLEPAGE.INTERFACE.setParameters({
+		searcher.setParameters({
 			wordsAroundHit: $(this).val() // validation/parsing performed in singlepage-bls
 		});
 	});
@@ -98,6 +100,8 @@ $(document).ready(function () {
 			event.preventDefault();
 		}
 	});
+
+	$('#mainForm').on('submit', searchSubmit);
 
 	// Rescale the querybuilder container when it's shown
 	$('a.querytype[href="#advanced"]').on('shown.bs.tab hide.bs.tab', function () {
@@ -180,7 +184,7 @@ function fromPageUrl() {
  */
 function toPageUrl(searchParams) {
 	var operation = searchParams && searchParams.operation; // store, as blsParams doesn't contain it: 'hits' or 'docs' or undefined
-	searchParams = SINGLEPAGE.BLS.getBlsParam(searchParams);
+	searchParams = getBlsParam(searchParams);
 
 	var uri = new URI();
 	var paths = uri.segmentCoded();
@@ -218,7 +222,7 @@ function populateQueryBuilder(pattern) {
 		return false;
 
 	try {
-		var parsedCql = SINGLEPAGE.CQLPARSER.parse(pattern);
+		var parsedCql = parseCql(pattern);
 		var tokens = parsedCql.tokens;
 		var within = parsedCql.within;
 		if (tokens === null) {
@@ -404,21 +408,21 @@ export function searchSubmit() {
 	// Get the correct pattern based on selected tab
 	var queryType = $('#searchTabs li.active .querytype').attr('href');
 	if (queryType === '#simple') {
-		pattern = SINGLEPAGE.FORM.getActiveProperties();
-		within = SINGLEPAGE.FORM.getWithin();
+		pattern = mainForm.getActiveProperties();
+		within = mainForm.getWithin();
 	} else if (queryType === '#advanced') {
 		pattern = $('#querybuilder').data('builder').getCql();
 	} else {
 		pattern = $('#querybox').val();
 	}
 
-	SINGLEPAGE.INTERFACE.setParameters({
+	searcher.setParameters({
 		page: 0,
 		viewGroup: null, // reset, as we might be looking at a detailed group currently, and the new search should not display within a specific group
 		pageSize: $('#resultsPerPage').selectpicker('val'),
 		pattern: pattern,
 		within: within,
-		filters: SINGLEPAGE.FORM.getActiveFilters(),
+		filters: mainForm.getActiveFilters(),
 		// Other parameters are automatically updated on interaction and thus always up-to-date
 	}, true);
 
@@ -471,6 +475,6 @@ export function onSearchUpdated(searchParams) {
 export function	resetPage() {
 	history.pushState(null, null, '?');
 	toPageState({});
-	SINGLEPAGE.BLS.cancelSearch();
+	cancelSearch();
 	return false;
 }

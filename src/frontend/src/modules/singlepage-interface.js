@@ -1,6 +1,11 @@
-/* global BLS_URL, URI, PROPS_IN_COLUMNS saveAs */
+/* global BLS_URL, PROPS_IN_COLUMNS */
 
 import $ from 'jquery';
+import URI from 'urijs';
+import {saveAs} from 'file-saver';
+
+import {getBlsParam, search, getQuerySummary} from './singlepage-bls';
+import {onSearchUpdated} from './singlepage';
 
 // TODO
 // showCitation showProperties onClick handlers
@@ -31,7 +36,7 @@ import $ from 'jquery';
  * @property {BLHitContext} right - context after the hit
  */
 
-var SINGLEPAGE = window.SINGLEPAGE;
+// var SINGLEPAGE = window.SINGLEPAGE;
 
 
 var ELLIPSIS = String.fromCharCode(8230);
@@ -349,7 +354,7 @@ function loadConcordances() {
 		$tab.data('constParameters')
 	);
 
-	SINGLEPAGE.BLS.search(searchParams, function(data) {
+	search(searchParams, function(data) {
 		var totalConcordances = data.hits ? data.summary.numberOfHitsRetrieved : data.summary.numberOfDocsRetrieved;
 		var loadedConcordances = data.summary.actualWindowSize;
 
@@ -691,7 +696,7 @@ function onExportCsv(event) {
 		$tab.data('parameters'),
 		$tab.data('constParameters'));
 
-	var blsParam = SINGLEPAGE.BLS.getBlsParam(pageParam);
+	var blsParam = getBlsParam(pageParam);
 
 	blsParam.outputformat = 'csv';
 	delete blsParam.number;
@@ -864,14 +869,14 @@ function onTabOpen(/*event, data*/) {
 	// CORE does as little UI manipulation as possible, just shows a tab when required
 	// so we're responsible for showing the entire results area.
 	$('#results').show();
-	var querySummary = SINGLEPAGE.BLS.getQuerySummary(searchSettings.pattern, searchSettings.within, searchSettings.filters);
+	var querySummary = getQuerySummary(searchSettings.pattern, searchSettings.within, searchSettings.filters);
 	$('#searchFormDivHeader').show()
 		.find('#querySummary').text(querySummary).attr('title', querySummary.substr(0, 1000));
 
 	if ($tab.data('results')) {
 		// Nothing to do, tab is already displaying data (this happens when you go back and forth between tabs without changing your query in between)
 		// Still notify core so that when the url is copied out the current tab can be restored.
-		SINGLEPAGE.CORE.onSearchUpdated(searchSettings);
+		onSearchUpdated(searchSettings);
 		return;
 	}
 
@@ -898,8 +903,8 @@ function onTabOpen(/*event, data*/) {
 
 	// All is well, search!
 	showSearchIndicator($tab);
-	SINGLEPAGE.CORE.onSearchUpdated(searchSettings);
-	SINGLEPAGE.BLS.search(searchSettings,
+	onSearchUpdated(searchSettings);
+	search(searchSettings,
 		function onSuccess() {
 			hideBlsError();
 			$tab.data('fnSetResults').apply(undefined, Array.prototype.slice.call(arguments)); // call with original args

@@ -111,7 +111,7 @@
 -->
 
 
-<form onsubmit="return SINGLEPAGE.CORE.searchSubmit();" class="clearfix">
+<form id="mainForm" class="clearfix">
 
 <div id='searchFormDiv' class="col-xs-12 contentbox collapse in">
     #if($websiteConfig.getCorpusOwner())<a href="$pathToTop" class="navbar-logo-margin"><i class="fa fa-arrow-left"></i> back to my corpora</a>#end

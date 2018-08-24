@@ -16,9 +16,6 @@ import createQueryBuilder from './modules/cql_querybuilder';
 
 import {debugLog} from './utils/debug';
 
-// var SINGLEPAGE = window.SINGLEPAGE;
-// SINGLEPAGE.DEBUG = false;
-
 $(document).ready(function () {
 	if (window.localStorage) {
 		$('input[data-persistent][id != ""]').each(function(i, elem) {

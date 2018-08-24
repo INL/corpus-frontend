@@ -1,9 +1,14 @@
-import './vendor'; // configure jquery etc
+// TODO bootstrap, jquery-ui, pageguide, autocomplete.
 
-import * as singlepage from './modules/singlepage';
-import * as singlepage_bls from './modules/singlepage-bls';
-import * as singlepage_form from './modules/singlepage-bls';
-import * as singlepage_interface from './modules/singlepage-interface';
-import * as singlepage_cqlparser from './modules/singlepage-cqlparser';
-import * as singlepage_querybuilder from './modules/cql_querybuilder';
-import * as tutorial from './modules/tutorial';
+// Bootstrap and bootstrap-select augment jquery
+import 'bootstrap';
+import 'bootstrap-select';
+
+import './modules/autocomplete';
+import './modules/tutorial';
+
+import './modules/singlepage';
+import './modules/singlepage-bls';
+import './modules/singlepage-bls';
+import './modules/singlepage-interface';
+import './modules/singlepage-cqlparser';

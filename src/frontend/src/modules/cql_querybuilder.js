@@ -1,4 +1,6 @@
 import 'jquery-extendext';
+import 'jquery-ui';
+import 'jquery-ui/ui/widgets/sortable';
 
 import $ from 'jquery';
 import Mustache from 'mustache';

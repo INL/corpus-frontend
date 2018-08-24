@@ -36,11 +36,7 @@ import {onSearchUpdated} from '../search';
  * @property {BLHitContext} right - context after the hit
  */
 
-// var SINGLEPAGE = window.SINGLEPAGE;
-
-
 var ELLIPSIS = String.fromCharCode(8230);
-
 
 /**
  * @typedef {Object} Property
@@ -703,9 +699,7 @@ function onExportCsv(event) {
 	delete blsParam.first;
 
 	var url = new URI(BLS_URL).segment(pageParam.operation).addSearch(blsParam).toString();
-	if (SINGLEPAGE.DEBUG) {
-		console.log('CSV download url', url, blsParam); // eslint-disable-line
-	}
+	debugLog('CSV download url', url, blsParam); // eslint-disable-line
 
 	$button
 		.addClass('disabled')

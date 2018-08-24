@@ -1,10 +1,12 @@
-/* global BLS_URL, lucenequeryparser */
+/* global BLS_URL */
 /* eslint-disable no-console */
 
 import $ from 'jquery';
 import URI from 'urijs';
+import luceneQueryParser from 'lucene-query-parser';
 
 import parseCql from '../utils/cqlparser';
+import {debugLog} from '../utils/debug';
 
 /**
  * Converts search parameters into a query for blacklab-server and executes it.
@@ -304,9 +306,7 @@ export function search(param, successFunc, errorFunc) {
 	var operation = param.operation;
 	var blsParam = getBlsParam(param);
 
-	if (SINGLEPAGE.DEBUG) {
-		console.log(blsParam);
-	}
+	debugLog(blsParam);
 
 	inflightRequest = $.ajax({
 		url: new URI(BLS_URL).segment(operation),
@@ -315,9 +315,7 @@ export function search(param, successFunc, errorFunc) {
 		dataType: 'json',
 		cache: false,
 		success: function(data) {
-			if (SINGLEPAGE.DEBUG) {
-				console.log(data);
-			}
+			debugLog(data);
 
 			// only start when we get the first bit of data back
 			// or we would fire off two nearly identical requests for nothing
@@ -327,8 +325,7 @@ export function search(param, successFunc, errorFunc) {
 				successFunc(data);
 		},
 		error: function() {
-			if (SINGLEPAGE.DEBUG)
-				console.log('Request failed: ', arguments);
+			debugLog('Request failed: ', arguments);
 
 			if (typeof errorFunc === 'function')
 				errorFunc.apply(undefined, arguments);
@@ -404,9 +401,7 @@ export function getPageParam(blsParam) {
 		if (!blsParam.filter)
 			return null;
 
-		if (SINGLEPAGE.DEBUG) {
-			console.log('parsing filter string', blsParam.filter);
-		}
+		debugLog('parsing filter string', blsParam.filter);
 
 		// First define some structures returned by the lib so we actually know what we're working with
 
@@ -485,9 +480,7 @@ export function getPageParam(blsParam) {
 				} else if (context != null && val.field && val.field !== '<implicit>') {
 					// this is weird, and it should probably never happen
 					// it would mean we're going to define terms for a field while we're already inside the term list expression for another field
-					if (SINGLEPAGE.DEBUG) {
-						console.log('Got a node with a field, but already have context, ignoring.', context);
-					}
+					debugLog('Got a node with a field, but already have context, ignoring.', context);
 					return;
 				}
 			}
@@ -519,9 +512,7 @@ export function getPageParam(blsParam) {
 
 			if (createdContext) {
 				if (context == null) {
-					if (SINGLEPAGE.DEBUG) {
-						console.log('We started a context but didn\'t end with one, some other function pushed it, that shouldn\'t happen...');
-					}
+					debugLog('We started a context but didn\'t end with one, some other function pushed it, that shouldn\'t happen...');
 				} else {
 					parsedValues.push(context);
 					context = null;
@@ -549,9 +540,7 @@ export function getPageParam(blsParam) {
 				};
 				createdContext = true;
 			} else if (context != null && val.field && val.field !== '<implicit>') {
-				if (SINGLEPAGE.DEBUG) {
-					console.log('Got field', field, ' with an explicit name, but we already have a context?');
-				}
+				debugLog('Got field', field, ' with an explicit name, but we already have a context?');
 				return;
 			} // else have context and field is implicit, just add the term value to the list
 
@@ -571,9 +560,7 @@ export function getPageParam(blsParam) {
 
 			if (context != null) {
 				// mixed terms and ranges for the same field, can't handle.
-				if (SINGLEPAGE.DEBUG) {
-					console.log('Entered a range expression, but context is not null, might happen? cannot handle in interface');
-				}
+				debugLog('Entered a range expression, but context is not null, might happen? cannot handle in interface');
 				return;
 			}
 			if (val.field === '<implicit>') // default value, basically parsing "[from TO to]" without the name of field to which to apply the range, interface can't handle this
@@ -588,14 +575,12 @@ export function getPageParam(blsParam) {
 		}
 
 		try {
-			var results = lucenequeryparser.parse(blsParam.filter);
+			var results = luceneQueryParser.parse(blsParam.filter);
 			node(results);
 			return parsedValues.length ? parsedValues : null;
 		} catch (error) {
-			if (SINGLEPAGE.DEBUG) {
-				console.log('Could not parse lucene query ' + blsParam.filter);
-				console.log('reason: ', error);
-			}
+			debugLog('Could not parse lucene query ' + blsParam.filter);
+			debugLog('reason: ', error);
 			return null;
 		}
 	})();
@@ -612,6 +597,10 @@ export function getPageParam(blsParam) {
 	pageParams.pattern = (function() {
 		function isCase(value) { return value.startsWith('(?-i)') || value.startsWith('(?c)'); }
 		function stripCase(value) { return value.substr(value.startsWith('(?-i)') ? 5 : 4); }
+
+		if (!blsParam.patt) {
+			return null;
+		}
 
 		try {
 			var result = parseCql(blsParam.patt);
@@ -686,9 +675,7 @@ export function getPageParam(blsParam) {
 
 			return propertyFields;
 		} catch (error) {
-			if (SINGLEPAGE.DEBUG) {
-				console.log('Could not parse cql query', blsParam.patt);
-			}
+			debugLog('Could not parse cql query', blsParam.patt);
 			pageParams.within = null; // couldn't parse
 			return blsParam.patt; // just pass on the cql-query, we can't parse it, or it's too complex
 		}

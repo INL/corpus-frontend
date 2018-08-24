@@ -14,6 +14,7 @@ import * as searcher from './modules/singlepage-interface';
 import {getPageParam, getBlsParam, cancelSearch} from './modules/singlepage-bls';
 import createQueryBuilder from './modules/cql_querybuilder';
 
+import {debugLog} from './utils/debug';
 
 // var SINGLEPAGE = window.SINGLEPAGE;
 // SINGLEPAGE.DEBUG = false;
@@ -320,13 +321,8 @@ function populateQueryBuilder(pattern) {
 		});
 	} catch (e) {
 		// couldn't decode query
-		if (SINGLEPAGE.DEBUG) {
-			/* eslint-disable */
-			console.log('Cql parser could not decode query pattern');
-			console.log(e);
-			console.log(pattern);
-			/* eslint-enable */
-		}
+		debugLog('Cql parser could not decode query pattern', e, pattern);
+
 		return false;
 	}
 

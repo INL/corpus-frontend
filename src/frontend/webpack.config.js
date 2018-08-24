@@ -15,12 +15,31 @@ module.exports = {
 		publicPath: '/dist/'
 	},
 	module: {
-		// Make the debug module available in the browser console under "cf.debug"
+		// Make several modules available globally (i.e. the browser console) under "cf.*"
+		// Helps with development and debugging and allows user scripts to hook in to some of the functionality
 		rules: [{
 			test: require.resolve('./src/utils/debug.js'),
 			use: [{
 				loader: 'expose-loader',
 				options: 'cf.debug'
+			}]
+		}, {
+			test: require.resolve('./src/corpora.js'),
+			use: [{
+				loader: 'expose-loader',
+				options: 'cf.core'
+			}]
+		}, {
+			test: require.resolve('./src/modules/singlepage-form.js'),
+			use: [{
+				loader: 'expose-loader',
+				options: 'cf.mainform'
+			}]
+		}, {
+			test: require.resolve('./src/modules/singlepage-interface.js'),
+			use: [{
+				loader: 'expose-loader',
+				options: 'cf.search'
 			}]
 		}]
 	},

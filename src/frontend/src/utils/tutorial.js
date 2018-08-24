@@ -40,7 +40,7 @@ function getStackingContextZIndex($el) {
  * Or we could end up way too low or high.
  */
 function monkeyPatchPageguide() {
-	tl.pg.PageGuide.prototype.checkTargets = function () { //eslint-disable-line
+	window.tl.pg.PageGuide.prototype.checkTargets = function () { //eslint-disable-line
 		var self = this;
 		var visibleIndex = 0;
 		var newVisibleTargets = [];
@@ -104,7 +104,7 @@ $(document).ready(function() {
 
 	// use a timeout so bootstrap-select etc has a moment to run
 	setTimeout(function() {
-		tl.pg.init({ // eslint-disable-line
+		window.tl.pg.init({ // eslint-disable-line
 			auto_refresh: true,
 			default_zindex: 1, // don't use auto, or overlays will appear beneath elements on the same layer as content is inserted at the top of the page
 		});

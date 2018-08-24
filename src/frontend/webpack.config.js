@@ -18,7 +18,7 @@ module.exports = {
 	},
 	plugins: [
 		// ProvidePlugin makes modules globally available under certain symbols, for both our own files as well as our imported dependencies.
-		// This is unfortunately required to allow dependencies to augment other dependencies (such as jquery-ui augmenting jquery)
+		// This is unfortunately required to allow dependencies to augment other dependencies (such as jquery-ui and bootstrap augmenting jquery)
 		// which requires the same instance of jquery to be visible to both the jquery-ui module as our own files
 		// See vendor/index.js
 		new webpack.ProvidePlugin({
@@ -28,4 +28,5 @@ module.exports = {
 			'CodeMirror':       'codemirror',
 		}),
 	],
+	devtool: 'eval-souce-map'
 };

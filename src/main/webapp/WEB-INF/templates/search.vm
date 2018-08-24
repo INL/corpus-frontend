@@ -96,7 +96,7 @@
 <script src="$pathToTop/js/cql_querybuilder.js?_$cache"></script>
 <script src="$pathToTop/js/singlepage-cqlparser.js?_$cache"></script>
 #else
-<script src="$jspath/singlepage.js?_$cache"></script>
+<script src="$jspath/search.js?_$cache"></script>
 #end
 
 

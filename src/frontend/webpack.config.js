@@ -14,6 +14,16 @@ module.exports = {
 		// Path in webpack-dev-server for compiled files (has priority over disk files in case both exist)
 		publicPath: '/dist/'
 	},
+	module: {
+		// Make the debug module available in the browser console under "cf.debug"
+		rules: [{
+			test: require.resolve('./src/utils/debug.js'),
+			use: [{
+				loader: 'expose-loader',
+				options: 'cf.debug'
+			}]
+		}]
+	},
 	plugins: [
 		// ProvidePlugin makes modules globally available under certain symbols, for both our own files as well as our imported dependencies.
 		// This is unfortunately required to allow dependencies to augment other dependencies (such as jquery-ui and bootstrap augmenting jquery)

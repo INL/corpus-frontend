@@ -14,9 +14,6 @@
  * @property {Array.<string>} values - Values of the filter, for selects, the selected values, for text, the text, for ranges the min and max values in indices [0][1]
  */
 
-// Our global symbol
-// var SINGLEPAGE = window.SINGLEPAGE;
-
 // Filters with currently valid values, values will need to be processed prior to search
 var activeFilters = [];
 var activeProperties = [];

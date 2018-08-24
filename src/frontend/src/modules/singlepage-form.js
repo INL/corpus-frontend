@@ -134,7 +134,7 @@ function updateWithin($radioButtonContainer) {
 
 
 
-export function	init() {
+$(document).on('ready', function() {
 
 	// Now enable autocompletion on our marked fields
 	$('input[data-autocomplete]').each(function() {
@@ -185,7 +185,7 @@ export function	init() {
 	}).each(function() {
 		updateWithin($(this));
 	});
-}
+});
 
 /** Clears all metadata, simple search properties, and within selector */
 export function reset() {

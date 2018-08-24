@@ -1,15 +1,22 @@
+import 'bootstrap';
+import 'bootstrap-select';
+
+import './autocomplete';
+import './tutorial';
+
 import $ from 'jquery';
 import URI from 'urijs';
 
 import createQueryBuilder from './cql_querybuilder';
 
-var SINGLEPAGE = window.SINGLEPAGE;
-SINGLEPAGE.DEBUG = false;
+import './singlepage-interface';
+import './singlepage-form';
+import './singlepage-bls';
+
+// var SINGLEPAGE = window.SINGLEPAGE;
+// SINGLEPAGE.DEBUG = false;
 
 $(document).ready(function () {
-	SINGLEPAGE.FORM.init();
-	SINGLEPAGE.INTERFACE.init();
-
 	if (window.localStorage) {
 		$('input[data-persistent][id != ""]').each(function(i, elem) {
 			var $this = $(elem);
@@ -91,6 +98,11 @@ $(document).ready(function () {
 	// Rescale the querybuilder container when it's shown
 	$('a.querytype[href="#advanced"]').on('shown.bs.tab hide.bs.tab', function () {
 		$('#searchContainer').toggleClass('col-md-6');
+	});
+
+	// Enable wide view toggle
+	$('#wide-view').on('change', function() {
+		$('.container, .container-fluid').toggleClass('container', !$(this).is(':checked')).toggleClass('container-fluid', $(this).is(':checked'));
 	});
 
 	// Attempt to parse the query from the cql editor into the querybuilder

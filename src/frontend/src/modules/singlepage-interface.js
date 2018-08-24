@@ -911,7 +911,7 @@ function onTabOpen(/*event, data*/) {
 	);
 }
 
-export function	init() {
+$(document).on('ready', function() {
 	// Hide the results area and deactivate all tabs to prevent accidental refreshes later.
 	// Tabs are unhidden when a search is submitted.
 	$('#results').hide();
@@ -1020,7 +1020,7 @@ export function	init() {
 			});
 			event.preventDefault();
 		});
-}
+});
 
 /**
  * Request and display more preview text from a document.

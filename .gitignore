@@ -15,7 +15,5 @@ target
 /bin/
 
 # Visual Studio Code files
-.vscode
-.eslintrc.json
-.eslintrc.js
+.vscode/
 jsconfig.json

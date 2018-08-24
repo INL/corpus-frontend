@@ -3,9 +3,9 @@ const webpack = require('webpack');
 
 module.exports = {
 	entry: {
-		article: './src/article.js',
-		corpora: './src/corpora.js',
-		search: './src/search.js',
+		article: ['babel-polyfill', './src/article.js'],
+		corpora: ['babel-polyfill', './src/corpora.js'],
+		search: ['babel-polyfill', './src/search.js'],
 	},
 	output: {
 		filename: '[name].js',
@@ -41,7 +41,11 @@ module.exports = {
 				loader: 'expose-loader',
 				options: 'cf.search'
 			}]
-		}]
+		}, {
+			test: /\.js$/,
+			exclude: [/node_modules/, './src/vendor'],
+			loader: 'babel-loader',
+		},]
 	},
 	plugins: [
 		// ProvidePlugin makes modules globally available under certain symbols, for both our own files as well as our imported dependencies.

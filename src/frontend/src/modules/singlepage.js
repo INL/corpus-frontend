@@ -10,8 +10,9 @@ import URI from 'urijs';
 import createQueryBuilder from './cql_querybuilder';
 
 import './singlepage-interface';
-import './singlepage-form';
-import './singlepage-bls';
+import * as mainForm from './singlepage-form';
+import * as searcher from './singlepage-interface';
+import {getPageParam} from './singlepage-bls';
 
 // var SINGLEPAGE = window.SINGLEPAGE;
 // SINGLEPAGE.DEBUG = false;
@@ -156,7 +157,7 @@ function fromPageUrl() {
 	if ($.isEmptyObject(blsParam))
 		return null;
 
-	var pageParam = SINGLEPAGE.BLS.getPageParam(blsParam);
+	var pageParam = getPageParam(blsParam);
 	if (operation)
 		pageParam.operation = operation;
 
@@ -335,7 +336,7 @@ function populateQueryBuilder(pattern) {
  */
 function toPageState(searchParams) {
 	// reset and repopulate the main form
-	SINGLEPAGE.FORM.reset();
+	mainForm.reset();
 	$('#querybuilder').data('builder').reset();
 	$('#querybox').val(undefined);
 
@@ -343,7 +344,7 @@ function toPageState(searchParams) {
 		// In the case of an array as search pattern,  it contains the basic/simple search parameters
 		if (searchParams.pattern.constructor === Array) {
 			$.each(searchParams.pattern, function (index, element) {
-				SINGLEPAGE.FORM.setPropertyValues(element);
+				mainForm.setPropertyValues(element);
 			});
 		} else {
 			// We have a raw cql query string, attempt to parse it using the querybuilder,
@@ -363,10 +364,10 @@ function toPageState(searchParams) {
 	}
 
 	$.each(searchParams.filters, function (index, element) {
-		SINGLEPAGE.FORM.setFilterValues(element.name, element.values);
+		mainForm.setFilterValues(element.name, element.values);
 	});
 
-	SINGLEPAGE.FORM.setWithin(searchParams.within);
+	mainForm.setWithin(searchParams.within);
 
 	// Restore the results per page, sample info, etc
 	$('#resultsPerPage').selectpicker('val', [searchParams.pageSize || 50]);
@@ -376,8 +377,8 @@ function toPageState(searchParams) {
 	$('#wordsAroundHit').val(searchParams.wordsAroundHit || '');
 
 	// Clear the results area, then actually run the search
-	SINGLEPAGE.INTERFACE.reset();
-	SINGLEPAGE.INTERFACE.setParameters(searchParams);
+	searcher.reset();
+	searcher.setParameters(searchParams);
 
 	// Select a tab to display if there is enough information to perform a search
 	// The tab will then auto-refresh and display results.

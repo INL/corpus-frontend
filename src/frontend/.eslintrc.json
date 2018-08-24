@@ -1,0 +1,36 @@
+{
+    "env": {
+        "browser": true
+    },
+    "extends": "eslint:recommended",
+    "parserOptions": {
+        "ecmaVersion": 5,
+        "sourceType": "module"
+    },
+    "rules": {
+        "indent": [
+            "error", "tab",
+            {
+                "CallExpression": {
+                    "arguments": "off"
+                },
+                "ArrayExpression": "off"
+            }
+        ],
+        "linebreak-style": [
+            "error",
+            "unix"
+        ],
+        "quotes": [
+            "error",
+            "single",
+            {
+                "avoidEscape": true
+            }
+        ],
+        "semi": [
+            "error",
+            "always"
+        ]
+    }
+}

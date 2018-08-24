@@ -30,7 +30,10 @@ $(document).ready(function () {
 			var storedVal = window.localStorage.getItem(key);
 			if (storedVal != null)
 				$this.is(':checkbox') ? $this.attr('checked', storedVal.toLowerCase() === 'true') : $this.val(storedVal);
-			$this.trigger('change'); // run handler once, init localstorage if required
+
+			// run handler once, init localstorage if required
+			// Only do next tick so handlers have a change to register
+			setTimeout(function() { $this.trigger('change'); });
 		});
 	}
 

@@ -1,8 +1,8 @@
 import 'bootstrap';
 import 'bootstrap-select';
 
-import './autocomplete';
-import './tutorial';
+import '../utils/autocomplete';
+import '../utils/tutorial';
 
 import $ from 'jquery';
 import URI from 'urijs';

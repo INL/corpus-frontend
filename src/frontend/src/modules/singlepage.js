@@ -102,6 +102,7 @@ $(document).ready(function () {
 	});
 
 	$('#mainForm').on('submit', searchSubmit);
+	$('#mainForm').on('reset', resetPage);
 
 	// Rescale the querybuilder container when it's shown
 	$('a.querytype[href="#advanced"]').on('shown.bs.tab hide.bs.tab', function () {
@@ -476,5 +477,5 @@ export function	resetPage() {
 	history.pushState(null, null, '?');
 	toPageState({});
 	cancelSearch();
-	return false;
+	return false; // might be used as eventhandler
 }

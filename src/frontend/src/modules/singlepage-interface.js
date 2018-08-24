@@ -911,7 +911,7 @@ function onTabOpen(/*event, data*/) {
 	);
 }
 
-$(document).on('ready', function() {
+$(document).ready(function() {
 	// Hide the results area and deactivate all tabs to prevent accidental refreshes later.
 	// Tabs are unhidden when a search is submitted.
 	$('#results').hide();

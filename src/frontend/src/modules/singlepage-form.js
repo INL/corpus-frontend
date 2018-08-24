@@ -132,9 +132,7 @@ function updateWithin($radioButtonContainer) {
 	within = $radioButtonContainer.find('input:checked').val() || null;
 }
 
-
-
-$(document).on('ready', function() {
+$(document).ready(function() {
 
 	// Now enable autocompletion on our marked fields
 	$('input[data-autocomplete]').each(function() {

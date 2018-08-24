@@ -3,9 +3,9 @@ const webpack = require('webpack');
 
 module.exports = {
 	entry: {
-		article: ['babel-polyfill', './src/article.js'],
-		corpora: ['babel-polyfill', './src/corpora.js'],
-		search: ['babel-polyfill', './src/search.js'],
+		article: ['@babel/polyfill', './src/article.js'],
+		corpora: ['@babel/polyfill', './src/corpora.js'],
+		search: ['@babel/polyfill', './src/search.js'],
 	},
 	output: {
 		filename: '[name].js',

@@ -185,7 +185,7 @@ createHandler(events.SERVER_REFRESH, function(serverInfo_) { serverInfo = $.exte
 createHandler(events.CORPORA_REFRESH, function(corpora_) { corpora = [].concat(corpora_); });
 createHandler(events.FORMATS_REFRESH, function(formats_) { formats = [].concat(formats_); });
 createHandler(events.CORPUS_REFRESH, function(corpus_) {
-	corpus_ = $.extend({}, corpus_);
+	corpus_ = Object.assign({}, corpus_);
 	// merge into list, trigger global corpora refresh
 	var i = corpora.findIndex(function(corpus) { return corpus.id === corpus_.id; });
 	i >= 0 ? corpora[i] = corpus_ : corpora.push(corpus_);
@@ -294,7 +294,8 @@ createHandler('tbody[data-autoupdate="corpora"]', events.CORPORA_REFRESH, functi
 		var documentFormatShortId = user__format[isUserFormat ? 1 : 0];
 		var documentFormatOwner = isUserFormat ? user__format[0] : null;
 
-		return $.extend({}, corpus, {
+		return {
+			...corpus,
 			status: status,
 			sizeString: abbrNumber(corpus.tokenCount),
 			isUserFormat: isUserFormat,
@@ -302,7 +303,7 @@ createHandler('tbody[data-autoupdate="corpora"]', events.CORPORA_REFRESH, functi
 			documentFormatOwner: documentFormatOwner,
 			searchUrl: pageURL + corpus.id + '/search',
 			timeModified: dateOnly(corpus.timeModified)
-		});
+		}
 	});
 
 	var template =

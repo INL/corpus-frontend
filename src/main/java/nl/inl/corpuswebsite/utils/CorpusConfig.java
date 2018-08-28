@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -28,11 +29,15 @@ public class CorpusConfig {
 
     private String displayName;
 
-    private List<FieldDescriptor> propertyFields = new ArrayList<>();
+    //    private List<FieldDescriptor> propertyFields = new ArrayList<>();
 
     /** Keyed by tab name */
     private Map<String, List<FieldDescriptor>> metadataFieldGroups = new LinkedHashMap<>();
     private List<FieldDescriptor> ungroupedMetadataFields = new ArrayList<>();
+
+    /** Keyed by tab name */
+    private Map<String, List<FieldDescriptor>> propertyFieldGroups = new LinkedHashMap<>();
+    private List<FieldDescriptor> ungroupedPropertyFields = new ArrayList<>();
 
     /**
      * Mapping between generic names for some properties of documents in this corpus (titleField, pidField, authorField,
@@ -65,9 +70,9 @@ public class CorpusConfig {
         return displayName;
     }
 
-    public List<FieldDescriptor> getPropertyFields() {
-        return propertyFields;
-    }
+    //    public List<FieldDescriptor> getPropertyFields() {
+    //        return propertyFields;
+    //    }
 
     public Map<String, List<FieldDescriptor>> getMetadataFieldGroups() {
         return metadataFieldGroups;
@@ -76,6 +81,15 @@ public class CorpusConfig {
     public List<FieldDescriptor> getUngroupedMetadataFields() {
         return ungroupedMetadataFields;
     }
+
+    public Map<String, List<FieldDescriptor>> getPropertyFieldGroups() {
+        return propertyFieldGroups;
+    }
+
+    public List<FieldDescriptor> getUngroupedPropertyFields() {
+        return ungroupedPropertyFields;
+    }
+
 
     /* TEI, FoLiA, etc */
     public String getCorpusDataFormat() {
@@ -112,6 +126,21 @@ public class CorpusConfig {
             this.corpusDataFormat = documentFormatTags.item(0).getTextContent();
     }
 
+    /**
+     * Word properties can have a "uiType" property that determines if the input field should have
+     * autocompletion enabled, use a dropdown list, be a number range, etc.
+     * For the "select" value (e.g. a dropdown list) we need to get the possible values for that field from blacklab.
+     * Since they aren't contained in the initial json payload unless we specifically request them.
+     * 
+     * This function parses the config, finds the fields marked with "select", and returns a comma-separated list of the field names.
+     * We can then use that list to request the config again, with the field values.
+     * 
+     * @param xml the indexStructure/indexMetadata xml
+     * @return comma-separated list of fields with uitype "select"
+     * @throws ParserConfigurationException
+     * @throws SAXException
+     * @throws IOException
+     */
     public static String getSelectProperties(String xml) throws ParserConfigurationException, SAXException, IOException {
         Document config = fromXml(xml);
         String selects = "";
@@ -128,8 +157,9 @@ public class CorpusConfig {
                 if (propertyElement.getElementsByTagName("isInternal").item(0).getTextContent().equalsIgnoreCase("true"))
                     continue;
 
-                String configType = propertyElement.getElementsByTagName("uiType").getLength()==1 ?
-                    propertyElement.getElementsByTagName("uiType").item(0).getTextContent() : "";
+                String configType = propertyElement.getElementsByTagName("uiType").getLength() == 1
+                    ? propertyElement.getElementsByTagName("uiType").item(0).getTextContent()
+                    : "";
                 if ("select".equals(configType)) {
                     selects += selects.isEmpty() ? propertyElement.getAttribute("name") : "," + propertyElement.getAttribute("name");
                 }
@@ -139,6 +169,8 @@ public class CorpusConfig {
     }
 
     private void parsePropertyFields() {
+
+        Map<String, FieldDescriptor> propertyFields = new HashMap<>();
 
         NodeList annotatedFieldElements = config.getElementsByTagName("complexField");
         for (int cfi = 0; cfi < annotatedFieldElements.getLength(); cfi++) {
@@ -160,8 +192,9 @@ public class CorpusConfig {
                 boolean caseSensitive =
                     propertyElement.getElementsByTagName("sensitivity").item(0).getTextContent().equals("SENSITIVE_AND_INSENSITIVE");
                 List<String> allowedValues = parsePropertyValues(propertyElement);
-                String configType = propertyElement.getElementsByTagName("uiType").getLength()==1 ?
-                    propertyElement.getElementsByTagName("uiType").item(0).getTextContent() : "";
+                String configType = propertyElement.getElementsByTagName("uiType").getLength() == 1
+                    ? propertyElement.getElementsByTagName("uiType").item(0).getTextContent()
+                    : "";
                 String type = inferType(configType, allowedValues, propertyElement);
 
                 FieldDescriptor field = new FieldDescriptor(fieldName, displayName, type);
@@ -171,8 +204,50 @@ public class CorpusConfig {
                 field.setCaseSensitive(caseSensitive);
                 field.setAnnotatedFieldName(annotatedFieldName);
                 field.setMainProperty(fieldName.equals(mainPropertyName));
-                this.propertyFields.add(field);
+                propertyFields.put(field.getId(), field);
             }
+        }
+
+        // parse groups
+        NodeList xmlPropertyFieldGroups = config.getElementsByTagName("propertyFieldGroup");
+        for (int i = 0; i < xmlPropertyFieldGroups.getLength(); i++) {
+            Node node = xmlPropertyFieldGroups.item(i);
+            if (!(node instanceof Element))
+                continue;
+            Element element = (Element) node;
+
+            String groupName = element.getElementsByTagName("name").item(0).getTextContent();
+
+            NodeList fieldNodeList = element.getElementsByTagName("field"); // Fields in this group
+            for (int fieldIndex = 0; fieldIndex < fieldNodeList.getLength(); fieldIndex++) {
+                String fieldName = fieldNodeList.item(fieldIndex).getTextContent();
+
+                if (propertyFields.containsKey(fieldName)) {
+
+                    FieldDescriptor field = propertyFields.get(fieldName);
+                    // Remove the field from our running list so we don't also insert it into the default group later.
+                    propertyFields.remove(fieldName);
+
+                    // Strip the groupname from the displayname of the field
+                    // Why do we do this again.. isn't this just a data issue that should be solved by the uploader?
+                    if (field.getDisplayName().length() > groupName.length() &&
+                        field.getDisplayName().toLowerCase().startsWith(groupName.toLowerCase())) {
+                        // Remove group
+                        String newDisplayName = field.getDisplayName().substring(groupName.length()).trim();
+                        // Capitalize first char
+                        newDisplayName = newDisplayName.substring(0, 1).toUpperCase(Locale.ROOT) + newDisplayName.substring(1);
+
+                        field.setDisplayName(newDisplayName);
+                    }
+
+                    addPropertyField(field, groupName);
+                }
+            }
+        }
+
+        // Remaining fields are ungrouped
+        for (Map.Entry<String, FieldDescriptor> e : propertyFields.entrySet()) {
+            addPropertyField(e.getValue(), null);
         }
     }
 
@@ -359,13 +434,23 @@ public class CorpusConfig {
         return values;
     }
 
+    private void addPropertyField(FieldDescriptor field, String groupName) {
+        if (groupName != null) {
+            assert !groupName.isEmpty() : "PropertyField group must not be empty";
+
+            this.propertyFieldGroups.computeIfAbsent(groupName, __ -> new ArrayList<>())
+                .add(field);
+        } else {
+            this.ungroupedPropertyFields.add(field);
+        }
+    }
+
     private void addMetadataField(FieldDescriptor field, String groupName) {
         if (groupName != null) {
             assert !groupName.isEmpty() : "MetadataField group must not be empty";
 
-            if (!this.metadataFieldGroups.containsKey(groupName))
-                this.metadataFieldGroups.put(groupName, new ArrayList<FieldDescriptor>());
-            this.metadataFieldGroups.get(groupName).add(field);
+            this.metadataFieldGroups.computeIfAbsent(groupName, __ -> new ArrayList<>())
+                .add(field);
         } else {
             this.ungroupedMetadataFields.add(field);
         }

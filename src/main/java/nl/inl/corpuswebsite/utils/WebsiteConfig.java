@@ -124,16 +124,19 @@ public class WebsiteConfig {
 
         List<FieldDescriptor> fd = new ArrayList<>(3);
 
-        corpusConfig.getPropertyFields()
-                    .stream()
-                    .filter(pf -> ("lemma".equals(pf.getId()) || "pos".equals(pf.getId())))
-                    .forEach(fd::add);
+        List<FieldDescriptor> allDescriptors = new ArrayList<>(corpusConfig.getUngroupedPropertyFields());
+        corpusConfig.getPropertyFieldGroups().values().forEach(allDescriptors::addAll);
 
-        // Add all others in order until we hit 3 properties
-        corpusConfig.getPropertyFields()
-                    .stream()
-                    .filter(pf -> fd.size() < 3 && !fd.contains(pf) && !pf.isMainProperty())
-                    .forEach(fd::add);
+        // Add lemma and pos
+        allDescriptors.stream()
+            .filter(pf -> ("lemma".equals(pf.getId()) || "pos".equals(pf.getId())))
+            .forEach(fd::add);
+
+        // Add first other fields in the list until we hit 3 fields
+        allDescriptors.stream()
+            .filter(pf -> fd.size() < 3 && !fd.contains(pf) && !pf.isMainProperty())
+            .limit(Math.max(0, 3 - fd.size()))
+            .forEach(fd::add);
 
         propColumns = fd.stream().map(FieldDescriptor::getId).toArray(String[]::new);
     }

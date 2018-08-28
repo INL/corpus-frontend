@@ -15,14 +15,14 @@
             </div>
         #elseif($docfield.getType() == "range")
             <div class="col-xs-4">
-                <input type="text" placeholder="From" class="form-control" >
+                <input type="text" placeholder="From" class="form-control" autocomplete="off">
             </div>
             <div class="col-xs-4">
-                <input type="text" placeholder="To" class="form-control" >
+                <input type="text" placeholder="To" class="form-control" autocomplete="off">
             </div>
         #else
             <div class="col-xs-12">
-                <input type="text" placeholder="$docfield.getDisplayName()" class="form-control" 
+                <input type="text" placeholder="$docfield.getDisplayName()" class="form-control" autocomplete="off" ## native autocomplete 
                     #if($docfield.getType() == "combobox")
                         data-autocomplete="$docfield.getId()" 
                     #end
@@ -51,7 +51,7 @@
                 #end
                 </select>
             #else
-                <input type="text" id="$propertyFieldInputId" name="$propertyFieldInputId" placeholder="$propertyField.getDisplayName()" class="form-control" 
+                <input type="text" id="$propertyFieldInputId" name="$propertyFieldInputId" placeholder="$propertyField.getDisplayName()" class="form-control" autocomplete="off"
                     #if($field.getType() == "combobox") 
                         ## when autocompleting word properties, blacklab needs to know the complex field from which they originate
                         ## the format is complexfield/property?term=searchterm
@@ -123,10 +123,43 @@
             <div class="tab-content haspadding-15">
                 <div class="tab-pane active" id="simple">
                     <div class="form-horizontal">
-                    #foreach($propertyField in $propertyFields)
-                        #propfield($propertyField)
-                    #end
-                    
+                   	
+                   	## TODO check the variable names
+                   	#if($propertyGroups.isEmpty()) ## Only display ungrouped fields if no other groups are present
+			            #set($_ = $propertyGroups.put("Properties", $ungroupedPropertyFields)) ## silence return value of put() to stop it from ending up in the page.
+			        #end
+			        #set($usePropertyTabs = ($propertyGroups.size() > 1)) ##only use tabs when we have more than one group to display
+			      	
+			        #if($usePropertyTabs) 
+			            <ul class="nav nav-tabs inverted">
+			            #foreach($group in $propertyGroups.entrySet())
+			                #set($groupName = $group.key)
+			                #set($groupId = $groupName.replace(" ", "").concat("_prop"))
+			                <li #if($velocityCount == 1) class="active" #end>
+			                    <a href="#$groupId" data-toggle="tab">$groupName</a>
+			                </li>
+			                #set($firstGroup = "false")
+			            #end
+			            </ul>
+			            <div class="tab-content">
+			            #foreach($group in $propertyGroups.entrySet())
+			                #set($groupName = $group.key)
+			                #set($groupId = $groupName.replace(" ", "").concat("_prop"))
+			                <div class="tab-pane #if($velocityCount == 1) active #end" id="$groupId">
+			                    #foreach($propertyField in $group.value)
+			                        #propfield($propertyField)
+			                    #end
+			                </div>
+			                #set($firstGroup = "false")            
+			            #end
+			            </div>
+			        #else ## !$usePropertyTabs
+			            #foreach($group in $propertyGroups.entrySet())
+			                #foreach($propertyField in $group.value)
+		                        #propfield($propertyField)
+		                    #end
+		                #end
+			        #end 
                         <div class="form-group">
                             ## TODO extract available options from blacklab
                             <label class="col-xs-12 col-md-3">Within:</label>
@@ -161,6 +194,7 @@
         #if($metadataGroups.isEmpty()) ## Only display ungrouped fields if no other groups are present
             #set($_ = $metadataGroups.put("Metadata", $ungroupedMetadataFields)) ## silence return value of put() to stop it from ending up in the page.
         #end
+        
         #set($useFilterTabs = ($metadataGroups.size() > 1)) ##only use tabs when we have more than one group to display
         <div class="col-xs-12 col-md-6" id="filterContainer">
             <h3>Filter search by &hellip;</h3>
@@ -169,7 +203,7 @@
             <ul class="nav nav-tabs">
             #foreach($group in $metadataGroups.entrySet())
                 #set($groupName = $group.key)
-                #set($groupId = $groupName.replace(" ", ""))
+                #set($groupId = $groupName.replace(" ", "").concat("_meta"))
                 <li #if($velocityCount == 1) class="active" #end>
                     <a href="#$groupId" data-toggle="tab">$groupName</a>
                 </li>
@@ -179,7 +213,7 @@
             <div class="tab-content">
             #foreach($group in $metadataGroups.entrySet())
                 #set($groupName = $group.key)
-                #set($groupId = $groupName.replace(" ", ""))
+                #set($groupId = $groupName.replace(" ", "").concat("_meta"))
                 <div class="tab-pane #if($velocityCount == 1) active #end" id="$groupId">
                     #filterfields($group.value)
                 </div>

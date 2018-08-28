@@ -1,12 +1,12 @@
 import 'bootstrap';
 import 'bootstrap-select';
 
+import $ from 'jquery';
+import URI from 'urijs';
+
 import './utils/autocomplete';
 import './utils/tutorial';
 import parseCql from './utils/cqlparser';
-
-import $ from 'jquery';
-import URI from 'urijs';
 
 import './modules/singlepage-interface';
 import * as mainForm from './modules/singlepage-form';

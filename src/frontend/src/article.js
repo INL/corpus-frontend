@@ -1,3 +1,4 @@
+import 'bootstrap';
 import $ from 'jquery';
 
 // Article-related functions.

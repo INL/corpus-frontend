@@ -120,18 +120,14 @@
                 <li><a href="#advanced" data-toggle="tab" class="querytype">Advanced</a></li>
                 <li><a href="#query" data-toggle="tab" class="querytype">CQL query</a></li>
             </ul>
-            <div class="tab-content haspadding-15">
-                <div class="tab-pane active" id="simple">
-                    <div class="form-horizontal">
-                   	
-                   	## TODO check the variable names
-                   	#if($propertyGroups.isEmpty()) ## Only display ungrouped fields if no other groups are present
-			            #set($_ = $propertyGroups.put("Properties", $ungroupedPropertyFields)) ## silence return value of put() to stop it from ending up in the page.
-			        #end
-			        #set($usePropertyTabs = ($propertyGroups.size() > 1)) ##only use tabs when we have more than one group to display
-			      	
+            <div class="tab-content">
+                #if($propertyGroups.isEmpty()) ## Only display ungrouped fields if no other groups are present
+		            #set($_ = $propertyGroups.put("Properties", $ungroupedPropertyFields)) ## silence return value of put() to stop it from ending up in the page.
+		        #end
+		        #set($usePropertyTabs = ($propertyGroups.size() > 1)) ##only use tabs when we have more than one group to display
+                <div class="tab-pane active form-horizontal" id="simple" #if ($usePropertyTabs) style="margin-top: -15px"#end>
 			        #if($usePropertyTabs) 
-			            <ul class="nav nav-tabs inverted">
+			            <ul class="nav nav-tabs subtabs">
 			            #foreach($group in $propertyGroups.entrySet())
 			                #set($groupName = $group.key)
 			                #set($groupId = $groupName.replace(" ", "").concat("_prop"))
@@ -153,30 +149,28 @@
 			                #set($firstGroup = "false")            
 			            #end
 			            </div>
-			        #else ## !$usePropertyTabs
+			        #else ## !$usePropertyTabs, insert fields directly
 			            #foreach($group in $propertyGroups.entrySet())
 			                #foreach($propertyField in $group.value)
 		                        #propfield($propertyField)
 		                    #end
 		                #end
-			        #end 
-                        <div class="form-group">
-                            ## TODO extract available options from blacklab
-                            <label class="col-xs-12 col-md-3">Within:</label>
-                            
-                            <div class="btn-group col-xs-12 col-md-9" data-toggle="buttons" id="simplesearch_within" style="display:block;">
-                                <label class="btn btn-default active">
-                                    <input type="radio" autocomplete="off" name="within" value="" checked="checked">document
-                                </label>
-                                <label class="btn btn-default">
-                                    <input type="radio" autocomplete="off" name="within" value="p">paragraph
-                                </label>
-                                <label class="btn btn-default">
-                                    <input type="radio" autocomplete="off" name="within" value="s">sentence
-                                </label>
-                            </div>
-                        </div>
+			        #end
+                    <div class="form-group">
+                        ## TODO extract available options from blacklab
+                        <label class="col-xs-12 col-md-3">Within:</label>
                         
+                        <div class="btn-group col-xs-12 col-md-9" data-toggle="buttons" id="simplesearch_within" style="display:block;">
+                            <label class="btn btn-default active">
+                                <input type="radio" autocomplete="off" name="within" value="" checked="checked">document
+                            </label>
+                            <label class="btn btn-default">
+                                <input type="radio" autocomplete="off" name="within" value="p">paragraph
+                            </label>
+                            <label class="btn btn-default">
+                                <input type="radio" autocomplete="off" name="within" value="s">sentence
+                            </label>
+                        </div>
                     </div>
                 </div>
                 <div class="tab-pane" id="advanced">

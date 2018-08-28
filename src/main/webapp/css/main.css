@@ -521,3 +521,21 @@ a[data-bls-sort], a.dropdown-toggle {
 .bootstrap-select small.text-muted {
 	padding-left: 0px!important;
 }
+
+/*
+	Some bootstrap tab customization 
+*/
+
+.nav-tabs.subtabs {
+	border-bottom: none;
+}
+.nav-tabs.subtabs > li {
+	margin-bottom: 0;
+}
+.nav-tabs.subtabs > li > a {
+	border-radius: 0 0 4px 4px;
+	padding: 4px 15px;
+}
+.nav-tabs.subtabs > li.active > a {
+	border-bottom-color: #ddd;
+}

@@ -209,7 +209,7 @@ public class CorpusConfig {
         }
 
         // parse groups
-        NodeList xmlPropertyFieldGroups = config.getElementsByTagName("propertyFieldGroup");
+        NodeList xmlPropertyFieldGroups = config.getElementsByTagName("annotationGroup");
         for (int i = 0; i < xmlPropertyFieldGroups.getLength(); i++) {
             Node node = xmlPropertyFieldGroups.item(i);
             if (!(node instanceof Element))
@@ -218,7 +218,7 @@ public class CorpusConfig {
 
             String groupName = element.getElementsByTagName("name").item(0).getTextContent();
 
-            NodeList fieldNodeList = element.getElementsByTagName("field"); // Fields in this group
+            NodeList fieldNodeList = element.getElementsByTagName("annotation"); // Fields in this group
             for (int fieldIndex = 0; fieldIndex < fieldNodeList.getLength(); fieldIndex++) {
                 String fieldName = fieldNodeList.item(fieldIndex).getTextContent();
 

@@ -1,6 +1,6 @@
 /* global BLS_URL, PROPS_IN_COLUMNS */
 
-import $ from 'jquery';
+import * as $ from 'jquery';
 import URI from 'urijs';
 import {saveAs} from 'file-saver';
 

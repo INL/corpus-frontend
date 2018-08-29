@@ -4,8 +4,8 @@ import 'bootstrap-select';
 import $ from 'jquery';
 import URI from 'urijs';
 
-import './utils/autocomplete';
-import './utils/tutorial';
+import './utils/features/autocomplete';
+import './utils/features/tutorial';
 import parseCql from './utils/cqlparser';
 
 import './modules/singlepage-interface';

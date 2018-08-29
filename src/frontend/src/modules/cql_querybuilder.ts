@@ -2,8 +2,8 @@ import 'jquery-extendext';
 import 'jquery-ui';
 import 'jquery-ui/ui/widgets/sortable';
 
-import $ from 'jquery';
-import Mustache from 'mustache';
+import * as $ from 'jquery';
+import * as Mustache from 'mustache';
 
 /**
  * The querybuilder is a visual editor for CQL queries (see http://inl.github.io/BlackLab/corpus-query-language.html#supported-features for an introduction to CQL)
@@ -44,7 +44,7 @@ import Mustache from 'mustache';
  * To support this, a custom settings object can be passed when initially creating the querybuilder instance.
  * This object must follow the structure of "DEFAULTS", the custom settings object will override properties with the same name in DEFAULTS, including the mustache view data object.
  */
-var templates = {
+const templates = {
 
 	queryBuilder: {
 		template:
@@ -240,7 +240,7 @@ var templates = {
 	}
 };
 
-var DEFAULTS = {
+const DEFAULTS = {
 
 	queryBuilder: {
 		view: {

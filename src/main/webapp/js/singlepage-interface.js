@@ -3,7 +3,9 @@
 /**
  * Dictionary where key == propertyId and value is array of containing the values for that id, in order of occurance.
  * Available properties are contained in SINGLEPAGE.INDEX.complexFields['complexFieldId'].properties['propertyId']
- *
+ * NOTE: starting with blacklab 2.0 (and dev versions after 29-08-2018) properties are now called annotations and
+ * are contained in INDEX.annotatedFields['id'].annotations['id']
+ * 
  * The 'punct' property is always available.
  *
  * @typedef {Object.<string, Array.<string>} BLHitContext
@@ -43,8 +45,8 @@ SINGLEPAGE.INTERFACE = (function() {
 	/** @type {{all: Property[], shown: Property[], firstMainProp: Property  }} */
 	var PROPS = {};
 	// Gather up all relevant properties of words in this index
-	PROPS.all = $.map(SINGLEPAGE.INDEX.complexFields, function(complexField) {
-		return $.map(complexField.properties, function(prop, propId) {
+	PROPS.all = $.map(SINGLEPAGE.INDEX.complexFields || SINGLEPAGE.INDEX.annotatedFields, function(complexField) {
+		return $.map(complexField.properties || complexField.annotations, function(prop, propId) {
 			if (prop.isInternal)
 				return null; // skip prop
 			return {

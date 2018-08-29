@@ -6,7 +6,7 @@ import 'bootstrap-select';
 import 'codemirror/mode/javascript/javascript.js';
 import 'codemirror/mode/yaml/yaml.js';
 
-import './utils/tutorial';
+import './utils/features/tutorial';
 
 // Now import the augmented modules (though import order shouldn't matter)
 import Mustache from 'mustache';

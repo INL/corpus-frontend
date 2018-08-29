@@ -1,23 +1,32 @@
-/* global BLS_URL, $ */
+/* global BLS_URL */
 
-/**
- * @typedef {Object} PropertyField
- * @property {string} name - Unique ID of the property
- * @property {string} value - Raw value of the property
- * @property {boolean} case - Should the property match using case sensitivity
- */
+import * as $ from 'jquery';
 
-/**
- * @typedef {Object} FilterField
- * @property {string} name - Unique ID of the filter
- * @property {('text' | 'range' | 'select')} filterType - Type of the filter, determines how the values are interpreted
- * @property {Array.<string>} values - Values of the filter, for selects, the selected values, for text, the text, for ranges the min and max values in indices [0][1]
- */
+export type PropertyField = {
+	/** Unique ID of the property */
+	name: string;
+	/** Raw value of the property */
+	value: string;
+	/** Should the property match using case sensitivity */
+	case: boolean;
+}
+
+export type FilterField = {
+	/** Unique id of the filter/metadata field */
+	name: string;
+	/** Type of the filter, determines how the values are interpreted and read from the DOM */
+	filterType: 'text'|'range'|'select'
+	/** Values of the filter, for selects, the selected values, for text, the text, for ranges the min and max values in indices [0][1] */
+	values: string[]
+}
+
+declare var BLS_URL: string;
 
 // Filters with currently valid values, values will need to be processed prior to search
-var activeFilters = [];
-var activeProperties = [];
-var within = null;
+var activeFilters: FilterField[] = [];
+var activeProperties: PropertyField[] = [];
+var within: string|null = null;
+
 
 // Update the filter description using the active filter value list
 function updateFilterDisplay() {
@@ -73,7 +82,7 @@ function updateFilterField($filterfield) {
 }
 
 // TODO tidy up
-function updatePropertyField($propertyField, event) {
+function updatePropertyField($propertyField, event?) {
 	function removeFromPropertyList(propertyName) {
 		activeProperties = $.grep(activeProperties, function(elem) { return elem.name === propertyName;}, true);
 	}
@@ -85,7 +94,7 @@ function updatePropertyField($propertyField, event) {
 	var $changedInput = event ? $(event.target) : $textOrSelect; // no event means we're initializing, so read from the input field
 
 	// Fetch the current state, or init the new property (if it wasn't in the list)
-	var prop = $.grep(activeProperties, function(elem) { return elem.name === propertyName; })[0] || {};
+	var prop = activeProperties.find(p => p.name === propertyName); // $.grep(activeProperties, function(elem) { return elem.name === propertyName; })[0] || {};
 	prop.name = propertyName;
 	prop.case = $caseInput.is(':checked');
 	prop.value = $textOrSelect.val();
@@ -106,7 +115,7 @@ function updatePropertyField($propertyField, event) {
 				// Replace all whitespace with pipes,
 				// this is due to the rather specific way whitespace in the simple search property fields is treated (see singlepage-bls.js:getPatternString)
 				// TODO discuss how we treat these fields with Jan/Katrien, see https://github.com/INL/corpus-frontend/issues/18
-				prop.value = fr.result.replace(/\s+/g, '|');
+				prop.value = (fr.result as string).replace(/\s+/g, '|');
 				$textOrSelect.val(prop.value);
 
 				if (prop.value)

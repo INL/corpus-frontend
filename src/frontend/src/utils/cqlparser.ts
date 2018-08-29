@@ -37,8 +37,6 @@
  * @property {string} value - regex to compare with
  */
 
-
-
 var WHITESPACE = [' ', '\t', '\n', '\r'];
 
 /**
@@ -88,7 +86,7 @@ export default function(input) {
 	// If the current symbol matches any of the symbols, advance one symbol
 	// skips all whitespace encountered before the symbol unless otherwise stated
 	// no whitespace is skipped if the symbol was not encountered
-	function accept(sym, keepWhitespace) {
+	function accept(sym, keepWhitespace: boolean = false) {
 		var originalPos = pos;
 		var originalCur = cur;
 

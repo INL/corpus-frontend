@@ -536,6 +536,7 @@ a[data-bls-sort], a.dropdown-toggle {
 	border-radius: 0 0 4px 4px;
 	padding: 4px 15px;
 }
-.nav-tabs.subtabs > li.active > a {
-	border-bottom-color: #ddd;
+.nav-tabs.subtabs > li.active > a,
+.nav-tabs.subtabs > li> a:hover {
+	border-color: transparent #ddd #ddd #ddd;
 }

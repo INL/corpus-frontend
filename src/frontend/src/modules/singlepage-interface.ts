@@ -19,6 +19,7 @@ import {onSearchUpdated} from '../search';
 /**
  * Dictionary where key == propertyId and value is array of containing the values for that id, in order of occurance.
  * Available properties are contained in SINGLEPAGE.INDEX.complexFields['complexFieldId'].properties['propertyId']
+ * NOTE: since blacklab 2.0, properties are called annotations and are contained in SINGLEPAGE.INDEX.annotatedFields['id'].annotations['id']
  *
  * The 'punct' property is always available.
  *

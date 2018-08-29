@@ -42,8 +42,8 @@ $(document).ready(function () {
 		attribute: {
 			view: {
 				// Pass the available properties of tokens in this corpus (PoS, Lemma, Word, etc..) to the querybuilder
-				attributes: $.map(SINGLEPAGE.INDEX.complexFields, function (complexField/*, complexFieldName*/) {
-					return $.map(complexField.properties, function(property, propertyId) {
+				attributes: $.map(SINGLEPAGE.INDEX.complexFields || SINGLEPAGE.INDEX.annotatedFields, function (complexField/*, complexFieldName*/) {
+					return $.map(complexField.properties || complexField.annotations, function(property, propertyId) {
 						if (property.isInternal)
 							return null; // Don't show internal fields in the queryBuilder; leave this out of the list.
 

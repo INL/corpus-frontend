@@ -320,7 +320,7 @@ public class MainServlet extends HttpServlet {
             try (InputStream is = new FileInputStream(f)) {
                 return new WebsiteConfig(is, corpus, getCorpusConfig(corpus));
             } catch (Exception e) {
-                throw new RuntimeException("Could not read search.xml " + f);
+                throw new RuntimeException("Could not read search.xml " + f + ": " + e.getMessage());
             }
         });
     }

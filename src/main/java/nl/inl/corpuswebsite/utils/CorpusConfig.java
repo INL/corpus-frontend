@@ -144,10 +144,24 @@ public class CorpusConfig {
     public static String getSelectProperties(String xml) throws ParserConfigurationException, SAXException, IOException {
         Document config = fromXml(xml);
         String selects = "";
-        NodeList annotatedFieldElements = config.getElementsByTagName("complexField");
+        
+        // We can't just retrieve the annotatedField/complexField entries directly, as there are two types of 
+        // elements named annotatedField, one for the annotationGroups and one for the annotations themselves
+        Element fieldContainerElement = (Element) config.getElementsByTagName("complexFields").item(0);
+        if (fieldContainerElement == null) {
+            fieldContainerElement = (Element) config.getElementsByTagName("annotatedFields").item(0);
+        }
+        
+        NodeList annotatedFieldElements = fieldContainerElement.getElementsByTagName("complexField");
+        if (annotatedFieldElements.getLength() == 0) {
+            annotatedFieldElements = fieldContainerElement.getElementsByTagName("annotatedField"); // since blacklab 2.0
+        }
         for (int cfi = 0; cfi < annotatedFieldElements.getLength(); cfi++) {
             Element annotatedFieldElement = (Element) annotatedFieldElements.item(cfi);
             NodeList propertyElements = annotatedFieldElement.getElementsByTagName("property");
+            if (propertyElements.getLength() == 0) {
+                propertyElements = annotatedFieldElement.getElementsByTagName("annotation"); // since blacklab 2.0
+            }
             for (int ip = 0; ip < propertyElements.getLength(); ++ip) {
                 Node propertyNode = propertyElements.item(ip);
                 if (!(propertyNode instanceof Element))
@@ -169,14 +183,26 @@ public class CorpusConfig {
     }
 
     private void parsePropertyFields() {
-
         Map<String, FieldDescriptor> propertyFields = new HashMap<>();
 
-        NodeList annotatedFieldElements = config.getElementsByTagName("complexField");
+        // We can't just retrieve the annotatedField/complexField entries directly, as there are two types of 
+        // elements named annotatedField, one for the annotationGroups and one for the annotations themselves
+        Element fieldContainerElement = (Element) config.getElementsByTagName("complexFields").item(0);
+        if (fieldContainerElement == null) {
+            fieldContainerElement = (Element) config.getElementsByTagName("annotatedFields").item(0);
+        }
+        
+        NodeList annotatedFieldElements = fieldContainerElement.getElementsByTagName("complexField");
+        if (annotatedFieldElements.getLength() == 0) {
+            annotatedFieldElements = fieldContainerElement.getElementsByTagName("annotatedField"); // since blacklab 2.0
+        }
         for (int cfi = 0; cfi < annotatedFieldElements.getLength(); cfi++) {
             Element annotatedFieldElement = (Element) annotatedFieldElements.item(cfi);
             String annotatedFieldName = annotatedFieldElement.getAttribute("name");
             NodeList propertyElements = annotatedFieldElement.getElementsByTagName("property");
+            if (propertyElements.getLength() == 0) {
+                propertyElements = annotatedFieldElement.getElementsByTagName("annotation"); // since blacklab 2.0
+            }
             String mainPropertyName = annotatedFieldElement.getElementsByTagName("mainProperty").item(0).getTextContent();
             for (int ip = 0; ip < propertyElements.getLength(); ++ip) {
                 Node propertyNode = propertyElements.item(ip);
@@ -208,7 +234,8 @@ public class CorpusConfig {
             }
         }
 
-        // parse groups
+        // parse groups, merge all groups from all annotatedFields (there's only one, "contents" by default) 
+        // The frontend currently only supported a single annotatedField/complexField.
         NodeList xmlPropertyFieldGroups = config.getElementsByTagName("annotationGroup");
         for (int i = 0; i < xmlPropertyFieldGroups.getLength(); i++) {
             Node node = xmlPropertyFieldGroups.item(i);

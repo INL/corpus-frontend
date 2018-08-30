@@ -96,7 +96,7 @@
 <script src="$pathToTop/js/cql_querybuilder.js?_$cache"></script>
 <script src="$pathToTop/js/singlepage-cqlparser.js?_$cache"></script>
 #else
-<script src="$jspath/search.js?_$cache"></script>
+<script src="$jspath/search.js"></script>
 #end
 
 
@@ -428,7 +428,7 @@
                             </div>
                         </div>
                     
-                        <div class="resultgroupdetails btn btn-sm btn-default nohover" style="margin-right: 5px;>
+                        <div class="resultgroupdetails btn btn-sm btn-default nohover" style="margin-right: 5px;">
                             <span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span class="resultgroupname"></span> &mdash; <a class="clearviewgroup" href="javascript:void(0)">Go back</a>
                         </div>
                         <div class="results-incomplete-warning btn btn-sm btn-default nohover">

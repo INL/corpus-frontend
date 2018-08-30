@@ -37,7 +37,7 @@
  * @property {string} value - regex to compare with
  */
 
-var WHITESPACE = [' ', '\t', '\n', '\r'];
+const WHITESPACE = [' ', '\t', '\n', '\r'];
 
 /**
  * @param {string} [input] - a cql query
@@ -45,40 +45,44 @@ var WHITESPACE = [' ', '\t', '\n', '\r'];
  */
 export default function(input) {
 
-	var pos = 0;
-	var cur = '';
+	let pos = 0;
+	let cur = '';
 
 	function errorMsg(msg) {
 		return msg + ' at ' + pos;
 	}
 
 	function nextSym() {
-		if (++pos >= input.length)
+		if (++pos >= input.length) {
 			cur = null;
-		else
+		} else {
 			cur = input[pos];
+		}
 	}
 
 	// Test current symbol against any number of other symbols
 	// Recursively unpacks arrays
-	function test() {
-		for (var i = 0; i < arguments.length; i++) {
-			var symbol = arguments[i];
+	// TODO properly type, arguments should be (optionally nested) string arrays
+	function test(...__: any[]) {
+		for (let i = 0; i < arguments.length; i++) {
+			const symbol = arguments[i];
 
 			if (symbol instanceof Array) {
-				for (var j = 0; j < symbol.length; j++) {
-					if (test(symbol[j]))
+				for (let j = 0; j < symbol.length; j++) {
+					if (test(symbol[j])) {
 						return true;
+					}
 				}
 			} else if (typeof symbol === 'string') { // 'string' instanceof String === false (go javascript!)
-				for (var k = 0; k < symbol.length; k++) {
-					if (pos + k >= input.length || input[pos + k] !== symbol[k])
+				for (let k = 0; k < symbol.length; k++) {
+					if (pos + k >= input.length || input[pos + k] !== symbol[k]) {
 						return false;
+					}
 				}
 				return true;
-			}
-			else
+			} else {
 				return (symbol === cur);
+										}
 		}
 		return false;
 	}
@@ -87,23 +91,25 @@ export default function(input) {
 	// skips all whitespace encountered before the symbol unless otherwise stated
 	// no whitespace is skipped if the symbol was not encountered
 	function accept(sym, keepWhitespace: boolean = false) {
-		var originalPos = pos;
-		var originalCur = cur;
+		const originalPos = pos;
+		const originalCur = cur;
 
 		if (!keepWhitespace) {
-			while (test(WHITESPACE))
+			while (test(WHITESPACE)) {
 				nextSym();
+			}
 		}
 
-		var accepted = test(sym);
+		const accepted = test(sym);
 		if (accepted) {
 			// Don't use nextSym(), sym.length might be >1
 			pos += sym.length;
 			cur = input[pos];
 
 			if (!keepWhitespace) {
-				while (test(WHITESPACE))
+				while (test(WHITESPACE)) {
 					nextSym();
+				}
 			}
 		} else {
 			cur = originalCur;
@@ -114,9 +120,10 @@ export default function(input) {
 	}
 
 	// Like accept, but throw an error if not at any of the symbols.
-	function expect(sym, keepWhitespace) {
-		if (!accept(sym, keepWhitespace))
+	function expect(sym, keepWhitespace?) {
+		if (!accept(sym, keepWhitespace)) {
 			throw errorMsg('Expected one of [' + sym + '] but found ' + input[pos]);
+		}
 	}
 
 	// Continue until one of the symbols is encountered,
@@ -124,10 +131,11 @@ export default function(input) {
 	function until(symbols) {
 		symbols = [symbols, null]; // always test for end of string
 		try {
-			var startPos = pos;
-			while (!test(symbols))
+			const startPos = pos;
+			while (!test(symbols)) {
 				nextSym();
-			var endPos = pos;
+			}
+			const endPos = pos;
 
 			return input.substring(startPos, endPos);
 		} catch(err) {
@@ -139,40 +147,41 @@ export default function(input) {
 	function parseXmlTag() {
 		expect('<');
 
-		var isClosingTag = accept('/');
+		const isClosingTag = accept('/');
 
 		// keep going until we meet the end of the tag, also break on whitespace as it's not allowed
-		var tagName = until([WHITESPACE, '>']);
+		const tagName = until([WHITESPACE, '>']);
 		expect('>');
 
 		return {
 			type: 'xml',
 			name: tagName, // todo validate
-			isClosingTag: isClosingTag
+			isClosingTag
 		};
 	}
 
 	function parseAttribute() {
-		var name = until(['=', '!']).trim(); // This should really be "until anything BUT a-zA-z" but eh
-		var operator = until('"').trim();
+		const name = until(['=', '!']).trim(); // This should really be "until anything BUT a-zA-z" but eh
+		const operator = until('"').trim();
 		expect('"', true); // keep all whtiespace after the opening quote
-		var test = until('"'); // don't trim whitespace
+		const test = until('"'); // don't trim whitespace
 		expect('"', true); // also keep all whitespace before and after the quote
 
-		if (operator !== '=' && operator !== '!=')
+		if (operator !== '=' && operator !== '!=') {
 			throw new errorMsg('Unknown operator ' + operator);
+		}
 
 		return {
 			type: 'attribute',
-			name: name,
-			operator: operator,
+			name,
+			operator,
 			value: test
 		};
 	}
 
 	function parsePredicate() {
 		if (accept('(')) {
-			var exp = parseExpression();
+			const exp = parseExpression();
 			expect(')');
 			return exp;
 		} else {
@@ -181,17 +190,17 @@ export default function(input) {
 	}
 
 	function parseExpression() {
-		var left = parsePredicate();
+		let left = parsePredicate();
 		while (test(['&', '|'])) {
-			var op = cur;
+			const op = cur;
 			nextSym();
-			var right = parsePredicate();
+			const right = parsePredicate();
 
 			left = {
 				type: 'binaryOp',
 				operator: op,
-				left: left,
-				right: right
+				left,
+				right
 			};
 		}
 
@@ -200,7 +209,7 @@ export default function(input) {
 
 	function parseToken() {
 
-		var token = {
+		const token = {
 			leadingXmlTag: null,
 			trailingXmlTag: null,
 
@@ -208,7 +217,6 @@ export default function(input) {
 			optional: false,
 			repeats: null,
 		};
-
 
 		if (test('<')) {
 			token.leadingXmlTag = parseXmlTag();
@@ -221,7 +229,7 @@ export default function(input) {
 			}
 		} else { // shorthand is just a single word
 			expect('"');
-			var word = until('"');
+			const word = until('"');
 			expect('"');
 
 			token.expression = {
@@ -234,42 +242,44 @@ export default function(input) {
 
 		if (accept('{')) { // range
 
-			var minRep = parseInt(until([',', '}']));
-			var maxRep = null;
+			const minRep = parseInt(until([',', '}']));
+			let maxRep = null;
 
 			if (accept(',')) {
 
-				var maxRepString = until('}').trim();
+				const maxRepString = until('}').trim();
 				// {n, } is valid syntax for unbounded repetitions starting at n times
 				// signal this by leaving maxRep as null
-				if (maxRepString.length > 0)
+				if (maxRepString.length > 0) {
 					maxRep = parseInt(maxRepString);
+				}
 
 				expect('}');
-			}
-			else {
+			} else {
 				maxRep = minRep;
 				expect('}');
 			}
 
-			if (isNaN(minRep))
+			if (isNaN(minRep)) {
 				throw new errorMsg('minRepeats is not a number');
-			if (maxRep !== null && isNaN(maxRep))
+			}
+			if (maxRep !== null && isNaN(maxRep)) {
 				throw new errorMsg('maxRepeats is not a number');
+			}
 
 			token.repeats = {
 				min: minRep,
 				max: maxRep,
 			};
-		}
-		else if (accept('?')) {
+		} else if (accept('?')) {
 			token.optional = true;
 		}
 
 		if (test('<')) {
 			token.trailingXmlTag = parseXmlTag();
-			if (!token.trailingXmlTag.isClosingTag)
+			if (!token.trailingXmlTag.isClosingTag) {
 				throw new errorMsg('Token is followed by xml tag but it\'s an opening tag');
+			}
 		}
 
 		return token;
@@ -279,24 +289,25 @@ export default function(input) {
 		expect('within');
 
 		expect('<');
-		var elementName = until(['/', WHITESPACE]); // break on whitespace, since whitespace in the <tag name/> is illegal
+		const elementName = until(['/', WHITESPACE]); // break on whitespace, since whitespace in the <tag name/> is illegal
 		expect('/'); // self closing tag (<tag/>)
 		expect('>');
 		return elementName;
 	}
 
-	if (typeof input !== 'string' || input.length === 0)
+	if (typeof input !== 'string' || input.length === 0) {
 		return null;
+	}
 	input = input.trim();
-	if (!input)
+	if (!input) {
 		return null;
+	}
 
 	pos = 0;
 	cur = input[0];
 
-	var tokens = [];
-	var within = null;
-
+	const tokens = [];
+	let within = null;
 
 	// we always start with a token
 	tokens.push(parseToken());
@@ -309,7 +320,7 @@ export default function(input) {
 	}
 
 	return {
-		tokens: tokens,
-		within: within
+		tokens,
+		within
 	};
 }

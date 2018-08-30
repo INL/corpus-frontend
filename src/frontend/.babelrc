@@ -1,3 +1,17 @@
 {
-	"presets": ["@babel/preset-env"]
+	"presets": [
+		["@babel/env", {
+			// Modules option can let babel transform import '...' statements into other ways of acquiring the module (commonjs, amd, etc)
+			// We don't need this, as webpack handles this for us.
+			// Since babel runs before webpack itself bundles the files, we need to leave the import statements alone so webpack can pick them up.
+			"modules": false,
+			// Scans our code and injects the necessary polyfills (promise, async, fetch, etc...)
+			// based on our browser targets and used language features.
+			"useBuiltIns": "usage",
+			"targets": {
+				"browsers": ["last 2 versions",  "not ie < 11"]
+			},
+			// "debug": true
+		}]
+	]
 }

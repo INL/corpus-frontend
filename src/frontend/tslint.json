@@ -1,11 +1,6 @@
 {
 	"extends": ["tslint:recommended"],
 	"rules": {
-		// The following settings are taken care of by eslint
-		"quotemark": false,
-		"indent": false,
-		"whitespace": false,
-
 		// These are just rules I disagree with or rules that are overboard
 		"interface-over-type-literal": false,
 		"max-line-length": false,
@@ -13,18 +8,43 @@
 		"object-literal-sort-keys": false,
 		"trailing-comma": false,
 		"radix": false,
+		"interface-name": false,
+		"only-arrow-functions": false, // jquery and some of our own code explicitly set 'this' of callbacks, can't do that with arrow functions
 
 		// These should eventually be fixed
 		"prefer-const": {"severity": "warn"},
-		"only-arrow-functions": {"severity": "warn"},
 		"no-var-keyword": {"severity": "warn"},
 		"curly": {"severity": "warn"},
 		"semicolon": {"severity": "warn"},
 		"object-literal-shorthand": {"severity": "warn"},
+		"whitespace": { "severity": "warn" },
+		"one-line": { "severity": "warn" },
 
 		// Eh.. consistent style I guess
-		"space-before-function-paren": {"severity": "warn"},
+		"space-before-function-paren": {
+			"severity": "warn",
+			"options": {
+				"anonymous": "never",
+				"named": "never",
+				"asyncArrow": "always"
+			}
+		},
 		"eofline": {"severity": "warn"},
-		"ordered-imports": {"severity": "warn"}
+		"ordered-imports": {"severity": "warn"},
+		"quotemark": {
+			"severity": "warn",
+			"options": ["single", "avoid-escape"]
+		},
+		"indent": {
+			"severity": "warn",
+			"options": "tabs"
+		}
+	},
+	"cliOptions": {
+		"exclude": [
+			"node_modules",
+			"src/vendor",
+			"dist"
+		]
 	}
 }

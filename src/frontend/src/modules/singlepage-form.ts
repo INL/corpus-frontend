@@ -9,7 +9,7 @@ export type PropertyField = {
 	value: string;
 	/** Should the property match using case sensitivity */
 	case: boolean;
-}
+};
 
 export type FilterField = {
 	/** Unique id of the filter/metadata field */
@@ -18,20 +18,19 @@ export type FilterField = {
 	filterType: 'text'|'range'|'select'
 	/** Values of the filter, for selects, the selected values, for text, the text, for ranges the min and max values in indices [0][1] */
 	values: string[]
-}
+};
 
 declare var BLS_URL: string;
 
 // Filters with currently valid values, values will need to be processed prior to search
-var activeFilters: FilterField[] = [];
-var activeProperties: PropertyField[] = [];
-var within: string|null = null;
-
+let activeFilters: FilterField[] = [];
+let activeProperties: PropertyField[] = [];
+let within: string|null = null;
 
 // Update the filter description using the active filter value list
 function updateFilterDisplay() {
 
-	var displayHtml = [];
+	const displayHtml = [];
 	$.each(activeFilters, function(index, element) {
 		displayHtml.push(element.name, ': ', '<i>', element.values.join(', '), ' </i>');
 	});
@@ -48,33 +47,35 @@ function updateFilterField($filterfield) {
 		activeFilters = $.grep(activeFilters, function(elem) { return elem.name === filterName;}, true);
 	}
 
-	var filterName = $filterfield.attr('id');
-	var filterType = $filterfield.data('filterfield-type');
-	var $inputs = $filterfield.find('input, select');
-	var values = [];
+	const filterName = $filterfield.attr('id');
+	const filterType = $filterfield.data('filterfield-type');
+	const $inputs = $filterfield.find('input, select');
+	let values = [];
 
 	// Has two input fields, special treatment
 	if (filterType === 'range') {
-		var from = $($inputs[0]).val();
-		var to = $($inputs[1]).val();
+		const from = $($inputs[0]).val();
+		const to = $($inputs[1]).val();
 
-		if (from && to) // Since these are text inputs, any falsy value ('', undefined, null) is invalid
+		if (from && to) { // Since these are text inputs, any falsy value ('', undefined, null) is invalid
 			values.push(from, to);
+		}
 	} else {
 		// We always store values in an array because multiselect and date fields both have multiple values
 		// Concatenate values since firstVal might be an array itself
 		// val might be an array (in case of multiselect), so concatenate to deal with single values as well as arrays
-		var firstVal = $inputs.first().val();
-		if (firstVal != null && firstVal != '')
+		const firstVal = $inputs.first().val();
+		if (firstVal != null && firstVal != '') {
 			values = values.concat(firstVal);
+		}
 	}
 
 	removeFromFilterList(filterName);
 	if (values.length >= 1) {
 		activeFilters.push({
 			name: filterName,
-			filterType: filterType,
-			values: values
+			filterType,
+			values
 		});
 	}
 
@@ -87,14 +88,14 @@ function updatePropertyField($propertyField, event?) {
 		activeProperties = $.grep(activeProperties, function(elem) { return elem.name === propertyName;}, true);
 	}
 
-	var propertyName = $propertyField.attr('id');
-	var $textOrSelect = $propertyField.find('#' + propertyName + '_value');
-	var fileInput = $propertyField.find('#' + propertyName + '_file')[0]; // NOTE: not always available
-	var $caseInput = $propertyField.find('#' + propertyName + '_case');
-	var $changedInput = event ? $(event.target) : $textOrSelect; // no event means we're initializing, so read from the input field
+	const propertyName = $propertyField.attr('id');
+	const $textOrSelect = $propertyField.find('#' + propertyName + '_value');
+	const fileInput = $propertyField.find('#' + propertyName + '_file')[0]; // NOTE: not always available
+	const $caseInput = $propertyField.find('#' + propertyName + '_case');
+	const $changedInput = event ? $(event.target) : $textOrSelect; // no event means we're initializing, so read from the input field
 
 	// Fetch the current state, or init the new property (if it wasn't in the list)
-	var prop = activeProperties.find(p => p.name === propertyName); // $.grep(activeProperties, function(elem) { return elem.name === propertyName; })[0] || {};
+	const prop = activeProperties.find(p => p.name === propertyName) || {};// $.grep(activeProperties, function(elem) { return elem.name === propertyName; })[0] || {};
 	prop.name = propertyName;
 	prop.case = $caseInput.is(':checked');
 	prop.value = $textOrSelect.val();
@@ -104,13 +105,14 @@ function updatePropertyField($propertyField, event?) {
 	// This has the added benefit we can never push the prop twice by accident
 	removeFromPropertyList(prop.name);
 
-	if ($changedInput.is($textOrSelect[0]) && fileInput != null)
+	if ($changedInput.is($textOrSelect[0]) && fileInput != null) {
 		fileInput.value = '';
+	}
 
 	if ($changedInput.is(fileInput)) {
-		var file = fileInput.files && fileInput.files[0];
+		const file = fileInput.files && fileInput.files[0];
 		if (file != null) {
-			var fr = new FileReader();
+			const fr = new FileReader();
 			fr.onload = function() {
 				// Replace all whitespace with pipes,
 				// this is due to the rather specific way whitespace in the simple search property fields is treated (see singlepage-bls.js:getPatternString)
@@ -118,8 +120,9 @@ function updatePropertyField($propertyField, event?) {
 				prop.value = (fr.result as string).replace(/\s+/g, '|');
 				$textOrSelect.val(prop.value);
 
-				if (prop.value)
+				if (prop.value) {
 					activeProperties.push(prop);
+				}
 			};
 			fr.readAsText(file);
 		} else {
@@ -128,8 +131,9 @@ function updatePropertyField($propertyField, event?) {
 			// Don't push back into active props, we've just cleared the value
 		}
 	} else {
-		if (prop.value)
+		if (prop.value) {
 			activeProperties.push(prop);
+		}
 	}
 }
 
@@ -142,8 +146,8 @@ $(document).ready(function() {
 
 	// Now enable autocompletion on our marked fields
 	$('input[data-autocomplete]').each(function() {
-		var $this = $(this);
-		var propertyId = $this.data('autocomplete');
+		const $this = $(this);
+		const propertyId = $this.data('autocomplete');
 
 		$this.autocomplete({
 			source: BLS_URL + '/autocomplete/' + propertyId,
@@ -151,14 +155,14 @@ $(document).ready(function() {
 			classes: {
 				'ui-autocomplete': 'dropdown-menu'
 			},
-			create: function() {
+			create () {
 				// This element has a div appended every time an element is highlighted
 				// but they are never removed... remove this element for now
 				$('.ui-helper-hidden-accessible').remove();
 			},
 			// Manually fire dom change event as autocomplete doesn't fire it when user selects a value
 			// and we require change events in other parts of the code.
-			select: function(event, ui) {
+			select (event, ui) {
 				$(this).val(ui.item.value);
 				$(this).trigger('change');
 				return false;
@@ -172,9 +176,9 @@ $(document).ready(function() {
 	});
 
 	// Register callbacks and sync with current state
-	$('.filterfield').on('change', function () {
+	$('.filterfield').on('change', function() {
 		updateFilterField($(this));
-	}).each(function () {
+	}).each(function() {
 		updateFilterField($(this));
 	});
 
@@ -229,11 +233,12 @@ export function getWithin() {
  * @param {Array.<string>} values - for 'range' type filters, index 0 and 1 are 'from' and 'to' respectively, for 'select' values, all values are selected, for all others: values are concatenated
  */
 export function setFilterValues(filterName, values) {
-	var $filterField = $('#' + filterName);
-	if (!$filterField.length) // Might happen when loading external queries?
+	const $filterField = $('#' + filterName);
+	if (!$filterField.length) { // Might happen when loading external queries?
 		return;
-	var $inputs = $filterField.find('input, select');
-	var filterType = $filterField.data('filterfield-type');
+	}
+	const $inputs = $filterField.find('input, select');
+	const filterType = $filterField.data('filterfield-type');
 
 	// Determine how to process the value of this filter field, based on the type of this filter
 	if (filterType == 'range') {
@@ -242,13 +247,15 @@ export function setFilterValues(filterName, values) {
 	} else if (filterType == 'select') {
 		$inputs.first().selectpicker('val', values);
 	} else {
-		var processed  = [];
+		const processed  = [];
 		$.each(values, function(index, val) {
-			var withoutQuotes = val.replace(/^"+|"+$/g, '');
-			if (withoutQuotes.match(/\s/)) // contains whitespace -> keep quotes
+			const withoutQuotes = val.replace(/^"+|"+$/g, '');
+			if (withoutQuotes.match(/\s/)) { // contains whitespace -> keep quotes
 				processed.push('"' + withoutQuotes + '"');
-			else
+			}
+			else {
 				processed.push(withoutQuotes);
+			}
 		});
 
 		$inputs.first().val(processed.join(' '));
@@ -265,15 +272,17 @@ export function setFilterValues(filterName, values) {
  * @param {PropertyField} property
  */
 export function setPropertyValues(property) {
-	var $propertyField = $('#' + property.name);
-	if (!$propertyField.length) // Might happen when loading external queries
+	const $propertyField = $('#' + property.name);
+	if (!$propertyField.length) { // Might happen when loading external queries
 		return;
+	}
 
-	if (typeof property.value === 'undefined')
-		property.value = null; // bootstrap-select doesn't do anything when setting to undefined, so instead set null
+	if (typeof property.value === 'undefined') {
+		property.value = null;
+	} // bootstrap-select doesn't do anything when setting to undefined, so instead set null
 	property.case = property.case || false;
 
-	var $input = $propertyField.find('#' + property.name + '_value');
+	const $input = $propertyField.find('#' + property.name + '_value');
 	$input.is('select') ? $input.selectpicker('val', property.value) : $input.val(property.value);
 	$propertyField.find('#' + property.name + '_case').prop('checked', property.case);
 

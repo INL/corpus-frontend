@@ -1,11 +1,16 @@
 /* global BLS_URL, PROPS_IN_COLUMNS */
 
+import 'bootstrap';
+import 'bootstrap-select';
+import {saveAs} from 'file-saver';
 import * as $ from 'jquery';
 import URI from 'urijs';
-import {saveAs} from 'file-saver';
 
-import {getBlsParam, search, getQuerySummary} from './singlepage-bls';
 import {onSearchUpdated} from '../search';
+import {debugLog} from '../utils/debug';
+import {getBlsParam, getQuerySummary, search} from './singlepage-bls';
+
+import * as BLTypes from '../types/blacklabtypes';
 
 // TODO
 // showCitation showProperties onClick handlers
@@ -22,42 +27,45 @@ import {onSearchUpdated} from '../search';
  * NOTE: since blacklab 2.0, properties are called annotations and are contained in SINGLEPAGE.INDEX.annotatedFields['id'].annotations['id']
  *
  * The 'punct' property is always available.
- *
- * @typedef {Object.<string, Array.<string>} BLHitContext
  */
+type BLHitContext = {
+	punct: string[];
+	[key: string]: string[];
+};
 
-/**
- * @typedef {Object} BLHit
- *
- * @property {string} docPid - id of the document from which the hit originated
- * @property {number} start - index of first token in hit, inclusive
- * @property {number} end - index of last token in hit, exclusive
- * @property {BLHitContext} left - context before the hit
- * @property {BLHitContext} match - context of the hit, may contain more than 1 value per property if query matched multiple tokens
- * @property {BLHitContext} right - context after the hit
- */
+type BLHit = {
+	docPid: string;
+	start: number;
+	end: number;
+	left: BLHitContext;
+	match: BLHitContext;
+	right: BLHitContext;
+};
 
-var ELLIPSIS = String.fromCharCode(8230);
+type Property = {
+	id: string;
+	displayName: string;
+	isMainProp: boolean;
+};
 
-/**
- * @typedef {Object} Property
- * @property {string} id
- * @property {string} displayName
- * @property {boolean} isMainProp
- */
+declare var PROPS_IN_COLUMNS: string[];
+declare var SINGLEPAGE: {INDEX: any};
+declare var BLS_URL: string;
 
-/** @type {{all: Property[], shown: Property[], firstMainProp: Property  }} */
-var PROPS = {};
+const ELLIPSIS = String.fromCharCode(8230);
+
+const PROPS: {all?: Property[], shown?: Property[], firstMainProp?: Property } = {};
 // Gather up all relevant properties of words in this index
-PROPS.all = $.map(SINGLEPAGE.INDEX.complexFields, function(complexField) {
-	return $.map(complexField.properties, function(prop, propId) {
-		if (prop.isInternal)
-			return null; // skip prop
+PROPS.all = $.map(SINGLEPAGE.INDEX.complexFields || SINGLEPAGE.INDEX.annotatedFields, function(complexField) {
+	return $.map(complexField.properties || complexField.annotations, function(prop, propId) {
+		if (prop.isInternal) {
+			return null;
+		} // skip prop
 		return {
 			id: propId,
 			displayName: prop.displayName || propId,
 			isMainProp: propId === complexField.mainProperty
-		};
+		} as Property;
 	});
 });
 
@@ -73,20 +81,20 @@ PROPS.shown = $.map(PROPS_IN_COLUMNS, function(propId) {
 // but this has some challenges in the hits table view, such as that it would show multiple columns for the before/hit/after contexts
 PROPS.firstMainProp = PROPS.all.filter(function(prop) { return prop.isMainProp; })[0];
 
-
 // Add a 'hide' function to bootstrap tabs
 // Doesn't do more than remove classes and aria labels, and fire some events
-$.fn.tab.Constructor.prototype.hide = function() {
-	var $this    = this.element;
-	var selector = $this.data('target') || $this.attr('href');
+($.fn.tab as any).Constructor.prototype.hide = function() {
+	const $this    = this.element;
+	const selector = $this.data('target') || $this.attr('href');
 
-	var hideEvent = $.Event('hide.bs.tab', {
+	const hideEvent = $.Event('hide.bs.tab', {
 		relatedTarget: $this[0]
 	});
 
 	$this.trigger(hideEvent);
-	if (hideEvent.isDefaultPrevented())
-		return;
+	if (hideEvent.isDefaultPrevented()) {
+		return this;
+	}
 
 	$this.closest('li.active')
 		.removeClass('active')
@@ -96,6 +104,7 @@ $.fn.tab.Constructor.prototype.hide = function() {
 			relatedTarget: this[0]
 		});
 	$(selector).removeClass('active');
+	return this;
 };
 
 /**
@@ -106,11 +115,12 @@ $.fn.tab.Constructor.prototype.hide = function() {
  * @returns {string} concatenated values of the property, interleaved with punctuation from context['punt']
  */
 function words(context, prop, doPunctBefore, addPunctAfter) {
-	var parts = [];
-	var n = context[prop] ? context[prop].length : 0;
-	for (var i = 0; i < n; i++) {
-		if ((i == 0 && doPunctBefore) || i > 0)
+	const parts = [];
+	const n = context[prop] ? context[prop].length : 0;
+	for (let i = 0; i < n; i++) {
+		if ((i === 0 && doPunctBefore) || i > 0) {
 			parts.push(context.punct[i]);
+		}
 		parts.push(context[prop][i]);
 	}
 	parts.push(addPunctAfter);
@@ -123,13 +133,13 @@ function words(context, prop, doPunctBefore, addPunctAfter) {
  * @returns {Array.<string>} - string[3] where [0] == before, [1] == hit and [2] == after, values are strings created by
  * concatenating and alternating the punctuation and values itself
  */
-function snippetParts(hit, prop) {
+function snippetParts(hit, prop?: string) {
 	prop = prop || PROPS.firstMainProp.id;
 
-	var punctAfterLeft = hit.match.word.length > 0 ? hit.match.punct[0] : '';
-	var before = words(hit.left, prop, false, punctAfterLeft);
-	var match = words(hit.match, prop, false, '');
-	var after = words(hit.right, prop, true, '');
+	const punctAfterLeft = hit.match.word.length > 0 ? hit.match.punct[0] : '';
+	const before = words(hit.left, prop, false, punctAfterLeft);
+	const match = words(hit.match, prop, false, '');
+	const after = words(hit.right, prop, true, '');
 	return [before, match, after];
 }
 
@@ -140,11 +150,11 @@ function snippetParts(hit, prop) {
  * @returns {string}
  */
 function properties(context) {
-	var props = [];
-	for (var key in context) {
+	const props = [];
+	for (const key in context) {
 		if (context.hasOwnProperty(key)) {
-			var val = $.trim(context[key]);
-			if (!val) continue;
+			const val = $.trim(context[key]);
+			if (!val) { continue; }
 			props.push(key+': '+val);
 		}
 	}
@@ -161,12 +171,13 @@ function properties(context) {
 function replaceTableContent($table, html, onComplete) {
 	// skip the fadeout if the table is empty
 	// fixes annoying mini-delay when first viewing results
-	var fadeOutTime = $table.find('tr').length ? 200 : 0;
+	const fadeOutTime = $table.find('tr').length ? 200 : 0;
 
-	$table.animate({opacity: 0}, fadeOutTime, function () {
+	$table.animate({opacity: 0}, fadeOutTime, function() {
 		$table.html(html);
-		if (onComplete)
+		if (onComplete) {
 			onComplete.call($table);
+		}
 		$table.animate({opacity: 1}, 200);
 	});
 }
@@ -181,9 +192,9 @@ function replaceTableContent($table, html, onComplete) {
  * @param {any} errorThrown
  */
 function showBlsError(jqXHR, textStatus, errorThrown) {
-	var errordata = (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.error) || {
-		'code': 'WEBSERVICE_ERROR',
-		'message': 'Error contacting webservice: ' + textStatus + '; ' + errorThrown
+	const errordata = (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.error) || {
+		code: 'WEBSERVICE_ERROR',
+		message: 'Error contacting webservice: ' + textStatus + '; ' + errorThrown
 	};
 
 	$('#errorDiv').text(errordata.message + ' (' + errordata.code + ') ').show();
@@ -205,47 +216,58 @@ function hideBlsError() {
  * @param {any} data a blacklab-server search response containing either groups, docs, or hits.
  */
 function updatePagination($pagination, data) {
-	var beginIndex = data.summary.windowFirstResult;
-	var pageSize = data.summary.requestedWindowSize;
-	var totalResults;
-	if (data.summary.numberOfGroups != null)
+	let beginIndex = data.summary.windowFirstResult;
+	const pageSize = data.summary.requestedWindowSize;
+	let totalResults;
+	if (data.summary.numberOfGroups != null) {
 		totalResults = data.summary.numberOfGroups;
-	else
+	}
+	else {
 		totalResults = (data.hits ? data.summary.numberOfHitsRetrieved : data.summary.numberOfDocsRetrieved);
-
-	// when out of bounds results, draw at least the last few pages so the user can go back
-	if (totalResults < beginIndex)
-		beginIndex = totalResults+1;
-
-	var totalPages =  Math.ceil(totalResults / pageSize);
-	var currentPage = Math.ceil(beginIndex / pageSize);
-	var startPage = Math.max(currentPage - 10, 0);
-	var endPage = Math.min(currentPage + 10, totalPages);
-
-	var html = [];
-	if (currentPage == 0)
-		html.push('<li class="disabled"><a>Prev</a></li>');
-	else
-		html.push('<li><a href="javascript:void(0)" data-page="', currentPage-1, '">Prev</a></li>');
-
-	if (startPage > 0)
-		html.push('<li class="disabled"><a>...</a></li>');
-
-	for (var i = startPage; i < endPage; i++) {
-		var showPageNumber = i + 1;
-		if (i == currentPage)
-			html.push('<li class="active"><a>', showPageNumber, '</a></li>');
-		else
-			html.push('<li><a href="javascript:void(0)" data-page="', i, '">', showPageNumber, '</a></li>');
 	}
 
-	if (endPage < totalPages)
-		html.push('<li class="disabled"><a>...</a></li>');
+	// when out of bounds results, draw at least the last few pages so the user can go back
+	if (totalResults < beginIndex) {
+		beginIndex = totalResults+1;
+	}
 
-	if (currentPage == (totalPages - 1) || totalPages == 0)
+	const totalPages =  Math.ceil(totalResults / pageSize);
+	const currentPage = Math.ceil(beginIndex / pageSize);
+	const startPage = Math.max(currentPage - 10, 0);
+	const endPage = Math.min(currentPage + 10, totalPages);
+
+	const html = [];
+	if (currentPage === 0) {
+		html.push('<li class="disabled"><a>Prev</a></li>');
+	}
+	else {
+		html.push('<li><a href="javascript:void(0)" data-page="', currentPage-1, '">Prev</a></li>');
+	}
+
+	if (startPage > 0) {
+		html.push('<li class="disabled"><a>...</a></li>');
+	}
+
+	for (let i = startPage; i < endPage; i++) {
+		const showPageNumber = i + 1;
+		if (i === currentPage) {
+			html.push('<li class="active"><a>', showPageNumber, '</a></li>');
+		}
+		else {
+			html.push('<li><a href="javascript:void(0)" data-page="', i, '">', showPageNumber, '</a></li>');
+		}
+	}
+
+	if (endPage < totalPages) {
+		html.push('<li class="disabled"><a>...</a></li>');
+	}
+
+	if (currentPage === (totalPages - 1) || totalPages === 0) {
 		html.push('<li class="disabled"><a>Next</a></li>');
-	else
+	}
+	else {
 		html.push('<li><a href="javascript:void(0)" data-page="', currentPage + 1, '">Next</a></li>');
+	}
 
 	$pagination.html(html.join(''));
 }
@@ -290,8 +312,8 @@ function hideSearchIndicator($tab) {
  * specifiying a valid group id.
  */
 function viewConcordances() {
-	var $button = $(this);
-	var groupId = $button.data('groupId');
+	const $button = $(this);
+	const groupId = $button.data('groupId');
 
 	// this parameter is local to this tab, as the other tabs are probably displaying other groups.
 	$(this).trigger('localParameterChange', {
@@ -300,17 +322,16 @@ function viewConcordances() {
 		sort: null,
 	});
 
-
 	// initialize the display indicating we're looking at a detailed group
 
 	// Only set the text, don't show it yet
 	// (it should always be hidden, as this function is only available/called when you're not currently viewing contents of a group)
 	// This is a brittle solution, but better than nothing for now.
 	// TODO when blacklab-server echoes this data in the search request, set these values in setTabResults() and remove this here
-	var groupName = $button.data('groupName');
-	var $tab = $button.closest('.tab-pane');
-	var $resultgroupdetails = $tab.find('.resultgroupdetails');
-	var $resultgroupname = $resultgroupdetails.find('.resultgroupname');
+	const groupName = $button.data('groupName');
+	const $tab = $button.closest('.tab-pane');
+	const $resultgroupdetails = $tab.find('.resultgroupdetails');
+	const $resultgroupname = $resultgroupdetails.find('.resultgroupname');
 	$resultgroupname.text(groupName || '');
 }
 
@@ -325,17 +346,18 @@ function viewConcordances() {
  * Some assumptions are also made about the exact structure of the document regarding placement of the results.
  */
 function loadConcordances() {
-	var $button = $(this);
-	var $tab = $button.parents('.tab-pane').first();
-	var textDirection = SINGLEPAGE.INDEX.textDirection || 'ltr';
-	var groupId = $button.data('groupId');
-	var currentConcordanceCount = $button.data('currentConcordanceCount') || 0;
-	var availableConcordanceCount = $button.data('availableConcordanceCount') || Number.MAX_VALUE;
+	const $button = $(this);
+	const $tab = $button.parents('.tab-pane').first();
+	const textDirection = SINGLEPAGE.INDEX.textDirection || 'ltr';
+	const groupId = $button.data('groupId');
+	const currentConcordanceCount = $button.data('currentConcordanceCount') || 0;
+	const availableConcordanceCount = $button.data('availableConcordanceCount') || Number.MAX_VALUE;
 
-	if (currentConcordanceCount >= availableConcordanceCount)
+	if (currentConcordanceCount >= availableConcordanceCount) {
 		return;
+	}
 
-	var searchParams = $.extend(
+	const searchParams = $.extend(
 		{},
 		$tab.data('defaultParameters'),
 		$tab.data('parameters'),
@@ -352,8 +374,8 @@ function loadConcordances() {
 	);
 
 	search(searchParams, function(data) {
-		var totalConcordances = data.hits ? data.summary.numberOfHitsRetrieved : data.summary.numberOfDocsRetrieved;
-		var loadedConcordances = data.summary.actualWindowSize;
+		const totalConcordances = data.hits ? data.summary.numberOfHitsRetrieved : data.summary.numberOfDocsRetrieved;
+		const loadedConcordances = data.summary.actualWindowSize;
 
 		// store new number of loaded elements
 		$button.data('currentConcordanceCount', currentConcordanceCount + loadedConcordances)
@@ -361,13 +383,13 @@ function loadConcordances() {
 			.toggle(currentConcordanceCount + loadedConcordances < totalConcordances);
 
 		// And generate html to display
-		var html = [];
+		const html = [];
 		// Only one of these will run depending on what is present in the data
 		// And what is present in the data depends on the current view, so all works out
 		$.each(data.hits, function(index, hit) {
-			var parts = snippetParts(hit);
-			var left = textDirection=='ltr'? parts[0] : parts[2];
-			var right = textDirection=='ltr'? parts[2] : parts[0];
+			const parts = snippetParts(hit);
+			const left = textDirection==='ltr'? parts[0] : parts[2];
+			const right = textDirection==='ltr'? parts[2] : parts[0];
 			html.push(
 				'<div class="clearfix">',
 					'<div class="col-xs-5 text-right">', ELLIPSIS, ' ', left, '</div>',
@@ -377,8 +399,8 @@ function loadConcordances() {
 		});
 
 		$.each(data.docs, function(index, doc) {
-			var title = doc.docInfo[data.summary.docFields.titleField];
-			var hits = doc.numberOfHits;
+			const title = doc.docInfo[data.summary.docFields.titleField];
+			const hits = doc.numberOfHits;
 			html.push(
 				'<div class="clearfix">',
 					'<div class="col-xs-10"><b>', title, '&nbsp;', '</b></div>',
@@ -390,18 +412,19 @@ function loadConcordances() {
 		$button.parent().parent().append(html.join(''));
 	},
 	function(jqXHR, textStatus, errorThrown) {
-		var errordata = (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.error) || {
-			'code': 'WEBSERVICE_ERROR',
-			'message': 'Error contacting webservice: ' + textStatus + '; ' + errorThrown
+		const errordata = (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.error) || {
+			code: 'WEBSERVICE_ERROR',
+			message: 'Error contacting webservice: ' + textStatus + '; ' + errorThrown
 		};
 
-		var html = [];
+		const html = [];
 		html.push('<div>',
 			'<b>Could not retrieve concordances.</b><br>');
 
-		if (jqXHR && jqXHR.status !== 0) // server is up
+		if (jqXHR && jqXHR.status !== 0) { // server is up
 			html.push('This is usually due to a misconfigured server, see ',
 				'<a href="https://github.com/INL/BlackLab/blob/be5b5be75c064e87cbfc2271fd19d073f80839af/core/src/site/markdown/blacklab-server-overview.md#installation" target="_blank">here</a> for more information.');
+		}
 
 		html.push('<hr><b>', errordata.code, '</b><br>', errordata.message, '</div>');
 
@@ -419,20 +442,20 @@ function loadConcordances() {
 function formatHits(data, textDirection) {
 	// TODO use mustache.js
 
-	var html = [];
+	const html = [];
 	/* eslint-disable indent */
 	html.push(
 		'<thead><tr>',
 			'<th class="text-right" style="width:40px">',
 				'<span class="dropdown">',
 					'<a class="dropdown-toggle" data-toggle="dropdown">',
-					textDirection=='ltr'? 'Before hit ' : 'After hit ',
+					textDirection==='ltr'? 'Before hit ' : 'After hit ',
 					'<span class="caret"></span></a>',
 					'<ul class="dropdown-menu" role="menu" aria-labelledby="left">');
-					PROPS.all.forEach(function(prop) { html.push(
+	PROPS.all.forEach(function(prop) { html.push(
 						'<li><a data-bls-sort="left:' + prop.id + '">' + prop.displayName + '</a></li>');
 					});
-					html.push(
+	html.push(
 					'</ul>',
 				'</span>',
 			'</th>',
@@ -444,41 +467,41 @@ function formatHits(data, textDirection) {
 			'<th class="text-left" style="width:40px;">',
 				'<span class="dropdown">', // span instead of div or the menu won't align with the toggle text, as the toggle container is wider than the toggle's text
 					'<a class="dropdown-toggle" data-toggle="dropdown">',
-					textDirection=='ltr'? 'After hit ' : 'Before hit ',
+					textDirection==='ltr'? 'After hit ' : 'Before hit ',
 					'<span class="caret"></span></a>',
 					'<ul class="dropdown-menu" role="menu" aria-labelledby="right">');
-					PROPS.all.forEach(function(prop) { html.push(
+	PROPS.all.forEach(function(prop) { html.push(
 						'<li><a data-bls-sort="right:' + prop.id + '">' + prop.displayName + '</a></li>');
 					});
-					html.push(
+	html.push(
 					'</ul>',
 				'</span>',
 			'</th>');
 
 			// Not all properties have their own table columns
-			PROPS.shown.forEach(function(prop) { html.push(
+	PROPS.shown.forEach(function(prop) { html.push(
 			'<th style="width:15px;"><a data-bls-sort="hit:' + prop.id + '">' + prop.displayName + '</a></th>');
 			});
 	html.push('</tr></thead>');
 	/* eslint-enable */
 
 	html.push('<tbody>');
-	var prevHitDocPid = null;
-	var numColumns = 3 + PROPS.shown.length; // before context - hit context - after context - remaining properties
+	let prevHitDocPid = null;
+	const numColumns = 3 + PROPS.shown.length; // before context - hit context - after context - remaining properties
 	$.each(data.hits, function(index, hit) {
 		// Render a row for this hit's document, if this hit occurred in a different document than the previous
-		var docPid = hit.docPid;
+		const docPid = hit.docPid;
 		if (docPid !== prevHitDocPid) {
 			prevHitDocPid = docPid;
-			var doc = data.docInfos[docPid];
-			var docTitle = doc[data.summary.docFields.titleField] || 'UNKNOWN';
-			var docAuthor = doc[data.summary.docFields.authorField] ? ' by ' + doc[data.summary.docFields.authorField] : '';
-			var docDate = doc[data.summary.docFields.dateField] ? ' (' + doc[data.summary.docFields.dateField] + ')' : '';
+			const doc = data.docInfos[docPid];
+			const docTitle = doc[data.summary.docFields.titleField] || 'UNKNOWN';
+			const docAuthor = doc[data.summary.docFields.authorField] ? ' by ' + doc[data.summary.docFields.authorField] : '';
+			const docDate = doc[data.summary.docFields.dateField] ? ' (' + doc[data.summary.docFields.dateField] + ')' : '';
 
 			// TODO the clientside url generation story... https://github.com/INL/corpus-frontend/issues/95
 			// Ideally use absolute urls everywhere, if the application needs to be proxied, let the proxy server handle it.
 			// Have a configurable url in the backend that's made available on the client that we can use here.
-			var docUrl;
+			let docUrl;
 			switch (new URI().filename()) {
 			case '':
 				docUrl = new URI('../../docs/');
@@ -498,7 +521,7 @@ function formatHits(data, textDirection) {
 				.filename(docPid)
 				.search({
 					// parameter 'query' controls the hits that are highlighted in the document when it's opened
-					'query': data.summary.searchParam.patt
+					query: data.summary.searchParam.patt
 				})
 				.toString();
 
@@ -512,10 +535,10 @@ function formatHits(data, textDirection) {
 		}
 
 		// And display the hit itself
-		var parts = snippetParts(hit);
-		var left = textDirection=='ltr'? parts[0] : parts[2];
-		var right = textDirection=='ltr'? parts[2] : parts[0];
-		var propsWord = properties(hit.match).replace("'","\\'").replace('&apos;',"\\'").replace('"', '&quot;');
+		const parts = snippetParts(hit);
+		const left = textDirection==='ltr'? parts[0] : parts[2];
+		const right = textDirection==='ltr'? parts[2] : parts[0];
+		const propsWord = properties(hit.match).replace("'","\\'").replace('&apos;',"\\'").replace('"', '&quot;');
 
 		/* eslint-disable indent */
 		html.push(
@@ -524,10 +547,10 @@ function formatHits(data, textDirection) {
 				'<td class="text-right">', ELLIPSIS, ' <span dir="', textDirection, '">', left, '</span></td>',
 				'<td class="text-center"><span dir="', textDirection, '"><strong>', parts[1], '</strong></span></td>',
 				'<td><span dir="', textDirection, '">', right, '</span> ', ELLIPSIS, '</td>');
-				PROPS.shown.forEach(function(prop) { html.push(
+		PROPS.shown.forEach(function(prop) { html.push(
 					'<td>', words(hit.match, prop.id, false, ''), '</td>');
 				});
-				html.push(
+		html.push(
 			'</tr>');
 
 		// Snippet row (initially hidden)
@@ -554,7 +577,7 @@ function formatHits(data, textDirection) {
  * @returns An array of html strings containing the <thead> and <tbody>, but without the enclosing <table> element.
  */
 function formatDocs(data, textDirection) {
-	var html = [];
+	const html = [];
 
 	html.push(
 		'<thead><tr>',
@@ -566,16 +589,16 @@ function formatDocs(data, textDirection) {
 
 	html.push('<tbody>');
 	$.each(data.docs, function(index, doc) {
-		var docPid = doc.docPid;
+		const docPid = doc.docPid;
 
-		var docTitle = doc.docInfo[data.summary.docFields.titleField] || 'UNKNOWN';
-		var docAuthor = doc.docInfo[data.summary.docFields.authorField] ? ' by ' + doc.docInfo[data.summary.docFields.authorField] : '';
-		var docDate = doc.docInfo[data.summary.docFields.dateField] || '';
-		var docHits = doc.numberOfHits || '';
+		const docTitle = doc.docInfo[data.summary.docFields.titleField] || 'UNKNOWN';
+		const docAuthor = doc.docInfo[data.summary.docFields.authorField] ? ' by ' + doc.docInfo[data.summary.docFields.authorField] : '';
+		const docDate = doc.docInfo[data.summary.docFields.dateField] || '';
+		const docHits = doc.numberOfHits || '';
 
-		var snippetStrings = [];
+		const snippetStrings = [];
 		$.each(doc.snippets, function(index, snippet) {
-			var parts = snippetParts(snippet);
+			const parts = snippetParts(snippet);
 			snippetStrings.push(ELLIPSIS, ' ', parts[0], '<strong>', parts[1], '</strong>', parts[2], ELLIPSIS);
 			return false; // only need the first snippet for now
 		});
@@ -583,7 +606,7 @@ function formatDocs(data, textDirection) {
 		// TODO the clientside url generation story... https://github.com/INL/corpus-frontend/issues/95
 		// Ideally use absolute urls everywhere, if the application needs to be proxied, let the proxy server handle it.
 		// Have a configurable url in the backend that's made available on the client that we can use here.
-		var docUrl;
+		let docUrl;
 		switch (new URI().filename()) {
 		case '':
 			docUrl = new URI('../../docs/');
@@ -602,7 +625,7 @@ function formatDocs(data, textDirection) {
 			.absoluteTo(new URI().toString())
 			.filename(docPid)
 			.search({
-				'query': data.summary.searchParam.patt
+				query: data.summary.searchParam.patt
 			})
 			.toString();
 
@@ -630,7 +653,7 @@ function formatDocs(data, textDirection) {
  * @returns An array of html strings containing the <thead> and <tbody>, but without the enclosing <table> element.
  */
 function formatGroups(data) {
-	var html = [];
+	const html = [];
 
 	html.push(
 		'<thead><tr>',
@@ -640,17 +663,17 @@ function formatGroups(data) {
 	);
 
 	// give the display a different color based on whether we're showing hits or docs
-	var displayClass = data.hitGroups ? 'progress-bar-success' : 'progress-bar-warning';
-	var idPrefix = data.hitGroups ? 'hg' : 'dg'; // hitgroup : docgroup
+	const displayClass = data.hitGroups ? 'progress-bar-success' : 'progress-bar-warning';
+	const idPrefix = data.hitGroups ? 'hg' : 'dg'; // hitgroup : docgroup
 
 	html.push('<tbody>');
-	var groups = data.hitGroups || data.docGroups;
+	const groups = data.hitGroups || data.docGroups;
 	$.each(groups, function(index, group) {
-		var groupId = group.identity;
-		var htmlId = idPrefix + index;
+		const groupId = group.identity;
+		const htmlId = idPrefix + index;
 
-		var displayName = group.identityDisplay;
-		var displayWidth = (group.size / data.summary.largestGroupSize) * 100;
+		const displayName = group.identityDisplay;
+		const displayWidth = (group.size / data.summary.largestGroupSize) * 100;
 
 		html.push(
 			'<tr>',
@@ -682,24 +705,25 @@ function formatGroups(data) {
  * @param {Jquery.Event} event
  */
 function onExportCsv(event) {
-	var $tab = $(event.delegateTarget);
+	const $tab = $(event.delegateTarget);
 
-	var $button = $(event.target);
-	if ($button.hasClass('disabled'))
+	const $button = $(event.target);
+	if ($button.hasClass('disabled')) {
 		return;
+	}
 
-	var pageParam = $.extend({},
+	const pageParam = $.extend({},
 		$tab.data('defaultParameters'),
 		$tab.data('parameters'),
 		$tab.data('constParameters'));
 
-	var blsParam = getBlsParam(pageParam);
+	const blsParam = getBlsParam(pageParam);
 
 	blsParam.outputformat = 'csv';
 	delete blsParam.number;
 	delete blsParam.first;
 
-	var url = new URI(BLS_URL).segment(pageParam.operation).addSearch(blsParam).toString();
+	const url = new URI(BLS_URL).segment(pageParam.operation).addSearch(blsParam).toString();
 	debugLog('CSV download url', url, blsParam); // eslint-disable-line
 
 	$button
@@ -713,12 +737,12 @@ function onExportCsv(event) {
 		// error: function(jqXHR, textStatus, errorThrown) {
 
 		// },
-		success: function(data) {
+		success (data) {
 			// NOTE: Excel <=2010 seems to ignore the BOM altogether, see https://stackoverflow.com/a/19516038
-			var b = new Blob([data], { type: 'text/plain;charset=utf-8' });
+			const b = new Blob([data], { type: 'text/plain;charset=utf-8' });
 			saveAs(b, 'data.csv'); // FileSaver.js
 		},
-		complete: function() {
+		complete () {
 			$button
 				.removeClass('disabled')
 				.attr('disabled', false)
@@ -733,16 +757,19 @@ function onExportCsv(event) {
  * @param {any} data the successful blacklab-server reply.
  */
 function setTabResults(data) {
-	var $tab = $(this);
-	var html;
-	var textDirection = SINGLEPAGE.INDEX.textDirection || 'ltr';
+	const $tab = $(this);
+	let html;
+	const textDirection = SINGLEPAGE.INDEX.textDirection || 'ltr';
 	// create the table
-	if (data.hits && data.hits.length)
+	if (data.hits && data.hits.length) {
 		html = formatHits(data, textDirection);
-	else if (data.docs && data.docs.length)
+	}
+	else if (data.docs && data.docs.length) {
 		html = formatDocs(data, textDirection);
-	else if ((data.hitGroups && data.hitGroups.length) || (data.docGroups && data.docGroups.length))
+						}
+	else if ((data.hitGroups && data.hitGroups.length) || (data.docGroups && data.docGroups.length)) {
 		html = formatGroups(data);
+						}
 	else {
 		html = [
 			'<thead>',
@@ -779,17 +806,18 @@ function setTabResults(data) {
 	// when initiating the search
 	// TODO we set the value as fallback when no value currently set, as when first loading page, there was no initial search
 	// where we know the group parameter.
-	var $resultgroupdetails = $tab.find('.resultgroupdetails');
+	const $resultgroupdetails = $tab.find('.resultgroupdetails');
 	if (data.summary.searchParam.viewgroup) {
 		$resultgroupdetails.show();
-		var $resultgroupname = $resultgroupdetails.find('.resultgroupname');
-		if (!$resultgroupname.text())
+		const $resultgroupname = $resultgroupdetails.find('.resultgroupname');
+		if (!$resultgroupname.text()) {
 			$resultgroupname.text(data.summary.searchParam.viewgroup);
+		}
 	} else {
 		$resultgroupdetails.hide();
 	}
 
-	var showWarning = !!(data.summary.stoppedRetrievingHits && !data.summary.stillCounting);
+	const showWarning = !!(data.summary.stoppedRetrievingHits && !data.summary.stillCounting);
 	$tab.find('.results-incomplete-warning').toggle(showWarning);
 }
 
@@ -825,7 +853,7 @@ function setTabParameters($tab, newParameters, toPageState) {
 	}
 
 	// write new values while preserving original values
-	var updatedParameters = $.extend($tab.data('parameters'), newParameters, $tab.data('constParameters'));
+	const updatedParameters = $.extend($tab.data('parameters'), newParameters, $tab.data('constParameters'));
 
 	// copy parameter values to their selectors etc
 	if (toPageState) {
@@ -843,13 +871,14 @@ function setTabParameters($tab, newParameters, toPageState) {
  * @param {any} event where the data attribute holds all new parameters
  */
 function onLocalParameterChange(event, parameters) {
-	var $tab = $(this);
+	const $tab = $(this);
 
 	setTabParameters($tab, parameters, true);
 	$tab.removeData('results'); // Invalidate data to indicate a refresh is required
 
-	if ($tab.hasClass('active')) // Emulate a reopen of the tab to refresh it
+	if ($tab.hasClass('active')) { // Emulate a reopen of the tab to refresh it
 		$tab.trigger('tabOpen');
+	}
 }
 
 /**
@@ -858,13 +887,13 @@ function onLocalParameterChange(event, parameters) {
  */
 function onTabOpen(/*event, data*/) {
 
-	var $tab = $(this);
-	var searchSettings = $.extend({}, $tab.data('defaultParameters'), $tab.data('parameters'), $tab.data('constParameters'));
+	const $tab = $(this);
+	const searchSettings = $.extend({}, $tab.data('defaultParameters'), $tab.data('parameters'), $tab.data('constParameters'));
 
 	// CORE does as little UI manipulation as possible, just shows a tab when required
 	// so we're responsible for showing the entire results area.
 	$('#results').show();
-	var querySummary = getQuerySummary(searchSettings.pattern, searchSettings.within, searchSettings.filters);
+	const querySummary = getQuerySummary(searchSettings.pattern, searchSettings.within, searchSettings.filters);
 	$('#searchFormDivHeader').show()
 		.find('#querySummary').text(querySummary).attr('title', querySummary.substr(0, 1000));
 
@@ -975,8 +1004,8 @@ $(document).ready(function() {
 	// use indirect event capture for easy access to the tab content-pane
 	$('#resultTabsContent .tab-pane')
 		.on('click', '[data-bls-sort]', function(event) {
-			var sort = $(this).data('blsSort');
-			var invert = ($(event.delegateTarget).data('parameters').sort === sort);
+			const sort = $(this).data('blsSort');
+			const invert = ($(event.delegateTarget).data('parameters').sort === sort);
 
 			$(this).trigger('localParameterChange', {
 				sort: invert ? '-' + sort : sort
@@ -997,8 +1026,8 @@ $(document).ready(function() {
 		})
 		// don't attach to 'changed', as that fires every time a single option is toggled, instead wait for the menu to close
 		.on('hide.bs.select', 'select.groupselect', function(event) {
-			var prev = $(event.delegateTarget).data('parameters').groupBy || [];
-			var cur = $(this).selectpicker('val') || [];
+			const prev = $(event.delegateTarget).data('parameters').groupBy || [];
+			const cur = $(this).selectpicker('val') || [];
 			// Don't fire search if options didn't change
 
 			if (prev.length != cur.length || !prev.every(function(elem) { return cur.includes(elem); })) {
@@ -1033,7 +1062,7 @@ $(document).ready(function() {
  */
 export function showCitation(concRow, docPid, start, end, textDirection) {
 	// Open/close the collapsible in the next row
-	var $element = $(concRow).next().find('.collapse');
+	const $element = $(concRow).next().find('.collapse');
 	$element.collapse('toggle');
 
 	$.ajax({
@@ -1044,11 +1073,11 @@ export function showCitation(concRow, docPid, start, end, textDirection) {
 			hitend: end,
 			wordsaroundhit: 50
 		},
-		success: function (response) {
-			var parts = snippetParts(response);
+		success (response) {
+			const parts = snippetParts(response);
 			$element.html('<span dir="'+ textDirection+'"><b>Kwic: </b>'+ parts[0] + '<b>' + parts[1] + '</b>' + parts[2]+ '</span>');
 		},
-		error: function(jqXHR, textStatus/*, errorThrown*/) {
+		error (jqXHR, textStatus/*, errorThrown*/) {
 			$element.text('Error retrieving data: ' + (jqXHR.responseJSON && jqXHR.responseJSON.error) || textStatus);
 		}
 	});
@@ -1062,10 +1091,10 @@ export function showCitation(concRow, docPid, start, end, textDirection) {
  */
 export function showProperties(propRow, props) {
 	// Open/close the collapsible in the next row
-	var $element = $(propRow).next().next().find('.collapse');
+	const $element = $(propRow).next().next().find('.collapse');
 	$element.collapse('toggle');
 
-	var $p = $('<div/>').text(props).html();
+	const $p = $('<div/>').text(props).html();
 	$element.html('<span><b>Properties: </b>' + $p + '</span>');
 }
 
@@ -1078,11 +1107,12 @@ export function showProperties(propRow, props) {
  * @param {any} searchParameters New search parameters.
  * @param {boolean} [clearResults=false] Clear any currently displayed search results.
  */
-export function setParameters(searchParameters, clearResults) {
+export function setParameters(searchParameters, clearResults = false) {
 	$('#resultTabsContent .tab-pane').each(function() {
-		var $tab = $(this);
-		if (clearResults)
+		const $tab = $(this);
+		if (clearResults) {
 			clearTabResults($tab);
+		}
 
 		$tab.trigger('localParameterChange', searchParameters);
 	});
@@ -1101,7 +1131,7 @@ export function reset() {
 	$('#searchFormDivHeader').hide();
 
 	$('#resultTabsContent .tab-pane').each(function() {
-		var $tab = $(this);
+		const $tab = $(this);
 
 		clearTabResults($tab);
 		$tab.trigger('localParameterChange', $.extend({},

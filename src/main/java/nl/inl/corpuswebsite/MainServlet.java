@@ -334,6 +334,10 @@ public class MainServlet extends HttpServlet {
      * @return the config
      */
     public CorpusConfig getCorpusConfig(String corpus) {
+        if (corpus == null) {
+            return null;
+        }
+        
         if (!corpusConfigs.containsKey(corpus)) {
             // Contact blacklab-server for the config xml file
             QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(corpus));

@@ -4,31 +4,34 @@ import 'bootstrap-select';
 import $ from 'jquery';
 import URI from 'urijs';
 
+import parseCql from './utils/cqlparser';
 import './utils/features/autocomplete';
 import './utils/features/tutorial';
-import parseCql from './utils/cqlparser';
 
-import './modules/singlepage-interface';
-import * as mainForm from './modules/singlepage-form';
-import * as searcher from './modules/singlepage-interface';
-import {getPageParam, getBlsParam, cancelSearch} from './modules/singlepage-bls';
 import createQueryBuilder from './modules/cql_querybuilder';
+import {cancelSearch, getBlsParam, getPageParam} from './modules/singlepage-bls';
+import * as mainForm from './modules/singlepage-form';
+import './modules/singlepage-interface';
+import * as searcher from './modules/singlepage-interface';
 
 import {debugLog} from './utils/debug';
 
-$(document).ready(function () {
+declare var SINGLEPAGE: {INDEX: any};
+
+$(document).ready(function() {
 	if (window.localStorage) {
 		$('input[data-persistent][id != ""]').each(function(i, elem) {
-			var $this = $(elem);
-			var key = 'input_' + $this.attr('id');
+			const $this = $(elem);
+			const key = 'input_' + $this.attr('id');
 			$this.on('change', function() {
-				var curVal = $this.is(':checkbox') ? $this.is(':checked') : $this.val();
+				const curVal = $this.is(':checkbox') ? $this.is(':checked') : $this.val();
 				window.localStorage.setItem(key, curVal);
 			});
 
-			var storedVal = window.localStorage.getItem(key);
-			if (storedVal != null)
+			const storedVal = window.localStorage.getItem(key);
+			if (storedVal != null) {
 				$this.is(':checkbox') ? $this.attr('checked', storedVal.toLowerCase() === 'true') : $this.val(storedVal);
+			}
 
 			// run handler once, init localstorage if required
 			// Only do next tick so handlers have a change to register
@@ -37,15 +40,16 @@ $(document).ready(function () {
 	}
 
 	// Init the querybuilder with the supported attributes/properties
-	var $queryBuilder = $('#querybuilder'); // container
-	var queryBuilderInstance = createQueryBuilder($queryBuilder, {
+	const $queryBuilder = $('#querybuilder'); // container
+	const queryBuilderInstance = createQueryBuilder($queryBuilder, {
 		attribute: {
 			view: {
 				// Pass the available properties of tokens in this corpus (PoS, Lemma, Word, etc..) to the querybuilder
-				attributes: $.map(SINGLEPAGE.INDEX.complexFields || SINGLEPAGE.INDEX.annotatedFields, function (complexField/*, complexFieldName*/) {
+				attributes: $.map(SINGLEPAGE.INDEX.complexFields || SINGLEPAGE.INDEX.annotatedFields, function(complexField/*, complexFieldName*/) {
 					return $.map(complexField.properties || complexField.annotations, function(property, propertyId) {
-						if (property.isInternal)
-							return null; // Don't show internal fields in the queryBuilder; leave this out of the list.
+						if (property.isInternal) {
+							return null;
+						} // Don't show internal fields in the queryBuilder; leave this out of the list.
 
 						// Transform the supported values to the querybuilder format
 						return {
@@ -62,23 +66,23 @@ $(document).ready(function () {
 	// register click handlers in the main search form (data irrespective or currently viewed tab)
 	// Parsing and validation of the values is performed in singlepage-bls when the search is executed
 	// and in toPageState when the values are written from the query
-	$('#resultsPerPage').on('change', function () {
+	$('#resultsPerPage').on('change', function() {
 		searcher.setParameters({
 			pageSize: $(this).selectpicker('val')
 		});
 	});
-	$('#sampleMode').on('change', function () {
+	$('#sampleMode').on('change', function() {
 		searcher.setParameters({
 			sampleMode: $(this).selectpicker('val')
 		});
 	});
-	$('#sampleSize').on('change', function () {
+	$('#sampleSize').on('change', function() {
 		searcher.setParameters({
 			sampleSize: $(this).val(),
 			sampleMode: $('#sampleMode').selectpicker('val') // in case it hasn't been initialized
 		});
 	});
-	$('#sampleSeed').on('change', function () {
+	$('#sampleSeed').on('change', function() {
 		searcher.setParameters({
 			sampleSeed: $(this).val()
 		});
@@ -102,7 +106,7 @@ $(document).ready(function () {
 	$('#mainForm').on('reset', resetPage);
 
 	// Rescale the querybuilder container when it's shown
-	$('a.querytype[href="#advanced"]').on('shown.bs.tab hide.bs.tab', function () {
+	$('a.querytype[href="#advanced"]').on('shown.bs.tab hide.bs.tab', function() {
 		$('#searchContainer').toggleClass('col-md-6');
 	});
 
@@ -114,33 +118,32 @@ $(document).ready(function () {
 	// Attempt to parse the query from the cql editor into the querybuilder
 	// when the user asks to
 	$('#parseQuery').on('click', function() {
-		var pattern = $('#querybox').val();
-		if (populateQueryBuilder(pattern))
+		const pattern = $('#querybox').val();
+		if (populateQueryBuilder(pattern)) {
 			$('#searchTabs a[href="#advanced"]').tab('show') && $('#parseQueryError').hide();
-		else {
+		} else {
 			$('#parseQueryError').show();
 			$('#querybox').val(pattern);
 		}
 	});
 
 	// And copy over the generated query to the manual field when changes happen
-	var $queryBox = $('#querybox'); //cql textfield
-	$queryBuilder.on('cql:modified', function () {
+	const $queryBox = $('#querybox'); // cql textfield
+	$queryBuilder.on('cql:modified', function() {
 		$queryBox.val(queryBuilderInstance.getCql());
 	});
 
 	// now restore the page state from the used url
 	// This will automatically start a search if the settings indicate it
-	var searchSettings = fromPageUrl();
+	const searchSettings = fromPageUrl();
 	if (searchSettings != null) {
 		toPageState(searchSettings);
 	}
 });
 
-
 // Restore page when using back/forward
 window.addEventListener('popstate', function() {
-	var searchSettings = fromPageUrl();
+	const searchSettings = fromPageUrl();
 	toPageState(searchSettings || {});
 });
 
@@ -152,19 +155,21 @@ window.addEventListener('popstate', function() {
  * @returns {SearchParameters} object containing the decoded and translated parameters, or null if no parameters were found
  */
 function fromPageUrl() {
-	var uri = new URI();
-	var paths = uri.segmentCoded();
+	const uri = new URI();
+	const paths = uri.segmentCoded();
 
 	// operation is (usually) contained in the path, the other parameters are contained in the query parameters
-	var operation = paths[paths.lastIndexOf('search') + 1];
+	const operation = paths[paths.lastIndexOf('search') + 1];
 
-	var blsParam = new URI().search(true);
-	if ($.isEmptyObject(blsParam))
+	const blsParam = new URI().search(true);
+	if ($.isEmptyObject(blsParam)) {
 		return null;
+	}
 
-	var pageParam = getPageParam(blsParam);
-	if (operation)
+	const pageParam = getPageParam(blsParam);
+	if (operation) {
 		pageParam.operation = operation;
+	}
 
 	return pageParam;
 }
@@ -181,12 +186,12 @@ function fromPageUrl() {
  * @returns the query string, beginning with ?, or an empty string when no searchParams with a proper value
  */
 function toPageUrl(searchParams) {
-	var operation = searchParams && searchParams.operation; // store, as blsParams doesn't contain it: 'hits' or 'docs' or undefined
+	const operation = searchParams && searchParams.operation; // store, as blsParams doesn't contain it: 'hits' or 'docs' or undefined
 	searchParams = getBlsParam(searchParams);
 
-	var uri = new URI();
-	var paths = uri.segmentCoded();
-	var basePath = paths.slice(0, paths.lastIndexOf('search')+1);
+	const uri = new URI();
+	const paths = uri.segmentCoded();
+	const basePath = paths.slice(0, paths.lastIndexOf('search')+1);
 	// basePath now contains our url path, up to and including /search/
 
 	// If we're not searching, return a bare url pointing to /search/
@@ -195,12 +200,14 @@ function toPageUrl(searchParams) {
 	}
 
 	// remove null, undefined, empty strings and empty arrays from our query params
-	var modifiedParams = {};
+	const modifiedParams = {};
 	$.each(searchParams, function(key, value) {
-		if (value == null)
+		if (value == null) {
 			return true;
-		if (value.length === 0)
+		}
+		if (value.length === 0) {
 			return true;
+		}
 		modifiedParams[key] = value;
 	});
 
@@ -216,18 +223,19 @@ function toPageUrl(searchParams) {
  * @returns True or false indicating success or failure respectively
  */
 function populateQueryBuilder(pattern) {
-	if (!pattern)
+	if (!pattern) {
 		return false;
+	}
 
 	try {
-		var parsedCql = parseCql(pattern);
-		var tokens = parsedCql.tokens;
-		var within = parsedCql.within;
+		const parsedCql = parseCql(pattern);
+		const tokens = parsedCql.tokens;
+		const within = parsedCql.within;
 		if (tokens === null) {
 			return false;
 		}
 
-		var queryBuilder = $('#querybuilder').data('builder');
+		const queryBuilder = $('#querybuilder').data('builder');
 		queryBuilder.reset();
 		if (tokens.length > 0) {
 			// only clear the querybuilder when we're putting something back in
@@ -235,15 +243,16 @@ function populateQueryBuilder(pattern) {
 				e.element.remove();
 			});
 		}
-		if (within)
+		if (within) {
 			queryBuilder.set('within', within);
+		}
 
 		// TODO: try and repopulate the "simple" tab
 
 		$.each(tokens, function(index, token) {
-			var tokenInstance = queryBuilder.createToken();
+			const tokenInstance = queryBuilder.createToken();
 
-			//clean the root group of all contents
+			// clean the root group of all contents
 			$.each(tokenInstance.rootAttributeGroup.getAttributes(), function(i, el) {
 				el.element.remove();
 			});
@@ -262,11 +271,12 @@ function populateQueryBuilder(pattern) {
 			}
 
 			function doOp(op, parentAttributeGroup, level) {
-				if (op == null)
+				if (op == null) {
 					return;
+				}
 
 				if (op.type === 'binaryOp') {
-					var label = op.operator === '&' ? 'AND' : 'OR'; // TODO get label internally in builder
+					const label = op.operator === '&' ? 'AND' : 'OR'; // TODO get label internally in builder
 					if (op.operator != parentAttributeGroup.operator) {
 
 						if (level === 0) {
@@ -277,12 +287,12 @@ function populateQueryBuilder(pattern) {
 						}
 					}
 
-					//inverse order, since new elements are inserted at top..
+					// inverse order, since new elements are inserted at top..
 					doOp(op.right, parentAttributeGroup, level + 1);
 					doOp(op.left, parentAttributeGroup, level + 1);
 				} else if (op.type === 'attribute') {
 
-					var attributeInstance = parentAttributeGroup.createAttribute();
+					const attributeInstance = parentAttributeGroup.createAttribute();
 
 					// case flag is always at the front, so check for that before checking
 					// for starts with/ends with flags
@@ -298,13 +308,11 @@ function populateQueryBuilder(pattern) {
 						if (op.value.indexOf('.*') === 0) {
 							op.operator = 'ends with';
 							op.value = op.value.substr(2);
-						}
-						else if (op.value.indexOf('.*') === op.value.length -2) {
+						} else if (op.value.indexOf('.*') === op.value.length -2) {
 							op.operator = 'starts with';
 							op.value = op.value.substr(0, op.value.length-2);
 						}
 					}
-
 
 					attributeInstance.set('operator', op.operator);
 					attributeInstance.set('type', op.name);
@@ -343,7 +351,7 @@ function toPageState(searchParams) {
 	if (searchParams.pattern) {
 		// In the case of an array as search pattern,  it contains the basic/simple search parameters
 		if (searchParams.pattern.constructor === Array) {
-			$.each(searchParams.pattern, function (index, element) {
+			$.each(searchParams.pattern, function(index, element) {
 				mainForm.setPropertyValues(element);
 			});
 		} else {
@@ -363,7 +371,7 @@ function toPageState(searchParams) {
 		}
 	}
 
-	$.each(searchParams.filters, function (index, element) {
+	$.each(searchParams.filters, function(index, element) {
 		mainForm.setFilterValues(element.name, element.values);
 	});
 
@@ -389,17 +397,17 @@ function toPageState(searchParams) {
 	}
 }
 
-//--------
+// --------
 // exports
-//--------
+// --------
 
 // Called when form is submitted
 export function searchSubmit() {
-	var pattern;
-	var within = null; // explicitly set to null to clear any previous value if queryType != simple
+	let pattern;
+	let within = null; // explicitly set to null to clear any previous value if queryType != simple
 
 	// Get the correct pattern based on selected tab
-	var queryType = $('#searchTabs li.active .querytype').attr('href');
+	const queryType = $('#searchTabs li.active .querytype').attr('href');
 	if (queryType === '#simple') {
 		pattern = mainForm.getActiveProperties();
 		within = mainForm.getWithin();
@@ -413,8 +421,8 @@ export function searchSubmit() {
 		page: 0,
 		viewGroup: null, // reset, as we might be looking at a detailed group currently, and the new search should not display within a specific group
 		pageSize: $('#resultsPerPage').selectpicker('val'),
-		pattern: pattern,
-		within: within,
+		pattern,
+		within,
 		filters: mainForm.getActiveFilters(),
 		// Other parameters are automatically updated on interaction and thus always up-to-date
 	}, true);
@@ -423,7 +431,7 @@ export function searchSubmit() {
 	// but when there is no tab open, activate one of the tabs manually
 	// (this triggers a refresh of the results in that tab)
 	// Also switch to the document tab if the query won't result in hits (no pattern supplied)
-	var $activeTab = $('#resultTabs .active');
+	const $activeTab = $('#resultTabs .active');
 	if (!$activeTab.length || (!pattern && $activeTab.has('a[href="#tabHits"]'))) {
 		if (pattern) {
 			$('#resultTabs a[href="#tabHits"]').tab('show');
@@ -450,18 +458,18 @@ export function onSearchUpdated(searchParams) {
 	// this search would push a new history entry, popping the next 10 pages off the stack, which the url is the same because we just entered the page.
 	// So don't do that.
 
-
 	// If we generate very long page urls, tomcat cannot parse our requests (referrer header too long)
 	// So omit the query from the page url in these cases
 	// TODO this breaks history-based navigation
-	var newUrl = toPageUrl(searchParams);
+	let newUrl = toPageUrl(searchParams);
 	if (newUrl.length > 4000) {
 		newUrl = toPageUrl($.extend({}, searchParams, { pattern: null }));
 	}
 
-	var currentUrl = new URI().toString();
-	if (newUrl !== currentUrl)
+	const currentUrl = new URI().toString();
+	if (newUrl !== currentUrl) {
 		history.pushState(null, null, newUrl);
+	}
 }
 
 // Called to reset search form and results

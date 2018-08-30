@@ -1,6 +1,6 @@
 import * as $ from 'jquery';
-import URI from 'urijs';
 import luceneQueryParser from 'lucene-query-parser';
+import URI from 'urijs';
 
 import parseCql from '../utils/cqlparser';
 import {debugLog} from '../utils/debug';
@@ -76,7 +76,7 @@ function makeWildcardRegex(original) {
 }
 
 function makeRegexWildcard(original) {
-	var a = original;
+	let a = original;
 	a=a.replace(/\\([\^$\-\\(){}[\]+])/g, '$1'); // remove most slashes
 	a=a.replace(/\\\./g, '_ESC_PERIOD_'); // escape \.
 	a=a.replace(/\.\*/g, '*'); // restore *
@@ -96,41 +96,46 @@ function makeRegexWildcard(original) {
 //  * @returns The formatted string
 //  */
 function getPatternString(pattern: string|PropertyField[], within?: string): string {
-	if (pattern == null)
+	if (pattern == null) {
 		return undefined;
+	}
 
-	if (typeof pattern === 'string')
+	if (typeof pattern === 'string') {
 		return pattern;
+	}
 
 	// First split the properties into individual words and pair them
-	var tokens = [];
-	$.each(pattern, function (propIndex, propertyField) {
+	const tokens = [];
+	$.each(pattern, function(propIndex, propertyField) {
 		if (propertyField.value.length > 0) { // skip empty fields
-			var words = propertyField.value.split(/\s+/);
-			for (var i = 0; i < words.length; i++) {
-				if (!tokens[i])
+			const words = propertyField.value.split(/\s+/);
+			for (let i = 0; i < words.length; i++) {
+				if (!tokens[i]) {
 					tokens[i] = {};
+				}
 
-				tokens[i][propertyField.name] = (propertyField['case'] ? '(?-i)' : '') + makeWildcardRegex(words[i]);
+				tokens[i][propertyField.name] = (propertyField.case ? '(?-i)' : '') + makeWildcardRegex(words[i]);
 			}
 		}
 	});
 
-	var tokenStrings = [];
+	const tokenStrings = [];
 	$.each(tokens, function(index, value) {
 
 		// push all attributes in this token
-		var attributesStrings = [];
-		$.each(value, function (key, value) {
-			if (value) // don't push empty attributes
+		const attributesStrings = [];
+		$.each(value, function(key, value) {
+			if (value) { // don't push empty attributes
 				attributesStrings.push(key + '=' + '"' + value + '"');
+			}
 		});
 
 		tokenStrings.push('[', attributesStrings.join(' & '), ']');
 	});
 
-	// if (tokenStrings.length > 0 && within)
+	if (tokenStrings.length > 0 && within) {
 		tokenStrings.push(' within ', '<'+ within+'/>');
+	}
 
 	return tokenStrings.join('');
 }
@@ -154,13 +159,15 @@ function getPatternString(pattern: string|PropertyField[], within?: string): str
  */
 function getFilterString(filterArr) {
 
-	if (filterArr == null || filterArr.length === 0)
+	if (filterArr == null || filterArr.length === 0) {
 		return undefined;
+	}
 
-	var filterStrings = [];
-	$.each(filterArr, function (index, element) {
-		if (filterStrings.length)
+	const filterStrings = [];
+	$.each(filterArr, function(index, element) {
+		if (filterStrings.length) {
 			filterStrings.push(' AND ');
+		}
 
 		if (element.filterType === 'range') {
 			filterStrings.push(element.name, ':', '[', element.values[0], ' TO ', element.values[1], ']');
@@ -169,13 +176,13 @@ function getFilterString(filterArr) {
 			filterStrings.push(element.name, ':', '("', element.values.join('" "'), '")');
 		} else {
 			// Do the quoting thing
-			var resultParts = [];
+			const resultParts = [];
 
-			$.each(element.values, function (index, value) {
-				var quotedParts = value.split(/"/);
-				var inQuotes = false;
-				for (var i = 0; i < quotedParts.length; i++) {
-					var part = quotedParts[i];
+			$.each(element.values, function(index, value) {
+				const quotedParts = value.split(/"/);
+				let inQuotes = false;
+				for (let i = 0; i < quotedParts.length; i++) {
+					let part = quotedParts[i];
 					if (inQuotes) {
 						// Inside quotes. Add literally.
 						resultParts.push(' "');
@@ -185,7 +192,7 @@ function getFilterString(filterArr) {
 						// Outside quotes. Surround each word with quotes.
 						part = part.trim();
 						if (part.length > 0) {
-							var words = part.split(/\s+/);
+							const words = part.split(/\s+/);
 							resultParts.push(' "');
 							resultParts.push(words.join('" "'));
 							resultParts.push('" ');
@@ -205,26 +212,26 @@ function getFilterString(filterArr) {
 /**
  * Central handler for updating the totals display
  */
-var totalsCounter = (function(){
+const totalsCounter = (function() {
 	// Parameters used in the next update request
-	var blsParam;
-	var operation;
-	var data;
+	let blsParam;
+	let operation;
+	let data;
 
 	// Handles to the current request/scheduled request
-	var timeoutHandle = null;
-	var inflightRequest = null;
+	let timeoutHandle = null;
+	let inflightRequest = null;
 
 	function scheduleRequest() {
 		// Don't request an actual window
 		// But keep window size intact in blsParam, we need it to calculate number of pages.
-		var url = new URI(BLS_URL).segment(operation).addSearch($.extend({}, blsParam, {number:0})).toString();
+		const url = new URI(BLS_URL).segment(operation).addSearch($.extend({}, blsParam, {number:0})).toString();
 
 		inflightRequest = $.ajax({
-			url: url,
+			url,
 			dataType: 'json',
 			cache: false,
-			success: function(responseData) {
+			success (responseData) {
 				data = responseData;
 				updateTotalsDisplay();
 				if (data.summary.stillCounting) {
@@ -233,30 +240,33 @@ var totalsCounter = (function(){
 					timeoutHandle = null;
 				}
 			},
-			error: function() {
+			error () {
 				timeoutHandle = null;
 				$('#totalsSpinner').hide();
 				$('#totalsReportText').text('Network Error');
 			},
-			complete: function() {
+			complete () {
 				inflightRequest = null;
 			}
 		});
 	}
 
 	function cancelRequest() {
-		timeoutHandle != null && clearTimeout(timeoutHandle);
-		timeoutHandle = null;
-
-		inflightRequest != null && inflightRequest.abort();
-		inflightRequest = null;
+		if (timeoutHandle != null) {
+			clearTimeout(timeoutHandle);
+			timeoutHandle = null;
+		}
+		if (inflightRequest != null) {
+			inflightRequest.abort();
+			inflightRequest = null;
+		}
 
 		$('#totalsReport').hide();
 	}
 
 	function updateTotalsDisplay() {
-		var type;
-		var total;
+		let type;
+		let total;
 
 		if (data.summary.numberOfGroups != null) {
 			type = 'groups';
@@ -269,9 +279,9 @@ var totalsCounter = (function(){
 			total = data.summary.numberOfDocs;
 		}
 
-		var totalPages = Math.ceil(total / blsParam.number);
+		const totalPages = Math.ceil(total / blsParam.number);
 
-		var optEllipsis = data.summary.stillCounting ? '...' : '';
+		const optEllipsis = data.summary.stillCounting ? '...' : '';
 		$('#totalsReport').show();
 		$('#totalsReportText').html(
 			'Total ' + type + ': ' + total + optEllipsis + '<br>' +
@@ -292,7 +302,7 @@ var totalsCounter = (function(){
 		 * @param {any} blsParam - The final (processed) blacklab search parameters.
 		 * @param {string} operation - The search operation, must not be 'hits' if no pattern supplied.
 		 */
-		start: function(data_, blsParam_, operation_) {
+		start (data_, blsParam_, operation_) {
 			cancelRequest();
 
 			data = data_;
@@ -300,16 +310,15 @@ var totalsCounter = (function(){
 			blsParam = blsParam_;
 
 			updateTotalsDisplay();
-			if (data.summary.stillCounting)
+			if (data.summary.stillCounting) {
 				scheduleRequest();
+			}
 		},
 		stop: cancelRequest,
 	};
 })();
 
-
-var inflightRequest = null;
-
+let inflightRequest = null;
 
 /**
  * Translate SearchParameters to blacklab-server search parameters and perform a search.
@@ -319,8 +328,8 @@ var inflightRequest = null;
  * @param {BLSError} errorFunc
  */
 export function search(param, successFunc, errorFunc) {
-	var operation = param.operation;
-	var blsParam = getBlsParam(param);
+	const operation = param.operation;
+	const blsParam = getBlsParam(param);
 
 	debugLog(blsParam);
 
@@ -330,31 +339,35 @@ export function search(param, successFunc, errorFunc) {
 		data: blsParam,
 		dataType: 'json',
 		cache: false,
-		success: function(data) {
+		success (data) {
 			debugLog(data);
 
 			// only start when we get the first bit of data back
 			// or we would fire off two nearly identical requests for nothing
 			totalsCounter.start(data, blsParam, operation);
 
-			if (typeof successFunc === 'function')
+			if (typeof successFunc === 'function') {
 				successFunc(data);
+			}
 		},
-		error: function() {
+		error () {
 			debugLog('Request failed: ', arguments);
 
-			if (typeof errorFunc === 'function')
+			if (typeof errorFunc === 'function') {
 				errorFunc.apply(undefined, arguments);
+			}
 		},
-		complete: function() {
+		complete () {
 			inflightRequest = null;
 		}
 	});
 }
 
 export function cancelSearch() {
-	inflightRequest != null && inflightRequest.abort();
-	inflightRequest = null;
+	if (inflightRequest != null) {
+		inflightRequest.abort();
+		inflightRequest = null;
+	}
 	totalsCounter.stop();
 }
 
@@ -394,9 +407,10 @@ export function getBlsParam(param) {
  * @returns {SearchParameters|null} - null if empty or null blsParam
  */
 export function getPageParam(blsParam): SearchParameters|null {
-	var pageParams: any = {};
-	if (blsParam == null || $.isEmptyObject(blsParam))
+	const pageParams: any = {};
+	if (blsParam == null || $.isEmptyObject(blsParam)) {
 		return null;
+	}
 
 	pageParams.operation        = blsParam.patt ? 'hits' : 'docs';
 	pageParams.sampleSize       = blsParam.sample != null ? blsParam.sample : blsParam.samplenum;
@@ -413,8 +427,9 @@ export function getPageParam(blsParam): SearchParameters|null {
 	// Parse the FilterFields from the lucene query, this is a bit involved.
 	// TODO factor into module and add tests.
 	pageParams.filters = (function() {
-		if (!blsParam.filter)
+		if (!blsParam.filter) {
 			return null;
+		}
 
 		debugLog('parsing filter string', blsParam.filter);
 
@@ -454,12 +469,12 @@ export function getPageParam(blsParam): SearchParameters|null {
 		 * To simplify keeping track of what part of the query we're parsing, we store the current field here.
 		 * @type {FilterField}
 		 */
-		var context = null;
+		let context = null;
 		/**
 		 * Once we're done with a field, we store it here and clear the context.
 		 * @type {Array.<FilterField>}
 		 */
-		var parsedValues = [];
+		const parsedValues = [];
 
 		/**
 		 * Process a Node. A Field object is always contained within a Node (as far as I can tell).
@@ -478,10 +493,11 @@ export function getPageParam(blsParam): SearchParameters|null {
 		 * @param {Node} val
 		 */
 		function node(val) {
-			if (val == null)
+			if (val == null) {
 				return;
+			}
 
-			var createdContext = false;
+			let createdContext = false;
 			if (val.field) {
 				// if there is no context yet, the field can still be <implicit>, in this case we'd expect that the left node
 				// defines the field name, this is the case with range expression, so we will define the context when processing the left node.
@@ -500,10 +516,8 @@ export function getPageParam(blsParam): SearchParameters|null {
 				}
 			}
 
-			var cur = val.left; // left always present
-			if ('left' in cur) node(cur);
-			else if ('term' in cur) field(cur);
-			else if ('term_min' in cur) range(cur);
+			let cur = val.left; // left always present
+			if ('left' in cur) { node(cur); } else if ('term' in cur) { field(cur); } else if ('term_min' in cur) { range(cur); }
 
 			/**
 			 * We need to know what the right side contains if we're to handle it.
@@ -517,12 +531,10 @@ export function getPageParam(blsParam): SearchParameters|null {
 			 */
 			if (val.right &&
 				((context == null && !(val.operator === 'OR' || val.operator === '<implicit>')) || // implicit operator between field means OR
-				(context != null && !(val.operator == 'AND' )))
+				(context != null && !(val.operator === 'AND' )))
 			) {
 				cur = val.right;
-				if ('left' in cur) node(cur);
-				else if ('term' in cur) field(cur);
-				else if ('term_min' in cur) range(cur);
+				if ('left' in cur) { node(cur); } else if ('term' in cur) { field(cur); } else if ('term_min' in cur) { range(cur); }
 			}
 
 			if (createdContext) {
@@ -540,13 +552,15 @@ export function getPageParam(blsParam): SearchParameters|null {
 		 * @param {Field} val
 		 */
 		function field(val) {
-			if (field == null)
+			if (field == null) {
 				return;
+			}
 
-			var createdContext = false;
+			let createdContext = false;
 			if (context == null) {
-				if (val.field === '<implicit>') // default field name, query only specifies a value but no field, such as the query 'value', interface can't display this
+				if (val.field === '<implicit>') { // default field name, query only specifies a value but no field, such as the query 'value', interface can't display this
 					return;
+				}
 
 				context = {
 					name: val.field,
@@ -570,16 +584,18 @@ export function getPageParam(blsParam): SearchParameters|null {
 		 * @param {Range} val
 		 */
 		function range(val) {
-			if (val == null)
+			if (val == null) {
 				return;
+			}
 
 			if (context != null) {
 				// mixed terms and ranges for the same field, can't handle.
 				debugLog('Entered a range expression, but context is not null, might happen? cannot handle in interface');
 				return;
 			}
-			if (val.field === '<implicit>') // default value, basically parsing "[from TO to]" without the name of field to which to apply the range, interface can't handle this
+			if (val.field === '<implicit>') { // default value, basically parsing "[from TO to]" without the name of field to which to apply the range, interface can't handle this
 				return;
+			}
 
 			// Ignore in/exclusivity
 			parsedValues.push({
@@ -590,7 +606,7 @@ export function getPageParam(blsParam): SearchParameters|null {
 		}
 
 		try {
-			var results = luceneQueryParser.parse(blsParam.filter);
+			const results = luceneQueryParser.parse(blsParam.filter);
 			node(results);
 			return parsedValues.length ? parsedValues : null;
 		} catch (error) {
@@ -618,7 +634,7 @@ export function getPageParam(blsParam): SearchParameters|null {
 		}
 
 		try {
-			var result = parseCql(blsParam.patt);
+			const result = parseCql(blsParam.patt);
 			pageParams.within = result.within;
 
 			/**
@@ -639,47 +655,50 @@ export function getPageParam(blsParam): SearchParameters|null {
 			 *
 			 * @type Object.<string, Array.<String>>
 			 */
-			var attributeValues = {};
+			const attributeValues = {};
 
-			for (var i = 0; i < result.tokens.length; ++i) {
+			for (let i = 0; i < result.tokens.length; ++i) {
 				/** @type {Token} */
-				var token = result.tokens[i];
+				const token = result.tokens[i];
 
-				if (token.leadingXmlTag || token.optional || token.repeats || token.trailingXmlTag)
+				if (token.leadingXmlTag || token.optional || token.repeats || token.trailingXmlTag) {
 					throw new Error('Token contains settings too complex for simple search');
+				}
 
 				// Use a stack instead of direct recursion to simplify code
-				var stack = [token.expression];
+				const stack = [token.expression];
 				while (stack.length) {
-					var expr = stack.shift();
+					const expr = stack.shift();
 					if (expr.type === 'attribute') {
-						var name = expr.name;
-						var values = attributeValues[name] = attributeValues[name] || [];
-						if (expr.operator != '=')
+						const name = expr.name;
+						const values = attributeValues[name] = attributeValues[name] || [];
+						if (expr.operator !== '=') {
 							throw new Error('Unsupported comparator, only "=" is supported.');
-						if (values.length !== i)
+						}
+						if (values.length !== i) {
 							throw new Error('Duplicate or missing values on property');
+						}
 						values.push(expr.value);
 					} else if (expr.type === 'binaryOp') {
-						if (!(expr.operator === '&' || expr.operator === 'AND'))
+						if (!(expr.operator === '&' || expr.operator === 'AND')) {
 							throw new Error('Multiple properties on token must use AND operator');
+						}
 
 						stack.push(expr.left, expr.right);
 					}
 				}
 			}
 
-			/**
+			/*
 			 * Build the actuals PropertyFields.
 			 * Convert from regex back into pattern globs, extract case sensitivity.
-			 *
-			 * @type {Array.<PropertyField>}
 			 */
-			var propertyFields = [];
-			$.each(attributeValues, function(attrName, attrValues) {
-				var caseSensitive = attrValues.every(isCase);
-				if (caseSensitive)
+			const propertyFields: PropertyField[] = [];
+			$.each(attributeValues, function(attrName, attrValues: string[]) {
+				const caseSensitive = attrValues.every(isCase);
+				if (caseSensitive) {
 					attrValues = attrValues.map(stripCase);
+				}
 
 				propertyFields.push({
 					name: attrName,
@@ -708,8 +727,8 @@ export function getPageParam(blsParam): SearchParameters|null {
  * @param {Array.<FilterField>} filters - Metadata filters as generated by singlepage-form.js, every filter is expected to have a valid value.
  */
 export function getQuerySummary(pattern, within, filters) {
-	var queryString = getPatternString(pattern, within);
-	var metadataString = $.map(filters, function(filter) {
+	const queryString = getPatternString(pattern, within);
+	const metadataString = $.map(filters, function(filter) {
 		return filter.name + ' = [' +
 			(filter.filterType === 'range'
 				? filter.values[0] + ' to ' + filter.values[1]
@@ -717,14 +736,15 @@ export function getQuerySummary(pattern, within, filters) {
 				+ ']';
 	}).join(', ');
 
-	var ret = '';
+	let ret = '';
 	if (queryString) {
 		ret += '"' + queryString + '"' + ' within ';
 	}
-	if (metadataString)
+	if (metadataString) {
 		ret += 'documents where ' + metadataString;
-	else
+	} else {
 		ret += 'all documents';
+	}
 
 	return ret;
 }

@@ -159,7 +159,8 @@ const templates = {
 		template:
 			'<div class="well bl-token-attribute-group" id="{{currentId}}">' +
 				'{{>create_attribute_dropdown}}'+
-			'</div>'
+			'</div>',
+		partials: {}
 	},
 
 	attribute: {
@@ -286,7 +287,7 @@ const DEFAULTS = {
 			]
 		},
 
-		getCql: function(attribute, comparator, caseSensitive, values) {
+		getCql (attribute, comparator, caseSensitive, values) {
 			switch (comparator) {
 			case 'starts with':
 				comparator = '=';
@@ -327,11 +328,11 @@ const DEFAULTS = {
 	}
 };
 
-//-------------------
+// -------------------
 // Class Querybuilder
-//-------------------
+// -------------------
 
-var QueryBuilder = function($rootElement, options) {
+const QueryBuilder = function($rootElement, options): void {
 	if (!(this instanceof QueryBuilder)) { // not called using "new"
 		return new QueryBuilder($rootElement, options);
 	}
@@ -364,11 +365,11 @@ QueryBuilder.prototype._prepareElement = function($element) {
 		cursor: 'move',
 		tolerance: 'pointer',
 
-		start: function(e, ui ){
+		start (e, ui ) {
 			ui.placeholder.height(ui.helper.outerHeight());
 			ui.placeholder.width(ui.helper.outerWidth());
 		},
-		update: function() {
+		update () {
 			$element.trigger('cql:modified');
 		}
 	});
@@ -384,7 +385,7 @@ QueryBuilder.prototype._prepareElement = function($element) {
 
 // create a new token and insert it in the root container
 QueryBuilder.prototype.createToken = function() {
-	var token = new Token(this);
+	const token = new Token(this);
 
 	token.element.insertBefore(this.createTokenButton);
 	this.element.trigger('cql:modified');
@@ -399,15 +400,16 @@ QueryBuilder.prototype.getTokens = function() {
 };
 
 QueryBuilder.prototype.getCql = function() {
-	var cqlParts = [];
+	const cqlParts = [];
 
-	this.element.find('.bl-token').each(function(index, element){
+	this.element.find('.bl-token').each(function(index, element) {
 		cqlParts.push($(element).data('token').getCql());
 	});
 
-	var within = this.withinSelect.find('input:checked').first().val();
-	if (within != null && within.length) // ignore empty and null
+	const within = this.withinSelect.find('input:checked').first().val();
+	if (within != null && within.length) { // ignore empty and null
 		cqlParts.push('within', '<'+ within+'/>');
+	}
 
 	return cqlParts.join(' ') || null;
 };
@@ -425,18 +427,17 @@ QueryBuilder.prototype.set = function(controlName, val) {
 	}
 };
 
-
 QueryBuilder.prototype.reset = function() {
 	this.element.find('.bl-token').remove();
 	this.createToken();
 	this.withinSelect.find('input').first().parent().button('toggle');
 };
 
-//----------
+// ----------
 // Class Token
-//----------
+// ----------
 
-var Token = function(parentBuilder) {
+const Token = function(parentBuilder): void {
 	if (!(this instanceof Token)) { // not called using "new"
 		return new Token(parentBuilder);
 	}
@@ -445,13 +446,13 @@ var Token = function(parentBuilder) {
 	this.element = this._createElement();
 
 	// Init controls before adding any child elements
-	var baseId = '#' + this.element.attr('id');
+	const baseId = '#' + this.element.attr('id');
 	this.$controls = {
-		'optional': this.element.find(baseId + '_property_optional'),
-		'minRepeats': this.element.find(baseId + '_property_repeats_min'),
-		'maxRepeats': this.element.find(baseId + '_property_repeats_max'),
-		'beginOfSentence': this.element.find(baseId + '_property_sentence_start'),
-		'endOfSentence': this.element.find(baseId + '_property_sentence_end')
+		optional: this.element.find(baseId + '_property_optional'),
+		minRepeats: this.element.find(baseId + '_property_repeats_min'),
+		maxRepeats: this.element.find(baseId + '_property_repeats_max'),
+		beginOfSentence: this.element.find(baseId + '_property_sentence_start'),
+		endOfSentence: this.element.find(baseId + '_property_sentence_end')
 	};
 
 	this.rootAttributeGroup = this._createRootAttributeGroup();
@@ -459,8 +460,8 @@ var Token = function(parentBuilder) {
 };
 
 Token.prototype._createElement = function() {
-	var view = $.extend({}, this.builder.settings.token.view, { currentId: generateId('token') });
-	var $element = $(Mustache.render(templates.token.template, view, templates.token.partials));
+	const view = $.extend({}, this.builder.settings.token.view, { currentId: generateId('token') });
+	const $element = $(Mustache.render(templates.token.template, view, templates.token.partials));
 
 	this._prepareElement($element);
 
@@ -473,8 +474,8 @@ Token.prototype._prepareElement = function($element) {
 		$element.trigger('cql:modified');
 	});
 
-	var self = this;
-	$element.find('.close').on('click', function(){
+	const self = this;
+	$element.find('.close').on('click', function() {
 		$element.remove();
 		self.builder.element.trigger('cql:modified');
 	});
@@ -483,9 +484,9 @@ Token.prototype._prepareElement = function($element) {
 };
 
 Token.prototype._createRootAttributeGroup = function() {
-	var baseId = '#' + this.element.attr('id');
+	const baseId = '#' + this.element.attr('id');
 
-	var group = new AttributeGroup(this.builder, this.builder.settings.token.rootOperator.operator, this.builder.settings.token.rootOperator.label);
+	const group = new AttributeGroup(this.builder, this.builder.settings.token.rootOperator.operator, this.builder.settings.token.rootOperator.label);
 	group.element.removeClass('well');
 	group.element.appendTo(this.element.find(baseId + '_tab_attributes'));
 	group.isRoot = true;
@@ -494,15 +495,16 @@ Token.prototype._createRootAttributeGroup = function() {
 };
 
 Token.prototype._updateCql = function() {
-	var baseId = '#' + this.element.attr('id');
+	const baseId = '#' + this.element.attr('id');
 
-	var $cqlPreviewElement = this.element.find(baseId + '_cql_preview');
-	var $tokenPanelHeading = this.element.find('.panel-heading');
-	var $tokenPanelBody = this.element.find('.panel-body');
+	const $cqlPreviewElement = this.element.find(baseId + '_cql_preview');
+	const $tokenPanelHeading = this.element.find('.panel-heading');
+	const $tokenPanelBody = this.element.find('.panel-body');
 
-	var cqlString = this.getCql();
-	if (cqlString.length > 250)
+	let cqlString = this.getCql();
+	if (cqlString.length > 250) {
 		cqlString = cqlString.slice(0, 245) + '…';
+	}
 	$cqlPreviewElement.text(cqlString);
 
 	// Set an explicit max-width to our header (containing the CQL preview string)
@@ -512,7 +514,7 @@ Token.prototype._updateCql = function() {
 	// We also need to take care to set a default when this code runs while the element isn't visible, or isn't attached to the DOM.
 	// When this happens, jquery doesn't return a sensible outerWidth value for our body.
 	// we can't know if the token body is wider than this default (currently 348px), so it will be wrong if the token body is wider than a usual empty token, but this is rare.
-	var width = parseInt($tokenPanelBody.outerWidth()) || 0;
+	const width = parseInt($tokenPanelBody.outerWidth()) || 0;
 	$tokenPanelHeading.css({
 		'width': '100%',
 		'max-width': Math.max(width, 348) + 'px'
@@ -520,18 +522,19 @@ Token.prototype._updateCql = function() {
 };
 
 Token.prototype.set = function(controlName, val) {
-	if (this.$controls[controlName])
+	if (this.$controls[controlName]) {
 		setValue(this.$controls[controlName], val);
+	}
 };
 
 Token.prototype.getCql = function() {
-	var optional = this.$controls['optional'].prop('checked');
-	var minRepeats = parseInt(this.$controls['minRepeats'].val());
-	var maxRepeats = parseInt(this.$controls['maxRepeats'].val());
-	var beginOfSentence = this.$controls['beginOfSentence'].prop('checked');
-	var endOfSentence = this.$controls['endOfSentence'].prop('checked');
+	const optional = this.$controls.optional.prop('checked');
+	let minRepeats = parseInt(this.$controls.minRepeats.val());
+	let maxRepeats = parseInt(this.$controls.maxRepeats.val());
+	const beginOfSentence = this.$controls.beginOfSentence.prop('checked');
+	const endOfSentence = this.$controls.endOfSentence.prop('checked');
 
-	var outputParts = [];
+	const outputParts = [];
 
 	if (beginOfSentence) {
 		outputParts.push('<s> ');
@@ -541,19 +544,17 @@ Token.prototype.getCql = function() {
 	outputParts.push(this.rootAttributeGroup.getCql());
 	outputParts.push(' ]');
 
-
 	if (!isNaN(minRepeats) || !isNaN(maxRepeats)) { // Only output when at least one of them is entered
 		minRepeats = minRepeats || 0;			// Set some default values in case of omitted field
 		maxRepeats = maxRepeats || Infinity;
 
 		if (minRepeats < maxRepeats) {
-			if (maxRepeats != Infinity) { // infinite is empty field instead of max value
+			if (maxRepeats !== Infinity) { // infinite is empty field instead of max value
 				outputParts.push('{'+minRepeats+','+maxRepeats+'}');
 			} else {
 				outputParts.push('{'+minRepeats+', }');
 			}
-		}
-		else if (minRepeats == maxRepeats && minRepeats != 1) { // 1 is the default so if min == max == 1 then we don't need to do anything
+		} else if (minRepeats === maxRepeats && minRepeats !== 1) { // 1 is the default so if min == max == 1 then we don't need to do anything
 			outputParts.push('{'+minRepeats+'}');
 		}
 	}
@@ -569,11 +570,11 @@ Token.prototype.getCql = function() {
 	return outputParts.join('');
 };
 
-//---------------------
+// ---------------------
 // Class AttributeGroup
-//---------------------
+// ---------------------
 
-var AttributeGroup = function(parentBuilder, operator, operatorLabel) {
+const AttributeGroup = function(parentBuilder, operator, operatorLabel): void {
 	if (!(this instanceof AttributeGroup)) { // not called using "new"
 		return new AttributeGroup(parentBuilder, operator, operatorLabel);
 	}
@@ -585,10 +586,10 @@ var AttributeGroup = function(parentBuilder, operator, operatorLabel) {
 };
 
 AttributeGroup.prototype._createElement = function() {
-	var view = $.extend({}, this.builder.settings.shared.view, this.builder.settings.attributeGroup.view, { currentId: generateId('attribute_group') });
-	var partials = $.extend({}, templates.shared.partials, templates.attributeGroup.partials);
+	const view = $.extend({}, this.builder.settings.shared.view, this.builder.settings.attributeGroup.view, { currentId: generateId('attribute_group') });
+	const partials = $.extend({}, templates.shared.partials, templates.attributeGroup.partials);
 
-	var $element = $(Mustache.render(templates.attributeGroup.template, view, partials));
+	const $element = $(Mustache.render(templates.attributeGroup.template, view, partials));
 	this._prepareElement($element);
 	return $element;
 };
@@ -601,10 +602,10 @@ AttributeGroup.prototype._prepareElement = function($element) {
 
 AttributeGroup.prototype._createAttribute = function(attributeCreateEvent, data) {
 	// The attribute for which the create button was clicked (if null, the button was our own button)
-	var originAttribute = $(attributeCreateEvent.target).parents('.bl-token-attribute').data('attribute');
+	const originAttribute = $(attributeCreateEvent.target).parents('.bl-token-attribute').data('attribute');
 
-	var newAttribute = new Attribute(this.builder);
-	var newGroup;
+	const newAttribute = new Attribute(this.builder);
+	let newGroup;
 
 	/*
 		* If the new attribute was created at the bottom of the group, wrap all existing attributes inside a new group
@@ -626,12 +627,11 @@ AttributeGroup.prototype._createAttribute = function(attributeCreateEvent, data)
 			this.addAttributeOrGroup(newGroup, originAttribute);
 			newGroup.addAttributeOrGroup(originAttribute);
 			newGroup.addAttributeOrGroup(newAttribute);
-		}
-		else {
+		} else {
 			// Create a new group, put in everything inside this group
 			// Then swap our operator and add the new attribute
 			$(this.element.children('.bl-token-attribute, .bl-token-attribute-group').get().reverse()).each(function(index, element) {
-				var instance = $(element).data('attribute') || $(element).data('attributeGroup');
+				const instance = $(element).data('attribute') || $(element).data('attributeGroup');
 				newGroup.addAttributeOrGroup(instance);
 			});
 
@@ -642,31 +642,30 @@ AttributeGroup.prototype._createAttribute = function(attributeCreateEvent, data)
 			this.operator = data.operator;
 			this.operatorLabel = data.operatorLabel;
 		}
-	}
-	else {
+	} else {
 		if (originAttribute) { // Insert below existing attribute
 			this.addAttributeOrGroup(newAttribute, originAttribute);
-		}
-		else { // Append at end of this group
-			var $lastChild = this.element.children('.bl-token-attribute, .bl-token-attribute-group').last();
-			var lastChildData = $lastChild.data('attributeGroup') || $lastChild.data('attribute');
+		} else { // Append at end of this group
+			const $lastChild = this.element.children('.bl-token-attribute, .bl-token-attribute-group').last();
+			const lastChildData = $lastChild.data('attributeGroup') || $lastChild.data('attribute');
 
 			this.addAttributeOrGroup(newAttribute, lastChildData);
 		}
 	}
 
 	this._updateLabels();
-	if (newGroup)
+	if (newGroup) {
 		newGroup._updateLabels();
+	}
 
 	this.element.trigger('cql:modified');
 	return false;
 };
 
 AttributeGroup.prototype._removeIfEmpty = function() {
-	var $children = this.element.children('.bl-token-attribute, .bl-token-attribute-group');
-	var parentGroup = this.element.parent().data('attributeGroup');
-	var self = this;
+	const $children = this.element.children('.bl-token-attribute, .bl-token-attribute-group');
+	const parentGroup = this.element.parent().data('attributeGroup');
+	const self = this;
 
 	if (this.isRoot) {
 		// Never hide root group, should be able to contain 0 members to indicate "[]", or any word
@@ -676,7 +675,7 @@ AttributeGroup.prototype._removeIfEmpty = function() {
 	if ($children.length <= 1) {
 		// Move children before removing this, so we can give them the correct index based on this
 		$children.each(function(index, element) {
-			var instance = $(element).data('attributeGroup') || $(element).data('attribute');
+			const instance = $(element).data('attributeGroup') || $(element).data('attribute');
 			parentGroup.addAttributeOrGroup(instance, self);
 		});
 
@@ -689,23 +688,22 @@ AttributeGroup.prototype._removeIfEmpty = function() {
 AttributeGroup.prototype._updateLabels = function() {
 	this.element.children('.bl-token-attribute-group-label').remove();
 
-	var self = this;
+	const self = this;
 	this.element.children('.bl-token-attribute, .bl-token-attribute-group').each(function(index, element) {
-		var $newLabel = $(Mustache.render(templates.operatorLabel.template, {label: self.operatorLabel}, templates.operatorLabel.partials));
+		const $newLabel = $(Mustache.render(templates.operatorLabel.template, {label: self.operatorLabel}, templates.operatorLabel.partials));
 		$newLabel.insertAfter(element);
 	});
 	this.element.children('.bl-token-attribute-group-label').last().remove();
 };
 
-
 AttributeGroup.prototype.createAttribute = function() {
-	var attribute = new Attribute(this.builder);
+	const attribute = new Attribute(this.builder);
 	this.addAttributeOrGroup(attribute);
 	return attribute;
 };
 
 AttributeGroup.prototype.createAttributeGroup = function(operator, operatorLabel) {
-	var attributeGroup = new AttributeGroup(this.builder, operator, operatorLabel);
+	const attributeGroup = new AttributeGroup(this.builder, operator, operatorLabel);
 	this.addAttributeOrGroup(attributeGroup);
 	return attributeGroup;
 };
@@ -716,10 +714,9 @@ AttributeGroup.prototype.addAttributeOrGroup = function(attributeOrGroup, preced
 		throw new Error('AttributeGroup.addAttributeOrGroup: precedingAttributeOrGroup is not a child of this group');
 	}
 
-	var oldParentGroup = attributeOrGroup.element.parent().data('attributeGroup');
+	const oldParentGroup = attributeOrGroup.element.parent().data('attributeGroup');
 
-
-	if (precedingAttributeOrGroup){
+	if (precedingAttributeOrGroup) {
 		attributeOrGroup.element.insertAfter(precedingAttributeOrGroup.element);
 	} else  {
 		attributeOrGroup.element.prependTo(this.element);
@@ -746,18 +743,18 @@ AttributeGroup.prototype.getAttributeGroups = function() {
 };
 
 AttributeGroup.prototype.getCql = function() {
-	var cqlStrings = [];
+	const cqlStrings = [];
 
 	this.element.children('.bl-token-attribute, .bl-token-attribute-group').each(function(index, element) {
-		var instance = $(element).data('attributeGroup') || $(element).data('attribute');
-		var elemCql = instance.getCql();
+		const instance = $(element).data('attributeGroup') || $(element).data('attribute');
+		const elemCql = instance.getCql();
 
 		if (elemCql && elemCql !== '') { // Do not push null, undefined or empty strings
 			cqlStrings.push(elemCql);
 		}
 	});
 
-	var joinedCql = cqlStrings.join(' ' + this.operator + ' ');
+	const joinedCql = cqlStrings.join(' ' + this.operator + ' ');
 	if (this.isRoot) {
 		return joinedCql;
 	} else {
@@ -765,11 +762,11 @@ AttributeGroup.prototype.getCql = function() {
 	}
 };
 
-//----------------
+// ----------------
 // Class Attribute
-//----------------
+// ----------------
 
-var Attribute = function(parentBuilder) {
+const Attribute = function(parentBuilder): void {
 	if (!(this instanceof Attribute)) { // not called using "new"
 		return new Attribute(parentBuilder);
 	}
@@ -777,26 +774,26 @@ var Attribute = function(parentBuilder) {
 	this.builder = parentBuilder;
 	this.element = this._createElement();
 
-	var baseId = '#' + this.element.attr('id');
+	const baseId = '#' + this.element.attr('id');
 	this.$controls = {
-		'type': this.element.find(baseId + '_type'),
-		'operator': this.element.find(baseId + '_operator'),
-		'value_simple': this.element.find(baseId + '_value_simple'),
-		'value_file': this.element.find(baseId + '_value_file'),
+		type: this.element.find(baseId + '_type'),
+		operator: this.element.find(baseId + '_operator'),
+		value_simple: this.element.find(baseId + '_value_simple'),
+		value_file: this.element.find(baseId + '_value_file'),
 	};
 };
 
-Attribute.prototype._createElement = function(){
-	var view = $.extend({}, this.builder.settings.shared.view, this.builder.settings.attribute.view, { currentId: generateId('attribute') });
-	var partials = $.extend({}, templates.shared.partials, templates.attribute.partials);
+Attribute.prototype._createElement = function() {
+	const view = $.extend({}, this.builder.settings.shared.view, this.builder.settings.attribute.view, { currentId: generateId('attribute') });
+	const partials = $.extend({}, templates.shared.partials, templates.attribute.partials);
 
-	var $element = $(Mustache.render(templates.attribute.template, view, partials));
+	const $element = $(Mustache.render(templates.attribute.template, view, partials));
 	this._prepareElement($element);
 	return $element;
 };
 
 Attribute.prototype._prepareElement = function($element) {
-	var baseId = '#' + $element.attr('id');
+	const baseId = '#' + $element.attr('id');
 
 	$element.data('attribute', this);
 
@@ -805,14 +802,14 @@ Attribute.prototype._prepareElement = function($element) {
 
 	// Show/hide elements for the selected attribute type
 	// Such as case-sensitivity checkbox or comboboxes for when there is a predefined set of valid values
-	var self = this;
+	const self = this;
 	$element.find(baseId + '_type').on('loaded.bs.select changed.bs.select', function() {
-		var selectedValue = $(this).val();
+		const selectedValue = $(this).val();
 		self._updateShownOptions(selectedValue);
 	});
 
 	$element.find(baseId + '_delete').on('click', function() {
-		var parentGroup = self.element.parent().data('attributeGroup');
+		const parentGroup = self.element.parent().data('attributeGroup');
 		// Remove the selectpickers first so they can gracefully tear down, prevents unclosable menu when deleting attribute with a dropdown open
 		self.element.find('.selectpicker').each(function() { $(this).selectpicker('destroy'); });
 		self.element.detach();
@@ -826,12 +823,12 @@ Attribute.prototype._prepareElement = function($element) {
 };
 
 Attribute.prototype._showModalEditor = function(/*event*/) {
-	var self = this;
-	var baseId = '#' + this.element.attr('id');
-	var $fileText = this.element.find(baseId + '_value_file');
-	var $modalTextArea = this.builder.modalEditor.find('textarea');
+	const self = this;
+	const baseId = '#' + this.element.attr('id');
+	const $fileText = this.element.find(baseId + '_value_file');
+	const $modalTextArea = this.builder.modalEditor.find('textarea');
 
-	$modalTextArea.val($fileText.val()); //copy out current text to modal
+	$modalTextArea.val($fileText.val()); // copy out current text to modal
 	this.builder.modalEditor.modal(); // show modal
 	this.builder.modalEditor.one('hide.bs.modal', function() { // copy out changes once closed
 		// A little dirty, to determine how the modal was closed, get the currently focused element
@@ -849,22 +846,18 @@ Attribute.prototype._showModalEditor = function(/*event*/) {
 };
 
 Attribute.prototype._onUploadChanged = function(event) {
-	if (!(window.FileReader && window.File && window.FileList && window.Blob))
-		return;
+	const baseId = '#' + this.element.attr('id');
+	const $inputContainer = this.element.find('.bl-token-attribute-main-input');
+	const $fileText = $inputContainer.find(baseId + '_value_file');
+	const $fileEditButton = $inputContainer.find('.bl-token-attribute-file-edit');
 
-	var baseId = '#' + this.element.attr('id');
-	var $inputContainer = this.element.find('.bl-token-attribute-main-input');
-	var $fileText = $inputContainer.find(baseId + '_value_file');
-	var $fileEditButton = $inputContainer.find('.bl-token-attribute-file-edit');
-
-	var file = event.target.files && event.target.files[0];
+	const file = event.target.files && event.target.files[0];
 	if (file == null) {
 		$inputContainer.removeAttr('data-has-file');
 		$fileEditButton.text('No file selected...');
 		$fileText.val('').trigger('change');
-	}
-	else {
-		var fr = new FileReader();
+	} else {
+		const fr = new FileReader();
 		fr.onload = function() {
 			$inputContainer.attr('data-has-file', '');
 			$fileEditButton.text(file.name);
@@ -880,70 +873,72 @@ Attribute.prototype._updateShownOptions = function(selectedValue) {
 	this.element.find('[data-attribute-type]').hide().filter('[data-attribute-type="' + selectedValue + '"]').show();
 };
 
-
 Attribute.prototype.set = function(controlName, val, additionalSelector) {
-	if (this.$controls[controlName])
+	if (this.$controls[controlName]) {
 		setValue(this.$controls[controlName], val);
-	else if (controlName === 'case') {
+	} else if (controlName === 'case') {
 		setValue(this.element.find('[data-attribute-type="' + additionalSelector + '"]')
 			.find('[data-attribute-role="case"]'), val);
 	} else if (controlName === 'val') {
 		if (!additionalSelector) { // Write to whatever is in focus/use right now
-			var hasFile	= this.element.find('.bl-token-attribute-main-input').is('[data-has-file]');
-			if (hasFile)
-				setValue(this.$controls['value_file'], val);
-			else
-				setValue(this.$controls['value_simple'], val);
+			const hasFile	= this.element.find('.bl-token-attribute-main-input').is('[data-has-file]');
+			if (hasFile) {
+				setValue(this.$controls.value_file, val);
+			} else {
+				setValue(this.$controls.value_simple, val);
+			}
 		} else {
-			if (additionalSelector === 'file')
-				setValue(this.$controls['value_file'], val);
-			else if (additionalSelector === 'simple')
-				setValue(this.$controls['value_simple'], val);
+			if (additionalSelector === 'file') {
+				setValue(this.$controls.value_file, val);
+			} else if (additionalSelector === 'simple') {
+				setValue(this.$controls.value_simple, val);
+								}
 		}
 	}
 };
 
 Attribute.prototype.getCql = function() {
 
-	var hasFile		= this.element.find('.bl-token-attribute-main-input').is('[data-has-file]');
+	const hasFile		= this.element.find('.bl-token-attribute-main-input').is('[data-has-file]');
 
-	var type 		= this.$controls['type'].val();
-	var operator 	= this.$controls['operator'].val();
+	const type 		= this.$controls.type.val();
+	const operator 	= this.$controls.operator.val();
 
-	var $optionsContainer = this.element.find('[data-attribute-type="' + type + '"]');
-	var caseSensitive = $optionsContainer.find('[data-attribute-role="case"]').is(':checked') || false;
+	const $optionsContainer = this.element.find('[data-attribute-type="' + type + '"]');
+	const caseSensitive = $optionsContainer.find('[data-attribute-role="case"]').is(':checked') || false;
 
-	var rawValue;
-	var values		= [];
+	let rawValue;
+	let values		= [];
 	if (hasFile) {
-		rawValue = this.$controls['value_file'].val() || '';
-		var trimmedLines = rawValue.trim().split(/\s*[\r\n]+\s*/g); // split on line breaks, ignore empty lines.
+		rawValue = this.$controls.value_file.val() || '';
+		const trimmedLines = rawValue.trim().split(/\s*[\r\n]+\s*/g); // split on line breaks, ignore empty lines.
 		values = values.concat(trimmedLines);
 	} else {
-		rawValue = this.$controls['value_simple'].val() || '';
+		rawValue = this.$controls.value_simple.val() || '';
 		values = values.concat(rawValue);
 	}
 
-	var callback = this.builder.settings.attribute.getCql;
+	const callback = this.builder.settings.attribute.getCql;
 	return callback(type, operator, caseSensitive, values);
 };
 
-//------------------
+// ------------------
 // Utility functions
-//------------------
+// ------------------
 
-var generateId = function() {
-	var nextId = 0;
+const generateId = function() {
+	let nextId = 0;
 	return function(prefix) {
 		return prefix + '_' + nextId++;
 	};
 }();
 
 // Set values on input/select elements uniformly
-var setValue = function($element, val) {
+const setValue = function($element, val) {
 	if (val != null) {
-		if (val.constructor !== Array)
+		if (val.constructor !== Array) {
 			val = [val];
+		}
 	} else {
 		val = [null];
 	}
@@ -954,20 +949,21 @@ var setValue = function($element, val) {
 		if ($element.hasClass('selectpicker')) {
 			$element.selectpicker('val', val);
 
-			var actualValues = [].concat($element.selectpicker('val')); // might not always be array
-			if (val.filter(function(v){return v!=null && !actualValues.includes(v);}).length)
+			const actualValues = [].concat($element.selectpicker('val')); // might not always be array
+			if (val.filter(function(v) {return v!=null && !actualValues.includes(v);}).length) {
 				throw new Error('Could not set value(s) ' + val.join() + ' on selectpicker - list contains invalid values (use null to clear)');
+			}
 		} else {
 			// deal with selects that don't have the "multiple" property
-			var multiSelect = $element.prop('multiple');
-			var hasSelected = false;
+			const multiSelect = $element.prop('multiple');
+			let hasSelected = false;
 			$element.find('option').each(function(i, option) {
-				var canSelect = !hasSelected || multiSelect;
+				const canSelect = !hasSelected || multiSelect;
 
-				var select = canSelect && ($.inArray($(option).val(), val) !== -1);
+				const select = canSelect && ($.inArray($(option).val(), val) !== -1);
 
 				$(option).prop('selected', select);
-				hasSelected |= select;
+				hasSelected = hasSelected || select;
 			});
 		}
 	} else if ($element.is(':input')) {
@@ -975,9 +971,9 @@ var setValue = function($element, val) {
 	}
 };
 
-//---------------
+// ---------------
 // exports
-//---------------
+// ---------------
 
 export default function($rootElement, options) {
 	return new QueryBuilder($rootElement, options);

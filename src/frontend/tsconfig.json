@@ -4,6 +4,8 @@
 		"module": "esnext",
 		"moduleResolution": "node",
 		"sourceMap": true,
+		"importHelpers": false,
+		"esModuleInterop": false,
 		"lib": [
 			"es2017",
 			"dom",

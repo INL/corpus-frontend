@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack --config webpack.config.js",
-    "start": "webpack-dev-server --mode development --port 80"
+    "start": "webpack-dev-server --mode=development --port 80"
   },
   "author": "INT",
   "license": "Apache-2.0",
@@ -14,6 +14,8 @@
     "@babel/core": "^7.0.0-rc.2",
     "@babel/polyfill": "^7.0.0-rc.2",
     "@babel/preset-env": "^7.0.0-rc.2",
+    "@types/bootstrap": "^4.1.2",
+    "@types/bootstrap-select": "^1.11.1",
     "@types/jquery": "^3.3.6",
     "@types/mustache": "^0.8.31",
     "babel-loader": "^8.0.0-beta.6",

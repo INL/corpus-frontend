@@ -9,87 +9,25 @@ import 'codemirror/mode/yaml/yaml.js';
 import './utils/features/tutorial';
 
 // Now import the augmented modules (though import order shouldn't matter)
-import Mustache from 'mustache';
 import CodeMirror from 'codemirror';
-import $ from 'jquery';
+import * as $ from 'jquery';
+import * as Mustache from 'mustache';
 
-/**
- * @typedef IndexProgress
- *
- * @property {number} filesProcessed
- * @property {number} docsDone - a single file may containing multiple documents
- * @property {number} tokensProcessed
- */
+import * as BLTypes from './types/blacklabtypes';
 
-/**
- * @typedef BLIndex
- *
- * @property {string} displayName
- * @property {string} [documentFormat] - id of the document format of the corpus, not always set per se, also in the format of username:formatname
- * @property {string} timeModified
- * @property {('available'|'empty'|'indexing')} status
- * @property {number} tokenCount - number of tokens in the corpus (not accurate while indexing)
- * @property {IndexProgress} [indexProgress] - data about the indexing progress if indexState === 'indexing'
- */
+const enum DataEvent {
+	SERVER_REFRESH = 'server/refresh',
+	FORMATS_REFRESH = 'formats/refresh',
+	CORPORA_REFRESH = 'corpora/refresh', // all corpora
+	CORPUS_REFRESH = 'corpus/refresh' // single corpus
+}
 
-/**
- * @typedef NormalizedIndex
- *
- * @property {string} id - ID of the corpus, in the format of username:corpusname, or just corpusname if is is not a user corpus
- * @property {string} shortId - ID of the corpus minus the username: portion
- * @property {string} documentFormat - fall back to '' if missing
- * @property {boolean} canSearch - is the index available for searching
- * @property {boolean} isBusy
- * @property {boolean} isPrivate - is this a user-defined corpus
- */
-
-/**
- * @typedef {BLIndex|NormalizedIndex} Index
- * JSDoc doesn't allow inheritance in typedef blocks, so work around it
- */
-
-/**
- * @typedef BLFormat
- *
- * @property {string} [displayName]
- * @property {string} [description]
- * @property {string} helpUrl
- * @property {boolean} configurationBased - is the format backed by a .blf.json/.blf.yaml configution file
- */
-
-/**
- * @typedef NormalizedFormat
- *
- * @property {string} id - ID of the format, in the format of username:formatname
- * @property {string} shortId - formatId without the username: portion
- * @property {string} displayName - set to shortId as fallback if missing
- * @property {string} description - set to displayName as fallback if missing
- * @property {boolean} isPrivate - is this a user-defined format
- */
-
-/**
- * @typedef {BLFormat| NormalizedFormat} Format
- * JSDoc doesn't allow inheritance in typedef blocks, so work around it
- */
-
-/**
- * @typedef User
- *
- * @property {boolean} loggedIn
- * @property {string} id
- * @property {boolean} canCreateIndex
- */
-
-/**
- * @typedef ServerInfo
- *
- * @property {string} blacklabBuildTime
- * @property {string} blacklabVersion
- * @property {string} helpPageUrl
- * @property {Object<string, BLIndex>} indices
- * @property {User} user
- * @property {object} [cacheStatus] - only when in debug mode? unused here
- */
+interface DataEventPayloadMap {
+	[DataEvent.SERVER_REFRESH]: BLTypes.BLServer;
+	[DataEvent.FORMATS_REFRESH]: BLTypes.NormalizedFormat[];
+	[DataEvent.CORPORA_REFRESH]: BLTypes.NormalizedIndex[];
+	[DataEvent.CORPUS_REFRESH]: BLTypes.NormalizedIndex;
+}
 
 // (Private) corpora management page.
 //
@@ -98,48 +36,26 @@ import $ from 'jquery';
 // and add data to them.
 
 // blacklab-server url
-var blsUrl;
+let blsUrl: string;
 // Contains the full list of available corpora
-var corpora = [];
+let corpora: BLTypes.NormalizedIndex[] = [];
 // Contains the full list of available formats
-var formats = [];
+let formats: BLTypes.NormalizedFormat[] = [];
 // Serverinfo, contains user information etc
-var serverInfo = {};
+let serverInfo: BLTypes.BLServer;
 
-var $root = $(document);
-function createTrigger(eventType, $target) {
-	return function(payload) {
+const $root = $(document);
+function createTrigger<K extends keyof DataEventPayloadMap>(eventType: K, $target = $root) {
+	return function(payload: DataEventPayloadMap[K]) {
 		// need to wrap payload in array to prevent jquery from unpacking it into multiple arguments on the receiving side
-		($target || $root).trigger(eventType, [payload]);
+		$target.trigger(eventType, [payload]);
 	};
 }
 
-/**
- * @param {string} [selector] - jquery, may be omitted, in which case the signature becomes (eventType, handler)
- * @param {string} eventType - from events object, or custom
- * @param {Function} handler - callback function, called once for every matched element, once - without an element- if no selector was provided
- */
-function createHandler(a, b, c) {
-	var $elements = (typeof b === 'function') ? undefined : $(a);
-	var eventType = $elements ? b : a;
-	var handler = $elements ? c : b;
+function createHandler<K extends keyof DataEventPayloadMap>({selector, event, handler}: {selector?: string,event: K,handler: (payload: DataEventPayloadMap[K]) => void}) {
+	const $elements = selector ? $(selector) : undefined;
 
-	$root.on(eventType, function(event, payload) {
-		if ($elements) {
-			$elements.each(function () {
-				handler.call($(this), payload);
-			});
-		} else {
-			handler.call(undefined, payload);
-		}
-	});
-}
-function createHandlerOnce(a,b,c) {
-	var $elements = (typeof b === 'function') ? undefined : $(a);
-	var eventType = $elements ? b : a;
-	var handler = $elements ? c : b;
-
-	$root.one(eventType, function(event, payload) {
+	$root.on(event, function(jqEvent, payload) {
 		if ($elements) {
 			$elements.each(function() {
 				handler.call($(this), payload);
@@ -150,78 +66,70 @@ function createHandlerOnce(a,b,c) {
 	});
 }
 
-var events = {
-	SERVER_REFRESH: 'server/refresh',
-	FORMATS_REFRESH: 'formats/refresh',
-	CORPORA_REFRESH: 'corpora/refresh', // all corpora
-	CORPUS_REFRESH: 'corpus/refresh' // single corpus
-};
+function createHandlerOnce<K extends keyof DataEventPayloadMap>({selector, event, handler}: {selector?: string, event: K, handler: (payload: DataEventPayloadMap[K]) => void}) {
+	const $elements = selector ? $(selector) : undefined;
 
-var triggers = {
-	/**
-	 * @type {Function}
-	 * @param {Array.<Format>} payload data passed into the handler
-	 */
-	updateFormats: createTrigger(events.FORMATS_REFRESH),
-	/**
-	 * @type {Function}
-	 * @param {ServerInfo} payload server status from blacklab-server
-	 */
-	updateServer: createTrigger(events.SERVER_REFRESH),
-	/**
-	 * @type {Function}
-	 * @param {Array.<Index>} payload normalized index data
-	 */
-	updateCorpora: createTrigger(events.CORPORA_REFRESH),
-	/**
-	 * @type {Function}
-	 * @param {Index} payload normalized index data
-	 */
-	updateCorpus: createTrigger(events.CORPUS_REFRESH)
+	$root.one(event, function(jqEvent, payload) {
+		if ($elements) {
+			$elements.each(function() {
+				handler.call($(this), payload);
+			});
+		} else {
+			handler.call(undefined, payload);
+		}
+	});
+}
+
+const triggers = {
+	updateFormats: createTrigger(DataEvent.FORMATS_REFRESH),
+	updateServer: createTrigger(DataEvent.SERVER_REFRESH),
+	updateCorpora: createTrigger(DataEvent.CORPORA_REFRESH),
+	updateCorpus: createTrigger(DataEvent.CORPUS_REFRESH)
 };
 
 // Attach these handlers first, so that we can store data before other handlers run
-createHandler(events.SERVER_REFRESH, function(serverInfo_) { serverInfo = $.extend({}, serverInfo_); });
-createHandler(events.CORPORA_REFRESH, function(corpora_) { corpora = [].concat(corpora_); });
-createHandler(events.FORMATS_REFRESH, function(formats_) { formats = [].concat(formats_); });
-createHandler(events.CORPUS_REFRESH, function(corpus_) {
-	corpus_ = Object.assign({}, corpus_);
+createHandler({event: DataEvent.SERVER_REFRESH, handler(payload) { serverInfo = Object.assign({}, payload); }});
+createHandler({event: DataEvent.CORPORA_REFRESH, handler(payload) { corpora = [].concat(payload); }});
+createHandler({event: DataEvent.FORMATS_REFRESH, handler(payload) { formats = [].concat(payload); }});
+createHandler({event: DataEvent.CORPUS_REFRESH, handler(payload) {
+	payload = Object.assign({}, payload);
 	// merge into list, trigger global corpora refresh
-	var i = corpora.findIndex(function(corpus) { return corpus.id === corpus_.id; });
-	i >= 0 ? corpora[i] = corpus_ : corpora.push(corpus_);
+	const i = corpora.findIndex(function(corpus) { return corpus.id === payload.id; });
+	i >= 0 ? corpora[i] = payload : corpora.push(payload);
 	triggers.updateCorpora(corpora);
-});
+}});
 
-createHandler(events.SERVER_REFRESH, function(serverInfo) {
+createHandler({event: DataEvent.SERVER_REFRESH, handler(newServerInfo) {
 	// Don't hide when !canCreateIndex, user may have just hit the limit
 	// (in this case it should be unhidden when a private corpus exists)
-	if (serverInfo.user.canCreateIndex)
+	if (newServerInfo.user.canCreateIndex) {
 		$('#corpora-private-container').show();
+	}
 
-	$('#create-corpus').toggle(serverInfo.user.canCreateIndex);
-	$('#create-corpus-limited').toggle(!serverInfo.user.canCreateIndex);
-	$('#formats-all-container').toggle(serverInfo.user.loggedIn);
-});
+	$('#create-corpus').toggle(newServerInfo.user.canCreateIndex);
+	$('#create-corpus-limited').toggle(!newServerInfo.user.canCreateIndex);
+	$('#formats-all-container').toggle(newServerInfo.user.loggedIn);
+}});
 
-createHandler(events.CORPORA_REFRESH, function(corpora) {
-	if (corpora.find(function(corpus) { return !corpus.isPrivate; }) != null)
+createHandler({event: DataEvent.CORPORA_REFRESH, handler(newCorpora) {
+	if (newCorpora.find(function(corpus) { return !corpus.owner; }) != null) {
 		$('#corpora-public-container').show();
+	}
 
-	if (corpora.find(function(corpus) { return corpus.isPrivate; }) != null)
+	if (newCorpora.find(function(corpus) { return !!corpus.owner; }) != null) {
 		$('#corpora-private-container').show();
-});
+	}
+}});
 
-createHandlerOnce('*[data-autoupdate="username"]', events.SERVER_REFRESH, function(serverInfo) {
-	this.show().html(serverInfo.user.loggedIn ? 'Logged in as <em>'+serverInfo.user.id+'</em>' : 'Not logged in');
-});
+createHandlerOnce({selector: '*[data-autoupdate="username"]', event: DataEvent.SERVER_REFRESH, handler(newServerInfo) {
+	this.show().html(newServerInfo.user.loggedIn ? 'Logged in as <em>'+newServerInfo.user.id+'</em>' : 'Not logged in');
+}});
 
-createHandler('tbody[data-autoupdate="format"]', events.FORMATS_REFRESH, function(formats) {
-	formats = formats.filter(function(format) {
-		// Always show user's own formats, even if isVisible == false
-		return format.id.indexOf(serverInfo.user.id) === 0;
-	});
+createHandler({selector: 'tbody[data-autoupdate="format"]', event: DataEvent.FORMATS_REFRESH, handler(newFormats) {
+	// Always show user's own formats, even if isVisible == false
+	newFormats = newFormats.filter(f => f.owner === serverInfo.user.id);
 
-	var template =
+	const template =
 	'{{#formats}}'+
 	'<tr>'+
 		'<td>{{shortId}}</td>'+
@@ -232,18 +140,18 @@ createHandler('tbody[data-autoupdate="format"]', events.FORMATS_REFRESH, functio
 	'{{/formats}}';
 
 	this.html(Mustache.render(template, {
-		formats: formats,
+		formats: newFormats,
 	}));
-});
+}});
 
-createHandler('select[data-autoupdate="format"]', events.FORMATS_REFRESH, function(formats) {
-	var showNonConfigBased = this.data('filter') !== 'configBased';
+createHandler({selector: 'select[data-autoupdate="format"]', event: DataEvent.FORMATS_REFRESH, handler(newFormats) {
+	const showNonConfigBased = this.data('filter') !== 'configBased';
 
-	formats = formats.filter(function(format) {
+	newFormats = newFormats.filter(function(format) {
 		return showNonConfigBased || format.configurationBased;
 	});
 
-	var template =
+	const template =
 	'<optgroup label="Presets">' +
 		'{{#builtinFormats}}' +
 		'<option title="{{displayName}}" value="{{id}}" data-content="{{displayName}} <small>({{shortId}})</small>">{{displayName}}</option>' +
@@ -258,55 +166,57 @@ createHandler('select[data-autoupdate="format"]', events.FORMATS_REFRESH, functi
 	this
 		.html(Mustache.render(template, {
 			userName: serverInfo.user.id,
-			builtinFormats: formats.filter(function(format) { return format.id === format.shortId && (format.isVisible == null /* temporary, for when bls does not support the property yet */ || format.isVisible); }),
-			userFormats: formats.filter(function(format) { return format.id !== format.shortId; }) // Always show user's own formats, even if isVisible == false
+			builtinFormats: newFormats.filter(f => !f.owner && f.isVisible == null /* temporary, for when bls does not support the property yet */ || f.isVisible),
+			userFormats: newFormats.filter(f => !!f.owner) // Always show user's own formats, even if isVisible == false
 		}))
 		.selectpicker('refresh')
 		.trigger('change');
-});
+}});
 
-createHandler('tbody[data-autoupdate="corpora"]', events.CORPORA_REFRESH, function(corpora) {
-	var filter = this.data('filter');
+createHandler({selector: 'tbody[data-autoupdate="corpora"]', event: DataEvent.CORPORA_REFRESH, handler(newCorpora) {
+	const filter = this.data('filter');
 
-	if (filter === 'public') corpora = corpora.filter(function(corpus) { return !corpus.isPrivate; });
-	else if (filter === 'private') corpora = corpora.filter(function(corpus) { return corpus.isPrivate; });
+	if (filter === 'public') {
+		newCorpora = newCorpora.filter(corpus => !corpus.owner);
+	} else if (filter === 'private') {
+		newCorpora = newCorpora.filter(corpus => !!corpus.owner);
+	}
 
 	// generate some data we need for rendering
-	corpora = corpora.map(function(corpus) {
-		var status = corpus.status;
-		if (status === 'indexing') {
-			status = ' (indexing) - ' + corpus.indexProgress.filesProcessed + ' files, ' +
+	const viewcorpora = newCorpora.map(function(corpus) {
+		let statusText: string = corpus.status;
+		if (statusText === 'indexing') {
+			statusText = ' (indexing) - ' + corpus.indexProgress.filesProcessed + ' files, ' +
 				corpus.indexProgress.docsDone + ' documents, and ' +
 				corpus.indexProgress.tokensProcessed + ' tokens indexed so far...';
-		} else if (!corpus.canSearch) {
-			status = ' (' + status + ')';
+		} else if (corpus.status !== 'available') {
+			statusText = ' (' + statusText + ')';
 		} else  {
-			status = '';
+			statusText = '';
 		}
 
-		var pageURL = window.location.href;
+		let pageURL = window.location.href;
 		if (pageURL[pageURL.length-1] !== '/') {
 			pageURL += '/';
 		}
 
-		var user__format = corpus.documentFormat.split(':');
-		var isUserFormat = user__format.length === 2;
-		var documentFormatShortId = user__format[isUserFormat ? 1 : 0];
-		var documentFormatOwner = isUserFormat ? user__format[0] : null;
+		const format = formats.find(f => f.id === corpus.documentFormat);
 
 		return {
 			...corpus,
-			status: status,
-			sizeString: abbrNumber(corpus.tokenCount),
-			isUserFormat: isUserFormat,
-			documentFormatShortId: documentFormatShortId,
-			documentFormatOwner: documentFormatOwner,
+			canSearch: corpus.status === 'available',
+			documentFormatShortId: format ? format.shortId : '',
+			documentFormatOwner: format ? format.owner : '',
+			isUserFormat: format ? !!format.owner : false,
+			isPrivate: !!corpus.owner,
 			searchUrl: pageURL + corpus.id + '/search',
+			sizeString: abbrNumber(corpus.tokenCount),
+			statusText,
 			timeModified: dateOnly(corpus.timeModified)
-		}
+		};
 	});
 
-	var template =
+	const template =
 	'{{#corpora}} \
 	<tr> \
 		<td><a title="Search the \'{{displayName}}\' corpus" class="icon fa fa-search {{^canSearch}}disabled{{/canSearch}}" {{#canSearch}}href="{{searchUrl}}"{{/canSearch}}></a></td> \
@@ -323,19 +233,20 @@ createHandler('tbody[data-autoupdate="corpora"]', events.CORPORA_REFRESH, functi
 	{{/corpora}}';
 
 	this.html(Mustache.render(template, {
-		corpora: corpora
+		corpora: viewcorpora
 	}));
-});
+}});
 
 $('#corpora-private-container').on('click', '*[data-corpus-action="delete"]:not(.disabled)', function deleteCorpus(event) {
 	event.preventDefault();
 	event.stopPropagation();
 
-	var $this = $(event.target);
-	var corpusId = $this.data('id');
-	var corpus = corpora.find(function(corpus) { return corpus.id === corpusId; });
-	if (corpus == null)
+	const $this = $(event.target);
+	const corpusId = $this.data('id');
+	const corpus = corpora.find(c => c.id === corpusId);
+	if (corpus == null) {
 		return;
+	}
 
 	confirmDialog(
 		'Delete corpus?',
@@ -345,15 +256,15 @@ $('#corpora-private-container').on('click', '*[data-corpus-action="delete"]:not(
 			$('#waitDisplay').show();
 
 			$.ajax(blsUrl + corpusId, {
-				'type': 'DELETE',
-				'accept': 'application/json',
-				'dataType': 'json',
-				'success': function () {
+				type: 'DELETE',
+				accepts: {json: 'application/json'},
+				dataType: 'json',
+				success () {
 					$('#waitDisplay').hide();
 					showSuccess('Corpus "' + corpus.displayName + '" deleted.');
 					refreshCorporaList();
 				},
-				'error': showXHRError('Could not delete corpus "' + corpus.displayName + '"', function() {
+				error: showXHRError('Could not delete corpus "' + corpus.displayName + '"', function() {
 					$('#waitDisplay').hide();
 				})
 			});
@@ -365,19 +276,20 @@ $('#corpora-private-container').on('click', '*[data-corpus-action="delete"]:not(
 $('#corpora-private-container').on('click', '*[data-corpus-action="upload"]:not(.disabled)', function showUploadForm(event) {
 	event.preventDefault();
 	event.stopPropagation();
-	var $this = $(event.target);
-	var corpusId = $this.data('id');
-	var corpus = corpora.find(function(corpus) { return corpus.id === corpusId; });
-	if (corpus == null)
+	const $this = $(event.target);
+	const corpusId = $this.data('id');
+	const corpus = corpora.find(c => c.id === corpusId);
+	if (corpus == null) {
 		return;
+	}
 
-	var format = formats.find(function(format) {return format.id === corpus.documentFormat;});
+	const format = formats.find(f => f.id === corpus.documentFormat);
 
 	$('#uploadCorpusName').text(corpus.displayName);
 	$('#uploadFormat').text(corpus.documentFormat + ' ');
 	$('#uploadFormatDescription').text(format ? format.description : 'Unknown format (it may have been deleted from the server), uploads might fail');
 
-	//clear selected files
+	// clear selected files
 	$('#document-upload-form input[type="file"]').each(function() { $(this).val(undefined); }).trigger('change');
 
 	$('#uploadErrorDiv').hide();
@@ -392,49 +304,49 @@ $('#corpora-private-container').on('click', '*[data-corpus-action="upload"]:not(
 $('#corpora-private-container').on('click', '*[data-corpus-action="share"]:not(.disabled)', function shareCorpus(event) {
 	event.preventDefault();
 	event.stopPropagation();
-	var $this = $(event.target);
-	var corpusId = $this.data('id');
-	var corpus = corpora.find(function(corpus) { return corpus.id === corpusId; });
+	const $this = $(event.target);
+	const corpusId = $this.data('id');
+	const corpus = corpora.find(c => c.id === corpusId);
 	if (corpus == null) {
 		showError('Unknown corpus, please refresh the page.'); // should never happen (except maybe before page is fully loaded) but whatever
 		return;
 	}
 
 	$.ajax(blsUrl + '/' + corpusId + '/sharing', {
-		'type': 'GET',
-		'accept': 'application/json',
-		'dataType': 'json',
-		'cache': false,
-		'success': function (data) {
+		type: 'GET',
+		accepts: {json: 'application/json' },
+		dataType: 'json',
+		cache: false,
+		success (data) {
 			$('#share-corpus-editor').val(data['users[]'].join('\n'));
 			$('#share-corpus-form').data('corpus', corpus);
 			$('#share-corpus-name').text(corpus.displayName);
 			$('#share-corpus-modal').modal('show');
 		},
-		'error': showXHRError('Could not retrieve share list'),
+		error: showXHRError('Could not retrieve share list'),
 	});
 });
 
 $('#share-corpus-form').on('submit', function(event) {
 	event.preventDefault();
 
-	var corpus = $(this).data('corpus');
-	var $modal = $('#share-corpus-modal');
-	var $editor = $('#share-corpus-editor');
-	var users = $editor.val().trim().split(/\s*[\r\n]+\s*/g); // split on line breaks, ignore empty lines.
+	const corpus = $(this).data('corpus');
+	const $modal = $('#share-corpus-modal');
+	const $editor = $('#share-corpus-editor');
+	const users = ($editor.val() as string).trim().split(/\s*[\r\n]+\s*/g); // split on line breaks, ignore empty lines.
 
 	$.ajax(blsUrl + '/' + corpus.id + '/sharing/', {
-		'type': 'POST',
-		'accept': 'application/json',
-		'dataType': 'json',
-		'data': {
+		type: 'POST',
+		accepts: {json: 'application/json'},
+		dataType: 'json',
+		data: {
 			'users[]': users,
 		},
-		success: function (data) {
+		success (data) {
 			showSuccess(data.status.message);
 		},
 		error: showXHRError('Could not share corpus "' + corpus.displayName + '"'),
-		complete: function() {
+		complete () {
 			$editor.val(undefined);
 			$modal.modal('hide');
 		}
@@ -444,9 +356,10 @@ $('#share-corpus-form').on('submit', function(event) {
 // Abbreviate a number, i.e. 3426 becomes 3,4K,
 // 2695798 becomes 2,6M, etc.
 function abbrNumber(n) {
-	if (n === undefined)
+	if (n === undefined) {
 		return '';
-	var unit = '';
+	}
+	let unit = '';
 	if (n >= 1e9) {
 		n = Math.round(n / 1e8) / 10;
 		unit = 'G';
@@ -466,8 +379,7 @@ function abbrNumber(n) {
 function dateOnly(dateTimeString) {
 	if (dateTimeString) {
 		return dateTimeString.replace(/^(\d+)-(\d+)-(\d+) .*$/, '$3-$2-$1');
-	}
-	else {
+	} else {
 		return '01-01-1970';
 	}
 }
@@ -479,26 +391,27 @@ function dateOnly(dateTimeString) {
  * @param {string} indexId full id including any username
  */
 function refreshIndexStatusWhileIndexing(indexId) {
-	var statusUrl = blsUrl + indexId + '/status/';
+	const statusUrl = blsUrl + indexId + '/status/';
 
-	var timeoutHandle;
+	let timeoutHandle;
 
 	function success(index) {
-		triggers.updateCorpus(normalizeIndexData(index, indexId));
+		triggers.updateCorpus(normalizeIndex(index, indexId));
 
-		if (index.status !== 'indexing')
+		if (index.status !== 'indexing') {
 			clearTimeout(timeoutHandle);
-		else
+		} else {
 			setTimeout(run, 2000);
+		}
 	}
 
 	function run() {
 		$.ajax(statusUrl, {
-			'type': 'GET',
-			'accept': 'application/json',
-			'dataType': 'json',
-			'success': success,
-			'error': showXHRError(
+			type: 'GET',
+			accepts: {json: 'application/json'},
+			dataType: 'json',
+			success,
+			error: showXHRError(
 				'Could not retrieve status for corpus "' + indexId.substr(indexId.indexOf(':')+1) + '"',
 				function() {
 					clearTimeout(timeoutHandle);
@@ -513,37 +426,41 @@ function refreshIndexStatusWhileIndexing(indexId) {
 /**
  * Add some calculated properties to the index object (such as if it's a private index) and normalize some optional data to empty strings if missing.
  *
- * @param {BLIndex} index the index json object as received from blacklab-server
- * @param {string} indexId full id of the index, including username portion (if applicable)
- * @returns {Index}
+ * @param index the index json object as received from blacklab-server
+ * @param indexId full id of the index, including username portion (if applicable)
  */
-function normalizeIndexData(index, indexId) {
-	var shortId = indexId.substr(indexId.indexOf(':')+1);
-	return $.extend({}, index, {
-		id: indexId,
-		shortId: shortId,
-		// displayName always set
-		documentFormat: index.documentFormat || '',
-		canSearch: index.status === 'available',
-		isBusy: index.status !== 'available' && index.status !== 'empty',
-		isPrivate: shortId !== indexId,
-	});
+
+function normalizeIndex(index: BLTypes.BLIndex, id: string): BLTypes.NormalizedIndex {
+	return {
+		...index,
+
+		id,
+		owner: id.substring(0, id.indexOf(':')) || null,
+		shortId: id.substr(id.indexOf(':') + 1),
+
+		displayName: index.displayName || id.substr(id.indexOf(':') + 1),
+		documentFormat: index.documentFormat || null,
+		indexProgress: index.indexProgress || null,
+		tokenCount: index.tokenCount == null ? null : index.tokenCount,
+	};
 }
 
 /**
- * @param {BLFormat} format as received from the server
- * @param {string} formatId - full id of the format, including userName portion (if applicable)
- * @return {Format} normalized version of the format
+ * @param format as received from the server
+ * @param formatId - full id of the format, including userName portion (if applicable)
  */
-function normalizeFormatData(format, formatId) {
-	var shortId = formatId.substr(formatId.indexOf(':')+1);
-	return $.extend({}, format, {
-		id: formatId,
-		shortId: shortId,
-		displayName: format.displayName || shortId,
-		description: format.description || format.displayName || shortId,
-		isPrivate: shortId !== formatId
-	});
+function normalizeFormat(format: BLTypes.BLFormat, id: string): BLTypes.NormalizedFormat {
+	return {
+		...format,
+
+		id,
+		owner: id.substring(0, id.indexOf(':')) || null,
+		shortId: id.substr(id.indexOf(':') + 1),
+
+		displayName: format.displayName || id.substr(id.indexOf(':') + 1),
+		helpUrl: format.helpUrl || null,
+		description: format.description || null,
+	};
 }
 
 // Request the list of available corpora and
@@ -552,19 +469,19 @@ function refreshCorporaList() {
 	// Perform the AJAX request to get the list of corpora.
 	$('#waitDisplay').show();
 	$.ajax(blsUrl, {
-		'type': 'GET',
-		'accept': 'application/json',
-		'dataType': 'json',
-		'success': function (data) {
-			var indices = $.map(data.indices, normalizeIndexData);
+		type: 'GET',
+		accepts: {json: 'application/json'},
+		dataType: 'json',
+		success (data: BLTypes.BLServer) {
+			const indices = $.map(data.indices, normalizeIndex);
 			triggers.updateServer(data);
 			triggers.updateCorpora(indices);
 			indices
 				.filter(function(corpus) { return corpus.status === 'indexing'; })
 				.forEach(function(corpus) { refreshIndexStatusWhileIndexing(corpus.id); });
 		},
-		'error': showXHRError('Could not retrieve corpora'),
-		complete: function() {
+		error: showXHRError('Could not retrieve corpora'),
+		complete () {
 			$('#waitDisplay').hide();
 		}
 	});
@@ -573,14 +490,14 @@ function refreshCorporaList() {
 function refreshFormatList() {
 	$.ajax(blsUrl + '/input-formats/', {
 		type: 'GET',
-		accept: 'application/json',
+		accepts: {json: 'application/json'},
 		dataType: 'json',
-		success: function(data) {
+		success (data: BLTypes.BLFormats) {
 			triggers.updateServer($.extend({}, serverInfo, {
 				user: data.user
 			}));
 			triggers.updateFormats(
-				$.map(data.supportedInputFormats, normalizeFormatData)
+				$.map(data.supportedInputFormats, normalizeFormat)
 					.sort(function(a, b) {
 						return a.displayName.localeCompare(b.displayName); // sort alphabetically by id
 					})
@@ -596,7 +513,7 @@ function getUserId() {
 }
 
 // Show success message at the top of the page.
-function showSuccess(msg) {
+function showSuccess(msg: string) {
 	$('#errorDiv').hide();
 	$('#successMessage').html(msg);
 	$('#successDiv').show();
@@ -606,7 +523,7 @@ function showSuccess(msg) {
 }
 
 // Show error at the top of the page.
-function showError(msg) {
+function showError(msg: string) {
 	$('#successDiv').hide();
 	$('#errorMessage').html(msg).show();
 	$('#errorDiv').show();
@@ -615,85 +532,92 @@ function showError(msg) {
 	}, 500);
 }
 
-function showXHRError(message, callback) {
+function showXHRError(message: string, callback?: () => void) {
 	return function(jqXHR, textStatus, errorThrown) {
-		var errorMsg;
+		let errorMsg;
 
-		if (jqXHR.readyState === 0)
+		if (jqXHR.readyState === 0) {
 			errorMsg = 'Cannot connect to server.';
-		else if (jqXHR.readyState === 4) {
-			var data = jqXHR.responseJSON;
-			if (data && data.error)
+		} else if (jqXHR.readyState === 4) {
+			const data = jqXHR.responseJSON;
+			if (data && data.error) {
 				errorMsg = data.error.message;
-			else try { // not json? try xml.
-				var xmlDoc = $.parseXML( jqXHR.responseText );
-				var $xml = $( xmlDoc );
+			} else { try { // not json? try xml.
+				const xmlDoc = $.parseXML( jqXHR.responseText );
+				const $xml = $( xmlDoc );
 				errorMsg = $xml.find( 'error code' ).text() + ' - ' +  $xml.find(' error message ').text();
 			} catch (error) {
-				if (textStatus && errorThrown)
+				if (textStatus && errorThrown) {
 					errorMsg = textStatus + ' - ' + errorThrown;
-				else
+				} else {
 					errorMsg = 'Unknown error.';
+				}
+			}
 			}
 		} else {
 			errorMsg = 'Unknown error.';
 		}
 
 		showError(message + ': ' + errorMsg);
-		if (typeof callback === 'function')
+		if (typeof callback === 'function') {
 			callback();
+		}
 	};
 }
 
 /**
  *  Create the specified index in the private user area.
  *
- *  @param displayName	string	Name to show for the index
- *  @param shortName	string	Internal, technical name that uniquely identifies the index
- *  @param format		string	Name of the format type for the documents in the index
+ *  @param displayName Name to show for the index
+ *  @param shortName Internal, technical name that uniquely identifies the index for this user
+ *  @param format Name of the format type for the documents in the index
  */
-function createIndex(displayName, shortName, format) {
-	if (shortName == null || shortName.length == 0)
+function createIndex(displayName: string, shortName: string, format: string) {
+	if (shortName == null || shortName.length === 0) {
 		return;
-	if (displayName == null)
+	}
+	if (displayName == null) {
 		return;
+	}
 
 	// Prefix the user name because it's a private index
-	var indexName = getUserId() + ':' + shortName;
+	const indexName = getUserId() + ':' + shortName;
 
 	// Create the index.
 	$('#waitDisplay').show();
 	$.ajax(blsUrl, {
-		'type': 'POST',
-		'accept': 'application/json',
-		'dataType': 'json',
-		'data': {
-			'name': indexName,
-			'display': displayName,
-			'format': format
+		type: 'POST',
+		accepts: {json: 'application/json'},
+		dataType: 'json',
+		data: {
+			name: indexName,
+			display: displayName,
+			format
 		},
-		'success': function (/*data*/) {
+		success (/*data*/) {
 			refreshCorporaList();
 			showSuccess('Corpus "' + displayName + '" created.');
 		},
-		'error': showXHRError('Could not create corpus "' + shortName + '"'),
-		'complete': function() {
+		error: showXHRError('Could not create corpus "' + shortName + '"'),
+		complete () {
 			$('#waitDisplay').hide();
 		}
 	});
 }
 
-createHandler('#uploadProgress', events.CORPORA_REFRESH, function(corpora) {
-	var displayedCorpusId = this.data('corpus-id');
-	if (!displayedCorpusId)
+createHandler({selector: '#uploadProgress', event: DataEvent.CORPORA_REFRESH, handler(newCorpora) {
+	const displayedCorpusId = this.data('corpus-id');
+	if (!displayedCorpusId) {
 		return;
+	}
 
-	var corpus = corpora.find(function(corpus) { return corpus.id === displayedCorpusId; });
-	if (!corpus)
+	const corpus = newCorpora.find(c => c.id === displayedCorpusId);
+	if (!corpus) {
 		return;
+	}
 
-	var statusText = '';
-	if (corpus.status === 'indexing'){
+	let statusText = '';
+	if (corpus.status === 'indexing') {
 		statusText = 'Indexing in progress... - '
 		+ corpus.indexProgress.filesProcessed + ' files, '
 		+ corpus.indexProgress.docsDone + ' documents, and '
@@ -703,31 +627,32 @@ createHandler('#uploadProgress', events.CORPORA_REFRESH, function(corpora) {
 		this.toggleClass('indexing', false);
 	}
 	this.text(statusText);
-});
+}});
 
 // What corpus are we uploading data to?
 // TODO not very tidy
-var uploadToCorpus = null;
+let uploadToCorpus = null;
 
 function initFileUpload() {
 
-	var $modal = $('#upload-file-dialog');
+	const $modal = $('#upload-file-dialog');
 
-	var $progress = $('#uploadProgress');
-	var $success = $('#uploadSuccessDiv');
-	var $error = $('#uploadErrorDiv');
+	const $progress = $('#uploadProgress');
+	const $success = $('#uploadSuccessDiv');
+	const $error = $('#uploadErrorDiv');
 
-	var $form = $('#document-upload-form');
-	var	$fileInputs = $form.find('input[type="file"]');
+	const $form = $('#document-upload-form');
+	const $fileInputs = $form.find('input[type="file"]') as JQuery<HTMLInputElement>;
 
 	$fileInputs.each(function() {
-		var $this = $(this);
+		const $this = $(this);
 		$this.on('change', function() {
-			var text;
-			if (this.files && this.files.length)
+			let text;
+			if (this.files && this.files.length) {
 				text = this.files.length + $this.data('labelWithValue');
-			else
+			} else {
 				text = $this.data('labelWithoutValue');
+			}
 
 			$($this.data('labelId')).text(text);
 		});
@@ -740,14 +665,15 @@ function initFileUpload() {
 	}
 
 	function handleUploadProgress(event) {
-		var progress = event.loaded / event.total * 100;
+		const progress = event.loaded / event.total * 100;
 		$progress
 			.text('Uploading... (' +  Math.floor(progress) + '%)')
 			.css('width', progress + '%')
 			.attr('aria-valuenow', progress);
 
-		if (event.loaded >= event.total)
+		if (event.loaded >= event.total) {
 			handleUploadComplete.call(this, event);
+		}
 	}
 
 	function handleUploadComplete(/*event*/) {
@@ -761,13 +687,14 @@ function initFileUpload() {
 	}
 
 	function handleIndexingComplete(event) {
-		if (this.status != 200)
+		if (this.status !== 200) {
 			return handleError.call(this, event);
+		}
 
-		var message = 'Data added to "' + uploadToCorpus.displayName + '".';
+		const message = 'Data added to "' + uploadToCorpus.displayName + '".';
 
 		$modal.off('hide.bs.modal', preventModalCloseEvent);
-		$modal.find('[data-dismiss="modal"]').attr('disabled', false).toggleClass('disabled', false);
+		$modal.find('[data-dismiss="modal"]').attr('disabled', null).toggleClass('disabled', false);
 		$progress.toggleClass('indexing', false).parent().hide();
 		$form.show();
 		$error.hide();
@@ -780,16 +707,17 @@ function initFileUpload() {
 	}
 
 	function handleError(/*event*/) {
-		var msg = 'Could not add data to "' + uploadToCorpus.displayName + '"';
-		if (this.responseText)
+		let msg = 'Could not add data to "' + uploadToCorpus.displayName + '"';
+		if (this.responseText) {
 			msg += ': ' + JSON.parse(this.responseText).error.message;
-		else if (this.textStatus)
+		} else if (this.textStatus) {
 			msg += ': ' + this.textStatus;
-		else
+		} else {
 			msg += ': unknown error (are you trying to upload too much data?)';
+		}
 
 		$modal.off('hide.bs.modal', preventModalCloseEvent);
-		$modal.find('[data-dismiss="modal"]').attr('disabled', false).toggleClass('disabled', false);
+		$modal.find('[data-dismiss="modal"]').attr('disabled', null).toggleClass('disabled', false);
 		$progress.toggleClass('indexing', false).parent().hide();
 		$form.show();
 		$success.hide();
@@ -800,7 +728,7 @@ function initFileUpload() {
 		event.preventDefault();
 
 		$modal.on('hide.bs.modal', preventModalCloseEvent);
-		$modal.find('[data-dismiss="modal"]').attr('disabled', true).toggleClass('disabled', true);
+		$modal.find('[data-dismiss="modal"]').attr('disabled', null).toggleClass('disabled', true);
 		$form.hide();
 		$error.hide();
 		$success.hide();
@@ -809,15 +737,15 @@ function initFileUpload() {
 			.css('width', '0%')
 			.parent().show();
 
-		var formData = new FormData();
+		const formData = new FormData();
 		$fileInputs.each(function() {
-			var self = this;
+			const self = this;
 			$.each(this.files, function(index, file) {
 				formData.append(self.name, file, file.name);
 			});
 		});
 
-		var xhr = new XMLHttpRequest();
+		const xhr = new XMLHttpRequest();
 
 		xhr.upload.addEventListener('progress', handleUploadProgress.bind(xhr));
 		xhr.upload.addEventListener('error', handleError.bind(xhr));
@@ -836,12 +764,12 @@ function initFileUpload() {
 }
 
 function initNewCorpus() {
-	var $newCorpusModal = $('#new-corpus-modal');
-	var $corpusNameInput = $('#corpus_name');
-	var $corpusFormatSelect = $('#corpus_document_type');
-	var $corpusFormatDescription = $('#corpus_document_type_description');
-	var $corpusFormatHelpUrl = $('#corpus_document_type_help_url');
-	var $saveButton = $('#new-corpus-modal .btn-primary');
+	const $newCorpusModal = $('#new-corpus-modal');
+	const $corpusNameInput = $('#corpus_name');
+	const $corpusFormatSelect = $('#corpus_document_type');
+	const $corpusFormatDescription = $('#corpus_document_type_description');
+	const $corpusFormatHelpUrl = $('#corpus_document_type_help_url');
+	const $saveButton = $('#new-corpus-modal .btn-primary');
 
 	$newCorpusModal.on('shown.bs.modal', function(/*event*/) {
 		$corpusNameInput.val('');
@@ -849,11 +777,11 @@ function initNewCorpus() {
 		$corpusNameInput[0].focus();
 	});
 	$corpusNameInput.on('change, input', function(/*event*/) {
-		$saveButton.prop('disabled', $(this).val().length <= 2);
+		$saveButton.prop('disabled', ($(this).val() as string).length <= 2);
 	});
 	// Enable submit through pressing the 'enter' key while a form element has the focus
 	$('input, select', $newCorpusModal).on('keydown', function(event) {
-		if (event.keyCode == 13) {
+		if (event.keyCode === 13) {
 			event.preventDefault();
 			if (!$saveButton.prop('disabled')) {
 				$saveButton.click();
@@ -862,18 +790,19 @@ function initNewCorpus() {
 	});
 	$saveButton.on('click', function(event) {
 		event.preventDefault();
-		if ($(this).prop('disabled'))
+		if ($(this).prop('disabled')) {
 			return;
+		}
 
-		var corpusName = $corpusNameInput.val();
-		var format = $corpusFormatSelect.val();
+		const corpusName = $corpusNameInput.val() as string;
+		const format = $corpusFormatSelect.val() as string;
 		$newCorpusModal.modal('hide');
 		createIndex(corpusName, generateShortName(corpusName), format);
 	});
 
 	$corpusFormatSelect.on('changed.bs.select, refreshed.bs.select, loaded.bs.select, change', function() {
-		var formatId = $(this).selectpicker('val');
-		var format = formats.find(function(format) { return format.id === formatId; });
+		const formatId = $(this).selectpicker('val');
+		const format = formats.find(f => f.id === formatId);
 		// format always exists if it's present in the select to begin with
 
 		$corpusFormatDescription.text(format.description);
@@ -890,11 +819,11 @@ function initNewCorpus() {
  * @param {string} buttontext
  * @param {any} fnCallback
  */
-var confirmDialog = (function() {
-	var $modal = $('#modal-confirm');
-	var $confirmButton = $modal.find('#modal-confirm-confirm');
-	var $title = $modal.find('#modal-confirm-title');
-	var $message = $modal.find('#modal-confirm-message');
+const confirmDialog = (function() {
+	const $modal = $('#modal-confirm');
+	const $confirmButton = $modal.find('#modal-confirm-confirm');
+	const $title = $modal.find('#modal-confirm-title');
+	const $message = $modal.find('#modal-confirm-message');
 
 	return function(title, message, buttontext, fnCallback) {
 		$title.html(title);
@@ -903,8 +832,9 @@ var confirmDialog = (function() {
 
 		$modal.modal('show');
 		$modal.one('hide.bs.modal', function() {
-			if (document.activeElement === $confirmButton[0])
+			if (document.activeElement === $confirmButton[0]) {
 				fnCallback();
+			}
 		});
 	};
 })();
@@ -914,16 +844,16 @@ function generateShortName(name) {
 }
 
 function initNewFormat() {
-	var $modal = $('#new-format-modal');
+	const $modal = $('#new-format-modal');
 
-	var $fileInput = $('#format_file');
-	var $presetSelect = $('#format_select');
-	var $presetInput = $('#format_preset');
-	var $downloadButton = $('#format_download');
+	const $fileInput = $('#format_file') as JQuery<HTMLInputElement>;
+	const $presetSelect = $('#format_select');
+	const $presetInput = $('#format_preset');
+	const $downloadButton = $('#format_download');
 
-	var $formatName = $('#format_name');
-	var $formatType = $('#format_type');
-	var editor = CodeMirror.fromTextArea($('#format_editor')[0], {
+	const $formatName = $('#format_name');
+	const $formatType = $('#format_type');
+	const editor = CodeMirror.fromTextArea($('#format_editor')[0], {
 		mode: 'yaml',
 		lineNumbers: true,
 		matchBrackets: true,
@@ -931,7 +861,7 @@ function initNewFormat() {
 		viewportMargin: 100 // render 100 lines above and below the visible editor window
 	});
 
-	var $confirmButton = $('#format_save');
+	const $confirmButton = $('#format_save');
 
 	function showFormatError(text) {
 		$('#format_error').text(text).show();
@@ -941,7 +871,7 @@ function initNewFormat() {
 	}
 
 	function uploadFormat(file) {
-		var formData = new FormData();
+		const formData = new FormData();
 		formData.append('data', file, file.name);
 
 		$.ajax(blsUrl + '/input-formats/', {
@@ -949,9 +879,9 @@ function initNewFormat() {
 			processData: false,
 			contentType: false,
 			type: 'POST',
-			accept: 'application/javascript',
+			accepts: {json: 'application/javascript'},
 			dataType: 'json',
-			success: function (data) {
+			success (data) {
 				$modal.modal('hide');
 				$formatName.val('');
 				editor.setValue('');
@@ -959,7 +889,7 @@ function initNewFormat() {
 				refreshFormatList();
 				showSuccess(data.status.message);
 			},
-			error: function (jqXHR, textStatus/*, errorThrown*/) {
+			error (jqXHR, textStatus/*, errorThrown*/) {
 				showFormatError(jqXHR.responseJSON && jqXHR.responseJSON.error.message || textStatus);
 			}
 		});
@@ -981,7 +911,7 @@ function initNewFormat() {
 	});
 
 	$formatType.on('change', function() {
-		var newMode = $(this).selectpicker('val');
+		const newMode = $(this).selectpicker('val');
 		if (newMode === 'json') {
 			editor.setOption('mode', {
 				name: 'javascript',
@@ -994,8 +924,8 @@ function initNewFormat() {
 
 	$fileInput.on('change', function() {
 		if (this.files[0] != null) {
-			var file = this.files[0];
-			var fr = new FileReader();
+			const file = this.files[0];
+			const fr = new FileReader();
 
 			fr.onload = function() {
 				editor.setValue(fr.result);
@@ -1005,23 +935,24 @@ function initNewFormat() {
 	});
 
 	$downloadButton.on('click', function() {
-		var $this = $(this);
-		var presetName = $presetInput.val();
-		var $formatName = $('#format_name');
+		const $this = $(this);
+		const presetName = $presetInput.val() as string;
 
-		if (!presetName || $this.prop('disabled'))
+		if (!presetName || $this.prop('disabled')) {
 			return;
+		}
 
 		$this.prop('disabled', true).append('<span class="fa fa-spinner fa-spin"></span>');
 		hideFormatError();
 		$.ajax(blsUrl + '/input-formats/' + presetName, {
-			'type': 'GET',
-			'accept': 'application/javascript',
-			'dataType': 'json',
-			'success': function (data) {
-				var configFileType = data.configFileType.toLowerCase();
-				if (configFileType === 'yml')
+			type: 'GET',
+			accepts: {json: 'application/javascript'},
+			dataType: 'json',
+			success (data) {
+				let configFileType = data.configFileType.toLowerCase();
+				if (configFileType === 'yml') {
 					configFileType = 'yaml';
+				}
 
 				$formatType.selectpicker('val', configFileType);
 				$formatType.trigger('change');
@@ -1029,15 +960,16 @@ function initNewFormat() {
 
 				// is a user-owned format and no name for the format has been given yet
 				// set the format name to this format so the user can easily save over it
-				if (!$formatName.val() && presetName.indexOf(':') > 0)
+				if (!$formatName.val() && presetName.indexOf(':') > 0) {
 					$formatName.val(presetName.substr(presetName.indexOf(':')+1));
+				}
 
 				$this.closest('.collapse').collapse('hide');
 			},
-			'error': function (jqXHR, textStatus/*, errorThrown*/) {
+			error (jqXHR, textStatus/*, errorThrown*/) {
 				showFormatError(jqXHR.responseJSON && jqXHR.responseJSON.error.message || textStatus);
 			},
-			'complete': function() {
+			complete () {
 				$this.prop('disabled', false).find('.fa-spinner').remove();
 			}
 		});
@@ -1049,12 +981,12 @@ function initNewFormat() {
 			return;
 		}
 
-		var fileContents = editor.getValue();
-		var fileName = $formatName.val() + '.' + $formatType.selectpicker('val');
+		const fileContents = editor.getValue();
+		const fileName = $formatName.val() + '.' + $formatType.selectpicker('val');
 
 		// IE11 does not support File constructor.
-		//var file = new File([new Blob([fileContents])], fileName);
-		var file = new Blob([fileContents]);
+		// var file = new File([new Blob([fileContents])], fileName);
+		const file = new Blob([fileContents]);
 		file.name = fileName;
 		file.lastModifiedDate = new Date();
 		uploadFormat(file);
@@ -1066,7 +998,7 @@ function initDeleteFormat() {
 	$('tbody[data-autoupdate="format"]').on('click', '[data-format-operation="delete"]', function(event) {
 		event.preventDefault();
 
-		var formatId = $(this).data('format-id');
+		const formatId = $(this).data('format-id');
 
 		confirmDialog(
 			'Delete import format?',
@@ -1075,9 +1007,9 @@ function initDeleteFormat() {
 			function() {
 				$.ajax(blsUrl + '/input-formats/' + formatId, {
 					type: 'DELETE',
-					accept: 'application/javascript',
+					accepts: {json: 'application/javascript'},
 					dataType: 'json',
-					success: function(data) {
+					success (data) {
 						showSuccess(data.status.message);
 						refreshFormatList();
 					},
@@ -1091,12 +1023,12 @@ function initDeleteFormat() {
 function initEditFormat() {
 	$('tbody[data-autoupdate="format"]').on('click', '[data-format-operation="edit"]', function(event) {
 		event.preventDefault();
-		var formatId = $(this).data('format-id');
+		const formatId = $(this).data('format-id');
 
-		var $modal = $('#new-format-modal');
-		var $presetSelect = $('#format_select');
-		var $downloadButton = $('#format_download');
-		var $formatName = $('#format_name');
+		const $modal = $('#new-format-modal');
+		const $presetSelect = $('#format_select');
+		const $downloadButton = $('#format_download');
+		const $formatName = $('#format_name');
 		// formattype determined after download succeeds
 
 		$presetSelect.selectpicker('val', formatId).trigger('change');
@@ -1107,7 +1039,7 @@ function initEditFormat() {
 	});
 }
 
-$(document).ready(function () {
+$(document).ready(function() {
 	blsUrl = $('.contentbox').data('blsUrl');
 
 	// Get the list of corpora.
@@ -1124,5 +1056,3 @@ $(document).ready(function () {
 	initDeleteFormat();
 	initEditFormat();
 });
-
-

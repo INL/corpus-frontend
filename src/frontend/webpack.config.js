@@ -4,16 +4,16 @@ const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 module.exports = {
 	entry: {
-		article: ['@babel/polyfill', './src/article.js'],
-		corpora: ['@babel/polyfill', './src/corpora.js'],
-		search: ['@babel/polyfill', './src/search.js'],
+		article: './src/article.ts',
+		corpora: './src/corpora.ts',
+		search: './src/search.ts',
 	},
 	output: {
 		filename: '[name].js',
 		// Path on disk for output file
 		path: path.resolve(__dirname, 'dist'),
 		// Path in webpack-dev-server for compiled files (has priority over disk files in case both exist)
-		publicPath: '/dist/'
+		publicPath: '/dist/',
 	},
 	resolve: {
 		extensions: ['.js', '.ts'] // enable autocompleting .ts and .js extensions when using import '...'
@@ -24,47 +24,58 @@ module.exports = {
 		// NOTE: This is only to help debugging and development, all inter-module communication should go through the normal
 		// import/exports
 		rules: [{
-			test: require.resolve('./src/utils/debug.js'),
-			use: [{
-				loader: 'expose-loader',
-				options: 'cf.debug'
-			}]
-		}, {
-			test: require.resolve('./src/corpora.js'),
-			use: [{
-				loader: 'expose-loader',
-				options: 'cf.core'
-			}]
-		}, {
-			test: require.resolve('./src/modules/singlepage-form.js'),
-			use: [{
-				loader: 'expose-loader',
-				options: 'cf.mainform'
-			}]
-		}, {
-			test: require.resolve('./src/modules/singlepage-interface.js'),
-			use: [{
-				loader: 'expose-loader',
-				options: 'cf.search'
-			}]
-		}, {
+		// 	test: require.resolve('./src/utils/debug.ts'),
+		// 	use: [{
+		// 		loader: 'expose-loader',
+		// 		options: 'cf.debug'
+		// 	}]
+		// }, {
+		// 	test: require.resolve('./src/corpora.ts'),
+		// 	use: [{
+		// 		loader: 'expose-loader',
+		// 		options: 'cf.core'
+		// 	}]
+		// }, {
+		// 	test: require.resolve('./src/modules/singlepage-form.ts'),
+		// 	use: [{
+		// 		loader: 'expose-loader',
+		// 		options: 'cf.mainform'
+		// 	}]
+		// }, {
+		// 	test: require.resolve('./src/modules/singlepage-interface.ts'),
+		// 	use: [{
+		// 		loader: 'expose-loader',
+		// 		options: 'cf.search'
+		// 	}]
+		// }, {
 			test: /\.tsx?$/,
 			use: [{
+				loader: 'babel-loader',
+			}, {
 				loader: 'ts-loader',
 				options: {
-					// disables type checking (typescript compiler now just removes type annotations basically)
-					// required for webpack-dev-server hot module replacement to work
-					// see https://github.com/TypeStrong/ts-loader/tree/d8096aac0061cdd0ef9228fee5a0c2d137eca34f/examples/hot-module-replacement
-					// We get back type checking through fork-ts-checker-webpack-plugin (https://github.com/Realytics/fork-ts-checker-webpack-plugin)
-					// This runs type checks outside the main webpack thread, also speeds up compilation significantly (though with this size project it's a non-issue)
-					transpileOnly: true,
+					/*
+					Required for webpack-dev-server to support HMR (hot module reloading) from typescript files
+					This however disables all type checking errors/warnings
+					These are then re-enabled through ForkTsCheckerWebpackPlugin
+					NOTE: the default behavior is to refresh the entire page on changes in a module
+					this can be prevented by adding the following code (essentially manually replacing your imported functions with the updated version):
+					But it needs to be done everywhere the module is used, and for every import that you want to update without refreshing the page...
+					if (module.hot) {
+						module.hot.accept('./exports-string', () => {
+							const { valueToLog } = require('./exports-string'); // original imported value doesn't update, so you need to import it again
+							document.write(`HMR valueToLog: ${valueToLog}`);
+						});
+					}
+					*/
+					transpileOnly: true
 				}
 			}]
 		}, {
 			test: /\.js$/,
 			exclude: [/node_modules/, './src/vendor'],
 			loader: 'babel-loader',
-		},]
+		}]
 	},
 	plugins: [
 		// ProvidePlugin makes modules globally available under certain symbols, for both our own files as well as our imported dependencies.
@@ -81,9 +92,5 @@ module.exports = {
 
 		new ForkTsCheckerWebpackPlugin(),
 	],
-	stats: {
-		// Some extraneous warnings from using ts-loader with transpileOnly true
-		warningsFilter: /export .* was not found in/,
-	},
-	devtool: 'eval-souce-map'
+	devtool: 'eval-source-map',
 };

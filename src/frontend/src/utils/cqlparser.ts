@@ -1,49 +1,48 @@
+export type XmlTag = {
+	type: 'xml';
+	/** xml token name excluding namespace, brackets, attributes etc */
+	tagName: string;
+	isClosingTag: boolean;
+};
 
-/**
- * @typedef Result
- * @property {Array.<Token>} [tokens]
- * @property {string} [within] - xml token name excluding namespace, brackets, attributes etc
- */
+export type Attribute = {
+	type: 'attribute';
+	/** A word property(/annotatedField) id, such as lemma, pos, word, etc... */
+	name: string;
+	/** Comparison type, usually '=' or '!=' */
+	operator: string;
+	/** Regex to compare the attribute to */
+	value: string;
+};
 
-/**
- * @typedef Token
- * @property {XmlTag} [leadingXmlTag]
- * @property {XmlTag} [trailingXmlTag]
- * @property {(BinaryOp | Attribute)} expression
- * @property {boolean} optional
- * @property {Repeats} [repeats]
- */
+export type BinaryOp = {
+	type: 'binaryOp';
+	/** typically 'OR', 'AND', '|', '&' */
+	operator: string;
+	left: BinaryOp|Attribute;
+	right: BinaryOp|Attribute;
+};
 
-/**
- * @typedef XmlTag
- * @property {'xml'} type
- * @property {string} tagName - xml token name excluding namespace, brackets, attributes etc
- * @property {boolean} isClosingTag
- */
+export type Token = {
+	leadingXmlTag?: XmlTag;
+	trailingXmlTag?: XmlTag;
+	expression: BinaryOp|Attribute;
+	optional: boolean;
+	repeats?: {
+		min: number;
+		max: number;
+	};
+};
 
-/**
- * @typedef BinaryOp
- * @property {'binaryOp'} type
- * @property {('OR' | 'AND')} operator
- * @property {(BinaryOp | Attribute)} left
- * @property {(BinaryOp | Attribute)} right
- */
-
-/**
- * @typedef Attribute
- * @property {'attribute'} type
- * @property {string} name - a word property name, such as lemma, pos, word etc...
- * @property {string} operator - equality type, usually '=' or '!='
- * @property {string} value - regex to compare with
- */
+export type Result = {
+	tokens: Token[];
+	/** xml token name excluding namespace, brackets, attributes etc */
+	within?: string;
+};
 
 const WHITESPACE = [' ', '\t', '\n', '\r'];
 
-/**
- * @param {string} [input] - a cql query
- * @return {Result}
- */
-export default function(input) {
+export default function(input: string): Result {
 
 	let pos = 0;
 	let cur = '';
@@ -140,7 +139,7 @@ export default function(input) {
 			return input.substring(startPos, endPos);
 		} catch(err) {
 			// We can be a little more descriptive in our errors
-			throw new errorMsg('Unexpected end of input, expected one of [' + symbols + ']');
+			throw errorMsg('Unexpected end of input, expected one of [' + symbols + ']');
 		}
 	}
 
@@ -168,7 +167,7 @@ export default function(input) {
 		expect('"', true); // also keep all whitespace before and after the quote
 
 		if (operator !== '=' && operator !== '!=') {
-			throw new errorMsg('Unknown operator ' + operator);
+			throw errorMsg('Unknown operator ' + operator);
 		}
 
 		return {
@@ -261,10 +260,10 @@ export default function(input) {
 			}
 
 			if (isNaN(minRep)) {
-				throw new errorMsg('minRepeats is not a number');
+				throw errorMsg('minRepeats is not a number');
 			}
 			if (maxRep !== null && isNaN(maxRep)) {
-				throw new errorMsg('maxRepeats is not a number');
+				throw errorMsg('maxRepeats is not a number');
 			}
 
 			token.repeats = {
@@ -278,7 +277,7 @@ export default function(input) {
 		if (test('<')) {
 			token.trailingXmlTag = parseXmlTag();
 			if (!token.trailingXmlTag.isClosingTag) {
-				throw new errorMsg('Token is followed by xml tag but it\'s an opening tag');
+				throw errorMsg('Token is followed by xml tag but it\'s an opening tag');
 			}
 		}
 

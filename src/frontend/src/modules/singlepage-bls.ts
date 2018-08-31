@@ -5,7 +5,8 @@ import URI from 'urijs';
 import parseCql from '../utils/cqlparser';
 import {debugLog} from '../utils/debug';
 
-import {FilterField, PropertyField} from './singlepage-form';
+import {FilterField, PropertyField} from '../types/pagetypes';
+import {makeRegexWildcard, makeWildcardRegex} from '../utils';
 
 /**
  * Converts search parameters into a query for blacklab-server and executes it.
@@ -67,23 +68,6 @@ export type BlacklabParameters = {
 };
 
 declare const BLS_URL: string;
-
-function makeWildcardRegex(original) {
-	return original
-		.replace(/([\^$\-\\.(){}[\]+])/g, '\\$1') // add slashes for regex characters
-		.replace(/\*/g, '.*') // * -> .*
-		.replace(/\?/g, '.'); // ? -> .
-}
-
-function makeRegexWildcard(original) {
-	let a = original;
-	a=a.replace(/\\([\^$\-\\(){}[\]+])/g, '$1'); // remove most slashes
-	a=a.replace(/\\\./g, '_ESC_PERIOD_'); // escape \.
-	a=a.replace(/\.\*/g, '*'); // restore *
-	a=a.replace(/\./g, '?'); // restore ?
-	a=a.replace(/_ESC_PERIOD_/g, '.'); // unescape \. to .
-	return a;
-}
 
 // /**
 //  * Converts an array of PropertyFields to a cql token string.
@@ -690,7 +674,7 @@ export function getPageParam(blsParam): SearchParameters|null {
 			}
 
 			/*
-			 * Build the actuals PropertyFields.
+			 * Build the actual PropertyFields.
 			 * Convert from regex back into pattern globs, extract case sensitivity.
 			 */
 			const propertyFields: PropertyField[] = [];

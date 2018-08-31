@@ -220,7 +220,7 @@ createHandler({selector: 'tbody[data-autoupdate="corpora"]', event: DataEvent.CO
 	'{{#corpora}} \
 	<tr> \
 		<td><a title="Search the \'{{displayName}}\' corpus" class="icon fa fa-search {{^canSearch}}disabled{{/canSearch}}" {{#canSearch}}href="{{searchUrl}}"{{/canSearch}}></a></td> \
-		<td class="corpus-name"><a title="Search the \'{{displayName}}\' corpus" class="{{^canSearch}}disabled{{/canSearch}}" {{#canSearch}}href="{{searchUrl}}"{{/canSearch}}>{{displayName}} {{status}}</a></td>\
+		<td class="corpus-name"><a title="Search the \'{{displayName}}\' corpus" class="{{^canSearch}}disabled{{/canSearch}}" {{#canSearch}}href="{{searchUrl}}"{{/canSearch}}>{{displayName}} {{statusText}}</a></td>\
 		<td>{{sizeString}}</td>\
 		{{#isPrivate}} \
 			<td {{#isUserFormat}}title="Format owned by {{documentFormatOwner}}"{{/isUserFormat}}>{{#isUserFormat}}*{{/isUserFormat}}{{documentFormatShortId}}</td>\

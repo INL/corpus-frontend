@@ -576,7 +576,7 @@ function formatHits(data, textDirection) {
  * @param {any} data the blacklab-server response.
  * @returns An array of html strings containing the <thead> and <tbody>, but without the enclosing <table> element.
  */
-function formatDocs(data, textDirection) {
+function formatDocs(data, textDirection): string[] {
 	const html = [];
 
 	html.push(

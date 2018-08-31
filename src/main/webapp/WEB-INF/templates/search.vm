@@ -74,6 +74,14 @@
 
 #parse("header.vm")
 
+#if($propertyGroups.isEmpty()) ## Only display ungrouped fields if no other groups are present
+	#set($_ = $propertyGroups.put("Properties", $ungroupedPropertyFields)) ## silence return value of put() to stop it from ending up in the page.
+#end
+#if($metadataGroups.isEmpty()) ## Only display ungrouped fields if no other groups are present
+    #set($_ = $metadataGroups.put("Metadata", $ungroupedMetadataFields)) ## silence return value of put() to stop it from ending up in the page.
+#end
+        
+
 #set($unescapedIndexStructureJson = $indexStructureJson) ## variables with 'unescaped' in the name are not html-escaped, see BaseResponse.java
 
 <script>
@@ -121,9 +129,6 @@
                 <li><a href="#query" data-toggle="tab" class="querytype">CQL query</a></li>
             </ul>
             <div class="tab-content">
-                #if($propertyGroups.isEmpty()) ## Only display ungrouped fields if no other groups are present
-		            #set($_ = $propertyGroups.put("Properties", $ungroupedPropertyFields)) ## silence return value of put() to stop it from ending up in the page.
-		        #end
 		        #set($usePropertyTabs = ($propertyGroups.size() > 1)) ##only use tabs when we have more than one group to display
                 <div class="tab-pane active form-horizontal" id="simple" #if ($usePropertyTabs) style="margin-top: -15px"#end>
 			        #if($usePropertyTabs) 
@@ -185,10 +190,6 @@
             </div>
         </div>
 
-        #if($metadataGroups.isEmpty()) ## Only display ungrouped fields if no other groups are present
-            #set($_ = $metadataGroups.put("Metadata", $ungroupedMetadataFields)) ## silence return value of put() to stop it from ending up in the page.
-        #end
-        
         #set($useFilterTabs = ($metadataGroups.size() > 1)) ##only use tabs when we have more than one group to display
         <div class="col-xs-12 col-md-6" id="filterContainer">
             <h3>Filter search by &hellip;</h3>
@@ -342,19 +343,19 @@
                         <div class="groupselect-container" style="display:flex;align-items:center;flex-wrap:nowrap;">
                             <select class="selectpicker groupselect" title="Group hits by..." data-size="15" data-actions-box="true" data-deselect-all-text="reset" data-show-subtext="true" data-style="btn-default btn-sm" multiple>
                                 <optgroup label="Before hit">
-                                    #foreach($propertyField in $propertyFields)
+                                   	#foreach($group in $propertyGroups.entrySet()) #foreach($propertyField in $group.value)
                                     <option value="wordleft:$propertyField.getId()" data-content="Group by $propertyField.getDisplayName() <small class=&quot;text-muted&quot;>before</small>">Group by $propertyField.getDisplayName()</option>
-                                    #end
+                                    #end #end
                                 </optgroup>
                                 <optgroup label="Hit">
-                                    #foreach($propertyField in $propertyFields)
+                                    #foreach($group in $propertyGroups.entrySet()) #foreach($propertyField in $group.value)
                                     <option value="hit:$propertyField.getId()">Group by $propertyField.getDisplayName()</option>
-                                    #end
+                                    #end #end
                                 </optgroup>
                                 <optgroup label="After hit">
-                                    #foreach($propertyField in $propertyFields)
+                                    #foreach($group in $propertyGroups.entrySet()) #foreach($propertyField in $group.value)
                                     <option value="wordright:$propertyField.getId()" data-content="Group by $propertyField.getDisplayName() <small class=&quot;text-muted&quot;>after</small>">Group by $propertyField.getDisplayName()</option>
-                                    #end
+                                    #end #end
                                 </optgroup>
                                 #foreach($group in $metadataGroups.entrySet())
                                 <optgroup label="$group.key">

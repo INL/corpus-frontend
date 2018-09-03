@@ -224,7 +224,7 @@ function toPageUrl(searchParams) {
  * @param {string} pattern - cql query
  * @returns True or false indicating success or failure respectively
  */
-function populateQueryBuilder(pattern) {
+export function populateQueryBuilder(pattern) {
 	if (!pattern) {
 		return false;
 	}

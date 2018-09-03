@@ -29,8 +29,9 @@ type PageState = {
 	/** More of a display mode on the results */
 	operation: 'hits'|'docs'|null;
 	pageSize: number;
-	pattern: {[key: string]: PropertyField};
+	pattern: {[key: string]: PropertyField|undefined};
 	patternString: string|null;
+	patternQuerybuilder: string|null;
 	sampleMode: 'percentage'|'count';
 	sampleSeed: string|null;
 	sampleSize: number|null;
@@ -178,6 +179,10 @@ class UrlPageState implements PageState {
 		return this.getString('patt', null, v => v?v:null);
 	}
 
+	get patternQuerybuilder(): string|null {
+		return this.patternString;
+	}
+
 	get sampleMode(): 'count'|'percentage' {
 		// If 'sample' exists we're in count mode, otherwise if 'samplenum' (and is valid), we're in percent mode
 		// ('sample' also has precendence for the purposes of determining samplesize)
@@ -221,7 +226,8 @@ class UrlPageState implements PageState {
 		} else {
 			const groupBy = this.getString('group', '')!
 			.split(',')
-			.map(g => g.trim());
+			.map(g => g.trim())
+			.filter(g => !!g);
 
 			return {
 				groupBy,
@@ -244,7 +250,8 @@ class UrlPageState implements PageState {
 		} else {
 			const groupBy = this.getString('group', '')!
 			.split(',')
-			.map(g => g.trim());
+			.map(g => g.trim())
+			.filter(g => !!g);
 
 			return {
 				groupBy,
@@ -264,6 +271,7 @@ class UrlPageState implements PageState {
 			pageSize: this.pageSize,
 			pattern: this.pattern,
 			patternString: this.patternString,
+			patternQuerybuilder: this.patternQuerybuilder,
 			sampleMode: this.sampleMode,
 			sampleSeed: this.sampleSeed,
 			sampleSize: this.sampleSize,
@@ -282,7 +290,7 @@ class UrlPageState implements PageState {
 		if (typeof prop !== 'string') {
 			return fallback;
 		}
-		const val = Number.parseInt(prop);
+		const val = Number.parseInt(prop, 10);
 		if (isNaN(val)) {
 			return fallback;
 		}
@@ -326,25 +334,6 @@ class UrlPageState implements PageState {
 // And then we can put that into the url and be done with it
 // though we still need some way to make the current parameters reactive (meaning that we can update the url when something changes)
 
-// let state: PageState = {
-// 	...new UrlPageState() // initialize using current url.
-// };
-/*
-type PageState = {
-	docDisplaySettings: DocDisplaySettings;
-	filters: {[key: string]: FilterField};
-	hitDisplaySettings: HitDisplaySettings;
-	operation: 'hits'|'docs';
-	pageSize: number;
-	pattern: {[key: string]: PropertyField};
-	patternString: string;
-	sampleMode: 'percentage'|'count';
-	sampleSeed: string;
-	sampleSize: number;
-	within: string|'__default__';
-	wordsAroundHit: number|null;
-};*/
-
 const b = getStoreBuilder<PageState>();
 export const actions = {
 	docs: {
@@ -368,8 +357,9 @@ export const actions = {
 	clearPattern: b.commit(state => state.pattern = {}, 'clearpattern'),
 	// may require some further work based on how it's used in practise
 	patternString: b.commit((state, payload: string) => state.patternString = payload, 'patternstring'),
+	patternQuerybuilder: b.commit((state, payload: string) => state.patternQuerybuilder = payload, 'patternquerybuilder'),
 	sampleMode: b.commit((state, payload: 'percentage'|'count') => state.sampleMode = payload, 'samplemode'),
-	sampleSeed: b.commit((state, payload: string|null) => state.sampleSeed = payload, 'sampleseed'),
+	sampleSeed: b.commit((state, payload: string|null) => state.sampleSeed = payload ? payload : null, 'sampleseed'),
 	sampleSize: b.commit((state, payload: number|null) => {
 		if (payload == null) {
 			state.sampleSize = payload;
@@ -382,8 +372,8 @@ export const actions = {
 			state.sampleSize = Math.max(0, payload);
 		}
 	}, 'samplesize'),
-	within: b.commit((state, payload: string|null) => state.within = payload, 'within'),
-	wordsaroundhit: b.commit((state, payload: number|null) => state.wordsAroundHit = payload, 'wordsaroundhit')
+	within: b.commit((state, payload: string|null) => state.within = payload?payload:null, 'within'),
+	wordsAroundHit: b.commit((state, payload: number|null) => state.wordsAroundHit = payload, 'wordsaroundhit')
 };
 
 export const getState = b.state();

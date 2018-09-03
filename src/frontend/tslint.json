@@ -7,7 +7,6 @@
 		"arrow-parens": false,
 		"object-literal-sort-keys": false,
 		"trailing-comma": false,
-		"radix": false,
 		"interface-name": false,
 		"only-arrow-functions": false, // jquery and some of our own code explicitly set 'this' of callbacks, can't do that with arrow functions
 

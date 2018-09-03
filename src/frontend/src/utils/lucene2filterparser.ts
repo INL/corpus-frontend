@@ -37,6 +37,7 @@ type ASTRange = {
 	inclusive_max: boolean;
 };
 
+/** Parse the expression into an array of filter fields for easy displaying. Throws error if the query is too complex or contains errors. */
 export default (blsParam: any): FilterField[] => {
 
 	debugLog('parsing filter string', blsParam.filter);
@@ -173,13 +174,7 @@ export default (blsParam: any): FilterField[] => {
 		});
 	}
 
-	try {
-		const results = luceneQueryParser.parse(blsParam.filter);
-		node(results);
-		return parsedValues.length ? parsedValues : null;
-	} catch (error) {
-		debugLog('Could not parse lucene query ' + blsParam.filter);
-		debugLog('reason: ', error);
-		return null;
-	}
+	const results = luceneQueryParser.parse(blsParam.filter);
+	node(results);
+	return parsedValues.length ? parsedValues : null;
 };

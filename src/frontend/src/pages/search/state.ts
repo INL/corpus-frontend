@@ -1,35 +1,52 @@
+import * as $ from 'jquery';
 import * as BLTypes from '../../types/blacklabtypes';
+
+import {getStoreBuilder} from 'vuex-typex';
 
 import {FilterField, PropertyField} from '../../types/pagetypes';
 import {makeRegexWildcard, makeWildcardRegex} from '../../utils';
 import parseCql from '../../utils/cqlparser';
 import parseLucene from '../../utils/lucene2filterparser';
-
-export type UrlParameters = {
-	// page: number,
-	// pageSize: number,
-	// sampleMode: null,
-	// sampleSize: null,
-	// sampleSeed: null,
-	// wordsAroundHit: null,
-	// pattern: null,
-	// within: null,
-	// filters: null,
-	// sort: null,
-	// groupBy: null,
-	// viewGroup: null,
-	// caseSensitive: null,
-	// operation?: 'docs'|'hits',
-};
+import { debugLog } from '../../utils/debug';
 
 const enum defaults {
 	pageSize = 20,
 	wordsAroundHit = 3,
-	sampleMode = 'percent'
+	sampleMode = 'percentage'
 }
 
-/** Decode the current url into various bits and pieces for the page state. */
-class UrlPageState {
+type PageState = {
+	filters: {[key: string]: FilterField};
+	hitDisplaySettings: HitDisplaySettings;
+	docDisplaySettings: DocDisplaySettings;
+	/** More of a display mode on the results */
+	operation: 'hits'|'docs';
+	pageSize: number;
+	pattern: {[key: string]: PropertyField};
+	patternString: string;
+	sampleMode: 'percentage'|'count';
+	sampleSeed: string;
+	sampleSize: number;
+	within?: string;
+	wordsAroundHit?: number;
+};
+
+interface SearchDisplaySettings {
+	/** case-sentive grouping */
+	caseSentive: boolean;
+	groupBy: string[];
+	sort?: string;
+}
+
+interface HitDisplaySettings extends SearchDisplaySettings {
+	viewGroup?: string;
+}
+interface DocDisplaySettings extends SearchDisplaySettings { // tslint:disable-line
+	// nothing yet
+}
+
+/** Decode the current url into a valid page state configuration. Keep everything private except the getters */
+class UrlPageState implements PageState {
 	/**
 	 * Path segments of the url this was constructed with, typically something like [corpusname, 'search', ('docs'|'hits')?]
 	 * But might contain extra leading segments if the application is proxied.
@@ -43,6 +60,19 @@ class UrlPageState {
 		this.params = uri.search(true);
 	}
 
+	get filters(): {[key: string]: FilterField} {
+		const luceneString = this.getString('filter', undefined, v=>v?v:undefined);
+		if (luceneString == null) {
+			return {};
+		}
+		try {
+			return parseLucene({filter: luceneString}).reduce((acc, v) => {acc[v.name] = v; return acc;}, {});
+		} catch (error) {
+			debugLog('Cannot decode lucene query ', luceneString);
+			return {};
+		}
+	}
+
 	get operation(): 'hits'|'docs'|undefined {
 		const path = this.paths.length ? this.paths[this.paths.length-1].toLowerCase() : undefined;
 		if (['hits', 'docs'].includes(path)) {
@@ -50,31 +80,6 @@ class UrlPageState {
 		} else {
 			return undefined;
 		}
-	}
-
-	get sampleSize(): number|undefined {
-		// Use 'sample' unless missing, then use 'samplenum', if 0-100 (as it's percentage-based)
-		return this.getNumber('sample', this.getNumber('samplenum', undefined, v => (v >= 0 && v <=100) ? v : undefined));
-	}
-
-	get sampleMode(): 'count'|'percent' {
-		// If 'sample' exists we're in count mode, otherwise if 'samplenum' (and is valid), we're in percent mode
-		// ('sample' also has precendence for the purposes of determining samplesize)
-		if (this.getNumber('sample') != null) {
-			return 'count';
-		} else if (this.getNumber('samplemode', undefined, v => (v >= 0 && v <=100) ? v : undefined) != null) {
-			return 'percent';
-		} else {
-			return defaults.sampleMode;
-		}
-	}
-
-	get sampleSeed(): string|undefined {
-		return this.getString('sampleseed', undefined, v => v?v:undefined);
-	}
-
-	get wordsAroundHit(): number {
-		return this.getNumber('wordsaroundhit', defaults.wordsAroundHit, v => v >= 0 && v <= 10 ? v : defaults.wordsAroundHit);
 	}
 
 	get page(): number {
@@ -86,36 +91,7 @@ class UrlPageState {
 		return this.getNumber('number', defaults.pageSize, v => [20,50,100,200].includes(v) ? v : defaults.pageSize);
 	}
 
-	// TODO verify based on indexmetadata
-	get groupBy(): string[] {
-		const groups = this.getString('group', undefined);
-		if (groups == null) {
-			return [];
-		}
-
-		return groups.split(',').map(g => g.replace(/:[si]$/, ''));
-	}
-
-	get viewGroup(): string|undefined {
-		return this.getString('viewgroup', undefined, v => v?v:undefined);
-	}
-
-	// TODO verify based on indexmetadata (maybe?)
-	get sort(): string|undefined {
-		return this.getString('sort', undefined, v => v?v:undefined);
-	}
-
-	get caseSensitive(): boolean {
-		const groups = this.getString('group', undefined);
-		return groups.split(',').every(g => g.endsWith(':s'));
-	}
-
-	get filters(): FilterField[] {
-		const luceneString = this.getString('filter', undefined, v=>v?v:undefined);
-		return (luceneString != null) ? parseLucene({filter: luceneString}) : [];
-	}
-
-	get pattern(): PropertyField[] {
+	get pattern(): {[key: string]: PropertyField} {
 		function isCase(value) { return value.startsWith('(?-i)') || value.startsWith('(?c)'); }
 		function stripCase(value) { return value.substr(value.startsWith('(?-i)') ? 5 : 4); }
 
@@ -183,10 +159,12 @@ class UrlPageState {
 					name: key,
 					case: caseSensitive,
 					value: makeRegexWildcard(values.join(' '))
-				};
-			});
+				} as PropertyField;
+			})
+			.reduce((acc, v) => {acc[v.name] = v; return acc;}, {});
 		} catch (error) {
-			return [];
+			debugLog('Could not parse cql query', error);
+			return {};
 		}
 	}
 
@@ -194,7 +172,78 @@ class UrlPageState {
 		return this.getString('patt', '');
 	}
 
-	// TODO within
+	get sampleMode(): 'count'|'percentage' {
+		// If 'sample' exists we're in count mode, otherwise if 'samplenum' (and is valid), we're in percent mode
+		// ('sample' also has precendence for the purposes of determining samplesize)
+		if (this.getNumber('sample') != null) {
+			return 'count';
+		} else if (this.getNumber('samplemode', undefined, v => (v >= 0 && v <=100) ? v : undefined) != null) {
+			return 'percentage';
+		} else {
+			return defaults.sampleMode;
+		}
+	}
+
+	get sampleSeed(): string|undefined {
+		return this.getString('sampleseed', undefined, v => v?v:undefined);
+	}
+
+	get sampleSize(): number|undefined {
+		// Use 'sample' unless missing, then use 'samplenum', if 0-100 (as it's percentage-based)
+		return this.getNumber('sample', this.getNumber('samplenum', undefined, v => (v >= 0 && v <=100) ? v : undefined));
+	}
+
+	// TODO these might become dynamic in the future, then we need extra manual checking
+	get within(): 'p'|'s'|undefined {
+		return undefined; // TODO
+	}
+
+	get wordsAroundHit(): number {
+		return this.getNumber('wordsaroundhit', defaults.wordsAroundHit, v => v >= 0 && v <= 10 ? v : defaults.wordsAroundHit);
+	}
+
+	get hitDisplaySettings(): HitDisplaySettings {
+		if (this.operation !== 'hits') {
+			// not the active view, use default/uninitialized settings
+			return {
+				caseSentive: false,
+				groupBy: [],
+				sort: undefined,
+				viewGroup: undefined
+			};
+		} else {
+			const groupBy = this.getString('group', '')
+			.split(',')
+			.map(g => g.trim());
+
+			return {
+				groupBy,
+				caseSentive: groupBy.every(g => g.endsWith(':s')),
+				sort: this.getString('sort', undefined, v => v?v:undefined),
+				viewGroup: this.getString('viewgroup', undefined, v => (v && groupBy.length)?v:undefined)
+			};
+		}
+	}
+
+	get docDisplaySettings(): DocDisplaySettings {
+		if(this.operation !== 'docs') {
+			return {
+				caseSentive: false,
+				groupBy: [],
+				sort: undefined
+			};
+		} else {
+			const groupBy = this.getString('group', '')
+			.split(',')
+			.map(g => g.trim());
+
+			return {
+				groupBy,
+				caseSentive: groupBy.every(g => g.endsWith(':s')),
+				sort: this.getString('sort', undefined, v => v?v:undefined),
+			};
+		}
+	}
 
 	/**
 	 * Get the parameter by the name of paramname from our query parameters.
@@ -249,3 +298,45 @@ class UrlPageState {
 // Now we just need some way to convert our page state into blacklab state
 // And then we can put that into the url and be done with it
 // though we still need some way to make the current parameters reactive (meaning that we can update the url when something changes)
+
+// let state: PageState = {
+// 	...new UrlPageState() // initialize using current url.
+// };
+/*
+type PageState = {
+	filters: {[key: string]: FilterField};
+	hitDisplaySettings: HitDisplaySettings;
+	docDisplaySettings: DocDisplaySettings;
+	operation: 'hits'|'docs';
+	pageSize: number;
+	pattern: {[key: string]: PropertyField};
+	patternString: string;
+	sampleMode: 'percentage'|'count';
+	sampleSeed: string;
+	sampleSize: number;
+	within: string|'__default__';
+	wordsAroundHit?: number;
+};
+*/
+
+// interface SearchDisplaySettings {
+// 	/** case-sentive grouping */
+// 	caseSentive: boolean;
+// 	groupBy: string[];
+// 	sort?: string;
+// }
+
+// interface HitDisplaySettings extends SearchDisplaySettings {
+// 	viewGroup?: string;
+// }
+
+const b = getStoreBuilder<PageState>();
+export const actions = {
+	filter: b.commit((state, payload: FilterField) => {state.filters = { ...state.filters, [payload.name]: payload};}, 'filter'),
+	clearFilters: b.commit(state => state.filters = {}),
+	pattern: b.commit((state, payload: PropertyField) => {state.pattern = {...state.pattern, [payload.name]: payload};}),
+	clearPattern: b.commit(state => state.pattern = {}),
+};
+
+export const getState = b.state();
+export const store = b.vuexStore();

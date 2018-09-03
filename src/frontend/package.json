@@ -41,6 +41,9 @@
     "lucene-query-parser": "^1.2.0",
     "mustache": "^2.3.2",
     "rxjs": "^6.2.2",
-    "urijs": "^1.19.1"
+    "urijs": "^1.19.1",
+    "vue": "^2.5.17",
+    "vuex": "^3.0.1",
+    "vuex-typex": "^3.0.1"
   }
 }

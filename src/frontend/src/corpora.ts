@@ -89,8 +89,8 @@ const triggers = {
 
 // Attach these handlers first, so that we can store data before other handlers run
 createHandler({event: DataEvent.SERVER_REFRESH, handler(payload) { serverInfo = Object.assign({}, payload); }});
-createHandler({event: DataEvent.CORPORA_REFRESH, handler(payload) { corpora = [].concat(payload); }});
-createHandler({event: DataEvent.FORMATS_REFRESH, handler(payload) { formats = [].concat(payload); }});
+createHandler({event: DataEvent.CORPORA_REFRESH, handler(payload) { corpora = ([] as any).concat(payload); }});
+createHandler({event: DataEvent.FORMATS_REFRESH, handler(payload) { formats = ([] as any).concat(payload); }});
 createHandler({event: DataEvent.CORPUS_REFRESH, handler(payload) {
 	payload = Object.assign({}, payload);
 	// merge into list, trigger global corpora refresh
@@ -186,9 +186,9 @@ createHandler({selector: 'tbody[data-autoupdate="corpora"]', event: DataEvent.CO
 	const viewcorpora = newCorpora.map(function(corpus) {
 		let statusText: string = corpus.status;
 		if (statusText === 'indexing') {
-			statusText = ' (indexing) - ' + corpus.indexProgress.filesProcessed + ' files, ' +
-				corpus.indexProgress.docsDone + ' documents, and ' +
-				corpus.indexProgress.tokensProcessed + ' tokens indexed so far...';
+			statusText = ' (indexing) - ' + corpus.indexProgress!.filesProcessed + ' files, ' +
+				corpus.indexProgress!.docsDone + ' documents, and ' +
+				corpus.indexProgress!.tokensProcessed + ' tokens indexed so far...';
 		} else if (corpus.status !== 'available') {
 			statusText = ' (' + statusText + ')';
 		} else  {
@@ -287,7 +287,7 @@ $('#corpora-private-container').on('click', '*[data-corpus-action="upload"]:not(
 
 	$('#uploadCorpusName').text(corpus.displayName);
 	$('#uploadFormat').text(corpus.documentFormat + ' ');
-	$('#uploadFormatDescription').text(format ? format.description : 'Unknown format (it may have been deleted from the server), uploads might fail');
+	$('#uploadFormatDescription').text(format ? (format.description ||'') : 'Unknown format (it may have been deleted from the server), uploads might fail');
 
 	// clear selected files
 	$('#document-upload-form input[type="file"]').each(function() { $(this).val(undefined); }).trigger('change');
@@ -619,9 +619,9 @@ createHandler({selector: '#uploadProgress', event: DataEvent.CORPORA_REFRESH, ha
 	let statusText = '';
 	if (corpus.status === 'indexing') {
 		statusText = 'Indexing in progress... - '
-		+ corpus.indexProgress.filesProcessed + ' files, '
-		+ corpus.indexProgress.docsDone + ' documents, and '
-		+ corpus.indexProgress.tokensProcessed + ' tokens indexed so far...';
+		+ corpus.indexProgress!.filesProcessed + ' files, '
+		+ corpus.indexProgress!.docsDone + ' documents, and '
+		+ corpus.indexProgress!.tokensProcessed + ' tokens indexed so far...';
 	} else {
 		statusText = 'Finished indexing!';
 		this.toggleClass('indexing', false);
@@ -631,7 +631,7 @@ createHandler({selector: '#uploadProgress', event: DataEvent.CORPORA_REFRESH, ha
 
 // What corpus are we uploading data to?
 // TODO not very tidy
-let uploadToCorpus = null;
+let uploadToCorpus: BLTypes.NormalizedIndex;
 
 function initFileUpload() {
 

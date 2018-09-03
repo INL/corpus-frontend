@@ -1,8 +1,8 @@
 import 'bootstrap';
 import 'bootstrap-select';
 
-import $ from 'jquery';
-import URI from 'urijs';
+import * as $ from 'jquery';
+import * as URI from 'urijs';
 
 import parseCql from './utils/cqlparser';
 import './utils/features/autocomplete';
@@ -13,6 +13,8 @@ import {cancelSearch, getBlsParam, getPageParam} from './modules/singlepage-bls'
 import * as mainForm from './modules/singlepage-form';
 import './modules/singlepage-interface';
 import * as searcher from './modules/singlepage-interface';
+
+import './pages/search/vuexbridge';
 
 import {debugLog} from './utils/debug';
 
@@ -277,7 +279,7 @@ function populateQueryBuilder(pattern) {
 
 				if (op.type === 'binaryOp') {
 					const label = op.operator === '&' ? 'AND' : 'OR'; // TODO get label internally in builder
-					if (op.operator != parentAttributeGroup.operator) {
+					if (op.operator !== parentAttributeGroup.operator) {
 
 						if (level === 0) {
 							parentAttributeGroup.operator = op.operator;

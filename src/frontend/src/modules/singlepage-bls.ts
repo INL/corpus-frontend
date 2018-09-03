@@ -1,6 +1,6 @@
 import * as $ from 'jquery';
 import luceneQueryParser from 'lucene-query-parser';
-import URI from 'urijs';
+import * as URI from 'urijs';
 
 import parseCql from '../utils/cqlparser';
 import {debugLog} from '../utils/debug';

@@ -98,12 +98,12 @@ $(document).ready(() => {
 	}
 
 	{
-		$('.propertyfield').each((i, el) => {
-			const propfield = $(el);
-			const id = propfield.attr('id')!;
-			const $textOrSelect = propfield.find('#' + id + '_value');
-			const $fileInput = propfield.find('#' + id + '_file') as JQuery<HTMLInputElement>; // NOTE: not always available
-			const $caseInput = propfield.find('#' + id + '_case');
+		$('.propertyfield').each(function() {
+			const $this = $(this);
+			const id = $this.attr('id')!;
+			const $textOrSelect = $this.find('#' + id + '_value');
+			const $fileInput = $this.find('#' + id + '_file') as JQuery<HTMLInputElement>; // NOTE: not always available
+			const $caseInput = $this.find('#' + id + '_case');
 
 			const getCurrentState = () => getState().pattern[id] || {
 				name: id,
@@ -148,4 +148,41 @@ $(document).ready(() => {
 			});
 		});
 	}
+
+	{
+		$('.filterfield').each(function() {
+			const $this = $(this);
+			const id = $this.attr('id')!;
+			const type = $this.data('filterfield-type') as string;
+			const $inputs = $this.find('input, select');
+
+			const getCurrentState = () => getState().filters[id] || {
+				filterType: type,
+				name: id,
+				values: []
+			};
+
+			$this.on('change', function() {
+				// Has two input fields, special treatment
+				if (type === 'range') {
+					const from = $($inputs[0]).val() as string;
+					const to = $($inputs[1]).val() as string;
+
+					actions.filter({...getCurrentState(),values: [from, to]});
+				} else {
+					// We always store values in an array because multiselect and date fields both have multiple values
+					// Concatenate values since firstVal might be an array itself
+					// val might be an array (in case of multiselect), so concatenate to deal with single values as well as arrays
+					const values = [].concat(($inputs.first().val() || '') as any)
+						.filter(v => v != null && v !== '') as string[];
+
+					actions.filter({...getCurrentState(), values});
+				}
+			})
+		});
+	}
 });
+
+/* TODO
+updateFilterDisplay();
+*/

@@ -1,3 +1,5 @@
+import * as _$ from 'jquery';
+
 let debug = false;
 
 let queued = [];
@@ -27,3 +29,6 @@ export function disable() {
 export default function() {
 	return debug;
 }
+
+// DEBUGGING ONLY, this should probably use node.env
+window.jquery = window.$ = _$;

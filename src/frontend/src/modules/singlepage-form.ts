@@ -68,8 +68,8 @@ function updateFilterField($filterfield) {
 
 // TODO tidy up
 function updatePropertyField($propertyField, event?) {
-	function removeFromPropertyList(propertyName) {
-		activeProperties = $.grep(activeProperties, function(elem) { return elem.name === propertyName;}, true);
+	function removeFromPropertyList(id: string) {
+		activeProperties = $.grep(activeProperties, function(elem) { return elem.name === id;}, true);
 	}
 
 	const propertyName = $propertyField.attr('id');
@@ -79,7 +79,7 @@ function updatePropertyField($propertyField, event?) {
 	const $changedInput = event ? $(event.target) : $textOrSelect; // no event means we're initializing, so read from the input field
 
 	// Fetch the current state, or init the new property (if it wasn't in the list)
-	const prop = activeProperties.find(p => p.name === propertyName) || {};// $.grep(activeProperties, function(elem) { return elem.name === propertyName; })[0] || {};
+	const prop = activeProperties.find(p => p.name === propertyName) || {} as PropertyField;// $.grep(activeProperties, function(elem) { return elem.name === propertyName; })[0] || {};
 	prop.name = propertyName;
 	prop.case = $caseInput.is(':checked');
 	prop.value = $textOrSelect.val();
@@ -153,7 +153,7 @@ $(document).ready(function() {
 			}
 		});
 		$this.keypress(function( event ) {
-			if ( event.which == 13 ) {
+			if ( event.which === 13 ) {
 				$this.autocomplete('close');
 			}
 		});
@@ -225,10 +225,10 @@ export function setFilterValues(filterName, values) {
 	const filterType = $filterField.data('filterfield-type');
 
 	// Determine how to process the value of this filter field, based on the type of this filter
-	if (filterType == 'range') {
+	if (filterType === 'range') {
 		$($inputs[0]).val(values[0]);
 		$($inputs[1]).val(values[1]);
-	} else if (filterType == 'select') {
+	} else if (filterType === 'select') {
 		$inputs.first().selectpicker('val', values);
 	} else {
 		const processed  = [];

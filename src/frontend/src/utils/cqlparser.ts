@@ -1,7 +1,7 @@
 export type XmlTag = {
 	type: 'xml';
 	/** xml token name excluding namespace, brackets, attributes etc */
-	tagName: string;
+	name: string;
 	isClosingTag: boolean;
 };
 
@@ -143,7 +143,7 @@ export default function(input: string): Result {
 		}
 	}
 
-	function parseXmlTag() {
+	function parseXmlTag(): XmlTag {
 		expect('<');
 
 		const isClosingTag = accept('/');
@@ -159,7 +159,7 @@ export default function(input: string): Result {
 		};
 	}
 
-	function parseAttribute() {
+	function parseAttribute(): Attribute {
 		const name = until(['=', '!']).trim(); // This should really be "until anything BUT a-zA-z" but eh
 		const operator = until('"').trim();
 		expect('"', true); // keep all whtiespace after the opening quote
@@ -178,7 +178,7 @@ export default function(input: string): Result {
 		};
 	}
 
-	function parsePredicate() {
+	function parsePredicate(): Attribute|BinaryOp {
 		if (accept('(')) {
 			const exp = parseExpression();
 			expect(')');
@@ -206,7 +206,7 @@ export default function(input: string): Result {
 		return left;
 	}
 
-	function parseToken() {
+	function parseToken(): Token {
 
 		const token = {
 			leadingXmlTag: null,

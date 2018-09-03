@@ -4,7 +4,7 @@ import 'bootstrap';
 import 'bootstrap-select';
 import {saveAs} from 'file-saver';
 import * as $ from 'jquery';
-import URI from 'urijs';
+import * as URI from 'urijs';
 
 import {onSearchUpdated} from '../search';
 import {debugLog} from '../utils/debug';
@@ -168,7 +168,7 @@ function properties(context) {
  * @param {string} html Table head and body
  * @param {function} [onComplete] callback, will be called in the context of $table
  */
-function replaceTableContent($table, html, onComplete) {
+function replaceTableContent($table, html, onComplete?: ($table: JQuery<HTMLElement>) => void) {
 	// skip the fadeout if the table is empty
 	// fixes annoying mini-delay when first viewing results
 	const fadeOutTime = $table.find('tr').length ? 200 : 0;
@@ -717,7 +717,7 @@ function onExportCsv(event) {
 		$tab.data('parameters'),
 		$tab.data('constParameters'));
 
-	const blsParam = getBlsParam(pageParam);
+	const blsParam = getBlsParam(pageParam) as any;
 
 	blsParam.outputformat = 'csv';
 	delete blsParam.number;
@@ -731,8 +731,8 @@ function onExportCsv(event) {
 		.attr('disabled', true)
 		.prepend('<span class="fa fa-spinner fa-spin"></span>');
 	$.ajax(url, {
-		accepts: 'application/csv',
-		cache: 'false',
+		accepts: {json: 'application/json'},
+		cache: false,
 		data: 'text',
 		// error: function(jqXHR, textStatus, errorThrown) {
 

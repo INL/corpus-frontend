@@ -47,7 +47,7 @@ export default (blsParam: any): FilterField[] => {
 	 * We need to recurse to extract all the values.
 	 * To simplify keeping track of what part of the query we're parsing, we store the current field here.
 	 */
-	let context: FilterField;
+	let context: FilterField|null = null;
 	/** Once we're done with a field, we store it here and clear the context. */
 	const parsedValues: FilterField[] = [];
 
@@ -123,7 +123,7 @@ export default (blsParam: any): FilterField[] => {
 	}
 
 	function field(val: ASTField|null) {
-		if (field == null) {
+		if (val == null) {
 			return;
 		}
 
@@ -176,5 +176,5 @@ export default (blsParam: any): FilterField[] => {
 
 	const results = luceneQueryParser.parse(blsParam.filter);
 	node(results);
-	return parsedValues.length ? parsedValues : null;
+	return parsedValues;
 };

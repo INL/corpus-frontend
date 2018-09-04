@@ -2,7 +2,7 @@ import * as _$ from 'jquery';
 
 let debug = false;
 
-let queued = [];
+let queued: IArguments[] = [];
 
 // If you wish to see the original logging location, blackbox this script in the chrome devtools
 // For now, seeing the original location is not supported in firefox and edge/ie (and probably safari)
@@ -16,8 +16,8 @@ export function debugLog(...args: any[]) {
 
 export function enable() {
 	debug = true;
-	for (let i = 0; i < queued.length; ++i) {
-		debugLog.apply(undefined, queued[i]);
+	for (const argArray of queued) {
+		debugLog.apply(undefined, argArray);
 	}
 	queued = [];
 }

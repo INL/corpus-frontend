@@ -26,13 +26,13 @@ $(document).ready(function() {
 			const $this = $(elem);
 			const key = 'input_' + $this.attr('id');
 			$this.on('change', function() {
-				const curVal = $this.is(':checkbox') ? $this.is(':checked') : $this.val();
+				const curVal: any = $this.is(':checkbox') ? $this.is(':checked') : $this.val();
 				window.localStorage.setItem(key, curVal);
 			});
 
 			const storedVal = window.localStorage.getItem(key);
 			if (storedVal != null) {
-				$this.is(':checkbox') ? $this.attr('checked', storedVal.toLowerCase() === 'true') : $this.val(storedVal);
+				$this.is(':checkbox') ? $this.attr('checked', (storedVal.toLowerCase() === 'true') as any) : $this.val(storedVal);
 			}
 
 			// run handler once, init localstorage if required
@@ -120,9 +120,10 @@ $(document).ready(function() {
 	// Attempt to parse the query from the cql editor into the querybuilder
 	// when the user asks to
 	$('#parseQuery').on('click', function() {
-		const pattern = $('#querybox').val();
+		const pattern = $('#querybox').val() as string;
 		if (populateQueryBuilder(pattern)) {
-			$('#searchTabs a[href="#advanced"]').tab('show') && $('#parseQueryError').hide();
+			$('#searchTabs a[href="#advanced"]').tab('show');
+			$('#parseQueryError').hide();
 		} else {
 			$('#parseQueryError').show();
 			$('#querybox').val(pattern);
@@ -168,9 +169,9 @@ function fromPageUrl() {
 		return null;
 	}
 
-	const pageParam = getPageParam(blsParam);
+	const pageParam = getPageParam(blsParam)!;
 	if (operation) {
-		pageParam.operation = operation;
+		pageParam.operation = operation as any;
 	}
 
 	return pageParam;
@@ -348,7 +349,7 @@ function toPageState(searchParams) {
 	// reset and repopulate the main form
 	mainForm.reset();
 	$('#querybuilder').data('builder').reset();
-	$('#querybox').val(undefined);
+	$('#querybox').val('');
 
 	if (searchParams.pattern) {
 		// In the case of an array as search pattern,  it contains the basic/simple search parameters
@@ -406,7 +407,7 @@ function toPageState(searchParams) {
 // Called when form is submitted
 export function searchSubmit() {
 	let pattern;
-	let within = null; // explicitly set to null to clear any previous value if queryType != simple
+	let within: string|null = null; // explicitly set to null to clear any previous value if queryType != simple
 
 	// Get the correct pattern based on selected tab
 	const queryType = $('#searchTabs li.active .querytype').attr('href');
@@ -443,7 +444,7 @@ export function searchSubmit() {
 	}
 
 	$('html, body').animate({
-		scrollTop: $('#searchFormDivHeader').offset().top - 75 // navbar
+		scrollTop: $('#searchFormDivHeader').offset()!.top - 75 // navbar
 	}, 500);
 
 	// May be used as click handler, so prevent event propagation
@@ -470,13 +471,13 @@ export function onSearchUpdated(searchParams) {
 
 	const currentUrl = new URI().toString();
 	if (newUrl !== currentUrl) {
-		history.pushState(null, null, newUrl);
+		history.pushState(null, undefined, newUrl);
 	}
 }
 
 // Called to reset search form and results
 export function	resetPage() {
-	history.pushState(null, null, '?');
+	history.pushState(null, undefined, '?');
 	toPageState({});
 	cancelSearch();
 	return false; // might be used as eventhandler

@@ -7,6 +7,7 @@ import {debugLog} from '../utils/debug';
 
 import {FilterField, PropertyField} from '../types/pagetypes';
 import {makeRegexWildcard, makeWildcardRegex} from '../utils';
+import parseLucene from '../utils/lucene2filterparser';
 
 /**
  * Converts search parameters into a query for blacklab-server and executes it.
@@ -79,7 +80,7 @@ declare const BLS_URL: string;
 //  * @param within - raw token name (i.e. not enclosed in </>) for the within clause (so 'p' for paragraph, 's' for sentence, etc), only used when typeof pattern === 'Array'
 //  * @returns The formatted string
 //  */
-function getPatternString(pattern: string|PropertyField[], within?: string): string {
+function getPatternString(pattern?: string|PropertyField[], within?: string): string|undefined {
 	if (pattern == null) {
 		return undefined;
 	}
@@ -89,7 +90,7 @@ function getPatternString(pattern: string|PropertyField[], within?: string): str
 	}
 
 	// First split the properties into individual words and pair them
-	const tokens = [];
+	const tokens = [] as Array<{[key: string]: string}>;
 	$.each(pattern, function(propIndex, propertyField) {
 		if (propertyField.value.length > 0) { // skip empty fields
 			const words = propertyField.value.split(/\s+/);
@@ -103,12 +104,12 @@ function getPatternString(pattern: string|PropertyField[], within?: string): str
 		}
 	});
 
-	const tokenStrings = [];
-	$.each(tokens, function(index, value) {
+	const tokenStrings = [] as string[];
+	$.each(tokens, function(index, token) {
 
 		// push all attributes in this token
-		const attributesStrings = [];
-		$.each(value, function(key, value) {
+		const attributesStrings = [] as string[]
+		$.each(token, function(key, value) {
 			if (value) { // don't push empty attributes
 				attributesStrings.push(key + '=' + '"' + value + '"');
 			}
@@ -137,18 +138,14 @@ function getPatternString(pattern: string|PropertyField[], within?: string): str
  *
  * If the array is empty or null, undefined is returned,
  * so it can be placed directly in the request paremeters without populating the object if the value is not present.
- *
- * @param {Array.<FilterField>} [filterArr]
- * @returns {string} - The converted filters, or undefined if no filters were present.
  */
-function getFilterString(filterArr) {
-
+function getFilterString(filterArr?: FilterField[]): string|undefined {
 	if (filterArr == null || filterArr.length === 0) {
 		return undefined;
 	}
 
-	const filterStrings = [];
-	$.each(filterArr, function(index, element) {
+	const filterStrings = [] as string[];
+	for (const element of filterArr) {
 		if (filterStrings.length) {
 			filterStrings.push(' AND ');
 		}
@@ -160,13 +157,12 @@ function getFilterString(filterArr) {
 			filterStrings.push(element.name, ':', '("', element.values.join('" "'), '")');
 		} else {
 			// Do the quoting thing
-			const resultParts = [];
+			const resultParts = [] as string[];
 
 			$.each(element.values, function(index, value) {
 				const quotedParts = value.split(/"/);
 				let inQuotes = false;
-				for (let i = 0; i < quotedParts.length; i++) {
-					let part = quotedParts[i];
+				for (let part of quotedParts) {
 					if (inQuotes) {
 						// Inside quotes. Add literally.
 						resultParts.push(' "');
@@ -188,7 +184,7 @@ function getFilterString(filterArr) {
 
 			filterStrings.push(element.name, ':', '(' + resultParts.join('').trim(), ')');
 		}
-	});
+	}
 
 	return filterStrings.join('');
 }
@@ -198,20 +194,20 @@ function getFilterString(filterArr) {
  */
 const totalsCounter = (function() {
 	// Parameters used in the next update request
-	let blsParam;
-	let operation;
+	let blsParam: null|BlacklabParameters;
+	let operation: null|'hits'|'docs';
 	let data;
 
 	// Handles to the current request/scheduled request
-	let timeoutHandle = null;
-	let inflightRequest = null;
+	let timeoutHandle: number|null = null;
+	let totalRequest: null|ReturnType<typeof $.ajax> = null;
 
 	function scheduleRequest() {
 		// Don't request an actual window
 		// But keep window size intact in blsParam, we need it to calculate number of pages.
-		const url = new URI(BLS_URL).segment(operation).addSearch($.extend({}, blsParam, {number:0})).toString();
+		const url = new URI(BLS_URL).segment(operation!).addSearch($.extend({}, blsParam, {number:0})).toString();
 
-		inflightRequest = $.ajax({
+		totalRequest = $.ajax({
 			url,
 			dataType: 'json',
 			cache: false,
@@ -230,7 +226,7 @@ const totalsCounter = (function() {
 				$('#totalsReportText').text('Network Error');
 			},
 			complete () {
-				inflightRequest = null;
+				totalRequest = null;
 			}
 		});
 	}
@@ -240,9 +236,9 @@ const totalsCounter = (function() {
 			clearTimeout(timeoutHandle);
 			timeoutHandle = null;
 		}
-		if (inflightRequest != null) {
-			inflightRequest.abort();
-			inflightRequest = null;
+		if (totalRequest != null) {
+			totalRequest.abort();
+			totalRequest = null;
 		}
 
 		$('#totalsReport').hide();
@@ -263,7 +259,7 @@ const totalsCounter = (function() {
 			total = data.summary.numberOfDocs;
 		}
 
-		const totalPages = Math.ceil(total / blsParam.number);
+		const totalPages = Math.ceil(total / blsParam!.number);
 
 		const optEllipsis = data.summary.stillCounting ? '...' : '';
 		$('#totalsReport').show();
@@ -282,16 +278,16 @@ const totalsCounter = (function() {
 		 * then immediately update the totals display with the results so far.
 		 * Starts a background counter that continues updating the display until all results have been counted.
 		 *
-		 * @param {any} data - the data returned from blacklab-server with the initial request
-		 * @param {any} blsParam - The final (processed) blacklab search parameters.
-		 * @param {string} operation - The search operation, must not be 'hits' if no pattern supplied.
+		 * @param searchResult - the data returned from blacklab-server with the initial request
+		 * @param searchParam - The final (processed) blacklab search parameters.
+		 * @param op - The search operation, must not be 'hits' if no pattern supplied.
 		 */
-		start (data_, blsParam_, operation_) {
+		start (searchResult, searchParam: BlacklabParameters, op: 'hits'|'docs') {
 			cancelRequest();
 
-			data = data_;
-			operation = operation_;
-			blsParam = blsParam_;
+			data = searchResult;
+			operation = op;
+			blsParam = searchParam;
 
 			updateTotalsDisplay();
 			if (data.summary.stillCounting) {
@@ -302,7 +298,7 @@ const totalsCounter = (function() {
 	};
 })();
 
-let inflightRequest = null;
+let inflightRequest: null|ReturnType<typeof $.ajax> = null;
 
 /**
  * Translate SearchParameters to blacklab-server search parameters and perform a search.
@@ -318,7 +314,7 @@ export function search(param, successFunc, errorFunc) {
 	debugLog(blsParam);
 
 	inflightRequest = $.ajax({
-		url: new URI(BLS_URL).segment(operation),
+		url: new URI(BLS_URL).segment(operation).toString(),
 		method: 'POST',
 		data: blsParam,
 		dataType: 'json',
@@ -355,24 +351,19 @@ export function cancelSearch() {
 	totalsCounter.stop();
 }
 
-/**
- * Translate SearchParameters to blacklab-server parameters.
- *
- * @param {SearchParameters} param - the page parameters.
- * @returns {BlackLabParameters}
- */
-export function getBlsParam(param) {
+/** Translate SearchParameters to blacklab-server parameters. */
+export function getBlsParam(param: SearchParameters): BlacklabParameters {
 	return {
 		// these are always present
 		number: param.pageSize,
 		first: param.page * param.pageSize,
 
 		sample: (param.sampleMode === 'percentage' && param.sampleSize) ? parseFloat(param.sampleSize) || undefined : undefined,
-		samplenum: (param.sampleMode === 'count' && param.sampleSize) ? parseInt(param.sampleSize) || undefined : undefined,
-		sampleseed: (param.sampleSeed != null && param.sampleMode && param.sampleSize) ? parseInt(param.sampleSeed) || undefined : undefined,
+		samplenum: (param.sampleMode === 'count' && param.sampleSize) ? parseInt(param.sampleSize, 10) || undefined : undefined,
+		sampleseed: (param.sampleSeed != null && param.sampleMode && param.sampleSize) ? parseInt(param.sampleSeed, 10) || undefined : undefined,
 
 		// don't let in any NaN or negatives, clamp negatives to 0, which are then replaced by undefined
-		wordsaroundhit: param.wordsAroundHit ? Math.max(0, parseInt(param.wordsAroundHit)) || undefined : undefined,
+		wordsaroundhit: param.wordsAroundHit ? Math.max(0, parseInt(param.wordsAroundHit as any /*todo verify*/, 10)) || undefined : undefined,
 
 		// these are either undefined or valid (meaning no empty strings/arrays)
 		filter: getFilterString(param.filters),
@@ -384,13 +375,8 @@ export function getBlsParam(param) {
 	};
 }
 
-/**
- * Transform BlackLabParameters into SearchParamers (where supported, blacklab server supports more options than the frontend in some options, so not all options may be mapped cleanly)
- *
- * @param {BlackLabParameters} blsParam - (optional) the blacklab search object
- * @returns {SearchParameters|null} - null if empty or null blsParam
- */
-export function getPageParam(blsParam): SearchParameters|null {
+/** Transform BlackLabParameters into SearchParamers (where supported, blacklab server supports more options than the frontend in some options, so not all options may be mapped cleanly) */
+export function getPageParam(blsParam: BlacklabParameters): SearchParameters|null {
 	const pageParams: any = {};
 	if (blsParam == null || $.isEmptyObject(blsParam)) {
 		return null;
@@ -410,195 +396,9 @@ export function getPageParam(blsParam): SearchParameters|null {
 
 	// Parse the FilterFields from the lucene query, this is a bit involved.
 	// TODO factor into module and add tests.
-	pageParams.filters = (function() {
-		if (!blsParam.filter) {
-			return null;
-		}
-
-		debugLog('parsing filter string', blsParam.filter);
-
-		// First define some structures returned by the lib so we actually know what we're working with
-
-		/**
-		 * @typedef Node
-		 * @property {(Node|Field|Range)} left
-		 * @property {('OR' | 'AND' | 'NOT' | '-' | '+')} operator - multiple operators in the same position are not supported e.g. (a OR NOT b)
-		 * @property {(Node|Field|Range)} right
-		 * @property {string} [field] - field name (for field group syntax)
-		 */
-
-		/**
-		 * @typedef Field
-		 * @property {string} field - field name, '<implicit>' if unspecified (then use field of nearest ancestor that defines it, if there's none, it's the default lucene field)
-		 * @property {string} term
-		 * @property {('+' | '-')} [prefix]
-		 * @property {number} [boost]
-		 * @property {number} [similarity] - 0<similarity<1
-		 * @property {number} [promity]
-		 */
-
-		/**
-		 * @typedef Range
-		 * @property {string} field - field name, '<implicit>' if unspecified
-		 * @property {string} term_min
-		 * @property {string} term_max
-		 * @property {boolean} inclusive - inclusive_min && inclusive_max
-		 * @property {boolean} inclusive_min - inclusive lower bound
-		 * @property {boolean} inclusive_max - inclusive upper bound
-		 */
-
-		/**
-		 * Since the parsed query is a tree-like structure (to allow expression like 'field:("value1" OR ("value3" OR "value4"))' )
-		 * We need to recurse to extract all the values.
-		 * To simplify keeping track of what part of the query we're parsing, we store the current field here.
-		 * @type {FilterField}
-		 */
-		let context = null;
-		/**
-		 * Once we're done with a field, we store it here and clear the context.
-		 * @type {Array.<FilterField>}
-		 */
-		const parsedValues = [];
-
-		/**
-		 * Process a Node. A Field object is always contained within a Node (as far as I can tell).
-		 * So for a simple query like 'field:value', the library returns a structure like:
-		 * ```
-		 * { // Node
-		 *   field: 'field',
-		 *   left: { // Field
-		 *     field: '<implicit>', // referring to property 'field' in the enclosing Node structure
-		 *     term: 'value'
-		 *    }
-		 * }
-		 * ```
-		 * So if the Node contains a 'field' property we know all children will be Field instances defining the values
-		 * and we can open a new context that we can store the values in later parsing steps.
-		 * @param {Node} val
-		 */
-		function node(val) {
-			if (val == null) {
-				return;
-			}
-
-			let createdContext = false;
-			if (val.field) {
-				// if there is no context yet, the field can still be <implicit>, in this case we'd expect that the left node
-				// defines the field name, this is the case with range expression, so we will define the context when processing the left node.
-				if (context == null && val.field && val.field !== '<implicit>') {
-					context = {
-						name: val.field,
-						filterType: 'select',
-						values: []
-					};
-					createdContext = true;
-				} else if (context != null && val.field && val.field !== '<implicit>') {
-					// this is weird, and it should probably never happen
-					// it would mean we're going to define terms for a field while we're already inside the term list expression for another field
-					debugLog('Got a node with a field, but already have context, ignoring.', context);
-					return;
-				}
-			}
-
-			let cur = val.left; // left always present
-			if ('left' in cur) { node(cur); } else if ('term' in cur) { field(cur); } else if ('term_min' in cur) { range(cur); }
-
-			/**
-			 * We need to know what the right side contains if we're to handle it.
-			 * - If have a context, that means both left and right are values for a specific field (or Nodes containg a subtree of multiple values).
-			 * The current Node is the OR/AND token in a query like 'field:("value" OR "value2")'
-			 * The interface can only handle OR'ing all values for a field, so check that the query doesn't specify AND,
-			 * and if it does then skip processing the right side of the tree.
-			 * - If we _don't_ have a context, then left and right define the Fields themselves
-			 * The current Node is then the OR/AND token in a query like 'field1:value1 AND field2:value2'
-			 * In thise case, the interface can only handle AND'ing all the different fields, so check that too.
-			 */
-			if (val.right &&
-				((context == null && !(val.operator === 'OR' || val.operator === '<implicit>')) || // implicit operator between field means OR
-				(context != null && !(val.operator === 'AND' )))
-			) {
-				cur = val.right;
-				if ('left' in cur) { node(cur); } else if ('term' in cur) { field(cur); } else if ('term_min' in cur) { range(cur); }
-			}
-
-			if (createdContext) {
-				if (context == null) {
-					debugLog('We started a context but didn\'t end with one, some other function pushed it, that shouldn\'t happen...');
-				} else {
-					parsedValues.push(context);
-					context = null;
-				}
-			}
-			// else we're already inside inside an existing context and are just recursing over the values
-		}
-
-		/**
-		 * @param {Field} val
-		 */
-		function field(val) {
-			if (field == null) {
-				return;
-			}
-
-			let createdContext = false;
-			if (context == null) {
-				if (val.field === '<implicit>') { // default field name, query only specifies a value but no field, such as the query 'value', interface can't display this
-					return;
-				}
-
-				context = {
-					name: val.field,
-					filterType: 'text',
-					values: []
-				};
-				createdContext = true;
-			} else if (context != null && val.field && val.field !== '<implicit>') {
-				debugLog('Got field', field, ' with an explicit name, but we already have a context?');
-				return;
-			} // else have context and field is implicit, just add the term value to the list
-
-			context.values.push(val.term);
-			if (createdContext) {
-				parsedValues.push(context);
-				context = null;
-			}
-		}
-
-		/**
-		 * @param {Range} val
-		 */
-		function range(val) {
-			if (val == null) {
-				return;
-			}
-
-			if (context != null) {
-				// mixed terms and ranges for the same field, can't handle.
-				debugLog('Entered a range expression, but context is not null, might happen? cannot handle in interface');
-				return;
-			}
-			if (val.field === '<implicit>') { // default value, basically parsing "[from TO to]" without the name of field to which to apply the range, interface can't handle this
-				return;
-			}
-
-			// Ignore in/exclusivity
-			parsedValues.push({
-				name: val.field,
-				filterType: 'range',
-				values: [val.term_min, val.term_max]
-			});
-		}
-
-		try {
-			const results = luceneQueryParser.parse(blsParam.filter);
-			node(results);
-			return parsedValues.length ? parsedValues : null;
-		} catch (error) {
-			debugLog('Could not parse lucene query ' + blsParam.filter);
-			debugLog('reason: ', error);
-			return null;
-		}
-	})();
+	try {
+		pageParams.filters = parseLucene(blsParam.filter);
+	} catch (error) {debugLog('Could not parse lucene query', blsParam.filter);}
 
 	/**
 	 * Attempt to parse the cql-query into an array of PropertyFields as used by the simple search tab.
@@ -652,7 +452,7 @@ export function getPageParam(blsParam): SearchParameters|null {
 				// Use a stack instead of direct recursion to simplify code
 				const stack = [token.expression];
 				while (stack.length) {
-					const expr = stack.shift();
+					const expr = stack.shift()!;
 					if (expr.type === 'attribute') {
 						const name = expr.name;
 						const values = attributeValues[name] = attributeValues[name] || [];

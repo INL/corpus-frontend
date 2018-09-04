@@ -321,7 +321,7 @@
             See the hint below this button for a reminder of the type(s) of files that can be added to this corpus.  
         </div>
     </li>
-    <li class="tlypageguide_right" data-tourtarget="#upload-metadata-input"]">
+    <li class="tlypageguide_right" data-tourtarget="#upload-metadata-input">
         <div>
             If your files link to external metadata in different files, you should also upload those files here.
             Support for external data has to be configured in a custom import format, so you usually won't need this option.<br>

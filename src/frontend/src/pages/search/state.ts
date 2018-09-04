@@ -24,8 +24,8 @@ const enum defaults {
 /** All unknown/unspecified properties must be initialized to null to enable state reactivity */
 type PageState = {
 	filters: {[key: string]: FilterField};
-	hitDisplaySettings: HitDisplaySettings;
-	docDisplaySettings: DocDisplaySettings;
+	hitDisplaySettings: SearchDisplaySettings;
+	docDisplaySettings: SearchDisplaySettings;
 	/** More of a display mode on the results */
 	operation: 'hits'|'docs'|null;
 	pageSize: number;
@@ -33,7 +33,7 @@ type PageState = {
 	patternString: string|null;
 	patternQuerybuilder: string|null;
 	sampleMode: 'percentage'|'count';
-	sampleSeed: string|null;
+	sampleSeed: number|null;
 	sampleSize: number|null;
 	within: string|null;
 	wordsAroundHit: number|null;
@@ -45,13 +45,7 @@ interface SearchDisplaySettings {
 	groupBy: string[];
 	sort: string|null;
 	page: number;
-}
-
-interface HitDisplaySettings extends SearchDisplaySettings {
 	viewGroup: string|null;
-}
-interface DocDisplaySettings extends SearchDisplaySettings { // tslint:disable-line
-	// nothing yet
 }
 
 /** Decode the current url into a valid page state configuration. Keep everything private except the getters */
@@ -75,7 +69,7 @@ class UrlPageState implements PageState {
 			return {};
 		}
 		try {
-			return parseLucene({filter: luceneString}).reduce((acc, v) => {acc[v.name] = v; return acc;}, {});
+			return parseLucene(luceneString).reduce((acc, v) => {acc[v.name] = v; return acc;}, {});
 		} catch (error) {
 			debugLog('Cannot decode lucene query ', luceneString, error);
 			return {};
@@ -195,8 +189,8 @@ class UrlPageState implements PageState {
 		}
 	}
 
-	get sampleSeed(): string|null {
-		return this.getString('sampleseed', null, v => v?v:null);
+	get sampleSeed(): number|null {
+		return this.getNumber('sampleseed', null);
 	}
 
 	get sampleSize(): number|null {
@@ -213,7 +207,7 @@ class UrlPageState implements PageState {
 		return this.getNumber('wordsaroundhit', defaults.wordsAroundHit, v => v >= 0 && v <= 10 ? v : defaults.wordsAroundHit)!;
 	}
 
-	get hitDisplaySettings(): HitDisplaySettings {
+	get hitDisplaySettings(): SearchDisplaySettings {
 		if (this.operation !== 'hits') {
 			// not the active view, use default/uninitialized settings
 			return {
@@ -239,12 +233,13 @@ class UrlPageState implements PageState {
 		}
 	}
 
-	get docDisplaySettings(): DocDisplaySettings {
+	get docDisplaySettings(): SearchDisplaySettings {
 		if(this.operation !== 'docs') {
 			return {
 				caseSentive: false,
 				groupBy: [],
 				sort: null,
+				viewGroup: null,
 				page: 0,
 			};
 		} else {
@@ -257,6 +252,7 @@ class UrlPageState implements PageState {
 				groupBy,
 				caseSentive: groupBy.every(g => g.endsWith(':s')),
 				sort: this.getString('sort', null, v => v?v:null),
+				viewGroup: this.getString('viewgroup', undefined, v => (v && groupBy.length)?v:null),
 				page: this.getNumber('start', 0, v => Math.floor(Math.max(0, v)/this.pageSize)/* round down to nearest page containing the starting index */)!,
 			};
 		}
@@ -341,6 +337,7 @@ export const actions = {
 		groupBy: b.commit((state, payload: string[]) => state.hitDisplaySettings.groupBy = payload, 'docs_groupby'),
 		sort: b.commit((state, payload: string) => state.hitDisplaySettings.sort = payload, 'docs_sort'),
 		page: b.commit((state, payload: number) => state.hitDisplaySettings.page = payload, 'docs_page'),
+		viewGroup: b.commit((state, payload: string) => state.hitDisplaySettings.viewGroup = payload, 'docs_viewgroup'),
 	},
 	filter: b.commit((state, payload: FilterField) => {state.filters = { ...state.filters, [payload.name]: payload};}, 'filter'),
 	clearFilters: b.commit(state => state.filters = {}, 'clearfilters'),
@@ -359,7 +356,7 @@ export const actions = {
 	patternString: b.commit((state, payload: string) => state.patternString = payload, 'patternstring'),
 	patternQuerybuilder: b.commit((state, payload: string) => state.patternQuerybuilder = payload, 'patternquerybuilder'),
 	sampleMode: b.commit((state, payload: 'percentage'|'count') => state.sampleMode = payload, 'samplemode'),
-	sampleSeed: b.commit((state, payload: string|null) => state.sampleSeed = payload ? payload : null, 'sampleseed'),
+	sampleSeed: b.commit((state, payload: number|null) => state.sampleSeed = payload, 'sampleseed'),
 	sampleSize: b.commit((state, payload: number|null) => {
 		if (payload == null) {
 			state.sampleSize = payload;

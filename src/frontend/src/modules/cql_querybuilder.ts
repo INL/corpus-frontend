@@ -400,7 +400,7 @@ QueryBuilder.prototype.getTokens = function() {
 };
 
 QueryBuilder.prototype.getCql = function() {
-	const cqlParts = [];
+	const cqlParts: string[] = [];
 
 	this.element.find('.bl-token').each(function(index, element) {
 		cqlParts.push($(element).data('token').getCql());
@@ -514,7 +514,7 @@ Token.prototype._updateCql = function() {
 	// We also need to take care to set a default when this code runs while the element isn't visible, or isn't attached to the DOM.
 	// When this happens, jquery doesn't return a sensible outerWidth value for our body.
 	// we can't know if the token body is wider than this default (currently 348px), so it will be wrong if the token body is wider than a usual empty token, but this is rare.
-	const width = parseInt($tokenPanelBody.outerWidth()) || 0;
+	const width = parseInt($tokenPanelBody.outerWidth(), 10) || 0;
 	$tokenPanelHeading.css({
 		'width': '100%',
 		'max-width': Math.max(width, 348) + 'px'
@@ -529,12 +529,12 @@ Token.prototype.set = function(controlName, val) {
 
 Token.prototype.getCql = function() {
 	const optional = this.$controls.optional.prop('checked');
-	let minRepeats = parseInt(this.$controls.minRepeats.val());
-	let maxRepeats = parseInt(this.$controls.maxRepeats.val());
+	let minRepeats = parseInt(this.$controls.minRepeats.val(), 10);
+	let maxRepeats = parseInt(this.$controls.maxRepeats.val(), 10);
 	const beginOfSentence = this.$controls.beginOfSentence.prop('checked');
 	const endOfSentence = this.$controls.endOfSentence.prop('checked');
 
-	const outputParts = [];
+	const outputParts = [] as string[];
 
 	if (beginOfSentence) {
 		outputParts.push('<s> ');
@@ -743,7 +743,7 @@ AttributeGroup.prototype.getAttributeGroups = function() {
 };
 
 AttributeGroup.prototype.getCql = function() {
-	const cqlStrings = [];
+	const cqlStrings = [] as string[];
 
 	this.element.children('.bl-token-attribute, .bl-token-attribute-group').each(function(index, element) {
 		const instance = $(element).data('attributeGroup') || $(element).data('attribute');
@@ -892,23 +892,23 @@ Attribute.prototype.set = function(controlName, val, additionalSelector) {
 				setValue(this.$controls.value_file, val);
 			} else if (additionalSelector === 'simple') {
 				setValue(this.$controls.value_simple, val);
-								}
+			}
 		}
 	}
 };
 
 Attribute.prototype.getCql = function() {
 
-	const hasFile		= this.element.find('.bl-token-attribute-main-input').is('[data-has-file]');
+	const hasFile = this.element.find('.bl-token-attribute-main-input').is('[data-has-file]');
 
-	const type 		= this.$controls.type.val();
-	const operator 	= this.$controls.operator.val();
+	const type = this.$controls.type.val();
+	const operator = this.$controls.operator.val();
 
 	const $optionsContainer = this.element.find('[data-attribute-type="' + type + '"]');
 	const caseSensitive = $optionsContainer.find('[data-attribute-role="case"]').is(':checked') || false;
 
 	let rawValue;
-	let values		= [];
+	let values = [];
 	if (hasFile) {
 		rawValue = this.$controls.value_file.val() || '';
 		const trimmedLines = rawValue.trim().split(/\s*[\r\n]+\s*/g); // split on line breaks, ignore empty lines.
@@ -949,7 +949,7 @@ const setValue = function($element, val) {
 		if ($element.hasClass('selectpicker')) {
 			$element.selectpicker('val', val);
 
-			const actualValues = [].concat($element.selectpicker('val')); // might not always be array
+			const actualValues = [].concat($element.selectpicker('val')) as string[]; // might not always be array
 			if (val.filter(function(v) {return v!=null && !actualValues.includes(v);}).length) {
 				throw new Error('Could not set value(s) ' + val.join() + ' on selectpicker - list contains invalid values (use null to clear)');
 			}

@@ -1,5 +1,3 @@
-/* global BLS_URL */
-
 import * as $ from 'jquery';
 
 import {FilterField, PropertyField} from '../types/pagetypes';
@@ -133,7 +131,7 @@ $(document).ready(function() {
 		const $this = $(this);
 		const propertyId = $this.data('autocomplete');
 
-		$this.autocomplete({
+		($this as any).autocomplete({
 			source: BLS_URL + '/autocomplete/' + propertyId,
 			minLength: 1, // Show values when at least 1 letter is present
 			classes: {
@@ -154,7 +152,7 @@ $(document).ready(function() {
 		});
 		$this.keypress(function( event ) {
 			if ( event.which === 13 ) {
-				$this.autocomplete('close');
+				($this as any).autocomplete('close');
 			}
 		});
 	});

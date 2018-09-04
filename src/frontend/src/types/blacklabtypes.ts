@@ -149,7 +149,8 @@ export type BLSearchSummary = {
 	windowHasPrevious: boolean;
 } & BLSearchSummarySampleSettings;
 
-interface GroupResult {
+/** Single group of either hits or documents */
+export interface GroupResult {
 	identity: string;
 	identityDisplay: string;
 	size: number;
@@ -167,7 +168,7 @@ export interface BLDocGroupResults {
 	summary: BLSearchSummary & BlSearchSummaryGroupInfo & BLSearchSummaryTotals;
 }
 
-interface BLHitSnippetPart {
+export interface BLHitSnippetPart {
 	/** Punctuation always exists (even if only an empty string or a space) */
 	punct: string[];
 	/** Usually this contains fields like lemma, word, pos */
@@ -175,14 +176,14 @@ interface BLHitSnippetPart {
 }
 
 /** Contains all the AnnotatedField (previously token/word "properties") values for tokens in or around a hit */
-interface BLHitSnippet {
+export interface BLHitSnippet {
 	left: BLHitSnippetPart;
 	match: BLHitSnippetPart;
 	right: BLHitSnippetPart;
 }
 
 /** Contains all metadata for a document */
-interface BLDocInfo {
+export interface BLDocInfo {
 	[key: string]: string;
 }
 
@@ -211,6 +212,14 @@ export type BlHitResults = {
 	} & BLHitSnippet>;
 	summary: BLSearchSummary & BLSearchSummaryTotals;
 };
+
+export type BLSearchResult = BlHitResults|BLDocResults|BLHitGroupResults|BLDocGroupResults;
+
+export const isHitResults = (d): d is BlHitResults => d && d.docInfos && d.hits;
+export const isDocResults = (d): d is BLDocResults => d && d.docs;
+export const isHitGroups = (d): d is BLHitGroupResults => d && d.hitGroups;
+export const isDocGroups = (d): d is BLDocGroupResults => d && d.docGroups;
+export const isGroups = (d): d is BLHitGroupResults|BLDocGroupResults => isHitGroups(d) || isDocGroups(d);
 
 // -----------------------
 // Blacklab derived types

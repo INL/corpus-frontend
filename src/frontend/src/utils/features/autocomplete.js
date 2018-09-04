@@ -2,7 +2,7 @@
 import 'jquery-ui';
 import 'jquery-ui/ui/widgets/autocomplete';
 
-import $ from 'jquery';
+import * as $ from 'jquery';
 
 // Inherit jQueryUI autocomplete widget and customize the rendering
 // to apply some bootstrap classes and structure

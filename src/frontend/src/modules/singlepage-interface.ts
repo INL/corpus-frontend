@@ -21,27 +21,6 @@ import * as BLTypes from '../types/blacklabtypes';
  * Does not manage the main search form.
  */
 
-/**
- * Dictionary where key == propertyId and value is array of containing the values for that id, in order of occurance.
- * Available properties are contained in SINGLEPAGE.INDEX.complexFields['complexFieldId'].properties['propertyId']
- * NOTE: since blacklab 2.0, properties are called annotations and are contained in SINGLEPAGE.INDEX.annotatedFields['id'].annotations['id']
- *
- * The 'punct' property is always available.
- */
-type BLHitContext = {
-	punct: string[];
-	[key: string]: string[];
-};
-
-type BLHit = {
-	docPid: string;
-	start: number;
-	end: number;
-	left: BLHitContext;
-	match: BLHitContext;
-	right: BLHitContext;
-};
-
 type Property = {
 	id: string;
 	displayName: string;
@@ -54,7 +33,7 @@ declare var BLS_URL: string;
 
 const ELLIPSIS = String.fromCharCode(8230);
 
-const PROPS: {all?: Property[], shown?: Property[], firstMainProp?: Property } = {};
+const PROPS = {} as {all: Property[], shown: Property[], firstMainProp: Property };
 // Gather up all relevant properties of words in this index
 PROPS.all = $.map(SINGLEPAGE.INDEX.complexFields || SINGLEPAGE.INDEX.annotatedFields, function(complexField) {
 	return $.map(complexField.properties || complexField.annotations, function(prop, propId) {
@@ -70,11 +49,9 @@ PROPS.all = $.map(SINGLEPAGE.INDEX.complexFields || SINGLEPAGE.INDEX.annotatedFi
 });
 
 /** Columns configured in PROPS_IN_COLUMNS, can contain duplicates */
-PROPS.shown = $.map(PROPS_IN_COLUMNS, function(propId) {
-	return $.map(PROPS.all, function(prop) {
-		return (prop.id === propId) ? prop : undefined;
-	});
-});
+PROPS.shown = PROPS_IN_COLUMNS.map(propId => {
+	return PROPS.all!.find(p => p.id === propId);
+}).filter(p => p != null) as Property[];
 
 // There is always at least a single main property.
 // TODO this shouldn't be required, mainProperties from multiple complexFields should be handled properly
@@ -108,14 +85,14 @@ PROPS.firstMainProp = PROPS.all.filter(function(prop) { return prop.isMainProp; 
 };
 
 /**
- * @param {BLHitContext} context
- * @param {string} prop - property to retrieve
- * @param {boolean} doPunctBefore - add the leading punctuation?
- * @param {string} addPunctAfter - trailing punctuation to append
- * @returns {string} concatenated values of the property, interleaved with punctuation from context['punt']
+ * @param context
+ * @param prop - property to retrieve
+ * @param doPunctBefore - add the leading punctuation?
+ * @param addPunctAfter - trailing punctuation to append
+ * @returns concatenated values of the property, interleaved with punctuation from context['punt']
  */
-function words(context, prop, doPunctBefore, addPunctAfter) {
-	const parts = [];
+function words(context: BLTypes.BLHitSnippetPart, prop: string, doPunctBefore: boolean, addPunctAfter: string): string {
+	const parts = [] as string[];
 	const n = context[prop] ? context[prop].length : 0;
 	for (let i = 0; i < n; i++) {
 		if ((i === 0 && doPunctBefore) || i > 0) {
@@ -130,11 +107,11 @@ function words(context, prop, doPunctBefore, addPunctAfter) {
 /**
  * @param {BLHit} hit - the hit
  * @param {string} [prop] - property of the context to retrieve, defaults to PROPS.firstMainProp (usually 'word')
- * @returns {Array.<string>} - string[3] where [0] == before, [1] == hit and [2] == after, values are strings created by
+ * @returns string[3] where [0] == before, [1] == hit and [2] == after, values are strings created by
  * concatenating and alternating the punctuation and values itself
  */
-function snippetParts(hit, prop?: string) {
-	prop = prop || PROPS.firstMainProp.id;
+function snippetParts(hit: BLTypes.BLHitSnippet, prop?: string): [string, string, string] {
+	prop = prop || PROPS.firstMainProp!.id;
 
 	const punctAfterLeft = hit.match.word.length > 0 ? hit.match.punct[0] : '';
 	const before = words(hit.left, prop, false, punctAfterLeft);
@@ -143,19 +120,14 @@ function snippetParts(hit, prop?: string) {
 	return [before, match, after];
 }
 
-/**
- * Concat all properties in the context into a large string
- *
- * @param {BLHitContext} context
- * @returns {string}
- */
-function properties(context) {
-	const props = [];
+/** Concat all properties in the context into a large string */
+function properties(context: BLTypes.BLHitSnippetPart): string {
+	const props = [] as string[];
 	for (const key in context) {
 		if (context.hasOwnProperty(key)) {
-			const val = $.trim(context[key]);
+			const val = $.trim(context[key].join(''));
 			if (!val) { continue; }
-			props.push(key+': '+val);
+			props.push(key + ': ' + val);
 		}
 	}
 	return props.join(', ');
@@ -164,11 +136,11 @@ function properties(context) {
 /**
  * Fade out the table, then replace its contents, and call a function.
  *
- * @param {object} $table
- * @param {string} html Table head and body
- * @param {function} [onComplete] callback, will be called in the context of $table
+ * @param $table the <table>
+ * @param html Table contents including thead and tbody as as string
+ * @param onComplete callback, will be called in the context of $table
  */
-function replaceTableContent($table, html, onComplete?: ($table: JQuery<HTMLElement>) => void) {
+function replaceTableContent($table: JQuery<HTMLElement>, html: string, onComplete?: ($table: JQuery<HTMLElement>) => void) {
 	// skip the fadeout if the table is empty
 	// fixes annoying mini-delay when first viewing results
 	const fadeOutTime = $table.find('tr').length ? 200 : 0;
@@ -212,18 +184,18 @@ function hideBlsError() {
  *
  * Buttons contain a data-page attribute containing the page index they're displaying - 1.
  *
- * @param {any} $pagination <ul> element where the generated pagination will be placed.
- * @param {any} data a blacklab-server search response containing either groups, docs, or hits.
+ * @param $pagination <ul> element where the generated pagination will be placed.
+ * @param data a blacklab-server search response containing either groups, docs, or hits.
  */
-function updatePagination($pagination, data) {
+function updatePagination($pagination: JQuery<HTMLElement>, data: BLTypes.BLSearchResult) {
 	let beginIndex = data.summary.windowFirstResult;
 	const pageSize = data.summary.requestedWindowSize;
-	let totalResults;
-	if (data.summary.numberOfGroups != null) {
+	let totalResults: number;
+
+	if (BLTypes.isGroups(data)) {
 		totalResults = data.summary.numberOfGroups;
-	}
-	else {
-		totalResults = (data.hits ? data.summary.numberOfHitsRetrieved : data.summary.numberOfDocsRetrieved);
+	} else {
+		totalResults = BLTypes.isHitResults(data) ? data.summary.numberOfHitsRetrieved : data.summary.numberOfDocsRetrieved;
 	}
 
 	// when out of bounds results, draw at least the last few pages so the user can go back
@@ -236,7 +208,7 @@ function updatePagination($pagination, data) {
 	const startPage = Math.max(currentPage - 10, 0);
 	const endPage = Math.min(currentPage + 10, totalPages);
 
-	const html = [];
+	const html = [] as Array<string|number>;
 	if (currentPage === 0) {
 		html.push('<li class="disabled"><a>Prev</a></li>');
 	}
@@ -383,7 +355,7 @@ function loadConcordances() {
 			.toggle(currentConcordanceCount + loadedConcordances < totalConcordances);
 
 		// And generate html to display
-		const html = [];
+		const html = [] as Array<string|number>;
 		// Only one of these will run depending on what is present in the data
 		// And what is present in the data depends on the current view, so all works out
 		$.each(data.hits, function(index, hit) {
@@ -417,7 +389,7 @@ function loadConcordances() {
 			message: 'Error contacting webservice: ' + textStatus + '; ' + errorThrown
 		};
 
-		const html = [];
+		const html = [] as string[];
 		html.push('<div>',
 			'<b>Could not retrieve concordances.</b><br>');
 
@@ -436,13 +408,13 @@ function loadConcordances() {
 /**
  * Convert a blacklab-server reply containing information about hits into a table containing the results.
  *
- * @param {any} data the blacklab-server response.
+ * @param data the blacklab-server response.
  * @returns An array of html strings containing the <thead> and <tbody>, but without the enclosing <table> element.
  */
-function formatHits(data, textDirection) {
+function formatHits(data: BLTypes.BlHitResults, textDirection: 'rtl'|'ltr'): Array<string|number> {
 	// TODO use mustache.js
 
-	const html = [];
+	const html = [] as Array<string|number>;
 	/* eslint-disable indent */
 	html.push(
 		'<thead><tr>',
@@ -486,7 +458,7 @@ function formatHits(data, textDirection) {
 	/* eslint-enable */
 
 	html.push('<tbody>');
-	let prevHitDocPid = null;
+	let prevHitDocPid: string;
 	const numColumns = 3 + PROPS.shown.length; // before context - hit context - after context - remaining properties
 	$.each(data.hits, function(index, hit) {
 		// Render a row for this hit's document, if this hit occurred in a different document than the previous
@@ -573,11 +545,11 @@ function formatHits(data, textDirection) {
 /**
  * Convert a blacklab-server reply containing information about documents into a table containing the results.
  *
- * @param {any} data the blacklab-server response.
+ * @param data the blacklab-server response.
  * @returns An array of html strings containing the <thead> and <tbody>, but without the enclosing <table> element.
  */
-function formatDocs(data, textDirection): string[] {
-	const html = [];
+function formatDocs(data: BLTypes.BLDocResults, textDirection): Array<string|number> {
+	const html = [] as Array<string|number>;
 
 	html.push(
 		'<thead><tr>',
@@ -588,7 +560,7 @@ function formatDocs(data, textDirection): string[] {
 	);
 
 	html.push('<tbody>');
-	$.each(data.docs, function(index, doc) {
+	for (const doc of data.docs) {
 		const docPid = doc.docPid;
 
 		const docTitle = doc.docInfo[data.summary.docFields.titleField] || 'UNKNOWN';
@@ -596,10 +568,10 @@ function formatDocs(data, textDirection): string[] {
 		const docDate = doc.docInfo[data.summary.docFields.dateField] || '';
 		const docHits = doc.numberOfHits || '';
 
-		const snippetStrings = [];
-		$.each(doc.snippets, function(index, snippet) {
-			const parts = snippetParts(snippet);
-			snippetStrings.push(ELLIPSIS, ' ', parts[0], '<strong>', parts[1], '</strong>', parts[2], ELLIPSIS);
+		const snippetStrings = [] as string[];
+		$.each(doc.snippets!, function(index, snippet) {
+			const [left, hit, right] = snippetParts(snippet);
+			snippetStrings.push(ELLIPSIS, ' ', left, '<strong>', hit, '</strong>', right, ELLIPSIS);
 			return false; // only need the first snippet for now
 		});
 
@@ -639,7 +611,7 @@ function formatDocs(data, textDirection): string[] {
 				'<td>', docDate, '</td>',
 				'<td>', docHits, '</td>',
 			'</tr>');
-	});
+	}
 	html.push('</tbody>');
 
 	return html;
@@ -649,11 +621,11 @@ function formatDocs(data, textDirection): string[] {
  * Convert a blacklab-server reply containing information about hit or document groups into a table containing the results.
  * Some minor styling is applied based on whether the results are hits or documents.
  *
- * @param {any} data the blacklab-server response.
+ * @param data the blacklab-server response.
  * @returns An array of html strings containing the <thead> and <tbody>, but without the enclosing <table> element.
  */
-function formatGroups(data) {
-	const html = [];
+function formatGroups(data: BLTypes.BLDocGroupResults|BLTypes.BLHitGroupResults) {
+	const html = [] as Array<string|number>;
 
 	html.push(
 		'<thead><tr>',
@@ -663,12 +635,12 @@ function formatGroups(data) {
 	);
 
 	// give the display a different color based on whether we're showing hits or docs
-	const displayClass = data.hitGroups ? 'progress-bar-success' : 'progress-bar-warning';
-	const idPrefix = data.hitGroups ? 'hg' : 'dg'; // hitgroup : docgroup
+	const displayClass = BLTypes.isHitGroups(data) ? 'progress-bar-success' : 'progress-bar-warning';
+	const idPrefix = BLTypes.isHitGroups(data) ? 'hg' : 'dg'; // hitgroup : docgroup
 
 	html.push('<tbody>');
-	const groups = data.hitGroups || data.docGroups;
-	$.each(groups, function(index, group) {
+	const groups = BLTypes.isHitGroups(data) ? data.hitGroups : data.docGroups;
+	$.each(groups, function(index: number, group) {
 		const groupId = group.identity;
 		const htmlId = idPrefix + index;
 
@@ -701,10 +673,8 @@ function formatGroups(data) {
  *
  * 'this' should be the tab containing the results to export.
  * 'event.target' should be the element that was clicked.
- *
- * @param {Jquery.Event} event
  */
-function onExportCsv(event) {
+function onExportCsv(event: JQueryEventObject) {
 	const $tab = $(event.delegateTarget);
 
 	const $button = $(event.target);
@@ -728,7 +698,7 @@ function onExportCsv(event) {
 
 	$button
 		.addClass('disabled')
-		.attr('disabled', true)
+		.attr('disabled', '')
 		.prepend('<span class="fa fa-spinner fa-spin"></span>');
 	$.ajax(url, {
 		accepts: {json: 'application/json'},
@@ -745,7 +715,7 @@ function onExportCsv(event) {
 		complete () {
 			$button
 				.removeClass('disabled')
-				.attr('disabled', false)
+				.removeAttr('disabled')
 				.find('.fa-spinner').remove();
 		}
 	});
@@ -754,22 +724,22 @@ function onExportCsv(event) {
 /**
  * Redraws the table, pagination, hides spinners, shows/hides group indicator, shows the pagination/group controls, etc.
  *
- * @param {any} data the successful blacklab-server reply.
+ * @param data the successful blacklab-server reply.
  */
-function setTabResults(data) {
+function setTabResults(data: BLTypes.BLSearchResult) {
 	const $tab = $(this);
-	let html;
+	let html: Array<string|number>;
 	const textDirection = SINGLEPAGE.INDEX.textDirection || 'ltr';
 	// create the table
-	if (data.hits && data.hits.length) {
+	if (BLTypes.isHitResults(data)) {
 		html = formatHits(data, textDirection);
 	}
-	else if (data.docs && data.docs.length) {
+	else if (BLTypes.isDocResults(data)) {
 		html = formatDocs(data, textDirection);
-						}
-	else if ((data.hitGroups && data.hitGroups.length) || (data.docGroups && data.docGroups.length)) {
+	}
+	else if ((BLTypes.isDocGroups(data) && data.docGroups.length) || (BLTypes.isHitGroups(data) && data.hitGroups.length)) {
 		html = formatGroups(data);
-						}
+	}
 	else {
 		html = [
 			'<thead>',
@@ -998,7 +968,7 @@ $(document).ready(function() {
 
 	// Forward show/open event to tab content pane
 	$('#resultTabs a').on('show.bs.tab', function() {
-		$($(this).attr('href')).trigger('tabOpen');
+		$($(this).attr('href') as string).trigger('tabOpen');
 	});
 
 	// use indirect event capture for easy access to the tab content-pane
@@ -1030,7 +1000,7 @@ $(document).ready(function() {
 			const cur = $(this).selectpicker('val') || [];
 			// Don't fire search if options didn't change
 
-			if (prev.length != cur.length || !prev.every(function(elem) { return cur.includes(elem); })) {
+			if (prev.length !== cur.length || !prev.every(function(elem) { return cur.includes(elem); })) {
 				$(this).trigger('localParameterChange', {
 					groupBy: cur,
 					page: 0,

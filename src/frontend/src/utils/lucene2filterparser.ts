@@ -38,9 +38,12 @@ type ASTRange = {
 };
 
 /** Parse the expression into an array of filter fields for easy displaying. Throws error if the query is too complex or contains errors. */
-export default (blsParam: any): FilterField[] => {
+export default (luceneQuery?: string): FilterField[] => {
+	if (!luceneQuery) {
+		return [];
+	}
 
-	debugLog('parsing filter string', blsParam.filter);
+	debugLog('parsing filter string', luceneQuery);
 
 	/**
 	 * Since the parsed query is a tree-like structure (to allow expression like 'field:("value1" OR ("value3" OR "value4"))' )
@@ -174,7 +177,7 @@ export default (blsParam: any): FilterField[] => {
 		});
 	}
 
-	const results = luceneQueryParser.parse(blsParam.filter);
+	const results = luceneQueryParser.parse(luceneQuery);
 	node(results);
 	return parsedValues;
 };

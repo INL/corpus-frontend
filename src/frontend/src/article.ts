@@ -19,10 +19,6 @@ $(document).ready(function() {
 const ANCHORS: any = {};
 
 (function() {
-
-	// To enable support for HTML5-History-API polyfill in your library
-	const location = window.history.location || window.location;
-
 	let $hits;
 	let currentHit = 0; // index into $hits
 
@@ -35,7 +31,7 @@ const ANCHORS: any = {};
 		}
 
 		if (location.hash != null && location.hash !== '') {
-			ANCHORS.gotoHit(parseInt(location.hash.substring(1)));
+			ANCHORS.gotoHit(parseInt(location.hash.substring(1), 10));
 		} // skip leading #
 		else {
 			ANCHORS.gotoHit(0);
@@ -58,8 +54,8 @@ const ANCHORS: any = {};
 			location.hash = position;
 
 			$('html, body').animate({
-				scrollTop: $hit.offset().top - $(window).height()/2,
-				scrollLeft: $hit.offset().left - $(window).width()/2
+				scrollTop: $hit.offset()!.top - $(window).height()!/2,
+				scrollLeft: $hit.offset()!.left - $(window).width()!/2
 			}, 0);
 		}
 

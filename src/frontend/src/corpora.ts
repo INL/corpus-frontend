@@ -290,7 +290,7 @@ $('#corpora-private-container').on('click', '*[data-corpus-action="upload"]:not(
 	$('#uploadFormatDescription').text(format ? (format.description ||'') : 'Unknown format (it may have been deleted from the server), uploads might fail');
 
 	// clear selected files
-	$('#document-upload-form input[type="file"]').each(function() { $(this).val(undefined); }).trigger('change');
+	$('#document-upload-form input[type="file"]').each(function() { $(this).val(''); }).trigger('change');
 
 	$('#uploadErrorDiv').hide();
 	$('#uploadSuccessDiv').hide();
@@ -347,7 +347,7 @@ $('#share-corpus-form').on('submit', function(event) {
 		},
 		error: showXHRError('Could not share corpus "' + corpus.displayName + '"'),
 		complete () {
-			$editor.val(undefined);
+			$editor.val('');
 			$modal.modal('hide');
 		}
 	});
@@ -518,7 +518,7 @@ function showSuccess(msg: string) {
 	$('#successMessage').html(msg);
 	$('#successDiv').show();
 	$('html, body').animate({
-		scrollTop: $('#successDiv').offset().top - 75 // navbar
+		scrollTop: $('#successDiv').offset()!.top - 75 // navbar
 	}, 500);
 }
 
@@ -528,7 +528,7 @@ function showError(msg: string) {
 	$('#errorMessage').html(msg).show();
 	$('#errorDiv').show();
 	$('html, body').animate({
-		scrollTop: $('#errorDiv').offset().top - 75 // navbar
+		scrollTop: $('#errorDiv').offset()!.top - 75 // navbar
 	}, 500);
 }
 
@@ -702,7 +702,7 @@ function initFileUpload() {
 
 		// clear values
 		$fileInputs.each(function() {
-			$(this).val(undefined).trigger('change');
+			$(this).val('').trigger('change');
 		});
 	}
 
@@ -740,7 +740,7 @@ function initFileUpload() {
 		const formData = new FormData();
 		$fileInputs.each(function() {
 			const self = this;
-			$.each(this.files, function(index, file) {
+			$.each(this.files!, function(index, file) {
 				formData.append(self.name, file, file.name);
 			});
 		});
@@ -802,11 +802,15 @@ function initNewCorpus() {
 
 	$corpusFormatSelect.on('changed.bs.select, refreshed.bs.select, loaded.bs.select, change', function() {
 		const formatId = $(this).selectpicker('val');
-		const format = formats.find(f => f.id === formatId);
+		const format = formats.find(f => f.id === formatId)!;
 		// format always exists if it's present in the select to begin with
 
-		$corpusFormatDescription.text(format.description);
-		$corpusFormatHelpUrl.attr('href', format.helpUrl || undefined).toggle(!!format.helpUrl);
+		$corpusFormatDescription.text(format.description as string);
+		if (format.helpUrl) {
+			$corpusFormatHelpUrl.attr('href', format.helpUrl).show();
+		} else {
+			$corpusFormatHelpUrl.removeAttr('href').hide();
+		}
 	});
 }
 
@@ -870,7 +874,7 @@ function initNewFormat() {
 		$('#format_error').hide();
 	}
 
-	function uploadFormat(file) {
+	function uploadFormat(file: File) {
 		const formData = new FormData();
 		formData.append('data', file, file.name);
 
@@ -923,7 +927,7 @@ function initNewFormat() {
 	});
 
 	$fileInput.on('change', function() {
-		if (this.files[0] != null) {
+		if (this.files && this.files[0] != null) {
 			const file = this.files[0];
 			const fr = new FileReader();
 
@@ -986,9 +990,8 @@ function initNewFormat() {
 
 		// IE11 does not support File constructor.
 		// var file = new File([new Blob([fileContents])], fileName);
-		const file = new Blob([fileContents]);
-		file.name = fileName;
-		file.lastModifiedDate = new Date();
+		// const file = new Blob([fileContents]);
+		const file = new File([fileContents], fileName);
 		uploadFormat(file);
 	});
 }

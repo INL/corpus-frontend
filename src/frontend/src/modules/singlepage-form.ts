@@ -14,7 +14,7 @@ let within: string|null = null;
 // Update the filter description using the active filter value list
 function updateFilterDisplay() {
 
-	const displayHtml = [];
+	const displayHtml: string[] = [];
 	$.each(activeFilters, function(index, element) {
 		displayHtml.push(element.name, ': ', '<i>', element.values.join(', '), ' </i>');
 	});
@@ -27,19 +27,19 @@ function updateFilterDisplay() {
 // Finally update the preview display with the new value
 function updateFilterField($filterfield) {
 
-	function removeFromFilterList(filterName) {
-		activeFilters = $.grep(activeFilters, function(elem) { return elem.name === filterName;}, true);
+	function removeFromFilterList(id) {
+		activeFilters = $.grep(activeFilters, function(elem) { return elem.name === id;}, true);
 	}
 
 	const filterName = $filterfield.attr('id');
 	const filterType = $filterfield.data('filterfield-type');
 	const $inputs = $filterfield.find('input, select');
-	let values = [];
+	let values = [] as string[];
 
 	// Has two input fields, special treatment
 	if (filterType === 'range') {
-		const from = $($inputs[0]).val();
-		const to = $($inputs[1]).val();
+		const from = $($inputs[0]).val() as string;
+		const to = $($inputs[1]).val() as string;
 
 		if (from && to) { // Since these are text inputs, any falsy value ('', undefined, null) is invalid
 			values.push(from, to);
@@ -49,7 +49,7 @@ function updateFilterField($filterfield) {
 		// Concatenate values since firstVal might be an array itself
 		// val might be an array (in case of multiselect), so concatenate to deal with single values as well as arrays
 		const firstVal = $inputs.first().val();
-		if (firstVal != null && firstVal != '') {
+		if (firstVal != null && firstVal !=='') {
 			values = values.concat(firstVal);
 		}
 	}
@@ -231,7 +231,7 @@ export function setFilterValues(filterName, values) {
 	} else if (filterType === 'select') {
 		$inputs.first().selectpicker('val', values);
 	} else {
-		const processed  = [];
+		const processed: string[] = [];
 		$.each(values, function(index, val) {
 			const withoutQuotes = val.replace(/^"+|"+$/g, '');
 			if (withoutQuotes.match(/\s/)) { // contains whitespace -> keep quotes

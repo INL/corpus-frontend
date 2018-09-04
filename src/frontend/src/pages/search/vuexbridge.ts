@@ -178,7 +178,7 @@ $(document).ready(() => {
 
 					actions.filter({...getCurrentState(), values});
 				}
-			})
+			});
 		});
 	}
 });

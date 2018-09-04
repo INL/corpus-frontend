@@ -1,3 +1,7 @@
+// --------------
+// Base responses
+// --------------
+
 export interface BLResponse {
 	status: {
 		code: string;
@@ -11,6 +15,10 @@ export interface BLError {
 		message: string;
 	};
 }
+
+// ------------------------
+// Index status/server info
+// ------------------------
 
 export interface BLIndexProgress {
 	/** Number of documents finished in this indexing action so far. */
@@ -92,6 +100,117 @@ export interface BLServer {
 	};
 	user: BLUser;
 }
+
+// --------------
+// Search results
+// --------------
+
+type BLSearchSummarySampleSettings = {} | {
+	samplePercentage: number;
+	sampleSeed: number;
+} | {
+	sampleSeed: number;
+	sampleSize: number;
+};
+
+interface BLSearchSummaryTotals {
+	/* -1 if some error occured */
+	numberOfDocs: number;
+	numberOfDocsRetrieved: number;
+	/* -1 if some error occured */
+	numberOfHits: number;
+	numberOfHitsRetrieved: number;
+	stillCounting: boolean;
+	stoppedCountingHits: boolean;
+	stoppedRetrievingHits: boolean;
+}
+
+interface BlSearchSummaryGroupInfo {
+	largestGroupSize: number;
+	numberOfGroups: number;
+}
+
+// TODO - incomplete
+export type BLSearchSummary = {
+	actualWindowSize: number;
+	countTime?: number;
+	/** These fields have a special meaning in the BLDocResult.docInfo */
+	docFields: {
+		// TODO - might be optional or might contain extra?
+		titleField: string;
+		authorField: string;
+		dateField: string;
+	};
+	requestedWindowSize: number;
+	searchParam: any;
+	searchTime: number;
+	windowFirstResult: number;
+	windowHasNext: boolean;
+	windowHasPrevious: boolean;
+} & BLSearchSummarySampleSettings;
+
+interface GroupResult {
+	identity: string;
+	identityDisplay: string;
+	size: number;
+}
+
+/** Blacklab response for a query for hits with grouping enabled */
+export interface BLHitGroupResults {
+	hitGroups: GroupResult[];
+	summary: BLSearchSummary & BlSearchSummaryGroupInfo & BLSearchSummaryTotals;
+}
+
+/** Blacklab response for a query for documents with grouping enabled */
+export interface BLDocGroupResults {
+	docGroups: GroupResult[];
+	summary: BLSearchSummary & BlSearchSummaryGroupInfo & BLSearchSummaryTotals;
+}
+
+interface BLHitSnippetPart {
+	/** Punctuation always exists (even if only an empty string or a space) */
+	punct: string[];
+	/** Usually this contains fields like lemma, word, pos */
+	[key: string]: string[];
+}
+
+/** Contains all the AnnotatedField (previously token/word "properties") values for tokens in or around a hit */
+interface BLHitSnippet {
+	left: BLHitSnippetPart;
+	match: BLHitSnippetPart;
+	right: BLHitSnippetPart;
+}
+
+/** Contains all metadata for a document */
+interface BLDocInfo {
+	[key: string]: string;
+}
+
+/** Blacklab response to a query for documents without grouping */
+export type BLDocResults = {
+	docs: Array<{
+		docInfo: BLDocInfo;
+		docPid: string;
+		/* Only when query was performed with a cql pattern */
+		numberOfHits?: number;
+		/* Only when query was performed with a cql pattern */
+		snippets?: BLHitSnippet[];
+	}>;
+	summary: BLSearchSummary & BLSearchSummaryTotals;
+};
+
+/** Blacklab response to a query for hits without grouping */
+export type BlHitResults = {
+	docInfos: {
+		[key: string]: BLDocInfo;
+	};
+	hits: Array<{
+		docPid: string;
+		end: number;
+		start: number;
+	} & BLHitSnippet>;
+	summary: BLSearchSummary & BLSearchSummaryTotals;
+};
 
 // -----------------------
 // Blacklab derived types

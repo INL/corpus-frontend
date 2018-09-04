@@ -30,7 +30,8 @@ export type Token = {
 	optional: boolean;
 	repeats?: {
 		min: number;
-		max: number;
+		/** When null, maximum repetitions is unbounded */
+		max: number|null;
 	};
 };
 
@@ -53,7 +54,7 @@ export default function(input: string): Result {
 
 	function nextSym() {
 		if (++pos >= input.length) {
-			cur = null;
+			cur = '';
 		} else {
 			cur = input[pos];
 		}
@@ -62,26 +63,20 @@ export default function(input: string): Result {
 	// Test current symbol against any number of other symbols
 	// Recursively unpacks arrays
 	// TODO properly type, arguments should be (optionally nested) string arrays
-	function test(...__: any[]) {
-		for (let i = 0; i < arguments.length; i++) {
-			const symbol = arguments[i];
-
-			if (symbol instanceof Array) {
-				for (let j = 0; j < symbol.length; j++) {
-					if (test(symbol[j])) {
-						return true;
-					}
+	function test(...items: Array<string|string[]>) {
+		for (const item of items) {
+			if (item instanceof Array) {
+				if (item.some(subItem => test(subItem))) {
+					return true;
 				}
-			} else if (typeof symbol === 'string') { // 'string' instanceof String === false (go javascript!)
-				for (let k = 0; k < symbol.length; k++) {
-					if (pos + k >= input.length || input[pos + k] !== symbol[k]) {
+			} else {
+				for (let k = 0; k < item.length; k++) {
+					if (pos + k >= input.length || input[pos + k] !== item[k]) {
 						return false;
 					}
 				}
 				return true;
-			} else {
-				return (symbol === cur);
-										}
+			}
 		}
 		return false;
 	}
@@ -162,8 +157,8 @@ export default function(input: string): Result {
 	function parseAttribute(): Attribute {
 		const name = until(['=', '!']).trim(); // This should really be "until anything BUT a-zA-z" but eh
 		const operator = until('"').trim();
-		expect('"', true); // keep all whtiespace after the opening quote
-		const test = until('"'); // don't trim whitespace
+		expect('"', true); // keep all whitespace after the opening quote
+		const value = until('"'); // don't trim whitespace
 		expect('"', true); // also keep all whitespace before and after the quote
 
 		if (operator !== '=' && operator !== '!=') {
@@ -174,7 +169,7 @@ export default function(input: string): Result {
 			type: 'attribute',
 			name,
 			operator,
-			value: test
+			value
 		};
 	}
 
@@ -207,15 +202,7 @@ export default function(input: string): Result {
 	}
 
 	function parseToken(): Token {
-
-		const token = {
-			leadingXmlTag: null,
-			trailingXmlTag: null,
-
-			expression: null,
-			optional: false,
-			repeats: null,
-		};
+		const token = {} as Token;
 
 		if (test('<')) {
 			token.leadingXmlTag = parseXmlTag();
@@ -241,8 +228,8 @@ export default function(input: string): Result {
 
 		if (accept('{')) { // range
 
-			const minRep = parseInt(until([',', '}']));
-			let maxRep = null;
+			const minRep = parseInt(until([',', '}']), 10);
+			let maxRep: number|null = null;
 
 			if (accept(',')) {
 
@@ -250,7 +237,7 @@ export default function(input: string): Result {
 				// {n, } is valid syntax for unbounded repetitions starting at n times
 				// signal this by leaving maxRep as null
 				if (maxRepString.length > 0) {
-					maxRep = parseInt(maxRepString);
+					maxRep = parseInt(maxRepString, 10);
 				}
 
 				expect('}');
@@ -294,19 +281,17 @@ export default function(input: string): Result {
 		return elementName;
 	}
 
-	if (typeof input !== 'string' || input.length === 0) {
-		return null;
-	}
-	input = input.trim();
-	if (!input) {
-		return null;
+	if (typeof input !== 'string' || (input = input.trim()).length === 0) {
+		return {
+			tokens: [],
+		};
 	}
 
 	pos = 0;
 	cur = input[0];
 
-	const tokens = [];
-	let within = null;
+	const tokens = [] as Token[];
+	let within: string|undefined;
 
 	// we always start with a token
 	tokens.push(parseToken());

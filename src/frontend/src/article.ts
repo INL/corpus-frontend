@@ -1,5 +1,5 @@
 import 'bootstrap';
-import * as $ from 'jquery';
+import $ from 'jquery';
 
 // Article-related functions.
 // Takes care of tooltips and highlighting/scrolling to anchors.

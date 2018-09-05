@@ -1,5 +1,5 @@
-import * as $ from 'jquery';
-import * as URI from 'urijs';
+import $ from 'jquery';
+import URI from 'urijs';
 import Vue from 'vue';
 import Vuex from 'vuex';
 
@@ -339,7 +339,8 @@ export const actions = {
 		page: b.commit((state, payload: number) => state.hitDisplaySettings.page = payload, 'docs_page'),
 		viewGroup: b.commit((state, payload: string) => state.hitDisplaySettings.viewGroup = payload, 'docs_viewgroup'),
 	},
-	filter: b.commit((state, payload: FilterField) => {state.filters = { ...state.filters, [payload.name]: payload};}, 'filter'),
+	initFilter: b.commit((state, payload: FilterField) => state.filters = {...state.filters, [payload.name]: payload}, 'initfilter'),
+	filter: b.commit((state, {id, values}: {id: string, values: string[]}) => state.filters[id].values = values, 'filter'),
 	clearFilters: b.commit(state => state.filters = {}, 'clearfilters'),
 	hits: {
 		caseSensitive: b.commit((state, payload: boolean) => state.hitDisplaySettings.caseSentive = payload, 'hits_casesentisive'),

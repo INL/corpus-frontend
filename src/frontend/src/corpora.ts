@@ -10,7 +10,7 @@ import './utils/features/tutorial';
 
 // Now import the augmented modules (though import order shouldn't matter)
 import CodeMirror from 'codemirror';
-import * as $ from 'jquery';
+import $ from 'jquery';
 import * as Mustache from 'mustache';
 
 import * as BLTypes from './types/blacklabtypes';

@@ -3,8 +3,8 @@
 import 'bootstrap';
 import 'bootstrap-select';
 import {saveAs} from 'file-saver';
-import * as $ from 'jquery';
-import * as URI from 'urijs';
+import $ from 'jquery';
+import URI from 'urijs';
 
 import {onSearchUpdated} from '../search';
 import {debugLog} from '../utils/debug';

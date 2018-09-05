@@ -1,8 +1,8 @@
 import 'bootstrap';
 import 'bootstrap-select';
 
-import * as $ from 'jquery';
-import * as URI from 'urijs';
+import $ from 'jquery';
+import URI from 'urijs';
 
 import parseCql from './utils/cqlparser';
 import './utils/features/autocomplete';
@@ -199,7 +199,7 @@ function toPageUrl(searchParams) {
 
 	// If we're not searching, return a bare url pointing to /search/
 	if (searchParams == null) {
-		return uri.directory(basePath).search(null).toString();
+		return uri.directory(basePath.join('')).search('').toString();
 	}
 
 	// remove null, undefined, empty strings and empty arrays from our query params

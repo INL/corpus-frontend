@@ -1,4 +1,4 @@
-import * as _$ from 'jquery';
+import _$ from 'jquery';
 
 let debug = false;
 
@@ -31,4 +31,4 @@ export default function() {
 }
 
 // DEBUGGING ONLY, this should probably use node.env
-window.jquery = window.$ = _$;
+(window as any).jquery = (window as any).$ = _$;

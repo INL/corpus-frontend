@@ -1,6 +1,7 @@
-import * as $ from 'jquery';
+import $ from 'jquery';
+import URI from 'urijs';
+
 import luceneQueryParser from 'lucene-query-parser';
-import * as URI from 'urijs';
 
 import parseCql from '../utils/cqlparser';
 import {debugLog} from '../utils/debug';
@@ -108,7 +109,7 @@ function getPatternString(pattern?: string|PropertyField[], within?: string): st
 	$.each(tokens, function(index, token) {
 
 		// push all attributes in this token
-		const attributesStrings = [] as string[]
+		const attributesStrings = [] as string[];
 		$.each(token, function(key, value) {
 			if (value) { // don't push empty attributes
 				attributesStrings.push(key + '=' + '"' + value + '"');

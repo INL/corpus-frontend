@@ -1,17 +1,39 @@
 {
 	"presets": [
 		["@babel/env", {
-			// Modules option can let babel transform import '...' statements into other ways of acquiring the module (commonjs, amd, etc)
-			// We don't need this, as webpack handles this for us.
-			// Since babel runs before webpack itself bundles the files, we need to leave the import statements alone so webpack can pick them up.
+			/*
+				Modules option can let babel transform import '...' statements into other ways of acquiring the module (commonjs, amd, etc)
+				The default is transform to CommonJs (the NodeJs module format prior to native javascript modules using import/export)
+				For now we need this to happen, so the transform-es2015-modules-commonjs-simple plugin (see below) can do its work.
+
+				Later we can just turn this off entirely and babel will preserve imports as they are,
+				which is okay, because the output is ran through webpack which will take care of it for us.
+			*/
 			"modules": false,
+
 			// Scans our code and injects the necessary polyfills (promise, async, fetch, etc...)
 			// based on our browser targets and used language features.
 			"useBuiltIns": "usage",
 			"targets": {
 				"browsers": ["last 2 versions",  "not ie < 11"]
-			},
-			// "debug": true
+			}
+		}]
+	],
+	"plugins": [
+		/*
+			This is super useful when on breakpoints - prevents imported variable/function names from being mangled
+			Does however require us to transform modules into CommonJs format instead of es6 import/exports
+			Eventually once this is solved, or reverse-sourcemapping (mapping pretty name in browser console to mangled name in the eval)
+			makes it into browsers, we can start using es6 import/exports again
+			See these issues for progress on the name-mangling part:
+			https://github.com/babel/babel/issues/2596
+			https://github.com/webpack/webpack/issues/3957
+			https://bugs.chromium.org/p/chromium/issues/detail?id=327092
+
+			See: https://github.com/jamietre/babel-plugin-transform-es2015-modules-commonjs-simple#readme
+		*/
+		["transform-es2015-modules-commonjs-simple", {
+			"noMangle": true
 		}]
 	]
 }

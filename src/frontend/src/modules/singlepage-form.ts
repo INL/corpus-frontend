@@ -77,8 +77,7 @@ function updatePropertyField($propertyField, event?) {
 	const $changedInput = event ? $(event.target) : $textOrSelect; // no event means we're initializing, so read from the input field
 
 	// Fetch the current state, or init the new property (if it wasn't in the list)
-	const prop = activeProperties.find(p => p.name === propertyName) || {} as PropertyField;// $.grep(activeProperties, function(elem) { return elem.name === propertyName; })[0] || {};
-	prop.name = propertyName;
+	const prop = activeProperties.find(p => p.name === propertyName) || { name: propertyName} as PropertyField;
 	prop.case = $caseInput.is(':checked');
 	prop.value = $textOrSelect.val();
 

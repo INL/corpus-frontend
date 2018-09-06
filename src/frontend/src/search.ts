@@ -477,7 +477,10 @@ export function onSearchUpdated(searchParams) {
 
 // Called to reset search form and results
 export function	resetPage() {
-	history.pushState(null, undefined, '?');
+	const url = new URI();
+	const newUrl = url.search('').segmentCoded(url.segmentCoded().filter(s => s !== 'hits' && s !== 'docs'));
+
+	history.pushState(null, undefined, newUrl.toString());
 	toPageState({});
 	cancelSearch();
 	return false; // might be used as eventhandler

@@ -1,6 +1,6 @@
 export type PropertyField = {
 	/** Unique ID of the property */
-	name: string;
+	readonly name: string;
 	/** Raw value of the property */
 	value: string;
 	/** Should the property match using case sensitivity */
@@ -16,7 +16,7 @@ export const enum FilterType {
 
 export type FilterField = {
 	/** Unique id of the filter/metadata field */
-	name: string;
+	readonly name: string;
 	/**
 	 * Type of the filter, determines how the values are interpreted and read from the DOM
 	 * See CorpusConfig.java/search.vm

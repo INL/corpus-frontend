@@ -22,7 +22,7 @@ const enum defaults {
 }
 
 /** All unknown/unspecified properties must be initialized to null to enable state reactivity */
-type PageState = {
+export type PageState = {
 	filters: {[key: string]: FilterField};
 	hitDisplaySettings: SearchDisplaySettings;
 	docDisplaySettings: SearchDisplaySettings;
@@ -39,9 +39,9 @@ type PageState = {
 	wordsAroundHit: number|null;
 };
 
-interface SearchDisplaySettings {
-	/** case-sentive grouping */
-	caseSentive: boolean;
+export interface SearchDisplaySettings {
+	/** case-sensitive grouping */
+	caseSensitive: boolean;
 	groupBy: string[];
 	sort: string|null;
 	page: number;
@@ -211,7 +211,7 @@ class UrlPageState implements PageState {
 		if (this.operation !== 'hits') {
 			// not the active view, use default/uninitialized settings
 			return {
-				caseSentive: false,
+				caseSensitive: false,
 				groupBy: [],
 				sort: null,
 				viewGroup: null,
@@ -225,10 +225,10 @@ class UrlPageState implements PageState {
 
 			return {
 				groupBy,
-				caseSentive: groupBy.every(g => g.endsWith(':s')),
+				caseSensitive: groupBy.length > 0 && groupBy.every(g => g.endsWith(':s')),
 				sort: this.getString('sort', null, v => v?v:null),
 				viewGroup: this.getString('viewgroup', undefined, v => (v && groupBy.length)?v:null),
-				page: this.getNumber('start', 0, v => Math.floor(Math.max(0, v)/this.pageSize)/* round down to nearest page containing the starting index */)!,
+				page: this.getNumber('first', 0, v => Math.floor(Math.max(0, v)/this.pageSize)/* round down to nearest page containing the starting index */)!,
 			};
 		}
 	}
@@ -236,7 +236,7 @@ class UrlPageState implements PageState {
 	get docDisplaySettings(): SearchDisplaySettings {
 		if(this.operation !== 'docs') {
 			return {
-				caseSentive: false,
+				caseSensitive: false,
 				groupBy: [],
 				sort: null,
 				viewGroup: null,
@@ -250,10 +250,10 @@ class UrlPageState implements PageState {
 
 			return {
 				groupBy,
-				caseSentive: groupBy.every(g => g.endsWith(':s')),
+				caseSensitive: groupBy.length > 0 && groupBy.every(g => g.endsWith(':s')),
 				sort: this.getString('sort', null, v => v?v:null),
 				viewGroup: this.getString('viewgroup', undefined, v => (v && groupBy.length)?v:null),
-				page: this.getNumber('start', 0, v => Math.floor(Math.max(0, v)/this.pageSize)/* round down to nearest page containing the starting index */)!,
+				page: this.getNumber('first', 0, v => Math.floor(Math.max(0, v)/this.pageSize)/* round down to nearest page containing the starting index */)!,
 			};
 		}
 	}
@@ -333,26 +333,45 @@ class UrlPageState implements PageState {
 const b = getStoreBuilder<PageState>();
 export const actions = {
 	docs: {
-		caseSensitive: b.commit((state, payload: boolean) => state.hitDisplaySettings.caseSentive = payload, 'docs_casesentisive'),
-		groupBy: b.commit((state, payload: string[]) => state.hitDisplaySettings.groupBy = payload, 'docs_groupby'),
-		sort: b.commit((state, payload: string) => state.hitDisplaySettings.sort = payload, 'docs_sort'),
-		page: b.commit((state, payload: number) => state.hitDisplaySettings.page = payload, 'docs_page'),
-		viewGroup: b.commit((state, payload: string) => state.hitDisplaySettings.viewGroup = payload, 'docs_viewgroup'),
+		caseSensitive: b.commit((state, payload: boolean) => state.docDisplaySettings.caseSensitive = payload, 'docs_casesentisive'),
+		groupBy: b.commit((state, payload: string[]) => {
+			state.docDisplaySettings.groupBy = payload;
+			state.docDisplaySettings.viewGroup = null;
+			state.docDisplaySettings.sort = null;
+		}, 'docs_groupby'),
+		sort: b.commit((state, payload: string|null) => state.docDisplaySettings.sort = payload, 'docs_sort'),
+		page: b.commit((state, payload: number) => state.docDisplaySettings.page = payload, 'docs_page'),
+		viewGroup: b.commit((state, payload: string|null) => {
+			state.docDisplaySettings.viewGroup = payload;
+			state.docDisplaySettings.sort = null;
+		}, 'docs_viewgroup'),
 	},
+
 	initFilter: b.commit((state, payload: FilterField) => state.filters = {...state.filters, [payload.name]: payload}, 'initfilter'),
 	filter: b.commit((state, {id, values}: {id: string, values: string[]}) => state.filters[id].values = values, 'filter'),
-	clearFilters: b.commit(state => state.filters = {}, 'clearfilters'),
+	clearFilters: b.commit(state => Object.entries(state.filters).forEach(([id, filter]) => filter.values = []), 'clearfilters'),
+
 	hits: {
-		caseSensitive: b.commit((state, payload: boolean) => state.hitDisplaySettings.caseSentive = payload, 'hits_casesentisive'),
-		groupBy: b.commit((state, payload: string[]) => state.hitDisplaySettings.groupBy = payload, 'hits_groupby'),
-		sort: b.commit((state, payload: string) => state.hitDisplaySettings.sort = payload, 'hits_sort'),
+		caseSensitive: b.commit((state, payload: boolean) => state.hitDisplaySettings.caseSensitive = payload, 'hits_casesentisive'),
+		groupBy: b.commit((state, payload: string[]) => {
+			state.hitDisplaySettings.groupBy = payload;
+			state.hitDisplaySettings.viewGroup = null;
+			state.hitDisplaySettings.sort = null;
+		} , 'hits_groupby'),
+		sort: b.commit((state, payload: string|null) => state.hitDisplaySettings.sort = payload, 'hits_sort'),
 		page: b.commit((state, payload: number) => state.hitDisplaySettings.page = payload, 'hits_page'),
-		viewGroup: b.commit((state, payload: string) => state.hitDisplaySettings.viewGroup = payload, 'hits_viewgroup'),
+		viewGroup: b.commit((state, payload: string|null) => {
+			state.hitDisplaySettings.viewGroup = payload;
+			state.hitDisplaySettings.sort = null;
+		},'hits_viewgroup'),
 	},
 	operation: b.commit((state, payload: 'hits'|'docs') => state.operation = payload, 'operation'),
 	pageSize: b.commit((state, payload: number) => state.pageSize = payload, 'pagesize'),
-	pattern: b.commit((state, payload: PropertyField) => {state.pattern = {...state.pattern, [payload.name]: payload};}, 'pattern'),
-	clearPattern: b.commit(state => state.pattern = {}, 'clearpattern'),
+
+	initProperty: b.commit((state, payload: PropertyField) => state.pattern = {...state.pattern, [payload.name]: payload}, 'initproperty'),
+	property: b.commit((state, {id, payload}: {id: string, payload: Partial<PropertyField>}) => state.pattern[id]! = {...state.pattern[id]!, ...payload}, 'property'),
+	clearProperties: b.commit(state => Object.entries(state.pattern).forEach(([id, prop]) => prop!.value = ''), 'clearproperties'),
+
 	// may require some further work based on how it's used in practise
 	patternString: b.commit((state, payload: string) => state.patternString = payload, 'patternstring'),
 	patternQuerybuilder: b.commit((state, payload: string) => state.patternQuerybuilder = payload, 'patternquerybuilder'),
@@ -376,3 +395,6 @@ export const actions = {
 
 export const getState = b.state();
 export const store = b.vuexStore({state: new UrlPageState().get()});
+
+// DEBUGGING
+(window as any).actions = actions;

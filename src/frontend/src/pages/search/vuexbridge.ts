@@ -1,9 +1,10 @@
 import $ from 'jquery';
 
-import {getState, store, actions} from './state';
+import {getState, store, actions, SearchDisplaySettings} from './state';
 
 import {populateQueryBuilder} from '../../search';  // FIXME extract into querybuilder module
 import { PropertyField, FilterField, FilterType } from '../../types/pagetypes';
+import { getStoreBuilder } from 'vuex-typex';
 
 /*
 	This is some ugly-ish code that implements some one- and two-way binding between oldschool normal html elements and the vuex store.
@@ -12,23 +13,83 @@ import { PropertyField, FilterField, FilterType } from '../../types/pagetypes';
 	The idea is to first get some basic synchronization of the jquery and vuex store working.
 */
 
+/** Set the new value and trigger a change event, but only when the value is different */
+function changeText($input: JQuery<HTMLInputElement>, value: string|null|number) {
+	if (value == null) {
+		value = '';
+	} else if (typeof value !== 'string') {
+		value = '' + value;
+	}
+	if ($input.val() as string !== value) {
+		$input.val(value).change();
+	}
+}
+/** Set the new value and trigger a change event, but only when the value is different */
+function changeSelect($input: JQuery<HTMLSelectElement>, value: string|string[]|null) {
+	function eq(a,b) {
+		if (a instanceof Array && b instanceof Array) {
+			if (a.length!==b.length) { // assert same length
+				return false;
+			}
+			for(let i = 0; i < a.length; ++i) { // assert each element equal
+				if (!eq(a[i], b[i])) {
+					return false;
+				}
+			}
+			return true;
+		} else {
+			return a===b;  // if not both arrays, should be the same
+		}
+	}
+
+	const valBefore = $input.selectpicker('val');
+	$input.selectpicker('val', value as any);
+	const valAfter = $input.selectpicker('val');
+
+	if (!eq(valBefore, valAfter)) {
+		$input.change();
+	}
+}
+function changeCheck($input: JQuery<HTMLInputElement>, value: boolean) {
+	if ($input.is(':checked') === value) {
+		return;
+	}
+
+	if (value) {
+		$input.attr('checked', '').change();
+	} else {
+		$input.removeAttr('checked').change();
+	}
+}
+
 $(document).ready(() => {
 	{
-		const $pageSize = $('#resultsPerPage');
-		store.watch(state => state.pageSize, v => $pageSize.selectpicker('val', '' + v));
-		$pageSize.on('change', e => actions.pageSize(Number.parseInt($pageSize.selectpicker('val') as string, 10)));
+		const $pageSize = $('#resultsPerPage') as JQuery<HTMLSelectElement>;
+		store.watch(state => state.pageSize, v => changeSelect($pageSize, v+''));
+		$pageSize.on('change', () => {
+			const v = Number.parseInt($pageSize.selectpicker('val') as string, 10);
+			if (v !== getState().pageSize) {
+				actions.pageSize(v);
+			}
+		});
 	}
 
 	{
-		const $sampleMode = $('#sampleMode');
-		store.watch(state => state.sampleMode, v => $sampleMode.selectpicker('val', v));
-		$sampleMode.on('change', e => actions.sampleMode($sampleMode.selectpicker('val') as any));
+		// TODO enum
+		const $sampleMode = $('#sampleMode') as JQuery<HTMLSelectElement>;
+		store.watch(state => state.sampleMode, v => changeSelect($sampleMode, v));
+		$sampleMode.on('change', () => {
+			const v = $sampleMode.selectpicker('val') as string;
+			if (v !== getState().sampleMode) {
+				actions.sampleMode(v as any);
+			}
+		});
 	}
 
 	{
-		const $sampleSize = $('#sampleSize');
-		store.watch(state => state.sampleSize, v => $sampleSize.val(v as any));
-		$sampleSize.on('change keyup', e => {
+		const $sampleSize = $('#sampleSize') as JQuery<HTMLInputElement>;
+		store.watch(state => state.sampleSize,v => changeText($sampleSize, v+''));
+		$sampleSize.on('change keyup', () => {
 			let n: number|null = Number.parseInt($sampleSize.val() as string, 10);
 			if (isNaN(n)) { n = null; }
 
@@ -39,14 +100,21 @@ $(document).ready(() => {
 	}
 
 	{
-		const $sampleSeed = $('#sampleSeed');
-		store.watch(state => state.sampleSeed, v => $sampleSeed.val(v as any));
-		$sampleSeed.on('change', e => actions.sampleSeed($sampleSeed.val() as any));
+		const $sampleSeed = $('#sampleSeed') as JQuery<HTMLInputElement>;
+		store.watch(state => state.sampleSeed, v => changeText($sampleSeed, v));
+		$sampleSeed.on('change', () => {
+			let n: number|null = Number.parseInt($sampleSeed.val() as string, 10);
+			if (isNaN(n)) { n = null; }
+
+			if (n !== getState().sampleSeed) {
+				actions.sampleSeed(n);
+			}
+		});
 	}
 
 	{
-		const $wordsAroundHit = $('#wordsAroundHit');
-		store.watch(state => state.wordsAroundHit, v => $wordsAroundHit.val(v as any));
+		const $wordsAroundHit = $('#wordsAroundHit')  as JQuery<HTMLInputElement>;
+		store.watch(state => state.wordsAroundHit, v => changeText($wordsAroundHit, v));
 		$wordsAroundHit.on('change keyup', e => {
 			let n: number|null = Number.parseInt($wordsAroundHit.val() as string, 10);
 			if (isNaN(n)) { n = null; }
@@ -58,11 +126,11 @@ $(document).ready(() => {
 	}
 
 	{
-		let preventNextUpdate = false;
-		const $querybox = $('#querybox');
+		let preventNextUpdate = false; // use some other guarding to prevent repeatedly comparing long strings
+		const $querybox = $('#querybox') as JQuery<HTMLTextAreaElement>;
 		store.watch(state => state.patternString, v => {
 			if (!preventNextUpdate) {
-				$querybox.val(v as string);
+				$querybox.val(v as string).change();
 			}
 			preventNextUpdate = false;
 		});
@@ -77,6 +145,7 @@ $(document).ready(() => {
 		const $querybuilder = $('#querybuilder');
 		store.watch(state => state.patternQuerybuilder, v => {
 			if (v !== lastPattern) {
+				lastPattern = v || '';
 				populateQueryBuilder(v);
 			}
 		});
@@ -106,19 +175,27 @@ $(document).ready(() => {
 			const $fileInput = $this.find('#' + id + '_file') as JQuery<HTMLInputElement>; // NOTE: not always available
 			const $caseInput = $this.find('#' + id + '_case');
 
-			const getCurrentState = () => getState().pattern[id] || {
-				name: id,
-				value: $textOrSelect.val() as string || '',
-				case: $caseInput.is(':checked')
-			};
-
-			$textOrSelect.on('change', function() { // no arrow-func due to context issues
-				actions.pattern({
-					...getCurrentState(),
-					value: $textOrSelect.val() as string || '',
+			// Initialize if the field is still unknown in the store (i.e. no initial values were hydrated for this field)
+			// NOTE: at this point the store is already initialized with initial data from page load
+			if (getState().pattern[id] == null) {
+				actions.initProperty({
+					case: $caseInput.is(':checked'),
+					name: id,
+					value: ''
 				});
-			});
+			}
 
+			// Store -> UI
+			store.watch(state => state.pattern[id]!.case, v => { if (v !== $caseInput.is(':checked')) { $caseInput.click(); }});
+			store.watch(state => state.pattern[id]!.value, v => { if ($textOrSelect.val() as string !== v) { $textOrSelect.val(v).change(); $fileInput.val(''); }});
+
+			// UI -> Store
+			$textOrSelect.on('change', () => actions.property({
+				id,
+				payload: { value: $textOrSelect.val() as string || '' }
+			}));
+
+			// UI -> Store
 			$fileInput.on('change', function() { // no arrow-func due to context issues
 				const file = this.files && this.files[0];
 				if (file != null) {
@@ -127,24 +204,25 @@ $(document).ready(() => {
 						// Replace all whitespace with pipes,
 						// this is due to the rather specific way whitespace in the simple search property fields is treated (see singlepage-bls.js:getPatternString)
 						// TODO discuss how we treat these fields with Jan/Katrien, see https://github.com/INL/corpus-frontend/issues/18
-						actions.pattern({
-							...getCurrentState(),
-							value: (fr.result as string).replace(/\s+/g, '|'),
+						actions.property({
+							id,
+							payload: { value: (fr.result as string).replace(/\s+/g, '|') }
 						});
 					};
 					fr.readAsText(file);
 				} else {
-					actions.pattern({
-						...getCurrentState(),
-						value: '', // clear value when the file is cleared
+					actions.property({
+						id,
+						payload: { value: '' }, // clear value when the file is cleared
 					});
 				}
 			});
 
+			// UI -> Store
 			$caseInput.on('change', function() {
-				actions.pattern({
-					...getCurrentState(),
-					case: $caseInput.is(':checked')
+				actions.property({
+					id,
+					payload: { case: $caseInput.is(':checked') }
 				});
 			});
 		});
@@ -158,16 +236,16 @@ $(document).ready(() => {
 			const $inputs = $this.find('input, select');
 
 			// Initialize if the field is still unknown in the store (i.e. no initial values were hydrated for this field)
-			// NOTE: at this point the store should already have been initialized with initial data from page load
+			// NOTE: at this point the store is already initialized with initial data from page load
 			if (getState().filters[id] == null) {
 				actions.initFilter({
 					name: id,
-					filterType: type as any, // TODO enum
+					filterType: type,
 					values: []
 				});
 			}
 
-			// Register change listener
+			// Store -> UI
 			store.watch(state => state.filters[id], ({values}) => {
 				if (type === FilterType.range) {
 					$($inputs[0]).val(values[0]);
@@ -179,6 +257,7 @@ $(document).ready(() => {
 				}
 			});
 
+			// UI -> store
 			$this.on('change', function() {
 				const currentState = getState().filters[id];
 				let values: string[];
@@ -201,25 +280,88 @@ $(document).ready(() => {
 		});
 	}
 
-	{ // TODO we cannot navigate to pages not in the pagination element at the moment
-		const $hitDisplay = $('#tabHits');
-		$hitDisplay.on('click', '[data-page]', () => {
-			actions.hits.page($(this).data('page'));
-		});
-		store.watch(state => state.hitDisplaySettings.page, page => {
-			$hitDisplay.find(`.pagination [data-page="${page}"]`).click();
+	{
+		$('#tabHits, #tabDocs').each((i, el) => {
+			const $this = $(el);
+			const handlers = $this.is($('#tabHits')) ? actions.hits : actions.docs;
+			const stateKey = $this.is($('#tabHits')) ? 'hitDisplaySettings' : 'docDisplaySettings';
+			const operation = $this.is($('#tabHits')) ? 'hits' : 'docs';
+			const getSubState = (): SearchDisplaySettings => getState()[stateKey];
+
+			// Main tab opening
+			$this.on('tabOpen', () => actions.operation(operation));
+
+			// Pagination
+			// TODO we cannot navigate to pages not in the pagination element at the moment
+			$this.on('click', '[data-page]', function() { // No arrow func - need context
+				const page = Number.parseInt($(this).data('page'), 10);
+				if (getSubState().page !== page) {
+					handlers.page(page);
+				}
+			});
+			store.watch(state => state[stateKey].page, page => {
+				$this.find(`.pagination [data-page="${page}"]`).click();
+			});
+
+			// Case sensitive grouping
+			const $caseSensitive = $this.find('.casesensitive') as JQuery<HTMLInputElement>;
+			$caseSensitive.on('change', () => {
+				const sensitive = $caseSensitive.is(':checked');
+				handlers.caseSensitive(sensitive);
+			});
+			store.watch(state => state[stateKey].caseSensitive, checked => {
+				changeCheck($caseSensitive, checked)
+			});
+
+			// Grouping settings
+			const $groupSelect = $this.find('.groupselect') as JQuery<HTMLSelectElement>;
+			$groupSelect.on('change', () => {
+				handlers.groupBy($groupSelect.selectpicker('val') as string[]);
+			});
+			store.watch(state => state[stateKey].groupBy, v => changeSelect($groupSelect, v));
+
+			// Sorting settings
+			$this.on('click', '[data-bls-sort]', function() {
+				let sort = $(this).data('blsSort') as string;
+				if (sort === getSubState().sort) {
+					sort = '-'+sort;
+				}
+				handlers.sort(sort);
+				return false; // click handling
+			});
+			// Nothing in UI to update from state (TODO initiate search instead)
+
+			// viewgroup
+			$this.on('click', '.viewconcordances', function() {
+				const id = $(this).data('groupId');
+				handlers.viewGroup(id);
+			});
+			$this.on('click', '.clearviewgroup', function() {
+				handlers.viewGroup(null);
+			});
 		});
 	}
 
-	{ // TODO we cannot navigate to pages not in the pagination element at the moment
-		const $hitDisplay = $('#tabDocs');
-		$hitDisplay.on('click', '[data-page]', () => {
-			actions.hits.page($(this).data('page'));
-		});
-		store.watch(state => state.docDisplaySettings.page, page => {
-			$hitDisplay.find(`.pagination [data-page="${page}"]`).click();
-		});
-	}
+	// 	const $hitDisplay = $('#tabHits');
+	// 	$hitDisplay.on('click', '[data-page]', () => {
+	// 		actions.hits.page($(this).data('page'));
+	// 	});
+	// 	store.watch(state => state.hitDisplaySettings.page, page => {
+	// 		$hitDisplay.find(`.pagination [data-page="${page}"]`).click();
+	// 	});
+	// }
+
+	// { // TODO we cannot navigate to pages not in the pagination element at the moment
+	// 	const $hitDisplay = $('#tabDocs');
+	// 	$hitDisplay.on('click', '[data-page]', () => {
+	// 		actions.hits.page($(this).data('page'));
+	// 	});
+	// 	store.watch(state => state.docDisplaySettings.page, page => {
+	// 		$hitDisplay.find(`.pagination [data-page="${page}"]`).click();
+	// 	});
+	// }
+
+
 });
 
 /* TODO

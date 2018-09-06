@@ -3,8 +3,7 @@ import $ from 'jquery';
 import {getState, store, actions, SearchDisplaySettings} from './state';
 
 import {populateQueryBuilder} from '../../search';  // FIXME extract into querybuilder module
-import { PropertyField, FilterField, FilterType } from '../../types/pagetypes';
-import { getStoreBuilder } from 'vuex-typex';
+import { FilterField, FilterType } from '../../types/pagetypes';
 
 /*
 	This is some ugly-ish code that implements some one- and two-way binding between oldschool normal html elements and the vuex store.
@@ -156,7 +155,11 @@ $(document).ready(() => {
 	{
 		const $within = $('#simplesearch_within');
 		store.watch(state => state.within, v => {
-			$within.find(`input[value="${v}"]`).parent().button('toggle');
+			if (!v) {
+				$within.find('input').first().parent().button('toggle');
+			} else {
+				$within.find(`input[value="${v}"]`).parent().button('toggle');
+			}
 		});
 		$within.on('change', () => {
 			const value = $within.find('input:checked').val() as string || null;

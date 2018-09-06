@@ -51,7 +51,7 @@ export interface SearchDisplaySettings {
 /** Decode the current url into a valid page state configuration. Keep everything private except the getters */
 class UrlPageState implements PageState {
 	/**
-	 * Path segments of the url this was constructed with, typically something like [corpusname, 'search', ('docs'|'hits')?]
+	 * Path segments of the url this was constructed with, typically something like ['corpus-frontend', corpusname, 'search', ('docs'|'hits')?]
 	 * But might contain extra leading segments if the application is proxied.
 	 */
 	private paths: string[];

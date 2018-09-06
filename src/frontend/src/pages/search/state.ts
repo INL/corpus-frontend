@@ -365,8 +365,12 @@ export const actions = {
 			state.hitDisplaySettings.sort = null;
 		},'hits_viewgroup'),
 	},
-	operation: b.commit((state, payload: 'hits'|'docs') => state.operation = payload, 'operation'),
-	pageSize: b.commit((state, payload: number) => state.pageSize = payload, 'pagesize'),
+	operation: b.commit((state, payload: 'hits'|'docs') => {
+		if (['hits', 'docs'].includes(payload)) { state.operation = payload; }
+	}, 'operation'),
+	pageSize: b.commit((state, payload: number) => {
+		if ([20, 50, 100, 200].includes(payload)) { state.pageSize = payload;}
+	}, 'pagesize'),
 
 	initProperty: b.commit((state, payload: PropertyField) => state.pattern = {...state.pattern, [payload.name]: payload}, 'initproperty'),
 	property: b.commit((state, {id, payload}: {id: string, payload: Partial<PropertyField>}) => state.pattern[id]! = {...state.pattern[id]!, ...payload}, 'property'),
@@ -375,7 +379,9 @@ export const actions = {
 	// may require some further work based on how it's used in practise
 	patternString: b.commit((state, payload: string) => state.patternString = payload, 'patternstring'),
 	patternQuerybuilder: b.commit((state, payload: string) => state.patternQuerybuilder = payload, 'patternquerybuilder'),
-	sampleMode: b.commit((state, payload: 'percentage'|'count') => state.sampleMode = payload, 'samplemode'),
+	sampleMode: b.commit((state, payload: 'percentage'|'count') => {
+		if (['percentage', 'count'].includes(payload)) { state.sampleMode = payload; }
+	}, 'samplemode'),
 	sampleSeed: b.commit((state, payload: number|null) => state.sampleSeed = payload, 'sampleseed'),
 	sampleSize: b.commit((state, payload: number|null) => {
 		if (payload == null) {

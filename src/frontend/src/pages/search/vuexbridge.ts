@@ -53,15 +53,12 @@ function changeSelect($input: JQuery<HTMLSelectElement>, value: string|string[]|
 function changeCheck($input: JQuery<HTMLInputElement>, value: boolean) {
 	if ($input.is(':checked') === value) {
 		return;
-	}
-
-	if (value) {
-		$input.attr('checked', '').change();
 	} else {
-		$input.removeAttr('checked').change();
+		$input.prop('checked', value).change();
 	}
 }
 
+// TODO move verification of options into store
 $(document).ready(() => {
 	{
 		const $pageSize = $('#resultsPerPage') as JQuery<HTMLSelectElement>;
@@ -187,7 +184,15 @@ $(document).ready(() => {
 
 			// Store -> UI
 			store.watch(state => state.pattern[id]!.case, v => { if (v !== $caseInput.is(':checked')) { $caseInput.click(); }});
-			store.watch(state => state.pattern[id]!.value, v => { if ($textOrSelect.val() as string !== v) { $textOrSelect.val(v).change(); $fileInput.val(''); }});
+			store.watch(state => state.pattern[id]!.value, v => {
+				if ($textOrSelect.is('select')) {
+					changeSelect($textOrSelect as JQuery<HTMLSelectElement>, v);
+				} else {
+					changeText($textOrSelect as JQuery<HTMLInputElement>, v);
+				}
+
+				// if ($textOrSelect.val() as string !== v) { $textOrSelect.val(v).change(); $fileInput.val(''); }
+			});
 
 			// UI -> Store
 			$textOrSelect.on('change', () => actions.property({
@@ -283,6 +288,7 @@ $(document).ready(() => {
 	{
 		$('#tabHits, #tabDocs').each((i, el) => {
 			const $this = $(el);
+			const $label = $(`a[href="#${$this.attr('id')}"`);
 			const handlers = $this.is($('#tabHits')) ? actions.hits : actions.docs;
 			const stateKey = $this.is($('#tabHits')) ? 'hitDisplaySettings' : 'docDisplaySettings';
 			const operation = $this.is($('#tabHits')) ? 'hits' : 'docs';
@@ -290,6 +296,9 @@ $(document).ready(() => {
 
 			// Main tab opening
 			$this.on('tabOpen', () => actions.operation(operation));
+			store.watch(state => state.operation, v => {
+				if (v === operation) { $label.tab('show'); }
+			});
 
 			// Pagination
 			// TODO we cannot navigate to pages not in the pagination element at the moment
@@ -341,27 +350,6 @@ $(document).ready(() => {
 			});
 		});
 	}
-
-	// 	const $hitDisplay = $('#tabHits');
-	// 	$hitDisplay.on('click', '[data-page]', () => {
-	// 		actions.hits.page($(this).data('page'));
-	// 	});
-	// 	store.watch(state => state.hitDisplaySettings.page, page => {
-	// 		$hitDisplay.find(`.pagination [data-page="${page}"]`).click();
-	// 	});
-	// }
-
-	// { // TODO we cannot navigate to pages not in the pagination element at the moment
-	// 	const $hitDisplay = $('#tabDocs');
-	// 	$hitDisplay.on('click', '[data-page]', () => {
-	// 		actions.hits.page($(this).data('page'));
-	// 	});
-	// 	store.watch(state => state.docDisplaySettings.page, page => {
-	// 		$hitDisplay.find(`.pagination [data-page="${page}"]`).click();
-	// 	});
-	// }
-
-
 });
 
 /* TODO

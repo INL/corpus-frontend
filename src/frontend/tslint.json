@@ -9,6 +9,7 @@
 		"trailing-comma": false,
 		"interface-name": false,
 		"only-arrow-functions": false, // jquery and some of our own code explicitly set 'this' of callbacks, can't do that with arrow functions
+		"ordered-imports": false,
 
 		// These should eventually be fixed
 		"prefer-const": {"severity": "warn"},
@@ -29,7 +30,6 @@
 			}
 		},
 		"eofline": {"severity": "warn"},
-		"ordered-imports": {"severity": "warn"},
 		"quotemark": {
 			"severity": "warn",
 			"options": ["single", "avoid-escape"]

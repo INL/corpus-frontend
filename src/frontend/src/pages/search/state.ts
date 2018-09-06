@@ -1,9 +1,6 @@
-import $ from 'jquery';
 import URI from 'urijs';
 import Vue from 'vue';
 import Vuex from 'vuex';
-
-import * as BLTypes from '../../types/blacklabtypes';
 
 import {getStoreBuilder} from 'vuex-typex';
 
@@ -326,45 +323,51 @@ class UrlPageState implements PageState {
 	}
 }
 
+// A type that only has those fields of T with type M
+// Don't even ask
+type FancyProperties<T, M> = Pick<T, {
+	[K in keyof T]: T[K] extends M ? K : never
+}[keyof T]>;
+
 // Now we just need some way to convert our page state into blacklab state
 // And then we can put that into the url and be done with it
 // though we still need some way to make the current parameters reactive (meaning that we can update the url when something changes)
-
+const initialState: PageState = new UrlPageState().get();
 const b = getStoreBuilder<PageState>();
-export const actions = {
-	docs: {
-		caseSensitive: b.commit((state, payload: boolean) => state.docDisplaySettings.caseSensitive = payload, 'docs_casesentisive'),
-		groupBy: b.commit((state, payload: string[]) => {
-			state.docDisplaySettings.groupBy = payload;
-			state.docDisplaySettings.viewGroup = null;
-			state.docDisplaySettings.sort = null;
-		}, 'docs_groupby'),
-		sort: b.commit((state, payload: string|null) => state.docDisplaySettings.sort = payload, 'docs_sort'),
-		page: b.commit((state, payload: number) => state.docDisplaySettings.page = payload, 'docs_page'),
-		viewGroup: b.commit((state, payload: string|null) => {
-			state.docDisplaySettings.viewGroup = payload;
-			state.docDisplaySettings.sort = null;
-		}, 'docs_viewgroup'),
-	},
 
-	initFilter: b.commit((state, payload: FilterField) => state.filters = {...state.filters, [payload.name]: payload}, 'initfilter'),
+const [hitActions, docActions] = (['docDisplaySettings', 'hitDisplaySettings'] as Array<keyof FancyProperties<PageState, SearchDisplaySettings>>).map(namespace => {
+	const ctx = b.module<SearchDisplaySettings>(namespace, initialState[namespace]);
+
+	return {
+		caseSensitive: ctx.commit((state, payload: boolean) => state.caseSensitive = payload, 'casesensitive'),
+		groupBy: ctx.commit((state, payload: string[]) => {
+			state.groupBy = payload;
+			state.viewGroup = null;
+			state.sort = null;
+		} , 'groupby'),
+		sort: ctx.commit((state, payload: string|null) => state.sort = payload, 'sort'),
+		page: ctx.commit((state, payload: number) => state.page = payload, 'page'),
+		viewGroup: ctx.commit((state, payload: string|null) => {
+			state.viewGroup = payload;
+			state.sort = null;
+		},'viewgroup'),
+
+		reset: ctx.commit(state => {
+			state.caseSensitive = false;
+			state.groupBy = [];
+			state.page = 0;
+			state.sort = null;
+			state.viewGroup = null;
+		}, 'reset')
+	};
+});
+
+export const actions = {
+	docs: docActions,
+	initFilter: b.commit((state, payload: FilterField) => Vue.set(state.filters, payload.name, payload), 'initfilter'),
 	filter: b.commit((state, {id, values}: {id: string, values: string[]}) => state.filters[id].values = values, 'filter'),
 	clearFilters: b.commit(state => Object.entries(state.filters).forEach(([id, filter]) => filter.values = []), 'clearfilters'),
-
-	hits: {
-		caseSensitive: b.commit((state, payload: boolean) => state.hitDisplaySettings.caseSensitive = payload, 'hits_casesentisive'),
-		groupBy: b.commit((state, payload: string[]) => {
-			state.hitDisplaySettings.groupBy = payload;
-			state.hitDisplaySettings.viewGroup = null;
-			state.hitDisplaySettings.sort = null;
-		} , 'hits_groupby'),
-		sort: b.commit((state, payload: string|null) => state.hitDisplaySettings.sort = payload, 'hits_sort'),
-		page: b.commit((state, payload: number) => state.hitDisplaySettings.page = payload, 'hits_page'),
-		viewGroup: b.commit((state, payload: string|null) => {
-			state.hitDisplaySettings.viewGroup = payload;
-			state.hitDisplaySettings.sort = null;
-		},'hits_viewgroup'),
-	},
+	hits: hitActions,
 	operation: b.commit((state, payload: 'hits'|'docs') => {
 		if (['hits', 'docs'].includes(payload)) { state.operation = payload; }
 	}, 'operation'),
@@ -372,7 +375,7 @@ export const actions = {
 		if ([20, 50, 100, 200].includes(payload)) { state.pageSize = payload;}
 	}, 'pagesize'),
 
-	initProperty: b.commit((state, payload: PropertyField) => state.pattern = {...state.pattern, [payload.name]: payload}, 'initproperty'),
+	initProperty: b.commit((state, payload: PropertyField) => Vue.set(state.pattern, payload.name, payload), 'initproperty'),
 	property: b.commit((state, {id, payload}: {id: string, payload: Partial<PropertyField>}) => state.pattern[id]! = {...state.pattern[id]!, ...payload}, 'property'),
 	clearProperties: b.commit(state => Object.entries(state.pattern).forEach(([id, prop]) => prop!.value = ''), 'clearproperties'),
 
@@ -396,11 +399,27 @@ export const actions = {
 		}
 	}, 'samplesize'),
 	within: b.commit((state, payload: string|null) => state.within = payload?payload:null, 'within'),
-	wordsAroundHit: b.commit((state, payload: number|null) => state.wordsAroundHit = payload, 'wordsaroundhit')
+	wordsAroundHit: b.commit((state, payload: number|null) => state.wordsAroundHit = payload, 'wordsaroundhit'),
+
+	reset: b.commit(state => {
+		docActions.reset();
+		hitActions.reset();
+		actions.clearFilters();
+		actions.clearProperties();
+		state.operation = null;
+		state.pageSize = defaults.pageSize as number;
+		state.patternQuerybuilder = null;
+		state.patternString = null;
+		state.sampleMode = defaults.sampleMode;
+		state.sampleSeed = null;
+		state.sampleSize = null;
+		state.within = null;
+		state.wordsAroundHit = null;
+	}, 'reset'),
 };
 
 export const getState = b.state();
-export const store = b.vuexStore({state: new UrlPageState().get()});
+export const store = b.vuexStore({state: initialState});
 
 // DEBUGGING
 (window as any).actions = actions;

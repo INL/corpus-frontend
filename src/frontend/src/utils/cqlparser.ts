@@ -61,15 +61,14 @@ export default function(input: string): Result {
 	}
 
 	// Test current symbol against any number of other symbols
-	// Recursively unpacks arrays
 	// TODO properly type, arguments should be (optionally nested) string arrays
-	function test(...items: Array<string|string[]>) {
-		for (const item of items) {
-			if (item instanceof Array) {
-				if (item.some(subItem => test(subItem))) {
-					return true;
-				}
-			} else {
+	function test(...tests: string[]): boolean {
+		for (const item of tests) {
+			// if (item instanceof Array) {
+			// 	if (item.some(subItem => test(subItem))) {
+			// 		return true;
+			// 	}
+			// } else {
 				for (let k = 0; k < item.length; k++) {
 					if (pos + k >= input.length || input[pos + k] !== item[k]) {
 						return false;
@@ -77,31 +76,31 @@ export default function(input: string): Result {
 				}
 				return true;
 			}
-		}
+		// }
 		return false;
 	}
 
 	// If the current symbol matches any of the symbols, advance one symbol
 	// skips all whitespace encountered before the symbol unless otherwise stated
 	// no whitespace is skipped if the symbol was not encountered
-	function accept(sym, keepWhitespace: boolean = false) {
+	function accept(sym: string[], keepWhitespace: boolean = false): boolean {
 		const originalPos = pos;
 		const originalCur = cur;
 
 		if (!keepWhitespace) {
-			while (test(WHITESPACE)) {
+			while (test(...WHITESPACE)) {
 				nextSym();
 			}
 		}
 
-		const accepted = test(sym);
+		const accepted = test(...sym);
 		if (accepted) {
 			// Don't use nextSym(), sym.length might be >1
 			pos += sym.length;
 			cur = input[pos];
 
 			if (!keepWhitespace) {
-				while (test(WHITESPACE)) {
+				while (test(...WHITESPACE)) {
 					nextSym();
 				}
 			}
@@ -114,19 +113,19 @@ export default function(input: string): Result {
 	}
 
 	// Like accept, but throw an error if not at any of the symbols.
-	function expect(sym, keepWhitespace?) {
-		if (!accept(sym, keepWhitespace)) {
+	function expect(sym: string, keepWhitespace?: boolean) {
+		if (!accept([sym], keepWhitespace)) {
 			throw errorMsg('Expected one of [' + sym + '] but found ' + input[pos]);
 		}
 	}
 
 	// Continue until one of the symbols is encountered,
 	// then stop at the encountered symbol and return a substring from where we started and ending at that symbol (exclusive)
-	function until(symbols) {
-		symbols = [symbols, null]; // always test for end of string
+	function until(...symbols: string[]) {
+		symbols.push(''); // always test for end of string
 		try {
 			const startPos = pos;
-			while (!test(symbols)) {
+			while (!test(...symbols)) {
 				nextSym();
 			}
 			const endPos = pos;
@@ -141,10 +140,10 @@ export default function(input: string): Result {
 	function parseXmlTag(): XmlTag {
 		expect('<');
 
-		const isClosingTag = accept('/');
+		const isClosingTag = accept(['/']);
 
 		// keep going until we meet the end of the tag, also break on whitespace as it's not allowed
-		const tagName = until([WHITESPACE, '>']);
+		const tagName = until(...WHITESPACE, '>');
 		expect('>');
 
 		return {
@@ -155,7 +154,7 @@ export default function(input: string): Result {
 	}
 
 	function parseAttribute(): Attribute {
-		const name = until(['=', '!']).trim(); // This should really be "until anything BUT a-zA-z" but eh
+		const name = until('=', '!').trim(); // This should really be "until anything BUT a-zA-z" but eh
 		const operator = until('"').trim();
 		expect('"', true); // keep all whitespace after the opening quote
 		const value = until('"'); // don't trim whitespace
@@ -174,7 +173,7 @@ export default function(input: string): Result {
 	}
 
 	function parsePredicate(): Attribute|BinaryOp {
-		if (accept('(')) {
+		if (accept(['('])) {
 			const exp = parseExpression();
 			expect(')');
 			return exp;
@@ -185,7 +184,7 @@ export default function(input: string): Result {
 
 	function parseExpression() {
 		let left = parsePredicate();
-		while (test(['&', '|'])) {
+		while (test('&', '|')) {
 			const op = cur;
 			nextSym();
 			const right = parsePredicate();
@@ -208,8 +207,8 @@ export default function(input: string): Result {
 			token.leadingXmlTag = parseXmlTag();
 		}
 
-		if (accept('[')) {
-			if (!accept(']')) {
+		if (accept(['['])) {
+			if (!accept([']'])) {
 				token.expression = parseExpression();
 				expect(']');
 			}
@@ -226,12 +225,12 @@ export default function(input: string): Result {
 			};
 		}
 
-		if (accept('{')) { // range
+		if (accept(['{'])) { // range
 
-			const minRep = parseInt(until([',', '}']), 10);
+			const minRep = parseInt(until(',', '}'), 10);
 			let maxRep: number|null = null;
 
-			if (accept(',')) {
+			if (accept([','])) {
 
 				const maxRepString = until('}').trim();
 				// {n, } is valid syntax for unbounded repetitions starting at n times
@@ -257,7 +256,7 @@ export default function(input: string): Result {
 				min: minRep,
 				max: maxRep,
 			};
-		} else if (accept('?')) {
+		} else if (accept(['?'])) {
 			token.optional = true;
 		}
 
@@ -275,7 +274,7 @@ export default function(input: string): Result {
 		expect('within');
 
 		expect('<');
-		const elementName = until(['/', WHITESPACE]); // break on whitespace, since whitespace in the <tag name/> is illegal
+		const elementName = until('/', ...WHITESPACE); // break on whitespace, since whitespace in the <tag name/> is illegal
 		expect('/'); // self closing tag (<tag/>)
 		expect('>');
 		return elementName;

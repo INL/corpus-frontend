@@ -319,7 +319,7 @@ $(document).ready(() => {
 				handlers.caseSensitive(sensitive);
 			});
 			store.watch(state => state[stateKey].caseSensitive, checked => {
-				changeCheck($caseSensitive, checked)
+				changeCheck($caseSensitive, checked);
 			});
 
 			// Grouping settings

@@ -254,7 +254,7 @@ $(document).ready(() => {
 			}
 
 			// Store -> UI
-			store.watch(state => state.filters[id], ({values}) => {
+			store.watch(state => state.filters[id].values, values => {
 				if (type === FilterType.range) {
 					$($inputs[0]).val(values[0]);
 					$($inputs[1]).val(values[1]);

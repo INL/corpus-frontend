@@ -1,5 +1,3 @@
-/* global BLS_URL, PROPS_IN_COLUMNS */
-
 import 'bootstrap';
 import 'bootstrap-select';
 import {saveAs} from 'file-saver';
@@ -53,13 +51,17 @@ PROPS.shown = PROPS_IN_COLUMNS.map(propId => {
 	return PROPS.all!.find(p => p.id === propId);
 }).filter(p => p != null) as Property[];
 
-// There is always at least a single main property.
-// TODO this shouldn't be required, mainProperties from multiple complexFields should be handled properly
-// but this has some challenges in the hits table view, such as that it would show multiple columns for the before/hit/after contexts
+/**
+ * There is always at least a single main property.
+ * TODO this shouldn't be required, mainProperties from multiple complexFields should be handled properly
+ * but this has some challenges in the hits table view, such as that it would show multiple columns for the before/hit/after contexts
+ */
 PROPS.firstMainProp = PROPS.all.filter(function(prop) { return prop.isMainProp; })[0];
 
-// Add a 'hide' function to bootstrap tabs
-// Doesn't do more than remove classes and aria labels, and fire some events
+/**
+ * Add a 'hide' function to bootstrap tabs
+ * Doesn't do more than remove classes and aria labels, and fire some events
+ */
 ($.fn.tab as any).Constructor.prototype.hide = function() {
 	const $this    = this.element;
 	const selector = $this.data('target') || $this.attr('href');
@@ -244,6 +246,7 @@ function updatePagination($pagination: JQuery<HTMLElement>, data: BLTypes.BLSear
 	$pagination.html(html.join(''));
 }
 
+// STATE
 /**
  * After a small delay, clear the tab's current data and show a spinner.
  *
@@ -274,6 +277,7 @@ function hideSearchIndicator($tab) {
 	$tab.find('.searchIndicator').hide();
 }
 
+// STATE
 /**
  * Load and display results within a specific group of documents/hits.
  *
@@ -307,6 +311,7 @@ function viewConcordances() {
 	$resultgroupname.text(groupName || '');
 }
 
+// STATE
 /**
  * Loads and displays a small amount of details about individual hits/documents within a specific group.
  * Some data is attached to the button to track how many concordances are already loaded/are available.
@@ -668,6 +673,7 @@ function formatGroups(data: BLTypes.BLDocGroupResults|BLTypes.BLHitGroupResults)
 	return html;
 }
 
+// STATE
 /**
  * Request the currently shown results as a CSV file, and save it.
  *
@@ -721,6 +727,7 @@ function onExportCsv(event: JQueryEventObject) {
 	});
 }
 
+// STATE
 /**
  * Redraws the table, pagination, hides spinners, shows/hides group indicator, shows the pagination/group controls, etc.
  *
@@ -791,6 +798,7 @@ function setTabResults(data: BLTypes.BLSearchResult) {
 	$tab.find('.results-incomplete-warning').toggle(showWarning);
 }
 
+// STATE
 /**
  * Clears displayed data, hides pagination, group indicator, group control, cached results, etc.
  *
@@ -803,6 +811,7 @@ function clearTabResults($tab) {
 	$tab.removeData('results');
 }
 
+// STATE
 /**
  * Set new search parameters for this tab. Does not mark tab for refresh or remove existing data.
  *
@@ -832,6 +841,7 @@ function setTabParameters($tab, newParameters, toPageState) {
 	}
 }
 
+// STATE
 /**
  * Updates the internal parameters for a tab and executes a search if the tab is currently active.
  *
@@ -851,6 +861,7 @@ function onLocalParameterChange(event, parameters) {
 	}
 }
 
+// STATE
 /**
  * The core search trigger, named a little awkwardly because it autotriggers when a tab is made active/opens.
  * We emulate the tab reopening to update the displayed search results when new search parameters are set/selected.
@@ -910,6 +921,7 @@ function onTabOpen(/*event, data*/) {
 	);
 }
 
+// STATE
 $(document).ready(function() {
 	// Hide the results area and deactivate all tabs to prevent accidental refreshes later.
 	// Tabs are unhidden when a search is submitted.
@@ -1030,7 +1042,7 @@ $(document).ready(function() {
  * @param {number} end
  * @param {('ltr' | 'rtl')} textDirection - to determine whether to specify text direction on the preview text
  */
-export function showCitation(concRow, docPid, start, end, textDirection) {
+function showCitation(concRow, docPid, start, end, textDirection) {
 	// Open/close the collapsible in the next row
 	const $element = $(concRow).next().find('.collapse');
 	$element.collapse('toggle');
@@ -1059,7 +1071,7 @@ export function showCitation(concRow, docPid, start, end, textDirection) {
  * @param {any} propRow the <tr> element for the current hit. The result will be displayed in the second row following this row.
  * @param {any} props the properties to show
  */
-export function showProperties(propRow, props) {
+function showProperties(propRow, props) {
 	// Open/close the collapsible in the next row
 	const $element = $(propRow).next().next().find('.collapse');
 	$element.collapse('toggle');
@@ -1068,6 +1080,7 @@ export function showProperties(propRow, props) {
 	$element.html('<span><b>Properties: </b>' + $p + '</span>');
 }
 
+// STATE
 /**
  * Set new search parameters and mark tabs for a refresh of data.
  *
@@ -1088,6 +1101,7 @@ export function setParameters(searchParameters, clearResults = false) {
 	});
 }
 
+// STATE
 /**
  * Clear all results, hide the result area and reset all search parameters within the tabs.
  *

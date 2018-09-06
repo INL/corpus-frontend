@@ -8,10 +8,10 @@ export type PropertyField = {
 };
 
 export const enum FilterType {
-	'range',
-	'select',
-	'combobox',
-	'text'
+	'range' = 'range',
+	'select' = 'select',
+	'combobox' = 'combobox',
+	'text' = 'text'
 }
 
 export type FilterField = {

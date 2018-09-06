@@ -377,7 +377,7 @@ export const actions = {
 
 	initProperty: b.commit((state, payload: PropertyField) => Vue.set(state.pattern, payload.name, payload), 'initproperty'),
 	property: b.commit((state, {id, payload}: {id: string, payload: Partial<PropertyField>}) => state.pattern[id]! = {...state.pattern[id]!, ...payload}, 'property'),
-	clearProperties: b.commit(state => Object.entries(state.pattern).forEach(([id, prop]) => prop!.value = ''), 'clearproperties'),
+	clearProperties: b.commit(state => Object.entries(state.pattern).forEach(([id, prop]) => {prop!.value = ''; prop!.case = false;}), 'clearproperties'),
 
 	// may require some further work based on how it's used in practise
 	patternString: b.commit((state, payload: string) => state.patternString = payload, 'patternstring'),

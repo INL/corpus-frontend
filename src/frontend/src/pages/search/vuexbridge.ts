@@ -173,7 +173,7 @@ $(document).ready(() => {
 			const id = $this.attr('id')!;
 			const $textOrSelect = $this.find('#' + id + '_value');
 			const $fileInput = $this.find('#' + id + '_file') as JQuery<HTMLInputElement>; // NOTE: not always available
-			const $caseInput = $this.find('#' + id + '_case');
+			const $caseInput = $this.find('#' + id + '_case') as JQuery<HTMLInputElement>;
 
 			// Initialize if the field is still unknown in the store (i.e. no initial values were hydrated for this field)
 			// NOTE: at this point the store is already initialized with initial data from page load
@@ -186,7 +186,7 @@ $(document).ready(() => {
 			}
 
 			// Store -> UI
-			store.watch(state => state.pattern[id]!.case, v => { if (v !== $caseInput.is(':checked')) { $caseInput.click(); }});
+			store.watch(state => state.pattern[id]!.case, v => changeCheck($caseInput, v));
 			store.watch(state => state.pattern[id]!.value, v => {
 				if ($textOrSelect.is('select')) {
 					changeSelect($textOrSelect as JQuery<HTMLSelectElement>, v);
@@ -241,7 +241,7 @@ $(document).ready(() => {
 			const $this = $(this);
 			const id = $this.attr('id')!;
 			const type = $this.data('filterfield-type') as FilterField['filterType'];
-			const $inputs = $this.find('input, select');
+			const $inputs = $this.find('input, select') as JQuery<HTMLElement>;
 
 			// Initialize if the field is still unknown in the store (i.e. no initial values were hydrated for this field)
 			// NOTE: at this point the store is already initialized with initial data from page load
@@ -256,18 +256,17 @@ $(document).ready(() => {
 			// Store -> UI
 			store.watch(state => state.filters[id].values, values => {
 				if (type === FilterType.range) {
-					$($inputs[0]).val(values[0]);
-					$($inputs[1]).val(values[1]);
+					changeText($($inputs[0]) as JQuery<HTMLInputElement>, values[0]);
+					changeText($($inputs[1]) as JQuery<HTMLInputElement>, values[1]);
 				} else if (type ===  FilterType.select) {
-					$inputs.first().selectpicker('val', values);
+					changeSelect($inputs.first() as JQuery<HTMLSelectElement>, values);
 				} else {
-					$inputs.first().val(values);
+					changeText($inputs.first() as JQuery<HTMLInputElement>, values[0]);
 				}
 			});
 
 			// UI -> store
 			$this.on('change', function() {
-				const currentState = getState().filters[id];
 				let values: string[];
 
 				// Has two input fields, special treatment

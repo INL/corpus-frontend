@@ -9,8 +9,8 @@ import './utils/features/autocomplete';
 import './utils/features/tutorial';
 
 import createQueryBuilder from './modules/cql_querybuilder';
-import {cancelSearch, getBlsParam, getPageParam} from './modules/singlepage-bls';
-import * as mainForm from './modules/singlepage-form';
+import {cancelSearch, getBlsParam, getPageParam, SearchParameters} from './modules/singlepage-bls';
+// import * as mainForm from './modules/singlepage-form';
 import './modules/singlepage-interface';
 import * as searcher from './modules/singlepage-interface';
 
@@ -18,6 +18,7 @@ import './pages/search/vuexbridge';
 
 import {debugLog} from './utils/debug';
 
+// TODO create type for indexmetadata
 declare var SINGLEPAGE: {INDEX: any};
 
 $(document).ready(function() {
@@ -65,47 +66,7 @@ $(document).ready(function() {
 		}
 	});
 
-	// register click handlers in the main search form (data irrespective or currently viewed tab)
-	// Parsing and validation of the values is performed in singlepage-bls when the search is executed
-	// and in toPageState when the values are written from the query
-	$('#resultsPerPage').on('change', function() {
-		searcher.setParameters({
-			pageSize: $(this).selectpicker('val')
-		});
-	});
-	$('#sampleMode').on('change', function() {
-		searcher.setParameters({
-			sampleMode: $(this).selectpicker('val')
-		});
-	});
-	$('#sampleSize').on('change', function() {
-		searcher.setParameters({
-			sampleSize: $(this).val(),
-			sampleMode: $('#sampleMode').selectpicker('val') // in case it hasn't been initialized
-		});
-	});
-	$('#sampleSeed').on('change', function() {
-		searcher.setParameters({
-			sampleSeed: $(this).val()
-		});
-	});
-	$('#wordsAroundHit').on('change', function() {
-		searcher.setParameters({
-			wordsAroundHit: $(this).val() // validation/parsing performed in singlepage-bls
-		});
-	});
-
-	// Prevent enter from submitting the form and initiating a search,
-	// these settings should only update existing searches
-	$('#sampleSize, #sampleSeed, #wordsAroundHit').on('keypress', function(event) {
-		if (event.keyCode === 13) {
-			$(this).trigger('change');
-			event.preventDefault();
-		}
-	});
-
 	$('#mainForm').on('submit', searchSubmit);
-	$('#mainForm').on('reset', resetPage);
 
 	// Rescale the querybuilder container when it's shown
 	$('a.querytype[href="#advanced"]').on('shown.bs.tab hide.bs.tab', function() {
@@ -117,6 +78,7 @@ $(document).ready(function() {
 		$('.container, .container-fluid').toggleClass('container', !$(this).is(':checked')).toggleClass('container-fluid', $(this).is(':checked'));
 	});
 
+	// TODO just set the new query in state? the commit probably needs to be async and cancelable/failable...
 	// Attempt to parse the query from the cql editor into the querybuilder
 	// when the user asks to
 	$('#parseQuery').on('click', function() {
@@ -130,52 +92,8 @@ $(document).ready(function() {
 		}
 	});
 
-	// And copy over the generated query to the manual field when changes happen
-	const $queryBox = $('#querybox'); // cql textfield
-	$queryBuilder.on('cql:modified', function() {
-		$queryBox.val(queryBuilderInstance.getCql());
-	});
-
-	// now restore the page state from the used url
-	// This will automatically start a search if the settings indicate it
-	const searchSettings = fromPageUrl();
-	if (searchSettings != null) {
-		toPageState(searchSettings);
-	}
+	// TODO initiate search
 });
-
-// Restore page when using back/forward
-window.addEventListener('popstate', function() {
-	const searchSettings = fromPageUrl();
-	toPageState(searchSettings || {});
-});
-
-/**
- * Decode the current page url in the format of /<contextRoot>/<corpus>/search/[hits|docs][/]?query=...
- * into a SearchParameters object
- *
- * @param {string} url - full page url, the querystring (if present) should encode a BlackLabParameters object
- * @returns {SearchParameters} object containing the decoded and translated parameters, or null if no parameters were found
- */
-function fromPageUrl() {
-	const uri = new URI();
-	const paths = uri.segmentCoded();
-
-	// operation is (usually) contained in the path, the other parameters are contained in the query parameters
-	const operation = paths[paths.lastIndexOf('search') + 1];
-
-	const blsParam = new URI().search(true);
-	if ($.isEmptyObject(blsParam)) {
-		return null;
-	}
-
-	const pageParam = getPageParam(blsParam)!;
-	if (operation) {
-		pageParam.operation = operation as any;
-	}
-
-	return pageParam;
-}
 
 /**
  * Encodes search parameters into a page url as understood by fromPageUrl().
@@ -185,12 +103,13 @@ function fromPageUrl() {
  *
  * Removes any empty strings, arrays, null, undefineds prior to conversion, to shorten the resulting query string.
  *
- * @param {SearchParameters} searchParams the search parameters
+ * @param searchParams the search parameters
  * @returns the query string, beginning with ?, or an empty string when no searchParams with a proper value
  */
-function toPageUrl(searchParams) {
+function toPageUrl(searchParams: SearchParameters) {
 	const operation = searchParams && searchParams.operation; // store, as blsParams doesn't contain it: 'hits' or 'docs' or undefined
-	searchParams = getBlsParam(searchParams);
+
+	const blsParams = getBlsParam(searchParams);
 
 	const uri = new URI();
 	const paths = uri.segmentCoded();
@@ -198,17 +117,17 @@ function toPageUrl(searchParams) {
 	// basePath now contains our url path, up to and including /search/
 
 	// If we're not searching, return a bare url pointing to /search/
-	if (searchParams == null) {
+	if (blsParams == null) {
 		return uri.directory(basePath.join('')).search('').toString();
 	}
 
 	// remove null, undefined, empty strings and empty arrays from our query params
 	const modifiedParams = {};
-	$.each(searchParams, function(key, value) {
+	$.each(blsParams, function(key, value) {
 		if (value == null) {
 			return true;
 		}
-		if (value.length === 0) {
+		if ((value as any).length === 0) { // TODO
 			return true;
 		}
 		modifiedParams[key] = value;
@@ -337,68 +256,9 @@ export function populateQueryBuilder(pattern) {
 	return true;
 }
 
-/**
- * Completely resets all form and results information and controls, then repopulates the page with the parameters.
- * Also initiates a search if the parameters contain a valid search. (the 'operation' is valid).
- *
- * NOTE: when called with a {} parameter, the entire page will be cleared.
- *
- * @param {any} searchParams
- */
-function toPageState(searchParams) {
-	// reset and repopulate the main form
-	mainForm.reset();
-	$('#querybuilder').data('builder').reset();
-	$('#querybox').val('');
-
-	if (searchParams.pattern) {
-		// In the case of an array as search pattern,  it contains the basic/simple search parameters
-		if (searchParams.pattern.constructor === Array) {
-			$.each(searchParams.pattern, function(index, element) {
-				mainForm.setPropertyValues(element);
-			});
-		} else {
-			// We have a raw cql query string, attempt to parse it using the querybuilder,
-			// otherwise fall back to the raw cql view
-			if (populateQueryBuilder(searchParams.pattern)) {
-				$('#searchTabs a[href="#advanced"]').tab('show');
-			} else  {
-				$('#querybuilder').data('builder').reset(); // clear potential half-parsed state
-				$('#searchTabs a[href="#query"]').tab('show');
-				// only set after attempting to populate querybuilder,
-				// or querybuilder will overwrite the value immediately when we populate it
-				// (this is usually not a problem, but it is when the query is malformed or too
-				// advanced for the builder to use - a half parsed query could then be written)
-				$('#querybox').val(searchParams.pattern);
-			}
-		}
-	}
-
-	$.each(searchParams.filters, function(index, element) {
-		mainForm.setFilterValues(element.name, element.values);
-	});
-
-	mainForm.setWithin(searchParams.within);
-
-	// Restore the results per page, sample info, etc
-	$('#resultsPerPage').selectpicker('val', [searchParams.pageSize || 50]);
-	$('#sampleSize').val(searchParams.sampleSize || '');
-	$('#sampleMode').selectpicker('val', [searchParams.sampleMode || 'percentage']);
-	$('#sampleSeed').val(searchParams.sampleSeed || '');
-	$('#wordsAroundHit').val(searchParams.wordsAroundHit || '');
-
-	// Clear the results area, then actually run the search
-	searcher.reset();
-	searcher.setParameters(searchParams);
-
-	// Select a tab to display if there is enough information to perform a search
-	// The tab will then auto-refresh and display results.
-	if (searchParams.operation === 'hits') {
-		$('#resultTabs a[href="#tabHits"]').tab('show');
-	} else if (searchParams.operation === 'docs') {
-		$('#resultTabs a[href="#tabDocs"]').tab('show');
-	}
-}
+import {actions, getState, get as stateGetters} from './pages/search/state';
+import { PropertyField } from './types/pagetypes';
+import { NaNToNull } from './utils';
 
 // --------
 // exports
@@ -406,27 +266,33 @@ function toPageState(searchParams) {
 
 // Called when form is submitted
 export function searchSubmit() {
-	let pattern;
+	let pattern: PropertyField[]|string|null;
 	let within: string|null = null; // explicitly set to null to clear any previous value if queryType != simple
 
 	// Get the correct pattern based on selected tab
 	const queryType = $('#searchTabs li.active .querytype').attr('href');
 	if (queryType === '#simple') {
-		pattern = mainForm.getActiveProperties();
-		within = mainForm.getWithin();
+		pattern = stateGetters.properties();
+		within = getState().within;
+		// pattern = mainForm.getActiveProperties();
+		// within = mainForm.getWithin();
 	} else if (queryType === '#advanced') {
-		pattern = $('#querybuilder').data('builder').getCql();
+		pattern = getState().patternQuerybuilder;
+		// pattern = $('#querybuilder').data('builder').getCql();
 	} else {
-		pattern = $('#querybox').val();
+		pattern = getState().patternString;
+		// pattern = $('#querybox').val();
 	}
 
 	searcher.setParameters({
 		page: 0,
 		viewGroup: null, // reset, as we might be looking at a detailed group currently, and the new search should not display within a specific group
-		pageSize: $('#resultsPerPage').selectpicker('val'),
+		// pageSize: $('#resultsPerPage').selectpicker('val'),
+		pageSize: getState().pageSize,
 		pattern,
 		within,
-		filters: mainForm.getActiveFilters(),
+		// filters: mainForm.getActiveFilters(),
+		filters: stateGetters.filters()
 		// Other parameters are automatically updated on interaction and thus always up-to-date
 	}, true);
 
@@ -451,11 +317,8 @@ export function searchSubmit() {
 	return false;
 }
 
-/**
- * Callback from when a search is executed (not neccesarily by the user, could also just be pagination and the like)
- * @param {SearchParameters} searchParams
- */
-export function onSearchUpdated(searchParams) {
+/** Callback from when a search is executed (not neccesarily by the user, could also just be pagination and the like) */
+export function onSearchUpdated(searchParams: SearchParameters) {
 	// Only push new url if different
 	// Why? Because when the user goes back say, 10 pages, we reinit the page and do a search with the restored parameters
 	// this search would push a new history entry, popping the next 10 pages off the stack, which the url is the same because we just entered the page.
@@ -473,15 +336,4 @@ export function onSearchUpdated(searchParams) {
 	if (newUrl !== currentUrl) {
 		history.pushState(null, undefined, newUrl);
 	}
-}
-
-// Called to reset search form and results
-export function	resetPage() {
-	const url = new URI();
-	const newUrl = url.search('').segmentCoded(url.segmentCoded().filter(s => s !== 'hits' && s !== 'docs'));
-
-	history.pushState(null, undefined, newUrl.toString());
-	toPageState({});
-	cancelSearch();
-	return false; // might be used as eventhandler
 }

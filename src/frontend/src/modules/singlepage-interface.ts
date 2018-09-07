@@ -6,7 +6,7 @@ import URI from 'urijs';
 
 import {onSearchUpdated} from '../search';
 import {debugLog} from '../utils/debug';
-import {getBlsParam, getQuerySummary, search} from './singlepage-bls';
+import {getBlsParam, getQuerySummary, search, SearchParameters} from './singlepage-bls';
 
 import * as BLTypes from '../types/blacklabtypes';
 
@@ -814,6 +814,8 @@ function clearTabResults($tab) {
 // STATE
 /**
  * Set new search parameters for this tab. Does not mark tab for refresh or remove existing data.
+ * Should never be called with tab-local parameters (currently as viewgroup, groupby, page, sort, group case-sensitivity)
+ * as that will cause the parameters to apply to both tabs (perhaps incorrectly)
  *
  * NOTE: pagination is never updated based on parameters, but instead drawn based on search response.
  * @param {jquery} $tab - tab-pane containing all contents of tab
@@ -888,7 +890,12 @@ function onTabOpen(/*event, data*/) {
 	// Not all configurations of search parameters will result in a valid search
 	// Verify that we're not trying to view hits without a pattern to generate said hits
 	// and warn the user if we are
-	if (searchSettings.operation === 'hits' && (searchSettings.pattern == null || searchSettings.pattern.length === 0)) {
+	if (searchSettings.operation === 'hits' && (
+			searchSettings.pattern == null ||
+			searchSettings.pattern.length === 0 ||
+			(Array.isArray(searchSettings.pattern) && searchSettings.pattern.filter(p => !!p.value).length === 0)
+		)
+	) {
 		replaceTableContent($tab.find('.resultcontainer table'),
 			['<thead>',
 				'<tr><th><a>No hits to display</a></th></tr>',
@@ -1090,7 +1097,7 @@ function showProperties(propRow, props) {
  * @param {any} searchParameters New search parameters.
  * @param {boolean} [clearResults=false] Clear any currently displayed search results.
  */
-export function setParameters(searchParameters, clearResults = false) {
+export function setParameters(searchParameters: Partial<SearchParameters>, clearResults = false) {
 	$('#resultTabsContent .tab-pane').each(function() {
 		const $tab = $(this);
 		if (clearResults) {

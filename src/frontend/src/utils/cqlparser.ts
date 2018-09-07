@@ -60,24 +60,28 @@ export default function(input: string): Result {
 		}
 	}
 
-	// Test current symbol against any number of other symbols
-	// TODO properly type, arguments should be (optionally nested) string arrays
-	function test(...tests: string[]): boolean {
+	/**
+	 * Test current symbol against any number of other symbols
+	 * @returns number of characters to advance, 0 if no matches
+	 */
+	function test(...tests: string[]): number {
 		for (const item of tests) {
 			// if (item instanceof Array) {
 			// 	if (item.some(subItem => test(subItem))) {
 			// 		return true;
 			// 	}
 			// } else {
+				let match = true;
 				for (let k = 0; k < item.length; k++) {
 					if (pos + k >= input.length || input[pos + k] !== item[k]) {
-						return false;
+						match = false;
+						break;
 					}
 				}
-				return true;
+				return match ? item.length : 0;
 			}
 		// }
-		return false;
+		return 0;
 	}
 
 	// If the current symbol matches any of the symbols, advance one symbol
@@ -94,9 +98,9 @@ export default function(input: string): Result {
 		}
 
 		const accepted = test(...sym);
-		if (accepted) {
+		if (accepted > 0) {
 			// Don't use nextSym(), sym.length might be >1
-			pos += sym.length;
+			pos += accepted;
 			cur = input[pos];
 
 			if (!keepWhitespace) {
@@ -109,7 +113,7 @@ export default function(input: string): Result {
 			pos = originalPos;
 		}
 
-		return accepted;
+		return accepted > 0;
 	}
 
 	// Like accept, but throw an error if not at any of the symbols.

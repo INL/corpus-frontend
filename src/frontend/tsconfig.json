@@ -34,6 +34,9 @@
 		*/
 		"allowSyntheticDefaultImports": true,
 		"strictNullChecks": true,
+
+		// Allow @decorator
+		"experimentalDecorators": true,
 		"lib": [
 			"es2017",
 			"dom",

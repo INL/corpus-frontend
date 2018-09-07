@@ -9,7 +9,7 @@ import './utils/features/autocomplete';
 import './utils/features/tutorial';
 
 import createQueryBuilder from './modules/cql_querybuilder';
-import {cancelSearch, getBlsParam, getPageParam, SearchParameters} from './modules/singlepage-bls';
+import {cancelSearch, getBlsParam, getPageParam, SearchParameters, BlacklabParameters} from './modules/singlepage-bls';
 // import * as mainForm from './modules/singlepage-form';
 import './modules/singlepage-interface';
 import * as searcher from './modules/singlepage-interface';
@@ -106,10 +106,7 @@ $(document).ready(function() {
  * @param searchParams the search parameters
  * @returns the query string, beginning with ?, or an empty string when no searchParams with a proper value
  */
-function toPageUrl(searchParams: SearchParameters) {
-	const operation = searchParams && searchParams.operation; // store, as blsParams doesn't contain it: 'hits' or 'docs' or undefined
-
-	const blsParams = getBlsParam(searchParams);
+function toPageUrl(operation: string, blsParams?: BlacklabParameters|null) {
 
 	const uri = new URI();
 	const paths = uri.segmentCoded();
@@ -317,8 +314,9 @@ export function searchSubmit() {
 	return false;
 }
 
+// TODO use pageState instead of blacklab parameters and push that instance of the object
 /** Callback from when a search is executed (not neccesarily by the user, could also just be pagination and the like) */
-export function onSearchUpdated(searchParams: SearchParameters) {
+export function onSearchUpdated(operation: string, searchParams: BlacklabParameters) {
 	// Only push new url if different
 	// Why? Because when the user goes back say, 10 pages, we reinit the page and do a search with the restored parameters
 	// this search would push a new history entry, popping the next 10 pages off the stack, which the url is the same because we just entered the page.
@@ -327,13 +325,13 @@ export function onSearchUpdated(searchParams: SearchParameters) {
 	// If we generate very long page urls, tomcat cannot parse our requests (referrer header too long)
 	// So omit the query from the page url in these cases
 	// TODO this breaks history-based navigation
-	let newUrl = toPageUrl(searchParams);
+	let newUrl = toPageUrl(operation, searchParams);
 	if (newUrl.length > 4000) {
-		newUrl = toPageUrl($.extend({}, searchParams, { pattern: null }));
+		newUrl = toPageUrl(operation, $.extend({}, searchParams, { patt: null }));
 	}
 
 	const currentUrl = new URI().toString();
 	if (newUrl !== currentUrl) {
-		history.pushState(null, undefined, newUrl);
+		history.pushState(getState(), undefined, newUrl);
 	}
 }

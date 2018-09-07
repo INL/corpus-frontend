@@ -303,7 +303,6 @@ $(document).ready(() => {
 			// Main tab opening
 			$this.on('tabOpen', () => actions.operation(operation));
 			store.watch(state => state.operation, v => {
-				console.log(`tab ${v} opening?`);
 				if (v === operation) { $label.tab('show'); }
 			}, {immediate: true});
 
@@ -385,6 +384,8 @@ $(document).ready(() => {
 		actions.replace(state);
 		// toPageState(searchSettings || {});
 	});
+
+	// TODO restore pattern tab
 
 	console.log('connected state to page');
 });

@@ -6,9 +6,10 @@ import URI from 'urijs';
 
 import {onSearchUpdated} from '../search';
 import {debugLog} from '../utils/debug';
-import {getBlsParam, getQuerySummary, search, SearchParameters} from './singlepage-bls';
+import {getBlsParam, getQuerySummary, search, SearchParameters, getBlsParamFromState} from './singlepage-bls';
 
 import * as BLTypes from '../types/blacklabtypes';
+import { getState, get as stateGetters } from '../pages/search/state';
 
 // TODO
 // showCitation showProperties onClick handlers
@@ -871,52 +872,71 @@ function onLocalParameterChange(event, parameters) {
 function onTabOpen(/*event, data*/) {
 
 	const $tab = $(this);
-	const searchSettings = $.extend({}, $tab.data('defaultParameters'), $tab.data('parameters'), $tab.data('constParameters'));
+	// const searchSettings = $.extend({}, $tab.data('defaultParameters'), $tab.data('parameters'), $tab.data('constParameters'));
 
 	// CORE does as little UI manipulation as possible, just shows a tab when required
 	// so we're responsible for showing the entire results area.
-	$('#results').show();
-	const querySummary = getQuerySummary(searchSettings.pattern, searchSettings.within, searchSettings.filters);
+	// $('#results').show();
+
+	const state = getState();
+	const param = getBlsParamFromState();
+	const operation = getState().operation!;
+	if (!operation) {
+		throw new Error('onTabOpen fired before state was updated, this will not work!');
+	}
+
+	// TODO tidy up, blacklab parameters should probably be generated as late as possible
+	const querySummary = getQuerySummary(stateGetters.activePatternValue(), getState().within, stateGetters.filters());
 	$('#searchFormDivHeader').show()
 		.find('#querySummary').text(querySummary).attr('title', querySummary.substr(0, 1000));
 
 	if ($tab.data('results')) {
 		// Nothing to do, tab is already displaying data (this happens when you go back and forth between tabs without changing your query in between)
 		// Still notify core so that when the url is copied out the current tab can be restored.
-		onSearchUpdated(searchSettings);
+		onSearchUpdated(operation, param);
 		return;
 	}
 
 	// Not all configurations of search parameters will result in a valid search
 	// Verify that we're not trying to view hits without a pattern to generate said hits
 	// and warn the user if we are
-	if (searchSettings.operation === 'hits' && (
-			searchSettings.pattern == null ||
-			searchSettings.pattern.length === 0 ||
-			(Array.isArray(searchSettings.pattern) && searchSettings.pattern.filter(p => !!p.value).length === 0)
-		)
-	) {
-		replaceTableContent($tab.find('.resultcontainer table'),
-			['<thead>',
+	if (state.operation === 'hits') {
+		// TODO improve state shape to make this easy
+		const pattValue = stateGetters.activePatternValue;
+		let valid = true;
+		if (pattValue == null) {
+			valid = false;
+		} else if (typeof pattValue === 'string') {
+			if (!pattValue) {
+				valid = false;
+			}
+		} else if (Array.isArray(pattValue) && pattValue.filter(p => !!p.value).length === 0) {
+			valid = false;
+		}
+
+		if (!valid) {
+			replaceTableContent($tab.find('.resultcontainer table'),
+				['<thead>',
 				'<tr><th><a>No hits to display</a></th></tr>',
-			'</thead>',
-			'<tbody>',
+				'</thead>',
+				'<tbody>',
 				'<tr>',
-					'<td class="no-results-found">No hits to display... (one or more of Lemma/PoS/Word is required).</td>',
+				'<td class="no-results-found">No hits to display... (one or more of Lemma/PoS/Word is required).</td>',
 				'</tr>',
-			'</tbody>'
-			].join('')
-		);
-		$tab.find('.resultcontainer').show();
-		$tab.find('.resultcontrols').hide();
-		$tab.data('results', {}); // Prevent refreshing search on next tab open
-		return;
+				'</tbody>'
+			].join(''));
+
+			$tab.find('.resultcontainer').show();
+			$tab.find('.resultcontrols').hide();
+			$tab.data('results', {}); // Prevent refreshing search on next tab open
+			return;
+		}
 	}
 
 	// All is well, search!
 	showSearchIndicator($tab);
-	onSearchUpdated(searchSettings);
-	search(searchSettings,
+	onSearchUpdated(operation, param);
+	search(operation, param,
 		function onSuccess() {
 			hideBlsError();
 			$tab.data('fnSetResults').apply(undefined, Array.prototype.slice.call(arguments)); // call with original args

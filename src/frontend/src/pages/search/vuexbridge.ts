@@ -1,9 +1,11 @@
 import $ from 'jquery';
+import URI from 'urijs';
 
-import {getState, store, actions, SearchDisplaySettings} from './state';
+import {getState, store, actions, SearchDisplaySettings, UrlPageState, PageState} from './state';
 
 import {populateQueryBuilder} from '../../search';  // FIXME extract into querybuilder module
 import { FilterField, FilterType } from '../../types/pagetypes';
+import { cancelSearch } from '../../modules/singlepage-bls';
 
 /*
 	This is some ugly-ish code that implements some one- and two-way binding between oldschool normal html elements and the vuex store.
@@ -61,7 +63,7 @@ function changeCheck($input: JQuery<HTMLInputElement>, value: boolean) {
 $(document).ready(() => {
 	{
 		const $pageSize = $('#resultsPerPage') as JQuery<HTMLSelectElement>;
-		store.watch(state => state.pageSize, v => changeSelect($pageSize, v+''));
+		store.watch(state => state.pageSize, v => changeSelect($pageSize, v+''), {immediate: true});
 		$pageSize.on('change', () => {
 			const v = Number.parseInt($pageSize.selectpicker('val') as string, 10);
 			if (v !== getState().pageSize) {
@@ -73,7 +75,7 @@ $(document).ready(() => {
 	{
 		// TODO enum
 		const $sampleMode = $('#sampleMode') as JQuery<HTMLSelectElement>;
-		store.watch(state => state.sampleMode, v => changeSelect($sampleMode, v));
+		store.watch(state => state.sampleMode, v => changeSelect($sampleMode, v), {immediate: true});
 		$sampleMode.on('change', () => {
 			const v = $sampleMode.selectpicker('val') as string;
 			if (v !== getState().sampleMode) {
@@ -84,7 +86,7 @@ $(document).ready(() => {
 
 	{
 		const $sampleSize = $('#sampleSize') as JQuery<HTMLInputElement>;
-		store.watch(state => state.sampleSize,v => changeText($sampleSize, v+''));
+		store.watch(state => state.sampleSize,v => changeText($sampleSize, v+''), {immediate: true});
 		$sampleSize.on('change keyup', () => {
 			let n: number|null = Number.parseInt($sampleSize.val() as string, 10);
 			if (isNaN(n)) { n = null; }
@@ -97,7 +99,7 @@ $(document).ready(() => {
 
 	{
 		const $sampleSeed = $('#sampleSeed') as JQuery<HTMLInputElement>;
-		store.watch(state => state.sampleSeed, v => changeText($sampleSeed, v));
+		store.watch(state => state.sampleSeed, v => changeText($sampleSeed, v), {immediate: true});
 		$sampleSeed.on('change', () => {
 			let n: number|null = Number.parseInt($sampleSeed.val() as string, 10);
 			if (isNaN(n)) { n = null; }
@@ -110,7 +112,7 @@ $(document).ready(() => {
 
 	{
 		const $wordsAroundHit = $('#wordsAroundHit')  as JQuery<HTMLInputElement>;
-		store.watch(state => state.wordsAroundHit, v => changeText($wordsAroundHit, v));
+		store.watch(state => state.wordsAroundHit, v => changeText($wordsAroundHit, v), {immediate: true});
 		$wordsAroundHit.on('change keyup', e => {
 			let n: number|null = Number.parseInt($wordsAroundHit.val() as string, 10);
 			if (isNaN(n)) { n = null; }
@@ -129,7 +131,7 @@ $(document).ready(() => {
 				$querybox.val(v as string).change();
 			}
 			preventNextUpdate = false;
-		});
+		}, {immediate: true});
 		$querybox.on('change keyup', e => {
 			preventNextUpdate = true;
 			actions.patternString($querybox.val() as string);
@@ -144,7 +146,7 @@ $(document).ready(() => {
 				lastPattern = v || '';
 				populateQueryBuilder(v);
 			}
-		});
+		}, {immediate: true});
 		$querybuilder.on('cql:modified', () => {
 			const pattern = $querybuilder.data('builder').getCql();
 			lastPattern = pattern;
@@ -160,7 +162,7 @@ $(document).ready(() => {
 			} else {
 				$within.find(`input[value="${v}"]`).parent().button('toggle');
 			}
-		});
+		}, {immediate: true});
 		$within.on('change', () => {
 			const value = $within.find('input:checked').val() as string || null;
 			actions.within(value);
@@ -186,16 +188,14 @@ $(document).ready(() => {
 			}
 
 			// Store -> UI
-			store.watch(state => state.pattern[id]!.case, v => changeCheck($caseInput, v));
+			store.watch(state => state.pattern[id]!.case, v => changeCheck($caseInput, v), {immediate: true});
 			store.watch(state => state.pattern[id]!.value, v => {
 				if ($textOrSelect.is('select')) {
 					changeSelect($textOrSelect as JQuery<HTMLSelectElement>, v);
 				} else {
 					changeText($textOrSelect as JQuery<HTMLInputElement>, v);
 				}
-
-				// if ($textOrSelect.val() as string !== v) { $textOrSelect.val(v).change(); $fileInput.val(''); }
-			});
+			}, {immediate: true});
 
 			// UI -> Store
 			$textOrSelect.on('change', () => actions.property({
@@ -263,7 +263,7 @@ $(document).ready(() => {
 				} else {
 					changeText($inputs.first() as JQuery<HTMLInputElement>, values[0]);
 				}
-			});
+			}, {immediate: true});
 
 			// UI -> store
 			$this.on('change', function() {
@@ -287,6 +287,10 @@ $(document).ready(() => {
 		});
 	}
 
+	store.watch(state => state.operation, v => {
+		$('#results').toggle(!!v);
+	}, {immediate: true});
+
 	{
 		$('#tabHits, #tabDocs').each((i, el) => {
 			const $this = $(el);
@@ -299,8 +303,9 @@ $(document).ready(() => {
 			// Main tab opening
 			$this.on('tabOpen', () => actions.operation(operation));
 			store.watch(state => state.operation, v => {
+				console.log(`tab ${v} opening?`);
 				if (v === operation) { $label.tab('show'); }
-			});
+			}, {immediate: true});
 
 			// Pagination
 			// TODO we cannot navigate to pages not in the pagination element at the moment
@@ -312,7 +317,7 @@ $(document).ready(() => {
 			});
 			store.watch(state => state[stateKey].page, page => {
 				$this.find(`.pagination [data-page="${page}"]`).click();
-			});
+			}, {immediate: true});
 
 			// Case sensitive grouping
 			const $caseSensitive = $this.find('.casesensitive') as JQuery<HTMLInputElement>;
@@ -322,14 +327,14 @@ $(document).ready(() => {
 			});
 			store.watch(state => state[stateKey].caseSensitive, checked => {
 				changeCheck($caseSensitive, checked);
-			});
+			}, {immediate: true});
 
 			// Grouping settings
 			const $groupSelect = $this.find('.groupselect') as JQuery<HTMLSelectElement>;
 			$groupSelect.on('change', () => {
 				handlers.groupBy($groupSelect.selectpicker('val') as string[]);
 			});
-			store.watch(state => state[stateKey].groupBy, v => changeSelect($groupSelect, v));
+			store.watch(state => state[stateKey].groupBy, v => changeSelect($groupSelect, v), {immediate: true});
 
 			// Sorting settings
 			$this.on('click', '[data-bls-sort]', function() {
@@ -343,15 +348,45 @@ $(document).ready(() => {
 			// Nothing in UI to update from state (TODO initiate search instead)
 
 			// viewgroup
+			const $resultgroupdetails = $this.find('.resultgroupdetails')
+			const $resultgroupname = $this.find('.resultgroupname');
+			// delegated handler for .viewconcordances, elements are dynamically created
 			$this.on('click', '.viewconcordances', function() {
 				const id = $(this).data('groupId');
 				handlers.viewGroup(id);
 			});
+			store.watch(state => state[stateKey].viewGroup, v => {
+				$resultgroupdetails.toggle(v != null);
+				$resultgroupname.text(v || '');
+			}, {immediate: true});
+
 			$this.on('click', '.clearviewgroup', function() {
 				handlers.viewGroup(null);
 			});
 		});
 	}
+
+	// Reset & history navigation
+	$('#mainForm').on('reset', () => {
+		actions.reset();
+		cancelSearch();
+
+		// TODO map PageState to url and autoupdate on appropriate state updates
+		const url = new URI();
+		const newUrl = url.search('').segmentCoded(url.segmentCoded().filter(s => s !== 'hits' && s !== 'docs'));
+
+		history.pushState(getState(), undefined, newUrl.toString());
+
+		return false;
+	});
+
+	window.addEventListener('popstate', function(event) {
+		const state: PageState = event.state || new UrlPageState().get();
+		actions.replace(state);
+		// toPageState(searchSettings || {});
+	});
+
+	console.log('connected state to page');
 });
 
 /* TODO

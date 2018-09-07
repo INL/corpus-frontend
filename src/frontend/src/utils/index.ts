@@ -13,3 +13,5 @@ export function makeRegexWildcard(original: string) {
 	.replace(/\./g, '?') // restore ?
 	.replace(/_ESC_PERIOD_/g, '.') // unescape \. to .
 }
+
+export const NaNToNull = (n: number) => isNaN(n) ? null : n;

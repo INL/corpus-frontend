@@ -26,7 +26,7 @@ export type PageState = {
 	/** More of a display mode on the results */
 	operation: 'hits'|'docs'|null;
 	pageSize: number;
-	pattern: {[key: string]: PropertyField|undefined};
+	pattern: {[key: string]: PropertyField};
 	patternString: string|null;
 	patternQuerybuilder: string|null;
 	sampleMode: 'percentage'|'count';
@@ -46,7 +46,7 @@ export interface SearchDisplaySettings {
 }
 
 /** Decode the current url into a valid page state configuration. Keep everything private except the getters */
-class UrlPageState implements PageState {
+export class UrlPageState implements PageState {
 	/**
 	 * Path segments of the url this was constructed with, typically something like ['corpus-frontend', corpusname, 'search', ('docs'|'hits')?]
 	 * But might contain extra leading segments if the application is proxied.
@@ -358,7 +358,11 @@ const [hitActions, docActions] = (['docDisplaySettings', 'hitDisplaySettings'] a
 			state.page = 0;
 			state.sort = null;
 			state.viewGroup = null;
-		}, 'reset')
+		}, 'reset'),
+
+		replace: ctx.commit((state, payload: SearchDisplaySettings) => {
+			Object.assign(state, payload);
+		}, 'replace'),
 	};
 });
 
@@ -368,8 +372,8 @@ export const actions = {
 	filter: b.commit((state, {id, values}: {id: string, values: string[]}) => state.filters[id].values = values, 'filter'),
 	clearFilters: b.commit(state => Object.entries(state.filters).forEach(([id, filter]) => filter.values = []), 'clearfilters'),
 	hits: hitActions,
-	operation: b.commit((state, payload: 'hits'|'docs') => {
-		if (['hits', 'docs'].includes(payload)) { state.operation = payload; }
+	operation: b.commit((state, payload: 'hits'|'docs'|null) => {
+		if (['hits', 'docs'].includes(payload!)) { state.operation = payload; }
 	}, 'operation'),
 	pageSize: b.commit((state, payload: number) => {
 		if ([20, 50, 100, 200].includes(payload)) { state.pageSize = payload;}
@@ -382,7 +386,8 @@ export const actions = {
 	// may require some further work based on how it's used in practise
 	patternString: b.commit((state, payload: string) => state.patternString = payload, 'patternstring'),
 	patternQuerybuilder: b.commit((state, payload: string) => state.patternQuerybuilder = payload, 'patternquerybuilder'),
-	sampleMode: b.commit((state, payload: 'percentage'|'count') => {
+	sampleMode: b.commit((state, payload: 'percentage'|'count'|undefined|null) => {
+		if (payload == null) { payload = defaults.sampleMode; } // reset on null, ignore on invalid string
 		if (['percentage', 'count'].includes(payload)) { state.sampleMode = payload; }
 	}, 'samplemode'),
 	sampleSeed: b.commit((state, payload: number|null) => state.sampleSeed = payload, 'sampleseed'),
@@ -416,10 +421,39 @@ export const actions = {
 		state.within = null;
 		state.wordsAroundHit = null;
 	}, 'reset'),
+
+	replace: b.commit((state, payload: PageState) => {
+		// this is a little nasty but maybe it will work, extract all special fields
+		// reset the rest by batch assignment, then place back and treat the specials
+
+		const specialFields = {
+			pattern: state.pattern,
+			docDisplaySettings: state.docDisplaySettings,
+			hitDisplaySettings: state.hitDisplaySettings,
+			filters: state.filters,
+		};
+
+		// Reset all basic properties, place back the fields with nested properties
+		// (we can't replace those without losing reactivity)
+		Object.assign(state, payload, specialFields);
+
+		// Now manually replace the values in those special fields
+		actions.clearFilters();
+		actions.clearProperties();
+		Object.values(payload.filters).forEach(f => actions.filter({id: f.name, values: f.values}));
+		Object.values(payload.pattern).forEach(p => actions.property({id: p.name, payload: p}));
+		actions.docs.replace(payload.docDisplaySettings);
+		actions.hits.replace(payload.hitDisplaySettings);
+	}, 'replace')
+};
+
+export const get = {
+	properties: b.read(state => Object.values(state.pattern) as PropertyField[], 'getproperties'),
+	filters: b.read(state => Object.values(state.filters), 'getfilters'),
 };
 
 export const getState = b.state();
 export const store = b.vuexStore({state: initialState});
 
-// DEBUGGING
+// TODO remove me, debugging only - use expose-loader or something?
 (window as any).actions = actions;

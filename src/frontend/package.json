@@ -40,6 +40,7 @@
     "jquery-extendext": "^0.1.2",
     "jquery-ui": "1.12.0",
     "lucene-query-parser": "^1.2.0",
+    "memoize-decorator": "^1.0.2",
     "mustache": "^2.3.2",
     "rxjs": "^6.2.2",
     "urijs": "^1.19.1",

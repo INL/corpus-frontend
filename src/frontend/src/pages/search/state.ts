@@ -4,6 +4,8 @@ import Vuex from 'vuex';
 
 import {getStoreBuilder} from 'vuex-typex';
 
+import memoize from 'memoize-decorator';
+
 import {FilterField, PropertyField} from '../../types/pagetypes';
 import {makeRegexWildcard, makeWildcardRegex} from '../../utils';
 import parseCql from '../../utils/cqlparser';
@@ -18,11 +20,21 @@ const enum defaults {
 	sampleMode = 'percentage'
 }
 
+export interface SearchDisplaySettings {
+	/** case-sensitive grouping */
+	caseSensitive: boolean;
+	groupBy: string[];
+	sort: string|null;
+	page: number;
+	viewGroup: string|null;
+}
+
 /** All unknown/unspecified properties must be initialized to null to enable state reactivity */
 export type PageState = {
+	activePattern: 'pattern'|'patternString'|'patternQueryBuilder';
+	docDisplaySettings: SearchDisplaySettings;
 	filters: {[key: string]: FilterField};
 	hitDisplaySettings: SearchDisplaySettings;
-	docDisplaySettings: SearchDisplaySettings;
 	/** More of a display mode on the results */
 	operation: 'hits'|'docs'|null;
 	pageSize: number;
@@ -35,15 +47,6 @@ export type PageState = {
 	within: string|null;
 	wordsAroundHit: number|null;
 };
-
-export interface SearchDisplaySettings {
-	/** case-sensitive grouping */
-	caseSensitive: boolean;
-	groupBy: string[];
-	sort: string|null;
-	page: number;
-	viewGroup: string|null;
-}
 
 /** Decode the current url into a valid page state configuration. Keep everything private except the getters */
 export class UrlPageState implements PageState {
@@ -60,6 +63,20 @@ export class UrlPageState implements PageState {
 		this.params = uri.search(true);
 	}
 
+	@memoize
+	get activePattern() {
+		if (Object.keys(this.pattern).length > 0) {
+			return 'pattern';
+		} else if (this.patternQuerybuilder) {
+			return 'patternQueryBuilder';
+		} else if (this.patternString) {
+			return 'patternString';
+		} else {
+			return 'pattern';
+		}
+	}
+
+	@memoize
 	get filters(): {[key: string]: FilterField} {
 		const luceneString = this.getString('filter', null, v=>v?v:null);
 		if (luceneString == null) {
@@ -73,6 +90,7 @@ export class UrlPageState implements PageState {
 		}
 	}
 
+	@memoize
 	get operation(): 'hits'|'docs'|null {
 		const path = this.paths.length ? this.paths[this.paths.length-1].toLowerCase() : null;
 		if (path !== 'hits' && path !== 'docs') {
@@ -82,10 +100,12 @@ export class UrlPageState implements PageState {
 		}
 	}
 
+	@memoize
 	get pageSize(): number {
 		return this.getNumber('number', defaults.pageSize, v => [20,50,100,200].includes(v) ? v : defaults.pageSize)!;
 	}
 
+	@memoize
 	get pattern(): {[key: string]: PropertyField} {
 		function isCase(value) { return value.startsWith('(?-i)') || value.startsWith('(?c)'); }
 		function stripCase(value) { return value.substr(value.startsWith('(?-i)') ? 5 : 4); }
@@ -166,14 +186,18 @@ export class UrlPageState implements PageState {
 		}
 	}
 
+	@memoize
 	get patternString(): string|null {
 		return this.getString('patt', null, v => v?v:null);
 	}
 
+	// TODO verify querybuilder can parse
+	@memoize
 	get patternQuerybuilder(): string|null {
 		return this.patternString;
 	}
 
+	@memoize
 	get sampleMode(): 'count'|'percentage' {
 		// If 'sample' exists we're in count mode, otherwise if 'samplenum' (and is valid), we're in percent mode
 		// ('sample' also has precendence for the purposes of determining samplesize)
@@ -186,24 +210,29 @@ export class UrlPageState implements PageState {
 		}
 	}
 
+	@memoize
 	get sampleSeed(): number|null {
 		return this.getNumber('sampleseed', null);
 	}
 
+	@memoize
 	get sampleSize(): number|null {
 		// Use 'sample' unless missing, then use 'samplenum', if 0-100 (as it's percentage-based)
 		return this.getNumber('sample', this.getNumber('samplenum', null, v => (v >= 0 && v <=100) ? v : null));
 	}
 
 	// TODO these might become dynamic in the future, then we need extra manual checking
+	@memoize
 	get within(): 'p'|'s'|null {
 		return null; // TODO
 	}
 
+	@memoize
 	get wordsAroundHit(): number {
 		return this.getNumber('wordsaroundhit', defaults.wordsAroundHit, v => v >= 0 && v <= 10 ? v : defaults.wordsAroundHit)!;
 	}
 
+	@memoize
 	get hitDisplaySettings(): SearchDisplaySettings {
 		if (this.operation !== 'hits') {
 			// not the active view, use default/uninitialized settings
@@ -230,6 +259,7 @@ export class UrlPageState implements PageState {
 		}
 	}
 
+	@memoize
 	get docDisplaySettings(): SearchDisplaySettings {
 		if(this.operation !== 'docs') {
 			return {
@@ -255,8 +285,10 @@ export class UrlPageState implements PageState {
 		}
 	}
 
+	@memoize
 	public get(): PageState {
 		return {
+			activePattern: this.activePattern,
 			docDisplaySettings: this.docDisplaySettings,
 			filters: this.filters,
 			hitDisplaySettings: this.hitDisplaySettings,
@@ -448,8 +480,23 @@ export const actions = {
 };
 
 export const get = {
+	activePatternValue: b.read((state): PropertyField[]|string|null => {
+		if (state.activePattern === 'pattern') {
+			return Object.values(state.pattern);
+		} else {
+			return state[state.activePattern];
+		}
+	}, 'getActivePatternValue'),
 	properties: b.read(state => Object.values(state.pattern) as PropertyField[], 'getproperties'),
 	filters: b.read(state => Object.values(state.filters), 'getfilters'),
+
+	displaySettings: b.read(state => {
+		switch (state.operation) {
+			case 'docs': return state.docDisplaySettings;
+			case 'hits': return state.hitDisplaySettings;
+			default: return null;
+		}
+	}, 'getDisplaySettings'),
 };
 
 export const getState = b.state();

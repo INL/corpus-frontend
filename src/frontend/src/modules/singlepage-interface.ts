@@ -4,12 +4,12 @@ import {saveAs} from 'file-saver';
 import $ from 'jquery';
 import URI from 'urijs';
 
-import {onSearchUpdated} from '../search';
-import {debugLog} from '../utils/debug';
-import {getBlsParam, getQuerySummary, search, SearchParameters, getBlsParamFromState} from './singlepage-bls';
+import {onSearchUpdated} from '@/search';
+import {debugLog} from '@/utils/debug';
+import {getQuerySummary, search, getBlsParamFromState} from '@/modules/singlepage-bls';
 
-import * as BLTypes from '../types/blacklabtypes';
-import { getState, get as stateGetters } from '../pages/search/state';
+import * as BLTypes from '@/types/blacklabtypes';
+import { getState, get as stateGetters } from '@/pages/search/state';
 
 // TODO
 // showCitation showProperties onClick handlers
@@ -256,11 +256,11 @@ function updatePagination($pagination: JQuery<HTMLElement>, data: BLTypes.BLSear
  *
  * @param {any} $tab the tab content container.
  */
-function showSearchIndicator($tab) {
+export function showSearchIndicator($tab) {
 	if ($tab.data('searchIndicatorTimeout') == null) {
 		$tab.data('searchIndicatorTimeout', setTimeout(function() {
 			$tab.find('.searchIndicator').show();
-			clearTabResults($tab);
+			clearResults($tab);
 		}, 500));
 	}
 }
@@ -280,49 +280,16 @@ function hideSearchIndicator($tab) {
 
 // STATE
 /**
- * Load and display results within a specific group of documents/hits.
- *
- * This function should only be called when the containing tab currently has a groupBy clause,
- * otherwise an invalid search will be generated.
- *
- * This function assumes it's being called in the context of a button/element containing a data-group-id attribute
- * specifiying a valid group id.
- */
-function viewConcordances() {
-	const $button = $(this);
-	const groupId = $button.data('groupId');
-
-	// this parameter is local to this tab, as the other tabs are probably displaying other groups.
-	$(this).trigger('localParameterChange', {
-		viewGroup: groupId,
-		page: 0,
-		sort: null,
-	});
-
-	// initialize the display indicating we're looking at a detailed group
-
-	// Only set the text, don't show it yet
-	// (it should always be hidden, as this function is only available/called when you're not currently viewing contents of a group)
-	// This is a brittle solution, but better than nothing for now.
-	// TODO when blacklab-server echoes this data in the search request, set these values in setTabResults() and remove this here
-	const groupName = $button.data('groupName');
-	const $tab = $button.closest('.tab-pane');
-	const $resultgroupdetails = $tab.find('.resultgroupdetails');
-	const $resultgroupname = $resultgroupdetails.find('.resultgroupname');
-	$resultgroupname.text(groupName || '');
-}
-
-// STATE
-/**
  * Loads and displays a small amount of details about individual hits/documents within a specific group.
  * Some data is attached to the button to track how many concordances are already loaded/are available.
  *
  * This function does not refresh the entire tab's contents, just inserts some extra data within a group's <tr>
- * For the version that loads the full result set and displays the extensive information, see {@link viewConcordances}
+ * That only happens when the viewgroup parameter is set
  *
  * This function assumes it's being called within the context of a button element containing a data-group-id attribute.
  * Some assumptions are also made about the exact structure of the document regarding placement of the results.
  */
+// TODO
 function loadConcordances() {
 	const $button = $(this);
 	const $tab = $button.parents('.tab-pane').first();
@@ -682,25 +649,19 @@ function formatGroups(data: BLTypes.BLDocGroupResults|BLTypes.BLHitGroupResults)
  * 'event.target' should be the element that was clicked.
  */
 function onExportCsv(event: JQueryEventObject) {
-	const $tab = $(event.delegateTarget);
-
 	const $button = $(event.target);
 	if ($button.hasClass('disabled')) {
 		return;
 	}
 
-	const pageParam = $.extend({},
-		$tab.data('defaultParameters'),
-		$tab.data('parameters'),
-		$tab.data('constParameters'));
+	const blsParam = getBlsParamFromState();
+	const operation = getState().operation!; // should always be valid in this ui state
 
-	const blsParam = getBlsParam(pageParam) as any;
-
-	blsParam.outputformat = 'csv';
+	(blsParam as any).outputformat = 'csv';
 	delete blsParam.number;
 	delete blsParam.first;
 
-	const url = new URI(BLS_URL).segment(pageParam.operation).addSearch(blsParam).toString();
+	const url = new URI(BLS_URL).segment(operation).addSearch(blsParam).toString();
 	debugLog('CSV download url', url, blsParam); // eslint-disable-line
 
 	$button
@@ -711,9 +672,6 @@ function onExportCsv(event: JQueryEventObject) {
 		accepts: {json: 'application/json'},
 		cache: false,
 		data: 'text',
-		// error: function(jqXHR, textStatus, errorThrown) {
-
-		// },
 		success (data) {
 			// NOTE: Excel <=2010 seems to ignore the BOM altogether, see https://stackoverflow.com/a/19516038
 			const b = new Blob([data], { type: 'text/plain;charset=utf-8' });
@@ -734,8 +692,7 @@ function onExportCsv(event: JQueryEventObject) {
  *
  * @param data the successful blacklab-server reply.
  */
-function setTabResults(data: BLTypes.BLSearchResult) {
-	const $tab = $(this);
+function setTabResults($tab: JQuery<HTMLElement>, data: BLTypes.BLSearchResult) {
 	let html: Array<string|number>;
 	const textDirection = SINGLEPAGE.INDEX.textDirection || 'ltr';
 	// create the table
@@ -767,7 +724,6 @@ function setTabResults(data: BLTypes.BLSearchResult) {
 			$(this).find('.loadconcordances').click();
 		});
 		$(this).find('.loadconcordances').on('click', loadConcordances);
-		$(this).find('.viewconcordances').on('click', viewConcordances);
 	}
 
 	// Always do this, if an out-of-bounds request is made and no data is returned,
@@ -801,92 +757,19 @@ function setTabResults(data: BLTypes.BLSearchResult) {
 
 // STATE
 /**
- * Clears displayed data, hides pagination, group indicator, group control, cached results, etc.
- *
- * @param {any} $tab
- */
-function clearTabResults($tab) {
-	$tab.find('.resultcontrols').hide();
-	$tab.find('.resultcontainer').hide().find('table thead, table tbody').empty();
-	$tab.find('.resultgroupdetails .resultgroupname').empty();
-	$tab.removeData('results');
-}
-
-// STATE
-/**
- * Set new search parameters for this tab. Does not mark tab for refresh or remove existing data.
- * Should never be called with tab-local parameters (currently as viewgroup, groupby, page, sort, group case-sensitivity)
- * as that will cause the parameters to apply to both tabs (perhaps incorrectly)
- *
- * NOTE: pagination is never updated based on parameters, but instead drawn based on search response.
- * @param {jquery} $tab - tab-pane containing all contents of tab
- * @param {any} newParameters - object containing any updated parameter keys
- * @param {boolean} [toPageState = false] whether to copy the parameter values to their ui elements
- */
-function setTabParameters($tab, newParameters, toPageState) {
-
-	// make a copy of the new parameters without groupBy and viewGroup if the parameters were meant for
-	// a tab with a different operation
-	if (newParameters.operation != null && newParameters.operation !== $tab.data('parameters').operation) {
-		newParameters = $.extend({}, newParameters);
-		// undefined so we don't overwrite our existing parameters
-		newParameters.groupBy = undefined;
-		newParameters.viewGroup = undefined;
-	}
-
-	// write new values while preserving original values
-	const updatedParameters = $.extend($tab.data('parameters'), newParameters, $tab.data('constParameters'));
-
-	// copy parameter values to their selectors etc
-	if (toPageState) {
-		$tab.find('select.groupselect').selectpicker('val', updatedParameters.groupBy);
-		$tab.find('.casesensitive').prop('checked', updatedParameters.caseSensitive);
-	}
-}
-
-// STATE
-/**
- * Updates the internal parameters for a tab and executes a search if the tab is currently active.
- *
- * Any currently shown results are not cleared.
- * Automatically unhides results containers and controls once search completes.
- *
- * @param {any} event where the data attribute holds all new parameters
- */
-function onLocalParameterChange(event, parameters) {
-	const $tab = $(this);
-
-	setTabParameters($tab, parameters, true);
-	$tab.removeData('results'); // Invalidate data to indicate a refresh is required
-
-	if ($tab.hasClass('active')) { // Emulate a reopen of the tab to refresh it
-		$tab.trigger('tabOpen');
-	}
-}
-
-// STATE
-/**
  * The core search trigger, named a little awkwardly because it autotriggers when a tab is made active/opens.
  * We emulate the tab reopening to update the displayed search results when new search parameters are set/selected.
  */
-function onTabOpen(/*event, data*/) {
-
-	const $tab = $(this);
-	// const searchSettings = $.extend({}, $tab.data('defaultParameters'), $tab.data('parameters'), $tab.data('constParameters'));
-
-	// CORE does as little UI manipulation as possible, just shows a tab when required
-	// so we're responsible for showing the entire results area.
-	// $('#results').show();
-
-	const state = getState();
+export function refreshTab($tab: JQuery<HTMLElement>) {
+	const {operation} = getState();
 	const param = getBlsParamFromState();
-	const operation = getState().operation!;
 	if (!operation) {
-		throw new Error('onTabOpen fired before state was updated, this will not work!');
+		throw new Error('Attempting to refresh search results without a valid operation (perhaps before vuex state change has been processed?), this will not work!');
 	}
 
 	// TODO tidy up, blacklab parameters should probably be generated as late as possible
-	const querySummary = getQuerySummary(stateGetters.activePatternValue(), getState().within, stateGetters.filters());
+	// This probably should exist in vuexbridge or something once we properly use globla event bus
+	const querySummary = getQuerySummary(stateGetters.activePatternValue(), getState().within, stateGetters.activeFilters());
 	$('#searchFormDivHeader').show()
 		.find('#querySummary').text(querySummary).attr('title', querySummary.substr(0, 1000));
 
@@ -900,46 +783,33 @@ function onTabOpen(/*event, data*/) {
 	// Not all configurations of search parameters will result in a valid search
 	// Verify that we're not trying to view hits without a pattern to generate said hits
 	// and warn the user if we are
-	if (state.operation === 'hits') {
-		// TODO improve state shape to make this easy
-		const pattValue = stateGetters.activePatternValue;
-		let valid = true;
-		if (pattValue == null) {
-			valid = false;
-		} else if (typeof pattValue === 'string') {
-			if (!pattValue) {
-				valid = false;
-			}
-		} else if (Array.isArray(pattValue) && pattValue.filter(p => !!p.value).length === 0) {
-			valid = false;
-		}
+	const patt = stateGetters.activePatternValue();
+	if (operation === 'hits' && !patt) {
+		replaceTableContent($tab.find('.resultcontainer table'),
+			['<thead>',
+			'<tr><th><a>No hits to display</a></th></tr>',
+			'</thead>',
+			'<tbody>',
+			'<tr>',
+			`<td class="no-results-found">No hits to display... (one or more of ${PROPS.all.map(p => p.displayName).slice(0 ,3).join('/')} is required).</td>`,
+			'</tr>',
+			'</tbody>'
+		].join(''));
 
-		if (!valid) {
-			replaceTableContent($tab.find('.resultcontainer table'),
-				['<thead>',
-				'<tr><th><a>No hits to display</a></th></tr>',
-				'</thead>',
-				'<tbody>',
-				'<tr>',
-				'<td class="no-results-found">No hits to display... (one or more of Lemma/PoS/Word is required).</td>',
-				'</tr>',
-				'</tbody>'
-			].join(''));
-
-			$tab.find('.resultcontainer').show();
-			$tab.find('.resultcontrols').hide();
-			$tab.data('results', {}); // Prevent refreshing search on next tab open
-			return;
-		}
+		$tab.find('.resultcontainer').show();
+		$tab.find('.resultcontrols').hide();
+		$tab.data('results', {}); // Prevent refreshing search on next tab open
+		return;
 	}
 
 	// All is well, search!
 	showSearchIndicator($tab);
 	onSearchUpdated(operation, param);
 	search(operation, param,
-		function onSuccess() {
+		function onSuccess(data) {
 			hideBlsError();
-			$tab.data('fnSetResults').apply(undefined, Array.prototype.slice.call(arguments)); // call with original args
+			debugger;
+			setTabResults($tab, data);
 		},
 		function onError() {
 			hideSearchIndicator($tab);
@@ -956,108 +826,7 @@ $(document).ready(function() {
 	$('#resultTabs a').each(function() { $(this).tab('hide'); });
 	$('.searchIndicator').hide();
 
-	// See parameters type documentation in singlepage-bls.js
-	$('#tabHits')
-		.data('parameters', {})
-		.data('defaultParameters', {
-			page: 0,
-			pageSize: 50,
-			sampleMode: null,
-			sampleSize: null,
-			sampleSeed: null,
-			wordsAroundHit: null,
-			pattern: null,
-			within: null,
-			filters: null,
-			sort: null,
-			groupBy: null,
-			viewGroup: null,
-			caseSensitive: null,
-		})
-		.data('constParameters', {
-			operation: 'hits',
-		})
-		.data('fnSetResults', setTabResults.bind($('#tabHits')[0]));
-
-	$('#tabDocs')
-		.data('parameters', {})
-		.data('defaultParameters', {
-			page: 0,
-			pageSize: 50,
-			sampleMode: null,
-			sampleSize: null,
-			sampleSeed: null,
-			wordsAroundHit: null,
-			pattern: null,
-			within: null,
-			filters: null,
-			sort: null,
-			groupBy: null,
-			viewGroup: null,
-			caseSensitive: null,
-		})
-		.data('constParameters', {
-			operation: 'docs',
-		})
-		.data('fnSetResults', setTabResults.bind($('#tabDocs')[0]));
-
-	$('#resultTabsContent .tab-pane').on('localParameterChange', onLocalParameterChange);
-	$('#resultTabsContent .tab-pane').on('tabOpen', onTabOpen);
 	$('#resultTabsContent .tab-pane').on('click', '.exportcsv', onExportCsv);
-
-	// Forward show/open event to tab content pane
-	$('#resultTabs a').on('show.bs.tab', function() {
-		$($(this).attr('href') as string).trigger('tabOpen');
-	});
-
-	// use indirect event capture for easy access to the tab content-pane
-	$('#resultTabsContent .tab-pane')
-		.on('click', '[data-bls-sort]', function(event) {
-			const sort = $(this).data('blsSort');
-			const invert = ($(event.delegateTarget).data('parameters').sort === sort);
-
-			$(this).trigger('localParameterChange', {
-				sort: invert ? '-' + sort : sort
-			});
-			event.preventDefault();
-		})
-		.on('click', '[data-page]', function(event) {
-			$(this).trigger('localParameterChange', {
-				page: $(this).data('page')
-			});
-			event.preventDefault();
-		})
-		.on('change', '.casesensitive', function(event) {
-			$(this).trigger('localParameterChange', {
-				caseSensitive: $(this).is(':checked') || null
-			});
-			event.preventDefault();
-		})
-		// don't attach to 'changed', as that fires every time a single option is toggled, instead wait for the menu to close
-		.on('hide.bs.select', 'select.groupselect', function(event) {
-			const prev = $(event.delegateTarget).data('parameters').groupBy || [];
-			const cur = $(this).selectpicker('val') || [];
-			// Don't fire search if options didn't change
-
-			if (prev.length !== cur.length || !prev.every(function(elem) { return cur.includes(elem); })) {
-				$(this).trigger('localParameterChange', {
-					groupBy: cur,
-					page: 0,
-					viewGroup: null, // Clear any group we may be currently viewing, as the available groups just changed
-					sort:null,
-				});
-			}
-
-			event.preventDefault();
-		})
-		.on('click', '.clearviewgroup', function(event) {
-			$(this).trigger('localParameterChange', {
-				page: 0,
-				viewGroup: null,
-				sort:null,
-			});
-			event.preventDefault();
-		});
 });
 
 /**
@@ -1108,23 +877,18 @@ function showProperties(propRow, props) {
 }
 
 // STATE
-/**
- * Set new search parameters and mark tabs for a refresh of data.
- *
- * The currently shown tab will auto-refresh.
- * Parameters with corresponding UI-elements within the tabs will update those elements with the new data.
- * NOTE: pagination is never updated based on parameters, but instead drawn based on search response.
- * @param {any} searchParameters New search parameters.
- * @param {boolean} [clearResults=false] Clear any currently displayed search results.
- */
-export function setParameters(searchParameters: Partial<SearchParameters>, clearResults = false) {
-	$('#resultTabsContent .tab-pane').each(function() {
-		const $tab = $(this);
-		if (clearResults) {
-			clearTabResults($tab);
-		}
+/** Clears displayed data, hides pagination, group indicator, group control, cached results, etc. */
+export function clearResults($tabs?: JQuery<HTMLElement>) {
+	if ($tabs == null) {
+		$tabs = $('#resultTabsContent .tab-pane');
+	}
 
-		$tab.trigger('localParameterChange', searchParameters);
+	$tabs.each(function() {
+		const $tab = $(this);
+		$tab.find('.resultcontrols').hide();
+		$tab.find('.resultcontainer').hide().find('table thead, table tbody').empty();
+		$tab.find('.resultgroupdetails .resultgroupname').empty();
+		$tab.removeData('results');
 	});
 }
 
@@ -1141,13 +905,5 @@ export function reset() {
 
 	$('#searchFormDivHeader').hide();
 
-	$('#resultTabsContent .tab-pane').each(function() {
-		const $tab = $(this);
-
-		clearTabResults($tab);
-		$tab.trigger('localParameterChange', $.extend({},
-			$tab.data('defaultParameters'),
-			$tab.data('constParameters')
-		));
-	});
+	clearResults();
 }

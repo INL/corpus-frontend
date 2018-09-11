@@ -16,7 +16,6 @@ Vue.use(Vuex);
 
 const enum defaults {
 	pageSize = 20,
-	wordsAroundHit = 3,
 	sampleMode = 'percentage'
 }
 
@@ -228,8 +227,8 @@ export class UrlPageState implements PageState {
 	}
 
 	@memoize
-	get wordsAroundHit(): number {
-		return this.getNumber('wordsaroundhit', defaults.wordsAroundHit, v => v >= 0 && v <= 10 ? v : defaults.wordsAroundHit)!;
+	get wordsAroundHit(): number|null {
+		return this.getNumber('wordsaroundhit', null, v => v != null && v >= 0 && v <= 10 ? v : null);
 	}
 
 	@memoize
@@ -376,12 +375,14 @@ const [hitActions, docActions] = (['docDisplaySettings', 'hitDisplaySettings'] a
 			state.groupBy = payload;
 			state.viewGroup = null;
 			state.sort = null;
+			state.page = 0;
 		} , 'groupby'),
 		sort: ctx.commit((state, payload: string|null) => state.sort = payload, 'sort'),
 		page: ctx.commit((state, payload: number) => state.page = payload, 'page'),
 		viewGroup: ctx.commit((state, payload: string|null) => {
 			state.viewGroup = payload;
 			state.sort = null;
+			state.page = 0;
 		},'viewgroup'),
 
 		reset: ctx.commit(state => {
@@ -480,15 +481,24 @@ export const actions = {
 };
 
 export const get = {
+	/** If no PropertyField is active, the array is collapsed to null */
 	activePatternValue: b.read((state): PropertyField[]|string|null => {
 		if (state.activePattern === 'pattern') {
-			return Object.values(state.pattern);
+			return get.activeProperties();
 		} else {
 			return state[state.activePattern];
 		}
 	}, 'getActivePatternValue'),
-	properties: b.read(state => Object.values(state.pattern) as PropertyField[], 'getproperties'),
-	filters: b.read(state => Object.values(state.filters), 'getfilters'),
+	/** If no property is active, the array collapses to null */
+	activeProperties: b.read(state => {
+		const active = Object.values(state.pattern).filter(p => !!p.value);
+		return active.length ? active : null;
+	}, 'getproperties'),
+	/** If no filter is active, the array collapses to null */
+	activeFilters: b.read(state => {
+		const active = Object.values(state.filters).filter(f => f.values.length > 0);
+		return active.length ? active : null;
+	}, 'getfilters'),
 
 	displaySettings: b.read(state => {
 		switch (state.operation) {

@@ -6,6 +6,7 @@ import {getState, store, actions, SearchDisplaySettings, UrlPageState, PageState
 import {populateQueryBuilder} from '../../search';  // FIXME extract into querybuilder module
 import { FilterField, FilterType } from '../../types/pagetypes';
 import { cancelSearch } from '../../modules/singlepage-bls';
+import { refreshTab, clearResults, showSearchIndicator } from '../../modules/singlepage-interface';
 
 /*
 	This is some ugly-ish code that implements some one- and two-way binding between oldschool normal html elements and the vuex store.
@@ -293,33 +294,33 @@ $(document).ready(() => {
 
 	{
 		$('#tabHits, #tabDocs').each((i, el) => {
-			const $this = $(el);
-			const $label = $(`a[href="#${$this.attr('id')}"`);
-			const handlers = $this.is($('#tabHits')) ? actions.hits : actions.docs;
-			const stateKey = $this.is($('#tabHits')) ? 'hitDisplaySettings' : 'docDisplaySettings';
-			const operation = $this.is($('#tabHits')) ? 'hits' : 'docs';
+			const $tab = $(el);
+			const $label = $(`a[href="#${$tab.attr('id')}"`);
+			const handlers = $tab.is($('#tabHits')) ? actions.hits : actions.docs;
+			const stateKey = $tab.is($('#tabHits')) ? 'hitDisplaySettings' : 'docDisplaySettings';
+			const operation = $tab.is($('#tabHits')) ? 'hits' : 'docs';
 			const getSubState = (): SearchDisplaySettings => getState()[stateKey];
 
 			// Main tab opening
-			$this.on('tabOpen', () => actions.operation(operation));
+			$label.on('show.bs.tab', () => actions.operation(operation));
 			store.watch(state => state.operation, v => {
 				if (v === operation) { $label.tab('show'); }
 			}, {immediate: true});
 
 			// Pagination
-			// TODO we cannot navigate to pages not in the pagination element at the moment
-			$this.on('click', '[data-page]', function() { // No arrow func - need context
+			$tab.on('click', '[data-page]', function() { // No arrow func - need context
 				const page = Number.parseInt($(this).data('page'), 10);
 				if (getSubState().page !== page) {
 					handlers.page(page);
 				}
 			});
 			store.watch(state => state[stateKey].page, page => {
-				$this.find(`.pagination [data-page="${page}"]`).click();
+				// Only updates UI, should not be any handlers attached
+				$tab.find(`.pagination [data-page="${page}"]`).click();
 			}, {immediate: true});
 
 			// Case sensitive grouping
-			const $caseSensitive = $this.find('.casesensitive') as JQuery<HTMLInputElement>;
+			const $caseSensitive = $tab.find('.casesensitive') as JQuery<HTMLInputElement>;
 			$caseSensitive.on('change', () => {
 				const sensitive = $caseSensitive.is(':checked');
 				handlers.caseSensitive(sensitive);
@@ -329,14 +330,15 @@ $(document).ready(() => {
 			}, {immediate: true});
 
 			// Grouping settings
-			const $groupSelect = $this.find('.groupselect') as JQuery<HTMLSelectElement>;
+			const $groupSelect = $tab.find('.groupselect') as JQuery<HTMLSelectElement>;
 			$groupSelect.on('change', () => {
 				handlers.groupBy($groupSelect.selectpicker('val') as string[]);
 			});
 			store.watch(state => state[stateKey].groupBy, v => changeSelect($groupSelect, v), {immediate: true});
 
-			// Sorting settings
-			$this.on('click', '[data-bls-sort]', function() {
+			// Sorting settings, only bind from ui to state,
+			// Nothing in UI to indicate sorting -- https://github.com/INL/corpus-frontend/issues/142
+			$tab.on('click', '[data-bls-sort]', function() {
 				let sort = $(this).data('blsSort') as string;
 				if (sort === getSubState().sort) {
 					sort = '-'+sort;
@@ -344,24 +346,40 @@ $(document).ready(() => {
 				handlers.sort(sort);
 				return false; // click handling
 			});
-			// Nothing in UI to update from state (TODO initiate search instead)
 
 			// viewgroup
-			const $resultgroupdetails = $this.find('.resultgroupdetails')
-			const $resultgroupname = $this.find('.resultgroupname');
+			const $resultgroupdetails = $tab.find('.resultgroupdetails');
+			const $resultgroupname = $tab.find('.resultgroupname');
 			// delegated handler for .viewconcordances, elements are dynamically created
-			$this.on('click', '.viewconcordances', function() {
+			$tab.on('click', '.viewconcordances', function() {
 				const id = $(this).data('groupId');
 				handlers.viewGroup(id);
+			});
+			$tab.on('click', '.clearviewgroup', function() {
+				handlers.viewGroup(null);
 			});
 			store.watch(state => state[stateKey].viewGroup, v => {
 				$resultgroupdetails.toggle(v != null);
 				$resultgroupname.text(v || '');
 			}, {immediate: true});
 
-			$this.on('click', '.clearviewgroup', function() {
-				handlers.viewGroup(null);
-			});
+			// Watch entire tab-local state and restart search when required.
+			// Also need to watch some global parameters that are instantly reactive
+			store.watch(state => ({
+				viewParameters: state[stateKey],
+				pageSize: state.pageSize,
+				sampleMode: state.sampleMode,
+				sampleSeed: state.sampleSeed,
+				sampleSize: state.sampleSize,
+				wordsAroundHit: state.wordsAroundHit,
+			}), (v) => {
+				// TODO ugly
+				showSearchIndicator($tab);
+				$tab.removeData('results');
+				refreshTab($tab);
+				console.log('dynamic parameter changed', v)
+			}, {deep: true});
+
 		});
 	}
 
@@ -386,6 +404,7 @@ $(document).ready(() => {
 	});
 
 	// TODO restore pattern tab
+	// TODO make activePattern reactive
 
 	console.log('connected state to page');
 });

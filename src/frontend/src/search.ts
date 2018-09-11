@@ -9,8 +9,7 @@ import './utils/features/autocomplete';
 import './utils/features/tutorial';
 
 import createQueryBuilder from './modules/cql_querybuilder';
-import {cancelSearch, getBlsParam, getPageParam, SearchParameters, BlacklabParameters} from './modules/singlepage-bls';
-// import * as mainForm from './modules/singlepage-form';
+import {BlacklabParameters} from './modules/singlepage-bls';
 import './modules/singlepage-interface';
 import * as searcher from './modules/singlepage-interface';
 
@@ -267,9 +266,10 @@ export function searchSubmit() {
 	let within: string|null = null; // explicitly set to null to clear any previous value if queryType != simple
 
 	// Get the correct pattern based on selected tab
+	// TODO get from state - state needs to be updated on ui change
 	const queryType = $('#searchTabs li.active .querytype').attr('href');
 	if (queryType === '#simple') {
-		pattern = stateGetters.properties();
+		pattern = stateGetters.activeProperties();
 		within = getState().within;
 		// pattern = mainForm.getActiveProperties();
 		// within = mainForm.getWithin();
@@ -281,30 +281,8 @@ export function searchSubmit() {
 		// pattern = $('#querybox').val();
 	}
 
-	searcher.setParameters({
-		page: 0,
-		viewGroup: null, // reset, as we might be looking at a detailed group currently, and the new search should not display within a specific group
-		// pageSize: $('#resultsPerPage').selectpicker('val'),
-		pageSize: getState().pageSize,
-		pattern,
-		within,
-		// filters: mainForm.getActiveFilters(),
-		filters: stateGetters.filters()
-		// Other parameters are automatically updated on interaction and thus always up-to-date
-	}, true);
-
-	// Setting parameters refreshes the open result tab (if a result tab is opened),
-	// but when there is no tab open, activate one of the tabs manually
-	// (this triggers a refresh of the results in that tab)
-	// Also switch to the document tab if the query won't result in hits (no pattern supplied)
-	const $activeTab = $('#resultTabs .active');
-	if (!$activeTab.length || (!pattern && $activeTab.has('a[href="#tabHits"]'))) {
-		if (pattern) {
-			$('#resultTabs a[href="#tabHits"]').tab('show');
-		} else {
-			$('#resultTabs a[href="#tabDocs"]').tab('show');
-		}
-	}
+	searcher.clearResults();
+	actions.operation(getState().operation || pattern ? 'hits' : 'docs');
 
 	$('html, body').animate({
 		scrollTop: $('#searchFormDivHeader').offset()!.top - 75 // navbar

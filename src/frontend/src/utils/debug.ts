@@ -1,6 +1,6 @@
 import _$ from 'jquery';
 
-let debug = false;
+let debug = true;
 
 let queued: IArguments[] = [];
 

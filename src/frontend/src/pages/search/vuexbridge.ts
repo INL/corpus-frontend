@@ -3,10 +3,11 @@ import URI from 'urijs';
 
 import {getState, store, actions, SearchDisplaySettings, UrlPageState, PageState} from './state';
 
-import {populateQueryBuilder} from '../../search';  // FIXME extract into querybuilder module
-import { FilterField, FilterType } from '../../types/pagetypes';
-import { cancelSearch } from '../../modules/singlepage-bls';
-import { refreshTab, clearResults, showSearchIndicator } from '../../modules/singlepage-interface';
+import {populateQueryBuilder} from '@/search';  // FIXME extract into querybuilder module
+import { FilterField, FilterType } from '@/types/pagetypes';
+import { cancelSearch } from '@/modules/singlepage-bls';
+import { refreshTab, clearResults, showSearchIndicator } from '@/modules/singlepage-interface';
+import {debugLog} from '@/utils/debug';
 
 /*
 	This is some ugly-ish code that implements some one- and two-way binding between oldschool normal html elements and the vuex store.
@@ -301,10 +302,30 @@ $(document).ready(() => {
 			const operation = $tab.is($('#tabHits')) ? 'hits' : 'docs';
 			const getSubState = (): SearchDisplaySettings => getState()[stateKey];
 
+			// TODO result view tabs should *really* be a vue component by this point
+			/** Are the search results within this tab up-to-date */
+			function dirty(state?: boolean) {
+				if (state == null) {
+					const v = $tab.data('dirty');
+					return v != null ? v : true;
+				} else {
+					$tab.data('dirty', state);
+				}
+			}
+
 			// Main tab opening
 			$label.on('show.bs.tab', () => actions.operation(operation));
 			store.watch(state => state.operation, v => {
-				if (v === operation) { $label.tab('show'); }
+				if (v === operation) {
+					$label.tab('show');
+					if (dirty()) {
+						console.log('changed to a dirty tab, refreshing');
+						refreshTab($tab);
+						dirty(false);
+					} else {
+						console.log('changed to a clean tab, ignoring refresh');
+					}
+				}
 			}, {immediate: true});
 
 			// Pagination
@@ -331,9 +352,7 @@ $(document).ready(() => {
 
 			// Grouping settings
 			const $groupSelect = $tab.find('.groupselect') as JQuery<HTMLSelectElement>;
-			$groupSelect.on('change', () => {
-				handlers.groupBy($groupSelect.selectpicker('val') as string[]);
-			});
+			$groupSelect.on('change', () => handlers.groupBy($groupSelect.selectpicker('val') as string[]));
 			store.watch(state => state[stateKey].groupBy, v => changeSelect($groupSelect, v), {immediate: true});
 
 			// Sorting settings, only bind from ui to state,
@@ -365,6 +384,7 @@ $(document).ready(() => {
 
 			// Watch entire tab-local state and restart search when required.
 			// Also need to watch some global parameters that are instantly reactive
+			// TODO If multiple properties change, is this called multiple times?
 			store.watch(state => ({
 				viewParameters: state[stateKey],
 				pageSize: state.pageSize,
@@ -372,14 +392,25 @@ $(document).ready(() => {
 				sampleSeed: state.sampleSeed,
 				sampleSize: state.sampleSize,
 				wordsAroundHit: state.wordsAroundHit,
-			}), (v) => {
-				// TODO ugly
-				showSearchIndicator($tab);
-				$tab.removeData('results');
-				refreshTab($tab);
-				console.log('dynamic parameter changed', v)
-			}, {deep: true});
+				activeSearch: state.activeSearch,
+				operation: state.operation
+			}), (cur, old) => {
+				// Changing the display mode doesn't invalidate already rendered results...
+				// Unfortunately we need to watch the operation to know if this tab just opened
+				if (cur.operation !== old.operation) {
+					console.log('changed operation, ignoring changes (operation triggers a re-search somewhere else), probably erroneously as other properties may have changed', cur, old)
+					return;
+				}
 
+				// if operation changed, nothing to do
+				// otherwise, mark dirty, and then refresh and mark clean if it's the current tab
+				dirty(true);
+				if (cur.operation === operation) {
+					refreshTab($tab);
+					dirty(false);
+				}
+				debugLog('dynamic parameter changed', cur);
+			}, {deep: true});
 		});
 	}
 
@@ -406,7 +437,7 @@ $(document).ready(() => {
 	// TODO restore pattern tab
 	// TODO make activePattern reactive
 
-	console.log('connected state to page');
+	debugLog('connected state to page');
 });
 
 /* TODO

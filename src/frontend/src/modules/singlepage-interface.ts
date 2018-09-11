@@ -6,10 +6,11 @@ import URI from 'urijs';
 
 import {onSearchUpdated} from '@/search';
 import {debugLog} from '@/utils/debug';
-import {getQuerySummary, search, getBlsParamFromState} from '@/modules/singlepage-bls';
+import {getQuerySummary, search, getBlsParamFromState, BlacklabParameters} from '@/modules/singlepage-bls';
 
 import * as BLTypes from '@/types/blacklabtypes';
-import { getState, get as stateGetters } from '@/pages/search/state';
+import { getState, get as rootStateGetters } from '@/pages/search/state';
+import {get as searchStateGetters} from '@/pages/search/searchState';
 
 // TODO
 // showCitation showProperties onClick handlers
@@ -732,7 +733,7 @@ function setTabResults($tab: JQuery<HTMLElement>, data: BLTypes.BLSearchResult) 
 	replaceTableContent($tab.find('.resultcontainer table'), html.join(''), onTableContentsReplaced);
 	hideSearchIndicator($tab);
 	$tab.find('.resultcontrols, .resultcontainer').show();
-	$tab.data('results', data);
+	// $tab.data('results', data);
 
 	// Hide/show the group view identifier and reset button
 	// The values of these are set when the search is initiated in viewConcordances()
@@ -761,29 +762,35 @@ function setTabResults($tab: JQuery<HTMLElement>, data: BLTypes.BLSearchResult) 
  * We emulate the tab reopening to update the displayed search results when new search parameters are set/selected.
  */
 export function refreshTab($tab: JQuery<HTMLElement>) {
+	debugLog(`refreshing tab(s) ${$tab.get().map(e => e.id).join()}`);
+
+	if ($tab.length > 1) {
+		throw new Error(`Refreshing more than one tab simultaneously shouldn't happen`);
+	}
+
 	const {operation} = getState();
-	const param = getBlsParamFromState();
+	const param: BlacklabParameters = getBlsParamFromState();
 	if (!operation) {
 		throw new Error('Attempting to refresh search results without a valid operation (perhaps before vuex state change has been processed?), this will not work!');
 	}
 
 	// TODO tidy up, blacklab parameters should probably be generated as late as possible
 	// This probably should exist in vuexbridge or something once we properly use globla event bus
-	const querySummary = getQuerySummary(stateGetters.activePatternValue(), getState().within, stateGetters.activeFilters());
+	const querySummary = getQuerySummary(rootStateGetters.activePatternValue(), getState().within, rootStateGetters.activeFilters());
 	$('#searchFormDivHeader').show()
 		.find('#querySummary').text(querySummary).attr('title', querySummary.substr(0, 1000));
 
-	if ($tab.data('results')) {
-		// Nothing to do, tab is already displaying data (this happens when you go back and forth between tabs without changing your query in between)
-		// Still notify core so that when the url is copied out the current tab can be restored.
-		onSearchUpdated(operation, param);
-		return;
-	}
+	// if ($tab.data('results')) {
+	// 	// Nothing to do, tab is already displaying data (this happens when you go back and forth between tabs without changing your query in between)
+	// 	// Still notify core so that when the url is copied out the current tab can be restored.
+	// 	onSearchUpdated(operation, param);
+	// 	return;
+	// }
 
 	// Not all configurations of search parameters will result in a valid search
 	// Verify that we're not trying to view hits without a pattern to generate said hits
 	// and warn the user if we are
-	const patt = stateGetters.activePatternValue();
+	const patt = searchStateGetters.pattern();
 	if (operation === 'hits' && !patt) {
 		replaceTableContent($tab.find('.resultcontainer table'),
 			['<thead>',
@@ -798,7 +805,6 @@ export function refreshTab($tab: JQuery<HTMLElement>) {
 
 		$tab.find('.resultcontainer').show();
 		$tab.find('.resultcontrols').hide();
-		$tab.data('results', {}); // Prevent refreshing search on next tab open
 		return;
 	}
 
@@ -808,7 +814,6 @@ export function refreshTab($tab: JQuery<HTMLElement>) {
 	search(operation, param,
 		function onSuccess(data) {
 			hideBlsError();
-			debugger;
 			setTabResults($tab, data);
 		},
 		function onError() {
@@ -888,7 +893,7 @@ export function clearResults($tabs?: JQuery<HTMLElement>) {
 		$tab.find('.resultcontrols').hide();
 		$tab.find('.resultcontainer').hide().find('table thead, table tbody').empty();
 		$tab.find('.resultgroupdetails .resultgroupname').empty();
-		$tab.removeData('results');
+		// $tab.removeData('results');
 	});
 }
 

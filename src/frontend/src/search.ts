@@ -262,27 +262,12 @@ import { NaNToNull } from './utils';
 
 // Called when form is submitted
 export function searchSubmit() {
-	let pattern: PropertyField[]|string|null;
-	let within: string|null = null; // explicitly set to null to clear any previous value if queryType != simple
-
-	// Get the correct pattern based on selected tab
-	// TODO get from state - state needs to be updated on ui change
-	const queryType = $('#searchTabs li.active .querytype').attr('href');
-	if (queryType === '#simple') {
-		pattern = stateGetters.activeProperties();
-		within = getState().within;
-		// pattern = mainForm.getActiveProperties();
-		// within = mainForm.getWithin();
-	} else if (queryType === '#advanced') {
-		pattern = getState().patternQuerybuilder;
-		// pattern = $('#querybuilder').data('builder').getCql();
-	} else {
-		pattern = getState().patternString;
-		// pattern = $('#querybox').val();
+	// TODO streamline
+	actions.search();
+	const state = getState();
+	if (!state.operation) {
+		actions.operation(state.activeSearch.pattern ? 'hits' : 'docs');
 	}
-
-	searcher.clearResults();
-	actions.operation(getState().operation || pattern ? 'hits' : 'docs');
 
 	$('html, body').animate({
 		scrollTop: $('#searchFormDivHeader').offset()!.top - 75 // navbar

@@ -48,7 +48,7 @@ declare const BLS_URL: string;
  * @param within - raw token name (i.e. not enclosed in </>) for the within clause (so 'p' for paragraph, 's' for sentence, etc), only used when typeof pattern === 'Array'
  * @returns The formatted string
  */
-function getPatternString(pattern: string|PropertyField[]|null, within: string|null): string|undefined {
+export function getPatternString(pattern: string|PropertyField[]|null, within: string|null): string|undefined {
 	if (pattern == null) {
 		return undefined;
 	}
@@ -111,7 +111,7 @@ function getPatternString(pattern: string|PropertyField[]|null, within: string|n
  * If the array is empty or null, undefined is returned,
  * so it can be placed directly in the request paremeters without populating the object if the value is not present.
  */
-function getFilterString(filterArr?: FilterField[]|null): string|undefined {
+export function getFilterString(filterArr?: FilterField[]|null): string|undefined {
 	if (filterArr == null || filterArr.length === 0) {
 		return undefined;
 	}
@@ -334,12 +334,11 @@ export function getBlsParamFromState(): BlacklabParameters {
 	}
 
 	return {
-		filter: getFilterString(stateGetters.activeFilters()),
+		filter: state.activeSearch.filter || undefined, // getFilterString(stateGetters.activeFilters()),
 		first: state.pageSize * viewProps.page,
-		group: viewProps.groupBy.map(g => g + viewProps.caseSensitive ? ':s':':i').join(',') || undefined,
+		group: viewProps.groupBy.map(g => g + (viewProps.caseSensitive ? ':s':':i')).join(',') || undefined,
 		number: state.pageSize,
-		// TODO this is a bit dumb, we need to process the pattern from state before using...
-		patt: getPatternString(stateGetters.activePatternValue(), state.within),
+		patt: state.activeSearch.pattern || undefined, // getPatternString(stateGetters.activePatternValue(), state.within),
 
 		sample: (state.sampleMode === 'percentage' && state.sampleSize) ? state.sampleSize /* can't be null after check */ : undefined,
 		samplenum: (state.sampleMode === 'count' && state.sampleSize) ? state.sampleSize : undefined,

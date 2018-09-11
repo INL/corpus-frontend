@@ -2,15 +2,18 @@ import URI from 'urijs';
 import Vue from 'vue';
 import Vuex from 'vuex';
 
+import memoize from 'memoize-decorator';
 import {getStoreBuilder} from 'vuex-typex';
 
-import memoize from 'memoize-decorator';
+import {FilterField, PropertyField} from '@/types/pagetypes';
+import {makeRegexWildcard} from '@/utils';
+import parseCql from '@/utils/cqlparser';
+import parseLucene from '@/utils/lucene2filterparser';
+import {debugLog} from '@/utils/debug';
 
-import {FilterField, PropertyField} from '../../types/pagetypes';
-import {makeRegexWildcard, makeWildcardRegex} from '../../utils';
-import parseCql from '../../utils/cqlparser';
-import parseLucene from '../../utils/lucene2filterparser';
-import { debugLog } from '../../utils/debug';
+import {initialState as initialSearchModuleState, ModuleRootState as searchModuleRootState, actions as searchStateActions} from '@/pages/search/searchState';
+
+import {getPatternString, getFilterString} from '@/modules/singlepage-bls';
 
 Vue.use(Vuex);
 
@@ -19,21 +22,25 @@ const enum defaults {
 	sampleMode = 'percentage'
 }
 
-export interface SearchDisplaySettings {
+export type SearchDisplaySettings = {
 	/** case-sensitive grouping */
 	caseSensitive: boolean;
 	groupBy: string[];
 	sort: string|null;
 	page: number;
 	viewGroup: string|null;
-}
+};
 
+// TODO create patternModule for management of pattern, patternString, patternQueryBuilder (and basic pattern (mainannotation/mainprop) in future)
 /** All unknown/unspecified properties must be initialized to null to enable state reactivity */
 export type PageState = {
 	activePattern: 'pattern'|'patternString'|'patternQueryBuilder';
+	/** Caches search properties that shouldn't update the displayed search results on change */
+	activeSearch: searchModuleRootState;
 	docDisplaySettings: SearchDisplaySettings;
 	filters: {[key: string]: FilterField};
 	hitDisplaySettings: SearchDisplaySettings;
+	// TODO rename to "visibleResults" or "displayMode" or something
 	/** More of a display mode on the results */
 	operation: 'hits'|'docs'|null;
 	pageSize: number;
@@ -46,6 +53,7 @@ export type PageState = {
 	within: string|null;
 	wordsAroundHit: number|null;
 };
+export type RootState = PageState;
 
 /** Decode the current url into a valid page state configuration. Keep everything private except the getters */
 export class UrlPageState implements PageState {
@@ -73,6 +81,14 @@ export class UrlPageState implements PageState {
 		} else {
 			return 'pattern';
 		}
+	}
+
+	@memoize
+	get activeSearch(): searchModuleRootState {
+		// Is not populated from simple url deserialization, but rather in a post-processing step when the search
+		// is auto-submitted for the user.
+		// TODO this doesn't happen yet
+		return initialSearchModuleState;
 	}
 
 	@memoize
@@ -249,7 +265,7 @@ export class UrlPageState implements PageState {
 			.filter(g => !!g);
 
 			return {
-				groupBy,
+				groupBy: groupBy.map(g => g.replace(/\:[is]$/, '')), // strip case-sensitivity flag from value, is only visible in url
 				caseSensitive: groupBy.length > 0 && groupBy.every(g => g.endsWith(':s')),
 				sort: this.getString('sort', null, v => v?v:null),
 				viewGroup: this.getString('viewgroup', undefined, v => (v && groupBy.length)?v:null),
@@ -275,7 +291,7 @@ export class UrlPageState implements PageState {
 			.filter(g => !!g);
 
 			return {
-				groupBy,
+				groupBy: groupBy.map(g => g.replace(/\:[is]$/, '')), // strip case-sensitivity flag from value, is only visible in url
 				caseSensitive: groupBy.length > 0 && groupBy.every(g => g.endsWith(':s')),
 				sort: this.getString('sort', null, v => v?v:null),
 				viewGroup: this.getString('viewgroup', undefined, v => (v && groupBy.length)?v:null),
@@ -288,6 +304,7 @@ export class UrlPageState implements PageState {
 	public get(): PageState {
 		return {
 			activePattern: this.activePattern,
+			activeSearch: this.activeSearch,
 			docDisplaySettings: this.docDisplaySettings,
 			filters: this.filters,
 			hitDisplaySettings: this.hitDisplaySettings,
@@ -366,7 +383,7 @@ type FancyProperties<T, M> = Pick<T, {
 const initialState: PageState = new UrlPageState().get();
 const b = getStoreBuilder<PageState>();
 
-const [hitActions, docActions] = (['docDisplaySettings', 'hitDisplaySettings'] as Array<keyof FancyProperties<PageState, SearchDisplaySettings>>).map(namespace => {
+const [docActions, hitActions] = (['docDisplaySettings', 'hitDisplaySettings'] as Array<keyof FancyProperties<PageState, SearchDisplaySettings>>).map(namespace => {
 	const ctx = b.module<SearchDisplaySettings>(namespace, initialState[namespace]);
 
 	return {
@@ -453,8 +470,13 @@ export const actions = {
 		state.sampleSize = null;
 		state.within = null;
 		state.wordsAroundHit = null;
+
+		// TODO move into module action
+		state.activeSearch.filter = null;
+		state.activeSearch.pattern = null;
 	}, 'reset'),
 
+	// TODO refactor this to the init function for the store (but also allow setting brand new parameters and run through the initial setup and search submission)
 	replace: b.commit((state, payload: PageState) => {
 		// this is a little nasty but maybe it will work, extract all special fields
 		// reset the rest by batch assignment, then place back and treat the specials
@@ -464,6 +486,7 @@ export const actions = {
 			docDisplaySettings: state.docDisplaySettings,
 			hitDisplaySettings: state.hitDisplaySettings,
 			filters: state.filters,
+			activeSearch: state.activeSearch
 		};
 
 		// Reset all basic properties, place back the fields with nested properties
@@ -477,7 +500,14 @@ export const actions = {
 		Object.values(payload.pattern).forEach(p => actions.property({id: p.name, payload: p}));
 		actions.docs.replace(payload.docDisplaySettings);
 		actions.hits.replace(payload.hitDisplaySettings);
-	}, 'replace')
+		Object.assign(state.activeSearch, payload.activeSearch);
+	}, 'replace'),
+
+	search: b.commit(async (state) => {
+		// TODO maybe this should actually drive the work, instead of some indirect observable?
+		state.activeSearch.pattern = getPatternString(get.activePatternValue(), state.within) || null;
+		state.activeSearch.filter = getFilterString(get.activeFilters()) ||null;
+	}, 'searchSubmit')
 };
 
 export const get = {
@@ -511,6 +541,9 @@ export const get = {
 
 export const getState = b.state();
 export const store = b.vuexStore({state: initialState});
+
+// TODO don't initialise the store through initial state, instead create an init() action that performs the neccesary steps.
+// This will also allow us a neat entry point to perform an initial search should it be possible
 
 // TODO remove me, debugging only - use expose-loader or something?
 (window as any).actions = actions;

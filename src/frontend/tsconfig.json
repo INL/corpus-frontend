@@ -43,5 +43,12 @@
 			"dom.iterable",
 			"es2018.promise"
 		],
+
+		// Enable importing source files by their absolute path by prefixing with "@/"
+		// Note: this also requires webpack to be able to find the imports see webpack.config.js
+		"baseUrl": "src",
+		"paths": {
+			"@/*": ["./*"]
+		}
 	},
 }

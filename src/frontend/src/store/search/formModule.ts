@@ -1,4 +1,4 @@
-import * as $ from 'jquery';
+import $ from 'jquery';
 
 import Vue from 'vue';
 import {StoreBuilder, ModuleBuilder} from 'vuex-typex';
@@ -6,6 +6,7 @@ import {StoreBuilder, ModuleBuilder} from 'vuex-typex';
 import {RootState} from '@/store';
 import {FilterField, PropertyField} from '@/types/pagetypes';
 import { getPatternString } from '@/modules/singlepage-bls';
+import { debugLog } from '@/utils/debug';
 
 export type ModuleRootState = {
 	filters: { [key: string]: FilterField };
@@ -51,7 +52,7 @@ const createActions = (b: ModuleBuilder<ModuleRootState, RootState>, ownGetters:
 		filter: b.commit((state, {id, values}: {id: string, values: string[]}) => state.filters[id].values = values, 'filter'),
 		resetFilters: b.commit(state => Object.values(state.filters).forEach(filter => filter.values = []), 'filter_reset'),
 
-		activePattern: b.commit((state, payload: ModuleRootState['activePattern']) => state.activePattern = payload),
+		activePattern: b.commit((state, payload: ModuleRootState['activePattern']) => state.activePattern = payload, 'activePattern'),
 		pattern: {
 			simple: {
 				annotation: b.commit((state, {id, ...rest}: Partial<PropertyField>&{id: string}) => Object.assign(state.pattern.simple.annotationValues[id], rest), 'simple_value'),
@@ -171,6 +172,8 @@ export const create = <M> (parent: StoreBuilder<RootState>|ModuleBuilder<M, Root
 				values: []
 			});
 		});
+
+		debugLog('Finished initializing formModule state shape');
 	});
 
 	const get = createGetters(b);

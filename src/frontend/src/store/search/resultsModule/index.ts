@@ -37,7 +37,7 @@ const createActions = (b: ModuleBuilder<ModuleRootState, RootState>, submodules:
 
 const createGetters = (b: ModuleBuilder<ModuleRootState, RootState>, submodules: {[key: string]: ReturnType<typeof SettingsModule.create>}) => {
 	return {
-		activeSettings: b.read(state => state.viewedResults ? state.settings[state.viewedResults] : null),
+		activeSettings: b.read(state => state.viewedResults ? state.settings[state.viewedResults] : null, 'activeSettings'),
 	};
 };
 

@@ -3,7 +3,7 @@
  * Think things like page size, context size, random sampling settings
  */
 
-import {getStoreBuilder, StoreBuilder, ModuleBuilder} from 'vuex-typex';
+import {StoreBuilder, ModuleBuilder} from 'vuex-typex';
 
 import {RootState} from '@/store';
 

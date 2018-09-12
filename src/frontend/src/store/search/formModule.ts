@@ -72,7 +72,7 @@ const createActions = (b: ModuleBuilder<ModuleRootState, RootState>, ownGetters:
 		search: b.commit(state => {
 			// Get the state without the submittedParameters key
 			state.submittedParameters = {
-				filters: ownGetters.activeFilters(),
+				filters: JSON.parse(JSON.stringify(ownGetters.activeFilters())) as ReturnType<typeof ownGetters['activeFilters']>, // small type safety for if we change one of the two later
 				pattern: state.activePattern ? getPatternString(state.pattern[state.activePattern])||null : null,
 			};
 

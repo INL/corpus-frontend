@@ -379,8 +379,8 @@ $(document).ready(() => {
 				viewParameters: state.resultSettings[viewId],
 				globalParameters: state.globalSettings,
 				submittedFormParameters: state.form.submittedParameters
-			}), v => {
-				debugLog(`dynamic parameter changed, marking results view '${viewId}' dirty`);
+			}), (cur, old) => {
+				debugLog(`dynamic parameter changed, marking results view '${viewId}' dirty`, cur, old);
 				// otherwise, mark dirty, and then refresh and mark clean if it's the current tab
 				dirty(true);
 				if (getState().resultSettings.viewedResults === viewId) {

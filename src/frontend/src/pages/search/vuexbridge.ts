@@ -325,7 +325,7 @@ $(document).ready(() => {
 					viewActions.page(page);
 				}
 			});
-			store.watch(state => state.resultSettings[viewId].page, page => {
+			store.watch(state => state.resultSettings.settings[viewId].page, page => {
 				// Only updates UI, should not be any handlers (other than directly above) attached to the ui element
 				$tab.find(`.pagination [data-page="${page}"]`).click();
 			}, {immediate: true});
@@ -336,14 +336,14 @@ $(document).ready(() => {
 				const sensitive = $caseSensitive.is(':checked');
 				viewActions.caseSensitive(sensitive);
 			});
-			store.watch(state => state.resultSettings[viewId].caseSensitive, checked => {
+			store.watch(state => state.resultSettings.settings[viewId].caseSensitive, checked => {
 				changeCheck($caseSensitive, checked);
 			}, {immediate: true});
 
 			// Grouping settings
 			const $groupSelect = $tab.find('.groupselect') as JQuery<HTMLSelectElement>;
 			$groupSelect.on('change', () => viewActions.groupBy($groupSelect.selectpicker('val') as string[]));
-			store.watch(state => state.resultSettings[viewId].groupBy, v => changeSelect($groupSelect, v), {immediate: true});
+			store.watch(state => state.resultSettings.settings[viewId].groupBy, v => changeSelect($groupSelect, v), {immediate: true});
 
 			// Sorting settings, only bind from ui to state,
 			// Nothing in UI to indicate sorting -- https://github.com/INL/corpus-frontend/issues/142
@@ -367,7 +367,7 @@ $(document).ready(() => {
 			$tab.on('click', '.clearviewgroup', function() {
 				viewActions.viewGroup(null);
 			});
-			store.watch(state => state.resultSettings[viewId].viewGroup, v => {
+			store.watch(state => state.resultSettings.settings[viewId].viewGroup, v => {
 				$resultgroupdetails.toggle(v != null);
 				$resultgroupname.text(v || '');
 			}, {immediate: true});
@@ -376,7 +376,7 @@ $(document).ready(() => {
 			// Also need to watch some global parameters that are instantly reactive
 			// NOTE: is called only once per vue tick (i.e. multiple property changes can be lumped together, such as when clearing the page)
 			store.watch(state => ({
-				viewParameters: state.resultSettings[viewId],
+				viewParameters: state.resultSettings.settings[viewId],
 				globalParameters: state.globalSettings,
 				submittedFormParameters: state.form.submittedParameters
 			}), (cur, old) => {
@@ -386,6 +386,11 @@ $(document).ready(() => {
 				if (getState().resultSettings.viewedResults === viewId) {
 					refreshTab($tab);
 					dirty(false);
+				} else {
+					// Tab is not visible
+					// for visible tabs, clearResults is called with a delay if the refresh takes too long
+					// to prevent the page from jumping around momentarily while new results are fetched
+					clearResults($tab);
 				}
 			}, {deep: true});
 

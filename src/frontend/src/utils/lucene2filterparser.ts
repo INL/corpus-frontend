@@ -80,7 +80,7 @@ export default (luceneQuery?: string): FilterField[] => {
 			// defines the field name, this is the case with range expression, so we will define the context when processing the left node.
 			if (context == null && val.field && val.field !== '<implicit>') {
 				context = {
-					name: val.field,
+					id: val.field,
 					filterType: 'select',
 					values: []
 				};
@@ -137,7 +137,7 @@ export default (luceneQuery?: string): FilterField[] => {
 			}
 
 			context = {
-				name: val.field,
+				id: val.field,
 				filterType: 'text',
 				values: []
 			};
@@ -171,7 +171,7 @@ export default (luceneQuery?: string): FilterField[] => {
 
 		// Ignore in/exclusivity
 		parsedValues.push({
-			name: val.field,
+			id: val.field,
 			filterType: 'range',
 			values: [val.term_min, val.term_max]
 		});

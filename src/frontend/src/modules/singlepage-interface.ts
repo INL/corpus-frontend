@@ -6,11 +6,13 @@ import URI from 'urijs';
 
 import {onSearchUpdated} from '@/search';
 import {debugLog} from '@/utils/debug';
-import {getQuerySummary, search, getBlsParamFromState, BlacklabParameters} from '@/modules/singlepage-bls';
+import {getQuerySummary, search, getBlsParamFromState, BlacklabParameters, getPatternString} from '@/modules/singlepage-bls';
 
 import * as BLTypes from '@/types/blacklabtypes';
-import { getState, get as rootStateGetters } from '@/pages/search/state';
-import {get as searchStateGetters} from '@/pages/search/searchState';
+// import { getState, get as rootStateGetters } from '@/pages/search/state';
+// import {get as searchStateGetters} from '@/pages/search/searchState';
+
+import {getState} from '@/store';
 
 // TODO
 // showCitation showProperties onClick handlers
@@ -656,7 +658,7 @@ function onExportCsv(event: JQueryEventObject) {
 	}
 
 	const blsParam = getBlsParamFromState();
-	const operation = getState().operation!; // should always be valid in this ui state
+	const operation = getState().resultSettings.viewedResults!; // should always be valid if the button can be clicked
 
 	(blsParam as any).outputformat = 'csv';
 	delete blsParam.number;
@@ -768,29 +770,25 @@ export function refreshTab($tab: JQuery<HTMLElement>) {
 		throw new Error(`Refreshing more than one tab simultaneously shouldn't happen`);
 	}
 
-	const {operation} = getState();
-	const param: BlacklabParameters = getBlsParamFromState();
+	// Operation isn't contained in blacklabparameters
+	// TODO ...
+	const operation = getState().resultSettings.viewedResults;
 	if (!operation) {
 		throw new Error('Attempting to refresh search results without a valid operation (perhaps before vuex state change has been processed?), this will not work!');
 	}
 
+	const param: BlacklabParameters = getBlsParamFromState();
+
 	// TODO tidy up, blacklab parameters should probably be generated as late as possible
 	// This probably should exist in vuexbridge or something once we properly use globla event bus
-	const querySummary = getQuerySummary(rootStateGetters.activePatternValue(), getState().within, rootStateGetters.activeFilters());
+	const querySummary = getQuerySummary(getState().form.submittedParameters);
 	$('#searchFormDivHeader').show()
 		.find('#querySummary').text(querySummary).attr('title', querySummary.substr(0, 1000));
-
-	// if ($tab.data('results')) {
-	// 	// Nothing to do, tab is already displaying data (this happens when you go back and forth between tabs without changing your query in between)
-	// 	// Still notify core so that when the url is copied out the current tab can be restored.
-	// 	onSearchUpdated(operation, param);
-	// 	return;
-	// }
 
 	// Not all configurations of search parameters will result in a valid search
 	// Verify that we're not trying to view hits without a pattern to generate said hits
 	// and warn the user if we are
-	const patt = searchStateGetters.pattern();
+	const patt = getPatternString(getState().form.submittedParameters!.pattern);
 	if (operation === 'hits' && !patt) {
 		replaceTableContent($tab.find('.resultcontainer table'),
 			['<thead>',

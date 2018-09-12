@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import URI from 'urijs';
 
-import {getState, get as stateGetters} from '../pages/search/state';
+import {getState, modules as stateModules, actions} from '@/store';
 
 import {debugLog} from '../utils/debug';
 
@@ -38,6 +38,9 @@ export type BlacklabParameters = {
 
 declare const BLS_URL: string;
 
+type PatternType = RootState['form']['pattern'][RootState['form']['activePattern']];
+
+// TODO update documentation
 /**
  * Converts an array of PropertyFields to a cql token string.
  * If pattern is a string already, it is returned as-is.
@@ -48,33 +51,30 @@ declare const BLS_URL: string;
  * @param within - raw token name (i.e. not enclosed in </>) for the within clause (so 'p' for paragraph, 's' for sentence, etc), only used when typeof pattern === 'Array'
  * @returns The formatted string
  */
-export function getPatternString(pattern: string|PropertyField[]|null, within: string|null): string|undefined {
-	if (pattern == null) {
+export function getPatternString(pattern: PatternType): string|undefined {
+	if (!pattern) {
 		return undefined;
 	}
-
 	if (typeof pattern === 'string') {
-		return pattern;
-	}
-
-	if (pattern.length === 0) {
-		return undefined;
+		return pattern || undefined; // coerce empty to undef
 	}
 
 	// First split the properties into individual words and pair them
 	const tokens = [] as Array<{[key: string]: string}>;
-	$.each(pattern, function(propIndex, propertyField) {
-		if (propertyField.value.length > 0) { // skip empty fields
-			const words = propertyField.value.split(/\s+/);
-			for (let i = 0; i < words.length; i++) {
-				if (!tokens[i]) {
-					tokens[i] = {};
-				}
-
-				tokens[i][propertyField.name] = (propertyField.case ? '(?-i)' : '') + makeWildcardRegex(words[i]);
-			}
+	for (const field of Object.values(pattern.annotationValues)) {
+		if (field.value.length === 0) {
+			continue;
 		}
-	});
+
+		const words = field.value.split(/\s+/);
+		for (let i = 0; i < words.length; i++) {
+			if (!tokens[i]) {
+				tokens[i] = {};
+			}
+
+			tokens[i][field.id] = (field.case ? '(?-i)' : '') + makeWildcardRegex(words[i]);
+		}
+	}
 
 	const tokenStrings = [] as string[];
 	$.each(tokens, function(index, token) {
@@ -90,13 +90,14 @@ export function getPatternString(pattern: string|PropertyField[]|null, within: s
 		tokenStrings.push('[', attributesStrings.join(' & '), ']');
 	});
 
-	if (tokenStrings.length > 0 && within) {
-		tokenStrings.push(' within ', '<'+ within+'/>');
+	if (tokenStrings.length > 0 && pattern.within) {
+		tokenStrings.push(' within ', '<'+ pattern.within+'/>');
 	}
 
-	return tokenStrings.join('');
+	return tokenStrings.join('') || undefined;
 }
 
+// TODO update documentation
 /**
  * Converts the active filters into a parameter string blacklab-server can understand.
  *
@@ -111,14 +112,14 @@ export function getPatternString(pattern: string|PropertyField[]|null, within: s
  * If the array is empty or null, undefined is returned,
  * so it can be placed directly in the request paremeters without populating the object if the value is not present.
  */
-export function getFilterString(filterArr?: FilterField[]|null): string|undefined {
-	if (filterArr == null || filterArr.length === 0) {
+export function getFilterString(params: RootState['form']['submittedParameters']): string|undefined {
+	if (params == null || !params.filters.length) {
 		return undefined;
 	}
 
 	const filterStrings = [] as string[];
-	for (const element of filterArr) {
-		if (!element.values.length) {
+	for (const filter of params.filters) {
+		if (!filter.values.length) {
 			continue;
 		}
 
@@ -126,16 +127,16 @@ export function getFilterString(filterArr?: FilterField[]|null): string|undefine
 			filterStrings.push(' AND ');
 		}
 
-		if (element.filterType === 'range') {
-			filterStrings.push(element.name, ':', '[', element.values[0], ' TO ', element.values[1], ']');
-		} else if (element.filterType === 'select') {
+		if (filter.filterType === 'range') {
+			filterStrings.push(filter.id, ':', '[', filter.values[0], ' TO ', filter.values[1], ']');
+		} else if (filter.filterType === 'select') {
 			// Surround each individual value with quotes, and surround the total with brackets
-			filterStrings.push(element.name, ':', '("', element.values.join('" "'), '")');
+			filterStrings.push(filter.id, ':', '("', filter.values.join('" "'), '")');
 		} else {
 			// Do the quoting thing
 			const resultParts = [] as string[];
 
-			$.each(element.values, function(index, value) {
+			$.each(filter.values, function(index, value) {
 				const quotedParts = value.split(/"/);
 				let inQuotes = false;
 				for (let part of quotedParts) {
@@ -158,11 +159,11 @@ export function getFilterString(filterArr?: FilterField[]|null): string|undefine
 				}
 			});
 
-			filterStrings.push(element.name, ':', '(' + resultParts.join('').trim(), ')');
+			filterStrings.push(filter.id, ':', '(' + resultParts.join('').trim(), ')');
 		}
 	}
 
-	return filterStrings.join('');
+	return filterStrings.join('') || undefined;
 }
 
 /**
@@ -328,27 +329,36 @@ export function cancelSearch() {
 export function getBlsParamFromState(): BlacklabParameters {
 	const state = getState();
 
-	const viewProps = stateGetters.displaySettings();
+	const viewProps = stateModules.results.get.activeSettings();
 	if (viewProps == null) {
 		throw new Error('Cannot generate blacklab parameters without knowing hits or docs');
 	}
 
-	return {
-		filter: state.activeSearch.filter || undefined, // getFilterString(stateGetters.activeFilters()),
-		first: state.pageSize * viewProps.page,
-		group: viewProps.groupBy.map(g => g + (viewProps.caseSensitive ? ':s':':i')).join(',') || undefined,
-		number: state.pageSize,
-		patt: state.activeSearch.pattern || undefined, // getPatternString(stateGetters.activePatternValue(), state.within),
+	const submittedParameters = state.form.submittedParameters;
+	if (submittedParameters == null) {
+		// Realistically we can... because we can use the current state of the ui
+		// but this should never happen before the form is submitted, or after it has been cleared
+		throw new Error('Cannot generate blacklab parameters before search form has been submitted');
+	}
 
-		sample: (state.sampleMode === 'percentage' && state.sampleSize) ? state.sampleSize /* can't be null after check */ : undefined,
-		samplenum: (state.sampleMode === 'count' && state.sampleSize) ? state.sampleSize : undefined,
-		sampleseed: (state.sampleSeed != null && state.sampleMode && state.sampleSize) ? state.sampleSeed : undefined,
+	return {
+		filter: getFilterString(submittedParameters),
+		first: state.globalSettings.pageSize * viewProps.page,
+		group: viewProps.groupBy.map(g => g + (viewProps.caseSensitive ? ':s':':i')).join(',') || undefined,
+		number: state.globalSettings.pageSize,
+		patt: submittedParameters.pattern||undefined,
+
+		sample: (state.globalSettings.sampleMode === 'percentage' && state.globalSettings.sampleSize) ? state.globalSettings.sampleSize /* can't be null after check */ : undefined,
+		samplenum: (state.globalSettings.sampleMode === 'count' && state.globalSettings.sampleSize) ? state.globalSettings.sampleSize : undefined,
+		sampleseed: (state.globalSettings.sampleSeed != null && state.globalSettings.sampleMode && state.globalSettings.sampleSize) ? state.globalSettings.sampleSeed : undefined,
 
 		sort: viewProps.sort != null ? viewProps.sort : undefined,
 		viewgroup: viewProps.sort && viewProps.viewGroup ? viewProps.viewGroup : undefined,
-		wordsaroundhit: state.wordsAroundHit != null ? state.wordsAroundHit : undefined,
+		wordsaroundhit: state.globalSettings.wordsAroundHit != null ? state.globalSettings.wordsAroundHit : undefined,
 	};
 }
+
+import {RootState} from '@/store';
 
 /**
  * Get a human-readable summary of the most important search parameters
@@ -358,15 +368,14 @@ export function getBlsParamFromState(): BlacklabParameters {
  * @param within - raw token name (i.e. not enclosed in </>) for the within clause (so 'p' for paragraph, 's' for sentence, etc), only used when typeof pattern === 'Array'
  * @param filters - Metadata filters as generated by singlepage-form.js, every filter is expected to have a valid value.
  */
-export function getQuerySummary(pattern: string|PropertyField[]|null, within: string|null, filters: FilterField[]|null|undefined) {
-	const queryString = getPatternString(pattern, within);
-	const metadataString = (filters || []).map(filter => {
-		return filter.name + ' = [' +
-			(filter.filterType === 'range'
-				? filter.values[0] + ' to ' + filter.values[1]
-				: filter.values.join(', '))
-				+ ']';
-	}).join(', ');
+export function getQuerySummary(params: RootState['form']['submittedParameters']) {
+	if (params == null) {
+		return 'all documents';
+	}
+
+	const queryString = params.pattern;
+	const metadataString = params.filters.map(({id, filterType, values}) =>
+		`${id} = [${filterType==='range'?`${values[0]} to ${values[1]}`:values.join(', ')}]`).join(', ');
 
 	let ret = '';
 	if (queryString) {

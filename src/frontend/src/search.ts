@@ -252,9 +252,7 @@ export function populateQueryBuilder(pattern) {
 	return true;
 }
 
-import {actions, getState, get as stateGetters} from './pages/search/state';
-import { PropertyField } from './types/pagetypes';
-import { NaNToNull } from './utils';
+import { actions, getState } from '@/store';
 
 // --------
 // exports
@@ -262,13 +260,10 @@ import { NaNToNull } from './utils';
 
 // Called when form is submitted
 export function searchSubmit() {
-	// TODO streamline
-	actions.search();
-	const state = getState();
-	if (!state.operation) {
-		actions.operation(state.activeSearch.pattern ? 'hits' : 'docs');
-	}
 
+	actions.search();
+
+	// TODO this seems to fire before the state is updated - move to vuexbridge
 	$('html, body').animate({
 		scrollTop: $('#searchFormDivHeader').offset()!.top - 75 // navbar
 	}, 500);

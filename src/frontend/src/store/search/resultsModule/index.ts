@@ -44,9 +44,11 @@ const createGetters = (b: ModuleBuilder<ModuleRootState, RootState>, submodules:
 export const create = <M> (parent: StoreBuilder<RootState>|ModuleBuilder<M, RootState>, namespace: string) => {
 	const b = parent.module<ModuleRootState>(namespace, initialState);
 
+	const settingsModuleModule = b.module<ModuleRootState['settings']>('settings', initialState.settings);
+
 	const submodules = {
-		hits: SettingsModule.create(b, 'hits'),
-		docs: SettingsModule.create(b, 'docs'),
+		hits: SettingsModule.create(settingsModuleModule, 'hits'),
+		docs: SettingsModule.create(settingsModuleModule, 'docs'),
 	};
 
 	return {

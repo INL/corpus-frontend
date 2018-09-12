@@ -1,3 +1,4 @@
+import $ from 'jquery';
 import URI from 'urijs';
 import Vue from 'vue';
 import Vuex from 'vuex';
@@ -366,7 +367,7 @@ export const actions = {
 		if (state.resultSettings.viewedResults == null) {
 			state.resultSettings.viewedResults = cqlPatt ? 'hits' : 'docs';
 		}
-	}),
+	}, 'search'),
 
 	reset: b.commit(state => {
 		modules.form.actions.reset();
@@ -378,17 +379,19 @@ export const actions = {
 		modules.form.actions.replace(payload.form);
 		modules.global.actions.replace(payload.globalSettings);
 		modules.results.actions.replace(payload.resultSettings);
-
-		// TODO determine if we need to initiate a search here?
-		// TODO replace action? resultview
-
-		debugLog('Finished replacing/initializing state');
+		if (state.resultSettings.viewedResults != null) {
+			actions.search();
+		}
 	}, 'replace'),
 };
 
 export const getState = b.state();
 export const store = b.vuexStore();
-actions.replace(initialState);
+
+$(document).ready(() => {
+	actions.replace(initialState);
+	debugLog('Finished initializing state from url');
+});
 
 // TODO remove me, debugging only - use expose-loader or something?
 (window as any).actions = actions;

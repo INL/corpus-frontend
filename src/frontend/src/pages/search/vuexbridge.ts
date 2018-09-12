@@ -69,6 +69,7 @@ function changeCheck($input: JQuery<HTMLInputElement>, value: boolean) {
 
 // TODO move verification of options into store
 $(document).ready(() => {
+	debugLog('Begin connecting listeners to store');
 	{
 		const $pageSize = $('#resultsPerPage') as JQuery<HTMLSelectElement>;
 		store.watch(state => state.globalSettings.pageSize, v => changeSelect($pageSize, v+''), {immediate: true});
@@ -275,6 +276,24 @@ $(document).ready(() => {
 		});
 	}
 
+	{
+		const $simple = $('#searchTabs a[href="#simple"]');
+		const $querybuilder = $('#searchTabs a[href="#advanced"]');
+		const $cql = $('#searchTabs a[href="#query"]');
+
+		store.watch(state => state.form.activePattern, v => {
+			switch (v) {
+				case 'simple': $simple.tab('show'); return;
+				case 'queryBuilder': $querybuilder.tab('show'); return;
+				case 'cql': $cql.tab('show'); return;
+			}
+		});
+
+		$simple.on('show.bs.tab', () => modules.form.actions.activePattern('simple'));
+		$querybuilder.on('show.bs.tab', () => modules.form.actions.activePattern('queryBuilder'));
+		$cql.on('show.bs.tab', () => modules.form.actions.activePattern('cql'));
+	}
+
 	store.watch(state => state.resultSettings.viewedResults, v => {
 		$('#results').toggle(!!v);
 	}, {immediate: true});
@@ -298,21 +317,6 @@ $(document).ready(() => {
 					$tab.data('dirty', state);
 				}
 			}
-
-			// Main tab opening
-			$label.on('show.bs.tab', () => resultsActions.viewedResults(viewId));
-			store.watch(state => state.resultSettings.viewedResults, v => {
-				if (v === viewId) {
-					$label.tab('show');
-					if (dirty()) {
-						debugLog('changed to a dirty tab, refreshing');
-						refreshTab($tab);
-						dirty(false);
-					} else {
-						debugLog('changed to a clean tab, ignoring refresh');
-					}
-				}
-			}, {immediate: true});
 
 			// Pagination
 			$tab.on('click', '[data-page]', function() { // No arrow func - need context
@@ -373,26 +377,39 @@ $(document).ready(() => {
 			// NOTE: is called only once per vue tick (i.e. multiple property changes can be lumped together, such as when clearing the page)
 			store.watch(state => ({
 				viewParameters: state.resultSettings[viewId],
-				activeView: state.resultSettings.viewedResults,
 				globalParameters: state.globalSettings,
 				submittedFormParameters: state.form.submittedParameters
-			}), (cur, old) => {
-				// Changing the display mode doesn't invalidate already rendered results...
-				// Unfortunately we need to watch the operation to know if this tab just opened
-				if (cur.activeView !== old.activeView) {
-					debugLog('changed operation, ignoring changes (operation triggers a re-search somewhere else)', cur, old);
-					return;
-				}
-
-				// if operation changed, nothing to do
+			}), v => {
+				debugLog(`dynamic parameter changed, marking results view '${viewId}' dirty`);
 				// otherwise, mark dirty, and then refresh and mark clean if it's the current tab
 				dirty(true);
-				if (cur.activeView === viewId) {
+				if (getState().resultSettings.viewedResults === viewId) {
 					refreshTab($tab);
 					dirty(false);
 				}
-				debugLog('dynamic parameter changed', cur);
 			}, {deep: true});
+
+			// Main tab opening
+			// TODO this is a clutch - we need to attach this listener after attaching
+			// the parameter listeners above, so that the tab is marked as dirty before
+			// we process the open event
+			// If we don't do this, we will miss refreshes when both the opened tab and some other
+			// parameter change in the same tick.
+			// (unless we always refresh the tab on opening, but that's a performance hog)
+			$label.on('show.bs.tab', () => resultsActions.viewedResults(viewId));
+			store.watch(state => state.resultSettings.viewedResults, v => {
+				if (v === viewId) {
+					$label.tab('show');
+					if (dirty()) {
+						debugLog('changed to a dirty tab, refreshing');
+						refreshTab($tab);
+						dirty(false);
+					} else {
+						debugLog('changed to a clean tab, ignoring refresh');
+					}
+				}
+			}, {immediate: true});
+
 		});
 	}
 

@@ -231,7 +231,7 @@ interface BLSearchSummaryTotals {
 
 interface BlSearchSummaryGroupInfo {
 	largestGroupSize: number;
-	numbeOfGroups: number;
+	numberOfGroups: number;
 }
 
 // TODO - incomplete

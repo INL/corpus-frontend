@@ -15,6 +15,7 @@ import {debugLog} from '@/utils/debug';
 import * as FormModule from '@/store/search/formModule';
 import * as GlobalSettingsModule from '@/store/search/globalSettingsModule';
 import * as ResultsSettingsModule from '@/store/search/resultsModule';
+import * as IndexModule from '@/store/search/indexModule';
 import cqlparser from '@/utils/cqlparser';
 
 Vue.use(Vuex);
@@ -24,10 +25,14 @@ export type RootState = {
 	form: FormModule.ModuleRootState;
 	globalSettings: GlobalSettingsModule.ModuleRootState;
 	resultSettings: ResultsSettingsModule.ModuleRootState;
+	index: IndexModule.ModuleRootState;
 };
 
+/** Not all state information is contained in the url, so only some properties can be extracted */
+type UrlPageStateResult = Pick<RootState, 'form'|'globalSettings'|'resultSettings'>;
+
 /** Decode the current url into a valid page state configuration. Keep everything private except the getters */
-export class UrlPageState implements RootState {
+export class UrlPageState implements UrlPageStateResult {
 	/**
 	 * Path segments of the url this was constructed with, typically something like ['corpus-frontend', corpusname, 'search', ('docs'|'hits')?]
 	 * But might contain extra leading segments if the application is proxied.
@@ -83,7 +88,7 @@ export class UrlPageState implements RootState {
 	@memoize
 	get resultSettings() {
 		return {
-			viewedResults: this.viewedResults, // TODO rename
+			viewedResults: this.viewedResults,
 			settings: {
 				hits: this.getLocalSearchParameters('hits'),
 				docs: this.getLocalSearchParameters('docs'),
@@ -91,7 +96,7 @@ export class UrlPageState implements RootState {
 		};
 	}
 
-	public get(): RootState {
+	public get(): UrlPageStateResult {
 		return {
 			form: this.form,
 			globalSettings: this.globalSettings,
@@ -351,21 +356,14 @@ const b = getStoreBuilder<RootState>();
 const form = FormModule.create(b, 'form');
 const global = GlobalSettingsModule.create(b, 'globalSettings');
 const results = ResultsSettingsModule.create(b, 'resultSettings');
-
-export const modules = {
-	form,
-	global,
-	results
-};
-
-const initialState: RootState = new UrlPageState().get();
+const index = IndexModule.create(b, 'index');
 
 export const actions = {
 	search: b.commit(state => {
 		// TODO make this implicit instead of having to write->read->write state here
-		modules.form.actions.search();
-		modules.results.docs.actions.page(0);
-		modules.results.hits.actions.page(0);
+		form.actions.search();
+		results.docs.actions.page(0);
+		results.hits.actions.page(0);
 		const cqlPatt = state.form.submittedParameters!.pattern;
 		if (state.resultSettings.viewedResults == null) {
 			state.resultSettings.viewedResults = cqlPatt ? 'hits' : 'docs';
@@ -374,25 +372,42 @@ export const actions = {
 	}, 'search'),
 
 	reset: b.commit(state => {
-		modules.form.actions.reset();
-		modules.global.actions.reset();
-		modules.results.actions.reset();
+		form.actions.reset();
+		global.actions.reset();
+		results.actions.reset();
 	}, 'reset'),
 
-	replace: b.dispatch(({rootState: state}, payload: RootState) => {
-		modules.form.actions.replace(payload.form);
-		modules.global.actions.replace(payload.globalSettings);
-		modules.results.actions.replace(payload.resultSettings);
+	replace: b.dispatch(({rootState: state}, payload: Partial<RootState>) => {
+		if (payload.form != null) { form.actions.replace(payload.form); }
+		if (payload.globalSettings != null) { global.actions.replace(payload.globalSettings); }
+		if (payload.resultSettings != null) { results.actions.replace(payload.resultSettings); }
+		// State should be up to date with the new payload now
 		if (state.resultSettings.viewedResults != null) {
 			actions.search();
 		}
 	}, 'replace'),
 };
 
+export const get = {
+	// No getters on root state (yet?)
+};
+
+export const modules = {
+	root: {
+		actions,
+		get
+	},
+	form,
+	global,
+	results,
+	index
+};
+
 export const getState = b.state();
 export const store = b.vuexStore();
 
 $(document).ready(() => {
+	const initialState = new UrlPageState().get();
 	actions.replace(initialState);
 	debugLog('Finished initializing state from url');
 });
@@ -402,6 +417,6 @@ $(document).ready(() => {
 	root: actions,
 	form: form.actions,
 	global: global.actions,
-	results: results.actions
+	results: results.actions,
+	index: index.actions
 };
-

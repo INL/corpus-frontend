@@ -436,12 +436,13 @@ $(document).ready(() => {
 	});
 
 	window.addEventListener('popstate', function(event) {
-		let newState: RootState|undefined = event.state;
-		if (newState == null) {
-			newState = new UrlPageState().get();
-		}
+		const newState: RootState|undefined = event.state;
 
-		actions.replace(newState);
+		if (newState == null) { // No state attached to this history entry - generate from url
+			actions.replace(new UrlPageState().get());
+		} else { // Just set the state as it was in the history
+			actions.replace(event.state);
+		}
 	});
 
 	// TODO restore pattern tab

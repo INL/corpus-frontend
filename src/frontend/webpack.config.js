@@ -1,6 +1,7 @@
 const path = require('path');
 const webpack = require('webpack');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+const VueLoaderPlugin = require('vue-loader/lib/plugin');
 
 module.exports = {
 	entry: {
@@ -53,6 +54,19 @@ module.exports = {
 		// 		options: 'cf.search'
 		// 	}]
 		// }, {
+
+			test: /\.scss$/,
+			use: [
+				'vue-style-loader',
+				'css-loader',
+				'sass-loader'
+			]
+		}, {
+			test: /\.vue$/,
+			use: [
+				'vue-loader',
+			]
+		}, {
 			test: /\.tsx?$/,
 			use: [{
 				loader: 'babel-loader',
@@ -73,7 +87,8 @@ module.exports = {
 						});
 					}
 					*/
-					transpileOnly: true
+					transpileOnly: true,
+					appendTsSuffixTo: [/\.vue$/],
 				}
 			}]
 		}, {
@@ -96,6 +111,7 @@ module.exports = {
 		}),
 
 		new ForkTsCheckerWebpackPlugin(),
+		new VueLoaderPlugin(),
 	],
 	devtool: 'eval-source-map',
 };

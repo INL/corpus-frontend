@@ -293,3 +293,23 @@ export function onSearchUpdated(operation: string, searchParams: BlacklabParamet
 		history.pushState(getState(), undefined, newUrl);
 	}
 }
+
+// TODO position properly?
+
+import Vue from 'vue';
+import {store} from '@/store';
+
+import ResultComponent from '@/pages/search/Results.vue';
+
+$(document).ready(() => {
+	Vue.config.productionTip = false;
+	new Vue({
+		store,
+		render: h => h(ResultComponent),
+	}).$mount(document.querySelector('#tabHits > div')!);
+
+	new Vue({
+		store,
+		render: h => h(ResultComponent)
+	}).$mount(document.querySelector('#tabDocs > div')!);
+});

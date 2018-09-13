@@ -41,7 +41,8 @@
 			"es2017",
 			"dom",
 			"dom.iterable",
-			"es2018.promise"
+			"es2018.promise",
+			"esnext.array"
 		],
 
 		// Enable importing source files by their absolute path by prefixing with "@/"

@@ -7,12 +7,9 @@ import URI from 'urijs';
 import {onSearchUpdated} from '@/search';
 import {debugLog} from '@/utils/debug';
 import {getQuerySummary, search, getBlsParamFromState, BlacklabParameters, getPatternString} from '@/modules/singlepage-bls';
+import {getState} from '@/store';
 
 import * as BLTypes from '@/types/blacklabtypes';
-// import { getState, get as rootStateGetters } from '@/pages/search/state';
-// import {get as searchStateGetters} from '@/pages/search/searchState';
-
-import {getState} from '@/store';
 
 // TODO
 // showCitation showProperties onClick handlers
@@ -250,16 +247,15 @@ function updatePagination($pagination: JQuery<HTMLElement>, data: BLTypes.BLSear
 	$pagination.html(html.join(''));
 }
 
-// STATE
 /**
  * After a small delay, clear the tab's current data and show a spinner.
  *
  * The delay exists because it's jarring when the user switches page and all content is removed
  * and then displayed again within a fraction of a second.
  *
- * @param {any} $tab the tab content container.
+ * @param $tab the tab content container.
  */
-export function showSearchIndicator($tab) {
+export function showSearchIndicator($tab: JQuery<HTMLElement>) {
 	if ($tab.data('searchIndicatorTimeout') == null) {
 		$tab.data('searchIndicatorTimeout', setTimeout(function() {
 			$tab.find('.searchIndicator').show();
@@ -271,9 +267,9 @@ export function showSearchIndicator($tab) {
 /**
  * Hide any currently displayed spinner within this tab, and remove any queued spinner (see showSearchIndicator).
  *
- * @param {any} $tab the tab's main content container.
+ * @param $tab the tab's main content container.
  */
-function hideSearchIndicator($tab) {
+function hideSearchIndicator($tab: JQuery<HTMLElement>) {
 	if ($tab.data('searchIndicatorTimeout') != null) {
 		clearTimeout($tab.data('searchIndicatorTimeout'));
 		$tab.removeData('searchIndicatorTimeout');
@@ -281,7 +277,6 @@ function hideSearchIndicator($tab) {
 	$tab.find('.searchIndicator').hide();
 }
 
-// STATE
 /**
  * Loads and displays a small amount of details about individual hits/documents within a specific group.
  * Some data is attached to the button to track how many concordances are already loaded/are available.

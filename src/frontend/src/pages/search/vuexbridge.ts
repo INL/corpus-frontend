@@ -380,7 +380,7 @@ $(document).ready(() => {
 				globalParameters: state.globalSettings,
 				submittedFormParameters: state.form.submittedParameters
 			}), (cur, old) => {
-				debugLog(`dynamic parameter changed, marking results view '${viewId}' dirty`, cur, old);
+				debugLog(`dynamic parameter changed, marking results view '${viewId}' dirty`);
 				// otherwise, mark dirty, and then refresh and mark clean if it's the current tab
 				dirty(true);
 				if (getState().resultSettings.viewedResults === viewId) {
@@ -406,11 +406,11 @@ $(document).ready(() => {
 				if (v === viewId) {
 					$label.tab('show');
 					if (dirty()) {
-						debugLog('changed to a dirty tab, refreshing');
+						debugLog('changed to a stale tab, refreshing');
 						refreshTab($tab);
 						dirty(false);
 					} else {
-						debugLog('changed to a clean tab, ignoring refresh');
+						debugLog('changed to an up-to-date tab, ignoring refresh');
 					}
 				}
 			}, {immediate: true});

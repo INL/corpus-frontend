@@ -5,7 +5,6 @@ import {getState, modules as stateModules, actions} from '@/store';
 
 import {debugLog} from '../utils/debug';
 
-import {FilterField, PropertyField} from '../types/pagetypes';
 import {makeWildcardRegex} from '../utils';
 
 /**

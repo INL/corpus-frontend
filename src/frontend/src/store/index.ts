@@ -346,7 +346,8 @@ export class UrlPageState implements RootState {
 
 const b = getStoreBuilder<RootState>();
 
-// NOTE: these keys should match with the keys of the respective ModuleRootStates in RootState
+// NOTE: these namespaces need to match the keys under which the module root state is placed in the RootState
+// So if the form module is created under namespace 'form', the RootState needs to contain the FormModule.ModuleRootState at key 'form' too.
 const form = FormModule.create(b, 'form');
 const global = GlobalSettingsModule.create(b, 'globalSettings');
 const results = ResultsSettingsModule.create(b, 'resultSettings');
@@ -363,10 +364,13 @@ export const actions = {
 	search: b.commit(state => {
 		// TODO make this implicit instead of having to write->read->write state here
 		modules.form.actions.search();
+		modules.results.docs.actions.page(0);
+		modules.results.hits.actions.page(0);
 		const cqlPatt = state.form.submittedParameters!.pattern;
 		if (state.resultSettings.viewedResults == null) {
 			state.resultSettings.viewedResults = cqlPatt ? 'hits' : 'docs';
 		}
+
 	}, 'search'),
 
 	reset: b.commit(state => {
@@ -394,4 +398,10 @@ $(document).ready(() => {
 });
 
 // TODO remove me, debugging only - use expose-loader or something?
-(window as any).actions = actions;
+(window as any).actions = {
+	root: actions,
+	form: form.actions,
+	global: global.actions,
+	results: results.actions
+};
+

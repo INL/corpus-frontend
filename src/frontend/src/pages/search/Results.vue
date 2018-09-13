@@ -5,11 +5,7 @@
 				<div class="grouping">
 					<div class="groupselect-container">
 						<select class="selectpicker groupselect" title="Group hits by..." data-size="15" data-actions-box="true" data-deselect-all-text="reset" data-show-subtext="true" data-style="btn-default btn-sm" multiple>
-							<optgroup v-if="isHits" v-for="g in [
-									{id: 'wordleft', displayName: 'Before hit'},
-									{id: 'hit', displayName: 'Hit'},
-									{id: 'wordright', displayName: 'After hit'}
-								]"
+							<optgroup v-for="g in hitOptGroups"
 								:key="g.id"
 								:label="g.displayName"
 							>
@@ -72,14 +68,31 @@ import {modules} from '@/store';
 import {BLAnnotation} from '@/types/blacklabtypes';
 
 export default Vue.extend({
-	props: {
-		// TODO this can probably be calculated based on the displayed results?
-		isHits: Boolean as () => boolean,
+	data() {
+		return {
+			annotations: modules.index.get.annotatedFields(),
+			metadataGroups: modules.index.get.metadataGroups()
+		}
 	},
-	data: () => ({
-		annotations: modules.index.get.annotatedFields(),
-		metadataGroups: modules.index.get.metadataGroups()
-	}),
+	computed: {
+		isHits(): boolean {
+			debugger;
+			const parentId = this.$parent.$el.parentElement!.id;
+			console.log(parentId);
+			return parentId === 'tabHits';
+		},
+		hitOptGroups() {
+			if (this.isHits) {
+				return [
+					{id: 'wordleft', displayName: 'Before hit'},
+					{id: 'hit', displayName: 'Hit'},
+					{id: 'wordright', displayName: 'After hit'}
+				];
+			} else {
+				return [];
+			}
+		},
+	}
 });
 </script>
 

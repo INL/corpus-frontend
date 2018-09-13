@@ -38,7 +38,7 @@ export interface BLIndex {
 	/** Only available when status === 'indexing' */
 	indexProgress?: BLIndexProgress;
 	/** status opening is currently unused, but should be treated as generally unavailable */
-	status: ('empty'|'available'|'indexing'|'opening');
+	status: 'empty'|'available'|'indexing'|'opening';
 	timeModified: string;
 	/** Number of tokens in this index (excluding those tokens added in any currently running indexing action). */
 	tokenCount?: number;
@@ -101,6 +101,110 @@ export interface BLServer {
 	user: BLUser;
 }
 
+// ----------------------------
+// IndexStructure/IndexMetadata
+// ----------------------------
+
+/** Property of a word, usually 'lemma', 'pos', 'word' */
+export interface BLAnnotation {
+	description: string;
+	displayName: string;
+	hasForwardIndex: boolean;
+	isInternal: boolean;
+	offsetsAlternative: string;
+	sensitivity: 'SENSITIVE_AND_INSENSITIVE'|'SENSITIVE'|'INSENSITIVE';
+	uiType: string|'select'|'combobox'|'text';
+}
+
+/** A set of annotations that form one data set on a token, usually there is only one of these in an index, called 'content' */
+export interface BLAnnotatedField {
+	annotations: {
+		[key: string]: BLAnnotation;
+	};
+	description: string;
+	displayName: string;
+	/** Identical to key for this annotatedField */
+	fieldName: string;
+	hasContentStore: boolean;
+	hasLengthTokens: boolean;
+	hasXmlTags: boolean;
+	isAnnotatedField: boolean;
+	/** If a cql query is fired that is just "searchterm", this is the annotation that is searched, usually 'word' - key in annotations */
+	mainProperty: string;
+}
+
+export interface BLMetadataField {
+	analyzer: string;
+	description: string;
+	displayName: string;
+	displayValues: {
+		/** Alternate display names/values for values in this field. */
+		[key: string]: string;
+	};
+	/** Key of this metadataField */
+	fieldName: string;
+	fieldValues: {
+		/** Keys are the values for this field, whereas the value for each key is the number of occurances */
+		[key: string]: string;
+	};
+	isAnnotatedField: boolean;
+	type: string; // TODO enum
+	uiType: string|'select'|'range'|'combobox'|'text';
+	unknownCondition: string;
+	unknownValue: string;
+	/** Are all values contained within the fieldValues */
+	valueListComplete: boolean;
+}
+
+// TODO also allow older version, annotatedFields are complexFields and some other change -- see corpus-frontend/CorpusConfig.java
+/** Contains information about the internal structure of the index - which fields exist for tokens, which metadata fields exist for documents, etc */
+export interface BLIndexMetadata {
+	annotatedFields: { [key: string]: BLAnnotatedField; };
+	annotationGroups: {
+		// TODO
+	};
+	contentViewable: boolean;
+	/** Description of the main index */
+	description: string;
+	displayName: string;
+	/** key of a BLFormat */
+	documentFormat?: string;
+	fieldInfo: {
+		/** Key to a field in BLDocInfo, empty if unknown */
+		authorField: string;
+		/** Key to a field in BLDocInfo, empty if unknown */
+		dateField: string;
+		/** Key to a field in BLDocInfo, empty if unknown */
+		pidField: string;
+		/** Key to a field in BLDocInfo, empty if unknown */
+		titleField: string;
+	};
+	/** Id of this index */
+	indexName: string;
+	/** Only available when status === 'indexing' */
+	indexProgress?: BLIndexProgress;
+	metadataFieldGroups: Array<{
+		name: string;
+		/** Keys in metadataFields */
+		fields: string[];
+	}>;
+	metadataFields: { [key: string]: BLMetadataField; };
+	status: 'empty'|'available'|'indexing'|'opening';
+	textDirection: 'ltr'|'rtl';
+	/** Number of tokens in this index (excluding those tokens added in any currently running indexing action). - not available if status === 'empty' */
+	tokenCount?: number;
+	versionInfo: {
+		blackLabBuildTime: string;
+		blackLabVersion: string;
+		/** major.minor */
+		indexFormat: string;
+		/** yyyy-mm-dd hh:mm:ss */
+		timeCreated: string;
+		/** yyyy-mm-dd hh:mm:ss */
+		timeModified: string;
+	};
+}
+
 // --------------
 // Search results
 // --------------
@@ -127,7 +231,7 @@ interface BLSearchSummaryTotals {
 
 interface BlSearchSummaryGroupInfo {
 	largestGroupSize: number;
-	numberOfGroups: number;
+	numbeOfGroups: number;
 }
 
 // TODO - incomplete
@@ -188,7 +292,7 @@ export interface BLDocInfo {
 }
 
 /** Blacklab response to a query for documents without grouping */
-export type BLDocResults = {
+export interface BLDocResults {
 	docs: Array<{
 		docInfo: BLDocInfo;
 		docPid: string;
@@ -198,10 +302,10 @@ export type BLDocResults = {
 		snippets?: BLHitSnippet[];
 	}>;
 	summary: BLSearchSummary & BLSearchSummaryTotals;
-};
+}
 
 /** Blacklab response to a query for hits without grouping */
-export type BlHitResults = {
+export interface BlHitResults {
 	docInfos: {
 		[key: string]: BLDocInfo;
 	};
@@ -211,7 +315,7 @@ export type BlHitResults = {
 		start: number;
 	} & BLHitSnippet>;
 	summary: BLSearchSummary & BLSearchSummaryTotals;
-};
+}
 
 export type BLSearchResult = BlHitResults|BLDocResults|BLHitGroupResults|BLDocGroupResults;
 

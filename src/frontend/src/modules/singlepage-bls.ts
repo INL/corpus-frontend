@@ -1,11 +1,10 @@
 import $ from 'jquery';
 import URI from 'urijs';
 
-import {getState, modules as stateModules, actions} from '@/store';
-
-import {debugLog} from '../utils/debug';
-
-import {makeWildcardRegex} from '../utils';
+import {getState, get} from '@/store';
+import {makeWildcardRegex} from '@/utils';
+import {debugLog} from '@/utils/debug';
+import * as BLTypes from '@/types/blacklabtypes'
 
 /**
  * Converts page state into a query for blacklab-server and executes it.
@@ -172,7 +171,7 @@ const totalsCounter = (function() {
 	// Parameters used in the next update request
 	let blsParam: null|BlacklabParameters;
 	let operation: null|'hits'|'docs';
-	let data;
+	let data: BLTypes.BLSearchResult;
 
 	// Handles to the current request/scheduled request
 	let timeoutHandle: number|null = null;
@@ -224,13 +223,13 @@ const totalsCounter = (function() {
 		let type;
 		let total;
 
-		if (data.summary.numberOfGroups != null) {
+		if (BLTypes.isGroups(data)) {
 			type = 'groups';
 			total = data.summary.numberOfGroups;
-		} else if (data.hits != null) {
+		} else if (BLTypes.isHitResults(data)) {
 			type = 'hits';
 			total = data.summary.numberOfHits;
-		} else if (data.docs != null) {
+		} else {
 			type = 'docs';
 			total = data.summary.numberOfDocs;
 		}
@@ -258,7 +257,7 @@ const totalsCounter = (function() {
 		 * @param searchParam - The final (processed) blacklab search parameters.
 		 * @param op - The search operation, must not be 'hits' if no pattern supplied.
 		 */
-		start (searchResult, searchParam: BlacklabParameters, op: 'hits'|'docs') {
+		start (searchResult: BLTypes.BLSearchResult, searchParam: BlacklabParameters, op: 'hits'|'docs') {
 			cancelRequest();
 
 			data = searchResult;
@@ -284,7 +283,7 @@ let inflightRequest: null|ReturnType<typeof $.ajax> = null;
  * @param successFunc
  * @param errorFunc
  */
-export function search(operation: 'hits'|'docs', param: BlacklabParameters, successFunc?: (data: any) => void, errorFunc?: () => void) {
+export function search(operation: 'hits'|'docs', param: BlacklabParameters, successFunc?: (data: BLTypes.BLSearchResult) => void, errorFunc?: JQuery.Ajax.ErrorCallback<any>) {
 	debugLog('starting search', operation, param);
 
 	inflightRequest = $.ajax({
@@ -328,7 +327,7 @@ export function cancelSearch() {
 export function getBlsParamFromState(): BlacklabParameters {
 	const state = getState();
 
-	const viewProps = stateModules.results.get.activeSettings();
+	const viewProps = get.viewedResultsSettings();
 	if (viewProps == null) {
 		throw new Error('Cannot generate blacklab parameters without knowing hits or docs');
 	}
@@ -342,18 +341,18 @@ export function getBlsParamFromState(): BlacklabParameters {
 
 	return {
 		filter: getFilterString(submittedParameters),
-		first: state.globalSettings.pageSize * viewProps.page,
+		first: state.settings.pageSize * viewProps.page,
 		group: viewProps.groupBy.map(g => g + (viewProps.caseSensitive ? ':s':':i')).join(',') || undefined,
-		number: state.globalSettings.pageSize,
+		number: state.settings.pageSize,
 		patt: submittedParameters.pattern||undefined,
 
-		sample: (state.globalSettings.sampleMode === 'percentage' && state.globalSettings.sampleSize) ? state.globalSettings.sampleSize /* can't be null after check */ : undefined,
-		samplenum: (state.globalSettings.sampleMode === 'count' && state.globalSettings.sampleSize) ? state.globalSettings.sampleSize : undefined,
-		sampleseed: (state.globalSettings.sampleSeed != null && state.globalSettings.sampleMode && state.globalSettings.sampleSize) ? state.globalSettings.sampleSeed : undefined,
+		sample: (state.settings.sampleMode === 'percentage' && state.settings.sampleSize) ? state.settings.sampleSize /* can't be null after check */ : undefined,
+		samplenum: (state.settings.sampleMode === 'count' && state.settings.sampleSize) ? state.settings.sampleSize : undefined,
+		sampleseed: (state.settings.sampleSeed != null && state.settings.sampleMode && state.settings.sampleSize) ? state.settings.sampleSeed : undefined,
 
 		sort: viewProps.sort != null ? viewProps.sort : undefined,
 		viewgroup: viewProps.sort && viewProps.viewGroup ? viewProps.viewGroup : undefined,
-		wordsaroundhit: state.globalSettings.wordsAroundHit != null ? state.globalSettings.wordsAroundHit : undefined,
+		wordsaroundhit: state.settings.wordsAroundHit != null ? state.settings.wordsAroundHit : undefined,
 	};
 }
 

@@ -54,5 +54,6 @@ export const create = <M> (parent: StoreBuilder<RootState>|ModuleBuilder<M, Root
 		actions: createActions(b),
 		get: createGetters(b),
 		namespace,
+		getState: b.state(),
 	};
 };

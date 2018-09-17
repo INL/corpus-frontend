@@ -161,19 +161,15 @@ function replaceTableContent($table: JQuery<HTMLElement>, html: string, onComple
  * Show the error reporting field and display any errors that occured when performing a search.
  *
  * Can be directly used as callback fuction to $.ajax
- *
- * @param {any} jqXHR
- * @param {any} textStatus
- * @param {any} errorThrown
  */
-function showBlsError(jqXHR, textStatus, errorThrown) {
+const showBlsError: JQuery.Ajax.ErrorCallback<any> = (jqXHR, textStatus, errorThrown) => {
 	const errordata = (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.error) || {
 		code: 'WEBSERVICE_ERROR',
 		message: 'Error contacting webservice: ' + textStatus + '; ' + errorThrown
 	};
 
 	$('#errorDiv').text(errordata.message + ' (' + errordata.code + ') ').show();
-}
+};
 
 /**
  * Hide the error field.
@@ -288,7 +284,7 @@ function hideSearchIndicator($tab: JQuery<HTMLElement>) {
  * Some assumptions are also made about the exact structure of the document regarding placement of the results.
  */
 // TODO
-function loadConcordances() {
+function loadConcordances(this: HTMLButtonElement) {
 	const $button = $(this);
 	const $tab = $button.parents('.tab-pane').first();
 	const textDirection = SINGLEPAGE.INDEX.textDirection || 'ltr';
@@ -316,7 +312,7 @@ function loadConcordances() {
 		$tab.data('constParameters')
 	);
 
-	search(searchParams, function(data) {
+	search('hits', searchParams, function(data: any) { // TODO
 		const totalConcordances = data.hits ? data.summary.numberOfHitsRetrieved : data.summary.numberOfDocsRetrieved;
 		const loadedConcordances = data.summary.actualWindowSize;
 
@@ -383,8 +379,6 @@ function loadConcordances() {
  * @returns An array of html strings containing the <thead> and <tbody>, but without the enclosing <table> element.
  */
 function formatHits(data: BLTypes.BlHitResults, textDirection: 'rtl'|'ltr'): Array<string|number> {
-	// TODO use mustache.js
-
 	const html = [] as Array<string|number>;
 	/* eslint-disable indent */
 	html.push(
@@ -516,10 +510,9 @@ function formatHits(data: BLTypes.BlHitResults, textDirection: 'rtl'|'ltr'): Arr
 /**
  * Convert a blacklab-server reply containing information about documents into a table containing the results.
  *
- * @param data the blacklab-server response.
  * @returns An array of html strings containing the <thead> and <tbody>, but without the enclosing <table> element.
  */
-function formatDocs(data: BLTypes.BLDocResults, textDirection): Array<string|number> {
+function formatDocs(data: BLTypes.BLDocResults, textDirection: 'ltr'|'rtl'): Array<string|number> {
 	const html = [] as Array<string|number>;
 
 	html.push(
@@ -653,7 +646,7 @@ function onExportCsv(event: JQueryEventObject) {
 	}
 
 	const blsParam = getBlsParamFromState();
-	const operation = getState().resultSettings.viewedResults!; // should always be valid if the button can be clicked
+	const operation = getState().viewedResults!; // should always be valid if the button can be clicked
 
 	(blsParam as any).outputformat = 'csv';
 	delete blsParam.number;
@@ -716,7 +709,7 @@ function setTabResults($tab: JQuery<HTMLElement>, data: BLTypes.BLSearchResult) 
 		];
 	}
 
-	function onTableContentsReplaced() {
+	function onTableContentsReplaced(this: HTMLElement) {
 		// first time opening the concordances for a group, load the first results
 		$(this).find('.collapse').one('show.bs.collapse', function() {
 			$(this).find('.loadconcordances').click();
@@ -767,7 +760,7 @@ export function refreshTab($tab: JQuery<HTMLElement>) {
 
 	// Operation isn't contained in blacklabparameters
 	// TODO ...
-	const operation = getState().resultSettings.viewedResults;
+	const operation = getState().viewedResults;
 	if (!operation) {
 		throw new Error('Attempting to refresh search results without a valid operation (perhaps before vuex state change has been processed?), this will not work!');
 	}
@@ -830,13 +823,13 @@ $(document).ready(function() {
 /**
  * Request and display more preview text from a document.
  *
- * @param {any} concRow the <tr> element for the current hit. The result will be displayed in the row following this row.
- * @param {any} docPid id/pid of the document
- * @param {number} start
- * @param {number} end
- * @param {('ltr' | 'rtl')} textDirection - to determine whether to specify text direction on the preview text
+ * @param concRow the <tr> element for the current hit. The result will be displayed in the row following this row.
+ * @param docPid id/pid of the document
+ * @param start
+ * @param end
+ * @param textDirection - to determine whether to specify text direction on the preview text
  */
-function showCitation(concRow, docPid, start, end, textDirection) {
+function showCitation(concRow: HTMLElement, docPid: string, start: number, end: number, textDirection: 'ltr'|'rtl') {
 	// Open/close the collapsible in the next row
 	const $element = $(concRow).next().find('.collapse');
 	$element.collapse('toggle');
@@ -862,10 +855,10 @@ function showCitation(concRow, docPid, start, end, textDirection) {
 /**
  * Request and display properties of the matched word.
  *
- * @param {any} propRow the <tr> element for the current hit. The result will be displayed in the second row following this row.
- * @param {any} props the properties to show
+ * @param propRow the <tr> element for the current hit. The result will be displayed in the second row following this row.
+ * @param props the properties to show
  */
-function showProperties(propRow, props) {
+function showProperties(propRow: HTMLElement, props: string) {
 	// Open/close the collapsible in the next row
 	const $element = $(propRow).next().next().find('.collapse');
 	$element.collapse('toggle');

@@ -10,6 +10,7 @@
 		"interface-name": false,
 		"only-arrow-functions": false, // jquery and some of our own code explicitly set 'this' of callbacks, can't do that with arrow functions
 		"ordered-imports": false,
+		"max-classes-per-file": false,
 
 		// These should eventually be fixed
 		"prefer-const": {"severity": "warn"},
@@ -19,6 +20,7 @@
 		"object-literal-shorthand": {"severity": "warn"},
 		"whitespace": { "severity": "warn" },
 		"one-line": { "severity": "warn" },
+		"member-ordering": { "severity": "warn" },
 
 		// Eh.. consistent style I guess
 		"space-before-function-paren": {
@@ -37,6 +39,9 @@
 		"indent": {
 			"severity": "warn",
 			"options": "tabs"
+		},
+		"variable-name": {
+			"options": "allow-leading-underscore"
 		}
 	},
 	"cliOptions": {

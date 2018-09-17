@@ -1,21 +1,29 @@
 <template>
-	<div>
+	<div v-show="visible">
 		<div class="resultcontrols">
 			<div class="top">
 				<div class="grouping">
 					<div class="groupselect-container">
-						<select class="selectpicker groupselect" title="Group hits by..." data-size="15" data-actions-box="true" data-deselect-all-text="reset" data-show-subtext="true" data-style="btn-default btn-sm" multiple ref="groupselect">
-							<optgroup v-for="(group, index) in optGroups" :key="index" :label="group.label">
-								<option v-for="option in group.options" :key="option.value" :value="option.value" :data-content="option.label"/>
-							</optgroup>
-						</select>
+
+						<select-picker v-model="groupBy"
+							:options="optGroups"
+							multiple
+							class="groupselect"
+							title="Group hits by..."
+							data-size="15"
+							data-actions-box="true"
+							data-deselect-all-text="reset"
+							data-show-subtext="true"
+							data-style="btn-default btn-sm"
+						/>
+
 						<button type="button" class="btn btn-sm btn-default dummybutton">update</button> <!-- dummy button... https://github.com/INL/corpus-frontend/issues/88 -->
 						<div class="checkbox-inline" style="margin-left: 5px;">
 							<label title="Separate groups for differently cased values" style="white-space: nowrap; margin: 0;" for="casesensitive-groups-hits"><input type="checkbox" class="casesensitive" id="casesensitive-groups-hits" name="casesensitive-groups-hits">Case sensitive</label>
 						</div>
 					</div>
 
-					<div v-if="settings.viewgroup" class="resultgroupdetails btn btn-sm btn-default nohover" style="margin-right: 5px">
+					<div v-if="viewGroup" class="resultgroupdetails btn btn-sm btn-default nohover" style="margin-right: 5px">
 						<span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span class="resultgroupname"></span> &mdash; <a class="clearviewgroup" href="javascript:void(0)">Go back</a>
 					</div>
 
@@ -30,7 +38,16 @@
 				</div>
 			</div>
 
-			<ul class="pagination pagination-sm"></ul>
+			<ul class="pagination pagination-sm">
+				<li v-for="i in pages" :key="i" :class="{'current': i === currentPage}">
+					<input v-if="i === currentPage" type="text" class="form-control"
+						:value="currentPage+1"
+						@input="userSubmittedPage = $event.target.value-1"
+						@keypress.enter="(userSubmittedPage !== currentPage) ? markDirty() : {} "
+					/>
+					<a v-else @click="page = i">{{i+1}}</a>
+				</li>
+			</ul>
 		</div>
 
 		<span class="fa fa-spinner fa-spin searchIndicator" style="position:absolute; left: 50%; top:15px"></span>
@@ -49,22 +66,99 @@
 import Vue from "vue";
 
 import * as resultsStore from '@/store/results';
+import * as settingsModule from '@/store/settings';
 import * as corpus from '@/store/corpus';
-import {BLAnnotation} from '@/types/blacklabtypes';
+import * as query from '@/store/form';
 
-type OptGroup = {
-	label: string;
-	options: Array<{
-		label: string;
-		value: string;
-	}>;
-}
+import * as bls from "@/modules/singlepage-bls";
+import * as BLTypes from '@/types/blacklabtypes';
+
+import SelectPicker, {OptGroup} from '@/components/SelectPicker.vue';
+
+// type OptGroup = {
+// 	label: string;
+// 	options: Array<{
+// 		label: string;
+// 		value: string;
+// 	}>;
+// }
 
 export default Vue.extend({
+	components: {
+		SelectPicker
+	},
 	props: {
 		type: String as () => 'hits'|'docs',
+		visible: Boolean,
+	},
+	data: () => ({
+		isDirty: false,
+		request: null as null|Promise<BLTypes.BLSearchResult>,
+		result: null as null|BLTypes.BLSearchResult,
+		error: null as null|BLTypes.BLError, // TODO not correct
+
+		userSubmittedPage: null as number|null,
+	}),
+	methods: {
+		markDirty() {
+			this.isDirty = true;
+		},
+		refresh() {
+			this.isDirty = false;
+			console.log('this is when the search should be refreshed');
+			this.request = new Promise<BLTypes.BLSearchResult>((resolve, reject) => {
+				bls.search(this.type, bls.getBlsParamFromState(), resolve, () => reject(arguments));
+			});
+			this.request.then(this.setSuccess, this.setError);
+		},
+		setSuccess(data: BLTypes.BLSearchResult) {
+			this.result = data;
+			this.error = null;
+			this.request = null;
+			this.userSubmittedPage = null;
+		},
+		setError(data: BLTypes.BLError) {
+			this.error = data;
+			this.result = null;
+			this.request = null;
+		}
 	},
 	computed: {
+		// Store properties
+		storeModule() { return resultsStore.modules[this.type]; },
+		caseSensitive: {
+			get(): boolean { return this.storeModule.getState().caseSensitive },
+			set(v: boolean) { this.storeModule.actions.caseSensitive(v); }
+		},
+		groupBy: {
+			get(): string[] { return this.storeModule.getState().groupBy; },
+			set(v: string[]) { this.storeModule.actions.groupBy(v); }
+		},
+		page: {
+			get(): number { return this.storeModule.getState().page; },
+			set(v: number) { this.storeModule.actions.page(v); }
+		},
+		sort: {
+			get(): string|null { return this.storeModule.getState().sort; },
+			set(v: string|null) { this.storeModule.actions.sort(v); }
+		},
+		viewGroup: {
+			get(): string|null { return this.storeModule.getState().viewGroup; },
+			set(v: string|null) { this.storeModule.actions.viewGroup(v); }
+		},
+
+		externalSettings(): settingsModule.ModuleRootState { return settingsModule.getState() },
+		querySettings() { return query.get.lastSubmittedPattern() },
+
+		watchSettings() {
+			return {
+				resultsSettings: this.storeModule.getState(),
+				viewSettings: this.externalSettings,
+				querySettings: this.querySettings
+			}
+		},
+
+		// Calculated fields
 		optGroups(): OptGroup[] {
 			const groups: OptGroup[] = [];
 
@@ -92,14 +186,68 @@ export default Vue.extend({
 			}))
 			return groups;
 		},
-		settings() { return resultsStore[this.type] }
+
+
+		totalResults(): number {
+			if (this.result == null) {
+				return 0;
+			} else if (BLTypes.isGroups(this.result)) {
+				return this.result.summary.numberOfGroups;
+			} else if (BLTypes.isHitResults(this.result)) {
+				return this.result.summary.numberOfHitsRetrieved;
+			} else {
+				return this.result.summary.numberOfDocsRetrieved;
+			}
+		},
+		/** NOTE: might be out of bounds */
+		currentPage(): number {
+			if (this.result == null) {
+				return 0;
+			} else {
+				const pageSize = this.result.summary.requestedWindowSize;
+				const currentPage = Math.min(Math.ceil(this.result.summary.windowFirstResult / pageSize), this.totalPages);
+				return currentPage;
+			}
+		},
+		totalPages(): number {
+			if (this.result == null) {
+				return 0;
+			} else {
+				return Math.ceil(this.totalResults / this.result.summary.requestedWindowSize);
+			}
+		},
+
+		pages(): number[] {
+			if (!this.result) {
+				return [];
+			}
+
+			const pages = [-10, -5, -1, 0, 1, 5, 10].map(offset => this.currentPage + offset).filter(page => page >= 0 && page <= this.totalPages);
+			return pages;
+
+			// // when out of bounds results, draw at least the last few pages so the user can go back
+			// if (totalResults < beginIndex) {
+			// 	beginIndex = totalResults+1;
+			// }
+
+			// const currentPage = Math.ceil(beginIndex / pageSize);
+			// const startPage = Math.max(currentPage - 10, 0);
+			// const endPage = Math.min(currentPage + 10, totalPages);
+		}
 	},
 	watch: {
-
+		watchSettings: {
+			handler(cur, prev) {
+				this.markDirty();
+			},
+			deep: true
+		},
+		isDirty(cur, prev) {
+			if (cur && this.visible) {
+				this.refresh();
+			}
+		}
 	}
-	// mounted() {
-	// 	$(this.$refs.groupselect).selectpicker();
-	// }
 });
 </script>
 
@@ -131,6 +279,28 @@ export default Vue.extend({
 		>.buttons {
 			flex: 0 1000 auto;
 		}
+	}
+}
+.pagination {
+	>li {
+		display: inline-block;
+		> input {
+			border-radius: 0;
+			border-color: #337ab7;
+			font-size: 12px;
+			height: auto;
+			line-height: 1.5;
+			padding: 5px 10px;
+			width: 3em;
+			z-index: 1;
+		}
+		>a {
+			cursor: pointer;
+		}
+	}
+	li.current+li>a {
+		border-left-width: 0px;
+		margin-left: 0;
 	}
 }
 

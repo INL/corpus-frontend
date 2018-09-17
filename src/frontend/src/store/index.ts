@@ -387,6 +387,7 @@ export const get = {
 	viewedResultsSettings: b.read(state => state.viewedResults != null ? state.results[state.viewedResults] : null, 'getViewedResultsSettings'),
 };
 
+// We need to call a function on the modules or they will be tree-shaken by webpack and their code (and thus implicit registration) won't be ran.
 SettingsModule.default();
 FormModule.default();
 ResultsModule.default();
@@ -403,4 +404,14 @@ $(document).ready(() => {
 });
 
 // TODO remove me, debugging only - use expose-loader or something?
-(window as any).actions = actions;
+(window as any).actions = {
+	root: actions,
+	settings: SettingsModule.actions,
+	form: FormModule.actions,
+	results: {
+		root: ResultsModule.actions,
+		docs: ResultsModule.docs.actions,
+		hits: ResultsModule.hits.actions
+	},
+	index: IndexModule.actions
+};

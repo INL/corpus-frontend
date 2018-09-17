@@ -11,8 +11,8 @@ export type ModuleRootState = {
 	/** case-sensitive grouping */
 	caseSensitive: boolean;
 	groupBy: string[];
-	sort: string|null;
 	page: number;
+	sort: string|null;
 	viewGroup: string|null;
 };
 

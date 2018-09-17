@@ -20,7 +20,10 @@
 		"object-literal-shorthand": {"severity": "warn"},
 		"whitespace": { "severity": "warn" },
 		"one-line": { "severity": "warn" },
-		"member-ordering": { "severity": "warn" },
+		"member-ordering": { "severity": "warn", "options": {
+			"alphabetize": true,
+			"order": "statics-first"
+		} },
 
 		// Eh.. consistent style I guess
 		"space-before-function-paren": {

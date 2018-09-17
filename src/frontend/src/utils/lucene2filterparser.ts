@@ -4,39 +4,6 @@ import {debugLog} from './debug';
 
 import {FilterField} from '../types/pagetypes';
 
-type ASTNode = {
-	left: ASTNode|ASTField|ASTRange;
-	/** Can apparently contain multiple operator (a OR NOT b) though we should never encounter this */
-	operator: string;
-	right: ASTNode|ASTField|ASTRange;
-	/** field name (for field group syntax) */
-	field: string;
-};
-
-type ASTField = {
-	field: '<implicit>'|string;
-	term: string;
-	prefix?: '+'|'-';
-	boost?: number;
-	/** 0..1 */
-	similarity?: number;
-	proximity?: number;
-};
-
-type ASTRange = {
-	field: '<implicit>'|string;
-	/** Lower bound */
-	term_min: string;
-	/** Upper bound */
-	term_max: string;
-	/** (inclusive_min && inclusive_max) */
-	inclusive: boolean;
-	/** Is lower bound inclusive */
-	inclusive_min: boolean;
-	/** Is upper bound inclusive */
-	inclusive_max: boolean;
-};
-
 /** Parse the expression into an array of filter fields for easy displaying. Throws error if the query is too complex or contains errors. */
 export default (luceneQuery?: string): FilterField[] => {
 	if (!luceneQuery) {
@@ -69,7 +36,7 @@ export default (luceneQuery?: string): FilterField[] => {
 	 * So if the Node contains a 'field' property we know all children will be Field instances defining the values
 	 * and we can open a new context that we can store the values in later parsing steps.
 	 */
-	function node(val: ASTNode|null) {
+	function node(val: luceneQueryParser.ASTNode|null) {
 		if (val == null) {
 			return;
 		}
@@ -125,7 +92,7 @@ export default (luceneQuery?: string): FilterField[] => {
 		// else we're already inside inside an existing context and are just recursing over the values
 	}
 
-	function field(val: ASTField|null) {
+	function field(val: luceneQueryParser.ASTField|null) {
 		if (val == null) {
 			return;
 		}
@@ -154,7 +121,7 @@ export default (luceneQuery?: string): FilterField[] => {
 		}
 	}
 
-	function range(val: ASTRange) {
+	function range(val: luceneQueryParser.ASTRange) {
 		if (val == null) {
 			return;
 		}

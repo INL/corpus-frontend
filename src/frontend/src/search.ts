@@ -4,14 +4,13 @@ import 'bootstrap-select';
 import $ from 'jquery';
 import URI from 'urijs';
 
-import parseCql from './utils/cqlparser';
+import parseCql, { Attribute } from './utils/cqlparser';
 import './utils/features/autocomplete';
 import './utils/features/tutorial';
 
 import createQueryBuilder from './modules/cql_querybuilder';
 import {BlacklabParameters} from './modules/singlepage-bls';
 import './modules/singlepage-interface';
-import * as searcher from './modules/singlepage-interface';
 
 import './pages/search/vuexbridge';
 
@@ -42,13 +41,12 @@ $(document).ready(function() {
 	}
 
 	// Init the querybuilder with the supported attributes/properties
-	const $queryBuilder = $('#querybuilder'); // container
-	const queryBuilderInstance = createQueryBuilder($queryBuilder, {
+	createQueryBuilder($('#querybuilder'), {
 		attribute: {
 			view: {
 				// Pass the available properties of tokens in this corpus (PoS, Lemma, Word, etc..) to the querybuilder
 				attributes: $.map(SINGLEPAGE.INDEX.complexFields || SINGLEPAGE.INDEX.annotatedFields, function(complexField/*, complexFieldName*/) {
-					return $.map(complexField.properties || complexField.annotations, function(property, propertyId) {
+					return $.map(complexField.properties || complexField.annotations, function(property, propertyId: string) {
 						if (property.isInternal) {
 							return null;
 						} // Don't show internal fields in the queryBuilder; leave this out of the list.
@@ -118,7 +116,7 @@ function toPageUrl(operation: string, blsParams?: BlacklabParameters|null) {
 	}
 
 	// remove null, undefined, empty strings and empty arrays from our query params
-	const modifiedParams = {};
+	const modifiedParams: Partial<BlacklabParameters> = {};
 	$.each(blsParams, function(key, value) {
 		if (value == null) {
 			return true;
@@ -140,7 +138,7 @@ function toPageUrl(operation: string, blsParams?: BlacklabParameters|null) {
  * @param {string} pattern - cql query
  * @returns True or false indicating success or failure respectively
  */
-export function populateQueryBuilder(pattern) {
+export function populateQueryBuilder(pattern: string) {
 	if (!pattern) {
 		return false;
 	}
@@ -188,7 +186,7 @@ export function populateQueryBuilder(pattern) {
 				tokenInstance.set('maxRepeats', token.repeats.max);
 			}
 
-			function doOp(op, parentAttributeGroup, level) {
+			function doOp(op: any, parentAttributeGroup: any, level: number) {
 				if (op == null) {
 					return;
 				}
@@ -306,10 +304,10 @@ $(document).ready(() => {
 	new Vue({
 		store,
 		render: h => h(ResultComponent),
-	}).$mount(document.querySelector('#tabHits > div')!);
+	}).$mount(document.querySelector('#results')!);
 
-	new Vue({
-		store,
-		render: h => h(ResultComponent)
-	}).$mount(document.querySelector('#tabDocs > div')!);
+	// new Vue({
+	// 	store,
+	// 	render: h => h(ResultComponent)
+	// }).$mount(document.querySelector('#tabDocs > div')!);
 });

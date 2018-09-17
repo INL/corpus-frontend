@@ -4,81 +4,69 @@ import $ from 'jquery';
 // Article-related functions.
 // Takes care of tooltips and highlighting/scrolling to anchors.
 
+// TODO assign onclicks to elements for gotonext and gotoprev
+
+let $hits: JQuery<HTMLElement>;
+let currentHit: number;
+
+function gotoHit(position: number) {
+	if ($hits.length === 0) {
+		return;
+	}
+
+	$($hits[currentHit]).removeClass('active');
+	window.location.hash = '';
+
+	// invalid index -> no hit made active
+	if (position != null && position >= 0 && position < $hits.length) {
+		const $hit = $($hits[position]);
+
+		$hit.addClass('active').attr('id', '#' + position);
+		window.location.hash = position.toString();
+
+		$('html, body').animate({
+			scrollTop: $hit.offset()!.top - $(window).height()!/2,
+			scrollLeft: $hit.offset()!.left - $(window).width()!/2
+		}, 0);
+	}
+
+	currentHit = position;
+}
+
+// Highlight and scroll to previous anchor
+function gotoPrevious() {
+	if(currentHit-1 < 0) {
+		gotoHit($hits.length-1);
+	} else {
+		gotoHit(currentHit-1);
+	}
+
+	return false;
+}
+
+// Highlight and scroll to next anchor
+function gotoNext() {
+	gotoHit((currentHit + 1) % $hits.length);
+	return false; // don't follow link
+}
+
 $(document).ready(function() {
+	$hits = $('.hl');
+	currentHit = 0;
 
 	// Create jQuery Tooltips from title attributes
 	$('span.word').tooltip();
 
 	// Show number of hits at the top of the metadata
-	const numHits = $('.hl').length;
-	$('#divHitsInDocument').text(numHits);
+	$('#divHitsInDocument').text($hits.length);
+
+	if($hits.length > 0) {
+		$('.hitscroll').show();
+	}
+
+	if (location.hash != null && location.hash !== '') {
+		gotoHit(parseInt(location.hash.substring(1), 10)); // skip leading #
+	} else {
+		gotoHit(0);
+	}
 });
-
-// For navigating through search hits within the article
-// --------------------------------------------------------------------
-const ANCHORS: any = {};
-
-(function() {
-	let $hits;
-	let currentHit = 0; // index into $hits
-
-	$(document).ready(function() {
-
-		$hits = $('.hl');
-
-		if($hits.length > 0) {
-			$('.hitscroll').show();
-		}
-
-		if (location.hash != null && location.hash !== '') {
-			ANCHORS.gotoHit(parseInt(location.hash.substring(1), 10));
-		} // skip leading #
-		else {
-			ANCHORS.gotoHit(0);
-		}
-	});
-
-	ANCHORS.gotoHit = function(position) {
-		if ($hits.length === 0) {
-			return;
-		}
-
-		$($hits[currentHit]).removeClass('active');
-		location.hash = '';
-
-		// invalid index -> no hit made active
-		if (position != null && position >= 0 && position < $hits.length) {
-			const $hit = $($hits[position]);
-
-			$hit.addClass('active').attr('id', '#' + position);
-			location.hash = position;
-
-			$('html, body').animate({
-				scrollTop: $hit.offset()!.top - $(window).height()!/2,
-				scrollLeft: $hit.offset()!.left - $(window).width()!/2
-			}, 0);
-		}
-
-		currentHit = position;
-	};
-
-	// Highlight and scroll to previous anchor
-	ANCHORS.gotoPrevious = function() {
-
-		if(currentHit-1 < 0) {
-			ANCHORS.gotoHit($hits.length-1);
-		}
-		else {
-			ANCHORS.gotoHit(currentHit-1);
-		}
-
-		return false;
-	};
-
-	// Highlight and scroll to next anchor
-	ANCHORS.gotoNext = function() {
-		ANCHORS.gotoHit((currentHit + 1) % $hits.length);
-		return false; // don't follow link
-	};
-
-})();

@@ -287,7 +287,7 @@ const DEFAULTS = {
 			]
 		},
 
-		getCql (attribute, comparator, caseSensitive, values) {
+		getCql (attribute: string, comparator: string, caseSensitive: boolean, values: string[]) {
 			switch (comparator) {
 			case 'starts with':
 				comparator = '=';
@@ -328,599 +328,609 @@ const DEFAULTS = {
 	}
 };
 
+type RecursivePartial<T> = {
+	[P in keyof T]?:
+		T[P] extends Array<(infer U)> ? Array<RecursivePartial<U>> :
+		T[P] extends object ? RecursivePartial<T[P]> :
+		T[P];
+};
+
+type QueryBuilderOptions = RecursivePartial<typeof DEFAULTS>;
 // -------------------
 // Class Querybuilder
 // -------------------
 
-const QueryBuilder = function($rootElement, options): void {
-	if (!(this instanceof QueryBuilder)) { // not called using "new"
-		return new QueryBuilder($rootElement, options);
+class QueryBuilder {
+	public settings: typeof DEFAULTS;
+	public element: JQuery<HTMLElement>; // TODO private and expose update function
+	private createTokenButton: JQuery<HTMLElement>;
+	public modalEditor: JQuery<HTMLElement>;
+	private withinSelect: JQuery<HTMLElement>;
+
+	constructor($rootElement: JQuery<HTMLElement>, options: QueryBuilderOptions) {
+		// Use extendext so arrays in the defaults are replaced instead of merged with those in options
+		this.settings = $.extendext(true, 'replace', {}, DEFAULTS, options);
+		this._prepareElement($rootElement);
+
+		this.element = $rootElement;
+		this.createTokenButton = $rootElement.find('.bl-token-create');
+		this.modalEditor = this.element.find('.bl-modal-editor');
+		this.withinSelect = this.element.find('#within_select');
+
+		this.createTokenButton.click();
 	}
 
-	// Use extendext so arrays in the defaults are replaced instead of merged with those in options
-	this.settings = $.extendext(true, 'replace', {}, DEFAULTS, options);
-	this._prepareElement($rootElement);
+	private _prepareElement($element: JQuery<HTMLElement>) {
+		$element
+			.html(Mustache.render(templates.queryBuilder.template, this.settings.queryBuilder.view, templates.queryBuilder.partials))
+			.data('builder', this)
+			.addClass('bl-querybuilder-root');
 
-	this.element = $rootElement;
-	this.createTokenButton = $rootElement.find('.bl-token-create');
-	this.modalEditor = this.element.find('.bl-modal-editor');
-	this.withinSelect = this.element.find('#within_select');
+		// Enable sorting tokens within the container
+		($element.find('.bl-token-container') as any).sortable({
+			items: '>*:not(.bl-prevent-sort)',
+			handle: '.bl-sort-handle',
+			placeholder: 'bl-sort-placeholder-token',
+			forcePlaceholderSize: true,
 
-	this.createTokenButton.click();
-};
+			cursor: 'move',
+			tolerance: 'pointer',
 
-QueryBuilder.prototype._prepareElement = function($element) {
-	$element
-		.html(Mustache.render(templates.queryBuilder.template, this.settings.queryBuilder.view, templates.queryBuilder.partials))
-		.data('builder', this)
-		.addClass('bl-querybuilder-root');
+			start (e: JQuery.Event, ui: any) {
+				ui.placeholder.height(ui.helper.outerHeight());
+				ui.placeholder.width(ui.helper.outerWidth());
+			},
+			update () {
+				$element.trigger('cql:modified');
+			}
+		});
 
-	// Enable sorting tokens within the container
-	$element.find('.bl-token-container').sortable({
-		items: '>*:not(.bl-prevent-sort)',
-		handle: '.bl-sort-handle',
-		placeholder: 'bl-sort-placeholder-token',
-		forcePlaceholderSize: true,
+		$element.find('.bl-token-create').on('click', this.createToken.bind(this));
+		$element.find('#within_select')
+			.on('change', function() { $element.trigger('cql:modified'); })
+			.find('input').first().attr('checked', 'checked')
+			.parent().addClass('active');
 
-		cursor: 'move',
-		tolerance: 'pointer',
+		return $element;
+	}
 
-		start (e, ui ) {
-			ui.placeholder.height(ui.helper.outerHeight());
-			ui.placeholder.width(ui.helper.outerWidth());
-		},
-		update () {
-			$element.trigger('cql:modified');
+	// create a new token and insert it in the root container
+	public createToken() {
+		const token = new Token(this);
+
+		token.element.insertBefore(this.createTokenButton);
+		this.element.trigger('cql:modified');
+
+		return token;
+	}
+
+	public getTokens() {
+		return this.element.children('.bl-token-container').children('.bl-token').map(function(i, elem) {
+			return $(elem).data('token');
+		}).get();
+	}
+
+	public getCql() {
+		const cqlParts: string[] = [];
+
+		this.element.find('.bl-token').each(function(index, element) {
+			cqlParts.push($(element).data('token').getCql());
+		});
+
+		const within = this.withinSelect.find('input:checked').first().val() as string;
+		if (within) { // ignore empty and null
+			cqlParts.push('within', '<'+ within+'/>');
 		}
-	});
 
-	$element.find('.bl-token-create').on('click', this.createToken.bind(this));
-	$element.find('#within_select')
-		.on('change', function() { $element.trigger('cql:modified'); })
-		.find('input').first().attr('checked', 'checked')
-		.parent().addClass('active');
-
-	return $element;
-};
-
-// create a new token and insert it in the root container
-QueryBuilder.prototype.createToken = function() {
-	const token = new Token(this);
-
-	token.element.insertBefore(this.createTokenButton);
-	this.element.trigger('cql:modified');
-
-	return token;
-};
-
-QueryBuilder.prototype.getTokens = function() {
-	return this.element.children('.bl-token-container').children('.bl-token').map(function(i, elem) {
-		return $(elem).data('token');
-	}).get();
-};
-
-QueryBuilder.prototype.getCql = function() {
-	const cqlParts: string[] = [];
-
-	this.element.find('.bl-token').each(function(index, element) {
-		cqlParts.push($(element).data('token').getCql());
-	});
-
-	const within = this.withinSelect.find('input:checked').first().val();
-	if (within != null && within.length) { // ignore empty and null
-		cqlParts.push('within', '<'+ within+'/>');
+		return cqlParts.join(' ') || null;
 	}
 
-	return cqlParts.join(' ') || null;
-};
-
-// When setting 'within', val should only be the name, without surrounding </>
-QueryBuilder.prototype.set = function(controlName, val) {
-	switch (controlName) {
-	case 'within': {
-		// Parent because bootstrap is expects us to call .button on the wrapper label...
-		this.withinSelect.find('input[value="'+val+'"]').parent().button('toggle');
-		break;
+	// When setting 'within', val should only be the name, without surrounding </>
+	public set(controlName: 'within', val: string) {
+		switch (controlName) {
+		case 'within': {
+			// Parent because bootstrap is expects us to call .button on the wrapper label...
+			this.withinSelect.find('input[value="'+val+'"]').parent().button('toggle');
+			break;
+		}
+		default:
+			break;
+		}
 	}
-	default:
-		break;
-	}
-};
 
-QueryBuilder.prototype.reset = function() {
-	this.element.find('.bl-token').remove();
-	this.createToken();
-	this.withinSelect.find('input').first().parent().button('toggle');
-};
+	public reset() {
+		this.element.find('.bl-token').remove();
+		this.createToken();
+		this.withinSelect.find('input').first().parent().button('toggle');
+	}
+}
 
 // ----------
 // Class Token
 // ----------
 
-const Token = function(parentBuilder): void {
-	if (!(this instanceof Token)) { // not called using "new"
-		return new Token(parentBuilder);
-	}
-
-	this.builder = parentBuilder;
-	this.element = this._createElement();
-
-	// Init controls before adding any child elements
-	const baseId = '#' + this.element.attr('id');
-	this.$controls = {
-		optional: this.element.find(baseId + '_property_optional'),
-		minRepeats: this.element.find(baseId + '_property_repeats_min'),
-		maxRepeats: this.element.find(baseId + '_property_repeats_max'),
-		beginOfSentence: this.element.find(baseId + '_property_sentence_start'),
-		endOfSentence: this.element.find(baseId + '_property_sentence_end')
+class Token {
+	public readonly id = generateId('token');
+	private readonly idSelector = '#' + this.id;
+	public readonly element =this._createElement();
+	private readonly $controls = {
+		optional: this.element.find(this.idSelector + '_property_optional'),
+		minRepeats: this.element.find(this.idSelector + '_property_repeats_min'),
+		maxRepeats: this.element.find(this.idSelector + '_property_repeats_max'),
+		beginOfSentence: this.element.find(this.idSelector + '_property_sentence_start'),
+		endOfSentence: this.element.find(this.idSelector + '_property_sentence_end')
 	};
+	private readonly rootAttributeGroup = this._createRootAttributeGroup();
 
-	this.rootAttributeGroup = this._createRootAttributeGroup();
-	this.rootAttributeGroup.createAttribute();
-};
-
-Token.prototype._createElement = function() {
-	const view = $.extend({}, this.builder.settings.token.view, { currentId: generateId('token') });
-	const $element = $(Mustache.render(templates.token.template, view, templates.token.partials));
-
-	this._prepareElement($element);
-
-	return $element;
-};
-
-Token.prototype._prepareElement = function($element) {
-	$element.data('token', this);
-	$element.find('input, textarea').on('change', function() {
-		$element.trigger('cql:modified');
-	});
-
-	const self = this;
-	$element.find('.close').on('click', function() {
-		$element.remove();
-		self.builder.element.trigger('cql:modified');
-	});
-
-	$element.on('cql:modified', this._updateCql.bind(this));
-};
-
-Token.prototype._createRootAttributeGroup = function() {
-	const baseId = '#' + this.element.attr('id');
-
-	const group = new AttributeGroup(this.builder, this.builder.settings.token.rootOperator.operator, this.builder.settings.token.rootOperator.label);
-	group.element.removeClass('well');
-	group.element.appendTo(this.element.find(baseId + '_tab_attributes'));
-	group.isRoot = true;
-
-	return group;
-};
-
-Token.prototype._updateCql = function() {
-	const baseId = '#' + this.element.attr('id');
-
-	const $cqlPreviewElement = this.element.find(baseId + '_cql_preview');
-	const $tokenPanelHeading = this.element.find('.panel-heading');
-	const $tokenPanelBody = this.element.find('.panel-body');
-
-	let cqlString = this.getCql();
-	if (cqlString.length > 250) {
-		cqlString = cqlString.slice(0, 245) + '…';
-	}
-	$cqlPreviewElement.text(cqlString);
-
-	// Set an explicit max-width to our header (containing the CQL preview string)
-	// Why? because otherwise text won't wrap and the token could become very wide for long queries.
-	// We want the token body to control the width of the entire token, and the token head to expand and contract together with the token body.
-	// There is no way to do this cleanly in pure css currently.
-	// We also need to take care to set a default when this code runs while the element isn't visible, or isn't attached to the DOM.
-	// When this happens, jquery doesn't return a sensible outerWidth value for our body.
-	// we can't know if the token body is wider than this default (currently 348px), so it will be wrong if the token body is wider than a usual empty token, but this is rare.
-	const width = parseInt($tokenPanelBody.outerWidth(), 10) || 0;
-	$tokenPanelHeading.css({
-		'width': '100%',
-		'max-width': Math.max(width, 348) + 'px'
-	});
-};
-
-Token.prototype.set = function(controlName, val) {
-	if (this.$controls[controlName]) {
-		setValue(this.$controls[controlName], val);
-	}
-};
-
-Token.prototype.getCql = function() {
-	const optional = this.$controls.optional.prop('checked');
-	let minRepeats = parseInt(this.$controls.minRepeats.val(), 10);
-	let maxRepeats = parseInt(this.$controls.maxRepeats.val(), 10);
-	const beginOfSentence = this.$controls.beginOfSentence.prop('checked');
-	const endOfSentence = this.$controls.endOfSentence.prop('checked');
-
-	const outputParts = [] as string[];
-
-	if (beginOfSentence) {
-		outputParts.push('<s> ');
+	constructor(private readonly builder: QueryBuilder) {
+		this.rootAttributeGroup.createAttribute();
 	}
 
-	outputParts.push('[ ');
-	outputParts.push(this.rootAttributeGroup.getCql());
-	outputParts.push(' ]');
+	private _createElement() {
+		const view = $.extend({}, this.builder.settings.token.view, { currentId: this.id });
+		const $element = $(Mustache.render(templates.token.template, view, templates.token.partials));
 
-	if (!isNaN(minRepeats) || !isNaN(maxRepeats)) { // Only output when at least one of them is entered
-		minRepeats = minRepeats || 0;			// Set some default values in case of omitted field
-		maxRepeats = maxRepeats || Infinity;
+		$element.data('token', this);
+		$element.find('input, textarea').on('change', function() {
+			$element.trigger('cql:modified');
+		});
 
-		if (minRepeats < maxRepeats) {
-			if (maxRepeats !== Infinity) { // infinite is empty field instead of max value
-				outputParts.push('{'+minRepeats+','+maxRepeats+'}');
-			} else {
-				outputParts.push('{'+minRepeats+', }');
-			}
-		} else if (minRepeats === maxRepeats && minRepeats !== 1) { // 1 is the default so if min == max == 1 then we don't need to do anything
-			outputParts.push('{'+minRepeats+'}');
+		const self = this;
+		$element.find('.close').on('click', function() {
+			$element.remove();
+			self.builder.element.trigger('cql:modified');
+		});
+
+		$element.on('cql:modified', this._updateCql.bind(this));
+		return $element;
+	}
+
+	private _createRootAttributeGroup() {
+		const group = new AttributeGroup(this.builder, this.builder.settings.token.rootOperator.operator, this.builder.settings.token.rootOperator.label);
+		group.element.removeClass('well');
+		group.element.appendTo(this.element.find(this.idSelector + '_tab_attributes'));
+		group.isRoot = true;
+
+		return group;
+	}
+
+	private _updateCql() {
+		const $cqlPreviewElement = this.element.find(this.idSelector + '_cql_preview');
+		const $tokenPanelHeading = this.element.find('.panel-heading');
+		const $tokenPanelBody = this.element.find('.panel-body');
+
+		let cqlString = this.getCql();
+		if (cqlString.length > 250) {
+			cqlString = cqlString.slice(0, 245) + '…';
+		}
+		$cqlPreviewElement.text(cqlString);
+
+		// Set an explicit max-width to our header (containing the CQL preview string)
+		// Why? because otherwise text won't wrap and the token could become very wide for long queries.
+		// We want the token body to control the width of the entire token, and the token head to expand and contract together with the token body.
+		// There is no way to do this cleanly in pure css currently.
+		// We also need to take care to set a default when this code runs while the element isn't visible, or isn't attached to the DOM.
+		// When this happens, jquery doesn't return a sensible outerWidth value for our body.
+		// we can't know if the token body is wider than this default (currently 348px), so it will be wrong if the token body is wider than a usual empty token, but this is rare.
+		const width = $tokenPanelBody.outerWidth() || 0;
+		$tokenPanelHeading.css({
+			'width': '100%',
+			'max-width': Math.max(width, 348) + 'px'
+		});
+	}
+
+	public set(controlName: keyof Token['$controls'], val: string|boolean) {
+		if (this.$controls[controlName]) {
+			setValue(this.$controls[controlName], val);
 		}
 	}
 
-	if (optional) {
-		outputParts.push('?');
-	}
+	public getCql() {
+		const optional = this.$controls.optional.prop('checked');
+		let minRepeats = parseInt(this.$controls.minRepeats.val() as string, 10);
+		let maxRepeats = parseInt(this.$controls.maxRepeats.val() as string, 10);
+		const beginOfSentence = this.$controls.beginOfSentence.prop('checked');
+		const endOfSentence = this.$controls.endOfSentence.prop('checked');
 
-	if (endOfSentence) {
-		outputParts.push(' </s>');
-	}
+		const outputParts = [] as string[];
 
-	return outputParts.join('');
-};
+		if (beginOfSentence) {
+			outputParts.push('<s> ');
+		}
+
+		outputParts.push('[ ');
+		outputParts.push(this.rootAttributeGroup.getCql());
+		outputParts.push(' ]');
+
+		if (!isNaN(minRepeats) || !isNaN(maxRepeats)) { // Only output when at least one of them is entered
+			minRepeats = minRepeats || 0;			// Set some default values in case of omitted field
+			maxRepeats = maxRepeats || Infinity;
+
+			if (minRepeats < maxRepeats) {
+				if (maxRepeats !== Infinity) { // infinite is empty field instead of max value
+					outputParts.push('{'+minRepeats+','+maxRepeats+'}');
+				} else {
+					outputParts.push('{'+minRepeats+', }');
+				}
+			} else if (minRepeats === maxRepeats && minRepeats !== 1) { // 1 is the default so if min == max == 1 then we don't need to do anything
+				outputParts.push('{'+minRepeats+'}');
+			}
+		}
+
+		if (optional) {
+			outputParts.push('?');
+		}
+
+		if (endOfSentence) {
+			outputParts.push(' </s>');
+		}
+
+		return outputParts.join('');
+	}
+}
 
 // ---------------------
 // Class AttributeGroup
 // ---------------------
 
-const AttributeGroup = function(parentBuilder, operator, operatorLabel): void {
-	if (!(this instanceof AttributeGroup)) { // not called using "new"
-		return new AttributeGroup(parentBuilder, operator, operatorLabel);
+class AttributeGroup {
+	private readonly builder: QueryBuilder;
+	private readonly id = generateId('attribute_group');
+	private readonly idSelector = '#' + this.id;
+
+	private operator: string; // todo type according to passed in settings
+	private operatorLabel: string;
+	public element: JQuery<HTMLElement>;
+	public isRoot: boolean = false; // set from parent
+
+	constructor(parentBuilder: QueryBuilder, operator: string, operatorLabel: string) {
+		this.builder = parentBuilder;
+		const id = generateId('attribute_group');
+		this.operator = operator;
+		this.operatorLabel = operatorLabel;
+		this.element =  this._createElement(id);
 	}
 
-	this.builder = parentBuilder;
-	this.operator = operator;
-	this.operatorLabel = operatorLabel;
-	this.element = this._createElement();
-};
+	private _createElement(id: string) {
+		const view = $.extend({}, this.builder.settings.shared.view, this.builder.settings.attributeGroup.view, { currentId: id });
+		const partials = $.extend({}, templates.shared.partials, templates.attributeGroup.partials);
 
-AttributeGroup.prototype._createElement = function() {
-	const view = $.extend({}, this.builder.settings.shared.view, this.builder.settings.attributeGroup.view, { currentId: generateId('attribute_group') });
-	const partials = $.extend({}, templates.shared.partials, templates.attributeGroup.partials);
+		const $element = $(Mustache.render(templates.attributeGroup.template, view, partials));
+		this._prepareElement($element);
+		return $element;
+	}
 
-	const $element = $(Mustache.render(templates.attributeGroup.template, view, partials));
-	this._prepareElement($element);
-	return $element;
-};
+	private _prepareElement($element: JQuery<HTMLElement>) {
+		$element.data('attributeGroup', this);
+		$element.on('cql:modified', this._updateLabels.bind(this));
+		$element.on('cql:attribute:create', this._createAttribute.bind(this));
+	}
 
-AttributeGroup.prototype._prepareElement = function($element) {
-	$element.data('attributeGroup', this);
-	$element.on('cql:modified', this._updateLabels.bind(this));
-	$element.on('cql:attribute:create', this._createAttribute.bind(this));
-};
+	private _createAttribute(attributeCreateEvent: JQuery.Event, data: {operator: string, operatorLabel: string}) {
+		// The attribute for which the create button was clicked (if null, the button was our own button)
+		const originAttribute: Attribute|undefined = $(attributeCreateEvent.target).parents('.bl-token-attribute').data('attribute');
 
-AttributeGroup.prototype._createAttribute = function(attributeCreateEvent, data) {
-	// The attribute for which the create button was clicked (if null, the button was our own button)
-	const originAttribute = $(attributeCreateEvent.target).parents('.bl-token-attribute').data('attribute');
+		const newAttribute = new Attribute(this.builder);
+		let newGroup: AttributeGroup|undefined;
 
-	const newAttribute = new Attribute(this.builder);
-	let newGroup;
-
-	/*
+		/*
 		* If the new attribute was created at the bottom of the group, wrap all existing attributes inside a new group
 		* then swap this group's operator to the new operator, and append the new attribute
 		*/
 
-	// we can just swap the operator if this contains only 1 attribute
-	if (this.element.children('.bl-token-attribute, .bl-token-attribute-group').size() <= 1) {
-		this.operator = data.operator;
-		this.operatorLabel = data.operatorLabel;
-	}
-
-	// Construct a new group and put the new operator in there together with the one that triggered the creation (if any)
-	if (data.operator !== this.operator) {
-		newGroup = new AttributeGroup(this.builder, data.operator, data.operatorLabel);
-		if (originAttribute) {
-			// Create a new group with the original attribute, and the new attribute
-			// at the position of the original attribute
-			this.addAttributeOrGroup(newGroup, originAttribute);
-			newGroup.addAttributeOrGroup(originAttribute);
-			newGroup.addAttributeOrGroup(newAttribute);
-		} else {
-			// Create a new group, put in everything inside this group
-			// Then swap our operator and add the new attribute
-			$(this.element.children('.bl-token-attribute, .bl-token-attribute-group').get().reverse()).each(function(index, element) {
-				const instance = $(element).data('attribute') || $(element).data('attributeGroup');
-				newGroup.addAttributeOrGroup(instance);
-			});
-
-			this.addAttributeOrGroup(newGroup);
-			this.addAttributeOrGroup(newAttribute, newGroup);
-			newGroup.operator = this.operator;
-			newGroup.operatorLabel = this.operatorLabel;
+		// we can just swap the operator if this contains only 1 attribute
+		if (this.element.children('.bl-token-attribute, .bl-token-attribute-group').length <= 1) {
 			this.operator = data.operator;
 			this.operatorLabel = data.operatorLabel;
 		}
-	} else {
-		if (originAttribute) { // Insert below existing attribute
-			this.addAttributeOrGroup(newAttribute, originAttribute);
-		} else { // Append at end of this group
-			const $lastChild = this.element.children('.bl-token-attribute, .bl-token-attribute-group').last();
-			const lastChildData = $lastChild.data('attributeGroup') || $lastChild.data('attribute');
 
-			this.addAttributeOrGroup(newAttribute, lastChildData);
+		// Construct a new group and put the new operator in there together with the one that triggered the creation (if any)
+		if (data.operator !== this.operator) {
+			newGroup = new AttributeGroup(this.builder, data.operator, data.operatorLabel);
+			if (originAttribute) {
+				// Create a new group with the original attribute, and the new attribute
+				// at the position of the original attribute
+				this.addAttributeOrGroup(newGroup, originAttribute);
+				newGroup.addAttributeOrGroup(originAttribute);
+				newGroup.addAttributeOrGroup(newAttribute);
+			} else {
+				// Create a new group, put in everything inside this group
+				// Then swap our operator and add the new attribute
+				$(this.element.children('.bl-token-attribute, .bl-token-attribute-group').get().reverse()).each(function(index, element) {
+					const instance: Attribute|AttributeGroup = $(element).data('attribute') || $(element).data('attributeGroup');
+					newGroup!.addAttributeOrGroup(instance);
+				});
+
+				this.addAttributeOrGroup(newGroup);
+				this.addAttributeOrGroup(newAttribute, newGroup);
+				newGroup.operator = this.operator;
+				newGroup.operatorLabel = this.operatorLabel;
+				this.operator = data.operator;
+				this.operatorLabel = data.operatorLabel;
+			}
+		} else {
+			if (originAttribute) { // Insert below existing attribute
+				this.addAttributeOrGroup(newAttribute, originAttribute);
+			} else { // Append at end of this group
+				const $lastChild = this.element.children('.bl-token-attribute, .bl-token-attribute-group').last();
+				const lastChildData = $lastChild.data('attributeGroup') || $lastChild.data('attribute');
+
+				this.addAttributeOrGroup(newAttribute, lastChildData);
+			}
+		}
+
+		this._updateLabels();
+		if (newGroup) {
+			newGroup._updateLabels();
+		}
+
+		this.element.trigger('cql:modified');
+		return false;
+	}
+
+	public _removeIfEmpty() {
+		const $children = this.element.children('.bl-token-attribute, .bl-token-attribute-group');
+		const parentGroup: AttributeGroup = this.element.parent().data('attributeGroup');
+		const self = this;
+
+		if (this.isRoot) {
+			// Never hide root group, should be able to contain 0 members to indicate "[]", or any word
+			return;
+		}
+
+		if ($children.length <= 1) {
+			// Move children before removing this, so we can give them the correct index based on this
+			$children.each(function(index, element) {
+				const instance: Attribute|AttributeGroup = $(element).data('attributeGroup') || $(element).data('attribute');
+				parentGroup.addAttributeOrGroup(instance, self);
+			});
+
+			this.element.remove();
+			parentGroup._updateLabels();
+			parentGroup.element.trigger('cql:modified');
 		}
 	}
 
-	this._updateLabels();
-	if (newGroup) {
-		newGroup._updateLabels();
+	private _updateLabels() {
+		this.element.children('.bl-token-attribute-group-label').remove();
+
+		const self = this;
+		this.element.children('.bl-token-attribute, .bl-token-attribute-group').each(function(index, element) {
+			const $newLabel = $(Mustache.render(templates.operatorLabel.template, {label: self.operatorLabel}, templates.operatorLabel.partials));
+			$newLabel.insertAfter(element);
+		});
+		this.element.children('.bl-token-attribute-group-label').last().remove();
 	}
 
-	this.element.trigger('cql:modified');
-	return false;
-};
-
-AttributeGroup.prototype._removeIfEmpty = function() {
-	const $children = this.element.children('.bl-token-attribute, .bl-token-attribute-group');
-	const parentGroup = this.element.parent().data('attributeGroup');
-	const self = this;
-
-	if (this.isRoot) {
-		// Never hide root group, should be able to contain 0 members to indicate "[]", or any word
-		return;
+	public createAttribute() {
+		const attribute = new Attribute(this.builder);
+		this.addAttributeOrGroup(attribute);
+		return attribute;
 	}
 
-	if ($children.length <= 1) {
-		// Move children before removing this, so we can give them the correct index based on this
-		$children.each(function(index, element) {
+	public createAttributeGroup(operator: string, operatorLabel: string) {
+		const attributeGroup = new AttributeGroup(this.builder, operator, operatorLabel);
+		this.addAttributeOrGroup(attributeGroup);
+		return attributeGroup;
+	}
+
+	// if no preceding attribute, insertion will be at the front of this group
+	public addAttributeOrGroup(attributeOrGroup: Attribute|AttributeGroup, precedingAttributeOrGroup?: AttributeGroup|Attribute) {
+		if (precedingAttributeOrGroup && precedingAttributeOrGroup.element.parent()[0] !== this.element[0]) {
+			throw new Error('AttributeGroup.addAttributeOrGroup: precedingAttributeOrGroup is not a child of this group');
+		}
+
+		const oldParentGroup = attributeOrGroup.element.parent().data('attributeGroup');
+
+		if (precedingAttributeOrGroup) {
+			attributeOrGroup.element.insertAfter(precedingAttributeOrGroup.element);
+		} else  {
+			attributeOrGroup.element.prependTo(this.element);
+		}
+
+		this.element.trigger('cql:modified');
+		if (oldParentGroup) {
+			oldParentGroup.element.trigger('cql:modified');
+		}
+	}
+
+	/* Get the object instances for all direct child attributes */
+	public getAttributes() {
+		return this.element.children('.bl-token-attribute').map(function(i, el) {
+			return $(el).data('attribute');
+		}).get();
+	}
+
+	/* Get the object instances for all direct child attribute groups */
+	public getAttributeGroups() {
+		return this.element.children('.bl-token-attribute-group').map(function(i, el) {
+			return $(el).data('attributeGroup');
+		}).get();
+	}
+
+	public getCql() {
+		const cqlStrings = [] as string[];
+
+		this.element.children('.bl-token-attribute, .bl-token-attribute-group').each(function(index, element) {
 			const instance = $(element).data('attributeGroup') || $(element).data('attribute');
-			parentGroup.addAttributeOrGroup(instance, self);
+			const elemCql = instance.getCql();
+
+			if (elemCql && elemCql !== '') { // Do not push null, undefined or empty strings
+				cqlStrings.push(elemCql);
+			}
 		});
 
-		this.element.remove();
-		parentGroup._updateLabels();
-		parentGroup.element.trigger('cql:modified');
-	}
-};
-
-AttributeGroup.prototype._updateLabels = function() {
-	this.element.children('.bl-token-attribute-group-label').remove();
-
-	const self = this;
-	this.element.children('.bl-token-attribute, .bl-token-attribute-group').each(function(index, element) {
-		const $newLabel = $(Mustache.render(templates.operatorLabel.template, {label: self.operatorLabel}, templates.operatorLabel.partials));
-		$newLabel.insertAfter(element);
-	});
-	this.element.children('.bl-token-attribute-group-label').last().remove();
-};
-
-AttributeGroup.prototype.createAttribute = function() {
-	const attribute = new Attribute(this.builder);
-	this.addAttributeOrGroup(attribute);
-	return attribute;
-};
-
-AttributeGroup.prototype.createAttributeGroup = function(operator, operatorLabel) {
-	const attributeGroup = new AttributeGroup(this.builder, operator, operatorLabel);
-	this.addAttributeOrGroup(attributeGroup);
-	return attributeGroup;
-};
-
-// if no preceding attribute, insertion will be at the front of this group
-AttributeGroup.prototype.addAttributeOrGroup = function(attributeOrGroup, precedingAttributeOrGroup) {
-	if (precedingAttributeOrGroup && precedingAttributeOrGroup.element.parent().index(0) !== this.element.index(0)) {
-		throw new Error('AttributeGroup.addAttributeOrGroup: precedingAttributeOrGroup is not a child of this group');
-	}
-
-	const oldParentGroup = attributeOrGroup.element.parent().data('attributeGroup');
-
-	if (precedingAttributeOrGroup) {
-		attributeOrGroup.element.insertAfter(precedingAttributeOrGroup.element);
-	} else  {
-		attributeOrGroup.element.prependTo(this.element);
-	}
-
-	this.element.trigger('cql:modified');
-	if (oldParentGroup) {
-		oldParentGroup.element.trigger('cql:modified');
-	}
-};
-
-/* Get the object instances for all direct child attributes */
-AttributeGroup.prototype.getAttributes = function() {
-	return this.element.children('.bl-token-attribute').map(function(i, el) {
-		return $(el).data('attribute');
-	}).get();
-};
-
-/* Get the object instances for all direct child attribute groups */
-AttributeGroup.prototype.getAttributeGroups = function() {
-	return this.element.children('.bl-token-attribute-group').map(function(i, el) {
-		return $(el).data('attributeGroup');
-	}).get();
-};
-
-AttributeGroup.prototype.getCql = function() {
-	const cqlStrings = [] as string[];
-
-	this.element.children('.bl-token-attribute, .bl-token-attribute-group').each(function(index, element) {
-		const instance = $(element).data('attributeGroup') || $(element).data('attribute');
-		const elemCql = instance.getCql();
-
-		if (elemCql && elemCql !== '') { // Do not push null, undefined or empty strings
-			cqlStrings.push(elemCql);
+		const joinedCql = cqlStrings.join(' ' + this.operator + ' ');
+		if (this.isRoot) {
+			return joinedCql;
+		} else {
+			return '(' + joinedCql  + ')';
 		}
-	});
-
-	const joinedCql = cqlStrings.join(' ' + this.operator + ' ');
-	if (this.isRoot) {
-		return joinedCql;
-	} else {
-		return '(' + joinedCql  + ')';
 	}
-};
+}
 
 // ----------------
 // Class Attribute
 // ----------------
 
-const Attribute = function(parentBuilder): void {
-	if (!(this instanceof Attribute)) { // not called using "new"
-		return new Attribute(parentBuilder);
-	}
-
-	this.builder = parentBuilder;
-	this.element = this._createElement();
-
-	const baseId = '#' + this.element.attr('id');
-	this.$controls = {
-		type: this.element.find(baseId + '_type'),
-		operator: this.element.find(baseId + '_operator'),
-		value_simple: this.element.find(baseId + '_value_simple'),
-		value_file: this.element.find(baseId + '_value_file'),
+class Attribute {
+	private readonly builder: QueryBuilder;
+	private readonly id = generateId('attribute');
+	private readonly idSelector = '#' + this.id;
+	public readonly element: JQuery<HTMLElement>;
+	private readonly $controls: {
+		type: JQuery<HTMLSelectElement>;
+		operator: JQuery<HTMLSelectElement>;
+		value_simple: JQuery<HTMLInputElement>;
+		value_file: JQuery<HTMLInputElement>;
 	};
-};
 
-Attribute.prototype._createElement = function() {
-	const view = $.extend({}, this.builder.settings.shared.view, this.builder.settings.attribute.view, { currentId: generateId('attribute') });
-	const partials = $.extend({}, templates.shared.partials, templates.attribute.partials);
+	constructor(builder: QueryBuilder) {
+		this.builder = builder;
+		this.element = this._createElement();
 
-	const $element = $(Mustache.render(templates.attribute.template, view, partials));
-	this._prepareElement($element);
-	return $element;
-};
-
-Attribute.prototype._prepareElement = function($element) {
-	const baseId = '#' + $element.attr('id');
-
-	$element.data('attribute', this);
-
-	$element.find('.selectpicker').selectpicker();
-	$element.find('.selectpicker, input, textarea').on('change', function() {$element.trigger('cql:modified');});
-
-	// Show/hide elements for the selected attribute type
-	// Such as case-sensitivity checkbox or comboboxes for when there is a predefined set of valid values
-	const self = this;
-	$element.find(baseId + '_type').on('loaded.bs.select changed.bs.select', function() {
-		const selectedValue = $(this).val();
-		self._updateShownOptions(selectedValue);
-	});
-
-	$element.find(baseId + '_delete').on('click', function() {
-		const parentGroup = self.element.parent().data('attributeGroup');
-		// Remove the selectpickers first so they can gracefully tear down, prevents unclosable menu when deleting attribute with a dropdown open
-		self.element.find('.selectpicker').each(function() { $(this).selectpicker('destroy'); });
-		self.element.detach();
-		parentGroup._removeIfEmpty();
-		parentGroup.element.trigger('cql:modified');
-	});
-
-	$element.find('.bl-input-upload').on('change', this._onUploadChanged.bind(this));
-
-	$element.find('.bl-token-attribute-file-edit').on('click', this._showModalEditor.bind(this));
-};
-
-Attribute.prototype._showModalEditor = function(/*event*/) {
-	const self = this;
-	const baseId = '#' + this.element.attr('id');
-	const $fileText = this.element.find(baseId + '_value_file');
-	const $modalTextArea = this.builder.modalEditor.find('textarea');
-
-	$modalTextArea.val($fileText.val()); // copy out current text to modal
-	this.builder.modalEditor.modal(); // show modal
-	this.builder.modalEditor.one('hide.bs.modal', function() { // copy out changes once closed
-		// A little dirty, to determine how the modal was closed, get the currently focused element
-		// If the modal was closed through a button click, the responsible button will have focus
-		// Only save the data if the clicked button as the data-save-edits attribute/property
-
-		if ($(document.activeElement).is('[data-dismiss][data-save-edits], [data-toggle][data-save-edits]')) {
-			$fileText
-				.val($modalTextArea.val())
-				.trigger('change');
-		} else if ($(document.activeElement).is('[data-dismiss][data-discard-value], [data-toggle][data-discard-value]')) {
-			self.element.find('.bl-input-upload').val(null).trigger('change');
-		}
-	});
-};
-
-Attribute.prototype._onUploadChanged = function(event) {
-	const baseId = '#' + this.element.attr('id');
-	const $inputContainer = this.element.find('.bl-token-attribute-main-input');
-	const $fileText = $inputContainer.find(baseId + '_value_file');
-	const $fileEditButton = $inputContainer.find('.bl-token-attribute-file-edit');
-
-	const file = event.target.files && event.target.files[0];
-	if (file == null) {
-		$inputContainer.removeAttr('data-has-file');
-		$fileEditButton.text('No file selected...');
-		$fileText.val('').trigger('change');
-	} else {
-		const fr = new FileReader();
-		fr.onload = function() {
-			$inputContainer.attr('data-has-file', '');
-			$fileEditButton.text(file.name);
-			$fileText.val(fr.result).trigger('change');
+		this.$controls = {
+			type: this.element.find(this.idSelector + '_type') as JQuery<HTMLSelectElement>,
+			operator: this.element.find(this.idSelector + '_operator') as JQuery<HTMLSelectElement>,
+			value_simple: this.element.find(this.idSelector + '_value_simple') as JQuery<HTMLInputElement>,
+			value_file: this.element.find(this.idSelector + '_value_file') as JQuery<HTMLInputElement>,
 		};
-		fr.readAsText(file);
 	}
-};
 
-Attribute.prototype._updateShownOptions = function(selectedValue) {
-	// First hide everything with a data-attribute-type value
-	// Then unhide the one for our new selectedValue
-	this.element.find('[data-attribute-type]').hide().filter('[data-attribute-type="' + selectedValue + '"]').show();
-};
+	private _createElement() {
+		const view = $.extend({}, this.builder.settings.shared.view, this.builder.settings.attribute.view, { currentId: this.id });
+		const partials = $.extend({}, templates.shared.partials, templates.attribute.partials);
 
-Attribute.prototype.set = function(controlName, val, additionalSelector) {
-	if (this.$controls[controlName]) {
-		setValue(this.$controls[controlName], val);
-	} else if (controlName === 'case') {
-		setValue(this.element.find('[data-attribute-type="' + additionalSelector + '"]')
-			.find('[data-attribute-role="case"]'), val);
-	} else if (controlName === 'val') {
-		if (!additionalSelector) { // Write to whatever is in focus/use right now
-			const hasFile	= this.element.find('.bl-token-attribute-main-input').is('[data-has-file]');
-			if (hasFile) {
-				setValue(this.$controls.value_file, val);
-			} else {
-				setValue(this.$controls.value_simple, val);
+		const $element = $(Mustache.render(templates.attribute.template, view, partials));
+		this._prepareElement($element);
+		return $element;
+	}
+
+	private _prepareElement($element: JQuery<HTMLElement>) {
+		$element.data('attribute', this);
+
+		$element.find('.selectpicker').selectpicker();
+		$element.find('.selectpicker, input, textarea').on('change', function() {$element.trigger('cql:modified');});
+
+		// Show/hide elements for the selected attribute type
+		// Such as case-sensitivity checkbox or comboboxes for when there is a predefined set of valid values
+		const self = this;
+		$element.find(this.idSelector + '_type').on('loaded.bs.select changed.bs.select', function() {
+			const selectedValue = $(this).val() as string;
+			self._updateShownOptions(selectedValue);
+		});
+
+		$element.find(this.idSelector + '_delete').on('click', function() {
+			const parentGroup = self.element.parent().data('attributeGroup') as AttributeGroup;
+			// Remove the selectpickers first so they can gracefully tear down, prevents unclosable menu when deleting attribute with a dropdown open
+			self.element.find('.selectpicker').each(function() { $(this).selectpicker('destroy'); });
+			self.element.detach();
+			parentGroup._removeIfEmpty();
+			parentGroup.element.trigger('cql:modified');
+		});
+
+		$element.find('.bl-input-upload').on('change', this._onUploadChanged.bind(this));
+
+		$element.find('.bl-token-attribute-file-edit').on('click', this._showModalEditor.bind(this));
+	}
+
+	private _showModalEditor(/*event*/) {
+		const self = this;
+		const $fileText = this.element.find(this.idSelector + '_value_file');
+		const $modalTextArea = this.builder.modalEditor.find('textarea');
+
+		$modalTextArea.val($fileText.val() as string); // copy out current text to modal
+		this.builder.modalEditor.modal(); // show modal
+		this.builder.modalEditor.one('hide.bs.modal', function() { // copy out changes once closed
+			// A little dirty, to determine how the modal was closed, get the currently focused element
+			// If the modal was closed through a button click, the responsible button will have focus
+			// Only save the data if the clicked button as the data-save-edits attribute/property
+
+			if ($(document.activeElement).is('[data-dismiss][data-save-edits], [data-toggle][data-save-edits]')) {
+				$fileText
+					.val($modalTextArea.val() as string)
+					.trigger('change');
+			} else if ($(document.activeElement).is('[data-dismiss][data-discard-value], [data-toggle][data-discard-value]')) {
+				self.element.find('.bl-input-upload').val('').trigger('change');
 			}
+		});
+	}
+
+	private _onUploadChanged(event: JQuery.Event<HTMLInputElement>) {
+		const $inputContainer = this.element.find('.bl-token-attribute-main-input');
+		const $fileText = $inputContainer.find(this.idSelector + '_value_file');
+		const $fileEditButton = $inputContainer.find('.bl-token-attribute-file-edit');
+
+		const file = event.target.files && event.target.files[0];
+		if (file == null) {
+			$inputContainer.removeAttr('data-has-file');
+			$fileEditButton.text('No file selected...');
+			$fileText.val('').trigger('change');
 		} else {
-			if (additionalSelector === 'file') {
-				setValue(this.$controls.value_file, val);
-			} else if (additionalSelector === 'simple') {
-				setValue(this.$controls.value_simple, val);
-			}
+			const fr = new FileReader();
+			fr.onload = function() {
+				$inputContainer.attr('data-has-file', '');
+				$fileEditButton.text(file.name);
+				$fileText.val(fr.result as string).trigger('change');
+			};
+			fr.readAsText(file);
 		}
 	}
-};
 
-Attribute.prototype.getCql = function() {
-
-	const hasFile = this.element.find('.bl-token-attribute-main-input').is('[data-has-file]');
-
-	const type = this.$controls.type.val();
-	const operator = this.$controls.operator.val();
-
-	const $optionsContainer = this.element.find('[data-attribute-type="' + type + '"]');
-	const caseSensitive = $optionsContainer.find('[data-attribute-role="case"]').is(':checked') || false;
-
-	let rawValue;
-	let values = [];
-	if (hasFile) {
-		rawValue = this.$controls.value_file.val() || '';
-		const trimmedLines = rawValue.trim().split(/\s*[\r\n]+\s*/g); // split on line breaks, ignore empty lines.
-		values = values.concat(trimmedLines);
-	} else {
-		rawValue = this.$controls.value_simple.val() || '';
-		values = values.concat(rawValue);
+	private _updateShownOptions(selectedValue: string) {
+		// First hide everything with a data-attribute-type value
+		// Then unhide the one for our new selectedValue
+		this.element.find('[data-attribute-type]').hide().filter('[data-attribute-type="' + selectedValue + '"]').show();
 	}
 
-	const callback = this.builder.settings.attribute.getCql;
-	return callback(type, operator, caseSensitive, values);
-};
+	public set(controlName: keyof Attribute['$controls']|'case'|'val', val: string|boolean, additionalSelector?: string) {
+		if (controlName === 'case') {
+			setValue(this.element.find('[data-attribute-type="' + additionalSelector + '"]')
+				.find('[data-attribute-role="case"]'), val);
+		} else if (controlName === 'val') {
+			if (!additionalSelector) { // Write to whatever is in focus/use right now
+				const hasFile = this.element.find('.bl-token-attribute-main-input').is('[data-has-file]');
+				if (hasFile) {
+					setValue(this.$controls.value_file, val);
+				} else {
+					setValue(this.$controls.value_simple, val);
+				}
+			} else {
+				if (additionalSelector === 'file') {
+					setValue(this.$controls.value_file, val);
+				} else if (additionalSelector === 'simple') {
+					setValue(this.$controls.value_simple, val);
+				}
+			}
+		} else if (this.$controls[controlName]) {
+			setValue(this.$controls[controlName], val);
+		}
+	}
+
+	public getCql() {
+		const hasFile = this.element.find('.bl-token-attribute-main-input').is('[data-has-file]');
+
+		const type = this.$controls.type.val() as string;
+		const operator = this.$controls.operator.val() as string;
+
+		const $optionsContainer = this.element.find('[data-attribute-type="' + type + '"]');
+		const caseSensitive = $optionsContainer.find('[data-attribute-role="case"]').is(':checked') || false;
+
+		let rawValue: string;
+		let values = [] as string[];
+		if (hasFile) {
+			rawValue = this.$controls.value_file.val() as string || '';
+			const trimmedLines = rawValue.trim().split(/\s*[\r\n]+\s*/g); // split on line breaks, ignore empty lines.
+			values = values.concat(trimmedLines);
+		} else {
+			rawValue = this.$controls.value_simple.val() as string || '';
+			values = values.concat(rawValue);
+		}
+
+		const callback = this.builder.settings.attribute.getCql;
+		return callback(type, operator, caseSensitive, values);
+	}
+}
 
 // ------------------
 // Utility functions
@@ -928,13 +938,13 @@ Attribute.prototype.getCql = function() {
 
 const generateId = function() {
 	let nextId = 0;
-	return function(prefix) {
+	return function(prefix: string) {
 		return prefix + '_' + nextId++;
 	};
 }();
 
 // Set values on input/select elements uniformly
-const setValue = function($element, val) {
+const setValue = function($element: JQuery<HTMLElement>, val: any) {
 	if (val != null) {
 		if (val.constructor !== Array) {
 			val = [val];
@@ -949,8 +959,8 @@ const setValue = function($element, val) {
 		if ($element.hasClass('selectpicker')) {
 			$element.selectpicker('val', val);
 
-			const actualValues = [].concat($element.selectpicker('val')) as string[]; // might not always be array
-			if (val.filter(function(v) {return v!=null && !actualValues.includes(v);}).length) {
+			const actualValues = ([] as string[]).concat($element.selectpicker('val')); // might not always be array
+			if (val.filter((v: any) => v!=null && !actualValues.includes(v)).length) {
 				throw new Error('Could not set value(s) ' + val.join() + ' on selectpicker - list contains invalid values (use null to clear)');
 			}
 		} else {
@@ -975,6 +985,6 @@ const setValue = function($element, val) {
 // exports
 // ---------------
 
-export default function($rootElement, options) {
+export default function($rootElement: JQuery<HTMLElement>, options: QueryBuilderOptions) {
 	return new QueryBuilder($rootElement, options);
 }

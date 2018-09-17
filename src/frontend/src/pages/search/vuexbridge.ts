@@ -1,19 +1,16 @@
 import $ from 'jquery';
 import URI from 'urijs';
 
-// import {getState, store, actions, SearchDisplaySettings, UrlPageState, PageState} from './state';
-
-import {store, getState, modules, actions, RootState, UrlPageState} from '@/store';
+import {store, getState, actions, RootState, UrlPageState} from '@/store';
+import * as ResultsStore from '@/store/results';
+import * as SettingsStore from '@/store/settings';
+import * as FormStore from '@/store/form';
 
 import {populateQueryBuilder} from '@/search';  // FIXME extract into querybuilder module
 import { FilterField, FilterType } from '@/types/pagetypes';
 import { cancelSearch } from '@/modules/singlepage-bls';
 import { refreshTab, clearResults, showSearchIndicator } from '@/modules/singlepage-interface';
 import {debugLog} from '@/utils/debug';
-
-const globalActions = modules.global.actions;
-const formActions = modules.form.actions;
-const resultsActions = modules.results.actions;
 
 /*
 	This is some ugly-ish code that implements some one- and two-way binding between oldschool normal html elements and the vuex store.
@@ -35,7 +32,7 @@ function changeText($input: JQuery<HTMLInputElement>, value: string|null|number)
 }
 /** Set the new value and trigger a change event, but only when the value is different */
 function changeSelect($input: JQuery<HTMLSelectElement>, value: string|string[]|null) {
-	function eq(a,b) {
+	function eq(a: any, b: any) {
 		if (a instanceof Array && b instanceof Array) {
 			if (a.length!==b.length) { // assert same length
 				return false;
@@ -72,11 +69,11 @@ $(document).ready(() => {
 	debugLog('Begin connecting listeners to store');
 	{
 		const $pageSize = $('#resultsPerPage') as JQuery<HTMLSelectElement>;
-		store.watch(state => state.globalSettings.pageSize, v => changeSelect($pageSize, v+''), {immediate: true});
+		store.watch(state => state.settings.pageSize, v => changeSelect($pageSize, v+''), {immediate: true});
 		$pageSize.on('change', () => {
 			const v = Number.parseInt($pageSize.selectpicker('val') as string, 10);
-			if (v !== getState().globalSettings.pageSize) {
-				modules.global.actions.pageSize(v);
+			if (v !== SettingsStore.getState().pageSize) {
+				SettingsStore.actions.pageSize(v);
 			}
 		});
 	}
@@ -84,50 +81,50 @@ $(document).ready(() => {
 	{
 		// TODO enum
 		const $sampleMode = $('#sampleMode') as JQuery<HTMLSelectElement>;
-		store.watch(state => state.globalSettings.sampleMode, v => changeSelect($sampleMode, v), {immediate: true});
+		store.watch(state => state.settings.sampleMode, v => changeSelect($sampleMode, v), {immediate: true});
 		$sampleMode.on('change', () => {
 			const v = $sampleMode.selectpicker('val') as string;
-			if (v !== getState().globalSettings.sampleMode) {
-				globalActions.sampleMode(v as any);
+			if (v !== SettingsStore.getState().sampleMode) {
+				SettingsStore.actions.sampleMode(v as any);
 			}
 		});
 	}
 
 	{
 		const $sampleSize = $('#sampleSize') as JQuery<HTMLInputElement>;
-		store.watch(state => state.globalSettings.sampleSize,v => changeText($sampleSize, v+''), {immediate: true});
+		store.watch(state => state.settings.sampleSize,v => changeText($sampleSize, v+''), {immediate: true});
 		$sampleSize.on('change keyup', () => {
 			let n: number|null = Number.parseInt($sampleSize.val() as string, 10);
 			if (isNaN(n)) { n = null; }
 
-			if (n !== getState().globalSettings.sampleSize) {
-				globalActions.sampleSize(n);
+			if (n !== SettingsStore.getState().sampleSize) {
+				SettingsStore.actions.sampleSize(n);
 			}
 		});
 	}
 
 	{
 		const $sampleSeed = $('#sampleSeed') as JQuery<HTMLInputElement>;
-		store.watch(state => state.globalSettings.sampleSeed, v => changeText($sampleSeed, v), {immediate: true});
+		store.watch(state => state.settings.sampleSeed, v => changeText($sampleSeed, v), {immediate: true});
 		$sampleSeed.on('change', () => {
 			let n: number|null = Number.parseInt($sampleSeed.val() as string, 10);
 			if (isNaN(n)) { n = null; }
 
-			if (n !== getState().globalSettings.sampleSeed) {
-				globalActions.sampleSeed(n);
+			if (n !== SettingsStore.getState().sampleSeed) {
+				SettingsStore.actions.sampleSeed(n);
 			}
 		});
 	}
 
 	{
 		const $wordsAroundHit = $('#wordsAroundHit')  as JQuery<HTMLInputElement>;
-		store.watch(state => state.globalSettings.wordsAroundHit, v => changeText($wordsAroundHit, v), {immediate: true});
+		store.watch(state => state.settings.wordsAroundHit, v => changeText($wordsAroundHit, v), {immediate: true});
 		$wordsAroundHit.on('change keyup', e => {
 			let n: number|null = Number.parseInt($wordsAroundHit.val() as string, 10);
 			if (isNaN(n)) { n = null; }
 
-			if (n !== getState().globalSettings.wordsAroundHit) {
-				globalActions.wordsAroundHit(n);
+			if (n !== SettingsStore.getState().wordsAroundHit) {
+				SettingsStore.actions.wordsAroundHit(n);
 			}
 		});
 	}
@@ -143,7 +140,7 @@ $(document).ready(() => {
 		}, {immediate: true});
 		$querybox.on('change keyup', e => {
 			preventNextUpdate = true;
-			formActions.pattern.cql($querybox.val() as string);
+			FormStore.actions.pattern.cql($querybox.val() as string);
 		});
 	}
 
@@ -159,7 +156,7 @@ $(document).ready(() => {
 		$querybuilder.on('cql:modified', () => {
 			const pattern = $querybuilder.data('builder').getCql();
 			lastPattern = pattern;
-			formActions.pattern.queryBuilder(pattern);
+			FormStore.actions.pattern.queryBuilder(pattern);
 		});
 	}
 
@@ -174,7 +171,7 @@ $(document).ready(() => {
 		}, {immediate: true});
 		$within.on('change', () => {
 			const value = $within.find('input:checked').val() as string || null;
-			formActions.pattern.simple.within(value);
+			FormStore.actions.pattern.simple.within(value);
 		});
 	}
 
@@ -197,7 +194,7 @@ $(document).ready(() => {
 			}, {immediate: true});
 
 			// UI -> Store
-			$textOrSelect.on('change', () => formActions.pattern.simple.annotation({
+			$textOrSelect.on('change', () => FormStore.actions.pattern.simple.annotation({
 				id,
 				value: $textOrSelect.val() as string || ''
 			}));
@@ -211,14 +208,14 @@ $(document).ready(() => {
 						// Replace all whitespace with pipes,
 						// this is due to the rather specific way whitespace in the simple search property fields is treated (see singlepage-bls.js:getPatternString)
 						// TODO discuss how we treat these fields with Jan/Katrien, see https://github.com/INL/corpus-frontend/issues/18
-						formActions.pattern.simple.annotation({
+						FormStore.actions.pattern.simple.annotation({
 							id,
 							value: (fr.result as string).replace(/\s+/g, '|'),
 						});
 					};
 					fr.readAsText(file);
 				} else {
-					formActions.pattern.simple.annotation({
+					FormStore.actions.pattern.simple.annotation({
 						id,
 						value: '', // clear value when the file is cleared
 					});
@@ -227,7 +224,7 @@ $(document).ready(() => {
 
 			// UI -> Store
 			$caseInput.on('change', function() {
-				formActions.pattern.simple.annotation({
+				FormStore.actions.pattern.simple.annotation({
 					id,
 					case: $caseInput.is(':checked')
 				});
@@ -271,7 +268,7 @@ $(document).ready(() => {
 					values = ([] as string[]).concat($inputs.first().val() as string | string[])
 						.filter(v => !!v); // Remove null, empty strings
 				}
-				formActions.filter({id, values});
+				FormStore.actions.filter({id, values});
 			});
 		});
 	}
@@ -289,141 +286,137 @@ $(document).ready(() => {
 			}
 		});
 
-		$simple.on('show.bs.tab', () => modules.form.actions.activePattern('simple'));
-		$querybuilder.on('show.bs.tab', () => modules.form.actions.activePattern('queryBuilder'));
-		$cql.on('show.bs.tab', () => modules.form.actions.activePattern('cql'));
+		$simple.on('show.bs.tab', () => FormStore.actions.activePattern('simple'));
+		$querybuilder.on('show.bs.tab', () => FormStore.actions.activePattern('queryBuilder'));
+		$cql.on('show.bs.tab', () => FormStore.actions.activePattern('cql'));
 	}
 
-	store.watch(state => state.resultSettings.viewedResults, v => {
+	store.watch(state => state.viewedResults, v => {
 		$('#results').toggle(!!v);
 	}, {immediate: true});
 
-	{
-		$('#tabHits, #tabDocs').each((i, el) => {
-			const $tab = $(el);
-			const $label = $(`a[href="#${$tab.attr('id')}"`);
+	// {
+	// 	$('#tabHits, #tabDocs').each((i, el) => {
+	// 		const $tab = $(el);
+	// 		const $label = $(`a[href="#${$tab.attr('id')}"`);
 
-			const viewId = $tab.is($('#tabHits')) ? 'hits' : 'docs';
-			const viewActions = modules.results[viewId].actions;
-			const getViewState = () => getState().resultSettings.settings[viewId];
+	// 		const viewId = $tab.is($('#tabHits')) ? 'hits' : 'docs';
+	// 		const viewStore = ResultsStore[viewId];
 
-			// TODO result view tabs should *really* be a vue component by this point
-			/** Are the search results within this tab up-to-date */
-			function dirty(state?: boolean) {
-				if (state == null) {
-					const v = $tab.data('dirty');
-					return v != null ? v : true;
-				} else {
-					$tab.data('dirty', state);
-				}
-			}
+	// 		// TODO result view tabs should *really* be a vue component by this point
+	// 		/** Are the search results within this tab up-to-date */
+	// 		function dirty(state?: boolean) {
+	// 			if (state == null) {
+	// 				const v = $tab.data('dirty');
+	// 				return v != null ? v : true;
+	// 			} else {
+	// 				$tab.data('dirty', state);
+	// 			}
+	// 		}
 
-			// Pagination
-			$tab.on('click', '[data-page]', function() { // No arrow func - need context
-				const page = Number.parseInt($(this).data('page'), 10);
-				if (getViewState().page !== page) {
-					viewActions.page(page);
-				}
-			});
-			store.watch(state => state.resultSettings.settings[viewId].page, page => {
-				// Only updates UI, should not be any handlers (other than directly above) attached to the ui element
-				$tab.find(`.pagination [data-page="${page}"]`).click();
-			}, {immediate: true});
+	// 		// Pagination
+	// 		$tab.on('click', '[data-page]', function() { // No arrow func - need context
+	// 			const page = Number.parseInt($(this).data('page'), 10);
+	// 			if (viewStore.getState().page !== page) {
+	// 				viewStore.actions.page(page);
+	// 			}
+	// 		});
+	// 		store.watch(state => state.results[viewId].page, page => {
+	// 			// Only updates UI, should not be any handlers (other than directly above) attached to the ui element
+	// 			$tab.find(`.pagination [data-page="${page}"]`).click();
+	// 		}, {immediate: true});
 
-			// Case sensitive grouping
-			const $caseSensitive = $tab.find('.casesensitive') as JQuery<HTMLInputElement>;
-			$caseSensitive.on('change', () => {
-				const sensitive = $caseSensitive.is(':checked');
-				viewActions.caseSensitive(sensitive);
-			});
-			store.watch(state => state.resultSettings.settings[viewId].caseSensitive, checked => {
-				changeCheck($caseSensitive, checked);
-			}, {immediate: true});
+	// 		// Case sensitive grouping
+	// 		const $caseSensitive = $tab.find('.casesensitive') as JQuery<HTMLInputElement>;
+	// 		$caseSensitive.on('change', () => {
+	// 			const sensitive = $caseSensitive.is(':checked');
+	// 			viewStore.actions.caseSensitive(sensitive);
+	// 		});
+	// 		store.watch(state => state.results[viewId].caseSensitive, checked => {
+	// 			changeCheck($caseSensitive, checked);
+	// 		}, {immediate: true});
 
-			// Grouping settings
-			const $groupSelect = $tab.find('.groupselect') as JQuery<HTMLSelectElement>;
-			$groupSelect.on('change', () => viewActions.groupBy($groupSelect.selectpicker('val') as string[]));
-			store.watch(state => state.resultSettings.settings[viewId].groupBy, v => changeSelect($groupSelect, v), {immediate: true});
+	// 		// Grouping settings
+	// 		const $groupSelect = $tab.find('.groupselect') as JQuery<HTMLSelectElement>;
+	// 		$groupSelect.on('change', () => viewStore.actions.groupBy($groupSelect.selectpicker('val') as string[]));
+	// 		store.watch(state => state.results[viewId].groupBy, v => changeSelect($groupSelect, v), {immediate: true});
 
-			// Sorting settings, only bind from ui to state,
-			// Nothing in UI to indicate sorting -- https://github.com/INL/corpus-frontend/issues/142
-			$tab.on('click', '[data-bls-sort]', function() {
-				let sort = $(this).data('blsSort') as string;
-				if (sort === getViewState().sort) {
-					sort = '-'+sort;
-				}
-				viewActions.sort(sort);
-				return false; // click handling
-			});
+	// 		// Sorting settings, only bind from ui to state,
+	// 		// Nothing in UI to indicate sorting -- https://github.com/INL/corpus-frontend/issues/142
+	// 		$tab.on('click', '[data-bls-sort]', function() {
+	// 			let sort = $(this).data('blsSort') as string;
+	// 			if (sort === viewStore.getState().sort) {
+	// 				sort = '-'+sort;
+	// 			}
+	// 			viewStore.actions.sort(sort);
+	// 			return false; // click handling
+	// 		});
 
-			// viewgroup
-			const $resultgroupdetails = $tab.find('.resultgroupdetails');
-			const $resultgroupname = $tab.find('.resultgroupname');
-			// delegated handler for .viewconcordances, elements are dynamically created
-			$tab.on('click', '.viewconcordances', function() {
-				const id = $(this).data('groupId');
-				viewActions.viewGroup(id);
-			});
-			$tab.on('click', '.clearviewgroup', function() {
-				viewActions.viewGroup(null);
-			});
-			store.watch(state => state.resultSettings.settings[viewId].viewGroup, v => {
-				$resultgroupdetails.toggle(v != null);
-				$resultgroupname.text(v || '');
-			}, {immediate: true});
+	// 		// viewgroup
+	// 		const $resultgroupdetails = $tab.find('.resultgroupdetails');
+	// 		const $resultgroupname = $tab.find('.resultgroupname');
+	// 		// delegated handler for .viewconcordances, elements are dynamically created
+	// 		$tab.on('click', '.viewconcordances', function() {
+	// 			const id = $(this).data('groupId');
+	// 			viewStore.actions.viewGroup(id);
+	// 		});
+	// 		$tab.on('click', '.clearviewgroup', function() {
+	// 			viewStore.actions.viewGroup(null);
+	// 		});
+	// 		store.watch(state => state.results[viewId].viewGroup, v => {
+	// 			$resultgroupdetails.toggle(v != null);
+	// 			$resultgroupname.text(v || '');
+	// 		}, {immediate: true});
 
-			// Watch entire tab-local state and restart search when required.
-			// Also need to watch some global parameters that are instantly reactive
-			// NOTE: is called only once per vue tick (i.e. multiple property changes can be lumped together, such as when clearing the page)
-			store.watch(state => ({
-				viewParameters: state.resultSettings.settings[viewId],
-				globalParameters: state.globalSettings,
-				submittedFormParameters: state.form.submittedParameters
-			}), (cur, old) => {
-				debugLog(`dynamic parameter changed, marking results view '${viewId}' dirty`);
-				// otherwise, mark dirty, and then refresh and mark clean if it's the current tab
-				dirty(true);
-				if (getState().resultSettings.viewedResults === viewId) {
-					refreshTab($tab);
-					dirty(false);
-				} else {
-					// Tab is not visible
-					// for visible tabs, clearResults is called with a delay if the refresh takes too long
-					// to prevent the page from jumping around momentarily while new results are fetched
-					clearResults($tab);
-				}
-			}, {deep: true});
+	// 		// Watch entire tab-local state and restart search when required.
+	// 		// Also need to watch some global parameters that are instantly reactive
+	// 		// NOTE: is called only once per vue tick (i.e. multiple property changes can be lumped together, such as when clearing the page)
+	// 		store.watch(state => ({
+	// 			viewParameters: state.results[viewId],
+	// 			globalParameters: state.settings,
+	// 			submittedFormParameters: state.form.submittedParameters
+	// 		}), (cur, old) => {
+	// 			debugLog(`dynamic parameter changed, marking results view '${viewId}' dirty`);
+	// 			// otherwise, mark dirty, and then refresh and mark clean if it's the current tab
+	// 			dirty(true);
+	// 			if (getState().viewedResults === viewId) {
+	// 				refreshTab($tab);
+	// 				dirty(false);
+	// 			} else {
+	// 				// Tab is not visible
+	// 				// for visible tabs, clearResults is called with a delay if the refresh takes too long
+	// 				// to prevent the page from jumping around momentarily while new results are fetched
+	// 				clearResults($tab);
+	// 			}
+	// 		}, {deep: true});
 
-			// Main tab opening
-			// TODO this is a clutch - we need to attach this listener after attaching
-			// the parameter listeners above, so that the tab is marked as dirty before
-			// we process the open event
-			// If we don't do this, we will miss refreshes when both the opened tab and some other
-			// parameter change in the same tick.
-			// (unless we always refresh the tab on opening, but that's a performance hog)
-			$label.on('show.bs.tab', () => resultsActions.viewedResults(viewId));
-			store.watch(state => state.resultSettings.viewedResults, v => {
-				if (v === viewId) {
-					$label.tab('show');
-					if (dirty()) {
-						debugLog('changed to a stale tab, refreshing');
-						refreshTab($tab);
-						dirty(false);
-					} else {
-						debugLog('changed to an up-to-date tab, ignoring refresh');
-					}
-				}
-			}, {immediate: true});
+	// 		// Main tab opening
+	// 		// TODO this is a clutch - we need to attach this listener after attaching
+	// 		// the parameter listeners above, so that the tab is marked as dirty before
+	// 		// we process the open event
+	// 		// If we don't do this, we will miss refreshes when both the opened tab and some other
+	// 		// parameter change in the same tick.
+	// 		// (unless we always refresh the tab on opening, but that's a performance hog)
+	// 		$label.on('show.bs.tab', () => actions.viewedResults(viewId));
+	// 		store.watch(state => state.viewedResults, v => {
+	// 			if (v === viewId) {
+	// 				$label.tab('show');
+	// 				if (dirty()) {
+	// 					debugLog('changed to a stale tab, refreshing');
+	// 					refreshTab($tab);
+	// 					dirty(false);
+	// 				} else {
+	// 					debugLog('changed to an up-to-date tab, ignoring refresh');
+	// 				}
+	// 			}
+	// 		}, {immediate: true});
 
-		});
-	}
+	// 	});
+	// }
 
 	// Reset & history navigation
 	$('#mainForm').on('reset', () => {
-		globalActions.reset();
-		formActions.reset();
-		resultsActions.reset();
-
+		actions.reset();
 		cancelSearch();
 
 		// TODO map PageState to url and autoupdate on appropriate state updates
@@ -446,7 +439,6 @@ $(document).ready(() => {
 	});
 
 	// TODO restore pattern tab
-	// TODO bind activePattern
 
 	debugLog('connected state to page');
 });

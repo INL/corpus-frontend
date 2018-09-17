@@ -48,7 +48,7 @@ export default function(input: string): Result {
 	let pos = 0;
 	let cur = '';
 
-	function errorMsg(msg) {
+	function errorMsg(msg: string) {
 		return msg + ' at ' + pos;
 	}
 

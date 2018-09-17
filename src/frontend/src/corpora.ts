@@ -52,7 +52,7 @@ function createTrigger<K extends keyof DataEventPayloadMap>(eventType: K, $targe
 	};
 }
 
-function createHandler<K extends keyof DataEventPayloadMap>({selector, event, handler}: {selector?: string,event: K,handler: (payload: DataEventPayloadMap[K]) => void}) {
+function createHandler<K extends keyof DataEventPayloadMap>({selector, event, handler}: {selector?: string,event: K,handler: (this: JQuery<HTMLElement>, payload: DataEventPayloadMap[K]) => void}) {
 	const $elements = selector ? $(selector) : undefined;
 
 	$root.on(event, function(jqEvent, payload) {
@@ -61,12 +61,12 @@ function createHandler<K extends keyof DataEventPayloadMap>({selector, event, ha
 				handler.call($(this), payload);
 			});
 		} else {
-			handler.call(undefined, payload);
+			handler.call($(), payload);
 		}
 	});
 }
 
-function createHandlerOnce<K extends keyof DataEventPayloadMap>({selector, event, handler}: {selector?: string, event: K, handler: (payload: DataEventPayloadMap[K]) => void}) {
+function createHandlerOnce<K extends keyof DataEventPayloadMap>({selector, event, handler}: {selector?: string, event: K, handler: (this: JQuery<HTMLElement>, payload: DataEventPayloadMap[K]) => void}) {
 	const $elements = selector ? $(selector) : undefined;
 
 	$root.one(event, function(jqEvent, payload) {
@@ -355,8 +355,8 @@ $('#share-corpus-form').on('submit', function(event) {
 
 // Abbreviate a number, i.e. 3426 becomes 3,4K,
 // 2695798 becomes 2,6M, etc.
-function abbrNumber(n) {
-	if (n === undefined) {
+function abbrNumber(n: number|null|undefined) {
+	if (n == null) {
 		return '';
 	}
 	let unit = '';
@@ -376,7 +376,7 @@ function abbrNumber(n) {
 // Return only the date part of a date/time string,
 // and flip it around, e.g.:
 // "1970-02-01 00:00:00" becomes "01-02-1970"
-function dateOnly(dateTimeString) {
+function dateOnly(dateTimeString: string) {
 	if (dateTimeString) {
 		return dateTimeString.replace(/^(\d+)-(\d+)-(\d+) .*$/, '$3-$2-$1');
 	} else {
@@ -388,14 +388,14 @@ function dateOnly(dateTimeString) {
  * Keep requesting the status of the current index until it's no longer indexing.
  * The update handler will be called periodically while the status is "indexing", and then once more when the status has changed to something other than "indexing".
  *
- * @param {string} indexId full id including any username
+ * @param indexId full id including any username
  */
-function refreshIndexStatusWhileIndexing(indexId) {
+function refreshIndexStatusWhileIndexing(indexId: string) {
 	const statusUrl = blsUrl + indexId + '/status/';
 
-	let timeoutHandle;
+	let timeoutHandle: number;
 
-	function success(index) {
+	function success(index: BLTypes.BLIndex) {
 		triggers.updateCorpus(normalizeIndex(index, indexId));
 
 		if (index.status !== 'indexing') {
@@ -532,7 +532,7 @@ function showError(msg: string) {
 	}, 500);
 }
 
-function showXHRError(message: string, callback?: () => void) {
+function showXHRError(message: string, callback?: () => void): JQueryAjaxSettings['error'] {
 	return function(jqXHR, textStatus, errorThrown) {
 		let errorMsg;
 
@@ -658,13 +658,13 @@ function initFileUpload() {
 		});
 	}).trigger('change'); // init labels
 
-	function preventModalCloseEvent(event) {
+	function preventModalCloseEvent(event: JQuery.Event) {
 		event.preventDefault();
 		event.stopPropagation();
 		return false;
 	}
 
-	function handleUploadProgress(event) {
+	function handleUploadProgress(this: XMLHttpRequest, event: ProgressEvent) {
 		const progress = event.loaded / event.total * 100;
 		$progress
 			.text('Uploading... (' +  Math.floor(progress) + '%)')
@@ -686,7 +686,7 @@ function initFileUpload() {
 		refreshIndexStatusWhileIndexing(uploadToCorpus.id);
 	}
 
-	function handleIndexingComplete(event) {
+	function handleIndexingComplete(this: XMLHttpRequest, event: ProgressEvent) {
 		if (this.status !== 200) {
 			return handleError.call(this, event);
 		}
@@ -706,12 +706,12 @@ function initFileUpload() {
 		});
 	}
 
-	function handleError(/*event*/) {
+	function handleError(this: XMLHttpRequest/*event*/) {
 		let msg = 'Could not add data to "' + uploadToCorpus.displayName + '"';
 		if (this.responseText) {
 			msg += ': ' + JSON.parse(this.responseText).error.message;
-		} else if (this.textStatus) {
-			msg += ': ' + this.textStatus;
+		} else if (this.statusText) {
+			msg += ': ' + this.statusText;
 		} else {
 			msg += ': unknown error (are you trying to upload too much data?)';
 		}
@@ -818,10 +818,10 @@ function initNewCorpus() {
  * Show a dialog with custom message, title, and confirm button html
  * Call a callback, only if the confirm button is pressed.
  *
- * @param {string} title
- * @param {string} message
- * @param {string} buttontext
- * @param {any} fnCallback
+ * @param title
+ * @param message
+ * @param buttontext
+ * @param fnCallback
  */
 const confirmDialog = (function() {
 	const $modal = $('#modal-confirm');
@@ -829,7 +829,7 @@ const confirmDialog = (function() {
 	const $title = $modal.find('#modal-confirm-title');
 	const $message = $modal.find('#modal-confirm-message');
 
-	return function(title, message, buttontext, fnCallback) {
+	return function(title: string, message: string, buttontext: string, fnCallback: () => void) {
 		$title.html(title);
 		$message.html(message);
 		$confirmButton.html(buttontext);
@@ -843,7 +843,7 @@ const confirmDialog = (function() {
 	};
 })();
 
-function generateShortName(name) {
+function generateShortName(name: string) {
 	return name.replace(/[^\w]/g, '-').replace(/^[_\d]+/, '');
 }
 
@@ -857,17 +857,16 @@ function initNewFormat() {
 
 	const $formatName = $('#format_name');
 	const $formatType = $('#format_type');
-	const editor = CodeMirror.fromTextArea($('#format_editor')[0], {
+	const editor = CodeMirror.fromTextArea($('#format_editor')[0] as HTMLTextAreaElement, {
 		mode: 'yaml',
 		lineNumbers: true,
-		matchBrackets: true,
 
 		viewportMargin: 100 // render 100 lines above and below the visible editor window
 	});
 
 	const $confirmButton = $('#format_save');
 
-	function showFormatError(text) {
+	function showFormatError(text: string) {
 		$('#format_error').text(text).show();
 	}
 	function hideFormatError() {
@@ -932,7 +931,7 @@ function initNewFormat() {
 			const fr = new FileReader();
 
 			fr.onload = function() {
-				editor.setValue(fr.result);
+				editor.setValue(fr.result as string);
 			};
 			fr.readAsText(file);
 		}

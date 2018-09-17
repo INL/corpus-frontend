@@ -318,28 +318,7 @@
     <p>(for assistance, please contact <a href='mailto:servicedesk@ivdnt.org'>servicedesk@ivdnt.org</a>)</p>
 </div>
 
-<div class="col-xs-12 contentbox" id="results">
-    <div id='totalsReport'>
-        <div id="totalsReportText" class="pull-right"></div>
-        <span id='totalsSpinner' class="fa fa-spinner fa-spin searchIndicator" style="font-size:16px; padding: 4px; margin: 0px 10px;"></span>
-        <div id="totalsLimitedWarning" class="text-danger text-center" style="margin: 0px 10px;">
-            <span class="fa fa-exclamation-triangle text-danger" style="font-size: 20px;"></span>
-            <br>
-            Too many results!
-        </div>
-    </div>
-
-    <!-- No initially active tab by design -->
-    <ul id="resultTabs" class="nav nav-tabs">
-        <li><a href="#tabHits" data-toggle="tab">Per Hit</a></li>
-        <li><a href="#tabDocs" data-toggle="tab">Per Document</a></li>
-    </ul>
-
-    <div id="resultTabsContent" class="tab-content">
-        <div id="tabHits" class="tab-pane"><div></div></div>
-        <div id="tabDocs" class="tab-pane"><div></div></div>
-    </div>
-</div>
+<div id="results"></div>
 </form>
 
 <ul id="tlyPageGuide" data-tourtitle="Searching the corpus">

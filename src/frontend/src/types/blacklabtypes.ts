@@ -319,11 +319,11 @@ export interface BlHitResults {
 
 export type BLSearchResult = BlHitResults|BLDocResults|BLHitGroupResults|BLDocGroupResults;
 
-export const isHitResults = (d): d is BlHitResults => d && d.docInfos && d.hits;
-export const isDocResults = (d): d is BLDocResults => d && d.docs;
-export const isHitGroups = (d): d is BLHitGroupResults => d && d.hitGroups;
-export const isDocGroups = (d): d is BLDocGroupResults => d && d.docGroups;
-export const isGroups = (d): d is BLHitGroupResults|BLDocGroupResults => isHitGroups(d) || isDocGroups(d);
+export const isHitResults = (d: any): d is BlHitResults => d && d.docInfos && d.hits;
+export const isDocResults = (d: any): d is BLDocResults => d && d.docs;
+export const isHitGroups = (d: any): d is BLHitGroupResults => d && d.hitGroups;
+export const isDocGroups = (d: any): d is BLDocGroupResults => d && d.docGroups;
+export const isGroups = (d: any): d is BLHitGroupResults|BLDocGroupResults => isHitGroups(d) || isDocGroups(d);
 
 // -----------------------
 // Blacklab derived types

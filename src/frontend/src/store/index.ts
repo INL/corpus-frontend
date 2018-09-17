@@ -12,27 +12,40 @@ import parseCql from '@/utils/cqlparser';
 import parseLucene from '@/utils/lucene2filterparser';
 import {debugLog} from '@/utils/debug';
 
-import * as FormModule from '@/store/search/formModule';
-import * as GlobalSettingsModule from '@/store/search/globalSettingsModule';
-import * as ResultsSettingsModule from '@/store/search/resultsModule';
-import * as IndexModule from '@/store/search/indexModule';
-import cqlparser from '@/utils/cqlparser';
+import * as FormModule from '@/store/form';
+import * as SettingsModule from '@/store/settings';
+import * as ResultsModule from '@/store/results';
+import * as IndexModule from '@/store/corpus';
 
 Vue.use(Vuex);
 
 /** All unknown/unspecified properties must be initialized to null to enable state reactivity */
-export type RootState = {
+type ChildRootState = {
 	form: FormModule.ModuleRootState;
-	globalSettings: GlobalSettingsModule.ModuleRootState;
-	resultSettings: ResultsSettingsModule.ModuleRootState;
+	settings: SettingsModule.ModuleRootState;
+	results: ResultsModule.ModuleRootState;
 	index: IndexModule.ModuleRootState;
 };
 
-/** Not all state information is contained in the url, so only some properties can be extracted */
-type UrlPageStateResult = Pick<RootState, 'form'|'globalSettings'|'resultSettings'>;
+type OwnRootState = {
+	viewedResults: null|ResultsModule.ViewId
+};
+
+export type RootState = ChildRootState&OwnRootState;
+
+const ownInitialState: OwnRootState = {
+	viewedResults: null
+};
+
+/**
+ * Not all state information is contained in the url,
+ * create a new type that captures only those parts that can and should be extracted from the url.
+ * For now this is everything, except the indexmetadata
+ */
+type UrlPageStateResult = Pick<RootState, Exclude<keyof RootState, 'index'>>;
 
 /** Decode the current url into a valid page state configuration. Keep everything private except the getters */
-export class UrlPageState implements UrlPageStateResult {
+export class UrlPageState {
 	/**
 	 * Path segments of the url this was constructed with, typically something like ['corpus-frontend', corpusname, 'search', ('docs'|'hits')?]
 	 * But might contain extra leading segments if the application is proxied.
@@ -64,7 +77,7 @@ export class UrlPageState implements UrlPageStateResult {
 	}
 
 	@memoize
-	get globalSettings(): GlobalSettingsModule.ModuleRootState {
+	get settings(): SettingsModule.ModuleRootState {
 		return {
 			operation: this.viewedResults,
 			pageSize: this.pageSize,
@@ -75,32 +88,15 @@ export class UrlPageState implements UrlPageStateResult {
 		};
 	}
 
-	@memoize
-	get hitsSettings() {
-		return this.getLocalSearchParameters('hits');
-	}
-
-	@memoize
-	get docsSettings() {
-		return this.getLocalSearchParameters('docs');
-	}
-
-	@memoize
-	get resultSettings() {
-		return {
-			viewedResults: this.viewedResults,
-			settings: {
-				hits: this.getLocalSearchParameters('hits'),
-				docs: this.getLocalSearchParameters('docs'),
-			}
-		};
-	}
-
 	public get(): UrlPageStateResult {
 		return {
 			form: this.form,
-			globalSettings: this.globalSettings,
-			resultSettings: this.resultSettings,
+			settings: this.settings,
+			results: {
+				hits: this.getLocalSearchParameters('hits'),
+				docs: this.getLocalSearchParameters('docs'),
+			},
+			viewedResults: this.viewedResults
 		};
 	}
 
@@ -124,7 +120,7 @@ export class UrlPageState implements UrlPageStateResult {
 			return {};
 		}
 		try {
-			return parseLucene(luceneString).reduce((acc, v) => {acc[v.id] = v; return acc;}, {});
+			return parseLucene(luceneString).reduce((acc, v) => {acc[v.id] = v; return acc;}, {} as {[key: string]: FilterField});
 		} catch (error) {
 			debugLog('Cannot decode lucene query ', luceneString, error);
 			return {};
@@ -143,13 +139,13 @@ export class UrlPageState implements UrlPageStateResult {
 
 	@memoize
 	get pageSize(): number {
-		return this.getNumber('number', GlobalSettingsModule.defaults.pageSize, v => [20,50,100,200].includes(v) ? v : GlobalSettingsModule.defaults.pageSize)!;
+		return this.getNumber('number', SettingsModule.defaults.pageSize, v => [20,50,100,200].includes(v) ? v : SettingsModule.defaults.pageSize)!;
 	}
 
 	@memoize
 	get pattern(): {[key: string]: PropertyField} {
-		function isCase(value) { return value.startsWith('(?-i)') || value.startsWith('(?c)'); }
-		function stripCase(value) { return value.substr(value.startsWith('(?-i)') ? 5 : 4); }
+		function isCase(value: string) { return value.startsWith('(?-i)') || value.startsWith('(?c)'); }
+		function stripCase(value: string) { return value.substr(value.startsWith('(?-i)') ? 5 : 4); }
 
 		const pattString = this.getString('patt', null, v=>v?v:null);
 		if (pattString == null) {
@@ -220,7 +216,7 @@ export class UrlPageState implements UrlPageStateResult {
 					value: makeRegexWildcard(values.join(' '))
 				} as PropertyField;
 			})
-			.reduce((acc, v) => {acc[v.id] = v; return acc;}, {});
+			.reduce((acc, v) => {acc[v.id] = v; return acc;}, {} as {[key: string]: PropertyField});
 		} catch (error) {
 			debugLog('Could not parse cql query', error);
 			return {};
@@ -247,7 +243,7 @@ export class UrlPageState implements UrlPageStateResult {
 		} else if (this.getNumber('samplemode', null, v => (v != null && (v >= 0 && v <=100)) ? v : null) != null) {
 			return 'percentage';
 		} else {
-			return GlobalSettingsModule.defaults.sampleMode;
+			return SettingsModule.defaults.sampleMode;
 		}
 	}
 
@@ -274,7 +270,7 @@ export class UrlPageState implements UrlPageStateResult {
 	}
 
 	// No memoize - has parameters
-	public getLocalSearchParameters(view: string): ResultsSettingsModule.ModuleRootState['settings']['docs'] {
+	public getLocalSearchParameters(view: string): ResultsModule.ModuleRootState['docs'] {
 		if(this.viewedResults !== view) {
 			return {
 				caseSensitive: false,
@@ -351,60 +347,54 @@ export class UrlPageState implements UrlPageStateResult {
 
 const b = getStoreBuilder<RootState>();
 
-// NOTE: these namespaces need to match the keys under which the module root state is placed in the RootState
-// So if the form module is created under namespace 'form', the RootState needs to contain the FormModule.ModuleRootState at key 'form' too.
-const form = FormModule.create(b, 'form');
-const global = GlobalSettingsModule.create(b, 'globalSettings');
-const results = ResultsSettingsModule.create(b, 'resultSettings');
-const index = IndexModule.create(b, 'index');
-
 export const actions = {
 	search: b.commit(state => {
 		// TODO make this implicit instead of having to write->read->write state here
-		form.actions.search();
-		results.docs.actions.page(0);
-		results.hits.actions.page(0);
-		const cqlPatt = state.form.submittedParameters!.pattern;
-		if (state.resultSettings.viewedResults == null) {
-			state.resultSettings.viewedResults = cqlPatt ? 'hits' : 'docs';
-		}
+		FormModule.actions.search();
+		ResultsModule.actions.resetPage();
 
+		const cqlPatt = state.form.submittedParameters!.pattern; // only after form.search() !
+		if (state.viewedResults !== 'docs') { // open when null, go to docs when viewing hits and no pattern
+			state.viewedResults = cqlPatt ? 'hits' : 'docs';
+		}
 	}, 'search'),
 
 	reset: b.commit(state => {
-		form.actions.reset();
-		global.actions.reset();
-		results.actions.reset();
+		FormModule.actions.reset();
+		SettingsModule.actions.reset();
+		ResultsModule.actions.reset();
+		state.viewedResults = null;
 	}, 'reset'),
 
 	replace: b.dispatch(({rootState: state}, payload: Partial<RootState>) => {
-		if (payload.form != null) { form.actions.replace(payload.form); }
-		if (payload.globalSettings != null) { global.actions.replace(payload.globalSettings); }
-		if (payload.resultSettings != null) { results.actions.replace(payload.resultSettings); }
+		if (payload.form != null) { FormModule.actions.replace(payload.form); }
+		if (payload.settings != null) { SettingsModule.actions.replace(payload.settings); }
+		if (payload.results != null) { ResultsModule.actions.replace(payload.results); }
+		if (payload.viewedResults !== undefined) {
+			state.viewedResults = payload.viewedResults;
+		}
 		// State should be up to date with the new payload now
-		if (state.resultSettings.viewedResults != null) {
+		if (state.viewedResults != null) {
 			actions.search();
 		}
 	}, 'replace'),
+	viewedResults: b.commit((state, payload: keyof ResultsModule.ModuleRootState) => state.viewedResults = payload, 'viewedResults'),
+
 };
 
 export const get = {
-	// No getters on root state (yet?)
+	viewedResults: b.read(state => state.viewedResults, 'getViewedResults'),
+	viewedResultsSettings: b.read(state => state.viewedResults != null ? state.results[state.viewedResults] : null, 'getViewedResultsSettings'),
 };
 
-export const modules = {
-	root: {
-		actions,
-		get
-	},
-	form,
-	global,
-	results,
-	index
-};
+SettingsModule.default();
+FormModule.default();
+ResultsModule.default();
+IndexModule.default();
 
+// shut up typescript, the state we pass here is merged with the modules initial states internally.
+export const store = b.vuexStore({state: ownInitialState as any});
 export const getState = b.state();
-export const store = b.vuexStore();
 
 $(document).ready(() => {
 	const initialState = new UrlPageState().get();
@@ -413,10 +403,4 @@ $(document).ready(() => {
 });
 
 // TODO remove me, debugging only - use expose-loader or something?
-(window as any).actions = {
-	root: actions,
-	form: form.actions,
-	global: global.actions,
-	results: results.actions,
-	index: index.actions
-};
+(window as any).actions = actions;

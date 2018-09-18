@@ -1,18 +1,25 @@
 package nl.inl.corpuswebsite.utils;
 
-import java.io.InputStream;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.HierarchicalConfiguration;
-import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.commons.lang.StringUtils;
 
 import nl.inl.corpuswebsite.MainServlet;
+import org.apache.commons.configuration2.HierarchicalConfiguration;
+import org.apache.commons.configuration2.XMLConfiguration;
+import org.apache.commons.configuration2.builder.ConfigurationBuilder;
+import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
+import org.apache.commons.configuration2.builder.fluent.Parameters;
+import org.apache.commons.configuration2.convert.DisabledListDelimiterHandler;
+import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.commons.configuration2.interpol.ConfigurationInterpolator;
+import org.apache.commons.configuration2.interpol.Lookup;
+import org.apache.commons.configuration2.tree.ImmutableNode;
 
 /**
  * Configuration read from an XML config file.
@@ -98,11 +105,11 @@ public class WebsiteConfig {
      * @param corpusConfig (optional) the blacklab configuration for the corpus
      * @throws ConfigurationException when the configFile can't be parsed.
      */
-    public WebsiteConfig(InputStream configFile, String corpus, CorpusConfig corpusConfig) throws ConfigurationException {
+    public WebsiteConfig(File configFile, String corpus, CorpusConfig corpusConfig, String contextPath) throws ConfigurationException {
         if (corpusConfig != null)
             initProps(corpusConfig);
 
-        load(configFile, corpus);
+        load(configFile, corpus, contextPath);
 
         if (corpusDisplayName == null) { // no displayName set
             String backendDisplayName = (corpusConfig != null) ? corpusConfig.getDisplayName() : null;
@@ -140,6 +147,25 @@ public class WebsiteConfig {
 
         propColumns = fd.stream().map(FieldDescriptor::getId).toArray(String[]::new);
     }
+    
+    private static class RequesLookup implements Lookup {
+
+        private final String contextPath;
+
+        public RequesLookup(String contextPath) {
+            this.contextPath = contextPath;
+        }
+        
+        @Override
+        public Object lookup(String variable) {
+            if ("contextPath".equals(variable)) {
+                return contextPath;
+            } else {
+                return variable + " not supported, only contextPath";
+            }
+        }
+        
+    }
 
     /**
      * Note that corpus may be null, when parsing the base config.
@@ -149,11 +175,18 @@ public class WebsiteConfig {
      *        config for the pages outside a corpus context, such as /about, /help, and / (root)))
      * @throws ConfigurationException
      */
-    private void load(InputStream configFile, String corpus) throws ConfigurationException {
+    private void load(File configFile, String corpus, String contextPath) throws ConfigurationException {
+        Map<String, Lookup> variableLookup = new HashMap<String, Lookup>(ConfigurationInterpolator.getDefaultPrefixLookups());
+        variableLookup.put("request", new RequesLookup(contextPath));
+        
+        Parameters parameters = new Parameters();
+        ConfigurationBuilder<XMLConfiguration> cb = new FileBasedConfigurationBuilder<XMLConfiguration>(XMLConfiguration.class)
+                .configure(parameters.fileBased()
+                        .setFile(configFile)
+                        .setListDelimiterHandler(new DisabledListDelimiterHandler())
+                .setPrefixLookups(variableLookup));
         // Load the specified config file
-        XMLConfiguration xmlConfig = new XMLConfiguration();
-        xmlConfig.setDelimiterParsingDisabled(true);
-        xmlConfig.load(configFile);
+        XMLConfiguration xmlConfig = cb.getConfiguration();
 
         corpusName = MainServlet.getCorpusName(corpus);
         corpusOwner = MainServlet.getCorpusOwner(corpus);
@@ -166,8 +199,8 @@ public class WebsiteConfig {
             propColumns = StringUtils.split(props);
         }
 
-        List<HierarchicalConfiguration> myfields = xmlConfig.configurationsAt("InterfaceProperties.NavLinks.Link");
-        for (Iterator<HierarchicalConfiguration> it = myfields.iterator(); it.hasNext();) {
+        List<HierarchicalConfiguration<ImmutableNode>> myfields = xmlConfig.configurationsAt("InterfaceProperties.NavLinks.Link");
+        for (Iterator<HierarchicalConfiguration<ImmutableNode>> it = myfields.iterator(); it.hasNext();) {
             HierarchicalConfiguration sub = it.next();
 
             String href = sub.getString("[@value]", null);
@@ -181,7 +214,7 @@ public class WebsiteConfig {
         }
 
         myfields = xmlConfig.configurationsAt("XsltParameters.XsltParameter");
-        for (Iterator<HierarchicalConfiguration> it = myfields.iterator(); it.hasNext();) {
+        for (Iterator<HierarchicalConfiguration<ImmutableNode>> it = myfields.iterator(); it.hasNext();) {
             HierarchicalConfiguration sub = it.next();
 
             String name = sub.getString("[@name]");

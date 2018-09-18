@@ -23,6 +23,8 @@
         <!-- You can define which properties to show as colummns in the results table-->
         <!--
         <PropColumns>lemma,pos,tense, person,number</PropColumns>
+        
+        You can use ${request:contextPath}, it will be replaced by the contextPath of the application
         -->
         
         <NavLinks>

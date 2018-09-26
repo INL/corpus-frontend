@@ -390,7 +390,7 @@ SINGLEPAGE.BLS = (function () {
 				pageParams.wordsAroundHit   = blsParam.wordsaroundhit || undefined;
 				pageParams.page             = blsParam.number != null ? Math.floor((blsParam.first || 0) / blsParam.number) : undefined;
 				pageParams.pageSize         = blsParam.number || undefined;
-				pageParams.groupBy          = blsParam.group ? blsParam.group.split(',').map(function(group) { return group.replace(/:s$/, ''); }) : undefined;
+				pageParams.groupBy          = blsParam.group ? blsParam.group.split(',').map(function(group) { return group.replace(/:s$/, '').replace(/:i$/, ''); }) : undefined;
 				pageParams.viewGroup        = blsParam.viewgroup;
 				pageParams.sort             = blsParam.sort;
 				pageParams.caseSensitive    = blsParam.group && blsParam.group.split(',').every(function(group) { return group.endsWith(':s'); }) || undefined;

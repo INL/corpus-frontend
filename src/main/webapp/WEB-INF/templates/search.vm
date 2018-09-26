@@ -15,14 +15,14 @@
             </div>
         #elseif($docfield.getType() == "range")
             <div class="col-xs-4">
-                <input type="text" placeholder="From" class="form-control" autocomplete="off">
+                <input type="text" placeholder="From" class="form-control" editable="#{sessionBean.mayEdit()}" editingRow="#{sessionBean.mayEdit()}">
             </div>
             <div class="col-xs-4">
-                <input type="text" placeholder="To" class="form-control" autocomplete="off">
+                <input type="text" placeholder="To" class="form-control" editable="#{sessionBean.mayEdit()}" editingRow="#{sessionBean.mayEdit()}">
             </div>
         #else
             <div class="col-xs-12">
-                <input type="text" placeholder="$docfield.getDisplayName()" class="form-control" autocomplete="off" ## native autocomplete 
+                <input type="text" placeholder="$docfield.getDisplayName()" class="form-control" editable="#{sessionBean.mayEdit()}" editingRow="#{sessionBean.mayEdit()}" ## native autocomplete 
                     #if($docfield.getType() == "combobox")
                         data-autocomplete="$docfield.getId()" 
                     #end
@@ -51,7 +51,7 @@
                 #end
                 </select>
             #else
-                <input type="text" id="$propertyFieldInputId" name="$propertyFieldInputId" placeholder="$propertyField.getDisplayName()" class="form-control" autocomplete="off"
+                <input type="text" id="$propertyFieldInputId" name="$propertyFieldInputId" placeholder="$propertyField.getDisplayName()" class="form-control" editable="#{sessionBean.mayEdit()}" editingRow="#{sessionBean.mayEdit()}"
                     #if($field.getType() == "combobox") 
                         ## when autocompleting word properties, blacklab needs to know the complex field from which they originate
                         ## the format is complexfield/property?term=searchterm

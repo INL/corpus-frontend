@@ -15,7 +15,7 @@ import {debugLog} from '@/utils/debug';
 import * as FormModule from '@/store/form';
 import * as SettingsModule from '@/store/settings';
 import * as ResultsModule from '@/store/results';
-import * as IndexModule from '@/store/corpus';
+import * as CorpusModule from '@/store/corpus';
 
 Vue.use(Vuex);
 
@@ -24,7 +24,7 @@ type ChildRootState = {
 	form: FormModule.ModuleRootState;
 	settings: SettingsModule.ModuleRootState;
 	results: ResultsModule.ModuleRootState;
-	index: IndexModule.ModuleRootState;
+	corpus: CorpusModule.ModuleRootState;
 };
 
 type OwnRootState = {
@@ -42,7 +42,7 @@ const ownInitialState: OwnRootState = {
  * create a new type that captures only those parts that can and should be extracted from the url.
  * For now this is everything, except the indexmetadata
  */
-type UrlPageStateResult = Pick<RootState, Exclude<keyof RootState, 'index'>>;
+type UrlPageStateResult = Pick<RootState, Exclude<keyof RootState, 'corpus'>>;
 
 /** Decode the current url into a valid page state configuration. Keep everything private except the getters */
 export class UrlPageState {
@@ -391,7 +391,7 @@ export const get = {
 SettingsModule.default();
 FormModule.default();
 ResultsModule.default();
-IndexModule.default();
+CorpusModule.default();
 
 // shut up typescript, the state we pass here is merged with the modules initial states internally.
 export const store = b.vuexStore({state: ownInitialState as any});
@@ -413,5 +413,5 @@ $(document).ready(() => {
 		docs: ResultsModule.docs.actions,
 		hits: ResultsModule.hits.actions
 	},
-	index: IndexModule.actions
+	corpus: CorpusModule.actions
 };

@@ -10,19 +10,37 @@ import * as BLTypes from '@/types/blacklabtypes';
 
 export type ModuleRootState = BLTypes.BLIndexMetadata;
 
-declare var SINGLEPAGE: {INDEX: BLTypes.BLIndexMetadata;};
-const b = getStoreBuilder<RootState>().module<ModuleRootState>('index', SINGLEPAGE.INDEX);
+declare const SINGLEPAGE: {INDEX: BLTypes.BLIndexMetadata;};
+declare const PROPS_IN_COLUMNS: string[];
+const b = getStoreBuilder<RootState>().module<ModuleRootState>('corpus', SINGLEPAGE.INDEX);
 
 export const get = {
-	annotatedFields: b.read(state => {
+	annotations: b.read(state => {
 		const fields = Object.values(state.annotatedFields);
 		const annotations = fields.flatMap(field => {
-			const extendedAnnotations = Object.entries(field.annotations).map(([id, annot]) => ({...annot, id}));
+			const extendedAnnotations = Object.entries(field.annotations).map(([id, annot]) => ({
+				...annot,
+				id,
+				isMainAnnotation: id === field.mainProperty
+			}));
 			return extendedAnnotations;
 		});
 
 		return annotations;
 	}, 'annotatedFields'),
+	// TODO there can be multiple main annotations if there are multiple annotatedFields
+	// the ui needs to respect this (probably render more extensive results?)
+	firstMainAnnotation: () => get.annotations().find(f => f.isMainAnnotation)!,
+	/**
+	 * Shown result columns can be configured, these are the annotations that should be shown in order of declaration.
+	 * Duplicates may exist in this list!
+	 */
+	shownAnnotations: () => {
+		const annotations = get.annotations();
+		return PROPS_IN_COLUMNS.map(propId => annotations.find(annot => annot.id === propId))
+			.filter(annot => annot != null) as typeof annotations; // need cast to remove union with undefined from .find()
+	},
+
 	/**
 	 * Returns all metadatagroups from the indexstructure, unless there are no metadatagroups defined
 	 * Then a single generated group "metadata" is returned, containing all metadata fields.
@@ -43,7 +61,8 @@ export const get = {
 			name: group.name,
 			fields: group.fields.map(fieldname => state.metadataFields[fieldname])
 		}));
-	}, 'metadataGroups')
+	}, 'metadataGroups'),
+	textDirection: b.read(state => state.textDirection, 'getTextDirection')
 };
 
 export const actions = {

@@ -1,5 +1,5 @@
 <template>
-	<div v-show="visible">
+	<div v-show="active">
 		<div class="resultcontrols">
 			<div class="top">
 				<div class="grouping">
@@ -52,12 +52,7 @@
 
 		<span class="fa fa-spinner fa-spin searchIndicator" style="position:absolute; left: 50%; top:15px"></span>
 
-		<div class="lightbg haspadding resultcontainer">
-			<table class="resultstable">
-				<tbody>
-				</tbody>
-			</table>
-		</div>
+		<ResultsTable v-if="results" :results="results"/>
 	</div>
 
 </template>
@@ -66,7 +61,8 @@
 import Vue from "vue";
 
 import * as resultsStore from '@/store/results';
-import * as settingsModule from '@/store/settings';
+import * as settingsStore from '@/store/settings';
+import * as globalStore from '@/store';
 import * as corpus from '@/store/corpus';
 import * as query from '@/store/form';
 
@@ -74,27 +70,20 @@ import * as bls from "@/modules/singlepage-bls";
 import * as BLTypes from '@/types/blacklabtypes';
 
 import SelectPicker, {OptGroup} from '@/components/SelectPicker.vue';
-
-// type OptGroup = {
-// 	label: string;
-// 	options: Array<{
-// 		label: string;
-// 		value: string;
-// 	}>;
-// }
+import ResultsTable from '@/pages/search/ResultsTable.vue';
 
 export default Vue.extend({
 	components: {
-		SelectPicker
+		SelectPicker,
+		ResultsTable
 	},
 	props: {
 		type: String as () => 'hits'|'docs',
-		visible: Boolean,
 	},
 	data: () => ({
 		isDirty: false,
 		request: null as null|Promise<BLTypes.BLSearchResult>,
-		result: null as null|BLTypes.BLSearchResult,
+		results: null as null|BLTypes.BLSearchResult,
 		error: null as null|BLTypes.BLError, // TODO not correct
 
 		userSubmittedPage: null as number|null,
@@ -112,14 +101,14 @@ export default Vue.extend({
 			this.request.then(this.setSuccess, this.setError);
 		},
 		setSuccess(data: BLTypes.BLSearchResult) {
-			this.result = data;
+			this.results = data;
 			this.error = null;
 			this.request = null;
 			this.userSubmittedPage = null;
 		},
 		setError(data: BLTypes.BLError) {
 			this.error = data;
-			this.result = null;
+			this.results = null;
 			this.request = null;
 		}
 	},
@@ -147,7 +136,7 @@ export default Vue.extend({
 			set(v: string|null) { this.storeModule.actions.viewGroup(v); }
 		},
 
-		externalSettings(): settingsModule.ModuleRootState { return settingsModule.getState() },
+		externalSettings(): settingsStore.ModuleRootState { return settingsStore.getState() },
 		querySettings() { return query.get.lastSubmittedPattern() },
 
 		watchSettings() {
@@ -164,7 +153,7 @@ export default Vue.extend({
 
 			const metadataGroups = corpus.get.metadataGroups();
 			if (this.type === 'hits') {
-				const annotations = corpus.get.annotatedFields();
+				const annotations = corpus.get.annotations();
 
 				[['wordleft:', 'Before hit'],['word:', 'Hit'],['wordRight:', 'After hit']]
 				.forEach(([prefix, label]) =>
@@ -181,7 +170,7 @@ export default Vue.extend({
 				label: group.name,
 				options: group.fields.map(field => ({
 					label: (field.displayName || field.fieldName).replace(group.name, ''),
-					value: field.fieldName
+					value: `field:${field.fieldName}`
 				}))
 			}))
 			return groups;
@@ -189,36 +178,36 @@ export default Vue.extend({
 
 
 		totalResults(): number {
-			if (this.result == null) {
+			if (this.results == null) {
 				return 0;
-			} else if (BLTypes.isGroups(this.result)) {
-				return this.result.summary.numberOfGroups;
-			} else if (BLTypes.isHitResults(this.result)) {
-				return this.result.summary.numberOfHitsRetrieved;
+			} else if (BLTypes.isGroups(this.results)) {
+				return this.results.summary.numberOfGroups;
+			} else if (BLTypes.isHitResults(this.results)) {
+				return this.results.summary.numberOfHitsRetrieved;
 			} else {
-				return this.result.summary.numberOfDocsRetrieved;
+				return this.results.summary.numberOfDocsRetrieved;
 			}
 		},
 		/** NOTE: might be out of bounds */
 		currentPage(): number {
-			if (this.result == null) {
+			if (this.results == null) {
 				return 0;
 			} else {
-				const pageSize = this.result.summary.requestedWindowSize;
-				const currentPage = Math.min(Math.ceil(this.result.summary.windowFirstResult / pageSize), this.totalPages);
+				const pageSize = this.results.summary.requestedWindowSize;
+				const currentPage = Math.min(Math.ceil(this.results.summary.windowFirstResult / pageSize), this.totalPages);
 				return currentPage;
 			}
 		},
 		totalPages(): number {
-			if (this.result == null) {
+			if (this.results == null) {
 				return 0;
 			} else {
-				return Math.ceil(this.totalResults / this.result.summary.requestedWindowSize);
+				return Math.ceil(this.totalResults / this.results.summary.requestedWindowSize);
 			}
 		},
 
 		pages(): number[] {
-			if (!this.result) {
+			if (!this.results) {
 				return [];
 			}
 
@@ -233,6 +222,10 @@ export default Vue.extend({
 			// const currentPage = Math.ceil(beginIndex / pageSize);
 			// const startPage = Math.max(currentPage - 10, 0);
 			// const endPage = Math.min(currentPage + 10, totalPages);
+		},
+
+		active() {
+			return globalStore.get.viewedResults() === this.type;
 		}
 	},
 	watch: {
@@ -243,7 +236,7 @@ export default Vue.extend({
 			deep: true
 		},
 		isDirty(cur, prev) {
-			if (cur && this.visible) {
+			if (cur && this.active) {
 				this.refresh();
 			}
 		}
@@ -286,13 +279,19 @@ export default Vue.extend({
 		display: inline-block;
 		> input {
 			border-radius: 0;
+			background-color: #337ab7;
 			border-color: #337ab7;
+			color: white;
 			font-size: 12px;
 			height: auto;
 			line-height: 1.5;
 			padding: 5px 10px;
+			text-decoration: underline;
 			width: 3em;
 			z-index: 1;
+		}
+		> input:focus {
+			text-decoration: none;
 		}
 		>a {
 			cursor: pointer;

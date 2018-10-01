@@ -343,6 +343,7 @@ export function getBlsParamFromState(): BlacklabParameters {
 		filter: getFilterString(submittedParameters),
 		first: state.settings.pageSize * viewProps.page,
 		group: viewProps.groupBy.map(g => g + (viewProps.caseSensitive ? ':s':':i')).join(',') || undefined,
+		// group: viewProps.groupBy.join(',') || undefined,
 		number: state.settings.pageSize,
 		patt: submittedParameters.pattern||undefined,
 

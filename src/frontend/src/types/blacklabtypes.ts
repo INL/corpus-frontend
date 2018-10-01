@@ -209,7 +209,7 @@ export interface BLIndexMetadata {
 // Search results
 // --------------
 
-type BLSearchSummarySampleSettings = {} | {
+export type BLSearchSummarySampleSettings = {} | {
 	samplePercentage: number;
 	sampleSeed: number;
 } | {
@@ -217,7 +217,7 @@ type BLSearchSummarySampleSettings = {} | {
 	sampleSize: number;
 };
 
-interface BLSearchSummaryTotals {
+export interface BLSearchSummaryTotals {
 	/* -1 if some error occured */
 	numberOfDocs: number;
 	numberOfDocsRetrieved: number;
@@ -229,7 +229,7 @@ interface BLSearchSummaryTotals {
 	stoppedRetrievingHits: boolean;
 }
 
-interface BlSearchSummaryGroupInfo {
+export interface BlSearchSummaryGroupInfo {
 	largestGroupSize: number;
 	numberOfGroups: number;
 }
@@ -272,6 +272,7 @@ export interface BLDocGroupResults {
 	summary: BLSearchSummary & BlSearchSummaryGroupInfo & BLSearchSummaryTotals;
 }
 
+/** Contains a hit's tokens, deconstructed into the individual annotations/properties, such as lemma, pos, word, always contains punctuation in between tokens */
 export interface BLHitSnippetPart {
 	/** Punctuation always exists (even if only an empty string or a space) */
 	punct: string[];

@@ -557,6 +557,10 @@ SINGLEPAGE.INTERFACE = (function() {
 			var left = textDirection=='ltr'? parts[0] : parts[2];
 			var right = textDirection=='ltr'? parts[2] : parts[0];
 			var propsWord = properties(hit.match).replace("'","\\'").replace("&apos;","\\'").replace('"', '&quot;');
+            // when searching multiple terms properties don't make sense
+            if (propsWord.indexOf(',,') > -1) {
+                propsWord = 'not shown for multiple search terms';
+            }
 
 			html.push(
 				'<tr class="concordance" onclick="SINGLEPAGE.INTERFACE.showCitation(this, \''

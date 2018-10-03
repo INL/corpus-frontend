@@ -15,16 +15,16 @@
             </div>
         #elseif($docfield.getType() == "range")
             <div class="col-xs-4">
-                <input type="text" placeholder="From" class="form-control" editable="#{sessionBean.mayEdit()}" editingRow="#{sessionBean.mayEdit()}">
+                <input type="text" placeholder="From" class="form-control">
             </div>
             <div class="col-xs-4">
-                <input type="text" placeholder="To" class="form-control" editable="#{sessionBean.mayEdit()}" editingRow="#{sessionBean.mayEdit()}">
+                <input type="text" placeholder="To" class="form-control">
             </div>
         #else
             <div class="col-xs-12">
-                <input type="text" placeholder="$docfield.getDisplayName()" class="form-control" editable="#{sessionBean.mayEdit()}" editingRow="#{sessionBean.mayEdit()}" ## native autocomplete 
+                <input type="text" placeholder="$docfield.getDisplayName()" class="form-control"
                     #if($docfield.getType() == "combobox")
-                        data-autocomplete="$docfield.getId()" 
+                        autocomplete="off" data-autocomplete="$docfield.getId()"
                     #end
                 />
             </div>

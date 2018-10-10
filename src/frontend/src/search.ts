@@ -13,11 +13,11 @@ import {BlacklabParameters} from './modules/singlepage-bls';
 import './modules/singlepage-interface';
 
 import './pages/search/vuexbridge';
+import * as BLTypes from '@/types/blacklabtypes';
 
 import {debugLog} from './utils/debug';
 
-// TODO create type for indexmetadata
-declare var SINGLEPAGE: {INDEX: any};
+declare var SINGLEPAGE: {INDEX: BLTypes.BLIndexMetadata};
 
 $(document).ready(function() {
 	if (window.localStorage) {

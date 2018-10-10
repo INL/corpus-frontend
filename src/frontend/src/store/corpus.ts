@@ -18,7 +18,7 @@ export const get = {
 	annotations: b.read(state => {
 		const fields = Object.values(state.annotatedFields);
 		const annotations = fields.flatMap(field => {
-			const extendedAnnotations = Object.entries(field.annotations).map(([id, annot]) => ({
+			const extendedAnnotations = Object.entries(field.annotations).filter(([id, annot]) => annot.hasForwardIndex && !annot.isInternal).map(([id, annot]) => ({
 				...annot,
 				id,
 				isMainAnnotation: id === field.mainProperty

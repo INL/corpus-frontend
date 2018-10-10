@@ -2,13 +2,13 @@
 	<table>
 		<thead>
 			<tr>
-				<th style="width:30%;"><a data-bls-sort="identity">Group</a></th>
-				<th style="width:70%;"><a data-bls-sort="numhits">Hits</a></th>
+				<th style="width:30%;"><a @click="changeSort('identity')">Group</a></th>
+				<th style="width:70%;"><a @click="changeSort('numhits')">Hits</a></th>
 			</tr>
 		</thead>
 		<tbody>
 			<tr v-for="group in groups" :key="group.identity">
-				<td>{{group.identityDisplay || group.identity}}</td>
+				<td>{{group.identityDisplay || '[unknown]'}}</td>
 				<td>
 					<div class="progress group-size-indicator" style="cursor:pointer;">
 						<div :class="['progress-bar', displayClass]" :style="[{'min-width': width(group)}]">{{group.size}}</div>
@@ -38,6 +38,7 @@ export default Vue.extend({
 	props: {
 		results: Object as () => BLTypes.BLHitGroupResults|BLTypes.BLDocGroupResults,
 		// group: Object as () => BLTypes.GroupResult
+		sort: String as () => null|string
 	},
 	data: () => ({
 		concordances: {} as {
@@ -60,6 +61,9 @@ export default Vue.extend({
 		},
 		loadConcordances(id: string) {
 
+		},
+		changeSort(payload: string) {
+			this.$emit('sort', payload === this.sort ? '-'+payload : payload)
 		}
 	}
 });

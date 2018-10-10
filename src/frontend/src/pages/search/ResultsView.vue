@@ -43,7 +43,7 @@
 					<input v-if="i === currentPage" type="text" class="form-control"
 						:value="currentPage+1"
 						@input="userSubmittedPage = $event.target.value-1"
-						@keypress.enter="(userSubmittedPage !== currentPage) ? markDirty() : {} "
+						@keypress.enter.prevent="(userSubmittedPage !== currentPage) ? page = userSubmittedPage : undefined"
 					/>
 					<a v-else @click="page = i">{{i+1}}</a>
 				</li>
@@ -53,9 +53,9 @@
 		<span v-if="request" class="fa fa-spinner fa-spin searchIndicator" style="position:absolute; left: 50%; top:15px"></span>
 
 		<div v-if="results" class="lightbg haspadding resultcontainer">
-			<GroupResults v-if="isGroups" :results="results"/>
-			<HitResults v-else-if="isHits" :results="results"/>
-			<DocResults v-else :results="results"/>
+			<GroupResults v-if="isGroups" :results="results" @sort="sort = $event" :sort="sort"/>
+			<HitResults v-else-if="isHits" :results="results" @sort="sort = $event" :sort="sort"/>
+			<DocResults v-else :results="results" @sort="sort = $event" :sort="sort"/>
 		</div>
 	</div>
 
@@ -94,7 +94,7 @@ export default Vue.extend({
 		type: String as () => 'hits'|'docs',
 	},
 	data: () => ({
-		isDirty: false,
+		isDirty: true, // since we don't have any results yet
 		request: null as null|Promise<BLTypes.BLSearchResult>,
 		results: null as null|BLTypes.BLSearchResult,
 		error: null as null|BLTypes.BLError, // TODO not correct
@@ -248,10 +248,13 @@ export default Vue.extend({
 				this.refresh();
 			}
 		},
-		active(cur, prev) {
-			if (cur && this.isDirty) {
-				this.refresh();
-			}
+		active: {
+			handler(cur, prev) {
+				if (cur && this.isDirty) {
+					this.refresh();
+				}
+			},
+			immediate: true
 		}
 	}
 });

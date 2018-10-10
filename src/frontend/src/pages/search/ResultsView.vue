@@ -19,22 +19,22 @@
 
 						<button type="button" class="btn btn-sm btn-default dummybutton">update</button> <!-- dummy button... https://github.com/INL/corpus-frontend/issues/88 -->
 						<div class="checkbox-inline" style="margin-left: 5px;">
-							<label title="Separate groups for differently cased values" style="white-space: nowrap; margin: 0;" for="casesensitive-groups-hits"><input type="checkbox" class="casesensitive" id="casesensitive-groups-hits" name="casesensitive-groups-hits">Case sensitive</label>
+							<label title="Separate groups for differently cased values" style="white-space: nowrap; margin: 0;" :for="uid+'case'"><input type="checkbox" :id="uid+'case'" v-model="caseSensitive">Case sensitive</label>
 						</div>
 					</div>
 
-					<div v-if="viewGroup" class="resultgroupdetails btn btn-sm btn-default nohover" style="margin-right: 5px">
-						<span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span class="resultgroupname"></span> &mdash; <a class="clearviewgroup" href="javascript:void(0)">Go back</a>
+					<div v-if="viewGroup" class="btn btn-sm btn-default nohover" style="margin-right: 5px">
+						<span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span>{{viewgroup}}</span> &mdash; <a href="javascript:void(0)" @click="viewgroup = null">Go back</a>
 					</div>
 
-					<div class="results-incomplete-warning btn btn-sm btn-default nohover">
+					<div class="btn btn-sm btn-default nohover" v-if="results && !!(results.summary.stoppedRetrievingHits && !results.summary.stillCounting)">
 						<span class="fa fa-exclamation-triangle text-danger"></span> Too many results! &mdash; your query was limited
 					</div>
 				</div>
 
 				<div class="buttons">
-					<button type="button" class="btn btn-default btn-sm pull-right exportcsv" style="margin-left: 5px;margin-bottom: 5px;">Export CSV</button>
-					<button type="button" class="btn btn-danger btn-sm pull-right" data-toggle="collapse" data-target=".doctitle" style="margin-left: 5px;margin-bottom: 5px;">Show/hide titles</button>
+					<button type="button" class="btn btn-default btn-sm pull-right" style="margin-left: 5px;margin-bottom: 5px;">Export CSV</button>
+					<button v-if="type === 'hits' && !isGroups" type="button" class="btn btn-danger btn-sm pull-right" style="margin-left: 5px;margin-bottom: 5px;">Show/hide titles</button>
 				</div>
 			</div>
 
@@ -50,15 +50,21 @@
 			</ul>
 		</div>
 
-		<span class="fa fa-spinner fa-spin searchIndicator" style="position:absolute; left: 50%; top:15px"></span>
+		<span v-if="request" class="fa fa-spinner fa-spin searchIndicator" style="position:absolute; left: 50%; top:15px"></span>
 
-		<ResultsTable v-if="results" :results="results"/>
+		<div v-if="results" class="lightbg haspadding resultcontainer">
+			<GroupResults v-if="isGroups" :results="results"/>
+			<HitResults v-else-if="isHits" :results="results"/>
+			<DocResults v-else :results="results"/>
+		</div>
 	</div>
 
 </template>
 
 <script lang="ts">
 import Vue from "vue";
+
+import uid from '@/mixins/uid';
 
 import * as resultsStore from '@/store/results';
 import * as settingsStore from '@/store/settings';
@@ -70,12 +76,19 @@ import * as bls from "@/modules/singlepage-bls";
 import * as BLTypes from '@/types/blacklabtypes';
 
 import SelectPicker, {OptGroup} from '@/components/SelectPicker.vue';
-import ResultsTable from '@/pages/search/ResultsTable.vue';
+import GroupResults from '@/pages/search/GroupResults.vue';
+import HitResults from '@/pages/search/HitResults.vue';
+import DocResults from '@/pages/search/DocResults.vue';
+
+import {onSearchUpdated} from '@/search';
 
 export default Vue.extend({
+	mixins: [uid],
 	components: {
 		SelectPicker,
-		ResultsTable
+		GroupResults,
+		HitResults,
+		DocResults
 	},
 	props: {
 		type: String as () => 'hits'|'docs',
@@ -95,10 +108,13 @@ export default Vue.extend({
 		refresh() {
 			this.isDirty = false;
 			console.log('this is when the search should be refreshed');
+			const params = bls.getBlsParamFromState();
+
 			this.request = new Promise<BLTypes.BLSearchResult>((resolve, reject) => {
 				bls.search(this.type, bls.getBlsParamFromState(), resolve, () => reject(arguments));
 			});
 			this.request.then(this.setSuccess, this.setError);
+			onSearchUpdated(this.type, params);
 		},
 		setSuccess(data: BLTypes.BLSearchResult) {
 			this.results = data;
@@ -136,14 +152,11 @@ export default Vue.extend({
 			set(v: string|null) { this.storeModule.actions.viewGroup(v); }
 		},
 
-		externalSettings(): settingsStore.ModuleRootState { return settingsStore.getState() },
-		querySettings() { return query.get.lastSubmittedPattern() },
-
 		watchSettings() {
 			return {
 				resultsSettings: this.storeModule.getState(),
-				viewSettings: this.externalSettings,
-				querySettings: this.querySettings
+				viewSettings: settingsStore.getState(),
+				querySettings: query.get.lastSubmittedPattern()
 			}
 		},
 
@@ -210,23 +223,18 @@ export default Vue.extend({
 			if (!this.results) {
 				return [];
 			}
-
-			const pages = [-10, -5, -1, 0, 1, 5, 10].map(offset => this.currentPage + offset).filter(page => page >= 0 && page <= this.totalPages);
+			// TotalPages is 1-indexed, while the page indices we return are 0-indexed, hence the page < totalPages and not page <= totalPages.
+			const pages = [-10, -5, -1, 0, 1, 5, 10].map(offset => this.currentPage + offset).filter(page => page >= 0 && page < this.totalPages);
 			return pages;
-
-			// // when out of bounds results, draw at least the last few pages so the user can go back
-			// if (totalResults < beginIndex) {
-			// 	beginIndex = totalResults+1;
-			// }
-
-			// const currentPage = Math.ceil(beginIndex / pageSize);
-			// const startPage = Math.max(currentPage - 10, 0);
-			// const endPage = Math.min(currentPage + 10, totalPages);
 		},
 
 		active() {
 			return globalStore.get.viewedResults() === this.type;
-		}
+		},
+
+		isHits() { return BLTypes.isHitResults(this.results); },
+		isDocs() { return BLTypes.isDocResults(this.results); },
+		isGroups() { return BLTypes.isGroups(this.results); },
 	},
 	watch: {
 		watchSettings: {
@@ -237,6 +245,11 @@ export default Vue.extend({
 		},
 		isDirty(cur, prev) {
 			if (cur && this.active) {
+				this.refresh();
+			}
+		},
+		active(cur, prev) {
+			if (cur && this.isDirty) {
 				this.refresh();
 			}
 		}
@@ -279,15 +292,20 @@ export default Vue.extend({
 		display: inline-block;
 		> input {
 			border-radius: 0;
-			background-color: #337ab7;
-			border-color: #337ab7;
-			color: white;
+			border-color: #4c91cd;
+			box-shadow: inset 0px 0px 0px 1px hsla(208, 56%, 46%, 0.3);
+			// background-color: #337ab7;
+			// border-color: #337ab7;
+			// color: #222;
+			color: #337ab7;
 			font-size: 12px;
 			height: auto;
 			line-height: 1.5;
-			padding: 5px 10px;
-			text-decoration: underline;
-			width: 3em;
+			padding: 5px;
+			// text-decoration: underline;
+			// width: 3em;
+			text-align: center;
+			width: 34px;
 			z-index: 1;
 		}
 		> input:focus {

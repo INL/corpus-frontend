@@ -4,7 +4,7 @@ import URI from 'urijs';
 import {getState, get} from '@/store';
 import {makeWildcardRegex} from '@/utils';
 import {debugLog} from '@/utils/debug';
-import * as BLTypes from '@/types/blacklabtypes'
+import * as BLTypes from '@/types/blacklabtypes';
 
 /**
  * Converts page state into a query for blacklab-server and executes it.

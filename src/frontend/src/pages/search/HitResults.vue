@@ -13,17 +13,17 @@
 							<li v-for="annotation in annotations" :key="annotation.id">
 								<a @click="sort(`left:${annotation.id}`)">{{annotation.displayName}}</a>
 							</li>
-						<ul>
+						</ul>
 					</span>
 				</th>
 
 				<th class="text-center" style="width:20px;">
 					<a @click="sort(`hit:${firstMainAnnotation.id}`)">
-						<strong>{{firstMainAnnotation.displayName}}<strong>
+						<strong>{{firstMainAnnotation.displayName}}</strong>
 					</a>
 				</th>
 
-				<th class="text-right" style="width:40px">
+				<th class="text-left" style="width:40px">
 					<span class="dropdown">
 						<a class="dropdown-toggle" data-toggle="dropdown">
 							{{textDirection==='ltr' ? 'After hit ' : 'Before hit '}}
@@ -34,7 +34,7 @@
 							<li v-for="annotation in annotations" :key="annotation.id">
 								<a @click="sort(`right:${annotation.id}`)">{{annotation.displayName}}</a>
 							</li>
-						<ul>
+						</ul>
 					</span>
 				</th>
 
@@ -43,20 +43,20 @@
 				</th>
 			</tr>
 		</thead>
+
+
 		<tbody>
-
-
 			<tr v-for="(rowData, index) in rows" :key="index" class="concordance">
 				<template v-if="rowData.type === 'doc'">
 					<td :colspan="numColumns">
-						<div class="doctitle collapse in">',
+						<div class="doctitle collapse in">
 							<a
 								class="text-error"
 								target="_blank"
 								:href="rowData.href"
 							>
 								{{rowData.summary}}
-							</a>,
+							</a>
 						</div>
 					</td>
 				</template>
@@ -66,25 +66,28 @@
 					<td><span :dir="textDirection">{{rowData.right}}</span>&hellip;</td>
 					<td v-for="(v, index) in rowData.other" :key="index">{{v}}</td>
 				</template>
-				<!-- TODO snippet row, properties row -->
+			</tr>
+			<!-- TODO snippet row, properties row -->
 
-				<!-- snippet row
-				<tr>
-				<td colspan="', numColumns, '" class="inline-concordance"><div class="collapse">Loading...</div></td>',
-				<tr>
-				-->
+			<!-- snippet row
+			<tr>
+			<td colspan="', numColumns, '" class="inline-concordance"><div class="collapse">Loading...</div></td>',
+			<tr>
+			-->
 
-				<!-- properties row
-				<tr>
-					<td colspan="', numColumns, '" class="inline-concordance"><div class="collapse">Loading...</div></td>
-				</tr>
-				-->
+			<!-- properties row
+			<tr>
+				<td colspan="', numColumns, '" class="inline-concordance"><div class="collapse">Loading...</div></td>
+			</tr>
+			-->
 		</tbody>
 	</table>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
+
+import URI from 'urijs';
 
 import * as corpusStore from '@/store/corpus';
 import * as resultsStore from '@/store/results';
@@ -123,7 +126,9 @@ export default Vue.extend({
 			const textDirection = this.textDirection
 
 			let prevHitDocPid: string;
-			return this.results.hits.map(hit => {
+			return this.results.hits.flatMap(hit => {
+				const rows = [] as (DocRow|HitRow)[];
+
 				// Render a row for this hit's document, if this hit occurred in a different document than the previous
 				const docPid = hit.docPid;
 				if (docPid !== prevHitDocPid) {
@@ -160,11 +165,11 @@ export default Vue.extend({
 						})
 						.toString();
 
-					return {
+					rows.push({
 						type: 'doc',
 						summary: docTitle + docAuthor + docDate,
 						href: docUrl
-					} as DocRow;
+					}  as DocRow);
 				}
 
 				// And display the hit itself
@@ -173,14 +178,16 @@ export default Vue.extend({
 				const right = textDirection==='ltr'? parts[2] : parts[0];
 				const propsWord = this.properties(hit.match);
 
-				return {
+				rows.push({
 					type: 'hit',
 					left,
 					right,
 					hit: parts[1],
 					props: propsWord,
 					other: this.shownAnnotations.map(annot => this.words(hit.match, annot.id, false, ''))
-				} as HitRow;
+				} as HitRow);
+
+				return rows;
 			});
 		},
 		numColumns() {

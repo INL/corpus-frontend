@@ -49,7 +49,7 @@ const createGetters = (b: ModuleBuilder<ModuleRootState, RootState>) => {
 };
 
 export const create = <M> (parent: StoreBuilder<RootState>|ModuleBuilder<M, RootState>, namespace: string) => {
-	const b = parent.module<ModuleRootState>(namespace, initialState);
+	const b = parent.module<ModuleRootState>(namespace, Object.assign({}, initialState) /* Don't alias initialstate of different modules! */);
 	return {
 		actions: createActions(b),
 		get: createGetters(b),

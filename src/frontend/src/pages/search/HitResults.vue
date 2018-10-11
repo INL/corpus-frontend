@@ -45,8 +45,8 @@
 		</thead>
 
 		<tbody>
-			<tr v-for="(rowData, index) in rows" :key="index" class="concordance">
-				<template v-if="rowData.type === 'doc'">
+			<template v-for="(rowData, index) in rows">
+				<tr v-if="showTitles && rowData.type === 'doc'" :key="index" class="concordance">
 					<td :colspan="numColumns">
 						<div class="doctitle collapse in">
 							<a
@@ -58,14 +58,14 @@
 							</a>
 						</div>
 					</td>
-				</template>
-				<template v-else>
+				</tr>
+				<tr v-else-if="rowData.type === 'hit'" :key="index" class="concordance">
 					<td class="text-right">&hellip;<span :dir="textDirection">{{rowData.left}}</span></td>
 					<td class="text-center"><strong :dir="textDirection">{{rowData.hit}}</strong></td>
 					<td><span :dir="textDirection">{{rowData.right}}</span>&hellip;</td>
 					<td v-for="(v, index) in rowData.other" :key="index">{{v}}</td>
-				</template>
-			</tr>
+				</tr>
+			</template>
 			<!-- TODO snippet row, properties row -->
 
 			<!-- snippet row
@@ -111,6 +111,7 @@ export default Vue.extend({
 	props: {
 		results: Object as () => BLTypes.BlHitResults,
 		sort: String as () => string|null,
+		showTitles: Boolean as () => boolean,
 	},
 	computed: {
 		rows(): Array<DocRow|HitRow> {

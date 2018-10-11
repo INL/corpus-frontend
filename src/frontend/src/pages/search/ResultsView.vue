@@ -40,7 +40,7 @@
 
 				<div class="buttons">
 					<button type="button" class="btn btn-default btn-sm pull-right" style="margin-left: 5px;margin-bottom: 5px;">Export CSV</button>
-					<button v-if="type === 'hits' && !isGroups" type="button" class="btn btn-danger btn-sm pull-right" style="margin-left: 5px;margin-bottom: 5px;">Show/hide titles</button>
+					<button v-if="type === 'hits' && !isGroups" type="button" class="btn btn-danger btn-sm pull-right" style="margin-left: 5px;margin-bottom: 5px;" @click="showTitles = !showTitles">{{showTitles ? 'Hide' : 'Show'}} Titles</button>
 				</div>
 			</div>
 
@@ -70,6 +70,7 @@
 			<HitResults v-else-if="isHits"
 				:results="results"
 				:sort="sort"
+				:showTitles="showTitles"
 
 				@sort="sort = $event"
 			/>
@@ -124,6 +125,7 @@ export default Vue.extend({
 
 		userSubmittedPage: null as number|null,
 		viewGroupName: null as string|null,
+		showTitles: true,
 	}),
 	methods: {
 		markDirty() {

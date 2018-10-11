@@ -6,7 +6,7 @@ import URI from 'urijs';
 
 import {onSearchUpdated} from '@/search';
 import {debugLog} from '@/utils/debug';
-import {getQuerySummary, search, getBlsParamFromState, BlacklabParameters, getPatternString} from '@/modules/singlepage-bls';
+import {getQuerySummary, search, getBlsParamFromState, getPatternString} from '@/modules/singlepage-bls';
 import {getState} from '@/store';
 
 import * as BLTypes from '@/types/blacklabtypes';
@@ -765,7 +765,7 @@ export function refreshTab($tab: JQuery<HTMLElement>) {
 		throw new Error('Attempting to refresh search results without a valid operation (perhaps before vuex state change has been processed?), this will not work!');
 	}
 
-	const param: BlacklabParameters = getBlsParamFromState();
+	const param: BLTypes.BlacklabParameters = getBlsParamFromState();
 
 	// TODO tidy up, blacklab parameters should probably be generated as late as possible
 	// This probably should exist in vuexbridge or something once we properly use globla event bus

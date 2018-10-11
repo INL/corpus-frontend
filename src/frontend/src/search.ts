@@ -9,7 +9,6 @@ import './utils/features/autocomplete';
 import './utils/features/tutorial';
 
 import createQueryBuilder from './modules/cql_querybuilder';
-import {BlacklabParameters} from './modules/singlepage-bls';
 import './modules/singlepage-interface';
 
 import './pages/search/vuexbridge';
@@ -103,7 +102,7 @@ $(document).ready(function() {
  * @param searchParams the search parameters
  * @returns the query string, beginning with ?, or an empty string when no searchParams with a proper value
  */
-function toPageUrl(operation: string, blsParams?: BlacklabParameters|null) {
+function toPageUrl(operation: string, blsParams?: BLTypes.BlacklabParameters|null) {
 
 	const uri = new URI();
 	const paths = uri.segmentCoded();
@@ -116,7 +115,7 @@ function toPageUrl(operation: string, blsParams?: BlacklabParameters|null) {
 	}
 
 	// remove null, undefined, empty strings and empty arrays from our query params
-	const modifiedParams: Partial<BlacklabParameters> = {};
+	const modifiedParams: Partial<BLTypes.BlacklabParameters> = {};
 	$.each(blsParams, function(key, value) {
 		if (value == null) {
 			return true;
@@ -272,7 +271,7 @@ export function searchSubmit() {
 
 // TODO use pageState instead of blacklab parameters and push that instance of the object
 /** Callback from when a search is executed (not neccesarily by the user, could also just be pagination and the like) */
-export function onSearchUpdated(operation: string, searchParams: BlacklabParameters) {
+export function onSearchUpdated(operation: string, searchParams: BLTypes.BlacklabParameters) {
 	// Only push new url if different
 	// Why? Because when the user goes back say, 10 pages, we reinit the page and do a search with the restored parameters
 	// this search would push a new history entry, popping the next 10 pages off the stack, which the url is the same because we just entered the page.

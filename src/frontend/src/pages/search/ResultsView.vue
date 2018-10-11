@@ -6,19 +6,20 @@
 					<div class="groupselect-container">
 
 						<select-picker v-model="groupBy"
-							:options="optGroups"
 							multiple
 							class="groupselect"
-							title="Group hits by..."
 							data-size="15"
 							data-actions-box="true"
 							data-deselect-all-text="reset"
 							data-show-subtext="true"
 							data-style="btn-default btn-sm"
+
+							:options="optGroups"
+							:title="`Group ${type} by...`"
 						/>
 
 						<button type="button" class="btn btn-sm btn-default dummybutton">update</button> <!-- dummy button... https://github.com/INL/corpus-frontend/issues/88 -->
-						<div class="checkbox-inline" style="margin-left: 5px;">
+						<div v-if="groupBy && groupBy.length > 0" class="checkbox-inline" style="margin-left: 5px;">
 							<label title="Separate groups for differently cased values" style="white-space: nowrap; margin: 0;" :for="uid+'case'"><input type="checkbox" :id="uid+'case'" v-model="caseSensitive">Case sensitive</label>
 						</div>
 					</div>
@@ -26,7 +27,7 @@
 					<div v-if="viewGroup"
 						class="btn btn-sm btn-default nohover viewgroup"
 					>
-						<span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span class="name">{{viewGroup}}</span> &mdash; <a class="clear" @click="viewGroup = null">Go back</a>
+						<span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span class="name">{{viewGroupName || viewGroup}}</span> &mdash; <a class="clear" @click="viewGroup = null">Go back</a>
 					</div>
 
 					<div v-if="results && !!(results.summary.stoppedRetrievingHits && !results.summary.stillCounting)"
@@ -61,9 +62,10 @@
 			<GroupResults v-if="isGroups"
 				:results="results"
 				:sort="sort"
+				:type="type"
 
 				@sort="sort = $event"
-				@viewgroup="viewGroup = $event"
+				@viewgroup="viewGroup = $event.id; viewGroupName = $event.displayName"
 			/>
 			<HitResults v-else-if="isHits"
 				:results="results"
@@ -121,6 +123,7 @@ export default Vue.extend({
 		error: null as null|BLTypes.BLError, // TODO not correct
 
 		userSubmittedPage: null as number|null,
+		viewGroupName: null as string|null,
 	}),
 	methods: {
 		markDirty() {
@@ -189,12 +192,12 @@ export default Vue.extend({
 			if (this.type === 'hits') {
 				const annotations = corpus.get.annotations();
 
-				[['wordleft:', 'Before hit'],['hit:', 'Hit'],['wordright:', 'After hit']]
-				.forEach(([prefix, label]) =>
+				[['wordleft:', 'Before hit', 'before'],['hit:', 'Hit', ''],['wordright:', 'After hit', 'after']]
+				.forEach(([prefix, groupname, suffix]) =>
 					groups.push({
-						label,
+						label: groupname,
 						options: annotations.map(annot => ({
-							label: `Group by ${annot.displayName} <small class="text-muted">${label.split(' ')[0].toLowerCase()}</small>`,
+							label: `Group by ${annot.displayName} <small class="text-muted">${suffix}</small>`,
 							value: `${prefix}${annot.id}`
 						}))
 					})
@@ -320,9 +323,9 @@ export default Vue.extend({
 					border-bottom-left-radius: 0px;
 				}
 
-				li a {
-					text-transform: capitalize;
-				}
+				// li a {
+				// 	text-transform: capitalize;
+				// }
 			}
 			> .viewgroup {
 				align-self: flex-start;

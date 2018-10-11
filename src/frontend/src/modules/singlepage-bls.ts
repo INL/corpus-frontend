@@ -11,29 +11,6 @@ import * as BLTypes from '@/types/blacklabtypes';
  * Also handles getting data such as longer snippets, concordances, etc.
  */
 
-/** BlackLab query parameters. Is a stricter subset of query parameters blacklab accepts. */
-export type BlacklabParameters = {
-	/* Number of results to request */
-	number: number;
-	/* Index of first result to request */
-	first: number;
-	/* percentage of results to return (0-100), mutually exclusive with 'samplenum' */
-	sample?: number;
-	/* How many results to return, mutually exclusive with 'sample' */
-	samplenum?: number;
-	/* Seed from which the samples are generated */
-	sampleseed?: number;
-	/* Context size, may be limited by blacklab */
-	wordsaroundhit?: number;
-	filter?: string;
-	group?: string;
-	/* CQL query */
-	patt?: string;
-	sort?: string;
-	/* Also return results within this specific group (only when 'group' specified) */
-	viewgroup?: string;
-};
-
 declare const BLS_URL: string;
 
 type PatternType = RootState['form']['pattern'][RootState['form']['activePattern']];
@@ -169,7 +146,7 @@ export function getFilterString(params: RootState['form']['submittedParameters']
  */
 const totalsCounter = (function() {
 	// Parameters used in the next update request
-	let blsParam: null|BlacklabParameters;
+	let blsParam: null|BLTypes.BlacklabParameters;
 	let operation: null|'hits'|'docs';
 	let data: BLTypes.BLSearchResult;
 
@@ -257,7 +234,7 @@ const totalsCounter = (function() {
 		 * @param searchParam - The final (processed) blacklab search parameters.
 		 * @param op - The search operation, must not be 'hits' if no pattern supplied.
 		 */
-		start (searchResult: BLTypes.BLSearchResult, searchParam: BlacklabParameters, op: 'hits'|'docs') {
+		start (searchResult: BLTypes.BLSearchResult, searchParam: BLTypes.BlacklabParameters, op: 'hits'|'docs') {
 			cancelRequest();
 
 			data = searchResult;
@@ -275,15 +252,16 @@ const totalsCounter = (function() {
 
 let inflightRequest: null|ReturnType<typeof $.ajax> = null;
 
+// TODO promisify
 /**
- * Translate SearchParameters to blacklab-server search parameters and perform a search.
+ * Perform a search.
  *
  * @param operation whether to request hits or documents
  * @param param - Parameters, these must be in a valid configuration.
  * @param successFunc
  * @param errorFunc
  */
-export function search(operation: 'hits'|'docs', param: BlacklabParameters, successFunc?: (data: BLTypes.BLSearchResult) => void, errorFunc?: JQuery.Ajax.ErrorCallback<any>) {
+export function search(operation: 'hits'|'docs', param: BLTypes.BlacklabParameters, successFunc?: (data: BLTypes.BLSearchResult) => void, errorFunc?: JQuery.Ajax.ErrorCallback<any>) {
 	debugLog('starting search', operation, param);
 
 	inflightRequest = $.ajax({
@@ -324,7 +302,7 @@ export function cancelSearch() {
 	totalsCounter.stop();
 }
 
-export function getBlsParamFromState(): BlacklabParameters {
+export function getBlsParamFromState(): BLTypes.BlacklabParameters {
 	const state = getState();
 
 	const viewProps = get.viewedResultsSettings();
@@ -388,3 +366,5 @@ export function getQuerySummary(params: RootState['form']['submittedParameters']
 
 	return ret;
 }
+
+export default {}

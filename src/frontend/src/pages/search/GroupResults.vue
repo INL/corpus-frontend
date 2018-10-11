@@ -109,8 +109,9 @@ export default Vue.extend({
 				return;
 			}
 
-			let requestParameters: BLTypes.BlacklabParameters = this.results.summary.searchParam;
-			Object.assign(requestParameters, {
+			// TODO this is probably incorrect, the results could be stale while we're waiting for a new set in the parent.
+			// make a copy!
+			let requestParameters: BLTypes.BlacklabParameters = Object.assign({}, this.results.summary.searchParam, {
 				number: 20,
 				first: cache.concordances.length,
 				viewgroup: id,

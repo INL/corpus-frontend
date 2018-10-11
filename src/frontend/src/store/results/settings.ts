@@ -25,7 +25,10 @@ export const initialState: ModuleRootState = {
 };
 
 const createActions = (b: ModuleBuilder<ModuleRootState, RootState>) => ({
-	caseSensitive: b.commit((state, payload: boolean) => state.caseSensitive = payload, 'casesensitive'),
+	caseSensitive: b.commit((state, payload: boolean) => {
+		state.caseSensitive = payload;
+		state.page = 0;
+	}, 'casesensitive'),
 	groupBy: b.commit((state, payload: string[]) => {
 		state.groupBy = payload;
 		state.viewGroup = null;

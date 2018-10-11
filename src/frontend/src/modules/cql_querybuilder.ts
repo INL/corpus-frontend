@@ -5,6 +5,9 @@ import 'jquery-ui/ui/widgets/sortable';
 import $ from 'jquery';
 import * as Mustache from 'mustache';
 
+import parseCql from '@/utils/cqlparser';
+import {debugLog} from '@/utils/debug';
+
 /**
  * The querybuilder is a visual editor for CQL queries (see http://inl.github.io/BlackLab/corpus-query-language.html#supported-features for an introduction to CQL)
  * The querybuilder is a hierarchy of nested objects, where every object is represented by its own isolated container in the DOM.
@@ -340,7 +343,7 @@ type QueryBuilderOptions = RecursivePartial<typeof DEFAULTS>;
 // Class Querybuilder
 // -------------------
 
-class QueryBuilder {
+export class QueryBuilder {
 	public settings: typeof DEFAULTS;
 	public element: JQuery<HTMLElement>; // TODO private and expose update function
 	private createTokenButton: JQuery<HTMLElement>;
@@ -443,13 +446,17 @@ class QueryBuilder {
 		this.createToken();
 		this.withinSelect.find('input').first().parent().button('toggle');
 	}
+
+	public parse(cql: string) {
+		return populateQueryBuilder(this, cql);
+	}
 }
 
 // ----------
 // Class Token
 // ----------
 
-class Token {
+export class Token {
 	public readonly id = generateId('token');
 	private readonly idSelector = '#' + this.id;
 	public readonly element =this._createElement();
@@ -460,7 +467,7 @@ class Token {
 		beginOfSentence: this.element.find(this.idSelector + '_property_sentence_start'),
 		endOfSentence: this.element.find(this.idSelector + '_property_sentence_end')
 	};
-	private readonly rootAttributeGroup = this._createRootAttributeGroup();
+	public readonly rootAttributeGroup = this._createRootAttributeGroup();
 
 	constructor(private readonly builder: QueryBuilder) {
 		this.rootAttributeGroup.createAttribute();
@@ -519,7 +526,7 @@ class Token {
 		});
 	}
 
-	public set(controlName: keyof Token['$controls'], val: string|boolean) {
+	public set(controlName: keyof Token['$controls'], val: string|boolean|number|null|undefined) {
 		if (this.$controls[controlName]) {
 			setValue(this.$controls[controlName], val);
 		}
@@ -573,7 +580,7 @@ class Token {
 // Class AttributeGroup
 // ---------------------
 
-class AttributeGroup {
+export class AttributeGroup {
 	private readonly builder: QueryBuilder;
 	private readonly id = generateId('attribute_group');
 	private readonly idSelector = '#' + this.id;
@@ -773,7 +780,7 @@ class AttributeGroup {
 // Class Attribute
 // ----------------
 
-class Attribute {
+export class Attribute {
 	private readonly builder: QueryBuilder;
 	private readonly id = generateId('attribute');
 	private readonly idSelector = '#' + this.id;
@@ -846,11 +853,11 @@ class Attribute {
 			// If the modal was closed through a button click, the responsible button will have focus
 			// Only save the data if the clicked button as the data-save-edits attribute/property
 
-			if ($(document.activeElement).is('[data-dismiss][data-save-edits], [data-toggle][data-save-edits]')) {
+			if ($(document.activeElement!).is('[data-dismiss][data-save-edits], [data-toggle][data-save-edits]')) {
 				$fileText
 					.val($modalTextArea.val() as string)
 					.trigger('change');
-			} else if ($(document.activeElement).is('[data-dismiss][data-discard-value], [data-toggle][data-discard-value]')) {
+			} else if ($(document.activeElement!).is('[data-dismiss][data-discard-value], [data-toggle][data-discard-value]')) {
 				self.element.find('.bl-input-upload').val('').trigger('change');
 			}
 		});
@@ -981,10 +988,122 @@ const setValue = function($element: JQuery<HTMLElement>, val: any) {
 	}
 };
 
-// ---------------
-// exports
-// ---------------
+/**
+ * Attempt to parse the query pattern and update the state of the query builder
+ * to match it as much as possible.
+ *
+ * @param {string} pattern - cql query
+ * @returns True or false indicating success or failure respectively
+ */
+function populateQueryBuilder(queryBuilder: QueryBuilder, pattern: string) {
+	if (!pattern) {
+		// TODO maybe reset querybuilder on empty or null pattern
+		// Also preserve the last state in case the pattern can't be parsed.
+		return false;
+	}
 
-export default function($rootElement: JQuery<HTMLElement>, options: QueryBuilderOptions) {
-	return new QueryBuilder($rootElement, options);
+	try {
+		const parsedCql = parseCql(pattern);
+		const tokens = parsedCql.tokens;
+		const within = parsedCql.within;
+		if (tokens === null) {
+			return false;
+		}
+
+		queryBuilder.reset();
+		if (tokens.length > 0) {
+			// only clear the querybuilder when we're putting something back in
+			$.each(queryBuilder.getTokens(), function(i, e) {
+				e.element.remove();
+			});
+		}
+		if (within) {
+			queryBuilder.set('within', within);
+		}
+
+		// TODO: try and repopulate the "simple" tab
+
+		$.each(tokens, function(index, token) {
+			const tokenInstance = queryBuilder.createToken();
+
+			// clean the root group of all contents
+			$.each(tokenInstance.rootAttributeGroup.getAttributes(), function(i, el) {
+				el.element.remove();
+			});
+
+			$.each(tokenInstance.rootAttributeGroup.getAttributeGroups(), function(i, el) {
+				el.element.remove();
+			});
+
+			tokenInstance.set('beginOfSentence', !!token.leadingXmlTag && token.leadingXmlTag.name === 's');
+			tokenInstance.set('endOfSentence', !!token.trailingXmlTag && token.trailingXmlTag.name === 's');
+			tokenInstance.set('optional', token.optional || false);
+
+			if (token.repeats) {
+				tokenInstance.set('minRepeats', token.repeats.min);
+				tokenInstance.set('maxRepeats', token.repeats.max);
+			}
+
+			function doOp(op: any, parentAttributeGroup: any, level: number) {
+				if (op == null) {
+					return;
+				}
+
+				if (op.type === 'binaryOp') {
+					const label = op.operator === '&' ? 'AND' : 'OR'; // TODO get label internally in builder
+					if (op.operator !== parentAttributeGroup.operator) {
+
+						if (level === 0) {
+							parentAttributeGroup.operator = op.operator;
+							parentAttributeGroup.label = label;
+						} else if (parentAttributeGroup.operator !== op.operator) {
+							parentAttributeGroup = parentAttributeGroup.createAttributeGroup(op.operator, label);
+						}
+					}
+
+					// inverse order, since new elements are inserted at top..
+					doOp(op.right, parentAttributeGroup, level + 1);
+					doOp(op.left, parentAttributeGroup, level + 1);
+				} else if (op.type === 'attribute') {
+
+					const attributeInstance = parentAttributeGroup.createAttribute();
+
+					// case flag is always at the front, so check for that before checking
+					// for starts with/ends with flags
+					if (op.value.indexOf('(?-i)') === 0) {
+						attributeInstance.set('case', true, op.name);
+						op.value = op.value.substr(5);
+					} else if (op.value.indexOf('(?c)') === 0) {
+						attributeInstance.set('case', true, op.name);
+						op.value = op.value.substr(4);
+					}
+
+					if (op.operator === '=' && op.value.length >= 2 && op.value.indexOf('|') === -1) {
+						if (op.value.indexOf('.*') === 0) {
+							op.operator = 'ends with';
+							op.value = op.value.substr(2);
+						} else if (op.value.indexOf('.*') === op.value.length -2) {
+							op.operator = 'starts with';
+							op.value = op.value.substr(0, op.value.length-2);
+						}
+					}
+
+					attributeInstance.set('operator', op.operator);
+					attributeInstance.set('type', op.name);
+
+					attributeInstance.set('val', op.value);
+				}
+			}
+
+			doOp(token.expression, tokenInstance.rootAttributeGroup, 0);
+			tokenInstance.element.trigger('cql:modified');
+		});
+	} catch (e) {
+		// couldn't decode query
+		debugLog('Cql parser could not decode query pattern', e, pattern);
+
+		return false;
+	}
+
+	return true;
 }

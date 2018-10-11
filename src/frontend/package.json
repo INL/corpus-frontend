@@ -23,6 +23,7 @@
     "@types/urijs": "^1.15.38",
     "babel-loader": "^8.0.0-beta.6",
     "babel-plugin-transform-es2015-modules-commonjs-simple": "^6.7.4",
+    "circular-dependency-plugin": "^5.0.2",
     "css-loader": "^1.0.0",
     "eslint": "^5.4.0",
     "expose-loader": "^0.7.5",

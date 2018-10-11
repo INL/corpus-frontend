@@ -415,3 +415,5 @@ $(document).ready(() => {
 	},
 	corpus: CorpusModule.actions
 };
+
+export default () => {/**/}; // allow importing root module to call something to present this from beeing tree-shaken

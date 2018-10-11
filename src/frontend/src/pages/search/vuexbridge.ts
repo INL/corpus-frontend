@@ -6,11 +6,11 @@ import * as ResultsStore from '@/store/results';
 import * as SettingsStore from '@/store/settings';
 import * as FormStore from '@/store/form';
 
-import {populateQueryBuilder} from '@/search';  // FIXME extract into querybuilder module
-import { FilterField, FilterType } from '@/types/pagetypes';
 import { cancelSearch } from '@/modules/singlepage-bls';
-import { refreshTab, clearResults, showSearchIndicator } from '@/modules/singlepage-interface';
-import {debugLog} from '@/utils/debug';
+import { debugLog } from '@/utils/debug';
+import { QueryBuilder } from '@/modules/cql_querybuilder';
+
+import { FilterField, FilterType } from '@/types/pagetypes';
 
 /*
 	This is some ugly-ish code that implements some one- and two-way binding between oldschool normal html elements and the vuex store.
@@ -145,13 +145,17 @@ $(document).ready(() => {
 		});
 	}
 
-	{
+	// TODO initialization order is a bit of a mess. querybuilder is constructed after connecting to the page
+	// so delay this a little
+	setTimeout(() => {
 		let lastPattern: string;
 		const $querybuilder = $('#querybuilder');
+		const instance: QueryBuilder = $querybuilder.data('builder');
+
 		store.watch(state => state.form.pattern.queryBuilder, v => {
 			if (v !== lastPattern) {
 				lastPattern = v || '';
-				populateQueryBuilder(v);
+				instance.parse(v || '');
 			}
 		}, {immediate: true});
 		$querybuilder.on('cql:modified', () => {
@@ -159,7 +163,7 @@ $(document).ready(() => {
 			lastPattern = pattern;
 			FormStore.actions.pattern.queryBuilder(pattern);
 		});
-	}
+	}, 0);
 
 	{
 		const $within = $('#simplesearch_within');
@@ -296,125 +300,6 @@ $(document).ready(() => {
 		$('#results').toggle(!!v);
 	}, {immediate: true});
 
-	// {
-	// 	$('#tabHits, #tabDocs').each((i, el) => {
-	// 		const $tab = $(el);
-	// 		const $label = $(`a[href="#${$tab.attr('id')}"`);
-
-	// 		const viewId = $tab.is($('#tabHits')) ? 'hits' : 'docs';
-	// 		const viewStore = ResultsStore[viewId];
-
-	// 		// TODO result view tabs should *really* be a vue component by this point
-	// 		/** Are the search results within this tab up-to-date */
-	// 		function dirty(state?: boolean) {
-	// 			if (state == null) {
-	// 				const v = $tab.data('dirty');
-	// 				return v != null ? v : true;
-	// 			} else {
-	// 				$tab.data('dirty', state);
-	// 			}
-	// 		}
-
-	// 		// Pagination
-	// 		$tab.on('click', '[data-page]', function() { // No arrow func - need context
-	// 			const page = Number.parseInt($(this).data('page'), 10);
-	// 			if (viewStore.getState().page !== page) {
-	// 				viewStore.actions.page(page);
-	// 			}
-	// 		});
-	// 		store.watch(state => state.results[viewId].page, page => {
-	// 			// Only updates UI, should not be any handlers (other than directly above) attached to the ui element
-	// 			$tab.find(`.pagination [data-page="${page}"]`).click();
-	// 		}, {immediate: true});
-
-	// 		// Case sensitive grouping
-	// 		const $caseSensitive = $tab.find('.casesensitive') as JQuery<HTMLInputElement>;
-	// 		$caseSensitive.on('change', () => {
-	// 			const sensitive = $caseSensitive.is(':checked');
-	// 			viewStore.actions.caseSensitive(sensitive);
-	// 		});
-	// 		store.watch(state => state.results[viewId].caseSensitive, checked => {
-	// 			changeCheck($caseSensitive, checked);
-	// 		}, {immediate: true});
-
-	// 		// Grouping settings
-	// 		const $groupSelect = $tab.find('.groupselect') as JQuery<HTMLSelectElement>;
-	// 		$groupSelect.on('change', () => viewStore.actions.groupBy($groupSelect.selectpicker('val') as string[]));
-	// 		store.watch(state => state.results[viewId].groupBy, v => changeSelect($groupSelect, v), {immediate: true});
-
-	// 		// Sorting settings, only bind from ui to state,
-	// 		// Nothing in UI to indicate sorting -- https://github.com/INL/corpus-frontend/issues/142
-	// 		$tab.on('click', '[data-bls-sort]', function() {
-	// 			let sort = $(this).data('blsSort') as string;
-	// 			if (sort === viewStore.getState().sort) {
-	// 				sort = '-'+sort;
-	// 			}
-	// 			viewStore.actions.sort(sort);
-	// 			return false; // click handling
-	// 		});
-
-	// 		// viewgroup
-	// 		const $resultgroupdetails = $tab.find('.resultgroupdetails');
-	// 		const $resultgroupname = $tab.find('.resultgroupname');
-	// 		// delegated handler for .viewconcordances, elements are dynamically created
-	// 		$tab.on('click', '.viewconcordances', function() {
-	// 			const id = $(this).data('groupId');
-	// 			viewStore.actions.viewGroup(id);
-	// 		});
-	// 		$tab.on('click', '.clearviewgroup', function() {
-	// 			viewStore.actions.viewGroup(null);
-	// 		});
-	// 		store.watch(state => state.results[viewId].viewGroup, v => {
-	// 			$resultgroupdetails.toggle(v != null);
-	// 			$resultgroupname.text(v || '');
-	// 		}, {immediate: true});
-
-	// 		// Watch entire tab-local state and restart search when required.
-	// 		// Also need to watch some global parameters that are instantly reactive
-	// 		// NOTE: is called only once per vue tick (i.e. multiple property changes can be lumped together, such as when clearing the page)
-	// 		store.watch(state => ({
-	// 			viewParameters: state.results[viewId],
-	// 			globalParameters: state.settings,
-	// 			submittedFormParameters: state.form.submittedParameters
-	// 		}), (cur, old) => {
-	// 			debugLog(`dynamic parameter changed, marking results view '${viewId}' dirty`);
-	// 			// otherwise, mark dirty, and then refresh and mark clean if it's the current tab
-	// 			dirty(true);
-	// 			if (getState().viewedResults === viewId) {
-	// 				refreshTab($tab);
-	// 				dirty(false);
-	// 			} else {
-	// 				// Tab is not visible
-	// 				// for visible tabs, clearResults is called with a delay if the refresh takes too long
-	// 				// to prevent the page from jumping around momentarily while new results are fetched
-	// 				clearResults($tab);
-	// 			}
-	// 		}, {deep: true});
-
-	// 		// Main tab opening
-	// 		// TODO this is a clutch - we need to attach this listener after attaching
-	// 		// the parameter listeners above, so that the tab is marked as dirty before
-	// 		// we process the open event
-	// 		// If we don't do this, we will miss refreshes when both the opened tab and some other
-	// 		// parameter change in the same tick.
-	// 		// (unless we always refresh the tab on opening, but that's a performance hog)
-	// 		$label.on('show.bs.tab', () => actions.viewedResults(viewId));
-	// 		store.watch(state => state.viewedResults, v => {
-	// 			if (v === viewId) {
-	// 				$label.tab('show');
-	// 				if (dirty()) {
-	// 					debugLog('changed to a stale tab, refreshing');
-	// 					refreshTab($tab);
-	// 					dirty(false);
-	// 				} else {
-	// 					debugLog('changed to an up-to-date tab, ignoring refresh');
-	// 				}
-	// 			}
-	// 		}, {immediate: true});
-
-	// 	});
-	// }
-
 	// Reset & history navigation
 	$('#mainForm').on('reset', () => {
 		actions.reset();
@@ -426,6 +311,17 @@ $(document).ready(() => {
 
 		history.pushState(getState(), undefined, newUrl.toString());
 
+		return false;
+	});
+	$('#mainForm').on('submit', () => {
+		actions.search();
+
+		// TODO this seems to fire before the state is updated - move to vuexbridge
+		$('html, body').animate({
+			scrollTop: $('#searchFormDivHeader').offset()!.top - 75 // navbar
+		}, 500);
+
+		// May be used as click handler, so prevent event propagation
 		return false;
 	});
 

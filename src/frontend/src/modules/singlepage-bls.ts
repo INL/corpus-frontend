@@ -13,65 +13,6 @@ import * as BLTypes from '@/types/blacklabtypes';
 
 declare const BLS_URL: string;
 
-type PatternType = RootState['form']['pattern'][RootState['form']['activePattern']];
-
-// TODO update documentation
-/**
- * Converts an array of PropertyFields to a cql token string.
- * If pattern is a string already, it is returned as-is.
- * Every PropertyField value is split on whitespace, and every word is mapped to a token with the same index.
- * I.E. lemma="multiple words" is converted to [lemma="multiple"][lemma="words"]
- * Values are converted from wildcard to regex, and case sensitivity flags are inserted where case-sensitive searching is specified.
- * @param pattern
- * @param within - raw token name (i.e. not enclosed in </>) for the within clause (so 'p' for paragraph, 's' for sentence, etc), only used when typeof pattern === 'Array'
- * @returns The formatted string
- */
-export function getPatternString(pattern: PatternType): string|undefined {
-	if (!pattern) {
-		return undefined;
-	}
-	if (typeof pattern === 'string') {
-		return pattern || undefined; // coerce empty to undef
-	}
-
-	// First split the properties into individual words and pair them
-	const tokens = [] as Array<{[key: string]: string}>;
-	for (const field of Object.values(pattern.annotationValues)) {
-		if (field.value.length === 0) {
-			continue;
-		}
-
-		const words = field.value.split(/\s+/);
-		for (let i = 0; i < words.length; i++) {
-			if (!tokens[i]) {
-				tokens[i] = {};
-			}
-
-			tokens[i][field.id] = (field.case ? '(?-i)' : '') + makeWildcardRegex(words[i]);
-		}
-	}
-
-	const tokenStrings = [] as string[];
-	$.each(tokens, function(index, token) {
-
-		// push all attributes in this token
-		const attributesStrings = [] as string[];
-		$.each(token, function(key, value) {
-			if (value) { // don't push empty attributes
-				attributesStrings.push(key + '=' + '"' + value + '"');
-			}
-		});
-
-		tokenStrings.push('[', attributesStrings.join(' & '), ']');
-	});
-
-	if (tokenStrings.length > 0 && pattern.within) {
-		tokenStrings.push(' within ', '<'+ pattern.within+'/>');
-	}
-
-	return tokenStrings.join('') || undefined;
-}
-
 // TODO update documentation
 /**
  * Converts the active filters into a parameter string blacklab-server can understand.

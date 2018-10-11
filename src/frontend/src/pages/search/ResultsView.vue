@@ -87,6 +87,7 @@
 
 <script lang="ts">
 import Vue from "vue";
+import URI from 'urijs';
 
 import uid from '@/mixins/uid';
 
@@ -104,7 +105,30 @@ import GroupResults from '@/pages/search/GroupResults.vue';
 import HitResults from '@/pages/search/HitResults.vue';
 import DocResults from '@/pages/search/DocResults.vue';
 
-import {onSearchUpdated} from '@/search';
+import {toPageUrl} from '@/utils';
+
+// TODO verify we don't store non-serializable elements in the store
+// TODO move to url management module, once vuexbridge is more factored out
+/** Callback from when a search is executed (not neccesarily by the user, could also just be pagination and the like) */
+function onSearchUpdated(operation: string, searchParams: BLTypes.BlacklabParameters) {
+	// Only push new url if different
+	// Why? Because when the user goes back say, 10 pages, we reinit the page and do a search with the restored parameters
+	// this search would push a new history entry, popping the next 10 pages off the stack, which the url is the same because we just entered the page.
+	// So don't do that.
+
+	// If we generate very long page urls, tomcat cannot parse our requests (referrer header too long)
+	// So omit the query from the page url in these cases
+	// TODO this breaks history-based navigation
+	let newUrl = toPageUrl(operation, searchParams);
+	if (newUrl.length > 4000) {
+		newUrl = toPageUrl(operation, $.extend({}, searchParams, { patt: null }));
+	}
+
+	const currentUrl = new URI().toString();
+	if (newUrl !== currentUrl) {
+		history.pushState(globalStore.getState(), undefined, newUrl);
+	}
+}
 
 export default Vue.extend({
 	mixins: [uid],

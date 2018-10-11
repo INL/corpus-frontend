@@ -1,11 +1,11 @@
 import $ from 'jquery';
 
 import Vue from 'vue';
-import {getStoreBuilder} from 'vuex-typex';
+import { getStoreBuilder } from 'vuex-typex';
 
-import {RootState} from '@/store';
-import {FilterField, PropertyField} from '@/types/pagetypes';
-import { getPatternString } from '@/modules/singlepage-bls';
+import { RootState } from '@/store';
+import { FilterField, PropertyField } from '@/types/pagetypes';
+import { getPatternString } from '@/utils';
 import { debugLog } from '@/utils/debug';
 
 export type ModuleRootState = {

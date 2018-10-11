@@ -20,7 +20,7 @@
 		"object-literal-shorthand": {"severity": "warn"},
 		"whitespace": { "severity": "warn" },
 		"one-line": { "severity": "warn" },
-		"member-ordering": { "severity": "warn", "options": {
+		"member-ordering": { "severity": "off", "options": { // TODO enable
 			"alphabetize": true,
 			"order": "statics-first"
 		} },

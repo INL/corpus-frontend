@@ -352,7 +352,7 @@ export function getBlsParamFromState(): BlacklabParameters {
 		sampleseed: (state.settings.sampleSeed != null && state.settings.sampleMode && state.settings.sampleSize) ? state.settings.sampleSeed : undefined,
 
 		sort: viewProps.sort != null ? viewProps.sort : undefined,
-		viewgroup: viewProps.sort && viewProps.viewGroup ? viewProps.viewGroup : undefined,
+		viewgroup: viewProps.viewGroup != null ? viewProps.viewGroup : undefined,
 		wordsaroundhit: state.settings.wordsAroundHit != null ? state.settings.wordsAroundHit : undefined,
 	};
 }

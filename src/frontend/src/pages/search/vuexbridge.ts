@@ -93,12 +93,13 @@ $(document).ready(() => {
 	{
 		const $sampleSize = $('#sampleSize') as JQuery<HTMLInputElement>;
 		store.watch(state => state.settings.sampleSize,v => changeText($sampleSize, v+''), {immediate: true});
-		$sampleSize.on('change keyup', () => {
+		$sampleSize.on('change', () => {
 			let n: number|null = Number.parseInt($sampleSize.val() as string, 10);
 			if (isNaN(n)) { n = null; }
 
 			if (n !== SettingsStore.getState().sampleSize) {
 				SettingsStore.actions.sampleSize(n);
+				ResultsStore.actions.resetPage();
 			}
 		});
 	}

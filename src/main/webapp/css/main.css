@@ -3,7 +3,7 @@
     src: url('../font/INLVRG__.eot');
     src: local('Inl vmnw wnt'),
     	 url('../font/INLVRG__.TTF') format('truetype');
-    
+
 }
 
 body {
@@ -11,7 +11,7 @@ body {
     background-repeat: no-repeat;
     background-position: -350px -310px;
     background-attachment: scroll;
-    
+
     padding-top: 60px;
     padding-bottom: 40px;
 }
@@ -130,7 +130,7 @@ hr {
 }.resultcontainer tr > *:first-child {
 	padding-left: 6px;
 }
-.resultstable th, 
+.resultstable th,
 .resultstable td {
 	padding: 0 0.4em;
 }
@@ -178,7 +178,7 @@ th {
 	background-color: #ffffff;
 }
 thead > tr {
-	border-bottom: 1px solid #aaaaaa;	
+	border-bottom: 1px solid #aaaaaa;
 }
 
 tr:hover {
@@ -197,12 +197,12 @@ tr.concordance {
 .group-size-indicator {
 	margin-bottom: 2px;
 }.group-size-indicator > .progress-bar {
-	/*  
+	/*
 		Do not shrink smaller than the text inside the bar.
 		Greater widths are set using min-width.
 	*/
-	
-	width: auto; 
+
+	width: auto;
 	padding: 0px 2px;
 }
 
@@ -221,13 +221,13 @@ div.hitscroll {
 	left: 60%;
 	background-color: #444444;
 	border: #222222 1px solid;
-	z-index: 9001;	
+	z-index: 9001;
 	padding: 10px;
 	border-radius: 5px;
 }
 
 div.hitscroll a {
-	color: #eeeeee; 
+	color: #eeeeee;
 }
 
 
@@ -405,55 +405,6 @@ a[data-bls-sort], a.dropdown-toggle {
 	z-index: 1000;
 }
 
-.groupselect-container {
-    display: inline-flex;
-    flex-wrap: nowrap;
-    max-width:100%;
-    margin-bottom: 5px;
-}
-.groupselect-container > .groupselect {
-    flex: 1 1 auto;
-    width: auto!important;
-    min-width: 0px!important;
-}
-.groupselect-container > .groupselect > button {    
-    border-top-right-radius: 0px;
-    border-bottom-right-radius: 0px;
-    border-right: 0px;
-}
-.groupselect-container .dummybutton {
-	flex: none;
-	border-top-left-radius: 0px;
-	border-bottom-left-radius: 0px;
-}
-
-
-.resultgroupdetails,
-.results-incomplete-warning {
-	border-radius: 100px;
-	margin-bottom: 5px;
-}
-
-.resultgroupname {
-	font-style: italic;
-	display: inline-block;
-	overflow-x: hidden;
-	margin-bottom: -5px;
-	max-width: 150px;
-	text-overflow: ellipsis;
-	padding-right: 1px; /* :after quote gets cut off sometimes due to overflow-hidden */
-}
-.resultgroupname:before {
-	content: "'";
-}.resultgroupname:after {
-	content: "'";
-}
-
-.clearviewgroup {
-	font-weight: 700;
-	text-decoration: underline!important;
-	padding-left: 2px;
-}
 
 #searchFormDiv h3 {
 	font-size: 1.4em;
@@ -502,7 +453,7 @@ a[data-bls-sort], a.dropdown-toggle {
 	z-index: 2;
 }
 
-/* 
+/*
 	Minor bootstrap-select overrides.
 	Do not display the select all button,
 	as it causes a massive query to be fired off when used on grouping.
@@ -523,7 +474,7 @@ a[data-bls-sort], a.dropdown-toggle {
 }
 
 /*
-	Some bootstrap tab customization 
+	Some bootstrap tab customization
 */
 
 .nav-tabs.subtabs {

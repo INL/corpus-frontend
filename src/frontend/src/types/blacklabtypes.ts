@@ -1,3 +1,28 @@
+// import { BlacklabParameters } from '@/modules/singlepage-bls';
+
+/** BlackLab query parameters. Is a stricter subset of query parameters blacklab accepts. */
+export type BlacklabParameters = {
+	/* Number of results to request */
+	number: number;
+	/* Index of first result to request */
+	first: number;
+	/* percentage of results to return (0-100), mutually exclusive with 'samplenum' */
+	sample?: number;
+	/* How many results to return, mutually exclusive with 'sample' */
+	samplenum?: number;
+	/* Seed from which the samples are generated */
+	sampleseed?: number;
+	/* Context size, may be limited by blacklab */
+	wordsaroundhit?: number;
+	filter?: string;
+	group?: string;
+	/* CQL query */
+	patt?: string;
+	sort?: string;
+	/* Also return results within this specific group (only when 'group' specified) */
+	viewgroup?: string;
+};
+
 // --------------
 // Base responses
 // --------------
@@ -246,7 +271,7 @@ export type BLSearchSummary = {
 		dateField: string;
 	};
 	requestedWindowSize: number;
-	searchParam: any;
+	searchParam: BlacklabParameters;
 	searchTime: number;
 	windowFirstResult: number;
 	windowHasNext: boolean;

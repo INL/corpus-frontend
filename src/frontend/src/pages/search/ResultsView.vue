@@ -39,7 +39,7 @@
 				</div>
 
 				<div class="buttons">
-					<button type="button" class="btn btn-default btn-sm pull-right" style="margin-left: 5px;margin-bottom: 5px;">Export CSV</button>
+					<button type="button" class="btn btn-default btn-sm pull-right" style="margin-left: 5px;margin-bottom: 5px;" :disabled="downloadInProgress || !this.results" @click="downloadCsv"><template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner"></span></template>Export CSV</button>
 					<button v-if="type === 'hits' && !isGroups" type="button" class="btn btn-danger btn-sm pull-right" style="margin-left: 5px;margin-bottom: 5px;" @click="showTitles = !showTitles">{{showTitles ? 'Hide' : 'Show'}} Titles</button>
 				</div>
 			</div>
@@ -88,6 +88,7 @@
 <script lang="ts">
 import Vue from "vue";
 import URI from 'urijs';
+import {saveAs} from 'file-saver';
 
 import uid from '@/mixins/uid';
 
@@ -106,6 +107,7 @@ import HitResults from '@/pages/search/HitResults.vue';
 import DocResults from '@/pages/search/DocResults.vue';
 
 import {toPageUrl} from '@/utils';
+import {debugLog} from '@/utils/debug';
 
 // TODO verify we don't store non-serializable elements in the store
 // TODO move to url management module, once vuexbridge is more factored out
@@ -150,6 +152,7 @@ export default Vue.extend({
 		userSubmittedPage: null as number|null,
 		viewGroupName: null as string|null,
 		showTitles: true,
+		downloadInProgress: false, // csv download
 	}),
 	methods: {
 		markDirty() {
@@ -176,6 +179,36 @@ export default Vue.extend({
 			this.error = data;
 			this.results = null;
 			this.request = null;
+		},
+		downloadCsv() {
+			if (this.downloadInProgress || !this.results) {
+				return;
+			}
+
+			// TODO this is wrong, results could be stale (and with that, the searchparam too)
+			const params = Object.assign({}, this.results.summary.searchParam, { // be sure to make a copy, as we may need to use the summary params for other purposes
+				number: undefined,
+				first: undefined,
+				outputformat: 'csv'
+			})
+
+			const url = new URI(bls.getBlsUrl()).segment(this.type).addSearch(params).toString();
+			debugLog('CSV download url', url, params);
+
+			this.downloadInProgress = true;
+			$.ajax(url, {
+				accepts: {json: 'application/json'},
+				cache: false,
+				data: 'text',
+				success: data => {
+					// NOTE: Excel <=2010 seems to ignore the BOM altogether, see https://stackoverflow.com/a/19516038
+					const b = new Blob([data], { type: 'text/plain;charset=utf-8' });
+					saveAs(b, 'data.csv'); // FileSaver.js
+				},
+				complete: () => {
+					this.downloadInProgress = false;
+				}
+			});
 		}
 	},
 	computed: {

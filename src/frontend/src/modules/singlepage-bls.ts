@@ -2,7 +2,6 @@ import $ from 'jquery';
 import URI from 'urijs';
 
 import {getState, get} from '@/store';
-import {makeWildcardRegex} from '@/utils';
 import {debugLog} from '@/utils/debug';
 import * as BLTypes from '@/types/blacklabtypes';
 
@@ -233,6 +232,10 @@ export function search(operation: 'hits'|'docs', param: BLTypes.BlacklabParamete
 			inflightRequest = null;
 		}
 	});
+}
+
+export function getBlsUrl() {
+	return BLS_URL;
 }
 
 export function cancelSearch() {

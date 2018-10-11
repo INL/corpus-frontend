@@ -23,11 +23,16 @@
 						</div>
 					</div>
 
-					<div v-if="viewGroup" class="btn btn-sm btn-default nohover" style="margin-right: 5px">
-						<span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span>{{viewgroup}}</span> &mdash; <a href="javascript:void(0)" @click="viewgroup = null">Go back</a>
+					<div v-if="viewGroup"
+						class="btn btn-sm btn-default nohover viewgroup"
+					>
+						<span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span class="name">{{viewGroup}}</span> &mdash; <a class="clear" @click="viewGroup = null">Go back</a>
 					</div>
 
-					<div class="btn btn-sm btn-default nohover" v-if="results && !!(results.summary.stoppedRetrievingHits && !results.summary.stillCounting)">
+					<div v-if="results && !!(results.summary.stoppedRetrievingHits && !results.summary.stillCounting)"
+						class="btn btn-sm btn-default nohover toomanyresults"
+						style="border-radius: 100px;"
+					>
 						<span class="fa fa-exclamation-triangle text-danger"></span> Too many results! &mdash; your query was limited
 					</div>
 				</div>
@@ -53,9 +58,25 @@
 		<span v-if="request" class="fa fa-spinner fa-spin searchIndicator" style="position:absolute; left: 50%; top:15px"></span>
 
 		<div v-if="results" class="lightbg haspadding resultcontainer">
-			<GroupResults v-if="isGroups" :results="results" @sort="sort = $event" :sort="sort"/>
-			<HitResults v-else-if="isHits" :results="results" @sort="sort = $event" :sort="sort"/>
-			<DocResults v-else :results="results" @sort="sort = $event" :sort="sort"/>
+			<GroupResults v-if="isGroups"
+				:results="results"
+				:sort="sort"
+
+				@sort="sort = $event"
+				@viewgroup="viewGroup = $event"
+			/>
+			<HitResults v-else-if="isHits"
+				:results="results"
+				:sort="sort"
+
+				@sort="sort = $event"
+			/>
+			<DocResults v-else
+				:results="results"
+				:sort="sort"
+
+				@sort="sort = $event"
+			/>
 		</div>
 	</div>
 
@@ -275,13 +296,64 @@ export default Vue.extend({
 			max-width: 100%;
 
 			>.groupselect-container {
-				align-items:center;
-				display:flex;
-				flex-wrap:nowrap;
+				align-items: center;
+				align-self: flex-start;
+				display: flex;
+				flex-wrap: nowrap;
+				margin-bottom: 5px;
+				margin-right: 5px;
+
+				> .groupselect {
+					flex: 1 1 auto;
+					min-width: 0px!important;
+					width: auto!important;
+
+					> button {
+						border-top-right-radius: 0px;
+						border-bottom-right-radius: 0px;
+						border-right: 0px;
+					}
+				}
+				>.dummybutton {
+					flex: none;
+					border-top-left-radius: 0px;
+					border-bottom-left-radius: 0px;
+				}
 
 				li a {
 					text-transform: capitalize;
 				}
+			}
+			> .viewgroup {
+				align-self: flex-start;
+				border-radius: 100px;
+				margin-right: 5px;
+				margin-bottom: 5px;
+				>.name {
+					font-style: italic;
+					display: inline-block;
+					overflow-x: hidden;
+					margin-bottom: -5px;
+					max-width: 150px;
+					text-overflow: ellipsis;
+					padding-right: 1px; /* :after quote gets cut off sometimes due to overflow-hidden */
+
+					:before,
+					:after {
+						content: "'";
+					}
+				}
+				>.clear {
+					font-weight: 700;
+					text-decoration: underline!important;
+					padding-left: 2px;
+				}
+			}
+			> .toomanyresults {
+				align-self: flex-start;
+				border-radius: 100px;
+				margin-right: 5px;
+				margin-bottom: 5px;
 			}
 		}
 

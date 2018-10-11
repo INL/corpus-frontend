@@ -10,7 +10,7 @@
 			<tr v-for="group in groups" :key="group.identity">
 				<td>{{group.identityDisplay || '[unknown]'}}</td>
 				<td>
-					<div class="progress group-size-indicator" style="cursor:pointer;">
+					<div class="progress group-size-indicator" style="cursor:pointer;" @click="openGroup(group.identity)">
 						<div :class="['progress-bar', displayClass]" :style="[{'min-width': width(group)}]">{{group.size}}</div>
 					</div>
 					<!-- todo spinner, disable loading more, etc -->
@@ -64,6 +64,9 @@ export default Vue.extend({
 		},
 		changeSort(payload: string) {
 			this.$emit('sort', payload === this.sort ? '-'+payload : payload)
+		},
+		openGroup(payload: string) {
+			this.$emit('viewgroup', payload);
 		}
 	}
 });

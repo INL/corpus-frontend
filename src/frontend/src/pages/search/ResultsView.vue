@@ -189,7 +189,7 @@ export default Vue.extend({
 			if (this.type === 'hits') {
 				const annotations = corpus.get.annotations();
 
-				[['wordleft:', 'Before hit'],['word:', 'Hit'],['wordRight:', 'After hit']]
+				[['wordleft:', 'Before hit'],['hit:', 'Hit'],['wordright:', 'After hit']]
 				.forEach(([prefix, label]) =>
 					groups.push({
 						label,

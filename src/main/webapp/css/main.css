@@ -379,14 +379,6 @@ a[data-bls-sort], a.dropdown-toggle {
 	border: 1px solid #ccc
 }
 
-.pagination {
-	margin: 0px;
-}.pagination > li > a {
-	/* No float shenanigans, they mess up the baseline of any container around pagination */
-	display: inline-block;
-	float: none;
-}
-
 #resultTabsContent {
 	/* Important for position of the spinner */
 	position: relative;

@@ -28,11 +28,15 @@ export type Option = {
 
 export default Vue.extend({
 	props: {
-		options: Array as () => Array<OptGroup|Option>,
+		options: {
+			type: Array as () => Array<OptGroup|Option>,
+			required: true
+		},
 		value: {
-			required: false,
 			default: null,
-			validator: (value: any) => value == null || Array.isArray(value) && value.every(v => typeof v === 'string') || typeof value === 'string'
+			validator(value: null|string|string[]) {
+				return value == null || Array.isArray(value) && value.every(v => typeof v === 'string') || typeof value === 'string'
+			},
 		},
 	},
 	data: () => ({

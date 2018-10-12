@@ -2,7 +2,7 @@
 	<div v-show="active">
 		<span v-if="request" class="fa fa-spinner fa-spin searchIndicator" style="position:absolute; left: 50%; top:15px"></span>
 
-		<div  class="resultcontrols">
+		<div v-show="results" class="resultcontrols">
 			<div class="top">
 				<div class="grouping">
 					<div class="groupselect-container">
@@ -39,8 +39,9 @@
 				</div>
 
 				<div class="buttons">
-					<button type="button" class="btn btn-default btn-sm pull-right" style="margin-left: 5px;margin-bottom: 5px;" :disabled="downloadInProgress || !this.results" @click="downloadCsv"><template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner"></span></template>Export CSV</button>
-					<button v-if="type === 'hits' && !isGroups" type="button" class="btn btn-danger btn-sm pull-right" style="margin-left: 5px;margin-bottom: 5px;" @click="showTitles = !showTitles">{{showTitles ? 'Hide' : 'Show'}} Titles</button>
+					<button type="button" class="btn btn-default btn-sm pull-right" style="margin-left: 5px;margin-bottom: 5px;" :disabled="downloadInProgress" @click="downloadCsv"><template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner"></span></template>Export CSV</button>
+					<button v-if="isHits" type="button" class="btn btn-danger btn-sm pull-right" style="margin-left: 5px;margin-bottom: 5px;" @click="showTitles = !showTitles">{{showTitles ? 'Hide' : 'Show'}} Titles</button>
+					<button v-if="isDocs" type="button" class="btn btn-danger btn-sm pull-right" style="margin-left: 5px;margin-bottom: 5px;" @click="showDocumentHits = !showDocumentHits">{{showDocumentHits ? 'Hide' : 'Show'}} Hits</button>
 				</div>
 			</div>
 
@@ -66,6 +67,7 @@
 			<DocResults v-else
 				:results="results"
 				:sort="sort"
+				:showDocumentHits="showDocumentHits"
 
 				@sort="sort = $event"
 			/>
@@ -155,6 +157,7 @@ export default Vue.extend({
 
 		viewGroupName: null as string|null,
 		showTitles: true,
+		showDocumentHits: false,
 		downloadInProgress: false, // csv download
 	}),
 	methods: {
@@ -184,7 +187,7 @@ export default Vue.extend({
 			this.error = null;
 			this.request = null;
 		},
-		setError(data: ParameterWarning) {
+		setError(data: ResultsError) {
 			this.error = data;
 			this.results = null;
 			this.request = null;

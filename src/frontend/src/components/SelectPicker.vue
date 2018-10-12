@@ -61,6 +61,9 @@ export default Vue.extend({
 		isSelected(value: string) {
 			return this.value != null && this.value === value || (this.value as string[]).includes(value);
 		}
+	},
+	mounted() {
+		$(this.$refs.select).selectpicker();
 	}
 });
 

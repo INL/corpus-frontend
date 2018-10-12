@@ -187,6 +187,12 @@ export default Vue.extend({
 </script>
 
 <style lang="scss">
-
+// TODO
+// .inline-concordance {
+// 	font-size: 12px;
+// 	background-color: rgba(255, 255, 255, 0.7);
+// 	border-radius: 4px;
+// 	padding: 0px 8px;
+// }
 </style>
 

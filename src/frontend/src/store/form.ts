@@ -131,7 +131,7 @@ export const actions = {
 
 export const get = {
 	/** Last submitted properties, these are already filtered to remove empty values, etc */
-	lastSubmittedPattern: b.read(state => state.submittedParameters, 'lastSubmittedParameters'),
+	lastSubmittedParameters: b.read(state => state.submittedParameters, 'lastSubmittedParameters'),
 	activeAnnotations: b.read(state => Object.values(state.pattern.simple.annotationValues).filter(p => !!p.value), 'activeAnnotations'),
 	activeFilters: b.read(state => Object.values(state.filters).filter(f => f.values.length > 0), 'activeFilters'),
 	activePatternValue: b.read(state => state.activePattern ? state.pattern[state.activePattern] : null, 'activePatternValue')

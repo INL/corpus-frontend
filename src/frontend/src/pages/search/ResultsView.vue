@@ -5,7 +5,7 @@
 				<div class="grouping">
 					<div class="groupselect-container">
 
-						<select-picker v-model="groupBy"
+						<SelectPicker v-model="groupBy"
 							multiple
 							class="groupselect"
 							data-size="15"
@@ -44,16 +44,7 @@
 				</div>
 			</div>
 
-			<ul class="pagination pagination-sm">
-				<li v-for="i in pages" :key="i" :class="{'current': i === currentPage}">
-					<input v-if="i === currentPage" type="text" class="form-control"
-						:value="currentPage+1"
-						@input="userSubmittedPage = $event.target.value-1"
-						@keypress.enter.prevent="(userSubmittedPage !== currentPage) ? page = userSubmittedPage : undefined"
-					/>
-					<a v-else @click="page = i">{{i+1}}</a>
-				</li>
-			</ul>
+			<Pagination v-if="results" :page="shownPage" :maxPage="maxShownPage" @change="page = $event"/>
 		</div>
 
 		<span v-if="request" class="fa fa-spinner fa-spin searchIndicator" style="position:absolute; left: 50%; top:15px"></span>
@@ -102,6 +93,8 @@ import * as bls from "@/modules/singlepage-bls";
 import * as BLTypes from '@/types/blacklabtypes';
 
 import SelectPicker, {OptGroup} from '@/components/SelectPicker.vue';
+import Pagination from '@/components/Pagination.vue';
+
 import GroupResults from '@/pages/search/GroupResults.vue';
 import HitResults from '@/pages/search/HitResults.vue';
 import DocResults from '@/pages/search/DocResults.vue';
@@ -136,12 +129,16 @@ export default Vue.extend({
 	mixins: [uid],
 	components: {
 		SelectPicker,
+		Pagination,
 		GroupResults,
 		HitResults,
 		DocResults
 	},
 	props: {
-		type: String as () => 'hits'|'docs',
+		type: {
+			type: String as () => 'hits'|'docs',
+			required: true,
+		}
 	},
 	data: () => ({
 		isDirty: true, // since we don't have any results yet
@@ -284,31 +281,22 @@ export default Vue.extend({
 				return this.results.summary.numberOfDocsRetrieved;
 			}
 		},
-		/** NOTE: might be out of bounds */
-		currentPage(): number {
+		/** 0-based page the current results contain */
+		shownPage(): number {
 			if (this.results == null) {
 				return 0;
 			} else {
 				const pageSize = this.results.summary.requestedWindowSize;
-				const currentPage = Math.min(Math.ceil(this.results.summary.windowFirstResult / pageSize), this.totalPages);
-				return currentPage;
+				return Math.floor(this.results.summary.windowFirstResult / pageSize);
 			}
 		},
-		totalPages(): number {
+		/** 0-based maximum page available for the current result set */
+		maxShownPage(): number {
 			if (this.results == null) {
 				return 0;
 			} else {
-				return Math.ceil(this.totalResults / this.results.summary.requestedWindowSize);
+				return Math.floor(this.totalResults / this.results.summary.requestedWindowSize);
 			}
-		},
-
-		pages(): number[] {
-			if (!this.results) {
-				return [];
-			}
-			// TotalPages is 1-indexed, while the page indices we return are 0-indexed, hence the page < totalPages and not page <= totalPages.
-			const pages = [-10, -5, -1, 0, 1, 5, 10].map(offset => this.currentPage + offset).filter(page => page >= 0 && page < this.totalPages);
-			return pages;
 		},
 
 		active() {
@@ -422,39 +410,6 @@ export default Vue.extend({
 		>.buttons {
 			flex: 0 1000 auto;
 		}
-	}
-}
-.pagination {
-	>li {
-		display: inline-block;
-		> input {
-			border-radius: 0;
-			border-color: #4c91cd;
-			box-shadow: inset 0px 0px 0px 1px hsla(208, 56%, 46%, 0.3);
-			// background-color: #337ab7;
-			// border-color: #337ab7;
-			// color: #222;
-			color: #337ab7;
-			font-size: 12px;
-			height: auto;
-			line-height: 1.5;
-			padding: 5px;
-			// text-decoration: underline;
-			// width: 3em;
-			text-align: center;
-			width: 34px;
-			z-index: 1;
-		}
-		> input:focus {
-			text-decoration: none;
-		}
-		>a {
-			cursor: pointer;
-		}
-	}
-	li.current+li>a {
-		border-left-width: 0px;
-		margin-left: 0;
 	}
 }
 

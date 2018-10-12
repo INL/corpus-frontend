@@ -314,6 +314,7 @@ $(document).ready(() => {
 		return false;
 	});
 	$('#mainForm').on('submit', () => {
+		ResultsStore.actions.resetPage();
 		actions.search();
 
 		// TODO this seems to fire before the state is updated - move to vuexbridge

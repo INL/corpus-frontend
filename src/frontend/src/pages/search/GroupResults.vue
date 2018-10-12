@@ -7,15 +7,15 @@
 			</tr>
 		</thead>
 		<tbody>
-			<tr v-for="group in groups" :key="group.identity">
+			<tr v-for="group in groups" :key="group.identity" :class="['grouprow', { 'open': concordances[group.identity] && concordances[group.identity].open }]">
 				<td>{{group.identityDisplay || '[unknown]'}}</td>
 				<td>
-					<div class="progress group-size-indicator" style="cursor:pointer;" @click="openPreviewConcordances(group.identity)">
+					<div class="progress group-size-indicator" @click="openPreviewConcordances(group.identity)">
 						<div :class="['progress-bar', displayClass]" :style="[{'min-width': width(group)}]">{{group.size}}</div>
 					</div>
 
 					<!-- todo spinner, disable loading more, etc -->
-					<div v-if="concordances[group.identity] && concordances[group.identity].open">
+					<div v-if="concordances[group.identity] && concordances[group.identity].open" style="margin-bottom: 8px;">
 						<div>
 							<button type="button" class="btn btn-sm btn-link" @click="openFullConcordances(group.identity, group.identityDisplay)">&#171; View detailed concordances in this group</button>
 							<template v-if="concordances[group.identity].available > concordances[group.identity].concordances.length">
@@ -29,16 +29,25 @@
 						</div>
 
 						<template v-if="type === 'hits'">
-							<div v-for="(conc, index) in concordances[group.identity].concordances" :key="index" class="clearfix">
+							<div class="clearfix" style="border-bottom:1px solid #ddd;">
+								<div class="col-xs-5 text-right"><strong>{{leftLabel}}</strong></div>
+								<div class="col-xs-2 text-center"><strong>Hit</strong></div>
+								<div class="col-xs-5"><strong>{{rightLabel}}</strong></div>
+							</div>
+							<div v-for="(conc, index) in concordances[group.identity].concordances" :key="index" class="clearfix concordance">
 								<div class="col-xs-5 text-right">&hellip; {{conc.left}}</div>
 								<div class="col-xs-2 text-center"><strong>{{conc.hit}}&nbsp;</strong></div>
 								<div class="col-xs-5">{{conc.right}} &hellip;</div>
 							</div>
 						</template>
 						<template v-else>
-							<div v-for="(conc, index) in concordances[group.identity].concordances" :key="index" class="clearfix">
-								<div class="col-xs-10"><strong>{{conc.title}}&nbsp;</strong></div>
-								<div class="col-xs-2">{{conc.hits}}&nbsp;</div>
+							<div class="clearfix" style="border-bottom:1px solid #ddd;">
+								<div class="col-xs-10"><strong>Document</strong></div>
+								<div class="col-xs-2"><strong>Hits</strong></div>
+							</div>
+							<div v-for="(conc, index) in concordances[group.identity].concordances" :key="index" class="clearfix concordance">
+								<div class="col-xs-10"><a :href="conc.href" target="_blank">{{conc.title}}</a></div>
+								<div class="col-xs-2"><strong>{{conc.hits}}</strong></div>
 							</div>
 						</template>
 					</div>
@@ -54,7 +63,7 @@ import Vue from 'vue';
 import * as BLTypes from '@/types/blacklabtypes';
 
 import * as corpusStore from '@/store/corpus';
-import {snippetParts} from '@/utils';
+import {snippetParts, getDocumentUrl} from '@/utils';
 
 import * as bls from '@/modules/singlepage-bls';
 
@@ -71,7 +80,7 @@ export default Vue.extend({
 				request: null|Promise<BLTypes.BlHitResults|BLTypes.BLDocResults>;
 				open: boolean;
 				// TODO
-				concordances: Array<{ left: string; hit: string; right: string; }|{ title: string; hits: number; }>;
+				concordances: Array<{ left: string; hit: string; right: string; }|{ title: string; hits: number; href: string; }>;
 			}
 		}
 	}),
@@ -84,6 +93,11 @@ export default Vue.extend({
 		},
 		firstMainAnnotation: corpusStore.get.firstMainAnnotation,
 		textDirection: corpusStore.get.textDirection,
+
+		leftLabel() { return this.textDirection === 'ltr' ? 'Before' : 'After'; },
+		rightLabel() { return this.textDirection === 'ltr' ? 'After' : 'Before'; },
+		leftIndex() { return this.textDirection === 'ltr' ? 0 : 2 },
+		rightIndex() { return this.textDirection === 'ltr' ? 2 : 0 }
 	},
 	methods: {
 		width(group: BLTypes.GroupResult): string {
@@ -132,9 +146,9 @@ export default Vue.extend({
 					data.hits.forEach(hit => {
 						const parts = snippetParts(hit, this.firstMainAnnotation.id);
 						cache.concordances.push({
-							left: this.textDirection==='ltr'? parts[0] : parts[2],
-							right: this.textDirection==='ltr'? parts[2] : parts[0],
-							hit: parts[1]
+							left: parts[this.leftIndex],
+							hit: parts[1],
+							right: parts[this.rightIndex],
 						})
 					})
 				} else {
@@ -145,6 +159,7 @@ export default Vue.extend({
 						cache.concordances.push({
 							title: doc.docInfo[data.summary.docFields.titleField],
 							hits: doc.numberOfHits!,
+							href: getDocumentUrl(doc.docPid, data.summary.searchParam.patt),
 						})
 					})
 				}
@@ -183,5 +198,28 @@ export default Vue.extend({
 
 <style lang="scss">
 
+.grouprow {
+	&.open {
+		background: none;
+	}
+
+	.concordance {
+		&:hover {
+			background-color: rgba(0,0,0,0.1);
+		}
+	}
+}
+
+.group-size-indicator {
+	cursor: pointer;
+	margin-bottom: 2px;
+
+	> .progress-bar {
+		// Do not shrink smaller than the text inside the bar.
+		// Greater widths are set using min-width.
+		padding: 0px 2px;
+		width: auto;
+	}
+}
 </style>
 

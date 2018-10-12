@@ -11,7 +11,7 @@
 			<tr v-for="(rowData, index) in rows" :key="index">
 				<td>
 					<a target="_blank" :href="rowData.href">{{rowData.summary}}</a><br>
-					<div v-for="(snippet, index) in rowData.snippets" :dir="textDirection" :key="index">
+					<div v-if="showDocumentHits" v-for="(snippet, index) in rowData.snippets" :dir="textDirection" :key="index">
 						{{snippet.left}} <strong :key="index">{{snippet.hit}}</strong> {{snippet.right}}
 					</div>
 				</td>
@@ -45,7 +45,8 @@ type DocRow = {
 export default Vue.extend({
 	props: {
 		results: Object as () => BLDocResults,
-		sort: String as () => null|string
+		sort: String as () => null|string,
+		showDocumentHits: Boolean as () => boolean
 	},
 	computed: {
 		mainAnnotation: corpusStore.get.firstMainAnnotation,

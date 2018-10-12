@@ -41,7 +41,7 @@
 				<div class="buttons">
 					<button type="button" class="btn btn-default btn-sm pull-right" style="margin-left: 5px;margin-bottom: 5px;" :disabled="downloadInProgress" @click="downloadCsv"><template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner"></span></template>Export CSV</button>
 					<button v-if="isHits" type="button" class="btn btn-danger btn-sm pull-right" style="margin-left: 5px;margin-bottom: 5px;" @click="showTitles = !showTitles">{{showTitles ? 'Hide' : 'Show'}} Titles</button>
-					<button v-if="isDocs" type="button" class="btn btn-danger btn-sm pull-right" style="margin-left: 5px;margin-bottom: 5px;" @click="showDocumentHits = !showDocumentHits">{{showDocumentHits ? 'Hide' : 'Show'}} Hits</button>
+					<button v-if="isDocs && resultsHaveHits" type="button" class="btn btn-danger btn-sm pull-right" style="margin-left: 5px;margin-bottom: 5px;" @click="showDocumentHits = !showDocumentHits">{{showDocumentHits ? 'Hide Hits' : 'Show Hits'}}</button>
 				</div>
 			</div>
 
@@ -251,7 +251,7 @@ export default Vue.extend({
 			return {
 				resultsSettings: this.storeModule.getState(),
 				viewSettings: settingsStore.getState(),
-				querySettings: query.get.lastSubmittedPattern()
+				querySettings: query.get.lastSubmittedParameters()
 			}
 		},
 
@@ -321,6 +321,9 @@ export default Vue.extend({
 		isHits() { return BLTypes.isHitResults(this.results); },
 		isDocs() { return BLTypes.isDocResults(this.results); },
 		isGroups() { return BLTypes.isGroups(this.results); },
+
+		// simple view variables
+		resultsHaveHits() { return this.results != null && this.results.summary.searchParam.patt}
 	},
 	watch: {
 		watchSettings: {

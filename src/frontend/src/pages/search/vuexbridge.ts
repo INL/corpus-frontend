@@ -319,7 +319,7 @@ $(document).ready(() => {
 
 		// TODO this seems to fire before the state is updated - move to vuexbridge
 		$('html, body').animate({
-			scrollTop: $('#searchFormDivHeader').offset()!.top - 75 // navbar
+			scrollTop: $('.querysummary').offset()!.top - 75 // navbar
 		}, 500);
 
 		// May be used as click handler, so prevent event propagation

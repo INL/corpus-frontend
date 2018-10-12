@@ -1,6 +1,8 @@
 <template>
 	<div v-show="active">
-		<div class="resultcontrols">
+		<span v-if="request" class="fa fa-spinner fa-spin searchIndicator" style="position:absolute; left: 50%; top:15px"></span>
+
+		<div  class="resultcontrols">
 			<div class="top">
 				<div class="grouping">
 					<div class="groupselect-container">
@@ -24,9 +26,7 @@
 						</div>
 					</div>
 
-					<div v-if="viewGroup"
-						class="btn btn-sm btn-default nohover viewgroup"
-					>
+					<div v-if="viewGroup" class="btn btn-sm btn-default nohover viewgroup" >
 						<span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span class="name">{{viewGroupName || viewGroup}}</span> &mdash; <a class="clear" @click="viewGroup = null">Go back</a>
 					</div>
 
@@ -46,8 +46,6 @@
 
 			<Pagination v-if="results" :page="shownPage" :maxPage="maxShownPage" @change="page = $event"/>
 		</div>
-
-		<span v-if="request" class="fa fa-spinner fa-spin searchIndicator" style="position:absolute; left: 50%; top:15px"></span>
 
 		<div v-if="results" class="lightbg haspadding resultcontainer">
 			<GroupResults v-if="isGroups"
@@ -72,6 +70,11 @@
 				@sort="sort = $event"
 			/>
 		</div>
+
+		<div v-if="error" class="error">
+			{{error.message}}
+		</div>
+
 	</div>
 
 </template>
@@ -125,6 +128,10 @@ function onSearchUpdated(operation: string, searchParams: BLTypes.BlacklabParame
 	}
 }
 
+type ResultsError = {
+	message: string;
+}
+
 export default Vue.extend({
 	mixins: [uid],
 	components: {
@@ -144,9 +151,8 @@ export default Vue.extend({
 		isDirty: true, // since we don't have any results yet
 		request: null as null|Promise<BLTypes.BLSearchResult>,
 		results: null as null|BLTypes.BLSearchResult,
-		error: null as null|BLTypes.BLError, // TODO not correct
+		error: null as null|ResultsError, // TODO not correct
 
-		userSubmittedPage: null as number|null,
 		viewGroupName: null as string|null,
 		showTitles: true,
 		downloadInProgress: false, // csv download
@@ -160,6 +166,13 @@ export default Vue.extend({
 			console.log('this is when the search should be refreshed');
 			const params = bls.getBlsParamFromState();
 
+			if (this.type === 'hits' && !params.patt) {
+				this.setError({
+					message: 'No hits to display... (one or more of Lemma/PoS/Word is required)'
+				});
+				return;
+			}
+
 			this.request = new Promise<BLTypes.BLSearchResult>((resolve, reject) => {
 				bls.search(this.type, bls.getBlsParamFromState(), resolve, () => reject(arguments));
 			});
@@ -170,9 +183,8 @@ export default Vue.extend({
 			this.results = data;
 			this.error = null;
 			this.request = null;
-			this.userSubmittedPage = null;
 		},
-		setError(data: BLTypes.BLError) {
+		setError(data: ParameterWarning) {
 			this.error = data;
 			this.results = null;
 			this.request = null;
@@ -411,6 +423,12 @@ export default Vue.extend({
 			flex: 0 1000 auto;
 		}
 	}
+}
+
+.error {
+	border: 1px solid red;
+	border-radius: 4px;
+	padding: 2em 1em;
 }
 
 </style>

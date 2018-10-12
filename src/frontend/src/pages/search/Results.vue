@@ -17,8 +17,8 @@
 		</ul>
 
 		<div class="tab-content">
-			<results-view type="hits" :visible="viewedResults === 'hits'"/>
-			<results-view type="docs" :visible="viewedResults === 'docs'"/>
+			<results-view type="hits"/>
+			<results-view type="docs"/>
 		</div>
 	</div>
 </template>

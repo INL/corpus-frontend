@@ -31,31 +31,12 @@ module.exports = {
 		// NOTE: This is only to help debugging and development, all inter-module communication should go through the normal
 		// import/exports
 		rules: [{
-		// 	test: require.resolve('./src/utils/debug.ts'),
-		// 	use: [{
-		// 		loader: 'expose-loader',
-		// 		options: 'cf.debug'
-		// 	}]
-		// }, {
 		// 	test: require.resolve('./src/corpora.ts'),
 		// 	use: [{
 		// 		loader: 'expose-loader',
 		// 		options: 'cf.core'
 		// 	}]
 		// }, {
-		// 	test: require.resolve('./src/modules/singlepage-form.ts'),
-		// 	use: [{
-		// 		loader: 'expose-loader',
-		// 		options: 'cf.mainform'
-		// 	}]
-		// }, {
-		// 	test: require.resolve('./src/modules/singlepage-interface.ts'),
-		// 	use: [{
-		// 		loader: 'expose-loader',
-		// 		options: 'cf.search'
-		// 	}]
-		// }, {
-
 			test: /\.scss$/,
 			use: [
 				'vue-style-loader',

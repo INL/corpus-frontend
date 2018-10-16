@@ -51,7 +51,7 @@
                 #end
                 </select>
             #else
-                <input type="text" id="$propertyFieldInputId" name="$propertyFieldInputId" placeholder="$propertyField.getDisplayName()" class="form-control" editable="#{sessionBean.mayEdit()}" editingRow="#{sessionBean.mayEdit()}"
+                <input type="text" id="$propertyFieldInputId" name="$propertyFieldInputId" placeholder="$propertyField.getDisplayName()" class="form-control"
                     #if($field.getType() == "combobox") 
                         ## when autocompleting word properties, blacklab needs to know the complex field from which they originate
                         ## the format is complexfield/property?term=searchterm

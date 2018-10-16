@@ -1,10 +1,7 @@
 #parse("header.vm")
 
-#if($jspath)
 <script src="$jspath/article.js?_$cache"></script>
-#else
-<script src="$pathToTop/js/article.js?_$cache"></script>
-#end
+
 <div class="hitscroll">
 <a href="#" onclick="return ANCHORS.gotoPrevious();"><b>&laquo; Previous hit</b></a> | 
 <a href="#" onclick="return ANCHORS.gotoNext();"><b>Next hit &raquo;</b></a>

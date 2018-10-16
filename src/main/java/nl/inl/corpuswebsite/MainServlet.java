@@ -122,8 +122,8 @@ public class MainServlet extends HttpServlet {
     public static final String PROP_DATA_DEFAULT            = "corporaInterfaceDefault";
     /** Number of words displayed by default on the /article/ page, also is a hard limit on the number */
     public static final String PROP_DOCUMENT_PAGE_LENGTH    = "wordend";
-    /** Development mode, allow script tags to load load js from an external server (webpack-dev-server) instead of from the static /js/ dir */
-    public static final String PROP_JSPATH					= "jspath"; // usually set to http://127.0.0.1/dist/
+    /** Development mode, allow script tags to load load js from an external server (webpack-dev-server), defaults to $pathToTop/js/ */
+    public static final String PROP_JSPATH					= "jspath"; // usually set to http://127.0.0.1/dist/ for development
     // @formatter:on
 
     /**
@@ -138,7 +138,7 @@ public class MainServlet extends HttpServlet {
      */
     private static String warBuildTime = null;
 
-    private static Properties getDefaultProps() {
+    private static Properties getDefaultProps(String contextPath) {
         // @formatter:off
         Properties p = new Properties();
         p.setProperty(PROP_BLS_CLIENTSIDE,          "/blacklab-server"); // no domain to account for proxied servers
@@ -146,6 +146,7 @@ public class MainServlet extends HttpServlet {
         p.setProperty(PROP_DATA_PATH,               "/etc/blacklab/projectconfigs");
         p.setProperty(PROP_DATA_DEFAULT,            "default");
         p.setProperty(PROP_DOCUMENT_PAGE_LENGTH,    "5000");
+        p.setProperty(PROP_JSPATH,                  contextPath+"/js");
         // not all properties may need defaults
         // @formatter:on
 
@@ -168,7 +169,7 @@ public class MainServlet extends HttpServlet {
             // Load the external properties file (for administration settings)
             String adminPropFileName = warName + ".properties";
             File adminPropFile = findPropertiesFile(adminPropFileName);
-            adminProps = new Properties(getDefaultProps());
+            adminProps = new Properties(getDefaultProps(contextPath));
 
             if (adminPropFile == null || !adminPropFile.exists()) {
                 logger

@@ -37,20 +37,6 @@
             <link rel="stylesheet" href="$pathToTop/$websiteConfig.getPathToCustomCss()?_$cache">
         #end
     
-        #if(!$jspath)
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/6.26.0/polyfill.min.js"></script>
-            <script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
-            <!-- SKIP JQueryUI 1.12.1, has bug where event handlers on widgets are not cleaned up correctly, fixed in 1.12.2, but unavailable as of writing (28-07-2017) -->
-            <!-- See https://bugs.jqueryui.com/ticket/15082 -->
-            <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.12.0/jquery-ui.min.js"></script>
-            <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>   
-            <script src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/js/bootstrap-select.min.js"></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/2.3.0/mustache.min.js" integrity="sha256-iaqfO5ue0VbSGcEiQn+OeXxnxAMK2+QgHXIDA5bWtGI=" crossorigin="anonymous"></script>
-            <script src="$pathToTop/js/vendor/jQuery.extendext.js"></script>
-            <script src="$pathToTop/js/vendor/pageguide.min.js"></script>
-            <script src="$pathToTop/js/tutorial.js"></script>
-        #end
-    
         #if ($websiteConfig.getPathToCustomJs())
             <script src="$pathToTop/$websiteConfig.getPathToCustomJs()?_$cache"></script>
         #end

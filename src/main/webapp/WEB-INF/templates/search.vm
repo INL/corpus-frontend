@@ -56,7 +56,8 @@
                         ## when autocompleting word properties, blacklab needs to know the complex field from which they originate
                         ## the format is complexfield/property?term=searchterm
                         data-autocomplete="$propertyField.getComplexFieldName()/$propertyField.getId()" 
-                    #end
+			autocomplete="off"
+		    #end
                 >
                 ## word-list upload-button only for text inputs
                 <span class="btn btn-default upload-button">

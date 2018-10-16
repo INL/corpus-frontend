@@ -2,9 +2,9 @@
 	<table>
 		<thead>
 			<tr>
-				<th style="width:70%"><a @click="changeSort(`field:${results.summary.docFields.titleField}`)">Document title</a></th>
-				<th style="width:15%"><a @click="changeSort(`field:${results.summary.docFields.dateField}`)">Year</a></th>
-				<th style="width:15%"><a @click="changeSort(`numhits`)">Hits</a></th>
+				<th style="width:70%"><a @click="changeSort(`field:${results.summary.docFields.titleField}`)" class="sort" title="`Sort by document title`">Document title</a></th>
+				<th style="width:15%"><a @click="changeSort(`field:${results.summary.docFields.dateField}`)" class="sort" title="Sort by document year">Year</a></th>
+				<th v-if="hasHits" style="width:15%"><a @click="changeSort(`numhits`)" class="sort" title="Sort by number of hits">Hits</a></th>
 			</tr>
 		</thead>
 		<tbody>
@@ -16,7 +16,7 @@
 					</div>
 				</td>
 				<td>{{rowData.date}}</td>
-				<td>{{rowData.hits}}</td>
+				<td v-if="hasHits">{{rowData.hits}}</td>
 			</tr>
 		</tbody>
 	</table>
@@ -39,7 +39,7 @@ type DocRow = {
 	summary: string;
 	href: string;
 	date: string;
-	hits: string;
+	hits?: number;
 }
 
 export default Vue.extend({
@@ -69,9 +69,12 @@ export default Vue.extend({
 					summary: (info[titleField] || 'UNKNOWN') + (info[authorField] ? ' by ' + info[authorField] : ''),
 					href: getDocumentUrl(pid, this.results.summary.searchParam.patt),
 					date: info[dateField] || '',
-					hits: !!doc.numberOfHits ? doc.numberOfHits.toString() : ''
+					hits: doc.numberOfHits
 				};
 			})
+		},
+		hasHits(): boolean {
+			return this.results.docs.length > 0 && this.results.docs[0].numberOfHits != null;
 		}
 	},
 	methods: {

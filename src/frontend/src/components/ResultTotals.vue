@@ -154,7 +154,7 @@ export default Vue.extend({
 	},
 	computed: {
 		pageCount(): number { return Math.ceil(this.resultCount / this.initialResults.summary.searchParam.number); },
-		isCounting(): boolean { return this.results.summary.stillCounting; },
+		isCounting(): boolean { return this.error == null && this.results.summary.stillCounting; },
 		tooManyResults(): boolean { return this.results.summary.stoppedCountingHits; },
 		resultType(): string {
 			if (BLTypes.isGroups(this.results)) {
@@ -177,12 +177,15 @@ export default Vue.extend({
 	},
 	methods: {
 		start() {
+
 			if (this.cancel == null && this.nextRequest == null) {
 				const apiCall = (this.type === 'docs') ? Api.blacklab.getDocs : Api.blacklab.getHits;
 				const {request, cancel} = apiCall(indexId, {
 					...this.results.summary.searchParam,
 					number: 0
 				});
+
+				this.error = null;
 				this.cancel = cancel;
 
 				(request as Promise<BLTypes.BLSearchResult>)
@@ -230,10 +233,19 @@ export default Vue.extend({
  			Total pages: {{pageCount}}<template v-if="isCounting">&hellip;</template>
 	</div>
 	<span v-show="isCounting" class="fa fa-spinner fa-spin searchIndicator totals-spinner"/>
-	<div v-if="tooManyResults" class="text-danger text-center totals-warning" style="margin: 0px 10px;">
-		<span class="fa fa-exclamation-triangle text-danger" style="font-size: 20px;"/><br>
-		Too many results!
-	</div>
+
+	<template v-if="error">
+		<div class="text-danger text-center totals-warning" style="cursor: pointer;" @click="start" :title="`${error.message} (click to retry)`">
+			<span class="fa fa-exclamation-triangle text-danger"/><br>
+			Network error!
+		</div>
+	</template>
+	<template v-else-if="tooManyResults">
+		<div class="text-danger text-center totals-warning" style="cursor: pointer;" @click="start" title="Click to continue counting">
+			<span class="fa fa-exclamation-triangle text-danger"/><br>
+			Too many results!
+		</div>
+	</template>
 </div>
 </template>
 
@@ -249,8 +261,15 @@ export default Vue.extend({
     align-items: center;
 }
 
-#totals-text {
+.totals-text {
 	order: 2;
+}
+
+.totals-warning {
+	margin: 0px 10px;
+	> .fa {
+		font-size: 20px;
+	}
 }
 
 .totals-spinner {

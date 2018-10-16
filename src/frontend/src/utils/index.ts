@@ -103,7 +103,7 @@ export function getPatternString(pattern: PatternType): string|undefined {
 		return undefined;
 	}
 	if (typeof pattern === 'string') {
-		return pattern || undefined; // coerce empty to undef
+		return pattern.trim() || undefined; // coerce empty to undef
 	}
 
 	// First split the properties into individual words and pair them
@@ -113,7 +113,7 @@ export function getPatternString(pattern: PatternType): string|undefined {
 			continue;
 		}
 
-		const words = field.value.split(/\s+/);
+		const words = field.value.trim().split(/\s+/);
 		for (let i = 0; i < words.length; i++) {
 			if (!tokens[i]) {
 				tokens[i] = {};

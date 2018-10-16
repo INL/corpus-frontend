@@ -11,14 +11,14 @@
 
 						<ul class="dropdown-menu" role="menu">
 							<li v-for="annotation in annotations" :key="annotation.id">
-								<a @click="changeSort(`left:${annotation.id}`)">{{annotation.displayName}}</a>
+								<a @click="changeSort(`left:${annotation.id}`)" class="sort">{{annotation.displayName}}</a>
 							</li>
 						</ul>
 					</span>
 				</th>
 
 				<th class="text-center" style="width:20px;">
-					<a @click="changeSort(`hit:${firstMainAnnotation.id}`)">
+					<a @click="changeSort(`hit:${firstMainAnnotation.id}`)" class="sort" :title="`Sort by ${firstMainAnnotation.displayName}`">
 						<strong>{{firstMainAnnotation.displayName}}</strong>
 					</a>
 				</th>
@@ -32,21 +32,21 @@
 
 						<ul class="dropdown-menu" role="menu">
 							<li v-for="annotation in annotations" :key="annotation.id">
-								<a @click="changeSort(`right:${annotation.id}`)">{{annotation.displayName}}</a>
+								<a @click="changeSort(`right:${annotation.id}`)" class="sort">{{annotation.displayName}}</a>
 							</li>
 						</ul>
 					</span>
 				</th>
 
 				<th v-for="annotation in shownAnnotations" :key="annotation.id" style="width:15px;">
-					<a @click="changeSort(`hit:${annotation.id}`)">{{annotation.displayName}}</a>
+					<a @click="changeSort(`hit:${annotation.id}`)" class="sort" :title="`Sort by ${annotation.displayName}`">{{annotation.displayName}}</a>
 				</th>
 			</tr>
 		</thead>
 
 		<tbody>
 			<template v-for="(rowData, index) in rows">
-				<tr v-if="showTitles && rowData.type === 'doc'" :key="index" class="document">
+				<tr v-if="rowData.type === 'doc'" v-show="showTitles" :key="index" class="document">
 					<td :colspan="numColumns">
 						<div class="doctitle">
 							<a class="text-error" target="_blank" :href="rowData.href">{{rowData.summary}}</a>
@@ -54,16 +54,16 @@
 					</td>
 				</tr>
 				<template v-else-if="rowData.type === 'hit'">
-					<tr :key="index" class="concordance" @click="showCitation(index)">
+					<tr :key="index" :class="['concordance', {'open': citations[index] && citations[index].open}]" @click="showCitation(index)">
 						<td class="text-right">&hellip;<span :dir="textDirection">{{rowData.left}}</span></td>
 						<td class="text-center"><strong :dir="textDirection">{{rowData.hit}}</strong></td>
 						<td><span :dir="textDirection">{{rowData.right}}</span>&hellip;</td>
 						<td v-for="(v, index) in rowData.other" :key="index">{{v}}</td>
 					</tr>
-					<tr v-if="citations[index] && citations[index].open" :key="index + '-citation'" class="concordance-details">
+					<tr v-if="citations[index]" v-show="citations[index].open" :key="index + '-citation'" :class="['concordance-details', {'open': citations[index].open}]">
 						<td :colspan="numColumns">
 							<div class="well-light">
-								<p>
+								<p :class="{'text-danger': citations[index].error}">
 									{{citations[index].citation}}
 								</p>
 								<div>
@@ -136,6 +136,7 @@ export default Vue.extend({
 		citations: {} as {
 			[key: number]: {
 				citation: string;
+				error: boolean;
 				open: boolean;
 			}
 		}
@@ -221,8 +222,9 @@ export default Vue.extend({
 			}
 
 			const citation = Vue.set(this.citations as any[], index, { // shut up vue
-				citation: 'Loading...',
-				open: true
+				citation: 'Loading citation...',
+				open: true,
+				error: false
 			});
 
 			const row = this.rows[index] as HitRow;
@@ -230,20 +232,31 @@ export default Vue.extend({
 			fetch(`${BLS_URL}docs/${row.docPid}/snippet?${qs.stringify({hitstart: row.start, hitend: row.end, wordsaroundhit: 50})}`, {
 				headers: {
 					'Accept': 'application/json'
-				}
+				},
+				cache: 'force-cache'
 			})
 			.then(r => {
 				if (r.ok) {
 					return r.json();
 				} else {
-					throw new Error('Some error when fetching snippet')
+					throw new Error(`Could not fetch citation: ${r.statusText}`);
 				}
+			}, e => {
+				console.log(e);
+				throw new Error(`Could not fetch citation: ${e.message}`);
 			})
-			.then(r => {
-				console.log('got snippet', r);
-				const parts = snippetParts(r, this.firstMainAnnotation.id);
-				citation.citation = parts.join(' ');
-			})
+			.then(
+				r => {
+					console.log('got snippet', r);
+					const parts = snippetParts(r, this.firstMainAnnotation.id);
+					citation.citation = parts.join(' ');
+				},
+				e => {
+					citation.citation = e.message
+					citation.error = true;
+				}
+			)
+
 		}
 	},
 	watch: {
@@ -257,14 +270,21 @@ export default Vue.extend({
 
 <style lang="scss" scoped>
 
+table {
+	border-collapse: separate;
+}
+
 th, td {
-	overflow: hidden;
 	&:first-child {
 		padding-left: 6px;
 	}
 	&:last-child {
 		padding-right: 6px;
 	}
+}
+
+td {
+	overflow: hidden;
 }
 
 tr {
@@ -279,11 +299,35 @@ tr {
 
 .concordance {
 	cursor: pointer;
-}
-.concordance-details {
-	.well-light {
-		margin-top: 5px;
-		padding: 15px 15px 10px
+
+	&.open {
+		> td {
+			background: white;
+			border-top: 2px solid #ddd;
+			border-bottom: 1px solid #ddd;
+			&:first-child {
+				border-left: 2px solid #ddd;
+				border-top-left-radius: 4px;
+			}
+			&:last-child {
+				border-right: 2px solid #ddd;
+				border-top-right-radius: 4px;
+			}
+		}
+	}
+	&-details {
+		> td {
+			background: white;
+			border: 2px solid #ddd;
+			border-top: none;
+			border-radius: 0px 0px 4px 4px;
+		}
+
+		.well-light {
+			box-shadow: none;
+			border: none;
+			padding: 15px 15px 10px;
+		}
 	}
 }
 

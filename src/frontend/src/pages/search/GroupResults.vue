@@ -2,29 +2,29 @@
 	<table>
 		<thead>
 			<tr>
-				<th style="width:30%;"><a @click="changeSort('identity')">Group</a></th>
-				<th style="width:70%;"><a @click="changeSort('numhits')">Hits</a></th>
+				<th style="width:30%;"><a @click="changeSort('identity')" class="sort" title="Sort by group name">Group</a></th>
+				<th style="width:70%;"><a @click="changeSort('numhits')" class="sort" title="Sort by group size">{{type === 'hits' ? 'Hits' : 'Documents'}}</a></th>
 			</tr>
 		</thead>
 		<tbody>
-			<tr v-for="group in groups" :key="group.identity" :class="['grouprow', { 'open': concordances[group.identity] && concordances[group.identity].open }]">
-				<td>{{group.identityDisplay || '[unknown]'}}</td>
+			<tr v-for="({identity, identityDisplay, size}) in groups" :key="identity" :class="['grouprow', { 'open': concordances[identity] && concordances[identity].open }]">
+				<td>{{identityDisplay || '[unknown]'}}</td>
 				<td>
-					<div class="progress group-size-indicator" @click="openPreviewConcordances(group.identity)">
-						<div :class="['progress-bar', displayClass]" :style="[{'min-width': width(group)}]">{{group.size}}</div>
+					<div class="progress group-size-indicator" @click="openPreviewConcordances(identity)">
+						<div :class="['progress-bar', displayClass]" :style="[{'min-width': width(size)}]">{{size}}</div>
 					</div>
 
 					<!-- todo spinner, disable loading more, etc -->
-					<div v-if="concordances[group.identity] && concordances[group.identity].open" class="well-light">
+					<div v-if="concordances[identity] && concordances[identity].open" class="well-light">
 						<div>
-							<button type="button" class="btn btn-sm btn-link" @click="openFullConcordances(group.identity, group.identityDisplay)">&#171; View detailed concordances in this group</button>
-							<template v-if="concordances[group.identity].available > concordances[group.identity].concordances.length">
+							<button type="button" class="btn btn-sm btn-link" @click="openFullConcordances(identity, identityDisplay)">&#171; View detailed concordances in this group</button>
+							<template v-if="concordances[identity].available > concordances[identity].concordances.length">
 								&nbsp;-&nbsp;<button
 									type="button"
 									class="btn btn-sm btn-link"
-									@click="loadPreviewConcordances(group.identity)"
-									:disabled="concordances[group.identity].request != null"
-								>{{`${concordances[group.identity].request != null ? 'loading...' : 'Load more concordances...'}`}}</button>
+									@click="loadPreviewConcordances(identity)"
+									:disabled="concordances[identity].request != null"
+								>{{`${concordances[identity].request != null ? 'loading...' : 'Load more concordances...'}`}}</button>
 							</template>
 						</div>
 
@@ -34,21 +34,38 @@
 								<div class="col-xs-2 text-center"><strong>Hit</strong></div>
 								<div class="col-xs-5"><strong>{{rightLabel}}</strong></div>
 							</div>
-							<div v-for="(conc, index) in concordances[group.identity].concordances" :key="index" class="clearfix concordance">
+							<div v-for="(conc, index) in concordances[identity].concordances" :key="index" class="clearfix concordance">
 								<div class="col-xs-5 text-right">&hellip; {{conc.left}}</div>
 								<div class="col-xs-2 text-center"><strong>{{conc.hit}}&nbsp;</strong></div>
 								<div class="col-xs-5">{{conc.right}} &hellip;</div>
 							</div>
 						</template>
 						<template v-else>
+							<table>
+								<thead>
+									<tr>
+										<th style="width: 80%">Document</th>
+										<th style="width: 20%" v-if="concordances[identity].hasHits">Hits</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr v-for="(conc, index) in concordances[identity].concordances" :key="index">
+										<td><a :href="conc.href" target="_blank">{{conc.title}}</a></td>
+										<td v-if="concordances[identity].hasHits"><strong>{{conc.hits}}</strong></td>
+									</tr>
+								</tbody>
+							</table>
+
+							<!--
 							<div class="clearfix" style="border-bottom:1px solid #ddd;">
 								<div class="col-xs-10"><strong>Document</strong></div>
 								<div class="col-xs-2"><strong>Hits</strong></div>
 							</div>
-							<div v-for="(conc, index) in concordances[group.identity].concordances" :key="index" class="clearfix concordance">
+							<div v-for="(conc, index) in concordances[identity].concordances" :key="index" class="clearfix concordance">
 								<div class="col-xs-10"><a :href="conc.href" target="_blank">{{conc.title}}</a></div>
 								<div class="col-xs-2"><strong>{{conc.hits}}</strong></div>
 							</div>
+							-->
 						</template>
 					</div>
 				</td>
@@ -80,7 +97,18 @@ export default Vue.extend({
 				request: null|Promise<BLTypes.BlHitResults|BLTypes.BLDocResults>;
 				open: boolean;
 				// TODO
-				concordances: Array<{ left: string; hit: string; right: string; }|{ title: string; hits: number; href: string; }>;
+				hasHits?: boolean, // only when this.type === docs
+				concordances: Array<
+					{ // when this.type === hits
+						left: string;
+						hit: string;
+						right: string;
+					}|{ // when this.type === docs
+						 title: string;
+						 hits?: number;
+						 href: string;
+					}
+				>;
 			}
 		}
 	}),
@@ -100,8 +128,8 @@ export default Vue.extend({
 		rightIndex() { return this.textDirection === 'ltr' ? 2 : 0 }
 	},
 	methods: {
-		width(group: BLTypes.GroupResult): string {
-			return Math.ceil(group.size / this.results.summary.largestGroupSize * 100) + '%';
+		width(groupSize: number): string {
+			return Math.ceil(groupSize / this.results.summary.largestGroupSize * 100) + '%';
 		},
 		openPreviewConcordances(id: string) {
 			const cache = this.concordances[id] = this.concordances[id] || {
@@ -109,6 +137,7 @@ export default Vue.extend({
 				available: Number.MAX_SAFE_INTEGER,
 				concordances: [],
 				request: null,
+				hasHits: this.type === 'docs' ? false : undefined,
 			}
 
 			cache.open = !cache.open;
@@ -123,8 +152,10 @@ export default Vue.extend({
 				return;
 			}
 
-			// TODO this is probably incorrect, the results could be stale while we're waiting for a new set in the parent.
-			// make a copy!
+			// TODO this is incorrect, the results could be stale while we're waiting for a new set of results in the parent.
+			// What can happen is that we place the stale result in the cache for the new set of results and it will be displayed...
+
+			// make a copy of the parameters so we don't clear them for all components using the summary
 			let requestParameters: BLTypes.BlacklabParameters = Object.assign({}, this.results.summary.searchParam, {
 				number: 20,
 				first: cache.concordances.length,
@@ -154,11 +185,13 @@ export default Vue.extend({
 				} else {
 					const data = res as BLTypes.BLDocResults;
 					cache.available = data.summary.numberOfDocsRetrieved;
+					cache.hasHits = cache.hasHits || (data.docs.length > 0 && data.docs[0].numberOfHits != null);
 
 					data.docs.forEach(doc => {
+						cache.hasHits = cache.hasHits || doc.numberOfHits != null;
 						cache.concordances.push({
 							title: doc.docInfo[data.summary.docFields.titleField],
-							hits: doc.numberOfHits!,
+							hits: doc.numberOfHits,
 							href: getDocumentUrl(doc.docPid, data.summary.searchParam.patt),
 						})
 					})

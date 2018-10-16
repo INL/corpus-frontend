@@ -485,7 +485,8 @@ th {
 	padding: 8px
 }
 
-a.clear {
+a.clear,
+a.sort {
 	cursor: pointer;
 }
 

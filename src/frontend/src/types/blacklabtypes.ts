@@ -41,6 +41,10 @@ export interface BLError {
 	};
 }
 
+export function isBLError(e: any): e is BLError {
+	return !!e && !!e.error && !!e.error.code && !!e.error.message;
+}
+
 // ------------------------
 // Index status/server info
 // ------------------------
@@ -142,10 +146,7 @@ export interface BLAnnotation {
 }
 
 /** A set of annotations that form one data set on a token, usually there is only one of these in an index, called 'content' */
-export interface BLAnnotatedField {
-	annotations: {
-		[key: string]: BLAnnotation;
-	};
+interface BLAnnotatedFieldInternal  {
 	description: string;
 	displayName: string;
 	/** Identical to key for this annotatedField */
@@ -157,6 +158,10 @@ export interface BLAnnotatedField {
 	/** If a cql query is fired that is just "searchterm", this is the annotation that is searched, usually 'word' - key in annotations */
 	mainProperty: string;
 }
+type BLAnnotatedFieldV1 = BLAnnotatedFieldInternal&{ properties: { [key: string]: BLAnnotation; }; };
+type BLAnnotatedFieldV2 = BLAnnotatedFieldInternal&{ annotations: { [key: string]: BLAnnotation; }; };
+export type BLAnnotatedField = BLAnnotatedFieldV1|BLAnnotatedFieldV2;
+export function isAnnotatedFieldV1(v: BLAnnotatedField): v is BLAnnotatedFieldV1 { return (v as any).properties != null; }
 
 export interface BLMetadataField {
 	analyzer: string;
@@ -181,10 +186,12 @@ export interface BLMetadataField {
 	valueListComplete: boolean;
 }
 
+// interface BLIndexMetadataInternal { complexFields: { [key: string]: BLAnnotatedField1; }; }
+
 // TODO also allow older version, annotatedFields are complexFields and some other change -- see corpus-frontend/CorpusConfig.java
 /** Contains information about the internal structure of the index - which fields exist for tokens, which metadata fields exist for documents, etc */
-export interface BLIndexMetadata {
-	annotatedFields: { [key: string]: BLAnnotatedField; };
+interface BLIndexMetadataInternal {
+	// annotatedFields: { [key: string]: BLAnnotatedField; };
 	annotationGroups: {
 		// TODO
 	};
@@ -229,6 +236,10 @@ export interface BLIndexMetadata {
 		timeModified: string;
 	};
 }
+type BLIndexMetadataV1 = BLIndexMetadataInternal&{complexFields: {[key: string]: BLAnnotatedFieldV1}; };
+type BLIndexMetadataV2 = BLIndexMetadataInternal&{annotatedFields: {[key: string]: BLAnnotatedFieldV2}; };
+export type BLIndexMetadata = BLIndexMetadataV1|BLIndexMetadataV2;
+export function isIndexMetadataV1(v: BLIndexMetadata): v is BLIndexMetadataV1 { return (v as any).complexFields != null; }
 
 // --------------
 // Search results
@@ -265,7 +276,7 @@ export type BLSearchSummary = {
 	countTime?: number;
 	/** These fields have a special meaning in the BLDocResult.docInfo */
 	docFields: {
-		// TODO - might be optional or might contain extra?
+		// TODO - might be optional or might contain extra fields?
 		titleField: string;
 		authorField: string;
 		dateField: string;

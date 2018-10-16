@@ -122,19 +122,6 @@ hr {
 	border: 1px solid #cccccc;
 }
 
-.resultcontainer {
-	margin-top: 5px;
-}
-.resultcontainer td {
-	overflow: hidden;
-}.resultcontainer tr > *:first-child {
-	padding-left: 6px;
-}
-.resultstable th,
-.resultstable td {
-	padding: 0 0.4em;
-}
-
 .modal-fullwidth {
 	width:100%;
 	padding-left:17px;
@@ -162,48 +149,6 @@ hr {
 
 .green {
 	color: #0e774a;
-}
-
-table {
-	width: 100%;
-	table-layout: fixed;
-}
-
-td {
-	vertical-align: top;
-}
-
-th {
-	text-align: left;
-	background-color: #ffffff;
-}
-thead > tr {
-	border-bottom: 1px solid #aaaaaa;
-}
-
-tr:hover {
-	background-color: rgba(0,0,0, 0.1);
-}
-
-tr.concordance {
-	border-bottom: 1px solid #ffffff;
-	cursor: pointer;
-}
-
-.documentrow > td {
-	padding-bottom: 15px;
-}
-
-.group-size-indicator {
-	margin-bottom: 2px;
-}.group-size-indicator > .progress-bar {
-	/*
-		Do not shrink smaller than the text inside the bar.
-		Greater widths are set using min-width.
-	*/
-
-	width: auto;
-	padding: 0px 2px;
 }
 
 #filteroverview {
@@ -279,14 +224,6 @@ span.pb, span.page-beginning {
     font-style: italic;
 }
 
-.inline-concordance {
-	font-size: 12px;
-	background-color: rgba(255, 255, 255, 0.7);
-	border-radius: 4px;
-	padding: 0px 8px;
-}
-
-
 a[data-bls-sort], a.dropdown-toggle {
 	cursor: pointer;
 }
@@ -295,32 +232,6 @@ a[data-bls-sort], a.dropdown-toggle {
 	width:100%;
 	resize: none;
 	margin-bottom: 10px;
-}
-
-#totalsReport {
-	color: #888;
-	font-size: 85%;
-}
-
-#totalsReport {
-	position: absolute;
-    top: 20px; /* align with padding of #results */
-    right: 20px;
-    display: flex;
-    align-items: center;
-}
-
-#totalsReportText {
-	order: 2;
-}
-
-#totalsSpinner {
-	display: none;
-	order: 1
-}
-
-#totalsLimitedWarning {
-	display: none; /* toggled in css */
 }
 
 .btn.nohover {
@@ -402,24 +313,6 @@ a[data-bls-sort], a.dropdown-toggle {
 	font-size: 1.4em;
 }
 
-/* header for when search for is hidden */
-
-#searchFormDivHeader {
-	background: white;
-	font-size: 18px;
-	padding: 8px 20px;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-#querySummary {
-	flex-grow: 1;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	margin-left: 0.35em;
-}
-
 /* simple search upload buttons */
 .upload-button-container {
 	position: relative;
@@ -443,6 +336,11 @@ a[data-bls-sort], a.dropdown-toggle {
 	opacity: 0;
 	background: transparent;
 	z-index: 2;
+}
+
+table {
+	table-layout: fixed;
+	width: 100%;
 }
 
 /*

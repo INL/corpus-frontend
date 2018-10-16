@@ -99,7 +99,7 @@ export default Vue.extend({
 })
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .pagination {
 
 	$color: darken(#337ab7, 5);
@@ -132,7 +132,7 @@ export default Vue.extend({
 				position: absolute;
 				right: 6px;
 				top: 0;
-				z-index: 2;
+				z-index: 10;
 
 				&:hover {
 					z-index: 0;
@@ -149,11 +149,11 @@ export default Vue.extend({
 				position: relative;
 				text-align: center;
 				width: 46px;
-				z-index: 1;
+				z-index: 5;
 
 				&:focus,
 				&:hover {
-					z-index: 3;
+					z-index: 15;
 				}
 			}
 		}

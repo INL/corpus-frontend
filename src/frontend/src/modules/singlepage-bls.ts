@@ -81,115 +81,6 @@ export function getFilterString(params: RootState['form']['submittedParameters']
 	return filterStrings.join('') || undefined;
 }
 
-/**
- * Central handler for updating the totals display
- */
-const totalsCounter = (function() {
-	// Parameters used in the next update request
-	let blsParam: null|BLTypes.BlacklabParameters;
-	let operation: null|'hits'|'docs';
-	let data: BLTypes.BLSearchResult;
-
-	// Handles to the current request/scheduled request
-	let timeoutHandle: number|null = null;
-	let totalRequest: null|ReturnType<typeof $.ajax> = null;
-
-	function scheduleRequest() {
-		// Don't request an actual window
-		// But keep window size intact in blsParam, we need it to calculate number of pages.
-		const url = new URI(BLS_URL).segment(operation!).addSearch($.extend({}, blsParam, {number:0})).toString();
-
-		totalRequest = $.ajax({
-			url,
-			dataType: 'json',
-			cache: false,
-			success (responseData) {
-				data = responseData;
-				updateTotalsDisplay();
-				if (data.summary.stillCounting) {
-					timeoutHandle = setTimeout(scheduleRequest, 1000);
-				} else {
-					timeoutHandle = null;
-				}
-			},
-			error () {
-				timeoutHandle = null;
-				$('#totalsSpinner').hide();
-				$('#totalsReportText').text('Network Error');
-			},
-			complete () {
-				totalRequest = null;
-			}
-		});
-	}
-
-	function cancelRequest() {
-		if (timeoutHandle != null) {
-			clearTimeout(timeoutHandle);
-			timeoutHandle = null;
-		}
-		if (totalRequest != null) {
-			totalRequest.abort();
-			totalRequest = null;
-		}
-
-		$('#totalsReport').hide();
-	}
-
-	function updateTotalsDisplay() {
-		let type;
-		let total;
-
-		if (BLTypes.isGroups(data)) {
-			type = 'groups';
-			total = data.summary.numberOfGroups;
-		} else if (BLTypes.isHitResults(data)) {
-			type = 'hits';
-			total = data.summary.numberOfHits;
-		} else {
-			type = 'docs';
-			total = data.summary.numberOfDocs;
-		}
-
-		const totalPages = Math.ceil(total / blsParam!.number);
-
-		const optEllipsis = data.summary.stillCounting ? '...' : '';
-		$('#totalsReport').show();
-		$('#totalsReportText').html(
-			'Total ' + type + ': ' + total + optEllipsis + '<br>' +
-			'Total pages: ' + totalPages + optEllipsis
-		);
-
-		$('#totalsLimitedWarning').toggle(!!(data.summary.stillCounting === false && data.summary.stoppedCountingHits));
-		$('#totalsSpinner').toggle(data.summary.stillCounting);
-	}
-
-	return {
-		/**
-		 * Cancel any pending updates from previous requests,
-		 * then immediately update the totals display with the results so far.
-		 * Starts a background counter that continues updating the display until all results have been counted.
-		 *
-		 * @param searchResult - the data returned from blacklab-server with the initial request
-		 * @param searchParam - The final (processed) blacklab search parameters.
-		 * @param op - The search operation, must not be 'hits' if no pattern supplied.
-		 */
-		start (searchResult: BLTypes.BLSearchResult, searchParam: BLTypes.BlacklabParameters, op: 'hits'|'docs') {
-			cancelRequest();
-
-			data = searchResult;
-			operation = op;
-			blsParam = searchParam;
-
-			updateTotalsDisplay();
-			if (data.summary.stillCounting) {
-				scheduleRequest();
-			}
-		},
-		stop: cancelRequest,
-	};
-})();
-
 let inflightRequest: null|ReturnType<typeof $.ajax> = null;
 
 // TODO promisify
@@ -212,10 +103,6 @@ export function search(operation: 'hits'|'docs', param: BLTypes.BlacklabParamete
 		cache: false,
 		success (data) {
 			debugLog('search results', data);
-
-			// only start when we get the first bit of data back
-			// or we would fire off two nearly identical requests for nothing
-			totalsCounter.start(data, param, operation);
 
 			if (typeof successFunc === 'function') {
 				successFunc(data);
@@ -243,7 +130,6 @@ export function cancelSearch() {
 		inflightRequest.abort();
 		inflightRequest = null;
 	}
-	totalsCounter.stop();
 }
 
 export function getBlsParamFromState(): BLTypes.BlacklabParameters {
@@ -311,4 +197,4 @@ export function getQuerySummary(params: RootState['form']['submittedParameters']
 	return ret;
 }
 
-export default {}
+export default {};

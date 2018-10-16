@@ -45,8 +45,8 @@ $(document).ready(function() {
 		attribute: {
 			view: {
 				// Pass the available properties of tokens in this corpus (PoS, Lemma, Word, etc..) to the querybuilder
-				attributes: $.map(SINGLEPAGE.INDEX.complexFields || SINGLEPAGE.INDEX.annotatedFields, function(complexField/*, complexFieldName*/) {
-					return $.map(complexField.properties || complexField.annotations, function(property, propertyId: string) {
+				attributes: $.map(BLTypes.isIndexMetadataV1(SINGLEPAGE.INDEX) ? SINGLEPAGE.INDEX.complexFields : SINGLEPAGE.INDEX.annotatedFields, function(annotatedField/*, annotatedFieldName*/) {
+					return $.map(BLTypes.isAnnotatedFieldV1(annotatedField) ? annotatedField.properties : annotatedField.annotations, function(property, propertyId: string) {
 						if (property.isInternal) {
 							return null;
 						} // Don't show internal fields in the queryBuilder; leave this out of the list.

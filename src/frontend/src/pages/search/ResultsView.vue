@@ -2,7 +2,12 @@
 	<div v-show="active">
 		<span v-if="request" class="fa fa-spinner fa-spin searchIndicator" style="position:absolute; left: 50%; top:15px"></span>
 
-		<div v-show="results" class="resultcontrols">
+		<Totals v-if="results"
+			:initialResults="results"
+			:type="type"
+		/>
+
+		<div v-show="results || error" class="resultcontrols">
 			<div class="top">
 				<div class="grouping">
 					<div class="groupselect-container">
@@ -21,7 +26,7 @@
 						/>
 
 						<button type="button" class="btn btn-sm btn-default dummybutton">update</button> <!-- dummy button... https://github.com/INL/corpus-frontend/issues/88 -->
-						<div v-if="groupBy && groupBy.length > 0" class="checkbox-inline" style="margin-left: 5px;">
+						<div v-if="groupBy && groupBy.length > 0 && !viewGroup" class="checkbox-inline" style="margin-left: 5px;">
 							<label title="Separate groups for differently cased values" style="white-space: nowrap; margin: 0;" :for="uid+'case'"><input type="checkbox" :id="uid+'case'" v-model="caseSensitive">Case sensitive</label>
 						</div>
 					</div>
@@ -30,18 +35,15 @@
 						<span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span class="name">{{viewGroupName || viewGroup}}</span> &mdash; <a class="clear" @click="viewGroup = null">Go back</a>
 					</div>
 
-					<div v-if="results && !!(results.summary.stoppedRetrievingHits && !results.summary.stillCounting)"
-						class="btn btn-sm btn-default nohover toomanyresults"
-						style="border-radius: 100px;"
-					>
+					<div v-if="results && !!(results.summary.stoppedRetrievingHits && !results.summary.stillCounting)" class="btn btn-sm btn-default nohover toomanyresults">
 						<span class="fa fa-exclamation-triangle text-danger"></span> Too many results! &mdash; your query was limited
 					</div>
 				</div>
 
 				<div class="buttons">
-					<button type="button" class="btn btn-default btn-sm pull-right" style="margin-left: 5px;margin-bottom: 5px;" :disabled="downloadInProgress" @click="downloadCsv"><template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner"></span></template>Export CSV</button>
-					<button v-if="isHits" type="button" class="btn btn-danger btn-sm pull-right" style="margin-left: 5px;margin-bottom: 5px;" @click="showTitles = !showTitles">{{showTitles ? 'Hide' : 'Show'}} Titles</button>
-					<button v-if="isDocs && resultsHaveHits" type="button" class="btn btn-danger btn-sm pull-right" style="margin-left: 5px;margin-bottom: 5px;" @click="showDocumentHits = !showDocumentHits">{{showDocumentHits ? 'Hide Hits' : 'Show Hits'}}</button>
+					<button type="button" class="btn btn-danger btn-sm"  v-if="isDocs && resultsHaveHits"  @click="showDocumentHits = !showDocumentHits">{{showDocumentHits ? 'Hide Hits' : 'Show Hits'}}</button>
+					<button type="button" class="btn btn-danger btn-sm"  v-if="isHits" @click="showTitles = !showTitles">{{showTitles ? 'Hide' : 'Show'}} Titles</button>
+					<button type="button" class="btn btn-default btn-sm" v-if="results" :disabled="downloadInProgress" @click="downloadCsv"><template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner"></span></template>Export CSV</button>
 				</div>
 			</div>
 
@@ -103,6 +105,7 @@ import Pagination from '@/components/Pagination.vue';
 import GroupResults from '@/pages/search/GroupResults.vue';
 import HitResults from '@/pages/search/HitResults.vue';
 import DocResults from '@/pages/search/DocResults.vue';
+import Totals from '@/components/ResultTotals.vue';
 
 import {toPageUrl} from '@/utils';
 import {debugLog} from '@/utils/debug';
@@ -141,7 +144,8 @@ export default Vue.extend({
 		Pagination,
 		GroupResults,
 		HitResults,
-		DocResults
+		DocResults,
+		Totals
 	},
 	props: {
 		type: {
@@ -329,6 +333,12 @@ export default Vue.extend({
 		watchSettings: {
 			handler(cur, prev) {
 				this.markDirty();
+				if (cur.querySettings !== prev.querySettings && cur.querySettings !== null) {
+					// TODO move to some other place
+					$('html, body').animate({
+						scrollTop: $('.querysummary').offset()!.top - 75 // navbar
+					}, 500);
+				}
 			},
 			deep: true
 		},
@@ -355,12 +365,14 @@ export default Vue.extend({
 	>.top {
 		align-items: flex-start;
 		display: flex;
+		flex-wrap: wrap;
 		justify-content: space-between;
 
 		>.grouping {
 			display: flex;
 			flex-wrap: wrap;
 			min-width: 220px;
+			margin-right: 5px;
 			max-width: 100%;
 
 			>.groupselect-container {
@@ -427,6 +439,14 @@ export default Vue.extend({
 
 		>.buttons {
 			flex: 0 1000 auto;
+			font-size: 0;
+			> button {
+				margin-bottom: 5px;
+				margin-left: 5px;
+			}
+			> button:first-child {
+				margin-left: 0px;
+			}
 		}
 	}
 }
@@ -435,6 +455,38 @@ export default Vue.extend({
 	border: 1px solid red;
 	border-radius: 4px;
 	padding: 2em 1em;
+}
+
+.resultcontainer {
+	margin-top: 5px;
+}
+
+.table {
+	table-layout: fixed;
+	width: 100%;
+}
+
+td {
+	vertical-align: top;
+}
+
+th {
+	text-align: left;
+	background-color: #ffffff;
+	border-bottom: 1px solid #aaaaaa;
+}
+
+.well-light {
+	background: rgba(255,255,255,0.8);
+	border: 1px solid #e8e8e8;
+	border-radius: 4px;
+	box-shadow: inset 0 1px 2px 0px rgba(0,0,0,0.1);
+	margin-bottom: 8px;
+	padding: 8px
+}
+
+a.clear {
+	cursor: pointer;
 }
 
 </style>

@@ -244,10 +244,6 @@
     </div>
 </div>
 
-<div id="searchFormDivHeader" style="display:none;" class="contentbox col-xs-12">
-    Results for: <span id="querySummary" class="small text-muted"></span> 
-</div>
-
 <div id="settingsModal" class="modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">

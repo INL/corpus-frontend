@@ -104,8 +104,8 @@ public abstract class BaseResponse {
         context.put("googleAnalyticsKey", this.servlet.getGoogleAnalyticsKey());
         context.put("brandLink", corpus == null ? "" : corpus + "/" + "search");
         context.put("buildTime", servlet.getWarBuildTime());
-        context.put("jspath", servlet.getAdminProps().get(MainServlet.PROP_JSPATH));
-        logger.info("jspath {}", servlet.getAdminProps().get(MainServlet.PROP_JSPATH));
+        context.put("jspath", servlet.getAdminProps().getProperty(MainServlet.PROP_JSPATH));
+        logger.info("jspath {}", servlet.getAdminProps().getProperty(MainServlet.PROP_JSPATH));
 
 
         // Escape all data written into the velocity templates by default

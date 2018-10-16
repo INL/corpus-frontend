@@ -378,14 +378,6 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/codemirror.min.css" integrity="sha256-I8NyGs4wjbMuBSUE40o55W6k6P7tu/7G28/JGUUYCIs=" crossorigin="anonymous" />
 <link rel="stylesheet" href="$pathToTop/css/corpora.css?_$cache" >
 
-#if($jspath)
 <script src="$jspath/corpora.js?_$cache"></script>
-#else
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/codemirror.min.js" integrity="sha256-U/4XQwZXDFDdAHjIZt1Lm7sFfmMiFDZzFYprq6XJ0gk=" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/mode/yaml/yaml.min.js" integrity="sha256-kDhSuX8q/IuvrvcSRAv9HzdC6NHqQsvZtCMnvSBQO+Q=" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/mode/javascript/javascript.min.js" integrity="sha256-MyRbKGolllWYWwxW8jH3jYdhK0p0LpgNjR8PqCa/UNQ=" crossorigin="anonymous"></script>
-<script src="$pathToTop/js/corpora.js?_$cache"></script>
-#end
-
     
 #parse("footer.vm")

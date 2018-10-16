@@ -5,8 +5,8 @@
   "private": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack --config webpack.config.js",
-    "start": "webpack-dev-server --mode=development --port 80"
+    "build": "webpack --config webpack.config.prod.js",
+    "start": "webpack-dev-server ---config webpack.config.dev.js -mode=development --port 80"
   },
   "author": "INT",
   "license": "Apache-2.0",
@@ -25,6 +25,7 @@
     "babel-loader": "^8.0.0-beta.6",
     "babel-plugin-transform-es2015-modules-commonjs-simple": "^6.7.4",
     "circular-dependency-plugin": "^5.0.2",
+    "clean-webpack-plugin": "^0.1.19",
     "css-loader": "^1.0.0",
     "eslint": "^5.4.0",
     "expose-loader": "^0.7.5",
@@ -39,6 +40,7 @@
     "vue-property-decorator": "^7.2.0",
     "vue-template-compiler": "^2.5.17",
     "webpack": "^4.17.1",
+    "webpack-bundle-analyzer": "^3.0.3",
     "webpack-cli": "^3.1.0",
     "webpack-dev-server": "^3.1.5"
   },

@@ -2,7 +2,7 @@
 	<table>
 		<thead>
 			<tr>
-				<th style="width:70%"><a @click="changeSort(`field:${results.summary.docFields.titleField}`)" class="sort" title="`Sort by document title`">Document title</a></th>
+				<th style="width:70%"><a @click="changeSort(`field:${results.summary.docFields.titleField}`)" class="sort" title="Sort by document title">Document title</a></th>
 				<th style="width:15%"><a @click="changeSort(`field:${results.summary.docFields.dateField}`)" class="sort" title="Sort by document year">Year</a></th>
 				<th v-if="hasHits" style="width:15%"><a @click="changeSort(`numhits`)" class="sort" title="Sort by number of hits">Hits</a></th>
 			</tr>

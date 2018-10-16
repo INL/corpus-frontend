@@ -315,12 +315,8 @@ $(document).ready(() => {
 	});
 	$('#mainForm').on('submit', () => {
 		ResultsStore.actions.resetPage();
+		ResultsStore.actions.resetViewGroup();
 		actions.search();
-
-		// TODO this seems to fire before the state is updated - move to vuexbridge
-		$('html, body').animate({
-			scrollTop: $('.querysummary').offset()!.top - 75 // navbar
-		}, 500);
 
 		// May be used as click handler, so prevent event propagation
 		return false;

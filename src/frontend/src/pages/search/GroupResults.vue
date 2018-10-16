@@ -15,7 +15,7 @@
 					</div>
 
 					<!-- todo spinner, disable loading more, etc -->
-					<div v-if="concordances[group.identity] && concordances[group.identity].open" style="margin-bottom: 8px;">
+					<div v-if="concordances[group.identity] && concordances[group.identity].open" class="well-light">
 						<div>
 							<button type="button" class="btn btn-sm btn-link" @click="openFullConcordances(group.identity, group.identityDisplay)">&#171; View detailed concordances in this group</button>
 							<template v-if="concordances[group.identity].available > concordances[group.identity].concordances.length">
@@ -221,5 +221,7 @@ export default Vue.extend({
 		width: auto;
 	}
 }
+
+
 </style>
 

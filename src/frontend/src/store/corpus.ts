@@ -16,9 +16,9 @@ const b = getStoreBuilder<RootState>().module<ModuleRootState>('corpus', SINGLEP
 
 export const get = {
 	annotations: b.read(state => {
-		const fields = Object.values(state.annotatedFields);
+		const fields: BLTypes.BLAnnotatedField[] = Object.values(BLTypes.isIndexMetadataV1(state) ? state.complexFields : state.annotatedFields);
 		const annotations = fields.flatMap(field => {
-			const extendedAnnotations = Object.entries(field.annotations).filter(([id, annot]) => annot.hasForwardIndex && !annot.isInternal).map(([id, annot]) => ({
+			const extendedAnnotations = Object.entries(BLTypes.isAnnotatedFieldV1(field) ? field.properties : field.annotations).filter(([id, annot]) => annot.hasForwardIndex && !annot.isInternal).map(([id, annot]) => ({
 				...annot,
 				id,
 				isMainAnnotation: id === field.mainProperty

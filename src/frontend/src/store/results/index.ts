@@ -28,6 +28,7 @@ export const modules = {
 export const actions = {
 	// viewedResults: b.commit((state, payload: ModuleRootState['viewedResults']) => state.viewedResults = payload, 'viewedResults'),
 	resetPage: b.commit(state => Object.values(state).forEach(view => view.page = 0), 'resetPage'),
+	resetViewGroup: b.commit(state => Object.values(state).forEach(view => view.viewGroup = null), 'resetViewGroup'),
 	page: b.commit((state, {viewId, page}: {viewId: ViewId, page: number}) => state[viewId].page = page, 'page'),
 
 	reset: b.commit(state => {

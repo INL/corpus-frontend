@@ -3,17 +3,6 @@
 		<QuerySummary/>
 
 		<div class="col-xs-12 contentbox">
-			<!-- TODO componentize -->
-			<div id='totalsReport'>
-				<div id="totalsReportText" class="pull-right"></div>
-				<span id='totalsSpinner' class="fa fa-spinner fa-spin searchIndicator" style="font-size:16px; padding: 4px; margin: 0px 10px;"></span>
-				<div id="totalsLimitedWarning" class="text-danger text-center" style="margin: 0px 10px;">
-					<span class="fa fa-exclamation-triangle text-danger" style="font-size: 20px;"></span>
-					<br>
-					Too many results!
-				</div>
-			</div>
-
 			<ul id="resultTabs" class="nav nav-tabs">
 				<li :class="[{'active': viewedResults === 'hits'}]"><a href="javascript:void(0);" @click="showHits">Per Hit</a></li>
 				<li :class="[{'active': viewedResults === 'docs'}]"><a href="javascript:void(0);" @click="showDocs">Per Document</a></li>
@@ -39,7 +28,7 @@ import * as resultsStore from '@/store/results';
 export default Vue.extend({
 	components: {
 		ResultsView,
-		QuerySummary
+		QuerySummary,
 	},
 	methods: {
 		showHits() {

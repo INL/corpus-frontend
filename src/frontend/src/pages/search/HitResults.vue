@@ -46,39 +46,49 @@
 
 		<tbody>
 			<template v-for="(rowData, index) in rows">
-				<tr v-if="showTitles && rowData.type === 'doc'" :key="index" class="concordance">
+				<tr v-if="showTitles && rowData.type === 'doc'" :key="index" class="document">
 					<td :colspan="numColumns">
-						<div class="doctitle collapse in">
-							<a
-								class="text-error"
-								target="_blank"
-								:href="rowData.href"
-							>
-								{{rowData.summary}}
-							</a>
+						<div class="doctitle">
+							<a class="text-error" target="_blank" :href="rowData.href">{{rowData.summary}}</a>
 						</div>
 					</td>
 				</tr>
-				<tr v-else-if="rowData.type === 'hit'" :key="index" class="concordance">
-					<td class="text-right">&hellip;<span :dir="textDirection">{{rowData.left}}</span></td>
-					<td class="text-center"><strong :dir="textDirection">{{rowData.hit}}</strong></td>
-					<td><span :dir="textDirection">{{rowData.right}}</span>&hellip;</td>
-					<td v-for="(v, index) in rowData.other" :key="index">{{v}}</td>
-				</tr>
+				<template v-else-if="rowData.type === 'hit'">
+					<tr :key="index" class="concordance" @click="showCitation(index)">
+						<td class="text-right">&hellip;<span :dir="textDirection">{{rowData.left}}</span></td>
+						<td class="text-center"><strong :dir="textDirection">{{rowData.hit}}</strong></td>
+						<td><span :dir="textDirection">{{rowData.right}}</span>&hellip;</td>
+						<td v-for="(v, index) in rowData.other" :key="index">{{v}}</td>
+					</tr>
+					<tr v-if="citations[index] && citations[index].open" :key="index + '-citation'" class="concordance-details">
+						<td :colspan="numColumns">
+							<div class="well-light">
+								<p>
+									{{citations[index].citation}}
+								</p>
+								<div>
+									<table>
+										<thead>
+											<tr>
+												<th v-for="(value, key) in rowData.props" v-if="key !== 'punct'" :key="key">
+													{{key}}
+												</th>
+											</tr>
+										</thead>
+										<tbody>
+											<tr v-for="i in rowData.props.punct.length" :key="i">
+												<td v-for="(value, key) in rowData.props" v-if="key !== 'punct'" :key="key">
+													{{value[i-1]}}
+												</td>
+											</tr>
+										</tbody>
+									</table>
+								</div>
+							</div>
+						</td>
+					</tr>
+				</template>
 			</template>
-			<!-- TODO snippet row, properties row -->
-
-			<!-- snippet row
-			<tr>
-			<td colspan="', numColumns, '" class="inline-concordance"><div class="collapse">Loading...</div></td>',
-			<tr>
-			-->
-
-			<!-- properties row
-			<tr>
-				<td colspan="', numColumns, '" class="inline-concordance"><div class="collapse">Loading...</div></td>
-			</tr>
-			-->
 		</tbody>
 	</table>
 </template>
@@ -87,10 +97,14 @@
 import Vue from 'vue';
 import URI from 'urijs';
 
+import * as qs from 'qs';
+
 import * as corpusStore from '@/store/corpus';
 import { snippetParts, words, getDocumentUrl } from '@/utils';
 
 import * as BLTypes from '@/types/blacklabtypes';
+
+declare const BLS_URL: string;
 
 type HitRow = {
 	type: 'hit';
@@ -98,7 +112,12 @@ type HitRow = {
 	hit: string;
 	right: string;
 	other: string[];
-	props: string;
+	props: BLTypes.BLHitSnippetPart;
+	// citation: string|null;
+	open: boolean;
+	docPid: string;
+	start: number;
+	end: number;
 }
 
 type DocRow = {
@@ -113,6 +132,14 @@ export default Vue.extend({
 		sort: String as () => string|null,
 		showTitles: Boolean as () => boolean,
 	},
+	data: () => ({
+		citations: {} as {
+			[key: number]: {
+				citation: string;
+				open: boolean;
+			}
+		}
+	}),
 	computed: {
 		rows(): Array<DocRow|HitRow> {
 			const { titleField, dateField, authorField } = this.results.summary.docFields;
@@ -149,14 +176,20 @@ export default Vue.extend({
 				const right = this.textDirection==='ltr'? parts[2] : parts[0];
 				const propsWord = this.properties(hit.match);
 
+				// TODO condense this data..
 				rows.push({
 					type: 'hit',
 					left,
 					right,
 					hit: parts[1],
-					props: propsWord,
-					other: this.shownAnnotations.map(annot => words(hit.match, annot.id, false, ''))
-				} as HitRow);
+					// props: propsWord,
+					props: hit.match,
+					other: this.shownAnnotations.map(annot => words(hit.match, annot.id, false, '')),
+					open: false,
+					docPid: hit.docPid,
+					start: hit.start,
+					end: hit.end
+				});
 
 				return rows;
 			});
@@ -173,26 +206,86 @@ export default Vue.extend({
 		changeSort(payload: string) {
 			this.$emit('sort', payload === this.sort ? '-'+payload : payload)
 		},
-		/** Concat all properties in the context into a large string */
+		/** Concat all properties (except punctuation) in the context into a large string */
 		properties(context: BLTypes.BLHitSnippetPart): string {
 			return Object.entries(context)
 				.map(([annotation, values]) => [annotation, values.join('')])
-				.filter(([annotation, value]) => !!value)
+				.filter(([annotation, value]) => !!value && annotation !== 'punct')
 				.map(([annotation, value]) => `${annotation}: ${value}`)
 				.join(', ');
 		},
+		showCitation(index: number /*row: HitRow*/) {
+			if (this.citations[index] != null) {
+				this.citations[index].open = !this.citations[index].open;
+				return;
+			}
+
+			const citation = Vue.set(this.citations as any[], index, { // shut up vue
+				citation: 'Loading...',
+				open: true
+			});
+
+			const row = this.rows[index] as HitRow;
+
+			fetch(`${BLS_URL}docs/${row.docPid}/snippet?${qs.stringify({hitstart: row.start, hitend: row.end, wordsaroundhit: 50})}`, {
+				headers: {
+					'Accept': 'application/json'
+				}
+			})
+			.then(r => {
+				if (r.ok) {
+					return r.json();
+				} else {
+					throw new Error('Some error when fetching snippet')
+				}
+			})
+			.then(r => {
+				console.log('got snippet', r);
+				const parts = snippetParts(r, this.firstMainAnnotation.id);
+				citation.citation = parts.join(' ');
+			})
+		}
 	},
+	watch: {
+		results() {
+			this.citations = {};
+		}
+	}
 });
 
 </script>
 
-<style lang="scss">
-// TODO
-// .inline-concordance {
-// 	font-size: 12px;
-// 	background-color: rgba(255, 255, 255, 0.7);
-// 	border-radius: 4px;
-// 	padding: 0px 8px;
-// }
+<style lang="scss" scoped>
+
+th, td {
+	overflow: hidden;
+	&:first-child {
+		padding-left: 6px;
+	}
+	&:last-child {
+		padding-right: 6px;
+	}
+}
+
+tr {
+	border-bottom: 1px solid #ffffff;
+}
+
+.concordance, .document {
+	&:hover {
+		background-color: rgba(0,0,0, 0.1);
+	}
+}
+
+.concordance {
+	cursor: pointer;
+}
+.concordance-details {
+	.well-light {
+		margin-top: 5px;
+		padding: 15px 15px 10px
+	}
+}
+
 </style>
 

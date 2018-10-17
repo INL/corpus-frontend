@@ -5,15 +5,15 @@
   "private": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack --config webpack.config.prod.js",
-    "start": "webpack-dev-server ---config webpack.config.dev.js -mode=development --port 80"
+    "build": "webpack --config webpack.config.prod.js --mode production",
+    "start": "webpack-dev-server --config webpack.config.dev.js --mode development --port 80"
   },
   "author": "INT",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@babel/core": "^7.0.0-rc.2",
-    "@babel/polyfill": "^7.0.0-rc.2",
-    "@babel/preset-env": "^7.0.0-rc.2",
+    "@babel/core": "^7.1.2",
+    "@babel/polyfill": "^7.0.0",
+    "@babel/preset-env": "^7.1.0",
     "@types/bootstrap": "^4.1.2",
     "@types/bootstrap-select": "^1.11.1",
     "@types/codemirror": "0.0.60",
@@ -42,7 +42,8 @@
     "webpack": "^4.17.1",
     "webpack-bundle-analyzer": "^3.0.3",
     "webpack-cli": "^3.1.0",
-    "webpack-dev-server": "^3.1.5"
+    "webpack-dev-server": "^3.1.5",
+    "whatwg-fetch": "^3.0.0"
   },
   "dependencies": {
     "axios": "^0.18.0",

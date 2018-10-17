@@ -5,7 +5,7 @@
 				<th class="text-right" style="width:40px">
 					<span class="dropdown">
 						<a class="dropdown-toggle" data-toggle="dropdown">
-							{{textDirection==='ltr' ? 'Before hit ' : 'After hit '}}
+							{{leftLabel}} hit
 							<span class="caret"/>
 						</a>
 
@@ -26,7 +26,7 @@
 				<th class="text-left" style="width:40px">
 					<span class="dropdown">
 						<a class="dropdown-toggle" data-toggle="dropdown">
-							{{textDirection==='ltr' ? 'After hit ' : 'Before hit '}}
+							{{rightLabel}} hit
 							<span class="caret"/>
 						</a>
 
@@ -64,7 +64,7 @@
 						<td :colspan="numColumns">
 							<div class="well-light">
 								<p :class="{'text-danger': citations[index].error}">
-									{{citations[index].citation}}
+									{{citations[index].citation[leftIndex]}}<strong>{{citations[index].citation[1]}}</strong>{{citations[index].citation[rightIndex]}}
 								</p>
 								<div>
 									<table>
@@ -113,8 +113,8 @@ type HitRow = {
 	right: string;
 	other: string[];
 	props: BLTypes.BLHitSnippetPart;
-	// citation: string|null;
-	open: boolean;
+
+	// For requesting snippets
 	docPid: string;
 	start: number;
 	end: number;
@@ -135,13 +135,18 @@ export default Vue.extend({
 	data: () => ({
 		citations: {} as {
 			[key: number]: {
-				citation: string;
+				citation: [string, string, string];
 				error: boolean;
 				open: boolean;
 			}
 		}
 	}),
 	computed: {
+		leftIndex() { return this.textDirection === 'ltr' ? 0 : 2 },
+		rightIndex() { return this.textDirection === 'ltr' ? 2 : 0 },
+		leftLabel() { return this.textDirection === 'ltr' ? 'Before' : 'After' },
+		rightLabel() { return this.textDirection === 'ltr' ? 'After' : 'Before' },
+
 		rows(): Array<DocRow|HitRow> {
 			const { titleField, dateField, authorField } = this.results.summary.docFields;
 			const infos = this.results.docInfos;
@@ -173,20 +178,15 @@ export default Vue.extend({
 
 				// And display the hit itself
 				const parts = snippetParts(hit, this.firstMainAnnotation.id);
-				const left = this.textDirection==='ltr'? parts[0] : parts[2];
-				const right = this.textDirection==='ltr'? parts[2] : parts[0];
-				const propsWord = this.properties(hit.match);
 
 				// TODO condense this data..
 				rows.push({
 					type: 'hit',
-					left,
-					right,
+					left: parts[this.leftIndex],
+					right: parts[this.rightIndex],
 					hit: parts[1],
-					// props: propsWord,
 					props: hit.match,
 					other: this.shownAnnotations.map(annot => words(hit.match, annot.id, false, '')),
-					open: false,
 					docPid: hit.docPid,
 					start: hit.start,
 					end: hit.end
@@ -222,7 +222,7 @@ export default Vue.extend({
 			}
 
 			const citation = Vue.set(this.citations as any[], index, { // shut up vue
-				citation: 'Loading citation...',
+				citation: ['Loading citation...', '', ''],
 				open: true,
 				error: false
 			});
@@ -248,8 +248,7 @@ export default Vue.extend({
 			.then(
 				r => {
 					console.log('got snippet', r);
-					const parts = snippetParts(r, this.firstMainAnnotation.id);
-					citation.citation = parts.join(' ');
+					citation.citation = snippetParts(r, this.firstMainAnnotation.id);
 				},
 				e => {
 					citation.citation = e.message

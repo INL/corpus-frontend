@@ -389,7 +389,7 @@ export const get = {
 	viewedResultsSettings: b.read(state => state.viewedResults != null ? state.results[state.viewedResults] : null, 'getViewedResultsSettings'),
 };
 
-// We need to call a function on the modules or they will be tree-shaken by webpack and their code (and thus implicit registration) won't be ran.
+// We need to call a function on the modules or they will be tree-shaken by webpack and their code (and thus implicit registration) won't be run.
 SettingsModule.default();
 FormModule.default();
 ResultsModule.default();
@@ -418,4 +418,5 @@ $(document).ready(() => {
 	corpus: CorpusModule.actions
 };
 
-export default () => {/**/}; // allow importing root module to call something to present this from beeing tree-shaken
+/** We need to call some function from this module or this module won't be evaluated (e.g. none of this code will run) */
+export default () => {/**/};

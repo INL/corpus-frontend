@@ -41,5 +41,5 @@ export const actions = {
 	}, 'replace'),
 };
 
-/** We need to call some function from the module before creating the root store or this code won't have run */
+/** We need to call some function from the module before creating the root store or this module won't be evaluated (e.g. none of this code will run) */
 export default () => {/**/};

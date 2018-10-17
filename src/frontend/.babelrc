@@ -21,7 +21,7 @@
 			"targets": {
 				"browsers": ["last 2 versions", "not ie < 11"]
 			},
-			"debug": true
+			// "debug": true
 		}]
 	],
 	"plugins": [

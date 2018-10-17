@@ -43,14 +43,14 @@
 				<div class="buttons">
 					<button type="button" class="btn btn-danger btn-sm"  v-if="isDocs && resultsHaveHits"  @click="showDocumentHits = !showDocumentHits">{{showDocumentHits ? 'Hide Hits' : 'Show Hits'}}</button>
 					<button type="button" class="btn btn-danger btn-sm"  v-if="isHits" @click="showTitles = !showTitles">{{showTitles ? 'Hide' : 'Show'}} Titles</button>
-					<button type="button" class="btn btn-default btn-sm" v-if="results" :disabled="downloadInProgress" @click="downloadCsv"><template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner"></span></template>Export CSV</button>
+					<button type="button" class="btn btn-default btn-sm" v-if="results" :disabled="downloadInProgress || !resultsHaveData" @click="downloadCsv"><template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner"></span></template>Export CSV</button>
 				</div>
 			</div>
 
 			<Pagination v-if="results" :page="shownPage" :maxPage="maxShownPage" @change="page = $event"/>
 		</div>
 
-		<div v-if="results" class="lightbg haspadding resultcontainer">
+		<div v-if="resultsHaveData" class="lightbg haspadding resultcontainer">
 			<GroupResults v-if="isGroups"
 				:results="results"
 				:sort="sort"
@@ -74,9 +74,9 @@
 				@sort="sort = $event"
 			/>
 		</div>
-
-		<div v-if="error" class="error">
-			{{error.message}}
+		<div v-else class="lightbg haspadding resultcontainer">
+			<template v-if="results"><div class="no-results-found">No results found.</div></template>
+			<template v-else-if="error"><div class="no-results-found">{{error.message}}</div></template>
 		</div>
 
 	</div>
@@ -322,11 +322,18 @@ export default Vue.extend({
 			return globalStore.get.viewedResults() === this.type;
 		},
 
+
+		// simple view variables
+		resultsHaveData() {
+			if (BLTypes.isDocGroups(this.results)) return this.results.docGroups.length > 0;
+			if (BLTypes.isHitGroups(this.results)) return this.results.hitGroups.length > 0;
+			if (BLTypes.isHitResults(this.results)) return this.results.hits.length > 0;
+			if (BLTypes.isDocResults(this.results)) return this.results.docs.length > 0;
+			return false;
+		},
 		isHits() { return BLTypes.isHitResults(this.results); },
 		isDocs() { return BLTypes.isDocResults(this.results); },
 		isGroups() { return BLTypes.isGroups(this.results); },
-
-		// simple view variables
 		resultsHaveHits() { return this.results != null && this.results.summary.searchParam.patt}
 	},
 	watch: {
@@ -451,10 +458,12 @@ export default Vue.extend({
 	}
 }
 
-.error {
-	border: 1px solid red;
-	border-radius: 4px;
-	padding: 2em 1em;
+.no-results-found {
+	padding: 1.25em;
+	text-align: center;
+	font-style: italic;
+	font-size: 16px;
+	color: #777;
 }
 
 .resultcontainer {

@@ -5,6 +5,7 @@ import {createEndpoint} from '@/utils/apiutils';
 import {normalizeFormat, normalizeIndex} from '@/utils/blacklabutils';
 
 import * as BLTypes from '@/types/blacklabtypes';
+import { ApiError } from '@/types/apptypes';
 
 declare const BLS_URL: string;
 
@@ -13,6 +14,7 @@ const blacklabEndpoint = createEndpoint({
 	params: {
 		outputformat: 'json',
 	},
+	paramsSerializer: params => qs.stringify(params)
 });
 
 // Some blacklab-server request creators
@@ -131,34 +133,44 @@ export const blacklab = {
 		.delete<BLTypes.BLResponse>(paths.index(id)),
 
 	getHits: (indexId: string, params: BLTypes.BlacklabParameters) => {
-		if (!params.patt || !indexId) {
-			throw new Error('Cannot get hits without patttern or index!');
-		}
-
 		const {token: cancelToken, cancel} = axios.CancelToken.source();
-		return {
-			request: blacklabEndpoint.get<BLTypes.BlHitResults|BLTypes.BLHitGroupResults>(paths.hits(indexId), {
+
+		let request: Promise<BLTypes.BlHitResults|BLTypes.BLHitGroupResults>;
+		if (!indexId) {
+			request = Promise.reject(new ApiError('Error', 'No index specified.', 'Internal error'));
+		} else if (!params.patt) {
+			request = Promise.reject(new ApiError('Info', 'Cannot get hits without pattern.', 'No results'));
+		} else {
+			request = blacklabEndpoint.get<BLTypes.BlHitResults|BLTypes.BLHitGroupResults>(paths.hits(indexId), {
 				params,
 				cancelToken
-			}),
+			});
+		}
+
+		return {
+			request,
 			cancel
 		};
 	},
 
 	getDocs: (indexId: string, params: BLTypes.BlacklabParameters) => {
-		if (!indexId) {
-			throw new Error('Cannot get results without index!');
-		}
-
 		const {token: cancelToken, cancel} = axios.CancelToken.source();
-		return {
-			request: blacklabEndpoint.get<BLTypes.BLDocResults|BLTypes.BLDocGroupResults>(paths.docs(indexId), {
+
+		let request: Promise<BLTypes.BLDocResults|BLTypes.BLDocGroupResults>;
+		if (!indexId) {
+			request = Promise.reject(new ApiError('Error', 'No index specified', 'Internal error'));
+		} else {
+			request = blacklabEndpoint.get<BLTypes.BLDocResults|BLTypes.BLDocGroupResults>(paths.docs(indexId), {
 				params,
 				cancelToken
-			}),
+			});
+		}
+
+		return {
+			request,
 			cancel
 		};
 	}
 };
 
-export {Canceler};
+export {Canceler, ApiError};

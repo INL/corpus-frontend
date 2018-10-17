@@ -98,6 +98,7 @@ import * as query from '@/store/form';
 
 import * as bls from "@/modules/singlepage-bls";
 import * as BLTypes from '@/types/blacklabtypes';
+import * as Api from '@/api';
 
 import SelectPicker, {OptGroup} from '@/components/SelectPicker.vue';
 import Pagination from '@/components/Pagination.vue';
@@ -133,10 +134,6 @@ function onSearchUpdated(operation: string, searchParams: BLTypes.BlacklabParame
 	}
 }
 
-type ResultsError = {
-	message: string;
-}
-
 export default Vue.extend({
 	mixins: [uid],
 	components: {
@@ -157,7 +154,8 @@ export default Vue.extend({
 		isDirty: true, // since we don't have any results yet
 		request: null as null|Promise<BLTypes.BLSearchResult>,
 		results: null as null|BLTypes.BLSearchResult,
-		error: null as null|ResultsError, // TODO not correct
+		error: null as null|Api.ApiError,
+		cancel: null as null|Api.Canceler,
 
 		viewGroupName: null as string|null,
 		showTitles: true,
@@ -167,34 +165,53 @@ export default Vue.extend({
 	methods: {
 		markDirty() {
 			this.isDirty = true;
+			if (this.cancel) {
+				this.cancel();
+				this.cancel = null;
+				this.request = null;
+			}
 		},
 		refresh() {
 			this.isDirty = false;
 			debugLog('this is when the search should be refreshed');
-			const params = bls.getBlsParamFromState();
 
+			if (this.cancel) {
+				this.cancel();
+				this.request = null;
+				this.cancel = null;
+			}
+
+			const params = bls.getBlsParamFromState();
 			if (this.type === 'hits' && !params.patt) {
-				this.setError({
-					message: 'No hits to display... (one or more of Lemma/PoS/Word is required)'
-				});
+				this.setError(new Api.ApiError('No results', 'No hits to display... (one or more of Lemma/PoS/Word is required).', 'No results'));
 				return;
 			}
 
-			this.request = new Promise<BLTypes.BLSearchResult>((resolve, reject) => {
-				bls.search(this.type, bls.getBlsParamFromState(), resolve, () => reject(arguments));
-			});
+			const apiCall = this.type === 'hits' ? Api.blacklab.getHits : Api.blacklab.getDocs;
+			debugLog('starting search', this.type, params);
+
+			const r = apiCall(corpus.getState().indexName, params);
+			this.request = r.request;
+			this.cancel = r.cancel;
+
 			this.request.then(this.setSuccess, this.setError);
 			onSearchUpdated(this.type, params);
 		},
 		setSuccess(data: BLTypes.BLSearchResult) {
+			debugLog('search results', data);
 			this.results = data;
 			this.error = null;
 			this.request = null;
+			this.cancel = null;
 		},
-		setError(data: ResultsError) {
-			this.error = data;
-			this.results = null;
+		setError(data: Api.ApiError) {
+			if (data.title !== 'Request cancelled') { // TODO
+				debugLog('Request failed: ', data);
+				this.error = data;
+				this.results = null;
+			}
 			this.request = null;
+			this.cancel= null;
 		},
 		downloadCsv() {
 			if (this.downloadInProgress || !this.results) {

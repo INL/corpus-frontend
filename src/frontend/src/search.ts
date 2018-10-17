@@ -14,6 +14,7 @@ import '@/pages/search/vuexbridge';
 import {QueryBuilder} from '@/modules/cql_querybuilder';
 
 import ResultComponent from '@/pages/search/Results.vue';
+import FilterOverviewComponent from '@/pages/search/FilterOverview.vue';
 
 import * as BLTypes from '@/types/blacklabtypes';
 
@@ -96,4 +97,9 @@ $(document).ready(function() {
 		store,
 		render: h => h(ResultComponent),
 	}).$mount(document.querySelector('#results')!);
+
+	new Vue({
+		store,
+		render: h => h(FilterOverviewComponent)
+	}).$mount(document.querySelector('#filteroverview')!);
 });

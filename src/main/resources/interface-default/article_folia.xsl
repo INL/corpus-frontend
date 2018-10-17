@@ -59,7 +59,7 @@
     <xsl:template match="//*[local-name()='p' or local-name()='s']/*[local-name()='t']"/>
     
     <xsl:template match="//*[local-name()='w']">
-        <xsl:variable name="lemma" select="./*[local-name()='lemma' and @class]"/>
+        <xsl:variable name="lemma" select="./*[local-name()='lemma' and @class]/@class[0]"/>
         <span class="word" ref="tooltip">
             <xsl:attribute name="title">
                 <xsl:value-of select="$lemma" />

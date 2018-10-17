@@ -104,6 +104,8 @@ import { snippetParts, words, getDocumentUrl } from '@/utils';
 
 import * as BLTypes from '@/types/blacklabtypes';
 
+import {debugLog} from '@/utils/debug';
+
 declare const BLS_URL: string;
 
 type HitRow = {
@@ -242,12 +244,12 @@ export default Vue.extend({
 					throw new Error(`Could not fetch citation: ${r.statusText}`);
 				}
 			}, e => {
-				console.log(e);
+				debugLog(e);
 				throw new Error(`Could not fetch citation: ${e.message}`);
 			})
 			.then(
 				r => {
-					console.log('got snippet', r);
+					debugLog('got snippet', r);
 					citation.citation = snippetParts(r, this.firstMainAnnotation.id);
 				},
 				e => {

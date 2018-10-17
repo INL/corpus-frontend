@@ -170,7 +170,7 @@ export default Vue.extend({
 		},
 		refresh() {
 			this.isDirty = false;
-			console.log('this is when the search should be refreshed');
+			debugLog('this is when the search should be refreshed');
 			const params = bls.getBlsParamFromState();
 
 			if (this.type === 'hits' && !params.patt) {

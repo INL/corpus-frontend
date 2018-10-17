@@ -6,9 +6,9 @@ const CleanWebpackPlugin = require('clean-webpack-plugin');
 
 module.exports = {
 	entry: {
-		article: './src/article.ts',
-		corpora: './src/corpora.ts',
-		search: './src/search.ts',
+		article: ['./src/utils/enable-polyfills.ts', './src/article.ts'],
+		corpora: ['./src/utils/enable-polyfills.ts', './src/corpora.ts'],
+		search: ['./src/utils/enable-polyfills.ts', './src/search.ts']
 	},
 	output: {
 		filename: '[name].js',

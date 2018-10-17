@@ -118,6 +118,7 @@ export default Vue.extend({
 		&.current {
 			color: #555;
 			position: relative;
+			vertical-align: bottom;
 			> .fa {
 				align-items: center;
 				background: none;
@@ -140,20 +141,24 @@ export default Vue.extend({
 			}
 			> input {
 				border-color: $border-color;
+				box-sizing: content-box;
 				color: $color;
 				border-radius: 0;
 				font-size: 12px;
-				height: auto;
-				line-height: 1.5;
+				height: 1.5em;
+				line-height: 1.5em;
 				padding: 5px;
 				position: relative;
 				text-align: center;
-				width: 46px;
+				width: 36px;
 				z-index: 5;
 
 				&:focus,
 				&:hover {
 					z-index: 15;
+				}
+				&:not(:focus):not(:hover) {
+					-moz-appearance: textfield;
 				}
 			}
 		}

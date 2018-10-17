@@ -183,7 +183,7 @@ export default Vue.extend({
 
 			const params = bls.getBlsParamFromState();
 			if (this.type === 'hits' && !params.patt) {
-				this.setError(new Api.ApiError('No results', 'No hits to display... (one or more of Lemma/PoS/Word is required).', 'No results'));
+				this.error = new Api.ApiError('No results', 'No hits to display... (one or more of Lemma/PoS/Word is required).', 'No results');
 				return;
 			}
 

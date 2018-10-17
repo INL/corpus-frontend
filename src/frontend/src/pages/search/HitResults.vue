@@ -275,14 +275,12 @@ table {
 	border-collapse: separate;
 }
 
+
 th, td {
-	&:first-child {
-		padding-left: 6px;
-	}
-	&:last-child {
-		padding-right: 6px;
-	}
+	&:first-child { padding-left: 6px; }
+	&:last-child { padding-right: 6px; }
 }
+
 
 td {
 	overflow: hidden;
@@ -300,12 +298,17 @@ tr {
 
 .concordance {
 	cursor: pointer;
+	> td {
+		padding: 0px 5px;
+		transition: all 0.1s;
+	}
 
 	&.open {
 		> td {
 			background: white;
 			border-top: 2px solid #ddd;
 			border-bottom: 1px solid #ddd;
+			padding: 8px 5px;
 			&:first-child {
 				border-left: 2px solid #ddd;
 				border-top-left-radius: 4px;
@@ -328,6 +331,11 @@ tr {
 			box-shadow: none;
 			border: none;
 			padding: 15px 15px 10px;
+
+			> p {
+				margin: 0 auto 10px;
+				width: 90%;
+			}
 		}
 	}
 }

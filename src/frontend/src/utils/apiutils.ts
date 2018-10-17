@@ -28,7 +28,7 @@ export function swallowError(p: any) {/**/}
  */
 export async function handleError<T>(error: AxiosError): Promise<never> {
 	if (!error.config) { // is a cancelled request, message containing details
-		return Promise.reject(new ApiError('Request cancelled', `Request was cancelled: ${error}`, ''));
+		return Promise.reject(new ApiError('Request cancelled', `Request was cancelled: ${error}`, '')); // TODO some logic depends on the exact title to filter out cancelled requests
 	}
 
 	const response = error.response;

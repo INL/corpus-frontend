@@ -2,7 +2,7 @@ import axios, {Canceler} from 'axios';
 import * as qs from 'qs';
 
 import {createEndpoint} from '@/utils/apiutils';
-import {normalizeFormat, normalizeIndex} from '@/utils/blacklabutils';
+import {normalizeIndexOld, normalizeFormatOld} from '@/utils/blacklabutils';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import { ApiError } from '@/types/apptypes';
@@ -37,7 +37,7 @@ const paths = {
 	formatXslt: (id: string) =>             `input-formats/${id}/xslt`,
 
 	hits: (indexId: string) =>              `${indexId}/hits/`,
-	docs: (indexId: string) =>              `${indexId}/docs`,
+	docs: (indexId: string) =>              `${indexId}/docs/`,
 };
 
 /**
@@ -54,11 +54,11 @@ export const blacklab = {
 	getCorpora: () => blacklabEndpoint
 		.get<BLTypes.BLServer>(paths.root())
 		.then(r => Object.entries(r.indices))
-		.then(r => r.map(([id, index]: [string, BLTypes.BLIndex]) => normalizeIndex(id, index))),
+		.then(r => r.map(([id, index]: [string, BLTypes.BLIndex]) => normalizeIndexOld(id, index))),
 
 	getCorpus: (id: string) => blacklabEndpoint
 		.get<BLTypes.BLIndex>(paths.indexStatus(id))
-		.then(r => normalizeIndex(id, r)),
+		.then(r => normalizeIndexOld(id, r)),
 
 	getShares: (id: string) => blacklabEndpoint
 		.get<{'users[]': BLTypes.BLShareInfo}>(paths.shares(id))
@@ -67,7 +67,7 @@ export const blacklab = {
 	getFormats: () => blacklabEndpoint
 		.get<BLTypes.BLFormats>(paths.formats())
 		.then(r => Object.entries(r.supportedInputFormats))
-		.then(r => r.map(([id, format]: [string, BLTypes.BLFormat]) => normalizeFormat(id, format))),
+		.then(r => r.map(([id, format]: [string, BLTypes.BLFormat]) => normalizeFormatOld(id, format))),
 
 	getFormatContent: (id: string) => blacklabEndpoint
 		.get<BLTypes.BLFormatContent>(paths.formatContent(id)),
@@ -144,6 +144,62 @@ export const blacklab = {
 			request = blacklabEndpoint.get<BLTypes.BlHitResults|BLTypes.BLHitGroupResults>(paths.hits(indexId), {
 				params,
 				cancelToken
+			});
+		}
+
+		return {
+			request,
+			cancel
+		};
+	},
+
+	getHitsCsv: (indexId: string, params: BLTypes.BlacklabParameters) => {
+		const {token: cancelToken, cancel} = axios.CancelToken.source();
+		const csvParams = Object.assign({}, params, {
+			number: undefined,
+			first: undefined,
+			outputformat: 'csv'
+		});
+
+		let request: Promise<Blob>;
+		if (!indexId) {
+			request = Promise.reject(new ApiError('Error', 'No index specified.', 'Internal error'));
+		} else if (!params.patt) {
+			request = Promise.reject(new ApiError('Info', 'Cannot get hits without pattern.', 'No results'));
+		} else {
+			request = blacklabEndpoint.get<Blob>(paths.hits(indexId), {
+				params: csvParams,
+				headers: { Accept: 'text/csv' },
+				responseType: 'blob',
+				transformResponse: data => new Blob([data], {type: 'text/plain;charset=utf-8' }),
+				cancelToken,
+			});
+		}
+
+		return {
+			request,
+			cancel
+		};
+	},
+
+	getDocsCsv(indexId: string, params: BLTypes.BlacklabParameters) {
+		const {token: cancelToken, cancel} = axios.CancelToken.source();
+		const csvParams = Object.assign({}, params, {
+			number: undefined,
+			first: undefined,
+			outputformat: 'csv'
+		});
+
+		let request: Promise<Blob>;
+		if (!indexId) {
+			request = Promise.reject(new ApiError('Error', 'No index specified', 'Internal error'));
+		} else {
+			request = blacklabEndpoint.get<Blob>(paths.docs(indexId), {
+				params: csvParams,
+				headers: { Accept: 'text/csv' },
+				responseType: 'blob',
+				transformResponse: data => new Blob([data], {type: 'text/plain;charset=utf-8' }),
+				cancelToken,
 			});
 		}
 

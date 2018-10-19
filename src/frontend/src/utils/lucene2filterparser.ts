@@ -1,11 +1,11 @@
 import luceneQueryParser from 'lucene-query-parser';
 
-import {debugLog} from './debug';
+import {debugLog} from '@/utils/debug';
 
-import {FilterField} from '../types/pagetypes';
+import {MetadataValue} from '@/types/apptypes';
 
 /** Parse the expression into an array of filter fields for easy displaying. Throws error if the query is too complex or contains errors. */
-export default (luceneQuery?: string): FilterField[] => {
+export default (luceneQuery?: string): MetadataValue[] => {
 	if (!luceneQuery) {
 		return [];
 	}
@@ -17,9 +17,9 @@ export default (luceneQuery?: string): FilterField[] => {
 	 * We need to recurse to extract all the values.
 	 * To simplify keeping track of what part of the query we're parsing, we store the current field here.
 	 */
-	let context: FilterField|null = null;
+	let context: MetadataValue|null = null;
 	/** Once we're done with a field, we store it here and clear the context. */
-	const parsedValues: FilterField[] = [];
+	const parsedValues: MetadataValue[] = [];
 
 	/**
 	 * Process a Node. A Field object is always contained within a Node (as far as I can tell).
@@ -48,7 +48,7 @@ export default (luceneQuery?: string): FilterField[] => {
 			if (context == null && val.field && val.field !== '<implicit>') {
 				context = {
 					id: val.field,
-					filterType: 'select',
+					type: 'select',
 					values: []
 				};
 				createdContext = true;
@@ -105,7 +105,7 @@ export default (luceneQuery?: string): FilterField[] => {
 
 			context = {
 				id: val.field,
-				filterType: 'text',
+				type: 'text',
 				values: []
 			};
 			createdContext = true;
@@ -139,7 +139,7 @@ export default (luceneQuery?: string): FilterField[] => {
 		// Ignore in/exclusivity
 		parsedValues.push({
 			id: val.field,
-			filterType: 'range',
+			type: 'range',
 			values: [val.term_min, val.term_max]
 		});
 	}

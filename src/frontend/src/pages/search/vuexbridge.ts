@@ -6,11 +6,8 @@ import * as ResultsStore from '@/store/results';
 import * as SettingsStore from '@/store/settings';
 import * as FormStore from '@/store/form';
 
-import { cancelSearch } from '@/modules/singlepage-bls';
 import { debugLog } from '@/utils/debug';
 import { QueryBuilder } from '@/modules/cql_querybuilder';
-
-import { FilterField, FilterType } from '@/types/pagetypes';
 
 /*
 	This is some ugly-ish code that implements some one- and two-way binding between oldschool normal html elements and the vuex store.
@@ -65,7 +62,7 @@ function changeCheck($input: JQuery<HTMLInputElement>, value: boolean) {
 }
 
 // TODO move verification of options into store
-$(document).ready(() => {
+export default () => {
 	debugLog('Begin connecting listeners to store');
 	{
 		const $pageSize = $('#resultsPerPage') as JQuery<HTMLSelectElement>;
@@ -145,9 +142,7 @@ $(document).ready(() => {
 		});
 	}
 
-	// TODO initialization order is a bit of a mess. querybuilder is constructed after connecting to the page
-	// so delay this a little
-	setTimeout(() => {
+	{
 		let lastPattern: string;
 		const $querybuilder = $('#querybuilder');
 		const instance: QueryBuilder = $querybuilder.data('builder');
@@ -163,7 +158,7 @@ $(document).ready(() => {
 			lastPattern = pattern;
 			FormStore.actions.pattern.queryBuilder(pattern);
 		});
-	}, 0);
+	}
 
 	{
 		const $within = $('#simplesearch_within');
@@ -177,104 +172,6 @@ $(document).ready(() => {
 		$within.on('change', () => {
 			const value = $within.find('input:checked').val() as string || null;
 			FormStore.actions.pattern.simple.within(value);
-		});
-	}
-
-	{
-		$('.propertyfield').each(function() {
-			const $this = $(this);
-			const id = $this.attr('id')!;
-			const $textOrSelect = $this.find('#' + id + '_value');
-			const $fileInput = $this.find('#' + id + '_file') as JQuery<HTMLInputElement>; // NOTE: not always available
-			const $caseInput = $this.find('#' + id + '_case') as JQuery<HTMLInputElement>;
-
-			// Store -> UI
-			store.watch(state => state.form.pattern.simple.annotationValues[id].case, v => changeCheck($caseInput, v), {immediate: true});
-			store.watch(state => state.form.pattern.simple.annotationValues[id].value, v => {
-				if ($textOrSelect.is('select')) {
-					changeSelect($textOrSelect as JQuery<HTMLSelectElement>, v);
-				} else {
-					changeText($textOrSelect as JQuery<HTMLInputElement>, v);
-				}
-			}, {immediate: true});
-
-			// UI -> Store
-			$textOrSelect.on('change', () => FormStore.actions.pattern.simple.annotation({
-				id,
-				value: $textOrSelect.val() as string || ''
-			}));
-
-			// UI -> Store
-			$fileInput.on('change', function() { // no arrow-func due to context issues
-				const file = this.files && this.files[0];
-				if (file != null) {
-					const fr = new FileReader();
-					fr.onload = function() {
-						// Replace all whitespace with pipes,
-						// this is due to the rather specific way whitespace in the simple search property fields is treated (see singlepage-bls.js:getPatternString)
-						// TODO discuss how we treat these fields with Jan/Katrien, see https://github.com/INL/corpus-frontend/issues/18
-						FormStore.actions.pattern.simple.annotation({
-							id,
-							value: (fr.result as string).replace(/\s+/g, '|'),
-						});
-					};
-					fr.readAsText(file);
-				} else {
-					FormStore.actions.pattern.simple.annotation({
-						id,
-						value: '', // clear value when the file is cleared
-					});
-				}
-			});
-
-			// UI -> Store
-			$caseInput.on('change', function() {
-				FormStore.actions.pattern.simple.annotation({
-					id,
-					case: $caseInput.is(':checked')
-				});
-			});
-		});
-	}
-
-	{
-		$('.filterfield').each(function() {
-			const $this = $(this);
-			const id = $this.attr('id')!;
-			const type = $this.data('filterfield-type') as FilterField['filterType'];
-			const $inputs = $this.find('input, select') as JQuery<HTMLElement>;
-
-			// Store -> UI
-			store.watch(state => state.form.filters[id].values, values => {
-				if (type === FilterType.range) {
-					changeText($($inputs[0]) as JQuery<HTMLInputElement>, values[0]);
-					changeText($($inputs[1]) as JQuery<HTMLInputElement>, values[1]);
-				} else if (type ===  FilterType.select) {
-					changeSelect($inputs.first() as JQuery<HTMLSelectElement>, values);
-				} else {
-					changeText($inputs.first() as JQuery<HTMLInputElement>, values[0]);
-				}
-			}, {immediate: true});
-
-			// UI -> store
-			$this.on('change', function() {
-				let values: string[];
-
-				// Has two input fields, special treatment
-				if (type === FilterType.range) {
-					values = [
-						$($inputs[0]).val() as string,
-						$($inputs[1]).val() as string
-					];
-				} else {
-					// We don't know whether the input is actually a (multi-)select, date field, or text input
-					// So .val() could be a single string, null/undefined, or an array of strings
-					// Concat all values then remove empty/null values
-					values = ([] as string[]).concat($inputs.first().val() as string | string[])
-						.filter(v => !!v); // Remove null, empty strings
-				}
-				FormStore.actions.filter({id, values});
-			});
 		});
 	}
 
@@ -303,7 +200,6 @@ $(document).ready(() => {
 	// Reset & history navigation
 	$('#mainForm').on('reset', () => {
 		actions.reset();
-		cancelSearch();
 
 		// TODO map PageState to url and autoupdate on appropriate state updates
 		const url = new URI();
@@ -332,11 +228,5 @@ $(document).ready(() => {
 		}
 	});
 
-	// TODO restore pattern tab
-
 	debugLog('connected state to page');
-});
-
-/* TODO
-updateFilterDisplay();
-*/
+};

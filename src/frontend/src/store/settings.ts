@@ -7,12 +7,12 @@ import {getStoreBuilder} from 'vuex-typex';
 
 import {RootState} from '@/store';
 
-export const enum defaults {
-	pageSize = 20,
-	sampleMode = 'percentage'
+const defaults = {
+	pageSize: 20,
+	sampleMode: 'percentage' as 'percentage' // required to allow putting it in string enum types
 }
 
-export type ModuleRootState = {
+type ModuleRootState = {
 	operation: 'hits'|'docs'|null; // TODO rename to view
 	pageSize: number;
 	sampleMode: 'percentage'|'count';
@@ -21,7 +21,7 @@ export type ModuleRootState = {
 	wordsAroundHit: number|null;
 };
 
-export const initialState: ModuleRootState = {
+const initialState: ModuleRootState = {
 	operation: null,
 	pageSize: defaults.pageSize as number,
 	sampleMode: defaults.sampleMode,
@@ -32,7 +32,13 @@ export const initialState: ModuleRootState = {
 
 const b = getStoreBuilder<RootState>().module<ModuleRootState>('settings', initialState);
 
-export const actions = {
+const getState = b.state();
+
+const get = {
+	// nothing here yet
+};
+
+const actions = {
 	pageSize: b.commit((state, payload: number) => {
 		state.pageSize = [20, 50, 100, 200].includes(payload) ? payload : defaults.pageSize;
 	}, 'pagesize'),
@@ -66,11 +72,16 @@ export const actions = {
 	}, 'replace'),
 };
 
-export const get = {
-	// nothing here yet
-};
-
-export const getState = b.state();
-
 /** We need to call some function from the module before creating the root store or this module won't be evaluated (e.g. none of this code will run) */
-export default () => {/**/};
+const init = () => {/**/};
+
+export {
+	ModuleRootState,
+
+	getState,
+	get,
+	actions,
+	init,
+
+	defaults
+};

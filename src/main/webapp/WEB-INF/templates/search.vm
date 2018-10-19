@@ -1,86 +1,4 @@
-#macro( filterfields $fields)
-<div class="form-horizontal">
-#foreach($docfield in $fields)
-    <div class="form-group filterfield" id="$docfield.getId()" data-filterfield-type="$docfield.getType()"> ##- Behaves as a .row, so every child element should have some form of .col-*
-        <label class="col-xs-12">$docfield.getDisplayName()</label>
-
-        #if($docfield.getType() == "select" && !$docfield.getValidValues().isEmpty())
-            <div class="col-xs-12">
-                <select title="$docfield.getDisplayName()" class="selectpicker form-control" data-container="body" multiple>
-            
-                #foreach($pair in $docfield.getValidValues())
-                    <option value="$pair.getValue()">$pair.getDescription()</option>
-                #end
-                </select>
-            </div>
-        #elseif($docfield.getType() == "range")
-            <div class="col-xs-4">
-                <input type="text" placeholder="From" class="form-control" autocomplete="off">
-            </div>
-            <div class="col-xs-4">
-                <input type="text" placeholder="To" class="form-control" autocomplete="off">
-            </div>
-        #else
-            <div class="col-xs-12">
-                <input type="text" placeholder="$docfield.getDisplayName()" class="form-control" autocomplete="off" ## native autocomplete 
-                    #if($docfield.getType() == "combobox")
-                        data-autocomplete="$docfield.getId()" 
-                    #end
-                />
-            </div>
-        #end
-    </div>
-#end
-</div>
-#end
-
-#macro( propfield $field)
-    #set ($propertyFieldInputId = $propertyField.getId() + "_value")
-    #set ($propertyFieldFileInputId = $propertyField.getId() + "_file")
-    #set ($propertyFieldCaseId = $propertyField.getId() + "_case")
-
-    <div class="form-group propertyfield" id="$propertyField.getId()"> ## behaves as .row when in .form-horizontal so .row may be omitted
-        <label for="$propertyFieldInputId" class="col-xs-12 col-md-3">$propertyField.getDisplayName()</label>
-        <div class="col-xs-12 col-md-9 upload-button-container">
-            
-            #if($field.getType() == "select" && !$field.getValidValues().isEmpty())
-                <select id="$propertyFieldInputId" title="$field.getDisplayName()" class="selectpicker form-control" data-container="body">
-                    <option value="">choose value</option>
-                #foreach($pair in $field.getValidValues())
-                    <option value="$pair.getValue()">$pair.getDescription()</option>
-                #end
-                </select>
-            #else
-                <input type="text" id="$propertyFieldInputId" name="$propertyFieldInputId" placeholder="$propertyField.getDisplayName()" class="form-control" autocomplete="off"
-                    #if($field.getType() == "combobox") 
-                        ## when autocompleting word properties, blacklab needs to know the complex field from which they originate
-                        ## the format is complexfield/property?term=searchterm
-                        data-autocomplete="$propertyField.getComplexFieldName()/$propertyField.getId()" 
-                    #end
-                >
-                ## word-list upload-button only for text inputs
-                <span class="btn btn-default upload-button">
-                    <input type="file" id="$propertyFieldFileInputId" title="Upload a list of values">
-                    <span class="glyphicon glyphicon-open"></span> 
-                </span>
-            #end
-
-            #if($propertyField.isCaseSensitive())
-            <div class="checkbox"><label for="$propertyFieldCaseId"><input type="checkbox" id="$propertyFieldCaseId" name="$propertyFieldCaseId"> Case&nbsp;and&nbsp;diacritics&nbsp;sensitive</label></div>
-            #end
-        </div>
-    </div>
-#end
-
 #parse("header.vm")
-
-#if($propertyGroups.isEmpty()) ## Only display ungrouped fields if no other groups are present
-   #set($_ = $propertyGroups.put("Properties", $ungroupedPropertyFields)) ## silence return value of put() to stop it from ending up in the page.
-#end
-#if($metadataGroups.isEmpty()) ## Only display ungrouped fields if no other groups are present
-    #set($_ = $metadataGroups.put("Metadata", $ungroupedMetadataFields)) ## silence return value of put() to stop it from ending up in the page.
-#end
-        
 
 #set($unescapedIndexStructureJson = $indexStructureJson) ## variables with 'unescaped' in the name are not html-escaped, see BaseResponse.java
 
@@ -104,131 +22,7 @@
 </noscript>
 -->
 
-
-<form id="mainForm" class="clearfix">
-
-<div id='searchFormDiv' class="col-xs-12 contentbox collapse in">
-    #if($websiteConfig.getCorpusOwner())<a href="$pathToTop" class="navbar-logo-margin"><i class="fa fa-arrow-left"></i> back to my corpora</a>#end
-    <h2>$websiteConfig.getCorpusDisplayName() #if($websiteConfig.getCorpusOwner())<span class="small">($websiteConfig.getCorpusOwner())</span>#end</h2>
-
-    <div class="row">
-        <div class="col-xs-12 col-md-6" id="searchContainer">
-            <h3>Search for &hellip;</h3>
-            <ul class="nav nav-tabs" id="searchTabs">
-                <li class="active"><a href="#simple" data-toggle="tab" class="querytype">Simple</a></li>
-                <li><a href="#advanced" data-toggle="tab" class="querytype">Advanced</a></li>
-                <li><a href="#query" data-toggle="tab" class="querytype">CQL query</a></li>
-            </ul>
-            <div class="tab-content">
-              #set($usePropertyTabs = ($propertyGroups.size() > 1)) ##only use tabs when we have more than one group to display
-                <div class="tab-pane active form-horizontal" id="simple" #if ($usePropertyTabs) style="margin-top: -15px"#end>
-                 #if($usePropertyTabs) 
-                     <ul class="nav nav-tabs subtabs">
-                     #foreach($group in $propertyGroups.entrySet())
-                         #set($groupName = $group.key)
-                         #set($groupId = $groupName.replace(" ", "").concat("_prop"))
-                         <li #if($velocityCount == 1) class="active" #end>
-                             <a href="#$groupId" data-toggle="tab">$groupName</a>
-                         </li>
-                         #set($firstGroup = "false")
-                     #end
-                     </ul>
-                     <div class="tab-content">
-                     #foreach($group in $propertyGroups.entrySet())
-                         #set($groupName = $group.key)
-                         #set($groupId = $groupName.replace(" ", "").concat("_prop"))
-                         <div class="tab-pane #if($velocityCount == 1) active #end" id="$groupId">
-                             #foreach($propertyField in $group.value)
-                                 #propfield($propertyField)
-                             #end
-                         </div>
-                         #set($firstGroup = "false")            
-                     #end
-                     </div>
-                 #else ## !$usePropertyTabs, insert fields directly
-                     #foreach($group in $propertyGroups.entrySet())
-                         #foreach($propertyField in $group.value)
-                              #propfield($propertyField)
-                          #end
-                      #end
-                 #end
-                    <div class="form-group">
-                        ## TODO extract available options from blacklab
-                        <label class="col-xs-12 col-md-3">Within:</label>
-                        
-                        <div class="btn-group col-xs-12 col-md-9" data-toggle="buttons" id="simplesearch_within" style="display:block;">
-                            <label class="btn btn-default active">
-                                <input type="radio" autocomplete="off" name="within" value="" checked="checked">document
-                            </label>
-                            <label class="btn btn-default">
-                                <input type="radio" autocomplete="off" name="within" value="p">paragraph
-                            </label>
-                            <label class="btn btn-default">
-                                <input type="radio" autocomplete="off" name="within" value="s">sentence
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                <div class="tab-pane" id="advanced">
-                    <div id="querybuilder"></div>
-                </div>
-                <div class="tab-pane" id="query">
-                    <h3>Corpus Query Language:</h3>
-                    <textarea id="querybox" class="form-control" name="querybox" rows="7"></textarea>
-                    <button type="button" class="btn btn-sm btn-default" name="parseQuery" id="parseQuery" title="Edit your query in the querybuilder">Copy to query builder</button>                
-                    <span id="parseQueryError" class="text-danger" style="display:none;"><span class="fa fa-danger"></span> The querybuilder could not parse your query</span>
-                </div>
-            </div>
-        </div>
-
-        #set($useFilterTabs = ($metadataGroups.size() > 1)) ##only use tabs when we have more than one group to display
-        <div class="col-xs-12 col-md-6" id="filterContainer">
-            <h3>Filter search by &hellip;</h3>
-            
-        #if($useFilterTabs) 
-            <ul class="nav nav-tabs">
-            #foreach($group in $metadataGroups.entrySet())
-                #set($groupName = $group.key)
-                #set($groupId = $groupName.replace(" ", "").concat("_meta"))
-                <li #if($velocityCount == 1) class="active" #end>
-                    <a href="#$groupId" data-toggle="tab">$groupName</a>
-                </li>
-                #set($firstGroup = "false")
-            #end
-            </ul>
-            <div class="tab-content">
-            #foreach($group in $metadataGroups.entrySet())
-                #set($groupName = $group.key)
-                #set($groupId = $groupName.replace(" ", "").concat("_meta"))
-                <div class="tab-pane #if($velocityCount == 1) active #end" id="$groupId">
-                    #filterfields($group.value)
-                </div>
-                #set($firstGroup = "false")            
-            #end
-            </div>
-        #else ## $useFilterTabs
-            #foreach($group in $metadataGroups.entrySet())
-                <div class="tab-content">
-                #filterfields($group.value)
-                </div>
-            #end
-        #end
-            <div class="row">
-                <div class="col-xs-8"><span id="filteroverview"></span></div>
-            </div>
-        </div>
-
-        <div class="col-xs-12">
-            <hr>
-            <div style="display:inline-block; position: absolute; bottom: 0;">
-                <button type="submit" class="btn btn-primary btn-lg">Search</button>
-                <button type="reset" class="btn btn-default btn-lg" title="Start a new search">Reset</button>
-            </div>
-            
-            <button type="button" class="btn btn-lg btn-default pull-right" data-toggle="modal" data-target="#settingsModal"><span class="glyphicon glyphicon-cog" style="vertical-align:text-top;"></span></button>
-        </div>
-    </div>
-</div>
+<form id="mainForm" class="clearfix"></form>
 
 <div id="settingsModal" class="modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
@@ -240,7 +34,7 @@
             <div class="modal-body">
                 <div class="form-horizontal">
 
-                    <div class="form-group"> <!-- behaves as .row when in .form-horizontal so .row may be omitted -->
+                    <div class="form-group"> ## behaves as .row when in .form-horizontal so .row may be omitted
                         <label for="resultsPerPage" class="col-xs-3">Results per page:</label>
                         <div class="col-xs-9">
                             <select id="resultsPerPage" name="resultsPerPage" class="selectpicker" data-width="auto" data-style="btn-default">
@@ -272,16 +66,16 @@
                             <input id="sampleSeed" name="sampleSeed" placeholder="seed" type="number" class="form-control" >
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="wordsAroundHit" class="col-xs-3">Context size:</label>
                         <div class="col-xs-9">
                             <input id="wordsAroundHit" name="wordsAroundHit" placeholder="context Size" type="number" class="form-control" >
                         </div>
                     </div>
-                    
+
                     <hr>
-                   
+
                     <div class="checkbox-inline"><label for="wide-view"><input type="checkbox" id="wide-view" name="wide-view" data-persistent> Wide View</label></div>
                 </div>
 
@@ -293,15 +87,15 @@
     </div>
 </div>
 
-
+<!--
 <div id="errorDiv" class="col-xs-12 alert alert-danger" style="display:none;">
     <h1>Error</h1>
     <p id="errorMessage"></p>
     <p>(for assistance, please contact <a href='mailto:servicedesk@ivdnt.org'>servicedesk@ivdnt.org</a>)</p>
 </div>
+-->
 
 <div id="results"></div>
-</form>
 
 <ul id="tlyPageGuide" data-tourtitle="Searching the corpus">
     <li class="tlypageguide_left" data-tourtarget="a[href='#simple']">
@@ -318,7 +112,7 @@
             </p>
             <p>
                 Enter the value you want to find tokens for in any of the inputs below.<br>
-                Press enter or click the search button below to execute the search and view the results.<br> 
+                Press enter or click the search button below to execute the search and view the results.<br>
                 As an example: to find all <code>nouns</code> within this corpus (assuming this corpus supports <code>part of speech</code> tags),
                 enter <code>NOU</code> (or the equivalent tag for a noun in this corpus) in the <code>part of speech</code> field.<br>
                 To find all occurrences of the word "ship", enter <code>ship</code> in the <code>lemma</code> field.<br>
@@ -328,7 +122,7 @@
                 <code>Wildcards</code> are special characters that will match any other character. Two kinds of wildcards are supported:<br>
                 The <code>*</code> wildcard will match any string, of any length.<br>
                 The <code>?</code> wildcard will match any single letter or character.<br>
-                As an example: searching for <code>a*b</code> will match <i>all values</i> that start with <code>a</code> and end with <code>b</code>, 
+                As an example: searching for <code>a*b</code> will match <i>all values</i> that start with <code>a</code> and end with <code>b</code>,
                 while searching for <code>a?b</code> will match match <i>only three-letter values</i> starting with <code>a</code> and ending with <code>b</code>.<br>
             </p>
             <p>
@@ -338,15 +132,15 @@
                 enter <code>ADJ NOU</code> (or the equivalent names for this corpus) in the <code>part of speech</code> field.<br>
             </p>
             <p>
-                Values at the same position in different fields are grouped together as a single <code>token</code>, meaning that all values in the first position of each field are grouped to match a single <code>token</code>, 
+                Values at the same position in different fields are grouped together as a single <code>token</code>, meaning that all values in the first position of each field are grouped to match a single <code>token</code>,
                 likewise for the second values in every field, and so on.<br>
-                 As an example: searching for <code>part of speech</code> <code>NOU</code> together with <code>lemma</code> <code>a*</code> 
-                will find all <code>nouns</code> starting with the letter <code>a</code> as you would expect, while searching for <code>pos</code> <code>ADJ NOU</code> together with <code>lemma</code> <code>a* b*</code> 
+                 As an example: searching for <code>part of speech</code> <code>NOU</code> together with <code>lemma</code> <code>a*</code>
+                will find all <code>nouns</code> starting with the letter <code>a</code> as you would expect, while searching for <code>pos</code> <code>ADJ NOU</code> together with <code>lemma</code> <code>a* b*</code>
                 will find all <code>adjectives</code> starting with the letter <code>a</code>, <i>followed by</i> a <code>noun</code> starting with the letter <code>b</code>.<br>
-            </p>  
+            </p>
         </div>
     </li>
-    
+
      <li class="tlypageguide_left" data-tourtarget=".propertyfield .upload-button">
         <div>
             Click here to upload a list of values to search for.<br>
@@ -355,7 +149,7 @@
             or simply delete all text in the field.
         </div>
     </li>
-    
+
     <li class="tlypageguide_top" data-tourtarget="a[href='#advanced']">
         <div>
             <p>
@@ -367,12 +161,12 @@
                 In addition to the simple search, it's also possible to define specific combinations of attributes, or specify lists of possible attributes, and more.
             </p>
             <p>
-                When multiple tokens are used, they are matched in order from left to right.<br>  
+                When multiple tokens are used, they are matched in order from left to right.<br>
                 Any time a query is created in the querybuilder, it's also copied to the <code>CQL editor</code>, where you can further edit the query by hand.
             </p>
         </div>
     </li>
-    
+
     <li class="tlypageguide_top" data-tourtarget=".bl-token .panel-heading">
         <div>
             <p>
@@ -380,7 +174,7 @@
             </p>
             <p>
                 A token in the querybuilder is made up two parts:<br>
-                The set of <code>attributes</code> a token in the corpus must have to be matched by the query.<br> 
+                The set of <code>attributes</code> a token in the corpus must have to be matched by the query.<br>
                 Create attributes by clicking the + button within this token. Then enter a value that the attribute must have for the token to be found.<br>
                 Contextual <code>properties</code>, such as whether the <code>token</code> occurs at the start, or the end of a sentence.
             </p>
@@ -394,13 +188,13 @@
             </p>
         </div>
     </li>
-    
+
     <li class="tlypageguide_top" data-tourtarget=".bl-token-create">
         <div>
             Create additional tokens by clicking this button.
         </div>
     </li>
-    
+
     <li class="tlypageguide_right" data-tourtarget=".bl-token-attribute">
         <div>
             <p>
@@ -415,40 +209,40 @@
             <p>
                 Using the + buttons, new attributes can be added. Two options exist: <code>AND</code> and <code>OR</code>.<br>
                 The <code>AND</code> option creates a new attribute that <i>also</i> must exist on a token for that token to be matched.<br>
-                As an example: the attribute <code>part of speech</code> with value <code>NOU</code> is already defined, so all tokens that are nouns will be matched.<br> 
+                As an example: the attribute <code>part of speech</code> with value <code>NOU</code> is already defined, so all tokens that are nouns will be matched.<br>
                 Creating a new attribute using <code>AND</code> will change that query so that now a token must be a noun, <i>in addition</i> to being/having whatever new attribute is created.<br>
                 The <code>OR</code> largely performs the same role, with the change that a token will now be matched whenever it has the original attribute <i>or</i> the new attribute.<br>
                 As an example: you have an attribute <code>lemma = "bee"</code>, and you select <code>AND</code>.<br>
                 Now you have <code>lemma = "bee"</code> AND <code>some other attribute</code>, and both of these must be true for a token to be found.<br>
                 If you had selected <code>OR</code> it would find all tokens with either <code>lemma = "bee"</code> or that have your new attribute<br>
             </p>
-            <p>            
+            <p>
                 It's also possible to upload a list of values, to do so, click the upload button that appears when you hover the mouse over the text input for this attribute and select a text file.
                 Tokens will then be matched for any of the values from the file.<br>
                 Uploaded files must be be plain text files (.txt), with each value on its own line.<br>
-                After uploading a file, the text can be edited by clicking the yellow button that has appeared in place of the text field. Editing the text is temporary and will not modify your original file.<br> 
+                After uploading a file, the text can be edited by clicking the yellow button that has appeared in place of the text field. Editing the text is temporary and will not modify your original file.<br>
                 To remove an uploaded file and go back to typing a value, click the upload button a second time, then press cancel instead of selecting a file.
             </p>
         </div>
     </li>
-    
+
 
     <li class="tlypageguide_top" data-tourtarget="a[href='#query']">
         <div>
             <p>
-                The <code>CQL editor</code> allows you to type your own CQL query, or edit a query further after creating it in the <code>querybuilder</code>. 
+                The <code>CQL editor</code> allows you to type your own CQL query, or edit a query further after creating it in the <code>querybuilder</code>.
             </p>
             <p>
                 Queries generated by the <code>querybuilder</code> will be pasted here automatically. Note that this will overwrite any queries you type here yourself!<br>
-                In some cases, when the query is relatively simple, it can be also be imported into the querybuilder using the <code>copy to query builder</code> button below. 
-                A message will be displayed next to the button if the query couldn't be parsed.  
+                In some cases, when the query is relatively simple, it can be also be imported into the querybuilder using the <code>copy to query builder</code> button below.
+                A message will be displayed next to the button if the query couldn't be parsed.
             </p>
             <p>
                 For more information on how to write <code>CQL</code>, <a style="text-decoration:underline;color:#337ab7;" target="_blank" href="https://github.com/INL/BlackLab/blob/d20eb71b25137facf10f7d2681242de34ab1fa54/core/src/site/markdown/corpus-query-language.md">click here</a>.
             </p>
         </div>
     </li>
-    
+
     <li class="tlypageguide_top" data-tourtarget="#filterContainer">
         <div>
             <p>
@@ -463,9 +257,9 @@
             <p>
                 Some values like dates and numbers support entering a <code>range</code>.<br>
                 Ranges are <code>inclusive</code>, meaning that for a range of <code>10 to 20</code>, documents for which the value is exactly 10 or 20 will also be included.
-            </p>  
+            </p>
             <p>
-                Some of the most common values will for each field be autocompleted as you are entering a value. Clicking on an autocompleted value will paste that value in the field.<br>   
+                Some of the most common values will for each field be autocompleted as you are entering a value. Clicking on an autocompleted value will paste that value in the field.<br>
                 For fields where the total number of different values is relatively small, a dropdown will be shown instead, allowing you to pick the exact set of documents to search.<br>
             </p>
             <p>
@@ -475,21 +269,21 @@
             </p>
         </div>
     </li>
-    
+
     <li class="tlypageguide_top" data-tourtarget="#resultTabs">
         <div>
-            Results can be viewed in two ways: as individual <code>hits</code> (groups of one or more <code>tokens</code> that matched the query), 
+            Results can be viewed in two ways: as individual <code>hits</code> (groups of one or more <code>tokens</code> that matched the query),
             or as the <code>documents</code> in which those hits exist.<br>
             Hits are only available when the query matches at least one attribute.
         </div>
     </li>
-    
+
     <li class="tlypageguide_top" data-tourtarget=".resultcontainer thead">
         <div>
             Click on any of the column headings to sort the <code>hits</code> on values within the column, clicking again inverts the sorting.
         </div>
     </li>
-    
+
     <li class="tlypageguide_top" data-tourtarget=".doctitle a">
         <div>
             <p>
@@ -498,17 +292,17 @@
             </p>
             <p>
                 Click the title of this document to open the document in a new window. Hits from the current query will be highlighted in the opened document.<br>
-                This functionality is only available when the corpus has not disabled the viewing of documents.<br> 
+                This functionality is only available when the corpus has not disabled the viewing of documents.<br>
             </p>
         </div>
     </li>
-    
+
     <li class="tlypageguide_top" data-tourtarget=".resultcontainer .concordance">
         <div>
             Click a hit to show a part of the document surrounding the hit. Click again to close.
         </div>
     </li>
-    
+
     <li class="tlypageguide_top" data-tourtarget=".resultcontrols .bootstrap-select">
         <div>
             <p>
@@ -521,24 +315,24 @@
             </p>
         </div>
     </li>
-    
+
     <li class="tlypageguide_top" data-tourtarget=".group-size-indicator">
         <div>
             Click a <code>group</code> to show or hide the <code>hits</code> within that group.
         </div>
     </li>
-    
+
     <li class="tlypageguide_top" data-tourtarget=".viewconcordances">
         <div>
             Click here to go back to the normal <code>hits</code> view to see more detailed information for the hits in this group.<br>
             A small indicator will appear to let you know that you're looking at hits from a specific group only.
         </div>
     </li>
-    
+
     <li class="tlypageguide_top" data-tourtarget=".documentrow">
         <div>
             Information about a <code>document</code>.<br>
-            Click the document's title or the <code>view document info</code> button to open this document in a new window.<br> 
+            Click the document's title or the <code>view document info</code> button to open this document in a new window.<br>
             This functionality is only available when the corpus has not disabled the viewing of documents.<br>
         </div>
     </li>

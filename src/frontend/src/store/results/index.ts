@@ -10,7 +10,7 @@ export type ModuleRootState = {
 
 export type ViewId = keyof ModuleRootState;
 
-export const initialState: ModuleRootState = {
+const initialState: ModuleRootState = {
 	docs: Object.assign({}, SettingsModule.initialState),
 	hits: Object.assign({}, SettingsModule.initialState), // Make a copy so we don't alias them
 };
@@ -42,4 +42,4 @@ export const actions = {
 };
 
 /** We need to call some function from the module before creating the root store or this module won't be evaluated (e.g. none of this code will run) */
-export default () => {/**/};
+export const init = () => {/**/};

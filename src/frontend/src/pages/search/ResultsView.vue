@@ -5,6 +5,7 @@
 		<Totals v-if="results"
 			:initialResults="results"
 			:type="type"
+			:indexId="indexId"
 		/>
 
 		<div v-show="results || error" class="resultcontrols">
@@ -22,6 +23,8 @@
 							data-style="btn-default btn-sm"
 
 							:options="optGroups"
+							:escapeLabels="false"
+
 							:title="`Group ${type} by...`"
 						/>
 
@@ -43,7 +46,7 @@
 				<div class="buttons">
 					<button type="button" class="btn btn-danger btn-sm"  v-if="isDocs && resultsHaveHits"  @click="showDocumentHits = !showDocumentHits">{{showDocumentHits ? 'Hide Hits' : 'Show Hits'}}</button>
 					<button type="button" class="btn btn-danger btn-sm"  v-if="isHits" @click="showTitles = !showTitles">{{showTitles ? 'Hide' : 'Show'}} Titles</button>
-					<button type="button" class="btn btn-default btn-sm" v-if="results" :disabled="downloadInProgress || !resultsHaveData" @click="downloadCsv"><template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner"></span></template>Export CSV</button>
+					<button type="button" class="btn btn-default btn-sm" v-if="results" :disabled="downloadInProgress || !resultsHaveData" @click="downloadCsv" :title="downloadInProgress ? 'Downloading...' : undefined"><template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner"></span></template>Export CSV</button>
 				</div>
 			</div>
 
@@ -166,6 +169,7 @@ export default Vue.extend({
 		markDirty() {
 			this.isDirty = true;
 			if (this.cancel) {
+				console.log('cancelling search request');
 				this.cancel();
 				this.cancel = null;
 				this.request = null;
@@ -176,6 +180,7 @@ export default Vue.extend({
 			debugLog('this is when the search should be refreshed');
 
 			if (this.cancel) {
+				console.log('cancelling search request');
 				this.cancel();
 				this.request = null;
 				this.cancel = null;
@@ -190,7 +195,7 @@ export default Vue.extend({
 			const apiCall = this.type === 'hits' ? Api.blacklab.getHits : Api.blacklab.getDocs;
 			debugLog('starting search', this.type, params);
 
-			const r = apiCall(corpus.getState().indexName, params);
+			const r = apiCall(corpus.getState().id, params);
 			this.request = r.request;
 			this.cancel = r.cancel;
 
@@ -218,29 +223,18 @@ export default Vue.extend({
 				return;
 			}
 
-			// TODO this is wrong, results could be stale (and with that, the searchparam too)
-			const params = Object.assign({}, this.results.summary.searchParam, { // be sure to make a copy, as we may need to use the summary params for other purposes
-				number: undefined,
-				first: undefined,
-				outputformat: 'csv'
-			})
-
-			const url = new URI(bls.getBlsUrl()).segment(this.type).addSearch(params).toString();
-			debugLog('CSV download url', url, params);
-
+			debugLog('starting csv download', this.type, params);
 			this.downloadInProgress = true;
-			$.ajax(url, {
-				accepts: {json: 'application/json'},
-				cache: false,
-				data: 'text',
-				success: data => {
-					// NOTE: Excel <=2010 seems to ignore the BOM altogether, see https://stackoverflow.com/a/19516038
-					const b = new Blob([data], { type: 'text/plain;charset=utf-8' });
-					saveAs(b, 'data.csv'); // FileSaver.js
-				},
-				complete: () => {
-					this.downloadInProgress = false;
-				}
+			const params = this.results.summary.searchParam;
+			const apiCall = this.type === 'hits' ? Api.blacklab.getHitsCsv : Api.blacklab.getDocsCsv;
+
+			apiCall(this.indexId, this.results.summary.searchParam).request
+			.then(
+				blob => saveAs(blob, 'data.csv'),
+				error => debugLog('Error downloading csv file', error)
+			)
+			.finally(() => {
+				this.downloadInProgress = false;
 			});
 		}
 	},
@@ -298,8 +292,8 @@ export default Vue.extend({
 			metadataGroups.forEach(group => groups.push({
 				label: group.name,
 				options: group.fields.map(field => ({
-					label: (field.displayName || field.fieldName).replace(group.name, ''),
-					value: `field:${field.fieldName}`
+					label: (field.displayName || field.id).replace(group.name, ''),
+					value: `field:${field.id}`
 				}))
 			}))
 			return groups;
@@ -341,6 +335,7 @@ export default Vue.extend({
 
 
 		// simple view variables
+		indexId() { return corpus.getState().id; },
 		resultsHaveData() {
 			if (BLTypes.isDocGroups(this.results)) return this.results.docGroups.length > 0;
 			if (BLTypes.isHitGroups(this.results)) return this.results.hitGroups.length > 0;

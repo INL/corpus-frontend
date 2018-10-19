@@ -7,15 +7,6 @@ const CircularDependencyPlugin = require('circular-dependency-plugin');
 module.exports = {
 	entry: {
 		// Output 3 files, one for each main page - important!: also include the polyfills in the output bundle
-
-			// "include": [
-			// 	// [October 2018]: These are shipped in most browsers, but are still technically stage-3 features (not formally accepted into standard yet)
-			// 	// Which means they aren't automatically polyfilled by useBuiltIns (because technically they aren't built in yet...)
-			// 	// So we need to manually enable them
-			// 	// See https://babeljs.io/docs/en/v7-migration#remove-proposal-polyfills-in-babel-polyfill-https-githubcom-babel-babel-issues-8416
-			// 	"core-js/fn/array/flatMap",
-			// 	"core-js/fn/array/flat"
-			// ],
 		article: ['./src/utils/enable-polyfills.ts', './src/article.ts'],
 		corpora: ['./src/utils/enable-polyfills.ts', './src/corpora.ts'],
 		search: ['./src/utils/enable-polyfills.ts', './src/search.ts']

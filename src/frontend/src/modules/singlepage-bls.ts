@@ -10,8 +10,6 @@ import * as BLTypes from '@/types/blacklabtypes';
  * Also handles getting data such as longer snippets, concordances, etc.
  */
 
-declare const BLS_URL: string;
-
 // TODO update documentation
 /**
  * Converts the active filters into a parameter string blacklab-server can understand.
@@ -42,9 +40,9 @@ export function getFilterString(params: RootState['form']['submittedParameters']
 			filterStrings.push(' AND ');
 		}
 
-		if (filter.filterType === 'range') {
+		if (filter.type === 'range') {
 			filterStrings.push(filter.id, ':', '[', filter.values[0], ' TO ', filter.values[1], ']');
-		} else if (filter.filterType === 'select') {
+		} else if (filter.type === 'select') {
 			// Surround each individual value with quotes, and surround the total with brackets
 			filterStrings.push(filter.id, ':', '("', filter.values.join('" "'), '")');
 		} else {
@@ -79,57 +77,6 @@ export function getFilterString(params: RootState['form']['submittedParameters']
 	}
 
 	return filterStrings.join('') || undefined;
-}
-
-let inflightRequest: null|ReturnType<typeof $.ajax> = null;
-
-// TODO promisify
-/**
- * Perform a search.
- *
- * @param operation whether to request hits or documents
- * @param param - Parameters, these must be in a valid configuration.
- * @param successFunc
- * @param errorFunc
- */
-export function search(operation: 'hits'|'docs', param: BLTypes.BlacklabParameters, successFunc?: (data: BLTypes.BLSearchResult) => void, errorFunc?: JQuery.Ajax.ErrorCallback<any>) {
-	debugLog('starting search', operation, param);
-
-	inflightRequest = $.ajax({
-		url: new URI(BLS_URL).segment(operation).toString(),
-		method: 'POST',
-		data: param,
-		dataType: 'json',
-		cache: false,
-		success (data) {
-			debugLog('search results', data);
-
-			if (typeof successFunc === 'function') {
-				successFunc(data);
-			}
-		},
-		error () {
-			debugLog('Request failed: ', arguments);
-
-			if (typeof errorFunc === 'function') {
-				errorFunc.apply(undefined, arguments);
-			}
-		},
-		complete () {
-			inflightRequest = null;
-		}
-	});
-}
-
-export function getBlsUrl() {
-	return BLS_URL;
-}
-
-export function cancelSearch() {
-	if (inflightRequest != null) {
-		inflightRequest.abort();
-		inflightRequest = null;
-	}
 }
 
 export function getBlsParamFromState(): BLTypes.BlacklabParameters {
@@ -181,8 +128,8 @@ export function getQuerySummary(params: RootState['form']['submittedParameters']
 	}
 
 	const queryString = params.pattern;
-	const metadataString = params.filters.map(({id, filterType, values}) =>
-		`${id} = [${filterType==='range'?`${values[0]} to ${values[1]}`:values.join(', ')}]`).join(', ');
+	const metadataString = params.filters.map(({id, type, values}) =>
+		`${id} = [${type==='range'?`${values[0]} to ${values[1]}`:values.join(', ')}]`).join(', ');
 
 	let ret = '';
 	if (queryString) {

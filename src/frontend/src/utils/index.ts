@@ -17,7 +17,7 @@ export function makeRegexWildcard(original: string) {
 	.replace(/\\\./g, '_ESC_PERIOD_') // escape \.
 	.replace(/\.\*/g, '*') // restore *
 	.replace(/\./g, '?') // restore ?
-	.replace(/_ESC_PERIOD_/g, '.') // unescape \. to .
+	.replace(/_ESC_PERIOD_/g, '.'); // unescape \. to .
 }
 
 export function NaNToNull(n: number) { return isNaN(n) ? null : n; }

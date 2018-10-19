@@ -362,6 +362,7 @@ public class MainServlet extends HttpServlet {
                 // We might not need the xml data to begin with.
                 params.clear();
                 params.put("outputformat", new String[] { "json" });
+                params.put("listvalues", new String[] { selectProperties }); // useful for frontend
                 if (userId != null)
                     params.put("userid", new String[] { userId });
                 String jsonResult = handler.makeRequest(params);

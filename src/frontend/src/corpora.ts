@@ -13,7 +13,9 @@ import CodeMirror from 'codemirror';
 import $ from 'jquery';
 import * as Mustache from 'mustache';
 
-import * as BLTypes from './types/blacklabtypes';
+import * as BLTypes from '@/types/blacklabtypes';
+import * as AppTypes from '@/types/apptypes';
+import { normalizeIndexOld, normalizeFormatOld } from './utils/blacklabutils';
 
 const enum DataEvent {
 	SERVER_REFRESH = 'server/refresh',
@@ -24,9 +26,9 @@ const enum DataEvent {
 
 interface DataEventPayloadMap {
 	[DataEvent.SERVER_REFRESH]: BLTypes.BLServer;
-	[DataEvent.FORMATS_REFRESH]: BLTypes.NormalizedFormat[];
-	[DataEvent.CORPORA_REFRESH]: BLTypes.NormalizedIndex[];
-	[DataEvent.CORPUS_REFRESH]: BLTypes.NormalizedIndex;
+	[DataEvent.FORMATS_REFRESH]: AppTypes.NormalizedFormatOld[];
+	[DataEvent.CORPORA_REFRESH]: AppTypes.NormalizedIndexOld[];
+	[DataEvent.CORPUS_REFRESH]: AppTypes.NormalizedIndexOld;
 }
 
 // (Private) corpora management page.
@@ -38,9 +40,9 @@ interface DataEventPayloadMap {
 // blacklab-server url
 let blsUrl: string;
 // Contains the full list of available corpora
-let corpora: BLTypes.NormalizedIndex[] = [];
+let corpora: AppTypes.NormalizedIndexOld[] = [];
 // Contains the full list of available formats
-let formats: BLTypes.NormalizedFormat[] = [];
+let formats: AppTypes.NormalizedFormatOld[] = [];
 // Serverinfo, contains user information etc
 let serverInfo: BLTypes.BLServer;
 
@@ -396,7 +398,7 @@ function refreshIndexStatusWhileIndexing(indexId: string) {
 	let timeoutHandle: number;
 
 	function success(index: BLTypes.BLIndex) {
-		triggers.updateCorpus(normalizeIndex(index, indexId));
+		triggers.updateCorpus(normalizeIndexOld(indexId, index));
 
 		if (index.status !== 'indexing') {
 			clearTimeout(timeoutHandle);
@@ -423,46 +425,6 @@ function refreshIndexStatusWhileIndexing(indexId: string) {
 	timeoutHandle = setTimeout(run, 2000);
 }
 
-/**
- * Add some calculated properties to the index object (such as if it's a private index) and normalize some optional data to empty strings if missing.
- *
- * @param index the index json object as received from blacklab-server
- * @param indexId full id of the index, including username portion (if applicable)
- */
-
-function normalizeIndex(index: BLTypes.BLIndex, id: string): BLTypes.NormalizedIndex {
-	return {
-		...index,
-
-		id,
-		owner: id.substring(0, id.indexOf(':')) || null,
-		shortId: id.substr(id.indexOf(':') + 1),
-
-		displayName: index.displayName || id.substr(id.indexOf(':') + 1),
-		documentFormat: index.documentFormat || null,
-		indexProgress: index.indexProgress || null,
-		tokenCount: index.tokenCount == null ? null : index.tokenCount,
-	};
-}
-
-/**
- * @param format as received from the server
- * @param formatId - full id of the format, including userName portion (if applicable)
- */
-function normalizeFormat(format: BLTypes.BLFormat, id: string): BLTypes.NormalizedFormat {
-	return {
-		...format,
-
-		id,
-		owner: id.substring(0, id.indexOf(':')) || null,
-		shortId: id.substr(id.indexOf(':') + 1),
-
-		displayName: format.displayName || id.substr(id.indexOf(':') + 1),
-		helpUrl: format.helpUrl || null,
-		description: format.description || null,
-	};
-}
-
 // Request the list of available corpora and
 // update the corpora page with it.
 function refreshCorporaList() {
@@ -473,7 +435,7 @@ function refreshCorporaList() {
 		accepts: {json: 'application/json'},
 		dataType: 'json',
 		success (data: BLTypes.BLServer) {
-			const indices = $.map(data.indices, normalizeIndex);
+			const indices = Object.entries(data.indices).map(([id, index]) => normalizeIndexOld(id, index));
 			triggers.updateServer(data);
 			triggers.updateCorpora(indices);
 			indices
@@ -497,10 +459,9 @@ function refreshFormatList() {
 				user: data.user
 			}));
 			triggers.updateFormats(
-				$.map(data.supportedInputFormats, normalizeFormat)
-					.sort(function(a, b) {
-						return a.displayName.localeCompare(b.displayName); // sort alphabetically by id
-					})
+				Object.entries(data.supportedInputFormats)
+				.map(([id, format]) => normalizeFormatOld(id, format))
+				.sort((a, b) => a.displayName.localeCompare(b.displayName)) // sort alphabetically.
 			);
 		},
 		error: showXHRError('Could not retrieve formats'),
@@ -631,7 +592,7 @@ createHandler({selector: '#uploadProgress', event: DataEvent.CORPORA_REFRESH, ha
 
 // What corpus are we uploading data to?
 // TODO not very tidy
-let uploadToCorpus: BLTypes.NormalizedIndex;
+let uploadToCorpus: AppTypes.NormalizedIndexOld;
 
 function initFileUpload() {
 

@@ -11,7 +11,6 @@ import { getBlsParamFromState, search } from '@/modules/singlepage-bls';
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
 
-declare const BLS_URL: string;
 
 // TODO for some reason the getters in this component aren't reactive...
 // @Component({})
@@ -120,7 +119,6 @@ declare const BLS_URL: string;
 
 const refreshRate = 1_000;
 const pauseAfterResults = 1_000_000; // TODO increment for next pause, reset on changing parameters
-const indexId = BLS_URL.substring(BLS_URL.lastIndexOf('/', BLS_URL.length-2)+1, BLS_URL.length-1); //hmm...
 
 export default Vue.extend({
 	props: {
@@ -130,6 +128,10 @@ export default Vue.extend({
 		},
 		type: {
 			type: String as () => 'hits'|'docs',
+			required: true
+		},
+		indexId: {
+			type: String as () => string,
 			required: true
 		}
 	},
@@ -180,7 +182,7 @@ export default Vue.extend({
 
 			if (this.cancel == null && this.nextRequest == null) {
 				const apiCall = (this.type === 'docs') ? Api.blacklab.getDocs : Api.blacklab.getHits;
-				const {request, cancel} = apiCall(indexId, {
+				const {request, cancel} = apiCall(this.indexId, {
 					...this.results.summary.searchParam,
 					number: 0
 				});

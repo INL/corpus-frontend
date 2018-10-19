@@ -143,6 +143,10 @@ export interface BLAnnotation {
 	offsetsAlternative: string;
 	sensitivity: 'SENSITIVE_AND_INSENSITIVE'|'SENSITIVE'|'INSENSITIVE';
 	uiType: string|'select'|'combobox'|'text';
+	/** Only when the indexMetadata was requested with ?listvalues=annotationId,annotationId etc. */
+	values?: string[];
+	/** Only when values present. */
+	valueListComplete?: boolean;
 }
 
 /** A set of annotations that form one data set on a token, usually there is only one of these in an index, called 'content' */
@@ -178,22 +182,24 @@ export interface BLMetadataField {
 		[key: string]: string;
 	};
 	isAnnotatedField: boolean;
-	type: string; // TODO enum
+	type: 'TOKENIZED'|'UNTOKENIZED'|'NUMERIC';
 	uiType: string|'select'|'range'|'combobox'|'text';
-	unknownCondition: string;
+	/** Internal blacklab property: when the unknownValue is used as the value for a document where the metadata for this field was unknown when indexing */
+	unknownCondition: 'NEVER'|'MISSING'|'EMPTY'|'MISSING_OR_EMPTY';
+	/** Internal blacklab property: what default value is substituted during indexing for document that are missing this metadata (depending on unknownCondition) */
 	unknownValue: string;
 	/** Are all values contained within the fieldValues */
 	valueListComplete: boolean;
 }
 
-// interface BLIndexMetadataInternal { complexFields: { [key: string]: BLAnnotatedField1; }; }
-
-// TODO also allow older version, annotatedFields are complexFields and some other change -- see corpus-frontend/CorpusConfig.java
 /** Contains information about the internal structure of the index - which fields exist for tokens, which metadata fields exist for documents, etc */
-interface BLIndexMetadataInternal {
-	// annotatedFields: { [key: string]: BLAnnotatedField; };
+export interface BLIndexMetadataInternal {
 	annotationGroups: {
-		// TODO
+		[annotatedFieldId: string]: Array<{
+			name: string;
+			/** Referring to BLAnnotatedField in the annotatedFields[annotatedFieldId] */
+			annotations: string[];
+		}>
 	};
 	contentViewable: boolean;
 	/** Description of the main index */
@@ -236,8 +242,8 @@ interface BLIndexMetadataInternal {
 		timeModified: string;
 	};
 }
-type BLIndexMetadataV1 = BLIndexMetadataInternal&{complexFields: {[key: string]: BLAnnotatedFieldV1}; };
-type BLIndexMetadataV2 = BLIndexMetadataInternal&{annotatedFields: {[key: string]: BLAnnotatedFieldV2}; };
+type BLIndexMetadataV1 = BLIndexMetadataInternal&{complexFields: {[id: string]: BLAnnotatedFieldV1}; };
+type BLIndexMetadataV2 = BLIndexMetadataInternal&{annotatedFields: {[id: string]: BLAnnotatedFieldV2}; };
 export type BLIndexMetadata = BLIndexMetadataV1|BLIndexMetadataV2;
 export function isIndexMetadataV1(v: BLIndexMetadata): v is BLIndexMetadataV1 { return (v as any).complexFields != null; }
 
@@ -277,9 +283,10 @@ export type BLSearchSummary = {
 	/** These fields have a special meaning in the BLDocResult.docInfo */
 	docFields: {
 		// TODO - might be optional or might contain extra fields?
-		titleField: string;
 		authorField: string;
 		dateField: string;
+		pidField: string;
+		titleField: string;
 	};
 	requestedWindowSize: number;
 	searchParam: BlacklabParameters;
@@ -361,44 +368,3 @@ export const isDocResults = (d: any): d is BLDocResults => d && d.docs;
 export const isHitGroups = (d: any): d is BLHitGroupResults => d && d.hitGroups;
 export const isDocGroups = (d: any): d is BLDocGroupResults => d && d.docGroups;
 export const isGroups = (d: any): d is BLHitGroupResults|BLDocGroupResults => isHitGroups(d) || isDocGroups(d);
-
-// -----------------------
-// Blacklab derived types
-// -----------------------
-
-// Helper - get all props in A not in B
-type Subtract<A, B> = Pick<A, Exclude<keyof A, keyof B>>;
-
-interface NormalizedIndex_ { // tslint:disable-line
-	// new props
-	/** ID in the form username:indexname */
-	id: string;
-	/** username extracted */
-	owner: string|null;
-	/** indexname extracted */
-	shortId: string;
-
-	// original props, with normalized values
-	documentFormat: string|null;
-	indexProgress: BLIndexProgress|null;
-	tokenCount: number|null;
-}
-export type NormalizedIndex = NormalizedIndex_ & Subtract<BLIndex, NormalizedIndex_>;
-
-interface NormalizedFormat_ { // tslint:disable-line
-	// new props
-	id: string;
-	/** Username extracted */
-	owner: string|null;
-	/** internal name extracted */
-	shortId: string;
-
-	// original props, with normalized values
-	/** Null if would be empty originally */
-	helpUrl: string|null;
-	/** Null if would be empty originally */
-	description: string|null;
-	/** set to shortId if originally empty */
-	displayName: string;
-}
-export type NormalizedFormat = NormalizedFormat_ & Subtract<BLFormat, NormalizedFormat_>;

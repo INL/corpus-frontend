@@ -1,26 +1,30 @@
 import 'bootstrap';
 import 'bootstrap-select';
 
-import '@/utils/features/autocomplete';
-import '@/utils/features/tutorial';
-
 import $ from 'jquery';
 import Vue from 'vue';
 
-import {store} from '@/store';
-
-import '@/pages/search/vuexbridge';
+import '@/utils/features/autocomplete';
+import '@/utils/features/tutorial';
 
 import {QueryBuilder} from '@/modules/cql_querybuilder';
+import {store, init as initStore, UrlPageState} from '@/store';
+import {debugLog} from '@/utils/debug';
+import {normalizeIndex} from '@/utils/blacklabutils';
+
+import connectVuexToPage from '@/pages/search/vuexbridge';
 
 import ResultComponent from '@/pages/search/Results.vue';
-import FilterOverviewComponent from '@/pages/search/FilterOverview.vue';
+import SearchFormComponent from '@/pages/search/form/SearchForm.vue';
 
+import * as AppTypes from '@/types/apptypes';
 import * as BLTypes from '@/types/blacklabtypes';
 
-declare var SINGLEPAGE: {INDEX: BLTypes.BLIndexMetadata};
+declare const SINGLEPAGE: {INDEX: BLTypes.BLIndexMetadata};
 
-$(document).ready(function() {
+const connectJqueryToPage = () => {
+	debugLog('begin initializing querybuilder and stuff');
+
 	if (window.localStorage) {
 		$('input[data-persistent][id != ""]').each(function(i, elem) {
 			const $this = $(elem);
@@ -87,10 +91,17 @@ $(document).ready(function() {
 			$('#querybox').val(pattern);
 		}
 	});
+};
 
-	// --------------
-	// Initialize vue
-	// --------------
+// --------------
+// Initialize vue
+// --------------
+
+$(document).ready(() => {
+	const normalizedIndex: AppTypes.NormalizedIndex = normalizeIndex(SINGLEPAGE.INDEX);
+	const stateFromUrl = new UrlPageState().get();
+
+	initStore(normalizedIndex, stateFromUrl);
 
 	Vue.config.productionTip = false;
 	new Vue({
@@ -100,6 +111,11 @@ $(document).ready(function() {
 
 	new Vue({
 		store,
-		render: h => h(FilterOverviewComponent)
-	}).$mount(document.querySelector('#filteroverview')!);
+		render: h => h(SearchFormComponent)
+	}).$mount(document.querySelector('#mainForm')!);
+});
+
+$(document).on('form-mounted', () => {
+	connectJqueryToPage();
+	connectVuexToPage();
 });

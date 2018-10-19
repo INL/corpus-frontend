@@ -2,7 +2,12 @@
 <select v-model="currentValue" class="selectpicker" ref="select">
 	<template v-for="(optOrGroup, index) in options">
 		<optgroup v-if="optOrGroup.options" :key="index" :label="optOrGroup.label">
-			<option v-for="option in optOrGroup.options" :key="option.value" :value="option.value" :data-content="option.label" :selected="isSelected(option.value)"/>
+			<option v-for="option in optOrGroup.options"
+				:key="option.value"
+				:value="option.value"
+				:data-content="(escapeLabels || !option.label) ? undefined : option.label"
+				:selected="isSelected(option.value)"
+			><template v-if="escapeLabels || !option.label">{{option.label || option.value}}</template></option>
 		</optgroup>
 		<option v-else :key="optOrGroup.value" :value="optOrGroup.value" :data-content="optOrGroup.label" :selected="isSelected(optOrGroup.value)"/>
 	</template>
@@ -21,9 +26,9 @@ export type OptGroup = {
 };
 
 export type Option = {
-	/** May contain html */
-	label: string;
 	value: string;
+	/** May contain html if escapeLabels is false, in case label is undefined, value used a label, but is html-escaped. */
+	label?: string;
 }
 
 export default Vue.extend({
@@ -38,6 +43,10 @@ export default Vue.extend({
 				return value == null || Array.isArray(value) && value.every(v => typeof v === 'string') || typeof value === 'string'
 			},
 		},
+		escapeLabels: {
+			default: true,
+			type: Boolean as () => boolean
+		}
 	},
 	data: () => ({
 		currentValue: null as null|string|string[], // synced with select

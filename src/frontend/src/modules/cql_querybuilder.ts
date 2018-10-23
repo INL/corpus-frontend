@@ -123,8 +123,8 @@ const templates = {
 
 			body_tab_header:
 				'<ul class="nav nav-tabs">' +
-					'<li class="active"><a data-toggle="tab" href="#{{currentId}}_tab_attributes">attributes</a></li>' +
-					'<li><a data-toggle="tab" href="#{{currentId}}_tab_properties">properties</a></li>' +
+					'<li class="active"><a data-toggle="tab" href="#{{currentId}}_tab_attributes">search</a></li>' +
+					'<li><a data-toggle="tab" href="#{{currentId}}_tab_properties">options</a></li>' +
 				'</ul>',
 			body_tab_container:
 				'<div class="tab-content">' +

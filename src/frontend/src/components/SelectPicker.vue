@@ -76,7 +76,7 @@ export default Vue.extend({
 	},
 	created() {
 		if (this.$attrs.multiple != null) {
-			this.currentValue = [];
+			this.currentValue = Array.isArray(this.value) ? this.value : [];
 		}
 	},
 	mounted() {

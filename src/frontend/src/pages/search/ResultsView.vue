@@ -114,7 +114,6 @@ import Totals from '@/components/ResultTotals.vue';
 import {toPageUrl} from '@/utils';
 import {debugLog} from '@/utils/debug';
 
-// TODO verify we don't store non-serializable elements in the store
 // TODO move to url management module, once vuexbridge is more factored out
 /** Callback from when a search is executed (not neccesarily by the user, could also just be pagination and the like) */
 function onSearchUpdated(operation: string, searchParams: BLTypes.BlacklabParameters) {

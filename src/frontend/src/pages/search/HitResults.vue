@@ -62,29 +62,31 @@
 					</tr>
 					<tr v-if="citations[index]" v-show="citations[index].open" :key="index + '-citation'" :class="['concordance-details', {'open': citations[index].open}]">
 						<td :colspan="numColumns">
-							<div class="well-light">
-								<p :class="{'text-danger': citations[index].error}">
-									{{citations[index].citation[leftIndex]}}<strong>{{citations[index].citation[1]}}</strong>{{citations[index].citation[rightIndex]}}
-								</p>
-								<div>
-									<table>
-										<thead>
-											<tr>
-												<th v-for="(value, key) in rowData.props" v-if="key !== 'punct'" :key="key">
-													{{key}}
-												</th>
-											</tr>
-										</thead>
-										<tbody>
-											<tr v-for="i in rowData.props.punct.length" :key="i">
-												<td v-for="(value, key) in rowData.props" v-if="key !== 'punct'" :key="key">
-													{{value[i-1]}}
-												</td>
-											</tr>
-										</tbody>
-									</table>
-								</div>
-							</div>
+							<p v-if="citations[index].error" class="text-danger">
+								{{citations[index].error}}
+							</p>
+							<p v-else-if="citations[index].citation">
+								{{citations[index].citation[leftIndex]}}<strong>{{citations[index].citation[1]}}</strong>{{citations[index].citation[rightIndex]}}
+							</p>
+							<p v-else>
+								Loading...
+							</p>
+							<table>
+								<thead>
+									<tr>
+										<th v-for="(value, key) in rowData.props" v-if="key !== 'punct'" :key="key">
+											{{key}}
+										</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr v-for="i in rowData.props.punct.length" :key="i">
+										<td v-for="(value, key) in rowData.props" v-if="key !== 'punct'" :key="key">
+											{{value[i-1]}}
+										</td>
+									</tr>
+								</tbody>
+							</table>
 						</td>
 					</tr>
 				</template>
@@ -101,6 +103,7 @@ import * as qs from 'qs';
 
 import * as corpusStore from '@/store/corpus';
 import { snippetParts, words, getDocumentUrl } from '@/utils';
+import * as Api from '@/api';
 
 import * as BLTypes from '@/types/blacklabtypes';
 
@@ -128,6 +131,13 @@ type DocRow = {
 	href: string;
 }
 
+type CitationData = {
+	open: boolean;
+	loading: boolean;
+	citation: null|[string, string, string];
+	error?: null|string;
+}
+
 export default Vue.extend({
 	props: {
 		results: Object as () => BLTypes.BlHitResults,
@@ -136,11 +146,7 @@ export default Vue.extend({
 	},
 	data: () => ({
 		citations: {} as {
-			[key: number]: {
-				citation: [string, string, string];
-				error: boolean;
-				open: boolean;
-			}
+			[key: number]: CitationData;
 		}
 	}),
 	computed: {
@@ -209,55 +215,46 @@ export default Vue.extend({
 		changeSort(payload: string) {
 			this.$emit('sort', payload === this.sort ? '-'+payload : payload)
 		},
-		/** Concat all properties (except punctuation) in the context into a large string */
-		properties(context: BLTypes.BLHitSnippetPart): string {
-			return Object.entries(context)
-				.map(([annotation, values]) => [annotation, values.join('')])
-				.filter(([annotation, value]) => !!value && annotation !== 'punct')
-				.map(([annotation, value]) => `${annotation}: ${value}`)
-				.join(', ');
-		},
 		showCitation(index: number /*row: HitRow*/) {
 			if (this.citations[index] != null) {
 				this.citations[index].open = !this.citations[index].open;
 				return;
 			}
 
-			const citation = Vue.set(this.citations as any[], index, { // shut up vue
-				citation: ['Loading citation...', '', ''],
+			const citation: CitationData = Vue.set(this.citations as any[], index, { // shut up vue
 				open: true,
-				error: false
-			});
+				loading: true,
+				citation: null,
+				error: null,
+			} as CitationData);
 
 			const row = this.rows[index] as HitRow;
 
-			fetch(`${BLS_URL}docs/${row.docPid}/snippet?${qs.stringify({hitstart: row.start, hitend: row.end, wordsaroundhit: 50})}`, {
-				headers: {
-					'Accept': 'application/json'
-				},
-				cache: 'force-cache'
-			})
-			.then(r => {
-				if (r.ok) {
-					return r.json();
-				} else {
-					throw new Error(`Could not fetch citation: ${r.statusText}`);
-				}
-			}, e => {
-				debugLog(e);
-				throw new Error(`Could not fetch citation: ${e.message}`);
-			})
-			.then(
-				r => {
-					debugLog('got snippet', r);
-					citation.citation = snippetParts(r, this.firstMainAnnotation.id);
-				},
-				e => {
-					citation.citation = e.message
-					citation.error = true;
-				}
-			)
+			Api.blacklab
+			.getSnippet(corpusStore.getState().id, row.docPid, row.start, row.end)
+			.then(s => citation.citation = snippetParts(s, this.firstMainAnnotation.id))
+			.catch(e => citation.error = e.message)
+			.finally(() => citation.loading = false);
 
+			// TODO use api
+			// fetch(`${BLS_URL}docs/${row.docPid}/snippet?${qs.stringify({hitstart: row.start, hitend: row.end, wordsaroundhit: 50})}`, {
+			// 	headers: {
+			// 		'Accept': 'application/json'
+			// 	},
+			// 	cache: 'force-cache'
+			// })
+			// .then(r => {
+			// 	if (r.ok) {
+			// 		return r.json();
+			// 	} else {
+			// 		throw new Error(`Could not fetch citation: ${r.statusText}`);
+			// 	}
+			// }, e => { debugLog(e); throw new Error(`Could not fetch citation: ${e.message}`); })
+			// .then(
+			// 	r => citation.citation = snippetParts(r, this.firstMainAnnotation.id),
+			// 	e => citation.error = e.message
+			// )
+			// .finally(() => citation.loading = false);
 		}
 	},
 	watch: {
@@ -325,16 +322,10 @@ tr {
 			border: 2px solid #ddd;
 			border-top: none;
 			border-radius: 0px 0px 4px 4px;
-		}
-
-		.well-light {
-			box-shadow: none;
-			border: none;
-			padding: 15px 15px 10px;
+			padding: 15px 20px;
 
 			> p {
-				margin: 0 auto 10px;
-				width: 90%;
+				margin: 0 6px 10px;
 			}
 		}
 	}

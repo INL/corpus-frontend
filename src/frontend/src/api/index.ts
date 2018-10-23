@@ -27,17 +27,18 @@ const paths = {
 		is performed by the servlet container and runs before any application code.
 		So ensure our requests end with a trailing slash to prevent the server from redirecting
 	*/
-	root: () =>                             './',
-	index: (indexId: string) =>             `${indexId}/`,
-	indexStatus: (indexId: string) =>       `${indexId}/status/`,
-	documentUpload: (indexId: string) =>    `${indexId}/docs/`,
-	shares: (indexId: string) =>            `${indexId}/sharing/`,
-	formats: () =>                          `input-formats/`,
-	formatContent: (id: string) =>          `input-formats/${id}/`,
-	formatXslt: (id: string) =>             `input-formats/${id}/xslt`,
+	root: () =>                                     './',
+	index: (indexId: string) =>                     `${indexId}/`,
+	indexStatus: (indexId: string) =>               `${indexId}/status/`,
+	documentUpload: (indexId: string) =>            `${indexId}/docs/`,
+	shares: (indexId: string) =>                    `${indexId}/sharing/`,
+	formats: () =>                                  `input-formats/`,
+	formatContent: (id: string) =>                  `input-formats/${id}/`,
+	formatXslt: (id: string) =>                     `input-formats/${id}/xslt`,
 
-	hits: (indexId: string) =>              `${indexId}/hits/`,
-	docs: (indexId: string) =>              `${indexId}/docs/`,
+	hits: (indexId: string) =>                      `${indexId}/hits/`,
+	docs: (indexId: string) =>                      `${indexId}/docs/`,
+	snippet: (indexId: string, docId: string ) =>   `${indexId}/docs/${docId}/snippet/`
 };
 
 /**
@@ -226,6 +227,16 @@ export const blacklab = {
 			request,
 			cancel
 		};
+	},
+
+	getSnippet: (indexId: string, docId: string, hitstart: number, hitend: number, wordsaroundhit: number = 50) => {
+		return blacklabEndpoint.get<BLTypes.BLHitSnippet>(paths.snippet(indexId, docId), {
+			params: {
+				hitstart,
+				hitend,
+				wordsaroundhit
+			}
+		});
 	}
 };
 

@@ -46,7 +46,7 @@ export default Vue.extend({
 		escapeLabels: {
 			default: true,
 			type: Boolean as () => boolean
-		}
+		},
 	},
 	data: () => ({
 		currentValue: null as null|string|string[], // synced with select
@@ -54,21 +54,29 @@ export default Vue.extend({
 	watch: {
 		value: {
 			immediate: true,
-			handler(newVal) {
-				if (newVal !== this.currentValue) {
-					this.currentValue = newVal;
-					$(this.$refs.select).selectpicker('val', newVal);
-				}
+			handler(newVal: null|undefined|string|string[]) {
+				$(this.$refs.select).selectpicker('val', newVal!);
 			}
 		},
 		// TODO only fire when closing the menu
 		currentValue(newValue) {
+			if (
+				newValue == this.value || // null, undefined, string
+				(Array.isArray(newValue) && Array.isArray(this.value) && newValue.length === this.value.length && newValue.every(v => (this.value as string[]).includes(v)))
+			) {
+				return;
+			}
 			this.$emit('input', newValue);
 		}
 	},
 	methods: {
 		isSelected(value: string) {
 			return this.value != null && this.value === value || (this.value as string[]).includes(value);
+		}
+	},
+	created() {
+		if (this.$attrs.multiple != null) {
+			this.currentValue = [];
 		}
 	},
 	mounted() {

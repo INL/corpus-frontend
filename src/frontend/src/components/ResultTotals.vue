@@ -1,12 +1,7 @@
 <script lang="ts">
 import {Vue, Component, Watch, Prop} from 'vue-property-decorator';
 
-import * as resultsStore from '@/store/results';
-import * as rootStore from '@/store';
-import * as formStore from '@/store/form';
-
 import * as Api from '@/api';
-import { getBlsParamFromState, search } from '@/modules/singlepage-bls';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';

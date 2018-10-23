@@ -81,6 +81,7 @@ import * as BLTypes from '@/types/blacklabtypes';
 
 import * as corpusStore from '@/store/corpus';
 import {snippetParts, getDocumentUrl} from '@/utils';
+import * as Api from '@/api';
 
 import * as bls from '@/modules/singlepage-bls';
 
@@ -156,7 +157,7 @@ export default Vue.extend({
 			// What can happen is that we place the stale result in the cache for the new set of results and it will be displayed...
 
 			// make a copy of the parameters so we don't clear them for all components using the summary
-			let requestParameters: BLTypes.BlacklabParameters = Object.assign({}, this.results.summary.searchParam, {
+			const requestParameters: BLTypes.BlacklabParameters = Object.assign({}, this.results.summary.searchParam, {
 				number: 20,
 				first: cache.concordances.length,
 				viewgroup: id,
@@ -167,10 +168,10 @@ export default Vue.extend({
 				sort: undefined,
 			} as BLTypes.BlacklabParameters)
 
-			cache.request = new Promise<BLTypes.BlHitResults|BLTypes.BLDocResults>((resolve, reject) => {
-				bls.search(this.type, requestParameters, (res: BLTypes.BlHitResults|BLTypes.BLDocResults) => resolve(res), reject);
-			})
-			.then(res => {
+			const apiCall = this.type === 'hits' ? Api.blacklab.getHits : Api.blacklab.getDocs;
+			const req: Promise<BLTypes.BLSearchResult> = apiCall(corpusStore.getState().id, requestParameters).request;
+
+			req.then(res => {
 				if (this.type === 'hits') {
 					const data = res as BLTypes.BlHitResults;
 					cache.available = data.summary.numberOfHitsRetrieved;
@@ -196,12 +197,8 @@ export default Vue.extend({
 						})
 					})
 				}
-				return res;
 			})
-			.catch<never>(err => {
-				// TODO log error somewhere in component.
-				throw err;
-			})
+			.catch(err => {throw err}) // TODO log error somewhere in component.
 			.finally(() => cache.request = null)
 		},
 

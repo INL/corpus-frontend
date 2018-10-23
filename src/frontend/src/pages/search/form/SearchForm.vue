@@ -1,16 +1,19 @@
 <template>
 	<form class="col-xs-12 contentbox" id="mainForm"> <!-- TODO id -->
-		<Annotations class="col-xs-12 col-md-6" id="searchcontainer"/> <!-- todo id -->
-		<Filters class="col-xs-12 col-md-6" id="filtercontainer"/>
+		<div class="row">
 
-		<div class="col-xs-12">
-			<hr>
-			<div style="display:inline-block; position: absolute; bottom: 0;">
-				<button type="submit" class="btn btn-primary btn-lg">Search</button>
-				<button type="reset" class="btn btn-default btn-lg" title="Start a new search">Reset</button>
+			<Annotations class="col-xs-12 col-md-6" id="searchcontainer"/> <!-- todo id -->
+			<Filters class="col-xs-12 col-md-6" id="filtercontainer"/>
+
+			<div class="col-xs-12">
+				<hr>
+				<div style="display:inline-block; position: absolute; bottom: 0;">
+					<button type="submit" class="btn btn-primary btn-lg">Search</button>
+					<button type="reset" class="btn btn-default btn-lg" title="Start a new search">Reset</button>
+				</div>
+
+				<button type="button" class="btn btn-lg btn-default pull-right" data-toggle="modal" data-target="#settingsModal"><span class="glyphicon glyphicon-cog" style="vertical-align:text-top;"></span></button>
 			</div>
-
-			<button type="button" class="btn btn-lg btn-default pull-right" data-toggle="modal" data-target="#settingsModal"><span class="glyphicon glyphicon-cog" style="vertical-align:text-top;"></span></button>
 		</div>
 
 	</form>

@@ -133,7 +133,7 @@ function onSearchUpdated(operation: string, searchParams: BLTypes.BlacklabParame
 
 	const currentUrl = new URI().toString();
 	if (newUrl !== currentUrl) {
-		history.pushState(globalStore.getState(), undefined, newUrl);
+		history.pushState(JSON.parse(JSON.stringify(globalStore.getState())), undefined, newUrl);
 	}
 }
 
@@ -223,10 +223,10 @@ export default Vue.extend({
 				return;
 			}
 
-			debugLog('starting csv download', this.type, params);
 			this.downloadInProgress = true;
 			const params = this.results.summary.searchParam;
 			const apiCall = this.type === 'hits' ? Api.blacklab.getHitsCsv : Api.blacklab.getDocsCsv;
+			debugLog('starting csv download', this.type, params);
 
 			apiCall(this.indexId, this.results.summary.searchParam).request
 			.then(

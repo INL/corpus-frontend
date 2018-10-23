@@ -1,4 +1,4 @@
-import axios, {Canceler} from 'axios';
+import axios, {Canceler, CancelToken, AxiosRequestConfig} from 'axios';
 import * as qs from 'qs';
 
 import {createEndpoint} from '@/utils/apiutils';
@@ -37,7 +37,9 @@ const paths = {
 	formatXslt: (id: string) =>                     `input-formats/${id}/xslt`,
 
 	hits: (indexId: string) =>                      `${indexId}/hits/`,
+	hitsCsv: (indexId: string) =>                   `${indexId}/hits-csv/`,
 	docs: (indexId: string) =>                      `${indexId}/docs/`,
+	docsCsv: (indexId: string) =>                   `${indexId}/docs-csv/`,
 	snippet: (indexId: string, docId: string ) =>   `${indexId}/docs/${docId}/snippet/`
 };
 
@@ -142,10 +144,7 @@ export const blacklab = {
 		} else if (!params.patt) {
 			request = Promise.reject(new ApiError('Info', 'Cannot get hits without pattern.', 'No results'));
 		} else {
-			request = blacklabEndpoint.get<BLTypes.BlHitResults|BLTypes.BLHitGroupResults>(paths.hits(indexId), {
-				params,
-				cancelToken
-			});
+			request = getOrPost(paths.hits(indexId), params, { cancelToken });
 		}
 
 		return {
@@ -168,11 +167,10 @@ export const blacklab = {
 		} else if (!params.patt) {
 			request = Promise.reject(new ApiError('Info', 'Cannot get hits without pattern.', 'No results'));
 		} else {
-			request = blacklabEndpoint.get<Blob>(paths.hits(indexId), {
-				params: csvParams,
+			request = getOrPost(paths.hitsCsv(indexId), csvParams, {
 				headers: { Accept: 'text/csv' },
 				responseType: 'blob',
-				transformResponse: data => new Blob([data], {type: 'text/plain;charset=utf-8' }),
+				transformResponse: (data: any) => new Blob([data], {type: 'text/plain;charset=utf-8' }),
 				cancelToken,
 			});
 		}
@@ -195,11 +193,10 @@ export const blacklab = {
 		if (!indexId) {
 			request = Promise.reject(new ApiError('Error', 'No index specified', 'Internal error'));
 		} else {
-			request = blacklabEndpoint.get<Blob>(paths.docs(indexId), {
-				params: csvParams,
+			request = getOrPost<Blob>(paths.docsCsv(indexId), csvParams, {
 				headers: { Accept: 'text/csv' },
 				responseType: 'blob',
-				transformResponse: data => new Blob([data], {type: 'text/plain;charset=utf-8' }),
+				transformResponse: (data: any) => new Blob([data], {type: 'text/plain;charset=utf-8' }),
 				cancelToken,
 			});
 		}
@@ -217,10 +214,7 @@ export const blacklab = {
 		if (!indexId) {
 			request = Promise.reject(new ApiError('Error', 'No index specified', 'Internal error'));
 		} else {
-			request = blacklabEndpoint.get<BLTypes.BLDocResults|BLTypes.BLDocGroupResults>(paths.docs(indexId), {
-				params,
-				cancelToken
-			});
+			request = getOrPost(paths.docs(indexId), params, { cancelToken });
 		}
 
 		return {
@@ -230,14 +224,33 @@ export const blacklab = {
 	},
 
 	getSnippet: (indexId: string, docId: string, hitstart: number, hitend: number, wordsaroundhit: number = 50) => {
-		return blacklabEndpoint.get<BLTypes.BLHitSnippet>(paths.snippet(indexId, docId), {
-			params: {
-				hitstart,
-				hitend,
-				wordsaroundhit
-			}
+		return getOrPost<BLTypes.BLHitSnippet>(paths.snippet(indexId, docId), {
+			hitstart,
+			hitend,
+			wordsaroundhit
 		});
 	}
 };
+
+// Server has issues with long urls.
+function getOrPost<R>(path: string, params: any, settings?: AxiosRequestConfig): Promise<R> {
+	const usePost = params && (params.patt ? params.patt.length : 0)+(params.filter ? params.filter.length : 0) > 1000;
+	if (usePost) {
+		settings = settings || {};
+		settings.headers = settings.headers || {};
+		settings.headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
+
+		// override the default-set outputformat if another is provided.
+		// Or it will be sent in both the request body and the query string causing unpredictable behavior in what is actually returned.
+		if (params.outputformat) {
+			settings.params = settings.params || {};
+			settings.params.outputformat = params.outputformat;
+		}
+
+		return blacklabEndpoint.post<R>(path, qs.stringify(params), settings);
+	} else {
+		return blacklabEndpoint.get<R>(path, { ...settings, params});
+	}
+}
 
 export {Canceler, ApiError};

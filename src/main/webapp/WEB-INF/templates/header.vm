@@ -5,11 +5,12 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
         
         #if ($websiteConfig.getCorpusDisplayName())
-        <meta property="og:description" content="$websiteConfig.getCorpusDisplayName() provided by the Dutch Language Institute in Leiden."/>
+        <meta property="og:description" content="$websiteConfig.getCorpusDisplayName() provided by the Dutch Language Institute in Leiden.">
         <meta name="description" content="$websiteConfig.getCorpusDisplayName() search provided by the Dutch Language Institute in Leiden.">
+        <meta name="referrer" content="no-referrer">
         <title>$websiteConfig.getCorpusDisplayName() search</title>
         #else
-        <meta property="og:description" content="AutoSearch provided by the Dutch Language Institute in Leiden."/>
+        <meta property="og:description" content="AutoSearch provided by the Dutch Language Institute in Leiden.">
         <meta name="description" content="AutoSearch, provided by the Dutch Language Institute in Leiden.">
         <title>Welcome to AutoSearch</title>
         #end

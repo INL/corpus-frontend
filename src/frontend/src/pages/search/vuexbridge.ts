@@ -211,7 +211,7 @@ export default () => {
 	});
 	$('#mainForm').on('submit', () => {
 		ResultsStore.actions.resetPage();
-		ResultsStore.actions.resetViewGroup();
+		ResultsStore.actions.resetGroup();
 		actions.search();
 
 		// May be used as click handler, so prevent event propagation

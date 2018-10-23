@@ -133,7 +133,7 @@ function onSearchUpdated(operation: string, searchParams: BLTypes.BlacklabParame
 
 	const currentUrl = new URI().toString();
 	if (newUrl !== currentUrl) {
-		history.pushState(JSON.parse(JSON.stringify(globalStore.getState())), undefined, newUrl);
+		history.pushState(JSON.parse(JSON.stringify(Object.assign({}, globalStore.getState(), {corpus: undefined}))), undefined, newUrl);
 	}
 }
 

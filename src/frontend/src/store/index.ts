@@ -387,7 +387,7 @@ const actions = {
 			state.viewedResults = payload.viewedResults;
 		}
 		// State should be up to date with the new payload now
-		if (state.viewedResults != null) {
+		if (state.form.submittedParameters == null && state.viewedResults != null) {
 			actions.search();
 		}
 	}, 'replace'),

@@ -174,34 +174,41 @@ export default Vue.extend({
 	},
 	methods: {
 		start() {
+			const self = this; // TODO there is something weird going on with context here
 
-			if (this.cancel == null && this.nextRequest == null) {
-				const apiCall = (this.type === 'docs') ? Api.blacklab.getDocs : Api.blacklab.getHits;
-				const {request, cancel} = apiCall(this.indexId, {
-					...this.results.summary.searchParam,
+			if (self.cancel == null && self.nextRequest == null) {
+				const apiCall = (self.type === 'docs') ? Api.blacklab.getDocs : Api.blacklab.getHits;
+				const {request, cancel} = apiCall(self.indexId, {
+					...self.results.summary.searchParam,
 					number: 0
 				});
 
-				this.error = null;
-				this.cancel = cancel;
+				self.error = null;
+				self.cancel = cancel;
 
 				(request as Promise<BLTypes.BLSearchResult>)
 				.then(r => {
-					this.results = r;
+					self.results = r;
 					// Do not clear in .finally(), we write to nextRequest here
-					this.cancel = null;
-					this.nextRequest = null;
-					if (this.resultCount < pauseAfterResults && !this.tooManyResults) {
-						this.nextRequest = setTimeout(() => this.start(), refreshRate);
+					self.cancel = null;
+					self.nextRequest = null;
+					if (self.resultCount < pauseAfterResults && !self.tooManyResults && self.isCounting) {
+						self.nextRequest = setTimeout(() => {
+							self.nextRequest = null;
+							self.start();
+						}, refreshRate);
 					}
 				}).catch(e => {
 					if (e.name !== 'AbortError') {
-						this.error = e
+						self.error = e
 					}
 					// Do not clear in .finally(), we write to nextRequest in .then
-					this.cancel = null;
-					this.nextRequest = null;
+					self.cancel = null;
+					self.nextRequest = null;
 				});
+			} else {
+				debugger;
+				console.log('trying to start totals retrieval but already busy??')
 			}
 		},
 

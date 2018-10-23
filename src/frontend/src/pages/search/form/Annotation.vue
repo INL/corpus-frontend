@@ -26,6 +26,7 @@
 
 					:data-autocomplete="serverAutocompleteUrl"
 
+					ref="input"
 					v-model="value"
 				/>
 				<span class="btn btn-default upload-button">
@@ -61,22 +62,22 @@
 <script lang="ts">
 import Vue from 'vue';
 
+import 'jquery-ui';
+import 'jquery-ui/ui/widgets/autocomplete';
+import $ from 'jquery';
+
 import * as formStore from '@/store/form';
 import { NormalizedAnnotation } from '@/types/apptypes';
 import SelectPicker, {Option} from '@/components/SelectPicker.vue';
 
-// TODO use description, use annotatedField description and properties and stuff
+declare const BLS_URL: string;
 
-// TODO map id of annotation to store's annotation
-// maybe we need a get/set pair that uses the annotatedfield too
+// TODO use description, use annotatedField description and properties and stuff
 
 export default Vue.extend({
 	props: {
 		annotation: Object as () => NormalizedAnnotation
 	},
-	// data: () => ({
-	// 	caseSensitive: false,
-	// }),
 	computed: {
 		inputId(): string { return this.annotation.id + '_value'; },
 		fileInputId(): string { return this.annotation.id + '_file'; },
@@ -134,6 +135,38 @@ export default Vue.extend({
 			} else {
 				self.value = '';
 			}
+		}
+	},
+	mounted() {
+		const self = this;
+		if (this.$refs.input) {
+			console.log('enabling autocomplete for property', this.id);
+			var $input = $(this.$refs.input as HTMLInputElement);
+			var propertyId = $input.data('autocomplete');
+
+			($input as any).autocomplete({
+				source: BLS_URL + '/autocomplete/' + propertyId,
+				minLength: 1, // Show values when at least 1 letter is present
+				classes: {
+					'ui-autocomplete': 'dropdown-menu'
+				},
+				create: function() {
+					// This element has a div appended every time an element is highlighted
+					// but they are never removed... remove this element for now
+					$('.ui-helper-hidden-accessible').remove();
+				},
+				// Manually fire dom change event as autocomplete doesn't fire it when user selects a value
+				// and we require change events in other parts of the code.
+				select: function(event: any, ui: any) {
+					self.value = ui.item.value;
+					return false;
+				}
+			});
+			$input.keypress(function(event) {
+				if ( event.which == 13 ) {
+					($input as any).autocomplete('close');
+				}
+			});
 		}
 	}
 })

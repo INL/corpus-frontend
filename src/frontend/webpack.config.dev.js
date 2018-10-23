@@ -87,7 +87,9 @@ module.exports = {
 			'CodeMirror':       'codemirror',
 		}),
 
-		new ForkTsCheckerWebpackPlugin(),
+		new ForkTsCheckerWebpackPlugin({
+			vue: true
+		}),
 		new VueLoaderPlugin(),
 		new CircularDependencyPlugin({
 			// `onStart` is called before the cycle detection starts

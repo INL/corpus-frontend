@@ -363,7 +363,7 @@ const actions = {
 		// TODO make this implicit instead of having to write->read->write state here
 		FormModule.actions.search();
 		// Do not reset page! We come through here when loading the page initially
-		// and it would cause the page paramter from url to be ignored/reset
+		// and it would cause the page parameter from url to be ignored/reset
 		// ResultsModule.actions.resetPage();
 
 		const cqlPatt = state.form.submittedParameters!.pattern; // only after form.search() !

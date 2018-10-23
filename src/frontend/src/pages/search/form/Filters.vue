@@ -51,7 +51,7 @@ export default Vue.extend({
 	},
 	methods: {
 		getTabId(name: string) {
-			return name.replace(/\s+/, '_') + '_meta';
+			return name.replace(/[^\w]+/g, '_') + '_meta';
 		}
 	}
 })

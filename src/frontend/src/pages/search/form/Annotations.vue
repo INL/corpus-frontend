@@ -78,11 +78,14 @@ export default Vue.extend({
 	},
 	methods: {
 		getTabId(name: string) {
-			return name.replace(/\s+/, '_') + '_annotations';
+			return name.replace(/[^\w]/g, '_') + '_annotations';
 		}
 	}
 })
 </script>
 
 <style lang="scss">
+.subtabs {
+	margin-top: -15px;
+}
 </style>

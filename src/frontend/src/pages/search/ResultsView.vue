@@ -126,12 +126,12 @@ function onSearchUpdated(operation: string, searchParams: BLTypes.BlacklabParame
 	// So omit the query from the page url in these cases
 	// TODO this breaks history-based navigation
 	let newUrl = toPageUrl(operation, searchParams);
-	if (newUrl.length > 4000) {
-		newUrl = toPageUrl(operation, $.extend({}, searchParams, { patt: null }));
-	}
-
 	const currentUrl = new URI().toString();
+
 	if (newUrl !== currentUrl) {
+		if (newUrl.length > 4000) {
+			newUrl = toPageUrl(operation, $.extend({}, searchParams, { patt: null }));
+		}
 		history.pushState(JSON.parse(JSON.stringify(Object.assign({}, globalStore.getState(), {corpus: undefined}))), undefined, newUrl);
 	}
 }

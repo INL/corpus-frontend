@@ -66,21 +66,17 @@ export default function(input: string): Result {
 	 */
 	function test(...tests: string[]): number {
 		for (const item of tests) {
-			// if (item instanceof Array) {
-			// 	if (item.some(subItem => test(subItem))) {
-			// 		return true;
-			// 	}
-			// } else {
-				let match = true;
-				for (let k = 0; k < item.length; k++) {
-					if (pos + k >= input.length || input[pos + k] !== item[k]) {
-						match = false;
-						break;
-					}
+			let match = true;
+			for (let k = 0; k < item.length; k++) {
+				if (pos + k >= input.length || input[pos + k] !== item[k]) {
+					match = false;
+					break;
 				}
-				return match ? item.length : 0;
 			}
-		// }
+			if (match) {
+				return item.length;
+			}
+		}
 		return 0;
 	}
 
@@ -126,19 +122,16 @@ export default function(input: string): Result {
 	// Continue until one of the symbols is encountered,
 	// then stop at the encountered symbol and return a substring from where we started and ending at that symbol (exclusive)
 	function until(...symbols: string[]) {
-		symbols.push(''); // always test for end of string
-		try {
-			const startPos = pos;
-			while (!test(...symbols)) {
-				nextSym();
+		const startPos = pos;
+		while (!test(...symbols)) {
+			if (pos >= input.length) {
+				throw errorMsg('Unexpected end of input, expected one of [' + symbols + ']');
 			}
-			const endPos = pos;
-
-			return input.substring(startPos, endPos);
-		} catch(err) {
-			// We can be a little more descriptive in our errors
-			throw errorMsg('Unexpected end of input, expected one of [' + symbols + ']');
+			nextSym();
 		}
+		const endPos = pos;
+
+		return input.substring(startPos, endPos);
 	}
 
 	function parseXmlTag(): XmlTag {
@@ -163,6 +156,7 @@ export default function(input: string): Result {
 		expect('"', true); // keep all whitespace after the opening quote
 		const value = until('"'); // don't trim whitespace
 		expect('"', true); // also keep all whitespace before and after the quote
+		while (test(...WHITESPACE)) { nextSym(); } // skip whitespace after quote.
 
 		if (operator !== '=' && operator !== '!=') {
 			throw errorMsg('Unknown operator ' + operator);

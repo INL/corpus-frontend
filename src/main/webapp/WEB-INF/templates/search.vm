@@ -7,6 +7,7 @@
     SINGLEPAGE.INDEX = JSON.parse("$esc.javascript($unescapedIndexStructureJson)");
     var BLS_URL = "$blsUrl";
     var PROPS_IN_COLUMNS = "$websiteConfig.getPropColumns()".split(',');
+    var PATH_TO_TOP = "$esc.javascript($pathToTop)";
 </script>
 
 <link rel="stylesheet" href="$pathToTop/css/cql_querybuilder.css">

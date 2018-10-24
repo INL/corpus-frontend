@@ -109,6 +109,10 @@ export type NormalizedIndex = {
 		fields: string[];
 	}>;
 	metadataFields: { [key: string]: NormalizedMetadataField; };
+	/** Owner of the corpus, if is a user owned corpus */
+	owner: string|null;
+	/** Id of the corpus minus the owner's username prefix */
+	shortId: string;
 	textDirection: 'ltr'|'rtl';
 };
 

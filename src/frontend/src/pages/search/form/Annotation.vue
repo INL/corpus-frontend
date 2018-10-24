@@ -75,6 +75,9 @@ declare const BLS_URL: string;
 // TODO use description, use annotatedField description and properties and stuff
 
 export default Vue.extend({
+	components: {
+		SelectPicker,
+	},
 	props: {
 		annotation: Object as () => NormalizedAnnotation
 	},

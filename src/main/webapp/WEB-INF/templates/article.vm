@@ -7,13 +7,17 @@
 <a href="#" onclick="return ANCHORS.gotoNext();"><b>Next hit &raquo;</b></a>
 </div>
 
-<div class="contentbox">
-#set($unescaped = $article_meta) ## see BaseResponse.java
-$!unescaped
+<div class="contentbox row">
+	<div class="col-xs-12">
+	#set($unescaped = $article_meta) ## see BaseResponse.java
+	$!unescaped
+	</div>
 </div>
-<div class="contentbox">
-#set($unescaped = $article_content) ## see BaseResponse.java
-$!unescaped
+<div class="contentbox row">
+	<div class="col-xs-12">
+	#set($unescaped = $article_content) ## see BaseResponse.java
+	$!unescaped
+	</div>
 </div>
 
 #parse("footer.vm")

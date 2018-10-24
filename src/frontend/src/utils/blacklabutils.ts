@@ -142,7 +142,9 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 				return acc;
 			}, {}),
 
-		textDirection: blIndex.textDirection
+		owner: blIndex.indexName.substring(0, blIndex.indexName.indexOf(':')) || null,
+		shortId: blIndex.indexName.substr(blIndex.indexName.indexOf(':') + 1),
+		textDirection: blIndex.textDirection,
 	};
 }
 

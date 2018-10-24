@@ -7,11 +7,11 @@
 <a href="#" onclick="return ANCHORS.gotoNext();"><b>Next hit &raquo;</b></a>
 </div>
 
-<div class="col-xs-12 contentbox">
+<div class="contentbox">
 #set($unescaped = $article_meta) ## see BaseResponse.java
 $!unescaped
 </div>
-<div class="col-xs-12 contentbox">
+<div class="contentbox">
 #set($unescaped = $article_content) ## see BaseResponse.java
 $!unescaped
 </div>

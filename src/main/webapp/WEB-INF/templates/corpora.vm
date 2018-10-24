@@ -9,7 +9,7 @@
     <span id="errorMessage"></span>
 </div>
 
-<div class="col-xs-12 contentbox" data-bls-url="$blsUrl" style="position:relative;min-height:150px;">
+<div class="contentbox" data-bls-url="$blsUrl" style="position:relative;min-height:150px;">
     <span id="waitDisplay" class="fa fa-spinner fa-spin searchIndicator" style="position: absolute; left: 50%;"></span>
     
     <p data-autoupdate="username" class="text-right" style="display: none;"></p>

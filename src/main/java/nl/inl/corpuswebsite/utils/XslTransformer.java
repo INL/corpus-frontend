@@ -8,8 +8,10 @@ import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Templates;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -29,16 +31,25 @@ public class XslTransformer {
 
     private final Transformer transformer;
 
+    private static final Map<File, Templates> FILETEMPLATES = new ConcurrentHashMap<File, Templates>() {
+        @Override
+        public Templates get(Object key) {
+            if (super.get(key)==null) {
+                try {
+                    put((File)key, FACTORY.newTemplates(new StreamSource((File) key)));
+                } catch (TransformerConfigurationException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+            return super.get(key);
+        }
+        
+    };
+    
     private static final Map<File, Transformer> stylesheets = new HashMap<>(2);
 
     public XslTransformer(File stylesheet) throws TransformerConfigurationException {
-        synchronized (stylesheets) {
-            if (stylesheets.containsKey(stylesheet)) {
-                transformer = stylesheets.get(stylesheet);
-            } else {
-                transformer = FACTORY.newTransformer(new StreamSource(stylesheet));
-            }
-        }
+        transformer = FILETEMPLATES.get(stylesheet).newTransformer();
     }
 
     public XslTransformer(InputStream stylesheet) throws TransformerConfigurationException {

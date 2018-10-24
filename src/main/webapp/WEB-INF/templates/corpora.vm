@@ -9,72 +9,74 @@
     <span id="errorMessage"></span>
 </div>
 
-<div class="contentbox" data-bls-url="$blsUrl" style="position:relative;min-height:150px;">
-    <span id="waitDisplay" class="fa fa-spinner fa-spin searchIndicator" style="position: absolute; left: 50%;"></span>
-    
-    <p data-autoupdate="username" class="text-right" style="display: none;"></p>
-
-    <div id="corpora-public-container">
-        <hr>
-        <h2>Public corpora</h2>
-
-        <table class="corpora public table">
-            <thead>
-                <tr>
-                    <th></th> ##search button
-                    <th>Corpus</th>
-                    <th>Size</th>
-                </tr>
-            </thead>
-            <tbody data-autoupdate="corpora" data-filter="public"></tbody>
-        </table>
-    </div>
-
-    <div id="corpora-private-container">
-        <hr>
-        <h2 id="header-private">Your corpora</h2>
+<div class="contentbox row" data-bls-url="$blsUrl" style="position:relative;min-height:150px;">
+    <div class="col-xs-12">
+        <span id="waitDisplay" class="fa fa-spinner fa-spin searchIndicator" style="position: absolute; left: 50%;"></span>
         
-        <table class="table corpora">
-            <thead>
-                <tr>
-                    <th></th> ##search button
-                    <th>Corpus</th>
-                    <th>Size</th>
-                    <th>Format</th>
-                    <th>Last modified</th>
-                    <th></th> ## delete, add, share buttons
-                    <th></th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody data-autoupdate="corpora" data-filter="private"></tbody>
-        </table>
+        <p data-autoupdate="username" class="text-right" style="display: none;"></p>
     
-    	<em id="create-corpus-limited" class="text-danger" style="display:none;padding-left: 8px;">You have reached the private corpora limit.<br>You will have to delete one of your corpora before you may create another.</em>    
-        <button class="btn btn-default btn-lg" id="create-corpus" type="button" data-toggle="modal" data-target="#new-corpus-modal">New corpus</button>
+        <div id="corpora-public-container">
+            <hr>
+            <h2>Public corpora</h2>
     
-    </div>
+            <table class="corpora public table">
+                <thead>
+                    <tr>
+                        <th></th> ##search button
+                        <th>Corpus</th>
+                        <th>Size</th>
+                    </tr>
+                </thead>
+                <tbody data-autoupdate="corpora" data-filter="public"></tbody>
+            </table>
+        </div>
     
-
-    <div id="formats-all-container">
-        <hr>
-        <h2>Your import formats</h2>
+        <div id="corpora-private-container">
+            <hr>
+            <h2 id="header-private">Your corpora</h2>
+            
+            <table class="table corpora">
+                <thead>
+                    <tr>
+                        <th></th> ##search button
+                        <th>Corpus</th>
+                        <th>Size</th>
+                        <th>Format</th>
+                        <th>Last modified</th>
+                        <th></th> ## delete, add, share buttons
+                        <th></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody data-autoupdate="corpora" data-filter="private"></tbody>
+            </table>
+        
+            <em id="create-corpus-limited" class="text-danger" style="display:none;padding-left: 8px;">You have reached the private corpora limit.<br>You will have to delete one of your corpora before you may create another.</em>    
+            <button class="btn btn-default btn-lg" id="create-corpus" type="button" data-toggle="modal" data-target="#new-corpus-modal">New corpus</button>
+        
+        </div>
+        
     
-        <table class="table corpora">
-            <thead>
-                <tr>
-                    <th>Id</th>
-                    <th>Name</th>
-                    <th></th> ## delete, edit buttons
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody data-autoupdate="format">
-            <!-- filled by clientside js -->
-            </tbody >
-        </table>
-        <button type="button" class="btn btn-lg btn-default" data-toggle="modal" data-target="#new-format-modal">New format</button>
-
+        <div id="formats-all-container">
+            <hr>
+            <h2>Your import formats</h2>
+        
+            <table class="table corpora">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Name</th>
+                        <th></th> ## delete, edit buttons
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody data-autoupdate="format">
+                <!-- filled by clientside js -->
+                </tbody >
+            </table>
+            <button type="button" class="btn btn-lg btn-default" data-toggle="modal" data-target="#new-format-modal">New format</button>
+    
+        </div>
     </div>
 </div>
 

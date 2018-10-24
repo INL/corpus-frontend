@@ -123,6 +123,18 @@ hr {
 	padding-bottom: 20px;
 }
 
+.contentbox.row > div[class^="col-"],
+.contentbox.row > div[class*=" col-"] {
+	padding-left: 20px;
+	padding-right: 20px;
+}
+
+div[class^="col-"].contentbox,
+div[class*=" col-"].contentbox {
+	padding-left: 20px;
+	padding-right: 20px;
+}
+
 .modal-fullwidth {
 	width:100%;
 	padding-left:17px;

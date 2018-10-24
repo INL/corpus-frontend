@@ -315,7 +315,7 @@ public class MainServlet extends HttpServlet {
      * @param corpus which corpus to read config for, may be null for the default config.
      * @return the website config
      */
-    public WebsiteConfig getWebsiteConfig(String corpus) {
+    public synchronized WebsiteConfig getWebsiteConfig(String corpus) {
         return configs.computeIfAbsent(corpus, c -> {
             File f =
                 getProjectFile(corpus, "search.xml")

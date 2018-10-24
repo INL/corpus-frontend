@@ -1,8 +1,6 @@
 <template>
-	<div v-show="!!viewedResults">
-		<QuerySummary/>
-
-		<div class="col-xs-12 contentbox">
+	<div>
+		<div class="col-xs-12">
 			<ul id="resultTabs" class="nav nav-tabs">
 				<li :class="[{'active': viewedResults === 'hits'}]"><a href="javascript:void(0);" @click="showHits">Per Hit</a></li>
 				<li :class="[{'active': viewedResults === 'docs'}]"><a href="javascript:void(0);" @click="showDocs">Per Document</a></li>

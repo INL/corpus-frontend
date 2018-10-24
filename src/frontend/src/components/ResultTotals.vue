@@ -259,7 +259,7 @@ export default Vue.extend({
 	color: #888;
 	font-size: 85%;
 	position: absolute;
-    top: 20px;
+    top: 0px;
     right: 25px;
     display: flex;
     align-items: center;

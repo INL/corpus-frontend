@@ -140,7 +140,6 @@ export default Vue.extend({
 	mounted() {
 		const self = this;
 		if (this.$refs.input) {
-			console.log('enabling autocomplete for property', this.id);
 			var $input = $(this.$refs.input as HTMLInputElement);
 			var propertyId = $input.data('autocomplete');
 

@@ -22,7 +22,10 @@
 </noscript>
 -->
 
-<form id="mainForm" class="clearfix"></form>
+
+<div id="vue-root"></div>
+
+
 
 <div id="settingsModal" class="modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
@@ -87,15 +90,6 @@
     </div>
 </div>
 
-<!--
-<div id="errorDiv" class="col-xs-12 alert alert-danger" style="display:none;">
-    <h1>Error</h1>
-    <p id="errorMessage"></p>
-    <p>(for assistance, please contact <a href='mailto:servicedesk@ivdnt.org'>servicedesk@ivdnt.org</a>)</p>
-</div>
--->
-
-<div id="results"></div>
 
 <ul id="tlyPageGuide" data-tourtitle="Searching the corpus">
     <li class="tlypageguide_left" data-tourtarget="a[href='#simple']">

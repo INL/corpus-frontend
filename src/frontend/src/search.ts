@@ -14,8 +14,7 @@ import {normalizeIndex} from '@/utils/blacklabutils';
 
 import connectVuexToPage from '@/pages/search/vuexbridge';
 
-import ResultComponent from '@/pages/search/Results.vue';
-import SearchFormComponent from '@/pages/search/form/SearchForm.vue';
+import SearchPageComponent from '@/pages/search/SearchPage.vue';
 
 import * as AppTypes from '@/types/apptypes';
 import * as BLTypes from '@/types/blacklabtypes';
@@ -104,18 +103,13 @@ $(document).ready(() => {
 	initStore(normalizedIndex, stateFromUrl);
 
 	Vue.config.productionTip = false;
-	new Vue({
-		store,
-		render: h => h(ResultComponent),
-	}).$mount(document.querySelector('#results')!);
 
 	new Vue({
 		store,
-		render: h => h(SearchFormComponent)
-	}).$mount(document.querySelector('#mainForm')!);
-});
-
-$(document).on('form-mounted', () => {
-	connectJqueryToPage();
-	connectVuexToPage();
+		render: h => h(SearchPageComponent),
+		mounted() {
+			connectJqueryToPage();
+			connectVuexToPage();
+		}
+	}).$mount(document.querySelector('#vue-root')!);
 });

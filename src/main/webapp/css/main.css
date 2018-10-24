@@ -117,9 +117,10 @@ hr {
 
 .contentbox {
 	background-color: rgba(208,218,228,0.6);
-	padding: 20px;
-	margin-bottom: 20px;
 	border: 1px solid #cccccc;
+	margin-bottom: 20px;
+	padding-top: 20px;
+	padding-bottom: 20px;
 }
 
 .modal-fullwidth {

@@ -44,13 +44,6 @@
         
     </head>
     <body>
-        <!--[if lt IE 9]>
-            <br/><br/><br/>
-            <div class="alert alert-warning">
-            <h1>Error: Incompatible browser.</h1>
-            <p>You are using an <strong>outdated</strong> browser which cannot display this website correctly. Please use the latest version of <a href="http://www.mozilla.org/en-US/firefox/new/">Mozilla Firefox</a> or <a href="https://www.google.com/intl/en/chrome/browser/">Google Chrome</a> instead.</p>
-            </div>
-        <![endif]-->
         <div class="navbar navbar-inverse navbar-fixed-top">
             <div class="container">
                 <div class="navbar-header">
@@ -81,11 +74,18 @@
             </div>
         </div>
         
-        <div class="container">
-            <noscript>
-                <br/><br/><br/>
-                <div class="alert alert-error">    
-                    <h1>Error: JavaScript disabled.</h1>
-                    We notice that you have JavaScript disabled in your browser. This website requires JavaScript to be enabled. Please enable JavaScript to use this website.
-                </div>
-            </noscript>
+        <noscript>
+            <br/><br/><br/>
+            <div class="alert alert-error">    
+                <h1>Error: JavaScript disabled.</h1>
+                We notice that you have JavaScript disabled in your browser. This website requires JavaScript to be enabled. Please enable JavaScript to use this website.
+            </div>
+        </noscript>
+      	
+      	<!--[if lt IE 9]>
+            <br/><br/><br/>
+            <div class="alert alert-warning">
+            <h1>Error: Incompatible browser.</h1>
+            <p>You are using an <strong>outdated</strong> browser which cannot display this website correctly. Please use the latest version of <a href="http://www.mozilla.org/en-US/firefox/new/">Mozilla Firefox</a> or <a href="https://www.google.com/intl/en/chrome/browser/">Google Chrome</a> instead.</p>
+            </div>
+        <![endif]-->

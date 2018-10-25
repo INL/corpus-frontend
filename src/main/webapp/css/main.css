@@ -1,25 +1,20 @@
 @font-face {
-    font-family: 'Inl vmnw wnt';
-    src: url('../font/INLVRG__.eot');
-    src: local('Inl vmnw wnt'),
-    	 url('../font/INLVRG__.TTF') format('truetype');
-
+	font-family: 'Inl vmnw wnt';
+	src: url('../font/INLVRG__.eot');
+	src: local('Inl vmnw wnt'), url('../font/INLVRG__.TTF')
+		format('truetype');
 }
 
 body {
-    background-image: url(../img/background.jpg);
-    background-repeat: no-repeat;
-    background-position: -350px -310px;
-    background-attachment: scroll;
-
-    padding-top: 60px;
-    padding-bottom: 40px;
+	background-image: url(../img/background.jpg);
+	background-repeat: no-repeat;
+	background-position: -350px -310px;
+	background-attachment: scroll;
+	padding-top: 60px;
+	padding-bottom: 40px;
 }
 
-a:link,
-a:visited,
-a:active,
-a:hover {
+a:link, a:visited, a:active, a:hover {
 	text-decoration: none;
 }
 
@@ -27,7 +22,9 @@ a.ui-state-active {
 	outline: 5px auto -webkit-focus-ring-color;
 	outline-offset: -2px;
 	background-color: #f5f5f5;
-}a.ui-state-active:hover {
+}
+
+a.ui-state-active:hover {
 	outline: none;
 }
 
@@ -38,7 +35,7 @@ a.ui-menu-item-wrapper {
 .ui-autocomplete.dropdown-menu:before {
 	/*content: "Values found";*/
 	display: block;
-	color:white;
+	color: white;
 	background-color: #337ab7;
 	border-bottom: 1px solid #2e6da4;
 	box-shadow: 0px 0px 8px #DDD;
@@ -47,117 +44,81 @@ a.ui-menu-item-wrapper {
 	margin-bottom: 5px;
 	margin-top: -5px;
 }
-.dropdown-menu > li > a:active,
-.dropdown-menu > li > a:focus,
-.dropdown-menu > li > a:hover,
-.ui-menu .ui-menu-item .ui-state-hover,
-.ui-menu .ui-menu-item .ui-state-active
- {
+
+.dropdown-menu>li>a:active, .dropdown-menu>li>a:focus, .dropdown-menu>li>a:hover,
+	.ui-menu .ui-menu-item .ui-state-hover, .ui-menu .ui-menu-item .ui-state-active
+	{
 	color: #262626;
 	text-decoration: none;
 	background-color: #ddd;
 }
 
-hr {
-	border-color: #000;
-	opacity: 0.1;
-}
 
 .navbar-logo-container {
 	float: left;
 	height: 1px;
 	overflow: visible;
 	margin-left: 15px;
+	display: none;
 }
 
-@media (min-width: 768px) {
+
+@media ( min-width : 768px) {
 	.navbar-logo-container {
 		margin-right: 15px;
 		margin-left: 0px;
 	}
 }
-@media (max-width: 992px) {
-	.navbar > .container {
+
+@media ( max-width : 992px) {
+	.navbar>.container {
 		width: auto;
 	}
 }
 
 .navbar-logo {
-	width:100px;
-	height:100px;
+	width: 100px;
+	height: 100px;
 	z-index: 9000;
 	background-image: url(../img/logo_100x100.png)
 }
-
+/*
 .navbar-logo-margin {
 	margin-left: 100px !important;
 }
+*/
 
 .navbar-brand {
 	color: #dddddd !important;
 }
 
 .navbar-fixed-top {
-	-webkit-box-shadow: 0 5px 10px rgba(0,0,0,0.2);
-	-moz-box-shadow: 0 5px 10px rgba(0,0,0,0.2);
-	box-shadow: 0 5px 10px rgba(0,0,0,0.2);
-}
-
-.progress-bar {
-	text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
-}
-
-.haspadding {
-	padding: 5px;
+	-webkit-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+	-moz-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+	box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
 }
 
 .tab-content {
 	padding-top: 15px;
 }
 
-.contentbox {
-	background-color: rgba(208,218,228,0.6);
-	border: 1px solid #cccccc;
-	margin-bottom: 20px;
-	padding-top: 20px;
-	padding-bottom: 20px;
-}
-
-.contentbox.row > div[class^="col-"],
-.contentbox.row > div[class*=" col-"] {
-	padding-left: 20px;
-	padding-right: 20px;
-}
-
-div[class^="col-"].contentbox,
-div[class*=" col-"].contentbox {
-	padding-left: 20px;
-	padding-right: 20px;
-}
-
 .modal-fullwidth {
-	width:100%;
-	padding-left:17px;
-	padding-right:17px;
+	width: 100%;
+	padding-left: 17px;
+	padding-right: 17px;
 }
 
-.modal-fullwidth > .modal-dialog {
+.modal-fullwidth>.modal-dialog {
 	margin: 30px auto;
 	width: 100%;
-	max-width:1170px;
+	max-width: 1170px;
 }
 
 /* CodeMirror editor */
 .cm-s-default {
 	border: 1px solid #CCC;
 	border-radius: 4px;
-	box-shadow: inset 0px 1px 1px rgba(0,0,0,0.075);
-}
-
-
-.lightbg {
-	background-color: rgba(255,255,255,0.6);
-	border: 1px solid #cccccc;
+	box-shadow: inset 0px 1px 1px rgba(0, 0, 0, 0.075);
 }
 
 .green {
@@ -165,9 +126,8 @@ div[class*=" col-"].contentbox {
 }
 
 /* article */
-
 div.hitscroll {
-	display:none; /* unhide with js */
+	display: none; /* unhide with js */
 	position: fixed;
 	top: 100px;
 	left: 60%;
@@ -182,19 +142,19 @@ div.hitscroll a {
 	color: #eeeeee;
 }
 
-
 .hl {
 	font-weight: bold;
-    color: #b10932;
+	color: #b10932;
 }
 
 .hl.active {
-    text-decoration: underline;
-    background: #FFF;
+	text-decoration: underline;
+	background: #FFF;
 }
 
 span.word {
-	font-family: "Inl vmnw wnt", "Helvetica Neue", "Helvetica", "Arial,sans-serif";
+	font-family: "Inl vmnw wnt", "Helvetica Neue", "Helvetica",
+		"Arial,sans-serif";
 }
 
 span.p, span.paragraph {
@@ -204,6 +164,7 @@ span.p, span.paragraph {
 
 span.s, span.sentence {
 	/* No special layout (yet) */
+	
 }
 
 /* e.g. TEI lb element (insert line break) */
@@ -213,9 +174,9 @@ span.lb:after, span.line-beginning:after {
 
 /* e.g. TEI pb element (insert horizontal rule) */
 span.pb, span.page-beginning {
-    display: block;
-    border-top: 1px solid black;
-    margin: 10px 0;
+	display: block;
+	border-top: 1px solid black;
+	margin: 10px 0;
 }
 
 .linenumber {
@@ -223,23 +184,10 @@ span.pb, span.page-beginning {
 	font-weight: bold;
 }
 
-/* Single-page */
-
-.no-results-found {
-    padding: 2cm;
-    text-align: center;
-    font-style: italic;
-}
-
 a[data-bls-sort], a.dropdown-toggle {
 	cursor: pointer;
 }
 
-#querybox {
-	width:100%;
-	resize: none;
-	margin-bottom: 10px;
-}
 
 .btn.nohover {
 	cursor: initial;
@@ -247,144 +195,38 @@ a[data-bls-sort], a.dropdown-toggle {
 }
 
 .btn.btn-default.nohover {
-	background-color: white!important;
-	border-color: #ccc!important;
+	background-color: white !important;
+	border-color: #ccc !important;
 }
 
 .btn.btn-info.nohover {
-	background-color: #5bc0de!important;
-	border-color: #46b8da!important;
+	background-color: #5bc0de !important;
+	border-color: #46b8da !important;
 }
 
 .btn.btn-primary.nohover {
-	background-color: #337ab7!important;
-	border-color: #2e6da4!important;
+	background-color: #337ab7 !important;
+	border-color: #2e6da4 !important;
 }
 
 .btn.btn-success.nohover {
-	background-color: #5cb85c!important;
-	border-color: #4cae4c!important;
+	background-color: #5cb85c !important;
+	border-color: #4cae4c !important;
 }
 
 .btn.btn-warning.nohover {
-	background-color: #f0ad4e!important;
-	border-color: #eea236!important;
+	background-color: #f0ad4e !important;
+	border-color: #eea236 !important;
 }
 
 .btn.btn-danger.nohover {
-	background-color: #d9534f!important;
-	border-color: #d43f3a!important;
+	background-color: #d9534f !important;
+	border-color: #d43f3a !important;
 }
 
-#searchContainer, #filterContainer {
-	-webkit-transition: all 0.5s ease;
-    -moz-transition: all 0.5s ease;
-    -o-transition: all 0.5s ease;
-    transition: all 0.5s ease;
-}
-
-#filterContainer > .tab-content {
-	max-height: 500px;
-	overflow-y: auto;
-	overflow-x: hidden; /* required due to negative margin-right of contents causing scrollbar otherwise */
-}
-
-#querybuilder {
-	background-color: rgba(255, 255, 255, 0.7);
-	border-radius: 4px;
-
-	box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
-	border: 1px solid #ccc
-}
-
-#resultTabsContent {
-	/* Important for position of the spinner */
-	position: relative;
-	min-height: 110px;
-}
-
-.searchIndicator {
-	color: white;
-	background-color: rgba(0,0,0,0.25);
-	border-radius: 1000px;
-
-	font-size: 80px;
-	padding: 10px;
-	margin-left: -50px;
-
-	z-index: 1000;
-}
-
-
-#searchFormDiv h3 {
-	font-size: 1.4em;
-}
-
-/* simple search upload buttons */
-.upload-button-container {
-	position: relative;
-}
-.upload-button {
-	position: absolute;
-	overflow: hidden;
-	right: 15px;
-	top: 0px;
-	border-top-left-radius: 0px;
-	border-bottom-left-radius: 0px;
-}
-.upload-button input {
-	position: absolute;
-	left: 0;
-	top: 0;
-	height: 100%;
-	width: 0px;
-	padding-left: 100%;
-	overflow: hidden;
-	opacity: 0;
-	background: transparent;
-	z-index: 2;
-}
 
 table {
 	table-layout: fixed;
 	width: 100%;
 }
 
-/*
-	Minor bootstrap-select overrides.
-	Do not display the select all button,
-	as it causes a massive query to be fired off when used on grouping.
-	This can be removed if https://github.com/silviomoreto/bootstrap-select/issues/1614 is ever fixed
-*/
-
-.bs-select-all {
-	display: none!important;
-}
-.bs-deselect-all {
-	/* pretend we're the only button there */
-	border-radius: 3px!important;
-	width: 100%!important;
-	font-weight: bold;
-}
-.bootstrap-select small.text-muted {
-	padding-left: 0px!important;
-}
-
-/*
-	Some bootstrap tab customization
-*/
-
-.nav-tabs.subtabs {
-	border-bottom: none;
-}
-.nav-tabs.subtabs > li {
-	margin-bottom: 0;
-}
-.nav-tabs.subtabs > li > a {
-	border-radius: 0 0 4px 4px;
-	padding: 4px 15px;
-}
-.nav-tabs.subtabs > li.active > a,
-.nav-tabs.subtabs > li> a:hover {
-	border-color: transparent #ddd #ddd #ddd;
-}

@@ -8,6 +8,8 @@ import 'codemirror/mode/yaml/yaml.js';
 
 import './utils/features/tutorial';
 
+import '@/global.scss';
+
 // Now import the augmented modules (though import order shouldn't matter)
 import CodeMirror from 'codemirror';
 import $ from 'jquery';
@@ -1003,7 +1005,7 @@ function initEditFormat() {
 }
 
 $(document).ready(function() {
-	blsUrl = $('.contentbox').data('blsUrl');
+	blsUrl = $('[data-bls-url]').data('blsUrl');
 
 	// Get the list of corpora.
 	refreshCorporaList();

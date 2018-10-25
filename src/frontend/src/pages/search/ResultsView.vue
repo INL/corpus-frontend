@@ -1,59 +1,53 @@
 <template>
-	<div v-show="active">
+	<div v-show="active" class="results-container">
 		<span v-if="request" class="fa fa-spinner fa-spin searchIndicator" style="position:absolute; left: 50%; top:15px"></span>
 
 		<Totals v-if="results"
+			class="result-totals"
 			:initialResults="results"
 			:type="type"
 			:indexId="indexId"
 		/>
 
-		<div v-show="results || error" class="resultcontrols">
-			<div class="top">
-				<div class="grouping">
-					<div class="groupselect-container">
+		<ol class="breadcrumb resultscrumb">
+			<li v-for="(crumb, index) in breadCrumbs" :class="{'active': crumb.active}" :key="index">
+				<a v-if="!crumb.active" href="#" @click.prevent="crumb.onClick" :title="crumb.title">{{crumb.label}}</a>
+				<template v-else>{{crumb.label}}</template>
+			</li>
+		</ol>
 
-						<SelectPicker v-model="groupBy"
-							multiple
-							class="groupselect"
-							data-size="15"
-							data-actions-box="true"
-							data-deselect-all-text="reset"
-							data-show-subtext="true"
-							data-style="btn-default btn-sm"
+		<div class="groupselect-container">
+			<SelectPicker v-model="groupBy"
+				multiple
+				class="groupselect"
+				data-size="15"
+				data-actions-box="true"
+				data-deselect-all-text="reset"
+				data-show-subtext="true"
+				data-style="btn-default btn-sm"
 
-							:options="optGroups"
-							:escapeLabels="false"
+				:options="optGroups"
+				:escapeLabels="false"
 
-							:title="`Group ${type} by...`"
-						/>
+				:title="`Group ${type} by...`"
+			/>
 
-						<button type="button" class="btn btn-sm btn-default dummybutton">update</button> <!-- dummy button... https://github.com/INL/corpus-frontend/issues/88 -->
-						<div v-if="groupBy && groupBy.length > 0 && !viewGroup" class="checkbox-inline" style="margin-left: 5px;">
-							<label title="Separate groups for differently cased values" style="white-space: nowrap; margin: 0;" :for="uid+'case'"><input type="checkbox" :id="uid+'case'" v-model="caseSensitive">Case sensitive</label>
-						</div>
-					</div>
+			<button type="button" class="btn btn-sm btn-default dummybutton">update</button> <!-- dummy button... https://github.com/INL/corpus-frontend/issues/88 -->
 
-					<div v-if="viewGroup" class="btn btn-sm btn-default nohover viewgroup" >
-						<span class="fa fa-exclamation-triangle text-danger"></span> Viewing group <span class="name">{{viewGroupName || viewGroup}}</span> &mdash; <a class="clear" @click="viewGroup = null">Go back</a>
-					</div>
-
-					<div v-if="results && !!(results.summary.stoppedRetrievingHits && !results.summary.stillCounting)" class="btn btn-sm btn-default nohover toomanyresults">
-						<span class="fa fa-exclamation-triangle text-danger"></span> Too many results! &mdash; your query was limited
-					</div>
-				</div>
-
-				<div class="buttons">
-					<button type="button" class="btn btn-danger btn-sm"  v-if="isDocs && resultsHaveHits"  @click="showDocumentHits = !showDocumentHits">{{showDocumentHits ? 'Hide Hits' : 'Show Hits'}}</button>
-					<button type="button" class="btn btn-danger btn-sm"  v-if="isHits" @click="showTitles = !showTitles">{{showTitles ? 'Hide' : 'Show'}} Titles</button>
-					<button type="button" class="btn btn-default btn-sm" v-if="results" :disabled="downloadInProgress || !resultsHaveData" @click="downloadCsv" :title="downloadInProgress ? 'Downloading...' : undefined"><template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner"></span></template>Export CSV</button>
-				</div>
+			<div v-if="groupBy && groupBy.length > 0 && !viewGroup" class="checkbox-inline" style="margin-left: 5px;">
+				<label title="Separate groups for differently cased values" style="white-space: nowrap; margin: 0;" :for="uid+'case'"><input type="checkbox" :id="uid+'case'" v-model="caseSensitive">Case sensitive</label>
 			</div>
-
-			<Pagination v-if="results" :page="shownPage" :maxPage="maxShownPage" @change="page = $event"/>
 		</div>
 
-		<div v-if="resultsHaveData" class="lightbg haspadding resultcontainer">
+		<div v-if="results && !!(results.summary.stoppedRetrievingHits && !results.summary.stillCounting)" class="btn btn-sm btn-default nohover toomanyresults">
+			<span class="fa fa-exclamation-triangle text-danger"></span> Too many results! &mdash; your query was limited
+		</div>
+
+		<div v-if="results" style="margin: 10px 0px;">
+			<Pagination :page="shownPage" :maxPage="maxShownPage" @change="page = $event"/>
+		</div>
+
+		<template v-if="resultsHaveData">
 			<GroupResults v-if="isGroups"
 				:results="results"
 				:sort="sort"
@@ -76,11 +70,18 @@
 
 				@sort="sort = $event"
 			/>
-		</div>
-		<div v-else class="lightbg haspadding resultcontainer">
-			<template v-if="results"><div class="no-results-found">No results found.</div></template>
-			<template v-else-if="error"><div class="no-results-found">{{error.message}}</div></template>
-		</div>
+
+			<hr>
+
+			<div class="buttons" style="text-align: right;">
+				<button type="button" class="btn btn-danger btn-sm"  v-if="isDocs && resultsHaveHits"  @click="showDocumentHits = !showDocumentHits">{{showDocumentHits ? 'Hide Hits' : 'Show Hits'}}</button>
+				<button type="button" class="btn btn-danger btn-sm"  v-if="isHits" @click="showTitles = !showTitles">{{showTitles ? 'Hide' : 'Show'}} Titles</button>
+				<button type="button" class="btn btn-default btn-sm" v-if="results" :disabled="downloadInProgress || !resultsHaveData" @click="downloadCsv" :title="downloadInProgress ? 'Downloading...' : undefined"><template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner"></span></template>Export CSV</button>
+			</div>
+
+		</template>
+		<template v-else-if="results"><div class="no-results-found">No results found.</div></template>
+		<template v-else-if="error"><div class="no-results-found">{{error.message}}</div></template>
 
 	</div>
 
@@ -345,18 +346,39 @@ export default Vue.extend({
 		isHits() { return BLTypes.isHitResults(this.results); },
 		isDocs() { return BLTypes.isDocResults(this.results); },
 		isGroups() { return BLTypes.isGroups(this.results); },
-		resultsHaveHits() { return this.results != null && this.results.summary.searchParam.patt}
+		resultsHaveHits() { return this.results != null && this.results.summary.searchParam.patt},
+
+		breadCrumbs(): any {
+			const r = [];
+			r.push({
+				label: this.type === 'hits' ? 'Hits' : 'Documents',
+				title: 'Go back to ungrouped results',
+				active: this.groupBy.length === 0,
+				onClick: () => this.groupBy = []
+			});
+			if (this.groupBy.length > 0) {
+				r.push({
+					label: 'Grouped by ' + this.groupBy.toString(),
+					title: 'Go back to grouped results',
+					active: this.viewGroup == null,
+					onClick: () => this.viewGroup = null
+				})
+			}
+			if (this.viewGroup != null) {
+				r.push({
+					label: 'Viewing group ' + (this.viewGroupName || this.viewGroup),
+					title: '',
+					active: true,
+					onClick: () => {}
+				})
+			}
+			return r;
+		}
 	},
 	watch: {
 		watchSettings: {
 			handler(cur, prev) {
 				this.markDirty();
-				if (cur.querySettings !== prev.querySettings && cur.querySettings !== null) {
-					// TODO move to some other place
-					$('html, body').animate({
-						scrollTop: $('.querysummary').offset()!.top - 75 // navbar
-					}, 500);
-				}
 			},
 			deep: true
 		},
@@ -379,93 +401,48 @@ export default Vue.extend({
 
 <style lang="scss">
 
-.resultcontrols {
-	>.top {
-		align-items: flex-start;
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: space-between;
+.groupselect-container {
+	align-items: center;
+	display: inline-flex;
+	flex-wrap: nowrap;
+	margin-bottom: 5px;
+	margin-right: 5px;
+	max-width: 100%;
 
-		>.grouping {
-			display: flex;
-			flex-wrap: wrap;
-			min-width: 220px;
-			margin-right: 5px;
-			max-width: 100%;
+	> .groupselect {
+		flex: 1 1 auto;
+		min-width: 0px!important;
+		width: auto!important;
 
-			>.groupselect-container {
-				align-items: center;
-				align-self: flex-start;
-				display: flex;
-				flex-wrap: nowrap;
-				margin-bottom: 5px;
-				margin-right: 5px;
-
-				> .groupselect {
-					flex: 1 1 auto;
-					min-width: 0px!important;
-					width: auto!important;
-
-					> button {
-						border-top-right-radius: 0px;
-						border-bottom-right-radius: 0px;
-						border-right: 0px;
-					}
-				}
-				>.dummybutton {
-					flex: none;
-					border-top-left-radius: 0px;
-					border-bottom-left-radius: 0px;
-				}
-
-				// li a {
-				// 	text-transform: capitalize;
-				// }
-			}
-			> .viewgroup {
-				align-self: flex-start;
-				border-radius: 100px;
-				margin-right: 5px;
-				margin-bottom: 5px;
-				>.name {
-					font-style: italic;
-					display: inline-block;
-					overflow-x: hidden;
-					margin-bottom: -5px;
-					max-width: 150px;
-					text-overflow: ellipsis;
-					padding-right: 1px; /* :after quote gets cut off sometimes due to overflow-hidden */
-
-					:before,
-					:after {
-						content: "'";
-					}
-				}
-				>.clear {
-					font-weight: 700;
-					text-decoration: underline!important;
-					padding-left: 2px;
-				}
-			}
-			> .toomanyresults {
-				align-self: flex-start;
-				border-radius: 100px;
-				margin-right: 5px;
-				margin-bottom: 5px;
-			}
+		> button {
+			border-top-right-radius: 0px;
+			border-bottom-right-radius: 0px;
+			border-right: 0px;
 		}
+	}
+	>.dummybutton {
+		flex: none;
+		border-top-left-radius: 0px;
+		border-bottom-left-radius: 0px;
+	}
+}
 
-		>.buttons {
-			flex: 0 1000 auto;
-			font-size: 0;
-			> button {
-				margin-bottom: 5px;
-				margin-left: 5px;
-			}
-			> button:first-child {
-				margin-left: 0px;
-			}
-		}
+.toomanyresults {
+	align-self: flex-start;
+	border-radius: 100px;
+	margin-right: 5px;
+	margin-bottom: 5px;
+}
+
+.buttons {
+	flex: 0 1000 auto;
+	font-size: 0;
+	> button {
+		margin-bottom: 5px;
+		margin-left: 5px;
+	}
+	> button:first-child {
+		margin-left: 0px;
 	}
 }
 
@@ -477,8 +454,19 @@ export default Vue.extend({
 	color: #777;
 }
 
-.resultcontainer {
-	margin-top: 5px;
+.breadcrumb.resultscrumb {
+	background: white;
+	border-bottom: 1px solid rgba(0,0,0,0.1);
+	border-radius: 0;
+	margin: 0 -15px 15px;
+	padding: 12px 15px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	&:hover {
+		// Pop in front of totals counter
+		z-index: 2;
+		position: relative;
+	}
 }
 
 .table {
@@ -492,22 +480,41 @@ td {
 
 th {
 	text-align: left;
-	background-color: #ffffff;
-	border-bottom: 1px solid #aaaaaa;
-}
-
-.well-light {
-	background: rgba(255,255,255,0.8);
-	border: 1px solid #e8e8e8;
-	border-radius: 4px;
-	box-shadow: inset 0 1px 2px 0px rgba(0,0,0,0.1);
-	margin-bottom: 8px;
-	padding: 8px
+	background-color: white;
+	border-bottom: 1px solid #aaa;
+	padding-bottom: 5px;
 }
 
 a.clear,
 a.sort {
 	cursor: pointer;
+}
+
+.result-totals {
+	position: absolute;
+	right: -15px;
+	top: 0;
+	background: white;
+	padding: 8px 8px 15px 15px;
+
+	&:hover {
+		z-index: -2;
+	}
+
+	&:before {
+		content: "";
+		display: block;
+		position: absolute;
+		height: 100%;
+		width: 50px;
+		left: -50px;
+		top: 0;
+		background: linear-gradient(to right, #fff0 0%, #ffff 100%);
+	}
+}
+
+.results-container {
+	position: relative;
 }
 
 </style>

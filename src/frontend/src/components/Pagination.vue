@@ -1,7 +1,10 @@
 <template>
 	<ul class="pagination pagination-sm">
-		<li :class="['prev', {'disabled': !prevEnabled}]">
-			<span title="previous" @click.prevent="changePage(page-1)">&laquo;</span>
+		<li :class="['first', {'disabled': !prevEnabled}]">
+			<span title="first" @click.prevent="changePage(minPage)">&laquo;</span>
+		</li>
+		<li v-if="prevEnabled" :class="['prev', {'disabled': !prevEnabled}]">
+			<span title="previous" @click.prevent="changePage(page-1)">&lsaquo;</span>
 		</li>
 		<li v-for="i in lowerPages" :key="i">
 			<span @click.prevent="changePage(i)">{{i+1}}</span>
@@ -26,8 +29,11 @@
 		<li v-for="i in higherPages" :key="i">
 			<span @click.prevent="changePage(i)">{{i+1}}</span>
 		</li>
-		<li :class="['next', {'disabled': !nextEnabled}]">
-			<span title="next" @click.prevent="changePage(page+1)">&raquo;</span>
+		<li v-if="nextEnabled" :class="['next', {'disabled': !nextEnabled}]">
+			<span title="next" @click.prevent="changePage(page+1)">&rsaquo;</span>
+		</li>
+		<li :class="['last', {'disabled': !nextEnabled}]">
+			<span title="last" @click.prevent="changePage(maxPage)">&raquo;</span>
 		</li>
 	</ul>
 </template>
@@ -63,7 +69,7 @@ export default Vue.extend({
 		},
 		prevEnabled(): boolean {
 			return this.page > this.minPage;
-		}
+		},
 	},
 	methods: {
 		calcOffsets(range: number) {
@@ -162,11 +168,17 @@ export default Vue.extend({
 				}
 			}
 		}
+		&.first,
+		&.prev,
 		&.next,
-		&.prev {
+		&.last {
 			> span {
 				padding-left: 6px;
 				padding-right: 6px;
+				box-sizing: content-box;
+				width: 6px;
+				text-align: center;
+				font-weight: bold;
 			}
 		}
 	}

@@ -235,26 +235,6 @@ export default Vue.extend({
 			.then(s => citation.citation = snippetParts(s, this.firstMainAnnotation.id))
 			.catch(e => citation.error = e.message)
 			.finally(() => citation.loading = false);
-
-			// TODO use api
-			// fetch(`${BLS_URL}docs/${row.docPid}/snippet?${qs.stringify({hitstart: row.start, hitend: row.end, wordsaroundhit: 50})}`, {
-			// 	headers: {
-			// 		'Accept': 'application/json'
-			// 	},
-			// 	cache: 'force-cache'
-			// })
-			// .then(r => {
-			// 	if (r.ok) {
-			// 		return r.json();
-			// 	} else {
-			// 		throw new Error(`Could not fetch citation: ${r.statusText}`);
-			// 	}
-			// }, e => { debugLog(e); throw new Error(`Could not fetch citation: ${e.message}`); })
-			// .then(
-			// 	r => citation.citation = snippetParts(r, this.firstMainAnnotation.id),
-			// 	e => citation.error = e.message
-			// )
-			// .finally(() => citation.loading = false);
 		}
 	},
 	watch: {
@@ -297,7 +277,7 @@ tr {
 	cursor: pointer;
 	> td {
 		padding: 0px 5px;
-		transition: all 0.1s;
+		transition: padding 0.1s;
 	}
 
 	&.open {

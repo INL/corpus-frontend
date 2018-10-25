@@ -252,6 +252,14 @@ export default Vue.extend({
 	}
 }
 
+.well-light {
+	background: rgba(255,255,255,0.8);
+	border: 1px solid #e8e8e8;
+	border-radius: 4px;
+	box-shadow: inset 0 1px 2px 0px rgba(0,0,0,0.1);
+	margin-bottom: 8px;
+	padding: 8px
+}
 
 </style>
 

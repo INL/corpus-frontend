@@ -88,4 +88,65 @@ export default Vue.extend({
 .subtabs {
 	margin-top: -15px;
 }
+
+#querybox {
+	width: 100%;
+	resize: none;
+	margin-bottom: 10px;
+}
+
+
+#querybuilder {
+	background-color: rgba(255, 255, 255, 0.7);
+	border-radius: 4px;
+	box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+	border: 1px solid #ccc
+}
+
+
+/* simple search upload buttons */
+.upload-button-container {
+	position: relative;
+}
+
+.upload-button {
+	position: absolute;
+	overflow: hidden;
+	right: 15px;
+	top: 0px;
+	border-top-left-radius: 0px;
+	border-bottom-left-radius: 0px;
+}
+
+.upload-button input {
+	position: absolute;
+	left: 0;
+	top: 0;
+	height: 100%;
+	width: 0px;
+	padding-left: 100%;
+	overflow: hidden;
+	opacity: 0;
+	background: transparent;
+	z-index: 2;
+}
+
+// Some bootstrap tab customization
+.nav-tabs.subtabs {
+	border-bottom: none;
+}
+
+.nav-tabs.subtabs>li {
+	margin-bottom: 0;
+}
+
+.nav-tabs.subtabs>li>a {
+	border-radius: 0 0 4px 4px;
+	padding: 4px 15px;
+}
+
+.nav-tabs.subtabs>li.active>a, .nav-tabs.subtabs>li>a:hover {
+	border-color: transparent #ddd #ddd #ddd;
+}
+
 </style>

@@ -1,15 +1,13 @@
 <template>
 	<div>
-		<div class="col-xs-12">
-			<ul id="resultTabs" class="nav nav-tabs">
-				<li :class="[{'active': viewedResults === 'hits'}]"><a href="javascript:void(0);" @click="showHits">Per Hit</a></li>
-				<li :class="[{'active': viewedResults === 'docs'}]"><a href="javascript:void(0);" @click="showDocs">Per Document</a></li>
-			</ul>
+		<ul id="resultTabs" class="nav nav-tabs cf-panel-tab-header">
+			<li :class="[{'active': viewedResults === 'hits'}]"><a href="javascript:void(0);" @click="showHits">Per Hit</a></li>
+			<li :class="[{'active': viewedResults === 'docs'}]"><a href="javascript:void(0);" @click="showDocs">Per Document</a></li>
+		</ul>
 
-			<div class="tab-content">
-				<results-view type="hits"/>
-				<results-view type="docs"/>
-			</div>
+		<div class="tab-content cf-panel-tab-body" style="padding-top: 0px;">
+			<results-view type="hits"/>
+			<results-view type="docs"/>
 		</div>
 	</div>
 </template>
@@ -42,7 +40,5 @@ export default Vue.extend({
 });
 </script>
 
-<style lang="scss">
-
-
+<style lang="scss" scoped>
 </style>

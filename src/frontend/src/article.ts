@@ -1,6 +1,8 @@
 import 'bootstrap';
 import $ from 'jquery';
 
+import '@/global.scss';
+
 // Article-related functions.
 // Takes care of tooltips and highlighting/scrolling to anchors.
 

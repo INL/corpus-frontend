@@ -5,7 +5,6 @@ import $ from 'jquery';
 import Vue from 'vue';
 
 import '@/utils/features/autocomplete';
-import '@/utils/features/tutorial';
 
 import {QueryBuilder} from '@/modules/cql_querybuilder';
 import {store, init as initStore, UrlPageState} from '@/store';
@@ -18,6 +17,8 @@ import SearchPageComponent from '@/pages/search/SearchPage.vue';
 
 import * as AppTypes from '@/types/apptypes';
 import * as BLTypes from '@/types/blacklabtypes';
+
+import '@/global.scss';
 
 declare const SINGLEPAGE: {INDEX: BLTypes.BLIndexMetadata};
 

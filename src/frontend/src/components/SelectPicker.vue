@@ -86,5 +86,27 @@ export default Vue.extend({
 
 </script>
 
-<style>
+<style lang="scss">
+
+/*
+	Minor bootstrap-select overrides.
+	Do not display the select all button,
+	as it causes a massive query to be fired off when used on grouping.
+	This can be removed if https://github.com/silviomoreto/bootstrap-select/issues/1614 is ever fixed
+*/
+.bs-select-all {
+	display: none !important;
+}
+
+.bs-deselect-all {
+	/* pretend we're the only button there */
+	border-radius: 3px !important;
+	width: 100% !important;
+	font-weight: bold;
+}
+
+.bootstrap-select small.text-muted {
+	padding-left: 0px !important;
+}
+
 </style>

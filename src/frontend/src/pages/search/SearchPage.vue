@@ -1,8 +1,8 @@
 <template>
 	<div class="container">
 
-		<SearchForm class="row cf-panel" id="mainForm"/>
-		<QuerySummary v-if="viewedResults" class="cf-panel" id="summary"/>
+		<SearchForm class="row cf-panel cf-panel-lg" id="mainForm"/>
+		<QuerySummary v-if="viewedResults" class="cf-panel cf-panel-lg" id="summary"/>
 		<Results v-show="viewedResults" id="results"/>
 
 		<!-- TODO -->

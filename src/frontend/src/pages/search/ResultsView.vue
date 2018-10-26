@@ -32,7 +32,7 @@
 				:title="`Group ${type} by...`"
 			/>
 
-			<button type="button" class="btn btn-sm btn-default dummybutton">update</button> <!-- dummy button... https://github.com/INL/corpus-frontend/issues/88 -->
+			<button type="button" class="btn btn-sm btn-default dummybutton" @click="viewGroup = null">update</button> <!-- dummy button... https://github.com/INL/corpus-frontend/issues/88 -->
 
 			<div v-if="groupBy && groupBy.length > 0 && !viewGroup" class="checkbox-inline" style="margin-left: 5px;">
 				<label title="Separate groups for differently cased values" style="white-space: nowrap; margin: 0;" :for="uid+'case'"><input type="checkbox" :id="uid+'case'" v-model="caseSensitive">Case sensitive</label>
@@ -164,6 +164,9 @@ export default Vue.extend({
 		showTitles: true,
 		showDocumentHits: false,
 		downloadInProgress: false, // csv download
+
+		// Should we scroll when next results arrive - set when main form submitted
+		scroll: true,
 	}),
 	methods: {
 		markDirty() {
@@ -199,7 +202,17 @@ export default Vue.extend({
 			this.request = r.request;
 			this.cancel = r.cancel;
 
-			this.request.then(this.setSuccess, this.setError);
+			this.request
+			.then(this.setSuccess, this.setError)
+			.finally(() => {
+				if (this.scroll) {
+					this.scroll = false;
+					window.scroll({
+						behavior: 'smooth',
+						top: this.$el.offsetTop - 150
+					})
+				}
+			})
 			onSearchUpdated(this.type, params);
 		},
 		setSuccess(data: BLTypes.BLSearchResult) {
@@ -269,6 +282,9 @@ export default Vue.extend({
 				querySettings: query.get.lastSubmittedParameters()
 			}
 		},
+
+		// just to know when we should initiate a scroll event
+		querySettings() { return query.get.lastSubmittedParameters(); },
 
 		// Calculated fields
 		optGroups(): OptGroup[] {
@@ -394,7 +410,11 @@ export default Vue.extend({
 				}
 			},
 			immediate: true
-		}
+		},
+
+		querySettings() {
+			this.scroll = true;
+		},
 	}
 });
 </script>

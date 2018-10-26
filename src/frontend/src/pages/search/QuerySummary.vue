@@ -1,12 +1,11 @@
 <template>
-	<div class="querysummary">
+	<div class="querysummary" ref="root">
 		Results for: <span class="small text-muted content" :title="summary">{{summary.substr(0, 1000)}}</span>
 	</div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
-import $ from 'jquery';
 
 import * as formStore from '@/store/form'
 
@@ -18,12 +17,6 @@ export default Vue.extend({
 			return getQuerySummary(formStore.get.lastSubmittedParameters())
 		}
 	},
-
-	updated() {
-		$('html, body').animate({
-			scrollTop: $('.querysummary').offset()!.top - 75 // navbar
-		}, 500);
-	}
 })
 </script>
 

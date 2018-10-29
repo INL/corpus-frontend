@@ -36,8 +36,12 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 
 		switch (field.uiType) {
 			case 'select': return field.valueListComplete ? 'select' : 'combobox';
-			case 'combobox': return 'combobox';
-			case 'range': return 'range';
+			case 'combobox':
+			case 'range':
+				return field.uiType;
+			case 'checkbox':
+			case 'radio':
+				return field.valueListComplete ? field.uiType : 'combobox';
 			default: return 'text';
 		}
 	}
@@ -66,7 +70,7 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 			groupId: findMetadataGroup(field),
 			id: field.fieldName,
 			uiType: normalizeMetadataUIType(field),
-			values: normalizeMetadataUIType(field) === 'select' ? Object.keys(field.fieldValues).map(value => {
+			values: ['select', 'checkbox', 'radio'].includes(normalizeMetadataUIType(field)) ? Object.keys(field.fieldValues).map(value => {
 				return {
 					value,
 					label: field.displayValues[value] != null ? field.displayValues[value] : value

@@ -21,6 +21,9 @@ export type BlacklabParameters = {
 	sort?: string;
 	/* Also return results within this specific group (only when 'group' specified) */
 	viewgroup?: string;
+
+	// additionals that aren't used often
+	includetokencount?: boolean;
 };
 
 // --------------
@@ -183,7 +186,7 @@ export interface BLMetadataField {
 	};
 	isAnnotatedField: boolean;
 	type: 'TOKENIZED'|'UNTOKENIZED'|'NUMERIC';
-	uiType: string|'select'|'range'|'combobox'|'text';
+	uiType: string|'select'|'range'|'combobox'|'text'|'checkbox'|'radio';
 	/** Internal blacklab property: when the unknownValue is used as the value for a document where the metadata for this field was unknown when indexing */
 	unknownCondition: 'NEVER'|'MISSING'|'EMPTY'|'MISSING_OR_EMPTY';
 	/** Internal blacklab property: what default value is substituted during indexing for document that are missing this metadata (depending on unknownCondition) */
@@ -259,7 +262,7 @@ export type BLSearchSummarySampleSettings = {} | {
 	sampleSize: number;
 };
 
-export interface BLSearchSummaryTotals {
+export interface BLSearchSummaryTotalsHits {
 	/* -1 if some error occured */
 	numberOfDocs: number;
 	numberOfDocsRetrieved: number;
@@ -269,6 +272,13 @@ export interface BLSearchSummaryTotals {
 	stillCounting: boolean;
 	stoppedCountingHits: boolean;
 	stoppedRetrievingHits: boolean;
+}
+
+export interface BLSearchSummaryTotalsDocs {
+	/** -1 if some error occured */
+	numberOfDocs: number;
+	numberOfDocsRetrieved: number;
+	stillCounting: boolean;
 }
 
 export interface BlSearchSummaryGroupInfo {
@@ -291,6 +301,8 @@ export type BLSearchSummary = {
 	requestedWindowSize: number;
 	searchParam: BlacklabParameters;
 	searchTime: number;
+	/** Only available when request was sent with includetokencount: true */
+	tokensInMatchingDocuments?: number;
 	windowFirstResult: number;
 	windowHasNext: boolean;
 	windowHasPrevious: boolean;
@@ -306,13 +318,13 @@ export interface GroupResult {
 /** Blacklab response for a query for hits with grouping enabled */
 export interface BLHitGroupResults {
 	hitGroups: GroupResult[];
-	summary: BLSearchSummary & BlSearchSummaryGroupInfo & BLSearchSummaryTotals;
+	summary: BLSearchSummary & BlSearchSummaryGroupInfo & BLSearchSummaryTotalsHits;
 }
 
 /** Blacklab response for a query for documents with grouping enabled */
 export interface BLDocGroupResults {
 	docGroups: GroupResult[];
-	summary: BLSearchSummary & BlSearchSummaryGroupInfo & BLSearchSummaryTotals;
+	summary: BLSearchSummary & BlSearchSummaryGroupInfo & BLSearchSummaryTotalsDocs;
 }
 
 /** Contains a hit's tokens, deconstructed into the individual annotations/properties, such as lemma, pos, word, always contains punctuation in between tokens */
@@ -345,7 +357,7 @@ export interface BLDocResults {
 		/* Only when query was performed with a cql pattern */
 		snippets?: BLHitSnippet[];
 	}>;
-	summary: BLSearchSummary & BLSearchSummaryTotals;
+	summary: BLSearchSummary & BLSearchSummaryTotalsDocs;
 }
 
 /** Blacklab response to a query for hits without grouping */
@@ -358,7 +370,7 @@ export interface BlHitResults {
 		end: number;
 		start: number;
 	} & BLHitSnippet>;
-	summary: BLSearchSummary & BLSearchSummaryTotals;
+	summary: BLSearchSummary & BLSearchSummaryTotalsHits;
 }
 
 export type BLSearchResult = BlHitResults|BLDocResults|BLHitGroupResults|BLDocGroupResults;

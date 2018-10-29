@@ -156,7 +156,8 @@ const init = (index: NormalizedIndex) => {
 				m.uiType === 'select' ? [] :
 				m.uiType === 'combobox' ? [] :
 				m.uiType === 'range' ? ['',''] :
-				[''] // normal text
+				m.uiType === 'checkbox' ? [] :
+				[''] // normal text, radio
 		});
 	});
 

@@ -23,7 +23,7 @@
 
 		<div class="row">
 			<div class="col-xs-8 form-horizontal">
-				<FilterOverview/>
+				<FilterOverview type="docs" :indexId="indexId"/>
 			</div>
 		</div>
 	</div>
@@ -47,7 +47,8 @@ export default Vue.extend({
 		tabs: corpus.get.metadataGroups,
 		useTabs() {
 			return this.tabs.length > 1;
-		}
+		},
+		indexId() { return corpus.getState().id }
 	},
 	methods: {
 		getTabId(name: string) {

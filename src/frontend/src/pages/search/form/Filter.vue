@@ -4,7 +4,7 @@
 		:id="id"
 		:data-filterfield-type="uiType"
 	>
-		<label class="col-xs-12" :for="inputId">{{displayName}}</label>
+		<label class="col-xs-12" :for="(uiType === 'select' || uiType === 'text') ? inputId : undefined">{{displayName}}</label>
 
 		<template v-if="uiType === 'select'">
 			<div class="col-xs-12">
@@ -30,7 +30,39 @@
 				<input type="text" :id="inputId+'_upper'" placeholder="To" class="form-control" autocomplete="off" v-model="value[1]">
 			</div>
 		</template>
-		<template v-else>
+		<template v-else-if="uiType === 'checkbox'">
+			<div class="col-xs-12">
+				 <div class="checkbox" v-for="(option, index) in options" :key="index">
+					<!-- TODO optimize this, currently rewriting all values, ergo rerendering all checkboxes every time one changes -->
+					<label :for="inputId+'_'+index"><input
+						type="checkbox"
+						:checked="value.includes(option.value)"
+						:value="option.value"
+						:name="inputId+'_'+index"
+						:id="inputId+'_'+index"
+						@change="value = $event.target.checked ? value.concat([option.value]) : value.filter(v => v !== option.value)"
+
+					> {{option.label || option.value}}</label>
+				</div>
+			</div>
+		</template>
+		<template v-else-if="uiType === 'radio'">
+			<div class="col-xs-12">
+				 <div class="radio" v-for="(option, index) in options" :key="index">
+					<!-- TODO optimize this, currently rewriting all values, ergo rerendering all checkboxes every time one changes -->
+					<label :for="inputId+'_'+index"><input
+						type="radio"
+						:value="option.value"
+						:name="inputId"
+						:id="inputId+'_'+index"
+
+						v-model="value[0]"
+						@click="$event.target.checked ? value = [''] : undefined /* clear if clicked again */"
+					> {{option.label || option.value}}</label>
+				</div>
+			</div>
+		</template>
+		<template v-else> <!-- should always be uiType === 'text' -->
 			<div class="col-xs-12">
 				<input
 					type="text"
@@ -66,7 +98,7 @@ export default Vue.extend({
 	computed: {
 		id(): string { return this.filter.id },
 		displayName(): string { return this.filter.displayName },
-		uiType(): string { return this.filter.uiType; },
+		uiType(): CorpusStore.NormalizedMetadataField['uiType'] { return this.filter.uiType; },
 
 		inputId(): string { return this.filter.id + '_value'; },
 
@@ -89,18 +121,14 @@ export default Vue.extend({
 			}
 		}
 	},
-
-	// beforeMount() {
-	// 	switch (this.filter.uiType ) {
-	// 		case 'range': this.value = ['','']; break;
-	// 		case 'combobox': this.value = []; break;
-	// 		case 'select': this.value = []; break;
-	// 		default: this.value = [''];
-	// 	}
-	// }
 });
 </script>
 
 <style lang="scss">
+
+.clear-button {
+	margin-left: 20px;
+	margin-top: 7px;
+}
 
 </style>

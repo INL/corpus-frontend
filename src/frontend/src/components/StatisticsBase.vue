@@ -6,7 +6,6 @@ import * as Api from '@/api';
 
 import * as BLTypes from '@/types/blacklabtypes';
 
-
 const default_delay = 1000;
 
 export default Vue.extend({
@@ -60,7 +59,7 @@ export default Vue.extend({
 	}),
 	methods: {
 		/** Whether to start a new request based on the current results and parameters */
-		isDone(): boolean { return false; },
+		isDone(): boolean { return !(this.results || this.initialParams); },
 		getNextRequestParams(): BLTypes.BlacklabParameters { return this.initialParams || this.initialResults.summary.searchParam; },
 		/** Get delay in ms until next request is started */
 		getDelay(): number { return default_delay; },
@@ -68,7 +67,12 @@ export default Vue.extend({
 		// Above methods should probably be overridden
 
 		start() {
+			// TODO is broken in some subtle way when cancelling and restarting often
+			// use rxjs.
 			const self = this; // TODO there is something weird going on with context here
+			if (self.isDone()) {
+				return;
+			}
 
 			if (self.cancel == null && self.nextRequest == null) {
 				const apiCall = (self.type === 'docs') ? Api.blacklab.getDocs : Api.blacklab.getHits;

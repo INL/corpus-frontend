@@ -37,7 +37,7 @@ export default StatisticsBaseComponents.extend({
 	computed: {
 		pageCount(): number { return Math.ceil(this.resultCount / this.initialResults.summary.searchParam.number); },
 		isCounting(): boolean { return this.error == null && this.results!.summary.stillCounting; },
-		tooManyResults(): boolean { return this.results!.summary.stoppedCountingHits; },
+		tooManyResults(): boolean { return (this.results!.summary as any).stoppedCountingHits; }, // if property missing, not too many results? TODO clarify these stopped/still variables with Jan and document in type.
 		resultType(): string {
 			if (BLTypes.isGroups(this.results)) {
 				return 'groups';

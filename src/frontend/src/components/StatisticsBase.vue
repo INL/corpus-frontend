@@ -11,7 +11,7 @@ const default_delay = 1000;
 export default Vue.extend({
 	props: {
 		initialParams: {
-			type: Object as () => BLTypes.BlacklabParameters,
+			type: Object as () => BLTypes.BLSearchParameters,
 			required: false,
 		},
 		initialResults: {
@@ -30,7 +30,7 @@ export default Vue.extend({
 	watch: {
 		initialParams: {
 			immediate: true,
-			handler(newValue: null|BLTypes.BlacklabParameters) {
+			handler(newValue: null|BLTypes.BLSearchParameters) {
 				this.stop();
 				this.results = null;
 				if (!this.isDone()) {
@@ -60,7 +60,7 @@ export default Vue.extend({
 	methods: {
 		/** Whether to start a new request based on the current results and parameters */
 		isDone(): boolean { return !(this.results || this.initialParams); },
-		getNextRequestParams(): BLTypes.BlacklabParameters { return this.initialParams || this.initialResults.summary.searchParam; },
+		getNextRequestParams(): BLTypes.BLSearchParameters { return this.initialParams || this.initialResults.summary.searchParam; },
 		/** Get delay in ms until next request is started */
 		getDelay(): number { return default_delay; },
 

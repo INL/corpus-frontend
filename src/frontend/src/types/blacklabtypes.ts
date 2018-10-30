@@ -1,7 +1,5 @@
-// import { BlacklabParameters } from '@/modules/singlepage-bls';
-
 /** BlackLab query parameters. Is a stricter subset of query parameters blacklab accepts. */
-export type BlacklabParameters = {
+export type BLSearchParameters = {
 	/* Number of results to request */
 	number: number;
 	/* Index of first result to request */
@@ -186,6 +184,7 @@ export interface BLMetadataField {
 	};
 	isAnnotatedField: boolean;
 	type: 'TOKENIZED'|'UNTOKENIZED'|'NUMERIC';
+	/** All the types we support are listed here, though the types are user-defined so in anything can show up. */
 	uiType: string|'select'|'range'|'combobox'|'text'|'checkbox'|'radio';
 	/** Internal blacklab property: when the unknownValue is used as the value for a document where the metadata for this field was unknown when indexing */
 	unknownCondition: 'NEVER'|'MISSING'|'EMPTY'|'MISSING_OR_EMPTY';
@@ -281,7 +280,7 @@ export interface BLSearchSummaryTotalsDocs {
 	stillCounting: boolean;
 }
 
-export interface BlSearchSummaryGroupInfo {
+export interface BLSearchSummaryGroupInfo {
 	largestGroupSize: number;
 	numberOfGroups: number;
 }
@@ -299,7 +298,7 @@ export type BLSearchSummary = {
 		titleField: string;
 	};
 	requestedWindowSize: number;
-	searchParam: BlacklabParameters;
+	searchParam: BLSearchParameters;
 	searchTime: number;
 	/** Only available when request was sent with includetokencount: true */
 	tokensInMatchingDocuments?: number;
@@ -309,7 +308,7 @@ export type BLSearchSummary = {
 } & BLSearchSummarySampleSettings;
 
 /** Single group of either hits or documents */
-export interface GroupResult {
+export interface BLGroupResult {
 	identity: string;
 	identityDisplay: string;
 	size: number;
@@ -317,14 +316,14 @@ export interface GroupResult {
 
 /** Blacklab response for a query for hits with grouping enabled */
 export interface BLHitGroupResults {
-	hitGroups: GroupResult[];
-	summary: BLSearchSummary & BlSearchSummaryGroupInfo & BLSearchSummaryTotalsHits;
+	hitGroups: BLGroupResult[];
+	summary: BLSearchSummary & BLSearchSummaryGroupInfo & BLSearchSummaryTotalsHits;
 }
 
 /** Blacklab response for a query for documents with grouping enabled */
 export interface BLDocGroupResults {
-	docGroups: GroupResult[];
-	summary: BLSearchSummary & BlSearchSummaryGroupInfo & BLSearchSummaryTotalsDocs;
+	docGroups: BLGroupResult[];
+	summary: BLSearchSummary & BLSearchSummaryGroupInfo & BLSearchSummaryTotalsDocs;
 }
 
 /** Contains a hit's tokens, deconstructed into the individual annotations/properties, such as lemma, pos, word, always contains punctuation in between tokens */
@@ -361,7 +360,7 @@ export interface BLDocResults {
 }
 
 /** Blacklab response to a query for hits without grouping */
-export interface BlHitResults {
+export interface BLHitResults {
 	docInfos: {
 		[key: string]: BLDocInfo;
 	};
@@ -373,10 +372,12 @@ export interface BlHitResults {
 	summary: BLSearchSummary & BLSearchSummaryTotalsHits;
 }
 
-export type BLSearchResult = BlHitResults|BLDocResults|BLHitGroupResults|BLDocGroupResults;
+export type BLSearchResult = BLHitResults|BLDocResults|BLHitGroupResults|BLDocGroupResults;
 
-export const isHitResults = (d: any): d is BlHitResults => d && d.docInfos && d.hits;
+export const isHitResults = (d: any): d is BLHitResults => d && d.docInfos && d.hits;
 export const isDocResults = (d: any): d is BLDocResults => d && d.docs;
 export const isHitGroups = (d: any): d is BLHitGroupResults => d && d.hitGroups;
 export const isDocGroups = (d: any): d is BLDocGroupResults => d && d.docGroups;
+export const isHitGroupsOrResults = (d: any): d is BLHitResults|BLHitGroupResults => isHitGroups(d) || isHitResults(d);
+export const isDocGroupsOrResults = (d: any): d is BLDocResults|BLDocGroupResults => isDocGroups(d) || isDocResults(d);
 export const isGroups = (d: any): d is BLHitGroupResults|BLDocGroupResults => isHitGroups(d) || isDocGroups(d);

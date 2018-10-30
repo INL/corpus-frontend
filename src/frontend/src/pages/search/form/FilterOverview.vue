@@ -4,13 +4,14 @@
 			<span v-for="filter in filters" :key="filter.id">{{filter.displayName}}: <i>{{filter.values.join(', ')}}</i>&nbsp;</span>
 		</span>
 		<div class="text-muted text-small sub-corpus-size">
-			<template v-if="results && isDone">
-				Total documents: {{results.summary.numberOfDocs}}<br>
-				Total tokens: {{results.summary.tokensInMatchingDocuments}}
+			<template v-if="subCorpusStats">
+				Selected subcorpus:<br>
+				Total documents: {{subCorpusStats.summary.numberOfDocs}}<br>
+				Total tokens: {{subCorpusStats.summary.tokensInMatchingDocuments}}
 			</template>
 			<template v-else>
-				<span class="fa fa-spinner fa-spin searchIndicator totals-spinner"></span><!-- todo -->
-				Calculating number of documents...
+				<span class="fa fa-spinner fa-spin searchIndicator totals-spinner"></span><!-- todo spinner classes -->
+				Calculating size of selected subcorpus...
 			</template>
 		</div>
 	</div>
@@ -24,7 +25,7 @@ import StatisticsBaseComponent from '@/components/StatisticsBase.vue';
 import * as formStore from '@/store/form';
 import * as corpusStore from '@/store/corpus';
 
-import {getFilterString} from '@/modules/singlepage-bls';
+import { selectedSubCorpus$ } from '@/store/streams';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
@@ -35,7 +36,10 @@ type ExtendedFilter = {
 	displayName: string;
 }
 
-export default StatisticsBaseComponent.extend({
+export default Vue.extend({
+	subscriptions: {
+		subCorpusStats: selectedSubCorpus$ // yield the search results
+	},
 	computed: {
 
 		// whatever, this will be cached.
@@ -66,30 +70,6 @@ export default StatisticsBaseComponent.extend({
 			})
 		},
 	},
-	methods: {
-		isDone(): boolean {
-			return this.filters.length === 0 || (this.results != null && !this.results.summary.stillCounting)
-		},
-		getNextRequestParams(): BLTypes.BlacklabParameters {
-			return {
-				number: 0,
-				first: 0,
-				filter: getFilterString({
-					pattern: null,
-					filters: formStore.get.activeFilters()
-				}),
-				includetokencount: true
-			}
-		}
-	},
-	watch: {
-		// TODO debounce & delay
-		filters() {
-			this.results = null;
-			this.stop();
-			this.start();
-		}
-	}
 });
 
 </script>

@@ -11,7 +11,7 @@
 				<td>{{identityDisplay || '[unknown]'}}</td>
 				<td>
 					<div class="progress group-size-indicator" @click="openPreviewConcordances(identity)">
-						<div :class="['progress-bar', displayClass]" :style="[{'min-width': width(size)}]">{{size}}</div>
+						<div :class="['progress-bar', displayClass]" :style="[{'min-width': width(size)}]">{{size}} {{relativeSize(size)}}</div>
 					</div>
 
 					<!-- todo spinner, disable loading more, etc -->
@@ -55,17 +55,6 @@
 									</tr>
 								</tbody>
 							</table>
-
-							<!--
-							<div class="clearfix" style="border-bottom:1px solid #ddd;">
-								<div class="col-xs-10"><strong>Document</strong></div>
-								<div class="col-xs-2"><strong>Hits</strong></div>
-							</div>
-							<div v-for="(conc, index) in concordances[identity].concordances" :key="index" class="clearfix concordance">
-								<div class="col-xs-10"><a :href="conc.href" target="_blank">{{conc.title}}</a></div>
-								<div class="col-xs-2"><strong>{{conc.hits}}</strong></div>
-							</div>
-							-->
 						</template>
 					</div>
 				</td>
@@ -77,13 +66,11 @@
 <script lang="ts">
 import Vue from 'vue';
 
-import * as BLTypes from '@/types/blacklabtypes';
-
 import * as corpusStore from '@/store/corpus';
-import {snippetParts, getDocumentUrl} from '@/utils';
 import * as Api from '@/api';
+import {snippetParts, getDocumentUrl} from '@/utils';
 
-import * as bls from '@/modules/singlepage-bls';
+import * as BLTypes from '@/types/blacklabtypes';
 
 export default Vue.extend({
 	props: {
@@ -95,7 +82,7 @@ export default Vue.extend({
 		concordances: {} as {
 			[key: string]: {
 				available: number;
-				request: null|Promise<BLTypes.BlHitResults|BLTypes.BLDocResults>;
+				request: null|Promise<BLTypes.BLHitResults|BLTypes.BLDocResults>;
 				open: boolean;
 				// TODO
 				hasHits?: boolean, // only when this.type === docs
@@ -111,10 +98,13 @@ export default Vue.extend({
 					}
 				>;
 			}
-		}
+		},
+		subCorpusStats: null as null|BLTypes.BLDocResults,
+		unsub: null as any
+
 	}),
 	computed: {
-		groups(): BLTypes.GroupResult[] {
+		groups(): BLTypes.BLGroupResult[] {
 			return BLTypes.isHitGroups(this.results) ? this.results.hitGroups : this.results.docGroups;
 		},
 		displayClass(): string {
@@ -126,7 +116,7 @@ export default Vue.extend({
 		leftLabel() { return this.textDirection === 'ltr' ? 'Before' : 'After'; },
 		rightLabel() { return this.textDirection === 'ltr' ? 'After' : 'Before'; },
 		leftIndex() { return this.textDirection === 'ltr' ? 0 : 2 },
-		rightIndex() { return this.textDirection === 'ltr' ? 2 : 0 }
+		rightIndex() { return this.textDirection === 'ltr' ? 2 : 0 },
 	},
 	methods: {
 		width(groupSize: number): string {
@@ -157,7 +147,7 @@ export default Vue.extend({
 			// What can happen is that we place the stale result in the cache for the new set of results and it will be displayed...
 
 			// make a copy of the parameters so we don't clear them for all components using the summary
-			const requestParameters: BLTypes.BlacklabParameters = Object.assign({}, this.results.summary.searchParam, {
+			const requestParameters: BLTypes.BLSearchParameters = Object.assign({}, this.results.summary.searchParam, {
 				number: 20,
 				first: cache.concordances.length,
 				viewgroup: id,
@@ -166,14 +156,14 @@ export default Vue.extend({
 				sampleseed: undefined,
 				wordsaroundhit: undefined,
 				sort: undefined,
-			} as BLTypes.BlacklabParameters)
+			} as BLTypes.BLSearchParameters)
 
 			const apiCall = this.type === 'hits' ? Api.blacklab.getHits : Api.blacklab.getDocs;
 			const req: Promise<BLTypes.BLSearchResult> = apiCall(corpusStore.getState().id, requestParameters).request;
 
 			req.then(res => {
 				if (this.type === 'hits') {
-					const data = res as BLTypes.BlHitResults;
+					const data = res as BLTypes.BLHitResults;
 					cache.available = data.summary.numberOfHitsRetrieved;
 					data.hits.forEach(hit => {
 						const parts = snippetParts(hit, this.firstMainAnnotation.id);
@@ -200,6 +190,15 @@ export default Vue.extend({
 			})
 			.catch(err => {throw err}) // TODO log error somewhere in component.
 			.finally(() => cache.request = null)
+		},
+
+		// Display stuff for groups
+		relativeSize(size: number) {
+			const total: number = BLTypes.isHitGroups(this.results) ? this.results.summary.numberOfHits : this.results.summary.numberOfDocs;
+			const div = size / total * 100;
+			const numDigits = Math.max(1-Math.floor(Math.log(div)/Math.log(10)), 0);
+
+			return `(${div.toFixed(numDigits)}%)`;
 		},
 
 		/** EVENTS **/
@@ -248,7 +247,8 @@ export default Vue.extend({
 		// Do not shrink smaller than the text inside the bar.
 		// Greater widths are set using min-width.
 		padding: 0px 2px;
-		width: auto;
+		//width: auto;
+		white-space: nowrap;
 	}
 }
 

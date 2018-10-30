@@ -35,7 +35,7 @@
 			<span title="next" @click.prevent="changePage(page+1)">&rsaquo;</span>
 		</li>
 		<li :class="['last', {'disabled': !nextEnabled}]">
-			<span title="last" @click.prevent="changePage(maxPage)">&raquo;</span>
+			<span :title="maxPage+1 +' (last)'" @click.prevent="changePage(maxPage)">&raquo;</span>
 		</li>
 	</ul>
 </template>

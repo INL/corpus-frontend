@@ -12,6 +12,7 @@ import {debugLog} from '@/utils/debug';
 import {normalizeIndex} from '@/utils/blacklabutils';
 
 import connectVuexToPage from '@/pages/search/vuexbridge';
+import connectStreamsToVuex from '@/store/streams';
 
 import SearchPageComponent from '@/pages/search/SearchPage.vue';
 
@@ -102,6 +103,7 @@ $(document).ready(() => {
 	const stateFromUrl = new UrlPageState().get();
 
 	initStore(normalizedIndex, stateFromUrl);
+	connectStreamsToVuex();
 
 	Vue.config.productionTip = false;
 

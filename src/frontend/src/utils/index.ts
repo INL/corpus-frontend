@@ -1,6 +1,7 @@
 import URI from 'urijs';
 
 import * as BLTypes from '@/types/blacklabtypes';
+import * as AppTypes from '@/types/apptypes';
 
 import {RootState} from '@/store';
 
@@ -155,7 +156,7 @@ export function getPatternString(pattern: PatternType): string|undefined {
  * @param searchParams the search parameters
  * @returns the query string, beginning with ?, or an empty string when no searchParams with a proper value
  */
-export function toPageUrl(operation: string, blsParams?: BLTypes.BlacklabParameters|null) {
+export function toPageUrl(operation: string, blsParams?: BLTypes.BLSearchParameters|null) {
 	const uri = new URI();
 	const paths = uri.segmentCoded();
 	const basePath = paths.slice(0, paths.lastIndexOf('search')+1);
@@ -167,7 +168,7 @@ export function toPageUrl(operation: string, blsParams?: BLTypes.BlacklabParamet
 	}
 
 	// remove null, undefined, empty strings and empty arrays from our query params
-	const modifiedParams: Partial<BLTypes.BlacklabParameters> = {};
+	const modifiedParams: Partial<BLTypes.BLSearchParameters> = {};
 	$.each(blsParams, function(key, value) {
 		if (value == null) {
 			return true;
@@ -180,4 +181,72 @@ export function toPageUrl(operation: string, blsParams?: BLTypes.BlacklabParamet
 
 	// Append the operation, query params, etc, and return.
 	return uri.segmentCoded(basePath).segmentCoded(operation).search(modifiedParams).toString();
+}
+
+/**
+ * Converts the active filters into a parameter string blacklab-server can understand.
+ *
+ * Values from filters with types other than 'range' or 'select' will be split on whitespace and individual words will be surrounded by quotes.
+ * Effectively transforming
+ * "quoted value" not quoted value
+ * into
+ * "quoted value" "not" "quoted" "value"
+ *
+ * The result of this is that the filter will respond to any value within one set of quotes, so practially an OR on individual words.
+ *
+ * If the array is empty or null, undefined is returned,
+ * so it can be placed directly in the request paremeters without populating the object if the value is not present.
+ */
+export function getFilterString(filters: AppTypes.MetadataValue[]): string|undefined {
+	if (!filters.length) {
+		return undefined;
+	}
+
+	const filterStrings = [] as string[];
+	for (const filter of filters) {
+		if (!filter.values.length) {
+			continue;
+		}
+
+		if (filterStrings.length) {
+			filterStrings.push(' AND ');
+		}
+
+		if (filter.type === 'range') {
+			filterStrings.push(filter.id, ':', '[', filter.values[0], ' TO ', filter.values[1], ']');
+		} else if (filter.type === 'select') {
+			// Surround each individual value with quotes, and surround the total with brackets
+			filterStrings.push(filter.id, ':', '("', filter.values.join('" "'), '")');
+		} else {
+			// Do the quoting thing
+			const resultParts = [] as string[];
+
+			$.each(filter.values, function(index, value) {
+				const quotedParts = value.split(/"/);
+				let inQuotes = false;
+				for (let part of quotedParts) {
+					if (inQuotes) {
+						// Inside quotes. Add literally.
+						resultParts.push(' "');
+						resultParts.push(part);
+						resultParts.push('"');
+					} else {
+						// Outside quotes. Surround each word with quotes.
+						part = part.trim();
+						if (part.length > 0) {
+							const words = part.split(/\s+/);
+							resultParts.push(' "');
+							resultParts.push(words.join('" "'));
+							resultParts.push('" ');
+						}
+					}
+					inQuotes = !inQuotes;
+				}
+			});
+
+			filterStrings.push(filter.id, ':', '(' + resultParts.join('').trim(), ')');
+		}
+	}
+
+	return filterStrings.join('') || undefined;
 }

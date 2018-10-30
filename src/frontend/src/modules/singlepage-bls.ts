@@ -1,85 +1,10 @@
-import $ from 'jquery';
-import URI from 'urijs';
+import {getState, get, RootState} from '@/store';
+import {getFilterString} from '@/utils';
 
-import {getState, get} from '@/store';
-import {debugLog} from '@/utils/debug';
 import * as BLTypes from '@/types/blacklabtypes';
 
-/**
- * Converts page state into a query for blacklab-server and executes it.
- * Also handles getting data such as longer snippets, concordances, etc.
- */
-
-// TODO update documentation
-/**
- * Converts the active filters into a parameter string blacklab-server can understand.
- *
- * Values from filters with types other than 'range' or 'select' will be split on whitespace and individual words will be surrounded by quotes.
- * Effectively transforming
- * "quoted value" not quoted value
- * into
- * "quoted value" "not" "quoted" "value"
- *
- * The result of this is that the filter will respond to any value within one set of quotes, so practially an OR on individual words.
- *
- * If the array is empty or null, undefined is returned,
- * so it can be placed directly in the request paremeters without populating the object if the value is not present.
- */
-export function getFilterString(params: RootState['form']['submittedParameters']): string|undefined {
-	if (params == null || !params.filters.length) {
-		return undefined;
-	}
-
-	const filterStrings = [] as string[];
-	for (const filter of params.filters) {
-		if (!filter.values.length) {
-			continue;
-		}
-
-		if (filterStrings.length) {
-			filterStrings.push(' AND ');
-		}
-
-		if (filter.type === 'range') {
-			filterStrings.push(filter.id, ':', '[', filter.values[0], ' TO ', filter.values[1], ']');
-		} else if (filter.type === 'select') {
-			// Surround each individual value with quotes, and surround the total with brackets
-			filterStrings.push(filter.id, ':', '("', filter.values.join('" "'), '")');
-		} else {
-			// Do the quoting thing
-			const resultParts = [] as string[];
-
-			$.each(filter.values, function(index, value) {
-				const quotedParts = value.split(/"/);
-				let inQuotes = false;
-				for (let part of quotedParts) {
-					if (inQuotes) {
-						// Inside quotes. Add literally.
-						resultParts.push(' "');
-						resultParts.push(part);
-						resultParts.push('"');
-					} else {
-						// Outside quotes. Surround each word with quotes.
-						part = part.trim();
-						if (part.length > 0) {
-							const words = part.split(/\s+/);
-							resultParts.push(' "');
-							resultParts.push(words.join('" "'));
-							resultParts.push('" ');
-						}
-					}
-					inQuotes = !inQuotes;
-				}
-			});
-
-			filterStrings.push(filter.id, ':', '(' + resultParts.join('').trim(), ')');
-		}
-	}
-
-	return filterStrings.join('') || undefined;
-}
-
-export function getBlsParamFromState(): BLTypes.BlacklabParameters {
+/** Converts page state into a query for blacklab-server. */
+export function getBlsParamFromState(): BLTypes.BLSearchParameters {
 	const state = getState();
 
 	const viewProps = get.viewedResultsSettings();
@@ -95,7 +20,7 @@ export function getBlsParamFromState(): BLTypes.BlacklabParameters {
 	}
 
 	return {
-		filter: getFilterString(submittedParameters),
+		filter: getFilterString(submittedParameters.filters),
 		first: state.settings.pageSize * viewProps.page,
 		group: viewProps.groupBy.map(g => g + (viewProps.caseSensitive ? ':s':':i')).join(',') || undefined,
 		// group: viewProps.groupBy.join(',') || undefined,
@@ -111,8 +36,6 @@ export function getBlsParamFromState(): BLTypes.BlacklabParameters {
 		wordsaroundhit: state.settings.wordsAroundHit != null ? state.settings.wordsAroundHit : undefined,
 	};
 }
-
-import {RootState} from '@/store';
 
 /**
  * Get a human-readable summary of the most important search parameters

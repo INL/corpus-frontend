@@ -117,7 +117,7 @@ import {debugLog} from '@/utils/debug';
 
 // TODO move to url management module, once vuexbridge is more factored out
 /** Callback from when a search is executed (not neccesarily by the user, could also just be pagination and the like) */
-function onSearchUpdated(operation: string, searchParams: BLTypes.BlacklabParameters) {
+function onSearchUpdated(operation: string, searchParams: BLTypes.BLSearchParameters) {
 	// Only push new url if different
 	// Why? Because when the user goes back say, 10 pages, we reinit the page and do a search with the restored parameters
 	// this search would push a new history entry, popping the next 10 pages off the stack, which the url is the same because we just entered the page.
@@ -517,9 +517,9 @@ a.sort {
 	background: white;
 	padding: 8px 8px 15px 15px;
 
-	&:hover {
-		z-index: -2;
-	}
+	// &:hover {
+	// 	z-index: -2;
+	// }
 
 	&:before {
 		content: "";

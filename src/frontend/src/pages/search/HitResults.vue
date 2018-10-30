@@ -140,7 +140,7 @@ type CitationData = {
 
 export default Vue.extend({
 	props: {
-		results: Object as () => BLTypes.BlHitResults,
+		results: Object as () => BLTypes.BLHitResults,
 		sort: String as () => string|null,
 		showTitles: Boolean as () => boolean,
 	},

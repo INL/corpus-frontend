@@ -1,6 +1,7 @@
 import URI from 'urijs';
 import Vue from 'vue';
 import Vuex from 'vuex';
+import VueRx from 'vue-rx';
 
 import memoize from 'memoize-decorator';
 import {getStoreBuilder} from 'vuex-typex';
@@ -18,6 +19,7 @@ import * as CorpusModule from '@/store/corpus';
 import {NormalizedIndex, MetadataValue, AnnotationValue} from '@/types/apptypes';
 
 Vue.use(Vuex);
+Vue.use(VueRx);
 
 /** All unknown/unspecified properties must be initialized to null to enable state reactivity */
 type ChildRootState = {
@@ -415,7 +417,7 @@ const init = (index: NormalizedIndex, urlState: UrlPageStateResult) => {
 };
 
 // TODO remove me, debugging only - use expose-loader or something?
-(window as any).actions = {
+(window as any).vuexActions = {
 	root: actions,
 	settings: SettingsModule.actions,
 	form: FormModule.actions,
@@ -426,6 +428,8 @@ const init = (index: NormalizedIndex, urlState: UrlPageStateResult) => {
 	},
 	corpus: CorpusModule.actions
 };
+
+(window as any).vuexStore = store;
 
 export {
 	RootState,

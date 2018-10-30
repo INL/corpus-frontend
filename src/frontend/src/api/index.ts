@@ -135,10 +135,10 @@ export const blacklab = {
 	deleteCorpus: (id: string) => blacklabEndpoint
 		.delete<BLTypes.BLResponse>(paths.index(id)),
 
-	getHits: (indexId: string, params: BLTypes.BlacklabParameters) => {
+	getHits: (indexId: string, params: BLTypes.BLSearchParameters) => {
 		const {token: cancelToken, cancel} = axios.CancelToken.source();
 
-		let request: Promise<BLTypes.BlHitResults|BLTypes.BLHitGroupResults>;
+		let request: Promise<BLTypes.BLHitResults|BLTypes.BLHitGroupResults>;
 		if (!indexId) {
 			request = Promise.reject(new ApiError('Error', 'No index specified.', 'Internal error'));
 		} else if (!params.patt) {
@@ -153,7 +153,7 @@ export const blacklab = {
 		};
 	},
 
-	getHitsCsv: (indexId: string, params: BLTypes.BlacklabParameters) => {
+	getHitsCsv: (indexId: string, params: BLTypes.BLSearchParameters) => {
 		const {token: cancelToken, cancel} = axios.CancelToken.source();
 		const csvParams = Object.assign({}, params, {
 			number: undefined,
@@ -181,7 +181,7 @@ export const blacklab = {
 		};
 	},
 
-	getDocsCsv(indexId: string, params: BLTypes.BlacklabParameters) {
+	getDocsCsv(indexId: string, params: BLTypes.BLSearchParameters) {
 		const {token: cancelToken, cancel} = axios.CancelToken.source();
 		const csvParams = Object.assign({}, params, {
 			number: undefined,
@@ -207,7 +207,7 @@ export const blacklab = {
 		};
 	},
 
-	getDocs: (indexId: string, params: BLTypes.BlacklabParameters) => {
+	getDocs: (indexId: string, params: BLTypes.BLSearchParameters) => {
 		const {token: cancelToken, cancel} = axios.CancelToken.source();
 
 		let request: Promise<BLTypes.BLDocResults|BLTypes.BLDocGroupResults>;

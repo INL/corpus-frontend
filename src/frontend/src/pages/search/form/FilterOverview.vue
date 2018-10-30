@@ -1,9 +1,7 @@
 <template>
-	<div v-if="filters.length">
-		<span class="filter-overview">
-			<span v-for="filter in filters" :key="filter.id">{{filter.displayName}}: <i>{{filter.values.join(', ')}}</i>&nbsp;</span>
-		</span>
-		<div class="text-muted text-small sub-corpus-size">
+	<div class="text-muted text-small filter-overview">
+		<span v-for="filter in filters" :key="filter.id">{{filter.displayName}}: <i>{{filter.values.join(', ')}}</i>&nbsp;</span>
+		<div class="sub-corpus-size">
 			<template v-if="subCorpusStats">
 				Selected subcorpus:<br>
 				Total documents: {{subCorpusStats.summary.numberOfDocs}}<br>
@@ -41,7 +39,6 @@ export default Vue.extend({
 		subCorpusStats: selectedSubCorpus$ // yield the search results
 	},
 	computed: {
-
 		// whatever, this will be cached.
 		// todo tidy up
 		metadataValueMaps(): {[fieldId: string]: {[value: string]: string; }} {
@@ -79,10 +76,10 @@ export default Vue.extend({
 	color: #888888;
 	font-size: 85%;
 	padding-left: 1px;
+	margin-top: 20px;
 }
 .sub-corpus-size {
-	font-size: 85%;
-	padding-left: 15px;
-	padding-top: 5px;
+	margin-top: 10px;
+	margin-left: 10px;
 }
 </style>

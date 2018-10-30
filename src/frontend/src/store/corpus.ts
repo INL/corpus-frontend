@@ -1,5 +1,7 @@
 import {getStoreBuilder} from 'vuex-typex';
 
+import * as Api from '@/api';
+
 import {RootState} from '@/store';
 
 import {normalizeIndex} from '@/utils/blacklabutils';
@@ -72,8 +74,20 @@ const actions = {
 	// nothing here yet (probably never, indexmetadata should be considered immutable)
 };
 
-/** We need to call some function from the module before creating the root store or this module won't be evaluated (e.g. none of this code will run) */
-const init = () => {/**/};
+const init = () => {
+	const state = getState();
+	if (state.documentCount === -1) {
+		// Request a sum of all documents in the corpus
+		Api.blacklab.getDocs(state.id, {
+			first: 0,
+			number: 0,
+			waitfortotal: true
+		})
+		.request.then(r => {
+			state.documentCount = r.summary.numberOfDocs;
+		});
+	}
+};
 
 export {
 	ModuleRootState,

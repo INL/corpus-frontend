@@ -9,12 +9,30 @@ import Vue from 'vue';
 
 import * as formStore from '@/store/form'
 
-import { getQuerySummary } from '@/modules/singlepage-bls';
-
 export default Vue.extend({
 	computed: {
-		summary() {
-			return getQuerySummary(formStore.get.lastSubmittedParameters())
+		param(): formStore.ModuleRootState['submittedParameters'] { return formStore.get.lastSubmittedParameters(); },
+		summary(): string {
+			const {pattern, filters} = this.param!;
+
+			if (!pattern && filters.length === 0) {
+				return 'all documents';
+			}
+
+			const metadataString = filters.map(({id, type, values}) =>
+				`${id} = [${type==='range'?`${values[0]} to ${values[1]}`:values.join(', ')}]`).join(', ');
+
+			let ret = '';
+			if (pattern) {
+				ret += '"' + pattern + '"' + ' within ';
+			}
+			if (metadataString) {
+				ret += 'documents where ' + metadataString;
+			} else {
+				ret += 'all documents';
+			}
+
+			return ret;
 		}
 	},
 })

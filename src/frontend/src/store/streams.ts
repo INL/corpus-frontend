@@ -30,12 +30,20 @@ export const selectedSubCorpus$ = merge(
 			filter: getFilterString(filters),
 			first: 0,
 			number: 0,
-			includetokencount: true
+			includetokencount: true,
+			waitfortotal: true
 		})),
 		switchMap(params => new Observable<BLTypes.BLDocResults|null>(subscriber => {
-			// We can't just filter on no filters before we get here or we would never cancel old requests if
-			// the last filters are cleared.
+			// Speedup: we know the totals beforehand when there are no totals: mock a reply
 			if (!params.filter) {
+				subscriber.next({
+					docs: [],
+					summary: {
+						numberOfDocs: corpusStore.getState().documentCount,
+						stillCounting: false,
+						tokensInMatchingDocuments: corpusStore.getState().tokenCount,
+					}
+				} as any);
 				return;
 			}
 
@@ -71,10 +79,23 @@ export const submittedSubcorpus$ = submittedMetadata$.pipe(
 		filter: getFilterString(filters),
 		first: 0,
 		number: 0,
-		includetokencount: true
+		includetokencount: true,
+		waitfortotal: true
 	})),
 	switchMap(params => new Observable<BLTypes.BLDocResults|null>(subscriber => {
-		// todo keep requesting until finished counting.
+		// Speedup: we know the totals beforehand when there are no totals: mock a reply
+		if (!params.filter) {
+			subscriber.next({
+				docs: [],
+				summary: {
+					numberOfDocs: corpusStore.getState().documentCount,
+					stillCounting: false,
+					tokensInMatchingDocuments: corpusStore.getState().tokenCount,
+				}
+			} as any);
+			return;
+		}
+
 		const {request, cancel} = Api.blacklab.getDocs(corpusStore.getState().id, params);
 		request.then(
 			// Sometimes a result comes in anyway after cancelling the request (and closing the subscription),
@@ -86,16 +107,13 @@ export const submittedSubcorpus$ = submittedMetadata$.pipe(
 		// When the observer is closed, cancel the ajax request
 		return cancel;
 	})),
-	// And finally remove subsequent nulls to prevent uneccesary rerenders when results are cleared repetitively
-	distinctUntilChanged(),
 	// And cache the last value so there's always something to display
 	shareReplay(1),
 );
 
 export default () => {
-	// Because we use vuex-typex, getters aren't attached to the store instance
-	// so we can't use the second argument for the selector...
-	// (also vuex typescript defintions are outdated and the argument is missing in the definition file...)
+	// Because we use vuex-typex, getters are a little different
+	// It doesn't matter though, they're attached to the same state instance, so just ignore the state argument.
 	rootStore.store.watch(
 		state => formStore.get.activeFilters(),
 		v => metadata$.next(v),

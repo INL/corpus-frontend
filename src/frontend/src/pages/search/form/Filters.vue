@@ -21,11 +21,7 @@
 			<MetadataFilter v-for="filter in allFilters" :filter="filter" :key="filter.id"/>
 		</div>
 
-		<div class="row">
-			<div class="col-xs-8 form-horizontal">
-				<FilterOverview type="docs" :indexId="indexId"/>
-			</div>
-		</div>
+		<FilterOverview type="docs" :indexId="indexId"/>
 	</div>
 </template>
 

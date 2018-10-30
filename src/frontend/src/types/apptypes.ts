@@ -87,6 +87,8 @@ export type NormalizedIndex = {
 	/** Description of the main index */
 	description: string;
 	displayName: string;
+	/** If -1, the blacklab version is too old to support this property, and it needs to be requested from the server. (we do this on app startup, see corpusStore). */
+	documentCount: number;
 	/** key of a BLFormat */
 	documentFormat?: string;
 	fieldInfo: {
@@ -114,6 +116,7 @@ export type NormalizedIndex = {
 	/** Id of the corpus minus the owner's username prefix */
 	shortId: string;
 	textDirection: 'ltr'|'rtl';
+	tokenCount: number;
 };
 
 // ---------

@@ -197,6 +197,7 @@ export default () => {
 		$('#results').toggle(!!v);
 	}, {immediate: true});
 
+	// TODO move into searchform component.
 	// Reset & history navigation
 	$('#mainForm').on('reset', () => {
 		actions.reset();
@@ -205,7 +206,7 @@ export default () => {
 		const url = new URI();
 		const newUrl = url.search('').segmentCoded(url.segmentCoded().filter(s => s !== 'hits' && s !== 'docs'));
 
-		history.pushState(getState(), undefined, newUrl.toString());
+		history.pushState(JSON.parse(JSON.stringify(Object.assign({}, getState(), {corpus: undefined}))), '', newUrl.toString());
 
 		return false;
 	});

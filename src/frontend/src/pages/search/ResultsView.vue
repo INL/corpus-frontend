@@ -133,6 +133,7 @@ function onSearchUpdated(operation: string, searchParams: BLTypes.BLSearchParame
 		if (newUrl.length > 4000) {
 			newUrl = toPageUrl(operation, $.extend({}, searchParams, { patt: null }));
 		}
+		// No need to save a massive object that never changes with every history entry
 		history.pushState(JSON.parse(JSON.stringify(Object.assign({}, globalStore.getState(), {corpus: undefined}))), undefined, newUrl);
 	}
 }
@@ -529,7 +530,7 @@ a.sort {
 		width: 50px;
 		left: -50px;
 		top: 0;
-		background: linear-gradient(to right, #fff0 0%, #ffff 100%);
+		background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,255) 100%);
 	}
 }
 

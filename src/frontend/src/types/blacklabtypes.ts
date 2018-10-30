@@ -1,27 +1,33 @@
 /** BlackLab query parameters. Is a stricter subset of query parameters blacklab accepts. */
 export type BLSearchParameters = {
-	/* Number of results to request */
+	/** Number of results to request */
 	number: number;
-	/* Index of first result to request */
+	/** Index of first result to request */
 	first: number;
-	/* percentage of results to return (0-100), mutually exclusive with 'samplenum' */
+	/** Percentage of results to return (0-100), mutually exclusive with 'samplenum' */
 	sample?: number;
-	/* How many results to return, mutually exclusive with 'sample' */
+	/** Sample up to a flat number of results from the total result set, mutually exclusive with 'sample' */
 	samplenum?: number;
-	/* Seed from which the samples are generated */
+	/** Seed from which the samples are generated */
 	sampleseed?: number;
-	/* Context size, may be limited by blacklab */
+	/** Context size, may be limited by blacklab */
 	wordsaroundhit?: number;
+	/** How to filter results: a lucene query */
 	filter?: string;
+	/** How to sort results, comma-separated list of field:${someMetadataFieldId} or (wordleft|hit|wordright):${someAnnotationId} */
 	group?: string;
-	/* CQL query */
+	/** CQL query */
 	patt?: string;
+	/** How to sort results, comma-separated list of field:${someMetadataFieldId} or (wordleft|hit|wordright):${someAnnotationId} */
 	sort?: string;
-	/* Also return results within this specific group (only when 'group' specified) */
+	/** Also return results within this specific group (only when 'group' specified) */
 	viewgroup?: string;
 
 	// additionals that aren't used often
+	/** Include the total number of tokens in documents containing matches */
 	includetokencount?: boolean;
+	/** Block until all results have been found */
+	waitfortotal?: boolean;
 };
 
 // --------------
@@ -235,6 +241,7 @@ export interface BLIndexMetadataInternal {
 	tokenCount?: number;
 	versionInfo: {
 		blackLabBuildTime: string;
+		/** BlackLab version when the index was created. In Maven format */
 		blackLabVersion: string;
 		/** major.minor */
 		indexFormat: string;
@@ -244,8 +251,15 @@ export interface BLIndexMetadataInternal {
 		timeModified: string;
 	};
 }
-type BLIndexMetadataV1 = BLIndexMetadataInternal&{complexFields: {[id: string]: BLAnnotatedFieldV1}; };
-type BLIndexMetadataV2 = BLIndexMetadataInternal&{annotatedFields: {[id: string]: BLAnnotatedFieldV2}; };
+type BLIndexMetadataV1 = BLIndexMetadataInternal&{
+	complexFields: {[id: string]: BLAnnotatedFieldV1};
+};
+type BLIndexMetadataV2 = BLIndexMetadataInternal&{
+	annotatedFields: {[id: string]: BLAnnotatedFieldV2};
+	/** Only available if index contains actual documents and if versionInfo.blackLabVersion >= 2.0.0 */
+	documentCount?: number;
+};
+
 export type BLIndexMetadata = BLIndexMetadataV1|BLIndexMetadataV2;
 export function isIndexMetadataV1(v: BLIndexMetadata): v is BLIndexMetadataV1 { return (v as any).complexFields != null; }
 

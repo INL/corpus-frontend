@@ -128,6 +128,10 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 		contentViewable: blIndex.contentViewable,
 		description: blIndex.description,
 		displayName: blIndex.displayName,
+		// If BlackLab is an old format, this property doesn't exist
+		// If BlackLab is new, and the property is still missing, it's 0 (tokenCount and documentCount are always omitted when 0)
+		// Encode this in the fallback value, then later request the actual number of documents
+		documentCount: !BLTypes.isIndexMetadataV1(blIndex) ? blIndex.documentCount || 0 : -1,
 		documentFormat: blIndex.documentFormat,
 		fieldInfo: blIndex.fieldInfo,
 		id: blIndex.indexName,
@@ -149,6 +153,7 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 		owner: blIndex.indexName.substring(0, blIndex.indexName.indexOf(':')) || null,
 		shortId: blIndex.indexName.substr(blIndex.indexName.indexOf(':') + 1),
 		textDirection: blIndex.textDirection,
+		tokenCount: blIndex.tokenCount || 0
 	};
 }
 

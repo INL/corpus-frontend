@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Templates;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -29,16 +30,26 @@ public class XslTransformer {
 
     private final Transformer transformer;
 
+    private static final Map<File, Templates> FILETEMPLATES = new HashMap<>();
+
+    private Templates getTemplates(File f) {
+        synchronized (FILETEMPLATES) {
+            if (!FILETEMPLATES.containsKey(f)) {
+                try {
+                    FILETEMPLATES.put(f, FACTORY.newTemplates(new StreamSource(f)));
+                } catch (TransformerConfigurationException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        }
+        return FILETEMPLATES.get(f);
+
+    }
+    
     private static final Map<File, Transformer> stylesheets = new HashMap<>(2);
 
     public XslTransformer(File stylesheet) throws TransformerConfigurationException {
-        synchronized (stylesheets) {
-            if (stylesheets.containsKey(stylesheet)) {
-                transformer = stylesheets.get(stylesheet);
-            } else {
-                transformer = FACTORY.newTransformer(new StreamSource(stylesheet));
-            }
-        }
+        transformer = getTemplates(stylesheet).newTransformer();
     }
 
     public XslTransformer(InputStream stylesheet) throws TransformerConfigurationException {

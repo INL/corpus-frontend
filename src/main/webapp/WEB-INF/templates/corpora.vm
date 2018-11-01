@@ -1,5 +1,5 @@
 #parse("header.vm")
-
+<div class="container">
 <div id="successDiv" class="alert alert-success alert-dismissable">
     <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
     <span id="successMessage"></span>
@@ -9,73 +9,64 @@
     <span id="errorMessage"></span>
 </div>
 
-<div class="col-xs-12 contentbox" data-bls-url="$blsUrl" style="position:relative;min-height:150px;">
-    <span id="waitDisplay" class="fa fa-spinner fa-spin searchIndicator" style="position: absolute; left: 50%;"></span>
-    
-    <p data-autoupdate="username" class="text-right" style="display: none;"></p>
+<span id="waitDisplay" class="fa fa-spinner fa-spin searchIndicator" style="position: absolute; left: 50%;"></span>
+<p data-autoupdate="username" class="text-right" style="display: none;"></p>
 
-    <div id="corpora-public-container">
-        <hr>
-        <h2>Public corpora</h2>
+<div id="corpora-public-container" class="cf-panel cf-panel-lg" data-bls-url="$blsUrl" style="position:relative;min-height:150px;" >
+    <h2>Public corpora</h2>
 
-        <table class="corpora public table">
-            <thead>
-                <tr>
-                    <th></th> ##search button
-                    <th>Corpus</th>
-                    <th>Size</th>
-                </tr>
-            </thead>
-            <tbody data-autoupdate="corpora" data-filter="public"></tbody>
-        </table>
-    </div>
+    <table class="corpora public table">
+        <thead>
+            <tr>
+                <th></th> ##search button
+                <th>Corpus</th>
+                <th>Size</th>
+            </tr>
+        </thead>
+        <tbody data-autoupdate="corpora" data-filter="public"></tbody>
+    </table>
+</div>
 
-    <div id="corpora-private-container">
-        <hr>
-        <h2 id="header-private">Your corpora</h2>
-        
-        <table class="table corpora">
-            <thead>
-                <tr>
-                    <th></th> ##search button
-                    <th>Corpus</th>
-                    <th>Size</th>
-                    <th>Format</th>
-                    <th>Last modified</th>
-                    <th></th> ## delete, add, share buttons
-                    <th></th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody data-autoupdate="corpora" data-filter="private"></tbody>
-        </table>
+<div id="corpora-private-container" class="cf-panel cf-panel-lg">
+    <h2>Your corpora</h2>
     
-    	<em id="create-corpus-limited" class="text-danger" style="display:none;padding-left: 8px;">You have reached the private corpora limit.<br>You will have to delete one of your corpora before you may create another.</em>    
-        <button class="btn btn-default btn-lg" id="create-corpus" type="button" data-toggle="modal" data-target="#new-corpus-modal">New corpus</button>
-    
-    </div>
-    
+    <table class="table corpora">
+        <thead>
+            <tr>
+                <th></th> ##search button
+                <th>Corpus</th>
+                <th>Size</th>
+                <th>Format</th>
+                <th>Last modified</th>
+                <th></th> ## delete, add, share buttons
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody data-autoupdate="corpora" data-filter="private"></tbody>
+    </table>
 
-    <div id="formats-all-container">
-        <hr>
-        <h2>Your import formats</h2>
+    <em id="create-corpus-limited" class="text-danger" style="display:none;padding-left: 8px;">You have reached the private corpora limit.<br>You will have to delete one of your corpora before you may create another.</em>    
+    <button class="btn btn-default btn-lg" id="create-corpus" type="button" data-toggle="modal" data-target="#new-corpus-modal">New corpus</button>
+</div>
     
-        <table class="table corpora">
-            <thead>
-                <tr>
-                    <th>Id</th>
-                    <th>Name</th>
-                    <th></th> ## delete, edit buttons
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody data-autoupdate="format">
-            <!-- filled by clientside js -->
-            </tbody >
-        </table>
-        <button type="button" class="btn btn-lg btn-default" data-toggle="modal" data-target="#new-format-modal">New format</button>
+<div id="formats-all-container" class="cf-panel cf-panel-lg">
+    <h2>Your import formats</h2>
 
-    </div>
+    <table class="table corpora">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th></th> ## delete, edit buttons
+                <th></th>
+            </tr>
+        </thead>
+        <tbody data-autoupdate="format">
+        <!-- filled by clientside js -->
+        </tbody >
+    </table>
+    <button type="button" class="btn btn-lg btn-default" data-toggle="modal" data-target="#new-format-modal">New format</button>
 </div>
 
 <div class="modal fade modal-fullwidth" id="new-format-modal" role="dialog">
@@ -321,7 +312,7 @@
             See the hint below this button for a reminder of the type(s) of files that can be added to this corpus.  
         </div>
     </li>
-    <li class="tlypageguide_right" data-tourtarget="#upload-metadata-input"]">
+    <li class="tlypageguide_right" data-tourtarget="#upload-metadata-input">
         <div>
             If your files link to external metadata in different files, you should also upload those files here.
             Support for external data has to be configured in a custom import format, so you usually won't need this option.<br>
@@ -374,13 +365,11 @@
         </div>
     </li>
 </ul>
+</div>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/codemirror.min.css" integrity="sha256-I8NyGs4wjbMuBSUE40o55W6k6P7tu/7G28/JGUUYCIs=" crossorigin="anonymous" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/codemirror.min.js" integrity="sha256-U/4XQwZXDFDdAHjIZt1Lm7sFfmMiFDZzFYprq6XJ0gk=" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/mode/yaml/yaml.min.js" integrity="sha256-kDhSuX8q/IuvrvcSRAv9HzdC6NHqQsvZtCMnvSBQO+Q=" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/mode/javascript/javascript.min.js" integrity="sha256-MyRbKGolllWYWwxW8jH3jYdhK0p0LpgNjR8PqCa/UNQ=" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="$pathToTop/css/corpora.css?_$cache" >
 
-<link  href="$pathToTop/css/corpora.css?_$cache" rel="stylesheet">
-<script src="$pathToTop/js/corpora.js?_$cache"></script>
-    
+<script src="$jspath/corpora.js?_$cache"></script>
+ 
 #parse("footer.vm")

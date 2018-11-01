@@ -1,0 +1,57 @@
+{
+	"extends": ["tslint:recommended"],
+	"rules": {
+		// These are just rules I disagree with or rules that are overboard
+		"interface-over-type-literal": false,
+		"max-line-length": false,
+		"arrow-parens": false,
+		"object-literal-sort-keys": false,
+		"trailing-comma": false,
+		"interface-name": false,
+		"only-arrow-functions": false, // jquery and some of our own code explicitly set 'this' of callbacks, can't do that with arrow functions
+		"ordered-imports": false,
+		"max-classes-per-file": false,
+
+		// These should eventually be fixed
+		"prefer-const": {"severity": "warn"},
+		"no-var-keyword": {"severity": "warn"},
+		"curly": {"severity": "warn"},
+		"semicolon": {"severity": "warn"},
+		"object-literal-shorthand": {"severity": "warn"},
+		"whitespace": { "severity": "warn" },
+		"one-line": { "severity": "warn" },
+		"member-ordering": { "severity": "off", "options": { // TODO enable
+			"alphabetize": true,
+			"order": "statics-first"
+		} },
+
+		// Eh.. consistent style I guess
+		"space-before-function-paren": {
+			"severity": "warn",
+			"options": {
+				"anonymous": "never",
+				"named": "never",
+				"asyncArrow": "always"
+			}
+		},
+		"eofline": {"severity": "warn"},
+		"quotemark": {
+			"severity": "warn",
+			"options": ["single", "avoid-escape"]
+		},
+		"indent": {
+			"severity": "warn",
+			"options": "tabs"
+		},
+		"variable-name": {
+			"options": "allow-leading-underscore"
+		}
+	},
+	"cliOptions": {
+		"exclude": [
+			"node_modules",
+			"src/vendor",
+			"dist"
+		]
+	}
+}

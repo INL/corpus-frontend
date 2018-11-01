@@ -556,7 +556,7 @@ SINGLEPAGE.INTERFACE = (function() {
 			var parts = snippetParts(hit);
 			var left = textDirection=='ltr'? parts[0] : parts[2];
 			var right = textDirection=='ltr'? parts[2] : parts[0];
-			var propsWord = properties(hit.match).replace("'","\\'").replace("&apos;","\\'").replace('"', '&quot;');
+			var propsWord = hit.match.punct.length > 1 ? 'not shown for multiple search terms' : properties(hit.match).replace("'","\\'").replace("&apos;","\\'").replace('"', '&quot;');
 
 			html.push(
 				'<tr class="concordance" onclick="SINGLEPAGE.INTERFACE.showCitation(this, \''

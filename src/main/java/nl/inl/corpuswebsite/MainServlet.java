@@ -317,8 +317,8 @@ public class MainServlet extends HttpServlet {
             File f =
                 getProjectFile(corpus, "search.xml")
                     .orElseThrow(() -> new IllegalStateException("No search.xml, and no default in jar either"));
-            try (InputStream is = new FileInputStream(f)) {
-                return new WebsiteConfig(is, corpus, getCorpusConfig(corpus));
+            try {
+                return new WebsiteConfig(f, corpus, getCorpusConfig(corpus), contextPath);
             } catch (Exception e) {
                 throw new RuntimeException("Could not read search.xml " + f + ": " + e.getMessage());
             }

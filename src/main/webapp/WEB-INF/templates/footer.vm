@@ -1,13 +1,9 @@
-            </div> <!-- /row -->
-
-            <div class="row">
+        <div class="container">
+            <footer class="row"> 
                 <hr>
-                
-                <footer class="col-xs-12"> 
-                    <p>Dutch Language Institute Corpus Search Interface v1.1 &copy; <a href="http://www.ivdnt.org">INT</a> 2013-2017</p>
-                </footer>
-            </div>
-        </div> <!-- /container -->
+                <p class="col-xs-12">Dutch Language Institute Corpus Search Interface v1.2 &copy; <a href="http://www.ivdnt.org">INT</a> 2013-2018</p>
+            </footer>
+        </div>
         
         #if($googleAnalyticsKey.length() > 0)
         #set($unescaped = $googleAnalyticsKey) ## see BaseResponse.java

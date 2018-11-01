@@ -5,11 +5,12 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
         
         #if ($websiteConfig.getCorpusDisplayName())
-        <meta property="og:description" content="$websiteConfig.getCorpusDisplayName() provided by the Dutch Language Institute in Leiden."/>
+        <meta property="og:description" content="$websiteConfig.getCorpusDisplayName() provided by the Dutch Language Institute in Leiden.">
         <meta name="description" content="$websiteConfig.getCorpusDisplayName() search provided by the Dutch Language Institute in Leiden.">
+        <meta name="referrer" content="no-referrer">
         <title>$websiteConfig.getCorpusDisplayName() search</title>
         #else
-        <meta property="og:description" content="AutoSearch provided by the Dutch Language Institute in Leiden."/>
+        <meta property="og:description" content="AutoSearch provided by the Dutch Language Institute in Leiden.">
         <meta name="description" content="AutoSearch, provided by the Dutch Language Institute in Leiden.">
         <title>Welcome to AutoSearch</title>
         #end
@@ -36,31 +37,13 @@
         #if ($websiteConfig.getPathToCustomCss())
             <link rel="stylesheet" href="$websiteConfig.getPathToCustomCss()?_$cache">
         #end
-
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/6.26.0/polyfill.min.js"></script>
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
-        <!-- SKIP JQueryUI 1.12.1, has bug where event handlers on widgets are not cleaned up correctly, fixed in 1.12.2, but unavailable as of writing (28-07-2017) -->
-        <!-- See https://bugs.jqueryui.com/ticket/15082 -->
-        <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.12.0/jquery-ui.min.js"></script>
-        <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>   
-        <script src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/js/bootstrap-select.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/2.3.0/mustache.min.js" integrity="sha256-iaqfO5ue0VbSGcEiQn+OeXxnxAMK2+QgHXIDA5bWtGI=" crossorigin="anonymous"></script>
-        <script src="$pathToTop/js/vendor/jQuery.extendext.js"></script>
-        <script src="$pathToTop/js/vendor/pageguide.min.js"></script>
-        <script src="$pathToTop/js/tutorial.js"></script>
+    
         #if ($websiteConfig.getPathToCustomJs())
             <script src="$websiteConfig.getPathToCustomJs()?_$cache"></script>
         #end
         
     </head>
     <body>
-        <!--[if lt IE 9]>
-            <br/><br/><br/>
-            <div class="alert alert-warning">
-            <h1>Error: Incompatible browser.</h1>
-            <p>You are using an <strong>outdated</strong> browser which cannot display this website correctly. Please use the latest version of <a href="http://www.mozilla.org/en-US/firefox/new/">Mozilla Firefox</a> or <a href="https://www.google.com/intl/en/chrome/browser/">Google Chrome</a> instead.</p>
-            </div>
-        <![endif]-->
         <div class="navbar navbar-inverse navbar-fixed-top">
             <div class="container">
                 <div class="navbar-header">
@@ -91,12 +74,18 @@
             </div>
         </div>
         
-        <div class="container">
-            <noscript>
-                <br/><br/><br/>
-                <div class="alert alert-error">    
-                    <h1>Error: JavaScript disabled.</h1>
-                    We notice that you have JavaScript disabled in your browser. This website requires JavaScript to be enabled. Please enable JavaScript to use this website.
-                </div>
-            </noscript>
-            <div class="row">
+        <noscript>
+            <br/><br/><br/>
+            <div class="alert alert-error">    
+                <h1>Error: JavaScript disabled.</h1>
+                We notice that you have JavaScript disabled in your browser. This website requires JavaScript to be enabled. Please enable JavaScript to use this website.
+            </div>
+        </noscript>
+      	
+      	<!--[if lt IE 9]>
+            <br/><br/><br/>
+            <div class="alert alert-warning">
+            <h1>Error: Incompatible browser.</h1>
+            <p>You are using an <strong>outdated</strong> browser which cannot display this website correctly. Please use the latest version of <a href="http://www.mozilla.org/en-US/firefox/new/">Mozilla Firefox</a> or <a href="https://www.google.com/intl/en/chrome/browser/">Google Chrome</a> instead.</p>
+            </div>
+        <![endif]-->

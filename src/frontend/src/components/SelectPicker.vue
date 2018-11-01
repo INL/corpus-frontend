@@ -67,7 +67,10 @@ export default Vue.extend({
 				return;
 			}
 			this.$emit('input', newValue);
-		}
+		},
+		options() {
+			Vue.nextTick(() => $(this.$refs.select).selectpicker('refresh'));
+		},
 	},
 	methods: {
 		isSelected(value: string) {

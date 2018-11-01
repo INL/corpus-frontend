@@ -31,7 +31,6 @@ public class WebsiteConfig {
         private final String label;
         private final String href;
         private final boolean openInNewWindow;
-        private final boolean relative;
 
         /**
          *
@@ -42,12 +41,11 @@ public class WebsiteConfig {
          *        We need to track this to know if we should make this link relative to the current page, or whether it's an
          *        absolute url
          */
-        public LinkInTopBar(String label, String href, boolean openInNewWindow, boolean relative) {
+        public LinkInTopBar(String label, String href, boolean openInNewWindow) {
             super();
             this.label = label;
             this.href = href;
             this.openInNewWindow = openInNewWindow;
-            this.relative = relative;
         }
 
         // Getters required for velicity
@@ -61,10 +59,6 @@ public class WebsiteConfig {
 
         public boolean isOpenInNewWindow() {
             return openInNewWindow;
-        }
-
-        public boolean isRelative() {
-            return relative;
         }
 
         @Override
@@ -182,8 +176,8 @@ public class WebsiteConfig {
         Parameters parameters = new Parameters();
         ConfigurationBuilder<XMLConfiguration> cb = new FileBasedConfigurationBuilder<XMLConfiguration>(XMLConfiguration.class)
                 .configure(parameters.fileBased()
-                        .setFile(configFile)
-                        .setListDelimiterHandler(new DisabledListDelimiterHandler())
+                .setFile(configFile)
+                .setListDelimiterHandler(new DisabledListDelimiterHandler())
                 .setPrefixLookups(variableLookup));
         // Load the specified config file
         XMLConfiguration xmlConfig = cb.getConfiguration();
@@ -201,21 +195,24 @@ public class WebsiteConfig {
 
         List<HierarchicalConfiguration<ImmutableNode>> myfields = xmlConfig.configurationsAt("InterfaceProperties.NavLinks.Link");
         for (Iterator<HierarchicalConfiguration<ImmutableNode>> it = myfields.iterator(); it.hasNext();) {
-            HierarchicalConfiguration sub = it.next();
+            HierarchicalConfiguration<ImmutableNode> sub = it.next();
 
             String href = sub.getString("[@value]", null);
             String label = sub.getString("");
             boolean newWindow = sub.getBoolean("[@newWindow]", false);
-            boolean relative = sub.getBoolean("[@relative]", false);
+            boolean relative = sub.getBoolean("[@relative]", false); // No longer supported, keep around for compatibility
             if (href == null)
                 href = label;
 
-            linksInTopBar.add(new LinkInTopBar(label, href, newWindow, relative));
+            if (relative)
+                href = contextPath + "/" + href;
+            
+            linksInTopBar.add(new LinkInTopBar(label, href, newWindow));
         }
 
         myfields = xmlConfig.configurationsAt("XsltParameters.XsltParameter");
         for (Iterator<HierarchicalConfiguration<ImmutableNode>> it = myfields.iterator(); it.hasNext();) {
-            HierarchicalConfiguration sub = it.next();
+            HierarchicalConfiguration<ImmutableNode> sub = it.next();
 
             String name = sub.getString("[@name]");
             String value = sub.getString("[@value]");

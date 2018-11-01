@@ -33,13 +33,20 @@ import * as corpus from '@/store/corpus';
 import FilterOverview from '@/pages/search/form/FilterOverview.vue';
 import MetadataFilter from '@/pages/search/form/Filter.vue';
 
+import * as AppTypes from '@/types/apptypes';
+
 export default Vue.extend({
 	components: {
 		FilterOverview,
 		MetadataFilter
 	},
 	computed: {
-		allFilters() { return corpus.getState().metadataFields },
+		allFilters(): AppTypes.NormalizedMetadataField[] {
+			return this.tabs.reduce((acc, tab) => {
+				acc.push(...tab.fields);
+				return acc;
+			}, [] as AppTypes.NormalizedMetadataField[]);
+		},
 		tabs: corpus.get.metadataGroups,
 		useTabs() {
 			return this.tabs.length > 1;

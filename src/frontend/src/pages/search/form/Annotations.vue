@@ -65,6 +65,8 @@ import * as corpus from '@/store/corpus';
 
 import Annotation from '@/pages/search/form/Annotation.vue';
 
+import * as AppTypes from '@/types/apptypes';
+
 export default Vue.extend({
 	components: {
 		Annotation,
@@ -74,7 +76,12 @@ export default Vue.extend({
 			return this.tabs.length > 1;
 		},
 		tabs: corpus.get.annotationGroups,
-		allAnnotations: corpus.get.annotations
+		allAnnotations(): AppTypes.NormalizedAnnotation[] {
+			return this.tabs.reduce((acc, tab) => {
+				acc.push(...tab.annotations);
+				return acc;
+			}, [] as AppTypes.NormalizedAnnotation[]);
+		}
 	},
 	methods: {
 		getTabId(name: string) {

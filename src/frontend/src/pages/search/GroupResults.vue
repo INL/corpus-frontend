@@ -11,7 +11,7 @@
 				<td>{{identityDisplay || '[unknown]'}}</td>
 				<td>
 					<div class="progress group-size-indicator" @click="openPreviewConcordances(identity)">
-						<div :class="['progress-bar', displayClass]" :style="[{'min-width': width(size)}]">{{size}} {{relativeSize(size)}}</div>
+						<div class="progress-bar progress-bar-primary" :style="[{'min-width': width(size)}]">{{size}} {{relativeSize(size)}}</div>
 					</div>
 
 					<!-- todo spinner, disable loading more, etc -->
@@ -106,9 +106,6 @@ export default Vue.extend({
 	computed: {
 		groups(): BLTypes.BLGroupResult[] {
 			return BLTypes.isHitGroups(this.results) ? this.results.hitGroups : this.results.docGroups;
-		},
-		displayClass(): string {
-			return BLTypes.isHitGroups(this.results) ? 'progress-bar-success' : 'progress-bar-warning';
 		},
 		firstMainAnnotation: corpusStore.get.firstMainAnnotation,
 		textDirection: corpusStore.get.textDirection,

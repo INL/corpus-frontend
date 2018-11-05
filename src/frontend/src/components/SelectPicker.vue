@@ -50,12 +50,13 @@ export default Vue.extend({
 	},
 	data: () => ({
 		currentValue: null as null|string|string[], // synced with select
+		destroying: false, // selectpicker rerenders after teardown leaving zombie elements..
 	}),
 	watch: {
 		value: {
 			immediate: true,
 			handler(newVal: null|undefined|string|string[]) {
-				$(this.$refs.select).selectpicker('val', newVal!);
+				$(this.$el).selectpicker('val', newVal!);
 			}
 		},
 		// TODO only fire when closing the menu
@@ -69,12 +70,12 @@ export default Vue.extend({
 			this.$emit('input', newValue);
 		},
 		options() {
-			Vue.nextTick(() => $(this.$refs.select).selectpicker('refresh'));
+			Vue.nextTick(() => $(this.$el).selectpicker('refresh'));
 		},
 	},
 	methods: {
 		isSelected(value: string) {
-			return this.value != null && this.value === value || (this.value as string[]).includes(value);
+			return this.value === value || (Array.isArray(this.value) && this.value.includes(value));
 		}
 	},
 	created() {
@@ -83,7 +84,10 @@ export default Vue.extend({
 		}
 	},
 	mounted() {
-		$(this.$refs.select).selectpicker();
+		$(this.$el).selectpicker();
+	},
+	destroyed() {
+		$(this.$el).selectpicker('destroy').remove();
 	}
 });
 

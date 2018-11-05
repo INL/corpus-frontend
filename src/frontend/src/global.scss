@@ -1,5 +1,5 @@
 body {
-	background: white;
+	background-image: none;
 }
 
 hr {
@@ -13,12 +13,18 @@ hr {
 
 $panel-color: #337ab7;
 $accent: darken($panel-color, 3);
+// $border-default: #ccc;
+// $border-dark: #bababa;
+$border-default: #ddd;
+$border-dark: #ccc;
+$border-radius: 3px;
+$border-radius-lg: 4px;
 
 .cf-panel {
-	border: 1px solid #ccc;
-	border-top: 3px solid $panel-color;
-	box-shadow: 0px 1px 7px -1px rgba(0,0,0,0.2);
-	border-radius: 3px;
+	border: 1px solid $border-default;
+	// border-top: 3px solid $panel-color;
+	// box-shadow: 0px 1px 7px -1px rgba(0,0,0,0.2);
+	border-radius: $border-radius;
 	background: white;
 	padding: 15px;
 	margin-left: -15px;
@@ -32,12 +38,12 @@ $accent: darken($panel-color, 3);
 	}
 
 	&.cf-panel-lg {
-		border-left-color: #bababa;
-		border-right-color: #bababa;
-		border-bottom-color: #bababa;
-		border-radius: 6px;
-		border-top-width: 5px;
-		box-shadow: 0px 3px 12px -2px rgba(0,0,0,0.6);
+		border-left-color: $border-dark;
+		border-right-color: $border-dark;
+		border-bottom-color: $border-dark;
+		border-radius: $border-radius-lg;
+		// border-top-width: 5px;
+		// box-shadow: 0px 3px 12px -2px rgba(0,0,0,0.6);
 		margin-bottom: 35px;
 		padding: 30px;
 
@@ -52,36 +58,36 @@ $accent: darken($panel-color, 3);
 ul.nav-tabs.cf-panel-tab-header {
 	background-color: $panel-color;
 	border-bottom-color: $accent;
+	// box-shadow: 0px 1px 7px -1px rgba(0,0,0,0.2);
 	margin-left: -15px;
 	margin-right: -15px;
-	border-radius: 3px 3px 0px 0px;
-	border-top: 3px solid $panel-color;
+	border-radius: $border-radius $border-radius 0px 0px;
+	// border-top: 3px solid $panel-color;
 	z-index: -1;
-	box-shadow: 0px 1px 7px -1px rgba(0,0,0,0.2);
 
 	&.cf-panel-lg {
-		box-shadow: 0px 3px 12px -2px rgba(0,0,0,0.6);
-		border-radius: 6px 6px 0px 0px;
-		border-top-width: 6px;
+		// box-shadow: 0px 3px 12px -2px rgba(0,0,0,0.6);
+		border-radius: $border-radius-lg $border-radius-lg 0px 0px;
+		// border-top-width: 6px;
 		> li:first-child.active,
 		> li:first-child:hover {
-			> a { border-left-color: #bababa!important; }
+			> a { border-left-color: $border-dark!important; }
 		}
 	}
 
 	> li {
 		> a {
-			border-top: none!important;
+			border-top-color: none;
 			color: white;
 		}
 
 		&.active > a {
-			border-color: white $accent white;
+			border-color: $border-default $accent white;
 			color: #555;
 		}
 
 		&:not(.active):hover > a {
-			border-color: white $accent #ccc;
+			border-color: $border-default $accent $border-default;
 			background-color: white;
 			color: #666;
 		}
@@ -89,7 +95,7 @@ ul.nav-tabs.cf-panel-tab-header {
 		&:first-child.active,
 		&:first-child:hover {
 			> a {
-				border-left-color: #ccc!important;
+				border-left-color: $border-default!important;
 			}
 		}
 	}

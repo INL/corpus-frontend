@@ -4,8 +4,6 @@ import 'bootstrap-select';
 import $ from 'jquery';
 import Vue from 'vue';
 
-import '@/utils/features/autocomplete';
-
 import {QueryBuilder} from '@/modules/cql_querybuilder';
 import {store, init as initStore, UrlPageState} from '@/store';
 import {debugLog} from '@/utils/debug';

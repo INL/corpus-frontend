@@ -118,9 +118,14 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 				}))
 			) :
 			annotatedFields.map<NormalizedIndex['annotationGroups'][number]>(field => {
+				// Add all known annotations to a default group
+				// (excluding internals and annotations not in a forward index)
+				const annotations = BLTypes.isAnnotatedFieldV1(field) ? field.properties : field.annotations;
+				const annotIds = Object.entries(annotations).filter(([id, annot]) => annot.hasForwardIndex && !annot.isInternal).map(([id, annot]) => id);
+
 				return {
 					annotatedFieldId: field.fieldName,
-					annotationIds: BLTypes.isAnnotatedFieldV1(field) ? Object.keys(field.properties) : Object.keys(field.annotations),
+					annotationIds: annotIds,
 					name: 'Annotations'
 				};
 			}),

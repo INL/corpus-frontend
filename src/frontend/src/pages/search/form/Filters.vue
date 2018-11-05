@@ -10,14 +10,14 @@
 
 		<div v-if="useTabs" class="tab-content">
 			<div v-for="(tab, index) in tabs"
-				:class="['tab-pane', 'form-horizontal', {'active': index === 0}]"
+				:class="['tab-pane', 'form-horizontal', 'filter-container', {'active': index === 0}]"
 				:key="index"
 				:id="getTabId(tab.name)"
 			>
 				<MetadataFilter v-for="filter in tab.fields" :filter="filter" :key="filter.id"/>
 			</div>
 		</div>
-		<div v-else class="tab-content form-horizontal"> <!-- TODO don't use tab-content when no actually tabs -->
+		<div v-else class="tab-content form-horizontal filter-container"> <!-- TODO don't use tab-content when no actually tabs -->
 			<MetadataFilter v-for="filter in allFilters" :filter="filter" :key="filter.id"/>
 		</div>
 
@@ -62,4 +62,9 @@ export default Vue.extend({
 </script>
 
 <style lang="scss">
+.filter-container {
+	max-height: 40vh;
+	overflow: auto;
+	overflow-x: hidden;
+}
 </style>

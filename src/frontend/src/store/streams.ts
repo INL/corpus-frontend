@@ -114,11 +114,13 @@ export const submittedSubcorpus$ = submittedMetadata$.pipe(
 export default () => {
 	// Because we use vuex-typex, getters are a little different
 	// It doesn't matter though, they're attached to the same state instance, so just ignore the state argument.
-	rootStore.store.watch(
-		state => formStore.get.activeFilters(),
-		v => metadata$.next(v),
-		{ immediate: true }
-	);
+
+	// NOTE: temporarily disabled, see https://github.com/INL/corpus-frontend/issues/153
+	// rootStore.store.watch(
+	// 	state => formStore.get.activeFilters(),
+	// 	v => metadata$.next(v),
+	// 	{ immediate: true }
+	// );
 	rootStore.store.watch(
 		state => {
 			const params = formStore.get.lastSubmittedParameters();

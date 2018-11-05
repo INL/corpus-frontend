@@ -300,7 +300,7 @@ export default Vue.extend({
 					groups.push({
 						label: groupname,
 						options: annotations.map(annot => ({
-							label: `Group by ${annot.displayName} <small class="text-muted">${suffix}</small>`,
+							label: `Group by ${annot.displayName || annot.id} <small class="text-muted">${suffix}</small>`,
 							value: `${prefix}${annot.id}`
 						}))
 					})

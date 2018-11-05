@@ -51,7 +51,7 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 			annotatedFieldId,
 			caseSensitive: annotation.sensitivity === 'SENSITIVE_AND_INSENSITIVE',
 			description: annotation.description,
-			displayName: annotation.displayName,
+			displayName: annotation.displayName || annotationId,
 			groupId: findAnnotationGroup(annotatedFieldId, annotationId),
 			hasForwardIndex: annotation.hasForwardIndex,
 			id: annotationId,
@@ -66,7 +66,7 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 	function normalizeMetadata(field: BLTypes.BLMetadataField): NormalizedMetadataField {
 		return {
 			description: field.description,
-			displayName: field.displayName,
+			displayName: field.displayName || field.fieldName,
 			groupId: findMetadataGroup(field),
 			id: field.fieldName,
 			uiType: normalizeMetadataUIType(field),

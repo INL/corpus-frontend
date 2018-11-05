@@ -19,5 +19,12 @@
           })();
         </script>
         #end
+         #if ($websiteConfig.getPathToCustomCss())
+            <link rel="stylesheet" href="$websiteConfig.getPathToCustomCss()?_$cache">
+        #end
+    
+        #if ($websiteConfig.getPathToCustomJs())
+            <script src="$websiteConfig.getPathToCustomJs()?_$cache"></script>
+        #end
     </body>
 </html>

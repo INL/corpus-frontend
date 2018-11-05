@@ -22,11 +22,9 @@
 					:id="inputId"
 					:name="inputId"
 					:placeholder="displayName"
-					:autocomplete="serverAutocompleteUrl ? 'off' : undefined"
+					:autocomplete="autocomplete ? 'off' : undefined"
 
-					:data-autocomplete="serverAutocompleteUrl"
-
-					ref="input"
+					ref="autocomplete"
 					v-model="value"
 				/>
 				<span class="btn btn-default upload-button">
@@ -62,19 +60,20 @@
 <script lang="ts">
 import Vue from 'vue';
 
-import 'jquery-ui';
-import 'jquery-ui/ui/widgets/autocomplete';
 import $ from 'jquery';
 
 import * as formStore from '@/store/form';
 import { NormalizedAnnotation } from '@/types/apptypes';
 import SelectPicker, {Option} from '@/components/SelectPicker.vue';
 
+import Autocomplete from '@/mixins/autocomplete';
+
 declare const BLS_URL: string;
 
 // TODO use description, use annotatedField description and properties and stuff
 
 export default Vue.extend({
+	mixins: [Autocomplete],
 	components: {
 		SelectPicker,
 	},
@@ -91,10 +90,8 @@ export default Vue.extend({
 
 		options(): Option[] { return this.annotation.values || [] },
 
-		serverAutocompleteUrl(): string|undefined {
-			// TODO move to api?
-			return this.annotation.uiType === 'combobox' ? `${this.annotation.annotatedFieldId}/${this.annotation.id}` : undefined
-		},
+		autocomplete(): boolean { return this.annotation.uiType === 'combobox'; },
+		autocompleteUrl(): string { return `${BLS_URL}/autocomplete/${this.annotation.annotatedFieldId}/${this.annotation.id}`},
 
 		value: {
 			get(): string {
@@ -122,6 +119,7 @@ export default Vue.extend({
 		}
 	},
 	methods: {
+		autocompleteSelected(value: string) { this.value = value; },
 		onFileChanged(event: Event) {
 			const self = this;
 			const fileInput = event.target as HTMLInputElement;
@@ -140,37 +138,6 @@ export default Vue.extend({
 			}
 		}
 	},
-	mounted() {
-		const self = this;
-		if (this.$refs.input) {
-			var $input = $(this.$refs.input as HTMLInputElement);
-			var propertyId = $input.data('autocomplete');
-
-			($input as any).autocomplete({
-				source: BLS_URL + '/autocomplete/' + propertyId,
-				minLength: 1, // Show values when at least 1 letter is present
-				classes: {
-					'ui-autocomplete': 'dropdown-menu'
-				},
-				create: function() {
-					// This element has a div appended every time an element is highlighted
-					// but they are never removed... remove this element for now
-					$('.ui-helper-hidden-accessible').remove();
-				},
-				// Manually fire dom change event as autocomplete doesn't fire it when user selects a value
-				// and we require change events in other parts of the code.
-				select: function(event: any, ui: any) {
-					self.value = ui.item.value;
-					return false;
-				}
-			});
-			$input.keypress(function(event) {
-				if ( event.which == 13 ) {
-					($input as any).autocomplete('close');
-				}
-			});
-		}
-	}
 })
 </script>
 

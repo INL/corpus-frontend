@@ -70,9 +70,10 @@
 
 					:id="inputId"
 					:placeholder="displayName"
-					:autocomplete="serverAutocompleteUrl ? 'off' : undefined"
-					:data-autocomplete="serverAutocompleteUrl"
+					:autocomplete="autocomplete"
 
+
+					ref="autocomplete"
 					v-model="value[0]"
 				/>
 			</div>
@@ -87,6 +88,10 @@ import * as CorpusStore from '@/store/corpus';
 import * as FormStore from '@/store/form';
 
 import SelectPicker, {Option} from '@/components/SelectPicker.vue';
+
+import Autocomplete from '@/mixins/autocomplete';
+
+declare const BLS_URL: string;
 
 export default Vue.extend({
 	components: {
@@ -104,10 +109,9 @@ export default Vue.extend({
 
 		options(): Option[] { return this.filter.values || []; },
 
-		serverAutocompleteUrl(): string|undefined {
-			// TODO move to api?
-			return this.filter.uiType === 'combobox' ? this.filter.id : undefined;
-		},
+		autocomplete(): boolean { return this.filter.uiType === 'combobox'; },
+		autocompleteUrl(): string { return `${BLS_URL}/autocomplete/${this.filter.id}`},
+
 
 		value: {
 			get(): string[] {
@@ -121,6 +125,9 @@ export default Vue.extend({
 			}
 		}
 	},
+	methods: {
+		autocompleteSelected(value: string) { this.value = [value]; }
+	}
 });
 </script>
 

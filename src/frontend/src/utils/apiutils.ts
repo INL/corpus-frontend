@@ -33,11 +33,11 @@ export async function handleError<T>(error: AxiosError): Promise<never> {
 
 	const response = error.response;
 	if (!response) {
-		throw new ApiError(
+		return Promise.reject(new ApiError(
 			error.message,
 			'Could not connect to server at ' + error.config.url,
 			'Server Offline'
-		);
+		));
 	}
 
 	// Something else is going on, assume it's a blacklab-server error

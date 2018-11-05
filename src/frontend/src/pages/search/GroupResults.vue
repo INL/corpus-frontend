@@ -18,20 +18,23 @@
 					<div v-if="concordances[identity] && concordances[identity].open" class="well-light">
 						<div>
 							<button type="button" class="btn btn-sm btn-link" @click="openFullConcordances(identity, identityDisplay)">&#171; View detailed concordances in this group</button>
-							<template v-if="concordances[identity].available > concordances[identity].concordances.length">
+							<template v-if="canLoadConcordances(identity)">
 								&nbsp;-&nbsp;<button
 									type="button"
 									class="btn btn-sm btn-link"
 									@click="loadPreviewConcordances(identity)"
-									:disabled="concordances[identity].request != null"
+									:disabled="!canLoadConcordances(identity)"
 								>{{`${concordances[identity].request != null ? 'loading...' : 'Load more concordances...'}`}}</button>
 							</template>
 						</div>
 
-						<template v-if="type === 'hits'">
+						<div v-if="concordances[identity].request">Loading...</div>
+						<div v-if="concordances[identity].error" class="text-danger">{{concordances[identity].error.title}}<br>{{concordances[identity].error.message}}</div>
+
+						<template v-if="type === 'hits' && concordances[identity].concordances.length > 0">
 							<div class="clearfix" style="border-bottom:1px solid #ddd;">
 								<div class="col-xs-5 text-right"><strong>{{leftLabel}}</strong></div>
-								<div class="col-xs-2 text-center"><strong>Hit</strong></div>
+								<div class="col-xs-2 text-center" style="padding: 0;"><strong>Hit</strong></div>
 								<div class="col-xs-5"><strong>{{rightLabel}}</strong></div>
 							</div>
 							<div v-for="(conc, index) in concordances[identity].concordances" :key="index" class="clearfix concordance">
@@ -40,7 +43,7 @@
 								<div class="col-xs-5">{{conc.right}} &hellip;</div>
 							</div>
 						</template>
-						<template v-else>
+						<template v-else-if="type === 'docs' && concordances[identity].concordances.length > 0">
 							<table>
 								<thead>
 									<tr>
@@ -82,7 +85,8 @@ export default Vue.extend({
 		concordances: {} as {
 			[key: string]: {
 				available: number;
-				request: null|Promise<BLTypes.BLHitResults|BLTypes.BLDocResults>;
+				request: null|Promise<BLTypes.BLSearchResult>;
+				error: null|Api.ApiError;
 				open: boolean;
 				// TODO
 				hasHits?: boolean, // only when this.type === docs
@@ -133,6 +137,7 @@ export default Vue.extend({
 				this.loadPreviewConcordances(id);
 			}
 		},
+		canLoadConcordances(id: string) { const conc = this.concordances[id]; return conc && conc.request == null && conc.available > conc.concordances.length; },
 		loadPreviewConcordances(id: string) {
 			const cache = this.concordances[id];
 
@@ -157,6 +162,8 @@ export default Vue.extend({
 
 			const apiCall = this.type === 'hits' ? Api.blacklab.getHits : Api.blacklab.getDocs;
 			const req: Promise<BLTypes.BLSearchResult> = apiCall(corpusStore.getState().id, requestParameters).request;
+			cache.request = req;
+			cache.error = null;
 
 			req.then(res => {
 				if (this.type === 'hits') {
@@ -185,7 +192,7 @@ export default Vue.extend({
 					})
 				}
 			})
-			.catch(err => {throw err}) // TODO log error somewhere in component.
+			.catch(err => cache.error = err) // TODO log error somewhere in component.
 			.finally(() => cache.request = null)
 		},
 

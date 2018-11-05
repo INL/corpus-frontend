@@ -95,6 +95,7 @@ import Autocomplete from '@/mixins/autocomplete';
 declare const BLS_URL: string;
 
 export default Vue.extend({
+	mixins: [Autocomplete],
 	components: {
 		SelectPicker
 	},

@@ -1,7 +1,8 @@
 <template>
 	<div class="text-muted text-small filter-overview">
 		<span v-for="filter in filters" :key="filter.id">{{filter.displayName}}: <i>{{filter.values.join(', ')}}</i>&nbsp;</span>
-		<div class="sub-corpus-size">
+
+		<div class="sub-corpus-size" v-if="false"> <!-- temporarily disabled until work done in BlackLab, see https://github.com/INL/corpus-frontend/issues/153 -->
 			<template v-if="subCorpusStats">
 				Selected subcorpus:<br>
 				Total documents: {{subCorpusStats.summary.numberOfDocs}}<br>
@@ -17,8 +18,6 @@
 
 <script lang="ts">
 import Vue from 'vue';
-
-import StatisticsBaseComponent from '@/components/StatisticsBase.vue';
 
 import * as formStore from '@/store/form';
 import * as corpusStore from '@/store/corpus';

@@ -73,8 +73,11 @@ export default StatisticsBaseComponents.extend({
 			}
 
 			let total = this.searchSpaceCount;
-			let actual = this.resultCount
-			const div = actual / total * 100;
+			let actual = this.resultCount;
+			if (total === 0) {
+				return '(100%)';
+			}
+			let div = actual / total * 100;
 
 			let numDigits = Math.max(1-Math.floor(Math.log(div)/Math.log(10)), 0);
 			return `(${div.toFixed(numDigits)}%)`;

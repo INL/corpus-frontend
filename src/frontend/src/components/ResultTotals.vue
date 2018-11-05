@@ -76,6 +76,8 @@ export default StatisticsBaseComponents.extend({
 			let actual = this.resultCount;
 			if (total === 0) {
 				return '(100%)';
+			} else if (actual === 0) {
+				return '(0%)';
 			}
 			let div = actual / total * 100;
 

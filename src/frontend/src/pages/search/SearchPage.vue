@@ -81,8 +81,8 @@ import $ from 'jquery';
 import * as RootStore from '@/store';
 
 import SearchForm from '@/pages/search/form/SearchForm.vue';
-import QuerySummary from '@/pages/search/QuerySummary.vue';
-import Results from '@/pages/search/Results.vue';
+import QuerySummary from '@/pages/search/results/QuerySummary.vue';
+import Results from '@/pages/search/results/Results.vue';
 
 import PageGuide from '@/pages/search/PageGuide.vue';
 

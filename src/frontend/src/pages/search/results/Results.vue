@@ -15,7 +15,7 @@
 <script lang="ts">
 import Vue from 'vue';
 
-import ResultsView from '@/pages/search/ResultsView.vue';
+import ResultsView from '@/pages/search/results/ResultsView.vue';
 
 import * as store from '@/store';
 import * as resultsStore from '@/store/results';

@@ -99,21 +99,23 @@ import * as settingsStore from '@/store/settings';
 import * as globalStore from '@/store';
 import * as corpus from '@/store/corpus';
 import * as query from '@/store/form';
+import {submittedSubcorpus$} from '@/store/streams';
 
 import * as bls from "@/modules/singlepage-bls";
-import * as BLTypes from '@/types/blacklabtypes';
 import * as Api from '@/api';
 
-import SelectPicker, {OptGroup} from '@/components/SelectPicker.vue';
-import Pagination from '@/components/Pagination.vue';
+import Totals from '@/pages/search/results/ResultTotals.vue';
+import GroupResults from '@/pages/search/results/table/GroupResults.vue';
+import HitResults from '@/pages/search/results/table/HitResults.vue';
+import DocResults from '@/pages/search/results/table/DocResults.vue';
 
-import GroupResults from '@/pages/search/GroupResults.vue';
-import HitResults from '@/pages/search/HitResults.vue';
-import DocResults from '@/pages/search/DocResults.vue';
-import Totals from '@/components/ResultTotals.vue';
+import Pagination from '@/components/Pagination.vue';
+import SelectPicker, {OptGroup, Option} from '@/components/SelectPicker.vue';
 
 import {toPageUrl} from '@/utils';
 import {debugLog} from '@/utils/debug';
+
+import * as BLTypes from '@/types/blacklabtypes';
 
 // TODO move to url management module, once vuexbridge is more factored out
 /** Callback from when a search is executed (not neccesarily by the user, could also just be pagination and the like) */
@@ -390,7 +392,7 @@ export default Vue.extend({
 				})
 			}
 			return r;
-		}
+		},
 	},
 	watch: {
 		watchSettings: {

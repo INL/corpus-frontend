@@ -32,7 +32,7 @@ public class XslTransformer {
 
     private static final Map<File, Templates> FILETEMPLATES = new HashMap<>();
 
-    private Templates getTemplates(File f) {
+    private static Templates getTemplates(File f) {
         synchronized (FILETEMPLATES) {
             if (!FILETEMPLATES.containsKey(f)) {
                 try {
@@ -45,8 +45,6 @@ public class XslTransformer {
         return FILETEMPLATES.get(f);
 
     }
-    
-    private static final Map<File, Transformer> stylesheets = new HashMap<>(2);
 
     public XslTransformer(File stylesheet) throws TransformerConfigurationException {
         transformer = getTemplates(stylesheet).newTransformer();

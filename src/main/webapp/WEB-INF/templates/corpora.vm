@@ -9,7 +9,7 @@
     <span id="errorMessage"></span>
 </div>
 
-<span id="waitDisplay" class="fa fa-spinner fa-spin searchIndicator" style="position: absolute; left: 50%;"></span>
+<span id="waitDisplay" class="fa fa-spinner fa-spin searchIndicator" style="position: absolute; left: 50%; font-size=50px;"></span>
 <p data-autoupdate="username" class="text-right" style="display: none;"></p>
 
 <div id="corpora-public-container" class="cf-panel cf-panel-lg" data-bls-url="$blsUrl" style="position:relative;min-height:150px;" >

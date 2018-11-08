@@ -17,6 +17,8 @@ $accent: darken($panel-color, 3);
 // $border-dark: #bababa;
 $border-default: #ddd;
 $border-dark: #ccc;
+$border-default-hover: darken($border-default, 10);
+$border-dark-hover: darken($border-dark, 10);
 $border-radius: 3px;
 $border-radius-lg: 4px;
 
@@ -26,10 +28,15 @@ $border-radius-lg: 4px;
 	// box-shadow: 0px 1px 7px -1px rgba(0,0,0,0.2);
 	border-radius: $border-radius;
 	background: white;
-	padding: 15px;
 	margin-left: -15px;
 	margin-right: -15px;
 	margin-bottom: 20px;
+	padding: 15px;
+	transition: 0.25s border-color;
+
+	&:hover {
+		border-color: $border-default-hover;
+	}
 
 	&.row {
 		// assumed to be taken care of by child col-* classes
@@ -38,14 +45,17 @@ $border-radius-lg: 4px;
 	}
 
 	&.cf-panel-lg {
-		border-left-color: $border-dark;
-		border-right-color: $border-dark;
-		border-bottom-color: $border-dark;
+		border-color: $border-dark;
+		// border-top-color: $panel-color;
 		border-radius: $border-radius-lg;
 		// border-top-width: 5px;
 		// box-shadow: 0px 3px 12px -2px rgba(0,0,0,0.6);
 		margin-bottom: 35px;
 		padding: 30px;
+
+		&:hover {
+			border-color: $border-dark-hover;
+		}
 
 		&.row {
 			padding-left: 15px;
@@ -58,11 +68,11 @@ $border-radius-lg: 4px;
 ul.nav-tabs.cf-panel-tab-header {
 	background-color: $panel-color;
 	border-bottom-color: $accent;
+	border-radius: $border-radius $border-radius 0px 0px;
+	// border-top: 3px solid $panel-color;
 	// box-shadow: 0px 1px 7px -1px rgba(0,0,0,0.2);
 	margin-left: -15px;
 	margin-right: -15px;
-	border-radius: $border-radius $border-radius 0px 0px;
-	// border-top: 3px solid $panel-color;
 	z-index: -1;
 
 	&.cf-panel-lg {

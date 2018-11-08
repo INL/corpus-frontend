@@ -26,11 +26,11 @@ module.exports = {
 		}
 	},
 	module: {
-		// Make several modules available globally (i.e. the browser console) under "cf.*"
-		// Helps with development and debugging and allows user scripts to hook in to some of the functionality
-		// NOTE: This is only to help debugging and development, all inter-module communication should go through the normal
 		// import/exports
 		rules: [{
+			test: /\.css$/,
+			use: [ 'vue-style-loader', 'css-loader'],
+		}, {
 			test: /\.scss$/,
 			use: [
 				'vue-style-loader',

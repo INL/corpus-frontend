@@ -70,7 +70,7 @@
 		</div>
 
 		<PageGuide/>
-
+		<History/>
 	</div>
 </template>
 
@@ -85,14 +85,15 @@ import QuerySummary from '@/pages/search/results/QuerySummary.vue';
 import Results from '@/pages/search/results/Results.vue';
 
 import PageGuide from '@/pages/search/PageGuide.vue';
-
+import History from '@/pages/search/History.vue';
 
 export default Vue.extend({
 	components: {
 		SearchForm,
 		QuerySummary,
 		Results,
-		PageGuide
+		PageGuide,
+		History
 	},
 	computed: {
 		viewedResults: RootStore.get.viewedResults

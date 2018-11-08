@@ -1,14 +1,16 @@
 // Bootstrap and bootstrap-select augment jquery
 import 'bootstrap';
 import 'bootstrap-select';
+import 'bootstrap-select/dist/css/bootstrap-select.css';
 
 // Whereas these register new highlighters for codemirror
 import 'codemirror/mode/javascript/javascript.js';
 import 'codemirror/mode/yaml/yaml.js';
 
-import './utils/features/tutorial';
+import '@/utils/features/tutorial';
 
 import '@/global.scss';
+
 
 // Now import the augmented modules (though import order shouldn't matter)
 import CodeMirror from 'codemirror';

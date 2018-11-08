@@ -160,20 +160,20 @@ export default () => {
 		});
 	}
 
-	{
-		const $within = $('#simplesearch_within');
-		store.watch(state => state.form.pattern.simple.within, v => {
-			if (!v) {
-				$within.find('input').first().parent().button('toggle');
-			} else {
-				$within.find(`input[value="${v}"]`).parent().button('toggle');
-			}
-		}, {immediate: true});
-		$within.on('change', () => {
-			const value = $within.find('input:checked').val() as string || null;
-			FormStore.actions.pattern.simple.within(value);
-		});
-	}
+	// {
+	// 	const $within = $('#simplesearch_within');
+	// 	store.watch(state => state.form.pattern.simple.within, v => {
+	// 		if (!v) {
+	// 			$within.find('input').first().parent().button('toggle');
+	// 		} else {
+	// 			$within.find(`input[value="${v}"]`).parent().button('toggle');
+	// 		}
+	// 	}, {immediate: true});
+	// 	$within.on('change', () => {
+	// 		const value = $within.find('input:checked').val() as string || null;
+	// 		FormStore.actions.pattern.simple.within(value);
+	// 	});
+	// }
 
 	{
 		const $simple = $('#searchTabs a[href="#simple"]');
@@ -193,31 +193,31 @@ export default () => {
 		$cql.on('show.bs.tab', () => FormStore.actions.activePattern('cql'));
 	}
 
-	store.watch(state => state.viewedResults, v => {
-		$('#results').toggle(!!v);
-	}, {immediate: true});
+	// store.watch(state => state.viewedResults, v => {
+	// 	$('#results').toggle(!!v);
+	// }, {immediate: true});
 
 	// TODO move into searchform component.
 	// Reset & history navigation
-	$('#mainForm').on('reset', () => {
-		actions.reset();
+	// $('#mainForm').on('reset', () => {
+	// 	actions.reset();
 
-		// TODO map PageState to url and autoupdate on appropriate state updates
-		const url = new URI();
-		const newUrl = url.search('').segmentCoded(url.segmentCoded().filter(s => s !== 'hits' && s !== 'docs'));
+	// 	// TODO map PageState to url and autoupdate on appropriate state updates
+	// 	const url = new URI();
+	// 	const newUrl = url.search('').segmentCoded(url.segmentCoded().filter(s => s !== 'hits' && s !== 'docs'));
 
-		history.pushState(JSON.parse(JSON.stringify(Object.assign({}, getState(), {corpus: undefined}))), '', newUrl.toString());
+	// 	history.pushState(JSON.parse(JSON.stringify(Object.assign({}, getState(), {corpus: undefined}))), '', newUrl.toString());
 
-		return false;
-	});
-	$('#mainForm').on('submit', () => {
-		ResultsStore.actions.resetPage();
-		ResultsStore.actions.resetGroup();
-		actions.search();
+	// 	return false;
+	// });
+	// $('#mainForm').on('submit', () => {
+	// 	ResultsStore.actions.resetPage();
+	// 	ResultsStore.actions.resetGroup();
+	// 	actions.search();
 
-		// May be used as click handler, so prevent event propagation
-		return false;
-	});
+	// 	// May be used as click handler, so prevent event propagation
+	// 	return false;
+	// });
 
 	window.addEventListener('popstate', function(event) {
 		const newState: RootState|undefined = event.state;

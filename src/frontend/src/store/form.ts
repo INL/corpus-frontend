@@ -1,13 +1,21 @@
-import $ from 'jquery';
-
 import Vue from 'vue';
 import { getStoreBuilder } from 'vuex-typex';
 
 import { RootState } from '@/store';
-import { getPatternString } from '@/utils';
+import { HistoryEntry } from '@/store/history';
 import { debugLog } from '@/utils/debug';
 
 import { NormalizedIndex, MetadataValue, AnnotationValue } from '@/types/apptypes';
+
+type SubmittedParameters = {
+	pattern: null|string|{
+		/** Only contains annotations with a value */
+		annotations: AnnotationValue[];
+		within: string|null;
+	};
+	/** Only contains filters with a value */
+	filters: MetadataValue[];
+};
 
 type ModuleRootState = {
 	filters: { [key: string]: MetadataValue };
@@ -27,11 +35,7 @@ type ModuleRootState = {
 	};
 
 	/** These were the parameters the last time the query was submitted, a somewhat processed version of the rest of the state */
-	submittedParameters: null|{
-		pattern: null|string;
-		/** Only contains filters with a value */
-		filters: MetadataValue[];
-	}
+	submittedParameters: SubmittedParameters|null;
 };
 
 // There are three levels of state initialization
@@ -107,10 +111,31 @@ const actions = {
 
 	search: b.commit(state => {
 		// Get the state without the submittedParameters key
-		state.submittedParameters = {
-			filters: JSON.parse(JSON.stringify(get.activeFilters())) as ReturnType<typeof get['activeFilters']>, // small type safety for if we change one of the two later
-			pattern: state.activePattern ? getPatternString(state.pattern[state.activePattern])||null : null,
+
+		// Deep copy these to prevent aliasing and the reactivity issues that come with it
+		// such as writing to current state causing updates in history entries
+		const filters = JSON.parse(JSON.stringify(get.activeFilters())) as ReturnType<typeof get['activeFilters']>; // small type safety for if we change one of the two later
+
+		const submitted: ModuleRootState['submittedParameters'] = {
+			filters,
+			pattern: null
 		};
+
+		switch (state.activePattern) {
+			case 'cql': submitted.pattern = state.pattern.cql || null; break;
+			case 'queryBuilder': submitted.pattern = state.pattern.queryBuilder || null; break;
+			case 'simple': {
+				const activeAnnotations = get.activeAnnotations();
+				if (activeAnnotations.length) {
+					submitted.pattern = {
+						annotations: JSON.parse(JSON.stringify(activeAnnotations)) as typeof activeAnnotations,
+						within: state.pattern.simple.within
+					};
+				} // else no annotations active, keep submitted.pattern as null.
+			}
+		}
+
+		state.submittedParameters = submitted;
 	}, 'search'),
 
 	reset: b.commit(state => {
@@ -132,7 +157,24 @@ const actions = {
 		actions.pattern.simple.within(payload.pattern.simple.within);
 		Object.values(payload.pattern.simple.annotationValues)/*.forEach(f => Object.values(f)*/.forEach(actions.pattern.simple.annotation)/*)*/;
 		state.submittedParameters = payload.submittedParameters;
-	}, 'replace')
+	}, 'replace'),
+	replaceFromHistory: b.commit((state, payload: HistoryEntry) => {
+		actions.reset();
+		if (payload.pattern == null) {
+			// nothing to do here, everything reset, default tab activated already
+		} else if (typeof payload.pattern === 'string') {
+			actions.pattern.cql(payload.pattern);
+			actions.pattern.queryBuilder(payload.pattern);
+			actions.pattern.simple.reset();
+			actions.activePattern('cql');
+		} else {
+			actions.activePattern('simple');
+			actions.pattern.simple.within(payload.pattern.within);
+			payload.pattern.annotations.forEach(actions.pattern.simple.annotation);
+		}
+
+		payload.filters.forEach(actions.filter);
+	}, 'replaceFromHistory')
 };
 
 /** We need to call some function from the module before creating the root store or this module won't be evaluated (e.g. none of this code will run) */
@@ -170,5 +212,7 @@ export {
 	getState,
 	get,
 	actions,
-	init
+	init,
+
+	SubmittedParameters,
 };

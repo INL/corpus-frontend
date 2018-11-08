@@ -1,17 +1,18 @@
 <template>
-	<table>
+	<table class="group-table">
 		<thead>
 			<tr>
 				<th style="width:30%;"><a @click="changeSort('identity')" class="sort" title="Sort by group name">Group</a></th>
 				<th style="width:70%;"><a @click="changeSort('numhits')" class="sort" title="Sort by group size">{{type === 'hits' ? 'Hits' : 'Documents'}}</a></th>
+				<th style="width:10%;"><a @click="changeSort('numhits')" class="sort" title="Sort by group size">Relative size</a></th>
 			</tr>
 		</thead>
 		<tbody>
 			<tr v-for="({identity, identityDisplay, size}) in groups" :key="identity" :class="['grouprow', { 'open': concordances[identity] && concordances[identity].open }]">
-				<td>{{identityDisplay || '[unknown]'}}</td>
-				<td>
+				<td class="td-group-identity" :title="identityDisplay">{{identityDisplay || '[unknown]'}}</td>
+				<td class="td-group-size">
 					<div class="progress group-size-indicator" @click="openPreviewConcordances(identity)">
-						<div class="progress-bar progress-bar-primary" :style="[{'min-width': width(size)}]">{{size}} {{relativeSize(size)}}</div>
+						<div class="progress-bar progress-bar-primary" :style="[{'min-width': width(size)}]">{{size}}</div>
 					</div>
 
 					<!-- todo spinner, disable loading more, etc -->
@@ -61,6 +62,7 @@
 						</template>
 					</div>
 				</td>
+				<td class="td-group-relative-size">{{relativeSize(size)}}%</td>
 			</tr>
 		</tbody>
 	</table>
@@ -202,7 +204,7 @@ export default Vue.extend({
 			const div = size / total * 100;
 			const numDigits = Math.max(1-Math.floor(Math.log(div)/Math.log(10)), 0);
 
-			return `(${div.toFixed(numDigits)}%)`;
+			return div.toFixed(numDigits);
 		},
 
 		/** EVENTS **/
@@ -231,6 +233,12 @@ export default Vue.extend({
 
 <style lang="scss">
 
+.group-table {
+	th {
+		vertical-align: top;
+	};
+}
+
 .grouprow {
 	&.open {
 		background: none;
@@ -241,17 +249,32 @@ export default Vue.extend({
 			background-color: rgba(0,0,0,0.1);
 		}
 	}
+
+	>.td-group-identity {
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	>.td-group-size {
+		padding-right: 6px;
+	}
 }
 
 .group-size-indicator {
 	cursor: pointer;
 	margin-bottom: 2px;
 
+	background: linear-gradient(to right, hsla(0, 0%, 91%, 1) 100px, white 100%);
+
+	&:hover {
+		background: #d8d8d8;
+	}
+
 	> .progress-bar {
 		// Do not shrink smaller than the text inside the bar.
 		// Greater widths are set using min-width.
 		padding: 0px 2px;
-		//width: auto;
+		width: auto;
 		white-space: nowrap;
 	}
 }

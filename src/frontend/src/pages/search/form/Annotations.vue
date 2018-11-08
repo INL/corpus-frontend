@@ -32,16 +32,14 @@
 					<!-- TODO extract available options from blacklab -->
 					<label class="col-xs-12 col-md-3">Within:</label>
 
-					<div class="btn-group col-xs-12 col-md-9" data-toggle="buttons" id="simplesearch_within" style="display:block;">
-						<label class="btn btn-default active">
-							<input type="radio" autocomplete="off" name="within" value="" checked="checked">document
-						</label>
-						<label class="btn btn-default">
-							<input type="radio" autocomplete="off" name="within" value="p">paragraph
-						</label>
-						<label class="btn btn-default">
-							<input type="radio" autocomplete="off" name="within" value="s">sentence
-						</label>
+					<div class="btn-group col-xs-12 col-md-9" id="simplesearch_within">
+						<button v-for="option in withinOptions"
+							type="button"
+							:class="['btn btn-default', {'active': within === option.value}]"
+							:key="option.value"
+							:value="option.value"
+							@click="within = option.value"
+						>{{option.label}}</button>
 					</div>
 				</div>
 			</div>
@@ -62,6 +60,7 @@
 import Vue from 'vue';
 
 import * as corpus from '@/store/corpus';
+import * as form from '@/store/form';
 
 import Annotation from '@/pages/search/form/Annotation.vue';
 
@@ -81,7 +80,25 @@ export default Vue.extend({
 				acc.push(...tab.annotations);
 				return acc;
 			}, [] as AppTypes.NormalizedAnnotation[]);
-		}
+		},
+		withinOptions(): Array<{label: string, value: string|null}> {
+			// TODO retrieve from indexMetadata once available
+			// discuss with jan?
+			return [{
+				label: 'document',
+				value: null
+			}, {
+				label: 'paragraph',
+				value: 'p'
+			}, {
+				label: 'sentence',
+				value: 's'
+			}]
+		},
+		within: {
+			get(): string|null { return form.getState().pattern.simple.within; },
+			set(v: null|string) { form.actions.pattern.simple.within(v); }
+		},
 	},
 	methods: {
 		getTabId(name: string) {

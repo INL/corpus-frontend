@@ -1,8 +1,7 @@
 import axios, {AxiosResponse, AxiosRequestConfig, AxiosError} from 'axios';
 
 import {ApiError} from '@/types/apptypes';
-import {BLError} from '@/types/blacklabtypes';
-import {isBLError} from '@/utils/blacklabutils';
+import {BLError, isBLError} from '@/types/blacklabtypes';
 
 const settings = {
 	delay: 0,

@@ -8,13 +8,14 @@ import {getStoreBuilder} from 'vuex-typex';
 
 import {makeRegexWildcard} from '@/utils';
 import parseCql from '@/utils/cqlparser';
-import parseLucene from '@/utils/lucene2filterparser';
+import parseLucene from '@/utils/luceneparser';
 import {debugLog} from '@/utils/debug';
 
 import * as FormModule from '@/store/form';
 import * as SettingsModule from '@/store/settings';
 import * as ResultsModule from '@/store/results';
 import * as CorpusModule from '@/store/corpus';
+import * as HistoryModule from '@/store/history';
 
 import {NormalizedIndex, MetadataValue, AnnotationValue} from '@/types/apptypes';
 
@@ -27,6 +28,7 @@ type ChildRootState = {
 	settings: SettingsModule.ModuleRootState;
 	results: ResultsModule.ModuleRootState;
 	corpus: CorpusModule.ModuleRootState;
+	history: HistoryModule.ModuleRootState;
 };
 
 type OwnRootState = {
@@ -42,9 +44,9 @@ const ownInitialState: OwnRootState = {
 /**
  * Not all state information is contained in the url,
  * create a new type that captures only those parts that can and should be extracted from the url.
- * For now this is everything, except the indexmetadata
+ * For now this is everything, except the indexmetadata and history
  */
-type UrlPageStateResult = Pick<RootState, Exclude<keyof RootState, 'corpus'>>;
+export type SlimRootState = Pick<RootState, Exclude<keyof RootState, 'corpus'|'history'>>;
 
 /**
  * Decode the current url into a valid page state configuration.
@@ -61,7 +63,7 @@ export class UrlPageState {
 
 	constructor(uri = new URI()) {
 		this.paths = uri.segmentCoded();
-		this.params = uri.search(true);
+		this.params = uri.search(true) || {};
 	}
 
 	@memoize
@@ -84,7 +86,6 @@ export class UrlPageState {
 	@memoize
 	private get settings(): SettingsModule.ModuleRootState {
 		return {
-			operation: this.viewedResults,
 			pageSize: this.pageSize,
 			sampleMode: this.sampleMode,
 			sampleSeed: this.sampleSeed,
@@ -93,7 +94,7 @@ export class UrlPageState {
 		};
 	}
 
-	public get(): UrlPageStateResult {
+	public get(): SlimRootState {
 		return {
 			form: this.form,
 			settings: this.settings,
@@ -266,8 +267,10 @@ export class UrlPageState {
 	// TODO these might become dynamic in the future, then we need extra manual checking
 	// this can be done from the NormalizedIndex maybe? we might need extra data from a second request however
 	@memoize
-	private get within(): 'p'|'s'|null {
-		return null; // TODO
+	private get within(): string|null {
+		// FIXME
+		const res = this.patternString ? /<(\w+)\/>$/.exec(this.patternString) : null;
+		return res ? res[1] : null;
 	}
 
 	@memoize
@@ -372,6 +375,7 @@ const actions = {
 		if (state.viewedResults !== 'docs') { // open when null, go to docs when viewing hits and no pattern
 			state.viewedResults = cqlPatt ? 'hits' : 'docs';
 		}
+		HistoryModule.actions.addEntry(state);
 	}, 'search'),
 
 	reset: b.commit(state => {
@@ -393,8 +397,18 @@ const actions = {
 			actions.search();
 		}
 	}, 'replace'),
-	viewedResults: b.commit((state, payload: keyof ResultsModule.ModuleRootState) => state.viewedResults = payload, 'viewedResults'),
+	replaceFromHistory: b.dispatch(({rootState: state}, payload: HistoryModule.HistoryEntry) => {
+		debugLog('Replacing state from history', payload);
 
+		FormModule.actions.replaceFromHistory(payload);
+		SettingsModule.actions.replaceFromHistory(payload);
+		ResultsModule.actions.replaceFromHistory(payload);
+
+		state.viewedResults = payload.viewedResults;
+		actions.search();
+	}, 'replaceFromHistory'),
+
+	viewedResults: b.commit((state, payload: keyof ResultsModule.ModuleRootState) => state.viewedResults = payload, 'viewedResults'),
 };
 
 // shut up typescript, the state we pass here is merged with the modules initial states internally.
@@ -403,7 +417,7 @@ const store = b.vuexStore({state: ownInitialState as any});
 
 /** We need to call some function from this module or this module won't be evaluated (e.g. none of this code will run) */
 // declare const SINGLEPAGE: { INDEX: BLTypes.BLIndexMetadata; }
-const init = (index: NormalizedIndex, urlState: UrlPageStateResult) => {
+const init = (index: NormalizedIndex, urlState: SlimRootState) => {
 	// const index = normalizeIndex(SINGLEPAGE.INDEX);
 
 	// We need to call a function on the modules or they will be tree-shaken by webpack and their code (and thus implicit registration) won't be run.
@@ -411,6 +425,7 @@ const init = (index: NormalizedIndex, urlState: UrlPageStateResult) => {
 	FormModule.init(index);
 	ResultsModule.init();
 	CorpusModule.init();
+	HistoryModule.init(index);
 
 	actions.replace(urlState);
 	debugLog('Finished initializing state shape and loading initial state from url.');

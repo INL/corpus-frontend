@@ -116,6 +116,8 @@ export type NormalizedIndex = {
 	/** Id of the corpus minus the owner's username prefix */
 	shortId: string;
 	textDirection: 'ltr'|'rtl';
+	/** yyyy-mm-dd hh:mm:ss */
+	timeModified: string;
 	tokenCount: number;
 };
 

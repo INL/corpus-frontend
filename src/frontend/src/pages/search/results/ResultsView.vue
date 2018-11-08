@@ -99,9 +99,9 @@ import * as settingsStore from '@/store/settings';
 import * as globalStore from '@/store';
 import * as corpus from '@/store/corpus';
 import * as query from '@/store/form';
+import * as historyStore from '@/store/history';
 import {submittedSubcorpus$} from '@/store/streams';
 
-import * as bls from "@/modules/singlepage-bls";
 import * as Api from '@/api';
 
 import Totals from '@/pages/search/results/ResultTotals.vue';
@@ -112,7 +112,7 @@ import DocResults from '@/pages/search/results/table/DocResults.vue';
 import Pagination from '@/components/Pagination.vue';
 import SelectPicker, {OptGroup, Option} from '@/components/SelectPicker.vue';
 
-import {toPageUrl} from '@/utils';
+import {getUrlFromParameters, getBLSearchParametersFromState} from '@/utils';
 import {debugLog} from '@/utils/debug';
 
 import * as BLTypes from '@/types/blacklabtypes';
@@ -128,15 +128,15 @@ function onSearchUpdated(operation: string, searchParams: BLTypes.BLSearchParame
 	// If we generate very long page urls, tomcat cannot parse our requests (referrer header too long)
 	// So omit the query from the page url in these cases
 	// TODO this breaks history-based navigation
-	let newUrl = toPageUrl(operation, searchParams);
+	let newUrl = getUrlFromParameters(operation, searchParams);
 	const currentUrl = new URI().toString();
 
 	if (newUrl !== currentUrl) {
 		if (newUrl.length > 4000) {
-			newUrl = toPageUrl(operation, $.extend({}, searchParams, { patt: null }));
+			newUrl = getUrlFromParameters(operation, $.extend({}, searchParams, { patt: null }));
 		}
 		// No need to save a massive object that never changes with every history entry
-		history.pushState(JSON.parse(JSON.stringify(Object.assign({}, globalStore.getState(), {corpus: undefined}))), undefined, newUrl);
+		history.pushState(JSON.parse(JSON.stringify(Object.assign({}, globalStore.getState(), {corpus: undefined, history: undefined}))), undefined, newUrl);
 	}
 }
 
@@ -192,7 +192,11 @@ export default Vue.extend({
 				this.cancel = null;
 			}
 
-			const params = bls.getBlsParamFromState();
+			const state = globalStore.getState();
+			const params = getBLSearchParametersFromState(state);
+			historyStore.actions.addEntry(state);
+			onSearchUpdated(this.type, params);
+
 			if (this.type === 'hits' && !params.patt) {
 				this.error = new Api.ApiError('No results', 'No hits to display... (one or more of Lemma/PoS/Word is required).', 'No results');
 				return;
@@ -215,8 +219,7 @@ export default Vue.extend({
 						top: this.$el.offsetTop - 150
 					})
 				}
-			})
-			onSearchUpdated(this.type, params);
+			});
 		},
 		setSuccess(data: BLTypes.BLSearchResult) {
 			debugLog('search results', data);
@@ -385,10 +388,10 @@ export default Vue.extend({
 			}
 			if (this.viewGroup != null) {
 				r.push({
-					label: 'Viewing group ' + (this.viewGroupName || this.viewGroup),
+					label: 'Viewing group ' + (this.viewGroupName || this.viewGroup.substring(this.viewGroup.indexOf(':')+1) || '[unknown]'),
 					title: '',
 					active: true,
-					onClick: () => {}
+					onClick: undefined
 				})
 			}
 			return r;
@@ -408,8 +411,17 @@ export default Vue.extend({
 		},
 		active: {
 			handler(cur, prev) {
-				if (cur && this.isDirty) {
-					this.refresh();
+				if (cur) {
+					if (this.isDirty) {
+						this.refresh();
+					} else {
+						// TODO slightly silly, we need to update the page url and the active history entry
+						// when this tab is opened.
+						const state = globalStore.getState();
+						const params = getBLSearchParametersFromState(state);
+						historyStore.actions.addEntry(state);
+						onSearchUpdated(this.type, params);
+					}
 				}
 			},
 			immediate: true

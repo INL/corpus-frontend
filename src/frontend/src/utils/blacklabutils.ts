@@ -158,6 +158,7 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 		owner: blIndex.indexName.substring(0, blIndex.indexName.indexOf(':')) || null,
 		shortId: blIndex.indexName.substr(blIndex.indexName.indexOf(':') + 1),
 		textDirection: blIndex.textDirection,
+		timeModified: blIndex.versionInfo.timeModified,
 		tokenCount: blIndex.tokenCount || 0
 	};
 }
@@ -189,11 +190,6 @@ export function normalizeIndexOld(id: string, index: BLTypes.BLIndex): Normalize
 	};
 }
 
-// export function normalizeIndicesOld(info: BLTypes.BLServer): NormalizedIndexOld[] {
-// 	return Object.entries(info.indices)
-// 	.map(([key, value]) => normalizeIndexOld(key, value));
-// }
-
 /**
  * @param id - full id of the format, including userName portion (if applicable)
  * @param format as received from the server
@@ -218,11 +214,3 @@ export function normalizeFormatOld(id: string, format: BLTypes.BLFormat): Normal
 // 	return Object.entries(formats.supportedInputFormats)
 // 	.map(([key, value]) => normalizeFormatOld(key, value));
 // }
-
-// -----------
-// Other utils
-// -----------
-
-export function isBLError(e: any): e is BLTypes.BLError {
-	return !!e && !!e.error && !!e.error.code && !!e.error.message;
-}

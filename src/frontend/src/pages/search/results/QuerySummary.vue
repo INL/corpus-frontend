@@ -9,6 +9,8 @@ import Vue from 'vue';
 
 import * as formStore from '@/store/form'
 
+import {getPatternString} from '@/utils';
+
 export default Vue.extend({
 	computed: {
 		param(): formStore.ModuleRootState['submittedParameters'] { return formStore.get.lastSubmittedParameters(); },
@@ -24,7 +26,7 @@ export default Vue.extend({
 
 			let ret = '';
 			if (pattern) {
-				ret += '"' + pattern + '"' + ' within ';
+				ret += '"' + getPatternString(pattern) + '"' + ' within ';
 			}
 			if (metadataString) {
 				ret += 'documents where ' + metadataString;

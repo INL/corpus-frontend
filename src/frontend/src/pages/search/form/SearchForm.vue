@@ -1,12 +1,12 @@
 <template>
-	<form>
+	<form @submit.prevent.stop="submit" @reset.prevent.stop="reset">
 		<div class="col-xs-12">
 			<h2>{{title}}</h2>
 			<a v-if="showHomeLink" :href="homeLink" id="corpora-link">Back to my corpora</a>
 		</div>
 
-		<Annotations class="col-xs-12 col-md-6" id="searchcontainer"/>
-		<Filters class="col-xs-12 col-md-6" id="filtercontainer"/>
+		<Annotations :class="['col-xs-12', {'col-md-6': !isQueryBuilderActive}]" id="searchcontainer"/>
+		<Filters :class="`col-xs-12 ${isQueryBuilderActive ? 'col-md-9' : 'col-md-6'}`" id="filtercontainer"/>
 
 		<div class="col-xs-12">
 			<hr>
@@ -22,8 +22,12 @@
 
 <script lang="ts">
 import Vue from 'vue';
+import URI from 'urijs';
 
 import * as CorpusStore from '@/store/corpus';
+import * as RootStore from '@/store';
+import * as ResultsStore from '@/store/results';
+import * as FormStore from '@/store/form';
 
 import Annotations from '@/pages/search/form/Annotations.vue';
 import Filters from '@/pages/search/form/Filters.vue';
@@ -40,8 +44,27 @@ export default Vue.extend({
 	},
 	computed: {
 		title(): string { return CorpusStore.getState().displayName; },
-		showHomeLink(): boolean { return true; }, //return CorpusStore.getState().owner != null; },
-		homeLink(): string { return PATH_TO_TOP; }
+		showHomeLink(): boolean { return CorpusStore.getState().owner != null; },
+		homeLink(): string { return PATH_TO_TOP; },
+		isQueryBuilderActive(): boolean { return FormStore.getState().activePattern === 'queryBuilder'; }
+	},
+	methods: {
+		reset() {
+			RootStore.actions.reset();
+
+			// TODO handle centrally and properly, also see ResultsView.vue
+			const url = new URI();
+			const newUrl = url.search('').segmentCoded(url.segmentCoded().filter(s => s !== 'hits' && s !== 'docs'));
+
+			history.pushState(JSON.parse(JSON.stringify(Object.assign({}, RootStore.getState(), {corpus: undefined, history: undefined}))), '', newUrl.toString());
+
+			return false;
+		},
+		submit() {
+			ResultsStore.actions.resetPage();
+			ResultsStore.actions.resetGroup();
+			RootStore.actions.search();
+		}
 	}
 })
 

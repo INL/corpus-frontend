@@ -48,10 +48,6 @@ export interface BLError {
 	};
 }
 
-export function isBLError(e: any): e is BLError {
-	return !!e && !!e.error && !!e.error.code && !!e.error.message;
-}
-
 // ------------------------
 // Index status/server info
 // ------------------------
@@ -395,3 +391,4 @@ export const isDocGroups = (d: any): d is BLDocGroupResults => d && d.docGroups;
 export const isHitGroupsOrResults = (d: any): d is BLHitResults|BLHitGroupResults => isHitGroups(d) || isHitResults(d);
 export const isDocGroupsOrResults = (d: any): d is BLDocResults|BLDocGroupResults => isDocGroups(d) || isDocResults(d);
 export const isGroups = (d: any): d is BLHitGroupResults|BLDocGroupResults => isHitGroups(d) || isDocGroups(d);
+export const isBLError = (e: any): e is BLError => !!e && !!e.error && !!e.error.code && !!e.error.message;

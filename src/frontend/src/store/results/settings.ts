@@ -6,6 +6,7 @@
 import {StoreBuilder, ModuleBuilder} from 'vuex-typex';
 
 import {RootState} from '@/store';
+import {HistoryEntry} from '@/store/history';
 
 export type ModuleRootState = {
 	/** case-sensitive grouping */
@@ -24,28 +25,38 @@ export const initialState: ModuleRootState = {
 	viewGroup: null
 };
 
-const createActions = (b: ModuleBuilder<ModuleRootState, RootState>) => ({
-	caseSensitive: b.commit((state, payload: boolean) => {
-		state.caseSensitive = payload;
-		state.page = 0;
-	}, 'casesensitive'),
-	groupBy: b.commit((state, payload: string[]) => {
-		state.groupBy = payload;
-		state.viewGroup = null;
-		state.sort = null;
-		state.page = 0;
-	} , 'groupby'),
-	sort: b.commit((state, payload: string|null) => state.sort = payload, 'sort'),
-	page: b.commit((state, payload: number) => state.page = payload, 'page'),
-	viewGroup: b.commit((state, payload: string|null) => {
-		state.viewGroup = payload;
-		state.sort = null;
-		state.page = 0;
-	},'viewgroup'),
+const createActions = (b: ModuleBuilder<ModuleRootState, RootState>) => {
+	const actions = {
+		caseSensitive: b.commit((state, payload: boolean) => {
+			state.caseSensitive = payload;
+			state.page = 0;
+		}, 'casesensitive'),
+		groupBy: b.commit((state, payload: string[]) => {
+			state.groupBy = payload;
+			state.viewGroup = null;
+			state.sort = null;
+			state.page = 0;
+		} , 'groupby'),
+		sort: b.commit((state, payload: string|null) => state.sort = payload, 'sort'),
+		page: b.commit((state, payload: number) => state.page = payload, 'page'),
+		viewGroup: b.commit((state, payload: string|null) => {
+			state.viewGroup = payload;
+			state.sort = null;
+			state.page = 0;
+		},'viewgroup'),
 
-	reset: b.commit(state => Object.assign(state, initialState), 'reset'),
-	replace: b.commit((state, payload: ModuleRootState) => Object.assign(state, payload), 'replace'),
-});
+		reset: b.commit(state => Object.assign(state, initialState), 'reset'),
+		replace: b.commit((state, payload: ModuleRootState) => Object.assign(state, payload), 'replace'),
+		replaceFromHistory: b.dispatch(({state}, payload: HistoryEntry) => {
+			actions.reset();
+			if (b.namespace === payload.viewedResults) {
+				actions.caseSensitive(payload.caseSensitiveGroupBy);
+				actions.groupBy(payload.groupBy);
+			}
+		}, 'replaceFromHistory')
+	};
+	return actions;
+};
 
 const createGetters = (b: ModuleBuilder<ModuleRootState, RootState>) => {
 	return {};

@@ -1,6 +1,7 @@
 import {getStoreBuilder} from 'vuex-typex';
 
 import {RootState} from '@/store';
+import {HistoryEntry} from '@/store/history';
 import * as SettingsModule from '@/store/results/settings';
 
 export type ModuleRootState = {
@@ -43,6 +44,9 @@ export const actions = {
 		hits.actions.replace(payload.hits);
 		docs.actions.replace(payload.docs);
 	}, 'replace'),
+	replaceFromHistory: b.dispatch((state, payload: HistoryEntry) => {
+		Object.values(modules).forEach(e => e.actions.replaceFromHistory(payload));
+	}, 'replaceFromHistory')
 };
 
 /** We need to call some function from the module before creating the root store or this module won't be evaluated (e.g. none of this code will run) */

@@ -1,7 +1,7 @@
-import axios, {Canceler, CancelToken, AxiosRequestConfig} from 'axios';
+import axios, {Canceler, AxiosRequestConfig} from 'axios';
 import * as qs from 'qs';
 
-import {createEndpoint} from '@/utils/apiutils';
+import {createEndpoint} from '@/api/apiutils';
 import {normalizeIndexOld, normalizeFormatOld} from '@/utils/blacklabutils';
 
 import * as BLTypes from '@/types/blacklabtypes';

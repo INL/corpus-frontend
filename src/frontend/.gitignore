@@ -2,3 +2,4 @@ node_modules/
 dist/
 # maven installs nodejs locally
 node/
+npm.tar.gz

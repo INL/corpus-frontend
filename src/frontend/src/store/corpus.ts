@@ -26,6 +26,16 @@ const get = {
 		.filter(a => !a.isInternal && a.hasForwardIndex)
 	, 'annotations'),
 
+	// TODO might be collisions between multiple annotatedFields, this is an unfinished part in blacklab
+	// like for instance, in a BLHitSnippet, how do we know which of the props comes from which annotatedfield.
+	annotationDisplayNames: b.read(state =>
+		Object.values(state.annotatedFields)
+		.flatMap(f => Object.values(f.annotations))
+		.reduce<{[id: string]: string; }>((acc, v) => {
+			acc[v.id] = v.displayName;
+			return acc;
+		}, {}), 'annotationDisplayNames'),
+
 	// TODO there can be multiple main annotations if there are multiple annotatedFields
 	// the ui needs to respect this (probably render more extensive results?)
 	firstMainAnnotation: () => get.annotations().find(f => f.isMainAnnotation)!,

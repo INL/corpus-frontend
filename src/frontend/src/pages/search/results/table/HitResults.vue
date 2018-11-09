@@ -1,5 +1,5 @@
 <template>
-	<table>
+	<table class="hits-table">
 		<thead>
 			<tr>
 				<th class="text-right" style="width:40px">
@@ -71,20 +71,31 @@
 							<p v-else>
 								Loading...
 							</p>
-							<table>
-								<thead>
+							<table class="concordance-details-table">
+								<!-- <thead>
 									<tr>
 										<th v-for="(value, key) in rowData.props" v-if="key !== 'punct'" :key="key">
 											{{key}}
 										</th>
 									</tr>
+								</thead> -->
+								<thead>
+									<tr>
+										<th>Property</th>
+										<th :colspan="rowData.props.punct.length">Value</th>
+									</tr>
 								</thead>
 								<tbody>
+									<tr v-for="(value, key) in rowData.props" v-if="key !== 'punct'" :key="key">
+										<th>{{annotationDisplayNames[key]}}</th>
+										<td v-for="(v, index) in value" :key="index">{{v}}</td>
+									</tr>
+									<!--
 									<tr v-for="i in rowData.props.punct.length" :key="i">
 										<td v-for="(value, key) in rowData.props" v-if="key !== 'punct'" :key="key">
 											{{value[i-1]}}
 										</td>
-									</tr>
+									</tr> -->
 								</tbody>
 							</table>
 						</td>
@@ -207,6 +218,7 @@ export default Vue.extend({
 			return 3 + this.shownAnnotations.length; // left - hit - right - (one per shown annotation)
 		},
 		annotations: corpusStore.get.annotations,
+		annotationDisplayNames: corpusStore.get.annotationDisplayNames,
 		firstMainAnnotation: corpusStore.get.firstMainAnnotation,
 		shownAnnotations: corpusStore.get.shownAnnotations,
 		textDirection: corpusStore.get.textDirection,
@@ -249,31 +261,39 @@ export default Vue.extend({
 <style lang="scss" scoped>
 
 table {
-	border-collapse: separate;
+	> thead > tr > th,
+	> tbody > tr > td,
+	> tbody > tr > th {
+		&:first-child { padding-left: 6px; }
+		&:last-child { padding-right: 6px; }
+	}
+
+	&.hits-table {
+		border-collapse: separate;
+		> tbody > tr {
+			border-bottom: 1px solid #ffffff;
+
+			> td {
+				overflow: hidden;
+			}
+		}
+	}
+
+	&.concordance-details-table {
+		table-layout: auto;
+	}
 }
 
 
-th, td {
-	&:first-child { padding-left: 6px; }
-	&:last-child { padding-right: 6px; }
-}
 
-
-td {
-	overflow: hidden;
-}
-
-tr {
-	border-bottom: 1px solid #ffffff;
-}
-
-.concordance, .document {
+tr.concordance,
+tr.document {
 	&:hover {
 		background-color: rgba(0,0,0, 0.1);
 	}
 }
 
-.concordance {
+tr.concordance {
 	cursor: pointer;
 	> td {
 		padding: 0px 5px;

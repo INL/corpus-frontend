@@ -453,6 +453,38 @@ export default Vue.extend({
 			border-top-right-radius: 0px;
 			border-bottom-right-radius: 0px;
 			border-right: 0px;
+
+			width: auto;
+			max-width: 100%;
+			padding-right: 26px; // for caret
+
+			> .filter-option {
+				padding: 0;
+				height: auto;
+				max-width: none;
+				position: static;
+				top: auto;
+				left: auto;
+				width: 100%;
+				display: inline-block;
+
+				> .filter-option-inner {
+					display: inline-block;
+					width: 100%;
+
+					> .filter-option-inner-inner {
+						display: inline-block;
+						width: 100%;
+						overflow: hidden;
+						text-overflow: ellipsis;
+						vertical-align: top;
+					}
+				}
+			}
+
+			&:before {
+				display: none;
+			}
 		}
 	}
 	>.dummybutton {

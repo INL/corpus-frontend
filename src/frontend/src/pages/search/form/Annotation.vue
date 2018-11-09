@@ -5,6 +5,7 @@
 			<SelectPicker v-if="annotation.uiType === 'select'"
 				class="form-control"
 				data-container="body"
+				data-live-search="true"
 
 				:title="displayName"
 				:id="inputId"

@@ -25,6 +25,7 @@
 				data-deselect-all-text="reset"
 				data-show-subtext="true"
 				data-style="btn-default btn-sm"
+				data-live-search="true"
 
 				:options="optGroups"
 				:escapeLabels="false"

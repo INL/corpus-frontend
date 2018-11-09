@@ -32,7 +32,7 @@
 								<label for="sampleSize" class="col-xs-3">Sample size:</label>
 								<div class="col-xs-9">
 									<div class="input-group">
-										<select  id="sampleMode" name="sampleMode" class="selectpicker" data-width="auto" data-style="btn-default">
+										<select  id="sampleMode" name="sampleMode" class="selectpicker input-group-btn" data-width="auto" data-style="btn-default">
 											<option value="percentage" selected>percentage</option>
 											<option value="count">count</option>
 										</select>

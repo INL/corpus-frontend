@@ -49,6 +49,8 @@
 
 		<template v-if="resultsHaveData">
 			<GroupResults v-if="isGroups"
+				class="results-table"
+
 				:results="results"
 				:sort="sort"
 				:type="type"
@@ -57,6 +59,8 @@
 				@viewgroup="viewGroup = $event.id; viewGroupName = $event.displayName"
 			/>
 			<HitResults v-else-if="isHits"
+				class="results-table"
+
 				:results="results"
 				:sort="sort"
 				:showTitles="showTitles"
@@ -64,6 +68,8 @@
 				@sort="sort = $event"
 			/>
 			<DocResults v-else
+				class="results-table"
+
 				:results="results"
 				:sort="sort"
 				:showDocumentHits="showDocumentHits"
@@ -536,20 +542,17 @@ export default Vue.extend({
 	}
 }
 
-.table {
-	table-layout: fixed;
-	width: 100%;
-}
+table {
+	> thead > tr > th {
+		text-align: left;
+		background-color: white;
+		border-bottom: 1px solid #aaa;
+		padding-bottom: 5px;
+	}
 
-td {
-	vertical-align: top;
-}
-
-th {
-	text-align: left;
-	background-color: white;
-	border-bottom: 1px solid #aaa;
-	padding-bottom: 5px;
+	> tbody > tr > td {
+		vertical-align: top;
+	}
 }
 
 a.clear,

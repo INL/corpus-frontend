@@ -27,7 +27,10 @@ export type OptGroup = {
 
 export type Option = {
 	value: string;
-	/** May contain html if escapeLabels is false, in case label is undefined, value used a label, but is html-escaped. */
+	/**
+	 * May contain html if escapeLabels is false.
+	 * Falls back to html-escaped value if omitted (regardless of escapeLabel - because values are likely not validated to be valid/trusted html).
+	 */
 	label?: string;
 }
 

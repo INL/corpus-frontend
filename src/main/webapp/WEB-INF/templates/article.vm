@@ -5,8 +5,7 @@
 <div class="container">
 
     <div class="hitscroll">
-        <a href="#" onclick="return ANCHORS.gotoPrevious();"><b>&laquo; Previous hit</b></a> | 
-        <a href="#" onclick="return ANCHORS.gotoNext();"><b>Next hit &raquo;</b></a>
+        <a href="#" id="prev"><b>&laquo; Previous hit</b></a> | <a href="#" id="next"><b>Next hit &raquo;</b></a>
     </div>
     
     <div class="cf-panel cf-panel-lg">

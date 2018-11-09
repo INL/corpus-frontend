@@ -2,11 +2,10 @@ import 'bootstrap';
 import $ from 'jquery';
 
 import '@/global.scss';
+import '@/article.scss';
 
 // Article-related functions.
 // Takes care of tooltips and highlighting/scrolling to anchors.
-
-// TODO assign onclicks to elements for gotonext and gotoprev
 
 let $hits: JQuery<HTMLElement>;
 let currentHit: number;
@@ -63,6 +62,14 @@ $(document).ready(function() {
 	$('#divHitsInDocument').text($hits.length);
 
 	if($hits.length > 0) {
+		$('#next').on('click', e => {
+			e.preventDefault();
+			gotoNext();
+		});
+		$('#prev').on('click', e => {
+			e.preventDefault();
+			gotoPrevious();
+		});
 		$('.hitscroll').show();
 	}
 

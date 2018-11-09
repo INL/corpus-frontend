@@ -1,0 +1,63 @@
+
+.hitscroll {
+	background-color: #444444;
+	border: #222222 1px solid;
+	border-radius: 5px;
+	color: #eeeeee;
+	display: none; // unhide with js
+	left: 60%;
+	padding: 10px;
+	position: fixed;
+	top: 100px;
+	z-index: 9001;
+
+	a {
+		color: inherit!important;
+	}
+}
+
+.hl {
+	font-weight: bold;
+	color: #b10932;
+
+	&.active {
+		text-decoration: underline;
+		background: #FFF;
+	}
+}
+
+.word {
+	font-family: "Inl vmnw wnt", "Helvetica Neue", "Helvetica",
+		"Arial,sans-serif";
+}
+
+.p,
+.paragraph {
+	display: block;
+	margin: 0 0 10px;
+}
+
+// .s, .sentence {
+	// No special layout (yet)
+// }
+
+// e.g. TEI lb element (insert line break)
+.lb,
+.line-beginning {
+	&:after {
+		content: '\A';
+	}
+}
+
+// e.g. TEI pb element (insert horizontal rule)
+.pb,
+.page-beginning {
+	display: block;
+	border-top: 1px solid black;
+	margin: 10px 0;
+}
+
+.linenumber {
+	color: #aaaaaa;
+	font-weight: bold;
+}

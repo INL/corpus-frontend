@@ -80,51 +80,57 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 	}
 
 	const annotatedFields: BLTypes.BLAnnotatedField[] = BLTypes.isIndexMetadataV1(blIndex) ? Object.values(blIndex.complexFields) : Object.values(blIndex.annotatedFields);
+	const annotatedFieldsNormalized: { [id: string]: NormalizedAnnotatedField; } = annotatedFields.map<NormalizedAnnotatedField>(f => {
+		const annotations: Array<[string, BLTypes.BLAnnotation]> = BLTypes.isAnnotatedFieldV1(f) ? Object.entries(f.properties) : Object.entries(f.annotations);
+
+		return {
+			annotations:
+				annotations.map(([annotationId, annotation]) => normalizeAnnotation(f.fieldName, f.mainProperty, annotationId, annotation))
+				.reduce<NormalizedAnnotatedField['annotations']>((acc, annot) => {
+					acc[annot.id] = annot;
+					return acc;
+				}, {}),
+			description: f.description,
+			displayName: f.displayName,
+			displayOrder: (!BLTypes.isAnnotatedFieldV1(f) && f.displayOrder != null) ? f.displayOrder : Object.keys(annotations),
+			hasContentStore: f.hasContentStore,
+			hasLengthTokens: f.hasLengthTokens,
+			hasXmlTags: f.hasXmlTags,
+			id: f.fieldName,
+			isAnnotatedField: f.isAnnotatedField,
+			mainAnnotationId: f.mainProperty,
+		};
+	})
+	.reduce<{[id: string]: NormalizedAnnotatedField}>((acc, field) => {
+		acc[field.id] = field;
+		return acc;
+	}, {});
 
 	return {
-		annotatedFields:
-			annotatedFields.map<NormalizedAnnotatedField>(f => {
-				const annotations: Array<[string, BLTypes.BLAnnotation]> = BLTypes.isAnnotatedFieldV1(f) ? Object.entries(f.properties) : Object.entries(f.annotations);
-
-				return {
-					annotations:
-						annotations.map(([annotationId, annotation]) => normalizeAnnotation(f.fieldName, f.mainProperty, annotationId, annotation))
-						.reduce<NormalizedAnnotatedField['annotations']>((acc, annot) => {
-							acc[annot.id] = annot;
-							return acc;
-						}, {}),
-					description: f.description,
-					displayName: f.displayName,
-					hasContentStore: f.hasContentStore,
-					hasLengthTokens: f.hasLengthTokens,
-					hasXmlTags: f.hasXmlTags,
-					id: f.fieldName,
-					isAnnotatedField: f.isAnnotatedField,
-					mainAnnotationId: f.mainProperty,
-				};
-			})
-			.reduce<{[id: string]: NormalizedAnnotatedField}>((acc, field) => {
-				acc[field.id] = field;
-				return acc;
-			}, {}),
+		annotatedFields: annotatedFieldsNormalized,
 
 		annotationGroups: Object.entries(blIndex.annotationGroups).length > 0 ?
 			Object.entries(blIndex.annotationGroups)
 			.flatMap<NormalizedIndex['annotationGroups'][number]>(([annotatedFieldId, groups]) =>
 				groups.map(group => ({
 					annotatedFieldId,
-					annotationIds: group.annotations,
+					annotationIds: group.annotations.sort((a, b) => {
+						const displayOrder = annotatedFieldsNormalized[annotatedFieldId].displayOrder;
+						return displayOrder.indexOf(a) - displayOrder.indexOf(b);
+					}),
 					name: group.name,
 				}))
 			) :
-			annotatedFields.map<NormalizedIndex['annotationGroups'][number]>(field => {
+			Object.values(annotatedFieldsNormalized).map<NormalizedIndex['annotationGroups'][number]>(field => {
 				// Add all known annotations to a default group
 				// (excluding internals and annotations not in a forward index)
-				const annotations = BLTypes.isAnnotatedFieldV1(field) ? field.properties : field.annotations;
-				const annotIds = Object.entries(annotations).filter(([id, annot]) => annot.hasForwardIndex && !annot.isInternal).map(([id, annot]) => id);
+				const annotIds = Object.values(field.annotations)
+					.filter(annot => annot.hasForwardIndex && !annot.isInternal)
+					.map(annot => annot.id)
+					.sort((a, b) => field.displayOrder.indexOf(a) - field.displayOrder.indexOf(b));
 
 				return {
-					annotatedFieldId: field.fieldName,
+					annotatedFieldId: field.id,
 					annotationIds: annotIds,
 					name: 'Annotations'
 				};

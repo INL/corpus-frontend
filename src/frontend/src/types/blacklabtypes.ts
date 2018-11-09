@@ -165,8 +165,16 @@ interface BLAnnotatedFieldInternal  {
 	/** If a cql query is fired that is just "searchterm", this is the annotation that is searched, usually 'word' - key in annotations */
 	mainProperty: string;
 }
-type BLAnnotatedFieldV1 = BLAnnotatedFieldInternal&{ properties: { [key: string]: BLAnnotation; }; };
-type BLAnnotatedFieldV2 = BLAnnotatedFieldInternal&{ annotations: { [key: string]: BLAnnotation; }; };
+type BLAnnotatedFieldV1 = BLAnnotatedFieldInternal&{
+	/** Indexed token properties/annotations for this field */
+	properties: { [key: string]: BLAnnotation; };
+};
+type BLAnnotatedFieldV2 = BLAnnotatedFieldInternal&{
+	/** Indexed token properties/annotations for this field */
+	annotations: { [key: string]: BLAnnotation; },
+	/** Ids of the annotations, in the order they should be displayed by the ui */
+	displayOrder?: string[];
+};
 export type BLAnnotatedField = BLAnnotatedFieldV1|BLAnnotatedFieldV2;
 export function isAnnotatedFieldV1(v: BLAnnotatedField): v is BLAnnotatedFieldV1 { return (v as any).properties != null; }
 

@@ -49,7 +49,7 @@ export default StatisticsBaseComponents.extend({
 		tooManyResults(): boolean { return (this.results!.summary as any).stoppedCountingHits; }, // if property missing, not too many results? TODO clarify these stopped/still variables with Jan and document in type.
 
 		isGroups(): boolean { return BLTypes.isGroups(this.results); },
-		groupCount(): number { return BLTypes.isHitGroups(this.results) ? this.results.hitGroups.length : BLTypes.isDocGroups(this.results) ? this.results.docGroups.length : -1 ; },
+		groupCount(): number { return BLTypes.isGroups(this.results) ? this.results.summary.numberOfGroups : 0; },
 
 		resultType(): string { return BLTypes.isHitGroupsOrResults(this.results) ? 'hits' : 'documents'; },
 		/** This is just a display value, it returns the number of groups if the results are grouped */

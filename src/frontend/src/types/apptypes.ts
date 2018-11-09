@@ -43,6 +43,8 @@ export type NormalizedAnnotatedField = {
 	annotations: { [annotationId: string]: NormalizedAnnotation };
 	description: string;
 	displayName: string;
+	/** Display order of annotations, by their id. */
+	displayOrder: string[];
 	hasContentStore: boolean;
 	hasLengthTokens: boolean;
 	hasXmlTags: boolean;
@@ -79,6 +81,10 @@ export type NormalizedIndex = {
 	/** If no groups are defined by blacklab itself, all annotations of all annotatedFields are placed in generated groups called 'Annotations' */
 	annotationGroups: Array<{
 		annotatedFieldId: string;
+		/**
+		 * Pre-sorted based on the displayOrder of annotations in the parent annotatedField
+		 * NOTE: we do this - blacklab returns them in order of declaration in the indexmetadata file.
+		 */
 		annotationIds: string[];
 		/** Unique within groups with the same annotatedFieldId, treat as a user-friendly name */
 		name: string;

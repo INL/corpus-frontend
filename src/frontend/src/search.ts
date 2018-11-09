@@ -68,11 +68,6 @@ const connectJqueryToPage = () => {
 		}
 	});
 
-	// Rescale the querybuilder container when it's shown
-	$('a.querytype[href="#advanced"]').on('shown.bs.tab hide.bs.tab', function() {
-		$('#searchContainer').toggleClass('col-md-6');
-	});
-
 	// Enable wide view toggle
 	$('#wide-view').on('change', function() {
 		$('.container, .container-fluid').toggleClass('container', !$(this).is(':checked')).toggleClass('container-fluid', $(this).is(':checked'));

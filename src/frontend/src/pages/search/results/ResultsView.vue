@@ -36,7 +36,7 @@
 			<button type="button" class="btn btn-sm btn-default dummybutton" @click="viewGroup = null">update</button> <!-- dummy button... https://github.com/INL/corpus-frontend/issues/88 -->
 
 			<div v-if="groupBy && groupBy.length > 0 && !viewGroup" class="checkbox-inline" style="margin-left: 5px;">
-				<label title="Separate groups for differently cased values" style="white-space: nowrap; margin: 0;" :for="uid+'case'"><input type="checkbox" :id="uid+'case'" v-model="caseSensitive">Case sensitive</label>
+				<label title="Separate groups for differently cased values" style="white-space: nowrap; margin: 0; cursor:pointer;" :for="uid+'case'"><input type="checkbox" :id="uid+'case'" v-model="caseSensitive">Case sensitive</label>
 			</div>
 		</div>
 

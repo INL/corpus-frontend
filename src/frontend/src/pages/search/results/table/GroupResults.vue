@@ -271,7 +271,7 @@ export default Vue.extend({
 	}
 
 	> .progress-bar {
-		background-image: linear-gradient(to right, rgba(0,0,0,0.3) 0px, rgba(0,0,0,0) 250px);
+		background-image: linear-gradient(to right, rgba(0,0,0,0.15) 0px, rgba(0,0,0,0) 250px);
 		// Do not shrink smaller than the text inside the bar.
 		// Greater widths are set using min-width.
 		padding: 0px 2px;

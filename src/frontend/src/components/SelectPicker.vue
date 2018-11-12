@@ -1,15 +1,14 @@
 <template>
-<select v-model="currentValue" class="selectpicker" ref="select">
+<select v-model="currentValue" class="selectpicker">
 	<template v-for="(optOrGroup, index) in options">
 		<optgroup v-if="optOrGroup.options" :key="index" :label="optOrGroup.label">
 			<option v-for="option in optOrGroup.options"
 				:key="option.value"
 				:value="option.value"
 				:data-content="(escapeLabels || !option.label) ? undefined : option.label"
-				:selected="isSelected(option.value)"
 			><template v-if="escapeLabels || !option.label">{{option.label || option.value}}</template></option>
 		</optgroup>
-		<option v-else :key="optOrGroup.value" :value="optOrGroup.value" :data-content="optOrGroup.label" :selected="isSelected(optOrGroup.value)"/>
+		<option v-else :key="optOrGroup.value" :value="optOrGroup.value" :data-content="optOrGroup.label"/>
 	</template>
 </select>
 
@@ -51,40 +50,23 @@ export default Vue.extend({
 			type: Boolean as () => boolean
 		},
 	},
-	data: () => ({
-		currentValue: null as null|string|string[], // synced with select
-		destroying: false, // selectpicker rerenders after teardown leaving zombie elements..
-	}),
+	computed: {
+		currentValue: {
+			get(): null|string|string[] {
+				// Function only runs when this.value changes.
+				// So we can use it to trigger a manual selectpicker update when our v-model changes
+				$(this.$el).selectpicker('val', this.value!);
+				return this.value;
+			},
+			set(newValue: string|string[]) {
+				this.$emit('input', newValue);
+			}
+		}
+	},
 	watch: {
-		value: {
-			immediate: true,
-			handler(newVal: null|undefined|string|string[]) {
-				$(this.$el).selectpicker('val', newVal!);
-			}
-		},
-		// TODO only fire when closing the menu
-		currentValue(newValue) {
-			if (
-				newValue == this.value || // null, undefined, string
-				(Array.isArray(newValue) && Array.isArray(this.value) && newValue.length === this.value.length && newValue.every(v => (this.value as string[]).includes(v)))
-			) {
-				return;
-			}
-			this.$emit('input', newValue);
-		},
 		options() {
 			Vue.nextTick(() => $(this.$el).selectpicker('refresh'));
 		},
-	},
-	methods: {
-		isSelected(value: string) {
-			return this.value === value || (Array.isArray(this.value) && this.value.includes(value));
-		}
-	},
-	created() {
-		if (this.$attrs.multiple != null) {
-			this.currentValue = Array.isArray(this.value) ? this.value : [];
-		}
 	},
 	mounted() {
 		$(this.$el).selectpicker();

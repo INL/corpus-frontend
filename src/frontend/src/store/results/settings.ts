@@ -12,6 +12,7 @@ export type ModuleRootState = {
 	/** case-sensitive grouping */
 	caseSensitive: boolean;
 	groupBy: string[];
+	groupByAdvanced: string[];
 	page: number;
 	sort: string|null;
 	viewGroup: string|null;
@@ -20,6 +21,7 @@ export type ModuleRootState = {
 export const initialState: ModuleRootState = {
 	caseSensitive: false,
 	groupBy: [],
+	groupByAdvanced: [],
 	page: 0,
 	sort: null,
 	viewGroup: null
@@ -37,6 +39,13 @@ const createActions = (b: ModuleBuilder<ModuleRootState, RootState>) => {
 			state.sort = null;
 			state.page = 0;
 		} , 'groupby'),
+		groupByAdvanced: b.commit((state, payload: string[]) => {
+			// can't just replace array since listeners might be attached to properties in a single entry, and they won't be updated.
+			state.groupByAdvanced.splice(0, state.groupByAdvanced.length, ...payload);
+			state.viewGroup = null;
+			state.sort = null;
+			state.page = 0;
+		}, 'groupByAdvanced'),
 		sort: b.commit((state, payload: string|null) => state.sort = payload, 'sort'),
 		page: b.commit((state, payload: number) => state.page = payload, 'page'),
 		viewGroup: b.commit((state, payload: string|null) => {
@@ -52,6 +61,7 @@ const createActions = (b: ModuleBuilder<ModuleRootState, RootState>) => {
 			if (b.namespace === payload.viewedResults) {
 				actions.caseSensitive(payload.caseSensitiveGroupBy);
 				actions.groupBy(payload.groupBy);
+				actions.groupByAdvanced(payload.groupByAdvanced);
 			}
 		}, 'replaceFromHistory')
 	};

@@ -134,3 +134,7 @@ ul.nav-tabs.cf-panel-tab-header {
 	margin-left: -50px;
 	z-index: 1000;
 }
+
+.disabled > label {
+	color: hsl(0, 0%, 42%);
+}

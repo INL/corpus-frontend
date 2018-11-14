@@ -2,31 +2,32 @@ import {getStoreBuilder} from 'vuex-typex';
 
 import {RootState} from '@/store';
 import {HistoryEntry} from '@/store/history';
-import * as SettingsModule from '@/store/results/settings';
+import {create as createSettingsModule, initialState as initialSettingsState, ModuleRootState as SettingsModuleRootState} from '@/store/results/settings';
 
-export type ModuleRootState = {
-	docs: SettingsModule.ModuleRootState;
-	hits: SettingsModule.ModuleRootState;
+type ModuleRootState = {
+	docs: SettingsModuleRootState;
+	hits: SettingsModuleRootState;
 };
 
-export type ViewId = keyof ModuleRootState;
+type ViewId = keyof ModuleRootState;
 
 const initialState: ModuleRootState = {
-	docs: Object.assign({}, SettingsModule.initialState),
-	hits: Object.assign({}, SettingsModule.initialState), // Make a copy so we don't alias them
+	docs: Object.assign({}, initialSettingsState),
+	hits: Object.assign({}, initialSettingsState), // Make a copy so we don't alias them
 };
 
 const b = getStoreBuilder<RootState>().module<ModuleRootState>('results', initialState);
 
-export const docs = SettingsModule.create(b, 'docs');
-export const hits = SettingsModule.create(b, 'hits');
+const getState = b.state();
+const docs = createSettingsModule(b, 'docs');
+const hits = createSettingsModule(b, 'hits');
 
-export const modules = {
+const modules = {
 	docs,
 	hits,
 };
 
-export const actions = {
+const actions = {
 	// viewedResults: b.commit((state, payload: ModuleRootState['viewedResults']) => state.viewedResults = payload, 'viewedResults'),
 	resetPage: b.commit(state => Object.values(state).forEach(view => view.page = 0), 'resetPage'),
 	resetViewGroup: b.commit(state => Object.values(state).forEach(view => view.viewGroup = null), 'resetViewGroup'),
@@ -50,4 +51,18 @@ export const actions = {
 };
 
 /** We need to call some function from the module before creating the root store or this module won't be evaluated (e.g. none of this code will run) */
-export const init = () => {/**/};
+const init = () => {/**/};
+
+export {
+	ModuleRootState,
+
+	actions,
+	init,
+	getState,
+
+	modules,
+	docs,
+	hits,
+
+	ViewId,
+};

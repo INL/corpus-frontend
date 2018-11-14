@@ -13,6 +13,7 @@ type Remove<T, U> = T extends U ? never : T;
 interface HistoryEntryV1 extends SubmittedParameters {
 	readonly version: 1;
 	readonly groupBy: string[];
+	readonly groupByAdvanced: string[];
 	readonly viewedResults: Remove<RootState['viewedResults'], null>;
 	readonly caseSensitiveGroupBy: boolean;
 

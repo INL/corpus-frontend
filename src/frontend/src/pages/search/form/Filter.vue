@@ -18,7 +18,7 @@
 					:name="inputId"
 					:options="options"
 
-					v-model="value"
+					v-model.lazy="value"
 				/>
 			</div>
 		</template>
@@ -58,6 +58,7 @@
 
 						v-model="value[0]"
 						@click="$event.target.checked ? value = [''] : undefined /* clear if clicked again */"
+						@input.space="$event.target.checked ? value = [''] : undefined /* clear if clicked again */"
 					> {{option.label || option.value}}</label>
 				</div>
 			</div>
@@ -74,7 +75,7 @@
 
 
 					ref="autocomplete"
-					v-model="value[0]"
+					v-model.lazy="value[0]"
 				/>
 			</div>
 		</template>

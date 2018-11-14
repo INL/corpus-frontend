@@ -193,7 +193,7 @@ export function getBLSearchParametersFromState(state: RootState): BLTypes.BLSear
 	return {
 		filter: getFilterString(submittedParameters.filters),
 		first: state.settings.pageSize * viewProps.page,
-		group: viewProps.groupBy.map(g => g + (viewProps.caseSensitive ? ':s':':i')).join(',') || undefined,
+		group: viewProps.groupBy.map(g => g + (viewProps.caseSensitive ? ':s':':i')).concat(viewProps.groupByAdvanced).join(',') || undefined,
 		// group: viewProps.groupBy.join(',') || undefined,
 		number: state.settings.pageSize,
 		patt: getPatternString(submittedParameters.pattern),
@@ -241,6 +241,7 @@ export function getHistoryEntryFromState(state: SlimRootState): HistoryEntry {
 	const base = {
 		filters: Object.values(state.form.filters).filter(v => v.values.length).sort((l, r) => l.id.localeCompare(r.id)),
 		groupBy: state.results[state.viewedResults!].groupBy.sort((l, r) => l.localeCompare(r)),
+		groupByAdvanced: state.results[state.viewedResults!].groupByAdvanced.sort((a, b) => a.localeCompare(b)),
 		pattern,
 		caseSensitiveGroupBy: state.results[state.viewedResults!].caseSensitive,
 		viewedResults: state.viewedResults!,
@@ -334,4 +335,29 @@ export function getDocumentUrl(pid: string, cql?: string) {
 			query: cql
 		})
 		.toString();
+}
+
+export function getSetPairsFromKeys<T extends {}>(keys: Array<keyof T>) {
+	interface Self {
+		value: T;
+		$emit(eventName: string, payload: any): void;
+	}
+
+	type GetSetPair<P extends keyof T> = {
+		get(this: Self): T[P];
+		set(this: Self, value: T[P]): void;
+	};
+
+	const ret = {} as {
+		[P in keyof T]: GetSetPair<P>;
+	};
+
+	keys.forEach(key => {
+		ret[key] = {
+			get() { return this.value[key]; },
+			set(value) { this.$emit('input', Object.assign(this.value, {[key]: value})); }
+		};
+	});
+
+	return ret;
 }

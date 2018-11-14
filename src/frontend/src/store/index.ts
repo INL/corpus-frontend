@@ -284,18 +284,31 @@ export class UrlPageState {
 			return {
 				caseSensitive: false,
 				groupBy: [],
+				groupByAdvanced: [],
 				sort: null,
 				viewGroup: null,
 				page: 0,
 			};
 		} else {
-			const groupBy = this.getString('group', '')!
+			const groupBy: string[] = [];
+			// TODO verify advanced context groups are valid
+			const groupByAdvanced: string[] = [];
+			this.getString('group', '')!
 			.split(',')
 			.map(g => g.trim())
-			.filter(g => !!g);
+			.filter(g => !!g)
+			.forEach(g => {
+				const isAdvancedGroup = g.startsWith('context:');
+				if (isAdvancedGroup) {
+					groupByAdvanced.push(g);
+				} else {
+					groupBy.push(g);
+				}
+			});
 
 			return {
 				groupBy: groupBy.map(g => g.replace(/\:[is]$/, '')), // strip case-sensitivity flag from value, is only visible in url
+				groupByAdvanced,
 				caseSensitive: groupBy.length > 0 && groupBy.every(g => g.endsWith(':s')),
 				sort: this.getString('sort', null, v => v?v:null),
 				viewGroup: this.getString('viewgroup', undefined, v => (v && groupBy.length)?v:null),

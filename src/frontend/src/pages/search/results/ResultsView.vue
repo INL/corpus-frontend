@@ -16,32 +16,7 @@
 			</li>
 		</ol>
 
-		<div class="groupselect-container">
-			<SelectPicker
-				multiple
-				class="groupselect"
-				data-size="15"
-				data-actions-box="true"
-				data-deselect-all-text="reset"
-				data-show-subtext="true"
-				data-style="btn-default btn-sm"
-				data-live-search="true"
-
-				:options="optGroups"
-				:escapeLabels="false"
-				:title="`Group ${type} by...`"
-
-				v-model.lazy="groupBy"
-			/>
-
-			<button type="button" class="btn btn-sm btn-default dummybutton" @click="viewGroup = null">update</button> <!-- dummy button... https://github.com/INL/corpus-frontend/issues/88 -->
-
-			<div v-if="groupBy && groupBy.length > 0 && !viewGroup" class="checkbox-inline" style="margin-left: 5px;">
-				<label title="Separate groups for differently cased values" style="white-space: nowrap; margin: 0; cursor:pointer;" :for="uid+'case'"><input type="checkbox" :id="uid+'case'" v-model="caseSensitive">Case sensitive</label>
-			</div>
-		</div>
-
-		<AdvancedGroupingList v-if="this.type === 'hits'" v-model="groupByAdvanced"/>
+		<GroupBy :type="type"/>
 
 		<div v-if="results && !!(results.summary.stoppedRetrievingHits && !results.summary.stillCounting)" class="btn btn-sm btn-default nohover toomanyresults">
 			<span class="fa fa-exclamation-triangle text-danger"></span> Too many results! &mdash; your query was limited
@@ -117,12 +92,9 @@ import * as Api from '@/api';
 import GroupResults from '@/pages/search/results/table/GroupResults.vue';
 import HitResults from '@/pages/search/results/table/HitResults.vue';
 import DocResults from '@/pages/search/results/table/DocResults.vue';
-
 import Totals from '@/pages/search/results/ResultTotals.vue';
-import AdvancedGroupingList from '@/pages/search/AdvancedGroupingList.vue'
-
+import GroupBy from '@/pages/search/results/groupby/GroupBy.vue';
 import Pagination from '@/components/Pagination.vue';
-import SelectPicker, {OptGroup, Option} from '@/components/SelectPicker.vue';
 
 import {getUrlFromParameters, getBLSearchParametersFromState} from '@/utils';
 import {debugLog} from '@/utils/debug';
@@ -155,17 +127,16 @@ function onSearchUpdated(operation: string, searchParams: BLTypes.BLSearchParame
 export default Vue.extend({
 	mixins: [uid],
 	components: {
-		SelectPicker,
 		Pagination,
 		GroupResults,
 		HitResults,
 		DocResults,
 		Totals,
-		AdvancedGroupingList
+		GroupBy
 	},
 	props: {
 		type: {
-			type: String as () => 'hits'|'docs',
+			type: String as () => resultsStore.ViewId,
 			required: true,
 		}
 	},
@@ -273,10 +244,6 @@ export default Vue.extend({
 	computed: {
 		// Store properties
 		storeModule() { return resultsStore.modules[this.type]; },
-		caseSensitive: {
-			get(): boolean { return this.storeModule.getState().caseSensitive },
-			set(v: boolean) { this.storeModule.actions.caseSensitive(v); }
-		},
 		groupBy: {
 			get(): string[] { return this.storeModule.getState().groupBy; },
 			set(v: string[]) { this.storeModule.actions.groupBy(v); }
@@ -308,36 +275,6 @@ export default Vue.extend({
 
 		// just to know when we should initiate a scroll event
 		querySettings() { return query.get.lastSubmittedParameters(); },
-
-		// Calculated fields
-		optGroups(): OptGroup[] {
-			const groups: OptGroup[] = [];
-
-			const metadataGroups = corpus.get.metadataGroups();
-			if (this.type === 'hits') {
-				const annotations = corpus.get.annotations();
-
-				[['wordleft:', 'Before hit', 'before'],['hit:', 'Hit', ''],['wordright:', 'After hit', 'after']]
-				.forEach(([prefix, groupname, suffix]) =>
-					groups.push({
-						label: groupname,
-						options: annotations.map(annot => ({
-							label: `Group by ${annot.displayName || annot.id} <small class="text-muted">${suffix}</small>`,
-							value: `${prefix}${annot.id}`
-						}))
-					})
-				);
-			}
-			metadataGroups.forEach(group => groups.push({
-				label: group.name,
-				options: group.fields.map(field => ({
-					label: (field.displayName || field.id).replace(group.name, ''),
-					value: `field:${field.id}`
-				}))
-			}))
-			return groups;
-		},
-
 
 		totalResults(): number {
 			if (this.results == null) {
@@ -434,6 +371,7 @@ export default Vue.extend({
 					} else {
 						// TODO slightly silly, we need to update the page url and the active history entry
 						// when this tab is opened.
+						// Normally that's done in refresh()
 						const state = globalStore.getState();
 						const params = getBLSearchParametersFromState(state);
 						historyStore.actions.addEntry(state);
@@ -452,64 +390,6 @@ export default Vue.extend({
 </script>
 
 <style lang="scss">
-
-.groupselect-container {
-	align-items: center;
-	display: inline-flex;
-	flex-wrap: nowrap;
-	margin-bottom: 5px;
-	margin-right: 5px;
-	max-width: 100%;
-
-	> .groupselect {
-		flex: 1 1 auto;
-		min-width: 0px!important;
-		width: auto!important;
-
-		> button {
-			border-top-right-radius: 0px;
-			border-bottom-right-radius: 0px;
-			border-right: 0px;
-
-			width: auto;
-			max-width: 100%;
-			padding-right: 26px; // for caret
-
-			> .filter-option {
-				padding: 0;
-				height: auto;
-				max-width: none;
-				position: static;
-				top: auto;
-				left: auto;
-				width: 100%;
-				display: inline-block;
-
-				> .filter-option-inner {
-					display: inline-block;
-					width: 100%;
-
-					> .filter-option-inner-inner {
-						display: inline-block;
-						width: 100%;
-						overflow: hidden;
-						text-overflow: ellipsis;
-						vertical-align: top;
-					}
-				}
-			}
-
-			&:before {
-				display: none;
-			}
-		}
-	}
-	>.dummybutton {
-		flex: none;
-		border-top-left-radius: 0px;
-		border-bottom-left-radius: 0px;
-	}
-}
 
 .toomanyresults {
 	align-self: flex-start;

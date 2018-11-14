@@ -30,8 +30,8 @@
         ## TODO set based on corpus info
         <link title="Search" type="application/opensearchdescription+xml" rel="search" href="$pathToTop/opensearch.xml">
         <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
         <link rel="stylesheet" href="$pathToTop/css/vendor/pageguide.min.css?_$cache">
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
         <link rel="stylesheet" href="$pathToTop/css/main.css?_$cache">
         ## Custom css and js in footer        
     </head>

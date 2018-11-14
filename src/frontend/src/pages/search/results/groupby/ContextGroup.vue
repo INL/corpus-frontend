@@ -6,8 +6,8 @@
 			data-style="btn-default btn-sm"
 			data-width="auto"
 
-			:data-live-search="availableAnnotations.length > 10"
-			:options="availableAnnotations"
+			:data-live-search="annotationOptions.length > 10"
+			:options="annotationOptions"
 
 			v-model="annotation"
 		/>
@@ -42,7 +42,7 @@
 				:width="/*'100px'*/'auto'"
 				:reverse="sliderInverted"
 
-				v-model="rangeValue"
+				v-model="range"
 
 				ref="slider"
 			>
@@ -80,52 +80,34 @@ import * as CorpusStore from '@/store/corpus';
 
 import SelectPicker, {Option} from '@/components/SelectPicker.vue';
 
-import {getSetPairsFromKeys} from '@/utils';
-
-export type AdvancedGroupSettings = {
-	caseSensitive: boolean;
-	context: 'before'|'hit'|'after';
-	fromEndOfHit: boolean;
-	annotation: string;
-	start: number;
-	end: number;
-};
-
 export default Vue.extend({
 	components: {
 		SelectPicker,
 		Slider
 	},
 	props: {
-		value: {
-			type: Object as () => AdvancedGroupSettings,
-			required: true
-		},
-		max: {
-			// should probably be equal to wordsAroundHit setting (the context size)
-			// but may cause issues when deserializing old query with different wordsaroundhit?
-			type: Number as () => number,
-			default: 5,
-		}
+		value: { required: true, type: String as () => string },
+		// should probably be equal to wordsAroundHit setting (the context size)
+		// but may cause issues when deserializing old query with different wordsaroundhit?
+		// max: { default: 5, type: Number as () => number },
+		// annotations: { required: true, type: Array as () => Option[] },
+		// defaultAnnotation: { required: true, type: String as () => string }
 	},
 	data: () => ({
-		rangeValue: [] as number[]
+		max: 5, // max slider value, should probably be equal to wordsAroundHit...
+
+		caseSensitive: false,
+		context: 'hit' as 'before'|'hit'|'after',
+		fromEndOfHit: false,
+		annotation: '',
+		range: [0, 5],
 	}),
 	computed: {
-		...getSetPairsFromKeys<AdvancedGroupSettings>([
-			'caseSensitive',
-			'context',
-			'fromEndOfHit',
-			'annotation',
-			'start',
-			'end'
-		]),
-		availableAnnotations(): Option[] {
-			return CorpusStore.get.annotations().map(annot => ({
-				label: annot.displayName,
-				value: annot.id
-			}));
+		defaultAnnotation(): string { return CorpusStore.get.firstMainAnnotation().id; },
+		annotationOptions(): Option[] {
+			return CorpusStore.get.annotations().map(a => ({label: a.displayName, value: a.id}));
 		},
+
 		contextOptions(): Option[] {
 			return [{
 				label: 'Before',
@@ -140,30 +122,64 @@ export default Vue.extend({
 		},
 		sliderInverted(): boolean {
 			return this.context === 'before' || (this.context === 'hit' && this.fromEndOfHit);
+		},
+
+		contextGroupString(): string {
+			// See http://inl.github.io/BlackLab/blacklab-server-overview.html#sorting-grouping-filtering-faceting
+			let contextLetter: string;
+			switch (this.context) {
+				case 'before': contextLetter = 'L'; break; // Left
+				case 'hit': contextLetter = (!this.fromEndOfHit ? 'H' : 'E'); break; // Hit, End, respectively
+				case 'after': contextLetter = 'R'; break; // Right
+			}
+
+			return `context:${this.annotation}:${this.caseSensitive ? 's' : 'i'}:${contextLetter!}${this.range[0]}-${this.range[1]}`;
+		}
+	},
+	methods: {
+		resetToDefaults() {
+			this.caseSensitive = false;
+			this.context = 'hit';
+			this.fromEndOfHit = false;
+			this.annotation = this.defaultAnnotation;
+			this.range = [1, this.max];
+		},
+		isValidAnnotation(annotation: string) {
+			return CorpusStore.get.annotationDisplayNames()[annotation] != null;
 		}
 	},
 	watch: {
-		sliderInverted() {
-			Vue.nextTick(() => (this.$refs.slider as any).refresh());
+		contextGroupString(s) {
+			this.$emit('input', s);
 		},
-		rangeValue([low, high]: [number, number]) {
-			this.start = low;
-			this.end = high;
-		},
-		value(newValue: AdvancedGroupSettings) {
-			this.rangeValue = [newValue.start, newValue.end];
+		value: {
+			immediate: true,
+			handler(v) {
+				// See http://inl.github.io/BlackLab/blacklab-server-overview.html#sorting-grouping-filtering-faceting
+				const patt = /context:(\w+):(s|i):(L|R|H|E)(\d+)\-(\d+)/;
+
+				const match = v.match(patt);
+				if (match == null) {
+					this.resetToDefaults();
+					return;
+				}
+
+				const contextLetter = match[3] as 'L'|'R'|'H'|'E';
+
+				this.annotation = this.isValidAnnotation(match[1]) ? match[1] : this.defaultAnnotation;
+				this.caseSensitive = match[2] === 's';
+				this.range = [Number.parseInt(match[4], 10), Number.parseInt(match[5], 10)];
+				this.fromEndOfHit = (contextLetter === 'E');
+
+				switch (contextLetter) {
+					case 'L': this.context = 'before'; break;
+					case 'R': this.context = 'after'; break;
+					case 'H':
+					case 'E': this.context = 'hit'; break;
+					default: throw new Error('wat');
+				}
+			}
 		}
-	},
-	created() {
-		this.rangeValue = [this.start, this.end];
-	},
-	mounted() {
-		// slider initializes before all sibling components have the correct size
-		// causing clicks on it to have an offset relative to the actual position :(
-		// unless we do this.
-		// Vue.nextTick is not late enough unfortunately
-		const self = this;
-		setTimeout(() => (self.$refs.slider as any).refresh(), 100);
 	}
 })
 </script>

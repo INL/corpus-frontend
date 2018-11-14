@@ -27,7 +27,7 @@
 									<td>{{entry.viewedResults === 'hits' ? 'Hits' : 'Documents'}}</td>
 									<td>{{entry.displayValues.pattern}}</td>
 									<td>{{entry.displayValues.filters}}</td>
-									<td>{{entry.groupBy.length ? entry.groupBy.join(' ') : '-'}}</td>
+									<td>{{entry.groupBy.concat(entry.groupByAdvanced).join(' ') || '-'}}</td>
 									<td>
 										<div class="dropdown history-dropdown">
 											<button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown" aria-label="More options" title="More options"><span class="fa fa-ellipsis-v fa-lg"></span></button>

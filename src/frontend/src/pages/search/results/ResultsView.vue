@@ -17,7 +17,7 @@
 		</ol>
 
 		<div class="groupselect-container">
-			<SelectPicker v-model="groupBy"
+			<SelectPicker
 				multiple
 				class="groupselect"
 				data-size="15"
@@ -29,8 +29,9 @@
 
 				:options="optGroups"
 				:escapeLabels="false"
-
 				:title="`Group ${type} by...`"
+
+				v-model.lazy="groupBy"
 			/>
 
 			<button type="button" class="btn btn-sm btn-default dummybutton" @click="viewGroup = null">update</button> <!-- dummy button... https://github.com/INL/corpus-frontend/issues/88 -->
@@ -39,6 +40,8 @@
 				<label title="Separate groups for differently cased values" style="white-space: nowrap; margin: 0; cursor:pointer;" :for="uid+'case'"><input type="checkbox" :id="uid+'case'" v-model="caseSensitive">Case sensitive</label>
 			</div>
 		</div>
+
+		<AdvancedGroupingList v-if="this.type === 'hits'" v-model="groupByAdvanced"/>
 
 		<div v-if="results && !!(results.summary.stoppedRetrievingHits && !results.summary.stillCounting)" class="btn btn-sm btn-default nohover toomanyresults">
 			<span class="fa fa-exclamation-triangle text-danger"></span> Too many results! &mdash; your query was limited
@@ -111,10 +114,12 @@ import {submittedSubcorpus$} from '@/store/streams';
 
 import * as Api from '@/api';
 
-import Totals from '@/pages/search/results/ResultTotals.vue';
 import GroupResults from '@/pages/search/results/table/GroupResults.vue';
 import HitResults from '@/pages/search/results/table/HitResults.vue';
 import DocResults from '@/pages/search/results/table/DocResults.vue';
+
+import Totals from '@/pages/search/results/ResultTotals.vue';
+import AdvancedGroupingList from '@/pages/search/AdvancedGroupingList.vue'
 
 import Pagination from '@/components/Pagination.vue';
 import SelectPicker, {OptGroup, Option} from '@/components/SelectPicker.vue';
@@ -155,7 +160,8 @@ export default Vue.extend({
 		GroupResults,
 		HitResults,
 		DocResults,
-		Totals
+		Totals,
+		AdvancedGroupingList
 	},
 	props: {
 		type: {
@@ -275,6 +281,10 @@ export default Vue.extend({
 			get(): string[] { return this.storeModule.getState().groupBy; },
 			set(v: string[]) { this.storeModule.actions.groupBy(v); }
 		},
+		groupByAdvanced: {
+			get(): string[] { return this.storeModule.getState().groupByAdvanced; },
+			set(v: string[]) { this.storeModule.actions.groupByAdvanced(v); }
+		},
 		page: {
 			get(): number { return this.storeModule.getState().page; },
 			set(v: number) { this.storeModule.actions.page(v); }
@@ -382,12 +392,12 @@ export default Vue.extend({
 			r.push({
 				label: this.type === 'hits' ? 'Hits' : 'Documents',
 				title: 'Go back to ungrouped results',
-				active: this.groupBy.length === 0,
-				onClick: () => this.groupBy = []
+				active: (this.groupBy.length + this.groupByAdvanced.length) === 0,
+				onClick: () => { this.groupBy = []; this.groupByAdvanced = []; }
 			});
-			if (this.groupBy.length > 0) {
+			if ((this.groupBy.length + this.groupByAdvanced.length) > 0) {
 				r.push({
-					label: 'Grouped by ' + this.groupBy.toString(),
+					label: 'Grouped by ' + this.groupBy.concat(this.groupByAdvanced).toString(),
 					title: 'Go back to grouped results',
 					active: this.viewGroup == null,
 					onClick: () => this.viewGroup = null

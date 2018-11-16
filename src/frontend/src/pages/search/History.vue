@@ -1,8 +1,8 @@
 <template>
 	<div class="history">
-		<a class="btn btn-lg history-button" href="#historyModal" data-toggle="modal">Open history</a>
+		<a class="btn btn-lg history-button" href="#history-modal" data-toggle="modal">Open history</a>
 
-		<div id="historyModal" class="modal fade modal-fullwidth" tabindex="-1" role="dialog" ref="modal">
+		<div id="history-modal" class="modal fade modal-fullwidth" tabindex="-1" role="dialog" ref="modal">
 			<div class="modal-dialog" role="document">
 				<div class="modal-content">
 					<div class="modal-header">
@@ -13,48 +13,44 @@
 						<table class="table table-hover history-table">
 							<thead>
 								<tr>
-									<th style="width: 5px">#</th>
-									<th style="width: 30px">Results</th>
-									<th style="width: 100px">Pattern</th>
-									<th style="width: 60px">Filters</th>
-									<th style="width: 60px">Grouping</th>
-									<th style="width: 10px"><!--Options--></th>
+									<th width="40px;">#</th>
+									<th width="90px;">Results</th>
+									<th>Pattern</th>
+									<th>Filters</th>
+									<th>Grouping</th>
+									<th width="115px"></th>
 								</tr>
 							</thead>
 							<tbody>
-								<tr v-for="(entry, index) in history" :key="entry.hash" class="history-entry">
-									<td>{{index + 1}}.</td>
+								<tr v-for="(entry, index) in history" :key="entry.hash">
+									<td><strong>{{index + 1}}.</strong></td>
 									<td>{{entry.viewedResults === 'hits' ? 'Hits' : 'Documents'}}</td>
-									<td>{{entry.displayValues.pattern}}</td>
-									<td>{{entry.displayValues.filters}}</td>
-									<td>{{entry.groupBy.concat(entry.groupByAdvanced).join(' ') || '-'}}</td>
+									<td class="history-table-contain-text" :title="entry.displayValues.pattern.substring(0,1000) || undefined">{{entry.displayValues.pattern}}</td>
+									<td class="history-table-contain-text" :title="entry.displayValues.filters.substring(0,1000) || undefined">{{entry.displayValues.filters}}</td>
+									<td class="history-table-contain-text" :title="entry.groupBy.concat(entry.groupByAdvanced).join(' ') || '-'">{{entry.groupBy.concat(entry.groupByAdvanced).join(' ') || '-'}}</td>
 									<td>
-										<div class="dropdown history-dropdown">
-											<button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown" aria-label="More options" title="More options"><span class="fa fa-ellipsis-v fa-lg"></span></button>
+										<div class="btn-group">
+											<button type="button" class="btn btn-default" @click="load(entry)">Search</button>
+											<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"/></button>
 											<ul class="dropdown-menu">
-												<li><a @click="load(entry)">Load</a></li>
-												<li><a @click="openShareUrl(entry)">Copy link</a></li>
-												<li><a @click="remove(index)">Delete</a></li>
+												<li><a href="#" @click.prevent="openShareUrl(entry)">Copy link</a></li>
+												<li><a href="#" @click.prevent="remove(index)">Delete</a></li>
 											</ul>
 										</div>
-									</td>
-								</tr>
-								<tr>
-									<td colspan="6" style="padding: 0">
-										<form v-if="importUrlVisible" @submit.prevent.stop="importFromUrl" :name="`${uid}_import`">
-											<div class="input-group" style="width: 100%; padding: 6px;">
-												<input type="url" class="form-control" autocomplete="off" autofocus placeholder="Copy your url here" ref="importUrlInput"/>
-												<span class="input-group-btn"><button type="submit" class="btn btn-primary">Import</button></span>
-											</div>
-											<div v-if="importUrlError" class="text-danger">{{importUrlError}}</div>
-										</form>
-										<button v-else class="btn btn-link btn-open-import" @click="importUrlVisible = !importUrlVisible"><span class="fa fa-lg fa-plus"></span>  Import from a link</button>
 									</td>
 								</tr>
 							</tbody>
 						</table>
 					</div>
 					<div class="modal-footer">
+						<form v-if="importUrlVisible" @submit.prevent.stop="importFromUrl" :name="`${uid}_import`" class="history-table-import-url">
+							<div class="input-group" style="width: 100%;">
+								<input type="url" class="form-control" autocomplete="off" autofocus placeholder="Copy your url here" ref="importUrlInput"/>
+								<span class="input-group-btn"><button type="submit" class="btn btn-primary">Import url</button></span>
+							</div>
+							<div v-if="importUrlError" class="text-danger">{{importUrlError}}</div>
+						</form>
+						<button v-else class="btn btn-link btn-open-import" @click="importUrlVisible = !importUrlVisible"><span class="fa fa-lg fa-plus"></span> Import from a link</button>
 						<button type="button" name="closeSettings" class="btn btn-primary" data-dismiss="modal">Close</button>
 					</div>
 				</div>
@@ -108,6 +104,10 @@ export default Vue.extend({
 		importFromUrl() {
 			const input = (this.$refs.importUrlInput as HTMLInputElement);
 			const importUrl = input.value;
+			if (!importUrl) {
+				this.importUrlError = null;
+				this.importUrlVisible = false;
+			}
 			if (!input.checkValidity()) {
 				this.importUrlError = 'Invalid url';
 				return;
@@ -172,8 +172,45 @@ export default Vue.extend({
 
 <style lang="scss">
 
-.history-entry > td {
-	padding: 6px;
+#history-modal {
+	.modal-content {
+		display: flex;
+		flex-direction: column;
+		max-height: calc(100vh - 60px);
+		min-height: 300px;
+	}
+
+	.modal-header {
+		flex: none;
+	}
+	.modal-body {
+		flex: 1 1 auto;
+		overflow: auto;
+	}
+	.modal-footer {
+		flex: none;
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+
+		.history-table-import-url {
+			flex-grow: 1;
+			margin-right: 25px;
+		}
+	}
+}
+
+.history-table {
+	margin: 0;
+	td, th {
+		white-space: nowrap;
+	}
+}
+
+.history-table-contain-text {
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
 }
 
 .history-popup {

@@ -51,21 +51,20 @@ const internalActions = {
 };
 
 const actions = {
-	addEntry: b.dispatch(({state}, rootState: SlimRootState) => {
-		const entry = getHistoryEntryFromState(rootState);
+	addEntry: b.commit((state, payload: SlimRootState) => {
+		const entry = getHistoryEntryFromState(payload);
 
 		const i = state.findIndex(v => v.hash === entry.hash);
 		if (i !== -1) {
 			state.splice(i, 1);
 		}
+		// push entry
 		state.unshift(entry);
-
-		if (state.length > 40) {
-			state.pop();
-		}
+		// pop entries older than 40
+		state.splice(40);
 		saveToLocalStorage(state);
 	}, 'addEntry'),
-	removeEntry: b.dispatch(({state}, i: number) => {
+	removeEntry: b.commit((state, i: number) => {
 		state.splice(i, 1);
 	}, 'removeEntry')
 };

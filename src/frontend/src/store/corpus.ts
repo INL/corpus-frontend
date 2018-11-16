@@ -15,7 +15,7 @@ declare const PROPS_IN_COLUMNS: string[];
 
 type ModuleRootState = NormalizedIndex;
 
-const b = getStoreBuilder<RootState>().module<ModuleRootState>('corpus', normalizeIndex(SINGLEPAGE.INDEX));
+const b = getStoreBuilder<RootState>().module<ModuleRootState>('corpus', normalizeIndex(JSON.parse(JSON.stringify(SINGLEPAGE.INDEX))));
 
 const getState = b.state();
 

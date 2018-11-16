@@ -1,12 +1,12 @@
 <template>
 <div class="totals">
 	<div class="totals-text" :title="percentOfSearchSpaceClarification">
-		Total {{resultType}}: {{resultCount}}<template v-if="isCounting">&hellip;</template> {{percentOfSearchSpace}}<br>
+		Total {{resultType}}: {{resultCount.toLocaleString()}}<template v-if="isCounting">&hellip;</template> {{percentOfSearchSpace}}<br>
 		<template v-if="isGroups">
-		Total groups: {{groupCount}}<template v-if="isCounting">&hellip;</template><br>
+		Total groups: {{groupCount.toLocaleString()}}<template v-if="isCounting">&hellip;</template><br>
 		</template>
 		<!-- Total {{resultType}}: {{resultCount}}<template v-if="isCounting">&hellip;</template> {{percentOfTotal}}<br> -->
-		Total pages: {{pageCount}}<template v-if="isCounting">&hellip;</template>
+		Total pages: {{pageCount.toLocaleString()}}<template v-if="isCounting">&hellip;</template>
 	</div>
 	<span v-show="isCounting || subCorpusStats == null" class="fa fa-spinner fa-spin searchIndicator totals-spinner"/>
 
@@ -90,7 +90,7 @@ export default StatisticsBaseComponents.extend({
 				return '';
 			}
 
-			return `Matched ${this.resultCount} ${this.resultType} of a total of ${this.searchSpaceCount} ${this.searchSpaceType} in the searched subcorpus.`;
+			return `Matched ${this.resultCount.toLocaleString()} ${this.resultType} in a total of ${this.searchSpaceCount.toLocaleString()} ${this.searchSpaceType} in the searched subcorpus.`;
 		}
 	},
 	methods: {

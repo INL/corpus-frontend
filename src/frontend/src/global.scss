@@ -138,3 +138,21 @@ ul.nav-tabs.cf-panel-tab-header {
 .disabled > label {
 	color: hsl(0, 0%, 42%);
 }
+
+// v-tooltip
+.tooltip {
+	opacity: 1;
+
+	> .tooltip-inner {
+		background: white;
+		border: 1px solid #ccc;
+		border-radius: 2px;
+		color: #333;
+		font-size: 12px;
+		padding: 4px 8px;
+	}
+
+	> .tooltip-arrow {
+		display: none;
+	}
+}

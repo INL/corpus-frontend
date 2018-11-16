@@ -60,6 +60,7 @@
     "mustache": "^2.3.2",
     "qs": "^6.5.2",
     "urijs": "^1.19.1",
+    "v-tooltip": "^2.0.0-rc.33",
     "vue": "^2.5.17",
     "vue-rx": "^6.0.1",
     "vue-slider-component": "^2.8.1",

@@ -46,7 +46,20 @@
 
 		<tbody>
 			<template v-for="(rowData, index) in rows">
-				<tr v-if="rowData.type === 'doc'" v-show="showTitles" :key="index" class="document">
+				<tr v-if="rowData.type === 'doc'" class="document"
+					v-show="showTitles"
+					:key="index"
+					v-tooltip="{
+						show: pinnedTooltip === index,
+						content: `Document id: ${rowData.docPid}`,
+						trigger: pinnedTooltip === index ? 'manual' : 'hover',
+						targetClasses: pinnedTooltip === index ? 'pinned' : undefined,
+						hideOnTargetClick: false,
+						autoHide: false,
+					}"
+
+					@click="pinnedTooltip = (pinnedTooltip === index ? null : index)"
+				>
 					<td :colspan="numColumns">
 						<div class="doctitle">
 							<a class="text-error" target="_blank" :href="rowData.href">{{rowData.summary}}</a>
@@ -72,13 +85,6 @@
 								Loading...
 							</p>
 							<table class="concordance-details-table">
-								<!-- <thead>
-									<tr>
-										<th v-for="(value, key) in rowData.props" v-if="key !== 'punct'" :key="key">
-											{{key}}
-										</th>
-									</tr>
-								</thead> -->
 								<thead>
 									<tr>
 										<th>Property</th>
@@ -90,12 +96,6 @@
 										<th>{{annotationDisplayNames[key]}}</th>
 										<td v-for="(v, index) in value" :key="index">{{v}}</td>
 									</tr>
-									<!--
-									<tr v-for="i in rowData.props.punct.length" :key="i">
-										<td v-for="(value, key) in rowData.props" v-if="key !== 'punct'" :key="key">
-											{{value[i-1]}}
-										</td>
-									</tr> -->
 								</tbody>
 							</table>
 						</td>
@@ -140,6 +140,7 @@ type DocRow = {
 	type: 'doc';
 	summary: string;
 	href: string;
+	docPid: string;
 }
 
 type CitationData = {
@@ -158,7 +159,8 @@ export default Vue.extend({
 	data: () => ({
 		citations: {} as {
 			[key: number]: CitationData;
-		}
+		},
+		pinnedTooltip: null as null|number
 	}),
 	computed: {
 		leftIndex() { return this.textDirection === 'ltr' ? 0 : 2 },
@@ -191,7 +193,8 @@ export default Vue.extend({
 					rows.push({
 						type: 'doc',
 						summary: title+author+date,
-						href: getDocumentUrl(pid, this.results.summary.searchParam.patt)
+						href: getDocumentUrl(pid, this.results.summary.searchParam.patt),
+						docPid: pid
 					}  as DocRow);
 				}
 
@@ -252,6 +255,7 @@ export default Vue.extend({
 	watch: {
 		results() {
 			this.citations = {};
+			this.pinnedTooltip = null;
 		}
 	}
 });

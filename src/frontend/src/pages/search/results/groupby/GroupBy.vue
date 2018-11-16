@@ -68,10 +68,10 @@ export default Vue.extend({
 	}),
 	methods: {
 		submit() {
-			// take care not to alias...
+			// take care to not call mutating functions, as to not directly mutate state
 			this.caseSensitive = this.unapplied.caseSensitive;
-			this.groupBy.splice(0, this.groupBy.length, ...this.unapplied.groupBy);
-			this.groupByAdvanced.splice(0, this.groupByAdvanced.length, ...this.unapplied.groupByAdvanced);
+			this.groupBy = JSON.parse(JSON.stringify(this.unapplied.groupBy));
+			this.groupByAdvanced = JSON.parse(JSON.stringify(this.unapplied.groupByAdvanced));
 		},
 		undo() {
 			// DON'T alias these objects...

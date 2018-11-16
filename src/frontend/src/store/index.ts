@@ -402,8 +402,8 @@ const actions = {
 		if (payload.form != null) { FormModule.actions.replace(payload.form); }
 		if (payload.settings != null) { SettingsModule.actions.replace(payload.settings); }
 		if (payload.results != null) { ResultsModule.actions.replace(payload.results); }
-		if (payload.viewedResults !== undefined) {
-			state.viewedResults = payload.viewedResults;
+		if (payload.viewedResults != null) {
+			actions.viewedResults(payload.viewedResults);
 		}
 		// State should be up to date with the new payload now
 		if (state.form.submittedParameters == null && state.viewedResults != null) {
@@ -426,7 +426,7 @@ const actions = {
 
 // shut up typescript, the state we pass here is merged with the modules initial states internally.
 // NOTE: only call this after creating all getters and actions etc.
-const store = b.vuexStore({state: ownInitialState as any});
+const store = b.vuexStore({state: ownInitialState as any, strict: true});
 
 /** We need to call some function from this module or this module won't be evaluated (e.g. none of this code will run) */
 // declare const SINGLEPAGE: { INDEX: BLTypes.BLIndexMetadata; }

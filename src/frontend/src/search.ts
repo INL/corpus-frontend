@@ -5,6 +5,9 @@ import 'bootstrap-select/dist/css/bootstrap-select.css';
 import $ from 'jquery';
 import Vue from 'vue';
 
+// @ts-ignore
+import VTooltip from 'v-tooltip';
+
 import {QueryBuilder} from '@/modules/cql_querybuilder';
 import {store, init as initStore, UrlPageState} from '@/store';
 import {debugLog} from '@/utils/debug';
@@ -91,6 +94,7 @@ const connectJqueryToPage = () => {
 // --------------
 // Initialize vue
 // --------------
+Vue.use(VTooltip);
 
 $(document).ready(() => {
 	const normalizedIndex: AppTypes.NormalizedIndex = normalizeIndex(SINGLEPAGE.INDEX);

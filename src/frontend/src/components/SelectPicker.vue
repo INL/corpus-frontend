@@ -5,10 +5,14 @@
 			<option v-for="option in optOrGroup.options"
 				:key="option.value"
 				:value="option.value"
-				:data-content="(escapeLabels || !option.label) ? undefined : option.label"
-			><template v-if="escapeLabels || !option.label">{{option.label || option.value}}</template></option>
+				:data-content="(option.label && !escapeLabels) ? option.label : undefined"
+			>{{option.label || option.value}}</option>
 		</optgroup>
-		<option v-else :key="optOrGroup.value" :value="optOrGroup.value" :data-content="optOrGroup.label"/>
+		<option v-else
+			:key="optOrGroup.value"
+			:value="optOrGroup.value"
+			:data-content="(optOrGroup.label && !escapeLabels) ? optOrGroup.label : undefined"
+		>{{optOrGroup.label || optOrGroup.value}}</option>
 	</template>
 </select>
 

@@ -378,6 +378,7 @@ const get = {
 
 const actions = {
 	search: b.commit(state => {
+		const oldCqlPatt = state.form.submittedParameters ? state.form.submittedParameters.pattern : null;
 		// TODO make this implicit instead of having to write->read->write state here
 		FormModule.actions.search();
 		// Do not reset page! We come through here when loading the page initially
@@ -385,9 +386,16 @@ const actions = {
 		// ResultsModule.actions.resetPage();
 
 		const cqlPatt = state.form.submittedParameters!.pattern; // only after form.search() !
-		if (state.viewedResults !== 'docs') { // open when null, go to docs when viewing hits and no pattern
-			state.viewedResults = cqlPatt ? 'hits' : 'docs';
+		let newView = state.viewedResults;
+		if (newView == null) {
+			newView = cqlPatt ? 'hits' : 'docs';
+		} else if (newView === 'hits' && !cqlPatt) {
+			newView = 'docs';
+		} else if (oldCqlPatt == null && cqlPatt != null) {
+			newView = 'hits';
 		}
+
+		actions.viewedResults(newView as any);
 		HistoryModule.actions.addEntry(state);
 	}, 'search'),
 
@@ -417,7 +425,7 @@ const actions = {
 		SettingsModule.actions.replaceFromHistory(payload);
 		ResultsModule.actions.replaceFromHistory(payload);
 
-		state.viewedResults = payload.viewedResults;
+		actions.viewedResults(payload.viewedResults);
 		actions.search();
 	}, 'replaceFromHistory'),
 

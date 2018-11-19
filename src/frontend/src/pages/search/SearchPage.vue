@@ -19,12 +19,17 @@
 							<div class="form-group"> <!-- behaves as .row when in .form-horizontal so .row may be omitted -->
 								<label for="resultsPerPage" class="col-xs-3">Results per page:</label>
 								<div class="col-xs-9">
-									<select id="resultsPerPage" name="resultsPerPage" class="selectpicker" data-width="auto" data-style="btn-default">
-										<option value="20">20 results</option>
-										<option value="50">50 results</option>
-										<option value="100">100 results</option>
-										<option value="200">200 results</option>
-									</select>
+									<SelectPicker
+										id="resultsPerPage"
+										name="resultsPerPage"
+
+										data-width="auto"
+										data-style="btn-default"
+
+										:options="['20','50','100','200'].map(value => ({value, label: `${value} results`}))"
+
+										v-model="pageSize"
+									/>
 								</div>
 							</div>
 
@@ -32,12 +37,19 @@
 								<label for="sampleSize" class="col-xs-3">Sample size:</label>
 								<div class="col-xs-9">
 									<div class="input-group">
-										<select  id="sampleMode" name="sampleMode" class="selectpicker input-group-btn" data-width="auto" data-style="btn-default">
-											<option value="percentage" selected>percentage</option>
-											<option value="count">count</option>
-										</select>
+										<SelectPicker
+											id="sampleMode"
+											name="sampleMode"
+											class="input-group-btn"
 
-										<input id="sampleSize" name="sampleSize" placeholder="sample size" type="number" class="form-control"/>
+											data-width="auto"
+											data-style="btn-default"
+
+											:options="['percentage', 'count'].map(o => ({value: o}))"
+											v-model="sampleMode"
+										/>
+
+										<input id="sampleSize" name="sampleSize" placeholder="sample size" type="number" class="form-control" v-model.lazy="sampleSize"/>
 									</div>
 								</div>
 							</div>
@@ -45,14 +57,14 @@
 							<div class="form-group">
 								<label for="sampleSeed" class="col-xs-3">Seed:</label>
 								<div class="col-xs-9">
-									<input id="sampleSeed" name="sampleSeed" placeholder="seed" type="number" class="form-control" >
+									<input id="sampleSeed" name="sampleSeed" placeholder="seed" type="number" class="form-control" v-model.lazy="sampleSeed">
 								</div>
 							</div>
 
 							<div class="form-group">
 								<label for="wordsAroundHit" class="col-xs-3">Context size:</label>
 								<div class="col-xs-9">
-									<input id="wordsAroundHit" name="wordsAroundHit" placeholder="context Size" type="number" class="form-control" >
+									<input id="wordsAroundHit" name="wordsAroundHit" placeholder="context Size" type="number" class="form-control" v-model.lazy="wordsAroundHit">
 								</div>
 							</div>
 
@@ -79,10 +91,13 @@ import Vue from 'vue';
 import $ from 'jquery';
 
 import * as RootStore from '@/store';
+import * as SettingsStore from '@/store/settings';
 
 import SearchForm from '@/pages/search/form/SearchForm.vue';
 import QuerySummary from '@/pages/search/results/QuerySummary.vue';
 import Results from '@/pages/search/results/Results.vue';
+
+import SelectPicker from '@/components/SelectPicker.vue';
 
 import PageGuide from '@/pages/search/PageGuide.vue';
 import History from '@/pages/search/History.vue';
@@ -93,10 +108,32 @@ export default Vue.extend({
 		QuerySummary,
 		Results,
 		PageGuide,
-		History
+		History,
+
+		SelectPicker
 	},
 	computed: {
-		viewedResults: RootStore.get.viewedResults
+		viewedResults: RootStore.get.viewedResults,
+		pageSize: {
+			get(): string { return SettingsStore.getState().pageSize + ''; },
+			set(v: string) { SettingsStore.actions.pageSize(Number.parseInt(v, 10)); }
+		},
+		sampleMode: {
+			get() { return SettingsStore.getState().sampleMode; },
+			set(v: string) { return SettingsStore.actions.sampleMode(v); }
+		},
+		sampleSize: {
+			get() { return SettingsStore.getState().sampleSize; },
+			set(v: number) { SettingsStore.actions.sampleSize(v); }
+		},
+		sampleSeed: {
+			get() { return SettingsStore.getState().sampleSeed; },
+			set(v: number) { SettingsStore.actions.sampleSeed(v); }
+		},
+		wordsAroundHit: {
+			get() { return SettingsStore.getState().wordsAroundHit; },
+			set(v: number) { SettingsStore.actions.wordsAroundHit(v); }
+		}
 	},
 
 	mounted() {

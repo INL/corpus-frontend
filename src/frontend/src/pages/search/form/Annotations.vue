@@ -7,7 +7,7 @@
 			<li><a href="#query" data-toggle="tab" class="querytype">CQL query</a></li>
 		</ul>
 		<div class="tab-content">
-			<div class="tab-pane active form-horizontal" id="simple" > <!-- #if ($usePropertyTabs) style="margin-top: -15px"#end -->
+			<div class="tab-pane active form-horizontal" id="simple">
 				<template v-if="useTabs">
 					<ul class="nav nav-tabs subtabs">
 						<li v-for="(tab, index) in tabs" :class="{'active': index === 0}" :key="index">
@@ -48,7 +48,7 @@
 			</div>
 			<div class="tab-pane" id="query">
 				<h3>Corpus Query Language:</h3>
-				<textarea id="querybox" class="form-control" name="querybox" rows="7"></textarea>
+				<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model.lazy="cql"></textarea>
 				<button type="button" class="btn btn-sm btn-default" name="parseQuery" id="parseQuery" title="Edit your query in the querybuilder">Copy to query builder</button>
 				<span id="parseQueryError" class="text-danger" style="display:none;"><span class="fa fa-danger"></span> The querybuilder could not parse your query</span>
 			</div>
@@ -99,6 +99,10 @@ export default Vue.extend({
 			get(): string|null { return form.getState().pattern.simple.within; },
 			set(v: null|string) { form.actions.pattern.simple.within(v); }
 		},
+		cql: {
+			get(): string|null { return form.getState().pattern.cql; },
+			set(v: string) { form.actions.pattern.cql(v); }
+		}
 	},
 	methods: {
 		getTabId(name: string) {

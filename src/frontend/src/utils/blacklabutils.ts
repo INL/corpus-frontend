@@ -82,10 +82,11 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 	const annotatedFields: BLTypes.BLAnnotatedField[] = BLTypes.isIndexMetadataV1(blIndex) ? Object.values(blIndex.complexFields) : Object.values(blIndex.annotatedFields);
 	const annotatedFieldsNormalized: { [id: string]: NormalizedAnnotatedField; } = annotatedFields.map<NormalizedAnnotatedField>(f => {
 		const annotations: Array<[string, BLTypes.BLAnnotation]> = BLTypes.isAnnotatedFieldV1(f) ? Object.entries(f.properties) : Object.entries(f.annotations);
+		const mainAnnotationId: string = BLTypes.isAnnotatedFieldV1(f) ? f.mainProperty : f.mainAnnotation;
 
 		return {
 			annotations:
-				annotations.map(([annotationId, annotation]) => normalizeAnnotation(f.fieldName, f.mainProperty, annotationId, annotation))
+				annotations.map(([annotationId, annotation]) => normalizeAnnotation(f.fieldName, mainAnnotationId, annotationId, annotation))
 				.reduce<NormalizedAnnotatedField['annotations']>((acc, annot) => {
 					acc[annot.id] = annot;
 					return acc;
@@ -98,7 +99,7 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 			hasXmlTags: f.hasXmlTags,
 			id: f.fieldName,
 			isAnnotatedField: f.isAnnotatedField,
-			mainAnnotationId: f.mainProperty,
+			mainAnnotationId,
 		};
 	})
 	.reduce<{[id: string]: NormalizedAnnotatedField}>((acc, field) => {

@@ -1,9 +1,9 @@
 import { ReplaySubject, Observable, merge } from 'rxjs';
 import { debounceTime, switchMap, map, distinctUntilChanged, publishLast, publishReplay, shareReplay, debounce, filter, tap } from 'rxjs/operators';
 
-import * as rootStore from '@/store';
-import * as formStore from '@/store/form';
-import * as corpusStore from '@/store/corpus';
+import * as RootStore from '@/store';
+import * as FormStore from '@/store/form';
+import * as CorpusStore from '@/store/corpus';
 
 import { getFilterString } from '@/utils/';
 import * as Api from '@/api';
@@ -39,16 +39,16 @@ export const selectedSubCorpus$ = merge(
 				subscriber.next({
 					docs: [],
 					summary: {
-						numberOfDocs: corpusStore.getState().documentCount,
+						numberOfDocs: CorpusStore.getState().documentCount,
 						stillCounting: false,
-						tokensInMatchingDocuments: corpusStore.getState().tokenCount,
+						tokensInMatchingDocuments: CorpusStore.getState().tokenCount,
 					}
 				} as any);
 				return;
 			}
 
 			// todo keep requesting until finished.
-			const {request, cancel} = Api.blacklab.getDocs(corpusStore.getState().id, params);
+			const {request, cancel} = Api.blacklab.getDocs(CorpusStore.getState().id, params);
 			request.then(
 				// Sometimes a result comes in anyway after cancelling the request (and closing the subscription),
 				// in this case the subscriber will bark at us if we try to push more values, so check for this.
@@ -88,15 +88,15 @@ export const submittedSubcorpus$ = submittedMetadata$.pipe(
 			subscriber.next({
 				docs: [],
 				summary: {
-					numberOfDocs: corpusStore.getState().documentCount,
+					numberOfDocs: CorpusStore.getState().documentCount,
 					stillCounting: false,
-					tokensInMatchingDocuments: corpusStore.getState().tokenCount,
+					tokensInMatchingDocuments: CorpusStore.getState().tokenCount,
 				}
 			} as any);
 			return;
 		}
 
-		const {request, cancel} = Api.blacklab.getDocs(corpusStore.getState().id, params);
+		const {request, cancel} = Api.blacklab.getDocs(CorpusStore.getState().id, params);
 		request.then(
 			// Sometimes a result comes in anyway after cancelling the request (and closing the subscription),
 			// in this case the subscriber will bark at us if we try to push more values, so check for this.
@@ -121,9 +121,9 @@ export default () => {
 	// 	v => metadata$.next(v),
 	// 	{ immediate: true }
 	// );
-	rootStore.store.watch(
+	RootStore.store.watch(
 		state => {
-			const params = formStore.get.lastSubmittedParameters();
+			const params = FormStore.get.lastSubmittedParameters();
 			return params != null ? params.filters : [];
 		},
 		v => submittedMetadata$.next(v),

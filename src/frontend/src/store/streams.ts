@@ -33,8 +33,8 @@ export const selectedSubCorpus$ = merge(
 			includetokencount: true,
 			waitfortotal: true
 		})),
-		switchMap(params => new Observable<BLTypes.BLDocResults|null>(subscriber => {
-			// Speedup: we know the totals beforehand when there are no totals: mock a reply
+		switchMap(params => new Observable<BLTypes.BLDocResults>(subscriber => {
+			// Speedup: we know the totals beforehand when there are no filters: mock a reply
 			if (!params.filter) {
 				subscriber.next({
 					docs: [],
@@ -82,7 +82,7 @@ export const submittedSubcorpus$ = submittedMetadata$.pipe(
 		includetokencount: true,
 		waitfortotal: true
 	})),
-	switchMap(params => new Observable<BLTypes.BLDocResults|null>(subscriber => {
+	switchMap(params => new Observable<BLTypes.BLDocResults>(subscriber => {
 		// Speedup: we know the totals beforehand when there are no totals: mock a reply
 		if (!params.filter) {
 			subscriber.next({
@@ -115,12 +115,11 @@ export default () => {
 	// Because we use vuex-typex, getters are a little different
 	// It doesn't matter though, they're attached to the same state instance, so just ignore the state argument.
 
-	// NOTE: temporarily disabled, see https://github.com/INL/corpus-frontend/issues/153
-	// rootStore.store.watch(
-	// 	state => formStore.get.activeFilters(),
-	// 	v => metadata$.next(v),
-	// 	{ immediate: true }
-	// );
+	RootStore.store.watch(
+		state => FormStore.get.activeFilters(),
+		v => metadata$.next(v),
+		{ immediate: true }
+	);
 	RootStore.store.watch(
 		state => {
 			const params = FormStore.get.lastSubmittedParameters();

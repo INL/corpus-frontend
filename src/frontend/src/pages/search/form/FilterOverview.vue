@@ -2,8 +2,11 @@
 	<div class="text-muted text-small filter-overview">
 		<span v-for="filter in filters" :key="filter.id">{{filter.displayName}}: <i>{{filter.values.join(', ')}}</i>&nbsp;</span>
 
-		<div class="sub-corpus-size" v-if="false"> <!-- temporarily disabled until work done in BlackLab, see https://github.com/INL/corpus-frontend/issues/153 -->
-			<template v-if="subCorpusStats">
+		<div class="sub-corpus-size">
+			<template v-if="error">
+				Error: {{error.message}}
+			</template>
+			<template v-else-if="subCorpusStats">
 				Selected subcorpus:<br>
 				Total documents: {{subCorpusStats.summary.numberOfDocs}}<br>
 				Total tokens: {{subCorpusStats.summary.tokensInMatchingDocuments}}
@@ -19,6 +22,8 @@
 <script lang="ts">
 import Vue from 'vue';
 
+import {Subscription} from 'rxjs';
+
 import * as formStore from '@/store/form';
 import * as corpusStore from '@/store/corpus';
 
@@ -26,6 +31,7 @@ import { selectedSubCorpus$ } from '@/store/streams';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
+import {ApiError} from '@/api';
 
 type ExtendedFilter = {
 	id: string;
@@ -34,9 +40,18 @@ type ExtendedFilter = {
 }
 
 export default Vue.extend({
-	subscriptions: {
-		subCorpusStats: selectedSubCorpus$ // yield the search results
-	},
+	// subscriptions: {
+	// 	subCorpusStats: {
+	// 		// selectedSubCorpus$
+
+
+	// 	}// yield the search results
+	// },
+	data: () => ({
+		subscriptions: [] as Subscription[],
+		subCorpusStats: null as null|BLTypes.BLDocResults,
+		error: null as null|ApiError,
+	}),
 	computed: {
 		// whatever, this will be cached.
 		// todo tidy up
@@ -66,6 +81,21 @@ export default Vue.extend({
 			})
 		},
 	},
+	created() {
+		this.subscriptions.push(selectedSubCorpus$.subscribe(
+			v => {
+				this.subCorpusStats = v;
+				this.error = null;
+			},
+			e => {
+				this.subCorpusStats = null;
+				this.error = e
+			}
+		))
+	},
+	destroyed() {
+		this.subscriptions.forEach(s => s.unsubscribe());
+	}
 });
 
 </script>

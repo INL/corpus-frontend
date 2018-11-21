@@ -115,10 +115,10 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 			.flatMap<NormalizedIndex['annotationGroups'][number]>(([annotatedFieldId, groups]) =>
 				groups.map(group => ({
 					annotatedFieldId,
-					annotationIds: group.annotations.sort((a, b) => {
-						const displayOrder = annotatedFieldsNormalized[annotatedFieldId].displayOrder;
-						return displayOrder.indexOf(a) - displayOrder.indexOf(b);
-					}),
+					// annotations in a group already have an order to them
+					// this should have higher priority than the global order of annotations within this annotatedfield.
+					// (which only applies to annotations not defined in a group)
+					annotationIds: group.annotations,
 					name: group.name,
 				}))
 			) :

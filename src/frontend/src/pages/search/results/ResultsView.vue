@@ -422,7 +422,7 @@ export default Vue.extend({
 	background: white;
 	border-bottom: 1px solid rgba(0,0,0,0.1);
 	border-radius: 0;
-	margin: 0 -15px 15px;
+	margin: 0 -15px 30px;
 	padding: 12px 15px;
 	overflow: hidden;
 	text-overflow: ellipsis;

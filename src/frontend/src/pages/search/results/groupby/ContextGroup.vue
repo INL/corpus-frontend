@@ -51,10 +51,10 @@
 		</div>
 
 		<div class="groupby-editor-checkboxes">
-			<div class="groupby-editor-case-sensitive checkbox">
+			<div class="groupby-editor-case-sensitive checkbox" title="Treat context case-sensitive">
 				<label><input type="checkbox" v-model="caseSensitive"> Case sensitive</label>
 			</div>
-			<div :class="['groupby-editor-end-of-hit', 'checkbox', {'disabled': context !== 'hit'}]" :title="context !== 'hit' ? 'Only available for hit context' : undefined">
+			<div :class="['groupby-editor-end-of-hit', 'checkbox', {'disabled': context !== 'hit'}]" :title="context !== 'hit' ? 'Only available for hit context' : 'Group the last words in the hit instead of the first'">
 				<label><input type="checkbox" :disabled="context !== 'hit'" v-model="fromEndOfHit"> From end of hit </label>
 			</div>
 		</div>
@@ -180,13 +180,16 @@ export default Vue.extend({
 				}
 			}
 		}
+	},
+	mounted() {
+		// This is required because the slider component is shuffled around a little after rendering
+		// and throws off the click handling of the slider handles (an ofset is introduced)
+		requestAnimationFrame(() => (this.$refs.slider as any).refresh());
 	}
 })
 </script>
 
 <style lang="scss">
-
-$classes: 'annotation' 'context-container' 'slider' 'context' 'delete';
 
 .groupby-editor {
 	display: flex;
@@ -226,25 +229,65 @@ $classes: 'annotation' 'context-container' 'slider' 'context' 'delete';
 	margin-left: auto;
 }
 
+$bg-primary: #337ab7;
+$bg-primary-hover: #286090;
+$bg-primary-active: #204d74;
+
+$br-primary: #2e6da4;
+$br-primary-hover:#204d74;
+$br-primary-active: #122b40;
+
 .groupby-editor-slider {
 	height: 30px;
 	> .vue-slider {
 		top: 50%;
 		transform: translateY(-50%);
+		cursor: pointer;
+
+		.vue-slider-process {
+			background: $bg-primary;
+		}
+
+		&:hover,
+		&:focus {
+			.vue-slider-process {
+				background: $bg-primary-hover;
+			}
+		}
+		&:active {
+			.vue-slider-process {
+				background: $bg-primary-active;
+			}
+		}
+
 	}
 }
 .groupby-editor-slider-handle {
 	width: calc(100% + 1px);
 	height: calc(100% + 1px);
 	line-height: 120%;
-	background: #3498db;
+
 	border-radius: 100%;
 	text-align: center;
-	border: 1px solid #2f96da;
+	border: 1px solid;
 	box-shadow: inset 0px 0px 0px 1px white;
 	color: white;
 	box-sizing: content-box;
 	margin-top: -1px;
+
+	background-color: $bg-primary;
+	border-color: $br-primary;
+
+	&:hover,
+	&:focus {
+		background-color: $bg-primary-hover;
+		border-color: $br-primary-hover;
+	}
+	&:active {
+		background-color: $bg-primary-active;
+		border-color: $br-primary-active;
+	}
+
 }
 
 .groupby-editor-end-of-hit ,

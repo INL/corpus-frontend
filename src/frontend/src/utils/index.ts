@@ -140,14 +140,14 @@ export function getFilterString(filters: AppTypes.MetadataValue[]): string|undef
 
 		if (filter.type === 'range') {
 			filterStrings.push(filter.id, ':', '[', filter.values[0], ' TO ', filter.values[1], ']');
-		} else if (filter.type === 'select') {
+		} else if (filter.type !== 'text') {
 			// Surround each individual value with quotes, and surround the total with brackets
 			filterStrings.push(filter.id, ':', '("', filter.values.join('" "'), '")');
 		} else {
 			// Do the quoting thing
 			const resultParts = [] as string[];
 
-			$.each(filter.values, function(index, value) {
+			filter.values.forEach(value => {
 				const quotedParts = value.split(/"/);
 				let inQuotes = false;
 				for (let part of quotedParts) {

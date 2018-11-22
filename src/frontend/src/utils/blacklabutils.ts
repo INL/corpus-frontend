@@ -18,11 +18,13 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 	}
 
 	function normalizeAnnotationUIType(field: BLTypes.BLAnnotation): NormalizedAnnotation['uiType'] {
-		if (!field.uiType) {
+		const uiType = field.uiType.trim().toLowerCase();
+
+		if (!uiType) {
 			return field.values ? field.valueListComplete ? 'select' : 'combobox' : 'text';
 		}
 
-		switch (field.uiType) {
+		switch (uiType) {
 			case 'select': return field.values && field.valueListComplete ? 'select' : 'combobox';
 			case 'combobox': return 'combobox';
 			default: return 'text';
@@ -30,18 +32,20 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 	}
 
 	function normalizeMetadataUIType(field: BLTypes.BLMetadataField): NormalizedMetadataField['uiType'] {
-		if (!field.uiType) {
+		const uiType = field.uiType.trim().toLowerCase();
+
+		if (!uiType) {
 			return Object.keys(field.fieldValues).length > 0 ? field.valueListComplete ? 'select' : 'combobox' : 'text';
 		}
 
-		switch (field.uiType) {
+		switch (uiType) {
 			case 'select': return field.valueListComplete ? 'select' : 'combobox';
 			case 'combobox':
 			case 'range':
-				return field.uiType;
+				return uiType;
 			case 'checkbox':
 			case 'radio':
-				return field.valueListComplete ? field.uiType : 'combobox';
+				return field.valueListComplete ? uiType : 'combobox';
 			default: return 'text';
 		}
 	}

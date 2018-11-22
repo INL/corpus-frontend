@@ -63,7 +63,7 @@ export default Vue.extend({
 
 <style lang="scss">
 .filter-container {
-	max-height: 40vh;
+	max-height: 385px; // 5 fields @ 74px + 15px padding
 	overflow: auto;
 	overflow-x: hidden;
 }

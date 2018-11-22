@@ -18,12 +18,20 @@
 				v-model="unapplied.groupBy"
 			/>
 
+			<div class="btn-group" style="display: flex; flex-wrap: none; flex: none;">
+				<button type="button" class="btn btn-sm btn-primary" @click="submit" style="border-top-left-radius: 0; border-bottom-left-radius: 0;">Apply</button>
+				<button type="button" class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"/></button>
+				<ul class="dropdown-menu">
+					<li><a href="#" @click.prevent="undo">Undo</a></li>
+				</ul>
+			</div>
+
 			<div v-if="unapplied.groupBy && unapplied.groupBy.length > 0" class="checkbox-inline" style="margin-left: 5px;">
 				<label title="Separate groups for differently cased values" style="white-space: nowrap; margin: 0; cursor:pointer;" :for="uid+'case'"><input type="checkbox" :id="uid+'case'" v-model="unapplied.caseSensitive">Case sensitive</label>
 			</div>
 		</div>
 
-		<div v-if="contextSupported" class="groupby-context-container" >
+		<div v-if="contextEnabled" class="groupby-context-container" >
 			<ContextGroup v-for="(group, index) in unapplied.groupByAdvanced"
 				:key="index"
 
@@ -31,11 +39,7 @@
 
 				v-model="unapplied.groupByAdvanced[index]"
 			/>
-		</div>
-
-		<div class="groupby-buttons-container">
-			<button v-if="contextSupported" type="button" class="btn btn-default btn-sm" @click="createContextGroup">Group by context</button>
-			<button type="button" class="btn btn-primary btn-sm" @click="submit">Apply</button>
+			<button v-if="contextSupported" type="button" class="btn btn-default btn-sm" @click="createContextGroup">New context group</button>
 		</div>
 	</div>
 </template>
@@ -49,6 +53,8 @@ import * as ResultsStore from '@/store/results';
 import SelectPicker, {OptGroup, Option} from '@/components/SelectPicker.vue';
 import ContextGroup from '@/pages/search/results/groupby/ContextGroup.vue';
 import UID from '@/mixins/uid';
+
+const CONTEXT_ENABLED_STRING = '_enable_context';
 
 export default Vue.extend({
 	mixins: [UID],
@@ -70,12 +76,12 @@ export default Vue.extend({
 		submit() {
 			// take care to not call mutating functions, as to not directly mutate state
 			this.caseSensitive = this.unapplied.caseSensitive;
-			this.groupBy = JSON.parse(JSON.stringify(this.unapplied.groupBy));
-			this.groupByAdvanced = JSON.parse(JSON.stringify(this.unapplied.groupByAdvanced));
+			this.groupBy = JSON.parse(JSON.stringify(this.contextEnabled ? this.unapplied.groupBy.filter(g => g !== CONTEXT_ENABLED_STRING) : this.unapplied.groupBy));
+			this.groupByAdvanced = this.contextEnabled ? JSON.parse(JSON.stringify(this.unapplied.groupByAdvanced)) : [];
 		},
 		undo() {
-			// DON'T alias these objects...
 			this.unapplied = JSON.parse(JSON.stringify(this.appliedSettings));
+			this.contextEnabled = this.unapplied.groupByAdvanced.length > 0;
 		},
 
 		createContextGroup() { this.unapplied.groupByAdvanced.push(''); },
@@ -95,6 +101,7 @@ export default Vue.extend({
 			get(): string[] { return this.storeModule.getState().groupByAdvanced; },
 			set(v: string[]) { this.storeModule.actions.groupByAdvanced(v); }
 		},
+
 		// useful shorthand for all props from store
 		appliedSettings() {
 			return {
@@ -105,8 +112,15 @@ export default Vue.extend({
 		},
 
 		// Calculated fields
-		normalGroupByOptions(): OptGroup[] {
-			const groups: OptGroup[] = [];
+		normalGroupByOptions(): Array<OptGroup|Option> {
+			const opts: Array<OptGroup|Option> = [];
+
+			if (this.contextSupported) {
+				opts.push({
+					label: 'Context (advanced)',
+					value: CONTEXT_ENABLED_STRING
+				});
+			}
 
 			const metadataGroups = CorpusStore.get.metadataGroups();
 			if (this.type === 'hits') {
@@ -114,7 +128,7 @@ export default Vue.extend({
 
 				[['wordleft:', 'Before hit', 'before'],['hit:', 'Hit', ''],['wordright:', 'After hit', 'after']]
 				.forEach(([prefix, groupname, suffix]) =>
-					groups.push({
+					opts.push({
 						label: groupname,
 						options: annotations.map(annot => ({
 							label: `Group by ${annot.displayName || annot.id} <small class="text-muted">${suffix}</small>`,
@@ -123,28 +137,43 @@ export default Vue.extend({
 					})
 				);
 			}
-			metadataGroups.forEach(group => groups.push({
+			metadataGroups.forEach(group => opts.push({
 				label: group.name,
 				options: group.fields.map(field => ({
 					label: (field.displayName || field.id).replace(group.name, ''),
 					value: `field:${field.id}`
 				}))
 			}))
-			return groups;
+			return opts;
 		},
 
-		contextSupported(): boolean { return this.type === 'hits'; }
+		contextSupported(): boolean { return this.type === 'hits'; },
+		contextEnabled: {
+			get(): boolean { return this.contextSupported && this.unapplied.groupBy.includes(CONTEXT_ENABLED_STRING); },
+			set(v: boolean) {
+				if (this.contextSupported && v !== this.contextEnabled) {
+					if (v) {
+						this.unapplied.groupBy.push(CONTEXT_ENABLED_STRING);
+					} else {
+						this.unapplied.groupBy = this.unapplied.groupBy.filter(g => g !== CONTEXT_ENABLED_STRING);
+					}
+				}
+			}
+		}
 	},
 	watch: {
+		contextEnabled(v: boolean) {
+			if (v && this.unapplied.groupByAdvanced.length === 0) {
+				this.createContextGroup();
+			}
+		},
 		appliedSettings: {
-			deep: true,
 			immediate: true,
-			handler(v) {
-				// sync with store on changes from store
+			handler() {
 				this.undo();
 			}
 		}
-	}
+	},
 })
 </script>
 
@@ -154,19 +183,25 @@ export default Vue.extend({
 	align-items: center;
 	display: inline-flex;
 	flex-wrap: nowrap;
-	margin-bottom: 5px;
-	margin-right: 5px;
 	max-width: 100%;
+	margin-bottom: 5px;
 
 	> .groupselect {
 		flex: 1 1 auto;
 		min-width: 0px!important;
 		width: auto!important;
+		display: flex;
+		flex-wrap: nowrap;
 
 		> button {
 			width: auto;
 			max-width: 100%;
 			padding-right: 26px; // for caret
+			border-top-right-radius: 0px;
+			border-bottom-right-radius: 0px;
+			border-right-width: 0;
+			display: flex;
+			flex-wrap: nowrap;
 
 			> .filter-option {
 				padding: 0;

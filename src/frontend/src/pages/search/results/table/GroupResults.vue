@@ -62,7 +62,7 @@
 						</template>
 					</div>
 				</td>
-				<td class="td-group-relative-size">{{relativeSize(size) | frac2Percent}}</td>
+				<td class="td-group-relative-size">{{size / resultCount | frac2Percent}}</td>
 			</tr>
 		</tbody>
 	</table>
@@ -123,6 +123,8 @@ export default Vue.extend({
 		rightLabel() { return this.textDirection === 'ltr' ? 'After' : 'Before'; },
 		leftIndex() { return this.textDirection === 'ltr' ? 0 : 2 },
 		rightIndex() { return this.textDirection === 'ltr' ? 2 : 0 },
+
+		resultCount(): number { return BLTypes.isHitGroups(this.results) ? this.results.summary.numberOfHits : this.results.summary.numberOfDocs; },
 	},
 	methods: {
 		width(groupSize: number): string {
@@ -200,10 +202,10 @@ export default Vue.extend({
 		},
 
 		// Display stuff for groups
-		relativeSize(size: number) {
-			const total: number = BLTypes.isHitGroups(this.results) ? this.results.summary.numberOfHits : this.results.summary.numberOfDocs;
-			return size / total;
-		},
+		// relativeSize(size: number) {
+		// 	const total: number = BLTypes.isHitGroups(this.results) ? this.results.summary.numberOfHits : this.results.summary.numberOfDocs;
+		// 	return size / total;
+		// },
 
 		/** EVENTS **/
 		openFullConcordances(id: string, displayName: string) {

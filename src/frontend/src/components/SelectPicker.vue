@@ -105,4 +105,29 @@ export default Vue.extend({
 	padding-left: 0px !important;
 }
 
+.input-group {
+	> .dropdown.bootstrap-select.input-group-btn {
+
+		> .btn {
+			border-radius: 4px;
+			&-lg { border-radius: 6px; }
+			&-sm { border-radius: 3px; }
+		}
+
+		> .btn ~ .btn {
+			border-top-left-radius: 0;
+			border-bottom-left-radius: 0;
+		}
+
+		&:not(:last-child) {
+			> .btn {
+				border-top-right-radius: 0px;
+				border-bottom-right-radius: 0px;
+				border-right-width: 0;
+			}
+		}
+	}
+}
+
+
 </style>

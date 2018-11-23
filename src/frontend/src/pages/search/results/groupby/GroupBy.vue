@@ -124,7 +124,7 @@ export default Vue.extend({
 
 			const metadataGroups = CorpusStore.get.metadataGroups();
 			if (this.type === 'hits') {
-				const annotations = CorpusStore.get.annotations();
+				const annotations = CorpusStore.get.annotations().filter(a => !a.isInternal && a.hasForwardIndex);
 
 				[['wordleft:', 'Before hit', 'before'],['hit:', 'Hit', ''],['wordright:', 'After hit', 'after']]
 				.forEach(([prefix, groupname, suffix]) =>

@@ -1,7 +1,7 @@
 <template>
 	<div class="form-group propertyfield" :id="id"> <!-- behaves as .row when in .form-horizontal so .row may be omitted -->
 		<label :for="inputId" class="col-xs-12 col-md-3" :title="annotation.description || undefined">{{displayName}}</label>
-		<div class="col-xs-12 col-md-9 upload-button-container">
+		<div class="col-xs-12 col-md-9">
 			<SelectPicker v-if="annotation.uiType === 'select'"
 				class="form-control"
 				data-container="body"
@@ -15,7 +15,7 @@
 
 				v-model="value"
 			/>
-			<template v-else>
+			<div v-else class="input-group">
 				<input
 					type="text"
 					class="form-control"
@@ -28,18 +28,20 @@
 					ref="autocomplete"
 					v-model="value"
 				/>
-				<span class="btn btn-default upload-button">
-					<input
-						type="file"
-						title="Upload a list of values"
+				<div class="input-group-btn wordlist-upload">
+					<label class="btn btn-default" :for="fileInputId">
+						<span class="glyphicon glyphicon-open"></span>
+						<input
+							type="file"
+							title="Upload a list of values"
 
-						:id="fileInputId"
+							:id="fileInputId"
 
-						@change="onFileChanged"
-					>
-					<span class="glyphicon glyphicon-open"></span>
-				</span>
-			</template>
+							@change="onFileChanged"
+						>
+					</label>
+				</div>
+			</div>
 			<div v-if="annotation.caseSensitive" class="checkbox">
 				<label :for="caseInputId">
 					<input
@@ -144,4 +146,21 @@ export default Vue.extend({
 </script>
 
 <style lang="scss">
+.wordlist-upload {
+	> label {
+		position: relative;
+		overflow: hidden;
+		> input {
+			position: absolute;
+			opacity: 0;
+			font-size: 80;
+			left: 0;
+			top: 0;
+			width: 100%;
+			height: 100%;
+			max-width: 100%;
+			max-height: 100%;
+		}
+	}
+}
 </style>

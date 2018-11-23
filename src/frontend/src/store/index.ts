@@ -244,9 +244,9 @@ export class UrlPageState {
 	private get sampleMode(): 'count'|'percentage' {
 		// If 'sample' exists we're in count mode, otherwise if 'samplenum' (and is valid), we're in percent mode
 		// ('sample' also has precendence for the purposes of determining samplesize)
-		if (this.getNumber('sample') != null) {
+		if (this.getNumber('samplenum') != null) {
 			return 'count';
-		} else if (this.getNumber('samplemode', null, v => (v != null && (v >= 0 && v <=100)) ? v : null) != null) {
+		} else if (this.getNumber('sample', null, v => (v != null && (v >= 0 && v <=100)) ? v : null) != null) {
 			return 'percentage';
 		} else {
 			return SettingsModule.defaults.sampleMode;
@@ -260,8 +260,10 @@ export class UrlPageState {
 
 	@memoize
 	private get sampleSize(): number|null {
+		const sample = this.getNumber('sample', null, v => v != null && v >= 0 && v <= 100 ? v : null);
+		return sample != null ? sample : this.getNumber('samplenum', null);
 		// Use 'sample' unless missing, then use 'samplenum', if 0-100 (as it's percentage-based)
-		return this.getNumber('sample', this.getNumber('samplenum', null, v => (v >= 0 && v <=100) ? v : null));
+		// return this.getNumber('sample', this.getNumber('samplenum', null, v => (v >= 0 && v <=100) ? v : null));
 	}
 
 	// TODO these might become dynamic in the future, then we need extra manual checking
@@ -395,7 +397,7 @@ const actions = {
 			newView = 'hits';
 		}
 
-		actions.viewedResults(newView as any);
+		actions.viewedResults(newView);
 		HistoryModule.actions.addEntry(state);
 	}, 'search'),
 

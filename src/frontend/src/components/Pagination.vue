@@ -61,17 +61,19 @@ export default Vue.extend({
 	}),
 	computed: {
 		lowerPages(): number[] {
-			return this.calcOffsets(this.page - this.minPage).reverse().map(o => this.page - o);
+			return this.calcOffsets(this.boundedPage - this.minPage).reverse().map(o => this.boundedPage - o);
 		},
 		higherPages(): number[] {
-			return this.calcOffsets(this.maxPage - this.page).map(o => this.page + o);
+			return this.calcOffsets(this.maxPage - this.boundedPage).map(o => this.boundedPage + o);
 		},
 		nextEnabled(): boolean {
-			return this.page < this.maxPage;
+			return this.boundedPage < this.maxPage;
 		},
 		prevEnabled(): boolean {
-			return this.page > this.minPage;
+			return this.boundedPage > this.minPage;
 		},
+
+		boundedPage(): number { return Math.max(this.minPage, Math.min(this.page, this.maxPage)); }
 	},
 	methods: {
 		calcOffsets(range: number) {

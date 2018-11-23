@@ -8,8 +8,8 @@
 			</template>
 			<template v-else-if="subCorpusStats">
 				Selected subcorpus:<br>
-				Total documents: {{subCorpusStats.summary.numberOfDocs}}<br>
-				Total tokens: {{subCorpusStats.summary.tokensInMatchingDocuments}}
+				Total documents: {{subCorpusStats.summary.numberOfDocs}} ({{ subCorpusStats.summary.numberOfDocs / totalCorpusDocs | frac2Percent }})<br>
+				Total tokens: {{subCorpusStats.summary.tokensInMatchingDocuments}} ({{ subCorpusStats.summary.tokensInMatchingDocuments / totalCorpusTokens | frac2Percent }})
 			</template>
 			<template v-else>
 				<span class="fa fa-spinner fa-spin searchIndicator totals-spinner"></span><!-- todo spinner classes -->
@@ -33,6 +33,8 @@ import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
 import {ApiError} from '@/api';
 
+import frac2Percent from '@/mixins/fractionalToPercent';
+
 type ExtendedFilter = {
 	id: string;
 	values: string[];
@@ -40,13 +42,9 @@ type ExtendedFilter = {
 }
 
 export default Vue.extend({
-	// subscriptions: {
-	// 	subCorpusStats: {
-	// 		// selectedSubCorpus$
-
-
-	// 	}// yield the search results
-	// },
+	filters: {
+		frac2Percent
+	},
 	data: () => ({
 		subscriptions: [] as Subscription[],
 		subCorpusStats: null as null|BLTypes.BLDocResults,
@@ -80,6 +78,9 @@ export default Vue.extend({
 				}
 			})
 		},
+
+		totalCorpusTokens(): number { return corpusStore.getState().tokenCount; },
+		totalCorpusDocs(): number { return corpusStore.getState().documentCount; }
 	},
 	created() {
 		this.subscriptions.push(selectedSubCorpus$.subscribe(

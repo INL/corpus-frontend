@@ -180,7 +180,7 @@ const actions = {
 /** We need to call some function from the module before creating the root store or this module won't be evaluated (e.g. none of this code will run) */
 const init = (index: NormalizedIndex) => {
 	Object.values(index.annotatedFields).forEach(af => {
-		Object.values(af.annotations).filter(annot => !annot.isInternal && annot.hasForwardIndex).forEach(a => {
+		Object.values(af.annotations).filter(annot => !annot.isInternal).forEach(a => {
 			privateActions.initAnnotation({
 				annotatedFieldId: a.annotatedFieldId,
 				id: a.id,

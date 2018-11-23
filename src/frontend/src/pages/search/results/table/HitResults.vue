@@ -10,7 +10,7 @@
 						</a>
 
 						<ul class="dropdown-menu" role="menu">
-							<li v-for="annotation in annotations" :key="annotation.id">
+							<li v-for="annotation in annotations.filter(a => a.hasForwardIndex)" :key="annotation.id">
 								<a @click="changeSort(`left:${annotation.id}`)" class="sort">{{annotation.displayName}}</a>
 							</li>
 						</ul>
@@ -18,7 +18,7 @@
 				</th>
 
 				<th class="text-center" style="width:20px;">
-					<a @click="changeSort(`hit:${firstMainAnnotation.id}`)" class="sort" :title="`Sort by ${firstMainAnnotation.displayName}`">
+					<a @click="firstMainAnnotation.hasForwardIndex ? changeSort(`hit:${firstMainAnnotation.id}`) : undefined" class="sort" :title="`Sort by ${firstMainAnnotation.displayName}`">
 						<strong>{{firstMainAnnotation.displayName}}</strong>
 					</a>
 				</th>
@@ -31,7 +31,7 @@
 						</a>
 
 						<ul class="dropdown-menu" role="menu">
-							<li v-for="annotation in annotations" :key="annotation.id">
+							<li v-for="annotation in annotations.filter(a => a.hasForwardIndex)" :key="annotation.id">
 								<a @click="changeSort(`right:${annotation.id}`)" class="sort">{{annotation.displayName}}</a>
 							</li>
 						</ul>
@@ -39,7 +39,7 @@
 				</th>
 
 				<th v-for="annotation in shownAnnotations" :key="annotation.id" style="width:15px;">
-					<a @click="changeSort(`hit:${annotation.id}`)" class="sort" :title="`Sort by ${annotation.displayName}`">{{annotation.displayName}}</a>
+					<a @click="annotation.hasForwardIndex ? changeSort(`hit:${annotation.id}`) : undefined" class="sort" :title="`Sort by ${annotation.displayName}`">{{annotation.displayName}}</a>
 				</th>
 			</tr>
 		</thead>

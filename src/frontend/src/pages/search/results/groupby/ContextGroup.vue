@@ -105,7 +105,8 @@ export default Vue.extend({
 	computed: {
 		defaultAnnotation(): string { return CorpusStore.get.firstMainAnnotation().id; },
 		annotationOptions(): Option[] {
-			return CorpusStore.get.annotations().map(a => ({label: a.displayName, value: a.id}));
+			// Grouping on annotations without forward index is not supported by blacklab
+			return CorpusStore.get.annotations().filter(a => !a.isInternal && a.hasForwardIndex).map(a => ({label: a.displayName, value: a.id}));
 		},
 
 		contextOptions(): Option[] {

@@ -23,7 +23,7 @@ const get = {
 	annotations: b.read(state =>
 		Object.values(state.annotatedFields)
 		.flatMap(f => Object.values(f.annotations))
-		.filter(a => !a.isInternal && a.hasForwardIndex)
+		.filter(a => !a.isInternal)
 	, 'annotations'),
 
 	// TODO might be collisions between multiple annotatedFields, this is an unfinished part in blacklab
@@ -73,7 +73,7 @@ const get = {
 	}> => {
 		return state.annotationGroups.map(g => ({
 			...g,
-			annotations: g.annotationIds.map(id => state.annotatedFields[g.annotatedFieldId].annotations[id])
+			annotations: g.annotationIds.map(id => state.annotatedFields[g.annotatedFieldId].annotations[id]).filter(annot => !annot.isInternal)
 		}));
 	}, 'annotationGroups'),
 

@@ -130,7 +130,7 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 				// Add all known annotations to a default group
 				// (excluding internals and annotations not in a forward index)
 				const annotIds = Object.values(field.annotations)
-					.filter(annot => annot.hasForwardIndex && !annot.isInternal)
+					.filter(annot => !annot.isInternal)
 					.map(annot => annot.id)
 					.sort((a, b) => field.displayOrder.indexOf(a) - field.displayOrder.indexOf(b));
 

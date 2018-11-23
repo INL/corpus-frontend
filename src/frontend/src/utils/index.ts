@@ -181,15 +181,17 @@ export function getBLSearchParametersFromState(state: RootState): BLTypes.BLSear
 	if (state.viewedResults == null) {
 		throw new Error('Cannot generate blacklab parameters without knowing what kinds of results are being viewed (hits or docs)');
 	}
-	const viewProps = state.results[state.viewedResults];
 
 	const submittedParameters = state.form.submittedParameters;
 	if (submittedParameters == null) {
-		// Realistically we can... because we can use the current state of the ui
-		// but this should never happen before the form is submitted, or after it has been cleared
 		throw new Error('Cannot generate blacklab parameters before search form has been submitted');
 	}
 
+	if (state.settings.sampleSize && state.settings.sampleSeed == null) {
+		throw new Error('Should provide a sampleSeed when random sampling, or every new pagination action will use a different seed');
+	}
+
+	const viewProps = state.results[state.viewedResults];
 	return {
 		filter: getFilterString(submittedParameters.filters),
 		first: state.settings.pageSize * viewProps.page,
@@ -198,9 +200,9 @@ export function getBLSearchParametersFromState(state: RootState): BLTypes.BLSear
 		number: state.settings.pageSize,
 		patt: getPatternString(submittedParameters.pattern),
 
-		sample: (state.settings.sampleMode === 'percentage' && state.settings.sampleSize) ? state.settings.sampleSize /* can't be null after check */ : undefined,
+		sample: (state.settings.sampleMode === 'percentage' && state.settings.sampleSize) ? state.settings.sampleSize : undefined,
 		samplenum: (state.settings.sampleMode === 'count' && state.settings.sampleSize) ? state.settings.sampleSize : undefined,
-		sampleseed: (state.settings.sampleSeed != null && state.settings.sampleMode && state.settings.sampleSize) ? state.settings.sampleSeed : undefined,
+		sampleseed: state.settings.sampleSize != null ? state.settings.sampleSeed! /* non-null precondition checked above */ : undefined,
 
 		sort: viewProps.sort != null ? viewProps.sort : undefined,
 		viewgroup: viewProps.viewGroup != null ? viewProps.viewGroup : undefined,

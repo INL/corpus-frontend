@@ -62,7 +62,7 @@
 						</template>
 					</div>
 				</td>
-				<td class="td-group-relative-size">{{relativeSize(size)}}%</td>
+				<td class="td-group-relative-size">{{relativeSize(size) | frac2Percent}}</td>
 			</tr>
 		</tbody>
 	</table>
@@ -75,9 +75,12 @@ import * as corpusStore from '@/store/corpus';
 import * as Api from '@/api';
 import {snippetParts, getDocumentUrl} from '@/utils';
 
+import frac2Percent from '@/mixins/fractionalToPercent';
+
 import * as BLTypes from '@/types/blacklabtypes';
 
 export default Vue.extend({
+	filters: { frac2Percent },
 	props: {
 		results: Object as () => BLTypes.BLHitGroupResults|BLTypes.BLDocGroupResults,
 		sort: String as () => null|string,
@@ -147,17 +150,15 @@ export default Vue.extend({
 				return;
 			}
 
-			// TODO this is incorrect, the results could be stale while we're waiting for a new set of results in the parent.
-			// What can happen is that we place the stale result in the cache for the new set of results and it will be displayed...
+			// Technically requests could come in after we get a new set of groups to display
+			// but it's not an issue, as we tie them to the groupId and the new groups should have new ids.
 
 			// make a copy of the parameters so we don't clear them for all components using the summary
 			const requestParameters: BLTypes.BLSearchParameters = Object.assign({}, this.results.summary.searchParam, {
 				number: 20,
 				first: cache.concordances.length,
 				viewgroup: id,
-				sample: undefined,
-				samplenum: undefined,
-				sampleseed: undefined,
+				// Do not clear sample/samplenum/samplecount, or we could retrieve concordances that weren't included in the input results for the grouping
 				wordsaroundhit: undefined,
 				sort: undefined,
 			} as BLTypes.BLSearchParameters)
@@ -201,10 +202,7 @@ export default Vue.extend({
 		// Display stuff for groups
 		relativeSize(size: number) {
 			const total: number = BLTypes.isHitGroups(this.results) ? this.results.summary.numberOfHits : this.results.summary.numberOfDocs;
-			const div = size / total * 100;
-			const numDigits = Math.max(1-Math.floor(Math.log(div)/Math.log(10)), 0);
-
-			return div.toFixed(numDigits);
+			return size / total;
 		},
 
 		/** EVENTS **/

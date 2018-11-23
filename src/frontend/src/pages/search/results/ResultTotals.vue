@@ -1,7 +1,7 @@
 <template>
 <div class="totals">
 	<div class="totals-text" :title="percentOfSearchSpaceClarification">
-		Total {{resultType}}: {{resultCount.toLocaleString()}}<template v-if="isCounting">&hellip;</template> {{percentOfSearchSpace}}<br>
+		Total {{resultType}}: {{resultCount.toLocaleString()}}<template v-if="isCounting">&hellip;</template><template v-if="searchSpaceCount !== -1 /* see corpus store documentCount property */"> ({{this.resultCount / this.searchSpaceCount | frac2Percent}})</template><br>
 		<template v-if="isGroups">
 		Total groups: {{groupCount.toLocaleString()}}<template v-if="isCounting">&hellip;</template><br>
 		</template>
@@ -36,10 +36,13 @@ import { submittedSubcorpus$ } from '@/store/streams';
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
 
+import frac2Percent from '@/mixins/fractionalToPercent';
+
 const refreshRate = 1_000;
 const pauseAfterResults = 1_000_000; // TODO time-based pausing, see https://github.com/INL/corpus-frontend/issues/164
 
 export default StatisticsBaseComponents.extend({
+	filters: { frac2Percent },
 	subscriptions: {
 		subCorpusStats: submittedSubcorpus$
 	},
@@ -64,25 +67,6 @@ export default StatisticsBaseComponents.extend({
 			}
 
 			return BLTypes.isHitGroupsOrResults(this.results) ? stats.summary.tokensInMatchingDocuments! : stats.summary.numberOfDocs;
-		},
-		percentOfSearchSpace(): string {
-			// Typescript doesn't seem to see our subscriptions
-			const stats: BLTypes.BLDocResults|null = (this as any).subCorpusStats;
-			if (!stats) {
-				return '';
-			}
-
-			let total = this.searchSpaceCount;
-			let actual = this.resultCount;
-			if (total === 0) {
-				return '(100%)';
-			} else if (actual === 0) {
-				return '(0%)';
-			}
-			let div = actual / total * 100;
-
-			let numDigits = Math.max(1-Math.floor(Math.log(div)/Math.log(10)), 0);
-			return `(${div.toFixed(numDigits)}%)`;
 		},
 		percentOfSearchSpaceClarification(): string {
 			const stats: BLTypes.BLDocResults|null = (this as any).subCorpusStats;

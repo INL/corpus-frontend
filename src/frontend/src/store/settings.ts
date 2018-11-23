@@ -44,8 +44,15 @@ const actions = {
 	sampleMode: b.commit((state, payload: 'percentage'|'count'|string|undefined|null) => {
 		if (payload == null) { payload = defaults.sampleMode; } // reset on null, ignore on invalid string
 		state.sampleMode = ['percentage', 'count'].includes(payload) ? payload as any : defaults.sampleMode;
+		state.sampleSize = null;
 	}, 'samplemode'),
-	sampleSeed: b.commit((state, payload: number|null) => state.sampleSeed = payload, 'sampleseed'),
+	sampleSeed: b.commit((state, payload: number|null) => {
+		// Must have a seed when there is a size (e.g. random sampling is active)
+		if (state.sampleSize != null && payload == null) {
+			payload = Number.MAX_SAFE_INTEGER - (Math.random() * 2 * Number.MAX_SAFE_INTEGER);
+		}
+		state.sampleSeed = payload;
+	}, 'sampleseed'),
 	sampleSize: b.commit((state, payload: number|null) => {
 		if (payload == null) {
 			state.sampleSize = payload;
@@ -57,6 +64,13 @@ const actions = {
 		} else {
 			state.sampleSize = Math.max(0, payload);
 		}
+
+		// null check already passed
+		// if missing seed, randomize it now
+		if (state.sampleSeed == null) {
+			state.sampleSeed =  Number.MAX_SAFE_INTEGER - (Math.random() * 2 * Number.MAX_SAFE_INTEGER);
+		}
+
 	}, 'samplesize'),
 	wordsAroundHit: b.commit((state, payload: number|null) => state.wordsAroundHit = payload, 'wordsaroundhit'),
 

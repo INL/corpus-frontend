@@ -2,8 +2,8 @@
 	<div class="container">
 
 		<SearchForm class="row cf-panel cf-panel-lg" id="mainForm"/>
-		<QuerySummary v-if="viewedResults" class="cf-panel cf-panel-lg" id="summary"/>
-		<Results v-show="viewedResults" id="results"/>
+		<QuerySummary v-if="viewedResultsSettings" class="cf-panel cf-panel-lg" id="summary"/>
+		<Results v-show="viewedResultsSettings" id="results"/>
 
 		<!-- TODO -->
 		<div id="settingsModal" class="modal fade" tabindex="-1" role="dialog">
@@ -46,10 +46,13 @@
 											data-style="btn-default"
 
 											:options="['percentage', 'count'].map(o => ({value: o}))"
+
+											@input="focusSampleSize"
+
 											v-model="sampleMode"
 										/>
 
-										<input id="sampleSize" name="sampleSize" placeholder="sample size" type="number" class="form-control" v-model.lazy="sampleSize"/>
+										<input id="sampleSize" name="sampleSize" placeholder="sample size" type="number" class="form-control" v-model.lazy="sampleSize" ref="sampleSize"/>
 									</div>
 								</div>
 							</div>
@@ -92,6 +95,8 @@ import $ from 'jquery';
 
 import * as RootStore from '@/store';
 import * as SettingsStore from '@/store/settings';
+import * as ResultsStore from '@/store/results';
+import * as FormStore from '@/store/form';
 
 import SearchForm from '@/pages/search/form/SearchForm.vue';
 import QuerySummary from '@/pages/search/results/QuerySummary.vue';
@@ -113,27 +118,52 @@ export default Vue.extend({
 		SelectPicker
 	},
 	computed: {
-		viewedResults: RootStore.get.viewedResults,
+		viewedResultsSettings: RootStore.get.viewedResultsSettings,
 		pageSize: {
-			get(): string { return SettingsStore.getState().pageSize + ''; },
-			set(v: string) { SettingsStore.actions.pageSize(Number.parseInt(v, 10)); }
+			get(): string { return this.itoa(SettingsStore.getState().pageSize); },
+			set(v: string) {
+				SettingsStore.actions.pageSize(this.atoi(v)!);
+				ResultsStore.actions.resetPage();
+			}
 		},
 		sampleMode: {
 			get() { return SettingsStore.getState().sampleMode; },
-			set(v: string) { return SettingsStore.actions.sampleMode(v); }
+			set(v: string) {
+				SettingsStore.actions.sampleMode(v);
+				ResultsStore.actions.resetPage();
+			}
 		},
 		sampleSize: {
-			get() { return SettingsStore.getState().sampleSize; },
-			set(v: number) { SettingsStore.actions.sampleSize(v); }
+			get(): string { return this.itoa(SettingsStore.getState().sampleSize); },
+			set(v: string) {
+				SettingsStore.actions.sampleSize(this.atoi(v));
+				ResultsStore.actions.resetPage();
+			}
 		},
 		sampleSeed: {
-			get() { return SettingsStore.getState().sampleSeed; },
-			set(v: number) { SettingsStore.actions.sampleSeed(v); }
+			get(): string { return this.itoa(SettingsStore.getState().sampleSeed); },
+			set(v: string) {
+				SettingsStore.actions.sampleSeed(this.atoi(v));
+				if (this.viewedResultsSettings && (this.viewedResultsSettings.groupBy.length || this.viewedResultsSettings.groupByAdvanced.length)) {
+					// No need to do this when ungrouped - the raw number of results
+					// will stay as it is, but the distribution (and number of) groups may change and
+					// cause the number of pages to shift
+					ResultsStore.actions.resetPage();
+				}
+			}
 		},
 		wordsAroundHit: {
-			get() { return SettingsStore.getState().wordsAroundHit; },
-			set(v: number) { SettingsStore.actions.wordsAroundHit(v); }
+			get(): string { return this.itoa(SettingsStore.getState().wordsAroundHit); },
+			set(v: string) { SettingsStore.actions.wordsAroundHit(this.atoi(v)); }
 		}
+	},
+	methods: {
+		focusSampleSize() {
+			(this.$refs.sampleSize as HTMLInputElement).focus()
+		},
+
+		itoa(n: number|null): string { return n == null ? '' : n.toString(); },
+		atoi(s: string): number|null { return s ? Number.parseInt(s, 10) : null; }
 	},
 
 	mounted() {

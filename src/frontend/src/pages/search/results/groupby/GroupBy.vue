@@ -138,7 +138,9 @@ export default Vue.extend({
 				);
 			}
 			metadataGroups.forEach(group => opts.push({
-				label: group.name,
+				// https://github.com/INL/corpus-frontend/issues/197#issuecomment-441475896
+				// (we don't show metadata groups in the Filters component unless there's more than one group, so don't show the group's name either in this case)
+				label: metadataGroups.length > 1 ? group.name : 'Metadata',
 				options: group.fields.map(field => ({
 					label: (field.displayName || field.id).replace(group.name, ''),
 					value: `field:${field.id}`

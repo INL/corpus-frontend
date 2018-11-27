@@ -5,6 +5,10 @@
 
 	border-bottom-color: black;
 	border-bottom-style: solid;
+
+	.filter-option-inner {
+		padding: 0!important;
+	}
 }.bl-selectpicker-hide-caret:hover {
 	border-bottom-color: ghostwhite;
 }.bl-selectpicker-hide-caret .bs-caret {
@@ -61,7 +65,7 @@
 	padding: 3px 8px 8px 8px;
 	margin-top: 6px;
 	margin-bottom: 0;
-	
+
 	box-shadow: 4px 4px 7px -3px rgba(0,0,0,0.38);
 	border: 1px solid rgba(0,0,0,0.15);
 }
@@ -115,8 +119,8 @@
 	position: relative;
 }
 
-/* Some weirdness going on here, we essentially move the actual 
-element out of its parent, hide the overflow, and fill the entire container with padding 
+/* Some weirdness going on here, we essentially move the actual
+element out of its parent, hide the overflow, and fill the entire container with padding
 This fixes issues like browsers overriding the cursor etc.*/
 .bl-input-upload {
 	position:absolute;
@@ -128,7 +132,7 @@ This fixes issues like browsers overriding the cursor etc.*/
 	opacity: 0;
 	left: 0;
 	top: 0;
-	z-index: 10; 
+	z-index: 10;
 	overflow: hidden;
 	cursor: pointer;
 }

@@ -10,7 +10,6 @@
     var PATH_TO_TOP = "$esc.javascript($pathToTop)";
 </script>
 
-<link rel="stylesheet" href="$pathToTop/css/cql_querybuilder.css">
 <script src="$jspath/search.js?_$cache"></script>
 
 <div id="vue-root"></div>

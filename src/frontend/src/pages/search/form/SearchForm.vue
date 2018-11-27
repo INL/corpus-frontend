@@ -1,7 +1,8 @@
 <template>
 	<form @submit.prevent.stop="submit" @reset.prevent.stop="reset">
+
 		<div class="col-xs-12">
-			<h2>{{title}}</h2>
+			<h2 id="corpus-title">{{title}}</h2>
 			<a v-if="showHomeLink" :href="homeLink" id="corpora-link">Back to my corpora</a>
 		</div>
 
@@ -85,6 +86,23 @@ export default Vue.extend({
 	overflow-y: auto;
 	overflow-x: hidden;
 	/* required due to negative margin-right of contents causing scrollbar otherwise */
+}
+
+#corpus-title {
+	text-transform: capitalize;
+	margin: 10px 0 0;
+}
+
+#corpora-link {
+	display: inline-block;
+	margin: 10px 0px;
+	position: relative;
+
+	&:before {
+		content: "«";
+		position: absolute;
+		left: -12px;
+	}
 }
 
 </style>

@@ -73,7 +73,7 @@
 
 							<hr>
 
-							<div class="checkbox-inline"><label for="wide-view"><input type="checkbox" id="wide-view" name="wide-view" data-persistent> Wide View</label></div>
+							<div class="checkbox-inline"><label for="wide-view"><input type="checkbox" id="wide-view" name="wide-view" data-persistent checked> Wide View</label></div>
 						</div>
 
 					</div>

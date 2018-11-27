@@ -8,6 +8,8 @@ import * as Mustache from 'mustache';
 import parseCql from '@/utils/cqlparser';
 import {debugLog} from '@/utils/debug';
 
+import '@/modules/cql_querybuilder.scss';
+
 /**
  * The querybuilder is a visual editor for CQL queries (see http://inl.github.io/BlackLab/corpus-query-language.html#supported-features for an introduction to CQL)
  * The querybuilder is a hierarchy of nested objects, where every object is represented by its own isolated container in the DOM.
@@ -59,7 +61,7 @@ const templates = {
 
 		partials: {
 			createTokenButton:
-				'<button type="button" class="btn btn-danger bl-token-create bl-prevent-sort" title="Insert another token"><span class="glyphicon glyphicon-plus"></span></button>',
+				'<button type="button" class="btn btn-primary bl-token-create bl-prevent-sort" title="Insert another token"><span class="glyphicon glyphicon-plus"></span></button>',
 
 			modalEditor:
 				'<div class="bl-modal-editor modal fade" tabindex="-1" role="dialog">' +
@@ -73,7 +75,7 @@ const templates = {
 								'<textarea class="form-control" rows="10" style="width:100%;overflow:auto;resize:none;white-space:pre;"></textarea>' +
 							'</div>' +
 							'<div class="modal-footer">' +
-								'<button type="button" class="btn btn-danger pull-left" data-dismiss="modal" data-discard-value>Clear</button>' +
+								'<button type="button" class="btn btn-primary pull-left" data-dismiss="modal" data-discard-value>Clear</button>' +
 								'<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>' +
 								'<button type="button" class="btn btn-primary" data-dismiss="modal" data-save-edits>Save changes</button>' +
 							'</div>' +
@@ -95,7 +97,7 @@ const templates = {
 
 	token: {
 		template:
-			'<div class="panel panel-danger bl-token" id="{{currentId}}">' +
+			'<div class="panel panel-primary bl-token" id="{{currentId}}">' +
 				'{{>head_root}}' +
 				'{{>body_root}}' +
 			'</div>',
@@ -176,7 +178,7 @@ const templates = {
 						'<option value="{{attribute}}">{{label}}</option>' +
 						'{{/attributes}}' +
 					'</select>' +
-					'<select class="selectpicker" data-width="54px"; data-container="body" data-style="btn btn-sm btn-danger bl-selectpicker-hide-caret bl-no-border-radius" id="{{currentId}}_operator">' +
+					'<select class="selectpicker" data-width="54px"; data-container="body" data-style="btn btn-sm btn-primary bl-selectpicker-hide-caret bl-no-border-radius" id="{{currentId}}_operator">' +
 						'{{#comparators}}' +
 						'<optgroup>' +
 							'{{#.}}' +
@@ -204,7 +206,7 @@ const templates = {
 
 		partials: {
 			delete_attribute_button:
-				'<span class="glyphicon glyphicon-remove text-danger" id="{{currentId}}_delete" style="flex-grow:0;cursor:pointer;" title="Remove this attribute"></span>',
+				'<span class="glyphicon glyphicon-remove text-primary" id="{{currentId}}_delete" style="flex-grow:0;cursor:pointer;" title="Remove this attribute"></span>',
 
 			main_input:
 				'<span class="bl-token-attribute-main-input">' +

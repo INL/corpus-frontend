@@ -28,25 +28,25 @@ declare const SINGLEPAGE: {INDEX: BLTypes.BLIndexMetadata};
 const connectJqueryToPage = () => {
 	debugLog('begin initializing querybuilder and stuff');
 
-	if (window.localStorage) {
-		$('input[data-persistent][id != ""]').each(function(i, elem) {
-			const $this = $(elem);
-			const key = 'input_' + $this.attr('id');
-			$this.on('change', function() {
-				const curVal: any = $this.is(':checkbox') ? $this.is(':checked') : $this.val();
-				window.localStorage.setItem(key, curVal);
-			});
+	$('input[data-persistent][id != ""]').each(function(i, elem) {
+		const $this = $(elem);
+		const key = 'input_' + $this.attr('id');
+		$this.on('change', function() {
+			const curVal: any = $this.is(':checkbox') ? $this.is(':checked') : $this.val();
+			window.localStorage.setItem(key, curVal);
+		});
 
+		if (window.localStorage) {
 			const storedVal = window.localStorage.getItem(key);
 			if (storedVal != null) {
 				$this.is(':checkbox') ? $this.attr('checked', (storedVal.toLowerCase() === 'true') as any) : $this.val(storedVal);
 			}
+		}
 
-			// run handler once, init localstorage if required
-			// Only do next tick so handlers have a change to register
-			setTimeout(function() { $this.trigger('change'); });
-		});
-	}
+		// run handler once, init localstorage if required
+		// Only do next tick so handlers have a change to register
+		setTimeout(function() { $this.trigger('change'); });
+	});
 
 	// Init the querybuilder with the supported attributes/properties
 	const queryBuilder = new QueryBuilder($('#querybuilder'), {

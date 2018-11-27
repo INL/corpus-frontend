@@ -53,7 +53,6 @@ a.ui-menu-item-wrapper {
 	background-color: #ddd;
 }
 
-
 .navbar-logo-container {
 	float: left;
 	height: 1px;
@@ -61,7 +60,6 @@ a.ui-menu-item-wrapper {
 	margin-left: 15px;
 	display: none;
 }
-
 
 @media ( min-width : 768px) {
 	.navbar-logo-container {
@@ -87,7 +85,6 @@ a.ui-menu-item-wrapper {
 	margin-left: 100px !important;
 }
 */
-
 .navbar-brand {
 	color: #dddddd !important;
 }
@@ -156,9 +153,7 @@ a.ui-menu-item-wrapper {
 	border-color: #d43f3a !important;
 }
 
-
 table {
 	table-layout: fixed;
 	width: 100%;
 }
-

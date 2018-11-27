@@ -173,7 +173,7 @@ const templates = {
 			'<div class="bl-token-attribute" id="{{currentId}}">' +
 				'<div class="bl-token-attribute-main">' +
 					'{{>delete_attribute_button}}' +
-					'<select class="selectpicker" data-width="auto" data-container="body" data-style="btn btn-sm btn-default bl-no-border-radius-right" id="{{currentId}}_type">' +
+					'<select class="selectpicker" data-width="75px" data-container="body" data-style="btn btn-sm btn-default bl-no-border-radius-right" id="{{currentId}}_type">' +
 						'{{#attributes}}' +
 						'<option value="{{attribute}}">{{label}}</option>' +
 						'{{/attributes}}' +

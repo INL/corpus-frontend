@@ -31,5 +31,5 @@ export default function(n: number, significants: number = 3): string {
 	// but toFixed returns 0.001 because it rounds.
 	// That causes it to output trailing zeroes we didn't anticipate, so strip those.
 	// (but only when they are in the fractional portion, or we would strip '10' and '100' to '1')
-	return (significants > 0 ? ret.replace(/0*$/, '') : ret) + '%';
+	return (significants > 0 ? ret.replace(/\.?0*$/, '') : ret) + '%';
 }

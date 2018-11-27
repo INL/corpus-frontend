@@ -8,8 +8,18 @@
 			</template>
 			<template v-else-if="subCorpusStats">
 				Selected subcorpus:<br>
-				Total documents: {{subCorpusStats.summary.numberOfDocs}} ({{ subCorpusStats.summary.numberOfDocs / totalCorpusDocs | frac2Percent }})<br>
-				Total tokens: {{subCorpusStats.summary.tokensInMatchingDocuments}} ({{ subCorpusStats.summary.tokensInMatchingDocuments / totalCorpusTokens | frac2Percent }})
+				<span style="display: inline-block; vertical-align:top;">
+					Total documents:<br>
+					Total tokens:
+				</span>
+				<span style="display: inline-block; vertical-align:top; text-align: right; font-family: monospace;">
+					 {{subCorpusStats.summary.numberOfDocs.toLocaleString()}}<br>
+					 {{subCorpusStats.summary.tokensInMatchingDocuments.toLocaleString()}}
+				</span>
+				<span style="display: inline-block; vertical-align:top; text-align: right; font-family: monospace;">
+					 ({{ subCorpusStats.summary.numberOfDocs / totalCorpusDocs | frac2Percent }})<br>
+					 ({{ subCorpusStats.summary.tokensInMatchingDocuments / totalCorpusTokens | frac2Percent }})
+				</span>
 			</template>
 			<template v-else>
 				<span class="fa fa-spinner fa-spin searchIndicator totals-spinner"></span><!-- todo spinner classes -->

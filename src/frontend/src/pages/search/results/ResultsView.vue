@@ -292,6 +292,8 @@ export default Vue.extend({
 			if (this.results == null) {
 				return 0;
 			} else {
+				// No need for -1 trickery, as this is the first result shown whereas totalResults
+				// is the last result shown
 				const pageSize = this.results.summary.requestedWindowSize;
 				return Math.floor(this.results.summary.windowFirstResult / pageSize);
 			}
@@ -301,28 +303,31 @@ export default Vue.extend({
 			if (this.results == null) {
 				return 0;
 			} else {
-				return Math.floor(this.totalResults / this.results.summary.requestedWindowSize);
+				const pageSize = this.results.summary.requestedWindowSize;
+				const exact = this.totalResults % pageSize === 0;
+				const pageCount = Math.floor(this.totalResults / pageSize);
+				return exact ? pageCount - 1 : pageCount;
 			}
 		},
 
-		active() {
+		active(): boolean {
 			return globalStore.get.viewedResults() === this.type;
 		},
 
 
 		// simple view variables
-		indexId() { return corpus.getState().id; },
-		resultsHaveData() {
+		indexId(): string { return corpus.getState().id; },
+		resultsHaveData(): boolean {
 			if (BLTypes.isDocGroups(this.results)) return this.results.docGroups.length > 0;
 			if (BLTypes.isHitGroups(this.results)) return this.results.hitGroups.length > 0;
 			if (BLTypes.isHitResults(this.results)) return this.results.hits.length > 0;
 			if (BLTypes.isDocResults(this.results)) return this.results.docs.length > 0;
 			return false;
 		},
-		isHits() { return BLTypes.isHitResults(this.results); },
-		isDocs() { return BLTypes.isDocResults(this.results); },
-		isGroups() { return BLTypes.isGroups(this.results); },
-		resultsHaveHits() { return this.results != null && this.results.summary.searchParam.patt},
+		isHits(): boolean { return BLTypes.isHitResults(this.results); },
+		isDocs(): boolean { return BLTypes.isDocResults(this.results); },
+		isGroups(): boolean { return BLTypes.isGroups(this.results); },
+		resultsHaveHits(): boolean { return this.results != null && !!this.results.summary.searchParam.patt},
 
 		breadCrumbs(): any {
 			const r = [];

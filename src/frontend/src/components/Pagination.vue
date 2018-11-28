@@ -25,7 +25,7 @@
 			/>
 			<span class="fa fa-pencil"></span>
 		</li>
-		<li v-else class="disabled"> <!-- no available pages -->
+		<li v-else class="active"> <!-- no available pages -->
 			<span>{{page+1}}</span>
 		</li>
 		<li v-for="i in higherPages" :key="i">

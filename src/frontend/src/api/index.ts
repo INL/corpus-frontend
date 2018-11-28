@@ -47,62 +47,75 @@ const paths = {
  * Blacklab api
  */
 export const blacklab = {
-	getServerInfo: () => blacklabEndpoint
-		.get<BLTypes.BLServer>(paths.root()),
+	getServerInfo: (requestParameters?: AxiosRequestConfig) => blacklabEndpoint
+		.get<BLTypes.BLServer>(paths.root(), requestParameters),
 
-	getUser: () => blacklabEndpoint
-		.get<BLTypes.BLServer>(paths.root())
+	getUser: (requestParameters?: AxiosRequestConfig) => blacklabEndpoint
+		.get<BLTypes.BLServer>(paths.root(), requestParameters)
 		.then(r => r.user),
 
-	getCorpora: () => blacklabEndpoint
-		.get<BLTypes.BLServer>(paths.root())
+	getCorpora: (requestParameters?: AxiosRequestConfig) => blacklabEndpoint
+		.get<BLTypes.BLServer>(paths.root(), requestParameters)
 		.then(r => Object.entries(r.indices))
 		.then(r => r.map(([id, index]: [string, BLTypes.BLIndex]) => normalizeIndexOld(id, index))),
 
-	getCorpus: (id: string) => blacklabEndpoint
-		.get<BLTypes.BLIndex>(paths.indexStatus(id))
+	getCorpus: (id: string, requestParameters?: AxiosRequestConfig) => blacklabEndpoint
+		.get<BLTypes.BLIndex>(paths.indexStatus(id), requestParameters)
 		.then(r => normalizeIndexOld(id, r)),
 
-	getShares: (id: string) => blacklabEndpoint
-		.get<{'users[]': BLTypes.BLShareInfo}>(paths.shares(id))
+	getShares: (id: string, requestParameters?: AxiosRequestConfig) => blacklabEndpoint
+		.get<{'users[]': BLTypes.BLShareInfo}>(paths.shares(id), requestParameters)
 		.then(r => r['users[]']),
 
-	getFormats: () => blacklabEndpoint
-		.get<BLTypes.BLFormats>(paths.formats())
+	getFormats: (requestParameters?: AxiosRequestConfig) => blacklabEndpoint
+		.get<BLTypes.BLFormats>(paths.formats(), requestParameters)
 		.then(r => Object.entries(r.supportedInputFormats))
 		.then(r => r.map(([id, format]: [string, BLTypes.BLFormat]) => normalizeFormatOld(id, format))),
 
-	getFormatContent: (id: string) => blacklabEndpoint
-		.get<BLTypes.BLFormatContent>(paths.formatContent(id)),
+	getFormatContent: (id: string, requestParameters?: AxiosRequestConfig) => blacklabEndpoint
+		.get<BLTypes.BLFormatContent>(paths.formatContent(id), requestParameters),
 
-	getFormatXslt: (id: string) => blacklabEndpoint
-		.get<string>(paths.formatXslt(id)),
+	getFormatXslt: (id: string, requestParameters?: AxiosRequestConfig) => blacklabEndpoint
+		.get<string>(paths.formatXslt(id), requestParameters),
 
-	postShares: (id: string, users: BLTypes.BLShareInfo) => blacklabEndpoint
+	postShares: (id: string, users: BLTypes.BLShareInfo, requestParameters?: AxiosRequestConfig) => blacklabEndpoint
 		.post<BLTypes.BLResponse>(paths.shares(id),
 			// Need to manually set content-type due to long-standing axios bug
 			// https://github.com/axios/axios/issues/362
 			qs.stringify({users: users.map(u => u.trim()).filter(u => u.length)}, {arrayFormat: 'brackets'}),
-			{headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}}
+			{
+				...requestParameters,
+				headers: {
+					...(requestParameters || {}).headers,
+					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+				}
+			}
 		),
 
-	postFormat: (name: string, contents: string) => {
+	postFormat: (name: string, contents: string, requestParameters?: AxiosRequestConfig) => {
 		const data = new FormData();
 		data.append('data', new File([contents], name, {type: 'text/plain'}), name);
-		return blacklabEndpoint.post<BLTypes.BLResponse>(paths.formats(), data);
+		return blacklabEndpoint.post<BLTypes.BLResponse>(paths.formats(), data, requestParameters);
 	},
 
-	postCorpus: (id: string, displayName: string, format: string) => blacklabEndpoint
+	postCorpus: (id: string, displayName: string, format: string, requestParameters?: AxiosRequestConfig) => blacklabEndpoint
 		.post(paths.root(),
 			qs.stringify({name: id, display: displayName, format}),
-			{headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}}
+			{
+				...requestParameters,
+				headers: {
+					...(requestParameters || {}).headers,
+					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+				}
+			}
 		),
 
 	postDocuments: (
 		indexId: string,
 		docs: FileList,
 		meta?: FileList|null,
-		onProgress?: (percentage: number) => void
+		onProgress?: (percentage: number) => void,
+		requestParameters?: AxiosRequestConfig
 	) => {
 		const formData = new FormData();
 		for (let i = 0; i < (docs ? docs.length : 0); ++i) {
@@ -115,7 +128,9 @@ export const blacklab = {
 		const cancelToken = axios.CancelToken.source();
 		return {
 			request: blacklabEndpoint.post<BLTypes.BLResponse>(paths.documentUpload(indexId), formData, {
+				...requestParameters,
 				headers: {
+					...(requestParameters || {}).headers,
 					'Content-Type': 'multipart/form-data',
 				},
 				onUploadProgress: (event: ProgressEvent) => {
@@ -135,7 +150,7 @@ export const blacklab = {
 	deleteCorpus: (id: string) => blacklabEndpoint
 		.delete<BLTypes.BLResponse>(paths.index(id)),
 
-	getHits: (indexId: string, params: BLTypes.BLSearchParameters) => {
+	getHits: (indexId: string, params: BLTypes.BLSearchParameters, requestParameters?: AxiosRequestConfig) => {
 		const {token: cancelToken, cancel} = axios.CancelToken.source();
 
 		let request: Promise<BLTypes.BLHitResults|BLTypes.BLHitGroupResults>;
@@ -144,7 +159,7 @@ export const blacklab = {
 		} else if (!params.patt) {
 			request = Promise.reject(new ApiError('Info', 'Cannot get hits without pattern.', 'No results'));
 		} else {
-			request = getOrPost(paths.hits(indexId), params, { cancelToken });
+			request = getOrPost(paths.hits(indexId), params, { ...requestParameters, cancelToken });
 		}
 
 		return {
@@ -153,7 +168,7 @@ export const blacklab = {
 		};
 	},
 
-	getHitsCsv: (indexId: string, params: BLTypes.BLSearchParameters) => {
+	getHitsCsv: (indexId: string, params: BLTypes.BLSearchParameters, requestParameters?: AxiosRequestConfig) => {
 		const {token: cancelToken, cancel} = axios.CancelToken.source();
 		const csvParams = Object.assign({}, params, {
 			number: undefined,
@@ -168,7 +183,11 @@ export const blacklab = {
 			request = Promise.reject(new ApiError('Info', 'Cannot get hits without pattern.', 'No results'));
 		} else {
 			request = getOrPost(paths.hitsCsv(indexId), csvParams, {
-				headers: { Accept: 'text/csv' },
+				...requestParameters,
+				headers: {
+					...(requestParameters || {}).headers,
+					Accept: 'text/csv'
+				},
 				responseType: 'blob',
 				transformResponse: (data: any) => new Blob([data], {type: 'text/plain;charset=utf-8' }),
 				cancelToken,
@@ -181,7 +200,7 @@ export const blacklab = {
 		};
 	},
 
-	getDocsCsv(indexId: string, params: BLTypes.BLSearchParameters) {
+	getDocsCsv(indexId: string, params: BLTypes.BLSearchParameters, requestParameters?: AxiosRequestConfig) {
 		const {token: cancelToken, cancel} = axios.CancelToken.source();
 		const csvParams = Object.assign({}, params, {
 			number: undefined,
@@ -194,7 +213,11 @@ export const blacklab = {
 			request = Promise.reject(new ApiError('Error', 'No index specified', 'Internal error'));
 		} else {
 			request = getOrPost<Blob>(paths.docsCsv(indexId), csvParams, {
-				headers: { Accept: 'text/csv' },
+				...requestParameters,
+				headers: {
+					...(requestParameters || {}).headers,
+					Accept: 'text/csv'
+				},
 				responseType: 'blob',
 				transformResponse: (data: any) => new Blob([data], {type: 'text/plain;charset=utf-8' }),
 				cancelToken,
@@ -207,14 +230,14 @@ export const blacklab = {
 		};
 	},
 
-	getDocs: (indexId: string, params: BLTypes.BLSearchParameters) => {
+	getDocs: (indexId: string, params: BLTypes.BLSearchParameters, requestParameters?: AxiosRequestConfig) => {
 		const {token: cancelToken, cancel} = axios.CancelToken.source();
 
 		let request: Promise<BLTypes.BLDocResults|BLTypes.BLDocGroupResults>;
 		if (!indexId) {
 			request = Promise.reject(new ApiError('Error', 'No index specified', 'Internal error'));
 		} else {
-			request = getOrPost(paths.docs(indexId), params, { cancelToken });
+			request = getOrPost(paths.docs(indexId), params, { ...requestParameters, cancelToken });
 		}
 
 		return {
@@ -223,12 +246,12 @@ export const blacklab = {
 		};
 	},
 
-	getSnippet: (indexId: string, docId: string, hitstart: number, hitend: number, wordsaroundhit: number = 50) => {
+	getSnippet: (indexId: string, docId: string, hitstart: number, hitend: number, wordsaroundhit: number = 50, requestParameters?: AxiosRequestConfig) => {
 		return getOrPost<BLTypes.BLHitSnippet>(paths.snippet(indexId, docId), {
 			hitstart,
 			hitend,
 			wordsaroundhit
-		});
+		}, requestParameters);
 	}
 };
 

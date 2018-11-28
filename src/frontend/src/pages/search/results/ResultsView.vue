@@ -159,7 +159,7 @@ export default Vue.extend({
 		markDirty() {
 			this.isDirty = true;
 			if (this.cancel) {
-				console.log('cancelling search request');
+				debugLog('cancelling search request');
 				this.cancel();
 				this.cancel = null;
 				this.request = null;
@@ -182,6 +182,7 @@ export default Vue.extend({
 			onSearchUpdated(this.type, params);
 
 			if (this.type === 'hits' && !params.patt) {
+				this.results = null;
 				this.error = new Api.ApiError('No results', 'No hits to display... (one or more of Lemma/PoS/Word is required).', 'No results');
 				return;
 			}
@@ -189,7 +190,9 @@ export default Vue.extend({
 			const apiCall = this.type === 'hits' ? Api.blacklab.getHits : Api.blacklab.getDocs;
 			debugLog('starting search', this.type, params);
 
-			const r = apiCall(corpus.getState().id, params);
+			const r = apiCall(corpus.getState().id, params, {
+				headers: { 'Cache-Control': 'no-cache' }
+			});
 			this.request = r.request;
 			this.cancel = r.cancel;
 

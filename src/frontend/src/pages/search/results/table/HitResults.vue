@@ -84,20 +84,23 @@
 							<p v-else>
 								Loading...
 							</p>
-							<table class="concordance-details-table">
-								<thead>
-									<tr>
-										<th>Property</th>
-										<th :colspan="rowData.props.punct.length">Value</th>
-									</tr>
-								</thead>
-								<tbody>
-									<tr v-for="(value, key) in rowData.props" v-if="key !== 'punct'" :key="key">
-										<th>{{annotationDisplayNames[key]}}</th>
-										<td v-for="(v, index) in value" :key="index">{{v}}</td>
-									</tr>
-								</tbody>
-							</table>
+							<div style="overflow: auto; max-width: 100%; padding-bottom: 15px;">
+								<table class="concordance-details-table">
+									<thead>
+										<tr>
+											<th>Property</th>
+											<th :colspan="rowData.props.punct.length">Value</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr v-for="(value, key) in rowData.props" v-if="key !== 'punct'" :key="key">
+											<th>{{annotationDisplayNames[key]}}</th>
+											<td v-for="(v, index) in value" :key="index">{{v}}</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+
 						</td>
 					</tr>
 				</template>

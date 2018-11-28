@@ -281,24 +281,25 @@ export type BLSearchSummarySampleSettings = {} | {
 	sampleSize: number;
 };
 
-export interface BLSearchSummaryTotalsHits {
-	/* -1 if some error occured */
+export interface BLSearchSummaryTotalsDocs {
+	/** Total documents across all counted (not retrieved) hits, -1 if some error occured */
 	numberOfDocs: number;
+	/** Total documents across all retrieved hits */
 	numberOfDocsRetrieved: number;
-	/* -1 if some error occured */
-	numberOfHits: number;
-	numberOfHitsRetrieved: number;
+	/** Is any hit counting ongoing, generally true unless blacklab finished counting all results or results exceed the count limit (stoppedCountingHits = true) */
 	stillCounting: boolean;
-	stoppedCountingHits: boolean;
-	stoppedRetrievingHits: boolean;
 }
 
-export interface BLSearchSummaryTotalsDocs {
-	/** -1 if some error occured */
-	numberOfDocs: number;
-	numberOfDocsRetrieved: number;
-	stillCounting: boolean;
-}
+export type BLSearchSummaryTotalsHits = {
+	/** Total number of counted hits (so far), -1 if some error occured */
+	numberOfHits: number;
+	/** Total number of retrieved hits (so far) */
+	numberOfHitsRetrieved: number;
+	/** Did the query hit the default count limit (defaultMaxHitsToCount) */
+	stoppedCountingHits: boolean;
+	/** Did the query hit the default retrieval limit (defaultMaxHitsToRetrieve) */
+	stoppedRetrievingHits: boolean;
+} & BLSearchSummaryTotalsDocs;
 
 export interface BLSearchSummaryGroupInfo {
 	largestGroupSize: number;
@@ -376,7 +377,8 @@ export interface BLDocResults {
 		/* Only when query was performed with a cql pattern */
 		snippets?: BLHitSnippet[];
 	}>;
-	summary: BLSearchSummary & BLSearchSummaryTotalsDocs;
+	/** All of the hit properties exist or none of them do, depending on whether a pattern was supplied */
+	summary: BLSearchSummary & BLSearchSummaryTotalsDocs & Partial<BLSearchSummaryTotalsHits>;
 }
 
 /** Blacklab response to a query for hits without grouping */

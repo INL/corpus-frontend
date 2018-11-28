@@ -7,97 +7,144 @@
 			Total pages:
 		</span>
 		<span style="display: inline-block; verical-align: top; text-align: right; font-family: monospace;">
-			 {{resultCount.toLocaleString()}}<template v-if="isCounting">&hellip;</template><br>
+			 <template v-if="isLimited">&ge;</template>{{numResults.toLocaleString()}}<template v-if="isCounting">&hellip;</template><br>
 			<template v-if="isGroups">
-			 {{groupCount.toLocaleString()}}<template v-if="isCounting">&hellip;</template><br>
+			 <template v-if="isLimited">&ge;</template>{{numGroups.toLocaleString()}}<template v-if="isCounting">&hellip;</template><br>
 			</template>
-			 {{pageCount.toLocaleString()}}<template v-if="isCounting">&hellip;</template>
+			 <template v-if="isLimited">&ge;</template>{{numPages.toLocaleString()}}<template v-if="isCounting">&hellip;</template>
 		</span>
 		<span style="display: inline-block; vertical-align:top; text-align: right; font-family: monospace;">
 			<template v-if="searchSpaceCount !== -1 /* see corpus store documentCount property */">
-			 ({{this.resultCount / this.searchSpaceCount | frac2Percent}})
+			 ({{this.numResults / this.searchSpaceCount | frac2Percent}})
 			</template>
 		</span>
 	</div>
-	<span v-show="isCounting || subCorpusStats == null" class="fa fa-spinner fa-spin searchIndicator totals-spinner"/>
+	<span v-show="(isCounting || subcorpus == null) && !error" class="fa fa-spinner fa-spin searchIndicator totals-spinner"/>
 
-	<template v-if="error">
-		<div class="text-danger text-center totals-warning" style="cursor: pointer;" @click="start" :title="`${error.message} (click to retry)`">
-			<span class="fa fa-exclamation-triangle text-danger"/><br>
-			Network error!
-		</div>
-	</template>
-	<template v-else-if="tooManyResults">
-		<div class="text-danger text-center totals-warning" style="cursor: pointer;" @click="start" title="Click to continue counting">
-			<span class="fa fa-exclamation-triangle text-danger"/><br>
-			Too many results!
-		</div>
-	</template>
+	<div v-if="error" class="text-danger totals-warning" style="cursor: pointer;" @click="continueCounting" :title="`${error.message} - (click to retry).`">
+		<span class="fa fa-exclamation-triangle text-danger"/> Network error!
+	</div>
+	<div v-else-if="isLimited" class="text-danger totals-warning" title="Stopped counting results because there are too many.">
+		<span class="fa fa-exclamation-triangle text-danger"/> Too many results to count.
+	</div>
+	<div v-else-if="isPaused" class="text-info totals-warning" style="cursor: pointer;" title="Click to continue." @click="continueCounting">
+		<span class="fa fa-clock-o text-info"></span> Counting paused.
+	</div>
 </div>
 </template>
 
 
 <script lang="ts">
-import StatisticsBaseComponents from '@/components/StatisticsBase.vue';
+import Vue from 'vue';
+
+import {Subscription, ReplaySubject} from 'rxjs';
 
 import * as Api from '@/api';
 
-import { submittedSubcorpus$ } from '@/store/streams';
+import { submittedSubcorpus$ as subcorpus$ } from '@/store/streams';
+import yieldResultCounts, { CounterInput, CounterOutput } from '@/pages/search/results/TotalsCounterStream';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
 
 import frac2Percent from '@/mixins/fractionalToPercent';
 
-const refreshRate = 1_000;
-const pauseAfterResults = 1_000_000; // TODO time-based pausing, see https://github.com/INL/corpus-frontend/issues/164
-
-export default StatisticsBaseComponents.extend({
+export default Vue.extend({
 	filters: { frac2Percent },
-	subscriptions: {
-		subCorpusStats: submittedSubcorpus$
+	props: {
+		initialResults: {
+			required: true,
+			type: Object as () => BLTypes.BLSearchResult
+		},
+		type: {
+			required: true,
+			type: String as () => 'hits'|'docs',
+		},
+		indexId: {
+			required: true,
+			type: String as () => string,
+		}
 	},
+	data: () => ({
+		subscriptions: [] as Subscription[],
+
+		subcorpus: null as null|BLTypes.BLDocResults, // total searchSpace
+		resultCount: {} as CounterOutput, // stream instantly returns output from the initials
+		error: null as null|Api.ApiError,
+
+		resultCount$: new ReplaySubject<CounterInput>(1),
+	}),
+
 	computed: {
-		pageCount(): number { return Math.ceil((this.isGroups ? this.groupCount : this.resultCount) / this.initialResults.summary.searchParam.number); },
-		isCounting(): boolean { return this.error == null && this.results!.summary.stillCounting; },
-		tooManyResults(): boolean { return (this.results!.summary as any).stoppedCountingHits; }, // if property missing, not too many results? TODO clarify these stopped/still variables with Jan and document in type.
+		stats(): BLTypes.BLSearchResult { return this.resultCount.results; },
+		isCounting(): boolean { return !this.error && this.resultCount.state === 'counting'; },
+		isLimited(): boolean { return !this.error && this.resultCount.state === 'limited'; },
+		isPaused(): boolean { return !this.error && this.resultCount.state === 'paused'; },
 
-		isGroups(): boolean { return BLTypes.isGroups(this.results); },
-		groupCount(): number { return BLTypes.isGroups(this.results) ? this.results.summary.numberOfGroups : 0; },
+		resultType(): string { return BLTypes.isHitGroupsOrResults(this.stats) ? 'hits' : 'documents'; },
+		isGroups(): boolean { return BLTypes.isGroups(this.stats); },
 
-		resultType(): string { return BLTypes.isHitGroupsOrResults(this.results) ? 'hits' : 'documents'; },
-		/** This is just a display value, it returns the number of groups if the results are grouped */
-		resultCount(): number { return BLTypes.isHitGroupsOrResults(this.results) ? this.results.summary.numberOfHits : this.results!.summary.numberOfDocs; },
+		numResults(): number { return BLTypes.isHitGroupsOrResults(this.stats) ? this.stats.summary.numberOfHits : this.stats.summary.numberOfDocs; },
+		numResultsRetrieved(): number { return BLTypes.isHitGroupsOrResults(this.stats) ? this.stats.summary.numberOfHitsRetrieved : this.stats.summary.numberOfDocsRetrieved; },
+		numGroups(): number { return BLTypes.isGroups(this.stats) ? this.stats.summary.numberOfGroups : 0; },
+		numPages(): number { return Math.ceil((this.isGroups ? this.numGroups : this.numResultsRetrieved) / this.initialResults.summary.searchParam.number); },
 
-		searchSpaceType(): string { return BLTypes.isHitGroupsOrResults(this.results) ? 'tokens' : 'documents'; },
+		searchSpaceType(): string { return BLTypes.isHitGroupsOrResults(this.stats) ? 'tokens' : 'documents'; },
 		/** The total number of relevant items in the searched subcorpus, tokens if viewing tokens, docs if viewing documents */
 		searchSpaceCount(): number {
-			const stats: BLTypes.BLDocResults|null = (this as any).subCorpusStats;
-			if (!stats) {
+			if (this.subcorpus == null) {
 				return -1;
 			}
 
-			return BLTypes.isHitGroupsOrResults(this.results) ? stats.summary.tokensInMatchingDocuments! : stats.summary.numberOfDocs;
+			return BLTypes.isHitGroupsOrResults(this.stats) ? this.subcorpus.summary.tokensInMatchingDocuments! : this.subcorpus.summary.numberOfDocs;
 		},
 		percentOfSearchSpaceClarification(): string {
-			const stats: BLTypes.BLDocResults|null = (this as any).subCorpusStats;
-			if (!stats) {
+			if (this.subcorpus == null) {
 				return '';
 			}
 
-			return `Matched ${this.resultCount.toLocaleString()} ${this.resultType} in a total of ${this.searchSpaceCount.toLocaleString()} ${this.searchSpaceType} in the searched subcorpus.`;
+			return `Matched ${this.numResults.toLocaleString()} ${this.resultType} in a total of ${this.searchSpaceCount.toLocaleString()} ${this.searchSpaceType} in the searched subcorpus.`;
 		}
 	},
 	methods: {
-		isDone(): boolean { return this.results == null || this.tooManyResults || !this.isCounting; },
-		getNextRequestParams(): BLTypes.BLSearchParameters {
-			return {
-				...this.results!.summary.searchParam,
-				number: 0,
-				first: 0,
-			}
-		},
+		continueCounting() {
+			this.error = null;
+			this.resultCount$.next({
+				indexId: this.indexId,
+				operation: this.type,
+				results: this.stats
+			});
+		}
 	},
+	watch: {
+		initialResults: {
+			immediate: true,
+			handler(v: BLTypes.BLSearchResult) {
+				this.error = null;
+				this.resultCount$.next({
+					indexId: this.indexId,
+					operation: this.type,
+					results: v
+				});
+			}
+		}
+	},
+	created() {
+		this.subscriptions.push(
+			this.resultCount$.pipe(yieldResultCounts).subscribe(
+				v => this.resultCount = v,
+				e => this.error = e
+			),
+			subcorpus$.subscribe(
+				v => this.subcorpus = v,
+				e => this.error = e
+			)
+		)
+	},
+	destroyed() {
+		this.subscriptions.forEach(s => s.unsubscribe());
+		this.resultCount$.complete();
+	}
 });
 </script>
 
@@ -107,17 +154,28 @@ export default StatisticsBaseComponents.extend({
 	color: #888;
 	font-size: 85%;
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 }
 
 .totals-text {
 	order: 2;
+	white-space: nowrap;
 }
 
 .totals-warning {
-	margin: 0px 10px;
+	display: inline-flex;
+	flex-wrap: nowrap;
+	white-space: nowrap;
+	align-items: center;
+	border-style: solid;
+	border-width: 1px;
+	border-radius: 100px;
+	padding: 2px 4px;
+	margin-right: 10px;
 	> .fa {
-		font-size: 20px;
+		font-size: 14px;
+		margin-right: 3px;
 	}
 }
 

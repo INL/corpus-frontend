@@ -47,8 +47,9 @@ export const selectedSubCorpus$ = merge(
 				return;
 			}
 
-			// todo keep requesting until finished.
-			const {request, cancel} = Api.blacklab.getDocs(CorpusStore.getState().id, params);
+			const {request, cancel} = Api.blacklab.getDocs(CorpusStore.getState().id, params, {
+				headers: { 'Cache-Control': 'no-cache' }
+			});
 			request.then(
 				// Sometimes a result comes in anyway after cancelling the request (and closing the subscription),
 				// in this case the subscriber will bark at us if we try to push more values, so check for this.
@@ -96,7 +97,9 @@ export const submittedSubcorpus$ = submittedMetadata$.pipe(
 			return;
 		}
 
-		const {request, cancel} = Api.blacklab.getDocs(CorpusStore.getState().id, params);
+		const {request, cancel} = Api.blacklab.getDocs(CorpusStore.getState().id, params, {
+			headers: { 'Cache-Control': 'no-cache' }
+		});
 		request.then(
 			// Sometimes a result comes in anyway after cancelling the request (and closing the subscription),
 			// in this case the subscriber will bark at us if we try to push more values, so check for this.

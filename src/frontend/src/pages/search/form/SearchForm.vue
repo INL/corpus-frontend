@@ -1,11 +1,5 @@
 <template>
-	<form @submit.prevent.stop="submit" @reset.prevent.stop="reset">
-
-		<div class="col-xs-12">
-			<h2 id="corpus-title">{{title}}</h2>
-			<a v-if="showHomeLink" :href="homeLink" id="corpora-link">Back to my corpora</a>
-		</div>
-
+	<form class="row" @submit.prevent.stop="submit" @reset.prevent.stop="reset">
 		<Annotations :class="['col-xs-12', {'col-md-6': !isQueryBuilderActive && filtersVisible}]" id="searchcontainer"/>
 		<Filters v-show="filtersVisible" :class="`col-xs-12 ${isQueryBuilderActive ? 'col-md-9' : 'col-md-6'}`" id="filtercontainer"/>
 
@@ -18,6 +12,8 @@
 
 			<button type="button" class="btn btn-lg btn-default pull-right" data-toggle="modal" data-target="#settingsModal"><span class="glyphicon glyphicon-cog" style="vertical-align:text-top;"></span></button>
 		</div>
+
+		<SearchFormSettings id="settingsModal"/>
 	</form>
 </template>
 
@@ -32,21 +28,18 @@ import * as FormStore from '@/store/form';
 
 import Annotations from '@/pages/search/form/Annotations.vue';
 import Filters from '@/pages/search/form/Filters.vue';
-
-declare const PATH_TO_TOP: string; // TODO
+import SearchFormSettings from '@/pages/search/form/SearchFormSettings.vue';
 
 export default Vue.extend({
 	components: {
 		Filters,
 		Annotations,
+		SearchFormSettings
 	},
 	props: {
 		afterMount: Object as any
 	},
 	computed: {
-		title(): string { return CorpusStore.getState().displayName; },
-		showHomeLink(): boolean { return CorpusStore.getState().owner != null; },
-		homeLink(): string { return PATH_TO_TOP; },
 		isQueryBuilderActive(): boolean { return FormStore.getState().activePattern === 'advanced'; },
 		filtersVisible(): boolean { return FormStore.getState().activePattern !== 'simple'; }
 	},
@@ -87,23 +80,6 @@ export default Vue.extend({
 	overflow-y: auto;
 	overflow-x: hidden;
 	/* required due to negative margin-right of contents causing scrollbar otherwise */
-}
-
-#corpus-title {
-	text-transform: capitalize;
-	margin: 10px 0 0;
-}
-
-#corpora-link {
-	display: inline-block;
-	margin: 10px 0px;
-	position: relative;
-
-	&:before {
-		content: "«";
-		position: absolute;
-		left: -12px;
-	}
 }
 
 </style>

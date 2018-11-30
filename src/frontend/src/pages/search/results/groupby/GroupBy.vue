@@ -3,12 +3,13 @@
 		<div :class="['groupby-container', {'context-enabled': contextEnabled}]">
 			<SelectPicker
 				class="groupselect"
-				data-size="15"
+				data-size="auto"
 				data-actions-box="true"
 				data-deselect-all-text="reset"
 				data-show-subtext="true"
 				data-style="btn-default btn-sm"
 				data-live-search="true"
+				data-window-padding="[150, 0, 50, 0]"
 
 				:options="normalGroupByOptions"
 				:escapeLabels="false"

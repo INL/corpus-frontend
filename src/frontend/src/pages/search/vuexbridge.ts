@@ -10,14 +10,14 @@ export default () => {
 	debugLog('Begin connecting listeners to store');
 
 	{
-		let lastPattern: string;
+		let lastPattern: FormStore.ModuleRootState['pattern']['advanced'] = null;
 		const $querybuilder = $('#querybuilder');
 		const instance: QueryBuilder = $querybuilder.data('builder');
 
 		store.watch(state => state.form.pattern.queryBuilder, v => {
 			if (v !== lastPattern) {
-				lastPattern = v || '';
-				instance.parse(v || '');
+				lastPattern = v;
+				instance.parse(v);
 			}
 		}, {immediate: true});
 		$querybuilder.on('cql:modified', () => {

@@ -453,7 +453,7 @@ export class QueryBuilder {
 		this.withinSelect.find('input').first().parent().button('toggle');
 	}
 
-	public parse(cql: string) {
+	public parse(cql: string|null) {
 		return populateQueryBuilder(this, cql);
 	}
 }
@@ -829,9 +829,13 @@ export class Attribute {
 		// Such as case-sensitivity checkbox or comboboxes for when there is a predefined set of valid values
 		const self = this;
 
-		$element.find(this.idSelector + '_type').on('loaded.bs.select changed.bs.select', function() {
+		const $attributeSelect = $element.find(this.idSelector + '_type');
+		$attributeSelect.on('changed.bs.select', function() {
 			const selectedValue = $(this).val() as string;
 			self._updateShownOptions(selectedValue);
+		});
+		$attributeSelect.on('loaded.bs.select', function() {
+			$attributeSelect.selectpicker('val', self.builder.settings.attribute.view.defaultAttribute);
 		});
 
 		$element.find(this.idSelector + '_delete').on('click', function() {
@@ -847,8 +851,7 @@ export class Attribute {
 
 		$element.find('.bl-token-attribute-file-edit').on('click', this._showModalEditor.bind(this));
 
-		const $attributeSelect = $element.find(this.idSelector + '_type');
-		$attributeSelect.selectpicker('val', this.builder.settings.attribute.view.defaultAttribute);
+
 	}
 
 	private _showModalEditor(/*event*/) {
@@ -1014,10 +1017,11 @@ function getOperatorLabel(builder: QueryBuilder, operator: string) {
  * @param {string} pattern - cql query
  * @returns True or false indicating success or failure respectively
  */
-function populateQueryBuilder(queryBuilder: QueryBuilder, pattern: string): boolean {
-	if (!pattern) {
-		// TODO maybe reset querybuilder on empty or null pattern
-		// Also preserve the last state in case the pattern can't be parsed.
+function populateQueryBuilder(queryBuilder: QueryBuilder, pattern: string|null|undefined): boolean {
+	if (pattern == null) {
+		queryBuilder.reset();
+		return true;
+	} else if (!pattern) {
 		return false;
 	}
 

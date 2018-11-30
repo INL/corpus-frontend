@@ -2,7 +2,6 @@
 	<div>
 		<div class="groupby-container">
 			<SelectPicker
-				multiple
 				class="groupselect"
 				data-size="15"
 				data-actions-box="true"
@@ -26,7 +25,7 @@
 				</ul>
 			</div>
 
-			<div v-if="unapplied.groupBy && unapplied.groupBy.length > 0" class="checkbox-inline" style="margin-left: 5px;">
+			<div v-if="!this.contextEnabled && unapplied.groupBy" class="checkbox-inline" style="margin-left: 5px;">
 				<label title="Separate groups for differently cased values" style="white-space: nowrap; margin: 0; cursor:pointer;" :for="uid+'case'"><input type="checkbox" :id="uid+'case'" v-model="unapplied.caseSensitive">Case sensitive</label>
 			</div>
 		</div>
@@ -67,7 +66,7 @@ export default Vue.extend({
 	},
 	data: () => ({
 		unapplied: {
-			groupBy: [] as string[],
+			groupBy: '',
 			groupByAdvanced: [] as string[],
 			caseSensitive: false,
 		}
@@ -76,12 +75,14 @@ export default Vue.extend({
 		submit() {
 			// take care to not call mutating functions, as to not directly mutate state
 			this.caseSensitive = this.unapplied.caseSensitive;
-			this.groupBy = JSON.parse(JSON.stringify(this.contextEnabled ? this.unapplied.groupBy.filter(g => g !== CONTEXT_ENABLED_STRING) : this.unapplied.groupBy));
+			this.groupBy = (!this.contextEnabled && this.unapplied.groupBy) ? [this.unapplied.groupBy] : [];
 			this.groupByAdvanced = this.contextEnabled ? JSON.parse(JSON.stringify(this.unapplied.groupByAdvanced)) : [];
 		},
 		undo() {
-			this.unapplied = JSON.parse(JSON.stringify(this.appliedSettings));
-			this.contextEnabled = this.unapplied.groupByAdvanced.length > 0;
+			this.unapplied.groupBy = this.appliedSettings.groupByAdvanced.length ? CONTEXT_ENABLED_STRING : (this.appliedSettings.groupBy[0] || '');
+			this.unapplied.groupByAdvanced = JSON.parse(JSON.stringify(this.appliedSettings.groupByAdvanced)); // prevent aliasing
+			this.unapplied.caseSensitive = this.appliedSettings.caseSensitive;
+			this.contextEnabled = this.appliedSettings.groupByAdvanced.length > 0;
 		},
 
 		createContextGroup() { this.unapplied.groupByAdvanced.push(''); },
@@ -151,13 +152,13 @@ export default Vue.extend({
 
 		contextSupported(): boolean { return this.type === 'hits'; },
 		contextEnabled: {
-			get(): boolean { return this.contextSupported && this.unapplied.groupBy.includes(CONTEXT_ENABLED_STRING); },
+			get(): boolean { return this.contextSupported && this.unapplied.groupBy === CONTEXT_ENABLED_STRING; },
 			set(v: boolean) {
 				if (this.contextSupported && v !== this.contextEnabled) {
 					if (v) {
-						this.unapplied.groupBy.push(CONTEXT_ENABLED_STRING);
+						this.unapplied.groupBy = CONTEXT_ENABLED_STRING;
 					} else {
-						this.unapplied.groupBy = this.unapplied.groupBy.filter(g => g !== CONTEXT_ENABLED_STRING);
+						this.unapplied.groupBy = '';
 					}
 				}
 			}

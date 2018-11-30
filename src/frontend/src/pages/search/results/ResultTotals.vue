@@ -28,7 +28,7 @@
 		<span class="fa fa-exclamation-triangle text-danger"/> Too many results to count.
 	</div>
 	<div v-else-if="isPaused" class="text-info totals-warning" style="cursor: pointer;" title="Click to continue." @click="continueCounting">
-		<span class="fa fa-clock-o text-info"></span> Counting paused.
+		<span class="fa fa-redo text-info"></span> Counting paused.
 	</div>
 </div>
 </template>

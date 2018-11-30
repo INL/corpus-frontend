@@ -250,7 +250,6 @@ export function getHistoryEntryFromState(state: SlimRootState): HistoryEntry {
 	};
 
 	return {
-		version: 1,
 		...base,
 
 		displayValues: {

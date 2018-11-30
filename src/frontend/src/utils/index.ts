@@ -79,14 +79,19 @@ export function getPatternString(pattern: SubmittedParameters['pattern']): strin
 
 	// First split the properties into individual words and pair them
 	const tokens = [] as Array<{[key: string]: string}>;
-	pattern.annotations.forEach(field => {
-		field.value.trim().split(/\s+/).filter(v => !!v).forEach((word, i) => {
+	pattern.annotations.forEach( ({id, case: caseSensitive, value}) => {
+		value
+		.replace(/"/g, '')
+		.trim()
+		.split(/\s+/)
+		.filter(v => !!v)
+		.forEach((word, i) => {
 			if (!tokens[i]) {
 				tokens[i] = {};
 			}
 
-			tokens[i][field.id] = (field.case ? '(?-i)' : '') + makeWildcardRegex(word);
-		});
+			tokens[i][id] = (caseSensitive ? '(?-i)' : '') + makeWildcardRegex(word);
+		})
 	});
 
 	const tokenStrings = [] as string[];

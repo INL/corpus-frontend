@@ -102,7 +102,7 @@ export default Vue.extend({
 				return formStore.get.annotationValue(this.annotation.annotatedFieldId, this.id).value;
 			},
 			set(value: string) {
-				formStore.actions.pattern.simple.annotation({
+				formStore.actions.pattern.extended.annotation({
 					annotatedFieldId: this.annotation.annotatedFieldId,
 					id: this.id,
 					value
@@ -114,7 +114,7 @@ export default Vue.extend({
 				return formStore.get.annotationValue(this.annotation.annotatedFieldId, this.id).case;
 			},
 			set(caseSensitive: boolean) {
-				formStore.actions.pattern.simple.annotation({
+				formStore.actions.pattern.extended.annotation({
 					annotatedFieldId: this.annotation.annotatedFieldId,
 					id: this.id,
 					case: caseSensitive

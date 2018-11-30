@@ -73,9 +73,10 @@ import $ from 'jquery';
 
 import * as HistoryStore from '@/store/history';
 import * as RootStore from '@/store';
+import * as CorpusStore from '@/store/corpus';
 
 import UID from '@/mixins/uid';
-import {getUrlFromHistoryEntry, getHistoryEntryFromState} from '@/utils';
+import {getUrlFromHistoryEntry, getHistoryEntryFromState, makeWildcardRegex, makeRegexWildcard, getPatternString} from '@/utils';
 
 import * as BLTypes from '@/types/blacklabtypes';
 
@@ -132,17 +133,30 @@ export default Vue.extend({
 				};
 
 				switch (state.form.activePattern) {
-					case 'cql': submitted.pattern = state.form.pattern.cql || null; break;
-					case 'queryBuilder': submitted.pattern = state.form.pattern.queryBuilder || null; break;
-					case 'simple': {
-						const activeAnnotations = Object.values(state.form.pattern.simple.annotationValues);
+					case 'simple': submitted.pattern = getPatternString({
+						// Note: emulate an annotatedField here so the string processing is the same
+						// this generates a cql query where wildcards etc are properly escaped
+						// which is important when restoring from history, as we only have the query
+						// and we don't know whether it came from the querybuilder, the simple field, or the expert field.
+						annotations: [{
+							annotatedFieldId: CorpusStore.get.firstMainAnnotation().annotatedFieldId,
+							id: CorpusStore.get.firstMainAnnotation().id,
+							value: state.form.pattern.simple || '',
+							case: false,
+						}],
+						within: null,
+					}) || null; break;
+					case 'extended': {
+						const activeAnnotations = Object.values(state.form.pattern.extended.annotationValues);
 						if (activeAnnotations.length) {
 							submitted.pattern = {
 								annotations: JSON.parse(JSON.stringify(activeAnnotations)) as typeof activeAnnotations,
-								within: state.form.pattern.simple.within
+								within: state.form.pattern.extended.within
 							};
 						} // else no annotations active, keep submitted.pattern as null.
 					}
+					case 'advanced': submitted.pattern = state.form.pattern.advanced || null; break;
+					case 'expert': submitted.pattern = state.form.pattern.expert || null; break;
 				}
 
 				state.form.submittedParameters = submitted;

@@ -5,7 +5,7 @@ import 'jquery-ui/ui/widgets/sortable';
 import $ from 'jquery';
 import * as Mustache from 'mustache';
 
-import parseCql from '@/utils/cqlparser';
+import parseCql, {BinaryOp as CQLBinaryOp, Attribute as CQLAttribute, DEFAULT_ATTRIBUTE} from '@/utils/cqlparser';
 import {debugLog} from '@/utils/debug';
 
 import '@/modules/cql_querybuilder.scss';
@@ -254,9 +254,9 @@ const DEFAULTS = {
 			// Empty value will omit the "within" tag from the query, essentially serving as a default option
 			// Syntax to transform the value into <value/> is inserted when the query is generated
 			withinSelectOptions: [
-				{value:'', 		label:'document'},
-				{value:'p', 	label:'paragraph'},
-				{value:'s', 	label:'sentence'},
+				{value:'',  label:'document'},
+				{value:'p', label:'paragraph'},
+				{value:'s', label:'sentence'},
 			]
 		}
 	},
@@ -289,7 +289,8 @@ const DEFAULTS = {
 					label: 'Part of speech',
 					caseSensitive: false,
 				}
-			]
+			],
+			defaultAttribute: 'word'
 		},
 
 		getCql (attribute: string, comparator: string, caseSensitive: boolean, values: string[]) {
@@ -341,6 +342,9 @@ type RecursivePartial<T> = {
 };
 
 type QueryBuilderOptions = RecursivePartial<typeof DEFAULTS>;
+// so not everything is optional and extracting types from nested properties works
+export type QueryBuilderOptionsDef = typeof DEFAULTS;
+
 // -------------------
 // Class Querybuilder
 // -------------------
@@ -587,8 +591,8 @@ export class AttributeGroup {
 	private readonly id = generateId('attribute_group');
 	private readonly idSelector = '#' + this.id;
 
-	private operator: string; // todo type according to passed in settings
-	private operatorLabel: string;
+	public operator: string; // todo type according to passed in settings
+	public operatorLabel: string;
 	public element: JQuery<HTMLElement>;
 	public isRoot: boolean = false; // set from parent
 
@@ -744,14 +748,14 @@ export class AttributeGroup {
 	}
 
 	/* Get the object instances for all direct child attributes */
-	public getAttributes() {
+	public getAttributes(): Attribute[] {
 		return this.element.children('.bl-token-attribute').map(function(i, el) {
 			return $(el).data('attribute');
 		}).get();
 	}
 
 	/* Get the object instances for all direct child attribute groups */
-	public getAttributeGroups() {
+	public getAttributeGroups(): AttributeGroup[] {
 		return this.element.children('.bl-token-attribute-group').map(function(i, el) {
 			return $(el).data('attributeGroup');
 		}).get();
@@ -824,6 +828,7 @@ export class Attribute {
 		// Show/hide elements for the selected attribute type
 		// Such as case-sensitivity checkbox or comboboxes for when there is a predefined set of valid values
 		const self = this;
+
 		$element.find(this.idSelector + '_type').on('loaded.bs.select changed.bs.select', function() {
 			const selectedValue = $(this).val() as string;
 			self._updateShownOptions(selectedValue);
@@ -841,6 +846,9 @@ export class Attribute {
 		$element.find('.bl-input-upload').on('change', this._onUploadChanged.bind(this));
 
 		$element.find('.bl-token-attribute-file-edit').on('click', this._showModalEditor.bind(this));
+
+		const $attributeSelect = $element.find(this.idSelector + '_type');
+		$attributeSelect.selectpicker('val', this.builder.settings.attribute.view.defaultAttribute);
 	}
 
 	private _showModalEditor(/*event*/) {
@@ -990,6 +998,15 @@ const setValue = function($element: JQuery<HTMLElement>, val: any) {
 	}
 };
 
+function hasAttribute(builder: QueryBuilder, attributeId: string) {
+	return builder.settings.attribute.view.attributes.find(att => att.attribute === attributeId) != null;
+}
+
+function getOperatorLabel(builder: QueryBuilder, operator: string) {
+	const found = builder.settings.shared.view.operators.find(op => op.operator === operator);
+	return found ? found.label : operator;
+}
+
 /**
  * Attempt to parse the query pattern and update the state of the query builder
  * to match it as much as possible.
@@ -997,7 +1014,7 @@ const setValue = function($element: JQuery<HTMLElement>, val: any) {
  * @param {string} pattern - cql query
  * @returns True or false indicating success or failure respectively
  */
-function populateQueryBuilder(queryBuilder: QueryBuilder, pattern: string) {
+function populateQueryBuilder(queryBuilder: QueryBuilder, pattern: string): boolean {
 	if (!pattern) {
 		// TODO maybe reset querybuilder on empty or null pattern
 		// Also preserve the last state in case the pattern can't be parsed.
@@ -1005,7 +1022,7 @@ function populateQueryBuilder(queryBuilder: QueryBuilder, pattern: string) {
 	}
 
 	try {
-		const parsedCql = parseCql(pattern);
+		const parsedCql = parseCql(pattern, queryBuilder.settings.attribute.view.defaultAttribute);
 		const tokens = parsedCql.tokens;
 		const within = parsedCql.within;
 		if (tokens === null) {
@@ -1015,27 +1032,18 @@ function populateQueryBuilder(queryBuilder: QueryBuilder, pattern: string) {
 		queryBuilder.reset();
 		if (tokens.length > 0) {
 			// only clear the querybuilder when we're putting something back in
-			$.each(queryBuilder.getTokens(), function(i, e) {
-				e.element.remove();
-			});
+			queryBuilder.getTokens().forEach(token => token.element.remove());
 		}
 		if (within) {
 			queryBuilder.set('within', within);
 		}
 
-		// TODO: try and repopulate the "simple" tab
-
-		$.each(tokens, function(index, token) {
+		tokens.forEach(token => {
 			const tokenInstance = queryBuilder.createToken();
 
 			// clean the root group of all contents
-			$.each(tokenInstance.rootAttributeGroup.getAttributes(), function(i, el) {
-				el.element.remove();
-			});
-
-			$.each(tokenInstance.rootAttributeGroup.getAttributeGroups(), function(i, el) {
-				el.element.remove();
-			});
+			tokenInstance.rootAttributeGroup.getAttributes().forEach(attribute => attribute.element.remove());
+			tokenInstance.rootAttributeGroup.getAttributeGroups().forEach(group => group.element.remove());
 
 			tokenInstance.set('beginOfSentence', !!token.leadingXmlTag && token.leadingXmlTag.name === 's');
 			tokenInstance.set('endOfSentence', !!token.trailingXmlTag && token.trailingXmlTag.name === 's');
@@ -1046,7 +1054,7 @@ function populateQueryBuilder(queryBuilder: QueryBuilder, pattern: string) {
 				tokenInstance.set('maxRepeats', token.repeats.max);
 			}
 
-			function doOp(op: any, parentAttributeGroup: any, level: number) {
+			function doOp(op: CQLAttribute|CQLBinaryOp, parentAttributeGroup: AttributeGroup, level: number) {
 				if (op == null) {
 					return;
 				}
@@ -1057,7 +1065,7 @@ function populateQueryBuilder(queryBuilder: QueryBuilder, pattern: string) {
 
 						if (level === 0) {
 							parentAttributeGroup.operator = op.operator;
-							parentAttributeGroup.label = label;
+							parentAttributeGroup.operatorLabel = getOperatorLabel(queryBuilder, op.operator);
 						} else if (parentAttributeGroup.operator !== op.operator) {
 							parentAttributeGroup = parentAttributeGroup.createAttributeGroup(op.operator, label);
 						}
@@ -1067,6 +1075,9 @@ function populateQueryBuilder(queryBuilder: QueryBuilder, pattern: string) {
 					doOp(op.right, parentAttributeGroup, level + 1);
 					doOp(op.left, parentAttributeGroup, level + 1);
 				} else if (op.type === 'attribute') {
+					if (!hasAttribute(queryBuilder, op.name)) {
+						return;
+					}
 
 					const attributeInstance = parentAttributeGroup.createAttribute();
 

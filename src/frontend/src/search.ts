@@ -8,8 +8,9 @@ import Vue from 'vue';
 // @ts-ignore
 import VTooltip from 'v-tooltip';
 
-import {QueryBuilder} from '@/modules/cql_querybuilder';
+import {QueryBuilder, QueryBuilderOptionsDef} from '@/modules/cql_querybuilder';
 import {store, init as initStore, UrlPageState} from '@/store';
+import * as CorpusStore from '@/store/corpus'; // NOTE: only use after initializing root store
 import {debugLog} from '@/utils/debug';
 import {normalizeIndex} from '@/utils/blacklabutils';
 
@@ -53,20 +54,14 @@ const connectJqueryToPage = () => {
 		attribute: {
 			view: {
 				// Pass the available properties of tokens in this corpus (PoS, Lemma, Word, etc..) to the querybuilder
-				attributes: $.map(BLTypes.isIndexMetadataV1(SINGLEPAGE.INDEX) ? SINGLEPAGE.INDEX.complexFields : SINGLEPAGE.INDEX.annotatedFields, function(annotatedField/*, annotatedFieldName*/) {
-					return $.map(BLTypes.isAnnotatedFieldV1(annotatedField) ? annotatedField.properties : annotatedField.annotations, function(property, propertyId: string) {
-						if (property.isInternal) {
-							return null;
-						} // Don't show internal fields in the queryBuilder; leave this out of the list.
+				attributes: CorpusStore.get.annotations()
+					.map((annotation): QueryBuilderOptionsDef['attribute']['view']['attributes'][number] => ({
+						attribute: annotation.id,
+						label: annotation.displayName,
+						caseSensitive: annotation.caseSensitive,
+					})),
 
-						// Transform the supported values to the querybuilder format
-						return {
-							attribute: propertyId,
-							label: property.displayName || propertyId,
-							caseSensitive: (property.sensitivity === 'SENSITIVE_AND_INSENSITIVE')
-						};
-					});
-				}),
+				defaultAttribute: CorpusStore.get.firstMainAnnotation().id
 			}
 		}
 	});

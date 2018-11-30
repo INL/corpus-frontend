@@ -3,15 +3,16 @@ import { getStoreBuilder } from 'vuex-typex';
 import { getHistoryEntryFromState } from '@/utils';
 
 import { RootState, SlimRootState } from '@/store';
-import { SubmittedParameters } from '@/store/form';
+import { SubmittedParameters, ModuleRootState as FormModuleRootState } from '@/store/form';
 import { NormalizedIndex } from '@/types/apptypes';
 import { debugLog } from '@/utils/debug';
 
 /** Remove type U from union T */
 type Remove<T, U> = T extends U ? never : T;
 
-interface HistoryEntryV1 extends SubmittedParameters {
-	readonly version: 1;
+const version = 2;
+
+interface HistoryEntry extends SubmittedParameters {
 	readonly groupBy: string[];
 	readonly groupByAdvanced: string[];
 	readonly viewedResults: Remove<RootState['viewedResults'], null>;
@@ -25,12 +26,11 @@ interface HistoryEntryV1 extends SubmittedParameters {
 	readonly hash: number;
 }
 
-type HistoryEntry = HistoryEntryV1;
-
 type ModuleRootState = HistoryEntry[];
 
 type LocalStorageState = {
 	indexLastModified: string;
+	version: number;
 	history: ModuleRootState;
 };
 
@@ -94,6 +94,11 @@ const readFromLocalStorage = () => {
 			window.localStorage.removeItem(key);
 			return null;
 		}
+		if (state.version !== version) {
+			debugLog(`History out of date: read version ${state.version}, current version ${version}, clearing history.`);
+			window.localStorage.removeItem(key);
+			return null;
+		}
 
 		internalActions.replace(state.history);
 	} catch (e) {
@@ -109,6 +114,7 @@ const saveToLocalStorage = (state: ModuleRootState) => {
 
 	const key = `cf/history/${index.id}`;
 	const entry: LocalStorageState = {
+		version,
 		history: state,
 		indexLastModified: index.timeModified
 	};

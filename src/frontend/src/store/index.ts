@@ -71,12 +71,10 @@ export class UrlPageState {
 		return {
 			filters: this.filters,
 			pattern: {
-				simple: {
-					annotationValues: this.annotationValues,
-					within: this.within
-				},
-				queryBuilder: this.patternQuerybuilder,
-				cql: this.patternString,
+				simple: this.simplePattern,
+				extended: this.extendedPattern,
+				advanced: this.advancedPattern,
+				expert: this.expertPattern,
 			},
 			activePattern: this.activePattern,
 			submittedParameters: null
@@ -107,16 +105,15 @@ export class UrlPageState {
 	}
 
 	@memoize
-	private get activePattern() {
-		if (Object.keys(this.annotationValues).length > 0) {
-			return 'simple';
-		} else if (this.patternQuerybuilder) {
-			return 'queryBuilder';
-		} else if (this.patternString) {
-			return 'cql';
-		} else {
-			return 'simple';
-		}
+	private get activePattern(): FormModule.ModuleRootState['activePattern'] {
+		// show the simplest view that can hold the query
+		// the other views will have the query placed in it as well, but this is more of a courtesy
+		// if no pattern exists, show the simplest search
+		if (this.simplePattern) { return 'simple'; }
+		else if (Object.keys(this.extendedPattern.annotationValues).length > 0) { return 'extended'; }
+		else if (this.advancedPattern) { return 'advanced'; }
+		else if (this.expertPattern) { return 'expert'; }
+		return 'simple';
 	}
 
 	@memoize
@@ -238,14 +235,37 @@ export class UrlPageState {
 	}
 
 	@memoize
-	private get patternString(): string|null {
-		return this.getString('patt', null, v => v?v:null);
+	private get simplePattern(): string|null {
+		// Simple view is just a subset of extended view
+		// So we can just check if extended fits into simple
+		// then we get wildcard conversion etc for free.
+		// (simple/extended view have their values processed when converting to query - see utils::getPatternString,
+		// and this needs to be undone too)
+		const vals = Object.values(this.extendedPattern.annotationValues);
+		if (vals.length === 1 && vals[0].id === CorpusModule.get.firstMainAnnotation().id && !vals[0].case) {
+			return vals[0].value;
+		}
+
+		return null;
 	}
 
 	@memoize
-	private get patternQuerybuilder(): string|null {
-		// If the pattern can't be parsed, the querybuilder can't use it either.
-		return this._parsedCql ? this.patternString : null;
+	private get extendedPattern() {
+		return {
+			annotationValues: this.annotationValues,
+			within: this.within
+		};
+	}
+
+	@memoize
+	private get advancedPattern(): string|null {
+		// If the pattern can't event be parsed, the querybuilder can't use it either.
+		return this._parsedCql ? this.expertPattern : null;
+	}
+
+	@memoize
+	private get expertPattern(): string|null {
+		return this.getString('patt', null, v=>v?v:null);
 	}
 
 	@memoize
@@ -334,7 +354,7 @@ export class UrlPageState {
 	@memoize
 	private get _parsedCql(): null|ReturnType<typeof parseCql> {
 		try {
-			const result = parseCql(this.patternString || '', CorpusModule.get.firstMainAnnotation().id);
+			const result = parseCql(this.expertPattern || '', CorpusModule.get.firstMainAnnotation().id);
 			return result.tokens.length > 0 ? result : null;
 		} catch (e) {
 			return null; // meh, can't parse

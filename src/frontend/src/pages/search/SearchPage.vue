@@ -165,10 +165,6 @@ export default Vue.extend({
 		itoa(n: number|null): string { return n == null ? '' : n.toString(); },
 		atoi(s: string): number|null { return s ? Number.parseInt(s, 10) : null; }
 	},
-
-	mounted() {
-		$(document).trigger('vue-root-mounted');
-	}
 })
 
 </script>

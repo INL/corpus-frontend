@@ -6,8 +6,8 @@
 			<a v-if="showHomeLink" :href="homeLink" id="corpora-link">Back to my corpora</a>
 		</div>
 
-		<Annotations :class="['col-xs-12', {'col-md-6': !isQueryBuilderActive}]" id="searchcontainer"/>
-		<Filters :class="`col-xs-12 ${isQueryBuilderActive ? 'col-md-9' : 'col-md-6'}`" id="filtercontainer"/>
+		<Annotations :class="['col-xs-12', {'col-md-6': !isQueryBuilderActive && filtersVisible}]" id="searchcontainer"/>
+		<Filters v-show="filtersVisible" :class="`col-xs-12 ${isQueryBuilderActive ? 'col-md-9' : 'col-md-6'}`" id="filtercontainer"/>
 
 		<div class="col-xs-12">
 			<hr>
@@ -25,8 +25,8 @@
 import Vue from 'vue';
 import URI from 'urijs';
 
-import * as CorpusStore from '@/store/corpus';
 import * as RootStore from '@/store';
+import * as CorpusStore from '@/store/corpus';
 import * as ResultsStore from '@/store/results';
 import * as FormStore from '@/store/form';
 
@@ -47,7 +47,8 @@ export default Vue.extend({
 		title(): string { return CorpusStore.getState().displayName; },
 		showHomeLink(): boolean { return CorpusStore.getState().owner != null; },
 		homeLink(): string { return PATH_TO_TOP; },
-		isQueryBuilderActive(): boolean { return FormStore.getState().activePattern === 'queryBuilder'; }
+		isQueryBuilderActive(): boolean { return FormStore.getState().activePattern === 'advanced'; },
+		filtersVisible(): boolean { return FormStore.getState().activePattern !== 'simple'; }
 	},
 	methods: {
 		reset() {

@@ -2,6 +2,8 @@ import Vue from 'vue';
 import { getStoreBuilder } from 'vuex-typex';
 
 import { RootState } from '@/store';
+import * as CorpusStore from '@/store/corpus';
+
 import { HistoryEntry } from '@/store/history';
 import { debugLog } from '@/utils/debug';
 
@@ -22,16 +24,17 @@ type ModuleRootState = {
 
 	activePattern: keyof ModuleRootState['pattern'];
 	pattern: {
-		cql: string|null;
-		queryBuilder: string|null;
-		simple: {
+		simple: string|null;
+		extended: {
 			annotationValues: {
 				// [annotatedFieldId: string]: {
 					[annotationId: string]: AnnotationValue
 				// }
 			},
 			within: string|null;
-		}
+		},
+		advanced: string|null;
+		expert: string|null;
 	};
 
 	/** These were the parameters the last time the query was submitted, a somewhat processed version of the rest of the state */
@@ -46,12 +49,13 @@ const initialState: ModuleRootState = {
 	filters: {},
 	activePattern: 'simple',
 	pattern: {
-		cql: null,
-		queryBuilder: null,
-		simple: {
+		simple: null,
+		extended: {
 			annotationValues: {},
 			within: null,
-		}
+		},
+		advanced: null,
+		expert: null,
 	},
 	submittedParameters: null,
 };
@@ -63,8 +67,9 @@ const getState = b.state();
 const get = {
 	/** Last submitted properties, these are already filtered to remove empty values, etc */
 	lastSubmittedParameters: b.read(state => state.submittedParameters, 'lastSubmittedParameters'),
-	activeAnnotations: b.read(state => Object.values(state.pattern.simple.annotationValues)/*.flatMap(f => Object.values(f))*/.filter(p => !!p.value), 'activeAnnotations'),
+	activeAnnotations: b.read(state => Object.values(state.pattern.extended.annotationValues)/*.flatMap(f => Object.values(f))*/.filter(p => !!p.value), 'activeAnnotations'),
 	activePatternValue: b.read(state => state.activePattern ? state.pattern[state.activePattern] : null, 'activePatternValue'),
+	/** Filters do not apply in simple search */
 	activeFilters: b.read(state => Object.values(state.filters).filter(f =>  {
 		// remove empty strings
 		const numValues = f.values.filter(v => !!v).length;
@@ -73,8 +78,7 @@ const get = {
 	}), 'activeFilters'),
 
 	annotationValue(annotatedFieldId: string, id: string) {
-		// debugger;
-		return getState().pattern.simple.annotationValues/*[annotatedFieldId]*/[id];
+		return getState().pattern.extended.annotationValues/*[annotatedFieldId]*/[id];
 	},
 	metadataValue(id: string) {
 		return getState().filters[id];
@@ -84,7 +88,7 @@ const get = {
 const privateActions = {
 	initFilter: b.commit((state, payload: MetadataValue) => Vue.set(state.filters, payload.id, payload), 'filter_init'),
 	// NOTE when re-integrating annotatedFieldId this needs to be updated to account.
-	initAnnotation: b.commit((state, payload: AnnotationValue) => Vue.set(state.pattern.simple.annotationValues, payload.id, payload), 'annotation_init'),
+	initAnnotation: b.commit((state, payload: AnnotationValue) => Vue.set(state.pattern.extended.annotationValues, payload.id, payload), 'annotation_init'),
 };
 
 const actions = {
@@ -93,20 +97,21 @@ const actions = {
 
 	activePattern: b.commit((state, payload: ModuleRootState['activePattern']) => state.activePattern = payload, 'activePattern'),
 	pattern: {
-		simple: {
+		simple: b.commit((state, payload: string|null) => state.pattern.simple = payload, 'simple'),
+		extended: {
 			// TODO ignore invalids annotations (can happen when parsing from url)
-			annotation: b.commit((state, {id/*, annotatedFieldId*/, ...rest}: Partial<AnnotationValue>&{id: string/*, annotatedFieldId: string*/}) => Object.assign(state.pattern.simple.annotationValues/*[annotatedFieldId]*/[id], rest), 'simple_value'),
-			within: b.commit((state, payload: string|null) => state.pattern.simple.within = payload, 'simple_within'),
+			annotation: b.commit((state, {id/*, annotatedFieldId*/, ...rest}: Partial<AnnotationValue>&{id: string/*, annotatedFieldId: string*/}) => Object.assign(state.pattern.extended.annotationValues/*[annotatedFieldId]*/[id], rest), 'extended_annotation'),
+			within: b.commit((state, payload: string|null) => state.pattern.extended.within = payload, 'extended_within'),
 			reset: b.commit(state => {
-				Object.values(state.pattern.simple.annotationValues)/*.forEach(field => Object.values(field)*/.forEach(annot => {
+				Object.values(state.pattern.extended.annotationValues)/*.forEach(field => Object.values(field)*/.forEach(annot => {
 					annot.value = '';
 					annot.case = false;
 				})/*)*/;
-				state.pattern.simple.within = null;
-			}, 'pattern_simple_reset'),
+				state.pattern.extended.within = null;
+			}, 'extended_reset'),
 		},
-		queryBuilder: b.commit((state, payload: string|null) =>state.pattern.queryBuilder = payload, 'querybuilder'),
-		cql: b.commit((state, payload: string|null) => state.pattern.cql = payload, 'cql')
+		advanced: b.commit((state, payload: string|null) =>state.pattern.advanced = payload, 'advanced'),
+		expert: b.commit((state, payload: string|null) => state.pattern.expert = payload, 'expert')
 	},
 
 	search: b.commit(state => {
@@ -114,7 +119,8 @@ const actions = {
 
 		// Deep copy these to prevent aliasing and the reactivity issues that come with it
 		// such as writing to current state causing updates in history entries
-		const filters = JSON.parse(JSON.stringify(get.activeFilters())) as ReturnType<typeof get['activeFilters']>; // small type safety for if we change one of the two later
+		// NOTE: filters do not apply in simple search
+		const filters = state.activePattern === 'simple' ? [] : JSON.parse(JSON.stringify(get.activeFilters()))  as ReturnType<typeof get['activeFilters']>; // small type safety for if we change one of the two later
 
 		const submitted: ModuleRootState['submittedParameters'] = {
 			filters,
@@ -122,16 +128,38 @@ const actions = {
 		};
 
 		switch (state.activePattern) {
-			case 'cql': submitted.pattern = state.pattern.cql || null; break;
-			case 'queryBuilder': submitted.pattern = state.pattern.queryBuilder || null; break;
+			case 'advanced':
+			case 'expert':
+				submitted.pattern = state.pattern[state.activePattern] || null; break;
 			case 'simple': {
+				// simple search is the same as extended search, except only the main annotation (usually 'word') is shown,
+				// and no case-sensitivity or within is supported
+				// so we must treat it the same as extended, but with only one active annotation
+				// This has the added benefit of making restoring from history simpler, since we don't have to go and unescape the query (into wildcard, pipes, separate tokens etc) when restoring
+				// It doesn't matter for the url generation and decoding, but that is a more loose system where the query is parsed on a best-effort basis anyway
+				const mainAnnotation = CorpusStore.get.firstMainAnnotation();
+				if (state.pattern.simple && state.pattern.simple.trim()) {
+					submitted.pattern = {
+						annotations: [{
+							annotatedFieldId: mainAnnotation.annotatedFieldId,
+							case: false,
+							id: mainAnnotation.id,
+							value: state.pattern.simple
+						}],
+						within: null
+					};
+				}
+				break;
+			}
+			case 'extended': {
 				const activeAnnotations = get.activeAnnotations();
 				if (activeAnnotations.length) {
 					submitted.pattern = {
 						annotations: JSON.parse(JSON.stringify(activeAnnotations)) as typeof activeAnnotations,
-						within: state.pattern.simple.within
+						within: state.pattern.extended.within
 					};
 				} // else no annotations active, keep submitted.pattern as null.
+				break;
 			}
 		}
 
@@ -140,40 +168,69 @@ const actions = {
 
 	reset: b.commit(state => {
 		actions.resetFilters();
-		actions.pattern.simple.reset();
-		state.pattern.cql = null;
-		state.pattern.queryBuilder = null;
+		state.pattern.simple = null;
+		actions.pattern.extended.reset();
+		state.pattern.advanced = null;
+		state.pattern.expert = null;
 		state.submittedParameters = null;
 		// No need to reset activepattern, just reset the values
 	}, 'reset'),
 
 	replace: b.commit((state, payload: ModuleRootState) => {
-		actions.activePattern(payload.activePattern);
 		actions.resetFilters();
 		Object.values(payload.filters).forEach(actions.filter);
-		actions.pattern.cql(payload.pattern.cql);
-		actions.pattern.queryBuilder(payload.pattern.cql);
-		actions.pattern.simple.reset();
-		actions.pattern.simple.within(payload.pattern.simple.within);
-		Object.values(payload.pattern.simple.annotationValues)/*.forEach(f => Object.values(f)*/.forEach(actions.pattern.simple.annotation)/*)*/;
+		actions.pattern.simple(payload.pattern.simple);
+		actions.pattern.advanced(payload.pattern.advanced);
+		actions.pattern.expert(payload.pattern.expert);
+		actions.pattern.extended.reset();
+		actions.pattern.extended.within(payload.pattern.extended.within);
+		Object.values(payload.pattern.extended.annotationValues)/*.forEach(f => Object.values(f)*/.forEach(actions.pattern.extended.annotation)/*)*/;
+		actions.activePattern(payload.activePattern);
 		state.submittedParameters = payload.submittedParameters;
 	}, 'replace'),
-	replaceFromHistory: b.commit((state, payload: HistoryEntry) => {
+	replaceFromHistory: b.commit((state, {pattern, filters}: HistoryEntry) => {
 		actions.reset();
-		if (payload.pattern == null) {
-			// nothing to do here, everything reset, default tab activated already
-		} else if (typeof payload.pattern === 'string') {
-			actions.pattern.cql(payload.pattern);
-			actions.pattern.queryBuilder(payload.pattern);
-			actions.pattern.simple.reset();
-			actions.activePattern('cql');
+		if (pattern == null) {
+			// nothing to do here, everything is reset, default tab is active already
+		} else if (typeof pattern === 'string') {
+			/**
+			 * FIXME we might be restoring a query from the expert view into the advanced view (querybuilder here)
+			 * which might fail
+			 * reason this happens is that both expert and advanced queries end up
+			 * as a string in submittedParameters.pattern when the form is submitted
+			 * this string in turn ends up in the history entry we're trying to restore here (the 'pattern' argument here)
+			 * but at this point we don't know whether this query is valid (expert allows the user to type one after all, and it might contain errors)
+			 * so we try to restore to the querybuilder and it might fail when parsing.
+			 *
+			 * the same issue exists with simple/extended, but if the config fits into the simple view
+			 * (e.g. only has a value for the main annotation, doesn't require case-sensitive matching, and doesn't use 'within')
+			 * then it's no big deal to restore to simple view instead of extended view (since this can't fail)
+			 *
+			 * TODO solution might just be to serialize the querybuilder state as something else than a string, so we can cleanly restore it.
+			 * we can of course keep support for parsing direct cql, but it would sidestep this problem in history.
+			 */
+			actions.pattern.advanced(pattern);
+			actions.pattern.expert(pattern);
+			actions.activePattern('expert');
 		} else {
-			actions.activePattern('simple');
-			actions.pattern.simple.within(payload.pattern.within);
-			payload.pattern.annotations.forEach(actions.pattern.simple.annotation);
+			const mainAnnotation = CorpusStore.get.firstMainAnnotation();
+			if (
+				pattern.within == null &&
+				pattern.annotations.length === 1 &&
+				pattern.annotations[0].id === mainAnnotation.id &&
+				pattern.annotations[0].annotatedFieldId === mainAnnotation.annotatedFieldId &&
+				pattern.annotations[0].case === false
+			) { // alright, it fits into the simple view
+				actions.pattern.simple(pattern.annotations[0].value);
+				actions.activePattern('simple');
+			} else {
+				actions.pattern.extended.within(pattern.within);
+				pattern.annotations.forEach(actions.pattern.extended.annotation);
+				actions.activePattern('extended');
+			}
 		}
 
-		payload.filters.forEach(actions.filter);
+		filters.forEach(actions.filter);
 	}, 'replaceFromHistory')
 };
 

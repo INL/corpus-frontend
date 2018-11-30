@@ -3,11 +3,31 @@
 		<h3>Search for &hellip;</h3>
 		<ul class="nav nav-tabs" id="searchTabs">
 			<li class="active"><a href="#simple" data-toggle="tab" class="querytype">Simple</a></li>
+			<li><a href="#extended" data-toggle="tab" class="querytype">Extended</a></li>
 			<li><a href="#advanced" data-toggle="tab" class="querytype">Advanced</a></li>
-			<li><a href="#query" data-toggle="tab" class="querytype">CQL query</a></li>
+			<li><a href="#expert" data-toggle="tab" class="querytype">Expert</a></li>
 		</ul>
 		<div class="tab-content">
 			<div class="tab-pane active form-horizontal" id="simple">
+				<div class="form-group form-group-lg">
+					<label class="control-label"
+						:for="firstMainAnnotation.id + '_' + uid"
+						:title="firstMainAnnotation.description || undefined"
+					>{{firstMainAnnotation.	displayName}}
+					</label>
+					<input
+						type="text"
+						class="form-control"
+
+						:id="firstMainAnnotation.id + '_' + uid"
+						:name="firstMainAnnotation.id + '_' + uid"
+						:placeholder="firstMainAnnotation.displayName"
+
+						v-model="simple"
+					/>
+				</div>
+			</div>
+			<div class="tab-pane form-horizontal" id="extended">
 				<template v-if="useTabs">
 					<ul class="nav nav-tabs subtabs">
 						<li v-for="(tab, index) in tabs" :class="{'active': index === 0}" :key="index">
@@ -46,9 +66,9 @@
 			<div class="tab-pane" id="advanced">
 				<div id="querybuilder"></div>
 			</div>
-			<div class="tab-pane" id="query">
+			<div class="tab-pane" id="expert">
 				<h3>Corpus Query Language:</h3>
-				<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model.lazy="cql"></textarea>
+				<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model.lazy="expert"></textarea>
 				<button type="button" class="btn btn-sm btn-default" name="parseQuery" id="parseQuery" title="Edit your query in the querybuilder">Copy to query builder</button>
 				<span id="parseQueryError" class="text-danger" style="display:none;"><span class="fa fa-danger"></span> The querybuilder could not parse your query</span>
 			</div>
@@ -59,14 +79,17 @@
 <script lang="ts">
 import Vue from 'vue';
 
-import * as corpus from '@/store/corpus';
-import * as form from '@/store/form';
+import * as CorpusStore from '@/store/corpus';
+import * as FormStore from '@/store/form';
 
 import Annotation from '@/pages/search/form/Annotation.vue';
 
 import * as AppTypes from '@/types/apptypes';
 
+import uid from '@/mixins/uid';
+
 export default Vue.extend({
+	mixins: [uid],
 	components: {
 		Annotation,
 	},
@@ -74,12 +97,19 @@ export default Vue.extend({
 		useTabs() {
 			return this.tabs.length > 1;
 		},
-		tabs: corpus.get.annotationGroups,
+		tabs: CorpusStore.get.annotationGroups,
 		allAnnotations(): AppTypes.NormalizedAnnotation[] {
 			return this.tabs.reduce((acc, tab) => {
 				acc.push(...tab.annotations);
 				return acc;
 			}, [] as AppTypes.NormalizedAnnotation[]);
+		},
+		firstMainAnnotation(): AppTypes.NormalizedAnnotation {
+			return CorpusStore.get.firstMainAnnotation();
+		},
+		simple: {
+			get(): string|null { return FormStore.getState().pattern.simple; },
+			set(v: string) { FormStore.actions.pattern.simple(v); }
 		},
 		withinOptions(): Array<{label: string, value: string|null}> {
 			// TODO retrieve from indexMetadata once available
@@ -96,12 +126,12 @@ export default Vue.extend({
 			}]
 		},
 		within: {
-			get(): string|null { return form.getState().pattern.simple.within; },
-			set(v: null|string) { form.actions.pattern.simple.within(v); }
+			get(): string|null { return FormStore.getState().pattern.extended.within; },
+			set(v: null|string) { FormStore.actions.pattern.extended.within(v); }
 		},
-		cql: {
-			get(): string|null { return form.getState().pattern.cql; },
-			set(v: string) { form.actions.pattern.cql(v); }
+		expert: {
+			get(): string|null { return FormStore.getState().pattern.expert; },
+			set(v: string) { FormStore.actions.pattern.expert(v); }
 		}
 	},
 	methods: {
@@ -131,6 +161,10 @@ export default Vue.extend({
 	border: 1px solid #ccc
 }
 
+#simple > .form-group {
+	margin: auto;
+	max-width: 1170px;
+}
 
 /* simple search upload buttons */
 .upload-button-container {

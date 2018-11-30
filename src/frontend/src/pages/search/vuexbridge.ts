@@ -14,7 +14,7 @@ export default () => {
 		const $querybuilder = $('#querybuilder');
 		const instance: QueryBuilder = $querybuilder.data('builder');
 
-		store.watch(state => state.form.pattern.queryBuilder, v => {
+		store.watch(state => state.form.pattern.advanced, v => {
 			if (v !== lastPattern) {
 				lastPattern = v;
 				instance.parse(v);
@@ -23,26 +23,20 @@ export default () => {
 		$querybuilder.on('cql:modified', () => {
 			const pattern = $querybuilder.data('builder').getCql();
 			lastPattern = pattern;
-			FormStore.actions.pattern.queryBuilder(pattern);
+			FormStore.actions.pattern.advanced(pattern);
 		});
 	}
 
 	{
-		const $simple = $('#searchTabs a[href="#simple"]');
-		const $querybuilder = $('#searchTabs a[href="#advanced"]');
-		const $cql = $('#searchTabs a[href="#query"]');
+		const tabs = {
+			simple: $('#searchTabs a[href="#simple"]'),
+			extended: $('#searchTabs a[href="#extended"]'),
+			advanced: $('#searchTabs a[href="#advanced"]'),
+			expert: $('#searchTabs a[href="#expert"]'),
+		};
 
-		store.watch(state => state.form.activePattern, v => {
-			switch (v) {
-				case 'simple': $simple.tab('show'); return;
-				case 'queryBuilder': $querybuilder.tab('show'); return;
-				case 'cql': $cql.tab('show'); return;
-			}
-		});
-
-		$simple.on('show.bs.tab', () => FormStore.actions.activePattern('simple'));
-		$querybuilder.on('show.bs.tab', () => FormStore.actions.activePattern('queryBuilder'));
-		$cql.on('show.bs.tab', () => FormStore.actions.activePattern('cql'));
+		store.watch(state => state.form.activePattern, v => tabs[v].tab('show'), {immediate: true});
+		Object.entries(tabs).forEach(([name, $tab]) => $tab.on('show.bs.tab', () => FormStore.actions.activePattern(name as keyof typeof tabs)));
 	}
 
 	window.addEventListener('popstate', function(event) {

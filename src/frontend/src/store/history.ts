@@ -18,6 +18,7 @@ interface HistoryEntry extends SubmittedParameters {
 	readonly viewedResults: Remove<RootState['viewedResults'], null>;
 	readonly caseSensitiveGroupBy: boolean;
 
+	/** String representations of the query, for simpler displaying of the entry in UI */
 	readonly displayValues: {
 		readonly filters: string;
 		readonly pattern: string;

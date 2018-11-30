@@ -230,9 +230,9 @@ export function getHistoryEntryFromState(state: SlimRootState): HistoryEntry {
 	// It's important we sort arrays and values consisiting of multiple items
 	// So we can calculate a stable hash.
 
-	// blech, if we don't do this, and we sort the annotations, that counts as a state change
-	// (everything is still reactive)
-	// this causes components to rerender where they shouldn't and makes results go missing.
+	// NOTE: we need to copy the state or we can't sort the annoations
+	// (as the array is reactive, and it counts as a state change, causing warnings and even page rerenders...)
+	// omit history and corpus state, as those are large objects and we don't need them anyway
 	state = JSON.parse(JSON.stringify(Object.assign({}, state, {history: undefined, corpus: undefined})));
 
 	const pattern = state.form.submittedParameters!.pattern;

@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<div class="groupby-container">
+		<div :class="['groupby-container', {'context-enabled': contextEnabled}]">
 			<SelectPicker
 				class="groupselect"
 				data-size="15"
@@ -14,29 +14,31 @@
 				:escapeLabels="false"
 				:title="`Group ${type} by...`"
 
-				v-model="unapplied.groupBy"
+				v-model="groupBy"
 			/>
 
-			<div class="btn-group" style="display: flex; flex-wrap: none; flex: none;">
-				<button type="button" class="btn btn-sm btn-primary" @click="submit" style="border-top-left-radius: 0; border-bottom-left-radius: 0;">Apply</button>
+			<div v-if="contextEnabled" class="btn-group" style="display: flex; flex-wrap: none; flex: none;">
+				<button type="button" class="btn btn-sm btn-primary" @click="submitContext" style="border-top-left-radius: 0; border-bottom-left-radius: 0;">Apply</button>
 				<button type="button" class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"/></button>
 				<ul class="dropdown-menu">
-					<li><a href="#" @click.prevent="undo">Undo</a></li>
+					<li><a href="#" @click.prevent="undoContext">Undo</a></li>
 				</ul>
 			</div>
 
-			<div v-if="!this.contextEnabled && unapplied.groupBy" class="checkbox-inline" style="margin-left: 5px;">
-				<label title="Separate groups for differently cased values" style="white-space: nowrap; margin: 0; cursor:pointer;" :for="uid+'case'"><input type="checkbox" :id="uid+'case'" v-model="unapplied.caseSensitive">Case sensitive</label>
+			<div v-if="groupBy && !contextEnabled" class="checkbox-inline" style="margin-left: 5px;">
+				<label title="Separate groups for differently cased values" style="white-space: nowrap; margin: 0; cursor:pointer;" :for="uid+'case'">
+					<input type="checkbox" :id="uid+'case'" v-model="caseSensitive">Case sensitive
+				</label>
 			</div>
 		</div>
 
 		<div v-if="contextEnabled" class="groupby-context-container" >
-			<ContextGroup v-for="(group, index) in unapplied.groupByAdvanced"
+			<ContextGroup v-for="(group, index) in unappliedContextGroups"
 				:key="index"
 
 				@delete="deleteContextGroup(index)"
 
-				v-model="unapplied.groupByAdvanced[index]"
+				v-model="unappliedContextGroups[index]"
 			/>
 			<button v-if="contextSupported" type="button" class="btn btn-default btn-sm" @click="createContextGroup">New context group</button>
 		</div>
@@ -65,28 +67,25 @@ export default Vue.extend({
 		type: String as () => ResultsStore.ViewId
 	},
 	data: () => ({
-		unapplied: {
-			groupBy: '',
-			groupByAdvanced: [] as string[],
-			caseSensitive: false,
-		}
+		contextEnabled: false,
+		unappliedContextGroups: [] as string[],
 	}),
 	methods: {
-		submit() {
-			// take care to not call mutating functions, as to not directly mutate state
-			this.caseSensitive = this.unapplied.caseSensitive;
-			this.groupBy = (!this.contextEnabled && this.unapplied.groupBy) ? [this.unapplied.groupBy] : [];
-			this.groupByAdvanced = this.contextEnabled ? JSON.parse(JSON.stringify(this.unapplied.groupByAdvanced)) : [];
+		submitContext() {
+			this.storeModule.actions.groupByAdvanced(this.unappliedContextGroups);
+			if (this.storeModule.getState().groupBy.length) {
+				this.storeModule.actions.groupBy([]);
+			}
 		},
-		undo() {
-			this.unapplied.groupBy = this.appliedSettings.groupByAdvanced.length ? CONTEXT_ENABLED_STRING : (this.appliedSettings.groupBy[0] || '');
-			this.unapplied.groupByAdvanced = JSON.parse(JSON.stringify(this.appliedSettings.groupByAdvanced)); // prevent aliasing
-			this.unapplied.caseSensitive = this.appliedSettings.caseSensitive;
-			this.contextEnabled = this.appliedSettings.groupByAdvanced.length > 0;
+		undoContext() {
+			this.unappliedContextGroups = this.appliedContextGroups.concat(); // prevent aliasing
+			if (this.unappliedContextGroups.length === 0) {
+ 				this.createContextGroup();
+			}
 		},
 
-		createContextGroup() { this.unapplied.groupByAdvanced.push(''); },
-		deleteContextGroup(index: number) { this.unapplied.groupByAdvanced.splice(index, 1); },
+		createContextGroup() { this.unappliedContextGroups.push(''); },
+		deleteContextGroup(index: number) { this.unappliedContextGroups.splice(index, 1); },
 	},
 	computed: {
 		storeModule() { return ResultsStore.modules[this.type]; },
@@ -95,26 +94,38 @@ export default Vue.extend({
 			set(v: boolean) { this.storeModule.actions.caseSensitive(v); }
 		},
 		groupBy: {
-			get(): string[] { return this.storeModule.getState().groupBy; },
-			set(v: string[]) { this.storeModule.actions.groupBy(v); }
+			get(): string { return this.contextEnabled ? CONTEXT_ENABLED_STRING : (this.storeModule.getState().groupBy[0] || ''); },
+			set(v: string) {
+				const newContext = v === CONTEXT_ENABLED_STRING;
+				// not grouping by context anymore
+				// clear the applied context grouping and apply the regular grouping (if applicable)
+				if (v !== CONTEXT_ENABLED_STRING) {
+					if (this.storeModule.getState().groupByAdvanced.length) {
+						this.storeModule.actions.groupByAdvanced([]); // clear
+					}
+					this.storeModule.actions.groupBy(v ? [v] : []);
+				}
+				// Don't have to do anything when we go from grouping normally to context grouping,
+				// that needs to be applied by the user specifically (so they can configure the options before applying)
+				// see submitContext
+
+				this.contextEnabled = newContext;
+			}
 		},
-		groupByAdvanced: {
+		appliedContextGroups: {
 			get(): string[] { return this.storeModule.getState().groupByAdvanced; },
 			set(v: string[]) { this.storeModule.actions.groupByAdvanced(v); }
-		},
-
-		// useful shorthand for all props from store
-		appliedSettings() {
-			return {
-				caseSensitive: this.caseSensitive,
-				groupBy: this.groupBy,
-				groupByAdvanced: this.groupByAdvanced
-			}
 		},
 
 		// Calculated fields
 		normalGroupByOptions(): Array<OptGroup|Option> {
 			const opts: Array<OptGroup|Option> = [];
+
+			// Deselect option
+			opts.push({
+				label: '',
+				value: ''
+			});
 
 			if (this.contextSupported) {
 				opts.push({
@@ -151,31 +162,22 @@ export default Vue.extend({
 		},
 
 		contextSupported(): boolean { return this.type === 'hits'; },
-		contextEnabled: {
-			get(): boolean { return this.contextSupported && this.unapplied.groupBy === CONTEXT_ENABLED_STRING; },
-			set(v: boolean) {
-				if (this.contextSupported && v !== this.contextEnabled) {
-					if (v) {
-						this.unapplied.groupBy = CONTEXT_ENABLED_STRING;
-					} else {
-						this.unapplied.groupBy = '';
-					}
-				}
-			}
-		}
 	},
 	watch: {
+		appliedContextGroups: {
+			immediate: true,
+			handler(v: string[]) {
+				this.unappliedContextGroups = v.concat();
+				if (v.length) {
+					this.contextEnabled = true;
+				}
+			}
+		},
 		contextEnabled(v: boolean) {
-			if (v && this.unapplied.groupByAdvanced.length === 0) {
+			if (v && this.unappliedContextGroups.length === 0) {
 				this.createContextGroup();
 			}
 		},
-		appliedSettings: {
-			immediate: true,
-			handler() {
-				this.undo();
-			}
-		}
 	},
 })
 </script>
@@ -189,6 +191,14 @@ export default Vue.extend({
 	max-width: 100%;
 	margin-bottom: 5px;
 
+	&.context-enabled {
+		> .groupselect > button {
+			border-top-right-radius: 0px;
+			border-bottom-right-radius: 0px;
+			border-right-width: 0;
+		}
+	}
+
 	> .groupselect {
 		flex: 1 1 auto;
 		min-width: 0px!important;
@@ -196,13 +206,13 @@ export default Vue.extend({
 		display: flex;
 		flex-wrap: nowrap;
 
+
+
 		> button {
 			width: auto;
 			max-width: 100%;
 			padding-right: 26px; // for caret
-			border-top-right-radius: 0px;
-			border-bottom-right-radius: 0px;
-			border-right-width: 0;
+
 			display: flex;
 			flex-wrap: nowrap;
 

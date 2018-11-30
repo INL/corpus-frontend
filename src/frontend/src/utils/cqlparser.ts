@@ -1,3 +1,5 @@
+export const DEFAULT_ATTRIBUTE = '__default__';
+
 export type XmlTag = {
 	type: 'xml';
 	/** xml token name excluding namespace, brackets, attributes etc */
@@ -43,7 +45,7 @@ export type Result = {
 
 const WHITESPACE = [' ', '\t', '\n', '\r'];
 
-export default function(input: string): Result {
+export default function(input: string, defaultAttribute = DEFAULT_ATTRIBUTE): Result {
 
 	let pos = 0;
 	let cur = '';
@@ -217,7 +219,7 @@ export default function(input: string): Result {
 
 			token.expression = {
 				type: 'attribute',
-				name: 'word', // or whatever the default in blacklab is TODO use 'implicit' or something
+				name: defaultAttribute,
 				operator: '=',
 				value: word
 			};

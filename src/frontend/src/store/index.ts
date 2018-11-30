@@ -72,7 +72,7 @@ export class UrlPageState {
 			filters: this.filters,
 			pattern: {
 				simple: {
-					annotationValues: this.pattern,
+					annotationValues: this.annotationValues,
 					within: this.within
 				},
 				queryBuilder: this.patternQuerybuilder,
@@ -108,7 +108,7 @@ export class UrlPageState {
 
 	@memoize
 	private get activePattern() {
-		if (Object.keys(this.pattern).length > 0) {
+		if (Object.keys(this.annotationValues).length > 0) {
 			return 'simple';
 		} else if (this.patternQuerybuilder) {
 			return 'queryBuilder';
@@ -126,7 +126,11 @@ export class UrlPageState {
 			return {};
 		}
 		try {
-			return parseLucene(luceneString).reduce((acc, v) => {acc[v.id] = v; return acc;}, {} as {[key: string]: MetadataValue});
+			const supportedMetadataFields = CorpusModule.getState().metadataFields;
+
+			return parseLucene(luceneString)
+			.filter(metadataField => supportedMetadataFields.hasOwnProperty(metadataField.id))
+			.reduce((acc, v) => {acc[v.id] = v; return acc;}, {} as {[key: string]: MetadataValue});
 		} catch (error) {
 			debugLog('Cannot decode lucene query ', luceneString, error);
 			return {};
@@ -149,17 +153,16 @@ export class UrlPageState {
 	}
 
 	@memoize
-	private get pattern(): {[key: string]: AnnotationValue} {
+	private get annotationValues(): {[key: string]: AnnotationValue} {
 		function isCase(value: string) { return value.startsWith('(?-i)') || value.startsWith('(?c)'); }
 		function stripCase(value: string) { return value.substr(value.startsWith('(?-i)') ? 5 : 4); }
 
-		const pattString = this.getString('patt', null, v=>v?v:null);
-		if (pattString == null) {
+		const result = this._parsedCql;
+		if (result == null) {
 			return {};
 		}
-		try {
-			const result = parseCql(pattString);
 
+		try {
 			/**
 			 * A requirement of the PropertyFields is that there are no gaps in the values
 			 * So a valid config is
@@ -189,6 +192,11 @@ export class UrlPageState {
 					const expr = stack.shift()!;
 					if (expr.type === 'attribute') {
 						const name = expr.name;
+						if (CorpusModule.get.annotations().find(annot => annot.id === name) == null) {
+							debugLog(`Encountered unknown cql field ${name} while decoding query from url, ignoring.`);
+							continue;
+						}
+
 						const values = attributeValues[name] = attributeValues[name] || [];
 						if (expr.operator !== '=') {
 							throw new Error('Unsupported comparator, only "=" is supported.');
@@ -207,7 +215,7 @@ export class UrlPageState {
 				}
 			}
 
-			/*
+			/**
 			 * Build the actual PropertyFields.
 			 * Convert from regex back into pattern globs, extract case sensitivity.
 			 */
@@ -234,10 +242,10 @@ export class UrlPageState {
 		return this.getString('patt', null, v => v?v:null);
 	}
 
-	// TODO verify querybuilder can parse
 	@memoize
 	private get patternQuerybuilder(): string|null {
-		return this.patternString;
+		// If the pattern can't be parsed, the querybuilder can't use it either.
+		return this._parsedCql ? this.patternString : null;
 	}
 
 	@memoize
@@ -270,9 +278,9 @@ export class UrlPageState {
 	// this can be done from the NormalizedIndex maybe? we might need extra data from a second request however
 	@memoize
 	private get within(): string|null {
-		// FIXME
-		const res = this.patternString ? /<(\w+)\/>$/.exec(this.patternString) : null;
-		return res ? res[1] : null;
+		return this._parsedCql ? this._parsedCql.within || null : null;
+		// const res = this._parsedCql ? this. /<(\w+)\/>$/.exec(this.patternString) : null;
+		// return res ? res[1] : null;
 	}
 
 	@memoize
@@ -316,6 +324,20 @@ export class UrlPageState {
 				viewGroup: this.getString('viewgroup', undefined, v => (v && groupBy.length)?v:null),
 				page: this.getNumber('first', 0, v => Math.floor(Math.max(0, v)/this.pageSize)/* round down to nearest page containing the starting index */)!,
 			};
+		}
+	}
+
+	// ------------------------
+	// Some intermediate values
+	// ------------------------
+
+	@memoize
+	private get _parsedCql(): null|ReturnType<typeof parseCql> {
+		try {
+			const result = parseCql(this.patternString || '', CorpusModule.get.firstMainAnnotation().id);
+			return result.tokens.length > 0 ? result : null;
+		} catch (e) {
+			return null; // meh, can't parse
 		}
 	}
 

@@ -323,7 +323,7 @@ public class MainServlet extends HttpServlet {
             try {
                 return new WebsiteConfig(f, corpus, getCorpusConfig(corpus), contextPath);
             } catch (Exception e) {
-                throw new RuntimeException("Could not read search.xml " + f + ": " + e.getMessage());
+                throw new RuntimeException("Could not read search.xml " + f, e);
             }
         });
     }

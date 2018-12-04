@@ -61,7 +61,7 @@
 
 		<button
 			class="groupby-editor-delete btn btn-default btn-sm"
-			title="Delete group criteria"
+			title="Remove group criteria"
 
 			@click="$emit('delete')"
 		>

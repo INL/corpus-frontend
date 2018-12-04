@@ -16,7 +16,7 @@
 			</li>
 		</ol>
 
-		<GroupBy :type="type"/>
+		<GroupBy :type="type" :viewGroupName="viewGroupName"/>
 
 		<div v-if="results && !!(results.summary.stoppedRetrievingHits && !results.summary.stillCounting)" class="btn btn-sm btn-default nohover toomanyresults">
 			<span class="fa fa-exclamation-triangle text-danger"></span> Too many results! &mdash; your query was limited
@@ -35,7 +35,7 @@
 				:type="type"
 
 				@sort="sort = $event"
-				@viewgroup="viewGroup = $event.id; viewGroupName = $event.displayName"
+				@viewgroup="viewGroup = $event.id; _viewGroupName = $event.displayName"
 			/>
 			<HitResults v-else-if="isHits"
 				class="results-table"
@@ -147,7 +147,7 @@ export default Vue.extend({
 		error: null as null|Api.ApiError,
 		cancel: null as null|Api.Canceler,
 
-		viewGroupName: null as string|null,
+		_viewGroupName: null as string|null,
 		showTitles: true,
 		showDocumentHits: false,
 		downloadInProgress: false, // csv download
@@ -331,6 +331,11 @@ export default Vue.extend({
 		isDocs(): boolean { return BLTypes.isDocResults(this.results); },
 		isGroups(): boolean { return BLTypes.isGroups(this.results); },
 		resultsHaveHits(): boolean { return this.results != null && !!this.results.summary.searchParam.patt},
+		viewGroupName(): string {
+			if (this.viewGroup == null) { return ''; }
+			return this._viewGroupName ? this._viewGroupName :
+			       this.viewGroup.substring(this.viewGroup.indexOf(':')+1) || '[unknown]'
+		},
 
 		breadCrumbs(): any {
 			const r = [];
@@ -350,7 +355,7 @@ export default Vue.extend({
 			}
 			if (this.viewGroup != null) {
 				r.push({
-					label: 'Viewing group ' + (this.viewGroupName || this.viewGroup.substring(this.viewGroup.indexOf(':')+1) || '[unknown]'),
+					label: 'Viewing group ' + this.viewGroupName,
 					title: '',
 					active: true,
 					onClick: undefined
@@ -432,12 +437,31 @@ export default Vue.extend({
 	border-radius: 0;
 	margin: 0 -15px 30px;
 	padding: 12px 15px;
-	overflow: hidden;
-	text-overflow: ellipsis;
 	&:hover {
 		// Pop in front of totals counter
-		z-index: 2;
+		z-index: 3;
 		position: relative;
+	}
+
+	&:after {
+		background: linear-gradient(to bottom, white 25%, rgba(255,255,255,0));
+		bottom: 0;
+		content: "";
+		transition-timing-function: ease-in-out;
+		height: 50px;
+		left: 0;
+		position: absolute;
+		right: 0;
+		transform: translateY(100%);
+		transition: opacity 0.17s;
+		z-index: 100;
+
+		display: none;
+	}
+	&:hover:after,
+	&:focus:after,
+	&:focus-within:after {
+		display: block;
 	}
 }
 
@@ -465,10 +489,7 @@ a.sort {
 	top: 0;
 	background: white;
 	padding: 8px 8px 15px 15px;
-
-	// &:hover {
-	// 	z-index: -2;
-	// }
+	z-index: 2;
 
 	&:before {
 		content: "";

@@ -8,28 +8,29 @@
 			</tr>
 		</thead>
 		<tbody>
-			<tr v-for="({identity, identityDisplay, size}) in groups" :key="identity" :class="['grouprow', { 'open': concordances[identity] && concordances[identity].open }]">
-				<td class="td-group-identity" :title="identityDisplay">{{identityDisplay || '[unknown]'}}</td>
-				<td class="td-group-size">
-					<div class="progress group-size-indicator" @click="openPreviewConcordances(identity)">
-						<div class="progress-bar progress-bar-primary" :style="[{'min-width': width(size)}]">{{size}}</div>
-					</div>
-
-					<!-- todo spinner, disable loading more, etc -->
-					<div v-if="concordances[identity] && concordances[identity].open" class="well-light">
-						<div>
-							<button type="button" class="btn btn-sm btn-link" @click="openFullConcordances(identity, identityDisplay)">&#171; View detailed concordances in this group</button>
-							<template v-if="canLoadConcordances(identity)">
-								&nbsp;-&nbsp;<button
-									type="button"
-									class="btn btn-sm btn-link"
-									@click="loadPreviewConcordances(identity)"
-									:disabled="!canLoadConcordances(identity)"
-								>{{`${concordances[identity].request != null ? 'loading...' : 'Load more concordances...'}`}}</button>
-							</template>
+			<template v-for="({identity, identityDisplay, size}) in groups">
+				<tr :key="`${identity}-group`" :class="['grouprow', { 'open': concordances[identity] && concordances[identity].open }]">
+					<td class="td-group-identity" :title="identityDisplay">{{identityDisplay || '[unknown]'}}</td>
+					<td class="td-group-size">
+						<div class="progress group-size-indicator" @click="openPreviewConcordances(identity)">
+							<div class="progress-bar progress-bar-primary" :style="[{'min-width': width(size)}]">{{size}}</div>
+						</div>
+					</td>
+					<td class="td-group-relative-size">{{size / resultCount | frac2Percent}}</td>
+				</tr>
+				<tr :key="`${identity}-concordances`" v-if="concordances[identity] && concordances[identity].open"><td colspan="3">
+					<div class="well-light">
+						<div class="concordance-controls">
+							<button type="button" class="btn btn-sm btn-primary" @click="openFullConcordances(identity, identityDisplay)"><span class="fa fa-angle-double-left"></span> View detailed concordances</button>
+							<button type="button" v-if="!allConcordancesLoaded(identity)" :disabled="!canLoadConcordances(identity)" class="btn btn-sm btn-default" @click="loadPreviewConcordances(identity)">
+								<template v-if="concordances[identity].request != null">
+									<span class="fa fa-spin fa-spinner"></span> Loading...
+								</template>
+								<template v-else>Load more concordances</template>
+							</button>
 						</div>
 
-						<div v-if="concordances[identity].request">Loading...</div>
+						<!-- <div v-if="concordances[identity].request">Loading...</div> -->
 						<div v-if="concordances[identity].error" class="text-danger">{{concordances[identity].error.title}}<br>{{concordances[identity].error.message}}</div>
 
 						<template v-if="type === 'hits' && concordances[identity].concordances.length > 0">
@@ -61,9 +62,9 @@
 							</table>
 						</template>
 					</div>
-				</td>
-				<td class="td-group-relative-size">{{size / resultCount | frac2Percent}}</td>
-			</tr>
+				</td></tr>
+			</template>
+
 		</tbody>
 	</table>
 </template>
@@ -145,6 +146,7 @@ export default Vue.extend({
 			}
 		},
 		canLoadConcordances(id: string) { const conc = this.concordances[id]; return conc && conc.request == null && conc.available > conc.concordances.length; },
+		allConcordancesLoaded(id: string) { const conc = this.concordances[id]; return conc && conc.available <= conc.concordances.length; },
 		loadPreviewConcordances(id: string) {
 			const cache = this.concordances[id];
 
@@ -278,6 +280,10 @@ export default Vue.extend({
 		width: auto;
 		white-space: nowrap;
 	}
+}
+
+.concordance-controls {
+	margin-bottom: 8px;
 }
 
 .well-light {

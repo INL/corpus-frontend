@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<div :class="['groupby-container', {'context-enabled': contextEnabled}]">
+		<div :class="['groupby-container', 'input-group', {'context-enabled': contextEnabled}]">
 			<SelectPicker
 				class="groupselect"
 				data-size="auto"
@@ -20,6 +20,7 @@
 
 			<div v-if="contextEnabled" class="btn-group" style="display: flex; flex-wrap: none; flex: none;">
 				<button type="button" class="btn btn-sm btn-primary" @click="submitContext" style="border-top-left-radius: 0; border-bottom-left-radius: 0;">Apply</button>
+
 				<!--
 				<button type="button" class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"/></button>
 				<ul class="dropdown-menu">
@@ -33,6 +34,10 @@
 					<input type="checkbox" :id="uid+'case'" v-model="caseSensitive">Case sensitive
 				</label>
 			</div>
+		</div>
+
+		<div v-if="viewGroup" style="color: #888; font-size: 85%;">
+			<button type="button" class="btn btn-sm btn-primary" @click="viewGroup = null"><span class="fa fa-angle-double-right"></span> Go back to grouped view</button>
 		</div>
 
 		<div v-if="contextEnabled" class="groupby-context-container" >
@@ -67,7 +72,8 @@ export default Vue.extend({
 		ContextGroup,
 	},
 	props: {
-		type: String as () => ResultsStore.ViewId
+		type: String as () => ResultsStore.ViewId,
+		viewGroupName: String as () => null|string
 	},
 	data: () => ({
 		contextEnabled: false,
@@ -114,6 +120,10 @@ export default Vue.extend({
 
 				this.contextEnabled = newContext;
 			}
+		},
+		viewGroup: {
+			get(): string|null { return this.storeModule.getState().viewGroup; },
+			set(v: string|null) { this.storeModule.actions.viewGroup(v); },
 		},
 		appliedContextGroups: {
 			get(): string[] { return this.storeModule.getState().groupByAdvanced; },
@@ -250,10 +260,8 @@ export default Vue.extend({
 	}
 }
 
-.groupby-buttons-container {
-	display: flex;
-	justify-content: space-between;
-	margin-top: 5px;
+.groupby-context-container {
+	margin: 5px 0;
 }
 
 </style>

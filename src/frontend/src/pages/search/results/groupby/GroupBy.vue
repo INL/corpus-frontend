@@ -20,10 +20,12 @@
 
 			<div v-if="contextEnabled" class="btn-group" style="display: flex; flex-wrap: none; flex: none;">
 				<button type="button" class="btn btn-sm btn-primary" @click="submitContext" style="border-top-left-radius: 0; border-bottom-left-radius: 0;">Apply</button>
+				<!--
 				<button type="button" class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"/></button>
 				<ul class="dropdown-menu">
 					<li><a href="#" @click.prevent="undoContext">Undo</a></li>
 				</ul>
+				-->
 			</div>
 
 			<div v-if="groupBy && !contextEnabled" class="checkbox-inline" style="margin-left: 5px;">

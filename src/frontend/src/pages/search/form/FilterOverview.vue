@@ -1,5 +1,5 @@
 <template>
-	<div class="text-muted text-small filter-overview">
+	<div class="filter-overview">
 		<span v-for="filter in filters" :key="filter.id">{{filter.displayName}}: <i>{{filter.values.join(', ')}}</i>&nbsp;</span>
 
 		<div class="sub-corpus-size">

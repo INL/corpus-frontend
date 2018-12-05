@@ -7,6 +7,8 @@
 			:initialResults="results"
 			:type="type"
 			:indexId="indexId"
+
+			@update="paginationResults = $event"
 		/>
 
 		<ol class="breadcrumb resultscrumb">
@@ -23,7 +25,12 @@
 		</div>
 
 		<div v-if="results" style="margin: 10px 0px;">
-			<Pagination :page="shownPage" :maxPage="maxShownPage" @change="page = $event"/>
+			<Pagination
+				:page="pagination.shownPage"
+				:maxPage="pagination.maxShownPage"
+
+				@change="page = $event"
+			/>
 		</div>
 
 		<template v-if="resultsHaveData">
@@ -152,6 +159,8 @@ export default Vue.extend({
 		showDocumentHits: false,
 		downloadInProgress: false, // csv download
 
+		paginationResults: null as null|BLTypes.BLSearchResult,
+
 		// Should we scroll when next results arrive - set when main form submitted
 		scroll: true,
 	}),
@@ -183,6 +192,7 @@ export default Vue.extend({
 
 			if (this.type === 'hits' && !params.patt) {
 				this.results = null;
+				this.paginationResults = null;
 				this.error = new Api.ApiError('No results', 'No hits to display... (one or more of Lemma/PoS/Word is required).', 'No results');
 				return;
 			}
@@ -211,6 +221,7 @@ export default Vue.extend({
 		setSuccess(data: BLTypes.BLSearchResult) {
 			debugLog('search results', data);
 			this.results = data;
+			this.paginationResults = data;
 			this.error = null;
 			this.request = null;
 			this.cancel = null;
@@ -220,6 +231,7 @@ export default Vue.extend({
 				debugLog('Request failed: ', data);
 				this.error = data;
 				this.results = null;
+				this.paginationResults = null;
 			}
 			this.request = null;
 			this.cancel= null;
@@ -279,44 +291,40 @@ export default Vue.extend({
 		// just to know when we should initiate a scroll event
 		querySettings() { return query.get.lastSubmittedParameters(); },
 
-		totalResults(): number {
-			if (this.results == null) {
-				return 0;
-			} else if (BLTypes.isGroups(this.results)) {
-				return this.results.summary.numberOfGroups;
-			} else if (BLTypes.isHitResults(this.results)) {
-				return this.results.summary.numberOfHitsRetrieved;
-			} else {
-				return this.results.summary.numberOfDocsRetrieved;
+
+		pagination(): {
+			// totalResults: number,
+			shownPage: number,
+			maxShownPage: number
+		} {
+			const r: BLTypes.BLSearchResult|null = this.paginationResults || this.results;
+			if (r == null) {
+				return {
+					shownPage: 0,
+					maxShownPage: 0,
+				}
 			}
-		},
-		/** 0-based page the current results contain */
-		shownPage(): number {
-			if (this.results == null) {
-				return 0;
-			} else {
-				// No need for -1 trickery, as this is the first result shown whereas totalResults
-				// is the last result shown
-				const pageSize = this.results.summary.requestedWindowSize;
-				return Math.floor(this.results.summary.windowFirstResult / pageSize);
-			}
-		},
-		/** 0-based maximum page available for the current result set */
-		maxShownPage(): number {
-			if (this.results == null) {
-				return 0;
-			} else {
-				const pageSize = this.results.summary.requestedWindowSize;
-				const exact = this.totalResults % pageSize === 0;
-				const pageCount = Math.floor(this.totalResults / pageSize);
-				return exact ? pageCount - 1 : pageCount;
-			}
+
+			const pageSize = this.results!.summary.requestedWindowSize;
+			const shownPage = Math.floor(this.results!.summary.windowFirstResult / pageSize);
+			const totalResults = BLTypes.isGroups(r) ? r.summary.numberOfGroups :
+			                     BLTypes.isHitResults(r) ? r.summary.numberOfHitsRetrieved :
+			                     r != null ? r.summary.numberOfDocsRetrieved :
+			                     0;
+
+			// subtract one page if number of results exactly divisible by page size
+			// e.g. 20 results for a page size of 20 is still only one page instead of 2.
+			const pageCount = Math.floor(totalResults / pageSize) - ((totalResults % pageSize === 0) ? 1 : 0)
+
+			return {
+				shownPage,
+				maxShownPage: pageCount
+			};
 		},
 
 		active(): boolean {
 			return globalStore.get.viewedResults() === this.type;
 		},
-
 
 		// simple view variables
 		indexId(): string { return corpus.getState().id; },

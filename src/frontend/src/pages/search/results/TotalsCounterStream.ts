@@ -1,5 +1,5 @@
-import { ReplaySubject, Observable, pipe, of } from 'rxjs';
-import { switchMap, map, expand, tap } from 'rxjs/operators';
+import { ReplaySubject, Observable, pipe, of, empty } from 'rxjs';
+import { switchMap, map, expand, catchError, timeout } from 'rxjs/operators';
 
 import * as Api from '@/api';
 
@@ -12,8 +12,11 @@ export type CounterInput = {
 };
 
 export type CounterOutput = {
-	state: 'counting'|'paused'|'finished'|'limited',
+	state: 'counting'|'paused'|'finished'|'limited';
 	results: BLTypes.BLSearchResult;
+}|{
+	state: 'error';
+	error: Api.ApiError;
 };
 
 type CounterInternal = CounterInput & CounterOutput;
@@ -29,7 +32,7 @@ function getCountState(results: BLTypes.BLSearchResult): 'limited'|'finished'|'c
 }
 
 const REFRESH_INTERVAL = 2_000;
-const REFRESH_DURATION = 30_000;
+const REFRESH_DURATION = 5_000;
 
 export default pipe(
 	switchMap((initial: CounterInput) => {
@@ -66,22 +69,19 @@ export default pipe(
 						So instead just return a stream we can control ourselves, so we can yield the value asynchronously
 						allowing us to wait for the response, handle cancellation, etc.
 					*/
-					const values$ = new ReplaySubject<CounterInternal>(1);
 					const {indexId, operation, results: oldResults, state} = cur;
-
 					if (state !== 'counting' || unsubscribed) {
 						if (timeoutHandle != null) {
 							clearTimeout(timeoutHandle);
 							timeoutHandle = null;
 						}
 
-						values$.complete();
-						return values$;
+						return empty();
 					}
 
 					// Delay for a second so we don't pummel the server with rapid requests if we don't need to
 					// Do this through a simple timeout so we don't have to nest so many streams
-					new Promise(resolve => setTimeout(resolve, REFRESH_INTERVAL))
+					return new Promise(resolve => setTimeout(resolve, REFRESH_INTERVAL))
 					.then((): Promise<BLTypes.BLSearchResult> => {
 						const apiCall = operation === 'docs' ? Api.blacklab.getDocs : Api.blacklab.getHits;
 						const apiResult = apiCall(indexId, {
@@ -95,33 +95,27 @@ export default pipe(
 						cancel = apiResult.cancel;
 						return apiResult.request;
 					})
-					.then((results: BLTypes.BLSearchResult) => {
-						values$.next({
-							indexId,
-							operation,
-							results,
-							state: hitTimeout ? 'paused' : getCountState(results)
-						});
-					})
-					.catch((e: Api.ApiError) => {
-						if (e.title !== 'Request cancelled') {
-							values$.error(e);
-						}
-					})
-					.finally(() => values$.complete());
-
-					return values$;
+					.then((results: BLTypes.BLSearchResult) => ({
+						indexId,
+						operation,
+						results,
+						state: hitTimeout ? 'paused' : getCountState(results)
+					}))
+					.catch((e: Api.ApiError) => ({
+						state: 'error',
+						error: e,
+						indexId,
+						operation
+					}));
 				}),
-				map((result: CounterInternal): CounterOutput => ({
-					results: result.results,
-					state: result.state
-				}))
+				map((result: CounterInternal): CounterOutput => result) // Small typescript quirk...
 			).subscribe(subscriber);
 
 			// This is the teardown for the top-level switchmap
 			// it should ensure the recursive expand operator quits on its next iteration
 			// and tear down any async work that might have been started by the last iteration
 			return teardown;
+
 		});
 	})
 );

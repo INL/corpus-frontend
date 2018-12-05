@@ -91,7 +91,7 @@ export function getPatternString(pattern: SubmittedParameters['pattern']): strin
 			}
 
 			tokens[i][id] = (caseSensitive ? '(?-i)' : '') + makeWildcardRegex(word);
-		})
+		});
 	});
 
 	const tokenStrings = [] as string[];

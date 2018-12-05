@@ -14,6 +14,8 @@ import { MetadataValue } from '@/types/apptypes';
 const metadata$ = new ReplaySubject<MetadataValue[]>(1);
 const submittedMetadata$ = new ReplaySubject<MetadataValue[]>(1);
 
+// TODO handle errors gracefully, right now the entire stream is closed permanently.
+
 /**
  * Reads the entered document metadata filters as they are in the main search form,
  * then periodically polls blacklab for the number of matching documents and tokens,

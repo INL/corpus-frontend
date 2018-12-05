@@ -1,10 +1,5 @@
 <template>
 	<div class="container">
-		<div class="cf-panel cf-panel-lg" style="padding: 15px 30px; margin-top: 25px; margin-bottom: 15px;">
-			<h2 id="corpus-title" style="margin: 0;">{{title}}</h2>
-			<a v-if="showHomeLink" :href="homeLink" id="corpora-link">Back to my corpora</a>
-		</div>
-
 		<SearchForm id="form-search" class="cf-panel cf-panel-lg"/>
 
 		<QuerySummary v-if="resultsVisible" class="cf-panel cf-panel-lg" id="summary"/>

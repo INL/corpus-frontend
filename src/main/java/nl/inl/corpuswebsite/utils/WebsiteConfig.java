@@ -193,6 +193,10 @@ public class WebsiteConfig {
             propColumns = StringUtils.split(props);
         }
 
+        
+        if (corpusOwner != null) {
+            linksInTopBar.add(new LinkInTopBar("My corpora", contextPath + "/corpora", false));
+        }
         List<HierarchicalConfiguration<ImmutableNode>> myfields = xmlConfig.configurationsAt("InterfaceProperties.NavLinks.Link");
         for (Iterator<HierarchicalConfiguration<ImmutableNode>> it = myfields.iterator(); it.hasNext();) {
             HierarchicalConfiguration<ImmutableNode> sub = it.next();

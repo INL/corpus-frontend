@@ -5,18 +5,17 @@
 		<span v-show="(isCounting || subcorpus == null) && !error" class="fa fa-spinner fa-spin searchIndicator totals-spinner"/>
 
 		<div class="totals-text" :title="percentOfSearchSpaceClarification">
-			<span class="totals-type">
-				Total {{resultType}}<template v-if="!isFinished"> so far</template>:<br>
-				<template v-if="isGroups">Total groups<template v-if="!isFinished"> so far</template>:<br></template>
-				Total pages<template v-if="!isFinished"> so far</template>:
-			</span>
-			<span class="totals-count">
-				{{numPrefix}}{{numResults.toLocaleString()}}{{numSuffix}}<br>
-				<template v-if="isGroups">
-				{{numPrefix}}{{numGroups.toLocaleString()}}{{numSuffix}}<br>
-				</template>
-				{{numPrefix}}{{numPages.toLocaleString()}}{{numSuffix}}
-			</span>
+			<div class="totals-type">
+				<div>Total {{resultType}}<template v-if="!isFinished"> so far</template>:</div>
+				<div v-if="isGroups">Total groups<template v-if="!isFinished"> so far</template>:</div>
+				<div>Total pages<template v-if="!isFinished"> so far</template>:</div>
+			</div>
+			<div class="totals-count">
+				<div>{{numPrefix}}{{numResults.toLocaleString()}}{{numSuffix}}</div>
+				<div v-if="isGroups">{{numPrefix}}{{numGroups.toLocaleString()}}{{numSuffix}}</div>
+				<div>{{numPrefix}}{{numPages.toLocaleString()}}{{numSuffix}}</div>
+			</div>
+
 			<span class="totals-percentage">
 				<template v-if="searchSpaceCount > 0 /* might also be -1, in this case don't render -- see corpus store documentCount property */">
 				({{this.numResults / this.searchSpaceCount | frac2Percent}})

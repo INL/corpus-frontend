@@ -6,7 +6,7 @@ import VueRx from 'vue-rx';
 import memoize from 'memoize-decorator';
 import {getStoreBuilder} from 'vuex-typex';
 
-import {makeRegexWildcard} from '@/utils';
+import {makeRegexWildcard, unescapeLucene} from '@/utils';
 import parseCql from '@/utils/cqlparser';
 import parseLucene from '@/utils/luceneparser';
 import {debugLog} from '@/utils/debug';
@@ -106,14 +106,16 @@ export class UrlPageState {
 
 	@memoize
 	private get activePattern(): FormModule.ModuleRootState['activePattern'] {
+		const hasFilters = Object.keys(this.filters).length > 0;
+
 		// show the simplest view that can hold the query
 		// the other views will have the query placed in it as well, but this is more of a courtesy
 		// if no pattern exists, show the simplest search
-		if (this.simplePattern) { return 'simple'; }
+		if (this.simplePattern && !hasFilters) { return 'simple'; }
 		else if (Object.keys(this.extendedPattern.annotationValues).length > 0) { return 'extended'; }
 		else if (this.advancedPattern) { return 'advanced'; }
 		else if (this.expertPattern) { return 'expert'; }
-		return 'simple';
+		return hasFilters ? 'extended' : 'simple';
 	}
 
 	@memoize
@@ -127,7 +129,36 @@ export class UrlPageState {
 
 			return parseLucene(luceneString)
 			.filter(metadataField => supportedMetadataFields.hasOwnProperty(metadataField.id))
-			.reduce((acc, v) => {acc[v.id] = v; return acc;}, {} as {[key: string]: MetadataValue});
+			.map(metadataField => {
+				const actualField = supportedMetadataFields[metadataField.id];
+				metadataField.type = actualField.uiType;
+				switch (actualField.uiType) {
+					case 'text':
+					case 'combobox': {
+						// See utils::getFilterString
+						// types that allow the user to type their own value have special lucene characters escaped.
+						// But only when the value does not contain any whitespace (as values with whitespace need to be surrounded by quotes, which already escapes all special characters)
+						// So we need to reverse this escaping here.
+						metadataField.values = metadataField.values.map(v => v.match(/\s+/) ? v : unescapeLucene(v));
+						break;
+					}
+					case 'checkbox':
+					case 'radio':
+					case 'range':
+					case 'select':
+						// the user can't enter custom values here, so nothing to do.
+						break;
+					default:
+						// This should never happen unless new uiTypes are added
+						// in which case, maybe the values need to be handled in a special way
+						throw new Error('Unimplemented value deserializing for metadata filter uiType ' + actualField.uiType);
+				}
+				return metadataField;
+			})
+			.reduce((acc, v) => {
+				acc[v.id] = v;
+				return acc;
+			}, {} as {[key: string]: MetadataValue});
 		} catch (error) {
 			debugLog('Cannot decode lucene query ', luceneString, error);
 			return {};
@@ -229,7 +260,7 @@ export class UrlPageState {
 			})
 			.reduce((acc, v) => {acc[v.id] = v; return acc;}, {} as {[key: string]: AnnotationValue});
 		} catch (error) {
-			debugLog('Could not parse cql query', error);
+			debugLog('Cql query could not be placed in extended view', error);
 			return {};
 		}
 	}

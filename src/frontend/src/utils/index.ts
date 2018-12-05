@@ -24,6 +24,16 @@ export function makeRegexWildcard(original: string) {
 	.replace(/_ESC_PERIOD_/g, '.'); // unescape \. to .
 }
 
+/** Escapes every lucene special character, except wildcards (? and *) */
+export function escapeLucene(original: string) {
+	return original.replace(/(\+|-|&&|\|\||!|\(|\)|{|}|\[|]|\^|"|~|:|\\)/g, '\\$1');
+}
+
+/** Unescapes every lucene special character, except wildcards */
+export function unescapeLucene(original: string) {
+	return original.replace(/\\(\+|-|&&|\|\||!|\(|\)|{|}|\[|]|\^|"|~|:|\\)/g, '$1');
+}
+
 export function NaNToNull(n: number) { return isNaN(n) ? null : n; }
 
 /**
@@ -143,38 +153,61 @@ export function getFilterString(filters: AppTypes.MetadataValue[]): string|undef
 			filterStrings.push(' AND ');
 		}
 
-		if (filter.type === 'range') {
-			filterStrings.push(filter.id, ':', '[', filter.values[0], ' TO ', filter.values[1], ']');
-		} else if (filter.type !== 'text') {
-			// Surround each individual value with quotes, and surround the total with brackets
-			filterStrings.push(filter.id, ':', '("', filter.values.join('" "'), '")');
-		} else {
-			// Do the quoting thing
-			const resultParts = [] as string[];
+		switch (filter.type) {
+			case 'range': {
+				filterStrings.push(filter.id, ':', '[', filter.values[0], ' TO ', filter.values[1], ']');
+				break;
+			}
+			case 'select':
+			case 'checkbox':
+			case 'radio': {
+				// Values for these uiTypes are predetermined (i.e. user can't type in these fields)
+				// So copy out the values without wildcard substitution or regex escaping.
+				// Surround each individual values with quotes, and surround the total with brackets
+				filterStrings.push(filter.id, ':', '("', filter.values.join('" "'), '")');
+				break;
+			}
+			case 'text':
+			case 'combobox': {
+				const resultParts = [] as string[];
 
-			filter.values.forEach(value => {
-				const quotedParts = value.split(/"/);
-				let inQuotes = false;
-				for (let part of quotedParts) {
-					if (inQuotes) {
-						// Inside quotes. Add literally.
-						resultParts.push(' "');
-						resultParts.push(part);
-						resultParts.push('"');
-					} else {
-						// Outside quotes. Surround each word with quotes.
-						part = part.trim();
-						if (part.length > 0) {
+				filter.values.forEach(value => {
+					const quotedParts = value.split(/"/);
+					let inQuotes = false;
+					for (let part of quotedParts) {
+						if (inQuotes && part.match(/\s+/)) {
+							// Inside quotes and containing whitespace.
+							// Preserve the quotes, they will implicitly escape every special character inside the string
+							// NOTE: wildcards do not work for phrases anyway. (https://lucene.apache.org/core/2_9_4/queryparsersyntax.html#Wildcard%20Searches)
 							resultParts.push(' "');
-							resultParts.push(part.split(/\s+/).join('" "'));
-							resultParts.push('" ');
+							resultParts.push(part);
+							resultParts.push('"');
+						} else {
+							// Outside quotes. Split on whitespace and escape (excluding wildcards) the strings
+							// This means wildcards are preserved.
+							// NOTE: we need to account for this by checking whether any term contains whitespace
+							// while deserializing the lucene query, and reverse this escaping.
+							// This is done in store/index.ts::UrlPageState
+							part = part.trim();
+							if (part.length > 0) {
+								// resultParts.push(' "');
+								resultParts.push(...part.split(/\s+/).map(escapeLucene));
+								// resultParts.push(part.split(/\s+/).join('" "'));
+								// resultParts.push('" ');
+							}
 						}
+						inQuotes = !inQuotes;
 					}
-					inQuotes = !inQuotes;
-				}
-			});
+				});
 
-			filterStrings.push(filter.id, ':', '(' + resultParts.join('').trim(), ')');
+				filterStrings.push(filter.id, ':', '(' + resultParts.join('').trim(), ')');
+				break;
+			}
+			default: {
+				// This should never happen unless new uiTypes are added
+				// in which case, maybe the values need to be handled in a special way
+				throw new Error('Unimplemented value serialization for metadata filter uiType ' + filter.type + '!');
+			}
 		}
 	}
 

@@ -18,16 +18,16 @@
 					:name="inputId"
 					:options="options"
 
-					v-model.lazy="valueAdapterMultipleArray"
+					v-model.lazy="value"
 				/>
 			</div>
 		</template>
 		<template v-else-if="uiType === 'range'">
 			<div class="col-xs-4">
-				<input type="text" :id="inputId+'_lower'" placeholder="From" class="form-control" autocomplete="off" v-model.lazy="valueAdapterRange.low">
+				<input type="text" :id="inputId+'_lower'" placeholder="From" class="form-control" autocomplete="off" v-model="value.low">
 			</div>
 			<div class="col-xs-4">
-				<input type="text" :id="inputId+'_upper'" placeholder="To" class="form-control" autocomplete="off" v-model.lazy="valueAdapterRange.high">
+				<input type="text" :id="inputId+'_upper'" placeholder="To" class="form-control" autocomplete="off" v-model="value.high">
 			</div>
 		</template>
 		<template v-else-if="uiType === 'checkbox'">
@@ -41,7 +41,7 @@
 						:name="inputId+'_'+index"
 						:id="inputId+'_'+index"
 
-						v-model="valueAdapterMultipleMap[option.value]"
+						v-model="value[option.value]"
 
 					> {{option.label || option.value}}</label>
 				</div>
@@ -56,9 +56,9 @@
 						:name="inputId"
 						:id="inputId+'_'+index"
 
-						v-model="valueAdapterSingle"
-						@click="$event.target.checked ? valueAdapterSingle = '' : undefined /* clear if clicked again */"
-						@input.space="$event.target.checked ? valueAdapterSingle = '' : undefined /* clear if clicked again */"
+						v-model="value"
+						@click="$event.target.checked ? value = '' : undefined /* clear if clicked again */"
+						@input.space="$event.target.checked ? value = '' : undefined /* clear if clicked again */"
 					> {{option.label || option.value}}</label>
 				</div>
 			</div>
@@ -74,7 +74,7 @@
 					:autocomplete="autocomplete"
 
 					ref="autocomplete"
-					v-model.lazy="valueAdapterSingle"
+					v-model="value"
 				/>
 			</div>
 		</template>
@@ -103,7 +103,11 @@ export default Vue.extend({
 		filter: Object as () => CorpusStore.NormalizedMetadataField,
 	},
 	data: () => ({
-		valueAdapterMultipleMap: {} as { [value: string]: boolean, }
+		value: null as null| // uninitialized
+			{[key: string]: boolean}| // checkbox
+			string[]| // select
+			string| // radio, combobox, text
+			{low: string; high: string;} // range
 	}),
 	computed: {
 		id(): string { return this.filter.id },
@@ -117,74 +121,103 @@ export default Vue.extend({
 		autocomplete(): boolean { return this.filter.uiType === 'combobox'; },
 		autocompleteUrl(): string { return `${BLS_URL}/autocomplete/${this.filter.id}`},
 
-		// we need some adapters to translate from string[] -> string
-		// or from string[] -> { key: boolean }
-		// and vice-versa
-		// or we get errors where we mutate inside arrays in the store directly etc
-
-		// text, radio, combobox
-		valueAdapterSingle: {
-			get(): string { return FormStore.get.metadataValue(this.id).values[0] || ''; },
-			set(v: string): void {
-				return FormStore.actions.filter({
-					id: this.id,
-					values: [v]
-				});
-			}
-		},
-
-		valueAdapterRange(): {low: string; high: string;} {
-			const id = this.id;
-			const storeValue = FormStore.get.metadataValue(id).values;
-
-			const adapter = {
-				get low(): string { return storeValue[0] || '' },
-				set low(v: string) { FormStore.actions.filter({
-					id,
-					values: [v, adapter.high]
-				});},
-
-				get high(): string { return storeValue[1] || ''},
-				set high(v: string) { FormStore.actions.filter({
-					id,
-					values: [adapter.low, v]
-				});},
-			};
-			return adapter;
-		},
-
-		valueAdapterMultipleArray: {
-			get(): string[] { return FormStore.get.metadataValue(this.id).values; },
-			set(v: string[]) { FormStore.actions.filter({
-				id: this.id,
-				values: v
-			});}
-		},
+		storeValue(): string[] { return FormStore.get.metadataValue(this.id).values; }
 	},
 	methods: {
-		autocompleteSelected(value: string) { this.valueAdapterSingle = value; }
+		autocompleteSelected(value: string) { this.value = value; }
 	},
 	watch: {
-		options: {
-			immediate: true,
-			handler(options: Array<{value: string, label: string}>) {
-				const newValues = {} as {[key:string]: boolean};
-				options.forEach(opt => {
-					newValues[opt.value] = this.valueAdapterMultipleArray.includes(opt.value)
-				});
-				this.valueAdapterMultipleMap = newValues;
+		value: {
+			// only trigger after we are initialized, so we don't write out initialization value
+			immediate: false,
+			deep: true,
+			handler(values: any) {
+				const uiType = this.uiType;
+				const id = this.id;
+				switch (this.uiType) {
+					case 'text':
+					case 'combobox':
+					case 'radio': {
+						FormStore.actions.filter({id, values: [values]});
+						break;
+					}
+					case 'select': {
+						FormStore.actions.filter({id, values});
+						break;
+					}
+					case 'checkbox': {
+						FormStore.actions.filter({
+							id,
+							values: Object.entries(values)
+								.filter(([value, selected]) => selected)
+								.map(([value, select]) => value)
+						});
+						break;
+					}
+					case 'range': {
+						FormStore.actions.filter({id, values: [values.low, values.high]});
+						break;
+					}
+					default: throw new Error('Unimplemented value handler for filter uiType ' + uiType);
+				}
 			}
 		},
-		valueAdapterMultipleMap: {
+		storeValue: {
 			immediate: true,
-			deep: true,
-			handler(v: {[key: string]: boolean}) {
-				FormStore.actions.filter({
-					id: this.id,
-					values: Object.entries(v).filter(([option, checked]) => checked).map(([option]) => option)
-				})
+			handler(v: string[]) {
+				// NOTE: we must deep-compare here to avoid infinite loops
+				// of syncing with store -> sending new local value to store -> syncing with store -> etc...
+				switch (this.uiType) {
+					case 'text':
+					case 'radio':
+					case 'combobox': {
+						// this.value = string
+						if (this.value !== v[0]) {
+							this.value = v[0] || '';
+						}
+						break;
+					}
+					case 'select': {
+						// this.value = string[]
+						if (!this.value || (this.value as any).length !== v.length || !(this.value as any).every((value: string) => v.includes(value))) {
+							this.value = v.concat(); // don't alias!
+						}
+						break;
+					}
+					case 'checkbox': {
+						// this.value = {[value: string]: boolean}
+						const currentValues: string[] = this.value ?
+							Object.entries(this.value as {[key:string]: boolean})
+							.filter(([value, selected]) => selected)
+							.map(([value, selected]) => value) : [];
+
+						if (!this.value || currentValues.length !== v.length || !v.every(value => currentValues.includes(value))) {
+							this.value = this.options.reduce((acc, o) => {
+								acc[o.value] = v.includes(o.value);
+								return acc;
+							}, {} as {[key: string]: boolean})
+						}
+						debugger;
+
+						break;
+					}
+					case 'range': {
+						// this.value = {low: string; high: string;}
+						if (!this.value || ((this.value as any).low != v[0] || (this.value as any).high != v[1])) {
+							this.value = {
+								low: v[0] || '',
+								high: v[1] || ''
+							}
+						}
+						break;
+					}
+					default: throw new Error('Unimplemented value handler for uiType ' + this.uiType);
+				}
 			}
 		}
+	},
+	created() {
+
 	}
 });
 </script>

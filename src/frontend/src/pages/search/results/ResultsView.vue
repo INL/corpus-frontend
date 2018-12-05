@@ -460,7 +460,8 @@ export default Vue.extend({
 		left: 0;
 		position: absolute;
 		right: 0;
-		transform: translateY(100%);
+		bottom: -51px;
+		// transform: translateY(100%);
 		transition: opacity 0.17s;
 		z-index: 100;
 

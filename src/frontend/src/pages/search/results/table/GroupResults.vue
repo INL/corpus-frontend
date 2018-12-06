@@ -3,8 +3,8 @@
 		<thead>
 			<tr>
 				<th style="width:30%;"><a @click="changeSort('identity')" class="sort" title="Sort by group name">Group</a></th>
-				<th style="width:70%;"><a @click="changeSort('numhits')" class="sort" title="Sort by group size">{{type === 'hits' ? 'Hits' : 'Documents'}}</a></th>
-				<th style="width:10%;"><a @click="changeSort('numhits')" class="sort" title="Sort by group size">Relative size</a></th>
+				<th style="width:70%;"><a @click="changeSort('size')" class="sort" title="Sort by group size">{{type === 'hits' ? 'Hits' : 'Documents'}}</a></th>
+				<th style="width:10%;"><a @click="changeSort('size')" class="sort" title="Sort by group size">Relative size</a></th>
 			</tr>
 		</thead>
 		<tbody>
@@ -214,6 +214,14 @@ export default Vue.extend({
 			this.$emit('viewgroup', {id, displayName});
 		},
 		changeSort(payload: string) {
+			if (payload === 'size' && this.sort == null) {
+				// Size is the default when current sort is null
+				// so it makes no sense to go from null to size, as it would give the same results
+				// instead intercept and go to inverted size sorting.
+				this.$emit('-size');
+				return;
+			}
+
 			this.$emit('sort', payload === this.sort ? '-'+payload : payload)
 		},
 	},

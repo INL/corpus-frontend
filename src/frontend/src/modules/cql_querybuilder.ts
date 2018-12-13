@@ -940,7 +940,7 @@ export class Attribute {
 		let values = [] as string[];
 		if (hasFile) {
 			rawValue = this.$controls.value_file.val() as string || '';
-			const trimmedLines = rawValue.trim().split(/\s*[\r\n]+\s*/g); // split on line breaks, ignore empty lines.
+			const trimmedLines = rawValue.trim().split(/\s+/g); // split on whitespace, across line breaks
 			values = values.concat(trimmedLines);
 		} else {
 			rawValue = this.$controls.value_simple.val() as string || '';

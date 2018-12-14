@@ -1,5 +1,5 @@
 <template>
-<select v-model="currentValue" class="selectpicker">
+<select v-model="currentValue" class="selectpicker" :disabled="disabled" @change="$emit('change', $event.target.value)">
 	<template v-for="(optOrGroup, index) in options">
 		<optgroup v-if="optOrGroup.options" :key="index" :label="optOrGroup.label">
 			<option v-for="option in optOrGroup.options"
@@ -53,6 +53,7 @@ export default Vue.extend({
 			default: true,
 			type: Boolean as () => boolean
 		},
+		disabled: Boolean,
 	},
 	computed: {
 		currentValue: {
@@ -71,6 +72,9 @@ export default Vue.extend({
 		options() {
 			Vue.nextTick(() => $(this.$el).selectpicker('refresh'));
 		},
+		disabled() {
+			Vue.nextTick(() => $(this.$el).selectpicker('refresh'));
+		}
 	},
 	mounted() {
 		$(this.$el).selectpicker();
@@ -79,7 +83,6 @@ export default Vue.extend({
 		$(this.$el).selectpicker('destroy').remove();
 	}
 });
-
 </script>
 
 <style lang="scss">

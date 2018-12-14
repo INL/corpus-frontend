@@ -17,8 +17,7 @@ import Vue from 'vue';
 
 import ResultsView from '@/pages/search/results/ResultsView.vue';
 
-import * as store from '@/store';
-import * as resultsStore from '@/store/results';
+import * as InterfaceStore from '@/store/form/interface';
 
 export default Vue.extend({
 	components: {
@@ -26,14 +25,14 @@ export default Vue.extend({
 	},
 	methods: {
 		showHits() {
-			store.actions.viewedResults('hits');
+			InterfaceStore.actions.viewedResults('hits');
 		},
 		showDocs() {
-			store.actions.viewedResults('docs');
+			InterfaceStore.actions.viewedResults('docs');
 		}
 	},
 	computed: {
-		viewedResults: store.get.viewedResults,
+		viewedResults: InterfaceStore.get.viewedResults,
 	}
 });
 </script>

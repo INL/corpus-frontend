@@ -1,6 +1,7 @@
 <template>
 	<form class="row" @submit.prevent.stop="submit" @reset.prevent.stop="reset">
 		<Annotations :class="['col-xs-12', {'col-md-6': !isQueryBuilderActive && filtersVisible}]" id="searchcontainer"/>
+		<div v-if="filtersVisible" class="col-xs-12 visible-xs visible-sm"><hr/></div>
 		<Filters v-show="filtersVisible" :class="`col-xs-12 ${isQueryBuilderActive ? 'col-md-9' : 'col-md-6'}`" id="filtercontainer"/>
 
 		<div class="col-xs-12">
@@ -40,25 +41,16 @@ export default Vue.extend({
 		afterMount: Object as any
 	},
 	computed: {
-		isQueryBuilderActive(): boolean { return FormStore.getState().activePattern === 'advanced'; },
-		filtersVisible(): boolean { return FormStore.getState().activePattern !== 'simple'; }
+		isQueryBuilderActive(): boolean { return RootStore.get.queryBuilderActive(); },
+		filtersVisible(): boolean { return RootStore.get.filtersActive(); }
 	},
 	methods: {
 		reset() {
 			RootStore.actions.reset();
-
-			// TODO handle centrally and properly, also see ResultsView.vue
-			const url = new URI();
-			const newUrl = url.search('').segmentCoded(url.segmentCoded().filter(s => s !== 'hits' && s !== 'docs'));
-
-			history.pushState(JSON.parse(JSON.stringify(Object.assign({}, RootStore.getState(), {corpus: undefined, history: undefined}))), '', newUrl.toString());
-
 			return false;
 		},
 		submit() {
-			ResultsStore.actions.resetPage();
-			ResultsStore.actions.resetGroup();
-			RootStore.actions.search();
+			RootStore.actions.searchFromSubmit();
 		}
 	}
 })

@@ -132,9 +132,8 @@ export default Vue.extend({
 				const fr = new FileReader();
 				fr.onload = function() {
 					// Replace all whitespace with pipes,
-					// this is due to the rather specific way whitespace in the simple search property fields is treated (see singlepage-bls.js:getPatternString)
-					// TODO discuss how we treat these fields with Jan/Katrien, see https://github.com/INL/corpus-frontend/issues/18
-					self.value = (fr.result as string).replace(/\s+/g, '|');
+					// Same as the querybuilder wordlist upload
+					self.value = (fr.result as string).trim().replace(/\s+/g, '|');
 				};
 				fr.readAsText(file);
 			} else {

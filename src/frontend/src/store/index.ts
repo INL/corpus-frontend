@@ -7,46 +7,40 @@ import memoize from 'memoize-decorator';
 import {getStoreBuilder} from 'vuex-typex';
 
 import {makeRegexWildcard, unescapeLucene} from '@/utils';
-import parseCql from '@/utils/cqlparser';
+import parseCql, {Attribute} from '@/utils/cqlparser';
 import parseLucene from '@/utils/luceneparser';
 import {debugLog} from '@/utils/debug';
 
-import * as FormModule from '@/store/form';
-import * as SettingsModule from '@/store/settings';
-import * as ResultsModule from '@/store/results';
 import * as CorpusModule from '@/store/corpus';
 import * as HistoryModule from '@/store/history';
+import * as QueryModule from '@/store/query';
 
-import {NormalizedIndex, MetadataValue, AnnotationValue} from '@/types/apptypes';
+// Form
+import * as FormManager from '@/store/form';
+import * as FilterModule from '@/store/form/filters';
+import * as InterfaceModule from '@/store/form/interface';
+import * as PatternModule from '@/store/form/patterns';
+import * as ExploreModule from '@/store/form/explore';
+
+// Results
+import * as ResultsManager from '@/store/results';
+import * as DocResultsModule from '@/store/results/docs';
+import * as GlobalResultsModule from '@/store/results/global';
+import * as HitResultsModule from '@/store/results/hits';
+
+import * as BLTypes from '@/types/blacklabtypes';
+import {NormalizedIndex, FilterValue, AnnotationValue} from '@/types/apptypes';
+
+import {RemoveProperties, RecursivePartial} from '@/types/helpers';
 
 Vue.use(Vuex);
 Vue.use(VueRx);
 
-/** All unknown/unspecified properties must be initialized to null to enable state reactivity */
-type ChildRootState = {
-	form: FormModule.ModuleRootState;
-	settings: SettingsModule.ModuleRootState;
-	results: ResultsModule.ModuleRootState;
+type RootState = {
 	corpus: CorpusModule.ModuleRootState;
 	history: HistoryModule.ModuleRootState;
-};
-
-type OwnRootState = {
-	viewedResults: null|ResultsModule.ViewId
-};
-
-type RootState = ChildRootState&OwnRootState;
-
-const ownInitialState: OwnRootState = {
-	viewedResults: null
-};
-
-/**
- * Not all state information is contained in the url,
- * create a new type that captures only those parts that can and should be extracted from the url.
- * For now this is everything, except the indexmetadata and history
- */
-export type SlimRootState = Pick<RootState, Exclude<keyof RootState, 'corpus'|'history'>>;
+	query: QueryModule.ModuleRootState;
+}&FormManager.PartialRootState&ResultsManager.PartialRootState;
 
 /**
  * Decode the current url into a valid page state configuration.
@@ -54,7 +48,7 @@ export type SlimRootState = Pick<RootState, Exclude<keyof RootState, 'corpus'|'h
  */
 export class UrlPageState {
 	/**
-	 * Path segments of the url this was constructed with, typically something like ['corpus-frontend', corpusname, 'search', ('docs'|'hits')?]
+	 * Path segments of the url this was constructed with, typically something like ['corpus-frontend', ${corpus.id}, ('search'), ('docs'|'hits')]
 	 * But might contain extra leading segments if the application is proxied.
 	 */
 	private paths: string[];
@@ -67,59 +61,31 @@ export class UrlPageState {
 	}
 
 	@memoize
-	private get form(): FormModule.ModuleRootState {
+	public get(): HistoryModule.HistoryEntry {
 		return {
+			explore: this.explore,
 			filters: this.filters,
-			pattern: {
-				simple: this.simplePattern,
-				extended: this.extendedPattern,
-				advanced: this.advancedPattern,
-				expert: this.expertPattern,
-			},
-			activePattern: this.activePattern,
-			submittedParameters: null
+			interface: this.interface,
+			patterns: this.patterns,
+
+			docs: this.docs,
+			global: this.global,
+			hits: this.hits,
+
+			// submitted query not parsed from url: is restored from rest of state later.
 		};
 	}
 
 	@memoize
-	private get settings(): SettingsModule.ModuleRootState {
+	private get explore(): ExploreModule.ModuleRootState {
 		return {
-			pageSize: this.pageSize,
-			sampleMode: this.sampleMode,
-			sampleSeed: this.sampleSeed,
-			sampleSize: this.sampleSize,
-			wordsAroundHit: this.wordsAroundHit
-		};
-	}
-
-	public get(): SlimRootState {
-		return {
-			form: this.form,
-			settings: this.settings,
-			results: {
-				hits: this.getLocalSearchParameters('hits'),
-				docs: this.getLocalSearchParameters('docs'),
-			},
-			viewedResults: this.viewedResults
+			frequency: this.frequencies || ExploreModule.defaults.frequency,
+			ngram: this.ngrams || ExploreModule.defaults.ngram
 		};
 	}
 
 	@memoize
-	private get activePattern(): FormModule.ModuleRootState['activePattern'] {
-		const hasFilters = Object.keys(this.filters).length > 0;
-
-		// show the simplest view that can hold the query
-		// the other views will have the query placed in it as well, but this is more of a courtesy
-		// if no pattern exists, show the simplest search
-		if (this.simplePattern && !hasFilters) { return 'simple'; }
-		else if (Object.keys(this.extendedPattern.annotationValues).length > 0) { return 'extended'; }
-		else if (this.advancedPattern) { return 'advanced'; }
-		else if (this.expertPattern) { return 'expert'; }
-		return hasFilters ? 'extended' : 'simple';
-	}
-
-	@memoize
-	private get filters(): {[key: string]: MetadataValue} {
+	private get filters(): FilterModule.ModuleRootState {
 		const luceneString = this.getString('filter', null, v=>v?v:null);
 		if (luceneString == null) {
 			return {};
@@ -158,10 +124,85 @@ export class UrlPageState {
 			.reduce((acc, v) => {
 				acc[v.id] = v;
 				return acc;
-			}, {} as {[key: string]: MetadataValue});
+			}, {} as {[key: string]: FilterValue});
 		} catch (error) {
 			debugLog('Cannot decode lucene query ', luceneString, error);
 			return {};
+		}
+	}
+
+	/**
+	 * Return the frequency form state, if the query fits in there in its entirity.
+	 * Null is returned otherwise.
+	 */
+	@memoize
+	private get frequencies(): null|ExploreModule.ModuleRootState['frequency'] {
+		if (this.expertPattern !== '[]' || this._groups.length !== 1 || this.groupBy.length !== 1) {
+			return null;
+		}
+
+		const group = this.groupBy[0];
+		if (!group.startsWith('hit:')) {
+			return null;
+		}
+
+		const annotationId = group.substring(4);
+		if (!CorpusModule.get.annotationDisplayNames().hasOwnProperty(annotationId)) {
+			return null;
+		}
+
+		return { annotationId };
+	}
+
+	@memoize
+	private get interface(): InterfaceModule.ModuleRootState {
+		try {
+			const uiStateFromUrl: Partial<InterfaceModule.ModuleRootState>|null = JSON.parse(this.getString('interface', null, v => v.startsWith('{')?v:null)!);
+			if (!uiStateFromUrl) {
+				throw new Error('No url ui state, falling back to determining from rest of parameters.');
+			}
+			return {
+				...InterfaceModule.defaults,
+				...uiStateFromUrl,
+				// This is not contained in the 'interface' query parameters, but in the path segments of the url.
+				// hence decode seperately.
+				viewedResults: this.viewedResults
+			};
+		} catch (e) {
+			// Can't parse from url, instead determine the best state based on other parameters.
+			const ui = InterfaceModule.defaults;
+
+			// show the pattern view that can hold the query
+			// the other views will have the query placed in it as well (if it fits), but this is more of a courtesy
+			// if no pattern exists, show the simplest search
+			const hasFilters = Object.keys(this.filters).length > 0;
+			let fromPattern = true; // is interface state actually from the pattern, or from the default fallback?
+			if (this.simplePattern && !hasFilters) {
+				ui.patternMode = 'simple';
+			} else if ((Object.keys(this.extendedPattern.annotationValues).length > 0)) {
+				ui.patternMode = 'extended';
+			} else if (this.advancedPattern) {
+				ui.patternMode = 'advanced';
+			} else if (this.expertPattern) {
+				ui.patternMode = 'expert';
+			} else {
+				ui.patternMode = hasFilters ? 'extended' : 'simple';
+				fromPattern = false;
+			}
+
+			// Open any results immediately?
+			ui.viewedResults = this.viewedResults;
+
+			// Explore forms have priority over normal search form
+			if (this.frequencies != null) {
+				ui.form = 'explore';
+				ui.exploreMode = 'frequency';
+			} else if (this.ngrams != null && !(fromPattern && ui.patternMode === 'simple')) {
+				ui.form = 'explore';
+				ui.exploreMode = 'ngram';
+			}
+
+			return ui;
 		}
 	}
 
@@ -175,9 +216,86 @@ export class UrlPageState {
 		}
 	}
 
+	/**
+	 * Return the ngram form state, if the query fits in there in its entirity.
+	 * Null is returned otherwise.
+	 */
+	@memoize
+	private get ngrams(): null|ExploreModule.ModuleRootState['ngram'] {
+		if (this.groupByAdvanced.length || this.groupBy.length === 0) {
+			return null;
+		}
+
+		const group = this.groupBy[0];
+		if (!group.startsWith('hit:')) {
+			return null;
+		}
+
+		const annotationId = group.substring(4);
+		if (!CorpusModule.get.annotationDisplayNames().hasOwnProperty(annotationId)) {
+			return null;
+		}
+
+		const cql = this._parsedCql;
+		if ( // all tokens need to be very simple [annotation="value"] tokens.
+			!cql ||
+			cql.within ||
+			cql.tokens.length > ExploreModule.defaults.ngram.maxSize ||
+			cql.tokens.find(t =>
+				t.leadingXmlTag != null ||
+				t.trailingXmlTag != null ||
+				t.repeats != null ||
+				t.optional ||
+				(t.expression != null && (t.expression.type !== 'attribute' || t.expression.operator !== '='))
+			) != null
+		) {
+			return null;
+		}
+
+		// Alright, seems we're all good.
+		return {
+			groupAnnotationId: annotationId,
+			maxSize: ExploreModule.defaults.ngram.maxSize,
+			size: cql.tokens.length,
+			tokens: cql.tokens.map(t => ({
+				id: t.expression ? (t.expression as Attribute).name : CorpusModule.get.firstMainAnnotation().id,
+				value: t.expression ? makeRegexWildcard((t.expression as Attribute).value) : ''
+			}))
+		};
+	}
+
+	@memoize
+	private get patterns(): PatternModule.ModuleRootState {
+		return {
+			simple: this.simplePattern,
+			extended: this.extendedPattern,
+			advanced: this.advancedPattern,
+			expert: this.expertPattern,
+		};
+	}
+
+	private get hits(): HitResultsModule.ModuleRootState {
+		return this.hitsOrDocs('hits');
+	}
+
+	private get docs(): DocResultsModule.ModuleRootState {
+		return this.hitsOrDocs('docs');
+	}
+
+	@memoize
+	private get global(): GlobalResultsModule.ModuleRootState {
+		return {
+			pageSize: this.pageSize,
+			sampleMode: this.sampleMode,
+			sampleSeed: this.sampleSeed,
+			sampleSize: this.sampleSize,
+			wordsAroundHit: this.wordsAroundHit
+		};
+	}
+
 	@memoize
 	private get pageSize(): number {
-		return this.getNumber('number', SettingsModule.defaults.pageSize, v => [20,50,100,200].includes(v) ? v : SettingsModule.defaults.pageSize)!;
+		return this.getNumber('number', GlobalResultsModule.defaults.pageSize, v => [20,50,100,200].includes(v) ? v : GlobalResultsModule.defaults.pageSize)!;
 	}
 
 	@memoize
@@ -272,8 +390,9 @@ export class UrlPageState {
 		// then we get wildcard conversion etc for free.
 		// (simple/extended view have their values processed when converting to query - see utils::getPatternString,
 		// and this needs to be undone too)
+		const extended = this.extendedPattern;
 		const vals = Object.values(this.extendedPattern.annotationValues);
-		if (vals.length === 1 && vals[0].id === CorpusModule.get.firstMainAnnotation().id && !vals[0].case) {
+		if (extended.within == null && vals.length === 1 && vals[0].id === CorpusModule.get.firstMainAnnotation().id && !vals[0].case) {
 			return vals[0].value;
 		}
 
@@ -290,7 +409,7 @@ export class UrlPageState {
 
 	@memoize
 	private get advancedPattern(): string|null {
-		// If the pattern can't event be parsed, the querybuilder can't use it either.
+		// If the pattern can't be parsed, the querybuilder can't use it either.
 		return this._parsedCql ? this.expertPattern : null;
 	}
 
@@ -308,7 +427,7 @@ export class UrlPageState {
 		} else if (this.getNumber('sample', null, v => (v != null && (v >= 0 && v <=100)) ? v : null) != null) {
 			return 'percentage';
 		} else {
-			return SettingsModule.defaults.sampleMode;
+			return GlobalResultsModule.defaults.sampleMode;
 		}
 	}
 
@@ -325,13 +444,10 @@ export class UrlPageState {
 		// return this.getNumber('sample', this.getNumber('samplenum', null, v => (v >= 0 && v <=100) ? v : null));
 	}
 
-	// TODO these might become dynamic in the future, then we need extra manual checking
-	// this can be done from the NormalizedIndex maybe? we might need extra data from a second request however
+	// TODO these might become dynamic in the future, then we need extra manual checking to see if the value is even supported in this corpus
 	@memoize
 	private get within(): string|null {
 		return this._parsedCql ? this._parsedCql.within || null : null;
-		// const res = this._parsedCql ? this. /<(\w+)\/>$/.exec(this.patternString) : null;
-		// return res ? res[1] : null;
 	}
 
 	@memoize
@@ -339,43 +455,50 @@ export class UrlPageState {
 		return this.getNumber('wordsaroundhit', null, v => v != null && v >= 0 && v <= 10 ? v : null);
 	}
 
-	// No memoize - has parameters
-	private getLocalSearchParameters(view: string): ResultsModule.ModuleRootState['docs'] {
-		if(this.viewedResults !== view) {
-			return {
-				caseSensitive: false,
-				groupBy: [],
-				groupByAdvanced: [],
-				sort: null,
-				viewGroup: null,
-				page: 0,
-			};
-		} else {
-			const groupBy: string[] = [];
-			// TODO verify advanced context groups are valid
-			const groupByAdvanced: string[] = [];
-			this.getString('group', '')!
-			.split(',')
-			.map(g => g.trim())
-			.filter(g => !!g)
-			.forEach(g => {
-				const isAdvancedGroup = g.startsWith('context:');
-				if (isAdvancedGroup) {
-					groupByAdvanced.push(g);
-				} else {
-					groupBy.push(g);
-				}
-			});
+	/** Return the group variables unprocessed, including their case flags and context groups intact */
+	@memoize
+	private get _groups(): string[] {
+		return this.getString('group', '')!
+		.split(',')
+		.map(g => g.trim())
+		.filter(g => !!g);
+	}
 
-			return {
-				groupBy: groupBy.map(g => g.replace(/\:[is]$/, '')), // strip case-sensitivity flag from value, is only visible in url
-				groupByAdvanced,
-				caseSensitive: groupBy.length > 0 && groupBy.every(g => g.endsWith(':s')),
-				sort: this.getString('sort', null, v => v?v:null),
-				viewGroup: this.getString('viewgroup', undefined, v => (v && groupBy.length)?v:null),
-				page: this.getNumber('first', 0, v => Math.floor(Math.max(0, v)/this.pageSize)/* round down to nearest page containing the starting index */)!,
-			};
+	@memoize
+	private get groupBy(): string[] {
+		return this._groups
+		.filter(g => !g.startsWith('context:'))
+		.map(g => g.replace(/\:[is]$/, '')); // strip case-sensitivity flag from value, is only visible in url
+	}
+
+	@memoize
+	private get groupByAdvanced(): string[] {
+		return this._groups
+		.filter(g => g.startsWith('context:'));
+	}
+
+	@memoize
+	private get caseSensitive(): boolean {
+		const groups = this._groups
+		.filter(g => !g.startsWith('context:'));
+
+		return groups.length > 0 && groups.every(g => g.endsWith(':s'));
+	}
+
+	// No memoize - has parameters
+	private hitsOrDocs(view: ResultsManager.ViewId): DocResultsModule.ModuleRootState { // they're the same anyway.
+		if (this.viewedResults !== view) {
+			return DocResultsModule.defaults;
 		}
+
+		return {
+			groupBy: this.groupBy,
+			groupByAdvanced: this.groupByAdvanced,
+			caseSensitive: this.caseSensitive,
+			sort: this.getString('sort', null, v => v?v:null),
+			viewGroup: this.getString('viewgroup', undefined, v => (v && this._groups.length > 0)?v:null),
+			page: this.getNumber('first', 0, v => Math.floor(Math.max(0, v)/this.pageSize)/* round down to nearest page containing the starting index */)!,
+		};
 	}
 
 	// ------------------------
@@ -447,97 +570,183 @@ const b = getStoreBuilder<RootState>();
 const getState = b.state();
 
 const get = {
-	viewedResults: b.read(state => state.viewedResults, 'getViewedResults'),
-	viewedResultsSettings: b.read(state => state.viewedResults != null ? state.results[state.viewedResults] : null, 'getViewedResultsSettings'),
+	viewedResultsSettings: b.read(state => state.interface.viewedResults != null ? state[state.interface.viewedResults] : null, 'getViewedResultsSettings'),
+
+	filtersActive: b.read(state => {
+		return !(InterfaceModule.get.form() === 'search' && InterfaceModule.get.patternMode() === 'simple');
+	}, 'filtersActive'),
+	queryBuilderActive: b.read(state => {
+		return InterfaceModule.get.form() === 'search' && InterfaceModule.get.patternMode() === 'advanced';
+	}, 'queryBuilderActive'),
+
+	blacklabParameters: b.read((state): BLTypes.BLSearchParameters|undefined => {
+		const activeView = get.viewedResultsSettings();
+		if (activeView == null) {
+			return undefined;
+			// throw new Error('Cannot generate blacklab parameters without knowing what kinds of results are being viewed (hits or docs)');
+		}
+
+		if (state.query == null) {
+			return undefined;
+			// throw new Error('Cannot generate blacklab parameters before search form has been submitted');
+		}
+
+		if (state.global.sampleSize && state.global.sampleSeed == null) {
+			throw new Error('Should provide a sampleSeed when random sampling, or every new page of results will use a different seed');
+		}
+
+		return {
+			filter: QueryModule.get.filterString(),
+			first: state.global.pageSize * activeView.page,
+			group: activeView.groupBy.map(g => g + (activeView.caseSensitive ? ':s':':i')).concat(activeView.groupByAdvanced).join(',') || undefined,
+
+			number: state.global.pageSize,
+			patt: QueryModule.get.patternString(),
+
+			sample: (state.global.sampleMode === 'percentage' && state.global.sampleSize) ? state.global.sampleSize : undefined,
+			samplenum: (state.global.sampleMode === 'count' && state.global.sampleSize) ? state.global.sampleSize : undefined,
+			sampleseed: state.global.sampleSize != null ? state.global.sampleSeed! /* non-null precondition checked above */ : undefined,
+
+			sort: activeView.sort != null ? activeView.sort : undefined,
+			viewgroup: activeView.viewGroup != null ? activeView.viewGroup : undefined,
+			wordsaroundhit: state.global.wordsAroundHit != null ? state.global.wordsAroundHit : undefined,
+		};
+	}, 'blacklabParameters')
 };
 
 const actions = {
-	search: b.commit(state => {
-		const oldCqlPatt = state.form.submittedParameters ? state.form.submittedParameters.pattern : null;
-		// TODO make this implicit instead of having to write->read->write state here
-		FormModule.actions.search();
-		// Do not reset page! We come through here when loading the page initially
-		// and it would cause the page parameter from url to be ignored/reset
-		// ResultsModule.actions.resetPage();
+	/** Read the form state, build the query, reset the results page/grouping, etc. */
+	searchFromSubmit: b.commit(state => {
+		// Reset the grouping/page/sorting/etc
+		ResultsManager.actions.resetResults();
+		// Apply the desired grouping for this form, if needed.
+		if (state.interface.form === 'explore') {
+			const exploreMode = state.interface.exploreMode;
+			InterfaceModule.actions.viewedResults('hits');
+			HitResultsModule.actions.groupBy(exploreMode === 'ngram' ? [ExploreModule.get.ngram.groupBy()] : [ExploreModule.get.frequency.groupBy()]);
+		}
 
-		const cqlPatt = state.form.submittedParameters!.pattern; // only after form.search() !
-		let newView = state.viewedResults;
+		// Open the results, which actually executes the query.
+		const oldPattern = QueryModule.get.patternString();
+		actions.searchAfterRestore();
+		const newPattern = QueryModule.get.patternString();
+
+		let newView = InterfaceModule.get.viewedResults();
 		if (newView == null) {
-			newView = cqlPatt ? 'hits' : 'docs';
-		} else if (newView === 'hits' && !cqlPatt) {
+			newView = newPattern ? 'hits' : 'docs';
+		} else if (newView === 'hits' && !newPattern) {
 			newView = 'docs';
-		} else if (oldCqlPatt == null && cqlPatt != null) {
+		} else if (oldPattern == null && newPattern != null) {
 			newView = 'hits';
 		}
 
-		actions.viewedResults(newView);
-		HistoryModule.actions.addEntry(state);
-	}, 'search'),
+		InterfaceModule.actions.viewedResults(newView);
+	}, 'searchFromSubmit'),
+
+	/**
+	 * Same deal, parse the form and generate the appropriate query, but do not change which, and how results are displayed
+	 * This is for when the page is first loaded, the url is decoded and might have contained information about how the results are displayed.
+	 * This data is now already in the store, we don't want to clear this.
+	 *
+	 * NOTE: this does make some assumption that the state shape is valid.
+	 * Namely that the groupBy parameter makes sense if the current search mode is ngrams or frequencies.
+	 */
+	searchAfterRestore: b.commit(state => {
+		let submittedFormState: QueryModule.ModuleRootState;
+
+		// jump through some typescript hoops
+		const activeForm = InterfaceModule.get.form();
+		switch (activeForm) {
+			case 'explore': {
+				const exploreMode = InterfaceModule.get.exploreMode();
+				submittedFormState = {
+					form: activeForm,
+					subForm: exploreMode,
+					// Copy so we don't alias, we should "snapshot" the current form
+					// Also cast back into correct type after parsing/stringifying so we don't lose type-safety (parse returns any)
+					filters: get.filtersActive() ? JSON.parse(JSON.stringify(FilterModule.get.activeFiltersMap())) as ReturnType<typeof FilterModule['get']['activeFiltersMap']> : {},
+					formState: JSON.parse(JSON.stringify(ExploreModule.getState()[exploreMode])) as ExploreModule.ModuleRootState[typeof exploreMode],
+				};
+				break;
+			}
+			case 'search': { // activeForm === 'search'
+				const patternMode = InterfaceModule.get.patternMode();
+				submittedFormState = {
+					form: activeForm,
+					subForm: patternMode,
+					// Copy so we don't alias the objects, we should "snapshot" the current form
+					// Also cast back into correct type after parsing/stringifying so we don't lose type-safety (parse returns any)
+					filters: get.filtersActive() ? JSON.parse(JSON.stringify(FilterModule.get.activeFiltersMap())) as ReturnType<typeof FilterModule['get']['activeFiltersMap']> : {},
+					formState: JSON.parse(JSON.stringify(PatternModule.getState()[patternMode])) as PatternModule.ModuleRootState[typeof patternMode],
+				};
+				break;
+			}
+			default: {
+				throw new Error('Form ' + activeForm + ' cannot generate blacklab query; not implemented!');
+			}
+		}
+		QueryModule.actions.search(submittedFormState);
+	}, 'searchFromRestore'),
 
 	reset: b.commit(state => {
-		FormModule.actions.reset();
-		SettingsModule.actions.reset();
-		ResultsModule.actions.reset();
-		state.viewedResults = null;
-	}, 'reset'),
+		FormManager.actions.reset();
+		ResultsManager.actions.resetResults();
+		QueryModule.actions.reset();
+	}, 'resetRoot'),
 
-	replace: b.dispatch(({rootState: state}, payload: Partial<RootState>) => {
-		if (payload.form != null) { FormModule.actions.replace(payload.form); }
-		if (payload.settings != null) { SettingsModule.actions.replace(payload.settings); }
-		if (payload.results != null) { ResultsModule.actions.replace(payload.results); }
-		if (payload.viewedResults != null) {
-			actions.viewedResults(payload.viewedResults);
+	replace: b.commit((state, payload: HistoryModule.HistoryEntry) => {
+		FormManager.actions.replace(payload);
+		ResultsManager.actions.replace(payload);
+
+		// The state we just restored has results open, so execute a search.
+		if (payload.interface.viewedResults != null) {
+			actions.searchAfterRestore();
 		}
-		// State should be up to date with the new payload now
-		if (state.form.submittedParameters == null && state.viewedResults != null) {
-			actions.search();
-		}
-	}, 'replace'),
-	replaceFromHistory: b.dispatch(({rootState: state}, payload: HistoryModule.HistoryEntry) => {
-		debugLog('Replacing state from history', payload);
-
-		FormModule.actions.replaceFromHistory(payload);
-		SettingsModule.actions.replaceFromHistory(payload);
-		ResultsModule.actions.replaceFromHistory(payload);
-
-		actions.viewedResults(payload.viewedResults);
-		actions.search();
-	}, 'replaceFromHistory'),
-
-	viewedResults: b.commit((state, payload: keyof ResultsModule.ModuleRootState) => state.viewedResults = payload, 'viewedResults'),
+	}, 'replaceRoot'),
 };
 
 // shut up typescript, the state we pass here is merged with the modules initial states internally.
 // NOTE: only call this after creating all getters and actions etc.
-const store = b.vuexStore({state: ownInitialState as any, strict: true});
+const store = b.vuexStore({state: {} as RootState, strict: true});
 
-/** We need to call some function from this module or this module won't be evaluated (e.g. none of this code will run) */
-// declare const SINGLEPAGE: { INDEX: BLTypes.BLIndexMetadata; }
-const init = (index: NormalizedIndex, urlState: SlimRootState) => {
-	// const index = normalizeIndex(SINGLEPAGE.INDEX);
-
-	// We need to call a function on the modules or they will be tree-shaken by webpack and their code (and thus implicit registration) won't be run.
-	SettingsModule.init();
-	FormModule.init(index);
-	ResultsModule.init();
+const init = (index: NormalizedIndex, urlState: HistoryModule.HistoryEntry) => {
 	CorpusModule.init();
-	HistoryModule.init(index);
 
+	FormManager.init();
+	ResultsManager.init();
+
+	HistoryModule.init();
+	QueryModule.init();
+
+	debugLog('state from url', urlState);
 	actions.replace(urlState);
 	debugLog('Finished initializing state shape and loading initial state from url.');
 };
 
-// TODO remove me, debugging only - use expose-loader or something?
-(window as any).vuexActions = {
-	root: actions,
-	settings: SettingsModule.actions,
-	form: FormModule.actions,
-	results: {
-		root: ResultsModule.actions,
-		docs: ResultsModule.docs.actions,
-		hits: ResultsModule.hits.actions
+// Debugging helpers.
+(window as any).vuexModules = {
+	root: {
+		store,
+		getState,
+		get,
+		actions,
+		init
 	},
-	corpus: CorpusModule.actions
+
+	corpus: CorpusModule,
+	history: HistoryModule,
+	query: QueryModule,
+
+	explore: ExploreModule,
+	form: FormManager,
+	filters: FilterModule,
+	interface: InterfaceModule,
+	patterns: PatternModule,
+
+	results: ResultsManager,
+	docs: DocResultsModule,
+	hits: HitResultsModule,
+	global: GlobalResultsModule,
 };
 
 (window as any).vuexStore = store;

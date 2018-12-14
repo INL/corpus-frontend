@@ -85,7 +85,8 @@
 import Vue from 'vue';
 
 import * as CorpusStore from '@/store/corpus';
-import * as FormStore from '@/store/form';
+import * as FilterStore from '@/store/form/filters';
+
 
 import SelectPicker, {Option} from '@/components/SelectPicker.vue';
 
@@ -93,6 +94,13 @@ import SelectPicker, {Option} from '@/components/SelectPicker.vue';
 import Autocomplete from '@/mixins/autocomplete';
 
 declare const BLS_URL: string;
+
+type ValueAdapter =
+null| // uninitialized
+{[key: string]: boolean}| // checkbox
+string[]| // select
+string| // radio, combobox, text
+{low: string; high: string;} // range
 
 export default Vue.extend({
 	mixins: [Autocomplete],
@@ -103,11 +111,7 @@ export default Vue.extend({
 		filter: Object as () => CorpusStore.NormalizedMetadataField,
 	},
 	data: () => ({
-		value: null as null| // uninitialized
-			{[key: string]: boolean}| // checkbox
-			string[]| // select
-			string| // radio, combobox, text
-			{low: string; high: string;} // range
+		value: null as ValueAdapter,
 	}),
 	computed: {
 		id(): string { return this.filter.id },
@@ -121,41 +125,115 @@ export default Vue.extend({
 		autocomplete(): boolean { return this.filter.uiType === 'combobox'; },
 		autocompleteUrl(): string { return `${BLS_URL}/autocomplete/${this.filter.id}`},
 
-		storeValue(): string[] { return FormStore.get.metadataValue(this.id).values; }
+		storeValue(): string[] { return FilterStore.get.filterValue(this.id).values; }
 	},
 	methods: {
-		autocompleteSelected(value: string) { this.value = value; }
+		autocompleteSelected(value: string) { this.value = value; },
+
+		compareValues(ownValue: ValueAdapter, storeValue: string[]): boolean {
+			const uiType = this.uiType;
+			const id = this.id;
+			if (ownValue == null) {
+				return false;
+			}
+
+			switch (uiType) {
+				case 'text':
+				case 'radio':
+				case 'combobox': {
+					const v = ownValue as string;
+					return storeValue.length === 1 && v === storeValue[0];
+				}
+				case 'select': {
+					const v = ownValue as string[];
+					return v.length === storeValue.length && v.every(s => storeValue.includes(s));
+				}
+				case 'checkbox': {
+					const v = ownValue as { [value: string]: boolean };
+
+					const currentValues: string[] = Object.entries(v)
+						.filter(([value, selected]) => selected)
+						.map(([value, selected]) => value);
+
+					return currentValues.length === storeValue.length && currentValues.every(value => storeValue.includes(value));
+				}
+				case 'range': {
+					const v = ownValue as {low: string; high: string;};
+					return v.low === storeValue[0] && v.high === storeValue[1];
+				}
+				default: throw new Error('Unimplemented value comparator for uiType ' + this.uiType);
+			}
+		},
+		syncWithStore(storeValue: string[]) {
+			if (this.compareValues(this.value, storeValue)) {
+				return;
+			}
+
+			switch (this.uiType) {
+				case 'text':
+				case 'radio':
+				case 'combobox': {
+					this.value = storeValue[0] || '';
+					break;
+				}
+				case 'select': {
+					this.value = storeValue.concat(); // don't alias!
+					break;
+				}
+				case 'checkbox': {
+					this.value = this.options.reduce((acc, o) => {
+						acc[o.value] = storeValue.includes(o.value);
+						return acc;
+					}, {} as {[key: string]: boolean})
+					break;
+				}
+				case 'range': {
+					this.value = {
+						low: storeValue[0] || '',
+						high: storeValue[1] || ''
+					}
+					break;
+				}
+				default: throw new Error('Unimplemented value handler for uiType ' + this.uiType);
+			}
+		}
 	},
+
 	watch: {
 		value: {
 			// only trigger after we are initialized, so we don't write out initialization value
 			immediate: false,
 			deep: true,
-			handler(values: any) {
+			handler(ownValue: ValueAdapter) {
+				// Not initialized yet, or already equal
+				if (ownValue == null || this.compareValues(ownValue, this.storeValue)) {
+					return;
+				}
+
 				const uiType = this.uiType;
 				const id = this.id;
 				switch (this.uiType) {
 					case 'text':
 					case 'combobox':
 					case 'radio': {
-						FormStore.actions.filter({id, values: [values]});
+						FilterStore.actions.filter({id, values: [ownValue as string]});
 						break;
 					}
 					case 'select': {
-						FormStore.actions.filter({id, values});
+						FilterStore.actions.filter({id, values: ownValue as string[] });
 						break;
 					}
 					case 'checkbox': {
-						FormStore.actions.filter({
+						FilterStore.actions.filter({
 							id,
-							values: Object.entries(values)
+							values: Object.entries(ownValue as {[value: string]: boolean})
 								.filter(([value, selected]) => selected)
 								.map(([value, select]) => value)
 						});
 						break;
 					}
 					case 'range': {
-						FormStore.actions.filter({id, values: [values.low, values.high]});
+						FilterStore.actions.filter({id, values: [(ownValue as any).low, (ownValue as any).high]});
 						break;
 					}
 					default: throw new Error('Unimplemented value handler for filter uiType ' + uiType);
@@ -165,61 +243,12 @@ export default Vue.extend({
 		storeValue: {
 			immediate: true,
 			handler(v: string[]) {
-				// NOTE: we must deep-compare here to avoid infinite loops
-				// of syncing with store -> sending new local value to store -> syncing with store -> etc...
-				switch (this.uiType) {
-					case 'text':
-					case 'radio':
-					case 'combobox': {
-						// this.value = string
-						if (this.value !== v[0]) {
-							this.value = v[0] || '';
-						}
-						break;
-					}
-					case 'select': {
-						// this.value = string[]
-						if (!this.value || (this.value as any).length !== v.length || !(this.value as any).every((value: string) => v.includes(value))) {
-							this.value = v.concat(); // don't alias!
-						}
-						break;
-					}
-					case 'checkbox': {
-						// this.value = {[value: string]: boolean}
-						const currentValues: string[] = this.value ?
-							Object.entries(this.value as {[key:string]: boolean})
-							.filter(([value, selected]) => selected)
-							.map(([value, selected]) => value) : [];
-
-						if (!this.value || currentValues.length !== v.length || !v.every(value => currentValues.includes(value))) {
-							this.value = this.options.reduce((acc, o) => {
-								acc[o.value] = v.includes(o.value);
-								return acc;
-							}, {} as {[key: string]: boolean})
-						}
-						debugger;
-
-						break;
-					}
-					case 'range': {
-						// this.value = {low: string; high: string;}
-						if (!this.value || ((this.value as any).low != v[0] || (this.value as any).high != v[1])) {
-							this.value = {
-								low: v[0] || '',
-								high: v[1] || ''
-							}
-						}
-						break;
-					}
-					default: throw new Error('Unimplemented value handler for uiType ' + this.uiType);
-				}
+				this.syncWithStore(v);
 			}
 		}
 	},
-	created() {
-
-	}
 });
+
 </script>
 
 <style lang="scss">

@@ -8,6 +8,8 @@ import * as Mustache from 'mustache';
 import parseCql, {BinaryOp as CQLBinaryOp, Attribute as CQLAttribute, DEFAULT_ATTRIBUTE} from '@/utils/cqlparser';
 import {debugLog} from '@/utils/debug';
 
+import {RecursivePartial} from '@/types/helpers';
+
 import '@/modules/cql_querybuilder.scss';
 
 /**
@@ -334,13 +336,6 @@ const DEFAULTS = {
 	}
 };
 
-type RecursivePartial<T> = {
-	[P in keyof T]?:
-		T[P] extends Array<(infer U)> ? Array<RecursivePartial<U>> :
-		T[P] extends object ? RecursivePartial<T[P]> :
-		T[P];
-};
-
 type QueryBuilderOptions = RecursivePartial<typeof DEFAULTS>;
 // so not everything is optional and extracting types from nested properties works
 export type QueryBuilderOptionsDef = typeof DEFAULTS;
@@ -453,7 +448,7 @@ export class QueryBuilder {
 		this.withinSelect.find('input').first().parent().button('toggle');
 	}
 
-	public parse(cql: string|null) {
+	public parse(cql: string|null): boolean {
 		return populateQueryBuilder(this, cql);
 	}
 }
@@ -850,8 +845,6 @@ export class Attribute {
 		$element.find('.bl-input-upload').on('change', this._onUploadChanged.bind(this));
 
 		$element.find('.bl-token-attribute-file-edit').on('click', this._showModalEditor.bind(this));
-
-
 	}
 
 	private _showModalEditor(/*event*/) {
@@ -1058,7 +1051,7 @@ function populateQueryBuilder(queryBuilder: QueryBuilder, pattern: string|null|u
 				tokenInstance.set('maxRepeats', token.repeats.max);
 			}
 
-			function doOp(op: CQLAttribute|CQLBinaryOp, parentAttributeGroup: AttributeGroup, level: number) {
+			function doOp(op: undefined|CQLAttribute|CQLBinaryOp, parentAttributeGroup: AttributeGroup, level: number) {
 				if (op == null) {
 					return;
 				}
@@ -1097,10 +1090,10 @@ function populateQueryBuilder(queryBuilder: QueryBuilder, pattern: string|null|u
 
 					if (op.operator === '=' && op.value.length >= 2 && op.value.indexOf('|') === -1) {
 						if (op.value.indexOf('.*') === 0) {
-							op.operator = 'ends with';
+							(op.operator as string) = 'ends with';
 							op.value = op.value.substr(2);
 						} else if (op.value.indexOf('.*') === op.value.length -2) {
-							op.operator = 'starts with';
+							(op.operator as string) = 'starts with';
 							op.value = op.value.substr(0, op.value.length-2);
 						}
 					}

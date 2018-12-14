@@ -65,7 +65,7 @@ import Vue from 'vue';
 
 import $ from 'jquery';
 
-import * as formStore from '@/store/form';
+import * as PatternStore from '@/store/form/patterns';
 import { NormalizedAnnotation } from '@/types/apptypes';
 import SelectPicker, {Option} from '@/components/SelectPicker.vue';
 
@@ -99,10 +99,10 @@ export default Vue.extend({
 
 		value: {
 			get(): string {
-				return formStore.get.annotationValue(this.annotation.annotatedFieldId, this.id).value;
+				return PatternStore.get.annotationValue(this.annotation.annotatedFieldId, this.id).value;
 			},
 			set(value: string) {
-				formStore.actions.pattern.extended.annotation({
+				PatternStore.actions.extended.annotation({
 					annotatedFieldId: this.annotation.annotatedFieldId,
 					id: this.id,
 					value
@@ -111,10 +111,10 @@ export default Vue.extend({
 		},
 		caseSensitive: {
 			get(): boolean {
-				return formStore.get.annotationValue(this.annotation.annotatedFieldId, this.id).case;
+				return PatternStore.get.annotationValue(this.annotation.annotatedFieldId, this.id).case;
 			},
 			set(caseSensitive: boolean) {
-				formStore.actions.pattern.extended.annotation({
+				PatternStore.actions.extended.annotation({
 					annotatedFieldId: this.annotation.annotatedFieldId,
 					id: this.id,
 					case: caseSensitive

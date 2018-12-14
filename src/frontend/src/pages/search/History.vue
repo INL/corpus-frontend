@@ -22,18 +22,18 @@
 								</tr>
 							</thead>
 							<tbody>
-								<tr v-for="(entry, index) in history" :key="entry.hash">
+								<tr v-for="(entry, index) in history" :key="entry.hash + entry.interface.viewedResults">
 									<td><strong>{{index + 1}}.</strong></td>
-									<td>{{entry.viewedResults === 'hits' ? 'Hits' : 'Documents'}}</td>
+									<td>{{entry.interface.viewedResults === 'hits' ? 'Hits' : 'Documents'}}</td>
 									<td class="history-table-contain-text" :title="entry.displayValues.pattern.substring(0,1000) || undefined">{{entry.displayValues.pattern}}</td>
 									<td class="history-table-contain-text" :title="entry.displayValues.filters.substring(0,1000) || undefined">{{entry.displayValues.filters}}</td>
-									<td class="history-table-contain-text" :title="entry.groupBy.concat(entry.groupByAdvanced).join(' ') || '-'">{{entry.groupBy.concat(entry.groupByAdvanced).join(' ') || '-'}}</td>
+									<td class="history-table-contain-text" :title="entry[entry.interface.viewedResults].groupBy.concat(entry[entry.interface.viewedResults].groupByAdvanced).join(' ') || '-'">{{entry[entry.interface.viewedResults].groupBy.concat(entry[entry.interface.viewedResults].groupByAdvanced).join(' ') || '-'}}</td>
 									<td>
 										<div class="btn-group">
 											<button type="button" class="btn btn-default" @click="load(entry)">Search</button>
 											<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"/></button>
 											<ul class="dropdown-menu">
-												<li><a href="#" @click.prevent="openShareUrl(entry)">Copy link</a></li>
+												<li><a href="#" @click.prevent="openShareUrl(index)">Copy link</a></li>
 												<li><a href="#" @click.prevent="remove(index)">Delete</a></li>
 											</ul>
 										</div>
@@ -76,7 +76,6 @@ import * as RootStore from '@/store';
 import * as CorpusStore from '@/store/corpus';
 
 import UID from '@/mixins/uid';
-import {getUrlFromHistoryEntry, getHistoryEntryFromState, makeWildcardRegex, makeRegexWildcard, getPatternString} from '@/utils';
 
 import * as BLTypes from '@/types/blacklabtypes';
 
@@ -94,12 +93,12 @@ export default Vue.extend({
 
 	methods: {
 		remove(index: number): void { HistoryStore.actions.removeEntry(index); },
-		openShareUrl(entry: HistoryStore.HistoryEntry) { this.sharingUrl = getUrlFromHistoryEntry(entry); },
+		openShareUrl(entry: HistoryStore.FullHistoryEntry) { this.sharingUrl = entry.url; },
 		closeShareUrl() { this.sharingUrl = null; },
 
 		load(entry: HistoryStore.HistoryEntry) {
 			$(this.$refs.modal).modal('toggle');
-			RootStore.actions.replaceFromHistory(entry);
+			RootStore.actions.replace(entry);
 		},
 
 		importFromUrl() {
@@ -114,60 +113,16 @@ export default Vue.extend({
 				return;
 			}
 
-			try {
-				const uri = new URI(importUrl);
-				const state = new RootStore.UrlPageState(uri).get();
+			const uri = new URI(importUrl);
+			const state = new RootStore.UrlPageState(uri).get();
+			HistoryStore.actions.addEntry({
+				entry: state,
+				pattern: (uri.query(true) as any).patt,
+				url: importUrl,
+			});
 
-				/*
-					TODO this is ugly
-					because the state as parsed from the url does not have the form submitted yet
-					the submittedParameters are null
-					the history store assumes this not to be the case
-					manually correct this for now.
-					See store/form::actions.search
-				*/
-
-				const submitted: RootStore.RootState['form']['submittedParameters'] = {
-					filters: Object.values(state.form.filters),
-					pattern: null
-				};
-
-				switch (state.form.activePattern) {
-					case 'simple': submitted.pattern = getPatternString({
-						// Note: emulate an annotatedField here so the string processing is the same
-						// this generates a cql query where wildcards etc are properly escaped
-						// which is important when restoring from history, as we only have the query
-						// and we don't know whether it came from the querybuilder, the simple field, or the expert field.
-						annotations: [{
-							annotatedFieldId: CorpusStore.get.firstMainAnnotation().annotatedFieldId,
-							id: CorpusStore.get.firstMainAnnotation().id,
-							value: state.form.pattern.simple || '',
-							case: false,
-						}],
-						within: null,
-					}) || null; break;
-					case 'extended': {
-						const activeAnnotations = Object.values(state.form.pattern.extended.annotationValues);
-						if (activeAnnotations.length) {
-							submitted.pattern = {
-								annotations: JSON.parse(JSON.stringify(activeAnnotations)) as typeof activeAnnotations,
-								within: state.form.pattern.extended.within
-							};
-						} // else no annotations active, keep submitted.pattern as null.
-					}
-					case 'advanced': submitted.pattern = state.form.pattern.advanced || null; break;
-					case 'expert': submitted.pattern = state.form.pattern.expert || null; break;
-				}
-
-				state.form.submittedParameters = submitted;
-				state.viewedResults = state.viewedResults || (submitted.pattern ? 'hits' : 'docs');
-
-				HistoryStore.actions.addEntry(state);
-				this.importUrlError = null;
-				this.importUrlVisible = false;
-			} catch (e) {
-				this.importUrlError = 'Invalid url: ' + e.message;
-			}
+			this.importUrlError = null;
+			this.importUrlVisible = false;
 		}
 	},
 	watch: {

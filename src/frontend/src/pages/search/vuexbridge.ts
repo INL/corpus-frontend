@@ -1,7 +1,7 @@
 import $ from 'jquery';
 
 import {store, actions, RootState, UrlPageState} from '@/store';
-import * as FormStore from '@/store/form';
+import * as PatternStore from '@/store/form/patterns';
 
 import { debugLog } from '@/utils/debug';
 import { QueryBuilder } from '@/modules/cql_querybuilder';
@@ -10,36 +10,37 @@ export default () => {
 	debugLog('Begin connecting listeners to store');
 
 	{
-		let lastPattern: FormStore.ModuleRootState['pattern']['advanced'] = null;
+		let lastPattern: PatternStore.ModuleRootState['advanced'] = null;
 		const $querybuilder = $('#querybuilder');
 		const instance: QueryBuilder = $querybuilder.data('builder');
 
-		store.watch(state => state.form.pattern.advanced, v => {
+		if (PatternStore.getState().advanced == null) {
+			// not initialized in store, set to default from querybuilder
+			lastPattern = instance.getCql();
+			PatternStore.actions.advanced(lastPattern);
+		} else {
+			// already something in store - copy to querybuilder.
+			if (!instance.parse(PatternStore.getState().advanced)) {
+				// Apparently it's invalid? reset to default.
+				PatternStore.actions.advanced(instance.getCql());
+			}
+		}
+
+		store.watch(state => state.patterns.advanced, v => {
 			if (v !== lastPattern) {
 				lastPattern = v;
 				instance.parse(v);
 			}
-		}, {immediate: true});
+		});
 		$querybuilder.on('cql:modified', () => {
-			const pattern = $querybuilder.data('builder').getCql();
+			const pattern = instance.getCql();
 			lastPattern = pattern;
-			FormStore.actions.pattern.advanced(pattern);
+			PatternStore.actions.advanced(pattern);
 		});
 	}
 
-	{
-		const tabs = {
-			simple: $('#searchTabs a[href="#simple"]'),
-			extended: $('#searchTabs a[href="#extended"]'),
-			advanced: $('#searchTabs a[href="#advanced"]'),
-			expert: $('#searchTabs a[href="#expert"]'),
-		};
-
-		store.watch(state => state.form.activePattern, v => tabs[v].tab('show'), {immediate: true});
-		Object.entries(tabs).forEach(([name, $tab]) => $tab.on('show.bs.tab', () => FormStore.actions.activePattern(name as keyof typeof tabs)));
-	}
-
 	window.addEventListener('popstate', function(event) {
+		// TODO type properly
 		const newState: RootState|undefined = event.state;
 
 		if (newState == null) { // No state attached to this history entry - generate from url

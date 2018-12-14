@@ -3,14 +3,14 @@
 		<h3>Filter search by &hellip;</h3>
 
 		<ul v-if="useTabs" class="nav nav-tabs">
-			<li v-for="(tab, index) in tabs" :class="{'active': index === 0}" :key="index">
-				<a :href="'#'+getTabId(tab.name)" data-toggle="tab">{{tab.name}}</a>
+			<li v-for="(tab, index) in tabs" :class="{'active': activeTab===getTabId(tab.name)}" :key="index" @click.prevent="activeTab=getTabId(tab.name)">
+				<a :href="'#'+getTabId(tab.name)">{{tab.name}}</a>
 			</li>
 		</ul>
 
 		<div v-if="useTabs" class="tab-content">
 			<div v-for="(tab, index) in tabs"
-				:class="['tab-pane', 'form-horizontal', 'filter-container', {'active': index === 0}]"
+				:class="['tab-pane', 'form-horizontal', 'filter-container', {'active': activeTab===getTabId(tab.name)}]"
 				:key="index"
 				:id="getTabId(tab.name)"
 			>
@@ -28,7 +28,7 @@
 <script lang="ts">
 import Vue from 'vue';
 
-import * as corpus from '@/store/corpus';
+import * as CorpusStore from '@/store/corpus';
 
 import FilterOverview from '@/pages/search/form/FilterOverview.vue';
 import MetadataFilter from '@/pages/search/form/Filter.vue';
@@ -40,6 +40,9 @@ export default Vue.extend({
 		FilterOverview,
 		MetadataFilter
 	},
+	data: () => ({
+		activeTab: null as string|null,
+	}),
 	computed: {
 		allFilters(): AppTypes.NormalizedMetadataField[] {
 			return this.tabs.reduce((acc, tab) => {
@@ -47,16 +50,19 @@ export default Vue.extend({
 				return acc;
 			}, [] as AppTypes.NormalizedMetadataField[]);
 		},
-		tabs: corpus.get.metadataGroups,
+		tabs: CorpusStore.get.metadataGroups,
 		useTabs() {
 			return this.tabs.length > 1;
 		},
-		indexId() { return corpus.getState().id }
+		indexId() { return CorpusStore.getState().id }
 	},
 	methods: {
 		getTabId(name: string) {
-			return name.replace(/[^\w]+/g, '_') + '_meta';
+			return name.replace(/[^\w]+/g, '_') + '_meta_' + (this as any).uid;
 		}
+	},
+	created() {
+		this.activeTab = this.useTabs ? this.getTabId(this.tabs[0].name) : null
 	}
 })
 </script>

@@ -1,18 +1,34 @@
-import { ReplaySubject, Observable, merge } from 'rxjs';
-import { debounceTime, switchMap, map, distinctUntilChanged, publishLast, publishReplay, shareReplay, debounce, filter, tap } from 'rxjs/operators';
+import URI from 'urijs';
+
+import { ReplaySubject, Observable, merge, empty, of, ObservableInput } from 'rxjs';
+import { debounceTime, switchMap, map, distinctUntilChanged, publishLast, publishReplay, shareReplay, debounce, filter, tap, skip, mergeMap, distinct } from 'rxjs/operators';
 
 import * as RootStore from '@/store';
-import * as FormStore from '@/store/form';
 import * as CorpusStore from '@/store/corpus';
+import * as PatternStore from '@/store/form/patterns';
+import * as ExploreStore from '@/store/form/explore';
+import * as HitsStore from '@/store/results/hits';
+import * as InterfaceStore from '@/store/form/interface';
+import * as DocsStore from '@/store/results/docs';
+import * as HistoryStore from '@/store/history';
+import * as FilterStore from '@/store/form/filters';
 
 import { getFilterString } from '@/utils/';
 import * as Api from '@/api';
 
 import * as BLTypes from '@/types/blacklabtypes';
-import { MetadataValue } from '@/types/apptypes';
+import { FilterValue } from '@/types/apptypes';
+import jsonStableStringify from 'json-stable-stringify';
+import { debugLog } from '@/utils/debug';
 
-const metadata$ = new ReplaySubject<MetadataValue[]>(1);
-const submittedMetadata$ = new ReplaySubject<MetadataValue[]>(1);
+type QueryState = {
+	params?: BLTypes.BLSearchParameters,
+	state: Pick<RootStore.RootState, 'query'|'interface'|'global'|'hits'|'docs'>
+};
+
+const metadata$ = new ReplaySubject<FilterValue[]>(1);
+const submittedMetadata$ = new ReplaySubject<FilterValue[]>(1);
+const url$ = new ReplaySubject<QueryState>(1);
 
 // TODO handle errors gracefully, right now the entire stream is closed permanently.
 
@@ -28,7 +44,7 @@ export const selectedSubCorpus$ = merge(
 	metadata$.pipe(
 		debounceTime(1000),
 		// filter(v => v.length > 0),
-		map<MetadataValue[], BLTypes.BLSearchParameters>(filters => ({
+		map<FilterValue[], BLTypes.BLSearchParameters>(filters => ({
 			filter: getFilterString(filters),
 			first: 0,
 			number: 0,
@@ -78,7 +94,7 @@ export const selectedSubCorpus$ = merge(
 
 export const submittedSubcorpus$ = submittedMetadata$.pipe(
 	debounceTime(1000),
-	map<MetadataValue[], BLTypes.BLSearchParameters>(filters => ({
+	map<FilterValue[], BLTypes.BLSearchParameters>(filters => ({
 		filter: getFilterString(filters),
 		first: 0,
 		number: 0,
@@ -116,21 +132,175 @@ export const submittedSubcorpus$ = submittedMetadata$.pipe(
 	shareReplay(1),
 );
 
+url$.pipe(
+	// filter(v => v.params != null && v.state.interface.viewedResults != null),
+	distinctUntilChanged((a, b) => {
+		const jsonOld = jsonStableStringify(a.params);
+		const jsonNew = jsonStableStringify(b.params);
+		const oldResults = a.state.interface.viewedResults;
+		const newResults = b.state.interface.viewedResults;
+
+		return jsonOld === jsonNew && oldResults === newResults && a.state.query.subForm === b.state.query.subForm;
+	}),
+	// generate the new page url
+	map<QueryState, QueryState&{
+		/**
+		 * When the full url would be very long, we need to generate a truncated version (without the pattern - which is often the longest part)
+		 * This is an unfortunate side-effect of Tomcat being unable to handle large referrer headers (which contain the full url)
+		 * and so blacklab-server will error out on any requests when the current url of the page is long enough.
+		 * Additionally, loading the page from a long url is impossible too, because the front-end Tomcat instance also can't serve the page any longer.
+		 */
+		isTruncated: boolean;
+		url: string;
+	}>(v => {
+		const uri = new URI();
+
+		// Extract our current url path, up to and including 'search'
+		// Usually something like ['corpus-frontend', ${indexId}, 'search']
+		// But might be different depending on whether the application is proxied or deployed using a different name.
+		const basePath = uri.segmentCoded().slice(0, uri.segmentCoded().lastIndexOf('search')+1);
+
+		// If we're not searching, return a bare url pointing to /search/
+		if (v.params == null) {
+			return {
+				url: uri.segmentCoded(basePath).search('').toString(),
+				isTruncated: false,
+				state: v.state
+			};
+		}
+
+		// remove null, undefined, empty strings and empty arrays from our query params
+		const queryParams: Partial<BLTypes.BLSearchParameters> = Object.entries(v.params).reduce((acc, [key, val]) => {
+			if (val == null) { return; }
+			if (typeof val === 'string' && val.length === 0) { return; }
+			if (Array.isArray(val) && val.length === 0) { return; }
+			acc[key] = val;
+			return acc;
+		}, {} as any);
+
+		// Store some interface state in the url, so the query can be restored to the correct form
+		// even when loading the page from just the url. See UrlPageState class in store/index.ts
+		// TODO we should probably output the form in the url as /${indexId}/('search'|'explore')/('simple'|'advanced' ...etc)/('hits'|'docs')
+		Object.assign(queryParams, {
+			interface: JSON.stringify({
+				form: v.state.query.form,
+				exploreMode: v.state.query.form === 'explore' ? v.state.query.subForm : undefined, // remove if not relevant
+				patternMode: v.state.query.form === 'search' ? v.state.query.subForm : undefined, // remove if not relevant
+				viewedResults: undefined // remove from query parameters: is encoded in path (segmentcoded)
+			} as Partial<InterfaceStore.ModuleRootState>)
+		});
+
+		// Generate the new url
+		const uri2 = uri
+			.segmentCoded(basePath)
+			.segmentCoded(v.state.interface.viewedResults!)
+			.search(queryParams);
+
+		const fullUrl = uri2.toString();
+		return {
+			url: fullUrl.length <= 4000 ? fullUrl : uri2.search(Object.assign({}, queryParams, {patt: undefined})).toString(),
+			isTruncated: fullUrl.length > 4000,
+			state: v.state,
+			params: v.params
+		};
+	}),
+	// In the case the new url is identical to the current url, don't put it in history
+	filter(v => {
+		// new urls are always generated without trailing slash (no empty trailing segment string)
+		// while current url might contain one for whatever reason (if user just landed on page)
+		// So strip it from the current url in order to properly compare.
+		const curUrl = new URI().toString().replace(/\/+$/, '');
+
+		if (curUrl !== v.url) {
+			return true;
+		} else if (!v.isTruncated) {
+			return false;
+		}
+
+		// Url was truncated and is equal to current,
+		// Might still be able to compare the patterns by checking the state from which it was generated
+		const lastState: HistoryStore.HistoryEntry|null = history.state;
+		if (lastState == null) {
+			// don't store; no previous state stored in history (i.e. the user just landed on the page, so it MUST be equal)
+			// this can't actually happen I think, since if you just landed here, how did the url end up truncated
+			// since the page can't even load with a url long enough to generate a state that would generate a truncated url.
+			return false;
+		}
+
+		// shortcut: only need to check the pattern, as the interface state IS contained in the url, and is guaranteed to be the same
+		return jsonStableStringify(v.state.query.formState) !== jsonStableStringify(lastState.patterns[lastState.interface.patternMode]);
+	}),
+	map((v): QueryState&{
+		entry: HistoryStore.HistoryEntry
+		url: string,
+	} => {
+		const {query, docs, hits, global} = v.state;
+		const entry: HistoryStore.HistoryEntry = {
+			filters: query.filters!,
+			global,
+			hits: v.state.interface.viewedResults === 'hits' ? hits : HitsStore.defaults,
+			docs: v.state.interface.viewedResults === 'docs' ? docs : DocsStore.defaults,
+			explore: query.form === 'explore' ? {
+				...ExploreStore.defaults,
+				[query.subForm]: query.formState
+			} : ExploreStore.defaults,
+			patterns: query.form === 'search' ? {
+				...PatternStore.defaults,
+				[query.subForm]: query.formState
+			} : PatternStore.defaults,
+			interface: {
+				form: query.form!,
+				exploreMode: query.form === 'explore' ? query.subForm : 'ngram',
+				patternMode: query.form === 'search' ? query.subForm : 'simple',
+				viewedResults: v.state.interface.viewedResults
+			}
+		};
+		return {
+			url: v.url,
+			entry,
+			state: v.state,
+			params: v.params
+		};
+	})
+)
+.subscribe(v => {
+	debugLog('Adding/updating query in query history, and adding browser history entry', v.url, v.entry);
+	HistoryStore.actions.addEntry({entry: v.entry, pattern: v.params!.patt, url: v.url});
+	history.pushState(v.entry, '', v.url);
+});
+
 export default () => {
 	// Because we use vuex-typex, getters are a little different
 	// It doesn't matter though, they're attached to the same state instance, so just ignore the state argument.
 
 	RootStore.store.watch(
-		state => FormStore.get.activeFilters(),
+		state => FilterStore.get.activeFilters(),
 		v => metadata$.next(v),
 		{ immediate: true }
 	);
 	RootStore.store.watch(
-		state => {
-			const params = FormStore.get.lastSubmittedParameters();
-			return params != null ? params.filters : [];
-		},
+		state => Object.values(state.query.filters || {}),
 		v => submittedMetadata$.next(v),
 		{ immediate: true }
+	);
+
+	RootStore.store.watch(
+		(state): QueryState => ({
+			params: RootStore.get.blacklabParameters(),
+			state: {
+				docs: state.docs,
+				global: state.global,
+				hits: state.hits,
+				interface: state.interface,
+				query: state.query
+			}
+		}),
+		v => {
+			url$.next(JSON.parse(JSON.stringify(v)));
+		},
+		{
+			immediate: true,
+			deep: true
+		}
 	);
 };

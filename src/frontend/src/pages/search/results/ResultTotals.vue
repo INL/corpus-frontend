@@ -2,7 +2,7 @@
 <div class="totals">
 	<!-- Heavy query, search paused [continue] -->
 	<div class="totals-content">
-		<span v-show="(isCounting || subcorpus == null) && !error" class="fa fa-spinner fa-spin searchIndicator totals-spinner"/>
+		<span v-show="(isCounting /*|| subcorpus == null*/) && !error" class="fa fa-spinner fa-spin searchIndicator totals-spinner"/>
 
 		<div class="totals-text" :title="percentOfSearchSpaceClarification">
 			<div class="totals-type">

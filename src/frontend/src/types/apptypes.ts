@@ -185,7 +185,7 @@ export type AnnotationValue = {
 	case: boolean;
 };
 
-export type MetadataValue = {
+export type FilterValue = {
 	/** Unique id of the metadata field */
 	readonly id: string;
 	/**

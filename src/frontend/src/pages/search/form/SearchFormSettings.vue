@@ -83,8 +83,8 @@
 import Vue from 'vue';
 
 import * as RootStore from '@/store';
-import * as SettingsStore from '@/store/settings';
-import * as ResultsStore from '@/store/results';
+import * as GlobalViewSettings from '@/store/results/global';
+import * as ResultsViewSettings from '@/store/results';
 
 import SelectPicker from '@/components/SelectPicker.vue';
 
@@ -95,41 +95,41 @@ export default Vue.extend({
 	computed: {
 		viewedResultsSettings: RootStore.get.viewedResultsSettings,
 		pageSize: {
-			get(): string { return this.itoa(SettingsStore.getState().pageSize); },
+			get(): string { return this.itoa(GlobalViewSettings.getState().pageSize); },
 			set(v: string) {
-				SettingsStore.actions.pageSize(this.atoi(v)!);
-				ResultsStore.actions.resetPage();
+				GlobalViewSettings.actions.pageSize(this.atoi(v)!);
+				ResultsViewSettings.actions.resetPage();
 			}
 		},
 		sampleMode: {
-			get() { return SettingsStore.getState().sampleMode; },
+			get() { return GlobalViewSettings.getState().sampleMode; },
 			set(v: string) {
-				SettingsStore.actions.sampleMode(v);
-				ResultsStore.actions.resetPage();
+				GlobalViewSettings.actions.sampleMode(v);
+				ResultsViewSettings.actions.resetPage();
 			}
 		},
 		sampleSize: {
-			get(): string { return this.itoa(SettingsStore.getState().sampleSize); },
+			get(): string { return this.itoa(GlobalViewSettings.getState().sampleSize); },
 			set(v: string) {
-				SettingsStore.actions.sampleSize(this.atoi(v));
-				ResultsStore.actions.resetPage();
+				GlobalViewSettings.actions.sampleSize(this.atoi(v));
+				ResultsViewSettings.actions.resetPage();
 			}
 		},
 		sampleSeed: {
-			get(): string { return this.itoa(SettingsStore.getState().sampleSeed); },
+			get(): string { return this.itoa(GlobalViewSettings.getState().sampleSeed); },
 			set(v: string) {
-				SettingsStore.actions.sampleSeed(this.atoi(v));
+				GlobalViewSettings.actions.sampleSeed(this.atoi(v));
 				if (this.viewedResultsSettings && (this.viewedResultsSettings.groupBy.length || this.viewedResultsSettings.groupByAdvanced.length)) {
 					// No need to do this when ungrouped - the raw number of results
 					// will stay as it is, but the distribution (and number of) groups may change and
 					// cause the number of pages to shift
-					ResultsStore.actions.resetPage();
+					ResultsViewSettings.actions.resetPage();
 				}
 			}
 		},
 		wordsAroundHit: {
-			get(): string { return this.itoa(SettingsStore.getState().wordsAroundHit); },
-			set(v: string) { SettingsStore.actions.wordsAroundHit(this.atoi(v)); }
+			get(): string { return this.itoa(GlobalViewSettings.getState().wordsAroundHit); },
+			set(v: string) { GlobalViewSettings.actions.wordsAroundHit(this.atoi(v)); }
 		},
 	},
 	methods: {

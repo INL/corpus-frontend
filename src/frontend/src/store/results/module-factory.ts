@@ -1,12 +1,9 @@
 /**
- * This store module contains all local parameters that instantly update the displayed results
- * In this case things like grouping settings, displayed page, sorting
+ * Can create store modules. Since docs and hits modules are clones of each other.
  */
-
 import {StoreBuilder, ModuleBuilder} from 'vuex-typex';
 
 import {RootState} from '@/store';
-import {HistoryEntry} from '@/store/history';
 
 export type ModuleRootState = {
 	/** case-sensitive grouping */
@@ -54,16 +51,8 @@ const createActions = (b: ModuleBuilder<ModuleRootState, RootState>) => {
 			state.page = 0;
 		},'viewgroup'),
 
-		reset: b.commit(state => Object.assign(state, initialState), 'reset'),
-		replace: b.commit((state, payload: ModuleRootState) => Object.assign(state, payload), 'replace'),
-		replaceFromHistory: b.dispatch(({state}, payload: HistoryEntry) => {
-			actions.reset();
-			if (b.namespace === payload.viewedResults) {
-				actions.caseSensitive(payload.caseSensitiveGroupBy);
-				actions.groupBy(payload.groupBy);
-				actions.groupByAdvanced(payload.groupByAdvanced);
-			}
-		}, 'replaceFromHistory')
+		reset: b.commit(state => Object.assign(state, JSON.parse(JSON.stringify(initialState))), 'reset'),
+		replace: b.commit((state, payload: ModuleRootState) => Object.assign(state, JSON.parse(JSON.stringify(payload))), 'replace'),
 	};
 	return actions;
 };

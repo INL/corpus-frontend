@@ -27,8 +27,6 @@ import '@/global.scss';
 declare const SINGLEPAGE: {INDEX: BLTypes.BLIndexMetadata};
 
 const connectJqueryToPage = () => {
-	debugLog('begin initializing querybuilder and stuff');
-
 	$('input[data-persistent][id != ""]').each(function(i, elem) {
 		const $this = $(elem);
 		const key = 'input_' + $this.attr('id');
@@ -50,6 +48,7 @@ const connectJqueryToPage = () => {
 	});
 
 	// Init the querybuilder with the supported attributes/properties
+	debugLog('Begin initializing querybuilder');
 	const queryBuilder = new QueryBuilder($('#querybuilder'), {
 		attribute: {
 			view: {
@@ -69,20 +68,6 @@ const connectJqueryToPage = () => {
 	// Enable wide view toggle
 	$('#wide-view').on('change', function() {
 		$('.container, .container-fluid').toggleClass('container', !$(this).is(':checked')).toggleClass('container-fluid', $(this).is(':checked'));
-	});
-
-	// TODO just set the new query in state? the commit probably needs to be async and cancelable/failable...
-	// Attempt to parse the query from the cql editor into the querybuilder
-	// when the user asks to
-	$('#parseQuery').on('click', function() {
-		const pattern = $('#querybox').val() as string;
-		if (queryBuilder.parse(pattern)) {
-			$('#searchTabs a[href="#advanced"]').tab('show');
-			$('#parseQueryError').hide();
-		} else {
-			$('#parseQueryError').show();
-			$('#querybox').val(pattern);
-		}
 	});
 };
 

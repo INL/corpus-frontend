@@ -1,5 +1,3 @@
-import _$ from 'jquery';
-
 let debug = true;
 
 let queued: IArguments[] = [];
@@ -87,6 +85,3 @@ export function monitorRedraws() {
 export default function() {
 	return debug;
 }
-
-// DEBUGGING ONLY, this should probably use node.env
-(window as any).jquery = (window as any).$ = _$;

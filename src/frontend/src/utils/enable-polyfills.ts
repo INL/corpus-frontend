@@ -9,3 +9,7 @@ import 'whatwg-fetch';
 // Except these polyfills, as they are still stage-3 as of writing, and preset-env doesn't support them
 // It also doesn't expand into polyfills for features that haven't been accepted into the ecma standard yet
 import 'core-js/fn/array';
+
+// DEBUGGING ONLY, this should probably use node.env
+import _$ from 'jquery';
+(window as any).jquery = (window as any).$ = _$;

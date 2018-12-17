@@ -102,7 +102,7 @@ export default Vue.extend({
 	computed: {
 		activePattern: {
 			get(): string { return InterfaceStore.getState().patternMode; },
-			set(v: InterfaceStore.ModuleRootState['patternMode']) { InterfaceStore.actions.patternMode(v); },
+			set: InterfaceStore.actions.patternMode,
 		},
 		useTabs() {
 			return this.tabs.length > 1;
@@ -114,9 +114,7 @@ export default Vue.extend({
 				return acc;
 			}, [] as AppTypes.NormalizedAnnotation[]);
 		},
-		firstMainAnnotation(): AppTypes.NormalizedAnnotation {
-			return CorpusStore.get.firstMainAnnotation();
-		},
+		firstMainAnnotation: CorpusStore.get.firstMainAnnotation,
 		withinOptions(): Array<{label: string, value: string|null}> {
 			// TODO retrieve from indexMetadata once available
 			// discuss with jan?
@@ -133,19 +131,19 @@ export default Vue.extend({
 		},
 		within: {
 			get(): string|null { return PatternStore.getState().extended.within; },
-			set(v: null|string) { PatternStore.actions.extended.within(v); }
+			set: PatternStore.actions.extended.within,
 		},
 		simple: {
 			get(): string|null { return PatternStore.getState().simple; },
-			set(v: string) { PatternStore.actions.simple(v); }
+			set: PatternStore.actions.simple,
 		},
 		advanced: {
 			get(): string|null { return PatternStore.getState().advanced; },
-			set(v: string|null) { PatternStore.actions.advanced(v); }
+			set: PatternStore.actions.advanced,
 		},
 		expert: {
 			get(): string|null { return PatternStore.getState().expert; },
-			set(v: string) { PatternStore.actions.expert(v); }
+			set: PatternStore.actions.expert,
 		}
 	},
 	methods: {

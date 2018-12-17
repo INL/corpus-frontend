@@ -1,0 +1,119 @@
+$text: hsl(345, 90%, 36%);
+
+$block-bg-1: hsl(355, 59%, 40%);
+$block-bg-2: hsl(355, 68%, 34%);
+$block-bg-3: hsl(355, 77%, 28%);
+$block-bg-4: hsl(355, 86%, 22%);
+$block-border-1: $block-bg-2;
+$block-border-2: $block-bg-3;
+$block-border-3: $block-bg-4;
+$block-border-4: hsl(355, 95%, 16%);
+
+a,
+.btn-link,
+.text-primary {
+	&,
+	&:hover,
+	&:focus,
+	&:active {
+		color: $text;
+	}
+}
+
+.pagination > li {
+
+	>span,
+	>a {
+		&,
+		&:hover,
+		&:active,
+		&:focus {
+			color: $text;
+		}
+	}
+
+	&.active,
+	&.current {
+		>span,
+		>a {
+			&,
+			&:hover,
+			&:active,
+			&:focus {
+				color: white;
+				background: $block-bg-1;
+				border-color: $block-bg-1;
+			}
+		}
+
+		>input {
+			color: $text!important;
+			border-color: $block-bg-1!important;
+		}
+		> .fa {
+			color: $text!important;
+		}
+	}
+}
+
+
+.dropdown-menu > .active > a {
+	&,
+	&:active,
+	&:hover,
+	&:focus {
+		background-color: $block-bg-2;
+	}
+}
+
+ul.nav-tabs.cf-panel-tab-header {
+	background-color: $block-bg-1!important;
+	border-top-color: $block-bg-1!important;
+	border-bottom-color: $block-bg-1!important;
+
+	>li.active > a,
+	>li:not(.active):hover > a {
+		border-right-color: $block-bg-1!important;
+		border-left-color: $block-bg-1!important;
+	}
+}
+
+.group-size-indicator > .progress-bar {
+	background-color: $block-bg-1!important;
+}
+
+.navbar-logo-margin {
+	margin-left: 100px!important;
+}
+
+.navbar-logo-container {
+	display: block;
+}
+
+.panel-primary {
+	border-color: $block-border-1;
+	>.panel-heading {
+		background-color: $block-bg-1;
+	}
+}
+
+.btn-primary {
+	background-color: $block-bg-1;
+	border-color: $block-bg-1;
+
+	&:hover,
+	&:focus {
+		background-color: $block-bg-2;
+		border-color: $block-bg-2;
+	}
+
+	&:active {
+		background-color: $block-bg-3;
+		border-color: $block-bg-3;
+	}
+
+	&:active:focus {
+		background-color: $block-bg-4;
+		border-color: $block-bg-4;
+	}
+}

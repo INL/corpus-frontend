@@ -265,7 +265,7 @@ url$.pipe(
 )
 .subscribe(v => {
 	debugLog('Adding/updating query in query history, and adding browser history entry', v.url, v.entry);
-	HistoryStore.actions.addEntry({entry: v.entry, pattern: v.params!.patt, url: v.url});
+	HistoryStore.actions.addEntry({entry: v.entry, pattern: v.params && v.params.patt, url: v.url});
 	history.pushState(v.entry, '', v.url);
 });
 

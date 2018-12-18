@@ -5,7 +5,6 @@
 		<QuerySummary v-if="resultsVisible" class="cf-panel cf-panel-lg" id="summary"/>
 		<Results v-show="resultsVisible" id="results"/>
 
-		<History/>
 		<PageGuide/>
 	</div>
 </template>
@@ -20,7 +19,6 @@ import * as InterfaceStore from '@/store/form/interface';
 import QueryForm from '@/pages/search/form/QueryForm.vue';
 import QuerySummary from '@/pages/search/results/QuerySummary.vue';
 import Results from '@/pages/search/results/Results.vue';
-import History from '@/pages/search/History.vue';
 import PageGuide from '@/pages/search/PageGuide.vue';
 
 export default Vue.extend({
@@ -28,7 +26,6 @@ export default Vue.extend({
 		QueryForm,
 		QuerySummary,
 		Results,
-		History,
 		PageGuide,
 	},
 	computed: {

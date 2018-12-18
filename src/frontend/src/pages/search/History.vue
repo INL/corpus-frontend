@@ -1,69 +1,64 @@
 <template>
-	<div class="history">
-		<a class="btn btn-lg history-button" href="#history-modal" data-toggle="modal">Open history</a>
-
-		<div id="history-modal" class="modal fade modal-fullwidth" tabindex="-1" role="dialog" ref="modal">
-			<div class="modal-dialog" role="document">
-				<div class="modal-content">
-					<div class="modal-header">
-						<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-						<h4 class="modal-title">History</h4>
-					</div>
-					<div class="modal-body">
-						<table class="table table-hover history-table">
-							<thead>
-								<tr>
-									<th width="40px;">#</th>
-									<th width="90px;">Results</th>
-									<th>Pattern</th>
-									<th>Filters</th>
-									<th>Grouping</th>
-									<th width="115px"></th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr v-for="(entry, index) in history" :key="entry.hash + entry.interface.viewedResults">
-									<td><strong>{{index + 1}}.</strong></td>
-									<td>{{entry.interface.viewedResults === 'hits' ? 'Hits' : 'Documents'}}</td>
-									<td class="history-table-contain-text" :title="entry.displayValues.pattern.substring(0,1000) || undefined">{{entry.displayValues.pattern}}</td>
-									<td class="history-table-contain-text" :title="entry.displayValues.filters.substring(0,1000) || undefined">{{entry.displayValues.filters}}</td>
-									<td class="history-table-contain-text" :title="entry[entry.interface.viewedResults].groupBy.concat(entry[entry.interface.viewedResults].groupByAdvanced).join(' ') || '-'">{{entry[entry.interface.viewedResults].groupBy.concat(entry[entry.interface.viewedResults].groupByAdvanced).join(' ') || '-'}}</td>
-									<td>
-										<div class="btn-group">
-											<button type="button" class="btn btn-default" @click="load(entry)">Search</button>
-											<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"/></button>
-											<ul class="dropdown-menu">
-												<li><a href="#" @click.prevent="openShareUrl(index)">Copy link</a></li>
-												<li><a href="#" @click.prevent="remove(index)">Delete</a></li>
-											</ul>
-										</div>
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-					<div class="modal-footer">
-						<form v-if="importUrlVisible" @submit.prevent.stop="importFromUrl" :name="`${uid}_import`" class="history-table-import-url">
-							<div class="input-group" style="width: 100%;">
-								<input type="url" class="form-control" autocomplete="off" autofocus placeholder="Copy your url here" ref="importUrlInput"/>
-								<span class="input-group-btn"><button type="submit" class="btn btn-primary">Import url</button></span>
-							</div>
-							<div v-if="importUrlError" class="text-danger">{{importUrlError}}</div>
-						</form>
-						<button v-else class="btn btn-link btn-open-import" @click="importUrlVisible = !importUrlVisible"><span class="fa fa-lg fa-plus"></span> Import from a link</button>
-						<button type="button" name="closeSettings" class="btn btn-primary" data-dismiss="modal">Close</button>
-					</div>
+	<div class="modal fade modal-fullwidth" tabindex="-1" ref="modal">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title">History</h4>
+				</div>
+				<div class="modal-body">
+					<table class="table table-hover history-table">
+						<thead>
+							<tr>
+								<th width="40px;">#</th>
+								<th width="90px;">Results</th>
+								<th>Pattern</th>
+								<th>Filters</th>
+								<th>Grouping</th>
+								<th width="115px"></th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr v-for="(entry, index) in history" :key="entry.hash + entry.interface.viewedResults">
+								<td><strong>{{index + 1}}.</strong></td>
+								<td>{{entry.interface.viewedResults === 'hits' ? 'Hits' : 'Documents'}}</td>
+								<td class="history-table-contain-text" :title="entry.displayValues.pattern.substring(0,1000) || undefined">{{entry.displayValues.pattern}}</td>
+								<td class="history-table-contain-text" :title="entry.displayValues.filters.substring(0,1000) || undefined">{{entry.displayValues.filters}}</td>
+								<td class="history-table-contain-text" :title="entry[entry.interface.viewedResults].groupBy.concat(entry[entry.interface.viewedResults].groupByAdvanced).join(' ') || '-'">{{entry[entry.interface.viewedResults].groupBy.concat(entry[entry.interface.viewedResults].groupByAdvanced).join(' ') || '-'}}</td>
+								<td>
+									<div class="btn-group">
+										<button type="button" class="btn btn-default" @click="load(entry)">Search</button>
+										<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"/></button>
+										<ul class="dropdown-menu">
+											<li><a href="#" @click.prevent="openShareUrl(entry)">Copy link</a></li>
+											<li><a href="#" @click.prevent="remove(index)">Delete</a></li>
+										</ul>
+									</div>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				<div class="modal-footer">
+					<form v-if="importUrlVisible" @submit.prevent.stop="importFromUrl" :name="`${uid}_import`" class="history-table-import-url">
+						<div class="input-group" style="width: 100%;">
+							<input type="url" class="form-control" autocomplete="off" autofocus placeholder="Copy your url here" ref="importUrlInput"/>
+							<span class="input-group-btn"><button type="submit" class="btn btn-primary">Import url</button></span>
+						</div>
+						<div v-if="importUrlError" class="text-danger">{{importUrlError}}</div>
+					</form>
+					<button v-else class="btn btn-link btn-open-import" @click="importUrlVisible = !importUrlVisible"><span class="fa fa-lg fa-plus"></span> Import from a link</button>
+					<button type="button" name="closeSettings" class="btn btn-primary" data-dismiss="modal">Close</button>
 				</div>
 			</div>
-
-			<form v-if="isSharingUrl" class="history-popup" @click.self="closeShareUrl">
-				<div class="history-popup-content">
-					<input type="text" class="form-control" :value="sharingUrl" autocomplete="off" autofocus readonly ref="shareUrlInput"/>
-				</div>
-			</form>
 		</div>
-	</div>
 
+		<form v-if="isSharingUrl" class="history-popup" @click.self="closeShareUrl">
+			<div class="history-popup-content">
+				<input type="text" class="form-control" :value="sharingUrl" autocomplete="off" autofocus readonly ref="shareUrlInput"/>
+			</div>
+		</form>
+	</div>
 </template>
 
 <script lang="ts">

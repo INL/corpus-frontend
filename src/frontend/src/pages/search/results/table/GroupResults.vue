@@ -8,7 +8,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			<template v-for="({identity, identityDisplay, size}) in groups">
+			<template v-for="({identity, identityDisplay, size, relativeFrequency}) in groups">
 				<tr :key="`${identity}-group`" :class="['grouprow', { 'open': concordances[identity] && concordances[identity].open }]">
 					<td class="td-group-identity" :title="identityDisplay">{{identityDisplay || '[unknown]'}}</td>
 					<td class="td-group-size">
@@ -16,7 +16,7 @@
 							<div class="progress-bar progress-bar-primary" :style="[{'min-width': width(size)}]">{{size}}</div>
 						</div>
 					</td>
-					<td class="td-group-relative-size">{{size / resultCount | frac2Percent}}</td>
+					<td class="td-group-relative-size">{{((relativeFrequency != null) ? relativeFrequency : size / resultCount) | frac2Percent}}</td>
 				</tr>
 				<tr :key="`${identity}-concordances`" v-if="concordances[identity] && concordances[identity].open"><td colspan="3">
 					<div class="well-light">

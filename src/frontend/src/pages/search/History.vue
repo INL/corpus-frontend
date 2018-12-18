@@ -29,7 +29,7 @@
 									<div class="btn-group">
 										<button type="button" class="btn btn-default" @click="load(entry)">Search</button>
 										<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"/></button>
-										<ul class="dropdown-menu">
+										<ul class="dropdown-menu dropdown-menu-right">
 											<li><a href="#" @click.prevent="openShareUrl(entry)">Copy link</a></li>
 											<li><a href="#" @click.prevent="remove(index)">Delete</a></li>
 										</ul>
@@ -136,7 +136,7 @@ export default Vue.extend({
 
 <style lang="scss">
 
-#history-modal {
+#history {
 	.modal-content {
 		display: flex;
 		flex-direction: column;
@@ -150,6 +150,7 @@ export default Vue.extend({
 	.modal-body {
 		flex: 1 1 auto;
 		overflow: auto;
+		padding-bottom: 80px;
 	}
 	.modal-footer {
 		flex: none;
@@ -166,6 +167,7 @@ export default Vue.extend({
 
 .history-table {
 	margin: 0;
+	min-width: 500px;
 	td, th {
 		white-space: nowrap;
 	}

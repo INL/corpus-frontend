@@ -40,10 +40,10 @@
 				<hr/>
 				<button type="submit" class="btn btn-primary btn-lg">Search</button>
 				<button type="reset" class="btn btn-default btn-lg" title="Start a new search">Reset</button>
-				<button type="button" class="btn btn-lg btn-default" data-toggle="modal" data-target="#settingsModal"><span class="glyphicon glyphicon-cog" style="vertical-align:text-top;"></span></button>
+				<button type="button" class="btn btn-lg btn-default" data-toggle="modal" data-target="#settings"><span class="glyphicon glyphicon-cog" style="vertical-align:text-top;"></span></button>
 			</div>
 		</form>
-		<QueryFormSettings id="settingsModal"/>
+		<QueryFormSettings />
 	</div>
 
 </template>

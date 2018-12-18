@@ -1,80 +1,82 @@
 <template>
-	<div class="modal fade" tabindex="-1" role="dialog">
-		<div class="modal-dialog" role="document">
-			<div class="modal-content">
-				<div class="modal-header">
-					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-					<h4 class="modal-title">Global settings</h4>
-				</div>
-				<div class="modal-body">
-					<div class="form-horizontal">
-
-						<div class="form-group"> <!-- behaves as .row when in .form-horizontal so .row may be omitted -->
-							<label for="resultsPerPage" class="col-xs-3">Results per page:</label>
-							<div class="col-xs-9">
-								<SelectPicker
-									id="resultsPerPage"
-									name="resultsPerPage"
-
-									data-width="auto"
-									data-style="btn-default"
-
-									:options="['20','50','100','200'].map(value => ({value, label: `${value} results`}))"
-
-									v-model="pageSize"
-								/>
-							</div>
-						</div>
-
-						<div class="form-group">
-							<label for="sampleSize" class="col-xs-3">Sample size:</label>
-							<div class="col-xs-9">
-								<div class="input-group">
+	<div>
+		<div class="modal fade" tabindex="-1" ref="settings" id="settings">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+						<h4 class="modal-title">Global settings</h4>
+					</div>
+					<div class="modal-body">
+						<div class="form-horizontal">
+							<div class="form-group"> <!-- behaves as .row when in .form-horizontal so .row may be omitted -->
+								<label for="resultsPerPage" class="col-xs-3">Results per page:</label>
+								<div class="col-xs-9">
 									<SelectPicker
-										id="sampleMode"
-										name="sampleMode"
-										class="input-group-btn"
+										id="resultsPerPage"
+										name="resultsPerPage"
 
 										data-width="auto"
 										data-style="btn-default"
 
-										:options="['percentage', 'count'].map(o => ({value: o}))"
+										:options="['20','50','100','200'].map(value => ({value, label: `${value} results`}))"
 
-										@input="focusSampleSize"
-
-										v-model="sampleMode"
+										v-model="pageSize"
 									/>
+								</div>
+							</div>
 
-									<input id="sampleSize" name="sampleSize" placeholder="sample size" type="number" class="form-control" v-model.lazy="sampleSize" ref="sampleSize"/>
+							<div class="form-group">
+								<label for="sampleSize" class="col-xs-3">Sample size:</label>
+								<div class="col-xs-9">
+									<div class="input-group">
+										<SelectPicker
+											id="sampleMode"
+											name="sampleMode"
+											class="input-group-btn"
+
+											data-width="auto"
+											data-style="btn-default"
+
+											:options="['percentage', 'count'].map(o => ({value: o}))"
+
+											@input="focusSampleSize"
+
+											v-model="sampleMode"
+										/>
+
+										<input id="sampleSize" name="sampleSize" placeholder="sample size" type="number" class="form-control" v-model.lazy="sampleSize" ref="sampleSize"/>
+									</div>
+								</div>
+							</div>
+
+							<div class="form-group">
+								<label for="sampleSeed" class="col-xs-3">Seed:</label>
+								<div class="col-xs-9">
+									<input id="sampleSeed" name="sampleSeed" placeholder="seed" type="number" class="form-control" v-model.lazy="sampleSeed">
+								</div>
+							</div>
+
+							<div class="form-group">
+								<label for="wordsAroundHit" class="col-xs-3">Context size:</label>
+								<div class="col-xs-9">
+									<input id="wordsAroundHit" name="wordsAroundHit" placeholder="context Size" type="number" class="form-control" v-model.lazy="wordsAroundHit">
 								</div>
 							</div>
 						</div>
-
-						<div class="form-group">
-							<label for="sampleSeed" class="col-xs-3">Seed:</label>
-							<div class="col-xs-9">
-								<input id="sampleSeed" name="sampleSeed" placeholder="seed" type="number" class="form-control" v-model.lazy="sampleSeed">
-							</div>
-						</div>
-
-						<div class="form-group">
-							<label for="wordsAroundHit" class="col-xs-3">Context size:</label>
-							<div class="col-xs-9">
-								<input id="wordsAroundHit" name="wordsAroundHit" placeholder="context Size" type="number" class="form-control" v-model.lazy="wordsAroundHit">
-							</div>
-						</div>
-
 						<hr>
-
 						<div class="checkbox-inline"><label for="wide-view"><input type="checkbox" id="wide-view" name="wide-view" data-persistent checked> Wide View</label></div>
+						<hr>
+						<button type="button" class="btn btn-default" @click="openHistory">History</button>
 					</div>
-
-				</div>
-				<div class="modal-footer">
-					<button type="button" name="closeSettings" class="btn btn-primary" data-dismiss="modal">Close</button>
+					<div class="modal-footer">
+						<button type="button" name="closeSettings" class="btn btn-primary" data-dismiss="modal">Close</button>
+					</div>
 				</div>
 			</div>
 		</div>
+		<History id="history" ref="history"/>
+
 	</div>
 
 </template>
@@ -86,10 +88,13 @@ import * as RootStore from '@/store';
 import * as GlobalViewSettings from '@/store/results/global';
 import * as ResultsViewSettings from '@/store/results';
 
+import History from '@/pages/search/History.vue';
+
 import SelectPicker from '@/components/SelectPicker.vue';
 
 export default Vue.extend({
 	components: {
+		History,
 		SelectPicker,
 	},
 	computed: {
@@ -135,6 +140,12 @@ export default Vue.extend({
 	methods: {
 		focusSampleSize() {
 			(this.$refs.sampleSize as HTMLInputElement).focus()
+		},
+		openHistory() {
+			const settings = $(this.$refs.settings);
+			const history = $((this.$refs.history as InstanceType<typeof History>).$el);
+
+			settings.modal('hide').one('hidden.bs.modal', () => history.modal('show'));
 		},
 
 		itoa(n: number|null): string { return n == null ? '' : n.toString(); },

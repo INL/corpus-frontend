@@ -26,7 +26,9 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 
 		switch (uiType) {
 			case 'select': return field.values && field.valueListComplete ? 'select' : 'combobox';
-			case 'combobox': return 'combobox';
+			case 'combobox':
+			case 'pos':
+				return uiType;
 			default: return 'text';
 		}
 	}
@@ -39,10 +41,10 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 		}
 
 		switch (uiType) {
-			case 'select': return field.valueListComplete ? 'select' : 'combobox';
 			case 'combobox':
 			case 'range':
 				return uiType;
+			case 'select':
 			case 'checkbox':
 			case 'radio':
 				return field.valueListComplete ? uiType : 'combobox';
@@ -62,6 +64,7 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 			isInternal: annotation.isInternal,
 			isMainAnnotation: annotationId === mainAnnotationId,
 			offsetsAlternative: annotation.offsetsAlternative,
+			subAnnotations: annotation.subannotations,
 			uiType: normalizeAnnotationUIType(annotation),
 			values: normalizeAnnotationUIType(annotation) === 'select' ? annotation.values!.map(v => ({label: v, value: v})) : undefined,
 		};

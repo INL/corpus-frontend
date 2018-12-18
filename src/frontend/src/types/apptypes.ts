@@ -32,9 +32,11 @@ export type NormalizedAnnotation = {
 	 */
 	isMainAnnotation: boolean;
 	offsetsAlternative: string;
+	/** List of annotationIds in the same annotatedField, only present when the field has actual subAnnotations */
+	subAnnotations?: string[];
 	/** Based on the uiType of the original annotion, but select falls back to combobox if not all values are known */
-	uiType: 'select'|'combobox'|'text';
-	/** Only contains values when uiType === 'select'. */
+	uiType: 'select'|'combobox'|'text'|'pos';
+	/** Only contains values when uiType === 'select'|'pos'. */
 	values?: Array<{value: string, label: string}>;
 };
 
@@ -183,6 +185,11 @@ export type AnnotationValue = {
 	value: string;
 	/** Should the property match using case sensitivity */
 	case: boolean;
+	/**
+	 * Type of the annotation.
+	 * Some types require special treatment when parsing or serializing from/to cql.
+	 */
+	type: NormalizedAnnotation['uiType'];
 };
 
 export type FilterValue = {

@@ -64,7 +64,11 @@ const privateActions = {
 const actions = {
 	simple: b.commit((state, payload: string|null) => state.simple = payload, 'simple'),
 	extended: {
-		annotation: b.commit((state, {id, ...rest}: Partial<AnnotationValue>&{id: string}) => Object.assign(state.extended.annotationValues[id], rest), 'extended_annotation'),
+		annotation: b.commit((state, {id, ...rest}: Partial<AnnotationValue>&{id: string}) => {
+			// Never overwrite annotatedFieldId or type even when they're submitted through here.
+			const {annotatedFieldId, type, ...safeValues} = rest;
+			Object.assign(state.extended.annotationValues[id], safeValues);
+		}, 'extended_annotation'),
 		within: b.commit((state, payload: string|null) => state.extended.within = payload, 'extended_within'),
 		reset: b.commit(state => {
 			Object.values(state.extended.annotationValues).forEach(annot => {
@@ -96,12 +100,13 @@ const actions = {
 
 /** We need to call some function from the module before creating the root store or this module won't be evaluated (e.g. none of this code will run) */
 const init = () => {
-	CorpusStore.get.annotations().forEach(({annotatedFieldId, id}) =>
+	CorpusStore.get.annotations().forEach(({annotatedFieldId, id, uiType}) =>
 		privateActions.initAnnotation({
 			annotatedFieldId,
 			id,
 			value: '',
-			case: false
+			case: false,
+			type: uiType
 		})
 	);
 	debugLog('Finished initializing pattern module state shape');

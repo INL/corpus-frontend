@@ -2,18 +2,18 @@
 <div class="totals">
 	<!-- Heavy query, search paused [continue] -->
 	<div class="totals-content">
-		<span v-show="(isCounting /*|| subcorpus == null*/) && !error" class="fa fa-spinner fa-spin searchIndicator totals-spinner"/>
+		<span v-show="(isCounting) && !error" class="fa fa-spinner fa-spin searchIndicator totals-spinner"/>
 
 		<div class="totals-text" :title="percentOfSearchSpaceClarification">
 			<div class="totals-type">
 				<div>Total {{resultType}}<template v-if="!isFinished"> so far</template>:</div>
 				<div v-if="isGroups">Total groups<template v-if="!isFinished"> so far</template>:</div>
-				<div>Total pages<template v-if="!isFinished"> so far</template>:</div>
+				<!-- <div>Total pages<template v-if="!isFinished"> so far</template>:</div> -->
 			</div>
 			<div class="totals-count">
 				<div>{{numPrefix}}{{numResults.toLocaleString()}}{{numSuffix}}</div>
 				<div v-if="isGroups">{{numPrefix}}{{numGroups.toLocaleString()}}{{numSuffix}}</div>
-				<div>{{numPrefix}}{{numPages.toLocaleString()}}{{numSuffix}}</div>
+				<!-- <div>{{numPrefix}}{{numPages.toLocaleString()}}{{numSuffix}}</div> -->
 			</div>
 
 			<span class="totals-percentage">
@@ -27,8 +27,11 @@
 	<div v-if="error" class="totals-message text-danger" @click="continueCounting" :title="error.message">
 		<span class="fa fa-exclamation-triangle text-danger"/> Network error! <button type="button" class="totals-button" @click="continueCounting"><span class="fa fa-rotate-right text-danger"></span> Retry</button>
 	</div>
-	<div v-else-if="isLimited" class="totals-message text-danger" title="Stopped counting results because there are too many.">
-		<span class="fa fa-exclamation-triangle text-danger"/> Too many results to count.
+	<div v-else-if="isFinished && numResults > numResultsRetrieved" class="totals-message text-danger" :title="`You may only view up to ${numResultsRetrieved.toLocaleString()} results` ">
+		<span class="fa fa-exclamation-triangle text-danger"/> <b>Query limited;</b> stopped after {{numResultsRetrieved.toLocaleString()}} from a total of {{numResults.toLocaleString()}}
+	</div>
+	<div v-else-if="isLimited" class="totals-message text-danger" :title="`You may view up to ${numResultsRetrieved.toLocaleString()}. Additionally, BlackLab stopped counting after ${numResults.toLocaleString()}.`">
+		<span class="fa fa-exclamation-triangle text-danger"/> <b>Query limited;</b> stopped after {{numResultsRetrieved.toLocaleString()}} from a total of more than {{numResults.toLocaleString()}}
 	</div>
 	<div v-else-if="isPaused" class="totals-message text-info">
 		Heavy query - search paused <button type="button" class="totals-button" @click="continueCounting"><span class="fa fa-rotate-right text-info"></span> Continue </button>
@@ -98,7 +101,7 @@ export default Vue.extend({
 		numResults(): number { return BLTypes.isHitGroupsOrResults(this.stats) ? this.stats.summary.numberOfHits : this.stats.summary.numberOfDocs; },
 		numResultsRetrieved(): number { return BLTypes.isHitGroupsOrResults(this.stats) ? this.stats.summary.numberOfHitsRetrieved : this.stats.summary.numberOfDocsRetrieved; },
 		numGroups(): number { return BLTypes.isGroups(this.stats) ? this.stats.summary.numberOfGroups : 0; },
-		numPages(): number { return Math.ceil((this.isGroups ? this.numGroups : this.numResultsRetrieved) / this.initialResults.summary.searchParam.number); },
+		// numPages(): number { return Math.ceil((this.isGroups ? this.numGroups : this.numResultsRetrieved) / this.initialResults.summary.searchParam.number); },
 
 		searchSpaceType(): string { return BLTypes.isHitGroupsOrResults(this.stats) ? 'tokens' : 'documents'; },
 		/** The total number of relevant items in the searched subcorpus, tokens if viewing tokens, docs if viewing documents */

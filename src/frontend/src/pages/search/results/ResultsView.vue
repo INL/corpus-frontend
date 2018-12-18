@@ -19,10 +19,11 @@
 		</ol>
 
 		<GroupBy :type="type" :viewGroupName="viewGroupName"/>
-
+		<!-- moved tot totalscounter -->
+		<!--
 		<div v-if="results && !!(results.summary.stoppedRetrievingHits && !results.summary.stillCounting)" class="btn btn-sm btn-default nohover toomanyresults">
 			<span class="fa fa-exclamation-triangle text-danger"></span> Too many results! &mdash; your query was limited
-		</div>
+		</div> -->
 
 		<div v-if="results" style="margin: 10px 0px;">
 			<Pagination
@@ -374,12 +375,12 @@ export default Vue.extend({
 
 <style lang="scss">
 
-.toomanyresults {
-	align-self: flex-start;
-	border-radius: 100px;
-	margin-right: 5px;
-	margin-bottom: 5px;
-}
+// .toomanyresults {
+// 	align-self: flex-start;
+// 	border-radius: 100px;
+// 	margin-right: 5px;
+// 	margin-bottom: 5px;
+// }
 
 .buttons {
 	flex: 0 1000 auto;

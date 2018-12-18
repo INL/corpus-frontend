@@ -138,7 +138,8 @@ const get = {
 						annotatedFieldId: CorpusModule.get.firstMainAnnotation().annotatedFieldId,
 						case: false,
 						id: CorpusModule.get.firstMainAnnotation().id,
-						value: pattern
+						value: pattern,
+						type: 'text'
 					}], null);
 				}
 				case 'extended': {

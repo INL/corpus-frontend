@@ -259,8 +259,9 @@ export class UrlPageState {
 			size: cql.tokens.length,
 			tokens: cql.tokens.map(t => ({
 				id: t.expression ? (t.expression as Attribute).name : CorpusModule.get.firstMainAnnotation().id,
-				value: t.expression ? makeRegexWildcard((t.expression as Attribute).value) : ''
-			}))
+				value: t.expression ? makeRegexWildcard((t.expression as Attribute).value) : '',
+				type: 'text' as 'text' // hmm
+			})),
 		};
 	}
 

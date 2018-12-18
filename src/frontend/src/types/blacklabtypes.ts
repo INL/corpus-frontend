@@ -145,7 +145,9 @@ export interface BLAnnotation {
 	isInternal: boolean;
 	offsetsAlternative: string;
 	sensitivity: 'SENSITIVE_AND_INSENSITIVE'|'SENSITIVE'|'INSENSITIVE';
-	uiType: string|'select'|'combobox'|'text';
+	/** Contains ids of other BLAnnotations in the parent annotatedField if this field has subannotations. */
+	subannotations?: string[];
+	uiType: string|'select'|'combobox'|'text'|'pos';
 	/** Only when the indexMetadata was requested with ?listvalues=annotationId,annotationId etc. */
 	values?: string[];
 	/** Only when values present. */

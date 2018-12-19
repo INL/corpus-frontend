@@ -273,16 +273,16 @@ export default () => {
 	// Because we use vuex-typex, getters are a little different
 	// It doesn't matter though, they're attached to the same state instance, so just ignore the state argument.
 
-	RootStore.store.watch(
-		state => FilterStore.get.activeFilters(),
-		v => metadata$.next(v),
-		{ immediate: true }
-	);
-	RootStore.store.watch(
-		state => Object.values(state.query.filters || {}),
-		v => submittedMetadata$.next(v),
-		{ immediate: true }
-	);
+	// RootStore.store.watch(
+	// 	state => FilterStore.get.activeFilters(),
+	// 	v => metadata$.next(v),
+	// 	{ immediate: true }
+	// );
+	// RootStore.store.watch(
+	// 	state => Object.values(state.query.filters || {}),
+	// 	v => submittedMetadata$.next(v),
+	// 	{ immediate: true }
+	// );
 
 	RootStore.store.watch(
 		(state): QueryState => ({

@@ -2,7 +2,7 @@
 	<div class="filter-overview">
 		<span v-for="filter in filters" :key="filter.id">{{filter.displayName}}: <i>{{filter.values.join(', ')}}</i>&nbsp;</span>
 
-		<div class="sub-corpus-size">
+		<!-- <div class="sub-corpus-size">
 			<template v-if="error">
 				Error: {{error.message}}
 			</template>
@@ -25,7 +25,7 @@
 				<span class="fa fa-spinner fa-spin searchIndicator totals-spinner"></span>
 				Calculating size of selected subcorpus...
 			</template>
-		</div>
+		</div> -->
 	</div>
 </template>
 

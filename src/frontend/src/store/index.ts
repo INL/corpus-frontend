@@ -31,6 +31,9 @@ import * as HitResultsModule from '@/store/results/hits';
 import * as BLTypes from '@/types/blacklabtypes';
 import {NormalizedIndex, FilterValue, AnnotationValue} from '@/types/apptypes';
 
+import {sonarTagset} from '@/components/tagset';
+import { AttributeGroup } from '@/modules/cql_querybuilder';
+
 Vue.use(Vuex);
 Vue.use(VueRx);
 
@@ -306,6 +309,14 @@ export class UrlPageState {
 			return {};
 		}
 
+		// FIXME: this should be properly disabled for corpora where no tagset is supported.
+		let mainTagsetAnnotation = '';
+		let tagsetAnnotations = [] as string[];
+		if (CorpusModule.get.annotations().find(a => a.uiType === 'pos')) {
+			tagsetAnnotations = Object.keys(sonarTagset.subAnnotations).concat(sonarTagset.annotationId);
+			mainTagsetAnnotation = sonarTagset.annotationId;
+		}
+
 		try {
 			/**
 			 * A requirement of the PropertyFields is that there are no gaps in the values
@@ -342,15 +353,26 @@ export class UrlPageState {
 							debugLog(`Encountered unknown cql field ${name} while decoding query from url, ignoring.`);
 							continue;
 						}
- 
-						const values = attributeValues[name] = attributeValues[name] || [];
-						if (expr.operator !== '=') {
-							throw new Error('Unsupported comparator, only "=" is supported.');
+
+						if (tagsetAnnotations.includes(name)) {
+							// add value as original cql-query substring to the main tagset annotation under which the values should be stored.
+							const values = attributeValues[mainTagsetAnnotation] = attributeValues[mainTagsetAnnotation] || [];
+							debugLog('substituting tagset annotation ' + name + ' for main tagset annotation ' + mainTagsetAnnotation);
+							const originalValue = `${name}="${expr.value}"`;
+							// keep main annotation at the start
+							name === mainTagsetAnnotation ? values.unshift(originalValue) : values.push(originalValue);
+						} else {
+							// otherwise just store wherever it should be in the store.
+							const values = attributeValues[name] = attributeValues[name] || [];
+							if (expr.operator !== '=') {
+								throw new Error('Unsupported comparator, only "=" is supported.');
+							}
+							if (values.length !== i) {
+								throw new Error('Duplicate or missing values on property');
+							}
+							values.push(expr.value);
 						}
-						if (values.length !== i) {
-							throw new Error('Duplicate or missing values on property');
-						}
-						values.push(expr.value);
+
 					} else if (expr.type === 'binaryOp') {
 						if (!(expr.operator === '&' || expr.operator === 'AND')) {
 							throw new Error('Multiple properties on token must use AND operator');
@@ -365,7 +387,18 @@ export class UrlPageState {
 			 * Build the actual PropertyFields.
 			 * Convert from regex back into pattern globs, extract case sensitivity.
 			 */
-			return Object.entries(attributeValues).map(([id, values]) => {
+			return Object.entries(attributeValues).map<AnnotationValue>(([id, values]) => {
+				if (id === mainTagsetAnnotation) {
+					// short path.
+					debugLog('Mapping tagset annotation back to cql: ' + id + ' with values ' + values);
+
+					return {
+						id,
+						case: false,
+						value: values.join('&'),
+					};
+				}
+
 				const caseSensitive = values.every(isCase);
 				if (caseSensitive) {
 					values = values.map(stripCase);

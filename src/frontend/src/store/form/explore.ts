@@ -68,13 +68,12 @@ const get = {
 
 const internalActions = {
 	fixTokenArray: b.commit(state => {
-		const {id, uiType} = CorpusStore.get.firstMainAnnotation();
+		const {id} = CorpusStore.get.firstMainAnnotation();
 		state.ngram.tokens = state.ngram.tokens.slice(0, state.ngram.maxSize);
 		while (state.ngram.tokens.length < state.ngram.maxSize) {
 			state.ngram.tokens.push({
 				id,
 				value: '',
-				type: uiType
 			});
 		}
 	}, 'fixTokenArray')
@@ -119,13 +118,12 @@ const actions = {
 };
 
 const init = () => {
-	const {id, uiType} = CorpusStore.get.firstMainAnnotation();
+	const {id} = CorpusStore.get.firstMainAnnotation();
 	defaults.ngram.groupAnnotationId = id;
 	while (defaults.ngram.tokens.length < defaults.ngram.maxSize) {
 		defaults.ngram.tokens.push({
 			id,
 			value: '',
-			type: uiType
 		});
 	}
 	actions.ngram.reset();

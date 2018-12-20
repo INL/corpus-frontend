@@ -31,8 +31,6 @@ import * as HitResultsModule from '@/store/results/hits';
 import * as BLTypes from '@/types/blacklabtypes';
 import {NormalizedIndex, FilterValue, AnnotationValue} from '@/types/apptypes';
 
-import {RemoveProperties, RecursivePartial} from '@/types/helpers';
-
 Vue.use(Vuex);
 Vue.use(VueRx);
 
@@ -260,7 +258,6 @@ export class UrlPageState {
 			tokens: cql.tokens.map(t => ({
 				id: t.expression ? (t.expression as Attribute).name : CorpusModule.get.firstMainAnnotation().id,
 				value: t.expression ? makeRegexWildcard((t.expression as Attribute).value) : '',
-				type: 'text' as 'text' // hmm
 			})),
 		};
 	}
@@ -326,6 +323,8 @@ export class UrlPageState {
 			 *
 			 * Store the values here while parsing.
 			 */
+			const knownAnnotations = CorpusModule.get.annotationDisplayNames();
+
 			const attributeValues: {[key: string]: string[]} = {};
 			for (let i = 0; i < result.tokens.length; ++i) {
 				const token = result.tokens[i];
@@ -339,11 +338,11 @@ export class UrlPageState {
 					const expr = stack.shift()!;
 					if (expr.type === 'attribute') {
 						const name = expr.name;
-						if (CorpusModule.get.annotations().find(annot => annot.id === name) == null) {
+						if (knownAnnotations[name] == null) {
 							debugLog(`Encountered unknown cql field ${name} while decoding query from url, ignoring.`);
 							continue;
 						}
-
+ 
 						const values = attributeValues[name] = attributeValues[name] || [];
 						if (expr.operator !== '=') {
 							throw new Error('Unsupported comparator, only "=" is supported.');
@@ -439,10 +438,9 @@ export class UrlPageState {
 
 	@memoize
 	private get sampleSize(): number|null {
+		// Use 'sample' unless missing or not 0-100 (as it's percentage-based), then use 'samplenum'
 		const sample = this.getNumber('sample', null, v => v != null && v >= 0 && v <= 100 ? v : null);
 		return sample != null ? sample : this.getNumber('samplenum', null);
-		// Use 'sample' unless missing, then use 'samplenum', if 0-100 (as it's percentage-based)
-		// return this.getNumber('sample', this.getNumber('samplenum', null, v => (v >= 0 && v <=100) ? v : null));
 	}
 
 	// TODO these might become dynamic in the future, then we need extra manual checking to see if the value is even supported in this corpus

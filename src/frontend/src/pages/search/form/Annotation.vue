@@ -30,7 +30,7 @@
 				/>
 				<div class="input-group-btn wordlist-upload">
 					<label class="btn btn-default" :for="fileInputId">
-						<span class="glyphicon glyphicon-open"></span>
+						<span class="fa fa-upload fa-fw"></span>
 						<input
 							type="file"
 							title="Upload a list of values"
@@ -103,7 +103,6 @@ export default Vue.extend({
 			},
 			set(value: string) {
 				PatternStore.actions.extended.annotation({
-					annotatedFieldId: this.annotation.annotatedFieldId,
 					id: this.id,
 					value
 				})
@@ -115,7 +114,6 @@ export default Vue.extend({
 			},
 			set(caseSensitive: boolean) {
 				PatternStore.actions.extended.annotation({
-					annotatedFieldId: this.annotation.annotatedFieldId,
 					id: this.id,
 					case: caseSensitive
 				});

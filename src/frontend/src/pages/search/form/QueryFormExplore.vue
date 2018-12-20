@@ -7,10 +7,7 @@
 		</ul>
 
 		<div class="tab-content">
-			<div
-				id="explore-n-grams"
-				:class="['tab-pane form-horizontal', {'active': exploreMode==='ngram'}]"
-			>
+			<div id="explore-n-grams" :class="['tab-pane form-horizontal', {'active': exploreMode==='ngram'}]">
 				<div class="form-group">
 					<label class="col-xs-4 col-md-2" for="n-gram-size">N-gram size</label>
 					<div class="col-xs-8 col-md-5">
@@ -68,13 +65,7 @@
 					</div>
 				</div>
 			</div>
-			<div
-				id="explore-frequency"
-				:class="['tab-pane form-horizontal', {'active': exploreMode==='frequency'}]"
-
-				@submit.prevent.stop="submitFrequency"
-				@reset.prevent.stop="resetFrequency"
-			>
+			<div id="explore-frequency" :class="['tab-pane form-horizontal', {'active': exploreMode==='frequency'}]">
 				<div class="form-group form-group-lg" style="margin: 0;">
 					<label for="frequency-type" class="control-label">Frequency list type</label>
 					<SelectPicker

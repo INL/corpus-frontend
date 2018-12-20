@@ -40,12 +40,12 @@
 							:key="index"
 							:id="getTabId(tab.name)"
 						>
-							<Annotation v-for="annotation in tab.annotations" :key="annotation.id" :annotation="annotation"/>
+							<Annotation v-for="annotation in tab.annotations" :key="annotation.annotatedFieldId + '/' + annotation.id" :annotation="annotation"/>
 						</div>
 					</div>
 				</template>
 				<template v-else>
-					<Annotation v-for="(annotation, index) in allAnnotations" :key="index" :annotation="annotation"/> <!-- use index as annots can share ids -->
+					<Annotation v-for="annotation in allAnnotations" :key="annotation.annotatedFieldId + '/' + annotation.id" :annotation="annotation"/>
 				</template>
 
 				<div class="form-group">

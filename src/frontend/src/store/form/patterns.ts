@@ -65,8 +65,8 @@ const actions = {
 	simple: b.commit((state, payload: string|null) => state.simple = payload, 'simple'),
 	extended: {
 		annotation: b.commit((state, {id, ...rest}: Partial<AnnotationValue>&{id: string}) => {
-			// Never overwrite annotatedFieldId or type even when they're submitted through here.
-			const {annotatedFieldId, type, ...safeValues} = rest;
+			// Never overwrite annotatedFieldId or type, even when they're submitted through here.
+			const {type, ...safeValues} = rest;
 			Object.assign(state.extended.annotationValues[id], safeValues);
 		}, 'extended_annotation'),
 		within: b.commit((state, payload: string|null) => state.extended.within = payload, 'extended_within'),
@@ -102,7 +102,7 @@ const actions = {
 const init = () => {
 	CorpusStore.get.annotations().forEach(({annotatedFieldId, id, uiType}) =>
 		privateActions.initAnnotation({
-			annotatedFieldId,
+			// annotatedFieldId,
 			id,
 			value: '',
 			case: false,

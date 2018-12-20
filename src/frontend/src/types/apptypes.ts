@@ -32,11 +32,13 @@ export type NormalizedAnnotation = {
 	 */
 	isMainAnnotation: boolean;
 	offsetsAlternative: string;
+	/** When this is a subAnnotation */
+	parentAnnotationId?: string;
 	/** List of annotationIds in the same annotatedField, only present when the field has actual subAnnotations */
 	subAnnotations?: string[];
 	/** Based on the uiType of the original annotion, but select falls back to combobox if not all values are known */
 	uiType: 'select'|'combobox'|'text'|'pos';
-	/** Only contains values when uiType === 'select'|'pos'. */
+	/** Contains all known values for this field. Undefined if no values known or list was incomplete. */
 	values?: Array<{value: string, label: string}>;
 };
 
@@ -178,7 +180,8 @@ export type NormalizedFormatOld = INormalizedFormatOld & Subtract<BLTypes.BLForm
 
 export type AnnotationValue = {
 	/** Unique id of the annotated field  */
-	readonly annotatedFieldId: string;
+	// readonly annotatedFieldId: string;
+
 	/** Unique ID of the property */
 	readonly id: string;
 	/** Raw value of the property */
@@ -188,8 +191,9 @@ export type AnnotationValue = {
 	/**
 	 * Type of the annotation.
 	 * Some types require special treatment when parsing or serializing from/to cql.
+	 * Always available, but not required to allow committing new values to the store without setting it.
 	 */
-	type: NormalizedAnnotation['uiType'];
+	readonly type?: NormalizedAnnotation['uiType'];
 };
 
 export type FilterValue = {

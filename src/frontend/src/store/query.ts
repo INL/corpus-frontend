@@ -68,41 +68,33 @@ const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, Object
 const getState = b.state();
 
 function getCQLFromAnnotations(annotations: AnnotationValue[], within: null|string) {
-	// First split the properties into individual words and pair them
-	const tokens = [] as Array<{[key: string]: string}>;
-	annotations.forEach(({id, case: caseSensitive, value}) => {
-		value
-		.replace(/"/g, '')
-		.trim()
-		.split(/\s+/)
-		.filter(v => !!v)
-		.forEach((word, i) => {
-			if (!tokens[i]) {
-				tokens[i] = {};
-			}
+	const tokens = [] as string[][];
 
-			tokens[i][id] = (caseSensitive ? '(?-i)' : '') + makeWildcardRegex(word);
-		});
+	annotations.forEach(({id, case: caseSensitive, value, type}) => {
+		switch (type) {
+			case 'select':
+			case 'text':
+			case 'combobox': {
+				value
+				.replace(/"/g, '')
+				.trim()
+				.split(/\s+/)
+				.filter(v => !!v)
+				.forEach((word, i) => {
+					const arr = (tokens[i] = tokens[i] || []);
+					arr.push(`${id}="${(caseSensitive ? '(?-i)' : '') + makeWildcardRegex(word)}"`);
+				});
+				return;
+			}
+			default: throw new Error('Unimplemented cql serialization for annotation type ' + type);
+		}
 	});
 
-	const tokenStrings = [] as string[];
-	tokens.forEach(token => {
-		// push all attributes in this token
-		const attributesStrings = [] as string[];
-		Object.entries(token).forEach(([key, value]) => {
-			if (value) { // don't push empty attributes
-				attributesStrings.push(key + '=' + '"' + value + '"');
-			}
-		});
-
-		tokenStrings.push('[', attributesStrings.join(' & '), ']');
-	});
-
-	if (tokenStrings.length > 0 && within) {
-		tokenStrings.push(' within ', '<'+within+'/>');
+	let query = tokens.map(t => `[${t.join('&')}]`).join('');
+	if (query.length > 0 && within) {
+		query += ` within <${within}/>`;
 	}
-
-	return tokenStrings.join('') || undefined;
+	return query || undefined;
 }
 
 const get = {
@@ -135,7 +127,6 @@ const get = {
 					const pattern = (state as ModuleRootStateSearch<'simple'>).formState;
 					if (!pattern) { return undefined; }
 					return getCQLFromAnnotations([{
-						annotatedFieldId: CorpusModule.get.firstMainAnnotation().annotatedFieldId,
 						case: false,
 						id: CorpusModule.get.firstMainAnnotation().id,
 						value: pattern,

@@ -151,6 +151,8 @@ ul.nav-tabs.cf-panel-tab-header {
 		color: #333;
 		font-size: 12px;
 		padding: 4px 8px;
+		max-width: 350px;
+		word-break: break-all;
 	}
 
 	> .tooltip-arrow {

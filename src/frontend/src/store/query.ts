@@ -72,6 +72,11 @@ function getCQLFromAnnotations(annotations: AnnotationValue[], within: null|stri
 
 	annotations.forEach(({id, case: caseSensitive, value, type}) => {
 		switch (type) {
+			case 'pos': {
+				const arr = (tokens[0] = tokens[0] || []);
+				arr.push(value); // already valid cql, no escaping or wildcard substitution.
+				return;
+			}
 			case 'select':
 			case 'text':
 			case 'combobox': {

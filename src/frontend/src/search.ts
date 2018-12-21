@@ -9,8 +9,10 @@ import Vue from 'vue';
 import VTooltip from 'v-tooltip';
 
 import {QueryBuilder, QueryBuilderOptionsDef} from '@/modules/cql_querybuilder';
-import {store, init as initStore, UrlPageState} from '@/store';
+import * as RootStore from '@/store';
 import * as CorpusStore from '@/store/corpus'; // NOTE: only use after initializing root store
+import * as TagsetStore from '@/store/tagset';
+
 import {debugLog} from '@/utils/debug';
 import {normalizeIndex} from '@/utils/blacklabutils';
 
@@ -75,18 +77,24 @@ const connectJqueryToPage = () => {
 // Initialize vue
 // --------------
 Vue.use(VTooltip);
+Vue.config.productionTip = false;
 
 $(document).ready(() => {
-	const normalizedIndex: AppTypes.NormalizedIndex = normalizeIndex(SINGLEPAGE.INDEX);
-	const stateFromUrl = new UrlPageState().get();
+	RootStore.init();
 
-	initStore(normalizedIndex, stateFromUrl);
-	connectStreamsToVuex();
+	TagsetStore.actions.awaitInit()
+	.then(() => new RootStore.UrlPageState().get())
+	.then(urlState => {
+		debugLog('Loading state from url', urlState);
+		RootStore.actions.reset();
+		RootStore.actions.replace(urlState);
+		connectStreamsToVuex(); // don't do this before the url is parsed, as it controls the page url (among other things derived from the state).
+		debugLog('Finished initializing state shape and loading initial state from url.');
+	});
 
-	Vue.config.productionTip = false;
-
+	// we can render before the tagset loads, the form just won't be populated from the url yet.
 	new Vue({
-		store,
+		store: RootStore.store,
 		render: h => h(SearchPageComponent),
 		mounted() {
 			connectJqueryToPage();

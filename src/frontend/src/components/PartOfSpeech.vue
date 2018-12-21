@@ -6,7 +6,7 @@
 					<button type="button" data-dismiss="modal" class="close" title="close">&times;</button>
 					<h3>{{annotation.displayName || annotation.id}}</h3>
 				</div>
-				<div class="modal-body">
+				<div v-if="isValidTagset" class="modal-body">
 					<div class="list-group-container">
 						<div class="list-group main">
 							<button v-for="value in tagset.values"
@@ -38,6 +38,11 @@
 					<hr>
 					<div>{{query}}</div>
 				</div>
+				<div v-else class="modal-body">
+					<div class="alert alert-danger">
+						{{errorMessage}}
+					</div>
+				</div>
 				<div class="modal-footer">
 					<button type="submit" class="btn btn-primary" @click.prevent="submit" data-dismiss="modal">Save</button>
 					<button type="reset" class="btn btn-default" @click.prevent="reset">Reset</button>
@@ -49,20 +54,22 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import {sonarTagset, NormalizedTagset, validateTagset} from '@/components/tagset';
+import * as TagsetStore from '@/store/tagset';
 
-import {NormalizedAnnotation} from '@/types/apptypes';
+import {NormalizedAnnotation, Tagset} from '@/types/apptypes';
 
 export default Vue.extend({
 	props: {
 		annotation: Object as () => NormalizedAnnotation
 	},
 	data: () => ({
-		tagset: JSON.parse(JSON.stringify(sonarTagset)) as NormalizedTagset,
-		annotationValue: null as null|NormalizedTagset['values'][string],
+		annotationValue: null as null|Tagset['values'][string],
 		selected: {} as {[key: string]: boolean}
 	}),
 	computed: {
+		tagset: TagsetStore.getState,
+		isValidTagset(): boolean { return TagsetStore.getState().state === 'loaded'; },
+		errorMessage(): string { return this.isValidTagset ? '' : TagsetStore.getState().message; },
 		query(): string {
 			if (this.annotationValue == null) { return ''; }
 			const mainValue = this.annotationValue.value;
@@ -88,8 +95,6 @@ export default Vue.extend({
 		}
 	},
 	created() {
-		validateTagset(this.annotation, this.tagset);
-
 		Object.values(this.tagset.values).forEach(value => {
 			value.subAnnotationIds.forEach(annotId => {
 				const {values, id} = this.tagset.subAnnotations[annotId];

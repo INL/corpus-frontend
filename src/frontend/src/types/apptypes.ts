@@ -218,6 +218,43 @@ export type FilterValue = {
 	values: string[];
 };
 
+// -------------------
+// Configuration types
+// -------------------
+
+export type Tagset = {
+	/** Referring to the annotation for which the values exist, this is the annotation under which the main part-of-speech category is stored ('ww', 'vnw' etc) */
+	// annotationId: string;
+	/**
+	 * All known values for this annotation.
+	 * The raw values can be gathered from blacklab
+	 * but displaynames, and the valid constraints need to be manually configured.
+	 */
+	values: {
+		[key: string]: {
+			value: string;
+			displayName: string;
+			/** All subannotations that can be used on this type of part-of-speech */
+			subAnnotationIds: Array<keyof Tagset['subAnnotations']>;
+		}
+	};
+	/**
+	 * All subannotations of the main annotation
+	 * Except the displayNames for values, we could just autofill this from blacklab.
+	 */
+	subAnnotations: {
+		[key: string]: {
+			id: string;
+			displayName: string;
+			/** The known values for the subannotation */
+			values: Array<{
+				value: string;
+				displayName: string;
+			}>;
+		};
+	};
+};
+
 export class ApiError extends Error {
 	public readonly title: string;
 	public readonly message: string;

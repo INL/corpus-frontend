@@ -40,10 +40,12 @@
 				<hr/>
 				<button type="submit" class="btn btn-primary btn-lg">Search</button>
 				<button type="reset" class="btn btn-default btn-lg" title="Start a new search">Reset</button>
+				<button type="button" class="btn btn-lg btn-default" data-toggle="modal" data-target="#history">History</button>
 				<button type="button" class="btn btn-lg btn-default" data-toggle="modal" data-target="#settings"><span class="glyphicon glyphicon-cog" style="vertical-align:text-top;"></span></button>
 			</div>
 		</form>
-		<QueryFormSettings />
+		<QueryFormSettings id="settings"/>
+		<History id="history"/>
 	</div>
 
 </template>
@@ -60,12 +62,15 @@ import QueryFormExplore from '@/pages/search/form/QueryFormExplore.vue';
 import QueryFormFilters from '@/pages/search/form/QueryFormFilters.vue';
 import QueryFormSettings from '@/pages/search/form/QueryFormSettings.vue';
 
+import History from '@/pages/search/History.vue';
+
 export default Vue.extend({
 	components: {
 		QueryFormExplore,
 		QueryFormSearch,
 		QueryFormFilters,
 		QueryFormSettings,
+		History
 	},
 	computed: {
 		queryBuilderVisible(): boolean { return RootStore.get.queryBuilderActive(); },

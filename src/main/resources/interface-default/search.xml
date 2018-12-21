@@ -31,7 +31,7 @@
             <Link value="http://www.clarin.eu/" newWindow="true">CLARIN</Link>
             <Link value="https://www.clariah.nl/" newWindow="true">CLARIAH</Link>
             <Link value="${request:contextPath}/help">Help</Link>
-            <Link value="${request:contextPath}/about" relative="true">About</Link>
+            <Link value="${request:contextPath}/about">About</Link>
         </NavLinks>
     </InterfaceProperties>
     <XsltParameters>

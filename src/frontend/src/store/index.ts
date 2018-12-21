@@ -14,6 +14,7 @@ import {debugLog} from '@/utils/debug';
 import * as CorpusModule from '@/store/corpus';
 import * as HistoryModule from '@/store/history';
 import * as QueryModule from '@/store/query';
+import * as TagsetModule from '@/store/tagset';
 
 // Form
 import * as FormManager from '@/store/form';
@@ -29,10 +30,7 @@ import * as GlobalResultsModule from '@/store/results/global';
 import * as HitResultsModule from '@/store/results/hits';
 
 import * as BLTypes from '@/types/blacklabtypes';
-import {NormalizedIndex, FilterValue, AnnotationValue} from '@/types/apptypes';
-
-import {sonarTagset} from '@/components/tagset';
-import { AttributeGroup } from '@/modules/cql_querybuilder';
+import {FilterValue, AnnotationValue} from '@/types/apptypes';
 
 Vue.use(Vuex);
 Vue.use(VueRx);
@@ -41,6 +39,7 @@ type RootState = {
 	corpus: CorpusModule.ModuleRootState;
 	history: HistoryModule.ModuleRootState;
 	query: QueryModule.ModuleRootState;
+	tagset: TagsetModule.ModuleRootState;
 }&FormManager.PartialRootState&ResultsManager.PartialRootState;
 
 /**
@@ -304,18 +303,20 @@ export class UrlPageState {
 		function isCase(value: string) { return value.startsWith('(?-i)') || value.startsWith('(?c)'); }
 		function stripCase(value: string) { return value.substr(value.startsWith('(?-i)') ? 5 : 4); }
 
+		// How we parse the cql pattern depends on whether a tagset is available for this corpus, and whether it's enabled in the ui
+		if (!(TagsetModule.getState().state === 'loaded' || TagsetModule.getState().state === 'disabled')) {
+			throw new Error('Attempting to parse url before tagset is loaded or disabled, await tagset.awaitInit() before parsing url.');
+		}
+
 		const result = this._parsedCql;
 		if (result == null) {
 			return {};
 		}
 
-		// FIXME: this should be properly disabled for corpora where no tagset is supported.
-		let mainTagsetAnnotation = '';
-		let tagsetAnnotations = [] as string[];
-		if (CorpusModule.get.annotations().find(a => a.uiType === 'pos')) {
-			tagsetAnnotations = Object.keys(sonarTagset.subAnnotations).concat(sonarTagset.annotationId);
-			mainTagsetAnnotation = sonarTagset.annotationId;
-		}
+		const tagsetInfo = TagsetModule.getState().state === 'loaded' ? {
+			mainAnnotations: CorpusModule.get.annotations().filter(a => a.uiType === 'pos').map(a => a.id),
+			subAnnotations: Object.keys(TagsetModule.getState().subAnnotations)
+		} : null;
 
 		try {
 			/**
@@ -336,7 +337,7 @@ export class UrlPageState {
 			 */
 			const knownAnnotations = CorpusModule.get.annotationDisplayNames();
 
-			const attributeValues: {[key: string]: string[]} = {};
+			const annotationValues: {[key: string]: string[]} = {};
 			for (let i = 0; i < result.tokens.length; ++i) {
 				const token = result.tokens[i];
 				if (token.leadingXmlTag || token.optional || token.repeats || token.trailingXmlTag) {
@@ -354,16 +355,22 @@ export class UrlPageState {
 							continue;
 						}
 
-						if (tagsetAnnotations.includes(name)) {
+						const isMainTagsetAnnotation = tagsetInfo && tagsetInfo.mainAnnotations.includes(name);
+						const isTagsetAnnotation = isMainTagsetAnnotation || (tagsetInfo && tagsetInfo.subAnnotations.includes(name));
+
+						if (isTagsetAnnotation) {
 							// add value as original cql-query substring to the main tagset annotation under which the values should be stored.
-							const values = attributeValues[mainTagsetAnnotation] = attributeValues[mainTagsetAnnotation] || [];
-							debugLog('substituting tagset annotation ' + name + ' for main tagset annotation ' + mainTagsetAnnotation);
+							debugLog('Relocating value for annotation ' + name + ' to tagset annotation(s) ' + tagsetInfo!.mainAnnotations);
 							const originalValue = `${name}="${expr.value}"`;
-							// keep main annotation at the start
-							name === mainTagsetAnnotation ? values.unshift(originalValue) : values.push(originalValue);
+
+							for (const id of tagsetInfo!.mainAnnotations) {
+								const valuesForAnnotation = annotationValues[id] = annotationValues[id] || [];
+								// keep main annotation at the start
+								isMainTagsetAnnotation ? valuesForAnnotation.unshift(originalValue) : valuesForAnnotation.push(originalValue);
+							}
 						} else {
 							// otherwise just store wherever it should be in the store.
-							const values = attributeValues[name] = attributeValues[name] || [];
+							const values = annotationValues[name] = annotationValues[name] || [];
 							if (expr.operator !== '=') {
 								throw new Error('Unsupported comparator, only "=" is supported.');
 							}
@@ -387,9 +394,9 @@ export class UrlPageState {
 			 * Build the actual PropertyFields.
 			 * Convert from regex back into pattern globs, extract case sensitivity.
 			 */
-			return Object.entries(attributeValues).map<AnnotationValue>(([id, values]) => {
-				if (id === mainTagsetAnnotation) {
-					// short path.
+			return Object.entries(annotationValues).map<AnnotationValue>(([id, values]) => {
+				if (tagsetInfo && tagsetInfo.mainAnnotations.includes(id)) {
+					// use value as-is, already contains cql and should not have wildcards substituted.
 					debugLog('Mapping tagset annotation back to cql: ' + id + ' with values ' + values);
 
 					return {
@@ -741,18 +748,15 @@ const actions = {
 // NOTE: only call this after creating all getters and actions etc.
 const store = b.vuexStore({state: {} as RootState, strict: true});
 
-const init = (index: NormalizedIndex, urlState: HistoryModule.HistoryEntry) => {
+const init = () => {
 	CorpusModule.init();
 
 	FormManager.init();
 	ResultsManager.init();
 
+	TagsetModule.init();
 	HistoryModule.init();
 	QueryModule.init();
-
-	debugLog('state from url', urlState);
-	actions.replace(urlState);
-	debugLog('Finished initializing state shape and loading initial state from url.');
 };
 
 // Debugging helpers.
@@ -768,6 +772,7 @@ const init = (index: NormalizedIndex, urlState: HistoryModule.HistoryEntry) => {
 	corpus: CorpusModule,
 	history: HistoryModule,
 	query: QueryModule,
+	tagset: TagsetModule,
 
 	explore: ExploreModule,
 	form: FormManager,

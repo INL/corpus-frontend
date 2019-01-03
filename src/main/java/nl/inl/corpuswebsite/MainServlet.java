@@ -6,43 +6,12 @@
  */
 package nl.inl.corpuswebsite;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.jar.Manifest;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerConfigurationException;
-
+import nl.inl.corpuswebsite.response.*;
+import nl.inl.corpuswebsite.utils.CorpusConfig;
+import nl.inl.corpuswebsite.utils.QueryServiceHandler;
+import nl.inl.corpuswebsite.utils.QueryServiceHandler.QueryException;
+import nl.inl.corpuswebsite.utils.WebsiteConfig;
+import nl.inl.corpuswebsite.utils.XslTransformer;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.logging.log4j.LogManager;
@@ -51,18 +20,25 @@ import org.apache.velocity.Template;
 import org.apache.velocity.app.Velocity;
 import org.xml.sax.SAXException;
 
-import nl.inl.corpuswebsite.response.AboutResponse;
-import nl.inl.corpuswebsite.response.ArticleResponse;
-import nl.inl.corpuswebsite.response.CorporaDataResponse;
-import nl.inl.corpuswebsite.response.CorporaResponse;
-import nl.inl.corpuswebsite.response.ErrorResponse;
-import nl.inl.corpuswebsite.response.HelpResponse;
-import nl.inl.corpuswebsite.response.SearchResponse;
-import nl.inl.corpuswebsite.utils.CorpusConfig;
-import nl.inl.corpuswebsite.utils.QueryServiceHandler;
-import nl.inl.corpuswebsite.utils.QueryServiceHandler.QueryException;
-import nl.inl.corpuswebsite.utils.WebsiteConfig;
-import nl.inl.corpuswebsite.utils.XslTransformer;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerConfigurationException;
+import java.io.*;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.jar.Manifest;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Main servlet class for the corpus application.
@@ -582,7 +558,7 @@ public class MainServlet extends HttpServlet {
 
             XslTransformer trans = file.map(f -> {
                 try { return new XslTransformer(f);}
-                catch (TransformerConfigurationException e) {
+                catch (TransformerConfigurationException | FileNotFoundException e) {
                     logger.debug("Error loading stylesheet {} for corpus {} : {}", file.get(), corpus, e.getMessage());
                     return null;
                 }
@@ -594,7 +570,7 @@ public class MainServlet extends HttpServlet {
                     QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(null) + "input-formats/" + corpusDataFormat + "/xslt");
                     Map<String, String[]> params = new HashMap<>();
                     String sheet = handler.makeRequest(params);
-                    return new XslTransformer(new StringReader(sheet));
+                    return new XslTransformer(sheet, new StringReader(sheet));
                 } catch (TransformerConfigurationException | IOException | QueryException e) {
                     logger.debug("Error getting or using stylesheet for format {} from blacklab : {}", corpusDataFormat, e.getMessage());
                     return null;

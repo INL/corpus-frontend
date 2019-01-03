@@ -1,22 +1,20 @@
 package nl.inl.corpuswebsite.response;
 
+import nl.inl.corpuswebsite.BaseResponse;
+import nl.inl.corpuswebsite.MainServlet;
+import nl.inl.corpuswebsite.utils.QueryServiceHandler;
+import nl.inl.corpuswebsite.utils.QueryServiceHandler.QueryException;
+import nl.inl.corpuswebsite.utils.XslTransformer;
+import org.apache.commons.lang.StringUtils;
+
+import javax.servlet.http.HttpServletResponse;
+import javax.xml.transform.TransformerException;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
-
-import javax.servlet.http.HttpServletResponse;
-import javax.xml.transform.TransformerException;
-
-import org.apache.commons.lang.StringUtils;
-
-import nl.inl.corpuswebsite.BaseResponse;
-import nl.inl.corpuswebsite.MainServlet;
-import nl.inl.corpuswebsite.utils.QueryServiceHandler;
-import nl.inl.corpuswebsite.utils.QueryServiceHandler.QueryException;
-import nl.inl.corpuswebsite.utils.XslTransformer;
 
 public class ArticleResponse extends BaseResponse {
 
@@ -29,7 +27,7 @@ public class ArticleResponse extends BaseResponse {
     static {
         try {
             // @formatter:off
-            defaultTransformer = new XslTransformer(new StringReader(
+            defaultTransformer = new XslTransformer("DEFAULTTRANSFORMER",new StringReader(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
                 "<xsl:stylesheet version=\"2.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">" +
                     "<xsl:output encoding=\"utf-8\" method=\"html\" omit-xml-declaration=\"yes\" />" +

@@ -57,7 +57,7 @@ public class XslTransformer {
     }
 
     public XslTransformer(File stylesheet) throws TransformerConfigurationException, FileNotFoundException {
-        transformer = TEMPLATES.containsKey(stylesheet.getPath()) ? get(stylesheet.getPath()) : getTemplates(stylesheet.getPath(), new StreamSource(new FileReader(stylesheet))).newTransformer();
+        transformer = TEMPLATES.containsKey(stylesheet.getPath()) ? get(stylesheet.getPath()) : getTemplates(stylesheet.getPath(), new StreamSource(stylesheet)).newTransformer();
     }
 
     public XslTransformer(InputStream stylesheet) throws TransformerConfigurationException {

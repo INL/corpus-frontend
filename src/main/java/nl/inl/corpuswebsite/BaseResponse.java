@@ -15,16 +15,16 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.event.EventCartridge;
 import org.apache.velocity.app.event.ReferenceInsertionEventHandler;
 import org.apache.velocity.tools.generic.EscapeTool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class BaseResponse {
-    protected static final Logger logger = LogManager.getLogger(BaseResponse.class);
+    protected static final Logger logger = LoggerFactory.getLogger(BaseResponse.class);
 
     private static final String OUTPUT_ENCODING = "UTF-8";
 

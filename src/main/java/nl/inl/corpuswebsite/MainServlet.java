@@ -14,8 +14,6 @@ import nl.inl.corpuswebsite.utils.WebsiteConfig;
 import nl.inl.corpuswebsite.utils.XslTransformer;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.velocity.Template;
 import org.apache.velocity.app.Velocity;
 import org.xml.sax.SAXException;
@@ -39,6 +37,8 @@ import java.util.*;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Main servlet class for the corpus application.
@@ -47,7 +47,7 @@ import java.util.stream.Stream;
  */
 public class MainServlet extends HttpServlet {
 
-    private static final Logger logger = LogManager.getLogger(MainServlet.class);
+    private static final Logger logger = LoggerFactory.getLogger(MainServlet.class);
 
     private static final String DEFAULT_PAGE = "corpora";
 

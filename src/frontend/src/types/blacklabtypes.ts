@@ -406,11 +406,11 @@ export interface BLHitResults {
 
 export type BLSearchResult = BLHitResults|BLDocResults|BLHitGroupResults|BLDocGroupResults;
 
-export const isHitResults = (d: any): d is BLHitResults => d && d.docInfos && d.hits;
-export const isDocResults = (d: any): d is BLDocResults => d && d.docs;
-export const isHitGroups = (d: any): d is BLHitGroupResults => d && d.hitGroups;
-export const isDocGroups = (d: any): d is BLDocGroupResults => d && d.docGroups;
+export const isHitResults = (d: any): d is BLHitResults => !!(d && d.docInfos && d.hits);
+export const isDocResults = (d: any): d is BLDocResults => !!(d && d.docs);
+export const isHitGroups = (d: any): d is BLHitGroupResults => !!(d && d.hitGroups);
+export const isDocGroups = (d: any): d is BLDocGroupResults => !!(d && d.docGroups);
 export const isHitGroupsOrResults = (d: any): d is BLHitResults|BLHitGroupResults => isHitGroups(d) || isHitResults(d);
 export const isDocGroupsOrResults = (d: any): d is BLDocResults|BLDocGroupResults => isDocGroups(d) || isDocResults(d);
 export const isGroups = (d: any): d is BLHitGroupResults|BLDocGroupResults => isHitGroups(d) || isDocGroups(d);
-export const isBLError = (e: any): e is BLError => !!e && !!e.error && !!e.error.code && !!e.error.message;
+export const isBLError = (e: any): e is BLError => !!(e && e.error && e.error.code && e.error.message);

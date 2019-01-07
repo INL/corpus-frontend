@@ -41,6 +41,7 @@
 			data-style="btn-default btn-sm"
 			:data-live-search="sortOptions.flat(2).length > 20 ? 'true' : undefined"
 			data-window-padding="[150, 0, 50, 0]"
+			data-hide-disabled="true"
 
 			:options="sortOptions"
 			:escapeLabels="false"
@@ -361,45 +362,53 @@ export default Vue.extend({
 			return r;
 		},
 		sortOptions(): Array<Option|OptGroup> {
+			// NOTE: we need to always pass all available options, then hide invalids based on displayed results
+			// if we don't do this, sorting will be cleared on initial page load
+			// This happens because results aren't loaded yet, thus isHits/isDocs/isGroups all return false, and no options would be available
+			// then the selectpicker will reset value to undefined, which clears it in the store, which updates the url, etc.
 			const opts = [] as Array<Option|OptGroup>;
 
-			if (this.isGroups) {
+			opts.push({
+				label: 'Groups',
+				options: [{
+					label: 'Sort by Identity',
+					value: 'identity',
+					// disabled: !this.isGroups
+				}, {
+					label: 'Sort by Size',
+					value: 'size',
+					// disabled: !this.isGroups
+				}],
+				disabled: !this.isGroups
+			});
+
+			const annotations = CorpusStore.get.annotations().filter(a => !a.isInternal && a.hasForwardIndex);
+
+			[['wordleft:', 'Before hit', 'before'],['hit:', 'Hit', ''],['wordright:', 'After hit', 'after']]
+			.forEach(([prefix, groupname, suffix]) =>
 				opts.push({
-					label: 'Groups',
-					options: [{
-						label: 'Sort by Identity',
-						value: 'identity'
-					}, {
-						label: 'Sort by Size',
-						value: 'size'
-					}]
-				});
-			} else if (this.isHits) {
-				const annotations = CorpusStore.get.annotations().filter(a => !a.isInternal && a.hasForwardIndex);
+					label: groupname,
+					options: annotations.map(annot => ({
+						label: `Sort by ${annot.displayName || annot.id} <small class="text-muted">${suffix}</small>`,
+						value: `${prefix}${annot.id}`,
+						// disabled: !this.isHits
+					})),
+					disabled: !this.isHits
+				})
+			);
 
-				[['wordleft:', 'Before hit', 'before'],['hit:', 'Hit', ''],['wordright:', 'After hit', 'after']]
-				.forEach(([prefix, groupname, suffix]) =>
-					opts.push({
-						label: groupname,
-						options: annotations.map(annot => ({
-							label: `Sort by ${annot.displayName || annot.id} <small class="text-muted">${suffix}</small>`,
-							value: `${prefix}${annot.id}`
-						}))
-					})
-				);
-			} else if (this.isDocs) {
-				const metadataGroups = CorpusStore.get.metadataGroups();
-
-				metadataGroups.forEach(group => opts.push({
-					// https://github.com/INL/corpus-frontend/issues/197#issuecomment-441475896
-					// (we don't show metadata groups in the Filters component unless there's more than one group, so don't show the group's name either in this case)
-					label: metadataGroups.length > 1 ? group.name : 'Metadata',
-					options: group.fields.map(field => ({
-						label: `Sort by ${(field.displayName || field.id).replace(group.name, '')}`,
-						value: `field:${field.id}`
-					}))
-				}));
-			}
+			const metadataGroups = CorpusStore.get.metadataGroups();
+			metadataGroups.forEach(group => opts.push({
+				// https://github.com/INL/corpus-frontend/issues/197#issuecomment-441475896
+				// (we don't show metadata groups in the Filters component unless there's more than one group, so don't show the group's name either in this case)
+				label: metadataGroups.length > 1 ? group.name : 'Metadata',
+				options: group.fields.map(field => ({
+					label: `Sort by ${(field.displayName || field.id).replace(group.name, '')}`,
+					value: `field:${field.id}`,
+					// disabled: !this.isDocs
+				})),
+				disabled: !this.isDocs
+			}));
 
 			return opts;
 		}

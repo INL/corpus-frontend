@@ -1,16 +1,18 @@
 <template>
 <select v-model="currentValue" class="selectpicker" :disabled="disabled" @change="$emit('change', $event.target.value)">
 	<template v-for="(optOrGroup, index) in options">
-		<optgroup v-if="optOrGroup.options" :key="index" :label="optOrGroup.label">
+		<optgroup v-if="optOrGroup.options" :key="index" :label="optOrGroup.label" :disabled="optOrGroup.disabled">
 			<option v-for="option in optOrGroup.options"
 				:key="option.value"
 				:value="option.value"
+				:disabled="option.disabled"
 				:data-content="(option.label && !escapeLabels) ? option.label : undefined"
 			>{{option.label || option.value}}</option>
 		</optgroup>
 		<option v-else
 			:key="optOrGroup.value"
 			:value="optOrGroup.value"
+			:disabled="optOrGroup.disabled"
 			:data-content="(optOrGroup.label && !escapeLabels) ? optOrGroup.label : undefined"
 		>{{optOrGroup.label || optOrGroup.value}}</option>
 	</template>
@@ -26,6 +28,7 @@ import $ from 'jquery';
 export type OptGroup = {
 	label: string;
 	options: Option[];
+	disabled?: boolean;
 };
 
 export type Option = {
@@ -35,6 +38,7 @@ export type Option = {
 	 * Falls back to html-escaped value if omitted (regardless of escapeLabel - because values are likely not validated to be valid/trusted html).
 	 */
 	label?: string;
+	disabled?: boolean;
 }
 
 export default Vue.extend({

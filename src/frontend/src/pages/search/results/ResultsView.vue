@@ -19,7 +19,7 @@
 		</ol>
 
 		<GroupBy :type="type" :viewGroupName="viewGroupName"/>
-		<!-- moved tot totalscounter -->
+		<!-- moved to totalscounter -->
 		<!--
 		<div v-if="results && !!(results.summary.stoppedRetrievingHits && !results.summary.stillCounting)" class="btn btn-sm btn-default nohover toomanyresults">
 			<span class="fa fa-exclamation-triangle text-danger"></span> Too many results! &mdash; your query was limited
@@ -33,6 +33,21 @@
 				@change="page = $event"
 			/>
 		</div>
+
+		<SelectPicker v-show="resultsHaveData"
+			title="Sort by..."
+			data-size="auto"
+			data-show-subtext="true"
+			data-style="btn-default btn-sm"
+			:data-live-search="sortOptions.flat(2).length > 20 ? 'true' : undefined"
+			data-window-padding="[150, 0, 50, 0]"
+
+			:options="sortOptions"
+			:escapeLabels="false"
+
+			v-model="sort"
+		/>
+
 
 		<template v-if="resultsHaveData">
 			<GroupResults v-if="isGroups"
@@ -85,6 +100,8 @@ import Vue from 'vue';
 import URI from 'urijs';
 import {saveAs} from 'file-saver';
 
+import * as Api from '@/api';
+
 import * as RootStore from '@/store';
 import * as CorpusStore from '@/store/corpus';
 import * as ResultsStore from '@/store/results';
@@ -94,14 +111,14 @@ import * as InterfaceStore from '@/store/form/interface';
 
 import {submittedSubcorpus$} from '@/store/streams';
 
-import * as Api from '@/api';
-
 import GroupResults from '@/pages/search/results/table/GroupResults.vue';
 import HitResults from '@/pages/search/results/table/HitResults.vue';
 import DocResults from '@/pages/search/results/table/DocResults.vue';
 import Totals from '@/pages/search/results/ResultTotals.vue';
 import GroupBy from '@/pages/search/results/groupby/GroupBy.vue';
+
 import Pagination from '@/components/Pagination.vue';
+import SelectPicker, {Option, OptGroup} from '@/components/SelectPicker.vue';
 
 import {debugLog} from '@/utils/debug';
 
@@ -114,7 +131,8 @@ export default Vue.extend({
 		HitResults,
 		DocResults,
 		Totals,
-		GroupBy
+		GroupBy,
+		SelectPicker
 	},
 	props: {
 		type: {
@@ -342,6 +360,49 @@ export default Vue.extend({
 			}
 			return r;
 		},
+		sortOptions(): Array<Option|OptGroup> {
+			const opts = [] as Array<Option|OptGroup>;
+
+			if (this.isGroups) {
+				opts.push({
+					label: 'Groups',
+					options: [{
+						label: 'Sort by Identity',
+						value: 'identity'
+					}, {
+						label: 'Sort by Size',
+						value: 'size'
+					}]
+				});
+			} else if (this.isHits) {
+				const annotations = CorpusStore.get.annotations().filter(a => !a.isInternal && a.hasForwardIndex);
+
+				[['wordleft:', 'Before hit', 'before'],['hit:', 'Hit', ''],['wordright:', 'After hit', 'after']]
+				.forEach(([prefix, groupname, suffix]) =>
+					opts.push({
+						label: groupname,
+						options: annotations.map(annot => ({
+							label: `Sort by ${annot.displayName || annot.id} <small class="text-muted">${suffix}</small>`,
+							value: `${prefix}${annot.id}`
+						}))
+					})
+				);
+			} else if (this.isDocs) {
+				const metadataGroups = CorpusStore.get.metadataGroups();
+
+				metadataGroups.forEach(group => opts.push({
+					// https://github.com/INL/corpus-frontend/issues/197#issuecomment-441475896
+					// (we don't show metadata groups in the Filters component unless there's more than one group, so don't show the group's name either in this case)
+					label: metadataGroups.length > 1 ? group.name : 'Metadata',
+					options: group.fields.map(field => ({
+						label: `Sort by ${(field.displayName || field.id).replace(group.name, '')}`,
+						value: `field:${field.id}`
+					}))
+				}));
+			}
+
+			return opts;
+		}
 	},
 	watch: {
 		refreshParameters: {

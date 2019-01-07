@@ -79,7 +79,7 @@
 								{{citations[index].error}}
 							</p>
 							<p v-else-if="citations[index].citation">
-								{{citations[index].citation[leftIndex]}}<strong>{{citations[index].citation[1]}}</strong>{{citations[index].citation[rightIndex]}}
+								{{citations[index].citation[0]}}<strong>{{citations[index].citation[1]}}</strong>{{citations[index].citation[2]}}
 							</p>
 							<p v-else>
 								Loading...

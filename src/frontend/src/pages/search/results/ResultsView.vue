@@ -34,22 +34,6 @@
 			/>
 		</div>
 
-		<SelectPicker v-show="resultsHaveData"
-			title="Sort by..."
-			data-size="auto"
-			data-show-subtext="true"
-			data-style="btn-default btn-sm"
-			:data-live-search="sortOptions.flat(2).length > 20 ? 'true' : undefined"
-			data-window-padding="[150, 0, 50, 0]"
-			data-hide-disabled="true"
-
-			:options="sortOptions"
-			:escapeLabels="false"
-
-			v-model="sort"
-		/>
-
-
 		<template v-if="resultsHaveData">
 			<GroupResults v-if="isGroups"
 				class="results-table"
@@ -83,8 +67,23 @@
 			<hr>
 
 			<div class="buttons" style="text-align: right;">
-				<button type="button" class="btn btn-danger btn-sm"  v-if="isDocs && resultsHaveHits"  @click="showDocumentHits = !showDocumentHits">{{showDocumentHits ? 'Hide Hits' : 'Show Hits'}}</button>
-				<button type="button" class="btn btn-danger btn-sm"  v-if="isHits" @click="showTitles = !showTitles">{{showTitles ? 'Hide' : 'Show'}} Titles</button>
+				<SelectPicker v-show="resultsHaveData"
+					title="Sort by..."
+					data-size="auto"
+					data-show-subtext="true"
+					data-style="btn-default btn-sm"
+					data-window-padding="[150, 0, 50, 0]"
+					data-hide-disabled="true"
+					:data-live-search="sortOptions.flat(2).length > 20 ? 'true' : undefined"
+
+					:options="sortOptions"
+					:escapeLabels="false"
+
+					v-model="sort"
+				/>
+
+				<button type="button" class="btn btn-primary btn-sm"  v-if="isDocs && resultsHaveHits"  @click="showDocumentHits = !showDocumentHits">{{showDocumentHits ? 'Hide Hits' : 'Show Hits'}}</button>
+				<button type="button" class="btn btn-primary btn-sm"  v-if="isHits" @click="showTitles = !showTitles">{{showTitles ? 'Hide' : 'Show'}} Titles</button>
 				<button type="button" class="btn btn-default btn-sm" v-if="results" :disabled="downloadInProgress || !resultsHaveData" @click="downloadCsv" :title="downloadInProgress ? 'Downloading...' : undefined"><template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner"></span></template>Export CSV</button>
 			</div>
 
@@ -455,12 +454,15 @@ export default Vue.extend({
 .buttons {
 	flex: 0 1000 auto;
 	font-size: 0;
-	> button {
+	> button,
+	> .bootstrap-select {
 		margin-bottom: 5px;
 		margin-left: 5px;
-	}
-	> button:first-child {
-		margin-left: 0px;
+		vertical-align: top;
+
+		&:first-child {
+			margin-left: 0;
+		}
 	}
 }
 

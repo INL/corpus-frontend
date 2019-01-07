@@ -12,16 +12,14 @@ import {QueryBuilder, QueryBuilderOptionsDef} from '@/modules/cql_querybuilder';
 import * as RootStore from '@/store';
 import * as CorpusStore from '@/store/corpus'; // NOTE: only use after initializing root store
 import * as TagsetStore from '@/store/tagset';
+import * as PatternStore from '@/store/form/patterns';
 
-import {debugLog} from '@/utils/debug';
-import {normalizeIndex} from '@/utils/blacklabutils';
+import debug, {debugLog} from '@/utils/debug';
 
-import connectVuexToPage from '@/pages/search/vuexbridge';
 import connectStreamsToVuex from '@/store/streams';
 
 import SearchPageComponent from '@/pages/search/SearchPage.vue';
 
-import * as AppTypes from '@/types/apptypes';
 import * as BLTypes from '@/types/blacklabtypes';
 
 import '@/global.scss';
@@ -49,17 +47,37 @@ const connectJqueryToPage = () => {
 		setTimeout(function() { $this.trigger('change'); });
 	});
 
-	// Init the querybuilder with the supported attributes/properties
+	// Enable wide view toggle
+	$('#wide-view').on('change', function() {
+		$('.container, .container-fluid').toggleClass('container', !$(this).is(':checked')).toggleClass('container-fluid', $(this).is(':checked'));
+	});
+};
+
+// Init the querybuilder with the supported attributes/properties
+function initQueryBuilder() {
 	debugLog('Begin initializing querybuilder');
-	const queryBuilder = new QueryBuilder($('#querybuilder'), {
+
+	// Initialize configuration
+	const firstPos = CorpusStore.get.annotations().find(a => a.uiType === 'pos');
+	const instance = new QueryBuilder($('#querybuilder'), {
+		queryBuilder: {
+			view: {
+				pos: firstPos ? {
+					id: firstPos.id,
+					displayName: firstPos.displayName
+				} : null
+			}
+		},
 		attribute: {
 			view: {
 				// Pass the available properties of tokens in this corpus (PoS, Lemma, Word, etc..) to the querybuilder
 				attributes: CorpusStore.get.annotations()
+					.filter(a => !a.parentAnnotationId || a.uiType === 'pos') // no subannotations
 					.map((annotation): QueryBuilderOptionsDef['attribute']['view']['attributes'][number] => ({
 						attribute: annotation.id,
 						label: annotation.displayName,
 						caseSensitive: annotation.caseSensitive,
+						// values: TagsetStore.getState().
 					})),
 
 				defaultAttribute: CorpusStore.get.firstMainAnnotation().id
@@ -67,11 +85,35 @@ const connectJqueryToPage = () => {
 		}
 	});
 
-	// Enable wide view toggle
-	$('#wide-view').on('change', function() {
-		$('.container, .container-fluid').toggleClass('container', !$(this).is(':checked')).toggleClass('container-fluid', $(this).is(':checked'));
+	// Set initial value
+	let lastPattern: PatternStore.ModuleRootState['advanced'] = null;
+	if (PatternStore.getState().advanced == null) {
+		// not initialized in store, set to default from querybuilder
+		lastPattern = instance.getCql();
+		PatternStore.actions.advanced(lastPattern);
+	} else {
+		// already something in store - copy to querybuilder.
+		if (!instance.parse(PatternStore.getState().advanced)) {
+			// Apparently it's invalid? reset to default.
+			PatternStore.actions.advanced(instance.getCql());
+		}
+	}
+
+	// Enable two-way binding.
+	RootStore.store.watch(state => state.patterns.advanced, v => {
+		if (v !== lastPattern) {
+			lastPattern = v;
+			instance.parse(v);
+		}
 	});
-};
+	instance.element.on('cql:modified', () => {
+		const pattern = instance.getCql();
+		lastPattern = pattern;
+		PatternStore.actions.advanced(pattern);
+	});
+
+	debugLog('Finished initializing querybuilder');
+}
 
 // --------------
 // Initialize vue
@@ -82,23 +124,26 @@ Vue.config.productionTip = false;
 $(document).ready(() => {
 	RootStore.init();
 
-	TagsetStore.actions.awaitInit()
-	.then(() => new RootStore.UrlPageState().get())
-	.then(urlState => {
-		debugLog('Loading state from url', urlState);
-		RootStore.actions.reset();
-		RootStore.actions.replace(urlState);
-		connectStreamsToVuex(); // don't do this before the url is parsed, as it controls the page url (among other things derived from the state).
-		debugLog('Finished initializing state shape and loading initial state from url.');
-	});
-
-	// we can render before the tagset loads, the form just won't be populated from the url yet.
+	// We can render before the tagset loads, the form just won't be populated from the url yet.
 	new Vue({
 		store: RootStore.store,
 		render: h => h(SearchPageComponent),
 		mounted() {
 			connectJqueryToPage();
-			connectVuexToPage();
+
+			TagsetStore.actions.awaitInit()
+			.then(() => new RootStore.UrlPageState().get())
+			.then(urlState => {
+				debugLog('Loading state from url', urlState);
+				RootStore.actions.reset();
+				RootStore.actions.replace(urlState);
+				debugLog('Finished initializing state shape and loading initial state from url.');
+
+				// Don't do this before the url is parsed, as it controls the page url (among other things derived from the state).
+				connectStreamsToVuex();
+				// And this needs the tagset to have been loaded (if available)
+				initQueryBuilder();
+			});
 		}
 	}).$mount(document.querySelector('#vue-root')!);
 });

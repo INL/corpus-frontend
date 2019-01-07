@@ -1,7 +1,7 @@
 import URI from 'urijs';
 
-import { ReplaySubject, Observable, merge, empty, of, ObservableInput } from 'rxjs';
-import { debounceTime, switchMap, map, distinctUntilChanged, publishLast, publishReplay, shareReplay, debounce, filter, tap, skip, mergeMap, distinct } from 'rxjs/operators';
+import { ReplaySubject, Observable, merge, fromEvent } from 'rxjs';
+import { debounceTime, switchMap, map, distinctUntilChanged, shareReplay, filter } from 'rxjs/operators';
 
 import * as RootStore from '@/store';
 import * as CorpusStore from '@/store/corpus';
@@ -270,6 +270,8 @@ url$.pipe(
 });
 
 export default () => {
+	debugLog('Begin attaching store to url and subcorpus calculations.');
+
 	// Because we use vuex-typex, getters are a little different
 	// It doesn't matter though, they're attached to the same state instance, so just ignore the state argument.
 
@@ -303,4 +305,10 @@ export default () => {
 			deep: true
 		}
 	);
+
+	fromEvent<PopStateEvent>(window, 'popstate')
+	.pipe(map<PopStateEvent, HistoryStore.HistoryEntry>(evt => evt.state ? evt.state : new RootStore.UrlPageState().get()))
+	.subscribe(state => RootStore.actions.replace(state));
+
+	debugLog('Finished connecting store to url and subcorpus calculations.');
 };

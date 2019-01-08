@@ -287,6 +287,7 @@
             <artifactId>slf4j-jdk14</artifactId>
             <version>1.7.25</version>
             <scope>runtime</scope>
+            <optional>true</optional>
         </dependency>
 
         <dependency>

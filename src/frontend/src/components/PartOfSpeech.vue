@@ -141,6 +141,13 @@ export default Vue.extend({
 .list-group-container {
 	display: flex;
 	flex-wrap: nowrap;
+
+	> .list-group.main,
+	> .category-container {
+		max-height: calc(100vh - 305px);
+		min-height: 200px;
+		overflow: auto;
+	}
 }
 
 .category-container {

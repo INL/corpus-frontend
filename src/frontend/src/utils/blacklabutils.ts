@@ -17,6 +17,12 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 		return group != null ? group.name : undefined;
 	}
 
+	function findParentAnnotation(annotatedFieldId: string, id: string): string|undefined {
+		const annotations = Object.entries(BLTypes.isIndexMetadataV1(blIndex) ? blIndex.complexFields[annotatedFieldId].properties : blIndex.annotatedFields[annotatedFieldId].annotations);
+		const parent: [string, BLTypes.BLAnnotation]|undefined = annotations.find(a => a[1].subannotations ? a[1].subannotations!.includes(id) : false);
+		return parent ? parent[0] : undefined;
+	}
+
 	function normalizeAnnotationUIType(field: BLTypes.BLAnnotation): NormalizedAnnotation['uiType'] {
 		const uiType = field.uiType.trim().toLowerCase();
 
@@ -26,7 +32,9 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 
 		switch (uiType) {
 			case 'select': return field.values && field.valueListComplete ? 'select' : 'combobox';
-			case 'combobox': return 'combobox';
+			case 'combobox':
+			case 'pos':
+				return uiType;
 			default: return 'text';
 		}
 	}
@@ -39,10 +47,10 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 		}
 
 		switch (uiType) {
-			case 'select': return field.valueListComplete ? 'select' : 'combobox';
 			case 'combobox':
 			case 'range':
 				return uiType;
+			case 'select':
 			case 'checkbox':
 			case 'radio':
 				return field.valueListComplete ? uiType : 'combobox';
@@ -62,8 +70,10 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 			isInternal: annotation.isInternal,
 			isMainAnnotation: annotationId === mainAnnotationId,
 			offsetsAlternative: annotation.offsetsAlternative,
+			subAnnotations: annotation.subannotations,
+			parentAnnotationId: findParentAnnotation(annotatedFieldId, annotationId),
 			uiType: normalizeAnnotationUIType(annotation),
-			values: normalizeAnnotationUIType(annotation) === 'select' ? annotation.values!.map(v => ({label: v, value: v})) : undefined,
+			values: annotation.valueListComplete && annotation.values && annotation.values.length > 0 ? annotation.values.map(v => ({label: v, value: v})) : undefined,
 		};
 	}
 

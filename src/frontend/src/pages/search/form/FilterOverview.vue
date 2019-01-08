@@ -2,7 +2,7 @@
 	<div class="filter-overview">
 		<span v-for="filter in filters" :key="filter.id">{{filter.displayName}}: <i>{{filter.values.join(', ')}}</i>&nbsp;</span>
 
-		<div class="sub-corpus-size">
+		<!-- <div class="sub-corpus-size">
 			<template v-if="error">
 				Error: {{error.message}}
 			</template>
@@ -22,10 +22,10 @@
 				</span>
 			</template>
 			<template v-else>
-				<span class="fa fa-spinner fa-spin searchIndicator totals-spinner"></span><!-- todo spinner classes -->
+				<span class="fa fa-spinner fa-spin searchIndicator totals-spinner"></span>
 				Calculating size of selected subcorpus...
 			</template>
-		</div>
+		</div> -->
 	</div>
 </template>
 
@@ -34,8 +34,8 @@ import Vue from 'vue';
 
 import {Subscription} from 'rxjs';
 
-import * as formStore from '@/store/form';
-import * as corpusStore from '@/store/corpus';
+import * as CorpusStore from '@/store/corpus';
+import * as FilterStore from '@/store/form/filters';
 
 import { selectedSubCorpus$ } from '@/store/streams';
 
@@ -63,8 +63,9 @@ export default Vue.extend({
 	computed: {
 		// whatever, this will be cached.
 		// todo tidy up
+		/** Get the metadata displayvalues for all fields and values in for form of map.fieldId.value */
 		metadataValueMaps(): {[fieldId: string]: {[value: string]: string; }} {
-			return Object.values(corpusStore.getState().metadataFields)
+			return Object.values(CorpusStore.getState().metadataFields)
 			.reduce((acc, field: AppTypes.NormalizedMetadataField) => {
 				acc[field.id] = (field.values || [])!.reduce((acc, val) => {
 					acc[val.value] = val.label;
@@ -75,8 +76,8 @@ export default Vue.extend({
 		},
 
 		filters(): ExtendedFilter[] {
-			const metadataFields = corpusStore.getState().metadataFields;
-			return formStore.get.activeFilters().map(f => {
+			const metadataFields = CorpusStore.getState().metadataFields;
+			return FilterStore.get.activeFilters().map(f => {
 				const {displayName} = metadataFields[f.id];
 
 				const displayValues = this.metadataValueMaps[f.id] || {};
@@ -89,8 +90,8 @@ export default Vue.extend({
 			})
 		},
 
-		totalCorpusTokens(): number { return corpusStore.getState().tokenCount; },
-		totalCorpusDocs(): number { return corpusStore.getState().documentCount; }
+		totalCorpusTokens(): number { return CorpusStore.getState().tokenCount; },
+		totalCorpusDocs(): number { return CorpusStore.getState().documentCount; }
 	},
 	created() {
 		this.subscriptions.push(selectedSubCorpus$.subscribe(

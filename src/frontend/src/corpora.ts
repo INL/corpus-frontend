@@ -205,6 +205,9 @@ createHandler({selector: 'tbody[data-autoupdate="corpora"]', event: DataEvent.CO
 		if (pageURL[pageURL.length-1] !== '/') {
 			pageURL += '/';
 		}
+		if (pageURL.endsWith('/corpora/')) {
+			pageURL = pageURL.substring(0, pageURL.length - 8); // keep trailing slash
+		}
 
 		const format = formats.find(f => f.id === corpus.documentFormat);
 

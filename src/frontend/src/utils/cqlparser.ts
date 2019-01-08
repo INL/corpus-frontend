@@ -12,7 +12,7 @@ export type Attribute = {
 	/** A word property(/annotatedField) id, such as lemma, pos, word, etc... */
 	name: string;
 	/** Comparison type, usually '=' or '!=' */
-	operator: string;
+	operator: '='|'!=';
 	/** Regex to compare the attribute to */
 	value: string;
 };
@@ -28,7 +28,7 @@ export type BinaryOp = {
 export type Token = {
 	leadingXmlTag?: XmlTag;
 	trailingXmlTag?: XmlTag;
-	expression: BinaryOp|Attribute;
+	expression?: BinaryOp|Attribute;
 	optional: boolean;
 	repeats?: {
 		min: number;

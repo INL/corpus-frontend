@@ -145,7 +145,9 @@ export interface BLAnnotation {
 	isInternal: boolean;
 	offsetsAlternative: string;
 	sensitivity: 'SENSITIVE_AND_INSENSITIVE'|'SENSITIVE'|'INSENSITIVE';
-	uiType: string|'select'|'combobox'|'text';
+	/** Contains ids of other BLAnnotations in the parent annotatedField if this field has subannotations. */
+	subannotations?: string[];
+	uiType: string|'select'|'combobox'|'text'|'pos';
 	/** Only when the indexMetadata was requested with ?listvalues=annotationId,annotationId etc. */
 	values?: string[];
 	/** Only when values present. */
@@ -334,10 +336,18 @@ export interface BLGroupResult {
 	identityDisplay: string;
 	size: number;
 }
+export interface BLHitGroupResult extends BLGroupResult {
+	/**
+	 * 0-1 size of this group relative to:
+	 * - when grouping by annotations or context only: the total number of tokens searched in the selected subcorpus.
+	 * - when also grouping by metadata: the total number of tokens in all documents that satisfy the metadata (e.g. all tokens in all documents by author when grouping on author)
+	 */
+	relativeFrequency?: number;
+}
 
 /** Blacklab response for a query for hits with grouping enabled */
 export interface BLHitGroupResults {
-	hitGroups: BLGroupResult[];
+	hitGroups: BLHitGroupResult[];
 	summary: BLSearchSummary & BLSearchSummaryGroupInfo & BLSearchSummaryTotalsHits;
 }
 

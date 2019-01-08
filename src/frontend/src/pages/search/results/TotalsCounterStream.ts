@@ -32,7 +32,7 @@ function getCountState(results: BLTypes.BLSearchResult): 'limited'|'finished'|'c
 }
 
 const REFRESH_INTERVAL = 2_000;
-const REFRESH_DURATION = 5_000;
+const REFRESH_DURATION = 90_000;
 
 export default pipe(
 	switchMap((initial: CounterInput) => {

@@ -1,6 +1,6 @@
 <template>
-	<div class="modal fade" tabindex="-1" role="dialog">
-		<div class="modal-dialog" role="document">
+	<div class="modal fade" tabindex="-1">
+		<div class="modal-dialog">
 			<div class="modal-content">
 				<div class="modal-header">
 					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -8,7 +8,6 @@
 				</div>
 				<div class="modal-body">
 					<div class="form-horizontal">
-
 						<div class="form-group"> <!-- behaves as .row when in .form-horizontal so .row may be omitted -->
 							<label for="resultsPerPage" class="col-xs-3">Results per page:</label>
 							<div class="col-xs-9">
@@ -63,12 +62,9 @@
 								<input id="wordsAroundHit" name="wordsAroundHit" placeholder="context Size" type="number" class="form-control" v-model.lazy="wordsAroundHit">
 							</div>
 						</div>
-
-						<hr>
-
-						<div class="checkbox-inline"><label for="wide-view"><input type="checkbox" id="wide-view" name="wide-view" data-persistent checked> Wide View</label></div>
 					</div>
-
+					<hr>
+					<div class="checkbox-inline"><label for="wide-view"><input type="checkbox" id="wide-view" name="wide-view" data-persistent checked> Wide View</label></div>
 				</div>
 				<div class="modal-footer">
 					<button type="button" name="closeSettings" class="btn btn-primary" data-dismiss="modal">Close</button>
@@ -83,8 +79,8 @@
 import Vue from 'vue';
 
 import * as RootStore from '@/store';
-import * as SettingsStore from '@/store/settings';
-import * as ResultsStore from '@/store/results';
+import * as GlobalViewSettings from '@/store/results/global';
+import * as ResultsViewSettings from '@/store/results';
 
 import SelectPicker from '@/components/SelectPicker.vue';
 
@@ -95,48 +91,47 @@ export default Vue.extend({
 	computed: {
 		viewedResultsSettings: RootStore.get.viewedResultsSettings,
 		pageSize: {
-			get(): string { return this.itoa(SettingsStore.getState().pageSize); },
+			get(): string { return this.itoa(GlobalViewSettings.getState().pageSize); },
 			set(v: string) {
-				SettingsStore.actions.pageSize(this.atoi(v)!);
-				ResultsStore.actions.resetPage();
+				GlobalViewSettings.actions.pageSize(this.atoi(v)!);
+				ResultsViewSettings.actions.resetPage();
 			}
 		},
 		sampleMode: {
-			get() { return SettingsStore.getState().sampleMode; },
+			get() { return GlobalViewSettings.getState().sampleMode; },
 			set(v: string) {
-				SettingsStore.actions.sampleMode(v);
-				ResultsStore.actions.resetPage();
+				GlobalViewSettings.actions.sampleMode(v);
+				ResultsViewSettings.actions.resetPage();
 			}
 		},
 		sampleSize: {
-			get(): string { return this.itoa(SettingsStore.getState().sampleSize); },
+			get(): string { return this.itoa(GlobalViewSettings.getState().sampleSize); },
 			set(v: string) {
-				SettingsStore.actions.sampleSize(this.atoi(v));
-				ResultsStore.actions.resetPage();
+				GlobalViewSettings.actions.sampleSize(this.atoi(v));
+				ResultsViewSettings.actions.resetPage();
 			}
 		},
 		sampleSeed: {
-			get(): string { return this.itoa(SettingsStore.getState().sampleSeed); },
+			get(): string { return this.itoa(GlobalViewSettings.getState().sampleSeed); },
 			set(v: string) {
-				SettingsStore.actions.sampleSeed(this.atoi(v));
+				GlobalViewSettings.actions.sampleSeed(this.atoi(v));
 				if (this.viewedResultsSettings && (this.viewedResultsSettings.groupBy.length || this.viewedResultsSettings.groupByAdvanced.length)) {
 					// No need to do this when ungrouped - the raw number of results
 					// will stay as it is, but the distribution (and number of) groups may change and
 					// cause the number of pages to shift
-					ResultsStore.actions.resetPage();
+					ResultsViewSettings.actions.resetPage();
 				}
 			}
 		},
 		wordsAroundHit: {
-			get(): string { return this.itoa(SettingsStore.getState().wordsAroundHit); },
-			set(v: string) { SettingsStore.actions.wordsAroundHit(this.atoi(v)); }
+			get(): string { return this.itoa(GlobalViewSettings.getState().wordsAroundHit); },
+			set(v: string) { GlobalViewSettings.actions.wordsAroundHit(this.atoi(v)); }
 		},
 	},
 	methods: {
 		focusSampleSize() {
 			(this.$refs.sampleSize as HTMLInputElement).focus()
 		},
-
 		itoa(n: number|null): string { return n == null ? '' : n.toString(); },
 		atoi(s: string): number|null { return s ? Number.parseInt(s, 10) : null; }
 	},

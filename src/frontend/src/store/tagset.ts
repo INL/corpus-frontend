@@ -15,6 +15,7 @@ import {Tagset} from '@/types/apptypes';
 import {NormalizedAnnotation} from '@/types/apptypes';
 
 type ModuleRootState = Tagset&{
+	/** Uninitialized before init() or load() action called. loading/loaded during/after load() called. Disabled when load() not called before init(), or loading failed for any reason. */
 	state: 'uninitialized'|'loading'|'loaded'|'disabled';
 	message: string;
 };
@@ -59,7 +60,9 @@ const actions = {
 		}
 
 		internalActions.state({state: 'loading', message: 'Loading tagset...'});
-		initPromise = Axios.get<Tagset>(url)
+		initPromise = Axios.get<Tagset>(url, {
+			transformResponse: [(r: string) => r.replace(/\/\/.*[\r\n]+/g, '')].concat(Axios.defaults.transformResponse!)
+		})
 		.then(t => {
 			internalActions.replace(t.data);
 			internalActions.state({state: 'loaded', message: 'Tagset succesfully loaded'});

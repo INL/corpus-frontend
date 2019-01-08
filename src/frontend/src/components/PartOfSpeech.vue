@@ -4,7 +4,7 @@
 			<div class="modal-content">
 				<div class="modal-header">
 					<button type="button" data-dismiss="modal" class="close" title="close">&times;</button>
-					<h3>{{annotation.displayName || annotation.id}}</h3>
+					<h3>{{annotationDisplayName || annotationId}}</h3>
 				</div>
 				<div v-if="isValidTagset" class="modal-body">
 					<div class="list-group-container">
@@ -33,6 +33,7 @@
 									</label>
 								</li>
 							</ul>
+							<em v-if="annotationValue.subAnnotationIds.length === 0">No options</em>
 						</div>
 					</div>
 					<hr>
@@ -60,7 +61,11 @@ import {NormalizedAnnotation, Tagset} from '@/types/apptypes';
 
 export default Vue.extend({
 	props: {
-		annotation: Object as () => NormalizedAnnotation
+		annotationId: {
+			required: true,
+			type: String,
+		},
+		annotationDisplayName: String,
 	},
 	data: () => ({
 		annotationValue: null as null|Tagset['values'][string],
@@ -83,15 +88,37 @@ export default Vue.extend({
 			.filter(v => v.values.length > 0);
 			const subAnnotStrings = subAnnots.map(({id, values}) => `${id}="${values.join('|')}"`);
 
-			return [`${this.annotation.id}="${mainValue}"`].concat(subAnnots.map(({id, values}) => `${id}="${values.join('|')}"`)).join('&');
+			return [`${this.annotationId}="${mainValue}"`].concat(subAnnots.map(({id, values}) => `${id}="${values.join('|')}"`)).join('&');
 		}
 	},
 	methods: {
-		reset() {
+		reset: function() {
 			Object.keys(this.selected).forEach(k => this.selected[k] = false);
+			this.annotationValue = null;
 		},
-		submit() {
-			this.$emit('submit', this.query);
+		submit: function() {
+			// TODO REMOVE ME
+			if (this.annotationValue == null) { return ''; }
+
+			const mainValue = this.annotationValue.value;
+			const subAnnots = this.annotationValue.subAnnotationIds.map(id => ({
+				id,
+				values: this.tagset.subAnnotations[id].values
+					.map(v => v.value)
+					.filter(v => this.selected[`${mainValue}/${id}/${v}`])
+			}))
+			.filter(v => v.values.length > 0);
+
+			this.$emit('submit', {
+				queryString: this.query,
+				value: {
+					[this.annotationId]: this.annotationValue.value,
+					...subAnnots.reduce((acc, cur) => {
+						acc[cur.id] = cur.values.join('|');
+						return acc;
+					}, {} as {[key: string]: string})
+				}
+			});
 		}
 	},
 	created() {

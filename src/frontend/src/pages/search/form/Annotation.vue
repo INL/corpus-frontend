@@ -55,9 +55,10 @@
 			<template v-if="annotation.uiType === 'pos'">
 				<PartOfSpeech
 					:id="`pos_editor${uid}`"
-					:annotation="annotation"
+					:annotationId="annotation.id"
+					:annotationDisplayName="annotation.displayName"
 
-					@submit="value = $event"
+					@submit="value = $event.queryString"
 				/>
 			</template>
 			<div v-if="annotation.caseSensitive" class="checkbox">

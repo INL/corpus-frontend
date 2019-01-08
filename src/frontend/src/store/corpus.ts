@@ -1,3 +1,10 @@
+/**
+ * This module contains the corpus info as it's configured in blacklab.
+ * We use it for pretty much everything to do with layout:
+ * which annotations and filters are available, what is the default annotation (lemma/pos/word/etc...),
+ * are the filters subdivided in groups, what is the text direction, and so on.
+ */
+
 import {getStoreBuilder} from 'vuex-typex';
 
 import * as Api from '@/api';
@@ -15,7 +22,8 @@ declare const PROPS_IN_COLUMNS: string[];
 
 type ModuleRootState = NormalizedIndex;
 
-const b = getStoreBuilder<RootState>().module<ModuleRootState>('corpus', normalizeIndex(JSON.parse(JSON.stringify(SINGLEPAGE.INDEX))));
+const namespace = 'corpus';
+const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, normalizeIndex(JSON.parse(JSON.stringify(SINGLEPAGE.INDEX))));
 
 const getState = b.state();
 
@@ -101,14 +109,15 @@ const init = () => {
 
 export {
 	ModuleRootState,
+	NormalizedIndex,
+	NormalizedAnnotatedField,
+	NormalizedAnnotation,
+	NormalizedMetadataField,
 
 	getState,
 	get,
 	actions,
 	init,
 
-	NormalizedIndex,
-	NormalizedAnnotatedField,
-	NormalizedAnnotation,
-	NormalizedMetadataField
+	namespace,
 };

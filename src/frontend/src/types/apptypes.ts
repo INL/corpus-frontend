@@ -32,9 +32,13 @@ export type NormalizedAnnotation = {
 	 */
 	isMainAnnotation: boolean;
 	offsetsAlternative: string;
+	/** When this is a subAnnotation */
+	parentAnnotationId?: string;
+	/** List of annotationIds in the same annotatedField, only present when the field has actual subAnnotations */
+	subAnnotations?: string[];
 	/** Based on the uiType of the original annotion, but select falls back to combobox if not all values are known */
-	uiType: 'select'|'combobox'|'text';
-	/** Only contains values when uiType === 'select'. */
+	uiType: 'select'|'combobox'|'text'|'pos';
+	/** Contains all known values for this field. Undefined if no values known or list was incomplete. */
 	values?: Array<{value: string, label: string}>;
 };
 
@@ -176,16 +180,23 @@ export type NormalizedFormatOld = INormalizedFormatOld & Subtract<BLTypes.BLForm
 
 export type AnnotationValue = {
 	/** Unique id of the annotated field  */
-	readonly annotatedFieldId: string;
+	// readonly annotatedFieldId: string;
+
 	/** Unique ID of the property */
 	readonly id: string;
 	/** Raw value of the property */
 	value: string;
 	/** Should the property match using case sensitivity */
 	case: boolean;
+	/**
+	 * Type of the annotation.
+	 * Some types require special treatment when parsing or serializing from/to cql.
+	 * Always available, but not required to allow committing new values to the store without setting it.
+	 */
+	readonly type?: NormalizedAnnotation['uiType'];
 };
 
-export type MetadataValue = {
+export type FilterValue = {
 	/** Unique id of the metadata field */
 	readonly id: string;
 	/**
@@ -205,6 +216,43 @@ export type MetadataValue = {
 	type: NormalizedMetadataField['uiType'];
 	/** Values of the filter, for selects, the selected values as array elements, for text, the text as the first array element, for ranges the min and max values in indices [0][1] */
 	values: string[];
+};
+
+// -------------------
+// Configuration types
+// -------------------
+
+export type Tagset = {
+	/** Referring to the annotation for which the values exist, this is the annotation under which the main part-of-speech category is stored ('ww', 'vnw' etc) */
+	// annotationId: string;
+	/**
+	 * All known values for this annotation.
+	 * The raw values can be gathered from blacklab
+	 * but displaynames, and the valid constraints need to be manually configured.
+	 */
+	values: {
+		[key: string]: {
+			value: string;
+			displayName: string;
+			/** All subannotations that can be used on this type of part-of-speech */
+			subAnnotationIds: Array<keyof Tagset['subAnnotations']>;
+		}
+	};
+	/**
+	 * All subannotations of the main annotation
+	 * Except the displayNames for values, we could just autofill this from blacklab.
+	 */
+	subAnnotations: {
+		[key: string]: {
+			id: string;
+			displayName: string;
+			/** The known values for the subannotation */
+			values: Array<{
+				value: string;
+				displayName: string;
+			}>;
+		};
+	};
 };
 
 export class ApiError extends Error {

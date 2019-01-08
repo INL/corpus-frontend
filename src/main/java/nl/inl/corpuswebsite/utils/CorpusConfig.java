@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -143,7 +144,8 @@ public class CorpusConfig {
      */
     public static String getSelectProperties(String xml) throws ParserConfigurationException, SAXException, IOException {
         Document config = fromXml(xml);
-        String selects = "";
+        ArrayList<String> selects = new ArrayList<>();
+//        String selects = "";
 
         // We can't just retrieve the annotatedField/complexField entries directly, as there are two types of
         // elements named annotatedField, one for the annotationGroups and one for the annotations themselves
@@ -175,11 +177,18 @@ public class CorpusConfig {
                     ? propertyElement.getElementsByTagName("uiType").item(0).getTextContent()
                     : "";
                 if ("select".equals(configType)) {
-                    selects += selects.isEmpty() ? propertyElement.getAttribute("name") : "," + propertyElement.getAttribute("name");
+                    selects.add(propertyElement.getAttribute("name"));
+                } else if ("pos".equals(configType)) {
+                    selects.add(propertyElement.getAttribute("name"));
+                    NodeList subAnnotations = propertyElement.getElementsByTagName("subannotation");
+                    for (int i = 0; i < subAnnotations.getLength(); ++i) {
+                        Element e = (Element) subAnnotations.item(i);
+                        selects.add(e.getTextContent());
+                    }
                 }
             }
         }
-        return selects;
+        return selects.stream().distinct().collect(Collectors.joining(","));
     }
 
     private void parsePropertyFields() {

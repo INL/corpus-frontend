@@ -57,11 +57,15 @@
 import Vue from 'vue';
 
 import * as CorpusStore from '@/store/corpus';
+import * as InterfaceStore from '@/store/form/interface';
 import * as ResultsStore from '@/store/results';
+import * as HitsStore from '@/store/results/hits';
+import * as DocsStore from '@/store/results/docs';
 
 import SelectPicker, {OptGroup, Option} from '@/components/SelectPicker.vue';
 import ContextGroup from '@/pages/search/results/groupby/ContextGroup.vue';
 import UID from '@/mixins/uid';
+import ResultTotalsVue from '../ResultTotals.vue';
 
 const CONTEXT_ENABLED_STRING = '_enable_context';
 
@@ -89,7 +93,7 @@ export default Vue.extend({
 		undoContext() {
 			this.unappliedContextGroups = this.appliedContextGroups.concat(); // prevent aliasing
 			if (this.unappliedContextGroups.length === 0) {
- 				this.createContextGroup();
+				this.createContextGroup();
 			}
 		},
 
@@ -97,7 +101,9 @@ export default Vue.extend({
 		deleteContextGroup(index: number) { this.unappliedContextGroups.splice(index, 1); },
 	},
 	computed: {
-		storeModule() { return ResultsStore.modules[this.type]; },
+		storeModule() {
+			return ResultsStore.get.resultsModules().find(m => m.namespace === this.type)!;
+		},
 		caseSensitive: {
 			get(): boolean { return this.storeModule.getState().caseSensitive },
 			set(v: boolean) { this.storeModule.actions.caseSensitive(v); }

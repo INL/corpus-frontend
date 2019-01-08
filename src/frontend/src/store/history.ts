@@ -1,33 +1,57 @@
+/**
+ * This module contains the history of executed queries.
+ * A new entry is created every time the user executes a query,
+ * but also when the user changes the grouping, and when they switch between viewing hits/documents.
+ */
 import { getStoreBuilder } from 'vuex-typex';
 
-import { getHistoryEntryFromState } from '@/utils';
+import { RootState } from '@/store';
+import * as CorpusModule from '@/store/corpus';
+import * as InterfaceModule from '@/store/form/interface';
+import * as FilterModule from '@/store/form/filters';
+import * as GlobalModule from '@/store/results/global';
+import * as HitsModule from '@/store/results/hits';
+import * as DocsModule from '@/store/results/docs';
+import * as PatternModule from '@/store/form/patterns';
+import * as ExploreModule from '@/store/form/explore';
 
-import { RootState, SlimRootState } from '@/store';
-import { SubmittedParameters, ModuleRootState as FormModuleRootState } from '@/store/form';
 import { NormalizedIndex } from '@/types/apptypes';
 import { debugLog } from '@/utils/debug';
+import { getFilterSummary } from '@/utils';
+import jsonStableStringify from 'json-stable-stringify';
 
-/** Remove type U from union T */
-type Remove<T, U> = T extends U ? never : T;
+const version = 3;
 
-const version = 2;
+type HistoryEntry = {
+	// always set
+	filters: FilterModule.ModuleRootState;
+	global: GlobalModule.ModuleRootState;
+	interface: InterfaceModule.ModuleRootState;
 
-interface HistoryEntry extends SubmittedParameters {
-	readonly groupBy: string[];
-	readonly groupByAdvanced: string[];
-	readonly viewedResults: Remove<RootState['viewedResults'], null>;
-	readonly caseSensitiveGroupBy: boolean;
+	// Depending on interface.viewedResults, one of these contains actual values,
+	// the other contains defaults (in order to reset inactive parts of the page)
+	hits: HitsModule.ModuleRootState;
+	docs: DocsModule.ModuleRootState;
 
+	// Depending on interface.form, one of these should contain the values, the other contains defaults.
+	// Depending on interface.subForm, one of the subproperties is set, the others contain defaults.
+	// (in order to reset inactive parts of the page)
+	patterns: PatternModule.ModuleRootState;
+	explore: ExploreModule.ModuleRootState;
+};
+
+export type FullHistoryEntry = HistoryEntry&{
 	/** String representations of the query, for simpler displaying of the entry in UI */
-	readonly displayValues: {
-		readonly filters: string;
-		readonly pattern: string;
+	displayValues: {
+		filters: string;
+		pattern: string;
 	};
 
-	readonly hash: number;
-}
+	hash: number;
+	url: string;
+};
 
-type ModuleRootState = HistoryEntry[];
+type ModuleRootState = FullHistoryEntry[];
 
 type LocalStorageState = {
 	indexLastModified: string;
@@ -36,13 +60,15 @@ type LocalStorageState = {
 };
 
 const initialState: ModuleRootState = [];
-const b = getStoreBuilder<RootState>().module<ModuleRootState>('history', initialState);
+
+const namespace = 'history';
+const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, initialState);
 let index: NormalizedIndex;
 
 const getState = b.state();
 
 const get = {
-	// Nothing yet
+	//
 };
 
 const internalActions = {
@@ -52,15 +78,40 @@ const internalActions = {
 };
 
 const actions = {
-	addEntry: b.commit((state, payload: SlimRootState) => {
-		const entry = getHistoryEntryFromState(payload);
+	addEntry: b.commit((state, {entry, pattern, url}: {entry: HistoryEntry; pattern?: string; url: string;}) => {
+		// history is updated together with page url, so we don't always receive a state we need to store.
+		if (entry.interface.viewedResults == null) {
+			return;
+		}
 
-		const i = state.findIndex(v => v.hash === entry.hash);
+		// Order needs to be consistent or hash might be different.
+		const filterSummary: string = getFilterSummary(Object.values(entry.filters).sort((l, r) => l.id.localeCompare(r.id)));
+		// Should only contain items that uniquely identify a query
+		// Normally this would only be the pattern and filters,
+		// but we've agreed that grouping differently constitutes a new query, so we also need to compare those
+		const hashBase = {
+			filters: filterSummary,
+			pattern,
+			groupBy: entry[entry.interface.viewedResults!].groupBy.concat(entry[entry.interface.viewedResults!].groupByAdvanced).sort((l, r) => l.localeCompare(r)),
+		};
+
+		const fullEntry: FullHistoryEntry = {
+			...entry,
+			hash: hashJavaDJB2(jsonStableStringify(hashBase)),
+			url,
+			displayValues: {
+				filters: filterSummary || '-',
+				pattern: pattern || '-'
+			}
+		};
+
+		const i = state.findIndex(v => v.hash === fullEntry.hash);
 		if (i !== -1) {
+			// remove existing entry
 			state.splice(i, 1);
 		}
 		// push entry
-		state.unshift(entry);
+		state.unshift(fullEntry);
 		// pop entries older than 40
 		state.splice(40);
 		saveToLocalStorage(state);
@@ -70,8 +121,8 @@ const actions = {
 	}, 'removeEntry')
 };
 
-const init = (corpus: NormalizedIndex) => {
-	index = corpus;
+const init = () => {
+	index = CorpusModule.getState();
 	readFromLocalStorage();
 };
 
@@ -123,13 +174,30 @@ const saveToLocalStorage = (state: ModuleRootState) => {
 	window.localStorage.setItem(key, JSON.stringify(entry));
 };
 
+// tslint:disable
+function hashJavaDJB2(str: string) {
+	let hash = 0;
+	let i = 0;
+	let char: number;
+	const l = str.length;
+	while (i < l) {
+		char  = str.charCodeAt(i);
+		hash  = ((hash<<5)-hash)+char;
+		hash |= 0; // Convert to 32bit integer
+		++i
+	}
+	return hash;
+};
+// tslint:enable
+
 export {
 	ModuleRootState,
+	HistoryEntry,
 
 	getState,
 	get,
 	actions,
 	init,
 
-	HistoryEntry
+	namespace,
 };

@@ -7,26 +7,25 @@
 <script lang="ts">
 import Vue from 'vue';
 
-import * as formStore from '@/store/form'
-
-import {getPatternString} from '@/utils';
+import * as QueryStore from '@/store/query';
+import {getFilterSummary} from '@/utils';
 
 export default Vue.extend({
 	computed: {
-		param(): formStore.ModuleRootState['submittedParameters'] { return formStore.get.lastSubmittedParameters(); },
+		filters() { return Object.values(QueryStore.getState().filters  || {}); },
+		cqlPattern(): string|undefined { return QueryStore.get.patternString(); },
 		summary(): string {
-			const {pattern, filters} = this.param!;
 
-			if (!pattern && filters.length === 0) {
+			if (!this.cqlPattern && this.filters.length === 0) {
 				return 'all documents';
 			}
 
-			const metadataString = filters.map(({id, type, values}) =>
-				`${id} = [${type==='range'?`${values[0]} to ${values[1]}`:values.join(', ')}]`).join(', ');
+			const metadataString = getFilterSummary(this.filters);
 
 			let ret = '';
-			if (pattern) {
-				ret += '"' + getPatternString(pattern) + '"' + ' within ';
+
+			if (this.cqlPattern) {
+				ret += '"' + this.cqlPattern + '"' + ' within ';
 			}
 			if (metadataString) {
 				ret += 'documents where ' + metadataString;

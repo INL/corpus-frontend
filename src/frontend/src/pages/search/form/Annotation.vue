@@ -24,13 +24,23 @@
 					:name="inputId"
 					:placeholder="displayName"
 					:autocomplete="autocomplete ? 'off' : undefined"
+					:disabled="annotation.uiType === 'pos'"
 
 					ref="autocomplete"
 					v-model="value"
 				/>
 				<div class="input-group-btn wordlist-upload">
-					<label class="btn btn-default" :for="fileInputId">
-						<span class="glyphicon glyphicon-open"></span>
+					<a v-if="annotation.uiType === 'pos'"
+						data-toggle="modal"
+						class="btn btn-default"
+
+						:href="`#pos_editor${uid}`"
+					>
+						<span class="fa fa-pencil fa-fw"/>
+					</a>
+
+					<label class="btn btn-default" :for="fileInputId" v-if="annotation.uiType !== 'pos'">
+						<span class="fa fa-upload fa-fw"></span>
 						<input
 							type="file"
 							title="Upload a list of values"
@@ -42,6 +52,14 @@
 					</label>
 				</div>
 			</div>
+			<template v-if="annotation.uiType === 'pos'">
+				<PartOfSpeech
+					:id="`pos_editor${uid}`"
+					:annotation="annotation"
+
+					@submit="value = $event"
+				/>
+			</template>
 			<div v-if="annotation.caseSensitive" class="checkbox">
 				<label :for="caseInputId">
 					<input
@@ -65,21 +83,24 @@ import Vue from 'vue';
 
 import $ from 'jquery';
 
-import * as formStore from '@/store/form';
+import * as PatternStore from '@/store/form/patterns';
 import { NormalizedAnnotation } from '@/types/apptypes';
 import SelectPicker, {Option} from '@/components/SelectPicker.vue';
+import PartOfSpeech from '@/components/PartOfSpeech.vue';
 
 //@ts-ignore
 import Autocomplete from '@/mixins/autocomplete';
+import UID from '@/mixins/uid';
 
 declare const BLS_URL: string;
 
 // TODO use description, use annotatedField description and properties and stuff
 
 export default Vue.extend({
-	mixins: [Autocomplete],
+	mixins: [Autocomplete, UID],
 	components: {
 		SelectPicker,
+		PartOfSpeech,
 	},
 	props: {
 		annotation: Object as () => NormalizedAnnotation
@@ -99,11 +120,10 @@ export default Vue.extend({
 
 		value: {
 			get(): string {
-				return formStore.get.annotationValue(this.annotation.annotatedFieldId, this.id).value;
+				return PatternStore.get.annotationValue(this.annotation.annotatedFieldId, this.id).value;
 			},
 			set(value: string) {
-				formStore.actions.pattern.extended.annotation({
-					annotatedFieldId: this.annotation.annotatedFieldId,
+				PatternStore.actions.extended.annotation({
 					id: this.id,
 					value
 				})
@@ -111,11 +131,10 @@ export default Vue.extend({
 		},
 		caseSensitive: {
 			get(): boolean {
-				return formStore.get.annotationValue(this.annotation.annotatedFieldId, this.id).case;
+				return PatternStore.get.annotationValue(this.annotation.annotatedFieldId, this.id).case;
 			},
 			set(caseSensitive: boolean) {
-				formStore.actions.pattern.extended.annotation({
-					annotatedFieldId: this.annotation.annotatedFieldId,
+				PatternStore.actions.extended.annotation({
 					id: this.id,
 					case: caseSensitive
 				});

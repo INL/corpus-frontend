@@ -6,13 +6,13 @@
 import {getStoreBuilder} from 'vuex-typex';
 
 import {RootState} from '@/store';
-import {HistoryEntry} from '@/store/history';
 
 const defaults = {
 	pageSize: 20,
 	sampleMode: 'percentage' as 'percentage' // required to allow putting it in string enum types
 };
 
+const namespace = 'global';
 type ModuleRootState = {
 	pageSize: number;
 	sampleMode: 'percentage'|'count';
@@ -29,12 +29,12 @@ const initialState: ModuleRootState = {
 	wordsAroundHit: null
 };
 
-const b = getStoreBuilder<RootState>().module<ModuleRootState>('settings', initialState);
+const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, Object.assign({}, initialState));
 
 const getState = b.state();
 
 const get = {
-	// nothing here yet
+
 };
 
 const actions = {
@@ -83,12 +83,6 @@ const actions = {
 		actions.sampleSize(payload.sampleSize);
 		actions.wordsAroundHit(payload.wordsAroundHit);
 	}, 'replace'),
-	replaceFromHistory: b.dispatch(({state}, payload: HistoryEntry) => {
-		// Reset only some values
-		actions.sampleMode(null);
-		actions.sampleSeed(null);
-		actions.sampleSize(null);
-	}, 'replaceFromHistory'),
 };
 
 /** We need to call some function from the module before creating the root store or this module won't be evaluated (e.g. none of this code will run) */
@@ -102,5 +96,6 @@ export {
 	actions,
 	init,
 
+	namespace,
 	defaults
 };

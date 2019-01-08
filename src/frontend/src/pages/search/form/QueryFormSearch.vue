@@ -2,13 +2,13 @@
 	<div>
 		<h3>Search for &hellip;</h3>
 		<ul class="nav nav-tabs" id="searchTabs">
-			<li class="active"><a href="#simple" data-toggle="tab" class="querytype">Simple</a></li>
-			<li><a href="#extended" data-toggle="tab" class="querytype">Extended</a></li>
-			<li><a href="#advanced" data-toggle="tab" class="querytype">Advanced</a></li>
-			<li><a href="#expert" data-toggle="tab" class="querytype">Expert</a></li>
+			<li :class="{'active': activePattern==='simple'}" @click.prevent="activePattern='simple'"><a href="#simple" class="querytype">Simple</a></li>
+			<li :class="{'active': activePattern==='extended'}" @click.prevent="activePattern='extended'"><a href="#extended" class="querytype">Extended</a></li>
+			<li :class="{'active': activePattern==='advanced'}" @click.prevent="activePattern='advanced'"><a href="#advanced" class="querytype">Advanced</a></li>
+			<li :class="{'active': activePattern==='expert'}" @click.prevent="activePattern='expert'"><a href="#expert" class="querytype">Expert</a></li>
 		</ul>
 		<div class="tab-content">
-			<div class="tab-pane active form-horizontal" id="simple">
+			<div :class="['tab-pane form-horizontal', {'active': activePattern==='simple'}]" id="simple">
 				<div class="form-group form-group-lg">
 					<label class="control-label"
 						:for="firstMainAnnotation.id + '_' + uid"
@@ -27,7 +27,7 @@
 					/>
 				</div>
 			</div>
-			<div class="tab-pane form-horizontal" id="extended">
+			<div :class="['tab-pane form-horizontal', {'active': activePattern==='extended'}]" id="extended">
 				<template v-if="useTabs">
 					<ul class="nav nav-tabs subtabs">
 						<li v-for="(tab, index) in tabs" :class="{'active': index === 0}" :key="index">
@@ -40,12 +40,12 @@
 							:key="index"
 							:id="getTabId(tab.name)"
 						>
-							<Annotation v-for="annotation in tab.annotations" :key="annotation.id" :annotation="annotation"/>
+							<Annotation v-for="annotation in tab.annotations" :key="annotation.annotatedFieldId + '/' + annotation.id" :annotation="annotation"/>
 						</div>
 					</div>
 				</template>
 				<template v-else>
-					<Annotation v-for="(annotation, index) in allAnnotations" :key="index" :annotation="annotation"/> <!-- use index as annots can share ids -->
+					<Annotation v-for="annotation in allAnnotations" :key="annotation.annotatedFieldId + '/' + annotation.id" :annotation="annotation"/>
 				</template>
 
 				<div class="form-group">
@@ -63,14 +63,14 @@
 					</div>
 				</div>
 			</div>
-			<div class="tab-pane" id="advanced">
-				<div id="querybuilder"></div>
+			<div :class="['tab-pane', {'active': activePattern==='advanced'}]" id="advanced">
+				<div id="querybuilder" ref="querybuilder"></div>
 			</div>
-			<div class="tab-pane" id="expert">
+			<div :class="['tab-pane', {'active': activePattern==='expert'}]" id="expert">
 				<h3>Corpus Query Language:</h3>
 				<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model.lazy="expert"></textarea>
-				<button type="button" class="btn btn-sm btn-default" name="parseQuery" id="parseQuery" title="Edit your query in the querybuilder">Copy to query builder</button>
-				<span id="parseQueryError" class="text-danger" style="display:none;"><span class="fa fa-danger"></span> The querybuilder could not parse your query</span>
+				<button type="button" class="btn btn-sm btn-default" name="parseQuery" id="parseQuery" title="Edit your query in the querybuilder" @click="parseQuery">Copy to query builder</button>
+				<span v-show="parseQueryError" id="parseQueryError" class="text-danger"><span class="fa fa-danger"></span> {{parseQueryError}}</span>
 			</div>
 		</div>
 	</div>
@@ -80,7 +80,8 @@
 import Vue from 'vue';
 
 import * as CorpusStore from '@/store/corpus';
-import * as FormStore from '@/store/form';
+import * as InterfaceStore from '@/store/form/interface';
+import * as PatternStore from '@/store/form/patterns';
 
 import Annotation from '@/pages/search/form/Annotation.vue';
 
@@ -88,12 +89,21 @@ import * as AppTypes from '@/types/apptypes';
 
 import uid from '@/mixins/uid';
 
+import {QueryBuilder} from '@/modules/cql_querybuilder';
+
 export default Vue.extend({
 	mixins: [uid],
 	components: {
 		Annotation,
 	},
+	data: () => ({
+		parseQueryError: null as string|null
+	}),
 	computed: {
+		activePattern: {
+			get(): string { return InterfaceStore.getState().patternMode; },
+			set: InterfaceStore.actions.patternMode,
+		},
 		useTabs() {
 			return this.tabs.length > 1;
 		},
@@ -104,13 +114,7 @@ export default Vue.extend({
 				return acc;
 			}, [] as AppTypes.NormalizedAnnotation[]);
 		},
-		firstMainAnnotation(): AppTypes.NormalizedAnnotation {
-			return CorpusStore.get.firstMainAnnotation();
-		},
-		simple: {
-			get(): string|null { return FormStore.getState().pattern.simple; },
-			set(v: string) { FormStore.actions.pattern.simple(v); }
-		},
+		firstMainAnnotation: CorpusStore.get.firstMainAnnotation,
 		withinOptions(): Array<{label: string, value: string|null}> {
 			// TODO retrieve from indexMetadata once available
 			// discuss with jan?
@@ -126,17 +130,35 @@ export default Vue.extend({
 			}]
 		},
 		within: {
-			get(): string|null { return FormStore.getState().pattern.extended.within; },
-			set(v: null|string) { FormStore.actions.pattern.extended.within(v); }
+			get(): string|null { return PatternStore.getState().extended.within; },
+			set: PatternStore.actions.extended.within,
+		},
+		simple: {
+			get(): string|null { return PatternStore.getState().simple; },
+			set: PatternStore.actions.simple,
+		},
+		advanced: {
+			get(): string|null { return PatternStore.getState().advanced; },
+			set: PatternStore.actions.advanced,
 		},
 		expert: {
-			get(): string|null { return FormStore.getState().pattern.expert; },
-			set(v: string) { FormStore.actions.pattern.expert(v); }
+			get(): string|null { return PatternStore.getState().expert; },
+			set: PatternStore.actions.expert,
 		}
 	},
 	methods: {
 		getTabId(name: string) {
 			return name.replace(/[^\w]/g, '_') + '_annotations';
+		},
+		parseQuery() {
+			// TODO dedicated component - port builder?
+			const builder: QueryBuilder = $(this.$refs.querybuilder).data('builder');
+			if (builder && builder.parse(this.expert)) {
+				InterfaceStore.actions.patternMode('advanced');
+				this.parseQueryError = null;
+			} else {
+				this.parseQueryError = 'The querybuilder could not parse your query.';
+			}
 		}
 	}
 })

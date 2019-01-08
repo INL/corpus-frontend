@@ -2,10 +2,10 @@ import luceneQueryParser from 'lucene-query-parser';
 
 import {debugLog} from '@/utils/debug';
 
-import {MetadataValue} from '@/types/apptypes';
+import {FilterValue} from '@/types/apptypes';
 
 /** Parse the expression into an array of filter fields for easy displaying. Throws error if the query is too complex or contains errors. */
-export default (luceneQuery?: string): MetadataValue[] => {
+export default (luceneQuery?: string): FilterValue[] => {
 	if (!luceneQuery) {
 		return [];
 	}
@@ -17,9 +17,9 @@ export default (luceneQuery?: string): MetadataValue[] => {
 	 * We need to recurse to extract all the values.
 	 * To simplify keeping track of what part of the query we're parsing, we store the current field here.
 	 */
-	let context: MetadataValue|null = null;
+	let context: FilterValue|null = null;
 	/** Once we're done with a field, we store it here and clear the context. */
-	const parsedValues: MetadataValue[] = [];
+	const parsedValues: FilterValue[] = [];
 
 	/**
 	 * Process a Node. A Field object is always contained within a Node (as far as I can tell).

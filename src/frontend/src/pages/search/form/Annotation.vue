@@ -172,13 +172,15 @@ export default Vue.extend({
 		> input {
 			position: absolute;
 			opacity: 0;
-			font-size: 80;
+			font-size: 80px;
 			left: 0;
 			top: 0;
 			width: 100%;
 			height: 100%;
 			max-width: 100%;
 			max-height: 100%;
+			cursor: pointer;
+			&::-webkit-file-upload-button { cursor:pointer; }
 		}
 	}
 }

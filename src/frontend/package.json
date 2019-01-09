@@ -59,6 +59,7 @@
     "memoize-decorator": "^1.0.2",
     "mustache": "^2.3.2",
     "qs": "^6.5.2",
+    "tippy.js": "^3.4.0",
     "urijs": "^1.19.1",
     "v-tooltip": "^2.0.0-rc.33",
     "vue": "^2.5.17",

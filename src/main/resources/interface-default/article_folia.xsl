@@ -60,8 +60,8 @@
     
     <xsl:template match="//*[local-name()='w']">
         <xsl:variable name="lemma" select="./*[local-name()='lemma' and @class]/@class[0]"/>
-        <span class="word" ref="tooltip">
-            <xsl:attribute name="title">
+        <span class="word" data-toggle="tooltip">
+            <xsl:attribute name="data-lemma">
                 <xsl:value-of select="$lemma" />
             </xsl:attribute>
             <xsl:value-of select="./*[local-name()='t']" />

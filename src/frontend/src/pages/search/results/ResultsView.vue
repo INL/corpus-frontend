@@ -63,33 +63,32 @@
 
 				@sort="sort = $event"
 			/>
-
 			<hr>
-
-			<div class="buttons" style="text-align: right;">
-				<SelectPicker v-show="resultsHaveData"
-					title="Sort by..."
-					data-size="auto"
-					data-show-subtext="true"
-					data-style="btn-default btn-sm"
-					data-window-padding="[150, 0, 50, 0]"
-					data-hide-disabled="true"
-					:data-live-search="sortOptions.flat(2).length > 20 ? 'true' : undefined"
-
-					:options="sortOptions"
-					:escapeLabels="false"
-
-					v-model="sort"
-				/>
-
-				<button type="button" class="btn btn-primary btn-sm"  v-if="isDocs && resultsHaveHits"  @click="showDocumentHits = !showDocumentHits">{{showDocumentHits ? 'Hide Hits' : 'Show Hits'}}</button>
-				<button type="button" class="btn btn-primary btn-sm"  v-if="isHits" @click="showTitles = !showTitles">{{showTitles ? 'Hide' : 'Show'}} Titles</button>
-				<button type="button" class="btn btn-default btn-sm" v-if="results" :disabled="downloadInProgress || !resultsHaveData" @click="downloadCsv" :title="downloadInProgress ? 'Downloading...' : undefined"><template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner"></span></template>Export CSV</button>
-			</div>
-
 		</template>
 		<template v-else-if="results"><div class="no-results-found">No results found.</div></template>
 		<template v-else-if="error"><div class="no-results-found">{{error.message}}</div></template>
+
+		<!-- Ugly - use v-show instead of v-if because teardown of selectpickers is problematic :( -->
+		<div v-show="resultsHaveData" class="buttons" style="text-align: right;">
+			<SelectPicker
+				title="Sort by..."
+				data-size="auto"
+				data-show-subtext="true"
+				data-style="btn-default btn-sm"
+				data-window-padding="[150, 0, 50, 0]"
+				data-hide-disabled="true"
+				:data-live-search="sortOptions.flat(2).length > 20 ? 'true' : undefined"
+
+				:options="sortOptions"
+				:escapeLabels="false"
+
+				v-model="sort"
+			/>
+
+			<button type="button" class="btn btn-primary btn-sm"  v-if="isDocs && resultsHaveHits"  @click="showDocumentHits = !showDocumentHits">{{showDocumentHits ? 'Hide Hits' : 'Show Hits'}}</button>
+			<button type="button" class="btn btn-primary btn-sm"  v-if="isHits" @click="showTitles = !showTitles">{{showTitles ? 'Hide' : 'Show'}} Titles</button>
+			<button type="button" class="btn btn-default btn-sm" v-if="results" :disabled="downloadInProgress || !resultsHaveData" @click="downloadCsv" :title="downloadInProgress ? 'Downloading...' : undefined"><template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner"></span></template>Export CSV</button>
+		</div>
 
 	</div>
 
@@ -303,7 +302,7 @@ export default Vue.extend({
 
 			// subtract one page if number of results exactly divisible by page size
 			// e.g. 20 results for a page size of 20 is still only one page instead of 2.
-			const pageCount = Math.floor(totalResults / pageSize) - ((totalResults % pageSize === 0) ? 1 : 0)
+			const pageCount = Math.floor(totalResults / pageSize) - ((totalResults % pageSize === 0 && totalResults > 0) ? 1 : 0)
 
 			return {
 				shownPage,

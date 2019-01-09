@@ -11,7 +11,7 @@
 
 						<ul class="dropdown-menu" role="menu">
 							<li v-for="annotation in annotations.filter(a => a.hasForwardIndex)" :key="annotation.id">
-								<a @click="changeSort(`left:${annotation.id}`)" class="sort">{{annotation.displayName}}</a>
+								<a @click="changeSort(`${beforeField}:${annotation.id}`)" class="sort">{{annotation.displayName}}</a>
 							</li>
 						</ul>
 					</span>
@@ -32,7 +32,7 @@
 
 						<ul class="dropdown-menu" role="menu">
 							<li v-for="annotation in annotations.filter(a => a.hasForwardIndex)" :key="annotation.id">
-								<a @click="changeSort(`right:${annotation.id}`)" class="sort">{{annotation.displayName}}</a>
+								<a @click="changeSort(`${afterField}:${annotation.id}`)" class="sort">{{annotation.displayName}}</a>
 							</li>
 						</ul>
 					</span>
@@ -79,7 +79,7 @@
 								{{citations[index].error}}
 							</p>
 							<p v-else-if="citations[index].citation">
-								{{citations[index].citation[leftIndex]}}<strong>{{citations[index].citation[1]}}</strong>{{citations[index].citation[rightIndex]}}
+								<span :dir="textDirection">{{citations[index].citation[0]}}<strong>{{citations[index].citation[1]}}</strong>{{citations[index].citation[2]}}</span>
 							</p>
 							<p v-else>
 								Loading...
@@ -169,7 +169,9 @@ export default Vue.extend({
 		leftIndex() { return this.textDirection === 'ltr' ? 0 : 2 },
 		rightIndex() { return this.textDirection === 'ltr' ? 2 : 0 },
 		leftLabel() { return this.textDirection === 'ltr' ? 'Before' : 'After' },
-		rightLabel() { return this.textDirection === 'ltr' ? 'After' : 'Before' },
+        rightLabel() { return this.textDirection === 'ltr' ? 'After' : 'Before' },
+        beforeField() { return this.textDirection === 'ltr' ? 'left' : 'right' },
+        afterField() { return this.textDirection === 'ltr' ? 'right' : 'left' },
 
 		rows(): Array<DocRow|HitRow> {
 			const { titleField, dateField, authorField } = this.results.summary.docFields;

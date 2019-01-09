@@ -78,16 +78,29 @@
 }.bl-token-attribute .checkbox {
 	margin: 5px 0px 0px 19px;
 }
-
-.bl-token-attribute-main-input {
+.bl-token-attribute-main-input-container {
 	flex-grow: 1;
-	flex-basis: 1px;
-	width: 1px;
+	display: inline-block;
 	min-width: 110px;
-	position: relative;
-	overflow: hidden;
+	width: 0;
+
+	> .bl-token-attribute-main-input {
+		width: 100%;
+		display: flex;
+		 >input,
+		 .selectpicker,
+		 .bootstrap-select {
+			width: 100%!important;
+			min-width: 0px!important;
+		 }
+
+	}
 }
 
+// Unhidden through script
+[data-attribute-type] {
+		display: none;
+}
 [data-has-file] .bl-has-file-hidden, .bl-has-file-shown {
 	display:none;
 }
@@ -107,10 +120,9 @@
 }
 
 .bl-input-upload-button {
-	position: absolute;
-	right: 0;
-	top: 0;
+	position: relative;
 	overflow: hidden;
+	border-left: none;
 }
 
 .bl-token-attribute-file-edit {

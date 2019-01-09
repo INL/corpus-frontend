@@ -54,31 +54,35 @@ const connectJqueryToPage = () => {
 };
 
 // Init the querybuilder with the supported attributes/properties
-function initQueryBuilder() {
+function initQueryBuilder(tagset?: TagsetStore.ModuleRootState) {
 	debugLog('Begin initializing querybuilder');
 
 	// Initialize configuration
-	const firstPos = CorpusStore.get.annotations().find(a => a.uiType === 'pos');
 	const instance = new QueryBuilder($('#querybuilder'), {
-		queryBuilder: {
-			view: {
-				pos: firstPos ? {
-					id: firstPos.id,
-					displayName: firstPos.displayName
-				} : null
-			}
-		},
 		attribute: {
 			view: {
 				// Pass the available properties of tokens in this corpus (PoS, Lemma, Word, etc..) to the querybuilder
 				attributes: CorpusStore.get.annotations()
-					.filter(a => !a.parentAnnotationId || a.uiType === 'pos') // no subannotations
-					.map((annotation): QueryBuilderOptionsDef['attribute']['view']['attributes'][number] => ({
-						attribute: annotation.id,
-						label: annotation.displayName,
-						caseSensitive: annotation.caseSensitive,
-						// values: TagsetStore.getState().
-					})),
+					.map((annotation): QueryBuilderOptionsDef['attribute']['view']['attributes'][number] => {
+						let values;
+						if (tagset) {
+							if (annotation.uiType === 'pos') {
+								values = Object.values(tagset.values).map(v => ({label: v.displayName, value: v.value}));
+							} else if (tagset.subAnnotations[annotation.id]) {
+								values = tagset.subAnnotations[annotation.id].values.map(v => ({label: v.displayName, value: v.value}));
+							}
+						} else {
+							values = annotation.values;
+						}
+
+						return {
+							attribute: annotation.id,
+							label: annotation.displayName,
+							caseSensitive: annotation.caseSensitive,
+							values,
+						};
+					})
+				,
 
 				defaultAttribute: CorpusStore.get.firstMainAnnotation().id
 			}
@@ -142,7 +146,7 @@ $(document).ready(() => {
 				// Don't do this before the url is parsed, as it controls the page url (among other things derived from the state).
 				connectStreamsToVuex();
 				// And this needs the tagset to have been loaded (if available)
-				initQueryBuilder();
+				initQueryBuilder(TagsetStore.get.isLoaded() ? TagsetStore.getState() : undefined);
 			});
 		}
 	}).$mount(document.querySelector('#vue-root')!);

@@ -371,25 +371,23 @@ export default Vue.extend({
 				options: [{
 					label: 'Sort by Identity',
 					value: 'identity',
-					// disabled: !this.isGroups
 				}, {
 					label: 'Sort by Size',
 					value: 'size',
-					// disabled: !this.isGroups
 				}],
 				disabled: !this.isGroups
 			});
 
 			const annotations = CorpusStore.get.annotations().filter(a => !a.isInternal && a.hasForwardIndex);
+			const dir = CorpusStore.getState().textDirection;
 
-			[['wordleft:', 'Before hit', 'before'],['hit:', 'Hit', ''],['wordright:', 'After hit', 'after']]
+			[[dir === 'rtl' ? 'right:' : 'left:', 'Before hit', 'before'],['hit:', 'Hit', ''],[dir === 'rtl' ? 'left:' : 'right:', 'After hit', 'after']]
 			.forEach(([prefix, groupname, suffix]) =>
 				opts.push({
 					label: groupname,
 					options: annotations.map(annot => ({
 						label: `Sort by ${annot.displayName || annot.id} <small class="text-muted">${suffix}</small>`,
 						value: `${prefix}${annot.id}`,
-						// disabled: !this.isHits
 					})),
 					disabled: !this.isHits
 				})
@@ -403,7 +401,6 @@ export default Vue.extend({
 				options: group.fields.map(field => ({
 					label: `Sort by ${(field.displayName || field.id).replace(group.name, '')}`,
 					value: `field:${field.id}`,
-					// disabled: !this.isDocs
 				})),
 				disabled: !this.isDocs
 			}));

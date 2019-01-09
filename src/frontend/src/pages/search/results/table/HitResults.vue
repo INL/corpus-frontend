@@ -4,7 +4,7 @@
 			<tr>
 				<th class="text-right" style="width:40px">
 					<span class="dropdown">
-						<a class="dropdown-toggle" data-toggle="dropdown">
+						<a class="dropdown-toggle" data-toggle="dropdown" href="#">
 							{{leftLabel}} hit
 							<span class="caret"/>
 						</a>
@@ -25,7 +25,7 @@
 
 				<th class="text-left" style="width:40px">
 					<span class="dropdown">
-						<a class="dropdown-toggle" data-toggle="dropdown">
+						<a class="dropdown-toggle" data-toggle="dropdown" href="#">
 							{{rightLabel}} hit
 							<span class="caret"/>
 						</a>

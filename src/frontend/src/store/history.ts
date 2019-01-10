@@ -24,7 +24,7 @@ import { NormalizedIndex } from '@/types/apptypes';
 import { debugLog } from '@/utils/debug';
 import { getFilterSummary } from '@/utils';
 
-const version = 3;
+const version = 4;
 
 type HistoryEntry = {
 	// always set
@@ -53,6 +53,7 @@ export type FullHistoryEntry = HistoryEntry&{
 
 	hash: number;
 	url: string;
+	timestamp: number;
 };
 
 type ModuleRootState = FullHistoryEntry[];
@@ -152,6 +153,7 @@ const actions = {
 			...entry,
 			hash: hashJavaDJB2(jsonStableStringify(hashBase)),
 			url,
+			timestamp: new Date().getTime(),
 			displayValues: {
 				filters: filterSummary || '-',
 				pattern: pattern || '-'
@@ -163,7 +165,7 @@ const actions = {
 			// remove existing entry
 			state.splice(i, 1);
 		}
-		// push entry
+		// push new/updated entry
 		state.unshift(fullEntry);
 		// pop entries older than 40
 		state.splice(40);

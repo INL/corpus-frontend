@@ -10,7 +10,8 @@
 					<table class="table table-hover history-table">
 						<thead>
 							<tr>
-								<th width="40px;">#</th>
+								<th width="30px;">#</th>
+								<th width="70px;"></th>
 								<th width="90px;">Results</th>
 								<th>Pattern</th>
 								<th>Filters</th>
@@ -19,8 +20,16 @@
 							</tr>
 						</thead>
 						<tbody>
-							<tr v-for="(entry, index) in history" :key="entry.hash + entry.interface.viewedResults">
+							<tr v-for="(entry, index) in recentHistory" :key="entry.hash + entry.interface.viewedResults">
 								<td><strong>{{index + 1}}.</strong></td>
+								<td class="text-muted" style="padding-left:0;"><small>{{new Date(entry.timestamp).toLocaleString('nl-NL', {
+									hour12: false,
+									//year: '2-digit',
+									month: '2-digit',
+									day: '2-digit',
+									hour: 'numeric',
+									minute: 'numeric'
+								})}}</small></td>
 								<td>{{entry.interface.viewedResults === 'hits' ? 'Hits' : 'Documents'}}</td>
 								<td class="history-table-contain-text" :title="entry.displayValues.pattern.substring(0,1000) || undefined">{{entry.displayValues.pattern}}</td>
 								<td class="history-table-contain-text" :title="entry.displayValues.filters.substring(0,1000) || undefined">{{entry.displayValues.filters}}</td>
@@ -39,6 +48,7 @@
 							</tr>
 						</tbody>
 					</table>
+					<button v-if="recentHistory.length < history.length" type="button" class="btn btn-default" @click="shownOlderEntries+=5">Load more</button>
 				</div>
 				<div class="modal-footer">
 					<form v-if="importUrlVisible" @submit.prevent.stop="importFromUrl" :name="`${uid}_import`" class="history-table-import-url">
@@ -82,12 +92,18 @@ import * as BLTypes from '@/types/blacklabtypes';
 export default Vue.extend({
 	mixins: [UID],
 	data: () => ({
+		sessionStart: new Date().getTime(),
+		shownOlderEntries: 0,
 		sharingUrl: null as null|string,
 		importUrlError: null as null|string,
 		importUrlVisible: false,
 	}),
 	computed: {
 		history(): HistoryStore.ModuleRootState { return HistoryStore.getState() },
+		recentHistory(): HistoryStore.ModuleRootState {
+			let olderEntryCount = 0;
+			return this.history.filter((e: HistoryStore.FullHistoryEntry, i) => (e.timestamp >= this.sessionStart) || (olderEntryCount++) < this.shownOlderEntries || i < 2);
+		},
 		isSharingUrl(): boolean { return this.sharingUrl != null; },
 	},
 
@@ -129,30 +145,6 @@ export default Vue.extend({
 			this.importUrlError = null;
 			this.importUrlVisible = false;
 		},
-
-		// importFromFile(f: File) {
-		// 	const self = this;
-		// 	const fr = new FileReader();
-
-		// 	fr.onload = function() {
-		// 		try {
-		// 			const base64 = (fr.result as string).replace(/#.*[\r\n]+/g, '').trim();
-		// 			const originalEntry: HistoryStore.FullHistoryEntry&{version:number} = JSON.parse(atob(base64));
-		// 			// Rountrip from url if not compatible.
-		// 			let entry = originalEntry.version === HistoryStore.version ? originalEntry : new UrlStateParser(new URI(originalEntry.url)).get();
-		// 			HistoryStore.actions.addEntry({
-		// 				entry,
-		// 				pattern: originalEntry.displayValues.pattern,
-		// 				url: originalEntry.url
-		// 			});
-		// 			self.load(entry);
-		// 		} catch (e) {
-		// 			// TODO
-		// 			debugLog('Cannot import query from file: ', f.name, e)
-		// 		}
-		// 	};
-		// 	fr.readAsText(f);
-		// }
 	},
 	watch: {
 		isSharingUrl(value: boolean) {
@@ -204,6 +196,14 @@ export default Vue.extend({
 	min-width: 500px;
 	td, th {
 		white-space: nowrap;
+	}
+	.history-{
+		&index { display: table-cell; }
+		&date {
+			display: table-cell;
+			text-align: right;
+			width: 100%;
+		}
 	}
 }
 

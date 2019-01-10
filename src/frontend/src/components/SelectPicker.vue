@@ -62,9 +62,6 @@ export default Vue.extend({
 	computed: {
 		currentValue: {
 			get(): null|string|string[] {
-				// Function only runs when this.value changes.
-				// So we can use it to trigger a manual selectpicker update when our v-model changes
-				Vue.nextTick(() => $(this.$el).selectpicker('val', this.value!));
 				return this.value;
 			},
 			set(newValue: string|string[]) {
@@ -78,6 +75,15 @@ export default Vue.extend({
 		},
 		disabled() {
 			Vue.nextTick(() => $(this.$el).selectpicker('refresh'));
+		},
+		value(n: string|string[], old: string|string[]) {
+			if (!Array.isArray(n)) {
+				if (n !== old) {
+					Vue.nextTick(() => $(this.$el).selectpicker('val', n));
+				}
+			} else if (n.length !== old.length || !n.every(v => old.includes(v))) {
+				Vue.nextTick(() => $(this.$el).selectpicker('val', n));
+			}
 		}
 	},
 	mounted() {

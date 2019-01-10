@@ -4,6 +4,7 @@
  * but also when the user changes the grouping, and when they switch between viewing hits/documents.
  */
 import { getStoreBuilder } from 'vuex-typex';
+import URI from 'urijs';
 
 import jsonStableStringify from 'json-stable-stringify';
 import {stripIndent} from 'common-tags';

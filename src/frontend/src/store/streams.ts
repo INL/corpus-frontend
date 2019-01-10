@@ -13,6 +13,8 @@ import * as DocsStore from '@/store/results/docs';
 import * as HistoryStore from '@/store/history';
 import * as FilterStore from '@/store/form/filters';
 
+import UrlStateParser from '@/store/util/url-state-parser';
+
 import { getFilterString } from '@/utils/';
 import * as Api from '@/api';
 
@@ -179,7 +181,7 @@ url$.pipe(
 		}, {} as any);
 
 		// Store some interface state in the url, so the query can be restored to the correct form
-		// even when loading the page from just the url. See UrlPageState class in store/index.ts
+		// even when loading the page from just the url. See UrlStateParser class in store/utils/url-state-parser.ts
 		// TODO we should probably output the form in the url as /${indexId}/('search'|'explore')/('simple'|'advanced' ...etc)/('hits'|'docs')
 		Object.assign(queryParams, {
 			interface: JSON.stringify({
@@ -307,7 +309,7 @@ export default () => {
 	);
 
 	fromEvent<PopStateEvent>(window, 'popstate')
-	.pipe(map<PopStateEvent, HistoryStore.HistoryEntry>(evt => evt.state ? evt.state : new RootStore.UrlPageState().get()))
+	.pipe(map<PopStateEvent, HistoryStore.HistoryEntry>(evt => evt.state ? evt.state : new UrlStateParser().get()))
 	.subscribe(state => RootStore.actions.replace(state));
 
 	debugLog('Finished connecting store to url and subcorpus calculations.');

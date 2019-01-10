@@ -5,6 +5,9 @@
  */
 import { getStoreBuilder } from 'vuex-typex';
 
+import jsonStableStringify from 'json-stable-stringify';
+import {stripIndent} from 'common-tags';
+
 import { RootState } from '@/store';
 import * as CorpusModule from '@/store/corpus';
 import * as InterfaceModule from '@/store/form/interface';
@@ -15,10 +18,11 @@ import * as DocsModule from '@/store/results/docs';
 import * as PatternModule from '@/store/form/patterns';
 import * as ExploreModule from '@/store/form/explore';
 
+import UrlStateParser from '@/store/util/url-state-parser';
+
 import { NormalizedIndex } from '@/types/apptypes';
 import { debugLog } from '@/utils/debug';
 import { getFilterSummary } from '@/utils';
-import jsonStableStringify from 'json-stable-stringify';
 
 const version = 3;
 
@@ -68,7 +72,56 @@ let index: NormalizedIndex;
 const getState = b.state();
 
 const get = {
-	//
+	asFile: (entry: FullHistoryEntry) => {
+		const date = new Date().toLocaleString('en-EN', {
+			hour12: false,
+			year: '2-digit',
+			month: '2-digit',
+			day: '2-digit',
+			hour: '2-digit',
+			minute: '2-digit',
+			second: '2-digit',
+		});
+
+		const fileName = `query_${date}.txt`;
+		const fileContents = stripIndent`
+			# Date: ${date}
+			# Results: ${entry.interface.form === 'search' ? entry.interface.viewedResults : entry.interface.exploreMode || '-'}
+			# Pattern: ${entry.displayValues.pattern || '-'}
+			# Filters: ${entry.displayValues.filters || '-'}
+			# Grouping: ${entry[entry.interface.viewedResults!].groupBy}
+
+			#####
+			${btoa(JSON.stringify(Object.assign({version}, entry)))}
+			#####`;
+
+		const file = new Blob([fileContents], {type: 'text/plain;charset=utf-8'});
+		return {file, fileName};
+	},
+	fromFile: (f: File) => new Promise<{entry: HistoryEntry, pattern: string, url: string}>((resolve, reject) => {
+		const fr = new FileReader();
+		fr.onload = function() {
+			try {
+				const base64 = (fr.result as string).replace(/#.*(?:\r\n|\n|\r|$)/g, '').trim();
+				let originalEntry: FullHistoryEntry&{version: number};
+				try { originalEntry = JSON.parse(atob(base64)); } catch (e) { throw new Error(`Could not read query file '${f.name}'.`); }
+				if (!originalEntry || originalEntry.version == null) { throw new Error('Cannot import: file does not appear to be a valid query.'); }
+
+				// Rountrip from url if not compatible.
+				const entry = originalEntry.version === version ? originalEntry : new UrlStateParser(new URI(originalEntry.url)).get();
+
+				resolve({
+					entry,
+					pattern: originalEntry.displayValues.pattern,
+					url: originalEntry.url
+				});
+			} catch (e) {
+				debugLog('Cannot import query from file: ', f.name, e);
+				reject(e);
+			}
+		};
+		fr.readAsText(f);
+	})
 };
 
 const internalActions = {

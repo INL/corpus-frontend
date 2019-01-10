@@ -29,7 +29,7 @@
 					ref="autocomplete"
 					v-model="value"
 				/>
-				<div class="input-group-btn wordlist-upload">
+				<div class="input-group-btn">
 					<a v-if="annotation.uiType === 'pos'"
 						data-toggle="modal"
 						class="btn btn-default"
@@ -39,7 +39,7 @@
 						<span class="fa fa-pencil fa-fw"/>
 					</a>
 
-					<label class="btn btn-default" :for="fileInputId" v-if="annotation.uiType !== 'pos'">
+					<label class="btn btn-default file-input-button" :for="fileInputId" v-if="annotation.uiType !== 'pos'">
 						<span class="fa fa-upload fa-fw"></span>
 						<input
 							type="file"
@@ -165,23 +165,4 @@ export default Vue.extend({
 </script>
 
 <style lang="scss">
-.wordlist-upload {
-	> label {
-		position: relative;
-		overflow: hidden;
-		> input {
-			position: absolute;
-			opacity: 0;
-			font-size: 80px;
-			left: 0;
-			top: 0;
-			width: 100%;
-			height: 100%;
-			max-width: 100%;
-			max-height: 100%;
-			cursor: pointer;
-			&::-webkit-file-upload-button { cursor:pointer; }
-		}
-	}
-}
 </style>

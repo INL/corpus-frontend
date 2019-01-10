@@ -26,7 +26,11 @@
 						<div v-if="annotationValue" class="category-container">
 							<ul v-for="subId in annotationValue.subAnnotationIds" class="list-group category">
 								<li class="list-group-item active category-name">{{tagset.subAnnotations[subId].displayName}}</li>
-								<li class="list-group-item catagory-value" v-for="subValue in tagset.subAnnotations[subId].values" :key="subValue.value">
+								<!-- debugging -->
+								<!-- :style="{
+									backgroundColor: (!subValue.pos || subValue.pos.includes(annotationValue.value)) ? undefined : 'red'
+								}" -->
+								<li class="list-group-item category-value" v-for="subValue in tagset.subAnnotations[subId].values" :key="subValue.value" v-if="!subValue.pos || subValue.pos.includes(annotationValue.value)">
 									<label>
 										<input type="checkbox" v-model="selected[`${annotationValue.value}/${subId}/${subValue.value}`]"/>
 										{{subValue.displayName}}

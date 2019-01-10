@@ -250,6 +250,8 @@ export type Tagset = {
 			values: Array<{
 				value: string;
 				displayName: string;
+				/** Only allow/show this specific value for the defined main annotation values (referring to Tagset['values'][key]) */
+				pos?: string[];
 			}>;
 		};
 	};

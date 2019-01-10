@@ -103,7 +103,7 @@ function validateTagset(annotation: NormalizedAnnotation, t: Tagset) {
 		return acc;
 	}, {} as {[id: string]: NormalizedAnnotation});
 
-	function validateAnnotation(id: string, values: string[]) {
+	function validateAnnotation(id: string, values: Tagset['subAnnotations'][string]['values']) {
 		const mainAnnotation = validAnnotations[id];
 		if (!mainAnnotation) {
 			throw new Error(`Annotation "${id}" does not exist in corpus.`);
@@ -114,16 +114,24 @@ function validateTagset(annotation: NormalizedAnnotation, t: Tagset) {
 		}
 
 		values.forEach(v => {
-			if (mainAnnotation.values!.findIndex(mav => mav.value === v) === -1) {
+			if (mainAnnotation.values!.findIndex(mav => mav.value === v.value) === -1) {
 				// tslint:disable-next-line
-				console.warn(`Annotation "${id}" may have value "${v}" which does not exist in the corpus.`);
+				console.warn(`Annotation "${id}" may have value "${v.value}" which does not exist in the corpus.`);
+			}
+
+			if (v.pos) {
+				const unknownPosList = v.pos!.filter(pos => !t.values[pos]);
+				if (unknownPosList.length > 0) {
+					// tslint:disable-next-line
+					console.warn(`SubAnnotation '${id}' value '${v.value}' declares unknown main-pos value(s): ${unknownPosList.toString()}`);
+				}
 			}
 		});
 	}
 
-	validateAnnotation(annotation.id, Object.keys(t.values));
+	validateAnnotation(annotation.id, Object.values(t.values));
 	Object.values(t.subAnnotations).forEach(sub => {
-		validateAnnotation(sub.id, sub.values.map(v => v.value));
+		validateAnnotation(sub.id, sub.values);
 	});
 
 	Object.values(t.values).forEach(({value, subAnnotationIds}) => {

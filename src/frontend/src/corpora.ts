@@ -11,7 +11,6 @@ import '@/utils/features/tutorial';
 
 import '@/global.scss';
 
-
 // Now import the augmented modules (though import order shouldn't matter)
 import CodeMirror from 'codemirror';
 import $ from 'jquery';

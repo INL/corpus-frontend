@@ -30,7 +30,8 @@
 										<button type="button" class="btn btn-default" @click="load(entry)">Search</button>
 										<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"/></button>
 										<ul class="dropdown-menu dropdown-menu-right">
-											<li><a href="#" @click.prevent="openShareUrl(entry)">Copy link</a></li>
+											<li><a href="#" @click.prevent="openShareUrl(entry)">Copy as link</a></li>
+											<li><a href="#" @click.prevent="downloadAsFile(entry)">Download as file</a></li>
 											<li><a href="#" @click.prevent="remove(index)">Delete</a></li>
 										</ul>
 									</div>
@@ -66,9 +67,13 @@ import Vue from 'vue';
 import URI from 'urijs';
 import $ from 'jquery';
 
+import {saveAs} from 'file-saver';
+
 import * as HistoryStore from '@/store/history';
 import * as RootStore from '@/store';
 import * as CorpusStore from '@/store/corpus';
+
+import UrlStateParser from '@/store/util/url-state-parser';
 
 import UID from '@/mixins/uid';
 
@@ -91,6 +96,11 @@ export default Vue.extend({
 		openShareUrl(entry: HistoryStore.FullHistoryEntry) { this.sharingUrl = entry.url; },
 		closeShareUrl() { this.sharingUrl = null; },
 
+		downloadAsFile(entry: HistoryStore.FullHistoryEntry) {
+			const {file, fileName} = HistoryStore.get.asFile(entry);
+			saveAs(file, fileName);
+		},
+
 		load(entry: HistoryStore.HistoryEntry) {
 			$(this.$refs.modal).modal('toggle');
 			RootStore.actions.replace(entry);
@@ -109,7 +119,7 @@ export default Vue.extend({
 			}
 
 			const uri = new URI(importUrl);
-			const state = new RootStore.UrlPageState(uri).get();
+			const state = new UrlStateParser(uri).get();
 			HistoryStore.actions.addEntry({
 				entry: state,
 				pattern: (uri.query(true) as any).patt,
@@ -118,7 +128,31 @@ export default Vue.extend({
 
 			this.importUrlError = null;
 			this.importUrlVisible = false;
-		}
+		},
+
+		// importFromFile(f: File) {
+		// 	const self = this;
+		// 	const fr = new FileReader();
+
+		// 	fr.onload = function() {
+		// 		try {
+		// 			const base64 = (fr.result as string).replace(/#.*[\r\n]+/g, '').trim();
+		// 			const originalEntry: HistoryStore.FullHistoryEntry&{version:number} = JSON.parse(atob(base64));
+		// 			// Rountrip from url if not compatible.
+		// 			let entry = originalEntry.version === HistoryStore.version ? originalEntry : new UrlStateParser(new URI(originalEntry.url)).get();
+		// 			HistoryStore.actions.addEntry({
+		// 				entry,
+		// 				pattern: originalEntry.displayValues.pattern,
+		// 				url: originalEntry.url
+		// 			});
+		// 			self.load(entry);
+		// 		} catch (e) {
+		// 			// TODO
+		// 			debugLog('Cannot import query from file: ', f.name, e)
+		// 		}
+		// 	};
+		// 	fr.readAsText(f);
+		// }
 	},
 	watch: {
 		isSharingUrl(value: boolean) {

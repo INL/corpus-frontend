@@ -140,6 +140,26 @@ ul.nav-tabs.cf-panel-tab-header {
 	color: hsl(0, 0%, 42%);
 }
 
+// We usually wrap file inputs in labels to style them better
+.file-input-button {
+	position: relative;
+	overflow: hidden;
+	> input[type="file"] {
+		position: absolute;
+		opacity: 0;
+		font-size: 100px;
+		left: 0;
+		top: 0;
+		width: 100%;
+		height: 100%;
+		max-width: 100%;
+		max-height: 100%;
+		cursor: pointer;
+		height: 100%;
+		&::-webkit-file-upload-button { cursor:pointer; } // chrome doesn't adhere to cursor: pointer on the (invisible) input label
+	}
+}
+
 // v-tooltip
 .tooltip {
 	opacity: 1;

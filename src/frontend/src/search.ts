@@ -13,12 +13,13 @@ import * as RootStore from '@/store';
 import * as CorpusStore from '@/store/corpus'; // NOTE: only use after initializing root store
 import * as TagsetStore from '@/store/tagset';
 import * as PatternStore from '@/store/form/patterns';
-
-import debug, {debugLog} from '@/utils/debug';
+import UrlStateParser from '@/store/util/url-state-parser';
 
 import connectStreamsToVuex from '@/store/streams';
 
 import SearchPageComponent from '@/pages/search/SearchPage.vue';
+
+import {debugLog} from '@/utils/debug';
 
 import * as BLTypes from '@/types/blacklabtypes';
 
@@ -136,7 +137,7 @@ $(document).ready(() => {
 			connectJqueryToPage();
 
 			TagsetStore.actions.awaitInit()
-			.then(() => new RootStore.UrlPageState().get())
+			.then(() => new UrlStateParser().get())
 			.then(urlState => {
 				debugLog('Loading state from url', urlState);
 				RootStore.actions.reset();

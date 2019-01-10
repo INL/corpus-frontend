@@ -284,6 +284,12 @@ table {
 
 			> td {
 				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+
+			&.open > td {
+				overflow: visible;
+				word-break: break-all;
 			}
 		}
 	}

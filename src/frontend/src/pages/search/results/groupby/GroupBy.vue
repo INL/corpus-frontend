@@ -118,7 +118,12 @@ export default Vue.extend({
 					if (this.storeModule.getState().groupByAdvanced.length) {
 						this.storeModule.actions.groupByAdvanced([]); // clear
 					}
-					this.storeModule.actions.groupBy(v ? [v] : []);
+					const newState = v ? [v] : [];
+					const oldState = this.storeModule.getState().groupBy;
+					// For some reason there's an extra roundtrip if we don't perform this check
+					if (newState.length != oldState.length || !newState.every(e => oldState.includes(e))) {
+						this.storeModule.actions.groupBy(newState);
+					}
 				}
 				// Don't have to do anything when we go from grouping normally to context grouping,
 				// that needs to be applied by the user specifically (so they can configure the options before applying)

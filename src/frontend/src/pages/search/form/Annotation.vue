@@ -59,6 +59,8 @@
 					:annotationDisplayName="annotation.displayName"
 
 					@submit="value = $event.queryString"
+
+					ref="pos"
 				/>
 			</template>
 			<div v-if="annotation.caseSensitive" class="checkbox">
@@ -84,6 +86,7 @@ import Vue from 'vue';
 
 import $ from 'jquery';
 
+import * as RootStore from '@/store';
 import * as PatternStore from '@/store/form/patterns';
 import { NormalizedAnnotation } from '@/types/apptypes';
 import SelectPicker, {Option} from '@/components/SelectPicker.vue';
@@ -92,6 +95,7 @@ import PartOfSpeech from '@/components/PartOfSpeech.vue';
 //@ts-ignore
 import Autocomplete from '@/mixins/autocomplete';
 import UID from '@/mixins/uid';
+import { Subscription } from 'rxjs';
 
 declare const BLS_URL: string;
 
@@ -106,6 +110,9 @@ export default Vue.extend({
 	props: {
 		annotation: Object as () => NormalizedAnnotation
 	},
+	data: () => ({
+		subscriptions: [] as Array<() => void>
+	}),
 	computed: {
 		inputId(): string { return this.annotation.id + '_value'; },
 		fileInputId(): string { return this.annotation.id + '_file'; },
@@ -161,6 +168,20 @@ export default Vue.extend({
 			}
 		}
 	},
+	created() {
+		if (this.annotation.uiType === 'pos') {
+			const eventId = `${PatternStore.namespace}/reset`;
+
+			this.subscriptions.push(RootStore.store.subscribe((mutation, state) => {
+				if (this.$refs.pos && mutation.type === eventId) {
+					(this.$refs.pos as InstanceType<typeof PartOfSpeech>).reset();
+				}
+			}));
+		}
+	},
+	destroyed() {
+		this.subscriptions.forEach(unsub => unsub());
+	}
 })
 </script>
 

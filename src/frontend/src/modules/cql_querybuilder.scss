@@ -97,10 +97,6 @@
 	}
 }
 
-// Unhidden through script
-[data-attribute-type] {
-		display: none;
-}
 [data-has-file] .bl-has-file-hidden, .bl-has-file-shown {
 	display:none;
 }

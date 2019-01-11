@@ -6,6 +6,7 @@
  */
 
 import {getStoreBuilder} from 'vuex-typex';
+import deepFreeze from 'deep-freeze';
 
 import * as Api from '@/api';
 
@@ -23,9 +24,30 @@ declare const PROPS_IN_COLUMNS: string[];
 type ModuleRootState = NormalizedIndex;
 
 const namespace = 'corpus';
-const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, normalizeIndex(JSON.parse(JSON.stringify(SINGLEPAGE.INDEX))));
+const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, freezeIndex(normalizeIndex(JSON.parse(JSON.stringify(SINGLEPAGE.INDEX)))));
 
 const getState = b.state();
+
+function freezeIndex(i: NormalizedIndex): NormalizedIndex {
+	type Key = keyof NormalizedIndex;
+	const mutableProps: Key[] = ['documentCount'];
+
+	(Object.keys(i) as Key[])
+	.filter(k => !mutableProps.includes(k))
+	.forEach(key => {
+		Object.defineProperty(i, key, {
+			writable: false,
+			configurable: false,
+		});
+		const p = i[key];
+		if (p != null && (typeof p === 'object' || typeof p === 'function')) {
+			deepFreeze(p);
+		}
+	});
+
+	Object.preventExtensions(i);
+	return i;
+}
 
 const get = {
 	annotations: b.read(state =>
@@ -94,6 +116,7 @@ const actions = {
 
 const init = () => {
 	const state = getState();
+
 	if (state.documentCount === -1) {
 		// Request a sum of all documents in the corpus
 		Api.blacklab.getDocs(state.id, {

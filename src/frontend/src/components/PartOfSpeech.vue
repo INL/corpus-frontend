@@ -96,8 +96,6 @@ export default Vue.extend({
 
 			return [`${this.annotationId}="${mainValue}"`].concat(subAnnots.map(({id, values}) => `${id}="${values.join('|')}"`)).join('&');
 		},
-
-		viewedResults(): string|null { return InterfaceStore.get.viewedResults(); }
 	},
 	methods: {
 		reset: function() {
@@ -138,15 +136,6 @@ export default Vue.extend({
 				});
 			});
 		});
-	},
-	watch: {
-		// TODO use a better method of detecting this (event bus, streams?).
-		/** When viewedResults is set to null, the global reset button was pressed, also reset this */
-		viewedResults(cur, prev) {
-			if (cur == null && prev != null) {
-				this.reset();
-			}
-		}
 	}
 });
 

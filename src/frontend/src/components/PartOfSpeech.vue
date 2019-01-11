@@ -60,6 +60,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import * as TagsetStore from '@/store/tagset';
+import * as InterfaceStore from '@/store/form/interface';
 
 import {NormalizedAnnotation, Tagset} from '@/types/apptypes';
 
@@ -93,7 +94,9 @@ export default Vue.extend({
 			const subAnnotStrings = subAnnots.map(({id, values}) => `${id}="${values.join('|')}"`);
 
 			return [`${this.annotationId}="${mainValue}"`].concat(subAnnots.map(({id, values}) => `${id}="${values.join('|')}"`)).join('&');
-		}
+		},
+
+		viewedResults(): string { return InterfaceStore.get.viewedResults(); }
 	},
 	methods: {
 		reset: function() {
@@ -134,6 +137,13 @@ export default Vue.extend({
 				});
 			});
 		});
+	},
+	watch: {
+		viewedResults(cur, prev) {
+			if (cur == null && prev != null) {
+				this.reset();
+			}
+		}
 	}
 });
 

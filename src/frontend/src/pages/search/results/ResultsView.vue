@@ -366,6 +366,11 @@ export default Vue.extend({
 			// then the selectpicker will reset value to undefined, which clears it in the store, which updates the url, etc.
 			const opts = [] as Array<Option|OptGroup>;
 
+			// NOTE: only disable groups when results are in
+			// this prevents an issue with bootstrap-select where optgroup headers are repeated for initially disabled groups.
+			// See https://github.com/snapappointments/bootstrap-select/issues/2166 and https://github.com/snapappointments/bootstrap-select/issues/2174
+			// should be fixed in v1.13.6 probably
+
 			opts.push({
 				label: 'Groups',
 				options: [{
@@ -375,7 +380,7 @@ export default Vue.extend({
 					label: 'Sort by Size',
 					value: 'size',
 				}],
-				disabled: !this.isGroups
+				disabled: this.results != null && !this.isGroups
 			});
 
 			const annotations = CorpusStore.get.annotations().filter(a => !a.isInternal && a.hasForwardIndex);
@@ -389,7 +394,7 @@ export default Vue.extend({
 						label: `Sort by ${annot.displayName || annot.id} <small class="text-muted">${suffix}</small>`,
 						value: `${prefix}${annot.id}`,
 					})),
-					disabled: !this.isHits
+					disabled: this.results != null && !this.isHits
 				})
 			);
 
@@ -402,7 +407,7 @@ export default Vue.extend({
 					label: `Sort by ${(field.displayName || field.id).replace(group.name, '')}`,
 					value: `field:${field.id}`,
 				})),
-				disabled: !this.isDocs
+				disabled: this.results != null && !this.isDocs
 			}));
 
 			return opts;

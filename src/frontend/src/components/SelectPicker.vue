@@ -1,7 +1,7 @@
 <template>
 <select v-model="currentValue" class="selectpicker" :disabled="disabled" @change="$emit('change', $event.target.value)">
-	<template v-for="(optOrGroup, index) in options">
-		<optgroup v-if="optOrGroup.options" :key="index" :label="optOrGroup.label" :disabled="optOrGroup.disabled">
+	<template v-for="optOrGroup in options">
+		<optgroup v-if="optOrGroup.options" :key="optOrGroup.label" :label="optOrGroup.label" :disabled="optOrGroup.disabled">
 			<option v-for="option in optOrGroup.options"
 				:key="option.value"
 				:value="option.value"
@@ -69,20 +69,25 @@ export default Vue.extend({
 			}
 		}
 	},
+	methods: {
+		refresh() {
+			Vue.nextTick(() => $(this.$el).selectpicker('refresh'));
+		}
+	},
 	watch: {
 		options() {
-			Vue.nextTick(() => $(this.$el).selectpicker('refresh'));
+			this.refresh();
 		},
 		disabled() {
-			Vue.nextTick(() => $(this.$el).selectpicker('refresh'));
+			this.refresh();
 		},
 		value(n: string|string[], old: string|string[]) {
 			if (!Array.isArray(n)) {
 				if (n !== old) {
-					Vue.nextTick(() => $(this.$el).selectpicker('val', n));
+					this.refresh();
 				}
 			} else if (n.length !== old.length || !n.every(v => old.includes(v))) {
-				Vue.nextTick(() => $(this.$el).selectpicker('val', n));
+				this.refresh();
 			}
 		}
 	},

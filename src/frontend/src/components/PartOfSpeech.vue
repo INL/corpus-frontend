@@ -49,8 +49,9 @@
 					</div>
 				</div>
 				<div class="modal-footer">
-					<button type="submit" class="btn btn-primary" @click.prevent="submit" data-dismiss="modal">Save</button>
-					<button type="reset" class="btn btn-default" @click.prevent="reset">Reset</button>
+					<!-- Don't use submit/reset, since these are not in their own form it messes up submitting any parent form using enter key in input -->
+					<button type="button" class="btn btn-primary" @click.prevent="submit" data-dismiss="modal">Save</button>
+					<button type="button" class="btn btn-default" @click.prevent="reset">Reset</button>
 				</div>
 			</div>
 		</div>
@@ -96,7 +97,7 @@ export default Vue.extend({
 			return [`${this.annotationId}="${mainValue}"`].concat(subAnnots.map(({id, values}) => `${id}="${values.join('|')}"`)).join('&');
 		},
 
-		viewedResults(): string { return InterfaceStore.get.viewedResults(); }
+		viewedResults(): string|null { return InterfaceStore.get.viewedResults(); }
 	},
 	methods: {
 		reset: function() {
@@ -139,6 +140,8 @@ export default Vue.extend({
 		});
 	},
 	watch: {
+		// TODO use a better method of detecting this (event bus, streams?).
+		/** When viewedResults is set to null, the global reset button was pressed, also reset this */
 		viewedResults(cur, prev) {
 			if (cur == null && prev != null) {
 				this.reset();

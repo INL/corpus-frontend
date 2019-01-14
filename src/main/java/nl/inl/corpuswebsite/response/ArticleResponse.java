@@ -26,7 +26,7 @@ public class ArticleResponse extends BaseResponse {
     /** Matches xml open/void tags &lt;namespace:tagname attribute="value"/&gt; excluding hl tags, as those are inserted by blacklab and can result in false positives */
     private static final Pattern XML_TAG_PATTERN = Pattern.compile("<([\\w]+:)?((?!(hl|blacklabResponse|[xX][mM][lL])\\b)[\\w.]+)(\\s+[\\w\\.]+=\"[\\w\\s,]*\")*\\/?>");
 
-    private static final Pattern CAPTURE_DOCLENGTH_PATTERN = Pattern.compile(".*<lengthInTokens>\\s*(\\d+)\\s*<\\/lengthInTokens>.*");
+    private static final Pattern CAPTURE_DOCLENGTH_PATTERN = Pattern.compile("<lengthInTokens>\\s*(\\d+)\\s*<\\/lengthInTokens>");
 
 
     static {
@@ -137,7 +137,7 @@ public class ArticleResponse extends BaseResponse {
                     try {
                         String meta = articleMetadataRequest.makeRequest(metadataRequestParameters);
                         Matcher m = CAPTURE_DOCLENGTH_PATTERN.matcher(meta);
-                        if (m.matches()) {
+                        if (m.find()) {
                             int docLength = Integer.parseInt(m.group(1));
                             int pageStart = getWordStart();
                             int pageEnd = getWordEnd();

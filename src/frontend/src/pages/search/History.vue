@@ -176,7 +176,7 @@ export default Vue.extend({
 	.modal-body {
 		flex: 1 1 auto;
 		overflow: auto;
-		padding-bottom: 80px;
+		padding-bottom: 110px;
 	}
 	.modal-footer {
 		flex: none;

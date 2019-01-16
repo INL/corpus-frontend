@@ -7,6 +7,7 @@
 
 import Axios from 'axios';
 import {getStoreBuilder} from 'vuex-typex';
+import deepFreeze from 'deep-freeze';
 
 import {RootState} from '@/store';
 import * as CorpusStore from '@/store/corpus';
@@ -64,6 +65,7 @@ const actions = {
 			transformResponse: [(r: string) => r.replace(/\/\/.*[\r\n]+/g, '')].concat(Axios.defaults.transformResponse!)
 		})
 		.then(t => {
+			deepFreeze(t);
 			internalActions.replace(t.data);
 			internalActions.state({state: 'loaded', message: 'Tagset succesfully loaded'});
 		})

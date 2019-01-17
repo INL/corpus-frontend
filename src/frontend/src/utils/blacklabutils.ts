@@ -3,7 +3,7 @@ import * as BLTypes from '@/types/blacklabtypes';
 
 export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedIndex {
 	function findAnnotationGroup(annotatedFieldId: string, annotationId: string): string|undefined {
-		const groupsForAnnotatedField = blIndex.annotationGroups[annotatedFieldId];
+		const groupsForAnnotatedField = blIndex.annotationGroups ? blIndex.annotationGroups[annotatedFieldId] : undefined;
 		if (groupsForAnnotatedField == null) {
 			return undefined;
 		}
@@ -124,7 +124,7 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 	return {
 		annotatedFields: annotatedFieldsNormalized,
 
-		annotationGroups: Object.entries(blIndex.annotationGroups).length > 0 ?
+		annotationGroups: (blIndex.annotationGroups && Object.entries(blIndex.annotationGroups).length > 0) ?
 			Object.entries(blIndex.annotationGroups)
 			.flatMap<NormalizedIndex['annotationGroups'][number]>(([annotatedFieldId, groups]) =>
 				groups.map(group => ({

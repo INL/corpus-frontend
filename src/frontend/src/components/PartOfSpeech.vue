@@ -50,7 +50,7 @@
 				</div>
 				<div class="modal-footer">
 					<!-- Don't use submit/reset, since these are not in their own form it messes up submitting any parent form using enter key in input -->
-					<button type="button" class="btn btn-primary" @click.prevent="submit" data-dismiss="modal">Save</button>
+					<button type="button" class="btn btn-primary" @click.prevent="submit" data-dismiss="modal">Ok</button>
 					<button type="button" class="btn btn-default" @click.prevent="reset">Reset</button>
 				</div>
 			</div>
@@ -103,8 +103,12 @@ export default Vue.extend({
 			this.annotationValue = null;
 		},
 		submit: function() {
-			// TODO REMOVE ME
-			if (this.annotationValue == null) { return ''; }
+			if (this.annotationValue == null) {
+				this.$emit('submit', {
+					query: '',
+				});
+				return;
+			}
 
 			const mainValue = this.annotationValue.value;
 			const subAnnots = this.annotationValue.subAnnotationIds.map(id => ({

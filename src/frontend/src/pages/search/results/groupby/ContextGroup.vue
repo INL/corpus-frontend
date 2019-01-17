@@ -3,10 +3,12 @@
 
 		<SelectPicker
 			class="groupby-editor-annotation"
-			data-style="btn-default btn-sm"
+			data-class="btn-default btn-sm"
 			data-width="auto"
 
-			:data-live-search="annotationOptions.length > 10"
+			container="body"
+
+			:searchable="annotationOptions.length > 10"
 			:options="annotationOptions"
 
 			v-model="annotation"

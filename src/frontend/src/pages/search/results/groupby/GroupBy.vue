@@ -1,33 +1,25 @@
 <template>
 	<div>
-		<div :class="['groupby-container', 'input-group', {'context-enabled': contextEnabled}]">
+		<div class="groupby-container">
 			<SelectPicker
 				class="groupselect"
-				data-size="auto"
-				data-actions-box="true"
-				data-deselect-all-text="reset"
-				data-show-subtext="true"
-				data-style="btn-default btn-sm"
-				data-live-search="true"
-				data-window-padding="[150, 0, 50, 0]"
+
+				data-class="btn-sm btn-default"
+				:data-style="{
+					borderTopRightRadius: contextEnabled ? 0 : undefined,
+					borderBottomRightRadius: contextEnabled ? 0 : undefined,
+					borderRightWidth: contextEnabled ? 0 : undefined,
+				}"
+
+				:placeholder="`Group ${type} by...`"
+				:searchable="normalGroupByOptions.flatMap(o => o.options ? o.options : o).length > 15"
+				allowHtml
 
 				:options="normalGroupByOptions"
-				:escapeLabels="false"
-				:title="`Group ${type} by...`"
 
 				v-model="groupBy"
 			/>
-
-			<div v-if="contextEnabled" class="btn-group" style="display: flex; flex-wrap: none; flex: none;">
-				<button type="button" class="btn btn-sm btn-primary" @click="submitContext" style="border-top-left-radius: 0; border-bottom-left-radius: 0;">Apply</button>
-
-				<!--
-				<button type="button" class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"/></button>
-				<ul class="dropdown-menu">
-					<li><a href="#" @click.prevent="undoContext">Undo</a></li>
-				</ul>
-				-->
-			</div>
+			<button v-if="contextEnabled" type="button" class="btn btn-sm btn-primary" @click="submitContext" style="border-top-left-radius: 0; border-bottom-left-radius: 0;">Apply</button>
 
 			<div v-if="groupBy && !contextEnabled" class="checkbox-inline" style="margin-left: 5px;">
 				<label title="Separate groups for differently cased values" style="white-space: nowrap; margin: 0; cursor:pointer;" :for="uid+'case'">
@@ -146,10 +138,10 @@ export default Vue.extend({
 			const opts: Array<OptGroup|Option> = [];
 
 			// Deselect option
-			opts.push({
-				label: '',
-				value: ''
-			});
+			// opts.push({
+			// 	label: '',
+			// 	value: ''
+			// });
 
 			if (this.contextSupported) {
 				opts.push({
@@ -216,56 +208,13 @@ export default Vue.extend({
 	margin-bottom: 5px;
 
 	&.context-enabled {
-		> .groupselect > button {
-			border-top-right-radius: 0px;
-			border-bottom-right-radius: 0px;
-			border-right-width: 0;
-		}
-	}
+		> .groupselect {
+			min-width: 0px;
 
-	> .groupselect {
-		flex: 1 1 auto;
-		min-width: 0px!important;
-		width: auto!important;
-		display: flex;
-		flex-wrap: nowrap;
-
-
-
-		> button {
-			width: auto;
-			max-width: 100%;
-			padding-right: 26px; // for caret
-
-			display: flex;
-			flex-wrap: nowrap;
-
-			> .filter-option {
-				padding: 0;
-				height: auto;
-				max-width: none;
-				position: static;
-				top: auto;
-				left: auto;
-				width: 100%;
-				display: inline-block;
-
-				> .filter-option-inner {
-					display: inline-block;
-					width: 100%;
-
-					> .filter-option-inner-inner {
-						display: inline-block;
-						width: 100%;
-						overflow: hidden;
-						text-overflow: ellipsis;
-						vertical-align: top;
-					}
-				}
-			}
-
-			&:before {
-				display: none;
+			> button {
+				border-top-right-radius: 0px;
+				border-bottom-right-radius: 0px;
+				border-right-width: 0;
 			}
 		}
 	}

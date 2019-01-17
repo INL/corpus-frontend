@@ -4,21 +4,22 @@
 		:id="id"
 		:data-filterfield-type="uiType"
 	>
-		<label class="col-xs-12" :for="(uiType === 'select' || uiType === 'text') ? inputId : undefined">{{displayName}}</label>
+		<label class="col-xs-12" :for="(uiType !== 'select' && uiType !== 'radio' && uiType !== 'checkbox' && uiType !== 'range') ? inputId : undefined">{{displayName}}</label>
 
 		<template v-if="uiType === 'select'">
 			<div class="col-xs-12">
 				<SelectPicker
-					class="selectpicker form-control"
-					data-container="body"
+					data-width="100%"
 					multiple
 
-					:title="displayName"
+					container="body"
+
+					:placeholder="displayName"
 					:id="inputId"
 					:name="inputId"
 					:options="options"
 
-					v-model.lazy="value"
+					v-model="value"
 				/>
 			</div>
 		</template>

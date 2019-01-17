@@ -3,11 +3,11 @@
 		<label :for="inputId" class="col-xs-12 col-md-3" :title="annotation.description || undefined">{{displayName}}</label>
 		<div class="col-xs-12 col-md-9">
 			<SelectPicker v-if="annotation.uiType === 'select'"
-				class="form-control"
-				data-container="body"
-				:data-live-search="options.length > 20"
+				data-width="100%"
+				container="body"
 
-				:title="displayName"
+				:searchable="options.length > 20"
+				:placeholder="displayName"
 				:id="inputId"
 				:name="inputId"
 

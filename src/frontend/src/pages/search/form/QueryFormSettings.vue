@@ -16,7 +16,6 @@
 									name="resultsPerPage"
 
 									data-width="auto"
-									data-style="btn-default"
 
 									:options="['20','50','100','200'].map(value => ({value, label: `${value} results`}))"
 
@@ -33,9 +32,6 @@
 										id="sampleMode"
 										name="sampleMode"
 										class="input-group-btn"
-
-										data-width="auto"
-										data-style="btn-default"
 
 										:options="['percentage', 'count'].map(o => ({value: o}))"
 

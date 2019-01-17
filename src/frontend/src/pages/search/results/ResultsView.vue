@@ -71,16 +71,13 @@
 		<!-- Ugly - use v-show instead of v-if because teardown of selectpickers is problematic :( -->
 		<div v-show="resultsHaveData" class="buttons" style="text-align: right;">
 			<SelectPicker
-				title="Sort by..."
-				data-size="auto"
-				data-show-subtext="true"
-				data-style="btn-default btn-sm"
-				data-window-padding="[150, 0, 50, 0]"
-				data-hide-disabled="true"
-				:data-live-search="sortOptions.flat(2).length > 20 ? 'true' : undefined"
+				data-class="btn-sm btn-default"
+				placeholder="Sort by..."
 
+				allowHtml
+
+				:searchable="sortOptions.flatMap(o => o.options ? o.options : o).length > 20"
 				:options="sortOptions"
-				:escapeLabels="false"
 
 				v-model="sort"
 			/>

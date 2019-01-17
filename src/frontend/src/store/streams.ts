@@ -173,9 +173,9 @@ url$.pipe(
 
 		// remove null, undefined, empty strings and empty arrays from our query params
 		const queryParams: Partial<BLTypes.BLSearchParameters> = Object.entries(v.params).reduce((acc, [key, val]) => {
-			if (val == null) { return; }
-			if (typeof val === 'string' && val.length === 0) { return; }
-			if (Array.isArray(val) && val.length === 0) { return; }
+			if (val == null) { return acc; }
+			if (typeof val === 'string' && val.length === 0) { return acc; }
+			if (Array.isArray(val) && val.length === 0) { return acc; }
 			acc[key] = val;
 			return acc;
 		}, {} as any);

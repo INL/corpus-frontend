@@ -17,7 +17,6 @@ import {normalizeIndex} from '@/utils/blacklabutils';
 import * as BLTypes from '@/types/blacklabtypes';
 import {NormalizedIndex, NormalizedAnnotation, NormalizedMetadataField, NormalizedAnnotatedField} from '@/types/apptypes';
 
-// TODO initialization order is messy.
 declare const SINGLEPAGE: { INDEX: BLTypes.BLIndexMetadata; };
 declare const PROPS_IN_COLUMNS: string[];
 

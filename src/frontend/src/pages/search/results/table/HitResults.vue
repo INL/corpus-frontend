@@ -2,7 +2,7 @@
 	<table class="hits-table">
 		<thead>
 			<tr>
-				<th class="text-right" style="width:40px">
+				<th class="text-right">
 					<span class="dropdown">
 						<a class="dropdown-toggle" data-toggle="dropdown" href="#">
 							{{leftLabel}} hit
@@ -17,13 +17,13 @@
 					</span>
 				</th>
 
-				<th class="text-center" style="width:20px;">
+				<th class="text-center">
 					<a @click="firstMainAnnotation.hasForwardIndex ? changeSort(`hit:${firstMainAnnotation.id}`) : undefined" class="sort" :title="`Sort by ${firstMainAnnotation.displayName}`">
 						<strong>{{firstMainAnnotation.displayName}}</strong>
 					</a>
 				</th>
 
-				<th class="text-left" style="width:40px">
+				<th class="text-left">
 					<span class="dropdown">
 						<a class="dropdown-toggle" data-toggle="dropdown" href="#">
 							{{rightLabel}} hit
@@ -38,7 +38,7 @@
 					</span>
 				</th>
 
-				<th v-for="annotation in shownAnnotations" :key="annotation.id" style="width:15px;">
+				<th v-for="annotation in shownAnnotations" :key="annotation.id">
 					<a @click="annotation.hasForwardIndex ? changeSort(`hit:${annotation.id}`) : undefined" class="sort" :title="`Sort by ${annotation.displayName}`">{{annotation.displayName}}</a>
 				</th>
 			</tr>
@@ -279,6 +279,7 @@ table {
 
 	&.hits-table {
 		border-collapse: separate;
+		table-layout: auto;
 		> tbody > tr {
 			border-bottom: 1px solid #ffffff;
 

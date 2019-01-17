@@ -327,7 +327,7 @@ export default class UrlStateParser {
 				}
 
 				// Use a stack instead of direct recursion to simplify code
-				const stack = [token.expression];
+				const stack = token.expression ? [token.expression] : [];
 				while (stack.length) {
 					const expr = stack.shift()!;
 					if (expr.type === 'attribute') {
@@ -354,17 +354,17 @@ export default class UrlStateParser {
 							// otherwise just store wherever it should be in the store.
 							const values = annotationValues[name] = annotationValues[name] || [];
 							if (expr.operator !== '=') {
-								throw new Error('Unsupported comparator, only "=" is supported.');
+								throw new Error(`Unsupported comparator for property ${name} on token ${i} for query ${this.expertPattern}, only "=" is supported.`);
 							}
 							if (values.length !== i) {
-								throw new Error('Duplicate or missing values on property');
+								throw new Error(`Property ${name} contains gaps in value for query ${this.expertPattern}`);
 							}
 							values.push(expr.value);
 						}
 
 					} else if (expr.type === 'binaryOp') {
 						if (!(expr.operator === '&' || expr.operator === 'AND')) {
-							throw new Error('Multiple properties on token must use AND operator');
+							throw new Error(`Properties on token ${i} are combined using unsupported operator ${expr.operator} in query ${this.expertPattern}, only AND/& operator is supported.`);
 						}
 
 						stack.push(expr.left, expr.right);

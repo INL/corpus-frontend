@@ -87,7 +87,7 @@
 					<template v-for="o in filteredOptions">
 					<li v-if="o.type === 1"
 						:class="['menu-option', {
-							'selected': internalModel[o.id] && !multiple,
+							'active': internalModel[o.id] && !multiple,
 							'disabled': o.disabled,
 						}]"
 						:key="o.id"
@@ -122,8 +122,6 @@
 
 <script lang="ts">
 import Vue from 'vue';
-
-// import {debugLog} from '@/utils/debug';
 
 export type SimpleOption = string;
 
@@ -474,16 +472,13 @@ export default Vue.extend({
 				}
 
 				if (cur) {
-					// Vue.nextTick(() => {
-						cur.appendChild(this.$refs.menu as HTMLElement);
-						if (this.isOpen) {
-							this.reposition();
-						}
-					// });
+					cur.appendChild(this.$refs.menu as HTMLElement);
+					if (this.isOpen) {
+						this.reposition();
+					}
 				};
 			}
 		},
-		// TODO
 		value: {
 			immediate: true,
 			handler(newVal: string|string[]|null, oldVal: string|string[]|null) {
@@ -535,7 +530,6 @@ export default Vue.extend({
 						.filter(v => !!v); // remove invalid values that were mapped to undefined
 					}
 
-					// debugLog('updating multiselect', 'old values', oldVal,  'new values', newVal, 'unselected', unselectedValues, 'new selected', newSelectedValues);
 					for (let v of unselectedValues) { Vue.delete(this.internalModel, v.id.toString()); }
 					for (let v of newSelectedValues as _uiOpt[]) { Vue.set(this.internalModel, v.id.toString(), v); }
 				}
@@ -679,7 +673,7 @@ export default Vue.extend({
 				white-space: nowrap;
 				width: 100%;
 
-				&.selected {
+				&.active {
 					background: #337ab7;
 					color: white;
 					.text-muted { color :white; }
@@ -690,7 +684,7 @@ export default Vue.extend({
 					cursor: not-allowed;
 				}
 
-				&:not(.selected):not(.disabled) {
+				&:not(.active):not(.disabled) {
 					&:hover,
 					&:focus,
 					&:active {

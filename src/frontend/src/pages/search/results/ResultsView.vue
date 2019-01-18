@@ -75,8 +75,9 @@
 				placeholder="Sort by..."
 
 				allowHtml
+				hideDisabled
 
-				:searchable="sortOptions.flatMap(o => o.options ? o.options : o).length > 20"
+				:searchable="sortOptions.flatMap(o => o.options && !o.disabled ? o.options.filter(opt => !opt.disabled) : o).length > 20"
 				:options="sortOptions"
 
 				v-model="sort"

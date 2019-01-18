@@ -1,16 +1,15 @@
-//
 // This is a helper file to allow easily generating custom css that overrides the primary bootstrap color for text, buttons, dropdowns, lists.
-//
 
+// $base: hsl(351, 70%, 36%); // SoNaR
+$base: hsl(345, 90%, 36%); // Zeebrieven
 
-$base: hsl(351, 70%, 36%);
 
 $sat-range: 100% - saturation($base);
 $light-range: lightness($base) * 0.5;
 
 $text: $base;
 $block-bg-1: $base;
-$block-bg-2: hsl(hue($base), saturation($base) + $sat-range / 4 * 2, lightness($base) - $light-range / 4 * 2);
+$block-bg-2: hsl(hue($base), saturation($base) + $sat-range / 4 * 1, lightness($base) - $light-range / 4 * 1);
 $block-bg-3: hsl(hue($base), saturation($base) + $sat-range / 4 * 2, lightness($base) - $light-range / 4 * 2);
 $block-bg-4: hsl(hue($base), saturation($base) + $sat-range / 4 * 3, lightness($base) - $light-range / 4 * 3);
 $block-border-1: $block-bg-2;
@@ -26,6 +25,7 @@ a,
 	&:hover,
 	&:focus,
 	&:active {
+		// Don't !important here, <a> is very multifuctional and we don't want to always override it everywhere
 		color: $text;
 	}
 }
@@ -34,26 +34,16 @@ a,
 
 	>span,
 	>a {
-		&,
-		&:hover,
-		&:active,
-		&:focus {
-			color: $text;
-		}
+		color: $text!important;
 	}
 
 	&.active,
 	&.current {
 		>span,
 		>a {
-			&,
-			&:hover,
-			&:active,
-			&:focus {
-				color: white;
-				background: $block-bg-1;
-				border-color: $block-bg-1;
-			}
+			color: white!important;
+			background: $block-bg-1!important;
+			border-color: $block-bg-1!important;
 		}
 
 		>input {
@@ -62,18 +52,15 @@ a,
 		}
 		> .fa {
 			color: $text!important;
+			background: none!important;
 		}
 	}
 }
 
 
-.dropdown-menu > .active > a {
-	&,
-	&:active,
-	&:hover,
-	&:focus {
-		background-color: $block-bg-2;
-	}
+.dropdown-menu > .active > a,
+.combobox .menu-option.active {
+	background-color: $block-bg-2!important;
 }
 
 ul.nav-tabs.cf-panel-tab-header {

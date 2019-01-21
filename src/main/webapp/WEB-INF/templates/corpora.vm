@@ -193,12 +193,12 @@
                 
                 <div style="padding: 10px 25px 0px;">
                     <form id="document-upload-form">
-                        <label for="data[]" class="btn btn-info document-upload-button">
+                        <label for="data[]" class="btn btn-info file-input-button document-upload-button">
                             <span id="upload-docs-label" class="document-upload-button-text"></span>
                             <input id="upload-docs-input" name="data[]" type="file" multiple data-label-id="#upload-docs-label" data-label-without-value="Select documents" data-label-with-value="&#8200;document file(s)">
                         </label>
     
-                        <label for="linkeddata[]" class="btn btn-default document-upload-button">
+                        <label for="linkeddata[]" class="btn btn-default file-input-button document-upload-button">
                             <span id="upload-metadata-label" class="document-upload-button-text"></span>
                             <input id="upload-metadata-input" name="linkeddata[]" type="file" multiple data-label-id="#upload-metadata-label" data-label-without-value="Select linked&#8200;files" data-label-with-value="&#8200;linked file(s)">
                         </label>

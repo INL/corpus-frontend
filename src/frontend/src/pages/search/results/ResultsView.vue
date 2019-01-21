@@ -19,7 +19,7 @@
 		</ol>
 
 		<GroupBy :type="type" :viewGroupName="viewGroupName"/>
-		<!-- moved tot totalscounter -->
+		<!-- moved to totalscounter -->
 		<!--
 		<div v-if="results && !!(results.summary.stoppedRetrievingHits && !results.summary.stillCounting)" class="btn btn-sm btn-default nohover toomanyresults">
 			<span class="fa fa-exclamation-triangle text-danger"></span> Too many results! &mdash; your query was limited
@@ -63,18 +63,30 @@
 
 				@sort="sort = $event"
 			/>
-
 			<hr>
-
-			<div class="buttons" style="text-align: right;">
-				<button type="button" class="btn btn-danger btn-sm"  v-if="isDocs && resultsHaveHits"  @click="showDocumentHits = !showDocumentHits">{{showDocumentHits ? 'Hide Hits' : 'Show Hits'}}</button>
-				<button type="button" class="btn btn-danger btn-sm"  v-if="isHits" @click="showTitles = !showTitles">{{showTitles ? 'Hide' : 'Show'}} Titles</button>
-				<button type="button" class="btn btn-default btn-sm" v-if="results" :disabled="downloadInProgress || !resultsHaveData" @click="downloadCsv" :title="downloadInProgress ? 'Downloading...' : undefined"><template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner"></span></template>Export CSV</button>
-			</div>
-
 		</template>
 		<template v-else-if="results"><div class="no-results-found">No results found.</div></template>
 		<template v-else-if="error"><div class="no-results-found">{{error.message}}</div></template>
+
+		<!-- Ugly - use v-show instead of v-if because teardown of selectpickers is problematic :( -->
+		<div v-show="resultsHaveData" class="buttons" style="text-align: right;">
+			<SelectPicker
+				data-class="btn-sm btn-default"
+				placeholder="Sort by..."
+
+				allowHtml
+				hideDisabled
+
+				:searchable="sortOptions.flatMap(o => o.options && !o.disabled ? o.options.filter(opt => !opt.disabled) : o).length > 20"
+				:options="sortOptions"
+
+				v-model="sort"
+			/>
+
+			<button type="button" class="btn btn-primary btn-sm"  v-if="isDocs && resultsHaveHits"  @click="showDocumentHits = !showDocumentHits">{{showDocumentHits ? 'Hide Hits' : 'Show Hits'}}</button>
+			<button type="button" class="btn btn-primary btn-sm"  v-if="isHits" @click="showTitles = !showTitles">{{showTitles ? 'Hide' : 'Show'}} Titles</button>
+			<button type="button" class="btn btn-default btn-sm" v-if="results" :disabled="downloadInProgress || !resultsHaveData" @click="downloadCsv" :title="downloadInProgress ? 'Downloading...' : undefined"><template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner"></span></template>Export CSV</button>
+		</div>
 
 	</div>
 
@@ -85,6 +97,8 @@ import Vue from 'vue';
 import URI from 'urijs';
 import {saveAs} from 'file-saver';
 
+import * as Api from '@/api';
+
 import * as RootStore from '@/store';
 import * as CorpusStore from '@/store/corpus';
 import * as ResultsStore from '@/store/results';
@@ -94,14 +108,14 @@ import * as InterfaceStore from '@/store/form/interface';
 
 import {submittedSubcorpus$} from '@/store/streams';
 
-import * as Api from '@/api';
-
 import GroupResults from '@/pages/search/results/table/GroupResults.vue';
 import HitResults from '@/pages/search/results/table/HitResults.vue';
 import DocResults from '@/pages/search/results/table/DocResults.vue';
 import Totals from '@/pages/search/results/ResultTotals.vue';
 import GroupBy from '@/pages/search/results/groupby/GroupBy.vue';
+
 import Pagination from '@/components/Pagination.vue';
+import SelectPicker, {Option, OptGroup} from '@/components/SelectPicker.vue';
 
 import {debugLog} from '@/utils/debug';
 
@@ -114,7 +128,8 @@ export default Vue.extend({
 		HitResults,
 		DocResults,
 		Totals,
-		GroupBy
+		GroupBy,
+		SelectPicker
 	},
 	props: {
 		type: {
@@ -285,7 +300,7 @@ export default Vue.extend({
 
 			// subtract one page if number of results exactly divisible by page size
 			// e.g. 20 results for a page size of 20 is still only one page instead of 2.
-			const pageCount = Math.floor(totalResults / pageSize) - ((totalResults % pageSize === 0) ? 1 : 0)
+			const pageCount = Math.floor(totalResults / pageSize) - ((totalResults % pageSize === 0 && totalResults > 0) ? 1 : 0)
 
 			return {
 				shownPage,
@@ -342,6 +357,59 @@ export default Vue.extend({
 			}
 			return r;
 		},
+		sortOptions(): Array<Option|OptGroup> {
+			// NOTE: we need to always pass all available options, then hide invalids based on displayed results
+			// if we don't do this, sorting will be cleared on initial page load
+			// This happens because results aren't loaded yet, thus isHits/isDocs/isGroups all return false, and no options would be available
+			// then the selectpicker will reset value to undefined, which clears it in the store, which updates the url, etc.
+			const opts = [] as Array<Option|OptGroup>;
+
+			// NOTE: only disable groups when results are in
+			// this prevents an issue with bootstrap-select where optgroup headers are repeated for initially disabled groups.
+			// See https://github.com/snapappointments/bootstrap-select/issues/2166 and https://github.com/snapappointments/bootstrap-select/issues/2174
+			// should be fixed in v1.13.6 probably
+
+			opts.push({
+				label: 'Groups',
+				options: [{
+					label: 'Sort by Identity',
+					value: 'identity',
+				}, {
+					label: 'Sort by Size',
+					value: 'size',
+				}],
+				disabled: this.results != null && !this.isGroups
+			});
+
+			const annotations = CorpusStore.get.annotations().filter(a => !a.isInternal && a.hasForwardIndex);
+			const dir = CorpusStore.getState().textDirection;
+
+			[[dir === 'rtl' ? 'right:' : 'left:', 'Before hit', 'before'],['hit:', 'Hit', ''],[dir === 'rtl' ? 'left:' : 'right:', 'After hit', 'after']]
+			.forEach(([prefix, groupname, suffix]) =>
+				opts.push({
+					label: groupname,
+					options: annotations.map(annot => ({
+						label: `Sort by ${annot.displayName || annot.id} <small class="text-muted">${suffix}</small>`,
+						value: `${prefix}${annot.id}`,
+					})),
+					disabled: this.results != null && !this.isHits
+				})
+			);
+
+			const metadataGroups = CorpusStore.get.metadataGroups();
+			metadataGroups.forEach(group => opts.push({
+				// https://github.com/INL/corpus-frontend/issues/197#issuecomment-441475896
+				// (we don't show metadata groups in the Filters component unless there's more than one group, so don't show the group's name either in this case)
+				label: metadataGroups.length > 1 ? group.name : 'Metadata',
+				options: group.fields.map(field => ({
+					label: `Sort by ${(field.displayName || field.id).replace(group.name, '')}`,
+					value: `field:${field.id}`,
+				})),
+				disabled: this.results != null && !this.isDocs
+			}));
+
+			return opts;
+		}
 	},
 	watch: {
 		refreshParameters: {
@@ -385,12 +453,15 @@ export default Vue.extend({
 .buttons {
 	flex: 0 1000 auto;
 	font-size: 0;
-	> button {
+	> button,
+	> .bootstrap-select {
 		margin-bottom: 5px;
 		margin-left: 5px;
-	}
-	> button:first-child {
-		margin-left: 0px;
+		vertical-align: top;
+
+		&:first-child {
+			margin-left: 0;
+		}
 	}
 }
 

@@ -1,6 +1,9 @@
 import 'bootstrap';
 import $ from 'jquery';
 
+import tippy from 'tippy.js';
+import Mustache from 'mustache';
+
 import '@/global.scss';
 import '@/article.scss';
 
@@ -55,8 +58,64 @@ $(document).ready(function() {
 	$hits = $('.hl');
 	currentHit = 0;
 
+	function getAttributeList(element: Element) {
+		const ret = [];
+
+		let key: string;
+		let value: string;
+		for ({name: key, value} of element.attributes) {
+			if (key.startsWith('data-') && value && key !== 'data-toggle') {
+				ret.push({key: key.substring(5), value});
+			}
+		}
+		return ret;
+	}
+
+	// Is this correct? It seems a little strange we don't get some sort of compiled template back.
+	const template = `
+		<table class="table" style="table-layout:fixed;width:auto;min-width:300px;">
+			<tbody>
+				{{#props}}
+				<tr>
+					<td>{{key}}</td>
+					<td>{{value}}</td>
+				</tr>
+				{{/props}}
+			</tbody>
+		</table>`;
+	const writer = new Mustache.Writer();
+	writer.parse(template);
+
 	// Create jQuery Tooltips from title attributes
-	$('span.word').tooltip();
+	tippy('.word[data-toggle="tooltip"]', {
+		animateFill: false,
+		allowHTML: true,
+		delay: [60,0],
+		duration: [0,0],
+		interactive: true,
+		performance: true,
+		trigger: 'focus mouseenter',
+		onMount(instance) {
+			const attrs = getAttributeList(instance.reference);
+			if (attrs.length === 0 && instance.reference.attributes.getNamedItem('title')) {
+				// sub title attribute for a default value if nothing else is present.
+				attrs.push({
+					key: 'title',
+					value: instance.reference.attributes.getNamedItem('title')!.name
+				});
+			}
+
+			if (attrs.length === 0) {
+				return;
+			} else if (attrs.length === 1) {
+				// Don't bother with a table if there's only one value to display
+				instance.setContent(attrs[0].value);
+			} else {
+				const content = writer.render(template, { props: getAttributeList(instance.reference) }, {});
+				instance.setContent(content);
+			}
+		}
+	});
 
 	// Show number of hits at the top of the metadata
 	$('#divHitsInDocument').text($hits.length);

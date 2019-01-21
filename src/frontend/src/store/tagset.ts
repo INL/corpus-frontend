@@ -7,6 +7,7 @@
 
 import Axios from 'axios';
 import {getStoreBuilder} from 'vuex-typex';
+import deepFreeze from 'deep-freeze';
 
 import {RootState} from '@/store';
 import * as CorpusStore from '@/store/corpus';
@@ -15,6 +16,7 @@ import {Tagset} from '@/types/apptypes';
 import {NormalizedAnnotation} from '@/types/apptypes';
 
 type ModuleRootState = Tagset&{
+	/** Uninitialized before init() or load() action called. loading/loaded during/after load() called. Disabled when load() not called before init(), or loading failed for any reason. */
 	state: 'uninitialized'|'loading'|'loaded'|'disabled';
 	message: string;
 };
@@ -59,8 +61,11 @@ const actions = {
 		}
 
 		internalActions.state({state: 'loading', message: 'Loading tagset...'});
-		initPromise = Axios.get<Tagset>(url)
+		initPromise = Axios.get<Tagset>(url, {
+			transformResponse: [(r: string) => r.replace(/\/\/.*[\r\n]+/g, '')].concat(Axios.defaults.transformResponse!)
+		})
 		.then(t => {
+			deepFreeze(t);
 			internalActions.replace(t.data);
 			internalActions.state({state: 'loaded', message: 'Tagset succesfully loaded'});
 		})
@@ -100,7 +105,7 @@ function validateTagset(annotation: NormalizedAnnotation, t: Tagset) {
 		return acc;
 	}, {} as {[id: string]: NormalizedAnnotation});
 
-	function validateAnnotation(id: string, values: string[]) {
+	function validateAnnotation(id: string, values: Tagset['subAnnotations'][string]['values']) {
 		const mainAnnotation = validAnnotations[id];
 		if (!mainAnnotation) {
 			throw new Error(`Annotation "${id}" does not exist in corpus.`);
@@ -111,16 +116,24 @@ function validateTagset(annotation: NormalizedAnnotation, t: Tagset) {
 		}
 
 		values.forEach(v => {
-			if (mainAnnotation.values!.findIndex(mav => mav.value === v) === -1) {
+			if (mainAnnotation.values!.findIndex(mav => mav.value === v.value) === -1) {
 				// tslint:disable-next-line
-				console.warn(`Annotation "${id}" may have value "${v}" which does not exist in the corpus.`);
+				console.warn(`Annotation "${id}" may have value "${v.value}" which does not exist in the corpus.`);
+			}
+
+			if (v.pos) {
+				const unknownPosList = v.pos!.filter(pos => !t.values[pos]);
+				if (unknownPosList.length > 0) {
+					// tslint:disable-next-line
+					console.warn(`SubAnnotation '${id}' value '${v.value}' declares unknown main-pos value(s): ${unknownPosList.toString()}`);
+				}
 			}
 		});
 	}
 
-	validateAnnotation(annotation.id, Object.keys(t.values));
+	validateAnnotation(annotation.id, Object.values(t.values));
 	Object.values(t.subAnnotations).forEach(sub => {
-		validateAnnotation(sub.id, sub.values.map(v => v.value));
+		validateAnnotation(sub.id, sub.values);
 	});
 
 	Object.values(t.values).forEach(({value, subAnnotationIds}) => {

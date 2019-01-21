@@ -128,7 +128,7 @@ export function getFilterString(filters: AppTypes.FilterValue[]): string|undefin
 							// This means wildcards are preserved.
 							// NOTE: we need to account for this by checking whether any term contains whitespace
 							// while deserializing the lucene query, and reverse this escaping.
-							// This is done in store/index.ts::UrlPageState
+							// This is done in UrlStateParser
 							part = part.trim();
 							if (part.length > 0) {
 								// resultParts.push(' "');

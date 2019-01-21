@@ -16,6 +16,13 @@
     <div class="cf-panel cf-panel-lg">
         #set($unescaped = $article_content) ## see BaseResponse.java
         $!unescaped
+        #if($previous_page || $next_page)
+        <hr>
+        <div>
+            #if($previous_page) <a href="$previous_page" class="btn btn-default">&laquo; Previous page </a> #end
+            #if($next_page) <a href="$next_page" class="btn btn-default">Next page &raquo;</a> #end
+        </div>
+        #end
     </div>
 
 </div>

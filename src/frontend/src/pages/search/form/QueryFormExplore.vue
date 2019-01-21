@@ -46,10 +46,12 @@
 						<SelectPicker
 							data-width="100%"
 
-							:class="{'disabled': index >= ngramSize}"
 							:options="annotationOptions"
 							:disabled="index >= ngramSize"
 							:value="token.id"
+							placeholder="Property"
+							hideEmpty
+							editable
 
 							@change="updateTokenAnnotation(index, $event /* custom component - custom event values */)"
 						/>
@@ -69,15 +71,15 @@
 				<div class="form-group form-group-lg" style="margin: 0;">
 					<label for="frequency-type" class="control-label">Frequency list type</label>
 					<SelectPicker
-							id="frequency-type"
-							name="frequency-type"
+						id="frequency-type"
+						name="frequency-type"
 
-							data-width="100%"
+						data-width="100%"
 
-							:options="annotationOptions"
+						:options="annotationOptions"
 
-							v-model="frequencyType"
-						/>
+						v-model="frequencyType"
+					/>
 				</div>
 			</div>
 		</div>
@@ -160,6 +162,7 @@ export default Vue.extend({
 
 .n-gram-token {
 	flex-grow: 1;
+	width: 0;
 
 	&+& {
 		margin-left: 15px;

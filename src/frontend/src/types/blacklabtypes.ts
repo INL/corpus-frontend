@@ -210,7 +210,8 @@ export interface BLMetadataField {
 
 /** Contains information about the internal structure of the index - which fields exist for tokens, which metadata fields exist for documents, etc */
 export interface BLIndexMetadataInternal {
-	annotationGroups: {
+	/** Always present, except in really old versions of blacklab */
+	annotationGroups?: {
 		[annotatedFieldId: string]: Array<{
 			name: string;
 			/** Referring to BLAnnotatedField in the annotatedFields[annotatedFieldId] */
@@ -406,11 +407,11 @@ export interface BLHitResults {
 
 export type BLSearchResult = BLHitResults|BLDocResults|BLHitGroupResults|BLDocGroupResults;
 
-export const isHitResults = (d: any): d is BLHitResults => d && d.docInfos && d.hits;
-export const isDocResults = (d: any): d is BLDocResults => d && d.docs;
-export const isHitGroups = (d: any): d is BLHitGroupResults => d && d.hitGroups;
-export const isDocGroups = (d: any): d is BLDocGroupResults => d && d.docGroups;
+export const isHitResults = (d: any): d is BLHitResults => !!(d && d.docInfos && d.hits);
+export const isDocResults = (d: any): d is BLDocResults => !!(d && d.docs);
+export const isHitGroups = (d: any): d is BLHitGroupResults => !!(d && d.hitGroups);
+export const isDocGroups = (d: any): d is BLDocGroupResults => !!(d && d.docGroups);
 export const isHitGroupsOrResults = (d: any): d is BLHitResults|BLHitGroupResults => isHitGroups(d) || isHitResults(d);
 export const isDocGroupsOrResults = (d: any): d is BLDocResults|BLDocGroupResults => isDocGroups(d) || isDocResults(d);
 export const isGroups = (d: any): d is BLHitGroupResults|BLDocGroupResults => isHitGroups(d) || isDocGroups(d);
-export const isBLError = (e: any): e is BLError => !!e && !!e.error && !!e.error.code && !!e.error.message;
+export const isBLError = (e: any): e is BLError => !!(e && e.error && e.error.code && e.error.message);

@@ -5,13 +5,13 @@ import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.TransformerException;
 
 import org.apache.commons.lang.StringUtils;
-
 import nl.inl.corpuswebsite.BaseResponse;
 import nl.inl.corpuswebsite.MainServlet;
 import nl.inl.corpuswebsite.utils.QueryServiceHandler;
@@ -25,6 +25,9 @@ public class ArticleResponse extends BaseResponse {
 
     /** Matches xml open/void tags &lt;namespace:tagname attribute="value"/&gt; excluding hl tags, as those are inserted by blacklab and can result in false positives */
     private static final Pattern XML_TAG_PATTERN = Pattern.compile("<([\\w]+:)?((?!(hl|blacklabResponse|[xX][mM][lL])\\b)[\\w.]+)(\\s+[\\w\\.]+=\"[\\w\\s,]*\")*\\/?>");
+
+    private static final Pattern CAPTURE_DOCLENGTH_PATTERN = Pattern.compile("<lengthInTokens>\\s*(\\d+)\\s*<\\/lengthInTokens>");
+
 
     static {
         try {
@@ -88,7 +91,8 @@ public class ArticleResponse extends BaseResponse {
         // since when you only get a subset of the document without begin and ending, the top of the xml tree will be missing
         // and xslt will not match anything (or match the wrong elements)
         // so blacklab will have to walk the tree and insert those tags in some manner.
-        contentRequestParameters.put("wordend", new String[] { Integer.toString(getWordsToShow()) });
+        contentRequestParameters.put("wordstart", new String[] { Integer.toString(getWordStart()) });
+        contentRequestParameters.put("wordend", new String[] { Integer.toString(getWordEnd()) });
 
         try {
             // NOTE: document not necessarily xml, though it might have some <hl/> tags injected to mark query hits
@@ -131,7 +135,22 @@ public class ArticleResponse extends BaseResponse {
             context.put("article_meta", metadataStylesheet
                 .map(t -> {
                     try {
-                        return t.transform(articleMetadataRequest.makeRequest(metadataRequestParameters));
+                        String meta = articleMetadataRequest.makeRequest(metadataRequestParameters);
+                        Matcher m = CAPTURE_DOCLENGTH_PATTERN.matcher(meta);
+                        if (m.find()) {
+                            int docLength = Integer.parseInt(m.group(1));
+                            int pageStart = getWordStart();
+                            int pageEnd = getWordEnd();
+                            int pageSize = servlet.getWordsToShow();
+
+                            if (pageStart > 0) {
+                                context.put("previous_page", "?wordstart="+Math.max(0, pageStart-pageSize)+"&wordend="+pageStart);
+                            }
+                            if (pageEnd < docLength) {
+                                context.put("next_page", "?wordstart="+(pageEnd)+"&wordend="+Math.min(pageEnd+pageSize, docLength));
+                            }
+                        }
+                        return t.transform(meta);
                     } catch (TransformerException | IOException | QueryException e) {
                         return null;
                     }
@@ -153,10 +172,12 @@ public class ArticleResponse extends BaseResponse {
         displayHtmlTemplate(servlet.getTemplate("article"));
     }
 
-    private int getWordsToShow() {
-        int maxWordCount = servlet.getWordsToShow();
+    private int getWordStart() {
+        return Math.max(0, getParameter("wordstart", 0));
+    }
 
-        int requestedWordCount = getParameter("wordend", maxWordCount);
-        return Math.min(requestedWordCount, maxWordCount);
+    private int getWordEnd() {
+        int maxWordCount = servlet.getWordsToShow();
+        return getWordStart() + Math.min(Math.max(0, getParameter("wordend", maxWordCount)), maxWordCount);
     }
 }

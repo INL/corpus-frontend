@@ -1,9 +1,17 @@
 <template>
 	<ul id="tlyPageGuide" data-tourtitle="Searching the corpus">
-		<li class="tlypageguide_left" data-tourtarget="a[href='#simple']">
+		<li class="tlypageguide_top" data-tourtarget="a[href='#simple']">
+			<p>The <code>simple</code></p> search lets you quickly search for words. It supports <code>wildcards</code>.<br>
+			<code>Wildcards</code> are special characters that will match any other character. Two kinds of wildcards are supported:<br>
+			The <code>*</code> wildcard will match any string, of any length.<br>
+			The <code>?</code> wildcard will match any single letter or character.<br>
+			As an example: searching for <code>a*b</code> will match <i>all values</i> that start with <code>a</code> and end with <code>b</code>,
+			while searching for <code>a?b</code> will match match <i>only three-letter values</i> starting with <code>a</code> and ending with <code>b</code>.<br>
+		</li>
+		<li class="tlypageguide_top" data-tourtarget="a[href='#extended']">
 			<div>
 				<p>
-					The <code>simple</code> search allows you to quickly find all occurrences of <code>tokens</code> with specific <code>attributes</code> in this corpus.<br>
+					The <code>extended</code> search allows you to quickly find all occurrences of <code>tokens</code> with specific <code>attributes</code> in this corpus.<br>
 				</p>
 				<p>
 					<code>Tokens</code> are the smallest unit within a corpus, usually just a single word.<br>
@@ -20,12 +28,7 @@
 					To find all occurrences of the word "ship", enter <code>ship</code> in the <code>lemma</code> field.<br>
 				</p>
 				<p>
-					Values entered in these fields support <code>Wildcards</code>.<br>
-					<code>Wildcards</code> are special characters that will match any other character. Two kinds of wildcards are supported:<br>
-					The <code>*</code> wildcard will match any string, of any length.<br>
-					The <code>?</code> wildcard will match any single letter or character.<br>
-					As an example: searching for <code>a*b</code> will match <i>all values</i> that start with <code>a</code> and end with <code>b</code>,
-					while searching for <code>a?b</code> will match match <i>only three-letter values</i> starting with <code>a</code> and ending with <code>b</code>.<br>
+					Like the <code>simple</code> search, it supports <code>Wildcards</code>.<br>
 				</p>
 				<p>
 					It's also possible to search for series of <code>tokens</code>, such as a <code>verb</code> followed by a <code>noun</code>.<br>
@@ -43,7 +46,7 @@
 			</div>
 		</li>
 
-		<li class="tlypageguide_left" data-tourtarget=".propertyfield .upload-button">
+		<li class="tlypageguide_left" data-tourtarget=".propertyfield .file-input-button">
 			<div>
 				Click here to upload a list of values to search for.<br>
 				Every word in the file will be added to the list of values to search for.<br>
@@ -68,6 +71,9 @@
 				</p>
 			</div>
 		</li>
+
+
+
 
 		<li class="tlypageguide_top" data-tourtarget=".bl-token .panel-heading">
 			<div>
@@ -145,6 +151,17 @@
 			</div>
 		</li>
 
+		<li class="tlypageguide_top" data-tourtarget="#importQuery">
+			<div>
+				<p>
+					Import previously saved queries here.
+				</p>
+				<p>
+					To <code>export</code> a query: first run a search, then open the history, and select <code>save as file</code> in the dropdown on the right.
+				</p>
+			</div>
+		</li>
+
 		<li class="tlypageguide_top" data-tourtarget="#filterContainer">
 			<div>
 				<p>
@@ -180,7 +197,7 @@
 			</div>
 		</li>
 
-		<li class="tlypageguide_top" data-tourtarget=".resultcontainer thead">
+		<li class="tlypageguide_top" data-tourtarget=".results-table th .dropdown">
 			<div>
 				Click on any of the column headings to sort the <code>hits</code> on values within the column, clicking again inverts the sorting.
 			</div>
@@ -199,22 +216,22 @@
 			</div>
 		</li>
 
-		<li class="tlypageguide_top" data-tourtarget=".resultcontainer .concordance">
+		<li class="tlypageguide_top" data-tourtarget=".hits-table tr.concordance">
 			<div>
 				Click a hit to show a part of the document surrounding the hit. Click again to close.
 			</div>
 		</li>
 
-		<li class="tlypageguide_top" data-tourtarget=".resultcontrols .bootstrap-select">
+		<li class="tlypageguide_top" data-tourtarget=".groupselect">
 			<div>
 				<p>
 					Results can be grouped by properties of the <code>tokens</code> or <code>documents</code> in which those hits occur.<br>
 					<code>left context</code>, <code>right context</code> and <code>hit</code> will group the tokens based on the <code>token's</code> attributes.<br>
 					The remaining options group by the <code>metadata</code> of the <code>documents</code>.
 				</p>
-				<p>
+				<!-- <p>
 					Grouping by multiple properties simultaneously is possible by selecting more than one option.
-				</p>
+				</p> -->
 			</div>
 		</li>
 
@@ -224,14 +241,14 @@
 			</div>
 		</li>
 
-		<li class="tlypageguide_top" data-tourtarget=".viewconcordances">
+		<li class="tlypageguide_top" data-tourtarget=".open-concordances">
 			<div>
 				Click here to go back to the normal <code>hits</code> view to see more detailed information for the hits in this group.<br>
 				A small indicator will appear to let you know that you're looking at hits from a specific group only.
 			</div>
 		</li>
 
-		<li class="tlypageguide_top" data-tourtarget=".documentrow">
+		<li class="tlypageguide_right" data-tourtarget="tr.document">
 			<div>
 				Information about a <code>document</code>.<br>
 				Click the document's title or the <code>view document info</code> button to open this document in a new window.<br>

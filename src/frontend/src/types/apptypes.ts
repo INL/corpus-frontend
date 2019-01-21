@@ -39,7 +39,7 @@ export type NormalizedAnnotation = {
 	/** Based on the uiType of the original annotion, but select falls back to combobox if not all values are known */
 	uiType: 'select'|'combobox'|'text'|'pos';
 	/** Contains all known values for this field. Undefined if no values known or list was incomplete. */
-	values?: Array<{value: string, label: string}>;
+	values?: Array<{value: string, label: string, title: string|null}>;
 };
 
 /** A set of annotations that form one data set on a token, usually there is only one of these in an index, called 'content' */
@@ -76,7 +76,7 @@ export type NormalizedMetadataField = {
 	 */
 	uiType: 'select'|'combobox'|'text'|'range'|'checkbox'|'radio';
 	/** Only when uiType === 'select' */
-	values?: Array<{value: string, label: string}>;
+	values?: Array<{value: string, label: string, title: string|null}>;
 };
 
 /** Contains information about the internal structure of the index - which fields exist for tokens, which metadata fields exist for documents, etc */

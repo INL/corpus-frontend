@@ -128,12 +128,12 @@ export type SimpleOption = string;
 export type Option = {
 	value: string;
 	label?: string;
-	title?: string;
+	title?: string|null;
 	disabled?: boolean;
 };
 export type OptGroup = {
 	label?: string;
-	title?: string;
+	title?: string|null;
 	disabled?: boolean;
 	options: Array<string|Option>;
 };
@@ -238,7 +238,7 @@ export default Vue.extend({
 
 				value: o.value,
 				label: o.label || o.value,
-				title: o.title,
+				title: o.title != null ? o.title : undefined,
 
 				disabled: o.disabled || (group && group.disabled),
 
@@ -249,7 +249,7 @@ export default Vue.extend({
 			const mapGroup = (o: OptGroup): _uiOptGroup => ({
 				type: 2,
 				label: o.label,
-				title: o.title,
+				title: o.title != null ? o.title : undefined,
 				disabled: o.disabled,
 			});
 

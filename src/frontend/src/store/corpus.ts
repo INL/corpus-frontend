@@ -23,7 +23,7 @@ declare const PROPS_IN_COLUMNS: string[];
 type ModuleRootState = NormalizedIndex;
 
 const namespace = 'corpus';
-const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, freezeIndex(normalizeIndex(JSON.parse(JSON.stringify(SINGLEPAGE.INDEX)))));
+const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, normalizeIndex(JSON.parse(JSON.stringify(SINGLEPAGE.INDEX))));
 
 const getState = b.state();
 

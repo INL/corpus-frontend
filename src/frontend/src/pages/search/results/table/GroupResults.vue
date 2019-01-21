@@ -21,7 +21,7 @@
 				<tr :key="`${identity}-concordances`" v-if="concordances[identity] && concordances[identity].open"><td colspan="3">
 					<div class="well-light">
 						<div class="concordance-controls">
-							<button type="button" class="btn btn-sm btn-primary" @click="openFullConcordances(identity, identityDisplay)"><span class="fa fa-angle-double-left"></span> View detailed concordances</button>
+							<button type="button" class="btn btn-sm btn-primary open-concordances" @click="openFullConcordances(identity, identityDisplay)"><span class="fa fa-angle-double-left"></span> View detailed concordances</button>
 							<button type="button" v-if="!allConcordancesLoaded(identity)" :disabled="!canLoadConcordances(identity)" class="btn btn-sm btn-default" @click="loadPreviewConcordances(identity)">
 								<template v-if="concordances[identity].request != null">
 									<span class="fa fa-spin fa-spinner"></span> Loading...

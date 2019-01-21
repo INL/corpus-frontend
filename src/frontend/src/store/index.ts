@@ -176,7 +176,9 @@ const actions = {
 
 // shut up typescript, the state we pass here is merged with the modules initial states internally.
 // NOTE: only call this after creating all getters and actions etc.
-const store = b.vuexStore({state: {} as RootState, strict: true});
+// NOTE: process.env is empty at runtime, but webpack inlines all values at compile time, so this check works.
+declare const process: any;
+const store = b.vuexStore({state: {} as RootState, strict: process.env.NODE_ENV === 'development'});
 
 const init = () => {
 	CorpusModule.init();

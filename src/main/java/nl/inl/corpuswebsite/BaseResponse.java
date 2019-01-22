@@ -98,6 +98,7 @@ public abstract class BaseResponse {
          * context.put("pathToTop", MainServlet.getRelativeUrl("/", request));
          */
         context.put("pathToTop", servlet.getServletContext().getContextPath());
+        context.put("corpusName", corpus);
         // For use in queryParameters to ensure clients don't cache old css/js when the application has updated.
         // During development, there's usually no WAR, so no build time either, but we assume the developer knows to ctrl+f5
         context.put("cache", servlet.getWarBuildTime().hashCode());

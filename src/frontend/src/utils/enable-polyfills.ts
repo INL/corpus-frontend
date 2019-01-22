@@ -10,6 +10,11 @@ import 'whatwg-fetch';
 // It also doesn't expand into polyfills for features that haven't been accepted into the ecma standard yet
 import 'core-js/fn/array';
 
-// DEBUGGING ONLY, this should probably use node.env
+// Ironic, our core-js polyfills are behind the ecma standard
+if (typeof Array.prototype.flat !== 'function') {
+	Array.prototype.flat = (Array.prototype as any).flatten;
+}
+
+// DEBUGGING ONLY, this should probably use node.env and be exposed through expose-loader
 import _$ from 'jquery';
 (window as any).jquery = (window as any).$ = _$;

@@ -3,11 +3,11 @@
 		<label :for="inputId" class="col-xs-12 col-md-3" :title="annotation.description || undefined">{{displayName}}</label>
 		<div class="col-xs-12 col-md-9">
 			<SelectPicker v-if="annotation.uiType === 'select'"
-				class="form-control"
-				data-container="body"
-				:data-live-search="options.length > 20"
+				data-width="100%"
+				container="body"
 
-				:title="displayName"
+				:searchable="options.length > 20"
+				:placeholder="displayName"
 				:id="inputId"
 				:name="inputId"
 
@@ -29,7 +29,7 @@
 					ref="autocomplete"
 					v-model="value"
 				/>
-				<div class="input-group-btn wordlist-upload">
+				<div class="input-group-btn">
 					<a v-if="annotation.uiType === 'pos'"
 						data-toggle="modal"
 						class="btn btn-default"
@@ -39,7 +39,7 @@
 						<span class="fa fa-pencil fa-fw"/>
 					</a>
 
-					<label class="btn btn-default" :for="fileInputId" v-if="annotation.uiType !== 'pos'">
+					<label class="btn btn-default file-input-button" :for="fileInputId" v-if="annotation.uiType !== 'pos'">
 						<span class="fa fa-upload fa-fw"></span>
 						<input
 							type="file"
@@ -55,9 +55,12 @@
 			<template v-if="annotation.uiType === 'pos'">
 				<PartOfSpeech
 					:id="`pos_editor${uid}`"
-					:annotation="annotation"
+					:annotationId="annotation.id"
+					:annotationDisplayName="annotation.displayName"
 
-					@submit="value = $event"
+					@submit="value = $event.queryString"
+
+					ref="pos"
 				/>
 			</template>
 			<div v-if="annotation.caseSensitive" class="checkbox">
@@ -83,6 +86,7 @@ import Vue from 'vue';
 
 import $ from 'jquery';
 
+import * as RootStore from '@/store';
 import * as PatternStore from '@/store/form/patterns';
 import { NormalizedAnnotation } from '@/types/apptypes';
 import SelectPicker, {Option} from '@/components/SelectPicker.vue';
@@ -91,6 +95,7 @@ import PartOfSpeech from '@/components/PartOfSpeech.vue';
 //@ts-ignore
 import Autocomplete from '@/mixins/autocomplete';
 import UID from '@/mixins/uid';
+import { Subscription } from 'rxjs';
 
 declare const BLS_URL: string;
 
@@ -105,6 +110,9 @@ export default Vue.extend({
 	props: {
 		annotation: Object as () => NormalizedAnnotation
 	},
+	data: () => ({
+		subscriptions: [] as Array<() => void>
+	}),
 	computed: {
 		inputId(): string { return this.annotation.id + '_value'; },
 		fileInputId(): string { return this.annotation.id + '_file'; },
@@ -160,25 +168,22 @@ export default Vue.extend({
 			}
 		}
 	},
+	created() {
+		if (this.annotation.uiType === 'pos') {
+			const eventId = `${PatternStore.namespace}/reset`;
+
+			this.subscriptions.push(RootStore.store.subscribe((mutation, state) => {
+				if (this.$refs.pos && mutation.type === eventId) {
+					(this.$refs.pos as InstanceType<typeof PartOfSpeech>).reset();
+				}
+			}));
+		}
+	},
+	destroyed() {
+		this.subscriptions.forEach(unsub => unsub());
+	}
 })
 </script>
 
 <style lang="scss">
-.wordlist-upload {
-	> label {
-		position: relative;
-		overflow: hidden;
-		> input {
-			position: absolute;
-			opacity: 0;
-			font-size: 80;
-			left: 0;
-			top: 0;
-			width: 100%;
-			height: 100%;
-			max-width: 100%;
-			max-height: 100%;
-		}
-	}
-}
 </style>

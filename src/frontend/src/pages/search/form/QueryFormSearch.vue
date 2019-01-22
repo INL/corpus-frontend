@@ -70,7 +70,12 @@
 				<h3>Corpus Query Language:</h3>
 				<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model.lazy="expert"></textarea>
 				<button type="button" class="btn btn-sm btn-default" name="parseQuery" id="parseQuery" title="Edit your query in the querybuilder" @click="parseQuery">Copy to query builder</button>
+				<label class="btn btn-sm btn-default file-input-button" for="importQuery">
+					Import query
+					<input type="file" name="importQuery" id="importQuery" accept=".txt,text/plain" @change="importQuery" title="Import a previously downloaded query">
+				</label>
 				<span v-show="parseQueryError" id="parseQueryError" class="text-danger"><span class="fa fa-danger"></span> {{parseQueryError}}</span>
+				<span v-show="importQueryError" id="importQueryError" class="text-danger"><span class="fa fa-danger"></span> {{importQueryError}}</span>
 			</div>
 		</div>
 	</div>
@@ -79,9 +84,11 @@
 <script lang="ts">
 import Vue from 'vue';
 
+import * as RootStore from '@/store';
 import * as CorpusStore from '@/store/corpus';
 import * as InterfaceStore from '@/store/form/interface';
 import * as PatternStore from '@/store/form/patterns';
+import * as HistoryStore from '@/store/history';
 
 import Annotation from '@/pages/search/form/Annotation.vue';
 
@@ -97,7 +104,8 @@ export default Vue.extend({
 		Annotation,
 	},
 	data: () => ({
-		parseQueryError: null as string|null
+		parseQueryError: null as string|null,
+		importQueryError: null as string|null
 	}),
 	computed: {
 		activePattern: {
@@ -159,6 +167,21 @@ export default Vue.extend({
 			} else {
 				this.parseQueryError = 'The querybuilder could not parse your query.';
 			}
+		},
+		importQuery(event: Event) {
+			const el = (event.target as HTMLInputElement);
+			if (!el.files || el.files.length !== 1) {
+				return;
+			}
+
+			const file = el.files[0];
+			HistoryStore.get.fromFile(file)
+			.then(r => {
+				RootStore.actions.replace(r.entry);
+				this.importQueryError = null;
+			})
+			.catch(e => this.importQueryError = e.message)
+			.finally(() => el.value = '')
 		}
 	}
 })
@@ -186,33 +209,6 @@ export default Vue.extend({
 #simple > .form-group {
 	margin: auto;
 	max-width: 1170px;
-}
-
-/* simple search upload buttons */
-.upload-button-container {
-	position: relative;
-}
-
-.upload-button {
-	position: absolute;
-	overflow: hidden;
-	right: 15px;
-	top: 0px;
-	border-top-left-radius: 0px;
-	border-bottom-left-radius: 0px;
-}
-
-.upload-button input {
-	position: absolute;
-	left: 0;
-	top: 0;
-	height: 100%;
-	width: 0px;
-	padding-left: 100%;
-	overflow: hidden;
-	opacity: 0;
-	background: transparent;
-	z-index: 2;
 }
 
 // Some bootstrap tab customization

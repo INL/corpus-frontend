@@ -171,55 +171,86 @@ const templates = {
 	},
 
 	attribute: {
-		template:
-			'<div class="bl-token-attribute" id="{{currentId}}">' +
-				'<div class="bl-token-attribute-main">' +
-					'{{>delete_attribute_button}}' +
-					'<select class="selectpicker" data-width="75px" data-container="body" data-style="btn btn-sm btn-default bl-no-border-radius-right" id="{{currentId}}_type">' +
-						'{{#attributes}}' +
-						'<option value="{{attribute}}">{{label}}</option>' +
-						'{{/attributes}}' +
-					'</select>' +
-					'<select class="selectpicker" data-width="54px"; data-container="body" data-style="btn btn-sm btn-primary bl-selectpicker-hide-caret bl-no-border-radius" id="{{currentId}}_operator">' +
-						'{{#comparators}}' +
-						'<optgroup>' +
-							'{{#.}}' +
-							'<option value="{{value}}">{{label}}</option>' +
-							'{{/.}}' +
-						'</optgroup>' +
-						'{{/comparators}}' +
-					'</select>' +
-					'{{>main_input}}' +
-					'{{>create_attribute_dropdown}}' +
-				'</div>' +
-				'{{#attributes}}' +
-					'<div data-attribute-type="{{attribute}}" style="display:none;">' +
-					'{{#caseSensitive}}' +
-						'<div class="checkbox">' +
-							'<label>' +
-								'<input type="checkbox" data-attribute-role="case">' +
-								'Case&nbsp;and&nbsp;diacritics&nbsp;sensitive' +
-							'</label>' +
-						'</div>' +
-					'{{/caseSensitive}}' +
-					'</div>' +
-				'{{/attributes}}' +
-			'</div>',
+		template: `
+			<div class="bl-token-attribute" id="{{currentId}}">
+				<div class="bl-token-attribute-main">
+					{{>delete_attribute_button}}
+					<select data-attribute-role="type" class="selectpicker" data-width="75px" data-container="body" data-style="btn btn-sm btn-default bl-no-border-radius-right">
+						{{#attributes}}
+						<option value="{{attribute}}">{{label}}</option>
+						{{/attributes}}
+					</select>
+					<select data-attribute-role="operator" class="selectpicker" data-width="50px"; data-container="body" data-style="btn btn-sm btn-primary bl-selectpicker-hide-caret bl-no-border-radius">
+						{{#comparators}}
+						<optgroup>
+							{{#.}}
+							<option value="{{value}}">{{label}}</option>
+							{{/.}}
+						</optgroup>
+						{{/comparators}}
+					</select>
+					{{>main_input}}
+					{{>create_attribute_dropdown}}
+				</div>
+				{{#attributes}}{{#caseSensitive}}
+				<div data-attribute-type="{{attribute}}" style="display:none;">
+					<div class="checkbox">
+						<label>
+							<input data-attribute-role="case" type="checkbox">
+							Case&nbsp;and&nbsp;diacritics&nbsp;sensitive
+						</label>
+					</div>
+				</div>
+				{{/caseSensitive}}{{/attributes}}
+			</div>
+		`,
 
 		partials: {
-			delete_attribute_button:
-				'<span class="glyphicon glyphicon-remove text-primary" id="{{currentId}}_delete" style="flex-grow:0;cursor:pointer;" title="Remove this attribute"></span>',
+			delete_attribute_button: `
+				<span data-attribute-role="delete" class="glyphicon glyphicon-remove text-primary" style="flex-grow:0;cursor:pointer;" title="Remove this attribute"></span>
+			`,
 
-			main_input:
-				'<span class="bl-token-attribute-main-input">' +
-					'<textarea id="{{currentId}}_value_file" class="hidden"></textarea>' +
-					'<input id="{{currentId}}_value_simple" type="text" class="form-control input-sm bl-no-border-radius bl-has-file-hidden" style="position:relative;">' +
-					'<button type="button" class="bl-token-attribute-file-edit btn btn-default btn-sm bl-no-border-radius bl-has-file-shown" title="Edit your uploaded values">(filename)</button>' +
-					'<span class="btn btn-sm btn-default bl-no-border-radius-right bl-input-upload-button title="Upload a list of values">' +
-						'<input type="file" accept="text/*" class="bl-input-upload" title="Upload a list of values">' +
-						'<span class="glyphicon glyphicon-open"></span>' +
-					'</span>' +
-				'</span>'
+			main_input: `
+				<div class="bl-has-file-hidden bl-token-attribute-main-input-container">
+					{{#attributes}}
+						{{>main_input_value}}
+					{{/attributes}}
+				</div>
+				{{>main_input_file_controls}}
+			`,
+
+			main_input_value: `
+				<div class="bl-token-attribute-main-input" data-attribute-type="{{attribute}}">
+					{{#values.0}}
+						{{>main_input_select}}
+					{{/values.0}}
+					{{^values.0}}
+						{{>main_input_original}}
+					{{/values.0}}
+				</div>
+			`,
+
+			main_input_file_controls: `
+				<label class="bl-has-file-hidden btn btn-sm btn-default bl-no-border-radius bl-input-upload-button" title="Upload a list of values">
+					<input data-attribute-role="file" type="file" accept="text/*" class="bl-input-upload" title="Upload a list of values">
+					<span class="glyphicon glyphicon-open"></span>
+				</label>
+
+				<button data-attribute-role="edit"  type="button" class="bl-has-file-shown btn btn-sm btn-default bl-no-border-radius" title="Edit your uploaded values" style="background-color:#ffa;">loading...</button>
+				<button data-attribute-role="clear" type="button" class="bl-has-file-shown btn btn-sm btn-default bl-no-border-radius" title="Clear uploaded values" style="border-left:none;"><span class="fa fa-times"></span></button>
+			`,
+
+			main_input_original: `
+				<input data-attribute-role="value" type="text" class="form-control input-sm bl-no-border-radius bl-has-file-hidden" style="min-width:110px; width:0;">
+			`,
+
+			main_input_select: `
+				<select data-attribute-role="value" multiple class="selectpicker" data-style="btn btn-default btn-sm bl-no-border-radius" data-container="body">
+					{{#values}}
+					<option value="{{value}}">{{label}}</option>
+					{{/values}}
+				</select>
+			`,
 		}
 	},
 
@@ -280,16 +311,28 @@ const DEFAULTS = {
 					attribute: 'word',
 					label: 'word',
 					caseSensitive: true,
+					values: undefined as undefined|Array<{
+						value: string;
+						label?: string;
+					}>
 				},
 				{
 					attribute: 'lemma',
 					label: 'lemma',
 					caseSensitive: true,
+					values: undefined as undefined|Array<{
+						value: string;
+						label?: string;
+					}>
 				},
 				{
 					attribute: 'pos',
 					label: 'Part of speech',
 					caseSensitive: false,
+					values: undefined as undefined|Array<{
+						value: string;
+						label?: string;
+					}>
 				}
 			],
 			defaultAttribute: 'word'
@@ -789,20 +832,22 @@ export class Attribute {
 	private readonly $controls: {
 		type: JQuery<HTMLSelectElement>;
 		operator: JQuery<HTMLSelectElement>;
-		value_simple: JQuery<HTMLInputElement>;
-		value_file: JQuery<HTMLInputElement>;
 	};
+
+	private uploadedValue = null as string|null;
 
 	constructor(builder: QueryBuilder) {
 		this.builder = builder;
 		this.element = this._createElement();
 
 		this.$controls = {
-			type: this.element.find(this.idSelector + '_type') as JQuery<HTMLSelectElement>,
-			operator: this.element.find(this.idSelector + '_operator') as JQuery<HTMLSelectElement>,
-			value_simple: this.element.find(this.idSelector + '_value_simple') as JQuery<HTMLInputElement>,
-			value_file: this.element.find(this.idSelector + '_value_file') as JQuery<HTMLInputElement>,
+			type: this.element.find('[data-attribute-role="type"]') as JQuery<HTMLSelectElement>,
+			operator: this.element.find('[data-attribute-role="operator"]') as JQuery<HTMLSelectElement>,
+			// value_simple: this.element.find(this.idSelector + '_value_simple') as JQuery<HTMLInputElement>,
+			// value_file: this.element.find(this.idSelector + '_value_file') as JQuery<HTMLInputElement>,
 		};
+
+		this._updateShownOptions(this.builder.settings.attribute.view.defaultAttribute);
 	}
 
 	private _createElement() {
@@ -815,25 +860,10 @@ export class Attribute {
 	}
 
 	private _prepareElement($element: JQuery<HTMLElement>) {
+		const self = this;
 		$element.data('attribute', this);
 
-		$element.find('.selectpicker').selectpicker();
-		$element.find('.selectpicker, input, textarea').on('change', function() {$element.trigger('cql:modified');});
-
-		// Show/hide elements for the selected attribute type
-		// Such as case-sensitivity checkbox or comboboxes for when there is a predefined set of valid values
-		const self = this;
-
-		const $attributeSelect = $element.find(this.idSelector + '_type');
-		$attributeSelect.on('changed.bs.select', function() {
-			const selectedValue = $(this).val() as string;
-			self._updateShownOptions(selectedValue);
-		});
-		$attributeSelect.on('loaded.bs.select', function() {
-			$attributeSelect.selectpicker('val', self.builder.settings.attribute.view.defaultAttribute);
-		});
-
-		$element.find(this.idSelector + '_delete').on('click', function() {
+		$element.on('click', '[data-attribute-role="delete"]', function() {
 			const parentGroup = self.element.parent().data('attributeGroup') as AttributeGroup;
 			// Remove the selectpickers first so they can gracefully tear down, prevents unclosable menu when deleting attribute with a dropdown open
 			self.element.find('.selectpicker').each(function() { $(this).selectpicker('destroy'); });
@@ -842,49 +872,64 @@ export class Attribute {
 			parentGroup.element.trigger('cql:modified');
 		});
 
-		$element.find('.bl-input-upload').on('change', this._onUploadChanged.bind(this));
+		// Show/hide elements for the selected attribute type
+		// Such as case-sensitivity checkbox or comboboxes for when there is a predefined set of valid values
+		$element.on('change', '[data-attribute-role="type"]', function() {
+			const selectedValue = $(this).val() as string;
+			self._updateShownOptions(selectedValue);
+		});
 
-		$element.find('.bl-token-attribute-file-edit').on('click', this._showModalEditor.bind(this));
+		$element.on('change', '[data-attribute-role="file"]', this._onUploadChanged.bind(this));
+		$element.on('click', '[data-attribute-role="edit"]', this._showModalEditor.bind(this));
+		$element.on('click', '[data-attribute-role="clear"]', () => {
+			$element.find('[data-attribute-role="file"]').val('').trigger('change');
+		});
+
+		$element.find('[data-attribute-role="type"]').val(self.builder.settings.attribute.view.defaultAttribute); // no need to trigger change yet, still initializing
+
+		// Bind this last, so other handlers can perform the appropriate updates before we notify parents.
+		$element.on('change', '[data-attribute-role="value"], [data-attribute-role="type"], [data-attribute-role="operator"], [data-attribute-role="case"]', () => $element.trigger('cql:modified'));
+
+		$element.find('.selectpicker').selectpicker();
 	}
 
-	private _showModalEditor(/*event*/) {
+	private _showModalEditor(event: JQuery.Event) {
 		const self = this;
-		const $fileText = this.element.find(this.idSelector + '_value_file');
-		const $modalTextArea = this.builder.modalEditor.find('textarea');
 
-		$modalTextArea.val($fileText.val() as string); // copy out current text to modal
+		// copy out current text to modal
+		const $modalTextArea = this.builder.modalEditor.find('textarea').val(this.uploadedValue || '');
+
 		this.builder.modalEditor.modal(); // show modal
 		this.builder.modalEditor.one('hide.bs.modal', function() { // copy out changes once closed
 			// A little dirty, to determine how the modal was closed, get the currently focused element
 			// If the modal was closed through a button click, the responsible button will have focus
 			// Only save the data if the clicked button as the data-save-edits attribute/property
-
-			if ($(document.activeElement!).is('[data-dismiss][data-save-edits], [data-toggle][data-save-edits]')) {
-				$fileText
-					.val($modalTextArea.val() as string)
-					.trigger('change');
-			} else if ($(document.activeElement!).is('[data-dismiss][data-discard-value], [data-toggle][data-discard-value]')) {
-				self.element.find('.bl-input-upload').val('').trigger('change');
+			if ($(document.activeElement!).is('[data-save-edits]')) {
+				self.uploadedValue = $modalTextArea.val() as string;
+				self.element.trigger('cql:modified');
+			} else if ($(document.activeElement!).is('[data-discard-value]')) {
+				self.element.find('[data-attribute-role="file"]').val('').trigger('change');
 			}
 		});
 	}
 
 	private _onUploadChanged(event: JQuery.Event<HTMLInputElement>) {
-		const $inputContainer = this.element.find('.bl-token-attribute-main-input');
-		const $fileText = $inputContainer.find(this.idSelector + '_value_file');
-		const $fileEditButton = $inputContainer.find('.bl-token-attribute-file-edit');
+		const self = this;
+		const $fileEditButton = self.element.find('[data-attribute-role="edit"]');
 
 		const file = event.target.files && event.target.files[0];
+		self.element.attr('data-has-file', file != null ? '' : null);
+
 		if (file == null) {
-			$inputContainer.removeAttr('data-has-file');
 			$fileEditButton.text('No file selected...');
-			$fileText.val('').trigger('change');
+			self.uploadedValue = null;
+			self.element.trigger('cql:modified');
 		} else {
 			const fr = new FileReader();
 			fr.onload = function() {
-				$inputContainer.attr('data-has-file', '');
 				$fileEditButton.text(file.name);
-				$fileText.val(fr.result as string).trigger('change');
+				self.uploadedValue = fr.result as string;
+				self.element.trigger('cql:modified');
 			};
 			fr.readAsText(file);
 		}
@@ -896,48 +941,31 @@ export class Attribute {
 		this.element.find('[data-attribute-type]').hide().filter('[data-attribute-type="' + selectedValue + '"]').show();
 	}
 
-	public set(controlName: keyof Attribute['$controls']|'case'|'val', val: string|boolean, additionalSelector?: string) {
+	public set(controlName: keyof Attribute['$controls']|'case'|'val', val: string|boolean|string[], additionalSelector?: string) {
 		if (controlName === 'case') {
 			setValue(this.element.find('[data-attribute-type="' + additionalSelector + '"]')
 				.find('[data-attribute-role="case"]'), val);
 		} else if (controlName === 'val') {
-			if (!additionalSelector) { // Write to whatever is in focus/use right now
-				const hasFile = this.element.find('.bl-token-attribute-main-input').is('[data-has-file]');
-				if (hasFile) {
-					setValue(this.$controls.value_file, val);
-				} else {
-					setValue(this.$controls.value_simple, val);
-				}
-			} else {
-				if (additionalSelector === 'file') {
-					setValue(this.$controls.value_file, val);
-				} else if (additionalSelector === 'simple') {
-					setValue(this.$controls.value_simple, val);
-				}
-			}
+			setValue(this.element.find('[data-attribute-type="' + additionalSelector + '"]')
+				.find('[data-attribute-role="value"]'), val);
 		} else if (this.$controls[controlName]) {
 			setValue(this.$controls[controlName], val);
 		}
 	}
 
 	public getCql() {
-		const hasFile = this.element.find('.bl-token-attribute-main-input').is('[data-has-file]');
-
 		const type = this.$controls.type.val() as string;
 		const operator = this.$controls.operator.val() as string;
 
 		const $optionsContainer = this.element.find('[data-attribute-type="' + type + '"]');
 		const caseSensitive = $optionsContainer.find('[data-attribute-role="case"]').is(':checked') || false;
 
-		let rawValue: string;
-		let values = [] as string[];
-		if (hasFile) {
-			rawValue = this.$controls.value_file.val() as string || '';
-			const trimmedLines = rawValue.trim().split(/\s+/g); // split on whitespace, across line breaks
-			values = values.concat(trimmedLines);
+		let values: string[];
+		if (this.uploadedValue != null) {
+			values = this.uploadedValue.trim().split(/\s+/g); // split on whitespace, across line breaks
 		} else {
-			rawValue = this.$controls.value_simple.val() as string || '';
-			values = values.concat(rawValue);
+			const rawValue = $optionsContainer.find('[data-attribute-role="value"]').val() as string|string[];
+			values = [rawValue].flat(2);
 		}
 
 		const callback = this.builder.settings.attribute.getCql;
@@ -967,10 +995,10 @@ const setValue = function($element: JQuery<HTMLElement>, val: any) {
 	}
 
 	if ($element.is(':checkbox')) {
-		$element.prop('checked', val[0]);
+		$element.prop('checked', val[0]).trigger('change');
 	} else if ($element.is('select')) {
 		if ($element.hasClass('selectpicker')) {
-			$element.selectpicker('val', val);
+			$element.selectpicker('val', val).trigger('change');
 
 			const actualValues = ([] as string[]).concat($element.selectpicker('val')); // might not always be array
 			if (val.filter((v: any) => v!=null && !actualValues.includes(v)).length) {
@@ -988,9 +1016,11 @@ const setValue = function($element: JQuery<HTMLElement>, val: any) {
 				$(option).prop('selected', select);
 				hasSelected = hasSelected || select;
 			});
+			$element.trigger('change');
 		}
 	} else if ($element.is(':input')) {
-		$element.val(val[0]);
+		// We know we're dealing with cql regex here, just pipe them together.
+		$element.val(val.join('|')).trigger('change');
 	}
 };
 
@@ -1100,8 +1130,7 @@ function populateQueryBuilder(queryBuilder: QueryBuilder, pattern: string|null|u
 
 					attributeInstance.set('operator', op.operator);
 					attributeInstance.set('type', op.name);
-
-					attributeInstance.set('val', op.value);
+					attributeInstance.set('val', op.value.split('|'), op.name);
 				}
 			}
 

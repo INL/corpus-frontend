@@ -22,7 +22,7 @@
 				<!-- will be filled in from article.js -->
                 <tr><td>Hits in document:</td><td><div id="divHitsInDocument"></div></td></tr>
                 <xsl:for-each select="child::*[name()!='mayView']">
-                <tr><td><xsl:call-template name="elementFriendlyName"/>:</td><td><xsl:value-of select="." /><xsl:if test="../mayView/text() = 'true' and local-name() = 'lengthInTokens' and number(text()) > 5000">(first 5000 tokens shown)</xsl:if></td></tr>
+                <tr><td><xsl:call-template name="elementFriendlyName"/>:</td><td><xsl:value-of select="." /><!--<xsl:if test="../mayView/text() = 'true' and local-name() = 'lengthInTokens' and number(text()) > 5000">(first 5000 tokens shown)</xsl:if>--></td></tr>
                 </xsl:for-each>
             </tbody>
         </table>

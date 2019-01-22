@@ -2,43 +2,43 @@
 	<table class="hits-table">
 		<thead>
 			<tr>
-				<th class="text-right" style="width:40px">
+				<th class="text-right">
 					<span class="dropdown">
-						<a class="dropdown-toggle" data-toggle="dropdown">
+						<a class="dropdown-toggle" data-toggle="dropdown" href="#">
 							{{leftLabel}} hit
 							<span class="caret"/>
 						</a>
 
 						<ul class="dropdown-menu" role="menu">
 							<li v-for="annotation in annotations.filter(a => a.hasForwardIndex)" :key="annotation.id">
-								<a @click="changeSort(`left:${annotation.id}`)" class="sort">{{annotation.displayName}}</a>
+								<a @click="changeSort(`${beforeField}:${annotation.id}`)" class="sort">{{annotation.displayName}}</a>
 							</li>
 						</ul>
 					</span>
 				</th>
 
-				<th class="text-center" style="width:20px;">
+				<th class="text-center">
 					<a @click="firstMainAnnotation.hasForwardIndex ? changeSort(`hit:${firstMainAnnotation.id}`) : undefined" class="sort" :title="`Sort by ${firstMainAnnotation.displayName}`">
 						<strong>{{firstMainAnnotation.displayName}}</strong>
 					</a>
 				</th>
 
-				<th class="text-left" style="width:40px">
+				<th class="text-left">
 					<span class="dropdown">
-						<a class="dropdown-toggle" data-toggle="dropdown">
+						<a class="dropdown-toggle" data-toggle="dropdown" href="#">
 							{{rightLabel}} hit
 							<span class="caret"/>
 						</a>
 
 						<ul class="dropdown-menu" role="menu">
 							<li v-for="annotation in annotations.filter(a => a.hasForwardIndex)" :key="annotation.id">
-								<a @click="changeSort(`right:${annotation.id}`)" class="sort">{{annotation.displayName}}</a>
+								<a @click="changeSort(`${afterField}:${annotation.id}`)" class="sort">{{annotation.displayName}}</a>
 							</li>
 						</ul>
 					</span>
 				</th>
 
-				<th v-for="annotation in shownAnnotations" :key="annotation.id" style="width:15px;">
+				<th v-for="annotation in shownAnnotations" :key="annotation.id">
 					<a @click="annotation.hasForwardIndex ? changeSort(`hit:${annotation.id}`) : undefined" class="sort" :title="`Sort by ${annotation.displayName}`">{{annotation.displayName}}</a>
 				</th>
 			</tr>
@@ -79,7 +79,7 @@
 								{{citations[index].error}}
 							</p>
 							<p v-else-if="citations[index].citation">
-								{{citations[index].citation[leftIndex]}}<strong>{{citations[index].citation[1]}}</strong>{{citations[index].citation[rightIndex]}}
+								<span :dir="textDirection">{{citations[index].citation[0]}}<strong>{{citations[index].citation[1]}}</strong>{{citations[index].citation[2]}}</span>
 							</p>
 							<p v-else>
 								Loading...
@@ -169,7 +169,9 @@ export default Vue.extend({
 		leftIndex() { return this.textDirection === 'ltr' ? 0 : 2 },
 		rightIndex() { return this.textDirection === 'ltr' ? 2 : 0 },
 		leftLabel() { return this.textDirection === 'ltr' ? 'Before' : 'After' },
-		rightLabel() { return this.textDirection === 'ltr' ? 'After' : 'Before' },
+        rightLabel() { return this.textDirection === 'ltr' ? 'After' : 'Before' },
+        beforeField() { return this.textDirection === 'ltr' ? 'left' : 'right' },
+        afterField() { return this.textDirection === 'ltr' ? 'right' : 'left' },
 
 		rows(): Array<DocRow|HitRow> {
 			const { titleField, dateField, authorField } = this.results.summary.docFields;
@@ -277,11 +279,18 @@ table {
 
 	&.hits-table {
 		border-collapse: separate;
+		table-layout: auto;
 		> tbody > tr {
 			border-bottom: 1px solid #ffffff;
 
 			> td {
 				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+
+			&.open > td {
+				overflow: visible;
+				word-break: break-all;
 			}
 		}
 	}

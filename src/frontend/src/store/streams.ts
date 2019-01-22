@@ -1,7 +1,7 @@
 import URI from 'urijs';
 
-import { ReplaySubject, Observable, merge, empty, of, ObservableInput } from 'rxjs';
-import { debounceTime, switchMap, map, distinctUntilChanged, publishLast, publishReplay, shareReplay, debounce, filter, tap, skip, mergeMap, distinct } from 'rxjs/operators';
+import { ReplaySubject, Observable, merge, fromEvent } from 'rxjs';
+import { debounceTime, switchMap, map, distinctUntilChanged, shareReplay, filter } from 'rxjs/operators';
 
 import * as RootStore from '@/store';
 import * as CorpusStore from '@/store/corpus';
@@ -12,6 +12,8 @@ import * as InterfaceStore from '@/store/form/interface';
 import * as DocsStore from '@/store/results/docs';
 import * as HistoryStore from '@/store/history';
 import * as FilterStore from '@/store/form/filters';
+
+import UrlStateParser from '@/store/util/url-state-parser';
 
 import { getFilterString } from '@/utils/';
 import * as Api from '@/api';
@@ -171,15 +173,15 @@ url$.pipe(
 
 		// remove null, undefined, empty strings and empty arrays from our query params
 		const queryParams: Partial<BLTypes.BLSearchParameters> = Object.entries(v.params).reduce((acc, [key, val]) => {
-			if (val == null) { return; }
-			if (typeof val === 'string' && val.length === 0) { return; }
-			if (Array.isArray(val) && val.length === 0) { return; }
+			if (val == null) { return acc; }
+			if (typeof val === 'string' && val.length === 0) { return acc; }
+			if (Array.isArray(val) && val.length === 0) { return acc; }
 			acc[key] = val;
 			return acc;
 		}, {} as any);
 
 		// Store some interface state in the url, so the query can be restored to the correct form
-		// even when loading the page from just the url. See UrlPageState class in store/index.ts
+		// even when loading the page from just the url. See UrlStateParser class in store/utils/url-state-parser.ts
 		// TODO we should probably output the form in the url as /${indexId}/('search'|'explore')/('simple'|'advanced' ...etc)/('hits'|'docs')
 		Object.assign(queryParams, {
 			interface: JSON.stringify({
@@ -270,19 +272,21 @@ url$.pipe(
 });
 
 export default () => {
+	debugLog('Begin attaching store to url and subcorpus calculations.');
+
 	// Because we use vuex-typex, getters are a little different
 	// It doesn't matter though, they're attached to the same state instance, so just ignore the state argument.
 
-	// RootStore.store.watch(
-	// 	state => FilterStore.get.activeFilters(),
-	// 	v => metadata$.next(v),
-	// 	{ immediate: true }
-	// );
-	// RootStore.store.watch(
-	// 	state => Object.values(state.query.filters || {}),
-	// 	v => submittedMetadata$.next(v),
-	// 	{ immediate: true }
-	// );
+	RootStore.store.watch(
+		state => FilterStore.get.activeFilters(),
+		v => metadata$.next(v),
+		{ immediate: true }
+	);
+	RootStore.store.watch(
+		state => Object.values(state.query.filters || {}),
+		v => submittedMetadata$.next(v),
+		{ immediate: true }
+	);
 
 	RootStore.store.watch(
 		(state): QueryState => ({
@@ -303,4 +307,10 @@ export default () => {
 			deep: true
 		}
 	);
+
+	fromEvent<PopStateEvent>(window, 'popstate')
+	.pipe(map<PopStateEvent, HistoryStore.HistoryEntry>(evt => evt.state ? evt.state : new UrlStateParser().get()))
+	.subscribe(state => RootStore.actions.replace(state));
+
+	debugLog('Finished connecting store to url and subcorpus calculations.');
 };

@@ -11,7 +11,6 @@ import '@/utils/features/tutorial';
 
 import '@/global.scss';
 
-
 // Now import the augmented modules (though import order shouldn't matter)
 import CodeMirror from 'codemirror';
 import $ from 'jquery';
@@ -172,7 +171,7 @@ createHandler({selector: 'select[data-autoupdate="format"]', event: DataEvent.FO
 	this
 		.html(Mustache.render(template, {
 			userName: serverInfo.user.id,
-			builtinFormats: newFormats.filter(f => !f.owner && f.isVisible == null /* temporary, for when bls does not support the property yet */ || f.isVisible),
+			builtinFormats: newFormats.filter(f => !f.owner && (f.isVisible == null /* temporary, for when bls does not support the property yet */ || f.isVisible)),
 			userFormats: newFormats.filter(f => !!f.owner) // Always show user's own formats, even if isVisible == false
 		}))
 		.selectpicker('refresh')
@@ -953,7 +952,7 @@ function initNewFormat() {
 		}
 
 		const fileContents = editor.getValue();
-		const fileName = $formatName.val() + '.' + $formatType.selectpicker('val');
+		const fileName = $formatName.val() + '.blf.' + $formatType.selectpicker('val');
 
 		// IE11 does not support File constructor.
 		// var file = new File([new Blob([fileContents])], fileName);

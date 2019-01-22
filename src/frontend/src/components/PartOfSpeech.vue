@@ -4,7 +4,7 @@
 			<div class="modal-content">
 				<div class="modal-header">
 					<button type="button" data-dismiss="modal" class="close" title="close">&times;</button>
-					<h3>{{annotation.displayName || annotation.id}}</h3>
+					<h3>{{annotationDisplayName || annotationId}}</h3>
 				</div>
 				<div v-if="isValidTagset" class="modal-body">
 					<div class="list-group-container">
@@ -26,13 +26,18 @@
 						<div v-if="annotationValue" class="category-container">
 							<ul v-for="subId in annotationValue.subAnnotationIds" class="list-group category">
 								<li class="list-group-item active category-name">{{tagset.subAnnotations[subId].displayName}}</li>
-								<li class="list-group-item catagory-value" v-for="subValue in tagset.subAnnotations[subId].values" :key="subValue.value">
+								<!-- debugging -->
+								<!-- :style="{
+									backgroundColor: (!subValue.pos || subValue.pos.includes(annotationValue.value)) ? undefined : 'red'
+								}" -->
+								<li class="list-group-item category-value" v-for="subValue in tagset.subAnnotations[subId].values" :key="subValue.value" v-if="!subValue.pos || subValue.pos.includes(annotationValue.value)">
 									<label>
 										<input type="checkbox" v-model="selected[`${annotationValue.value}/${subId}/${subValue.value}`]"/>
 										{{subValue.displayName}}
 									</label>
 								</li>
 							</ul>
+							<em v-if="annotationValue.subAnnotationIds.length === 0">No options</em>
 						</div>
 					</div>
 					<hr>
@@ -44,8 +49,9 @@
 					</div>
 				</div>
 				<div class="modal-footer">
-					<button type="submit" class="btn btn-primary" @click.prevent="submit" data-dismiss="modal">Save</button>
-					<button type="reset" class="btn btn-default" @click.prevent="reset">Reset</button>
+					<!-- Don't use submit/reset, since these are not in their own form it messes up submitting any parent form using enter key in input -->
+					<button type="button" class="btn btn-primary" @click.prevent="submit" data-dismiss="modal">Ok</button>
+					<button type="button" class="btn btn-default" @click.prevent="reset">Reset</button>
 				</div>
 			</div>
 		</div>
@@ -55,12 +61,17 @@
 <script lang="ts">
 import Vue from 'vue';
 import * as TagsetStore from '@/store/tagset';
+import * as InterfaceStore from '@/store/form/interface';
 
 import {NormalizedAnnotation, Tagset} from '@/types/apptypes';
 
 export default Vue.extend({
 	props: {
-		annotation: Object as () => NormalizedAnnotation
+		annotationId: {
+			required: true,
+			type: String,
+		},
+		annotationDisplayName: String,
 	},
 	data: () => ({
 		annotationValue: null as null|Tagset['values'][string],
@@ -83,15 +94,41 @@ export default Vue.extend({
 			.filter(v => v.values.length > 0);
 			const subAnnotStrings = subAnnots.map(({id, values}) => `${id}="${values.join('|')}"`);
 
-			return [`${this.annotation.id}="${mainValue}"`].concat(subAnnots.map(({id, values}) => `${id}="${values.join('|')}"`)).join('&');
-		}
+			return [`${this.annotationId}="${mainValue}"`].concat(subAnnots.map(({id, values}) => `${id}="${values.join('|')}"`)).join('&');
+		},
 	},
 	methods: {
-		reset() {
+		reset: function() {
 			Object.keys(this.selected).forEach(k => this.selected[k] = false);
+			this.annotationValue = null;
 		},
-		submit() {
-			this.$emit('submit', this.query);
+		submit: function() {
+			if (this.annotationValue == null) {
+				this.$emit('submit', {
+					query: '',
+				});
+				return;
+			}
+
+			const mainValue = this.annotationValue.value;
+			const subAnnots = this.annotationValue.subAnnotationIds.map(id => ({
+				id,
+				values: this.tagset.subAnnotations[id].values
+					.map(v => v.value)
+					.filter(v => this.selected[`${mainValue}/${id}/${v}`])
+			}))
+			.filter(v => v.values.length > 0);
+
+			this.$emit('submit', {
+				queryString: this.query,
+				value: {
+					[this.annotationId]: this.annotationValue.value,
+					...subAnnots.reduce((acc, cur) => {
+						acc[cur.id] = cur.values.join('|');
+						return acc;
+					}, {} as {[key: string]: string})
+				}
+			});
 		}
 	},
 	created() {
@@ -114,6 +151,13 @@ export default Vue.extend({
 .list-group-container {
 	display: flex;
 	flex-wrap: nowrap;
+
+	> .list-group.main,
+	> .category-container {
+		max-height: calc(100vh - 305px);
+		min-height: 200px;
+		overflow: auto;
+	}
 }
 
 .category-container {

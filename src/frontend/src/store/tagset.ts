@@ -93,7 +93,7 @@ const actions = {
 const init = () => {
 	// At this point the global store is being initialized and the url has been parsed, prevent a tagset from loading now (initialization order is pretty strict).
 	if (getState().state === 'uninitialized') {
-		internalActions.state({state: 'disabled', message: 'No tagset loaded.\n Call "vuexModules.tagset.actions.load(CONTEXT_URL + ${corpusName}/static/${path_to_tagset.json}) from custom js file before $document.ready()'});
+		internalActions.state({state: 'disabled', message: 'No tagset loaded.\n Call "vuexModules.tagset.actions.load(CONTEXT_URL + /static/${path_to_tagset.json}) from custom js file before $document.ready()'});
 		initPromise = Promise.resolve();
 	}
 };

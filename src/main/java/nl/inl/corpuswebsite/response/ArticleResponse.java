@@ -32,7 +32,7 @@ public class ArticleResponse extends BaseResponse {
     static {
         try {
             // @formatter:off
-            defaultTransformer = new XslTransformer(new StringReader(
+            defaultTransformer = new XslTransformer("DEFAULTTRANSFORMER",new StringReader(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
                 "<xsl:stylesheet version=\"2.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">" +
                     "<xsl:output encoding=\"utf-8\" method=\"html\" omit-xml-declaration=\"yes\" />" +

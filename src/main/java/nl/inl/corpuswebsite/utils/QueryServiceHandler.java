@@ -12,15 +12,15 @@ import java.util.Map.Entry;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Contacts the webservice and returns the response.
  */
 public class QueryServiceHandler {
 
-    private static final Logger logger = LogManager.getLogger(QueryServiceHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(QueryServiceHandler.class);
 
     public static class QueryException extends Exception {
         private final int httpStatusCode;

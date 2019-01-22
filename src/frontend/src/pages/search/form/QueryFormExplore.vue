@@ -51,7 +51,6 @@
 							:value="token.id"
 							placeholder="Property"
 							hideEmpty
-							editable
 
 							@change="updateTokenAnnotation(index, $event /* custom component - custom event values */)"
 						/>

@@ -135,7 +135,7 @@
 		</li>
 
 
-		<li class="tlypageguide_top" data-tourtarget="a[href='#query']">
+		<li class="tlypageguide_top" data-tourtarget="a[href='#expert']">
 			<div>
 				<p>
 					The <code>CQL editor</code> allows you to type your own CQL query, or edit a query further after creating it in the <code>querybuilder</code>.

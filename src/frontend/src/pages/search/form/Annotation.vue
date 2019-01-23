@@ -83,19 +83,18 @@
 
 <script lang="ts">
 import Vue from 'vue';
-
-import $ from 'jquery';
+import { Subscription } from 'rxjs';
 
 import * as RootStore from '@/store';
 import * as PatternStore from '@/store/form/patterns';
-import { NormalizedAnnotation } from '@/types/apptypes';
-import SelectPicker, {Option} from '@/components/SelectPicker.vue';
-import PartOfSpeech from '@/components/PartOfSpeech.vue';
 
-//@ts-ignore
+import SelectPicker, {Option} from '@/components/SelectPicker.vue';
+import PartOfSpeech from '@/pages/search/form/PartOfSpeech.vue';
+
+import { NormalizedAnnotation } from '@/types/apptypes';
+
 import Autocomplete from '@/mixins/autocomplete';
 import UID from '@/mixins/uid';
-import { Subscription } from 'rxjs';
 
 declare const BLS_URL: string;
 
@@ -134,7 +133,7 @@ export default Vue.extend({
 				PatternStore.actions.extended.annotation({
 					id: this.id,
 					value
-				})
+				});
 			}
 		},
 		caseSensitive: {
@@ -182,7 +181,7 @@ export default Vue.extend({
 	destroyed() {
 		this.subscriptions.forEach(unsub => unsub());
 	}
-})
+});
 </script>
 
 <style lang="scss">

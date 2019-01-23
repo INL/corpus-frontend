@@ -93,6 +93,7 @@ import PartOfSpeech from '@/pages/search/form/PartOfSpeech.vue';
 
 import { NormalizedAnnotation } from '@/types/apptypes';
 
+//@ts-ignore
 import Autocomplete from '@/mixins/autocomplete';
 import UID from '@/mixins/uid';
 

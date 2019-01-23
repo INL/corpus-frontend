@@ -69,7 +69,7 @@ import QueryFormSettings from '@/pages/search/form/QueryFormSettings.vue';
 import History from '@/pages/search/History.vue';
 
 import * as BLTypes from '@/types/blacklabtypes';
-import {ApiError} from '@/types/appTypes';
+import {ApiError} from '@/types/apptypes';
 
 export default Vue.extend({
 	components: {

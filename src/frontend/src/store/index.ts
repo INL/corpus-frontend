@@ -8,6 +8,7 @@ import * as CorpusModule from '@/store/corpus';
 import * as HistoryModule from '@/store/history';
 import * as QueryModule from '@/store/query';
 import * as TagsetModule from '@/store/tagset';
+import * as UIModule from '@/store/ui';
 
 // Form
 import * as FormManager from '@/store/form';
@@ -32,6 +33,7 @@ type RootState = {
 	history: HistoryModule.ModuleRootState;
 	query: QueryModule.ModuleRootState;
 	tagset: TagsetModule.ModuleRootState;
+	ui: UIModule.ModuleRootState;
 }&FormManager.PartialRootState&ResultsManager.PartialRootState;
 
 const b = getStoreBuilder<RootState>();
@@ -189,6 +191,7 @@ const init = () => {
 	TagsetModule.init();
 	HistoryModule.init();
 	QueryModule.init();
+	UIModule.init();
 };
 
 // Debugging helpers.
@@ -205,6 +208,7 @@ const init = () => {
 	history: HistoryModule,
 	query: QueryModule,
 	tagset: TagsetModule,
+	ui: UIModule,
 
 	explore: ExploreModule,
 	form: FormManager,

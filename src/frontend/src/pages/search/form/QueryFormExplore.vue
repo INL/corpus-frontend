@@ -33,6 +33,7 @@
 							name="n-gram-type"
 
 							data-width="100%"
+							hideEmpty
 
 							:options="annotationOptions"
 
@@ -74,6 +75,7 @@
 						name="frequency-type"
 
 						data-width="100%"
+						hideEmpty
 
 						:options="annotationOptions"
 
@@ -89,9 +91,10 @@
 import Vue from 'vue';
 
 import * as RootStore from '@/store';
-import * as CorpusStore from '@/store/corpus';
+// import * as CorpusStore from '@/store/corpus';
 import * as InterfaceStore from '@/store/form/interface';
 import * as ExploreStore from '@/store/form/explore';
+import * as UIStore from '@/store/ui';
 
 import SelectPicker, {Option} from '@/components/SelectPicker.vue';
 
@@ -105,15 +108,17 @@ export default Vue.extend({
 			set: InterfaceStore.actions.exploreMode,
 		},
 
-		annotationOptions(): Option[] {
-			return CorpusStore.get.annotations()
-			.filter(a => a.hasForwardIndex)
-			.map ((annot): Option => ({
-				label: annot.displayName,
-				value: annot.id
-			}));
-		},
-		defaultAnnotationId(): string { return CorpusStore.get.firstMainAnnotation().id; },
+		annotationOptions() { return UIStore.getState().explore.shownAnnotations; },
+		defaultAnnotationId() { return UIStore.getState().explore.defaultAnnotation; },
+		// annotationOptions(): Option[] {
+		// 	return CorpusStore.get.annotations()
+		// 	.filter(a => a.hasForwardIndex)
+		// 	.map ((annot): Option => ({
+		// 		label: annot.displayName,
+		// 		value: annot.id
+		// 	}));
+		// },
+		// defaultAnnotationId(): string { return CorpusStore.get.firstMainAnnotation().id; },
 
 		ngramSize: {
 			get: ExploreStore.get.ngram.size,

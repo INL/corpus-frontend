@@ -45,7 +45,7 @@ type HistoryEntry = {
 	explore: ExploreModule.ModuleRootState;
 };
 
-export type FullHistoryEntry = HistoryEntry&{
+type FullHistoryEntry = HistoryEntry&{
 	/** String representations of the query, for simpler displaying of the entry in UI */
 	displayValues: {
 		filters: string;
@@ -249,6 +249,7 @@ function hashJavaDJB2(str: string) {
 export {
 	ModuleRootState,
 	HistoryEntry,
+	FullHistoryEntry,
 
 	getState,
 	get,

@@ -15,6 +15,7 @@ import * as FilterModule from '@/store/form/filters';
 import * as InterfaceModule from '@/store/form/interface';
 import * as PatternModule from '@/store/form/patterns';
 import * as ExploreModule from '@/store/form/explore';
+import * as GapModule from '@/store/form/gap';
 
 // Results
 import * as ResultsManager from '@/store/results';
@@ -49,6 +50,7 @@ export default class UrlStateParser {
 			filters: this.filters,
 			interface: this.interface,
 			patterns: this.patterns,
+			gap: this.gap,
 
 			docs: this.docs,
 			global: this.global,
@@ -158,17 +160,18 @@ export default class UrlStateParser {
 			// the other views will have the query placed in it as well (if it fits), but this is more of a courtesy
 			// if no pattern exists, show the simplest search
 			const hasFilters = Object.keys(this.filters).length > 0;
+			const hasGapValue = !!this.gap.value; // Only supported for expert view for, prevent setting anything else for now
 			let fromPattern = true; // is interface state actually from the pattern, or from the default fallback?
-			if (this.simplePattern && !hasFilters) {
+			if (this.simplePattern && !hasFilters && !hasGapValue) {
 				ui.patternMode = 'simple';
-			} else if ((Object.keys(this.extendedPattern.annotationValues).length > 0)) {
+			} else if ((Object.keys(this.extendedPattern.annotationValues).length > 0) && !hasGapValue) {
 				ui.patternMode = 'extended';
-			} else if (this.advancedPattern) {
+			} else if (this.advancedPattern && !hasGapValue) {
 				ui.patternMode = 'advanced';
 			} else if (this.expertPattern) {
 				ui.patternMode = 'expert';
 			} else {
-				ui.patternMode = hasFilters ? 'extended' : 'simple';
+				ui.patternMode = hasFilters ? hasGapValue ? 'expert' : 'extended' : 'simple';
 				fromPattern = false;
 			}
 
@@ -186,6 +189,12 @@ export default class UrlStateParser {
 
 			return ui;
 		}
+	}
+
+	@memoize
+	private get gap(): GapModule.ModuleRootState {
+		const value = this.getString('pattgapdata');
+		return value ? { value } : GapModule.defaults;
 	}
 
 	@memoize

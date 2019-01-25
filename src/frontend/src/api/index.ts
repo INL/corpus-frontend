@@ -257,7 +257,7 @@ export const blacklab = {
 
 // Server has issues with long urls.
 function getOrPost<R>(path: string, params: any, settings?: AxiosRequestConfig): Promise<R> {
-	const usePost = params && (params.patt ? params.patt.length : 0)+(params.filter ? params.filter.length : 0) > 1000;
+	const usePost = params && (params.patt ? params.patt.length : 0)+(params.filter ? params.filter.length : 0)+(params.pattgapdata ? params.pattgapdata.length : 0) > 1000;
 	if (usePost) {
 		settings = settings || {};
 		settings.headers = settings.headers || {};

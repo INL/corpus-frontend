@@ -16,6 +16,7 @@ import * as FilterModule from '@/store/form/filters';
 import * as InterfaceModule from '@/store/form/interface';
 import * as PatternModule from '@/store/form/patterns';
 import * as ExploreModule from '@/store/form/explore';
+import * as GapModule from '@/store/form/gap';
 
 // Results
 import * as ResultsManager from '@/store/results';
@@ -46,6 +47,9 @@ const get = {
 	filtersActive: b.read(state => {
 		return !(InterfaceModule.get.form() === 'search' && InterfaceModule.get.patternMode() === 'simple');
 	}, 'filtersActive'),
+	gapFillingActive: b.read(state => {
+		return (InterfaceModule.get.form() === 'search' && InterfaceModule.get.patternMode() === 'expert');
+	}, 'gapFillingActive'),
 	queryBuilderActive: b.read(state => {
 		return InterfaceModule.get.form() === 'search' && InterfaceModule.get.patternMode() === 'advanced';
 	}, 'queryBuilderActive'),
@@ -73,6 +77,7 @@ const get = {
 
 			number: state.global.pageSize,
 			patt: QueryModule.get.patternString(),
+			pattgapdata: (QueryModule.get.patternString() && QueryModule.getState().gap) ? QueryModule.getState().gap!.value || undefined : undefined,
 
 			sample: (state.global.sampleMode === 'percentage' && state.global.sampleSize) ? state.global.sampleSize : undefined,
 			samplenum: (state.global.sampleMode === 'count' && state.global.sampleSize) ? state.global.sampleSize : undefined,
@@ -137,6 +142,7 @@ const actions = {
 					// Also cast back into correct type after parsing/stringifying so we don't lose type-safety (parse returns any)
 					filters: get.filtersActive() ? JSON.parse(JSON.stringify(FilterModule.get.activeFiltersMap())) as ReturnType<typeof FilterModule['get']['activeFiltersMap']> : {},
 					formState: JSON.parse(JSON.stringify(ExploreModule.getState()[exploreMode])) as ExploreModule.ModuleRootState[typeof exploreMode],
+					gap: get.gapFillingActive() ? GapModule.getState() : GapModule.defaults,
 				};
 				break;
 			}
@@ -149,6 +155,7 @@ const actions = {
 					// Also cast back into correct type after parsing/stringifying so we don't lose type-safety (parse returns any)
 					filters: get.filtersActive() ? JSON.parse(JSON.stringify(FilterModule.get.activeFiltersMap())) as ReturnType<typeof FilterModule['get']['activeFiltersMap']> : {},
 					formState: JSON.parse(JSON.stringify(PatternModule.getState()[patternMode])) as PatternModule.ModuleRootState[typeof patternMode],
+					gap: get.gapFillingActive() ? GapModule.getState() : GapModule.defaults,
 				};
 				break;
 			}

@@ -75,7 +75,7 @@ const actions = {
 	wordsAroundHit: b.commit((state, payload: number|null) => state.wordsAroundHit = payload, 'wordsaroundhit'),
 
 	reset: b.commit(state => Object.assign(state, initialState), 'reset'),
-	replace: b.dispatch(({state}, payload: ModuleRootState) => {
+	replace: b.commit((state, payload: ModuleRootState) => {
 		// Use actions so we can verify data
 		actions.pageSize(payload.pageSize);
 		actions.sampleMode(payload.sampleMode);

@@ -18,6 +18,7 @@ import * as HitsModule from '@/store/results/hits';
 import * as DocsModule from '@/store/results/docs';
 import * as PatternModule from '@/store/form/patterns';
 import * as ExploreModule from '@/store/form/explore';
+import * as GapModule from '@/store/form/gap';
 
 import UrlStateParser from '@/store/util/url-state-parser';
 
@@ -25,11 +26,12 @@ import { NormalizedIndex } from '@/types/apptypes';
 import { debugLog } from '@/utils/debug';
 import { getFilterSummary } from '@/utils';
 
-const version = 4;
+const version = 5;
 
 type HistoryEntry = {
 	// always set
 	filters: FilterModule.ModuleRootState;
+	gap: GapModule.ModuleRootState;
 	global: GlobalModule.ModuleRootState;
 	interface: InterfaceModule.ModuleRootState;
 
@@ -92,6 +94,7 @@ const get = {
 			# Pattern: ${entry.displayValues.pattern || '-'}
 			# Filters: ${entry.displayValues.filters || '-'}
 			# Grouping: ${entry[entry.interface.viewedResults!].groupBy}
+			# Contains gap values: ${entry.gap.value ? 'yes' : 'no'}
 
 			#####
 			${btoa(JSON.stringify(Object.assign({version}, entry)))}
@@ -142,11 +145,12 @@ const actions = {
 		// Order needs to be consistent or hash might be different.
 		const filterSummary: string = getFilterSummary(Object.values(entry.filters).sort((l, r) => l.id.localeCompare(r.id)));
 		// Should only contain items that uniquely identify a query
-		// Normally this would only be the pattern and filters,
+		// Normally this would only be the pattern (including gap values) and filters,
 		// but we've agreed that grouping differently constitutes a new query, so we also need to compare those
 		const hashBase = {
 			filters: filterSummary,
 			pattern,
+			gap: entry.gap,
 			groupBy: entry[entry.interface.viewedResults!].groupBy.concat(entry[entry.interface.viewedResults!].groupByAdvanced).sort((l, r) => l.localeCompare(r)),
 		};
 

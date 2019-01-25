@@ -74,6 +74,25 @@
 					Import query
 					<input type="file" name="importQuery" id="importQuery" accept=".txt,text/plain" @change="importQuery" title="Import a previously downloaded query">
 				</label>
+				<div class="btn-group">
+					<label class="btn btn-sm btn-default file-input-button" for="gapFilling">
+						Gap-filling
+						<input type="file" name="gapFilling" id="gapFilling" accept=".tsv,.csv,text/plain" @change="importGapFile" title="Upload a tab-separated list of values to substitute for gap values ('@@' in your query).">
+					</label>
+					<button v-if="gapValue != null"
+						type="button"
+						class="btn btn-default btn-sm"
+						:title="`${gapEditorOpen ? 'close' : 'open' } gap value editor`"
+						@click="gapEditorOpen = !gapEditorOpen"
+					><span class="fa fa-pencil"></span></button>
+					<button v-if="gapValue != null"
+						type="button"
+						class="btn btn-default btn-sm"
+						title="Clear gap values"
+						@click="gapValue = null"
+					><span class="fa fa-times"></span></button>
+				</div>
+				<textarea type="area" v-if="gapValue != null" v-show="gapEditorOpen" class="form-control gap-value-editor" v-model.lazy="gapValue"/>
 				<span v-show="parseQueryError" id="parseQueryError" class="text-danger"><span class="fa fa-danger"></span> {{parseQueryError}}</span>
 				<span v-show="importQueryError" id="importQueryError" class="text-danger"><span class="fa fa-danger"></span> {{importQueryError}}</span>
 			</div>
@@ -88,6 +107,7 @@ import * as RootStore from '@/store';
 import * as CorpusStore from '@/store/corpus';
 import * as InterfaceStore from '@/store/form/interface';
 import * as PatternStore from '@/store/form/patterns';
+import * as GapStore from '@/store/form/gap';
 import * as HistoryStore from '@/store/history';
 
 import Annotation from '@/pages/search/form/Annotation.vue';
@@ -105,7 +125,8 @@ export default Vue.extend({
 	},
 	data: () => ({
 		parseQueryError: null as string|null,
-		importQueryError: null as string|null
+		importQueryError: null as string|null,
+		gapEditorOpen: false
 	}),
 	computed: {
 		activePattern: {
@@ -152,6 +173,10 @@ export default Vue.extend({
 		expert: {
 			get(): string|null { return PatternStore.getState().expert; },
 			set: PatternStore.actions.expert,
+		},
+		gapValue: {
+			get: GapStore.get.gapValue,
+			set: GapStore.actions.gapValue
 		}
 	},
 	methods: {
@@ -182,6 +207,16 @@ export default Vue.extend({
 			})
 			.catch(e => this.importQueryError = e.message)
 			.finally(() => el.value = '')
+		},
+		importGapFile(event: Event) {
+			const self = this;
+			const el = (event.target as HTMLInputElement);
+			if (!el.files || el.files.length !== 1) {
+				self.gapValue = null;
+				return;
+			}
+			GapStore.actions.gapValueFile(el.files[0]);
+			el.value = '';
 		}
 	}
 })
@@ -227,6 +262,14 @@ export default Vue.extend({
 
 .nav-tabs.subtabs>li.active>a, .nav-tabs.subtabs>li>a:hover {
 	border-color: transparent #ddd #ddd #ddd;
+}
+
+textarea.gap-value-editor {
+	margin-top: 10px;
+	height: 300px;
+	max-width: 100%;
+	resize: vertical;
+	width: 100%;
 }
 
 </style>

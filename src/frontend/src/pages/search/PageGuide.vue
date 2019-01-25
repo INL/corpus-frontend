@@ -151,7 +151,22 @@
 			</div>
 		</li>
 
-		<li class="tlypageguide_top" data-tourtarget="#importQuery">
+		<li class="tlypageguide_bottom" data-tourtarget="#gapFilling">
+			<div>
+				<p>
+					Use this button to upload a TSV file with terms to complete a query with marked gaps.<br>
+					For instance, given a query:<br>
+					<code>[lemma="@@"][pos="LID.*"][lemma="@@"]</code><br>
+					you would supply a list with two tab-separated columns of terms, where the terms in the first column will be entered at the position of the first gap (@@) and the words in the second column at the position of the second gap.
+					This mimics the word list functionality of the Extended and Advanced search interfaces.
+				</p>
+				<p>
+					Please note that for this to work, you do need to enter @@ in the field where you want the substitution to take place. An empty field ([]) will match any term.
+				</p>
+			</div>
+		</li>
+
+		<li class="tlypageguide_bottom" data-tourtarget="#importQuery">
 			<div>
 				<p>
 					Import previously saved queries here.

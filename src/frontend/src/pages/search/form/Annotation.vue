@@ -166,6 +166,7 @@ export default Vue.extend({
 			} else {
 				self.value = '';
 			}
+			(event.target as HTMLInputElement).value = '';
 		}
 	},
 	created() {

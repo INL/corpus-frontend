@@ -172,8 +172,8 @@ const actions = {
 		}
 		// push new/updated entry
 		state.unshift(fullEntry);
-		// pop entries older than 40
-		state.splice(40);
+		// pop old entries
+		state.splice(200);
 		saveToLocalStorage(state);
 	}, 'addEntry'),
 	removeEntry: b.commit((state, i: number) => {

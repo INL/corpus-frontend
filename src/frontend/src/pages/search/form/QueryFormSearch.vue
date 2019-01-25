@@ -52,7 +52,7 @@
 					<!-- TODO extract available options from blacklab -->
 					<label class="col-xs-12 col-md-3">Within:</label>
 
-					<div class="btn-group col-xs-12 col-md-9" id="simplesearch_within">
+					<div class="btn-group col-xs-12 col-md-9">
 						<button v-for="option in withinOptions"
 							type="button"
 							:class="['btn btn-default', {'active': within === option.value}]"
@@ -60,6 +60,13 @@
 							:value="option.value"
 							@click="within = option.value"
 						>{{option.label}}</button>
+					</div>
+				</div>
+				<div class="form-group">
+					<div class="col-xs-12 col-md-9 col-md-push-3 checkbox">
+						<label for="extended_split_batch">
+							<input type="checkbox" name="extended_split_batch" id="extended_split_batch" v-model="splitBatch"/> Split batch queries
+						</label>
 					</div>
 				</div>
 			</div>
@@ -161,6 +168,10 @@ export default Vue.extend({
 		within: {
 			get(): string|null { return PatternStore.getState().extended.within; },
 			set: PatternStore.actions.extended.within,
+		},
+		splitBatch: {
+			get(): boolean { return PatternStore.getState().extended.splitBatch; },
+			set: PatternStore.actions.extended.splitBatch
 		},
 		simple: {
 			get(): string|null { return PatternStore.getState().simple; },

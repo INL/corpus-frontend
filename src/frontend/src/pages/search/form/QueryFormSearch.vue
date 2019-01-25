@@ -217,6 +217,7 @@ export default Vue.extend({
 			}
 			GapStore.actions.gapValueFile(el.files[0]);
 			el.value = '';
+			this.gapEditorOpen = true;
 		}
 	}
 })

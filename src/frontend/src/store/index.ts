@@ -222,6 +222,7 @@ const _vuexModules = (window as any).vuexModules = {
 	filters: FilterModule,
 	interface: InterfaceModule,
 	patterns: PatternModule,
+	gap: GapModule,
 
 	results: ResultsManager,
 	docs: DocResultsModule,

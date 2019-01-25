@@ -21,11 +21,7 @@ import SearchPageComponent from '@/pages/search/SearchPage.vue';
 
 import {debugLog} from '@/utils/debug';
 
-import * as BLTypes from '@/types/blacklabtypes';
-
 import '@/global.scss';
-
-declare const SINGLEPAGE: {INDEX: BLTypes.BLIndexMetadata};
 
 const connectJqueryToPage = () => {
 	$('input[data-persistent][id != ""]').each(function(i, elem) {
@@ -125,12 +121,11 @@ function initQueryBuilder(tagset?: TagsetStore.ModuleRootState) {
 // --------------
 Vue.use(VTooltip);
 Vue.config.productionTip = false;
-
 $(document).ready(() => {
 	RootStore.init();
 
 	// We can render before the tagset loads, the form just won't be populated from the url yet.
-	new Vue({
+	const vueRoot = new Vue({
 		store: RootStore.store,
 		render: h => h(SearchPageComponent),
 		mounted() {
@@ -151,4 +146,15 @@ $(document).ready(() => {
 			});
 		}
 	}).$mount(document.querySelector('#vue-root')!);
+
+	(window as any).vueRoot = vueRoot;
 });
+
+// Expose and declare some globals
+const _Vue = (window as any).Vue = Vue;
+
+declare global {
+	// tslint:disable-next-line
+	const Vue: typeof _Vue;
+	const vueRoot: InstanceType<typeof SearchPageComponent>&{store: typeof RootStore.store};
+}

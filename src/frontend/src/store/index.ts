@@ -195,7 +195,7 @@ const init = () => {
 };
 
 // Debugging helpers.
-(window as any).vuexModules = {
+const _vuexModules = (window as any).vuexModules = {
 	root: {
 		store,
 		getState,
@@ -223,6 +223,11 @@ const init = () => {
 };
 
 (window as any).vuexStore = store;
+
+declare global {
+	const vuexModules: typeof _vuexModules;
+	const vuexStore: typeof store;
+}
 
 export {
 	RootState,

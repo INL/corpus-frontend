@@ -10,6 +10,7 @@ import {getStoreBuilder} from 'vuex-typex';
 
 import {RootState} from '@/store';
 import * as CorpusStore from '@/store/corpus';
+import * as BlacklabTypes from '@/types/blacklabtypes';
 
 type ModuleRootState = {
 	search: {
@@ -28,12 +29,19 @@ type ModuleRootState = {
 
 	results: {
 		// placeholder
-		hits: {};
+		hits: {
+			getAudioPlayerData: null|((corpus: string, docId: string, snippet: BlacklabTypes.BLHitSnippet) => undefined|({
+				docId: string
+				start: number,
+				end: number,
+				url: string
+			}))
+		};
 		docs: {};
 	};
 };
 
-const initialState = {
+const initialState: ModuleRootState = {
 	search: {
 		simple: {},
 		extended: {},
@@ -45,7 +53,9 @@ const initialState = {
 		defaultAnnotation: '',
 	},
 	results: {
-		hits: {},
+		hits: {
+			getAudioPlayerData: null
+		},
 		docs: {}
 	}
 };

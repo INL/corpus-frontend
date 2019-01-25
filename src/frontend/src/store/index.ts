@@ -25,6 +25,7 @@ import * as GlobalResultsModule from '@/store/results/global';
 import * as HitResultsModule from '@/store/results/hits';
 
 import * as BLTypes from '@/types/blacklabtypes';
+import { getPatternString } from '@/utils';
 
 Vue.use(Vuex);
 Vue.use(VueRx);
@@ -93,8 +94,15 @@ const get = {
 const actions = {
 	/** Read the form state, build the query, reset the results page/grouping, etc. */
 	searchFromSubmit: b.commit(state => {
+		if (state.interface.form === 'search' && state.interface.patternMode === 'extended' && state.patterns.extended.splitBatch) {
+			// TODO tidy up implementation of split batch queries
+			actions.searchSplitBatches();
+			return;
+		}
+
 		// Reset the grouping/page/sorting/etc
 		ResultsManager.actions.resetResults();
+
 		// Apply the desired grouping for this form, if needed.
 		if (state.interface.form === 'explore') {
 			const exploreMode = state.interface.exploreMode;
@@ -165,6 +173,103 @@ const actions = {
 		}
 		QueryModule.actions.search(submittedFormState);
 	}, 'searchFromRestore'),
+
+	/**
+	 * TODO: this is ugly code, and heavily relies on knowledge about other parts of the codebase, mostly the history objects - clean it up in some manner.
+	 *
+	 * Split batch queries: allow batch submission of many cql patterns
+	 * Works by splitting OR'ed annotations into individual queries containing just that one value.
+	 * So say we have
+	 * ```typescript
+	 * [{
+	 *     id: 'lemma',
+	 *     value: 'a|b',
+	 *     ...
+	 * }, {
+	 *     id: 'word',
+	 *     value: 'c|d',
+	 *     ...
+	 * }]
+	 * ```
+	 * Normally the resulting query would be
+	 * ```typescript
+	 * - [lemma="a|b" & word="c|d"]
+	 * ```
+	 * But using split batches, the following 4 queries are generated:
+	 * ```typescript
+	 * - [lemma = "a"]
+	 * - [lemma = "b"]
+	 * - [word  = "c"]
+	 * - [word  = "d"]
+	 * ```
+	 * Then the first query in the list is submitted, and the rest is pushed into the history so the user can load them at a later moment.
+	 */
+	searchSplitBatches: b.commit(state => {
+		if (state.interface.form !== 'search' || state.interface.patternMode !== 'extended' || !state.patterns.extended.splitBatch) {
+			throw new Error('Attempting to submit split batches in wrong view');
+		}
+
+		const sharedBatchState: Pick<HistoryModule.HistoryEntry, Exclude<keyof HistoryModule.HistoryEntry, 'patterns'>> = {
+			docs: DocResultsModule.defaults,
+			explore: ExploreModule.defaults,
+			global: GlobalResultsModule.getState(),
+			hits: HitResultsModule.defaults,
+			interface: InterfaceModule.getState(),
+			filters: get.filtersActive() ? FilterModule.get.activeFiltersMap() : {},
+			gap: get.gapFillingActive() ? GapModule.getState() : GapModule.defaults,
+		};
+
+		const annotations = PatternModule.get.activeAnnotations();
+		const submittedFormStates = annotations
+		.filter(a => a.type !== 'pos')
+		.flatMap(a => {
+			return a.value
+			.split('|')
+			.map(value => ({
+				...a,
+				value
+			}));
+		})
+		.map<{
+			entry: HistoryModule.HistoryEntry,
+			pattern?: string,
+			url: string
+		}>(a => ({
+			entry: {
+				...sharedBatchState,
+				patterns: {
+					advanced: null,
+					expert: null,
+					simple: null,
+					extended: {
+						annotationValues: {
+							[a.id]: a
+						},
+						splitBatch: false,
+						within: state.patterns.extended.within
+					}
+				}
+			},
+			pattern: getPatternString([a], state.patterns.extended.within),
+			// TODO :( url generation is too encapsulated to completely repro here
+			url: ''
+		}))
+		// remove vuex listeners from aliased parts of the store.
+		.map(v => JSON.parse(JSON.stringify(v)));
+
+		// We can't just run a submit for every subquery, as that would be REALLY slow.
+		// Even if it were fast, mutations within a single vue frame are debounced,
+		// so listeners won't be called for any update except the last,
+		// preventing the history entries from being created.
+		// Unfortunately we need to copy the history entry generation code :(
+		// See streams.ts
+
+		submittedFormStates.forEach(HistoryModule.actions.addEntry);
+		const mostRecent = HistoryModule.getState()[0];
+		if (mostRecent) {
+			actions.replace(mostRecent);
+		}
+	}, 'searchSplitBatches'),
 
 	reset: b.commit(state => {
 		FormManager.actions.reset();

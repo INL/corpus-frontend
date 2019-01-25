@@ -159,6 +159,41 @@ export const getFilterSummary = (filters: AppTypes.FilterValue[]) => filters
 	.map(({id, type, values}) =>
 		`${id} = [${type==='range'?`${values[0]} to ${values[1]}`:values.join(', ')}]`).join(', ');
 
+export const getPatternString = (annotations: AppTypes.AnnotationValue[], within: null|string) => {
+	const tokens = [] as string[][];
+
+	annotations.forEach(({id, case: caseSensitive, value, type}) => {
+		switch (type) {
+			case 'pos': {
+				const arr = (tokens[0] = tokens[0] || []);
+				arr.push(value); // already valid cql, no escaping or wildcard substitution.
+				return;
+			}
+			case 'select':
+			case 'text':
+			case 'combobox': {
+				value
+				.replace(/"/g, '')
+				.trim()
+				.split(/\s+/)
+				.filter(v => !!v)
+				.forEach((word, i) => {
+					const arr = (tokens[i] = tokens[i] || []);
+					arr.push(`${id}="${(caseSensitive ? '(?-i)' : '') + makeWildcardRegex(word)}"`);
+				});
+				return;
+			}
+			default: throw new Error('Unimplemented cql serialization for annotation type ' + type);
+		}
+	});
+
+	let query = tokens.map(t => `[${t.join('&')}]`).join('');
+	if (query.length > 0 && within) {
+		query += ` within <${within}/>`;
+	}
+	return query || undefined;
+};
+
 // TODO the clientside url generation story... https://github.com/INL/corpus-frontend/issues/95
 // Ideally use absolute urls everywhere, if the application needs to be proxied, let the proxy server handle it.
 // Have a configurable url in the backend that's made available on the client that we can use here.

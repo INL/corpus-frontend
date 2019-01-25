@@ -29,7 +29,7 @@ import * as PatternModule from '@/store/form/patterns';
 import * as FilterModule from '@/store/form/filters';
 import * as ExploreModule from '@/store/form/explore';
 import * as GapModule from '@/store/form/gap';
-import { getFilterString, makeWildcardRegex } from '@/utils';
+import { getFilterString, getPatternString, makeWildcardRegex } from '@/utils';
 
 type ModuleRootStateSearch<K extends keyof PatternModule.ModuleRootState> = {
 	form: 'search';

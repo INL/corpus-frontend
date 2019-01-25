@@ -22,6 +22,7 @@ type ModuleRootState = {
 			// }
 		},
 		within: string|null;
+		splitBatch: boolean;
 	},
 	advanced: string|null;
 	expert: string|null;
@@ -36,6 +37,7 @@ const defaults: ModuleRootState = {
 	extended: {
 		annotationValues: {},
 		within: null,
+		splitBatch: false,
 	},
 	advanced: null,
 	expert: null,
@@ -70,12 +72,14 @@ const actions = {
 			Object.assign(state.extended.annotationValues[id], safeValues);
 		}, 'extended_annotation'),
 		within: b.commit((state, payload: string|null) => state.extended.within = payload, 'extended_within'),
+		splitBatch: b.commit((state, payload: boolean) => state.extended.splitBatch = payload, 'extended_split_batch'),
 		reset: b.commit(state => {
 			Object.values(state.extended.annotationValues).forEach(annot => {
 				annot.value = '';
 				annot.case = false;
 			});
 			state.extended.within = null;
+			state.extended.splitBatch = false;
 		}, 'extended_reset'),
 	},
 	advanced: b.commit((state, payload: string|null) =>state.advanced = payload, 'advanced'),
@@ -94,6 +98,7 @@ const actions = {
 		actions.expert(payload.expert);
 		actions.extended.reset();
 		actions.extended.within(payload.extended.within);
+		state.extended.splitBatch = payload.extended.splitBatch;
 		Object.values(payload.extended.annotationValues).forEach(actions.extended.annotation);
 	}, 'replace'),
 };

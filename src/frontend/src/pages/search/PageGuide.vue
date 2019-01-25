@@ -46,6 +46,22 @@
 			</div>
 		</li>
 
+		<li class="tlypageguide_bottom" data-tourtarget="#extended_split_batch">
+			<div>
+				<p>
+					Split your query into many smaller queries.
+				</p>
+				<p>
+					Values for all <code>attributes</code> are split on <code>OR</code> (the <code>|</code> character), and every term is executed as a separate query.<br>
+					Entered <code>Metadata filters</code> will apply to all subqueries.
+				</p>
+				<p>
+					After running the query, the result of the last value will be shown.<br>
+					The other subqueries can be inspected and loaded from the <code>history</code> panel.
+				</p>
+			</div>
+		</li>
+
 		<li class="tlypageguide_left" data-tourtarget=".propertyfield .file-input-button">
 			<div>
 				Click here to upload a list of values to search for.<br>

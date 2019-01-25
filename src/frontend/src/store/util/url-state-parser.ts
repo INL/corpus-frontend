@@ -434,7 +434,9 @@ export default class UrlStateParser {
 	private get extendedPattern() {
 		return {
 			annotationValues: this.annotationValues,
-			within: this.within
+			within: this.within,
+			// This is always false, it's just a checkbox that will split up the query when it's submitted, then untick itself
+			splitBatch: false
 		};
 	}
 

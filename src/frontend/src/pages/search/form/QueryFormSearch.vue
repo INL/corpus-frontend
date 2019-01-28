@@ -89,17 +89,11 @@
 					<button v-if="gapValue != null"
 						type="button"
 						class="btn btn-default btn-sm"
-						:title="`${gapEditorOpen ? 'close' : 'open' } gap value editor`"
-						@click="gapEditorOpen = !gapEditorOpen"
-					><span class="fa fa-pencil"></span></button>
-					<button v-if="gapValue != null"
-						type="button"
-						class="btn btn-default btn-sm"
 						title="Clear gap values"
 						@click="gapValue = null"
 					><span class="fa fa-times"></span></button>
 				</div>
-				<textarea type="area" v-if="gapValue != null" v-show="gapEditorOpen" class="form-control gap-value-editor" v-model.lazy="gapValue"/>
+				<textarea type="area" v-if="gapValue != null" class="form-control gap-value-editor" v-model.lazy="gapValue"/>
 				<span v-show="parseQueryError" id="parseQueryError" class="text-danger"><span class="fa fa-danger"></span> {{parseQueryError}}</span>
 				<span v-show="importQueryError" id="importQueryError" class="text-danger"><span class="fa fa-danger"></span> {{importQueryError}}</span>
 			</div>
@@ -133,7 +127,6 @@ export default Vue.extend({
 	data: () => ({
 		parseQueryError: null as string|null,
 		importQueryError: null as string|null,
-		gapEditorOpen: false
 	}),
 	computed: {
 		activePattern: {
@@ -228,7 +221,6 @@ export default Vue.extend({
 			}
 			GapStore.actions.gapValueFile(el.files[0]);
 			el.value = '';
-			this.gapEditorOpen = true;
 		}
 	}
 })

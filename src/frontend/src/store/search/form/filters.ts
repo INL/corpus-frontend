@@ -7,8 +7,8 @@
 import Vue from 'vue';
 import {getStoreBuilder} from 'vuex-typex';
 
-import {RootState} from '@/store';
-import * as CorpusModule from '@/store/corpus';
+import {RootState} from '@/store/search/';
+import * as CorpusModule from '@/store/search/corpus';
 
 import {FilterValue} from '@/types/apptypes';
 

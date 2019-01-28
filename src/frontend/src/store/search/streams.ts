@@ -3,18 +3,18 @@ import URI from 'urijs';
 import { ReplaySubject, Observable, merge, fromEvent } from 'rxjs';
 import { debounceTime, switchMap, map, distinctUntilChanged, shareReplay, filter } from 'rxjs/operators';
 
-import * as RootStore from '@/store';
-import * as CorpusStore from '@/store/corpus';
-import * as PatternStore from '@/store/form/patterns';
-import * as ExploreStore from '@/store/form/explore';
-import * as HitsStore from '@/store/results/hits';
-import * as InterfaceStore from '@/store/form/interface';
-import * as DocsStore from '@/store/results/docs';
-import * as HistoryStore from '@/store/history';
-import * as FilterStore from '@/store/form/filters';
-import * as GapStore from '@/store/form/gap';
+import * as RootStore from '@/store/search/';
+import * as CorpusStore from '@/store/search/corpus';
+import * as HistoryStore from '@/store/search/history';
+import * as PatternStore from '@/store/search/form/patterns';
+import * as ExploreStore from '@/store/search/form/explore';
+import * as HitsStore from '@/store/search/results/hits';
+import * as InterfaceStore from '@/store/search/form/interface';
+import * as DocsStore from '@/store/search/results/docs';
+import * as FilterStore from '@/store/search/form/filters';
+import * as GapStore from '@/store/search/form/gap';
 
-import UrlStateParser from '@/store/util/url-state-parser';
+import UrlStateParser from '@/store/search/util/url-state-parser';
 
 import { getFilterString } from '@/utils/';
 import * as Api from '@/api';

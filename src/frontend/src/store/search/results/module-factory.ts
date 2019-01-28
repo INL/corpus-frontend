@@ -3,7 +3,7 @@
  */
 import {StoreBuilder, ModuleBuilder} from 'vuex-typex';
 
-import {RootState} from '@/store';
+import {RootState} from '@/store/search/';
 
 export type ModuleRootState = {
 	/** case-sensitive grouping */

@@ -6,7 +6,7 @@
 import Vue from 'vue';
 import { getStoreBuilder } from 'vuex-typex';
 
-import { RootState } from '@/store';
+import { RootState } from '@/store/search/';
 
 type ModuleRootState = {
 	value: string|null;

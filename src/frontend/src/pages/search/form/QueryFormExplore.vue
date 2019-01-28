@@ -90,11 +90,11 @@
 <script lang="ts">
 import Vue from 'vue';
 
-import * as RootStore from '@/store';
-// import * as CorpusStore from '@/store/corpus';
-import * as InterfaceStore from '@/store/form/interface';
-import * as ExploreStore from '@/store/form/explore';
-import * as UIStore from '@/store/ui';
+import * as RootStore from '@/store/search/';
+// import * as CorpusStore from '@/store/search/corpus';
+import * as InterfaceStore from '@/store/search/form/interface';
+import * as ExploreStore from '@/store/search/form/explore';
+import * as UIStore from '@/store/search/ui';
 
 import SelectPicker, {Option} from '@/components/SelectPicker.vue';
 

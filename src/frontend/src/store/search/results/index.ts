@@ -1,8 +1,8 @@
 import {getStoreBuilder} from 'vuex-typex';
 
-import * as HitsModule from '@/store/results/hits';
-import * as DocsModule from '@/store/results/docs';
-import * as GlobalModule from '@/store/results/global';
+import * as HitsModule from '@/store/search/results/hits';
+import * as DocsModule from '@/store/search/results/docs';
+import * as GlobalModule from '@/store/search/results/global';
 
 type ViewId = Exclude<keyof PartialRootState, 'global'>;
 

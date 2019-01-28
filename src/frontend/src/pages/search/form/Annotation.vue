@@ -85,8 +85,8 @@
 import Vue from 'vue';
 import { Subscription } from 'rxjs';
 
-import * as RootStore from '@/store';
-import * as PatternStore from '@/store/form/patterns';
+import * as RootStore from '@/store/search/';
+import * as PatternStore from '@/store/search/form/patterns';
 
 import SelectPicker, {Option} from '@/components/SelectPicker.vue';
 import PartOfSpeech from '@/pages/search/form/PartOfSpeech.vue';

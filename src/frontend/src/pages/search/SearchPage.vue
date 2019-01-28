@@ -13,8 +13,8 @@
 import Vue from 'vue';
 import $ from 'jquery';
 
-import * as CorpusStore from '@/store/corpus';
-import * as InterfaceStore from '@/store/form/interface';
+import * as CorpusStore from '@/store/search/corpus';
+import * as InterfaceStore from '@/store/search/form/interface';
 
 import QueryForm from '@/pages/search/form/QueryForm.vue';
 import QuerySummary from '@/pages/search/results/QuerySummary.vue';

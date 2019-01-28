@@ -199,7 +199,7 @@ export default Vue.extend({
 					})
 				}
 			})
-			.catch(err => cache.error = err) // TODO log error somewhere in component.
+			.catch(err => cache.error = err)
 			.finally(() => cache.request = null)
 		},
 

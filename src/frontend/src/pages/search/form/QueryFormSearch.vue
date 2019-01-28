@@ -93,7 +93,7 @@
 						@click="gapValue = null"
 					><span class="fa fa-times"></span></button>
 				</div>
-				<textarea type="area" v-if="gapValue != null" class="form-control gap-value-editor" v-model.lazy="gapValue"/>
+				<textarea type="area" v-if="gapValue != null" class="form-control gap-value-editor" v-model.lazy="gapValue" @keydown.tab.prevent="insertTabInText"/>
 				<span v-show="parseQueryError" id="parseQueryError" class="text-danger"><span class="fa fa-danger"></span> {{parseQueryError}}</span>
 				<span v-show="importQueryError" id="importQueryError" class="text-danger"><span class="fa fa-danger"></span> {{importQueryError}}</span>
 			</div>
@@ -221,6 +221,18 @@ export default Vue.extend({
 			}
 			GapStore.actions.gapValueFile(el.files[0]);
 			el.value = '';
+		},
+		insertTabInText(event: Event) {
+			const el = event.target as HTMLTextAreaElement;
+			let text = el.value;
+
+			const originalSelectionStart = el.selectionStart;
+			const originalSelectionEnd = el.selectionEnd;
+			const textStart = text.slice(0, originalSelectionStart);
+			const textEnd =  text.slice(originalSelectionEnd);
+
+			el.value = `${textStart}\t${textEnd}`;
+			el.selectionEnd = el.selectionStart = originalSelectionStart + 1;
 		}
 	}
 })

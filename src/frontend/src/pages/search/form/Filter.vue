@@ -85,8 +85,8 @@
 <script lang="ts">
 import Vue from 'vue';
 
-import * as CorpusStore from '@/store/corpus';
-import * as FilterStore from '@/store/form/filters';
+import * as CorpusStore from '@/store/search/corpus';
+import * as FilterStore from '@/store/search/form/filters';
 
 
 import SelectPicker, {Option} from '@/components/SelectPicker.vue';

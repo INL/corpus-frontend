@@ -39,7 +39,7 @@
 <script lang="ts">
 import Vue from 'vue';
 
-import * as CorpusStore from '@/store/corpus';
+import * as CorpusStore from '@/store/search/corpus';
 
 import { snippetParts, getDocumentUrl } from '@/utils';
 import { BLDocResults } from 'types/blacklabtypes';

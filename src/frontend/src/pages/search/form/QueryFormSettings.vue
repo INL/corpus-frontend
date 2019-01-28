@@ -74,9 +74,9 @@
 <script lang="ts">
 import Vue from 'vue';
 
-import * as RootStore from '@/store';
-import * as GlobalViewSettings from '@/store/results/global';
-import * as ResultsViewSettings from '@/store/results';
+import * as RootStore from '@/store/search/';
+import * as GlobalViewSettings from '@/store/search/results/global';
+import * as ResultsViewSettings from '@/store/search/results';
 
 import SelectPicker from '@/components/SelectPicker.vue';
 

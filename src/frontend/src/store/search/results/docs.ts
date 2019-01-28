@@ -4,10 +4,10 @@
  */
 
 import {getStoreBuilder} from 'vuex-typex';
-import {RootState} from '@/store';
-import {create, ModuleRootState, initialState as defaults} from '@/store/results/module-factory';
+import {RootState} from '@/store/search/';
+import {create, ModuleRootState, initialState as defaults} from '@/store/search/results/module-factory';
 
-const namespace = 'hits';
+const namespace = 'docs';
 const b = getStoreBuilder<RootState>();
 
 const {actions, get, getState} = create(b, namespace);
@@ -18,9 +18,9 @@ const init = () => {/**/};
 export {
 	ModuleRootState,
 
-	getState,
-	get,
 	actions,
+	get,
+	getState,
 	init,
 
 	namespace,

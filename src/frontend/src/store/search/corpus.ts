@@ -10,7 +10,7 @@ import deepFreeze from 'deep-freeze';
 
 import * as Api from '@/api';
 
-import {RootState} from '@/store';
+import {RootState} from '@/store/search/';
 
 import {normalizeIndex} from '@/utils/blacklabutils';
 

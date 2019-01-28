@@ -4,25 +4,25 @@ import VueRx from 'vue-rx';
 
 import {getStoreBuilder} from 'vuex-typex';
 
-import * as CorpusModule from '@/store/corpus';
-import * as HistoryModule from '@/store/history';
-import * as QueryModule from '@/store/query';
-import * as TagsetModule from '@/store/tagset';
-import * as UIModule from '@/store/ui';
+import * as CorpusModule from '@/store/search/corpus';
+import * as HistoryModule from '@/store/search/history';
+import * as QueryModule from '@/store/search/query';
+import * as TagsetModule from '@/store/search/tagset';
+import * as UIModule from '@/store/search/ui';
 
 // Form
-import * as FormManager from '@/store/form';
-import * as FilterModule from '@/store/form/filters';
-import * as InterfaceModule from '@/store/form/interface';
-import * as PatternModule from '@/store/form/patterns';
-import * as ExploreModule from '@/store/form/explore';
-import * as GapModule from '@/store/form/gap';
+import * as FormManager from '@/store/search/form';
+import * as FilterModule from '@/store/search/form/filters';
+import * as InterfaceModule from '@/store/search/form/interface';
+import * as PatternModule from '@/store/search/form/patterns';
+import * as ExploreModule from '@/store/search/form/explore';
+import * as GapModule from '@/store/search/form/gap';
 
 // Results
-import * as ResultsManager from '@/store/results';
-import * as DocResultsModule from '@/store/results/docs';
-import * as GlobalResultsModule from '@/store/results/global';
-import * as HitResultsModule from '@/store/results/hits';
+import * as ResultsManager from '@/store/search/results';
+import * as DocResultsModule from '@/store/search/results/docs';
+import * as GlobalResultsModule from '@/store/search/results/global';
+import * as HitResultsModule from '@/store/search/results/hits';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import { getPatternString } from '@/utils';

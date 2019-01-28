@@ -79,11 +79,11 @@ import $ from 'jquery';
 
 import {saveAs} from 'file-saver';
 
-import * as HistoryStore from '@/store/history';
-import * as RootStore from '@/store';
-import * as CorpusStore from '@/store/corpus';
+import * as HistoryStore from '@/store/search/history';
+import * as RootStore from '@/store/search/';
+import * as CorpusStore from '@/store/search/corpus';
 
-import UrlStateParser from '@/store/util/url-state-parser';
+import UrlStateParser from '@/store/search/util/url-state-parser';
 
 import UID from '@/mixins/uid';
 

@@ -1,12 +1,12 @@
 import {getStoreBuilder} from 'vuex-typex';
 
-import { RootState } from '@/store';
+import { RootState } from '@/store/search/';
 
-import * as ExploreModule from '@/store/form/explore';
-import * as FilterModule from '@/store/form/filters';
-import * as InterfaceModule from '@/store/form/interface';
-import * as PatternModule from '@/store/form/patterns';
-import * as GapModule from '@/store/form/gap';
+import * as ExploreModule from '@/store/search/form/explore';
+import * as FilterModule from '@/store/search/form/filters';
+import * as InterfaceModule from '@/store/search/form/interface';
+import * as PatternModule from '@/store/search/form/patterns';
+import * as GapModule from '@/store/search/form/gap';
 
 type PartialRootState = {
 	explore: ExploreModule.ModuleRootState;

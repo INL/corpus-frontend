@@ -7,10 +7,10 @@
 
 import {getStoreBuilder} from 'vuex-typex';
 
-import {RootState} from '@/store';
-import {ModuleRootState as PatternModuleRootState} from '@/store/form/patterns';
-import {ModuleRootState as ExploreModuleRootState} from '@/store/form/explore';
-import {ViewId as ResultViewId} from '@/store/results';
+import {RootState} from '@/store/search/';
+import {ModuleRootState as PatternModuleRootState} from '@/store/search/form/patterns';
+import {ModuleRootState as ExploreModuleRootState} from '@/store/search/form/explore';
+import {ViewId as ResultViewId} from '@/store/search/results';
 
 type ModuleRootState = {
 	form: 'search'|'explore';

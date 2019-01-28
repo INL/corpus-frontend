@@ -9,13 +9,13 @@ import Vue from 'vue';
 import VTooltip from 'v-tooltip';
 
 import {QueryBuilder, QueryBuilderOptionsDef} from '@/modules/cql_querybuilder';
-import * as RootStore from '@/store';
-import * as CorpusStore from '@/store/corpus'; // NOTE: only use after initializing root store
-import * as TagsetStore from '@/store/tagset';
-import * as PatternStore from '@/store/form/patterns';
-import UrlStateParser from '@/store/util/url-state-parser';
+import * as RootStore from '@/store/search/';
+import * as CorpusStore from '@/store/search/corpus'; // NOTE: only use after initializing root store
+import * as TagsetStore from '@/store/search/tagset';
+import * as PatternStore from '@/store/search/form/patterns';
+import UrlStateParser from '@/store/search/util/url-state-parser';
 
-import connectStreamsToVuex from '@/store/streams';
+import connectStreamsToVuex from '@/store/search/streams';
 
 import SearchPageComponent from '@/pages/search/SearchPage.vue';
 

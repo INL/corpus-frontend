@@ -78,7 +78,7 @@ import Vue from 'vue';
 //@ts-ignore
 import Slider from 'vue-slider-component';
 
-import * as CorpusStore from '@/store/corpus';
+import * as CorpusStore from '@/store/search/corpus';
 
 import SelectPicker, {Option} from '@/components/SelectPicker.vue';
 

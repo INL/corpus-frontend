@@ -9,18 +9,18 @@ import URI from 'urijs';
 import jsonStableStringify from 'json-stable-stringify';
 import {stripIndent} from 'common-tags';
 
-import { RootState } from '@/store';
-import * as CorpusModule from '@/store/corpus';
-import * as InterfaceModule from '@/store/form/interface';
-import * as FilterModule from '@/store/form/filters';
-import * as GlobalModule from '@/store/results/global';
-import * as HitsModule from '@/store/results/hits';
-import * as DocsModule from '@/store/results/docs';
-import * as PatternModule from '@/store/form/patterns';
-import * as ExploreModule from '@/store/form/explore';
-import * as GapModule from '@/store/form/gap';
+import { RootState } from '@/store/search/';
+import * as CorpusModule from '@/store/search/corpus';
+import * as InterfaceModule from '@/store/search/form/interface';
+import * as FilterModule from '@/store/search/form/filters';
+import * as GlobalModule from '@/store/search/results/global';
+import * as HitsModule from '@/store/search/results/hits';
+import * as DocsModule from '@/store/search/results/docs';
+import * as PatternModule from '@/store/search/form/patterns';
+import * as ExploreModule from '@/store/search/form/explore';
+import * as GapModule from '@/store/search/form/gap';
 
-import UrlStateParser from '@/store/util/url-state-parser';
+import UrlStateParser from '@/store/search/util/url-state-parser';
 
 import { NormalizedIndex } from '@/types/apptypes';
 import { debugLog } from '@/utils/debug';

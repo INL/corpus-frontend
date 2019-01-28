@@ -104,12 +104,12 @@
 <script lang="ts">
 import Vue from 'vue';
 
-import * as RootStore from '@/store';
-import * as CorpusStore from '@/store/corpus';
-import * as InterfaceStore from '@/store/form/interface';
-import * as PatternStore from '@/store/form/patterns';
-import * as GapStore from '@/store/form/gap';
-import * as HistoryStore from '@/store/history';
+import * as RootStore from '@/store/search/';
+import * as CorpusStore from '@/store/search/corpus';
+import * as InterfaceStore from '@/store/search/form/interface';
+import * as PatternStore from '@/store/search/form/patterns';
+import * as GapStore from '@/store/search/form/gap';
+import * as HistoryStore from '@/store/search/history';
 
 import Annotation from '@/pages/search/form/Annotation.vue';
 

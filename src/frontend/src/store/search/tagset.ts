@@ -9,8 +9,8 @@ import Axios from 'axios';
 import {getStoreBuilder} from 'vuex-typex';
 import deepFreeze from 'deep-freeze';
 
-import {RootState} from '@/store';
-import * as CorpusStore from '@/store/corpus';
+import {RootState} from '@/store/search/';
+import * as CorpusStore from '@/store/search/corpus';
 
 import {Tagset} from '@/types/apptypes';
 import {NormalizedAnnotation} from '@/types/apptypes';
@@ -29,7 +29,6 @@ const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, {
 	values: {}
 });
 
-// hide implementation detail
 const getState = b.state();
 
 const get = {

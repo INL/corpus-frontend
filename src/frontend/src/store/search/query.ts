@@ -21,14 +21,14 @@
  */
 
 import {getStoreBuilder} from 'vuex-typex';
-import {RootState} from '@/store';
+import {RootState} from '@/store/search/';
 
 import { AnnotationValue} from '@/types/apptypes';
-import * as CorpusModule from '@/store/corpus';
-import * as PatternModule from '@/store/form/patterns';
-import * as FilterModule from '@/store/form/filters';
-import * as ExploreModule from '@/store/form/explore';
-import * as GapModule from '@/store/form/gap';
+import * as CorpusModule from '@/store/search/corpus';
+import * as PatternModule from '@/store/search/form/patterns';
+import * as FilterModule from '@/store/search/form/filters';
+import * as ExploreModule from '@/store/search/form/explore';
+import * as GapModule from '@/store/search/form/gap';
 import { getFilterString, getPatternString, makeWildcardRegex } from '@/utils';
 
 type ModuleRootStateSearch<K extends keyof PatternModule.ModuleRootState> = {

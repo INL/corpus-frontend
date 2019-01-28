@@ -60,8 +60,8 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import * as TagsetStore from '@/store/tagset';
-import * as InterfaceStore from '@/store/form/interface';
+import * as TagsetStore from '@/store/search/tagset';
+import * as InterfaceStore from '@/store/search/form/interface';
 
 import {NormalizedAnnotation, Tagset} from '@/types/apptypes';
 

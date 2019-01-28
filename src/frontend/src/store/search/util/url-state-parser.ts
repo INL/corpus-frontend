@@ -6,22 +6,22 @@ import parseCql, {Attribute} from '@/utils/cqlparser';
 import parseLucene from '@/utils/luceneparser';
 import {debugLog} from '@/utils/debug';
 
-import * as CorpusModule from '@/store/corpus';
-import * as HistoryModule from '@/store/history';
-import * as TagsetModule from '@/store/tagset';
+import * as CorpusModule from '@/store/search/corpus';
+import * as HistoryModule from '@/store/search/history';
+import * as TagsetModule from '@/store/search/tagset';
 
 // Form
-import * as FilterModule from '@/store/form/filters';
-import * as InterfaceModule from '@/store/form/interface';
-import * as PatternModule from '@/store/form/patterns';
-import * as ExploreModule from '@/store/form/explore';
-import * as GapModule from '@/store/form/gap';
+import * as FilterModule from '@/store/search/form/filters';
+import * as InterfaceModule from '@/store/search/form/interface';
+import * as PatternModule from '@/store/search/form/patterns';
+import * as ExploreModule from '@/store/search/form/explore';
+import * as GapModule from '@/store/search/form/gap';
 
 // Results
-import * as ResultsManager from '@/store/results';
-import * as DocResultsModule from '@/store/results/docs';
-import * as GlobalResultsModule from '@/store/results/global';
-import * as HitResultsModule from '@/store/results/hits';
+import * as ResultsManager from '@/store/search/results';
+import * as DocResultsModule from '@/store/search/results/docs';
+import * as GlobalResultsModule from '@/store/search/results/global';
+import * as HitResultsModule from '@/store/search/results/hits';
 
 import {FilterValue, AnnotationValue} from '@/types/apptypes';
 

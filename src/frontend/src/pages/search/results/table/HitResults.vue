@@ -120,8 +120,8 @@ import URI from 'urijs';
 
 import * as qs from 'qs';
 
-import * as CorpusStore from '@/store/corpus';
-import * as UIStore from '@/store/ui';
+import * as CorpusStore from '@/store/search/corpus';
+import * as UIStore from '@/store/search/ui';
 import { snippetParts, words, getDocumentUrl } from '@/utils';
 import * as Api from '@/api';
 

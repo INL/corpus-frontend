@@ -618,13 +618,11 @@ public class MainServlet extends HttpServlet {
         return url;
     }
 
-    public String getExternalWebserviceUrl(String corpus) {
+    /** NOTE: never suffixed with corpus id, to unify behavior on different pages */
+    public String getExternalWebserviceUrl() {
         String url = adminProps.getProperty(PROP_BLS_CLIENTSIDE);
         if (!url.endsWith("/")) {
             url += "/";
-        }
-        if (corpus != null && corpus.length() > 0) {
-            url += corpus + "/";
         }
         return url;
     }

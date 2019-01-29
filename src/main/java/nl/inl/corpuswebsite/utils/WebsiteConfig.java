@@ -18,6 +18,7 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.interpol.ConfigurationInterpolator;
 import org.apache.commons.configuration2.interpol.Lookup;
 import org.apache.commons.configuration2.tree.ImmutableNode;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * Configuration read from an XML config file.
@@ -65,13 +66,13 @@ public class WebsiteConfig {
         }
     }
 
+    /** Raw id of this corpus, including username if this is a user corpus. Null if no corpus set. */
+    private String corpusId;
+
     /**
      * Name to display for this corpus, null if no corpus set. Falls back to the corpus name if not explicitly configured.
      */
     private String corpusDisplayName;
-
-    /** Raw name for this corpus, null if no corpus set. */
-    private String corpusName;
 
     /** User for this corpus, null if no corpus set or this corpus has no owner. */
     private String corpusOwner;
@@ -93,77 +94,45 @@ public class WebsiteConfig {
     /**
      *
      * @param configFile
-     * @param corpus (optional) id of the corpus
+     * @param corpusId (optional) id of the corpus
      * @param corpusConfig (optional) the blacklab configuration for the corpus
      * @throws ConfigurationException when the configFile can't be parsed.
      */
-    public WebsiteConfig(File configFile, String corpus, CorpusConfig corpusConfig, String contextPath) throws ConfigurationException {
-        load(configFile, corpus, contextPath);
-
-        if (corpusDisplayName == null) { // no displayName set
-            String backendDisplayName = (corpusConfig != null) ? corpusConfig.getDisplayName() : null;
-            if (backendDisplayName != null && !backendDisplayName.isEmpty() && !backendDisplayName.equals(corpus))
-                corpusDisplayName = backendDisplayName;
-            else
-                corpusDisplayName = MainServlet.getCorpusName(corpus); // strip username prefix from corpus ID, and use remainder
-        }
-    }
-
-    private static class RequestLookup implements Lookup {
-
-        private final String contextPath;
-
-        public RequestLookup(String contextPath) {
-            this.contextPath = contextPath;
-        }
-
-        @Override
-        public Object lookup(String variable) {
-            if ("contextPath".equals(variable)) {
-                return contextPath;
-            } else {
-                return variable + " not supported, only contextPath";
-            }
-        }
-
+    public WebsiteConfig(File configFile, String corpusId, CorpusConfig corpusConfig, String contextPath) throws ConfigurationException {
+        load(configFile, corpusId, corpusConfig, contextPath);
     }
 
     /**
      * Note that corpus may be null, when parsing the base config.
      *
      * @param configFile
-     * @param corpus (optional) raw name of the corpus, including the username (if applicable), (null when loading the
+     * @param corpusId (optional) raw name of the corpus, including the username (if applicable), (null when loading the
      *        config for the pages outside a corpus context, such as /about, /help, and / (root)))
      * @throws ConfigurationException
      */
-    private void load(File configFile, String corpus, String contextPath) throws ConfigurationException {
-        Map<String, Lookup> variableLookup = new HashMap<>(ConfigurationInterpolator.getDefaultPrefixLookups());
-        variableLookup.put("request", new RequestLookup(contextPath));
-
+    private void load(File configFile, String corpusId, CorpusConfig corpus, String contextPath) throws ConfigurationException {
         Parameters parameters = new Parameters();
         ConfigurationBuilder<XMLConfiguration> cb = new FileBasedConfigurationBuilder<>(XMLConfiguration.class)
                 .configure(parameters.fileBased()
                 .setFile(configFile)
                 .setListDelimiterHandler(new DisabledListDelimiterHandler())
-                .setPrefixLookups(variableLookup));
+                .setPrefixLookups(new HashMap<String, Lookup>(ConfigurationInterpolator.getDefaultPrefixLookups()) {{
+                    put("request", key -> key.equals("contextPath") ? contextPath : key + " not supported");
+                }}));
         // Load the specified config file
         XMLConfiguration xmlConfig = cb.getConfiguration();
 
-        corpusName = MainServlet.getCorpusName(corpus);
-        corpusOwner = MainServlet.getCorpusOwner(corpus);
-        corpusDisplayName = xmlConfig.getString("InterfaceProperties.DisplayName", null);
+        this.corpusId = corpusId;
+        // Can be specified in multiple places: search.xml, corpusConfig (in blacklab), or as a fallback, just the corpusname with some capitalization and any username removed.
+        corpusDisplayName = StringUtils.defaultIfEmpty(xmlConfig.getString("InterfaceProperties.displayName"), StringUtils.defaultIfEmpty(corpus != null ? corpus.getDisplayName() : null, MainServlet.getCorpusName(corpusId)));
+        corpusOwner = MainServlet.getCorpusOwner(corpusId);
         pathToCustomJs = xmlConfig.getString("InterfaceProperties.CustomJs");
         pathToCustomCss = xmlConfig.getString("InterfaceProperties.CustomCss");
-
-        String props = xmlConfig.getString("InterfaceProperties.PropColumns");
-        if (props != null && !props.isEmpty()) {
-            propColumns = props;
-        }
-
-
+        propColumns = StringUtils.defaultIfEmpty(xmlConfig.getString("InterfaceProperties.PropColumns"), "");
         if (corpusOwner != null) {
             linksInTopBar.add(new LinkInTopBar("My corpora", contextPath + "/corpora", false));
         }
+
         List<HierarchicalConfiguration<ImmutableNode>> myfields = xmlConfig.configurationsAt("InterfaceProperties.NavLinks.Link");
         for (Iterator<HierarchicalConfiguration<ImmutableNode>> it = myfields.iterator(); it.hasNext();) {
             HierarchicalConfiguration<ImmutableNode> sub = it.next();
@@ -192,12 +161,12 @@ public class WebsiteConfig {
         }
     }
 
-    public String getCorpusDisplayName() {
-        return corpusDisplayName;
+    public String getCorpusId() {
+        return corpusId;
     }
 
-    public String getCorpusName() {
-        return corpusName;
+    public String getCorpusDisplayName() {
+        return corpusDisplayName;
     }
 
     public String getCorpusOwner() {

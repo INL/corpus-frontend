@@ -89,25 +89,24 @@ public abstract class BaseResponse {
         this.corpus = corpus;
         this.pathParameters = pathParameters;
 
+
+        // Utils
         context.put("esc", esc);
-        context.put("websiteConfig", this.servlet.getWebsiteConfig(corpus));
-        /*
-         * TODO this doesn't work if the client lands on server.com/corpus-frontend without trailing slash,
-         * we'd need to insert the context root in the relative url, which we don't know in a reverse proxy situation.
-         * Instead..for the time being use an absolute url.
-         * context.put("pathToTop", MainServlet.getRelativeUrl("/", request));
-         */
-        context.put("pathToTop", servlet.getServletContext().getContextPath());
-        context.put("corpusName", corpus);
         // For use in queryParameters to ensure clients don't cache old css/js when the application has updated.
         // During development, there's usually no WAR, so no build time either, but we assume the developer knows to ctrl+f5
         context.put("cache", servlet.getWarBuildTime().hashCode());
-        context.put("googleAnalyticsKey", this.servlet.getGoogleAnalyticsKey());
-        context.put("brandLink", corpus == null ? "" : corpus + "/" + "search");
+
+        // Stuff for use in constructing the page
+        context.put("websiteConfig", this.servlet.getWebsiteConfig(corpus));
         context.put("buildTime", servlet.getWarBuildTime());
         context.put("jspath", servlet.getAdminProps().getProperty(MainServlet.PROP_JSPATH));
-        logger.info("jspath {}", servlet.getAdminProps().getProperty(MainServlet.PROP_JSPATH));
+        context.put("googleAnalyticsKey", this.servlet.getGoogleAnalyticsKey());
 
+        // Clientside js variables (some might be used in vm directly)
+        context.put("pathToTop", servlet.getServletContext().getContextPath());
+        context.put("blsUrl", servlet.getExternalWebserviceUrl());
+
+        logger.debug("jspath {}", servlet.getAdminProps().getProperty(MainServlet.PROP_JSPATH));
 
         // Escape all data written into the velocity templates by default
         // Only allow access to the raw string if the expression contains the word "unescaped"

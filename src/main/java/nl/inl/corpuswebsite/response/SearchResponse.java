@@ -12,8 +12,6 @@ public class SearchResponse extends BaseResponse {
 
     @Override
     protected void completeRequest() {
-        context.put("blsUrl", servlet.getExternalWebserviceUrl(corpus));
-
         CorpusConfig config = servlet.getCorpusConfig(corpus);
         if (config == null) {
             try {

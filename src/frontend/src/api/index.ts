@@ -8,7 +8,7 @@ import * as BLTypes from '@/types/blacklabtypes';
 import { ApiError } from '@/types/apptypes';
 
 const blacklabEndpoint = createEndpoint({
-	baseURL: BLS_URL.substring(0, BLS_URL.lastIndexOf('/', BLS_URL.length-2)+1),
+	baseURL: BLS_URL.replace(/\/*$/, '/'),
 	params: {
 		outputformat: 'json',
 	},

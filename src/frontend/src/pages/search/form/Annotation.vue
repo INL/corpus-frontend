@@ -97,8 +97,6 @@ import { NormalizedAnnotation } from '@/types/apptypes';
 import Autocomplete from '@/mixins/autocomplete';
 import UID from '@/mixins/uid';
 
-declare const BLS_URL: string;
-
 // TODO use description, use annotatedField description and properties and stuff
 
 export default Vue.extend({

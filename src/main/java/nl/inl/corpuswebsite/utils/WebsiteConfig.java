@@ -7,8 +7,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang.StringUtils;
-
 import nl.inl.corpuswebsite.MainServlet;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.XMLConfiguration;
@@ -84,8 +82,8 @@ public class WebsiteConfig {
     /** Custom js to use */
     private String pathToCustomJs;
 
-    /** properties to show in result columns, empty if no corpus set */
-    private String[] propColumns = new String[] {};
+    /** properties to show in result columns, empty string if no corpus set or not configured for this corpus */
+    private String propColumns = "";
 
     /** Link to put in the top bar */
     private List<LinkInTopBar> linksInTopBar = new ArrayList<>();
@@ -100,9 +98,6 @@ public class WebsiteConfig {
      * @throws ConfigurationException when the configFile can't be parsed.
      */
     public WebsiteConfig(File configFile, String corpus, CorpusConfig corpusConfig, String contextPath) throws ConfigurationException {
-        if (corpusConfig != null)
-            initProps(corpusConfig);
-
         load(configFile, corpus, contextPath);
 
         if (corpusDisplayName == null) { // no displayName set
@@ -114,42 +109,14 @@ public class WebsiteConfig {
         }
     }
 
-    /**
-     * Initializes the max 3 properties to show in columns, lemma and pos, when present, will be in these 3.
-     *
-     * @param corpusConfig
-     */
-    private void initProps(CorpusConfig corpusConfig) {
-        if (corpusConfig == null)
-            return;
-
-        List<FieldDescriptor> fd = new ArrayList<>(3);
-
-        List<FieldDescriptor> allDescriptors = new ArrayList<>(corpusConfig.getUngroupedPropertyFields());
-        corpusConfig.getPropertyFieldGroups().values().forEach(allDescriptors::addAll);
-
-        // Add lemma and pos
-        allDescriptors.stream()
-            .filter(pf -> ("lemma".equals(pf.getId()) || "pos".equals(pf.getId())))
-            .forEach(fd::add);
-
-        // Add first other fields in the list until we hit 3 fields
-        allDescriptors.stream()
-            .filter(pf -> fd.size() < 3 && !fd.contains(pf) && !pf.isMainProperty())
-            .limit(Math.max(0, 3 - fd.size()))
-            .forEach(fd::add);
-
-        propColumns = fd.stream().map(FieldDescriptor::getId).toArray(String[]::new);
-    }
-    
-    private static class RequesLookup implements Lookup {
+    private static class RequestLookup implements Lookup {
 
         private final String contextPath;
 
-        public RequesLookup(String contextPath) {
+        public RequestLookup(String contextPath) {
             this.contextPath = contextPath;
         }
-        
+
         @Override
         public Object lookup(String variable) {
             if ("contextPath".equals(variable)) {
@@ -158,7 +125,7 @@ public class WebsiteConfig {
                 return variable + " not supported, only contextPath";
             }
         }
-        
+
     }
 
     /**
@@ -170,11 +137,11 @@ public class WebsiteConfig {
      * @throws ConfigurationException
      */
     private void load(File configFile, String corpus, String contextPath) throws ConfigurationException {
-        Map<String, Lookup> variableLookup = new HashMap<String, Lookup>(ConfigurationInterpolator.getDefaultPrefixLookups());
-        variableLookup.put("request", new RequesLookup(contextPath));
-        
+        Map<String, Lookup> variableLookup = new HashMap<>(ConfigurationInterpolator.getDefaultPrefixLookups());
+        variableLookup.put("request", new RequestLookup(contextPath));
+
         Parameters parameters = new Parameters();
-        ConfigurationBuilder<XMLConfiguration> cb = new FileBasedConfigurationBuilder<XMLConfiguration>(XMLConfiguration.class)
+        ConfigurationBuilder<XMLConfiguration> cb = new FileBasedConfigurationBuilder<>(XMLConfiguration.class)
                 .configure(parameters.fileBased()
                 .setFile(configFile)
                 .setListDelimiterHandler(new DisabledListDelimiterHandler())
@@ -190,10 +157,10 @@ public class WebsiteConfig {
 
         String props = xmlConfig.getString("InterfaceProperties.PropColumns");
         if (props != null && !props.isEmpty()) {
-            propColumns = StringUtils.split(props);
+            propColumns = props;
         }
 
-        
+
         if (corpusOwner != null) {
             linksInTopBar.add(new LinkInTopBar("My corpora", contextPath + "/corpora", false));
         }
@@ -210,7 +177,7 @@ public class WebsiteConfig {
 
             if (relative)
                 href = contextPath + "/" + href;
-            
+
             linksInTopBar.add(new LinkInTopBar(label, href, newWindow));
         }
 
@@ -264,6 +231,6 @@ public class WebsiteConfig {
     }
 
     public String getPropColumns() {
-        return StringUtils.join(propColumns, ",");
+        return propColumns;
     }
 }

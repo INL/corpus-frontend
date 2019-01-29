@@ -94,8 +94,6 @@ import SelectPicker, {Option} from '@/components/SelectPicker.vue';
 //@ts-ignore
 import Autocomplete from '@/mixins/autocomplete';
 
-declare const BLS_URL: string;
-
 type ValueAdapter =
 null| // uninitialized
 {[key: string]: boolean}| // checkbox

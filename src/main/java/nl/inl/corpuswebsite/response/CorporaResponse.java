@@ -20,8 +20,6 @@ public class CorporaResponse extends BaseResponse {
     public void init(HttpServletRequest request, HttpServletResponse response, MainServlet servlet, String corpus, List<String> pathParameters)
         throws ServletException {
         super.init(request, response, servlet, corpus, pathParameters);
-
-        context.put("blsUrl", servlet.getExternalWebserviceUrl(""));
     }
 
     @Override

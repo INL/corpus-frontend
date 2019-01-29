@@ -157,4 +157,7 @@ declare global {
 	// tslint:disable-next-line
 	const Vue: typeof _Vue;
 	const vueRoot: InstanceType<typeof SearchPageComponent>&{store: typeof RootStore.store};
+
+	const BLS_URL: string;
+	const PROPS_IN_COLUMNS: string[];
 }

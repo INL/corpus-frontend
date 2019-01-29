@@ -38,8 +38,8 @@
 					</span>
 				</th>
 
-				<th v-for="annotation in shownAnnotations" :key="annotation.id">
-					<a @click="annotation.hasForwardIndex ? changeSort(`hit:${annotation.id}`) : undefined" class="sort" :title="`Sort by ${annotation.displayName}`">{{annotation.displayName}}</a>
+				<th v-for="id in shownAnnotations" :key="id">
+					<a @click="annotation.hasForwardIndex ? changeSort(`hit:${id}`) : undefined" class="sort" :title="`Sort by ${annotationDisplayNames[id]}`">{{annotationDisplayNames[id]}}</a>
 				</th>
 			</tr>
 		</thead>
@@ -130,8 +130,6 @@ import AudioPlayer from '@/components/AudioPlayer.vue';
 import * as BLTypes from '@/types/blacklabtypes';
 
 import {debugLog} from '@/utils/debug';
-
-declare const BLS_URL: string;
 
 type HitRow = {
 	type: 'hit';
@@ -225,7 +223,7 @@ export default Vue.extend({
 					right: parts[this.rightIndex],
 					hit: parts[1],
 					props: hit.match,
-					other: this.shownAnnotations.map(annot => words(hit.match, annot.id, false, '')),
+					other: this.shownAnnotations.map(annot => words(hit.match, annot, false, '')),
 					docPid: hit.docPid,
 					start: hit.start,
 					end: hit.end
@@ -240,7 +238,7 @@ export default Vue.extend({
 		annotations: CorpusStore.get.annotations,
 		annotationDisplayNames: CorpusStore.get.annotationDisplayNames,
 		firstMainAnnotation: CorpusStore.get.firstMainAnnotation,
-		shownAnnotations: CorpusStore.get.shownAnnotations,
+		shownAnnotations(): string[] { return UIStore.getState().results.hits.shownAnnotations; },
 		textDirection: CorpusStore.get.textDirection,
 
 		corpus() { return CorpusStore.getState().id; },

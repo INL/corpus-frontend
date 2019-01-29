@@ -35,7 +35,8 @@ type ModuleRootState = {
 				start: number,
 				end: number,
 				url: string
-			}))
+			})),
+			shownAnnotations: string[];
 		};
 		docs: {};
 	};
@@ -54,7 +55,8 @@ const initialState: ModuleRootState = {
 	},
 	results: {
 		hits: {
-			getAudioPlayerData: null
+			getAudioPlayerData: null,
+			shownAnnotations: []
 		},
 		docs: {}
 	}
@@ -75,12 +77,38 @@ const actions = {
 };
 
 const init = () => {
+	const allAnnotations = CorpusStore.get.annotationDisplayNames();
+	const mainAnnotation = CorpusStore.get.firstMainAnnotation().id;
+
 	const newInitialState: ModuleRootState = JSON.parse(JSON.stringify(initialState));
-	newInitialState.explore.shownAnnotations = CorpusStore.get.annotations().map(annot => ({
-		label: annot.displayName,
-		value: annot.id
+	newInitialState.explore.shownAnnotations = Object.entries(allAnnotations).map(([value, label]) => ({
+		label,
+		value
 	}));
-	newInitialState.explore.defaultAnnotation = CorpusStore.get.firstMainAnnotation().id;
+	newInitialState.explore.defaultAnnotation = mainAnnotation;
+
+	// Validate or initialize shown annotations for results
+	// Use PROPS_IN_COLUMNS if configured
+	// Otherwise show up to the first 3 annotations as defined by their displayOrder,
+	// Giving precedence to 'lemma' and 'pos' if they exist, regardless of their displayOrder
+	// and omitting the default main annotation (usually 'word') - as that's always displayed.
+	const shownAnnotations = PROPS_IN_COLUMNS.filter(annot => allAnnotations[annot] != null && annot !== mainAnnotation);
+	if (!shownAnnotations.length) {
+		// These have precedence if they exist.
+		if (allAnnotations.lemma != null) { shownAnnotations.push('lemma'); }
+		if (allAnnotations.pos != null) { shownAnnotations.push('pos'); }
+
+		// Now add other annotations until we hit 3 annotations.
+		Object.values(CorpusStore.getState().annotatedFields)
+		.flatMap(f => f.displayOrder)
+		.filter(annot => annot !== mainAnnotation && !shownAnnotations.includes(annot))
+		.forEach(annot => {
+			if (shownAnnotations.length < 3) {
+				shownAnnotations.push(annot);
+			}
+		});
+	}
+	newInitialState.results.hits.shownAnnotations = shownAnnotations;
 
 	actions.replace(newInitialState);
 };

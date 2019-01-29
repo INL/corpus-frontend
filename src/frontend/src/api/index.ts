@@ -7,8 +7,6 @@ import {normalizeIndexOld, normalizeFormatOld} from '@/utils/blacklabutils';
 import * as BLTypes from '@/types/blacklabtypes';
 import { ApiError } from '@/types/apptypes';
 
-declare const BLS_URL: string;
-
 const blacklabEndpoint = createEndpoint({
 	baseURL: BLS_URL.substring(0, BLS_URL.lastIndexOf('/', BLS_URL.length-2)+1),
 	params: {

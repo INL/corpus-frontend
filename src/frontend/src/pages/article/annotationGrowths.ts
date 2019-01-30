@@ -23,18 +23,17 @@ export default Vue.extend({
 				const seen = {} as {[key: string]: boolean};
 
 				const values = this.snippet.match[annot.id];
-				const invLength = 100/values.length;
+				const invLength = 100/(values.length+1);
 
 				return {
 					type: 'line',
 					name: annot.displayName,
 					keys: ['name', 'x', 'x2', 'y', 'y2'],
 					data: (() => {
-						const ret: any[][] = values.map((v, i) => [v, i, i*invLength, seen[v] ? uniques : (seen[v] = true, ++uniques)]);
+						const ret: any[][] = values.map((v, i) => [v, i+1, (i+1)*invLength, seen[v] ? uniques : (seen[v] = true, ++uniques)]);
 						const invUniques = 100/uniques;
 						ret.forEach(r => r.push(r[3]*invUniques));
 						return ret as Array<[string, number]>; // highchart typings aren't fully correct with what's actually supported, do some casting so we "comply"
-
 
 						// const ret = values.map((v, i) => ({
 						// 	name: v,

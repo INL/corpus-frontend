@@ -7,6 +7,8 @@ import {normalizeIndexOld, normalizeFormatOld} from '@/utils/blacklabutils';
 import * as BLTypes from '@/types/blacklabtypes';
 import { ApiError } from '@/types/apptypes';
 
+declare const BLS_URL: string;
+
 const blacklabEndpoint = createEndpoint({
 	baseURL: BLS_URL.replace(/\/*$/, '/'),
 	params: {
@@ -15,8 +17,8 @@ const blacklabEndpoint = createEndpoint({
 	paramsSerializer: params => qs.stringify(params)
 });
 
-// Some blacklab-server request creators
-const paths = {
+/** Contains url mappings for different requests to blacklab-server */
+export const paths = {
 	/*
 		Stupid issue, sending a request to /blacklab-server redirects to /blacklab-server/
 		Problem is, the redirect response is missing the CORS header
@@ -34,11 +36,20 @@ const paths = {
 	formatContent: (id: string) =>                  `input-formats/${id}/`,
 	formatXslt: (id: string) =>                     `input-formats/${id}/xslt`,
 
+	docInfo: (indexId: string, docId: string) =>    `${indexId}/docs/${docId}`,
 	hits: (indexId: string) =>                      `${indexId}/hits/`,
 	hitsCsv: (indexId: string) =>                   `${indexId}/hits-csv/`,
 	docs: (indexId: string) =>                      `${indexId}/docs/`,
 	docsCsv: (indexId: string) =>                   `${indexId}/docs-csv/`,
-	snippet: (indexId: string, docId: string ) =>   `${indexId}/docs/${docId}/snippet/`
+	snippet: (indexId: string, docId: string) =>    `${indexId}/docs/${docId}/snippet/`,
+
+	autocompleteAnnotation: (
+		indexId: string,
+		annotatedFieldId: string,
+		annotationId: string) =>                    `${indexId}/autocomplete/${annotatedFieldId}/${annotationId}/`,
+	autocompleteMetadata: (
+		indexId: string,
+		metadataFieldId: string) =>                 `${indexId}/autocomplete/${metadataFieldId}/`
 };
 
 /**
@@ -148,6 +159,9 @@ export const blacklab = {
 	deleteCorpus: (id: string) => blacklabEndpoint
 		.delete<BLTypes.BLResponse>(paths.index(id)),
 
+	getDocumentInfo: (indexId: string, documentId: string, params: { query?: string; } = {}, requestParameters?: AxiosRequestConfig) =>
+		getOrPost<BLTypes.BLDocument>(paths.docInfo(indexId, documentId), params, requestParameters),
+
 	getHits: (indexId: string, params: BLTypes.BLSearchParameters, requestParameters?: AxiosRequestConfig) => {
 		const {token: cancelToken, cancel} = axios.CancelToken.source();
 
@@ -255,7 +269,9 @@ export const blacklab = {
 
 // Server has issues with long urls.
 function getOrPost<R>(path: string, params: any, settings?: AxiosRequestConfig): Promise<R> {
-	const usePost = params && (params.patt ? params.patt.length : 0)+(params.filter ? params.filter.length : 0)+(params.pattgapdata ? params.pattgapdata.length : 0) > 1000;
+	const queryString = params ? qs.stringify(params) : '';
+	const usePost = queryString.length > 1000;
+	// const usePost = params && (params.patt ? params.patt.length : 0)+(params.filter ? params.filter.length : 0)+(params.pattgapdata ? params.pattgapdata.length : 0) > 1000;
 	if (usePost) {
 		settings = settings || {};
 		settings.headers = settings.headers || {};
@@ -268,7 +284,7 @@ function getOrPost<R>(path: string, params: any, settings?: AxiosRequestConfig):
 			settings.params.outputformat = params.outputformat;
 		}
 
-		return blacklabEndpoint.post<R>(path, qs.stringify(params), settings);
+		return blacklabEndpoint.post<R>(path, queryString, settings);
 	} else {
 		return blacklabEndpoint.get<R>(path, { ...settings, params});
 	}

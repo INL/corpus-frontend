@@ -94,6 +94,8 @@ public class ArticleResponse extends BaseResponse {
         contentRequestParameters.put("wordstart", new String[] { Integer.toString(getWordStart()) });
         contentRequestParameters.put("wordend", new String[] { Integer.toString(getWordEnd()) });
 
+        context.put("docId", pid);
+
         try {
             // NOTE: document not necessarily xml, though it might have some <hl/> tags injected to mark query hits
             String documentContents = articleContentRequest.makeRequest(contentRequestParameters);

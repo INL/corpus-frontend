@@ -85,7 +85,10 @@
 import Vue from 'vue';
 import { Subscription } from 'rxjs';
 
+import {paths} from '@/api';
+
 import * as RootStore from '@/store/search/';
+import * as CorpusStore from '@/store/search/corpus';
 import * as PatternStore from '@/store/search/form/patterns';
 
 import SelectPicker, {Option} from '@/components/SelectPicker.vue';
@@ -122,7 +125,7 @@ export default Vue.extend({
 		options(): Option[] { return this.annotation.values || [] },
 
 		autocomplete(): boolean { return this.annotation.uiType === 'combobox'; },
-		autocompleteUrl(): string { return `${BLS_URL}/autocomplete/${this.annotation.annotatedFieldId}/${this.annotation.id}`},
+		autocompleteUrl(): string { return paths.autocompleteAnnotation(CorpusStore.getState().id, this.annotation.annotatedFieldId, this.annotation.id); },
 
 		value: {
 			get(): string {

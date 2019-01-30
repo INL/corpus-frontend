@@ -197,9 +197,9 @@ export default Vue.extend({
 					prevPid = pid;
 					const doc = infos[pid]
 
-					const title = doc[titleField] || 'UNKNOWN';
-					const author = doc[authorField] ? ' by ' + doc[authorField] : '';
-					const date = doc[dateField] ? ' (' + doc[dateField] + ')' : '';
+					const title = titleField && doc[titleField] || 'UNKNOWN';
+					const author = authorField && doc[authorField] ? ' by ' + doc[authorField] : '';
+					const date = dateField && doc[dateField] ? ' (' + doc[dateField] + ')' : '';
 
 					// TODO the clientside url generation story... https://github.com/INL/corpus-frontend/issues/95
 					// Ideally use absolute urls everywhere, if the application needs to be proxied, let the proxy server handle it.

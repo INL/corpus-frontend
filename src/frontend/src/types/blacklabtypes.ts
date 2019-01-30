@@ -143,6 +143,17 @@ export interface BLServer {
 // IndexStructure/IndexMetadata
 // ----------------------------
 
+export type BLDocFields = {
+	/** Key to a field in BLDocInfo, missing if unknown */
+	authorField?: string;
+	/** Key to a field in BLDocInfo, missing if unknown */
+	dateField?: string;
+	/** Key to a field in BLDocInfo, missing if unknown */
+	pidField: string;
+	/** Key to a field in BLDocInfo, missing if unknown */
+	titleField: string;
+};
+
 /** Property of a word, usually 'lemma', 'pos', 'word' */
 export interface BLAnnotation {
 	description: string;
@@ -230,16 +241,7 @@ export interface BLIndexMetadataInternal {
 	displayName: string;
 	/** key of a BLFormat */
 	documentFormat?: string;
-	fieldInfo: {
-		/** Key to a field in BLDocInfo, empty if unknown */
-		authorField: string;
-		/** Key to a field in BLDocInfo, empty if unknown */
-		dateField: string;
-		/** Key to a field in BLDocInfo, empty if unknown */
-		pidField: string;
-		/** Key to a field in BLDocInfo, empty if unknown */
-		titleField: string;
-	};
+	fieldInfo: BLDocFields;
 	/** Id of this index */
 	indexName: string;
 	/** Only available when status === 'indexing' */
@@ -277,6 +279,12 @@ type BLIndexMetadataV2 = BLIndexMetadataInternal&{
 
 export type BLIndexMetadata = BLIndexMetadataV1|BLIndexMetadataV2;
 export function isIndexMetadataV1(v: BLIndexMetadata): v is BLIndexMetadataV1 { return (v as any).complexFields != null; }
+
+export type BLDocument = {
+	docPid: string;
+	docInfo: BLDocInfo;
+	docFields: BLDocFields;
+};
 
 // --------------
 // Search results
@@ -320,13 +328,7 @@ export type BLSearchSummary = {
 	actualWindowSize: number;
 	countTime?: number;
 	/** These fields have a special meaning in the BLDocResult.docInfo */
-	docFields: {
-		// TODO - might be optional or might contain extra fields?
-		authorField: string;
-		dateField: string;
-		pidField: string;
-		titleField: string;
-	};
+	docFields: BLDocFields;
 	requestedWindowSize: number;
 	searchParam: BLSearchParameters;
 	searchTime: number;
@@ -380,9 +382,12 @@ export interface BLHitSnippet {
 }
 
 /** Contains all metadata for a document */
-export interface BLDocInfo {
+export type BLDocInfo = {
+	lengthInTokens: number;
+	mayView: boolean;
+}&{
 	[key: string]: string;
-}
+};
 
 /** Blacklab response to a query for documents without grouping */
 export interface BLDocResults {

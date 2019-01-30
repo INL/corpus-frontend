@@ -85,9 +85,10 @@
 <script lang="ts">
 import Vue from 'vue';
 
+import {paths} from '@/api';
+
 import * as CorpusStore from '@/store/search/corpus';
 import * as FilterStore from '@/store/search/form/filters';
-
 
 import SelectPicker, {Option} from '@/components/SelectPicker.vue';
 
@@ -122,7 +123,7 @@ export default Vue.extend({
 		options(): Option[] { return this.filter.values || []; },
 
 		autocomplete(): boolean { return this.filter.uiType === 'combobox'; },
-		autocompleteUrl(): string { return `${BLS_URL}/autocomplete/${this.filter.id}`},
+		autocompleteUrl(): string { return paths.autocompleteMetadata(CorpusStore.getState().id, this.filter.id); },
 
 		storeValue(): string[] { return FilterStore.get.filterValue(this.id).values; }
 	},

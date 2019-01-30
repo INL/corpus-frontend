@@ -101,16 +101,7 @@ export type NormalizedIndex = {
 	documentCount: number;
 	/** key of a BLFormat */
 	documentFormat?: string;
-	fieldInfo: {
-		/** Key to a field in BLDocInfo and id of a metadataField, empty if unknown */
-		authorField: string;
-		/** Key to a field in BLDocInfo and id of a metadataField, empty if unknown */
-		dateField: string;
-		/** Key to a field in BLDocInfo and id of a metadataField, empty if unknown */
-		pidField: string;
-		/** Key to a field in BLDocInfo and id of a metadataField, empty if unknown */
-		titleField: string;
-	};
+	fieldInfo: BLTypes.BLDocFields;
 	/** Id of this index */
 	id: string;
 	/** If no groups are defined by blacklab itself, all metadata fields are placed in a single group called 'Metadata' */

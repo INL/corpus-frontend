@@ -125,7 +125,7 @@ $(document).ready(() => {
 	RootStore.init();
 
 	// We can render before the tagset loads, the form just won't be populated from the url yet.
-	const vueRoot = new Vue({
+	(window as any).vueRoot = new Vue({
 		store: RootStore.store,
 		render: h => h(SearchPageComponent),
 		mounted() {
@@ -146,18 +146,7 @@ $(document).ready(() => {
 			});
 		}
 	}).$mount(document.querySelector('#vue-root')!);
-
-	(window as any).vueRoot = vueRoot;
 });
 
 // Expose and declare some globals
-const _Vue = (window as any).Vue = Vue;
-
-declare global {
-	// tslint:disable-next-line
-	const Vue: typeof _Vue;
-	const vueRoot: InstanceType<typeof SearchPageComponent>&{store: typeof RootStore.store};
-
-	const BLS_URL: string;
-	const PROPS_IN_COLUMNS: string[];
-}
+(window as any).Vue = Vue;

@@ -83,9 +83,9 @@ export default Vue.extend({
 							after
 						}
 					}) : [],
-					summary: (info[titleField] || 'UNKNOWN') + (info[authorField] ? ' by ' + info[authorField] : ''),
+					summary: (info[titleField!] || 'UNKNOWN') + (info[authorField!] ? ' by ' + info[authorField!] : ''),
 					href: getDocumentUrl(pid, this.results.summary.searchParam.patt),
-					date: info[dateField] || '',
+					date: info[dateField!] || '',
 					hits: doc.numberOfHits,
 					docPid: pid,
 				};

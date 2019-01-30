@@ -76,6 +76,8 @@ const actions = {
 	replace: b.commit((state, payload: ModuleRootState) => Object.assign(state, JSON.parse(JSON.stringify(payload))), 'replace'),
 };
 
+declare const PROPS_IN_COLUMNS: string[];
+
 const init = () => {
 	const allAnnotations = CorpusStore.get.annotationDisplayNames();
 	const mainAnnotation = CorpusStore.get.firstMainAnnotation().id;

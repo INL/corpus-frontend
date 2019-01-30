@@ -28,18 +28,24 @@ export default Vue.extend({
 				return {
 					type: 'line',
 					name: annot.displayName,
+					keys: ['name', 'x', 'x2', 'y', 'y2'],
 					data: (() => {
-						const ret = values.map((v, i) => ({
-							name: v,
-							x: i,
-							x2: i * invLength,
-							y: seen[v] ? uniques : (seen[v] = true, ++uniques),
-							y2: 0
-						}));
-
+						const ret: any[][] = values.map((v, i) => [v, i, i*invLength, seen[v] ? uniques : (seen[v] = true, ++uniques)]);
 						const invUniques = 100/uniques;
-						ret.forEach(v => (v.y2 = v.y*invUniques, v));
-						return ret;
+						ret.forEach(r => r.push(r[3]*invUniques));
+						return ret as Array<[string, number]>; // highchart typings aren't fully correct with what's actually supported, do some casting so we "comply"
+
+
+						// const ret = values.map((v, i) => ({
+						// 	name: v,
+						// 	x: i,
+						// 	x2: i * invLength,
+						// 	y: ,
+						// 	y2: 0
+						// }));
+						// const invUniques = 100/uniques;
+						// ret.forEach(v => (v.y2 = v.y*invUniques, v));
+						// return ret;
 					})(),
 				};
 			});

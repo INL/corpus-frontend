@@ -2,7 +2,11 @@ import 'bootstrap';
 import $ from 'jquery';
 import Vue from 'vue';
 // @ts-ignore
+import * as Highcharts from 'highcharts';
 import HighchartsVue from 'highcharts-vue';
+import HighchartsExporting from 'highcharts/modules/exporting';
+import HighchartsExportingData from 'highcharts/modules/export-data';
+
 import tippy from 'tippy.js';
 import Mustache from 'mustache';
 
@@ -147,6 +151,9 @@ $(document).ready(function() {
 // ---------------------------
 // Vue initialization & config
 // ---------------------------
+
+HighchartsExporting(Highcharts);
+HighchartsExportingData(Highcharts);
 
 Vue.use(HighchartsVue);
 

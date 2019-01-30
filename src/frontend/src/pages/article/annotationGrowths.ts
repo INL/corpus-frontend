@@ -34,17 +34,6 @@ export default Vue.extend({
 						const invUniques = 100/uniques;
 						ret.forEach(r => r.push(r[3]*invUniques));
 						return ret as Array<[string, number]>; // highchart typings aren't fully correct with what's actually supported, do some casting so we "comply"
-
-						// const ret = values.map((v, i) => ({
-						// 	name: v,
-						// 	x: i,
-						// 	x2: i * invLength,
-						// 	y: ,
-						// 	y2: 0
-						// }));
-						// const invUniques = 100/uniques;
-						// ret.forEach(v => (v.y2 = v.y*invUniques, v));
-						// return ret;
 					})(),
 				};
 			});

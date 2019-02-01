@@ -197,7 +197,7 @@ export default Vue.extend({
 		'data-class': [String, Object],
 		'data-style': [String, Object],
 		'data-title': String,
- 	},
+	},
 	data: () =>  ({
 		isOpen: false,
 		emitChangeOnClose: false,
@@ -376,7 +376,7 @@ export default Vue.extend({
 				this.open();
 				Vue.nextTick(() => el.focus());
 			} else {
-				 el.focus();
+				el.focus();
 			}
 		},
 
@@ -476,7 +476,7 @@ export default Vue.extend({
 					if (this.isOpen) {
 						this.reposition();
 					}
-				};
+				}
 			}
 		},
 		value: {
@@ -551,7 +551,7 @@ export default Vue.extend({
 	},
 	created() {
 		if (this.editable && this.multiple) {
-			throw new Error("Editable not supported with multiple");
+			throw new Error('Editable not supported with multiple');
 		}
 	},
 	mounted() {

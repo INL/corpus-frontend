@@ -144,12 +144,13 @@ public class ArticleResponse extends BaseResponse {
                             int pageStart = getWordStart();
                             int pageEnd = getWordEnd();
                             int pageSize = servlet.getWordsToShow();
+                            String q = (query != null && !query.isEmpty()) ? ("&query="+esc.url(query)) : "";
 
                             if (pageStart > 0) {
-                                context.put("previous_page", "?wordstart="+Math.max(0, pageStart-pageSize)+"&wordend="+pageStart);
+                                context.put("previous_page", "?wordstart="+Math.max(0, pageStart-pageSize)+"&wordend="+pageStart+(q.isEmpty() ? "" : q));
                             }
                             if (pageEnd < docLength) {
-                                context.put("next_page", "?wordstart="+(pageEnd)+"&wordend="+Math.min(pageEnd+pageSize, docLength));
+                                context.put("next_page", "?wordstart="+(pageEnd)+"&wordend="+Math.min(pageEnd+pageSize, docLength)+(q.isEmpty() ? "" : q));
                             }
                         }
                         return t.transform(meta);

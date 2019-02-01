@@ -97,7 +97,7 @@ export default Vue.extend({
 		submit() {
 			if (this.activeForm === 'explore' && this.subCorpusStats && this.subCorpusStats.summary.tokensInMatchingDocuments! > 500_000) {
 				const msg = stripIndent`
-					You have selected a subcorpus of over ${new Number(500_000).toLocaleString()} tokens.
+					You have selected a subcorpus of over ${(500_000).toLocaleString()} tokens.
 					Please note that this query, on first execution, may take a considerable amount of time to complete.
 					Proceed with caution.
 
@@ -118,15 +118,14 @@ export default Vue.extend({
 			},
 			e => {
 				this.subCorpusStats = null;
-				this.error = e
+				this.error = e;
 			}
-		))
+		));
 	},
 	destroyed() {
 		this.subscriptions.forEach(s => s.unsubscribe());
 	}
-})
-
+});
 </script>
 
 <style lang="scss">

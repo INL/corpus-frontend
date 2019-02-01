@@ -41,7 +41,8 @@ interface DataEventPayloadMap {
 // and add data to them.
 
 // blacklab-server url
-let blsUrl: string;
+declare const BLS_URL: string;
+const blsUrl: string = BLS_URL;
 // Contains the full list of available corpora
 let corpora: AppTypes.NormalizedIndexOld[] = [];
 // Contains the full list of available formats
@@ -134,15 +135,15 @@ createHandler({selector: 'tbody[data-autoupdate="format"]', event: DataEvent.FOR
 	// Always show user's own formats, even if isVisible == false
 	newFormats = newFormats.filter(f => f.owner === serverInfo.user.id);
 
-	const template =
-	'{{#formats}}'+
-	'<tr>'+
-		'<td>{{shortId}}</td>'+
-		'<td>{{displayName}}</td>'+
-		'<td><a data-format-operation="edit" class="fa fa-pencil" data-format-id="{{id}}" title="Edit format \'{{displayName}}\'" href="javascript:void(0)"></a></td>'+
-		'<td><a data-format-operation="delete" class="fa fa-trash" data-format-id="{{id}}" title="Delete format \'{{displayName}}\'" href="javascript:void(0)"></a></td>'+
-	'</tr>'+
-	'{{/formats}}';
+	const template =`
+	{{#formats}}
+	<tr>
+		<td>{{shortId}}</td>
+		<td>{{displayName}}</td>
+		<td><a data-format-operation="edit" class="fa fa-pencil" data-format-id="{{id}}" title="Edit format '{{displayName}}'" href="javascript:void(0)"></a></td>
+		<td><a data-format-operation="delete" class="fa fa-trash" data-format-id="{{id}}" title="Delete format '{{displayName}}'" href="javascript:void(0)"></a></td>
+	</tr>
+	{{/formats}}`;
 
 	this.html(Mustache.render(template, {
 		formats: newFormats,
@@ -156,17 +157,17 @@ createHandler({selector: 'select[data-autoupdate="format"]', event: DataEvent.FO
 		return showNonConfigBased || format.configurationBased;
 	});
 
-	const template =
-	'<optgroup label="Presets">' +
-		'{{#builtinFormats}}' +
-		'<option title="{{displayName}}" value="{{id}}" data-content="{{displayName}} <small>({{shortId}})</small>">{{displayName}}</option>' +
-		'{{/builtinFormats}}' +
-	'</optgroup>' +
-	'<optgroup label="{{userName}}">' +
-		'{{#userFormats}}' +
-		'<option title="{{displayName}}" value="{{id}}" data-content="{{displayName}} <small>({{shortId}})</small>">{{displayName}}</option>' +
-		'{{/userFormats}}' +
-	'</optgroup>';
+	const template = `
+	<optgroup label="Presets">
+		{{#builtinFormats}}
+		<option title="{{displayName}}" value="{{id}}" data-content="{{displayName}} <small>({{shortId}})</small>">{{displayName}}</option>
+		{{/builtinFormats}}
+	</optgroup>
+	<optgroup label="{{userName}}">
+		{{#userFormats}}
+		<option title="{{displayName}}" value="{{id}}" data-content="{{displayName}} <small>({{shortId}})</small>">{{displayName}}</option>
+		{{/userFormats}}
+	</optgroup>`;
 
 	this
 		.html(Mustache.render(template, {
@@ -225,20 +226,20 @@ createHandler({selector: 'tbody[data-autoupdate="corpora"]', event: DataEvent.CO
 	});
 
 	const template =
-	'{{#corpora}} \
-	<tr> \
-		<td><a title="Search the \'{{displayName}}\' corpus" class="icon fa fa-search {{^canSearch}}disabled{{/canSearch}}" {{#canSearch}}href="{{searchUrl}}"{{/canSearch}}></a></td> \
-		<td class="corpus-name"><a title="Search the \'{{displayName}}\' corpus" class="{{^canSearch}}disabled{{/canSearch}}" {{#canSearch}}href="{{searchUrl}}"{{/canSearch}}>{{displayName}} {{statusText}}</a></td>\
-		<td>{{sizeString}}</td>\
-		{{#isPrivate}} \
-			<td {{#isUserFormat}}title="Format owned by {{documentFormatOwner}}"{{/isUserFormat}}>{{#isUserFormat}}*{{/isUserFormat}}{{documentFormatShortId}}</td>\
-			<td>{{timeModified}}</td>\
-			<td><a data-corpus-action="upload" data-id="{{id}}" title="Upload documents to the \'{{displayName}}\' corpus" class="icon fa fa-plus-square {{#isBusy}}disabled{{/isBusy}}" href="javascript:void(0)"></a></td>\
-			<td><a data-corpus-action="share" data-id="{{id}}" title="Share the \'{{displayName}}\' corpus" class="icon fa fa-user-plus" href="javascript:void(0)"></a></td>\
-			<td><a data-corpus-action="delete" data-id="{{id}}" title="Delete the \'{{displayName}}\' corpus" class="icon fa fa-trash {{#isBusy}}disabled{{/isBusy}}" href="javascript:void(0)"></a></td> \
-		{{/isPrivate}} \
-	</tr>\
-	{{/corpora}}';
+	`{{#corpora}}
+	<tr>
+		<td><a title="Search the \'{{displayName}}\' corpus" class="icon fa fa-search {{^canSearch}}disabled{{/canSearch}}" {{#canSearch}}href="{{searchUrl}}"{{/canSearch}}></a></td>
+		<td class="corpus-name"><a title="Search the \'{{displayName}}\' corpus" class="{{^canSearch}}disabled{{/canSearch}}" {{#canSearch}}href="{{searchUrl}}"{{/canSearch}}>{{displayName}} {{statusText}}</a></td>
+		<td>{{sizeString}}</td>
+		{{#isPrivate}}
+			<td {{#isUserFormat}}title="Format owned by {{documentFormatOwner}}"{{/isUserFormat}}>{{#isUserFormat}}*{{/isUserFormat}}{{documentFormatShortId}}</td>
+			<td>{{timeModified}}</td>
+			<td><a data-corpus-action="upload" data-id="{{id}}" title="Upload documents to the \'{{displayName}}\' corpus" class="icon fa fa-plus-square {{#isBusy}}disabled{{/isBusy}}" href="javascript:void(0)"></a></td>
+			<td><a data-corpus-action="share" data-id="{{id}}" title="Share the \'{{displayName}}\' corpus" class="icon fa fa-user-plus" href="javascript:void(0)"></a></td>
+			<td><a data-corpus-action="delete" data-id="{{id}}" title="Delete the \'{{displayName}}\' corpus" class="icon fa fa-trash {{#isBusy}}disabled{{/isBusy}}" href="javascript:void(0)"></a></td>
+		{{/isPrivate}}
+	</tr>
+	{{/corpora}}`;
 
 	this.html(Mustache.render(template, {
 		corpora: viewcorpora
@@ -1009,8 +1010,6 @@ function initEditFormat() {
 }
 
 $(document).ready(function() {
-	blsUrl = $('[data-bls-url]').data('blsUrl');
-
 	// Get the list of corpora.
 	refreshCorporaList();
 	refreshFormatList();

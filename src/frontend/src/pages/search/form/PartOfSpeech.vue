@@ -98,11 +98,11 @@ export default Vue.extend({
 		},
 	},
 	methods: {
-		reset: function() {
+		reset() {
 			Object.keys(this.selected).forEach(k => this.selected[k] = false);
 			this.annotationValue = null;
 		},
-		submit: function() {
+		submit() {
 			if (this.annotationValue == null) {
 				this.$emit('submit', {
 					query: '',

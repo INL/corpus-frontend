@@ -3,6 +3,7 @@ import $ from 'jquery';
 import Vue from 'vue';
 // @ts-ignore
 import * as Highcharts from 'highcharts';
+// @ts-ignore
 import HighchartsVue from 'highcharts-vue';
 import HighchartsExporting from 'highcharts/modules/exporting';
 import HighchartsExportingData from 'highcharts/modules/export-data';

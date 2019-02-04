@@ -105,7 +105,8 @@
 						@keydown.prevent.enter="select(o); emitChangeOnClose = true;"
 						@keydown.prevent.space="select(o); emitChangeOnClose = true;"
 					>
-						<span v-if="allowHtml || !o.label || !o.label.trim()" class="menu-value" v-html="o.label && o.label.trim() ? o.label : '&nbsp;'"/>						<span v-else class="menu-value">{{o.label || ' '}}</span>
+						<span v-if="allowHtml || !o.label || !o.label.trim()" class="menu-value" v-html="o.label && o.label.trim() ? o.label : '&nbsp;'"/>
+						<span v-else class="menu-value">{{o.label || ' '}}</span>
 						<span v-if="multiple && internalModel[o.id]" class="menu-icon fa fa-check"/>
 					</li>
 					<li v-else-if="o.type === 2"
@@ -398,7 +399,12 @@ export default Vue.extend({
 
 		select(opt: _uiOpt): void {
 			const {id, value, disabled} = opt;
+
 			if (disabled) {
+				return;
+			} else if (!this.multiple && !this.editable && this.internalModel[id]) {
+				// already selected - ignore if not multiple and not editable
+				this.close();
 				return;
 			}
 
@@ -461,6 +467,60 @@ export default Vue.extend({
 			};
 		},
 
+		correctModel(newVal: null|undefined|string|string[]) {
+			if (this.editable) {
+				this.inputValue = (newVal ? typeof newVal === 'string' ? newVal : newVal[0] || '' : '');
+				return;
+			};
+
+			if (newVal == null) { newVal = this.multiple ? [] : ''; }
+			else if (this.multiple && typeof newVal === 'string') { newVal = [newVal]; }
+			else if (!this.multiple && Array.isArray(newVal)) { newVal = newVal[0] || ''; }
+
+			if (!this.multiple) {
+				newVal = newVal as string; // we verified above, but can't declare it to be a type...
+
+				// Assume model always in a consistent state - e.g. no multiple values when !this.multiple
+				const cur = Object.values(this.internalModel)[0] as _uiOpt|undefined;
+				const newOption = newVal ? (cur && cur.value === newVal) ? cur : this.uiOptions.find(o => o.type === 1 && o.value === newVal) as _uiOpt : undefined;
+				if (newOption !== cur || (newVal && newOption == null)) { // if newOption doesn't exist but there is a value passed in, replace the model, which will $emit a new empty value, which will (if our parent is a sane component) correct our state
+					this.internalModel = newOption ? { [newOption.id]: newOption } : {};
+				}
+			} else {
+				// We need to be smart about this to prevent infinite loops or double $emits when updating
+
+				// First split the currently selected options into two categories: those still selected, and those no longer selected
+				// Then find the corresponding option object for all new values that weren't selected yet
+				// Then check whether we need to update the model (any deselections or new selections) and rewrite it
+				// NOTE: new values for which no corresponding option exists are ignored, and will not be removed until an option that actually exists is toggled.
+
+				const unselectedValues = [] as _uiOpt[];
+				let newSelectedValues: any[] = (newVal as string[]).concat(); // copy, don't edit values from a parent! currently string[]
+				const alreadySelectedValues = Object.values(this.internalModel)
+				.filter(o => {
+					const indexInNew = (newSelectedValues as string[]).indexOf(o.value);
+					if (indexInNew !== -1) {
+						// already have this, so it's not a new option
+						(newSelectedValues as string[]).splice(indexInNew, 1);
+						return true;
+					}
+
+					unselectedValues.push(o);
+					return false;
+				});
+
+				if (newSelectedValues.length) {
+					const allOptions = this.uiOptions.filter(o => o.type === 1) as _uiOpt[];
+					// map to _uiOpt[]
+					newSelectedValues = newSelectedValues.map(v => allOptions.find(o => o.value === v && !alreadySelectedValues.includes(o)))
+					.filter(v => !!v); // remove invalid values that were mapped to undefined
+				}
+
+				for (let v of unselectedValues) { Vue.delete(this.internalModel, v.id.toString()); }
+				for (let v of newSelectedValues as _uiOpt[]) { Vue.set(this.internalModel, v.id.toString(), v); }
+			}
+		}
+
 	},
 	watch: {
 		isOpen: {
@@ -471,7 +531,7 @@ export default Vue.extend({
 
 				if (!cur && this.emitChangeOnClose) {
 					this.emitChangeOnClose = false;
-					this.$emit('change', this.editable ? this.inputValue : Object.values(this.internalModel).map(o => o.value));
+					this.$emit('change', this.editable ? this.inputValue : this.multiple ? Object.values(this.internalModel).map(o => o.value) : Object.values(this.internalModel).map(o => o.value)[0]);
 				}
 			}
 		},
@@ -498,57 +558,7 @@ export default Vue.extend({
 		value: {
 			immediate: true,
 			handler(newVal: string|string[]|null, oldVal: string|string[]|null) {
-				if (this.editable) {
-					this.inputValue = (newVal ? typeof newVal === 'string' ? newVal : newVal[0] || '' : '');
-					return;
-				};
-
-				if (newVal == null) { newVal = this.multiple ? [] : ''; }
-				else if (this.multiple && typeof newVal === 'string') { newVal = [newVal]; }
-				else if (!this.multiple && Array.isArray(newVal)) { newVal = newVal[0] || ''; }
-
-				if (!this.multiple) {
-					newVal = newVal as string; // we verified above, but can't declare it to be a type...
-
-					// Assume model always in a consistent state - e.g. no multiple values when !this.multiple
-					const cur = Object.values(this.internalModel)[0] as _uiOpt|undefined;
-					const newOption = newVal ? (cur && cur.value === newVal) ? cur : this.uiOptions.find(o => o.type === 1 && o.value === newVal) as _uiOpt : undefined;
-					if (newOption !== cur) {
-						this.internalModel = newOption ? { [newOption.id]: newOption } : {};
-					}
-				} else {
-					// We need to be smart about this to prevent infinite loops or double $emits when updating
-
-					// First split the currently selected options into two categories: those still selected, and those no longer selected
-					// Then find the corresponding option object for all new values that weren't selected yet
-					// Then check whether we need to update the model (any deselections or new selections) and rewrite it
-					// NOTE: new values for which no corresponding option exists are ignored, and will not be removed until an option that actually exists is toggled.
-
-					const unselectedValues = [] as _uiOpt[];
-					let newSelectedValues: any[] = (newVal as string[]).concat(); // copy, don't edit values from a parent! currently string[]
-					const alreadySelectedValues = Object.values(this.internalModel)
-					.filter(o => {
-						const indexInNew = (newSelectedValues as string[]).indexOf(o.value);
-						if (indexInNew !== -1) {
-							// already have this, so it's not a new option
-							(newSelectedValues as string[]).splice(indexInNew, 1);
-							return true;
-						}
-
-						unselectedValues.push(o);
-						return false;
-					});
-
-					if (newSelectedValues.length) {
-						const allOptions = this.uiOptions.filter(o => o.type === 1) as _uiOpt[];
-						// map to _uiOpt[]
-						newSelectedValues = newSelectedValues.map(v => allOptions.find(o => o.value === v && !alreadySelectedValues.includes(o)))
-						.filter(v => !!v); // remove invalid values that were mapped to undefined
-					}
-
-					for (let v of unselectedValues) { Vue.delete(this.internalModel, v.id.toString()); }
-					for (let v of newSelectedValues as _uiOpt[]) { Vue.set(this.internalModel, v.id.toString(), v); }
-				}
+				this.correctModel(newVal);
 			}
 		},
 		internalModel() {
@@ -568,6 +578,10 @@ export default Vue.extend({
 	created() {
 		if (this.editable && this.multiple) {
 			throw new Error('Editable not supported with multiple');
+		}
+		// Correct initial value (it might be invalid?)
+		if (this.value) {
+			this.correctModel(this.value);
 		}
 	},
 	mounted() {

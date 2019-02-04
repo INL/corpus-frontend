@@ -7,6 +7,7 @@
 	>
 		<input v-if="editable"
 			:class="['menu-input', dataClass ? dataClass : 'form-control']"
+			:id="dataId"
 			:style="dataStyle"
 			:title="dataTitle"
 			:placeholder="$attrs.placeholder || $attrs.title"
@@ -28,6 +29,7 @@
 			type="button"
 
 			:class="['menu-button', 'btn', dataClass ? dataClass : 'btn-default', { 'active': isOpen }]"
+			:id="dataId"
 			:style="dataStyle"
 			:title="dataTitle"
 			:disabled="disabled"
@@ -44,6 +46,7 @@
 				<span class="menu-value" v-else :title="displayValues.join(',')">{{displayValues.join(', ')}}</span>
 			</template>
 			<span v-else class="menu-value placeholder">{{$attrs.placeholder || $attrs.title || 'Select a value...'}} </span>
+			<span v-if="loading" class="menu-icon fa fa-spinner fa-spin text-muted"></span>
 			<span :class="['menu-icon', 'fa', `fa-caret-${isOpen ? 'up' : 'down'}`]"/>
 		</button>
 
@@ -60,7 +63,10 @@
 
 			ref="menu"
 		>
-			<li class="menu-header"><button v-if="resettable"
+			<li class="menu-header">
+			<div v-if="loading && this.editable /* not visible in button when editable */" class="text-center">
+				<span class="fa fa-spinner fa-spin text-muted"></span>
+			</div><button v-if="resettable"
 				type="button"
 				class="btn btn-sm btn-default menu-reset"
 				tabindex="-1"
@@ -181,6 +187,8 @@ export default Vue.extend({
 		/** Show reset button at top of menu? */
 		resettable: Boolean,
 		disabled: Boolean,
+		/** Show a little spinner while the parent is fetching options, or something */
+		loading: Boolean,
 
 		allowHtml: Boolean,
 		hideDisabled: Boolean,
@@ -196,6 +204,7 @@ export default Vue.extend({
 		/** attached to main input/button */
 		'data-class': [String, Object],
 		'data-style': [String, Object],
+		'data-id': String,
 		'data-title': String,
 	},
 	data: () =>  ({
@@ -265,8 +274,13 @@ export default Vue.extend({
 				}
 			});
 
+			// Sometimes we get dropdowns with only a single, empty value. Detect this and remove the option, since it's silly.
+			if (!this.multiple && !uiOptions.some(o => o.type === 1 && !!(o.label || o.value))) {
+				uiOptions = [];
+			}
+
 			// prepend an empty valued option if there is none and the user can't untick values otherwise
-			if (!this.multiple && !this.editable && !this.hideEmpty && !uiOptions.some(o => o.type === 1 && o.value === '')) {
+			if (!this.multiple && !this.editable && !this.hideEmpty && uiOptions.length && !uiOptions.some(o => o.type === 1 && o.value === '')) {
 				const emptyOption: _uiOpt = {
 					type: 1,
 					id: -1,
@@ -330,9 +344,11 @@ export default Vue.extend({
 
 			if (event && event.type === 'click') {
 				const isOwnMenuClick = isChild(this.$refs.menu as HTMLElement, event.target! as HTMLElement);
+				// We don't render a label, but outside may want to point a label at our input/button.
+				const isOwnLabelClick = (event.target as HTMLElement).closest(`label[for="${(this as any).dataId}"]`) != null;
 				// NOTE: assumes the template doesn't render a button as main interactable when this.editable is true
 				const isOwnInputClick = this.editable && isChild(this.$el, event.target! as HTMLElement);
-				if (isOwnMenuClick || isOwnInputClick) {
+				if (isOwnMenuClick || isOwnInputClick || isOwnLabelClick) {
 					return;
 				}
 			}
@@ -610,6 +626,17 @@ export default Vue.extend({
 		display: flex;
 		align-items: baseline;
 		justify-content: space-between;
+		text-align: left;
+
+		>.menu-icon {
+			flex: none;
+			flex-grow: 0;
+			flex-shrink: 0;
+			flex-basis: auto;
+		}
+		>.menu-value {
+			flex-grow: 1;
+		}
 	}
 
 	>.combobox-menu { top: auto; }
@@ -707,6 +734,24 @@ export default Vue.extend({
 					cursor: not-allowed;
 				}
 			}
+		}
+	}
+}
+
+.input-group {
+	.combobox:not(:last-child) {
+		> button,
+		> input[type="text"] {
+			border-top-right-radius: 0;
+			border-bottom-right-radius: 0;
+		}
+	}
+
+	.combobox:not(:first-child) {
+		> button,
+		> input[type="text"] {
+			border-top-left-radius: 0;
+			border-bottom-left-radius: 0;
 		}
 	}
 }

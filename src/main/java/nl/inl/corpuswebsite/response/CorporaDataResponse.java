@@ -54,7 +54,7 @@ public class CorporaDataResponse extends BaseResponse {
             String pathString = path.toString();
             Optional<File> file = servlet.getProjectFile(corpus, pathString);
 
-            if (!file.isPresent()) {
+            if (!file.isPresent() || !file.get().isFile()) {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND);
                 return;
             }
@@ -63,6 +63,7 @@ public class CorporaDataResponse extends BaseResponse {
                 // Headers must be set before writing the response.
                 String mime = servlet.getServletContext().getMimeType(pathString);
                 response.setHeader("Cache-Control", "public, max-age=604800" /* 7 days */);
+                response.setHeader("Content-Length", Long.toString(file.get().length()));
                 response.setContentType(mime);
 
                 IOUtils.copy(is, response.getOutputStream());

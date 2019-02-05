@@ -46,7 +46,7 @@
         <tbody data-autoupdate="corpora" data-filter="private"></tbody>
     </table>
 
-    <em id="create-corpus-limited" class="text-danger" style="display:none;padding-left: 8px;">You have reached the private corpora limit.<br>You will have to delete one of your corpora before you may create another.</em>    
+    <div id="create-corpus-limited" class="text-danger" style="display:none;padding-left: 8px;"><em>You have reached the private corpora limit.<br>You will have to delete one of your corpora before you may create another.</em></div>    
     <button class="btn btn-default btn-lg" id="create-corpus" type="button" data-toggle="modal" data-target="#new-corpus-modal">New corpus</button>
 </div>
     

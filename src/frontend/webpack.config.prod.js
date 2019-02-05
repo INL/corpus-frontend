@@ -3,12 +3,15 @@ const webpack = require('webpack');
 const VueLoaderPlugin = require('vue-loader/lib/plugin');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const CleanWebpackPlugin = require('clean-webpack-plugin');
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 module.exports = {
 	entry: {
+		// Output multiple files, one for each main page - important!: also include the polyfills in the output bundle
 		article: ['./src/utils/enable-polyfills.ts', './src/article.ts'],
 		corpora: ['./src/utils/enable-polyfills.ts', './src/corpora.ts'],
-		search: ['./src/utils/enable-polyfills.ts', './src/search.ts']
+		search: ['./src/utils/enable-polyfills.ts', './src/search.ts'],
+		'remote-index': ['./src/utils/enable-polyfills.ts', './src/remote-index.ts']
 	},
 	output: {
 		filename: '[name].js',
@@ -63,7 +66,7 @@ module.exports = {
 						});
 					}
 					*/
-					// transpileOnly: true,
+					transpileOnly: true,
 					appendTsSuffixTo: [/\.vue$/],
 				}
 			}]
@@ -84,6 +87,9 @@ module.exports = {
 			'jQuery':           'jquery',
 			'$':                'jquery',
 			'CodeMirror':       'codemirror',
+		}),
+		new ForkTsCheckerWebpackPlugin({
+			vue: true
 		}),
 		new VueLoaderPlugin(),
 		// new BundleAnalyzerPlugin(),

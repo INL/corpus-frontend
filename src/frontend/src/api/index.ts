@@ -121,17 +121,17 @@ export const blacklab = {
 
 	postDocuments: (
 		indexId: string,
-		docs: FileList,
-		meta?: FileList|null,
-		onProgress?: (percentage: number) => void,
+		docs: File[],
+		meta?: File[]|null,
+		onProgress?: (percentage: number) => any,
 		requestParameters?: AxiosRequestConfig
 	) => {
 		const formData = new FormData();
 		for (let i = 0; i < (docs ? docs.length : 0); ++i) {
-			formData.append('data', docs.item(i)!, docs.item(i)!.name);
+			formData.append('data', docs[i], docs[i].name);
 		}
 		for (let i = 0; i < (meta ? meta.length : 0); ++i) {
-			formData.append('linkeddata', meta!.item(i)!, meta!.item(i)!.name);
+			formData.append('linkeddata', meta![i], meta![i].name);
 		}
 
 		const cancelToken = axios.CancelToken.source();

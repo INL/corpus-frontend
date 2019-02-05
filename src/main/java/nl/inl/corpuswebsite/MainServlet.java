@@ -186,6 +186,7 @@ public class MainServlet extends HttpServlet {
         responses.put("search", SearchResponse.class);
         responses.put("docs", ArticleResponse.class);
         responses.put("static", CorporaDataResponse.class);
+        responses.put("upload", RemoteIndexResponse.class);
     }
 
     /**

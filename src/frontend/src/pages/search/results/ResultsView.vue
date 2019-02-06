@@ -201,7 +201,7 @@ export default Vue.extend({
 					window.scroll({
 						behavior: 'smooth',
 						top: this.$el.offsetTop - 150
-					})
+					});
 				}
 			});
 		},
@@ -272,7 +272,7 @@ export default Vue.extend({
 				global: GlobalStore.getState(),
 				self: this.storeModule.getState(),
 				query: QueryStore.getState()
-			}
+			};
 		},
 
 		// When these change, the form has been resubmitted, so we need to initiate a scroll event
@@ -288,19 +288,20 @@ export default Vue.extend({
 				return {
 					shownPage: 0,
 					maxShownPage: 0,
-				}
+				};
 			}
 
 			const pageSize = this.results!.summary.requestedWindowSize;
 			const shownPage = Math.floor(this.results!.summary.windowFirstResult / pageSize);
-			const totalResults = BLTypes.isGroups(r) ? r.summary.numberOfGroups :
-			                     BLTypes.isHitResults(r) ? r.summary.numberOfHitsRetrieved :
-			                     r != null ? r.summary.numberOfDocsRetrieved :
-			                     0;
+			const totalResults =
+				BLTypes.isGroups(r) ? r.summary.numberOfGroups :
+				BLTypes.isHitResults(r) ? r.summary.numberOfHitsRetrieved :
+				r != null ? r.summary.numberOfDocsRetrieved :
+				0;
 
 			// subtract one page if number of results exactly divisible by page size
 			// e.g. 20 results for a page size of 20 is still only one page instead of 2.
-			const pageCount = Math.floor(totalResults / pageSize) - ((totalResults % pageSize === 0 && totalResults > 0) ? 1 : 0)
+			const pageCount = Math.floor(totalResults / pageSize) - ((totalResults % pageSize === 0 && totalResults > 0) ? 1 : 0);
 
 			return {
 				shownPage,
@@ -324,11 +325,11 @@ export default Vue.extend({
 		isHits(): boolean { return BLTypes.isHitResults(this.results); },
 		isDocs(): boolean { return BLTypes.isDocResults(this.results); },
 		isGroups(): boolean { return BLTypes.isGroups(this.results); },
-		resultsHaveHits(): boolean { return this.results != null && !!this.results.summary.searchParam.patt},
+		resultsHaveHits(): boolean { return this.results != null && !!this.results.summary.searchParam.patt; },
 		viewGroupName(): string {
 			if (this.viewGroup == null) { return ''; }
 			return this._viewGroupName ? this._viewGroupName :
-			       this.viewGroup.substring(this.viewGroup.indexOf(':')+1) || '[unknown]'
+				this.viewGroup.substring(this.viewGroup.indexOf(':')+1) || '[unknown]';
 		},
 
 		breadCrumbs(): any {
@@ -345,7 +346,7 @@ export default Vue.extend({
 					title: 'Go back to grouped results',
 					active: this.viewGroup == null,
 					onClick: () => this.viewGroup = null
-				})
+				});
 			}
 			if (this.viewGroup != null) {
 				r.push({
@@ -353,16 +354,16 @@ export default Vue.extend({
 					title: '',
 					active: true,
 					onClick: undefined
-				})
+				});
 			}
 			return r;
 		},
-		sortOptions(): Array<Option|OptGroup> {
+		sortOptions(): OptGroup[] {
 			// NOTE: we need to always pass all available options, then hide invalids based on displayed results
 			// if we don't do this, sorting will be cleared on initial page load
 			// This happens because results aren't loaded yet, thus isHits/isDocs/isGroups all return false, and no options would be available
 			// then the selectpicker will reset value to undefined, which clears it in the store, which updates the url, etc.
-			const opts = [] as Array<Option|OptGroup>;
+			const opts = [] as OptGroup[];
 
 			// NOTE: only disable groups when results are in
 			// this prevents an issue with bootstrap-select where optgroup headers are repeated for initially disabled groups.
@@ -407,6 +408,20 @@ export default Vue.extend({
 				})),
 				disabled: this.results != null && !this.isDocs
 			}));
+
+			return opts.flatMap(group => {
+				return [
+					group,
+					{
+						...group,
+						disabled: true,
+						options: group.options.map((o: Option): Option => ({
+							value: '-' + o.value,
+							label: o.label + ' inverted'
+						}))
+					}
+				];
+			});
 
 			return opts;
 		}
@@ -525,6 +540,8 @@ table {
 a.clear,
 a.sort {
 	cursor: pointer;
+	display: flex;
+	align-items: baseline;
 }
 
 .result-totals {

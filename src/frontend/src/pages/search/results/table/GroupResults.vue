@@ -2,9 +2,9 @@
 	<table class="group-table">
 		<thead>
 			<tr>
-				<th style="width:30%;"><a @click="changeSort('identity')" class="sort" title="Sort by group name">Group</a></th>
-				<th style="width:70%;"><a @click="changeSort('size')" class="sort" title="Sort by group size">{{type === 'hits' ? 'Hits' : 'Documents'}}</a></th>
-				<th style="width:10%;"><a @click="changeSort('size')" class="sort" title="Sort by group size">Relative size</a></th>
+				<th style="width:30%;"><SortHeader v-model="sortModel" ownValue="identity" title="Sort by group name">Group</SortHeader></th>
+				<th style="width:70%;"><SortHeader v-model="sortModel" ownValue="size" isDefault title="Sort by group size">{{type === 'hits' ? 'Hits' : 'Documents'}}</SortHeader></th>
+				<th style="width:10%;"><SortHeader v-model="sortModel" ownValue="size" isDefault title="Sort by group size">Relative size</SortHeader></th>
 			</tr>
 		</thead>
 		<tbody>
@@ -69,8 +69,8 @@
 	</table>
 </template>
 
-<script lang="ts">
-import Vue from 'vue';
+<script lang="tsx">
+import Vue, {FunctionalComponentOptions} from 'vue';
 
 import * as corpusStore from '@/store/search/corpus';
 import * as Api from '@/api';
@@ -80,7 +80,51 @@ import frac2Percent from '@/mixins/fractionalToPercent';
 
 import * as BLTypes from '@/types/blacklabtypes';
 
+import SelectPicker from '@/components/SelectPicker.vue';
+
+const sortheader: FunctionalComponentOptions<{
+	value: string;
+	/** What sort property this header controls */
+	ownValue: string;
+	/** Is it the default (e.g. listens to null or '' as well) */
+	isDefault: boolean;
+}> = {
+	functional: true,
+	render(h, {props, listeners, data, children}) {
+		const {isDefault,ownValue,value, ...restProps} = props;
+		const isActive = (isDefault && !value) || (value === ownValue);
+		const isInverted = value === '-'+ownValue;
+
+		const onNextClick = (isInverted||!isActive) ? isDefault ? null : ownValue : '-'+ownValue;
+
+		return (
+			<a
+				{...data}
+				attrs={restProps}
+				class={Array.isArray(data.class) ? data.class.concat('sort') : ['sort', data.class]}
+				on={{
+					...listeners,
+					// yuck?
+					click: [listeners.click!, () => [listeners.input!, listeners.change!].flat().filter(v => !!v).forEach(l => l(onNextClick))].flat().filter(v => !!v)
+				}}
+			>
+				<span
+					class={{
+						'fa': true,
+						'fa-sort': !isActive && !isInverted,
+						'fa-sort-up': isActive,
+						'fa-sort-down': isInverted
+					}}
+				/>
+				&nbsp;
+				{children}
+			</a>
+		);
+	}
+};
+
 export default Vue.extend({
+	components: { SelectPicker, SortHeader: sortheader },
 	filters: { frac2Percent },
 	props: {
 		results: Object as () => BLTypes.BLHitGroupResults|BLTypes.BLDocGroupResults,
@@ -102,9 +146,9 @@ export default Vue.extend({
 						hit: string;
 						right: string;
 					}|{ // when this.type === docs
-						 title: string;
-						 hits?: number;
-						 href: string;
+						title: string;
+						hits?: number;
+						href: string;
 					}
 				>;
 			}
@@ -122,10 +166,15 @@ export default Vue.extend({
 
 		leftLabel() { return this.textDirection === 'ltr' ? 'Before' : 'After'; },
 		rightLabel() { return this.textDirection === 'ltr' ? 'After' : 'Before'; },
-		leftIndex() { return this.textDirection === 'ltr' ? 0 : 2 },
-		rightIndex() { return this.textDirection === 'ltr' ? 2 : 0 },
+		leftIndex() { return this.textDirection === 'ltr' ? 0 : 2; },
+		rightIndex() { return this.textDirection === 'ltr' ? 2 : 0; },
 
 		resultCount(): number { return BLTypes.isHitGroups(this.results) ? this.results.summary.numberOfHits : this.results.summary.numberOfDocs; },
+
+		sortModel: {
+			get(): string|null { return this.sort; },
+			set(v: string|null) { this.$emit('sort', v); }
+		}
 	},
 	methods: {
 		width(groupSize: number): string {
@@ -138,7 +187,7 @@ export default Vue.extend({
 				concordances: [],
 				request: null,
 				hasHits: this.type === 'docs' ? false : undefined,
-			}
+			};
 
 			cache.open = !cache.open;
 			if (cache.open && cache.request == null && cache.concordances.length === 0) {
@@ -165,7 +214,7 @@ export default Vue.extend({
 				// Do not clear sample/samplenum/samplecount, or we could retrieve concordances that weren't included in the input results for the grouping
 				wordsaroundhit: undefined,
 				sort: undefined,
-			} as BLTypes.BLSearchParameters)
+			} as BLTypes.BLSearchParameters);
 
 			const apiCall = this.type === 'hits' ? Api.blacklab.getHits : Api.blacklab.getDocs;
 			const req: Promise<BLTypes.BLSearchResult> = apiCall(corpusStore.getState().id, requestParameters).request;
@@ -182,8 +231,8 @@ export default Vue.extend({
 							left: parts[this.leftIndex],
 							hit: parts[1],
 							right: parts[this.rightIndex],
-						})
-					})
+						});
+					});
 				} else {
 					const data = res as BLTypes.BLDocResults;
 					cache.available = data.summary.numberOfDocsRetrieved;
@@ -192,15 +241,15 @@ export default Vue.extend({
 					data.docs.forEach(doc => {
 						cache.hasHits = cache.hasHits || doc.numberOfHits != null;
 						cache.concordances.push({
-							title: doc.docInfo[data.summary.docFields.titleField],
+							title: doc.docInfo[data.summary.docFields.titleField!],
 							hits: doc.numberOfHits,
 							href: getDocumentUrl(doc.docPid, data.summary.searchParam.patt),
-						})
-					})
+						});
+					});
 				}
 			})
 			.catch(err => cache.error = err)
-			.finally(() => cache.request = null)
+			.finally(() => cache.request = null);
 		},
 
 		// Display stuff for groups
@@ -209,20 +258,9 @@ export default Vue.extend({
 		// 	return size / total;
 		// },
 
-		/** EVENTS **/
+		/* EVENTS */
 		openFullConcordances(id: string, displayName: string) {
 			this.$emit('viewgroup', {id, displayName});
-		},
-		changeSort(payload: string) {
-			if (payload === 'size' && this.sort == null) {
-				// Size is the default when current sort is null
-				// so it makes no sense to go from null to size, as it would give the same results
-				// instead intercept and go to inverted size sorting.
-				this.$emit('-size');
-				return;
-			}
-
-			this.$emit('sort', payload === this.sort ? '-'+payload : payload)
 		},
 	},
 	watch: {
@@ -232,13 +270,12 @@ export default Vue.extend({
 				const newConcordances = {} as any;
 				(BLTypes.isHitGroups(newVal) ? newVal.hitGroups : newVal.docGroups).forEach(group => {
 					newConcordances[group.identity] = null;
-				})
+				});
 				this.concordances = newConcordances;
 			}
- 		}
+		},
 	}
 });
-
 </script>
 
 <style lang="scss">

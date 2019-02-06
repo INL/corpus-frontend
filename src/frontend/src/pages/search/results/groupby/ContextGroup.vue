@@ -75,7 +75,7 @@
 <script lang="ts">
 import Vue from 'vue';
 
-//@ts-ignore
+// @ts-ignore
 import Slider from 'vue-slider-component';
 
 import * as CorpusStore from '@/store/search/corpus';
@@ -189,7 +189,7 @@ export default Vue.extend({
 		// and throws off the click handling of the slider handles (an ofset is introduced)
 		requestAnimationFrame(() => (this.$refs.slider as any).refresh());
 	}
-})
+});
 </script>
 
 <style lang="scss">

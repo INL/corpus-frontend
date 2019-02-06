@@ -1,5 +1,5 @@
 {
-	"extends": ["tslint:recommended"],
+	"extends": ["tslint:recommended", "tslint-react"],
 	"rules": {
 		// These are just rules I disagree with or rules that are overboard
 		"interface-over-type-literal": false,
@@ -11,6 +11,7 @@
 		"only-arrow-functions": false, // jquery and some of our own code explicitly set 'this' of callbacks, can't do that with arrow functions
 		"ordered-imports": false,
 		"max-classes-per-file": false,
+		"jsx-no-multiline-js": false,
 
 		// These should eventually be fixed
 		"prefer-const": {"severity": "warn"},

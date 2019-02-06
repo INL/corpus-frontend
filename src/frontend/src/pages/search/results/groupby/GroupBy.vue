@@ -97,7 +97,7 @@ export default Vue.extend({
 			return ResultsStore.get.resultsModules().find(m => m.namespace === this.type)!;
 		},
 		caseSensitive: {
-			get(): boolean { return this.storeModule.getState().caseSensitive },
+			get(): boolean { return this.storeModule.getState().caseSensitive; },
 			set(v: boolean) { this.storeModule.actions.caseSensitive(v); }
 		},
 		groupBy: {
@@ -113,7 +113,7 @@ export default Vue.extend({
 					const newState = v ? [v] : [];
 					const oldState = this.storeModule.getState().groupBy;
 					// For some reason there's an extra roundtrip if we don't perform this check
-					if (newState.length != oldState.length || !newState.every(e => oldState.includes(e))) {
+					if (newState.length !== oldState.length || !newState.every(e => oldState.includes(e))) {
 						this.storeModule.actions.groupBy(newState);
 					}
 				}
@@ -199,7 +199,7 @@ export default Vue.extend({
 			}
 		},
 	},
-})
+});
 </script>
 
 <style lang="scss">

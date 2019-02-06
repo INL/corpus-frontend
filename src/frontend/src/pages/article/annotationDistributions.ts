@@ -1,6 +1,5 @@
-import Vue from 'vue';
+import Vue, {FunctionalComponentOptions} from 'vue';
 import * as Highcharts from 'highcharts';
-import * as rx from 'rxjs';
 
 import * as RootStore from '@/store/article';
 

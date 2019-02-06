@@ -36,6 +36,12 @@
 		"strictNullChecks": true,
 		"noImplicitThis": true,
 		"noImplicitAny": true,
+		/*
+			We use babel to transform jsx into vue render calls, see @babe/babel-preset-jsx in .babelrc
+			So the typescript compiler should just ignore it.
+			See https://github.com/vuejs/jsx/tree/dev/packages/babel-preset-jsx
+		*/
+		"jsx": "preserve",
 
 		// Allow @decorator
 		"experimentalDecorators": true,

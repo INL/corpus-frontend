@@ -9,8 +9,8 @@ import Axios from 'axios';
 import {getStoreBuilder} from 'vuex-typex';
 import deepFreeze from 'deep-freeze';
 
-import {RootState} from '@/store';
-import * as CorpusStore from '@/store/corpus';
+import {RootState} from '@/store/search/';
+import * as CorpusStore from '@/store/search/corpus';
 
 import {Tagset} from '@/types/apptypes';
 import {NormalizedAnnotation} from '@/types/apptypes';
@@ -29,7 +29,6 @@ const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, {
 	values: {}
 });
 
-// hide implementation detail
 const getState = b.state();
 
 const get = {
@@ -93,7 +92,7 @@ const actions = {
 const init = () => {
 	// At this point the global store is being initialized and the url has been parsed, prevent a tagset from loading now (initialization order is pretty strict).
 	if (getState().state === 'uninitialized') {
-		internalActions.state({state: 'disabled', message: 'No tagset loaded.\n Call "vuexModules.tagset.actions.load(CONTEXT_URL + ${corpusName}/static/${path_to_tagset.json}) from custom js file before $document.ready()'});
+		internalActions.state({state: 'disabled', message: 'No tagset loaded.\n Call "vuexModules.tagset.actions.load(CONTEXT_URL + /static/${path_to_tagset.json}) from custom js file before $document.ready()'});
 		initPromise = Promise.resolve();
 	}
 };

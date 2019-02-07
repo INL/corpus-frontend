@@ -9,23 +9,19 @@ import Vue from 'vue';
 import VTooltip from 'v-tooltip';
 
 import {QueryBuilder, QueryBuilderOptionsDef} from '@/modules/cql_querybuilder';
-import * as RootStore from '@/store';
-import * as CorpusStore from '@/store/corpus'; // NOTE: only use after initializing root store
-import * as TagsetStore from '@/store/tagset';
-import * as PatternStore from '@/store/form/patterns';
-import UrlStateParser from '@/store/util/url-state-parser';
+import * as RootStore from '@/store/search/';
+import * as CorpusStore from '@/store/search/corpus'; // NOTE: only use after initializing root store
+import * as TagsetStore from '@/store/search/tagset';
+import * as PatternStore from '@/store/search/form/patterns';
+import UrlStateParser from '@/store/search/util/url-state-parser';
 
-import connectStreamsToVuex from '@/store/streams';
+import connectStreamsToVuex from '@/store/search/streams';
 
 import SearchPageComponent from '@/pages/search/SearchPage.vue';
 
 import {debugLog} from '@/utils/debug';
 
-import * as BLTypes from '@/types/blacklabtypes';
-
 import '@/global.scss';
-
-declare const SINGLEPAGE: {INDEX: BLTypes.BLIndexMetadata};
 
 const connectJqueryToPage = () => {
 	$('input[data-persistent][id != ""]').each(function(i, elem) {
@@ -125,12 +121,11 @@ function initQueryBuilder(tagset?: TagsetStore.ModuleRootState) {
 // --------------
 Vue.use(VTooltip);
 Vue.config.productionTip = false;
-
 $(document).ready(() => {
 	RootStore.init();
 
 	// We can render before the tagset loads, the form just won't be populated from the url yet.
-	new Vue({
+	(window as any).vueRoot = new Vue({
 		store: RootStore.store,
 		render: h => h(SearchPageComponent),
 		mounted() {
@@ -152,3 +147,6 @@ $(document).ready(() => {
 		}
 	}).$mount(document.querySelector('#vue-root')!);
 });
+
+// Expose and declare some globals
+(window as any).Vue = Vue;

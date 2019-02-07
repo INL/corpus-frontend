@@ -83,21 +83,22 @@
 
 <script lang="ts">
 import Vue from 'vue';
+import { Subscription } from 'rxjs';
 
-import $ from 'jquery';
+import {paths} from '@/api';
 
-import * as RootStore from '@/store';
-import * as PatternStore from '@/store/form/patterns';
-import { NormalizedAnnotation } from '@/types/apptypes';
+import * as RootStore from '@/store/search/';
+import * as CorpusStore from '@/store/search/corpus';
+import * as PatternStore from '@/store/search/form/patterns';
+
 import SelectPicker, {Option} from '@/components/SelectPicker.vue';
-import PartOfSpeech from '@/components/PartOfSpeech.vue';
+import PartOfSpeech from '@/pages/search/form/PartOfSpeech.vue';
+
+import { NormalizedAnnotation } from '@/types/apptypes';
 
 //@ts-ignore
 import Autocomplete from '@/mixins/autocomplete';
 import UID from '@/mixins/uid';
-import { Subscription } from 'rxjs';
-
-declare const BLS_URL: string;
 
 // TODO use description, use annotatedField description and properties and stuff
 
@@ -124,7 +125,7 @@ export default Vue.extend({
 		options(): Option[] { return this.annotation.values || [] },
 
 		autocomplete(): boolean { return this.annotation.uiType === 'combobox'; },
-		autocompleteUrl(): string { return `${BLS_URL}/autocomplete/${this.annotation.annotatedFieldId}/${this.annotation.id}`},
+		autocompleteUrl(): string { return paths.autocompleteAnnotation(CorpusStore.getState().id, this.annotation.annotatedFieldId, this.annotation.id); },
 
 		value: {
 			get(): string {
@@ -134,7 +135,7 @@ export default Vue.extend({
 				PatternStore.actions.extended.annotation({
 					id: this.id,
 					value
-				})
+				});
 			}
 		},
 		caseSensitive: {
@@ -166,6 +167,7 @@ export default Vue.extend({
 			} else {
 				self.value = '';
 			}
+			(event.target as HTMLInputElement).value = '';
 		}
 	},
 	created() {
@@ -182,7 +184,7 @@ export default Vue.extend({
 	destroyed() {
 		this.subscriptions.forEach(unsub => unsub());
 	}
-})
+});
 </script>
 
 <style lang="scss">

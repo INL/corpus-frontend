@@ -33,7 +33,15 @@
         <link rel="stylesheet" href="$pathToTop/css/vendor/pageguide.min.css?_$cache">
         <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
         <link rel="stylesheet" href="$pathToTop/css/main.css?_$cache">
-        ## Custom css and js in footer        
+        ## Custom css and js in footer
+        
+        <script>
+            // Might be null if this page is not in a corpus!
+            var INDEX_ID = "$esc.javascript($websiteConfig.getCorpusId())";
+            var CONTEXT_URL = "$esc.javascript($pathToTop)";
+            // Not suffixed with the corpus id
+            var BLS_URL = "$esc.javascript($blsUrl)";
+        </script>
     </head>
     <body>
         <div class="navbar navbar-inverse navbar-fixed-top">
@@ -43,10 +51,10 @@
                         <div class="navbar-logo"></div>
                     </div> 
                     
-                    #if($websiteConfig.getCorpusDisplayName())
-                    <a href='$pathToTop/$brandLink' class='navbar-brand'>$websiteConfig.getCorpusDisplayName()</a>
+                    #if($websiteConfig.getCorpusId())
+                    <a href='$pathToTop/$websiteConfig.getCorpusId()/search/' class='navbar-brand'>$websiteConfig.getCorpusDisplayName()</a>
                     #else
-                    <a href='$pathToTop/$brandLink' class='navbar-brand'>AutoSearch</a>
+                    <a href='$pathToTop/' class='navbar-brand'>AutoSearch</a>
                     #end
                     
                     <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
@@ -65,7 +73,7 @@
                 </div>
             </div>
         </div>
-        
+
         <noscript>
             <br/><br/><br/>
             <div class="alert alert-error">    

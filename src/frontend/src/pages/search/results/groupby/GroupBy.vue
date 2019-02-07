@@ -48,11 +48,11 @@
 <script lang="ts">
 import Vue from 'vue';
 
-import * as CorpusStore from '@/store/corpus';
-import * as InterfaceStore from '@/store/form/interface';
-import * as ResultsStore from '@/store/results';
-import * as HitsStore from '@/store/results/hits';
-import * as DocsStore from '@/store/results/docs';
+import * as CorpusStore from '@/store/search/corpus';
+import * as InterfaceStore from '@/store/search/form/interface';
+import * as ResultsStore from '@/store/search/results';
+import * as HitsStore from '@/store/search/results/hits';
+import * as DocsStore from '@/store/search/results/docs';
 
 import SelectPicker, {OptGroup, Option} from '@/components/SelectPicker.vue';
 import ContextGroup from '@/pages/search/results/groupby/ContextGroup.vue';
@@ -154,7 +154,11 @@ export default Vue.extend({
 			if (this.type === 'hits') {
 				const annotations = CorpusStore.get.annotations().filter(a => !a.isInternal && a.hasForwardIndex);
 
-				[['wordleft:', 'Before hit', 'before'],['hit:', 'Hit', ''],['wordright:', 'After hit', 'after']]
+				[
+					['hit:', 'Hit', ''],
+					['wordleft:', 'Before hit', 'before'],
+					['wordright:', 'After hit', 'after']
+				]
 				.forEach(([prefix, groupname, suffix]) =>
 					opts.push({
 						label: groupname,

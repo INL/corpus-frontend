@@ -1,30 +1,45 @@
 #parse("header.vm")
 
+<script>
+    DOCUMENT_ID = "$esc.javascript($docId)";  
+</script>  
+
 <script src="$jspath/article.js?_$cache"></script>
 
 <div class="container">
 
-    <div class="hitscroll">
-        <a href="#" id="prev"><b>&laquo; Previous hit</b></a> | <a href="#" id="next"><b>Next hit &raquo;</b></a>
-    </div>
-    
-    <div class="cf-panel cf-panel-lg">
-        #set($unescaped = $article_meta) ## see BaseResponse.java
-        $!unescaped
-    </div>
+    <ul id="resultTabs" class="nav nav-tabs cf-panel-tab-header cf-panel-lg">
+        <li class="active"><a href="#content" data-toggle="tab">Content</a></li>
+        <li><a href="#metadata" data-toggle="tab">Metadata</a></li>
+        <li><a href="#statistics" data-toggle="tab">Statistics</a></li>
+    </ul>
 
-    <div class="cf-panel cf-panel-lg">
-        #set($unescaped = $article_content) ## see BaseResponse.java
-        $!unescaped
-        #if($previous_page || $next_page)
-        <hr>
-        <div>
-            #if($previous_page) <a href="$previous_page" class="btn btn-default">&laquo; Previous page </a> #end
-            #if($next_page) <a href="$next_page" class="btn btn-default">Next page &raquo;</a> #end
+    <div class="tab-content cf-panel-tab-body cf-panel-lg" style="padding-top: 35px;">
+         <div id="content" class="tab-pane active">
+            <div class="hitscroll">
+                <a href="#" id="prev"><b>&laquo; Previous hit</b></a> | <a href="#" id="next"><b>Next hit &raquo;</b></a>
+            </div>
+            
+            #set($unescaped = $article_content) ## see BaseResponse.java
+            $!unescaped
+            #if($previous_page || $next_page)
+            <hr>
+            <div>
+                #if($previous_page) <a href="$previous_page" class="btn btn-default">&laquo; Previous page </a> #end
+                #if($next_page) <a href="$next_page" class="btn btn-default">Next page &raquo;</a> #end
+            </div>
+            #end
         </div>
-        #end
-    </div>
 
+        <div id="metadata" class="tab-pane">
+            #set($unescaped = $article_meta) ## see BaseResponse.java
+            $!unescaped
+        </div>
+
+        <div id="statistics" class="tab-pane">
+            <div id="vue-root-statistics"></div>
+        </div>
+    </div>
 </div>
 
 #parse("footer.vm")

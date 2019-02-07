@@ -39,7 +39,7 @@
 <script lang="ts">
 import Vue from 'vue';
 
-import * as CorpusStore from '@/store/corpus';
+import * as CorpusStore from '@/store/search/corpus';
 
 import { snippetParts, getDocumentUrl } from '@/utils';
 import { BLDocResults } from 'types/blacklabtypes';
@@ -83,9 +83,9 @@ export default Vue.extend({
 							after
 						}
 					}) : [],
-					summary: (info[titleField] || 'UNKNOWN') + (info[authorField] ? ' by ' + info[authorField] : ''),
+					summary: (info[titleField!] || 'UNKNOWN') + (info[authorField!] ? ' by ' + info[authorField!] : ''),
 					href: getDocumentUrl(pid, this.results.summary.searchParam.patt),
-					date: info[dateField] || '',
+					date: info[dateField!] || '',
 					hits: doc.numberOfHits,
 					docPid: pid,
 				};

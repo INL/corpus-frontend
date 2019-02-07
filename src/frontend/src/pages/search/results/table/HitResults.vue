@@ -38,8 +38,8 @@
 					</span>
 				</th>
 
-				<th v-for="annotation in shownAnnotations" :key="annotation.id">
-					<a @click="annotation.hasForwardIndex ? changeSort(`hit:${annotation.id}`) : undefined" class="sort" :title="`Sort by ${annotation.displayName}`">{{annotation.displayName}}</a>
+				<th v-for="id in shownAnnotations" :key="id">
+					<a @click="annotation.hasForwardIndex ? changeSort(`hit:${id}`) : undefined" class="sort" :title="`Sort by ${annotationDisplayNames[id]}`">{{annotationDisplayNames[id]}}</a>
 				</th>
 			</tr>
 		</thead>
@@ -62,7 +62,7 @@
 				>
 					<td :colspan="numColumns">
 						<div class="doctitle">
-							<a class="text-error" target="_blank" :href="rowData.href">{{rowData.summary}}</a>
+							<a target="_blank" :href="rowData.href">{{rowData.summary}}</a>
 						</div>
 					</td>
 				</tr>
@@ -79,6 +79,11 @@
 								{{citations[index].error}}
 							</p>
 							<p v-else-if="citations[index].citation">
+								<AudioPlayer
+									v-if="getAudioPlayerData && getAudioPlayerData(corpus, rowData.docPid, citations[index].snippet) != null"
+									v-bind="getAudioPlayerData(corpus, rowData.docPid, citations[index].snippet)"
+								/>
+
 								<span :dir="textDirection">{{citations[index].citation[0]}}<strong>{{citations[index].citation[1]}}</strong>{{citations[index].citation[2]}}</span>
 							</p>
 							<p v-else>
@@ -115,15 +120,16 @@ import URI from 'urijs';
 
 import * as qs from 'qs';
 
-import * as corpusStore from '@/store/corpus';
+import * as CorpusStore from '@/store/search/corpus';
+import * as UIStore from '@/store/search/ui';
 import { snippetParts, words, getDocumentUrl } from '@/utils';
 import * as Api from '@/api';
+
+import AudioPlayer from '@/components/AudioPlayer.vue';
 
 import * as BLTypes from '@/types/blacklabtypes';
 
 import {debugLog} from '@/utils/debug';
-
-declare const BLS_URL: string;
 
 type HitRow = {
 	type: 'hit';
@@ -151,9 +157,13 @@ type CitationData = {
 	loading: boolean;
 	citation: null|[string, string, string];
 	error?: null|string;
+	snippet: null|BLTypes.BLHitSnippet;
 }
 
 export default Vue.extend({
+	components: {
+		AudioPlayer
+	},
 	props: {
 		results: Object as () => BLTypes.BLHitResults,
 		sort: String as () => string|null,
@@ -187,9 +197,9 @@ export default Vue.extend({
 					prevPid = pid;
 					const doc = infos[pid]
 
-					const title = doc[titleField] || 'UNKNOWN';
-					const author = doc[authorField] ? ' by ' + doc[authorField] : '';
-					const date = doc[dateField] ? ' (' + doc[dateField] + ')' : '';
+					const title = titleField && doc[titleField] || 'UNKNOWN';
+					const author = authorField && doc[authorField] ? ' by ' + doc[authorField] : '';
+					const date = dateField && doc[dateField] ? ' (' + doc[dateField] + ')' : '';
 
 					// TODO the clientside url generation story... https://github.com/INL/corpus-frontend/issues/95
 					// Ideally use absolute urls everywhere, if the application needs to be proxied, let the proxy server handle it.
@@ -213,7 +223,7 @@ export default Vue.extend({
 					right: parts[this.rightIndex],
 					hit: parts[1],
 					props: hit.match,
-					other: this.shownAnnotations.map(annot => words(hit.match, annot.id, false, '')),
+					other: this.shownAnnotations.map(annot => words(hit.match, annot, false, '')),
 					docPid: hit.docPid,
 					start: hit.start,
 					end: hit.end
@@ -225,11 +235,14 @@ export default Vue.extend({
 		numColumns() {
 			return 3 + this.shownAnnotations.length; // left - hit - right - (one per shown annotation)
 		},
-		annotations: corpusStore.get.annotations,
-		annotationDisplayNames: corpusStore.get.annotationDisplayNames,
-		firstMainAnnotation: corpusStore.get.firstMainAnnotation,
-		shownAnnotations: corpusStore.get.shownAnnotations,
-		textDirection: corpusStore.get.textDirection,
+		annotations: CorpusStore.get.annotations,
+		annotationDisplayNames: CorpusStore.get.annotationDisplayNames,
+		firstMainAnnotation: CorpusStore.get.firstMainAnnotation,
+		shownAnnotations(): string[] { return UIStore.getState().results.hits.shownAnnotations; },
+		textDirection: CorpusStore.get.textDirection,
+
+		corpus() { return CorpusStore.getState().id; },
+		getAudioPlayerData() { return UIStore.getState().results.hits.getAudioPlayerData; }
 	},
 	methods: {
 		changeSort(payload: string) {
@@ -246,13 +259,17 @@ export default Vue.extend({
 				loading: true,
 				citation: null,
 				error: null,
+				snippet: null
 			} as CitationData);
 
 			const row = this.rows[index] as HitRow;
 
 			Api.blacklab
-			.getSnippet(corpusStore.getState().id, row.docPid, row.start, row.end)
-			.then(s => citation.citation = snippetParts(s, this.firstMainAnnotation.id))
+			.getSnippet(CorpusStore.getState().id, row.docPid, row.start, row.end)
+			.then(s => {
+				citation.citation = snippetParts(s, this.firstMainAnnotation.id)
+				citation.snippet = s;
+			})
 			.catch(e => citation.error = e.message)
 			.finally(() => citation.loading = false);
 		}
@@ -288,7 +305,7 @@ table {
 				text-overflow: ellipsis;
 			}
 
-			&.open > td {
+			&.concordance.open > td {
 				overflow: visible;
 				word-break: break-all;
 			}

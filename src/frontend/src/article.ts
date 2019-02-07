@@ -1,8 +1,18 @@
 import 'bootstrap';
 import $ from 'jquery';
+import Vue from 'vue';
+// @ts-ignore
+import * as Highcharts from 'highcharts';
+// @ts-ignore
+import HighchartsVue from 'highcharts-vue';
+import HighchartsExporting from 'highcharts/modules/exporting';
+import HighchartsExportingData from 'highcharts/modules/export-data';
 
 import tippy from 'tippy.js';
 import Mustache from 'mustache';
+
+import * as RootStore from '@/store/article';
+import ArticlePageComponent from '@/pages/article/ArticlePage.vue';
 
 import '@/global.scss';
 import '@/article.scss';
@@ -137,4 +147,24 @@ $(document).ready(function() {
 	} else {
 		gotoHit(0);
 	}
+});
+
+// ---------------------------
+// Vue initialization & config
+// ---------------------------
+
+HighchartsExporting(Highcharts);
+HighchartsExportingData(Highcharts);
+
+Vue.use(HighchartsVue);
+
+$(document).ready(() => {
+	RootStore.init();
+
+	(window as any).vueRoot = new Vue({
+		render: v => v(ArticlePageComponent)
+	})
+	.$mount(document.querySelector('#vue-root-statistics')!);
+
+	(window as any).Vue = Vue;
 });

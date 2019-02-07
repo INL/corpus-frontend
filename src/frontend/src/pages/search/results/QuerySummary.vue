@@ -7,7 +7,7 @@
 <script lang="ts">
 import Vue from 'vue';
 
-import * as QueryStore from '@/store/query';
+import * as QueryStore from '@/store/search/query';
 import {getFilterSummary} from '@/utils';
 
 export default Vue.extend({

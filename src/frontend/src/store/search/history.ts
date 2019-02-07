@@ -9,27 +9,29 @@ import URI from 'urijs';
 import jsonStableStringify from 'json-stable-stringify';
 import {stripIndent} from 'common-tags';
 
-import { RootState } from '@/store';
-import * as CorpusModule from '@/store/corpus';
-import * as InterfaceModule from '@/store/form/interface';
-import * as FilterModule from '@/store/form/filters';
-import * as GlobalModule from '@/store/results/global';
-import * as HitsModule from '@/store/results/hits';
-import * as DocsModule from '@/store/results/docs';
-import * as PatternModule from '@/store/form/patterns';
-import * as ExploreModule from '@/store/form/explore';
+import { RootState } from '@/store/search/';
+import * as CorpusModule from '@/store/search/corpus';
+import * as InterfaceModule from '@/store/search/form/interface';
+import * as FilterModule from '@/store/search/form/filters';
+import * as GlobalModule from '@/store/search/results/global';
+import * as HitsModule from '@/store/search/results/hits';
+import * as DocsModule from '@/store/search/results/docs';
+import * as PatternModule from '@/store/search/form/patterns';
+import * as ExploreModule from '@/store/search/form/explore';
+import * as GapModule from '@/store/search/form/gap';
 
-import UrlStateParser from '@/store/util/url-state-parser';
+import UrlStateParser from '@/store/search/util/url-state-parser';
 
 import { NormalizedIndex } from '@/types/apptypes';
 import { debugLog } from '@/utils/debug';
 import { getFilterSummary } from '@/utils';
 
-const version = 4;
+const version = 5;
 
 type HistoryEntry = {
 	// always set
 	filters: FilterModule.ModuleRootState;
+	gap: GapModule.ModuleRootState;
 	global: GlobalModule.ModuleRootState;
 	interface: InterfaceModule.ModuleRootState;
 
@@ -45,7 +47,7 @@ type HistoryEntry = {
 	explore: ExploreModule.ModuleRootState;
 };
 
-export type FullHistoryEntry = HistoryEntry&{
+type FullHistoryEntry = HistoryEntry&{
 	/** String representations of the query, for simpler displaying of the entry in UI */
 	displayValues: {
 		filters: string;
@@ -92,6 +94,7 @@ const get = {
 			# Pattern: ${entry.displayValues.pattern || '-'}
 			# Filters: ${entry.displayValues.filters || '-'}
 			# Grouping: ${entry[entry.interface.viewedResults!].groupBy}
+			# Contains gap values: ${entry.gap.value ? 'yes' : 'no'}
 
 			#####
 			${btoa(JSON.stringify(Object.assign({version}, entry)))}
@@ -142,11 +145,12 @@ const actions = {
 		// Order needs to be consistent or hash might be different.
 		const filterSummary: string = getFilterSummary(Object.values(entry.filters).sort((l, r) => l.id.localeCompare(r.id)));
 		// Should only contain items that uniquely identify a query
-		// Normally this would only be the pattern and filters,
+		// Normally this would only be the pattern (including gap values) and filters,
 		// but we've agreed that grouping differently constitutes a new query, so we also need to compare those
 		const hashBase = {
 			filters: filterSummary,
 			pattern,
+			gap: entry.gap,
 			groupBy: entry[entry.interface.viewedResults!].groupBy.concat(entry[entry.interface.viewedResults!].groupByAdvanced).sort((l, r) => l.localeCompare(r)),
 		};
 
@@ -168,8 +172,8 @@ const actions = {
 		}
 		// push new/updated entry
 		state.unshift(fullEntry);
-		// pop entries older than 40
-		state.splice(40);
+		// pop old entries
+		state.splice(200);
 		saveToLocalStorage(state);
 	}, 'addEntry'),
 	removeEntry: b.commit((state, i: number) => {
@@ -249,6 +253,7 @@ function hashJavaDJB2(str: string) {
 export {
 	ModuleRootState,
 	HistoryEntry,
+	FullHistoryEntry,
 
 	getState,
 	get,

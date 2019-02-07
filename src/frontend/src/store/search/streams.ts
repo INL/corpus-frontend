@@ -3,17 +3,18 @@ import URI from 'urijs';
 import { ReplaySubject, Observable, merge, fromEvent } from 'rxjs';
 import { debounceTime, switchMap, map, distinctUntilChanged, shareReplay, filter } from 'rxjs/operators';
 
-import * as RootStore from '@/store';
-import * as CorpusStore from '@/store/corpus';
-import * as PatternStore from '@/store/form/patterns';
-import * as ExploreStore from '@/store/form/explore';
-import * as HitsStore from '@/store/results/hits';
-import * as InterfaceStore from '@/store/form/interface';
-import * as DocsStore from '@/store/results/docs';
-import * as HistoryStore from '@/store/history';
-import * as FilterStore from '@/store/form/filters';
+import * as RootStore from '@/store/search/';
+import * as CorpusStore from '@/store/search/corpus';
+import * as HistoryStore from '@/store/search/history';
+import * as PatternStore from '@/store/search/form/patterns';
+import * as ExploreStore from '@/store/search/form/explore';
+import * as HitsStore from '@/store/search/results/hits';
+import * as InterfaceStore from '@/store/search/form/interface';
+import * as DocsStore from '@/store/search/results/docs';
+import * as FilterStore from '@/store/search/form/filters';
+import * as GapStore from '@/store/search/form/gap';
 
-import UrlStateParser from '@/store/util/url-state-parser';
+import UrlStateParser from '@/store/search/util/url-state-parser';
 
 import { getFilterString } from '@/utils/';
 import * as Api from '@/api';
@@ -135,19 +136,22 @@ export const submittedSubcorpus$ = submittedMetadata$.pipe(
 );
 
 url$.pipe(
-	// filter(v => v.params != null && v.state.interface.viewedResults != null),
+	// The a.params and b.params are the direct query parameters being sent to blacklab-server
+	// Do a simple compare to allow an early escape
 	distinctUntilChanged((a, b) => {
 		const jsonOld = jsonStableStringify(a.params);
 		const jsonNew = jsonStableStringify(b.params);
 		const oldResults = a.state.interface.viewedResults;
 		const newResults = b.state.interface.viewedResults;
 
+		// Account for the fact that the same query doesn't always mean the same ui state - the querybuilder can generate the same query as the expert view, etc.
+		// We do want to store this data in the page's url so reloads properly restore it.
 		return jsonOld === jsonNew && oldResults === newResults && a.state.query.subForm === b.state.query.subForm;
 	}),
-	// generate the new page url
+	// Generate the new page url and add it to the data flowing through the stream
 	map<QueryState, QueryState&{
 		/**
-		 * When the full url would be very long, we need to generate a truncated version (without the pattern - which is often the longest part)
+		 * When the full url would be very long, we need to generate a truncated version (without the pattern and gap values, - which are often the longest part)
 		 * This is an unfortunate side-effect of Tomcat being unable to handle large referrer headers (which contain the full url)
 		 * and so blacklab-server will error out on any requests when the current url of the page is long enough.
 		 * Additionally, loading the page from a long url is impossible too, because the front-end Tomcat instance also can't serve the page any longer.
@@ -171,7 +175,8 @@ url$.pipe(
 			};
 		}
 
-		// remove null, undefined, empty strings and empty arrays from our query params
+		// Remove null, undefined, empty strings and empty arrays from our query params
+		// Any missing/omitted parameters in the (frontend) url will be replaced by their defaults by the url-state-parser when the url might be decoded.
 		const queryParams: Partial<BLTypes.BLSearchParameters> = Object.entries(v.params).reduce((acc, [key, val]) => {
 			if (val == null) { return acc; }
 			if (typeof val === 'string' && val.length === 0) { return acc; }
@@ -180,6 +185,7 @@ url$.pipe(
 			return acc;
 		}, {} as any);
 
+		// The raw blacklab-server query parameters don't contain enough information on their own to fully restore the frontend's state on load
 		// Store some interface state in the url, so the query can be restored to the correct form
 		// even when loading the page from just the url. See UrlStateParser class in store/utils/url-state-parser.ts
 		// TODO we should probably output the form in the url as /${indexId}/('search'|'explore')/('simple'|'advanced' ...etc)/('hits'|'docs')
@@ -192,7 +198,7 @@ url$.pipe(
 			} as Partial<InterfaceStore.ModuleRootState>)
 		});
 
-		// Generate the new url
+		// Generate the new frontend url
 		const uri2 = uri
 			.segmentCoded(basePath)
 			.segmentCoded(v.state.interface.viewedResults!)
@@ -200,13 +206,16 @@ url$.pipe(
 
 		const fullUrl = uri2.toString();
 		return {
-			url: fullUrl.length <= 4000 ? fullUrl : uri2.search(Object.assign({}, queryParams, {patt: undefined})).toString(),
+			url: fullUrl.length <= 4000 ? fullUrl : uri2.search(Object.assign({}, queryParams, {patt: undefined, pattgapdata: undefined})).toString(),
 			isTruncated: fullUrl.length > 4000,
 			state: v.state,
 			params: v.params
 		};
 	}),
 	// In the case the new url is identical to the current url, don't put it in history
+	// This second check is required because distinctUntilChanged does not fire on the very first time this stream processes a value
+	// And we want to avoid pushing an identical url on to the history when you first load the page.
+	// (Or just when there are subtle differences such as a trailing slash or no trailing slash)
 	filter(v => {
 		// new urls are always generated without trailing slash (no empty trailing segment string)
 		// while current url might contain one for whatever reason (if user just landed on page)
@@ -219,8 +228,9 @@ url$.pipe(
 			return false;
 		}
 
-		// Url was truncated and is equal to current,
+		// New url is truncated, and is different from the previous url, but did the pattern change?
 		// Might still be able to compare the patterns by checking the state from which it was generated
+		// NOTE: history.state here is the browser's history entry state, we save it in this stream's subscribe handler
 		const lastState: HistoryStore.HistoryEntry|null = history.state;
 		if (lastState == null) {
 			// don't store; no previous state stored in history (i.e. the user just landed on the page, so it MUST be equal)
@@ -230,7 +240,8 @@ url$.pipe(
 		}
 
 		// shortcut: only need to check the pattern, as the interface state IS contained in the url, and is guaranteed to be the same
-		return jsonStableStringify(v.state.query.formState) !== jsonStableStringify(lastState.patterns[lastState.interface.patternMode]);
+		// TODO double-check this, and document thought process better.
+		return jsonStableStringify({formState: v.state.query.formState, gap: v.state.query.gap}) !== jsonStableStringify({formState: lastState.patterns[lastState.interface.patternMode], gap: lastState.gap});
 	}),
 	map((v): QueryState&{
 		entry: HistoryStore.HistoryEntry
@@ -238,7 +249,7 @@ url$.pipe(
 	} => {
 		const {query, docs, hits, global} = v.state;
 		const entry: HistoryStore.HistoryEntry = {
-			filters: query.filters!,
+			filters: query.filters || {},
 			global,
 			hits: v.state.interface.viewedResults === 'hits' ? hits : HitsStore.defaults,
 			docs: v.state.interface.viewedResults === 'docs' ? docs : DocsStore.defaults,
@@ -251,11 +262,12 @@ url$.pipe(
 				[query.subForm]: query.formState
 			} : PatternStore.defaults,
 			interface: {
-				form: query.form!,
+				form: query.form ? query.form : 'search',
 				exploreMode: query.form === 'explore' ? query.subForm : 'ngram',
 				patternMode: query.form === 'search' ? query.subForm : 'simple',
 				viewedResults: v.state.interface.viewedResults
-			}
+			},
+			gap: query.gap || GapStore.defaults
 		};
 		return {
 			url: v.url,

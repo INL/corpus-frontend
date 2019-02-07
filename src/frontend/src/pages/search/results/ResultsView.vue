@@ -99,14 +99,14 @@ import {saveAs} from 'file-saver';
 
 import * as Api from '@/api';
 
-import * as RootStore from '@/store';
-import * as CorpusStore from '@/store/corpus';
-import * as ResultsStore from '@/store/results';
-import * as GlobalStore from '@/store/results/global';
-import * as QueryStore from '@/store/query';
-import * as InterfaceStore from '@/store/form/interface';
+import * as RootStore from '@/store/search/';
+import * as CorpusStore from '@/store/search/corpus';
+import * as ResultsStore from '@/store/search/results';
+import * as GlobalStore from '@/store/search/results/global';
+import * as QueryStore from '@/store/search/query';
+import * as InterfaceStore from '@/store/search/form/interface';
 
-import {submittedSubcorpus$} from '@/store/streams';
+import {submittedSubcorpus$} from '@/store/search/streams';
 
 import GroupResults from '@/pages/search/results/table/GroupResults.vue';
 import HitResults from '@/pages/search/results/table/HitResults.vue';

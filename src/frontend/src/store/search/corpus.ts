@@ -10,7 +10,7 @@ import deepFreeze from 'deep-freeze';
 
 import * as Api from '@/api';
 
-import {RootState} from '@/store';
+import {RootState} from '@/store/search/';
 
 import {normalizeIndex} from '@/utils/blacklabutils';
 
@@ -18,7 +18,6 @@ import * as BLTypes from '@/types/blacklabtypes';
 import {NormalizedIndex, NormalizedAnnotation, NormalizedMetadataField, NormalizedAnnotatedField} from '@/types/apptypes';
 
 declare const SINGLEPAGE: { INDEX: BLTypes.BLIndexMetadata; };
-declare const PROPS_IN_COLUMNS: string[];
 
 type ModuleRootState = NormalizedIndex;
 
@@ -68,15 +67,6 @@ const get = {
 	// TODO there can be multiple main annotations if there are multiple annotatedFields
 	// the ui needs to respect this (probably render more extensive results?)
 	firstMainAnnotation: () => get.annotations().find(f => f.isMainAnnotation)!,
-	/**
-	 * Shown result columns can be configured, these are the annotations that should be shown in order of declaration.
-	 * Duplicates may exist in this list!
-	 */
-	shownAnnotations: () => {
-		const annotations = get.annotations();
-		return PROPS_IN_COLUMNS.map(annotId => annotations.find(annot => annot.id === annotId))
-			.filter(annot => annot != null) as typeof annotations; // need cast to remove union with undefined from .find()
-	},
 
 	/**
 	 * Returns all metadatagroups from the indexstructure, unless there are no metadatagroups defined

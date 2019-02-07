@@ -34,10 +34,10 @@ import Vue from 'vue';
 
 import {Subscription} from 'rxjs';
 
-import * as CorpusStore from '@/store/corpus';
-import * as FilterStore from '@/store/form/filters';
+import * as CorpusStore from '@/store/search/corpus';
+import * as FilterStore from '@/store/search/form/filters';
 
-import { selectedSubCorpus$ } from '@/store/streams';
+import { selectedSubCorpus$ } from '@/store/search/streams';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';

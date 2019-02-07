@@ -4,8 +4,8 @@
  */
 import {getStoreBuilder} from 'vuex-typex';
 
-import {RootState} from '@/store';
-import * as CorpusStore from '@/store/corpus'; // Is initialized before we are.
+import {RootState} from '@/store/search/';
+import * as CorpusStore from '@/store/search/corpus'; // Is initialized before we are.
 import {makeWildcardRegex} from '@/utils';
 import {AnnotationValue} from '@/types/apptypes';
 

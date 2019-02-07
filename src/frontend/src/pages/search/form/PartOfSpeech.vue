@@ -60,8 +60,8 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import * as TagsetStore from '@/store/tagset';
-import * as InterfaceStore from '@/store/form/interface';
+import * as TagsetStore from '@/store/search/tagset';
+import * as InterfaceStore from '@/store/search/form/interface';
 
 import {NormalizedAnnotation, Tagset} from '@/types/apptypes';
 
@@ -98,11 +98,11 @@ export default Vue.extend({
 		},
 	},
 	methods: {
-		reset: function() {
+		reset() {
 			Object.keys(this.selected).forEach(k => this.selected[k] = false);
 			this.annotationValue = null;
 		},
-		submit: function() {
+		submit() {
 			if (this.annotationValue == null) {
 				this.$emit('submit', {
 					query: '',

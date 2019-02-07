@@ -52,7 +52,7 @@
 					<!-- TODO extract available options from blacklab -->
 					<label class="col-xs-12 col-md-3">Within:</label>
 
-					<div class="btn-group col-xs-12 col-md-9" id="simplesearch_within">
+					<div class="btn-group col-xs-12 col-md-9">
 						<button v-for="option in withinOptions"
 							type="button"
 							:class="['btn btn-default', {'active': within === option.value}]"
@@ -60,6 +60,13 @@
 							:value="option.value"
 							@click="within = option.value"
 						>{{option.label}}</button>
+					</div>
+				</div>
+				<div class="form-group">
+					<div class="col-xs-12 col-md-9 col-md-push-3 checkbox">
+						<label for="extended_split_batch">
+							<input type="checkbox" name="extended_split_batch" id="extended_split_batch" v-model="splitBatch"/> Split batch queries
+						</label>
 					</div>
 				</div>
 			</div>
@@ -74,6 +81,19 @@
 					Import query
 					<input type="file" name="importQuery" id="importQuery" accept=".txt,text/plain" @change="importQuery" title="Import a previously downloaded query">
 				</label>
+				<div class="btn-group">
+					<label class="btn btn-sm btn-default file-input-button" for="gapFilling">
+						Gap-filling
+						<input type="file" name="gapFilling" id="gapFilling" accept=".tsv,.csv,text/plain" @change="importGapFile" title="Upload a tab-separated list of values to substitute for gap values ('@@' in your query).">
+					</label>
+					<button v-if="gapValue != null"
+						type="button"
+						class="btn btn-default btn-sm"
+						title="Clear gap values"
+						@click="gapValue = null"
+					><span class="fa fa-times"></span></button>
+				</div>
+				<textarea type="area" v-if="gapValue != null" class="form-control gap-value-editor" v-model.lazy="gapValue" @keydown.tab.prevent="insertTabInText"/>
 				<span v-show="parseQueryError" id="parseQueryError" class="text-danger"><span class="fa fa-danger"></span> {{parseQueryError}}</span>
 				<span v-show="importQueryError" id="importQueryError" class="text-danger"><span class="fa fa-danger"></span> {{importQueryError}}</span>
 			</div>
@@ -84,11 +104,12 @@
 <script lang="ts">
 import Vue from 'vue';
 
-import * as RootStore from '@/store';
-import * as CorpusStore from '@/store/corpus';
-import * as InterfaceStore from '@/store/form/interface';
-import * as PatternStore from '@/store/form/patterns';
-import * as HistoryStore from '@/store/history';
+import * as RootStore from '@/store/search/';
+import * as CorpusStore from '@/store/search/corpus';
+import * as InterfaceStore from '@/store/search/form/interface';
+import * as PatternStore from '@/store/search/form/patterns';
+import * as GapStore from '@/store/search/form/gap';
+import * as HistoryStore from '@/store/search/history';
 
 import Annotation from '@/pages/search/form/Annotation.vue';
 
@@ -105,7 +126,7 @@ export default Vue.extend({
 	},
 	data: () => ({
 		parseQueryError: null as string|null,
-		importQueryError: null as string|null
+		importQueryError: null as string|null,
 	}),
 	computed: {
 		activePattern: {
@@ -141,6 +162,10 @@ export default Vue.extend({
 			get(): string|null { return PatternStore.getState().extended.within; },
 			set: PatternStore.actions.extended.within,
 		},
+		splitBatch: {
+			get(): boolean { return PatternStore.getState().extended.splitBatch; },
+			set: PatternStore.actions.extended.splitBatch
+		},
 		simple: {
 			get(): string|null { return PatternStore.getState().simple; },
 			set: PatternStore.actions.simple,
@@ -152,6 +177,10 @@ export default Vue.extend({
 		expert: {
 			get(): string|null { return PatternStore.getState().expert; },
 			set: PatternStore.actions.expert,
+		},
+		gapValue: {
+			get: GapStore.get.gapValue,
+			set: GapStore.actions.gapValue
 		}
 	},
 	methods: {
@@ -182,6 +211,28 @@ export default Vue.extend({
 			})
 			.catch(e => this.importQueryError = e.message)
 			.finally(() => el.value = '')
+		},
+		importGapFile(event: Event) {
+			const self = this;
+			const el = (event.target as HTMLInputElement);
+			if (!el.files || el.files.length !== 1) {
+				self.gapValue = null;
+				return;
+			}
+			GapStore.actions.gapValueFile(el.files[0]);
+			el.value = '';
+		},
+		insertTabInText(event: Event) {
+			const el = event.target as HTMLTextAreaElement;
+			let text = el.value;
+
+			const originalSelectionStart = el.selectionStart;
+			const originalSelectionEnd = el.selectionEnd;
+			const textStart = text.slice(0, originalSelectionStart);
+			const textEnd =  text.slice(originalSelectionEnd);
+
+			el.value = `${textStart}\t${textEnd}`;
+			el.selectionEnd = el.selectionStart = originalSelectionStart + 1;
 		}
 	}
 })
@@ -227,6 +278,14 @@ export default Vue.extend({
 
 .nav-tabs.subtabs>li.active>a, .nav-tabs.subtabs>li>a:hover {
 	border-color: transparent #ddd #ddd #ddd;
+}
+
+textarea.gap-value-editor {
+	margin-top: 10px;
+	height: 300px;
+	max-width: 100%;
+	resize: vertical;
+	width: 100%;
 }
 
 </style>

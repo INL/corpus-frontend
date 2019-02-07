@@ -14,22 +14,22 @@
  *
  * Generally, this part of the state ends up in the query history,
  * and the less processing we do here (such as turning annotations in a normal cql query string, or turning filters into a normal lucene query string)
- * the more work we have to do to undo this
- * when the user loads that same history entry later.
+ * the less work we have to do to undo this when the user loads that same history entry later.
  *
  * In order to generate a complete blacklab query, it is combined with the global settings (page size, sampling, context size, etc)
  * and the results settings (the grouping, viewed page number, etc).
  */
 
 import {getStoreBuilder} from 'vuex-typex';
-import {RootState} from '@/store';
+import {RootState} from '@/store/search/';
 
 import { AnnotationValue} from '@/types/apptypes';
-import * as CorpusModule from '@/store/corpus';
-import * as PatternModule from '@/store/form/patterns';
-import * as FilterModule from '@/store/form/filters';
-import * as ExploreModule from '@/store/form/explore';
-import { getFilterString, makeWildcardRegex } from '@/utils';
+import * as CorpusModule from '@/store/search/corpus';
+import * as PatternModule from '@/store/search/form/patterns';
+import * as FilterModule from '@/store/search/form/filters';
+import * as ExploreModule from '@/store/search/form/explore';
+import * as GapModule from '@/store/search/form/gap';
+import { getFilterString, getPatternString, makeWildcardRegex } from '@/utils';
 
 type ModuleRootStateSearch<K extends keyof PatternModule.ModuleRootState> = {
 	form: 'search';
@@ -37,6 +37,7 @@ type ModuleRootStateSearch<K extends keyof PatternModule.ModuleRootState> = {
 
 	formState: PatternModule.ModuleRootState[K];
 	filters: FilterModule.ModuleRootState;
+	gap: GapModule.ModuleRootState;
 };
 
 type ModuleRootStateExplore<K extends keyof ExploreModule.ModuleRootState> = {
@@ -45,6 +46,7 @@ type ModuleRootStateExplore<K extends keyof ExploreModule.ModuleRootState> = {
 
 	formState: ExploreModule.ModuleRootState[K];
 	filters: FilterModule.ModuleRootState;
+	gap: GapModule.ModuleRootState;
 };
 
 type ModuleRootStateNone = {
@@ -52,6 +54,7 @@ type ModuleRootStateNone = {
 	subForm: null;
 	formState: null;
 	filters: null;
+	gap: null;
 };
 
 type ModuleRootState = ModuleRootStateNone|ModuleRootStateSearch<keyof PatternModule.ModuleRootState>|ModuleRootStateExplore<keyof ExploreModule.ModuleRootState>;
@@ -60,7 +63,8 @@ const initialState: ModuleRootStateNone = {
 	form: null,
 	subForm: null,
 	formState: null,
-	filters: null
+	filters: null,
+	gap: null
 };
 
 const namespace = 'query';
@@ -164,8 +168,8 @@ const actions = {
 	// such as writing to current state causing updates in history entries
 	search: b.commit((state, payload: ModuleRootState) => Object.assign(state, JSON.parse(JSON.stringify(payload))), 'search'),
 
-	reset: b.dispatch(state => Object.assign(state, Object.assign({}, initialState)), 'reset'),
-	replace: b.dispatch((state, payload: ModuleRootState) => Object.assign(state, JSON.parse(JSON.stringify(payload))), 'replace'),
+	reset: b.commit(state => Object.assign(state, Object.assign({}, initialState)), 'reset'),
+	replace: b.commit((state, payload: ModuleRootState) => Object.assign(state, JSON.parse(JSON.stringify(payload))), 'replace'),
 };
 
 /** We need to call some function from the module before creating the root store or this module won't be evaluated (e.g. none of this code will run) */

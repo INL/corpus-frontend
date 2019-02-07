@@ -5,9 +5,7 @@
 <script>
     var SINGLEPAGE = SINGLEPAGE || {};
     SINGLEPAGE.INDEX = JSON.parse("$esc.javascript($unescapedIndexStructureJson)");
-    var BLS_URL = "$blsUrl";
     var PROPS_IN_COLUMNS = "$websiteConfig.getPropColumns()".split(',');
-    var CONTEXT_URL = "$esc.javascript($pathToTop)";
 </script>
 
 <script src="$jspath/search.js?_$cache"></script>

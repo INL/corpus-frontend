@@ -1,26 +1,29 @@
 import URI from 'urijs';
 import memoize from 'memoize-decorator';
 
+import BaseUrlStateParser from '@/store/util/url-state-parser-base';
+
 import {makeRegexWildcard, unescapeLucene} from '@/utils';
 import parseCql, {Attribute} from '@/utils/cqlparser';
 import parseLucene from '@/utils/luceneparser';
 import {debugLog} from '@/utils/debug';
 
-import * as CorpusModule from '@/store/corpus';
-import * as HistoryModule from '@/store/history';
-import * as TagsetModule from '@/store/tagset';
+import * as CorpusModule from '@/store/search/corpus';
+import * as HistoryModule from '@/store/search/history';
+import * as TagsetModule from '@/store/search/tagset';
 
 // Form
-import * as FilterModule from '@/store/form/filters';
-import * as InterfaceModule from '@/store/form/interface';
-import * as PatternModule from '@/store/form/patterns';
-import * as ExploreModule from '@/store/form/explore';
+import * as FilterModule from '@/store/search/form/filters';
+import * as InterfaceModule from '@/store/search/form/interface';
+import * as PatternModule from '@/store/search/form/patterns';
+import * as ExploreModule from '@/store/search/form/explore';
+import * as GapModule from '@/store/search/form/gap';
 
 // Results
-import * as ResultsManager from '@/store/results';
-import * as DocResultsModule from '@/store/results/docs';
-import * as GlobalResultsModule from '@/store/results/global';
-import * as HitResultsModule from '@/store/results/hits';
+import * as ResultsManager from '@/store/search/results';
+import * as DocResultsModule from '@/store/search/results/docs';
+import * as GlobalResultsModule from '@/store/search/results/global';
+import * as HitResultsModule from '@/store/search/results/hits';
 
 import {FilterValue, AnnotationValue} from '@/types/apptypes';
 
@@ -28,20 +31,7 @@ import {FilterValue, AnnotationValue} from '@/types/apptypes';
  * Decode the current url into a valid page state configuration.
  * Keep everything private except the getters
  */
-export default class UrlStateParser {
-	/**
-	 * Path segments of the url this was constructed with, typically something like ['corpus-frontend', ${corpus.id}, ('search'), ('docs'|'hits')]
-	 * But might contain extra leading segments if the application is proxied.
-	 */
-	private paths: string[];
-	/** Query parameters parsed into an object, repeated fields are turned into an array, though all values are kept as-is as strings */
-	private params: {[key: string]: string|string[]|null};
-
-	constructor(uri = new URI()) {
-		this.paths = uri.segmentCoded();
-		this.params = uri.search(true) || {};
-	}
-
+export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.HistoryEntry> {
 	@memoize
 	public get(): HistoryModule.HistoryEntry {
 		return {
@@ -49,6 +39,7 @@ export default class UrlStateParser {
 			filters: this.filters,
 			interface: this.interface,
 			patterns: this.patterns,
+			gap: this.gap,
 
 			docs: this.docs,
 			global: this.global,
@@ -158,17 +149,18 @@ export default class UrlStateParser {
 			// the other views will have the query placed in it as well (if it fits), but this is more of a courtesy
 			// if no pattern exists, show the simplest search
 			const hasFilters = Object.keys(this.filters).length > 0;
+			const hasGapValue = !!this.gap.value; // Only supported for expert view for, prevent setting anything else for now
 			let fromPattern = true; // is interface state actually from the pattern, or from the default fallback?
-			if (this.simplePattern && !hasFilters) {
+			if (this.simplePattern && !hasFilters && !hasGapValue) {
 				ui.patternMode = 'simple';
-			} else if ((Object.keys(this.extendedPattern.annotationValues).length > 0)) {
+			} else if ((Object.keys(this.extendedPattern.annotationValues).length > 0) && !hasGapValue) {
 				ui.patternMode = 'extended';
-			} else if (this.advancedPattern) {
+			} else if (this.advancedPattern && !hasGapValue) {
 				ui.patternMode = 'advanced';
 			} else if (this.expertPattern) {
 				ui.patternMode = 'expert';
 			} else {
-				ui.patternMode = hasFilters ? 'extended' : 'simple';
+				ui.patternMode = hasFilters ? hasGapValue ? 'expert' : 'extended' : 'simple';
 				fromPattern = false;
 			}
 
@@ -186,6 +178,12 @@ export default class UrlStateParser {
 
 			return ui;
 		}
+	}
+
+	@memoize
+	private get gap(): GapModule.ModuleRootState {
+		const value = this.getString('pattgapdata');
+		return value ? { value } : GapModule.defaults;
 	}
 
 	@memoize
@@ -425,7 +423,9 @@ export default class UrlStateParser {
 	private get extendedPattern() {
 		return {
 			annotationValues: this.annotationValues,
-			within: this.within
+			within: this.within,
+			// This is always false, it's just a checkbox that will split up the query when it's submitted, then untick itself
+			splitBatch: false
 		};
 	}
 
@@ -533,55 +533,6 @@ export default class UrlStateParser {
 			return result.tokens.length > 0 ? result : null;
 		} catch (e) {
 			return null; // meh, can't parse
-		}
-	}
-
-	/**
-	 * Get the parameter by the name of paramname from our query parameters.
-	 * If the parameter is missing or is NaN, the fallback will be returned,
-	 * otherwise, the parameter is passed to the validate function (if present), and the result is returned.
-	 */
-	private getNumber(paramname: string, fallback: number|null = null, validate?: (value: number)=>number|null): number|null {
-		const {[paramname]: prop} = this.params;
-		if (typeof prop !== 'string') {
-			return fallback;
-		}
-		const val = Number.parseInt(prop, 10);
-		if (isNaN(val)) {
-			return fallback;
-		}
-		return validate ? validate(val) : val;
-	}
-	/**
-	 * Get the parameter by the name of paramname from our query parameters.
-	 * If the parameter is missing, the fallback will be returned,
-	 * otherwise, the parameter is passed to the validate function (if present), and the result is returned.
-	 * NOTE: empty strings are preserved and need to removed using the validation function if needed.
-	 */
-	private getString(paramname: string, fallback: string|null = null, validate?: (value: string)=>string|null): string|null {
-		const {[paramname]: prop} = this.params;
-		if (typeof prop !== 'string') {
-			return fallback;
-		}
-		return validate ? validate(prop) : prop;
-	}
-	/** If the property is missing altogether or can't be parsed, fallback is returned, otherwise the value is parsed */
-	private getBoolean(paramname: string, fallback: boolean|null = null, validate?: (value: boolean)=>boolean): boolean|null {
-		const {[paramname]: prop} = this.params;
-		if (typeof prop !== 'string') {
-			return fallback;
-		}
-
-		// Present but no value (&prop) === null --> true
-		// Present with value --> parse
-		if (prop === null) {
-			return true;
-		} else if (['true', 'yes', 'on', 'enable', 'enabled'].includes(prop.toLowerCase())) {
-			return true;
-		} else if (['', 'false', 'no', 'off', 'disable', 'disabled'].includes(prop.toLowerCase())) {
-			return false;
-		} else {
-			return fallback;
 		}
 	}
 }

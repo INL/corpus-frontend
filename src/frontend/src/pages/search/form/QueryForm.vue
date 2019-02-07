@@ -32,8 +32,8 @@
 			<QueryFormFilters id="filtercontainer" v-show="filtersVisible"
 				:class="{
 					'col-xs-12': true,
-					'col-md-6': !queryBuilderVisible,
-					'col-md-9': queryBuilderVisible
+					'col-md-6': activeForm === 'search' && !queryBuilderVisible,
+					'col-md-9': activeForm === 'explore' || queryBuilderVisible
 				}"
 			/>
 			<div class="col-xs-12">
@@ -53,9 +53,13 @@
 <script lang="ts">
 import Vue from 'vue';
 import URI from 'urijs';
+import {Subscription} from 'rxjs';
+import {stripIndent} from 'common-tags';
 
-import * as RootStore from '@/store';
-import * as InterfaceStore from '@/store/form/interface';
+import * as RootStore from '@/store/search/';
+import * as InterfaceStore from '@/store/search/form/interface';
+
+import { selectedSubCorpus$ } from '@/store/search/streams';
 
 import QueryFormSearch from '@/pages/search/form/QueryFormSearch.vue';
 import QueryFormExplore from '@/pages/search/form/QueryFormExplore.vue';
@@ -63,6 +67,9 @@ import QueryFormFilters from '@/pages/search/form/QueryFormFilters.vue';
 import QueryFormSettings from '@/pages/search/form/QueryFormSettings.vue';
 
 import History from '@/pages/search/History.vue';
+
+import * as BLTypes from '@/types/blacklabtypes';
+import {ApiError} from '@/types/apptypes';
 
 export default Vue.extend({
 	components: {
@@ -72,6 +79,11 @@ export default Vue.extend({
 		QueryFormSettings,
 		History
 	},
+	data: () => ({
+		subscriptions: [] as Subscription[],
+		subCorpusStats: null as null|BLTypes.BLDocResults,
+		error: null as null|ApiError,
+	}),
 	computed: {
 		queryBuilderVisible(): boolean { return RootStore.get.queryBuilderActive(); },
 		filtersVisible(): boolean { return RootStore.get.filtersActive(); },
@@ -82,10 +94,38 @@ export default Vue.extend({
 	},
 	methods: {
 		reset: RootStore.actions.reset,
-		submit: RootStore.actions.searchFromSubmit,
-	}
-})
+		submit() {
+			if (this.activeForm === 'explore' && this.subCorpusStats && this.subCorpusStats.summary.tokensInMatchingDocuments! > 500_000) {
+				const msg = stripIndent`
+					You have selected a subcorpus of over ${(500_000).toLocaleString()} tokens.
+					Please note that this query, on first execution, may take a considerable amount of time to complete.
+					Proceed with caution.
 
+					Continue?`;
+
+				if (!confirm(msg)) {
+					return;
+				}
+			}
+			RootStore.actions.searchFromSubmit();
+		}
+	},
+	created() {
+		this.subscriptions.push(selectedSubCorpus$.subscribe(
+			v => {
+				this.subCorpusStats = this.subCorpusStats || v; // NOTE: don't null last result while calculation is running
+				this.error = null;
+			},
+			e => {
+				this.subCorpusStats = null;
+				this.error = e;
+			}
+		));
+	},
+	destroyed() {
+		this.subscriptions.forEach(s => s.unsubscribe());
+	}
+});
 </script>
 
 <style lang="scss">

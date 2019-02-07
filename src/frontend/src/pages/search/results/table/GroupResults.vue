@@ -72,7 +72,7 @@
 <script lang="ts">
 import Vue from 'vue';
 
-import * as corpusStore from '@/store/corpus';
+import * as corpusStore from '@/store/search/corpus';
 import * as Api from '@/api';
 import {snippetParts, getDocumentUrl} from '@/utils';
 
@@ -199,7 +199,7 @@ export default Vue.extend({
 					})
 				}
 			})
-			.catch(err => cache.error = err) // TODO log error somewhere in component.
+			.catch(err => cache.error = err)
 			.finally(() => cache.request = null)
 		},
 

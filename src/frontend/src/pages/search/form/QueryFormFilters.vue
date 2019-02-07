@@ -28,7 +28,7 @@
 <script lang="ts">
 import Vue from 'vue';
 
-import * as CorpusStore from '@/store/corpus';
+import * as CorpusStore from '@/store/search/corpus';
 
 import FilterOverview from '@/pages/search/form/FilterOverview.vue';
 import MetadataFilter from '@/pages/search/form/Filter.vue';

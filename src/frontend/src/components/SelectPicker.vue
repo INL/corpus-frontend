@@ -34,7 +34,7 @@
 			:title="dataTitle"
 			:disabled="disabled"
 
-			@click="isOpen ? close() : open()"
+			@click="isOpen ? close() : open($refs.focusOnClickOpen)"
 			@keydown.tab="close()/*focus shifts to next element, close menu*/"
 			@keydown.esc="close()"
 			@keydown.prevent.enter="$event.target.click()/*stop to prevent submitting any parent form*/"
@@ -80,9 +80,11 @@
 
 				@keydown.stop.left="/*stop menu from changing focus here*/"
 				@keydown.stop.right="/*stop menu from changing focus here*/"
-				@keydown.prevent.enter="/*prevent submission when embedded in a form*/"
+				@keydown.prevent.enter="filteredOptions.filter(o => o.type === 1).length === 1 ? select(filteredOptions.filter(o => o.type === 1)[0]) : undefined/*prevent submission when embedded in a form*/"
 
 				v-model="inputValue"
+
+				ref="focusOnClickOpen"
 			/></li>
 
 			<li class="menu-body">
@@ -157,25 +159,25 @@ type _uiOpt = {
 
 	lowerValue: string;
 	lowerLabel: string;
-}
+};
 type _uiOptGroup = {
 	type: 2;
 
 	label?: string;
 	title?: string;
 	disabled?: boolean;
-}
+};
 type uiOption = _uiOpt|_uiOptGroup;
 
 type Model = {
 	[key: string]: _uiOpt;
-}
+};
 
 function isSimpleOption(e: any): e is string { return typeof e === 'string'; }
 function isOption(e: any): e is Option { return e && isSimpleOption(e.value); }
 function isOptGroup(e: any): e is OptGroup { return e && typeof e.label === 'string' && Array.isArray(e.options); }
 
-let id = 0;
+let nextMenuId = 0;
 
 export default Vue.extend({
 	props: {
@@ -221,16 +223,16 @@ export default Vue.extend({
 		// (as container might be a parent element that hasn't fully mounted yet when we init)
 		containerEl: null as null|HTMLElement,
 
-		uid: id++
+		uid: nextMenuId++
 	}),
 	computed: {
-		menuId(): string { return this.$attrs.id != null ? this.$attrs.id : `combobox-${this.uid}`},
+		menuId(): string { return this.$attrs.id != null ? this.$attrs.id : `combobox-${this.uid}`; },
 
 		uiOptions(): uiOption[] {
 
-			const mapSimple = (o: SimpleOption, i: number, group?: OptGroup): _uiOpt => ({
+			const mapSimple = (o: SimpleOption, id: number, group?: OptGroup): _uiOpt => ({
 				type: 1,
-				id: i,
+				id,
 
 				label: o,
 				value: o,
@@ -242,9 +244,9 @@ export default Vue.extend({
 				lowerLabel: o.toLowerCase(),
 			});
 
-			const mapOption = (o: Option, i: number, group?: OptGroup): _uiOpt => ({
+			const mapOption = (o: Option, id: number, group?: OptGroup): _uiOpt => ({
 				type: 1,
-				id: i,
+				id,
 
 				value: o.value,
 				label: o.label || o.value,
@@ -265,8 +267,8 @@ export default Vue.extend({
 
 			let i = 0;
 			let uiOptions = this.options.flatMap(o => {
-				if (isSimpleOption(o)) return mapSimple(o, i++);
-				else if (isOption(o)) return mapOption(o, i++);
+				if (isSimpleOption(o)) { return mapSimple(o, i++); }
+				else if (isOption(o)) { return mapOption(o, i++); }
 				else {
 					const h = mapGroup(o);
 					const subs: uiOption[] = o.options.map(sub => isSimpleOption(sub) ? mapSimple(sub, i++, o) : mapOption(sub, i++, o));
@@ -289,12 +291,12 @@ export default Vue.extend({
 					label: '',
 					lowerValue: '',
 					lowerLabel: '',
-				}
+				};
 
 				uiOptions.unshift(emptyOption);
 			} else if (this.multiple || this.editable) {
 				// remove all empty options if the user can edit or otherwise untick values
-				uiOptions = uiOptions.filter(o => !(o.type === 1 && !o.value && !o.label))
+				uiOptions = uiOptions.filter(o => !(o.type === 1 && !o.value && !o.label));
 			}
 
 			return uiOptions;
@@ -308,7 +310,7 @@ export default Vue.extend({
 						inDisabledGroup = !!o.disabled;
 					}
 					return !(o as any).disabled && !inDisabledGroup;
-				})
+				});
 			}
 
 			const filter = this.inputValue;
@@ -320,7 +322,7 @@ export default Vue.extend({
 			})
 			.reverse()
 			.filter(o => {
-				if (o.type === 2 && hideNextOptGroup) return false;
+				if (o.type === 2 && hideNextOptGroup) { return false; }
 				hideNextOptGroup = o.type !== 1;
 				return true;
 			})
@@ -332,15 +334,20 @@ export default Vue.extend({
 		displayValues(): string[] { return Object.values(this.internalModel).map(v => v.label || v.value); },
 	},
 	methods: {
-		open(): void {
+		open(focusEl?: HTMLElement): void {
 			this.isOpen = true;
+			if (focusEl) {
+				Vue.nextTick(() => focusEl.focus());
+			}
 		},
 		close(event?: Event): void {
 			function isChild(parent: HTMLElement, child: HTMLElement|null) {
-				do {
-					if (!child) { return false; }
-					if (child === parent) { return true; }
-				} while (child = child.parentElement)
+				for (child; child; child = child.parentElement) {
+					if (child === parent) {
+						return true;
+					}
+				}
+				return false;
 			}
 
 			if (event && event.type === 'click') {
@@ -390,8 +397,7 @@ export default Vue.extend({
 		},
 		focus(el: HTMLElement): void {
 			if (!this.isOpen) {
-				this.open();
-				Vue.nextTick(() => el.focus());
+				this.open(el);
 			} else {
 				el.focus();
 			}
@@ -471,7 +477,7 @@ export default Vue.extend({
 			if (this.editable) {
 				this.inputValue = (newVal ? typeof newVal === 'string' ? newVal : newVal[0] || '' : '');
 				return;
-			};
+			}
 
 			if (newVal == null) { newVal = this.multiple ? [] : ''; }
 			else if (this.multiple && typeof newVal === 'string') { newVal = [newVal]; }
@@ -516,8 +522,8 @@ export default Vue.extend({
 					.filter(v => !!v); // remove invalid values that were mapped to undefined
 				}
 
-				for (let v of unselectedValues) { Vue.delete(this.internalModel, v.id.toString()); }
-				for (let v of newSelectedValues as _uiOpt[]) { Vue.set(this.internalModel, v.id.toString(), v); }
+				for (const v of unselectedValues) { Vue.delete(this.internalModel, v.id.toString()); }
+				for (const v of newSelectedValues as _uiOpt[]) { Vue.set(this.internalModel, v.id.toString(), v); }
 			}
 		}
 
@@ -526,12 +532,17 @@ export default Vue.extend({
 		isOpen: {
 			immediate: true,
 			handler(cur: boolean, prev: boolean) {
-				cur ? this.addGlobalListeners() : this.removeGlobalListeners();
-				if (cur && this.containerEl) { this.reposition(); }
-
-				if (!cur && this.emitChangeOnClose) {
-					this.emitChangeOnClose = false;
-					this.$emit('change', this.editable ? this.inputValue : this.multiple ? Object.values(this.internalModel).map(o => o.value) : Object.values(this.internalModel).map(o => o.value)[0]);
+				if (cur) {
+					this.addGlobalListeners();
+					if (this.containerEl) {
+						this.reposition();
+					}
+				} else {
+					this.removeGlobalListeners();
+					if (this.emitChangeOnClose) {
+						this.emitChangeOnClose = false;
+						this.$emit('change', this.editable ? this.inputValue : this.multiple ? Object.values(this.internalModel).map(o => o.value) : Object.values(this.internalModel).map(o => o.value)[0]);
+					}
 				}
 			}
 		},
@@ -572,8 +583,8 @@ export default Vue.extend({
 			}
 		},
 
-		editable(v: boolean) { if (!v && !this.searchable) this.inputValue = '' },
-		searchable(v: boolean) { if (!v && !this.editable) this.inputValue = ''},
+		editable(v: boolean) { if (!v && !this.searchable) { this.inputValue = ''; } },
+		searchable(v: boolean) { if (!v && !this.editable) { this.inputValue = ''; } },
 	},
 	created() {
 		if (this.editable && this.multiple) {
@@ -597,7 +608,6 @@ export default Vue.extend({
 		(this.$refs.menu as HTMLElement).remove();
 	},
 });
-
 </script>
 
 <style lang="scss">

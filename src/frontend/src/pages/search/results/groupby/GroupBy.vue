@@ -5,6 +5,7 @@
 				class="groupselect"
 
 				data-class="btn-sm btn-default"
+				data-width="275px"
 				:data-style="{
 					borderTopRightRadius: contextEnabled ? 0 : undefined,
 					borderBottomRightRadius: contextEnabled ? 0 : undefined,
@@ -137,12 +138,6 @@ export default Vue.extend({
 		normalGroupByOptions(): Array<OptGroup|Option> {
 			const opts: Array<OptGroup|Option> = [];
 
-			// Deselect option
-			// opts.push({
-			// 	label: '',
-			// 	value: ''
-			// });
-
 			if (this.contextSupported) {
 				opts.push({
 					label: 'Context (advanced)',
@@ -174,7 +169,7 @@ export default Vue.extend({
 				// (we don't show metadata groups in the Filters component unless there's more than one group, so don't show the group's name either in this case)
 				label: metadataGroups.length > 1 ? group.name : 'Metadata',
 				options: group.fields.map(field => ({
-					label: `Group by ${(field.displayName || field.id).replace(group.name, '')}`,
+					label: `Group by ${(field.displayName || field.id).replace(group.name, '')} <small class="text-muted">(${group.name})</small>`,
 					value: `field:${field.id}`
 				}))
 			}));

@@ -119,7 +119,14 @@ function initQueryBuilder(tagset?: TagsetStore.ModuleRootState) {
 // --------------
 // Initialize vue
 // --------------
-Vue.use(VTooltip);
+Vue.use(VTooltip, {
+	popover: {
+		defaultBaseClass: 'popover',
+		defaultWrapperClass: 'wrapper',
+		defaultInnerClass: 'popover-content',
+		defaultArrowClass: 'arrow tooltip-arrow',
+	}
+});
 Vue.config.productionTip = false;
 $(document).ready(() => {
 	RootStore.init();

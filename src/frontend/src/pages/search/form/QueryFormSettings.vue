@@ -32,8 +32,10 @@
 										id="sampleMode"
 										name="sampleMode"
 										class="input-group-btn"
+										data-width="auto"
 
-										:options="['percentage', 'count'].map(o => ({value: o}))"
+										:options="['percentage', 'count']"
+										hideEmpty
 
 										@input="focusSampleSize"
 

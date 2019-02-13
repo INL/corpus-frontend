@@ -582,6 +582,13 @@ export default Vue.extend({
 				this.$emit('input', values[0] || '');
 			}
 		},
+		options: {
+			deep: true,
+			immediate: false,
+			handler() {
+				this.correctModel(Object.values(this.internalModel).map(v => v.value));
+			}
+		},
 
 		editable(v: boolean) { if (!v && !this.searchable) { this.inputValue = ''; } },
 		searchable(v: boolean) { if (!v && !this.editable) { this.inputValue = ''; } },

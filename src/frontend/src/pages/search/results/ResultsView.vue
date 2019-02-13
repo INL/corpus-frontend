@@ -1,38 +1,35 @@
 <template>
-	<div v-show="active" class="results-container">
+	<div v-show="active" class="results-container" :disabled="request">
 		<span v-if="request" class="fa fa-spinner fa-spin searchIndicator" style="position:absolute; left: 50%; top:15px"></span>
 
-		<Totals v-if="results"
-			class="result-totals"
-			:initialResults="results"
-			:type="type"
-			:indexId="indexId"
+		<div class="crumbs-totals">
+			<ol class="breadcrumb resultscrumb">
+				<li v-for="(crumb, index) in breadCrumbs" :class="{'active': crumb.active}" :key="index">
+					<a v-if="!crumb.active" href="#" @click.prevent="crumb.onClick" :title="crumb.title">{{crumb.label}}</a>
+					<template v-else>{{crumb.label}}</template>
+				</li>
+			</ol>
 
-			@update="paginationResults = $event"
-		/>
+			<Totals v-if="results"
+				class="result-totals"
+				:initialResults="results"
+				:type="type"
+				:indexId="indexId"
 
-		<ol class="breadcrumb resultscrumb">
-			<li v-for="(crumb, index) in breadCrumbs" :class="{'active': crumb.active}" :key="index">
-				<a v-if="!crumb.active" href="#" @click.prevent="crumb.onClick" :title="crumb.title">{{crumb.label}}</a>
-				<template v-else>{{crumb.label}}</template>
-			</li>
-		</ol>
-
-		<GroupBy :type="type" :viewGroupName="viewGroupName"/>
-		<!-- moved to totalscounter -->
-		<!--
-		<div v-if="results && !!(results.summary.stoppedRetrievingHits && !results.summary.stillCounting)" class="btn btn-sm btn-default nohover toomanyresults">
-			<span class="fa fa-exclamation-triangle text-danger"></span> Too many results! &mdash; your query was limited
-		</div> -->
-
-		<div v-if="results" style="margin: 10px 0px;">
-			<Pagination
-				:page="pagination.shownPage"
-				:maxPage="pagination.maxShownPage"
-
-				@change="page = $event"
+				@update="paginationResults = $event"
 			/>
 		</div>
+
+		<GroupBy :type="type" :viewGroupName="viewGroupName"/>
+
+		<Pagination v-if="results"
+			style="display: block; margin: 10px 0;"
+
+			:page="pagination.shownPage"
+			:maxPage="pagination.maxShownPage"
+
+			@change="page = $event"
+		/>
 
 		<template v-if="resultsHaveData">
 			<GroupResults v-if="isGroups"
@@ -69,7 +66,7 @@
 		<template v-else-if="error"><div class="no-results-found">{{error.message}}</div></template>
 
 		<!-- Ugly - use v-show instead of v-if because teardown of selectpickers is problematic :( -->
-		<div v-show="resultsHaveData" class="buttons" style="text-align: right;">
+		<div v-show="resultsHaveData" class="text-right">
 			<SelectPicker
 				data-class="btn-sm btn-default"
 				placeholder="Sort by..."
@@ -458,25 +455,25 @@ export default Vue.extend({
 
 <style lang="scss">
 
-// .toomanyresults {
-// 	align-self: flex-start;
-// 	border-radius: 100px;
-// 	margin-right: 5px;
-// 	margin-bottom: 5px;
-// }
+.crumbs-totals {
+	margin: 0 -15px 10px;
+	display:flex;
+	flex-wrap:nowrap;
+	align-items:flex-start;
+	justify-content:space-between;
 
-.buttons {
-	flex: 0 1000 auto;
-	font-size: 0;
-	> button,
-	> .bootstrap-select {
-		margin-bottom: 5px;
-		margin-left: 5px;
-		vertical-align: top;
-
-		&:first-child {
-			margin-left: 0;
-		}
+	> .breadcrumb.resultscrumb {
+		background: white;
+		border-bottom: 1px solid rgba(0,0,0,0.1);
+		border-radius: 0;
+		padding: 12px 15px;
+		margin-bottom: 0;
+		flex-grow: 1;
+	}
+	> .result-totals {
+		background: white;
+		padding: 8px 8px 15px 15px;
+		flex: none;
 	}
 }
 
@@ -488,41 +485,7 @@ export default Vue.extend({
 	color: #777;
 }
 
-.breadcrumb.resultscrumb {
-	background: white;
-	border-bottom: 1px solid rgba(0,0,0,0.1);
-	border-radius: 0;
-	margin: 0 -15px 30px;
-	padding: 12px 15px;
-	&:hover {
-		// Pop in front of totals counter
-		z-index: 3;
-		position: relative;
-	}
 
-	&:after {
-		background: linear-gradient(to bottom, white 25%, rgba(255,255,255,0));
-		bottom: 0;
-		content: "";
-		transition-timing-function: ease-in-out;
-		height: 50px;
-		left: 0;
-		position: absolute;
-		right: 0;
-		bottom: -51px;
-		pointer-events: none;
-		// transform: translateY(100%);
-		transition: opacity 0.17s;
-		z-index: 100;
-
-		display: none;
-	}
-	&:hover:after,
-	&:focus:after,
-	&:focus-within:after {
-		display: block;
-	}
-}
 
 table {
 	> thead > tr > th {
@@ -544,25 +507,6 @@ a.sort {
 	align-items: baseline;
 }
 
-.result-totals {
-	position: absolute;
-	right: -15px;
-	top: 0;
-	background: white;
-	padding: 8px 8px 15px 15px;
-	z-index: 2;
-
-	&:before {
-		content: "";
-		display: block;
-		position: absolute;
-		height: 100%;
-		width: 50px;
-		left: -50px;
-		top: 0;
-		background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,255) 100%);
-	}
-}
 
 .results-container {
 	position: relative;

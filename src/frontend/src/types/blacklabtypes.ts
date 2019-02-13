@@ -362,7 +362,7 @@ export interface BLSearchSummaryGroupInfoDocs extends BLSearchSummaryGroupInfo {
 	 * Only present when the query does not contain a cql pattern.
 	 * If the query does contain a cql pattern, subcorpusSize is instead defined per docGroup, and contains the size of that group if the cql pattern would not exist.
 	 */
-	subCorpusSize?: {
+	subcorpusSize?: {
 		documents: number;
 		tokens: number;
 	};
@@ -402,13 +402,13 @@ export interface BLDocGroupResult extends BLGroupResult {
 /** Blacklab response for a query for hits with grouping enabled */
 export interface BLHitGroupResults {
 	hitGroups: BLHitGroupResult[];
-	summary: BLSearchSummary & BLSearchSummaryGroupInfo & BLSearchSummaryTotalsHits;
+	summary: BLSearchSummary & BLSearchSummaryGroupInfoHits & BLSearchSummaryTotalsHits;
 }
 
 /** Blacklab response for a query for documents with grouping enabled */
 export interface BLDocGroupResults {
-	docGroups: BLGroupResult[];
-	summary: BLSearchSummary & BLSearchSummaryGroupInfo & BLSearchSummaryTotalsDocs;
+	docGroups: BLDocGroupResult[];
+	summary: BLSearchSummary & BLSearchSummaryGroupInfoDocs & BLSearchSummaryTotalsDocs;
 }
 
 /** Contains a hit's tokens, deconstructed into the individual annotations/properties, such as lemma, pos, word, always contains punctuation in between tokens */

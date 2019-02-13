@@ -8,6 +8,8 @@
 
 			container="body"
 
+			hideEmpty
+
 			:searchable="annotationOptions.length > 10"
 			:options="annotationOptions"
 

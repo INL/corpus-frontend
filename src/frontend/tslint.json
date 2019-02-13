@@ -12,6 +12,8 @@
 		"ordered-imports": false,
 		"max-classes-per-file": false,
 		"jsx-no-multiline-js": false,
+		"object-literal-key-quotes": false,
+		"class-name": false,
 
 		// These should eventually be fixed
 		"prefer-const": {"severity": "warn"},

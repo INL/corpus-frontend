@@ -83,9 +83,12 @@ const init = () => {
 	const mainAnnotation = CorpusStore.get.firstMainAnnotation().id;
 
 	const newInitialState: ModuleRootState = JSON.parse(JSON.stringify(initialState));
-	newInitialState.explore.shownAnnotations = Object.entries(allAnnotations).map(([value, label]) => ({
-		label,
-		value
+	// Cannot group on annotations without forward index, and some of these options auto group on the annotation
+	newInitialState.explore.shownAnnotations = CorpusStore.get.annotations()
+	.filter(a => a.hasForwardIndex && !a.isInternal)
+	.map(a => ({
+		label: a.displayName,
+		value: a.id
 	}));
 	newInitialState.explore.defaultAnnotation = mainAnnotation;
 

@@ -138,16 +138,26 @@ export const submittedSubcorpus$ = submittedMetadata$.pipe(
 url$.pipe(
 	// The a.params and b.params are the direct query parameters being sent to blacklab-server
 	// Do a simple compare to allow an early escape
+	/*
 	distinctUntilChanged((a, b) => {
 		const jsonOld = jsonStableStringify(a.params);
 		const jsonNew = jsonStableStringify(b.params);
-		const oldResults = a.state.interface.viewedResults;
-		const newResults = b.state.interface.viewedResults;
+
+		const stateToCompareOld = {
+			params: a.params,
+			viewedResults: a.state.interface.viewedResults,
+			groupedView: a.interface.
+		}
+
+		jsonStableStringify()
+		const oldResults = a.state.interface.viewedResults + a.state.interface.groupDisplayMode[a.state.interface.viewedResults];
+		const newResults = b.state.interface.viewedResults + b.state.interface.groupDisplayMode[b.state.interface.viewedResults]
 
 		// Account for the fact that the same query doesn't always mean the same ui state - the querybuilder can generate the same query as the expert view, etc.
 		// We do want to store this data in the page's url so reloads properly restore it.
 		return jsonOld === jsonNew && oldResults === newResults && a.state.query.subForm === b.state.query.subForm;
 	}),
+	*/
 	// Generate the new page url and add it to the data flowing through the stream
 	map<QueryState, QueryState&{
 		/**
@@ -189,12 +199,14 @@ url$.pipe(
 		// Store some interface state in the url, so the query can be restored to the correct form
 		// even when loading the page from just the url. See UrlStateParser class in store/utils/url-state-parser.ts
 		// TODO we should probably output the form in the url as /${indexId}/('search'|'explore')/('simple'|'advanced' ...etc)/('hits'|'docs')
+		const {groupDisplayMode, viewedResults} = v.state.interface;
 		Object.assign(queryParams, {
 			interface: JSON.stringify({
 				form: v.state.query.form,
 				exploreMode: v.state.query.form === 'explore' ? v.state.query.subForm : undefined, // remove if not relevant
 				patternMode: v.state.query.form === 'search' ? v.state.query.subForm : undefined, // remove if not relevant
-				viewedResults: undefined // remove from query parameters: is encoded in path (segmentcoded)
+				viewedResults: undefined, // remove from query parameters: is encoded in path (segmentcoded)
+				groupDisplayMode: (groupDisplayMode && viewedResults && groupDisplayMode[viewedResults]) ? {[viewedResults]: groupDisplayMode[viewedResults]} : undefined
 			} as Partial<InterfaceStore.ModuleRootState>)
 		});
 
@@ -248,6 +260,10 @@ url$.pipe(
 		url: string,
 	} => {
 		const {query, docs, hits, global} = v.state;
+		// Map to all defaults, except the parts of the ui that are currently in use.
+
+		const {groupDisplayMode, viewedResults} = v.state.interface;
+
 		const entry: HistoryStore.HistoryEntry = {
 			filters: query.filters || {},
 			global,
@@ -265,7 +281,8 @@ url$.pipe(
 				form: query.form ? query.form : 'search',
 				exploreMode: query.form === 'explore' ? query.subForm : 'ngram',
 				patternMode: query.form === 'search' ? query.subForm : 'simple',
-				viewedResults: v.state.interface.viewedResults
+				viewedResults: v.state.interface.viewedResults,
+				groupDisplayMode: (groupDisplayMode && viewedResults && groupDisplayMode[viewedResults]) ? {[viewedResults]: groupDisplayMode[viewedResults]} : {}
 			},
 			gap: query.gap || GapStore.defaults
 		};

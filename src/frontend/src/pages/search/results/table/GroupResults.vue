@@ -32,14 +32,14 @@
 			</thead>
 			<tbody>
 				<template v-for="row in rows">
-					<tr :key="row.id">
+					<tr class="grouprow" :key="row.id" @click="openPreviewConcordances(row.id)">
 						<td v-for="col in columns" :key="col.toString()">
 							<template v-if="typeof col === 'string'">
 								<template v-if="col.indexOf('relative') === -1">{{row[col] != null ? row[col].toLocaleString() : '[unknown]'}}</template> <!-- HACK! all division keys contain spaces for now, probably pretty slow too -->
 								<template v-else>{{row[col] != null ? $options.filters.frac2Percent(row[col]) : '[unknown]'}}</template>
 							</template>
 
-							<div v-else class="progress group-size-indicator" @click="openPreviewConcordances(row.id)">
+							<div v-else class="progress group-size-indicator">
 								<div class="progress-bar progress-bar-primary"
 									:style="{
 										'min-width': row[col[0]] ? $options.filters.frac2Percent(row[col[0]] / maxima[col[0]]) : '100%',
@@ -48,7 +48,7 @@
 							</div>
 						</td>
 					</tr>
-					<tr :key="`${row.id}-concordances`" v-if="concordances[row.id] && concordances[row.id].open">
+					<tr class="concordance" :key="`${row.id}-concordances`" v-if="concordances[row.id] && concordances[row.id].open">
 						<td colspan="10">
 							<div class="well-light">
 								<div class="concordance-controls clearfix">
@@ -569,40 +569,44 @@ export default Vue.extend({
 
 .group-table {
 	table-layout: auto;
-	th:not(:last-child) {
-		vertical-align: top;
-		padding-right: 8px;
-	};
 
-	td:not(:last-child) {
-		padding-right: 8px;
+	th {
+		vertical-align: top;
+	}
+
+	tr:not(.concordance) {
+		> th,
+		> td {
+			padding: 0 4px;
+
+			&:first-child {
+				border-top-left-radius: 3px;
+				border-bottom-left-radius: 3px;
+			}
+			&:last-child {
+				border-top-right-radius: 3px;
+				border-bottom-right-radius: 3px;
+			}
+		}
+	}
+
+	tr.grouprow {
+		border-bottom: 2px solid transparent;
+		cursor: pointer;
+
+		&:hover,
+		&:focus {
+			background: #eee;
+		}
+		&:active {
+			background: #ddd;
+		}
 	}
 }
 
-// .grouprow {
-// 	&.open {
-// 		background: none;
-// 	}
-
-// 	.concordance {
-// 		&:hover {
-// 			background-color: rgba(0,0,0,0.1);
-// 		}
-// 	}
-
-// 	>.td-group-identity {
-// 		overflow: hidden;
-// 		text-overflow: ellipsis;
-// 	}
-
-// 	>.td-group-size {
-// 		padding-right: 6px;
-// 	}
-// }
-
 .group-size-indicator {
 	cursor: pointer;
-	margin-bottom: 2px;
+	margin: 0;
 
 	background: linear-gradient(to right, hsla(0, 0%, 91%, 1) 40%, white 100%);
 

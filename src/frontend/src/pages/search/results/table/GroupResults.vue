@@ -35,7 +35,7 @@
 					<tr :key="row.id">
 						<td v-for="col in columns" :key="col.toString()">
 							<template v-if="typeof col === 'string'">
-								<template v-if="col.indexOf('relative') === -1">{{row[col] != null ? row[col] : '[unknown]'}}</template> <!-- HACK! all division keys contain spaces for now, probably pretty slow too -->
+								<template v-if="col.indexOf('relative') === -1">{{row[col] != null ? row[col].toLocaleString() : '[unknown]'}}</template> <!-- HACK! all division keys contain spaces for now, probably pretty slow too -->
 								<template v-else>{{row[col] != null ? $options.filters.frac2Percent(row[col]) : '[unknown]'}}</template>
 							</template>
 
@@ -228,7 +228,7 @@ const displayModes: {
 
 			'hits': [
 				'displayname',
-				['relative group size [gr.h/r.h]', 'gr.t'],
+				['relative group size [gr.h/r.h]', 'gr.h'],
 				'relative group size [gr.h/r.h]',
 			],
 
@@ -266,8 +266,8 @@ const displayModes: {
 				'gr.t',
 				'relative frequency (tokens) [gr.t/gsc.t]',
 				'average document length [gr.t/gr.d]',
-				// TODO clarify, now we can't see amount of hits per group, neither can we see relative frequency of hits against group's subcorpus
-				// then again, the user should group hit results for that....
+				// TODO clarify, now we can't see amount of hits per group, neither can we see relative frequency of hits against group's subcorpus size in tokens
+				// then again, the user can see that info by viewing grouped hits and grouping by the same metadata... (but how will they know this? - discoverability is an issue)
 			],
 			'docs': [
 				'displayname',

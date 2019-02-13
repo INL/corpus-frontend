@@ -519,6 +519,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 			sort: this.getString('sort', null, v => v?v:null),
 			viewGroup: this.getString('viewgroup', undefined, v => (v && this._groups.length > 0)?v:null),
 			page: this.getNumber('first', 0, v => Math.floor(Math.max(0, v)/this.pageSize)/* round down to nearest page containing the starting index */)!,
+			groupDisplayMode: this.getString('groupDisplayMode', null, v => v?v:null),
 		};
 	}
 

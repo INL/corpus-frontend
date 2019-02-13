@@ -199,15 +199,15 @@ url$.pipe(
 		// Store some interface state in the url, so the query can be restored to the correct form
 		// even when loading the page from just the url. See UrlStateParser class in store/utils/url-state-parser.ts
 		// TODO we should probably output the form in the url as /${indexId}/('search'|'explore')/('simple'|'advanced' ...etc)/('hits'|'docs')
-		const {groupDisplayMode, viewedResults} = v.state.interface;
+		const {viewedResults} = v.state.interface;
 		Object.assign(queryParams, {
 			interface: JSON.stringify({
 				form: v.state.query.form,
 				exploreMode: v.state.query.form === 'explore' ? v.state.query.subForm : undefined, // remove if not relevant
 				patternMode: v.state.query.form === 'search' ? v.state.query.subForm : undefined, // remove if not relevant
 				viewedResults: undefined, // remove from query parameters: is encoded in path (segmentcoded)
-				groupDisplayMode: (groupDisplayMode && viewedResults && groupDisplayMode[viewedResults]) ? {[viewedResults]: groupDisplayMode[viewedResults]} : undefined
-			} as Partial<InterfaceStore.ModuleRootState>)
+			} as Partial<InterfaceStore.ModuleRootState>),
+			groupDisplayMode: v.state[viewedResults!].groupDisplayMode || undefined // remove null
 		});
 
 		// Generate the new frontend url
@@ -262,8 +262,6 @@ url$.pipe(
 		const {query, docs, hits, global} = v.state;
 		// Map to all defaults, except the parts of the ui that are currently in use.
 
-		const {groupDisplayMode, viewedResults} = v.state.interface;
-
 		const entry: HistoryStore.HistoryEntry = {
 			filters: query.filters || {},
 			global,
@@ -282,7 +280,6 @@ url$.pipe(
 				exploreMode: query.form === 'explore' ? query.subForm : 'ngram',
 				patternMode: query.form === 'search' ? query.subForm : 'simple',
 				viewedResults: v.state.interface.viewedResults,
-				groupDisplayMode: (groupDisplayMode && viewedResults && groupDisplayMode[viewedResults]) ? {[viewedResults]: groupDisplayMode[viewedResults]} : {}
 			},
 			gap: query.gap || GapStore.defaults
 		};

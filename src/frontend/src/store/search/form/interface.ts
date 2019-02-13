@@ -17,8 +17,6 @@ type ModuleRootState = {
 	patternMode: keyof PatternModuleRootState;
 	exploreMode: keyof ExploreModuleRootState;
 	viewedResults: null|ResultViewId;
-
-	groupDisplayMode: { [K in ResultViewId]?: string; }
 };
 
 const defaults: ModuleRootState = {
@@ -26,7 +24,6 @@ const defaults: ModuleRootState = {
 	patternMode: 'simple',
 	exploreMode: 'ngram',
 	viewedResults: null,
-	groupDisplayMode: {}
 };
 
 const namespace = 'interface';
@@ -38,7 +35,6 @@ const get = {
 	patternMode: b.read(state => state.patternMode, 'patternMode'),
 	exploreMode: b.read(state => state.exploreMode, 'exploreMode'),
 	viewedResults: b.read(state => state.viewedResults, 'viewedResults'),
-	groupDisplayMode: b.read(state => state.groupDisplayMode, 'groupDisplayModes'),
 };
 
 const actions = {
@@ -46,7 +42,6 @@ const actions = {
 	patternMode: b.commit((state, payload: ModuleRootState['patternMode']) => state.patternMode = payload, 'patternMode'),
 	exploreMode: b.commit((state, payload: ModuleRootState['exploreMode']) => state.exploreMode = payload, 'exploreMode'),
 	viewedResults: b.commit((state, payload: ModuleRootState['viewedResults']) => state.viewedResults = payload, 'viewedResults'),
-	groupDisplayMode: b.commit((state, payload: {view: ResultViewId, value: string}) => Vue.set(state.groupDisplayMode, payload.view, payload.value), 'groupDisplayMode'),
 
 	reset: b.commit(state => Object.assign(state, JSON.parse(JSON.stringify(defaults))), 'reset'),
 	replace: b.commit((state, payload: ModuleRootState) => Object.assign(state, payload), 'replace'),

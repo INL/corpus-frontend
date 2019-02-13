@@ -13,6 +13,7 @@ export type ModuleRootState = {
 	page: number;
 	sort: string|null;
 	viewGroup: string|null;
+	groupDisplayMode: string|null;
 };
 
 export const initialState: ModuleRootState = {
@@ -21,7 +22,8 @@ export const initialState: ModuleRootState = {
 	groupByAdvanced: [],
 	page: 0,
 	sort: null,
-	viewGroup: null
+	viewGroup: null,
+	groupDisplayMode: null,
 };
 
 const createActions = (b: ModuleBuilder<ModuleRootState, RootState>) => {
@@ -50,6 +52,7 @@ const createActions = (b: ModuleBuilder<ModuleRootState, RootState>) => {
 			state.sort = null;
 			state.page = 0;
 		},'viewgroup'),
+		groupDisplayMode: b.commit((state, payload: string|null) => state.groupDisplayMode = payload, 'groupDisplayMode'),
 
 		reset: b.commit(state => Object.assign(state, JSON.parse(JSON.stringify(initialState))), 'reset'),
 		replace: b.commit((state, payload: ModuleRootState) => Object.assign(state, JSON.parse(JSON.stringify(payload))), 'replace'),

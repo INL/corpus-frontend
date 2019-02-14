@@ -114,10 +114,8 @@ const get = {
 		// Quite a bit of how we generate the cql pattern hinges on which part of the form was submitted.
 		if (state.form === 'explore') {
 			switch (state.subForm) {
-				case 'frequency': {
-					// const stateHelper = state as ModuleRootStateExplore<'frequency'>;
-					return '[]';
-				}
+				case 'corpora': return undefined;
+				case 'frequency': return '[]';
 				case 'ngram': {
 					const stateHelper = state as ModuleRootStateExplore<'ngram'>;
 					return stateHelper.formState.tokens

@@ -22,7 +22,7 @@ type ModuleRootState = {
 const defaults: ModuleRootState = {
 	form: 'search',
 	patternMode: 'simple',
-	exploreMode: 'ngram',
+	exploreMode: 'corpora',
 	viewedResults: null,
 };
 

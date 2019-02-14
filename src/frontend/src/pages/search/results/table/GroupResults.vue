@@ -107,8 +107,7 @@ import Vue, {FunctionalComponentOptions} from 'vue';
 import {stripIndent} from 'common-tags';
 
 import * as CorpusStore from '@/store/search/corpus';
-import * as InterfaceStore from '@/store/search/form/interface';
-import {ViewId} from '@/store/search/results';
+import * as ResultsStore from '@/store/search/results';
 
 import * as Api from '@/api';
 import {snippetParts, getDocumentUrl} from '@/utils';
@@ -300,7 +299,7 @@ export default Vue.extend({
 	props: {
 		results: Object as () => BLTypes.BLHitGroupResults|BLTypes.BLDocGroupResults,
 		sort: String as () => null|string,
-		type: String as () => ViewId,
+		type: String as () => ResultsStore.ViewId,
 	},
 	data: () => ({
 		concordances: {} as {
@@ -326,6 +325,7 @@ export default Vue.extend({
 		},
 	}),
 	computed: {
+		storeModule() { return ResultsStore.get.resultsModules().find(m => m.namespace === this.type)!; },
 
 		firstMainAnnotation: CorpusStore.get.firstMainAnnotation,
 		textDirection: CorpusStore.get.textDirection,
@@ -355,13 +355,8 @@ export default Vue.extend({
 			return Object.keys((displayModes as any)[this.type][this.groupMode]);
 		},
 		chartMode: {
-			get(): string { return InterfaceStore.getState().groupDisplayMode[this.type] || this.chartModeOptions[1]; },
-			set(v: string) {
-				InterfaceStore.actions.groupDisplayMode({
-					view: this.type,
-					value: v
-				});
-			}
+			get(): string { return this.storeModule.getState().groupDisplayMode || this.chartModeOptions[1]; },
+			set(v: string) { this.storeModule.actions.groupDisplayMode(v === this.chartModeOptions[1] ? null : v); },
 		},
 
 		definitions(): string[][] {

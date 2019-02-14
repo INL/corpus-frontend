@@ -17,6 +17,7 @@
 							allowHtml
 							data-width="100%"
 							data-id="corpus_select"
+							data-name="corpus_select"
 
 							:options="availableCorporaOptions"
 							:loading="isLoadingCorpora"

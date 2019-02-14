@@ -14,9 +14,9 @@
 
 					container="body"
 
+					:data-id="inputId"
+					:data-name="inputId"
 					:placeholder="displayName"
-					:id="inputId"
-					:name="inputId"
 					:options="options"
 
 					v-model="value"

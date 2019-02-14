@@ -8,6 +8,7 @@
 		<input v-if="editable"
 			:class="['menu-input', dataClass ? dataClass : 'form-control']"
 			:id="dataId"
+			:name="dataName"
 			:style="dataStyle"
 			:title="dataTitle"
 			:placeholder="$attrs.placeholder || $attrs.title"
@@ -30,6 +31,7 @@
 
 			:class="['menu-button', 'btn', dataClass ? dataClass : 'btn-default', { 'active': isOpen }]"
 			:id="dataId"
+			:name="dataName"
 			:style="dataStyle"
 			:title="dataTitle"
 			:disabled="disabled"
@@ -208,6 +210,7 @@ export default Vue.extend({
 		'data-class': [String, Object],
 		'data-style': [String, Object],
 		'data-id': String,
+		'data-name': String,
 		'data-title': String,
 	},
 	data: () =>  ({

@@ -94,6 +94,8 @@ import Vue from 'vue';
 import URI from 'urijs';
 import {saveAs} from 'file-saver';
 
+import jsonStableStringify from 'json-stable-stringify';
+
 import * as Api from '@/api';
 
 import * as RootStore from '@/store/search/';
@@ -264,12 +266,21 @@ export default Vue.extend({
 			set(v: string|null) { this.storeModule.actions.viewGroup(v); }
 		},
 
-		refreshParameters() {
-			return {
+		refreshParameters(): string {
+			/*
+				NOTE: we return this as a string so we can remove properties
+				If we don't the watcher on this computed will fire regardless
+				because some property somewhere in the object is a new instance and thus not equal...
+				This would cause new results to be requested even when just changing the table display mode...
+			*/
+			return jsonStableStringify({
 				global: GlobalStore.getState(),
-				self: this.storeModule.getState(),
+				self: {
+					...this.storeModule.getState(),
+					groupDisplayMode: null // ignore this property
+				} as Partial<ResultsStore.PartialRootState[ResultsStore.ViewId]>,
 				query: QueryStore.getState()
-			};
+			});
 		},
 
 		// When these change, the form has been resubmitted, so we need to initiate a scroll event
@@ -419,8 +430,6 @@ export default Vue.extend({
 					}
 				];
 			});
-
-			return opts;
 		}
 	},
 	watch: {
@@ -432,7 +441,6 @@ export default Vue.extend({
 					this.markDirty();
 				}
 			},
-			deep: true
 		},
 		active: {
 			handler(active) {

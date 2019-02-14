@@ -22,6 +22,12 @@ type ModuleRootState = {
 	frequency: {
 		annotationId: string;
 	};
+
+	/** When the form is submitted this is copied to the DocsStore */
+	corpora: {
+		groupBy: string;
+		groupDisplayMode: string;
+	};
 };
 
 // NOTE: This state shape is invalid, we correct it on store initialization
@@ -37,6 +43,11 @@ const defaults: ModuleRootState = {
 
 	frequency: {
 		annotationId: ''
+	},
+
+	corpora: {
+		groupBy: '',
+		groupDisplayMode: ''
 	}
 };
 
@@ -63,6 +74,11 @@ const get = {
 		annotationId: b.read(state => state.frequency.annotationId, 'frequency_annotationId'),
 		patternString: b.read(() => '[]', 'frequency_patternString'), // always search for all tokens.
 		groupBy: b.read(state => `hit:${state.frequency.annotationId}`, 'frequency_groupBy')
+	},
+
+	corpora: {
+		groupBy: b.read(state => state.corpora.groupBy, 'corpora_groupBy'),
+		groupDisplayMode: b.read(state => state.corpora.groupDisplayMode, 'corpora_groupDisplayMode'),
 	}
 };
 
@@ -110,6 +126,14 @@ const actions = {
 		replace: b.commit((state, payload: ModuleRootState['frequency']) => Object.assign(state.frequency, payload), 'frequency_replace'),
 	},
 
+	corpora: {
+		groupBy: b.commit((state, payload: string) => state.corpora.groupBy = payload, 'corpora_groupBy'),
+		groupDisplayMode: b.commit((state, payload: string) => state.corpora.groupDisplayMode = payload, 'corpora_groupDisplayMode'),
+
+		reset: b.commit(state => Object.assign(state.corpora, defaults.corpora), 'corpora_reset'),
+		replace: b.commit((state, payload: ModuleRootState['corpora']) => Object.assign(state.corpora, payload), 'corpora_replace'),
+	},
+
 	replace: b.commit((state, payload: ModuleRootState) => {
 		actions.frequency.replace(payload.frequency);
 		actions.ngram.replace(payload.ngram);
@@ -118,17 +142,33 @@ const actions = {
 };
 
 const init = () => {
-	const {id} = CorpusStore.get.firstMainAnnotation();
-	defaults.ngram.groupAnnotationId = id;
+	const {id: firstMainAnnotationId} = CorpusStore.get.firstMainAnnotation();
+	defaults.ngram.groupAnnotationId = firstMainAnnotationId;
 	while (defaults.ngram.tokens.length < defaults.ngram.maxSize) {
 		defaults.ngram.tokens.push({
-			id,
+			id: firstMainAnnotationId,
 			value: '',
 		});
 	}
 	actions.ngram.reset();
 
-	defaults.frequency.annotationId = id;
+	const {metadataFieldGroups, metadataFields, fieldInfo} = CorpusStore.getState();
+	// const metadataFields = CorpusStore.getState().metadataFields;
+	// const specialFields = CorpusStore.getState().fieldInfo;
+	const firstSpecialField = [
+		fieldInfo.dateField,
+		fieldInfo.authorField,
+		fieldInfo.titleField,
+		fieldInfo.pidField,
+		...metadataFieldGroups.flatMap(g => g.fields)
+	].find(id => id != null && metadataFields[id] && metadataFields[id].groupId != null);
+
+	const defaultGroupBy = firstSpecialField ? `field:${firstSpecialField}` : '';
+	defaults.corpora.groupBy = defaultGroupBy;
+	defaults.corpora.groupDisplayMode = 'table';
+	actions.corpora.reset();
+
+	defaults.frequency.annotationId = firstMainAnnotationId;
 	actions.frequency.reset();
 };
 

@@ -105,9 +105,21 @@ const actions = {
 
 		// Apply the desired grouping for this form, if needed.
 		if (state.interface.form === 'explore') {
-			const exploreMode = state.interface.exploreMode;
-			InterfaceModule.actions.viewedResults('hits');
-			HitResultsModule.actions.groupBy(exploreMode === 'ngram' ? [ExploreModule.get.ngram.groupBy()] : [ExploreModule.get.frequency.groupBy()]);
+			switch (state.interface.exploreMode) {
+				case 'corpora': {
+					InterfaceModule.actions.viewedResults('docs');
+					DocResultsModule.actions.groupDisplayMode(state.explore.corpora.groupDisplayMode);
+					DocResultsModule.actions.groupBy(state.explore.corpora.groupBy ? [state.explore.corpora.groupBy] : []);
+					break;
+				}
+				case 'frequency':
+				case 'ngram': {
+					InterfaceModule.actions.viewedResults('hits');
+					HitResultsModule.actions.groupBy(state.interface.exploreMode === 'ngram' ? [ExploreModule.get.ngram.groupBy()] : [ExploreModule.get.frequency.groupBy()]);
+					break;
+				}
+				default: throw new Error(`Unhandled explore mode ${state.interface.exploreMode} while submitting form`);
+			}
 		}
 
 		// Open the results, which actually executes the query.

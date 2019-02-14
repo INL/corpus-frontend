@@ -8,7 +8,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			<tr
+			<tr class="rounded"
 				v-for="(rowData, index) in rows"
 				v-tooltip="{
 					show: pinnedTooltip === index,
@@ -115,7 +115,7 @@ export default Vue.extend({
 
 .docs-table {
 	tr:hover {
-		background: #e8e8e8;
+		background: #eee;
 	}
 }
 

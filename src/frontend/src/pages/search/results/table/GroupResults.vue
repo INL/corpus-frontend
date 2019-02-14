@@ -26,13 +26,13 @@
 
 		<table class="group-table">
 			<thead>
-				<tr>
+				<tr class="rounded">
 					<th v-for="col in columns" :key="col.toString()">{{col}}</th>
 				</tr>
 			</thead>
 			<tbody>
 				<template v-for="row in rows">
-					<tr class="grouprow" :key="row.id" @click="openPreviewConcordances(row.id)">
+					<tr class="grouprow rounded interactable" :key="row.id" @click="openPreviewConcordances(row.id)">
 						<td v-for="col in columns" :key="col.toString()">
 							<template v-if="typeof col === 'string'">
 								<template v-if="col.indexOf('relative') === -1">{{row[col] != null ? row[col].toLocaleString() : '[unknown]'}}</template> <!-- HACK! all division keys contain spaces for now, probably pretty slow too -->
@@ -568,35 +568,10 @@ export default Vue.extend({
 	th {
 		vertical-align: top;
 	}
+}
 
-	tr:not(.concordance) {
-		> th,
-		> td {
-			padding: 0 4px;
-
-			&:first-child {
-				border-top-left-radius: 3px;
-				border-bottom-left-radius: 3px;
-			}
-			&:last-child {
-				border-top-right-radius: 3px;
-				border-bottom-right-radius: 3px;
-			}
-		}
-	}
-
-	tr.grouprow {
-		border-bottom: 2px solid transparent;
-		cursor: pointer;
-
-		&:hover,
-		&:focus {
-			background: #eee;
-		}
-		&:active {
-			background: #ddd;
-		}
-	}
+.grouprow {
+	border-bottom: 2px solid transparent;
 }
 
 .group-size-indicator {

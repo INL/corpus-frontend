@@ -49,7 +49,10 @@
 			</template>
 			<span v-else class="menu-value placeholder">{{$attrs.placeholder || $attrs.title || 'Select a value...'}} </span>
 			<span v-if="loading" class="menu-icon fa fa-spinner fa-spin text-muted"></span>
-			<span :class="['menu-icon', 'fa', `fa-caret-${isOpen ? 'up' : 'down'}`]"/>
+			<span :class="['menu-icon', 'fa', 'fa-caret-down', {
+				//'fa-rotate-180': isOpen
+				'fa-flip-vertical': isOpen
+			}]"/>
 		</button>
 
 		<!-- NOTE: might not actually be a child of root element at runtime! Event handling is rather specific -->
@@ -633,6 +636,7 @@ export default Vue.extend({
 		display: inline-block;
 		flex: none;
 		margin-left: 4px;
+		transition: transform 0.2s ease-out;
 	}
 	.placeholder {
 		color: #999;

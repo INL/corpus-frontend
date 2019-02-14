@@ -12,8 +12,8 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 		return group ? group.name : undefined;
 	}
 
-	function findMetadataGroup(field: BLTypes.BLMetadataField): string|undefined {
-		const group = blIndex.metadataFieldGroups.find(g => g.fields.includes(field.fieldName));
+	function findMetadataGroup(field: BLTypes.BLMetadataField, groups: BLTypes.BLIndexMetadata['metadataFieldGroups']): string|undefined {
+		const group = groups.find(g => g.fields.includes(field.fieldName));
 		return group != null ? group.name : undefined;
 	}
 
@@ -77,11 +77,11 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 		};
 	}
 
-	function normalizeMetadata(field: BLTypes.BLMetadataField): NormalizedMetadataField {
+	function normalizeMetadata(field: BLTypes.BLMetadataField, groups: BLTypes.BLIndexMetadata['metadataFieldGroups']): NormalizedMetadataField {
 		return {
 			description: field.description,
 			displayName: field.displayName || field.fieldName,
-			groupId: findMetadataGroup(field),
+			groupId: findMetadataGroup(field, groups),
 			id: field.fieldName,
 			uiType: normalizeMetadataUIType(field),
 			values: ['select', 'checkbox', 'radio'].includes(normalizeMetadataUIType(field)) ? Object.keys(field.fieldValues).map(value => {
@@ -121,6 +121,9 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 		acc[field.id] = field;
 		return acc;
 	}, {});
+	const metadataFieldGroupsNormalized =
+		blIndex.metadataFieldGroups.length > 0 ? blIndex.metadataFieldGroups :
+		[{ name: 'Metadata', fields: Object.keys(blIndex.metadataFields) }];
 
 	return {
 		annotatedFields: annotatedFieldsNormalized,
@@ -162,16 +165,10 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 		documentFormat: blIndex.documentFormat,
 		fieldInfo: blIndex.fieldInfo,
 		id: blIndex.indexName,
-		metadataFieldGroups: blIndex.metadataFieldGroups.length > 0 ?
-			blIndex.metadataFieldGroups :
-			[{
-				name: 'Metadata',
-				fields: Object.keys(blIndex.metadataFields)
-			}],
-
+		metadataFieldGroups: metadataFieldGroupsNormalized,
 		metadataFields:
 			Object.values(blIndex.metadataFields)
-			.map(normalizeMetadata)
+			.map(f => normalizeMetadata(f, metadataFieldGroupsNormalized))
 			.reduce<NormalizedIndex['metadataFields']>((acc, field) => {
 				acc[field.id] = field;
 				return acc;

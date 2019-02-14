@@ -1,7 +1,7 @@
 <template>
 	<table class="hits-table">
 		<thead>
-			<tr>
+			<tr class="rounded">
 				<th class="text-right">
 					<span class="dropdown">
 						<a class="dropdown-toggle" data-toggle="dropdown" href="#">
@@ -46,7 +46,7 @@
 
 		<tbody>
 			<template v-for="(rowData, index) in rows">
-				<tr v-if="rowData.type === 'doc'" class="document"
+				<tr v-if="rowData.type === 'doc'" class="document rounded"
 					v-show="showTitles"
 					:key="index"
 					v-tooltip="{
@@ -67,7 +67,7 @@
 					</td>
 				</tr>
 				<template v-else-if="rowData.type === 'hit'">
-					<tr :key="index" :class="['concordance', {'open': citations[index] && citations[index].open}]" @click="showCitation(index)">
+					<tr :key="index" :class="['concordance', 'rounded interactable', {'open': citations[index] && citations[index].open}]" @click="showCitation(index)">
 						<td class="text-right">&hellip;<span :dir="textDirection">{{rowData.left}}</span></td>
 						<td class="text-center"><strong :dir="textDirection">{{rowData.hit}}</strong></td>
 						<td><span :dir="textDirection">{{rowData.right}}</span>&hellip;</td>
@@ -281,7 +281,6 @@ export default Vue.extend({
 		}
 	}
 });
-
 </script>
 
 <style lang="scss" scoped>
@@ -317,19 +316,8 @@ table {
 	}
 }
 
-
-
-tr.concordance,
-tr.document {
-	&:hover {
-		background-color: rgba(0,0,0, 0.1);
-	}
-}
-
 tr.concordance {
-	cursor: pointer;
 	> td {
-		padding: 0px 5px;
 		transition: padding 0.1s;
 	}
 
@@ -338,14 +326,17 @@ tr.concordance {
 			background: white;
 			border-top: 2px solid #ddd;
 			border-bottom: 1px solid #ddd;
-			padding: 8px 5px;
+			padding-top: 8px;
+			padding-bottom: 8px;
 			&:first-child {
 				border-left: 2px solid #ddd;
 				border-top-left-radius: 4px;
+				border-bottom-left-radius: 0;
 			}
 			&:last-child {
 				border-right: 2px solid #ddd;
 				border-top-right-radius: 4px;
+				border-bottom-right-radius: 0;
 			}
 		}
 	}

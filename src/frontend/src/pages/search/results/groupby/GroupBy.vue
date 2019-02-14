@@ -50,15 +50,11 @@
 import Vue from 'vue';
 
 import * as CorpusStore from '@/store/search/corpus';
-import * as InterfaceStore from '@/store/search/form/interface';
 import * as ResultsStore from '@/store/search/results';
-import * as HitsStore from '@/store/search/results/hits';
-import * as DocsStore from '@/store/search/results/docs';
 
 import SelectPicker, {OptGroup, Option} from '@/components/SelectPicker.vue';
 import ContextGroup from '@/pages/search/results/groupby/ContextGroup.vue';
 import UID from '@/mixins/uid';
-import ResultTotalsVue from '../ResultTotals.vue';
 
 const CONTEXT_ENABLED_STRING = '_enable_context';
 

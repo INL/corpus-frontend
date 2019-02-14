@@ -8,8 +8,8 @@
 
 				:searchable="options.length > 20"
 				:placeholder="displayName"
-				:id="inputId"
-				:name="inputId"
+				:data-id="inputId"
+				:data-name="inputId"
 
 				:options="options"
 

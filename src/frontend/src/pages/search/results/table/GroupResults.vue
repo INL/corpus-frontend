@@ -27,7 +27,12 @@
 		<table class="group-table">
 			<thead>
 				<tr class="rounded">
-					<th v-for="col in columns" :key="col.toString()">{{col}}</th>
+					<th v-for="header in headers" :key="header.id" :title="header.title" :style="{
+						width: header.isBar ? '60%' : undefined
+					}">
+						{{header.label}}
+					</th>
+					<!-- <th v-for="col in columns" :key="col.toString()">{{col}}</th> -->
 				</tr>
 			</thead>
 			<tbody>
@@ -120,7 +125,7 @@ import frac2Percent from '@/mixins/fractionalToPercent';
 const definitions = [
 	['c',   '[corpus]',            'The entire corpus'],
 	['sc',  '[subcorpus]',         'A set of documents within c. Defined by a specific set of metadata.'],
-	['gsc', '[grouped subcorpus]', 'A set of documents within sc. Creating by matching a set of metadata against documents in sc.'],
+	['gsc', '[grouped subcorpus]', 'A set of documents within sc. Creating by matching a set of metadata against documents in sc. If not grouping by metadata, gsc=sc'],
 	['r',   '[results]',           'A set of documents within sc. Created by matching a (optional) cql pattern against documents in sc. If no cql is used, r=sc'],
 	['gr',  '[grouped results]',   'A set of documents within r. Created by matching a set of metadata against documents in r.'],
 
@@ -128,15 +133,6 @@ const definitions = [
 	['*.t', '[tokens]',            'Number of tokens in a collections'],
 	['*.h', '[documents]',         'Number of hits in a collection'],
 ];
-
-/*
- * All of these groups have the following properties:
- * - documents
- * - tokens
- * - hits (optional, only available in r and gr when a cql pattern was used)
- *
- * We now make a whole lot of stuff available
- */
 
 interface GroupData {
 	id: string;
@@ -170,21 +166,18 @@ interface RowData extends GroupData {
 	// adds to 1 across all groups - optional, only when cql pattern available
 	'relative group size [gr.h/r.h]'?: number;
 
-	'relative frequency (docs) [gr.d/gsc.d]'?: number; // optional because subcorpus might not be calculatable
-	'relative frequency (tokens) [gr.t/gsc.t]'?: number; // optional because subcorpus might not be calculatable
-	'relative frequency (hits) [gr.h/gsc.t]'?: number; // optional because subcorpus might not be calculatable and hits are optional
+	'relative frequency (docs) [gr.d/gsc.d]'?: number; // optional because subcorpus might not be calculable
+	'relative frequency (tokens) [gr.t/gsc.t]'?: number; // optional because subcorpus might not be calculable
+	'relative frequency (hits) [gr.h/gsc.t]'?: number; // optional because subcorpus might not be calculable and hits are optional
+
+	'relative frequency (docs) [gr.d/sc.d]'?: number; // FIXME optional because subcorpus is unknown for metadata grouped requests, wait for Jan
+	'relative frequency (tokens) [gr.t/sc.t]'?: number; // FIXME optional because subcorpus is unknown for metadata grouped requests, wait for Jan
 
 	'average document length [gr.t/gr.d]'?: number;
 }
 
-type LocalMaxima = {
-	[P in Exclude<keyof RowData, 'id'|'displayname'>]-?: number;
-};
-
 type RowKey = keyof RowData;
-
 type TableDef = Array<RowKey|[RowKey, RowKey]>;
-
 const displayModes: {
 	hits: {
 		metadata: {
@@ -261,12 +254,10 @@ const displayModes: {
 			'table': [
 				'displayname',
 				'gr.d',
-				'relative frequency (docs) [gr.d/gsc.d]',
 				'gr.t',
+				'relative frequency (docs) [gr.d/gsc.d]',
 				'relative frequency (tokens) [gr.t/gsc.t]',
 				'average document length [gr.t/gr.d]',
-				// TODO clarify, now we can't see amount of hits per group, neither can we see relative frequency of hits against group's subcorpus size in tokens
-				// then again, the user can see that info by viewing grouped hits and grouping by the same metadata... (but how will they know this? - discoverability is an issue)
 			],
 			'docs': [
 				'displayname',
@@ -282,6 +273,80 @@ const displayModes: {
 	}
 };
 
+const tableHeaders: {
+	[K in (ResultsStore.ViewId|'default')]: {
+		[ColumnId in keyof RowData]?: {
+			label?: string;
+			title?: string;
+		}
+	}
+} = {
+	default: {
+		'displayname': {
+			label: 'Group',
+		},
+		'average document length [gr.t/gr.d]': {
+			label: 'Average document length',
+			title: '(gr.t/gr.d)'
+		},
+		'gsc.d': {
+			label: '#all docs in current group',
+			title: '(gsc.d) - This includes documents without hits'
+		},
+		'gr.t': {
+			label: '#tokens in group',
+			title: '(gr.t) - Combined length of all documents with hits in this group'
+		},
+		'gr.h': {
+			label: '#hits in group',
+			title: '(gr.h)'
+		},
+		'relative frequency (docs) [gr.d/gsc.d]': {
+			label: 'Relative frequency (docs)',
+			title: '(gr.d/gsc.d) - Note that gsc.d = sc.d when not grouped by metadata'
+		},
+		'relative frequency (hits) [gr.h/gsc.t]': {
+			label: 'Relative frequency (hits)',
+			title: '(gr.h/gsc.t) - Note that gsc.t = sc.t when not grouped by metadata'
+		},
+		'relative frequency (tokens) [gr.t/gsc.t]': {
+			label: 'Relative frequency (tokens)',
+			title: '(gr.t/gsc.t) - Note that gsc.t = sc.t when not grouped by metadata'
+		}
+	},
+	hits: {
+		'gr.d': {
+			label: '#docs with hits in current group',
+			title: '(gr.d)'
+		},
+		'gsc.t': {
+			label: '#all tokens in current group',
+			title: '(gr.t)'
+		},
+
+		'relative group size [gr.d/r.d]': {
+			label: 'Relative group size (docs)',
+			title: '(gr.d/r.d) - Number of found documents in this group relative to total number of found documents'
+		},
+		'relative group size [gr.h/r.h]': {
+			label: 'Relative group size (hits)',
+			title: '(gr.h/r.h) - Number of hits in this group relative to total number hits'
+		}
+	},
+	docs: {
+		'gr.d': {
+			label: '#docs in group',
+			title: '(gr.d)'
+		},
+		'relative group size [gr.d/r.d]': {
+			label: 'Relative frequency (docs)',
+			title: '(gr.d/r.d)'
+		},
+
+	},
+};
+
+type LocalMaxima = {  [P in keyof RowData]-?: number extends RowData[P] ? number : never; };
 class MaxCounter {
 	public values: {[key: string]: number} = {};
 
@@ -302,6 +367,8 @@ export default Vue.extend({
 		type: String as () => ResultsStore.ViewId,
 	},
 	data: () => ({
+		definitions,
+
 		concordances: {} as {
 			[key: string]: {
 				available: number;
@@ -327,6 +394,7 @@ export default Vue.extend({
 	computed: {
 		storeModule() { return ResultsStore.get.resultsModules().find(m => m.namespace === this.type)!; },
 
+		// Display variables not influenced by results
 		firstMainAnnotation: CorpusStore.get.firstMainAnnotation,
 		textDirection: CorpusStore.get.textDirection,
 
@@ -335,40 +403,86 @@ export default Vue.extend({
 		leftIndex() { return this.textDirection === 'ltr' ? 0 : 2; },
 		rightIndex() { return this.textDirection === 'ltr' ? 2 : 0; },
 
-		sortModel: {
-			get(): string|null { return this.sort; },
-			set(v: string|null) { this.$emit('sort', v); }
-		},
+		/** True if the results were created from a search containing a cql pattern, e.g. not just a raw document query */
+		isTokenResults(): boolean { return !!this.results.summary.searchParam.patt; },
+
+		// This does not work, as the rules on when subcorpusSize is included are different for /docs and /hits?
+		// isGroupedByMetadata(): boolean { return this.type === 'docs' ? !this.results.summary.subcorpusSize : !this.results.summary.subcorpusSize; },
+		// isGroupedByAnnotation(): boolean { return !!this.results.summary.subcorpusSize; },
+		// groupMode(): 'annotation'|'metadata'|'mixed' {
+		// 	if (this.isGroupedByMetadata && this.isGroupedByAnnotation) { return 'mixed'; }
+		// 	else if (this.isGroupedByAnnotation) { return 'annotation'; }
+		// 	else if (this.isGroupedByMetadata) { return 'metadata'; }
+		// 	throw new Error('In GroupResults but results not grouped?');
+		// },
 
 		groupMode(): 'annotation'|'metadata' {
 			// eventually needs a mixed mode for when grouping on metadata + annotation values
 			// but we can't detect this from the blacklab response alone since it looks the same as when grouping on metadata only
 			const groupMode =
 				this.type === 'docs' ? 'metadata' :
-				this.results.summary.subcorpusSize ? 'annotation' :
+				this.results.summary.subcorpusSize ? 'annotation' : // TODO this might not work any longer in the future, we need a different way of detecting
 				'metadata';
 			return groupMode;
 		},
 
 		chartModeOptions() {
-			// TODO
-			return Object.keys((displayModes as any)[this.type][this.groupMode]);
+			// FIXME hardcoded
+			const options = Object.keys((displayModes as any)[this.type][this.groupMode]);
+			if (this.type === 'docs' && this.isTokenResults) {
+				// Hide the relative tokens view when results are filtered based on a cql pattern
+				return options.filter(o => o !== 'tokens');
+			}
+			return options;
 		},
 		chartMode: {
 			get(): string { return this.storeModule.getState().groupDisplayMode || this.chartModeOptions[1]; },
 			set(v: string) { this.storeModule.actions.groupDisplayMode(v === this.chartModeOptions[1] ? null : v); },
 		},
 
-		definitions(): string[][] {
-			return definitions;
+		/** Columns in the table */
+		columns(): TableDef {
+			const columns = (displayModes as any)[this.type][this.groupMode][this.chartMode] as TableDef;
+			if (!columns) {
+				throw new Error(`No columns defined for ${this.type} grouped by ${this.groupMode} shown as ${this.chartMode}`);
+			}
+
+			// FIXME hardcoded
+			if (this.type === 'docs' && this.chartMode === 'table' && this.isTokenResults) {
+				// Hide the relative tokens column when the results are filtered based on a cql pattern...
+				return columns.filter(c => c !== 'relative frequency (tokens) [gr.t/gsc.t]');
+			}
+			return columns;
+		},
+		/**
+		 * Map the column to a pretty header with a display name and tooltip information etc,
+		 * the description for a column containing the same information might be different based on what we're displaying
+		 */
+		headers(): Array<{key: string, label: string, title?: string, isBar: boolean}> {
+			return this.columns.map(c => {
+				const headerId = typeof c === 'string' ? c : c[1];
+
+				const viewHeader = tableHeaders[this.type][headerId] || {};
+				const defaultHeader = tableHeaders.default[headerId] || {};
+				const fallback = {
+					label: headerId,
+					title: undefined
+				};
+
+				return {
+					key: headerId,
+					label: viewHeader.label || defaultHeader.label || fallback.label,
+					title: viewHeader.title || defaultHeader.title || fallback.title,
+					isBar: typeof c !== 'string'
+				};
+			});
 		},
 
-		columns(): TableDef {
-			return (displayModes as any)[this.type][this.groupMode][this.chartMode];
-		},
-		rows(): RowData[] { return this.rowsData.rows; },
-		maxima(): LocalMaxima { return this.rowsData.maxima; },
-		rowsData(): {
+		rows(): RowData[] { return this._rowsData.rows; },
+		maxima(): LocalMaxima { return this._rowsData.maxima; },
+
+		/** Convert results into ready to display bits of info */
+		_rowsData(): {
 			rows: RowData[],
 			maxima: LocalMaxima
 		} {
@@ -431,7 +545,7 @@ export default Vue.extend({
 						'gsc.d': (g.subcorpusSize ? g.subcorpusSize.documents : summary.subcorpusSize!.documents) || undefined,
 						'gsc.t': (g.subcorpusSize ? g.subcorpusSize.tokens : summary.subcorpusSize!.tokens) || undefined,
 
-						'sc.d': summary.subcorpusSize ? summary.subcorpusSize.documents : undefined, // TODO jan might make always available, remove null check if/when
+						'sc.d': summary.subcorpusSize ? summary.subcorpusSize.documents : undefined, // TODO jan might make always available, remove null check and make non-optional if/when
 						'sc.t': summary.subcorpusSize ? summary.subcorpusSize.tokens : undefined
 					});
 				});
@@ -444,9 +558,12 @@ export default Vue.extend({
 					'relative group size [gr.t/r.t]': row['gr.t'] ? row['gr.t']! / row['r.t'] : undefined,
 					'relative group size [gr.h/r.h]': row['gr.h'] && row['r.h'] ? row['gr.h']! / row['r.h']! : undefined,
 
-					'relative frequency (docs) [gr.d/gsc.d]':   row['gsc.d'] ? row['gr.d'] / row['gsc.d']! : undefined,
-					'relative frequency (tokens) [gr.t/gsc.t]': row['gr.t'] && row['gsc.t'] ? row['gr.t']! / row['gsc.t']! : undefined,
-					'relative frequency (hits) [gr.h/gsc.t]': row['gr.h'] && row['gsc.t'] ? row['gr.h']! / row['gsc.t']! : undefined,
+					'relative frequency (docs) [gr.d/gsc.d]':   row['gsc.d']                 ? row['gr.d']  / row['gsc.d']! : undefined,
+					'relative frequency (tokens) [gr.t/gsc.t]': row['gr.t']  && row['gsc.t'] ? row['gr.t']! / row['gsc.t']! : undefined,
+					'relative frequency (hits) [gr.h/gsc.t]':   row['gr.h']  && row['gsc.t'] ? row['gr.h']! / row['gsc.t']! : undefined,
+
+					'relative frequency (docs) [gr.d/sc.d]':   row['sc.d'] ? row['gr.d'] / row['sc.d']! : undefined,
+					'relative frequency (tokens) [gr.t/sc.t]': row['gr.t'] && row['sc.t'] ? row['gr.t']! / row['sc.t']! : undefined,
 
 					'average document length [gr.t/gr.d]': row['gr.t'] ? Math.round(row['gr.t']! / row['gr.d']) : undefined,
 				};
@@ -459,6 +576,11 @@ export default Vue.extend({
 				rows,
 				maxima: max.values as any
 			};
+		},
+
+		sortModel: {
+			get(): string|null { return this.sort; },
+			set(v: string|null) { this.$emit('sort', v); }
 		},
 	},
 	methods: {

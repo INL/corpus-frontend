@@ -179,7 +179,7 @@ export default Vue.extend({
 			if (this.type === 'hits' && !params.patt) {
 				this.results = null;
 				this.paginationResults = null;
-				this.error = new Api.ApiError('No results', 'No hits to display... (one or more of Lemma/PoS/Word is required).', 'No results');
+				this.error = new Api.ApiError('No results', 'This view is inactive because no search criteria for words were specified.', 'No results');
 				return;
 			}
 

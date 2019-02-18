@@ -1,38 +1,33 @@
 <template>
 	<div>
-		<SelectPicker
-			placeholder="Show as chart..."
-			data-class="btn btn-default btn-sm"
-
-			hideEmpty
-
-			:options="chartModeOptions"
-			v-model="chartMode"
-		/>
-
-		<v-popover offset="5" style="display:inline-block;">
-			<a role="button" title="Column meanings"><span class="fa fa-lg fa-question-circle"/></a>
-
-			<template slot="popover">
-				<table class="table table-condensed" style="table-layout:auto; max-width:calc(100vw - 75px);width:500px;">
-					<tbody>
-						<tr v-for="(row, i) in definitions" :key="i">
-							<td v-for="(cell, j) in row" :key="j">{{cell}}</td>
-						</tr>
-					</tbody>
-				</table>
-			</template>
-		</v-popover>
+		<slot name="groupBy"/>
+		<slot name="pagination"/>
 
 		<table class="group-table">
 			<thead>
 				<tr class="rounded">
-					<th v-for="header in headers" :key="header.id" :title="header.title" :style="{
+					<th v-for="(header, i) in headers" :key="header.id" :title="header.title" :style="{
 						width: header.isBar ? '60%' : undefined
 					}">
-						{{header.label}}
+						<v-popover v-if="i === 0" offset="5" style="display:inline-block;">
+							<a role="button" title="Column meanings"><span class="fa fa-lg fa-question-circle"/></a>
+
+							<template slot="popover">
+								<table class="table table-condensed" style="table-layout:auto; max-width:calc(100vw - 75px);width:500px;">
+									<tbody>
+										<tr v-for="(row, i) in definitions" :key="i">
+											<td v-for="(cell, j) in row" :key="j">{{cell}}</td>
+										</tr>
+									</tbody>
+								</table>
+							</template>
+						</v-popover>
+
+						<a v-if="header.chartMode && header.chartMode != chartMode" role="button" @click="chartMode = header.chartMode">
+							{{header.label}}
+						</a>
+						<template v-else>{{header.label}}</template>
 					</th>
-					<!-- <th v-for="col in columns" :key="col.toString()">{{col}}</th> -->
 				</tr>
 			</thead>
 			<tbody>
@@ -190,6 +185,7 @@ const displayModes: {
 		annotation: {
 			'table': TableDef,
 			'hits': TableDef,
+			'relative hits': TableDef, // todo artifact of the way we do display modes currently.
 		},
 	},
 	docs: {
@@ -247,6 +243,11 @@ const displayModes: {
 				['relative frequency (hits) [gr.h/gsc.t]', 'gr.h'],
 				'relative frequency (hits) [gr.h/gsc.t]'
 			],
+			'relative hits': [
+				'displayname',
+				['relative frequency (hits) [gr.h/gsc.t]', 'gr.h'],
+				'relative frequency (hits) [gr.h/gsc.t]'
+			],
 		},
 	},
 	docs: {
@@ -278,12 +279,14 @@ const tableHeaders: {
 		[ColumnId in keyof RowData]?: {
 			label?: string;
 			title?: string;
+			chartMode?: string;
 		}
 	}
 } = {
 	default: {
 		'displayname': {
 			label: 'Group',
+			chartMode: 'table'
 		},
 		'average document length [gr.t/gr.d]': {
 			label: 'Average document length',
@@ -317,20 +320,30 @@ const tableHeaders: {
 	hits: {
 		'gr.d': {
 			label: '#docs with hits in current group',
-			title: '(gr.d)'
+			title: '(gr.d)',
+			chartMode: 'docs',
+		},
+		'gr.h': {
+			chartMode: 'hits',
 		},
 		'gsc.t': {
 			label: '#all tokens in current group',
-			title: '(gr.t)'
+			title: '(gr.t)',
 		},
 
 		'relative group size [gr.d/r.d]': {
 			label: 'Relative group size (docs)',
-			title: '(gr.d/r.d) - Number of found documents in this group relative to total number of found documents'
+			title: '(gr.d/r.d) - Number of found documents in this group relative to total number of found documents',
 		},
 		'relative group size [gr.h/r.h]': {
 			label: 'Relative group size (hits)',
-			title: '(gr.h/r.h) - Number of hits in this group relative to total number hits'
+			title: '(gr.h/r.h) - Number of hits in this group relative to total number hits',
+		},
+		'relative frequency (docs) [gr.d/gsc.d]': {
+			chartMode: 'relative docs',
+		},
+		'relative frequency (hits) [gr.h/gsc.t]': {
+			chartMode: 'relative hits',
 		}
 	},
 	docs: {
@@ -340,9 +353,14 @@ const tableHeaders: {
 		},
 		'relative group size [gr.d/r.d]': {
 			label: 'Relative frequency (docs)',
-			title: '(gr.d/r.d)'
+			title: '(gr.d/r.d)',
 		},
-
+		'relative frequency (docs) [gr.d/gsc.d]': {
+			chartMode: 'docs'
+		},
+		'relative frequency (tokens) [gr.t/gsc.t]': {
+			chartMode: 'tokens'
+		},
 	},
 };
 
@@ -364,7 +382,7 @@ export default Vue.extend({
 	props: {
 		results: Object as () => BLTypes.BLHitGroupResults|BLTypes.BLDocGroupResults,
 		sort: String as () => null|string,
-		type: String as () => ResultsStore.ViewId,
+		// type: String as () => ResultsStore.ViewId,
 	},
 	data: () => ({
 		definitions,
@@ -392,6 +410,7 @@ export default Vue.extend({
 		},
 	}),
 	computed: {
+		type(): ResultsStore.ViewId { return BLTypes.isDocGroupsOrResults(this.results) ? 'docs' : 'hits'; },
 		storeModule() { return ResultsStore.get.resultsModules().find(m => m.namespace === this.type)!; },
 
 		// Display variables not influenced by results
@@ -459,7 +478,7 @@ export default Vue.extend({
 		 * the description for a column containing the same information might be different based on what we're displaying
 		 */
 		headers(): Array<{key: string, label: string, title?: string, isBar: boolean}> {
-			return this.columns.map(c => {
+			const c = this.columns.map(c => {
 				const headerId = typeof c === 'string' ? c : c[1];
 
 				const viewHeader = tableHeaders[this.type][headerId] || {};
@@ -469,13 +488,19 @@ export default Vue.extend({
 					title: undefined
 				};
 
+				// debugger;
+
 				return {
 					key: headerId,
 					label: viewHeader.label || defaultHeader.label || fallback.label,
 					title: viewHeader.title || defaultHeader.title || fallback.title,
+					chartMode: viewHeader.chartMode || defaultHeader.chartMode || undefined,
 					isBar: typeof c !== 'string'
 				};
 			});
+
+			// debugger;
+			return c;
 		},
 
 		rows(): RowData[] { return this._rowsData.rows; },

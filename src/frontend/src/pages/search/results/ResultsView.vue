@@ -20,46 +20,26 @@
 			/>
 		</div>
 
-		<GroupBy :type="type" :viewGroupName="viewGroupName"/>
-
-		<Pagination v-if="results"
-			style="display: block; margin: 10px 0;"
-
-			:page="pagination.shownPage"
-			:maxPage="pagination.maxShownPage"
-
-			@change="page = $event"
-		/>
-
 		<template v-if="resultsHaveData">
-			<GroupResults v-if="isGroups"
-				class="results-table"
-
-				:results="results"
-				:sort="sort"
-				:type="type"
+			<component
+				:is="resultComponentName"
+				v-bind="resultComponentData"
 
 				@sort="sort = $event"
 				@viewgroup="viewGroup = $event.id; _viewGroupName = $event.displayName"
-			/>
-			<HitResults v-else-if="isHits"
-				class="results-table"
+			>
 
-				:results="results"
-				:sort="sort"
-				:showTitles="showTitles"
+				<GroupBy slot="groupBy" :type="type" :viewGroupName="viewGroupName"/>
 
-				@sort="sort = $event"
-			/>
-			<DocResults v-else
-				class="results-table"
+				<Pagination slot="pagination"
+					style="display: block; margin: 10px 0;"
 
-				:results="results"
-				:sort="sort"
-				:showDocumentHits="showDocumentHits"
+					:page="pagination.shownPage"
+					:maxPage="pagination.maxShownPage"
 
-				@sort="sort = $event"
-			/>
+					@change="page = $event"
+				/>
+			</component>
 			<hr>
 		</template>
 		<template v-else-if="results"><div class="no-results-found">No results found.</div></template>
@@ -430,7 +410,35 @@ export default Vue.extend({
 					}
 				];
 			});
-		}
+		},
+
+		resultComponentName(): string {
+			if (this.isGroups) {
+				return 'GroupResults'
+			} else if (this.isHits) {
+				return 'HitResults'
+			} else {
+				return 'DocResults'
+			}
+		},
+		resultComponentData(): any {
+			switch (this.resultComponentName) {
+				case 'GroupResults': return {
+					results: this.results,
+					sort: this.sort,
+				};
+				case 'HitResults': return {
+					results: this.results,
+					sort: this.sort,
+					showTitles: this.showTitles,
+				};
+				case 'DocResults': return {
+					results: this.results,
+					sort: this.sort,
+					showDocumentHits: this.showDocumentHits
+				};
+			}
+		},
 	},
 	watch: {
 		refreshParameters: {
@@ -480,7 +488,7 @@ export default Vue.extend({
 	}
 	> .result-totals {
 		background: white;
-		padding: 8px 8px 15px 15px;
+		padding: 8px 8px 0 15px;
 		flex: none;
 	}
 }

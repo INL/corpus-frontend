@@ -145,7 +145,6 @@ function validateTagset(annotation: NormalizedAnnotation, t: Tagset) {
 		if (subAnnotsNotInCorpus.length) {
 			throw new Error(`Value "${value}" declares subAnnotation(s) "${subAnnotsNotInCorpus}" that do not exist in the corpus.`);
 		}
-
 	});
 }
 

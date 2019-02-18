@@ -1,39 +1,44 @@
 <template>
-	<table class="docs-table">
-		<thead>
-			<tr>
-				<th style="width:70%"><a @click="changeSort(`field:${results.summary.docFields.titleField}`)" class="sort" title="Sort by document title">Document title</a></th>
-				<th style="width:15%"><a @click="changeSort(`field:${results.summary.docFields.dateField}`)" class="sort" title="Sort by document year">Year</a></th>
-				<th v-if="hasHits" style="width:15%"><a @click="changeSort(`numhits`)" class="sort" title="Sort by number of hits">Hits</a></th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr class="rounded"
-				v-for="(rowData, index) in rows"
-				v-tooltip="{
-					show: pinnedTooltip === index,
-					content: `Document id: ${rowData.docPid}`,
-					trigger: pinnedTooltip === index ? 'manual' : 'hover',
-					targetClasses: pinnedTooltip === index ? 'pinned' : undefined,
-					hideOnTargetClick: false,
-					autoHide: false,
-				}"
+	<div>
+		<slot name="groupBy"/>
+		<slot name="pagination"/>
 
-				:key="index"
+		<table class="docs-table">
+			<thead>
+				<tr>
+					<th style="width:70%"><a @click="changeSort(`field:${results.summary.docFields.titleField}`)" class="sort" title="Sort by document title">Document title</a></th>
+					<th style="width:15%"><a @click="changeSort(`field:${results.summary.docFields.dateField}`)" class="sort" title="Sort by document year">Year</a></th>
+					<th v-if="hasHits" style="width:15%"><a @click="changeSort(`numhits`)" class="sort" title="Sort by number of hits">Hits</a></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr class="rounded"
+					v-for="(rowData, index) in rows"
+					v-tooltip="{
+						show: pinnedTooltip === index,
+						content: `Document id: ${rowData.docPid}`,
+						trigger: pinnedTooltip === index ? 'manual' : 'hover',
+						targetClasses: pinnedTooltip === index ? 'pinned' : undefined,
+						hideOnTargetClick: false,
+						autoHide: false,
+					}"
 
-				@click="pinnedTooltip = (pinnedTooltip === index ? null : index)"
-			>
-				<td>
-					<a target="_blank" :href="rowData.href">{{rowData.summary}}</a><br>
-					<div v-if="showDocumentHits" v-for="(snippet, index) in rowData.snippets" :dir="textDirection" :key="index">
-						{{snippet.left}} <strong :key="index">{{snippet.hit}}</strong> {{snippet.right}}
-					</div>
-				</td>
-				<td>{{rowData.date}}</td>
-				<td v-if="hasHits">{{rowData.hits}}</td>
-			</tr>
-		</tbody>
-	</table>
+					:key="index"
+
+					@click="pinnedTooltip = (pinnedTooltip === index ? null : index)"
+				>
+					<td>
+						<a target="_blank" :href="rowData.href">{{rowData.summary}}</a><br>
+						<div v-if="showDocumentHits" v-for="(snippet, index) in rowData.snippets" :dir="textDirection" :key="index">
+							{{snippet.left}} <strong :key="index">{{snippet.hit}}</strong> {{snippet.right}}
+						</div>
+					</td>
+					<td>{{rowData.date}}</td>
+					<td v-if="hasHits">{{rowData.hits}}</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
 </template>
 
 <script lang="ts">

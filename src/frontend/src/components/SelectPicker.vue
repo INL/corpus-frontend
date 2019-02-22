@@ -496,7 +496,8 @@ export default Vue.extend({
 			if (!this.multiple) {
 				newVal = newVal as string; // we verified above, but can't declare it to be a type...
 
-				const newOption = this.uiOptions.find(o => o.type === 1 && o.value === newVal) as _uiOpt|undefined;
+				// Don't select empty strings, those are meant to clear the selectpicker
+				const newOption = !!newVal ? this.uiOptions.find(o => o.type === 1 && o.value === newVal) as _uiOpt|undefined : undefined;
 				// Assume model always in a consistent state - e.g. no multiple values when !this.multiple
 				// Otherwise whatever, just discard the rest of the selections... It's not a valid state anyway
 				const cur = Object.values(this.internalModel)[0] as _uiOpt|undefined;

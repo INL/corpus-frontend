@@ -481,7 +481,11 @@ export default Vue.extend({
 
 		correctModel(newVal: null|undefined|string|string[]) {
 			if (this.editable) {
+				const prev = this.inputValue;
 				this.inputValue = (newVal ? typeof newVal === 'string' ? newVal : newVal[0] || '' : '');
+				if (prev !== this.inputValue) {
+					this.$emit('change', this.inputValue);
+				}
 				return;
 			}
 
@@ -492,11 +496,16 @@ export default Vue.extend({
 			if (!this.multiple) {
 				newVal = newVal as string; // we verified above, but can't declare it to be a type...
 
+				const newOption = this.uiOptions.find(o => o.type === 1 && o.value === newVal) as _uiOpt|undefined;
 				// Assume model always in a consistent state - e.g. no multiple values when !this.multiple
+				// Otherwise whatever, just discard the rest of the selections... It's not a valid state anyway
 				const cur = Object.values(this.internalModel)[0] as _uiOpt|undefined;
-				const newOption = newVal ? (cur && cur.value === newVal) ? cur : this.uiOptions.find(o => o.type === 1 && o.value === newVal) as _uiOpt : undefined;
+
 				if (newOption !== cur || (newVal && newOption == null)) { // if newOption doesn't exist but there is a value passed in, replace the model, which will $emit a new empty value, which will (if our parent is a sane component) correct our state
 					this.internalModel = newOption ? { [newOption.id]: newOption } : {};
+					if (!this.editable) {
+						this.$emit('change', newOption ? newOption.value : '');
+					}
 				}
 			} else {
 				// We need to be smart about this to prevent infinite loops or double $emits when updating
@@ -530,9 +539,11 @@ export default Vue.extend({
 
 				for (const v of unselectedValues) { Vue.delete(this.internalModel, v.id.toString()); }
 				for (const v of newSelectedValues as _uiOpt[]) { Vue.set(this.internalModel, v.id.toString(), v); }
+				if (unselectedValues.length + newSelectedValues.length) {
+					this.$emit('change', Object.values(this.internalModel).map(o => o.value));
+				}
 			}
 		}
-
 	},
 	watch: {
 		isOpen: {

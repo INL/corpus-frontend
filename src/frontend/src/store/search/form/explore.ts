@@ -6,6 +6,7 @@ import {getStoreBuilder} from 'vuex-typex';
 
 import {RootState} from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus'; // Is initialized before we are.
+import * as UIStore from '@/store/search/ui'; // Is initialized before we are.
 import {makeWildcardRegex} from '@/utils';
 import {AnnotationValue} from '@/types/apptypes';
 
@@ -37,17 +38,28 @@ const defaults: ModuleRootState = {
 		maxSize: 5,
 		/** 1-indexed */
 		size: 5,
-		tokens: [],
-		groupAnnotationId: ''
+		get tokens() {
+			const ret: ModuleRootState['ngram']['tokens'] = [];
+			for (let i = 0; i < defaults.ngram.maxSize; ++i) {
+				ret.push({
+					id: defaults.ngram.groupAnnotationId,
+					type: 'text', // doesn't matter here
+					value: ''
+				});
+			}
+			return ret;
+		},
+		get groupAnnotationId() { return UIStore.getState().explore.defaultAnnotationId; }
 	},
 
 	frequency: {
-		annotationId: ''
+		get annotationId() { return UIStore.getState().explore.defaultAnnotationId; }
 	},
 
 	corpora: {
-		groupBy: '',
-		groupDisplayMode: ''
+		get groupBy() { return `field:${UIStore.getState().explore.defaultMetadataFieldId}`; },
+		// todo
+		groupDisplayMode: 'table'
 	}
 };
 
@@ -142,34 +154,7 @@ const actions = {
 };
 
 const init = () => {
-	const {id: firstMainAnnotationId} = CorpusStore.get.firstMainAnnotation();
-	defaults.ngram.groupAnnotationId = firstMainAnnotationId;
-	while (defaults.ngram.tokens.length < defaults.ngram.maxSize) {
-		defaults.ngram.tokens.push({
-			id: firstMainAnnotationId,
-			value: '',
-		});
-	}
-	actions.ngram.reset();
-
-	const {metadataFieldGroups, metadataFields, fieldInfo} = CorpusStore.getState();
-	// const metadataFields = CorpusStore.getState().metadataFields;
-	// const specialFields = CorpusStore.getState().fieldInfo;
-	const firstSpecialField = [
-		fieldInfo.dateField,
-		fieldInfo.authorField,
-		fieldInfo.titleField,
-		fieldInfo.pidField,
-		...metadataFieldGroups.flatMap(g => g.fields)
-	].find(id => id != null && metadataFields[id] && metadataFields[id].groupId != null);
-
-	const defaultGroupBy = firstSpecialField ? `field:${firstSpecialField}` : '';
-	defaults.corpora.groupBy = defaultGroupBy;
-	defaults.corpora.groupDisplayMode = 'table';
-	actions.corpora.reset();
-
-	defaults.frequency.annotationId = firstMainAnnotationId;
-	actions.frequency.reset();
+	actions.reset();
 };
 
 export {

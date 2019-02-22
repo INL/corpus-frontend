@@ -307,7 +307,13 @@ declare const process: any;
 const store = b.vuexStore({state: {} as RootState, strict: process.env.NODE_ENV === 'development'});
 
 const init = () => {
+	// Load the corpus data, so we can derive values, fallbacks and defaults in the following modules
+	// This must happen right at the beginning of the app startup
 	CorpusModule.init();
+	// This is user-customizable data, it can be used to override various defaults from other modules,
+	// It needs to determine fallbacks and defaults for settings that haven't been configured,
+	// So initialize it before the other modules.
+	UIModule.init();
 
 	FormManager.init();
 	ResultsManager.init();
@@ -315,7 +321,6 @@ const init = () => {
 	TagsetModule.init();
 	HistoryModule.init();
 	QueryModule.init();
-	UIModule.init();
 };
 
 // Debugging helpers.

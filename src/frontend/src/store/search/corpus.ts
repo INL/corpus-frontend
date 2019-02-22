@@ -26,33 +26,23 @@ const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, normal
 
 const getState = b.state();
 
-function freezeIndex(i: NormalizedIndex): NormalizedIndex {
-	type Key = keyof NormalizedIndex;
-	const mutableProps: Key[] = ['documentCount'];
-
-	(Object.keys(i) as Key[])
-	.filter(k => !mutableProps.includes(k))
-	.forEach(key => {
-		Object.defineProperty(i, key, {
-			writable: false,
-			configurable: false,
-		});
-		const p = i[key];
-		if (p != null && (typeof p === 'object' || typeof p === 'function')) {
-			deepFreeze(p);
-		}
-	});
-
-	Object.preventExtensions(i);
-	return i;
-}
-
 const get = {
 	annotations: b.read(state =>
 		Object.values(state.annotatedFields)
 		.flatMap(f => Object.values(f.annotations))
 		.filter(a => !a.isInternal)
 	, 'annotations'),
+	annotationsMap: b.read((state): {[id: string]: NormalizedAnnotation[]} =>
+		get.annotations()
+		.reduce<{[id: string]: NormalizedAnnotation[]}>((fields, field) => {
+			if (!fields[field.id]) {
+				fields[field.id] = [];
+			}
+			fields[field.id].push(field);
+			return fields;
+		}, {})
+		// return annotations;
+	, 'annotationsMap'),
 
 	// TODO might be collisions between multiple annotatedFields, this is an unfinished part in blacklab
 	// like for instance, in a BLHitSnippet, how do we know which of the props comes from which annotatedfield.
@@ -101,6 +91,7 @@ const get = {
 
 const actions = {
 	// nothing here yet (probably never, indexmetadata should be considered immutable)
+	// maybe just some things to customize displaynames and the like.
 };
 
 const init = () => {

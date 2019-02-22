@@ -16,8 +16,9 @@
 							placeholder="Group by..."
 							data-id="corpora-group-by"
 							data-width="100%"
-							style="max-width: 220px;"
+							style="max-width: 400px;"
 
+							searchable
 							hideEmpty
 							allowHtml
 
@@ -33,7 +34,7 @@
 							placeholder="Show as"
 							data-id="corpora-display-mode"
 							data-width="100%"
-							style="max-width: 220px;"
+							style="max-width: 400px;"
 
 							hideEmpty
 							allowHtml
@@ -72,7 +73,7 @@
 							data-width="100%"
 							hideEmpty
 
-							:options="annotationOptions"
+							:options="ngramAnnotationOptions"
 
 							v-model="ngramType"
 						/>
@@ -84,7 +85,7 @@
 						<SelectPicker
 							data-width="100%"
 
-							:options="annotationOptions"
+							:options="ngramAnnotationOptions"
 							:disabled="index >= ngramSize"
 							:value="token.id"
 							placeholder="Property"
@@ -114,7 +115,7 @@
 						data-width="100%"
 						hideEmpty
 
-						:options="annotationOptions"
+						:options="frequencyAnnotationOptions"
 
 						v-model="frequencyType"
 					/>
@@ -144,9 +145,6 @@ export default Vue.extend({
 			set: InterfaceStore.actions.exploreMode,
 		},
 
-		annotationOptions() { return UIStore.getState().explore.shownAnnotations; },
-		defaultAnnotationId() { return UIStore.getState().explore.defaultAnnotation; },
-
 		ngramSize: {
 			get: ExploreStore.get.ngram.size,
 			set: ExploreStore.actions.ngram.size,
@@ -173,24 +171,44 @@ export default Vue.extend({
 			get: ExploreStore.get.corpora.groupDisplayMode,
 			set: ExploreStore.actions.corpora.groupDisplayMode,
 		},
-		corporaGroupByOptions(): OptGroup[] {
-			const opts: OptGroup[] = [];
-			const metadataGroups = CorpusStore.get.metadataGroups();
-			metadataGroups.forEach(group => opts.push({
-				// https://github.com/INL/corpus-frontend/issues/197#issuecomment-441475896
-				// (we don't show metadata groups in the Filters component unless there's more than one group, so don't show the group's name either in this case)
-				label: metadataGroups.length > 1 ? group.name : 'Metadata',
-				options: group.fields.map(field => ({
-					label: `Group by ${(field.displayName || field.id).replace(group.name, '')} <small class="text-muted">(${group.name})</small>`,
-					value: `field:${field.id}`
-				}))
+
+		ngramAnnotationOptions(): Option[] {
+			const annotations = CorpusStore.get.annotationDisplayNames();
+			return UIStore.getState().explore.shownAnnotationIds.map(id => ({
+				value: id,
+				label: annotations[id]
 			}));
-			return opts;
+		},
+
+		corporaGroupByOptions(): OptGroup[] {
+			const metadataFields = CorpusStore.getState().metadataFields;
+			const fieldsPerGroup = UIStore.getState().explore.shownMetadataFieldIds.reduce<{[groupId: string]: Option[]}>((groups, fieldId) => {
+				const field = metadataFields[fieldId];
+				// default fallback group, may happen if corpus wants to show options for grouping on certain metadata fields
+				// that are not available for regular subcorpus selection (i.e. not in a metadataFieldGroup, which normally hides the field in the ui)
+				const groupId = field.groupId || 'Metadata';
+				const fieldsInGroup = groups[groupId] = groups[groupId] || [];
+				fieldsInGroup.push({
+					label: `Group by ${(field.displayName || field.id).replace(groupId, '')} <small class="text-muted">(${groupId})</small>`,
+					value: `field:${field.id}`
+				});
+
+				return groups;
+			}, {});
+
+			return Object.entries(fieldsPerGroup)
+			.map(([groupName, options]): OptGroup => ({
+				label: groupName,
+				options
+			}));
 		},
 		corporaGroupDisplayModeOptions(): string[] {
 			// TODO
 			return ['table', 'docs', 'tokens'];
-		}
+		},
+
+		frequencyAnnotationOptions(): Option[] { return this.ngramAnnotationOptions; }
+
 	},
 	methods: {
 		updateTokenAnnotation(index: number, id: string) {
@@ -206,6 +224,11 @@ export default Vue.extend({
 			});
 		}
 	},
+	created() {
+		this.corporaGroupBy = `field:${UIStore.getState().explore.defaultMetadataFieldId}`;
+		this.ngramType = UIStore.getState().explore.defaultAnnotationId;
+		this.corporaGroupDisplayMode = this.corporaGroupDisplayModeOptions[0];
+	}
 });
 </script>
 

@@ -3,6 +3,17 @@
 		<slot name="groupBy"/>
 		<slot name="pagination"/>
 
+		<div class="form-group">
+			<div class="btn-group" style="margin: auto;">
+				<button v-for="option in chartModeOptions"
+					type="button"
+					:class="['btn btn-default btn-sm', {'active': chartMode === option}]"
+					:key="option"
+					@click="chartMode = option"
+				>{{option}}</button>
+			</div>
+		</div>
+
 		<table class="group-table">
 			<thead>
 				<tr class="rounded">
@@ -23,10 +34,12 @@
 							</template>
 						</v-popover>
 
-						<a v-if="header.chartMode && header.chartMode != chartMode" role="button" @click="chartMode = header.chartMode">
+						{{header.label}}
+
+						<!-- <a v-if="header.chartMode && header.chartMode != chartMode" role="button" @click="chartMode = header.chartMode">
 							{{header.label}}
 						</a>
-						<template v-else>{{header.label}}</template>
+						<template v-else>{{header.label}}</template> -->
 					</th>
 				</tr>
 			</thead>
@@ -185,7 +198,7 @@ const displayModes: {
 		annotation: {
 			'table': TableDef,
 			'hits': TableDef,
-			'relative hits': TableDef, // todo artifact of the way we do display modes currently.
+			// 'relative hits': TableDef, // todo artifact of the way we do display modes currently.
 		},
 	},
 	docs: {
@@ -243,11 +256,11 @@ const displayModes: {
 				['relative frequency (hits) [gr.h/gsc.t]', 'gr.h'],
 				'relative frequency (hits) [gr.h/gsc.t]'
 			],
-			'relative hits': [
-				'displayname',
-				['relative frequency (hits) [gr.h/gsc.t]', 'gr.h'],
-				'relative frequency (hits) [gr.h/gsc.t]'
-			],
+			// 'relative hits': [
+			// 	'displayname',
+			// 	['relative frequency (hits) [gr.h/gsc.t]', 'gr.h'],
+			// 	'relative frequency (hits) [gr.h/gsc.t]'
+			// ],
 		},
 	},
 	docs: {
@@ -286,7 +299,7 @@ const tableHeaders: {
 	default: {
 		'displayname': {
 			label: 'Group',
-			chartMode: 'table'
+			// chartMode: 'table'
 		},
 		'average document length [gr.t/gr.d]': {
 			label: 'Average document length',
@@ -321,11 +334,11 @@ const tableHeaders: {
 		'gr.d': {
 			label: '#docs with hits in current group',
 			title: '(gr.d)',
-			chartMode: 'docs',
+			// chartMode: 'docs',
 		},
-		'gr.h': {
-			chartMode: 'hits',
-		},
+		// 'gr.h': {
+		// 	chartMode: 'hits',
+		// },
 		'gsc.t': {
 			label: '#all tokens in current group',
 			title: '(gr.t)',
@@ -339,12 +352,12 @@ const tableHeaders: {
 			label: 'Relative group size (hits)',
 			title: '(gr.h/r.h) - Number of hits in this group relative to total number hits',
 		},
-		'relative frequency (docs) [gr.d/gsc.d]': {
-			chartMode: 'relative docs',
-		},
-		'relative frequency (hits) [gr.h/gsc.t]': {
-			chartMode: 'relative hits',
-		}
+		// 'relative frequency (docs) [gr.d/gsc.d]': {
+		// 	chartMode: 'relative docs',
+		// },
+		// 'relative frequency (hits) [gr.h/gsc.t]': {
+		// 	chartMode: 'relative hits',
+		// }
 	},
 	docs: {
 		'gr.d': {
@@ -355,12 +368,12 @@ const tableHeaders: {
 			label: 'Relative frequency (docs)',
 			title: '(gr.d/r.d)',
 		},
-		'relative frequency (docs) [gr.d/gsc.d]': {
-			chartMode: 'docs'
-		},
-		'relative frequency (tokens) [gr.t/gsc.t]': {
-			chartMode: 'tokens'
-		},
+		// 'relative frequency (docs) [gr.d/gsc.d]': {
+		// 	chartMode: 'docs'
+		// },
+		// 'relative frequency (tokens) [gr.t/gsc.t]': {
+		// 	chartMode: 'tokens'
+		// },
 	},
 };
 
@@ -752,6 +765,14 @@ export default Vue.extend({
 	box-shadow: inset 0 1px 2px 0px rgba(0,0,0,0.1);
 	margin-bottom: 8px;
 	padding: 8px
+}
+
+.chart-mode-picker {
+	font-weight: bold;
+	> li:not(:last-child) {
+		border-right: 2px solid;
+		border-color: inherit;
+	}
 }
 
 </style>

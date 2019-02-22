@@ -243,7 +243,7 @@ export default Vue.extend({
 		annotations: CorpusStore.get.annotations,
 		annotationDisplayNames: CorpusStore.get.annotationDisplayNames,
 		firstMainAnnotation: CorpusStore.get.firstMainAnnotation,
-		shownAnnotations(): string[] { return UIStore.getState().results.hits.shownAnnotations; },
+		shownAnnotations(): string[] { return UIStore.getState().results.hits.shownAnnotationIds; },
 		textDirection: CorpusStore.get.textDirection,
 
 		corpus() { return CorpusStore.getState().id; },

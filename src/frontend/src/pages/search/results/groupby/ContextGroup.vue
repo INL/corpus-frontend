@@ -244,27 +244,32 @@ $br-primary-active: #122b40;
 
 .groupby-editor-slider {
 	height: 30px;
+
 	> .vue-slider {
 		top: 50%;
 		transform: translateY(-50%);
 		cursor: pointer;
 
-		.vue-slider-process {
-			background: $bg-primary;
-		}
-
+		background: #ccc;
 		&:hover,
 		&:focus {
-			.vue-slider-process {
-				background: $bg-primary-hover;
-			}
+			background: #bbb;
 		}
 		&:active {
-			.vue-slider-process {
+			background: #aaa;
+		}
+
+		.vue-slider-process {
+			background: $bg-primary;
+
+			&:hover,
+			&:focus {
+				background: $bg-primary-hover;
+			}
+			&:active {
 				background: $bg-primary-active;
 			}
 		}
-
 	}
 }
 .groupby-editor-slider-handle {

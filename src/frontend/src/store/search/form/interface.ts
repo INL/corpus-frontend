@@ -6,6 +6,7 @@
  */
 import Vue from 'vue';
 import {getStoreBuilder} from 'vuex-typex';
+import cloneDeep from 'clone-deep';
 
 import {RootState} from '@/store/search/';
 import {ModuleRootState as PatternModuleRootState} from '@/store/search/form/patterns';
@@ -27,7 +28,7 @@ const defaults: ModuleRootState = {
 };
 
 const namespace = 'interface';
-const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, JSON.parse(JSON.stringify(defaults))); // copy so we don't add listeners to defaults
+const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, cloneDeep(defaults)); // copy so we don't add listeners to defaults
 const getState = b.state();
 
 const get = {
@@ -43,7 +44,7 @@ const actions = {
 	exploreMode: b.commit((state, payload: ModuleRootState['exploreMode']) => state.exploreMode = payload, 'exploreMode'),
 	viewedResults: b.commit((state, payload: ModuleRootState['viewedResults']) => state.viewedResults = payload, 'viewedResults'),
 
-	reset: b.commit(state => Object.assign(state, JSON.parse(JSON.stringify(defaults))), 'reset'),
+	reset: b.commit(state => Object.assign(state, cloneDeep(defaults)), 'reset'),
 	replace: b.commit((state, payload: ModuleRootState) => Object.assign(state, payload), 'replace'),
 };
 

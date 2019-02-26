@@ -3,6 +3,7 @@
  * When the user actually executes the query a snapshot of the state is copied to the query module.
  */
 import {getStoreBuilder} from 'vuex-typex';
+import cloneDeep from 'clone-deep';
 
 import {RootState} from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus'; // Is initialized before we are.
@@ -64,7 +65,7 @@ const defaults: ModuleRootState = {
 };
 
 const namespace = 'explore';
-const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, JSON.parse(JSON.stringify(defaults)));
+const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, cloneDeep(defaults));
 const getState = b.state();
 
 const get = {
@@ -123,7 +124,7 @@ const actions = {
 		}, 'ngram_maxSize'),
 
 		// stringify/parse required so we don't alias the default array
-		reset: b.commit(state => Object.assign(state.ngram, JSON.parse(JSON.stringify(defaults.ngram))), 'ngram_reset'),
+		reset: b.commit(state => Object.assign(state.ngram, cloneDeep(defaults.ngram)), 'ngram_reset'),
 
 		replace: b.commit((state, payload: ModuleRootState['ngram']) => {
 			Object.assign(state.ngram, payload);
@@ -150,7 +151,7 @@ const actions = {
 		actions.frequency.replace(payload.frequency);
 		actions.ngram.replace(payload.ngram);
 	}, 'replace'),
-	reset: b.commit(state => Object.assign(state, JSON.parse(JSON.stringify(defaults))), 'reset'),
+	reset: b.commit(state => Object.assign(state, cloneDeep(defaults)), 'reset'),
 };
 
 const init = () => {

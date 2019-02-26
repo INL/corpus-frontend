@@ -2,6 +2,7 @@
  * Can create store modules. Since docs and hits modules are clones of each other.
  */
 import {StoreBuilder, ModuleBuilder} from 'vuex-typex';
+import cloneDeep from 'clone-deep';
 
 import {RootState} from '@/store/search/';
 
@@ -54,8 +55,8 @@ const createActions = (b: ModuleBuilder<ModuleRootState, RootState>) => {
 		},'viewgroup'),
 		groupDisplayMode: b.commit((state, payload: string|null) => state.groupDisplayMode = payload, 'groupDisplayMode'),
 
-		reset: b.commit(state => Object.assign(state, JSON.parse(JSON.stringify(initialState))), 'reset'),
-		replace: b.commit((state, payload: ModuleRootState) => Object.assign(state, JSON.parse(JSON.stringify(payload))), 'replace'),
+		reset: b.commit(state => Object.assign(state, cloneDeep(initialState)), 'reset'),
+		replace: b.commit((state, payload: ModuleRootState) => Object.assign(state, cloneDeep(payload)), 'replace'),
 	};
 	return actions;
 };

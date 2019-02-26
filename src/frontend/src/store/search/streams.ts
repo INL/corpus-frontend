@@ -2,6 +2,7 @@ import URI from 'urijs';
 
 import { ReplaySubject, Observable, merge, fromEvent } from 'rxjs';
 import { debounceTime, switchMap, map, distinctUntilChanged, shareReplay, filter } from 'rxjs/operators';
+import cloneDeep from 'clone-deep';
 
 import * as RootStore from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus';
@@ -326,7 +327,7 @@ export default () => {
 			}
 		}),
 		v => {
-			url$.next(JSON.parse(JSON.stringify(v)));
+			url$.next(cloneDeep(v));
 		},
 		{
 			immediate: true,

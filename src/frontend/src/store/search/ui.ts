@@ -6,6 +6,7 @@
  * Configure from external javascript through window.vuexModules.ui.getState() and assign things.
  */
 
+import cloneDeep from 'clone-deep';
 import {getStoreBuilder} from 'vuex-typex';
 
 import {RootState} from '@/store/search/';
@@ -73,7 +74,7 @@ const initialState: ModuleRootState = {
 };
 
 const namespace = 'ui';
-const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, JSON.parse(JSON.stringify(initialState)));
+const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, cloneDeep(initialState));
 
 // hide implementation detail
 // Sometimes this is used before store is actually created (in order to initialize other parts of the store)
@@ -84,7 +85,7 @@ const getState = (() => {
 		try {
 			return getter();
 		} catch (e) {
-			return JSON.parse(JSON.stringify(initialState));
+			return cloneDeep(initialState);
 		}
 	};
 })();
@@ -178,7 +179,7 @@ const actions = {
 			}, 'hits_shownAnnotationIds')
 		}
 	},
-	replace: b.commit((state, payload: ModuleRootState) => Object.assign(state, JSON.parse(JSON.stringify(payload))), 'replace'),
+	replace: b.commit((state, payload: ModuleRootState) => Object.assign(state, cloneDeep(payload)), 'replace'),
 };
 
 declare const PROPS_IN_COLUMNS: string[];
@@ -188,7 +189,7 @@ const init = () => {
 	// This should have happened before this code runs
 	// Now set the defaults based on what is configured
 	// Then detect any parts that haven't been configured, and set them to some sensible defaults
-	Object.assign(initialState, JSON.parse(JSON.stringify(getState())));
+	Object.assign(initialState, cloneDeep(getState()));
 
 	const allAnnotations = CorpusStore.get.annotationsMap();
 	const mainAnnotation = CorpusStore.get.firstMainAnnotation().id;
@@ -232,7 +233,7 @@ const init = () => {
 		initialState.results.hits.shownAnnotationIds = shownAnnotations;
 	}
 
-	actions.replace(JSON.parse(JSON.stringify(initialState)));
+	actions.replace(cloneDeep(initialState));
 };
 
 export {

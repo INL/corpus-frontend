@@ -1,6 +1,7 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 
+import cloneDeep from 'clone-deep';
 import {getStoreBuilder} from 'vuex-typex';
 
 import {blacklab} from '@/api';
@@ -67,7 +68,7 @@ const actions = {
 	document: b.commit((state, payload: BLTypes.BLDocument) => state.document = payload, 'document'),
 	baseColor: b.commit((state, payload: string) => state.baseColor = payload, 'baseColor'),
 
-	reset: b.commit(state => Object.assign(state, JSON.parse(JSON.stringify(initialState))), 'resetRoot'),
+	reset: b.commit(state => Object.assign(state, cloneDeep(initialState)), 'resetRoot'),
 	replace: b.commit((state, payload: RootState) => Object.assign(state, payload), 'replaceRoot'),
 };
 
@@ -75,7 +76,7 @@ const actions = {
 // NOTE: only call this after creating all getters and actions etc.
 // NOTE: process.env is empty at runtime, but webpack inlines all values at compile time, so this check works.
 declare const process: any;
-const store = b.vuexStore({state: JSON.parse(JSON.stringify(initialState)) as RootState, strict: process.env.NODE_ENV === 'development'});
+const store = b.vuexStore({state: cloneDeep(initialState) as RootState, strict: process.env.NODE_ENV === 'development'});
 
 const init = () => {
 	blacklab.getDocumentInfo(INDEX_ID, DOCUMENT_ID)

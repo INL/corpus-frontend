@@ -6,7 +6,7 @@
  */
 
 import {getStoreBuilder} from 'vuex-typex';
-import deepFreeze from 'deep-freeze';
+import cloneDeep from 'clone-deep';
 
 import * as Api from '@/api';
 
@@ -22,7 +22,7 @@ declare const SINGLEPAGE: { INDEX: BLTypes.BLIndexMetadata; };
 type ModuleRootState = NormalizedIndex;
 
 const namespace = 'corpus';
-const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, normalizeIndex(JSON.parse(JSON.stringify(SINGLEPAGE.INDEX))));
+const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, normalizeIndex(cloneDeep(SINGLEPAGE.INDEX)));
 
 const getState = b.state();
 

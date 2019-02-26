@@ -2,6 +2,7 @@ import Vue from 'vue';
 import Vuex from 'vuex';
 import VueRx from 'vue-rx';
 
+import cloneDeep from 'clone-deep';
 import {getStoreBuilder} from 'vuex-typex';
 
 import * as CorpusModule from '@/store/search/corpus';
@@ -160,8 +161,8 @@ const actions = {
 					subForm: exploreMode,
 					// Copy so we don't alias, we should "snapshot" the current form
 					// Also cast back into correct type after parsing/stringifying so we don't lose type-safety (parse returns any)
-					filters: get.filtersActive() ? JSON.parse(JSON.stringify(FilterModule.get.activeFiltersMap())) as ReturnType<typeof FilterModule['get']['activeFiltersMap']> : {},
-					formState: JSON.parse(JSON.stringify(ExploreModule.getState()[exploreMode])) as ExploreModule.ModuleRootState[typeof exploreMode],
+					filters: get.filtersActive() ? cloneDeep(FilterModule.get.activeFiltersMap()) as ReturnType<typeof FilterModule['get']['activeFiltersMap']> : {},
+					formState: cloneDeep(ExploreModule.getState()[exploreMode]) as ExploreModule.ModuleRootState[typeof exploreMode],
 					gap: get.gapFillingActive() ? GapModule.getState() : GapModule.defaults,
 				};
 				break;
@@ -173,8 +174,8 @@ const actions = {
 					subForm: patternMode,
 					// Copy so we don't alias the objects, we should "snapshot" the current form
 					// Also cast back into correct type after parsing/stringifying so we don't lose type-safety (parse returns any)
-					filters: get.filtersActive() ? JSON.parse(JSON.stringify(FilterModule.get.activeFiltersMap())) as ReturnType<typeof FilterModule['get']['activeFiltersMap']> : {},
-					formState: JSON.parse(JSON.stringify(PatternModule.getState()[patternMode])) as PatternModule.ModuleRootState[typeof patternMode],
+					filters: get.filtersActive() ? cloneDeep(FilterModule.get.activeFiltersMap()) as ReturnType<typeof FilterModule['get']['activeFiltersMap']> : {},
+					formState: cloneDeep(PatternModule.getState()[patternMode]) as PatternModule.ModuleRootState[typeof patternMode],
 					gap: get.gapFillingActive() ? GapModule.getState() : GapModule.defaults,
 				};
 				break;
@@ -267,7 +268,7 @@ const actions = {
 			url: ''
 		}))
 		// remove vuex listeners from aliased parts of the store.
-		.map(v => JSON.parse(JSON.stringify(v)));
+		.map(v => cloneDeep(v));
 
 		// We can't just run a submit for every subquery, as that would be REALLY slow.
 		// Even if it were fast, mutations within a single vue frame are debounced,

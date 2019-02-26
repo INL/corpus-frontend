@@ -20,9 +20,10 @@
  * and the results settings (the grouping, viewed page number, etc).
  */
 
+import cloneDeep from 'clone-deep';
 import {getStoreBuilder} from 'vuex-typex';
-import {RootState} from '@/store/search/';
 
+import {RootState} from '@/store/search/';
 import { AnnotationValue} from '@/types/apptypes';
 import * as CorpusModule from '@/store/search/corpus';
 import * as PatternModule from '@/store/search/form/patterns';
@@ -164,10 +165,10 @@ const get = {
 const actions = {
 	// Deep copy these to prevent aliasing and the reactivity issues that come with it
 	// such as writing to current state causing updates in history entries
-	search: b.commit((state, payload: ModuleRootState) => Object.assign(state, JSON.parse(JSON.stringify(payload))), 'search'),
+	search: b.commit((state, payload: ModuleRootState) => Object.assign(state, cloneDeep(payload)), 'search'),
 
 	reset: b.commit(state => Object.assign(state, Object.assign({}, initialState)), 'reset'),
-	replace: b.commit((state, payload: ModuleRootState) => Object.assign(state, JSON.parse(JSON.stringify(payload))), 'replace'),
+	replace: b.commit((state, payload: ModuleRootState) => Object.assign(state, cloneDeep(payload)), 'replace'),
 };
 
 /** We need to call some function from the module before creating the root store or this module won't be evaluated (e.g. none of this code will run) */

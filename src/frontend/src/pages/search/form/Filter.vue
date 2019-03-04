@@ -64,7 +64,7 @@
 				</div>
 			</div>
 		</template>
-		<template v-else> <!-- should always be uiType === 'text' -->
+		<template v-else> <!-- should always be uiType === 'text' or 'combobox' -->
 			<div class="col-xs-12">
 				<input
 					type="text"
@@ -115,7 +115,7 @@ export default Vue.extend({
 	}),
 	computed: {
 		id(): string { return this.filter.id },
-		displayName(): string { return this.filter.displayName },
+		displayName(): string { return this.filter.displayName; },
 		uiType(): CorpusStore.NormalizedMetadataField['uiType'] { return this.filter.uiType; },
 
 		inputId(): string { return this.filter.id + '_value'; },

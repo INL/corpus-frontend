@@ -46,10 +46,10 @@ export const paths = {
 	autocompleteAnnotation: (
 		indexId: string,
 		annotatedFieldId: string,
-		annotationId: string) =>                    `${indexId}/autocomplete/${annotatedFieldId}/${annotationId}/`,
+		annotationId: string) =>                    `${blacklabEndpoint.defaults.baseURL}${indexId}/autocomplete/${annotatedFieldId}/${annotationId}/`,
 	autocompleteMetadata: (
 		indexId: string,
-		metadataFieldId: string) =>                 `${indexId}/autocomplete/${metadataFieldId}/`
+		metadataFieldId: string) =>                 `${blacklabEndpoint.defaults.baseURL}${indexId}/autocomplete/${metadataFieldId}/`
 };
 
 /**

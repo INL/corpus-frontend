@@ -33,13 +33,7 @@
 								</table>
 							</template>
 						</v-popover>
-
 						{{header.label}}
-
-						<!-- <a v-if="header.chartMode && header.chartMode != chartMode" role="button" @click="chartMode = header.chartMode">
-							{{header.label}}
-						</a>
-						<template v-else>{{header.label}}</template> -->
 					</th>
 				</tr>
 			</thead>
@@ -65,7 +59,7 @@
 						<td colspan="10">
 							<div class="well-light">
 								<div class="concordance-controls clearfix">
-									<button type="button" class="btn btn-sm btn-primary open-concordances" @click="openFullConcordances(row.id, row.displayName)"><span class="fa fa-angle-double-left"></span> View detailed concordances</button>
+									<button type="button" class="btn btn-sm btn-primary open-concordances" :disabled="disabled" @click="openFullConcordances(row.id, row.displayName)"><span class="fa fa-angle-double-left"></span> View detailed concordances</button>
 									<button type="button" v-if="!allConcordancesLoaded(row.id)" :disabled="!canLoadConcordances(row.id)" class="btn btn-sm btn-default" @click="loadPreviewConcordances(row.id)">
 										<template v-if="concordances[row.id].request != null">
 											<span class="fa fa-spin fa-spinner"></span> Loading...
@@ -395,7 +389,7 @@ export default Vue.extend({
 	props: {
 		results: Object as () => BLTypes.BLHitGroupResults|BLTypes.BLDocGroupResults,
 		sort: String as () => null|string,
-		// type: String as () => ResultsStore.ViewId,
+		disabled: Boolean
 	},
 	data: () => ({
 		definitions,

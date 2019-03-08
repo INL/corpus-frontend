@@ -1,15 +1,16 @@
 <template>
 	<ul class="pagination pagination-sm">
-		<li :class="['first', {'disabled': !prevEnabled}]">
-			<span title="first" @click.prevent="changePage(minPage)">&laquo;</span>
+		<li :class="['first', {'disabled': !prevEnabled || disabled}]">
+			<a v-if="prevEnabled" role="button" title="first" @click.prevent="changePage(minPage)">&laquo;</a>
+			<span v-else title="first">&laquo;</span>
 		</li>
-		<li v-if="prevEnabled" :class="['prev', {'disabled': !prevEnabled}]">
-			<span title="previous" @click.prevent="changePage(page-1)">&lsaquo;</span>
+		<li v-if="prevEnabled" :class="['prev', {'disabled': !prevEnabled || disabled}]">
+			<a role="button" title="previous" @click.prevent="changePage(page-1)">&lsaquo;</a>
 		</li>
-		<li v-for="i in lowerPages" :key="i">
-			<span @click.prevent="changePage(i)">{{i+1}}</span>
+		<li v-for="i in lowerPages" :key="i" :class="{'disabled': disabled}">
+			<a role="button" @click.prevent="changePage(i)">{{i+1}}</a>
 		</li>
-		<li v-if="lowerPages.length || higherPages.length" class="current">
+		<li v-if="lowerPages.length || higherPages.length" :class="['current', {'disabled': disabled}]">
 			<input
 				type="number"
 				class="form-control"
@@ -17,6 +18,7 @@
 				:value="page+1"
 				:min="minPage+1"
 				:max="maxPage+1"
+				:disabled="disabled"
 				@input="$event.target.value = Math.max(minPage+1, Math.min($event.target.value, maxPage+1))"
 				@keypress.enter.prevent="isValid($event.target.value-1) ? changePage($event.target.value - 1) : $event.target.value=page+1"
 				@keyup.esc.prevent="$event.target.value=page+1; $event.target.blur();"
@@ -28,14 +30,15 @@
 		<li v-else class="active"> <!-- no available pages -->
 			<span>{{page+1}}</span>
 		</li>
-		<li v-for="i in higherPages" :key="i">
-			<span @click.prevent="changePage(i)">{{i+1}}</span>
+		<li v-for="i in higherPages" :key="i" :class="{'disabled': disabled}">
+			<a role="button" @click.prevent="changePage(i)">{{i+1}}</a>
 		</li>
-		<li v-if="nextEnabled" :class="['next', {'disabled': !nextEnabled}]">
-			<span title="next" @click.prevent="changePage(page+1)">&rsaquo;</span>
+		<li v-if="nextEnabled" :class="['next', {'disabled': !nextEnabled || disabled}]">
+			<a role="button" title="next" @click.prevent="changePage(page+1)">&rsaquo;</a>
 		</li>
-		<li :class="['last', {'disabled': !nextEnabled}]">
-			<span :title="maxPage+1 +' (last)'" @click.prevent="changePage(maxPage)">&raquo;</span>
+		<li :class="['last', {'disabled': !nextEnabled || disabled}]">
+			<a v-if="nextEnabled" role="button" :title="maxPage+1 +' (last)'" @click.prevent="changePage(maxPage)">&raquo;</a>
+			<span v-else :title="maxPage+1 + ' (last)'">&raquo;</span>
 		</li>
 	</ul>
 </template>
@@ -55,6 +58,7 @@ export default Vue.extend({
 			type: Number as () => number,
 			default: 0,
 		},
+		disabled: Boolean
 	},
 	data: () => ({
 		focus: false,
@@ -92,13 +96,13 @@ export default Vue.extend({
 				page <= this.maxPage
 		},
 		changePage(page: any) {
-			if (this.isValid(page)) {
+			if (!this.disabled && this.isValid(page)) {
 				this.$emit('change', page)
 			}
 		}
 	},
 	beforeUpdate() {
-		this.focus = document.activeElement === this.$refs.maincontrol
+		this.focus = document.activeElement === this.$refs.maincontrol;
 	},
 	updated() {
 		if (this.focus) {
@@ -118,13 +122,14 @@ export default Vue.extend({
 	font-size: 0;
 
 	>li {
-		display: inline-block;
+		> a,
 		> span {
-			cursor: pointer;
 			display: inline-block;
 			float: none;
 			user-select: none;
 		}
+
+		display: inline-block;
 		&.current {
 			color: #555;
 			position: relative;
@@ -176,6 +181,7 @@ export default Vue.extend({
 		&.prev,
 		&.next,
 		&.last {
+			> a,
 			> span {
 				padding-left: 6px;
 				padding-right: 6px;

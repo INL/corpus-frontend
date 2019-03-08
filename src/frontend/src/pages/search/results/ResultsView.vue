@@ -4,8 +4,17 @@
 
 		<div class="crumbs-totals">
 			<ol class="breadcrumb resultscrumb">
-				<li v-for="(crumb, index) in breadCrumbs" :class="{'active': crumb.active}" :key="index">
-					<a v-if="!crumb.active" href="#" @click.prevent="crumb.onClick" :title="crumb.title">{{crumb.label}}</a>
+				<!-- no disabled state; use active class instead... -->
+				<li v-for="(crumb, index) in breadCrumbs" :key="index" :class="{'active': crumb.active || !!request}">
+					<a v-if="!crumb.active && !request"
+						role="button"
+						:title="crumb.title"
+						:disabled="request"
+						:class="request ? 'disabled' : undefined"
+						@click.prevent="!request && crumb.onClick ? crumb.onClick() : undefined"
+					>
+						{{crumb.label}}
+					</a>
 					<template v-else>{{crumb.label}}</template>
 				</li>
 			</ol>
@@ -29,13 +38,14 @@
 				@viewgroup="viewGroup = $event.id; _viewGroupName = $event.displayName"
 			>
 
-				<GroupBy slot="groupBy" :type="type" :viewGroupName="viewGroupName"/>
+				<GroupBy slot="groupBy" :type="type" :viewGroupName="viewGroupName" :disabled="!!request"/>
 
 				<Pagination slot="pagination"
 					style="display: block; margin: 10px 0;"
 
 					:page="pagination.shownPage"
 					:maxPage="pagination.maxShownPage"
+					:disabled="!!request"
 
 					@change="page = $event"
 				/>
@@ -45,7 +55,7 @@
 		<template v-else-if="results"><div class="no-results-found">No results found.</div></template>
 		<template v-else-if="error"><div class="no-results-found">{{error.message}}</div></template>
 
-		<!-- Ugly - use v-show instead of v-if because teardown of selectpickers is problematic :( -->
+
 		<div v-show="resultsHaveData" class="text-right">
 			<SelectPicker
 				data-class="btn-sm btn-default"
@@ -56,13 +66,14 @@
 
 				:searchable="sortOptions.flatMap(o => o.options && !o.disabled ? o.options.filter(opt => !opt.disabled) : o).length > 20"
 				:options="sortOptions"
+				:disabled="!!request"
 
 				v-model="sort"
 			/>
 
 			<button type="button" class="btn btn-primary btn-sm"  v-if="isDocs && resultsHaveHits"  @click="showDocumentHits = !showDocumentHits">{{showDocumentHits ? 'Hide Hits' : 'Show Hits'}}</button>
 			<button type="button" class="btn btn-primary btn-sm"  v-if="isHits" @click="showTitles = !showTitles">{{showTitles ? 'Hide' : 'Show'}} Titles</button>
-			<button type="button" class="btn btn-default btn-sm" v-if="results" :disabled="downloadInProgress || !resultsHaveData" @click="downloadCsv" :title="downloadInProgress ? 'Downloading...' : undefined"><template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner"></span></template>Export CSV</button>
+			<button type="button" class="btn btn-default btn-sm" v-if="results" :disabled="downloadInProgress || !resultsHaveData || !!request" @click="downloadCsv" :title="downloadInProgress ? 'Downloading...' : undefined"><template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner"></span></template>Export CSV</button>
 		</div>
 
 	</div>
@@ -220,7 +231,7 @@ export default Vue.extend({
 			.finally(() => {
 				this.downloadInProgress = false;
 			});
-		}
+		},
 	},
 	computed: {
 		// Store properties
@@ -267,7 +278,6 @@ export default Vue.extend({
 		querySettings() { return QueryStore.getState(); },
 
 		pagination(): {
-			// totalResults: number,
 			shownPage: number,
 			maxShownPage: number
 		} {
@@ -284,8 +294,7 @@ export default Vue.extend({
 			const totalResults =
 				BLTypes.isGroups(r) ? r.summary.numberOfGroups :
 				BLTypes.isHitResults(r) ? r.summary.numberOfHitsRetrieved :
-				r != null ? r.summary.numberOfDocsRetrieved :
-				0;
+				r.summary.numberOfDocsRetrieved;
 
 			// subtract one page if number of results exactly divisible by page size
 			// e.g. 20 results for a page size of 20 is still only one page instead of 2.
@@ -352,11 +361,6 @@ export default Vue.extend({
 			// This happens because results aren't loaded yet, thus isHits/isDocs/isGroups all return false, and no options would be available
 			// then the selectpicker will reset value to undefined, which clears it in the store, which updates the url, etc.
 			const opts = [] as OptGroup[];
-
-			// NOTE: only disable groups when results are in
-			// this prevents an issue with bootstrap-select where optgroup headers are repeated for initially disabled groups.
-			// See https://github.com/snapappointments/bootstrap-select/issues/2166 and https://github.com/snapappointments/bootstrap-select/issues/2174
-			// should be fixed in v1.13.6 probably
 
 			opts.push({
 				label: 'Groups',
@@ -425,15 +429,18 @@ export default Vue.extend({
 			switch (this.resultComponentName) {
 				case 'GroupResults': return {
 					results: this.results,
+					disabled: !!this.request,
 					sort: this.sort,
 				};
 				case 'HitResults': return {
 					results: this.results,
+					disabled: !!this.request,
 					sort: this.sort,
 					showTitles: this.showTitles,
 				};
 				case 'DocResults': return {
 					results: this.results,
+					disabled: !!this.request,
 					sort: this.sort,
 					showDocumentHits: this.showDocumentHits
 				};
@@ -515,14 +522,6 @@ table {
 		vertical-align: top;
 	}
 }
-
-a.clear,
-a.sort {
-	cursor: pointer;
-	display: flex;
-	align-items: baseline;
-}
-
 
 .results-container {
 	position: relative;

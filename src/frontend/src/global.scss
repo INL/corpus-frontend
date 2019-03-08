@@ -305,3 +305,8 @@ tr.rounded {
 		}
 	}
 }
+
+a.disabled {
+	opacity: 0.65;
+	cursor: not-allowed;
+}

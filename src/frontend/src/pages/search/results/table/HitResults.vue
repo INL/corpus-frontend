@@ -7,43 +7,58 @@
 			<thead>
 				<tr class="rounded">
 					<th class="text-right">
-						<span class="dropdown">
-							<a class="dropdown-toggle" data-toggle="dropdown" href="#">
+						<span v-if="annotations.filter(a => a.hasForwardIndex).length" class="dropdown">
+							<a role="button"data-toggle="dropdown" :class="['dropdown-toggle', {'disabled': disabled}]">
 								{{leftLabel}} hit
 								<span class="caret"/>
 							</a>
 
 							<ul class="dropdown-menu" role="menu">
-								<li v-for="annotation in annotations.filter(a => a.hasForwardIndex)" :key="annotation.id">
+								<li v-for="annotation in annotations.filter(a => a.hasForwardIndex)" :key="annotation.id" :class="{'disabled': disabled}">
 									<a @click="changeSort(`${beforeField}:${annotation.id}`)" class="sort">{{annotation.displayName}}</a>
 								</li>
 							</ul>
 						</span>
+						<template v-else>{{leftLabel}} hit</template>
 					</th>
 
 					<th class="text-center">
-						<a @click="firstMainAnnotation.hasForwardIndex ? changeSort(`hit:${firstMainAnnotation.id}`) : undefined" class="sort" :title="`Sort by ${firstMainAnnotation.displayName}`">
-							<strong>{{firstMainAnnotation.displayName}}</strong>
+						<a v-if="firstMainAnnotation.hasForwardIndex"
+							role="button"
+							:class="['sort', {'disabled':disabled}]"
+							:title="`Sort by ${firstMainAnnotation.displayName}`"
+							@click="changeSort(`hit:${firstMainAnnotation.id}`)"
+						>
+							{{firstMainAnnotation.displayName}}
 						</a>
+						<template v-else>{{firstMainAnnotation.displayName}}</template>
 					</th>
 
 					<th class="text-left">
-						<span class="dropdown">
-							<a class="dropdown-toggle" data-toggle="dropdown" href="#">
+						<span v-if="annotations.filter(a => a.hasForwardIndex).length" class="dropdown">
+							<a role="button" data-toggle="dropdown" :class="['dropdown-toggle', {'disabled': disabled}]">
 								{{rightLabel}} hit
 								<span class="caret"/>
 							</a>
 
 							<ul class="dropdown-menu" role="menu">
-								<li v-for="annotation in annotations.filter(a => a.hasForwardIndex)" :key="annotation.id">
-									<a @click="changeSort(`${afterField}:${annotation.id}`)" class="sort">{{annotation.displayName}}</a>
+								<li v-for="annotation in annotations.filter(a => a.hasForwardIndex)" :key="annotation.id" :class="{'disabled': disabled}">
+									<a @click="changeSort(`${afterField}:${annotation.id}`)" :class="['sort', {'disabled':disabled}]">{{annotation.displayName}}</a>
 								</li>
 							</ul>
 						</span>
+						<template v-else>{{rightLabel}} hit</template>
 					</th>
-
-					<th v-for="id in shownAnnotations" :key="id">
-						<a @click="annotation.hasForwardIndex ? changeSort(`hit:${id}`) : undefined" class="sort" :title="`Sort by ${annotationDisplayNames[id]}`">{{annotationDisplayNames[id]}}</a>
+					<th v-for="annot in shownAnnotations" :key="annot.id">
+						<a v-if="annot.hasForwardIndex"
+							role="button"
+							:class="['sort', {'disabled':disabled}]"
+							:title="`Sort by ${annot.displayName}`"
+							@click="changeSort(`hit:${annot.id}`)"
+						>
+							{{annot.displayName}}
+						</a>
+						<template v-else>{{annot.displayName}}</template>
 					</th>
 				</tr>
 			</thead>
@@ -133,6 +148,7 @@ import * as Api from '@/api';
 import AudioPlayer from '@/components/AudioPlayer.vue';
 
 import * as BLTypes from '@/types/blacklabtypes';
+import * as AppTypes from '@/types/apptypes';
 
 import {debugLog} from '@/utils/debug';
 
@@ -148,14 +164,14 @@ type HitRow = {
 	docPid: string;
 	start: number;
 	end: number;
-}
+};
 
 type DocRow = {
 	type: 'doc';
 	summary: string;
 	href: string;
 	docPid: string;
-}
+};
 
 type CitationData = {
 	open: boolean;
@@ -163,7 +179,7 @@ type CitationData = {
 	citation: null|[string, string, string];
 	error?: null|string;
 	snippet: null|BLTypes.BLHitSnippet;
-}
+};
 
 export default Vue.extend({
 	components: {
@@ -173,6 +189,7 @@ export default Vue.extend({
 		results: Object as () => BLTypes.BLHitResults,
 		sort: String as () => string|null,
 		showTitles: Boolean as () => boolean,
+		disabled: Boolean
 	},
 	data: () => ({
 		citations: {} as {
@@ -181,12 +198,12 @@ export default Vue.extend({
 		pinnedTooltip: null as null|number
 	}),
 	computed: {
-		leftIndex() { return this.textDirection === 'ltr' ? 0 : 2 },
-		rightIndex() { return this.textDirection === 'ltr' ? 2 : 0 },
-		leftLabel() { return this.textDirection === 'ltr' ? 'Before' : 'After' },
-        rightLabel() { return this.textDirection === 'ltr' ? 'After' : 'Before' },
-        beforeField() { return this.textDirection === 'ltr' ? 'left' : 'right' },
-        afterField() { return this.textDirection === 'ltr' ? 'right' : 'left' },
+		leftIndex() { return this.textDirection === 'ltr' ? 0 : 2; },
+		rightIndex() { return this.textDirection === 'ltr' ? 2 : 0; },
+		leftLabel() { return this.textDirection === 'ltr' ? 'Before' : 'After'; },
+		rightLabel() { return this.textDirection === 'ltr' ? 'After' : 'Before'; },
+		beforeField() { return this.textDirection === 'ltr' ? 'left' : 'right'; },
+		afterField() { return this.textDirection === 'ltr' ? 'right' : 'left'; },
 
 		rows(): Array<DocRow|HitRow> {
 			const { titleField, dateField, authorField } = this.results.summary.docFields;
@@ -194,13 +211,13 @@ export default Vue.extend({
 
 			let prevPid: string;
 			return this.results.hits.flatMap(hit => {
-				const rows = [] as (DocRow|HitRow)[];
+				const rows = [] as Array<DocRow|HitRow>;
 
 				// Render a row for this hit's document, if this hit occurred in a different document than the previous
 				const pid = hit.docPid;
 				if (pid !== prevPid) {
 					prevPid = pid;
-					const doc = infos[pid]
+					const doc = infos[pid];
 
 					const title = titleField && doc[titleField] || 'UNKNOWN';
 					const author = authorField && doc[authorField] ? ' by ' + doc[authorField] : '';
@@ -228,7 +245,7 @@ export default Vue.extend({
 					right: parts[this.rightIndex],
 					hit: parts[1],
 					props: hit.match,
-					other: this.shownAnnotations.map(annot => words(hit.match, annot, false, '')),
+					other: this.shownAnnotations.map(annot => words(hit.match, annot.id, false, '')),
 					docPid: hit.docPid,
 					start: hit.start,
 					end: hit.end
@@ -243,7 +260,7 @@ export default Vue.extend({
 		annotations: CorpusStore.get.annotations,
 		annotationDisplayNames: CorpusStore.get.annotationDisplayNames,
 		firstMainAnnotation: CorpusStore.get.firstMainAnnotation,
-		shownAnnotations(): string[] { return UIStore.getState().results.hits.shownAnnotationIds; },
+		shownAnnotations(): AppTypes.NormalizedAnnotation[] { return UIStore.getState().results.hits.shownAnnotationIds.map(id => CorpusStore.get.annotationsMap()[id][0]); },
 		textDirection: CorpusStore.get.textDirection,
 
 		corpus() { return CorpusStore.getState().id; },
@@ -251,7 +268,9 @@ export default Vue.extend({
 	},
 	methods: {
 		changeSort(payload: string) {
-			this.$emit('sort', payload === this.sort ? '-'+payload : payload)
+			if (!this.disabled) {
+				this.$emit('sort', payload === this.sort ? '-'+payload : payload);
+			}
 		},
 		showCitation(index: number /*row: HitRow*/) {
 			if (this.citations[index] != null) {
@@ -272,7 +291,7 @@ export default Vue.extend({
 			Api.blacklab
 			.getSnippet(CorpusStore.getState().id, row.docPid, row.start, row.end)
 			.then(s => {
-				citation.citation = snippetParts(s, this.firstMainAnnotation.id)
+				citation.citation = snippetParts(s, this.firstMainAnnotation.id);
 				citation.snippet = s;
 			})
 			.catch(e => citation.error = e.message)

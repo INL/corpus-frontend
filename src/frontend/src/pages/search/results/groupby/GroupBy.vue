@@ -4,6 +4,7 @@
 			<SelectPicker
 				class="groupselect"
 
+				allowHtml
 				data-class="btn-sm btn-default"
 				data-width="275px"
 				:data-style="{
@@ -11,26 +12,30 @@
 					borderBottomRightRadius: contextEnabled ? 0 : undefined,
 					borderRightWidth: contextEnabled ? 0 : undefined,
 				}"
-
 				:placeholder="`Group ${type} by...`"
 				:searchable="normalGroupByOptions.flatMap(o => o.options ? o.options : o).length > 15"
-				allowHtml
-
+				:disabled="disabled"
 				:options="normalGroupByOptions"
 
 				v-model="groupBy"
 			/>
-			<button v-if="contextEnabled" type="button" class="btn btn-sm btn-primary" @click="submitContext" style="border-top-left-radius: 0; border-bottom-left-radius: 0;">Apply</button>
+			<button v-if="contextEnabled"
+				type="button"
+				class="btn btn-sm btn-primary"
+				style="border-top-left-radius: 0; border-bottom-left-radius: 0;"
+				:disabled="disabled"
+				@click="submitContext"
+			>Apply</button>
 
-			<div v-if="groupBy && !contextEnabled" class="checkbox-inline" style="margin-left: 5px;">
+			<div v-if="groupBy && !contextEnabled" :class="['checkbox-inline', {'disabled': disabled}]" style="margin-left: 5px;">
 				<label title="Separate groups for differently cased values" style="white-space: nowrap; margin: 0; cursor:pointer;" :for="uid+'case'">
-					<input type="checkbox" :id="uid+'case'" v-model="caseSensitive">Case sensitive
+					<input type="checkbox" :id="uid+'case'" :disabled="disabled" v-model="caseSensitive">Case sensitive
 				</label>
 			</div>
 		</div>
 
 		<div v-if="viewGroup" style="color: #888; font-size: 85%;">
-			<button type="button" class="btn btn-sm btn-primary" @click="viewGroup = null"><span class="fa fa-angle-double-right"></span> Go back to grouped view</button>
+			<button type="button" class="btn btn-sm btn-primary" :disabled="disabled" @click="viewGroup = null"><span class="fa fa-angle-double-right"></span> Go back to grouped view</button>
 		</div>
 
 		<div v-if="contextEnabled" class="groupby-context-container" >
@@ -66,7 +71,8 @@ export default Vue.extend({
 	},
 	props: {
 		type: String as () => ResultsStore.ViewId,
-		viewGroupName: String as () => null|string
+		viewGroupName: String as () => null|string,
+		disabled: Boolean
 	},
 	data: () => ({
 		contextEnabled: false,

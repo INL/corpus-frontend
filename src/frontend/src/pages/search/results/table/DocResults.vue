@@ -6,9 +6,9 @@
 		<table class="docs-table">
 			<thead>
 				<tr>
-					<th style="width:70%"><a @click="changeSort(`field:${results.summary.docFields.titleField}`)" class="sort" title="Sort by document title">Document title</a></th>
-					<th style="width:15%"><a @click="changeSort(`field:${results.summary.docFields.dateField}`)" class="sort" title="Sort by document year">Year</a></th>
-					<th v-if="hasHits" style="width:15%"><a @click="changeSort(`numhits`)" class="sort" title="Sort by number of hits">Hits</a></th>
+					<th style="width:70%"><a role="button" @click="changeSort(`field:${results.summary.docFields.titleField}`)" :class="['sort', {'disabled': disabled}]" title="Sort by document title">Document title</a></th>
+					<th style="width:15%"><a role="button" @click="changeSort(`field:${results.summary.docFields.dateField}`)" :class="['sort', {'disabled': disabled}]" title="Sort by document year">Year</a></th>
+					<th v-if="hasHits" style="width:15%"><a role="button" @click="changeSort(`numhits`)" :class="['sort', {'disabled': disabled}]" title="Sort by number of hits">Hits</a></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -60,13 +60,14 @@ type DocRow = {
 	date: string;
 	hits?: number;
 	docPid: string;
-}
+};
 
 export default Vue.extend({
 	props: {
 		results: Object as () => BLDocResults,
 		sort: String as () => null|string,
-		showDocumentHits: Boolean as () => boolean
+		showDocumentHits: Boolean,
+		disabled: Boolean
 	},
 	data: () => ({
 		pinnedTooltip: null as null|number,
@@ -75,7 +76,7 @@ export default Vue.extend({
 		mainAnnotation: CorpusStore.get.firstMainAnnotation,
 		textDirection: CorpusStore.get.textDirection,
 		rows() {
-		 	const { titleField, dateField, authorField } = this.results.summary.docFields;
+			const { titleField, dateField, authorField } = this.results.summary.docFields;
 			return this.results.docs.map(doc => {
 				const { docPid: pid, docInfo: info } = doc;
 
@@ -86,7 +87,7 @@ export default Vue.extend({
 							before,
 							hit,
 							after
-						}
+						};
 					}) : [],
 					summary: (info[titleField!] || 'UNKNOWN') + (info[authorField!] ? ' by ' + info[authorField!] : ''),
 					href: getDocumentUrl(pid, this.results.summary.searchParam.patt),
@@ -102,7 +103,9 @@ export default Vue.extend({
 	},
 	methods: {
 		changeSort(payload: string) {
-			this.$emit('sort', payload === this.sort ? '-'+payload : payload)
+			if (!this.disabled) {
+				this.$emit('sort', payload === this.sort ? '-'+payload : payload);
+			}
 		},
 	},
 
@@ -113,7 +116,7 @@ export default Vue.extend({
 			}
 		}
 	}
-})
+});
 </script>
 
 <style lang="scss">

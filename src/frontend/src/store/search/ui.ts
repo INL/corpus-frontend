@@ -12,7 +12,6 @@ import {getStoreBuilder} from 'vuex-typex';
 import {RootState} from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus';
 import * as BlacklabTypes from '@/types/blacklabtypes';
-import jsonStableStringify from 'json-stable-stringify';
 
 type ModuleRootState = {
 	search: {
@@ -83,8 +82,10 @@ const getState = (() => {
 
 	return (): ModuleRootState => {
 		try {
+			// throws if store not built yet
 			return getter();
 		} catch (e) {
+			// return the default state we already know
 			return cloneDeep(initialState);
 		}
 	};

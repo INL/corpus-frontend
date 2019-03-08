@@ -117,7 +117,14 @@ public class WebsiteConfig {
                 .setFile(configFile)
                 .setListDelimiterHandler(new DisabledListDelimiterHandler())
                 .setPrefixLookups(new HashMap<String, Lookup>(ConfigurationInterpolator.getDefaultPrefixLookups()) {{
-                    put("request", key -> key.equals("contextPath") ? contextPath : key + " not supported");
+                    put("request", key -> {
+                        switch (key) {
+                            case "contextPath": return contextPath;
+                            case "corpusId": return corpusId != null ? corpusId : ""; // don't return null, or the interpolation string (${request:corpusId}) will be rendered
+                            case "corpusPath": return contextPath + (corpusId != null ? "/" + corpusId : "");
+                            default: return key;
+                        }
+                    });
                 }}));
         // Load the specified config file
         XMLConfiguration xmlConfig = cb.getConfiguration();

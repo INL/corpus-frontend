@@ -1,27 +1,26 @@
-import Vue, {FunctionalComponentOptions} from 'vue';
+import Vue from 'vue';
 import * as Highcharts from 'highcharts';
-
-import * as RootStore from '@/store/article';
 
 import * as BLTypes from '@/types/blacklabtypes';
 
 export default Vue.extend({
 	props: {
-		snippet: Object as () => BLTypes.BLHitSnippet
+		snippet: Object as () => BLTypes.BLHitSnippet,
+		baseColor: String,
+		annotationId: String,
+		chartTitle: String
 	},
 	computed: {
-		distributionAnnotation: RootStore.get.distributionAnnotation,
-
 		distribution(): Array<{
 			y: number,
 			name: string,
 			color?: string
 		}> {
-			if (!this.distributionAnnotation) {
+			if (!this.annotationId) {
 				return [];
 			}
 
-			const values = this.snippet.match[this.distributionAnnotation.id];
+			const values = this.snippet.match[this.annotationId];
 			const occurrances = values.reduce((acc, v) => (acc[v] = (acc[v] || 0) + 1, acc), {} as {[key: string]: number});
 			return Object.entries(occurrances)
 			.map(([key, count]) => ({
@@ -34,7 +33,7 @@ export default Vue.extend({
 		chartOptions(): Highcharts.Options {
 			return {
 				title: {
-					text: this.distributionAnnotation ? this.distributionAnnotation.displayName : ''
+					text: this.chartTitle || this.annotationId
 				},
 				series: [{
 					type: 'pie',
@@ -46,7 +45,7 @@ export default Vue.extend({
 					},
 					colors: (() => {
 						const colors = [];
-						const base = RootStore.get.baseColor();
+						const base = this.baseColor;
 						const numColors = Math.min(20, this.distribution.length);
 
 						for (let i = 0; i < numColors; i += 1) {

@@ -27,9 +27,20 @@ const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, normal
 const getState = b.state();
 
 const get = {
+	/*
+	TODO order of returned annotations is not entirely correct, as annotations can have an order defined in two ways:
+	- through the order of the id array in an annotatedFieldGroup
+	- through the displayOrder array in the parent annotatedField
+	right now we're always using the displayOrder from the annotatedField, but the order of the annotatedFieldGroup should actually have a higher prio!
+	we can't just get the fields from the annotatedFieldGroup(s), because they may not contain all annotations, and annotations might be shared/duplicated between groups
+
+	This is a really minor issue though...
+	the case can be made that it's not important to use the fieldgroup's orders anyway,
+	because we're not doing anything with those groups if we need all annotations
+	*/
 	annotations: b.read(state =>
 		Object.values(state.annotatedFields)
-		.flatMap(f => Object.values(f.annotations))
+		.flatMap(f => f.displayOrder.map(id => f.annotations[id]))
 		.filter(a => !a.isInternal)
 	, 'annotations'),
 	annotationsMap: b.read((state): {[id: string]: NormalizedAnnotation[]} =>
@@ -82,6 +93,7 @@ const get = {
 	}> => {
 		return state.annotationGroups.map(g => ({
 			...g,
+			// use group's annotation order! not the parent annotatedField's displayOrder
 			annotations: g.annotationIds.map(id => state.annotatedFields[g.annotatedFieldId].annotations[id]).filter(annot => !annot.isInternal)
 		}));
 	}, 'annotationGroups'),

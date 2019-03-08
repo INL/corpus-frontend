@@ -108,7 +108,11 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 				}, {}),
 			description: f.description,
 			displayName: f.displayName,
-			displayOrder: (!BLTypes.isAnnotatedFieldV1(f) && f.displayOrder != null) ? f.displayOrder : Object.keys(annotations),
+			displayOrder: (!BLTypes.isAnnotatedFieldV1(f) && f.displayOrder != null) ?
+				f.displayOrder :
+				annotations
+				.sort(([aId, a], [bId, b]) => a.displayName.localeCompare(b.displayName)) // sort by displayname if no predefined order
+				.map(([id, annot]) => id),
 			hasContentStore: f.hasContentStore,
 			hasLengthTokens: f.hasLengthTokens,
 			hasXmlTags: f.hasXmlTags,

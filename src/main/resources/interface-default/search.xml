@@ -1,17 +1,25 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <SearchInterface>
     <InterfaceProperties>
-        <!-- You can use ${request:contextPath}, it will be replaced by the contextPath of the application (usually '/corpus-frontend')-->
+        <!--  
+        Limited variable interpolation is supported. 
+        ${request:contextPath}  - the application root path, usually /corpus-frontend
+        ${request:corpusPath}   - the corpus root path, usually /corpus-frontend/${corpus-id}, equal to ${request:contextPath} if not viewing a corpus
+        ${request:corpusId}     - the corpus id (including username portion for user corpora), so 'lassy' or 'username:corpus-name', empty if not viewing a corpus.
+        Paths do not contain a trailing slash
+        -->
 
         <!--
         Custom files can be made available by placing them in a ./static directory within the corpus data directory 
         (the exact location of that directory is configured in the .properties file for AutoSearch.)
-        These files can then be accessed through the url ${contextPath}/corpusname/static/**
+
+        These files can then be accessed through the url ${request:corpusPath}/static/**
+
         So when you create a static/img/ directory containing logo.png for the 'zeebrieven' corpus, 
-        the url here would be '${request:contextPath}/zeebrieven/static/img/logo.png' 
+        the url here would be '${request:contextPath}/zeebrieven/static/img/logo.png', or '${request:corpusPath}/static/img/logo.png' 
         and the directory structure would be ${interfaceDataDir}/zeebrieven/static/img/logo.png 
         
-        Tip: use relative urls to reference resources from inside other resources (such from within custom css or js).
+        Tip: use relative urls to reference resources from inside other resources (such from within custom css or js) (e.g. '../img/**' for images in a css file)
         -->
 
         <!-- When a DisplayName has been set, it will be shown in stead of the raw corpus name. 
@@ -20,24 +28,27 @@
         <!--<DisplayName>BlackLab AutoSearch Corpus Search</DisplayName>-->
 
         <!-- You can include custom js and css (usually from your corpus interface directory under /${contextPath}/corpusname/static/**), but external sites are supported. -->
-        <!--<CustomJs>${request:contextPath}/corpusname/static/your.js</CustomJs>-->
-        <!--<CustomCss>${request:contextPath}/corpusname/static/your.css</CustomCss>-->
+        <!--<CustomJs>${request:corpusPath}/static/your.js</CustomJs>-->
+        <!--<CustomCss>${request:corpusPath}/static/your.css</CustomCss>-->
 
-        <!-- You can define which properties/annotations to show as colummns in the results table-->
+        <!-- 
+            You can define which properties/annotations to show as colummns in the results table. 
+            By default (up to) the first 3 properties are shown, but 'lemma' and 'pos' have precedence and are always shown if they exist in the corpus.   
+        -->
         <!-- <PropColumns>lemma,pos,tense, person,number</PropColumns> -->
 
         <NavLinks>
             <Link value="http://www.ivdnt.org/" newWindow="true">INT</Link>
             <Link value="http://www.clarin.eu/" newWindow="true">CLARIN</Link>
             <Link value="https://www.clariah.nl/" newWindow="true">CLARIAH</Link>
-            <Link value="${request:contextPath}/help">Help</Link>
-            <Link value="${request:contextPath}/about">About</Link>
+            <Link value="${request:corpusPath}/help">Help</Link>
+            <Link value="${request:corpusPath}/about">About</Link>
         </NavLinks>
     </InterfaceProperties>
     <XsltParameters>
-    <!-- 
+    <!--
         The following values are provided automatically: 
-        <XsltParameter name="contextRoot" value="./corpus-frontend"/>
+        <XsltParameter name="contextRoot" value="/corpus-frontend"/>
      -->
     </XsltParameters>
 </SearchInterface>

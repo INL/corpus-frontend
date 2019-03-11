@@ -1,8 +1,8 @@
 // This is a helper file to allow easily generating custom css that overrides the primary bootstrap color for text, buttons, dropdowns, lists.
 
 //$base: hsl(351, 70%, 36%); // SoNaR
-$base: hsl(345, 90%, 36%); // Zeebrieven
-
+// $base: hsl(345, 90%, 36%); // Zeebrieven
+$base: #337ab7 !default; // bootstrap blue;
 
 $sat-range: 100% - saturation($base);
 $light-range: lightness($base) * 0.5;

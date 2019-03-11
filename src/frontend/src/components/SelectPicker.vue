@@ -750,16 +750,19 @@ export default Vue.extend({
 				white-space: nowrap;
 				width: 100%;
 
+				&.disabled {
+					color: #777;
+					cursor: not-allowed;
+				}
 				&.active {
 					background: #337ab7;
 					color: white;
 					.text-muted { color :white; }
 				}
-
-				&.disabled {
-					color: #777;
-					cursor: not-allowed;
+				&.active.disabled {
+					opacity: .65;
 				}
+
 
 				&:not(.active):not(.disabled) {
 					&:hover,

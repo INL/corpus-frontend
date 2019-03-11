@@ -72,41 +72,6 @@ const namespace = 'query';
 const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, Object.assign({}, initialState));
 const getState = b.state();
 
-function getCQLFromAnnotations(annotations: AnnotationValue[], within: null|string) {
-	const tokens = [] as string[][];
-
-	annotations.forEach(({id, case: caseSensitive, value, type}) => {
-		switch (type) {
-			case 'pos': {
-				const arr = (tokens[0] = tokens[0] || []);
-				arr.push(value); // already valid cql, no escaping or wildcard substitution.
-				return;
-			}
-			case 'select':
-			case 'text':
-			case 'combobox': {
-				value
-				.replace(/"/g, '')
-				.trim()
-				.split(/\s+/)
-				.filter(v => !!v)
-				.forEach((word, i) => {
-					const arr = (tokens[i] = tokens[i] || []);
-					arr.push(`${id}="${(caseSensitive ? '(?-i)' : '') + makeWildcardRegex(word)}"`);
-				});
-				return;
-			}
-			default: throw new Error('Unimplemented cql serialization for annotation type ' + type);
-		}
-	});
-
-	let query = tokens.map(t => `[${t.join('&')}]`).join('');
-	if (query.length > 0 && within) {
-		query += ` within <${within}/>`;
-	}
-	return query || undefined;
-}
-
 const get = {
 	patternString: b.read((state): string|undefined => {
 		// Nothing submitted yet? This shouldn't be called in that case, but whatever.
@@ -134,7 +99,7 @@ const get = {
 				case 'simple': {
 					const pattern = (state as ModuleRootStateSearch<'simple'>).formState;
 					if (!pattern) { return undefined; }
-					return getCQLFromAnnotations([{
+					return getPatternString([{
 						case: false,
 						id: CorpusModule.get.firstMainAnnotation().id,
 						value: pattern,
@@ -145,7 +110,7 @@ const get = {
 					const pattern = (state as ModuleRootStateSearch<'extended'>).formState;
 					const annotations: AnnotationValue[] = Object.values(pattern.annotationValues).filter(annot => !!annot.value);
 					if (annotations.length === 0) { return undefined; }
-					return getCQLFromAnnotations(annotations, pattern.within);
+					return getPatternString(annotations, pattern.within);
 				}
 				case 'advanced':
 				case 'expert': {

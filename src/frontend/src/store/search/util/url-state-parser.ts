@@ -26,6 +26,7 @@ import * as GlobalResultsModule from '@/store/search/results/global';
 import * as HitResultsModule from '@/store/search/results/hits';
 
 import {FilterValue, AnnotationValue} from '@/types/apptypes';
+import { range } from 'rxjs';
 
 /**
  * Decode the current url into a valid page state configuration.
@@ -84,10 +85,14 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 					}
 					case 'checkbox':
 					case 'radio':
-					case 'range':
 					case 'select':
 						// the user can't enter custom values here, so nothing to do.
 						break;
+					case 'range': {
+						// Replace internal defaults with empty string, see https://github.com/INL/corpus-frontend/issues/234
+						if (metadataField.values[0] === '0') { metadataField.values[0] = ''; }
+						if (metadataField.values[1] === '9999') { metadataField.values[1] = ''; }
+					}
 					default:
 						// This should never happen unless new uiTypes are added
 						// in which case, maybe the values need to be handled in a special way

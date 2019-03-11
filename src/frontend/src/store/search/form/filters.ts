@@ -27,10 +27,7 @@ const getState = b.state();
 const get = {
 	/** Return all filters holding a value */
 	activeFilters: b.read(state => Object.values(state).filter(f => {
-		// remove empty strings
-		const numValues = f.values.filter(v => !!v).length;
-		// Only active when both fields filled for range, or at least a single string for select, or text non-empty
-		return f.type === 'range' ? numValues === 2 : numValues > 0;
+		return f.values.some(v => !!v); // any non-empty string, for ranges this is just lower or higher entered, for the rest it's anything.
 	}), 'activeFilters'),
 	/** Return activeFilters as assiciative map instead of array */
 	activeFiltersMap: b.read((state): ModuleRootState => {

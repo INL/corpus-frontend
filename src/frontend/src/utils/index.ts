@@ -96,7 +96,8 @@ export function getFilterString(filters: AppTypes.FilterValue[]): string|undefin
 
 		switch (filter.type) {
 			case 'range': {
-				filterStrings.push(filter.id, ':', '[', filter.values[0], ' TO ', filter.values[1], ']');
+				// NOTE: range filter has hidden defaults for unset field (min, max), see https://github.com/INL/corpus-frontend/issues/234
+				filterStrings.push(filter.id, ':', '[', filter.values[0] || '0', ' TO ', filter.values[1] || '9999', ']');
 				break;
 			}
 			case 'select':
@@ -155,9 +156,10 @@ export function getFilterString(filters: AppTypes.FilterValue[]): string|undefin
 	return filterStrings.join('') || undefined;
 }
 
+// NOTE: range filter has hidden defaults for unset field (min, max), see https://github.com/INL/corpus-frontend/issues/234
 export const getFilterSummary = (filters: AppTypes.FilterValue[]) => filters
 	.map(({id, type, values}) =>
-		`${id} = [${type==='range'?`${values[0]} to ${values[1]}`:values.join(', ')}]`).join(', ');
+		`${id} = [${type==='range'?`${values[0] || '0'} to ${values[1] || '9999'}`:values.join(', ')}]`).join(', ');
 
 export const getPatternString = (annotations: AppTypes.AnnotationValue[], within: null|string) => {
 	const tokens = [] as string[][];

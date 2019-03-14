@@ -83,7 +83,7 @@
                         <label for="format_name">Format name</label>
                         <div class="input-group" style="width:100%">
                             <input type="text" id="format_name" name="format_name" class="form-control" />
-                            <select id="format_type" class="selectpicker" data-width="auto" data-style="btn-primary">
+                            <select id="format_type" class="selectpicker input-group-btn" data-width="auto" data-style="btn-primary">
                                 <option label="YAML" value="yaml" selected>YAML</option>
                                 <option label="JSON" value="json">JSON</option>
                             </select>

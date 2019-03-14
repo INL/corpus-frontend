@@ -1,18 +1,20 @@
 <template>
 	<div class="combobox" :style="{ width: dataWidth }"
 		:data-menu-id="menuId"
+		:dir="dir"
 
 		@keydown.prevent.down="focusDown"
 		@keydown.prevent.up="focusUp"
 	>
 		<input v-if="editable"
-			:class="['menu-input', dataClass ? dataClass : 'form-control']"
+			:class="['menu-input', dataClass || 'form-control']"
 			:id="dataId"
 			:name="dataName"
 			:style="dataStyle"
 			:title="dataTitle"
 			:placeholder="$attrs.placeholder || $attrs.title"
 			:disabled="disabled"
+			:dir="dir"
 
 			@focus="open"
 			@keydown.tab="close()/*focus shifts to next element, close menu*/"
@@ -29,12 +31,13 @@
 		<button v-else
 			type="button"
 
-			:class="['menu-button', 'btn', dataClass ? dataClass : 'btn-default', { 'active': isOpen }]"
+			:class="['menu-button', 'btn', dataClass || 'btn-default', { 'active': isOpen }]"
 			:id="dataId"
 			:name="dataName"
 			:style="dataStyle"
 			:title="dataTitle"
 			:disabled="disabled"
+			:dir="dir"
 
 			@click="isOpen ? close() : open($refs.focusOnClickOpen)"
 			@keydown.tab="close()/*focus shifts to next element, close menu*/"
@@ -58,6 +61,7 @@
 		<!-- NOTE: might not actually be a child of root element at runtime! Event handling is rather specific -->
 		<ul class="combobox-menu" v-show="isOpen && !(editable && !filteredOptions.length)"
 			:data-menu-id="menuId"
+			:dir="dir"
 
 			@keydown.prevent.stop.esc="$refs.focusOnEscClose.focus(); close(); /* order is important */"
 			@keydown.prevent.stop.down="focusDown"
@@ -82,6 +86,8 @@
 				class="form-control input-sm menu-search"
 				placeholder="Filter..."
 				tabindex="-1"
+
+				:dir="dir"
 
 				@keydown.stop.left="/*stop menu from changing focus here*/"
 				@keydown.stop.right="/*stop menu from changing focus here*/"
@@ -198,6 +204,11 @@ export default Vue.extend({
 		/** Show a little spinner while the parent is fetching options, or something */
 		loading: Boolean,
 
+		/** Text direction (for rtl support) */
+		dir: {
+			type: String,
+			default: 'rtl'
+		},
 		allowHtml: Boolean,
 		hideDisabled: Boolean,
 		/** Hide the default empty value for non-multiple dropdowns */
@@ -647,7 +658,7 @@ export default Vue.extend({
 	.menu-icon {
 		display: inline-block;
 		flex: none;
-		margin-left: 4px;
+		margin: 0 4px;
 		transition: transform 0.2s ease-out;
 	}
 	.placeholder {
@@ -657,6 +668,10 @@ export default Vue.extend({
 
 .combobox {
 	text-align: left;
+	&[dir="rtl"] {
+		text-align: right;
+	}
+
 	// Bootstrap helper
 	&:not(.input-group-btn):not(.input-group-addon) {
 		display: inline-block;
@@ -676,7 +691,7 @@ export default Vue.extend({
 		display: flex;
 		align-items: baseline;
 		justify-content: space-between;
-		text-align: left;
+		text-align: inherit;
 
 		>.menu-icon {
 			flex: none;
@@ -705,10 +720,15 @@ export default Vue.extend({
 	overflow-y: auto;
 	padding: 5px 0;
 	position: absolute;
-	text-align: left;
 	top: 0;
 	width: 100%;
 	z-index: 1000;
+
+	text-align: left;
+	&[dir="rtl"] {
+		text-align: right;
+	}
+
 
 	ul {
 		padding: 0;
@@ -738,56 +758,63 @@ export default Vue.extend({
 		display: block;
 		max-height: 300px;
 		overflow: auto;
+	}
 
-		>.menu-options {
-			>.menu-option {
-				align-items: baseline;
-				justify-content: space-between;
-				color: #333;
-				cursor: pointer;
-				display: flex;
-				padding: 4px 12px 4px 22px;
-				white-space: nowrap;
-				width: 100%;
+	.menu-option {
+		align-items: baseline;
+		justify-content: space-between;
+		color: #333;
+		cursor: pointer;
+		display: flex;
+		padding: 4px 12px;
+		white-space: nowrap;
+		width: 100%;
 
-				&.disabled {
-					color: #777;
-					cursor: not-allowed;
-				}
-				&.active {
-					background: #337ab7;
-					color: white;
-					.text-muted { color :white; }
-				}
-				&.active.disabled {
-					opacity: .65;
-				}
+		&.disabled {
+			color: #777;
+			cursor: not-allowed;
+		}
+		&.active {
+			background: #337ab7;
+			color: white;
+			.text-muted { color :white; }
+		}
+		&.active.disabled {
+			opacity: .65;
+		}
 
-
-				&:not(.active):not(.disabled) {
-					&:hover,
-					&:focus,
-					&:active {
-						background: #ddd;
-						color: #262626;
-					}
-				}
-			}
-			>.menu-group {
-				border-bottom: 1px solid #e5e5e5;
-				color: #777;
-				display: flex;
-				font-size: 12px;
-				margin-bottom: 3px;
-				padding: 8px 0px 4px 12px;
-				width: 100%;
-
-				&.disabled {
-					color: #777;
-					cursor: not-allowed;
-				}
+		&:not(.active):not(.disabled) {
+			&:hover,
+			&:focus,
+			&:active {
+				background: #ddd;
+				color: #262626;
 			}
 		}
+	}
+
+	.menu-group {
+		border-bottom: 1px solid #e5e5e5;
+		color: #777;
+		display: flex;
+		font-size: 12px;
+		margin-bottom: 3px;
+		padding: 8px 0px 4px;
+		width: 100%;
+
+		&.disabled {
+			color: #777;
+			cursor: not-allowed;
+		}
+	}
+
+	&:not([dir="rtl"]) {
+		.menu-option { padding-left: 22px; }
+		.menu-group { padding-left: 12px; }
+	}
+	&[dir="rtl"] {
+		.menu-option { padding-right: 22px; }
+		.menu-group { padding-right: 12px; }
 	}
 }
 

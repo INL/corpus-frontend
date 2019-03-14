@@ -241,9 +241,16 @@ const templates = {
 			`,
 
 			main_input_original: `
-				<input data-attribute-role="value" type="text" class="form-control input-sm bl-no-border-radius bl-has-file-hidden" style="min-width:110px; width:0;">
+				<input
+					data-attribute-role="value"
+					type="text"
+					class="form-control input-sm bl-no-border-radius bl-has-file-hidden"
+					style="min-width:110px; width:0;"
+					{{#textDirection}}dir="{{textDirection}}"{{/textDirection}}
+				>
 			`,
 
+			// TODO rtl not supported for Bootstrap-Select (https://github.com/snapappointments/bootstrap-select/issues/862)
 			main_input_select: `
 				<select data-attribute-role="value" multiple class="selectpicker" data-style="btn btn-default btn-sm bl-no-border-radius" data-container="body">
 					{{#values}}
@@ -311,6 +318,7 @@ const DEFAULTS = {
 					attribute: 'word',
 					label: 'word',
 					caseSensitive: true,
+					textDirection: undefined as undefined|'ltr'|'rtl',
 					values: undefined as undefined|Array<{
 						value: string;
 						label?: string;
@@ -320,6 +328,7 @@ const DEFAULTS = {
 					attribute: 'lemma',
 					label: 'lemma',
 					caseSensitive: true,
+					textDirection: undefined as undefined|'ltr'|'rtl',
 					values: undefined as undefined|Array<{
 						value: string;
 						label?: string;
@@ -329,6 +338,7 @@ const DEFAULTS = {
 					attribute: 'pos',
 					label: 'Part of speech',
 					caseSensitive: false,
+					textDirection: undefined as undefined|'ltr'|'rtl',
 					values: undefined as undefined|Array<{
 						value: string;
 						label?: string;

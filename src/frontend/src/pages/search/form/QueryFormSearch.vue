@@ -22,6 +22,7 @@
 						:id="firstMainAnnotation.id + '_' + uid"
 						:name="firstMainAnnotation.id + '_' + uid"
 						:placeholder="firstMainAnnotation.displayName"
+						:dir="textDirection"
 
 						v-model="simple"
 					/>
@@ -144,6 +145,7 @@ export default Vue.extend({
 			}, [] as AppTypes.NormalizedAnnotation[]);
 		},
 		firstMainAnnotation: CorpusStore.get.firstMainAnnotation,
+		textDirection: CorpusStore.get.textDirection,
 		withinOptions(): Array<{label: string, value: string|null}> {
 			// TODO retrieve from indexMetadata once available
 			// discuss with jan?

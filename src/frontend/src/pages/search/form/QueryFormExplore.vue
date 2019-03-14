@@ -99,6 +99,7 @@
 
 							:disabled="index >= ngramSize"
 							:value="token.value"
+							:dir="token.annotation.isMainAnnotation ? mainTokenTextDirection : undefined"
 
 							@change="updateTokenValue(index, $event.target.value /* native component - native event */)"
 						/>
@@ -155,7 +156,12 @@ export default Vue.extend({
 			set: ExploreStore.actions.ngram.groupAnnotationId,
 		},
 
-		ngramTokens: ExploreStore.get.ngram.tokens,
+		ngramTokens() {
+			return ExploreStore.get.ngram.tokens().map(tok => ({
+				...tok,
+				annotation: CorpusStore.get.annotationsMap()[tok.id][0]
+			}));
+		},
 		ngramSizeMax: ExploreStore.get.ngram.maxSize,
 
 		frequencyType: {
@@ -207,7 +213,9 @@ export default Vue.extend({
 			return ['table', 'docs', 'tokens'];
 		},
 
-		frequencyAnnotationOptions(): Option[] { return this.ngramAnnotationOptions; }
+		frequencyAnnotationOptions(): Option[] { return this.ngramAnnotationOptions; },
+
+		mainTokenTextDirection: CorpusStore.get.textDirection,
 
 	},
 	methods: {

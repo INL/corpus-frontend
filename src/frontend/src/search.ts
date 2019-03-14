@@ -76,6 +76,7 @@ function initQueryBuilder(tagset?: TagsetStore.ModuleRootState) {
 							attribute: annotation.id,
 							label: annotation.displayName,
 							caseSensitive: annotation.caseSensitive,
+							textDirection: annotation.isMainAnnotation ? CorpusStore.get.textDirection() : undefined,
 							values,
 						};
 					})

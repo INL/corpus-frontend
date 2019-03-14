@@ -137,28 +137,6 @@ export const submittedSubcorpus$ = submittedMetadata$.pipe(
 );
 
 url$.pipe(
-	// The a.params and b.params are the direct query parameters being sent to blacklab-server
-	// Do a simple compare to allow an early escape
-	/*
-	distinctUntilChanged((a, b) => {
-		const jsonOld = jsonStableStringify(a.params);
-		const jsonNew = jsonStableStringify(b.params);
-
-		const stateToCompareOld = {
-			params: a.params,
-			viewedResults: a.state.interface.viewedResults,
-			groupedView: a.interface.
-		}
-
-		jsonStableStringify()
-		const oldResults = a.state.interface.viewedResults + a.state.interface.groupDisplayMode[a.state.interface.viewedResults];
-		const newResults = b.state.interface.viewedResults + b.state.interface.groupDisplayMode[b.state.interface.viewedResults]
-
-		// Account for the fact that the same query doesn't always mean the same ui state - the querybuilder can generate the same query as the expert view, etc.
-		// We do want to store this data in the page's url so reloads properly restore it.
-		return jsonOld === jsonNew && oldResults === newResults && a.state.query.subForm === b.state.query.subForm;
-	}),
-	*/
 	// Generate the new page url and add it to the data flowing through the stream
 	map<QueryState, QueryState&{
 		/**
@@ -226,8 +204,8 @@ url$.pipe(
 		};
 	}),
 	// In the case the new url is identical to the current url, don't put it in history
-	// This second check is required because distinctUntilChanged does not fire on the very first time this stream processes a value
-	// And we want to avoid pushing an identical url on to the history when you first load the page.
+	// We want to avoid pushing an identical url on to the history when you first load the page,
+	// or went back and loaded older results.
 	// (Or just when there are subtle differences such as a trailing slash or no trailing slash)
 	filter(v => {
 		// new urls are always generated without trailing slash (no empty trailing segment string)
@@ -261,8 +239,8 @@ url$.pipe(
 		url: string,
 	} => {
 		const {query, docs, hits, global} = v.state;
-		// Map to all defaults, except the parts of the ui that are currently in use.
-
+		// Store only those parts actively in use (so don't store the hits tab info when currently viewing docs for example)
+		// the rest is set to defaults so the rest of the page nicely clears if this entry is loaded later.
 		const entry: HistoryStore.HistoryEntry = {
 			filters: query.filters || {},
 			global,

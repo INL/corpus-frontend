@@ -13,7 +13,8 @@
     - [Frontend configuration](#Frontend-configuration)
         - [Search.xml](#Search.xml)
         - [Index formats](#Index-config)
-        - [Custom JS/CSS](#Custom-JS-and-CSS)
+        - [Custom JS](#Custom-JS)
+        - [Custom CSS](#Custom-CSS)
 - **[Development](#Development)**
     - [Frontend Javascript](#Frontend-Javascript)
       - [Application structure](#Application-structure)
@@ -379,7 +380,7 @@ Because the format config specifies the shape of a corpus (which metadata and an
       ![](docs/img/metadata_range.png)
   </details>
 
-### **Custom JS and CSS**
+### **Custom JS**
 
 These can be enabled on pages by defining them in [search.xml](#Search.xml)  
 All javascript should run _before_ `$(document).ready` unless otherwise stated.
@@ -575,6 +576,29 @@ Enabling any of these will show a new tab `Statistics` next to the default `Cont
     ```
 
   </details>
+
+### **Custom CSS**
+
+We have included a template [SASS](https://sass-lang.com/) file [here](src/frontend/src/style-template.scss) to allow you to customize your page's color theme easily.  
+From there you can then add your own customizations on top.
+
+Create a file with the following contents  
+
+```scss
+// custom.scss
+
+$base: hsl(351, 70%, 36%); // Defines the base color of the theme, this can be any css color
+@import 'style-template.scss'; // the absolute or relative path to our template file
+
+// Your own styles & overrides here ...
+
+```
+You now need to compile this file by following the following steps:
+- Install [Node.js](https://nodejs.org/en/)
+- Install the `node-sass` package by running `npm install -g node-sass`
+- Compile the file by running `node-sass -o . custom.scss`
+
+You will now have a `custom.css` file you can include in your install through `search.xml`.
 
 Development
 ===================

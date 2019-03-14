@@ -147,9 +147,13 @@ export default Vue.extend({
 				});
 			}
 
-			const metadataGroups = CorpusStore.get.metadataGroups();
 			if (this.type === 'hits') {
-				const annotations = CorpusStore.get.annotations().filter(a => !a.isInternal && a.hasForwardIndex);
+				// Use annotations in groups instead of all annotations for parity with metadata
+				// (That also only shows fields in a group)
+				// See https://github.com/INL/corpus-frontend/issues/190
+				const annotations = CorpusStore.get.annotationGroups()
+				.flatMap(g => g.annotations)
+				.filter(a => !a.isInternal && a.hasForwardIndex); // grouping not supported for annotations without forward index
 
 				[
 					['hit:', 'Hit', ''],
@@ -166,6 +170,8 @@ export default Vue.extend({
 					})
 				);
 			}
+
+			const metadataGroups = CorpusStore.get.metadataGroups();
 			metadataGroups.forEach(group => opts.push({
 				// https://github.com/INL/corpus-frontend/issues/197#issuecomment-441475896
 				// (we don't show metadata groups in the Filters component unless there's more than one group, so don't show the group's name either in this case)

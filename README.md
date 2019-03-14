@@ -250,6 +250,8 @@ Because the format config specifies the shape of a corpus (which metadata and an
           addRemainingAnnotations: true
     ```
 
+    The order of the annotations will be reflected in the interface.
+
     ![](docs/img/annotation_groups.png)
 
   </details>
@@ -267,7 +269,45 @@ Because the format config specifies the shape of a corpus (which metadata and an
         - Country
     ```
 
+    The order of the fields will be reflected in the interface.
+
     ![](docs/img/metadata_groups.png)
+
+  </details>
+
+- <details>
+    <summary>Change the display strings of values for metadata</summary>
+
+    ```yaml
+    metadata:
+      fields:
+      - name: year
+        displayValues: 
+          someOtherValue: someOtherDisplayValue
+          someValue: someDisplayValue
+    ```
+
+    ![](docs/img/value_display_order.png)
+
+    Currently not supported for annotations. 
+
+  </details>
+
+- <details>
+    <summary>Designate special metadata fields</summary>
+
+    ```yaml
+    corpusConfig:
+      specialFields:
+        pidField: id
+        titleField: Title
+        authorField: AuthorNameOrPseudonym
+        dateField: PublicationYear
+    ```
+
+    These fields will be used to format document title rows in the results table.
+
+    ![](docs/img/metadata_special_fields.png)
 
   </details>
 

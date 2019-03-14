@@ -205,10 +205,7 @@ export default Vue.extend({
 		loading: Boolean,
 
 		/** Text direction (for rtl support) */
-		dir: {
-			type: String,
-			default: 'rtl'
-		},
+		dir: String,
 		allowHtml: Boolean,
 		hideDisabled: Boolean,
 		/** Hide the default empty value for non-multiple dropdowns */

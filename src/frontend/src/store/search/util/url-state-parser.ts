@@ -1,4 +1,3 @@
-import URI from 'urijs';
 import memoize from 'memoize-decorator';
 
 import BaseUrlStateParser from '@/store/util/url-state-parser-base';
@@ -26,7 +25,6 @@ import * as GlobalResultsModule from '@/store/search/results/global';
 import * as HitResultsModule from '@/store/search/results/hits';
 
 import {FilterValue, AnnotationValue} from '@/types/apptypes';
-import { range } from 'rxjs';
 
 /**
  * Decode the current url into a valid page state configuration.

@@ -11,7 +11,8 @@ import {getStoreBuilder} from 'vuex-typex';
 
 import {RootState} from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus';
-import * as BlacklabTypes from '@/types/blacklabtypes';
+import * as BLTypes from '@/types/blacklabtypes';
+import * as AppTypes from '@/types/apptypes';
 
 type ModuleRootState = {
 	search: {
@@ -33,7 +34,7 @@ type ModuleRootState = {
 	results: {
 		// placeholder
 		hits: {
-			getAudioPlayerData: null|((corpus: string, docId: string, snippet: BlacklabTypes.BLHitSnippet) => undefined|({
+			getAudioPlayerData: null|((corpus: string, docId: string, snippet: BLTypes.BLHitSnippet) => undefined|({
 				docId: string
 				start: number,
 				end: number,
@@ -222,11 +223,16 @@ const init = () => {
 
 			// Now add other annotations until we hit 3 annotations.
 			Object.values(CorpusStore.getState().annotatedFields)
-			.flatMap(f => f.displayOrder)
-			.filter(annot => annot !== mainAnnotation && !shownAnnotations.includes(annot))
+			.flatMap(f => {
+				const annots = Object.values(f.annotations);
+				const order = f.displayOrder;
+				annots.sort((x, y) => order.indexOf(x.id) - order.indexOf(y.id));
+				return annots;
+			})
+			.filter(annot => !annot.isInternal && annot.id !== mainAnnotation && !shownAnnotations.includes(annot.id))
 			.forEach(annot => {
 				if (shownAnnotations.length < 3) {
-					shownAnnotations.push(annot);
+					shownAnnotations.push(annot.id);
 				}
 			});
 		}

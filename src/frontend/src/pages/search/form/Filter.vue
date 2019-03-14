@@ -4,7 +4,7 @@
 		:id="id"
 		:data-filterfield-type="uiType"
 	>
-		<label class="col-xs-12" :for="(uiType !== 'select' && uiType !== 'radio' && uiType !== 'checkbox' && uiType !== 'range') ? inputId : undefined">{{displayName}}</label>
+		<label class="col-xs-12" :for="(uiType !== 'radio' && uiType !== 'checkbox' && uiType !== 'range') ? inputId : undefined">{{displayName}}</label>
 
 		<template v-if="uiType === 'select'">
 			<div class="col-xs-12">
@@ -16,6 +16,7 @@
 
 					:data-id="inputId"
 					:data-name="inputId"
+					:dir="textDirection"
 					:placeholder="displayName"
 					:options="options"
 
@@ -73,6 +74,7 @@
 					:id="inputId"
 					:placeholder="displayName"
 					:autocomplete="autocomplete"
+					:dir="textDirection"
 
 					ref="autocomplete"
 					v-model="value"
@@ -92,7 +94,7 @@ import * as FilterStore from '@/store/search/form/filters';
 
 import SelectPicker, {Option} from '@/components/SelectPicker.vue';
 
-//@ts-ignore
+// @ts-ignore
 import Autocomplete from '@/mixins/autocomplete';
 
 type ValueAdapter =
@@ -100,7 +102,7 @@ null| // uninitialized
 {[key: string]: boolean}| // checkbox
 string[]| // select
 string| // radio, combobox, text
-{low: string; high: string;} // range
+{low: string; high: string;}; // range
 
 export default Vue.extend({
 	mixins: [Autocomplete],
@@ -114,9 +116,10 @@ export default Vue.extend({
 		value: null as ValueAdapter,
 	}),
 	computed: {
-		id(): string { return this.filter.id },
+		id(): string { return this.filter.id; },
 		displayName(): string { return this.filter.displayName; },
 		uiType(): CorpusStore.NormalizedMetadataField['uiType'] { return this.filter.uiType; },
+		textDirection: CorpusStore.get.textDirection,
 
 		inputId(): string { return this.filter.id + '_value'; },
 
@@ -184,14 +187,14 @@ export default Vue.extend({
 					this.value = this.options.reduce((acc, o) => {
 						acc[o.value] = storeValue.includes(o.value);
 						return acc;
-					}, {} as {[key: string]: boolean})
+					}, {} as {[key: string]: boolean});
 					break;
 				}
 				case 'range': {
 					this.value = {
 						low: storeValue[0] || '',
 						high: storeValue[1] || ''
-					}
+					};
 					break;
 				}
 				default: throw new Error('Unimplemented value handler for uiType ' + this.uiType);
@@ -248,14 +251,4 @@ export default Vue.extend({
 		}
 	},
 });
-
 </script>
-
-<style lang="scss">
-
-.clear-button {
-	margin-left: 20px;
-	margin-top: 7px;
-}
-
-</style>

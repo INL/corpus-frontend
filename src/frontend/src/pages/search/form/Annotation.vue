@@ -10,6 +10,7 @@
 				:placeholder="displayName"
 				:data-id="inputId"
 				:data-name="inputId"
+				:data-dir="textDirection"
 
 				:options="options"
 
@@ -23,8 +24,9 @@
 					:id="inputId"
 					:name="inputId"
 					:placeholder="displayName"
-					:autocomplete="autocomplete ? 'off' : undefined"
+					:autocomplete="autocomplete ? 'off' /*ajax autocomplete handles it*/: undefined"
 					:disabled="annotation.uiType === 'pos'"
+					:dir="textDirection"
 
 					ref="autocomplete"
 					v-model="value"
@@ -96,11 +98,9 @@ import PartOfSpeech from '@/pages/search/form/PartOfSpeech.vue';
 
 import { NormalizedAnnotation } from '@/types/apptypes';
 
-//@ts-ignore
+// @ts-ignore
 import Autocomplete from '@/mixins/autocomplete';
 import UID from '@/mixins/uid';
-
-// TODO use description, use annotatedField description and properties and stuff
 
 export default Vue.extend({
 	mixins: [Autocomplete, UID],
@@ -115,14 +115,19 @@ export default Vue.extend({
 		subscriptions: [] as Array<() => void>
 	}),
 	computed: {
+		textDirection(): string|undefined {
+			// only set direction if this is the main annotation
+			// so we don't set rtl mode on things like part-of-speech etc.
+			return this.annotation.isMainAnnotation ? CorpusStore.get.textDirection() : undefined;
+		},
 		inputId(): string { return this.annotation.id + '_value'; },
 		fileInputId(): string { return this.annotation.id + '_file'; },
-		caseInputId(): string { return this.annotation.id + "_case"; },
+		caseInputId(): string { return this.annotation.id + '_case'; },
 
-		id(): string { return /*this.annotation.annotatedFieldId + '_' +*/ this.annotation.id },
-		displayName(): string { return this.annotation.displayName },
+		id(): string { return /*this.annotation.annotatedFieldId + '_' +*/ this.annotation.id; },
+		displayName(): string { return this.annotation.displayName; },
 
-		options(): Option[] { return this.annotation.values || [] },
+		options(): Option[] { return this.annotation.values || []; },
 
 		autocomplete(): boolean { return this.annotation.uiType === 'combobox'; },
 		autocompleteUrl(): string { return paths.autocompleteAnnotation(CorpusStore.getState().id, this.annotation.annotatedFieldId, this.annotation.id); },

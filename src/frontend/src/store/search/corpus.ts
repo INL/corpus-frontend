@@ -32,7 +32,7 @@ const get = {
 	- through the order of the id array in an annotatedFieldGroup
 	- through the displayOrder array in the parent annotatedField
 	right now we're always using the displayOrder from the annotatedField, but the order of the annotatedFieldGroup should actually have a higher prio!
-	we can't just get the fields from the annotatedFieldGroup(s), because they may not contain all annotations, and annotations might be shared/duplicated between groups
+	we can't just get the fields from the annotatedFieldGroup(s), because they may not contain all annotations (an annotation not in any group is simply not shown)
 
 	This is a really minor issue though...
 	the case can be made that it's not important to use the fieldgroup's orders anyway,

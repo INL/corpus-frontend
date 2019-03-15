@@ -321,7 +321,7 @@ $('#corpora-private-container').on('click', '*[data-corpus-action="share"]:not(.
 		return;
 	}
 
-	$.ajax(blsUrl + '/' + corpusId + '/sharing', {
+	$.ajax(blsUrl + corpusId + '/sharing', {
 		type: 'GET',
 		accepts: {json: 'application/json' },
 		dataType: 'json',
@@ -344,7 +344,7 @@ $('#share-corpus-form').on('submit', function(event) {
 	const $editor = $('#share-corpus-editor');
 	const users = ($editor.val() as string).trim().split(/\s*[\r\n]+\s*/g); // split on line breaks, ignore empty lines.
 
-	$.ajax(blsUrl + '/' + corpus.id + '/sharing/', {
+	$.ajax(blsUrl + corpus.id + '/sharing/', {
 		type: 'POST',
 		accepts: {json: 'application/json'},
 		dataType: 'json',
@@ -457,7 +457,7 @@ function refreshCorporaList() {
 }
 
 function refreshFormatList() {
-	$.ajax(blsUrl + '/input-formats/', {
+	$.ajax(blsUrl + 'input-formats/', {
 		type: 'GET',
 		accepts: {json: 'application/json'},
 		dataType: 'json',
@@ -845,7 +845,7 @@ function initNewFormat() {
 		const formData = new FormData();
 		formData.append('data', file, file.name);
 
-		$.ajax(blsUrl + '/input-formats/', {
+		$.ajax(blsUrl + 'input-formats/', {
 			data: formData,
 			processData: false,
 			contentType: false,
@@ -915,7 +915,7 @@ function initNewFormat() {
 
 		$this.prop('disabled', true).append('<span class="fa fa-spinner fa-spin"></span>');
 		hideFormatError();
-		$.ajax(blsUrl + '/input-formats/' + presetName, {
+		$.ajax(blsUrl + 'input-formats/' + presetName, {
 			type: 'GET',
 			accepts: {json: 'application/javascript'},
 			dataType: 'json',
@@ -975,7 +975,7 @@ function initDeleteFormat() {
 			'You are about to delete the import format <i>' + formatId + '</i>.<br>Are you sure?',
 			'Delete',
 			function() {
-				$.ajax(blsUrl + '/input-formats/' + formatId, {
+				$.ajax(blsUrl + 'input-formats/' + formatId, {
 					type: 'DELETE',
 					accepts: {json: 'application/javascript'},
 					dataType: 'json',

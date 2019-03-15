@@ -338,7 +338,7 @@ Because the format config specifies the shape of a corpus (which metadata and an
       Just like `text`, but add a dropdown that gets autocompleted values from the server.
       ![](docs/img/annotation_combobox.png)
 
-    - **POS** _(Part of speech)_
+    - **POS** _(Part of speech)_  
         This is an extension we use for corpora with split part of speech tags.
         It's mostly meant for internal use, but with some knowhow it can be configured for any corpus with detailed enough information.
         You will need to write a json file containing a `tagset` definition.
@@ -401,19 +401,19 @@ Because the format config specifies the shape of a corpus (which metadata and an
     The `pos` type is not supported for metadata.  
     In addition, several new types are available:
 
-    - **Checkbox**
+    - **Checkbox**  
       Predictably, transforms the dropdown into a checkbox selection.  
       **NOTE:** The same limitations apply as with `select`.
     
       ![](docs/img/metadata_checkbox.png)
 
-    - **Radio**
+    - **Radio**  
       Like checkbox, but allow only one value.  
       **NOTE:** The same limitations apply as with `select`.
 
       ![](docs/img/metadata_radio.png)
 
-    - **Range**
+    - **Range**  
       Use two inputs to specify a range of values (usually for numeric fields, but works for text too).
 
       ![](docs/img/metadata_range.png)
@@ -476,24 +476,24 @@ Through javascript you can do the following things on the `/search/` page:
     ```javascript
     /**
      * @param {string} corpus - name of the corpus 
-    * @param {string} docId - id of the document from which this hit originated
-    * @param {BLHitSnippet} snippet - the hit, looks like the following: 
-    * {
-    *   left: {
-    *     lemma: ["this", "is", "an", "example"]
-    *     begintime: [1,3,5,7]
-    *     endtime: [2,4,6,8]
-    *   },
-    *   match: {
-    *     begintime: [9]
-    *     endtime: [10]
-    *     // ... etc
-    *   },
-    *   right: {
-    *     // ... 
-    *   }
-    * }
-    */
+     * @param {string} docId - id of the document from which this hit originated
+     * @param {BLHitSnippet} snippet - the hit, looks like the following: 
+     * {
+     *   left: {
+     *     lemma: ["this", "is", "an", "example"]
+     *     begintime: [1,3,5,7]
+     *     endtime: [2,4,6,8]
+     *   },
+     *   match: {
+     *     begintime: [9]
+     *     endtime: [10]
+     *     // ... etc
+     *   },
+     *   right: {
+     *     // ... 
+     *   }
+     * }
+     */
     vuexModules.ui.getState().results.hits.getAudioPlayerData = function(corpus, docId, snippet) {
       var s = 'begintime';
       var e = 'endtime';
@@ -600,7 +600,7 @@ Enabling any of these will show a new tab `Statistics` next to the default `Cont
         }],
     });
     ```
-    ![](img/article_chart.png)
+    ![](docs/img/article_chart.png)
 
   </details>
 

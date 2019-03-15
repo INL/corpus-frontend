@@ -673,6 +673,7 @@ export default Vue.extend({
 	&:not(.input-group-btn):not(.input-group-addon) {
 		display: inline-block;
 		position: relative;
+		vertical-align: middle; // mimic bootstrap btn
 		width: 220px; // just some default
 
 		>.menu-button {

@@ -394,7 +394,7 @@ export default Vue.extend({
 			const left = ownLeft - containerLeft;
 			const top = ownBottom - containerTop;
 
-			menu.style.transform = `translate(${left}px, ${top}px)`;
+			menu.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
 			menu.style.width = width + 'px';
 		},
 		focusDown(): void {this.focusOffset(1); },

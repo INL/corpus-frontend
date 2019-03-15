@@ -4,6 +4,7 @@
     - [Intro](#Intro)
     - [Basic usage](#How-to-use)
 - **[Installation](#Installation)**
+    - [Requirements](#Requirements)
     - [Releases](#Download-a-release)
     - [Building from source](#Building-from-source)
 - **[Configuration](#Configuration)**
@@ -46,13 +47,7 @@ Help is contained in the application in the form of a _page guide_ that can be o
 Installation
 ===================
 
-## Download a release
-
-Releases can be downloaded [here](https://github.com/INL/corpus-frontend/releases).
-
-## Building from source
-
-### Requirements:
+## Requirements:
 
 - Java 1.8
 - A java servlet container such as [Apache Tomcat](http://tomcat.apache.org/).
@@ -60,7 +55,11 @@ Use Tomcat 7 version `7.0.76` or newer or Tomcat 8 version `8.0.42` or newer. Us
 - An instance of [BlackLab-Server](https://github.com/INL/BlackLab/).
 While we do our best to make the frontend work with older versions of BlackLab, use a matching version of BlackLab (so `corpus-frontend v2.0` with `blacklab-server v2.0`).
 
-### Building the war
+## Download a release
+
+Releases can be downloaded [here](https://github.com/INL/corpus-frontend/releases).
+
+## Building from source
 
 - Clone this repository, use `mvn package` to build the WAR file (or download the .war from the latest release) and add corpus-frontend.war to Tomcat's webapps directory.
 - Optionally, create a file `corpus-frontend.properties` (name must be the same as the .war file) in the same directory as the BlackLab Server config file (e.g. `/etc/blacklab/`).  

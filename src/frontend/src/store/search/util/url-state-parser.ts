@@ -1,4 +1,3 @@
-import URI from 'urijs';
 import memoize from 'memoize-decorator';
 
 import BaseUrlStateParser from '@/store/util/url-state-parser-base';
@@ -53,7 +52,8 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	private get explore(): ExploreModule.ModuleRootState {
 		return {
 			frequency: this.frequencies || ExploreModule.defaults.frequency,
-			ngram: this.ngrams || ExploreModule.defaults.ngram
+			ngram: this.ngrams || ExploreModule.defaults.ngram,
+			corpora: this.corpora || ExploreModule.defaults.corpora,
 		};
 	}
 
@@ -83,10 +83,14 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 					}
 					case 'checkbox':
 					case 'radio':
-					case 'range':
 					case 'select':
 						// the user can't enter custom values here, so nothing to do.
 						break;
+					case 'range': {
+						// Replace internal defaults with empty string, see https://github.com/INL/corpus-frontend/issues/234
+						if (metadataField.values[0] === '0') { metadataField.values[0] = ''; }
+						if (metadataField.values[1] === '9999') { metadataField.values[1] = ''; }
+					}
 					default:
 						// This should never happen unless new uiTypes are added
 						// in which case, maybe the values need to be handled in a special way
@@ -174,6 +178,9 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 			} else if (this.ngrams != null && !(fromPattern && ui.patternMode === 'simple')) {
 				ui.form = 'explore';
 				ui.exploreMode = 'ngram';
+			} else if (this.corpora != null) {
+				ui.form = 'explore';
+				ui.exploreMode = 'corpora';
 			}
 
 			return ui;
@@ -194,6 +201,30 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 		} else {
 			return path;
 		}
+	}
+
+	/**
+	 * Return the ngram form state, if the query fits in there in its entirity.
+	 * Null is returned otherwise.
+	 */
+	@memoize
+	private get corpora(): null|ExploreModule.ModuleRootState['corpora'] {
+		if (this.viewedResults !== 'docs') {
+			return null;
+		}
+
+		if (this.groupByAdvanced.length !== 0 || this.groupBy.length === 0) {
+			return null;
+		}
+
+		if (this.expertPattern) {
+			return null;
+		}
+
+		return {
+			groupBy: this.groupBy[0],
+			groupDisplayMode: this.hitsOrDocs('docs').groupDisplayMode || ExploreModule.defaults.corpora.groupDisplayMode
+		};
 	}
 
 	/**
@@ -519,6 +550,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 			sort: this.getString('sort', null, v => v?v:null),
 			viewGroup: this.getString('viewgroup', undefined, v => (v && this._groups.length > 0)?v:null),
 			page: this.getNumber('first', 0, v => Math.floor(Math.max(0, v)/this.pageSize)/* round down to nearest page containing the starting index */)!,
+			groupDisplayMode: this.getString('groupDisplayMode', null, v => v?v:null),
 		};
 	}
 

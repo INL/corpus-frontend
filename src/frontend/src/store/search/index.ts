@@ -2,6 +2,7 @@ import Vue from 'vue';
 import Vuex from 'vuex';
 import VueRx from 'vue-rx';
 
+import cloneDeep from 'clone-deep';
 import {getStoreBuilder} from 'vuex-typex';
 
 import * as CorpusModule from '@/store/search/corpus';
@@ -105,9 +106,21 @@ const actions = {
 
 		// Apply the desired grouping for this form, if needed.
 		if (state.interface.form === 'explore') {
-			const exploreMode = state.interface.exploreMode;
-			InterfaceModule.actions.viewedResults('hits');
-			HitResultsModule.actions.groupBy(exploreMode === 'ngram' ? [ExploreModule.get.ngram.groupBy()] : [ExploreModule.get.frequency.groupBy()]);
+			switch (state.interface.exploreMode) {
+				case 'corpora': {
+					InterfaceModule.actions.viewedResults('docs');
+					DocResultsModule.actions.groupDisplayMode(state.explore.corpora.groupDisplayMode);
+					DocResultsModule.actions.groupBy(state.explore.corpora.groupBy ? [state.explore.corpora.groupBy] : []);
+					break;
+				}
+				case 'frequency':
+				case 'ngram': {
+					InterfaceModule.actions.viewedResults('hits');
+					HitResultsModule.actions.groupBy(state.interface.exploreMode === 'ngram' ? [ExploreModule.get.ngram.groupBy()] : [ExploreModule.get.frequency.groupBy()]);
+					break;
+				}
+				default: throw new Error(`Unhandled explore mode ${state.interface.exploreMode} while submitting form`);
+			}
 		}
 
 		// Open the results, which actually executes the query.
@@ -148,8 +161,8 @@ const actions = {
 					subForm: exploreMode,
 					// Copy so we don't alias, we should "snapshot" the current form
 					// Also cast back into correct type after parsing/stringifying so we don't lose type-safety (parse returns any)
-					filters: get.filtersActive() ? JSON.parse(JSON.stringify(FilterModule.get.activeFiltersMap())) as ReturnType<typeof FilterModule['get']['activeFiltersMap']> : {},
-					formState: JSON.parse(JSON.stringify(ExploreModule.getState()[exploreMode])) as ExploreModule.ModuleRootState[typeof exploreMode],
+					filters: get.filtersActive() ? cloneDeep(FilterModule.get.activeFiltersMap()) as ReturnType<typeof FilterModule['get']['activeFiltersMap']> : {},
+					formState: cloneDeep(ExploreModule.getState()[exploreMode]) as ExploreModule.ModuleRootState[typeof exploreMode],
 					gap: get.gapFillingActive() ? GapModule.getState() : GapModule.defaults,
 				};
 				break;
@@ -161,8 +174,8 @@ const actions = {
 					subForm: patternMode,
 					// Copy so we don't alias the objects, we should "snapshot" the current form
 					// Also cast back into correct type after parsing/stringifying so we don't lose type-safety (parse returns any)
-					filters: get.filtersActive() ? JSON.parse(JSON.stringify(FilterModule.get.activeFiltersMap())) as ReturnType<typeof FilterModule['get']['activeFiltersMap']> : {},
-					formState: JSON.parse(JSON.stringify(PatternModule.getState()[patternMode])) as PatternModule.ModuleRootState[typeof patternMode],
+					filters: get.filtersActive() ? cloneDeep(FilterModule.get.activeFiltersMap()) as ReturnType<typeof FilterModule['get']['activeFiltersMap']> : {},
+					formState: cloneDeep(PatternModule.getState()[patternMode]) as PatternModule.ModuleRootState[typeof patternMode],
 					gap: get.gapFillingActive() ? GapModule.getState() : GapModule.defaults,
 				};
 				break;
@@ -255,7 +268,7 @@ const actions = {
 			url: ''
 		}))
 		// remove vuex listeners from aliased parts of the store.
-		.map(v => JSON.parse(JSON.stringify(v)));
+		.map(v => cloneDeep(v));
 
 		// We can't just run a submit for every subquery, as that would be REALLY slow.
 		// Even if it were fast, mutations within a single vue frame are debounced,
@@ -295,7 +308,13 @@ declare const process: any;
 const store = b.vuexStore({state: {} as RootState, strict: process.env.NODE_ENV === 'development'});
 
 const init = () => {
+	// Load the corpus data, so we can derive values, fallbacks and defaults in the following modules
+	// This must happen right at the beginning of the app startup
 	CorpusModule.init();
+	// This is user-customizable data, it can be used to override various defaults from other modules,
+	// It needs to determine fallbacks and defaults for settings that haven't been configured,
+	// So initialize it before the other modules.
+	UIModule.init();
 
 	FormManager.init();
 	ResultsManager.init();
@@ -303,7 +322,6 @@ const init = () => {
 	TagsetModule.init();
 	HistoryModule.init();
 	QueryModule.init();
-	UIModule.init();
 };
 
 // Debugging helpers.

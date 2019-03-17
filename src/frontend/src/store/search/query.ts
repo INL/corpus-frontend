@@ -20,9 +20,10 @@
  * and the results settings (the grouping, viewed page number, etc).
  */
 
+import cloneDeep from 'clone-deep';
 import {getStoreBuilder} from 'vuex-typex';
-import {RootState} from '@/store/search/';
 
+import {RootState} from '@/store/search/';
 import { AnnotationValue} from '@/types/apptypes';
 import * as CorpusModule from '@/store/search/corpus';
 import * as PatternModule from '@/store/search/form/patterns';
@@ -71,41 +72,6 @@ const namespace = 'query';
 const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, Object.assign({}, initialState));
 const getState = b.state();
 
-function getCQLFromAnnotations(annotations: AnnotationValue[], within: null|string) {
-	const tokens = [] as string[][];
-
-	annotations.forEach(({id, case: caseSensitive, value, type}) => {
-		switch (type) {
-			case 'pos': {
-				const arr = (tokens[0] = tokens[0] || []);
-				arr.push(value); // already valid cql, no escaping or wildcard substitution.
-				return;
-			}
-			case 'select':
-			case 'text':
-			case 'combobox': {
-				value
-				.replace(/"/g, '')
-				.trim()
-				.split(/\s+/)
-				.filter(v => !!v)
-				.forEach((word, i) => {
-					const arr = (tokens[i] = tokens[i] || []);
-					arr.push(`${id}="${(caseSensitive ? '(?-i)' : '') + makeWildcardRegex(word)}"`);
-				});
-				return;
-			}
-			default: throw new Error('Unimplemented cql serialization for annotation type ' + type);
-		}
-	});
-
-	let query = tokens.map(t => `[${t.join('&')}]`).join('');
-	if (query.length > 0 && within) {
-		query += ` within <${within}/>`;
-	}
-	return query || undefined;
-}
-
 const get = {
 	patternString: b.read((state): string|undefined => {
 		// Nothing submitted yet? This shouldn't be called in that case, but whatever.
@@ -114,10 +80,8 @@ const get = {
 		// Quite a bit of how we generate the cql pattern hinges on which part of the form was submitted.
 		if (state.form === 'explore') {
 			switch (state.subForm) {
-				case 'frequency': {
-					// const stateHelper = state as ModuleRootStateExplore<'frequency'>;
-					return '[]';
-				}
+				case 'corpora': return undefined;
+				case 'frequency': return '[]';
 				case 'ngram': {
 					const stateHelper = state as ModuleRootStateExplore<'ngram'>;
 					return stateHelper.formState.tokens
@@ -135,7 +99,7 @@ const get = {
 				case 'simple': {
 					const pattern = (state as ModuleRootStateSearch<'simple'>).formState;
 					if (!pattern) { return undefined; }
-					return getCQLFromAnnotations([{
+					return getPatternString([{
 						case: false,
 						id: CorpusModule.get.firstMainAnnotation().id,
 						value: pattern,
@@ -146,7 +110,7 @@ const get = {
 					const pattern = (state as ModuleRootStateSearch<'extended'>).formState;
 					const annotations: AnnotationValue[] = Object.values(pattern.annotationValues).filter(annot => !!annot.value);
 					if (annotations.length === 0) { return undefined; }
-					return getCQLFromAnnotations(annotations, pattern.within);
+					return getPatternString(annotations, pattern.within);
 				}
 				case 'advanced':
 				case 'expert': {
@@ -166,10 +130,10 @@ const get = {
 const actions = {
 	// Deep copy these to prevent aliasing and the reactivity issues that come with it
 	// such as writing to current state causing updates in history entries
-	search: b.commit((state, payload: ModuleRootState) => Object.assign(state, JSON.parse(JSON.stringify(payload))), 'search'),
+	search: b.commit((state, payload: ModuleRootState) => Object.assign(state, cloneDeep(payload)), 'search'),
 
 	reset: b.commit(state => Object.assign(state, Object.assign({}, initialState)), 'reset'),
-	replace: b.commit((state, payload: ModuleRootState) => Object.assign(state, JSON.parse(JSON.stringify(payload))), 'replace'),
+	replace: b.commit((state, payload: ModuleRootState) => Object.assign(state, cloneDeep(payload)), 'replace'),
 };
 
 /** We need to call some function from the module before creating the root store or this module won't be evaluated (e.g. none of this code will run) */

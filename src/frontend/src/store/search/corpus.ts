@@ -6,7 +6,7 @@
  */
 
 import {getStoreBuilder} from 'vuex-typex';
-import deepFreeze from 'deep-freeze';
+import cloneDeep from 'clone-deep';
 
 import * as Api from '@/api';
 
@@ -22,37 +22,38 @@ declare const SINGLEPAGE: { INDEX: BLTypes.BLIndexMetadata; };
 type ModuleRootState = NormalizedIndex;
 
 const namespace = 'corpus';
-const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, normalizeIndex(JSON.parse(JSON.stringify(SINGLEPAGE.INDEX))));
+const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, normalizeIndex(cloneDeep(SINGLEPAGE.INDEX)));
 
 const getState = b.state();
 
-function freezeIndex(i: NormalizedIndex): NormalizedIndex {
-	type Key = keyof NormalizedIndex;
-	const mutableProps: Key[] = ['documentCount'];
-
-	(Object.keys(i) as Key[])
-	.filter(k => !mutableProps.includes(k))
-	.forEach(key => {
-		Object.defineProperty(i, key, {
-			writable: false,
-			configurable: false,
-		});
-		const p = i[key];
-		if (p != null && (typeof p === 'object' || typeof p === 'function')) {
-			deepFreeze(p);
-		}
-	});
-
-	Object.preventExtensions(i);
-	return i;
-}
-
 const get = {
+	/*
+	TODO order of returned annotations is not entirely correct, as annotations can have an order defined in two ways:
+	- through the order of the id array in an annotatedFieldGroup
+	- through the displayOrder array in the parent annotatedField
+	right now we're always using the displayOrder from the annotatedField, but the order of the annotatedFieldGroup should actually have a higher prio!
+	we can't just get the fields from the annotatedFieldGroup(s), because they may not contain all annotations (an annotation not in any group is simply not shown)
+
+	This is a really minor issue though...
+	the case can be made that it's not important to use the fieldgroup's orders anyway,
+	because we're not doing anything with those groups if we need all annotations
+	*/
 	annotations: b.read(state =>
 		Object.values(state.annotatedFields)
-		.flatMap(f => Object.values(f.annotations))
+		.flatMap(f => f.displayOrder.map(id => f.annotations[id]))
 		.filter(a => !a.isInternal)
 	, 'annotations'),
+	annotationsMap: b.read((state): {[id: string]: NormalizedAnnotation[]} =>
+		get.annotations()
+		.reduce<{[id: string]: NormalizedAnnotation[]}>((fields, field) => {
+			if (!fields[field.id]) {
+				fields[field.id] = [];
+			}
+			fields[field.id].push(field);
+			return fields;
+		}, {})
+		// return annotations;
+	, 'annotationsMap'),
 
 	// TODO might be collisions between multiple annotatedFields, this is an unfinished part in blacklab
 	// like for instance, in a BLHitSnippet, how do we know which of the props comes from which annotatedfield.
@@ -92,6 +93,7 @@ const get = {
 	}> => {
 		return state.annotationGroups.map(g => ({
 			...g,
+			// use group's annotation order! not the parent annotatedField's displayOrder
 			annotations: g.annotationIds.map(id => state.annotatedFields[g.annotatedFieldId].annotations[id]).filter(annot => !annot.isInternal)
 		}));
 	}, 'annotationGroups'),
@@ -101,6 +103,7 @@ const get = {
 
 const actions = {
 	// nothing here yet (probably never, indexmetadata should be considered immutable)
+	// maybe just some things to customize displaynames and the like.
 };
 
 const init = () => {

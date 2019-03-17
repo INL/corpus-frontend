@@ -12,10 +12,9 @@
 							<label for="resultsPerPage" class="col-xs-3">Results per page:</label>
 							<div class="col-xs-9">
 								<SelectPicker
-									id="resultsPerPage"
-									name="resultsPerPage"
-
-									data-width="auto"
+									data-id="resultsPerPage"
+									data-name="resultsPerPage"
+									hideEmpty
 
 									:options="['20','50','100','200'].map(value => ({value, label: `${value} results`}))"
 
@@ -29,11 +28,12 @@
 							<div class="col-xs-9">
 								<div class="input-group">
 									<SelectPicker
-										id="sampleMode"
-										name="sampleMode"
 										class="input-group-btn"
+										data-id="sampleMode"
+										data-name="sampleMode"
 
-										:options="['percentage', 'count'].map(o => ({value: o}))"
+										hideEmpty
+										:options="['percentage', 'count']"
 
 										@input="focusSampleSize"
 

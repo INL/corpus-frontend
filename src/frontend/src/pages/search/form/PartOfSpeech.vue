@@ -25,7 +25,7 @@
 
 						<div v-if="annotationValue" class="category-container">
 							<ul v-for="subId in annotationValue.subAnnotationIds" class="list-group category">
-								<li class="list-group-item active category-name">{{tagset.subAnnotations[subId].displayName}}</li>
+								<li class="list-group-item active category-name">{{annotationDisplayNames[subId]}}</li>
 								<!-- debugging -->
 								<!-- :style="{
 									backgroundColor: (!subValue.pos || subValue.pos.includes(annotationValue.value)) ? undefined : 'red'
@@ -61,6 +61,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import * as TagsetStore from '@/store/search/tagset';
+import * as CorpusStore from '@/store/search/corpus';
 import * as InterfaceStore from '@/store/search/form/interface';
 
 import {NormalizedAnnotation, Tagset} from '@/types/apptypes';
@@ -79,6 +80,7 @@ export default Vue.extend({
 	}),
 	computed: {
 		tagset: TagsetStore.getState,
+		annotationDisplayNames: CorpusStore.get.annotationDisplayNames,
 		isValidTagset(): boolean { return TagsetStore.getState().state === 'loaded'; },
 		errorMessage(): string { return this.isValidTagset ? '' : TagsetStore.getState().message; },
 		query(): string {
@@ -142,7 +144,6 @@ export default Vue.extend({
 		});
 	}
 });
-
 
 </script>
 

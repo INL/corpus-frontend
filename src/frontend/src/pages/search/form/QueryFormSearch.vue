@@ -22,6 +22,7 @@
 						:id="firstMainAnnotation.id + '_' + uid"
 						:name="firstMainAnnotation.id + '_' + uid"
 						:placeholder="firstMainAnnotation.displayName"
+						:dir="textDirection"
 
 						v-model="simple"
 					/>
@@ -36,7 +37,7 @@
 					</ul>
 					<div class="tab-content">
 						<div v-for="(tab, index) in tabs"
-							:class="['tab-pane', {'active': index === 0}]"
+							:class="['tab-pane', 'annotation-container', {'active': index === 0}]"
 							:key="index"
 							:id="getTabId(tab.name)"
 						>
@@ -144,6 +145,7 @@ export default Vue.extend({
 			}, [] as AppTypes.NormalizedAnnotation[]);
 		},
 		firstMainAnnotation: CorpusStore.get.firstMainAnnotation,
+		textDirection: CorpusStore.get.textDirection,
 		withinOptions(): Array<{label: string, value: string|null}> {
 			// TODO retrieve from indexMetadata once available
 			// discuss with jan?
@@ -265,19 +267,20 @@ export default Vue.extend({
 // Some bootstrap tab customization
 .nav-tabs.subtabs {
 	border-bottom: none;
-}
 
-.nav-tabs.subtabs>li {
-	margin-bottom: 0;
-}
+	>li {
+		margin-bottom: 0;
 
-.nav-tabs.subtabs>li>a {
-	border-radius: 0 0 4px 4px;
-	padding: 4px 15px;
-}
+		> a {
+			border-radius: 0 0 4px 4px;
+			padding: 4px 15px;
+		}
 
-.nav-tabs.subtabs>li.active>a, .nav-tabs.subtabs>li>a:hover {
-	border-color: transparent #ddd #ddd #ddd;
+		&.active > a,
+		> a:hover {
+			border-color: transparent #ddd #ddd #ddd;
+		}
+	}
 }
 
 textarea.gap-value-editor {
@@ -286,6 +289,13 @@ textarea.gap-value-editor {
 	max-width: 100%;
 	resize: vertical;
 	width: 100%;
+}
+
+.annotation-container {
+	max-height: 385px; // 5 fields @ 74px + 15px padding
+	overflow: auto;
+	overflow-x: hidden;
+	margin-bottom: 15px;
 }
 
 </style>

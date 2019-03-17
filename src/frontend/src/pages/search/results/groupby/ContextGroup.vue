@@ -8,6 +8,8 @@
 
 			container="body"
 
+			hideEmpty
+
 			:searchable="annotationOptions.length > 10"
 			:options="annotationOptions"
 
@@ -75,7 +77,7 @@
 <script lang="ts">
 import Vue from 'vue';
 
-//@ts-ignore
+// @ts-ignore
 import Slider from 'vue-slider-component';
 
 import * as CorpusStore from '@/store/search/corpus';
@@ -189,7 +191,7 @@ export default Vue.extend({
 		// and throws off the click handling of the slider handles (an ofset is introduced)
 		requestAnimationFrame(() => (this.$refs.slider as any).refresh());
 	}
-})
+});
 </script>
 
 <style lang="scss">
@@ -242,27 +244,32 @@ $br-primary-active: #122b40;
 
 .groupby-editor-slider {
 	height: 30px;
+
 	> .vue-slider {
 		top: 50%;
 		transform: translateY(-50%);
 		cursor: pointer;
 
-		.vue-slider-process {
-			background: $bg-primary;
-		}
-
+		background: #ccc;
 		&:hover,
 		&:focus {
-			.vue-slider-process {
-				background: $bg-primary-hover;
-			}
+			background: #bbb;
 		}
 		&:active {
-			.vue-slider-process {
+			background: #aaa;
+		}
+
+		.vue-slider-process {
+			background: $bg-primary;
+
+			&:hover,
+			&:focus {
+				background: $bg-primary-hover;
+			}
+			&:active {
 				background: $bg-primary-active;
 			}
 		}
-
 	}
 }
 .groupby-editor-slider-handle {

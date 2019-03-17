@@ -1,17 +1,20 @@
 <template>
 	<div class="combobox" :style="{ width: dataWidth }"
 		:data-menu-id="menuId"
+		:dir="dir"
 
 		@keydown.prevent.down="focusDown"
 		@keydown.prevent.up="focusUp"
 	>
 		<input v-if="editable"
-			:class="['menu-input', dataClass ? dataClass : 'form-control']"
+			:class="['menu-input', dataClass || 'form-control']"
 			:id="dataId"
+			:name="dataName"
 			:style="dataStyle"
 			:title="dataTitle"
 			:placeholder="$attrs.placeholder || $attrs.title"
 			:disabled="disabled"
+			:dir="dir"
 
 			@focus="open"
 			@keydown.tab="close()/*focus shifts to next element, close menu*/"
@@ -28,13 +31,15 @@
 		<button v-else
 			type="button"
 
-			:class="['menu-button', 'btn', dataClass ? dataClass : 'btn-default', { 'active': isOpen }]"
+			:class="['menu-button', 'btn', dataClass || 'btn-default', { 'active': isOpen }]"
 			:id="dataId"
+			:name="dataName"
 			:style="dataStyle"
 			:title="dataTitle"
 			:disabled="disabled"
+			:dir="dir"
 
-			@click="isOpen ? close() : open()"
+			@click="isOpen ? close() : open($refs.focusOnClickOpen)"
 			@keydown.tab="close()/*focus shifts to next element, close menu*/"
 			@keydown.esc="close()"
 			@keydown.prevent.enter="$event.target.click()/*stop to prevent submitting any parent form*/"
@@ -47,12 +52,16 @@
 			</template>
 			<span v-else class="menu-value placeholder">{{$attrs.placeholder || $attrs.title || 'Select a value...'}} </span>
 			<span v-if="loading" class="menu-icon fa fa-spinner fa-spin text-muted"></span>
-			<span :class="['menu-icon', 'fa', `fa-caret-${isOpen ? 'up' : 'down'}`]"/>
+			<span :class="['menu-icon', 'fa', 'fa-caret-down', {
+				//'fa-rotate-180': isOpen
+				'fa-flip-vertical': isOpen
+			}]"/>
 		</button>
 
 		<!-- NOTE: might not actually be a child of root element at runtime! Event handling is rather specific -->
 		<ul class="combobox-menu" v-show="isOpen && !(editable && !filteredOptions.length)"
 			:data-menu-id="menuId"
+			:dir="dir"
 
 			@keydown.prevent.stop.esc="$refs.focusOnEscClose.focus(); close(); /* order is important */"
 			@keydown.prevent.stop.down="focusDown"
@@ -78,11 +87,15 @@
 				placeholder="Filter..."
 				tabindex="-1"
 
+				:dir="dir"
+
 				@keydown.stop.left="/*stop menu from changing focus here*/"
 				@keydown.stop.right="/*stop menu from changing focus here*/"
-				@keydown.prevent.enter="/*prevent submission when embedded in a form*/"
+				@keydown.prevent.enter="filteredOptions.filter(o => o.type === 1).length === 1 ? select(filteredOptions.filter(o => o.type === 1)[0]) : undefined/*prevent submission when embedded in a form*/"
 
 				v-model="inputValue"
+
+				ref="focusOnClickOpen"
 			/></li>
 
 			<li class="menu-body">
@@ -157,25 +170,25 @@ type _uiOpt = {
 
 	lowerValue: string;
 	lowerLabel: string;
-}
+};
 type _uiOptGroup = {
 	type: 2;
 
 	label?: string;
 	title?: string;
 	disabled?: boolean;
-}
+};
 type uiOption = _uiOpt|_uiOptGroup;
 
 type Model = {
 	[key: string]: _uiOpt;
-}
+};
 
 function isSimpleOption(e: any): e is string { return typeof e === 'string'; }
 function isOption(e: any): e is Option { return e && isSimpleOption(e.value); }
 function isOptGroup(e: any): e is OptGroup { return e && typeof e.label === 'string' && Array.isArray(e.options); }
 
-let id = 0;
+let nextMenuId = 0;
 
 export default Vue.extend({
 	props: {
@@ -191,6 +204,8 @@ export default Vue.extend({
 		/** Show a little spinner while the parent is fetching options, or something */
 		loading: Boolean,
 
+		/** Text direction (for rtl support) */
+		dir: String,
 		allowHtml: Boolean,
 		hideDisabled: Boolean,
 		/** Hide the default empty value for non-multiple dropdowns */
@@ -206,6 +221,7 @@ export default Vue.extend({
 		'data-class': [String, Object],
 		'data-style': [String, Object],
 		'data-id': String,
+		'data-name': String,
 		'data-title': String,
 	},
 	data: () =>  ({
@@ -221,16 +237,16 @@ export default Vue.extend({
 		// (as container might be a parent element that hasn't fully mounted yet when we init)
 		containerEl: null as null|HTMLElement,
 
-		uid: id++
+		uid: nextMenuId++
 	}),
 	computed: {
-		menuId(): string { return this.$attrs.id != null ? this.$attrs.id : `combobox-${this.uid}`},
+		menuId(): string { return this.$attrs.id != null ? this.$attrs.id : `combobox-${this.uid}`; },
 
 		uiOptions(): uiOption[] {
 
-			const mapSimple = (o: SimpleOption, i: number, group?: OptGroup): _uiOpt => ({
+			const mapSimple = (o: SimpleOption, id: number, group?: OptGroup): _uiOpt => ({
 				type: 1,
-				id: i,
+				id,
 
 				label: o,
 				value: o,
@@ -242,9 +258,9 @@ export default Vue.extend({
 				lowerLabel: o.toLowerCase(),
 			});
 
-			const mapOption = (o: Option, i: number, group?: OptGroup): _uiOpt => ({
+			const mapOption = (o: Option, id: number, group?: OptGroup): _uiOpt => ({
 				type: 1,
-				id: i,
+				id,
 
 				value: o.value,
 				label: o.label || o.value,
@@ -265,8 +281,8 @@ export default Vue.extend({
 
 			let i = 0;
 			let uiOptions = this.options.flatMap(o => {
-				if (isSimpleOption(o)) return mapSimple(o, i++);
-				else if (isOption(o)) return mapOption(o, i++);
+				if (isSimpleOption(o)) { return mapSimple(o, i++); }
+				else if (isOption(o)) { return mapOption(o, i++); }
 				else {
 					const h = mapGroup(o);
 					const subs: uiOption[] = o.options.map(sub => isSimpleOption(sub) ? mapSimple(sub, i++, o) : mapOption(sub, i++, o));
@@ -289,12 +305,12 @@ export default Vue.extend({
 					label: '',
 					lowerValue: '',
 					lowerLabel: '',
-				}
+				};
 
 				uiOptions.unshift(emptyOption);
 			} else if (this.multiple || this.editable) {
 				// remove all empty options if the user can edit or otherwise untick values
-				uiOptions = uiOptions.filter(o => !(o.type === 1 && !o.value && !o.label))
+				uiOptions = uiOptions.filter(o => !(o.type === 1 && !o.value && !o.label));
 			}
 
 			return uiOptions;
@@ -308,7 +324,7 @@ export default Vue.extend({
 						inDisabledGroup = !!o.disabled;
 					}
 					return !(o as any).disabled && !inDisabledGroup;
-				})
+				});
 			}
 
 			const filter = this.inputValue;
@@ -320,7 +336,7 @@ export default Vue.extend({
 			})
 			.reverse()
 			.filter(o => {
-				if (o.type === 2 && hideNextOptGroup) return false;
+				if (o.type === 2 && hideNextOptGroup) { return false; }
 				hideNextOptGroup = o.type !== 1;
 				return true;
 			})
@@ -332,15 +348,20 @@ export default Vue.extend({
 		displayValues(): string[] { return Object.values(this.internalModel).map(v => v.label || v.value); },
 	},
 	methods: {
-		open(): void {
+		open(focusEl?: HTMLElement): void {
 			this.isOpen = true;
+			if (focusEl) {
+				Vue.nextTick(() => focusEl.focus());
+			}
 		},
 		close(event?: Event): void {
 			function isChild(parent: HTMLElement, child: HTMLElement|null) {
-				do {
-					if (!child) { return false; }
-					if (child === parent) { return true; }
-				} while (child = child.parentElement)
+				for (child; child; child = child.parentElement) {
+					if (child === parent) {
+						return true;
+					}
+				}
+				return false;
 			}
 
 			if (event && event.type === 'click') {
@@ -373,7 +394,7 @@ export default Vue.extend({
 			const left = ownLeft - containerLeft;
 			const top = ownBottom - containerTop;
 
-			menu.style.transform = `translate(${left}px, ${top}px)`;
+			menu.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
 			menu.style.width = width + 'px';
 		},
 		focusDown(): void {this.focusOffset(1); },
@@ -390,8 +411,7 @@ export default Vue.extend({
 		},
 		focus(el: HTMLElement): void {
 			if (!this.isOpen) {
-				this.open();
-				Vue.nextTick(() => el.focus());
+				this.open(el);
 			} else {
 				el.focus();
 			}
@@ -469,9 +489,13 @@ export default Vue.extend({
 
 		correctModel(newVal: null|undefined|string|string[]) {
 			if (this.editable) {
+				const prev = this.inputValue;
 				this.inputValue = (newVal ? typeof newVal === 'string' ? newVal : newVal[0] || '' : '');
+				if (prev !== this.inputValue) {
+					this.$emit('change', this.inputValue);
+				}
 				return;
-			};
+			}
 
 			if (newVal == null) { newVal = this.multiple ? [] : ''; }
 			else if (this.multiple && typeof newVal === 'string') { newVal = [newVal]; }
@@ -480,11 +504,17 @@ export default Vue.extend({
 			if (!this.multiple) {
 				newVal = newVal as string; // we verified above, but can't declare it to be a type...
 
+				// Don't select empty strings, those are meant to clear the selectpicker
+				const newOption = !!newVal ? this.uiOptions.find(o => o.type === 1 && o.value === newVal) as _uiOpt|undefined : undefined;
 				// Assume model always in a consistent state - e.g. no multiple values when !this.multiple
+				// Otherwise whatever, just discard the rest of the selections... It's not a valid state anyway
 				const cur = Object.values(this.internalModel)[0] as _uiOpt|undefined;
-				const newOption = newVal ? (cur && cur.value === newVal) ? cur : this.uiOptions.find(o => o.type === 1 && o.value === newVal) as _uiOpt : undefined;
+
 				if (newOption !== cur || (newVal && newOption == null)) { // if newOption doesn't exist but there is a value passed in, replace the model, which will $emit a new empty value, which will (if our parent is a sane component) correct our state
 					this.internalModel = newOption ? { [newOption.id]: newOption } : {};
+					if (!this.editable) {
+						this.$emit('change', newOption ? newOption.value : '');
+					}
 				}
 			} else {
 				// We need to be smart about this to prevent infinite loops or double $emits when updating
@@ -516,22 +546,29 @@ export default Vue.extend({
 					.filter(v => !!v); // remove invalid values that were mapped to undefined
 				}
 
-				for (let v of unselectedValues) { Vue.delete(this.internalModel, v.id.toString()); }
-				for (let v of newSelectedValues as _uiOpt[]) { Vue.set(this.internalModel, v.id.toString(), v); }
+				for (const v of unselectedValues) { Vue.delete(this.internalModel, v.id.toString()); }
+				for (const v of newSelectedValues as _uiOpt[]) { Vue.set(this.internalModel, v.id.toString(), v); }
+				if (unselectedValues.length + newSelectedValues.length) {
+					this.$emit('change', Object.values(this.internalModel).map(o => o.value));
+				}
 			}
 		}
-
 	},
 	watch: {
 		isOpen: {
 			immediate: true,
 			handler(cur: boolean, prev: boolean) {
-				cur ? this.addGlobalListeners() : this.removeGlobalListeners();
-				if (cur && this.containerEl) { this.reposition(); }
-
-				if (!cur && this.emitChangeOnClose) {
-					this.emitChangeOnClose = false;
-					this.$emit('change', this.editable ? this.inputValue : this.multiple ? Object.values(this.internalModel).map(o => o.value) : Object.values(this.internalModel).map(o => o.value)[0]);
+				if (cur) {
+					this.addGlobalListeners();
+					if (this.containerEl) {
+						this.reposition();
+					}
+				} else {
+					this.removeGlobalListeners();
+					if (this.emitChangeOnClose) {
+						this.emitChangeOnClose = false;
+						this.$emit('change', this.editable ? this.inputValue : this.multiple ? Object.values(this.internalModel).map(o => o.value) : Object.values(this.internalModel).map(o => o.value)[0]);
+					}
 				}
 			}
 		},
@@ -571,9 +608,16 @@ export default Vue.extend({
 				this.$emit('input', values[0] || '');
 			}
 		},
+		options: {
+			deep: true,
+			immediate: false,
+			handler() {
+				this.correctModel(Object.values(this.internalModel).map(v => v.value));
+			}
+		},
 
-		editable(v: boolean) { if (!v && !this.searchable) this.inputValue = '' },
-		searchable(v: boolean) { if (!v && !this.editable) this.inputValue = ''},
+		editable(v: boolean) { if (!v && !this.searchable) { this.inputValue = ''; } },
+		searchable(v: boolean) { if (!v && !this.editable) { this.inputValue = ''; } },
 	},
 	created() {
 		if (this.editable && this.multiple) {
@@ -597,7 +641,6 @@ export default Vue.extend({
 		(this.$refs.menu as HTMLElement).remove();
 	},
 });
-
 </script>
 
 <style lang="scss">
@@ -612,7 +655,8 @@ export default Vue.extend({
 	.menu-icon {
 		display: inline-block;
 		flex: none;
-		margin-left: 4px;
+		margin: 0 4px;
+		transition: transform 0.2s ease-out;
 	}
 	.placeholder {
 		color: #999;
@@ -621,10 +665,15 @@ export default Vue.extend({
 
 .combobox {
 	text-align: left;
+	&[dir="rtl"] {
+		text-align: right;
+	}
+
 	// Bootstrap helper
 	&:not(.input-group-btn):not(.input-group-addon) {
 		display: inline-block;
 		position: relative;
+		vertical-align: middle; // mimic bootstrap btn
 		width: 220px; // just some default
 
 		>.menu-button {
@@ -640,7 +689,7 @@ export default Vue.extend({
 		display: flex;
 		align-items: baseline;
 		justify-content: space-between;
-		text-align: left;
+		text-align: inherit;
 
 		>.menu-icon {
 			flex: none;
@@ -669,10 +718,15 @@ export default Vue.extend({
 	overflow-y: auto;
 	padding: 5px 0;
 	position: absolute;
-	text-align: left;
 	top: 0;
 	width: 100%;
 	z-index: 1000;
+
+	text-align: left;
+	&[dir="rtl"] {
+		text-align: right;
+	}
+
 
 	ul {
 		padding: 0;
@@ -702,53 +756,63 @@ export default Vue.extend({
 		display: block;
 		max-height: 300px;
 		overflow: auto;
+	}
 
-		>.menu-options {
-			>.menu-option {
-				align-items: baseline;
-				justify-content: space-between;
-				color: #333;
-				cursor: pointer;
-				display: flex;
-				padding: 4px 12px 4px 22px;
-				white-space: nowrap;
-				width: 100%;
+	.menu-option {
+		align-items: baseline;
+		justify-content: space-between;
+		color: #333;
+		cursor: pointer;
+		display: flex;
+		padding: 4px 12px;
+		white-space: nowrap;
+		width: 100%;
 
-				&.active {
-					background: #337ab7;
-					color: white;
-					.text-muted { color :white; }
-				}
+		&.disabled {
+			color: #777;
+			cursor: not-allowed;
+		}
+		&.active {
+			background: #337ab7;
+			color: white;
+			.text-muted { color :white; }
+		}
+		&.active.disabled {
+			opacity: .65;
+		}
 
-				&.disabled {
-					color: #777;
-					cursor: not-allowed;
-				}
-
-				&:not(.active):not(.disabled) {
-					&:hover,
-					&:focus,
-					&:active {
-						background: #ddd;
-						color: #262626;
-					}
-				}
-			}
-			>.menu-group {
-				border-bottom: 1px solid #e5e5e5;
-				color: #777;
-				display: flex;
-				font-size: 12px;
-				margin-bottom: 3px;
-				padding: 8px 0px 4px 12px;
-				width: 100%;
-
-				&.disabled {
-					color: #777;
-					cursor: not-allowed;
-				}
+		&:not(.active):not(.disabled) {
+			&:hover,
+			&:focus,
+			&:active {
+				background: #ddd;
+				color: #262626;
 			}
 		}
+	}
+
+	.menu-group {
+		border-bottom: 1px solid #e5e5e5;
+		color: #777;
+		display: flex;
+		font-size: 12px;
+		margin-bottom: 3px;
+		padding: 8px 0px 4px;
+		width: 100%;
+
+		&.disabled {
+			color: #777;
+			cursor: not-allowed;
+		}
+	}
+
+	&:not([dir="rtl"]) {
+		.menu-option { padding-left: 22px; }
+		.menu-group { padding-left: 12px; }
+	}
+	&[dir="rtl"] {
+		.menu-option { padding-right: 22px; }
+		.menu-group { padding-right: 12px; }
 	}
 }
 

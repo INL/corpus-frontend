@@ -4,32 +4,38 @@
 			<SelectPicker
 				class="groupselect"
 
+				allowHtml
 				data-class="btn-sm btn-default"
+				data-width="275px"
 				:data-style="{
 					borderTopRightRadius: contextEnabled ? 0 : undefined,
 					borderBottomRightRadius: contextEnabled ? 0 : undefined,
 					borderRightWidth: contextEnabled ? 0 : undefined,
 				}"
-
 				:placeholder="`Group ${type} by...`"
 				:searchable="normalGroupByOptions.flatMap(o => o.options ? o.options : o).length > 15"
-				allowHtml
-
+				:disabled="disabled"
 				:options="normalGroupByOptions"
 
 				v-model="groupBy"
 			/>
-			<button v-if="contextEnabled" type="button" class="btn btn-sm btn-primary" @click="submitContext" style="border-top-left-radius: 0; border-bottom-left-radius: 0;">Apply</button>
+			<button v-if="contextEnabled"
+				type="button"
+				class="btn btn-sm btn-primary"
+				style="border-top-left-radius: 0; border-bottom-left-radius: 0;"
+				:disabled="disabled"
+				@click="submitContext"
+			>Apply</button>
 
-			<div v-if="groupBy && !contextEnabled" class="checkbox-inline" style="margin-left: 5px;">
+			<div v-if="groupBy && !contextEnabled" :class="['checkbox-inline', {'disabled': disabled}]" style="margin-left: 5px;">
 				<label title="Separate groups for differently cased values" style="white-space: nowrap; margin: 0; cursor:pointer;" :for="uid+'case'">
-					<input type="checkbox" :id="uid+'case'" v-model="caseSensitive">Case sensitive
+					<input type="checkbox" :id="uid+'case'" :disabled="disabled" v-model="caseSensitive">Case sensitive
 				</label>
 			</div>
 		</div>
 
 		<div v-if="viewGroup" style="color: #888; font-size: 85%;">
-			<button type="button" class="btn btn-sm btn-primary" @click="viewGroup = null"><span class="fa fa-angle-double-right"></span> Go back to grouped view</button>
+			<button type="button" class="btn btn-sm btn-primary" :disabled="disabled" @click="viewGroup = null"><span class="fa fa-angle-double-right"></span> Go back to grouped view</button>
 		</div>
 
 		<div v-if="contextEnabled" class="groupby-context-container" >
@@ -49,15 +55,11 @@
 import Vue from 'vue';
 
 import * as CorpusStore from '@/store/search/corpus';
-import * as InterfaceStore from '@/store/search/form/interface';
 import * as ResultsStore from '@/store/search/results';
-import * as HitsStore from '@/store/search/results/hits';
-import * as DocsStore from '@/store/search/results/docs';
 
 import SelectPicker, {OptGroup, Option} from '@/components/SelectPicker.vue';
 import ContextGroup from '@/pages/search/results/groupby/ContextGroup.vue';
 import UID from '@/mixins/uid';
-import ResultTotalsVue from '../ResultTotals.vue';
 
 const CONTEXT_ENABLED_STRING = '_enable_context';
 
@@ -69,7 +71,8 @@ export default Vue.extend({
 	},
 	props: {
 		type: String as () => ResultsStore.ViewId,
-		viewGroupName: String as () => null|string
+		viewGroupName: String as () => null|string,
+		disabled: Boolean
 	},
 	data: () => ({
 		contextEnabled: false,
@@ -97,7 +100,7 @@ export default Vue.extend({
 			return ResultsStore.get.resultsModules().find(m => m.namespace === this.type)!;
 		},
 		caseSensitive: {
-			get(): boolean { return this.storeModule.getState().caseSensitive },
+			get(): boolean { return this.storeModule.getState().caseSensitive; },
 			set(v: boolean) { this.storeModule.actions.caseSensitive(v); }
 		},
 		groupBy: {
@@ -113,7 +116,7 @@ export default Vue.extend({
 					const newState = v ? [v] : [];
 					const oldState = this.storeModule.getState().groupBy;
 					// For some reason there's an extra roundtrip if we don't perform this check
-					if (newState.length != oldState.length || !newState.every(e => oldState.includes(e))) {
+					if (newState.length !== oldState.length || !newState.every(e => oldState.includes(e))) {
 						this.storeModule.actions.groupBy(newState);
 					}
 				}
@@ -137,12 +140,6 @@ export default Vue.extend({
 		normalGroupByOptions(): Array<OptGroup|Option> {
 			const opts: Array<OptGroup|Option> = [];
 
-			// Deselect option
-			// opts.push({
-			// 	label: '',
-			// 	value: ''
-			// });
-
 			if (this.contextSupported) {
 				opts.push({
 					label: 'Context (advanced)',
@@ -150,9 +147,13 @@ export default Vue.extend({
 				});
 			}
 
-			const metadataGroups = CorpusStore.get.metadataGroups();
 			if (this.type === 'hits') {
-				const annotations = CorpusStore.get.annotations().filter(a => !a.isInternal && a.hasForwardIndex);
+				// Use annotations in groups instead of all annotations for parity with metadata
+				// (That also only shows fields in a group)
+				// See https://github.com/INL/corpus-frontend/issues/190
+				const annotations = CorpusStore.get.annotationGroups()
+				.flatMap(g => g.annotations)
+				.filter(a => !a.isInternal && a.hasForwardIndex); // grouping not supported for annotations without forward index
 
 				[
 					['hit:', 'Hit', ''],
@@ -169,12 +170,14 @@ export default Vue.extend({
 					})
 				);
 			}
+
+			const metadataGroups = CorpusStore.get.metadataGroups();
 			metadataGroups.forEach(group => opts.push({
 				// https://github.com/INL/corpus-frontend/issues/197#issuecomment-441475896
 				// (we don't show metadata groups in the Filters component unless there's more than one group, so don't show the group's name either in this case)
 				label: metadataGroups.length > 1 ? group.name : 'Metadata',
 				options: group.fields.map(field => ({
-					label: `Group by ${(field.displayName || field.id).replace(group.name, '')}`,
+					label: `Group by ${(field.displayName || field.id).replace(group.name, '')} <small class="text-muted">(${group.name})</small>`,
 					value: `field:${field.id}`
 				}))
 			}));
@@ -199,7 +202,7 @@ export default Vue.extend({
 			}
 		},
 	},
-})
+});
 </script>
 
 <style lang="scss">

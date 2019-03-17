@@ -1,75 +1,62 @@
 <template>
-	<div v-show="active" class="results-container">
+	<div v-show="active" class="results-container" :disabled="request">
 		<span v-if="request" class="fa fa-spinner fa-spin searchIndicator" style="position:absolute; left: 50%; top:15px"></span>
 
-		<Totals v-if="results"
-			class="result-totals"
-			:initialResults="results"
-			:type="type"
-			:indexId="indexId"
+		<div class="crumbs-totals">
+			<ol class="breadcrumb resultscrumb">
+				<!-- no disabled state; use active class instead... -->
+				<li v-for="(crumb, index) in breadCrumbs" :key="index" :class="{'active': crumb.active || !!request}">
+					<a v-if="!crumb.active && !request"
+						role="button"
+						:title="crumb.title"
+						:disabled="request"
+						:class="request ? 'disabled' : undefined"
+						@click.prevent="!request && crumb.onClick ? crumb.onClick() : undefined"
+					>
+						{{crumb.label}}
+					</a>
+					<template v-else>{{crumb.label}}</template>
+				</li>
+			</ol>
 
-			@update="paginationResults = $event"
-		/>
+			<Totals v-if="results"
+				class="result-totals"
+				:initialResults="results"
+				:type="type"
+				:indexId="indexId"
 
-		<ol class="breadcrumb resultscrumb">
-			<li v-for="(crumb, index) in breadCrumbs" :class="{'active': crumb.active}" :key="index">
-				<a v-if="!crumb.active" href="#" @click.prevent="crumb.onClick" :title="crumb.title">{{crumb.label}}</a>
-				<template v-else>{{crumb.label}}</template>
-			</li>
-		</ol>
-
-		<GroupBy :type="type" :viewGroupName="viewGroupName"/>
-		<!-- moved to totalscounter -->
-		<!--
-		<div v-if="results && !!(results.summary.stoppedRetrievingHits && !results.summary.stillCounting)" class="btn btn-sm btn-default nohover toomanyresults">
-			<span class="fa fa-exclamation-triangle text-danger"></span> Too many results! &mdash; your query was limited
-		</div> -->
-
-		<div v-if="results" style="margin: 10px 0px;">
-			<Pagination
-				:page="pagination.shownPage"
-				:maxPage="pagination.maxShownPage"
-
-				@change="page = $event"
+				@update="paginationResults = $event"
 			/>
 		</div>
 
 		<template v-if="resultsHaveData">
-			<GroupResults v-if="isGroups"
-				class="results-table"
-
-				:results="results"
-				:sort="sort"
-				:type="type"
+			<component
+				:is="resultComponentName"
+				v-bind="resultComponentData"
 
 				@sort="sort = $event"
 				@viewgroup="viewGroup = $event.id; _viewGroupName = $event.displayName"
-			/>
-			<HitResults v-else-if="isHits"
-				class="results-table"
+			>
 
-				:results="results"
-				:sort="sort"
-				:showTitles="showTitles"
+				<GroupBy slot="groupBy" :type="type" :viewGroupName="viewGroupName" :disabled="!!request"/>
 
-				@sort="sort = $event"
-			/>
-			<DocResults v-else
-				class="results-table"
+				<Pagination slot="pagination"
+					style="display: block; margin: 10px 0;"
 
-				:results="results"
-				:sort="sort"
-				:showDocumentHits="showDocumentHits"
+					:page="pagination.shownPage"
+					:maxPage="pagination.maxShownPage"
+					:disabled="!!request"
 
-				@sort="sort = $event"
-			/>
+					@change="page = $event"
+				/>
+			</component>
 			<hr>
 		</template>
 		<template v-else-if="results"><div class="no-results-found">No results found.</div></template>
 		<template v-else-if="error"><div class="no-results-found">{{error.message}}</div></template>
 
-		<!-- Ugly - use v-show instead of v-if because teardown of selectpickers is problematic :( -->
-		<div v-show="resultsHaveData" class="buttons" style="text-align: right;">
+
+		<div v-show="resultsHaveData" class="text-right">
 			<SelectPicker
 				data-class="btn-sm btn-default"
 				placeholder="Sort by..."
@@ -79,13 +66,14 @@
 
 				:searchable="sortOptions.flatMap(o => o.options && !o.disabled ? o.options.filter(opt => !opt.disabled) : o).length > 20"
 				:options="sortOptions"
+				:disabled="!!request"
 
 				v-model="sort"
 			/>
 
 			<button type="button" class="btn btn-primary btn-sm"  v-if="isDocs && resultsHaveHits"  @click="showDocumentHits = !showDocumentHits">{{showDocumentHits ? 'Hide Hits' : 'Show Hits'}}</button>
 			<button type="button" class="btn btn-primary btn-sm"  v-if="isHits" @click="showTitles = !showTitles">{{showTitles ? 'Hide' : 'Show'}} Titles</button>
-			<button type="button" class="btn btn-default btn-sm" v-if="results" :disabled="downloadInProgress || !resultsHaveData" @click="downloadCsv" :title="downloadInProgress ? 'Downloading...' : undefined"><template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner"></span></template>Export CSV</button>
+			<button type="button" class="btn btn-default btn-sm" v-if="results" :disabled="downloadInProgress || !resultsHaveData || !!request" @click="downloadCsv" :title="downloadInProgress ? 'Downloading...' : undefined"><template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner"></span></template>Export CSV</button>
 		</div>
 
 	</div>
@@ -96,6 +84,8 @@
 import Vue from 'vue';
 import URI from 'urijs';
 import {saveAs} from 'file-saver';
+
+import jsonStableStringify from 'json-stable-stringify';
 
 import * as Api from '@/api';
 
@@ -180,7 +170,7 @@ export default Vue.extend({
 			if (this.type === 'hits' && !params.patt) {
 				this.results = null;
 				this.paginationResults = null;
-				this.error = new Api.ApiError('No results', 'No hits to display... (one or more of Lemma/PoS/Word is required).', 'No results');
+				this.error = new Api.ApiError('No results', 'This view is inactive because no search criteria for words were specified.', 'No results');
 				return;
 			}
 
@@ -201,7 +191,7 @@ export default Vue.extend({
 					window.scroll({
 						behavior: 'smooth',
 						top: this.$el.offsetTop - 150
-					})
+					});
 				}
 			});
 		},
@@ -241,7 +231,7 @@ export default Vue.extend({
 			.finally(() => {
 				this.downloadInProgress = false;
 			});
-		}
+		},
 	},
 	computed: {
 		// Store properties
@@ -267,19 +257,27 @@ export default Vue.extend({
 			set(v: string|null) { this.storeModule.actions.viewGroup(v); }
 		},
 
-		refreshParameters() {
-			return {
+		refreshParameters(): string {
+			/*
+				NOTE: we return this as a string so we can remove properties
+				If we don't the watcher on this computed will fire regardless
+				because some property somewhere in the object is a new instance and thus not equal...
+				This would cause new results to be requested even when just changing the table display mode...
+			*/
+			return jsonStableStringify({
 				global: GlobalStore.getState(),
-				self: this.storeModule.getState(),
+				self: {
+					...this.storeModule.getState(),
+					groupDisplayMode: null // ignore this property
+				} as Partial<ResultsStore.PartialRootState[ResultsStore.ViewId]>,
 				query: QueryStore.getState()
-			}
+			});
 		},
 
 		// When these change, the form has been resubmitted, so we need to initiate a scroll event
 		querySettings() { return QueryStore.getState(); },
 
 		pagination(): {
-			// totalResults: number,
 			shownPage: number,
 			maxShownPage: number
 		} {
@@ -288,19 +286,19 @@ export default Vue.extend({
 				return {
 					shownPage: 0,
 					maxShownPage: 0,
-				}
+				};
 			}
 
 			const pageSize = this.results!.summary.requestedWindowSize;
 			const shownPage = Math.floor(this.results!.summary.windowFirstResult / pageSize);
-			const totalResults = BLTypes.isGroups(r) ? r.summary.numberOfGroups :
-			                     BLTypes.isHitResults(r) ? r.summary.numberOfHitsRetrieved :
-			                     r != null ? r.summary.numberOfDocsRetrieved :
-			                     0;
+			const totalResults =
+				BLTypes.isGroups(r) ? r.summary.numberOfGroups :
+				BLTypes.isHitResults(r) ? r.summary.numberOfHitsRetrieved :
+				r.summary.numberOfDocsRetrieved;
 
 			// subtract one page if number of results exactly divisible by page size
 			// e.g. 20 results for a page size of 20 is still only one page instead of 2.
-			const pageCount = Math.floor(totalResults / pageSize) - ((totalResults % pageSize === 0 && totalResults > 0) ? 1 : 0)
+			const pageCount = Math.floor(totalResults / pageSize) - ((totalResults % pageSize === 0 && totalResults > 0) ? 1 : 0);
 
 			return {
 				shownPage,
@@ -324,11 +322,11 @@ export default Vue.extend({
 		isHits(): boolean { return BLTypes.isHitResults(this.results); },
 		isDocs(): boolean { return BLTypes.isDocResults(this.results); },
 		isGroups(): boolean { return BLTypes.isGroups(this.results); },
-		resultsHaveHits(): boolean { return this.results != null && !!this.results.summary.searchParam.patt},
+		resultsHaveHits(): boolean { return this.results != null && !!this.results.summary.searchParam.patt; },
 		viewGroupName(): string {
 			if (this.viewGroup == null) { return ''; }
 			return this._viewGroupName ? this._viewGroupName :
-			       this.viewGroup.substring(this.viewGroup.indexOf(':')+1) || '[unknown]'
+				this.viewGroup.substring(this.viewGroup.indexOf(':')+1) || '[unknown]';
 		},
 
 		breadCrumbs(): any {
@@ -345,7 +343,7 @@ export default Vue.extend({
 					title: 'Go back to grouped results',
 					active: this.viewGroup == null,
 					onClick: () => this.viewGroup = null
-				})
+				});
 			}
 			if (this.viewGroup != null) {
 				r.push({
@@ -353,21 +351,16 @@ export default Vue.extend({
 					title: '',
 					active: true,
 					onClick: undefined
-				})
+				});
 			}
 			return r;
 		},
-		sortOptions(): Array<Option|OptGroup> {
+		sortOptions(): OptGroup[] {
 			// NOTE: we need to always pass all available options, then hide invalids based on displayed results
 			// if we don't do this, sorting will be cleared on initial page load
 			// This happens because results aren't loaded yet, thus isHits/isDocs/isGroups all return false, and no options would be available
 			// then the selectpicker will reset value to undefined, which clears it in the store, which updates the url, etc.
-			const opts = [] as Array<Option|OptGroup>;
-
-			// NOTE: only disable groups when results are in
-			// this prevents an issue with bootstrap-select where optgroup headers are repeated for initially disabled groups.
-			// See https://github.com/snapappointments/bootstrap-select/issues/2166 and https://github.com/snapappointments/bootstrap-select/issues/2174
-			// should be fixed in v1.13.6 probably
+			const opts = [] as OptGroup[];
 
 			opts.push({
 				label: 'Groups',
@@ -408,8 +401,51 @@ export default Vue.extend({
 				disabled: this.results != null && !this.isDocs
 			}));
 
-			return opts;
-		}
+			return opts.flatMap(group => {
+				return [
+					group,
+					{
+						...group,
+						disabled: true,
+						options: group.options.map((o: Option): Option => ({
+							value: '-' + o.value,
+							label: o.label + ' inverted'
+						}))
+					}
+				];
+			});
+		},
+
+		resultComponentName(): string {
+			if (this.isGroups) {
+				return 'GroupResults'
+			} else if (this.isHits) {
+				return 'HitResults'
+			} else {
+				return 'DocResults'
+			}
+		},
+		resultComponentData(): any {
+			switch (this.resultComponentName) {
+				case 'GroupResults': return {
+					results: this.results,
+					disabled: !!this.request,
+					sort: this.sort,
+				};
+				case 'HitResults': return {
+					results: this.results,
+					disabled: !!this.request,
+					sort: this.sort,
+					showTitles: this.showTitles,
+				};
+				case 'DocResults': return {
+					results: this.results,
+					disabled: !!this.request,
+					sort: this.sort,
+					showDocumentHits: this.showDocumentHits
+				};
+			}
+		},
 	},
 	watch: {
 		refreshParameters: {
@@ -420,7 +456,6 @@ export default Vue.extend({
 					this.markDirty();
 				}
 			},
-			deep: true
 		},
 		active: {
 			handler(active) {
@@ -443,25 +478,25 @@ export default Vue.extend({
 
 <style lang="scss">
 
-// .toomanyresults {
-// 	align-self: flex-start;
-// 	border-radius: 100px;
-// 	margin-right: 5px;
-// 	margin-bottom: 5px;
-// }
+.crumbs-totals {
+	margin: 0 -15px 10px;
+	display:flex;
+	flex-wrap:nowrap;
+	align-items:flex-start;
+	justify-content:space-between;
 
-.buttons {
-	flex: 0 1000 auto;
-	font-size: 0;
-	> button,
-	> .bootstrap-select {
-		margin-bottom: 5px;
-		margin-left: 5px;
-		vertical-align: top;
-
-		&:first-child {
-			margin-left: 0;
-		}
+	> .breadcrumb.resultscrumb {
+		background: white;
+		border-bottom: 1px solid rgba(0,0,0,0.1);
+		border-radius: 0;
+		padding: 12px 15px;
+		margin-bottom: 0;
+		flex-grow: 1;
+	}
+	> .result-totals {
+		background: white;
+		padding: 8px 8px 0 15px;
+		flex: none;
 	}
 }
 
@@ -473,41 +508,7 @@ export default Vue.extend({
 	color: #777;
 }
 
-.breadcrumb.resultscrumb {
-	background: white;
-	border-bottom: 1px solid rgba(0,0,0,0.1);
-	border-radius: 0;
-	margin: 0 -15px 30px;
-	padding: 12px 15px;
-	&:hover {
-		// Pop in front of totals counter
-		z-index: 3;
-		position: relative;
-	}
 
-	&:after {
-		background: linear-gradient(to bottom, white 25%, rgba(255,255,255,0));
-		bottom: 0;
-		content: "";
-		transition-timing-function: ease-in-out;
-		height: 50px;
-		left: 0;
-		position: absolute;
-		right: 0;
-		bottom: -51px;
-		pointer-events: none;
-		// transform: translateY(100%);
-		transition: opacity 0.17s;
-		z-index: 100;
-
-		display: none;
-	}
-	&:hover:after,
-	&:focus:after,
-	&:focus-within:after {
-		display: block;
-	}
-}
 
 table {
 	> thead > tr > th {
@@ -519,31 +520,6 @@ table {
 
 	> tbody > tr > td {
 		vertical-align: top;
-	}
-}
-
-a.clear,
-a.sort {
-	cursor: pointer;
-}
-
-.result-totals {
-	position: absolute;
-	right: -15px;
-	top: 0;
-	background: white;
-	padding: 8px 8px 15px 15px;
-	z-index: 2;
-
-	&:before {
-		content: "";
-		display: block;
-		position: absolute;
-		height: 100%;
-		width: 50px;
-		left: -50px;
-		top: 0;
-		background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,255) 100%);
 	}
 }
 

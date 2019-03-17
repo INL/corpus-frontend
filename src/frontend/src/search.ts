@@ -76,6 +76,7 @@ function initQueryBuilder(tagset?: TagsetStore.ModuleRootState) {
 							attribute: annotation.id,
 							label: annotation.displayName,
 							caseSensitive: annotation.caseSensitive,
+							textDirection: annotation.isMainAnnotation ? CorpusStore.get.textDirection() : undefined,
 							values,
 						};
 					})
@@ -119,7 +120,14 @@ function initQueryBuilder(tagset?: TagsetStore.ModuleRootState) {
 // --------------
 // Initialize vue
 // --------------
-Vue.use(VTooltip);
+Vue.use(VTooltip, {
+	popover: {
+		defaultBaseClass: 'popover',
+		defaultWrapperClass: 'wrapper',
+		defaultInnerClass: 'popover-content',
+		defaultArrowClass: 'arrow tooltip-arrow',
+	}
+});
 Vue.config.productionTip = false;
 $(document).ready(() => {
 	RootStore.init();
@@ -132,7 +140,7 @@ $(document).ready(() => {
 			connectJqueryToPage();
 
 			TagsetStore.actions.awaitInit()
-			.then(() => new UrlStateParser().get())
+			.then(() => history.state || new UrlStateParser().get())
 			.then(urlState => {
 				debugLog('Loading state from url', urlState);
 				RootStore.actions.reset();

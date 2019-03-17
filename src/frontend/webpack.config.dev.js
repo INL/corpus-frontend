@@ -45,7 +45,32 @@ module.exports = {
 				'vue-loader',
 			]
 		}, {
-			test: /\.tsx?$/,
+			test: /\.tsx$/,
+			use: [{
+				loader: 'babel-loader',
+			}, {
+				loader: 'ts-loader',
+				options: {
+					/*
+					Required for webpack-dev-server to support HMR (hot module reloading) from typescript files
+					This however disables all type checking errors/warnings
+					These are then re-enabled through ForkTsCheckerWebpackPlugin
+					NOTE: the default behavior is to refresh the entire page on changes in a module
+					this can be prevented by adding the following code (essentially manually replacing your imported functions with the updated version):
+					But it needs to be done everywhere the module is used, and for every import that you want to update without refreshing the page...
+					if (module.hot) {
+						module.hot.accept('./exports-string', () => {
+							const { valueToLog } = require('./exports-string'); // original imported value doesn't update, so you need to import it again
+							document.write(`HMR valueToLog: ${valueToLog}`);
+						});
+					}
+					*/
+					transpileOnly: true,
+					appendTsxSuffixTo: [/\.vue$/],
+				}
+			}]
+		}, {
+			test: /\.ts$/,
 			use: [{
 				loader: 'babel-loader',
 			}, {

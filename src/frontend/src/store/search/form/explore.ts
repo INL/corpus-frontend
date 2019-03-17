@@ -3,9 +3,11 @@
  * When the user actually executes the query a snapshot of the state is copied to the query module.
  */
 import {getStoreBuilder} from 'vuex-typex';
+import cloneDeep from 'clone-deep';
 
 import {RootState} from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus'; // Is initialized before we are.
+import * as UIStore from '@/store/search/ui'; // Is initialized before we are.
 import {makeWildcardRegex} from '@/utils';
 import {AnnotationValue} from '@/types/apptypes';
 
@@ -22,6 +24,12 @@ type ModuleRootState = {
 	frequency: {
 		annotationId: string;
 	};
+
+	/** When the form is submitted this is copied to the DocsStore */
+	corpora: {
+		groupBy: string;
+		groupDisplayMode: string;
+	};
 };
 
 // NOTE: This state shape is invalid, we correct it on store initialization
@@ -31,17 +39,33 @@ const defaults: ModuleRootState = {
 		maxSize: 5,
 		/** 1-indexed */
 		size: 5,
-		tokens: [],
-		groupAnnotationId: ''
+		get tokens() {
+			const ret: ModuleRootState['ngram']['tokens'] = [];
+			for (let i = 0; i < defaults.ngram.maxSize; ++i) {
+				ret.push({
+					id: defaults.ngram.groupAnnotationId,
+					type: 'text', // doesn't matter here
+					value: ''
+				});
+			}
+			return ret;
+		},
+		get groupAnnotationId() { return UIStore.getState().explore.defaultAnnotationId; }
 	},
 
 	frequency: {
-		annotationId: ''
+		get annotationId() { return UIStore.getState().explore.defaultAnnotationId; }
+	},
+
+	corpora: {
+		get groupBy() { return `field:${UIStore.getState().explore.defaultMetadataFieldId}`; },
+		// todo
+		groupDisplayMode: 'table'
 	}
 };
 
 const namespace = 'explore';
-const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, JSON.parse(JSON.stringify(defaults)));
+const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, cloneDeep(defaults));
 const getState = b.state();
 
 const get = {
@@ -63,6 +87,11 @@ const get = {
 		annotationId: b.read(state => state.frequency.annotationId, 'frequency_annotationId'),
 		patternString: b.read(() => '[]', 'frequency_patternString'), // always search for all tokens.
 		groupBy: b.read(state => `hit:${state.frequency.annotationId}`, 'frequency_groupBy')
+	},
+
+	corpora: {
+		groupBy: b.read(state => state.corpora.groupBy, 'corpora_groupBy'),
+		groupDisplayMode: b.read(state => state.corpora.groupDisplayMode, 'corpora_groupDisplayMode'),
 	}
 };
 
@@ -95,7 +124,7 @@ const actions = {
 		}, 'ngram_maxSize'),
 
 		// stringify/parse required so we don't alias the default array
-		reset: b.commit(state => Object.assign(state.ngram, JSON.parse(JSON.stringify(defaults.ngram))), 'ngram_reset'),
+		reset: b.commit(state => Object.assign(state.ngram, cloneDeep(defaults.ngram)), 'ngram_reset'),
 
 		replace: b.commit((state, payload: ModuleRootState['ngram']) => {
 			Object.assign(state.ngram, payload);
@@ -110,26 +139,23 @@ const actions = {
 		replace: b.commit((state, payload: ModuleRootState['frequency']) => Object.assign(state.frequency, payload), 'frequency_replace'),
 	},
 
+	corpora: {
+		groupBy: b.commit((state, payload: string) => state.corpora.groupBy = payload, 'corpora_groupBy'),
+		groupDisplayMode: b.commit((state, payload: string) => state.corpora.groupDisplayMode = payload, 'corpora_groupDisplayMode'),
+
+		reset: b.commit(state => Object.assign(state.corpora, defaults.corpora), 'corpora_reset'),
+		replace: b.commit((state, payload: ModuleRootState['corpora']) => Object.assign(state.corpora, payload), 'corpora_replace'),
+	},
+
 	replace: b.commit((state, payload: ModuleRootState) => {
 		actions.frequency.replace(payload.frequency);
 		actions.ngram.replace(payload.ngram);
 	}, 'replace'),
-	reset: b.commit(state => Object.assign(state, JSON.parse(JSON.stringify(defaults))), 'reset'),
+	reset: b.commit(state => Object.assign(state, cloneDeep(defaults)), 'reset'),
 };
 
 const init = () => {
-	const {id} = CorpusStore.get.firstMainAnnotation();
-	defaults.ngram.groupAnnotationId = id;
-	while (defaults.ngram.tokens.length < defaults.ngram.maxSize) {
-		defaults.ngram.tokens.push({
-			id,
-			value: '',
-		});
-	}
-	actions.ngram.reset();
-
-	defaults.frequency.annotationId = id;
-	actions.frequency.reset();
+	actions.reset();
 };
 
 export {

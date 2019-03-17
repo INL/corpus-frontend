@@ -1,117 +1,137 @@
 <template>
-	<table class="hits-table">
-		<thead>
-			<tr>
-				<th class="text-right">
-					<span class="dropdown">
-						<a class="dropdown-toggle" data-toggle="dropdown" href="#">
-							{{leftLabel}} hit
-							<span class="caret"/>
+	<div>
+		<slot name="groupBy"/>
+		<slot name="pagination"/>
+
+		<table class="hits-table">
+			<thead>
+				<tr class="rounded">
+					<th class="text-right">
+						<span v-if="annotations.filter(a => a.hasForwardIndex).length" class="dropdown">
+							<a role="button"data-toggle="dropdown" :class="['dropdown-toggle', {'disabled': disabled}]">
+								{{leftLabel}} hit
+								<span class="caret"/>
+							</a>
+
+							<ul class="dropdown-menu" role="menu">
+								<li v-for="annotation in annotations.filter(a => a.hasForwardIndex)" :key="annotation.id" :class="{'disabled': disabled}">
+									<a @click="changeSort(`${beforeField}:${annotation.id}`)" class="sort">{{annotation.displayName}}</a>
+								</li>
+							</ul>
+						</span>
+						<template v-else>{{leftLabel}} hit</template>
+					</th>
+
+					<th class="text-center">
+						<a v-if="firstMainAnnotation.hasForwardIndex"
+							role="button"
+							:class="['sort', {'disabled':disabled}]"
+							:title="`Sort by ${firstMainAnnotation.displayName}`"
+							@click="changeSort(`hit:${firstMainAnnotation.id}`)"
+						>
+							{{firstMainAnnotation.displayName}}
 						</a>
+						<template v-else>{{firstMainAnnotation.displayName}}</template>
+					</th>
 
-						<ul class="dropdown-menu" role="menu">
-							<li v-for="annotation in annotations.filter(a => a.hasForwardIndex)" :key="annotation.id">
-								<a @click="changeSort(`${beforeField}:${annotation.id}`)" class="sort">{{annotation.displayName}}</a>
-							</li>
-						</ul>
-					</span>
-				</th>
+					<th class="text-left">
+						<span v-if="annotations.filter(a => a.hasForwardIndex).length" class="dropdown">
+							<a role="button" data-toggle="dropdown" :class="['dropdown-toggle', {'disabled': disabled}]">
+								{{rightLabel}} hit
+								<span class="caret"/>
+							</a>
 
-				<th class="text-center">
-					<a @click="firstMainAnnotation.hasForwardIndex ? changeSort(`hit:${firstMainAnnotation.id}`) : undefined" class="sort" :title="`Sort by ${firstMainAnnotation.displayName}`">
-						<strong>{{firstMainAnnotation.displayName}}</strong>
-					</a>
-				</th>
-
-				<th class="text-left">
-					<span class="dropdown">
-						<a class="dropdown-toggle" data-toggle="dropdown" href="#">
-							{{rightLabel}} hit
-							<span class="caret"/>
+							<ul class="dropdown-menu" role="menu">
+								<li v-for="annotation in annotations.filter(a => a.hasForwardIndex)" :key="annotation.id" :class="{'disabled': disabled}">
+									<a @click="changeSort(`${afterField}:${annotation.id}`)" :class="['sort', {'disabled':disabled}]">{{annotation.displayName}}</a>
+								</li>
+							</ul>
+						</span>
+						<template v-else>{{rightLabel}} hit</template>
+					</th>
+					<th v-for="annot in shownAnnotations" :key="annot.id">
+						<a v-if="annot.hasForwardIndex"
+							role="button"
+							:class="['sort', {'disabled':disabled}]"
+							:title="`Sort by ${annot.displayName}`"
+							@click="changeSort(`hit:${annot.id}`)"
+						>
+							{{annot.displayName}}
 						</a>
-
-						<ul class="dropdown-menu" role="menu">
-							<li v-for="annotation in annotations.filter(a => a.hasForwardIndex)" :key="annotation.id">
-								<a @click="changeSort(`${afterField}:${annotation.id}`)" class="sort">{{annotation.displayName}}</a>
-							</li>
-						</ul>
-					</span>
-				</th>
-
-				<th v-for="id in shownAnnotations" :key="id">
-					<a @click="annotation.hasForwardIndex ? changeSort(`hit:${id}`) : undefined" class="sort" :title="`Sort by ${annotationDisplayNames[id]}`">{{annotationDisplayNames[id]}}</a>
-				</th>
-			</tr>
-		</thead>
-
-		<tbody>
-			<template v-for="(rowData, index) in rows">
-				<tr v-if="rowData.type === 'doc'" class="document"
-					v-show="showTitles"
-					:key="index"
-					v-tooltip="{
-						show: pinnedTooltip === index,
-						content: `Document id: ${rowData.docPid}`,
-						trigger: pinnedTooltip === index ? 'manual' : 'hover',
-						targetClasses: pinnedTooltip === index ? 'pinned' : undefined,
-						hideOnTargetClick: false,
-						autoHide: false,
-					}"
-
-					@click="pinnedTooltip = (pinnedTooltip === index ? null : index)"
-				>
-					<td :colspan="numColumns">
-						<div class="doctitle">
-							<a target="_blank" :href="rowData.href">{{rowData.summary}}</a>
-						</div>
-					</td>
+						<template v-else>{{annot.displayName}}</template>
+					</th>
 				</tr>
-				<template v-else-if="rowData.type === 'hit'">
-					<tr :key="index" :class="['concordance', {'open': citations[index] && citations[index].open}]" @click="showCitation(index)">
-						<td class="text-right">&hellip;<span :dir="textDirection">{{rowData.left}}</span></td>
-						<td class="text-center"><strong :dir="textDirection">{{rowData.hit}}</strong></td>
-						<td><span :dir="textDirection">{{rowData.right}}</span>&hellip;</td>
-						<td v-for="(v, index) in rowData.other" :key="index">{{v}}</td>
-					</tr>
-					<tr v-if="citations[index]" v-show="citations[index].open" :key="index + '-citation'" :class="['concordance-details', {'open': citations[index].open}]">
+			</thead>
+
+			<tbody>
+				<template v-for="(rowData, index) in rows">
+					<tr v-if="rowData.type === 'doc'" class="document rounded"
+						v-show="showTitles"
+						:key="index"
+						v-tooltip="{
+							show: pinnedTooltip === index,
+							content: `Document id: ${rowData.docPid}`,
+							trigger: pinnedTooltip === index ? 'manual' : 'hover',
+							targetClasses: pinnedTooltip === index ? 'pinned' : undefined,
+							hideOnTargetClick: false,
+							autoHide: false,
+						}"
+
+						@click="pinnedTooltip = (pinnedTooltip === index ? null : index)"
+					>
 						<td :colspan="numColumns">
-							<p v-if="citations[index].error" class="text-danger">
-								{{citations[index].error}}
-							</p>
-							<p v-else-if="citations[index].citation">
-								<AudioPlayer
-									v-if="getAudioPlayerData && getAudioPlayerData(corpus, rowData.docPid, citations[index].snippet) != null"
-									v-bind="getAudioPlayerData(corpus, rowData.docPid, citations[index].snippet)"
-								/>
-
-								<span :dir="textDirection">{{citations[index].citation[0]}}<strong>{{citations[index].citation[1]}}</strong>{{citations[index].citation[2]}}</span>
-							</p>
-							<p v-else>
-								Loading...
-							</p>
-							<div style="overflow: auto; max-width: 100%; padding-bottom: 15px;">
-								<table class="concordance-details-table">
-									<thead>
-										<tr>
-											<th>Property</th>
-											<th :colspan="rowData.props.punct.length">Value</th>
-										</tr>
-									</thead>
-									<tbody>
-										<tr v-for="(value, key) in rowData.props" v-if="key !== 'punct'" :key="key">
-											<th>{{annotationDisplayNames[key]}}</th>
-											<td v-for="(v, index) in value" :key="index">{{v}}</td>
-										</tr>
-									</tbody>
-								</table>
+							<div class="doctitle">
+								<a target="_blank" :href="rowData.href">{{rowData.summary}}</a>
 							</div>
-
 						</td>
 					</tr>
+					<template v-else-if="rowData.type === 'hit'">
+						<tr :key="index" :class="['concordance', 'rounded interactable', {'open': citations[index] && citations[index].open}]" @click="showCitation(index)">
+							<td class="text-right">&hellip;<span :dir="textDirection">{{rowData.left}}</span></td>
+							<td class="text-center"><strong :dir="textDirection">{{rowData.hit}}</strong></td>
+							<td><span :dir="textDirection">{{rowData.right}}</span>&hellip;</td>
+							<td v-for="(v, index) in rowData.other" :key="index">{{v}}</td>
+						</tr>
+						<tr v-if="citations[index]" v-show="citations[index].open" :key="index + '-citation'" :class="['concordance-details', {'open': citations[index].open}]">
+							<td :colspan="numColumns">
+								<p v-if="citations[index].error" class="text-danger">
+									{{citations[index].error}}
+								</p>
+								<p v-else-if="citations[index].citation">
+									<AudioPlayer
+										v-if="getAudioPlayerData && getAudioPlayerData(corpus, rowData.docPid, citations[index].snippet) != null"
+										v-bind="getAudioPlayerData(corpus, rowData.docPid, citations[index].snippet)"
+									/>
+
+									<span :dir="textDirection">{{citations[index].citation[0]}}<strong>{{citations[index].citation[1]}}</strong>{{citations[index].citation[2]}}</span>
+								</p>
+								<p v-else>
+									Loading...
+								</p>
+								<div style="overflow: auto; max-width: 100%; padding-bottom: 15px;">
+									<table class="concordance-details-table">
+										<thead>
+											<tr>
+												<th>Property</th>
+												<th :colspan="rowData.props.punct.length">Value</th>
+											</tr>
+										</thead>
+										<tbody>
+											<tr v-for="(value, key) in rowData.props" v-if="key !== 'punct'" :key="key">
+												<th>{{annotationDisplayNames[key]}}</th>
+												<td v-for="(v, index) in value" :key="index">{{v}}</td>
+											</tr>
+										</tbody>
+									</table>
+								</div>
+
+							</td>
+						</tr>
+					</template>
 				</template>
-			</template>
-		</tbody>
-	</table>
+			</tbody>
+		</table>
+	</div>
 </template>
 
 <script lang="ts">
@@ -128,6 +148,7 @@ import * as Api from '@/api';
 import AudioPlayer from '@/components/AudioPlayer.vue';
 
 import * as BLTypes from '@/types/blacklabtypes';
+import * as AppTypes from '@/types/apptypes';
 
 import {debugLog} from '@/utils/debug';
 
@@ -143,14 +164,14 @@ type HitRow = {
 	docPid: string;
 	start: number;
 	end: number;
-}
+};
 
 type DocRow = {
 	type: 'doc';
 	summary: string;
 	href: string;
 	docPid: string;
-}
+};
 
 type CitationData = {
 	open: boolean;
@@ -158,7 +179,7 @@ type CitationData = {
 	citation: null|[string, string, string];
 	error?: null|string;
 	snippet: null|BLTypes.BLHitSnippet;
-}
+};
 
 export default Vue.extend({
 	components: {
@@ -168,6 +189,7 @@ export default Vue.extend({
 		results: Object as () => BLTypes.BLHitResults,
 		sort: String as () => string|null,
 		showTitles: Boolean as () => boolean,
+		disabled: Boolean
 	},
 	data: () => ({
 		citations: {} as {
@@ -176,12 +198,12 @@ export default Vue.extend({
 		pinnedTooltip: null as null|number
 	}),
 	computed: {
-		leftIndex() { return this.textDirection === 'ltr' ? 0 : 2 },
-		rightIndex() { return this.textDirection === 'ltr' ? 2 : 0 },
-		leftLabel() { return this.textDirection === 'ltr' ? 'Before' : 'After' },
-        rightLabel() { return this.textDirection === 'ltr' ? 'After' : 'Before' },
-        beforeField() { return this.textDirection === 'ltr' ? 'left' : 'right' },
-        afterField() { return this.textDirection === 'ltr' ? 'right' : 'left' },
+		leftIndex() { return this.textDirection === 'ltr' ? 0 : 2; },
+		rightIndex() { return this.textDirection === 'ltr' ? 2 : 0; },
+		leftLabel() { return this.textDirection === 'ltr' ? 'Before' : 'After'; },
+		rightLabel() { return this.textDirection === 'ltr' ? 'After' : 'Before'; },
+		beforeField() { return this.textDirection === 'ltr' ? 'left' : 'right'; },
+		afterField() { return this.textDirection === 'ltr' ? 'right' : 'left'; },
 
 		rows(): Array<DocRow|HitRow> {
 			const { titleField, dateField, authorField } = this.results.summary.docFields;
@@ -189,13 +211,13 @@ export default Vue.extend({
 
 			let prevPid: string;
 			return this.results.hits.flatMap(hit => {
-				const rows = [] as (DocRow|HitRow)[];
+				const rows = [] as Array<DocRow|HitRow>;
 
 				// Render a row for this hit's document, if this hit occurred in a different document than the previous
 				const pid = hit.docPid;
 				if (pid !== prevPid) {
 					prevPid = pid;
-					const doc = infos[pid]
+					const doc = infos[pid];
 
 					const title = titleField && doc[titleField] || 'UNKNOWN';
 					const author = authorField && doc[authorField] ? ' by ' + doc[authorField] : '';
@@ -223,7 +245,7 @@ export default Vue.extend({
 					right: parts[this.rightIndex],
 					hit: parts[1],
 					props: hit.match,
-					other: this.shownAnnotations.map(annot => words(hit.match, annot, false, '')),
+					other: this.shownAnnotations.map(annot => words(hit.match, annot.id, false, '')),
 					docPid: hit.docPid,
 					start: hit.start,
 					end: hit.end
@@ -238,7 +260,7 @@ export default Vue.extend({
 		annotations: CorpusStore.get.annotations,
 		annotationDisplayNames: CorpusStore.get.annotationDisplayNames,
 		firstMainAnnotation: CorpusStore.get.firstMainAnnotation,
-		shownAnnotations(): string[] { return UIStore.getState().results.hits.shownAnnotations; },
+		shownAnnotations(): AppTypes.NormalizedAnnotation[] { return UIStore.getState().results.hits.shownAnnotationIds.map(id => CorpusStore.get.annotationsMap()[id][0]); },
 		textDirection: CorpusStore.get.textDirection,
 
 		corpus() { return CorpusStore.getState().id; },
@@ -246,7 +268,9 @@ export default Vue.extend({
 	},
 	methods: {
 		changeSort(payload: string) {
-			this.$emit('sort', payload === this.sort ? '-'+payload : payload)
+			if (!this.disabled) {
+				this.$emit('sort', payload === this.sort ? '-'+payload : payload);
+			}
 		},
 		showCitation(index: number /*row: HitRow*/) {
 			if (this.citations[index] != null) {
@@ -267,7 +291,7 @@ export default Vue.extend({
 			Api.blacklab
 			.getSnippet(CorpusStore.getState().id, row.docPid, row.start, row.end)
 			.then(s => {
-				citation.citation = snippetParts(s, this.firstMainAnnotation.id)
+				citation.citation = snippetParts(s, this.firstMainAnnotation.id);
 				citation.snippet = s;
 			})
 			.catch(e => citation.error = e.message)
@@ -281,7 +305,6 @@ export default Vue.extend({
 		}
 	}
 });
-
 </script>
 
 <style lang="scss" scoped>
@@ -317,19 +340,8 @@ table {
 	}
 }
 
-
-
-tr.concordance,
-tr.document {
-	&:hover {
-		background-color: rgba(0,0,0, 0.1);
-	}
-}
-
 tr.concordance {
-	cursor: pointer;
 	> td {
-		padding: 0px 5px;
 		transition: padding 0.1s;
 	}
 
@@ -338,14 +350,17 @@ tr.concordance {
 			background: white;
 			border-top: 2px solid #ddd;
 			border-bottom: 1px solid #ddd;
-			padding: 8px 5px;
+			padding-top: 8px;
+			padding-bottom: 8px;
 			&:first-child {
 				border-left: 2px solid #ddd;
 				border-top-left-radius: 4px;
+				border-bottom-left-radius: 0;
 			}
 			&:last-child {
 				border-right: 2px solid #ddd;
 				border-top-right-radius: 4px;
+				border-bottom-right-radius: 0;
 			}
 		}
 	}

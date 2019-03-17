@@ -1,6 +1,7 @@
 <template>
 	<div class="filter-overview">
-		<span v-for="filter in filters" :key="filter.id">{{filter.displayName}}: <i>{{filter.values.join(', ')}}</i>&nbsp;</span>
+		<!-- <span v-for="filter in filters" :key="filter.id">{{filter.displayName}}: <i>{{filter.values.join(', ')}}</i>&nbsp;</span> -->
+		<span>{{filterSummary}}</span>
 
 		<div class="sub-corpus-size">
 			<template v-if="error">
@@ -42,6 +43,7 @@ import { selectedSubCorpus$ } from '@/store/search/streams';
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
 import {ApiError} from '@/api';
+import {getFilterSummary} from '@/utils';
 
 import frac2Percent from '@/mixins/fractionalToPercent';
 
@@ -66,13 +68,13 @@ export default Vue.extend({
 		/** Get the metadata displayvalues for all fields and values in for form of map.fieldId.value */
 		metadataValueMaps(): {[fieldId: string]: {[value: string]: string; }} {
 			return Object.values(CorpusStore.getState().metadataFields)
-			.reduce((acc, field: AppTypes.NormalizedMetadataField) => {
-				acc[field.id] = (field.values || [])!.reduce((acc, val) => {
+			.reduce((fieldValues, field: AppTypes.NormalizedMetadataField) => {
+				fieldValues[field.id] = (field.values || [])!.reduce((acc, val) => {
 					acc[val.value] = val.label;
 					return acc;
 				}, {} as {[key: string]: string})
-				return acc;
-			}, {} as {[key:string]: {[key: string]: string}})
+				return fieldValues;
+			}, {} as {[key: string]: {[key: string]: string}})
 		},
 
 		filters(): ExtendedFilter[] {
@@ -86,9 +88,10 @@ export default Vue.extend({
 					...f,
 					displayName,
 					values: f.values.map(value => displayValues[value] != null ? displayValues[value] : value)
-				}
-			})
+				};
+			});
 		},
+		filterSummary(): string { return getFilterSummary(FilterStore.get.activeFilters()); },
 
 		totalCorpusTokens(): number { return CorpusStore.getState().tokenCount; },
 		totalCorpusDocs(): number { return CorpusStore.getState().documentCount; }
@@ -101,15 +104,14 @@ export default Vue.extend({
 			},
 			e => {
 				this.subCorpusStats = null;
-				this.error = e
+				this.error = e;
 			}
-		))
+		));
 	},
 	destroyed() {
 		this.subscriptions.forEach(s => s.unsubscribe());
 	}
 });
-
 </script>
 
 <style lang="scss" scoped>

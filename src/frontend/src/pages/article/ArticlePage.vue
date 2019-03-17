@@ -1,6 +1,6 @@
 <template>
 	<div class="row">
-		<span v-if="isLoading || !document" class="fa fa-spinner fa-spin text-center" style="font-size: 60px; display: block; margin: auto;"></span>
+		<span v-if="isLoading" class="fa fa-spinner fa-spin text-center" style="font-size: 60px; display: block; margin: auto;"></span>
 		<div v-else-if="error" class="text-center">
 			<h3 class="text-danger"><em>{{error.message}}</em></h3>
 			<br>
@@ -30,15 +30,16 @@
 				</table>
 			</div>
 
-			<AnnotationDistributions v-if="snippet"
+			<AnnotationDistributions v-if="snippet && distributionData"
 				:class="{
 					'col-xs-12': true,
 					'col-md-6': !!statisticsTableData
 				}"
 				:snippet="snippet"
+				v-bind="distributionData"
 			/>
 
-			<AnnotationGrowths v-if="snippet" class="col-xs-12" :snippet="snippet" />
+			<AnnotationGrowths v-if="snippet && growthData" class="col-xs-12" :snippet="snippet" v-bind="growthData"/>
 		</template>
 	</div>
 </template>
@@ -55,6 +56,12 @@ import * as AppTypes from '@/types/apptypes';
 import AnnotationDistributions from '@/pages/article/AnnotationDistributions.vue';
 import AnnotationGrowths from '@/pages/article/AnnotationGrowths.vue';
 
+function _preventClicks(e: Event) {
+	e.preventDefault();
+	e.stopPropagation();
+	return false;
+}
+
 export default Vue.extend({
 	components: {
 		AnnotationDistributions,
@@ -64,7 +71,7 @@ export default Vue.extend({
 		snippet: null as null|BLTypes.BLHitSnippet,
 		error: null as null|AppTypes.ApiError,
 
-		isLoading: false,
+		tick: 0,
 	}),
 	computed: {
 		document: RootStore.get.document,
@@ -73,32 +80,74 @@ export default Vue.extend({
 			return (this.getStatistics && this.document && this.snippet) ?
 				this.getStatistics(this.document, this.snippet) : null;
 		},
+		distributionData() {
+			const data = RootStore.get.distributionAnnotation();
+			return data ? {
+				annotationId: data.id,
+				chartTitle: data.displayName,
+				baseColor: RootStore.get.baseColor()
+			} : null;
+		},
+		growthData() {
+			const data = RootStore.get.growthAnnotations();
+			return data ? {
+				annotations: data.annotations,
+				chartTitle: data.displayName,
+				baseColor: RootStore.get.baseColor()
+			} : null;
+		},
+
 		anythingToShow(): boolean {
-			return !!(
+			return !!this.document && !!(
 				RootStore.get.statisticsTableFn() ||
-				RootStore.get.distributionAnnotation() ||
-				RootStore.get.growthAnnotations()
+				this.distributionData ||
+				this.growthData
 			);
-		}
+		},
+		isLoading(): boolean { return !this.document || (this.anythingToShow && !(this.snippet || this.error)); }
 	},
 	methods: {
 		fetch() {
-			if (this.isLoading || !this.document) {
+			if (!this.anythingToShow) {
 				return;
 			}
 
-			this.isLoading = true;
 			this.error = null;
 			this.snippet = null;
 
-			blacklab.getSnippet(RootStore.getState().indexId, RootStore.getState().docId, 0, this.document.docInfo.lengthInTokens, 0)
+			blacklab.getSnippet(RootStore.getState().indexId, RootStore.getState().docId, 0, this.document!.docInfo.lengthInTokens, 0)
 			.then(snippet => this.snippet = snippet)
-			.catch(error => this.error = error)
-			.finally(() => this.isLoading = false);
+			.catch(error => this.error = error);
 		},
 	},
 	watch: {
-		document() { this.fetch(); }
+		document() { this.fetch(); },
+		anythingToShow: {
+			immediate: true,
+			handler(v: boolean) {
+				const statsTab = (document.querySelector('a[href="#statistics"]') as HTMLAnchorElement);
+				if (v) {
+					this.fetch();
+					statsTab.classList.remove('disabled');
+					statsTab.removeEventListener('click', _preventClicks);
+					statsTab.style.display = null; // default display
+					statsTab.setAttribute('data-toggle', 'tab');
+				} else {
+					statsTab.classList.add('disabled');
+					statsTab.addEventListener('click', _preventClicks);
+					statsTab.style.display = 'none';
+					statsTab.removeAttribute('data-toggle');
+				}
+			}
+		},
+		tick: {
+			immediate: true,
+			handler(v: number) {
+				Vue.nextTick(() => {
+					// ++this.tick;
+				});
+			}
+		}
 	},
 	created() {
 		this.fetch();

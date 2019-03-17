@@ -22,7 +22,8 @@
 				"browsers": ["last 2 versions", "not ie < 11"]
 			},
 			// "debug": true
-		}]
+		}],
+		"@vue/babel-preset-jsx",
 	],
 	"plugins": [
 		/*

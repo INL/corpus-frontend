@@ -5,6 +5,7 @@
 
 import Vue from 'vue';
 import { getStoreBuilder } from 'vuex-typex';
+import cloneDeep from 'clone-deep';
 
 import { RootState } from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus';
@@ -44,7 +45,7 @@ const defaults: ModuleRootState = {
 };
 
 const namespace = 'patterns';
-const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, JSON.parse(JSON.stringify(defaults)));
+const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, cloneDeep(defaults));
 
 const getState = b.state();
 

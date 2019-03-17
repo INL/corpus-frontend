@@ -179,3 +179,134 @@ ul.nav-tabs.cf-panel-tab-header {
 		display: none;
 	}
 }
+
+// v-tooltip
+.popover {
+	display: block !important;
+	max-width: none;
+	z-index: 10000;
+
+	.arrow {
+		width: 0;
+		height: 0;
+		border-style: solid;
+		position: absolute;
+		margin: 5px;
+		border-color: inherit;
+		z-index: 1;
+	}
+
+	&[x-placement^="top"] {
+		margin-bottom: 5px;
+
+		.arrow {
+			border-width: 5px 5px 0 5px;
+			border-left-color: transparent !important;
+			border-right-color: transparent !important;
+			border-bottom-color: transparent !important;
+			bottom: -5px;
+			left: calc(50% - 5px);
+			margin-top: 0;
+			margin-bottom: 0;
+		}
+	}
+
+	&[x-placement^="bottom"] {
+		margin-top: 5px;
+
+		.arrow {
+			border-width: 0 5px 5px 5px;
+			border-left-color: transparent !important;
+			border-right-color: transparent !important;
+			border-top-color: transparent !important;
+			top: -5px;
+			left: calc(50% - 5px);
+			margin-top: 0;
+			margin-bottom: 0;
+		}
+	}
+
+	&[x-placement^="right"] {
+		margin-left: 5px;
+
+		.arrow {
+			border-width: 5px 5px 5px 0;
+			border-left-color: transparent !important;
+			border-top-color: transparent !important;
+			border-bottom-color: transparent !important;
+			left: -5px;
+			top: calc(50% - 5px);
+			margin-left: 0;
+			margin-right: 0;
+		}
+	}
+
+	&[x-placement^="left"] {
+		margin-right: 5px;
+
+		.arrow {
+			border-width: 5px 0 5px 5px;
+			border-top-color: transparent !important;
+			border-right-color: transparent !important;
+			border-bottom-color: transparent !important;
+			right: -5px;
+			top: calc(50% - 5px);
+			margin-left: 0;
+			margin-right: 0;
+		}
+	}
+
+	&[aria-hidden='true'] {
+		visibility: hidden;
+		opacity: 0;
+		// transition: opacity .15s, visibility .15s;
+	}
+
+	&[aria-hidden='false'] {
+		visibility: visible;
+		opacity: 1;
+		// transition: opacity .15s;
+	}
+}
+
+// bootstrap tables
+.table > tbody > tr:first-child > td {
+	border: none;
+}
+
+.table > thead + tbody > tr:first-child > td {
+	border-top: 1px solid #ddd;
+}
+
+tr.interactable {
+	cursor: pointer;
+
+	&:hover,
+	&:focus {
+		background-color: #eee;
+	}
+	&:active {
+		background-color: #ddd;
+	}
+}
+
+tr.rounded {
+	> th,
+	> td {
+		padding: 0 4px;
+
+		&:first-child {
+			border-top-left-radius: 3px;
+			border-bottom-left-radius: 3px;
+		}
+		&:last-child {
+			border-top-right-radius: 3px;
+			border-bottom-right-radius: 3px;
+		}
+	}
+}
+
+a.disabled {
+	opacity: 0.65;
+	cursor: not-allowed;
+}

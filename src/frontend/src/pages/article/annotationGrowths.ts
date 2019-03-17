@@ -1,24 +1,29 @@
 import Vue from 'vue';
 import * as Highcharts from 'highcharts';
 
-import * as RootStore from '@/store/article';
-
 import * as BLTypes from '@/types/blacklabtypes';
 import { stripIndent } from 'common-tags';
 
 export default Vue.extend({
 	props: {
-		snippet: Object as () => BLTypes.BLHitSnippet
+		snippet: Object as () => BLTypes.BLHitSnippet,
+		annotations: Array as () => Array<{
+			id: string;
+			displayName?: string;
+		}>,
+		chartTitle: {
+			type: String,
+			default: 'Growths'
+		},
+		baseColor: String
 	},
 	computed: {
-		growthAnnotations: RootStore.get.growthAnnotations,
-
 		growth(): Highcharts.SeriesLineOptions[] {
-			if (!this.growthAnnotations) {
+			if (!this.annotations || this.annotations.length === 0) {
 				return [];
 			}
 
-			return this.growthAnnotations.annotations.map((annot): Highcharts.SeriesLineOptions => {
+			return this.annotations.map((annot): Highcharts.SeriesLineOptions => {
 				let uniques = 0;
 				const seen = {} as {[key: string]: boolean};
 
@@ -27,7 +32,7 @@ export default Vue.extend({
 
 				return {
 					type: 'line',
-					name: annot.displayName,
+					name: annot.displayName || annot.id,
 					keys: ['name', 'x', 'x2', 'y', 'y2'],
 					data: (() => {
 						const ret: any[][] = values.map((v, i) => [v, i+1, (i+1)*invLength, seen[v] ? uniques : (seen[v] = true, ++uniques)]);
@@ -42,15 +47,15 @@ export default Vue.extend({
 		chartOptions(): Highcharts.Options {
 			return {
 				title: {
-					text: this.growthAnnotations ? this.growthAnnotations.displayName : ''
+					text: this.chartTitle || ''
 				},
 				chart: {
 					animation: false,
 				},
 				colors: (() => {
 					const colors = [];
-					const base = RootStore.get.baseColor();
-					const numColors = Math.min(20, this.growthAnnotations ? this.growthAnnotations.annotations.length : 1);
+					const base = this.baseColor;
+					const numColors = Math.min(20, this.annotations ? this.annotations.length : 1);
 
 					for(let i = 0; i < numColors; i += 1) {
 						colors.push((Highcharts as any).Color(base).brighten(-0.4 + i / ((numColors+1) * 0.7)).get());

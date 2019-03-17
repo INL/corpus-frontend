@@ -149,9 +149,9 @@ export type BLDocFields = {
 	/** Key to a field in BLDocInfo, missing if unknown */
 	dateField?: string;
 	/** Key to a field in BLDocInfo, missing if unknown */
-	pidField: string;
+	pidField?: string;
 	/** Key to a field in BLDocInfo, missing if unknown */
-	titleField: string;
+	titleField?: string;
 };
 
 /** Property of a word, usually 'lemma', 'pos', 'word' */
@@ -298,31 +298,6 @@ export type BLSearchSummarySampleSettings = {} | {
 	sampleSize: number;
 };
 
-export interface BLSearchSummaryTotalsDocs {
-	/** Total documents across all counted (not retrieved) hits, -1 if some error occured */
-	numberOfDocs: number;
-	/** Total documents across all retrieved hits */
-	numberOfDocsRetrieved: number;
-	/** Is any hit counting ongoing, generally true unless blacklab finished counting all results or results exceed the count limit (stoppedCountingHits = true) */
-	stillCounting: boolean;
-}
-
-export type BLSearchSummaryTotalsHits = {
-	/** Total number of counted hits (so far), -1 if some error occured */
-	numberOfHits: number;
-	/** Total number of retrieved hits (so far) */
-	numberOfHitsRetrieved: number;
-	/** Did the query hit the default count limit (defaultMaxHitsToCount) */
-	stoppedCountingHits: boolean;
-	/** Did the query hit the default retrieval limit (defaultMaxHitsToRetrieve) */
-	stoppedRetrievingHits: boolean;
-} & BLSearchSummaryTotalsDocs;
-
-export interface BLSearchSummaryGroupInfo {
-	largestGroupSize: number;
-	numberOfGroups: number;
-}
-
 // TODO - incomplete
 export type BLSearchSummary = {
 	actualWindowSize: number;
@@ -339,31 +314,101 @@ export type BLSearchSummary = {
 	windowHasPrevious: boolean;
 } & BLSearchSummarySampleSettings;
 
+export interface BLSearchSummaryTotalsDocs {
+	/** Total documents across all counted (not retrieved) hits, -1 if some error occured */
+	numberOfDocs: number;
+	/** Total documents across all retrieved hits */
+	numberOfDocsRetrieved: number;
+	/** Is any hit counting ongoing, generally true unless blacklab finished counting all results or results exceed the count limit (stoppedCountingHits = true) */
+	stillCounting: boolean;
+}
+
+export interface BLSearchSummaryTotalsHits extends BLSearchSummaryTotalsDocs {
+	/** Total number of counted hits (so far), -1 if some error occured */
+	numberOfHits: number;
+	/** Total number of retrieved hits (so far) */
+	numberOfHitsRetrieved: number;
+	/** Did the query hit the default count limit (defaultMaxHitsToCount) */
+	stoppedCountingHits: boolean;
+	/** Did the query hit the default retrieval limit (defaultMaxHitsToRetrieve) */
+	stoppedRetrievingHits: boolean;
+}
+
+export interface BLSearchSummaryGroupInfo {
+	largestGroupSize: number;
+	numberOfGroups: number;
+}
+
+export interface BLSearchSummaryGroupInfoHits extends BLSearchSummaryGroupInfo {
+	/**
+	 * Contains the size of the entire searched subcorpus (e.g. number of docs and tokens found by the same query without a cql pattern).
+	 * Only present when the query is not grouping results based on document metadata.
+	 *
+	 * When results ARE grouped based on document metadata, is present in the individual HitGroups instead.
+	 * Then it contains the total number of documents in the group, along with their total number of tokens.
+	 */
+	subcorpusSize?: {
+		/** NOTE: may be 0 in rare cases, when specifying a search for the empty value for all metadata fields */
+		documents: number;
+		/** NOTE: may be 0 in rare cases, when specifying a search for the empty value for all metadata fields */
+		tokens: number;
+	};
+}
+
+export interface BLSearchSummaryGroupInfoDocs extends BLSearchSummaryGroupInfo {
+	/**
+	 * Contains the size of the entire searched subcorpus (e.g. number of docs and tokens found by the same query without a cql pattern).
+	 *
+	 * Only present when the query does not contain a cql pattern.
+	 * If the query does contain a cql pattern, subcorpusSize is instead defined per docGroup, and contains the size of that group if the cql pattern would not exist.
+	 */
+	subcorpusSize?: {
+		documents: number;
+		tokens: number;
+	};
+}
+
 /** Single group of either hits or documents */
 export interface BLGroupResult {
 	identity: string;
 	identityDisplay: string;
 	size: number;
 }
+
 export interface BLHitGroupResult extends BLGroupResult {
-	/**
-	 * 0-1 size of this group relative to:
-	 * - when grouping by annotations or context only: the total number of tokens searched in the selected subcorpus.
-	 * - when also grouping by metadata: the total number of tokens in all documents that satisfy the metadata (e.g. all tokens in all documents by author when grouping on author)
-	 */
-	relativeFrequency?: number;
+	/** When grouped on annotation + metadata */
+	numberOfDocs: number;
+	/** Present when grouped on at least one metadata field, otherwise use subcorpusSize in BLSearchSummaryHitsGrouped */
+	subcorpusSize?: {
+		/** Number of documents this group including those documents that do not contain a hit. */
+		documents: number;
+		/** Total number of tokens in those documents */
+		tokens: number;
+	};
+}
+
+export interface BLDocGroupResult extends BLGroupResult {
+	/** Total number of tokens across all documents in this group */
+	numberOfTokens: number;
+	/** Present when the query contains a pattern, otherwise use subcorpusSize in BLSearchSummaryDocsGrouped */
+	subcorpusSize?: {
+		/** Number of documents this group including those documents that do not contain a hit. */
+		documents: number;
+		/** Total number of tokens in those documents */
+		tokens: number;
+	};
 }
 
 /** Blacklab response for a query for hits with grouping enabled */
 export interface BLHitGroupResults {
 	hitGroups: BLHitGroupResult[];
-	summary: BLSearchSummary & BLSearchSummaryGroupInfo & BLSearchSummaryTotalsHits;
+	summary: BLSearchSummary & BLSearchSummaryGroupInfoHits & BLSearchSummaryTotalsHits;
 }
 
 /** Blacklab response for a query for documents with grouping enabled */
 export interface BLDocGroupResults {
-	docGroups: BLGroupResult[];
-	summary: BLSearchSummary & BLSearchSummaryGroupInfo & BLSearchSummaryTotalsDocs;
+	docGroups: BLDocGroupResult[];
+	summary: BLSearchSummary & BLSearchSummaryGroupInfoDocs & BLSearchSummaryTotalsDocs;
 }
 
 /** Contains a hit's tokens, deconstructed into the individual annotations/properties, such as lemma, pos, word, always contains punctuation in between tokens */

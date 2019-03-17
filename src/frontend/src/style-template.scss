@@ -1,8 +1,8 @@
 // This is a helper file to allow easily generating custom css that overrides the primary bootstrap color for text, buttons, dropdowns, lists.
 
-// $base: hsl(351, 70%, 36%); // SoNaR
-$base: hsl(345, 90%, 36%); // Zeebrieven
-
+//$base: hsl(351, 70%, 36%); // SoNaR
+// $base: hsl(345, 90%, 36%); // Zeebrieven
+$base: #337ab7 !default; // bootstrap blue;
 
 $sat-range: 100% - saturation($base);
 $light-range: lightness($base) * 0.5;
@@ -59,7 +59,7 @@ a,
 
 
 .dropdown-menu > .active > a,
-.combobox .menu-option.active {
+.combobox-menu .menu-option.active {
 	background-color: $block-bg-2!important;
 }
 
@@ -114,4 +114,57 @@ ul.nav-tabs.cf-panel-tab-header {
 		border-color: $block-bg-1
 	}
 }
+
+
+
+
+$bg-primary: #337ab7;
+$bg-primary-hover: #286090;
+$bg-primary-active: #204d74;
+
+$br-primary: #2e6da4;
+$br-primary-hover:#204d74;
+$br-primary-active: #122b40;
+
+.groupby-editor-slider > .vue-slider  {
+
+	background: #ccc;
+
+	&:hover,
+	&:focus {
+		background: #bbb;
+	}
+	&:active {
+		background: #aaa;
+	}
+
+	> .vue-slider-process {
+		background: $block-bg-1;
+
+		&:hover,
+		&:focus {
+			background: $block-bg-2;
+		}
+		&:active {
+			background: $block-bg-3;
+		}
+	}
+
+}
+.groupby-editor-slider-handle {
+	background-color: $block-bg-1;
+	border-color: $block-border-1;
+
+	&:hover,
+	&:focus {
+		background-color: $block-bg-2;
+		border-color: $block-border-2;
+	}
+	&:active {
+		background-color: $block-bg-3;
+		border-color: $block-bg-3;
+	}
+
+}
+
 /** End style-template.scss */

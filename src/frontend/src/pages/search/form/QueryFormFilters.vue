@@ -2,21 +2,23 @@
 	<div>
 		<h3>Filter search by &hellip;</h3>
 
-		<ul v-if="useTabs" class="nav nav-tabs">
-			<li v-for="(tab, index) in tabs" :class="{'active': activeTab===getTabId(tab.name)}" :key="index" @click.prevent="activeTab=getTabId(tab.name)">
-				<a :href="'#'+getTabId(tab.name)">{{tab.name}}</a>
+		<template v-if="useTabs">
+		<ul class="nav nav-tabs">
+			<li v-for="tab in tabs" :class="{'active': activeTab===tab.id}" :key="tab.id" @click.prevent="activeTab=tab.id">
+				<a :href="'#'+tab.id">{{tab.displayName}} <span v-if="tab.activeFilters" class="badge" style="background-color:#aaa">{{tab.activeFilters}}</span></a>
 			</li>
 		</ul>
 
-		<div v-if="useTabs" class="tab-content">
-			<div v-for="(tab, index) in tabs"
-				:class="['tab-pane', 'form-horizontal', 'filter-container', {'active': activeTab===getTabId(tab.name)}]"
-				:key="index"
-				:id="getTabId(tab.name)"
+		<div class="tab-content">
+			<div v-for="tab in tabs"
+				:class="['tab-pane', 'form-horizontal', 'filter-container', {'active': activeTab===tab.id}]"
+				:key="tab.id"
+				:id="tab.id"
 			>
-				<MetadataFilter v-for="filter in tab.fields" :filter="filter" :key="filter.id"/>
+				<MetadataFilter v-for="filter in tab.filters" :filter="filter" :key="filter.id"/>
 			</div>
 		</div>
+		</template>
 		<div v-else class="tab-content form-horizontal filter-container"> <!-- TODO don't use tab-content when no actually tabs -->
 			<MetadataFilter v-for="filter in allFilters" :filter="filter" :key="filter.id"/>
 		</div>
@@ -29,6 +31,7 @@
 import Vue from 'vue';
 
 import * as CorpusStore from '@/store/search/corpus';
+import * as FilterStore from '@/store/search/form/filters';
 
 import FilterOverview from '@/pages/search/form/FilterOverview.vue';
 import MetadataFilter from '@/pages/search/form/Filter.vue';
@@ -46,23 +49,30 @@ export default Vue.extend({
 	computed: {
 		allFilters(): AppTypes.NormalizedMetadataField[] {
 			return this.tabs.reduce((acc, tab) => {
-				acc.push(...tab.fields);
+				acc.push(...tab.filters);
 				return acc;
 			}, [] as AppTypes.NormalizedMetadataField[]);
 		},
-		tabs: CorpusStore.get.metadataGroups,
+		tabs(): Array<{
+			id: string;
+			displayName: string;
+			filters: AppTypes.NormalizedMetadataField[],
+			activeFilters: number
+		}> {
+			return CorpusStore.get.metadataGroups().map(g => ({
+				id: g.name.replace(/[^\w]+/g, '_') + '_meta_' + (this as any).uid,
+				displayName: g.name,
+				filters: g.fields,
+				activeFilters: g.fields.filter(f => FilterStore.get.activeFiltersMap()[f.id] != null).length
+			}));
+		},
 		useTabs() {
 			return this.tabs.length > 1;
 		},
 		indexId() { return CorpusStore.getState().id }
 	},
-	methods: {
-		getTabId(name: string) {
-			return name.replace(/[^\w]+/g, '_') + '_meta_' + (this as any).uid;
-		}
-	},
 	created() {
-		this.activeTab = this.useTabs ? this.getTabId(this.tabs[0].name) : null
+		this.activeTab = this.useTabs ? this.tabs[0].id : null
 	}
 })
 </script>

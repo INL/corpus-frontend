@@ -7,9 +7,9 @@
 <script src="$jspath/article.js?_$cache"></script>
 
 <div class="container">
-
+    #set($s=($pageEnd - $pageStart))
     <ul id="resultTabs" class="nav nav-tabs cf-panel-tab-header cf-panel-lg">
-        <li class="active"><a href="#content" data-toggle="tab">Content</a></li>
+        <li class="active"><a href="#content" data-toggle="tab">Content</a>$s words shown, from word $pageStart out of $docLength</li>
         <li><a href="#metadata" data-toggle="tab">Metadata</a></li>
         <li><a href="#statistics" data-toggle="tab">Statistics</a></li>
     </ul>
@@ -25,8 +25,10 @@
             #if($previous_page || $next_page)
             <hr>
             <div>
+                #if($first_page) <a href="$first_page" class="btn btn-default">&laquo; First page </a> #end
                 #if($previous_page) <a href="$previous_page" class="btn btn-default">&laquo; Previous page </a> #end
                 #if($next_page) <a href="$next_page" class="btn btn-default">Next page &raquo;</a> #end
+                #if($last_page) <a href="$last_page" class="btn btn-default">&laquo; Last page </a> #end
             </div>
             #end
         </div>

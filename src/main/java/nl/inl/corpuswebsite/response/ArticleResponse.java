@@ -1,5 +1,14 @@
 package nl.inl.corpuswebsite.response;
 
+import nl.inl.corpuswebsite.BaseResponse;
+import nl.inl.corpuswebsite.MainServlet;
+import nl.inl.corpuswebsite.utils.QueryServiceHandler;
+import nl.inl.corpuswebsite.utils.QueryServiceHandler.QueryException;
+import nl.inl.corpuswebsite.utils.XslTransformer;
+import org.apache.commons.lang.StringUtils;
+
+import javax.servlet.http.HttpServletResponse;
+import javax.xml.transform.TransformerException;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.HashMap;
@@ -7,16 +16,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.servlet.http.HttpServletResponse;
-import javax.xml.transform.TransformerException;
-
-import org.apache.commons.lang.StringUtils;
-import nl.inl.corpuswebsite.BaseResponse;
-import nl.inl.corpuswebsite.MainServlet;
-import nl.inl.corpuswebsite.utils.QueryServiceHandler;
-import nl.inl.corpuswebsite.utils.QueryServiceHandler.QueryException;
-import nl.inl.corpuswebsite.utils.XslTransformer;
 
 public class ArticleResponse extends BaseResponse {
 
@@ -146,11 +145,18 @@ public class ArticleResponse extends BaseResponse {
                             int pageSize = servlet.getWordsToShow();
                             String q = (query != null && !query.isEmpty()) ? ("&query="+esc.url(query)) : "";
 
+                            context.put("docLength",docLength);
+                            context.put("pageStart",pageStart);
+                            context.put("pageSize",pageSize);
+                            context.put("pageEnd",pageEnd);
+
                             if (pageStart > 0) {
+                                context.put("first_page", "?wordstart=0&wordend="+pageSize);
                                 context.put("previous_page", "?wordstart="+Math.max(0, pageStart-pageSize)+"&wordend="+pageStart+(q.isEmpty() ? "" : q));
                             }
                             if (pageEnd < docLength) {
                                 context.put("next_page", "?wordstart="+(pageEnd)+"&wordend="+Math.min(pageEnd+pageSize, docLength)+(q.isEmpty() ? "" : q));
+                                context.put("last_page", "?wordstart="+(docLength-pageSize)+"&wordend="+(docLength)+(q.isEmpty() ? "" : q));
                             }
                         }
                         return t.transform(meta);

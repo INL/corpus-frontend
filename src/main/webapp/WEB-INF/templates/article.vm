@@ -9,12 +9,23 @@
 <div class="container">
     #set($s=($pageEnd - $pageStart))
     <ul id="resultTabs" class="nav nav-tabs cf-panel-tab-header cf-panel-lg">
-        <li class="active"><a href="#content" data-toggle="tab">Content</a>$s words shown, from word $pageStart out of $docLength</li>
+        <li class="active"><a href="#content" data-toggle="tab">Content</a>
+        </li>
         <li><a href="#metadata" data-toggle="tab">Metadata</a></li>
         <li><a href="#statistics" data-toggle="tab">Statistics</a></li>
     </ul>
-
     <div class="tab-content cf-panel-tab-body cf-panel-lg" style="padding-top: 35px;">
+        #if($previous_page || $next_page)
+            <div class="hitscroll" style="top: 150px">
+                <div>$s words shown, from word $pageStart out of $docLength</div>>
+                <div>
+                    #if($first_page) <a href="$first_page" ><b>First page</b></a> #end
+                    #if($previous_page) <a href="$previous_page" ><b>&laquo; Previous page</b></a> #end
+                    #if($next_page) <a href="$next_page" ><b>Next page &raquo;</b></a> #end
+                    #if($last_page) <a href="$last_page" ><b>Last page</b></a> #end
+                </div>
+            </div>
+        #end
          <div id="content" class="tab-pane active">
             <div class="hitscroll">
                 <a href="#" id="prev"><b>&laquo; Previous hit</b></a> | <a href="#" id="next"><b>Next hit &raquo;</b></a>
@@ -22,15 +33,6 @@
             
             #set($unescaped = $article_content) ## see BaseResponse.java
             $!unescaped
-            #if($previous_page || $next_page)
-            <hr>
-            <div>
-                #if($first_page) <a href="$first_page" class="btn btn-default">&laquo; First page </a> #end
-                #if($previous_page) <a href="$previous_page" class="btn btn-default">&laquo; Previous page </a> #end
-                #if($next_page) <a href="$next_page" class="btn btn-default">Next page &raquo;</a> #end
-                #if($last_page) <a href="$last_page" class="btn btn-default">&laquo; Last page </a> #end
-            </div>
-            #end
         </div>
 
         <div id="metadata" class="tab-pane">

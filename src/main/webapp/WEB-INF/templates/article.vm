@@ -16,7 +16,7 @@
     <div class="tab-content cf-panel-tab-body cf-panel-lg" style="padding-top: 35px;">
         #if($previous_page || $next_page)
             #set($s=($pageEnd - $pageStart))
-            <div class="hitscroll" style="top: 150px">
+            <div class="hitscroll" style="top: 150px; display: block">
                 <div>$s words shown, from word $pageStart out of $docLength</div>
                 <div>
                     #if($first_page) <a href="$first_page" ><b>First page</b></a> #end

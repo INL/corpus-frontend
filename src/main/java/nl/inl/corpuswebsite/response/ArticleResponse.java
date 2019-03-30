@@ -149,7 +149,6 @@ public class ArticleResponse extends BaseResponse {
                             context.put("pageStart",pageStart);
                             context.put("pageSize",pageSize);
                             context.put("pageEnd",pageEnd);
-
                             if (pageStart > 0) {
                                 context.put("first_page", "?wordstart=0&wordend="+pageSize+(q.isEmpty() ? "" : q));
                                 context.put("previous_page", "?wordstart="+Math.max(0, pageStart-pageSize)+"&wordend="+pageStart+(q.isEmpty() ? "" : q));

@@ -7,7 +7,6 @@
 <script src="$jspath/article.js?_$cache"></script>
 
 <div class="container">
-    #set($s=($pageEnd - $pageStart))
     <ul id="resultTabs" class="nav nav-tabs cf-panel-tab-header cf-panel-lg">
         <li class="active"><a href="#content" data-toggle="tab">Content</a>
         </li>
@@ -16,6 +15,7 @@
     </ul>
     <div class="tab-content cf-panel-tab-body cf-panel-lg" style="padding-top: 35px;">
         #if($previous_page || $next_page)
+            #set($s=($pageEnd - $pageStart))
             <div class="hitscroll" style="top: 150px">
                 <div>$s words shown, from word $pageStart out of $docLength</div>
                 <div>

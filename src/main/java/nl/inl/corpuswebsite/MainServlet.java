@@ -96,8 +96,8 @@ public class MainServlet extends HttpServlet {
     public static final String PROP_DATA_PATH               = "corporaInterfaceDataDir";
     /** Name of the default fallback directory/corpus in the PROP_DATA_PATH */
     public static final String PROP_DATA_DEFAULT            = "corporaInterfaceDefault";
-    /** Number of words displayed by default on the /article/ page, also is a hard limit on the number */
-    public static final String PROP_DOCUMENT_PAGE_LENGTH    = "wordend";
+    /** Maximum number of words displayed in one "page" of a document */
+    public static final String PROP_DOCUMENT_PAGE_LENGTH    = "pageLength";
     /** Development mode, allow script tags to load load js from an external server (webpack-dev-server), defaults to $pathToTop/js/ */
     public static final String PROP_JSPATH					= "jspath"; // usually set to http://127.0.0.1/dist/ for development
     // @formatter:on
@@ -634,7 +634,8 @@ public class MainServlet extends HttpServlet {
 
     public int getWordsToShow() {
         try {
-            return Integer.parseInt(adminProps.getProperty(PROP_DOCUMENT_PAGE_LENGTH));
+            int pageLength = Integer.parseInt(adminProps.getProperty(PROP_DOCUMENT_PAGE_LENGTH));
+            return pageLength>0?pageLength:5000;
         } catch (NumberFormatException e) {
             return 5000;
         }

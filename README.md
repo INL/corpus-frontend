@@ -109,9 +109,8 @@ corporaInterfaceDataDir=/etc/blacklab/projectconfigs/
 #  we'll use internal fallback files for all essential data.
 corporaInterfaceDefault=default
 
-# Default (and maximum) number of words to show per page 
-#  in opened documents (/article page)
-wordend=5000
+# Maximum number of words displayed in one "page" of a document
+pageLength=5000
 
 # Path to frontend javascript files (can be configured to aid development, e.g. 
 #  loading from an external server so the java web server does not need 

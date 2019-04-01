@@ -156,3 +156,8 @@ table {
 	table-layout: fixed;
 	width: 100%;
 }
+#resultTabs {
+	position: sticky;
+	top: 50px;
+	z-index: 1;
+}

@@ -356,7 +356,7 @@ export default Vue.extend({
 			}
 		},
 		close(event?: Event): void {
-			function isChild(parent: HTMLElement, child: HTMLElement|null) {
+			function isChild(parent: Element, child: Element|null) {
 				for (child; child; child = child.parentElement) {
 					if (child === parent) {
 						return true;
@@ -371,6 +371,9 @@ export default Vue.extend({
 				const isOwnLabelClick = (event.target as HTMLElement).closest(`label[for="${(this as any).dataId}"]`) != null;
 				// NOTE: assumes the template doesn't render a button as main interactable when this.editable is true
 				const isOwnInputClick = this.editable && isChild(this.$el, event.target! as HTMLElement);
+
+
+
 				if (isOwnMenuClick || isOwnInputClick || isOwnLabelClick) {
 					return;
 				}
@@ -391,7 +394,7 @@ export default Vue.extend({
 			const {left: containerLeft, top: containerTop} = container.getBoundingClientRect();
 			const {left: ownLeft, bottom: ownBottom, top: ownTop} = this.$el.getBoundingClientRect();
 
-			const width = this.$el.offsetWidth;
+			const width = (this.$el as HTMLElement).offsetWidth;
 			const left = ownLeft - containerLeft;
 			const top = ownBottom - containerTop;
 
@@ -407,7 +410,14 @@ export default Vue.extend({
 				return;
 			}
 
-			const focusIndex = this.loopingIncrementor(items.findIndex(e => e === document.activeElement), items.length, offset).next();
+			const currentFocusIndex = items.findIndex(e => e === document.activeElement);
+			// if arrow up is pressed, and nothing is in focus, we should focus the last element
+			// but if we offset -1 we move to the last index - 1, which isn't correct.
+			// so correct for that.
+			if (currentFocusIndex < 0 && offset < 0) {
+				offset++;
+			}
+			const focusIndex = this.loopingIncrementor(currentFocusIndex, items.length, offset).next();
 			this.focus(items[focusIndex] as HTMLElement);
 		},
 		focus(el: HTMLElement): void {
@@ -571,7 +581,10 @@ export default Vue.extend({
 			immediate: true,
 			handler(cur: boolean, prev: boolean) {
 				if (cur) {
-					this.addGlobalListeners();
+					// Add a small delay on adding click listeners, or we risk intercepting our own bubbling opening click
+					// and immediately closing
+					// Use requestAnimationFrame because vue.nextTick is too early (event is still bubbling).
+					requestAnimationFrame(() => this.addGlobalListeners());
 					if (this.containerEl) {
 						this.reposition();
 					}

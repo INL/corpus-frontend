@@ -190,7 +190,7 @@ export default Vue.extend({
 					this.scroll = false;
 					window.scroll({
 						behavior: 'smooth',
-						top: this.$el.offsetTop - 150
+						top: (this.$el as HTMLElement).offsetTop - 150
 					});
 				}
 			});

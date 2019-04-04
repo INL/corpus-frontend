@@ -41,10 +41,11 @@ const actions = {
 	pageSize: b.commit((state, payload: number) => {
 		state.pageSize = [20, 50, 100, 200].includes(payload) ? payload : defaults.pageSize;
 	}, 'pagesize'),
-	sampleMode: b.commit((state, payload: 'percentage'|'count'|string|undefined|null) => {
-		if (payload == null) { payload = defaults.sampleMode; } // reset on null, ignore on invalid string
-		if (state.sampleMode === payload) { return; }
-		state.sampleMode = ['percentage', 'count'].includes(payload) ? payload as any : defaults.sampleMode;
+	sampleMode: b.commit((state, payload?: 'percentage'|'count') => {
+		// reset on null, undefined, invalid strings
+		if (!['percentage', 'count'].includes(payload as any)) { payload = defaults.sampleMode; }
+		if (payload === state.sampleMode) { return; }
+		state.sampleMode =  payload as any;
 		state.sampleSize = null;
 	}, 'samplemode'),
 	sampleSeed: b.commit((state, payload: number|null) => {
@@ -69,7 +70,7 @@ const actions = {
 		// null check already passed
 		// if missing seed, randomize it now
 		if (state.sampleSeed == null) {
-			state.sampleSeed =  Number.MAX_SAFE_INTEGER - (Math.random() * 2 * Number.MAX_SAFE_INTEGER);
+			actions.sampleSeed(Number.MAX_SAFE_INTEGER - (Math.random() * 2 * Number.MAX_SAFE_INTEGER));
 		}
 
 	}, 'samplesize'),

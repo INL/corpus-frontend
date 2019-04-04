@@ -156,7 +156,7 @@ table {
 	table-layout: fixed;
 	width: 100%;
 }
-#resultTabs {
+#articleTabs {
 	position: sticky;
 	top: 50px;
 	z-index: 1;

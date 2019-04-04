@@ -7,7 +7,7 @@
 <script src="$jspath/article.js?_$cache"></script>
 
 <div class="container">
-    <ul id="resultTabs" class="nav nav-tabs cf-panel-tab-header cf-panel-lg">
+    <ul id="articleTabs" class="nav nav-tabs cf-panel-tab-header cf-panel-lg">
         <li class="active"><a href="#content" data-toggle="tab">Content</a>
         </li>
         <li><a href="#metadata" data-toggle="tab">Metadata</a></li>

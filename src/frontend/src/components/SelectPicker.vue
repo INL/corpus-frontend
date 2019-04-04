@@ -142,6 +142,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
+import JsonStableStringify from 'json-stable-stringify';
 
 export type SimpleOption = string;
 
@@ -510,7 +511,18 @@ export default Vue.extend({
 				// Otherwise whatever, just discard the rest of the selections... It's not a valid state anyway
 				const cur = Object.values(this.internalModel)[0] as _uiOpt|undefined;
 
-				if (newOption !== cur || (newVal && newOption == null)) { // if newOption doesn't exist but there is a value passed in, replace the model, which will $emit a new empty value, which will (if our parent is a sane component) correct our state
+				if (
+					// also need to compare json, as a new option list may be set, which generates a new set of uiOptions
+					// but the list may be identical (just a different instance of the array containing the same values)
+					// So the newOption !== cur check might fail despite them being the same value.
+					// (simply comparing new.value !== old.value isn't enough, as they might have different labels, disabled state, etc)
+					(newOption !== cur && JsonStableStringify(newOption) !== JsonStableStringify(cur)) ||
+					// if newOption doesn't exist, but there is a value passed in,
+					// the component is in an invalid state,
+					// set our internal model to nothing selected, which will cause an $emit for a null value,
+					// which should correct the v-model in our parent.
+					(newVal && newOption == null)
+				) {
 					this.internalModel = newOption ? { [newOption.id]: newOption } : {};
 					if (!this.editable) {
 						this.$emit('change', newOption ? newOption.value : '');

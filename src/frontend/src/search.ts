@@ -140,7 +140,7 @@ $(document).ready(() => {
 			connectJqueryToPage();
 
 			TagsetStore.actions.awaitInit()
-			.then(() => history.state || new UrlStateParser().get())
+			.then(() => new UrlStateParser().get())
 			.then(urlState => {
 				debugLog('Loading state from url', urlState);
 				RootStore.actions.reset();

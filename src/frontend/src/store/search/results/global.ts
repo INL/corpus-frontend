@@ -43,6 +43,7 @@ const actions = {
 	}, 'pagesize'),
 	sampleMode: b.commit((state, payload: 'percentage'|'count'|string|undefined|null) => {
 		if (payload == null) { payload = defaults.sampleMode; } // reset on null, ignore on invalid string
+		if (state.sampleMode === payload) { return; }
 		state.sampleMode = ['percentage', 'count'].includes(payload) ? payload as any : defaults.sampleMode;
 		state.sampleSize = null;
 	}, 'samplemode'),

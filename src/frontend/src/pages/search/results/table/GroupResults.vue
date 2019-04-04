@@ -495,8 +495,6 @@ export default Vue.extend({
 					title: undefined
 				};
 
-				// debugger;
-
 				return {
 					key: headerId,
 					label: viewHeader.label || defaultHeader.label || fallback.label,
@@ -506,7 +504,6 @@ export default Vue.extend({
 				};
 			});
 
-			// debugger;
 			return c;
 		},
 

@@ -55,7 +55,7 @@ public class CorporaDataResponse extends BaseResponse {
             Optional<File> file = servlet.getProjectFile(corpus, pathString);
 
             if (!file.isPresent() || !file.get().isFile()) {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                response.setStatus(404);
                 return;
             }
 

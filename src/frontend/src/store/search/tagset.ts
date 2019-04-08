@@ -13,6 +13,7 @@ import * as CorpusStore from '@/store/search/corpus';
 
 import {Tagset} from '@/types/apptypes';
 import {NormalizedAnnotation} from '@/types/apptypes';
+import { reductio } from '@/utils';
 
 type ModuleRootState = Tagset&{
 	/** Uninitialized before init() or load() action called. loading/loaded during/after load() called. Disabled when load() not called before init(), or loading failed for any reason. */
@@ -65,6 +66,73 @@ const actions = {
 		.then(t => {
 			internalActions.replace(t.data);
 			internalActions.state({state: 'loaded', message: 'Tagset succesfully loaded'});
+
+			// The tagset (may) contain displaynames for the values of many of the part-of-speech annotations
+			// that are not available otherwise in blacklab.
+			// Explicitly place those displaynames in the store so they can be used by the querybuilder and the normal search form
+			const annots = CorpusStore.get.annotationsMap();
+
+			// Apply top-level displaynames to the 'pos' annotation
+			Object.values(annots)
+			.flat()
+			.filter(a => a.uiType === 'pos')
+			.forEach(originalAnnotation => {
+				const originalValues = reductio(originalAnnotation.values, 'value');
+
+				for (const tagsetValue of Object.values(t.data.values)) {
+					const a = originalValues[tagsetValue.value];
+					const b = tagsetValue;
+
+					const value = a ? a.value : b.value;
+					const label = b.displayName || b.value;
+					const title = a ? a.title : null;
+
+					originalValues[value] = {
+						value,
+						label,
+						title
+					};
+				}
+
+				originalAnnotation.values = Object.values(originalValues)
+				.sort((a, b) =>
+					originalAnnotation.values ?
+						originalAnnotation.values.findIndex(v => v.value === a.value) -
+						originalAnnotation.values.findIndex(v => v.value === b.value) :
+					0
+				);
+			});
+
+			// apply subannotaton displaynames
+			Object.values(t.data.subAnnotations)
+			.forEach(subAnnot => {
+				annots[subAnnot.id].forEach(originalAnnotation => {
+					const originalValues = reductio(originalAnnotation.values, 'value');
+
+					for (const tagsetValue of subAnnot.values) {
+						const a = originalValues[tagsetValue.value];
+						const b = tagsetValue;
+
+						const value = a ? a.value : b.value;
+						const label = b.displayName || b.value;
+						const title = a ? a.title : null;
+
+						originalValues[value] = {
+							value,
+							label,
+							title
+						};
+					}
+
+					originalAnnotation.values = Object.values(originalValues)
+					.sort((a, b) =>
+						originalAnnotation.values ?
+							originalAnnotation.values.findIndex(v => v.value === a.value) -
+							originalAnnotation.values.findIndex(v => v.value === b.value) :
+						0
+					);
+				});
+			});
 		})
 		.catch(e => {
 			// tslint:disable-next-line

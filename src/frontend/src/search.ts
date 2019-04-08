@@ -51,7 +51,7 @@ const connectJqueryToPage = () => {
 };
 
 // Init the querybuilder with the supported attributes/properties
-function initQueryBuilder(tagset?: TagsetStore.ModuleRootState) {
+function initQueryBuilder() {
 	debugLog('Begin initializing querybuilder');
 
 	// Initialize configuration
@@ -61,23 +61,12 @@ function initQueryBuilder(tagset?: TagsetStore.ModuleRootState) {
 				// Pass the available properties of tokens in this corpus (PoS, Lemma, Word, etc..) to the querybuilder
 				attributes: CorpusStore.get.annotations()
 					.map((annotation): QueryBuilderOptionsDef['attribute']['view']['attributes'][number] => {
-						let values;
-						if (tagset) {
-							if (annotation.uiType === 'pos') {
-								values = Object.values(tagset.values).map(v => ({label: v.displayName, value: v.value}));
-							} else if (tagset.subAnnotations[annotation.id]) {
-								values = tagset.subAnnotations[annotation.id].values.map(v => ({label: v.displayName, value: v.value}));
-							}
-						} else {
-							values = annotation.values;
-						}
-
 						return {
 							attribute: annotation.id,
 							label: annotation.displayName,
 							caseSensitive: annotation.caseSensitive,
 							textDirection: annotation.isMainAnnotation ? CorpusStore.get.textDirection() : undefined,
-							values,
+							values: annotation.values,
 						};
 					})
 				,
@@ -150,7 +139,7 @@ $(document).ready(() => {
 				// Don't do this before the url is parsed, as it controls the page url (among other things derived from the state).
 				connectStreamsToVuex();
 				// And this needs the tagset to have been loaded (if available)
-				initQueryBuilder(TagsetStore.get.isLoaded() ? TagsetStore.getState() : undefined);
+				initQueryBuilder();
 			});
 		}
 	}).$mount(document.querySelector('#vue-root')!);

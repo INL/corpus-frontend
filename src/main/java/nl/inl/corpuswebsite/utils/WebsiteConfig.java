@@ -83,6 +83,9 @@ public class WebsiteConfig {
     /** Custom js to use */
     private String pathToCustomJs;
 
+    /** Should be a directory */
+    private String pathToFaviconDir;
+
     /** properties to show in result columns, empty string if no corpus set or not configured for this corpus */
     private String propColumns = "";
 
@@ -135,6 +138,7 @@ public class WebsiteConfig {
         corpusOwner = MainServlet.getCorpusOwner(corpusId);
         pathToCustomJs = xmlConfig.getString("InterfaceProperties.CustomJs");
         pathToCustomCss = xmlConfig.getString("InterfaceProperties.CustomCss");
+        pathToFaviconDir = xmlConfig.getString("InterfaceProperties.FaviconDir", contextPath + "/img");
         propColumns = StringUtils.defaultIfEmpty(xmlConfig.getString("InterfaceProperties.PropColumns"), "");
         if (corpusOwner != null) {
             linksInTopBar.add(new LinkInTopBar("My corpora", contextPath + "/corpora", false));
@@ -204,6 +208,10 @@ public class WebsiteConfig {
 
     public String getPathToCustomJs() {
         return pathToCustomJs;
+    }
+
+    public String getPathToFaviconDir() {
+        return pathToFaviconDir;
     }
 
     public String getPropColumns() {

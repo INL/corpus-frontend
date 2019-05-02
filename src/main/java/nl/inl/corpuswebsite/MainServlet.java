@@ -525,11 +525,18 @@ public class MainServlet extends HttpServlet {
     }
 
     /**
-     * Get the stylesheet to convert an article from this corpus into an html
-     * snippet suitable for inseting in the article.vm page.
+     * Get the stylesheet to convert a document or its metadata from this corpus into
+     * an html snippet suitable for inserting in the article.vm page.
+     *
+     * First attempts to find file "${name}.xsl" in all locations, then,
+     * as a fallback, attempts to find "${name}_${corpusDataFormat}.xsl" in all locations.
+     * The data format suffix is supported to allow placing xsl files for all corpora in the same fallback directory.
+     *
+     * "meta.xsl" is used to transform the document's metadata, "article.xsl" for the content.
+     * see {@link ArticleResponse#completeRequest()}
      *
      * Looks for a file by the name of "article_corpusDataFormat.xsl", so "article_tei" for tei, etc.
-     * Separate xslt is used for metadata, see {@link ArticleResponse#completeRequest()}
+     * Separate xslt is used for metadata,
      *
      * <pre>
      * First tries retrieving the file using {@link #getProjectFile(String, String)}
@@ -544,10 +551,11 @@ public class MainServlet extends HttpServlet {
      * a transformer, and can easily tell if they're xml documents or some other document/file type.
      *
      * @param corpus
-     * @param corpusDataFormat
+     * @param name - the name of the file
+     * @param corpusDataFormat - optional name suffix to differentiate files for different formats
      * @return the xsl transformer to use for transformation, note that this is always the same transformer.
      */
-    public Optional<XslTransformer> getStylesheet(String corpus, String corpusDataFormat) {
+    public Optional<XslTransformer> getStylesheet(String corpus, String name, String corpusDataFormat) {
         // @formatter:off
 
         // need to use corpus name in the cache map
@@ -555,7 +563,10 @@ public class MainServlet extends HttpServlet {
         // (this is common with - but not exclusive to - metadata stylesheets, that are all named "article_meta.xsl")
         String key = corpus + "_" + corpusDataFormat;
         return articleTransformers.computeIfAbsent(key, __ -> {
-            Optional<File> file = getProjectFile(corpus, "article_" + corpusDataFormat + ".xsl");
+            Optional<File> file =
+                Arrays.asList(getProjectFile(corpus, "article.xsl").orElse(null),
+                              getProjectFile(corpus, "article_"+corpusDataFormat+".xsl").orElse(null))
+                .stream().filter(f -> f != null).findFirst();
 
             XslTransformer trans = file.map(f -> {
                 try { return new XslTransformer(f);}

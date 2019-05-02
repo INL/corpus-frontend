@@ -64,8 +64,8 @@ public class ArticleResponse extends BaseResponse {
             return;
         }
         String formatIdentifier = servlet.getCorpusConfig(corpus).getCorpusDataFormat();
-        Optional<XslTransformer> articleStylesheet = servlet.getStylesheet(corpus, formatIdentifier);
-        Optional<XslTransformer> metadataStylesheet = servlet.getStylesheet(corpus, "meta");
+        Optional<XslTransformer> articleStylesheet = servlet.getStylesheet(corpus, "article", formatIdentifier);
+        Optional<XslTransformer> metadataStylesheet = servlet.getStylesheet(corpus, "meta", formatIdentifier);
 
         QueryServiceHandler articleContentRequest = new QueryServiceHandler(servlet.getWebserviceUrl(corpus) + "docs/" + pid + "/contents");
         QueryServiceHandler articleMetadataRequest = new QueryServiceHandler(servlet.getWebserviceUrl(corpus) + "docs/" + pid);

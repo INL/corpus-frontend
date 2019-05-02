@@ -400,6 +400,14 @@ export default Vue.extend({
 				})),
 				disabled: this.results != null && !this.isDocs
 			}));
+			opts.push({
+				label: 'Documents',
+				options: [{
+					label: 'Sort by hits',
+					value: 'numhits'
+				}],
+				disabled: this.results != null && !this.isDocs
+			});
 
 			return opts.flatMap(group => {
 				return [

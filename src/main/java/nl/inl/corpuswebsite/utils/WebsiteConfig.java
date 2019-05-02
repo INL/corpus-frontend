@@ -89,6 +89,9 @@ public class WebsiteConfig {
     /** properties to show in result columns, empty string if no corpus set or not configured for this corpus */
     private String propColumns = "";
 
+    /** Allow suppressing pagination on the article page. This causes the article xslt to receive the full document instead of only a snippet */
+    private boolean pagination = true;
+
     /** Link to put in the top bar */
     private List<LinkInTopBar> linksInTopBar = new ArrayList<>();
 
@@ -140,6 +143,7 @@ public class WebsiteConfig {
         pathToCustomCss = xmlConfig.getString("InterfaceProperties.CustomCss");
         pathToFaviconDir = xmlConfig.getString("InterfaceProperties.FaviconDir", contextPath + "/img");
         propColumns = StringUtils.defaultIfEmpty(xmlConfig.getString("InterfaceProperties.PropColumns"), "");
+        pagination = xmlConfig.getBoolean("InterfaceProperties.Article.Pagination", true);
         if (corpusOwner != null) {
             linksInTopBar.add(new LinkInTopBar("My corpora", contextPath + "/corpora", false));
         }
@@ -216,5 +220,9 @@ public class WebsiteConfig {
 
     public String getPropColumns() {
         return propColumns;
+    }
+
+    public boolean usePagination() {
+        return pagination;
     }
 }

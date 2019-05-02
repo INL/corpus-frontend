@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <SearchInterface>
     <InterfaceProperties>
-        <!--  
-        Limited variable interpolation is supported. 
+        <!--
+        Limited variable interpolation is supported.
         ${request:contextPath}  - the application root path, usually /corpus-frontend
         ${request:corpusPath}   - the corpus root path, usually /corpus-frontend/${corpus-id}, equal to ${request:contextPath} if not viewing a corpus
         ${request:corpusId}     - the corpus id (including username portion for user corpora), so 'lassy' or 'username:corpus-name', empty if not viewing a corpus.
@@ -10,20 +10,20 @@
         -->
 
         <!--
-        Custom files can be made available by placing them in a ./static directory within the corpus data directory 
+        Custom files can be made available by placing them in a ./static directory within the corpus data directory
         (the exact location of that directory is configured in the .properties file for AutoSearch.)
 
         These files can then be accessed through the url ${request:corpusPath}/static/**
 
-        So when you create a static/img/ directory containing logo.png for the 'zeebrieven' corpus, 
-        the url here would be '${request:contextPath}/zeebrieven/static/img/logo.png', or '${request:corpusPath}/static/img/logo.png' 
-        and the directory structure would be ${interfaceDataDir}/zeebrieven/static/img/logo.png 
-        
+        So when you create a static/img/ directory containing logo.png for the 'zeebrieven' corpus,
+        the url here would be '${request:contextPath}/zeebrieven/static/img/logo.png', or '${request:corpusPath}/static/img/logo.png'
+        and the directory structure would be ${interfaceDataDir}/zeebrieven/static/img/logo.png
+
         Tip: use relative urls to reference resources from inside other resources (such from within custom css or js) (e.g. '../img/**' for images in a css file)
         -->
 
-        <!-- When a DisplayName has been set, it will be shown in stead of the raw corpus name. 
-        If omitted, we will fall back to the displayName configured in BlackLab-Server, 
+        <!-- When a DisplayName has been set, it will be shown in stead of the raw corpus name.
+        If omitted, we will fall back to the displayName configured in BlackLab-Server,
         if that is not configured either, the internal corpus name is shown. -->
         <!--<DisplayName>BlackLab AutoSearch Corpus Search</DisplayName>-->
 
@@ -33,9 +33,9 @@
         <!-- Should be a directory; see webapp/img/ for a full listing of files -->
         <FaviconDir>${request:contextPath}/img</FaviconDir>
 
-        <!-- 
-            You can define which properties/annotations to show as colummns in the results table. 
-            By default (up to) the first 3 properties are shown, but 'lemma' and 'pos' have precedence and are always shown if they exist in the corpus.   
+        <!--
+            You can define which properties/annotations to show as colummns in the results table.
+            By default (up to) the first 3 properties are shown, but 'lemma' and 'pos' have precedence and are always shown if they exist in the corpus.
         -->
         <!-- <PropColumns>lemma,pos,tense, person,number</PropColumns> -->
 
@@ -46,10 +46,17 @@
             <Link value="${request:corpusPath}/help">Help</Link>
             <Link value="${request:corpusPath}/about">About</Link>
         </NavLinks>
+
+        <Article>
+            <!-- Set to false to disable pagination when viewing documents.
+            This will cause your article xslt file to run on the entire document instead of only a snippet. -->
+            <pagination>true</pagination>
+        </Article>
+
     </InterfaceProperties>
     <XsltParameters>
     <!--
-        The following values are provided automatically: 
+        The following values are provided automatically:
         <XsltParameter name="contextRoot" value="/corpus-frontend"/>
      -->
     </XsltParameters>

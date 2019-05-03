@@ -252,7 +252,7 @@ const templates = {
 
 			// TODO rtl not supported for Bootstrap-Select (https://github.com/snapappointments/bootstrap-select/issues/862)
 			main_input_select: `
-				<select data-attribute-role="value" multiple class="selectpicker" data-style="btn btn-default btn-sm bl-no-border-radius" data-container="body">
+				<select data-attribute-role="value" multiple class="selectpicker" data-style="btn btn-default btn-sm bl-no-border-radius" data-container="body" data-live-search="true">
 					{{#values}}
 					<option value="{{value}}">{{label}}</option>
 					{{/values}}

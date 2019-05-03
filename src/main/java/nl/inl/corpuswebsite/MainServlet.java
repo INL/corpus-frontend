@@ -564,8 +564,8 @@ public class MainServlet extends HttpServlet {
         String key = corpus + "_" + corpusDataFormat;
         return articleTransformers.computeIfAbsent(key, __ -> {
             Optional<File> file =
-                Arrays.asList(getProjectFile(corpus, "article.xsl").orElse(null),
-                              getProjectFile(corpus, "article_"+corpusDataFormat+".xsl").orElse(null))
+                Arrays.asList(getProjectFile(corpus, name + ".xsl").orElse(null),
+                              getProjectFile(corpus, name + "_" + corpusDataFormat+".xsl").orElse(null))
                 .stream().filter(f -> f != null).findFirst();
 
             XslTransformer trans = file.map(f -> {

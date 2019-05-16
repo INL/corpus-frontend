@@ -109,6 +109,11 @@ function initQueryBuilder() {
 // --------------
 // Initialize vue
 // --------------
+Vue.config.productionTip = false;
+Vue.config.errorHandler = (err, vm, info) => {
+	ga('send', 'exception', { exDescription: err.message, exFatal: true });
+};
+
 Vue.use(VTooltip, {
 	popover: {
 		defaultBaseClass: 'popover',
@@ -117,7 +122,7 @@ Vue.use(VTooltip, {
 		defaultArrowClass: 'arrow tooltip-arrow',
 	}
 });
-Vue.config.productionTip = false;
+
 $(document).ready(() => {
 	RootStore.init();
 

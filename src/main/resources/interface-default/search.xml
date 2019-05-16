@@ -48,13 +48,20 @@
         </NavLinks>
 
         <Article>
-            <!-- 
+            <!--
             Set to true to enable pagination when viewing documents.
             This setting is not enabled by default, as it may result in issues displaying the document's content,
             because xsl files will not run on the complete document any longer, thus xpaths may fail unexpectedly.
             -->
             <Pagination>false</Pagination>
         </Article>
+
+        <!-- Google analytics. Disabled if not provided. -->
+        <!--
+        <Analytics>
+            <Key>google analytics key</Key>
+        </Analytics>
+        -->
 
     </InterfaceProperties>
     <XsltParameters>

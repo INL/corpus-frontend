@@ -117,8 +117,6 @@ pageLength=5000
 #  to constantly reload, and hot-reloading/refreshing of javascript can be used).
 jspath=/corpus-frontend/js
 
-# The following properties do not have a default value
-# googleAnalyticsKey=
 ```
 
 

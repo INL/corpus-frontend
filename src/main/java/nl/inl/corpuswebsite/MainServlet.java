@@ -87,7 +87,6 @@ public class MainServlet extends HttpServlet {
     private String contextPath;
 
     // @formatter:off
-    public static final String PROP_ANALYTICS_KEY           = "googleAnalyticsKey";
     /** Url to reach blacklab-server from this application */
     public static final String PROP_BLS_CLIENTSIDE          = "blsUrlExternal";
     /** Url to reach blacklab-server from the browser */
@@ -637,10 +636,6 @@ public class MainServlet extends HttpServlet {
             url += "/";
         }
         return url;
-    }
-
-    public String getGoogleAnalyticsKey() {
-        return adminProps.getProperty(PROP_ANALYTICS_KEY, "");
     }
 
     public int getWordsToShow() {

@@ -23,6 +23,8 @@ import org.apache.velocity.tools.generic.EscapeTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import nl.inl.corpuswebsite.utils.WebsiteConfig;
+
 public abstract class BaseResponse {
     protected static final Logger logger = LoggerFactory.getLogger(BaseResponse.class);
 
@@ -88,7 +90,7 @@ public abstract class BaseResponse {
         this.servlet = servlet;
         this.corpus = corpus;
         this.pathParameters = pathParameters;
-
+        WebsiteConfig cfg = servlet.getWebsiteConfig(corpus);
 
         // Utils
         context.put("esc", esc);
@@ -97,10 +99,10 @@ public abstract class BaseResponse {
         context.put("cache", servlet.getWarBuildTime().hashCode());
 
         // Stuff for use in constructing the page
-        context.put("websiteConfig", this.servlet.getWebsiteConfig(corpus));
+        context.put("websiteConfig", cfg);
         context.put("buildTime", servlet.getWarBuildTime());
         context.put("jspath", servlet.getAdminProps().getProperty(MainServlet.PROP_JSPATH));
-        context.put("googleAnalyticsKey", this.servlet.getGoogleAnalyticsKey());
+        context.put("googleAnalyticsKey", cfg.getAnalyticsKey());
 
         // Clientside js variables (some might be used in vm directly)
         context.put("pathToTop", servlet.getServletContext().getContextPath());

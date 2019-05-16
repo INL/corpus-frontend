@@ -92,6 +92,9 @@ public class WebsiteConfig {
     /** Allow suppressing pagination on the article page. This causes the article xslt to receive the full document instead of only a snippet */
     private boolean pagination = true;
 
+    /** Google analytics key, analytics are disabled if not provided */
+    private String analyticsKey;
+
     /** Link to put in the top bar */
     private List<LinkInTopBar> linksInTopBar = new ArrayList<>();
 
@@ -144,6 +147,7 @@ public class WebsiteConfig {
         pathToFaviconDir = xmlConfig.getString("InterfaceProperties.FaviconDir", contextPath + "/img");
         propColumns = StringUtils.defaultIfEmpty(xmlConfig.getString("InterfaceProperties.PropColumns"), "");
         pagination = xmlConfig.getBoolean("InterfaceProperties.Article.Pagination", true);
+        analyticsKey  = xmlConfig.getString("InterfaceProperties.Analytics.Key", "");
         if (corpusOwner != null) {
             linksInTopBar.add(new LinkInTopBar("My corpora", contextPath + "/corpora", false));
         }
@@ -224,5 +228,9 @@ public class WebsiteConfig {
 
     public boolean usePagination() {
         return pagination;
+    }
+
+    public String getAnalyticsKey() {
+        return analyticsKey;
     }
 }

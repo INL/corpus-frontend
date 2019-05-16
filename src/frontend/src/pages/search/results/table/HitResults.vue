@@ -288,13 +288,18 @@ export default Vue.extend({
 
 			const row = this.rows[index] as HitRow;
 
+			ga('send', 'event', 'results', 'snippet/load', row.docPid);
+
 			Api.blacklab
 			.getSnippet(CorpusStore.getState().id, row.docPid, row.start, row.end)
 			.then(s => {
 				citation.citation = snippetParts(s, this.firstMainAnnotation.id);
 				citation.snippet = s;
 			})
-			.catch(e => citation.error = e.message)
+			.catch((err: AppTypes.ApiError) => {
+				citation.error = err.message;
+				ga('send', 'exception', { exDescription: err.message, exFatal: false });
+			})
 			.finally(() => citation.loading = false);
 		}
 	},

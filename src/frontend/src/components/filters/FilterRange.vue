@@ -2,21 +2,40 @@
 	<div
 		class="form-group filterfield"
 		:id="id"
-		:data-filterfield-type="uiType"
+		:data-filterfield-type="_componentTag"
 	>
 		<label class="col-xs-12" :for="inputId">{{displayName}}</label>
 		<div class="col-xs-4">
-			<input type="text" :id="inputId+'_lower'" placeholder="From" class="form-control" autocomplete="off" :value="value.low" @input="e_input({low: $event.target.value, high})">
+			<input type="text"
+				placeholder="From"
+				class="form-control"
+				autocomplete="off"
+
+				:id="inputId+'_lower'"
+				:value="value.low"
+
+				@input="e_input({low: $event.target.value, high})"
+			>
 		</div>
 		<div class="col-xs-4">
-			<input type="text" :id="inputId+'_upper'" placeholder="To" class="form-control" autocomplete="off" :value="value.high" @input="e_input({low, high: $event.target.value})">
+			<input type="text"
+				placeholder="To"
+				class="form-control"
+				autocomplete="off"
+
+				:id="inputId+'_upper'"
+				:value="value.high"
+
+				@input="e_input({low, high: $event.target.value})"
+			>
 		</div>
 	</div>
 </template>
 
 <script lang="ts">
 import BaseFilter from '@/components/filters/Filter.vue';
-import { FilterValue } from '../../types/apptypes';
+import { FilterValue } from '@/types/apptypes';
+import { MapOf } from '@/utils';
 
 export default BaseFilter.extend({
 	props: {
@@ -26,10 +45,10 @@ export default BaseFilter.extend({
 				high: string
 			},
 			required: true,
-			default: {
-				low: '',
-				high: ''
-			}
+			default: () => ({
+				high: '',
+				low: ''
+			})
 		}
 	},
 	computed: {
@@ -42,28 +61,18 @@ export default BaseFilter.extend({
 			return this.luceneQuery ? `[${this.value.low} TO ${this.value.high}]` : undefined;
 		}
 	},
-	watch: {
-		initialLuceneState: {
-			immediate: true,
-			handler(filters: FilterValue[]|undefined) {
-				if (!filters || !filters.length) {
-					this.e_input(undefined);
-					return;
-				}
-
-				const v = filters.find(f => f.id === this.id);
-				if (!v || !(v.values.length === 2)) {
-					this.e_input(undefined);
-					return;
-				}
-
-				this.e_input({
-					low: v.values[0] !== '0' ? v.values[0] : '',
-					high: v.values[1] !== '9999' ? v.values[1] : ''
-				});
+	methods: {
+		decodeInitialState(filterValues: MapOf<FilterValue>): { low: string; high: string; }|undefined {
+			const v = filterValues[this.id];
+			if (!v || !v.values.length) {
+				return undefined;
 			}
+			return {
+				low: v.values[0] !== '0' ? v.values[0] || '' : '',
+				high: v.values[1] !== '9999' ? v.values[1] || '' : '',
+			};
 		}
-	},
+	}
 });
 </script>
 

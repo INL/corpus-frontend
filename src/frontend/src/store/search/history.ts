@@ -26,7 +26,7 @@ import { NormalizedIndex } from '@/types/apptypes';
 import { debugLog } from '@/utils/debug';
 import { getFilterSummary } from '@/utils';
 
-const version = 5;
+const version = 6;
 
 type HistoryEntry = {
 	// always set
@@ -113,7 +113,7 @@ const get = {
 				if (!originalEntry || originalEntry.version == null) { throw new Error('Cannot import: file does not appear to be a valid query.'); }
 
 				// Rountrip from url if not compatible.
-				const entry = originalEntry.version === version ? originalEntry : new UrlStateParser(new URI(originalEntry.url)).get();
+				const entry = originalEntry.version === version ? originalEntry : new UrlStateParser(FilterModule.getState().filters, new URI(originalEntry.url)).get();
 
 				resolve({
 					entry,
@@ -142,13 +142,13 @@ const actions = {
 			return;
 		}
 
-		// Order needs to be consistent or hash might be different.
-		const filterSummary: string = getFilterSummary(Object.values(entry.filters).sort((l, r) => l.id.localeCompare(r.id)));
+		// Order needs to be consistent or hash will be different.
+		const filterSummary: string|undefined = getFilterSummary(Object.values(entry.filters).sort((l, r) => l.id.localeCompare(r.id)));
 		// Should only contain items that uniquely identify a query
 		// Normally this would only be the pattern (including gap values) and filters,
 		// but we've agreed that grouping differently constitutes a new query, so we also need to compare those
 		const hashBase = {
-			filters: filterSummary,
+			filters: entry,
 			pattern,
 			gap: entry.gap,
 			groupBy: entry[entry.interface.viewedResults!].groupBy.concat(entry[entry.interface.viewedResults!].groupByAdvanced).sort((l, r) => l.localeCompare(r)),

@@ -2,7 +2,7 @@
 	<div
 		class="form-group filterfield"
 		:id="id"
-		:data-filterfield-type="uiType"
+		:data-filterfield-type="_componentTag"
 	>
 		<label class="col-xs-12" :for="inputId">{{displayName}}</label>
 		<div class="col-xs-12">
@@ -14,8 +14,8 @@
 					:id="inputId+'_'+index"
 					:checked="value === option.value"
 
-					@click="e_input($event.target.checked ? undefined : option.value) /* clear if clicked again */"
-					@input.space="e_input($event.target.checked ? undefined : option.value) /* clear if clicked again */"
+					@click="e_input($event.target.checked ? '' : option.value) /* clear if clicked again */"
+					@input.space="e_input($event.target.checked ? '' : option.value) /* clear if clicked again */"
 				> {{option.label || option.value}}</label>
 			</div>
 		</div>
@@ -26,7 +26,7 @@
 import BaseFilter from '@/components/filters/Filter.vue';
 import { FilterValue } from '@/types/apptypes';
 import { Option } from '@/components/SelectPicker.vue';
-import { MapOf, mapReduce } from '../../utils';
+import { MapOf, mapReduce, unescapeLucene, escapeLucene } from '@/utils';
 
 export default BaseFilter.extend({
 	props: {
@@ -41,23 +41,12 @@ export default BaseFilter.extend({
 		optionsMap(): MapOf<Option> { return mapReduce(this.options, 'value'); },
 		luceneQuery(): string|undefined {
 			const value = this.value as string;
-			return this.value ? `${this.id}:("${this.value}")` : undefined;
+			return this.value ? `${this.id}:(${escapeLucene(this.value)})` : undefined;
 		},
 		luceneQuerySummary(): string|undefined {
 			const value = this.value as string;
 			return value ? this.optionsMap[value].label || value : undefined;
 		}
-	},
-	watch: {
-		initialLuceneState: {
-			immediate: true,
-			handler(filters: FilterValue[]|undefined) {
-				// validate value, clear to undefined if not in our options
-				const f = filters && filters.find(filter => filter.id === this.id);
-				const value = f ? f.values.find(v => this.options.some(o => o.value === v)) : undefined;
-				this.e_input(value);
-			}
-		},
 	},
 	methods: {
 		toggleCheckbox(value: string, checked: boolean) {
@@ -65,6 +54,11 @@ export default BaseFilter.extend({
 				...this.value,
 				[value]: checked
 			});
+		},
+
+		decodeInitialState(filterValues: MapOf<FilterValue>): string|undefined {
+			const v = filterValues[this.id];
+			return v ? v.values.map(unescapeLucene).find(val => this.optionsMap[val] != null) : undefined;
 		}
 	},
 });

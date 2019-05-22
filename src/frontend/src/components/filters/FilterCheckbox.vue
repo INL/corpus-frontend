@@ -2,7 +2,7 @@
 	<div
 		class="form-group filterfield"
 		:id="id"
-		:data-filterfield-type="uiType"
+		:data-filterfield-type="_componentTag"
 	>
 		<label class="col-xs-12" :for="inputId">{{displayName}}</label>
 		<div class="col-xs-12">
@@ -14,8 +14,8 @@
 					:value="option.value"
 					:name="inputId+'_'+index"
 					:id="inputId+'_'+index"
-
 					:checked="value[option.value]"
+
 					@change="toggleCheckbox(option.value, $event.target.checked);"
 				> {{option.label || option.value}}</label>
 			</div>
@@ -28,7 +28,7 @@
 import BaseFilter from '@/components/filters/Filter.vue';
 import { FilterValue } from '@/types/apptypes';
 import { Option } from '@/components/SelectPicker.vue';
-import { MapOf, mapReduce } from '@/utils';
+import { MapOf, mapReduce, escapeLucene, unescapeLucene } from '@/utils';
 
 export default BaseFilter.extend({
 	props: {
@@ -37,7 +37,7 @@ export default BaseFilter.extend({
 				[value: string]: boolean;
 			},
 			required: true,
-			default: {}
+			default: () => ({})
 		}
 	},
 	computed: {
@@ -51,7 +51,7 @@ export default BaseFilter.extend({
 				.filter(([value, isSelected]) => isSelected)
 				.map(([value, isSelected]) => `"${value}"`);
 
-			return selected.length ? `${this.id}:(${selected.join(' ')})` : undefined;
+			return selected.length ? `${this.id}:(${selected.map(escapeLucene).join(' ')})` : undefined;
 		},
 		luceneQuerySummary(): string|undefined {
 			const selected = Object.entries(this.value)
@@ -61,34 +61,24 @@ export default BaseFilter.extend({
 			return selected.length ? `["${selected.map(v => this.optionsMap[v].label || v).join('", "')}"]` : undefined;
 		}
 	},
-	watch: {
-		initialLuceneState: {
-			immediate: true,
-			handler(filters: FilterValue[]|undefined) {
-				// Create model
-				const model = this.options.reduce<{[v: string]: boolean;}>((values, opt) => {
-					values[opt.value] = false;
-					return values;
-				}, {});
-
-				// fill initial values
-				const f = filters && filters.find(filter => filter.id === this.id);
-				if (f) {
-					f.values.filter(v => v in model).forEach(v => model[v] = true);
-				}
-
-				// will flow back through prop
-				this.e_input(model);
-			}
-		},
-	},
 	methods: {
 		toggleCheckbox(value: string, checked: boolean) {
 			this.e_input({
 				...this.value,
 				[value]: checked
 			});
-		}
+		},
+
+		decodeInitialState(filterValues: MapOf<FilterValue>): MapOf<boolean>|undefined {
+			const v = filterValues[this.id];
+
+			const values = v ? v.values.map(unescapeLucene).map(val => this.optionsMap[val]).filter(opt => opt != null) : undefined;
+			if (!values || !values.length) {
+				return undefined;
+			}
+
+			return mapReduce(values, 'value', value => true);
+		},
 	},
 });
 </script>

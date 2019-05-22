@@ -2,7 +2,7 @@
 	<div
 		class="form-group filterfield"
 		:id="id"
-		:data-filterfield-type="uiType"
+		:data-filterfield-type="_componentTag"
 	>
 		<label class="col-xs-12" :for="inputId">{{displayName}}</label>
 		<div class="col-xs-12">
@@ -28,8 +28,8 @@
 <script lang="ts">
 import BaseFilter from '@/components/filters/Filter.vue';
 import SelectPicker, { Option } from '@/components/SelectPicker.vue';
-import { FilterValue } from '../../types/apptypes';
-import { MapOf, mapReduce } from '../../utils';
+import { FilterValue } from '@/types/apptypes';
+import { MapOf, mapReduce, unescapeLucene, escapeLucene } from '@/utils';
 
 export default BaseFilter.extend({
 	components: {
@@ -39,7 +39,7 @@ export default BaseFilter.extend({
 		value: {
 			type: Array as () => string[],
 			required: true,
-			default: []
+			default: () => []
 		},
 	},
 	computed: {
@@ -47,7 +47,7 @@ export default BaseFilter.extend({
 		optionsMap(): MapOf<Option> { return mapReduce(this.options, 'value'); },
 		luceneQuery(): string|undefined {
 			const value = this.value as string[];
-			return value.length ? `${this.id}:("${value.join('" "')}")` : undefined;
+			return value.length ? `${this.id}:(${value.map(escapeLucene).join(' ')})` : undefined;
 		},
 		// use option displaynames in the summary
 		luceneQuerySummary(): string|undefined {
@@ -55,23 +55,11 @@ export default BaseFilter.extend({
 			return value.length ? `["${value.map(v => this.optionsMap[v].label || v).join('", "')}"]` : undefined;
 		}
 	},
-	watch: {
-		initialLuceneState: {
-			immediate: true,
-			handler(filters: FilterValue[]|undefined) {
-				if (!filters || !filters.length) {
-					this.e_input(undefined);
-					return;
-				}
-
-				const v = filters.find(f => f.id === this.id);
-				if (!v || !v.values.length) {
-					this.e_input(undefined);
-					return;
-				}
-
-				this.e_input(v.values);
-			}
+	methods: {
+		decodeInitialState(filterValues: MapOf<FilterValue>): string[]|undefined {
+			const v = filterValues[this.id];
+			const values = v ? v.values.map(unescapeLucene).filter(val => this.optionsMap[val] != null) : [];
+			return values.length ? values : undefined;
 		}
 	},
 });

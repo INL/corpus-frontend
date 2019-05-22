@@ -14,10 +14,10 @@ import * as InterfaceStore from '@/store/search/form/interface';
 import * as DocsStore from '@/store/search/results/docs';
 import * as FilterStore from '@/store/search/form/filters';
 import * as GapStore from '@/store/search/form/gap';
+import * as QueryStore from '@/store/search/query';
 
 import UrlStateParser from '@/store/search/util/url-state-parser';
 
-import { getFilterString } from '@/utils/';
 import * as Api from '@/api';
 
 import * as BLTypes from '@/types/blacklabtypes';
@@ -30,8 +30,8 @@ type QueryState = {
 	state: Pick<RootStore.RootState, 'query'|'interface'|'global'|'hits'|'docs'>
 };
 
-const metadata$ = new ReplaySubject<FilterValue[]>(1);
-const submittedMetadata$ = new ReplaySubject<FilterValue[]>(1);
+const metadata$ = new ReplaySubject<string>(1);
+const submittedMetadata$ = new ReplaySubject<string>(1);
 const url$ = new ReplaySubject<QueryState>(1);
 
 // TODO handle errors gracefully, right now the entire stream is closed permanently.
@@ -48,8 +48,8 @@ export const selectedSubCorpus$ = merge(
 	metadata$.pipe(
 		debounceTime(1000),
 		// filter(v => v.length > 0),
-		map<FilterValue[], BLTypes.BLSearchParameters>(filters => ({
-			filter: getFilterString(filters),
+		map<string, BLTypes.BLSearchParameters>(luceneFilter => ({
+			filter: luceneFilter,
 			first: 0,
 			number: 0,
 			includetokencount: true,
@@ -98,8 +98,8 @@ export const selectedSubCorpus$ = merge(
 
 export const submittedSubcorpus$ = submittedMetadata$.pipe(
 	debounceTime(1000),
-	map<FilterValue[], BLTypes.BLSearchParameters>(filters => ({
-		filter: getFilterString(filters),
+	map<string, BLTypes.BLSearchParameters>(luceneFilter => ({
+		filter: luceneFilter,
 		first: 0,
 		number: 0,
 		includetokencount: true,
@@ -286,12 +286,12 @@ export default () => {
 	// It doesn't matter though, they're attached to the same state instance, so just ignore the state argument.
 
 	RootStore.store.watch(
-		state => FilterStore.get.activeFilters(),
+		state => FilterStore.get.luceneQuery(),
 		v => metadata$.next(v),
 		{ immediate: true }
 	);
 	RootStore.store.watch(
-		state => Object.values(state.query.filters || {}),
+		state => QueryStore.get.filterString(),
 		v => submittedMetadata$.next(v),
 		{ immediate: true }
 	);
@@ -317,7 +317,7 @@ export default () => {
 	);
 
 	fromEvent<PopStateEvent>(window, 'popstate')
-	.pipe(map<PopStateEvent, HistoryStore.HistoryEntry>(evt => evt.state ? evt.state : new UrlStateParser().get()))
+	.pipe(map<PopStateEvent, HistoryStore.HistoryEntry>(evt => evt.state ? evt.state : new UrlStateParser(FilterStore.getState().filters).get()))
 	.subscribe(state => RootStore.actions.replace(state));
 
 	debugLog('Finished connecting store to url and subcorpus calculations.');

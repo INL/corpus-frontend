@@ -2,7 +2,7 @@ import URI from 'urijs';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
-import { FilterState } from '@/store/search/form/filters';
+import { FilterState, FullFilterState } from '@/store/search/form/filters';
 
 export function makeWildcardRegex(original: string) {
 	return original
@@ -20,12 +20,12 @@ export function makeRegexWildcard(original: string) {
 	.replace(/_ESC_PERIOD_/g, '.'); // unescape \. to .
 }
 
-/** Escapes every lucene special character, except wildcards (? and *) */
+/** Escapes every lucene special character including double quotes, except wildcards (? and *) */
 export function escapeLucene(original: string) {
 	return original.replace(/(\+|-|&&|\|\||!|\(|\)|{|}|\[|]|\^|"|~|:|\\)/g, '\\$1');
 }
 
-/** Unescapes every lucene special character, except wildcards */
+/** Unescapes every lucene special character including double quotes, except wildcards */
 export function unescapeLucene(original: string) {
 	return original.replace(/\\(\+|-|&&|\|\||!|\(|\)|{|}|\[|]|\^|"|~|:|\\)/g, '$1');
 }
@@ -157,10 +157,10 @@ export function getFilterString(filters: FilterState[]): string|undefined {
 }
 
 // NOTE: range filter has hidden defaults for unset field (min, max), see https://github.com/INL/corpus-frontend/issues/234
-export const getFilterSummary = (filters: FilterState[]) => filters
+export const getFilterSummary = (filters: FullFilterState[]): string|undefined => filters
 	.filter(f => !!f.lucene && !!f.summary)
 	.map(f => `${f.displayName}: ${f.summary}`)
-	.join(', ');
+	.join(', ') || undefined;
 
 export const getFilterSummaryOld = (filters: AppTypes.FilterValue[]) => filters
 	.map(({id, type, values}) =>

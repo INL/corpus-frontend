@@ -79,9 +79,10 @@ import $ from 'jquery';
 
 import {saveAs} from 'file-saver';
 
-import * as HistoryStore from '@/store/search/history';
 import * as RootStore from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus';
+import * as HistoryStore from '@/store/search/history';
+import * as FilterStore from '@/store/search/form/filters';
 
 import UrlStateParser from '@/store/search/util/url-state-parser';
 
@@ -135,7 +136,7 @@ export default Vue.extend({
 			}
 
 			const uri = new URI(importUrl);
-			const state = new UrlStateParser(uri).get();
+			const state = new UrlStateParser(FilterStore.getState().filters, uri).get();
 			HistoryStore.actions.addEntry({
 				entry: state,
 				pattern: (uri.query(true) as any).patt,

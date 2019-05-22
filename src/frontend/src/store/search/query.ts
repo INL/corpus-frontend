@@ -30,7 +30,7 @@ import * as PatternModule from '@/store/search/form/patterns';
 import * as FilterModule from '@/store/search/form/filters';
 import * as ExploreModule from '@/store/search/form/explore';
 import * as GapModule from '@/store/search/form/gap';
-import { getFilterString, getPatternString, makeWildcardRegex } from '@/utils';
+import { getFilterString, getPatternString, makeWildcardRegex, getFilterSummary } from '@/utils';
 
 type ModuleRootStateSearch<K extends keyof PatternModule.ModuleRootState> = {
 	form: 'search';
@@ -123,8 +123,12 @@ const get = {
 	}, 'patternString'),
 	filterString: b.read((state): string|undefined => {
 		if (!state.form) { return undefined; }
-		return getFilterString(Object.values(state.filters));
+		return getFilterString(Object.values(state.filters).sort((a, b) => a.id.localeCompare(b.id)));
 	}, 'filterString'),
+	filterSummary: b.read((state): string|undefined => {
+		if (!state.form) { return undefined; }
+		return getFilterSummary(Object.values(state.filters).sort((a, b) => a.id.localeCompare(b.id)));
+	}, 'filterSummary')
 };
 
 const actions = {

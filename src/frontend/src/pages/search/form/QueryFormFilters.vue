@@ -15,15 +15,43 @@
 				:key="tab.id"
 				:id="tab.id"
 			>
-				<MetadataFilter v-for="filter in tab.filters" :filter="filter" :key="filter.id"/>
+				<Component v-for="filter in tab.filters" :key="filter.id"
+					:is="`filter-${filter.uiType}`"
+
+					:id="filter.id"
+					:corpusStore="corpusStore"
+					:value="filter.value"
+					:metadata="filter.metadata"
+					:initialLuceneState="initialLuceneState"
+
+					@change-value="updateFilterValue(filter.id, $event)"
+					@change-lucene="updateLuceneValue(filter.id, $event)"
+					@change-lucene-summary="updateLuceneSummary(filter.id, $event)"
+				/>
+
+				<!-- <MetadataFilter v-for="filter in tab.filters" :filter="filter" :key="filter.id"/> -->
 			</div>
 		</div>
 		</template>
 		<div v-else class="tab-content form-horizontal filter-container"> <!-- TODO don't use tab-content when no actually tabs -->
-			<MetadataFilter v-for="filter in allFilters" :filter="filter" :key="filter.id"/>
+			<Component v-for="filter in allFilters" :key="filter.id"
+				:is="`filter-${filter.uiType}`"
+
+				:id="filter.id"
+				:corpusStore="corpusStore"
+				:value="filter.value"
+				:metadata="filter.metadata"
+				:initialLuceneState="initialLuceneState"
+
+				@change-value="updateFilterValue(filter.id, $event)"
+				@change-lucene="updateLuceneValue(filter.id, $event)"
+				@change-lucene-summary="updateLuceneSummary(filter.id, $event)"
+			/>
+
+			<!-- <MetadataFilter v-for="filter in allFilters" :filter="filter" :key="filter.id"/> -->
 		</div>
 
-		<FilterOverview type="docs" :indexId="indexId"/>
+		<FilterOverview/>
 	</div>
 </template>
 
@@ -34,47 +62,66 @@ import * as CorpusStore from '@/store/search/corpus';
 import * as FilterStore from '@/store/search/form/filters';
 
 import FilterOverview from '@/pages/search/form/FilterOverview.vue';
-import MetadataFilter from '@/pages/search/form/Filter.vue';
+// import MetadataFilter from '@/pages/search/form/Filter.vue';
+
+import FilterAutocomplete from '@/components/filters/FilterAutocomplete.vue';
+import FilterCheckbox from '@/components/filters/FilterCheckbox.vue';
+import FilterRadio from '@/components/filters/FilterRadio.vue';
+import FilterRange from '@/components/filters/FilterRange.vue';
+import FilterSelect from '@/components/filters/FilterSelect.vue';
+import FilterText from '@/components/filters/FilterText.vue';
 
 import * as AppTypes from '@/types/apptypes';
 
 export default Vue.extend({
 	components: {
 		FilterOverview,
-		MetadataFilter
+		// MetadataFilter,
+		'filter-autocomplete': FilterAutocomplete,
+		'filter-checkbox': FilterCheckbox,
+		'filter-radio': FilterRadio,
+		'filter-range': FilterRange,
+		'filter-select': FilterSelect,
+		'filter-text': FilterText,
 	},
 	data: () => ({
+		corpusStore: CorpusStore,
 		activeTab: null as string|null,
 	}),
+	methods: {
+		updateFilterValue(id: string, value: any) { FilterStore.actions.filterValue({id, value}); },
+		updateLuceneValue(id: string, lucene: string|undefined) { FilterStore.actions.filterLucene({id, lucene}); },
+		updateLuceneSummary(id: string, summary: string|undefined) { FilterStore.actions.filterSummary({id, summary}); },
+	},
 	computed: {
-		allFilters(): AppTypes.NormalizedMetadataField[] {
-			return this.tabs.reduce((acc, tab) => {
+		initialLuceneState: FilterStore.get.initialLuceneState,
+		allFilters(): FilterStore.FilterState[] {
+			return this.tabs.reduce<FilterStore.FilterState[]>((acc, tab) => {
 				acc.push(...tab.filters);
 				return acc;
-			}, [] as AppTypes.NormalizedMetadataField[]);
+			}, []);
 		},
 		tabs(): Array<{
-			id: string;
-			displayName: string;
-			filters: AppTypes.NormalizedMetadataField[],
+			name: string;
+			filters: FilterStore.FilterState[],
 			activeFilters: number
 		}> {
-			return CorpusStore.get.metadataGroups().map(g => ({
-				id: g.name.replace(/[^\w]+/g, '_') + '_meta_' + (this as any).uid,
-				displayName: g.name,
-				filters: g.fields,
-				activeFilters: g.fields.filter(f => FilterStore.get.activeFiltersMap()[f.id] != null).length
+			const groups = FilterStore.get.filterGroups();
+			return groups.map(g => ({
+				name: g.groupId,
+				filters: g.filters,
+				activeFilters: g.filters.filter(f => !!f.lucene).length
 			}));
 		},
 		useTabs() {
 			return this.tabs.length > 1;
 		},
-		indexId() { return CorpusStore.getState().id }
+		indexId() { return CorpusStore.getState().id; }
 	},
 	created() {
-		this.activeTab = this.useTabs ? this.tabs[0].id : null
+		this.activeTab = this.useTabs ? this.tabs[0].name : null;
 	}
-})
+});
 </script>
 
 <style lang="scss">

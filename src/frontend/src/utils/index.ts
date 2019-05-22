@@ -2,6 +2,7 @@ import URI from 'urijs';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
+import { FilterState } from '@/store/search/form/filters';
 
 export function makeWildcardRegex(original: string) {
 	return original
@@ -79,85 +80,89 @@ export function words(context: BLTypes.BLHitSnippetPart, prop: string, doPunctBe
  * If the array is empty or null, undefined is returned,
  * so it can be placed directly in the request paremeters without populating the object if the value is not present.
  */
-export function getFilterString(filters: AppTypes.FilterValue[]): string|undefined {
-	if (!filters.length) {
-		return undefined;
-	}
+export function getFilterString(filters: FilterState[]): string|undefined {
+	return filters.map(f => f.lucene).filter(lucene => !!lucene).join(' AND ') || undefined;
 
-	const filterStrings = [] as string[];
-	for (const filter of filters) {
-		if (!filter.values.length) {
-			continue;
-		}
+	// const filterStrings = [] as string[];
 
-		if (filterStrings.length) {
-			filterStrings.push(' AND ');
-		}
+	// for (const filter of filters) {
+	// 	if (!filter.values.length) {
+	// 		continue;
+	// 	}
 
-		switch (filter.type) {
-			case 'range': {
-				// NOTE: range filter has hidden defaults for unset field (min, max), see https://github.com/INL/corpus-frontend/issues/234
-				filterStrings.push(filter.id, ':', '[', filter.values[0] || '0', ' TO ', filter.values[1] || '9999', ']');
-				break;
-			}
-			case 'select':
-			case 'checkbox':
-			case 'radio': {
-				// Values for these uiTypes are predetermined (i.e. user can't type in these fields)
-				// So copy out the values without wildcard substitution or regex escaping.
-				// Surround each individual values with quotes, and surround the total with brackets
-				filterStrings.push(filter.id, ':', '("', filter.values.join('" "'), '")');
-				break;
-			}
-			case 'text':
-			case 'combobox': {
-				const resultParts = [] as string[];
+	// 	if (filterStrings.length) {
+	// 		filterStrings.push(' AND ');
+	// 	}
 
-				filter.values.forEach(value => {
-					const quotedParts = value.split(/"/);
-					let inQuotes = false;
-					for (let part of quotedParts) {
-						if (inQuotes && part.match(/\s+/)) {
-							// Inside quotes and containing whitespace.
-							// Preserve the quotes, they will implicitly escape every special character inside the string
-							// NOTE: wildcards do not work for phrases anyway. (https://lucene.apache.org/core/2_9_4/queryparsersyntax.html#Wildcard%20Searches)
-							resultParts.push(' "');
-							resultParts.push(part);
-							resultParts.push('"');
-						} else {
-							// Outside quotes. Split on whitespace and escape (excluding wildcards) the strings
-							// This means wildcards are preserved.
-							// NOTE: we need to account for this by checking whether any term contains whitespace
-							// while deserializing the lucene query, and reverse this escaping.
-							// This is done in UrlStateParser
-							part = part.trim();
-							if (part.length > 0) {
-								// resultParts.push(' "');
-								resultParts.push(...part.split(/\s+/).map(escapeLucene));
-								// resultParts.push(part.split(/\s+/).join('" "'));
-								// resultParts.push('" ');
-							}
-						}
-						inQuotes = !inQuotes;
-					}
-				});
+	// 	switch (filter.type) {
+	// 		case 'range': {
+	// 			// NOTE: range filter has hidden defaults for unset field (min, max), see https://github.com/INL/corpus-frontend/issues/234
+	// 			filterStrings.push(filter.id, ':', '[', filter.values[0] || '0', ' TO ', filter.values[1] || '9999', ']');
+	// 			break;
+	// 		}
+	// 		case 'select':
+	// 		case 'checkbox':
+	// 		case 'radio': {
+	// 			// Values for these uiTypes are predetermined (i.e. user can't type in these fields)
+	// 			// So copy out the values without wildcard substitution or regex escaping.
+	// 			// Surround each individual values with quotes, and surround the total with brackets
+	// 			filterStrings.push(filter.id, ':', '("', filter.values.join('" "'), '")');
+	// 			break;
+	// 		}
+	// 		case 'text':
+	// 		case 'combobox': {
+	// 			const resultParts = [] as string[];
 
-				filterStrings.push(filter.id, ':', '(' + resultParts.join('').trim(), ')');
-				break;
-			}
-			default: {
-				// This should never happen unless new uiTypes are added
-				// in which case, maybe the values need to be handled in a special way
-				throw new Error('Unimplemented value serialization for metadata filter uiType ' + filter.type + '!');
-			}
-		}
-	}
+	// 			filter.values.forEach(value => {
+	// 				const quotedParts = value.split(/"/);
+	// 				let inQuotes = false;
+	// 				for (let part of quotedParts) {
+	// 					if (inQuotes && part.match(/\s+/)) {
+	// 						// Inside quotes and containing whitespace.
+	// 						// Preserve the quotes, they will implicitly escape every special character inside the string
+	// 						// NOTE: wildcards do not work for phrases anyway. (https://lucene.apache.org/core/2_9_4/queryparsersyntax.html#Wildcard%20Searches)
+	// 						resultParts.push(' "');
+	// 						resultParts.push(part);
+	// 						resultParts.push('"');
+	// 					} else {
+	// 						// Outside quotes. Split on whitespace and escape (excluding wildcards) the strings
+	// 						// This means wildcards are preserved.
+	// 						// NOTE: we need to account for this by checking whether any term contains whitespace
+	// 						// while deserializing the lucene query, and reverse this escaping.
+	// 						// This is done in UrlStateParser
+	// 						part = part.trim();
+	// 						if (part.length > 0) {
+	// 							// resultParts.push(' "');
+	// 							resultParts.push(...part.split(/\s+/).map(escapeLucene));
+	// 							// resultParts.push(part.split(/\s+/).join('" "'));
+	// 							// resultParts.push('" ');
+	// 						}
+	// 					}
+	// 					inQuotes = !inQuotes;
+	// 				}
+	// 			});
 
-	return filterStrings.join('') || undefined;
+	// 			filterStrings.push(filter.id, ':', '(' + resultParts.join('').trim(), ')');
+	// 			break;
+	// 		}
+	// 		default: {
+	// 			// This should never happen unless new uiTypes are added
+	// 			// in which case, maybe the values need to be handled in a special way
+	// 			throw new Error('Unimplemented value serialization for metadata filter uiType ' + filter.type + '!');
+	// 		}
+	// 	}
+	// }
+
+	// return filterStrings.join('') || undefined;
 }
 
 // NOTE: range filter has hidden defaults for unset field (min, max), see https://github.com/INL/corpus-frontend/issues/234
-export const getFilterSummary = (filters: AppTypes.FilterValue[]) => filters
+export const getFilterSummary = (filters: FilterState[]) => filters
+	.filter(f => !!f.lucene && !!f.summary)
+	.map(f => `${f.displayName}: ${f.summary}`)
+	.join(', ');
+
+export const getFilterSummaryOld = (filters: AppTypes.FilterValue[]) => filters
 	.map(({id, type, values}) =>
 		`${id} = [${type==='range'?`${values[0] || '0'} to ${values[1] || '9999'}`:values.join(', ')}]`).join(', ');
 
@@ -225,7 +230,7 @@ export function getDocumentUrl(pid: string, cql?: string) {
 		.toString();
 }
 
-type MapOf<T> = {
+export type MapOf<T> = {
 	[key: string]: T;
 };
 
@@ -233,14 +238,20 @@ type KeysOfType<Base, Condition> = keyof Pick<Base, {
 	[Key in keyof Base]: Base[Key] extends Condition ? Key : never
 }[keyof Base]>;
 
-export function makeMapReducer<T>(k: KeysOfType<T, string>): (m: MapOf<T>, t: T) => MapOf<T> {
-	return (acc: MapOf<T>, v: T): MapOf<T> => {
+export function makeMapReducer<T, V extends (t: T) => any = (t: T) => T>(k: KeysOfType<T, string>, m?: V): (m: MapOf<ReturnType<V>>, t: T) => MapOf<ReturnType<V>> {
+	return (acc: MapOf<ReturnType<V>>, v: T): MapOf<ReturnType<V>> => {
 		const kv = v[k] as any as string;
-		acc[kv] = v;
+		acc[kv] = m ? m(v) : v;
 		return acc;
 	};
 }
 
-export function reductio<T>(t: T[]|undefined|null, k: KeysOfType<T, string>): MapOf<T> {
-	return t ? t.reduce(makeMapReducer<T>(k), {}) : {};
+/**
+ * Turn an array of type T[] into a map of type {[key: string]: T};
+ * @param t the array of objects to place in a map.
+ * @param k a key in the objects to use as key in the map.
+ * @param m (optional) a mapping function to apply to values.
+ */
+export function mapReduce<T, V extends (t: T) => any = (t: T) => T>(t: T[]|undefined|null, k: KeysOfType<T, string>, m?: V): MapOf<ReturnType<V>> {
+	return t ? t.reduce(makeMapReducer<T>(k, m), {}) : {};
 }

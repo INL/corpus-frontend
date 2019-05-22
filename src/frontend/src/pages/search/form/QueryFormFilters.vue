@@ -16,13 +16,10 @@
 				:id="tab.id"
 			>
 				<Component v-for="filter in tab.filters" :key="filter.id"
-					:is="`filter-${filter.uiType}`"
-
-					:id="filter.id"
-					:corpusStore="corpusStore"
+					:is="filter.componentName"
+					:definition="filter"
+					:textDirection="textDirection"
 					:value="filter.value"
-					:metadata="filter.metadata"
-					:initialLuceneState="initialLuceneState"
 
 					@change-value="updateFilterValue(filter.id, $event)"
 					@change-lucene="updateLuceneValue(filter.id, $event)"
@@ -35,13 +32,10 @@
 		</template>
 		<div v-else class="tab-content form-horizontal filter-container"> <!-- TODO don't use tab-content when no actually tabs -->
 			<Component v-for="filter in allFilters" :key="filter.id"
-				:is="`filter-${filter.uiType}`"
-
-				:id="filter.id"
-				:corpusStore="corpusStore"
+				:is="filter.componentName"
+				:definition="filter"
+				:textDirection="textDirection"
 				:value="filter.value"
-				:metadata="filter.metadata"
-				:initialLuceneState="initialLuceneState"
 
 				@change-value="updateFilterValue(filter.id, $event)"
 				@change-lucene="updateLuceneValue(filter.id, $event)"
@@ -62,27 +56,12 @@ import * as CorpusStore from '@/store/search/corpus';
 import * as FilterStore from '@/store/search/form/filters';
 
 import FilterOverview from '@/pages/search/form/FilterOverview.vue';
-// import MetadataFilter from '@/pages/search/form/Filter.vue';
-
-import FilterAutocomplete from '@/components/filters/FilterAutocomplete.vue';
-import FilterCheckbox from '@/components/filters/FilterCheckbox.vue';
-import FilterRadio from '@/components/filters/FilterRadio.vue';
-import FilterRange from '@/components/filters/FilterRange.vue';
-import FilterSelect from '@/components/filters/FilterSelect.vue';
-import FilterText from '@/components/filters/FilterText.vue';
 
 import * as AppTypes from '@/types/apptypes';
 
 export default Vue.extend({
 	components: {
 		FilterOverview,
-		// MetadataFilter,
-		'filter-autocomplete': FilterAutocomplete,
-		'filter-checkbox': FilterCheckbox,
-		'filter-radio': FilterRadio,
-		'filter-range': FilterRange,
-		'filter-select': FilterSelect,
-		'filter-text': FilterText,
 	},
 	data: () => ({
 		corpusStore: CorpusStore,
@@ -94,16 +73,13 @@ export default Vue.extend({
 		updateLuceneSummary(id: string, summary: string|undefined) { FilterStore.actions.filterSummary({id, summary}); },
 	},
 	computed: {
-		initialLuceneState: FilterStore.get.initialLuceneState,
-		allFilters(): FilterStore.FilterState[] {
-			return this.tabs.reduce<FilterStore.FilterState[]>((acc, tab) => {
-				acc.push(...tab.filters);
-				return acc;
-			}, []);
+		textDirection(): string { return CorpusStore.getState().textDirection; },
+		allFilters(): FilterStore.FullFilterState[] {
+			return this.tabs.flatMap(t => t.filters);
 		},
 		tabs(): Array<{
 			name: string;
-			filters: FilterStore.FilterState[],
+			filters: FilterStore.FullFilterState[],
 			activeFilters: number
 		}> {
 			const groups = FilterStore.get.filterGroups();

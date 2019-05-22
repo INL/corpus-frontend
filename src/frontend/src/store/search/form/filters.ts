@@ -5,77 +5,186 @@
  * When the user actually executes the query a snapshot of the state is copied to the query module.
  */
 import Vue from 'vue';
-import {getStoreBuilder} from 'vuex-typex';
+import { getStoreBuilder } from 'vuex-typex';
 
-import {RootState} from '@/store/search/';
+import { RootState } from '@/store/search/';
 import * as CorpusModule from '@/store/search/corpus';
 
-import {FilterValue} from '@/types/apptypes';
+import { FilterDefinition } from '@/types/apptypes';
 
-import {debugLog} from '@/utils/debug';
+import { debugLog } from '@/utils/debug';
+import { paths } from '@/api';
+import { getFilterString, mapReduce, getFilterSummary } from '@/utils';
 
-type ModuleRootState = {
-	[key: string]: FilterValue;
+export type FilterState = {
+	lucene: string|undefined;
+	value: any|undefined;
+	summary: string|undefined;
 };
 
-const initialState: ModuleRootState = {};
+export type FullFilterState = FilterDefinition&FilterState;
+
+type ModuleRootState = {
+	filters: {
+		[filterId: string]: FullFilterState;
+	},
+	filterGroups: {
+		[groupId: string]: {
+			groupId: string;
+			filterIds: string[];
+		};
+	};
+};
+
+type ExternalModuleRootState = ModuleRootState['filters'];
+
+/** Populated on store initialization and afterwards */
+const initialState: ModuleRootState = {
+	filters: {},
+	filterGroups: {}
+};
 
 const namespace = 'filters';
 const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, Object.assign({}, initialState));
 const getState = b.state();
 
 const get = {
+	luceneQuery: b.read(state => {
+		// NOTE: sort the filters so a stable query is created
+		// this is important for comparing history entries
+		const activeFilters: FullFilterState[] = get.activeFilters().concat().sort((l, r) => l.id.localeCompare(r.id));
+		return getFilterString(activeFilters);
+	} , 'luceneQuery'),
+	luceneQuerySummary: b.read(state => {
+		// NOTE: sort the filters so a stable query is created
+		// this is important for comparing history entries
+		const activeFilters: FullFilterState[] = get.activeFilters().concat().sort((l, r) => l.id.localeCompare(r.id));
+		return getFilterSummary(activeFilters);
+	}, 'luceneQuerySummary'),
+
 	/** Return all filters holding a value */
-	activeFilters: b.read(state => Object.values(state).filter(f => {
-		return f.values.some(v => !!v); // any non-empty string, for ranges this is just lower or higher entered, for the rest it's anything.
-	}), 'activeFilters'),
-	/** Return activeFilters as assiciative map instead of array */
-	activeFiltersMap: b.read((state): ModuleRootState => {
-		return get.activeFilters().reduce((acc, f) => {
-			acc[f.id] = f;
-			return acc;
-		}, {} as ModuleRootState);
+	activeFilters: b.read(state => Object.values(state.filters).filter(f => !!f.lucene), 'activeFilters'),
+	/** Return activeFilters as associative map instead of array */
+	activeFiltersMap: b.read(state => {
+		const activeFilters: FullFilterState[] = get.activeFilters();
+		return mapReduce(activeFilters, 'id');
 	}, 'activeFiltersMap'),
 
-	filterValue(id: string) { return getState()[id]; },
-};
+	filterGroups: b.read(state => Object.values(state.filterGroups).map(group => ({
+		...group,
+		filters: group.filterIds.map(id => state.filters[id])
+	})), 'filterGroups'),
 
-const privateActions = {
-	initFilter: b.commit((state, payload: FilterValue) => Vue.set(state, payload.id, payload), 'filter_init'),
+	filterValue(id: string) { return getState().filters[id]; },
 };
 
 const actions = {
-	filter: b.commit((state, {id, values}: {id: string, values: string[]}) => state[id].values = values, 'filter'),
-	reset: b.commit(state => Object.values(state).forEach(filter => filter.values = getInitialValue(filter.type)), 'filter_reset'),
+	registerFilterGroup: b.commit((state, filterGroup: {groupId: string, filterIds: string[]}) => {
+		if (filterGroup.groupId in state.filterGroups) {
+			// tslint:disable-next-line
+			console.warn(`Filter group ${filterGroup.groupId} already exists`);
+			return;
+		}
 
-	replace: b.commit((state, payload: ModuleRootState) => {
+		Vue.set<ModuleRootState['filterGroups'][string]>(state.filterGroups, filterGroup.groupId, {
+			groupId: filterGroup.groupId,
+			filterIds: filterGroup.filterIds.filter(id => state.filters[id] != null),
+		});
+	}, 'registerFilterGroup'),
+
+	registerFilter: b.commit((state, filter: FilterDefinition) => {
+		if (filter.id in state.filters) {
+			// tslint:disable-next-line
+			console.warn(`Filter ${filter.id} already exists`);
+			return;
+		}
+
+		if (filter.groupId) {
+			if(!(filter.groupId in state.filterGroups)) {
+				actions.registerFilterGroup({
+					filterIds: [],
+					groupId: filter.groupId,
+				});
+			}
+			state.filterGroups[filter.groupId].filterIds.push(filter.id);
+		}
+
+		Vue.set<FullFilterState>(state.filters, filter.id, {...filter, value: undefined, lucene: undefined, summary: undefined});
+	}, 'registerFilter'),
+
+	filter: b.commit((state, {id, lucene, value, summary}: Pick<FullFilterState, 'id'|'lucene'|'value'|'summary'>) => {
+		const f = state.filters[id];
+		if (f) {
+			f.lucene = lucene || undefined;
+			f.summary = summary || undefined;
+			f.value = value !== undefined ? value : undefined;
+		}
+	}, 'filter'),
+	filterValue: b.commit((state, {id, value}: Pick<FullFilterState, 'id'|'value'>) => state.filters[id].value = value !== undefined ? value : null, 'filter_value'),
+	filterLucene: b.commit((state, {id, lucene}: Pick<FullFilterState, 'id'|'lucene'>) => state.filters[id].lucene = lucene, 'filter_lucene'),
+	filterSummary: b.commit((state, {id, summary}: Pick<FullFilterState, 'id'|'summary'>) => state.filters[id].summary = summary, 'filter_summary'),
+	reset: b.commit(state => Object.values(state.filters).forEach(filter => filter.value = filter.lucene = filter.summary = undefined), 'filter_reset'),
+
+	replace: b.commit((state, payload: ExternalModuleRootState) => {
 		actions.reset();
 		Object.values(payload).forEach(actions.filter);
 	}, 'replace'),
 };
 
 const init = () => {
-	CorpusModule.get.metadataGroups().flatMap(g => g.fields).forEach(m => {
-		privateActions.initFilter({
-			type: m.uiType,
-			id: m.id,
-			values: getInitialValue(m.uiType)
+	CorpusModule.get.metadataGroups().forEach(g => {
+		actions.registerFilterGroup({
+			filterIds: g.fields.map(f => f.id),
+			groupId: g.name
+		});
+
+		g.fields.forEach(f => {
+			let componentName;
+			let metadata: any;
+			switch (f.uiType) {
+				case 'checkbox':
+					componentName = 'filter-checkbox';
+					metadata = f.values || [];
+					break;
+				case 'combobox':
+					componentName = 'filter-autocomplete';
+					metadata = paths.autocompleteMetadata(CorpusModule.getState().id, f.id);
+					break;
+				case 'radio'   :
+					componentName = 'filter-radio';
+					metadata = f.values || [];
+					break;
+				case 'range'   :
+					componentName = 'filter-range';
+					metadata = undefined;
+					break;
+				case 'select'  :
+					componentName = 'filter-select';
+					metadata = f.values || [];
+					break;
+				case 'text'    :
+				default        :
+					componentName = 'filter-text';
+					metadata = undefined;
+					break;
+			}
+
+			actions.registerFilter({
+				componentName,
+				description: f.description,
+				displayName: f.displayName,
+				groupId: f.groupId,
+				id: f.id,
+				metadata,
+			});
 		});
 	});
 
 	debugLog('Finished initializing filter module state shape');
 };
 
-function getInitialValue(uiType: FilterValue['type']) {
-	return uiType === 'select' ? [] :
-		uiType === 'combobox' ? [] :
-		uiType === 'range' ? ['',''] :
-		uiType === 'checkbox' ? [] :
-		['']; // normal text, radio
-}
-
 export {
-	ModuleRootState,
+	ExternalModuleRootState as ModuleRootState,
 
 	getState,
 	get,

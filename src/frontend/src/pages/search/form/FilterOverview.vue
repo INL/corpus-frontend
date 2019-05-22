@@ -1,7 +1,8 @@
 <template>
 	<div class="filter-overview">
-		<!-- <span v-for="filter in filters" :key="filter.id">{{filter.displayName}}: <i>{{filter.values.join(', ')}}</i>&nbsp;</span> -->
-		<span>{{filterSummary}}</span>
+		<span v-for="filter in activeFilters" :key="filter.id">
+			{{filter.displayName}}: <i>{{filter.summary}}</i>&nbsp;
+		</span>
 
 		<div class="sub-corpus-size">
 			<template v-if="error">
@@ -63,35 +64,7 @@ export default Vue.extend({
 		error: null as null|ApiError,
 	}),
 	computed: {
-		// whatever, this will be cached.
-		// todo tidy up
-		/** Get the metadata displayvalues for all fields and values in for form of map.fieldId.value */
-		metadataValueMaps(): {[fieldId: string]: {[value: string]: string; }} {
-			return Object.values(CorpusStore.getState().metadataFields)
-			.reduce((fieldValues, field: AppTypes.NormalizedMetadataField) => {
-				fieldValues[field.id] = (field.values || [])!.reduce((acc, val) => {
-					acc[val.value] = val.label;
-					return acc;
-				}, {} as {[key: string]: string})
-				return fieldValues;
-			}, {} as {[key: string]: {[key: string]: string}})
-		},
-
-		filters(): ExtendedFilter[] {
-			const metadataFields = CorpusStore.getState().metadataFields;
-			return FilterStore.get.activeFilters().map(f => {
-				const {displayName} = metadataFields[f.id];
-
-				const displayValues = this.metadataValueMaps[f.id] || {};
-
-				return {
-					...f,
-					displayName,
-					values: f.values.map(value => displayValues[value] != null ? displayValues[value] : value)
-				};
-			});
-		},
-		filterSummary(): string { return getFilterSummary(FilterStore.get.activeFilters()); },
+		activeFilters: FilterStore.get.activeFilters,
 
 		totalCorpusTokens(): number { return CorpusStore.getState().tokenCount; },
 		totalCorpusDocs(): number { return CorpusStore.getState().documentCount; }

@@ -2,7 +2,7 @@
 	<div
 		class="form-group filterfield"
 		:id="id"
-		:data-filterfield-type="_componentTag"
+		:data-filterfield-type="definition.componentName"
 	>
 		<label class="col-xs-12" :for="inputId">{{displayName}}</label>
 		<div class="col-xs-12">
@@ -25,11 +25,11 @@
 </template>
 
 <script lang="ts">
-import BaseFilter from '@/components/filters/Filter.vue';
+import BaseFilter from '@/components/filters/Filter';
 // @ts-ignore
 import Autocomplete from '@/mixins/autocomplete';
 
-import {paths} from '@/api';
+import { paths } from '@/api';
 import { escapeLucene, MapOf, unescapeLucene } from '@/utils';
 import { FilterValue } from '../../types/apptypes';
 
@@ -43,6 +43,7 @@ export default BaseFilter.extend({
 		}
 	},
 	computed: {
+		autocomplete(): boolean { return true; },
 		autocompleteUrl(): string { return this.definition.metadata as string; },
 
 		luceneQuery(): string|undefined {

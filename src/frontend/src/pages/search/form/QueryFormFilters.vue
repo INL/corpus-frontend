@@ -19,7 +19,7 @@
 					:is="filter.componentName"
 					:definition="filter"
 					:textDirection="textDirection"
-					:value="filter.value"
+					:value="filter.value != null ? filter.value : undefined"
 
 					@change-value="updateFilterValue(filter.id, $event)"
 					@change-lucene="updateLuceneValue(filter.id, $event)"
@@ -69,8 +69,8 @@ export default Vue.extend({
 	}),
 	methods: {
 		updateFilterValue(id: string, value: any) { FilterStore.actions.filterValue({id, value}); },
-		updateLuceneValue(id: string, lucene: string|undefined) { FilterStore.actions.filterLucene({id, lucene}); },
-		updateLuceneSummary(id: string, summary: string|undefined) { FilterStore.actions.filterSummary({id, summary}); },
+		updateLuceneValue(id: string, lucene: string|null) { FilterStore.actions.filterLucene({id, lucene}); },
+		updateLuceneSummary(id: string, summary: string|null) { FilterStore.actions.filterSummary({id, summary}); },
 	},
 	computed: {
 		textDirection(): string { return CorpusStore.getState().textDirection; },

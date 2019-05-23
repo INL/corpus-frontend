@@ -17,9 +17,9 @@ import { paths } from '@/api';
 import { getFilterString, mapReduce, getFilterSummary } from '@/utils';
 
 export type FilterState = {
-	lucene: string|undefined;
-	value: any|undefined;
-	summary: string|undefined;
+	lucene: string|null;
+	value: any|null;
+	summary: string|null;
 };
 
 export type FullFilterState = FilterDefinition&FilterState;
@@ -109,21 +109,19 @@ const actions = {
 			state.filterGroups[filter.groupId].filterIds.push(filter.id);
 		}
 
-		Vue.set<FullFilterState>(state.filters, filter.id, {...filter, value: undefined, lucene: undefined, summary: undefined});
+		Vue.set<FullFilterState>(state.filters, filter.id, {...filter, value: null, lucene: null, summary: null});
 	}, 'registerFilter'),
 
 	filter: b.commit((state, {id, lucene, value, summary}: Pick<FullFilterState, 'id'|'lucene'|'value'|'summary'>) => {
 		const f = state.filters[id];
-		if (f) {
-			f.lucene = lucene || undefined;
-			f.summary = summary || undefined;
-			f.value = value !== undefined ? value : undefined;
-		}
+		f.lucene = lucene || null;
+		f.summary = summary || null;
+		f.value = value != null ? value : null;
 	}, 'filter'),
-	filterValue: b.commit((state, {id, value}: Pick<FullFilterState, 'id'|'value'>) => state.filters[id].value = value !== undefined ? value : null, 'filter_value'),
-	filterLucene: b.commit((state, {id, lucene}: Pick<FullFilterState, 'id'|'lucene'>) => state.filters[id].lucene = lucene, 'filter_lucene'),
-	filterSummary: b.commit((state, {id, summary}: Pick<FullFilterState, 'id'|'summary'>) => state.filters[id].summary = summary, 'filter_summary'),
-	reset: b.commit(state => Object.values(state.filters).forEach(filter => filter.value = filter.lucene = filter.summary = undefined), 'filter_reset'),
+	filterValue: b.commit((state, {id, value}: Pick<FullFilterState, 'id'|'value'>) => state.filters[id].value = value != null ? value : null, 'filter_value'),
+	filterLucene: b.commit((state, {id, lucene}: Pick<FullFilterState, 'id'|'lucene'>) => state.filters[id].lucene = lucene || null, 'filter_lucene'),
+	filterSummary: b.commit((state, {id, summary}: Pick<FullFilterState, 'id'|'summary'>) => state.filters[id].summary = summary || null, 'filter_summary'),
+	reset: b.commit(state => Object.values(state.filters).forEach(f => f.value = f.summary = f.lucene = null), 'filter_reset'),
 
 	replace: b.commit((state, payload: ExternalModuleRootState) => {
 		actions.reset();

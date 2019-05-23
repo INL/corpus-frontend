@@ -53,17 +53,30 @@ export default BaseFilter.extend({
 				return (inQuotes && containsWhitespace && v.length > 0) ? `"${v}"` : v.split(/\s+/).filter(s => !!s).map(escapeLucene);
 			});
 
-			return `${this.id}:(${resultParts.join(' ')})`;
+			return resultParts.length ? `${this.id}:(${resultParts.join(' ')})` : null;
 		},
 		luceneQuerySummary(): string|null {
-			const value = this.value && this.value.trim() as string|undefined;
-			return value ? `["${value.split(/"/).filter(v => !!v).join('", "')}"]` : null;
+			let surroundWithQuotes = false;
+
+			const value = (this.value as string)
+			.split(/"/)
+			.flatMap((v, i) => {
+				const inQuotes = (i % 2) !== 0;
+				const containsWhitespace = !!v.match(/\s+/);
+				if (inQuotes && containsWhitespace && v.length > 0) {
+					surroundWithQuotes = true;
+					return v;
+				} else {
+					return v.split(/\s+/).filter(vv => !!vv);
+				}
+			})
+			return (value.length >= 2 || surroundWithQuotes) ? value.map(vv => `"${vv}"`).join(', ') : value.join(', ');
 		}
 	},
 	methods: {
-		decodeInitialState(filterValues: MapOf<FilterValue>): string|undefined {
+		decodeInitialState(filterValues: MapOf<FilterValue>): string|null {
 			const v = filterValues[this.id];
-			return v ? v.values.map(s => s.match(/"/) ? s : unescapeLucene(s)).join(' ') || undefined : undefined;
+			return v ? v.values.map(s => s.match(/"/) ? s : unescapeLucene(s)).join(' ') || null : null;
 		}
 	}
 });

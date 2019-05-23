@@ -28,7 +28,6 @@ import * as GlobalResultsModule from '@/store/search/results/global';
 import * as HitResultsModule from '@/store/search/results/hits';
 
 import {FilterValue, AnnotationValue} from '@/types/apptypes';
-import { RemoveProperties } from '@/types/helpers';
 
 import { RecordPropsDefinition } from 'vue/types/options';
 
@@ -102,8 +101,8 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 
 				const value: FilterModule.FilterState = {
 					value: vueComponentInstance.decodeInitialState(parsedQuery),
-					summary: undefined,
-					lucene: undefined
+					summary: null,
+					lucene: null
 				};
 				Vue.set(vueComponentInstance.$props, 'value', value.value);
 				value.summary = vueComponentInstance.summary;
@@ -114,7 +113,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 				};
 			});
 
-			return {};
+			return mapReduce(parsedQuery2, 'id');
 		} catch (error) {
 			debugLog('Cannot decode lucene query ', luceneString, error);
 			return {};

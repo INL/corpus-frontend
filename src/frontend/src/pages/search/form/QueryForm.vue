@@ -111,16 +111,10 @@ export default Vue.extend({
 		}
 	},
 	created() {
-		this.subscriptions.push(selectedSubCorpus$.subscribe(
-			v => {
-				this.subCorpusStats = this.subCorpusStats || v; // NOTE: don't null last result while calculation is running
-				this.error = null;
-			},
-			e => {
-				this.subCorpusStats = null;
-				this.error = e;
-			}
-		));
+		this.subscriptions.push(selectedSubCorpus$.subscribe(v => {
+			this.subCorpusStats = v.value || null;
+			this.error = v.error || null;
+		}));
 	},
 	destroyed() {
 		this.subscriptions.forEach(s => s.unsubscribe());

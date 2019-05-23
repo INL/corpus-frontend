@@ -11,10 +11,7 @@ const baseFilter = Vue.extend({
 			required: true
 		},
 		// you should probably set a default value in the extended component.
-		value: {
-			type: undefined as any as () => any, // any is a bit weird to define
-			required: true,
-		},
+		value: undefined as any as () => any,
 		textDirection: {
 			type: String as () => 'ltr'|'rtl',
 			required: true
@@ -24,8 +21,8 @@ const baseFilter = Vue.extend({
 		// Implemented as multiple events because our value is a prop
 		// and thus computing lucene is a second event (value out through event -> value in through prop -> lucene out)
 		e_input(value: any) { this.$emit('change-value', value); },
-		e_changelucene(lucene: string|undefined) { this.$emit('change-lucene', lucene); },
-		e_changelucenesummary(summary: string|undefined) { this.$emit('change-lucene-summary', summary); },
+		e_changelucene(lucene: string|null) { this.$emit('change-lucene', lucene); },
+		e_changelucenesummary(summary: string|null) { this.$emit('change-lucene-summary', summary); },
 
 		/**
 		 * Called on first load, convert the initial query to a valid state for the value prop,
@@ -41,12 +38,12 @@ const baseFilter = Vue.extend({
 		displayName(): string { return this.definition.displayName || this.definition.id; },
 		description(): string|undefined { return this.definition.description; },
 
-		luceneQuery(): string|undefined { throw new Error('missing luceneQuery() implementation in filter'); },
-		luceneQuerySummary(): string|undefined { throw new Error('missing luceneQuerySummary implementation in filter'); }
+		luceneQuery(): string|null { throw new Error('missing luceneQuery() implementation in filter'); },
+		luceneQuerySummary(): string|null { throw new Error('missing luceneQuerySummary implementation in filter'); }
 	},
 	watch: {
-		luceneQuery(v: string|undefined) { this.e_changelucene(v); },
-		luceneQuerySummary(v: string|undefined) { this.e_changelucene(v); },
+		luceneQuery(v: string|null) { this.e_changelucene(v); },
+		luceneQuerySummary(v: string|null) { this.e_changelucenesummary(v); },
 	},
 });
 

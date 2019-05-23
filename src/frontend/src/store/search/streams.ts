@@ -1,7 +1,7 @@
 import URI from 'urijs';
 
-import { ReplaySubject, Observable, merge, fromEvent } from 'rxjs';
-import { debounceTime, switchMap, map, distinctUntilChanged, shareReplay, filter } from 'rxjs/operators';
+import { ReplaySubject, Observable, merge, fromEvent, of, Notification, from } from 'rxjs';
+import { debounceTime, switchMap, map, distinctUntilChanged, shareReplay, filter, materialize, tap } from 'rxjs/operators';
 import cloneDeep from 'clone-deep';
 
 import * as RootStore from '@/store/search/';
@@ -21,9 +21,9 @@ import UrlStateParser from '@/store/search/util/url-state-parser';
 import * as Api from '@/api';
 
 import * as BLTypes from '@/types/blacklabtypes';
-import { FilterValue } from '@/types/apptypes';
 import jsonStableStringify from 'json-stable-stringify';
 import { debugLog } from '@/utils/debug';
+import { Cancel } from 'axios';
 
 type QueryState = {
 	params?: BLTypes.BLSearchParameters,
@@ -55,29 +55,31 @@ export const selectedSubCorpus$ = merge(
 			includetokencount: true,
 			waitfortotal: true
 		})),
-		switchMap(params => new Observable<BLTypes.BLDocResults>(subscriber => {
+		switchMap(params => new Observable<Notification<BLTypes.BLDocResults>>(subscriber => {
 			// Speedup: we know the totals beforehand when there are no filters: mock a reply
 			if (!params.filter) {
-				subscriber.next({
+				subscriber.next(Notification.createNext<BLTypes.BLDocResults>({
 					docs: [],
 					summary: {
 						numberOfDocs: CorpusStore.getState().documentCount,
 						stillCounting: false,
 						tokensInMatchingDocuments: CorpusStore.getState().tokenCount,
 					}
-				} as any);
+				} as any));
+
+				subscriber.next(Notification.createComplete());
+				subscriber.complete();
 				return;
 			}
 
 			const {request, cancel} = Api.blacklab.getDocs(CorpusStore.getState().id, params, {
 				headers: { 'Cache-Control': 'no-cache' }
-			});
-			request.then(
-				// Sometimes a result comes in anyway after cancelling the request (and closing the subscription),
-				// in this case the subscriber will bark at us if we try to push more values, so check for this.
-				(result: BLTypes.BLDocResults) => { if (!subscriber.closed) { subscriber.next(result); } },
-				(error: Api.ApiError) => { if (!subscriber.closed) { subscriber.error(error); } }
-			);
+			}) as {
+				request: Promise<BLTypes.BLDocResults>;
+				cancel: Api.Canceler;
+			};
+
+			from(request).pipe(materialize()).subscribe(subscriber);
 
 			// When the observer is closed, cancel the ajax request
 			return cancel;
@@ -87,11 +89,10 @@ export const selectedSubCorpus$ = merge(
 	// And the value-clearing stream, it always emits on changes
 	// The idea is that if the last active filter is removed, the value is clear, and no new value is ever produced,
 	// but when filters are changed, we don't fire a query right away.
-	metadata$.pipe(map(v => null))
+	metadata$.pipe(map(v => null), materialize())
 )
 .pipe(
-	// And finally remove subsequent nulls to prevent uneccesary rerenders when results are cleared repetitively
-	distinctUntilChanged(),
+	filter(v => v.kind !== 'C'),
 	// And cache the last value so there's always something to display
 	shareReplay(1),
 );

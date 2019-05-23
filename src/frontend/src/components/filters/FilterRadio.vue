@@ -14,8 +14,8 @@
 					:id="inputId+'_'+index"
 					:checked="value === option.value"
 
-					@click="e_input($event.target.checked ? '' : option.value) /* clear if clicked again */"
-					@input.space="e_input($event.target.checked ? '' : option.value) /* clear if clicked again */"
+					@click="changeValue($event, option.value) /* clear if clicked again */"
+					@input.space="changeValue($event, option.value) /* clear if clicked again */"
 				> {{option.label || option.value}}</label>
 			</div>
 		</div>
@@ -39,26 +39,23 @@ export default BaseFilter.extend({
 	computed: {
 		options(): Option[] { return this.definition.metadata as Option[]; },
 		optionsMap(): MapOf<Option> { return mapReduce(this.options, 'value'); },
-		luceneQuery(): string|undefined {
+		luceneQuery(): string|null {
 			const value = this.value as string;
-			return this.value ? `${this.id}:(${escapeLucene(this.value)})` : undefined;
+			return this.value ? `${this.id}:(${escapeLucene(this.value)})` : null;
 		},
-		luceneQuerySummary(): string|undefined {
+		luceneQuerySummary(): string|null {
 			const value = this.value as string;
-			return value ? this.optionsMap[value].label || value : undefined;
+			return value ? this.optionsMap[value].label || value : null;
 		}
 	},
 	methods: {
-		toggleCheckbox(value: string, checked: boolean) {
-			this.e_input({
-				...this.value,
-				[value]: checked
-			});
-		},
-
-		decodeInitialState(filterValues: MapOf<FilterValue>): string|undefined {
+		decodeInitialState(filterValues: MapOf<FilterValue>): string|null {
 			const v = filterValues[this.id];
-			return v ? v.values.map(unescapeLucene).find(val => this.optionsMap[val] != null) : undefined;
+			return v ? v.values.map(unescapeLucene).find(val => this.optionsMap[val] != null) || null: null;
+		},
+		changeValue(event: Event, value: string) {
+			const t = event.target as HTMLInputElement;
+			this.e_input(t.checked ? value : undefined);
 		}
 	},
 });

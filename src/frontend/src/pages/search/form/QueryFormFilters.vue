@@ -4,16 +4,16 @@
 
 		<template v-if="useTabs">
 		<ul class="nav nav-tabs">
-			<li v-for="tab in tabs" :class="{'active': activeTab===tab.id}" :key="tab.id" @click.prevent="activeTab=tab.id">
-				<a :href="'#'+tab.id">{{tab.displayName}} <span v-if="tab.activeFilters" class="badge" style="background-color:#aaa">{{tab.activeFilters}}</span></a>
+			<li v-for="tab in tabs" :class="{'active': activeTab===tab.name}" :key="tab.name" @click.prevent="activeTab=tab.name">
+				<a :href="'#'+tab.name">{{tab.name}} <span v-if="tab.activeFilters" class="badge" style="background-color:#aaa">{{tab.activeFilters}}</span></a>
 			</li>
 		</ul>
 
 		<div class="tab-content">
 			<div v-for="tab in tabs"
-				:class="['tab-pane', 'form-horizontal', 'filter-container', {'active': activeTab===tab.id}]"
-				:key="tab.id"
-				:id="tab.id"
+				:class="['tab-pane', 'form-horizontal', 'filter-container', {'active': activeTab===tab.name}]"
+				:key="tab.name"
+				:id="tab.name"
 			>
 				<Component v-for="filter in tab.filters" :key="filter.id"
 					:is="filter.componentName"

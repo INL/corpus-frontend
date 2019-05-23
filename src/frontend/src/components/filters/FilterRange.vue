@@ -2,7 +2,7 @@
 	<div
 		class="form-group filterfield"
 		:id="id"
-		:data-filterfield-type="_componentTag"
+		:data-filterfield-type="definition.componentName"
 	>
 		<label class="col-xs-12" :for="inputId">{{displayName}}</label>
 		<div class="col-xs-4">
@@ -33,7 +33,7 @@
 </template>
 
 <script lang="ts">
-import BaseFilter from '@/components/filters/Filter.vue';
+import BaseFilter from '@/components/filters/Filter';
 import { FilterValue } from '@/types/apptypes';
 import { MapOf } from '@/utils';
 

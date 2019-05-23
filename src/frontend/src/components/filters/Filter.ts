@@ -1,13 +1,10 @@
-<script lang="ts">
 import Vue from 'vue';
 
 // just for whatever metadata might be needed here.
-import * as CorpusStore from '@/store/search/corpus';
-import { FilterValue, NormalizedAnnotation, FilterDefinition } from '@/types/apptypes';
+import { FilterValue, FilterDefinition } from '@/types/apptypes';
 import { MapOf } from '@/utils';
-import { FilterState } from '@/store/search/form/filters';
 
-export default Vue.extend({
+const baseFilter = Vue.extend({
 	props: {
 		definition: {
 			type: Object as () => FilterDefinition,
@@ -52,4 +49,5 @@ export default Vue.extend({
 		luceneQuerySummary(v: string|undefined) { this.e_changelucene(v); },
 	},
 });
-</script>
+
+export default baseFilter;

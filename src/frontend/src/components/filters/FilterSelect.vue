@@ -18,7 +18,8 @@
 				:placeholder="displayName"
 				:options="options"
 
-				v-model="value"
+				:value="value"
+				@input="e_input($event)"
 			/>
 		</div>
 	</div>
@@ -45,21 +46,23 @@ export default BaseFilter.extend({
 	computed: {
 		options(): Option[] { return this.definition.metadata as Option[]; },
 		optionsMap(): MapOf<Option> { return mapReduce(this.options, 'value'); },
-		luceneQuery(): string|undefined {
+		luceneQuery(): string|null {
 			const value = this.value as string[];
-			return value.length ? `${this.id}:(${value.map(escapeLucene).join(' ')})` : undefined;
+			return value.length ? `${this.id}:(${value.map(escapeLucene).join(' ')})` : null;
 		},
 		// use option displaynames in the summary
-		luceneQuerySummary(): string|undefined {
-			const value = this.value as string[];
-			return value.length ? `["${value.map(v => this.optionsMap[v].label || v).join('", "')}"]` : undefined;
+		luceneQuerySummary(): string|null {
+			const selected = (this.value as string[])
+			.map(v => this.optionsMap[v].label || v);
+
+			return selected.length >= 2 ? selected.map(v => `"${v}"`).join(', ') : selected[0] || null;
 		}
 	},
 	methods: {
-		decodeInitialState(filterValues: MapOf<FilterValue>): string[]|undefined {
+		decodeInitialState(filterValues: MapOf<FilterValue>): string[]|null {
 			const v = filterValues[this.id];
 			const values = v ? v.values.map(unescapeLucene).filter(val => this.optionsMap[val] != null) : [];
-			return values.length ? values : undefined;
+			return values.length ? values : null;
 		}
 	},
 });

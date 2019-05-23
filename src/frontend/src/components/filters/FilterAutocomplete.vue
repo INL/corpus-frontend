@@ -16,7 +16,7 @@
 				:dir="textDirection"
 				:value="value"
 
-				@input="e_input"
+				@input="e_input($event.target.value)"
 
 				ref="autocomplete"
 			/>
@@ -32,6 +32,7 @@ import Autocomplete from '@/mixins/autocomplete';
 import { paths } from '@/api';
 import { escapeLucene, MapOf, unescapeLucene } from '@/utils';
 import { FilterValue } from '../../types/apptypes';
+import { flatMap } from 'rxjs/operators';
 
 export default BaseFilter.extend({
 	mixins: [Autocomplete],
@@ -46,10 +47,10 @@ export default BaseFilter.extend({
 		autocomplete(): boolean { return true; },
 		autocompleteUrl(): string { return this.definition.metadata as string; },
 
-		luceneQuery(): string|undefined {
+		luceneQuery(): string|null {
 			const value = this.value as string;
 			if (!value || !value.trim()) {
-				return undefined;
+				return null;
 			}
 
 			const resultParts = value
@@ -60,20 +61,33 @@ export default BaseFilter.extend({
 				return (inQuotes && containsWhitespace && v.length > 0) ? `"${v}"` : v.split(/\s+/).filter(s => !!s).map(escapeLucene);
 			});
 
-			return `${this.id}:(${resultParts.join(' ')})`;
+			return resultParts.length ? `${this.id}:(${resultParts.join(' ')})` : null;
 		},
 
-		luceneQuerySummary(): string|undefined {
-			const value = this.value && this.value.trim() as string|undefined;
-			return value ? `["${value.split(/"/).filter(v => !!v).join('", "')}"]` : undefined;
+		luceneQuerySummary(): string|null {
+			let surroundWithQuotes = false;
+
+			const value = (this.value as string)
+			.split(/"/)
+			.flatMap((v, i) => {
+				const inQuotes = (i % 2) !== 0;
+				const containsWhitespace = !!v.match(/\s+/);
+				if (inQuotes && containsWhitespace && v.length > 0) {
+					surroundWithQuotes = true;
+					return v;
+				} else {
+					return v.split(/\s+/).filter(vv => !!vv);
+				}
+			})
+			return (value.length >= 2 || surroundWithQuotes) ? value.map(vv => `"${vv}"`).join(', ') : value.join(', ');
 		},
 	},
 	methods: {
 		autocompleteSelected(value: string) { this.e_input(value); },
 
-		decodeInitialState(filterValues: MapOf<FilterValue>): string|undefined {
+		decodeInitialState(filterValues: MapOf<FilterValue>): string|null {
 			const v = filterValues[this.id];
-			return v && v.values.length ? v.values.map(unescapeLucene).join(' ') : undefined;
+			return v && v.values.length ? v.values.map(unescapeLucene).join(' ') : null;
 		}
 	},
 });

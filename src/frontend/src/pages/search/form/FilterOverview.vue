@@ -1,8 +1,8 @@
 <template>
 	<div class="filter-overview">
-		<span v-for="filter in activeFilters" :key="filter.id">
-			{{filter.displayName}}: <i>{{filter.summary}}</i>&nbsp;
-		</span>
+		<div v-for="filter in activeFilters" :key="filter.id">
+			{{filter.displayName}}: <i>{{filter.summary}}</i>
+		</div>
 
 		<div class="sub-corpus-size">
 			<template v-if="error">
@@ -34,7 +34,7 @@
 <script lang="ts">
 import Vue from 'vue';
 
-import {Subscription} from 'rxjs';
+import {Subscription, Notification} from 'rxjs';
 
 import * as CorpusStore from '@/store/search/corpus';
 import * as FilterStore from '@/store/search/form/filters';
@@ -70,16 +70,10 @@ export default Vue.extend({
 		totalCorpusDocs(): number { return CorpusStore.getState().documentCount; }
 	},
 	created() {
-		this.subscriptions.push(selectedSubCorpus$.subscribe(
-			v => {
-				this.subCorpusStats = v;
-				this.error = null;
-			},
-			e => {
-				this.subCorpusStats = null;
-				this.error = e;
-			}
-		));
+		this.subscriptions.push(selectedSubCorpus$.subscribe(v => {
+			this.subCorpusStats = v.value || null;
+			this.error = v.error || null;
+		}));
 	},
 	destroyed() {
 		this.subscriptions.forEach(s => s.unsubscribe());

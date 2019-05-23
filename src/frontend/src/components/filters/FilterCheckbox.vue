@@ -43,7 +43,7 @@ export default BaseFilter.extend({
 	computed: {
 		options(): Option[] { return this.definition.metadata as Option[]; },
 		optionsMap(): MapOf<Option> { return mapReduce(this.options, 'value'); },
-		luceneQuery(): string|undefined {
+		luceneQuery(): string|null {
 			// Values for checkboxes are predetermined (i.e. user can't type in these fields)
 			// So copy out the values without wildcard substitution or regex escaping.
 			// Surround each individual values with quotes, and surround the total with brackets
@@ -51,14 +51,14 @@ export default BaseFilter.extend({
 				.filter(([value, isSelected]) => isSelected)
 				.map(([value, isSelected]) => `"${value}"`);
 
-			return selected.length ? `${this.id}:(${selected.map(escapeLucene).join(' ')})` : undefined;
+			return selected.length ? `${this.id}:(${selected.map(escapeLucene).join(' ')})` : null;
 		},
-		luceneQuerySummary(): string|undefined {
+		luceneQuerySummary(): string|null {
 			const selected = Object.entries(this.value)
 				.filter(([value, isSelected]) => isSelected)
-				.map(([value, isSelected]) => value);
+				.map(([value, isSelected]) => this.optionsMap[value].label || value);
 
-			return selected.length ? `["${selected.map(v => this.optionsMap[v].label || v).join('", "')}"]` : undefined;
+			return selected.length >= 2 ? selected.map(v => `"${v}"`).join(', ') : selected[0] || null;
 		}
 	},
 	methods: {
@@ -69,12 +69,12 @@ export default BaseFilter.extend({
 			});
 		},
 
-		decodeInitialState(filterValues: MapOf<FilterValue>): MapOf<boolean>|undefined {
+		decodeInitialState(filterValues: MapOf<FilterValue>): MapOf<boolean>|null {
 			const v = filterValues[this.id];
 
 			const values = v ? v.values.map(unescapeLucene).map(val => this.optionsMap[val]).filter(opt => opt != null) : undefined;
 			if (!values || !values.length) {
-				return undefined;
+				return null;
 			}
 
 			return mapReduce(values, 'value', value => true);

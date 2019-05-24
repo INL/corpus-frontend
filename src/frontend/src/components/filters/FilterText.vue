@@ -12,11 +12,8 @@
 
 				:id="inputId"
 				:placeholder="displayName"
-				:autocomplete="autocomplete"
 				:dir="textDirection"
 				:value="value"
-
-				ref="autocomplete"
 
 				@input="e_input"
 			/>

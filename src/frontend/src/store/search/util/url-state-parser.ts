@@ -1,11 +1,11 @@
 import Vue from 'vue';
-import URI from 'urijs';
 
 import memoize from 'memoize-decorator';
 
 import BaseUrlStateParser from '@/store/util/url-state-parser-base';
+import LuceneQueryParser from 'lucene-query-parser';
 
-import {makeRegexWildcard, unescapeLucene, mapReduce, MapOf} from '@/utils';
+import {makeRegexWildcard, mapReduce, MapOf} from '@/utils';
 import parseCql, {Attribute} from '@/utils/cqlparser';
 import parseLucene from '@/utils/luceneparser';
 import {debugLog} from '@/utils/debug';
@@ -29,7 +29,6 @@ import * as HitResultsModule from '@/store/search/results/hits';
 
 import {FilterValue, AnnotationValue} from '@/types/apptypes';
 
-import { RecordPropsDefinition } from 'vue/types/options';
 import BaseFilter from '@/components/filters/Filter';
 
 /**
@@ -81,6 +80,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 		}
 
 		try {
+			const luceneParsedThing = LuceneQueryParser.parse(luceneString);
 			const parsedQuery: MapOf<FilterValue> = mapReduce(parseLucene(luceneString), 'id');
 			const parsedQuery2: FilterModule.FullFilterState[] = Object.values(this.registeredMetadataFilters).map(filter => {
 				const vueComponent = Vue.component(filter.componentName) as typeof BaseFilter;
@@ -100,17 +100,20 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 					},
 				}) as any;
 
-				const value: FilterModule.FilterState = {
-					value: vueComponentInstance.decodeInitialState(parsedQuery),
+				const componentValue = vueComponentInstance.decodeInitialState(parsedQuery, luceneParsedThing);
+				const storeValue: FilterModule.FilterState = {
+					value: componentValue != null ? componentValue : undefined,
 					summary: null,
 					lucene: null
 				};
-				Vue.set(vueComponentInstance.$props, 'value', value.value);
-				value.summary = vueComponentInstance.summary;
-				value.lucene = vueComponentInstance.lucene;
+				if (componentValue != null) { // don't overwrite default value
+					Vue.set(vueComponentInstance.$props, 'value', componentValue);
+					storeValue.summary = vueComponentInstance.summary;
+					storeValue.lucene = vueComponentInstance.lucene;
+				}
 				return {
 					...filter,
-					...value
+					...storeValue
 				};
 			});
 

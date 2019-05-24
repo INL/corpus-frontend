@@ -30,6 +30,7 @@ import * as HitResultsModule from '@/store/search/results/hits';
 import {FilterValue, AnnotationValue} from '@/types/apptypes';
 
 import { RecordPropsDefinition } from 'vue/types/options';
+import BaseFilter from '@/components/filters/Filter';
 
 /**
  * Decode the current url into a valid page state configuration.
@@ -81,8 +82,8 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 
 		try {
 			const parsedQuery: MapOf<FilterValue> = mapReduce(parseLucene(luceneString), 'id');
-			const parsedQuery2: FilterModule.FullFilterState[] = Object.values(this.registeredMetadataFilters.filters).map(filter => {
-				const vueComponent = Vue.component(filter.componentName);
+			const parsedQuery2: FilterModule.FullFilterState[] = Object.values(this.registeredMetadataFilters).map(filter => {
+				const vueComponent = Vue.component(filter.componentName) as typeof BaseFilter;
 				if (!vueComponent) {
 					// tslint:disable-next-line
 					console.warn(`Filter ${filter.id} defines its vue component as ${filter.componentName} but it does not exist! (have you registered it properly with vue?)`);
@@ -90,13 +91,13 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 				}
 
 				const vueComponentInstance = new vueComponent({
-					props: {
+					propsData: {
 						// don't set a null value, allow the component to set this prop's default value (if configured).
 						// or it may throw errors when running compute methods.
 						value: undefined,
 						textDirection: CorpusModule.getState().textDirection,
-						definition: filter
-					} as RecordPropsDefinition<{}>
+						definition: filter,
+					},
 				}) as any;
 
 				const value: FilterModule.FilterState = {

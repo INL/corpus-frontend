@@ -41,7 +41,7 @@ export default BaseFilter.extend({
 		}
 	},
 	computed: {
-		options(): Option[] { return this.definition.metadata as Option[]; },
+		options(): Option[] { return this.definition.metadata; },
 		optionsMap(): MapOf<Option> { return mapReduce(this.options, 'value'); },
 		luceneQuery(): string|null {
 			// Values for checkboxes are predetermined (i.e. user can't type in these fields)
@@ -49,9 +49,9 @@ export default BaseFilter.extend({
 			// Surround each individual values with quotes, and surround the total with brackets
 			const selected = Object.entries(this.value)
 				.filter(([value, isSelected]) => isSelected)
-				.map(([value, isSelected]) => `"${value}"`);
+				.map(([value, isSelected]) => escapeLucene(value, false));
 
-			return selected.length ? `${this.id}:(${selected.map(escapeLucene).join(' ')})` : null;
+			return selected.length ? `${this.id}:(${selected.join(' ')})` : null;
 		},
 		luceneQuerySummary(): string|null {
 			const selected = Object.entries(this.value)

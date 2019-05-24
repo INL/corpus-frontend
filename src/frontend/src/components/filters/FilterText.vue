@@ -48,9 +48,13 @@ export default BaseFilter.extend({
 			const resultParts = value
 			.split(/"/)
 			.flatMap((v, i) => {
+				if (!v) {
+					return [];
+				}
 				const inQuotes = (i % 2) !== 0;
 				const containsWhitespace = v.match(/\s+/);
-				return (inQuotes && containsWhitespace && v.length > 0) ? `"${v}"` : v.split(/\s+/).filter(s => !!s).map(escapeLucene);
+
+				return inQuotes ? escapeLucene(v, false) : v.split(/\s+/).filter(s => !!s).map(val => escapeLucene(val, true));
 			});
 
 			return resultParts.length ? `${this.id}:(${resultParts.join(' ')})` : null;
@@ -69,14 +73,14 @@ export default BaseFilter.extend({
 				} else {
 					return v.split(/\s+/).filter(vv => !!vv);
 				}
-			})
+			});
 			return (value.length >= 2 || surroundWithQuotes) ? value.map(vv => `"${vv}"`).join(', ') : value.join(', ');
 		}
 	},
 	methods: {
 		decodeInitialState(filterValues: MapOf<FilterValue>): string|null {
 			const v = filterValues[this.id];
-			return v ? v.values.map(s => s.match(/"/) ? s : unescapeLucene(s)).join(' ') || null : null;
+			return v ? v.values.map(unescapeLucene).map(val => val.match(/\s+/) ? `"${val}"` : val).join(' ') || null : null;
 		}
 	}
 });

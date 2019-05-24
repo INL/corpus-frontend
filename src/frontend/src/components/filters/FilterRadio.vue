@@ -41,7 +41,7 @@ export default BaseFilter.extend({
 		optionsMap(): MapOf<Option> { return mapReduce(this.options, 'value'); },
 		luceneQuery(): string|null {
 			const value = this.value as string;
-			return this.value ? `${this.id}:(${escapeLucene(this.value)})` : null;
+			return this.value ? `${this.id}:(${escapeLucene(this.value, false)})` : null;
 		},
 		luceneQuerySummary(): string|null {
 			const value = this.value as string;

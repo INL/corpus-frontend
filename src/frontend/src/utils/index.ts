@@ -20,14 +20,28 @@ export function makeRegexWildcard(original: string) {
 	.replace(/_ESC_PERIOD_/g, '.'); // unescape \. to .
 }
 
-/** Escapes every lucene special character including double quotes, except wildcards (? and *) */
-export function escapeLucene(original: string) {
+/**
+ * Escapes the lucene term. This is done by surrounding it by quotes, unless wildcards (* and ?) should be preserved,
+ * in which case characters are escaped on an individual basis.
+ * Preserving wildcards is only possible when the string does not contain whitespace, as that is the term delimited and cannot be escaped
+ * except by surrounding the term with quotes, which implicitly escapes wildcards.
+ *
+ * The resultant string should NOT need to be be surrounded by quotes again.
+ */
+export function escapeLucene(original: string, preserveWildcards: boolean) {
+	if (!preserveWildcards || original.match(/\s+/)) {
+		return `"${original.replace(/"/g, '\\$1')}"`;
+	}
 	return original.replace(/(\+|-|&&|\|\||!|\(|\)|{|}|\[|]|\^|"|~|:|\\)/g, '\\$1');
 }
 
 /** Unescapes every lucene special character including double quotes, except wildcards */
 export function unescapeLucene(original: string) {
-	return original.replace(/\\(\+|-|&&|\|\||!|\(|\)|{|}|\[|]|\^|"|~|:|\\)/g, '$1');
+	if (original.startsWith('"') && original.endsWith('"') && !original.endsWith('\\"')) {
+		return original.substr(1, original.length - 2).replace(/\\(")/g, '$1');
+	}
+
+	return original.replace(/\\(\+|-|&&|\|\||!|\(|\)|{|}|\[|]|\^|"|~|:|\\|\*|\?)/g, '$1');
 }
 
 export function NaNToNull(n: number) { return isNaN(n) ? null : n; }

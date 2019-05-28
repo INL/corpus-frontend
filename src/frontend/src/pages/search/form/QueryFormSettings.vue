@@ -16,7 +16,7 @@
 									data-name="resultsPerPage"
 									hideEmpty
 
-									:options="['20','50','100','200'].map(value => ({value, label: `${value} results`}))"
+									:options="pageSizeOptions"
 
 									v-model="pageSize"
 								/>
@@ -33,7 +33,7 @@
 										data-name="sampleMode"
 
 										hideEmpty
-										:options="['percentage', 'count']"
+										:options="sampleModeOptions"
 
 										@input="focusSampleSize"
 
@@ -78,12 +78,19 @@ import * as RootStore from '@/store/search/';
 import * as GlobalViewSettings from '@/store/search/results/global';
 import * as ResultsViewSettings from '@/store/search/results';
 
-import SelectPicker from '@/components/SelectPicker.vue';
+import SelectPicker,{ Option } from '@/components/SelectPicker.vue';
 
 export default Vue.extend({
 	components: {
 		SelectPicker,
 	},
+	data: (): {
+		sampleModeOptions: Array<GlobalViewSettings.ModuleRootState['sampleMode']>,
+		pageSizeOptions: Option[],
+	} => ({
+		sampleModeOptions: ['percentage', 'count'],
+		pageSizeOptions: ['20','50','100','200'].map(value => ({value, label: `${value} results`}))
+	}),
 	computed: {
 		viewedResultsSettings: RootStore.get.viewedResultsSettings,
 		pageSize: {
@@ -95,7 +102,7 @@ export default Vue.extend({
 		},
 		sampleMode: {
 			get() { return GlobalViewSettings.getState().sampleMode; },
-			set(v: string) {
+			set(v: GlobalViewSettings.ModuleRootState['sampleMode']) {
 				GlobalViewSettings.actions.sampleMode(v);
 				ResultsViewSettings.actions.resetPage();
 			}

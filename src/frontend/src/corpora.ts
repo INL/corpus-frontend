@@ -158,15 +158,17 @@ createHandler({selector: 'select[data-autoupdate="format"]', event: DataEvent.FO
 	});
 
 	const template = `
-	<optgroup label="Presets">
-		{{#builtinFormats}}
-		<option title="{{displayName}}" value="{{id}}" data-content="{{displayName}} <small>({{shortId}})</small>">{{displayName}}</option>
-		{{/builtinFormats}}
-	</optgroup>
+	{{#userFormats.0}}
 	<optgroup label="{{userName}}">
 		{{#userFormats}}
 		<option title="{{displayName}}" value="{{id}}" data-content="{{displayName}} <small>({{shortId}})</small>">{{displayName}}</option>
 		{{/userFormats}}
+	</optgroup>
+	{{/userFormats.0}}
+	<optgroup label="Presets">
+		{{#builtinFormats}}
+		<option title="{{displayName}}" value="{{id}}" data-content="{{displayName}} <small>({{shortId}})</small>">{{displayName}}</option>
+		{{/builtinFormats}}
 	</optgroup>`;
 
 	this

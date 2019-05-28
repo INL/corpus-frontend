@@ -190,7 +190,7 @@ export default Vue.extend({
 					this.scroll = false;
 					window.scroll({
 						behavior: 'smooth',
-						top: this.$el.offsetTop - 150
+						top: (this.$el as HTMLElement).offsetTop - 150
 					});
 				}
 			});
@@ -400,6 +400,14 @@ export default Vue.extend({
 				})),
 				disabled: this.results != null && !this.isDocs
 			}));
+			opts.push({
+				label: 'Documents',
+				options: [{
+					label: 'Sort by hits',
+					value: 'numhits'
+				}],
+				disabled: this.results != null && !this.isDocs
+			});
 
 			return opts.flatMap(group => {
 				return [

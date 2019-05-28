@@ -70,8 +70,6 @@ export default Vue.extend({
 	data: () => ({
 		snippet: null as null|BLTypes.BLHitSnippet,
 		error: null as null|AppTypes.ApiError,
-
-		tick: 0,
 	}),
 	computed: {
 		document: RootStore.get.document,
@@ -138,14 +136,6 @@ export default Vue.extend({
 					statsTab.style.display = 'none';
 					statsTab.removeAttribute('data-toggle');
 				}
-			}
-		},
-		tick: {
-			immediate: true,
-			handler(v: number) {
-				Vue.nextTick(() => {
-					// ++this.tick;
-				});
 			}
 		}
 	},

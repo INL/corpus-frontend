@@ -495,8 +495,6 @@ export default Vue.extend({
 					title: undefined
 				};
 
-				// debugger;
-
 				return {
 					key: headerId,
 					label: viewHeader.label || defaultHeader.label || fallback.label,
@@ -506,7 +504,6 @@ export default Vue.extend({
 				};
 			});
 
-			// debugger;
 			return c;
 		},
 
@@ -652,6 +649,8 @@ export default Vue.extend({
 				sort: undefined,
 			} as BLTypes.BLSearchParameters);
 
+			ga('send', 'event', 'results', 'concordances/load', id, requestParameters.first+requestParameters.number);
+
 			const apiCall = this.type === 'hits' ? Api.blacklab.getHits : Api.blacklab.getDocs;
 			const req: Promise<BLTypes.BLSearchResult> = apiCall(CorpusStore.getState().id, requestParameters).request;
 			cache.request = req;
@@ -684,7 +683,10 @@ export default Vue.extend({
 					});
 				}
 			})
-			.catch(err => cache.error = err)
+			.catch((err: Api.ApiError) => {
+				cache.error = err;
+				ga('send', 'exception', { exDescription: err.message, exFatal: false });
+			})
 			.finally(() => cache.request = null);
 		},
 
@@ -698,7 +700,7 @@ export default Vue.extend({
 			immediate: true,
 			handler(newVal: BLTypes.BLHitGroupResults|BLTypes.BLDocGroupResults, oldVal: BLTypes.BLHitGroupResults|BLTypes.BLDocGroupResults) {
 				const newConcordances = {} as any;
-				// @ts-ignore
+
 				(BLTypes.isHitGroups(newVal) ? newVal.hitGroups : newVal.docGroups).forEach((group: BLTypes.BLGroupResult) => {
 					newConcordances[group.identity] = null;
 				});

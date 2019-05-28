@@ -83,8 +83,17 @@ public class WebsiteConfig {
     /** Custom js to use */
     private String pathToCustomJs;
 
+    /** Should be a directory */
+    private String pathToFaviconDir;
+
     /** properties to show in result columns, empty string if no corpus set or not configured for this corpus */
     private String propColumns = "";
+
+    /** Allow suppressing pagination on the article page. This causes the article xslt to receive the full document instead of only a snippet */
+    private boolean pagination = true;
+
+    /** Google analytics key, analytics are disabled if not provided */
+    private String analyticsKey;
 
     /** Link to put in the top bar */
     private List<LinkInTopBar> linksInTopBar = new ArrayList<>();
@@ -135,7 +144,10 @@ public class WebsiteConfig {
         corpusOwner = MainServlet.getCorpusOwner(corpusId);
         pathToCustomJs = xmlConfig.getString("InterfaceProperties.CustomJs");
         pathToCustomCss = xmlConfig.getString("InterfaceProperties.CustomCss");
+        pathToFaviconDir = xmlConfig.getString("InterfaceProperties.FaviconDir", contextPath + "/img");
         propColumns = StringUtils.defaultIfEmpty(xmlConfig.getString("InterfaceProperties.PropColumns"), "");
+        pagination = xmlConfig.getBoolean("InterfaceProperties.Article.Pagination", true);
+        analyticsKey  = xmlConfig.getString("InterfaceProperties.Analytics.Key", "");
         if (corpusOwner != null) {
             linksInTopBar.add(new LinkInTopBar("My corpora", contextPath + "/corpora", false));
         }
@@ -206,7 +218,19 @@ public class WebsiteConfig {
         return pathToCustomJs;
     }
 
+    public String getPathToFaviconDir() {
+        return pathToFaviconDir;
+    }
+
     public String getPropColumns() {
         return propColumns;
+    }
+
+    public boolean usePagination() {
+        return pagination;
+    }
+
+    public String getAnalyticsKey() {
+        return analyticsKey;
     }
 }

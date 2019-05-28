@@ -1,6 +1,8 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import VueRx from 'vue-rx';
+// @ts-ignore
+import VuePursue from 'vue-pursue';
 
 import cloneDeep from 'clone-deep';
 import {getStoreBuilder} from 'vuex-typex';
@@ -301,11 +303,14 @@ const actions = {
 	}, 'replaceRoot'),
 };
 
-// shut up typescript, the state we pass here is merged with the modules initial states internally.
 // NOTE: only call this after creating all getters and actions etc.
 // NOTE: process.env is empty at runtime, but webpack inlines all values at compile time, so this check works.
 declare const process: any;
-const store = b.vuexStore({state: {} as RootState, strict: process.env.NODE_ENV === 'development'});
+const store = b.vuexStore({
+	state: {} as RootState, // shut up typescript, the state we pass here is merged with the modules initial states internally.
+	strict: process.env.NODE_ENV === 'development',
+	plugins: process.env.NODE_ENV === 'development' ? [VuePursue] : undefined
+});
 
 const init = () => {
 	// Load the corpus data, so we can derive values, fallbacks and defaults in the following modules

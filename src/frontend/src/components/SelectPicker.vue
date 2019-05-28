@@ -142,6 +142,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
+import JsonStableStringify from 'json-stable-stringify';
 
 export type SimpleOption = string;
 
@@ -355,7 +356,7 @@ export default Vue.extend({
 			}
 		},
 		close(event?: Event): void {
-			function isChild(parent: HTMLElement, child: HTMLElement|null) {
+			function isChild(parent: Element, child: Element|null) {
 				for (child; child; child = child.parentElement) {
 					if (child === parent) {
 						return true;
@@ -370,6 +371,9 @@ export default Vue.extend({
 				const isOwnLabelClick = (event.target as HTMLElement).closest(`label[for="${(this as any).dataId}"]`) != null;
 				// NOTE: assumes the template doesn't render a button as main interactable when this.editable is true
 				const isOwnInputClick = this.editable && isChild(this.$el, event.target! as HTMLElement);
+
+
+
 				if (isOwnMenuClick || isOwnInputClick || isOwnLabelClick) {
 					return;
 				}
@@ -390,7 +394,7 @@ export default Vue.extend({
 			const {left: containerLeft, top: containerTop} = container.getBoundingClientRect();
 			const {left: ownLeft, bottom: ownBottom, top: ownTop} = this.$el.getBoundingClientRect();
 
-			const width = this.$el.offsetWidth;
+			const width = (this.$el as HTMLElement).offsetWidth;
 			const left = ownLeft - containerLeft;
 			const top = ownBottom - containerTop;
 
@@ -406,7 +410,14 @@ export default Vue.extend({
 				return;
 			}
 
-			const focusIndex = this.loopingIncrementor(items.findIndex(e => e === document.activeElement), items.length, offset).next();
+			const currentFocusIndex = items.findIndex(e => e === document.activeElement);
+			// if arrow up is pressed, and nothing is in focus, we should focus the last element
+			// but if we offset -1 we move to the last index - 1, which isn't correct.
+			// so correct for that.
+			if (currentFocusIndex < 0 && offset < 0) {
+				offset++;
+			}
+			const focusIndex = this.loopingIncrementor(currentFocusIndex, items.length, offset).next();
 			this.focus(items[focusIndex] as HTMLElement);
 		},
 		focus(el: HTMLElement): void {
@@ -510,7 +521,18 @@ export default Vue.extend({
 				// Otherwise whatever, just discard the rest of the selections... It's not a valid state anyway
 				const cur = Object.values(this.internalModel)[0] as _uiOpt|undefined;
 
-				if (newOption !== cur || (newVal && newOption == null)) { // if newOption doesn't exist but there is a value passed in, replace the model, which will $emit a new empty value, which will (if our parent is a sane component) correct our state
+				if (
+					// also need to compare json, as a new option list may be set, which generates a new set of uiOptions
+					// but the list may be identical (just a different instance of the array containing the same values)
+					// So the newOption !== cur check might fail despite them being the same value.
+					// (simply comparing new.value !== old.value isn't enough, as they might have different labels, disabled state, etc)
+					(newOption !== cur && JsonStableStringify(newOption) !== JsonStableStringify(cur)) ||
+					// if newOption doesn't exist, but there is a value passed in,
+					// the component is in an invalid state,
+					// set our internal model to nothing selected, which will cause an $emit for a null value,
+					// which should correct the v-model in our parent.
+					(newVal && newOption == null)
+				) {
 					this.internalModel = newOption ? { [newOption.id]: newOption } : {};
 					if (!this.editable) {
 						this.$emit('change', newOption ? newOption.value : '');
@@ -559,7 +581,10 @@ export default Vue.extend({
 			immediate: true,
 			handler(cur: boolean, prev: boolean) {
 				if (cur) {
-					this.addGlobalListeners();
+					// Add a small delay on adding click listeners, or we risk intercepting our own bubbling opening click
+					// and immediately closing
+					// Use requestAnimationFrame because vue.nextTick is too early (event is still bubbling).
+					requestAnimationFrame(() => this.addGlobalListeners());
 					if (this.containerEl) {
 						this.reposition();
 					}

@@ -6,7 +6,7 @@ import nl.inl.corpuswebsite.utils.QueryServiceHandler;
 import nl.inl.corpuswebsite.utils.QueryServiceHandler.QueryException;
 import nl.inl.corpuswebsite.utils.XslTransformer;
 import org.apache.commons.lang.StringUtils;
-
+import org.apache.commons.lang3.tuple.MutablePair;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.TransformerException;
 import java.io.IOException;
@@ -64,8 +64,8 @@ public class ArticleResponse extends BaseResponse {
             return;
         }
         String formatIdentifier = servlet.getCorpusConfig(corpus).getCorpusDataFormat();
-        Optional<XslTransformer> articleStylesheet = servlet.getStylesheet(corpus, formatIdentifier);
-        Optional<XslTransformer> metadataStylesheet = servlet.getStylesheet(corpus, "meta");
+        Optional<XslTransformer> articleStylesheet = servlet.getStylesheet(corpus, "article", formatIdentifier);
+        Optional<XslTransformer> metadataStylesheet = servlet.getStylesheet(corpus, "meta", formatIdentifier);
 
         QueryServiceHandler articleContentRequest = new QueryServiceHandler(servlet.getWebserviceUrl(corpus) + "docs/" + pid + "/contents");
         QueryServiceHandler articleMetadataRequest = new QueryServiceHandler(servlet.getWebserviceUrl(corpus) + "docs/" + pid);
@@ -90,8 +90,10 @@ public class ArticleResponse extends BaseResponse {
         // since when you only get a subset of the document without begin and ending, the top of the xml tree will be missing
         // and xslt will not match anything (or match the wrong elements)
         // so blacklab will have to walk the tree and insert those tags in some manner.
-        contentRequestParameters.put("wordstart", new String[] { Integer.toString(getWordStart()) });
-        contentRequestParameters.put("wordend", new String[] { Integer.toString(getWordEnd()) });
+        if (servlet.getWebsiteConfig(this.corpus).usePagination()) {
+            contentRequestParameters.put("wordstart", new String[] { Integer.toString(getWordStart()) });
+            contentRequestParameters.put("wordend", new String[] { Integer.toString(getWordEnd()) });
+        }
 
         context.put("docId", pid);
 
@@ -135,31 +137,46 @@ public class ArticleResponse extends BaseResponse {
 
             context.put("article_meta", metadataStylesheet
                 .map(t -> {
+                    MutablePair<XslTransformer, String> p = new MutablePair<>();
+
                     try {
                         String meta = articleMetadataRequest.makeRequest(metadataRequestParameters);
-                        Matcher m = CAPTURE_DOCLENGTH_PATTERN.matcher(meta);
-                        if (m.find()) {
-                            int docLength = Integer.parseInt(m.group(1));
-                            int pageStart = getWordStart();
-                            int pageEnd = getWordEnd();
-                            int pageSize = servlet.getWordsToShow();
-                            String q = (query != null && !query.isEmpty()) ? ("&query="+esc.url(query)) : "";
+                        p.left = t;
+                        p.right = meta;
+                        return p;
+                    } catch (QueryException | IOException e) {
+                        return null;
+                    }
+                })
+                .map(p -> {
+                    XslTransformer t = p.left;
+                    String meta = p.right;
 
-                            context.put("docLength",docLength);
-                            context.put("pageStart",pageStart);
-                            context.put("pageSize",pageSize);
-                            context.put("pageEnd",pageEnd);
-                            if (pageStart > 0) {
-                                context.put("first_page", "?wordstart=0&wordend="+pageSize+(q.isEmpty() ? "" : q));
-                                context.put("previous_page", "?wordstart="+Math.max(0, pageStart-pageSize)+"&wordend="+pageStart+(q.isEmpty() ? "" : q));
-                            }
-                            if (pageEnd < docLength) {
-                                context.put("next_page", "?wordstart="+(pageEnd)+"&wordend="+Math.min(pageEnd+pageSize, docLength)+(q.isEmpty() ? "" : q));
-                                context.put("last_page", "?wordstart="+(docLength-pageSize)+"&wordend="+(docLength)+(q.isEmpty() ? "" : q));
-                            }
+                    Matcher m = CAPTURE_DOCLENGTH_PATTERN.matcher(meta);
+                    if (servlet.getWebsiteConfig(this.corpus).usePagination() && m.find()) {
+                        int docLength = Integer.parseInt(m.group(1));
+                        int pageStart = getWordStart();
+                        int pageEnd = getWordEnd();
+                        int pageSize = servlet.getWordsToShow();
+                        String q = (query != null && !query.isEmpty()) ? ("&query="+esc.url(query)) : "";
+
+                        context.put("docLength",docLength);
+                        context.put("pageStart",pageStart);
+                        context.put("pageSize",pageSize);
+                        context.put("pageEnd",pageEnd);
+                        if (pageStart > 0) {
+                            context.put("first_page", "?wordstart=0&wordend="+pageSize+(q.isEmpty() ? "" : q));
+                            context.put("previous_page", "?wordstart="+Math.max(0, pageStart-pageSize)+"&wordend="+pageStart+(q.isEmpty() ? "" : q));
                         }
+                        if (pageEnd < docLength) {
+                            context.put("next_page", "?wordstart="+(pageEnd)+"&wordend="+Math.min(pageEnd+pageSize, docLength)+(q.isEmpty() ? "" : q));
+                            context.put("last_page", "?wordstart="+(docLength-pageSize)+"&wordend="+(docLength)+(q.isEmpty() ? "" : q));
+                        }
+                    }
+
+                    try {
                         return t.transform(meta);
-                    } catch (TransformerException | IOException | QueryException e) {
+                    } catch (TransformerException e) {
                         return null;
                     }
                 })

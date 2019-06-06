@@ -92,7 +92,12 @@ const actions = {
 		});
 	}, 'registerFilterGroup'),
 
-	registerFilter: b.commit((state, filter: FilterDefinition) => {
+	registerFilter: b.commit((state, {filter, insertBefore}: {
+		/** Filter definition */
+		filter: FilterDefinition;
+		/** Optional: ID of another filter in this group before which to insert this filter, if omitted, the filter is appended at the end. */
+		insertBefore?: string;
+	}) => {
 		if (filter.id in state.filters) {
 			// tslint:disable-next-line
 			console.warn(`Filter ${filter.id} already exists`);
@@ -106,7 +111,10 @@ const actions = {
 					groupId: filter.groupId,
 				});
 			}
-			state.filterGroups[filter.groupId].filterIds.push(filter.id);
+
+			const group = state.filterGroups[filter.groupId];
+			const index = insertBefore != null ? group.filterIds.indexOf(insertBefore) : -1;
+			group.filterIds.splice(index !== -1 ? index : group.filterIds.length, 0, filter.id);
 		}
 
 		Vue.set<FullFilterState>(state.filters, filter.id, {...filter, value: null, lucene: null, summary: null});
@@ -168,12 +176,14 @@ const init = () => {
 			}
 
 			actions.registerFilter({
-				componentName,
-				description: f.description,
-				displayName: f.displayName,
-				groupId: f.groupId,
-				id: f.id,
-				metadata,
+				filter: {
+					componentName,
+					description: f.description,
+					displayName: f.displayName,
+					groupId: f.groupId,
+					id: f.id,
+					metadata,
+				}
 			});
 		});
 	});

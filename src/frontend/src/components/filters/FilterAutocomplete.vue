@@ -25,14 +25,15 @@
 </template>
 
 <script lang="ts">
-import FilterText from '@/components/filters/FilterText.vue';
-// @ts-ignore
-import Autocomplete from '@/mixins/autocomplete';
+import { flatMap } from 'rxjs/operators';
 
 import { paths } from '@/api';
 import { escapeLucene, MapOf, unescapeLucene } from '@/utils';
-import { FilterValue } from '../../types/apptypes';
-import { flatMap } from 'rxjs/operators';
+import { FilterValue } from '@/types/apptypes';
+
+// @ts-ignore
+import Autocomplete from '@/mixins/autocomplete';
+import FilterText from '@/components/filters/FilterText.vue';
 
 export default FilterText.extend({
 	mixins: [Autocomplete],

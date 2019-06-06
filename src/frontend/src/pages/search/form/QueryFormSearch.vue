@@ -9,13 +9,46 @@
 		</ul>
 		<div class="tab-content">
 			<div :class="['tab-pane form-horizontal', {'active': activePattern==='simple'}]" id="simple">
+				<!-- TODO render the full annotation instance? requires some changes to bind to store correctly and apply appropriate classes though -->
 				<div class="form-group form-group-lg">
 					<label class="control-label"
 						:for="firstMainAnnotation.id + '_' + uid"
 						:title="firstMainAnnotation.description || undefined"
 					>{{firstMainAnnotation.	displayName}}
 					</label>
-					<input
+
+					<SelectPicker v-if="firstMainAnnotation.uiType === 'select'"
+						data-width="100%"
+						data-class="btn btn-lg btn-default"
+
+						:searchable="firstMainAnnotation.options.length > 20"
+						:placeholder="firstMainAnnotation.displayName"
+						:data-id="firstMainAnnotation.id + '_' + uid"
+						:data-name="firstMainAnnotation.id + '_' + uid"
+						:data-dir="textDirection"
+
+						:options="firstMainAnnotation.options"
+
+						v-model="simple"
+					/>
+
+					<AutocompleteSimple v-else
+						:annotation="firstMainAnnotation"
+						v-model="simple"
+					>
+						<input
+							type="text"
+							class="form-control"
+
+							:id="firstMainAnnotation.id + '_' + uid"
+							:placeholder="firstMainAnnotation.displayName"
+							:dir="textDirection"
+							:autocomplete="firstMainAnnotation.uiType !== 'combobox'"
+							v-model="simple"
+						/>
+					</AutocompleteSimple>
+<!--
+					<input v-else
 						type="text"
 						class="form-control"
 
@@ -25,7 +58,7 @@
 						:dir="textDirection"
 
 						v-model="simple"
-					/>
+					/> -->
 				</div>
 			</div>
 			<div :class="['tab-pane form-horizontal', {'active': activePattern==='extended'}]" id="extended">
@@ -113,17 +146,48 @@ import * as GapStore from '@/store/search/form/gap';
 import * as HistoryStore from '@/store/search/history';
 
 import Annotation from '@/pages/search/form/Annotation.vue';
-
-import * as AppTypes from '@/types/apptypes';
-
+import SelectPicker from '@/components/SelectPicker.vue';
+// @ts-ignore
+import Autocomplete from '@/mixins/autocomplete';
 import uid from '@/mixins/uid';
 
-import {QueryBuilder} from '@/modules/cql_querybuilder';
+
+import { QueryBuilder } from '@/modules/cql_querybuilder';
+
+import { paths } from '@/api';
+import * as AppTypes from '@/types/apptypes';
+
+// TODO this is very hacky, but it works...
+const AutocompleteSimple = Vue.extend({
+	mixins: [Autocomplete],
+	// @ts-ignore
+	render() { return this._c('div', [this._t("default")], 2) },
+	props: {
+		annotation: Object as () => AppTypes.NormalizedAnnotation,
+		value: String,
+	},
+	data: () => ({
+		initialized: false,
+	}),
+	computed: {
+		autocomplete(): boolean { return this.annotation.uiType === 'combobox' && this.initialized; },
+		autocompleteUrl(): string { return paths.autocompleteAnnotation(CorpusStore.getState().id, this.annotation.annotatedFieldId, this.annotation.id); },
+	},
+	methods: {
+		autocompleteSelected(value: string) { this.$emit('input', value); },
+	},
+	mounted() {
+		this.$refs.autocomplete = this.$el.querySelector('input')!;
+		this.initialized = true;
+	}
+});
 
 export default Vue.extend({
 	mixins: [uid],
 	components: {
 		Annotation,
+		AutocompleteSimple,
+		SelectPicker
 	},
 	data: () => ({
 		parseQueryError: null as string|null,

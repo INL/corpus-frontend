@@ -48,7 +48,7 @@ import luceneQueryParser from 'lucene-query-parser';
 
 import { escapeLucene, MapOf, unescapeLucene } from '@/utils';
 import { FilterValue } from '@/types/apptypes';
-import { Option } from '../SelectPicker.vue';
+import { Option } from '@/components/SelectPicker.vue';
 
 const modes = {
 	permissive: {

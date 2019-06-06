@@ -33,7 +33,10 @@
         <link rel="stylesheet" href="$pathToTop/css/vendor/pageguide.min.css?_$cache">
         <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
         <link rel="stylesheet" href="$pathToTop/css/main.css?_$cache">
-        ## Custom css and js in footer
+        ## Custom JS in footer
+        #if ($websiteConfig.getPathToCustomCss())
+            <link rel="stylesheet" href="$websiteConfig.getPathToCustomCss()?_$cache">
+        #end
 
         <script>
             // Might be null if this page is not in a corpus!

@@ -21,10 +21,8 @@
         window.ga=window.ga||function(){};
         </script>
         #end
-        #if ($websiteConfig.getPathToCustomCss())
-            <link rel="stylesheet" href="$websiteConfig.getPathToCustomCss()?_$cache">
-        #end
 
+        ## custom css in header to prevent FOUT
         #if ($websiteConfig.getPathToCustomJs())
             <script src="$websiteConfig.getPathToCustomJs()?_$cache"></script>
         #end

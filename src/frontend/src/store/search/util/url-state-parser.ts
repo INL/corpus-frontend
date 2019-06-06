@@ -107,9 +107,9 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 					lucene: null
 				};
 				if (componentValue != null) { // don't overwrite default value
-					Vue.set(vueComponentInstance.$props, 'value', componentValue);
-					storeValue.summary = vueComponentInstance.summary;
-					storeValue.lucene = vueComponentInstance.lucene;
+					Vue.set(vueComponentInstance._props, 'value', componentValue);
+					storeValue.summary = vueComponentInstance.luceneQuerySummary;
+					storeValue.lucene = vueComponentInstance.luceneQuery;
 				}
 				return {
 					...filter,

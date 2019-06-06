@@ -95,8 +95,8 @@
 					><span class="fa fa-times"></span></button>
 				</div>
 				<textarea type="area" v-if="gapValue != null" class="form-control gap-value-editor" v-model.lazy="gapValue" @keydown.tab.prevent="insertTabInText"/>
-				<span v-show="parseQueryError" id="parseQueryError" class="text-danger"><span class="fa fa-danger"></span> {{parseQueryError}}</span>
-				<span v-show="importQueryError" id="importQueryError" class="text-danger"><span class="fa fa-danger"></span> {{importQueryError}}</span>
+				<span v-show="parseQueryError" id="parseQueryError" class="text-danger"><span class="fa fa-exclamation-triangle"></span> {{parseQueryError}}</span>
+				<span v-show="importQueryError" id="importQueryError" class="text-danger"><span class="fa fa-exclamation-triangle"></span> {{importQueryError}}</span>
 			</div>
 		</div>
 	</div>

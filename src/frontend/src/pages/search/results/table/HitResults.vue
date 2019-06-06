@@ -8,7 +8,7 @@
 				<tr class="rounded">
 					<th class="text-right">
 						<span v-if="annotations.filter(a => a.hasForwardIndex).length" class="dropdown">
-							<a role="button"data-toggle="dropdown" :class="['dropdown-toggle', {'disabled': disabled}]">
+							<a role="button" data-toggle="dropdown" :class="['dropdown-toggle', {'disabled': disabled}]">
 								{{leftLabel}} hit
 								<span class="caret"/>
 							</a>
@@ -95,18 +95,14 @@
 						<tr v-if="citations[index]" v-show="citations[index].open" :key="index + '-citation'" :class="['concordance-details', {'open': citations[index].open}]">
 							<td :colspan="numColumns">
 								<p v-if="citations[index].error" class="text-danger">
-									{{citations[index].error}}
+									<span class="fa fa-exclamation-triangle"></span> {{citations[index].error}}
 								</p>
 								<p v-else-if="citations[index].citation">
-									<AudioPlayer
-										v-if="getAudioPlayerData && getAudioPlayerData(corpus, rowData.docPid, citations[index].snippet) != null"
-										v-bind="getAudioPlayerData(corpus, rowData.docPid, citations[index].snippet)"
-									/>
-
+									<AudioPlayer v-if="citations[index].audioPlayerData" v-bind="citations[index].audioPlayerData"/>
 									<span :dir="textDirection">{{citations[index].citation[0]}}<strong>{{citations[index].citation[1]}}</strong>{{citations[index].citation[2]}}</span>
 								</p>
 								<p v-else>
-									Loading...
+									<span class="fa fa-spinner fa-spin"></span> Loading...
 								</p>
 								<div style="overflow: auto; max-width: 100%; padding-bottom: 15px;">
 									<table class="concordance-details-table">
@@ -179,6 +175,7 @@ type CitationData = {
 	citation: null|[string, string, string];
 	error?: null|string;
 	snippet: null|BLTypes.BLHitSnippet;
+	audioPlayerData: any;
 };
 
 export default Vue.extend({
@@ -295,6 +292,7 @@ export default Vue.extend({
 			.then(s => {
 				citation.citation = snippetParts(s, this.firstMainAnnotation.id);
 				citation.snippet = s;
+				citation.audioPlayerData = this.getAudioPlayerData ? this.getAudioPlayerData(this.corpus, row.docPid, s) : null;
 			})
 			.catch((err: AppTypes.ApiError) => {
 				citation.error = err.message;

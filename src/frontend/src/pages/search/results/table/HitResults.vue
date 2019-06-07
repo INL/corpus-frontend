@@ -113,9 +113,9 @@
 											</tr>
 										</thead>
 										<tbody>
-											<tr v-for="(value, key) in rowData.props" v-if="key !== 'punct'" :key="key">
-												<th>{{annotationDisplayNames[key]}}</th>
-												<td v-for="(v, index) in value" :key="index">{{v}}</td>
+											<tr v-for="annot in shownConcordanceAnnotations" :key="annot.id">
+												<th>{{annot.displayName}}</th>
+												<td v-for="(v, index) in rowData.props[annot.id]" :key="index">{{v}}</td>
 											</tr>
 										</tbody>
 									</table>
@@ -255,9 +255,9 @@ export default Vue.extend({
 			return 3 + this.shownAnnotations.length; // left - hit - right - (one per shown annotation)
 		},
 		annotations: CorpusStore.get.annotations,
-		annotationDisplayNames: CorpusStore.get.annotationDisplayNames,
 		firstMainAnnotation: CorpusStore.get.firstMainAnnotation,
 		shownAnnotations(): AppTypes.NormalizedAnnotation[] { return UIStore.getState().results.hits.shownAnnotationIds.map(id => CorpusStore.get.annotationsMap()[id][0]); },
+		shownConcordanceAnnotations(): AppTypes.NormalizedAnnotation[] { return UIStore.getState().results.hits.shownConcordanceAnnotationIds.map(id => CorpusStore.get.annotationsMap()[id][0]); },
 		textDirection: CorpusStore.get.textDirection,
 
 		corpus() { return CorpusStore.getState().id; },
@@ -383,4 +383,3 @@ tr.concordance {
 }
 
 </style>
-

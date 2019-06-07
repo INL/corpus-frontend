@@ -8,13 +8,23 @@ package nl.inl.corpuswebsite;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.event.EventCartridge;
@@ -103,6 +113,14 @@ public abstract class BaseResponse {
         context.put("buildTime", servlet.getWarBuildTime());
         context.put("jspath", servlet.getAdminProps().getProperty(MainServlet.PROP_JSPATH));
         context.put("googleAnalyticsKey", cfg.getAnalyticsKey());
+        
+        if (servlet.getBannerMessage() != null && !this.isCookieSet("banner-hidden", Integer.toString(servlet.getBannerMessage().hashCode()))) {
+            context.put("bannerMessage", servlet.getBannerMessage());
+            context.put("bannerMessageCookie", 
+                        "banner-hidden="+servlet.getBannerMessage().hashCode()+
+                        "; Max-Age="+24*7*3600+
+                        "; Path="+servlet.getServletContext().getContextPath()+"/");
+        }
 
         // Clientside js variables (some might be used in vm directly)
         context.put("pathToTop", servlet.getServletContext().getContextPath());
@@ -237,5 +255,13 @@ public abstract class BaseResponse {
 
     public boolean isCorpusRequired() {
         return requiresCorpus;
+    }
+    
+    public Optional<Cookie> getCookie(String name) {
+        return Optional.ofNullable(request.getCookies()).flatMap(cc -> Arrays.stream(cc).filter(t -> t.getName().equals(name)).findFirst());
+    }
+    
+    public boolean isCookieSet(String name, String value) {
+        return this.getCookie(name).filter(c -> c.getValue().equals(value)).isPresent();
     }
 }

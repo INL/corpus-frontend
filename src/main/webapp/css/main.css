@@ -161,3 +161,39 @@ table {
 	top: 50px;
 	z-index: 1;
 }
+
+.navbar-alert {
+	align-items: baseline;
+	color: #ccc;
+	display: flex;
+	flex-wrap: nowrap;
+	font-size: 18px;
+	justify-content: space-between;
+	margin-bottom: 0!important;
+	margin-top: 0!important;
+	padding: 10px 15px;
+	padding-right: 0;
+	position: relative;
+	text-align: left;
+}
+
+.navbar-alert > .message {
+	flex-grow: 1;
+}
+
+.navbar-alert:before {
+	display: none;
+}
+
+.navbar-alert:after {
+	background: #333;
+	border-top: 1px solid #111;
+	bottom: 0;
+	box-sizing: content-box;
+	display: block;
+	height: 1px;
+	left: calc(50% - 50vw);
+	position: absolute;
+	width: 100vw;
+}
+

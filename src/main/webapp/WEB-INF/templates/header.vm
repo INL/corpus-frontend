@@ -48,6 +48,14 @@
     </head>
     <body>
         <div class="navbar navbar-inverse navbar-fixed-top">
+            #if ($bannerMessage && $bannerMessageCookie)
+                #set($unescaped = $bannerMessage)
+                <div class="container alert alert-dismissable navbar-alert">
+                    <div class="message">$unescaped</div>
+                    <button type="button" class="btn btn-link btn-lg" data-dismiss="alert" title="Dismiss" onClick="javascript:document.cookie='$bannerMessageCookie'"><span class="fa fa-times"></span></button>
+                </div>
+            #end
+
             <div class="container">
                 <div class="navbar-header">
                     <div class="navbar-logo-container">

@@ -87,6 +87,8 @@ public class MainServlet extends HttpServlet {
     private String contextPath;
 
     // @formatter:off
+    /** Message to display at the top of the page. Note that this may contain HTML. https://github.com/INL/corpus-frontend/issues/247 */
+    public static final String PROP_BANNER_MESSAGE          = "bannerMessage";
     /** Url to reach blacklab-server from this application */
     public static final String PROP_BLS_CLIENTSIDE          = "blsUrlExternal";
     /** Url to reach blacklab-server from the browser */
@@ -645,6 +647,10 @@ public class MainServlet extends HttpServlet {
         } catch (NumberFormatException e) {
             return 5000;
         }
+    }
+
+    public String getBannerMessage() {
+        return this.adminProps.getProperty(PROP_BANNER_MESSAGE);
     }
 
     /**

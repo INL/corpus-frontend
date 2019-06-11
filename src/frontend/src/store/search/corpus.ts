@@ -70,9 +70,9 @@ const get = {
 	firstMainAnnotation: () => get.annotations().find(f => f.isMainAnnotation)!,
 
 	/**
-	 * Returns all metadatagroups from the indexstructure, unless there are no metadatagroups defined
-	 * Then a single generated group "metadata" is returned, containing all metadata fields.
-	 * If groups are defined, fields not in a group are omitted
+	 * Returns all metadatagroups from the indexstructure, unless there are no metadatagroups defined.
+	 * In that case a single generated group "metadata" is returned, containing all metadata fields.
+	 * If groups are defined, fields not in any group are omitted.
 	 */
 	metadataGroups: b.read((state): Array<{
 		name: string,

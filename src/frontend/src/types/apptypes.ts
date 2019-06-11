@@ -4,11 +4,6 @@ import * as BLTypes from '@/types/blacklabtypes';
 // State types
 // -----------
 
-// TODO unify these with the above types, take care to backport changes to vuejs corpora management page
-
-// NOTE: take care not to create any circular references or depend on objects being aliased (being the same instance, ===)
-// The store is serialized and deserialized by the browser when navigating, all indirect references should use string ids
-
 /** Property of a word, usually 'lemma', 'pos', 'word' */
 export type NormalizedAnnotation = {
 	/** id of the field this annotation resides in, usually 'contents' */
@@ -207,6 +202,24 @@ export type FilterValue = {
 	type: NormalizedMetadataField['uiType'];
 	/** Values of the filter, for selects, the selected values as array elements, for text, the text as the first array element, for ranges the min and max values in indices [0][1] */
 	values: string[];
+};
+
+export type FilterDefinition = {
+	/** Id of the filters, this must be unique */
+	id: string;
+	displayName: string;
+	description?: string;
+	/** Name of the component, for filters generated from the blacklab index metadata, `filter-${uiType}` */
+	componentName: string;
+	/** The group this filter is part of, only for ui purposes. */
+	groupId?: string;
+	/**
+	 * Other info the filter component may require, such as options in a dropdown list for a filter of type Select.
+	 * This is usually empty for the normal text, range, autocomplete types. But for select, radio, and checkbox this contains the available options.
+	 * For 'pos' this contains the tagset.
+	 * Custom filter types may place whatever data they require here and it will be made available as a prop.
+	 */
+	metadata: any;
 };
 
 // -------------------

@@ -8,11 +8,14 @@ import Vue from 'vue';
 // @ts-ignore
 import VTooltip from 'v-tooltip';
 
+import Filters from '@/components/filters';
+
 import {QueryBuilder, QueryBuilderOptionsDef} from '@/modules/cql_querybuilder';
 import * as RootStore from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus'; // NOTE: only use after initializing root store
 import * as TagsetStore from '@/store/search/tagset';
 import * as PatternStore from '@/store/search/form/patterns';
+import * as FilterStore from '@/store/search/form/filters';
 import UrlStateParser from '@/store/search/util/url-state-parser';
 
 import connectStreamsToVuex from '@/store/search/streams';
@@ -114,6 +117,7 @@ Vue.config.errorHandler = (err, vm, info) => {
 	ga('send', 'exception', { exDescription: err.message, exFatal: true });
 };
 
+Vue.use(Filters);
 Vue.use(VTooltip, {
 	popover: {
 		defaultBaseClass: 'popover',
@@ -134,7 +138,7 @@ $(document).ready(() => {
 			connectJqueryToPage();
 
 			TagsetStore.actions.awaitInit()
-			.then(() => new UrlStateParser().get())
+			.then(() => new UrlStateParser(FilterStore.getState().filters).get())
 			.then(urlState => {
 				debugLog('Loading state from url', urlState);
 				RootStore.actions.reset();

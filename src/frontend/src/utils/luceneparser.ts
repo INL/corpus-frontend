@@ -24,7 +24,7 @@ export default (luceneQuery?: string): FilterValue[] => {
 	/**
 	 * Process a Node. A Field object is always contained within a Node (as far as I can tell).
 	 * So for a simple query like 'field:value', the library returns a structure like:
-	 * ```
+	 * ```javascript
 	 * { // Node
 	 *   field: 'field',
 	 *   left: { // Field

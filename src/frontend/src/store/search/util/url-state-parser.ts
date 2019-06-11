@@ -1,8 +1,11 @@
+import Vue from 'vue';
+
 import memoize from 'memoize-decorator';
 
 import BaseUrlStateParser from '@/store/util/url-state-parser-base';
+import LuceneQueryParser from 'lucene-query-parser';
 
-import {makeRegexWildcard, unescapeLucene} from '@/utils';
+import {makeRegexWildcard, mapReduce, MapOf} from '@/utils';
 import parseCql, {Attribute} from '@/utils/cqlparser';
 import parseLucene from '@/utils/luceneparser';
 import {debugLog} from '@/utils/debug';
@@ -26,11 +29,23 @@ import * as HitResultsModule from '@/store/search/results/hits';
 
 import {FilterValue, AnnotationValue} from '@/types/apptypes';
 
+import BaseFilter from '@/components/filters/Filter';
+
 /**
  * Decode the current url into a valid page state configuration.
  * Keep everything private except the getters
  */
 export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.HistoryEntry> {
+	/**
+	 * MetadataFilters here are the interface components to filter a query by document metadata.
+	 * Because these can be fairly complex components, we have decided to implement decoding of the query in the Vue components.
+	 * So in order to decode the query, we need knowledge of which filters are configured.
+	 * This is done by the FilterModule, so we need that info here.
+	 */
+	constructor(private registeredMetadataFilters: FilterModule.ModuleRootState, uri?: uri.URI) {
+		super(uri);
+	}
+
 	@memoize
 	public get(): HistoryModule.HistoryEntry {
 		return {
@@ -63,45 +78,46 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 		if (luceneString == null) {
 			return {};
 		}
-		try {
-			const supportedMetadataFields = CorpusModule.getState().metadataFields;
 
-			return parseLucene(luceneString)
-			.filter(metadataField => supportedMetadataFields.hasOwnProperty(metadataField.id))
-			.map(metadataField => {
-				const actualField = supportedMetadataFields[metadataField.id];
-				metadataField.type = actualField.uiType;
-				switch (actualField.uiType) {
-					case 'text':
-					case 'combobox': {
-						// See utils::getFilterString
-						// types that allow the user to type their own value have special lucene characters escaped.
-						// But only when the value does not contain any whitespace (as values with whitespace need to be surrounded by quotes, which already escapes all special characters)
-						// So we need to reverse this escaping here.
-						metadataField.values = metadataField.values.map(v => v.match(/\s+/) ? v : unescapeLucene(v));
-						break;
-					}
-					case 'checkbox':
-					case 'radio':
-					case 'select':
-						// the user can't enter custom values here, so nothing to do.
-						break;
-					case 'range': {
-						// Replace internal defaults with empty string, see https://github.com/INL/corpus-frontend/issues/234
-						if (metadataField.values[0] === '0') { metadataField.values[0] = ''; }
-						if (metadataField.values[1] === '9999') { metadataField.values[1] = ''; }
-					}
-					default:
-						// This should never happen unless new uiTypes are added
-						// in which case, maybe the values need to be handled in a special way
-						throw new Error('Unimplemented value deserializing for metadata filter uiType ' + actualField.uiType);
+		try {
+			const luceneParsedThing = LuceneQueryParser.parse(luceneString);
+			const parsedQuery: MapOf<FilterValue> = mapReduce(parseLucene(luceneString), 'id');
+			const parsedQuery2: FilterModule.FullFilterState[] = Object.values(this.registeredMetadataFilters).map(filter => {
+				const vueComponent = Vue.component(filter.componentName) as typeof BaseFilter;
+				if (!vueComponent) {
+					// tslint:disable-next-line
+					console.warn(`Filter ${filter.id} defines its vue component as ${filter.componentName} but it does not exist! (have you registered it properly with vue?)`);
+					return filter;
 				}
-				return metadataField;
-			})
-			.reduce((acc, v) => {
-				acc[v.id] = v;
-				return acc;
-			}, {} as {[key: string]: FilterValue});
+
+				const vueComponentInstance = new vueComponent({
+					propsData: {
+						// don't set a null value, allow the component to set this prop's default value (if configured).
+						// or it may throw errors when running compute methods.
+						value: undefined,
+						textDirection: CorpusModule.getState().textDirection,
+						definition: filter,
+					},
+				}) as any;
+
+				const componentValue = vueComponentInstance.decodeInitialState(parsedQuery, luceneParsedThing);
+				const storeValue: FilterModule.FilterState = {
+					value: componentValue != null ? componentValue : undefined,
+					summary: null,
+					lucene: null
+				};
+				if (componentValue != null) { // don't overwrite default value
+					Vue.set(vueComponentInstance._props, 'value', componentValue);
+					storeValue.summary = vueComponentInstance.luceneQuerySummary;
+					storeValue.lucene = vueComponentInstance.luceneQuery;
+				}
+				return {
+					...filter,
+					...storeValue
+				};
+			});
+
+			return mapReduce(parsedQuery2, 'id');
 		} catch (error) {
 			debugLog('Cannot decode lucene query ', luceneString, error);
 			return {};

@@ -1,7 +1,7 @@
 import URI from 'urijs';
 
-import { ReplaySubject, Observable, merge, fromEvent } from 'rxjs';
-import { debounceTime, switchMap, map, distinctUntilChanged, shareReplay, filter } from 'rxjs/operators';
+import { ReplaySubject, Observable, merge, fromEvent, of, Notification, from } from 'rxjs';
+import { debounceTime, switchMap, map, distinctUntilChanged, shareReplay, filter, materialize, tap } from 'rxjs/operators';
 import cloneDeep from 'clone-deep';
 
 import * as RootStore from '@/store/search/';
@@ -14,24 +14,24 @@ import * as InterfaceStore from '@/store/search/form/interface';
 import * as DocsStore from '@/store/search/results/docs';
 import * as FilterStore from '@/store/search/form/filters';
 import * as GapStore from '@/store/search/form/gap';
+import * as QueryStore from '@/store/search/query';
 
 import UrlStateParser from '@/store/search/util/url-state-parser';
 
-import { getFilterString } from '@/utils/';
 import * as Api from '@/api';
 
 import * as BLTypes from '@/types/blacklabtypes';
-import { FilterValue } from '@/types/apptypes';
 import jsonStableStringify from 'json-stable-stringify';
 import { debugLog } from '@/utils/debug';
+import { Cancel } from 'axios';
 
 type QueryState = {
 	params?: BLTypes.BLSearchParameters,
 	state: Pick<RootStore.RootState, 'query'|'interface'|'global'|'hits'|'docs'>
 };
 
-const metadata$ = new ReplaySubject<FilterValue[]>(1);
-const submittedMetadata$ = new ReplaySubject<FilterValue[]>(1);
+const metadata$ = new ReplaySubject<string>(1);
+const submittedMetadata$ = new ReplaySubject<string>(1);
 const url$ = new ReplaySubject<QueryState>(1);
 
 // TODO handle errors gracefully, right now the entire stream is closed permanently.
@@ -48,36 +48,38 @@ export const selectedSubCorpus$ = merge(
 	metadata$.pipe(
 		debounceTime(1000),
 		// filter(v => v.length > 0),
-		map<FilterValue[], BLTypes.BLSearchParameters>(filters => ({
-			filter: getFilterString(filters),
+		map<string, BLTypes.BLSearchParameters>(luceneFilter => ({
+			filter: luceneFilter,
 			first: 0,
 			number: 0,
 			includetokencount: true,
 			waitfortotal: true
 		})),
-		switchMap(params => new Observable<BLTypes.BLDocResults>(subscriber => {
+		switchMap(params => new Observable<Notification<BLTypes.BLDocResults>>(subscriber => {
 			// Speedup: we know the totals beforehand when there are no filters: mock a reply
 			if (!params.filter) {
-				subscriber.next({
+				subscriber.next(Notification.createNext<BLTypes.BLDocResults>({
 					docs: [],
 					summary: {
 						numberOfDocs: CorpusStore.getState().documentCount,
 						stillCounting: false,
 						tokensInMatchingDocuments: CorpusStore.getState().tokenCount,
 					}
-				} as any);
+				} as any));
+
+				subscriber.next(Notification.createComplete());
+				subscriber.complete();
 				return;
 			}
 
 			const {request, cancel} = Api.blacklab.getDocs(CorpusStore.getState().id, params, {
 				headers: { 'Cache-Control': 'no-cache' }
-			});
-			request.then(
-				// Sometimes a result comes in anyway after cancelling the request (and closing the subscription),
-				// in this case the subscriber will bark at us if we try to push more values, so check for this.
-				(result: BLTypes.BLDocResults) => { if (!subscriber.closed) { subscriber.next(result); } },
-				(error: Api.ApiError) => { if (!subscriber.closed) { subscriber.error(error); } }
-			);
+			}) as {
+				request: Promise<BLTypes.BLDocResults>;
+				cancel: Api.Canceler;
+			};
+
+			from(request).pipe(materialize()).subscribe(subscriber);
 
 			// When the observer is closed, cancel the ajax request
 			return cancel;
@@ -87,19 +89,18 @@ export const selectedSubCorpus$ = merge(
 	// And the value-clearing stream, it always emits on changes
 	// The idea is that if the last active filter is removed, the value is clear, and no new value is ever produced,
 	// but when filters are changed, we don't fire a query right away.
-	metadata$.pipe(map(v => null))
+	metadata$.pipe(map(v => null), materialize())
 )
 .pipe(
-	// And finally remove subsequent nulls to prevent uneccesary rerenders when results are cleared repetitively
-	distinctUntilChanged(),
+	filter(v => v.kind !== 'C'),
 	// And cache the last value so there's always something to display
 	shareReplay(1),
 );
 
 export const submittedSubcorpus$ = submittedMetadata$.pipe(
 	debounceTime(1000),
-	map<FilterValue[], BLTypes.BLSearchParameters>(filters => ({
-		filter: getFilterString(filters),
+	map<string, BLTypes.BLSearchParameters>(luceneFilter => ({
+		filter: luceneFilter,
 		first: 0,
 		number: 0,
 		includetokencount: true,
@@ -286,12 +287,12 @@ export default () => {
 	// It doesn't matter though, they're attached to the same state instance, so just ignore the state argument.
 
 	RootStore.store.watch(
-		state => FilterStore.get.activeFilters(),
+		state => FilterStore.get.luceneQuery(),
 		v => metadata$.next(v),
 		{ immediate: true }
 	);
 	RootStore.store.watch(
-		state => Object.values(state.query.filters || {}),
+		state => QueryStore.get.filterString(),
 		v => submittedMetadata$.next(v),
 		{ immediate: true }
 	);
@@ -317,7 +318,7 @@ export default () => {
 	);
 
 	fromEvent<PopStateEvent>(window, 'popstate')
-	.pipe(map<PopStateEvent, HistoryStore.HistoryEntry>(evt => evt.state ? evt.state : new UrlStateParser().get()))
+	.pipe(map<PopStateEvent, HistoryStore.HistoryEntry>(evt => evt.state ? evt.state : new UrlStateParser(FilterStore.getState().filters).get()))
 	.subscribe(state => RootStore.actions.replace(state));
 
 	debugLog('Finished connecting store to url and subcorpus calculations.');

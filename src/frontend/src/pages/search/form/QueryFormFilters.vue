@@ -4,26 +4,48 @@
 
 		<template v-if="useTabs">
 		<ul class="nav nav-tabs">
-			<li v-for="tab in tabs" :class="{'active': activeTab===tab.id}" :key="tab.id" @click.prevent="activeTab=tab.id">
-				<a :href="'#'+tab.id">{{tab.displayName}} <span v-if="tab.activeFilters" class="badge" style="background-color:#aaa">{{tab.activeFilters}}</span></a>
+			<li v-for="tab in tabs" :class="{'active': activeTab===tab.name}" :key="tab.name" @click.prevent="activeTab=tab.name">
+				<a :href="'#'+tab.name">{{tab.name}} <span v-if="tab.activeFilters" class="badge" style="background-color:#aaa">{{tab.activeFilters}}</span></a>
 			</li>
 		</ul>
 
 		<div class="tab-content">
 			<div v-for="tab in tabs"
-				:class="['tab-pane', 'form-horizontal', 'filter-container', {'active': activeTab===tab.id}]"
-				:key="tab.id"
-				:id="tab.id"
+				:class="['tab-pane', 'form-horizontal', 'filter-container', {'active': activeTab===tab.name}]"
+				:key="tab.name"
+				:id="tab.name"
 			>
-				<MetadataFilter v-for="filter in tab.filters" :filter="filter" :key="filter.id"/>
+				<Component v-for="filter in tab.filters" :key="filter.id"
+					:is="filter.componentName"
+					:definition="filter"
+					:textDirection="textDirection"
+					:value="filter.value != null ? filter.value : undefined"
+
+					@change-value="updateFilterValue(filter.id, $event)"
+					@change-lucene="updateLuceneValue(filter.id, $event)"
+					@change-lucene-summary="updateLuceneSummary(filter.id, $event)"
+				/>
+
+				<!-- <MetadataFilter v-for="filter in tab.filters" :filter="filter" :key="filter.id"/> -->
 			</div>
 		</div>
 		</template>
 		<div v-else class="tab-content form-horizontal filter-container"> <!-- TODO don't use tab-content when no actually tabs -->
-			<MetadataFilter v-for="filter in allFilters" :filter="filter" :key="filter.id"/>
+			<Component v-for="filter in allFilters" :key="filter.id"
+				:is="filter.componentName"
+				:definition="filter"
+				:textDirection="textDirection"
+				:value="filter.value"
+
+				@change-value="updateFilterValue(filter.id, $event)"
+				@change-lucene="updateLuceneValue(filter.id, $event)"
+				@change-lucene-summary="updateLuceneSummary(filter.id, $event)"
+			/>
+
+			<!-- <MetadataFilter v-for="filter in allFilters" :filter="filter" :key="filter.id"/> -->
 		</div>
 
-		<FilterOverview type="docs" :indexId="indexId"/>
+		<FilterOverview/>
 	</div>
 </template>
 
@@ -34,47 +56,48 @@ import * as CorpusStore from '@/store/search/corpus';
 import * as FilterStore from '@/store/search/form/filters';
 
 import FilterOverview from '@/pages/search/form/FilterOverview.vue';
-import MetadataFilter from '@/pages/search/form/Filter.vue';
 
 import * as AppTypes from '@/types/apptypes';
 
 export default Vue.extend({
 	components: {
 		FilterOverview,
-		MetadataFilter
 	},
 	data: () => ({
+		corpusStore: CorpusStore,
 		activeTab: null as string|null,
 	}),
+	methods: {
+		updateFilterValue(id: string, value: any) { FilterStore.actions.filterValue({id, value}); },
+		updateLuceneValue(id: string, lucene: string|null) { FilterStore.actions.filterLucene({id, lucene}); },
+		updateLuceneSummary(id: string, summary: string|null) { FilterStore.actions.filterSummary({id, summary}); },
+	},
 	computed: {
-		allFilters(): AppTypes.NormalizedMetadataField[] {
-			return this.tabs.reduce((acc, tab) => {
-				acc.push(...tab.filters);
-				return acc;
-			}, [] as AppTypes.NormalizedMetadataField[]);
+		textDirection(): string { return CorpusStore.getState().textDirection; },
+		allFilters(): FilterStore.FullFilterState[] {
+			return this.tabs.flatMap(t => t.filters);
 		},
 		tabs(): Array<{
-			id: string;
-			displayName: string;
-			filters: AppTypes.NormalizedMetadataField[],
+			name: string;
+			filters: FilterStore.FullFilterState[],
 			activeFilters: number
 		}> {
-			return CorpusStore.get.metadataGroups().map(g => ({
-				id: g.name.replace(/[^\w]+/g, '_') + '_meta_' + (this as any).uid,
-				displayName: g.name,
-				filters: g.fields,
-				activeFilters: g.fields.filter(f => FilterStore.get.activeFiltersMap()[f.id] != null).length
+			const groups = FilterStore.get.filterGroups();
+			return groups.map(g => ({
+				name: g.groupId,
+				filters: g.filters,
+				activeFilters: g.filters.filter(f => !!f.lucene).length
 			}));
 		},
 		useTabs() {
 			return this.tabs.length > 1;
 		},
-		indexId() { return CorpusStore.getState().id }
+		indexId() { return CorpusStore.getState().id; }
 	},
 	created() {
-		this.activeTab = this.useTabs ? this.tabs[0].id : null
+		this.activeTab = this.useTabs ? this.tabs[0].name : null;
 	}
-})
+});
 </script>
 
 <style lang="scss">

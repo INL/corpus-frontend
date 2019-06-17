@@ -34,6 +34,10 @@ export type BLSearchParameters = {
 	includetokencount?: boolean;
 	/** Block until all results have been found */
 	waitfortotal?: boolean;
+	/** List of comma-separated annotation IDs to include in the kwic data. */
+	listvalues?: string;
+	/** List of comma-separated metadata IDs to include in document info. */
+	listmetadatavalues?: string;
 };
 
 // --------------

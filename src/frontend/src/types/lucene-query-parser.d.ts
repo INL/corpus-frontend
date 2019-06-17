@@ -4,8 +4,8 @@ declare module 'lucene-query-parser' {
 		/** Can apparently contain multiple operator (a OR NOT b) though we should never encounter this */
 		operator: string;
 		right: ASTNode|ASTField|ASTRange;
-		/** field name (for field group syntax) */
-		field: string;
+		/** field name (for field group syntax) not present if top level looks like (field:value OPERATOR field:value) */
+		field?: string;
 	};
 
 	export type ASTField = {

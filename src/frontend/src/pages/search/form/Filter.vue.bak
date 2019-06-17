@@ -2,7 +2,7 @@
 	<div
 		class="form-group filterfield"
 		:id="id"
-		:data-filterfield-type="uiType"
+		::data-filterfield-type="definition.componentName"="uiType"
 	>
 		<label class="col-xs-12" :for="(uiType !== 'radio' && uiType !== 'checkbox' && uiType !== 'range') ? inputId : undefined">{{displayName}}</label>
 

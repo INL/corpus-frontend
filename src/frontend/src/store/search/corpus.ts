@@ -38,11 +38,13 @@ const get = {
 	the case can be made that it's not important to use the fieldgroup's orders anyway,
 	because we're not doing anything with those groups if we need all annotations
 	*/
+	/** Get an array of all (non-internal) annotations in the index */
 	annotations: b.read(state =>
 		Object.values(state.annotatedFields)
 		.flatMap(f => f.displayOrder.map(id => f.annotations[id]))
 		.filter(a => !a.isInternal)
 	, 'annotations'),
+	/** Get a map of all (non-internal) annotations in the index */
 	annotationsMap: b.read((state): {[id: string]: NormalizedAnnotation[]} =>
 		get.annotations()
 		.reduce<{[id: string]: NormalizedAnnotation[]}>((fields, field) => {
@@ -70,9 +72,9 @@ const get = {
 	firstMainAnnotation: () => get.annotations().find(f => f.isMainAnnotation)!,
 
 	/**
-	 * Returns all metadatagroups from the indexstructure, unless there are no metadatagroups defined
-	 * Then a single generated group "metadata" is returned, containing all metadata fields.
-	 * If groups are defined, fields not in a group are omitted
+	 * Returns all metadatagroups from the indexstructure, unless there are no metadatagroups defined.
+	 * In that case a single generated group "metadata" is returned, containing all metadata fields.
+	 * If groups are defined, fields not in any group are omitted.
 	 */
 	metadataGroups: b.read((state): Array<{
 		name: string,

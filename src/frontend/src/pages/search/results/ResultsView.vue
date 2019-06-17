@@ -73,7 +73,7 @@
 
 			<button type="button" class="btn btn-primary btn-sm"  v-if="isDocs && resultsHaveHits"  @click="showDocumentHits = !showDocumentHits">{{showDocumentHits ? 'Hide Hits' : 'Show Hits'}}</button>
 			<button type="button" class="btn btn-primary btn-sm"  v-if="isHits" @click="showTitles = !showTitles">{{showTitles ? 'Hide' : 'Show'}} Titles</button>
-			<button type="button" class="btn btn-default btn-sm" v-if="results" :disabled="downloadInProgress || !resultsHaveData || !!request" @click="downloadCsv" :title="downloadInProgress ? 'Downloading...' : undefined"><template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner"></span></template>Export CSV</button>
+			<button type="button" class="btn btn-default btn-sm" v-if="results" :disabled="downloadInProgress || !resultsHaveData || !!request" @click="downloadCsv" :title="downloadInProgress ? 'Downloading...' : undefined"><template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner fa-spin"></span>&nbsp;</template>Export CSV</button>
 		</div>
 
 	</div>
@@ -95,6 +95,7 @@ import * as ResultsStore from '@/store/search/results';
 import * as GlobalStore from '@/store/search/results/global';
 import * as QueryStore from '@/store/search/query';
 import * as InterfaceStore from '@/store/search/form/interface';
+import * as UIStore from '@/store/search/ui';
 
 import {submittedSubcorpus$} from '@/store/search/streams';
 
@@ -219,11 +220,15 @@ export default Vue.extend({
 			}
 
 			this.downloadInProgress = true;
-			const params = this.results.summary.searchParam;
 			const apiCall = this.type === 'hits' ? Api.blacklab.getHitsCsv : Api.blacklab.getDocsCsv;
-			debugLog('starting csv download', this.type, params);
+			const params = {
+				...this.results.summary.searchParam,
+				listvalues: UIStore.getState().results.shared.detailedAnnotationIds.join(','),
+				listmetadatavalues: UIStore.getState().results.shared.detailedMetadataIds.join(','),
+			};
 
-			apiCall(this.indexId, this.results.summary.searchParam).request
+			debugLog('starting csv download', this.type, params);
+			apiCall(this.indexId, params).request
 			.then(
 				blob => saveAs(blob, 'data.csv'),
 				error => debugLog('Error downloading csv file', error)
@@ -426,11 +431,11 @@ export default Vue.extend({
 
 		resultComponentName(): string {
 			if (this.isGroups) {
-				return 'GroupResults'
+				return 'GroupResults';
 			} else if (this.isHits) {
-				return 'HitResults'
+				return 'HitResults';
 			} else {
-				return 'DocResults'
+				return 'DocResults';
 			}
 		},
 		resultComponentData(): any {

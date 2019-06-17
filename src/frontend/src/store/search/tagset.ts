@@ -13,7 +13,7 @@ import * as CorpusStore from '@/store/search/corpus';
 
 import {Tagset} from '@/types/apptypes';
 import {NormalizedAnnotation} from '@/types/apptypes';
-import { reductio } from '@/utils';
+import { mapReduce } from '@/utils';
 
 type ModuleRootState = Tagset&{
 	/** Uninitialized before init() or load() action called. loading/loaded during/after load() called. Disabled when load() not called before init(), or loading failed for any reason. */
@@ -77,7 +77,7 @@ const actions = {
 			.flat()
 			.filter(a => a.uiType === 'pos')
 			.forEach(originalAnnotation => {
-				const originalValues = reductio(originalAnnotation.values, 'value');
+				const originalValues = mapReduce(originalAnnotation.values, 'value');
 
 				for (const tagsetValue of Object.values(t.data.values)) {
 					const a = originalValues[tagsetValue.value];
@@ -107,7 +107,7 @@ const actions = {
 			Object.values(t.data.subAnnotations)
 			.forEach(subAnnot => {
 				annots[subAnnot.id].forEach(originalAnnotation => {
-					const originalValues = reductio(originalAnnotation.values, 'value');
+					const originalValues = mapReduce(originalAnnotation.values, 'value');
 
 					for (const tagsetValue of subAnnot.values) {
 						const a = originalValues[tagsetValue.value];

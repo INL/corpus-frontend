@@ -32,7 +32,7 @@ About
 
 ## Intro
 
-This is a corpus search application that works with [BlackLab Server](https://github.com/INL/BlackLab/).  
+This is a corpus search application that works with [BlackLab Server](https://github.com/INL/BlackLab/).
 At the Dutch Language Institute, we use it to publish our corpora such as [CHN](http://chn.inl.nl/) (CLARIN login required), [Letters as Loot](http://brievenalsbuit.inl.nl/) and [AutoSearch](http://portal.clarin.inl.nl/autocorp/) (CLARIN login required).
 
 
@@ -62,7 +62,7 @@ Releases can be downloaded [here](https://github.com/INL/corpus-frontend/release
 ## Building from source
 
 - Clone this repository, use `mvn package` to build the WAR file (or download the .war from the latest release) and add corpus-frontend.war to Tomcat's webapps directory.
-- Optionally, create a file `corpus-frontend.properties` (name must be the same as the .war file) in the same directory as the BlackLab Server config file (e.g. `/etc/blacklab/`).  
+- Optionally, create a file `corpus-frontend.properties` (name must be the same as the .war file) in the same directory as the BlackLab Server config file (e.g. `/etc/blacklab/`).
 See the [Configuration section](#Backend-configuration) for more information.
 - Navigate to `http://localhost:8080/corpus-frontend/` and you will see a list of available corpora you can search.
 
@@ -88,14 +88,14 @@ Example file and defaults:
 ```properties
 
 # The url under which the back-end can reach blacklab-server.
-# Separate from the front-end to allow connections for proxy situations 
+# Separate from the front-end to allow connections for proxy situations
 #  where the paths or ports may differ internally and externally.
 blsUrl=http://localhost:8080/blacklab-server/
 
 # The url under which the front-end can reach blacklab-server.
 blsUrlExternal=/blacklab-server/
 
-# Optional directory where you can place files to further configure and customize 
+# Optional directory where you can place files to further configure and customize
 #  the interface on a per-corpus basis.
 # Files should be placed in a directory with the name of your corpus, e.g. files
 #  for a corpus 'MyCorpus' should be placed under 'corporaInterfaceDataDir/MyCorpus/'.
@@ -103,19 +103,25 @@ corporaInterfaceDataDir=/etc/blacklab/projectconfigs/
 
 # For unconfigured corpora, the directory where defaults may be found (optional).
 # The name of a directory directly under the corpusInterfaceDataDir.
-# Files such as the help and about page will be loaded from here 
+# Files such as the help and about page will be loaded from here
 #  if they are not configured/available for a corpus.
-# If this directory does not exist or is not configured, 
+# If this directory does not exist or is not configured,
 #  we'll use internal fallback files for all essential data.
 corporaInterfaceDefault=default
 
 # Maximum number of words displayed in one "page" of a document
 pageLength=5000
 
-# Path to frontend javascript files (can be configured to aid development, e.g. 
-#  loading from an external server so the java web server does not need 
+# Path to frontend javascript files (can be configured to aid development, e.g.
+#  loading from an external server so the java web server does not need
 #  to constantly reload, and hot-reloading/refreshing of javascript can be used).
 jspath=/corpus-frontend/js
+
+# An optional banner message that shows above the navbar.
+#  It can be hidden by the user by clicking an embedded button, and stores a cookie to keep it hidden for a week.
+#  A new banner message will require the user to explicitly hide it again.
+# Simply remove this property to disable the banner.
+bannerMessage=<span class="fa fa-exclamation-triangle"></span> Configure this however you see fit, HTML is allowed here!
 
 ```
 
@@ -131,24 +137,24 @@ After a corpus has been added, the corpus-frontend will automatically detect it,
 
 ### Configuring BlackLab
 
-To allow this, BlackLab needs to be configured properly (user support needs to be enabled and user directories need to be configured).  
+To allow this, BlackLab needs to be configured properly (user support needs to be enabled and user directories need to be configured).
 See [here](http://inl.github.io/BlackLab/blacklab-server-overview.html#examples) for the BlackLab documentation on this (scroll down a little).
 
-When this is done, two new sections will appear on the main corpus overview page.  
+When this is done, two new sections will appear on the main corpus overview page.
 They allow you to define your own configurations to customize how blacklab will index your data, create private corpora (up to 10), and add data to them.
 
 **Per corpus configuration is not supported for user corpora created through the Corpus-Frontend.**
 
 ### Formats
 
-Out of the box, users can create corpora and upload data in any of the formats supported by BlackLab (`tei`, `folia`, `chat`, `tsv`, `plaintext` and more).  
+Out of the box, users can create corpora and upload data in any of the formats supported by BlackLab (`tei`, `folia`, `chat`, `tsv`, `plaintext` and more).
 In addition, users can also define their own formats or extend the builtin formats.
 
 ### Index url
 
-There is also a hidden/experimental page (`/corpus-frontend/upload/`) for externally linking to the corpus-frontend to automatically index a file from the web.  
-It can be used it to link to the frontend from external web services that output indexable files.  
-It requires user uploading to be enabled, and there should be a cookie/query parameter present to configure the user name.  
+There is also a hidden/experimental page (`/corpus-frontend/upload/`) for externally linking to the corpus-frontend to automatically index a file from the web.
+It can be used it to link to the frontend from external web services that output indexable files.
+It requires user uploading to be enabled, and there should be a cookie/query parameter present to configure the user name.
 Parameters are passed as query parameters:
 ```properties
 file=http://my-service.tld/my-file.zip
@@ -158,13 +164,13 @@ format=folia
 corpus=my-corpus-name
 ```
 
-If the user does not own a corpus with this name yet, it's automatically created.  
+If the user does not own a corpus with this name yet, it's automatically created.
 After indexing is complete, the user is redirected to the search page.
 
 
 ## Frontend configuration
 
-**Per corpus configuration is not supported for user corpora.**  
+**Per corpus configuration is not supported for user corpora.**
 Though you can still configure them by overriding the defaults.
 
 By placing certain files in the `corporaInterfaceDataDir` it's possible to customize several aspects of a corpus.
@@ -178,20 +184,20 @@ When a file is not found for a corpus, the frontend will then check the followin
 
 The data directory may contain the following files and subdirectories:
 
-- `Search.xml`  
-Allows you to (among other things) set the navbar links and inject custom css/js.  
+- `Search.xml`
+Allows you to (among other things) set the navbar links and inject custom css/js.
 See [the default configuration](src/main/resources/interface-default/search.xml).
-- `help.inc`  
+- `help.inc`
 Html content placed in the body of the `MyCorpus/help/` page.
-- `about.inc`  
+- `about.inc`
 Html content placed in the body of the `MyCorpus/about/` page.
-- `.xsl` files  
-These are used to transform documents in your corpus into something that can be displayed on the `article/` page.  
-The name of the xsl file that is used to do this is based on the format of files in your corpus (`tei`, `folia`, etc).  
-The xslt file that is used has the name `article_<formatName>.xsl`, so `article_tei.xsl` for tei files.  
-- `static/`  
-A sandbox where you can place whatever other files you may need, such as custom js, css, fonts, logo's etc.  
-These files are public, and can be accessed through `MyCorpus/static/path/to/my.file`  
+- `.xsl` files
+These are used to transform documents in your corpus into something that can be displayed on the `article/` page.
+The name of the xsl file that is used to do this is based on the format of files in your corpus (`tei`, `folia`, etc).
+The xslt file that is used has the name `article_<formatName>.xsl`, so `article_tei.xsl` for tei files.
+- `static/`
+A sandbox where you can place whatever other files you may need, such as custom js, css, fonts, logo's etc.
+These files are public, and can be accessed through `MyCorpus/static/path/to/my.file`
 
 ---
 
@@ -219,11 +225,11 @@ Because the format config specifies the shape of a corpus (which metadata and an
     <summary>Change the text direction of your corpus</summary>
 
     ```yaml
-    corpusConfig: 
+    corpusConfig:
       textDirection: "rtl"
     ```
 
-    This will change many minor aspects of the interface, such as the order of columns in the result tables, the ordering of sentences in concordances, the text direction of dropdowns, etc.  
+    This will change many minor aspects of the interface, such as the order of columns in the result tables, the ordering of sentences in concordances, the text direction of dropdowns, etc.
     **NOTE:** This is a somewhat experimental feature. If you experience issues or want to see improvements, please [create an issue](https://github.com/INL/corpus-frontend/issues/new)!
 
     > Special thanks to [Janneke van der Zwaan](https://github.com/jvdzwaan)!
@@ -278,14 +284,14 @@ Because the format config specifies the shape of a corpus (which metadata and an
     metadata:
       fields:
       - name: year
-        displayValues: 
+        displayValues:
           someOtherValue: someOtherDisplayValue
           someValue: someDisplayValue
     ```
 
     ![](docs/img/value_display_order.png)
 
-    Currently not supported for annotations. 
+    Currently not supported for annotations.
 
   </details>
 
@@ -323,19 +329,19 @@ Because the format config specifies the shape of a corpus (which metadata and an
 
     ### Multiple types are supported:
 
-    - **Text** _(default)_  
+    - **Text** _(default)_
       ![](docs/img/annotation_text.png)
 
-    - **Select**  
-      Select is automatically enabled when the field does not have a uiType set, and all values are known.  
-      **NOTE:** Limited to `500` values! When you specify `select`, we need to know all values beforehand, BlackLab only stores the first `500` values, and ignores values longer than `256` characters. When this happens, we transform the field into a `combobox` for you, so you don't inadvertently miss any options.  
+    - **Select**
+      Select is automatically enabled when the field does not have a uiType set, and all values are known.
+      **NOTE:** Limited to `500` values! When you specify `select`, we need to know all values beforehand, BlackLab only stores the first `500` values, and ignores values longer than `256` characters. When this happens, we transform the field into a `combobox` for you, so you don't inadvertently miss any options.
       ![](docs/img/annotation_select.png)
 
-    - **Combobox**  
+    - **Combobox**
       Just like `text`, but add a dropdown that gets autocompleted values from the server.
       ![](docs/img/annotation_combobox.png)
 
-    - **POS** _(Part of speech)_  
+    - **POS** _(Part of speech)_
         This is an extension we use for corpora with split part of speech tags.
         It's mostly meant for internal use, but with some knowhow it can be configured for any corpus with detailed enough information.
         You will need to write a json file containing a `tagset` definition.
@@ -374,7 +380,7 @@ Because the format config specifies the shape of a corpus (which metadata and an
         ```
         Then, during page initialization, the tagset will have to be loaded by calling
 
-        `vuexModules.tagset.actions.load('http://localhost:8080/corpus-frontend/my-corpus/static/path/to/my/tagset.json');`  
+        `vuexModules.tagset.actions.load('http://localhost:8080/corpus-frontend/my-corpus/static/path/to/my/tagset.json');`
         This has to happen before $(document).ready fires! The reason for this is that the tagset you load determines how the page url is decoded, which is done when on first render.
 
         ![](docs/img/annotation_pos.png)
@@ -391,26 +397,26 @@ Because the format config specifies the shape of a corpus (which metadata and an
         uiType: range
     ```
 
-    The `text`, `select`, and `combobox` types function identical to the annotations uiTypes.  
-    **NOTE:** The `select` type is limited to `50` values (instead of `500` - though unlike with annotations, this can be configured, see [here](https://github.com/INL/BlackLab/issues/85) for more information)!  
+    The `text`, `select`, and `combobox` types function identical to the annotations uiTypes.
+    **NOTE:** The `select` type is limited to `50` values (instead of `500` - though unlike with annotations, this can be configured, see [here](https://github.com/INL/BlackLab/issues/85) for more information)!
     Also, values longer than 256 characters are ignored and will prevent the select from showing (though BlackLab still indexes them, and you can search on them).
 
-    The `pos` type is not supported for metadata.  
+    The `pos` type is not supported for metadata.
     In addition, several new types are available:
 
-    - **Checkbox**  
-      Predictably, transforms the dropdown into a checkbox selection.  
+    - **Checkbox**
+      Predictably, transforms the dropdown into a checkbox selection.
       **NOTE:** The same limitations apply as with `select`.
-    
+
       ![](docs/img/metadata_checkbox.png)
 
-    - **Radio**  
-      Like checkbox, but allow only one value.  
+    - **Radio**
+      Like checkbox, but allow only one value.
       **NOTE:** The same limitations apply as with `select`.
 
       ![](docs/img/metadata_radio.png)
 
-    - **Range**  
+    - **Range**
       Use two inputs to specify a range of values (usually for numeric fields, but works for text too).
 
       ![](docs/img/metadata_range.png)
@@ -418,13 +424,13 @@ Because the format config specifies the shape of a corpus (which metadata and an
 
 ### **Custom JS**
 
-These can be enabled on pages by defining them in [search.xml](#Search.xml)  
+These can be enabled on pages by defining them in [search.xml](#Search.xml)
 All javascript should run _before_ `$(document).ready` unless otherwise stated.
 
-> **NOTE:** your javascript file is shared between all pages!  
+> **NOTE:** your javascript file is shared between all pages!
 This means the vuex store might not be available! Check which page you're on beforehand by using the url or detecting whether the store exists and what exists inside it.
 
-Through javascript you can do the following things on the `/search/` page: 
+Through javascript you can do the following things on the `/search/` page:
 
 - <details>
     <summary>Show/hide annotations in the explore view</summary>
@@ -450,7 +456,7 @@ Through javascript you can do the following things on the `/search/` page:
 - <details>
     <summary>Change the columns in the hits table</summary>
 
-    Initially these columns are based on `propColumns` from `search.xml`, but this is the newer way of defining these.  
+    Initially these columns are based on `propColumns` from `search.xml`, but this is the newer way of defining these.
     Invalid annotations will be ignored.
 
     `vuexModules.ui.actions.results.hits.shownAnnotationIds(['lemma', 'pos', 'word', ...])`
@@ -459,22 +465,22 @@ Through javascript you can do the following things on the `/search/` page:
 - <details>
     <summary>Enable an audio player for spoken corpora</summary>
 
-    This will create small play buttons in concordances, allowing the user to listen to the fragment. We use this feature in the `CGN (Corpus Gesproken Nederlands)` corpus. 
+    This will create small play buttons in concordances, allowing the user to listen to the fragment. We use this feature in the `CGN (Corpus Gesproken Nederlands)` corpus.
 
     ![](docs/img/concordance_audio_player.png)
 
-    To enable this, three things are needed: 
+    To enable this, three things are needed:
     - The corpus needs to be annotated with some form of link to an audio file in the document metadata (or token annotations).
-    - You need to have hosted the audio files somewhere. 
+    - You need to have hosted the audio files somewhere.
       **NOTE:** The `/static/` directory will not work, as the server needs to support the http `range` headers, which that implementation does not. (PR would be most welcome!)
-    - A function that transforms a result into a start- and endtime inside the audio file. 
+    - A function that transforms a result into a start- and endtime inside the audio file.
 
-    Shown here is (an edited version of) the function we use in the `CGN`, but specific implementation will of course be unique to your situation. 
+    Shown here is (an edited version of) the function we use in the `CGN`, but specific implementation will of course be unique to your situation.
     ```javascript
     /**
-     * @param {string} corpus - name of the corpus 
+     * @param {string} corpus - name of the corpus
      * @param {string} docId - id of the document from which this hit originated
-     * @param {BLHitSnippet} snippet - the hit, looks like the following: 
+     * @param {BLHitSnippet} snippet - the hit, looks like the following:
      * {
      *   left: {
      *     lemma: ["this", "is", "an", "example"]
@@ -487,7 +493,7 @@ Through javascript you can do the following things on the `/search/` page:
      *     // ... etc
      *   },
      *   right: {
-     *     // ... 
+     *     // ...
      *   }
      * }
      */
@@ -528,9 +534,9 @@ Through javascript you can do the following things on the `/search/` page:
 - <details>
     <summary>Override any other data you want</summary>
 
-    If you know what you're doing, it's possible to override any value in the store.  
-    The `corpus` module (`vuexModules.corpus`) contains all data used to render the page, including the annotations, metadata fields, display names, descriptions, uiTypes, etc.  
-    This object is writable and can be interacted with from the console or javascript, so tinker away.  
+    If you know what you're doing, it's possible to override any value in the store.
+    The `corpus` module (`vuexModules.corpus`) contains all data used to render the page, including the annotations, metadata fields, display names, descriptions, uiTypes, etc.
+    This object is writable and can be interacted with from the console or javascript, so tinker away.
 
     Changing the ids of annotations/metadata will result in broken queries though! :)
 
@@ -538,7 +544,7 @@ Through javascript you can do the following things on the `/search/` page:
 
 ----
 
-The `/article/` page has other features that can be enabled.  
+The `/article/` page has other features that can be enabled.
 Enabling any of these will show a new tab `Statistics` next to the default `Content` and `Metadata` tabs.
 
 - <details>
@@ -566,9 +572,9 @@ Enabling any of these will show a new tab `Statistics` next to the default `Cont
     });
     ```
     ![](docs/img/article_table.png)
-    
+
   </details>
- 
+
 - <details>
     <summary>A pie chart displaying the frequency of an annotation's values</summary>
 
@@ -603,8 +609,8 @@ Enabling any of these will show a new tab `Statistics` next to the default `Cont
 
 - <details>
     <summary>The color palette for the charts</summary>
-    
-    If you're using custom css, this can help them blend in with your own style.  
+
+    If you're using custom css, this can help them blend in with your own style.
     <span style="color: white; background: #337ab7; display: inline-block; border-radius: 3px; padding: 0 0.5em;">Defaults to bootstrap 3 primary blue (`#337ab7`).</span>
 
     ```javascript
@@ -615,10 +621,10 @@ Enabling any of these will show a new tab `Statistics` next to the default `Cont
 
 ### **Custom CSS**
 
-We have included a template [SASS](https://sass-lang.com/) file [here](src/frontend/src/style-template.scss) to allow you to customize your page's color theme easily.  
+We have included a template [SASS](https://sass-lang.com/) file [here](src/frontend/src/style-template.scss) to allow you to customize your page's color theme easily.
 From there you can then add your own customizations on top.
 
-Create a file with the following contents  
+Create a file with the following contents
 
 ```scss
 // custom.scss
@@ -641,57 +647,57 @@ Development
 
 ## Frontend Javascript
 
-The app is primarly written in [Vue.js](https://vuejs.org/).  
-Outlined here is the `/search/` page, as it contains the majority of the code.  
+The app is primarly written in [Vue.js](https://vuejs.org/).
+Outlined here is the `/search/` page, as it contains the majority of the code.
 
 ### **Application structure**
 
 Entry points are the following files
-- [article.ts](src/frontend/src/article.ts)  
+- [article.ts](src/frontend/src/article.ts)
   Handles the hit navigation, graphs and charts on the document page `/corpus-frontend/docs/...`
-- [corpora.ts](src/frontend/src/corpora.ts)  
-  The main index page (or `/corpus-frontend/corpora/`)  
-- [remote-index.ts](src/frontend/src/remote-index.ts)  
+- [corpora.ts](src/frontend/src/corpora.ts)
+  The main index page (or `/corpus-frontend/corpora/`)
+- [remote-index.ts](src/frontend/src/remote-index.ts)
   The `/upload/` page.
-- [search.ts](src/frontend/src/search.ts)  
+- [search.ts](src/frontend/src/search.ts)
   The search form
 
-Individual components are contained in the [pages](src/frontend/src/pages) directory. These components are single-use and/or connected to the store in some way.  
+Individual components are contained in the [pages](src/frontend/src/pages) directory. These components are single-use and/or connected to the store in some way.
 The [components](src/frontend/src/components) directory contains a few "dumb" components that can be reused anywhere.
 
 ### **The Vuex store**
 
-We use [vuex](https://vuex.vuejs.org/guide/) to store the app state, treat it as a central database (though it's not persisted between sessions).  
+We use [vuex](https://vuex.vuejs.org/guide/) to store the app state, treat it as a central database (though it's not persisted between sessions).
 The vuex store is made up of many `modules` that all handle a specific part of the state, such as the metadata filters, or the settings menu (page size, random seed).
 
-The [form](src/frontend/src/store/search/form) directory contains most of the state to do with the top of the page, such as filters, query builder, explore view.  
+The [form](src/frontend/src/store/search/form) directory contains most of the state to do with the top of the page, such as filters, query builder, explore view.
 The [results](src/frontend/src/store/search/results) directory handles the settings that directly update the results, such as which page is open, how results are grouped, etc.
 
-A couple of modules have slightly different roles: 
-- The [corpus](src/frontend/src/store/search/corpus.ts) module stores the blacklab index config and is used almost everywhere.  
+A couple of modules have slightly different roles:
+- The [corpus](src/frontend/src/store/search/corpus.ts) module stores the blacklab index config and is used almost everywhere.
 - The [history](src/frontend/src/store/search/history.ts) module stores the query history (_not the browser history_).
-- The [query](src/frontend/src/store/search/query.ts) module contains a snapshot of the form (with filters, patterns, etc) as it was when `submit` was pressed.  
+- The [query](src/frontend/src/store/search/query.ts) module contains a snapshot of the form (with filters, patterns, etc) as it was when `submit` was pressed.
   This is what actually determines the results being shown, and is what render the query summary etc.
-- The [tagset](src/frontend/src/store/search/tagset.ts) module is mostly inactive, but it stores the info to build the editor for the `pos` uiType. 
+- The [tagset](src/frontend/src/store/search/tagset.ts) module is mostly inactive, but it stores the info to build the editor for the `pos` uiType.
 
 ### **URL generation and parsing**
 
-The current page url is generated and updated in [streams.ts](src/frontend/src/store/search/streams.ts).  
-It contains a few things: a stream that listens to state changes in the `vuex` store, and is responsible for updating the page url, and a couple streams that fetch some metadata about the currently selected/searched corpus (shown below the filters and at the top of the results panel).  
-![](docs/img/filter_overview.png)  
-![](docs/img/result_totals.png)  
+The current page url is generated and updated in [streams.ts](src/frontend/src/store/search/streams.ts).
+It contains a few things: a stream that listens to state changes in the `vuex` store, and is responsible for updating the page url, and a couple streams that fetch some metadata about the currently selected/searched corpus (shown below the filters and at the top of the results panel).
+![](docs/img/filter_overview.png)
+![](docs/img/result_totals.png)
 
-Url parsing happens in the [UrlStateParser](src/frontend/src/store/search/util/url-state-parser.ts).  
-The url parsing is a little involved, because depending on whether a `tagset` is provided it can differ (the cql pattern is normally parsed and split up so we know what to place in the `simple` and `extended` views, but this needs to happen differently when a tagset is involved).  
-Because of this, the store is first initialized (with empty values everywhere), then the url is parsed, after which the state is updated with the parsed values (see [search.ts](src/frontend/src/search.ts)).  
+Url parsing happens in the [UrlStateParser](src/frontend/src/store/search/util/url-state-parser.ts).
+The url parsing is a little involved, because depending on whether a `tagset` is provided it can differ (the cql pattern is normally parsed and split up so we know what to place in the `simple` and `extended` views, but this needs to happen differently when a tagset is involved).
+Because of this, the store is first initialized (with empty values everywhere), then the url is parsed, after which the state is updated with the parsed values (see [search.ts](src/frontend/src/search.ts)).
 When navigating back and forth through browser history, the url is not parsed, instead the state is attached to the history entry and read directly.
 
 ### **Development tips**
 
 Install the Vue devtools! ([chrome](https://chrome.google.com/webstore/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd), [firefox](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)).
 
-You can compile and watch the javascript files using webpack.  
-Execute `npm run start` in the `src/frontend/` directory. This will start `webpack-dev-server` (webpack is a javascript build tool) that will serve the compiled files (the [entry points](#structure)) at `localhost/dist/`.  
+You can compile and watch the javascript files using webpack.
+Execute `npm run start` in the `src/frontend/` directory. This will start `webpack-dev-server` (webpack is a javascript build tool) that will serve the compiled files (the [entry points](#structure)) at `localhost/dist/`.
 It adds a feature where if one of those files is loaded on the page, and the file changes, your page will reload automatically with the new changes.
 
 Combining this with `jspath` in `corpus-frontend.properties` we can start the corpus-frontend as we normally would, but sideload our javascript from `webpack-dev-server` and get realtime compilation :)
@@ -710,11 +716,11 @@ One note is that by default the port is `8080`, but we changed it to `80`, as `t
 
 ## Backend development
 
-The backend is written in Java, and does comparitively little.  
-Its most important tasks are serving the right javascript file and setting up a page skeleton (with [Apache Velocity](http://velocity.apache.org/)).  
+The backend is written in Java, and does comparitively little.
+Its most important tasks are serving the right javascript file and setting up a page skeleton (with [Apache Velocity](http://velocity.apache.org/)).
 
-When a request comes in, the `MainServlet` fetches the relevant corpus data from BlackLab, reads the matching `search.xml` file, and determines which page to serve (the `*Response` classes). Together this renders the header, footer, defines some client side variables (mainly urls to the corpus frontend server and blacklab servers).  
-From there on out the rest happens clientside.  
+When a request comes in, the `MainServlet` fetches the relevant corpus data from BlackLab, reads the matching `search.xml` file, and determines which page to serve (the `*Response` classes). Together this renders the header, footer, defines some client side variables (mainly urls to the corpus frontend server and blacklab servers).
+From there on out the rest happens clientside.
 
 It also handles most of the `document` page, retrieving the xml and metadata and converting it to html.
 

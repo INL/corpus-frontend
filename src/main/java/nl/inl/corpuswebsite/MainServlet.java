@@ -561,8 +561,7 @@ public class MainServlet extends HttpServlet {
 
         // need to use corpus name in the cache map
         // because corpora can define their own xsl files in their own data directory
-        // (this is common with - but not exclusive to - metadata stylesheets, that are all named "article_meta.xsl")
-        String key = corpus + "_" + corpusDataFormat;
+        String key = corpus + "_" + corpusDataFormat + "_" + name;
         return articleTransformers.computeIfAbsent(key, __ -> {
             Optional<File> file =
                 Arrays.asList(getProjectFile(corpus, name + ".xsl").orElse(null),

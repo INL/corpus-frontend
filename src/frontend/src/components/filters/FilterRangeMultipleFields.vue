@@ -134,12 +134,14 @@ function getFieldValues(ast: luceneQueryParser.ASTNode, field1: string, field2: 
 			const f2 = cur.left.field === field2 ? cur.left : cur.right;
 			return {
 				field1: {
-					low: f1.term_min,
-					high: f1.term_max
+					// Strip leading zeroes we may have inserted
+					low: f1.term_min.replace(/^0*/, ''),
+					high: f1.term_max.replace(/^0*/, '')
 				},
 				field2: {
-					low: f2.term_min,
-					high: f2.term_max
+					// Strip leading zeroes we may have inserted
+					low: f2.term_min.replace(/^0*/, ''),
+					high: f2.term_max.replace(/^0*/, '')
 				},
 				mode:
 					cur.operator === '&&' ? 'strict' :
@@ -184,13 +186,15 @@ export default BaseFilter.extend({
 			}));
 		},
 		luceneQuery(): string|null {
+			const value = this.value as ValueType;
 			const lf = this.fields.low;
-			const ll = this.value.low;
-			const lh = this.value.high;
+			// pad using leading zeroes, for when the field is a string in lucene/bls, otherwise field:[1 TO 2] matches anything containing a 1 or 2
+			const ll = value.low.padStart(4, '0');
+			const lh = value.high.padStart(4, '0');
 
 			const hf = this.fields.high;
-			const hl = this.value.low;
-			const hh = this.value.high;
+			const hl = value.low.padStart(4, '0');
+			const hh = value.high.padStart(4, '0');
 
 			const op = modes[this.value.mode as keyof typeof modes].operator;
 

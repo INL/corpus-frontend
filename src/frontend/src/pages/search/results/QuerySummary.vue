@@ -36,7 +36,7 @@ export default Vue.extend({
 			return ret;
 		}
 	},
-})
+});
 </script>
 
 <style lang="scss">

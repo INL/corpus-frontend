@@ -257,7 +257,7 @@ export default Vue.extend({
 		annotations: CorpusStore.get.annotations,
 		firstMainAnnotation: CorpusStore.get.firstMainAnnotation,
 		shownAnnotations(): AppTypes.NormalizedAnnotation[] { return UIStore.getState().results.hits.shownAnnotationIds.map(id => CorpusStore.get.annotationsMap()[id][0]); },
-		shownConcordanceAnnotations(): AppTypes.NormalizedAnnotation[] { return UIStore.getState().results.hits.shownConcordanceAnnotationIds.map(id => CorpusStore.get.annotationsMap()[id][0]); },
+		shownConcordanceAnnotations(): AppTypes.NormalizedAnnotation[] { return UIStore.getState().results.shared.detailedAnnotationIds.map(id => CorpusStore.get.annotationsMap()[id][0]); },
 		textDirection: CorpusStore.get.textDirection,
 
 		corpus() { return CorpusStore.getState().id; },

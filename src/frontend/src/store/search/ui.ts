@@ -42,19 +42,29 @@ type ModuleRootState = {
 				url: string
 			})),
 			/**
-			 * Annotations to show for every hit in the results table, context columns are always shown.
-			 * Defaults to lemma' and 'pos' if they exist, and up to 3 other random annotations.
+			 * Annotations columns to show in the hit results table, left, right and context columns are always shown.
+			 * Defaults to 'lemma' and 'pos' if they exist, and up to 3 other annotations in order of their displayOrder.
 			 * Can be configured through PROP_COLUMNS, which in turn is configured through search.xml.
 			 * Can also be overridden at runtime by custom js.
 			 */
 			shownAnnotationIds: string[];
-			/**
-			 * Annotations to show when opening an individual hit to see a larger context and the concordance details.
-			 * Defaults to all (non-internal) annotations, except punctuation.
-			 */
-			shownConcordanceAnnotationIds: string[];
 		};
 		docs: {};
+
+		shared: {
+			/**
+			 * Annotations IDs to include in expanded hit rows (meaning in the table there), and csv exports containing hits.
+			 * Defaults to all (non-internal) annotations.
+			 * By default, annotations are ordered according to their displayOrder in their AnnotatedField.
+			 */
+			detailedAnnotationIds: string[];
+			/**
+			 * Document Metadata field IDs to include in exported results.
+			 * Has no influence over shown metadata in the opened documents/articles on the /docs/${docId} page.
+			 * Defaults to all fields.
+			 */
+			detailedMetadataIds: string[];
+		};
 	};
 };
 
@@ -80,9 +90,12 @@ const initialState: ModuleRootState = {
 		hits: {
 			getAudioPlayerData: null,
 			shownAnnotationIds: [],
-			shownConcordanceAnnotationIds: []
 		},
-		docs: {}
+		docs: {},
+		shared: {
+			detailedAnnotationIds: [],
+			detailedMetadataIds: []
+		}
 	}
 };
 
@@ -192,12 +205,14 @@ const actions = {
 				}
 				state.results.hits.shownAnnotationIds = ids;
 			}, 'hits_shownAnnotationIds'),
-			shownConcordanceAnnotationIds: b.commit((state, ids: string[]) => {
+		},
+		shared: {
+			detailedAnnotationIds: b.commit((state, ids: string[]) => {
 				const allAnnotations = CorpusStore.get.annotationDisplayNames();
 				ids = ids.filter(id => {
 					if (!allAnnotations[id]) {
 						// tslint:disable-next-line
-						console.warn(`Trying to display Annotation ${id} in hits table but it does not exist`);
+						console.warn(`Trying to display Annotation ${id} in expanded hit rows, but it does not exist`);
 						return false;
 					}
 					return true;
@@ -206,8 +221,24 @@ const actions = {
 				if (!ids.length) {
 					return;
 				}
-				state.results.hits.shownConcordanceAnnotationIds = ids;
-			}, 'hits_shownConcordanceAnnotationIds')
+				state.results.shared.detailedAnnotationIds = ids;
+			}, 'shared_detailedAnnotationIds'),
+
+			detailedMetadataIds: b.commit((state, ids: string[]) => {
+				const allMetadataFields = CorpusStore.getState().metadataFields;
+				ids = ids.filter(id => {
+					if (!allMetadataFields[id]) {
+						// tslint:disable-next-line
+						console.warn(`Trying to add document metadata field ${id} to exports, but it does not exist`);
+						return false;
+					}
+					return true;
+				});
+				if (!ids.length) {
+					return;
+				}
+				state.results.shared.detailedMetadataIds = ids;
+			}, 'shared_detailedMetadataIds')
 		}
 	},
 	replace: b.commit((state, payload: ModuleRootState) => Object.assign(state, cloneDeep(payload)), 'replace'),
@@ -255,8 +286,7 @@ const init = () => {
 			.flatMap(f => {
 				const annots = Object.values(f.annotations);
 				const order = f.displayOrder;
-				annots.filter(a => !a.isInternal).sort((x, y) => order.indexOf(x.id) - order.indexOf(y.id));
-				return annots;
+				return annots.filter(a => !a.isInternal).sort((x, y) => order.indexOf(x.id) - order.indexOf(y.id));
 			})
 			.filter(annot => annot.id !== mainAnnotation && !shownAnnotations.includes(annot.id))
 			.forEach(annot => {
@@ -269,10 +299,9 @@ const init = () => {
 		initialState.results.hits.shownAnnotationIds = shownAnnotations;
 	}
 
-	// Same story as shownAnnotationIds, but use all annotations instead of only the first 3
-	if (!initialState.results.hits.shownConcordanceAnnotationIds.length) {
-		// Now add other annotations until we hit 3 annotations.
-		initialState.results.hits.shownConcordanceAnnotationIds =
+	// Same story as detailedAnnotationIds, but use all annotations instead of only the first 3
+	if (!initialState.results.shared.detailedAnnotationIds.length) {
+		initialState.results.shared.detailedAnnotationIds =
 		Object.values(CorpusStore.getState().annotatedFields)
 		.flatMap(f => {
 			const annots = Object.values(f.annotations);
@@ -280,6 +309,16 @@ const init = () => {
 			return annots.filter(a => !a.isInternal).sort((x, y) => order.indexOf(x.id) - order.indexOf(y.id));
 		})
 		.map(annot => annot.id);
+	}
+
+	// Also set all metadata fields here.
+	if (!initialState.results.shared.detailedMetadataIds.length) {
+		const metaFieldOrder = CorpusStore.getState().metadataFieldGroups.flatMap(g => g.fields);
+		const otherFields = new Set(Object.keys(CorpusStore.getState().metadataFields));
+		metaFieldOrder.forEach(id => otherFields.delete(id)); // already accounted for
+		metaFieldOrder.push(...otherFields);
+
+		initialState.results.shared.detailedMetadataIds = metaFieldOrder;
 	}
 
 	actions.replace(cloneDeep(initialState));

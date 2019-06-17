@@ -165,7 +165,7 @@ export default Vue.extend({
 				}),
 			subcorpus$
 				.subscribe(v => this.subcorpus = v)
-		)
+		);
 	},
 	destroyed() {
 		this.subscriptions.forEach(s => s.unsubscribe());

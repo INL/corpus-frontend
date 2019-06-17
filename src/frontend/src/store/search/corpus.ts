@@ -38,11 +38,13 @@ const get = {
 	the case can be made that it's not important to use the fieldgroup's orders anyway,
 	because we're not doing anything with those groups if we need all annotations
 	*/
+	/** Get an array of all (non-internal) annotations in the index */
 	annotations: b.read(state =>
 		Object.values(state.annotatedFields)
 		.flatMap(f => f.displayOrder.map(id => f.annotations[id]))
 		.filter(a => !a.isInternal)
 	, 'annotations'),
+	/** Get a map of all (non-internal) annotations in the index */
 	annotationsMap: b.read((state): {[id: string]: NormalizedAnnotation[]} =>
 		get.annotations()
 		.reduce<{[id: string]: NormalizedAnnotation[]}>((fields, field) => {

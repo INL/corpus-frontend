@@ -45,12 +45,10 @@ export default BaseFilter.extend({
 				high: string
 			},
 			required: true,
-			default: function() {
-				return {
-					high: '',
-					low: ''
-				}
-			}
+			default: () => ({
+				high: '',
+				low: ''
+			})
 		}
 	},
 	computed: {

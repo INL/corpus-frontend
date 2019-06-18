@@ -49,7 +49,7 @@
 						</span>
 						<template v-else>{{rightLabel}} hit</template>
 					</th>
-					<th v-for="annot in shownAnnotations" :key="annot.id">
+					<th v-for="annot in shownAnnotationCols" :key="annot.id">
 						<a v-if="annot.hasForwardIndex"
 							role="button"
 							:class="['sort', {'disabled':disabled}]"
@@ -59,6 +59,16 @@
 							{{annot.displayName}}
 						</a>
 						<template v-else>{{annot.displayName}}</template>
+					</th>
+					<th v-for="meta in shownMetadataCols" :key="meta.id">
+						<a
+							role="button"
+							:class="['sort', {'disabled':disabled}]"
+							:title="`Sort by ${meta.displayName}`"
+							@click="changeSort(`field:${meta.id}`)"
+						>
+							{{meta.displayName}}
+						</a>
 					</th>
 				</tr>
 			</thead>
@@ -91,6 +101,7 @@
 							<td class="text-center"><strong :dir="textDirection">{{rowData.hit}}</strong></td>
 							<td><span :dir="textDirection">{{rowData.right}}</span>&hellip;</td>
 							<td v-for="(v, index) in rowData.other" :key="index">{{v}}</td>
+							<td v-for="meta in shownMetadataCols" :key="meta.id">{{rowData.doc[meta.id]}}</td>
 						</tr>
 						<tr v-if="citations[index]" v-show="citations[index].open" :key="index + '-citation'" :class="['concordance-details', {'open': citations[index].open}]">
 							<td :colspan="numColumns">
@@ -113,14 +124,13 @@
 											</tr>
 										</thead>
 										<tbody>
-											<tr v-for="annot in shownConcordanceAnnotations" :key="annot.id">
+											<tr v-for="annot in shownConcordanceAnnotationRows" :key="annot.id">
 												<th>{{annot.displayName}}</th>
 												<td v-for="(v, index) in rowData.props[annot.id]" :key="index">{{v}}</td>
 											</tr>
 										</tbody>
 									</table>
 								</div>
-
 							</td>
 						</tr>
 					</template>
@@ -160,6 +170,7 @@ type HitRow = {
 	docPid: string;
 	start: number;
 	end: number;
+	doc: BLTypes.BLDocInfo;
 };
 
 type DocRow = {
@@ -216,9 +227,9 @@ export default Vue.extend({
 					prevPid = pid;
 					const doc = infos[pid];
 
-					const title = titleField && doc[titleField] || 'UNKNOWN';
-					const author = authorField && doc[authorField] ? ' by ' + doc[authorField] : '';
-					const date = dateField && doc[dateField] ? ' (' + doc[dateField] + ')' : '';
+					const title = doc[titleField!] || 'UNKNOWN';
+					const author = doc[authorField!] ? ' by ' + doc[authorField!] : '';
+					const date = doc[dateField!] ? ' (' + doc[dateField!] + ')' : '';
 
 					// TODO the clientside url generation story... https://github.com/INL/corpus-frontend/issues/95
 					// Ideally use absolute urls everywhere, if the application needs to be proxied, let the proxy server handle it.
@@ -228,7 +239,7 @@ export default Vue.extend({
 						type: 'doc',
 						summary: title+author+date,
 						href: getDocumentUrl(pid, this.results.summary.searchParam.patt),
-						docPid: pid
+						docPid: pid,
 					}  as DocRow);
 				}
 
@@ -242,22 +253,28 @@ export default Vue.extend({
 					right: parts[this.rightIndex],
 					hit: parts[1],
 					props: hit.match,
-					other: this.shownAnnotations.map(annot => words(hit.match, annot.id, false, '')),
+					other: this.shownAnnotationCols.map(annot => words(hit.match, annot.id, false, '')),
 					docPid: hit.docPid,
 					start: hit.start,
-					end: hit.end
+					end: hit.end,
+					doc: infos[pid]
 				});
 
 				return rows;
 			});
 		},
 		numColumns() {
-			return 3 + this.shownAnnotations.length; // left - hit - right - (one per shown annotation)
+			return 3 + this.shownAnnotationCols.length + this.shownMetadataCols.length; // left - hit - right - (one per shown annotation) - (one per shown metadata)
 		},
 		annotations: CorpusStore.get.annotations,
 		firstMainAnnotation: CorpusStore.get.firstMainAnnotation,
-		shownAnnotations(): AppTypes.NormalizedAnnotation[] { return UIStore.getState().results.hits.shownAnnotationIds.map(id => CorpusStore.get.annotationsMap()[id][0]); },
-		shownConcordanceAnnotations(): AppTypes.NormalizedAnnotation[] { return UIStore.getState().results.shared.detailedAnnotationIds.map(id => CorpusStore.get.annotationsMap()[id][0]); },
+		shownAnnotationCols(): AppTypes.NormalizedAnnotation[] { return UIStore.getState().results.hits.shownAnnotationIds.map(id => CorpusStore.get.annotationsMap()[id][0]); },
+		shownMetadataCols(): AppTypes.NormalizedMetadataField[] { return UIStore.getState().results.hits.shownMetadataIds.map(id => CorpusStore.getState().metadataFields[id]); },
+		/** Get annotations to show in concordances, if not configured, returns all (non-internal) annotations. */
+		shownConcordanceAnnotationRows(): AppTypes.NormalizedAnnotation[] {
+			const configured = UIStore.getState().results.shared.detailedAnnotationIds;
+			return configured ? configured.map(id => CorpusStore.get.annotationsMap()[id][0]) : CorpusStore.get.annotations();
+		},
 		textDirection: CorpusStore.get.textDirection,
 
 		corpus() { return CorpusStore.getState().id; },

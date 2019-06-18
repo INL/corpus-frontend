@@ -422,6 +422,14 @@ public class MainServlet extends HttpServlet {
 
         // Get response class
         Class<? extends BaseResponse> brClass = responses.getOrDefault(page, ErrorResponse.class);
+        // If requesting invalid page, redirect to ${page}/search/, as the user probably meant to go to ${corpus}/search/ but instead went to ${corpus}/
+        // if they actually meant a page, the corpus probably doesn't exist, they will still get a 404 as usual
+        if (brClass.equals(ErrorResponse.class) && page != null && corpus == null) {
+            logger.debug("Unknown raw page {} requested - might be a corpus, redirecting", page);
+            response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
+            response.setHeader("location", this.getServletContext().getContextPath() + "/" + page + "/search/");
+            return;
+        }
 
         // Instantiate response class
         BaseResponse br;

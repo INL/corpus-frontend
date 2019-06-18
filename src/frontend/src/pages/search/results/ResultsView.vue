@@ -1,5 +1,5 @@
 <template>
-	<div v-show="active" class="results-container" :disabled="request">
+	<div v-show="visible" class="results-container" :disabled="request">
 		<span v-if="request" class="fa fa-spinner fa-spin searchIndicator" style="position:absolute; left: 50%; top:15px"></span>
 
 		<div class="crumbs-totals">
@@ -52,9 +52,17 @@
 			</component>
 			<hr>
 		</template>
-		<template v-else-if="results"><div class="no-results-found">No results found.</div></template>
-		<template v-else-if="error"><div class="no-results-found">{{error.message}}</div></template>
-
+		<div v-else-if="results" class="no-results-found">No results found.</div>
+		<div v-else-if="!valid" class="no-results-found">
+			This view is inactive because no search criteria for words were specified.
+		</div>
+		<div v-else-if="error" class="no-results-found">
+			<span class="fa fa-exclamation-triangle text-danger"></span><br>
+			{{error.message}}
+			<br>
+			<br>
+			<button type="button" class="btn btn-default" title="Reset sorting+grouping and try again" @click="storeModule.actions.reset">Clear settings and try again</button>
+		</div>
 
 		<div v-show="resultsHaveData" class="text-right">
 			<SelectPicker
@@ -63,6 +71,8 @@
 
 				allowHtml
 				hideDisabled
+				allowUnknownValues
+				hideUnknown
 
 				:searchable="sortOptions.flatMap(o => o.options && !o.disabled ? o.options.filter(opt => !opt.disabled) : o).length > 20"
 				:options="sortOptions"
@@ -111,6 +121,7 @@ import SelectPicker, {Option, OptGroup} from '@/components/SelectPicker.vue';
 import {debugLog} from '@/utils/debug';
 
 import * as BLTypes from '@/types/blacklabtypes';
+import cloneDeep from 'clone-deep';
 
 export default Vue.extend({
 	components: {
@@ -166,21 +177,18 @@ export default Vue.extend({
 				this.cancel = null;
 			}
 
-			const params = RootStore.get.blacklabParameters()!;
-
-			if (this.type === 'hits' && !params.patt) {
+			if (!this.valid) {
 				this.results = null;
 				this.paginationResults = null;
-				this.error = new Api.ApiError('No results', 'This view is inactive because no search criteria for words were specified.', 'No results');
+				this.error = null;
 				return;
 			}
 
+			const params = RootStore.get.blacklabParameters()!;
 			const apiCall = this.type === 'hits' ? Api.blacklab.getHits : Api.blacklab.getDocs;
 			debugLog('starting search', this.type, params);
 
-			const r = apiCall(this.indexId, params, {
-				headers: { 'Cache-Control': 'no-cache' }
-			});
+			const r = apiCall(this.indexId, params, {headers: { 'Cache-Control': 'no-cache' }});
 			this.request = r.request;
 			this.cancel = r.cancel;
 
@@ -221,11 +229,13 @@ export default Vue.extend({
 
 			this.downloadInProgress = true;
 			const apiCall = this.type === 'hits' ? Api.blacklab.getHitsCsv : Api.blacklab.getDocsCsv;
-			const params = {
-				...this.results.summary.searchParam,
-				listvalues: UIStore.getState().results.shared.detailedAnnotationIds.join(','),
-				listmetadatavalues: UIStore.getState().results.shared.detailedMetadataIds.join(','),
-			};
+			const params = cloneDeep(this.results.summary.searchParam);
+			if (UIStore.getState().results.shared.detailedAnnotationIds) {
+				params.listvalues = UIStore.getState().results.shared.detailedAnnotationIds!.join(',');
+			}
+			if (UIStore.getState().results.shared.detailedMetadataIds) {
+				params.listmetadatavalues = UIStore.getState().results.shared.detailedAnnotationIds!.join(',');
+			}
 
 			debugLog('starting csv download', this.type, params);
 			apiCall(this.indexId, params).request
@@ -311,10 +321,15 @@ export default Vue.extend({
 			};
 		},
 
-		active(): boolean {
-			return InterfaceStore.get.viewedResults() === this.type;
+		visible(): boolean { return InterfaceStore.get.viewedResults() === this.type; },
+		valid(): boolean {
+			if (this.type === 'hits') {
+				const params = RootStore.get.blacklabParameters();
+				return !!(params && params.patt);
+			} else {
+				return true;
+			}
 		},
-
 		// simple view variables
 		indexId(): string { return CorpusStore.getState().id; },
 		resultsHaveData(): boolean {
@@ -463,16 +478,16 @@ export default Vue.extend({
 	watch: {
 		refreshParameters: {
 			handler(cur, prev) {
-				if (this.active) {
+				if (this.visible) {
 					this.refresh();
 				} else {
 					this.markDirty();
 				}
 			},
 		},
-		active: {
-			handler(active) {
-				if (active && this.isDirty) {
+		visible: {
+			handler(visible) {
+				if (visible && this.isDirty && this.valid) {
 					this.refresh();
 				}
 			},

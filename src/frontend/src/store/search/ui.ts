@@ -48,22 +48,33 @@ type ModuleRootState = {
 			 * Can also be overridden at runtime by custom js.
 			 */
 			shownAnnotationIds: string[];
+			/**
+			 * Metadata columns to show in the hit results table.
+			 * Defaults to empty.
+			 */
+			shownMetadataIds: string[];
 		};
-		docs: {};
+		docs: {
+			/**
+			 * Metadata columns to show in the doc results table.
+			 * Defaults to the special year field (if it has been set in the index).
+			 */
+			shownMetadataIds: string[];
+		};
 
 		shared: {
 			/**
 			 * Annotations IDs to include in expanded hit rows (meaning in the table there), and csv exports containing hits.
-			 * Defaults to all (non-internal) annotations.
-			 * By default, annotations are ordered according to their displayOrder in their AnnotatedField.
+			 * The server returns all annotations if this is null,
+			 * and the interface will then display all non-internal annotations, in their displayOrder.
 			 */
-			detailedAnnotationIds: string[];
+			detailedAnnotationIds: null|string[];
 			/**
 			 * Document Metadata field IDs to include in exported results.
 			 * Has no influence over shown metadata in the opened documents/articles on the /docs/${docId} page.
-			 * Defaults to all fields.
+			 * Server returns all fields if this is null.
 			 */
-			detailedMetadataIds: string[];
+			detailedMetadataIds: null|string[];
 		};
 	};
 };
@@ -90,11 +101,14 @@ const initialState: ModuleRootState = {
 		hits: {
 			getAudioPlayerData: null,
 			shownAnnotationIds: [],
+			shownMetadataIds: [],
 		},
-		docs: {},
+		docs: {
+			shownMetadataIds: [],
+		},
 		shared: {
-			detailedAnnotationIds: [],
-			detailedMetadataIds: []
+			detailedAnnotationIds: null,
+			detailedMetadataIds: null,
 		}
 	}
 };
@@ -299,27 +313,34 @@ const init = () => {
 		initialState.results.hits.shownAnnotationIds = shownAnnotations;
 	}
 
+	if (!initialState.results.docs.shownMetadataIds.length) {
+		const dateField = CorpusStore.getState().fieldInfo.dateField;
+		if (dateField) {
+			initialState.results.docs.shownMetadataIds.push(dateField);
+		}
+	}
+
 	// Same story as detailedAnnotationIds, but use all annotations instead of only the first 3
-	if (!initialState.results.shared.detailedAnnotationIds.length) {
-		initialState.results.shared.detailedAnnotationIds =
-		Object.values(CorpusStore.getState().annotatedFields)
-		.flatMap(f => {
-			const annots = Object.values(f.annotations);
-			const order = f.displayOrder;
-			return annots.filter(a => !a.isInternal).sort((x, y) => order.indexOf(x.id) - order.indexOf(y.id));
-		})
-		.map(annot => annot.id);
-	}
+	// if (!initialState.results.shared.detailedAnnotationIds) {
+	// 	initialState.results.shared.detailedAnnotationIds =
+	// 	Object.values(CorpusStore.getState().annotatedFields)
+	// 	.flatMap(f => {
+	// 		const annots = Object.values(f.annotations);
+	// 		const order = f.displayOrder;
+	// 		return annots.filter(a => !a.isInternal).sort((x, y) => order.indexOf(x.id) - order.indexOf(y.id));
+	// 	})
+	// 	.map(annot => annot.id);
+	// }
 
-	// Also set all metadata fields here.
-	if (!initialState.results.shared.detailedMetadataIds.length) {
-		const metaFieldOrder = CorpusStore.getState().metadataFieldGroups.flatMap(g => g.fields);
-		const otherFields = new Set(Object.keys(CorpusStore.getState().metadataFields));
-		metaFieldOrder.forEach(id => otherFields.delete(id)); // already accounted for
-		metaFieldOrder.push(...otherFields);
+	// // Also set all metadata fields here.
+	// if (!initialState.results.shared.detailedMetadataIds) {
+	// 	const metaFieldOrder = CorpusStore.getState().metadataFieldGroups.flatMap(g => g.fields);
+	// 	const otherFields = new Set(Object.keys(CorpusStore.getState().metadataFields));
+	// 	metaFieldOrder.forEach(id => otherFields.delete(id)); // already accounted for
+	// 	metaFieldOrder.push(...otherFields);
 
-		initialState.results.shared.detailedMetadataIds = metaFieldOrder;
-	}
+	// 	initialState.results.shared.detailedMetadataIds = metaFieldOrder;
+	// }
 
 	actions.replace(cloneDeep(initialState));
 };

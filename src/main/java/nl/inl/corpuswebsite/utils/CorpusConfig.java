@@ -3,12 +3,14 @@ package nl.inl.corpuswebsite.utils;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -77,10 +79,13 @@ public class CorpusConfig {
     }
 
     /**
+     * Extract annotation ids for which we require the full list of values to be known by the frontend.
+     *
      * Word properties can have a "uiType" property that determines if the input field should have
      * autocompletion enabled, use a dropdown list, be a number range, etc.
      * For the "select" value (e.g. a dropdown list) we need to get the possible values for that field from blacklab.
      * Since they aren't contained in the initial json payload unless we specifically request them.
+     * This is also required for
      *
      * This function parses the config, finds the fields marked with "select", and returns a comma-separated list of the field names.
      * We can then use that list to request the config again, with the field values.
@@ -92,9 +97,9 @@ public class CorpusConfig {
      * @throws IOException
      * @throws XPathExpressionException
      */
-    public static String getSelectProperties(String xml) throws ParserConfigurationException, SAXException, IOException {
+    public static String getAnnotationsWithRequiredValues(String xml) throws ParserConfigurationException, SAXException, IOException {
         Document config = fromXml(xml);
-        ArrayList<String> selects = new ArrayList<>();
+        Set<String> annotations = new HashSet<>();
 
         // We can't just retrieve the annotatedField/complexField entries directly, as there are two types of
         // elements named annotatedField, one for the annotationGroups and one for the annotations themselves
@@ -126,17 +131,20 @@ public class CorpusConfig {
                     ? propertyElement.getElementsByTagName("uiType").item(0).getTextContent()
                     : "";
                 if ("select".equals(configType)) {
-                    selects.add(propertyElement.getAttribute("name"));
+                    annotations.add(propertyElement.getAttribute("name"));
                 } else if ("pos".equals(configType)) {
-                    selects.add(propertyElement.getAttribute("name"));
+                    annotations.add(propertyElement.getAttribute("name"));
                     NodeList subAnnotations = propertyElement.getElementsByTagName("subannotation");
                     for (int i = 0; i < subAnnotations.getLength(); ++i) {
                         Element e = (Element) subAnnotations.item(i);
-                        selects.add(e.getTextContent());
+                        annotations.add(e.getTextContent());
                     }
                 }
             }
         }
-        return selects.stream().distinct().collect(Collectors.joining(","));
+
+        // this is always required.
+        annotations.add("starttag");
+        return annotations.stream().collect(Collectors.joining(","));
     }
 }

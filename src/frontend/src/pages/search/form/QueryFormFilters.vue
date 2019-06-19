@@ -35,7 +35,7 @@
 				:is="filter.componentName"
 				:definition="filter"
 				:textDirection="textDirection"
-				:value="filter.value"
+				:value="filter.value != null ? filter.value : undefined"
 
 				@change-value="updateFilterValue(filter.id, $event)"
 				@change-lucene="updateLuceneValue(filter.id, $event)"

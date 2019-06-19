@@ -36,6 +36,13 @@ import Autocomplete from '@/mixins/autocomplete';
 import FilterText from '@/components/filters/FilterText.vue';
 
 export default FilterText.extend({
+	props: {
+		value: {
+			type: String,
+			required: true,
+			default: '',
+		}
+	},
 	mixins: [Autocomplete],
 	computed: {
 		autocomplete(): boolean { return true; },

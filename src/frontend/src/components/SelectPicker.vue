@@ -143,6 +143,8 @@
 <script lang="ts">
 import Vue from 'vue';
 import JsonStableStringify from 'json-stable-stringify';
+import { mapReduce } from '../utils';
+import { debugLog } from '../utils/debug';
 
 export type SimpleOption = string;
 
@@ -204,7 +206,14 @@ export default Vue.extend({
 		disabled: Boolean,
 		/** Show a little spinner while the parent is fetching options, or something */
 		loading: Boolean,
+		/**
+		 * Allow values that are not in options, only relevant if !editable
+		 * If true, preserve the value, though no entry will exist for it in the dropdown
+		 * If false, immediately emit a change event with a corrected value prop
+		 */
+		allowUnknownValues: Boolean,
 
+		// interface options, do not change interaction behavior
 		/** Text direction (for rtl support) */
 		dir: String,
 		allowHtml: Boolean,
@@ -371,9 +380,6 @@ export default Vue.extend({
 				const isOwnLabelClick = (event.target as HTMLElement).closest(`label[for="${(this as any).dataId}"]`) != null;
 				// NOTE: assumes the template doesn't render a button as main interactable when this.editable is true
 				const isOwnInputClick = this.editable && isChild(this.$el, event.target! as HTMLElement);
-
-
-
 				if (isOwnMenuClick || isOwnInputClick || isOwnLabelClick) {
 					return;
 				}
@@ -454,10 +460,7 @@ export default Vue.extend({
 					Vue.set(this.internalModel, id as any as string, opt);
 				}
 			} else {
-				this.internalModel = {};
-				if (value) {
-					Vue.set(this.internalModel, id as any as string, opt);
-				}
+				this.internalModel = {[id]: opt};
 			}
 
 			if (this.isOpen && !this.multiple) {
@@ -516,7 +519,24 @@ export default Vue.extend({
 				newVal = newVal as string; // we verified above, but can't declare it to be a type...
 
 				// Don't select empty strings, those are meant to clear the selectpicker
-				const newOption = !!newVal ? this.uiOptions.find(o => o.type === 1 && o.value === newVal) as _uiOpt|undefined : undefined;
+				let newOption = !!newVal ? this.uiOptions.find(o => o.type === 1 && o.value === newVal) as _uiOpt|undefined : undefined;
+				if (newOption == null && newVal && this.allowUnknownValues) {
+					// uh oh, this value is not in our options, but we're configured to allow unknowns
+					// construct a synthetic option to place in our model.
+					// this way the option won't show in the dropdown list, but we still adopt its value.
+					debugLog('Creating synthetic option for value ' + newVal);
+					newOption = {
+						type: 1,
+						id: Number.MAX_SAFE_INTEGER,
+						value: newVal,
+						label: newVal,
+						disabled: false,
+						lowerValue: newVal.toLowerCase(),
+						lowerLabel: newVal.toLowerCase(),
+						title: newVal
+					};
+				}
+
 				// Assume model always in a consistent state - e.g. no multiple values when !this.multiple
 				// Otherwise whatever, just discard the rest of the selections... It's not a valid state anyway
 				const cur = Object.values(this.internalModel)[0] as _uiOpt|undefined;
@@ -544,33 +564,44 @@ export default Vue.extend({
 				// First split the currently selected options into two categories: those still selected, and those no longer selected
 				// Then find the corresponding option object for all new values that weren't selected yet
 				// Then check whether we need to update the model (any deselections or new selections) and rewrite it
-				// NOTE: new values for which no corresponding option exists are ignored, and will not be removed until an option that actually exists is toggled.
 
-				const unselectedValues = [] as _uiOpt[];
-				let newSelectedValues: any[] = (newVal as string[]).concat(); // copy, don't edit values from a parent! currently string[]
-				const alreadySelectedValues = Object.values(this.internalModel)
-				.filter(o => {
-					const indexInNew = (newSelectedValues as string[]).indexOf(o.value);
-					if (indexInNew !== -1) {
-						// already have this, so it's not a new option
-						(newSelectedValues as string[]).splice(indexInNew, 1);
-						return true;
+				const newValuesAsSet = new Set<string>(newVal as string[]);
+				const oldValuesAsMap = mapReduce(Object.values(this.internalModel), 'value');
+
+				const deSelectedValues: _uiOpt[] = Object.values(this.internalModel).filter(selectedOption => !newValuesAsSet.has(selectedOption.value));
+				const newlySelectedValues: string[] = (newVal as string[]).filter(value => oldValuesAsMap[value] == null);
+				const stillSelectedValues: _uiOpt[] = (newVal as string[]).map(value => oldValuesAsMap[value]).filter(opt => opt != null);
+
+				// now find the corresponding uiOpts for all new values so we can create our model
+				// add synthetic options for unknown values if allowUnknownValues, else remove unknown values
+				const allKnownOptions = this.uiOptions.filter(o => o.type === 1) as _uiOpt[];
+				const newlySelectedValuesAsUiOpts = newlySelectedValues.reduce<_uiOpt[]>((opts, value, index) => {
+					let matchingOption = allKnownOptions.find(v => v.value === value);
+					if (!matchingOption && this.allowUnknownValues) {
+						// create a synthetic option to place in our model
+						// so we can store the value, event though it's not in our options list
+						debugLog('Creating synthetic option for value ' + value);
+						matchingOption = {
+							type: 1,
+							id: Number.MAX_SAFE_INTEGER - index,
+							value,
+							label: value,
+							disabled: false,
+							title: value,
+							lowerValue: value.toLowerCase(),
+							lowerLabel: value.toLowerCase(),
+						};
 					}
+					if (matchingOption) {
+						opts.push(matchingOption);
+					}
+					return opts;
+				}, []);
 
-					unselectedValues.push(o);
-					return false;
-				});
-
-				if (newSelectedValues.length) {
-					const allOptions = this.uiOptions.filter(o => o.type === 1) as _uiOpt[];
-					// map to _uiOpt[]
-					newSelectedValues = newSelectedValues.map(v => allOptions.find(o => o.value === v && !alreadySelectedValues.includes(o)))
-					.filter(v => !!v); // remove invalid values that were mapped to undefined
-				}
-
-				for (const v of unselectedValues) { Vue.delete(this.internalModel, v.id.toString()); }
-				for (const v of newSelectedValues as _uiOpt[]) { Vue.set(this.internalModel, v.id.toString(), v); }
-				if (unselectedValues.length + newSelectedValues.length) {
+				for (const v of deSelectedValues) { Vue.delete(this.internalModel, v.id.toString()); }
+				for (const v of newlySelectedValuesAsUiOpts) { Vue.set(this.internalModel, v.id.toString(), v); }
+				const modelChanged = newlySelectedValuesAsUiOpts.length > 0 || deSelectedValues.length > 0;
+				if (modelChanged) {
 					this.$emit('change', Object.values(this.internalModel).map(o => o.value));
 				}
 			}

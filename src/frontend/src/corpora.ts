@@ -20,6 +20,8 @@ import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
 import { normalizeIndexOld, normalizeFormatOld } from './utils/blacklabutils';
 
+import * as Api from '@/api';
+
 const enum DataEvent {
 	SERVER_REFRESH = 'server/refresh',
 	FORMATS_REFRESH = 'formats/refresh',
@@ -98,10 +100,14 @@ createHandler({event: DataEvent.SERVER_REFRESH, handler(payload) { serverInfo = 
 createHandler({event: DataEvent.CORPORA_REFRESH, handler(payload) { corpora = ([] as any).concat(payload); }});
 createHandler({event: DataEvent.FORMATS_REFRESH, handler(payload) { formats = ([] as any).concat(payload); }});
 createHandler({event: DataEvent.CORPUS_REFRESH, handler(payload) {
-	payload = Object.assign({}, payload);
+	// payload = Object.assign({}, payload);
 	// merge into list, trigger global corpora refresh
 	const i = corpora.findIndex(function(corpus) { return corpus.id === payload.id; });
-	i >= 0 ? corpora[i] = payload : corpora.push(payload);
+	i >= 0 ? corpora[i] = {
+		// merge with old data, to preserve retrieved async data
+		...corpora[i],
+		...payload
+	} : corpora.push(payload);
 	triggers.updateCorpora(corpora);
 }});
 
@@ -216,6 +222,8 @@ createHandler({selector: 'tbody[data-autoupdate="corpora"]', event: DataEvent.CO
 		return {
 			...corpus,
 			canSearch: corpus.status === 'available',
+			description: corpus.description != null ? corpus.description : 'Loading...',
+			detailsId: corpus.id + '-details',
 			documentFormatShortId: format ? format.shortId : '',
 			documentFormatOwner: format ? format.owner : '',
 			isUserFormat: format ? !!format.owner : false,
@@ -230,16 +238,39 @@ createHandler({selector: 'tbody[data-autoupdate="corpora"]', event: DataEvent.CO
 	const template =
 	`{{#corpora}}
 	<tr>
-		<td><a title="Search the \'{{displayName}}\' corpus" class="icon fa fa-search {{^canSearch}}disabled{{/canSearch}}" {{#canSearch}}href="{{searchUrl}}"{{/canSearch}}></a></td>
-		<td class="corpus-name"><a title="Search the \'{{displayName}}\' corpus" class="{{^canSearch}}disabled{{/canSearch}}" {{#canSearch}}href="{{searchUrl}}"{{/canSearch}}>{{displayName}} {{statusText}}</a></td>
+		<td><a title="Search the '{{displayName}}' corpus" class="icon fa fa-search {{^canSearch}}disabled{{/canSearch}}" {{#canSearch}}href="{{searchUrl}}"{{/canSearch}}></a></td>
+		<td class="corpus-name"><a title="Search the '{{displayName}}' corpus" class="{{^canSearch}}disabled{{/canSearch}}" {{#canSearch}}href="{{searchUrl}}"{{/canSearch}}>{{displayName}} {{statusText}}</a></td>
 		<td>{{sizeString}}</td>
 		{{#isPrivate}}
-			<td {{#isUserFormat}}title="Format owned by {{documentFormatOwner}}"{{/isUserFormat}}>{{#isUserFormat}}*{{/isUserFormat}}{{documentFormatShortId}}</td>
-			<td>{{timeModified}}</td>
-			<td><a data-corpus-action="upload" data-id="{{id}}" title="Upload documents to the \'{{displayName}}\' corpus" class="icon fa fa-plus-square {{#isBusy}}disabled{{/isBusy}}" href="javascript:void(0)"></a></td>
-			<td><a data-corpus-action="share" data-id="{{id}}" title="Share the \'{{displayName}}\' corpus" class="icon fa fa-user-plus" href="javascript:void(0)"></a></td>
-			<td><a data-corpus-action="delete" data-id="{{id}}" title="Delete the \'{{displayName}}\' corpus" class="icon fa fa-trash {{#isBusy}}disabled{{/isBusy}}" href="javascript:void(0)"></a></td>
+			<td><a data-corpus-action="upload" data-id="{{id}}" title="Upload documents to the '{{displayName}}' corpus" class="icon fa fa-plus-square {{#isBusy}}disabled{{/isBusy}}" href="javascript:void(0)"></a></td>
+			<td><a data-corpus-action="share" data-id="{{id}}" title="Share the '{{displayName}}' corpus" class="icon fa fa-user-plus" href="javascript:void(0)"></a></td>
+			<td><a data-corpus-action="delete" data-id="{{id}}" title="Delete the '{{displayName}}' corpus" class="icon fa fa-trash {{#isBusy}}disabled{{/isBusy}}" href="javascript:void(0)"></a></td>
 		{{/isPrivate}}
+		<td>
+			<a role="button" data-toggle="collapse" href="#{{detailsId}}" aria-expanded="false" aria-controls="{{detailsId}}">
+				<span class="icon fa fa-caret-down" title="show details"></span>
+			</a>
+		</td>
+	</tr>
+	<tr id="{{detailsId}}" class="collapse">
+		<td colspan="{{^isPrivate}}3{{/isPrivate}}{{#isPrivate}}6{{/isPrivate}}">
+			<table>
+				<tr>
+					<th>Last modified</th>
+					<td>{{timeModified}}</td>
+				</tr>
+				{{#isPrivate}}
+				<tr>
+					<th>Format</th>
+					<td {{#isUserFormat}}title="Format owned by {{documentFormatOwner}}"{{/isUserFormat}}>{{#isUserFormat}}*{{/isUserFormat}}{{documentFormatShortId}}</td>
+				</tr>
+				{{/isPrivate}}
+				<tr>
+					<th>Description</th>
+					<td>{{description}}</td>
+				</tr>
+			</table>
+		</td>
 	</tr>
 	{{/corpora}}`;
 
@@ -416,6 +447,8 @@ function refreshIndexStatusWhileIndexing(indexId: string) {
 		}
 	}
 
+	// api
+
 	function run() {
 		$.ajax(statusUrl, {
 			type: 'GET',
@@ -434,28 +467,44 @@ function refreshIndexStatusWhileIndexing(indexId: string) {
 	timeoutHandle = setTimeout(run, 2000);
 }
 
+function loadAdditionalCorpusData(corpusId: string) {
+	Api.blacklab.getCorpus(corpusId)
+	.then(corpus => {
+		const currentState = corpora.find(c => c.id === corpusId);
+		triggers.updateCorpus({
+			description: corpus.description,
+			displayName: corpus.displayName,
+			documentFormat: corpus.documentFormat || '',
+			id: corpusId,
+			indexProgress: currentState ? currentState.indexProgress : null,
+			owner: corpusId.substring(0, corpusId.indexOf(':')) || null,
+			shortId: corpusId.substr(corpusId.indexOf(':') + 1),
+			status: currentState ? currentState.status : 'available',
+			timeModified: corpus.timeModified,
+			tokenCount: corpus.tokenCount
+		});
+	})
+	.catch((e: AppTypes.ApiError) => showError(`Could not retrieve additional details for corpus ${corpusId}: ${e.message}`));
+}
+
 // Request the list of available corpora and
 // update the corpora page with it.
 function refreshCorporaList() {
 	// Perform the AJAX request to get the list of corpora.
 	$('#waitDisplay').show();
-	$.ajax(blsUrl, {
-		type: 'GET',
-		accepts: {json: 'application/json'},
-		dataType: 'json',
-		success (data: BLTypes.BLServer) {
-			const indices = Object.entries(data.indices).map(([id, index]) => normalizeIndexOld(id, index));
-			triggers.updateServer(data);
-			triggers.updateCorpora(indices);
-			indices
-				.filter(function(corpus) { return corpus.status === 'indexing'; })
-				.forEach(function(corpus) { refreshIndexStatusWhileIndexing(corpus.id); });
-		},
-		error: showXHRError('Could not retrieve corpora'),
-		complete () {
-			$('#waitDisplay').hide();
-		}
-	});
+
+	Api.blacklab.getServerInfo()
+	.then(server => {
+		const indices = Object.entries(server.indices).map(([id, index]) => normalizeIndexOld(id, index));
+		triggers.updateServer(server);
+		triggers.updateCorpora(indices);
+		indices.forEach(corpus => loadAdditionalCorpusData(corpus.id));
+		indices
+			.filter(corpus => corpus.status === 'indexing')
+			.forEach(corpus => refreshIndexStatusWhileIndexing(corpus.id));
+	})
+	.catch((error: Api.ApiError) => showError(`Could not retrieve corpora: ${error.message}`))
+	.finally(() => $('#waitDisplay').hide());
 }
 
 function refreshFormatList() {
@@ -512,17 +561,18 @@ function showXHRError(message: string, callback?: () => void): JQueryAjaxSetting
 			const data = jqXHR.responseJSON;
 			if (data && data.error) {
 				errorMsg = data.error.message;
-			} else { try { // not json? try xml.
-				const xmlDoc = $.parseXML( jqXHR.responseText );
-				const $xml = $( xmlDoc );
-				errorMsg = $xml.find( 'error code' ).text() + ' - ' +  $xml.find(' error message ').text();
-			} catch (error) {
-				if (textStatus && errorThrown) {
-					errorMsg = textStatus + ' - ' + errorThrown;
-				} else {
-					errorMsg = 'Unknown error.';
+			} else {
+				try { // not json? try xml.
+					const xmlDoc = $.parseXML( jqXHR.responseText );
+					const $xml = $( xmlDoc );
+					errorMsg = $xml.find( 'error code' ).text() + ' - ' +  $xml.find(' error message ').text();
+				} catch (error) {
+					if (textStatus && errorThrown) {
+						errorMsg = textStatus + ' - ' + errorThrown;
+					} else {
+						errorMsg = 'Unknown error.';
+					}
 				}
-			}
 			}
 		} else {
 			errorMsg = 'Unknown error.';

@@ -2,7 +2,7 @@ import axios, {Canceler, AxiosRequestConfig} from 'axios';
 import * as qs from 'qs';
 
 import {createEndpoint} from '@/api/apiutils';
-import {normalizeIndexOld, normalizeFormatOld} from '@/utils/blacklabutils';
+import {normalizeIndexOld, normalizeFormatOld, normalizeIndex} from '@/utils/blacklabutils';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import { ApiError } from '@/types/apptypes';
@@ -68,9 +68,13 @@ export const blacklab = {
 		.then(r => Object.entries(r.indices))
 		.then(r => r.map(([id, index]: [string, BLTypes.BLIndex]) => normalizeIndexOld(id, index))),
 
-	getCorpus: (id: string, requestParameters?: AxiosRequestConfig) => blacklabEndpoint
-		.get<BLTypes.BLIndex>(paths.indexStatus(id), requestParameters)
+	getCorpusStatus: (id: string, requestParamers?: AxiosRequestConfig) => blacklabEndpoint
+		.get<BLTypes.BLIndex>(paths.indexStatus(id), requestParamers)
 		.then(r => normalizeIndexOld(id, r)),
+
+	getCorpus: (id: string, requestParameters?: AxiosRequestConfig) => blacklabEndpoint
+		.get<BLTypes.BLIndexMetadata>(paths.index(id), requestParameters)
+		.then(normalizeIndex),
 
 	getShares: (id: string, requestParameters?: AxiosRequestConfig) => blacklabEndpoint
 		.get<{'users[]': BLTypes.BLShareInfo}>(paths.shares(id), requestParameters)

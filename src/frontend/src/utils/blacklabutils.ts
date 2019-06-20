@@ -210,7 +210,6 @@ export function normalizeIndexOld(id: string, index: BLTypes.BLIndex): Normalize
 		documentFormat: index.documentFormat || null,
 		indexProgress: index.indexProgress || null,
 		tokenCount: index.tokenCount == null ? null : index.tokenCount,
-		description: null,
 	};
 }
 

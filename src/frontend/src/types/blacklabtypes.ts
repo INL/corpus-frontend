@@ -74,6 +74,7 @@ export interface BLIndexProgress {
 // Optional values have the null type added as that allows us to
 // set them to null when they're missing.
 export interface BLIndex {
+	description: string;
 	displayName: string;
 	/** key of a BLFormat */
 	documentFormat?: string;

@@ -100,7 +100,6 @@ createHandler({event: DataEvent.SERVER_REFRESH, handler(payload) { serverInfo = 
 createHandler({event: DataEvent.CORPORA_REFRESH, handler(payload) { corpora = ([] as any).concat(payload); }});
 createHandler({event: DataEvent.FORMATS_REFRESH, handler(payload) { formats = ([] as any).concat(payload); }});
 createHandler({event: DataEvent.CORPUS_REFRESH, handler(payload) {
-	// payload = Object.assign({}, payload);
 	// merge into list, trigger global corpora refresh
 	const i = corpora.findIndex(function(corpus) { return corpus.id === payload.id; });
 	i >= 0 ? corpora[i] = {
@@ -222,8 +221,7 @@ createHandler({selector: 'tbody[data-autoupdate="corpora"]', event: DataEvent.CO
 		return {
 			...corpus,
 			canSearch: corpus.status === 'available',
-			description: corpus.description != null ? corpus.description : 'Loading...',
-			detailsId: corpus.id + '-details',
+			detailsId: corpus.id.replace(/[^\w]/g, '_') + '-details',
 			documentFormatShortId: format ? format.shortId : '',
 			documentFormatOwner: format ? format.owner : '',
 			isUserFormat: format ? !!format.owner : false,
@@ -498,7 +496,6 @@ function refreshCorporaList() {
 		const indices = Object.entries(server.indices).map(([id, index]) => normalizeIndexOld(id, index));
 		triggers.updateServer(server);
 		triggers.updateCorpora(indices);
-		indices.forEach(corpus => loadAdditionalCorpusData(corpus.id));
 		indices
 			.filter(corpus => corpus.status === 'indexing')
 			.forEach(corpus => refreshIndexStatusWhileIndexing(corpus.id));

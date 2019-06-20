@@ -21,6 +21,7 @@
                 <th></th> ##search button
                 <th>Corpus</th>
                 <th>Size</th>
+                <th></th> ## expand details buttons
             </tr>
         </thead>
         <tbody data-autoupdate="corpora" data-filter="public"></tbody>
@@ -36,11 +37,10 @@
                 <th></th> ##search button
                 <th>Corpus</th>
                 <th>Size</th>
-                <th>Format</th>
-                <th>Last modified</th>
                 <th></th> ## delete, add, share buttons
                 <th></th>
                 <th></th>
+                <th></th> ## expand details buttons
             </tr>
         </thead>
         <tbody data-autoupdate="corpora" data-filter="private"></tbody>

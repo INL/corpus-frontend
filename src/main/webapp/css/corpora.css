@@ -24,6 +24,9 @@ table.corpora th {
 	padding: 3px;
 	background-color: inherit;
 }
+table.corpora table {
+	width: auto;
+}
 
 /* Don't change color when hovering over row (as in results table) */
 table.corpora tr:hover {

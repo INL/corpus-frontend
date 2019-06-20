@@ -135,10 +135,15 @@ interface INormalizedIndexOld {
 	/** indexname extracted */
 	shortId: string;
 
+	/** Not available immediately - filled in after some time */
+	description: string|null;
+
 	// original props, with normalized values
 	documentFormat: string|null;
 	indexProgress: BLTypes.BLIndexProgress|null;
 	tokenCount: number|null;
+
+
 }
 export type NormalizedIndexOld = INormalizedIndexOld & Subtract<BLTypes.BLIndex, INormalizedIndexOld>;
 

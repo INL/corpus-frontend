@@ -180,8 +180,11 @@ function validateTagset(annotation: NormalizedAnnotation, t: Tagset) {
 			throw new Error(`Annotation "${id}" does not have any known values.`);
 		}
 
+		// part-of-speech is almost always indexed case-insensitive
+		// so we always want to compare values in the tagset and values in the corpus in lowercase
+		const annotationValuesInCorpus = mapReduce(mainAnnotation.values, 'value');
 		values.forEach(v => {
-			if (mainAnnotation.values!.findIndex(mav => mav.value === v.value) === -1) {
+			if (!annotationValuesInCorpus[mainAnnotation.caseSensitive ? v.value : v.value.toLowerCase()]) {
 				// tslint:disable-next-line
 				console.warn(`Annotation "${id}" may have value "${v.value}" which does not exist in the corpus.`);
 			}

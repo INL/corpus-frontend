@@ -178,7 +178,12 @@ const actions = {
 	}, 'addEntry'),
 	removeEntry: b.commit((state, i: number) => {
 		state.splice(i, 1);
-	}, 'removeEntry')
+		saveToLocalStorage(state);
+	}, 'removeEntry'),
+	clear: b.commit(state => {
+		state.splice(0, state.length);
+		saveToLocalStorage(state);
+	}, 'clearHistory')
 };
 
 const init = () => {

@@ -95,7 +95,9 @@ export default Vue.extend({
 		indexId() { return CorpusStore.getState().id; }
 	},
 	created() {
-		this.activeTab = this.useTabs ? this.tabs[0].name : null;
+		// Always set an active tab if there are any tabs at all
+		// new tabs may be added just after setup, changing useTabs from false to true
+		this.activeTab = this.tabs.length ? this.tabs[0].name : null;
 	}
 });
 </script>

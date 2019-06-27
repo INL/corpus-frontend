@@ -72,6 +72,7 @@ public class ArticleResponse extends BaseResponse {
 
         // get parameter values
         String query = this.getParameter("query", "");
+        String pattGapData = this.getParameter("pattgapdata", "");
         String userId = MainServlet.getCorpusOwner(corpus);
 
         Map<String, String[]> contentRequestParameters = new HashMap<>();
@@ -79,6 +80,9 @@ public class ArticleResponse extends BaseResponse {
 
         if (query != null && !query.isEmpty()) {
             contentRequestParameters.put("patt", new String[] { query });
+            if (pattGapData != null && !pattGapData.isEmpty()) {
+                contentRequestParameters.put("pattgapdata", new String[] { pattGapData });
+            }
         }
         if (userId != null && !userId.isEmpty()) {
             contentRequestParameters.put("userid", new String[] { userId });

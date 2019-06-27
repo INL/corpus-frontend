@@ -61,6 +61,12 @@
 	font-weight: bold;
 }
 
+// Metadata table
+#metadata td,
+#metadata th {
+	vertical-align: top;
+}
+
 // Tooltips
 .tippy-content {
 	background: white;

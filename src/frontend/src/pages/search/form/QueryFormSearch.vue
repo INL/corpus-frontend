@@ -21,13 +21,13 @@
 						data-width="100%"
 						data-class="btn btn-lg btn-default"
 
-						:searchable="firstMainAnnotation.options.length > 20"
+						:searchable="firstMainAnnotation.values.length > 20"
 						:placeholder="firstMainAnnotation.displayName"
 						:data-id="firstMainAnnotation.id + '_' + uid"
 						:data-name="firstMainAnnotation.id + '_' + uid"
 						:data-dir="textDirection"
 
-						:options="firstMainAnnotation.options"
+						:options="firstMainAnnotation.values"
 
 						v-model="simple"
 					/>

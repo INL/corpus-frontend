@@ -61,7 +61,7 @@
 			{{error.message}}
 			<br>
 			<br>
-			<button type="button" class="btn btn-default" title="Reset sorting+grouping and try again" @click="storeModule.actions.reset">Clear settings and try again</button>
+			<button type="button" class="btn btn-default" title="Reset sorting+grouping and try again" @click="storeModule.actions.reset(); markDirty();">Clear settings and try again</button>
 		</div>
 
 		<div v-show="resultsHaveData" class="text-right">
@@ -164,6 +164,9 @@ export default Vue.extend({
 				this.cancel();
 				this.cancel = null;
 				this.request = null;
+			}
+			if (this.visible) {
+				this.refresh();
 			}
 		},
 		refresh() {

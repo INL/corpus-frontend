@@ -238,7 +238,7 @@ export default Vue.extend({
 					rows.push({
 						type: 'doc',
 						summary: title+author+date,
-						href: getDocumentUrl(pid, this.results.summary.searchParam.patt),
+						href: getDocumentUrl(pid, this.results.summary.searchParam.patt || null, this.results.summary.searchParam.pattgapdata || null),
 						docPid: pid,
 					}  as DocRow);
 				}

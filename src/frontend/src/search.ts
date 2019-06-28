@@ -27,9 +27,9 @@ import {debugLog} from '@/utils/debug';
 import '@/global.scss';
 
 const connectJqueryToPage = () => {
-	$('input[data-persistent][id != ""]').each(function(i, elem) {
+	$('input[data-persistent][id != ""], input[data-persistent][data-pid != ""]').each(function(i, elem) {
 		const $this = $(elem);
-		const key = 'input_' + $this.attr('id');
+		const key = 'input_' + ($this.attr('data-pid') || $this.attr('id'));
 		$this.on('change', function() {
 			const curVal: any = $this.is(':checkbox') ? $this.is(':checked') : $this.val();
 			window.localStorage.setItem(key, curVal);

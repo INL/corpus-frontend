@@ -81,13 +81,49 @@
 				v-model="sort"
 			/>
 
-			<button type="button" class="btn btn-primary btn-sm"  v-if="isDocs && resultsHaveHits"  @click="showDocumentHits = !showDocumentHits">{{showDocumentHits ? 'Hide Hits' : 'Show Hits'}}</button>
-			<button type="button" class="btn btn-primary btn-sm"  v-if="isHits" @click="showTitles = !showTitles">{{showTitles ? 'Hide' : 'Show'}} Titles</button>
-			<button type="button" class="btn btn-default btn-sm" v-if="results" :disabled="downloadInProgress || !resultsHaveData || !!request" @click="downloadCsv" :title="downloadInProgress ? 'Downloading...' : undefined"><template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner fa-spin"></span>&nbsp;</template>Export CSV</button>
+			<button v-if="isDocs && resultsHaveHits"
+				type="button"
+				class="btn btn-primary btn-sm"
+
+				@click="showDocumentHits = !showDocumentHits"
+			>
+				{{showDocumentHits ? 'Hide Hits' : 'Show Hits'}}
+			</button>
+			<button v-if="isHits"
+				type="button"
+				class="btn btn-primary btn-sm"
+
+				@click="showTitles = !showTitles"
+			>
+				{{showTitles ? 'Hide' : 'Show'}} Titles
+			</button>
+
+			<div class="btn-group" v-if="results">
+				<button v-if="results"
+					type="button"
+					class="btn btn-default btn-sm"
+					:disabled="downloadInProgress || !resultsHaveData || !!request"
+					:title="downloadInProgress ? 'Downloading...' : undefined"
+
+					@click="downloadCsv"
+				>
+					<template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner fa-spin"></span>&nbsp;</template>Export CSV
+				</button>
+				<button type="button"  class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+					<span class="caret"></span>
+				</button>
+				<ul class="dropdown-menu dropdown-menu-right" @click.stop>
+					<li><a class="checkbox" title="Adds a header describing the query used to generate these results.">
+						<label><input type="checkbox" v-model="exportSummary">Include summary</label></a>
+					</li>
+					<li><a class="checkbox"
+						title="Adds a header line declaring that the file is comma-separated,
+						for some versions of microsoft excel this is required to correctly display the file."
+					><label><input type="checkbox" v-model="exportSeparator">Export for excel</label></a></li>
+				</ul>
+			</div>
 		</div>
-
 	</div>
-
 </template>
 
 <script lang="ts">
@@ -149,7 +185,10 @@ export default Vue.extend({
 		_viewGroupName: null as string|null,
 		showTitles: true,
 		showDocumentHits: false,
+
 		downloadInProgress: false, // csv download
+		exportSummary: false,
+		exportSeparator: false,
 
 		paginationResults: null as null|BLTypes.BLSearchResult,
 
@@ -238,6 +277,12 @@ export default Vue.extend({
 			}
 			if (UIStore.getState().results.shared.detailedMetadataIds) {
 				params.listmetadatavalues = UIStore.getState().results.shared.detailedAnnotationIds!.join(',');
+			}
+			if (this.exportSeparator) {
+				(params as any).csvsepline = true;
+			}
+			if (this.exportSummary) {
+				(params as any).csvsummary = true;
 			}
 
 			debugLog('starting csv download', this.type, params);

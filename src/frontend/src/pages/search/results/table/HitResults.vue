@@ -108,7 +108,7 @@
 								<p v-if="citations[index].error" class="text-danger">
 									<span class="fa fa-exclamation-triangle"></span> {{citations[index].error}}
 								</p>
-								<p v-else-if="citations[index].citation">
+								<p v-if="citations[index].citation">
 									<AudioPlayer v-if="citations[index].audioPlayerData" v-bind="citations[index].audioPlayerData"/>
 									<span :dir="textDirection">{{citations[index].citation[0]}}<strong>{{citations[index].citation[1]}}</strong>{{citations[index].citation[2]}}</span>
 								</p>
@@ -313,6 +313,7 @@ export default Vue.extend({
 			})
 			.catch((err: AppTypes.ApiError) => {
 				citation.error = err.message;
+				debugLog(err.stack);
 				ga('send', 'exception', { exDescription: err.message, exFatal: false });
 			})
 			.finally(() => citation.loading = false);

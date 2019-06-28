@@ -208,7 +208,7 @@ The interface may be customized in three different ways:
 
 ### **Search.xml**
 
-Allows you to set a custom display name, load custom JS/CSS, edit the shown columns for results.
+Allows you to set a custom display name, load custom JS/CSS, edit the shown columns for results, configure Google Analytics, and more.
 See [the default configuration](src/main/resources/interface-default/search.xml) for more information.
 
 ### **Index config**
@@ -329,62 +329,66 @@ Because the format config specifies the shape of a corpus (which metadata and an
 
     ### Multiple types are supported:
 
-    - **Text** _(default)_
+    - **Text** _(default)_  
+
       ![](docs/img/annotation_text.png)
 
-    - **Select**
+    - **Select**  
       Select is automatically enabled when the field does not have a uiType set, and all values are known.
-      **NOTE:** Limited to `500` values! When you specify `select`, we need to know all values beforehand, BlackLab only stores the first `500` values, and ignores values longer than `256` characters. When this happens, we transform the field into a `combobox` for you, so you don't inadvertently miss any options.
+      **NOTE:** Limited to `500` values! When you specify `select`, we need to know all values beforehand, BlackLab only stores the first `500` values, and ignores values longer than `256` characters. When this happens, we transform the field into a `combobox` for you, so you don't inadvertently miss any options.  
+
       ![](docs/img/annotation_select.png)
 
-    - **Combobox**
-      Just like `text`, but add a dropdown that gets autocompleted values from the server.
+    - **Combobox**  
+      Just like `text`, but add a dropdown that gets autocompleted values from the server.  
+
       ![](docs/img/annotation_combobox.png)
 
-    - **POS** _(Part of speech)_
-        This is an extension we use for corpora with split part of speech tags.
-        It's mostly meant for internal use, but with some knowhow it can be configured for any corpus with detailed enough information.
-        You will need to write a json file containing a `tagset` definition.
-        ```typescript
-        type Tagset = {
-          /**
-           * All known values for this annotation.
-          * The raw values can be gathered from blacklab
-          * but displaynames, and the valid constraints need to be manually configured.
-          */
-          values: {
-            [key: string]: {
+    - **POS** _(Part of speech)_  
+      **Not supported for simple search**
+      This is an extension we use for corpora with split part of speech tags.
+      It's mostly meant for internal use, but with some knowhow it can be configured for any corpus with detailed enough information.
+      You will need to write a json file containing a `tagset` definition.  
+      ```typescript
+      type Tagset = {
+        /**
+         * All known values for this annotation.
+        * The raw values can be gathered from blacklab
+        * but displaynames, and the valid constraints need to be manually configured.
+        */
+        values: {
+          [key: string]: {
+            value: string;
+            displayName: string;
+            /** All subannotations that can be used on this type of part-of-speech */
+            subAnnotationIds: Array<keyof Tagset['subAnnotations']>;
+          }
+        };
+        /**
+         * All subannotations of the main annotation
+        * Except the displayNames for values, we could just autofill this from blacklab.
+        */
+        subAnnotations: {
+          [key: string]: {
+            id: string;
+            /** The known values for the subannotation */
+            values: Array<{
               value: string;
               displayName: string;
-              /** All subannotations that can be used on this type of part-of-speech */
-              subAnnotationIds: Array<keyof Tagset['subAnnotations']>;
-            }
-          };
-          /**
-           * All subannotations of the main annotation
-          * Except the displayNames for values, we could just autofill this from blacklab.
-          */
-          subAnnotations: {
-            [key: string]: {
-              id: string;
-              /** The known values for the subannotation */
-              values: Array<{
-                value: string;
-                displayName: string;
-                /** Only allow/show this specific value for the defined main annotation values (referring to Tagset['values'][key]) */
-                pos?: string[];
-              }>;
-            };
+              /** Only allow/show this specific value for the defined main annotation values (referring to Tagset['values'][key]) */
+              pos?: string[];
+            }>;
           };
         };
-        ```
-        Then, during page initialization, the tagset will have to be loaded by calling
+      };
+      ```
+      Then, during page initialization, the tagset will have to be loaded by calling  
 
-        `vuexModules.tagset.actions.load('http://localhost:8080/corpus-frontend/my-corpus/static/path/to/my/tagset.json');`
-        This has to happen before $(document).ready fires! The reason for this is that the tagset you load determines how the page url is decoded, which is done when on first render.
+      `vuexModules.tagset.actions.load('http://localhost:8080/corpus-frontend/my-corpus/static/path/to/my/tagset.json');`  
+      This has to happen before $(document).ready fires! The reason for this is that the tagset you load determines how the page url is decoded, which is done when on first render.
 
-        ![](docs/img/annotation_pos.png)
-        ![](docs/img/annotation_pos_editor.png)
+      ![](docs/img/annotation_pos.png)  
+      ![](docs/img/annotation_pos_editor.png)
   </details>
 
 - <details>
@@ -397,43 +401,81 @@ Because the format config specifies the shape of a corpus (which metadata and an
         uiType: range
     ```
 
-    The `text`, `select`, and `combobox` types function identical to the annotations uiTypes.
-    **NOTE:** The `select` type is limited to `50` values (instead of `500` - though unlike with annotations, this can be configured, see [here](https://github.com/INL/BlackLab/issues/85) for more information)!
-    Also, values longer than 256 characters are ignored and will prevent the select from showing (though BlackLab still indexes them, and you can search on them).
+    - **Text** _(default)_  
 
-    The `pos` type is not supported for metadata.
-    In addition, several new types are available:
+      ![](docs/img/annotation_text.png)
 
-    - **Checkbox**
-      Predictably, transforms the dropdown into a checkbox selection.
+    - **Select**  
+      Select is automatically enabled when the field does not have a uiType set, and all values are known.
+      **NOTE:** Limited to `50` values (instead of `500` - though unlike with annotations, this can be configured, see [here](https://github.com/INL/BlackLab/issues/85) for more information)!
+      When you specify `select`, we need to know all values beforehand, BlackLab only stores the first `50` values, and ignores values longer than `256` characters. When this happens, we transform the field into a `combobox` for you, so you don't inadvertently miss any options.  
+
+      ![](docs/img/annotation_select.png)
+
+    - **Combobox**  
+      Just like `text`, but add a dropdown that gets autocompleted values from the server.  
+
+      ![](docs/img/annotation_combobox.png)
+
+    - **Checkbox**  
+      Predictably, transforms the dropdown into a checkbox selection.  
       **NOTE:** The same limitations apply as with `select`.
 
       ![](docs/img/metadata_checkbox.png)
 
-    - **Radio**
-      Like checkbox, but allow only one value.
+    - **Radio**  
+      Like checkbox, but allow only one value.  
       **NOTE:** The same limitations apply as with `select`.
 
       ![](docs/img/metadata_radio.png)
 
-    - **Range**
+    - **Range**  
       Use two inputs to specify a range of values (usually for numeric fields, but works for text too).
 
       ![](docs/img/metadata_range.png)
+
+    - **Multi-field Range** _(custom js only!)_  
+      This is a special purpose field that can be used if your documents contain metadata describing a value in a range.  
+
+      ![](docs/img/metadata_multi_range.png)
+
+      For example: your documents have an unknown date of writing, but the date of writing definitely lies between in a known range, for example between 1900-1950. This data is stored in two fields; `date_lower` and `date_upper`.
+      ```javascript
+        vuexModules.filters.actions.registerFilter({
+        filter: {
+          componentName: 'filter-range-multiple-fields',
+          description: 'Filters documents based on their date range',
+          displayName: 'Date text witness',
+          groupId: 'Date', // The filter tab under which this should be placed, missing tabs will be created
+          id: 'my-date-range-filter', // a unique id for internal bookkeeping
+          metadata: { // Info the widget needs to do its work
+            low: 'date_lower', // the id of the metadata field containing the lower bound
+            high: 'date_upper' // the id of the metadata field containing the upper bound
+          }
+        },
+        // Set the id of another filter here to append this filter behind that one.
+        // Undefined will add the filter at the top.
+        precedingFilterId: undefined
+      });
+      ```
+
+      The `Permissive` and `String` setting toggles whether to match documents that merely overlap with the provided range, or only documents that fall fully within the range.  
+      E.G.: the document has `date_lower=1900` and `date_upper=1950`. The query is `1900-1910`, this matches when using Permissive (as the values overlap somewhat), while Strict would not match, as the document's actual value could also be outside this range. To also match using Strict, the query would have to be at least `1899-1951`.
+
   </details>
 
 ### **Custom JS**
 
-These can be enabled on pages by defining them in [search.xml](#Search.xml)
-All javascript should run _before_ `$(document).ready` unless otherwise stated.
-
+A custom javascript file can be injected by setting it in [search.xml](#Search.xml)  
 > **NOTE:** your javascript file is shared between all pages!
 This means the vuex store might not be available! Check which page you're on beforehand by using the url or detecting whether the store exists and what exists inside it.
+All javascript should run _before_ `$(document).ready` unless otherwise stated.
+
 
 Through javascript you can do the following things on the `/search/` page:
 
 - <details>
-    <summary>Show/hide annotations in the explore view</summary>
+    <summary>[Explore] - Show/hide annotations in the selectors</summary>
 
     In the explore tab, the `n-gram` and `statistics` annotation dropdowns can be filtered to hide certain annotations that aren't useful to show statistics about, but that you may have indexed for other purposes (such as `xmlid`).
 
@@ -445,7 +487,7 @@ Through javascript you can do the following things on the `/search/` page:
   </details>
 
 - <details>
-    <summary>Show hide metadata (grouping options) in the explore view</summary>
+    <summary>[Explore] - Show hide metadata (grouping options) in the explore view</summary>
 
     Invalid metadata fields will be ignored.
 
@@ -454,16 +496,29 @@ Through javascript you can do the following things on the `/search/` page:
   </details>
 
 - <details>
-    <summary>Change the columns in the hits table</summary>
+    <summary>[Results] - Change the columns in the hits and docs tables</summary>
 
-    Initially these columns are based on `propColumns` from `search.xml`, but this is the newer way of defining these.
-    Invalid annotations will be ignored.
+  **Change the hits table**  
+  The default for these columns is set using `propColumns` from `search.xml`.  
+  `vuexModules.ui.actions.results.hits.shownAnnotationIds(['lemma', 'pos', 'word', ...])`  
+  Document metadata can also be shown:  
+  `vuexModules.ui.actions.results.hits.shownMetadataIds(['title', 'date', ...])`  
 
-    `vuexModules.ui.actions.results.hits.shownAnnotationIds(['lemma', 'pos', 'word', ...])`
+  **Change the docs table**  
+  `vuexModules.ui.actions.results.docs.shownMetadataIds(['title', 'date', ...])`  
+
+  **Change which annotations are exported in csv/shown in concordance details**  
+  `vuexModules.ui.actions.results.shared.detailsAnnotationIds(['lemma', 'pos', 'word', ...])`  
+  This influences both the rows in the concordance details table, and sets which annotations are included in csv exports.  
+  Defaults to all non-internal annotations.
+
+  **Change which metadata is exported in csv**
+  `vuexModules.ui.actions.results.shared.detailMetadataIds(['title', 'date', ...])`  
+  Defaults to all non-internal metadata
   </details>
 
 - <details>
-    <summary>Enable an audio player for spoken corpora</summary>
+    <summary>[Hits] Enable an audio player for spoken corpora</summary>
 
     This will create small play buttons in concordances, allowing the user to listen to the fragment. We use this feature in the `CGN (Corpus Gesproken Nederlands)` corpus.
 

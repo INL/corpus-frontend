@@ -263,6 +263,38 @@ const actions = {
 				}
 				state.results.hits.shownAnnotationIds = ids;
 			}, 'hits_shownAnnotationIds'),
+			shownMetadataIds: b.commit((state, ids: string[]) => {
+				const allMetadata = CorpusStore.getState().metadataFields;
+				ids = ids.filter(id => {
+					if (!allMetadata[id]) {
+						// tslint:disable-next-line
+						console.warn(`Trying to display metadata field ${id} in hits table but it does not exist`);
+						return false;
+					}
+					return true;
+				});
+				if (!ids.length) {
+					return;
+				}
+				state.results.hits.shownMetadataIds = ids;
+			}, 'hits_shownMetadataIds')
+		},
+		docs: {
+			shownMetadataIds: b.commit((state, ids: string[]) => {
+				const allMetadata = CorpusStore.getState().metadataFields;
+				ids = ids.filter(id => {
+					if (!allMetadata[id]) {
+						// tslint:disable-next-line
+						console.warn(`Trying to display metadata field ${id} in hits table but it does not exist`);
+						return false;
+					}
+					return true;
+				});
+				if (!ids.length) {
+					return;
+				}
+				state.results.docs.shownMetadataIds = ids;
+			}, 'docs_shownMetadataIds')
 		},
 		shared: {
 			detailedAnnotationIds: b.commit((state, ids: string[]) => {

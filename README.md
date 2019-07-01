@@ -1,4 +1,4 @@
-# BlackLab AutoSearch
+# BlackLab Frontend
 
 - **[About](#About)**
     - [Intro](#Intro)
@@ -32,7 +32,7 @@ About
 
 ## Intro
 
-This is a corpus search application that works with [BlackLab Server](https://github.com/INL/BlackLab/).
+This is a corpus search application that works with [BlackLab Server](https://github.com/INL/BlackLab/).  
 At the Dutch Language Institute, we use it to publish our corpora such as [CHN](http://chn.inl.nl/) (CLARIN login required), [Letters as Loot](http://brievenalsbuit.inl.nl/) and [AutoSearch](http://portal.clarin.inl.nl/autocorp/) (CLARIN login required).
 
 
@@ -62,7 +62,7 @@ Releases can be downloaded [here](https://github.com/INL/corpus-frontend/release
 ## Building from source
 
 - Clone this repository, use `mvn package` to build the WAR file (or download the .war from the latest release) and add corpus-frontend.war to Tomcat's webapps directory.
-- Optionally, create a file `corpus-frontend.properties` (name must be the same as the .war file) in the same directory as the BlackLab Server config file (e.g. `/etc/blacklab/`).
+- Optionally, create a file `corpus-frontend.properties` (name must be the same as the .war file) in the same directory as the BlackLab Server config file (e.g. `/etc/blacklab/`).  
 See the [Configuration section](#Backend-configuration) for more information.
 - Navigate to `http://localhost:8080/corpus-frontend/` and you will see a list of available corpora you can search.
 
@@ -137,24 +137,24 @@ After a corpus has been added, the corpus-frontend will automatically detect it,
 
 ### Configuring BlackLab
 
-To allow this, BlackLab needs to be configured properly (user support needs to be enabled and user directories need to be configured).
+To allow this, BlackLab needs to be configured properly (user support needs to be enabled and user directories need to be configured).  
 See [here](http://inl.github.io/BlackLab/blacklab-server-overview.html#examples) for the BlackLab documentation on this (scroll down a little).
 
-When this is done, two new sections will appear on the main corpus overview page.
+When this is done, two new sections will appear on the main corpus overview page.  
 They allow you to define your own configurations to customize how blacklab will index your data, create private corpora (up to 10), and add data to them.
 
 **Per corpus configuration is not supported for user corpora created through the Corpus-Frontend.**
 
 ### Formats
 
-Out of the box, users can create corpora and upload data in any of the formats supported by BlackLab (`tei`, `folia`, `chat`, `tsv`, `plaintext` and more).
+Out of the box, users can create corpora and upload data in any of the formats supported by BlackLab (`tei`, `folia`, `chat`, `tsv`, `plaintext` and more).  
 In addition, users can also define their own formats or extend the builtin formats.
 
 ### Index url
 
-There is also a hidden/experimental page (`/corpus-frontend/upload/`) for externally linking to the corpus-frontend to automatically index a file from the web.
-It can be used it to link to the frontend from external web services that output indexable files.
-It requires user uploading to be enabled, and there should be a cookie/query parameter present to configure the user name.
+There is also a hidden/experimental page (`/corpus-frontend/upload/`) for externally linking to the corpus-frontend to automatically index a file from the web.  
+It can be used it to link to the frontend from external web services that output indexable files.  
+It requires user uploading to be enabled, and there should be a cookie/query parameter present to configure the user name.  
 Parameters are passed as query parameters:
 ```properties
 file=http://my-service.tld/my-file.zip
@@ -164,13 +164,13 @@ format=folia
 corpus=my-corpus-name
 ```
 
-If the user does not own a corpus with this name yet, it's automatically created.
+If the user does not own a corpus with this name yet, it's automatically created.  
 After indexing is complete, the user is redirected to the search page.
 
 
 ## Frontend configuration
 
-**Per corpus configuration is not supported for user corpora.**
+**Per corpus configuration is not supported for user corpora.**  
 Though you can still configure them by overriding the defaults.
 
 By placing certain files in the `corporaInterfaceDataDir` it's possible to customize several aspects of a corpus.
@@ -184,18 +184,18 @@ When a file is not found for a corpus, the frontend will then check the followin
 
 The data directory may contain the following files and subdirectories:
 
-- `Search.xml`
+- `Search.xml`  
 Allows you to (among other things) set the navbar links and inject custom css/js.
 See [the default configuration](src/main/resources/interface-default/search.xml).
-- `help.inc`
+- `help.inc`  
 Html content placed in the body of the `MyCorpus/help/` page.
-- `about.inc`
+- `about.inc`  
 Html content placed in the body of the `MyCorpus/about/` page.
-- `.xsl` files
+- `.xsl` files  
 These are used to transform documents in your corpus into something that can be displayed on the `article/` page.
 The name of the xsl file that is used to do this is based on the format of files in your corpus (`tei`, `folia`, etc).
 The xslt file that is used has the name `article_<formatName>.xsl`, so `article_tei.xsl` for tei files.
-- `static/`
+- `static/`  
 A sandbox where you can place whatever other files you may need, such as custom js, css, fonts, logo's etc.
 These files are public, and can be accessed through `MyCorpus/static/path/to/my.file`
 
@@ -229,7 +229,7 @@ Because the format config specifies the shape of a corpus (which metadata and an
       textDirection: "rtl"
     ```
 
-    This will change many minor aspects of the interface, such as the order of columns in the result tables, the ordering of sentences in concordances, the text direction of dropdowns, etc.
+    This will change many minor aspects of the interface, such as the order of columns in the result tables, the ordering of sentences in concordances, the text direction of dropdowns, etc.  
     **NOTE:** This is a somewhat experimental feature. If you experience issues or want to see improvements, please [create an issue](https://github.com/INL/corpus-frontend/issues/new)!
 
     > Special thanks to [Janneke van der Zwaan](https://github.com/jvdzwaan)!
@@ -345,7 +345,7 @@ Because the format config specifies the shape of a corpus (which metadata and an
       ![](docs/img/annotation_combobox.png)
 
     - **POS** _(Part of speech)_  
-      **Not supported for simple search**
+      **Not supported for simple search**  
       This is an extension we use for corpora with split part of speech tags.
       It's mostly meant for internal use, but with some knowhow it can be configured for any corpus with detailed enough information.
       You will need to write a json file containing a `tagset` definition.  
@@ -508,12 +508,12 @@ Through javascript you can do the following things on the `/search/` page:
   `vuexModules.ui.actions.results.docs.shownMetadataIds(['title', 'date', ...])`  
 
   **Change which annotations are exported in csv/shown in concordance details**  
-  `vuexModules.ui.actions.results.shared.detailsAnnotationIds(['lemma', 'pos', 'word', ...])`  
+  `vuexModules.ui.actions.results.shared.detailedAnnotationIds(['lemma', 'pos', 'word', ...])`  
   This influences both the rows in the concordance details table, and sets which annotations are included in csv exports.  
   Defaults to all non-internal annotations.
 
-  **Change which metadata is exported in csv**
-  `vuexModules.ui.actions.results.shared.detailMetadataIds(['title', 'date', ...])`  
+  **Change which metadata is exported in csv**  
+  `vuexModules.ui.actions.results.shared.detailedMetadataIds(['title', 'date', ...])`  
   Defaults to all non-internal metadata
   </details>
 
@@ -599,8 +599,8 @@ Through javascript you can do the following things on the `/search/` page:
 
 ----
 
-The `/article/` page has other features that can be enabled.
-Enabling any of these will show a new tab `Statistics` next to the default `Content` and `Metadata` tabs.
+The `/article/` page has other features that can be enabled.  
+Enabling any of these will show a new `Statistics` tab next to the default `Content` and `Metadata` tabs.
 
 - <details>
     <summary>A table with whatever data you wish to show.</summary>
@@ -708,13 +708,13 @@ Outlined here is the `/search/` page, as it contains the majority of the code.
 ### **Application structure**
 
 Entry points are the following files
-- [article.ts](src/frontend/src/article.ts)
+- [article.ts](src/frontend/src/article.ts)  
   Handles the hit navigation, graphs and charts on the document page `/corpus-frontend/docs/...`
-- [corpora.ts](src/frontend/src/corpora.ts)
+- [corpora.ts](src/frontend/src/corpora.ts)  
   The main index page (or `/corpus-frontend/corpora/`)
-- [remote-index.ts](src/frontend/src/remote-index.ts)
+- [remote-index.ts](src/frontend/src/remote-index.ts)  
   The `/upload/` page.
-- [search.ts](src/frontend/src/search.ts)
+- [search.ts](src/frontend/src/search.ts)  
   The search form
 
 Individual components are contained in the [pages](src/frontend/src/pages) directory. These components are single-use and/or connected to the store in some way.
@@ -722,13 +722,13 @@ The [components](src/frontend/src/components) directory contains a few "dumb" co
 
 ### **The Vuex store**
 
-We use [vuex](https://vuex.vuejs.org/guide/) to store the app state, treat it as a central database (though it's not persisted between sessions).
+We use [vuex](https://vuex.vuejs.org/guide/) to store the app state, treat it as a central database (though it's not persisted between sessions).  
 The vuex store is made up of many `modules` that all handle a specific part of the state, such as the metadata filters, or the settings menu (page size, random seed).
 
-The [form](src/frontend/src/store/search/form) directory contains most of the state to do with the top of the page, such as filters, query builder, explore view.
-The [results](src/frontend/src/store/search/results) directory handles the settings that directly update the results, such as which page is open, how results are grouped, etc.
+The [form](src/frontend/src/store/search/form) directory contains most of the state to do with the top of the page, such as filters, query builder, explore view.  
+The [results](src/frontend/src/store/search/results) directory handles the settings that directly update the results, such as which page is open, how results are grouped, etc.  
 
-A couple of modules have slightly different roles:
+A couple of modules have slightly different roles:  
 - The [corpus](src/frontend/src/store/search/corpus.ts) module stores the blacklab index config and is used almost everywhere.
 - The [history](src/frontend/src/store/search/history.ts) module stores the query history (_not the browser history_).
 - The [query](src/frontend/src/store/search/query.ts) module contains a snapshot of the form (with filters, patterns, etc) as it was when `submit` was pressed.
@@ -737,10 +737,10 @@ A couple of modules have slightly different roles:
 
 ### **URL generation and parsing**
 
-The current page url is generated and updated in [streams.ts](src/frontend/src/store/search/streams.ts).
-It contains a few things: a stream that listens to state changes in the `vuex` store, and is responsible for updating the page url, and a couple streams that fetch some metadata about the currently selected/searched corpus (shown below the filters and at the top of the results panel).
-![](docs/img/filter_overview.png)
-![](docs/img/result_totals.png)
+The current page url is generated and updated in [streams.ts](src/frontend/src/store/search/streams.ts).  
+It contains a few things: a stream that listens to state changes in the `vuex` store, and is responsible for updating the page url, and a couple streams that fetch some metadata about the currently selected/searched corpus (shown below the filters and at the top of the results panel).  
+![](docs/img/filter_overview.png)  
+![](docs/img/result_totals.png)  
 
 Url parsing happens in the [UrlStateParser](src/frontend/src/store/search/util/url-state-parser.ts).
 The url parsing is a little involved, because depending on whether a `tagset` is provided it can differ (the cql pattern is normally parsed and split up so we know what to place in the `simple` and `extended` views, but this needs to happen differently when a tagset is involved).
@@ -751,8 +751,8 @@ When navigating back and forth through browser history, the url is not parsed, i
 
 Install the Vue devtools! ([chrome](https://chrome.google.com/webstore/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd), [firefox](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)).
 
-You can compile and watch the javascript files using webpack.
-Execute `npm run start` in the `src/frontend/` directory. This will start `webpack-dev-server` (webpack is a javascript build tool) that will serve the compiled files (the [entry points](#structure)) at `localhost/dist/`.
+You can compile and watch the javascript files using webpack.  
+Execute `npm run start` in the `src/frontend/` directory. This will start `webpack-dev-server` (webpack is a javascript build tool) that will serve the compiled files (the [entry points](#structure)) at `localhost/dist/`.  
 It adds a feature where if one of those files is loaded on the page, and the file changes, your page will reload automatically with the new changes.
 
 Combining this with `jspath` in `corpus-frontend.properties` we can start the corpus-frontend as we normally would, but sideload our javascript from `webpack-dev-server` and get realtime compilation :)

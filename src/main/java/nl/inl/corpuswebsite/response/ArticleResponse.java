@@ -214,8 +214,8 @@ public class ArticleResponse extends BaseResponse {
 
     /**
      *
-     * @param docLength the length of the document OR -1
-     * @return the value of parameter wordend or {@link MainServlet#getWordsToShow()}, or -1 when greater or equal the
+     * @param docLength the length of the document or -1
+     * @return the value of parameter wordend or {@link MainServlet#getWordsToShow()}, or -1 when greater or equal than
      * doclength to have blacklab return content after last word
      */
     private int getWordEnd(int docLength) {

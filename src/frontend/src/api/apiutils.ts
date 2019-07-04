@@ -40,7 +40,7 @@ export async function handleError<T>(error: AxiosError): Promise<never> {
 	}
 
 	// Something else is going on, assume it's a blacklab-server error
-	const contentType = (response.headers['content-type'] || '');
+	const contentType: string = (response.headers['content-type'] || '');
 	if (isBLError(response.data)) {
 		const blErr: BLError = response.data;
 		return Promise.reject(new ApiError(
@@ -48,7 +48,7 @@ export async function handleError<T>(error: AxiosError): Promise<never> {
 			response.data.error.message,
 			response.statusText
 		));
-	} else if (contentType.indexOf('xml') >= 0 && typeof response.data === 'string') { // todo check content-type
+	} else if (contentType.toLowerCase().indexOf('xml') >= 0 && typeof response.data === 'string') {
 		try {
 			const text = response.data;
 			const xml = new DOMParser().parseFromString(text, 'application/xml');

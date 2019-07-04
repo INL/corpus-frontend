@@ -72,6 +72,7 @@ public class ArticleResponse extends BaseResponse {
 
         // get parameter values
         String query = this.getParameter("query", "");
+        String pattGapData = this.getParameter("pattgapdata", "");
         String userId = MainServlet.getCorpusOwner(corpus);
 
         Map<String, String[]> contentRequestParameters = new HashMap<>();
@@ -79,6 +80,9 @@ public class ArticleResponse extends BaseResponse {
 
         if (query != null && !query.isEmpty()) {
             contentRequestParameters.put("patt", new String[] { query });
+            if (pattGapData != null && !pattGapData.isEmpty()) {
+                contentRequestParameters.put("pattgapdata", new String[] { pattGapData });
+            }
         }
         if (userId != null && !userId.isEmpty()) {
             contentRequestParameters.put("userid", new String[] { userId });
@@ -159,18 +163,19 @@ public class ArticleResponse extends BaseResponse {
                         int pageEnd = getWordEnd();
                         int pageSize = servlet.getWordsToShow();
                         String q = (query != null && !query.isEmpty()) ? ("&query="+esc.url(query)) : "";
+                        String pg = (pattGapData != null && !pattGapData.isEmpty()) ? "&pattgapdata="+esc.url(pattGapData) : "";
 
                         context.put("docLength",docLength);
                         context.put("pageStart",pageStart);
                         context.put("pageSize",pageSize);
                         context.put("pageEnd",pageEnd);
                         if (pageStart > 0) {
-                            context.put("first_page", "?wordstart=0&wordend="+pageSize+(q.isEmpty() ? "" : q));
-                            context.put("previous_page", "?wordstart="+Math.max(0, pageStart-pageSize)+"&wordend="+pageStart+(q.isEmpty() ? "" : q));
+                            context.put("first_page", "?wordstart=0&wordend="+pageSize+q+pg);
+                            context.put("previous_page", "?wordstart="+Math.max(0, pageStart-pageSize)+"&wordend="+pageStart+q+pg);
                         }
                         if (pageEnd < docLength) {
-                            context.put("next_page", "?wordstart="+(pageEnd)+"&wordend="+Math.min(pageEnd+pageSize, docLength)+(q.isEmpty() ? "" : q));
-                            context.put("last_page", "?wordstart="+(docLength-pageSize)+"&wordend="+(docLength)+(q.isEmpty() ? "" : q));
+                            context.put("next_page", "?wordstart="+(pageEnd)+"&wordend="+Math.min(pageEnd+pageSize, docLength)+q+pg);
+                            context.put("last_page", "?wordstart="+(docLength-pageSize)+"&wordend="+(docLength)+q+pg);
                         }
                     }
 

@@ -678,7 +678,7 @@ export default Vue.extend({
 						cache.concordances.push({
 							title: doc.docInfo[data.summary.docFields.titleField!],
 							hits: doc.numberOfHits,
-							href: getDocumentUrl(doc.docPid, data.summary.searchParam.patt),
+							href: getDocumentUrl(doc.docPid, data.summary.searchParam.patt || null, data.summary.searchParam.pattgapdata || null),
 						});
 					});
 				}

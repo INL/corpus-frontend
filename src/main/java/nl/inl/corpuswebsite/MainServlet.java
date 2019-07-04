@@ -313,51 +313,35 @@ public class MainServlet extends HttpServlet {
      * @return the config
      */
     public CorpusConfig getCorpusConfig(String corpus) {
-        if (corpus == null || corpus.isEmpty()) {
-            return null;
-        }
-        if (!corpusConfigs.containsKey(corpus)) {
-            // Contact blacklab-server for the config xml file
-            QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(corpus));
-
-            try {
-                String userId = getCorpusOwner(corpus);
-                Map<String, String[]> params = new HashMap<>();
-
-                String xmlConfig = getXml(userId, handler, params);
-
-                String selectProperties = CorpusConfig.getSelectProperties(xmlConfig);
-
-                if (!selectProperties.isEmpty()) {
-                    // again retrieve config with values for props with uitype select
-                    params.clear();
-                    params.put("listvalues", new String[] { selectProperties });
-                    xmlConfig = getXml(userId, handler, params);
+        synchronized (corpusConfigs) {
+            return corpusConfigs.computeIfAbsent(corpus, __ -> {
+                if (corpus == null || corpus.isEmpty()) {
+                    return null;
                 }
 
-                // TODO tidy this up, the json is only used to embed the index data in the search page.
-                // We might not need the xml data to begin with.
-                params.clear();
-                params.put("outputformat", new String[] { "json" });
-                params.put("listvalues", new String[] { selectProperties }); // useful for frontend
-                if (userId != null)
-                    params.put("userid", new String[] { userId });
-                String jsonResult = handler.makeRequest(params);
+                // Contact blacklab-server for the config xml file
+                QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(corpus));
 
-                corpusConfigs.put(corpus, new CorpusConfig(xmlConfig, jsonResult));
-            } catch (IOException | SAXException | ParserConfigurationException | QueryException e) {
-                return null;
-            }
+                try {
+                    Map<String, String[]> params = new HashMap<>();
+                    if (getCorpusOwner(corpus) != null)
+                        params.put("userid", new String[] {getCorpusOwner(corpus)});
+
+                    params.put("outputformat", new String[] {"xml"});
+                    String xmlConfig = handler.makeRequest(params); // get initial index data
+                    String listValuesFor = CorpusConfig.getAnnotationsWithRequiredValues(xmlConfig); // extract annotations that we need all values for
+
+                    params.put("outputformat", new String[] { "json" });
+                    params.put("listvalues", new String[] { listValuesFor });
+                    String jsonResult = handler.makeRequest(params); // again get index data, this time with those values included, in json format (used by the frontend code)
+
+                    // and store the config
+                    return new CorpusConfig(xmlConfig, jsonResult);
+                } catch (IOException | SAXException | ParserConfigurationException | QueryException e) {
+                    return null;
+                }
+            });
         }
-
-        return corpusConfigs.get(corpus);
-    }
-
-    private static String getXml(String userId, QueryServiceHandler handler, Map<String, String[]> params) throws IOException, QueryException {
-        params.put("outputformat", new String[] { "xml" });
-        if (userId != null)
-            params.put("userid", new String[] { userId });
-        return handler.makeRequest(params);
     }
 
     @Override

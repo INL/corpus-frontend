@@ -115,7 +115,8 @@ const get = {
 				case 'advanced':
 				case 'expert': {
 					const pattern = (state as ModuleRootStateSearch<'expert'>).formState;
-					return pattern || undefined;
+					// trim leading/trailing whitespace, remove pattern if naught but whitespace
+					return (pattern || '').trim() || undefined;
 				}
 				default: throw new Error('Unimplemented pattern generation.');
 			}

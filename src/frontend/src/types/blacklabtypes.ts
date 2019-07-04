@@ -74,6 +74,7 @@ export interface BLIndexProgress {
 // Optional values have the null type added as that allows us to
 // set them to null when they're missing.
 export interface BLIndex {
+	description: string;
 	displayName: string;
 	/** key of a BLFormat */
 	documentFormat?: string;
@@ -81,6 +82,7 @@ export interface BLIndex {
 	indexProgress?: BLIndexProgress;
 	/** status opening is currently unused, but should be treated as generally unavailable */
 	status: 'empty'|'available'|'indexing'|'opening';
+	/** yyyy-mm-dd hh:mm:ss */
 	timeModified: string;
 	/** Number of tokens in this index (excluding those tokens added in any currently running indexing action). */
 	tokenCount?: number;

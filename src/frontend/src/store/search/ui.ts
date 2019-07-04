@@ -13,12 +13,26 @@ import {RootState} from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus';
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
+import { mapReduce } from '@/utils';
+import { stripIndent } from 'common-tags';
 
 type ModuleRootState = {
 	search: {
 		// future use
 		simple: {};
-		extended: {};
+		extended: {
+			splitBatch: {
+				enabled: boolean;
+			};
+			within: {
+				enabled: boolean;
+				elements: Array<{
+					title: string|null;
+					label: string;
+					value: string;
+				}>;
+			};
+		};
 		advanced: {};
 		expert: {};
 	};
@@ -87,7 +101,15 @@ type ModuleRootState = {
 const initialState: ModuleRootState = {
 	search: {
 		simple: {},
-		extended: {},
+		extended: {
+			splitBatch: {
+				enabled: true,
+			},
+			within: {
+				enabled: true,
+				elements: [],
+			},
+		},
 		advanced: {},
 		expert: {}
 	},
@@ -139,7 +161,29 @@ const get = {
 const actions = {
 	search: {
 		simple: {},
-		extended: {},
+		extended: {
+			splitBatch: {
+				enable: b.commit((state, payload: boolean) => state.search.extended.splitBatch.enabled = payload, 'search_extended_splitbatch_enable'),
+			},
+			within: {
+				enable: b.commit((state, payload: boolean) => state.search.extended.within.enabled = payload, 'search_extended_within_enable'),
+				elements: b.commit((state, payload: ModuleRootState['search']['extended']['within']['elements']) => {
+					// explicitly retrieve this annotations as it's supposed to be internal and thus not included in any getters.
+					const field = Object.values(CorpusStore.getState().annotatedFields).find(f => 'starttag' in f.annotations);
+					const annot = field ? field.annotations.starttag : undefined;
+					const validValuesMap = mapReduce(annot ? annot.values : undefined, 'value');
+
+					state.search.extended.within.elements = payload.filter(v => {
+						const valid = v.value in validValuesMap;
+						// tslint:disable-next-line
+						if (!valid) { console.warn(stripIndent`
+							Trying to register element name ${v.value} for 'within' clause, but it doesn't exist in the index.
+							This might happen when there are too many tags recorded in the index, but also when it just doesn't occur (or tags aren't indexed).`)
+						}
+					});
+				}, 'search_extended_within_annotations'),
+			},
+		},
 		advanced: {},
 		expert: {},
 	},
@@ -219,6 +263,38 @@ const actions = {
 				}
 				state.results.hits.shownAnnotationIds = ids;
 			}, 'hits_shownAnnotationIds'),
+			shownMetadataIds: b.commit((state, ids: string[]) => {
+				const allMetadata = CorpusStore.getState().metadataFields;
+				ids = ids.filter(id => {
+					if (!allMetadata[id]) {
+						// tslint:disable-next-line
+						console.warn(`Trying to display metadata field ${id} in hits table but it does not exist`);
+						return false;
+					}
+					return true;
+				});
+				if (!ids.length) {
+					return;
+				}
+				state.results.hits.shownMetadataIds = ids;
+			}, 'hits_shownMetadataIds')
+		},
+		docs: {
+			shownMetadataIds: b.commit((state, ids: string[]) => {
+				const allMetadata = CorpusStore.getState().metadataFields;
+				ids = ids.filter(id => {
+					if (!allMetadata[id]) {
+						// tslint:disable-next-line
+						console.warn(`Trying to display metadata field ${id} in hits table but it does not exist`);
+						return false;
+					}
+					return true;
+				});
+				if (!ids.length) {
+					return;
+				}
+				state.results.docs.shownMetadataIds = ids;
+			}, 'docs_shownMetadataIds')
 		},
 		shared: {
 			detailedAnnotationIds: b.commit((state, ids: string[]) => {
@@ -317,6 +393,25 @@ const init = () => {
 		const dateField = CorpusStore.getState().fieldInfo.dateField;
 		if (dateField) {
 			initialState.results.docs.shownMetadataIds.push(dateField);
+		}
+	}
+
+	if (!initialState.search.extended.within.elements.length) {
+		// explicitly retrieve this annotations as it's supposed to be internal and thus not included in any getters.
+		const field = Object.values(CorpusStore.getState().annotatedFields).find(f => 'starttag' in f.annotations);
+		const annot = field ? field.annotations.starttag : undefined;
+		const validValues = annot ? annot.values : [];
+
+		if (validValues) {
+			if (validValues.length <= 6) { // an arbitrary limit
+				initialState.search.extended.within.elements = cloneDeep(validValues);
+			} else {
+				// tslint:disable-next-line
+				console.warn(`Within clause can contain ${validValues.length} different values, ignoring...`);
+			}
+		} else {
+			// tslint:disable-next-line
+			console.warn('Within clause not supported in this corpus, no starttags indexed');
 		}
 	}
 

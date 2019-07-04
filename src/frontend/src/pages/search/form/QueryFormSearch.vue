@@ -21,13 +21,13 @@
 						data-width="100%"
 						data-class="btn btn-lg btn-default"
 
-						:searchable="firstMainAnnotation.options.length > 20"
+						:searchable="firstMainAnnotation.values.length > 20"
 						:placeholder="firstMainAnnotation.displayName"
 						:data-id="firstMainAnnotation.id + '_' + uid"
 						:data-name="firstMainAnnotation.id + '_' + uid"
 						:data-dir="textDirection"
 
-						:options="firstMainAnnotation.options"
+						:options="firstMainAnnotation.values"
 
 						v-model="simple"
 					/>
@@ -47,18 +47,6 @@
 							v-model="simple"
 						/>
 					</AutocompleteSimple>
-<!--
-					<input v-else
-						type="text"
-						class="form-control"
-
-						:id="firstMainAnnotation.id + '_' + uid"
-						:name="firstMainAnnotation.id + '_' + uid"
-						:placeholder="firstMainAnnotation.displayName"
-						:dir="textDirection"
-
-						v-model="simple"
-					/> -->
 				</div>
 			</div>
 			<div :class="['tab-pane form-horizontal', {'active': activePattern==='extended'}]" id="extended">
@@ -82,8 +70,9 @@
 					<Annotation v-for="annotation in allAnnotations" :key="annotation.annotatedFieldId + '/' + annotation.id" :annotation="annotation"/>
 				</template>
 
-				<div class="form-group">
-					<!-- TODO extract available options from blacklab -->
+				<!-- show this even if it's disabled when "within" contains a value, or you can never remove the value -->
+				<!-- this will probably never happen, but it could, if someone imports a query with a "within" clause active from somewhere -->
+				<div v-if="withinOptions.length || within" class="form-group">
 					<label class="col-xs-12 col-md-3">Within:</label>
 
 					<div class="btn-group col-xs-12 col-md-9">
@@ -92,11 +81,12 @@
 							:class="['btn btn-default', {'active': within === option.value}]"
 							:key="option.value"
 							:value="option.value"
+							:title="option.title || undefined"
 							@click="within = option.value"
-						>{{option.label}}</button>
+						>{{option.label || option.value || 'document'}}</button> <!-- empty value searches across entire documents -->
 					</div>
 				</div>
-				<div class="form-group">
+				<div v-if="splitBatchEnabled" class="form-group">
 					<div class="col-xs-12 col-md-9 col-md-push-3 checkbox">
 						<label for="extended_split_batch">
 							<input type="checkbox" name="extended_split_batch" id="extended_split_batch" v-model="splitBatch"/> Split batch queries
@@ -144,9 +134,10 @@ import * as InterfaceStore from '@/store/search/form/interface';
 import * as PatternStore from '@/store/search/form/patterns';
 import * as GapStore from '@/store/search/form/gap';
 import * as HistoryStore from '@/store/search/history';
+import * as UIStore from '@/store/search/ui';
 
 import Annotation from '@/pages/search/form/Annotation.vue';
-import SelectPicker from '@/components/SelectPicker.vue';
+import SelectPicker, { Option } from '@/components/SelectPicker.vue';
 // @ts-ignore
 import Autocomplete from '@/mixins/autocomplete';
 import uid from '@/mixins/uid';
@@ -210,24 +201,15 @@ export default Vue.extend({
 		},
 		firstMainAnnotation: CorpusStore.get.firstMainAnnotation,
 		textDirection: CorpusStore.get.textDirection,
-		withinOptions(): Array<{label: string, value: string|null}> {
-			// TODO retrieve from indexMetadata once available
-			// discuss with jan?
-			return [{
-				label: 'document',
-				value: null
-			}, {
-				label: 'paragraph',
-				value: 'p'
-			}, {
-				label: 'sentence',
-				value: 's'
-			}]
+		withinOptions(): Option[] {
+			const {enabled, elements} = UIStore.getState().search.extended.within;
+			return enabled ? elements : [];
 		},
 		within: {
 			get(): string|null { return PatternStore.getState().extended.within; },
 			set: PatternStore.actions.extended.within,
 		},
+		splitBatchEnabled(): boolean { return UIStore.getState().search.extended.splitBatch.enabled; },
 		splitBatch: {
 			get(): boolean { return PatternStore.getState().extended.splitBatch; },
 			set: PatternStore.actions.extended.splitBatch

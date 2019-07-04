@@ -301,7 +301,7 @@ export default Vue.extend({
 
 			try {
 				let indexProgress: BLTypes.BLIndexProgress|null = null;
-				while (({indexProgress} = await blacklab.getCorpus(this.selectedCorpus!.id)) != null && !indexError) {
+				while (({indexProgress} = await blacklab.getCorpusStatus(this.selectedCorpus!.id)) != null && !indexError) {
 					const {filesProcessed: files, docsDone: docs, tokensProcessed: tokens} = indexProgress!;
 					this.action = `Indexing... - ${files} files, ${docs} documents, and ${tokens} tokens indexed so far...`;
 					await new Promise(resolve => setTimeout(resolve, 1000));

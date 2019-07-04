@@ -39,9 +39,10 @@
 										<button type="button" class="btn btn-default" @click="load(entry)">Search</button>
 										<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"/></button>
 										<ul class="dropdown-menu dropdown-menu-right">
-											<li><a href="#" @click.prevent="openShareUrl(entry)">Copy as link</a></li>
-											<li><a href="#" @click.prevent="downloadAsFile(entry)">Download as file</a></li>
-											<li><a href="#" @click.prevent="remove(index)">Delete</a></li>
+											<li><a role="button" @click.prevent="openShareUrl(entry)">Copy as link</a></li>
+											<li><a role="button" @click.prevent="downloadAsFile(entry)">Download as file</a></li>
+											<li><a role="button" @click.prevent="remove(index)">Delete</a></li>
+											<li><a role="button" @click.prevent="clearHistoryVisible = true">Delete all</a></li>
 										</ul>
 									</div>
 								</td>
@@ -65,8 +66,20 @@
 		</div>
 
 		<form v-if="isSharingUrl" class="history-popup" @click.self="closeShareUrl">
-			<div class="history-popup-content">
+			<div class="history-popup-content modal-content">
 				<input type="text" class="form-control" :value="sharingUrl" autocomplete="off" autofocus readonly ref="shareUrlInput"/>
+			</div>
+		</form>
+		<form v-if="clearHistoryVisible" class="history-popup" @click.self="clearHistoryVisible = false">
+			<div class="history-popup-content modal-content">
+				<div class="modal-header"><h4 class="modal-title">Clear search history</h4></div>
+				<div class="modal-body">
+					Are you sure you want to clear your search history?
+				</div>
+				<div class="modal-footer" style="justify-content: flex-end">
+					<button type="button" class="btn btn-primary" @click="clearHistory">Clear</button>
+					<button type="button" class="btn btn-default" @click="clearHistoryVisible = false">Cancel</button>
+				</div>
 			</div>
 		</form>
 	</div>
@@ -98,6 +111,7 @@ export default Vue.extend({
 		sharingUrl: null as null|string,
 		importUrlError: null as null|string,
 		importUrlVisible: false,
+		clearHistoryVisible: false
 	}),
 	computed: {
 		history(): HistoryStore.ModuleRootState { return HistoryStore.getState() },
@@ -146,6 +160,10 @@ export default Vue.extend({
 			this.importUrlError = null;
 			this.importUrlVisible = false;
 		},
+		clearHistory() {
+			HistoryStore.actions.clear();
+			this.clearHistoryVisible = false;
+		}
 	},
 	watch: {
 		isSharingUrl(value: boolean) {

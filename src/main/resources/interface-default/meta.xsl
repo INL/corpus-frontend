@@ -39,7 +39,7 @@
                         </xsl:for-each>
 				    </xsl:otherwise>
 				</xsl:choose>
-				<tr><td>Document length (tokens)</td><td>lengthInTokens</td></tr>
+				<tr><td>Document length (tokens)</td><td><xsl:value-of select="lengthInTokens"/></td></tr>
 			</tbody>
 		</table>
 	</xsl:template>

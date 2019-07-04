@@ -7,6 +7,7 @@ import nl.inl.corpuswebsite.utils.QueryServiceHandler.QueryException;
 import nl.inl.corpuswebsite.utils.XslTransformer;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
+
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.TransformerException;
 import java.io.IOException;
@@ -95,8 +96,8 @@ public class ArticleResponse extends BaseResponse {
         // and xslt will not match anything (or match the wrong elements)
         // so blacklab will have to walk the tree and insert those tags in some manner.
         if (servlet.getWebsiteConfig(this.corpus).usePagination()) {
-            contentRequestParameters.put("wordstart", new String[] { Integer.toString(getWordStart()) });
-            contentRequestParameters.put("wordend", new String[] { Integer.toString(getWordEnd()) });
+            contentRequestParameters.put("wordstart", new String[] { Integer.toString(getWordStart(-1)) });
+            contentRequestParameters.put("wordend", new String[] { Integer.toString(getWordEnd(-1)) });
         }
 
         context.put("docId", pid);
@@ -159,21 +160,21 @@ public class ArticleResponse extends BaseResponse {
                     Matcher m = CAPTURE_DOCLENGTH_PATTERN.matcher(meta);
                     if (servlet.getWebsiteConfig(this.corpus).usePagination() && m.find()) {
                         int docLength = Integer.parseInt(m.group(1));
-                        int pageStart = getWordStart();
-                        int pageEnd = getWordEnd();
+                        int pageStart = getWordStart(-1); // can be -1 to show content before first word
+                        int pageEnd = getWordEnd(docLength); // can be -1 to show content after last word
                         int pageSize = servlet.getWordsToShow();
                         String q = (query != null && !query.isEmpty()) ? ("&query="+esc.url(query)) : "";
                         String pg = (pattGapData != null && !pattGapData.isEmpty()) ? "&pattgapdata="+esc.url(pattGapData) : "";
 
                         context.put("docLength",docLength);
-                        context.put("pageStart",pageStart);
-                        context.put("pageSize",pageSize);
-                        context.put("pageEnd",pageEnd);
+                        context.put("pageStart",Math.max(0,pageStart));
+                        // number of words shown calculated: page end or doclength minus 0 or pagestart
+                        context.put("wordsShown",Math.max(pageSize,pageEnd==-1?docLength:pageEnd)-Math.max(0,pageStart));
                         if (pageStart > 0) {
                             context.put("first_page", "?wordstart=0&wordend="+pageSize+q+pg);
                             context.put("previous_page", "?wordstart="+Math.max(0, pageStart-pageSize)+"&wordend="+pageStart+q+pg);
                         }
-                        if (pageEnd < docLength) {
+                        if (pageEnd!=-1 && pageEnd < docLength) {
                             context.put("next_page", "?wordstart="+(pageEnd)+"&wordend="+Math.min(pageEnd+pageSize, docLength)+q+pg);
                             context.put("last_page", "?wordstart="+(docLength-pageSize)+"&wordend="+(docLength)+q+pg);
                         }
@@ -202,12 +203,15 @@ public class ArticleResponse extends BaseResponse {
         displayHtmlTemplate(servlet.getTemplate("article"));
     }
 
-    private int getWordStart() {
-        return Math.max(0, getParameter("wordstart", 0));
+    private int getWordStart(int first) {
+        return Math.max(first, getParameter("wordstart", first));
     }
 
-    private int getWordEnd() {
+    private int getWordEnd(int docLength) {
         int maxWordCount = servlet.getWordsToShow();
-        return getWordStart() + Math.min(Math.max(0, getParameter("wordend", maxWordCount)), maxWordCount);
+        //  get 0 based wordstart for calculation of wordend
+        int wordStart = getWordStart(0);
+        int end = wordStart + Math.min(Math.max(0, getParameter("wordend", maxWordCount)), maxWordCount);
+        return docLength != -1 && end >= docLength ? -1 : end;
     }
 }

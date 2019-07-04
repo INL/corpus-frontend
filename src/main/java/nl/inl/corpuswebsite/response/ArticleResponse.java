@@ -203,10 +203,21 @@ public class ArticleResponse extends BaseResponse {
         displayHtmlTemplate(servlet.getTemplate("article"));
     }
 
+    /**
+     *
+     * @param first the default and max for the start word (-1 to have blacklab return content before first word)
+     * @return the value of parameter wordstart or first when wordstart not set or greater than first
+     */
     private int getWordStart(int first) {
         return Math.max(first, getParameter("wordstart", first));
     }
 
+    /**
+     *
+     * @param docLength the length of the document OR -1
+     * @return the value of parameter wordend or {@link MainServlet#getWordsToShow()}, or -1 when greater or equal the
+     * doclength to have blacklab return content after last word
+     */
     private int getWordEnd(int docLength) {
         int maxWordCount = servlet.getWordsToShow();
         //  get 0 based wordstart for calculation of wordend

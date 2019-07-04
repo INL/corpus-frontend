@@ -19,17 +19,27 @@
 			<xsl:value-of select="*[name()=/*//titleField]" />
 		</h2>
 
-		<table>
+		<table class="table-striped">
 			<tbody>
 				<!-- will be filled in from article.js -->
 				<tr><td>Hits in document:</td><td><div id="divHitsInDocument"></div></td></tr>
 
-				<xsl:for-each select="metadataFieldGroups/metadataFieldGroup">
-					<tr><td colspan="2"><b><xsl:value-of select="name"/>:</b></td></tr>
-					<xsl:for-each select="fields/field">
-						<tr><td style="padding-left: 0.5em"><xsl:value-of select="//docInfo/*[name()=current()]/@displayName" /></td><td><xsl:value-of select="//docInfo/*[name()=current()]" /></td></tr>
-					</xsl:for-each>
-				</xsl:for-each>
+				<xsl:choose>
+				    <xsl:when test="metadataFieldGroups/metadataFieldGroup">
+                        <xsl:for-each select="metadataFieldGroups/metadataFieldGroup">
+                            <tr><td colspan="2"><b><xsl:value-of select="name"/>:</b></td></tr>
+                            <xsl:for-each select="fields/field">
+                                <tr><td style="padding-left: 0.5em"><xsl:value-of select="//docInfo/*[name()=current()]/@displayName" /></td><td><xsl:value-of select="//docInfo/*[name()=current()]" /></td></tr>
+                            </xsl:for-each>
+                        </xsl:for-each>
+				    </xsl:when>
+				    <xsl:otherwise>
+                        <xsl:for-each select="*[name()!='mayView' and name() != 'lengthInTokens']">
+                            <tr><td><xsl:value-of select="@displayName" /></td><td><xsl:value-of select="." /></td></tr>
+                        </xsl:for-each>
+				    </xsl:otherwise>
+				</xsl:choose>
+				<tr><td>Document length (tokens)</td><td>lengthInTokens</td></tr>
 			</tbody>
 		</table>
 	</xsl:template>

@@ -4,50 +4,34 @@
 
 	<xsl:template match="error">
 		<h1>Error</h1>
-		<xsl:value-of select="message" /> (Error code: <xsl:value-of select="code" />)
+		<xsl:value-of select="message" />
+		(Error code:
+		<xsl:value-of select="code" />
+		)
 	</xsl:template>
 
-	<xsl:template match="docPid|docFields" />
+	<xsl:template match="/" >
+		<xsl:apply-templates select="/blacklabResponse/docInfo"/>
+	</xsl:template>
 
 	<xsl:template match="docInfo">
 		<h2 style="word-break:break-all;">
 			<xsl:value-of select="*[name()=/*//titleField]" />
 		</h2>
-	
+
 		<table>
 			<tbody>
 				<!-- will be filled in from article.js -->
-				<tr><th>Hits in document:</th><td><div id="divHitsInDocument"></div></td></tr>
-				<xsl:for-each select="child::*[name()!='mayView']">
-				<tr><th><xsl:call-template name="elementFriendlyName"/>:</th><td><xsl:value-of select="." /></td></tr>
+				<tr><td>Hits in document:</td><td><div id="divHitsInDocument"></div></td></tr>
+
+				<xsl:for-each select="metadataFieldGroups/metadataFieldGroup">
+					<tr><td colspan="2"><b><xsl:value-of select="name"/>:</b></td></tr>
+					<xsl:for-each select="fields/field">
+						<tr><td style="padding-left: 0.5em"><xsl:value-of select="//docInfo/*[name()=current()]/@displayName" /></td><td><xsl:value-of select="//docInfo/*[name()=current()]" /></td></tr>
+					</xsl:for-each>
 				</xsl:for-each>
 			</tbody>
 		</table>
-	</xsl:template>
-
-	<xsl:variable name="vLower" select="'abcdefghijklmnopqrstuvwxyz'" />
-
-	<xsl:variable name="vUpper" select="'ABCDEFGHIJKLMNOPQRSTUVWXYZ'" />
-
-	<xsl:template name="elementFriendlyName">
-		<xsl:choose>
-			<xsl:when test="local-name() = 'lengthInTokens'">
-				Document length (tokens)
-			</xsl:when>
-			<xsl:when test="local-name() = 'fromInputFile'">
-				From input file
-			</xsl:when>
-			<xsl:when test="local-name() = 'yearFrom'">
-				Year (from)
-			</xsl:when>
-			<xsl:when test="local-name() = 'yearTo'">
-				Year (to)
-			</xsl:when>
-			<xsl:otherwise>
-				<xsl:value-of
-					select="concat(translate(substring(local-name(), 1, 1), $vLower, $vUpper), substring(local-name(), 2))" />
-			</xsl:otherwise>
-		</xsl:choose>
 	</xsl:template>
 
 </xsl:stylesheet>

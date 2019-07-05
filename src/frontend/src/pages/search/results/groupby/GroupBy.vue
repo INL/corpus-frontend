@@ -5,6 +5,7 @@
 				class="groupselect"
 
 				allowHtml
+				allowUnknownValues
 				data-class="btn-sm btn-default"
 				data-width="275px"
 				:data-style="{
@@ -177,7 +178,9 @@ export default Vue.extend({
 
 			const metadataGroups = CorpusStore.get.metadataGroups();
 			const shownMetadataFields = new Set(UIStore.getState().results.shared.groupMetadataIds);
-			metadataGroups.forEach(group => opts.push({
+			metadataGroups
+			.filter(group => group.fields.some(field => shownMetadataFields.has(field.id)))
+			.forEach(group => opts.push({
 				// https://github.com/INL/corpus-frontend/issues/197#issuecomment-441475896
 				// (we don't show metadata groups in the Filters component unless there's more than one group, so don't show the group's name either in this case)
 				label: metadataGroups.length > 1 ? group.name : 'Metadata',

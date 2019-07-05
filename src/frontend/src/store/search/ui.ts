@@ -365,7 +365,7 @@ const actions = {
 				ids = ids.filter(id => {
 					if (!allMetadataFields[id]) {
 						// tslint:disable-next-line
-						console.warn(`Trying to add document metadata field ${id} to exports, but it does not exist`);
+						console.warn(`Trying to allow grouping by metadata field ${id} in results, but it does not exist`);
 						return false;
 					}
 					return true;

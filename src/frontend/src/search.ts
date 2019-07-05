@@ -127,8 +127,34 @@ Vue.use(VTooltip, {
 	}
 });
 
-$(document).ready(() => {
+// Expose and declare some globals
+(window as any).Vue = Vue;
+
+type Hook = () => void|Promise<any>;
+const isHook = (hook: any): hook is Hook => typeof hook === 'function';
+declare const hooks: {
+	beforeStoreInit?: Hook;
+	beforeRender?: Hook;
+	beforeStateLoaded?: Hook;
+};
+
+async function runHook(hookName: keyof (typeof hooks)) {
+	const hook = hooks[hookName];
+	if (isHook(hook)) {
+		debugLog(`Running hook ${hookName}...`);
+		await hook();
+		debugLog(`Finished running hook ${hookName}`);
+	}
+}
+
+$(document).ready(async () => {
+	await runHook('beforeStoreInit');
+
+	debugLog('Initializing vuex store...');
 	RootStore.init();
+	debugLog('Finished initializing vuex store');
+
+	await runHook('beforeRender');
 
 	// We can render before the tagset loads, the form just won't be populated from the url yet.
 	(window as any).vueRoot = new Vue({
@@ -137,7 +163,8 @@ $(document).ready(() => {
 		mounted() {
 			connectJqueryToPage();
 
-			TagsetStore.actions.awaitInit()
+			runHook('beforeStateLoaded')
+			.then(() => TagsetStore.actions.awaitInit())
 			.then(() => new UrlStateParser(FilterStore.getState().filters).get())
 			.then(urlState => {
 				debugLog('Loading state from url', urlState);
@@ -153,6 +180,3 @@ $(document).ready(() => {
 		}
 	}).$mount(document.querySelector('#vue-root')!);
 });
-
-// Expose and declare some globals
-(window as any).Vue = Vue;

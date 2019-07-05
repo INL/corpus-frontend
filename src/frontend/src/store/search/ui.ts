@@ -417,7 +417,7 @@ const actions = {
 	},
 	global: {
 		pageGuide: {
-			enabled: b.commit((state, payload: boolean) => {
+			enable: b.commit((state, payload: boolean) => {
 				state.global.pageGuide.enabled = !!payload;
 			}, 'global_pageGuide_enabled'),
 		}

@@ -16,6 +16,7 @@ import {normalizeIndex} from '@/utils/blacklabutils';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import {NormalizedIndex, NormalizedAnnotation, NormalizedMetadataField, NormalizedAnnotatedField} from '@/types/apptypes';
+import { MapOf } from '@/utils';
 
 declare const SINGLEPAGE: { INDEX: BLTypes.BLIndexMetadata; };
 
@@ -56,9 +57,22 @@ const get = {
 		}, {})
 		// return annotations;
 	, 'annotationsMap'),
+	/** Get a map of all annotations, including internal ones */
+	annotationsMapInternal: b.read((state) =>
+		Object.values(state.annotatedFields)
+		.flatMap(f => Object.values(f.annotations))
+		.reduce<MapOf<NormalizedAnnotation[]>>((fields, field) => {
+			if (!fields[field.id]) {
+				fields[field.id] = [];
+			}
+			fields[field.id].push(field);
+			return fields;
+		}, {})
+	, 'annotationsMapInternal'),
 
 	// TODO might be collisions between multiple annotatedFields, this is an unfinished part in blacklab
 	// like for instance, in a BLHitSnippet, how do we know which of the props comes from which annotatedfield.
+	/** Get all annotation displayNames, including for internal annotations */
 	annotationDisplayNames: b.read(state =>
 		Object.values(state.annotatedFields)
 		.flatMap(f => Object.values(f.annotations))

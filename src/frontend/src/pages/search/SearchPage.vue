@@ -5,7 +5,7 @@
 		<QuerySummary v-if="resultsVisible" class="cf-panel cf-panel-lg" id="summary"/>
 		<Results v-show="resultsVisible" id="results"/>
 
-		<PageGuide/>
+		<PageGuide v-if="pageGuideEnabled"/>
 	</div>
 </template>
 
@@ -15,6 +15,7 @@ import $ from 'jquery';
 
 import * as CorpusStore from '@/store/search/corpus';
 import * as InterfaceStore from '@/store/search/form/interface';
+import * as UIStore from '@/store/search/ui';
 
 import QueryForm from '@/pages/search/form/QueryForm.vue';
 import QuerySummary from '@/pages/search/results/QuerySummary.vue';
@@ -30,6 +31,7 @@ export default Vue.extend({
 	},
 	computed: {
 		resultsVisible(): boolean { return InterfaceStore.getState().viewedResults != null; },
+		pageGuideEnabled(): boolean { return UIStore.getState().global.pageGuide.enabled; }
 	},
 });
 </script>

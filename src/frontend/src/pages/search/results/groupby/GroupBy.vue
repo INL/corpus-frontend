@@ -62,7 +62,7 @@ import * as UIStore from '@/store/search/ui';
 import SelectPicker, {OptGroup, Option} from '@/components/SelectPicker.vue';
 import ContextGroup from '@/pages/search/results/groupby/ContextGroup.vue';
 import UID from '@/mixins/uid';
-import { mapReduce } from '../../../../utils';
+import { mapReduce, MapOf } from '../../../../utils';
 
 const CONTEXT_ENABLED_STRING = '_enable_context';
 
@@ -151,15 +151,9 @@ export default Vue.extend({
 			}
 
 			if (this.type === 'hits') {
-				const shownAnnotations = new Set(UIStore.getState().results.shared.groupAnnotationIds);
-
-				// Use annotations in groups instead of all annotations for parity with metadata
-				// (That also only shows fields in a group)
-				// See https://github.com/INL/corpus-frontend/issues/190
-				const annotations = CorpusStore.get.annotationGroups()
-				.flatMap(g => g.annotations)
-				.filter(a => !a.isInternal && a.hasForwardIndex && shownAnnotations.has(a.id)); // grouping not supported for annotations without forward index
-
+				// NOTE: grouping on annotations without a forward index is not supported - however has already been checked in the UIStore
+				const displayNames = CorpusStore.get.annotationDisplayNames();
+				const shownAnnotationIds = UIStore.getState().results.shared.groupAnnotationIds;
 				[
 					['hit:', 'Hit', ''],
 					['wordleft:', 'Before hit', 'before'],
@@ -168,28 +162,45 @@ export default Vue.extend({
 				.forEach(([prefix, groupname, suffix]) =>
 					opts.push({
 						label: groupname,
-						options: annotations.map(annot => ({
-							label: `Group by ${annot.displayName || annot.id} <small class="text-muted">${suffix}</small>`,
-							value: `${prefix}${annot.id}`
+						options: shownAnnotationIds.map(id => ({
+							label: `Group by ${displayNames[id] || id} <small class="text-muted">${suffix}</small>`,
+							value: `${prefix}${id}`
 						}))
 					})
 				);
 			}
 
-			const metadataGroups = CorpusStore.get.metadataGroups();
-			const shownMetadataFields = new Set(UIStore.getState().results.shared.groupMetadataIds);
-			metadataGroups
-			.filter(group => group.fields.some(field => shownMetadataFields.has(field.id)))
-			.forEach(group => opts.push({
-				// https://github.com/INL/corpus-frontend/issues/197#issuecomment-441475896
-				// (we don't show metadata groups in the Filters component unless there's more than one group, so don't show the group's name either in this case)
-				label: metadataGroups.length > 1 ? group.name : 'Metadata',
-				options: group.fields.filter(field => shownMetadataFields.has(field.id)).map(field => ({
-					label: `Group by ${(field.displayName || field.id).replace(group.name, '')} <small class="text-muted">(${group.name})</small>`,
-					value: `field:${field.id}`
-				}))
+			// So recreate the groups and add everything that's not in the form into a default fallback group.
+			const metadataFields = CorpusStore.getState().metadataFields;
+			const metadataGroupsToShow: MapOf<Option[]> = {};
+
+			UIStore.getState().results.shared.groupMetadataIds.forEach(id => {
+				let {displayName, groupId} = metadataFields[id];
+				groupId = groupId || 'Metadata'; // fallback group name
+
+				if (!metadataGroupsToShow[groupId]) {
+					metadataGroupsToShow[groupId] = [];
+				}
+
+				metadataGroupsToShow[groupId].push({
+					value: `field:${id}`,
+					label: `Group by ${(displayName || id).replace(groupId, '')} <small class="text-muted">(${groupId})</small>`,
+				});
+			});
+
+			const metadataOptGroups =
+			Object.entries(metadataGroupsToShow)
+			.map(([groupName, fieldsInGroup]) => ({
+				label: groupName,
+				options: fieldsInGroup
 			}));
-			return opts;
+
+			// If there is only one metadata group to display: do not display the groups's name, instead display only 'Metadata'
+			// https://github.com/INL/corpus-frontend/issues/197#issuecomment-441475896
+			if (metadataOptGroups.length === 1) {
+				metadataOptGroups.forEach(g => g.label = 'Metadata');
+			}
+			return opts.concat(metadataOptGroups);
 		},
 
 		contextSupported(): boolean { return this.type === 'hits'; },

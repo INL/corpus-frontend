@@ -218,7 +218,7 @@ export const getPatternString = (annotations: AppTypes.AnnotationValue[], within
 // TODO the clientside url generation story... https://github.com/INL/corpus-frontend/issues/95
 // Ideally use absolute urls everywhere, if the application needs to be proxied, let the proxy server handle it.
 // Have a configurable url in the backend that's made available on the client that we can use here.
-export function getDocumentUrl(pid: string, cql: string|null, pattgapdata: string|null) {
+export function getDocumentUrl(pid: string, cql: string|null, pattgapdata: string|null, wordstart: number = 0, pageSize: number = 5000) {
 	let docUrl;
 	switch (new URI().filename()) {
 	case '':
@@ -247,7 +247,8 @@ export function getDocumentUrl(pid: string, cql: string|null, pattgapdata: strin
 		.search({
 			// parameter 'query' controls the hits that are highlighted in the document when it's opened
 			query: cql || undefined,
-			pattgapdata: pattgapdata || undefined
+			pattgapdata: pattgapdata || undefined,
+			wordstart: (Math.floor(wordstart / pageSize) * pageSize) || undefined
 		})
 		.toString();
 }

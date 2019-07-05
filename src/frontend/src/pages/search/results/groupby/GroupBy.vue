@@ -56,10 +56,12 @@ import Vue from 'vue';
 
 import * as CorpusStore from '@/store/search/corpus';
 import * as ResultsStore from '@/store/search/results';
+import * as UIStore from '@/store/search/ui';
 
 import SelectPicker, {OptGroup, Option} from '@/components/SelectPicker.vue';
 import ContextGroup from '@/pages/search/results/groupby/ContextGroup.vue';
 import UID from '@/mixins/uid';
+import { mapReduce } from '../../../../utils';
 
 const CONTEXT_ENABLED_STRING = '_enable_context';
 
@@ -148,12 +150,14 @@ export default Vue.extend({
 			}
 
 			if (this.type === 'hits') {
+				const shownAnnotations = new Set(UIStore.getState().results.shared.groupAnnotationIds);
+
 				// Use annotations in groups instead of all annotations for parity with metadata
 				// (That also only shows fields in a group)
 				// See https://github.com/INL/corpus-frontend/issues/190
 				const annotations = CorpusStore.get.annotationGroups()
 				.flatMap(g => g.annotations)
-				.filter(a => !a.isInternal && a.hasForwardIndex); // grouping not supported for annotations without forward index
+				.filter(a => !a.isInternal && a.hasForwardIndex && shownAnnotations.has(a.id)); // grouping not supported for annotations without forward index
 
 				[
 					['hit:', 'Hit', ''],
@@ -172,11 +176,12 @@ export default Vue.extend({
 			}
 
 			const metadataGroups = CorpusStore.get.metadataGroups();
+			const shownMetadataFields = new Set(UIStore.getState().results.shared.groupMetadataIds);
 			metadataGroups.forEach(group => opts.push({
 				// https://github.com/INL/corpus-frontend/issues/197#issuecomment-441475896
 				// (we don't show metadata groups in the Filters component unless there's more than one group, so don't show the group's name either in this case)
 				label: metadataGroups.length > 1 ? group.name : 'Metadata',
-				options: group.fields.map(field => ({
+				options: group.fields.filter(field => shownMetadataFields.has(field.id)).map(field => ({
 					label: `Group by ${(field.displayName || field.id).replace(group.name, '')} <small class="text-muted">(${group.name})</small>`,
 					value: `field:${field.id}`
 				}))

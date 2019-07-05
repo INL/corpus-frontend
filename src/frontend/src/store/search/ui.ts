@@ -93,6 +93,11 @@ type ModuleRootState = {
 			 */
 			detailedMetadataIds: null|string[];
 
+			/** Available options for grouping in the hits view */
+			groupAnnotationIds: string[];
+			/** Available metadata options for grouping in the docs view */
+			groupMetadataIds: string[];
+
 			/** Used for calculating page offsets in links to documents */
 			pageSize: number;
 		};
@@ -137,6 +142,8 @@ const initialState: ModuleRootState = {
 		shared: {
 			detailedAnnotationIds: null,
 			detailedMetadataIds: null,
+			groupAnnotationIds: [],
+			groupMetadataIds: [],
 			pageSize: PAGESIZE
 		}
 	}
@@ -335,7 +342,39 @@ const actions = {
 					return;
 				}
 				state.results.shared.detailedMetadataIds = ids;
-			}, 'shared_detailedMetadataIds')
+			}, 'shared_detailedMetadataIds'),
+
+			groupAnnotationIds: b.commit((state, ids: string[]) => {
+				const allAnnotations = CorpusStore.get.annotationDisplayNames();
+				ids = ids.filter(id => {
+					if (!allAnnotations[id]) {
+						// tslint:disable-next-line
+						console.warn(`Trying to allow grouping by Annotation ${id} in results, but it does not exist`);
+						return false;
+					}
+					return true;
+				});
+
+				if (!ids.length) {
+					return;
+				}
+				state.results.shared.groupAnnotationIds = ids;
+			}, 'shared_groupAnnotationIds'),
+			groupMetadataIds: b.commit((state, ids: string[]) => {
+				const allMetadataFields = CorpusStore.getState().metadataFields;
+				ids = ids.filter(id => {
+					if (!allMetadataFields[id]) {
+						// tslint:disable-next-line
+						console.warn(`Trying to add document metadata field ${id} to exports, but it does not exist`);
+						return false;
+					}
+					return true;
+				});
+				if (!ids.length) {
+					return;
+				}
+				state.results.shared.groupMetadataIds = ids;
+			}, 'shared_groupMetadataIds'),
 		}
 	},
 	replace: b.commit((state, payload: ModuleRootState) => Object.assign(state, cloneDeep(payload)), 'replace'),
@@ -348,7 +387,9 @@ const init = () => {
 	// Then detect any parts that haven't been configured, and set them to some sensible defaults
 	Object.assign(initialState, cloneDeep(getState()));
 
+	// NOTE: does not include internal annotations
 	const allAnnotations = CorpusStore.get.annotationsMap();
+	const allMetadataFields = mapReduce(CorpusStore.get.metadataGroups().flatMap(g => g.fields), 'id');
 	const mainAnnotation = CorpusStore.get.firstMainAnnotation().id;
 
 	if (!initialState.explore.shownAnnotationIds.length) {
@@ -420,27 +461,12 @@ const init = () => {
 		}
 	}
 
-	// Same story as detailedAnnotationIds, but use all annotations instead of only the first 3
-	// if (!initialState.results.shared.detailedAnnotationIds) {
-	// 	initialState.results.shared.detailedAnnotationIds =
-	// 	Object.values(CorpusStore.getState().annotatedFields)
-	// 	.flatMap(f => {
-	// 		const annots = Object.values(f.annotations);
-	// 		const order = f.displayOrder;
-	// 		return annots.filter(a => !a.isInternal).sort((x, y) => order.indexOf(x.id) - order.indexOf(y.id));
-	// 	})
-	// 	.map(annot => annot.id);
-	// }
-
-	// // Also set all metadata fields here.
-	// if (!initialState.results.shared.detailedMetadataIds) {
-	// 	const metaFieldOrder = CorpusStore.getState().metadataFieldGroups.flatMap(g => g.fields);
-	// 	const otherFields = new Set(Object.keys(CorpusStore.getState().metadataFields));
-	// 	metaFieldOrder.forEach(id => otherFields.delete(id)); // already accounted for
-	// 	metaFieldOrder.push(...otherFields);
-
-	// 	initialState.results.shared.detailedMetadataIds = metaFieldOrder;
-	// }
+	if (!initialState.results.shared.groupAnnotationIds.length) {
+		initialState.results.shared.groupAnnotationIds = Object.keys(allAnnotations);
+	}
+	if (!initialState.results.shared.groupMetadataIds.length) {
+		initialState.results.shared.groupMetadataIds = Object.keys(allMetadataFields);
+	}
 
 	actions.replace(cloneDeep(initialState));
 };

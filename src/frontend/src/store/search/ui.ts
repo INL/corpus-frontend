@@ -102,6 +102,12 @@ type ModuleRootState = {
 			pageSize: number;
 		};
 	};
+
+	global: {
+		pageGuide: {
+			enabled: boolean;
+		}
+	}
 };
 
 // Will be corrected on store init
@@ -145,6 +151,11 @@ const initialState: ModuleRootState = {
 			groupAnnotationIds: [],
 			groupMetadataIds: [],
 			pageSize: PAGESIZE
+		}
+	},
+	global: {
+		pageGuide: {
+			enabled: true
 		}
 	}
 };
@@ -345,11 +356,25 @@ const actions = {
 			}, 'shared_detailedMetadataIds'),
 
 			groupAnnotationIds: b.commit((state, ids: string[]) => {
-				const allAnnotations = CorpusStore.get.annotationDisplayNames();
+				const allAnnotations = CorpusStore.get.annotationsMapInternal();
+				const allAnnotationsDisplayOrder =
+					CorpusStore.get.annotationGroups()
+					.flatMap(g => g.annotations.map(a => a.id)) // first by group
+					.concat( // then all annots not in a group, sorted by their displayname
+						Object.values(allAnnotations)
+						.flat()
+						.filter(annot => annot.groupId == null)
+						.sort((a, b) => a.displayName.localeCompare(b.displayName))
+						.map(annot => annot.id)
+					);
+
 				ids = ids.filter(id => {
 					if (!allAnnotations[id]) {
 						// tslint:disable-next-line
 						console.warn(`Trying to allow grouping by Annotation ${id} in results, but it does not exist`);
+						return false;
+					} else if (!allAnnotations[id][0].hasForwardIndex) {
+						console.warn(`Trying to allow grouping by Annotation ${id} in results, which does not have a forward index to do so`);
 						return false;
 					}
 					return true;
@@ -358,10 +383,22 @@ const actions = {
 				if (!ids.length) {
 					return;
 				}
+				ids.sort((a, b) => allAnnotationsDisplayOrder.indexOf(a)-allAnnotationsDisplayOrder.indexOf(b));
 				state.results.shared.groupAnnotationIds = ids;
 			}, 'shared_groupAnnotationIds'),
 			groupMetadataIds: b.commit((state, ids: string[]) => {
+				// Yes, allow internal metadata fields if so desired
 				const allMetadataFields = CorpusStore.getState().metadataFields;
+				const allMetadataFieldsDisplayOrder =
+					CorpusStore.getState().metadataFieldGroups
+					.flatMap(g => g.fields)
+					.concat(
+						Object.values(allMetadataFields)
+						.filter(f => f.groupId == null)
+						.sort((a, b) => a.displayName.localeCompare(b.displayName))
+						.map(f => f.id)
+					);
+
 				ids = ids.filter(id => {
 					if (!allMetadataFields[id]) {
 						// tslint:disable-next-line
@@ -373,8 +410,16 @@ const actions = {
 				if (!ids.length) {
 					return;
 				}
+				ids.sort((a, b) => allMetadataFieldsDisplayOrder.indexOf(a)-allMetadataFieldsDisplayOrder.indexOf(b));
 				state.results.shared.groupMetadataIds = ids;
 			}, 'shared_groupMetadataIds'),
+		}
+	},
+	global: {
+		pageGuide: {
+			enabled: b.commit((state, payload: boolean) => {
+				state.global.pageGuide.enabled = !!payload;
+			}, 'global_pageGuide_enabled'),
 		}
 	},
 	replace: b.commit((state, payload: ModuleRootState) => Object.assign(state, cloneDeep(payload)), 'replace'),
@@ -387,8 +432,9 @@ const init = () => {
 	// Then detect any parts that haven't been configured, and set them to some sensible defaults
 	Object.assign(initialState, cloneDeep(getState()));
 
-	// NOTE: does not include internal annotations
+	/** NOTE: does not include internal annotations, as you never want to show those if the user didn't configure anything */
 	const allAnnotations = CorpusStore.get.annotationsMap();
+	/** NOTE: does not include internal metadata fields, as you never want to show those if the user didn't configure anything */
 	const allMetadataFields = mapReduce(CorpusStore.get.metadataGroups().flatMap(g => g.fields), 'id');
 	const mainAnnotation = CorpusStore.get.firstMainAnnotation().id;
 
@@ -462,10 +508,18 @@ const init = () => {
 	}
 
 	if (!initialState.results.shared.groupAnnotationIds.length) {
-		initialState.results.shared.groupAnnotationIds = Object.keys(allAnnotations);
+		// Use annotations in groups instead of all annotations for parity with metadata
+		// See https://github.com/INL/corpus-frontend/issues/190
+		// Also keep them in displayOrder for ease of use in components
+		initialState.results.shared.groupAnnotationIds =
+			Object
+			.values(CorpusStore.getState().annotatedFields)
+			.flatMap(f => f.displayOrder)
+			.filter(id => allAnnotations[id][0].hasForwardIndex); // Grouping is only supported for those annotations that have a forward index
 	}
+	// NOTE: Show all fields in metadata groups here by default (though the user can customize fields not in groups through customjs)
 	if (!initialState.results.shared.groupMetadataIds.length) {
-		initialState.results.shared.groupMetadataIds = Object.keys(allMetadataFields);
+		initialState.results.shared.groupMetadataIds = CorpusStore.getState().metadataFieldGroups.flatMap(g => g.fields);
 	}
 
 	actions.replace(cloneDeep(initialState));

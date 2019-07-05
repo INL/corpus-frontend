@@ -6,6 +6,7 @@
     var SINGLEPAGE = SINGLEPAGE || {};
     SINGLEPAGE.INDEX = JSON.parse("$esc.javascript($unescapedIndexStructureJson)");
     var PROPS_IN_COLUMNS = "$websiteConfig.getPropColumns()".split(',');
+    var PAGESIZE = $pageSize;
 </script>
 
 <script src="$jspath/search.js?_$cache"></script>

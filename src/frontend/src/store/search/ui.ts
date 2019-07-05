@@ -16,6 +16,9 @@ import * as AppTypes from '@/types/apptypes';
 import { mapReduce } from '@/utils';
 import { stripIndent } from 'common-tags';
 
+declare const PROPS_IN_COLUMNS: string[];
+declare const PAGESIZE: number;
+
 type ModuleRootState = {
 	search: {
 		// future use
@@ -89,6 +92,9 @@ type ModuleRootState = {
 			 * Server returns all fields if this is null.
 			 */
 			detailedMetadataIds: null|string[];
+
+			/** Used for calculating page offsets in links to documents */
+			pageSize: number;
 		};
 	};
 };
@@ -131,6 +137,7 @@ const initialState: ModuleRootState = {
 		shared: {
 			detailedAnnotationIds: null,
 			detailedMetadataIds: null,
+			pageSize: PAGESIZE
 		}
 	}
 };
@@ -333,8 +340,6 @@ const actions = {
 	},
 	replace: b.commit((state, payload: ModuleRootState) => Object.assign(state, cloneDeep(payload)), 'replace'),
 };
-
-declare const PROPS_IN_COLUMNS: string[];
 
 const init = () => {
 	// Store can be configured by user scripts

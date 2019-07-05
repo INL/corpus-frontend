@@ -110,7 +110,14 @@
 								</p>
 								<p v-if="citations[index].citation">
 									<AudioPlayer v-if="citations[index].audioPlayerData" v-bind="citations[index].audioPlayerData"/>
-									<span :dir="textDirection">{{citations[index].citation[0]}}<strong>{{citations[index].citation[1]}}</strong>{{citations[index].citation[2]}}</span>
+									<span :dir="textDirection">
+										{{citations[index].citation[0]}}
+										<strong>
+											{{citations[index].citation[1]}}
+											<a :href="citations[index].href" title="Go to hit in document" target="_blank"><sup class="fa fa-link" style="margin-left: -5px;"></sup></a>
+										</strong>
+										{{citations[index].citation[2]}}
+									</span>
 								</p>
 								<p v-else>
 									<span class="fa fa-spinner fa-spin"></span> Loading...
@@ -187,6 +194,7 @@ type CitationData = {
 	error?: null|string;
 	snippet: null|BLTypes.BLHitSnippet;
 	audioPlayerData: any;
+	href: string;
 };
 
 export default Vue.extend({
@@ -292,15 +300,15 @@ export default Vue.extend({
 				return;
 			}
 
+			const row = this.rows[index] as HitRow;
 			const citation: CitationData = Vue.set(this.citations as any[], index, { // shut up vue
 				open: true,
 				loading: true,
 				citation: null,
 				error: null,
-				snippet: null
+				snippet: null,
+				href: getDocumentUrl(row.docPid, this.results.summary.searchParam.patt || null, this.results.summary.searchParam.pattgapdata || null, row.start, UIStore.getState().results.shared.pageSize),
 			} as CitationData);
-
-			const row = this.rows[index] as HitRow;
 
 			ga('send', 'event', 'results', 'snippet/load', row.docPid);
 

@@ -14,6 +14,7 @@ import * as CorpusStore from '@/store/search/corpus';
 import {Tagset} from '@/types/apptypes';
 import {NormalizedAnnotation} from '@/types/apptypes';
 import { mapReduce } from '@/utils';
+import cloneDeep from 'clone-deep';
 
 type ModuleRootState = Tagset&{
 	/** Uninitialized before init() or load() action called. loading/loaded during/after load() called. Disabled when load() not called before init(), or loading failed for any reason. */
@@ -64,13 +65,38 @@ const actions = {
 			transformResponse: [(r: string) => r.replace(/\/\/.*[\r\n]+/g, '')].concat(Axios.defaults.transformResponse!)
 		})
 		.then(t => {
+			const tagset = t.data;
+
+			const annots = CorpusStore.get.annotationsMap();
+			const posAnnotation = Object.values(annots).flat().find(a => a.uiType === 'pos'); // I mean, has to exist right
+			if (!posAnnotation) {
+				return;
+			}
+
+			const caseSensitive = posAnnotation.caseSensitive;
+			if (!caseSensitive) {
+				tagset.values = mapReduce(Object.values(tagset.values).map<Tagset['values'][string]>(v => ({
+					value: v.value.toLowerCase(),
+					displayName: v.displayName,
+					subAnnotationIds: v.subAnnotationIds
+				})), 'value');
+			}
+
+			Object.values(tagset.subAnnotations).forEach(subAnnotInTagset => {
+				const actualAnnot = annots[subAnnotInTagset.id][0];
+				const subAnnotCaseSensitive = actualAnnot.caseSensitive;
+
+				if (!subAnnotCaseSensitive) {
+					subAnnotInTagset.values = subAnnotInTagset.values.map(v => ({
+						value: v.value.toLowerCase(),
+						displayName: v.displayName,
+						pos: v.pos
+					}));
+				}
+			});
+
 			internalActions.replace(t.data);
 			internalActions.state({state: 'loaded', message: 'Tagset succesfully loaded'});
-
-			// The tagset (may) contain displaynames for the values of many of the part-of-speech annotations
-			// that are not available otherwise in blacklab.
-			// Explicitly place those displaynames in the store so they can be used by the querybuilder and the normal search form
-			const annots = CorpusStore.get.annotationsMap();
 
 			// Apply top-level displaynames to the 'pos' annotation
 			Object.values(annots)
@@ -79,6 +105,7 @@ const actions = {
 			.forEach(originalAnnotation => {
 				const originalValues = mapReduce(originalAnnotation.values, 'value');
 
+				debugger;
 				for (const tagsetValue of Object.values(t.data.values)) {
 					const a = originalValues[tagsetValue.value];
 					const b = tagsetValue;

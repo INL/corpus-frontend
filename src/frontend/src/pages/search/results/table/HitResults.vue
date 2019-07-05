@@ -29,9 +29,9 @@
 							:title="`Sort by ${firstMainAnnotation.displayName}`"
 							@click="changeSort(`hit:${firstMainAnnotation.id}`)"
 						>
-							{{firstMainAnnotation.displayName}}
+							Hit
 						</a>
-						<template v-else>{{firstMainAnnotation.displayName}}</template>
+						<template v-else>Hit</template>
 					</th>
 
 					<th class="text-left">

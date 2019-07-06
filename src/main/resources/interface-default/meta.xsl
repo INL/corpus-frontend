@@ -29,13 +29,13 @@
                         <xsl:for-each select="metadataFieldGroups/metadataFieldGroup">
                             <tr><td colspan="2"><b><xsl:value-of select="name"/>:</b></td></tr>
                             <xsl:for-each select="fields/field">
-                                <tr><td style="padding-left: 0.5em"><xsl:value-of select="//docInfo/*[name()=current()]/@displayName" /></td><td><xsl:value-of select="//docInfo/*[name()=current()]" /></td></tr>
+                                <tr><td style="padding-left: 0.5em"><xsl:value-of select="//docInfo/displayNames/*[name()=current()]" /></td><td><xsl:value-of select="//docInfo/*[name()=current()]" /></td></tr>
                             </xsl:for-each>
                         </xsl:for-each>
 				    </xsl:when>
 				    <xsl:otherwise>
                         <xsl:for-each select="*[name()!='mayView' and name() != 'lengthInTokens']">
-                            <tr><td><xsl:value-of select="@displayName" /></td><td><xsl:value-of select="." /></td></tr>
+                            <tr><td><xsl:value-of select="//docInfo/displayNames/*[name()=current()]" /></td><td><xsl:value-of select="." /></td></tr>
                         </xsl:for-each>
 				    </xsl:otherwise>
 				</xsl:choose>

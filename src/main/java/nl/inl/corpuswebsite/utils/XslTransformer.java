@@ -95,7 +95,7 @@ public class XslTransformer {
             }
 
             transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            //transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             transformer.transform(ssSource, streamResult);
             transformer.reset();
         }

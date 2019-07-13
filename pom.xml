@@ -309,7 +309,11 @@
             <artifactId>Saxon-HE</artifactId>
             <version>9.8.0-14</version>
         </dependency>
-
+     <dependency>
+      <groupId>commons-beanutils</groupId>
+      <artifactId>commons-beanutils</artifactId>
+      <version>1.9.3</version>
+     </dependency>
     </dependencies>
 
     <reporting>

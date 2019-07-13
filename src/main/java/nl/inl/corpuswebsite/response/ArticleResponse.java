@@ -171,12 +171,16 @@ public class ArticleResponse extends BaseResponse {
                         // number of words shown calculated: page end or doclength minus 0 or pagestart
                         context.put("wordsShown",Math.max(pageSize,pageEnd==-1?docLength:pageEnd)-Math.max(0,pageStart));
                         if (pageStart > 0) {
-                            context.put("first_page", "?wordstart=0&wordend="+pageSize+q+pg);
+                            context.put("first_page", "?wordstart=-1&wordend="+pageSize+q+pg);
                             context.put("previous_page", "?wordstart="+Math.max(0, pageStart-pageSize)+"&wordend="+pageStart+q+pg);
                         }
                         if (pageEnd!=-1 && pageEnd < docLength) {
-                            context.put("next_page", "?wordstart="+(pageEnd)+"&wordend="+Math.min(pageEnd+pageSize, docLength)+q+pg);
-                            context.put("last_page", "?wordstart="+(docLength-pageSize)+"&wordend="+(docLength)+q+pg);
+                            if (pageEnd==-1) {
+                                context.put("next_page", "?wordstart="+(pageEnd)+"&wordend=-1");
+                            } else {
+                                context.put("next_page", "?wordstart=" + (pageEnd) + "&wordend=" + Math.min(pageEnd + pageSize, docLength) + q + pg);
+                            }
+                            context.put("last_page", "?wordstart="+(docLength-pageSize)+"&wordend=-1");
                         }
                     }
 

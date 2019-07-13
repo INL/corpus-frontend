@@ -15,6 +15,7 @@ import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -90,19 +91,73 @@ public class ArticleResponse extends BaseResponse {
             metadataRequestParameters.put("userid", new String[] { userId });
         }
 
-        // show max. 5000 (or as requested/configured) words of content (TODO: paging)
-        // paging will also need edits in blacklab,
-        // since when you only get a subset of the document without begin and ending, the top of the xml tree will be missing
-        // and xslt will not match anything (or match the wrong elements)
-        // so blacklab will have to walk the tree and insert those tags in some manner.
-        if (servlet.getWebsiteConfig(this.corpus).usePagination()) {
-            contentRequestParameters.put("wordstart", new String[] { Integer.toString(getWordStart(-1)) });
-            contentRequestParameters.put("wordend", new String[] { Integer.toString(getWordEnd(-1)) });
-        }
-
         context.put("docId", pid);
 
         try {
+            AtomicInteger docLength = new AtomicInteger(-1);
+            context.put("article_meta", metadataStylesheet
+                    .map(t -> {
+                        MutablePair<XslTransformer, String> p = new MutablePair<>();
+
+                        try {
+                            String meta = articleMetadataRequest.makeRequest(metadataRequestParameters);
+                            p.left = t;
+                            p.right = meta;
+                            return p;
+                        } catch (QueryException | IOException e) {
+                            return null;
+                        }
+                    })
+                    .map(p -> {
+                        XslTransformer t = p.left;
+                        String meta = p.right;
+
+                        Matcher m = CAPTURE_DOCLENGTH_PATTERN.matcher(meta);
+                        if (servlet.getWebsiteConfig(this.corpus).usePagination() && m.find()) {
+                            docLength.set(Integer.parseInt(m.group(1)));
+                            int pageStart = getWordStart(-1); // can be -1 to show content before first word
+                            int pageEnd = getWordEnd(docLength.get()); // can be -1 to show content after last word
+                            int pageSize = servlet.getWordsToShow();
+                            String q = (query != null && !query.isEmpty()) ? ("&query="+esc.url(query)) : "";
+                            String pg = (pattGapData != null && !pattGapData.isEmpty()) ? "&pattgapdata="+esc.url(pattGapData) : "";
+
+                            context.put("docLength",docLength);
+                            context.put("pageStart",Math.max(0,pageStart));
+                            // number of words shown calculated: page end or doclength minus 0 or pagestart
+                            context.put("wordsShown",Math.max(pageSize,pageEnd==-1?docLength.get():pageEnd)-Math.max(0,pageStart));
+                            if (pageStart > 0) {
+                                context.put("first_page", "?wordstart=-1&wordend="+pageSize+q+pg);
+                                context.put("previous_page", "?wordstart="+Math.max(0, pageStart-pageSize)+"&wordend="+pageStart+q+pg);
+                            }
+                            if (pageEnd!=-1 && pageEnd < docLength.get()) {
+                                if (pageEnd==-1) {
+                                    context.put("next_page", "?wordstart="+(pageEnd)+"&wordend=-1");
+                                } else {
+                                    context.put("next_page", "?wordstart=" + (pageEnd) + "&wordend=" + Math.min(pageEnd + pageSize, docLength.get()) + q + pg);
+                                }
+                                context.put("last_page", "?wordstart="+(docLength.get()-pageSize)+"&wordend=-1");
+                            }
+                        }
+
+                        try {
+                            return t.transform(meta);
+                        } catch (TransformerException e) {
+                            return null;
+                        }
+                    })
+                    .orElse("")
+            );
+
+            // show max. 5000 (or as requested/configured) words of content (TODO: paging)
+            // paging will also need edits in blacklab,
+            // since when you only get a subset of the document without begin and ending, the top of the xml tree will be missing
+            // and xslt will not match anything (or match the wrong elements)
+            // so blacklab will have to walk the tree and insert those tags in some manner.
+            if (servlet.getWebsiteConfig(this.corpus).usePagination()) {
+                contentRequestParameters.put("wordstart", new String[] { Integer.toString(getWordStart(-1)) });
+                contentRequestParameters.put("wordend", new String[] { Integer.toString(getWordEnd(docLength.get())) });
+            }
+
             // NOTE: document not necessarily xml, though it might have some <hl/> tags injected to mark query hits
             String documentContents = articleContentRequest.makeRequest(contentRequestParameters);
             if (documentContents.contains("NOT_AUTHORIZED")) {
@@ -140,58 +195,6 @@ public class ArticleResponse extends BaseResponse {
                 );
             }
 
-            context.put("article_meta", metadataStylesheet
-                .map(t -> {
-                    MutablePair<XslTransformer, String> p = new MutablePair<>();
-
-                    try {
-                        String meta = articleMetadataRequest.makeRequest(metadataRequestParameters);
-                        p.left = t;
-                        p.right = meta;
-                        return p;
-                    } catch (QueryException | IOException e) {
-                        return null;
-                    }
-                })
-                .map(p -> {
-                    XslTransformer t = p.left;
-                    String meta = p.right;
-
-                    Matcher m = CAPTURE_DOCLENGTH_PATTERN.matcher(meta);
-                    if (servlet.getWebsiteConfig(this.corpus).usePagination() && m.find()) {
-                        int docLength = Integer.parseInt(m.group(1));
-                        int pageStart = getWordStart(-1); // can be -1 to show content before first word
-                        int pageEnd = getWordEnd(docLength); // can be -1 to show content after last word
-                        int pageSize = servlet.getWordsToShow();
-                        String q = (query != null && !query.isEmpty()) ? ("&query="+esc.url(query)) : "";
-                        String pg = (pattGapData != null && !pattGapData.isEmpty()) ? "&pattgapdata="+esc.url(pattGapData) : "";
-
-                        context.put("docLength",docLength);
-                        context.put("pageStart",Math.max(0,pageStart));
-                        // number of words shown calculated: page end or doclength minus 0 or pagestart
-                        context.put("wordsShown",Math.max(pageSize,pageEnd==-1?docLength:pageEnd)-Math.max(0,pageStart));
-                        if (pageStart > 0) {
-                            context.put("first_page", "?wordstart=-1&wordend="+pageSize+q+pg);
-                            context.put("previous_page", "?wordstart="+Math.max(0, pageStart-pageSize)+"&wordend="+pageStart+q+pg);
-                        }
-                        if (pageEnd!=-1 && pageEnd < docLength) {
-                            if (pageEnd==-1) {
-                                context.put("next_page", "?wordstart="+(pageEnd)+"&wordend=-1");
-                            } else {
-                                context.put("next_page", "?wordstart=" + (pageEnd) + "&wordend=" + Math.min(pageEnd + pageSize, docLength) + q + pg);
-                            }
-                            context.put("last_page", "?wordstart="+(docLength-pageSize)+"&wordend=-1");
-                        }
-                    }
-
-                    try {
-                        return t.transform(meta);
-                    } catch (TransformerException e) {
-                        return null;
-                    }
-                })
-                .orElse("")
-            );
         } catch (QueryException e) {
             if (e.getHttpStatusCode() == 404) {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -218,7 +221,7 @@ public class ArticleResponse extends BaseResponse {
 
     /**
      *
-     * @param docLength the length of the document or -1
+     * @param docLength the length of the document
      * @return the value of parameter wordend or {@link MainServlet#getWordsToShow()}, or -1 when greater or equal than
      * doclength to have blacklab return content after last word
      */
@@ -226,7 +229,11 @@ public class ArticleResponse extends BaseResponse {
         int maxWordCount = servlet.getWordsToShow();
         //  get 0 based wordstart for calculation of wordend
         int wordStart = getWordStart(0);
-        int end = wordStart + Math.min(Math.max(0, getParameter("wordend", maxWordCount)), maxWordCount);
-        return docLength != -1 && end >= docLength ? -1 : end;
+        int wordend = getParameter("wordend", maxWordCount);
+        // wordend can be -1, meaning rest of the document
+        int end = (wordend!=-1) ?
+                wordStart + Math.min(Math.max(0, wordend), maxWordCount) :
+                wordStart + Math.min(docLength-wordStart, maxWordCount);
+        return end >= docLength ? -1 : end;
     }
 }

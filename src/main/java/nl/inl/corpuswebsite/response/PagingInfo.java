@@ -5,6 +5,10 @@ import nl.inl.corpuswebsite.BaseResponse;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Encapsulates paging so that a user sees correct values that make sense and blacklab receives -1 for wordstart and wordend
+ * to make sure content before and after last word is included. Also holds transformed metadata.
+ */
 class PagingInfo {
 
     public static final String WORDEND = "wordend";
@@ -25,6 +29,7 @@ class PagingInfo {
     PagingInfo(BaseResponse response, int max, int docLength) {
         int start = Math.max(response.getParameter(WORDSTART, 0), 0);
         int end = Math.min(response.getParameter(WORDEND, start + max), start + max);
+        if (end==-1) end = docLength;
         this.start = start;
         this.end = end;
         this.max = max;
@@ -32,7 +37,7 @@ class PagingInfo {
     }
 
     String firstUrlQuery() {
-        return WORDSTART + "=-1&" + WORDEND + "=" + max;
+        return WORDSTART + "=0&" + WORDEND + "=" + max;
     }
 
     boolean hasPrev() {
@@ -40,8 +45,7 @@ class PagingInfo {
     }
 
     String prevUrlQuery() {
-        int back = end >= docLength ? docLength % max : max;
-        return start == 0 ? "" : WORDSTART + "=" + (start - back) + "&" + WORDEND + "=" + start;
+        return start == 0 ? "" : WORDSTART + "=" + (start - max) + "&" + WORDEND + "=" + start;
     }
 
     boolean hasNext() {
@@ -53,13 +57,13 @@ class PagingInfo {
     }
 
     String nextUrlQuery() {
-        int forward = end + max >= docLength ? -1 : end + max;
+        int forward = end + max >= docLength ? docLength : end + max;
         return end >= docLength ? "" : WORDSTART + "=" + end + "&" + WORDEND + "=" + forward;
     }
 
     String lastUrlQuery() {
         int lastStart = docLength % max == 0 ? docLength - max : docLength - docLength % max;
-        return WORDSTART + "=" + lastStart + "&" + WORDEND + "=-1";
+        return WORDSTART + "=" + lastStart + "&" + WORDEND + "=" + docLength;
     }
 
     Map<String, String[]> getBlacklabQuery() {
@@ -84,10 +88,18 @@ class PagingInfo {
         return docLength;
     }
 
+    /**
+     * Can also be used without paging
+     * @return
+     */
     String getMetaData() {
         return metaData != null ? metaData : "";
     }
 
+    /**
+     * Also called without paging
+     * @return
+     */
     PagingInfo setMetaData(String metaData) {
         this.metaData = metaData;
         return this;

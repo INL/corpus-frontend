@@ -168,7 +168,7 @@ public class ArticleResponse extends BaseResponse {
      * @param query
      * @param pattGapData
      * @param metadataRequestParameters
-     * @return
+     * @return PagingInfo holding metadata content and info for paging
      */
     private PagingInfo getMetadata(Optional<XslTransformer> metadataStylesheet,QueryServiceHandler articleMetadataRequest, String query, String pattGapData, Map<String, String[]> metadataRequestParameters) {
         return metadataStylesheet

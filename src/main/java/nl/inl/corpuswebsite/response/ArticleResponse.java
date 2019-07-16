@@ -15,7 +15,6 @@ import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -94,59 +93,8 @@ public class ArticleResponse extends BaseResponse {
         context.put("docId", pid);
 
         try {
-            AtomicInteger docLength = new AtomicInteger(-1);
-            context.put("article_meta", metadataStylesheet
-                    .map(t -> {
-                        MutablePair<XslTransformer, String> p = new MutablePair<>();
-
-                        try {
-                            String meta = articleMetadataRequest.makeRequest(metadataRequestParameters);
-                            p.left = t;
-                            p.right = meta;
-                            return p;
-                        } catch (QueryException | IOException e) {
-                            return null;
-                        }
-                    })
-                    .map(p -> {
-                        XslTransformer t = p.left;
-                        String meta = p.right;
-
-                        Matcher m = CAPTURE_DOCLENGTH_PATTERN.matcher(meta);
-                        if (servlet.getWebsiteConfig(this.corpus).usePagination() && m.find()) {
-                            docLength.set(Integer.parseInt(m.group(1)));
-                            int pageStart = getWordStart(-1); // can be -1 to show content before first word
-                            int pageEnd = getWordEnd(docLength.get()); // can be -1 to show content after last word
-                            int pageSize = servlet.getWordsToShow();
-                            String q = (query != null && !query.isEmpty()) ? ("&query="+esc.url(query)) : "";
-                            String pg = (pattGapData != null && !pattGapData.isEmpty()) ? "&pattgapdata="+esc.url(pattGapData) : "";
-
-                            context.put("docLength",docLength);
-                            context.put("pageStart",Math.max(0,pageStart));
-                            // number of words shown calculated: page end or doclength minus 0 or pagestart
-                            context.put("wordsShown",Math.max(pageSize,pageEnd==-1?docLength.get():pageEnd)-Math.max(0,pageStart));
-                            if (pageStart > 0) {
-                                context.put("first_page", "?wordstart=-1&wordend="+pageSize+q+pg);
-                                context.put("previous_page", "?wordstart="+Math.max(0, pageStart-pageSize)+"&wordend="+pageStart+q+pg);
-                            }
-                            if (pageEnd!=-1 && pageEnd < docLength.get()) {
-                                if (pageEnd==-1) {
-                                    context.put("next_page", "?wordstart="+(pageEnd)+"&wordend=-1");
-                                } else {
-                                    context.put("next_page", "?wordstart=" + (pageEnd) + "&wordend=" + Math.min(pageEnd + pageSize, docLength.get()) + q + pg);
-                                }
-                                context.put("last_page", "?wordstart="+(docLength.get()-pageSize)+"&wordend=-1");
-                            }
-                        }
-
-                        try {
-                            return t.transform(meta);
-                        } catch (TransformerException e) {
-                            return null;
-                        }
-                    })
-                    .orElse("")
-            );
+            PagingInfo pi = getMetadata(metadataStylesheet,articleMetadataRequest, query, pattGapData, metadataRequestParameters);
+            context.put("article_meta", pi.getMetaData());
 
             // show max. 5000 (or as requested/configured) words of content (TODO: paging)
             // paging will also need edits in blacklab,
@@ -154,8 +102,7 @@ public class ArticleResponse extends BaseResponse {
             // and xslt will not match anything (or match the wrong elements)
             // so blacklab will have to walk the tree and insert those tags in some manner.
             if (servlet.getWebsiteConfig(this.corpus).usePagination()) {
-                contentRequestParameters.put("wordstart", new String[] { Integer.toString(getWordStart(-1)) });
-                contentRequestParameters.put("wordend", new String[] { Integer.toString(getWordEnd(docLength.get())) });
+                contentRequestParameters.putAll(pi.getBlacklabQuery());
             }
 
             // NOTE: document not necessarily xml, though it might have some <hl/> tags injected to mark query hits
@@ -164,34 +111,7 @@ public class ArticleResponse extends BaseResponse {
                 context.put("article_content", "content restricted");
             } else {
                 context.put("article_content",
-                    articleStylesheet.map(t -> {  // probably xml, or we wouldn't have a stylesheet
-                        t.clearParameters();
-                        t.addParameter("contextRoot", servlet.getServletContext().getContextPath());
-                        servlet.getWebsiteConfig(corpus).getXsltParameters().forEach(t::addParameter);
-
-                        try {
-                            return t.transform(documentContents);
-                        } catch (TransformerException e) {
-                            return null; // proceed to orElseGet
-                        }
-                    })
-                    .orElseGet(() -> {
-                        if (!XML_TAG_PATTERN.matcher(documentContents).find()) {
-                            // not xml, just replace the inserted hl tags and pass on
-                           return "<pre>" + StringUtils.replaceEach(documentContents,
-                                                           new String[] {"<hl>", "</hl>"},
-                                                           new String[] { "<span class=\"hl\">", "</span>"}) +
-                           "</pre>";
-                        }
-
-                        // seems to contain at least one xml opening/self-closing tag, process using default xslt
-                        try {
-                            return defaultTransformer.transform(documentContents);
-                        } catch (TransformerException e) {
-                            // Document seems to be xml, but probably not valid, we tried...
-                            return "Could not prepare document for viewing (it might be malformed xml) - " + e.getMessage();
-                        }
-                    })
+                        transformContent(articleStylesheet, documentContents)
                 );
             }
 
@@ -210,30 +130,90 @@ public class ArticleResponse extends BaseResponse {
         displayHtmlTemplate(servlet.getTemplate("article"));
     }
 
-    /**
-     *
-     * @param first the default and max for the start word (-1 to have blacklab return content before first word)
-     * @return the value of parameter wordstart or first when wordstart not set or greater than first
-     */
-    private int getWordStart(int first) {
-        return Math.max(first, getParameter("wordstart", first));
+    private String transformContent(Optional<XslTransformer> articleStylesheet, String documentContents) {
+        return articleStylesheet.map(t -> {  // probably xml, or we wouldn't have a stylesheet
+            t.clearParameters();
+            t.addParameter("contextRoot", servlet.getServletContext().getContextPath());
+            servlet.getWebsiteConfig(corpus).getXsltParameters().forEach(t::addParameter);
+
+            try {
+                return t.transform(documentContents);
+            } catch (TransformerException e) {
+                return null; // proceed to orElseGet
+            }
+        })
+        .orElseGet(() -> {
+            if (!XML_TAG_PATTERN.matcher(documentContents).find()) {
+                // not xml, just replace the inserted hl tags and pass on
+               return "<pre>" + StringUtils.replaceEach(documentContents,
+                                               new String[] {"<hl>", "</hl>"},
+                                               new String[] { "<span class=\"hl\">", "</span>"}) +
+               "</pre>";
+            }
+
+            // seems to contain at least one xml opening/self-closing tag, process using default xslt
+            try {
+                return defaultTransformer.transform(documentContents);
+            } catch (TransformerException e) {
+                // Document seems to be xml, but probably not valid, we tried...
+                return "Could not prepare document for viewing (it might be malformed xml) - " + e.getMessage();
+            }
+        });
     }
 
     /**
      *
-     * @param docLength the length of the document
-     * @return the value of parameter wordend or {@link MainServlet#getWordsToShow()}, or -1 when greater or equal than
-     * doclength to have blacklab return content after last word
+     * @param metadataStylesheet
+     * @param articleMetadataRequest
+     * @param query
+     * @param pattGapData
+     * @param metadataRequestParameters
+     * @return
      */
-    private int getWordEnd(int docLength) {
-        int maxWordCount = servlet.getWordsToShow();
-        //  get 0 based wordstart for calculation of wordend
-        int wordStart = getWordStart(0);
-        int wordend = getParameter("wordend", maxWordCount);
-        // wordend can be -1, meaning rest of the document
-        int end = (wordend!=-1) ?
-                wordStart + Math.min(Math.max(0, wordend), maxWordCount) :
-                wordStart + Math.min(docLength-wordStart, maxWordCount);
-        return end >= docLength ? -1 : end;
+    private PagingInfo getMetadata(Optional<XslTransformer> metadataStylesheet,QueryServiceHandler articleMetadataRequest, String query, String pattGapData, Map<String, String[]> metadataRequestParameters) {
+        return metadataStylesheet
+                .map(t -> {
+                    MutablePair<XslTransformer, String> p = new MutablePair<>();
+
+                    try {
+                        String meta = articleMetadataRequest.makeRequest(metadataRequestParameters);
+                        p.left = t;
+                        p.right = meta;
+                        return p;
+                    } catch (QueryException | IOException e) {
+                        return null;
+                    }
+                })
+                .map(p -> {
+                    XslTransformer t = p.left;
+                    String meta = p.right;
+
+                    Matcher m = CAPTURE_DOCLENGTH_PATTERN.matcher(meta);
+                    PagingInfo pi = new PagingInfo(this, servlet.getWordsToShow(),m.find()?Integer.parseInt(m.group(1)):0);
+                    if (servlet.getWebsiteConfig(this.corpus).usePagination()) {
+                        String q = (query != null && !query.isEmpty()) ? ("&query="+esc.url(query)) : "";
+                        String pg = (pattGapData != null && !pattGapData.isEmpty()) ? "&pattgapdata="+esc.url(pattGapData) : "";
+
+                        context.put("docLength",pi.getDocLength());
+                        context.put("pageStart",pi.getStart());
+                        // number of words shown calculated: page end or doclength minus 0 or pagestart
+                        context.put("wordsShown",pi.wordsShown());
+                        if (pi.hasPrev()) {
+                            context.put("first_page", "?" + pi.firstUrlQuery()+q+pg);
+                            context.put("previous_page", "?"+pi.prevUrlQuery()+q+pg);
+                        }
+                        if (pi.hasNext()) {
+                            context.put("next_page", "?"+pi.nextUrlQuery() + pg + q);
+                            context.put("last_page", "?"+pi.lastUrlQuery() + pg + q);
+                        }
+                    }
+
+                    try {
+                        return pi.setMetaData(t.transform(meta));
+                    } catch (TransformerException e) {
+                        return pi;
+                    }
+                })
+                .orElse(new PagingInfo(this,servlet.getWordsToShow(),0));
     }
 }

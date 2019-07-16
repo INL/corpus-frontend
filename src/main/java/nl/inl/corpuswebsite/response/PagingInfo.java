@@ -7,7 +7,7 @@ import java.util.Map;
 
 /**
  * Encapsulates paging so that a user sees correct values that make sense and blacklab receives -1 for wordstart and wordend
- * to make sure content before and after last word is included. Also holds transformed metadata.
+ * to make sure content before and after last word is included.
  */
 class PagingInfo {
 
@@ -86,22 +86,5 @@ class PagingInfo {
 
     int getDocLength() {
         return docLength;
-    }
-
-    /**
-     * Can also be used without paging
-     * @return
-     */
-    String getMetaData() {
-        return metaData != null ? metaData : "";
-    }
-
-    /**
-     * Also called without paging
-     * @return
-     */
-    PagingInfo setMetaData(String metaData) {
-        this.metaData = metaData;
-        return this;
     }
 }

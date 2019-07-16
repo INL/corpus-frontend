@@ -7,6 +7,7 @@ import nl.inl.corpuswebsite.utils.QueryServiceHandler.QueryException;
 import nl.inl.corpuswebsite.utils.XslTransformer;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
+import org.apache.velocity.VelocityContext;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.TransformerException;
@@ -93,8 +94,7 @@ public class ArticleResponse extends BaseResponse {
         context.put("docId", pid);
 
         try {
-            PagingInfo pi = getMetadata(metadataStylesheet,articleMetadataRequest, query, pattGapData, metadataRequestParameters);
-            context.put("article_meta", pi.getMetaData());
+            PagingInfo pi = getMetadata(metadataStylesheet,articleMetadataRequest, query, pattGapData, metadataRequestParameters, context);
 
             // show max. 5000 (or as requested/configured) words of content (TODO: paging)
             // paging will also need edits in blacklab,
@@ -168,9 +168,10 @@ public class ArticleResponse extends BaseResponse {
      * @param query
      * @param pattGapData
      * @param metadataRequestParameters
-     * @return PagingInfo holding metadata content and info for paging
+     * @param context
+     * @return PagingInfo holding info for paging
      */
-    private PagingInfo getMetadata(Optional<XslTransformer> metadataStylesheet,QueryServiceHandler articleMetadataRequest, String query, String pattGapData, Map<String, String[]> metadataRequestParameters) {
+    private PagingInfo getMetadata(Optional<XslTransformer> metadataStylesheet, QueryServiceHandler articleMetadataRequest, String query, String pattGapData, Map<String, String[]> metadataRequestParameters, VelocityContext context) {
         return metadataStylesheet
                 .map(t -> {
                     MutablePair<XslTransformer, String> p = new MutablePair<>();
@@ -209,10 +210,11 @@ public class ArticleResponse extends BaseResponse {
                     }
 
                     try {
-                        return pi.setMetaData(t.transform(meta));
+                        context.put("article_meta", t.transform(meta));
                     } catch (TransformerException e) {
-                        return pi;
+                        context.put("article_meta", "");
                     }
+                    return pi;
                 })
                 .orElse(new PagingInfo(this,servlet.getWordsToShow(),0));
     }

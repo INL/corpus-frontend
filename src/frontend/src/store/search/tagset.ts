@@ -68,13 +68,13 @@ const actions = {
 			const tagset = t.data;
 
 			const annots = CorpusStore.get.allAnnotationsMap();
-			const posAnnotation = Object.values(annots).flat().find(a => a.uiType === 'pos'); // I mean, has to exist right
-			if (!posAnnotation) {
+			const mainAnnot = Object.values(annots).flat().find(a => a.uiType === 'pos'); // I mean, has to exist right
+			if (!mainAnnot) {
 				return;
 			}
 
-			const caseSensitive = posAnnotation.caseSensitive;
-			if (!caseSensitive) {
+			const mainAnnotationCS = mainAnnot.caseSensitive;
+			if (!mainAnnotationCS) {
 				tagset.values = mapReduce(Object.values(tagset.values).map<Tagset['values'][string]>(v => ({
 					value: v.value.toLowerCase(),
 					displayName: v.displayName,
@@ -83,14 +83,15 @@ const actions = {
 			}
 
 			Object.values(tagset.subAnnotations).forEach(subAnnotInTagset => {
-				const actualAnnot = annots[subAnnotInTagset.id][0];
-				const subAnnotCaseSensitive = actualAnnot.caseSensitive;
+				const subAnnot = annots[subAnnotInTagset.id][0];
+				const subAnnotCS = subAnnot.caseSensitive;
 
-				if (!subAnnotCaseSensitive) {
+				if (!subAnnotCS) {
 					subAnnotInTagset.values = subAnnotInTagset.values.map(v => ({
 						value: v.value.toLowerCase(),
 						displayName: v.displayName,
-						pos: v.pos
+						// if the main annotation is not case-sensitive, lowercase all its values here too
+						pos: v.pos ? mainAnnotationCS ? v.pos : v.pos.map(vv => vv.toLowerCase()) : undefined
 					}));
 				}
 			});
@@ -192,6 +193,7 @@ const init = () => {
 /** check if all annotations and their values exist */
 function validateTagset(annotation: NormalizedAnnotation, t: Tagset) {
 	const validAnnotations = CorpusStore.get.allAnnotationsMap();
+	debugger;
 
 	function validateAnnotation(id: string, values: Tagset['subAnnotations'][string]['values']) {
 		const mainAnnotation = validAnnotations[id] && validAnnotations[id][0];

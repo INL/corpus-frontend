@@ -81,6 +81,7 @@ import Vue from 'vue';
 import Slider from 'vue-slider-component';
 
 import * as CorpusStore from '@/store/search/corpus';
+import * as UIStore from '@/store/search/ui';
 
 import SelectPicker, {Option} from '@/components/SelectPicker.vue';
 
@@ -107,10 +108,17 @@ export default Vue.extend({
 		range: [0, 5],
 	}),
 	computed: {
-		defaultAnnotation(): string { return CorpusStore.get.firstMainAnnotation().id; },
+		defaultAnnotation(): string {
+			const mainAnnotationId = CorpusStore.get.firstMainAnnotation().id;
+			const options = UIStore.getState().results.shared.groupAnnotationIds;
+			return options.includes(mainAnnotationId) ? mainAnnotationId : options[0] || '';
+		},
 		annotationOptions(): Option[] {
+			const allAnnotationsMap = CorpusStore.get.allAnnotationsMap();
 			// Grouping on annotations without forward index is not supported by blacklab
-			return CorpusStore.get.annotations().filter(a => !a.isInternal && a.hasForwardIndex).map(a => ({label: a.displayName, value: a.id}));
+			return UIStore.getState().results.shared.groupAnnotationIds
+				.map(id => allAnnotationsMap[id][0])
+				.map(a => ({label: a.displayName, value: a.id}));
 		},
 
 		contextOptions(): Option[] {

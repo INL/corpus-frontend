@@ -40,7 +40,7 @@ const get = {
 const internalActions = {
 	state: b.commit((state, payload: {state: ModuleRootState['state'], message: string}) => Object.assign(state, payload), 'state'),
 	replace: b.commit((state, payload: Tagset) => {
-		const annot = CorpusStore.get.annotations().find(a => a.uiType === 'pos');
+		const annot = CorpusStore.get.shownAnnotations().find(a => a.uiType === 'pos');
 		if (annot == null) {
 			throw new Error(`Tagset isn't attached to any annotation! Set uiType to 'pos' on a single annotation to enable.`);
 		}
@@ -67,7 +67,7 @@ const actions = {
 		.then(t => {
 			const tagset = t.data;
 
-			const annots = CorpusStore.get.annotationsMap();
+			const annots = CorpusStore.get.shownAnnotationsMap();
 			const posAnnotation = Object.values(annots).flat().find(a => a.uiType === 'pos'); // I mean, has to exist right
 			if (!posAnnotation) {
 				return;
@@ -105,7 +105,6 @@ const actions = {
 			.forEach(originalAnnotation => {
 				const originalValues = mapReduce(originalAnnotation.values, 'value');
 
-				debugger;
 				for (const tagsetValue of Object.values(t.data.values)) {
 					const a = originalValues[tagsetValue.value];
 					const b = tagsetValue;
@@ -192,7 +191,7 @@ const init = () => {
 
 /** check if all annotations and their values exist */
 function validateTagset(annotation: NormalizedAnnotation, t: Tagset) {
-	const validAnnotations = CorpusStore.get.annotations().reduce((acc, a) => {
+	const validAnnotations = CorpusStore.get.shownAnnotations().reduce((acc, a) => {
 		acc[a.id] = a;
 		return acc;
 	}, {} as {[id: string]: NormalizedAnnotation});

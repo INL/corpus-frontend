@@ -171,7 +171,7 @@ export default Vue.extend({
 			}
 
 			// So recreate the groups and add everything that's not in the form into a default fallback group.
-			const metadataFields = CorpusStore.getState().metadataFields;
+			const metadataFields = CorpusStore.get.allMetadataFieldsMap();
 			const metadataGroupsToShow: MapOf<Option[]> = {};
 
 			UIStore.getState().results.shared.groupMetadataIds.forEach(id => {

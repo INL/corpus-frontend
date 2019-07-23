@@ -62,7 +62,7 @@ function initQueryBuilder() {
 		attribute: {
 			view: {
 				// Pass the available properties of tokens in this corpus (PoS, Lemma, Word, etc..) to the querybuilder
-				attributes: CorpusStore.get.annotations()
+				attributes: CorpusStore.get.shownAnnotations()
 					.map((annotation): QueryBuilderOptionsDef['attribute']['view']['attributes'][number] => {
 						return {
 							attribute: annotation.id,

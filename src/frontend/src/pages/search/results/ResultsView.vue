@@ -442,7 +442,7 @@ export default Vue.extend({
 				disabled: this.results != null && !this.isGroups
 			});
 
-			const annotations = CorpusStore.get.annotations().filter(a => !a.isInternal && a.hasForwardIndex);
+			const annotations = CorpusStore.get.shownAnnotations().filter(a => a.hasForwardIndex);
 			const dir = CorpusStore.getState().textDirection;
 
 			[[dir === 'rtl' ? 'right:' : 'left:', 'Before hit', 'before'],['hit:', 'Hit', ''],[dir === 'rtl' ? 'left:' : 'right:', 'After hit', 'after']]

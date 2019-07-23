@@ -269,6 +269,14 @@ export function makeMapReducer<T, V extends (t: T) => any = (t: T) => T>(k: Keys
 	};
 }
 
+export function makeMultimapReducer<T, V extends (t: T) => any = (t: T) => T>(k: KeysOfType<T, string>, m?: V): (m: MapOf<Array<ReturnType<V>>>, t: T) => MapOf<Array<ReturnType<V>>> {
+	return (acc: MapOf<Array<ReturnType<V>>>, v: T): MapOf<Array<ReturnType<V>>> => {
+		const kv = v[k] as any as string;
+		acc[kv] ? acc[kv].push(m ? m(v) : v) : acc[kv] = [m ? m(v) : v];
+		return acc;
+	};
+}
+
 /**
  * Turn an array of type T[] into a map of type {[key: string]: T};
  * @param t the array of objects to place in a map.
@@ -277,4 +285,16 @@ export function makeMapReducer<T, V extends (t: T) => any = (t: T) => T>(k: Keys
  */
 export function mapReduce<T, V extends (t: T) => any = (t: T) => T>(t: T[]|undefined|null, k: KeysOfType<T, string>, m?: V): MapOf<ReturnType<V>> {
 	return t ? t.reduce(makeMapReducer<T>(k, m), {}) : {};
+}
+
+/**
+ * Turn an array of type T[] into a map of type {[key: string]: T[]};
+ * Duplicate keys will be pushed into the array at that key in order of appearance.
+ *
+ * @param t the array of objects to place in a map.
+ * @param k a key in the objects to use as key in the map.
+ * @param m (optional) a mapping function to apply to values.
+ */
+export function multimapReduce<T, V extends (t: T) => any = (t: T) => T>(t: T[]|undefined|null, k: KeysOfType<T, string>, m?: V): MapOf<Array<ReturnType<V>>> {
+	return t ? t.reduce(makeMultimapReducer<T>(k, m), {}) : {};
 }

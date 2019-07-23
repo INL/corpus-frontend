@@ -7,15 +7,15 @@
 			<thead>
 				<tr class="rounded">
 					<th class="text-right">
-						<span v-if="annotations.filter(a => a.hasForwardIndex).length" class="dropdown">
+						<span v-if="sortableAnnotations.length" class="dropdown">
 							<a role="button" data-toggle="dropdown" :class="['dropdown-toggle', {'disabled': disabled}]">
 								{{leftLabel}} hit
 								<span class="caret"/>
 							</a>
 
 							<ul class="dropdown-menu" role="menu">
-								<li v-for="annotation in annotations.filter(a => a.hasForwardIndex)" :key="annotation.id" :class="{'disabled': disabled}">
-									<a @click="changeSort(`${beforeField}:${annotation.id}`)" class="sort">{{annotation.displayName}}</a>
+								<li v-for="annotation in sortableAnnotations" :key="annotation.id" :class="{'disabled': disabled}">
+									<a @click="changeSort(`${beforeField}:${annotation.id}`)" class="sort" role="button">{{annotation.displayName}}</a>
 								</li>
 							</ul>
 						</span>
@@ -35,15 +35,15 @@
 					</th>
 
 					<th class="text-left">
-						<span v-if="annotations.filter(a => a.hasForwardIndex).length" class="dropdown">
+						<span v-if="sortableAnnotations.length" class="dropdown">
 							<a role="button" data-toggle="dropdown" :class="['dropdown-toggle', {'disabled': disabled}]">
 								{{rightLabel}} hit
 								<span class="caret"/>
 							</a>
 
 							<ul class="dropdown-menu" role="menu">
-								<li v-for="annotation in annotations.filter(a => a.hasForwardIndex)" :key="annotation.id" :class="{'disabled': disabled}">
-									<a @click="changeSort(`${afterField}:${annotation.id}`)" :class="['sort', {'disabled':disabled}]">{{annotation.displayName}}</a>
+								<li v-for="annotation in sortableAnnotations" :key="annotation.id" :class="{'disabled': disabled}">
+									<a @click="changeSort(`${afterField}:${annotation.id}`)" :class="['sort', {'disabled':disabled}]" role="button">{{annotation.displayName}}</a>
 								</li>
 							</ul>
 						</span>
@@ -274,14 +274,15 @@ export default Vue.extend({
 		numColumns() {
 			return 3 + this.shownAnnotationCols.length + this.shownMetadataCols.length; // left - hit - right - (one per shown annotation) - (one per shown metadata)
 		},
-		annotations: CorpusStore.get.annotations,
+		/** Return all annotations shown in the main search form (provided they have a forward index) */
+		sortableAnnotations(): AppTypes.NormalizedAnnotation[] { return CorpusStore.get.shownAnnotations().filter(a => a.hasForwardIndex); },
 		firstMainAnnotation: CorpusStore.get.firstMainAnnotation,
-		shownAnnotationCols(): AppTypes.NormalizedAnnotation[] { return UIStore.getState().results.hits.shownAnnotationIds.map(id => CorpusStore.get.annotationsMap()[id][0]); },
+		shownAnnotationCols(): AppTypes.NormalizedAnnotation[] { return UIStore.getState().results.hits.shownAnnotationIds.map(id => CorpusStore.get.allAnnotationsMap()[id][0]); },
 		shownMetadataCols(): AppTypes.NormalizedMetadataField[] { return UIStore.getState().results.hits.shownMetadataIds.map(id => CorpusStore.getState().metadataFields[id]); },
-		/** Get annotations to show in concordances, if not configured, returns all (non-internal) annotations. */
+		/** Get annotations to show in concordances, if not configured, returns all annotations shown in the main search form. */
 		shownConcordanceAnnotationRows(): AppTypes.NormalizedAnnotation[] {
 			const configured = UIStore.getState().results.shared.detailedAnnotationIds;
-			return configured ? configured.map(id => CorpusStore.get.annotationsMap()[id][0]) : CorpusStore.get.annotations();
+			return configured ? configured.map(id => CorpusStore.get.allAnnotationsMap()[id][0]) : CorpusStore.get.shownAnnotations();
 		},
 		textDirection: CorpusStore.get.textDirection,
 

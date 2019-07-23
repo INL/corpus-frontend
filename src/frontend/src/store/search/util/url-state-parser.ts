@@ -341,7 +341,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 		}
 
 		const tagsetInfo = TagsetModule.getState().state === 'loaded' ? {
-			mainAnnotations: CorpusModule.get.annotations().filter(a => a.uiType === 'pos').map(a => a.id),
+			mainAnnotations: CorpusModule.get.allAnnotations().filter(a => a.uiType === 'pos').map(a => a.id),
 			subAnnotations: Object.keys(TagsetModule.getState().subAnnotations)
 		} : null;
 

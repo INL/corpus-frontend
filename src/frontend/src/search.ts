@@ -57,6 +57,9 @@ const connectJqueryToPage = () => {
 function initQueryBuilder() {
 	debugLog('Begin initializing querybuilder');
 
+	const mainAnnotationId = CorpusStore.get.firstMainAnnotation().id;
+	const shownAnnotations = CorpusStore.get.shownAnnotations();
+
 	// Initialize configuration
 	const instance = new QueryBuilder($('#querybuilder'), {
 		attribute: {
@@ -74,7 +77,7 @@ function initQueryBuilder() {
 					})
 				,
 
-				defaultAttribute: CorpusStore.get.firstMainAnnotation().id
+				defaultAttribute: shownAnnotations.find(a => a.id === mainAnnotationId) ? mainAnnotationId : shownAnnotations[0] && shownAnnotations[0].id || ''
 			}
 		}
 	});

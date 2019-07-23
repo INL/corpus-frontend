@@ -78,7 +78,7 @@ const get = {
 
 	// TODO there can be multiple main annotations if there are multiple annotatedFields
 	// the ui needs to respect this (probably render more extensive results?)
-	firstMainAnnotation: () => get.shownAnnotations().find(f => f.isMainAnnotation)!,
+	firstMainAnnotation: () => get.allAnnotations().find(f => f.isMainAnnotation)!,
 
 	/**
 	 * Returns all metadatagroups from the indexstructure, unless there are no metadatagroups defined.

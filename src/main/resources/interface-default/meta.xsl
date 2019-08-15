@@ -19,7 +19,7 @@
 				<!-- will be filled in from article.js -->
 				<tr><th>Hits in document:</th><td><div id="divHitsInDocument"></div></td></tr>
 				<xsl:for-each select="child::*[name()!='mayView']">
-				<tr><th><xsl:call-template name="elementFriendlyName"/>:</th><td><xsl:value-of select="." /></td></tr>
+				<tr><th><xsl:call-template name="elementFriendlyName"/>:</th><td><xsl:value-of select="string-join(value, ', ')" /></td></tr>
 				</xsl:for-each>
 			</tbody>
 		</table>

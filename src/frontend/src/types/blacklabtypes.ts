@@ -438,7 +438,7 @@ export type BLDocInfo = {
 	lengthInTokens: number;
 	mayView: boolean;
 }&{
-	[key: string]: string;
+	[key: string]: string[];
 };
 
 /** Blacklab response to a query for documents without grouping */

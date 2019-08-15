@@ -244,3 +244,31 @@ export function normalizeFormatsOld(formats: BLTypes.BLFormats): NormalizedForma
 	return Object.entries(formats.supportedInputFormats)
 	.map(([key, value]) => normalizeFormatOld(key, value));
 }
+
+// ---------------------------------------
+// Fixup function for BlackLab 2.0 release
+// ---------------------------------------
+
+// tslint:disable
+/**
+ * Remove at blacklab 2.1 release.
+ * Blacklab went from sending document metadata as string to sending as string[].
+ * We temporarily bridge this by mapping old responses to also be string[].
+ * See api/index.ts
+ */
+export function fixDocInfo(d: BLTypes.BLDocInfo) {
+	for (const key in d) switch (key) {
+		case 'lengthInTokens':
+		case 'mayView':
+			continue;
+		default: {
+			const v = d[key]
+			if (typeof v === 'string') {
+				d[key] = [v]
+			} else {
+				return;
+			}
+		}
+	}
+}
+// tslint: enable

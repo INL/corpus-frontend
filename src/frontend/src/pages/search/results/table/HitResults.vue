@@ -101,7 +101,7 @@
 							<td class="text-center"><strong :dir="textDirection">{{rowData.hit}}</strong></td>
 							<td><span :dir="textDirection">{{rowData.right}}</span>&hellip;</td>
 							<td v-for="(v, index) in rowData.other" :key="index">{{v}}</td>
-							<td v-for="meta in shownMetadataCols" :key="meta.id">{{rowData.doc[meta.id]}}</td>
+							<td v-for="meta in shownMetadataCols" :key="meta.id">{{rowData.doc[meta.id].join(', ')}}</td>
 						</tr>
 						<tr v-if="citations[index]" v-show="citations[index].open" :key="index + '-citation'" :class="['concordance-details', {'open': citations[index].open}]">
 							<td :colspan="numColumns">
@@ -222,7 +222,7 @@ export default Vue.extend({
 		afterField() { return this.textDirection === 'ltr' ? 'right' : 'left'; },
 
 		rows(): Array<DocRow|HitRow> {
-			const { titleField, dateField, authorField } = this.results.summary.docFields;
+			const { titleField = '', dateField = '', authorField = '' } = this.results.summary.docFields as BLTypes.BLDocFields;
 			const infos = this.results.docInfos;
 
 			let prevPid: string;
@@ -234,10 +234,7 @@ export default Vue.extend({
 				if (pid !== prevPid) {
 					prevPid = pid;
 					const doc = infos[pid];
-
-					const title = doc[titleField!] || 'UNKNOWN';
-					const author = doc[authorField!] ? ' by ' + doc[authorField!] : '';
-					const date = doc[dateField!] ? ' (' + doc[dateField!] + ')' : '';
+					const { [titleField]: title = [], [dateField]: date = [], [authorField]: author = [] } = doc;
 
 					// TODO the clientside url generation story... https://github.com/INL/corpus-frontend/issues/95
 					// Ideally use absolute urls everywhere, if the application needs to be proxied, let the proxy server handle it.
@@ -245,7 +242,7 @@ export default Vue.extend({
 
 					rows.push({
 						type: 'doc',
-						summary: title+author+date,
+						summary: (title[0] || 'UNKNOWN') + (author[0] ? ' by ' + author[0] : ''),
 						href: getDocumentUrl(pid, this.results.summary.searchParam.patt || null, this.results.summary.searchParam.pattgapdata || null),
 						docPid: pid,
 					}  as DocRow);

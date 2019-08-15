@@ -676,7 +676,7 @@ export default Vue.extend({
 					data.docs.forEach(doc => {
 						cache.hasHits = cache.hasHits || doc.numberOfHits != null;
 						cache.concordances.push({
-							title: doc.docInfo[data.summary.docFields.titleField!],
+							title: doc.docInfo[data.summary.docFields.titleField!][0],
 							hits: doc.numberOfHits,
 							href: getDocumentUrl(doc.docPid, data.summary.searchParam.patt || null, data.summary.searchParam.pattgapdata || null),
 						});

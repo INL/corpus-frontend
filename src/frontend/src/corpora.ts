@@ -946,12 +946,15 @@ function initNewFormat() {
 		if (this.files && this.files[0] != null) {
 			const file = this.files[0];
 			const fr = new FileReader();
+			const self = this;
 
 			fr.onload = function() {
 				editor.setValue(fr.result as string);
+				self.value = '';
 			};
 			fr.readAsText(file);
 		}
+
 	});
 
 	$downloadButton.on('click', function() {

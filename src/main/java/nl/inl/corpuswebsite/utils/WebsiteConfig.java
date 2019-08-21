@@ -117,6 +117,8 @@ public class WebsiteConfig {
      * @param configFile
      * @param corpusId (optional) raw name of the corpus, including the username (if applicable), (null when loading the
      *        config for the pages outside a corpus context, such as /about, /help, and / (root)))
+     * @param corpus (optional) the corpus as described by blacklab-server
+     * @param contextPath the application root url (usually /corpus-frontend). Required for string interpolation while loading the configFile.
      * @throws ConfigurationException
      */
     private void load(File configFile, String corpusId, CorpusConfig corpus, String contextPath) throws ConfigurationException {

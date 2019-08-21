@@ -193,7 +193,6 @@ const init = () => {
 /** check if all annotations and their values exist */
 function validateTagset(annotation: NormalizedAnnotation, t: Tagset) {
 	const validAnnotations = CorpusStore.get.allAnnotationsMap();
-	debugger;
 
 	function validateAnnotation(id: string, values: Tagset['subAnnotations'][string]['values']) {
 		const mainAnnotation = validAnnotations[id] && validAnnotations[id][0];

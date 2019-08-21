@@ -2,11 +2,14 @@ package nl.inl.corpuswebsite.response;
 
 import nl.inl.corpuswebsite.BaseResponse;
 import nl.inl.corpuswebsite.MainServlet;
+import nl.inl.corpuswebsite.utils.CorpusConfig;
 import nl.inl.corpuswebsite.utils.QueryServiceHandler;
 import nl.inl.corpuswebsite.utils.QueryServiceHandler.QueryException;
 import nl.inl.corpuswebsite.utils.XslTransformer;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
+import org.apache.velocity.VelocityContext;
+
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.TransformerException;
 import java.io.IOException;
@@ -63,7 +66,13 @@ public class ArticleResponse extends BaseResponse {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
-        String formatIdentifier = servlet.getCorpusConfig(corpus).getCorpusDataFormat();
+        CorpusConfig cfg = servlet.getCorpusConfig(corpus);
+        if (cfg == null) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+
+        String formatIdentifier = cfg.getCorpusDataFormat();
         Optional<XslTransformer> articleStylesheet = servlet.getStylesheet(corpus, "article", formatIdentifier);
         Optional<XslTransformer> metadataStylesheet = servlet.getStylesheet(corpus, "meta", formatIdentifier);
 
@@ -89,57 +98,88 @@ public class ArticleResponse extends BaseResponse {
             metadataRequestParameters.put("userid", new String[] { userId });
         }
 
-        // show max. 5000 (or as requested/configured) words of content (TODO: paging)
-        // paging will also need edits in blacklab,
-        // since when you only get a subset of the document without begin and ending, the top of the xml tree will be missing
-        // and xslt will not match anything (or match the wrong elements)
-        // so blacklab will have to walk the tree and insert those tags in some manner.
-        if (servlet.getWebsiteConfig(this.corpus).usePagination()) {
-            contentRequestParameters.put("wordstart", new String[] { Integer.toString(getWordStart()) });
-            contentRequestParameters.put("wordend", new String[] { Integer.toString(getWordEnd()) });
-        }
-
         context.put("docId", pid);
 
         try {
+            PagingInfo pi = getMetadata(metadataStylesheet,articleMetadataRequest, query, pattGapData, metadataRequestParameters, context);
+
+            // show max. 5000 (or as requested/configured) words of content (TODO: paging)
+            // paging will also need edits in blacklab,
+            // since when you only get a subset of the document without begin and ending, the top of the xml tree will be missing
+            // and xslt will not match anything (or match the wrong elements)
+            // so blacklab will have to walk the tree and insert those tags in some manner.
+            if (servlet.getWebsiteConfig(this.corpus).usePagination()) {
+                contentRequestParameters.putAll(pi.getBlacklabQuery());
+            }
+
             // NOTE: document not necessarily xml, though it might have some <hl/> tags injected to mark query hits
             String documentContents = articleContentRequest.makeRequest(contentRequestParameters);
             if (documentContents.contains("NOT_AUTHORIZED")) {
                 context.put("article_content", "content restricted");
             } else {
                 context.put("article_content",
-                    articleStylesheet.map(t -> {  // probably xml, or we wouldn't have a stylesheet
-                        t.clearParameters();
-                        t.addParameter("contextRoot", servlet.getServletContext().getContextPath());
-                        servlet.getWebsiteConfig(corpus).getXsltParameters().forEach(t::addParameter);
-
-                        try {
-                            return t.transform(documentContents);
-                        } catch (TransformerException e) {
-                            return null; // proceed to orElseGet
-                        }
-                    })
-                    .orElseGet(() -> {
-                        if (!XML_TAG_PATTERN.matcher(documentContents).find()) {
-                            // not xml, just replace the inserted hl tags and pass on
-                           return "<pre>" + StringUtils.replaceEach(documentContents,
-                                                           new String[] {"<hl>", "</hl>"},
-                                                           new String[] { "<span class=\"hl\">", "</span>"}) +
-                           "</pre>";
-                        }
-
-                        // seems to contain at least one xml opening/self-closing tag, process using default xslt
-                        try {
-                            return defaultTransformer.transform(documentContents);
-                        } catch (TransformerException e) {
-                            // Document seems to be xml, but probably not valid, we tried...
-                            return "Could not prepare document for viewing (it might be malformed xml) - " + e.getMessage();
-                        }
-                    })
+                        transformContent(articleStylesheet, documentContents)
                 );
             }
 
-            context.put("article_meta", metadataStylesheet
+        } catch (QueryException e) {
+            if (e.getHttpStatusCode() == 404) {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                return;
+            }
+
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+            return;
+        }
+
+
+        // display template
+        displayHtmlTemplate(servlet.getTemplate("article"));
+    }
+
+    private String transformContent(Optional<XslTransformer> articleStylesheet, String documentContents) {
+        return articleStylesheet.map(t -> {  // probably xml, or we wouldn't have a stylesheet
+            t.clearParameters();
+            t.addParameter("contextRoot", servlet.getServletContext().getContextPath());
+            servlet.getWebsiteConfig(corpus).getXsltParameters().forEach(t::addParameter);
+
+            try {
+                return t.transform(documentContents);
+            } catch (TransformerException e) {
+                return null; // proceed to orElseGet
+            }
+        })
+        .orElseGet(() -> {
+            if (!XML_TAG_PATTERN.matcher(documentContents).find()) {
+                // not xml, just replace the inserted hl tags and pass on
+               return "<pre>" + StringUtils.replaceEach(documentContents,
+                                               new String[] {"<hl>", "</hl>"},
+                                               new String[] { "<span class=\"hl\">", "</span>"}) +
+               "</pre>";
+            }
+
+            // seems to contain at least one xml opening/self-closing tag, process using default xslt
+            try {
+                return defaultTransformer.transform(documentContents);
+            } catch (TransformerException e) {
+                // Document seems to be xml, but probably not valid, we tried...
+                return "Could not prepare document for viewing (it might be malformed xml) - " + e.getMessage();
+            }
+        });
+    }
+
+    /**
+     *
+     * @param metadataStylesheet
+     * @param articleMetadataRequest
+     * @param query
+     * @param pattGapData
+     * @param metadataRequestParameters
+     * @param context
+     * @return PagingInfo holding info for paging
+     */
+    private PagingInfo getMetadata(Optional<XslTransformer> metadataStylesheet, QueryServiceHandler articleMetadataRequest, String query, String pattGapData, Map<String, String[]> metadataRequestParameters, VelocityContext context) {
+        return metadataStylesheet
                 .map(t -> {
                     MutablePair<XslTransformer, String> p = new MutablePair<>();
 
@@ -157,57 +197,32 @@ public class ArticleResponse extends BaseResponse {
                     String meta = p.right;
 
                     Matcher m = CAPTURE_DOCLENGTH_PATTERN.matcher(meta);
-                    if (servlet.getWebsiteConfig(this.corpus).usePagination() && m.find()) {
-                        int docLength = Integer.parseInt(m.group(1));
-                        int pageStart = getWordStart();
-                        int pageEnd = getWordEnd();
-                        int pageSize = servlet.getWordsToShow();
+                    PagingInfo pi = new PagingInfo(this, servlet.getWordsToShow(),m.find()?Integer.parseInt(m.group(1)):0);
+                    if (servlet.getWebsiteConfig(this.corpus).usePagination()) {
                         String q = (query != null && !query.isEmpty()) ? ("&query="+esc.url(query)) : "";
                         String pg = (pattGapData != null && !pattGapData.isEmpty()) ? "&pattgapdata="+esc.url(pattGapData) : "";
 
-                        context.put("docLength",docLength);
-                        context.put("pageStart",pageStart);
-                        context.put("pageSize",pageSize);
-                        context.put("pageEnd",pageEnd);
-                        if (pageStart > 0) {
-                            context.put("first_page", "?wordstart=0&wordend="+pageSize+q+pg);
-                            context.put("previous_page", "?wordstart="+Math.max(0, pageStart-pageSize)+"&wordend="+pageStart+q+pg);
+                        context.put("docLength",pi.getDocLength());
+                        context.put("pageStart",pi.getStart());
+                        // number of words shown calculated: page end or doclength minus 0 or pagestart
+                        context.put("wordsShown",pi.wordsShown());
+                        if (pi.hasPrev()) {
+                            context.put("first_page", "?" + pi.firstUrlQuery()+q+pg);
+                            context.put("previous_page", "?"+pi.prevUrlQuery()+q+pg);
                         }
-                        if (pageEnd < docLength) {
-                            context.put("next_page", "?wordstart="+(pageEnd)+"&wordend="+Math.min(pageEnd+pageSize, docLength)+q+pg);
-                            context.put("last_page", "?wordstart="+(docLength-pageSize)+"&wordend="+(docLength)+q+pg);
+                        if (pi.hasNext()) {
+                            context.put("next_page", "?"+pi.nextUrlQuery() + pg + q);
+                            context.put("last_page", "?"+pi.lastUrlQuery() + pg + q);
                         }
                     }
 
                     try {
-                        return t.transform(meta);
+                        context.put("article_meta", t.transform(meta));
                     } catch (TransformerException e) {
-                        return null;
+                        context.put("article_meta", "");
                     }
+                    return pi;
                 })
-                .orElse("")
-            );
-        } catch (QueryException e) {
-            if (e.getHttpStatusCode() == 404) {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND);
-                return;
-            }
-
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
-            return;
-        }
-
-
-        // display template
-        displayHtmlTemplate(servlet.getTemplate("article"));
-    }
-
-    private int getWordStart() {
-        return Math.max(0, getParameter("wordstart", 0));
-    }
-
-    private int getWordEnd() {
-        int maxWordCount = servlet.getWordsToShow();
-        return getWordStart() + Math.min(Math.max(0, getParameter("wordend", maxWordCount)), maxWordCount);
+                .orElse(new PagingInfo(this,servlet.getWordsToShow(),0));
     }
 }

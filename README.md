@@ -124,7 +124,7 @@ jspath=/corpus-frontend/js
 bannerMessage=<span class="fa fa-exclamation-triangle"></span> Configure this however you see fit, HTML is allowed here!
 
 # Disable xslt and search.xml caching, useful during development. 
-cache=false 
+cache=true 
 
 ```
 

@@ -256,7 +256,7 @@ export function normalizeFormatsOld(formats: BLTypes.BLFormats): NormalizedForma
  * We temporarily bridge this by mapping old responses to also be string[].
  * See api/index.ts
  */
-export function fixDocInfo(d: BLTypes.BLDocInfo, makeTheseFieldsExist: string[]) {
+export function fixDocInfo(d: BLTypes.BLDocInfo) {
 	for (const key in d) switch (key) {
 		case 'lengthInTokens':
 		case 'mayView':
@@ -269,10 +269,6 @@ export function fixDocInfo(d: BLTypes.BLDocInfo, makeTheseFieldsExist: string[])
 				return;
 			}
 		}
-	}
-
-	for (const f in makeTheseFieldsExist) {
-		if (!d[f]) { d[f] = []; }
 	}
 }
 // tslint: enable

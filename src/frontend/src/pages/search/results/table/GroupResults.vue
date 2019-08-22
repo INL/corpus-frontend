@@ -673,10 +673,12 @@ export default Vue.extend({
 					cache.available = data.summary.numberOfDocsRetrieved;
 					cache.hasHits = cache.hasHits || (data.docs.length > 0 && data.docs[0].numberOfHits != null);
 
+					const {titleField = ''} = data.summary.docFields;
+
 					data.docs.forEach(doc => {
 						cache.hasHits = cache.hasHits || doc.numberOfHits != null;
 						cache.concordances.push({
-							title: doc.docInfo[data.summary.docFields.titleField!][0],
+							title: doc.docInfo[titleField] ? doc.docInfo[titleField][0] : '',
 							hits: doc.numberOfHits,
 							href: getDocumentUrl(doc.docPid, data.summary.searchParam.patt || null, data.summary.searchParam.pattgapdata || null),
 						});

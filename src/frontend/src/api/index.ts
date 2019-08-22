@@ -7,6 +7,8 @@ import {normalizeIndexOld, normalizeFormatOld, normalizeIndex, fixDocInfo} from 
 import * as BLTypes from '@/types/blacklabtypes';
 import { ApiError } from '@/types/apptypes';
 
+import * as CorpusStore from '@/store/search/corpus';
+
 declare const BLS_URL: string;
 
 const blacklabEndpoint = createEndpoint({
@@ -16,6 +18,10 @@ const blacklabEndpoint = createEndpoint({
 	},
 	paramsSerializer: params => qs.stringify(params)
 });
+
+// We need this for transforming metadata fields in reponses from (optional) strings to (required) arrays
+// i.e. polyfilling missing document info fields in responses.
+const allMetadataFields = CorpusStore.get.allMetadataFields().map(f => f.id);
 
 /** Contains url mappings for different requests to blacklab-server */
 export const paths = {
@@ -256,7 +262,7 @@ export const blacklab = {
 			request = getOrPost<BLTypes.BLDocResults|BLTypes.BLDocGroupResults>(paths.docs(indexId), params, { ...requestParameters, cancelToken })
 			.then(res => {
 				if (!BLTypes.isDocGroups(res)) {
-					res.docs.forEach(d => fixDocInfo(d.docInfo));
+					res.docs.forEach(d => fixDocInfo(d.docInfo, allMetadataFields));
 				}
 				return res;
 			});

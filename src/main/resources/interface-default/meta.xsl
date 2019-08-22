@@ -22,28 +22,22 @@
 		<table class="table-striped">
 			<tbody>
 				<!-- will be filled in from article.js -->
-				<tr><th>Hits in document:</th><td><div id="divHitsInDocument"></div></td></tr>
-				<xsl:for-each select="child::*[name()!='mayView']">
-				<tr><th><xsl:call-template name="elementFriendlyName"/>:</th><td><xsl:value-of select="string-join(value, ', ')" /></td></tr>
-				</xsl:for-each>
-			</tbody>
-		</table>
-	</xsl:template>
+				<tr><td>Hits in document:</td><td><div id="divHitsInDocument"></div></td></tr>
 
 				<xsl:choose>
-				    <xsl:when test="metadataFieldGroups/metadataFieldGroup">
-                        <xsl:for-each select="metadataFieldGroups/metadataFieldGroup">
-                            <tr><td colspan="2"><b><xsl:value-of select="name"/>:</b></td></tr>
-                            <xsl:for-each select="fields/field">
-                                <tr><td style="padding-left: 0.5em"><xsl:value-of select="//docInfo/displayNames/*[name()=current()]" /></td><td><xsl:value-of select="//docInfo/*[name()=current()]" /></td></tr>
-                            </xsl:for-each>
-                        </xsl:for-each>
-				    </xsl:when>
-				    <xsl:otherwise>
-                        <xsl:for-each select="*[name()!='mayView' and name() != 'lengthInTokens']">
-                            <tr><td><xsl:value-of select="//docInfo/displayNames/*[name()=current()]" /></td><td><xsl:value-of select="." /></td></tr>
-                        </xsl:for-each>
-				    </xsl:otherwise>
+					<xsl:when test="metadataFieldGroups/metadataFieldGroup">
+						<xsl:for-each select="metadataFieldGroups/metadataFieldGroup">
+							<tr><td colspan="2"><b><xsl:value-of select="name"/>:</b></td></tr>
+							<xsl:for-each select="fields/field">
+								<tr><td style="padding-left: 0.5em"><xsl:value-of select="/blacklabResponse/metadataFieldDisplayNames/*[name()=current()]" /></td><td><xsl:value-of select="//docInfo/*[name()=current()]" /></td></tr>
+							</xsl:for-each>
+						</xsl:for-each>
+					</xsl:when>
+					<xsl:otherwise>
+						<xsl:for-each select="*[name()!='mayView' and name() != 'lengthInTokens']">
+							<tr><td><xsl:value-of select="/blacklabResponse/metadataFieldDisplayNames/*[name()=current()]" /></td><td><xsl:value-of select="." /></td></tr>
+						</xsl:for-each>
+					</xsl:otherwise>
 				</xsl:choose>
 				<tr><td>Document length (tokens)</td><td><xsl:value-of select="lengthInTokens"/></td></tr>
 			</tbody>

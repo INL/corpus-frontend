@@ -23,49 +23,47 @@ public class XslTransformer {
 
     private static final Map<String, Templates> TEMPLATES = new HashMap<>();
 
-    private Templates getTemplates(String id, Source sheet) {
-        synchronized (TEMPLATES) {
-            if (!TEMPLATES.containsKey(id)) {
-                try {
-                    TEMPLATES.put(id, FACTORY.newTemplates(sheet));
-                } catch (TransformerConfigurationException ex) {
-                    throw new RuntimeException(ex);
-                }
-            }
-        }
-        return TEMPLATES.get(id);
+    private static boolean useCache = true;
 
+    public static void setUseCache(boolean use) {
+        useCache = use;
     }
 
     /**
-     * returns Transformer from cached Templates or null
+     * Constructs a new transformer (and templates if not cached and cache is enabled) and caches the templates it caching is enabled.
      *
      * @param id
+     * @param source
      * @return
+     * @throws TransformerConfigurationException
      */
-    public static Transformer get(String id) throws TransformerConfigurationException {
-        return TEMPLATES.get(id).newTransformer();
-    }
+    private static Transformer get(String id, StreamSource source) throws TransformerConfigurationException {
+        boolean put = id != null && useCache && !TEMPLATES.containsKey(id);
+        boolean has = id != null && useCache && TEMPLATES.containsKey(id);
 
-    /**
-     * clear Templates for id from cache
-     * @param id
-     * @return true when id was found and removed
-     */
-    public static boolean clear(String id) {
-        return TEMPLATES.remove(id) != null;
+        synchronized (TEMPLATES) {
+            if (has) {
+                return TEMPLATES.get(id).newTransformer();
+            }
+
+            Templates t = FACTORY.newTemplates(source);
+            if (put) {
+                TEMPLATES.put(id, t);
+            }
+            return t.newTransformer();
+        }
     }
 
     public XslTransformer(File stylesheet) throws TransformerConfigurationException, FileNotFoundException {
-        transformer = TEMPLATES.containsKey(stylesheet.getPath()) ? get(stylesheet.getPath()) : getTemplates(stylesheet.getPath(), new StreamSource(stylesheet)).newTransformer();
+        transformer = get(stylesheet.getAbsolutePath(), new StreamSource(stylesheet));
     }
 
     public XslTransformer(InputStream stylesheet) throws TransformerConfigurationException {
-        transformer = FACTORY.newTransformer(new StreamSource(stylesheet));
+        transformer = get(null, new StreamSource(stylesheet));
     }
 
     public XslTransformer(Reader stylesheet) throws TransformerConfigurationException {
-        transformer = FACTORY.newTransformer(new StreamSource(stylesheet));
+        transformer = get(null, new StreamSource(stylesheet));
     }
 
     /**
@@ -75,12 +73,11 @@ public class XslTransformer {
      * @throws TransformerConfigurationException
      */
     public XslTransformer(String stylesheet) throws TransformerConfigurationException {
-        StreamSource streamSource = new StreamSource(stylesheet);
-        transformer = TEMPLATES.containsKey(stylesheet) ? get(stylesheet) : getTemplates(stylesheet, streamSource).newTransformer();
+        transformer = get(stylesheet, new StreamSource(stylesheet));
     }
 
     public XslTransformer(String stylesheet, Reader sheet) throws TransformerConfigurationException {
-        transformer = TEMPLATES.containsKey(stylesheet) ? get(stylesheet) : getTemplates(stylesheet, new StreamSource(sheet)).newTransformer();
+        transformer = get(stylesheet, new StreamSource(sheet));
     }
 
     public String transform(String source)
@@ -95,7 +92,7 @@ public class XslTransformer {
             }
 
             transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            //transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             transformer.transform(ssSource, streamResult);
             transformer.reset();
         }

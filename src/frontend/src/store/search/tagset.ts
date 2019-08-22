@@ -14,6 +14,7 @@ import * as CorpusStore from '@/store/search/corpus';
 import {Tagset} from '@/types/apptypes';
 import {NormalizedAnnotation} from '@/types/apptypes';
 import { mapReduce } from '@/utils';
+import cloneDeep from 'clone-deep';
 
 type ModuleRootState = Tagset&{
 	/** Uninitialized before init() or load() action called. loading/loaded during/after load() called. Disabled when load() not called before init(), or loading failed for any reason. */
@@ -39,7 +40,7 @@ const get = {
 const internalActions = {
 	state: b.commit((state, payload: {state: ModuleRootState['state'], message: string}) => Object.assign(state, payload), 'state'),
 	replace: b.commit((state, payload: Tagset) => {
-		const annot = CorpusStore.get.annotations().find(a => a.uiType === 'pos');
+		const annot = CorpusStore.get.allAnnotations().find(a => a.uiType === 'pos');
 		if (annot == null) {
 			throw new Error(`Tagset isn't attached to any annotation! Set uiType to 'pos' on a single annotation to enable.`);
 		}
@@ -64,13 +65,39 @@ const actions = {
 			transformResponse: [(r: string) => r.replace(/\/\/.*[\r\n]+/g, '')].concat(Axios.defaults.transformResponse!)
 		})
 		.then(t => {
+			const tagset = t.data;
+
+			const annots = CorpusStore.get.allAnnotationsMap();
+			const mainAnnot = Object.values(annots).flat().find(a => a.uiType === 'pos'); // I mean, has to exist right
+			if (!mainAnnot) {
+				return;
+			}
+
+			const mainAnnotationCS = mainAnnot.caseSensitive;
+			if (!mainAnnotationCS) {
+				tagset.values = mapReduce(Object.values(tagset.values).map<Tagset['values'][string]>(v => ({
+					value: v.value.toLowerCase(),
+					displayName: v.displayName,
+					subAnnotationIds: v.subAnnotationIds
+				})), 'value');
+			}
+
+			Object.values(tagset.subAnnotations).forEach(subAnnotInTagset => {
+				const subAnnot = annots[subAnnotInTagset.id][0];
+				const subAnnotCS = subAnnot.caseSensitive;
+
+				if (!subAnnotCS) {
+					subAnnotInTagset.values = subAnnotInTagset.values.map(v => ({
+						value: v.value.toLowerCase(),
+						displayName: v.displayName,
+						// if the main annotation is not case-sensitive, lowercase all its values here too
+						pos: v.pos ? mainAnnotationCS ? v.pos : v.pos.map(vv => vv.toLowerCase()) : undefined
+					}));
+				}
+			});
+
 			internalActions.replace(t.data);
 			internalActions.state({state: 'loaded', message: 'Tagset succesfully loaded'});
-
-			// The tagset (may) contain displaynames for the values of many of the part-of-speech annotations
-			// that are not available otherwise in blacklab.
-			// Explicitly place those displaynames in the store so they can be used by the querybuilder and the normal search form
-			const annots = CorpusStore.get.annotationsMap();
 
 			// Apply top-level displaynames to the 'pos' annotation
 			Object.values(annots)
@@ -165,13 +192,10 @@ const init = () => {
 
 /** check if all annotations and their values exist */
 function validateTagset(annotation: NormalizedAnnotation, t: Tagset) {
-	const validAnnotations = CorpusStore.get.annotations().reduce((acc, a) => {
-		acc[a.id] = a;
-		return acc;
-	}, {} as {[id: string]: NormalizedAnnotation});
+	const validAnnotations = CorpusStore.get.allAnnotationsMap();
 
 	function validateAnnotation(id: string, values: Tagset['subAnnotations'][string]['values']) {
-		const mainAnnotation = validAnnotations[id];
+		const mainAnnotation = validAnnotations[id] && validAnnotations[id][0];
 		if (!mainAnnotation) {
 			throw new Error(`Annotation "${id}" does not exist in corpus.`);
 		}

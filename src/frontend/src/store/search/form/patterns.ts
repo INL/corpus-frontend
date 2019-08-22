@@ -106,7 +106,7 @@ const actions = {
 
 /** We need to call some function from the module before creating the root store or this module won't be evaluated (e.g. none of this code will run) */
 const init = () => {
-	CorpusStore.get.annotations().forEach(({annotatedFieldId, id, uiType}) =>
+	CorpusStore.get.allAnnotations().forEach(({annotatedFieldId, id, uiType}) =>
 		privateActions.initAnnotation({
 			// annotatedFieldId,
 			id,

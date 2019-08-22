@@ -57,12 +57,15 @@ const connectJqueryToPage = () => {
 function initQueryBuilder() {
 	debugLog('Begin initializing querybuilder');
 
+	const mainAnnotationId = CorpusStore.get.firstMainAnnotation().id;
+	const shownAnnotations = CorpusStore.get.shownAnnotations();
+
 	// Initialize configuration
 	const instance = new QueryBuilder($('#querybuilder'), {
 		attribute: {
 			view: {
 				// Pass the available properties of tokens in this corpus (PoS, Lemma, Word, etc..) to the querybuilder
-				attributes: CorpusStore.get.annotations()
+				attributes: CorpusStore.get.shownAnnotations()
 					.map((annotation): QueryBuilderOptionsDef['attribute']['view']['attributes'][number] => {
 						return {
 							attribute: annotation.id,
@@ -74,7 +77,7 @@ function initQueryBuilder() {
 					})
 				,
 
-				defaultAttribute: CorpusStore.get.firstMainAnnotation().id
+				defaultAttribute: shownAnnotations.find(a => a.id === mainAnnotationId) ? mainAnnotationId : shownAnnotations[0] && shownAnnotations[0].id || ''
 			}
 		}
 	});
@@ -127,8 +130,34 @@ Vue.use(VTooltip, {
 	}
 });
 
-$(document).ready(() => {
+// Expose and declare some globals
+(window as any).Vue = Vue;
+
+type Hook = () => void|Promise<any>;
+const isHook = (hook: any): hook is Hook => typeof hook === 'function';
+declare const hooks: {
+	beforeStoreInit?: Hook;
+	beforeRender?: Hook;
+	beforeStateLoaded?: Hook;
+};
+
+async function runHook(hookName: keyof (typeof hooks)) {
+	const hook = hooks[hookName];
+	if (isHook(hook)) {
+		debugLog(`Running hook ${hookName}...`);
+		await hook();
+		debugLog(`Finished running hook ${hookName}`);
+	}
+}
+
+$(document).ready(async () => {
+	await runHook('beforeStoreInit');
+
+	debugLog('Initializing vuex store...');
 	RootStore.init();
+	debugLog('Finished initializing vuex store');
+
+	await runHook('beforeRender');
 
 	// We can render before the tagset loads, the form just won't be populated from the url yet.
 	(window as any).vueRoot = new Vue({
@@ -137,7 +166,8 @@ $(document).ready(() => {
 		mounted() {
 			connectJqueryToPage();
 
-			TagsetStore.actions.awaitInit()
+			runHook('beforeStateLoaded')
+			.then(() => TagsetStore.actions.awaitInit())
 			.then(() => new UrlStateParser(FilterStore.getState().filters).get())
 			.then(urlState => {
 				debugLog('Loading state from url', urlState);
@@ -153,6 +183,3 @@ $(document).ready(() => {
 		}
 	}).$mount(document.querySelector('#vue-root')!);
 });
-
-// Expose and declare some globals
-(window as any).Vue = Vue;

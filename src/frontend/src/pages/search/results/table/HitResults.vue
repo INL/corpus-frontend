@@ -7,15 +7,15 @@
 			<thead>
 				<tr class="rounded">
 					<th class="text-right">
-						<span v-if="annotations.filter(a => a.hasForwardIndex).length" class="dropdown">
+						<span v-if="sortableAnnotations.length" class="dropdown">
 							<a role="button" data-toggle="dropdown" :class="['dropdown-toggle', {'disabled': disabled}]">
 								{{leftLabel}} hit
 								<span class="caret"/>
 							</a>
 
 							<ul class="dropdown-menu" role="menu">
-								<li v-for="annotation in annotations.filter(a => a.hasForwardIndex)" :key="annotation.id" :class="{'disabled': disabled}">
-									<a @click="changeSort(`${beforeField}:${annotation.id}`)" class="sort">{{annotation.displayName}}</a>
+								<li v-for="annotation in sortableAnnotations" :key="annotation.id" :class="{'disabled': disabled}">
+									<a @click="changeSort(`${beforeField}:${annotation.id}`)" class="sort" role="button">{{annotation.displayName}}</a>
 								</li>
 							</ul>
 						</span>
@@ -29,21 +29,21 @@
 							:title="`Sort by ${firstMainAnnotation.displayName}`"
 							@click="changeSort(`hit:${firstMainAnnotation.id}`)"
 						>
-							{{firstMainAnnotation.displayName}}
+							Hit
 						</a>
-						<template v-else>{{firstMainAnnotation.displayName}}</template>
+						<template v-else>Hit</template>
 					</th>
 
 					<th class="text-left">
-						<span v-if="annotations.filter(a => a.hasForwardIndex).length" class="dropdown">
+						<span v-if="sortableAnnotations.length" class="dropdown">
 							<a role="button" data-toggle="dropdown" :class="['dropdown-toggle', {'disabled': disabled}]">
 								{{rightLabel}} hit
 								<span class="caret"/>
 							</a>
 
 							<ul class="dropdown-menu" role="menu">
-								<li v-for="annotation in annotations.filter(a => a.hasForwardIndex)" :key="annotation.id" :class="{'disabled': disabled}">
-									<a @click="changeSort(`${afterField}:${annotation.id}`)" :class="['sort', {'disabled':disabled}]">{{annotation.displayName}}</a>
+								<li v-for="annotation in sortableAnnotations" :key="annotation.id" :class="{'disabled': disabled}">
+									<a @click="changeSort(`${afterField}:${annotation.id}`)" :class="['sort', {'disabled':disabled}]" role="button">{{annotation.displayName}}</a>
 								</li>
 							</ul>
 						</span>
@@ -101,7 +101,7 @@
 							<td class="text-center"><strong :dir="textDirection">{{rowData.hit}}</strong></td>
 							<td><span :dir="textDirection">{{rowData.right}}</span>&hellip;</td>
 							<td v-for="(v, index) in rowData.other" :key="index">{{v}}</td>
-							<td v-for="meta in shownMetadataCols" :key="meta.id">{{rowData.doc[meta.id]}}</td>
+							<td v-for="meta in shownMetadataCols" :key="meta.id">{{rowData.doc[meta.id].join(', ')}}</td>
 						</tr>
 						<tr v-if="citations[index]" v-show="citations[index].open" :key="index + '-citation'" :class="['concordance-details', {'open': citations[index].open}]">
 							<td :colspan="numColumns">
@@ -110,7 +110,14 @@
 								</p>
 								<p v-if="citations[index].citation">
 									<AudioPlayer v-if="citations[index].audioPlayerData" v-bind="citations[index].audioPlayerData"/>
-									<span :dir="textDirection">{{citations[index].citation[0]}}<strong>{{citations[index].citation[1]}}</strong>{{citations[index].citation[2]}}</span>
+									<span :dir="textDirection">
+										{{citations[index].citation[0]}}
+										<strong>
+											{{citations[index].citation[1]}}
+											<a :href="citations[index].href" title="Go to hit in document" target="_blank"><sup class="fa fa-link" style="margin-left: -5px;"></sup></a>
+										</strong>
+										{{citations[index].citation[2]}}
+									</span>
 								</p>
 								<p v-else>
 									<span class="fa fa-spinner fa-spin"></span> Loading...
@@ -187,6 +194,7 @@ type CitationData = {
 	error?: null|string;
 	snippet: null|BLTypes.BLHitSnippet;
 	audioPlayerData: any;
+	href: string;
 };
 
 export default Vue.extend({
@@ -214,7 +222,7 @@ export default Vue.extend({
 		afterField() { return this.textDirection === 'ltr' ? 'right' : 'left'; },
 
 		rows(): Array<DocRow|HitRow> {
-			const { titleField, dateField, authorField } = this.results.summary.docFields;
+			const { titleField = '', dateField = '', authorField = '' } = this.results.summary.docFields as BLTypes.BLDocFields;
 			const infos = this.results.docInfos;
 
 			let prevPid: string;
@@ -226,10 +234,7 @@ export default Vue.extend({
 				if (pid !== prevPid) {
 					prevPid = pid;
 					const doc = infos[pid];
-
-					const title = doc[titleField!] || 'UNKNOWN';
-					const author = doc[authorField!] ? ' by ' + doc[authorField!] : '';
-					const date = doc[dateField!] ? ' (' + doc[dateField!] + ')' : '';
+					const { [titleField]: title = [], [dateField]: date = [], [authorField]: author = [] } = doc;
 
 					// TODO the clientside url generation story... https://github.com/INL/corpus-frontend/issues/95
 					// Ideally use absolute urls everywhere, if the application needs to be proxied, let the proxy server handle it.
@@ -237,7 +242,7 @@ export default Vue.extend({
 
 					rows.push({
 						type: 'doc',
-						summary: title+author+date,
+						summary: (title[0] || 'UNKNOWN') + (author[0] ? ' by ' + author[0] : ''),
 						href: getDocumentUrl(pid, this.results.summary.searchParam.patt || null, this.results.summary.searchParam.pattgapdata || null),
 						docPid: pid,
 					}  as DocRow);
@@ -266,14 +271,15 @@ export default Vue.extend({
 		numColumns() {
 			return 3 + this.shownAnnotationCols.length + this.shownMetadataCols.length; // left - hit - right - (one per shown annotation) - (one per shown metadata)
 		},
-		annotations: CorpusStore.get.annotations,
+		/** Return all annotations shown in the main search form (provided they have a forward index) */
+		sortableAnnotations(): AppTypes.NormalizedAnnotation[] { return CorpusStore.get.shownAnnotations().filter(a => a.hasForwardIndex); },
 		firstMainAnnotation: CorpusStore.get.firstMainAnnotation,
-		shownAnnotationCols(): AppTypes.NormalizedAnnotation[] { return UIStore.getState().results.hits.shownAnnotationIds.map(id => CorpusStore.get.annotationsMap()[id][0]); },
+		shownAnnotationCols(): AppTypes.NormalizedAnnotation[] { return UIStore.getState().results.hits.shownAnnotationIds.map(id => CorpusStore.get.allAnnotationsMap()[id][0]); },
 		shownMetadataCols(): AppTypes.NormalizedMetadataField[] { return UIStore.getState().results.hits.shownMetadataIds.map(id => CorpusStore.getState().metadataFields[id]); },
-		/** Get annotations to show in concordances, if not configured, returns all (non-internal) annotations. */
+		/** Get annotations to show in concordances, if not configured, returns all annotations shown in the main search form. */
 		shownConcordanceAnnotationRows(): AppTypes.NormalizedAnnotation[] {
 			const configured = UIStore.getState().results.shared.detailedAnnotationIds;
-			return configured ? configured.map(id => CorpusStore.get.annotationsMap()[id][0]) : CorpusStore.get.annotations();
+			return configured ? configured.map(id => CorpusStore.get.allAnnotationsMap()[id][0]) : CorpusStore.get.shownAnnotations();
 		},
 		textDirection: CorpusStore.get.textDirection,
 
@@ -292,15 +298,15 @@ export default Vue.extend({
 				return;
 			}
 
+			const row = this.rows[index] as HitRow;
 			const citation: CitationData = Vue.set(this.citations as any[], index, { // shut up vue
 				open: true,
 				loading: true,
 				citation: null,
 				error: null,
-				snippet: null
+				snippet: null,
+				href: getDocumentUrl(row.docPid, this.results.summary.searchParam.patt || null, this.results.summary.searchParam.pattgapdata || null, row.start, UIStore.getState().results.shared.pageSize),
 			} as CitationData);
-
-			const row = this.rows[index] as HitRow;
 
 			ga('send', 'event', 'results', 'snippet/load', row.docPid);
 

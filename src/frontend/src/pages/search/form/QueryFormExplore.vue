@@ -159,7 +159,7 @@ export default Vue.extend({
 		ngramTokens() {
 			return ExploreStore.get.ngram.tokens().map(tok => ({
 				...tok,
-				annotation: CorpusStore.get.annotationsMap()[tok.id][0]
+				annotation: CorpusStore.get.allAnnotationsMap()[tok.id][0]
 			}));
 		},
 		ngramSizeMax: ExploreStore.get.ngram.maxSize,

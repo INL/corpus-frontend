@@ -34,6 +34,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Function;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -100,7 +101,9 @@ public class MainServlet extends HttpServlet {
     /** Maximum number of words displayed in one "page" of a document */
     public static final String PROP_DOCUMENT_PAGE_LENGTH    = "pageLength";
     /** Development mode, allow script tags to load load js from an external server (webpack-dev-server), defaults to $pathToTop/js/ */
-    public static final String PROP_JSPATH					= "jspath"; // usually set to http://127.0.0.1/dist/ for development
+    public static final String PROP_JSPATH                  = "jspath"; // usually set to http://127.0.0.1/dist/ for development
+    /** Development mode, disable caching of any corpus data (e.g. search.xml, article.xsl, meta.xsl etc) */
+    public static final String PROP_CACHE                   = "cache";
     // @formatter:on
 
     /**
@@ -124,6 +127,7 @@ public class MainServlet extends HttpServlet {
         p.setProperty(PROP_DATA_DEFAULT,            "default");
         p.setProperty(PROP_DOCUMENT_PAGE_LENGTH,    "5000");
         p.setProperty(PROP_JSPATH,                  contextPath+"/js");
+        p.setProperty(PROP_CACHE, 					"false");
         // not all properties may need defaults
         // @formatter:on
 
@@ -173,6 +177,7 @@ public class MainServlet extends HttpServlet {
             if (!Paths.get(adminProps.getProperty(PROP_DATA_PATH)).isAbsolute()) {
                 throw new ServletException(PROP_DATA_PATH + " setting should be an absolute path");
             }
+            XslTransformer.setUseCache(this.useCache());
         } catch (ServletException e) {
             throw e;
         } catch (Exception e) {
@@ -294,16 +299,18 @@ public class MainServlet extends HttpServlet {
      * @return the website config
      */
     public synchronized WebsiteConfig getWebsiteConfig(String corpus) {
-        return configs.computeIfAbsent(corpus, c -> {
+        Function<String, WebsiteConfig> gen = __ -> {
             File f =
                 getProjectFile(corpus, "search.xml")
-                    .orElseThrow(() -> new IllegalStateException("No search.xml, and no default in jar either"));
+                .orElseThrow(() -> new IllegalStateException("No search.xml, and no default in jar either"));
             try {
                 return new WebsiteConfig(f, corpus, getCorpusConfig(corpus), contextPath);
             } catch (Exception e) {
                 throw new RuntimeException("Could not read search.xml " + f, e);
             }
-        });
+        };
+
+        return useCache() ? configs.computeIfAbsent(corpus, gen) : gen.apply(corpus);
     }
 
     /**
@@ -355,7 +362,6 @@ public class MainServlet extends HttpServlet {
     }
 
     private void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException {
-
         try {
             request.setCharacterEncoding("utf-8");
         } catch (UnsupportedEncodingException ex) {
@@ -549,12 +555,9 @@ public class MainServlet extends HttpServlet {
      * @return the xsl transformer to use for transformation, note that this is always the same transformer.
      */
     public Optional<XslTransformer> getStylesheet(String corpus, String name, String corpusDataFormat) {
-        // @formatter:off
 
-        // need to use corpus name in the cache map
-        // because corpora can define their own xsl files in their own data directory
-        String key = corpus + "_" + corpusDataFormat + "_" + name;
-        return articleTransformers.computeIfAbsent(key, __ -> {
+        // @formatter:off
+        Function<String, Optional<XslTransformer>> gen = __ -> {
             Optional<File> file =
                 Arrays.asList(getProjectFile(corpus, name + ".xsl").orElse(null),
                               getProjectFile(corpus, name + "_" + corpusDataFormat+".xsl").orElse(null))
@@ -582,8 +585,13 @@ public class MainServlet extends HttpServlet {
             });
 
             return Optional.ofNullable(trans);
-        });
-        // @formatter:on
+    	};
+    	// @formatter:on
+
+    	// need to use corpus name in the cache map
+    	// because corpora can define their own xsl files in their own data directory
+    	String key = corpus + "_" + corpusDataFormat + "_" + name;
+    	return this.useCache() ? articleTransformers.computeIfAbsent(key, gen) : gen.apply(key);
     }
 
     public InputStream getHelpPage(String corpus) {
@@ -642,6 +650,10 @@ public class MainServlet extends HttpServlet {
 
     public String getBannerMessage() {
         return this.adminProps.getProperty(PROP_BANNER_MESSAGE);
+    }
+
+    public boolean useCache() {
+    	return Boolean.parseBoolean(this.adminProps.getProperty(PROP_CACHE));
     }
 
     /**

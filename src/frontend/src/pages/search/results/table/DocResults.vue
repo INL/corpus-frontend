@@ -38,7 +38,7 @@
 						</div>
 					</td>
 					<!-- <td>{{rowData.date}}</td> -->
-					<td v-for="meta in shownMetadataCols" :key="meta.id">{{rowData.doc.docInfo[meta.id]}}</td>
+					<td v-for="meta in shownMetadataCols" :key="meta.id">{{rowData.doc.docInfo[meta.id].join(', ')}}</td>
 					<td v-if="hasHits">{{rowData.hits}}</td>
 				</tr>
 			</tbody>
@@ -99,9 +99,11 @@ export default Vue.extend({
 			return ret;
 		},
 		rows() {
-			const { titleField, dateField, authorField } = this.results.summary.docFields;
+			const { titleField = '', dateField = '', authorField = '' } = this.results.summary.docFields as BLDocFields;
+
 			return this.results.docs.map(doc => {
 				const { docPid: pid, docInfo: info } = doc;
+				const { [titleField]: title = [], [dateField]: date = [], [authorField]: author = [] } = info;
 
 				return {
 					snippets: doc.snippets ? doc.snippets.map(s => {
@@ -112,9 +114,9 @@ export default Vue.extend({
 							after
 						};
 					}) : [],
-					summary: (info[titleField!] || 'UNKNOWN') + (info[authorField!] ? ' by ' + info[authorField!] : ''),
+					summary: (title[0] || 'UNKNOWN') + (author[0] ? ' by ' + author[0] : ''),
 					href: getDocumentUrl(pid, this.results.summary.searchParam.patt || null, this.results.summary.searchParam.pattgapdata || null),
-					date: info[dateField!] || '',
+					date: date[0] || '',
 					hits: doc.numberOfHits,
 					docPid: pid,
 					doc

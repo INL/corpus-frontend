@@ -16,6 +16,9 @@ import * as AppTypes from '@/types/apptypes';
 import { mapReduce } from '@/utils';
 import { stripIndent } from 'common-tags';
 
+declare const PROPS_IN_COLUMNS: string[];
+declare const PAGESIZE: number;
+
 type ModuleRootState = {
 	search: {
 		// future use
@@ -38,9 +41,9 @@ type ModuleRootState = {
 	};
 
 	explore: {
-		/** Annotations to show in the explore form, all (non-internal) annotations are shown if this is not configured. */
+		/** Annotations to show in the explore form, all (non-internal) annotations with a forward index are shown if this is not configured. */
 		shownAnnotationIds: string[];
-		/** Metadata fields to show in the explore form, all metadata in annotationGroups is shown if this is not configured. */
+		/** Metadata fields to show in the explore form, all metadata in metadataGroups is shown if this is not configured. */
 		shownMetadataFieldIds: string[];
 		defaultAnnotationId: string;
 		defaultMetadataFieldId: string;
@@ -89,8 +92,22 @@ type ModuleRootState = {
 			 * Server returns all fields if this is null.
 			 */
 			detailedMetadataIds: null|string[];
+
+			/** Available options for grouping in the hits view */
+			groupAnnotationIds: string[];
+			/** Available metadata options for grouping in the docs view */
+			groupMetadataIds: string[];
+
+			/** Used for calculating page offsets in links to documents */
+			pageSize: number;
 		};
 	};
+
+	global: {
+		pageGuide: {
+			enabled: boolean;
+		}
+	}
 };
 
 // Will be corrected on store init
@@ -131,6 +148,14 @@ const initialState: ModuleRootState = {
 		shared: {
 			detailedAnnotationIds: null,
 			detailedMetadataIds: null,
+			groupAnnotationIds: [],
+			groupMetadataIds: [],
+			pageSize: PAGESIZE
+		}
+	},
+	global: {
+		pageGuide: {
+			enabled: true
 		}
 	}
 };
@@ -178,7 +203,7 @@ const actions = {
 						// tslint:disable-next-line
 						if (!valid) { console.warn(stripIndent`
 							Trying to register element name ${v.value} for 'within' clause, but it doesn't exist in the index.
-							This might happen when there are too many tags recorded in the index, but also when it just doesn't occur (or tags aren't indexed).`)
+							This might happen when there are too many tags recorded in the index, but also when it just doesn't occur (or tags aren't indexed).`);
 						}
 					});
 				}, 'search_extended_within_annotations'),
@@ -189,7 +214,7 @@ const actions = {
 	},
 	explore: {
 		shownAnnotationIds: b.commit((state, annotationIds: string[]) => {
-			const allAnnotations = CorpusStore.get.annotationsMap();
+			const allAnnotations = CorpusStore.get.allAnnotationsMap();
 
 			const filteredIds = annotationIds.filter(id => {
 				const annotsWithId = allAnnotations[id];
@@ -197,11 +222,13 @@ const actions = {
 				if (!annot) {
 					// tslint:disable-next-line
 					console.warn(`[UIStore.actions.explore.shownAnnotations]: Annotation with id '${id}' does not exist in corpus, ignoring...`);
+					return false;
 				} else if (!annot.hasForwardIndex) {
 					// tslint:disable-next-line
 					console.warn(`[UIStore.actions.explore.shownAnnotations]: Annotation with id '${id}' has no forward index and therefor cannot be grouped, ignoring...`)
+					return false;
 				}
-				return !!annot;
+				return true;
 			});
 
 			if (filteredIds.length === 0) {
@@ -221,14 +248,15 @@ const actions = {
 		}, 'explore_defaultAnnotationId'),
 
 		shownMetadataFieldIds: b.commit((state, metadataFieldIds: string[]) => {
-			const allMetadataFields = CorpusStore.getState().metadataFields;
+			const allMetadataFields = CorpusStore.get.allMetadataFieldsMap();
 			const filteredIds = metadataFieldIds.filter(id => {
 				const field = allMetadataFields[id];
 				if (!field) {
 					// tslint:disable-next-line
 					console.warn(`[UIStore.actions.explore.shownMetadataFields]: Annotations with id '${id}' does not exist in corpus, ignoring...`);
+					return false;
 				}
-				return !!field;
+				return true;
 			});
 
 			if (!filteredIds.length) {
@@ -249,7 +277,7 @@ const actions = {
 	results: {
 		hits: {
 			shownAnnotationIds: b.commit((state, ids: string[]) => {
-				const allAnnotations = CorpusStore.get.annotationDisplayNames();
+				const allAnnotations = CorpusStore.get.allAnnotationsMap();
 				ids = ids.filter(id => {
 					if (!allAnnotations[id]) {
 						// tslint:disable-next-line
@@ -264,7 +292,7 @@ const actions = {
 				state.results.hits.shownAnnotationIds = ids;
 			}, 'hits_shownAnnotationIds'),
 			shownMetadataIds: b.commit((state, ids: string[]) => {
-				const allMetadata = CorpusStore.getState().metadataFields;
+				const allMetadata = CorpusStore.get.allMetadataFieldsMap();
 				ids = ids.filter(id => {
 					if (!allMetadata[id]) {
 						// tslint:disable-next-line
@@ -281,7 +309,7 @@ const actions = {
 		},
 		docs: {
 			shownMetadataIds: b.commit((state, ids: string[]) => {
-				const allMetadata = CorpusStore.getState().metadataFields;
+				const allMetadata = CorpusStore.get.allMetadataFieldsMap();
 				ids = ids.filter(id => {
 					if (!allMetadata[id]) {
 						// tslint:disable-next-line
@@ -298,7 +326,7 @@ const actions = {
 		},
 		shared: {
 			detailedAnnotationIds: b.commit((state, ids: string[]) => {
-				const allAnnotations = CorpusStore.get.annotationDisplayNames();
+				const allAnnotations = CorpusStore.get.allAnnotationsMap();
 				ids = ids.filter(id => {
 					if (!allAnnotations[id]) {
 						// tslint:disable-next-line
@@ -315,7 +343,7 @@ const actions = {
 			}, 'shared_detailedAnnotationIds'),
 
 			detailedMetadataIds: b.commit((state, ids: string[]) => {
-				const allMetadataFields = CorpusStore.getState().metadataFields;
+				const allMetadataFields = CorpusStore.get.allMetadataFieldsMap();
 				ids = ids.filter(id => {
 					if (!allMetadataFields[id]) {
 						// tslint:disable-next-line
@@ -328,13 +356,61 @@ const actions = {
 					return;
 				}
 				state.results.shared.detailedMetadataIds = ids;
-			}, 'shared_detailedMetadataIds')
+			}, 'shared_detailedMetadataIds'),
+
+			groupAnnotationIds: b.commit((state, ids: string[]) => {
+				const allAnnotationsMap = CorpusStore.get.allAnnotationsMap();
+				const allAnnotationsDisplayOrder = CorpusStore.get.allAnnotations().map(a => a.id);
+
+				ids = ids.filter(id => {
+					if (!allAnnotationsMap[id]) {
+						// tslint:disable-next-line
+						console.warn(`Trying to allow grouping by Annotation ${id} in results, but it does not exist`);
+						return false;
+					} else if (!allAnnotationsMap[id][0].hasForwardIndex) {
+						// tslint:disable-next-line
+						console.warn(`Trying to allow grouping by Annotation ${id} in results, which does not have a forward index to do so`);
+						return false;
+					}
+					return true;
+				});
+
+				if (!ids.length) {
+					return;
+				}
+				ids.sort((a, b) => allAnnotationsDisplayOrder.indexOf(a)-allAnnotationsDisplayOrder.indexOf(b));
+				state.results.shared.groupAnnotationIds = ids;
+			}, 'shared_groupAnnotationIds'),
+			groupMetadataIds: b.commit((state, ids: string[]) => {
+				// Yes, allow internal metadata fields if so desired
+				const allMetadataFieldsDisplayOrder = CorpusStore.get.allMetadataFields().map(f => f.id);
+				const allMetadataFieldsMap = CorpusStore.get.allMetadataFieldsMap();
+
+				ids = ids.filter(id => {
+					if (!allMetadataFieldsMap[id]) {
+						// tslint:disable-next-line
+						console.warn(`Trying to allow grouping by metadata field ${id} in results, but it does not exist`);
+						return false;
+					}
+					return true;
+				});
+				if (!ids.length) {
+					return;
+				}
+				ids.sort((a, b) => allMetadataFieldsDisplayOrder.indexOf(a)-allMetadataFieldsDisplayOrder.indexOf(b));
+				state.results.shared.groupMetadataIds = ids;
+			}, 'shared_groupMetadataIds'),
+		}
+	},
+	global: {
+		pageGuide: {
+			enable: b.commit((state, payload: boolean) => {
+				state.global.pageGuide.enabled = !!payload;
+			}, 'global_pageGuide_enabled'),
 		}
 	},
 	replace: b.commit((state, payload: ModuleRootState) => Object.assign(state, cloneDeep(payload)), 'replace'),
 };
-
-declare const PROPS_IN_COLUMNS: string[];
 
 const init = () => {
 	// Store can be configured by user scripts
@@ -343,17 +419,26 @@ const init = () => {
 	// Then detect any parts that haven't been configured, and set them to some sensible defaults
 	Object.assign(initialState, cloneDeep(getState()));
 
-	const allAnnotations = CorpusStore.get.annotationsMap();
+	const allAnnotations= CorpusStore.get.allAnnotations();
+	const allAnnotationsMap = CorpusStore.get.allAnnotationsMap();
+	const allShownAnnotations = CorpusStore.get.shownAnnotations();
+	const allShownAnnotationsMap = CorpusStore.get.shownAnnotationsMap();
+
+	const allMetadataFields = CorpusStore.get.allMetadataFields();
+	const allMetadataFieldsMap = CorpusStore.get.allMetadataFieldsMap();
+	const allShownMetadataFields = CorpusStore.get.shownMetadataFields();
+	const allShownMetadataFieldsMap = CorpusStore.get.shownMetadataFieldsMap();
+
 	const mainAnnotation = CorpusStore.get.firstMainAnnotation().id;
 
 	if (!initialState.explore.shownAnnotationIds.length) {
-		initialState.explore.shownAnnotationIds = CorpusStore.get.annotations().filter(a => !a.isInternal && a.hasForwardIndex).map(a => a.id);
+		initialState.explore.shownAnnotationIds = allShownAnnotations.filter(a => a.hasForwardIndex).map(a => a.id);
 	}
 	if (!initialState.explore.defaultAnnotationId) {
 		initialState.explore.defaultAnnotationId = initialState.explore.shownAnnotationIds.includes(mainAnnotation) ? mainAnnotation : (initialState.explore.shownAnnotationIds[0] || '');
 	}
 	if (!initialState.explore.shownMetadataFieldIds.length) {
-		initialState.explore.shownMetadataFieldIds = Object.values(CorpusStore.get.metadataGroups()).flatMap(g => g.fields.map(f => f.id));
+		initialState.explore.shownMetadataFieldIds = allShownMetadataFields.map(f => f.id);
 	}
 	if (!initialState.explore.defaultMetadataFieldId) {
 		initialState.explore.defaultMetadataFieldId = initialState.explore.shownMetadataFieldIds[0] || '';
@@ -365,19 +450,14 @@ const init = () => {
 	// Giving precedence to 'lemma' and 'pos' if they exist, regardless of their displayOrder
 	// and omitting the default main annotation (usually 'word') - as that's always displayed.
 	if (!initialState.results.hits.shownAnnotationIds.length) {
-		const shownAnnotations = PROPS_IN_COLUMNS.filter(annot => allAnnotations[annot] != null && annot !== mainAnnotation);
+		const shownAnnotations = PROPS_IN_COLUMNS.filter(annot => allAnnotationsMap[annot] != null && annot !== mainAnnotation);
 		if (!shownAnnotations.length) {
 			// These have precedence if they exist.
-			if (allAnnotations.lemma != null) { shownAnnotations.push('lemma'); }
-			if (allAnnotations.pos != null) { shownAnnotations.push('pos'); }
+			if (allAnnotationsMap.lemma != null) { shownAnnotations.push('lemma'); }
+			if (allAnnotationsMap.pos != null) { shownAnnotations.push('pos'); }
 
 			// Now add other annotations until we hit 3 annotations.
-			Object.values(CorpusStore.getState().annotatedFields)
-			.flatMap(f => {
-				const annots = Object.values(f.annotations);
-				const order = f.displayOrder;
-				return annots.filter(a => !a.isInternal).sort((x, y) => order.indexOf(x.id) - order.indexOf(y.id));
-			})
+			allShownAnnotations
 			.filter(annot => annot.id !== mainAnnotation && !shownAnnotations.includes(annot.id))
 			.forEach(annot => {
 				if (shownAnnotations.length < 3) {
@@ -398,8 +478,8 @@ const init = () => {
 
 	if (!initialState.search.extended.within.elements.length) {
 		// explicitly retrieve this annotations as it's supposed to be internal and thus not included in any getters.
-		const field = Object.values(CorpusStore.getState().annotatedFields).find(f => 'starttag' in f.annotations);
-		const annot = field ? field.annotations.starttag : undefined;
+		const fields = allAnnotationsMap.starttag;
+		const annot = fields ? fields[0] : undefined;
 		const validValues = annot ? annot.values : [];
 
 		if (validValues) {
@@ -412,30 +492,21 @@ const init = () => {
 		} else {
 			// tslint:disable-next-line
 			console.warn('Within clause not supported in this corpus, no starttags indexed');
+			initialState.search.extended.within.enabled = false;
 		}
 	}
 
-	// Same story as detailedAnnotationIds, but use all annotations instead of only the first 3
-	// if (!initialState.results.shared.detailedAnnotationIds) {
-	// 	initialState.results.shared.detailedAnnotationIds =
-	// 	Object.values(CorpusStore.getState().annotatedFields)
-	// 	.flatMap(f => {
-	// 		const annots = Object.values(f.annotations);
-	// 		const order = f.displayOrder;
-	// 		return annots.filter(a => !a.isInternal).sort((x, y) => order.indexOf(x.id) - order.indexOf(y.id));
-	// 	})
-	// 	.map(annot => annot.id);
-	// }
-
-	// // Also set all metadata fields here.
-	// if (!initialState.results.shared.detailedMetadataIds) {
-	// 	const metaFieldOrder = CorpusStore.getState().metadataFieldGroups.flatMap(g => g.fields);
-	// 	const otherFields = new Set(Object.keys(CorpusStore.getState().metadataFields));
-	// 	metaFieldOrder.forEach(id => otherFields.delete(id)); // already accounted for
-	// 	metaFieldOrder.push(...otherFields);
-
-	// 	initialState.results.shared.detailedMetadataIds = metaFieldOrder;
-	// }
+	if (!initialState.results.shared.groupAnnotationIds.length) {
+		// Grouping is only supported for those annotations that have a forward index
+		// Use annotations in groups instead of all annotations for parity with metadata
+		// See https://github.com/INL/corpus-frontend/issues/190
+		// Also keep them in displayOrder for ease of use in components
+		initialState.results.shared.groupAnnotationIds = allShownAnnotations.filter(a => a.hasForwardIndex).map(a => a.id);
+	}
+	// NOTE: Show all fields in metadata groups here by default (though the user can customize fields not in groups through customjs)
+	if (!initialState.results.shared.groupMetadataIds.length) {
+		initialState.results.shared.groupMetadataIds = allMetadataFields.map(f => f.id);
+	}
 
 	actions.replace(cloneDeep(initialState));
 };

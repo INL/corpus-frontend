@@ -23,6 +23,7 @@ public class SearchResponse extends BaseResponse {
         }
 
         context.put("indexStructureJson", config.getJsonUnescaped());
+        context.put("pageSize", this.servlet.getWordsToShow());
 
         // display template
         displayHtmlTemplate(servlet.getTemplate("search"));

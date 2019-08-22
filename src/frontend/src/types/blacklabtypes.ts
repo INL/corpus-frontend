@@ -252,6 +252,7 @@ export interface BLIndexMetadataInternal {
 	indexName: string;
 	/** Only available when status === 'indexing' */
 	indexProgress?: BLIndexProgress;
+	/** Always present, but may be empty if no metadata groups are defined in the index config. */
 	metadataFieldGroups: Array<{
 		name: string;
 		/** Keys in metadataFields */
@@ -437,7 +438,7 @@ export type BLDocInfo = {
 	lengthInTokens: number;
 	mayView: boolean;
 }&{
-	[key: string]: string;
+	[key: string]: string[];
 };
 
 /** Blacklab response to a query for documents without grouping */

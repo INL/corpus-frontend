@@ -44,6 +44,8 @@
             var CONTEXT_URL = "$esc.javascript($pathToTop)";
             // Not suffixed with the corpus id
             var BLS_URL = "$esc.javascript($blsUrl)";
+            // Place to register CustomJS hook functions
+            var hooks = {};
         </script>
     </head>
     <body>

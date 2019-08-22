@@ -38,7 +38,7 @@
 						</div>
 					</td>
 					<!-- <td>{{rowData.date}}</td> -->
-					<td v-for="meta in shownMetadataCols" :key="meta.id">{{rowData.doc.docInfo[meta.id].join(', ')}}</td>
+					<td v-for="meta in shownMetadataCols" :key="meta.id">{{(rowData.doc.docInfo[meta.id] || []).join(', ')}}</td>
 					<td v-if="hasHits">{{rowData.hits}}</td>
 				</tr>
 			</tbody>

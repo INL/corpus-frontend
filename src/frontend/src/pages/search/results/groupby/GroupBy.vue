@@ -14,7 +14,7 @@
 					borderRightWidth: contextEnabled ? 0 : undefined,
 				}"
 				:placeholder="`Group ${type} by...`"
-				:searchable="normalGroupByOptions.flatMap(o => o.options ? o.options : o).length > 15"
+				:searchable="normalGroupByOptions.flatMap(o => o.options ? o.options : o).length > 12"
 				:disabled="disabled"
 				:options="normalGroupByOptions"
 
@@ -62,7 +62,7 @@ import * as UIStore from '@/store/search/ui';
 import SelectPicker, {OptGroup, Option} from '@/components/SelectPicker.vue';
 import ContextGroup from '@/pages/search/results/groupby/ContextGroup.vue';
 import UID from '@/mixins/uid';
-import { mapReduce, MapOf, groupByOptionsFromAnnotations, groupByOptionsFromMetadata } from '../../../../utils';
+import { mapReduce, MapOf, selectPickerAnnotationOptions, selectPickerMetadataOptions } from '../../../../utils';
 
 const CONTEXT_ENABLED_STRING = '_enable_context';
 
@@ -153,13 +153,14 @@ export default Vue.extend({
 			if (this.type === 'hits') {
 				// NOTE: grouping on annotations without a forward index is not supported - however has already been checked in the UIStore
 				const annots = CorpusStore.get.allAnnotationsMap();
+				const dir = CorpusStore.get.textDirection();
 				const shownAnnotIds = UIStore.getState().results.shared.groupAnnotationIds;
-				opts.push(...groupByOptionsFromAnnotations(shownAnnotIds, annots));
+				opts.push(...selectPickerAnnotationOptions(shownAnnotIds, annots, 'Group', dir));
 			}
 
 			const metas = CorpusStore.get.allMetadataFieldsMap();
 			const shownMetaIds = UIStore.getState().results.shared.groupMetadataIds;
-			opts.push(...groupByOptionsFromMetadata(shownMetaIds, metas));
+			opts.push(...selectPickerMetadataOptions(shownMetaIds, metas, 'Group'));
 			return opts;
 		},
 

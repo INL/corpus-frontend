@@ -98,6 +98,11 @@ type ModuleRootState = {
 			/** Available metadata options for grouping in the docs view */
 			groupMetadataIds: string[];
 
+			/** Available options for sorting in the hits+docs results, only supported with a forward index */
+			sortAnnotationIds: string[];
+			/** Available metadata options for sorting in the hits+docs results */
+			sortMetadataIds: string[];
+
 			/** Used for calculating page offsets in links to documents */
 			pageSize: number;
 		};
@@ -150,6 +155,8 @@ const initialState: ModuleRootState = {
 			detailedMetadataIds: null,
 			groupAnnotationIds: [],
 			groupMetadataIds: [],
+			sortAnnotationIds: [],
+			sortMetadataIds: [],
 			pageSize: PAGESIZE
 		}
 	},
@@ -400,6 +407,48 @@ const actions = {
 				ids.sort((a, b) => allMetadataFieldsDisplayOrder.indexOf(a)-allMetadataFieldsDisplayOrder.indexOf(b));
 				state.results.shared.groupMetadataIds = ids;
 			}, 'shared_groupMetadataIds'),
+			sortAnnotationIds: b.commit((state, ids: string[]) => {
+				const allAnnotationsMap = CorpusStore.get.allAnnotationsMap();
+				const allAnnotationsDisplayOrder = CorpusStore.get.allAnnotations().map(a => a.id);
+
+				ids = ids.filter(id => {
+					if (!allAnnotationsMap[id]) {
+						// tslint:disable-next-line
+						console.warn(`Trying to allow sorting by Annotation ${id} in results, but it does not exist`);
+						return false;
+					} else if (!allAnnotationsMap[id][0].hasForwardIndex) {
+						// tslint:disable-next-line
+						console.warn(`Trying to allow sorting by Annotation ${id} in results, which does not have a forward index to do so`);
+						return false;
+					}
+					return true;
+				});
+
+				if (!ids.length) {
+					return;
+				}
+				ids.sort((a, b) => allAnnotationsDisplayOrder.indexOf(a)-allAnnotationsDisplayOrder.indexOf(b));
+				state.results.shared.sortAnnotationIds = ids;
+			}, 'shared_sortAnnotationIds'),
+			sortMetadataIds: b.commit((state, ids: string[]) => {
+				// Yes, allow internal metadata fields if so desired
+				const allMetadataFieldsDisplayOrder = CorpusStore.get.allMetadataFields().map(f => f.id);
+				const allMetadataFieldsMap = CorpusStore.get.allMetadataFieldsMap();
+
+				ids = ids.filter(id => {
+					if (!allMetadataFieldsMap[id]) {
+						// tslint:disable-next-line
+						console.warn(`Trying to allow sorting by metadata field ${id} in results, but it does not exist`);
+						return false;
+					}
+					return true;
+				});
+				if (!ids.length) {
+					return;
+				}
+				ids.sort((a, b) => allMetadataFieldsDisplayOrder.indexOf(a)-allMetadataFieldsDisplayOrder.indexOf(b));
+				state.results.shared.sortMetadataIds = ids;
+			}, 'shared_sortMetadataIds'),
 		}
 	},
 	global: {
@@ -505,7 +554,13 @@ const init = () => {
 	}
 	// NOTE: Show all fields in metadata groups here by default (though the user can customize fields not in groups through customjs)
 	if (!initialState.results.shared.groupMetadataIds.length) {
-		initialState.results.shared.groupMetadataIds = allMetadataFields.map(f => f.id);
+		initialState.results.shared.groupMetadataIds = allShownMetadataFields.map(f => f.id);
+	}
+	if (!initialState.results.shared.sortAnnotationIds.length) {
+		initialState.results.shared.sortAnnotationIds = allShownAnnotations.filter(a => a.hasForwardIndex).map(a => a.id);
+	}
+	if (!initialState.results.shared.sortMetadataIds.length) {
+		initialState.results.shared.sortMetadataIds = allShownMetadataFields.map(f => f.id);
 	}
 
 	actions.replace(cloneDeep(initialState));

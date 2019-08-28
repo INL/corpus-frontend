@@ -10,7 +10,7 @@
 
 			hideEmpty
 
-			:searchable="annotationOptions.length > 10"
+			:searchable="annotationOptions.length > 12"
 			:options="annotationOptions"
 
 			v-model="annotation"

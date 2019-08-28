@@ -135,7 +135,7 @@ import * as ExploreStore from '@/store/search/form/explore';
 import * as UIStore from '@/store/search/ui';
 
 import SelectPicker, {Option, OptGroup} from '@/components/SelectPicker.vue';
-import { groupByOptionsFromAnnotations, groupByOptionsFromMetadata } from '../../../utils';
+import { selectPickerMetadataOptions } from '../../../utils';
 
 export default Vue.extend({
 	components: {
@@ -190,7 +190,7 @@ export default Vue.extend({
 		corporaGroupByOptions(): OptGroup[] {
 			const metas = CorpusStore.get.allMetadataFieldsMap();
 			const shownMetaIds = UIStore.getState().explore.shownMetadataFieldIds;
-			return groupByOptionsFromMetadata(shownMetaIds, metas);
+			return selectPickerMetadataOptions(shownMetaIds, metas, 'Group');
 		},
 		corporaGroupDisplayModeOptions(): string[] {
 			// TODO

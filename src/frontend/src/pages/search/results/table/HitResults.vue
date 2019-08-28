@@ -23,14 +23,18 @@
 					</th>
 
 					<th class="text-center">
-						<a v-if="firstMainAnnotation.hasForwardIndex"
-							role="button"
-							:class="['sort', {'disabled':disabled}]"
-							:title="`Sort by ${firstMainAnnotation.displayName}`"
-							@click="changeSort(`hit:${firstMainAnnotation.id}`)"
-						>
-							Hit
-						</a>
+						<span v-if="sortableAnnotations.length" class="dropdown">
+							<a role="button" data-toggle="dropdown" :class="['dropdown-toggle', {'disabled': disabled}]">
+								Hit
+								<span class="caret"/>
+							</a>
+
+							<ul class="dropdown-menu" role="menu">
+								<li v-for="annotation in sortableAnnotations" :key="annotation.id" :class="{'disabled': disabled}">
+									<a @click="changeSort(`hit:${annotation.id}`)" class="sort" role="button">{{annotation.displayName}}</a>
+								</li>
+							</ul>
+						</span>
 						<template v-else>Hit</template>
 					</th>
 
@@ -272,10 +276,23 @@ export default Vue.extend({
 			return 3 + this.shownAnnotationCols.length + this.shownMetadataCols.length; // left - hit - right - (one per shown annotation) - (one per shown metadata)
 		},
 		/** Return all annotations shown in the main search form (provided they have a forward index) */
-		sortableAnnotations(): AppTypes.NormalizedAnnotation[] { return CorpusStore.get.shownAnnotations().filter(a => a.hasForwardIndex); },
+		sortableAnnotations(): AppTypes.NormalizedAnnotation[] { return UIStore.getState().results.shared.sortAnnotationIds.map(id => CorpusStore.get.allAnnotationsMap()[id][0]); },
 		firstMainAnnotation: CorpusStore.get.firstMainAnnotation,
-		shownAnnotationCols(): AppTypes.NormalizedAnnotation[] { return UIStore.getState().results.hits.shownAnnotationIds.map(id => CorpusStore.get.allAnnotationsMap()[id][0]); },
-		shownMetadataCols(): AppTypes.NormalizedMetadataField[] { return UIStore.getState().results.hits.shownMetadataIds.map(id => CorpusStore.getState().metadataFields[id]); },
+		shownAnnotationCols(): AppTypes.NormalizedAnnotation[] {
+			// Don't bother showing the value when we're sorting on the surrounding context and not the hit itself
+			// as the table doesn't support showing data from something else than the hit
+			const sortAnnotationMatch = this.sort && this.sort.match(/^-?hit:(.+)$/);
+			const sortAnnotationId = sortAnnotationMatch ? sortAnnotationMatch[1] : undefined;
+
+			const colsToShow = UIStore.getState().results.hits.shownAnnotationIds;
+			return (sortAnnotationId && !colsToShow.includes(sortAnnotationId) ? colsToShow.concat(sortAnnotationId) : colsToShow)
+			.map(id => CorpusStore.get.allAnnotationsMap()[id][0]);
+		},
+		shownMetadataCols(): AppTypes.NormalizedMetadataField[] {
+			// Do not display the metadata here, it's silly.
+			return UIStore.getState().results.hits.shownMetadataIds
+			.map(id => CorpusStore.getState().metadataFields[id]);
+		},
 		/** Get annotations to show in concordances, if not configured, returns all annotations shown in the main search form. */
 		shownConcordanceAnnotationRows(): AppTypes.NormalizedAnnotation[] {
 			const configured = UIStore.getState().results.shared.detailedAnnotationIds;

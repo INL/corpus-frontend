@@ -301,23 +301,23 @@ export function multimapReduce<T, V extends (t: T) => any = (t: T) => T>(t: T[]|
 
 // --------------
 
-export function groupByOptionsFromAnnotations(ids: string[], annots: MapOf<AppTypes.NormalizedAnnotation[]>): AppTypes.OptGroup[] {
+export function selectPickerAnnotationOptions(ids: string[], annots: MapOf<AppTypes.NormalizedAnnotation[]>, operation: 'Group'|'Sort', corpusTextDirection: 'ltr'|'rtl'): AppTypes.OptGroup[] {
 	// NOTE: grouping on annotations without a forward index is not supported - however has already been checked in the UIStore
 	return [
 		['hit:', 'Hit', ''],
-		['wordleft:', 'Before hit', 'before'],
-		['wordright:', 'After hit', 'after']
+		[corpusTextDirection === 'rtl' ? 'right:' : 'left:', 'Before hit', 'before'],
+		[corpusTextDirection === 'rtl' ? 'left:' : 'right:', 'After hit', 'after']
 	]
 	.map<AppTypes.OptGroup>(([prefix, groupname, suffix]) =>({
 		label: groupname,
 		options: ids.map(id => ({
-			label: `Group by ${annots[id][0].displayName || id} <small class="text-muted">${suffix}</small>`,
+			label: `${operation} by ${annots[id][0].displayName || id} <small class="text-muted">${suffix}</small>`,
 			value: `${prefix}${id}`
 		}))
 	}));
 }
 
-export function groupByOptionsFromMetadata(ids: string[], metadataFields: MapOf<AppTypes.NormalizedMetadataField>): AppTypes.OptGroup[] {
+export function selectPickerMetadataOptions(ids: string[], metadataFields: MapOf<AppTypes.NormalizedMetadataField>, operation: 'Group'|'Sort'): AppTypes.OptGroup[] {
 	// So recreate the groups and add everything that's not in the form into a default fallback group.
 	const metadataGroupsToShow: MapOf<AppTypes.Option[]&{groupIndex: number}> = {};
 
@@ -332,7 +332,7 @@ export function groupByOptionsFromMetadata(ids: string[], metadataFields: MapOf<
 
 		metadataGroupsToShow[groupId].push({
 			value: `field:${id}`,
-			label: `Group by ${(displayName || id).replace(groupId, '')} <small class="text-muted">(${groupId})</small>`,
+			label: `${operation} by ${(displayName || id).replace(groupId, '')} <small class="text-muted">(${groupId})</small>`,
 		});
 	});
 

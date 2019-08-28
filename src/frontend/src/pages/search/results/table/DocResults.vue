@@ -85,7 +85,14 @@ export default Vue.extend({
 	computed: {
 		mainAnnotation: CorpusStore.get.firstMainAnnotation,
 		textDirection: CorpusStore.get.textDirection,
-		shownMetadataCols(): NormalizedMetadataField[] { return UIStore.getState().results.docs.shownMetadataIds.map(id => CorpusStore.getState().metadataFields[id]); },
+		shownMetadataCols(): NormalizedMetadataField[] {
+			const sortMetadataFieldMatch = this.sort && this.sort.match(/^-?field:(.+)$/);
+			const sortMetadataField = sortMetadataFieldMatch ? sortMetadataFieldMatch[1] : undefined;
+
+			const colsToShow = UIStore.getState().results.docs.shownMetadataIds;
+			return (sortMetadataField && !colsToShow.includes(sortMetadataField) ? colsToShow.concat(sortMetadataField) : colsToShow)
+			.map(id => CorpusStore.getState().metadataFields[id]);
+		},
 		specialMetaDisplayNames(): { [id: string]: string; } {
 			const specialFields = CorpusStore.getState().fieldInfo;
 			const ret: {[id: string]: string} = {};

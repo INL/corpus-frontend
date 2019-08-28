@@ -6,7 +6,7 @@
 				data-width="100%"
 				container="body"
 
-				:searchable="options.length > 20"
+				:searchable="options.length > 12"
 				:placeholder="displayName"
 				:data-id="inputId"
 				:data-name="inputId"

@@ -72,9 +72,8 @@
 				allowHtml
 				hideDisabled
 				allowUnknownValues
-				hideUnknown
 
-				:searchable="sortOptions.flatMap(o => o.options && !o.disabled ? o.options.filter(opt => !opt.disabled) : o).length > 20"
+				:searchable="sortOptions.flatMap(o => o.options && !o.disabled ? o.options.filter(opt => !opt.disabled) : o).length > 12"
 				:options="sortOptions"
 				:disabled="!!request"
 
@@ -158,6 +157,7 @@ import {debugLog} from '@/utils/debug';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import cloneDeep from 'clone-deep';
+import { selectPickerAnnotationOptions, selectPickerMetadataOptions } from '../../../utils';
 
 export default Vue.extend({
 	components: {
@@ -430,66 +430,43 @@ export default Vue.extend({
 			// then the selectpicker will reset value to undefined, which clears it in the store, which updates the url, etc.
 			const opts = [] as OptGroup[];
 
-			opts.push({
-				label: 'Groups',
-				options: [{
-					label: 'Sort by Identity',
-					value: 'identity',
-				}, {
-					label: 'Sort by Size',
-					value: 'size',
-				}],
-				disabled: this.results != null && !this.isGroups
-			});
 
-			const annotations = CorpusStore.get.shownAnnotations().filter(a => a.hasForwardIndex);
-			const dir = CorpusStore.getState().textDirection;
-
-			[[dir === 'rtl' ? 'right:' : 'left:', 'Before hit', 'before'],['hit:', 'Hit', ''],[dir === 'rtl' ? 'left:' : 'right:', 'After hit', 'after']]
-			.forEach(([prefix, groupname, suffix]) =>
+			if (this.isGroups) {
 				opts.push({
-					label: groupname,
-					options: annotations.map(annot => ({
-						label: `Sort by ${annot.displayName || annot.id} <small class="text-muted">${suffix}</small>`,
-						value: `${prefix}${annot.id}`,
-					})),
-					disabled: this.results != null && !this.isHits
-				})
-			);
+					label: 'Groups',
+					options: [{
+						label: 'Sort by Identity',
+						value: 'identity',
+					}, {
+						label: 'Sort by Size',
+						value: 'size',
+					}]
+				});
+			}
 
-			const metadataGroups = CorpusStore.get.metadataGroups();
-			metadataGroups.forEach(group => opts.push({
-				// https://github.com/INL/corpus-frontend/issues/197#issuecomment-441475896
-				// (we don't show metadata groups in the Filters component unless there's more than one group, so don't show the group's name either in this case)
-				label: metadataGroups.length > 1 ? group.name : 'Metadata',
-				options: group.fields.map(field => ({
-					label: `Sort by ${(field.displayName || field.id).replace(group.name, '')}`,
-					value: `field:${field.id}`,
-				})),
-				disabled: this.results != null && !this.isDocs
-			}));
-			opts.push({
-				label: 'Documents',
-				options: [{
-					label: 'Sort by hits',
-					value: 'numhits'
-				}],
-				disabled: this.results != null && !this.isDocs
-			});
+			if (this.isHits) {
+				const dir = CorpusStore.getState().textDirection;
+				const shownAnnotIds = UIStore.getState().results.shared.sortAnnotationIds;
+				const annots = CorpusStore.get.allAnnotationsMap();
+				opts.push(...selectPickerAnnotationOptions(shownAnnotIds, annots, 'Sort', dir));
+			}
+			if (this.isDocs) {
+				opts.push({
+					label: 'Documents',
+					options: [{
+						label: 'Sort by hits',
+						value: 'numhits'
+					}]
+				});
+			}
 
-			return opts.flatMap(group => {
-				return [
-					group,
-					{
-						...group,
-						disabled: true,
-						options: group.options.map((o: Option): Option => ({
-							value: '-' + o.value,
-							label: o.label + ' inverted'
-						}))
-					}
-				];
-			});
+			if (!this.isGroups) {
+				const metadataIds = UIStore.getState().results.shared.sortMetadataIds;
+				const metas = CorpusStore.get.allMetadataFieldsMap();
+
+				opts.push(...selectPickerMetadataOptions(metadataIds, metas, 'Sort'));
+			}
+			return opts;
 		},
 
 		resultComponentName(): string {

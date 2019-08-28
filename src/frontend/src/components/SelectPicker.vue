@@ -460,7 +460,7 @@ export default Vue.extend({
 					Vue.set(this.internalModel, id as any as string, opt);
 				}
 			} else {
-				this.internalModel = {[id]: opt};
+				this.internalModel = id === -1 ? {} : {[id]: opt};
 			}
 
 			if (this.isOpen && !this.multiple) {

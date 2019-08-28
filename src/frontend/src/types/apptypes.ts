@@ -286,3 +286,18 @@ export class ApiError extends Error {
 		this.statusText = statusText;
 	}
 }
+
+// Import quirks, duplicate these
+// TODO solve and allow importing types from .vue files in non-.vue files
+export type Option = {
+	value: string;
+	label?: string;
+	title?: string|null;
+	disabled?: boolean;
+};
+export type OptGroup = {
+	label?: string;
+	title?: string|null;
+	disabled?: boolean;
+	options: Array<string|Option>;
+};

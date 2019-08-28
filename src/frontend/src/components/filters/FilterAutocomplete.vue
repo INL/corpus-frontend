@@ -49,7 +49,17 @@ export default FilterText.extend({
 		autocompleteUrl(): string { return this.definition.metadata as string; },
 	},
 	methods: {
-		autocompleteSelected(value: string) { this.e_input(value); },
+		autocompleteSelected(autocompletion: string) {
+			const input = this.$refs.autocomplete as HTMLInputElement;
+			const value = input.value;
+			// @ts-ignore
+			const {start, end}: {start: number; end: number;} = this._getWordAroundCursor();
+			// alrighty, done?
+			input.value = value.substring(0, start) + autocompletion + value.substring(end);
+			input.selectionStart = start+autocompletion.length+1;
+			input.selectionEnd = start+autocompletion.length+1;
+			input.dispatchEvent(new Event('input'));
+		},
 	},
 });
 </script>

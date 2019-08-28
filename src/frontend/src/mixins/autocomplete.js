@@ -41,11 +41,36 @@ export default {
 			}
 			const $input = $(this.$refs.autocomplete);
 			const self = this;
+			/** @type {string} */
+			let lastSearchValue;
+			/** @type {string[]|undefined} */
+			let lastSearchResults;
 			$input.autocomplete({
-				source: this.autocompleteUrl,
-				minLength: 1, // Show values when at least 1 letter is present
+				minLength: 1, // Show values when at least 1 letter is present in the input
 				classes: {
 					'ui-autocomplete': 'dropdown-menu'
+				},
+				source: function(params, render) {
+					const {value} = self._getWordAroundCursor();
+					if (value.length <= 1) {
+						return;
+					} else if (value === lastSearchValue) {
+						if (lastSearchResults) {
+							render(lastSearchResults);
+						} // user typed quickly or something, results are in flight, will come in eventually...
+					} else {
+						lastSearchValue = value;
+						$.ajax({
+							method: 'GET',
+							url: self.autocompleteUrl,
+							data: {term: value},
+							dataType: 'json',
+							success: function(data) {
+								lastSearchResults = data;
+								render(data);
+							}
+						})
+					}
 				},
 				create: function() {
 					// This element has a div appended every time an element is highlighted
@@ -57,6 +82,11 @@ export default {
 				select: function(event, ui) {
 					self.autocompleteSelected(ui.item.value);
 					return false;
+				},
+				focus: function(event, ui) {
+					event.preventDefault();
+					// prevent jquery from previewing the entire value in the input field.
+					// since we run custom value logic
 				},
 				_renderMenu: function(ul, items) {
 					const ui = this;
@@ -82,17 +112,60 @@ export default {
 			});
 
 			$input.on('keypress', this._closeAutocomplete);
+			$input.on('click', () => $input.autocomplete('search'));
+			$input.on('keypress', function(event) {
+				switch (event.which) {
+					case 37:
+					case 39:
+					$input.autocomplete('search')
+				}
+			})
 		},
 		_destroyAutocomplete() {
 			const $input = $(this.$refs.autocomplete);
 			$input.off('keypress', this._closeAutocomplete);
 			$input.autocomplete('destroy');
 		},
-		_closeAutocomplete($event) {
+		_closeAutocomplete(event) {
 			const $input = $(this.$refs.autocomplete);
 			if ( event.which === 13 ) {
 				$input.autocomplete('close');
 			}
+		},
+		/**
+		 *
+		 * @param {HTMLInputElement} input
+		 * @returns
+		 */
+		_getWordAroundCursor() {
+			/** @type {HTMLInputElement} */
+			const input = this.$refs.autocomplete;
+			if (input.value.length > 100) {
+				return '';
+			}
+
+			let start = input.selectionStart || 0;
+			let end = input.selectionEnd || input.value.length;
+			if (start > end) {
+				const tmp = start;
+				start = end;
+				end = tmp;
+			}
+
+			if (start === end) { // just a caret; no selection, find whitespace boundaries around cursor
+				start = input.value.lastIndexOf(' ', start) + 1;
+				end = input.value.indexOf(' ', end);
+
+				if (end === -1) { end = input.value.length; }
+			}
+
+			const value = input.value.substring(start, end);
+
+			return {
+				start,
+				end,
+				value
+			};
 		}
 	},
 	watch: {
@@ -113,5 +186,5 @@ export default {
 		if (this.autocomplete) {
 			this._destroyAutocomplete();
 		}
-	}
+	},
 };

@@ -298,3 +298,55 @@ export function mapReduce<T, V extends (t: T) => any = (t: T) => T>(t: T[]|undef
 export function multimapReduce<T, V extends (t: T) => any = (t: T) => T>(t: T[]|undefined|null, k: KeysOfType<T, string>, m?: V): MapOf<Array<ReturnType<V>>> {
 	return t ? t.reduce(makeMultimapReducer<T>(k, m), {}) : {};
 }
+
+// --------------
+
+export function groupByOptionsFromAnnotations(ids: string[], annots: MapOf<AppTypes.NormalizedAnnotation[]>): AppTypes.OptGroup[] {
+	// NOTE: grouping on annotations without a forward index is not supported - however has already been checked in the UIStore
+	return [
+		['hit:', 'Hit', ''],
+		['wordleft:', 'Before hit', 'before'],
+		['wordright:', 'After hit', 'after']
+	]
+	.map<AppTypes.OptGroup>(([prefix, groupname, suffix]) =>({
+		label: groupname,
+		options: ids.map(id => ({
+			label: `Group by ${annots[id][0].displayName || id} <small class="text-muted">${suffix}</small>`,
+			value: `${prefix}${id}`
+		}))
+	}));
+}
+
+export function groupByOptionsFromMetadata(ids: string[], metadataFields: MapOf<AppTypes.NormalizedMetadataField>): AppTypes.OptGroup[] {
+	// So recreate the groups and add everything that's not in the form into a default fallback group.
+	const metadataGroupsToShow: MapOf<AppTypes.Option[]&{groupIndex: number}> = {};
+
+	let groupIndex = 0;
+	ids.forEach(id => {
+		const {displayName, groupId = 'Metadata'} = metadataFields[id];
+
+		if (!metadataGroupsToShow[groupId]) {
+			metadataGroupsToShow[groupId] = [] as any;
+			metadataGroupsToShow[groupId].groupIndex = groupId === 'Metadata' ? Number.MAX_SAFE_INTEGER : groupIndex++;
+		}
+
+		metadataGroupsToShow[groupId].push({
+			value: `field:${id}`,
+			label: `Group by ${(displayName || id).replace(groupId, '')} <small class="text-muted">(${groupId})</small>`,
+		});
+	});
+
+	const metadataOptGroups =
+	Object.entries(metadataGroupsToShow).sort((a, b) => a[1].groupIndex - b[1].groupIndex)
+	.map(([groupName, fieldsInGroup]) => ({
+		label: groupName,
+		options: fieldsInGroup
+	}));
+
+	// If there is only one metadata group to display: do not display the groups's name, instead display only 'Metadata'
+	// https://github.com/INL/corpus-frontend/issues/197#issuecomment-441475896
+	if (metadataOptGroups.length === 1) {
+		metadataOptGroups.forEach(g => g.label = 'Metadata');
+	}
+	return metadataOptGroups;
+}

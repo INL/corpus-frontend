@@ -135,6 +135,7 @@ import * as ExploreStore from '@/store/search/form/explore';
 import * as UIStore from '@/store/search/ui';
 
 import SelectPicker, {Option, OptGroup} from '@/components/SelectPicker.vue';
+import { groupByOptionsFromAnnotations, groupByOptionsFromMetadata } from '../../../utils';
 
 export default Vue.extend({
 	components: {
@@ -187,26 +188,9 @@ export default Vue.extend({
 		},
 
 		corporaGroupByOptions(): OptGroup[] {
-			const metadataFields = CorpusStore.getState().metadataFields;
-			const fieldsPerGroup = UIStore.getState().explore.shownMetadataFieldIds.reduce<{[groupId: string]: Option[]}>((groups, fieldId) => {
-				const field = metadataFields[fieldId];
-				// default fallback group, may happen if corpus wants to show options for grouping on certain metadata fields
-				// that are not available for regular subcorpus selection (i.e. not in a metadataFieldGroup, which normally hides the field in the ui)
-				const groupId = field.groupId || 'Metadata';
-				const fieldsInGroup = groups[groupId] = groups[groupId] || [];
-				fieldsInGroup.push({
-					label: `Group by ${(field.displayName || field.id).replace(groupId, '')} <small class="text-muted">(${groupId})</small>`,
-					value: `field:${field.id}`
-				});
-
-				return groups;
-			}, {});
-
-			return Object.entries(fieldsPerGroup)
-			.map(([groupName, options]): OptGroup => ({
-				label: groupName,
-				options
-			}));
+			const metas = CorpusStore.get.allMetadataFieldsMap();
+			const shownMetaIds = UIStore.getState().explore.shownMetadataFieldIds;
+			return groupByOptionsFromMetadata(shownMetaIds, metas);
 		},
 		corporaGroupDisplayModeOptions(): string[] {
 			// TODO

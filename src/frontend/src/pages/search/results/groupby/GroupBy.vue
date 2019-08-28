@@ -62,7 +62,7 @@ import * as UIStore from '@/store/search/ui';
 import SelectPicker, {OptGroup, Option} from '@/components/SelectPicker.vue';
 import ContextGroup from '@/pages/search/results/groupby/ContextGroup.vue';
 import UID from '@/mixins/uid';
-import { mapReduce, MapOf } from '../../../../utils';
+import { mapReduce, MapOf, groupByOptionsFromAnnotations, groupByOptionsFromMetadata } from '../../../../utils';
 
 const CONTEXT_ENABLED_STRING = '_enable_context';
 
@@ -152,55 +152,15 @@ export default Vue.extend({
 
 			if (this.type === 'hits') {
 				// NOTE: grouping on annotations without a forward index is not supported - however has already been checked in the UIStore
-				const displayNames = CorpusStore.get.annotationDisplayNames();
-				const shownAnnotationIds = UIStore.getState().results.shared.groupAnnotationIds;
-				[
-					['hit:', 'Hit', ''],
-					['wordleft:', 'Before hit', 'before'],
-					['wordright:', 'After hit', 'after']
-				]
-				.forEach(([prefix, groupname, suffix]) =>
-					opts.push({
-						label: groupname,
-						options: shownAnnotationIds.map(id => ({
-							label: `Group by ${displayNames[id] || id} <small class="text-muted">${suffix}</small>`,
-							value: `${prefix}${id}`
-						}))
-					})
-				);
+				const annots = CorpusStore.get.allAnnotationsMap();
+				const shownAnnotIds = UIStore.getState().results.shared.groupAnnotationIds;
+				opts.push(...groupByOptionsFromAnnotations(shownAnnotIds, annots));
 			}
 
-			// So recreate the groups and add everything that's not in the form into a default fallback group.
-			const metadataFields = CorpusStore.get.allMetadataFieldsMap();
-			const metadataGroupsToShow: MapOf<Option[]> = {};
-
-			UIStore.getState().results.shared.groupMetadataIds.forEach(id => {
-				let {displayName, groupId} = metadataFields[id];
-				groupId = groupId || 'Metadata'; // fallback group name
-
-				if (!metadataGroupsToShow[groupId]) {
-					metadataGroupsToShow[groupId] = [];
-				}
-
-				metadataGroupsToShow[groupId].push({
-					value: `field:${id}`,
-					label: `Group by ${(displayName || id).replace(groupId, '')} <small class="text-muted">(${groupId})</small>`,
-				});
-			});
-
-			const metadataOptGroups =
-			Object.entries(metadataGroupsToShow)
-			.map(([groupName, fieldsInGroup]) => ({
-				label: groupName,
-				options: fieldsInGroup
-			}));
-
-			// If there is only one metadata group to display: do not display the groups's name, instead display only 'Metadata'
-			// https://github.com/INL/corpus-frontend/issues/197#issuecomment-441475896
-			if (metadataOptGroups.length === 1) {
-				metadataOptGroups.forEach(g => g.label = 'Metadata');
-			}
-			return opts.concat(metadataOptGroups);
+			const metas = CorpusStore.get.allMetadataFieldsMap();
+			const shownMetaIds = UIStore.getState().results.shared.groupMetadataIds;
+			opts.push(...groupByOptionsFromMetadata(shownMetaIds, metas));
+			return opts;
 		},
 
 		contextSupported(): boolean { return this.type === 'hits'; },

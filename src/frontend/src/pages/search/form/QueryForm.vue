@@ -95,9 +95,9 @@ export default Vue.extend({
 	methods: {
 		reset: RootStore.actions.reset,
 		submit() {
-			if (this.activeForm === 'explore' && this.subCorpusStats && this.subCorpusStats.summary.tokensInMatchingDocuments! > 500_000) {
+			if (this.activeForm === 'explore' && this.subCorpusStats && this.subCorpusStats.summary.tokensInMatchingDocuments! > 5_000_000) {
 				const msg = stripIndent`
-					You have selected a subcorpus of over ${(500_000).toLocaleString()} tokens.
+					You have selected a subcorpus of over ${(5_000_000).toLocaleString()} tokens.
 					Please note that this query, on first execution, may take a considerable amount of time to complete.
 					Proceed with caution.
 

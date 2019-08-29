@@ -25,6 +25,7 @@ import SearchPageComponent from '@/pages/search/SearchPage.vue';
 import {debugLog} from '@/utils/debug';
 
 import '@/global.scss';
+import { CombinedVueInstance } from 'vue/types/vue';
 
 const connectJqueryToPage = () => {
 	$('input[data-persistent][id != ""], input[data-persistent][data-pid != ""]').each(function(i, elem) {
@@ -117,8 +118,31 @@ function initQueryBuilder() {
 // --------------
 Vue.config.productionTip = false;
 Vue.config.errorHandler = (err, vm, info) => {
-	ga('send', 'exception', { exDescription: err.message, exFatal: true });
+	if (err.message !== '[vuex] Do not mutate vuex store state outside mutation handlers.') {
+		ga('send', 'exception', { exDescription: err.message, exFatal: true });
+		// tslint:disable-next-line
+		console.error(err);
+	}
 };
+Vue.mixin({
+	// tslint:disable
+	renderError(h, err) {
+		// Retrieve component stack
+		let components = [this] as Vue[];
+		while(components[components.length-1].$options.parent) {
+			components.push(components[components.length-1].$options.parent as Vue)
+		}
+		return (
+			<div class="well">
+				<h3>Error in component! ({components.map(c => (c.$options as any)._componentTag).reverse().filter(v => !!v).join(' // ')})</h3>
+				<pre style="color: red;">
+					{err.stack}
+				</pre>
+			</div>
+		)
+	}
+	// tslint:enable
+});
 
 Vue.use(Filters);
 Vue.use(VTooltip, {

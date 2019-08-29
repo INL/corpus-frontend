@@ -259,6 +259,17 @@ Because the format config specifies the shape of a corpus (which metadata and an
 
     ![](docs/img/annotation_groups.png)
 
+    -----------
+
+    **NOTE:** When using annotation groups, fields not in any group will be **hidden everywhere!** (unless manually re-added through `customjs`). This includes at least the following places:
+    - `Explore/N-grams`
+    - `Explore/Statistics`
+    - `Search/Extended`
+    - `Search/Advanced`
+    - `Per Hit - in the results table`
+    - `Per Hit/Group by`
+    - `Per Hit/Sort by`
+
   </details>
 
 - <details>
@@ -277,6 +288,16 @@ Because the format config specifies the shape of a corpus (which metadata and an
     The order of the fields will be reflected in the interface.
 
     ![](docs/img/metadata_groups.png)
+
+    -----------
+
+    **NOTE:** When using metadata groups, fields not in any group will be **hidden everywhere!** (unless manually re-added through `customjs`). This includes at least the following places:
+    - `Explore/Corpora`
+    - `Filter`
+    - `Per Hit/Group by`
+    - `Per Hit/Sort by`
+    - `Per Document/Group by`
+    - `Per Document/Sort by`
 
   </details>
 
@@ -478,9 +499,33 @@ All javascript should run _before_ `$(document).ready` unless otherwise stated.
 Through javascript you can do the following things on the `/search/` page:
 
 - <details>
-    <summary>[Explore] - Show/hide annotations in the selectors</summary>
+    <summary>[Global] - Hide the page guide</summary>
+    
+    `vuexModules.ui.actions.global.pageGuide.enable(false)`
+  </details>
 
-    In the explore tab, the `n-gram` and `statistics` annotation dropdowns can be filtered to hide certain annotations that aren't useful to show statistics about, but that you may have indexed for other purposes (such as `xmlid`).
+- <details>
+    <summary>[Search] - Show/hide Split-Batch and Within</summary>
+
+    `vuexModules.ui.actions.search.extended.splitBatch.enable(false)`
+    `vuexModules.ui.actions.search.extended.within.enable(false)`
+
+    It's also possible to set which tags are shown (and how) in `within`.
+    You can only add tags that you actually index (using the [inlineTags options](http://inl.github.io/BlackLab/how-to-configure-indexing.html#annotated-input-format-configuration-file) in your index config yaml)
+    ```js
+    vuexModules.ui.actions.search.extended.within.elements({
+      title: 'Tooltip here (optional)',
+      label: 'Sentence',
+      value: 's'
+    });
+    ```
+  </details>
+
+
+- <details>
+    <summary>[Explore] - Show/hide annotations in the N-gram & Statistics views</summary>
+
+    In the explore tab, the `N-gram` and `Statistics` annotation dropdowns can be filtered to hide certain annotations that aren't useful to show statistics about, but that you may have indexed for other purposes (such as `xmlid`).
 
     Invalid annotations will be ignored.
 
@@ -490,12 +535,26 @@ Through javascript you can do the following things on the `/search/` page:
   </details>
 
 - <details>
-    <summary>[Explore] - Show hide metadata (grouping options) in the explore view</summary>
+    <summary>[Explore] - Show/hide metadata (grouping options) in the Corpora view</summary>
 
     Invalid metadata fields will be ignored.
 
     `vuexModules.ui.actions.explore.shownMetadataFieldIds(['title', 'year', 'location', ...])`
     `vuexModules.ui.actions.explore.defaultMetadataFieldId('title')`
+  </details>
+
+- <details>
+    <summary>[Results] - Change the available grouping & sorting options</summary>
+
+    ```js
+    // Grouping
+    vuexModules.ui.actions.results.shared.groupAnnotationIds(['lemma', 'word', 'pos', ...])
+    vuexModules.ui.actions.results.shared.groupMetadataIds(['title', 'year', 'location', ...])
+    
+    // Sorting
+    vuexModules.ui.actions.results.shared.sortAnnotationIds(['lemma', 'word', 'pos', ...])
+    vuexModules.ui.actions.results.shared.sortMetadataIds(['title', 'year', 'location', ...])
+    ```
   </details>
 
 - <details>

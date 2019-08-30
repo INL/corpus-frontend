@@ -31,22 +31,18 @@
 
 						v-model="simple"
 					/>
+					<Autocomplete v-else
+						type="text"
+						class="form-control"
 
-					<AutocompleteSimple v-else
-						:annotation="firstMainAnnotation"
+						:id="firstMainAnnotation.id + '_' + uid"
+						:placeholder="firstMainAnnotation.displayName"
+						:dir="textDirection"
+
+						:autocomplete="firstMainAnnotation.uiType === 'combobox'"
+						:url="firstMainAnnotationACUrl"
 						v-model="simple"
-					>
-						<input
-							type="text"
-							class="form-control"
-
-							:id="firstMainAnnotation.id + '_' + uid"
-							:placeholder="firstMainAnnotation.displayName"
-							:dir="textDirection"
-							:autocomplete="firstMainAnnotation.uiType !== 'combobox'"
-							v-model="simple"
-						/>
-					</AutocompleteSimple>
+					/>
 				</div>
 			</div>
 			<div :class="['tab-pane form-horizontal', {'active': activePattern==='extended'}]" id="extended">
@@ -139,45 +135,19 @@ import * as UIStore from '@/store/search/ui';
 import Annotation from '@/pages/search/form/Annotation.vue';
 import SelectPicker, { Option } from '@/components/SelectPicker.vue';
 // @ts-ignore
-import Autocomplete from '@/mixins/autocomplete';
+import Autocomplete from '@/components/Autocomplete.vue';
 import uid from '@/mixins/uid';
-
 
 import { QueryBuilder } from '@/modules/cql_querybuilder';
 
 import { paths } from '@/api';
 import * as AppTypes from '@/types/apptypes';
 
-// TODO this is very hacky, but it works...
-const AutocompleteSimple = Vue.extend({
-	mixins: [Autocomplete],
-	// @ts-ignore
-	render() { return this._c('div', [this._t("default")], 2) },
-	props: {
-		annotation: Object as () => AppTypes.NormalizedAnnotation,
-		value: String,
-	},
-	data: () => ({
-		initialized: false,
-	}),
-	computed: {
-		autocomplete(): boolean { return this.annotation.uiType === 'combobox' && this.initialized; },
-		autocompleteUrl(): string { return paths.autocompleteAnnotation(CorpusStore.getState().id, this.annotation.annotatedFieldId, this.annotation.id); },
-	},
-	methods: {
-		autocompleteSelected(value: string) { this.$emit('input', value); },
-	},
-	mounted() {
-		this.$refs.autocomplete = this.$el.querySelector('input')!;
-		this.initialized = true;
-	}
-});
-
 export default Vue.extend({
 	mixins: [uid],
 	components: {
 		Annotation,
-		AutocompleteSimple,
+		Autocomplete,
 		SelectPicker
 	},
 	data: () => ({
@@ -200,6 +170,7 @@ export default Vue.extend({
 			}, [] as AppTypes.NormalizedAnnotation[]);
 		},
 		firstMainAnnotation: CorpusStore.get.firstMainAnnotation,
+		firstMainAnnotationACUrl(): string { return paths.autocompleteAnnotation(CorpusStore.getState().id, this.firstMainAnnotation.annotatedFieldId, this.firstMainAnnotation.id); },
 		textDirection: CorpusStore.get.textDirection,
 		withinOptions(): Option[] {
 			const {enabled, elements} = UIStore.getState().search.extended.within;

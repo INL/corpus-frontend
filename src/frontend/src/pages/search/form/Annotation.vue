@@ -17,18 +17,18 @@
 				v-model="value"
 			/>
 			<div v-else class="input-group">
-				<input
+				<Autocomplete
 					type="text"
 					class="form-control"
 
 					:id="inputId"
 					:name="inputId"
 					:placeholder="displayName"
-					:autocomplete="autocomplete ? 'off' /*ajax autocomplete handles it*/: undefined"
 					:disabled="annotation.uiType === 'pos'"
 					:dir="textDirection"
 
-					ref="autocomplete"
+					:autocomplete="autocomplete"
+					:url="autocompleteUrl"
 					v-model="value"
 				/>
 				<div class="input-group-btn">
@@ -98,15 +98,15 @@ import PartOfSpeech from '@/pages/search/form/PartOfSpeech.vue';
 
 import { NormalizedAnnotation } from '@/types/apptypes';
 
-// @ts-ignore
-import Autocomplete from '@/mixins/autocomplete';
+import Autocomplete from '@/components/Autocomplete.vue';
 import UID from '@/mixins/uid';
 
 export default Vue.extend({
-	mixins: [Autocomplete, UID],
+	mixins: [UID],
 	components: {
 		SelectPicker,
 		PartOfSpeech,
+		Autocomplete
 	},
 	props: {
 		annotation: Object as () => NormalizedAnnotation
@@ -156,17 +156,6 @@ export default Vue.extend({
 		}
 	},
 	methods: {
-		autocompleteSelected(autocompletion: string) {
-			const input = this.$refs.autocomplete as HTMLInputElement;
-			const value = input.value;
-			// @ts-ignore
-			const {start, end}: {start: number; end: number;} = this._getWordAroundCursor();
-			// alrighty, done?
-			input.value = value.substring(0, start) + autocompletion + value.substring(end);
-			input.selectionStart = start+autocompletion.length+1;
-			input.selectionEnd = start+autocompletion.length+1;
-			input.dispatchEvent(new Event('input'));
-		},
 		onFileChanged(event: Event) {
 			const self = this;
 			const fileInput = event.target as HTMLInputElement;

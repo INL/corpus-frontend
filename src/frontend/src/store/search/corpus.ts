@@ -115,6 +115,9 @@ const get = {
 };
 
 const actions = {
+	loadTagsetValues: b.commit((state, handler: (state: ModuleRootState) => void) => {
+		handler(state);
+	}, 'loadTagsetValues')
 	// nothing here yet (probably never, indexmetadata should be considered immutable)
 	// maybe just some things to customize displaynames and the like.
 };

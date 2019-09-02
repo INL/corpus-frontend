@@ -81,7 +81,6 @@ const get = {
 const actions = {
 	registerFilterGroup: b.commit((state, filterGroup: {groupId: string, filterIds: string[]}) => {
 		if (filterGroup.groupId in state.filterGroups) {
-			// tslint:disable-next-line
 			console.warn(`Filter group ${filterGroup.groupId} already exists`);
 			return;
 		}
@@ -99,7 +98,6 @@ const actions = {
 		insertBefore?: string;
 	}) => {
 		if (filter.id in state.filters) {
-			// tslint:disable-next-line
 			console.warn(`Filter ${filter.id} already exists`);
 			return;
 		}

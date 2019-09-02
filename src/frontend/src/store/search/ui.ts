@@ -207,7 +207,6 @@ const actions = {
 
 					state.search.extended.within.elements = payload.filter(v => {
 						const valid = v.value in validValuesMap;
-						// tslint:disable-next-line
 						if (!valid) { console.warn(stripIndent`
 							Trying to register element name ${v.value} for 'within' clause, but it doesn't exist in the index.
 							This might happen when there are too many tags recorded in the index, but also when it just doesn't occur (or tags aren't indexed).`);
@@ -227,11 +226,9 @@ const actions = {
 				const annotsWithId = allAnnotations[id];
 				const annot = annotsWithId ? annotsWithId[0] : undefined;
 				if (!annot) {
-					// tslint:disable-next-line
 					console.warn(`[UIStore.actions.explore.shownAnnotations]: Annotation with id '${id}' does not exist in corpus, ignoring...`);
 					return false;
 				} else if (!annot.hasForwardIndex) {
-					// tslint:disable-next-line
 					console.warn(`[UIStore.actions.explore.shownAnnotations]: Annotation with id '${id}' has no forward index and therefor cannot be grouped, ignoring...`)
 					return false;
 				}
@@ -259,7 +256,6 @@ const actions = {
 			const filteredIds = metadataFieldIds.filter(id => {
 				const field = allMetadataFields[id];
 				if (!field) {
-					// tslint:disable-next-line
 					console.warn(`[UIStore.actions.explore.shownMetadataFields]: Annotations with id '${id}' does not exist in corpus, ignoring...`);
 					return false;
 				}
@@ -287,7 +283,6 @@ const actions = {
 				const allAnnotations = CorpusStore.get.allAnnotationsMap();
 				ids = ids.filter(id => {
 					if (!allAnnotations[id]) {
-						// tslint:disable-next-line
 						console.warn(`Trying to display Annotation ${id} in hits table but it does not exist`);
 						return false;
 					}
@@ -302,7 +297,6 @@ const actions = {
 				const allMetadata = CorpusStore.get.allMetadataFieldsMap();
 				ids = ids.filter(id => {
 					if (!allMetadata[id]) {
-						// tslint:disable-next-line
 						console.warn(`Trying to display metadata field ${id} in hits table but it does not exist`);
 						return false;
 					}
@@ -319,7 +313,6 @@ const actions = {
 				const allMetadata = CorpusStore.get.allMetadataFieldsMap();
 				ids = ids.filter(id => {
 					if (!allMetadata[id]) {
-						// tslint:disable-next-line
 						console.warn(`Trying to display metadata field ${id} in hits table but it does not exist`);
 						return false;
 					}
@@ -336,7 +329,6 @@ const actions = {
 				const allAnnotations = CorpusStore.get.allAnnotationsMap();
 				ids = ids.filter(id => {
 					if (!allAnnotations[id]) {
-						// tslint:disable-next-line
 						console.warn(`Trying to display Annotation ${id} in expanded hit rows, but it does not exist`);
 						return false;
 					}
@@ -353,7 +345,6 @@ const actions = {
 				const allMetadataFields = CorpusStore.get.allMetadataFieldsMap();
 				ids = ids.filter(id => {
 					if (!allMetadataFields[id]) {
-						// tslint:disable-next-line
 						console.warn(`Trying to add document metadata field ${id} to exports, but it does not exist`);
 						return false;
 					}
@@ -371,11 +362,9 @@ const actions = {
 
 				ids = ids.filter(id => {
 					if (!allAnnotationsMap[id]) {
-						// tslint:disable-next-line
 						console.warn(`Trying to allow grouping by Annotation ${id} in results, but it does not exist`);
 						return false;
 					} else if (!allAnnotationsMap[id][0].hasForwardIndex) {
-						// tslint:disable-next-line
 						console.warn(`Trying to allow grouping by Annotation ${id} in results, which does not have a forward index to do so`);
 						return false;
 					}
@@ -395,7 +384,6 @@ const actions = {
 
 				ids = ids.filter(id => {
 					if (!allMetadataFieldsMap[id]) {
-						// tslint:disable-next-line
 						console.warn(`Trying to allow grouping by metadata field ${id} in results, but it does not exist`);
 						return false;
 					}
@@ -413,11 +401,9 @@ const actions = {
 
 				ids = ids.filter(id => {
 					if (!allAnnotationsMap[id]) {
-						// tslint:disable-next-line
 						console.warn(`Trying to allow sorting by Annotation ${id} in results, but it does not exist`);
 						return false;
 					} else if (!allAnnotationsMap[id][0].hasForwardIndex) {
-						// tslint:disable-next-line
 						console.warn(`Trying to allow sorting by Annotation ${id} in results, which does not have a forward index to do so`);
 						return false;
 					}
@@ -437,7 +423,6 @@ const actions = {
 
 				ids = ids.filter(id => {
 					if (!allMetadataFieldsMap[id]) {
-						// tslint:disable-next-line
 						console.warn(`Trying to allow sorting by metadata field ${id} in results, but it does not exist`);
 						return false;
 					}
@@ -535,11 +520,9 @@ const init = () => {
 			if (validValues.length <= 6) { // an arbitrary limit
 				initialState.search.extended.within.elements = cloneDeep(validValues);
 			} else {
-				// tslint:disable-next-line
 				console.warn(`Within clause can contain ${validValues.length} different values, ignoring...`);
 			}
 		} else {
-			// tslint:disable-next-line
 			console.warn('Within clause not supported in this corpus, no starttags indexed');
 			initialState.search.extended.within.enabled = false;
 		}

@@ -59,7 +59,6 @@ const actions = {
 		if (context.state.state !== 'uninitialized') {
 			throw new Error('Cannot load tagset after calling store.init(), and cannot replace existing tagset.');
 		}
-
 		internalActions.state({state: 'loading', message: 'Loading tagset...'});
 		initPromise = Axios.get<Tagset>(url, {
 			transformResponse: [(r: string) => r.replace(/\/\/.*[\r\n]+/g, '')].concat(Axios.defaults.transformResponse!)
@@ -70,6 +69,11 @@ const actions = {
 			const annots = CorpusStore.get.allAnnotationsMap();
 			const mainAnnot = Object.values(annots).flat().find(a => a.uiType === 'pos'); // I mean, has to exist right
 			if (!mainAnnot) {
+				// We don't have any annotation to attach the tagset to
+				// Stop loading, and act as if no tagset was loaded (because it wasn't).
+				console.warn(`Attempting to loading tagset when no annotation has uiType "pos". Cannot load!`);
+				(initPromise as any) = null;
+				init();
 				return;
 			}
 
@@ -95,9 +99,6 @@ const actions = {
 					}));
 				}
 			});
-
-			internalActions.replace(t.data);
-			internalActions.state({state: 'loaded', message: 'Tagset succesfully loaded'});
 
 			// Apply top-level displaynames to the 'pos' annotation
 			Object.values(annots)
@@ -160,9 +161,11 @@ const actions = {
 					);
 				});
 			});
+
+			internalActions.replace(t.data);
+			internalActions.state({state: 'loaded', message: 'Tagset succesfully loaded'});
 		})
 		.catch(e => {
-			// tslint:disable-next-line
 			console.warn('Could not load tagset: ' + e.message);
 			internalActions.state({state: 'disabled', message: 'Error loading tagset: ' + e.message});
 		});
@@ -174,20 +177,17 @@ const actions = {
 	 * If load has been called, returns a promise that resolves when the loading is completed.
 	 */
 	awaitInit: () => {
-		if (initPromise == null) {
-			init();
-			initPromise = Promise.resolve();
-		}
-		return initPromise;
+		return init();
 	}
 };
 
 const init = () => {
-	// At this point the global store is being initialized and the url has been parsed, prevent a tagset from loading now (initialization order is pretty strict).
-	if (getState().state === 'uninitialized') {
+	// At this point the global store is being initialized and the url has been (or is being) parsed, prevent a tagset from loading now (initialization order is pretty strict).
+	if (!initPromise) {
 		internalActions.state({state: 'disabled', message: 'No tagset loaded.\n Call "vuexModules.tagset.actions.load(CONTEXT_URL + /static/${path_to_tagset.json}) from custom js file before $document.ready()'});
 		initPromise = Promise.resolve();
 	}
+	return initPromise;
 };
 
 /** check if all annotations and their values exist */
@@ -209,14 +209,12 @@ function validateTagset(annotation: NormalizedAnnotation, t: Tagset) {
 		const annotationValuesInCorpus = mapReduce(mainAnnotation.values, 'value');
 		values.forEach(v => {
 			if (!annotationValuesInCorpus[mainAnnotation.caseSensitive ? v.value : v.value.toLowerCase()]) {
-				// tslint:disable-next-line
 				console.warn(`Annotation "${id}" may have value "${v.value}" which does not exist in the corpus.`);
 			}
 
 			if (v.pos) {
 				const unknownPosList = v.pos!.filter(pos => !t.values[pos]);
 				if (unknownPosList.length > 0) {
-					// tslint:disable-next-line
 					console.warn(`SubAnnotation '${id}' value '${v.value}' declares unknown main-pos value(s): ${unknownPosList.toString()}`);
 				}
 			}

@@ -118,10 +118,11 @@ function initQueryBuilder() {
 // --------------
 Vue.config.productionTip = false;
 Vue.config.errorHandler = (err, vm, info) => {
-	if (err.message !== '[vuex] Do not mutate vuex store state outside mutation handlers.') {
+	if (err.message !== '[vuex] Do not mutate vuex store state outside mutation handlers.') { // already logged and annoying
 		ga('send', 'exception', { exDescription: err.message, exFatal: true });
-		// tslint:disable-next-line
 		console.error(err);
+	} else {
+		console.warn(err);
 	}
 };
 Vue.mixin({

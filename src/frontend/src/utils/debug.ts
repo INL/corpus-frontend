@@ -6,7 +6,7 @@ let queued: IArguments[] = [];
 // For now, seeing the original location is not supported in firefox and edge/ie (and probably safari)
 export function debugLog(...args: any[]) {
 	if (debug) {
-		console.log.apply(console, arguments); // tslint:disable-line
+		console.log.apply(console, arguments); //tslint:disable-line
 	} else {
 		queued.push(arguments);
 	}

@@ -85,7 +85,6 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 			const parsedQuery2: FilterModule.FullFilterState[] = Object.values(this.registeredMetadataFilters).map(filter => {
 				const vueComponent = Vue.component(filter.componentName) as typeof BaseFilter;
 				if (!vueComponent) {
-					// tslint:disable-next-line
 					console.warn(`Filter ${filter.id} defines its vue component as ${filter.componentName} but it does not exist! (have you registered it properly with vue?)`);
 					return filter;
 				}

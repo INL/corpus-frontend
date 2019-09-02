@@ -100,44 +100,15 @@ const actions = {
 				}
 			});
 
-			// Apply top-level displaynames to the 'pos' annotation
-			Object.values(annots)
-			.flat()
-			.filter(a => a.uiType === 'pos')
-			.forEach(originalAnnotation => {
-				const originalValues = mapReduce(originalAnnotation.values, 'value');
-
-				for (const tagsetValue of Object.values(t.data.values)) {
-					const a = originalValues[tagsetValue.value];
-					const b = tagsetValue;
-
-					const value = a ? a.value : b.value;
-					const label = b.displayName || b.value;
-					const title = a ? a.title : null;
-
-					originalValues[value] = {
-						value,
-						label,
-						title
-					};
-				}
-
-				originalAnnotation.values = Object.values(originalValues)
-				.sort((a, b) =>
-					originalAnnotation.values ?
-						originalAnnotation.values.findIndex(v => v.value === a.value) -
-						originalAnnotation.values.findIndex(v => v.value === b.value) :
-					0
-				);
-			});
-
-			// apply subannotaton displaynames
-			Object.values(t.data.subAnnotations)
-			.forEach(subAnnot => {
-				annots[subAnnot.id].forEach(originalAnnotation => {
+			CorpusStore.actions.loadTagsetValues(state => {
+				// Apply top-level displaynames to the 'pos' annotation
+				Object.values(annots)
+				.flat()
+				.filter(a => a.uiType === 'pos')
+				.forEach(originalAnnotation => {
 					const originalValues = mapReduce(originalAnnotation.values, 'value');
 
-					for (const tagsetValue of subAnnot.values) {
+					for (const tagsetValue of Object.values(t.data.values)) {
 						const a = originalValues[tagsetValue.value];
 						const b = tagsetValue;
 
@@ -159,6 +130,37 @@ const actions = {
 							originalAnnotation.values.findIndex(v => v.value === b.value) :
 						0
 					);
+				});
+
+				// apply subannotation displaynames
+				Object.values(t.data.subAnnotations)
+				.forEach(subAnnot => {
+					annots[subAnnot.id].forEach(originalAnnotation => {
+						const originalValues = mapReduce(originalAnnotation.values, 'value');
+
+						for (const tagsetValue of subAnnot.values) {
+							const a = originalValues[tagsetValue.value];
+							const b = tagsetValue;
+
+							const value = a ? a.value : b.value;
+							const label = b.displayName || b.value;
+							const title = a ? a.title : null;
+
+							originalValues[value] = {
+								value,
+								label,
+								title
+							};
+						}
+
+						originalAnnotation.values = Object.values(originalValues)
+						.sort((a, b) =>
+							originalAnnotation.values ?
+								originalAnnotation.values.findIndex(v => v.value === a.value) -
+								originalAnnotation.values.findIndex(v => v.value === b.value) :
+							0
+						);
+					});
 				});
 			});
 

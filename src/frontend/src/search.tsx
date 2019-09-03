@@ -61,7 +61,7 @@ function initQueryBuilder() {
 	const ui = UIStore.getState();
 
 	// Remove overlap in the lists
-	const annotIds = new Set([...ui.explore.shownAnnotationIds, ...CorpusStore.get.shownAnnotations().map(a => a.id)]);
+	const annotIds = new Set([...ui.explore.searchAnnotationIds, ...CorpusStore.get.shownAnnotations().map(a => a.id)]);
 	// allAnnotations() is sorted correctly already :)
 	const annots = CorpusStore.get.allAnnotations().filter(a => annotIds.has(a.id));
 	const defaultAnnot = annotIds.has(CorpusStore.get.firstMainAnnotation().id) ? CorpusStore.get.firstMainAnnotation().id : annots[0].id;

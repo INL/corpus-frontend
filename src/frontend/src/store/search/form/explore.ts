@@ -6,12 +6,15 @@ import {getStoreBuilder} from 'vuex-typex';
 import cloneDeep from 'clone-deep';
 
 import {RootState} from '@/store/search/';
-import * as CorpusStore from '@/store/search/corpus'; // Is initialized before we are.
 import * as UIStore from '@/store/search/ui'; // Is initialized before we are.
 import {makeWildcardRegex} from '@/utils';
-import {AnnotationValue} from '@/types/apptypes';
 
-type Token = Pick<AnnotationValue, Exclude<keyof AnnotationValue, 'annotatedFieldId'|'case'>>;
+type Token = {
+	/** Annotation ID */
+	id: string;
+	/** Raw value in the input */
+	value: string;
+};
 
 type ModuleRootState = {
 	ngram: {
@@ -43,23 +46,22 @@ const defaults: ModuleRootState = {
 			const ret: ModuleRootState['ngram']['tokens'] = [];
 			for (let i = 0; i < defaults.ngram.maxSize; ++i) {
 				ret.push({
-					id: defaults.ngram.groupAnnotationId,
-					type: 'text', // doesn't matter here
+					id: UIStore.getState().explore.defaultSearchAnnotationId,
 					value: ''
 				});
 			}
 			return ret;
 		},
-		get groupAnnotationId() { return UIStore.getState().explore.defaultAnnotationId; }
+		get groupAnnotationId() { return UIStore.getState().explore.defaultGroupAnnotationId; }
 	},
 
 	frequency: {
-		get annotationId() { return UIStore.getState().explore.defaultAnnotationId; }
+		get annotationId() { return UIStore.getState().explore.defaultGroupAnnotationId; }
 	},
 
 	corpora: {
-		get groupBy() { return `field:${UIStore.getState().explore.defaultMetadataFieldId}`; },
-		// todo
+		get groupBy() { return `field:${UIStore.getState().explore.defaultGroupMetadataId}`; },
+		// TODO
 		groupDisplayMode: 'table'
 	}
 };
@@ -78,7 +80,7 @@ const get = {
 		groupBy: b.read(state => `hit:${state.ngram.groupAnnotationId}`, 'ngram_groupBy'),
 		patternString: b.read(state => state.ngram.tokens
 			.slice(0, state.ngram.size)
-			.map(({id, value}) => value ? `[${id}="${makeWildcardRegex(value)}"]` : '[]')
+			.map(({id, value}) => id && value ? `[${id}="${makeWildcardRegex(value)}"]` : '[]')
 			.join('')
 		, 'ngram_patternString')
 	},
@@ -97,7 +99,7 @@ const get = {
 
 const internalActions = {
 	fixTokenArray: b.commit(state => {
-		const {id} = CorpusStore.get.firstMainAnnotation();
+		const id = UIStore.getState().explore.defaultSearchAnnotationId;
 		state.ngram.tokens = state.ngram.tokens.slice(0, state.ngram.maxSize);
 		while (state.ngram.tokens.length < state.ngram.maxSize) {
 			state.ngram.tokens.push({
@@ -113,7 +115,11 @@ const actions = {
 		size: b.commit((state, payload: number) => state.ngram.size = Math.min(state.ngram.maxSize, payload), 'ngram_size'),
 		token: b.commit((state, payload: { index: number, token: Partial<Token> }) => {
 			if (payload.index < state.ngram.maxSize) {
-				Object.assign(state.ngram.tokens[payload.index], payload.token);
+				const storeValue = state.ngram.tokens[payload.index];
+				Object.assign(storeValue, payload.token);
+				if (!storeValue.id) {
+					storeValue.id = defaults.ngram.groupAnnotationId;
+				}
 			}
 		}, 'ngram_token'),
 		groupAnnotationId: b.commit((state, payload: string) => state.ngram.groupAnnotationId = payload, 'ngram_groupAnnotationId'),
@@ -123,7 +129,7 @@ const actions = {
 			internalActions.fixTokenArray();
 		}, 'ngram_maxSize'),
 
-		// stringify/parse required so we don't alias the default array
+		// clone required so we don't insert a the default array and subsequent changes don't write back into it
 		reset: b.commit(state => Object.assign(state.ngram, cloneDeep(defaults.ngram)), 'ngram_reset'),
 
 		replace: b.commit((state, payload: ModuleRootState['ngram']) => {

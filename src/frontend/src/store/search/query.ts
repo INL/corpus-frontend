@@ -86,7 +86,7 @@ const get = {
 					const stateHelper = state as ModuleRootStateExplore<'ngram'>;
 					return stateHelper.formState.tokens
 						.slice(0, stateHelper.formState.size)
-						.map(({id, value}) => value ? `[${id}="${makeWildcardRegex(value)}"]` : '[]')
+						.map(({id, value}) => id && value ? `[${id}="${makeWildcardRegex(value)}"]` : '[]')
 						.join('');
 				}
 				default: throw new Error('Unknown submitted form ' + state.subForm + ' - cannot generate cql query');

@@ -160,7 +160,8 @@ export default Vue.extend({
 
 			const metas = CorpusStore.get.allMetadataFieldsMap();
 			const shownMetaIds = UIStore.getState().results.shared.groupMetadataIds;
-			opts.push(...selectPickerMetadataOptions(shownMetaIds, metas, 'Group'));
+			const groups = CorpusStore.getState().metadataFieldGroups;
+			opts.push(...selectPickerMetadataOptions(shownMetaIds, metas, groups, 'Group'));
 			return opts;
 		},
 

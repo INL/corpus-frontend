@@ -11,6 +11,7 @@ import parseLucene from '@/utils/luceneparser';
 import {debugLog} from '@/utils/debug';
 
 import * as CorpusModule from '@/store/search/corpus';
+import * as UIModule from '@/store/search/ui';
 import * as HistoryModule from '@/store/search/history';
 import * as TagsetModule from '@/store/search/tagset';
 
@@ -30,6 +31,7 @@ import * as HitResultsModule from '@/store/search/results/hits';
 import {FilterValue, AnnotationValue} from '@/types/apptypes';
 
 import BaseFilter from '@/components/filters/Filter';
+import cloneDeep from 'clone-deep';
 
 /**
  * Decode the current url into a valid page state configuration.
@@ -172,7 +174,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 			let fromPattern = true; // is interface state actually from the pattern, or from the default fallback?
 			if (this.simplePattern && !hasFilters && !hasGapValue) {
 				ui.patternMode = 'simple';
-			} else if ((Object.keys(this.extendedPattern.annotationValues).length > 0) && !hasGapValue) {
+			} else if ((Object.keys(this.annotationValues).length > 0) && !hasGapValue) {
 				ui.patternMode = 'extended';
 			} else if (this.advancedPattern && !hasGapValue) {
 				ui.patternMode = 'advanced';
@@ -451,24 +453,30 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 
 	@memoize
 	private get simplePattern(): string|null {
-		// Simple view is just a subset of extended view
-		// So we can just check if extended fits into simple
-		// then we get wildcard conversion etc for free.
-		// (simple/extended view have their values processed when converting to query - see utils::getPatternString,
-		// and this needs to be undone too)
-		const extended = this.extendedPattern;
-		const vals = Object.values(this.extendedPattern.annotationValues);
-		if (extended.within == null && vals.length === 1 && vals[0].id === CorpusModule.get.firstMainAnnotation().id && !vals[0].case) {
+		// Simple view is just a single annotation without any within query or filters
+		const vals = Object.values(this.annotationValues);
+		const within = this.within;
+
+		if (within == null && vals.length === 1 && vals[0].id === CorpusModule.get.firstMainAnnotation().id && !vals[0].case) {
 			return vals[0].value;
 		}
+		// TODO fix that we don't force firstmainannotation, but instead use the ui module - same for the ngrams
 
 		return null;
 	}
 
 	@memoize
 	private get extendedPattern() {
+		const annotationsInInterface = CorpusModule.get.shownAnnotationsMap();
+		const parsedAnnotationValues = cloneDeep(this.annotationValues);
+		Object.keys(parsedAnnotationValues).forEach(annotId => {
+			if (!annotationsInInterface[annotId]) {
+				delete parsedAnnotationValues[annotId];
+			}
+		});
+
 		return {
-			annotationValues: this.annotationValues,
+			annotationValues: parsedAnnotationValues,
 			within: this.within,
 			// This is always false, it's just a checkbox that will split up the query when it's submitted, then untick itself
 			splitBatch: false

@@ -89,14 +89,18 @@ const templates = {
 			`,
 
 			withinSelect: `
+				{{#withinSelectOptions.0}}
 				<label>Within:</label>
 				<div class="btn-group bl-within-select clearfix" data-toggle="buttons" id="within_select" style="display:block;">
+				{{/withinSelectOptions.0}}
 					{{#withinSelectOptions}}
 						<label class="btn btn-default">
 							<input type="radio" autocomplete="off" name="within" value="{{value}}">{{label}}
 						</label>
 					{{/withinSelectOptions}}
+				{{#withinSelectOptions.0}}
 				</div>
+				{{/withinSelectOptions.0}}
 			`,
 		},
 	},
@@ -192,7 +196,16 @@ const templates = {
 					{{>delete_attribute_button}}
 					<select data-attribute-role="type" class="selectpicker" data-width="75px" data-container="body" data-style="btn btn-sm btn-default bl-no-border-radius-right">
 						{{#attributes}}
-						<option value="{{attribute}}">{{label}}</option>
+						{{#groupname}}
+							<optgroup label="{{groupname}}">
+							{{#options}}
+								<option value="{{attribute}}">{{label}}</option>
+							{{/options}}
+							</optgroup>
+						{{/groupname}}
+						{{^groupname}}
+							<option value="{{attribute}}">{{label}}</option>
+						{{/groupname}}
 						{{/attributes}}
 					</select>
 					<select data-attribute-role="operator" class="selectpicker" data-width="50px"; data-container="body" data-style="btn btn-sm btn-primary bl-selectpicker-hide-caret bl-no-border-radius">
@@ -228,7 +241,8 @@ const templates = {
 			main_input: `
 				<div class="bl-has-file-hidden bl-token-attribute-main-input-container">
 					{{#attributes}}
-						{{>main_input_value}}
+					{{#groupname}}{{#options}}{{>main_input_value}}{{/options}}{{/groupname}}
+					{{^groupname}}{{>main_input_value}}{{/groupname}}
 					{{/attributes}}
 				</div>
 				{{>main_input_file_controls}}
@@ -303,6 +317,17 @@ const templates = {
 	}
 };
 
+export type AttributeDef = {
+	attribute: string;
+	label: string;
+	caseSensitive: boolean;
+	textDirection: undefined|'ltr'|'rtl';
+	values: undefined|Array<{
+		value: string;
+		label?: string;
+	}>;
+};
+
 const DEFAULTS = {
 
 	queryBuilder: {
@@ -335,33 +360,25 @@ const DEFAULTS = {
 					attribute: 'word',
 					label: 'word',
 					caseSensitive: true,
-					textDirection: undefined as undefined|'ltr'|'rtl',
-					values: undefined as undefined|Array<{
-						value: string;
-						label?: string;
-					}>
+					textDirection: undefined,
+					values: undefined
 				},
 				{
 					attribute: 'lemma',
 					label: 'lemma',
 					caseSensitive: true,
-					textDirection: undefined as undefined|'ltr'|'rtl',
-					values: undefined as undefined|Array<{
-						value: string;
-						label?: string;
-					}>
+					textDirection: undefined,
+					values: undefined
 				},
 				{
 					attribute: 'pos',
 					label: 'Part of speech',
 					caseSensitive: false,
-					textDirection: undefined as undefined|'ltr'|'rtl',
-					values: undefined as undefined|Array<{
-						value: string;
-						label?: string;
-					}>
+					textDirection: undefined,
+					values: undefined
 				}
-			],
+			] as Array<AttributeDef | { groupname: string; options: AttributeDef[]}>,
+
 			defaultAttribute: 'word'
 		},
 
@@ -974,7 +991,10 @@ export class Attribute {
 				.find('[data-attribute-role="case"]'), val);
 		} else if (controlName === 'val') {
 			// correct value casing (if applicable)
-			const ourSettings = this.builder.settings.attribute.view.attributes.find(a => a.attribute === additionalSelector);
+			const ourSettings = this.builder.settings.attribute.view.attributes
+				.flatMap<AttributeDef>((a: any) => a.options ? a.options : a)
+				.find(a => a.attribute === additionalSelector);
+
 			if (ourSettings && !ourSettings.caseSensitive && ourSettings.values && ourSettings.values.length) {
 				const caseMap = ourSettings.values.reduce<{[k: string]: string}>((acc, v) => {
 					acc[v.value.toLowerCase()] = v.value;
@@ -1065,7 +1085,8 @@ const setValue = function($element: JQuery<HTMLElement>, val: any) {
 };
 
 function hasAttribute(builder: QueryBuilder, attributeId: string) {
-	return builder.settings.attribute.view.attributes.find(att => att.attribute === attributeId) != null;
+	const attributes = builder.settings.attribute.view.attributes.flatMap<AttributeDef, any>((a: any) => a.options ? a.options : a);
+	return attributes.find(att => att.attribute === attributeId) != null;
 }
 
 function getOperatorLabel(builder: QueryBuilder, operator: string) {

@@ -36,14 +36,18 @@ type ModuleRootState = {
 				}>;
 			};
 		};
-		advanced: {};
+		advanced: {
+			/** Annotation selection options in querybuilder. Sorted by global annotation order. */
+			searchAnnotationIds: string[];
+			defaultSearchAnnotationId: string;
+		};
 		expert: {};
 	};
 
 	explore: {
 		/** Default selection in the ngram token dropdowns */
 		defaultSearchAnnotationId: string;
-		/** Options in the ngram token dropdowns */
+		/** Options in the ngram token dropdowns. Sorted by global annotation order. */
 		searchAnnotationIds: string[];
 
 		/** Default selection in "N-Gram type" and "Frequency list type", available options are defined by results.shared.groupAnnotationIds */
@@ -66,11 +70,13 @@ type ModuleRootState = {
 			 * Defaults to 'lemma' and 'pos' if they exist, and up to 3 other annotations in order of their displayOrder.
 			 * Can be configured through PROP_COLUMNS, which in turn is configured through search.xml.
 			 * Can also be overridden at runtime by custom js.
+			 * If manually configured, order from configuration is preserved. Otherwise uses the global annotation order.
 			 */
 			shownAnnotationIds: string[];
 			/**
 			 * Metadata columns to show in the hit results table.
 			 * Defaults to empty.
+			 * If manually configured, order from configuration is preserved. Otherwise uses the global metadata order.
 			 */
 			shownMetadataIds: string[];
 		};
@@ -78,6 +84,7 @@ type ModuleRootState = {
 			/**
 			 * Metadata columns to show in the doc results table.
 			 * Defaults to the special year field (if it has been set in the index).
+			 * If manually configured, order from configuration is preserved. Otherwise uses the global annotation order.
 			 */
 			shownMetadataIds: string[];
 		};
@@ -87,26 +94,29 @@ type ModuleRootState = {
 			 * Annotations IDs to include in expanded hit rows (meaning in the table there), and csv exports containing hits.
 			 * The server returns all annotations if this is null,
 			 * and the interface will then display all non-internal annotations, in their displayOrder.
+			 * Sorted by global annotation order.
 			 */
 			detailedAnnotationIds: null|string[];
 			/**
 			 * Document Metadata field IDs to include in exported results.
 			 * Has no influence over shown metadata in the opened documents/articles on the /docs/${docId} page.
 			 * Server returns all fields if this is null.
+			 * Sorted by global metadata order.
 			 */
 			detailedMetadataIds: null|string[];
 
 			/**
 			 * Available options for grouping by annotation, in Explore//N-grams, Explore//Statistics, and the Per Hit results.
 			 * Annotations must contain a forward index.
+			 * Sorted by global annotation order.
 			 */
 			groupAnnotationIds: string[];
-			/** Available options for grouping by metadata, in Explore//Corpora, and the Per Hit/Per Doc results. */
+			/** Available options for grouping by metadata, in Explore//Corpora, and the Per Hit/Per Doc results. Sorted by global metadata order. */
 			groupMetadataIds: string[];
 
-			/** Available options for sorting in the hits+docs results, only supported with a forward index */
+			/** Available options for sorting in the hits+docs results, only supported with a forward index. Sorted by global annotation order. */
 			sortAnnotationIds: string[];
-			/** Available metadata options for sorting in the hits+docs results */
+			/** Available metadata options for sorting in the hits+docs results. Sorted by global metadata order. */
 			sortMetadataIds: string[];
 
 			/** Used for calculating page offsets in links to documents */
@@ -138,7 +148,10 @@ const initialState: ModuleRootState = {
 				elements: [],
 			},
 		},
-		advanced: {},
+		advanced: {
+			searchAnnotationIds: [],
+			defaultSearchAnnotationId: ''
+		},
 		expert: {}
 	},
 	explore: {
@@ -251,7 +264,12 @@ function validateAnnotations(
 	// tslint:enable
 }
 
-async function validateMetadata(
+function sortAnnotations(ids: string[]) {
+	const displayOrder: {[id: string]: number} = mapReduce(CorpusStore.get.allAnnotations(), 'id', (a, i) => i);
+	return ids.concat().sort((a, b) => displayOrder[a] - displayOrder[b]);
+}
+
+function validateMetadata(
 	ids: string[],
 	missing: (id: string) => string,
 	validate: (m: AppTypes.NormalizedMetadataField) => boolean,
@@ -268,6 +286,11 @@ async function validateMetadata(
 
 	results.length && cb(results);
 	// tslint:enable
+}
+
+function sortMetadata(ids: string[]) {
+	const displayOrder: {[id: string]: number} = mapReduce(CorpusStore.get.allMetadataFields(), 'id', (a, i) => i);
+	return ids.concat().sort((a, b) => displayOrder[a] - displayOrder[b]);
 }
 
 const get = {
@@ -299,7 +322,29 @@ const actions = {
 				}, 'search_extended_within_annotations'),
 			},
 		},
-		advanced: {},
+		advanced: {
+			searchAnnotationIds: b.commit((state, ids: string[]) => validateAnnotations(ids,
+				id => `Trying to display Annotation ${id} in the querybuilder, but it does not exist`,
+				_ => true, _ => '',
+				r => {
+					r = state.search.advanced.searchAnnotationIds = sortAnnotations(r);
+					const defaultId = state.search.advanced.defaultSearchAnnotationId;
+					if (!r.includes(defaultId)) {
+						if (defaultId) { // don't warn when it was unconfigured before (e.g. '')
+							console.warn(`[search.advanced.searchAnnotationIds] - Resetting default selection from '${defaultId}' to '${r[0]}' because it's not in the configured list ${JSON.stringify(r)}`);
+						}
+						state.search.advanced.defaultSearchAnnotationId = r[0];
+					}
+				}
+			), 'search_advanced_searchAnnotationIds'),
+			defaultSearchAnnotationId: b.commit((state, annotationId: string) => {
+				if (state.search.advanced.searchAnnotationIds.length === 0 || state.search.advanced.searchAnnotationIds.includes(annotationId)) {
+					state.explore.defaultGroupAnnotationId = annotationId;
+				} else {
+					console.warn(`[search.advanced.defaultSearchAnnotationId] - Trying to set default selection to '${annotationId}', but it's not one of the configured options (${JSON.stringify(state.search.advanced.searchAnnotationIds)})!`);
+				}
+			}, 'search_advanced_defaultSearchAnnotationId')
+		},
 		expert: {},
 	},
 	explore: {
@@ -326,15 +371,14 @@ const actions = {
 			}
 		}, 'explore_defaultSearchAnnotationId'),
 		searchAnnotationIds: b.commit((state, ids: string[]) => validateAnnotations(ids,
-			id => `Trying to display Annotation ${id} in hits table, but it does not exist`,
+			id => `Trying to display Annotation ${id} in the explore view (n-grams), but it does not exist`,
 			_ => true, _ => '',
 			r => {
-				const displayOrder = CorpusStore.get.allAnnotations().map(a => a.id);
-				r.sort((a, b) => displayOrder.indexOf(a)-displayOrder.indexOf(b));
-				state.explore.searchAnnotationIds = r;
-				if (!r.includes(state.explore.defaultSearchAnnotationId)) {
-					if (state.explore.defaultSearchAnnotationId) { // don't warn when it was unconfigured before (e.g. '')
-						console.warn(`[explore.searchAnnotationIds] - Resetting default selection from '${state.explore.defaultSearchAnnotationId}' to '${r[0]}' because it's not in the configured list ${JSON.stringify(r)}`);
+				const defaultId = state.explore.defaultSearchAnnotationId;
+				r = state.explore.searchAnnotationIds = sortAnnotations(r);
+				if (!r.includes(defaultId)) {
+					if (defaultId) { // don't warn when it was unconfigured before (e.g. '')
+						console.warn(`[explore.searchAnnotationIds] - Resetting default selection from '${defaultId}' to '${r[0]}' because it's not in the configured list ${JSON.stringify(r)}`);
 					}
 					state.explore.defaultSearchAnnotationId = r[0];
 				}
@@ -363,18 +407,24 @@ const actions = {
 			), 'docs_shownMetadataIds')
 		},
 		shared: {
-			detailedAnnotationIds: b.commit((state, ids: string[]) => validateAnnotations(ids,
-				id => `Trying to display Annotation '${id}' in expanded hit rows, but it does not exist`,
-				_ => true, _ => '',
-				r => state.results.shared.detailedAnnotationIds = r
-			), 'shared_detailedAnnotationIds'),
+			detailedAnnotationIds: b.commit((state, ids: string[]|null) => {
+				if (ids != null) {
+					validateAnnotations(ids,
+						id => `Trying to display Annotation '${id}' in expanded hit rows, but it does not exist`,
+						_ => true, _ => '',
+						r => state.results.shared.detailedAnnotationIds = sortAnnotations(r)
+					);
+				} else {
+					state.results.shared.detailedAnnotationIds = ids;
+				}
+			}, 'shared_detailedAnnotationIds'),
 
 			detailedMetadataIds: b.commit((state, ids: string[]|null) => {
 				if (ids != null) {
 					validateMetadata(ids,
 						id => `Trying to add document metadata field '${id}' to exports, but it does not exist`,
 						_ => true, _ => '',
-						r => state.results.shared.detailedMetadataIds = r
+						r => state.results.shared.detailedMetadataIds = sortMetadata(r)
 					);
 				} else {
 					state.results.shared.detailedMetadataIds = ids;
@@ -386,12 +436,11 @@ const actions = {
 				a => a.hasForwardIndex,
 				id => `Trying to allow grouping by Annotation '${id}', which does not have a forward index (a forward index is required for grouping)`,
 				r => {
-					const displayOrder = CorpusStore.get.allAnnotations().map(a => a.id);
-					r.sort((a, b) => displayOrder.indexOf(a)-displayOrder.indexOf(b));
-					state.results.shared.groupAnnotationIds = r;
-					if (!r.includes(state.explore.defaultGroupAnnotationId)) {
-						if (state.explore.defaultGroupAnnotationId) { // don't warn when it was unconfigured before (e.g. '')
-							console.warn(`[results.shared.groupAnnotationIds] - Resetting default selection for explore.defaultGroupAnnotationId from '${state.explore.defaultGroupAnnotationId}' to '${r[0]}' because it's not in the configured list ${JSON.stringify(r)}`);
+					const defaultId = state.explore.defaultGroupAnnotationId;
+					r = state.results.shared.groupAnnotationIds = sortAnnotations(r);
+					if (!r.includes(defaultId)) {
+						if (defaultId) { // don't warn when it was unconfigured before (e.g. '')
+							console.warn(`[results.shared.groupAnnotationIds] - Resetting default selection for explore.defaultGroupAnnotationId from '${defaultId}' to '${r[0]}' because it's not in the configured list ${JSON.stringify(r)}`);
 						}
 						state.explore.defaultGroupAnnotationId = r[0];
 					}
@@ -402,12 +451,11 @@ const actions = {
 				id => `Trying to allow grouping by metadata field '${id}', but it does not exist`,
 				_ => true, _ => '',
 				r => {
-					const displayOrder = CorpusStore.get.allMetadataFields().map(f => f.id);
-					r.sort((a, b) => displayOrder.indexOf(a)-displayOrder.indexOf(b));
-					state.results.shared.groupMetadataIds = r;
-					if (!r.includes(state.explore.defaultGroupMetadataId)) {
-						if (state.explore.defaultGroupMetadataId) { // don't warn when it was unconfigured before (e.g. '')
-							console.warn(`[results.shared.groupMetadataIds] - Resetting default selection for explore.defaultGroupMetadataId from '${state.explore.defaultGroupMetadataId}' to '${r[0]}' because it's not in the configured list ${JSON.stringify(r)}`);
+					const defaultId = state.explore.defaultGroupMetadataId;
+					r = state.results.shared.groupMetadataIds = sortMetadata(r);
+					if (!r.includes(defaultId)) {
+						if (defaultId) { // don't warn when it was unconfigured before (e.g. '')
+							console.warn(`[results.shared.groupMetadataIds] - Resetting default selection for explore.defaultGroupMetadataId from '${defaultId}' to '${r[0]}' because it's not in the configured list ${JSON.stringify(r)}`);
 						}
 						state.explore.defaultGroupMetadataId = r[0];
 					}
@@ -418,21 +466,13 @@ const actions = {
 				id => `Trying to allow sorting by Annotation '${id}', but it does not exist`,
 				a => a.hasForwardIndex,
 				id => `Trying to allow sorting by Annotation '${id}', which does not have a forward index (a forward index is required for grouping)`,
-				r => {
-					const displayOrder = CorpusStore.get.allAnnotations().map(a => a.id);
-					r.sort((a, b) => displayOrder.indexOf(a)-displayOrder.indexOf(b));
-					state.results.shared.sortAnnotationIds = r;
-				}
+				r => state.results.shared.sortAnnotationIds = sortAnnotations(r)
 			), 'shared_sortAnnotationIds'),
 
 			sortMetadataIds: b.commit((state, ids: string[]) => validateMetadata(ids,
 				id => `Trying to allow sorting by metadata field '${id}', but it does not exist`,
 				_ => true, _ => '',
-				r => {
-					const displayOrder = CorpusStore.get.allMetadataFields().map(f => f.id);
-					r.sort((a, b) => displayOrder.indexOf(a)-displayOrder.indexOf(b));
-					state.results.shared.sortMetadataIds = r;
-				}
+				r => state.results.shared.sortMetadataIds = sortMetadata(r)
 			), 'shared_sortMetadataIds'),
 		}
 	},
@@ -518,6 +558,12 @@ const init = () => {
 		actions.results.shared.groupMetadataIds(allShownMetadataFields.map(f => f.id));
 	}
 
+	if (!initialState.search.advanced.searchAnnotationIds.length) {
+		actions.search.advanced.searchAnnotationIds(allShownAnnotations.map(a => a.id));
+	}
+	if (!initialState.search.advanced.defaultSearchAnnotationId) {
+		actions.search.advanced.defaultSearchAnnotationId(initialState.search.advanced.searchAnnotationIds.includes(mainAnnotation) ? mainAnnotation : (initialState.search.advanced.searchAnnotationIds[0] || ''));
+	}
 	if (!initialState.explore.searchAnnotationIds.length) {
 		actions.explore.searchAnnotationIds(allShownAnnotations.map(a => a.id));
 	}

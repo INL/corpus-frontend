@@ -317,17 +317,18 @@ export function selectPickerAnnotationOptions(ids: string[], annots: MapOf<AppTy
 	}));
 }
 
-export function selectPickerMetadataOptions(ids: string[], metadataFields: MapOf<AppTypes.NormalizedMetadataField>, operation: 'Group'|'Sort'): AppTypes.OptGroup[] {
+export function selectPickerMetadataOptions(ids: string[], metadataFields: MapOf<AppTypes.NormalizedMetadataField>, groups: AppTypes.NormalizedIndex['metadataFieldGroups'], operation: 'Group'|'Sort'): AppTypes.OptGroup[] {
+	const groupOrder = groups.map(g => g.name);
+
 	// So recreate the groups and add everything that's not in the form into a default fallback group.
 	const metadataGroupsToShow: MapOf<AppTypes.Option[]&{groupIndex: number}> = {};
 
-	let groupIndex = 0;
 	ids.forEach(id => {
 		const {displayName, groupId = 'Metadata'} = metadataFields[id];
 
 		if (!metadataGroupsToShow[groupId]) {
 			metadataGroupsToShow[groupId] = [] as any;
-			metadataGroupsToShow[groupId].groupIndex = groupId === 'Metadata' ? Number.MAX_SAFE_INTEGER : groupIndex++;
+			metadataGroupsToShow[groupId].groupIndex = groupId === 'Metadata' ? Number.MAX_SAFE_INTEGER : groupOrder.indexOf(groupId);
 		}
 
 		metadataGroupsToShow[groupId].push({

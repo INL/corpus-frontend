@@ -463,8 +463,9 @@ export default Vue.extend({
 			if (!this.isGroups) {
 				const metadataIds = UIStore.getState().results.shared.sortMetadataIds;
 				const metas = CorpusStore.get.allMetadataFieldsMap();
+				const groups = CorpusStore.getState().metadataFieldGroups;
 
-				opts.push(...selectPickerMetadataOptions(metadataIds, metas, 'Sort'));
+				opts.push(...selectPickerMetadataOptions(metadataIds, metas, groups, 'Sort'));
 			}
 			return opts;
 		},

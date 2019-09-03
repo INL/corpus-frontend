@@ -212,8 +212,9 @@ export default Vue.extend({
 
 		corporaGroupByOptions(): OptGroup[] {
 			const metas = CorpusStore.get.allMetadataFieldsMap();
+			const groups = CorpusStore.getState().metadataFieldGroups;
 			const shownMetaIds = UIStore.getState().explore.shownMetadataFieldIds;
-			return selectPickerMetadataOptions(shownMetaIds, metas, 'Group');
+			return selectPickerMetadataOptions(shownMetaIds, metas, groups, 'Group');
 		},
 		corporaGroupDisplayModeOptions(): string[] {
 			// TODO

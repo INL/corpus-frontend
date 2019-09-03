@@ -12,7 +12,8 @@ import Filters from '@/components/filters';
 
 import {QueryBuilder, QueryBuilderOptionsDef} from '@/modules/cql_querybuilder';
 import * as RootStore from '@/store/search/';
-import * as CorpusStore from '@/store/search/corpus'; // NOTE: only use after initializing root store
+import * as CorpusStore from '@/store/search/corpus';
+import * as UIStore from '@/store/search/ui';
 import * as TagsetStore from '@/store/search/tagset';
 import * as PatternStore from '@/store/search/form/patterns';
 import * as FilterStore from '@/store/search/form/filters';
@@ -58,27 +59,26 @@ const connectJqueryToPage = () => {
 function initQueryBuilder() {
 	debugLog('Begin initializing querybuilder');
 
-	const mainAnnotationId = CorpusStore.get.firstMainAnnotation().id;
-	const shownAnnotations = CorpusStore.get.shownAnnotations();
+	// Remove overlap in the lists
+	const annotIds = new Set([...UIStore.getState().explore.shownAnnotationIds, ...CorpusStore.get.shownAnnotations().map(a => a.id)]);
+	// allAnnotations() is sorted correctly already :)
+	const annots = CorpusStore.get.allAnnotations().filter(a => annotIds.has(a.id));
+	const defaultAnnot = annotIds.has(CorpusStore.get.firstMainAnnotation().id) ? CorpusStore.get.firstMainAnnotation().id : annots[0].id;
 
 	// Initialize configuration
 	const instance = new QueryBuilder($('#querybuilder'), {
 		attribute: {
 			view: {
 				// Pass the available properties of tokens in this corpus (PoS, Lemma, Word, etc..) to the querybuilder
-				attributes: CorpusStore.get.shownAnnotations()
-					.map((annotation): QueryBuilderOptionsDef['attribute']['view']['attributes'][number] => {
-						return {
-							attribute: annotation.id,
-							label: annotation.displayName,
-							caseSensitive: annotation.caseSensitive,
-							textDirection: annotation.isMainAnnotation ? CorpusStore.get.textDirection() : undefined,
-							values: annotation.values,
-						};
-					})
-				,
+				attributes: annots.map((annotation): QueryBuilderOptionsDef['attribute']['view']['attributes'][number] => ({
+					attribute: annotation.id,
+					label: annotation.displayName,
+					caseSensitive: annotation.caseSensitive,
+					textDirection: annotation.isMainAnnotation ? CorpusStore.get.textDirection() : undefined,
+					values: annotation.values,
+				})),
 
-				defaultAttribute: shownAnnotations.find(a => a.id === mainAnnotationId) ? mainAnnotationId : shownAnnotations[0] && shownAnnotations[0].id || ''
+				defaultAttribute: defaultAnnot
 			}
 		}
 	});

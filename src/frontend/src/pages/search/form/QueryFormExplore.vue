@@ -22,7 +22,7 @@
 							hideEmpty
 							allowHtml
 
-							:options="corporaGroupByOptions"
+							:options="metadataGroupByOptions"
 							v-model="corporaGroupBy"
 						/>
 					</div>
@@ -73,7 +73,7 @@
 							data-width="100%"
 							hideEmpty
 
-							:options="ngramAnnotationOptions"
+							:options="annotationGroupByOptions"
 
 							v-model="ngramType"
 						/>
@@ -85,7 +85,7 @@
 						<SelectPicker
 							data-width="100%"
 
-							:options="ngramAnnotationOptions"
+							:options="annotationSearchOptions"
 							:disabled="index >= ngramSize"
 							:value="token.id"
 							placeholder="Property"
@@ -135,7 +135,7 @@
 						data-width="100%"
 						hideEmpty
 
-						:options="frequencyAnnotationOptions"
+						:options="annotationGroupByOptions"
 
 						v-model="frequencyType"
 					/>
@@ -202,18 +202,24 @@ export default Vue.extend({
 			set: ExploreStore.actions.corpora.groupDisplayMode,
 		},
 
-		ngramAnnotationOptions(): Option[] {
+		annotationSearchOptions(): Option[] {
 			const annotations = CorpusStore.get.annotationDisplayNames();
-			return UIStore.getState().explore.shownAnnotationIds.map(id => ({
+			return UIStore.getState().explore.searchAnnotationIds.map(id => ({
 				value: id,
 				label: annotations[id]
 			}));
 		},
-
-		corporaGroupByOptions(): OptGroup[] {
+		annotationGroupByOptions(): Option[] {
+			const annotations = CorpusStore.get.annotationDisplayNames();
+			return UIStore.getState().results.shared.groupAnnotationIds.map(id => ({
+				value: id,
+				label: annotations[id]
+			}));
+		},
+		metadataGroupByOptions(): OptGroup[] {
 			const metas = CorpusStore.get.allMetadataFieldsMap();
 			const groups = CorpusStore.getState().metadataFieldGroups;
-			const shownMetaIds = UIStore.getState().explore.shownMetadataFieldIds;
+			const shownMetaIds = UIStore.getState().results.shared.groupMetadataIds;
 			return selectPickerMetadataOptions(shownMetaIds, metas, groups, 'Group');
 		},
 		corporaGroupDisplayModeOptions(): string[] {
@@ -221,10 +227,7 @@ export default Vue.extend({
 			return ['table', 'docs', 'tokens'];
 		},
 
-		frequencyAnnotationOptions(): Option[] { return this.ngramAnnotationOptions; },
-
 		mainTokenTextDirection: CorpusStore.get.textDirection,
-
 	},
 	methods: {
 		updateTokenAnnotation(index: number, id: string) {

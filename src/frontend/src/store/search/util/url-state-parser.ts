@@ -174,7 +174,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 			let fromPattern = true; // is interface state actually from the pattern, or from the default fallback?
 			if (this.simplePattern && !hasFilters && !hasGapValue) {
 				ui.patternMode = 'simple';
-			} else if ((Object.keys(this.annotationValues).length > 0) && !hasGapValue) {
+			} else if ((Object.keys(this.extendedPattern.annotationValues).length > 0) && !hasGapValue) {
 				ui.patternMode = 'extended';
 			} else if (this.advancedPattern && !hasGapValue) {
 				ui.patternMode = 'advanced';
@@ -281,12 +281,15 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 		}
 
 		// Alright, seems we're all good.
+		// const defaultNgramSearchAnnotation = ExploreModule.
+		const defaultNgramTokenAnnotation = ExploreModule.defaults.ngram.tokens[0].id;
 		return {
 			groupAnnotationId: annotationId,
 			maxSize: ExploreModule.defaults.ngram.maxSize,
 			size: cql.tokens.length,
 			tokens: cql.tokens.map(t => ({
-				id: t.expression ? (t.expression as Attribute).name : CorpusModule.get.firstMainAnnotation().id,
+				// when expression is undefined, the token was just '[]' in the query, so set it to defaults.
+				id: t.expression ? (t.expression as Attribute).name : defaultNgramTokenAnnotation,
 				value: t.expression ? makeRegexWildcard((t.expression as Attribute).value) : '',
 			})),
 		};
@@ -454,13 +457,13 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	@memoize
 	private get simplePattern(): string|null {
 		// Simple view is just a single annotation without any within query or filters
+		// NOTE: do not use extendedPattern, as the annotation used for simple may not be available for extended searching!				
 		const vals = Object.values(this.annotationValues);
 		const within = this.within;
 
 		if (within == null && vals.length === 1 && vals[0].id === CorpusModule.get.firstMainAnnotation().id && !vals[0].case) {
 			return vals[0].value;
 		}
-		// TODO fix that we don't force firstmainannotation, but instead use the ui module - same for the ngrams
 
 		return null;
 	}

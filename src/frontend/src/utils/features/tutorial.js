@@ -1,4 +1,4 @@
-import '../../vendor/pageguide.min.js';
+import '@/vendor/pageguide.min.js';
 
 import $ from 'jquery';
 

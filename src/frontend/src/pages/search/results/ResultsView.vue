@@ -157,7 +157,7 @@ import {debugLog} from '@/utils/debug';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import cloneDeep from 'clone-deep';
-import { selectPickerAnnotationOptions, selectPickerMetadataOptions } from '../../../utils';
+import { selectPickerAnnotationOptions, selectPickerMetadataOptions } from '@/utils';
 
 export default Vue.extend({
 	components: {

@@ -10,7 +10,7 @@ import VTooltip from 'v-tooltip';
 
 import Filters from '@/components/filters';
 
-import {QueryBuilder, QueryBuilderOptionsDef} from '@/modules/cql_querybuilder';
+import {QueryBuilder, QueryBuilderOptionsDef, AttributeDef as QueryBuilderAttributeDef} from '@/modules/cql_querybuilder';
 import * as RootStore from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus';
 import * as UIStore from '@/store/search/ui';
@@ -26,6 +26,8 @@ import SearchPageComponent from '@/pages/search/SearchPage.vue';
 import {debugLog} from '@/utils/debug';
 
 import '@/global.scss';
+import { MapOf, multimapReduce } from '@/utils';
+import { Option } from '@/types/apptypes';
 
 const connectJqueryToPage = () => {
 	$('input[data-persistent][id != ""], input[data-persistent][data-pid != ""]').each(function(i, elem) {
@@ -58,16 +60,28 @@ const connectJqueryToPage = () => {
 function initQueryBuilder() {
 	debugLog('Begin initializing querybuilder');
 
-	const ui = UIStore.getState();
+	const annots = CorpusStore.get.allAnnotationsMap();
+	const defaultAnnot = UIStore.getState().search.advanced.defaultSearchAnnotationId;
+	const groupOrder = CorpusStore.get.annotationGroups().map(g => g.name);
+	const groupsMap = multimapReduce(
+		UIStore.getState().search.advanced.searchAnnotationIds.map(id => annots[id][0]) as Array<Required<CorpusStore.NormalizedAnnotation>>,
+		'groupId',
+		(annotation): QueryBuilderAttributeDef => ({
+			attribute: annotation.id,
+			label: annotation.displayName,
+			caseSensitive: annotation.caseSensitive,
+			textDirection: annotation.isMainAnnotation ? CorpusStore.get.textDirection() : undefined,
+			values: annotation.values,
+		})
+	);
 
-	// Remove overlap in the lists
-	const annotIds = new Set([...ui.explore.searchAnnotationIds, ...CorpusStore.get.shownAnnotations().map(a => a.id)]);
-	// allAnnotations() is sorted correctly already :)
-	const annots = CorpusStore.get.allAnnotations().filter(a => annotIds.has(a.id));
-	const defaultAnnot = annotIds.has(CorpusStore.get.firstMainAnnotation().id) ? CorpusStore.get.firstMainAnnotation().id : annots[0].id;
+	const sortedGroupsArray = Object.entries(groupsMap)
+	.map(([groupname = 'Other', options]) => ({groupname, options}))
+	.sort(({groupname: a}, {groupname: b}) => a !== 'Other' ? groupOrder.indexOf(a) - groupOrder.indexOf(b) : 1);
 
-	const withinOptions = ui.search.extended.within.elements;
+	const qbAttributesConfig = sortedGroupsArray.length > 1 ? sortedGroupsArray : sortedGroupsArray.flatMap(g => g.options);
 
+	const withinOptions = UIStore.getState().search.extended.within.elements;
 	// Initialize configuration
 	const instance = new QueryBuilder($('#querybuilder'), {
 		queryBuilder: {
@@ -78,14 +92,7 @@ function initQueryBuilder() {
 		attribute: {
 			view: {
 				// Pass the available properties of tokens in this corpus (PoS, Lemma, Word, etc..) to the querybuilder
-				attributes: annots.map((annotation): QueryBuilderOptionsDef['attribute']['view']['attributes'][number] => ({
-					attribute: annotation.id,
-					label: annotation.displayName,
-					caseSensitive: annotation.caseSensitive,
-					textDirection: annotation.isMainAnnotation ? CorpusStore.get.textDirection() : undefined,
-					values: annotation.values,
-				})),
-
+				attributes: qbAttributesConfig,
 				defaultAttribute: defaultAnnot,
 			}
 		}

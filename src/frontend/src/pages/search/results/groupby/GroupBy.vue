@@ -62,7 +62,7 @@ import * as UIStore from '@/store/search/ui';
 import SelectPicker, {OptGroup, Option} from '@/components/SelectPicker.vue';
 import ContextGroup from '@/pages/search/results/groupby/ContextGroup.vue';
 import UID from '@/mixins/uid';
-import { mapReduce, MapOf, selectPickerAnnotationOptions, selectPickerMetadataOptions } from '../../../../utils';
+import { mapReduce, MapOf, selectPickerAnnotationOptions, selectPickerMetadataOptions } from '@/utils';
 
 const CONTEXT_ENABLED_STRING = '_enable_context';
 

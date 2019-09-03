@@ -143,8 +143,8 @@
 <script lang="ts">
 import Vue from 'vue';
 import JsonStableStringify from 'json-stable-stringify';
-import { mapReduce } from '../utils';
-import { debugLog } from '../utils/debug';
+import { mapReduce } from '@/utils';
+import { debugLog } from '@/utils/debug';
 
 export type SimpleOption = string;
 

@@ -261,18 +261,18 @@ type KeysOfType<Base, Condition> = keyof Pick<Base, {
 	[Key in keyof Base]: Base[Key] extends Condition ? Key : never
 }[keyof Base]>;
 
-export function makeMapReducer<T, V extends (t: T) => any = (t: T) => T>(k: KeysOfType<T, string>, m?: V): (m: MapOf<ReturnType<V>>, t: T) => MapOf<ReturnType<V>> {
-	return (acc: MapOf<ReturnType<V>>, v: T): MapOf<ReturnType<V>> => {
+export function makeMapReducer<T, V extends (t: T, i: number) => any = (t: T, i: number) => T>(k: KeysOfType<T, string>, m?: V): (m: MapOf<ReturnType<V>>, t: T, i: number) => MapOf<ReturnType<V>> {
+	return (acc: MapOf<ReturnType<V>>, v: T, i: number): MapOf<ReturnType<V>> => {
 		const kv = v[k] as any as string;
-		acc[kv] = m ? m(v) : v;
+		acc[kv] = m ? m(v, i) : v;
 		return acc;
 	};
 }
 
-export function makeMultimapReducer<T, V extends (t: T) => any = (t: T) => T>(k: KeysOfType<T, string>, m?: V): (m: MapOf<Array<ReturnType<V>>>, t: T) => MapOf<Array<ReturnType<V>>> {
-	return (acc: MapOf<Array<ReturnType<V>>>, v: T): MapOf<Array<ReturnType<V>>> => {
+export function makeMultimapReducer<T, V extends (t: T, i: number) => any = (t: T, i: number) => T>(k: KeysOfType<T, string>, m?: V): (m: MapOf<Array<ReturnType<V>>>, t: T, i: number) => MapOf<Array<ReturnType<V>>> {
+	return (acc: MapOf<Array<ReturnType<V>>>, v: T, i: number): MapOf<Array<ReturnType<V>>> => {
 		const kv = v[k] as any as string;
-		acc[kv] ? acc[kv].push(m ? m(v) : v) : acc[kv] = [m ? m(v) : v];
+		acc[kv] ? acc[kv].push(m ? m(v, i) : v) : acc[kv] = [m ? m(v, i) : v];
 		return acc;
 	};
 }
@@ -283,7 +283,7 @@ export function makeMultimapReducer<T, V extends (t: T) => any = (t: T) => T>(k:
  * @param k a key in the objects to use as key in the map.
  * @param m (optional) a mapping function to apply to values.
  */
-export function mapReduce<T, V extends (t: T) => any = (t: T) => T>(t: T[]|undefined|null, k: KeysOfType<T, string>, m?: V): MapOf<ReturnType<V>> {
+export function mapReduce<T, V extends (t: T, i: number) => any = (t: T, i: number) => T>(t: T[]|undefined|null, k: KeysOfType<T, string>, m?: V): MapOf<ReturnType<V>> {
 	return t ? t.reduce(makeMapReducer<T>(k, m), {}) : {};
 }
 
@@ -295,7 +295,7 @@ export function mapReduce<T, V extends (t: T) => any = (t: T) => T>(t: T[]|undef
  * @param k a key in the objects to use as key in the map.
  * @param m (optional) a mapping function to apply to values.
  */
-export function multimapReduce<T, V extends (t: T) => any = (t: T) => T>(t: T[]|undefined|null, k: KeysOfType<T, string>, m?: V): MapOf<Array<ReturnType<V>>> {
+export function multimapReduce<T, V extends (t: T, i: number) => any = (t: T, i: number) => T>(t: T[]|undefined|null, k: KeysOfType<T, string>, m?: V): MapOf<Array<ReturnType<V>>> {
 	return t ? t.reduce(makeMultimapReducer<T>(k, m), {}) : {};
 }
 

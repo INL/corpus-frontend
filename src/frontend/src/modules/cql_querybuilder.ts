@@ -956,6 +956,19 @@ export class Attribute {
 			setValue(this.element.find('[data-attribute-type="' + additionalSelector + '"]')
 				.find('[data-attribute-role="case"]'), val);
 		} else if (controlName === 'val') {
+			// correct value casing (if applicable)
+			const ourSettings = this.builder.settings.attribute.view.attributes.find(a => a.attribute === additionalSelector);
+			if (ourSettings && !ourSettings.caseSensitive && ourSettings.values && ourSettings.values.length) {
+				const caseMap = ourSettings.values.reduce<{[k: string]: string}>((acc, v) => {
+					acc[v.value.toLowerCase()] = v.value;
+					return acc;
+				}, {});
+
+				val = [val]
+					.flat()
+					.filter((v): v is string => typeof v === 'string')
+					.map(v => caseMap[v.toLowerCase()] || v);
+			}
 			setValue(this.element.find('[data-attribute-type="' + additionalSelector + '"]')
 				.find('[data-attribute-role="value"]'), val);
 		} else if (this.$controls[controlName]) {

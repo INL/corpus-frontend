@@ -32,7 +32,7 @@ export function escapeLucene(original: string, preserveWildcards: boolean) {
 	if (!preserveWildcards || original.match(/\s+/)) {
 		return `"${original.replace(/"/g, '\\$1')}"`;
 	}
-	return original.replace(/(\+|-|&&|\|\||!|\(|\)|{|}|\[|]|\^|"|~|:|\\)/g, '\\$1');
+	return original.replace(/(\+|-|&&|\|\||!|\(|\)|{|}|\[|]|\^|"|~|:|\\|\/)/g, '\\$1');
 }
 
 /** Unescapes every lucene special character including double quotes, except wildcards */
@@ -41,7 +41,7 @@ export function unescapeLucene(original: string) {
 		return original.substr(1, original.length - 2).replace(/\\(")/g, '$1');
 	}
 
-	return original.replace(/\\(\+|-|&&|\|\||!|\(|\)|{|}|\[|]|\^|"|~|:|\\|\*|\?)/g, '$1');
+	return original.replace(/\\(\+|-|&&|\|\||!|\(|\)|{|}|\[|]|\^|"|~|:|\\|\/|\*|\?)/g, '$1');
 }
 
 export function NaNToNull(n: number) { return isNaN(n) ? null : n; }

@@ -26,7 +26,6 @@ import SearchPageComponent from '@/pages/search/SearchPage.vue';
 import {debugLog} from '@/utils/debug';
 
 import '@/global.scss';
-import { CombinedVueInstance } from 'vue/types/vue';
 
 const connectJqueryToPage = () => {
 	$('input[data-persistent][id != ""], input[data-persistent][data-pid != ""]').each(function(i, elem) {
@@ -59,14 +58,23 @@ const connectJqueryToPage = () => {
 function initQueryBuilder() {
 	debugLog('Begin initializing querybuilder');
 
+	const ui = UIStore.getState();
+
 	// Remove overlap in the lists
-	const annotIds = new Set([...UIStore.getState().explore.shownAnnotationIds, ...CorpusStore.get.shownAnnotations().map(a => a.id)]);
+	const annotIds = new Set([...ui.explore.shownAnnotationIds, ...CorpusStore.get.shownAnnotations().map(a => a.id)]);
 	// allAnnotations() is sorted correctly already :)
 	const annots = CorpusStore.get.allAnnotations().filter(a => annotIds.has(a.id));
 	const defaultAnnot = annotIds.has(CorpusStore.get.firstMainAnnotation().id) ? CorpusStore.get.firstMainAnnotation().id : annots[0].id;
 
+	const withinOptions = ui.search.extended.within.elements;
+
 	// Initialize configuration
 	const instance = new QueryBuilder($('#querybuilder'), {
+		queryBuilder: {
+			view: {
+				withinSelectOptions: withinOptions
+			}
+		},
 		attribute: {
 			view: {
 				// Pass the available properties of tokens in this corpus (PoS, Lemma, Word, etc..) to the querybuilder
@@ -78,7 +86,7 @@ function initQueryBuilder() {
 					values: annotation.values,
 				})),
 
-				defaultAttribute: defaultAnnot
+				defaultAttribute: defaultAnnot,
 			}
 		}
 	});

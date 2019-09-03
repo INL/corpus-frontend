@@ -160,6 +160,9 @@ const actions = {
 								originalAnnotation.values.findIndex(v => v.value === b.value) :
 							0
 						);
+						if (originalAnnotation.uiType === 'text') {
+							originalAnnotation.uiType = 'select';
+						}
 					});
 				});
 			});

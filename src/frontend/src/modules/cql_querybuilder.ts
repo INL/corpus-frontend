@@ -54,119 +54,134 @@ import '@/modules/cql_querybuilder.scss';
 const templates = {
 
 	queryBuilder: {
-		template:
-			'<div class="bl-token-container">' +
-				'{{>createTokenButton}}' +
-			'</div>' +
-			'{{>withinSelect}}' +
-			'{{>modalEditor}}',
+		template: `
+			<div class="bl-token-container">
+				{{>createTokenButton}}
+			</div>
+			{{>withinSelect}}
+			{{>modalEditor}}
+		`,
 
 		partials: {
-			createTokenButton:
-				'<button type="button" class="btn btn-primary bl-token-create bl-prevent-sort" title="Insert another token"><span class="glyphicon glyphicon-plus"></span></button>',
+			createTokenButton: `
+				<button type="button" class="btn btn-primary bl-token-create bl-prevent-sort" title="Insert another token"><span class="glyphicon glyphicon-plus"></span></button>
+			`,
 
-			modalEditor:
-				'<div class="bl-modal-editor modal fade" tabindex="-1" role="dialog">' +
-					'<div class="modal-dialog" role="document">' +
-						'<div class="modal-content">' +
-							'<div class="modal-header">' +
-								'<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>' +
-								'<h4 class="modal-title">Edit</h4>' +
-							'</div>' +
-							'<div class="modal-body">' +
-								'<textarea class="form-control" rows="10" style="width:100%;overflow:auto;resize:none;white-space:pre;"></textarea>' +
-							'</div>' +
-							'<div class="modal-footer">' +
-								'<button type="button" class="btn btn-primary pull-left" data-dismiss="modal" data-discard-value>Clear</button>' +
-								'<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>' +
-								'<button type="button" class="btn btn-primary" data-dismiss="modal" data-save-edits>Save changes</button>' +
-							'</div>' +
-						'</div>' +
-					'</div>' +
-				'</div>',
+			modalEditor: `
+				<div class="bl-modal-editor modal fade" tabindex="-1" role="dialog">
+					<div class="modal-dialog" role="document">
+						<div class="modal-content">
+							<div class="modal-header">
+								<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+								<h4 class="modal-title">Edit</h4>
+							</div>
+							<div class="modal-body">
+								<textarea class="form-control" rows="10" style="width:100%;overflow:auto;resize:none;white-space:pre;"></textarea>
+							</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-primary pull-left" data-dismiss="modal" data-discard-value>Clear</button>
+								<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+								<button type="button" class="btn btn-primary" data-dismiss="modal" data-save-edits>Save changes</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			`,
 
-			withinSelect:
-				'<label>Within:</label>' +
-				'<div class="btn-group bl-within-select clearfix" data-toggle="buttons" id="within_select" style="display:block;">' +
-					'{{#withinSelectOptions}}' +
-						'<label class="btn btn-default">' +
-							'<input type="radio" autocomplete="off" name="within" value="{{value}}">{{label}}' +
-						'</label>' +
-					'{{/withinSelectOptions}}' +
-				'</div>',
+			withinSelect: `
+				<label>Within:</label>
+				<div class="btn-group bl-within-select clearfix" data-toggle="buttons" id="within_select" style="display:block;">
+					{{#withinSelectOptions}}
+						<label class="btn btn-default">
+							<input type="radio" autocomplete="off" name="within" value="{{value}}">{{label}}
+						</label>
+					{{/withinSelectOptions}}
+				</div>
+			`,
 		},
 	},
 
 	token: {
-		template:
-			'<div class="panel panel-primary bl-token" id="{{currentId}}">' +
-				'{{>head_root}}' +
-				'{{>body_root}}' +
-			'</div>',
+		template: `
+			<div class="panel panel-primary bl-token" id="{{currentId}}">
+				{{>head_root}}
+				{{>body_root}}
+			</div>
+		`,
 
 		partials: {
-			head_root:
-				'<div class="panel-heading clearfix">' +
-					'{{>head_handle}}' +
-					'{{>head_deleteButton}}' +
-					'{{>head_cqlPreview}}' +
-				'</div>',
-			head_handle:
-				'<span class="glyphicon glyphicon-resize-horizontal bl-sort-handle" style="margin-right:5px;" title="Drag here to move this token"></span>',
-			head_deleteButton:
-				'<button type="button" class="close" area-label="delete" title="remove token"><span aria-hidden="true">&times;</span></button>',
+			head_root: `
+				<div class="panel-heading clearfix">
+					{{>head_handle}}
+					{{>head_deleteButton}}
+					{{>head_cqlPreview}}
+				</div>
+			`,
+			head_handle: `
+				<span class="glyphicon glyphicon-resize-horizontal bl-sort-handle" style="margin-right:5px;" title="Drag here to move this token"></span>
+			`,
+			head_deleteButton: `
+				<button type="button" class="close" area-label="delete" title="remove token"><span aria-hidden="true">&times;</span></button>
+			`,
 
-			head_cqlPreview:
-				'<span id="{{currentId}}_cql_preview">Generated cql will appear here.</span>',
+			head_cqlPreview: `
+				<span id="{{currentId}}_cql_preview">Generated cql will appear here.</span>
+			`,
 
-			body_root:
-				'<div class="panel-body" id="{{currentId}}_panel_body">' +
-					'{{>body_tab_header}}' +
-					'{{>body_tab_container}}' +
-				'</div>',
+			body_root: `
+				<div class="panel-body" id="{{currentId}}_panel_body">
+					{{>body_tab_header}}
+					{{>body_tab_container}}
+				</div>
+			`,
 
-			body_tab_header:
-				'<ul class="nav nav-tabs">' +
-					'<li class="active"><a data-toggle="tab" href="#{{currentId}}_tab_attributes">search</a></li>' +
-					'<li><a data-toggle="tab" href="#{{currentId}}_tab_properties">options</a></li>' +
-				'</ul>',
-			body_tab_container:
-				'<div class="tab-content">' +
-					'{{>body_tab_attributes}}' +
-					'{{>body_tab_properties}}' +
-				'</div>',
+			body_tab_header: `
+				<ul class="nav nav-tabs">
+					<li class="active"><a data-toggle="tab" href="#{{currentId}}_tab_attributes">search</a></li>
+					<li><a data-toggle="tab" href="#{{currentId}}_tab_properties">options</a></li>
+				</ul>
+			`,
+			body_tab_container: `
+				<div class="tab-content">
+					{{>body_tab_attributes}}
+					{{>body_tab_properties}}
+				</div>
+			`,
 
-			body_tab_attributes:
-				'<div id="{{currentId}}_tab_attributes" class="tab-pane active" style="padding: 25px 15px;">' +
-				'</div>',
+			body_tab_attributes: `
+				<div id="{{currentId}}_tab_attributes" class="tab-pane active" style="padding: 25px 15px;">
+				</div>
+			`,
 
-			body_tab_properties:
-				'<div id="{{currentId}}_tab_properties" class="tab-pane" style="padding: 10px 15px 25px 15px;">' +
-					'<div class="checkbox">' +
-						'<label title="Token is optional"><input type="checkbox" id="{{currentId}}_property_optional">Optional</label>' +
-					'</div>' +
-					'<div class="checkbox">' +
-						'<label title="Token must occur at beginning of sentence"><input type="checkbox" id="{{currentId}}_property_sentence_start">Begin of sentence</label>' +
-					'</div>' +
-					'<div class="checkbox">' +
-						'<label title="Token must occur at end of sentence"><input type="checkbox" id="{{currentId}}_property_sentence_end">End of sentence</label>' +
-					'</div>' +
-					'<div class="input-group" style="width:318px;">' +
-						'<span class="input-group-addon">repeats</span>' +
-						'<input type="text" class="form-control" value="1" id="{{currentId}}_property_repeats_min">' +
-						'<span class="input-group-addon" style="border-left-width:0px; border-right-width:0px;">to</span>' +
-						'<input type="text" class="form-control" value="1" id="{{currentId}}_property_repeats_max">' +
-						'<span class="input-group-addon">times</span>' +
-					'</div>' +
-				'</div>'
+			body_tab_properties: `
+				<div id="{{currentId}}_tab_properties" class="tab-pane" style="padding: 10px 15px 25px 15px;">
+					<div class="checkbox">
+						<label title="Token is optional"><input type="checkbox" id="{{currentId}}_property_optional">Optional</label>
+					</div>
+					<div class="checkbox">
+						<label title="Token must occur at beginning of sentence"><input type="checkbox" id="{{currentId}}_property_sentence_start">Begin of sentence</label>
+					</div>
+					<div class="checkbox">
+						<label title="Token must occur at end of sentence"><input type="checkbox" id="{{currentId}}_property_sentence_end">End of sentence</label>
+					</div>
+					<div class="input-group" style="width:318px;">
+						<span class="input-group-addon">repeats</span>
+						<input type="text" class="form-control" value="1" id="{{currentId}}_property_repeats_min">
+						<span class="input-group-addon" style="border-left-width:0px; border-right-width:0px;">to</span>
+						<input type="text" class="form-control" value="1" id="{{currentId}}_property_repeats_max">
+						<span class="input-group-addon">times</span>
+					</div>
+				</div>
+			`,
 		}
 	},
 
 	attributeGroup: {
-		template:
-			'<div class="well bl-token-attribute-group" id="{{currentId}}">' +
-				'{{>create_attribute_dropdown}}'+
-			'</div>',
+		template: `
+			<div class="well bl-token-attribute-group" id="{{currentId}}">
+				{{>create_attribute_dropdown}}
+			</div>
+		`,
 		partials: {}
 	},
 
@@ -262,26 +277,28 @@ const templates = {
 	},
 
 	operatorLabel: {
-		template:
-			'<div class="bl-token-attribute-group-label">' +
-				'{{label}}' +
-			'</div>',
+		template: `
+			<div class="bl-token-attribute-group-label">
+				{{label}}
+			</div>
+		`,
 
 		partials: {}
 	},
 
 	shared: {
 		partials: {
-			create_attribute_dropdown:
-				'<div class="dropup bl-create-attribute-dropdown">' +
-					'<button type="button" class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown" title="Add another attribute"><span class="glyphicon glyphicon-plus"></span>&#8203;</button>' +
-					'<ul class="dropdown-menu">' +
-						'{{#operators}}' +
-						'<li><a href="#" onclick="$(this).trigger(\'cql:attribute:create\', { operator: \'{{operator}}\', operatorLabel: \'{{label}}\' }); return false;">'+
-							'<span class="glyphicon glyphicon-plus-sign text-success"></span> {{label}}</a></li>'+
-						'{{/operators}}'+
-					'</ul>'+
-				'</div>',
+			create_attribute_dropdown: `
+				<div class="dropup bl-create-attribute-dropdown">
+					<button type="button" class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown" title="Add another attribute"><span class="glyphicon glyphicon-plus"></span>&#8203;</button>
+					<ul class="dropdown-menu">
+						{{#operators}}
+						<li><a href="#" onclick="$(this).trigger('cql:attribute:create', { operator: '{{operator}}', operatorLabel: '{{label}}' }); return false;">
+							<span class="glyphicon glyphicon-plus-sign text-success"></span> {{label}}</a></li>
+						{{/operators}}
+					</ul>
+				</div>
+			`,
 		}
 	}
 };

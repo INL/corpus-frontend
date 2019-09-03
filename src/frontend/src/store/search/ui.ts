@@ -514,9 +514,17 @@ const init = () => {
 		// explicitly retrieve this annotations as it's supposed to be internal and thus not included in any getters.
 		const fields = allAnnotationsMap.starttag;
 		const annot = fields ? fields[0] : undefined;
-		const validValues = annot ? annot.values : [];
+		const validValues = cloneDeep(annot && annot.values ? annot.values : []);
+		validValues.forEach(v => {
+			if (!v.label.trim()) {
+				if (v.value === 'p') { v.label = 'paragraph'; }
+				else if (v.value === 's') { v.label = 'sentence'; }
+				else if (!v.value) { v.label = 'document'; }
+				else { v.label = v.value; }
+			}
+		});
 
-		if (validValues) {
+		if (validValues.length) {
 			if (validValues.length <= 6) { // an arbitrary limit
 				initialState.search.extended.within.elements = cloneDeep(validValues);
 			} else {

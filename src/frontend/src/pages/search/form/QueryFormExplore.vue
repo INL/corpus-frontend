@@ -93,15 +93,34 @@
 
 							@change="updateTokenAnnotation(index, $event /* custom component - custom event values */)"
 						/>
-						<input
-							class="form-control"
-							type="text"
+						<input v-if="!token.annotation" type="text" disabled title="Please select an annotation to edit." class="form-control" :value="token.value">
+						<SelectPicker v-else-if="token.annotation.uiType === 'select' || (token.annotation.uiType === 'pos' && token.annotation.values)"
+							data-width="100%"
+							data-class="btn btn-default"
 
+							:searchable="token.annotation.values.length > 12"
+							:placeholder="token.annotation.displayName"
+							:data-dir="token.annotation.isMainAnnotation ? mainTokenTextDirection : undefined"
+							:options="token.annotation.values"
 							:disabled="index >= ngramSize"
-							:value="token.value"
-							:dir="token.annotation.isMainAnnotation ? mainTokenTextDirection : undefined"
 
-							@change="updateTokenValue(index, $event.target.value /* native component - native event */)"
+							:value="token.value"
+							@change="updateTokenValue(index, $event)"
+						/>
+
+						<Autocomplete v-else
+							type="text"
+							class="form-control"
+
+							:placeholder="token.annotation.displayName"
+							:dir="token.annotation.isMainAnnotation ? mainTokenTextDirection : undefined"
+							:disabled="index >= ngramSize"
+
+							:autocomplete="token.annotation.uiType === 'combobox'"
+							:url="autocompleteUrl(token.annotation)"
+
+							:value="token.value"
+							@change="updateTokenValue(index, $event)"
 						/>
 					</div>
 				</div>
@@ -135,11 +154,14 @@ import * as ExploreStore from '@/store/search/form/explore';
 import * as UIStore from '@/store/search/ui';
 
 import SelectPicker, {Option, OptGroup} from '@/components/SelectPicker.vue';
-import { selectPickerMetadataOptions } from '../../../utils';
+import Autocomplete from '@/components/Autocomplete.vue';
+import { selectPickerMetadataOptions } from '@/utils';
+import { paths } from '@/api';
 
 export default Vue.extend({
 	components: {
-		SelectPicker
+		SelectPicker,
+		Autocomplete
 	},
 	computed: {
 		exploreMode: {
@@ -158,9 +180,10 @@ export default Vue.extend({
 		},
 
 		ngramTokens() {
+			const allAnnotations = CorpusStore.get.allAnnotationsMap();
 			return ExploreStore.get.ngram.tokens().map(tok => ({
 				...tok,
-				annotation: CorpusStore.get.allAnnotationsMap()[tok.id][0]
+				annotation: allAnnotations[tok.id] ? allAnnotations[tok.id][0] : null
 			}));
 		},
 		ngramSizeMax: ExploreStore.get.ngram.maxSize,
@@ -214,11 +237,12 @@ export default Vue.extend({
 				index,
 				token: { value }
 			});
+		},
+		autocompleteUrl(annot: CorpusStore.NormalizedAnnotation) {
+			return paths.autocompleteAnnotation(CorpusStore.getState().id, annot.annotatedFieldId, annot.id);
 		}
 	},
 	created() {
-		this.corporaGroupBy = `field:${UIStore.getState().explore.defaultMetadataFieldId}`;
-		this.ngramType = UIStore.getState().explore.defaultAnnotationId;
 		this.corporaGroupDisplayMode = this.corporaGroupDisplayModeOptions[0];
 	}
 });
@@ -240,7 +264,8 @@ export default Vue.extend({
 		margin-left: 15px;
 	}
 
-	> .form-control {
+	> .form-control,
+	> .combobox {
 		margin-top: 8px;
 	}
 }

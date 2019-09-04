@@ -6,7 +6,7 @@
 	>
 		<label class="col-xs-12" :for="inputId">{{displayName}}</label>
 		<div class="col-xs-4">
-			<input type="text"
+			<input type="number"
 				placeholder="From"
 				class="form-control"
 				autocomplete="off"
@@ -18,7 +18,7 @@
 			>
 		</div>
 		<div class="col-xs-4">
-			<input type="text"
+			<input type="number"
 				placeholder="To"
 				class="form-control"
 				autocomplete="off"
@@ -201,7 +201,7 @@ export default BaseFilter.extend({
 			return this.value.low && this.value.high ? `(${lf}:[${ll} TO ${lh}] ${op} ${hf}:[${hl} TO ${hh}])` : null;
 		},
 		luceneQuerySummary(): string|null {
-			return this.luceneQuery;
+			return this.luceneQuery ? `${this.value.low.padStart(4, '0')}-${this.value.high.padStart(4, '0')}` : null;
 		}
 	},
 	methods: {

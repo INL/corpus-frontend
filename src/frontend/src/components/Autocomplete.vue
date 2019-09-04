@@ -73,7 +73,7 @@ export default Vue.extend({
 					'ui-autocomplete': 'dropdown-menu'
 				},
 				source(params: any, render: (v: string[]) => void) {
-					const {value} = self._getWordAroundCursor();
+					const {value} = self._getWordAroundCursor(false);
 					if (!value.length) {
 						return;
 					} else if (value === lastSearchValue) {
@@ -114,7 +114,10 @@ export default Vue.extend({
 		},
 		_destroyAutocomplete() { $(this.$el).autocomplete('destroy'); },
 		_refreshList(e: Event) { if (!this.autocomplete) { return; } $(e.target as HTMLElement).autocomplete('search'); },
-		_getWordAroundCursor(): {start: number, end: number, value: string} {
+		/**
+		 * @param lookForward select until next whitespace, or only look back
+		 */
+		_getWordAroundCursor(lookForward: boolean): {start: number, end: number, value: string} {
 			const input = this.$el as HTMLInputElement;
 			if (input.value.length > 100) {
 				return {value : '', start: 0, end: input.value.length};
@@ -126,9 +129,10 @@ export default Vue.extend({
 
 			if (start === end) { // just a caret; no selection, find whitespace boundaries around cursor
 				start = input.value.lastIndexOf(' ', start-1)+1;
-				end = input.value.indexOf(' ', end);
-
-				if (end === -1) { end = input.value.length; }
+				if (lookForward) {
+					end = input.value.indexOf(' ', end);
+					if (end === -1) { end = input.value.length; }
+				}
 			}
 
 			const value = input.value.substring(start, end);
@@ -138,7 +142,7 @@ export default Vue.extend({
 			const input = this.$el as HTMLInputElement;
 			const value = input.value;
 
-			const {start, end}: {start: number; end: number;} = this._getWordAroundCursor();
+			const {start, end}: {start: number; end: number;} = this._getWordAroundCursor(true);
 
 			input.value = value.substring(0, start) + v + value.substring(end);
 			input.selectionStart = start+v.length+1;

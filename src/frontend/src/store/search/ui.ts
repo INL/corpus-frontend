@@ -557,26 +557,13 @@ const init = () => {
 	if (!initialState.results.shared.groupMetadataIds.length) {
 		actions.results.shared.groupMetadataIds(allShownMetadataFields.map(f => f.id));
 	}
-
 	if (!initialState.search.advanced.searchAnnotationIds.length) {
 		actions.search.advanced.searchAnnotationIds(allShownAnnotations.map(a => a.id));
-	}
-	if (!initialState.search.advanced.defaultSearchAnnotationId) {
-		actions.search.advanced.defaultSearchAnnotationId(initialState.search.advanced.searchAnnotationIds.includes(mainAnnotation) ? mainAnnotation : (initialState.search.advanced.searchAnnotationIds[0] || ''));
 	}
 	if (!initialState.explore.searchAnnotationIds.length) {
 		actions.explore.searchAnnotationIds(allShownAnnotations.map(a => a.id));
 	}
-	if (!initialState.explore.defaultSearchAnnotationId) {
-		actions.explore.defaultSearchAnnotationId(initialState.explore.searchAnnotationIds.includes(mainAnnotation) ? mainAnnotation : (initialState.explore.searchAnnotationIds[0] || ''));
-	}
-
-	if (!initialState.explore.defaultGroupAnnotationId) {
-		actions.explore.defaultGroupAnnotationId(initialState.results.shared.groupAnnotationIds.includes(mainAnnotation) ? mainAnnotation : (initialState.results.shared.groupAnnotationIds[0] || ''));
-	}
-	if (!initialState.explore.defaultGroupMetadataId) {
-		actions.explore.defaultGroupMetadataId(initialState.results.shared.groupMetadataIds[0] || '');
-	}
+	// Default selections for the above lists are set automatically.
 
 	// Initialize shown annotations for results
 	// Use PROPS_IN_COLUMNS if configured

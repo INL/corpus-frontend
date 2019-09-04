@@ -53,7 +53,7 @@ type ExtendedFilter = {
 	id: string;
 	values: string[];
 	displayName: string;
-}
+};
 
 export default Vue.extend({
 	filters: {

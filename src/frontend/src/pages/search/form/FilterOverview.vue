@@ -3,7 +3,7 @@
 		<div v-for="filter in activeFilters" :key="filter.id">
 			{{filter.displayName}}: <i>{{filter.summary}}</i>
 		</div>
-		<div v-for="filter in activeFilters" :key="filter.id + '_lucene'">{{filter.displayName}}: <i>{{filter.lucene}}</i></div>
+		<!-- <div v-for="filter in activeFilters" :key="filter.id + '_lucene'">{{filter.displayName}}: <i>{{filter.lucene}}</i></div> -->
 
 		<div class="sub-corpus-size">
 			<template v-if="error">

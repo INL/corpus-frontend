@@ -53,6 +53,7 @@ const get = {
 	/** Last submitted properties, these are already filtered to remove empty values, etc */
 	activeAnnotations: b.read(state => Object.values(state.extended.annotationValues)/*.flatMap(f => Object.values(f))*/.filter(p => !!p.value), 'activeAnnotations'),
 
+	/** Get the annotation's search value in the extended form */
 	annotationValue(annotatedFieldId: string, id: string) {
 		return getState().extended.annotationValues/*[annotatedFieldId]*/[id];
 	},

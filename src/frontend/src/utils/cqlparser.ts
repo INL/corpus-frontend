@@ -156,7 +156,8 @@ export default function(input: string, defaultAttribute = DEFAULT_ATTRIBUTE): Re
 		const name = until('=', '!').trim(); // This should really be "until anything BUT a-zA-z" but eh
 		const operator = until('"').trim();
 		expect('"', true); // keep all whitespace after the opening quote
-		const value = until('"'); // don't trim whitespace
+		let value = '';
+		do {if (value) { value +='"'; ++pos; } value += until('"');} while (value.endsWith('\\')); // don't trim whitespace, ignore escaped quotes
 		expect('"', true); // also keep all whitespace before and after the quote
 		while (test(...WHITESPACE)) { nextSym(); } // skip whitespace after quote.
 
@@ -214,7 +215,8 @@ export default function(input: string, defaultAttribute = DEFAULT_ATTRIBUTE): Re
 			}
 		} else { // shorthand is just a single word
 			expect('"');
-			const word = until('"');
+			let word = '';
+			do {if (word) { word +='"'; ++pos; } word += until('"');} while (word.endsWith('\\')); // don't trim whitespace, ignore escaped quotes
 			expect('"');
 
 			token.expression = {

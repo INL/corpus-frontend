@@ -7,7 +7,7 @@ import cloneDeep from 'clone-deep';
 
 import {RootState} from '@/store/search/';
 import * as UIStore from '@/store/search/ui'; // Is initialized before we are.
-import {makeWildcardRegex} from '@/utils';
+import {escapeRegex} from '@/utils';
 
 type Token = {
 	/** Annotation ID */
@@ -80,7 +80,7 @@ const get = {
 		groupBy: b.read(state => `hit:${state.ngram.groupAnnotationId}`, 'ngram_groupBy'),
 		patternString: b.read(state => state.ngram.tokens
 			.slice(0, state.ngram.size)
-			.map(({id, value}) => id && value ? `[${id}="${makeWildcardRegex(value)}"]` : '[]')
+			.map(({id, value}) => id && value ? `[${id}="${escapeRegex(value, false)}"]` : '[]')
 			.join('')
 		, 'ngram_patternString')
 	},

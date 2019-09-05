@@ -4,20 +4,32 @@ import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
 import { FilterState, FullFilterState } from '@/store/search/form/filters';
 
-export function makeWildcardRegex(original: string) {
-	return original
-		.replace(/([\^$\-\\.(){}[\]+])/g, '\\$1') // add slashes for regex characters
-		.replace(/\*/g, '.*') // * -> .*
-		.replace(/\?/g, '.'); // ? -> .
+export function escapeRegex(original: string, wildcardSupport: boolean) {
+	original = original.replace(/([\^$\-\\.(){}[\]+])/g, '\\$1'); // add slashes for regex characters
+
+	if (wildcardSupport) {
+		return original
+			.replace(/\*/g, '.*') // * -> .*
+			.replace(/\?/g, '.'); // ? -> .
+	} else {
+		return original
+			.replace(/([\*\?])/g, '\\$1');
+	}
 }
 
-export function makeRegexWildcard(original: string) {
-	return original
-	.replace(/\\([\^$\-\\(){}[\]+])/g, '$1') // remove most slashes
-	.replace(/\\\./g, '_ESC_PERIOD_') // escape \.
-	.replace(/\.\*/g, '*') // restore *
-	.replace(/\./g, '?') // restore ?
-	.replace(/_ESC_PERIOD_/g, '.'); // unescape \. to .
+export function unescapeRegex(original: string, wildcardSupport: boolean) {
+	original = original.replace(/\\([\^$\-\\(){}[\]+])/g, '$1'); // remove most slashes
+
+	if (wildcardSupport) {
+		return original
+		.replace(/\\\./g, '_ESC_PERIOD_') // escape \.
+		.replace(/\.\*/g, '*') // restore *
+		.replace(/\./g, '?') // restore ?
+		.replace(/_ESC_PERIOD_/g, '.'); // unescape \. to .
+	} else {
+		return original
+		.replace(/\\([\.\?\*])/g, '$1') // restore \. \? \*
+	}
 }
 
 /**
@@ -96,78 +108,6 @@ export function words(context: BLTypes.BLHitSnippetPart, prop: string, doPunctBe
  */
 export function getFilterString(filters: FilterState[]): string|undefined {
 	return filters.map(f => f.lucene).filter(lucene => !!lucene).join(' AND ') || undefined;
-
-	// const filterStrings = [] as string[];
-
-	// for (const filter of filters) {
-	// 	if (!filter.values.length) {
-	// 		continue;
-	// 	}
-
-	// 	if (filterStrings.length) {
-	// 		filterStrings.push(' AND ');
-	// 	}
-
-	// 	switch (filter.type) {
-	// 		case 'range': {
-	// 			// NOTE: range filter has hidden defaults for unset field (min, max), see https://github.com/INL/corpus-frontend/issues/234
-	// 			filterStrings.push(filter.id, ':', '[', filter.values[0] || '0', ' TO ', filter.values[1] || '9999', ']');
-	// 			break;
-	// 		}
-	// 		case 'select':
-	// 		case 'checkbox':
-	// 		case 'radio': {
-	// 			// Values for these uiTypes are predetermined (i.e. user can't type in these fields)
-	// 			// So copy out the values without wildcard substitution or regex escaping.
-	// 			// Surround each individual values with quotes, and surround the total with brackets
-	// 			filterStrings.push(filter.id, ':', '("', filter.values.join('" "'), '")');
-	// 			break;
-	// 		}
-	// 		case 'text':
-	// 		case 'combobox': {
-	// 			const resultParts = [] as string[];
-
-	// 			filter.values.forEach(value => {
-	// 				const quotedParts = value.split(/"/);
-	// 				let inQuotes = false;
-	// 				for (let part of quotedParts) {
-	// 					if (inQuotes && part.match(/\s+/)) {
-	// 						// Inside quotes and containing whitespace.
-	// 						// Preserve the quotes, they will implicitly escape every special character inside the string
-	// 						// NOTE: wildcards do not work for phrases anyway. (https://lucene.apache.org/core/2_9_4/queryparsersyntax.html#Wildcard%20Searches)
-	// 						resultParts.push(' "');
-	// 						resultParts.push(part);
-	// 						resultParts.push('"');
-	// 					} else {
-	// 						// Outside quotes. Split on whitespace and escape (excluding wildcards) the strings
-	// 						// This means wildcards are preserved.
-	// 						// NOTE: we need to account for this by checking whether any term contains whitespace
-	// 						// while deserializing the lucene query, and reverse this escaping.
-	// 						// This is done in UrlStateParser
-	// 						part = part.trim();
-	// 						if (part.length > 0) {
-	// 							// resultParts.push(' "');
-	// 							resultParts.push(...part.split(/\s+/).map(escapeLucene));
-	// 							// resultParts.push(part.split(/\s+/).join('" "'));
-	// 							// resultParts.push('" ');
-	// 						}
-	// 					}
-	// 					inQuotes = !inQuotes;
-	// 				}
-	// 			});
-
-	// 			filterStrings.push(filter.id, ':', '(' + resultParts.join('').trim(), ')');
-	// 			break;
-	// 		}
-	// 		default: {
-	// 			// This should never happen unless new uiTypes are added
-	// 			// in which case, maybe the values need to be handled in a special way
-	// 			throw new Error('Unimplemented value serialization for metadata filter uiType ' + filter.type + '!');
-	// 		}
-	// 	}
-	// }
-
-	// return filterStrings.join('') || undefined;
 }
 
 // NOTE: range filter has hidden defaults for unset field (min, max), see https://github.com/INL/corpus-frontend/issues/234
@@ -176,9 +116,42 @@ export const getFilterSummary = (filters: FullFilterState[]): string|undefined =
 	.map(f => `${f.displayName}: ${f.summary}`)
 	.join(', ') || undefined;
 
-export const getFilterSummaryOld = (filters: AppTypes.FilterValue[]) => filters
-	.map(({id, type, values}) =>
-		`${id} = [${type==='range'?`${values[0] || '0'} to ${values[1] || '9999'}`:values.join(', ')}]`).join(', ');
+export const decodeAnnotationValue = (value: string|string[], type: Required<AppTypes.AnnotationValue>['type']): {case: boolean; value: string} => {
+	function isCase(v: string) { return v.startsWith('(?-i)') || v.startsWith('(?c)'); }
+	function stripCase(v: string) { return v.substr(v.startsWith('(?-i)') ? 5 : 4); }
+	switch (type) {
+		case 'text':
+		case 'combobox': {
+			let caseSensitive = false;
+			const annotationValue = [value].flat().map(v => {
+				if (isCase(v)) {
+					v = stripCase(v);
+					caseSensitive = true;
+				}
+				v = unescapeRegex(v, true).replace(/\\"/g, '"');
+				// Only surround with quotes when we're joining multiple values into one string and this sub-value contains whitespace
+				return Array.isArray(value) && v.match(/\s+/) ? `"${v}"` : v;
+			}).join(' ');
+
+			return {
+				case: caseSensitive,
+				value: annotationValue
+			};
+		}
+		case 'select': {
+			value = Array.isArray(value) ? value[0] : value;
+			const caseSensitive = isCase(value);
+			value = caseSensitive ? stripCase(value) : value;
+			value = unescapeRegex(value, false).replace(/\\"/g, '"');
+			return {
+				case: caseSensitive,
+				value
+			};
+		}
+		case 'pos': // pos is handled separately (url-state-parser)
+		default: throw new Error('Unimplemented uitype query decoder');
+	}
+};
 
 export const getPatternString = (annotations: AppTypes.AnnotationValue[], within: null|string) => {
 	const tokens = [] as string[][];
@@ -186,21 +159,38 @@ export const getPatternString = (annotations: AppTypes.AnnotationValue[], within
 	annotations.forEach(({id, case: caseSensitive, value, type}) => {
 		switch (type) {
 			case 'pos': {
-				const arr = (tokens[0] = tokens[0] || []);
-				arr.push(value); // already valid cql, no escaping or wildcard substitution.
+				// already valid cql, no escaping or wildcard substitution.
+				(tokens[0] = tokens[0] || []).push(value);
 				return;
 			}
-			case 'select':
+			case 'select': {
+				const arr = (tokens[0] = tokens[0] || []);
+				arr.push(`${id}="${escapeRegex(value.trim(), false).replace(/"/g, '\\"')}"`);
+				return;
+			}
 			case 'text':
 			case 'combobox': {
-				value
-				.replace(/"/g, '')
+				// if multiple tokens, split on quotes (removing them), and whitespace outside quotes, and then transform the values individually
+				let resultParts = value
 				.trim()
-				.split(/\s+/)
-				.filter(v => !!v)
-				.forEach((word, i) => {
+				.split(/"/)
+				.flatMap((v, i) => {
+					if (!v) {
+						return [];
+					}
+					const inQuotes = (i % 2) !== 0;
+					// alrighty,
+					// "split word" behind another few --> ["split word", "behind", "another", "few"]
+					// "wild* in split words" and such --> ["wild.* in split words", "and", "such"]
+					return inQuotes ? escapeRegex(v, true) : v.split(/\s+/).filter(s => !!s).map(val => escapeRegex(val, true));
+				});
+				if (caseSensitive) {
+					resultParts = resultParts.map(v => `(?-i)${v}`);
+				}
+
+				resultParts.forEach((word, i) => {
 					const arr = (tokens[i] = tokens[i] || []);
-					arr.push(`${id}="${(caseSensitive ? '(?-i)' : '') + makeWildcardRegex(word)}"`);
+					arr.push(`${id}="${word}"`);
 				});
 				return;
 			}

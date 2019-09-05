@@ -30,7 +30,7 @@ import * as PatternModule from '@/store/search/form/patterns';
 import * as FilterModule from '@/store/search/form/filters';
 import * as ExploreModule from '@/store/search/form/explore';
 import * as GapModule from '@/store/search/form/gap';
-import { getFilterString, getPatternString, makeWildcardRegex, getFilterSummary } from '@/utils';
+import { getFilterString, getPatternString, getFilterSummary } from '@/utils';
 
 type ModuleRootStateSearch<K extends keyof PatternModule.ModuleRootState> = {
 	form: 'search';
@@ -86,7 +86,8 @@ const get = {
 					const stateHelper = state as ModuleRootStateExplore<'ngram'>;
 					return stateHelper.formState.tokens
 						.slice(0, stateHelper.formState.size)
-						.map(({id, value}) => id && value ? `[${id}="${makeWildcardRegex(value)}"]` : '[]')
+						// type select because we only ever want to output one cql token per n-gram input
+						.map(token => getPatternString([{...token, case: false, type: 'select'}], null))
 						.join('');
 				}
 				default: throw new Error('Unknown submitted form ' + state.subForm + ' - cannot generate cql query');

@@ -10,7 +10,7 @@ import VTooltip from 'v-tooltip';
 
 import Filters from '@/components/filters';
 
-import {QueryBuilder, QueryBuilderOptionsDef, AttributeDef as QueryBuilderAttributeDef} from '@/modules/cql_querybuilder';
+import {QueryBuilder, AttributeDef as QueryBuilderAttributeDef} from '@/modules/cql_querybuilder';
 import * as RootStore from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus';
 import * as UIStore from '@/store/search/ui';
@@ -26,8 +26,7 @@ import SearchPageComponent from '@/pages/search/SearchPage.vue';
 import {debugLog} from '@/utils/debug';
 
 import '@/global.scss';
-import { MapOf, multimapReduce } from '@/utils';
-import { Option } from '@/types/apptypes';
+import { multimapReduce } from '@/utils';
 
 const connectJqueryToPage = () => {
 	$('input[data-persistent][id != ""], input[data-persistent][data-pid != ""]').each(function(i, elem) {
@@ -74,9 +73,8 @@ function initQueryBuilder() {
 			values: annotation.values,
 		})
 	);
-
 	const sortedGroupsArray = Object.entries(groupsMap)
-	.map(([groupname = 'Other', options]) => ({groupname, options}))
+	.map(([groupname, options]) => ({groupname: groupname !== 'undefined' ? groupname : 'Other', options}))
 	.sort(({groupname: a}, {groupname: b}) => a !== 'Other' ? groupOrder.indexOf(a) - groupOrder.indexOf(b) : 1);
 
 	const qbAttributesConfig = sortedGroupsArray.length > 1 ? sortedGroupsArray : sortedGroupsArray.flatMap(g => g.options);

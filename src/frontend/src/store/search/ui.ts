@@ -501,6 +501,7 @@ const actions = {
 		configureAnnotations: createConfigurator({
 			'SORT':        ['results', 'shared', 'sortAnnotationIds'],
 			'GROUP':       ['results', 'shared', 'groupAnnotationIds'],
+			'ADVANCED':    ['search', 'advanced', 'searchAnnotationIds'],
 			'EXPLORE':     ['explore', 'searchAnnotationIds'],
 			'RESULTS':     ['results', 'hits', 'shownAnnotationIds'],
 			'CONCORDANCE': ['results', 'shared', 'detailedAnnotationIds'],

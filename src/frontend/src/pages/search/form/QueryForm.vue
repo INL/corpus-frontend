@@ -107,6 +107,9 @@ export default Vue.extend({
 					return;
 				}
 			}
+			if (document.activeElement) {
+				(document.activeElement as HTMLInputElement).blur();
+			}
 			RootStore.actions.searchFromSubmit();
 		}
 	},

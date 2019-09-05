@@ -5,7 +5,7 @@ import memoize from 'memoize-decorator';
 import BaseUrlStateParser from '@/store/util/url-state-parser-base';
 import LuceneQueryParser from 'lucene-query-parser';
 
-import {makeRegexWildcard, mapReduce, MapOf} from '@/utils';
+import {mapReduce, MapOf, decodeAnnotationValue} from '@/utils';
 import parseCql, {Attribute} from '@/utils/cqlparser';
 import parseLucene from '@/utils/luceneparser';
 import {debugLog} from '@/utils/debug';
@@ -250,6 +250,8 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	 */
 	@memoize
 	private get ngrams(): null|ExploreModule.ModuleRootState['ngram'] {
+		const allAnnotations = CorpusModule.get.allAnnotationsMap();
+
 		if (this.groupByAdvanced.length || this.groupBy.length === 0) {
 			return null;
 		}
@@ -259,8 +261,8 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 			return null;
 		}
 
-		const annotationId = group.substring(4);
-		if (!CorpusModule.get.annotationDisplayNames().hasOwnProperty(annotationId)) {
+		const groupAnnotationId = group.substring(4);
+		if (!allAnnotations[groupAnnotationId]) {
 			return null;
 		}
 
@@ -281,17 +283,21 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 		}
 
 		// Alright, seems we're all good.
-		// const defaultNgramSearchAnnotation = ExploreModule.
 		const defaultNgramTokenAnnotation = ExploreModule.defaults.ngram.tokens[0].id;
 		return {
-			groupAnnotationId: annotationId,
+			groupAnnotationId,
 			maxSize: ExploreModule.defaults.ngram.maxSize,
 			size: cql.tokens.length,
-			tokens: cql.tokens.map(t => ({
-				// when expression is undefined, the token was just '[]' in the query, so set it to defaults.
-				id: t.expression ? (t.expression as Attribute).name : defaultNgramTokenAnnotation,
-				value: t.expression ? makeRegexWildcard((t.expression as Attribute).value) : '',
-			})),
+			tokens: cql.tokens.map(t => {
+				const valueAnnotationId = t.expression ? (t.expression as Attribute).name : defaultNgramTokenAnnotation;
+				const type = allAnnotations[valueAnnotationId][0].uiType;
+
+				return {
+					// when expression is undefined, the token was just '[]' in the query, so set it to defaults.
+					id: valueAnnotationId,
+					value: t.expression ? decodeAnnotationValue((t.expression as Attribute).value, type).value : '',
+				};
+			}),
 		};
 	}
 
@@ -331,9 +337,6 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 
 	@memoize
 	private get annotationValues(): {[key: string]: AnnotationValue} {
-		function isCase(value: string) { return value.startsWith('(?-i)') || value.startsWith('(?c)'); }
-		function stripCase(value: string) { return value.substr(value.startsWith('(?-i)') ? 5 : 4); }
-
 		// How we parse the cql pattern depends on whether a tagset is available for this corpus, and whether it's enabled in the ui
 		if (!(TagsetModule.getState().state === 'loaded' || TagsetModule.getState().state === 'disabled')) {
 			throw new Error('Attempting to parse url before tagset is loaded or disabled, await tagset.awaitInit() before parsing url.');
@@ -366,7 +369,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 			 *
 			 * Store the values here while parsing.
 			 */
-			const knownAnnotations = CorpusModule.get.annotationDisplayNames();
+			const knownAnnotations = CorpusModule.get.allAnnotationsMap();
 
 			const annotationValues: {[key: string]: string[]} = {};
 			for (let i = 0; i < result.tokens.length; ++i) {
@@ -421,11 +424,10 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 				}
 			}
 
-			/**
-			 * Build the actual PropertyFields.
-			 * Convert from regex back into pattern globs, extract case sensitivity.
-			 */
-			return Object.entries(annotationValues).map<AnnotationValue>(([id, values]) => {
+			// Now we have extracted all raw cql-escaped values for all annotations, and validated the shape of the query
+			// decode the values back into their textual representation (i.e. without regex escaping joined back into a single string and such)
+			const decodedValues = Object.entries(annotationValues).map(([id, values]) => {
+				const annot = knownAnnotations[id][0];
 				if (tagsetInfo && tagsetInfo.mainAnnotations.includes(id)) {
 					// use value as-is, already contains cql and should not have wildcards substituted.
 					debugLog('Mapping tagset annotation back to cql: ' + id + ' with values ' + values);
@@ -437,17 +439,12 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 					};
 				}
 
-				const caseSensitive = values.every(isCase);
-				if (caseSensitive) {
-					values = values.map(stripCase);
-				}
 				return {
 					id,
-					case: caseSensitive,
-					value: makeRegexWildcard(values.join(' '))
-				} as AnnotationValue;
-			})
-			.reduce((acc, v) => {acc[v.id] = v; return acc;}, {} as {[key: string]: AnnotationValue});
+					...decodeAnnotationValue(values, annot.uiType)
+				};
+			});
+			return mapReduce(decodedValues, 'id');
 		} catch (error) {
 			debugLog('Cql query could not be placed in extended view', error);
 			return {};
@@ -457,7 +454,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	@memoize
 	private get simplePattern(): string|null {
 		// Simple view is just a single annotation without any within query or filters
-		// NOTE: do not use extendedPattern, as the annotation used for simple may not be available for extended searching!				
+		// NOTE: do not use extendedPattern, as the annotation used for simple may not be available for extended searching!
 		const vals = Object.values(this.annotationValues);
 		const within = this.within;
 

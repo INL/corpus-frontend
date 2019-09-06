@@ -68,6 +68,7 @@
 			<SelectPicker
 				data-class="btn-sm btn-default"
 				placeholder="Sort by..."
+				data-menu-width="grow"
 
 				allowHtml
 				hideDisabled

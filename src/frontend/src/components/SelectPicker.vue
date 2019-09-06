@@ -59,9 +59,11 @@
 		</button>
 
 		<!-- NOTE: might not actually be a child of root element at runtime! Event handling is rather specific -->
-		<ul class="combobox-menu" v-show="isOpen && !(editable && !filteredOptions.length)"
+		<ul v-show="isOpen && !(editable && !filteredOptions.length)"
 			:data-menu-id="menuId"
 			:dir="dir"
+			:class="['combobox-menu', computedMenuClass]"
+			:style="[{width: computedMenuWidth}, computedMenuStyle]"
 
 			@keydown.prevent.stop.esc="$refs.focusOnEscClose.focus(); close(); /* order is important */"
 			@keydown.prevent.stop.down="focusDown"
@@ -233,6 +235,19 @@ export default Vue.extend({
 		'data-id': String,
 		'data-name': String,
 		'data-title': String,
+		/**
+		 * Controls the width of the dropdown menu
+		 * - stretch: grow and shrink with the input
+		 * - shrink: exactly fit menu content, but shrink with input if that is smaller
+		 * - grow: exactly fit menu content, but grow with input if that is larger
+		 * - anything else: used as css-value ('auto' works!)
+		 */
+		'data-menu-width': {
+			type: String as any as () => 'stretch'|'shrink'|'grow'|string,
+			default: 'stretch'
+		},
+		/** Right-align the dropdown menu, only when menuWidth != 'stretch' */
+		right: Boolean
 	},
 	data: () =>  ({
 		isOpen: false,
@@ -247,7 +262,9 @@ export default Vue.extend({
 		// (as container might be a parent element that hasn't fully mounted yet when we init)
 		containerEl: null as null|HTMLElement,
 
-		uid: nextMenuId++
+		uid: nextMenuId++,
+
+		computedMenuStyle: null as null|Partial<CSSStyleDeclaration>,
 	}),
 	computed: {
 		menuId(): string { return this.$attrs.id != null ? this.$attrs.id : `combobox-${this.uid}`; },
@@ -356,6 +373,13 @@ export default Vue.extend({
 		///////////////
 
 		displayValues(): string[] { return Object.values(this.internalModel).map(v => v.label || v.value); },
+		computedMenuWidth(): string|undefined { return ['grow', 'shrink', 'stretch'].includes((this as any).dataMenuWidth) ? undefined : (this as any).dataMenuWidth || undefined; },
+		computedMenuClass(): any {
+			return {
+				[(this as any).dataMenuWidth]: ['grow', 'shrink', 'stretch'].includes((this as any).dataMenuWidth),
+				right: this.right
+			};
+		},
 	},
 	methods: {
 		open(focusEl?: HTMLElement): void {
@@ -394,18 +418,56 @@ export default Vue.extend({
 		reposition(): void {
 			if (!this.containerEl) { return; }
 
+			let widthMode = this['data-menu-width'];
+			(widthMode as any) = (this as any).dataMenuWidth;
+
 			const menu = this.$refs.menu as HTMLElement;
 			const container = this.containerEl!;
 
-			const {left: containerLeft, top: containerTop} = container.getBoundingClientRect();
-			const {left: ownLeft, bottom: ownBottom, top: ownTop} = this.$el.getBoundingClientRect();
+			const {left: containerLeft, top: containerTop, right: containerRight} = container.getBoundingClientRect();
+			const {left: ownLeft, bottom: ownBottom, top: ownTop, right: ownRight} = this.$el.getBoundingClientRect();
 
 			const width = (this.$el as HTMLElement).offsetWidth;
-			const left = ownLeft - containerLeft;
 			const top = ownBottom - containerTop;
+			let left = ownLeft - containerLeft;
 
-			menu.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
-			menu.style.width = width + 'px';
+			const s = this.computedMenuStyle = {} as Partial<CSSStyleDeclaration>;
+			if (widthMode === 'stretch') {
+				s.width =  width + 'px';
+				s.maxWidth = '';
+				s.minWidth = '';
+			} else if (widthMode === 'shrink') {
+				s.width = 'auto';
+				s.maxWidth = width + 'px';
+				s.minWidth = '';
+			} else if (widthMode === 'grow') {
+				s.width = 'auto';
+				s.maxWidth = '';
+				s.minWidth = width + 'px';
+			} else {
+				s.width = widthMode;
+				s.maxWidth = '';
+				s.minWidth = '';
+			}
+
+			// blech, retrieve menu dimenstions, taking care to apply the inheritance from the input element first
+			if (this.right && widthMode !== 'stretch') {
+				let rect: ClientRect;
+				Object.assign(menu.style, s);
+				if (menu.style.display === 'none') {
+					menu.style.display = '';
+					rect = menu.getBoundingClientRect();
+					menu.style.display = 'none';
+				} else {
+					rect = menu.getBoundingClientRect();
+				}
+
+				const menuWidth = rect.width;
+
+				left = ownRight - menuWidth;
+			}
+
+			s.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
 		},
 		focusDown(): void {this.focusOffset(1); },
 		focusUp(): void { this.focusOffset(-1); },
@@ -758,7 +820,30 @@ export default Vue.extend({
 		}
 	}
 
-	>.combobox-menu { top: auto; }
+	>.combobox-menu {
+		top: auto;
+
+		&.stretch {
+			width: 100%;
+			min-width: none;
+			max-width: none;
+		}
+		&.shrink {
+			width: auto;
+			max-width: 100%;
+			min-width: none;
+		}
+		&.grow {
+			width: auto;
+			max-width: none;
+			min-width: 100%;
+		}
+
+		&.right {
+			left: unset;
+			right: 0;
+		}
+	}
 }
 
 .combobox-menu {
@@ -769,14 +854,16 @@ export default Vue.extend({
 	font-size: 14px;
 	left: 0;
 	margin-top: 3px;
-	max-width: 100%;
-	min-width: 150px;
+	// max-width: none;
+	// min-width: 100%;
 	overflow-y: auto;
 	padding: 5px 0;
 	position: absolute;
 	top: 0;
-	width: 100%;
+	// width: auto;
 	z-index: 1000;
+
+
 
 	text-align: left;
 	&[dir="rtl"] {

@@ -84,6 +84,7 @@
 					<div v-for="(token, index) in ngramTokens" :key="index" class="n-gram-token">
 						<SelectPicker
 							data-width="100%"
+							data-menu-width="grow"
 
 							:options="annotationSearchOptions"
 							:disabled="index >= ngramSize"
@@ -97,6 +98,7 @@
 						<SelectPicker v-else-if="token.annotation.uiType === 'select' || (token.annotation.uiType === 'pos' && token.annotation.values)"
 							data-width="100%"
 							data-class="btn btn-default"
+							data-menu-width="grow"
 
 							:searchable="token.annotation.values.length > 12"
 							:placeholder="token.annotation.displayName"

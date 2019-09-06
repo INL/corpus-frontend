@@ -8,6 +8,7 @@
 				allowUnknownValues
 				data-class="btn-sm btn-default"
 				data-width="275px"
+				data-menu-width="grow"
 				:data-style="{
 					borderTopRightRadius: contextEnabled ? 0 : undefined,
 					borderBottomRightRadius: contextEnabled ? 0 : undefined,

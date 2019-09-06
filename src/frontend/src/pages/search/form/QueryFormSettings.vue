@@ -31,6 +31,7 @@
 										class="input-group-btn"
 										data-id="sampleMode"
 										data-name="sampleMode"
+										data-menu-width="grow"
 
 										hideEmpty
 										:options="sampleModeOptions"

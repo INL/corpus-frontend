@@ -75,7 +75,7 @@ function initQueryBuilder() {
 	);
 	const sortedGroupsArray = Object.entries(groupsMap)
 	.map(([groupname, options]) => ({groupname: groupname !== 'undefined' ? groupname : 'Other', options}))
-	.sort(({groupname: a}, {groupname: b}) => a !== 'Other' ? groupOrder.indexOf(a) - groupOrder.indexOf(b) : 1);
+	.sort(({groupname: a}, {groupname: b}) => a === 'Other' ? 1 : b === 'Other' ? -1 : groupOrder.indexOf(a) - groupOrder.indexOf(b));
 
 	const qbAttributesConfig = sortedGroupsArray.length > 1 ? sortedGroupsArray : sortedGroupsArray.flatMap(g => g.options);
 

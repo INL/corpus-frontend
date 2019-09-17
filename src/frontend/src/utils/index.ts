@@ -157,6 +157,10 @@ export const decodeAnnotationValue = (value: string|string[], type: Required<App
 export const getAnnotationPatternString = (annotation: AppTypes.AnnotationValue): string[] => {
 	const {id, case: caseSensitive, value, type} = annotation;
 
+	if (!value.trim()) {
+		return [''];
+	}
+
 	switch (type) {
 		case 'pos':
 			// already valid cql, no escaping or wildcard substitution.

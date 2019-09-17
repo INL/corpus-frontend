@@ -28,7 +28,7 @@ export function unescapeRegex(original: string, wildcardSupport: boolean) {
 		.replace(/_ESC_PERIOD_/g, '.'); // unescape \. to .
 	} else {
 		return original
-		.replace(/\\([\.\?\*])/g, '$1') // restore \. \? \*
+		.replace(/\\([\.\?\*])/g, '$1'); // restore . ? *
 	}
 }
 
@@ -121,6 +121,7 @@ export const decodeAnnotationValue = (value: string|string[], type: Required<App
 	function stripCase(v: string) { return v.substr(v.startsWith('(?-i)') ? 5 : 4); }
 	switch (type) {
 		case 'text':
+		case 'lexicon':
 		case 'combobox': {
 			let caseSensitive = false;
 			const annotationValue = [value].flat().map(v => {
@@ -153,50 +154,48 @@ export const decodeAnnotationValue = (value: string|string[], type: Required<App
 	}
 };
 
+export const getAnnotationPatternString = (annotation: AppTypes.AnnotationValue): string[] => {
+	const {id, case: caseSensitive, value, type} = annotation;
+
+	switch (type) {
+		case 'pos':
+			// already valid cql, no escaping or wildcard substitution.
+			return [value];
+		case 'select':
+			return [`${id}="${escapeRegex(value.trim(), false).replace(/"/g, '\\"')}"`];
+		case 'text':
+		case 'lexicon':
+		case 'combobox': {
+			// if multiple tokens, split on quotes (removing them), and whitespace outside quotes, and then transform the values individually
+			let resultParts = value
+			.trim()
+			.split(/"/)
+			.flatMap((v, i) => {
+				if (!v) {
+					return [];
+				}
+				const inQuotes = (i % 2) !== 0;
+				// alrighty,
+				// "split word" behind another few --> ["split word", "behind", "another", "few"]
+				// "wild* in split words" and such --> ["wild.* in split words", "and", "such"]
+				return inQuotes ? escapeRegex(v, true) : v.split(/\s+/).filter(s => !!s).map(val => escapeRegex(val, true));
+			});
+			if (caseSensitive) {
+				resultParts = resultParts.map(v => `(?-i)${v}`);
+			}
+
+			return resultParts.map(word => `${id}="${word}"`);
+		}
+		default: throw new Error('Unimplemented cql serialization for annotation type ' + type);
+	}
+};
+
 export const getPatternString = (annotations: AppTypes.AnnotationValue[], within: null|string) => {
 	const tokens = [] as string[][];
 
-	annotations.forEach(({id, case: caseSensitive, value, type}) => {
-		switch (type) {
-			case 'pos': {
-				// already valid cql, no escaping or wildcard substitution.
-				(tokens[0] = tokens[0] || []).push(value);
-				return;
-			}
-			case 'select': {
-				const arr = (tokens[0] = tokens[0] || []);
-				arr.push(`${id}="${escapeRegex(value.trim(), false).replace(/"/g, '\\"')}"`);
-				return;
-			}
-			case 'text':
-			case 'combobox': {
-				// if multiple tokens, split on quotes (removing them), and whitespace outside quotes, and then transform the values individually
-				let resultParts = value
-				.trim()
-				.split(/"/)
-				.flatMap((v, i) => {
-					if (!v) {
-						return [];
-					}
-					const inQuotes = (i % 2) !== 0;
-					// alrighty,
-					// "split word" behind another few --> ["split word", "behind", "another", "few"]
-					// "wild* in split words" and such --> ["wild.* in split words", "and", "such"]
-					return inQuotes ? escapeRegex(v, true) : v.split(/\s+/).filter(s => !!s).map(val => escapeRegex(val, true));
-				});
-				if (caseSensitive) {
-					resultParts = resultParts.map(v => `(?-i)${v}`);
-				}
-
-				resultParts.forEach((word, i) => {
-					const arr = (tokens[i] = tokens[i] || []);
-					arr.push(`${id}="${word}"`);
-				});
-				return;
-			}
-			default: throw new Error('Unimplemented cql serialization for annotation type ' + type);
-		}
-	});
+	annotations.forEach(annot => getAnnotationPatternString(annot).forEach((value, index) => {
+		(tokens[index] = tokens[index] || []).push(value);
+	}));
 
 	let query = tokens.map(t => `[${t.join('&')}]`).join('');
 	if (query.length > 0 && within) {
@@ -287,6 +286,17 @@ export function mapReduce<T, V extends (t: T, i: number) => any = (t: T, i: numb
  */
 export function multimapReduce<T, V extends (t: T, i: number) => any = (t: T, i: number) => T>(t: T[]|undefined|null, k: KeysOfType<T, string>, m?: V): MapOf<Array<ReturnType<V>>> {
 	return t ? t.reduce(makeMultimapReducer<T>(k, m), {}) : {};
+}
+
+export function filterDuplicates<T>(t: T[]|null|undefined, k: KeysOfType<T, string|number>): T[] {
+	const found = new Set<T[KeysOfType<T, string|number>]>();
+	return t ? t.filter(v => {
+		if (!found.has(v[k])) {
+			found.add(v[k]);
+			return true;
+		}
+		return false;
+	}) : [];
 }
 
 // --------------

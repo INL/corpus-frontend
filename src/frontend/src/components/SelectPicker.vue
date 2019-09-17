@@ -6,7 +6,16 @@
 		@keydown.prevent.down="focusDown"
 		@keydown.prevent.up="focusUp"
 	>
-		<input v-if="editable"
+		<input v-if="editable && multiple"
+			:class="dataClass || 'form-control'"
+			:style="dataStyle"
+			title="Editable and Multiple are not supported on the same selectpicker!"
+			value="Editable and Multiple are not supported on the same selectpicker!"
+			style="background-color: #f2dede; border-color: #ebccd1; color: #a94442;"
+
+			disabled
+		>
+		<input v-else-if="editable"
 			:class="['menu-input', dataClass || 'form-control']"
 			:id="dataId"
 			:name="dataName"
@@ -46,12 +55,17 @@
 
 			ref="focusOnEscClose"
 		>
-			<template v-if="displayValues.length">
+			<template v-if="displayValues.length && (showValues || !multiple)">
 				<span class="menu-value" v-if="allowHtml" v-html="displayValues.join(', ')"/>
 				<span class="menu-value" v-else :title="displayValues.join(',')">{{displayValues.join(', ')}}</span>
 			</template>
-			<span v-else class="menu-value placeholder">{{$attrs.placeholder || $attrs.title || 'Select a value...'}} </span>
+			<span v-else class="menu-value placeholder">
+				{{$attrs.placeholder || $attrs.title || (this.multiple ? 'Select values...' : 'Select a value...')}}
+			</span>
 			<span v-if="loading" class="menu-icon fa fa-spinner fa-spin text-muted"></span>
+			<span v-else-if="!showValues && multiple" :class="['menu-icon badge',{'active': displayValues.length}]">
+				{{displayValues.length || totalOptionCount}}
+			</span>
 			<span :class="['menu-icon', 'fa', 'fa-caret-down', {
 				//'fa-rotate-180': isOpen
 				'fa-flip-vertical': isOpen
@@ -77,7 +91,7 @@
 			<li class="menu-header">
 			<div v-if="loading && this.editable /* not visible in button when editable */" class="text-center">
 				<span class="fa fa-spinner fa-spin text-muted"></span>
-			</div><button v-if="resettable"
+			</div><button v-if="resettable && filteredOptions.length"
 				type="button"
 				class="btn btn-sm btn-default menu-reset"
 				tabindex="-1"
@@ -214,6 +228,8 @@ export default Vue.extend({
 		 * If false, immediately emit a change event with a corrected value prop
 		 */
 		allowUnknownValues: Boolean,
+		/** Show selected values in the selection button, only when multiple */
+		showValues: { type: Boolean, default: true },
 
 		// interface options, do not change interaction behavior
 		/** Text direction (for rtl support) */
@@ -369,6 +385,7 @@ export default Vue.extend({
 			})
 			.reverse();
 		},
+		totalOptionCount(): number { return this.uiOptions.filter(o => o.type === 1).length; },
 
 		///////////////
 
@@ -815,6 +832,12 @@ export default Vue.extend({
 			flex-shrink: 0;
 			flex-basis: auto;
 		}
+		>.badge {
+			background-color: #999;
+			&.active {
+				background-color: #333
+			}
+		}
 		>.menu-value {
 			flex-grow: 1;
 		}
@@ -862,8 +885,6 @@ export default Vue.extend({
 	top: 0;
 	// width: auto;
 	z-index: 1000;
-
-
 
 	text-align: left;
 	&[dir="rtl"] {

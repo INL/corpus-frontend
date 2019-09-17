@@ -30,7 +30,7 @@ import * as PatternModule from '@/store/search/form/patterns';
 import * as FilterModule from '@/store/search/form/filters';
 import * as ExploreModule from '@/store/search/form/explore';
 import * as GapModule from '@/store/search/form/gap';
-import { getFilterString, getPatternString, getFilterSummary } from '@/utils';
+import { getFilterString, getPatternString, getFilterSummary, escapeRegex } from '@/utils';
 
 type ModuleRootStateSearch<K extends keyof PatternModule.ModuleRootState> = {
 	form: 'search';
@@ -83,11 +83,18 @@ const get = {
 				case 'corpora': return undefined;
 				case 'frequency': return '[]';
 				case 'ngram': {
+					const annots = CorpusModule.get.allAnnotationsMap();
 					const stateHelper = state as ModuleRootStateExplore<'ngram'>;
+
 					return stateHelper.formState.tokens
 						.slice(0, stateHelper.formState.size)
 						// type select because we only ever want to output one cql token per n-gram input
-						.map(token => getPatternString([{...token, case: false, type: 'select'}], null))
+						.map(token => {
+							const tokenType = annots[token.id][0].uiType;
+							const correctedType = getCorrectUiType(uiTypeSupport.explore.ngram, tokenType);
+
+							return token.value ? `[${token.id}="${escapeRegex(token.value, correctedType !== 'select').replace(/"/g, '\\"')}"]` : '[]';
+						})
 						.join('');
 				}
 				default: throw new Error('Unknown submitted form ' + state.subForm + ' - cannot generate cql query');
@@ -100,16 +107,21 @@ const get = {
 				case 'simple': {
 					const pattern = (state as ModuleRootStateSearch<'simple'>).formState;
 					if (!pattern) { return undefined; }
+					const {id, uiType} = CorpusModule.get.firstMainAnnotation();
 					return getPatternString([{
 						case: false,
-						id: CorpusModule.get.firstMainAnnotation().id,
+						id,
 						value: pattern,
-						type: 'text'
+						type: getCorrectUiType(uiTypeSupport.search.simple, uiType)
 					}], null);
 				}
 				case 'extended': {
 					const pattern = (state as ModuleRootStateSearch<'extended'>).formState;
-					const annotations: AnnotationValue[] = Object.values(pattern.annotationValues).filter(annot => !!annot.value);
+					const annotations: AnnotationValue[] = cloneDeep(Object.values(pattern.annotationValues).filter(annot => !!annot.value))
+					.map(annot => ({
+						...annot,
+						type: getCorrectUiType(uiTypeSupport.search.extended, annot.type!)
+					}));
 					if (annotations.length === 0) { return undefined; }
 					return getPatternString(annotations, pattern.within);
 				}
@@ -144,6 +156,23 @@ const actions = {
 
 /** We need to call some function from the module before creating the root store or this module won't be evaluated (e.g. none of this code will run) */
 const init = () => {/**/};
+
+type UITypeArray = Array<CorpusModule.NormalizedAnnotation['uiType']>;
+// type ValueType = UITypeArray|{[key: string]: ValueType};
+
+export const uiTypeSupport: {[key: string]: {[key: string]: UITypeArray}} = {
+	search: {
+		simple: ['combobox', 'select', 'lexicon'],
+		extended: ['combobox', 'select', 'pos'],
+	},
+	explore: {
+		ngram: ['combobox', 'select']
+	}
+};
+
+export function getCorrectUiType<T extends CorpusModule.NormalizedAnnotation['uiType']>(allowed: T[], actual: T): T {
+	return allowed.includes(actual) ? actual : 'text' as any;
+}
 
 export {
 	ModuleRootState,

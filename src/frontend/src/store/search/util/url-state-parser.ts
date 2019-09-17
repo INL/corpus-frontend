@@ -14,6 +14,7 @@ import * as CorpusModule from '@/store/search/corpus';
 import * as UIModule from '@/store/search/ui';
 import * as HistoryModule from '@/store/search/history';
 import * as TagsetModule from '@/store/search/tagset';
+import * as QueryModule from '@/store/search/query';
 
 // Form
 import * as FilterModule from '@/store/search/form/filters';
@@ -290,7 +291,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 			size: cql.tokens.length,
 			tokens: cql.tokens.map(t => {
 				const valueAnnotationId = t.expression ? (t.expression as Attribute).name : defaultNgramTokenAnnotation;
-				const type = allAnnotations[valueAnnotationId][0].uiType;
+				const type = QueryModule.getCorrectUiType(QueryModule.uiTypeSupport.explore.ngram, allAnnotations[valueAnnotationId][0].uiType);
 
 				return {
 					// when expression is undefined, the token was just '[]' in the query, so set it to defaults.

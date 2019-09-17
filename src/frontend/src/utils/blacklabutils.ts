@@ -49,6 +49,7 @@ function normalizeAnnotationUIType(field: BLTypes.BLAnnotation): NormalizedAnnot
 	switch (uiType) {
 		case 'select': return field.values && field.valueListComplete ? 'select' : 'combobox';
 		case 'combobox':
+		case 'lexicon':
 		case 'pos':
 			return uiType;
 		default: return 'text';

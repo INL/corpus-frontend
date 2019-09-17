@@ -14,10 +14,15 @@
 					<label class="control-label"
 						:for="firstMainAnnotation.id + '_' + uid"
 						:title="firstMainAnnotation.description || undefined"
-					>{{firstMainAnnotation.	displayName}}
+					>{{firstMainAnnotation.displayName}}
 					</label>
 
-					<SelectPicker v-if="firstMainAnnotation.uiType === 'select'"
+					<Lexicon v-if="firstMainAnnotation.uiType === 'lexicon'"
+						:annotationId="firstMainAnnotation.id"
+						:definition="firstMainAnnotation"
+						v-model="simple"
+					/>
+					<SelectPicker v-else-if="firstMainAnnotation.uiType === 'select'"
 						data-width="100%"
 						data-class="btn btn-lg btn-default"
 
@@ -133,6 +138,7 @@ import * as HistoryStore from '@/store/search/history';
 import * as UIStore from '@/store/search/ui';
 
 import Annotation from '@/pages/search/form/Annotation.vue';
+import Lexicon from '@/pages/search/form/Lexicon.vue';
 import SelectPicker, { Option } from '@/components/SelectPicker.vue';
 // @ts-ignore
 import Autocomplete from '@/components/Autocomplete.vue';
@@ -148,7 +154,8 @@ export default Vue.extend({
 	components: {
 		Annotation,
 		Autocomplete,
-		SelectPicker
+		SelectPicker,
+		Lexicon
 	},
 	data: () => ({
 		parseQueryError: null as string|null,

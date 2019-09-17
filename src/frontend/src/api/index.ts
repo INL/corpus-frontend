@@ -53,7 +53,8 @@ export const paths = {
 		annotationId: string) =>                    `${blacklabEndpoint.defaults.baseURL}${indexId}/autocomplete/${annotatedFieldId}/${annotationId}/`,
 	autocompleteMetadata: (
 		indexId: string,
-		metadataFieldId: string) =>                 `${blacklabEndpoint.defaults.baseURL}${indexId}/autocomplete/${metadataFieldId}/`
+		metadataFieldId: string) =>                 `${blacklabEndpoint.defaults.baseURL}${indexId}/autocomplete/${metadataFieldId}/`,
+	termFrequencies: (indexId: string) =>            `${blacklabEndpoint.defaults.baseURL}${indexId}/termfreq/`,
 };
 
 /**
@@ -277,6 +278,14 @@ export const blacklab = {
 			hitstart,
 			hitend,
 			wordsaroundhit
+		}, requestParameters);
+	},
+
+	getTermFrequencies: (indexId: string, annotationId: string, values?: string[], filter?: string, requestParameters?: AxiosRequestConfig) => {
+		return getOrPost<BLTypes.BLTermOccurances>(paths.termFrequencies(indexId), {
+			annotation: annotationId,
+			filter,
+			terms: values && values.length ? values.join(',') : undefined,
 		}, requestParameters);
 	}
 };

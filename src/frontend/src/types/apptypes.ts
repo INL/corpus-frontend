@@ -32,7 +32,7 @@ export type NormalizedAnnotation = {
 	/** List of annotationIds in the same annotatedField, only present when the field has actual subAnnotations */
 	subAnnotations?: string[];
 	/** Based on the uiType of the original annotion, but select falls back to combobox if not all values are known */
-	uiType: 'select'|'combobox'|'text'|'pos';
+	uiType: 'select'|'combobox'|'text'|'pos'|'lexicon';
 	/** Contains all known values for this field. Undefined if no values known or list was incomplete. */
 	values?: Array<{value: string, label: string, title: string|null}>;
 };

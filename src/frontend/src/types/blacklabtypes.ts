@@ -433,6 +433,13 @@ export interface BLHitSnippet {
 	right: BLHitSnippetPart;
 }
 
+/** Contains occurance counts of terms in the index */
+export interface BLTermOccurances {
+	termFreq: {
+		[term: string]: number
+	};
+}
+
 /** Contains all metadata for a document */
 export type BLDocInfo = {
 	lengthInTokens: number;

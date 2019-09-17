@@ -112,7 +112,7 @@
 								<p v-if="citations[index].error" class="text-danger">
 									<span class="fa fa-exclamation-triangle"></span> {{citations[index].error}}
 								</p>
-								<p v-if="citations[index].citation">
+								<p v-else-if="citations[index].citation">
 									<AudioPlayer v-if="citations[index].audioPlayerData" v-bind="citations[index].audioPlayerData"/>
 									<span :dir="textDirection">
 										{{citations[index].citation[0]}}

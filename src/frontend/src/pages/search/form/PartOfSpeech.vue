@@ -33,7 +33,8 @@
 								<li class="list-group-item category-value" v-for="subValue in tagset.subAnnotations[subId].values" :key="subValue.value" v-if="!subValue.pos || subValue.pos.includes(annotationValue.value)">
 									<label>
 										<input type="checkbox" v-model="selected[`${annotationValue.value}/${subId}/${subValue.value}`]"/>
-										{{subValue.displayName}}
+										<!-- {{subValue.displayName}} -->
+										{{subValue.value}}
 									</label>
 								</li>
 							</ul>
@@ -65,6 +66,7 @@ import * as CorpusStore from '@/store/search/corpus';
 import * as InterfaceStore from '@/store/search/form/interface';
 
 import {NormalizedAnnotation, Tagset} from '@/types/apptypes';
+import { escapeRegex } from '../../../utils';
 
 export default Vue.extend({
 	props: {
@@ -85,18 +87,19 @@ export default Vue.extend({
 		errorMessage(): string { return this.isValidTagset ? '' : TagsetStore.getState().message; },
 		query(): string {
 			if (this.annotationValue == null) { return ''; }
-			const mainValue = this.annotationValue.value;
+			const mainValue = escapeRegex(this.annotationValue.value, false).replace(/"/g, '\\"');
 
 			const subAnnots = this.annotationValue.subAnnotationIds.map(id => ({
 				id,
 				values: this.tagset.subAnnotations[id].values
-					.map(v => v.value)
-					.filter(v => this.selected[`${mainValue}/${id}/${v}`])
+					.filter(v => this.selected[`${mainValue}/${id}/${v.value}`])
+					.map(v => escapeRegex(v.value, false).replace(/"/g, '\\"'))
 			}))
 			.filter(v => v.values.length > 0);
+
 			const subAnnotStrings = subAnnots.map(({id, values}) => `${id}="${values.join('|')}"`);
 
-			return [`${this.annotationId}="${mainValue}"`].concat(subAnnots.map(({id, values}) => `${id}="${values.join('|')}"`)).join('&');
+			return [`${this.annotationId}="${mainValue}"`].concat(subAnnotStrings).join('&');
 		},
 	},
 	methods: {
@@ -112,12 +115,12 @@ export default Vue.extend({
 				return;
 			}
 
-			const mainValue = this.annotationValue.value;
+			const mainValue = escapeRegex(this.annotationValue.value, false).replace(/"/g, '\\"');
 			const subAnnots = this.annotationValue.subAnnotationIds.map(id => ({
 				id,
 				values: this.tagset.subAnnotations[id].values
-					.map(v => v.value)
-					.filter(v => this.selected[`${mainValue}/${id}/${v}`])
+					.filter(v => this.selected[`${mainValue}/${id}/${v.value}`])
+					.map(v => escapeRegex(v.value, false).replace(/"/g, '\\"'))
 			}))
 			.filter(v => v.values.length > 0);
 
@@ -144,7 +147,6 @@ export default Vue.extend({
 		});
 	}
 });
-
 </script>
 
 <style lang="scss" scoped>

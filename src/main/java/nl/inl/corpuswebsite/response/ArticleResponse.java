@@ -8,6 +8,7 @@ import nl.inl.corpuswebsite.utils.QueryServiceHandler.QueryException;
 import nl.inl.corpuswebsite.utils.XslTransformer;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.velocity.VelocityContext;
 
 import javax.servlet.http.HttpServletResponse;
@@ -66,12 +67,31 @@ public class ArticleResponse extends BaseResponse {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
-        CorpusConfig cfg = servlet.getCorpusConfig(corpus);
-        if (cfg == null) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+        Pair<CorpusConfig, Exception> blackLabInfo = servlet.getCorpusConfig(corpus);
+        if (blackLabInfo.getRight() != null) {
+            Exception e = blackLabInfo.getRight();
+            String message = "Error retrieving corpus information" + (e.getMessage() != null ? ": " + e.getMessage() : "");
+            int code = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+            if (e instanceof QueryException) {
+                QueryException qe = (QueryException) e;
+                code = qe.getHttpStatusCode();
+                    
+                if (code == HttpServletResponse.SC_NOT_FOUND) {
+                    message = null;
+                } else {
+                    message = "Error retrieving corpus information - unexpected BlackLab response.";
+                }
+            }
+
+            if (message != null) {
+                response.sendError(code, message);
+            } else { 
+                response.sendError(code);
+            }
             return;
         }
 
+        CorpusConfig cfg = blackLabInfo.getLeft();
         String formatIdentifier = cfg.getCorpusDataFormat();
         Optional<XslTransformer> articleStylesheet = servlet.getStylesheet(corpus, "article", formatIdentifier);
         Optional<XslTransformer> metadataStylesheet = servlet.getStylesheet(corpus, "meta", formatIdentifier);

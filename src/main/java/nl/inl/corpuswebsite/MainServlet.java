@@ -14,6 +14,7 @@ import nl.inl.corpuswebsite.utils.WebsiteConfig;
 import nl.inl.corpuswebsite.utils.XslTransformer;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.velocity.Template;
 import org.apache.velocity.app.Velocity;
 import org.xml.sax.SAXException;
@@ -65,7 +66,7 @@ public class MainServlet extends HttpServlet {
     /**
      * Per-corpus structure and configuration gotten from blacklab-server (IndexStructure)
      */
-    private static final Map<String, CorpusConfig> corpusConfigs = new HashMap<>();
+    private static final Map<String, Pair<CorpusConfig, Exception>> corpusConfigs = new HashMap<>();
 
     /**
      * Our Velocity templates
@@ -304,7 +305,7 @@ public class MainServlet extends HttpServlet {
                 getProjectFile(corpus, "search.xml")
                 .orElseThrow(() -> new IllegalStateException("No search.xml, and no default in jar either"));
             try {
-                return new WebsiteConfig(f, corpus, getCorpusConfig(corpus), contextPath);
+                return new WebsiteConfig(f, corpus, getCorpusConfig(corpus).getLeft(), contextPath);
             } catch (Exception e) {
                 throw new RuntimeException("Could not read search.xml " + f, e);
             }
@@ -319,11 +320,11 @@ public class MainServlet extends HttpServlet {
      * @param corpus name of the corpus
      * @return the config
      */
-    public CorpusConfig getCorpusConfig(String corpus) {
+    public Pair<CorpusConfig, Exception> getCorpusConfig(String corpus) {
         synchronized (corpusConfigs) {
             return corpusConfigs.computeIfAbsent(corpus, __ -> {
                 if (corpus == null || corpus.isEmpty()) {
-                    return null;
+                    return Pair.of(null, null);
                 }
 
                 // Contact blacklab-server for the config xml file
@@ -343,9 +344,9 @@ public class MainServlet extends HttpServlet {
                     String jsonResult = handler.makeRequest(params); // again get index data, this time with those values included, in json format (used by the frontend code)
 
                     // and store the config
-                    return new CorpusConfig(xmlConfig, jsonResult);
-                } catch (IOException | SAXException | ParserConfigurationException | QueryException e) {
-                    return null;
+                    return Pair.of(new CorpusConfig(xmlConfig, jsonResult), null);
+                } catch (QueryException | IOException | SAXException | ParserConfigurationException e) {
+                    return Pair.of(null, e);
                 }
             });
         }

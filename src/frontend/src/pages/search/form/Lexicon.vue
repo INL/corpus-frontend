@@ -15,7 +15,21 @@
 		/>
 		<span v-if="!wordOptions" class="fa fa-spinner fa-spin text-muted"></span>
 
-		<br>
+		<div v-if="wordOptions && wordOptions.length" style="margin: 10px 0;">
+			<button
+				type="button"
+				class="btn btn-default"
+				:disabled="selectedWords.length === renderedWords.length"
+				@click="renderedWords.forEach(w => w.selected = w.count > 0)">Select all
+			</button>
+			<button
+				type="button"
+				class="btn btn-default"
+				:disabled="!selectedWords.length"
+				@click="renderedWords.forEach(w => w.selected = false)">Deselect all
+			</button>
+		</div>
+
 		<label v-for="opt in renderedWords" :key="opt.id"
 			style="width: 10vw; min-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
 			:role="opt.count > 0 ? 'button' : undefined"
@@ -41,21 +55,7 @@
 				> {{pos}}
 			</label>
 		</template>
-		<template v-if="wordOptions && wordOptions.length">
-			<br><br>
-			<button
-				type="button"
-				class="btn btn-default"
-				:disabled="selectedWords.length === renderedWords.length"
-				@click="renderedWords.forEach(w => w.selected = w.count > 0)">Select all
-			</button>
-			<button
-				type="button"
-				class="btn btn-default"
-				:disabled="!selectedWords.length"
-				@click="renderedWords.forEach(w => w.selected = false)">Deselect all
-			</button>
-		</template>
+
 	</div>
 </template>
 

@@ -157,7 +157,7 @@ import * as UIStore from '@/store/search/ui';
 
 import SelectPicker, {Option, OptGroup} from '@/components/SelectPicker.vue';
 import Autocomplete from '@/components/Autocomplete.vue';
-import { selectPickerMetadataOptions } from '@/utils';
+import { selectPickerMetadataOptions, annotationGroups } from '@/utils';
 import { paths } from '@/api';
 
 export default Vue.extend({
@@ -204,14 +204,44 @@ export default Vue.extend({
 			set: ExploreStore.actions.corpora.groupDisplayMode,
 		},
 
-		annotationSearchOptions(): Option[] {
+		annotationSearchOptions(): Option[]|OptGroup[] {
+			// const groups = annotationGroups(
+			// 	UIStore.getState().explore.searchAnnotationIds,
+			// 	CorpusStore.get.allAnnotationsMap(),
+			// 	CorpusStore.getState().annotationGroups
+			// )
+			// .map(g => ({
+			// 	label: g.groupId,
+			// 	options: g.annotations.map<Option>(a => ({
+			// 		value: a.id,
+			// 		label: a.displayName,
+			// 		title: a.description
+			// 	}))
+			// }));
+
+			// return groups.length > 1 ? groups : groups.flatMap(g => g.options);
 			const annotations = CorpusStore.get.annotationDisplayNames();
 			return UIStore.getState().explore.searchAnnotationIds.map(id => ({
 				value: id,
 				label: annotations[id]
 			}));
 		},
-		annotationGroupByOptions(): Option[] {
+		annotationGroupByOptions(): Option[]|OptGroup[] {
+			// const groups = annotationGroups(
+			// 	UIStore.getState().results.shared.groupAnnotationIds,
+			// 	CorpusStore.get.allAnnotationsMap(),
+			// 	CorpusStore.getState().annotationGroups
+			// )
+			// .map(g => ({
+			// 	label: g.groupId,
+			// 	options: g.annotations.map<Option>(a => ({
+			// 		value: a.id,
+			// 		label: a.displayName,
+			// 		title: a.description
+			// 	}))
+			// }));
+
+			// return groups.length > 1 ? groups : groups.flatMap(g => g.options);
 			const annotations = CorpusStore.get.annotationDisplayNames();
 			return UIStore.getState().results.shared.groupAnnotationIds.map(id => ({
 				value: id,

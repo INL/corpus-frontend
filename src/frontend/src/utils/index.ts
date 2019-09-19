@@ -3,6 +3,7 @@ import URI from 'urijs';
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
 import { FilterState, FullFilterState } from '@/store/search/form/filters';
+import { RemoveProperties } from '@/types/helpers';
 
 export function escapeRegex(original: string, wildcardSupport: boolean) {
 	original = original.replace(/([\^$\-\\.(){}[\]+])/g, '\\$1'); // add slashes for regex characters
@@ -271,13 +272,44 @@ export function makeMultimapReducer<T, V extends (t: T, i: number) => any = (t: 
 }
 
 /**
- * Turn an array of type T[] into a map of type {[key: string]: T};
+ * Turn an array of strings into a map of type {[key: string]: true}.
+ * Optionally mapping the values to be something other than "true".
+ *
+ * @param t the array of strings to place in a map.
+ * @param m (optional) a mapping function to apply to values.
+ */
+export function mapReduce<VS extends (t: string, i: number) => any = (t: string, i: number) => true>(t: string[]|undefined|null, m?: VS): MapOf<ReturnType<VS>>;
+/**
+ * Turn an array of type T[] into a map of type {[key: string]: T}.
+ * Optionally mapping the values to be something other than "true".
+ *
  * @param t the array of objects to place in a map.
  * @param k a key in the objects to use as key in the map.
  * @param m (optional) a mapping function to apply to values.
  */
-export function mapReduce<T, V extends (t: T, i: number) => any = (t: T, i: number) => T>(t: T[]|undefined|null, k: KeysOfType<T, string>, m?: V): MapOf<ReturnType<V>> {
-	return t ? t.reduce(makeMapReducer<T>(k, m), {}) : {};
+export function mapReduce<T, VT extends (t: T, i: number) => any = (t: T, i: number) => T>(t: T[]|undefined|null, k: KeysOfType<T, string>, m?: VT): MapOf<ReturnType<VT>>;
+export function mapReduce<
+	T,
+	VT extends (t: T, i: number) => any = (t: T, i: number) => T,
+	VS extends (t: string, i: number) => any = (t: string, i: number) => true
+>(
+	t: string[]|T[]|undefined|null,
+	a?: VS|KeysOfType<T, string>,
+	b?: VT
+): any {
+	if (t && t.length > 0 && typeof t[0] === 'string') {
+		const values = t as string[];
+		const mapper = a as VS|undefined;
+		return values.reduce<MapOf<ReturnType<VS>>>((acc, cur, index) => {
+			acc[cur] = mapper ? mapper(cur, index) : true;
+			return acc;
+		}, {});
+	} else {
+		const values = t as T[]|undefined|null;
+		const key = a as KeysOfType<T, string>;
+		const mapper = b as VT|undefined;
+		return values ? values.reduce(makeMapReducer<T>(key, mapper), {}) : {};
+	}
 }
 
 /**
@@ -305,6 +337,36 @@ export function filterDuplicates<T>(t: T[]|null|undefined, k: KeysOfType<T, stri
 
 // --------------
 
+/**
+ * Transforms the list of annotation ids into a list of groups containing the full annotation info.
+ * Returned groups are sorted based on global group order.
+ *
+ * NOTE: groups are formed based on the groupId property of the individual fields.
+ * We only use the list from blacklab (the "groups" parameter) to determined the order of groups.
+ */
+export function annotationGroups(
+	ids: string[],
+	annots: MapOf<AppTypes.NormalizedAnnotation[]>,
+	groups: AppTypes.NormalizedIndex['annotationGroups'],
+	defaultGroupName = 'Other'
+): Array<{groupId: string, annotations: AppTypes.NormalizedAnnotation[]}> {
+	const groupOrder = groups.map(g => g.name);
+	const groupsMap = multimapReduce(
+		ids.map(id => annots[id][0] as Required<AppTypes.NormalizedAnnotation>) ,
+		'groupId',
+	);
+	const sortedGroupsArray = Object.entries(groupsMap)
+	.map(([groupId, entries]) => ({groupId: groupId !== 'undefined' ? groupId : defaultGroupName, annotations: entries}))
+	.sort(({groupId: a}, {groupId: b}) => a === defaultGroupName ? 1 : b === defaultGroupName ? -1 : groupOrder.indexOf(a) - groupOrder.indexOf(b));
+
+	// If there is only one metadata group to display: do not display the groups's name, instead display only 'Metadata'
+	// https://github.com/INL/corpus-frontend/issues/197#issuecomment-441475896
+	if (sortedGroupsArray.length === 1) {
+		sortedGroupsArray.forEach(g => g.groupId = defaultGroupName);
+	}
+	return sortedGroupsArray;
+}
+
 export function selectPickerAnnotationOptions(ids: string[], annots: MapOf<AppTypes.NormalizedAnnotation[]>, operation: 'Group'|'Sort', corpusTextDirection: 'ltr'|'rtl'): AppTypes.OptGroup[] {
 	// NOTE: grouping on annotations without a forward index is not supported - however has already been checked in the UIStore
 	return [
@@ -321,37 +383,47 @@ export function selectPickerAnnotationOptions(ids: string[], annots: MapOf<AppTy
 	}));
 }
 
-export function selectPickerMetadataOptions(ids: string[], metadataFields: MapOf<AppTypes.NormalizedMetadataField>, groups: AppTypes.NormalizedIndex['metadataFieldGroups'], operation: 'Group'|'Sort'): AppTypes.OptGroup[] {
-	const groupOrder = groups.map(g => g.name);
-
-	// So recreate the groups and add everything that's not in the form into a default fallback group.
-	const metadataGroupsToShow: MapOf<AppTypes.Option[]&{groupIndex: number}> = {};
-
-	ids.forEach(id => {
-		const {displayName, groupId = 'Metadata'} = metadataFields[id];
-
-		if (!metadataGroupsToShow[groupId]) {
-			metadataGroupsToShow[groupId] = [] as any;
-			metadataGroupsToShow[groupId].groupIndex = groupId === 'Metadata' ? Number.MAX_SAFE_INTEGER : groupOrder.indexOf(groupId);
-		}
-
-		metadataGroupsToShow[groupId].push({
-			value: `field:${id}`,
-			label: `${operation} by ${(displayName || id).replace(groupId, '')} <small class="text-muted">(${groupId})</small>`,
-		});
-	});
-
-	const metadataOptGroups =
-	Object.entries(metadataGroupsToShow).sort((a, b) => a[1].groupIndex - b[1].groupIndex)
-	.map(([groupName, fieldsInGroup]) => ({
-		label: groupName,
-		options: fieldsInGroup
-	}));
+/**
+ * NOTE: groups are formed based on the groupId property of the individual fields.
+ * We only use the list from blacklab (the "groups" parameter) to determined the order of groups.
+ * This is because there may exist filter/metadata fields that do not exist in blacklab.
+ * These fields' groups are not present in the groups array.
+ */
+export function metadataGroups<T extends {id: string, groupId?: string}>(
+	ids: string[],
+	fields: MapOf<T>,
+	groups: AppTypes.NormalizedIndex['metadataFieldGroups'],
+	defaultGroupName = 'Metadata'
+): Array<{groupId: string, fields: T[]}> {
+	const groupOrder = groups.map(g => g.name).concat(defaultGroupName); // fallback group at the end.
+	const groupsMap = multimapReduce(
+		ids.map(id => fields[id] as any), // just pretend groupId exists, even if it's undefined it's fine and we handle that.
+		'groupId'
+	);
+	const sortedGroupsArray = Object.entries(groupsMap)
+	.map(([groupId, entries]) => ({groupId: groupId !== 'undefined' ? groupId : defaultGroupName, fields: entries}))
+	.sort(({groupId: a}, {groupId: b}) => a === defaultGroupName ? 1 : b === defaultGroupName ? -1 : groupOrder.indexOf(a) - groupOrder.indexOf(b));
 
 	// If there is only one metadata group to display: do not display the groups's name, instead display only 'Metadata'
 	// https://github.com/INL/corpus-frontend/issues/197#issuecomment-441475896
-	if (metadataOptGroups.length === 1) {
-		metadataOptGroups.forEach(g => g.label = 'Metadata');
+	if (sortedGroupsArray.length === 1) {
+		sortedGroupsArray.forEach(g => g.groupId = defaultGroupName);
 	}
-	return metadataOptGroups;
+	return sortedGroupsArray;
+}
+
+export function selectPickerMetadataOptions(
+	ids: string[],
+	fields: MapOf<AppTypes.NormalizedMetadataField>,
+	groups: AppTypes.NormalizedIndex['metadataFieldGroups'],
+	operation: 'Group'|'Sort'
+): AppTypes.OptGroup[] {
+	return metadataGroups(ids, fields, groups)
+	.map<AppTypes.OptGroup>(g => ({
+		label: g.groupId,
+		options: g.fields.map(({id, displayName}) => ({
+			value: `field:${id}`,
+			label: `${operation} by ${(displayName || id).replace(g.groupId, '')} <small class="text-muted">(${g.groupId})</small>`,
+		}))
+	}));
 }

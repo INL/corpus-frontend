@@ -85,7 +85,16 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 		try {
 			const luceneParsedThing = LuceneQueryParser.parse(luceneString);
 			const parsedQuery: MapOf<FilterValue> = mapReduce(parseLucene(luceneString), 'id');
-			const parsedQuery2: FilterModule.FullFilterState[] = Object.values(this.registeredMetadataFilters).map(filter => {
+
+			const metadataFields = CorpusModule.get.allMetadataFieldsMap();
+			const shownFilters = new Set<string>(UIModule.getState().search.shared.searchFilterIds.concat(
+				Object.keys(FilterModule.getState().filters)
+				.filter(id => metadataFields[id] == null)
+			));
+			const parsedQuery2: FilterModule.FullFilterState[] =
+			Object.values(this.registeredMetadataFilters)
+			.filter(f => shownFilters.has(f.id)) // Do not parse filters that are not in the ui
+			.map(filter => {
 				const vueComponent = Vue.component(filter.componentName) as typeof BaseFilter;
 				if (!vueComponent) {
 					console.warn(`Filter ${filter.id} defines its vue component as ${filter.componentName} but it does not exist! (have you registered it properly with vue?)`);
@@ -468,7 +477,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 
 	@memoize
 	private get extendedPattern() {
-		const annotationsInInterface = CorpusModule.get.shownAnnotationsMap();
+		const annotationsInInterface = mapReduce(UIModule.getState().search.extended.searchAnnotationIds);
 		const parsedAnnotationValues = cloneDeep(this.annotationValues);
 		Object.keys(parsedAnnotationValues).forEach(annotId => {
 			if (!annotationsInInterface[annotId]) {

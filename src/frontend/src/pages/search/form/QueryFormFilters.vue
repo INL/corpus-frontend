@@ -25,12 +25,10 @@
 					@change-lucene="updateLuceneValue(filter.id, $event)"
 					@change-lucene-summary="updateLuceneSummary(filter.id, $event)"
 				/>
-
-				<!-- <MetadataFilter v-for="filter in tab.filters" :filter="filter" :key="filter.id"/> -->
 			</div>
 		</div>
 		</template>
-		<div v-else class="tab-content form-horizontal filter-container"> <!-- TODO don't use tab-content when no actually tabs -->
+		<div v-else-if="allFilters.length" class="tab-content form-horizontal filter-container"> <!-- TODO don't use tab-content when no actually tabs -->
 			<Component v-for="filter in allFilters" :key="filter.id"
 				:is="filter.componentName"
 				:definition="filter"
@@ -41,8 +39,10 @@
 				@change-lucene="updateLuceneValue(filter.id, $event)"
 				@change-lucene-summary="updateLuceneSummary(filter.id, $event)"
 			/>
-
-			<!-- <MetadataFilter v-for="filter in allFilters" :filter="filter" :key="filter.id"/> -->
+		</div>
+		<div v-else class="text-muted well">
+			<h4>No filters available</h4>
+			<em>This corpus does not contain metadata, or the author has chosen not to allow filtering on metadata.</em>
 		</div>
 
 		<FilterOverview/>
@@ -53,18 +53,19 @@
 import Vue from 'vue';
 
 import * as CorpusStore from '@/store/search/corpus';
+import * as UIStore from '@/store/search/ui';
 import * as FilterStore from '@/store/search/form/filters';
 
 import FilterOverview from '@/pages/search/form/FilterOverview.vue';
 
 import * as AppTypes from '@/types/apptypes';
+import { metadataGroups, mapReduce } from '../../../utils';
 
 export default Vue.extend({
 	components: {
 		FilterOverview,
 	},
 	data: () => ({
-		corpusStore: CorpusStore,
 		activeTab: null as string|null,
 	}),
 	methods: {
@@ -82,22 +83,38 @@ export default Vue.extend({
 			filters: FilterStore.FullFilterState[],
 			activeFilters: number
 		}> {
-			const groups = FilterStore.get.filterGroups();
-			return groups.map(g => ({
+			const availableBuiltinFilters = CorpusStore.get.allMetadataFieldsMap();
+			const builtinFiltersToShow = UIStore.getState().search.shared.searchFilterIds;
+			const customFilters = Object.keys(FilterStore.getState().filters).filter(id => !availableBuiltinFilters[id]);
+			const order = mapReduce(FilterStore.getState().filterGroups.flatMap(g => g.fields).flatMap(f => ({f})), 'f', (f, index) => index + 1);
+			const allIdsToShow = builtinFiltersToShow.concat(customFilters).sort((a, b) => (order[a] || Number.MAX_SAFE_INTEGER) - (order[b] || Number.MAX_SAFE_INTEGER));
+			return metadataGroups(
+				allIdsToShow,
+				FilterStore.getState().filters,
+				FilterStore.getState().filterGroups,
+			)
+			.map(g => ({
 				name: g.groupId,
-				filters: g.filters,
-				activeFilters: g.filters.filter(f => !!f.lucene).length
+				filters: g.fields,
+				activeFilters: g.fields.filter(f => !!f.lucene).length
 			}));
 		},
-		useTabs() {
+		useTabs(): boolean {
 			return this.tabs.length > 1;
 		},
-		indexId() { return CorpusStore.getState().id; }
+		indexId(): string { return CorpusStore.getState().id; }
 	},
 	created() {
 		// Always set an active tab if there are any tabs at all
 		// new tabs may be added just after setup, changing useTabs from false to true
 		this.activeTab = this.tabs.length ? this.tabs[0].name : null;
+	},
+	watch: {
+		tabs(cur, prev) {
+			if (cur.length !== prev.length) {
+				this.activeTab = cur.length ? cur[0].name : null;
+			}
+		}
 	}
 });
 </script>

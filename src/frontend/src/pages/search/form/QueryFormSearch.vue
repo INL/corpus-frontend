@@ -54,14 +54,14 @@
 				<template v-if="useTabs">
 					<ul class="nav nav-tabs subtabs">
 						<li v-for="(tab, index) in tabs" :class="{'active': index === 0}" :key="index">
-							<a :href="'#'+getTabId(tab.name)" data-toggle="tab">{{tab.name}}</a>
+							<a :href="'#'+getTabId(tab.groupId)" data-toggle="tab">{{tab.groupId}}</a>
 						</li>
 					</ul>
 					<div class="tab-content">
 						<div v-for="(tab, index) in tabs"
 							:class="['tab-pane', 'annotation-container', {'active': index === 0}]"
 							:key="index"
-							:id="getTabId(tab.name)"
+							:id="getTabId(tab.groupId)"
 						>
 							<Annotation v-for="annotation in tab.annotations" :key="annotation.annotatedFieldId + '/' + annotation.id" :annotation="annotation"/>
 						</div>
@@ -131,11 +131,11 @@ import Vue from 'vue';
 
 import * as RootStore from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus';
+import * as UIStore from '@/store/search/ui';
 import * as InterfaceStore from '@/store/search/form/interface';
 import * as PatternStore from '@/store/search/form/patterns';
 import * as GapStore from '@/store/search/form/gap';
 import * as HistoryStore from '@/store/search/history';
-import * as UIStore from '@/store/search/ui';
 
 import Annotation from '@/pages/search/form/Annotation.vue';
 import Lexicon from '@/pages/search/form/Lexicon.vue';
@@ -148,6 +148,7 @@ import { QueryBuilder } from '@/modules/cql_querybuilder';
 
 import { paths } from '@/api';
 import * as AppTypes from '@/types/apptypes';
+import { annotationGroups } from '../../../utils';
 
 export default Vue.extend({
 	mixins: [uid],
@@ -166,15 +167,18 @@ export default Vue.extend({
 			get(): string { return InterfaceStore.getState().patternMode; },
 			set: InterfaceStore.actions.patternMode,
 		},
-		useTabs() {
+		useTabs(): boolean {
 			return this.tabs.length > 1;
 		},
-		tabs: CorpusStore.get.annotationGroups,
+		tabs(): Array<{groupId: string, annotations: AppTypes.NormalizedAnnotation[]}> {
+			return annotationGroups(
+				UIStore.getState().search.extended.searchAnnotationIds,
+				CorpusStore.get.allAnnotationsMap(),
+				CorpusStore.getState().annotationGroups
+			)
+		},
 		allAnnotations(): AppTypes.NormalizedAnnotation[] {
-			return this.tabs.reduce((acc, tab) => {
-				acc.push(...tab.annotations);
-				return acc;
-			}, [] as AppTypes.NormalizedAnnotation[]);
+			return this.tabs.flatMap(tab => tab.annotations);
 		},
 		firstMainAnnotation: CorpusStore.get.firstMainAnnotation,
 		firstMainAnnotationACUrl(): string { return paths.autocompleteAnnotation(CorpusStore.getState().id, this.firstMainAnnotation.annotatedFieldId, this.firstMainAnnotation.id); },

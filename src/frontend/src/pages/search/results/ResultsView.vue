@@ -12,9 +12,7 @@
 						:disabled="request"
 						:class="request ? 'disabled' : undefined"
 						@click.prevent="!request && crumb.onClick ? crumb.onClick() : undefined"
-					>
-						{{crumb.label}}
-					</a>
+					>{{crumb.label}}</a>
 					<template v-else>{{crumb.label}}</template>
 				</li>
 			</ol>
@@ -299,7 +297,7 @@ export default Vue.extend({
 	},
 	computed: {
 		// Store properties
-		storeModule() { return ResultsStore.get.resultsModules().find(m => m.namespace === this.type)!; },
+		storeModule(): ReturnType<(typeof ResultsStore)['get']['resultsModules']>[number] { return ResultsStore.get.resultsModules().find(m => m.namespace === this.type)!; },
 		groupBy: {
 			get(): string[] { return this.storeModule.getState().groupBy; },
 			set(v: string[]) { this.storeModule.actions.groupBy(v); }
@@ -430,7 +428,6 @@ export default Vue.extend({
 			// This happens because results aren't loaded yet, thus isHits/isDocs/isGroups all return false, and no options would be available
 			// then the selectpicker will reset value to undefined, which clears it in the store, which updates the url, etc.
 			const opts = [] as OptGroup[];
-
 
 			if (this.isGroups) {
 				opts.push({

@@ -44,6 +44,7 @@ const get = {
 				f.displayOrder
 				.map(id => f.annotations[id])
 				.filter(annot => annot.groupId == null)
+				.sort((a, b) => a.displayName.localeCompare(b.displayName))
 			)
 		)
 	, 'allAnnotations'),

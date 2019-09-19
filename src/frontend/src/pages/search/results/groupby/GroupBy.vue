@@ -100,7 +100,7 @@ export default Vue.extend({
 		deleteContextGroup(index: number) { this.unappliedContextGroups.splice(index, 1); },
 	},
 	computed: {
-		storeModule() {
+		storeModule(): ReturnType<(typeof ResultsStore)['get']['resultsModules']>[number] {
 			return ResultsStore.get.resultsModules().find(m => m.namespace === this.type)!;
 		},
 		caseSensitive: {

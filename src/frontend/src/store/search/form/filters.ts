@@ -28,12 +28,7 @@ type ModuleRootState = {
 	filters: {
 		[filterId: string]: FullFilterState;
 	},
-	filterGroups: {
-		[groupId: string]: {
-			groupId: string;
-			filterIds: string[];
-		};
-	};
+	filterGroups: CorpusModule.NormalizedIndex['metadataFieldGroups']
 };
 
 type ExternalModuleRootState = ModuleRootState['filters'];
@@ -41,7 +36,7 @@ type ExternalModuleRootState = ModuleRootState['filters'];
 /** Populated on store initialization and afterwards */
 const initialState: ModuleRootState = {
 	filters: {},
-	filterGroups: {}
+	filterGroups: []
 };
 
 const namespace = 'filters';
@@ -70,24 +65,18 @@ const get = {
 		return mapReduce(activeFilters, 'id');
 	}, 'activeFiltersMap'),
 
-	filterGroups: b.read(state => Object.values(state.filterGroups).map(group => ({
-		...group,
-		filters: group.filterIds.map(id => state.filters[id])
-	})), 'filterGroups'),
-
 	filterValue(id: string) { return getState().filters[id]; },
 };
 
 const actions = {
 	registerFilterGroup: b.commit((state, filterGroup: {groupId: string, filterIds: string[]}) => {
-		if (filterGroup.groupId in state.filterGroups) {
+		if (state.filterGroups.find(g => g.name === filterGroup.groupId)) {
 			console.warn(`Filter group ${filterGroup.groupId} already exists`);
 			return;
 		}
-
-		Vue.set<ModuleRootState['filterGroups'][string]>(state.filterGroups, filterGroup.groupId, {
-			groupId: filterGroup.groupId,
-			filterIds: filterGroup.filterIds.filter(id => state.filters[id] != null),
+		state.filterGroups.push({
+			name: filterGroup.groupId,
+			fields: filterGroup.filterIds.filter(id => state.filters[id] != null),
 		});
 	}, 'registerFilterGroup'),
 
@@ -97,22 +86,21 @@ const actions = {
 		/** Optional: ID of another filter in this group before which to insert this filter, if omitted, the filter is appended at the end. */
 		insertBefore?: string;
 	}) => {
-		if (filter.id in state.filters) {
+		if (state.filters[filter.id]) {
 			console.warn(`Filter ${filter.id} already exists`);
 			return;
 		}
 
 		if (filter.groupId) {
-			if(!(filter.groupId in state.filterGroups)) {
+			if (!state.filterGroups.find(g => g.name === filter.groupId)) {
 				actions.registerFilterGroup({
 					filterIds: [],
 					groupId: filter.groupId,
 				});
 			}
-
-			const group = state.filterGroups[filter.groupId];
-			const index = insertBefore != null ? group.filterIds.indexOf(insertBefore) : -1;
-			group.filterIds.splice(index !== -1 ? index : group.filterIds.length, 0, filter.id);
+			const group = state.filterGroups.find(g => g.name === filter.groupId)!;
+			const index = insertBefore != null ? group.fields.indexOf(insertBefore) : -1;
+			group.fields.splice(index !== -1 ? index : group.fields.length, 0, filter.id);
 		}
 
 		Vue.set<FullFilterState>(state.filters, filter.id, {...filter, value: null, lucene: null, summary: null});
@@ -136,53 +124,51 @@ const actions = {
 };
 
 const init = () => {
-	CorpusModule.get.metadataGroups().forEach(g => {
-		actions.registerFilterGroup({
-			filterIds: g.fields.map(f => f.id),
-			groupId: g.name
-		});
+	// Take care to copy the order of metadatagroups and their fields here!
+	CorpusModule.get.metadataGroups().forEach(g => actions.registerFilterGroup({
+		filterIds: [],
+		groupId: g.name
+	}));
+	CorpusModule.get.allMetadataFields().forEach(f => {
+		let componentName;
+		let metadata: any;
+		switch (f.uiType) {
+			case 'checkbox':
+				componentName = 'filter-checkbox';
+				metadata = f.values || [];
+				break;
+			case 'combobox':
+				componentName = 'filter-autocomplete';
+				metadata = paths.autocompleteMetadata(CorpusModule.getState().id, f.id);
+				break;
+			case 'radio'   :
+				componentName = 'filter-radio';
+				metadata = f.values || [];
+				break;
+			case 'range'   :
+				componentName = 'filter-range';
+				metadata = undefined;
+				break;
+			case 'select'  :
+				componentName = 'filter-select';
+				metadata = f.values || [];
+				break;
+			case 'text'    :
+			default        :
+				componentName = 'filter-text';
+				metadata = undefined;
+				break;
+		}
 
-		g.fields.forEach(f => {
-			let componentName;
-			let metadata: any;
-			switch (f.uiType) {
-				case 'checkbox':
-					componentName = 'filter-checkbox';
-					metadata = f.values || [];
-					break;
-				case 'combobox':
-					componentName = 'filter-autocomplete';
-					metadata = paths.autocompleteMetadata(CorpusModule.getState().id, f.id);
-					break;
-				case 'radio'   :
-					componentName = 'filter-radio';
-					metadata = f.values || [];
-					break;
-				case 'range'   :
-					componentName = 'filter-range';
-					metadata = undefined;
-					break;
-				case 'select'  :
-					componentName = 'filter-select';
-					metadata = f.values || [];
-					break;
-				case 'text'    :
-				default        :
-					componentName = 'filter-text';
-					metadata = undefined;
-					break;
+		actions.registerFilter({
+			filter: {
+				componentName,
+				description: f.description,
+				displayName: f.displayName,
+				groupId: f.groupId,
+				id: f.id,
+				metadata,
 			}
-
-			actions.registerFilter({
-				filter: {
-					componentName,
-					description: f.description,
-					displayName: f.displayName,
-					groupId: f.groupId,
-					id: f.id,
-					metadata,
-				}
-			});
 		});
 	});
 

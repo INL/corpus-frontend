@@ -7,14 +7,14 @@
  */
 
 import cloneDeep from 'clone-deep';
-import {getStoreBuilder} from 'vuex-typex';
+import { getStoreBuilder } from 'vuex-typex';
 
-import {RootState} from '@/store/search/';
+import { RootState } from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus';
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
-import { mapReduce, MapOf } from '@/utils';
-import { stripIndent } from 'common-tags';
+import { mapReduce, MapOf, multimapReduce } from '@/utils';
+import { stripIndent, html } from 'common-tags';
 
 declare const PROPS_IN_COLUMNS: string[];
 declare const PAGESIZE: number;
@@ -24,6 +24,8 @@ type ModuleRootState = {
 		// future use
 		simple: {};
 		extended: {
+			/** Available annotation inputs in the extended search */
+			searchAnnotationIds: string[],
 			splitBatch: {
 				enabled: boolean;
 			};
@@ -42,6 +44,18 @@ type ModuleRootState = {
 			defaultSearchAnnotationId: string;
 		};
 		expert: {};
+
+		shared: {
+			/**
+			 * Fields available in the filters view. Sorted by global metadata order.
+			 * This does not contain custom filters.
+			 * NOTE THAT THIS MAY CONTAIN IDS THAT ARE NOT A METADATA FIELD.
+			 * The reason for this is custom filters.
+			 * We cannot reasonably validate this, so we only output a warning when you're trying to register those.
+			 * This remains a bit of a TODO but it requires some deep thinking and architectural changes.
+			 */
+			searchFilterIds: string[];
+		}
 	};
 
 	explore: {
@@ -127,7 +141,7 @@ type ModuleRootState = {
 	global: {
 		pageGuide: {
 			enabled: boolean;
-		}
+		},
 	}
 };
 
@@ -140,6 +154,7 @@ const initialState: ModuleRootState = {
 	search: {
 		simple: {},
 		extended: {
+			searchAnnotationIds: [],
 			splitBatch: {
 				enabled: true,
 			},
@@ -152,7 +167,11 @@ const initialState: ModuleRootState = {
 			searchAnnotationIds: [],
 			defaultSearchAnnotationId: ''
 		},
-		expert: {}
+		expert: {},
+
+		shared: {
+			searchFilterIds: [],
+		}
 	},
 	explore: {
 		defaultSearchAnnotationId: '',
@@ -183,8 +202,8 @@ const initialState: ModuleRootState = {
 	global: {
 		pageGuide: {
 			enabled: true
-		}
-	}
+		},
+	},
 };
 
 const namespace = 'ui';
@@ -206,93 +225,6 @@ const getState = (() => {
 	};
 })();
 
-// =======================
-// Some helpers
-// =======================
-
-function createConfigurator<T extends MapOf<string[]>>(proppaths: T) {
-	return function(config: [[undefined, ...Array<keyof T>],  [string, ...Array<boolean|undefined>]]) {
-		const props = config.shift() as string[];
-		const propvalues = {} as {[K in keyof T]: string[]};
-		Object.keys(proppaths).forEach(function(propname) { propvalues[propname] = []; });
-
-		(config as Array<[string, ...Array<boolean|undefined>]>).forEach(function(field) {
-			const id = field[0];
-			field.forEach(function(value, index) {
-				const propname: string|undefined = props[index]; // undefined at index 0
-				if (value && propname && proppaths[propname]) {
-					propvalues[propname].push(id);
-				}
-			});
-		});
-
-		Object.entries(propvalues).forEach(function(entry) {
-			const propname = entry[0];
-			const propvalue = entry[1];
-			const proppath = proppaths[propname];
-
-			if (propvalue.length === 0) {
-				return;
-			}
-
-			const propfunction = proppath.reduce(function(scope, segment) {
-				return scope[segment];
-			}, actions as any);
-
-			propfunction(propvalue);
-		});
-	};
-}
-
-/** Validate all ids, triggering callbacks for failed ids, and returning a promise that resolves if any id passes. */
-function validateAnnotations(
-	ids: string[],
-	missing: (id: string) => string,
-	validate: (a: AppTypes.NormalizedAnnotation) => boolean,
-	invalid: (id: string) => string,
-	cb: (ids: string[]) => void
-) {
-	// tslint:disable
-	const all = CorpusStore.get.allAnnotationsMap();
-	const results = ids.filter(id => {
-		if (!all[id]) { console.warn(missing(id)); return false; }
-		if (!validate(all[id][0])) { console.warn(invalid(id)); return false; }
-		return true;
-	});
-
-	results.length && cb(results);
-	// tslint:enable
-}
-
-function sortAnnotations(ids: string[]) {
-	const displayOrder: {[id: string]: number} = mapReduce(CorpusStore.get.allAnnotations(), 'id', (a, i) => i);
-	return ids.concat().sort((a, b) => displayOrder[a] - displayOrder[b]);
-}
-
-function validateMetadata(
-	ids: string[],
-	missing: (id: string) => string,
-	validate: (m: AppTypes.NormalizedMetadataField) => boolean,
-	invalid: (id: string) => string,
-	cb: (ids: string[]) => void
-) {
-	// tslint:disable
-	const all = CorpusStore.get.allMetadataFieldsMap();
-	const results = ids.filter(id => {
-		if (!all[id]) { console.warn(missing(id)); return false; }
-		if (!validate(all[id])) { console.warn(invalid(id)); return false; }
-		return true;
-	});
-
-	results.length && cb(results);
-	// tslint:enable
-}
-
-function sortMetadata(ids: string[]) {
-	const displayOrder: {[id: string]: number} = mapReduce(CorpusStore.get.allMetadataFields(), 'id', (a, i) => i);
-	return ids.concat().sort((a, b) => displayOrder[a] - displayOrder[b]);
-}
-
 const get = {
 
 };
@@ -301,6 +233,12 @@ const actions = {
 	search: {
 		simple: {},
 		extended: {
+			searchAnnotationIds: b.commit((state, ids: string[]) => validateAnnotations(ids,
+				id => `Trying to display Annotation ${id} in the extended search, but it does not exist`,
+				_ => true, _ => '',
+				r => state.search.extended.searchAnnotationIds = sortAnnotations(r)
+			), 'search_extended_searchAnnotationIds'),
+
 			splitBatch: {
 				enable: b.commit((state, payload: boolean) => state.search.extended.splitBatch.enabled = payload, 'search_extended_splitbatch_enable'),
 			},
@@ -346,6 +284,14 @@ const actions = {
 			}, 'search_advanced_defaultSearchAnnotationId')
 		},
 		expert: {},
+
+		shared: {
+			searchFilterIds: b.commit((state, ids: string[]) => validateMetadata(ids,
+				id => `Trying to show metadata field '${id}' in the filters section, but it does not exist.`,
+				_ => true, _ => '',
+				r => state.search.shared.searchFilterIds = sortMetadata(r)
+			), 'search_shared_searchFilterIds')
+		}
 	},
 	explore: {
 		defaultGroupAnnotationId: b.commit((state, annotationId: string) => {
@@ -481,28 +427,30 @@ const actions = {
 			enable: b.commit((state, payload: boolean) => {
 				state.global.pageGuide.enabled = !!payload;
 			}, 'global_pageGuide_enabled'),
-		}
+		},
 	},
 	replace: b.commit((state, payload: ModuleRootState) => Object.assign(state, cloneDeep(payload)), 'replace'),
 
 	helpers: {
 		/**
-		 * Configure many annotations at the same time. Columns without any "true" values are left at their defaults.
+		 * Configure many annotations at the same time. Omitted columns, or columns without any "true" values are left at their defaults.
+		 * If you want to clear the defaults for a column and show nothing: configure it through the dedicated function.
 		 * Call as follows:
 		 * ```js
 		 * configureAnnotations([
-		 *     [        , 'SORT' , 'GROUP' , 'EXPLORE' , 'RESULTS' , 'CONCORDANCE'],
-		 *     ['word'  , true   , true    ,           ,           ,      true    ],
-		 *     ['lemma' , true   ,         ,           ,           ,      true    ],
+		 *     [        , 'EXTENDED',  'ADVANCED' , 'EXPLORE' , 'SORT' , 'GROUP' , 'RESULTS' , 'CONCORDANCE'],
+		 *     ['word'  ,           ,             ,           , true   , true    ,           ,      true    ],
+		 *     ['lemma' ,           ,             ,           , true   ,         ,           ,      true    ],
 		 *     ...
 		 * ]);
 		 * ```
 		 */
 		configureAnnotations: createConfigurator({
-			'SORT':        ['results', 'shared', 'sortAnnotationIds'],
-			'GROUP':       ['results', 'shared', 'groupAnnotationIds'],
+			'EXTENDED':    ['search', 'extended', 'searchAnnotationIds'],
 			'ADVANCED':    ['search', 'advanced', 'searchAnnotationIds'],
 			'EXPLORE':     ['explore', 'searchAnnotationIds'],
+			'SORT':        ['results', 'shared', 'sortAnnotationIds'],
+			'GROUP':       ['results', 'shared', 'groupAnnotationIds'],
 			'RESULTS':     ['results', 'hits', 'shownAnnotationIds'],
 			'CONCORDANCE': ['results', 'shared', 'detailedAnnotationIds'],
 		}),
@@ -520,6 +468,7 @@ const actions = {
 		 * ```
 		 */
 		configureMetadata: createConfigurator({
+			'FILTER':       ['search', 'shared', 'searchFilterIds'],
 			'SORT':         ['results', 'shared', 'sortMetadataIds'],
 			'GROUP':        ['results', 'shared', 'groupMetadataIds'],
 			'RESULTS/HITS': ['results', 'hits', 'shownMetadataIds'],
@@ -548,15 +497,14 @@ const init = () => {
 
 	const mainAnnotation = CorpusStore.get.firstMainAnnotation().id;
 
-	// Show all annotations & metadata in groups (groups are defined by the user)
-	// Exclude annotations without forward index.
-	// Also take care to preserve the order of fields
-	// Do this first as we use these lists later
-	if (!initialState.results.shared.groupAnnotationIds.length) {
-		actions.results.shared.groupAnnotationIds(allShownAnnotations.filter(a => a.hasForwardIndex).map(a => a.id));
-	}
-	if (!initialState.results.shared.groupMetadataIds.length) {
-		actions.results.shared.groupMetadataIds(allShownMetadataFields.map(f => f.id));
+	// ===========
+	// Search form
+	// ===========
+
+	// Annotations (extended, advanced, explore [n-grams])
+	// For all unconfigured sections: show all annotations in groups (groups are defined in the index format yaml file)
+	if (!initialState.search.extended.searchAnnotationIds.length) {
+		actions.search.extended.searchAnnotationIds(allShownAnnotations.map(a => a.id));
 	}
 	if (!initialState.search.advanced.searchAnnotationIds.length) {
 		actions.search.advanced.searchAnnotationIds(allShownAnnotations.map(a => a.id));
@@ -564,39 +512,14 @@ const init = () => {
 	if (!initialState.explore.searchAnnotationIds.length) {
 		actions.explore.searchAnnotationIds(allShownAnnotations.map(a => a.id));
 	}
-	// Default selections for the above lists are set automatically.
 
-	// Initialize shown annotations for results
-	// Use PROPS_IN_COLUMNS if configured
-	// Otherwise show up to the first 3 annotations as defined by their displayOrder,
-	// Giving precedence to 'lemma' and 'pos' if they exist, regardless of their displayOrder
-	// and omitting the default main annotation (usually 'word') - as that's always displayed.
-	if (!initialState.results.hits.shownAnnotationIds.length) {
-		const shownAnnotations = PROPS_IN_COLUMNS.filter(annot => allAnnotationsMap[annot] != null && annot !== mainAnnotation);
-		if (!shownAnnotations.length) {
-			// These have precedence if they exist.
-			if (allAnnotationsMap.lemma != null) { shownAnnotations.push('lemma'); }
-			if (allAnnotationsMap.pos != null) { shownAnnotations.push('pos'); }
-
-			// Now add other annotations until we hit 3 annotations.
-			allShownAnnotations
-			.filter(annot => annot.id !== mainAnnotation && !shownAnnotations.includes(annot.id))
-			.forEach(annot => {
-				if (shownAnnotations.length < 3) {
-					shownAnnotations.push(annot.id);
-				}
-			});
-		}
-		actions.results.hits.shownAnnotationIds(shownAnnotations);
+	// Metadata/filters (extended, advanced, expert, explore)
+	// If unconfigured: show all metadata in groups (groups are defined in the index format yaml file)
+	if (!initialState.search.shared.searchFilterIds.length) {
+		actions.search.shared.searchFilterIds(allShownMetadataFields.map(f => f.id));
 	}
 
-	if (!initialState.results.docs.shownMetadataIds.length) {
-		const dateField = CorpusStore.getState().fieldInfo.dateField;
-		if (dateField) {
-			actions.results.docs.shownMetadataIds([dateField]);
-		}
-	}
-
+	// "within"
 	if (!initialState.search.extended.within.elements.length) {
 		// explicitly retrieve this annotations as it's supposed to be internal and thus not included in any getters.
 		const fields = allAnnotationsMap.starttag;
@@ -623,15 +546,237 @@ const init = () => {
 		}
 	}
 
+	// ====================
+	// Results manipulation
+	// ====================
+
+	// Annotations (sorting, grouping, display in the table columns, display in opened condordances)
+	// Sorting/grouping: show all annotations in groups and that have a forward index (blacklab doesn't support sorting/grouping without FI)
+	if (!initialState.results.shared.groupAnnotationIds.length) {
+		actions.results.shared.groupAnnotationIds(allShownAnnotations.filter(a => a.hasForwardIndex).map(a => a.id));
+	}
 	if (!initialState.results.shared.sortAnnotationIds.length) {
 		actions.results.shared.sortAnnotationIds(allShownAnnotations.filter(a => a.hasForwardIndex).map(a => a.id));
+	}
+	// Results table columns
+	// Show 'lemma' and 'pos' (if they exist) and up to 3 more annotations in order of definition
+	// OR: show based on PROPS_IN_COLUMNS [legacy support] (configured in this corpus's search.xml)
+	if (!initialState.results.hits.shownAnnotationIds.length) {
+		const shownAnnotations = PROPS_IN_COLUMNS.filter(annot => allAnnotationsMap[annot] != null && annot !== mainAnnotation);
+		if (!shownAnnotations.length) {
+			// These have precedence if they exist.
+			if (allAnnotationsMap.lemma != null) { shownAnnotations.push('lemma'); }
+			if (allAnnotationsMap.pos != null) { shownAnnotations.push('pos'); }
+
+			// Now add other annotations until we hit 3 annotations.
+			allShownAnnotations
+			.filter(annot => annot.id !== mainAnnotation && !shownAnnotations.includes(annot.id))
+			.forEach(annot => {
+				if (shownAnnotations.length < 3) {
+					shownAnnotations.push(annot.id);
+				}
+			});
+		}
+		actions.results.hits.shownAnnotationIds(shownAnnotations);
+	}
+	// Concordances show all non-internal annotations when not set.
+
+	// Metadata
+	// Sorting/grouping: show all metadata in groups
+	if (!initialState.results.shared.groupMetadataIds.length) {
+		actions.results.shared.groupMetadataIds(allShownMetadataFields.map(f => f.id));
 	}
 	if (!initialState.results.shared.sortMetadataIds.length) {
 		actions.results.shared.sortMetadataIds(allShownMetadataFields.map(f => f.id));
 	}
 
+	// Results table columns
+	// Hits table: Never show any metadata in the hits table
+	// Docs table: Show the date column if it is configured
+	if (!initialState.results.docs.shownMetadataIds.length) {
+		const dateField = CorpusStore.getState().fieldInfo.dateField;
+		if (dateField) {
+			actions.results.docs.shownMetadataIds([dateField]);
+		}
+	}
+
 	Object.assign(initialState, cloneDeep(getState()));
 };
+
+// =======================
+// Some helpers
+// =======================
+
+function createConfigurator<T extends MapOf<string[]>>(proppaths: T) {
+	const r = function(config: [[undefined, ...Array<keyof T>],  [string, ...Array<boolean|undefined>]]) {
+		const props = config.shift() as string[];
+		const propvalues = {} as {[K in keyof T]: string[]};
+		Object.keys(proppaths).forEach(function(propname) { propvalues[propname] = []; });
+
+		(config as Array<[string, ...Array<boolean|undefined>]>).forEach(function(field) {
+			const id = field[0];
+			field.forEach(function(value, index) {
+				const propname: string|undefined = props[index]; // undefined at index 0
+				if (value && propname && proppaths[propname]) {
+					propvalues[propname].push(id);
+				}
+			});
+		});
+
+		Object.entries(propvalues).forEach(function(entry) {
+			const propname = entry[0];
+			const propvalue = entry[1];
+			const proppath = proppaths[propname];
+
+			if (propvalue.length === 0) {
+				return;
+			}
+
+			const propfunction = proppath.reduce(function(scope, segment) {
+				return scope[segment];
+			}, actions as any);
+
+			propfunction(propvalue);
+		});
+	};
+
+	r.config = proppaths;
+	return r;
+}
+
+/** Validate all ids, triggering callbacks for failed ids, and triggering a final callback if there is any valid annotation. */
+function validateAnnotations(
+	ids: string[],
+	missing: (id: string) => string,
+	validate: (a: AppTypes.NormalizedAnnotation) => boolean,
+	invalid: (id: string) => string,
+	cb: (ids: string[]) => void
+) {
+	// tslint:disable
+	const all = CorpusStore.get.allAnnotationsMap();
+	const results = ids.filter(id => {
+		if (!all[id]) { console.warn(missing(id)); return false; }
+		if (!validate(all[id][0])) { console.warn(invalid(id)); return false; }
+		return true;
+	});
+
+	results.length && cb(results);
+	// tslint:enable
+}
+
+function sortAnnotations(ids: string[]) {
+	const displayOrder: {[id: string]: number} = mapReduce(CorpusStore.get.allAnnotations(), 'id', (a, i) => i);
+	return ids.concat().sort((x, y) => displayOrder[x] - displayOrder[y]);
+}
+
+/** Validate all ids, triggering callbacks for failed ids, and triggering a final callback if there is any valid annotation. */
+function validateMetadata(
+	ids: string[],
+	missing: (id: string) => string,
+	validate: (m: AppTypes.NormalizedMetadataField) => boolean,
+	invalid: (id: string) => string,
+	cb: (ids: string[]) => void
+) {
+	// tslint:disable
+	const all = CorpusStore.get.allMetadataFieldsMap();
+	const results = ids.filter(id => {
+		if (!all[id]) { console.warn(missing(id)); return false; }
+		if (!validate(all[id])) { console.warn(invalid(id)); return false; }
+		return true;
+	});
+
+	results.length && cb(results);
+	// tslint:enable
+}
+
+function sortMetadata(ids: string[]) {
+	// use +1 so we can replace undefined results with max_int
+	const displayOrder: {[id: string]: number} = mapReduce(CorpusStore.get.allMetadataFields(), 'id', (a, i) => i+1);
+	return ids.concat().sort((x, y) => (displayOrder[x] || Number.MAX_SAFE_INTEGER) - (displayOrder[y] || Number.MAX_SAFE_INTEGER));
+}
+
+// =============
+
+function gatherchecks(config: MapOf<string[]>, entries: Array<{id: string, groupId?: string}>, defaultGroupName: string) {
+	const entryMap = mapReduce(entries, 'id', entry => ({
+		id: entry.id,
+		groupId: entry.groupId || defaultGroupName,
+		checkmarks: {} as MapOf<boolean>
+	}));
+
+	Object.entries(config).forEach(([checkmarkName, checkmarkPath]) => {
+		const entriesToPutCheck: string[] = checkmarkPath.reduce((context, path) => (context as any)[path], getState()) || [];
+		entriesToPutCheck.forEach(id => entryMap[id].checkmarks[checkmarkName] = true);
+	});
+
+	// take care to preserve field order
+	return entries.map(e => entryMap[e.id]);
+}
+
+function getAsGroups(groupOrder: string[], entries: Array<{id: string, groupId: string, checkmarks: MapOf<boolean>}>) {
+	return Object.entries(multimapReduce(Object.values(entries), 'groupId'))
+	.map(([groupId, values]) => ({groupId, values}))
+	.sort((a, b) => groupOrder.indexOf(a.groupId) - groupOrder.indexOf(b.groupId));
+}
+
+function getCells(props: string[]) {
+	return props.map(p => ({
+		propName: p,
+		header: `    '${p}'    `,
+		checked: ' '.repeat(5 + Math.ceil(p.length / 2)-1) + 'x' + ' '.repeat(5 + Math.floor(p.length / 2)),
+		unchecked: ' '.repeat(10 + p.length)
+	}));
+}
+
+function printCustomizations() {
+	// Annotations
+	const defaultGroupName = '(not in any group)';
+
+	const annotGroupOrder = CorpusStore.getState().annotationGroups.map(g => g.name).concat(defaultGroupName);
+	const metadataGroupOrder = CorpusStore.getState().metadataFieldGroups.map(g => g.name).concat(defaultGroupName);
+	const annotColumns = actions.helpers.configureAnnotations.config;
+	const metadataColumns = actions.helpers.configureMetadata.config;
+
+	// output stuff
+	const annotationData = getAsGroups(annotGroupOrder, gatherchecks(annotColumns, CorpusStore.get.allAnnotations(), defaultGroupName));
+	const metadataData = getAsGroups(metadataGroupOrder, gatherchecks(metadataColumns, CorpusStore.get.allMetadataFields(), defaultGroupName));
+	const annotationCells = getCells(Object.keys(annotColumns));
+	const metadataCells = getCells(Object.keys(metadataColumns));
+	const longestAnnotId = annotationData.flatMap(g => g.values).reduce((longest, cur) => Math.max(longest, cur.id.length), 0);
+	const longestMetadataId = metadataData.flatMap(g => g.values).reduce((longest, cur) => Math.max(longest, cur.id.length), 0);
+
+	// Sort entries in the default groups by ID (instead of their original sorting by displayName) - Reads much better in output
+	(annotationData.find(g => g.groupId === defaultGroupName) || {values: [] as Array<{id: string}>}).values.sort((a, b) => a.id.localeCompare(b.id));
+	(metadataData.find(g => g.groupId === defaultGroupName) || {values: [] as Array<{id: string}>}).values.sort((a, b) => a.id.localeCompare(b.id));
+
+	console.log(html`
+		var x = true;
+		var ui = vuexModules.ui.actions;
+		ui.helpers.configureAnnotations([
+			[${' '.repeat(longestAnnotId+2)},${annotationCells.map(c => c.header).join(',')}],
+			${annotationData.flatMap(g => [
+				'',
+				`// ${g.groupId}`,
+				...g.values.map(v => stripIndent`
+					['${v.id}'${' '.repeat(longestAnnotId - v.id.length)},${annotationCells.map(c => v.checkmarks[c.propName] ? c.checked : c.unchecked).join(',')}],
+				`)
+			])}
+		]);
+
+		ui.helpers.configureMetadata([
+			[${' '.repeat(longestMetadataId+2)},${metadataCells.map(c => c.header).join(',')}],
+			${metadataData.flatMap(g => [
+				'',
+				`// ${g.groupId}`,
+				...g.values.map(v => stripIndent`
+					['${v.id}'${' '.repeat(longestMetadataId - v.id.length)},${metadataCells.map(c => v.checkmarks[c.propName] ? c.checked : c.unchecked).join(',')}],
+				`)
+			])}
+		]);
+	`);
+}
+
+(window as any).printCustomJs = printCustomizations;
 
 export {
 	ModuleRootState,

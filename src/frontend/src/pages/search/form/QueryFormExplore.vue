@@ -109,6 +109,13 @@
 							:value="token.value"
 							@change="updateTokenValue(index, $event)"
 						/>
+						<Lexicon v-else-if="token.annotation.uiType === 'lexicon'"
+							:annotationId="token.annotation.id"
+							:definition="token.annotation"
+
+							:value="token.value"
+							@input="updateTokenValue(index, $event)"
+						/>
 
 						<Autocomplete v-else
 							type="text"
@@ -157,13 +164,15 @@ import * as UIStore from '@/store/search/ui';
 
 import SelectPicker, {Option, OptGroup} from '@/components/SelectPicker.vue';
 import Autocomplete from '@/components/Autocomplete.vue';
+import Lexicon from '@/pages/search/form/Lexicon.vue';
 import { selectPickerMetadataOptions, annotationGroups } from '@/utils';
 import { paths } from '@/api';
 
 export default Vue.extend({
 	components: {
 		SelectPicker,
-		Autocomplete
+		Autocomplete,
+		Lexicon
 	},
 	computed: {
 		exploreMode: {

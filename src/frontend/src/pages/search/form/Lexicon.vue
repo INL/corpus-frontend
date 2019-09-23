@@ -302,9 +302,14 @@ label.disabled {
 	position: absolute;
 	right: 0;
 	top: 0;
-	font-size: 200%;
-	padding: 0.33em;
+	font-size: 22px;
+	padding: 6px;
 	pointer-events: none;
+}
+
+.form-group-lg .fa-spinner {
+	font-size: 32px;
+	padding: 7px;
 }
 
 .form-control.loading {

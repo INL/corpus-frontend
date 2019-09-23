@@ -50,11 +50,11 @@ export const paths = {
 	autocompleteAnnotation: (
 		indexId: string,
 		annotatedFieldId: string,
-		annotationId: string) =>                    `${blacklabEndpoint.defaults.baseURL}${indexId}/autocomplete/${annotatedFieldId}/${annotationId}/`,
+		annotationId: string) =>                    `${indexId}/autocomplete/${annotatedFieldId}/${annotationId}/`,
 	autocompleteMetadata: (
 		indexId: string,
-		metadataFieldId: string) =>                 `${blacklabEndpoint.defaults.baseURL}${indexId}/autocomplete/${metadataFieldId}/`,
-	termFrequencies: (indexId: string) =>            `${blacklabEndpoint.defaults.baseURL}${indexId}/termfreq/`,
+		metadataFieldId: string) =>                 `${indexId}/autocomplete/${metadataFieldId}/`,
+	termFrequencies: (indexId: string) =>           `${indexId}/termfreq/`,
 };
 
 /**

@@ -726,8 +726,8 @@ export class AttributeGroup {
 				// Create a new group with the original attribute, and the new attribute
 				// at the position of the original attribute
 				this.addAttributeOrGroup(newGroup, originAttribute);
-				newGroup.addAttributeOrGroup(originAttribute);
 				newGroup.addAttributeOrGroup(newAttribute);
+				newGroup.addAttributeOrGroup(originAttribute);
 			} else {
 				// Create a new group, put in everything inside this group
 				// Then swap our operator and add the new attribute

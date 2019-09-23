@@ -97,6 +97,7 @@
 			</div>
 			<div :class="['tab-pane', {'active': activePattern==='advanced'}]" id="advanced">
 				<div id="querybuilder" ref="querybuilder"></div>
+				<button type="button" class="btn btn-default btn-sm" @click="copyAdvancedQuery">Copy to CQL editor</button>
 			</div>
 			<div :class="['tab-pane', {'active': activePattern==='expert'}]" id="expert">
 				<h3>Corpus Query Language:</h3>
@@ -263,6 +264,11 @@ export default Vue.extend({
 
 			el.value = `${textStart}\t${textEnd}`;
 			el.selectionEnd = el.selectionStart = originalSelectionStart + 1;
+		},
+
+		copyAdvancedQuery() {
+			PatternStore.actions.expert(PatternStore.getState().advanced);
+			InterfaceStore.actions.patternMode('expert');
 		}
 	}
 })
@@ -279,12 +285,12 @@ export default Vue.extend({
 	margin-bottom: 10px;
 }
 
-
 #querybuilder {
 	background-color: rgba(255, 255, 255, 0.7);
 	border-radius: 4px;
 	box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
-	border: 1px solid #ccc
+	border: 1px solid #ccc;
+	margin-bottom: 10px;
 }
 
 #simple > .form-group {

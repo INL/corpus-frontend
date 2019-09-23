@@ -47,13 +47,15 @@ export const paths = {
 	docsCsv: (indexId: string) =>                   `${indexId}/docs-csv/`,
 	snippet: (indexId: string, docId: string) =>    `${indexId}/docs/${docId}/snippet/`,
 
+	// Is used outside the axios endpoint we created above, so prefix with the correct location
 	autocompleteAnnotation: (
 		indexId: string,
 		annotatedFieldId: string,
-		annotationId: string) =>                    `${indexId}/autocomplete/${annotatedFieldId}/${annotationId}/`,
+		annotationId: string) =>                    `${blacklabEndpoint.defaults.baseURL}${indexId}/autocomplete/${annotatedFieldId}/${annotationId}/`,
+	// Is used outside the axios endpoint we created above, so prefix with the correct location
 	autocompleteMetadata: (
 		indexId: string,
-		metadataFieldId: string) =>                 `${indexId}/autocomplete/${metadataFieldId}/`,
+		metadataFieldId: string) =>                 `${blacklabEndpoint.defaults.baseURL}${indexId}/autocomplete/${metadataFieldId}/`,
 	termFrequencies: (indexId: string) =>           `${indexId}/termfreq/`,
 };
 

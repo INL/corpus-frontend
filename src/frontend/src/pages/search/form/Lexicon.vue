@@ -65,6 +65,7 @@ import * as Observable from 'rxjs';
 import { debounceTime, switchMap, flatMap, map, toArray, catchError, mapTo, distinctUntilChanged, tap } from 'rxjs/operators';
 
 import * as CorpusStore from '@/store/search/corpus';
+import * as UIStore from '@/store/search/ui';
 import * as api from '@/api';
 import SelectPicker, { Option } from '@/components/SelectPicker.vue';
 import UID from '@/mixins/uid';
@@ -128,8 +129,6 @@ export default Vue.extend({
 	components: { SelectPicker },
 	props: {
 		annotationId: String,
-		/** Lexicon database to use */
-		database: String,
 		value: null as any as () => null|string,
 		definition: Object as () => any
 	},
@@ -145,6 +144,9 @@ export default Vue.extend({
 		displayValue: '',
 	}),
 	computed: {
+		/** Lexicon database to use */
+		database(): string { return UIStore.getState().global.lexiconDb; },
+
 		cql(): string|undefined {
 			if (this.selectedWords.length) {
 				// return this.selectedWords.map(w => escapeRegex(w.word, false).replace(/"/g, '\\"')).join('|');
@@ -205,16 +207,28 @@ export default Vue.extend({
 						const {termFreq: frequencies} = await api.blacklab.getTermFrequencies(CorpusStore.getState().id, this.annotationId, lemmata.flatMap(r => r.wordforms).concat(term));
 
 						const options: MapOf<WordOption> = {};
-						lemmata.forEach(({pos, wordforms, lemma}) => wordforms.forEach((word, i) => {
-							options[word] = options[word] || {
+						lemmata.forEach(({pos, wordforms, lemma}) => {
+							wordforms.forEach((word, i) => {
+								options[word] = options[word] || {
+									lemma,
+									pos: [],
+									count: frequencies[word],
+									word,
+									selected: frequencies[word] > 0
+								} as WordOption;
+
+								options[word].pos.push(pos);
+							});
+
+							options[lemma] = options[lemma] || {
 								lemma,
 								pos: [],
-								count: frequencies[word],
-								word,
-								selected: frequencies[word] > 0
+								count: frequencies[lemma],
+								word: lemma,
+								selected: frequencies[lemma] > 0
 							} as WordOption;
-							options[word].pos.push(pos);
-						}));
+							options[lemma].pos.push(pos);
+						});
 						const posList = filterDuplicates(lemmata, 'pos').map(l => l.pos);
 
 						// If the entered word is not known in the lexicon service, but does occur in the corpus, create an extra checkbox

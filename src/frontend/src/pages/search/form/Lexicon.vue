@@ -111,7 +111,6 @@ const config = {
 	getLemmaIdFromWordform: `http://sk.taalbanknederlands.inl.nl/LexiconService/lexicon/get_lemma/`,
 	getLemmaIdFromLemma: `http://sk.taalbanknederlands.inl.nl/LexiconService/lexicon/get_lemma_id_from_lemma/`,
 	getWordformsFromLemmaId: `http://sk.taalbanknederlands.inl.nl/LexiconService/lexicon/get_wordforms_from_lemma_id/`,
-	database: `mnwlex`,
 	case_sensitive: false,
 };
 
@@ -129,6 +128,8 @@ export default Vue.extend({
 	components: { SelectPicker },
 	props: {
 		annotationId: String,
+		/** Lexicon database to use */
+		database: String,
 		value: null as any as () => null|string,
 		definition: Object as () => any
 	},
@@ -167,8 +168,8 @@ export default Vue.extend({
 					return Observable.of(emptyResult);
 				}
 
-				const lemmata1 = Axios.get<LexiconLemmaIdResponse>(config.getLemmaIdFromWordform, { params: { database: config.database, wordform: term, case_sensitive: config.case_sensitive } });
-				const lemmata2 = Axios.get<LexiconLemmaIdResponse>(config.getLemmaIdFromLemma, { params: { database: config.database, lemma: term, case_sensitive: config.case_sensitive } });
+				const lemmata1 = Axios.get<LexiconLemmaIdResponse>(config.getLemmaIdFromWordform, { params: { database: this.database, wordform: term, case_sensitive: config.case_sensitive } });
+				const lemmata2 = Axios.get<LexiconLemmaIdResponse>(config.getLemmaIdFromLemma, { params: { database: this.database, lemma: term, case_sensitive: config.case_sensitive } });
 				const lemmataRequest = Promise.all([lemmata1, lemmata2])
 				.then(r => r.flatMap(rr => rr.data.lemmata_list.flatMap(l => l.found_lemmata)))
 
@@ -182,7 +183,7 @@ export default Vue.extend({
 					// Get the words that map to this lemma
 					flatMap(lemma => Axios.get<LexiconWordformsResponse>(config.getWordformsFromLemmaId, {
 						params: {
-							database: config.database,
+							database: this.database,
 							lemma_id: lemma.lemma_id
 						}
 					}).then(response => ({...response.data, ...lemma}))),

@@ -104,7 +104,8 @@ function initQueryBuilder() {
 		PatternStore.actions.advanced(lastPattern);
 	} else {
 		// already something in store - copy to querybuilder.
-		if (!instance.parse(PatternStore.getState().advanced)) {
+		lastPattern = PatternStore.getState().advanced;
+		if (!instance.parse(lastPattern)) {
 			// Apparently it's invalid? reset to default.
 			PatternStore.actions.advanced(instance.getCql());
 		}

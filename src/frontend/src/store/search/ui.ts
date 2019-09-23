@@ -142,6 +142,9 @@ type ModuleRootState = {
 		pageGuide: {
 			enabled: boolean;
 		},
+
+		/** Database to use in the lexicon service component. To allow switching early dutch/middle dutch etc. */
+		lexiconDb: string;
 	}
 };
 
@@ -203,6 +206,7 @@ const initialState: ModuleRootState = {
 		pageGuide: {
 			enabled: true
 		},
+		lexiconDb: 'mnwlex'
 	},
 };
 
@@ -428,6 +432,7 @@ const actions = {
 				state.global.pageGuide.enabled = !!payload;
 			}, 'global_pageGuide_enabled'),
 		},
+		lexiconDb: b.commit((state, payload: string) => state.global.lexiconDb = payload, 'global_lexiconDb')
 	},
 	replace: b.commit((state, payload: ModuleRootState) => Object.assign(state, cloneDeep(payload)), 'replace'),
 

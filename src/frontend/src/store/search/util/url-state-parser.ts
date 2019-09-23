@@ -87,7 +87,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 			const parsedQuery: MapOf<FilterValue> = mapReduce(parseLucene(luceneString), 'id');
 
 			const metadataFields = CorpusModule.get.allMetadataFieldsMap();
-			const shownFilters = new Set<string>(UIModule.getState().search.shared.searchFilterIds.concat(
+			const shownFilters = new Set<string>(UIModule.getState().search.shared.searchMetadataIds.concat(
 				Object.keys(FilterModule.getState().filters)
 				.filter(id => metadataFields[id] == null)
 			));

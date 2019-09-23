@@ -54,7 +54,7 @@ type ModuleRootState = {
 			 * We cannot reasonably validate this, so we only output a warning when you're trying to register those.
 			 * This remains a bit of a TODO but it requires some deep thinking and architectural changes.
 			 */
-			searchFilterIds: string[];
+			searchMetadataIds: string[];
 		}
 	};
 
@@ -170,7 +170,7 @@ const initialState: ModuleRootState = {
 		expert: {},
 
 		shared: {
-			searchFilterIds: [],
+			searchMetadataIds: [],
 		}
 	},
 	explore: {
@@ -286,11 +286,11 @@ const actions = {
 		expert: {},
 
 		shared: {
-			searchFilterIds: b.commit((state, ids: string[]) => validateMetadata(ids,
+			searchMetadataIds: b.commit((state, ids: string[]) => validateMetadata(ids,
 				id => `Trying to show metadata field '${id}' in the filters section, but it does not exist.`,
 				_ => true, _ => '',
-				r => state.search.shared.searchFilterIds = sortMetadata(r)
-			), 'search_shared_searchFilterIds')
+				r => state.search.shared.searchMetadataIds = sortMetadata(r)
+			), 'search_shared_searchMetadataIds')
 		}
 	},
 	explore: {
@@ -468,7 +468,7 @@ const actions = {
 		 * ```
 		 */
 		configureMetadata: createConfigurator({
-			'FILTER':       ['search', 'shared', 'searchFilterIds'],
+			'FILTER':       ['search', 'shared', 'searchMetadataIds'],
 			'SORT':         ['results', 'shared', 'sortMetadataIds'],
 			'GROUP':        ['results', 'shared', 'groupMetadataIds'],
 			'RESULTS/HITS': ['results', 'hits', 'shownMetadataIds'],
@@ -515,8 +515,8 @@ const init = () => {
 
 	// Metadata/filters (extended, advanced, expert, explore)
 	// If unconfigured: show all metadata in groups (groups are defined in the index format yaml file)
-	if (!initialState.search.shared.searchFilterIds.length) {
-		actions.search.shared.searchFilterIds(allShownMetadataFields.map(f => f.id));
+	if (!initialState.search.shared.searchMetadataIds.length) {
+		actions.search.shared.searchMetadataIds(allShownMetadataFields.map(f => f.id));
 	}
 
 	// "within"

@@ -84,7 +84,7 @@ export default Vue.extend({
 			activeFilters: number
 		}> {
 			const availableBuiltinFilters = CorpusStore.get.allMetadataFieldsMap();
-			const builtinFiltersToShow = UIStore.getState().search.shared.searchFilterIds;
+			const builtinFiltersToShow = UIStore.getState().search.shared.searchMetadataIds;
 			const customFilters = Object.keys(FilterStore.getState().filters).filter(id => !availableBuiltinFilters[id]);
 			const order = mapReduce(FilterStore.getState().filterGroups.flatMap(g => g.fields).flatMap(f => ({f})), 'f', (f, index) => index + 1);
 			const allIdsToShow = builtinFiltersToShow.concat(customFilters).sort((a, b) => (order[a] || Number.MAX_SAFE_INTEGER) - (order[b] || Number.MAX_SAFE_INTEGER));

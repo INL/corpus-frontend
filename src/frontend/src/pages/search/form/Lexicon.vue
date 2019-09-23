@@ -71,14 +71,9 @@ import SelectPicker, { Option } from '@/components/SelectPicker.vue';
 import UID from '@/mixins/uid';
 import { escapeRegex, filterDuplicates, MapOf, mapReduce, getAnnotationPatternString } from '@/utils';
 
-type LexiconParams = {
+type LexiconParams1 = {lemma: string}|{wordform: string}
+type LexiconParams = LexiconParams1&{
 	database: string;
-	lemma: string;
-	case_sensitive: boolean;
-	/** only one pos per query supported */
-	pos?: string;
-	/** Return split part of speech tags in the lexicon service? */
-	split?: boolean;
 
 	dataset?: string;
 	year_from?: string; // format to be determined (just yyyy?)
@@ -86,6 +81,13 @@ type LexiconParams = {
 	tweaked_queries?: boolean;
 	lemma_provenance?: string;
 	paradigm_provenance?: any; // not sure what this is?
+
+	/** only one pos per query supported */
+	pos?: string;
+	/** Return split part of speech tags in the lexicon service? */
+	split?: boolean;
+
+	case_sensitive: boolean;
 };
 
 type LexiconLemmaIdResponse = {
@@ -107,8 +109,9 @@ type LexiconWordformsResponse = {
 };
 
 const config = {
-	lexiconUrl1: `http://sk.taalbanknederlands.inl.nl/LexiconService/lexicon/get_lemma_id_from_lemma`,
-	lexiconUrl2: `http://sk.taalbanknederlands.inl.nl/LexiconService/lexicon/get_wordforms_from_lemma_id`,
+	getLemmaIdFromWordform: `http://sk.taalbanknederlands.inl.nl/LexiconService/lexicon/get_lemma/`,
+	getLemmaIdFromLemma: `http://sk.taalbanknederlands.inl.nl/LexiconService/lexicon/get_lemma_id_from_lemma/`,
+	getWordformsFromLemmaId: `http://sk.taalbanknederlands.inl.nl/LexiconService/lexicon/get_wordforms_from_lemma_id/`,
 	database: `mnwlex`,
 	case_sensitive: false,
 };
@@ -145,7 +148,7 @@ export default Vue.extend({
 		cql(): string|undefined {
 			if (this.selectedWords.length) {
 				// return this.selectedWords.map(w => escapeRegex(w.word, false).replace(/"/g, '\\"')).join('|');
-				const joined = this.selectedWords.map(w => w.word).join('|').replace(/"/g, '\\"');
+				const joined = this.selectedWords.map(w => escapeRegex(w.word, false).replace(/|"/g, '\\$1')).join('|');
 				return joined.match(/\s+/) ? `"${joined}"` : joined;
 			}
 			return this.displayValue.trim() || undefined;
@@ -165,16 +168,10 @@ export default Vue.extend({
 					return Observable.of(emptyResult);
 				}
 
-				// Phase 1: get lemmata and their wordforms from the lexicon using the entered text
-				const lemmataRequest = Axios.get<LexiconLemmaIdResponse>(config.lexiconUrl1, {
-					params: {
-						database: config.database,
-						lemma: term,
-						case_sensitive: config.case_sensitive
-					},
-				})
-				.then(response => response.data.lemmata_list.flatMap(l => l.found_lemmata));
-				// .then(r => new Promise<typeof r>((resolve) => setTimeout(() => resolve(r), 10000)));
+				const lemmata1 = Axios.get<LexiconLemmaIdResponse>(config.getLemmaIdFromWordform, { params: { database: config.database, wordform: term, case_sensitive: config.case_sensitive } });
+				const lemmata2 = Axios.get<LexiconLemmaIdResponse>(config.getLemmaIdFromLemma, { params: { database: config.database, lemma: term, case_sensitive: config.case_sensitive } });
+				const lemmataRequest = Promise.all([lemmata1, lemmata2])
+				.then(r => r.flatMap(rr => rr.data.lemmata_list.flatMap(l => l.found_lemmata)))
 
 				// Do this inside an observable, the pending stages of pipe() will not be ran if this observable is old (e.g. a new lemma came in)
 				// Whereas if we .then().then().then() chain a promise, it will all run regardless of whether the results are still needed.
@@ -182,9 +179,9 @@ export default Vue.extend({
 				.from(lemmataRequest)
 				.pipe(
 					// Phase 2: get associated words
-					flatMap(lemmata => lemmata), // unpack the array of found lemmata into one message per lemma, for ease of use
+					flatMap(lemmata => filterDuplicates(lemmata, 'lemma_id')), // unpack the array of found lemmata into one message per lemma, for ease of use
 					// Get the words that map to this lemma
-					flatMap(lemma => Axios.get<LexiconWordformsResponse>(config.lexiconUrl2, {
+					flatMap(lemma => Axios.get<LexiconWordformsResponse>(config.getWordformsFromLemmaId, {
 						params: {
 							database: config.database,
 							lemma_id: lemma.lemma_id
@@ -200,7 +197,9 @@ export default Vue.extend({
 					// then coordinate with BlackLab to find out which of the found words actually exist in the corpus.
 					toArray(),
 					flatMap(async (lemmata) => {
-						lemmata.forEach(l => l.pos = l.pos || '[unknown]');
+						if (!lemmata.length) { return emptyResult; }
+
+						lemmata.forEach(l => l.pos = `${l.lemma} (${l.pos || 'unknown'})`);
 
 						const {termFreq: frequencies} = await api.blacklab.getTermFrequencies(CorpusStore.getState().id, this.annotationId, lemmata.flatMap(r => r.wordforms));
 
@@ -217,7 +216,7 @@ export default Vue.extend({
 						}));
 
 						const wordList = Object.values(options).filter(word => word.count > 0);
-						const posOptions = mapReduce(lemmata, 'pos', l => true);
+						const posOptions = mapReduce(lemmata.map(l => l.pos));
 						return {posOptions, wordList};
 					}),
 					catchError(e => [emptyResult])

@@ -16,6 +16,12 @@
 
 				v-model="value"
 			/>
+			<Lexicon v-if="annotation.uiType === 'lexicon'"
+				:annotationId="annotation.id"
+				:definition="annotation"
+
+				v-model="value"
+			/>
 			<div v-else class="input-group">
 				<Autocomplete
 					type="text"
@@ -87,26 +93,26 @@
 import Vue from 'vue';
 import { Subscription } from 'rxjs';
 
-import {paths} from '@/api';
-
 import * as RootStore from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus';
 import * as PatternStore from '@/store/search/form/patterns';
 
 import SelectPicker, {Option} from '@/components/SelectPicker.vue';
 import PartOfSpeech from '@/pages/search/form/PartOfSpeech.vue';
-
-import { NormalizedAnnotation } from '@/types/apptypes';
-
 import Autocomplete from '@/components/Autocomplete.vue';
+import Lexicon from '@/pages/search/form/Lexicon.vue';
 import UID from '@/mixins/uid';
+
+import {paths} from '@/api';
+import { NormalizedAnnotation } from '@/types/apptypes';
 
 export default Vue.extend({
 	mixins: [UID],
 	components: {
 		SelectPicker,
 		PartOfSpeech,
-		Autocomplete
+		Autocomplete,
+		Lexicon
 	},
 	props: {
 		annotation: Object as () => NormalizedAnnotation

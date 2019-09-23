@@ -55,7 +55,6 @@
 				> {{pos}}
 			</label>
 		</template>
-
 	</div>
 </template>
 
@@ -148,7 +147,7 @@ export default Vue.extend({
 		cql(): string|undefined {
 			if (this.selectedWords.length) {
 				// return this.selectedWords.map(w => escapeRegex(w.word, false).replace(/"/g, '\\"')).join('|');
-				const joined = this.selectedWords.map(w => escapeRegex(w.word, false).replace(/|"/g, '\\$1')).join('|');
+				const joined = this.selectedWords.map(w => escapeRegex(w.word, false).replace(/\|"/g, '\\$1')).join('|');
 				return joined.match(/\s+/) ? `"${joined}"` : joined;
 			}
 			return this.displayValue.trim() || undefined;
@@ -201,10 +200,11 @@ export default Vue.extend({
 
 						lemmata.forEach(l => l.pos = `${l.lemma} (${l.pos || 'unknown'})`);
 
-						const {termFreq: frequencies} = await api.blacklab.getTermFrequencies(CorpusStore.getState().id, this.annotationId, lemmata.flatMap(r => r.wordforms));
+						// Request occurance counts in the corpus from blacklab. Note we also request occurance count for the entered search term.
+						const {termFreq: frequencies} = await api.blacklab.getTermFrequencies(CorpusStore.getState().id, this.annotationId, lemmata.flatMap(r => r.wordforms).concat(term));
 
 						const options: MapOf<WordOption> = {};
-						lemmata.forEach(({pos, wordforms, lemma}) => wordforms.forEach(word => {
+						lemmata.forEach(({pos, wordforms, lemma}) => wordforms.forEach((word, i) => {
 							options[word] = options[word] || {
 								lemma,
 								pos: [],
@@ -214,9 +214,22 @@ export default Vue.extend({
 							} as WordOption;
 							options[word].pos.push(pos);
 						}));
+						const posList = filterDuplicates(lemmata, 'pos').map(l => l.pos);
+
+						// If the entered word is not known in the lexicon service, but does occur in the corpus, create an extra checkbox
+						// that is always shown (as long as any pos is selected)
+						if (frequencies[term] && !options[term]) {
+							options[term] = {
+								lemma: term,
+								pos: posList, // always show
+								count: frequencies[term],
+								word: term,
+								selected: true
+							};
+						}
 
 						const wordList = Object.values(options).filter(word => word.count > 0);
-						const posOptions = mapReduce(lemmata.map(l => l.pos));
+						const posOptions = mapReduce(posList);
 						return {posOptions, wordList};
 					}),
 					catchError(e => [emptyResult])

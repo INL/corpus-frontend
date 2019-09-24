@@ -16,7 +16,7 @@
 
 				v-model="value"
 			/>
-			<Lexicon v-if="annotation.uiType === 'lexicon'"
+			<Lexicon v-else-if="annotation.uiType === 'lexicon'"
 				:annotationId="annotation.id"
 				:definition="annotation"
 

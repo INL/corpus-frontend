@@ -18,10 +18,10 @@
     <table class="corpora public table">
         <thead>
             <tr>
-                <th></th> ##search button
+                <th class="table-icon"></th> ##search button
                 <th>Corpus</th>
                 <th>Size</th>
-                <th></th> ## expand details buttons
+                <th class="table-icon"></th> ## expand details buttons
             </tr>
         </thead>
         <tbody data-autoupdate="corpora" data-filter="public"></tbody>
@@ -34,13 +34,13 @@
     <table class="table corpora">
         <thead>
             <tr>
-                <th></th> ##search button
+                <th class="table-icon"></th> ##search button
                 <th>Corpus</th>
                 <th>Size</th>
-                <th></th> ## delete, add, share buttons
-                <th></th>
-                <th></th>
-                <th></th> ## expand details buttons
+                <th class="table-icon"></th> ## delete, add, share buttons
+                <th class="table-icon"></th>
+                <th class="table-icon"></th>
+                <th class="table-icon"></th> ## expand details buttons
             </tr>
         </thead>
         <tbody data-autoupdate="corpora" data-filter="private"></tbody>

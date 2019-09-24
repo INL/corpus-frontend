@@ -240,18 +240,18 @@ createHandler({selector: 'tbody[data-autoupdate="corpora"]', event: DataEvent.CO
 		<td class="corpus-name"><a title="Search the '{{displayName}}' corpus" class="{{^canSearch}}disabled{{/canSearch}}" {{#canSearch}}href="{{searchUrl}}"{{/canSearch}}>{{displayName}} {{statusText}}</a></td>
 		<td>{{sizeString}}</td>
 		{{#isPrivate}}
-			<td><a data-corpus-action="upload" data-id="{{id}}" title="Upload documents to the '{{displayName}}' corpus" class="icon fa fa-plus-square {{#isBusy}}disabled{{/isBusy}}" href="javascript:void(0)"></a></td>
-			<td><a data-corpus-action="share" data-id="{{id}}" title="Share the '{{displayName}}' corpus" class="icon fa fa-user-plus" href="javascript:void(0)"></a></td>
-			<td><a data-corpus-action="delete" data-id="{{id}}" title="Delete the '{{displayName}}' corpus" class="icon fa fa-trash {{#isBusy}}disabled{{/isBusy}}" href="javascript:void(0)"></a></td>
+			<td><a data-corpus-action="upload" data-id="{{id}}" title="Upload documents to the '{{displayName}}' corpus" class="icon fa fa-fw fa-plus-square {{#isBusy}}disabled{{/isBusy}}" href="javascript:void(0)"></a></td>
+			<td><a data-corpus-action="share" data-id="{{id}}" title="Share the '{{displayName}}' corpus" class="icon fa  fa-fw fa-user-plus" href="javascript:void(0)"></a></td>
+			<td><a data-corpus-action="delete" data-id="{{id}}" title="Delete the '{{displayName}}' corpus" class="icon fa  fa-fw fa-trash {{#isBusy}}disabled{{/isBusy}}" href="javascript:void(0)"></a></td>
 		{{/isPrivate}}
 		<td>
 			<a role="button" data-toggle="collapse" href="#{{detailsId}}" aria-expanded="false" aria-controls="{{detailsId}}">
-				<span class="icon fa fa-caret-down" title="show details"></span>
+				<span class="icon fa fa-fw fa-caret-down" title="show details"></span>
 			</a>
 		</td>
 	</tr>
 	<tr id="{{detailsId}}" class="collapse">
-		<td colspan="{{^isPrivate}}3{{/isPrivate}}{{#isPrivate}}6{{/isPrivate}}">
+		<td colspan="{{^isPrivate}}4{{/isPrivate}}{{#isPrivate}}7{{/isPrivate}}">
 			<table>
 				<tr>
 					<th>Last modified</th>

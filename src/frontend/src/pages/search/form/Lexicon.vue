@@ -149,7 +149,6 @@ export default Vue.extend({
 
 		cql(): string|undefined {
 			if (this.selectedWords.length) {
-				// return this.selectedWords.map(w => escapeRegex(w.word, false).replace(/"/g, '\\"')).join('|');
 				const joined = this.selectedWords.map(w => escapeRegex(w.word, false).replace(/\|"/g, '\\$1')).join('|');
 				return joined.match(/\s+/) ? `"${joined}"` : joined;
 			}

@@ -423,7 +423,7 @@ export function selectPickerMetadataOptions(
 		label: g.groupId,
 		options: g.fields.map(({id, displayName}) => ({
 			value: `field:${id}`,
-			label: `${operation} by ${(displayName || id).replace(g.groupId, '')} <small class="text-muted">(${g.groupId})</small>`,
+			label: `${operation} by ${(displayName || id)} <small class="text-muted">(${g.groupId})</small>`,
 		}))
 	}));
 }

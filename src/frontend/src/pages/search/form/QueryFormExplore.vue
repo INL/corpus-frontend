@@ -214,48 +214,38 @@ export default Vue.extend({
 		},
 
 		annotationSearchOptions(): Option[]|OptGroup[] {
-			// const groups = annotationGroups(
-			// 	UIStore.getState().explore.searchAnnotationIds,
-			// 	CorpusStore.get.allAnnotationsMap(),
-			// 	CorpusStore.getState().annotationGroups
-			// )
-			// .map(g => ({
-			// 	label: g.groupId,
-			// 	options: g.annotations.map<Option>(a => ({
-			// 		value: a.id,
-			// 		label: a.displayName,
-			// 		title: a.description
-			// 	}))
-			// }));
-
-			// return groups.length > 1 ? groups : groups.flatMap(g => g.options);
-			const annotations = CorpusStore.get.annotationDisplayNames();
-			return UIStore.getState().explore.searchAnnotationIds.map(id => ({
-				value: id,
-				label: annotations[id]
+			const groups = annotationGroups(
+				UIStore.getState().explore.searchAnnotationIds,
+				CorpusStore.get.allAnnotationsMap(),
+				CorpusStore.getState().annotationGroups
+			)
+			.map(g => ({
+				label: g.groupId,
+				options: g.annotations.map<Option>(a => ({
+					value: a.id,
+					label: a.displayName,
+					title: a.description
+				}))
 			}));
+
+			return groups.length > 1 ? groups : groups.flatMap(g => g.options);
 		},
 		annotationGroupByOptions(): Option[]|OptGroup[] {
-			// const groups = annotationGroups(
-			// 	UIStore.getState().results.shared.groupAnnotationIds,
-			// 	CorpusStore.get.allAnnotationsMap(),
-			// 	CorpusStore.getState().annotationGroups
-			// )
-			// .map(g => ({
-			// 	label: g.groupId,
-			// 	options: g.annotations.map<Option>(a => ({
-			// 		value: a.id,
-			// 		label: a.displayName,
-			// 		title: a.description
-			// 	}))
-			// }));
-
-			// return groups.length > 1 ? groups : groups.flatMap(g => g.options);
-			const annotations = CorpusStore.get.annotationDisplayNames();
-			return UIStore.getState().results.shared.groupAnnotationIds.map(id => ({
-				value: id,
-				label: annotations[id]
+			const groups = annotationGroups(
+				UIStore.getState().results.shared.groupAnnotationIds,
+				CorpusStore.get.allAnnotationsMap(),
+				CorpusStore.getState().annotationGroups
+			)
+			.map(g => ({
+				label: g.groupId,
+				options: g.annotations.map<Option>(a => ({
+					value: a.id,
+					label: a.displayName,
+					title: a.description
+				}))
 			}));
+
+			return groups.length > 1 ? groups : groups.flatMap(g => g.options);
 		},
 		metadataGroupByOptions(): OptGroup[] {
 			const metas = CorpusStore.get.allMetadataFieldsMap();

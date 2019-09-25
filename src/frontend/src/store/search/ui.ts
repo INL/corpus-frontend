@@ -206,7 +206,7 @@ const initialState: ModuleRootState = {
 		pageGuide: {
 			enabled: true
 		},
-		lexiconDb: 'mnwlex'
+		lexiconDb: 'lexiconservice_mnw_wnt'
 	},
 };
 

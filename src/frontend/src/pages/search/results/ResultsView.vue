@@ -511,7 +511,7 @@ export default Vue.extend({
 		},
 		visible: {
 			handler(visible) {
-				if (visible && this.isDirty && this.valid) {
+				if (visible && this.isDirty) {
 					this.refresh();
 				}
 			},

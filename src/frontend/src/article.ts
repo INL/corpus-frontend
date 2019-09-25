@@ -7,6 +7,7 @@ import * as Highcharts from 'highcharts';
 import HighchartsVue from 'highcharts-vue';
 import HighchartsExporting from 'highcharts/modules/exporting';
 import HighchartsExportingData from 'highcharts/modules/export-data';
+import HighchartsBoost from 'highcharts/modules/boost';
 
 import tippy from 'tippy.js';
 import Mustache from 'mustache';
@@ -100,11 +101,11 @@ $(document).ready(function() {
 	tippy('.word[data-toggle="tooltip"]', {
 		animateFill: false,
 		allowHTML: true,
-		delay: [60,0],
-		duration: [0,0],
+		delay: 0,
+		duration: 0,
 		interactive: true,
 		performance: true,
-		trigger: 'focus mouseenter',
+		trigger: 'click',
 		onMount(instance) {
 			const attrs = getAttributeList(instance.reference);
 			if (attrs.length === 0 && instance.reference.attributes.getNamedItem('title')) {
@@ -119,7 +120,8 @@ $(document).ready(function() {
 				return;
 			} else if (attrs.length === 1) {
 				// Don't bother with a table if there's only one value to display
-				instance.setContent(attrs[0].value);
+				const content = attrs[0].value.replace(/&quot;/g, '"').replace(/&amp;/g, '&');
+				instance.setContent(content);
 			} else {
 				const content = writer.render(template, { props: getAttributeList(instance.reference) }, {});
 				instance.setContent(content);
@@ -155,6 +157,7 @@ $(document).ready(function() {
 
 HighchartsExporting(Highcharts);
 HighchartsExportingData(Highcharts);
+HighchartsBoost(Highcharts);
 
 Vue.use(HighchartsVue);
 

@@ -33,6 +33,7 @@ export default Vue.extend({
 				return {
 					type: 'line',
 					name: annot.displayName || annot.id,
+					boostThreshold: 250,
 					keys: ['name', 'x', 'x2', 'y', 'y2'],
 					data: (() => {
 						const ret: any[][] = values.map((v, i) => [v, i+1, (i+1)*invLength, seen[v] ? uniques : (seen[v] = true, ++uniques)]);
@@ -49,8 +50,13 @@ export default Vue.extend({
 				title: {
 					text: this.chartTitle || ''
 				},
+				boost: {
+					useGPUTranslations: true,
+					enabled: true,
+				},
 				chart: {
 					animation: false,
+					zoomType: 'x'
 				},
 				colors: (() => {
 					const colors = [];

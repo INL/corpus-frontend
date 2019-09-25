@@ -6,12 +6,10 @@
 			<br>
 			<button type="button" class="btn btn-lg btn-default" @click="fetch">Retry</button>
 		</div>
-		<h4 v-else-if="!anythingToShow" class="text-muted text-center"><em>
-			No statistics have been configured for this corpus.
-		</em></h4>
-
+		<h4 v-else-if="!isEnabled" class="text-muted text-center">
+			<em>No statistics have been configured for this corpus.</em>
+		</h4>
 		<template v-else>
-
 			<div v-if="statisticsTableData"
 				:class="{
 					'col-xs-12': true,
@@ -68,64 +66,57 @@ export default Vue.extend({
 		AnnotationGrowths,
 	},
 	data: () => ({
+		request: null as null|Promise<BLTypes.BLHitSnippet>,
 		snippet: null as null|BLTypes.BLHitSnippet,
 		error: null as null|AppTypes.ApiError,
 	}),
 	computed: {
 		document: RootStore.get.document,
+		baseColor: RootStore.get.baseColor,
+
 		getStatistics: RootStore.get.statisticsTableFn,
-		statisticsTableData() {
+		statisticsTableData(): any {
 			return (this.getStatistics && this.document && this.snippet) ?
 				this.getStatistics(this.document, this.snippet) : null;
 		},
-		distributionData() {
+		distributionData(): any {
 			const data = RootStore.get.distributionAnnotation();
 			return data ? {
 				annotationId: data.id,
 				chartTitle: data.displayName,
-				baseColor: RootStore.get.baseColor()
+				baseColor: this.baseColor
 			} : null;
 		},
-		growthData() {
+		growthData(): any {
 			const data = RootStore.get.growthAnnotations();
 			return data ? {
 				annotations: data.annotations,
 				chartTitle: data.displayName,
-				baseColor: RootStore.get.baseColor()
+				baseColor: this.baseColor
 			} : null;
 		},
 
-		anythingToShow(): boolean {
-			return !!this.document && !!(
-				RootStore.get.statisticsTableFn() ||
-				this.distributionData ||
-				this.growthData
-			);
-		},
-		isLoading(): boolean { return !this.document || (this.anythingToShow && !(this.snippet || this.error)); }
+		isEnabled(): boolean { return !!(this.getStatistics || this.distributionData || this.growthData); },
+		isLoading(): boolean { return this.request != null; }
 	},
 	methods: {
-		fetch() {
-			if (!this.anythingToShow) {
+		load(): void {
+			if (this.snippet || this.error || this.request || !this.isEnabled) {
 				return;
 			}
 
-			this.error = null;
-			this.snippet = null;
-
-			blacklab.getSnippet(RootStore.getState().indexId, RootStore.getState().docId, 0, this.document!.docInfo.lengthInTokens, 0)
+			this.request = blacklab.getSnippet(RootStore.getState().indexId, RootStore.getState().docId, 0, this.document!.docInfo.lengthInTokens, 0)
 			.then(snippet => this.snippet = snippet)
-			.catch(error => this.error = error);
-		},
+			.catch(error => this.error = error)
+			.finally(() => this.request = null);
+		}
 	},
 	watch: {
-		document() { this.fetch(); },
-		anythingToShow: {
+		isEnabled: {
 			immediate: true,
 			handler(v: boolean) {
 				const statsTab = (document.querySelector('a[href="#statistics"]') as HTMLAnchorElement);
 				if (v) {
-					this.fetch();
 					statsTab.classList.remove('disabled');
 					statsTab.removeEventListener('click', _preventClicks);
 					statsTab.style.display = null; // default display
@@ -140,7 +131,8 @@ export default Vue.extend({
 		}
 	},
 	created() {
-		this.fetch();
+		const statsTab = (document.querySelector('a[href="#statistics"]') as HTMLAnchorElement);
+		statsTab.addEventListener('click', () => this.load(), { once: true });
 	}
 });
 

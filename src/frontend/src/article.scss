@@ -1,3 +1,5 @@
+// Only contains styles for classes used in the built in xsl files (article_tei.xsl, article_folia.xsl). And some styles for the navigation controls (next hit, next page)
+
 .hitscroll {
 	background-color: #444444;
 	border: #222222 1px solid;
@@ -25,35 +27,14 @@
 	}
 }
 
-.word {
-	font-family: "Inl vmnw wnt", "Helvetica Neue", "Helvetica",
-		"Arial,sans-serif";
+.word, .tippy-tooltip {
+	font-family: "Inl vmnw wnt", "Helvetica Neue", "Helvetica", "Arial,sans-serif";
 }
 
 .p,
 .paragraph {
 	display: block;
 	margin: 0 0 10px;
-}
-
-// .s, .sentence {
-	// No special layout (yet)
-// }
-
-// e.g. TEI lb element (insert line break)
-.lb,
-.line-beginning {
-	&:after {
-		content: '\A';
-	}
-}
-
-// e.g. TEI pb element (insert horizontal rule)
-.pb,
-.page-beginning {
-	display: block;
-	border-top: 1px solid black;
-	margin: 10px 0;
 }
 
 .linenumber {
@@ -67,7 +48,7 @@
 	vertical-align: top;
 }
 
-// Tooltips
+// Word Tooltips
 .tippy-content {
 	background: white;
 	border: 1px solid #ccc;

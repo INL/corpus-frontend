@@ -103,7 +103,7 @@ $(document).ready(function() {
 		allowHTML: true,
 		delay: 0,
 		duration: 0,
-		interactive: true,
+		interactive: true, // required to allow selecting text in the tooltip
 		performance: true,
 		trigger: 'click',
 		onMount(instance) {
@@ -120,6 +120,7 @@ $(document).ready(function() {
 				return;
 			} else if (attrs.length === 1) {
 				// Don't bother with a table if there's only one value to display
+				// (unescape double quotes and ampersands, as those are always required to be escaped in attributes)
 				const content = attrs[0].value.replace(/&quot;/g, '"').replace(/&amp;/g, '&');
 				instance.setContent(content);
 			} else {

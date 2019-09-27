@@ -137,9 +137,7 @@ public class ArticleResponse extends BaseResponse {
             if (documentContents.contains("NOT_AUTHORIZED")) {
                 context.put("article_content", "content restricted");
             } else {
-                context.put("article_content",
-                        transformContent(articleStylesheet, documentContents)
-                );
+                context.put("article_content", transformContent(articleStylesheet, documentContents));
             }
 
         } catch (QueryException e) {
@@ -243,6 +241,9 @@ public class ArticleResponse extends BaseResponse {
                     }
                     return pi;
                 })
-                .orElse(new PagingInfo(this,servlet.getWordsToShow(),0));
+                .orElseGet(() -> {
+                    context.put("article_meta", "");
+                    return new PagingInfo(this,servlet.getWordsToShow(),0);
+                });
     }
 }

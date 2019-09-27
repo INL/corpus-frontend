@@ -141,7 +141,7 @@ public class MainServlet extends HttpServlet {
     @Override
     public void init(ServletConfig cfg) throws ServletException {
         super.init(cfg);
-
+        
         try {
             startVelocity(cfg);
 
@@ -567,12 +567,16 @@ public class MainServlet extends HttpServlet {
             XslTransformer trans = file.map(f -> {
                 try { return new XslTransformer(f);}
                 catch (TransformerConfigurationException | FileNotFoundException e) {
-                    logger.debug("Error loading stylesheet {} for corpus {} : {}", file.get(), corpus, e.getMessage());
+                    logger.info("Error loading stylesheet {} for corpus {} : {}", file.get(), corpus, e.getMessage());
                     return null;
                 }
             })
             .orElseGet(() -> {
-                logger.debug("Attempting to get xsl {} for corpus {} from blacklab...", corpusDataFormat, corpus);
+                if (!name.equals("article")) {
+                    return null;
+                }
+
+                logger.info("Attempting to get xsl {} for corpus {} from blacklab...", corpusDataFormat, corpus);
 
                 try {
                     QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(null) + "input-formats/" + corpusDataFormat + "/xslt");
@@ -580,7 +584,7 @@ public class MainServlet extends HttpServlet {
                     String sheet = handler.makeRequest(params);
                     return new XslTransformer(sheet, new StringReader(sheet));
                 } catch (TransformerConfigurationException | IOException | QueryException e) {
-                    logger.debug("Error getting or using stylesheet for format {} from blacklab : {}", corpusDataFormat, e.getMessage());
+                    logger.info("Error getting or using stylesheet for format {} from blacklab : {}", corpusDataFormat, e.getMessage());
                     return null;
                 }
             });

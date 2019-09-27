@@ -37,7 +37,7 @@
 	</xsl:template>
 
 	<xsl:template match="//*[local-name()='del']">
-		<span style="text-decoration:line-through"><xsl:apply-templates/></span>
+		<del><xsl:apply-templates/></del>
 	</xsl:template>
 
 	<xsl:template match="//*[local-name()='hl']">

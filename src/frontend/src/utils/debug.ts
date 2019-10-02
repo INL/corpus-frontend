@@ -1,4 +1,5 @@
-let debug = true;
+declare const process: any;
+let debug = process.env.NODE_ENV === 'development';
 
 let queued: IArguments[] = [];
 

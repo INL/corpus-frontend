@@ -1,5 +1,5 @@
 <template>
-	<div style="position: relative;">
+	<div class="lexicon">
 		<input
 			type="text"
 			:class="{'form-control': true, 'loading': !posOptions || !wordOptions}"

@@ -300,6 +300,7 @@ export default Vue.extend({
 	}
 
 	> .form-control,
+	> .lexicon,
 	> .combobox {
 		margin-top: 8px;
 	}

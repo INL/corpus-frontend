@@ -288,6 +288,10 @@ export default Vue.extend({
 
 <style lang="scss" scoped>
 
+.lexicon {
+	position: relative;
+}
+
 label[disabled],
 label.disabled {
 	opacity: 0.5;

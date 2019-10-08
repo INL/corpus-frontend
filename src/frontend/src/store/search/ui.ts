@@ -250,8 +250,7 @@ const actions = {
 				enable: b.commit((state, payload: boolean) => state.search.extended.within.enabled = payload, 'search_extended_within_enable'),
 				elements: b.commit((state, payload: ModuleRootState['search']['extended']['within']['elements']) => {
 					// explicitly retrieve this annotations as it's supposed to be internal and thus not included in any getters.
-					const field = Object.values(CorpusStore.getState().annotatedFields).find(f => 'starttag' in f.annotations);
-					const annot = field ? field.annotations.starttag : undefined;
+					const annot = (CorpusStore.get.allAnnotationsMap().starttag || [])[0];
 					const validValuesMap = mapReduce(annot ? annot.values : undefined, 'value');
 
 					state.search.extended.within.elements = payload.filter(v => {
@@ -260,6 +259,7 @@ const actions = {
 							Trying to register element name ${v.value} for 'within' clause, but it doesn't exist in the index.
 							This might happen when there are too many tags recorded in the index, but also when it just doesn't occur (or tags aren't indexed).`);
 						}
+						return valid;
 					});
 				}, 'search_extended_within_annotations'),
 			},
@@ -531,7 +531,7 @@ const init = () => {
 		const annot = fields ? fields[0] : undefined;
 		const validValues = cloneDeep(annot && annot.values ? annot.values : []);
 		validValues.forEach(v => {
-			if (!v.label.trim()) {
+			if (!v.label.trim() || v.label === v.value) {
 				if (v.value === 'p') { v.label = 'paragraph'; }
 				else if (v.value === 's') { v.label = 'sentence'; }
 				else if (!v.value) { v.label = 'document'; }
@@ -541,7 +541,7 @@ const init = () => {
 
 		if (validValues.length) {
 			if (validValues.length <= 6) { // an arbitrary limit
-				actions.search.extended.within.elements(cloneDeep(validValues));
+				actions.search.extended.within.elements(validValues);
 			} else {
 				console.warn(`Within clause can contain ${validValues.length} different values, ignoring...`);
 			}

@@ -583,8 +583,11 @@ public class MainServlet extends HttpServlet {
                     Map<String, String[]> params = new HashMap<>();
                     String sheet = handler.makeRequest(params);
                     return new XslTransformer(sheet, new StringReader(sheet));
-                } catch (TransformerConfigurationException | IOException | QueryException e) {
+                } catch (TransformerConfigurationException | IOException e)  {
                     logger.info("Error getting or using stylesheet for format {} from blacklab : {}", corpusDataFormat, e.getMessage());
+                    return null;
+                } catch (QueryException e) {
+                    logger.info("Error getting stylesheet for format {} from blacklab, the format might not exist (http {}).", corpusDataFormat, e.getHttpStatusCode());
                     return null;
                 }
             });

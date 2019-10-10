@@ -6,7 +6,7 @@
 
 <script src="$jspath/article.js?_$cache"></script>
 
-<div class="container">
+<div class="container article">
     <ul id="articleTabs" class="nav nav-tabs cf-panel-tab-header cf-panel-lg">
         <li class="active"><a href="#content" data-toggle="tab">Content</a>
         </li>

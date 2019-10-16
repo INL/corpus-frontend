@@ -122,7 +122,7 @@ export default Vue.extend({
 						};
 					}) : [],
 					summary: (title[0] || 'UNKNOWN') + (author[0] ? ' by ' + author[0] : ''),
-					href: getDocumentUrl(pid, this.results.summary.searchParam.patt || null, this.results.summary.searchParam.pattgapdata || null),
+					href: getDocumentUrl(pid, this.results.summary.searchParam.patt || undefined, this.results.summary.searchParam.pattgapdata || undefined),
 					date: date[0] || '',
 					hits: doc.numberOfHits,
 					docPid: pid,

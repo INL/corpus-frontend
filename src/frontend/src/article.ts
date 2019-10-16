@@ -17,9 +17,14 @@ import ArticlePageComponent from '@/pages/article/ArticlePage.vue';
 
 import '@/global.scss';
 import '@/article.scss';
+import debug from '@/utils/debug';
 
 // Article-related functions.
 // Takes care of tooltips and highlighting/scrolling to anchors.
+
+declare const BLS_URL: string;
+declare const INDEX_ID: string;
+declare const DOCUMENT_ID: string;
 
 let $hits: JQuery<HTMLElement>;
 let currentHit: number;
@@ -171,4 +176,8 @@ $(document).ready(() => {
 	.$mount(document.querySelector('#vue-root-statistics')!);
 
 	(window as any).Vue = Vue;
+
+	if (debug) {
+		$('#content').append(`<hr><a href="${BLS_URL}${INDEX_ID}/docs/${DOCUMENT_ID}/contents?wordend=100" target="_blank">Open raw document</a>`);
+	}
 });

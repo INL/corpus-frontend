@@ -126,7 +126,7 @@ $(document).ready(() => {
 
 	initTooltips({
 		mode: 'title',
-		excludeAttributes: ['toggle'],
+		excludeAttributes: ['toggle', 'tooltip-content', 'tooltip-preview'],
 		tooltippableSelector: '.word[data-toggle="tooltip"]'
 	});
 });

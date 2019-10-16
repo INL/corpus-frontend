@@ -9,15 +9,13 @@ import HighchartsExporting from 'highcharts/modules/exporting';
 import HighchartsExportingData from 'highcharts/modules/export-data';
 import HighchartsBoost from 'highcharts/modules/boost';
 
-import tippy from 'tippy.js';
-import Mustache from 'mustache';
-
 import * as RootStore from '@/store/article';
 import ArticlePageComponent from '@/pages/article/ArticlePage.vue';
+import debug from '@/utils/debug';
+import initTooltips from '@/modules/expandable-tooltips';
 
 import '@/global.scss';
 import '@/article.scss';
-import debug from '@/utils/debug';
 
 // Article-related functions.
 // Takes care of tooltips and highlighting/scrolling to anchors.
@@ -74,67 +72,6 @@ $(document).ready(function() {
 	$hits = $('.hl');
 	currentHit = 0;
 
-	function getAttributeList(element: Element) {
-		const ret = [];
-
-		let key: string;
-		let value: string;
-		for ({name: key, value} of element.attributes) {
-			if (key.startsWith('data-') && value && key !== 'data-toggle') {
-				ret.push({key: key.substring(5), value});
-			}
-		}
-		return ret;
-	}
-
-	// Is this correct? It seems a little strange we don't get some sort of compiled template back.
-	const template = `
-		<table class="table" style="table-layout:fixed;width:auto;min-width:300px;">
-			<tbody>
-				{{#props}}
-				<tr>
-					<td>{{key}}</td>
-					<td>{{value}}</td>
-				</tr>
-				{{/props}}
-			</tbody>
-		</table>`;
-	const writer = new Mustache.Writer();
-	writer.parse(template);
-
-	// Create jQuery Tooltips from title attributes
-	tippy('.word[data-toggle="tooltip"]', {
-		animateFill: false,
-		allowHTML: true,
-		delay: 0,
-		duration: 0,
-		interactive: true, // required to allow selecting text in the tooltip
-		performance: true,
-		trigger: 'click',
-		onMount(instance) {
-			const attrs = getAttributeList(instance.reference);
-			if (attrs.length === 0 && instance.reference.attributes.getNamedItem('title')) {
-				// sub title attribute for a default value if nothing else is present.
-				attrs.push({
-					key: 'title',
-					value: instance.reference.attributes.getNamedItem('title')!.name
-				});
-			}
-
-			if (attrs.length === 0) {
-				return;
-			} else if (attrs.length === 1) {
-				// Don't bother with a table if there's only one value to display
-				// (unescape double quotes and ampersands, as those are always required to be escaped in attributes)
-				const content = attrs[0].value.replace(/&quot;/g, '"').replace(/&amp;/g, '&');
-				instance.setContent(content);
-			} else {
-				const content = writer.render(template, { props: getAttributeList(instance.reference) }, {});
-				instance.setContent(content);
-			}
-		}
-	});
-
 	// Show number of hits at the top of the metadata
 	$('#divHitsInDocument').text($hits.length);
 
@@ -180,4 +117,16 @@ $(document).ready(() => {
 	if (debug) {
 		$('#content').append(`<hr><a href="${BLS_URL}${INDEX_ID}/docs/${DOCUMENT_ID}/contents?wordend=100" target="_blank">Open raw document</a>`);
 	}
+
+	initTooltips({
+		mode: 'attributes',
+		contentAttribute: 'data-tooltip-content',
+		previewAttribute: 'data-tooltip-preview'
+	});
+
+	initTooltips({
+		mode: 'title',
+		excludeAttributes: ['toggle'],
+		tooltippableSelector: '.word[data-toggle="tooltip"]'
+	});
 });

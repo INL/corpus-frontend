@@ -245,7 +245,7 @@ export default Vue.extend({
 					rows.push({
 						type: 'doc',
 						summary: (title[0] || 'UNKNOWN') + (author[0] ? ' by ' + author[0] : ''),
-						href: getDocumentUrl(pid, this.results.summary.searchParam.patt || null, this.results.summary.searchParam.pattgapdata || null),
+						href: getDocumentUrl(pid, this.results.summary.searchParam.patt || undefined, this.results.summary.searchParam.pattgapdata || undefined),
 						docPid: pid,
 					}  as DocRow);
 				}
@@ -320,7 +320,7 @@ export default Vue.extend({
 				citation: null,
 				error: null,
 				snippet: null,
-				href: getDocumentUrl(row.docPid, this.results.summary.searchParam.patt || null, this.results.summary.searchParam.pattgapdata || null, row.start, UIStore.getState().results.shared.pageSize),
+				href: getDocumentUrl(row.docPid, this.results.summary.searchParam.patt || undefined, this.results.summary.searchParam.pattgapdata || undefined, row.start, UIStore.getState().results.shared.pageSize),
 			} as CitationData);
 
 			ga('send', 'event', 'results', 'snippet/load', row.docPid);

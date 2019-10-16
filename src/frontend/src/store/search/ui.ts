@@ -17,7 +17,7 @@ import { mapReduce, MapOf, multimapReduce } from '@/utils';
 import { stripIndent, html } from 'common-tags';
 
 declare const PROPS_IN_COLUMNS: string[];
-declare const PAGESIZE: number;
+declare const PAGESIZE: number|undefined;
 
 type ModuleRootState = {
 	search: {
@@ -134,7 +134,7 @@ type ModuleRootState = {
 			sortMetadataIds: string[];
 
 			/** Used for calculating page offsets in links to documents */
-			pageSize: number;
+			pageSize: number|undefined;
 		};
 	};
 

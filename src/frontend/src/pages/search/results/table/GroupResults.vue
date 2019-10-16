@@ -680,7 +680,7 @@ export default Vue.extend({
 						cache.concordances.push({
 							title: doc.docInfo[titleField] ? doc.docInfo[titleField][0] : '',
 							hits: doc.numberOfHits,
-							href: getDocumentUrl(doc.docPid, data.summary.searchParam.patt || null, data.summary.searchParam.pattgapdata || null),
+							href: getDocumentUrl(doc.docPid, data.summary.searchParam.patt || undefined, data.summary.searchParam.pattgapdata || undefined),
 						});
 					});
 				}

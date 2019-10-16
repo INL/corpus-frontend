@@ -45,7 +45,7 @@ public class SearchResponse extends BaseResponse {
         CorpusConfig cfg = blackLabInfo.getLeft();
         
         context.put("indexStructureJson", cfg.getJsonUnescaped());
-        context.put("pageSize", this.servlet.getWordsToShow());
+        context.put("pageSize", servlet.getWebsiteConfig(corpus).usePagination() ? this.servlet.getWordsToShow() : "undefined");
 
         // display template
         displayHtmlTemplate(servlet.getTemplate("search"));

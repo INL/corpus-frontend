@@ -212,7 +212,13 @@ export const getPatternString = (annotations: AppTypes.AnnotationValue[], within
 // TODO the clientside url generation story... https://github.com/INL/corpus-frontend/issues/95
 // Ideally use absolute urls everywhere, if the application needs to be proxied, let the proxy server handle it.
 // Have a configurable url in the backend that's made available on the client that we can use here.
-export function getDocumentUrl(pid: string, cql: string|null, pattgapdata: string|null, wordstart: number = 0, pageSize: number = 5000) {
+export function getDocumentUrl(
+	pid: string,
+	cql?: string,
+	pattgapdata?: string,
+	wordstart: number = 0,
+	pageSize?: number
+) {
 	let docUrl;
 	switch (new URI().filename()) {
 	case '':
@@ -231,8 +237,8 @@ export function getDocumentUrl(pid: string, cql: string|null, pattgapdata: strin
 	cql = (cql || '').trim();
 	pattgapdata = (pattgapdata || '').trim();
 	if ((cql.length + pattgapdata.length) > 1000) { // server has issues with long urls
-		cql = null;
-		pattgapdata = null;
+		cql = undefined;
+		pattgapdata = undefined;
 	}
 
 	return docUrl
@@ -242,7 +248,7 @@ export function getDocumentUrl(pid: string, cql: string|null, pattgapdata: strin
 			// parameter 'query' controls the hits that are highlighted in the document when it's opened
 			query: cql || undefined,
 			pattgapdata: pattgapdata || undefined,
-			wordstart: (Math.floor(wordstart / pageSize) * pageSize) || undefined
+			wordstart: pageSize != null ? (Math.floor(wordstart / pageSize) * pageSize) || undefined : undefined
 		})
 		.toString();
 }
@@ -342,7 +348,7 @@ export function filterDuplicates<T>(t: T[]|null|undefined, k: KeysOfType<T, stri
  * Returned groups are sorted based on global group order.
  *
  * NOTE: groups are formed based on the groupId property of the individual fields.
- * We only use the list from blacklab (the "groups" parameter) to determined the order of groups.
+ * We only use the list from blacklab (the "groups" argument) to determine the order of groups.
  */
 export function annotationGroups(
 	ids: string[],
@@ -359,7 +365,7 @@ export function annotationGroups(
 	.map(([groupId, entries]) => ({groupId: groupId !== 'undefined' ? groupId : defaultGroupName, annotations: entries}))
 	.sort(({groupId: a}, {groupId: b}) => a === defaultGroupName ? 1 : b === defaultGroupName ? -1 : groupOrder.indexOf(a) - groupOrder.indexOf(b));
 
-	// If there is only one metadata group to display: do not display the groups's name, instead display only 'Metadata'
+	// If there is only one metadata group to display: do not display the group names, instead display only 'Other'
 	// https://github.com/INL/corpus-frontend/issues/197#issuecomment-441475896
 	if (sortedGroupsArray.length === 1) {
 		sortedGroupsArray.forEach(g => g.groupId = defaultGroupName);
@@ -385,7 +391,7 @@ export function selectPickerAnnotationOptions(ids: string[], annots: MapOf<AppTy
 
 /**
  * NOTE: groups are formed based on the groupId property of the individual fields.
- * We only use the list from blacklab (the "groups" parameter) to determined the order of groups.
+ * We only use the list from blacklab (the "groups" argument) to determined the order of groups.
  * This is because there may exist filter/metadata fields that do not exist in blacklab.
  * These fields' groups are not present in the groups array.
  */
@@ -404,7 +410,7 @@ export function metadataGroups<T extends {id: string, groupId?: string}>(
 	.map(([groupId, entries]) => ({groupId: groupId !== 'undefined' ? groupId : defaultGroupName, fields: entries}))
 	.sort(({groupId: a}, {groupId: b}) => a === defaultGroupName ? 1 : b === defaultGroupName ? -1 : groupOrder.indexOf(a) - groupOrder.indexOf(b));
 
-	// If there is only one metadata group to display: do not display the groups's name, instead display only 'Metadata'
+	// If there is only one metadata group to display: do not display the group names, instead display only 'Metadata'
 	// https://github.com/INL/corpus-frontend/issues/197#issuecomment-441475896
 	if (sortedGroupsArray.length === 1) {
 		sortedGroupsArray.forEach(g => g.groupId = defaultGroupName);

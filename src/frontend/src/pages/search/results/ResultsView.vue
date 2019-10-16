@@ -579,4 +579,9 @@ table {
 	position: relative;
 }
 
+// Make entire row clickable even when the document title is short
+.doctitle {
+	display: block;
+}
+
 </style>

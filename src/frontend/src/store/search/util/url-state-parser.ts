@@ -165,6 +165,9 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 			if (!uiStateFromUrl) {
 				throw new Error('No url ui state, falling back to determining from rest of parameters.');
 			}
+			if (!UIModule.getState().search.advanced.enabled && uiStateFromUrl.form === 'search' && uiStateFromUrl.patternMode === 'advanced') {
+				uiStateFromUrl.patternMode = 'expert';
+			}
 			return {
 				...InterfaceModule.defaults,
 				...uiStateFromUrl,
@@ -186,7 +189,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 				ui.patternMode = 'simple';
 			} else if ((Object.keys(this.extendedPattern.annotationValues).length > 0) && !hasGapValue) {
 				ui.patternMode = 'extended';
-			} else if (this.advancedPattern && !hasGapValue) {
+			} else if (this.advancedPattern && !hasGapValue && UIModule.getState().search.advanced.enabled) {
 				ui.patternMode = 'advanced';
 			} else if (this.expertPattern) {
 				ui.patternMode = 'expert';

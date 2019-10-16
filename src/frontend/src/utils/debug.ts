@@ -83,6 +83,4 @@ export function monitorRedraws() {
 
 // monitorRedraws();
 
-export default function() {
-	return debug;
-}
+export default debug;

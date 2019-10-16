@@ -1,0 +1,22 @@
+.tooltip-hover {
+	padding: 8px 12px 6px 20px;
+	background: white;
+	border: 1px solid #ccc;
+	border-radius: 3px;
+	max-width: calc(100% - 50px);
+	max-height: calc(100% - 150px);
+	overflow-y: auto;
+	overflow-x: hidden;
+	z-index: 1200;
+	word-wrap: break-word;
+	font-size: 14px;
+
+	&.preview {
+		padding: 4px 10px 2px;
+	}
+
+	.btn.showdetails {
+		padding: 0;
+		padding-left: 6px;
+	}
+}

@@ -39,6 +39,7 @@ type ModuleRootState = {
 			};
 		};
 		advanced: {
+			enabled: boolean,
 			/** Annotation selection options in querybuilder. Sorted by global annotation order. */
 			searchAnnotationIds: string[];
 			defaultSearchAnnotationId: string;
@@ -167,6 +168,7 @@ const initialState: ModuleRootState = {
 			},
 		},
 		advanced: {
+			enabled: true,
 			searchAnnotationIds: [],
 			defaultSearchAnnotationId: ''
 		},
@@ -285,7 +287,9 @@ const actions = {
 				} else {
 					console.warn(`[search.advanced.defaultSearchAnnotationId] - Trying to set default selection to '${annotationId}', but it's not one of the configured options (${JSON.stringify(state.search.advanced.searchAnnotationIds)})!`);
 				}
-			}, 'search_advanced_defaultSearchAnnotationId')
+			}, 'search_advanced_defaultSearchAnnotationId'),
+
+			enable: b.commit((state, enable: boolean) => state.search.advanced.enabled = enable, 'search_advanced_enabled'),
 		},
 		expert: {},
 
@@ -754,6 +758,7 @@ function printCustomizations() {
 	(annotationData.find(g => g.groupId === defaultGroupName) || {values: [] as Array<{id: string}>}).values.sort((a, b) => a.id.localeCompare(b.id));
 	(metadataData.find(g => g.groupId === defaultGroupName) || {values: [] as Array<{id: string}>}).values.sort((a, b) => a.id.localeCompare(b.id));
 
+	// tslint:disable-next-line
 	console.log(html`
 		var x = true;
 		var ui = vuexModules.ui.actions;

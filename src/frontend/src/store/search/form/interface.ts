@@ -4,7 +4,6 @@
  * we need to track what the user is actually doing when a query is submitted,
  * so that we know how to construct the actual query that's sent to blacklab.
  */
-import Vue from 'vue';
 import {getStoreBuilder} from 'vuex-typex';
 import cloneDeep from 'clone-deep';
 

@@ -4,7 +4,7 @@
 		<ul class="nav nav-tabs" id="searchTabs">
 			<li :class="{'active': activePattern==='simple'}" @click.prevent="activePattern='simple'"><a href="#simple" class="querytype">Simple</a></li>
 			<li :class="{'active': activePattern==='extended'}" @click.prevent="activePattern='extended'"><a href="#extended" class="querytype">Extended</a></li>
-			<li :class="{'active': activePattern==='advanced'}" @click.prevent="activePattern='advanced'"><a href="#advanced" class="querytype">Advanced</a></li>
+			<li :class="{'active': activePattern==='advanced'}" @click.prevent="activePattern='advanced'" v-if="advancedEnabled"><a href="#advanced" class="querytype">Advanced</a></li>
 			<li :class="{'active': activePattern==='expert'}" @click.prevent="activePattern='expert'"><a href="#expert" class="querytype">Expert</a></li>
 		</ul>
 		<div class="tab-content">
@@ -102,7 +102,7 @@
 			<div :class="['tab-pane', {'active': activePattern==='expert'}]" id="expert">
 				<h3>Corpus Query Language:</h3>
 				<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model.lazy="expert"></textarea>
-				<button type="button" class="btn btn-sm btn-default" name="parseQuery" id="parseQuery" title="Edit your query in the querybuilder" @click="parseQuery">Copy to query builder</button>
+				<button v-if="advancedEnabled" type="button" class="btn btn-sm btn-default" name="parseQuery" id="parseQuery" title="Edit your query in the querybuilder" @click="parseQuery">Copy to query builder</button>
 				<label class="btn btn-sm btn-default file-input-button" for="importQuery">
 					Import query
 					<input type="file" name="importQuery" id="importQuery" accept=".txt,text/plain" @change="importQuery" title="Import a previously downloaded query">
@@ -201,6 +201,7 @@ export default Vue.extend({
 			get(): string|null { return PatternStore.getState().simple; },
 			set: PatternStore.actions.simple,
 		},
+		advancedEnabled(): boolean { return UIStore.getState().search.advanced.enabled; },
 		advanced: {
 			get(): string|null { return PatternStore.getState().advanced; },
 			set: PatternStore.actions.advanced,

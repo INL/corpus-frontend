@@ -32,7 +32,7 @@
 					@click="pinnedTooltip = (pinnedTooltip === index ? null : index)"
 				>
 					<td>
-						<a target="_blank" :href="rowData.href">{{rowData.summary}}</a><br>
+						<a class="doctitle" target="_blank" :href="rowData.href">{{rowData.summary}}</a>
 						<div v-if="showDocumentHits" v-for="(snippet, index) in rowData.snippets" :dir="textDirection" :key="index">
 							{{snippet.left}} <strong :key="index">{{snippet.hit}}</strong> {{snippet.right}}
 						</div>
@@ -168,6 +168,11 @@ export default Vue.extend({
 	tr:hover {
 		background: #eee;
 	}
+}
+
+.doclink {
+	// Make line clickable when links wraps onto next line.
+	display: inline-block;
 }
 
 </style>

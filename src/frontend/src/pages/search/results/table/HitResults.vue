@@ -94,9 +94,7 @@
 						@click="pinnedTooltip = (pinnedTooltip === index ? null : index)"
 					>
 						<td :colspan="numColumns">
-							<div class="doctitle">
-								<a target="_blank" :href="rowData.href">{{rowData.summary}}</a>
-							</div>
+							<a class="doctitle" target="_blank" :href="rowData.href">{{rowData.summary}}</a>
 						</td>
 					</tr>
 					<template v-else-if="rowData.type === 'hit'">

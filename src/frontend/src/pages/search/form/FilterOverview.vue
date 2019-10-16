@@ -1,7 +1,7 @@
 <template>
 	<div class="filter-overview">
 		<div v-for="filter in activeFilters" :key="filter.id">
-			{{filter.displayName}}: <i>{{filter.summary}}</i>
+			{{filter.displayName}}<small v-if="filter.groupId"> ({{filter.groupId}})</small>: <i>{{filter.summary}}</i>
 		</div>
 		<!-- <div v-for="filter in activeFilters" :key="filter.id + '_lucene'">{{filter.displayName}}: <i>{{filter.lucene}}</i></div> -->
 

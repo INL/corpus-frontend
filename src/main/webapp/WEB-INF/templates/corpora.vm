@@ -106,7 +106,7 @@
                         
                         <div id="format-download-container" class="collapse" style="margin-top:10px;">
                             <div class="well" style="padding: 12px 8px; margin: 0;">
-                                <select class="selectpicker" id="format_select" data-autoupdate="format" data-filter="configBased" data-width="100%">
+                                <select class="selectpicker" id="format_select" data-autoupdate="format" data-filter="configBased" data-width="100%" data-live-search="true">
                                     <!-- options filled in by clientside javascript -->
                                 </select>
                                 
@@ -160,7 +160,7 @@
                     <div class="form-group">
                         <label for="corpus_document_type" title="The format of the documents that will be stored in the corpus">Document Format</label>
                         <br/>
-                        <select id="corpus_document_type" name="corpus_document_type" class="selectpicker" data-autoupdate="format" data-width="100%">
+                        <select id="corpus_document_type" name="corpus_document_type" class="selectpicker" data-autoupdate="format" data-width="100%" data-live-search="true">
                             <!-- filled in through clientside javascript -->
                         </select>
                         <small class="text-muted" id="corpus_document_type_description" style="display: block; padding: 8px 8px 0px;"></small>

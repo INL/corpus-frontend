@@ -24,6 +24,7 @@
 			:placeholder="$attrs.placeholder || $attrs.title"
 			:disabled="disabled"
 			:dir="dir"
+			:autofocus="autofocus"
 
 			@focus="open"
 			@keydown.tab="close()/*focus shifts to next element, close menu*/"
@@ -47,6 +48,7 @@
 			:title="dataTitle"
 			:disabled="disabled"
 			:dir="dir"
+			:autofocus="autofocus"
 
 			@click="isOpen ? close() : open($refs.focusOnClickOpen)"
 			@keydown.tab="close()/*focus shifts to next element, close menu*/"
@@ -240,6 +242,7 @@ export default Vue.extend({
 		hideEmpty: Boolean,
 		/** Queryselector for menu container */
 		container: String,
+		autofocus: Boolean,
 
 		value: [String, Array] as any as () => string|string[]|null,
 

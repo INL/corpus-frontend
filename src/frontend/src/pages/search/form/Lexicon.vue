@@ -12,6 +12,8 @@
 
 			:value="displayLexiconValue ? displayLexiconValue : displayValue"
 			@input="displayValue = $event.target.value; input$.next($event.target.value);"
+
+			v-bind="$attrs"
 		/>
 		<span v-if="!wordOptions" class="fa fa-spinner fa-spin text-muted"></span>
 
@@ -127,6 +129,7 @@ type WordOption = {
 export default Vue.extend({
 	mixins: [UID],
 	components: { SelectPicker },
+	inheritAttrs: false,
 	props: {
 		annotationId: String,
 		value: null as any as () => null|string,

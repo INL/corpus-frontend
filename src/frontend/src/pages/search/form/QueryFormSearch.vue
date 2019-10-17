@@ -18,6 +18,8 @@
 					</label>
 
 					<Lexicon v-if="firstMainAnnotation.uiType === 'lexicon'"
+						autofocus
+
 						:annotationId="firstMainAnnotation.id"
 						:definition="firstMainAnnotation"
 						v-model="simple"
@@ -25,6 +27,7 @@
 					<SelectPicker v-else-if="firstMainAnnotation.uiType === 'select'"
 						data-width="100%"
 						data-class="btn btn-lg btn-default"
+						autofocus
 
 						:searchable="firstMainAnnotation.values.length > 12"
 						:placeholder="firstMainAnnotation.displayName"
@@ -39,6 +42,7 @@
 					<Autocomplete v-else
 						type="text"
 						class="form-control"
+						autofocus
 
 						:id="firstMainAnnotation.id + '_' + uid"
 						:placeholder="firstMainAnnotation.displayName"

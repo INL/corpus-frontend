@@ -295,7 +295,7 @@ const actions = {
 
 		shared: {
 			searchMetadataIds: b.commit((state, ids: string[]) => validateMetadata(ids,
-				id => `Trying to show metadata field '${id}' in the filters section, but it does not exist.`,
+				id => `Trying to display metadata field '${id}' in the filters section, but it does not exist.`,
 				_ => true, _ => '',
 				r => state.search.shared.searchMetadataIds = sortMetadata(r)
 			), 'search_shared_searchMetadataIds')
@@ -342,20 +342,21 @@ const actions = {
 	results: {
 		hits: {
 			shownAnnotationIds: b.commit((state, ids: string[]) => validateAnnotations(ids,
-				id => `Trying to display Annotation '${id}' in hits table, but it does not exist`,
-				_ => true, _ => '',
+				id => `Trying to display Annotation '${id}' as column in the hits table, but it does not exist`,
+				a => a.hasForwardIndex,
+				id => `Trying to display Annotation '${id}' as column in the hits table, but it does not have the required forward index.`,
 				r => state.results.hits.shownAnnotationIds = r
 			), 'hits_shownAnnotationIds'),
 
 			shownMetadataIds: b.commit((state, ids: string[]) => validateMetadata(ids,
-					id => `Trying to display metadata field '${id}' in hits table, but it does not exist`,
-					_ => true, _ => '',
-					r => state.results.hits.shownMetadataIds = r
+				id => `Trying to display metadata field '${id}' as column in the hits table, but it does not exist`,
+				_ => true, _ => '',
+				r => state.results.hits.shownMetadataIds = r
 			), 'hits_shownMetadataIds')
 		},
 		docs: {
 			shownMetadataIds: b.commit((state, ids: string[]) => validateMetadata(ids,
-				id => `Trying to display metadata field '${id}' in docs table, but it does not exist`,
+				id => `Trying to display metadata field '${id}' as column in the docs table, but it does not exist`,
 				_ => true, _ => '',
 				r => state.results.docs.shownMetadataIds = r
 			), 'docs_shownMetadataIds')
@@ -364,8 +365,9 @@ const actions = {
 			detailedAnnotationIds: b.commit((state, ids: string[]|null) => {
 				if (ids != null) {
 					validateAnnotations(ids,
-						id => `Trying to display Annotation '${id}' in expanded hit rows, but it does not exist`,
-						_ => true, _ => '',
+						id => `Trying to display Annotation '${id}' in hit detail snippets, but it does not exist`,
+						a => a.hasForwardIndex,
+						id => `Trying to display Annotation '${id}' in hit detail snippets, but it does not have the required forward index.`,
 						r => state.results.shared.detailedAnnotationIds = sortAnnotations(r)
 					);
 				} else {
@@ -388,7 +390,7 @@ const actions = {
 			groupAnnotationIds: b.commit((state, ids: string[]) => validateAnnotations(ids,
 				id => `Trying to allow grouping by Annotation '${id}', but it does not exist`,
 				a => a.hasForwardIndex,
-				id => `Trying to allow grouping by Annotation '${id}', which does not have a forward index (a forward index is required for grouping)`,
+				id => `Trying to allow grouping by Annotation '${id}', but it does not have the required forward index.`,
 				r => {
 					const defaultId = state.explore.defaultGroupAnnotationId;
 					r = state.results.shared.groupAnnotationIds = sortAnnotations(r);
@@ -419,7 +421,7 @@ const actions = {
 			sortAnnotationIds: b.commit((state, ids: string[]) => validateAnnotations(ids,
 				id => `Trying to allow sorting by Annotation '${id}', but it does not exist`,
 				a => a.hasForwardIndex,
-				id => `Trying to allow sorting by Annotation '${id}', which does not have a forward index (a forward index is required for grouping)`,
+				id => `Trying to allow sorting by Annotation '${id}', but it does not have the required forward index.`,
 				r => state.results.shared.sortAnnotationIds = sortAnnotations(r)
 			), 'shared_sortAnnotationIds'),
 
@@ -571,15 +573,15 @@ const init = () => {
 	// Show 'lemma' and 'pos' (if they exist) and up to 3 more annotations in order of definition
 	// OR: show based on PROPS_IN_COLUMNS [legacy support] (configured in this corpus's search.xml)
 	if (!initialState.results.hits.shownAnnotationIds.length) {
-		const shownAnnotations = PROPS_IN_COLUMNS.filter(annot => allAnnotationsMap[annot] != null && annot !== mainAnnotation);
+		const shownAnnotations = PROPS_IN_COLUMNS.filter(annot => allAnnotationsMap[annot] != null && allAnnotationsMap[annot][0].hasForwardIndex && annot !== mainAnnotation);
 		if (!shownAnnotations.length) {
 			// These have precedence if they exist.
-			if (allAnnotationsMap.lemma != null) { shownAnnotations.push('lemma'); }
-			if (allAnnotationsMap.pos != null) { shownAnnotations.push('pos'); }
+			if (allAnnotationsMap.lemma != null && allAnnotationsMap.lemma[0].hasForwardIndex) { shownAnnotations.push('lemma'); }
+			if (allAnnotationsMap.pos != null && allAnnotationsMap.pos[0].hasForwardIndex) { shownAnnotations.push('pos'); }
 
 			// Now add other annotations until we hit 3 annotations.
 			allShownAnnotations
-			.filter(annot => annot.id !== mainAnnotation && !shownAnnotations.includes(annot.id))
+			.filter(annot => annot.id !== mainAnnotation && !shownAnnotations.includes(annot.id) && annot.hasForwardIndex)
 			.forEach(annot => {
 				if (shownAnnotations.length < 3) {
 					shownAnnotations.push(annot.id);

@@ -293,8 +293,9 @@ export default Vue.extend({
 		},
 		/** Get annotations to show in concordances, if not configured, returns all annotations shown in the main search form. */
 		shownConcordanceAnnotationRows(): AppTypes.NormalizedAnnotation[] {
-			const configured = UIStore.getState().results.shared.detailedAnnotationIds;
-			return configured ? configured.map(id => CorpusStore.get.allAnnotationsMap()[id][0]) : CorpusStore.get.shownAnnotations();
+			const configuredIds = UIStore.getState().results.shared.detailedAnnotationIds;
+			const configuredAnnotations = configuredIds ? configuredIds.map(id => CorpusStore.get.allAnnotationsMap()[id][0]) : CorpusStore.get.shownAnnotations();
+			return configuredAnnotations.filter(annot => annot.hasForwardIndex);
 		},
 		textDirection: CorpusStore.get.textDirection,
 

@@ -22,6 +22,7 @@ import UrlStateParser from '@/store/search/util/url-state-parser';
 import connectStreamsToVuex from '@/store/search/streams';
 
 import SearchPageComponent from '@/pages/search/SearchPage.vue';
+import DebugComponent from '@/components/Debug.vue';
 
 import {debugLog} from '@/utils/debug';
 
@@ -168,6 +169,8 @@ Vue.use(VTooltip, {
 		defaultArrowClass: 'arrow tooltip-arrow',
 	}
 });
+Vue.component('Debug', DebugComponent);
+
 
 // Expose and declare some globals
 (window as any).Vue = Vue;

@@ -1,6 +1,6 @@
 <template>
 	<div class="form-group propertyfield" :id="id"> <!-- behaves as .row when in .form-horizontal so .row may be omitted -->
-		<label :for="inputId" class="col-xs-12 col-md-3" :title="annotation.description || undefined">{{displayName}}</label>
+		<label :for="inputId" class="col-xs-12 col-md-3" :title="annotation.description || undefined">{{displayName}} <Debug>({{id}})</Debug></label>
 		<div class="col-xs-12 col-md-9">
 			<SelectPicker v-if="annotation.uiType === 'select'"
 				data-width="100%"
@@ -105,6 +105,7 @@ import UID from '@/mixins/uid';
 
 import {paths} from '@/api';
 import { NormalizedAnnotation } from '@/types/apptypes';
+import debug from '@/utils/debug';
 
 export default Vue.extend({
 	mixins: [UID],
@@ -118,7 +119,8 @@ export default Vue.extend({
 		annotation: Object as () => NormalizedAnnotation
 	},
 	data: () => ({
-		subscriptions: [] as Array<() => void>
+		subscriptions: [] as Array<() => void>,
+		debug
 	}),
 	computed: {
 		textDirection(): string|undefined {

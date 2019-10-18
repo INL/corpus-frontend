@@ -4,7 +4,7 @@
 		:id="id"
 		:data-filterfield-type="definition.componentName"
 	>
-		<label class="col-xs-12" :for="inputId">{{displayName}}</label>
+		<label class="col-xs-12" :for="inputId">{{displayName}} <Debug>({{id}})</Debug></label>
 		<div class="col-xs-12">
 			<SelectPicker
 				data-width="100%"

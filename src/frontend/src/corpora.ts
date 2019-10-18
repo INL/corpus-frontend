@@ -229,7 +229,8 @@ createHandler({selector: 'tbody[data-autoupdate="corpora"]', event: DataEvent.CO
 			searchUrl: pageURL + corpus.id + '/search',
 			sizeString: abbrNumber(corpus.tokenCount),
 			statusText,
-			timeModified: dateOnly(corpus.timeModified)
+			timeModified: dateOnly(corpus.timeModified),
+			timeModifiedFull: corpus.timeModified
 		};
 	});
 
@@ -253,7 +254,7 @@ createHandler({selector: 'tbody[data-autoupdate="corpora"]', event: DataEvent.CO
 	<tr id="{{detailsId}}" class="collapse">
 		<td colspan="{{^isPrivate}}4{{/isPrivate}}{{#isPrivate}}7{{/isPrivate}}">
 			<table>
-				<tr>
+				<tr title="{{timeModifiedFull}}">
 					<th>Last modified</th>
 					<td>{{timeModified}}</td>
 				</tr>

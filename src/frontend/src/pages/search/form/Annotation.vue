@@ -21,6 +21,8 @@
 				:definition="annotation"
 
 				v-model="value"
+
+				ref="reset"
 			/>
 			<div v-else class="input-group">
 				<Autocomplete
@@ -68,7 +70,7 @@
 
 					@submit="value = $event.queryString"
 
-					ref="pos"
+					ref="reset"
 				/>
 			</template>
 			<div v-if="annotation.caseSensitive" class="checkbox">
@@ -182,13 +184,13 @@ export default Vue.extend({
 			(event.target as HTMLInputElement).value = '';
 		}
 	},
-	created() {
-		if (this.annotation.uiType === 'pos') {
+	mounted() {
+		if (this.$refs.reset) {
 			const eventId = `${PatternStore.namespace}/reset`;
 
 			this.subscriptions.push(RootStore.store.subscribe((mutation, state) => {
-				if (this.$refs.pos && mutation.type === eventId) {
-					(this.$refs.pos as InstanceType<typeof PartOfSpeech>).reset();
+				if (this.$refs.reset && mutation.type === eventId) {
+					(this.$refs.reset as any).reset();
 				}
 			}));
 		}

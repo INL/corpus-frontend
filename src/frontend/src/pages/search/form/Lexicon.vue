@@ -8,12 +8,9 @@
 			:id="inputId"
 			:name="inputId"
 			:placeholder="definition.displayName"
-			:disabled="!!displayLexiconValue"
-
-			:value="displayLexiconValue ? displayLexiconValue : displayValue"
-			@input="displayValue = $event.target.value; input$.next($event.target.value);"
 
 			v-bind="$attrs"
+			v-model="modelValue"
 		/>
 		<span v-if="!wordOptions" class="fa fa-spinner fa-spin text-muted"></span>
 
@@ -64,7 +61,7 @@
 import Vue from 'vue';
 import Axios from 'axios';
 import * as Observable from 'rxjs';
-import { debounceTime, switchMap, flatMap, map, toArray, catchError, mapTo, distinctUntilChanged, tap } from 'rxjs/operators';
+import { debounceTime, switchMap, flatMap, map, toArray, catchError, mapTo, distinctUntilChanged, tap, filter } from 'rxjs/operators';
 
 import * as CorpusStore from '@/store/search/corpus';
 import * as UIStore from '@/store/search/ui';
@@ -122,7 +119,6 @@ type WordOption = {
 	pos: string[];
 	count: number;
 	word: string;
-	// id: string;
 	selected: boolean;
 };
 
@@ -140,7 +136,6 @@ export default Vue.extend({
 		subscriptions: [] as Observable.Subscription[],
 
 		wordOptions: [] as null|WordOption[],
-		// selectedWordOptions: [] as WordOption[],
 
 		posOptions: {} as MapOf<boolean>,
 
@@ -150,32 +145,30 @@ export default Vue.extend({
 		/** Lexicon database to use */
 		database(): string { return UIStore.getState().global.lexiconDb; },
 
-		cql(): string|undefined {
-			if (this.selectedWords.length) {
-				const joined = this.selectedWords.map(w => escapeRegex(w.word, false).replace(/\|"/g, '\\$1')).join('|');
-				return joined.match(/\s+/) ? `"${joined}"` : joined;
-			}
-			return this.displayValue.trim() || undefined;
-		},
-		displayLexiconValue(): string|null { return this.selectedWords.map(w => w.word).join('|') || null; },
 		inputId(): string { return this.definition.id + '_' + (this as any).uid; },
 
 		selectedWords(): WordOption[] { return this.renderedWords ? this.renderedWords.filter(w => w.selected) : []; },
 		renderedWords(): WordOption[] { return this.wordOptions ? this.wordOptions.filter(w => w.pos.some(pos => this.posOptions[pos])) : []; },
+
+		modelValue: {
+			get(): string { return this.value || ''; },
+			set(v: string) { this.$emit('input', v); this.input$.next(v); }
+		}
+	},
+	methods: {
+		reset() { this.wordOptions = []; this.posOptions = {}; this.modelValue = ''; }
 	},
 	created() {
+		const re = /^\w+$/;
+		const filteredInput$ = this.input$.pipe(filter(v => !!v.match(re) && !this.selectedWords.length));
+
 		const emptyResult = {posOptions: {} as MapOf<boolean>, wordList: [] as WordOption[]};
-		const suggestions$: Observable.Observable<typeof emptyResult> = this.input$.pipe(
+		const suggestions$: Observable.Observable<typeof emptyResult> = filteredInput$.pipe(
 			debounceTime(1500),
 			switchMap(term => {
-				if (!term) {
-					return Observable.of(emptyResult);
-				}
-
 				const lemmata1 = Axios.get<LexiconLemmaIdResponse>(config.getLemmaIdFromWordform, { params: { database: this.database, wordform: term, case_sensitive: config.case_sensitive } });
 				const lemmata2 = Axios.get<LexiconLemmaIdResponse>(config.getLemmaIdFromLemma, { params: { database: this.database, lemma: term, case_sensitive: config.case_sensitive } });
-				const lemmataRequest = Promise.all([lemmata1, lemmata2])
-				.then(r => r.flatMap(rr => rr.data.lemmata_list.flatMap(l => l.found_lemmata)))
+				const lemmataRequest = Promise.all([lemmata1, lemmata2]).then(r => r.flatMap(rr => rr.data.lemmata_list.flatMap(l => l.found_lemmata)));
 
 				// Do this inside an observable, the pending stages of pipe() will not be ran if this observable is old (e.g. a new lemma came in)
 				// Whereas if we .then().then().then() chain a promise, it will all run regardless of whether the results are still needed.
@@ -216,7 +209,7 @@ export default Vue.extend({
 									pos: [],
 									count: frequencies[word],
 									word,
-									selected: frequencies[word] > 0
+									selected: false
 								} as WordOption;
 
 								options[word].pos.push(pos);
@@ -227,7 +220,7 @@ export default Vue.extend({
 								pos: [],
 								count: frequencies[lemma],
 								word: lemma,
-								selected: frequencies[lemma] > 0
+								selected: false
 							} as WordOption;
 							options[lemma].pos.push(pos);
 						});
@@ -241,7 +234,7 @@ export default Vue.extend({
 								pos: posList, // always show
 								count: frequencies[term],
 								word: term,
-								selected: true
+								selected: false
 							};
 						}
 
@@ -254,36 +247,25 @@ export default Vue.extend({
 			})
 		);
 
-		const results$ = Observable.merge(this.input$.pipe(mapTo(null)), suggestions$);
+		const results$ = Observable.merge(filteredInput$.pipe(mapTo(null)), suggestions$);
 
 		this.subscriptions.push(
 			results$.subscribe(r => {
-				// this.selectedPosOptions = new Set<string>(r && r.posList ? r.posList : []);
 				this.posOptions = r ? r.posOptions : {};
 				this.wordOptions = r ? r.wordList.sort((a, b) => ((a.count === 0) !== (b.count === 0)) ? (a.count === 0 ? 1 : -1) : 0) : null;
 			}),
 		);
-
-		this.displayValue = this.value || '';
 	},
 	destroyed() {
 		this.subscriptions.forEach(s => s.unsubscribe());
 	},
 	watch: {
-		// Watch for resets and clear the suggestions
-		value(v: string) {
-			// Hack! initialize the component's value
-			if (!this.displayValue) {
-				this.displayValue = v;
+		selectedWords(v: WordOption[], prev: WordOption[]) {
+			// We need to discern changed checkbox availability from actual changes
+			// Take care not to remove user-input value when an empty batch of alternatives comes in.
+			if (v.length !== prev.length && this.wordOptions && this.wordOptions.length > 0) {
+				this.modelValue = v.map(w => w.word.replace(/\|"/g, '\\$1')).map(w => w.includes(' ') ? '"'+w+'"' : w).join('|');
 			}
-			if (!v) {
-				this.wordOptions = [];
-				this.posOptions = {};
-				this.displayValue = '';
-			}
-		},
-		cql(v: string) {
-			this.$emit('input', v);
 		},
 	}
 });

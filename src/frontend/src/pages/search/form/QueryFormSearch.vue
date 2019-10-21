@@ -23,6 +23,8 @@
 						:annotationId="firstMainAnnotation.id"
 						:definition="firstMainAnnotation"
 						v-model="simple"
+
+						ref="reset"
 					/>
 					<SelectPicker v-else-if="firstMainAnnotation.uiType === 'select'"
 						data-width="100%"
@@ -166,6 +168,8 @@ export default Vue.extend({
 	data: () => ({
 		parseQueryError: null as string|null,
 		importQueryError: null as string|null,
+
+		subscriptions: [] as Array<() => void>
 	}),
 	computed: {
 		activePattern: {
@@ -274,6 +278,17 @@ export default Vue.extend({
 		copyAdvancedQuery() {
 			PatternStore.actions.expert(PatternStore.getState().advanced);
 			InterfaceStore.actions.patternMode('expert');
+		}
+	},
+	mounted() {
+		if (this.$refs.reset) {
+			const eventId = `${PatternStore.namespace}/reset`;
+
+			this.subscriptions.push(RootStore.store.subscribe((mutation, state) => {
+				if (this.$refs.reset && mutation.type === eventId) {
+					(this.$refs.reset as any).reset();
+				}
+			}));
 		}
 	}
 })

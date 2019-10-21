@@ -116,7 +116,7 @@
 										{{citations[index].citation[0]}}
 										<strong>
 											{{citations[index].citation[1]}}
-											<a :href="citations[index].href" title="Go to hit in document" target="_blank"><sup class="fa fa-link" style="margin-left: -5px;"></sup></a>
+											<!-- <a :href="citations[index].href" title="Go to hit in document" target="_blank"><sup class="fa fa-link" style="margin-left: -5px;"></sup></a> -->
 										</strong>
 										{{citations[index].citation[2]}}
 									</span>
@@ -245,7 +245,8 @@ export default Vue.extend({
 					rows.push({
 						type: 'doc',
 						summary: (title[0] || 'UNKNOWN') + (author[0] ? ' by ' + author[0] : ''),
-						href: getDocumentUrl(pid, this.results.summary.searchParam.patt || undefined, this.results.summary.searchParam.pattgapdata || undefined),
+						// href: getDocumentUrl(pid, this.results.summary.searchParam.patt || undefined, this.results.summary.searchParam.pattgapdata || undefined),
+						href: getDocumentUrl(pid, this.results.summary.searchParam.patt || undefined, this.results.summary.searchParam.pattgapdata || undefined, hit.start, UIStore.getState().results.shared.pageSize),
 						docPid: pid,
 					}  as DocRow);
 				}
@@ -321,7 +322,7 @@ export default Vue.extend({
 				citation: null,
 				error: null,
 				snippet: null,
-				href: getDocumentUrl(row.docPid, this.results.summary.searchParam.patt || undefined, this.results.summary.searchParam.pattgapdata || undefined, row.start, UIStore.getState().results.shared.pageSize),
+				// href: getDocumentUrl(row.docPid, this.results.summary.searchParam.patt || undefined, this.results.summary.searchParam.pattgapdata || undefined, row.start, UIStore.getState().results.shared.pageSize),
 			} as CitationData);
 
 			ga('send', 'event', 'results', 'snippet/load', row.docPid);

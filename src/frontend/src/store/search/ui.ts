@@ -671,7 +671,9 @@ function validateAnnotations(
 		return true;
 	});
 
-	results.length && cb(results);
+	if (!ids.length || results.length) {
+		cb(results);
+	}
 	// tslint:enable
 }
 
@@ -695,8 +697,9 @@ function validateMetadata(
 		if (!validate(all[id])) { console.warn(invalid(id)); return false; }
 		return true;
 	});
-
-	results.length && cb(results);
+	if (!ids.length || results.length) {
+		cb(results);
+	}
 	// tslint:enable
 }
 

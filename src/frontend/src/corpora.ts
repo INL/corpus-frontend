@@ -145,8 +145,8 @@ createHandler({selector: 'tbody[data-autoupdate="format"]', event: DataEvent.FOR
 	<tr>
 		<td>{{shortId}}</td>
 		<td>{{displayName}}</td>
-		<td><a data-format-operation="edit" class="fa fa-pencil" data-format-id="{{id}}" title="Edit format '{{displayName}}'" href="javascript:void(0)"></a></td>
-		<td><a data-format-operation="delete" class="fa fa-trash" data-format-id="{{id}}" title="Delete format '{{displayName}}'" href="javascript:void(0)"></a></td>
+		<td><a role="button" data-format-operation="edit" class="fa fa-fw fa-pencil" data-format-id="{{id}}" title="Edit format '{{displayName}}'"></a></td>
+		<td><a role="button" data-format-operation="delete" class="fa fa-fw fa-trash" data-format-id="{{id}}" title="Delete format '{{displayName}}'"></a></td>
 	</tr>
 	{{/formats}}`;
 
@@ -241,9 +241,9 @@ createHandler({selector: 'tbody[data-autoupdate="corpora"]', event: DataEvent.CO
 		<td class="corpus-name"><a title="Search the '{{displayName}}' corpus" class="{{^canSearch}}disabled{{/canSearch}}" {{#canSearch}}href="{{searchUrl}}"{{/canSearch}}>{{displayName}} {{statusText}}</a></td>
 		<td>{{sizeString}}</td>
 		{{#isPrivate}}
-			<td><a data-corpus-action="upload" data-id="{{id}}" title="Upload documents to the '{{displayName}}' corpus" class="icon fa fa-fw fa-plus-square {{#isBusy}}disabled{{/isBusy}}" href="javascript:void(0)"></a></td>
-			<td><a data-corpus-action="share" data-id="{{id}}" title="Share the '{{displayName}}' corpus" class="icon fa  fa-fw fa-user-plus" href="javascript:void(0)"></a></td>
-			<td><a data-corpus-action="delete" data-id="{{id}}" title="Delete the '{{displayName}}' corpus" class="icon fa  fa-fw fa-trash {{#isBusy}}disabled{{/isBusy}}" href="javascript:void(0)"></a></td>
+			<td><a role="button" data-corpus-action="upload" data-id="{{id}}" title="Upload documents to the '{{displayName}}' corpus" class="icon fa fa-fw fa-plus-square {{#isBusy}}disabled{{/isBusy}}"></a></td>
+			<td><a role="button" data-corpus-action="share" data-id="{{id}}" title="Share the '{{displayName}}' corpus" class="icon fa fa-fw fa-user-plus"></a></td>
+			<td><a role="button" data-corpus-action="delete" data-id="{{id}}" title="Delete the '{{displayName}}' corpus" class="icon fa fa-fw fa-trash {{#isBusy}}disabled{{/isBusy}}"></a></td>
 		{{/isPrivate}}
 		<td>
 			<a role="button" data-toggle="collapse" href="#{{detailsId}}" aria-expanded="false" aria-controls="{{detailsId}}">

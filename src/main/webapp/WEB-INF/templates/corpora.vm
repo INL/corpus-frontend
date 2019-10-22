@@ -58,8 +58,8 @@
             <tr>
                 <th>Id</th>
                 <th>Name</th>
-                <th></th> ## delete, edit buttons
-                <th></th>
+                <th class="table-icon"></th> ## delete, edit buttons
+                <th class="table-icon"></th>
             </tr>
         </thead>
         <tbody data-autoupdate="format">

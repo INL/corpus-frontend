@@ -16,31 +16,48 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr class="rounded"
-					v-for="(rowData, index) in rows"
-					v-tooltip="{
-						show: pinnedTooltip === index,
-						content: `Document id: ${rowData.docPid}`,
-						trigger: pinnedTooltip === index ? 'manual' : 'hover',
-						targetClasses: pinnedTooltip === index ? 'pinned' : undefined,
-						hideOnTargetClick: false,
-						autoHide: false,
-					}"
+				<template v-for="(rowData, index) in rows">
+					<tr class="rounded"
+						v-tooltip="{
+							show: pinnedTooltip === index,
+							content: `Document id: ${rowData.docPid}`,
+							trigger: pinnedTooltip === index ? 'manual' : 'hover',
+							targetClasses: pinnedTooltip === index ? 'pinned' : undefined,
+							hideOnTargetClick: false,
+							autoHide: false,
+						}"
 
-					:key="index"
+						:key="index"
 
-					@click="pinnedTooltip = (pinnedTooltip === index ? null : index)"
-				>
-					<td>
-						<a class="doctitle" target="_blank" :href="rowData.href">{{rowData.summary}}</a>
-						<div v-if="showDocumentHits" v-for="(snippet, index) in rowData.snippets" :dir="textDirection" :key="index">
-							{{snippet.left}} <strong :key="index">{{snippet.hit}}</strong> {{snippet.right}}
+						@click="pinnedTooltip = (pinnedTooltip === index ? null : index)"
+					>
+						<td>
+							<a class="doctitle" target="_blank" :href="rowData.href">{{rowData.summary}}</a>
+						</td>
+						<td v-for="meta in shownMetadataCols" :key="meta.id">{{(rowData.doc.docInfo[meta.id] || []).join(', ')}}</td>
+						<td v-if="hasHits">{{rowData.hits}}</td>
+					</tr>
+					<tr v-if="showDocumentHits" :key="index + '_hits'" class="hit-details"><td colspan="600">
+						<div class="clearfix" style="border-bottom:1px solid #ddd;">
+							<div class="col-xs-5 text-right"><strong>{{leftLabel}}</strong></div>
+							<div class="col-xs-2 text-center" style="padding: 0;"><strong>Hit</strong></div>
+							<div class="col-xs-5"><strong>{{rightLabel}}</strong></div>
 						</div>
-					</td>
-					<!-- <td>{{rowData.date}}</td> -->
-					<td v-for="meta in shownMetadataCols" :key="meta.id">{{(rowData.doc.docInfo[meta.id] || []).join(', ')}}</td>
-					<td v-if="hasHits">{{rowData.hits}}</td>
-				</tr>
+						<div v-for="(conc, index) in rowData.snippets" :key="index" class="clearfix concordance" :dir="textDirection">
+							<template v-if="concordanceAsHtml">
+								<div class="col-xs-5 text-right" v-html="conc.left"></div>
+								<div class="col-xs-2 text-center"><strong v-html="conc.hit"></strong></div>
+								<div class="col-xs-5" v-html="conc.right"></div>
+							</template>
+							<template v-else>
+								<div class="col-xs-5 text-right">&hellip; {{conc.left}}</div>
+								<div class="col-xs-2 text-center"><strong>{{conc.hit}}&nbsp;</strong></div>
+								<div class="col-xs-5">{{conc.right}} &hellip;</div>
+							</template>
+						</div>
+						<div class="text-muted clearfix col-xs-12" v-if="hasHits && rowData.hits > rowData.snippets.length">...({{rowData.hits - rowData.snippets.length}} more hidden hits)</div>
+					</td></tr>
+				</template>
 			</tbody>
 		</table>
 	</div>
@@ -58,9 +75,9 @@ import { NormalizedMetadataField } from '@/types/apptypes';
 
 type DocRow = {
 	snippets: Array<{
-		before: string;
+		left: string;
 		hit: string;
-		after: string;
+		right: string;
 	}>
 	/** Title + year + author of the document */
 	summary: string;
@@ -69,7 +86,7 @@ type DocRow = {
 	date: string;
 	hits?: number;
 	docPid: string;
-	doc: BLDocInfo;
+	doc: BLDocResults['docs'][number];
 };
 
 export default Vue.extend({
@@ -83,8 +100,15 @@ export default Vue.extend({
 		pinnedTooltip: null as null|number,
 	}),
 	computed: {
-		mainAnnotation: CorpusStore.get.firstMainAnnotation,
+		concordanceAnnotationId(): string { return UIStore.getState().results.shared.concordanceAnnotationId; },
+		transformSnippets() { return UIStore.getState().results.shared.transformSnippets; },
+		concordanceAsHtml(): boolean { return UIStore.getState().results.shared.concordanceAsHtml; },
 		textDirection: CorpusStore.get.textDirection,
+		leftIndex(): number { return this.textDirection === 'ltr' ? 0 : 2; },
+		rightIndex(): number { return this.textDirection === 'ltr' ? 2 : 0; },
+		leftLabel(): string { return this.textDirection === 'ltr' ? 'Before' : 'After'; },
+		rightLabel(): string { return this.textDirection === 'ltr' ? 'After' : 'Before'; },
+
 		shownMetadataCols(): NormalizedMetadataField[] {
 			const sortMetadataFieldMatch = this.sort && this.sort.match(/^-?field:(.+)$/);
 			const sortMetadataField = sortMetadataFieldMatch ? sortMetadataFieldMatch[1] : undefined;
@@ -105,7 +129,7 @@ export default Vue.extend({
 
 			return ret;
 		},
-		rows() {
+		rows(): DocRow[] {
 			const { titleField = '', dateField = '', authorField = '' } = this.results.summary.docFields as BLDocFields;
 
 			return this.results.docs.map(doc => {
@@ -114,11 +138,14 @@ export default Vue.extend({
 
 				return {
 					snippets: doc.snippets ? doc.snippets.map(s => {
-						const [before, hit, after] = snippetParts(s, this.mainAnnotation.id);
+						if (this.transformSnippets) {
+							this.transformSnippets(s);
+						}
+						const snippet = snippetParts(s, this.concordanceAnnotationId);
 						return {
-							before,
-							hit,
-							after
+							left: snippet[this.leftIndex],
+							hit: snippet[1],
+							right: snippet[this.rightIndex]
 						};
 					}) : [],
 					summary: (title[0] || 'UNKNOWN') + (author[0] ? ' by ' + author[0] : ''),
@@ -165,7 +192,7 @@ export default Vue.extend({
 	}
 
 
-	tr:hover {
+	tr.docrow:not(.hit-details):hover {
 		background: #eee;
 	}
 }

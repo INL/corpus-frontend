@@ -99,9 +99,16 @@
 					</tr>
 					<template v-else-if="rowData.type === 'hit'">
 						<tr :key="index" :class="['concordance', 'rounded interactable', {'open': citations[index] && citations[index].open}]" @click="showCitation(index)">
-							<td class="text-right">&hellip;<span :dir="textDirection">{{rowData.left}}</span></td>
-							<td class="text-center"><strong :dir="textDirection">{{rowData.hit}}</strong></td>
-							<td><span :dir="textDirection">{{rowData.right}}</span>&hellip;</td>
+							<template v-if="concordanceAsHtml">
+								<td class="text-right">&hellip;<span :dir="textDirection" v-html="rowData.left"></span></td>
+								<td class="text-center"><strong :dir="textDirection" v-html="rowData.hit"></strong></td>
+								<td><span :dir="textDirection" v-html="rowData.right"></span>&hellip;</td>
+							</template>
+							<template v-else>
+								<td class="text-right">&hellip;<span :dir="textDirection">{{rowData.left}}</span></td>
+								<td class="text-center"><strong :dir="textDirection">{{rowData.hit}}</strong></td>
+								<td><span :dir="textDirection">{{rowData.right}}</span>&hellip;</td>
+							</template>
 							<td v-for="(v, index) in rowData.other" :key="index">{{v}}</td>
 							<td v-for="meta in shownMetadataCols" :key="meta.id">{{rowData.doc[meta.id].join(', ')}}</td>
 						</tr>
@@ -113,18 +120,22 @@
 								<p v-else-if="citations[index].citation">
 									<AudioPlayer v-if="citations[index].audioPlayerData" v-bind="citations[index].audioPlayerData"/>
 									<span :dir="textDirection">
-										{{citations[index].citation[0]}}
-										<strong>
-											{{citations[index].citation[1]}}
-											<!-- <a :href="citations[index].href" title="Go to hit in document" target="_blank"><sup class="fa fa-link" style="margin-left: -5px;"></sup></a> -->
-										</strong>
-										{{citations[index].citation[2]}}
+										<template v-if="concordanceAsHtml">
+											<span v-html="citations[index].citation.left"></span>
+											<strong v-html="citations[index].citation.hit"></strong>
+											<span v-html="citations[index].citation.right"></span>
+										</template>
+										<template v-else>
+											<span>{{citations[index].citation.left}}</span>
+											<strong>{{citations[index].citation.hit}}</strong>
+											<span>{{citations[index].citation.right}}</span>
+										</template>
 									</span>
 								</p>
 								<p v-else>
 									<span class="fa fa-spinner fa-spin"></span> Loading...
 								</p>
-								<div style="overflow: auto; max-width: 100%; padding-bottom: 15px;">
+								<div v-if="shownConcordanceAnnotationRows.length" style="overflow: auto; max-width: 100%; padding-bottom: 15px;">
 									<table class="concordance-details-table">
 										<thead>
 											<tr>
@@ -192,7 +203,11 @@ type DocRow = {
 type CitationData = {
 	open: boolean;
 	loading: boolean;
-	citation: null|[string, string, string];
+	citation: null|{
+		left: string;
+		hit: string;
+		right: string;
+	};
 	error?: null|string;
 	snippet: null|BLTypes.BLHitSnippet;
 	audioPlayerData: any;
@@ -216,12 +231,12 @@ export default Vue.extend({
 		pinnedTooltip: null as null|number
 	}),
 	computed: {
-		leftIndex() { return this.textDirection === 'ltr' ? 0 : 2; },
-		rightIndex() { return this.textDirection === 'ltr' ? 2 : 0; },
-		leftLabel() { return this.textDirection === 'ltr' ? 'Before' : 'After'; },
-		rightLabel() { return this.textDirection === 'ltr' ? 'After' : 'Before'; },
-		beforeField() { return this.textDirection === 'ltr' ? 'left' : 'right'; },
-		afterField() { return this.textDirection === 'ltr' ? 'right' : 'left'; },
+		leftIndex(): number { return this.textDirection === 'ltr' ? 0 : 2; },
+		rightIndex(): number { return this.textDirection === 'ltr' ? 2 : 0; },
+		leftLabel(): string { return this.textDirection === 'ltr' ? 'Before' : 'After'; },
+		rightLabel(): string { return this.textDirection === 'ltr' ? 'After' : 'Before'; },
+		beforeField(): string { return this.textDirection === 'ltr' ? 'left' : 'right'; },
+		afterField(): string { return this.textDirection === 'ltr' ? 'right' : 'left'; },
 
 		rows(): Array<DocRow|HitRow> {
 			const { titleField = '', dateField = '', authorField = '' } = this.results.summary.docFields as BLTypes.BLDocFields;
@@ -252,7 +267,10 @@ export default Vue.extend({
 				}
 
 				// And display the hit itself
-				const parts = snippetParts(hit, this.firstMainAnnotation.id);
+				if (this.transformSnippets) {
+					this.transformSnippets(hit);
+				}
+				const parts = snippetParts(hit, this.concordanceAnnotationId);
 
 				// TODO condense this data..
 				rows.push({
@@ -271,12 +289,14 @@ export default Vue.extend({
 				return rows;
 			});
 		},
-		numColumns() {
+		numColumns(): number {
 			return 3 + this.shownAnnotationCols.length + this.shownMetadataCols.length; // left - hit - right - (one per shown annotation) - (one per shown metadata)
 		},
 		/** Return all annotations shown in the main search form (provided they have a forward index) */
 		sortableAnnotations(): AppTypes.NormalizedAnnotation[] { return UIStore.getState().results.shared.sortAnnotationIds.map(id => CorpusStore.get.allAnnotationsMap()[id][0]); },
-		firstMainAnnotation: CorpusStore.get.firstMainAnnotation,
+		concordanceAnnotationId(): string { return UIStore.getState().results.shared.concordanceAnnotationId; },
+		transformSnippets() { return UIStore.getState().results.shared.transformSnippets; },
+		concordanceAsHtml(): boolean { return UIStore.getState().results.shared.concordanceAsHtml; },
 		shownAnnotationCols(): AppTypes.NormalizedAnnotation[] {
 			// Don't bother showing the value when we're sorting on the surrounding context and not the hit itself
 			// as the table doesn't support showing data from something else than the hit
@@ -300,7 +320,7 @@ export default Vue.extend({
 		},
 		textDirection: CorpusStore.get.textDirection,
 
-		corpus() { return CorpusStore.getState().id; },
+		corpus(): string { return CorpusStore.getState().id; },
 		getAudioPlayerData() { return UIStore.getState().results.hits.getAudioPlayerData; }
 	},
 	methods: {
@@ -330,7 +350,15 @@ export default Vue.extend({
 			Api.blacklab
 			.getSnippet(CorpusStore.getState().id, row.docPid, row.start, row.end)
 			.then(s => {
-				citation.citation = snippetParts(s, this.firstMainAnnotation.id);
+				if (this.transformSnippets) {
+					this.transformSnippets(s);
+				}
+				const snippet = snippetParts(s, this.concordanceAnnotationId);
+				citation.citation = {
+					left: snippet[this.leftIndex],
+					hit: snippet[1],
+					right: snippet[this.rightIndex]
+				};
 				citation.snippet = s;
 				citation.audioPlayerData = this.getAudioPlayerData ? this.getAudioPlayerData(this.corpus, row.docPid, s) : null;
 			})

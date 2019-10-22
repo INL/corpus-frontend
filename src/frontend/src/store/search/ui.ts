@@ -105,6 +105,12 @@ type ModuleRootState = {
 		};
 
 		shared: {
+			/** What annotation to use for displaying of [before, hit, after] and snippets. Conventionally the main annotation. */
+			concordanceAnnotationId: string;
+			/** Optionally run a function on all retrieved snippets to arbitrarily process the data (we use this to format the values in some annotations for display purposes). */
+			transformSnippets: null|((snippet?: BLTypes.BLHitSnippet|BLTypes.BLHitSnippet[]) => void);
+			concordanceAsHtml: boolean;
+
 			/**
 			 * Annotations IDs to include in expanded hit rows (meaning in the table there), and csv exports containing hits.
 			 * The server returns all annotations if this is null,
@@ -195,6 +201,10 @@ const initialState: ModuleRootState = {
 			shownMetadataIds: [],
 		},
 		shared: {
+			concordanceAnnotationId: '',
+			transformSnippets: null,
+			concordanceAsHtml: false,
+
 			detailedAnnotationIds: null,
 			detailedMetadataIds: null,
 			groupAnnotationIds: [],
@@ -362,6 +372,14 @@ const actions = {
 			), 'docs_shownMetadataIds')
 		},
 		shared: {
+			concordanceAnnotationId: b.commit((state, id: string) => validateAnnotations([id],
+				_ => `Trying to display Annotation '${id}' as concordance and snippet text, but it does not exist`,
+				a => a.hasForwardIndex,
+				_ => `Trying to display Annotation '${id}' as concordance and snippet text, but it does not have the required forward index.`,
+				r => state.results.shared.concordanceAnnotationId = id
+			), 'shared_concordanceAnnotationId'),
+			concordanceAsHtml: b.commit((state, enable: boolean) => state.results.shared.concordanceAsHtml = enable, 'shared_concordanceAsHtml'),
+
 			detailedAnnotationIds: b.commit((state, ids: string[]|null) => {
 				if (ids != null) {
 					validateAnnotations(ids,
@@ -506,7 +524,7 @@ const init = () => {
 	const allShownMetadataFields = CorpusStore.get.shownMetadataFields();
 	const allShownMetadataFieldsMap = CorpusStore.get.shownMetadataFieldsMap();
 
-	const mainAnnotation = CorpusStore.get.firstMainAnnotation().id;
+	const mainAnnotation = CorpusStore.get.firstMainAnnotation();
 
 	// ===========
 	// Search form
@@ -573,7 +591,7 @@ const init = () => {
 	// Show 'lemma' and 'pos' (if they exist) and up to 3 more annotations in order of definition
 	// OR: show based on PROPS_IN_COLUMNS [legacy support] (configured in this corpus's search.xml)
 	if (!initialState.results.hits.shownAnnotationIds.length) {
-		const shownAnnotations = PROPS_IN_COLUMNS.filter(annot => allAnnotationsMap[annot] != null && allAnnotationsMap[annot][0].hasForwardIndex && annot !== mainAnnotation);
+		const shownAnnotations = PROPS_IN_COLUMNS.filter(annot => allAnnotationsMap[annot] != null && allAnnotationsMap[annot][0].hasForwardIndex && annot !== mainAnnotation.id);
 		if (!shownAnnotations.length) {
 			// These have precedence if they exist.
 			if (allAnnotationsMap.lemma != null && allAnnotationsMap.lemma[0].hasForwardIndex) { shownAnnotations.push('lemma'); }
@@ -581,7 +599,7 @@ const init = () => {
 
 			// Now add other annotations until we hit 3 annotations.
 			allShownAnnotations
-			.filter(annot => annot.id !== mainAnnotation && !shownAnnotations.includes(annot.id) && annot.hasForwardIndex)
+			.filter(annot => annot.id !== mainAnnotation.id && !shownAnnotations.includes(annot.id) && annot.hasForwardIndex)
 			.forEach(annot => {
 				if (shownAnnotations.length < 3) {
 					shownAnnotations.push(annot.id);
@@ -591,6 +609,11 @@ const init = () => {
 		actions.results.hits.shownAnnotationIds(shownAnnotations);
 	}
 	// Concordances show all non-internal annotations when not set.
+
+	// Displaying of result context/snippets
+	if (!initialState.results.shared.concordanceAnnotationId) {
+		actions.results.shared.concordanceAnnotationId(mainAnnotation.hasForwardIndex ? mainAnnotation.id : allAnnotations.find(a => a.hasForwardIndex)!.id);
+	}
 
 	// Metadata
 	// Sorting/grouping: show all metadata in groups

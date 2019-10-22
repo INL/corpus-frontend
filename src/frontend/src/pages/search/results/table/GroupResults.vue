@@ -79,9 +79,16 @@
 										<div class="col-xs-5"><strong>{{rightLabel}}</strong></div>
 									</div>
 									<div v-for="(conc, index) in concordances[row.id].concordances" :key="index" class="clearfix concordance">
+									<template v-if="concordanceAsHtml">
+										<div class="col-xs-5 text-right" v-html="conc.left"></div>
+										<div class="col-xs-2 text-center"><strong v-html="conc.hit"></strong></div>
+										<div class="col-xs-5" v-html="conc.right"></div>
+									</template>
+									<template v-else>
 										<div class="col-xs-5 text-right">&hellip; {{conc.left}}</div>
 										<div class="col-xs-2 text-center"><strong>{{conc.hit}}&nbsp;</strong></div>
 										<div class="col-xs-5">{{conc.right}} &hellip;</div>
+									</template>
 									</div>
 								</template>
 								<template v-else-if="type === 'docs' && concordances[row.id].concordances.length > 0">
@@ -115,6 +122,7 @@ import {stripIndent} from 'common-tags';
 
 import * as CorpusStore from '@/store/search/corpus';
 import * as ResultsStore from '@/store/search/results';
+import * as UIStore from '@/store/search/ui';
 
 import * as Api from '@/api';
 import {snippetParts, getDocumentUrl} from '@/utils';
@@ -418,16 +426,19 @@ export default Vue.extend({
 	}),
 	computed: {
 		type(): ResultsStore.ViewId { return BLTypes.isDocGroupsOrResults(this.results) ? 'docs' : 'hits'; },
-		storeModule() { return ResultsStore.get.resultsModules().find(m => m.namespace === this.type)!; },
+		storeModule(): any { return ResultsStore.get.resultsModules().find(m => m.namespace === this.type)!; },
 
 		// Display variables not influenced by results
-		firstMainAnnotation: CorpusStore.get.firstMainAnnotation,
+		concordanceAnnotationId(): string { return UIStore.getState().results.shared.concordanceAnnotationId; },
+		transformSnippets() { return UIStore.getState().results.shared.transformSnippets; },
+		concordanceAsHtml(): boolean { return UIStore.getState().results.shared.concordanceAsHtml; },
+
 		textDirection: CorpusStore.get.textDirection,
 
-		leftLabel() { return this.textDirection === 'ltr' ? 'Before' : 'After'; },
-		rightLabel() { return this.textDirection === 'ltr' ? 'After' : 'Before'; },
-		leftIndex() { return this.textDirection === 'ltr' ? 0 : 2; },
-		rightIndex() { return this.textDirection === 'ltr' ? 2 : 0; },
+		leftLabel(): string { return this.textDirection === 'ltr' ? 'Before' : 'After'; },
+		rightLabel(): string { return this.textDirection === 'ltr' ? 'After' : 'Before'; },
+		leftIndex(): number { return this.textDirection === 'ltr' ? 0 : 2; },
+		rightIndex(): number { return this.textDirection === 'ltr' ? 2 : 0; },
 
 		/** True if the results were created from a search containing a cql pattern, e.g. not just a raw document query */
 		isTokenResults(): boolean { return !!this.results.summary.searchParam.patt; },
@@ -452,7 +463,7 @@ export default Vue.extend({
 			return groupMode;
 		},
 
-		chartModeOptions() {
+		chartModeOptions(): string[] {
 			// FIXME hardcoded
 			const options = Object.keys((displayModes as any)[this.type][this.groupMode]);
 			if (this.type === 'docs' && this.isTokenResults) {
@@ -463,7 +474,7 @@ export default Vue.extend({
 		},
 		chartMode: {
 			get(): string { return this.storeModule.getState().groupDisplayMode || this.chartModeOptions[1]; },
-			set(v: string) { this.storeModule.actions.groupDisplayMode(v === this.chartModeOptions[1] ? null : v); },
+			set(v: string): void { this.storeModule.actions.groupDisplayMode(v === this.chartModeOptions[1] ? null : v); },
 		},
 
 		/** Columns in the table */
@@ -485,7 +496,7 @@ export default Vue.extend({
 		 * the description for a column containing the same information might be different based on what we're displaying
 		 */
 		headers(): Array<{key: string, label: string, title?: string, isBar: boolean}> {
-			const c = this.columns.map(c => {
+			const r = this.columns.map(c => {
 				const headerId = typeof c === 'string' ? c : c[1];
 
 				const viewHeader = tableHeaders[this.type][headerId] || {};
@@ -504,7 +515,7 @@ export default Vue.extend({
 				};
 			});
 
-			return c;
+			return r;
 		},
 
 		rows(): RowData[] { return this._rowsData.rows; },
@@ -609,7 +620,7 @@ export default Vue.extend({
 
 		sortModel: {
 			get(): string|null { return this.sort; },
-			set(v: string|null) { this.$emit('sort', v); }
+			set(v: string|null): void { this.$emit('sort', v); }
 		},
 	},
 	methods: {
@@ -661,7 +672,11 @@ export default Vue.extend({
 					const data = res as BLTypes.BLHitResults;
 					cache.available = data.summary.numberOfHitsRetrieved;
 					data.hits.forEach(hit => {
-						const parts = snippetParts(hit, this.firstMainAnnotation.id);
+						if (this.transformSnippets) {
+							this.transformSnippets(hit);
+						}
+
+						const parts = snippetParts(hit, this.concordanceAnnotationId);
 						cache.concordances.push({
 							left: parts[this.leftIndex],
 							hit: parts[1],

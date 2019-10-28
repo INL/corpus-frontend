@@ -179,13 +179,9 @@
 
                 <configuration>
                     <workingDirectory>src/frontend</workingDirectory>
-                    
-                
                 </configuration>
             
-
                 <executions>
-
                     <execution>
                         <id>install node and npm</id>
                         <goals>
@@ -209,6 +205,13 @@
                         <configuration>
                             <arguments>install</arguments>
                         </configuration>
+
+                        <!-- 
+                            skip compiling JS when compiling in eclipse. 
+                            It's slow and unneeded as you can manually start a webpack-dev-server during development.
+                            Run "npm start" in the src/frontend/src folder, and configure corpus-frontend.properties jspath to "http://localhost:80/dist" 
+                        -->
+                        <?m2e ignore?>
                     </execution>
 
                     <execution>
@@ -219,6 +222,13 @@
                         <configuration>
                             <arguments>run build</arguments>
                         </configuration>
+
+                        <!-- 
+                            skip compiling JS when compiling in eclipse. 
+                            It's slow and unneeded as you can manually start a webpack-dev-server during development.
+                            Run "npm start" in the src/frontend/src folder, and configure corpus-frontend.properties jspath to "http://localhost:80/dist" 
+                        -->
+                        <?m2e ignore?>
                     </execution>
 
                    <!-- TODO lifecycle mapping, incremental builds. -->

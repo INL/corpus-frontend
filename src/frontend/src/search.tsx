@@ -206,21 +206,25 @@ $(document).ready(async () => {
 		store: RootStore.store,
 		render: h => h(SearchPageComponent),
 		mounted() {
-			connectJqueryToPage();
 
-			runHook('beforeStateLoaded')
-			.then(() => TagsetStore.actions.awaitInit())
-			.then(() => new UrlStateParser(FilterStore.getState().filters).get())
-			.then(urlState => {
-				debugLog('Loading state from url', urlState);
-				RootStore.actions.reset();
-				RootStore.actions.replace(urlState);
-				debugLog('Finished initializing state shape and loading initial state from url.');
+			requestAnimationFrame(() => {
+				debugger;
+				connectJqueryToPage();
 
-				// Don't do this before the url is parsed, as it controls the page url (among other things derived from the state).
-				connectStreamsToVuex();
-				// And this needs the tagset to have been loaded (if available)
-				initQueryBuilder();
+				runHook('beforeStateLoaded')
+				.then(() => TagsetStore.actions.awaitInit())
+				.then(() => new UrlStateParser(FilterStore.getState().filters).get())
+				.then(urlState => {
+					debugLog('Loading state from url', urlState);
+					RootStore.actions.reset();
+					RootStore.actions.replace(urlState);
+					debugLog('Finished initializing state shape and loading initial state from url.');
+
+					// Don't do this before the url is parsed, as it controls the page url (among other things derived from the state).
+					connectStreamsToVuex();
+					// And this needs the tagset to have been loaded (if available)
+					initQueryBuilder();
+				});
 			});
 		}
 	}).$mount(document.querySelector('#vue-root')!);

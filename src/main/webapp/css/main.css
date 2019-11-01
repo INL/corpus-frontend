@@ -88,6 +88,16 @@ a.ui-menu-item-wrapper {
 	color: #dddddd !important;
 }
 
+.navbar-header {
+	display: flex;
+	flex-wrap: nowrap;
+}
+.navbar-header > .navbar-brand {
+	flex-grow: 1;
+	min-height: 50px;
+	height: auto;
+}
+
 .navbar-fixed-top {
 	-webkit-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
 	-moz-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);

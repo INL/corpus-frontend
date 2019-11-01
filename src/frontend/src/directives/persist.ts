@@ -80,7 +80,14 @@ class Persist implements DirectiveOptions {
 				break;
 		}
 
-		el.dispatchEvent(new Event('change'));
+		let event: Event;
+		if(typeof(Event) === 'function') {
+			event = new Event('change');
+		}else{
+			event = document.createEvent('Event');
+			event.initEvent('change', true, true);
+		}
+		el.dispatchEvent(event);
 	}
 
 	private getValue(el: HTMLElement): any {

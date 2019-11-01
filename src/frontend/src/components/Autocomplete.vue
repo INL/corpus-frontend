@@ -147,7 +147,16 @@ export default Vue.extend({
 			input.value = value.substring(0, start) + v + value.substring(end);
 			input.selectionStart = start+v.length+1;
 			input.selectionEnd = start+v.length+1;
-			input.dispatchEvent(new Event('input'));
+
+			let event: Event;
+			if(typeof(Event) === 'function') {
+				event = new Event('input');
+			}else{
+				event = document.createEvent('Event');
+				event.initEvent('input', true, true);
+			}
+			input.dispatchEvent(event);
+
 		}
 	},
 	mounted() { if (this.autocomplete) { this._createAutocomplete(); }},

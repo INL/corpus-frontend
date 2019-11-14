@@ -206,9 +206,7 @@ $(document).ready(async () => {
 		store: RootStore.store,
 		render: h => h(SearchPageComponent),
 		mounted() {
-
 			requestAnimationFrame(() => {
-				debugger;
 				connectJqueryToPage();
 
 				runHook('beforeStateLoaded')

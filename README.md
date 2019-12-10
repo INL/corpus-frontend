@@ -195,12 +195,15 @@ Html content placed in the body of the `MyCorpus/help/` page.
 - `about.inc`  
 Html content placed in the body of the `MyCorpus/about/` page.
 - `.xsl` files  
-These are used to transform documents in your corpus into something that can be displayed on the `article/` page.
-The name of the xsl file that is used to do this is based on the format of files in your corpus (`tei`, `folia`, etc).
-The xslt file that is used has the name `article_<formatName>.xsl`, so `article_tei.xsl` for tei files.
+These are used to transform documents in your corpus into something that can be displayed on the `article/` page.  
+Two files can be placed here: 
+  - `article.xsl`, the most important one, for your document's content (previously this was `article_${formatName}.xsl` (e.g. `article_tei.xsl` or `article_folia.xsl`). This will still work for now, however, this is deprecated).  
+  A small note: if you'd like to enable tooltips displaying more info on the words of your corpus, you can use the `data-tooltip-preview` (when just hovering) and `data-tooltip-content` (when clicking on the tooltip) attributes on any html element to create a tooltip. Alternatively if you don't want to write your own html, you can use `title` for the preview, combined with one or more `data-${valueName}` to create a little table. `title="greeting" data-lemma="hi" data-speaker="jim"` will create a preview containing `greeting` which can be clicked on to show a table with the details`.
+  - `meta.xsl` for your document's metadata (shown under the metadata tab on the page)  
+  **Note:** this stylesheet does not receive the raw document, but rather the results of `/blacklab-server/docs/${documentId}`, containing only the indexed metadata.
 - `static/`  
 A sandbox where you can place whatever other files you may need, such as custom js, css, fonts, logo's etc.
-These files are public, and can be accessed through `MyCorpus/static/path/to/my.file`
+These files are public, and can be accessed through `MyCorpus/static/path/to/my.file`. 
 
 ---
 
@@ -512,7 +515,6 @@ Through javascript you can do many things, but outlined below are some of the mo
     `vuexModules.ui.actions.global.pageGuide.enable(false)`
   </details>
 
-
 - <details>
     <summary>[Global] - Configure which annotations & metadata can be used/is shown where</summary>
 
@@ -576,6 +578,12 @@ Through javascript you can do many things, but outlined below are some of the mo
 
     If you want to hide every single option in a category, use the dedicated function to configure that section of the ui and pass it an empty array.
 
+  </details>
+
+- <details>
+    <summary>[Search] - Hide the query builder</summary>
+
+    `vuexModules.ui.actions.search.advanced.enable(false)`
   </details>
 
 - <details>
@@ -662,6 +670,67 @@ Through javascript you can do many things, but outlined below are some of the mo
       }
     }
     ```
+  </details>
+
+- <details>
+    <summary>[Hits] configure which annotation is shown as context and snippet and enable html mode</summary>
+
+    `vuexModules.ui.actions.results.shared.concordanceAnnotationId('word_xml')`
+    `vuexModules.ui.actions.results.shared.concordanceAsHtml(true)`
+
+    `concordanceAnnotationId` lets you set which annotation is used to display words in the results table:
+
+    1.  ![](docs/img/concordance_annot_word.png)
+    2.  `vuexModules.ui.actions.results.shared.concordanceAnnotationId('pos_id')`
+    3.  ![](docs/img/concordance_annot_posId.png)
+
+    For a more interesting example consider the following:
+
+    In diacritic words, there are usually two words, but only one lemma shared between them.  
+    Indexing multiple words per token is supported by blacklab,  
+    but due to a limitation in the forward index, only the first value for an annotation can be shown in the results.  
+    Using this system you can use a different annotation for searching (with multiple indexed values)  
+    than you use for displaying the results (with the multiple words concatenated for example).  
+
+    -------
+
+    `concordanceAsHtml` is an advanced feature.  
+    Combined with blacklab's [captureXml](https://github.com/INL/BlackLab/blob/9fdc0e146f136287b0c3cca8456b0ef60ce2cbe2/core/src/site/markdown/how-to-configure-indexing.md#indexing-xml) mode, you can index snippets of raw xml from your document into an annotation. You can then set that annotation to display as html in the results table. This allows you to style it as any html using `custom css`.
+
+    Internally, we use this to display strike throughs, manual corrections and underlines in words in historical corpora. 
+    For example: given a word structure like so:  
+    ```xml
+      <!-- source document -->
+      <w>
+        en<strikethrough>de</strikethrough>
+      </w>
+    ```
+
+    ```yaml
+      # Index config
+      - name: word_xml
+        valuePath: //w
+        captureXml: true
+    ```
+
+    ```typescript
+      // Custom js
+      vuexModules.ui.actions.results.shared.concordanceAnnotationId('word_xml')
+      vuexModules.ui.actions.results.shared.concordanceAsHtml(true)
+    ```
+
+    ```css
+      /* Custom css */
+      strikethrough {
+        text-decoration: line-through;
+      }
+    ```
+    > en<del>de</del>
+
+    Browser support for non-html elements is good, so arbitrary xml should work out of the box, given it is well-formed.
+
+    USE THIS FEATURE WITH CARE! It may break your page if the xml contains unexpected or malformed contents.
+
   </details>
 
 - <details>

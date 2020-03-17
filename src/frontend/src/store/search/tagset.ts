@@ -67,7 +67,7 @@ const actions = {
 			const tagset = t.data;
 
 			const annots = CorpusStore.get.allAnnotationsMap();
-			const mainAnnot = Object.values(annots).flat().find(a => a.uiType === 'pos'); // I mean, has to exist right
+			const mainAnnot = Object.values(annots).flat().find(a => a.uiType === 'pos');
 			if (!mainAnnot) {
 				// We don't have any annotation to attach the tagset to
 				// Stop loading, and act as if no tagset was loaded (because it wasn't).
@@ -76,6 +76,7 @@ const actions = {
 				init();
 				return;
 			}
+			validateTagset(mainAnnot, tagset);
 
 			const mainAnnotationCS = mainAnnot.caseSensitive;
 			if (!mainAnnotationCS) {

@@ -252,7 +252,7 @@ export type Tagset = {
 			value: string;
 			displayName: string;
 			/** All subannotations that can be used on this type of part-of-speech */
-			subAnnotationIds: Array<keyof Tagset['subAnnotations']>;
+			subAnnotationIds: string[];
 		}
 	};
 	/**

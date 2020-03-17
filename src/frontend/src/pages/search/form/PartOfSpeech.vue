@@ -92,7 +92,7 @@ export default Vue.extend({
 			const subAnnots = this.annotationValue.subAnnotationIds.map(id => ({
 				id,
 				values: this.tagset.subAnnotations[id].values
-					.filter(v => this.selected[`${mainValue}/${id}/${v.value}`])
+					.filter(v => this.selected[`${this.annotationValue!.value}/${id}/${v.value}`])
 					.map(v => escapeRegex(v.value, false).replace(/"/g, '\\"'))
 			}))
 			.filter(v => v.values.length > 0);
@@ -119,7 +119,7 @@ export default Vue.extend({
 			const subAnnots = this.annotationValue.subAnnotationIds.map(id => ({
 				id,
 				values: this.tagset.subAnnotations[id].values
-					.filter(v => this.selected[`${mainValue}/${id}/${v.value}`])
+					.filter(v => this.selected[`${this.annotationValue!.value}/${id}/${v.value}`])
 					.map(v => escapeRegex(v.value, false).replace(/"/g, '\\"'))
 			}))
 			.filter(v => v.values.length > 0);

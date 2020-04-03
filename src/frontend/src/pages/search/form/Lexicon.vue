@@ -159,13 +159,15 @@ export default Vue.extend({
 		reset() { this.wordOptions = []; this.posOptions = {}; this.modelValue = ''; }
 	},
 	created() {
-		const re = /^\w+$/;
-		const filteredInput$ = this.input$.pipe(filter(v => !!v.match(re) && !this.selectedWords.length));
-
+		const re = /^[\w]+$/;
 		const emptyResult = {posOptions: {} as MapOf<boolean>, wordList: [] as WordOption[]};
-		const suggestions$: Observable.Observable<typeof emptyResult> = filteredInput$.pipe(
+		const suggestions$: Observable.Observable<typeof emptyResult|null> = this.input$.pipe(
+			map(v => v.trim()),
 			debounceTime(1500),
 			switchMap(term => {
+				if (this.selectedWords.length) { console.log('aborting because selected words', this.selectedWords); return Observable.empty(); } // don't do anything - keep previous results
+				if (!term.match(re)) { console.log('query term ', term, ' does not match'); return Observable.from([emptyResult]); } // weird input - clear results
+
 				const lemmata1 = Axios.get<LexiconLemmaIdResponse>(config.getLemmaIdFromWordform, { params: { database: this.database, wordform: term, case_sensitive: config.case_sensitive } });
 				const lemmata2 = Axios.get<LexiconLemmaIdResponse>(config.getLemmaIdFromLemma, { params: { database: this.database, lemma: term, case_sensitive: config.case_sensitive } });
 				const lemmataRequest = Promise.all([lemmata1, lemmata2]).then(r => r.flatMap(rr => rr.data.lemmata_list.flatMap(l => l.found_lemmata)));
@@ -247,7 +249,7 @@ export default Vue.extend({
 			})
 		);
 
-		const results$ = Observable.merge(filteredInput$.pipe(mapTo(null)), suggestions$);
+		const results$ = Observable.merge(this.input$.pipe(mapTo(null)), suggestions$);
 
 		this.subscriptions.push(
 			results$.subscribe(r => {

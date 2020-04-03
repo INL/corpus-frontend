@@ -82,7 +82,7 @@
 					<tr v-if="rowData.type === 'doc'" class="document rounded"
 						v-show="showTitles"
 						:key="index"
-						v-tooltip="{
+						v-tooltip.top-start="{
 							show: pinnedTooltip === index,
 							content: `Document id: ${rowData.docPid}`,
 							trigger: pinnedTooltip === index ? 'manual' : 'hover',

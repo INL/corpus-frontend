@@ -123,11 +123,13 @@
 										<template v-if="concordanceAsHtml">
 											<span v-html="citations[index].citation.left"></span>
 											<strong v-html="citations[index].citation.hit"></strong>
+											<a :href="citations[index].href" title="Go to hit in document" target="_blank"><sup class="fa fa-link" style="margin-left: -5px;"></sup></a>
 											<span v-html="citations[index].citation.right"></span>
 										</template>
 										<template v-else>
 											<span>{{citations[index].citation.left}}</span>
 											<strong>{{citations[index].citation.hit}}</strong>
+											<a :href="citations[index].href" title="Go to hit in document" target="_blank"><sup class="fa fa-link" style="margin-left: -5px;"></sup></a>
 											<span>{{citations[index].citation.right}}</span>
 										</template>
 									</span>
@@ -260,7 +262,6 @@ export default Vue.extend({
 					rows.push({
 						type: 'doc',
 						summary: (title[0] || 'UNKNOWN') + (author[0] ? ' by ' + author[0] : ''),
-						// href: getDocumentUrl(pid, this.results.summary.searchParam.patt || undefined, this.results.summary.searchParam.pattgapdata || undefined),
 						href: getDocumentUrl(pid, this.results.summary.searchParam.patt || undefined, this.results.summary.searchParam.pattgapdata || undefined, hit.start, UIStore.getState().results.shared.pageSize),
 						docPid: pid,
 					}  as DocRow);
@@ -342,7 +343,13 @@ export default Vue.extend({
 				citation: null,
 				error: null,
 				snippet: null,
-				// href: getDocumentUrl(row.docPid, this.results.summary.searchParam.patt || undefined, this.results.summary.searchParam.pattgapdata || undefined, row.start, UIStore.getState().results.shared.pageSize),
+				href: getDocumentUrl(
+					row.docPid,
+					this.results.summary.searchParam.patt || undefined,
+					this.results.summary.searchParam.pattgapdata || undefined,
+					row.start,
+					UIStore.getState().results.shared.pageSize,
+					row.start),
 			} as CitationData);
 
 			ga('send', 'event', 'results', 'snippet/load', row.docPid);

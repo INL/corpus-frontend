@@ -37,8 +37,11 @@ type RootState = {
 	baseColor: string; // TODO make ui store shared.
 };
 
+// see article.vm
 declare const INDEX_ID: string;
 declare const DOCUMENT_ID: string;
+declare const PAGESIZE: number|null;
+
 const initialState: RootState = {
 	indexId: INDEX_ID,
 	docId: DOCUMENT_ID,

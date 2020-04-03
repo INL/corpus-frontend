@@ -7,32 +7,43 @@
 		<li v-if="prevEnabled" :class="['prev', {'disabled': !prevEnabled || disabled}]">
 			<a role="button" title="previous" @click.prevent="changePage(page-1)">&lsaquo;</a>
 		</li>
-		<li v-for="i in lowerPages" :key="i" :class="{'disabled': disabled}">
-			<a role="button" @click.prevent="changePage(i)">{{i+1}}</a>
-		</li>
-		<li v-if="lowerPages.length || higherPages.length" :class="['current', {'disabled': disabled}]">
-			<input
-				type="number"
-				class="form-control"
+		<template v-if="showOffsets">
+			<li v-for="i in lowerPages" :key="i" :class="{'disabled': disabled}">
+				<a role="button" @click.prevent="changePage(i)">{{i+1}}</a>
+			</li>
+		</template>
+		<li v-if="lowerPages.length || higherPages.length" :class="{
+			current: pageActive,
+			disabled
+		}">
+			<template v-if="editable">
+				<input
+					type="number"
+					class="form-control"
 
-				:value="page+1"
-				:min="minPage+1"
-				:max="maxPage+1"
-				:disabled="disabled"
-				@input="$event.target.value = Math.max(minPage+1, Math.min($event.target.value, maxPage+1))"
-				@keypress.enter.prevent="isValid($event.target.value-1) ? changePage($event.target.value - 1) : $event.target.value=page+1"
-				@keyup.esc.prevent="$event.target.value=page+1; $event.target.blur();"
-				@change.prevent="isValid($event.target.value-1) ? changePage($event.target.value-1) : $event.target.value=page+1"
-				ref="maincontrol"
-			/>
-			<span class="fa fa-pencil"></span>
+					:value="page+1"
+					:min="minPage+1"
+					:max="maxPage+1"
+					:disabled="disabled"
+					@input="$event.target.value = Math.max(minPage+1, Math.min($event.target.value, maxPage+1))"
+					@keypress.enter.prevent="isValid($event.target.value-1) ? changePage($event.target.value - 1) : $event.target.value=page+1"
+					@keyup.esc.prevent="$event.target.value=page+1; $event.target.blur();"
+					@change.prevent="isValid($event.target.value-1) ? changePage($event.target.value-1) : $event.target.value=page+1"
+					ref="maincontrol"
+				/>
+				<span v-if="editable" class="fa fa-pencil"></span>
+			</template>
+			<a v-else-if="!pageActive" role="button" @click.prevent="changePage(page)">{{page + 1}}</a>
+			<span v-else>{{page+1}}</span>
 		</li>
 		<li v-else class="active"> <!-- no available pages -->
 			<span>{{page+1}}</span>
 		</li>
-		<li v-for="i in higherPages" :key="i" :class="{'disabled': disabled}">
-			<a role="button" @click.prevent="changePage(i)">{{i+1}}</a>
-		</li>
+		<template v-if="showOffsets">
+			<li v-for="i in higherPages" :key="i" :class="{'disabled': disabled}">
+				<a role="button" @click.prevent="changePage(i)">{{i+1}}</a>
+			</li>
+		</template>
 		<li v-if="nextEnabled" :class="['next', {'disabled': !nextEnabled || disabled}]">
 			<a role="button" title="next" @click.prevent="changePage(page+1)">&rsaquo;</a>
 		</li>
@@ -49,16 +60,28 @@ import Vue from 'vue';
 /** Renders pagination controls, inputs are 0-based, meaning page === 0 will render as 1 on the label */
 export default Vue.extend({
 	props: {
-		page: Number as () => number,
+		page: Number,
+		pageActive: {
+			type: Boolean,
+			default: true
+		},
 		maxPage: {
-			type: Number as () => number,
+			type: Number,
 			default: Number.MAX_VALUE,
 		},
 		minPage: {
-			type: Number as () => number,
+			type: Number,
 			default: 0,
 		},
-		disabled: Boolean
+		disabled: Boolean,
+		editable: {
+			type: Boolean,
+			default: true
+		},
+		showOffsets: {
+			type: Boolean,
+			default: true
+		}
 	},
 	data: () => ({
 		focus: false,
@@ -91,7 +114,7 @@ export default Vue.extend({
 		isValid(page: any): page is number {
 			return typeof page === 'number' &&
 				!isNaN(page) &&
-				page !== this.page &&
+				(page !== this.page || !this.pageActive) && // emit event for current page if the page is not active (i.e. is page is just center of the pagination, but not the "current" page)
 				page >= this.minPage &&
 				page <= this.maxPage
 		},

@@ -217,7 +217,9 @@ export function getDocumentUrl(
 	cql?: string,
 	pattgapdata?: string,
 	wordstart: number = 0,
-	pageSize?: number
+	pageSize?: number,
+	/** HACK: Find the hit starting with this word index on the page -- see ArticlePagination.vue */
+	findHit?: number
 ) {
 	let docUrl;
 	switch (new URI().filename()) {
@@ -248,7 +250,8 @@ export function getDocumentUrl(
 			// parameter 'query' controls the hits that are highlighted in the document when it's opened
 			query: cql || undefined,
 			pattgapdata: pattgapdata || undefined,
-			wordstart: pageSize != null ? (Math.floor(wordstart / pageSize) * pageSize) || undefined : undefined
+			wordstart: pageSize != null ? (Math.floor(wordstart / pageSize) * pageSize) || undefined : undefined,
+			findhit: findHit
 		})
 		.toString();
 }

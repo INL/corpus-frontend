@@ -17,9 +17,13 @@
 		<table class="group-table">
 			<thead>
 				<tr class="rounded">
-					<th v-for="(header, i) in headers" :key="header.id" :title="header.title" :style="{
-						width: header.isBar ? '60%' : undefined
-					}">
+					<th v-for="(header, i) in headers"
+						:key="header.id"
+						:title="header.title"
+						:style="{
+							width: header.isBar ? '60%' : undefined
+						}"
+					>
 						<v-popover v-if="i === 0" offset="5" style="display:inline-block;">
 							<a role="button" title="Column meanings"><span class="fa fa-lg fa-question-circle"/></a>
 
@@ -33,7 +37,16 @@
 								</table>
 							</template>
 						</v-popover>
-						{{header.label}}
+
+						<a v-if="header.sortProp"
+							role="button"
+							:class="['sort', {'disabled':disabled}]"
+							:title="`${header.title} (click to sort)`"
+							@click="changeSort(header.sortProp)"
+						>
+							{{header.label}}
+						</a>
+						<template v-else>{{header.label}}</template>
 					</th>
 				</tr>
 			</thead>
@@ -132,6 +145,7 @@ import * as BLTypes from '@/types/blacklabtypes';
 import SelectPicker from '@/components/SelectPicker.vue';
 import frac2Percent from '@/mixins/fractionalToPercent';
 
+/** Used to show a help tooltip explaining what data is represented by a column, also for developer documentation :) */
 const definitions = [
 	['c',   '[corpus]',            'The entire corpus'],
 	['sc',  '[subcorpus]',         'A set of documents within c. Defined by a specific set of metadata.'],
@@ -144,6 +158,10 @@ const definitions = [
 	['*.h', '[documents]',         'Number of hits in a collection'],
 ];
 
+/**
+ * The BlackLab api response for groups has data in several different places.
+ * We unpack and simplify it a little so that every entry has the same data available. Names are according to the definitions above
+ */
 interface GroupData {
 	id: string;
 	displayname: string;
@@ -169,6 +187,7 @@ interface GroupData {
 	'sc.t'?: number; // FIXME remove optional flag when Jan implements
 }
 
+/** For UI purposes: holds derived statistics about groups. E.G. size of this group vs the largest group. */
 interface RowData extends GroupData {
 	// adds to 1 across all groups
 	'relative group size [gr.d/r.d]': number;
@@ -186,8 +205,28 @@ interface RowData extends GroupData {
 	'average document length [gr.t/gr.d]'?: number;
 }
 
-type RowKey = keyof RowData;
-type TableDef = Array<RowKey|[RowKey, RowKey]>;
+/** What properties are available to display in the columns */
+type Column = keyof RowData;
+/**
+ * A "table" layout is just an array of columns.
+ * A column in our case is a cell holding a number, or a horizontal bar (the table represents a sideways bar chart)
+ * The subarray represents a bar, and a string ("column") represents a cell holding a number (like rowData[cell.key])
+ */
+type TableDef = Array<Column|[Column, Column]>;
+
+/**
+ * The user can pick how and what data they want to show:
+ * This object holds the various available column layouts for the table.
+ *
+ * It is structures as follows:
+ * Based on what the user has searched for, there are several ways of displaying the data
+ * - At the top is the distinction of what we're grouping/displaying: hits or docs
+ * - Below that is the distinction of what is being grouped on: document metadata, or a hit property (such as 'lemma' or 'pos')
+ * - Then below THAT, is the display mode chose by the user. These are the same data, just different sets of columns.
+ *     Usually one wide table containing all relevant properties of the groups
+ *     Then the rest are the same columns but in a wider view using a horizontal bar to illustrate the magnitude of the group,
+ *     instead of just a cell with a fractional number.
+ */
 const displayModes: {
 	hits: {
 		metadata: {
@@ -200,7 +239,6 @@ const displayModes: {
 		annotation: {
 			'table': TableDef,
 			'hits': TableDef,
-			// 'relative hits': TableDef, // todo artifact of the way we do display modes currently.
 		},
 	},
 	docs: {
@@ -258,11 +296,6 @@ const displayModes: {
 				['relative frequency (hits) [gr.h/gsc.t]', 'gr.h'],
 				'relative frequency (hits) [gr.h/gsc.t]'
 			],
-			// 'relative hits': [
-			// 	'displayname',
-			// 	['relative frequency (hits) [gr.h/gsc.t]', 'gr.h'],
-			// 	'relative frequency (hits) [gr.h/gsc.t]'
-			// ],
 		},
 	},
 	docs: {
@@ -289,19 +322,26 @@ const displayModes: {
 	}
 };
 
+
+/**
+ * For every possible column (1 per key in the RowData type) a column header is defined.
+ * It holds the display name, possible tooltip, and optionally what to sort on should the user click the header
+ * (e.g. the column header for the "size" property sorts the groups based on size when clicked by the user - analogous to the Hits and Docs tables)
+ */
 const tableHeaders: {
 	[K in (ResultsStore.ViewId|'default')]: {
 		[ColumnId in keyof RowData]?: {
 			label?: string;
 			title?: string;
-			chartMode?: string;
+			/** annotation, meta field or other property to sort on should this header be clicked by the user */
+			sortProp?: string;
 		}
 	}
 } = {
 	default: {
 		'displayname': {
 			label: 'Group',
-			// chartMode: 'table'
+			sortProp: 'identity'
 		},
 		'average document length [gr.t/gr.d]': {
 			label: 'Average document length',
@@ -336,11 +376,10 @@ const tableHeaders: {
 		'gr.d': {
 			label: '#docs with hits in current group',
 			title: '(gr.d)',
-			// chartMode: 'docs',
 		},
-		// 'gr.h': {
-		// 	chartMode: 'hits',
-		// },
+		'gr.h': {
+			sortProp: 'size'
+		},
 		'gsc.t': {
 			label: '#all tokens in current group',
 			title: '(gr.t)',
@@ -354,31 +393,26 @@ const tableHeaders: {
 			label: 'Relative group size (hits)',
 			title: '(gr.h/r.h) - Number of hits in this group relative to total number hits',
 		},
-		// 'relative frequency (docs) [gr.d/gsc.d]': {
-		// 	chartMode: 'relative docs',
-		// },
-		// 'relative frequency (hits) [gr.h/gsc.t]': {
-		// 	chartMode: 'relative hits',
-		// }
 	},
 	docs: {
 		'gr.d': {
 			label: '#docs in group',
-			title: '(gr.d)'
+			title: '(gr.d)',
+			sortProp: 'size'
 		},
 		'relative group size [gr.d/r.d]': {
 			label: 'Relative frequency (docs)',
 			title: '(gr.d/r.d)',
 		},
-		// 'relative frequency (docs) [gr.d/gsc.d]': {
-		// 	chartMode: 'docs'
-		// },
-		// 'relative frequency (tokens) [gr.t/gsc.t]': {
-		// 	chartMode: 'tokens'
-		// },
 	},
 };
 
+// Helpers to compute the largest number in the currently displayed result set.
+// E.G. largest occurance of the RowData['gr.d'] property.
+// This is required to scale the bars in the horizontal barchart view. The largest occurance of a value there has 100% width.
+// NOTE: sometimes we know the absolute maximum across all groups (such as the size), because BlackLab tells us,
+// but sometimes we only have the maximum value in the currently displayed page (such as for properties we compute locally, such as relative sizes).
+// Fixing this would be a substantial amount of extra work for BlackLab.
 type LocalMaxima = {  [P in keyof RowData]-?: number extends RowData[P] ? number : never; };
 class MaxCounter {
 	public values: {[key: string]: number} = {};
@@ -458,8 +492,7 @@ export default Vue.extend({
 			// but we can't detect this from the blacklab response alone since it looks the same as when grouping on metadata only
 			const groupMode =
 				this.type === 'docs' ? 'metadata' :
-				this.results.summary.subcorpusSize ? 'annotation' : // TODO this might not work any longer in the future, we need a different way of detecting
-				'metadata';
+				this.results.summary.searchParam.group!.match(/^(field|decade):/) ? 'metadata' : 'annotation'
 			return groupMode;
 		},
 
@@ -495,7 +528,7 @@ export default Vue.extend({
 		 * Map the column to a pretty header with a display name and tooltip information etc,
 		 * the description for a column containing the same information might be different based on what we're displaying
 		 */
-		headers(): Array<{key: string, label: string, title?: string, isBar: boolean}> {
+		headers(): Array<{key: string, label: string, title?: string, isBar: boolean, sortProp?: string}> {
 			const r = this.columns.map(c => {
 				const headerId = typeof c === 'string' ? c : c[1];
 
@@ -510,8 +543,8 @@ export default Vue.extend({
 					key: headerId,
 					label: viewHeader.label || defaultHeader.label || fallback.label,
 					title: viewHeader.title || defaultHeader.title || fallback.title,
-					chartMode: viewHeader.chartMode || defaultHeader.chartMode || undefined,
-					isBar: typeof c !== 'string'
+					isBar: typeof c !== 'string',
+					sortProp: viewHeader.sortProp || defaultHeader.sortProp || undefined
 				};
 			});
 
@@ -707,6 +740,12 @@ export default Vue.extend({
 			.finally(() => cache.request = null);
 		},
 
+		changeSort(payload: string) {
+			if (!this.disabled) {
+				this.$emit('sort', payload === this.sort ? '-'+payload : payload);
+			}
+		},
+
 		/* EVENTS */
 		openFullConcordances(id: string, displayName: string) {
 			this.$emit('viewgroup', {id, displayName});
@@ -789,4 +828,3 @@ export default Vue.extend({
 }
 
 </style>
-

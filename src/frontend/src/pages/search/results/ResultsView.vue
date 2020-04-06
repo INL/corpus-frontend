@@ -433,7 +433,7 @@ export default Vue.extend({
 				opts.push({
 					label: 'Groups',
 					options: [{
-						label: 'Sort by Identity',
+						label: 'Sort by Group Name',
 						value: 'identity',
 					}, {
 						label: 'Sort by Size',

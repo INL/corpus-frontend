@@ -106,7 +106,7 @@
                         
                         <div id="format-download-container" class="collapse" style="margin-top:10px;">
                             <div class="well" style="padding: 12px 8px; margin: 0;">
-                                <select class="selectpicker" id="format_select" data-autoupdate="format" data-filter="configBased" data-width="100%" data-live-search="true">
+                                <select class="selectpicker" id="format_select" data-autoupdate="format" data-dropdown-align-right="auto" data-filter="configBased" data-width="100%" data-live-search="true">
                                     <!-- options filled in by clientside javascript -->
                                 </select>
                                 

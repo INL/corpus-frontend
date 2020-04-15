@@ -119,6 +119,7 @@ public class ArticleResponse extends BaseResponse {
         }
 
         context.put("docId", pid);
+        context.put("pageSize", servlet.getWebsiteConfig(corpus).usePagination() ? this.servlet.getWordsToShow() : "undefined");
 
         try {
             PagingInfo pi = getMetadata(metadataStylesheet,articleMetadataRequest, query, pattGapData, metadataRequestParameters, context);

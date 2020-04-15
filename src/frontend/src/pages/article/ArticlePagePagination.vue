@@ -1,16 +1,14 @@
 <template>
-	<div v-if="shouldRender" class="article-pagination">
+	<div v-if="shouldRender" :class="['article-pagination', shouldRender && loading && 'loading']">
 		<span v-if="loading" class="fa fa-spinner fa-spin fa-4x"></span>
 		<template v-else>
-			<template v-if="pageSize != null">
-				<div class="pagination-container">
-					<label>Pages</label>
-					<div class="pagination-wrapper">
-						<Pagination v-bind="paginationInfo" :editable="false" :showOffsets="false" @change="handlePageNavigation"/>
-					</div>
+			<div v-if="pageSize != null" class="pagination-container">
+				<label>Pages</label>
+				<div class="pagination-wrapper">
+					<Pagination v-bind="paginationInfo" :editable="false" :showOffsets="false" @change="handlePageNavigation"/>
 				</div>
-				<hr>
-			</template>
+			</div>
+			<hr v-if="hits.length && pageSize != null">
 			<div v-if="hits.length" class="pagination-container">
 				<label>Hits</label>
 				<div class="pagination-wrapper">
@@ -36,7 +34,7 @@ import Pagination from '@/components/Pagination.vue';
 // see article.vm
 declare const INDEX_ID: string;
 declare const DOCUMENT_ID: string;
-declare const PAGESIZE: number|null;
+declare const PAGESIZE: number|undefined;
 
 // NOTE: wordend is exclusive (wordstart=0 && wordend=100 returns words at index 0-99)
 
@@ -48,12 +46,16 @@ export default Vue.extend({
 		hits: null as null|Array<[number, number]>,
 		hitElements: [...document.querySelectorAll('.hl')] as HTMLElement[],
 		currentHitInPage: undefined as number|undefined,
+		loadingForAwhile: false,
 	}),
 	computed: {
 		shouldRender(): boolean {
-			return this.pageSize != null || // pagination enabled
-				(this.hits && this.hits.length) || // hits found
-				!!this.hits == null && new URI().search(true).patt // hits being fetched
+			return this.loading ?
+				this.loadingForAwhile : // loading, and been loading for a while
+				(this.pageSize != null) || (this.hits != null && this.hits.length > 0); // not loading, has anything interesting to display
+			// return this.pageSize != null || // pagination enabled
+			// 	!!(this.hits && this.hits.length) || // hits found
+			// 	(this.hits == null && (new URI().search(true).patt) && this.loadingForAwhile) // hits being fetched
 		},
 
 		document: RootStore.get.document,
@@ -171,20 +173,21 @@ export default Vue.extend({
 				if (!this.document || this.hits != null) { return; }
 
 				const { query } = new URI().search(true);
-				const pidField = this.document!.docFields.pidField!;
-				const docId = this.document.docInfo[pidField][0];
+				const docId = this.document!.docPid;
 
 				if (!query) { // no hits when no query, abort
 					this.hits = [];
 					return;
 				}
 
+				const spinnerTimeout = setTimeout(() => this.loadingForAwhile = true, 3000);
+
 				blacklab.getHits(INDEX_ID, {
-					filter: `${pidField}:("${docId.replace(/"/g, '\\"')}")`,
+					docpid: docId,
 					patt: query,
 					first: 0,
 					number: Math.pow(2, 31)-1,
-				})
+				} as any)
 				.request.then((r: BLHitResults) => r.hits.map(h => [h.start, h.end] as [number, number]))
 				.then(hits => {
 					// if specific hit passed from the previous page, find it in this page
@@ -208,7 +211,8 @@ export default Vue.extend({
 					}
 
 					this.hits = hits;
-				});
+				})
+				.finally(() => { clearTimeout(spinnerTimeout);  this.loadingForAwhile = false; });
 			}
 		}
 	},
@@ -245,6 +249,10 @@ export default Vue.extend({
 	border-radius: 3px;
 
 	padding: 5px;
+
+	&.loading {
+		border-radius: 50%;
+	}
 
 	> hr {
 		margin: 5px 0;

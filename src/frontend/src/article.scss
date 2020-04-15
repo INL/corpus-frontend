@@ -1,22 +1,5 @@
 // Only contains styles for classes used in the built in xsl files (article_tei.xsl, article_folia.xsl). And some styles for the navigation controls (next hit, next page)
 
-.hitscroll {
-	background-color: #444444;
-	border: #222222 1px solid;
-	border-radius: 5px;
-	color: #eeeeee;
-	display: none; // unhide with js
-	left: 60%;
-	padding: 10px;
-	position: fixed;
-	top: 100px;
-	z-index: 9001;
-
-	a {
-		color: inherit!important;
-	}
-}
-
 .hl {
 	font-weight: bold;
 	color: #b10932;

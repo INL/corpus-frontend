@@ -78,10 +78,10 @@ Configuration
 
 The backend is configured through a config file `corpus-frontend.properties`.
 This file must be located in one of the following locations (in order of priority):
-- `%AUTOSEARCH_CONFIG_DIR%`
-- `/etc/blacklab/`
-- `/vol1/etc/blacklab/` (linux only)
-- `%tmp%`
+- `AUTOSEARCH_CONFIG_DIR` environment variable.
+- `/etc/blacklab/` (`C:\etc\blacklab` on windows)
+- `/vol1/etc/blacklab/` (`C:\vol1\etc\blacklab` on windows)
+- `tmp` environment variable. (usually `C:\Users\%yourusername%\AppData\Local\Temp` or `C:\Windows\Temp` on windows. `/tmp` or `/var/tmp` on linux)
 
 Example file and defaults:
 

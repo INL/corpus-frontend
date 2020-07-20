@@ -119,7 +119,7 @@ export default Vue.extend({
 				if (v) {
 					statsTab.classList.remove('disabled');
 					statsTab.removeEventListener('click', _preventClicks);
-					statsTab.style.display = null; // default display
+					statsTab.style.display = ''; // default display
 					statsTab.setAttribute('data-toggle', 'tab');
 				} else {
 					statsTab.classList.add('disabled');

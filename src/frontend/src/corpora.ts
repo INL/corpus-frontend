@@ -60,7 +60,11 @@ function createTrigger<K extends keyof DataEventPayloadMap>(eventType: K, $targe
 	};
 }
 
-function createHandler<K extends keyof DataEventPayloadMap>({selector, event, handler}: {selector?: string,event: K,handler: (this: JQuery<HTMLElement>, payload: DataEventPayloadMap[K]) => void}) {
+function createHandler<K extends keyof DataEventPayloadMap>({selector, event, handler}: {
+	selector?: string,
+	event: K,
+	handler: (this: JQuery<HTMLElement>, payload: DataEventPayloadMap[K]) => void
+}) {
 	const $elements = selector ? $(selector) : undefined;
 
 	$root.on(event, function(jqEvent, payload) {
@@ -89,16 +93,22 @@ function createHandlerOnce<K extends keyof DataEventPayloadMap>({selector, event
 }
 
 const triggers = {
-	updateFormats: createTrigger(DataEvent.FORMATS_REFRESH),
+	updateFormats: (() => {
+		const trigger = createTrigger(DataEvent.FORMATS_REFRESH);
+		return (payload: DataEventPayloadMap[DataEvent.FORMATS_REFRESH]) => trigger(payload.sort((a, b) => a.displayName.localeCompare(b.displayName)));
+	})(),
 	updateServer: createTrigger(DataEvent.SERVER_REFRESH),
-	updateCorpora: createTrigger(DataEvent.CORPORA_REFRESH),
+	updateCorpora: (() => {
+		const trigger = createTrigger(DataEvent.CORPORA_REFRESH);
+		return (payload: DataEventPayloadMap[DataEvent.CORPORA_REFRESH]) => trigger(payload.sort((a, b) => a.displayName.localeCompare(b.displayName)));
+	})(),
 	updateCorpus: createTrigger(DataEvent.CORPUS_REFRESH)
 };
 
 // Attach these handlers first, so that we can store data before other handlers run
 createHandler({event: DataEvent.SERVER_REFRESH, handler(payload) { serverInfo = Object.assign({}, payload); }});
-createHandler({event: DataEvent.CORPORA_REFRESH, handler(payload) { corpora = ([] as any).concat(payload); }});
-createHandler({event: DataEvent.FORMATS_REFRESH, handler(payload) { formats = ([] as any).concat(payload); }});
+createHandler({event: DataEvent.CORPORA_REFRESH, handler(payload) { corpora = payload.concat().sort((a, b) => a.displayName.localeCompare(b.displayName)); }});
+createHandler({event: DataEvent.FORMATS_REFRESH, handler(payload) { formats = payload.concat().sort((a, b) => a.displayName.localeCompare(b.displayName)); }});
 createHandler({event: DataEvent.CORPUS_REFRESH, handler(payload) {
 	// merge into list, trigger global corpora refresh
 	const i = corpora.findIndex(function(corpus) { return corpus.id === payload.id; });
@@ -107,6 +117,7 @@ createHandler({event: DataEvent.CORPUS_REFRESH, handler(payload) {
 		...corpora[i],
 		...payload
 	} : corpora.push(payload);
+	corpora.sort((a, b) => a.displayName.localeCompare(b.displayName));
 	triggers.updateCorpora(corpora);
 }});
 

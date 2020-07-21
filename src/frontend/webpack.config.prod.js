@@ -97,7 +97,7 @@ module.exports = {
 			}]
 		}, {
 			test: /\.js$/,
-			exclude: [/node_modules/, './src/vendor'],
+			exclude: [/node_modules/, '/src/vendor'],
 			loader: 'babel-loader',
 		}]
 	},
@@ -122,5 +122,24 @@ module.exports = {
 			verbose: false,
 		}),
 	],
-	devtool: 'source-map'
+	devtool: 'source-map',
+	// Sometimes we get false-positive errors when importing a typescript type definition from a file which itself imported it from a third file
+	// The cause for this is the "transpileOnly" setting in our ts-loader configuration above.
+	// What happens is a .ts file is passed to the ts-loader, which turns it into a .js file, removing all typescript syntax & annotations
+
+	// But due to the "transpileOnly" flag it does this in isolation, it doesn't inspect WHAT is actually imported.
+	// So it leaves in type-only imports like "import { SomeTypeDefinition } from '...'"
+	// At the same time, it removes the corresponding export statement "export type SomeTypeDefinition { ... }" from the other file (as that would be meaningless and a syntax error in the plain javascript output)
+
+	// The output .js file is then passed to the next loader in the chain (babel-loader in this case)
+	// That loader finds a leftover "import { SomeTypeDefinition }" statement that the ts-loader couldn't remove
+	// (again - because it doesn't know whether SomeTypeDefinition is just a type definition or something else, such as an object or a function)
+	// But this time, it does try to wire the two files together (to bundle them, to my understanding) and can't find the export statement, thus the warning.
+
+	// We can safely ignore these warnings.
+	// We run a second typescript compiler in a separate thread that does do actual deep validation, so we will still get warnings for genuine typescript errors.
+	// (this process happens in the ForkTsCheckerWebpackPlugin we enabled above)
+	stats: {
+		warningsFilter: /export .* was not found in/
+	}
 };

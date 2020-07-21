@@ -11,10 +11,9 @@ import {getStoreBuilder} from 'vuex-typex';
 import {RootState} from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus';
 
-import {Tagset} from '@/types/apptypes';
-import {NormalizedAnnotation} from '@/types/apptypes';
+import { NormalizedAnnotation, Tagset } from '@/types/apptypes';
+
 import { mapReduce } from '@/utils';
-import cloneDeep from 'clone-deep';
 
 type ModuleRootState = Tagset&{
 	/** Uninitialized before init() or load() action called. loading/loaded during/after load() called. Disabled when load() not called before init(), or loading failed for any reason. */

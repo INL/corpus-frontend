@@ -1,6 +1,6 @@
 {
 	"presets": [
-		["@babel/env", {
+		["@babel/preset-env", {
 			/*
 				Modules option can let babel transform import '...' statements into other ways of acquiring the module (commonjs, amd, etc)
 				The default is transform to CommonJs (the NodeJs module format prior to native javascript modules using import/export)
@@ -17,13 +17,14 @@
 				NOTE: the bundle still needs to import '@babel/polyfill' at the entry point to enable the polyfills, see utils/enable-polyfills.ts,
 				which is prepended to all output files through our webpack config (webpack.config.(prod|dev).js)
 			*/
-			"useBuiltIns": "entry",
+			"useBuiltIns": "usage",
+			"corejs": 3, //
 			"targets": {
 				"browsers": ["last 2 versions", "not ie < 11"]
-			},
+			}
 			// "debug": true
 		}],
-		"@vue/babel-preset-jsx",
+		"@vue/babel-preset-jsx"
 	],
 	"plugins": [
 		/*
@@ -42,8 +43,8 @@
 
 			See: https://github.com/jamietre/babel-plugin-transform-es2015-modules-commonjs-simple#readme
 		*/
-		["transform-es2015-modules-commonjs-simple", {
-			"noMangle": true
-		}]
+		// ["transform-es2015-modules-commonjs-simple", {
+		// 	"noMangle": true
+		// }]
 	]
 }

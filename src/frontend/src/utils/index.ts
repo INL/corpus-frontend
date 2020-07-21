@@ -317,7 +317,7 @@ export function mapReduce<
 		const values = t as T[]|undefined|null;
 		const key = a as KeysOfType<T, string>;
 		const mapper = b as VT|undefined;
-		return values ? values.reduce(makeMapReducer<T>(key, mapper), {}) : {};
+		return values ? values.reduce(makeMapReducer<T, VT>(key, b), {}) : {};
 	}
 }
 
@@ -330,7 +330,7 @@ export function mapReduce<
  * @param m (optional) a mapping function to apply to values.
  */
 export function multimapReduce<T, V extends (t: T, i: number) => any = (t: T, i: number) => T>(t: T[]|undefined|null, k: KeysOfType<T, string>, m?: V): MapOf<Array<ReturnType<V>>> {
-	return t ? t.reduce(makeMultimapReducer<T>(k, m), {}) : {};
+	return t ? t.reduce(makeMultimapReducer<T, V>(k, m), {}) : {};
 }
 
 export function filterDuplicates<T>(t: T[]|null|undefined, k: KeysOfType<T, string|number>): T[] {

@@ -45,7 +45,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	 * So in order to decode the query, we need knowledge of which filters are configured.
 	 * This is done by the FilterModule, so we need that info here.
 	 */
-	constructor(private registeredMetadataFilters: FilterModule.ModuleRootState, uri?: uri.URI) {
+	constructor(private registeredMetadataFilters: FilterModule.ModuleRootState, uri?: URI) {
 		super(uri);
 	}
 

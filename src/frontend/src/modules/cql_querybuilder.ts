@@ -701,7 +701,7 @@ export class AttributeGroup {
 		$element.on('cql:attribute:create', this._createAttribute.bind(this));
 	}
 
-	private _createAttribute(attributeCreateEvent: JQuery.Event, data: {operator: string, operatorLabel: string}) {
+	private _createAttribute(attributeCreateEvent: JQuery.TriggeredEvent, data: {operator: string, operatorLabel: string}) {
 		// The attribute for which the create button was clicked (if null, the button was our own button)
 		const originAttribute: Attribute|undefined = $(attributeCreateEvent.target).parents('.bl-token-attribute').data('attribute');
 
@@ -957,7 +957,7 @@ export class Attribute {
 		});
 	}
 
-	private _onUploadChanged(event: JQuery.Event<HTMLInputElement>) {
+	private _onUploadChanged(event: JQuery.TriggeredEvent<HTMLInputElement>) {
 		const self = this;
 		const $fileEditButton = self.element.find('[data-attribute-role="edit"]');
 

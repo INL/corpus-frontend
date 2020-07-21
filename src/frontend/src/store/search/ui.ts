@@ -645,8 +645,7 @@ function createConfigurator<T extends MapOf<string[]>>(proppaths: T) {
 	const r = function(config: [[undefined, ...Array<keyof T>],  [string, ...Array<boolean|undefined>]]) {
 		const props = config.shift() as string[];
 		const propvalues = {} as {[K in keyof T]: string[]};
-		Object.keys(proppaths).forEach(function(propname) { propvalues[propname] = []; });
-
+		Object.keys(proppaths).forEach(function(propname: keyof T) { propvalues[propname] = []; });
 		(config as Array<[string, ...Array<boolean|undefined>]>).forEach(function(field) {
 			const id = field[0];
 			field.forEach(function(value, index) {

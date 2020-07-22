@@ -159,11 +159,18 @@ export default Vue.extend({
 		reset() { this.wordOptions = []; this.posOptions = {}; this.modelValue = ''; }
 	},
 	created() {
-		const re = /^\w+$/;
-		const filteredInput$ = this.input$.pipe(filter(v => !!v.match(re) && !this.selectedWords.length));
-
+		const re = /^[\w]+$/;
 		const emptyResult = {posOptions: {} as MapOf<boolean>, wordList: [] as WordOption[]};
+
+		// don't ever do anything (clear or search...) while a suggestion is selected, also not when search term is emptied (such as when deselecting all suggestions)
+		const filteredInput$ = this.input$.pipe(filter(v => !this.selectedWords.length && !!v));
+
+		// we need three outcome streams:
+
+		// one that clears immediately to either: empty when something is typed that seems invalid, or to null (indicating pending results) otherwise
+		const clearResults$ = filteredInput$.pipe(map(v => !v.match(re) ? emptyResult : null));
 		const suggestions$: Observable.Observable<typeof emptyResult> = filteredInput$.pipe(
+			filter(v => !!v.match(re)), // non-actionable input, don't show any suggestions, they should already have been cleared
 			debounceTime(1500),
 			switchMap(term => {
 				const lemmata1 = Axios.get<LexiconLemmaIdResponse>(config.getLemmaIdFromWordform, { params: { database: this.database, wordform: term, case_sensitive: config.case_sensitive } });
@@ -247,7 +254,7 @@ export default Vue.extend({
 			})
 		);
 
-		const results$ = Observable.merge(filteredInput$.pipe(mapTo(null)), suggestions$);
+		const results$ = Observable.merge(clearResults$, suggestions$);
 
 		this.subscriptions.push(
 			results$.subscribe(r => {

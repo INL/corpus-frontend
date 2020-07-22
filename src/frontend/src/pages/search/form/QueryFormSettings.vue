@@ -54,9 +54,9 @@
 						</div>
 
 						<div class="form-group">
-							<label for="wordsAroundHit" class="col-xs-3">Context Size:</label>
+							<label for="wordsAroundHit" class="col-xs-3">Context size:</label>
 							<div class="col-xs-9">
-								<input id="wordsAroundHit" name="wordsAroundHit" placeholder="Context Size" type="number" class="form-control" v-model.lazy="wordsAroundHit">
+								<input id="wordsAroundHit" name="wordsAroundHit" placeholder="Context size" type="number" class="form-control" v-model.lazy="wordsAroundHit">
 							</div>
 						</div>
 					</div>

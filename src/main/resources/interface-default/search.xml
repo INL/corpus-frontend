@@ -54,6 +54,8 @@
             because xsl files will not run on the complete document any longer, thus xpaths may fail unexpectedly.
             -->
             <Pagination>false</Pagination>
+            <!-- When pagination is enabled, this controls the length of a page. -->
+            <PageSize>1000</PageSize>
         </Article>
 
         <!-- Google analytics. Disabled if not provided. -->

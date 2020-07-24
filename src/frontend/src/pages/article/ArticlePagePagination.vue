@@ -25,63 +25,52 @@ import Vue from 'vue';
 import URI from 'urijs';
 
 import * as RootStore from '@/store/article';
+import { BLIndexMetadata, isIndexMetadataV1 } from '@/types/blacklabtypes';
 import { MapOf, words } from '@/utils';
 import { blacklab } from '@/api';
 import { BLHitResults } from '@/types/blacklabtypes';
 
 import Pagination from '@/components/Pagination.vue';
 
+declare const SINGLEPAGE: { INDEX: BLIndexMetadata; };
+
 // see article.vm
 declare const INDEX_ID: string;
 declare const DOCUMENT_ID: string;
-declare const PAGESIZE: number|undefined;
+declare const DOCUMENT_LENGTH: number;
+declare const PAGINATION_ENABLED: boolean;
+declare const PAGE_SIZE: number|undefined; // set to undefined when when pagination disabled
+declare const PAGE_START: number; // set to 0 when pagination disabled
+declare const PAGE_END: number; // set to document_length when pagination disabled
 
-// NOTE: wordend is exclusive (wordstart=0 && wordend=100 returns words at index 0-99)
+declare const MAIN_ANNOTATION: string;
+
+// NOTE: wordend in blacklab parameters is exclusive (wordstart=0 && wordend=100 returns words at index 0-99)
 
 // NOTE: this is a ugly piece of code, but hey it works /shrug
 export default Vue.extend({
 	components: { Pagination },
 	data: () => ({
-		pageSize: PAGESIZE,
 		hits: null as null|Array<[number, number]>,
 		hitElements: [...document.querySelectorAll('.hl')] as HTMLElement[],
 		currentHitInPage: undefined as number|undefined,
 		loadingForAwhile: false,
+		pageSize: PAGE_SIZE
 	}),
 	computed: {
 		shouldRender(): boolean {
-			return this.loading ?
-				this.loadingForAwhile : // loading, and been loading for a while
-				(this.pageSize != null) || (this.hits != null && this.hits.length > 0); // not loading, has anything interesting to display
-			// return this.pageSize != null || // pagination enabled
-			// 	!!(this.hits && this.hits.length) || // hits found
-			// 	(this.hits == null && (new URI().search(true).patt) && this.loadingForAwhile) // hits being fetched
+			return (this.loadingForAwhile || (this.hits != null && this.hits.length > 0)) || // hits portion
+			(PAGINATION_ENABLED && (PAGE_END - PAGE_START) < DOCUMENT_LENGTH)
+			// return PAGINATION_ENABLED;
 		},
 
-		document: RootStore.get.document,
-		docLength(): number { return this.document ? this.document.docInfo.lengthInTokens : 1 ; },
-
-		loading(): boolean { return this.document == null || this.hits == null; },
+		loading(): boolean { return this.hits == null; },
 
 		currentPageInfo(): {wordstart: number, wordend: number} {
-			if (!this.pageSize || this.document == null) { return {wordstart: 0, wordend: 1}; }
-			let { wordstart, wordend } = new URI().search(true);
-
-			// TODO: this should use the same logic as on the server. Server should probably just expose a wordstart and wordend global variable that we can use here.
-			// fallback to defaults if nan, clamp to document size
-			wordstart = Number(wordstart) || 0;
-			wordend = Number(wordend) || this.pageSize;
-			wordstart = wordstart >= 0 ? wordstart <= this.docLength ? wordstart : this.docLength! : 0;
-
-			if (wordend <= 0) { wordend = wordstart + this.pageSize; }
-			if (wordend > this.docLength) { wordend = this.docLength; }
-			if (wordend > wordstart + this.pageSize || wordend < wordstart) { wordend = wordstart + this.pageSize; }
-			// wordend = wordend >= 0 && wordend > wordstart ? wordend <= this.docLength ? wordend : this.docLength! : this.pageSize;
-
-			return {wordstart, wordend}
+			return {wordstart: PAGE_START, wordend: PAGE_END};
 		},
 		firstVisibleHitIndex(): number {
-			if (this.loading || !this.pageSize) { return 0; }
+			if (this.loading || !PAGINATION_ENABLED) { return 0; }
 			const firstVisibleHitIndex = this.hits!.findIndex(([start, end]) => start >= this.currentPageInfo.wordstart);
 			return firstVisibleHitIndex >= 0 ? firstVisibleHitIndex : this.hits!.length - 1;
 		},
@@ -94,15 +83,14 @@ export default Vue.extend({
 			disabled: boolean,
 			pageActive: boolean
 		} {
-			if (this.loading || !this.pageSize) { return undefined; }
+			if (this.loading || !PAGINATION_ENABLED) { return undefined; }
 
 			const {wordstart, wordend} = this.currentPageInfo;
 
-			console.log(this.currentPageInfo);
-			const isOnExactPage = (wordstart % this.pageSize) === 0 && ((wordend - this.pageSize) === wordstart || wordend === this.docLength);
+			const isOnExactPage = (wordstart % PAGE_SIZE!) === 0 && (PAGE_END === (PAGE_START + PAGE_SIZE!) || PAGE_END === DOCUMENT_LENGTH)
 			return {
-				page: Math.floor(this.currentPageInfo.wordstart / this.pageSize),
-				maxPage: Math.floor(this.docLength / this.pageSize),
+				page: Math.floor(this.currentPageInfo.wordstart / PAGE_SIZE!),
+				maxPage: Math.floor(DOCUMENT_LENGTH / PAGE_SIZE!),
 				minPage: 0,
 				disabled: false,
 				pageActive: isOnExactPage
@@ -129,10 +117,10 @@ export default Vue.extend({
 	},
 	methods: {
 		handlePageNavigation(page: number, hit?: number) {
-			let wordstart: number|undefined = page * this.pageSize!;
-			let wordend: number|undefined = (page + 1) * this.pageSize!;
+			let wordstart: number|undefined = page * PAGE_SIZE!;
+			let wordend: number|undefined = (page + 1) * PAGE_SIZE!;
 			if (wordstart <= 0) { wordstart = undefined; }
-			if (wordend >= this.docLength!) { wordend = undefined; }
+			if (wordend >= DOCUMENT_LENGTH) { wordend = undefined; }
 
 			const newUrl = new URI().setSearch({wordstart, wordend}).fragment(hit != null ? hit.toString(10): '').toString();
 			window.location.href = newUrl;
@@ -140,9 +128,9 @@ export default Vue.extend({
 		handleHitNavigation(index: number) {
 			const indexInThisPage = index - this.firstVisibleHitIndex;
 			if (indexInThisPage >= this.hitElements.length || indexInThisPage < 0) {
-				const pageOfNewHit = Math.floor(this.hits![index][0] / this.pageSize!);
-				const startOfNewPage = pageOfNewHit * this.pageSize!;
-				const endOfNewPage = (pageOfNewHit + 1) * this.pageSize!;
+				const pageOfNewHit = Math.floor(this.hits![index][0] / PAGE_SIZE!);
+				const startOfNewPage = pageOfNewHit * PAGE_SIZE!;
+				const endOfNewPage = (pageOfNewHit + 1) * PAGE_SIZE!;
 
 				// find index in new page
 				let firstHitOnNewPage = Number.MAX_SAFE_INTEGER;
@@ -172,73 +160,79 @@ export default Vue.extend({
 		currentHitInPage() {
 			window.history.replaceState(undefined, '', window.location.pathname + window.location.search + (this.currentHitInPage == null ? '' : `#${this.currentHitInPage.toString(10)}`));
 		},
-
-		document: {
-			immediate: true,
-			handler() {
-				if (!this.document || this.hits != null) { return; }
-
-				const { query } = new URI().search(true);
-				const docId = this.document!.docPid;
-
-				if (!query) { // no hits when no query, abort
-					this.hits = [];
-					return;
-				}
-
-				const spinnerTimeout = setTimeout(() => this.loadingForAwhile = true, 3000);
-
-				blacklab.getHits(INDEX_ID, {
-					docpid: docId,
-					patt: query,
-					first: 0,
-					number: Math.pow(2, 31)-1,
-				} as any)
-				.request.then((r: BLHitResults) => r.hits.map(h => [h.start, h.end] as [number, number]))
-				.then(hits => {
-					// if specific hit passed from the previous page, find it in this page
-					let findHit: string|undefined|number = new URI().search(true).findhit as string|undefined;
-					if (findHit != null) {
-						findHit = Number(findHit);
-
-						if (!isNaN(Number(findHit))) {
-							const index = hits.findIndex(hit => hit[0] === findHit);
-							if (index >= 0) {
-								const firstVisibleHitIndex = hits.findIndex(([start, end]) => start >= this.currentPageInfo.wordstart);
-								if (this.currentHitInPage != null) {
-									this.hitElements[this.currentHitInPage].classList.remove('active');
-								}
-								this.currentHitInPage = index - firstVisibleHitIndex;
-								this.hitElements[this.currentHitInPage].classList.add('active');
-								this.hitElements[this.currentHitInPage].scrollIntoView({block: 'center', inline: 'center'});
-							}
-						}
-						window.history.replaceState(undefined, '', new URI().removeSearch('findhit').toString());
-					}
-
-					this.hits = hits;
-				})
-				.finally(() => { clearTimeout(spinnerTimeout);  this.loadingForAwhile = false; });
-			}
-		}
 	},
 	created() {
+		// There are two ways the url can contain a reference to a specific hit we should outline/scroll to
+		// first: the hash as an index (#10 for the 10th hit on this page for example - this is when someone got sent the page from someone else, or when refreshing the page)
+		// second: the ?findhit parameter, contains the token offset where the hit starts
+
+		// case 1: the nth hit on the page
+
 		// initially, highlight the correct hit, if there is any specified
-		// otherwise just remove the
+		// otherwise just remove the window hash
 		if (!this.hitElements.length) {
 			this.currentHitInPage = undefined;
 			window.history.replaceState(undefined, '', window.location.pathname + window.location.search); // setting hash to '' won't remove '#'
+		} else {
+			let hitInPage = Number(window.location.hash ? window.location.hash.substring(1) : '0') || 0;
+			if (hitInPage >= this.hitElements.length || hitInPage < 0) {
+				hitInPage = 0;
+			}
+
+			this.hitElements[hitInPage].classList.add('active');
+			this.hitElements[hitInPage].scrollIntoView({block: 'center', inline: 'center'});
+			this.currentHitInPage = hitInPage;
+		}
+
+
+		// now request all hits from blacklab, we need this to solve the second case with the ?findhit parameter, but also so we know whether there are more hits
+		// outside this page (so we can navigate the user there).
+
+
+		// Load all hits in the document (also those outside this page)
+		const { query }: { query: string|undefined } = new URI().search(true);
+
+		if (!query) { // no hits when no query, abort
+			this.hits = [];
 			return;
 		}
 
-		let hitInPage = Number(window.location.hash ? window.location.hash.substring(1) : '0') || 0;
-		if (hitInPage >= this.hitElements.length || hitInPage < 0) {
-			hitInPage = 0;
-		}
+		const spinnerTimeout = setTimeout(() => this.loadingForAwhile = true, 3000);
+		blacklab
+		.getHits(INDEX_ID, {
+			docpid: DOCUMENT_ID,
+			patt: query,
+			first: 0,
+			number: Math.pow(2, 31)-1,
+			wordsaroundhit: 0,
+			includetokencount: false,
+			listvalues: "__do_not_send_anything__", // we don't need this info
+		} as any).request
+		.then((r: BLHitResults) => r.hits.map(h => [h.start, h.end] as [number, number]))
+		.then(hits => {
+			// if specific hit passed from the previous page, find it in this page
+			let findHit: string|undefined|number = new URI().search(true).findhit as string|undefined;
+			if (findHit != null) {
+				findHit = Number(findHit);
 
-		this.hitElements[hitInPage].classList.add('active');
-		this.hitElements[hitInPage].scrollIntoView({block: 'center', inline: 'center'});
-		this.currentHitInPage = hitInPage;
+				if (!isNaN(Number(findHit))) {
+					const index = hits.findIndex(hit => hit[0] === findHit);
+					if (index >= 0) {
+						const firstVisibleHitIndex = hits.findIndex(([start, end]) => start >= this.currentPageInfo.wordstart);
+						if (this.currentHitInPage != null) {
+							this.hitElements[this.currentHitInPage].classList.remove('active');
+						}
+						this.currentHitInPage = index - firstVisibleHitIndex;
+						this.hitElements[this.currentHitInPage].classList.add('active');
+						this.hitElements[this.currentHitInPage].scrollIntoView({block: 'center', inline: 'center'});
+					}
+				}
+				window.history.replaceState(undefined, '', new URI().removeSearch('findhit').toString());
+			}
+
+			this.hits = hits;
+		})
+		.finally(() => { clearTimeout(spinnerTimeout);  this.loadingForAwhile = false; });
 	}
 });
 </script>

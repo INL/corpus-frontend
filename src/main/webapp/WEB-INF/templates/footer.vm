@@ -5,7 +5,7 @@
             </footer>
         </div>
 
-        #if($googleAnalyticsKey.length() > 0)
+        #if($googleAnalyticsKey)
         #set($unescaped = $googleAnalyticsKey) ## see BaseResponse.java
         <script>
         window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
@@ -23,8 +23,8 @@
         #end
 
         ## custom css in header to prevent FOUT
-        #if ($websiteConfig.getPathToCustomJs())
-            <script src="$websiteConfig.getPathToCustomJs()?_$cache"></script>
+        #if ($websiteConfig.getPathToCustomJs().isPresent())
+            <script src="$websiteConfig.getPathToCustomJs().get()?_$cache"></script>
         #end
     </body>
 </html>

@@ -12,6 +12,8 @@ import nl.inl.corpuswebsite.utils.QueryServiceHandler;
 import nl.inl.corpuswebsite.utils.QueryServiceHandler.QueryException;
 import nl.inl.corpuswebsite.utils.WebsiteConfig;
 import nl.inl.corpuswebsite.utils.XslTransformer;
+
+import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -299,19 +301,16 @@ public class MainServlet extends HttpServlet {
      * @param corpus which corpus to read config for, may be null for the default config.
      * @return the website config
      */
-    public synchronized WebsiteConfig getWebsiteConfig(String corpus) {
-        Function<String, WebsiteConfig> gen = __ -> {
-            File f =
-                getProjectFile(corpus, "search.xml")
-                .orElseThrow(() -> new IllegalStateException("No search.xml, and no default in jar either"));
-            try {
-                return new WebsiteConfig(f, corpus, getCorpusConfig(corpus).getLeft(), contextPath);
-            } catch (Exception e) {
-                throw new RuntimeException("Could not read search.xml " + f, e);
-            }
-        };
-
-        return useCache() ? configs.computeIfAbsent(corpus, gen) : gen.apply(corpus);
+    public synchronized WebsiteConfig getWebsiteConfig(Optional<String> corpus) {
+        Function<String, WebsiteConfig> gen = __ -> 
+            getProjectFile(corpus, "search.xml")
+            .map(configFile -> { 
+            	try { return new WebsiteConfig(configFile, Optional.ofNullable(getCorpusConfig(corpus).getLeft()), contextPath); } 
+            	catch (ConfigurationException e) { throw new RuntimeException("Could not read search.xml " + configFile, e); }
+            })
+            .orElseThrow(() -> new IllegalStateException("No search.xml, and no default in jar either"));
+        
+        return useCache() ? configs.computeIfAbsent(corpus.orElse(null), gen) : gen.apply(corpus.orElse(null));
     }
 
     /**
@@ -320,20 +319,15 @@ public class MainServlet extends HttpServlet {
      * @param corpus name of the corpus
      * @return the config
      */
-    public Pair<CorpusConfig, Exception> getCorpusConfig(String corpus) {
-        synchronized (corpusConfigs) {
-            return corpusConfigs.computeIfAbsent(corpus, __ -> {
-                if (corpus == null || corpus.isEmpty()) {
-                    return Pair.of(null, null);
-                }
-
-                // Contact blacklab-server for the config xml file
-                QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(corpus));
+    public Pair<CorpusConfig, Exception> getCorpusConfig(Optional<String> corpus) {
+    	synchronized (corpusConfigs) {
+    		return corpus.map(c -> corpusConfigs.computeIfAbsent(c, __ -> {
+		        // Contact blacklab-server for the config xml file
+                QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(c));
 
                 try {
                     Map<String, String[]> params = new HashMap<>();
-                    if (getCorpusOwner(corpus) != null)
-                        params.put("userid", new String[] {getCorpusOwner(corpus)});
+                    getCorpusOwner(corpus).ifPresent(owner -> params.put("userid", new String[] {owner}));
 
                     params.put("outputformat", new String[] {"xml"});
                     String xmlConfig = handler.makeRequest(params); // get initial index data
@@ -344,11 +338,11 @@ public class MainServlet extends HttpServlet {
                     String jsonResult = handler.makeRequest(params); // again get index data, this time with those values included, in json format (used by the frontend code)
 
                     // and store the config
-                    return Pair.of(new CorpusConfig(xmlConfig, jsonResult), null);
+                    return Pair.of(new CorpusConfig(c, xmlConfig, jsonResult), null);
                 } catch (QueryException | IOException | SAXException | ParserConfigurationException e) {
                     return Pair.of(null, e);
                 }
-            });
+            })).orElse(Pair.of(null, null));
         }
     }
 
@@ -398,13 +392,13 @@ public class MainServlet extends HttpServlet {
             .collect(Collectors.toList());
 
         String corpus = null;
-        String page = null;
+        final String page;
         List<String> pathParameters = pathParts.subList(Math.min(pathParts.size(), 2), pathParts.size()); // remainder of the url after the context root and page url, split on '/' and decoded.
         if (pathParts.isEmpty()) { // requested application root
             page = DEFAULT_PAGE;
         } else if (pathParts.size() == 1) { // <page>
             page = pathParts.get(0);
-        } else if (pathParts.size() >= 2) { // <corpus>/<page>/...
+        } else { // pathParts.size() >= 2 ... <corpus>/<page>/...
             corpus = pathParts.get(0);
             page = pathParts.get(1);
             if (corpus.equals(adminProps.getProperty(PROP_DATA_DEFAULT)))
@@ -440,7 +434,7 @@ public class MainServlet extends HttpServlet {
             return;
         }
 
-        br.init(request, response, this, corpus, pathParameters);
+        br.init(request, response, this, Optional.ofNullable(corpus), pathParameters);
         try {
             br.completeRequest();
         } catch (IOException e) {
@@ -464,20 +458,20 @@ public class MainServlet extends HttpServlet {
      * @param filePath - path to the file relative to the directory for the corpus.
      * @return the file, if found
      */
-    public final Optional<File> getProjectFile(String corpus, String filePath) {
+    public final Optional<File> getProjectFile(Optional<String> corpus, String filePath) {
         Optional<Path> dataDir = getIfValid(adminProps.getProperty(PROP_DATA_PATH));
 
         // Path the file in the corpus' data directory, only when a valid non-user corpus
         Optional<Path> corpusFile = dataDir
-            .filter(path -> corpus != null && !corpus.isEmpty() && !isUserCorpus(corpus))
+            .filter(path -> !isUserCorpus(corpus))
             .flatMap(p -> resolveIfValid(p, corpus))
-            .flatMap(p -> resolveIfValid(p, filePath));
+            .flatMap(p -> resolveIfValid(p, Optional.of(filePath)));
 
         // Path to the file in the default data directory, always available if configured correctly
         // see https://github.com/INL/corpus-frontend/pull/69
         Optional<Path> corpusFileDefault = dataDir
-            .flatMap(p -> resolveIfValid(p, adminProps.getProperty(PROP_DATA_DEFAULT)))
-            .flatMap(p -> resolveIfValid(p, filePath));
+            .flatMap(p -> resolveIfValid(p, Optional.of(adminProps.getProperty(PROP_DATA_DEFAULT))))
+            .flatMap(p -> resolveIfValid(p, Optional.of(filePath)));
 
         File file = Stream.of(corpusFile, corpusFileDefault)
             .map(o -> o.map(Path::toFile).orElse(null))
@@ -516,9 +510,9 @@ public class MainServlet extends HttpServlet {
      * @param child
      * @return the new path if everything is alright
      */
-    private static Optional<Path> resolveIfValid(Path parent, String child) {
+    private static Optional<Path> resolveIfValid(Path parent, Optional<String> child) {
         try {
-            return Optional.of(parent.resolve(child)).filter(resolved -> resolved.startsWith(parent) && !resolved.equals(parent)); // prevent upward directory traversal - child must be in parent
+            return Optional.of(parent.resolve(child.get())).filter(resolved -> resolved.startsWith(parent) && !resolved.equals(parent)); // prevent upward directory traversal - child must be in parent
         } catch (Exception e) { // catch anything, a bit lazy but allows passing in null and empty strings etc
             return Optional.empty();
         }
@@ -551,17 +545,18 @@ public class MainServlet extends HttpServlet {
      * a transformer, and can easily tell if they're xml documents or some other document/file type.
      *
      * @param corpus
-     * @param name - the name of the file
+     * @param name - the name of the file, excluding extension
      * @param corpusDataFormat - optional name suffix to differentiate files for different formats
      * @return the xsl transformer to use for transformation, note that this is always the same transformer.
      */
-    public Optional<XslTransformer> getStylesheet(String corpus, String name, String corpusDataFormat) {
+    public Optional<XslTransformer> getStylesheet(String corpus, String name, Optional<String> corpusDataFormat) {
 
         // @formatter:off
         Function<String, Optional<XslTransformer>> gen = __ -> {
             Optional<File> file =
-                Arrays.asList(getProjectFile(corpus, name + ".xsl").orElse(null),
-                              getProjectFile(corpus, name + "_" + corpusDataFormat+".xsl").orElse(null))
+                Arrays.asList(
+            		getProjectFile(Optional.of(corpus), name + ".xsl").orElse(null),
+            		corpusDataFormat.flatMap(f -> getProjectFile(Optional.of(corpus), name + "_" + f +".xsl")).orElse(null))
                 .stream().filter(f -> f != null).findFirst();
 
             XslTransformer trans = file.map(f -> {
@@ -602,7 +597,7 @@ public class MainServlet extends HttpServlet {
     	return this.useCache() ? articleTransformers.computeIfAbsent(key, gen) : gen.apply(key);
     }
 
-    public InputStream getHelpPage(String corpus) {
+    public InputStream getHelpPage(Optional<String> corpus) {
         try {
             return new FileInputStream(getProjectFile(corpus, "help.inc").get());
         } catch (FileNotFoundException e) {
@@ -610,7 +605,7 @@ public class MainServlet extends HttpServlet {
         }
     }
 
-    public InputStream getAboutPage(String corpus) {
+    public InputStream getAboutPage(Optional<String> corpus) {
         try {
             return new FileInputStream(getProjectFile(corpus, "about.inc").get());
         } catch (FileNotFoundException e) {
@@ -638,7 +633,7 @@ public class MainServlet extends HttpServlet {
         return url;
     }
 
-    /** NOTE: never suffixed with corpus id, to unify behavior on different pages */
+    /** NOTE: never suffixed with corpus id, to unify behavior on different pages. The url will always end in "/" */
     public String getExternalWebserviceUrl() {
         String url = adminProps.getProperty(PROP_BLS_CLIENTSIDE);
         if (!url.endsWith("/")) {
@@ -647,17 +642,8 @@ public class MainServlet extends HttpServlet {
         return url;
     }
 
-    public int getWordsToShow() {
-        try {
-            int pageLength = Integer.parseInt(adminProps.getProperty(PROP_DOCUMENT_PAGE_LENGTH));
-            return pageLength>0?pageLength:5000;
-        } catch (NumberFormatException e) {
-            return 5000;
-        }
-    }
-
-    public String getBannerMessage() {
-        return this.adminProps.getProperty(PROP_BANNER_MESSAGE);
+    public Optional<String> getBannerMessage() {
+        return Optional.ofNullable(StringUtils.trimToNull(this.adminProps.getProperty(PROP_BANNER_MESSAGE)));
     }
 
     public boolean useCache() {
@@ -726,33 +712,15 @@ public class MainServlet extends HttpServlet {
         return StringUtils.join(parts, "/");
     }
 
-    public static boolean isUserCorpus(String corpus) {
-        return corpus != null && corpus.indexOf(':') != -1;
+    public static boolean isUserCorpus(Optional<String> corpus) {
+        return getCorpusOwner(corpus).isPresent();
     }
 
-    public static String getCorpusName(String corpus) {
-        if (corpus == null) {
-            return null;
-        }
-
-        int i = corpus.indexOf(':');
-        if (i != -1) {
-            return corpus.substring(i + 1);
-        }
-
-        return corpus;
+    public static Optional<String> getCorpusName(Optional<String> corpus) {
+        return corpus.map(id -> id.substring(Math.max(0, id.indexOf(':'))));
     }
 
-    public static String getCorpusOwner(String corpus) {
-        if (corpus == null) {
-            return null;
-        }
-
-        int i = corpus.indexOf(':');
-        if (i != -1) {
-            return corpus.substring(0, i);
-        }
-
-        return null;
+    public static Optional<String> getCorpusOwner(Optional<String> corpus) {
+        return corpus.map(id -> { int i = id.indexOf(':'); return i != -1 ? id.substring(0, i) : null; });
     }
 }

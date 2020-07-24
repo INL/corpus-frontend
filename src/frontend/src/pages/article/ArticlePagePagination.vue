@@ -67,18 +67,23 @@ export default Vue.extend({
 			if (!this.pageSize || this.document == null) { return {wordstart: 0, wordend: 1}; }
 			let { wordstart, wordend } = new URI().search(true);
 
+			// TODO: this should use the same logic as on the server. Server should probably just expose a wordstart and wordend global variable that we can use here.
 			// fallback to defaults if nan, clamp to document size
 			wordstart = Number(wordstart) || 0;
 			wordend = Number(wordend) || this.pageSize;
 			wordstart = wordstart >= 0 ? wordstart <= this.docLength ? wordstart : this.docLength! : 0;
-			wordend = wordend >= 0 ? wordend <= this.docLength ? wordend : this.docLength! : this.pageSize;
+
+			if (wordend <= 0) { wordend = wordstart + this.pageSize; }
+			if (wordend > this.docLength) { wordend = this.docLength; }
+			if (wordend > wordstart + this.pageSize || wordend < wordstart) { wordend = wordstart + this.pageSize; }
+			// wordend = wordend >= 0 && wordend > wordstart ? wordend <= this.docLength ? wordend : this.docLength! : this.pageSize;
 
 			return {wordstart, wordend}
 		},
 		firstVisibleHitIndex(): number {
 			if (this.loading || !this.pageSize) { return 0; }
 			const firstVisibleHitIndex = this.hits!.findIndex(([start, end]) => start >= this.currentPageInfo.wordstart);
-			return firstVisibleHitIndex;
+			return firstVisibleHitIndex >= 0 ? firstVisibleHitIndex : this.hits!.length - 1;
 		},
 		currentHitIndex(): number|undefined { return this.currentHitInPage ? (this.firstVisibleHitIndex + this.currentHitInPage) : undefined; },
 
@@ -93,7 +98,8 @@ export default Vue.extend({
 
 			const {wordstart, wordend} = this.currentPageInfo;
 
-			const isOnExactPage = (wordstart % this.pageSize) === 0 && ((wordend - this.pageSize) === wordstart);
+			console.log(this.currentPageInfo);
+			const isOnExactPage = (wordstart % this.pageSize) === 0 && ((wordend - this.pageSize) === wordstart || wordend === this.docLength);
 			return {
 				page: Math.floor(this.currentPageInfo.wordstart / this.pageSize),
 				maxPage: Math.floor(this.docLength / this.pageSize),
@@ -113,7 +119,7 @@ export default Vue.extend({
 
 			const isOnHit = this.currentHitInPage != null;
 			return {
-				page: this.currentHitIndex || this.firstVisibleHitIndex,
+				page: this.currentHitIndex != null ? this.currentHitIndex : this.firstVisibleHitIndex,
 				maxPage: this.hits!.length-1,
 				minPage: 0,
 				disabled: false,

@@ -22,10 +22,7 @@
 					class="form-control"
 
 					:value="page+1"
-					:min="minPage+1"
-					:max="maxPage+1"
 					:disabled="disabled"
-					@input="$event.target.value = Math.max(minPage+1, Math.min($event.target.value, maxPage+1))"
 					@keypress.enter.prevent="isValid($event.target.value-1) ? changePage($event.target.value - 1) : $event.target.value=page+1"
 					@keyup.esc.prevent="$event.target.value=page+1; $event.target.blur();"
 					@change.prevent="isValid($event.target.value-1) ? changePage($event.target.value-1) : $event.target.value=page+1"

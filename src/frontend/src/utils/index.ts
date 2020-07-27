@@ -378,10 +378,19 @@ export function annotationGroups(
 
 export function selectPickerAnnotationOptions(ids: string[], annots: MapOf<AppTypes.NormalizedAnnotation[]>, operation: 'Group'|'Sort', corpusTextDirection: 'ltr'|'rtl'): AppTypes.OptGroup[] {
 	// NOTE: grouping on annotations without a forward index is not supported - however has already been checked in the UIStore
+
+	// If sorting: do left/right
+	// if grouping: do wordleft/wordright
+	// See https://github.com/INL/corpus-frontend/issues/316#issuecomment-609627245
+	const operations = {
+		left: operation === 'Group' ? 'wordleft:' : 'left:',
+		right: operation === 'Group' ? 'wordright:' : 'right:'
+	};
+
 	return [
 		['hit:', 'Hit', ''],
-		[corpusTextDirection === 'rtl' ? 'right:' : 'left:', 'Before hit', 'before'],
-		[corpusTextDirection === 'rtl' ? 'left:' : 'right:', 'After hit', 'after']
+		[corpusTextDirection === 'rtl' ? operations.right : operations.left, 'Before hit', 'before'],
+		[corpusTextDirection === 'rtl' ? operations.left : operations.right, 'After hit', 'after']
 	]
 	.map<AppTypes.OptGroup>(([prefix, groupname, suffix]) =>({
 		label: groupname,

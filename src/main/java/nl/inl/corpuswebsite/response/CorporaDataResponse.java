@@ -26,7 +26,7 @@ public class CorporaDataResponse extends BaseResponse {
     }
 
     @Override
-    public void init(HttpServletRequest request, HttpServletResponse response, MainServlet servlet, String corpus, List<String> pathParameters)
+    public void init(HttpServletRequest request, HttpServletResponse response, MainServlet servlet, Optional<String> corpus, List<String> pathParameters)
         throws ServletException {
 
         // Don't call super(), we don't always have a corpus to work with, and even if we do, it's not guaranteed to be valid

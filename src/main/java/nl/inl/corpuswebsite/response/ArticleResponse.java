@@ -1,25 +1,29 @@
 package nl.inl.corpuswebsite.response;
 
-import nl.inl.corpuswebsite.BaseResponse;
-import nl.inl.corpuswebsite.MainServlet;
-import nl.inl.corpuswebsite.utils.CorpusConfig;
-import nl.inl.corpuswebsite.utils.QueryServiceHandler;
-import nl.inl.corpuswebsite.utils.QueryServiceHandler.QueryException;
-import nl.inl.corpuswebsite.utils.XslTransformer;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang3.tuple.MutablePair;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.velocity.VelocityContext;
-
-import javax.servlet.http.HttpServletResponse;
-import javax.xml.transform.TransformerException;
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.servlet.http.HttpServletResponse;
+import javax.xml.transform.TransformerException;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
+
+import nl.inl.corpuswebsite.BaseResponse;
+import nl.inl.corpuswebsite.MainServlet;
+import nl.inl.corpuswebsite.utils.CorpusConfig;
+import nl.inl.corpuswebsite.utils.QueryServiceHandler;
+import nl.inl.corpuswebsite.utils.QueryServiceHandler.QueryException;
+import nl.inl.corpuswebsite.utils.WebsiteConfig;
+import nl.inl.corpuswebsite.utils.XslTransformer;
 
 public class ArticleResponse extends BaseResponse {
 
@@ -55,196 +59,206 @@ public class ArticleResponse extends BaseResponse {
         super(true);
     }
 
-    @Override
-    protected void completeRequest() throws IOException {
+    private static class ActionableException extends Exception {
+		public final int httpCode;
+        private final Optional<String> message;
+
+        public ActionableException(int httpCode, String message) {
+            super();
+            this.httpCode = httpCode;
+            this.message = Optional.ofNullable(message);
+        }
+        public ActionableException(int httpCode) {
+        	this(httpCode, null);
+        }
+    }
+    
+    private String getDocPid() throws ActionableException {
         if (pathParameters.size() != 1) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid document id format " + StringUtils.join(pathParameters, '/'));
-            return;
+            throw new ActionableException(
+                    HttpServletResponse.SC_BAD_REQUEST,
+                    "Invalid document id format " + StringUtils.join(pathParameters, '/') + " - should just be a single string, with any contained slashes encoded."
+            );
         }
 
         String pid = pathParameters.get(0);
         if (pid == null || pid.isEmpty()) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND);
-            return;
+            throw new ActionableException(HttpServletResponse.SC_NOT_FOUND);
         }
-        Pair<CorpusConfig, Exception> blackLabInfo = servlet.getCorpusConfig(corpus);
-        if (blackLabInfo.getRight() != null) {
-            Exception e = blackLabInfo.getRight();
-            String message = "Error retrieving corpus information" + (e.getMessage() != null ? ": " + e.getMessage() : "");
-            int code = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
-            if (e instanceof QueryException) {
-                QueryException qe = (QueryException) e;
-                code = qe.getHttpStatusCode();
-                    
-                if (code == HttpServletResponse.SC_NOT_FOUND) {
-                    message = null;
-                } else {
-                    message = "Error retrieving corpus information - unexpected BlackLab response.";
-                }
-            }
-
-            if (message != null) {
-                response.sendError(code, message);
-            } else { 
-                response.sendError(code);
-            }
-            return;
-        }
-
-        CorpusConfig cfg = blackLabInfo.getLeft();
-        String formatIdentifier = cfg.getCorpusDataFormat();
-        Optional<XslTransformer> articleStylesheet = servlet.getStylesheet(corpus, "article", formatIdentifier);
-        Optional<XslTransformer> metadataStylesheet = servlet.getStylesheet(corpus, "meta", formatIdentifier);
-
-        QueryServiceHandler articleContentRequest = new QueryServiceHandler(servlet.getWebserviceUrl(corpus) + "docs/" + pid + "/contents");
-        QueryServiceHandler articleMetadataRequest = new QueryServiceHandler(servlet.getWebserviceUrl(corpus) + "docs/" + pid);
-
-        // get parameter values
-        String query = this.getParameter("query", "");
-        String pattGapData = this.getParameter("pattgapdata", "");
-        String userId = MainServlet.getCorpusOwner(corpus);
-
-        Map<String, String[]> contentRequestParameters = new HashMap<>();
-        Map<String, String[]> metadataRequestParameters = new HashMap<>();
-
-        if (query != null && !query.isEmpty()) {
-            contentRequestParameters.put("patt", new String[] { query });
-            if (pattGapData != null && !pattGapData.isEmpty()) {
-                contentRequestParameters.put("pattgapdata", new String[] { pattGapData });
-            }
-        }
-        if (userId != null && !userId.isEmpty()) {
-            contentRequestParameters.put("userid", new String[] { userId });
-            metadataRequestParameters.put("userid", new String[] { userId });
-        }
-
-        context.put("docId", pid);
-        context.put("pageSize", servlet.getWebsiteConfig(corpus).usePagination() ? this.servlet.getWordsToShow() : "undefined");
-
-        try {
-            PagingInfo pi = getMetadata(metadataStylesheet,articleMetadataRequest, query, pattGapData, metadataRequestParameters, context);
-
-            // show max. 5000 (or as requested/configured) words of content (TODO: paging)
-            // paging will also need edits in blacklab,
-            // since when you only get a subset of the document without begin and ending, the top of the xml tree will be missing
-            // and xslt will not match anything (or match the wrong elements)
-            // so blacklab will have to walk the tree and insert those tags in some manner.
-            if (servlet.getWebsiteConfig(this.corpus).usePagination()) {
-                contentRequestParameters.putAll(pi.getBlacklabQuery());
-            }
-
-            // NOTE: document not necessarily xml, though it might have some <hl/> tags injected to mark query hits
-            String documentContents = articleContentRequest.makeRequest(contentRequestParameters);
-            if (documentContents.contains("NOT_AUTHORIZED")) {
-                context.put("article_content", "content restricted");
-            } else {
-                context.put("article_content", transformContent(articleStylesheet, documentContents));
-            }
-
-        } catch (QueryException e) {
-            if (e.getHttpStatusCode() == 404) {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND);
-                return;
-            }
-
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
-            return;
-        }
-
-
-        // display template
-        displayHtmlTemplate(servlet.getTemplate("article"));
+        return pid;
     }
 
-    private String transformContent(Optional<XslTransformer> articleStylesheet, String documentContents) {
-        return articleStylesheet.map(t -> {  // probably xml, or we wouldn't have a stylesheet
-            t.clearParameters();
-            t.addParameter("contextRoot", servlet.getServletContext().getContextPath());
-            servlet.getWebsiteConfig(corpus).getXsltParameters().forEach(t::addParameter);
-
-            try {
-                return t.transform(documentContents);
-            } catch (TransformerException e) {
-                return null; // proceed to orElseGet
-            }
-        })
-        .orElseGet(() -> {
-            if (!XML_TAG_PATTERN.matcher(documentContents).find()) {
-                // not xml, just replace the inserted hl tags and pass on
-               return "<pre>" + StringUtils.replaceEach(documentContents,
-                                               new String[] {"<hl>", "</hl>"},
-                                               new String[] { "<span class=\"hl\">", "</span>"}) +
-               "</pre>";
-            }
-
-            // seems to contain at least one xml opening/self-closing tag, process using default xslt
-            try {
-                return defaultTransformer.transform(documentContents);
-            } catch (TransformerException e) {
-                // Document seems to be xml, but probably not valid, we tried...
-                return "Could not prepare document for viewing (it might be malformed xml) - " + e.getMessage();
-            }
-        });
+    private CorpusConfig getCorpusConfig() throws ActionableException {
+        Pair<CorpusConfig, Exception> blackLabInfo = servlet.getCorpusConfig(corpus);
+        // surface errors about this config - if there are any
+        if (blackLabInfo.getRight() instanceof QueryException) { 
+        	QueryException e = (QueryException) blackLabInfo.getRight();
+        	throw new ActionableException(
+        			e.getHttpStatusCode() == HttpServletResponse.SC_NOT_FOUND ? HttpServletResponse.SC_NOT_FOUND : HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					e.getHttpStatusCode() == HttpServletResponse.SC_NOT_FOUND ? null : e.getMessage()
+        	);
+        } else if (blackLabInfo.getRight() != null) {
+        	Exception e = blackLabInfo.getRight();
+        	throw new ActionableException(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error retrieving corpus information: " + (e.getMessage() != null ? ": " + e.getMessage() : ""));
+        } else if (blackLabInfo.getLeft() == null) {
+        	throw new ActionableException(HttpServletResponse.SC_NOT_FOUND);
+        }
+        return blackLabInfo.getLeft();
     }
 
     /**
-     *
-     * @param metadataStylesheet
-     * @param articleMetadataRequest
-     * @param query
-     * @param pattGapData
-     * @param metadataRequestParameters
-     * @param context
-     * @return PagingInfo holding info for paging
+     * Fetch the document's metadata from blacklab, load the metadata stylesheet, and return the transformed result.
+     * In case of errors, a string describing the error will be returned instead of the metadata.
+     * @param documentId
+     * @param corpusOwner
+     * @param corpusDataFormat may be null
+     * @return
      */
-    private PagingInfo getMetadata(Optional<XslTransformer> metadataStylesheet, QueryServiceHandler articleMetadataRequest, String query, String pattGapData, Map<String, String[]> metadataRequestParameters, VelocityContext context) {
-        return metadataStylesheet
-                .map(t -> {
-                    MutablePair<XslTransformer, String> p = new MutablePair<>();
+    protected String getRawMetadata(String documentId, Optional<String> corpusOwner) {
+        try {
+            final QueryServiceHandler articleMetadataRequest = new QueryServiceHandler(servlet.getWebserviceUrl(corpus.get()) + "docs/" + URLEncoder.encode(documentId, StandardCharsets.UTF_8.toString()));
+            final Map<String, String[]> requestParameters = new HashMap<>();
+            corpusOwner.ifPresent(s -> requestParameters.put("userid", new String[] { s }));
+            return articleMetadataRequest.makeRequest(requestParameters); 
+        } catch (UnsupportedEncodingException e) { // is subclass of IOException, but is thrown by URLEncoder instead of signifying network error - consider this fatal
+            throw new RuntimeException(e);
+        } catch (QueryException e) {
+            return "Unexpected blacklab response: " + e.getMessage() + " (code " + e.getHttpStatusCode() + ")";
+        } catch (IOException e) {
+            return "Error while retrieving document metadata: " + e.getMessage();
+        } 
+    }
+    
+    // TODO: return errors array.
+    protected String transformMetadata(String rawMetadata,  Optional<String> corpusDataFormat) {
+    	try {
+    		final Optional<XslTransformer> metadataStylesheet = addParametersToStylesheet(servlet.getStylesheet(corpus.get(), "meta", corpusDataFormat));
+    		return metadataStylesheet.isPresent() ? metadataStylesheet.get().transform(rawMetadata) : "Cannot display metadata - misconfigured server, missing metadata stylesheet (meta.xsl) - see README.MD, section #frontend-configuration";    		
+    	} catch (TransformerException e) {
+            return "<h1>Error in metadata stylesheet</h1>\n" + e.getMessageAndLocation();
+        }
+    }
+    
+    protected Optional<XslTransformer> addParametersToStylesheet(Optional<XslTransformer> transformer) {
+//    	transformer.ifPresent(t -> {
+//	    	t.addParameter("", servlet.getServletContext().getContextPath());
+//	    	servlet.getWebsiteConfig(corpus).getXsltParameters().forEach(t::addParameter);    	
+//    	});
+    	return transformer;
+    }
 
-                    try {
-                        String meta = articleMetadataRequest.makeRequest(metadataRequestParameters);
-                        p.left = t;
-                        p.right = meta;
-                        return p;
-                    } catch (QueryException | IOException e) {
-                        return null;
-                    }
-                })
-                .map(p -> {
-                    XslTransformer t = p.left;
-                    String meta = p.right;
+    // TODO: return errors array
+    // NOTE: assumes pageStart and pageEnd are validated and correct, they are not passed if they are -1
+    protected String getTransformedContent(String documentId, Optional<String> corpusOwner, Optional<String> corpusDataFormat, Optional<Integer> pageStart, Optional<Integer> pageEnd) {
+        // Compute pagination info, if required.
+        final HashMap<String, String[]> requestParameters = new HashMap<>();
+        corpusOwner.ifPresent(v -> requestParameters.put("userid", new String[] { v }));
+        Optional.ofNullable(this.getParameter("query", (String) null)).ifPresent(v -> requestParameters.put("patt", new String[] { v }));
+        Optional.ofNullable(this.getParameter("pattgapdata", (String) null)).ifPresent(v -> requestParameters.put("pattgapdata", new String[] { v }));
+        pageStart.ifPresent(s -> requestParameters.put("wordstart", new String[] { s.toString() }));
+        pageEnd.ifPresent(s -> requestParameters.put("wordend", new String[] { s.toString() }));
+        try {
+            final QueryServiceHandler articleContentRequest = new QueryServiceHandler(servlet.getWebserviceUrl(corpus.get()) + "docs/" + URLEncoder.encode(documentId, StandardCharsets.UTF_8.toString()) + "/contents");
+            final String documentContents = articleContentRequest.makeRequest(requestParameters);
+            final Optional<XslTransformer> articleStylesheet = addParametersToStylesheet(servlet.getStylesheet(corpus.get(), "article", corpusDataFormat));
 
-                    Matcher m = CAPTURE_DOCLENGTH_PATTERN.matcher(meta);
-                    PagingInfo pi = new PagingInfo(this, servlet.getWordsToShow(),m.find()?Integer.parseInt(m.group(1)):0);
-                    if (servlet.getWebsiteConfig(this.corpus).usePagination()) {
-                        String q = (query != null && !query.isEmpty()) ? ("&query="+esc.url(query)) : "";
-                        String pg = (pattGapData != null && !pattGapData.isEmpty()) ? "&pattgapdata="+esc.url(pattGapData) : "";
+            // TODO this should check 401 instead.
+            if (documentContents.contains("NOT_AUTHORIZED")) return "<h1>Content restricted</h1>\nThe webmaster has disabled direct access to the documents in this corpus";
+            // We have a stylesheet - assume it's xml content
+            if (articleStylesheet.isPresent()) return articleStylesheet.get().transform(documentContents); 
+            // When it's not xml just replace the inserted hl tags and pass on
+            if (!XML_TAG_PATTERN.matcher(documentContents).find()) return "<pre>" + StringUtils.replaceEach(documentContents, new String[] {"<hl>", "</hl>"}, new String[] { "<span class=\"hl\">", "</span>"}) + "</pre>";
+            // It looks like xml, but no stylesheet - return using the default transformer
+            return defaultTransformer.transform(documentContents);
+        } catch (UnsupportedEncodingException e) { // is subclass of IOException, but is thrown by URLEncoder instead of signifying network error - consider this fatal
+            throw new RuntimeException(e);
+        } catch (QueryException e) {
+            return "Unexpected blacklab response: " + e.getMessage() + " (code " + e.getHttpStatusCode() + ")";
+        } catch (IOException e) {
+            return "Error while retrieving document metadata: " + e.getMessage();
+        } catch (TransformerException e) {
+        	return "Could not prepare document for viewing (it might be malformed xml, or there is an error in the stylesheet)\n" + e.getMessageAndLocation(); // TODO: return this separately
+        }
+    }
+    
+    /** 
+     * Since pagination can be disabled, edited by the user through the url, and BlackLab has some peculiarities with values touching document boundaries,
+     * We correct the values. 
+     * Try to keep pageStart static (as long as it is within the document), and slide pageEnd around if it's invalid (negative range, too large).
+     * 
+     * Apply the following rules: 
+     * - the client only sees numbers within [0, documentLength], 
+     * - BlackLab sees numbers [1, documentLength - 1], or an omitted value if the value would touch a boundary.
+     */
+    private static class PaginationInfo {
+    	public final int pageSize;
+    	public final int documentLength;
+    	public final boolean paginationEnabled;
 
-                        context.put("docLength",pi.getDocLength());
-                        context.put("pageStart",pi.getStart());
-                        // number of words shown calculated: page end or doclength minus 0 or pagestart
-                        context.put("wordsShown",pi.wordsShown());
-                        if (pi.hasPrev()) {
-                            context.put("first_page", "?" + pi.firstUrlQuery()+q+pg);
-                            context.put("previous_page", "?"+pi.prevUrlQuery()+q+pg);
-                        }
-                        if (pi.hasNext()) {
-                            context.put("next_page", "?"+pi.nextUrlQuery() + pg + q);
-                            context.put("last_page", "?"+pi.lastUrlQuery() + pg + q);
-                        }
-                    }
+    	public final int clientPageStart;
+    	public final int clientPageEnd;
+    	public final Optional<Integer> blacklabPageStart;
+    	public final Optional<Integer> blacklabPageEnd;
+    	
+    	public PaginationInfo(boolean usePagination, int pageSize, String documentMetadata, int requestedPageStart, int requestedPageEnd) {
+    		final Matcher m = CAPTURE_DOCLENGTH_PATTERN.matcher(documentMetadata);
+    		if (m.find()) {
+    			this.documentLength = Integer.parseInt(m.group(1));
+    		} else {
+    			throw new RuntimeException("Cannot decode document size. Unsupported BlackLab version?");
+    		}
+    		
+    		this.pageSize = pageSize;
+        	this.paginationEnabled = usePagination;
+        	
+        	if (!usePagination) {
+	    		requestedPageStart = 0;
+	    		requestedPageEnd = documentLength;
+	    	}
+	    	
+	    	if (requestedPageStart >= documentLength || requestedPageStart <= 0) { requestedPageStart = 0; }
+	    	requestedPageEnd = Math.min(Math.min(requestedPageEnd, documentLength), requestedPageStart + pageSize); // clamp if too large (above doclength or above allowed page size)
+	    	if (requestedPageEnd <= requestedPageStart) { requestedPageEnd = Math.min(requestedPageStart + pageSize, documentLength); } // fix if end is before start
+	    	
+	    	// Now they're bounded to [0, documentLength] This is what we send to the frontend
+	    	this.clientPageStart = requestedPageStart;
+	    	this.clientPageEnd = requestedPageEnd;
+	    	
+	    	// But if any of the parameters touches a document border, we don't want to send that to BlackLab 
+	    	// as it would chop off leading/trailing document contents if we do, instead we don't want to send anything
+	    	this.blacklabPageStart = Optional.of(requestedPageStart).filter(v -> v != 0);
+	    	this.blacklabPageEnd = Optional.of(requestedPageEnd).filter(v -> v != documentLength);
+    	}	
+    }
 
-                    try {
-                        context.put("article_meta", t.transform(meta));
-                    } catch (TransformerException e) {
-                        context.put("article_meta", "");
-                    }
-                    return pi;
-                })
-                .orElseGet(() -> {
-                    context.put("article_meta", "");
-                    return new PagingInfo(this,servlet.getWordsToShow(),0);
-                });
+    @Override
+    protected void completeRequest() throws IOException {
+        try {
+            // parameters for the requesting of metadata and content from blacklab
+            final String pid = getDocPid();
+            final Optional<String> userId = MainServlet.getCorpusOwner(corpus);
+
+            final CorpusConfig blacklabCorpusInfo = getCorpusConfig();
+            final WebsiteConfig interfaceConfig = servlet.getWebsiteConfig(corpus);
+
+            final String rawMetadata = getRawMetadata(pid, userId);
+            final String transformedMetadata = transformMetadata(rawMetadata, blacklabCorpusInfo.getCorpusDataFormat());
+            PaginationInfo pi = new PaginationInfo(interfaceConfig.usePagination(), interfaceConfig.getPageSize(), rawMetadata, getParameter("wordstart", 0), getParameter("wordend", Integer.MAX_VALUE));
+            final String transformedContent = getTransformedContent(pid, userId, blacklabCorpusInfo.getCorpusDataFormat(), pi.blacklabPageStart, pi.blacklabPageEnd);
+            
+            context.put("article_meta", transformedMetadata);
+            context.put("article_content", transformedContent);
+            context.put("docId", pid);
+            context.put("docLength", pi.documentLength);
+            context.put("paginationEnabled", pi.paginationEnabled);
+            context.put("pageSize", pi.pageSize);
+            context.put("pageStart", pi.clientPageStart);
+            context.put("pageEnd", pi.clientPageEnd);
+            
+            displayHtmlTemplate(servlet.getTemplate("article"));
+        } catch (ActionableException e) {
+            response.sendError(e.httpCode, e.message.orElseGet(null));
+            return;
+        }
     }
 }

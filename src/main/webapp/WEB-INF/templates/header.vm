@@ -4,11 +4,11 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 
-        #if ($websiteConfig.getCorpusDisplayName())
-        <meta property="og:description" content="$websiteConfig.getCorpusDisplayName() provided by the Dutch Language Institute in Leiden.">
-        <meta name="description" content="$websiteConfig.getCorpusDisplayName() search provided by the Dutch Language Institute in Leiden.">
+        #if ($websiteConfig.getCorpusDisplayName().isPresent())
+        <meta property="og:description" content="$websiteConfig.getCorpusDisplayName().get() provided by the Dutch Language Institute in Leiden.">
+        <meta name="description" content="$websiteConfig.getCorpusDisplayName().get() search provided by the Dutch Language Institute in Leiden.">
         <meta name="referrer" content="no-referrer">
-        <title>$websiteConfig.getCorpusDisplayName() search</title>
+        <title>$websiteConfig.getCorpusDisplayName().get() search</title>
         #else
         <meta property="og:description" content="AutoSearch provided by the Dutch Language Institute in Leiden.">
         <meta name="description" content="AutoSearch, provided by the Dutch Language Institute in Leiden.">
@@ -34,13 +34,13 @@
         <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
         <link rel="stylesheet" href="$pathToTop/css/main.css?_$cache">
         ## Custom JS in footer
-        #if ($websiteConfig.getPathToCustomCss())
-            <link rel="stylesheet" href="$websiteConfig.getPathToCustomCss()?_$cache">
+        #if ($websiteConfig.getPathToCustomCss().isPresent())
+            <link rel="stylesheet" href="$websiteConfig.getPathToCustomCss().get()?_$cache">
         #end
 
         <script>
             // Might be null if this page is not in a corpus!
-            var INDEX_ID = "$esc.javascript($websiteConfig.getCorpusId())";
+            var INDEX_ID = "$esc.javascript($websiteConfig.getCorpusId().orElse(null))";
             var CONTEXT_URL = "$esc.javascript($pathToTop)";
             // Not suffixed with the corpus id
             var BLS_URL = "$esc.javascript($blsUrl)";
@@ -64,8 +64,8 @@
                         <div class="navbar-logo"></div>
                     </div> 
 
-                    #if($websiteConfig.getCorpusId())
-                    <a href='$pathToTop/$websiteConfig.getCorpusId()/search/' class='navbar-brand'>$websiteConfig.getCorpusDisplayName()</a>
+                    #if($websiteConfig.getCorpusId().isPresent())
+                    <a href='$pathToTop/$websiteConfig.getCorpusId().get()/search/' class='navbar-brand'>$websiteConfig.getCorpusDisplayName().get()</a>
                     #else
                     <a href='$pathToTop/' class='navbar-brand'>AutoSearch</a>
                     #end

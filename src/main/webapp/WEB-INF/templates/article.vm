@@ -1,9 +1,14 @@
 #parse("header.vm")
 
 <script>
-    DOCUMENT_ID = "$esc.javascript($docId)";  
-    PAGESIZE = $pageSize;
-</script>  
+    DOCUMENT_ID = "$esc.javascript($docId)";
+    DOCUMENT_LENGTH = $docLength;
+    
+    PAGINATION_ENABLED = $paginationEnabled;
+    PAGE_SIZE = $pageSize;
+    PAGE_START = $pageStart;
+    PAGE_END = $pageEnd;
+</script>
 
 <script src="$jspath/article.js?_$cache"></script>
 
@@ -17,7 +22,7 @@
     <div class="tab-content cf-panel-tab-body cf-panel-lg" style="padding-top: 35px;">
          <div id="content" class="tab-pane active">
             <div id="vue-root-pagination"></div>
-            
+
             #set($unescaped = $article_content) ## see BaseResponse.java
             $!unescaped
         </div>

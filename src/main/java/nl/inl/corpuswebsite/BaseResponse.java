@@ -52,7 +52,7 @@ public abstract class BaseResponse {
      * When on contextRoot/*, this response is not in the context of any corpus.
      * If {@link #requiresCorpus} is true, this response will only be used in the context of a corpus.
      */
-    protected String corpus = null;
+    protected Optional<String> corpus = Optional.empty();
 
     /**
      * Whatever path/url segments followed after the page that cause this response to be served.
@@ -81,12 +81,10 @@ public abstract class BaseResponse {
      * @param pathParameters trailing path segments in the original request uri, so the part behind the response's path
      * @throws ServletException when corpus is required but missing.
      */
-    public void init(HttpServletRequest request, HttpServletResponse response, MainServlet servlet, String corpus,
-                     List<String> pathParameters)
-        throws ServletException {
-        if ((corpus == null || corpus.isEmpty()) && this.requiresCorpus)
-            throw new ServletException("Response requires a corpus");
-
+    public void init(HttpServletRequest request, HttpServletResponse response, MainServlet servlet, Optional<String> corpus, List<String> pathParameters) throws ServletException {
+        if (this.requiresCorpus && !corpus.isPresent()) {
+        	throw new ServletException("Response requires a corpus");
+        }
         this.request = request;
         this.response = response;
         this.servlet = servlet;
@@ -104,12 +102,12 @@ public abstract class BaseResponse {
         context.put("websiteConfig", cfg);
         context.put("buildTime", servlet.getWarBuildTime());
         context.put("jspath", servlet.getAdminProps().getProperty(MainServlet.PROP_JSPATH));
-        context.put("googleAnalyticsKey", cfg.getAnalyticsKey());
+        cfg.getAnalyticsKey().ifPresent(key -> context.put("googleAnalyticsKey", key));
         
-        if (servlet.getBannerMessage() != null && !this.isCookieSet("banner-hidden", Integer.toString(servlet.getBannerMessage().hashCode()))) {
-            context.put("bannerMessage", servlet.getBannerMessage());
+        if (servlet.getBannerMessage().isPresent() && !this.isCookieSet("banner-hidden", Integer.toString(servlet.getBannerMessage().get().hashCode()))) {
+            context.put("bannerMessage", servlet.getBannerMessage().get());
             context.put("bannerMessageCookie", 
-                        "banner-hidden="+servlet.getBannerMessage().hashCode()+
+                        "banner-hidden="+servlet.getBannerMessage().get().hashCode()+
                         "; Max-Age="+24*7*3600+
                         "; Path="+servlet.getServletContext().getContextPath()+"/");
         }

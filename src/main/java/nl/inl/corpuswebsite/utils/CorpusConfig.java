@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -11,6 +12,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -19,18 +21,22 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 public class CorpusConfig {
-    private String jsonUnescaped;
+    private final String jsonUnescaped;
 
-    private Document config;
+    private final Document config;
+    
+    private final String corpusId;
 
-    private String displayName;
+    private final Optional<String> displayName;
 
-    private String corpusDataFormat = "UNKNOWN";
-
-    public CorpusConfig(String xml, String jsonUnescaped) throws SAXException, IOException, ParserConfigurationException {
-        config = fromXml(xml);
-        this.jsonUnescaped = jsonUnescaped;
-        parse();
+    private final Optional<String> corpusDataFormat;
+    
+    public CorpusConfig(String corpusId, String configAsXml, String configAsJson) throws SAXException, IOException, ParserConfigurationException {
+        config = fromXml(configAsXml);
+        this.corpusId = corpusId;
+        this.jsonUnescaped = configAsJson;
+        this.displayName = parseDisplayName();
+        this.corpusDataFormat = parseCorpusDataFormat();
     }
 
     public static Document fromXml(String xml) throws ParserConfigurationException, SAXException, IOException {
@@ -42,42 +48,41 @@ public class CorpusConfig {
     public String getJsonUnescaped() {
         return jsonUnescaped;
     }
+    
+    public String getCorpusId() {
+    	return corpusId;
+    }
 
     /**
      * @return the displayName for this corpus as configured in BlackLab-Server, may be null if not configured.
      */
-    public String getDisplayName() {
+    public Optional<String> getDisplayName() {
         return displayName;
     }
 
     /* TEI, FoLiA, etc */
-    public String getCorpusDataFormat() {
+    public Optional<String> getCorpusDataFormat() {
         return corpusDataFormat;
     }
 
-    private void parse() {
-        parseDisplayName();
-        parseCorpusDataFormat();
-    }
 
-    private void parseDisplayName() {
+    private Optional<String> parseDisplayName() {
         Element root = (Element) config.getElementsByTagName("blacklabResponse").item(0);
         NodeList l = root.getChildNodes();
         for (int i = 0; i < l.getLength(); ++i) {
             Node n = l.item(i);
             if (n.getNodeName().equals("displayName")) {
-                displayName = n.getTextContent();
-                return;
+            	return Optional.of(n.getTextContent());
             }
         }
+        return Optional.empty();
     }
 
-    private void parseCorpusDataFormat() {
+    private Optional<String> parseCorpusDataFormat() {
         NodeList documentFormatTags = config.getElementsByTagName("documentFormat");
-        if (documentFormatTags.getLength() > 0)
-            this.corpusDataFormat = documentFormatTags.item(0).getTextContent();
+        return Optional.ofNullable(documentFormatTags.getLength() > 0 ? StringUtils.trimToNull(documentFormatTags.item(0).getTextContent()) : null);
     }
-
+  
     /**
      * Extract annotation ids for which we require the full list of values to be known by the frontend.
      *

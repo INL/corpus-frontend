@@ -40,7 +40,9 @@ $.widget('custom.autocomplete', $.ui.autocomplete, {
 			'max-height': '300px',
 			'overflow-y': 'auto',
 			'overflow-x': 'hidden',
-			'width': $(this.element).outerWidth()
+			'width': 'auto',
+			'min-width': $(this.element).outerWidth(),
+			'max-width': '500px'
 		} as JQuery.PlainObject);
 	}
 });

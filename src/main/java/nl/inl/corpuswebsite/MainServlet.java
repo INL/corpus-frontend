@@ -27,11 +27,13 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+
 import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -78,7 +80,7 @@ public class MainServlet extends HttpServlet {
     /**
      * Xslt transformers for corpora
      */
-    private static final Map<String, Optional<XslTransformer>> articleTransformers = new HashMap<>();
+    private static final Map<String, Pair<Optional<XslTransformer>, Optional<Exception>>> articleTransformers = new HashMap<>();
 
     /**
      * The response classes for our URI patterns
@@ -143,7 +145,7 @@ public class MainServlet extends HttpServlet {
     @Override
     public void init(ServletConfig cfg) throws ServletException {
         super.init(cfg);
-        
+
         try {
             startVelocity(cfg);
 
@@ -302,14 +304,14 @@ public class MainServlet extends HttpServlet {
      * @return the website config
      */
     public synchronized WebsiteConfig getWebsiteConfig(Optional<String> corpus) {
-        Function<String, WebsiteConfig> gen = __ -> 
+        Function<String, WebsiteConfig> gen = __ ->
             getProjectFile(corpus, "search.xml")
-            .map(configFile -> { 
-            	try { return new WebsiteConfig(configFile, Optional.ofNullable(getCorpusConfig(corpus).getLeft()), contextPath); } 
-            	catch (ConfigurationException e) { throw new RuntimeException("Could not read search.xml " + configFile, e); }
+            .map(configFile -> {
+                try { return new WebsiteConfig(configFile, Optional.ofNullable(getCorpusConfig(corpus).getLeft()), contextPath); }
+                catch (ConfigurationException e) { throw new RuntimeException("Could not read search.xml " + configFile, e); }
             })
             .orElseThrow(() -> new IllegalStateException("No search.xml, and no default in jar either"));
-        
+
         return useCache() ? configs.computeIfAbsent(corpus.orElse(null), gen) : gen.apply(corpus.orElse(null));
     }
 
@@ -320,9 +322,9 @@ public class MainServlet extends HttpServlet {
      * @return the config
      */
     public Pair<CorpusConfig, Exception> getCorpusConfig(Optional<String> corpus) {
-    	synchronized (corpusConfigs) {
-    		return corpus.map(c -> corpusConfigs.computeIfAbsent(c, __ -> {
-		        // Contact blacklab-server for the config xml file
+        synchronized (corpusConfigs) {
+            return corpus.map(c -> corpusConfigs.computeIfAbsent(c, __ -> {
+                // Contact blacklab-server for the config xml file
                 QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(c));
 
                 try {
@@ -549,52 +551,54 @@ public class MainServlet extends HttpServlet {
      * @param corpusDataFormat - optional name suffix to differentiate files for different formats
      * @return the xsl transformer to use for transformation, note that this is always the same transformer.
      */
-    public Optional<XslTransformer> getStylesheet(String corpus, String name, Optional<String> corpusDataFormat) {
+    public Pair<Optional<XslTransformer>, Optional<Exception>> getStylesheet(String corpus, String name, Optional<String> corpusDataFormat) {
 
         // @formatter:off
-        Function<String, Optional<XslTransformer>> gen = __ -> {
-            Optional<File> file =
-                Arrays.asList(
-            		getProjectFile(Optional.of(corpus), name + ".xsl").orElse(null),
-            		corpusDataFormat.flatMap(f -> getProjectFile(Optional.of(corpus), name + "_" + f +".xsl")).orElse(null))
-                .stream().filter(f -> f != null).findFirst();
+        Function<String, Pair<Optional<XslTransformer>, Optional<Exception>>> gen = __ -> {
+            Optional<File> file = Arrays
+            .asList(
+                getProjectFile(Optional.of(corpus), name + ".xsl").orElse(null),
+                corpusDataFormat.flatMap(f -> getProjectFile(Optional.of(corpus), name + "_" + f +".xsl")).orElse(null)
+            )
+            .stream()
+            .filter(f -> f != null)
+            .findFirst();
 
-            XslTransformer trans = file.map(f -> {
-                try { return new XslTransformer(f);}
-                catch (TransformerConfigurationException | FileNotFoundException e) {
-                    logger.info("Error loading stylesheet {} for corpus {} : {}", file.get(), corpus, e.getMessage());
-                    return null;
-                }
-            })
-            .orElseGet(() -> {
-                if (!name.equals("article")) {
-                    return null;
-                }
+            // File found - try loading it
+            if (file.isPresent()) {
+                try {
+                    XslTransformer trans = new XslTransformer(file.get());
+                    return Pair.of(Optional.of(trans), Optional.empty());
+                 } catch (TransformerException | FileNotFoundException e) {
+                     logger.info("Error loading stylesheet {} for corpus {} : {}", file.get(), corpus, e.getMessage());
+                     return Pair.of(Optional.empty(), Optional.of(e));
+                 }
+            }
 
+
+            // alright, file not found. Try getting from BlackLab and parse that
+            if (name.equals("article") && corpusDataFormat.isPresent()) try { // for article files, we can use a fallback if there is no template file
                 logger.info("Attempting to get xsl {} for corpus {} from blacklab...", corpusDataFormat, corpus);
 
-                try {
-                    QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(null) + "input-formats/" + corpusDataFormat + "/xslt");
-                    Map<String, String[]> params = new HashMap<>();
-                    String sheet = handler.makeRequest(params);
-                    return new XslTransformer(sheet, new StringReader(sheet));
-                } catch (TransformerConfigurationException | IOException e)  {
-                    logger.info("Error getting or using stylesheet for format {} from blacklab : {}", corpusDataFormat, e.getMessage());
-                    return null;
-                } catch (QueryException e) {
-                    logger.info("Error getting stylesheet for format {} from blacklab, the format might not exist (http {}).", corpusDataFormat, e.getHttpStatusCode());
-                    return null;
-                }
-            });
+                final QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(null) + "input-formats/" + URLEncoder.encode(corpusDataFormat.get(), StandardCharsets.UTF_8.toString()) + "/xslt");
+                final String sheet = handler.makeRequest(new HashMap<>());
+                return Pair.of(Optional.of(new XslTransformer(sheet, new StringReader(sheet))), Optional.empty());
+            } catch (TransformerException | IOException e)  {
+                logger.info("Error getting or using stylesheet for format {} from blacklab : {}", corpusDataFormat, e.getMessage());
+                return Pair.of(Optional.empty(), Optional.of(e));
+            } catch (QueryException e) {
+                logger.info("Error getting stylesheet for format {} from blacklab, the format might not exist (http {}).", corpusDataFormat, e.getHttpStatusCode());
+                return Pair.of(Optional.empty(), Optional.of(e));
+            }
 
-            return Optional.ofNullable(trans);
-    	};
-    	// @formatter:on
+            return Pair.of(Optional.empty(), Optional.empty());
+        };
+        // @formatter:on
 
-    	// need to use corpus name in the cache map
-    	// because corpora can define their own xsl files in their own data directory
-    	String key = corpus + "_" + corpusDataFormat + "_" + name;
-    	return this.useCache() ? articleTransformers.computeIfAbsent(key, gen) : gen.apply(key);
+        // need to use corpus name in the cache map
+        // because corpora can define their own xsl files in their own data directory
+        String key = corpus + "_" + corpusDataFormat.orElse("missing-format") + "_" + name;
+        return this.useCache() ? articleTransformers.computeIfAbsent(key, gen) : gen.apply(key);
     }
 
     public InputStream getHelpPage(Optional<String> corpus) {
@@ -647,7 +651,7 @@ public class MainServlet extends HttpServlet {
     }
 
     public boolean useCache() {
-    	return Boolean.parseBoolean(this.adminProps.getProperty(PROP_CACHE));
+        return Boolean.parseBoolean(this.adminProps.getProperty(PROP_CACHE));
     }
 
     /**

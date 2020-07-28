@@ -3,12 +3,60 @@ package nl.inl.corpuswebsite.utils;
 import javax.xml.transform.*;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
+
+import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import net.sf.saxon.trans.XPathException;
+import nl.inl.corpuswebsite.MainServlet;
+
 import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Function;
 
 public class XslTransformer {
+    private static final Logger logger = LoggerFactory.getLogger(XslTransformer.class);
+
+    private static class CapturingErrorListener implements ErrorListener {
+        private final List<Pair<String, Exception>> exceptions = new ArrayList<>();
+
+        @Override
+        public void error(TransformerException e) throws TransformerException {
+            this.exceptions.add(Pair.of(this.getDescriptiveMessage(e), e));
+        }
+
+        @Override
+        public void fatalError(TransformerException e) throws TransformerException {
+            this.exceptions.add(Pair.of(this.getDescriptiveMessage(e), e));
+        }
+
+        @Override
+        public void warning(TransformerException e) throws TransformerException {
+            // just log these, no need to store them as errors
+            logger.warn(getDescriptiveMessage(e), e);
+        }
+
+        public List<Pair<String, Exception>> getErrorList() {
+            return this.exceptions;
+        }
+
+        private String getDescriptiveMessage(TransformerException e) {
+            if (e instanceof TransformerConfigurationException) {
+                final TransformerConfigurationException ee  = (TransformerConfigurationException) e;
+                return ee.getMessageAndLocation();
+            } else if (e instanceof XPathException) {
+                XPathException ee = (XPathException) e;
+                return ee.getErrorCodeLocalPart() + " in " + ee.getHostLanguage() + ": " + ee.getMessageAndLocation();
+            } else {
+                return e.getMessageAndLocation();
+            }
+        }
+    }
 
     /**
      * Threadsafe as long as you don't change Configuration, which we don't. See
@@ -29,40 +77,52 @@ public class XslTransformer {
         useCache = use;
     }
 
+    static {
+        FACTORY.setErrorListener(new CapturingErrorListener());
+    }
+
     /**
-     * Constructs a new transformer (and templates if not cached and cache is enabled) and caches the templates it caching is enabled.
+     * Constructs a new transformer (and templates if not cached and cache is enabled) and caches the templates if caching is enabled.
      *
      * @param id
      * @param source
      * @return
      * @throws TransformerConfigurationException
      */
-    private static Transformer get(String id, StreamSource source) throws TransformerConfigurationException {
-        boolean put = id != null && useCache && !TEMPLATES.containsKey(id);
-        boolean has = id != null && useCache && TEMPLATES.containsKey(id);
+    private static Transformer get(String id, StreamSource source) throws TransformerException {
+//        boolean put = id != null && useCache && !TEMPLATES.containsKey(id);
+//        boolean has = id != null && useCache && TEMPLATES.containsKey(id);
 
         synchronized (TEMPLATES) {
-            if (has) {
-                return TEMPLATES.get(id).newTransformer();
+            try {
+                FACTORY.setErrorListener(new CapturingErrorListener()); // renew to remove old exceptions
+                Function<String, Templates> gen = __ -> { try { return FACTORY.newTemplates(source); } catch (TransformerException e) { throw new RuntimeException(e); } };
+                Templates t = (useCache ? TEMPLATES.computeIfAbsent(id, gen) : gen.apply(id));
+                return t.newTransformer();
+            } catch (Exception e) {
+                CapturingErrorListener l = (CapturingErrorListener) FACTORY.getErrorListener();
+                if (!l.getErrorList().isEmpty()) {
+                    throw new TransformerException(l.getErrorList().get(0).getLeft(), l.getErrorList().get(0).getRight());
+                } else if (e instanceof TransformerException) {
+                    throw (TransformerException) e;
+                } else if (e.getCause() instanceof TransformerException) {
+                    throw (TransformerException) e.getCause();
+                } else {
+                    throw new TransformerException(e.getMessage(), e);
+                }
             }
-
-            Templates t = FACTORY.newTemplates(source);
-            if (put) {
-                TEMPLATES.put(id, t);
-            }
-            return t.newTransformer();
         }
     }
 
-    public XslTransformer(File stylesheet) throws TransformerConfigurationException, FileNotFoundException {
+    public XslTransformer(File stylesheet) throws FileNotFoundException, TransformerException {
         transformer = get(stylesheet.getAbsolutePath(), new StreamSource(stylesheet));
     }
 
-    public XslTransformer(InputStream stylesheet) throws TransformerConfigurationException {
+    public XslTransformer(InputStream stylesheet) throws TransformerException {
         transformer = get(null, new StreamSource(stylesheet));
     }
 
-    public XslTransformer(Reader stylesheet) throws TransformerConfigurationException {
+    public XslTransformer(Reader stylesheet) throws TransformerException {
         transformer = get(null, new StreamSource(stylesheet));
     }
 
@@ -70,13 +130,13 @@ public class XslTransformer {
      * stylesheet is assumed to be a resource URI
      *
      * @param stylesheet
-     * @throws TransformerConfigurationException
+     * @throws TransformerException
      */
-    public XslTransformer(String stylesheet) throws TransformerConfigurationException {
+    public XslTransformer(String stylesheet) throws TransformerException {
         transformer = get(stylesheet, new StreamSource(stylesheet));
     }
 
-    public XslTransformer(String stylesheet, Reader sheet) throws TransformerConfigurationException {
+    public XslTransformer(String stylesheet, Reader sheet) throws TransformerException {
         transformer = get(stylesheet, new StreamSource(sheet));
     }
 

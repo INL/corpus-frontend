@@ -3,7 +3,7 @@
 <script>
     DOCUMENT_ID = "$esc.javascript($docId)";
     DOCUMENT_LENGTH = $docLength;
-    
+
     PAGINATION_ENABLED = $paginationEnabled;
     PAGE_SIZE = $pageSize;
     PAGE_START = $pageStart;
@@ -25,11 +25,37 @@
 
             #set($unescaped = $article_content) ## see BaseResponse.java
             $!unescaped
+
+            #if ($article_content_error)
+                <a class="btn btn-primary" role="button" data-toggle="collapse" href="#content_error" aria-expanded="false" aria-controls="content_error">
+                  Click here to see errors
+                </a><br>
+                <div class="collapse" id="content_error"><div class="well" style="overflow: auto; max-height: 300px; white-space: pre-line;">
+                   $article_content_error.getMessage()
+                   #foreach($stack in $article_content_error.getStackTrace())
+                       $stack.toString()
+                   #end
+                </div></div>
+            #end
+
+
         </div>
 
         <div id="metadata" class="tab-pane">
             #set($unescaped = $article_meta) ## see BaseResponse.java
             $!unescaped
+
+            #if ($article_meta_error)
+                <a class="btn btn-primary" role="button" data-toggle="collapse" href="#meta_error" aria-expanded="false" aria-controls="meta_error">
+                  Click here to see errors
+                </a><br>
+                <div class="collapse" id="meta_error"><div class="well" style="overflow: auto; max-height: 300px; white-space: pre-line;">
+                   $article_meta_error.getMessage()
+                   #foreach($stack in $article_meta_error.getStackTrace())
+                       $stack.toString()
+                   #end
+                </div></div>
+            #end
         </div>
 
         <div id="statistics" class="tab-pane">

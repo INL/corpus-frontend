@@ -394,10 +394,20 @@ export function selectPickerAnnotationOptions(ids: string[], annots: MapOf<AppTy
 	]
 	.map<AppTypes.OptGroup>(([prefix, groupname, suffix]) =>({
 		label: groupname,
-		options: ids.map(id => ({
-			label: `${operation} by ${annots[id][0].displayName || id} <small class="text-muted">${suffix}</small>`,
-			value: `${prefix}${id}`
-		}))
+		options: ids.flatMap(id => {
+			const r: AppTypes.Option[] = [];
+			r.push({
+				label: `${operation} by ${annots[id][0].displayName || id} <small class="text-muted">${suffix}</small>`,
+				value: `${prefix}${id}`
+			});
+			if (operation === 'Sort') {
+				r.push({
+					label: `${operation} by ${annots[id][0].displayName || id} (descending) <small class="text-muted">${suffix}</small>`,
+					value: `-${prefix}${id}`
+				});
+			}
+			return r;
+		})
 	}));
 }
 
@@ -439,9 +449,19 @@ export function selectPickerMetadataOptions(
 	return metadataGroups(ids, fields, groups)
 	.map<AppTypes.OptGroup>(g => ({
 		label: g.groupId,
-		options: g.fields.map(({id, displayName}) => ({
-			value: `field:${id}`,
-			label: `${operation} by ${(displayName || id)} <small class="text-muted">(${g.groupId})</small>`,
-		}))
+		options: g.fields.flatMap(({id, displayName}) => {
+			const r: AppTypes.Option[] = [];
+			r.push({
+				value: `field:${id}`,
+				label: `${operation} by ${(displayName || id)} <small class="text-muted">(${g.groupId})</small>`,
+			});
+			if (operation === 'Sort') {
+				r.push({
+					value: `-field:${id}`,
+					label: `${operation} by ${(displayName || id)} (descending) <small class="text-muted">(${g.groupId})</small>`,
+				});
+			}
+			return r;
+		})
 	}));
 }

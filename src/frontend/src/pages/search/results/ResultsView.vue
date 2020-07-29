@@ -438,7 +438,7 @@ export default Vue.extend({
 					}, {
 						label: 'Sort by Size',
 						value: 'size',
-					}]
+					}].flatMap(o => [o, {...o, label: o.label + ' (descending)', value: '-' + o.value}])
 				});
 			}
 
@@ -454,7 +454,7 @@ export default Vue.extend({
 					options: [{
 						label: 'Sort by hits',
 						value: 'numhits'
-					}]
+					}].flatMap(o => [o, {...o, label: o.label + ' (descending)', value: '-' + o.value}])
 				});
 			}
 
@@ -465,6 +465,7 @@ export default Vue.extend({
 
 				opts.push(...selectPickerMetadataOptions(metadataIds, metas, groups, 'Sort'));
 			}
+
 			return opts;
 		},
 

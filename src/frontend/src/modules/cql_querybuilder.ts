@@ -11,6 +11,7 @@ import {debugLog} from '@/utils/debug';
 import {RecursivePartial} from '@/types/helpers';
 
 import '@/modules/cql_querybuilder.scss';
+import { unescapeRegex, escapeRegex } from '@/utils';
 
 /**
  * The querybuilder is a visual editor for CQL queries (see http://inl.github.io/BlackLab/corpus-query-language.html#supported-features for an introduction to CQL)
@@ -984,16 +985,18 @@ export class Attribute {
 		// Then unhide the one for our new selectedValue
 		this.element.find('[data-attribute-type]').hide().filter('[data-attribute-type="' + selectedValue + '"]').show();
 	}
-
-	public set(controlName: keyof Attribute['$controls']|'case'|'val', val: string|boolean|string[], additionalSelector?: string) {
+	public set(controlName: 'operator', val: 'starts with'|'ends with'|'='|'!='): void;
+	public set(controlName: 'case', val: boolean, attributeName: string): void;
+	public set(controlName: 'val', val: string|string[], attributeName: string): void;
+	public set(controlName: 'type', val: string): void;
+	public set(controlName: keyof Attribute['$controls']|'case'|'val', val: string|boolean|string[], attributeName?: string) {
 		if (controlName === 'case') {
-			setValue(this.element.find('[data-attribute-type="' + additionalSelector + '"]')
-				.find('[data-attribute-role="case"]'), val);
+			setValue(this.element.find('[data-attribute-type="' + attributeName + '"] [data-attribute-role="case"]'), val);
 		} else if (controlName === 'val') {
 			// correct value casing (if applicable)
 			const ourSettings = this.builder.settings.attribute.view.attributes
 				.flatMap<AttributeDef>((a: any) => a.options ? a.options : a)
-				.find(a => a.attribute === additionalSelector);
+				.find(a => a.attribute === attributeName);
 
 			if (ourSettings && !ourSettings.caseSensitive && ourSettings.values && ourSettings.values.length) {
 				const caseMap = ourSettings.values.reduce<{[k: string]: string}>((acc, v) => {
@@ -1006,8 +1009,23 @@ export class Attribute {
 					.filter((v): v is string => typeof v === 'string')
 					.map(v => caseMap[v.toLowerCase()] || v);
 			}
-			setValue(this.element.find('[data-attribute-type="' + additionalSelector + '"]')
-				.find('[data-attribute-role="value"]'), val);
+
+			// FIXME: dirty
+			const $input = this.element.find('[data-attribute-type="' + attributeName + '"] [data-attribute-role="value"]');
+			if ($input.is('select')) {
+				let unescapedVal = unescapeMultiSelectValue(val as string[]);
+				if (unescapedVal.every(v => v.indexOf('.*') === 0)) {
+					unescapedVal = unescapedVal.map(v => v.substr(2));
+					this.set('operator', 'starts with');
+				} else if (unescapedVal.every(v => v.indexOf('.*') === v.length -2)) {
+					unescapedVal = unescapedVal.map(v => v.substr(0, v.length - 2));
+					this.set('operator', 'ends with');
+				}
+
+				val = unescapedVal;
+			}
+
+			setValue(this.element.find('[data-attribute-type="' + attributeName + '"] [data-attribute-role="value"]'), val);
 		} else if (this.$controls[controlName]) {
 			setValue(this.$controls[controlName], val);
 		}
@@ -1024,8 +1042,10 @@ export class Attribute {
 		if (this.uploadedValue != null) {
 			values = this.uploadedValue.trim().split(/\s+/g); // split on whitespace, across line breaks
 		} else {
-			const rawValue = $optionsContainer.find('[data-attribute-role="value"]').val() as string|string[];
-			values = [rawValue].flat(2);
+			const $input = $optionsContainer.find('[data-attribute-role="value"]');
+			const rawValue = [$input.val() as string|string[]].flat(2); // transform to array if it isn't
+			// if we're a dropdown we need to regex-escape, since they're exact values, but are interpreted as if they're regex
+			values = $input.is('select') ? rawValue.map(v => escapeRegex(v, false).replace(/([|"])/g, '\\$1')) : rawValue;
 		}
 
 		const callback = this.builder.settings.attribute.getCql;
@@ -1044,7 +1064,82 @@ const generateId = function() {
 	};
 }();
 
-// Set values on input/select elements uniformly
+const unescapeMultiSelectValue = (s: string[]): string[] => {
+	// We need to decode the value in the same manner we encoded it.
+	// for the encoding step we did the following:
+	// 1. full regex-escaping of the individual values
+	// 2. OR-ing them together using | (regex OR)
+
+	// so to do the opposite:
+	// 1. invert step 2: split on pipes (but only non-escaped pipes, because the individual values can also contain pipes, which were escaped by step 1 above during query generation/encoding)
+	// 2. invert step 1, unescape the regex.
+
+	// value a|\ --> a\|\\
+	// value b --> b
+	// a+b === a\|\\|b
+	// so now matching | not preceded by \ doesn't work
+	// walk through, check what the active escapers are, and split if not preceded by an active escaper
+	// so into [a\|\\, b]
+
+	return s.flatMap(v => {
+		const r: string[] = [];
+		let cur = '';
+		let isEscaped = false;
+		for (const c of v) { // each char
+			if (isEscaped) {
+				isEscaped = false;
+				cur += c;
+				continue;
+			}
+			if (c === '\\') {
+				isEscaped = true;
+				cur += c;
+				continue;
+			}
+			if (c === '|' && cur.length) { // not escaped - we checked above -- split!
+				r.push(cur);
+				cur = '';
+				continue; // don't push - erase the pipe
+			}
+
+			cur += c; // regular character, not escaped, push
+		}
+		if (cur) { r.push(cur); }
+		return r;
+	})
+
+	// now we have the still escaped regexes with only the pipes removed
+	// so now remove all escaping slashes to return them to the intended value
+	// NOTE: if a string comes in that contains "a\b", that's illegal and it came from a weird place
+	// because the we (the querybuilder) cannot ever output the string "a\b" unless it's from a text field - which is not what we're parsing back in to
+	// if there was every a value "a\b" in the select, it would have been output as "a\\b"
+	// so erasing all lone backslashes is perfectly valid
+	// (it's also not possible to )
+	.map(v => {
+		let r = '';
+		let isEscaped = false;
+		for (const c of v) {
+			if (isEscaped) {
+				isEscaped = false;
+				r += c;
+				continue;
+			}
+			if (c === '\\') { // not escaped
+				isEscaped = true;
+				// and remove the backslash since it's an escape
+				continue;
+			}
+			r += c;
+		}
+		return r;
+	});
+};
+
+/**
+ * Set values on input/select elements uniformly
+ * @param $element
+ * @param val
+ */
 const setValue = function($element: JQuery<HTMLElement>, val: any) {
 	if (val != null) {
 		if (val.constructor !== Array) {
@@ -1080,7 +1175,7 @@ const setValue = function($element: JQuery<HTMLElement>, val: any) {
 		}
 	} else if ($element.is(':input')) {
 		// We know we're dealing with cql regex here, just pipe them together.
-		$element.val(val.join('|')).trigger('change');
+		$element.val(val).trigger('change');
 	}
 };
 
@@ -1191,7 +1286,7 @@ function populateQueryBuilder(queryBuilder: QueryBuilder, pattern: string|null|u
 
 					attributeInstance.set('operator', op.operator);
 					attributeInstance.set('type', op.name);
-					attributeInstance.set('val', op.value.split('|'), op.name);
+					attributeInstance.set('val', op.value, op.name);
 				}
 			}
 

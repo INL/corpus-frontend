@@ -33,8 +33,8 @@
 								<li class="list-group-item category-value" v-for="subValue in tagset.subAnnotations[subId].values" :key="subValue.value" v-if="!subValue.pos || subValue.pos.includes(annotationValue.value)">
 									<label>
 										<input type="checkbox" v-model="selected[`${annotationValue.value}/${subId}/${subValue.value}`]"/>
-										<!-- {{subValue.displayName}} -->
-										{{subValue.value}}
+										{{subValue.displayName}}
+										<!-- {{subValue.value}} -->
 									</label>
 								</li>
 							</ul>
@@ -87,13 +87,13 @@ export default Vue.extend({
 		errorMessage(): string { return this.isValidTagset ? '' : TagsetStore.getState().message; },
 		query(): string {
 			if (this.annotationValue == null) { return ''; }
-			const mainValue = escapeRegex(this.annotationValue.value, false).replace(/"/g, '\\"');
+			const mainValue = escapeRegex(this.annotationValue.value, false).replace(/("|\|)/g, '\\$1');
 
 			const subAnnots = this.annotationValue.subAnnotationIds.map(id => ({
 				id,
 				values: this.tagset.subAnnotations[id].values
 					.filter(v => this.selected[`${this.annotationValue!.value}/${id}/${v.value}`])
-					.map(v => escapeRegex(v.value, false).replace(/"/g, '\\"'))
+					.map(v => escapeRegex(v.value, false).replace(/("|\|)/g, '\\$1'))
 			}))
 			.filter(v => v.values.length > 0);
 
@@ -115,12 +115,12 @@ export default Vue.extend({
 				return;
 			}
 
-			const mainValue = escapeRegex(this.annotationValue.value, false).replace(/"/g, '\\"');
+			const mainValue = escapeRegex(this.annotationValue.value, false).replace(/("|\|)/g, '\\$1');
 			const subAnnots = this.annotationValue.subAnnotationIds.map(id => ({
 				id,
 				values: this.tagset.subAnnotations[id].values
 					.filter(v => this.selected[`${this.annotationValue!.value}/${id}/${v.value}`])
-					.map(v => escapeRegex(v.value, false).replace(/"/g, '\\"'))
+					.map(v => escapeRegex(v.value, false).replace(/("|\|)/g, '\\$1'))
 			}))
 			.filter(v => v.values.length > 0);
 

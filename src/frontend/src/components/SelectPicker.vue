@@ -3,8 +3,8 @@
 		:data-menu-id="menuId"
 		:dir="dir"
 
-		@keydown.prevent.down="focusDown"
-		@keydown.prevent.up="focusUp"
+		@keydown.prevent.exact.down="(isOpen || !$refs.focusOnClickOpen) ? focusDown() : doOpen($refs.focusOnClickOpen)"
+		@keydown.prevent.exact.up="focusUp"
 	>
 		<input v-if="editable && multiple"
 			:class="dataClass || 'form-control'"
@@ -12,26 +12,29 @@
 			title="Editable and Multiple are not supported on the same selectpicker!"
 			value="Editable and Multiple are not supported on the same selectpicker!"
 			style="background-color: #f2dede; border-color: #ebccd1; color: #a94442;"
+			type="text"
 
 			disabled
 		>
 		<input v-else-if="editable"
+			type="text"
 			:class="['menu-input', dataClass || 'form-control']"
 			:id="dataId"
 			:name="dataName"
 			:style="dataStyle"
 			:title="dataTitle"
-			:placeholder="$attrs.placeholder || $attrs.title"
+			:placeholder="placeholder || $attrs.title"
 			:disabled="disabled"
 			:dir="dir"
 			:autofocus="autofocus"
+			:autocomplete="autocomplete"
 
-			@focus="open"
-			@keydown.tab="close()/*focus shifts to next element, close menu*/"
-			@keydown.esc="close()"
-			@keydown.enter="close()"
+			@focus="doOpen()/*call directly, don't pass focusIn event*/"
+			@keydown.tab="doClose()/*focus shifts to next element, close menu*/"
+			@keydown.esc="doClose()"
+			@keydown.enter="doClose()"
 
-			@input.stop="$emit('input', $event.target.value); emitChangeOnClose = true"
+			@input.stop="emitChangeOnClose = true"
 			@change.stop=""
 
 			v-model="inputValue"
@@ -50,22 +53,22 @@
 			:dir="dir"
 			:autofocus="autofocus"
 
-			@click="isOpen ? close() : open($refs.focusOnClickOpen)"
-			@keydown.tab="close()/*focus shifts to next element, close menu*/"
-			@keydown.esc="close()"
+			@click="isOpen ? doClose() : doOpen($refs.focusOnClickOpen)"
+			@keydown.tab="doClose()/*focus shifts to next element, close menu*/"
+			@keydown.esc="doClose()"
 			@keydown.prevent.enter="$event.target.click()/*stop to prevent submitting any parent form*/"
 
 			ref="focusOnEscClose"
 		>
 			<template v-if="displayValues.length && (showValues || !multiple)">
-				<span class="menu-value" v-if="allowHtml" v-html="displayValues.join(', ')"/>
+				<span class="menu-value" v-if="allowHtml" :title="value" v-html="displayValues.join(', ')"/>
 				<span class="menu-value" v-else :title="displayValues.join(',')">{{displayValues.join(', ')}}</span>
 			</template>
 			<span v-else class="menu-value placeholder">
-				{{$attrs.placeholder || $attrs.title || (this.multiple ? 'Select values...' : 'Select a value...')}}
+				{{placeholder || $attrs.title || (this.multiple ? 'Select values...' : 'Select a value...')}}
 			</span>
 			<span v-if="loading" class="menu-icon fa fa-spinner fa-spin text-muted"></span>
-			<span v-else-if="!showValues && multiple" :class="['menu-icon badge',{'active': displayValues.length}]">
+			<span v-else-if="!showValues && multiple && showValueCount" :class="['menu-icon badge',{'active': displayValues.length}]">
 				{{displayValues.length || totalOptionCount}}
 			</span>
 			<span :class="['menu-icon', 'fa', 'fa-caret-down', {
@@ -75,18 +78,21 @@
 		</button>
 
 		<!-- NOTE: might not actually be a child of root element at runtime! Event handling is rather specific -->
-		<ul v-show="isOpen && !(editable && !filteredOptions.length)"
+		<ul v-show="isOpen && (filteredOptions.length || !editable)"
 			:data-menu-id="menuId"
 			:dir="dir"
-			:class="['combobox-menu', computedMenuClass]"
-			:style="[{width: computedMenuWidth}, computedMenuStyle]"
+			:class="['combobox-menu', computedMenuClass, dataMenuClass]"
 
-			@keydown.prevent.stop.esc="$refs.focusOnEscClose.focus(); close(); /* order is important */"
+			@keydown.prevent.stop.esc="$refs.focusOnEscClose.focus(); doClose(); /* order is important */"
 			@keydown.prevent.stop.down="focusDown"
 			@keydown.prevent.stop.right="focusDown"
 			@keydown.prevent.stop.up="focusUp"
 			@keydown.prevent.stop.left="focusUp"
 			@keydown.prevent.stop.tab="$event.shiftKey ? focusUp() : focusDown()"
+			@keydown.prevent.stop.page-down="focusOffset(10, false)"
+			@keydown.prevent.stop.page-up="focusOffset(-10, false)"
+			@keydown.prevent.stop.home="focus(0)"
+			@keydown.prevent.stop.end="focus(Number.MAX_SAFE_INTEGER)"
 
 			ref="menu"
 		>
@@ -95,8 +101,8 @@
 				<span class="fa fa-spinner fa-spin text-muted"></span>
 			</div><button v-if="resettable && filteredOptions.length"
 				type="button"
-				class="btn btn-sm btn-default menu-reset"
 				tabindex="-1"
+				:class="['menu-button menu-reset', 'btn btn-sm', dataClass || 'btn-default']"
 
 				@click="internalModel = {}; inputValue=''"
 			>Reset</button><input v-if="searchable && !editable /* When it's available, edit box handles searching */"
@@ -107,9 +113,16 @@
 
 				:dir="dir"
 
-				@keydown.stop.left="/*stop menu from changing focus here*/"
-				@keydown.stop.right="/*stop menu from changing focus here*/"
-				@keydown.prevent.enter="filteredOptions.filter(o => o.type === 1).length === 1 ? select(filteredOptions.filter(o => o.type === 1)[0]) : undefined/*prevent submission when embedded in a form*/"
+				@keydown.stop.left
+				@keydown.stop.right
+				@keydown.stop.home
+				@keydown.stop.end
+				@keydown.prevent.enter="
+					filteredOptions.length < 5 &&
+					filteredOptions.filter(o => o.type === 1).length === 1 ?
+						select(filteredOptions.filter(o => o.type === 1)[0]) :
+						undefined/*prevent submission when embedded in a form*/
+				"
 
 				v-model="inputValue"
 
@@ -119,15 +132,16 @@
 			<li class="menu-body">
 				<ul class="menu-options">
 					<li v-if="!filteredOptions.length" class="menu-option disabled">
-						<em class="menu-value">No available options.</em>
+						<em class="menu-value" v-html="noOptionsPlaceholder"></em>
 					</li>
 					<template v-for="o in filteredOptions">
 					<li v-if="o.type === 1"
-						:class="['menu-option', {
-							'active': internalModel[o.id] && !multiple,
+						:class="{
+							'menu-option': true,
+							'active': !multiple && internalModel[o.value],
 							'disabled': o.disabled,
-						}]"
-						:key="o.id"
+						}"
+						:key="o.value"
 						:tabindex="o.disabled ? undefined : -1"
 						:title="o.title"
 						:data-value="o.value"
@@ -138,13 +152,14 @@
 					>
 						<span v-if="allowHtml || !o.label || !o.label.trim()" class="menu-value" v-html="o.label && o.label.trim() ? o.label : '&nbsp;'"/>
 						<span v-else class="menu-value">{{o.label || ' '}}</span>
-						<span v-if="multiple && internalModel[o.id]" class="menu-icon fa fa-check"/>
+						<span v-if="multiple && internalModel[o.value]" class="menu-icon fa fa-check"/>
 					</li>
 					<li v-else-if="o.type === 2"
-						:class="['menu-group', {
+						:class="{
+							'menu-group': true,
 							'disabled': o.disabled,
-						}]"
-						:key="o.index + o.label"
+						}"
+						:key="o.id"
 						:title="o.title"
 					>
 						<span v-if="allowHtml" class="menu-value" v-html="o.label"/> <!-- don't nbsp fallback here, we want the height to collapse if there's no label -->
@@ -155,14 +170,14 @@
 			</li>
 		</ul>
 	</div>
-
 </template>
 
 <script lang="ts">
+
+// tslint:disable
+
 import Vue from 'vue';
-import JsonStableStringify from 'json-stable-stringify';
-import { mapReduce } from '@/utils';
-import { debugLog } from '@/utils/debug';
+import { mapReduce, MapOf } from '@/utils';
 
 export type SimpleOption = string;
 
@@ -179,9 +194,10 @@ export type OptGroup = {
 	options: Array<string|Option>;
 };
 
+export type Options = Array<SimpleOption|Option|OptGroup>;
+
 type _uiOpt = {
 	type: 1;
-	id: number;
 
 	value: string;
 	label: string;
@@ -195,15 +211,15 @@ type _uiOpt = {
 type _uiOptGroup = {
 	type: 2;
 
+	id: string;
 	label?: string;
 	title?: string;
 	disabled?: boolean;
 };
 type uiOption = _uiOpt|_uiOptGroup;
 
-type Model = {
-	[key: string]: _uiOpt;
-};
+/** Might also be any other valid css value for 'width', but these values have special behavior in the code */
+type MenuWidthMode = 'stretch'|'shrink'|'grow';
 
 function isSimpleOption(e: any): e is string { return typeof e === 'string'; }
 function isOption(e: any): e is Option { return e && isSimpleOption(e.value); }
@@ -213,7 +229,12 @@ let nextMenuId = 0;
 
 export default Vue.extend({
 	props: {
-		options: Array as () => Array<string|Option|OptGroup>,
+		flip: {
+			type: Boolean,
+			default: true
+		},
+
+		options: { type: Array as () => Option[], default: () => [] as Options },
 		multiple: Boolean,
 		/** Is the dropdown list filtered by the current value (acts more as an autocomplete) */
 		searchable: Boolean,
@@ -222,6 +243,8 @@ export default Vue.extend({
 		/** Show reset button at top of menu? */
 		resettable: Boolean,
 		disabled: Boolean,
+		placeholder: String,
+		noOptionsPlaceholder: {type: String, default: 'No available options.'},
 		/** Show a little spinner while the parent is fetching options, or something */
 		loading: Boolean,
 		/**
@@ -232,6 +255,8 @@ export default Vue.extend({
 		allowUnknownValues: Boolean,
 		/** Show selected values in the selection button, only when multiple */
 		showValues: { type: Boolean, default: true },
+		/** Show value count, only when showValues === false */
+		showValueCount: { type: Boolean, default: true },
 
 		// interface options, do not change interaction behavior
 		/** Text direction (for rtl support) */
@@ -243,6 +268,11 @@ export default Vue.extend({
 		/** Queryselector for menu container */
 		container: String,
 		autofocus: Boolean,
+		autocomplete: String,
+		/** Prevent automatic positioning of the menu. Useful for when placed in a container somewhere and you want it to be position: static */
+		noTransform: Boolean,
+		/** Force the menu open or closed */
+		open: { type: Boolean, default: undefined },
 
 		value: [String, Array] as any as () => string|string[]|null,
 
@@ -262,37 +292,36 @@ export default Vue.extend({
 		 * - anything else: used as css-value ('auto' works!)
 		 */
 		'data-menu-width': {
-			type: String as any as () => 'stretch'|'shrink'|'grow'|string,
+			type: String as any as () => MenuWidthMode,
 			default: 'stretch'
 		},
+		'data-menu-class': [Array, String, Object],
 		/** Right-align the dropdown menu, only when menuWidth != 'stretch' */
 		right: Boolean
 	},
 	data: () =>  ({
-		isOpen: false,
+		/** Is the menu currently open, overridden by the 'open' prop, i.e. only used when 'open' not specified */
+		isNaturallyOpen: false,
 		emitChangeOnClose: false,
 
 		/** Search/custom input value, role depends on editable, searchable */
 		inputValue: '',
 
-		internalModel: {} as Model,
+		internalModel: {} as MapOf<boolean>,
 
 		// Can't be computed, need to wait until we are mounted
 		// (as container might be a parent element that hasn't fully mounted yet when we init)
 		containerEl: null as null|HTMLElement,
 
 		uid: nextMenuId++,
-
-		computedMenuStyle: null as null|Partial<CSSStyleDeclaration>,
 	}),
 	computed: {
 		menuId(): string { return this.$attrs.id != null ? this.$attrs.id : `combobox-${this.uid}`; },
+		isOpen(): boolean { if (this.open != null) { return this.open; } else { return this.isNaturallyOpen; } },
 
 		uiOptions(): uiOption[] {
-
-			const mapSimple = (o: SimpleOption, id: number, group?: OptGroup): _uiOpt => ({
+			const mapSimple = (o: SimpleOption, group?: OptGroup): _uiOpt => ({
 				type: 1,
-				id,
 
 				label: o,
 				value: o,
@@ -304,9 +333,8 @@ export default Vue.extend({
 				lowerLabel: o.toLowerCase(),
 			});
 
-			const mapOption = (o: Option, id: number, group?: OptGroup): _uiOpt => ({
+			const mapOption = (o: Option, group?: OptGroup): _uiOpt => ({
 				type: 1,
-				id,
 
 				value: o.value,
 				label: o.label || o.value,
@@ -318,20 +346,20 @@ export default Vue.extend({
 				lowerLabel: (o.label || o.value).toLowerCase()
 			});
 
-			const mapGroup = (o: OptGroup): _uiOptGroup => ({
+			const mapGroup = (o: OptGroup, id: number): _uiOptGroup => ({
 				type: 2,
+				id: id.toString(),
 				label: o.label,
 				title: o.title != null ? o.title : undefined,
 				disabled: o.disabled,
 			});
 
-			let i = 0;
-			let uiOptions = this.options.flatMap(o => {
-				if (isSimpleOption(o)) { return mapSimple(o, i++); }
-				else if (isOption(o)) { return mapOption(o, i++); }
+			let uiOptions = this.options.flatMap((o, index) => {
+				if (isSimpleOption(o)) { return mapSimple(o); }
+				else if (isOption(o)) { return mapOption(o); }
 				else {
-					const h = mapGroup(o);
-					const subs: uiOption[] = o.options.map(sub => isSimpleOption(sub) ? mapSimple(sub, i++, o) : mapOption(sub, i++, o));
+					const h = mapGroup(o, index);
+					const subs: uiOption[] = o.options.map(sub => isSimpleOption(sub) ? mapSimple(sub, o) : mapOption(sub, o));
 					subs.unshift(h);
 					return subs;
 				}
@@ -346,7 +374,6 @@ export default Vue.extend({
 			if (!this.multiple && !this.editable && !this.hideEmpty && uiOptions.length && !uiOptions.some(o => o.type === 1 && o.value === '')) {
 				const emptyOption: _uiOpt = {
 					type: 1,
-					id: -1,
 					value: '',
 					label: '',
 					lowerValue: '',
@@ -361,15 +388,15 @@ export default Vue.extend({
 
 			return uiOptions;
 		},
+		uiOptionsMap(): MapOf<_uiOpt> { return mapReduce(this.uiOptions.filter(o => o.type === 1) as _uiOpt[], 'value'); },
+
 		filteredOptions(): uiOption[] {
 			let options = this.uiOptions;
 			if (this.hideDisabled) {
-				let inDisabledGroup = false;
+				let disabledGroup = false;
 				options = options.filter(o => {
-					if (o.type === 2) {
-						inDisabledGroup = !!o.disabled;
-					}
-					return !(o as any).disabled && !inDisabledGroup;
+					if (isOptGroup(o)) { disabledGroup = !!o.disabled; }
+					return !(disabledGroup || o.disabled);
 				});
 			}
 
@@ -377,9 +404,8 @@ export default Vue.extend({
 			if (!filter) { return options; }
 
 			let hideNextOptGroup = true;
-			return options.filter(o => {
-				return o.type !== 1 || o.lowerLabel.includes(filter) || o.lowerValue.includes(filter);
-			})
+			return options
+			.filter(o => o.type !== 1 || o.lowerLabel.includes(filter) || o.lowerValue.includes(filter) || o.label.includes(filter) || o.value.includes(filter))
 			.reverse()
 			.filter(o => {
 				if (o.type === 2 && hideNextOptGroup) { return false; }
@@ -392,23 +418,40 @@ export default Vue.extend({
 
 		///////////////
 
-		displayValues(): string[] { return Object.values(this.internalModel).map(v => v.label || v.value); },
-		computedMenuWidth(): string|undefined { return ['grow', 'shrink', 'stretch'].includes((this as any).dataMenuWidth) ? undefined : (this as any).dataMenuWidth || undefined; },
+		displayValues(): string[] { return Object.keys(this.internalModel).map(k => this.uiOptionsMap[k] /* check first - might be unknown value */ ? this.uiOptionsMap[k].label : k); },
 		computedMenuClass(): any {
 			return {
 				[(this as any).dataMenuWidth]: ['grow', 'shrink', 'stretch'].includes((this as any).dataMenuWidth),
-				right: this.right
+				right: this.right,
+				static: this.noTransform
 			};
 		},
+
+		/** We need to watch all these to react to changes and correct any possible stale value/internal state */
+		correctModelProps(): any {
+			return {
+				value: this.value,
+				options: this.options,
+				editable: this.editable,
+				multiple: this.multiple,
+				allowUnknownValues: this.allowUnknownValues,
+			};
+		},
+		emitInputEventData(): any {
+			return {
+				internalModel: this.internalModel,
+				inputValue: this.inputValue
+			};
+		}
 	},
 	methods: {
-		open(focusEl?: HTMLElement): void {
-			this.isOpen = true;
-			if (focusEl) {
+		doOpen(focusEl?: HTMLElement): void {
+			this.isNaturallyOpen = true;
+			if (focusEl && this.isOpen) {
 				Vue.nextTick(() => focusEl.focus());
 			}
 		},
-		close(event?: Event): void {
+		doClose(event?: Event): void {
 			function isChild(parent: Element, child: Element|null) {
 				for (child; child; child = child.parentElement) {
 					if (child === parent) {
@@ -430,68 +473,167 @@ export default Vue.extend({
 			}
 
 			// reset option search/filter string
-			if (!this.editable) {
+			if (!this.editable && !this.$attrs.open) {
 				this.inputValue = '';
 			}
-			this.isOpen = false;
+			this.isNaturallyOpen = false;
 		},
-		reposition(): void {
-			if (!this.containerEl) { return; }
+
+		/** Compute css width + min/max width of the dropdown portion of our menu */
+		getWidth(ownRootBoundingRect: ClientRect): Partial<CSSStyleDeclaration> {
+			const r: Partial<CSSStyleDeclaration> = {};
+			if (!this.containerEl) {
+				return r; // there is no need to declare any explicit width on our menu, as it's a child of our $el and our normal css classes handle everything
+			}
 
 			let widthMode = this['data-menu-width'];
 			(widthMode as any) = (this as any).dataMenuWidth;
+			const width = ownRootBoundingRect.width;
 
-			const menu = this.$refs.menu as HTMLElement;
-			const container = this.containerEl!;
-
-			const {left: containerLeft, top: containerTop, right: containerRight} = container.getBoundingClientRect();
-			const {left: ownLeft, bottom: ownBottom, top: ownTop, right: ownRight} = this.$el.getBoundingClientRect();
-
-			const width = (this.$el as HTMLElement).offsetWidth;
-			const top = ownBottom - containerTop;
-			let left = ownLeft - containerLeft;
-
-			const s = this.computedMenuStyle = {} as Partial<CSSStyleDeclaration>;
 			if (widthMode === 'stretch') {
-				s.width =  width + 'px';
-				s.maxWidth = '';
-				s.minWidth = '';
+				r.width =  width + 'px';
+				r.maxWidth = '';
+				r.minWidth = '';
 			} else if (widthMode === 'shrink') {
-				s.width = 'auto';
-				s.maxWidth = width + 'px';
-				s.minWidth = '';
+				r.width = 'auto';
+				r.maxWidth = width + 'px';
+				r.minWidth = '';
 			} else if (widthMode === 'grow') {
-				s.width = 'auto';
-				s.maxWidth = '';
-				s.minWidth = width + 'px';
+				r.width = 'auto';
+				r.maxWidth = '';
+				r.minWidth = width + 'px';
 			} else {
-				s.width = widthMode;
-				s.maxWidth = '';
-				s.minWidth = '';
+				r.width = widthMode;
+				r.maxWidth = '';
+				r.minWidth = '';
 			}
 
-			// blech, retrieve menu dimenstions, taking care to apply the inheritance from the input element first
-			if (this.right && widthMode !== 'stretch') {
-				let rect: ClientRect;
-				Object.assign(menu.style, s);
-				if (menu.style.display === 'none') {
-					menu.style.display = '';
-					rect = menu.getBoundingClientRect();
-					menu.style.display = 'none';
-				} else {
-					rect = menu.getBoundingClientRect();
-				}
-
-				const menuWidth = rect.width;
-
-				left = ownRight - menuWidth;
-			}
-
-			s.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
+			return r;
 		},
+
+		/**
+		 * Compute the css left value for our dropdown menu, relative to our own $el root element.
+		 * When the menu is right-aligned, we need to adjust left by the difference in widths between our input element
+		 * and the menu's own desired width.
+		 *
+		 * If the button is 100px wide, and the dropdown is 50px wide, left should be 50px as well
+		 *    0px      50px       100px
+		 *     ↓        ↓          ↓
+		 *     |=======button======|
+		 *              |--menu----|
+		 *              |----------|
+		 *              |          |
+		 *            (left)
+		 *
+		 * If the button is 50px wide, but the dropdown is set to be for example 100px wide
+		 *     -50px       0px          50px
+		 *       ↓          ↓             ↓
+		 *                  |====button===|
+		 *       |----------menu----------|
+		 *       |---------←100px→--------|
+		 *       |                        |
+		 *     (left)
+		 *
+		 * This only needs to be done when our dropdown is right-aligned.
+		 * When our dropdown is stretch, or left, or nothing set at all, we just leave "left" unset and it will work implicitly.
+		 */
+		getHorizontalPosition(ownRootBoundingRect: ClientRect, menuRect: ClientRect) {
+			const r: Partial<CSSStyleDeclaration> = {};
+
+			if (!this.right) {
+				return r; // no offset, we're left aligned and that's the default for the box model
+			}
+
+			const menuLeftOffset = ownRootBoundingRect.width - menuRect.width + 'px';
+			r.left = menuLeftOffset;
+			return r;
+		},
+
+		reposition(): void {
+			if (this.noTransform) { return; }
+
+			const root = this.$el as HTMLElement;
+			const menu = this.$refs.menu as HTMLElement;
+
+			// These are all styles this function outputs, we need to reset them to their intrinsic value prior to recalculating them or we will interfere with ourselves
+			const resetMenuStyles: Partial<CSSStyleDeclaration> = {
+				left: '',
+				width: '',
+
+				height: '',
+				bottom: '',
+				top: '',
+				marginTop: '',
+				marginBottom: '',
+
+				transform: '',
+			};
+			Object.assign(menu.style, resetMenuStyles);
+
+			let ownRootBoundingRect: ClientRect = root.getBoundingClientRect();
+			let menuBoundingRect: ClientRect;
+			let liveMenuStyle = window.getComputedStyle(menu); // NOTE: object is not a snapshot, but is the live styles! Setting anything in menu.style updates this!
+
+			// First see if the menu's width is or needs to be set.
+			const css: Partial<CSSStyleDeclaration> = this.getWidth(ownRootBoundingRect);
+			// Now apply those width parameters, as they might override the menu's intrinsic width.
+			// Then get the menu's resolved size (positioning is not important yet). Take care to display it first or everything will be 0
+			Object.assign(menu.style, css);
+			const initialStyleDisplay = liveMenuStyle.display;
+			menu.style.display = 'block';
+			menuBoundingRect = menu.getBoundingClientRect();
+			menu.style.display = initialStyleDisplay;
+			// Now apply any explicit left/right offset due to requested menu-alignment (left/right aligned dropdown)
+			Object.assign(css, this.getHorizontalPosition(ownRootBoundingRect, menuBoundingRect));
+
+			// We now have the following properties of the dropdown menu
+			// its final width
+			// its intrinsic height (we haven't set any css that overrides its width so far)
+			// its horizontal offset relative to our input button
+
+			// Continue with step two: flipping the menu above or below the input, depending on available height in the screen
+			let menuFlipped = false;
+			if (this.flip) {
+				const visibleWindowHeight: number = document.documentElement.clientHeight;
+				const menuMargin: number = Number(liveMenuStyle.marginTop!.slice(0, -2)) + Number(liveMenuStyle.marginBottom!.slice(0, -2)); // remove 'px' suffixes and convert to number
+
+				const spaceBelow =  Math.max(0, visibleWindowHeight - ownRootBoundingRect.bottom);
+				const spaceAbove = Math.max(0, ownRootBoundingRect.top);
+				const wantedHeight = menuMargin + menuBoundingRect.height;
+
+				menuFlipped = spaceAbove > spaceBelow && spaceBelow < wantedHeight;
+				const availableHeight = menuFlipped ? spaceAbove : spaceBelow;
+				// If there is less vertical space than we need both above and below our button, force our menu to be less tall so it fits
+				const compress = availableHeight < wantedHeight;
+
+				if (menuFlipped) {
+					css.marginTop = liveMenuStyle.marginBottom;
+					css.marginBottom = liveMenuStyle.marginTop;
+					css.bottom = '100%';
+					css.top = 'auto';
+				}
+				if (compress) {
+					css.height = availableHeight - menuMargin + 'px';
+				}
+			}
+
+			// Finally, we have set the menu's top, buttom, and left properties assuming it's a child of our root element
+			// But this isn't always the case.
+			// If it isn't, move the menu by the difference in position between its actual parent and our root element.
+			if (this.containerEl) {
+				const containerBoundingRect = this.containerEl.getBoundingClientRect();
+				const top = menuFlipped ? ownRootBoundingRect.top - containerBoundingRect.top : ownRootBoundingRect.bottom - containerBoundingRect.top;
+				const left = ownRootBoundingRect.left - containerBoundingRect.left;
+
+				css.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
+			}
+
+			Object.assign(menu.style, css);
+		},
+
 		focusDown(): void {this.focusOffset(1); },
 		focusUp(): void { this.focusOffset(-1); },
-		focusOffset(offset: number): void {
+		focusOffset(offset: number, loop = true): void {
 			const menu = this.$refs.menu as HTMLElement;
 			const items = [...menu.querySelectorAll('[tabindex]')];
 			if (!items.length) {
@@ -505,67 +647,80 @@ export default Vue.extend({
 			if (currentFocusIndex < 0 && offset < 0) {
 				offset++;
 			}
-			const focusIndex = this.loopingIncrementor(currentFocusIndex, items.length, offset).next();
+			const focusIndex = loop ?
+				this.loopingIncrementor(currentFocusIndex, items.length, offset).next() :
+				Math.max(0, Math.min(currentFocusIndex + offset, items.length - 1));
 			this.focus(items[focusIndex] as HTMLElement);
 		},
-		focus(el: HTMLElement): void {
-			if (!this.isOpen) {
-				this.open(el);
+		focus(v?: HTMLElement|number): void {
+			let el: HTMLElement|undefined;
+
+			if (typeof v === 'number') {
+				const items = [...(this.$refs.menu as HTMLElement).querySelectorAll('.menu-option:not(.disabled)')];
+				el = items[Math.min(Math.max(0, v), items.length - 1)] as HTMLElement;
 			} else {
+				el = v;
+			}
+
+			if (!this.isNaturallyOpen) {
+				this.doOpen(el);
+			} else if (el) {
 				el.focus();
 			}
 		},
 
 		select(opt: _uiOpt): void {
-			const {id, value, disabled} = opt;
+			const {disabled, value} = opt;
 
 			if (disabled) {
-				return;
-			} else if (!this.multiple && !this.editable && this.internalModel[id]) {
-				// already selected - ignore if not multiple and not editable
-				this.close();
 				return;
 			}
 
 			if (this.editable) {
+				// If editable, internalModel is unused
 				this.inputValue = value;
-				this.$emit('input', value);
-				this.close();
+				this.doClose();
 				return;
 			}
 
-			// regular select, highlight the node, store in model, etc
-			if (this.multiple) {
-				if (this.internalModel[id]) {
-					Vue.delete(this.internalModel, id as any as string);
-				} else if (value) {
-					Vue.set(this.internalModel, id as any as string, opt);
-				}
-			} else {
-				this.internalModel = id === -1 ? {} : {[id]: opt};
+			const deleteFromModel =
+				this.multiple && this.internalModel[value] ? [value] : // multiple values and value already selected -> delete value
+				!this.multiple && !this.internalModel[value] ? Object.keys(this.internalModel) : // single value allowed and value not already selected -> delete all previous values
+				[]; // Single select and already selected, or something.
+
+			const addToModel =
+				this.multiple && !this.internalModel[value] ? value : // multiple values and value not already selected -> add value
+				!this.multiple && !!value && !this.internalModel[value] ? value : // single value and not '' (clear selection) and not already selected -> add as well
+				undefined;
+
+			for (const key of deleteFromModel) {
+				Vue.delete(this.internalModel, key);
+			}
+			if (addToModel) {
+				Vue.set(this.internalModel, addToModel, true);
+				this.$emit('select', addToModel);
 			}
 
-			if (this.isOpen && !this.multiple) {
-				this.close();
+			if (!this.multiple) {
+				this.doClose();
 			}
-		},
-		submit() {
-			this.close();
 		},
 
 		//////////////////
 		addGlobalListeners() { this.addGlobalCloseListeners(); this.addGlobalScrollListeners(); },
 		removeGlobalListeners() { this.removeGlobalCloseListeners(); this.removeGlobalScrollListeners(); },
-		addGlobalCloseListeners() { document.addEventListener('click', this.close); },
-		removeGlobalCloseListeners() { document.removeEventListener('click', this.close); },
+		addGlobalCloseListeners() { document.addEventListener('click', this.doClose); },
+		removeGlobalCloseListeners() { document.removeEventListener('click', this.doClose); },
 		addGlobalScrollListeners() {
 			window.addEventListener('resize', this.reposition);
+			document.addEventListener('scroll', this.reposition); // required if any of our parents has for position:sticky
 			for (let parent = this.$el && this.$el.parentElement; parent != null; parent = parent.parentElement) {
 				parent.addEventListener('scroll', this.reposition);
 			}
 		},
 		removeGlobalScrollListeners() {
 			window.removeEventListener('resize', this.reposition);
+			document.removeEventListener('scroll', this.reposition); // required if any of our parents has for position:sticky
 			for (let parent = this.$el && this.$el.parentElement; parent != null; parent = parent.parentElement) {
 				parent.removeEventListener('scroll', this.reposition);
 			}
@@ -585,134 +740,86 @@ export default Vue.extend({
 
 		correctModel(newVal: null|undefined|string|string[]) {
 			if (this.editable) {
-				const prev = this.inputValue;
 				this.inputValue = (newVal ? typeof newVal === 'string' ? newVal : newVal[0] || '' : '');
-				if (prev !== this.inputValue) {
-					this.$emit('change', this.inputValue);
-				}
 				return;
 			}
 
+			// Correct type of the new value. e.g. array for multiple, otherwise string
 			if (newVal == null) { newVal = this.multiple ? [] : ''; }
 			else if (this.multiple && typeof newVal === 'string') { newVal = [newVal]; }
 			else if (!this.multiple && Array.isArray(newVal)) { newVal = newVal[0] || ''; }
 
 			if (!this.multiple) {
 				newVal = newVal as string; // we verified above, but can't declare it to be a type...
+				const oldVals = Object.keys(this.internalModel);
 
-				// Don't select empty strings, those are meant to clear the selectpicker
-				let newOption = !!newVal ? this.uiOptions.find(o => o.type === 1 && o.value === newVal) as _uiOpt|undefined : undefined;
-				if (newOption == null && newVal && this.allowUnknownValues) {
-					// uh oh, this value is not in our options, but we're configured to allow unknowns
-					// construct a synthetic option to place in our model.
-					// this way the option won't show in the dropdown list, but we still adopt its value.
-					debugLog('Creating synthetic option for value ' + newVal);
-					newOption = {
-						type: 1,
-						id: Number.MAX_SAFE_INTEGER,
-						value: newVal,
-						label: newVal,
-						disabled: false,
-						lowerValue: newVal.toLowerCase(),
-						lowerLabel: newVal.toLowerCase(),
-						title: newVal
-					};
-				}
-
-				// Assume model always in a consistent state - e.g. no multiple values when !this.multiple
-				// Otherwise whatever, just discard the rest of the selections... It's not a valid state anyway
-				const cur = Object.values(this.internalModel)[0] as _uiOpt|undefined;
-
-				if (
-					// also need to compare json, as a new option list may be set, which generates a new set of uiOptions
-					// but the list may be identical (just a different instance of the array containing the same values)
-					// So the newOption !== cur check might fail despite them being the same value.
-					// (simply comparing new.value !== old.value isn't enough, as they might have different labels, disabled state, etc)
-					(newOption !== cur && JsonStableStringify(newOption) !== JsonStableStringify(cur)) ||
-					// if newOption doesn't exist, but there is a value passed in,
-					// the component is in an invalid state,
-					// set our internal model to nothing selected, which will cause an $emit for a null value,
-					// which should correct the v-model in our parent.
-					(newVal && newOption == null)
-				) {
-					this.internalModel = newOption ? { [newOption.id]: newOption } : {};
-					if (!this.editable) {
-						this.$emit('change', newOption ? newOption.value : '');
+				if (oldVals.length !== 1 || newVal !== oldVals[0]) {
+					if (newVal === '') {
+						this.internalModel = {};
+					} else if (this.uiOptionsMap[newVal] || this.allowUnknownValues) {
+						this.internalModel = { [newVal]: true };
 					}
 				}
 			} else {
-				// We need to be smart about this to prevent infinite loops or double $emits when updating
+				// NOTE:
+				// at this point, this.uiOptions is up to date with any (potential) new options prop
+				// however, this.internalModel is not yet updated, so still contains handles to (possibly stale) _uiOpts
 
-				// First split the currently selected options into two categories: those still selected, and those no longer selected
-				// Then find the corresponding option object for all new values that weren't selected yet
-				// Then check whether we need to update the model (any deselections or new selections) and rewrite it
+				const newValues = new Set<string>(newVal as string[]);
+				const oldValues = this.internalModel;
+				const availableOptions = this.uiOptionsMap;
 
-				const newValuesAsSet = new Set<string>(newVal as string[]);
-				const oldValuesAsMap = mapReduce(Object.values(this.internalModel), 'value');
+				/** no longer in :value array - guaranteed deselect or is actually in :value array but not available as option (and unknowns are not allowed) */
+				const deselectedValues: string[] = Object.keys(oldValues).filter(v => !newValues.has(v) || (!availableOptions[v] && !this.allowUnknownValues));
 
-				const deSelectedValues: _uiOpt[] = Object.values(this.internalModel).filter(selectedOption => !newValuesAsSet.has(selectedOption.value));
-				const newlySelectedValues: string[] = (newVal as string[]).filter(value => oldValuesAsMap[value] == null);
-				const stillSelectedValues: _uiOpt[] = (newVal as string[]).map(value => oldValuesAsMap[value]).filter(opt => opt != null);
+				/** wasn't in previous :value array but is now - guaranteed selected and a corresponding option exists, or we allow unknowns */
+				const newSelectedValues: string[] = (newVal as string[]).filter(v => !oldValues[v] && (availableOptions[v] || this.allowUnknownValues));
 
-				// now find the corresponding uiOpts for all new values so we can create our model
-				// add synthetic options for unknown values if allowUnknownValues, else remove unknown values
-				const allKnownOptions = this.uiOptions.filter(o => o.type === 1) as _uiOpt[];
-				const newlySelectedValuesAsUiOpts = newlySelectedValues.reduce<_uiOpt[]>((opts, value, index) => {
-					let matchingOption = allKnownOptions.find(v => v.value === value);
-					if (!matchingOption && this.allowUnknownValues) {
-						// create a synthetic option to place in our model
-						// so we can store the value, event though it's not in our options list
-						debugLog('Creating synthetic option for value ' + value);
-						matchingOption = {
-							type: 1,
-							id: Number.MAX_SAFE_INTEGER - index,
-							value,
-							label: value,
-							disabled: false,
-							title: value,
-							lowerValue: value.toLowerCase(),
-							lowerLabel: value.toLowerCase(),
-						};
-					}
-					if (matchingOption) {
-						opts.push(matchingOption);
-					}
-					return opts;
-				}, []);
-
-				for (const v of deSelectedValues) { Vue.delete(this.internalModel, v.id.toString()); }
-				for (const v of newlySelectedValuesAsUiOpts) { Vue.set(this.internalModel, v.id.toString(), v); }
-				const modelChanged = newlySelectedValuesAsUiOpts.length > 0 || deSelectedValues.length > 0;
-				if (modelChanged) {
-					this.$emit('change', Object.values(this.internalModel).map(o => o.value));
-				}
+				deselectedValues.forEach(v => Vue.delete(this.internalModel, v));
+				newSelectedValues.forEach(v => Vue.set(this.internalModel, v, true));
 			}
 		}
 	},
 	watch: {
+		emitInputEventData() {
+			if (this.editable) {
+				this.$emit('input', this.inputValue);
+			} else {
+				// Model only edited when actually required, so always fire input event
+				// So if this triggers we know for sure the value output also needs to change
+				const values = Object.keys(this.internalModel);
+				this.$emit('input', this.multiple ? values : values[0]);
+			}
+		},
 		isOpen: {
 			immediate: true,
-			handler(cur: boolean, prev: boolean) {
+			handler(cur: boolean) {
 				if (cur) {
 					// Add a small delay on adding click listeners, or we risk intercepting our own bubbling opening click
 					// and immediately closing
 					// Use requestAnimationFrame because vue.nextTick is too early (event is still bubbling).
 					requestAnimationFrame(() => this.addGlobalListeners());
-					if (this.containerEl) {
+					if (this.containerEl || this.flip) {
 						this.reposition();
 					}
 				} else {
 					this.removeGlobalListeners();
 					if (this.emitChangeOnClose) {
 						this.emitChangeOnClose = false;
-						this.$emit('change', this.editable ? this.inputValue : this.multiple ? Object.values(this.internalModel).map(o => o.value) : Object.values(this.internalModel).map(o => o.value)[0]);
+						this.$emit('change',
+							this.editable ? this.inputValue :
+							this.multiple ? Object.keys(this.internalModel) :
+							Object.keys(this.internalModel)[0]
+						);
 					}
 				}
 			}
 		},
-		// Not immediate on purpose, first change is done in mounted()
+
+		// Not immediate on purpose, as the element might be part of a nother vue component that needs some time to mount
+		// The initial change is set in mounted()
 		container(v: string) {
-			return v ? document.querySelector(v) : null;
+			this.containerEl = v ? document.querySelector(v) : null;
 		},
 		containerEl: {
 			immediate: true,
@@ -730,41 +837,13 @@ export default Vue.extend({
 				}
 			}
 		},
-		value: {
-			immediate: true,
-			handler(newVal: string|string[]|null, oldVal: string|string[]|null) {
-				this.correctModel(newVal);
-			}
-		},
-		internalModel() {
-			// Model only updated when required, see value prop watcher above
-			// So if this triggers we know for sure the value output also needs to change
-			const values = Object.values(this.internalModel).map(v => v.value);
-			if (this.multiple) {
-				this.$emit('input', values);
-			} else {
-				this.$emit('input', values[0] || '');
-			}
-		},
-		options: {
-			deep: true,
-			immediate: false,
-			handler() {
-				this.correctModel(Object.values(this.internalModel).map(v => v.value));
-			}
-		},
 
-		editable(v: boolean) { if (!v && !this.searchable) { this.inputValue = ''; } },
+		correctModelProps: {
+			immediate: true,
+			handler() { this.correctModel(this.value); }
+		},
+		editable(v: boolean) { if (!v && !this.searchable) { this.inputValue = ''; } if (v) { this.internalModel = {}; }},
 		searchable(v: boolean) { if (!v && !this.editable) { this.inputValue = ''; } },
-	},
-	created() {
-		if (this.editable && this.multiple) {
-			throw new Error('Editable not supported with multiple');
-		}
-		// Correct initial value (it might be invalid?)
-		if (this.value) {
-			this.correctModel(this.value);
-		}
 	},
 	mounted() {
 		// Only do this when mounted, the container selector may refer to a parent element
@@ -776,7 +855,7 @@ export default Vue.extend({
 	beforeDestroy() {
 		this.removeGlobalListeners();
 		// In case container has been set.
-		(this.$refs.menu as HTMLElement).remove();
+		(this.$refs.menu as HTMLElement).parentElement!.removeChild(this.$refs.menu as HTMLElement);
 	},
 });
 </script>
@@ -798,6 +877,13 @@ export default Vue.extend({
 	}
 	.placeholder {
 		color: #999;
+	}
+
+	&:hover,
+	&:focus {
+		.placeholder {
+			color: inherit;
+		}
 	}
 }
 
@@ -851,13 +937,13 @@ export default Vue.extend({
 
 		&.stretch {
 			width: 100%;
-			min-width: none;
+			min-width: 0;
 			max-width: none;
 		}
 		&.shrink {
 			width: auto;
 			max-width: 100%;
-			min-width: none;
+			min-width: 0;
 		}
 		&.grow {
 			width: auto;
@@ -887,7 +973,20 @@ export default Vue.extend({
 	position: absolute;
 	top: 0;
 	// width: auto;
-	z-index: 1000;
+	z-index: 1050;
+
+	&.static {
+		position: static;
+		box-shadow: none;
+		border: none;
+		z-index: 0;
+		top: inherit;
+		left: inherit;
+		right: inherit;
+		bottom: inherit;
+		margin: 0;
+		border-radius: 0;
+	}
 
 	text-align: left;
 	&[dir="rtl"] {
@@ -920,9 +1019,14 @@ export default Vue.extend({
 		}
 	}
 	>.menu-body {
-		display: block;
+		display: flex;
+		flex-direction: vertical;
 		max-height: 300px;
 		overflow: auto;
+	}
+
+	.menu-options {
+		width: 100%;
 	}
 
 	.menu-option {

@@ -5,6 +5,7 @@
 			class="groupby-editor-annotation"
 			data-class="btn-default btn-sm"
 			data-width="auto"
+			data-menu-width="grow"
 
 			container="body"
 

@@ -31,7 +31,7 @@
 
 			<div v-if="groupBy && !contextEnabled" :class="['checkbox-inline', {'disabled': disabled}]" style="margin-left: 5px;">
 				<label title="Separate groups for differently cased values" style="white-space: nowrap; margin: 0; cursor:pointer;" :for="uid+'case'">
-					<input type="checkbox" :id="uid+'case'" :disabled="disabled" v-model="caseSensitive">Case sensitive
+					<input type="checkbox" :id="uid+'case'" :disabled="disabled" v-model="caseSensitive">Case-sensitive
 				</label>
 			</div>
 		</div>

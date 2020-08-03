@@ -83,7 +83,7 @@
 
 						v-model="caseSensitive"
 					>
-					Case&nbsp;and&nbsp;diacritics&nbsp;sensitive
+					Case-&nbsp;and&nbsp;diacritics-sensitive
 				</label>
 			</div>
 		</div>

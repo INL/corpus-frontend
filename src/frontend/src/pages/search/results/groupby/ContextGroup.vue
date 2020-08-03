@@ -56,7 +56,7 @@
 
 		<div class="groupby-editor-checkboxes">
 			<div class="groupby-editor-case-sensitive checkbox" title="Treat context case-sensitive">
-				<label><input type="checkbox" v-model="caseSensitive"> Case sensitive</label>
+				<label><input type="checkbox" v-model="caseSensitive"> Case-sensitive</label>
 			</div>
 			<div :class="['groupby-editor-end-of-hit', 'checkbox', {'disabled': context !== 'hit'}]" :title="context !== 'hit' ? 'Only available for hit context' : 'Group the last words in the hit instead of the first'">
 				<label><input type="checkbox" :disabled="context !== 'hit'" v-model="fromEndOfHit"> From end of hit </label>

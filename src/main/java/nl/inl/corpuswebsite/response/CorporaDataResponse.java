@@ -30,7 +30,7 @@ public class CorporaDataResponse extends BaseResponse {
         throws ServletException {
 
         // Don't call super(), we don't always have a corpus to work with, and even if we do, it's not guaranteed to be valid
-        // (since we will retrieve the default fallback files in that case, and the BaseResponse is supposed to use a valid )
+        // (since we will retrieve the default fallback files in that case, and the BaseResponse is supposed to use a valid corpus)
 
         this.request = request;
         this.response = response;

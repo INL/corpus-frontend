@@ -1,14 +1,33 @@
-@font-face {
+@font-face{
 	font-family: 'Inl vmnw wnt';
-	src: url('../font/INLVRG__.eot');
-	src: local('Inl vmnw wnt'), url('../font/INLVRG__.TTF')
-		format('truetype');
+	src: url('../font/INLVRG__.TTF') format('truetype');
+}
+
+@font-face{
+	font-family: 'Inl vmnw wnt';
+	src: url('../font/INLVI___.TTF') format('truetype');
+	font-style: italic;
+}
+
+@font-face{
+	font-family: 'Inl vmnw wnt';
+	src: url('../font/INLVB___.TTF') format('truetype');
+	font-weight: bold;
+}
+
+@font-face{
+	font-family: 'Inl vmnw wnt';
+	src: url('../font/INLVBI__.TTF') format('truetype');
+	font-weight: bold;
+	font-style: italic;
 }
 
 body {
 	background-repeat: no-repeat;
 	background-position: -350px -310px;
 	background-attachment: scroll;
+	
+	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif,"Inl vmnw wnt";
 	padding-top: 60px;
 	padding-bottom: 40px;
 }

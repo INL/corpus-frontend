@@ -159,20 +159,23 @@ export default Vue.extend({
 		reset() { this.wordOptions = []; this.posOptions = {}; this.modelValue = ''; }
 	},
 	created() {
-		const re = /^[\w]+$/;
+		const isValidWord = /^[\w]+$/;
 		const emptyResult = {posOptions: {} as MapOf<boolean>, wordList: [] as WordOption[]};
 
 		// don't ever do anything (clear or search...) while a suggestion is selected, also not when search term is emptied (such as when deselecting all suggestions)
 		const filteredInput$ = this.input$.pipe(filter(v => !this.selectedWords.length && !!v));
 
-		// we need three outcome streams:
-
+		// we need two outcome streams:
 		// one that clears immediately to either: empty when something is typed that seems invalid, or to null (indicating pending results) otherwise
-		const clearResults$ = filteredInput$.pipe(map(v => !v.match(re) ? emptyResult : null));
+		const clearResults$ = filteredInput$.pipe(map(v => !v.match(isValidWord) ? emptyResult : null));
+		// and one that (for valid inputs) gets the results
 		const suggestions$: Observable.Observable<typeof emptyResult> = filteredInput$.pipe(
-			filter(v => !!v.match(re)), // non-actionable input, don't show any suggestions, they should already have been cleared
 			debounceTime(1500),
 			switchMap(term => {
+				// non-actionable input, don't show any suggestions, they should already have been cleared.
+				// We need to let these invalid inputs trickle through to here so that
+				// old requests are not given an oppertunity to complete and show stale results
+				if (!term.match(isValidWord)) { return Observable.empty(); }
 				const lemmata1 = Axios.get<LexiconLemmaIdResponse>(config.getLemmaIdFromWordform, { params: { database: this.database, wordform: term, case_sensitive: config.case_sensitive } });
 				const lemmata2 = Axios.get<LexiconLemmaIdResponse>(config.getLemmaIdFromLemma, { params: { database: this.database, lemma: term, case_sensitive: config.case_sensitive } });
 				const lemmataRequest = Promise.all([lemmata1, lemmata2]).then(r => r.flatMap(rr => rr.data.lemmata_list.flatMap(l => l.found_lemmata)));

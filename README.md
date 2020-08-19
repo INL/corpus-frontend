@@ -491,7 +491,7 @@ Because the format config specifies the shape of a corpus (which metadata and an
       });
       ```
 
-      The `Permissive` and `String` setting toggles whether to match documents that merely overlap with the provided range, or only documents that fall fully within the range.
+      The `Permissive`/`Strict` mode (see image) toggles whether to match documents that merely overlap with the provided range, or only documents that fall fully within the range.
       E.G.: the document has `date_lower=1900` and `date_upper=1950`. The query is `1900-1910`, this matches when using Permissive (as the values overlap somewhat), while Strict would not match, as the document's actual value could also be outside this range. To also match using Strict, the query would have to be at least `1899-1951`.
 
   </details>

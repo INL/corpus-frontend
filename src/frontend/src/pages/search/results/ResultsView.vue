@@ -71,6 +71,7 @@
 				allowHtml
 				hideDisabled
 				allowUnknownValues
+				right
 
 				:searchable="sortOptions.flatMap(o => o.options && !o.disabled ? o.options.filter(opt => !opt.disabled) : o).length > 12"
 				:options="sortOptions"

@@ -2,14 +2,14 @@
 	<div v-if="shouldRender" :class="['article-pagination', shouldRender && loading && 'loading']">
 		<span v-if="loading" class="fa fa-spinner fa-spin fa-4x"></span>
 		<template v-else>
-			<div v-if="pageSize != null" class="pagination-container">
+			<div v-if="paginationInfo" class="pagination-container">
 				<label>Pages</label>
 				<div class="pagination-wrapper">
 					<Pagination v-bind="paginationInfo" :editable="false" :showOffsets="false" @change="handlePageNavigation"/>
 				</div>
 			</div>
-			<hr v-if="hits.length && pageSize != null">
-			<div v-if="hits.length" class="pagination-container">
+			<hr v-if="hitInfo && paginationInfo != null">
+			<div v-if="hitInfo" class="pagination-container">
 				<label>Hits</label>
 				<div class="pagination-wrapper">
 					<Pagination v-bind="hitInfo" :editable="false" :showOffsets="false" @change="handleHitNavigation"/>
@@ -39,7 +39,7 @@ declare const INDEX_ID: string;
 declare const DOCUMENT_ID: string;
 declare const DOCUMENT_LENGTH: number;
 declare const PAGINATION_ENABLED: boolean;
-declare const PAGE_SIZE: number|undefined; // set to undefined when when pagination disabled
+declare const PAGE_SIZE: number; // always set, even when pagination disabled
 declare const PAGE_START: number; // set to 0 when pagination disabled
 declare const PAGE_END: number; // set to document_length when pagination disabled
 

@@ -59,6 +59,7 @@
 			{{error.message}}
 			<br>
 			<br>
+			<button type="button" class="btn btn-default" title="Reset sorting+grouping and try again" @click="markDirty();">Try again</button>
 			<button type="button" class="btn btn-default" title="Reset sorting+grouping and try again" @click="storeModule.actions.reset(); markDirty();">Clear settings and try again</button>
 		</div>
 

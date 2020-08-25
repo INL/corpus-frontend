@@ -571,7 +571,8 @@ export default Vue.extend({
 				hitGroups.forEach(g => {
 					stage1.push({
 						id: g.identity || '[unknown]',
-						displayname: g.identityDisplay || '[unknown]',
+						displayname: g.identity.split(',').map(v => v.split(':')[0]).join('·' /* middot i.e. list separator*/)
+						.replace('$CL', ':').replace('$CM', ',').replace('$DL', '$') || '[unknown]',
 
 						'r.d': summary.numberOfDocs,
 						'r.t': summary.tokensInMatchingDocuments!, // FIXME augment request to make this available
@@ -604,8 +605,9 @@ export default Vue.extend({
 					const sreltokens = stokens ? g.numberOfTokens / stokens : undefined;
 
 					stage1.push({
-						id: g.identity || '[unknown]',
-						displayname: g.identityDisplay || '[unknown]',
+						id: g.identity,
+						displayname: g.identity.split(',').map(v => v.split(':')[1] || '[unknown]').join(' · ' /* middot i.e. list separator*/)
+						.replace('$CL', ':').replace('$CM', ',').replace('$DL', '$') || '[unknown]',
 
 						'r.d': summary.numberOfDocs,
 						'r.t': summary.tokensInMatchingDocuments!, // FIXME augment request to make this available

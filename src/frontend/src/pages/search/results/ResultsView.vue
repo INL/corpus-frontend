@@ -438,9 +438,15 @@ export default Vue.extend({
 						label: 'Sort by Group Name',
 						value: 'identity',
 					}, {
+						label: 'Sort by Group Name (descending)',
+						value: '-identity',
+					}, {
 						label: 'Sort by Size',
 						value: 'size',
-					}].flatMap(o => [o, {...o, label: o.label + ' (descending)', value: '-' + o.value}])
+					}, {
+						label: 'Sort by Size (descending)',
+						value: '-size', // numeric sorting is inverted: https://github.com/INL/corpus-frontend/issues/340
+					}]
 				});
 			}
 
@@ -456,7 +462,10 @@ export default Vue.extend({
 					options: [{
 						label: 'Sort by hits',
 						value: 'numhits'
-					}].flatMap(o => [o, {...o, label: o.label + ' (descending)', value: '-' + o.value}])
+					}, {
+						label: 'Sort by hits (ascending)',
+						value: '-numhits' // numeric sorting is inverted: https://github.com/INL/corpus-frontend/issues/340
+					}]
 				});
 			}
 

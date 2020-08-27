@@ -444,7 +444,7 @@ export default Vue.extend({
 						label: 'Sort by Size',
 						value: 'size',
 					}, {
-						label: 'Sort by Size (descending)',
+						label: 'Sort by Size (ascending)',
 						value: '-size', // numeric sorting is inverted: https://github.com/INL/corpus-frontend/issues/340
 					}]
 				});

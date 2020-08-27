@@ -571,7 +571,7 @@ export default Vue.extend({
 				hitGroups.forEach(g => {
 					stage1.push({
 						id: g.identity || '[unknown]',
-						displayname: g.identity.split(',').map(v => v.split(':')[0]).join('·' /* middot i.e. list separator*/)
+						displayname: g.identity.split(',').map(v => v.substring(1+v.lastIndexOf(':'))).join('·' /* middot i.e. list separator*/)
 						.replace('$CL', ':').replace('$CM', ',').replace('$DL', '$') || '[unknown]',
 
 						'r.d': summary.numberOfDocs,
@@ -606,7 +606,7 @@ export default Vue.extend({
 
 					stage1.push({
 						id: g.identity,
-						displayname: g.identity.split(',').map(v => v.split(':')[1] || '[unknown]').join(' · ' /* middot i.e. list separator*/)
+						displayname: g.identity.split(',').map(v => v.substring(1+v.lastIndexOf(':'))).join('·' /* middot i.e. list separator*/)
 						.replace('$CL', ':').replace('$CM', ',').replace('$DL', '$') || '[unknown]',
 
 						'r.d': summary.numberOfDocs,

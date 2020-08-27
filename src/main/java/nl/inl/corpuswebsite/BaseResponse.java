@@ -21,6 +21,7 @@ import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.event.EventCartridge;
 import org.apache.velocity.app.event.ReferenceInsertionEventHandler;
+import org.apache.velocity.tools.generic.DateTool;
 import org.apache.velocity.tools.generic.EscapeTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +34,7 @@ public abstract class BaseResponse {
     private static final String OUTPUT_ENCODING = "UTF-8";
 
     protected static final EscapeTool esc = new EscapeTool();
+    protected static final DateTool date = new DateTool();
 
     protected MainServlet servlet;
 
@@ -94,6 +96,7 @@ public abstract class BaseResponse {
 
         // Utils
         context.put("esc", esc);
+        context.put("date", date);
         // For use in queryParameters to ensure clients don't cache old css/js when the application has updated.
         // During development, there's usually no WAR, so no build time either, but we assume the developer knows to ctrl+f5
         context.put("cache", servlet.getWarBuildTime().hashCode());
@@ -103,10 +106,10 @@ public abstract class BaseResponse {
         context.put("buildTime", servlet.getWarBuildTime());
         context.put("jspath", servlet.getAdminProps().getProperty(MainServlet.PROP_JSPATH));
         cfg.getAnalyticsKey().ifPresent(key -> context.put("googleAnalyticsKey", key));
-        
+
         if (servlet.getBannerMessage().isPresent() && !this.isCookieSet("banner-hidden", Integer.toString(servlet.getBannerMessage().get().hashCode()))) {
             context.put("bannerMessage", servlet.getBannerMessage().get());
-            context.put("bannerMessageCookie", 
+            context.put("bannerMessageCookie",
                         "banner-hidden="+servlet.getBannerMessage().get().hashCode()+
                         "; Max-Age="+24*7*3600+
                         "; Path="+servlet.getServletContext().getContextPath()+"/");
@@ -246,11 +249,11 @@ public abstract class BaseResponse {
     public boolean isCorpusRequired() {
         return requiresCorpus;
     }
-    
+
     public Optional<Cookie> getCookie(String name) {
         return Optional.ofNullable(request.getCookies()).flatMap(cc -> Arrays.stream(cc).filter(t -> t.getName().equals(name)).findFirst());
     }
-    
+
     public boolean isCookieSet(String name, String value) {
         return this.getCookie(name).filter(c -> c.getValue().equals(value)).isPresent();
     }

@@ -788,7 +788,7 @@ export default Vue.extend({
 				// Model only edited when actually required, so always fire input event
 				// So if this triggers we know for sure the value output also needs to change
 				const values = Object.keys(this.internalModel);
-				this.$emit('input', this.multiple ? values : values[0]);
+				this.$emit('input', this.multiple ? values : values.length ? values[0] : null);
 			}
 		},
 		isOpen: {
@@ -806,10 +806,11 @@ export default Vue.extend({
 					this.removeGlobalListeners();
 					if (this.emitChangeOnClose) {
 						this.emitChangeOnClose = false;
+						const values = Object.keys(this.internalModel);
 						this.$emit('change',
 							this.editable ? this.inputValue :
-							this.multiple ? Object.keys(this.internalModel) :
-							Object.keys(this.internalModel)[0]
+							this.multiple ? values :
+							values.length ? values[0] : null // not multiple - single value
 						);
 					}
 				}

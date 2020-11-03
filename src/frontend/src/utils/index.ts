@@ -376,7 +376,12 @@ export function annotationGroups(
 	return sortedGroupsArray;
 }
 
-export function selectPickerAnnotationOptions(ids: string[], annots: MapOf<AppTypes.NormalizedAnnotation[]>, operation: 'Group'|'Sort', corpusTextDirection: 'ltr'|'rtl'): AppTypes.OptGroup[] {
+export function selectPickerAnnotationOptions(
+	ids: string[],
+	annots: MapOf<AppTypes.NormalizedAnnotation[]>,
+	operation: 'Group'|'Sort',
+	corpusTextDirection: 'ltr'|'rtl'
+): AppTypes.OptGroup[] {
 	// NOTE: grouping on annotations without a forward index is not supported - however has already been checked in the UIStore
 
 	// If sorting: do left/right
@@ -395,14 +400,19 @@ export function selectPickerAnnotationOptions(ids: string[], annots: MapOf<AppTy
 	.map<AppTypes.OptGroup>(([prefix, groupname, suffix]) =>({
 		label: groupname,
 		options: ids.flatMap(id => {
+			// @ts-ignore
+			const displayIdHtml = process.env.NODE_ENV === 'development' ? `<small><strong>[${id}]</strong></small>` : '';
+			const displayNameHtml = annots[id][0].displayName || id; // in development mode - show IDs
+			const displaySuffixHtml = suffix && `<small class="text-muted">${suffix}</small>`;
+
 			const r: AppTypes.Option[] = [];
 			r.push({
-				label: `${operation} by ${annots[id][0].displayName || id} <small class="text-muted">${suffix}</small>`,
+				label: `${operation} by ${displayNameHtml} ${displayIdHtml} ${displaySuffixHtml}`,
 				value: `${prefix}${id}`
 			});
 			if (operation === 'Sort') {
 				r.push({
-					label: `${operation} by ${annots[id][0].displayName || id} (descending) <small class="text-muted">${suffix}</small>`,
+					label: `${operation} by ${displayNameHtml} ${displayIdHtml} (descending) ${displaySuffixHtml}`,
 					value: `-${prefix}${id}`
 				});
 			}
@@ -450,15 +460,21 @@ export function selectPickerMetadataOptions(
 	.map<AppTypes.OptGroup>(g => ({
 		label: g.groupId,
 		options: g.fields.flatMap(({id, displayName}) => {
+			// @ts-ignore
+			const displayIdHtml = process.env.NODE_ENV === 'development' ? `<small><strong>[${id}]</strong></small>` : '';
+			const displayNameHtml = displayName || id; // in development mode - show IDs
+			const displaySuffixHtml = g.groupId && `<small class="text-muted">${g.groupId}</small>`;
+
 			const r: AppTypes.Option[] = [];
+
 			r.push({
 				value: `field:${id}`,
-				label: `${operation} by ${(displayName || id)} <small class="text-muted">(${g.groupId})</small>`,
+				label: `${operation} by ${displayNameHtml} ${displayIdHtml} ${displaySuffixHtml}`,
 			});
 			if (operation === 'Sort') {
 				r.push({
 					value: `-field:${id}`,
-					label: `${operation} by ${(displayName || id)} (descending) <small class="text-muted">(${g.groupId})</small>`,
+					label: `${operation} by ${displayNameHtml} ${displayIdHtml} (descending) ${displaySuffixHtml}`,
 				});
 			}
 			return r;

@@ -353,7 +353,8 @@ const tableHeaders: {
 		},
 		'gr.t': {
 			label: '#tokens in group',
-			title: '(gr.t) - Combined length of all documents with hits in this group'
+			title: '(gr.t) - Combined length of all documents with hits in this group',
+			sortProp: 'sizeintokens',
 		},
 		'gr.h': {
 			label: '#hits in group',
@@ -383,6 +384,7 @@ const tableHeaders: {
 		'gsc.t': {
 			label: '#all tokens in current group',
 			title: '(gr.t)',
+			sortProp: 'sizeintokens',
 		},
 
 		'relative group size [gr.d/r.d]': {
@@ -572,7 +574,7 @@ export default Vue.extend({
 					stage1.push({
 						id: g.identity || '[unknown]',
 						displayname: g.identity.split(',').map(v => v.substring(1+v.lastIndexOf(':'))).join('·' /* middot i.e. list separator*/)
-						.replace('$CL', ':').replace('$CM', ',').replace('$DL', '$') || '[unknown]',
+						.replace(/\$CL/g, ':').replace(/\$CM/g, ',').replace(/\$DL/g, '$') || '[unknown]',
 
 						'r.d': summary.numberOfDocs,
 						'r.t': summary.tokensInMatchingDocuments!, // FIXME augment request to make this available
@@ -607,7 +609,7 @@ export default Vue.extend({
 					stage1.push({
 						id: g.identity,
 						displayname: g.identity.split(',').map(v => v.substring(1+v.lastIndexOf(':'))).join('·' /* middot i.e. list separator*/)
-						.replace('$CL', ':').replace('$CM', ',').replace('$DL', '$') || '[unknown]',
+						.replace(/\$CL/g, ':').replace(/\$CM/g, ',').replace(/\$DL/g, '$') || '[unknown]',
 
 						'r.d': summary.numberOfDocs,
 						'r.t': summary.tokensInMatchingDocuments!, // FIXME augment request to make this available

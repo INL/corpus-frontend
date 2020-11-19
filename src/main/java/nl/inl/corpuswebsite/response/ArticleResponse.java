@@ -12,7 +12,6 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.TransformerException;
 
@@ -262,20 +261,16 @@ public class ArticleResponse extends BaseResponse {
                 return;
             }
 
-
-            final Matcher m = CAPTURE_DOCLENGTH_PATTERN.matcher(documentMetadata.getLeft());
-            if (m.find()) {
-                this.documentLength = Integer.parseInt(m.group(1));
-            } else {
-                throw new RuntimeException("Cannot decode document size. Unsupported BlackLab version?");
-            }
-
             this.pageSize = pageSize;
+            this.documentLength = getDocumentLength(documentMetadata.getLeft());
             this.paginationEnabled = usePagination;
 
             if (!usePagination) {
-                requestedPageStart = 0;
-                requestedPageEnd = documentLength;
+                this.clientPageStart = 0;
+                this.clientPageEnd = documentLength;
+                this.blacklabPageStart = Optional.empty();
+                this.blacklabPageEnd = Optional.empty();
+                return;
             }
 
             if (requestedPageStart >= documentLength || requestedPageStart <= 0) { requestedPageStart = 0; }
@@ -290,6 +285,15 @@ public class ArticleResponse extends BaseResponse {
             // as it would chop off leading/trailing document contents if we do, instead we don't want to send anything
             this.blacklabPageStart = Optional.of(requestedPageStart).filter(v -> v != 0);
             this.blacklabPageEnd = Optional.of(requestedPageEnd).filter(v -> v != documentLength);
+        }
+        
+        private static int getDocumentLength(String documentMetadata) {
+            final Matcher m = CAPTURE_DOCLENGTH_PATTERN.matcher(documentMetadata);
+            if (m.find()) {
+                return Integer.parseInt(m.group(1));
+            } else {
+                throw new RuntimeException("Cannot decode document size. Unsupported BlackLab version?");
+            }
         }
     }
 

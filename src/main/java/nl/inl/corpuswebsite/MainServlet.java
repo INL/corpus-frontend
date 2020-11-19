@@ -6,20 +6,36 @@
  */
 package nl.inl.corpuswebsite;
 
-import nl.inl.corpuswebsite.response.*;
-import nl.inl.corpuswebsite.utils.CorpusConfig;
-import nl.inl.corpuswebsite.utils.QueryServiceHandler;
-import nl.inl.corpuswebsite.utils.QueryServiceHandler.QueryException;
-import nl.inl.corpuswebsite.utils.WebsiteConfig;
-import nl.inl.corpuswebsite.utils.XslTransformer;
-
-import org.apache.commons.configuration2.ex.ConfigurationException;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.SystemUtils;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.velocity.Template;
-import org.apache.velocity.app.Velocity;
-import org.xml.sax.SAXException;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.function.Function;
+import java.util.jar.Manifest;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -29,22 +45,29 @@ import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
-import java.io.*;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
-import java.util.function.Function;
-import java.util.jar.Manifest;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.SystemUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.velocity.Template;
+import org.apache.velocity.app.Velocity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
+
+import nl.inl.corpuswebsite.response.AboutResponse;
+import nl.inl.corpuswebsite.response.ArticleResponse;
+import nl.inl.corpuswebsite.response.CorporaDataResponse;
+import nl.inl.corpuswebsite.response.CorporaResponse;
+import nl.inl.corpuswebsite.response.ErrorResponse;
+import nl.inl.corpuswebsite.response.HelpResponse;
+import nl.inl.corpuswebsite.response.RemoteIndexResponse;
+import nl.inl.corpuswebsite.response.SearchResponse;
+import nl.inl.corpuswebsite.utils.CorpusConfig;
+import nl.inl.corpuswebsite.utils.QueryServiceHandler;
+import nl.inl.corpuswebsite.utils.QueryServiceHandler.QueryException;
+import nl.inl.corpuswebsite.utils.WebsiteConfig;
+import nl.inl.corpuswebsite.utils.XslTransformer;
 
 /**
  * Main servlet class for the corpus application.
@@ -103,8 +126,6 @@ public class MainServlet extends HttpServlet {
     public static final String PROP_DATA_PATH               = "corporaInterfaceDataDir";
     /** Name of the default fallback directory/corpus in the PROP_DATA_PATH */
     public static final String PROP_DATA_DEFAULT            = "corporaInterfaceDefault";
-    /** Maximum number of words displayed in one "page" of a document */
-    public static final String PROP_DOCUMENT_PAGE_LENGTH    = "pageLength";
     /** Development mode, allow script tags to load load js from an external server (webpack-dev-server), defaults to $pathToTop/js/ */
     public static final String PROP_JSPATH                  = "jspath"; // usually set to http://127.0.0.1/dist/ for development
     /** Development mode, disable caching of any corpus data (e.g. search.xml, article.xsl, meta.xsl etc) */
@@ -130,7 +151,6 @@ public class MainServlet extends HttpServlet {
         p.setProperty(PROP_BLS_SERVERSIDE,          "http://localhost:8080/blacklab-server/");
         p.setProperty(PROP_DATA_PATH,               "/etc/blacklab/projectconfigs");
         p.setProperty(PROP_DATA_DEFAULT,            "default");
-        p.setProperty(PROP_DOCUMENT_PAGE_LENGTH,    "5000");
         p.setProperty(PROP_JSPATH,                  contextPath+"/js");
         p.setProperty(PROP_CACHE, 					"false");
         // not all properties may need defaults

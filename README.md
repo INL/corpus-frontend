@@ -185,7 +185,7 @@ When a file is not found for a corpus, the frontend will then check the followin
 The data directory may contain the following files and subdirectories:
 
 - `Search.xml`
-Allows you to (among other things) set the navbar links and inject custom css/js, or enable/disabled pagination in documents.
+Allows you to (among other things) set the navbar links and inject custom css/js, or enable/disable pagination in documents.
 See [the default configuration](src/main/resources/interface-default/search.xml).
 - `help.inc`
 Html content placed in the body of the `MyCorpus/help/` page.

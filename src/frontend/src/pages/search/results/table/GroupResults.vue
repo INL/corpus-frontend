@@ -573,8 +573,7 @@ export default Vue.extend({
 				hitGroups.forEach(g => {
 					stage1.push({
 						id: g.identity || '[unknown]',
-						displayname: g.identity.split(',').map(v => v.substring(1+v.lastIndexOf(':'))).join('·' /* middot i.e. list separator*/)
-						.replace(/\$CL/g, ':').replace(/\$CM/g, ',').replace(/\$DL/g, '$') || '[unknown]',
+						displayname: this.decodePropertyValue(g.identity) || '[unknown]',
 
 						'r.d': summary.numberOfDocs,
 						'r.t': summary.tokensInMatchingDocuments!, // FIXME augment request to make this available
@@ -608,8 +607,7 @@ export default Vue.extend({
 
 					stage1.push({
 						id: g.identity,
-						displayname: g.identity.split(',').map(v => v.substring(1+v.lastIndexOf(':'))).join('·' /* middot i.e. list separator*/)
-						.replace(/\$CL/g, ':').replace(/\$CM/g, ',').replace(/\$DL/g, '$') || '[unknown]',
+						displayname: this.decodePropertyValue(g.identity) || '[unknown]',
 
 						'r.d': summary.numberOfDocs,
 						'r.t': summary.tokensInMatchingDocuments!, // FIXME augment request to make this available
@@ -754,6 +752,37 @@ export default Vue.extend({
 		openFullConcordances(id: string, displayName: string) {
 			this.$emit('viewgroup', {id, displayName});
 		},
+
+		decodePropertyValue(v: string): string {
+			function decode(value: string[], skipParts: number, unescape: boolean) {
+				value.splice(0, skipParts);
+				if (unescape) value = value.map(p => p.replace(/\$CL/g, ':').replace(/\$CM/g, ',').replace(/\$DL/g, '$'));
+				return value.join(' ');
+			}
+
+			return v
+			.split(',')
+			.map(p => {
+				const [type, ...rest] = p.split(':');
+				switch (type) {
+					case 'cwo':
+					case 'cws':
+					case 'cwsr':
+						return decode(rest, 2, true);
+						//  reverse! (apparently)
+					case 'dec': // no sens - no unescape
+					case 'int': // no sens -- no unescape
+					case 'str': // no sens -- do unescape
+					case 'doc': // no sens - no unescape
+						return decode(rest, 0, false);
+					default:
+						// unknown property - newer version of blacklab? make some best effort guess.
+						const valueMightHaveSensitivitySpecifier = rest.includes('i') || rest.includes('s');
+						return decode(rest, valueMightHaveSensitivitySpecifier ? 2 : 0, valueMightHaveSensitivitySpecifier);
+				}
+			})
+			.join('·');
+		}
 	},
 	watch: {
 		results: {

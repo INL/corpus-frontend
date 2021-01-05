@@ -53,7 +53,7 @@
     "whatwg-fetch": "^3.2.0"
   },
   "dependencies": {
-    "axios": "^0.18.1",
+    "axios": "^0.21.1",
     "bootstrap": "file:src/vendor/bootstrap-3.3.7-edited",
     "bootstrap-select": "^1.13.5",
     "clone-deep": "^4.0.1",

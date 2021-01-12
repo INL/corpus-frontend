@@ -19,6 +19,8 @@ import $ from 'jquery';
 import 'jquery-ui';
 import 'jquery-ui/ui/widgets/autocomplete';
 
+import {splitIntoTerms} from '@/utils';
+
 // Inherit jQueryUI autocomplete widget and customize the rendering
 // to apply some bootstrap classes and structure
 $.widget('custom.autocomplete', $.ui.autocomplete, {
@@ -55,6 +57,7 @@ export default Vue.extend({
 			default: true,
 			type: Boolean
 		},
+		useQuoteAsWordBoundary: Boolean
 	},
 	computed: {
 		modelvalue: {
@@ -116,31 +119,44 @@ export default Vue.extend({
 		},
 		_destroyAutocomplete() { $(this.$el).autocomplete('destroy'); },
 		_refreshList(e: Event) { if (!this.autocomplete) { return; } $(e.target as HTMLElement).autocomplete('search'); },
+
 		/**
 		 * @param lookForward select until next whitespace, or only look back
 		 */
 		_getWordAroundCursor(lookForward: boolean): {start: number, end: number, value: string} {
 			const input = this.$el as HTMLInputElement;
-			if (input.value.length > 100) {
-				return {value : '', start: 0, end: input.value.length};
+			const value = input.value;
+			const nothingFound = {value : '', start: 0, end: value.length};
+			if (value.length > 100) {
+				return nothingFound;
 			}
 
-			let start = input.selectionStart || 0;
-			let end = input.selectionEnd || input.value.length;
+			let start = input.selectionStart != null ? input.selectionStart : 0;
+			let end = input.selectionEnd != null ? input.selectionEnd : value.length;
 			if (start > end) { const tmp = start; start = end; end = tmp; }
 
 			if (start === end) { // just a caret; no selection, find whitespace boundaries around cursor
-				start = input.value.lastIndexOf(' ', start-1)+1;
+				// start - 1 because splitIntoTerms takes quotes into consideration by default, but we do not.
+				const term =  splitIntoTerms(value, this.useQuoteAsWordBoundary).find(t => t.end >= (start -1))
+				if (!term) {
+					return nothingFound;
+				}
 				if (lookForward) {
-					end = input.value.indexOf(' ', end);
-					if (end === -1) { end = input.value.length; }
+					return term;
+				}
+				// We have a term but aren't supposed to look beyond the cursor end index, strip everything beyond it from the found term.
+				return {
+					start: term.isQuoted ? term.start + 1 : term.start,
+					end: Math.min(term.end, end),
+					value: term.value.substring(0, end - term.start)
 				}
 			}
 
-			const value = input.value.substring(start, end);
-			return { start, end, value };
+			return { start, end, value: value.substring(start, end) };
 		},
 		_autocompleteSelected(v: string) {
+			if (this.useQuoteAsWordBoundary && v.match(/\s/)) v = `"${v}"`;
+
 			const input = this.$el as HTMLInputElement;
 			const value = input.value;
 

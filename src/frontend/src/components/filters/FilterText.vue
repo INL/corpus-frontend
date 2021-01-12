@@ -24,7 +24,7 @@
 <script lang="ts">
 import BaseFilter from '@/components/filters/Filter';
 
-import { escapeLucene, MapOf, unescapeLucene } from '@/utils';
+import { escapeLucene, MapOf, splitIntoTerms, unescapeLucene } from '@/utils';
 import { FilterValue } from '@/types/apptypes';
 
 export default BaseFilter.extend({
@@ -41,37 +41,12 @@ export default BaseFilter.extend({
 			if (!value || !value.trim()) {
 				return null;
 			}
-
-			const resultParts = value
-			.split(/"/)
-			.flatMap((v, i) => {
-				if (!v) {
-					return [];
-				}
-				const inQuotes = (i % 2) !== 0;
-				const containsWhitespace = v.match(/\s+/);
-
-				return inQuotes ? escapeLucene(v, false) : v.split(/\s+/).filter(s => !!s).map(val => escapeLucene(val, true));
-			});
-
-			return resultParts.length ? `${this.id}:(${resultParts.join(' ')})` : null;
+			return `${this.id}:(${splitIntoTerms(value, true).map(t => escapeLucene(t.value, !t.isQuoted)).join(' ')})`;
 		},
 		luceneQuerySummary(): string|null {
 			let surroundWithQuotes = false;
-
-			const value = (this.value as string)
-			.split(/"/)
-			.flatMap((v, i) => {
-				const inQuotes = (i % 2) !== 0;
-				const containsWhitespace = !!v.match(/\s+/);
-				if (inQuotes && containsWhitespace && v.length > 0) {
-					surroundWithQuotes = true;
-					return v;
-				} else {
-					return v.split(/\s+/).filter(vv => !!vv);
-				}
-			});
-			return (value.length >= 2 || surroundWithQuotes) ? value.map(vv => `"${vv}"`).join(', ') : value.join(', ');
+			const split = splitIntoTerms(this.value, true);
+			return split.map(t => (t.isQuoted ||split.length > 1) ? `"${t.value}"` : t.value).join(', ') || null;
 		}
 	},
 	methods: {

@@ -46,6 +46,8 @@
 						class="form-control"
 						autofocus
 
+						useQuoteAsWordBoundary
+
 						:id="firstMainAnnotation.id + '_' + uid"
 						:placeholder="firstMainAnnotation.displayName"
 						:dir="textDirection"

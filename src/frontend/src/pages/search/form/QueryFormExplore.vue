@@ -121,6 +121,8 @@
 							type="text"
 							class="form-control"
 
+							useQuoteAsWordBoundary
+
 							:placeholder="token.annotation.displayName"
 							:dir="token.annotation.isMainAnnotation ? mainTokenTextDirection : undefined"
 							:disabled="index >= ngramSize"

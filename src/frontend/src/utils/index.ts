@@ -3,7 +3,6 @@ import URI from 'urijs';
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
 import { FilterState, FullFilterState } from '@/store/search/form/filters';
-import { RemoveProperties } from '@/types/helpers';
 
 export function escapeRegex(original: string, wildcardSupport: boolean) {
 	original = original.replace(/([\^$\-\\.(){}[\]+])/g, '\\$1'); // add slashes for regex characters
@@ -172,19 +171,7 @@ export const getAnnotationPatternString = (annotation: AppTypes.AnnotationValue)
 		case 'lexicon':
 		case 'combobox': {
 			// if multiple tokens, split on quotes (removing them), and whitespace outside quotes, and then transform the values individually
-			let resultParts = value
-			.trim()
-			.split(/"/)
-			.flatMap((v, i) => {
-				if (!v) {
-					return [];
-				}
-				const inQuotes = (i % 2) !== 0;
-				// alrighty,
-				// "split word" behind another few --> ["split word", "behind", "another", "few"]
-				// "wild* in split words" and such --> ["wild.* in split words", "and", "such"]
-				return inQuotes ? escapeRegex(v, true) : v.split(/\s+/).filter(s => !!s).map(val => escapeRegex(val, true));
-			});
+			let resultParts = splitIntoTerms(value, true).map(v => escapeRegex(v.value, true));
 			if (caseSensitive) {
 				resultParts = resultParts.map(v => `(?-i)${v}`);
 			}
@@ -194,6 +181,165 @@ export const getAnnotationPatternString = (annotation: AppTypes.AnnotationValue)
 		default: throw new Error('Unimplemented cql serialization for annotation type ' + type);
 	}
 };
+
+type SplitString = {
+	start: number;
+	end: number;
+	value: string;
+};
+
+/**
+ * Split a search pattern string into its terms.
+ * For example strings input in the "Simple Search" input.
+ * This works by splitting the string on all whitespace (ignoring it), except where (a part of) the string is enclosed in double quotes (""), between which whitespace is preserved.
+ * Double quotes and whitespace that has been used as separator is stripped from the value field of the returned structs.
+ * Stripped quotes (not whitespace!) are however still reflected in the start and end properties. (meaning for a string that isQuoted, (end-start) === (value.length + 2))
+ * This is because this function is also used to split out (and replace) the currently selected word/sequence of words for autocompleted annotations.
+ * Note: quote escaping is not taken into consideration. Backslashes are treated as any other character
+ * Examples:
+ * "split word" behind another few --> ["split word", "behind", "another", "few"]
+ * "wild* in split words" and such --> ["wild.* in split words", "and", "such"]
+ * @param v the input string.
+ */
+export const splitIntoTerms = (value: string, useQuoteDelimiters: boolean): Array<SplitString&{isQuoted: boolean}>  => {
+	let i = 0;
+	let inQuotes = false;
+	let seg = '';
+	let start = 0;
+	let segs: Array<{start: number, end: number, value: string, isQuoted: boolean}> = [];
+	for (const c of value) {
+		switch (c) {
+			case '"':
+				if (useQuoteDelimiters) {
+					// start or end of section (possibly both?)
+					if (seg) {
+						segs.push({start, end: i+1, value: seg, isQuoted: inQuotes})
+						seg = '';
+					}
+					inQuotes = !inQuotes;
+					start = i;
+				} else {
+					seg += c;
+				}
+				break;
+			case ' ':
+			case '\t':
+			case '\r':
+			case '\n':
+			case '\f':
+			case '\v':
+				if (inQuotes) seg += c;
+				else if (seg) {
+					// this character is already no longer a part of the segment - hence no +1 on end
+					segs.push({start, end: i, value: seg, isQuoted: inQuotes});
+					seg = '';
+				}
+				break;
+				// ignorable whitespace
+			default:
+				if (!seg && !inQuotes) start = i;
+				seg += c;
+				break;
+		}
+		++i;
+	}
+	if (seg) {
+		segs.push({start, end: i+1, value: seg, isQuoted: inQuotes});
+		seg = '';
+	}
+	return segs;
+};
+
+[{
+	value: '"the simplest"',
+	expect: [{
+		start: 0,
+		end: 14,
+		value: 'the simplest',
+		isQuoted: true
+	}]
+}, {
+	value: 'this is " a test """ ',
+	expect: [{
+		start: 0,
+		end: 4,
+		value: 'this'
+	}, {
+		start: 5,
+		end: 7,
+		value: 'is'
+	}, {
+		start: 8,
+		end: 18,
+		value: ' a test ',
+		isQuoted: true
+	}]
+}, {
+	value: 'regular string',
+	expect: [{
+		start: 0,
+		end: 7,
+		value: 'regular'
+	}, {
+		start: 8,
+		end: 14,
+		value: 'string'
+	}]
+}, {
+	value: '  starting with a few \t spaces \r\nhelp',
+	expect: [{
+		start: 2,
+		end: 10,
+		value: 'starting'
+	}, {
+		start: 11,
+		end: 15,
+		value: 'with'
+	}, {
+		start: 16,
+		end: 17,
+		value: 'a'
+	}, {
+		start: 18,
+		end: 21,
+		value: 'few'
+	}, {
+		start: 24,
+		end: 30,
+		value: 'spaces'
+	}, {
+		start: 33,
+		end: 37,
+		value: 'help'
+	}]
+},{
+	value: '"normal everyday" string "with some quotes"',
+	expect: [{
+		start: 0,
+		end: 17,
+		value: 'normal everyday',
+		isQuoted: true
+	}, {
+		start: 19,
+		end: 24,
+		value: 'string'
+	}, {
+		start: 26,
+		end: 44,
+		value: 'with some quotes',
+		isQuoted: true
+	}]
+}].forEach(({value: fullValue, expect}) => {
+	const split = splitIntoTerms(fullValue, true);
+	split.forEach((part, index) => {
+		const {start, end, value, isQuoted} = expect[index];
+		const expand = part.isQuoted ? 1 : 0;
+		if (fullValue.substring(part.start + expand, part.end - expand) !== value) {
+			console.log('part: ', part, 'expect: ', expect[index]);
+			debugger;
+		}
+	})
+});
 
 export const getPatternString = (annotations: AppTypes.AnnotationValue[], within: null|string) => {
 	const tokens = [] as string[][];

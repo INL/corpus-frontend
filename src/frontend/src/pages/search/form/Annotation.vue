@@ -29,6 +29,8 @@
 					type="text"
 					class="form-control"
 
+					useQuoteAsWordBoundary
+
 					:id="inputId"
 					:name="inputId"
 					:placeholder="displayName"

@@ -27,11 +27,11 @@
 	<div v-if="error" class="totals-message text-danger" @click="continueCounting" :title="error.message">
 		<span class="fa fa-exclamation-triangle text-danger"/> Network error! <button type="button" class="totals-button" @click="continueCounting"><span class="fa fa-rotate-right text-danger"></span> Retry</button>
 	</div>
-	<div v-else-if="isFinished && numResults > numResultsRetrieved" class="totals-message text-danger" :title="`You may only view up to ${numResultsRetrieved.toLocaleString()} results` ">
-		<span class="fa fa-exclamation-triangle text-danger"/> <b>Query limited;</b> stopped after {{numResultsRetrieved.toLocaleString()}} from a total of {{numResults.toLocaleString()}}
-	</div>
 	<div v-else-if="isLimited" class="totals-message text-danger" :title="`You may view up to ${numResultsRetrieved.toLocaleString()}. Additionally, BlackLab stopped counting after ${numResults.toLocaleString()}.`">
 		<span class="fa fa-exclamation-triangle text-danger"/> <b>Query limited;</b> stopped after {{numResultsRetrieved.toLocaleString()}} from a total of more than {{numResults.toLocaleString()}}
+	</div>
+	<div v-else-if="isFinished && numResults > numResultsRetrieved" class="totals-message text-danger" :title="`You may only view up to ${numResultsRetrieved.toLocaleString()} results` ">
+		<span class="fa fa-exclamation-triangle text-danger"/> <b>Query limited;</b> stopped after {{numResultsRetrieved.toLocaleString()}} from a total of {{numResults.toLocaleString()}}
 	</div>
 	<div v-else-if="isPaused" class="totals-message text-info">
 		Heavy query - search paused <button type="button" class="totals-button" @click="continueCounting"><span class="fa fa-rotate-right text-info"></span> Continue </button>
@@ -117,7 +117,7 @@ export default Vue.extend({
 				return '';
 			}
 
-			return `Matched ${this.numResults.toLocaleString()} ${this.resultType} in a total of ${this.searchSpaceCount.toLocaleString()} ${this.searchSpaceType} in the searched subcorpus.`;
+			return `Matched ${this.numResults.toLocaleString()} ${this.resultType} in a total of ${this.isLimited ? ' more than' : ''} ${this.searchSpaceCount.toLocaleString()} ${this.searchSpaceType} in the searched subcorpus.`;
 		}
 	},
 	methods: {

@@ -120,6 +120,9 @@
 						title="Adds a header line declaring that the file is comma-separated,
 						for some versions of microsoft excel this is required to correctly display the file."
 					><label><input type="checkbox" v-model="exportSeparator">Export for excel</label></a></li>
+					<li v-if="isHits"><a class="checkbox"
+						title="Also export document metadata. Warning: this might result in very large exports!"
+					><label><input type="checkbox" v-model="exportHitMetadata">Export metadata</label></a></li>
 				</ul>
 			</div>
 		</div>
@@ -190,6 +193,7 @@ export default Vue.extend({
 		downloadInProgress: false, // csv download
 		exportSummary: false,
 		exportSeparator: false,
+		exportHitMetadata: false,
 
 		paginationResults: null as null|BLTypes.BLSearchResult,
 
@@ -277,14 +281,10 @@ export default Vue.extend({
 				params.listvalues = UIStore.getState().results.shared.detailedAnnotationIds!.join(',');
 			}
 			if (UIStore.getState().results.shared.detailedMetadataIds) {
-				params.listmetadatavalues = UIStore.getState().results.shared.detailedAnnotationIds!.join(',');
+				params.listmetadatavalues = UIStore.getState().results.shared.detailedMetadataIds!.join(',');
 			}
-			if (this.exportSeparator) {
-				(params as any).csvsepline = true;
-			}
-			if (this.exportSummary) {
-				(params as any).csvsummary = true;
-			}
+			(params as any).csvsepline = this.exportSeparator;
+			(params as any).csvsummary = this.exportSummary;
 
 			debugLog('starting csv download', this.type, params);
 			apiCall(this.indexId, params).request

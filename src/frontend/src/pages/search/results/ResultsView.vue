@@ -99,20 +99,30 @@
 			</button>
 
 			<div class="btn-group" v-if="results">
-				<button v-if="results"
+				<button
 					type="button"
 					class="btn btn-default btn-sm"
 					:disabled="downloadInProgress || !resultsHaveData || !!request"
-					:title="downloadInProgress ? 'Downloading...' : undefined"
+					:title="downloadInProgress ? 'Downloading...' : 'Export results as a CSV file'"
 
-					@click="downloadCsv"
+					@click="downloadCsv(false)"
 				>
-					<template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner fa-spin"></span>&nbsp;</template>Export CSV
+					<template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner fa-spin"></span>&nbsp;</template>Export
 				</button>
-				<button type="button"  class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+				<button
+					type="button"
+					class="btn btn-default btn-sm"
+					:disabled="downloadInProgress || !resultsHaveData || !!request"
+					:title="downloadInProgress ? 'Downloading...' : 'Export Results as a CSV file for use with Excel'"
+
+					@click="downloadCsv(true)"
+				>
+					<template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner fa-spin"></span>&nbsp;</template>Export for Excel
+				</button>
+				<!-- <button type="button"  class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
 					<span class="caret"></span>
-				</button>
-				<ul class="dropdown-menu dropdown-menu-right" @click.stop>
+				</button> -->
+				<!-- <ul class="dropdown-menu dropdown-menu-right" @click.stop>
 					<li><a class="checkbox" title="Adds a header describing the query used to generate these results.">
 						<label><input type="checkbox" v-model="exportSummary">Include summary</label></a>
 					</li>
@@ -123,7 +133,7 @@
 					<li v-if="isHits"><a class="checkbox"
 						title="Also export document metadata. Warning: this might result in very large exports!"
 					><label><input type="checkbox" v-model="exportHitMetadata">Export metadata</label></a></li>
-				</ul>
+				</ul> -->
 			</div>
 		</div>
 	</div>
@@ -131,7 +141,6 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import URI from 'urijs';
 import {saveAs} from 'file-saver';
 
 import jsonStableStringify from 'json-stable-stringify';
@@ -146,8 +155,6 @@ import * as QueryStore from '@/store/search/query';
 import * as InterfaceStore from '@/store/search/form/interface';
 import * as UIStore from '@/store/search/ui';
 
-import {submittedSubcorpus$} from '@/store/search/streams';
-
 import GroupResults from '@/pages/search/results/table/GroupResults.vue';
 import HitResults from '@/pages/search/results/table/HitResults.vue';
 import DocResults from '@/pages/search/results/table/DocResults.vue';
@@ -155,7 +162,7 @@ import Totals from '@/pages/search/results/ResultTotals.vue';
 import GroupBy from '@/pages/search/results/groupby/GroupBy.vue';
 
 import Pagination from '@/components/Pagination.vue';
-import SelectPicker, {Option, OptGroup} from '@/components/SelectPicker.vue';
+import SelectPicker, {OptGroup} from '@/components/SelectPicker.vue';
 
 import {debugLog} from '@/utils/debug';
 
@@ -191,9 +198,9 @@ export default Vue.extend({
 		showDocumentHits: false,
 
 		downloadInProgress: false, // csv download
-		exportSummary: false,
-		exportSeparator: false,
-		exportHitMetadata: false,
+		// exportSummary: false,
+		// exportSeparator: false,
+		// exportHitMetadata: false,
 
 		paginationResults: null as null|BLTypes.BLSearchResult,
 
@@ -269,7 +276,7 @@ export default Vue.extend({
 			this.request = null;
 			this.cancel= null;
 		},
-		downloadCsv() {
+		downloadCsv(excel: boolean) {
 			if (this.downloadInProgress || !this.results) {
 				return;
 			}
@@ -283,8 +290,8 @@ export default Vue.extend({
 			if (UIStore.getState().results.shared.detailedMetadataIds) {
 				params.listmetadatavalues = UIStore.getState().results.shared.detailedMetadataIds!.join(',');
 			}
-			(params as any).csvsepline = this.exportSeparator;
-			(params as any).csvsummary = this.exportSummary;
+			(params as any).csvsepline = !!excel;
+			(params as any).csvsummary = true;
 
 			debugLog('starting csv download', this.type, params);
 			apiCall(this.indexId, params).request

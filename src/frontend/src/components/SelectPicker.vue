@@ -739,25 +739,34 @@ export default Vue.extend({
 		},
 
 		correctModel(newVal: null|undefined|string|string[]) {
+			debugger;
 			if (this.editable) {
 				this.inputValue = (newVal ? typeof newVal === 'string' ? newVal : newVal[0] || '' : '');
 				return;
 			}
 
 			// Correct type of the new value. e.g. array for multiple, otherwise string
-			if (newVal == null) { newVal = this.multiple ? [] : ''; }
+			if (newVal == null) { newVal = this.multiple ? [] : null; }
 			else if (this.multiple && typeof newVal === 'string') { newVal = [newVal]; }
-			else if (!this.multiple && Array.isArray(newVal)) { newVal = newVal[0] || ''; }
+			else if (!this.multiple && Array.isArray(newVal)) { newVal = typeof newVal[0] === 'string' ? newVal[0] : null; }
 
 			if (!this.multiple) {
-				newVal = newVal as string; // we verified above, but can't declare it to be a type...
+				newVal = newVal as string|null; // we verified above, but can't declare it to be a type...
 				const oldVals = Object.keys(this.internalModel);
 
-				if (oldVals.length !== 1 || newVal !== oldVals[0]) {
-					if (newVal === '') {
-						this.internalModel = {};
-					} else if (this.uiOptionsMap[newVal] || this.allowUnknownValues) {
-						this.internalModel = { [newVal]: true };
+				if (newVal == null) {
+					if (oldVals.length !== 0) { this.internalModel = {}; }
+					// else oldvals.length === 0 -- already at "unset" state, so a null value is perfectly fine
+					return;
+				} else {
+					if (oldVals.length === 0) {
+						if (this.uiOptionsMap[newVal] || this.allowUnknownValues) { this.internalModel = { [newVal]: true }; }
+						else { this.internalModel = {}; } // unknown value. Replace model with an empty one so we re-emit our correct "unset" value
+					} else {
+						// have (one or more) old value(s), and a new value, compare.
+						if (oldVals.length === 1 && oldVals[0] === newVal) { return; }
+						else if (this.uiOptionsMap[newVal] || this.allowUnknownValues) { this.internalModel = { [newVal]: true }; } // replace whatever we had with the new value, seeing as its different.
+						else { this.internalModel = {}; } // unknown value. Replace model with an empty one so we re-emit our correct "unset" value
 					}
 				}
 			} else {
@@ -782,6 +791,7 @@ export default Vue.extend({
 	},
 	watch: {
 		emitInputEventData() {
+			debugger;
 			if (this.editable) {
 				this.$emit('input', this.inputValue);
 			} else {

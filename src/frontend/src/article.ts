@@ -45,7 +45,7 @@ $(document).ready(() => {
 
 	(window as any).Vue = Vue;
 
-	if (debug) {
+	if (debug.debug) {
 		let {wordstart, wordend} = new URI().search(true);
 		wordstart = wordstart ? `wordstart=${wordstart}` : '';
 		wordend = wordend ? `wordend=${wordend}` : '';

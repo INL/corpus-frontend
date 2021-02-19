@@ -8,7 +8,7 @@ export default Vue.extend({
 		debug
 	}),
 	render(): any {
-		return debug ? this.$slots.default : undefined;
+		return debug.debug ? this.$slots.default : undefined;
 	}
 });
 </script>

@@ -9,7 +9,7 @@
 					<th><a role="button" @click="changeSort(`field:${results.summary.docFields.titleField}`)" :class="['sort', {'disabled': disabled}]" title="Sort by document title">Document</a></th>
 					<th v-for="meta in shownMetadataCols" :key="meta.id">
 						<a role="button" @click="changeSort(`field:${meta.id}`)" :class="['sort', {'disabled': disabled}]" :title="`Sort by ${specialMetaDisplayNames[meta.id] || meta.displayName}`">
-							{{specialMetaDisplayNames[meta.id] || meta.displayName}}
+							{{specialMetaDisplayNames[meta.id] || meta.displayName}} <Debug>(id: {{meta.id}})</Debug>
 						</a>
 					</th>
 					<th v-if="hasHits"><a role="button" @click="changeSort(`numhits`)" :class="['sort', {'disabled': disabled}]" title="Sort by number of hits">Hits</a></th>

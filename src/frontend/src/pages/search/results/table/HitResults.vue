@@ -15,7 +15,7 @@
 
 							<ul class="dropdown-menu" role="menu">
 								<li v-for="annotation in sortableAnnotations" :key="annotation.id" :class="{'disabled': disabled}">
-									<a @click="changeSort(`${beforeField}:${annotation.id}`)" class="sort" role="button">{{annotation.displayName}}</a>
+									<a @click="changeSort(`${beforeField}:${annotation.id}`)" class="sort" role="button">{{annotation.displayName}} <Debug>(id: {{annotation.id}})</Debug></a>
 								</li>
 							</ul>
 						</span>
@@ -31,7 +31,7 @@
 
 							<ul class="dropdown-menu" role="menu">
 								<li v-for="annotation in sortableAnnotations" :key="annotation.id" :class="{'disabled': disabled}">
-									<a @click="changeSort(`hit:${annotation.id}`)" class="sort" role="button">{{annotation.displayName}}</a>
+									<a @click="changeSort(`hit:${annotation.id}`)" class="sort" role="button">{{annotation.displayName}} <Debug>(id: {{annotation.id}})</Debug></a>
 								</li>
 							</ul>
 						</span>
@@ -47,22 +47,22 @@
 
 							<ul class="dropdown-menu" role="menu">
 								<li v-for="annotation in sortableAnnotations" :key="annotation.id" :class="{'disabled': disabled}">
-									<a @click="changeSort(`${afterField}:${annotation.id}`)" :class="['sort', {'disabled':disabled}]" role="button">{{annotation.displayName}}</a>
+									<a @click="changeSort(`${afterField}:${annotation.id}`)" :class="['sort', {'disabled':disabled}]" role="button">{{annotation.displayName}} <Debug>(id: {{annotation.id}})</Debug></a>
 								</li>
 							</ul>
 						</span>
 						<template v-else>{{rightLabel}} hit</template>
 					</th>
-					<th v-for="annot in shownAnnotationCols" :key="annot.id">
-						<a v-if="annot.hasForwardIndex"
+					<th v-for="annotation in shownAnnotationCols" :key="annotation.id">
+						<a v-if="annotation.hasForwardIndex"
 							role="button"
 							:class="['sort', {'disabled':disabled}]"
-							:title="`Sort by ${annot.displayName}`"
-							@click="changeSort(`hit:${annot.id}`)"
+							:title="`Sort by ${annotation.displayName}`"
+							@click="changeSort(`hit:${annotation.id}`)"
 						>
-							{{annot.displayName}}
+							{{annotation.displayName}} <Debug>(id: {{annotation.id}})</Debug>
 						</a>
-						<template v-else>{{annot.displayName}}</template>
+						<template v-else>{{annotation.displayName}}</template>
 					</th>
 					<th v-for="meta in shownMetadataCols" :key="meta.id">
 						<a
@@ -71,7 +71,7 @@
 							:title="`Sort by ${meta.displayName}`"
 							@click="changeSort(`field:${meta.id}`)"
 						>
-							{{meta.displayName}}
+							{{meta.displayName}} <Debug>(id: {{meta.id}})</Debug>
 						</a>
 					</th>
 				</tr>

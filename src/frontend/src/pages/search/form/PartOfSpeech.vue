@@ -14,18 +14,18 @@
 								:key="value.id"
 								:class="{
 									'list-group-item': true,
-									'active': annotationValue=== value
+									'active': annotationValue === value
 								}"
 
 								@click="annotationValue = (annotationValue === value ? null : value)"
 							>
-								{{value.displayName}}
+								{{value.displayName}} <Debug>({{value.value}})</Debug>
 							</button>
 						</div>
 
 						<div v-if="annotationValue" class="category-container">
 							<ul v-for="subId in annotationValue.subAnnotationIds" class="list-group category">
-								<li class="list-group-item active category-name">{{annotationDisplayNames[subId]}}</li>
+								<li class="list-group-item active category-name">{{annotationDisplayNames[subId]}} <Debug>({{subId}})</Debug></li>
 								<!-- debugging -->
 								<!-- :style="{
 									backgroundColor: (!subValue.pos || subValue.pos.includes(annotationValue.value)) ? undefined : 'red'
@@ -34,7 +34,7 @@
 									<label>
 										<input type="checkbox" v-model="selected[`${annotationValue.value}/${subId}/${subValue.value}`]"/>
 										{{subValue.displayName}}
-										<!-- {{subValue.value}} -->
+										<Debug>({{subValue.value}})</Debug>
 									</label>
 								</li>
 							</ul>
@@ -63,10 +63,9 @@
 import Vue from 'vue';
 import * as TagsetStore from '@/store/search/tagset';
 import * as CorpusStore from '@/store/search/corpus';
-import * as InterfaceStore from '@/store/search/form/interface';
 
-import {NormalizedAnnotation, Tagset} from '@/types/apptypes';
-import { escapeRegex } from '../../../utils';
+import { Tagset } from '@/types/apptypes';
+import { escapeRegex } from '@/utils';
 
 export default Vue.extend({
 	props: {
@@ -127,7 +126,7 @@ export default Vue.extend({
 			this.$emit('submit', {
 				queryString: this.query,
 				value: {
-					[this.annotationId]: this.annotationValue.value,
+					[this.annotationId]: mainValue,
 					...subAnnots.reduce((acc, cur) => {
 						acc[cur.id] = cur.values.join('|');
 						return acc;

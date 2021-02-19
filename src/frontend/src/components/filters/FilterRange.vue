@@ -4,7 +4,7 @@
 		:id="id"
 		:data-filterfield-type="definition.componentName"
 	>
-		<label class="col-xs-12" :for="inputId">{{displayName}} <Debug>({{id}})</Debug></label>
+		<label class="col-xs-12" :for="inputId">{{displayName}} <Debug>(id: {{id}})</Debug></label>
 		<div class="col-xs-4">
 			<input type="text"
 				placeholder="From"

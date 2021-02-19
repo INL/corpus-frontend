@@ -3,6 +3,8 @@
 		<QueryForm/>
 
 		<QuerySummary v-if="resultsVisible" class="cf-panel cf-panel-lg" id="summary"/>
+		<Debug><div><div>Full query: </div><pre>{{debugQuery}}</pre></div></Debug>
+
 		<Results v-show="resultsVisible" id="results"/>
 
 		<PageGuide v-if="pageGuideEnabled"/>
@@ -11,11 +13,9 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import $ from 'jquery';
-
-import * as CorpusStore from '@/store/search/corpus';
 import * as InterfaceStore from '@/store/search/form/interface';
 import * as UIStore from '@/store/search/ui';
+import * as RootStore from '@/store/search/';
 
 import QueryForm from '@/pages/search/form/QueryForm.vue';
 import QuerySummary from '@/pages/search/results/QuerySummary.vue';
@@ -31,7 +31,8 @@ export default Vue.extend({
 	},
 	computed: {
 		resultsVisible(): boolean { return InterfaceStore.getState().viewedResults != null; },
-		pageGuideEnabled(): boolean { return UIStore.getState().global.pageGuide.enabled; }
+		pageGuideEnabled(): boolean { return UIStore.getState().global.pageGuide.enabled; },
+		debugQuery(): string { return JSON.stringify(RootStore.get.blacklabParameters(), undefined, 2); }
 	},
 });
 </script>

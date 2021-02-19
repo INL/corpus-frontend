@@ -526,7 +526,8 @@ export function selectPickerAnnotationOptions(
 	ids: string[],
 	annots: MapOf<AppTypes.NormalizedAnnotation[]>,
 	operation: 'Group'|'Sort',
-	corpusTextDirection: 'ltr'|'rtl'
+	corpusTextDirection: 'ltr'|'rtl',
+	debug = false
 ): AppTypes.OptGroup[] {
 	// NOTE: grouping on annotations without a forward index is not supported - however has already been checked in the UIStore
 
@@ -547,7 +548,7 @@ export function selectPickerAnnotationOptions(
 		label: groupname,
 		options: ids.flatMap(id => {
 			// @ts-ignore
-			const displayIdHtml = process.env.NODE_ENV === 'development' ? `<small><strong>[${id}]</strong></small>` : '';
+			const displayIdHtml = debug ? `<small><strong>[id: ${id}]</strong></small>` : '';
 			const displayNameHtml = annots[id][0].displayName || id; // in development mode - show IDs
 			const displaySuffixHtml = suffix && `<small class="text-muted">${suffix}</small>`;
 
@@ -600,14 +601,15 @@ export function selectPickerMetadataOptions(
 	ids: string[],
 	fields: MapOf<AppTypes.NormalizedMetadataField>,
 	groups: AppTypes.NormalizedIndex['metadataFieldGroups'],
-	operation: 'Group'|'Sort'
+	operation: 'Group'|'Sort',
+	debug = false
 ): AppTypes.OptGroup[] {
 	return metadataGroups(ids, fields, groups)
 	.map<AppTypes.OptGroup>(g => ({
 		label: g.groupId,
 		options: g.fields.flatMap(({id, displayName}) => {
 			// @ts-ignore
-			const displayIdHtml = process.env.NODE_ENV === 'development' ? `<small><strong>[${id}]</strong></small>` : '';
+			const displayIdHtml = debug ? `<small><strong>[id: ${id}]</strong></small>` : '';
 			const displayNameHtml = displayName || id; // in development mode - show IDs
 			const displaySuffixHtml = g.groupId && `<small class="text-muted">${g.groupId}</small>`;
 

@@ -62,6 +62,8 @@
 					</div>
 					<hr>
 					<div class="checkbox-inline"><label for="wide-view"><input type="checkbox" id="wide-view" name="wide-view" data-persistent checked> Wide View</label></div>
+					<br>
+					<div class="checkbox-inline"><label for="debug" class="text-muted"><input type="checkbox" id="debug" name="debug" data-persistent v-model="debug.debug"> Debug info</label></div>
 				</div>
 				<div class="modal-footer">
 					<button type="button" name="closeSettings" class="btn btn-primary" data-dismiss="modal">Close</button>
@@ -81,6 +83,8 @@ import * as ResultsViewSettings from '@/store/search/results';
 
 import SelectPicker,{ Option } from '@/components/SelectPicker.vue';
 
+import debug from '@/utils/debug';
+
 export default Vue.extend({
 	components: {
 		SelectPicker,
@@ -88,9 +92,11 @@ export default Vue.extend({
 	data: (): {
 		sampleModeOptions: Array<GlobalViewSettings.ModuleRootState['sampleMode']>,
 		pageSizeOptions: Option[],
+		debug: typeof debug
 	} => ({
 		sampleModeOptions: ['percentage', 'count'],
-		pageSizeOptions: ['20','50','100','200'].map(value => ({value, label: `${value} results`}))
+		pageSizeOptions: ['20','50','100','200'].map(value => ({value, label: `${value} results`})),
+		debug
 	}),
 	computed: {
 		viewedResultsSettings: RootStore.get.viewedResultsSettings,

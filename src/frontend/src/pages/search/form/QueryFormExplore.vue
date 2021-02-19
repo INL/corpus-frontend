@@ -170,12 +170,17 @@ import Lexicon from '@/pages/search/form/Lexicon.vue';
 import { selectPickerMetadataOptions, annotationGroups } from '@/utils';
 import { paths } from '@/api';
 
+import debug from '@/utils/debug';
+
 export default Vue.extend({
 	components: {
 		SelectPicker,
 		Autocomplete,
 		Lexicon
 	},
+	data: () => ({
+		debug
+	}),
 	computed: {
 		exploreMode: {
 			get(): string { return InterfaceStore.getState().exploreMode; },
@@ -225,7 +230,7 @@ export default Vue.extend({
 				label: g.groupId,
 				options: g.annotations.map<Option>(a => ({
 					value: a.id,
-					label: a.displayName,
+					label: a.displayName + (this.debug.debug ? ` (id: ${a.id})` : ''),
 					title: a.description
 				}))
 			}));
@@ -242,7 +247,7 @@ export default Vue.extend({
 				label: g.groupId,
 				options: g.annotations.map<Option>(a => ({
 					value: a.id,
-					label: a.displayName,
+					label: a.displayName + (this.debug.debug ? ` (id: ${a.id})` : ''),
 					title: a.description
 				}))
 			}));
@@ -253,7 +258,7 @@ export default Vue.extend({
 			const metas = CorpusStore.get.allMetadataFieldsMap();
 			const groups = CorpusStore.getState().metadataFieldGroups;
 			const shownMetaIds = UIStore.getState().results.shared.groupMetadataIds;
-			return selectPickerMetadataOptions(shownMetaIds, metas, groups, 'Group');
+			return selectPickerMetadataOptions(shownMetaIds, metas, groups, 'Group', this.debug.debug);
 		},
 		corporaGroupDisplayModeOptions(): string[] {
 			// TODO

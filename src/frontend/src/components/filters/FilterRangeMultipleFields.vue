@@ -4,7 +4,7 @@
 		:id="id"
 		:data-filterfield-type="definition.componentName"
 	>
-		<label class="col-xs-12" :for="inputId">{{displayName}} <Debug>({{id}} [{{fields.low}} - {{fields.high}}])</Debug></label>
+		<label class="col-xs-12" :for="inputId">{{displayName}} <Debug>(id: {{id}} [{{fields.low}} - {{fields.high}}])</Debug></label>
 		<div class="col-xs-4">
 			<input type="number"
 				placeholder="From"
@@ -46,7 +46,7 @@
 import BaseFilter from '@/components/filters/Filter';
 import luceneQueryParser from 'lucene-query-parser';
 
-import { escapeLucene, MapOf, unescapeLucene } from '@/utils';
+import { MapOf } from '@/utils';
 import { FilterValue } from '@/types/apptypes';
 import { Option } from '@/components/SelectPicker.vue';
 

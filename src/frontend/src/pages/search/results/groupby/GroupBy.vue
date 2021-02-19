@@ -63,7 +63,8 @@ import * as UIStore from '@/store/search/ui';
 import SelectPicker, {OptGroup, Option} from '@/components/SelectPicker.vue';
 import ContextGroup from '@/pages/search/results/groupby/ContextGroup.vue';
 import UID from '@/mixins/uid';
-import { mapReduce, MapOf, selectPickerAnnotationOptions, selectPickerMetadataOptions } from '@/utils';
+import { selectPickerAnnotationOptions, selectPickerMetadataOptions } from '@/utils';
+import debug from '@/utils/debug';
 
 const CONTEXT_ENABLED_STRING = '_enable_context';
 
@@ -81,6 +82,7 @@ export default Vue.extend({
 	data: () => ({
 		contextEnabled: false,
 		unappliedContextGroups: [] as string[],
+		debug
 	}),
 	methods: {
 		submitContext() {
@@ -156,13 +158,13 @@ export default Vue.extend({
 				const annots = CorpusStore.get.allAnnotationsMap();
 				const dir = CorpusStore.get.textDirection();
 				const shownAnnotIds = UIStore.getState().results.shared.groupAnnotationIds;
-				opts.push(...selectPickerAnnotationOptions(shownAnnotIds, annots, 'Group', dir));
+				opts.push(...selectPickerAnnotationOptions(shownAnnotIds, annots, 'Group', dir, this.debug.debug));
 			}
 
 			const metas = CorpusStore.get.allMetadataFieldsMap();
 			const shownMetaIds = UIStore.getState().results.shared.groupMetadataIds;
 			const groups = CorpusStore.getState().metadataFieldGroups;
-			opts.push(...selectPickerMetadataOptions(shownMetaIds, metas, groups, 'Group'));
+			opts.push(...selectPickerMetadataOptions(shownMetaIds, metas, groups, 'Group', this.debug.debug));
 			return opts;
 		},
 

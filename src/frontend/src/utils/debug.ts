@@ -1,5 +1,9 @@
+import Vue from 'vue';
+
 declare const process: any;
-let debug = process.env.NODE_ENV === 'development';
+let debug = Vue.observable({
+	debug: process.env.NODE_ENV === 'development'
+});
 
 let queued: IArguments[] = [];
 
@@ -14,7 +18,7 @@ export function debugLog(...args: any[]) {
 }
 
 export function enable() {
-	debug = true;
+	debug.debug = true;
 	for (const argArray of queued) {
 		debugLog.apply(undefined, argArray);
 	}
@@ -22,7 +26,7 @@ export function enable() {
 }
 
 export function disable() {
-	debug = false;
+	debug.debug = false;
 }
 
 export function monitorRedraws() {
@@ -84,3 +88,9 @@ export function monitorRedraws() {
 // monitorRedraws();
 
 export default debug;
+
+(window as any).debug = {
+	enable,
+	disable,
+	monitorRedraws,
+}

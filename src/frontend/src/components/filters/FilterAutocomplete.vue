@@ -4,7 +4,7 @@
 		:id="id"
 		:data-filterfield-type="definition.componentName"
 	>
-		<label class="col-xs-12" :for="inputId">{{displayName}} <Debug>({{id}})</Debug></label>
+		<label class="col-xs-12" :for="inputId">{{displayName}} <Debug>(id: {{id}})</Debug></label>
 		<div class="col-xs-12">
 			<Autocomplete
 				type="text"
@@ -22,12 +22,6 @@
 </template>
 
 <script lang="ts">
-import { flatMap } from 'rxjs/operators';
-
-import { paths } from '@/api';
-import { escapeLucene, MapOf, unescapeLucene } from '@/utils';
-import { FilterValue } from '@/types/apptypes';
-
 import Autocomplete from '@/components/Autocomplete.vue';
 import FilterText from '@/components/filters/FilterText.vue';
 

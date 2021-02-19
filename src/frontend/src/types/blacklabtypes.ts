@@ -38,6 +38,11 @@ export type BLSearchParameters = {
 	listvalues?: string;
 	/** List of comma-separated metadata IDs to include in document info. */
 	listmetadatavalues?: string;
+
+	/** maximum hits to count outside requested window (only does something when > first+number) */
+	maxcount?: number;
+	/** maximum hits to actually retrieve (only does something when > first+number) */
+	maxretrieve?: number;
 };
 
 // --------------

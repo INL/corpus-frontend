@@ -345,11 +345,12 @@ export const blacklab = {
 		});
 	},
 
-	getTermFrequencies: (indexId: string, annotationId: string, values?: string[], filter?: string, requestParameters?: AxiosRequestConfig) => {
+	getTermFrequencies: (indexId: string, annotationId: string, values?: string[], filter?: string, number = 20, requestParameters?: AxiosRequestConfig) => {
 		return endpoints.blacklab.getOrPost<BLTypes.BLTermOccurances>(blacklabPaths.termFrequencies(indexId), {
 			annotation: annotationId,
 			filter,
 			terms: values && values.length ? values.join(',') : undefined,
+			number
 		}, requestParameters);
 	},
 

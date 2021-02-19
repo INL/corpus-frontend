@@ -60,8 +60,14 @@
             var hooks = {};
         </script>
     </head>
-    <body>
-        <div class="navbar navbar-inverse navbar-fixed-top">
+    <body 
+        #if (!$fixedNavbar) style="padding-top: 0" #end
+    >
+        <div class="navbar navbar-inverse 
+            #if($fixedNavbar)
+            navbar-fixed-top
+            #end
+        ">
             #if ($bannerMessage && $bannerMessageCookie)
                 #set($unescaped = $bannerMessage)
                 <div class="container alert alert-dismissable navbar-alert">
@@ -91,14 +97,6 @@
                 </div>
 
                 <div class="username navbar-username navbar-brand"><span class="username" data-autoupdate="username">Anonymous</span><span class="fa fa-solid fa-user username-icon"></span></div>
-
-                <div class="navbar-collapse collapse navbar-logo-margin">
-                    <ul class="nav navbar-nav">
-                        #foreach($link in $websiteConfig.getLinks())
-                            <li><a href="$link.href" #if($link.openInNewWindow) target="_blank" #end>$link</a></li>
-                        #end
-                    </ul>
-                </div>
             </div>
         </div>
 

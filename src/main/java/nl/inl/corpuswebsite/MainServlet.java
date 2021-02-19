@@ -45,6 +45,7 @@ import nl.inl.corpuswebsite.response.AboutResponse;
 import nl.inl.corpuswebsite.response.ApiResponse;
 import nl.inl.corpuswebsite.response.ArticleResponse;
 import nl.inl.corpuswebsite.response.ConfigResponse;
+import nl.inl.corpuswebsite.response.ConfigWizardResponse;
 import nl.inl.corpuswebsite.response.CorporaDataResponse;
 import nl.inl.corpuswebsite.response.CorporaResponse;
 import nl.inl.corpuswebsite.response.ErrorResponse;
@@ -127,6 +128,7 @@ public class MainServlet extends HttpServlet {
             responses.put("static", CorporaDataResponse.class);
             responses.put("upload", RemoteIndexResponse.class);
             responses.put("config", ConfigResponse.class);
+            responses.put("configwizard", ConfigWizardResponse.class);
             responses.put("api", ApiResponse.class);
             responses.put("callback", OidcCallbackResponse.class);
 //            responses.put("docs-api", ArticleContentResponse.class);

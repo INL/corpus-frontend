@@ -155,7 +155,7 @@ export default Vue.extend({
 
 			this.isLoadingCorpora = true;
 			Promise.all([
-				blacklab.getCorpora(),
+				blacklab.getCorporaOld(),
 				blacklab.getUser()
 			])
 			.then(([corpora, user]) => {
@@ -205,7 +205,7 @@ export default Vue.extend({
 				this.isCreatingCorpus = false;
 				this.isLoadingCorpora = true;
 				this.newCorpusName = '';
-				return blacklab.getCorpora();
+				return blacklab.getCorporaOld();
 			})
 			.then(corpora => {
 				this.isLoadingCorpora = false;

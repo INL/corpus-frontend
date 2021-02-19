@@ -12,6 +12,7 @@ module.exports = {
 		search:         ['./src/utils/enable-polyfills.ts', './src/search.tsx'],
 		'remote-index': ['./src/utils/enable-polyfills.ts', './src/remote-index.ts'],
 		callback:       ['./src/utils/enable-polyfills.ts', './src/callback.ts'],
+		config:         ['./src/utils/enable-polyfills.ts', './src/config.ts']
 	},
 	output: {
 		filename: '[name].js',

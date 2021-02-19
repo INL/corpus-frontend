@@ -205,12 +205,12 @@ public class ArticleResponse extends BaseResponse {
 
             // No hand-written transformer for this type (article.xsl or our builtin article_tei.xsl and friends), and no blacklab auto-generated transformer either.
             // load the fallback transformer that just outputs all text.
-            // NOTE: don't do this is the stylesheet simply failed to load due to an error.
-            // NOTE: (not for a specific reason though, it just seems more correct to me to not use fallbacks on errors)
-            if (trans == null && error == null) {
+            // NOTE: don't do this is the stylesheet simply failed to load due to an error, so that we can actually expose the error to devs/users.
+            if (trans == null && (error == null || error instanceof QueryException && ((QueryException) error).getHttpStatusCode() == 404)) {
                 // Only load the fallback if this is actually xml, otherwise just string-replace the highlighted words with spans and return as-is (this might not be an xml corpus!)
                 if (!XML_TAG_PATTERN.matcher(documentContents).find()) return Pair.of("<pre>" + StringUtils.replaceEach(documentContents, new String[] {"<hl>", "</hl>"}, new String[] { "<span class=\"hl\">", "</span>"}) + "</pre>", Optional.empty());
                 trans = defaultTransformer;
+                error = null;
             }
 
             // Always transform if we can.

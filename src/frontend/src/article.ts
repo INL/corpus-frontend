@@ -19,6 +19,7 @@ import initTooltips from '@/modules/expandable-tooltips';
 
 import '@/global.scss';
 import '@/article.scss';
+import { blacklab } from './api';
 
 // Article-related functions.
 // Takes care of tooltips and highlighting/scrolling to anchors.
@@ -45,16 +46,42 @@ $(document).ready(() => {
 
 	(window as any).Vue = Vue;
 
-	if (debug.debug) {
-		let {wordstart, wordend} = new URI().search(true);
-		wordstart = wordstart ? `wordstart=${wordstart}` : '';
-		wordend = wordend ? `wordend=${wordend}` : '';
+	// This is pretty horrendous
+	// We need a callback when some Vue.observable changes
+	// The easy way is through a store watcher, since that works even when the variable is outside the store
+	// and even when the store is completely ignored other than that.
+	// And since debug.debug is observable, this works!
+	RootStore.store.watch(() => debug.debug, (isDebugEnabled) => {
+		if (isDebugEnabled) {
+			let {wordstart, wordend} = new URI().search(true);
+			wordstart = wordstart ? `wordstart=${wordstart}` : '';
+			wordend = wordend ? `wordend=${wordend}` : '';
 
-		let q = [wordstart, wordend].filter(v => !!v).join('&');
-		q = q ? '?' + q : q;
+			let q = [wordstart, wordend].filter(v => !!v).join('&');
+			q = q ? '?' + q : q;
 
-		$('#content').append(`<hr><a href="${BLS_URL}${INDEX_ID}/docs/${DOCUMENT_ID}/contents${q}" target="_blank">Open raw document</a>`);
-	}
+			blacklab.getDocumentInfo(INDEX_ID, DOCUMENT_ID).then(r => {
+				const s =
+				`<div id="debug-info">
+					<hr>
+					<h2>Debug info</h2>
+
+					<table class="table table-striped" style="table-layout: fixed">
+						<tr>
+							<th>Field</th>
+							<th>Values</th>
+						</tr>
+						${Object.entries(r.docInfo).map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}
+					</table>
+
+					<a href="${BLS_URL}${INDEX_ID}/docs/${DOCUMENT_ID}/contents${q}" target="_blank">Open raw document</a>
+				</div>`
+				$('#content').append(s)
+			})
+		} else {
+			$('#debug-info').remove();
+		}
+	}, { immediate: true})
 
 	initTooltips({
 		mode: 'attributes',

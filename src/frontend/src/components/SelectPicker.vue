@@ -739,14 +739,13 @@ export default Vue.extend({
 		},
 
 		correctModel(newVal: null|undefined|string|string[]) {
-			debugger;
 			if (this.editable) {
 				this.inputValue = (newVal ? typeof newVal === 'string' ? newVal : newVal[0] || '' : '');
 				return;
 			}
 
 			// Correct type of the new value. e.g. array for multiple, otherwise string
-			if (newVal == null) { newVal = this.multiple ? [] : null; }
+			if (!newVal) { newVal = this.multiple ? [] : null; }
 			else if (this.multiple && typeof newVal === 'string') { newVal = [newVal]; }
 			else if (!this.multiple && Array.isArray(newVal)) { newVal = typeof newVal[0] === 'string' ? newVal[0] : null; }
 
@@ -791,7 +790,6 @@ export default Vue.extend({
 	},
 	watch: {
 		emitInputEventData() {
-			debugger;
 			if (this.editable) {
 				this.$emit('input', this.inputValue);
 			} else {

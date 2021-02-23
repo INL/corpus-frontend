@@ -16,7 +16,7 @@
 
 export default function(n: number, significants: number = 3): string {
 	n = n*100;
-	const str = n.toString();
+	const str = n.toFixed(20);
 	const p = /(\d+)\.?(0*)(\d*)$/; // toString divider character is always '.' as defined by the standard
 
 	const result = str.match(p)!;

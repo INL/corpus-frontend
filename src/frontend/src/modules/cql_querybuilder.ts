@@ -479,9 +479,22 @@ export class QueryBuilder {
 
 		$element.find('.bl-token-create').on('click', this.createToken.bind(this));
 		$element.find('#within_select')
-			.on('change', function() { $element.trigger('cql:modified'); })
-			.find('input').first().attr('checked', 'checked')
-			.parent().addClass('active');
+			.on('click', function(e) {
+				// go up to label element
+				const label = e.target.closest('label');
+				if (!label) { return; }
+
+				const input = label.querySelector('input') as HTMLInputElement;
+				if (input.checked) {
+					setTimeout(function() { // run after jquery event handlers
+						input.checked = false;
+						label.classList.remove('active');
+						$element.trigger('cql:modified');
+					}, 0);
+				}
+
+				$element.trigger('cql:modified');
+			})
 
 		return $element;
 	}
@@ -533,7 +546,10 @@ export class QueryBuilder {
 	public reset() {
 		this.element.find('.bl-token').remove();
 		this.createToken();
-		this.withinSelect.find('input').first().parent().button('toggle');
+
+		const withinInput = this.withinSelect.find('input')[0];
+		withinInput.checked = false;
+		withinInput.parentElement!.classList.remove('active');
 	}
 
 	public parse(cql: string|null): boolean {

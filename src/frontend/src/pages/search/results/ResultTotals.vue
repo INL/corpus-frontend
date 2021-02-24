@@ -1,6 +1,5 @@
 <template>
 <div class="totals">
-	<!-- Heavy query, search paused [continue] -->
 	<div class="totals-content">
 		<span v-show="(isCounting || !subcorpus) && !error" class="fa fa-spinner fa-spin searchIndicator totals-spinner"/>
 
@@ -8,11 +7,13 @@
 			<div class="totals-type">
 				<div>Total {{resultType}}<template v-if="!isFinished"> so far</template>:</div>
 				<div v-if="isGroups">Total groups<template v-if="!isFinished"> so far</template>:</div>
+				<div>Search time:</div>
 				<!-- <div>Total pages<template v-if="!isFinished"> so far</template>:</div> -->
 			</div>
 			<div class="totals-count">
 				<div>{{numPrefix}}{{numResults.toLocaleString()}}{{numSuffix}}</div>
 				<div v-if="isGroups">{{numPrefix}}{{numGroups.toLocaleString()}}{{numSuffix}}</div>
+				<div>{{searchTime}}</div>
 				<!-- <div>{{numPrefix}}{{numPages.toLocaleString()}}{{numSuffix}}</div> -->
 			</div>
 
@@ -51,7 +52,6 @@ import { submittedSubcorpus$ as subcorpus$ } from '@/store/search/streams';
 import yieldResultCounts, { CounterInput, CounterOutput } from '@/pages/search/results/TotalsCounterStream';
 
 import * as BLTypes from '@/types/blacklabtypes';
-import * as AppTypes from '@/types/apptypes';
 
 import frac2Percent from '@/mixins/fractionalToPercent';
 
@@ -95,6 +95,7 @@ export default Vue.extend({
 
 		resultType(): string { return BLTypes.isHitGroupsOrResults(this.stats) ? 'hits' : 'documents'; },
 		isGroups(): boolean { return BLTypes.isGroups(this.stats); },
+		searchTime(): string { return frac2Percent(this.stats.summary.searchTime / 100000, 1).replace('%', 's'); },
 
 		numPrefix(): string { return (this.isLimited || this.isPaused) ? '≥' : ''; },
 		numSuffix(): string { return (this.isCounting || this.isPaused) ? '…' : ''; },

@@ -249,17 +249,11 @@ export default Vue.extend({
 			this.request = r.request;
 			this.cancel = r.cancel;
 
+			setTimeout(() => this.scrollToResults(), 1500);
+
 			this.request
 			.then(this.setSuccess, this.setError)
-			.finally(() => {
-				if (this.scroll) {
-					this.scroll = false;
-					window.scroll({
-						behavior: 'smooth',
-						top: (this.$el as HTMLElement).offsetTop - 150
-					});
-				}
-			});
+			.finally(() => this.scrollToResults())
 		},
 		setSuccess(data: BLTypes.BLSearchResult) {
 			debugLog('search results', data);
@@ -306,6 +300,15 @@ export default Vue.extend({
 				this.downloadInProgress = false;
 			});
 		},
+		scrollToResults() {
+			if (this.scroll) {
+				this.scroll = false;
+				window.scroll({
+					behavior: 'smooth',
+					top: (this.$el as HTMLElement).offsetTop - 150
+				});
+			}
+		}
 	},
 	computed: {
 		// Store properties

@@ -136,6 +136,9 @@
 				</ul> -->
 			</div>
 		</div>
+		<hr>
+		<div>BlackLab response: </div>
+		<Debug><pre v-if="results">{{JSON.stringify(results.summary, undefined, 2)}}</pre></Debug>
 	</div>
 </template>
 

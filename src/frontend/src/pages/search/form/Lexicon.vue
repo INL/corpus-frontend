@@ -61,7 +61,7 @@
 import Vue from 'vue';
 import Axios from 'axios';
 import * as Observable from 'rxjs';
-import { debounceTime, switchMap, flatMap, map, toArray, catchError, mapTo, distinctUntilChanged, tap, filter } from 'rxjs/operators';
+import { debounceTime, switchMap, mergeMap, map, toArray, catchError, mapTo, distinctUntilChanged, tap, filter } from 'rxjs/operators';
 
 import * as CorpusStore from '@/store/search/corpus';
 import * as UIStore from '@/store/search/ui';
@@ -186,9 +186,9 @@ export default Vue.extend({
 				.from(lemmataRequest)
 				.pipe(
 					// Phase 2: get associated words
-					flatMap(lemmata => filterDuplicates(lemmata, 'lemma_id')), // unpack the array of found lemmata into one message per lemma, for ease of use
+					mergeMap(lemmata => filterDuplicates(lemmata, 'lemma_id')), // unpack the array of found lemmata into one message per lemma, for ease of use
 					// Get the words that map to this lemma
-					flatMap(lemma => Axios.get<LexiconWordformsResponse>(config.getWordformsFromLemmaId, {
+					mergeMap(lemma => Axios.get<LexiconWordformsResponse>(config.getWordformsFromLemmaId, {
 						params: {
 							database: this.database,
 							lemma_id: lemma.lemma_id
@@ -203,7 +203,7 @@ export default Vue.extend({
 					// Phase 3: wait for all requests to the lexicon service to complete,
 					// then coordinate with BlackLab to find out which of the found words actually exist in the corpus.
 					toArray(),
-					flatMap(async (lemmata) => {
+					mergeMap(async (lemmata) => {
 						if (!lemmata.length) { return emptyResult; }
 
 						lemmata.forEach(l => l.pos = `${l.lemma} (${l.pos || 'unknown'})`);
@@ -277,6 +277,14 @@ export default Vue.extend({
 				this.modelValue = v.map(w => w.word.replace(/\|"/g, '\\$1')).map(w => w.includes(' ') ? '"'+w+'"' : w).join('|');
 			}
 		},
+		posOptions: {
+			handler(cur, prev) {
+				if (Object.entries(prev).length) {
+					this.renderedWords.forEach(wo => wo.selected = wo.pos.some(pos => this.posOptions[pos]));
+				}
+			},
+			deep: true
+		}
 	}
 });
 </script>

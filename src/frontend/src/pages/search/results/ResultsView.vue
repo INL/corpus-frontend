@@ -138,8 +138,10 @@
 		</div>
 		<hr>
 		<Debug>
-			<div>BlackLab response: </div>
-			<pre v-if="results">{{JSON.stringify(results.summary, undefined, 2)}}</pre>
+			<div>
+				<div>BlackLab response: </div>
+				<pre v-if="results">{{JSON.stringify(results.summary, undefined, 2)}}</pre>
+			</div>
 		</Debug>
 	</div>
 </template>

@@ -354,7 +354,6 @@ const tableHeaders: {
 		'gr.t': {
 			label: '#tokens in group',
 			title: '(gr.t) - Combined length of all documents with hits in this group',
-			sortProp: 'sizeintokens',
 		},
 		'gr.h': {
 			label: '#hits in group',
@@ -384,7 +383,6 @@ const tableHeaders: {
 		'gsc.t': {
 			label: '#all tokens in current group',
 			title: '(gr.t)',
-			sortProp: 'sizeintokens',
 		},
 
 		'relative group size [gr.d/r.d]': {

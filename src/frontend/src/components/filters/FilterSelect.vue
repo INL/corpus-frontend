@@ -17,6 +17,7 @@
 				:dir="textDirection"
 				:placeholder="displayName"
 				:options="options"
+				:searchable="searchable"
 
 				:value="value"
 				@input="e_input($event)"
@@ -46,6 +47,7 @@ export default BaseFilter.extend({
 	computed: {
 		options(): Option[] { return this.definition.metadata as Option[]; },
 		optionsMap(): MapOf<Option> { return mapReduce(this.options, 'value'); },
+		searchable(): boolean { return this.options.length > 10; },
 		luceneQuery(): string|null {
 			const value = this.value as string[];
 			return value.length ? `${this.id}:(${value.map(v => escapeLucene(v, false)).join(' ')})` : null;

@@ -10,6 +10,8 @@
 				type="text"
 				class="form-control"
 
+				useQuoteAsWordBoundary
+
 				:id="inputId"
 				:placeholder="displayName"
 				:dir="textDirection"

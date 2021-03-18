@@ -9,7 +9,7 @@
 		</li>
 		<template v-if="showOffsets">
 			<li v-for="i in lowerPages" :key="i" :class="{'disabled': disabled}">
-				<a role="button" @click.prevent="changePage(i)">{{i+1}}</a>
+				<a role="button" @click.prevent="changePage(i)">{{(i+1).toLocaleString()}}</a>
 			</li>
 		</template>
 		<li v-if="lowerPages.length || higherPages.length" :class="{
@@ -30,23 +30,23 @@
 				/>
 				<span v-if="editable" class="fa fa-pencil"></span>
 			</template>
-			<a v-else-if="!pageActive" role="button" @click.prevent="changePage(page)">{{page + 1}}</a>
+			<a v-else-if="!pageActive" role="button" @click.prevent="changePage(page)">{{(page+1).toLocaleString()}}</a>
 			<span v-else>{{page+1}}</span>
 		</li>
 		<li v-else class="active"> <!-- no available pages -->
-			<span>{{page+1}}</span>
+			<span>{{(page+1).toLocaleString()}}</span>
 		</li>
 		<template v-if="showOffsets">
 			<li v-for="i in higherPages" :key="i" :class="{'disabled': disabled}">
-				<a role="button" @click.prevent="changePage(i)">{{i+1}}</a>
+				<a role="button" @click.prevent="changePage(i)">{{(i+1).toLocaleString()}}</a>
 			</li>
 		</template>
 		<li v-if="nextEnabled" :class="['next', {'disabled': !nextEnabled || disabled}]">
 			<a role="button" title="next" @click.prevent="changePage(page+1)">&rsaquo;</a>
 		</li>
 		<li :class="['last', {'disabled': !nextEnabled || disabled}]">
-			<a v-if="nextEnabled" role="button" :title="maxPage+1 +' (last)'" @click.prevent="changePage(maxPage)">&raquo;</a>
-			<span v-else :title="maxPage+1 + ' (last)'">&raquo;</span>
+			<a v-if="nextEnabled" role="button" :title="(maxPage+1).toLocaleString() +' (last)'" @click.prevent="changePage(maxPage)">&raquo;</a>
+			<span v-else :title="(maxPage+1).toLocaleString() + ' (last)'">&raquo;</span>
 		</li>
 	</ul>
 </template>

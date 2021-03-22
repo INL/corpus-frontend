@@ -171,7 +171,7 @@ import GroupBy from '@/pages/search/results/groupby/GroupBy.vue';
 import Pagination from '@/components/Pagination.vue';
 import SelectPicker, {OptGroup} from '@/components/SelectPicker.vue';
 
-import {debugLog} from '@/utils/debug';
+import debug, { debugLog } from '@/utils/debug';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import cloneDeep from 'clone-deep';
@@ -213,6 +213,8 @@ export default Vue.extend({
 
 		// Should we scroll when next results arrive - set when main form submitted
 		scroll: true,
+
+		debug
 	}),
 	methods: {
 		markDirty() {
@@ -491,7 +493,7 @@ export default Vue.extend({
 				const metas = CorpusStore.get.allMetadataFieldsMap();
 				const groups = CorpusStore.getState().metadataFieldGroups;
 
-				opts.push(...selectPickerMetadataOptions(metadataIds, metas, groups, 'Sort'));
+				opts.push(...selectPickerMetadataOptions(metadataIds, metas, groups, 'Sort', this.debug.debug));
 			}
 
 			return opts;

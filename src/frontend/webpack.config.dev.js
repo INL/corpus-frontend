@@ -6,7 +6,7 @@ const CircularDependencyPlugin = require('circular-dependency-plugin');
 
 module.exports = {
 	entry: {
-		// Output muWltiple files, one for each main page - important!: also include the polyfills in the output bundle
+		// Output multiple files, one for each main page - important!: also include the polyfills in the output bundle
 		article: ['./src/utils/enable-polyfills.ts', './src/article.ts'],
 		corpora: ['./src/utils/enable-polyfills.ts', './src/corpora.ts'],
 		search: ['./src/utils/enable-polyfills.ts', './src/search.tsx'],
@@ -152,7 +152,7 @@ module.exports = {
 
 	// We can safely ignore these warnings.
 	// We run a second typescript compiler in a separate thread that does do actual deep validation, so we will still get warnings for genuine typescript errors.
-	// (this process happens in the ForkTsCheckerWebpackPlugin we enabled above)
+	// (that process happens in the ForkTsCheckerWebpackPlugin we enabled above)
 	stats: {
 	  warningsFilter: /export .* was not found in/
 	}

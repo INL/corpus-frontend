@@ -138,7 +138,7 @@ module.exports = {
 
 	// We can safely ignore these warnings.
 	// We run a second typescript compiler in a separate thread that does do actual deep validation, so we will still get warnings for genuine typescript errors.
-	// (this process happens in the ForkTsCheckerWebpackPlugin we enabled above)
+	// (that process happens in the ForkTsCheckerWebpackPlugin we enabled above)
 	stats: {
 		warningsFilter: /export .* was not found in/
 	}

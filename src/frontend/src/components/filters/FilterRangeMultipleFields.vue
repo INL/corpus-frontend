@@ -55,14 +55,14 @@ const modes = {
 		id: 'permissive',
 		operator: 'OR',
 		displayName: 'Permissive',
-		description: "Matches documents if either field overlaps with the document's metadata"
+		description: "Matches documents that are partially contained within the entered range"
 	},
 
 	strict: {
 		id: 'strict',
 		operator: 'AND',
 		displayName: 'Strict',
-		description: "Matches documents if both fields overlap with the document's metadata"
+		description: "Matches documents that are completely contained within the entered range"
 	}
 };
 

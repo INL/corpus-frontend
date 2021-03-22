@@ -331,7 +331,7 @@ Because the format config specifies the shape of a corpus (which metadata and an
         dateField: PublicationYear
     ```
 
-    These fields will be used to format document title rows in the results table.
+    These fields will be used to format document title rows in the results table (unless overridden: see [customizing document titles](#customizing-document-titles))
 
     ![](docs/img/metadata_special_fields.png)
 
@@ -729,6 +729,34 @@ Through javascript you can do many things, but outlined below are some of the mo
     USE THIS FEATURE WITH CARE! It may break your page if the xml contains unexpected or malformed contents.
 
   </details>
+
+- <details>
+    <summary>Customize the display of document titles in the results table</summary>
+    <a name="customizing-document-titles"></a>
+    
+    By setting a callback to generate or extract the title of the documents, you can have more control over it.
+    
+
+    ```js
+    /**
+     * @param metadata all metadata of the document, in the form of { [fieldName: string]: string[] }
+     * @param specialFields the names of the pid, title, author, and date fields, in the shape of 
+      { 
+        authorField: string, 
+        pidField: string, 
+        dateField: string, 
+        titleField: string 
+      }
+      @returns {string}
+     */
+    vuexModules.ui.getState().results.shared.getDocumentSummary = function(metadata, specialFields) {
+      return 'The document title is: ' + metadata[specialFields.titleField][0];
+    }
+    ```
+    ![](docs/img/metadata_special_fields.png)
+
+  </details>
+
 
 - <details>
     <summary>Override any other data you want</summary>

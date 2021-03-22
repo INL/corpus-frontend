@@ -241,7 +241,7 @@ export default Vue.extend({
 		afterField(): string { return this.textDirection === 'ltr' ? 'right' : 'left'; },
 
 		rows(): Array<DocRow|HitRow> {
-			const { titleField = '', dateField = '', authorField = '' } = this.results.summary.docFields as BLTypes.BLDocFields;
+			const docFields = this.results.summary.docFields;
 			const infos = this.results.docInfos;
 
 			let prevPid: string;
@@ -253,15 +253,12 @@ export default Vue.extend({
 				if (pid !== prevPid) {
 					prevPid = pid;
 					const doc = infos[pid];
-					const { [titleField]: title = [], [dateField]: date = [], [authorField]: author = [] } = doc;
-
 					// TODO the clientside url generation story... https://github.com/INL/corpus-frontend/issues/95
 					// Ideally use absolute urls everywhere, if the application needs to be proxied, let the proxy server handle it.
 					// Have a configurable url in the backend that's made available on the client that we can use here.
-
 					rows.push({
 						type: 'doc',
-						summary: (title[0] || 'UNKNOWN') + (author[0] ? ' by ' + author[0] : ''),
+						summary: this.getDocumentSummary(doc, docFields),
 						href: getDocumentUrl(pid, this.results.summary.searchParam.patt || undefined, this.results.summary.searchParam.pattgapdata || undefined, hit.start, UIStore.getState().results.shared.pageSize),
 						docPid: pid,
 					}  as DocRow);
@@ -296,7 +293,6 @@ export default Vue.extend({
 		/** Return all annotations shown in the main search form (provided they have a forward index) */
 		sortableAnnotations(): AppTypes.NormalizedAnnotation[] { return UIStore.getState().results.shared.sortAnnotationIds.map(id => CorpusStore.get.allAnnotationsMap()[id][0]); },
 		concordanceAnnotationId(): string { return UIStore.getState().results.shared.concordanceAnnotationId; },
-		transformSnippets() { return UIStore.getState().results.shared.transformSnippets; },
 		concordanceAsHtml(): boolean { return UIStore.getState().results.shared.concordanceAsHtml; },
 		shownAnnotationCols(): AppTypes.NormalizedAnnotation[] {
 			// Don't bother showing the value when we're sorting on the surrounding context and not the hit itself
@@ -375,7 +371,10 @@ export default Vue.extend({
 				ga('send', 'exception', { exDescription: err.message, exFatal: false });
 			})
 			.finally(() => citation.loading = false);
-		}
+		},
+
+		transformSnippets: UIStore.getState().results.shared.transformSnippets,
+		getDocumentSummary: UIStore.getState().results.shared.getDocumentSummary,
 	},
 	watch: {
 		results() {

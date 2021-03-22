@@ -70,7 +70,7 @@ import * as CorpusStore from '@/store/search/corpus';
 import * as UIStore from '@/store/search/ui';
 
 import { snippetParts, getDocumentUrl } from '@/utils';
-import { BLDocResults, BLDocInfo, BLDocFields } from '@/types/blacklabtypes';
+import { BLDocResults, BLDocFields, BLHitSnippet, BLDocInfo } from '@/types/blacklabtypes';
 import { NormalizedMetadataField } from '@/types/apptypes';
 
 type DocRow = {
@@ -83,7 +83,7 @@ type DocRow = {
 	summary: string;
 	/** Url to open the article view */
 	href: string;
-	date: string;
+	// date: string;
 	hits?: number;
 	docPid: string;
 	doc: BLDocResults['docs'][number];
@@ -101,8 +101,10 @@ export default Vue.extend({
 	}),
 	computed: {
 		concordanceAnnotationId(): string { return UIStore.getState().results.shared.concordanceAnnotationId; },
-		transformSnippets() { return UIStore.getState().results.shared.transformSnippets; },
 		concordanceAsHtml(): boolean { return UIStore.getState().results.shared.concordanceAsHtml; },
+		transformSnippets(): null|((s?: BLHitSnippet|BLHitSnippet[]) => void) { return UIStore.getState().results.shared.transformSnippets; },
+		getDocumentSummary(): ((doc: BLDocInfo, fields: BLDocFields) => string) { return UIStore.getState().results.shared.getDocumentSummary; },
+
 		textDirection: CorpusStore.get.textDirection,
 		leftIndex(): number { return this.textDirection === 'ltr' ? 0 : 2; },
 		rightIndex(): number { return this.textDirection === 'ltr' ? 2 : 0; },
@@ -130,11 +132,10 @@ export default Vue.extend({
 			return ret;
 		},
 		rows(): DocRow[] {
-			const { titleField = '', dateField = '', authorField = '' } = this.results.summary.docFields as BLDocFields;
+			const docFields = this.results.summary.docFields;
 
 			return this.results.docs.map(doc => {
 				const { docPid: pid, docInfo: info } = doc;
-				const { [titleField]: title = [], [dateField]: date = [], [authorField]: author = [] } = info;
 
 				return {
 					snippets: doc.snippets ? doc.snippets.map(s => {
@@ -148,9 +149,8 @@ export default Vue.extend({
 							right: snippet[this.rightIndex]
 						};
 					}) : [],
-					summary: (title[0] || 'UNKNOWN') + (author[0] ? ' by ' + author[0] : ''),
+					summary: this.getDocumentSummary(info, docFields),
 					href: getDocumentUrl(pid, this.results.summary.searchParam.patt || undefined, this.results.summary.searchParam.pattgapdata || undefined),
-					date: date[0] || '',
 					hits: doc.numberOfHits,
 					docPid: pid,
 					doc
@@ -175,7 +175,7 @@ export default Vue.extend({
 				this.pinnedTooltip = null;
 			}
 		}
-	}
+	},
 });
 </script>
 

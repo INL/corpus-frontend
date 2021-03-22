@@ -110,6 +110,7 @@ type ModuleRootState = {
 			/** Optionally run a function on all retrieved snippets to arbitrarily process the data (we use this to format the values in some annotations for display purposes). */
 			transformSnippets: null|((snippet?: BLTypes.BLHitSnippet|BLTypes.BLHitSnippet[]) => void);
 			concordanceAsHtml: boolean;
+			getDocumentSummary: ((doc: BLTypes.BLDocInfo, fields: BLTypes.BLDocFields) => string);
 
 			/**
 			 * Annotations IDs to include in expanded hit rows (meaning in the table there), and csv exports containing hits.
@@ -204,7 +205,11 @@ const initialState: ModuleRootState = {
 			concordanceAnnotationId: '',
 			transformSnippets: null,
 			concordanceAsHtml: false,
-
+			getDocumentSummary: (doc: BLTypes.BLDocInfo, fields: BLTypes.BLDocFields): string => {
+				const { titleField = '', dateField = '', authorField = '' } = fields;
+				const { [titleField]: title = [], [dateField]: date = [], [authorField]: author = [] } = doc;
+				return (title[0] || 'UNKNOWN') + (author[0] ? ' by ' + author[0] : '');
+			},
 			detailedAnnotationIds: null,
 			detailedMetadataIds: null,
 			groupAnnotationIds: [],

@@ -291,7 +291,7 @@ export default Vue.extend({
 			return 3 + this.shownAnnotationCols.length + this.shownMetadataCols.length; // left - hit - right - (one per shown annotation) - (one per shown metadata)
 		},
 		/** Return all annotations shown in the main search form (provided they have a forward index) */
-		sortableAnnotations(): AppTypes.NormalizedAnnotation[] { return UIStore.getState().results.shared.sortAnnotationIds.map(id => CorpusStore.get.allAnnotationsMap()[id][0]); },
+		sortableAnnotations(): AppTypes.NormalizedAnnotation[] { return UIStore.getState().results.shared.sortAnnotationIds.map(id => CorpusStore.get.allAnnotationsMap()[id]); },
 		concordanceAnnotationId(): string { return UIStore.getState().results.shared.concordanceAnnotationId; },
 		concordanceAsHtml(): boolean { return UIStore.getState().results.shared.concordanceAsHtml; },
 		shownAnnotationCols(): AppTypes.NormalizedAnnotation[] {
@@ -302,23 +302,30 @@ export default Vue.extend({
 
 			const colsToShow = UIStore.getState().results.hits.shownAnnotationIds;
 			return (sortAnnotationId && !colsToShow.includes(sortAnnotationId) ? colsToShow.concat(sortAnnotationId) : colsToShow)
-			.map(id => CorpusStore.get.allAnnotationsMap()[id][0]);
+			.map(id => CorpusStore.get.allAnnotationsMap()[id]);
 		},
 		shownMetadataCols(): AppTypes.NormalizedMetadataField[] {
-			// Do not display the metadata here, it's silly.
 			return UIStore.getState().results.hits.shownMetadataIds
 			.map(id => CorpusStore.getState().metadataFields[id]);
 		},
 		/** Get annotations to show in concordances, if not configured, returns all annotations shown in the main search form. */
 		shownConcordanceAnnotationRows(): AppTypes.NormalizedAnnotation[] {
-			const configuredIds = UIStore.getState().results.shared.detailedAnnotationIds;
-			const configuredAnnotations = configuredIds ? configuredIds.map(id => CorpusStore.get.allAnnotationsMap()[id][0]) : CorpusStore.get.shownAnnotations();
+			let configuredIds = UIStore.getState().results.shared.detailedAnnotationIds;
+			if (!configuredIds || !configuredIds.length) {
+				configuredIds = CorpusStore.get.annotationGroups().flatMap(g => g.isRemainderGroup ? [] : g.entries)
+			}
+
+			const annots = CorpusStore.get.allAnnotationsMap();
+			const configuredAnnotations = configuredIds.map(id => annots[id]);
 			return configuredAnnotations.filter(annot => annot.hasForwardIndex);
 		},
 		textDirection: CorpusStore.get.textDirection,
 
 		corpus(): string { return CorpusStore.getState().id; },
-		getAudioPlayerData() { return UIStore.getState().results.hits.getAudioPlayerData; }
+		getAudioPlayerData() { return UIStore.getState().results.hits.getAudioPlayerData; },
+
+		transformSnippets(): null|((snippet: any)=> any){ return UIStore.getState().results.shared.transformSnippets; },
+		getDocumentSummary(): ((doc: any, info: any) => any) { return UIStore.getState().results.shared.getDocumentSummary },
 	},
 	methods: {
 		changeSort(payload: string) {
@@ -372,9 +379,6 @@ export default Vue.extend({
 			})
 			.finally(() => citation.loading = false);
 		},
-
-		transformSnippets: UIStore.getState().results.shared.transformSnippets,
-		getDocumentSummary: UIStore.getState().results.shared.getDocumentSummary,
 	},
 	watch: {
 		results() {

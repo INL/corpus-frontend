@@ -1,10 +1,11 @@
 <template>
 	<div
 		class="form-group filterfield"
-		:id="id"
+		:id="htmlId"
 		:data-filterfield-type="definition.componentName"
 	>
-		<label class="col-xs-12" :for="inputId">{{displayName}} <Debug>(id: {{id}})</Debug></label>
+		<label v-if="showLabel" class="col-xs-12" :for="inputId">{{displayName}} <Debug>(id: {{id}})</Debug></label>
+		<Debug v-else><label class="col-xs-12">(id: {{id}})</label></Debug>
 		<div class="col-xs-12">
 			<div class="checkbox" v-for="(option, index) in options" :key="index">
 				<!-- TODO optimize this, currently rewriting all values, ergo rerendering all checkboxes every time one changes -->
@@ -26,9 +27,7 @@
 
 <script lang="ts">
 import BaseFilter from '@/components/filters/Filter';
-import { FilterValue } from '@/types/apptypes';
 import { Option } from '@/components/SelectPicker.vue';
-import { MapOf, mapReduce, escapeLucene, unescapeLucene } from '@/utils';
 
 export default BaseFilter.extend({
 	props: {
@@ -42,24 +41,6 @@ export default BaseFilter.extend({
 	},
 	computed: {
 		options(): Option[] { return this.definition.metadata; },
-		optionsMap(): MapOf<Option> { return mapReduce(this.options, 'value'); },
-		luceneQuery(): string|null {
-			// Values for checkboxes are predetermined (i.e. user can't type in these fields)
-			// So copy out the values without wildcard substitution or regex escaping.
-			// Surround each individual values with quotes, and surround the total with brackets
-			const selected = Object.entries(this.value)
-				.filter(([value, isSelected]) => isSelected)
-				.map(([value, isSelected]) => escapeLucene(value, false));
-
-			return selected.length ? `${this.id}:(${selected.join(' ')})` : null;
-		},
-		luceneQuerySummary(): string|null {
-			const selected = Object.entries(this.value)
-				.filter(([value, isSelected]) => isSelected)
-				.map(([value, isSelected]) => this.optionsMap[value].label || value);
-
-			return selected.length >= 2 ? selected.map(v => `"${v}"`).join(', ') : selected[0] || null;
-		}
 	},
 	methods: {
 		toggleCheckbox(value: string, checked: boolean) {
@@ -68,21 +49,7 @@ export default BaseFilter.extend({
 				[value]: checked
 			});
 		},
-
-		decodeInitialState(filterValues: MapOf<FilterValue>): MapOf<boolean>|null {
-			const v = filterValues[this.id];
-
-			const values = v ? v.values.map(unescapeLucene).map(val => this.optionsMap[val]).filter(opt => opt != null) : undefined;
-			if (!values || !values.length) {
-				return null;
-			}
-
-			return mapReduce(values, 'value', value => true);
-		},
 	},
 });
+
 </script>
-
-<style lang="scss">
-
-</style>

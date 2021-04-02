@@ -48,7 +48,6 @@ export default (luceneQuery?: string): FilterValue[] => {
 			if (context == null && val.field && val.field !== '<implicit>') {
 				context = {
 					id: val.field,
-					type: 'select',
 					values: []
 				};
 				createdContext = true;
@@ -105,7 +104,6 @@ export default (luceneQuery?: string): FilterValue[] => {
 
 			context = {
 				id: val.field,
-				type: 'text',
 				values: []
 			};
 			createdContext = true;
@@ -139,7 +137,6 @@ export default (luceneQuery?: string): FilterValue[] => {
 		// Ignore in/exclusivity
 		parsedValues.push({
 			id: val.field,
-			type: 'range',
 			values: [val.term_min, val.term_max]
 		});
 	}

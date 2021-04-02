@@ -62,21 +62,29 @@
 				<template v-if="useTabs">
 					<ul class="nav nav-tabs subtabs">
 						<li v-for="(tab, index) in tabs" :class="{'active': index === 0}" :key="index">
-							<a :href="'#'+getTabId(tab.groupId)" data-toggle="tab">{{tab.groupId}}</a>
+							<a :href="'#'+getTabId(tab.label)" data-toggle="tab">{{tab.label}}</a>
 						</li>
 					</ul>
 					<div class="tab-content">
 						<div v-for="(tab, index) in tabs"
 							:class="['tab-pane', 'annotation-container', {'active': index === 0}]"
 							:key="index"
-							:id="getTabId(tab.groupId)"
+							:id="getTabId(tab.label)"
 						>
-							<Annotation v-for="annotation in tab.annotations" :key="annotation.annotatedFieldId + '/' + annotation.id" :annotation="annotation"/>
+							<Annotation v-for="annotation in tab.entries"
+								:key="getTabId(tab.label) + '/' + annotation.annotatedFieldId + '/' + annotation.id"
+								:htmlId="getTabId(tab.label) + '/' + annotation.annotatedFieldId + '/' + annotation.id"
+								:annotation="annotation"
+							/>
 						</div>
 					</div>
 				</template>
 				<template v-else>
-					<Annotation v-for="annotation in allAnnotations" :key="annotation.annotatedFieldId + '/' + annotation.id" :annotation="annotation"/>
+					<Annotation v-for="annotation in allAnnotations"
+						:key="annotation.annotatedFieldId + '/' + annotation.id"
+						:htmlId="annotation.annotatedFieldId + '/' + annotation.id"
+						:annotation="annotation"
+					/>
 				</template>
 
 				<!-- show this even if it's disabled when "within" contains a value, or you can never remove the value -->
@@ -87,7 +95,7 @@
 					<div class="btn-group col-xs-12 col-md-9">
 						<button v-for="option in withinOptions"
 							type="button"
-							:class="['btn btn-default', {'active': within === option.value}]"
+							:class="['btn btn-primary', {'active': within === option.value}]"
 							:key="option.value"
 							:value="option.value"
 							:title="option.title || undefined"
@@ -157,7 +165,7 @@ import { QueryBuilder } from '@/modules/cql_querybuilder';
 
 import { paths } from '@/api';
 import * as AppTypes from '@/types/apptypes';
-import { annotationGroups } from '../../../utils';
+import { getAnnotationSubset } from '@/utils';
 
 export default Vue.extend({
 	mixins: [uid],
@@ -181,15 +189,17 @@ export default Vue.extend({
 		useTabs(): boolean {
 			return this.tabs.length > 1;
 		},
-		tabs(): Array<{groupId: string, annotations: AppTypes.NormalizedAnnotation[]}> {
-			return annotationGroups(
+		tabs(): Array<{label?: string, entries: AppTypes.NormalizedAnnotation[]}> {
+			return getAnnotationSubset(
 				UIStore.getState().search.extended.searchAnnotationIds,
+				CorpusStore.getState().annotationGroups,
 				CorpusStore.get.allAnnotationsMap(),
-				CorpusStore.getState().annotationGroups
-			)
+				'Search',
+				CorpusStore.get.textDirection()
+			);
 		},
 		allAnnotations(): AppTypes.NormalizedAnnotation[] {
-			return this.tabs.flatMap(tab => tab.annotations);
+			return this.tabs.flatMap(tab => tab.entries);
 		},
 		firstMainAnnotation: CorpusStore.get.firstMainAnnotation,
 		firstMainAnnotationACUrl(): string { return paths.autocompleteAnnotation(CorpusStore.getState().id, this.firstMainAnnotation.annotatedFieldId, this.firstMainAnnotation.id); },

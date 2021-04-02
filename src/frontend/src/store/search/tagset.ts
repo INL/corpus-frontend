@@ -87,7 +87,7 @@ const actions = {
 			}
 
 			Object.values(tagset.subAnnotations).forEach(subAnnotInTagset => {
-				const subAnnot = annots[subAnnotInTagset.id][0];
+				const subAnnot = annots[subAnnotInTagset.id];
 				const subAnnotCS = subAnnot.caseSensitive;
 
 				if (!subAnnotCS) {
@@ -135,35 +135,34 @@ const actions = {
 				// apply subannotation displaynames
 				Object.values(t.data.subAnnotations)
 				.forEach(subAnnot => {
-					annots[subAnnot.id].forEach(originalAnnotation => {
-						const originalValues = mapReduce(originalAnnotation.values, 'value');
+					const originalAnnotation = annots[subAnnot.id];
+					const originalValues = mapReduce(originalAnnotation.values, 'value');
 
-						for (const tagsetValue of subAnnot.values) {
-							const a = originalValues[tagsetValue.value];
-							const b = tagsetValue;
+					for (const tagsetValue of subAnnot.values) {
+						const a = originalValues[tagsetValue.value];
+						const b = tagsetValue;
 
-							const value = a ? a.value : b.value;
-							const label = b.displayName || b.value;
-							const title = a ? a.title : null;
+						const value = a ? a.value : b.value;
+						const label = b.displayName || b.value;
+						const title = a ? a.title : null;
 
-							originalValues[value] = {
-								value,
-								label,
-								title
-							};
-						}
+						originalValues[value] = {
+							value,
+							label,
+							title
+						};
+					}
 
-						originalAnnotation.values = Object.values(originalValues)
-						.sort((a, b) =>
-							originalAnnotation.values ?
-								originalAnnotation.values.findIndex(v => v.value === a.value) -
-								originalAnnotation.values.findIndex(v => v.value === b.value) :
-							0
-						);
-						if (originalAnnotation.uiType === 'text') {
-							originalAnnotation.uiType = 'select';
-						}
-					});
+					originalAnnotation.values = Object.values(originalValues)
+					.sort((a, b) =>
+						originalAnnotation.values ?
+							originalAnnotation.values.findIndex(v => v.value === a.value) -
+							originalAnnotation.values.findIndex(v => v.value === b.value) :
+						0
+					);
+					if (originalAnnotation.uiType === 'text') {
+						originalAnnotation.uiType = 'select';
+					}
 				});
 			});
 
@@ -200,7 +199,7 @@ function validateTagset(annotation: NormalizedAnnotation, t: Tagset) {
 	const validAnnotations = CorpusStore.get.allAnnotationsMap();
 
 	function validateAnnotation(id: string, values: Tagset['subAnnotations'][string]['values']) {
-		const mainAnnotation = validAnnotations[id] && validAnnotations[id][0];
+		const mainAnnotation = validAnnotations[id];
 		if (!mainAnnotation) {
 			throw new Error(`Annotation "${id}" does not exist in corpus.`);
 		}

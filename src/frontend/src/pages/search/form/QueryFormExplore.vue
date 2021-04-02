@@ -167,7 +167,7 @@ import * as UIStore from '@/store/search/ui';
 import SelectPicker, {Option, OptGroup} from '@/components/SelectPicker.vue';
 import Autocomplete from '@/components/Autocomplete.vue';
 import Lexicon from '@/pages/search/form/Lexicon.vue';
-import { selectPickerMetadataOptions, annotationGroups } from '@/utils';
+import { getAnnotationSubset, getMetadataSubset } from '@/utils';
 import { paths } from '@/api';
 
 import debug from '@/utils/debug';
@@ -201,7 +201,7 @@ export default Vue.extend({
 			const allAnnotations = CorpusStore.get.allAnnotationsMap();
 			return ExploreStore.get.ngram.tokens().map(tok => ({
 				...tok,
-				annotation: allAnnotations[tok.id] ? allAnnotations[tok.id][0] : null
+				annotation: allAnnotations[tok.id]
 			}));
 		},
 		ngramSizeMax: ExploreStore.get.ngram.maxSize,
@@ -221,44 +221,33 @@ export default Vue.extend({
 		},
 
 		annotationSearchOptions(): Option[]|OptGroup[] {
-			const groups = annotationGroups(
+			const optGroups = getAnnotationSubset(
 				UIStore.getState().explore.searchAnnotationIds,
+				CorpusStore.get.annotationGroups(),
 				CorpusStore.get.allAnnotationsMap(),
-				CorpusStore.getState().annotationGroups
-			)
-			.map(g => ({
-				label: g.groupId,
-				options: g.annotations.map<Option>(a => ({
-					value: a.id,
-					label: a.displayName + (this.debug.debug ? ` (id: ${a.id})` : ''),
-					title: a.description
-				}))
-			}));
-
-			return groups.length > 1 ? groups : groups.flatMap(g => g.options);
+				'Search',
+				CorpusStore.getState().textDirection
+			);
+			return optGroups.length > 1 ? optGroups : optGroups.flatMap(g => g.options as Option[]);
 		},
 		annotationGroupByOptions(): Option[]|OptGroup[] {
-			const groups = annotationGroups(
+			const optGroups = getAnnotationSubset(
 				UIStore.getState().results.shared.groupAnnotationIds,
+				CorpusStore.get.annotationGroups(),
 				CorpusStore.get.allAnnotationsMap(),
-				CorpusStore.getState().annotationGroups
-			)
-			.map(g => ({
-				label: g.groupId,
-				options: g.annotations.map<Option>(a => ({
-					value: a.id,
-					label: a.displayName + (this.debug.debug ? ` (id: ${a.id})` : ''),
-					title: a.description
-				}))
-			}));
-
-			return groups.length > 1 ? groups : groups.flatMap(g => g.options);
+				'Search', // we don't want the before hit/after hit context options, just do search mode, it'll be fine
+				CorpusStore.getState().textDirection
+			);
+			return optGroups.length > 1 ? optGroups : optGroups.flatMap(g => g.options as Option[]);
 		},
 		metadataGroupByOptions(): OptGroup[] {
-			const metas = CorpusStore.get.allMetadataFieldsMap();
-			const groups = CorpusStore.getState().metadataFieldGroups;
-			const shownMetaIds = UIStore.getState().results.shared.groupMetadataIds;
-			return selectPickerMetadataOptions(shownMetaIds, metas, groups, 'Group', this.debug.debug);
+			const optGroups = getMetadataSubset(
+				UIStore.getState().results.shared.groupMetadataIds,
+				CorpusStore.get.metadataGroups(),
+				CorpusStore.get.allMetadataFieldsMap(),
+				'Group'
+			);
+			return optGroups;
 		},
 		corporaGroupDisplayModeOptions(): string[] {
 			// TODO

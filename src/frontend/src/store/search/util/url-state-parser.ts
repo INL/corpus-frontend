@@ -31,8 +31,8 @@ import * as HitResultsModule from '@/store/search/results/hits';
 
 import {FilterValue, AnnotationValue} from '@/types/apptypes';
 
-import BaseFilter from '@/components/filters/Filter';
 import cloneDeep from 'clone-deep';
+import { valueFunctions } from '@/components/filters/filterValueFunctions';
 
 /**
  * Decode the current url into a valid page state configuration.
@@ -83,52 +83,26 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 		}
 
 		try {
-			const luceneParsedThing = LuceneQueryParser.parse(luceneString);
+			const luceneQueryAST = LuceneQueryParser.parse(luceneString);
 			const parsedQuery: MapOf<FilterValue> = mapReduce(parseLucene(luceneString), 'id');
 
-			const metadataFields = CorpusModule.get.allMetadataFieldsMap();
-			const shownFilters = new Set<string>(UIModule.getState().search.shared.searchMetadataIds.concat(
-				Object.keys(FilterModule.getState().filters)
-				.filter(id => metadataFields[id] == null)
-			));
-			const parsedQuery2: FilterModule.FullFilterState[] =
-			Object.values(this.registeredMetadataFilters)
-			.filter(f => shownFilters.has(f.id)) // Do not parse filters that are not in the ui
-			.map(filter => {
-				const vueComponent = Vue.component(filter.componentName) as typeof BaseFilter;
-				if (!vueComponent) {
-					console.warn(`Filter ${filter.id} defines its vue component as ${filter.componentName} but it does not exist! (have you registered it properly with vue?)`);
-					return filter;
-				}
+			const filterValues: MapOf<FilterModule.FullFilterState> = {};
+			Object.values(FilterModule.getState().filters).forEach(filterDefinition => {
+				const value: unknown = valueFunctions[filterDefinition.componentName].decodeInitialState(
+					filterDefinition.id,
+					filterDefinition.metadata,
+					parsedQuery,
+					luceneQueryAST
+				);
 
-				const vueComponentInstance = new vueComponent({
-					propsData: {
-						// don't set a null value, allow the component to set this prop's default value (if configured).
-						// or it may throw errors when running compute methods.
-						value: undefined,
-						textDirection: CorpusModule.getState().textDirection,
-						definition: filter,
-					},
-				}) as any;
-
-				const componentValue = vueComponentInstance.decodeInitialState(parsedQuery, luceneParsedThing);
-				const storeValue: FilterModule.FilterState = {
-					value: componentValue != null ? componentValue : undefined,
-					summary: null,
-					lucene: null
-				};
-				if (componentValue != null) { // don't overwrite default value
-					Vue.set(vueComponentInstance._props, 'value', componentValue);
-					storeValue.summary = vueComponentInstance.luceneQuerySummary;
-					storeValue.lucene = vueComponentInstance.luceneQuery;
+				if (value) {
+					filterValues[filterDefinition.id] = {
+						...filterDefinition,
+						value,
+					}
 				}
-				return {
-					...filter,
-					...storeValue
-				};
 			});
-
-			return mapReduce(parsedQuery2, 'id');
+			return filterValues;
 		} catch (error) {
 			debugLog('Cannot decode lucene query ', luceneString, error);
 			return {};
@@ -303,7 +277,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 			size: cql.tokens.length,
 			tokens: cql.tokens.map(t => {
 				const valueAnnotationId = t.expression ? (t.expression as Attribute).name : defaultNgramTokenAnnotation;
-				const type = QueryModule.getCorrectUiType(QueryModule.uiTypeSupport.explore.ngram, allAnnotations[valueAnnotationId][0].uiType);
+				const type = QueryModule.getCorrectUiType(QueryModule.uiTypeSupport.explore.ngram, allAnnotations[valueAnnotationId].uiType);
 
 				return {
 					// when expression is undefined, the token was just '[]' in the query, so set it to defaults.
@@ -440,7 +414,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 			// Now we have extracted all raw cql-escaped values for all annotations, and validated the shape of the query
 			// decode the values back into their textual representation (i.e. without regex escaping joined back into a single string and such)
 			const decodedValues = Object.entries(annotationValues).map(([id, values]) => {
-				const annot = knownAnnotations[id][0];
+				const annot = knownAnnotations[id];
 				if (tagsetInfo && tagsetInfo.mainAnnotations.includes(id)) {
 					// use value as-is, already contains cql and should not have wildcards substituted.
 					debugLog('Mapping tagset annotation back to cql: ' + id + ' with values ' + values);

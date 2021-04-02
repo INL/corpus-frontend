@@ -24,7 +24,7 @@ import UrlStateParser from '@/store/search/util/url-state-parser';
 
 import { NormalizedIndex } from '@/types/apptypes';
 import { debugLog } from '@/utils/debug';
-import { getFilterSummary } from '@/utils';
+import { getFilterSummary } from '@/components/filters/filterValueFunctions';
 
 const version = 6;
 

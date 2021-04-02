@@ -63,7 +63,7 @@ import * as UIStore from '@/store/search/ui';
 import SelectPicker, {OptGroup, Option} from '@/components/SelectPicker.vue';
 import ContextGroup from '@/pages/search/results/groupby/ContextGroup.vue';
 import UID from '@/mixins/uid';
-import { selectPickerAnnotationOptions, selectPickerMetadataOptions } from '@/utils';
+import { getAnnotationSubset, getMetadataSubset } from '@/utils';
 import debug from '@/utils/debug';
 
 const CONTEXT_ENABLED_STRING = '_enable_context';
@@ -154,17 +154,23 @@ export default Vue.extend({
 			}
 
 			if (this.type === 'hits') {
-				// NOTE: grouping on annotations without a forward index is not supported - however has already been checked in the UIStore
-				const annots = CorpusStore.get.allAnnotationsMap();
-				const dir = CorpusStore.get.textDirection();
-				const shownAnnotIds = UIStore.getState().results.shared.groupAnnotationIds;
-				opts.push(...selectPickerAnnotationOptions(shownAnnotIds, annots, 'Group', dir, this.debug.debug));
+				opts.push(...getAnnotationSubset(
+					UIStore.getState().results.shared.groupAnnotationIds,
+					CorpusStore.get.annotationGroups(),
+					CorpusStore.get.allAnnotationsMap(),
+					'Group',
+					CorpusStore.get.textDirection(),
+					this.debug.debug
+				));
 			}
 
-			const metas = CorpusStore.get.allMetadataFieldsMap();
-			const shownMetaIds = UIStore.getState().results.shared.groupMetadataIds;
-			const groups = CorpusStore.getState().metadataFieldGroups;
-			opts.push(...selectPickerMetadataOptions(shownMetaIds, metas, groups, 'Group', this.debug.debug));
+			opts.push(...getMetadataSubset(
+				UIStore.getState().results.shared.groupMetadataIds,
+				CorpusStore.get.metadataGroups(),
+				CorpusStore.get.allMetadataFieldsMap(),
+				'Group',
+				this.debug.debug
+			));
 			return opts;
 		},
 

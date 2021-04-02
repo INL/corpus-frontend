@@ -141,7 +141,7 @@
 							'active': !multiple && internalModel[o.value],
 							'disabled': o.disabled,
 						}"
-						:key="o.value"
+						:key="o.id"
 						:tabindex="o.disabled ? undefined : -1"
 						:title="o.title"
 						:data-value="o.value"
@@ -198,6 +198,7 @@ export type Options = Array<SimpleOption|Option|OptGroup>;
 
 type _uiOpt = {
 	type: 1;
+	id: number;
 
 	value: string;
 	label: string;
@@ -211,7 +212,7 @@ type _uiOpt = {
 type _uiOptGroup = {
 	type: 2;
 
-	id: string;
+	id: number;
 	label?: string;
 	title?: string;
 	disabled?: boolean;
@@ -320,8 +321,10 @@ export default Vue.extend({
 		isOpen(): boolean { if (this.open != null) { return this.open; } else { return this.isNaturallyOpen; } },
 
 		uiOptions(): uiOption[] {
+			let id = 0;
 			const mapSimple = (o: SimpleOption, group?: OptGroup): _uiOpt => ({
 				type: 1,
+				id: id++,
 
 				label: o,
 				value: o,
@@ -335,6 +338,7 @@ export default Vue.extend({
 
 			const mapOption = (o: Option, group?: OptGroup): _uiOpt => ({
 				type: 1,
+				id: id++,
 
 				value: o.value,
 				label: o.label || o.value,
@@ -346,19 +350,19 @@ export default Vue.extend({
 				lowerLabel: (o.label || o.value).toLowerCase()
 			});
 
-			const mapGroup = (o: OptGroup, id: number): _uiOptGroup => ({
+			const mapGroup = (o: OptGroup): _uiOptGroup => ({
 				type: 2,
-				id: id.toString(),
+				id: id++,
 				label: o.label,
 				title: o.title != null ? o.title : undefined,
 				disabled: o.disabled,
 			});
 
-			let uiOptions = this.options.flatMap((o, index) => {
+			let uiOptions = this.options.flatMap(o => {
 				if (isSimpleOption(o)) { return mapSimple(o); }
 				else if (isOption(o)) { return mapOption(o); }
 				else {
-					const h = mapGroup(o, index);
+					const h = mapGroup(o);
 					const subs: uiOption[] = o.options.map(sub => isSimpleOption(sub) ? mapSimple(sub, o) : mapOption(sub, o));
 					subs.unshift(h);
 					return subs;
@@ -374,6 +378,7 @@ export default Vue.extend({
 			if (!this.multiple && !this.editable && !this.hideEmpty && uiOptions.length && !uiOptions.some(o => o.type === 1 && o.value === '')) {
 				const emptyOption: _uiOpt = {
 					type: 1,
+					id: -1,
 					value: '',
 					label: '',
 					lowerValue: '',
@@ -771,7 +776,7 @@ export default Vue.extend({
 			} else {
 				// NOTE:
 				// at this point, this.uiOptions is up to date with any (potential) new options prop
-				// however, this.internalModel is not yet updated, so still contains handles to (possibly stale) _uiOpts
+				// however, this.internalModel is not yet updated, so still contains handles to (possibly stale) options
 
 				const newValues = new Set<string>(newVal as string[]);
 				const oldValues = this.internalModel;
@@ -795,7 +800,12 @@ export default Vue.extend({
 			} else {
 				// Model only edited when actually required, so always fire input event
 				// So if this triggers we know for sure the value output also needs to change
+
+				// But maybe the model only changed because we got pushed a new value from props
+				// check that this is not the case.
 				const values = Object.keys(this.internalModel);
+				if (this.multiple && Array.isArray(this.value) && values.every(v => (this.value as string[]).includes(v))) { return; } // our value prop is already up to date - don't fire.
+				if (!this.multiple && typeof this.value === 'string' && values.length == 1 && values[0] === this.value) { return; }
 				this.$emit('input', this.multiple ? values : values.length ? values[0] : null);
 			}
 		},
@@ -972,6 +982,8 @@ export default Vue.extend({
 	border: 1px solid #e5e5e5;
 	border-radius: 4px;
 	box-shadow: 0 6px 12px rgba(0,0,0,.175);
+	display: flex;
+	flex-direction: column;
 	font-size: 14px;
 	left: 0;
 	margin-top: 3px;

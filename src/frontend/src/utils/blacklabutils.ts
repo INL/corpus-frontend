@@ -1,17 +1,6 @@
-import {NormalizedIndex, NormalizedAnnotation, NormalizedAnnotatedField, NormalizedMetadataField, NormalizedIndexOld, NormalizedFormatOld} from '@/types/apptypes';
+import {NormalizedIndex, NormalizedAnnotation, NormalizedAnnotatedField, NormalizedMetadataField, NormalizedIndexOld, NormalizedFormatOld, NormalizedMetadataGroup, NormalizedAnnotationGroup} from '@/types/apptypes';
 import * as BLTypes from '@/types/blacklabtypes';
-import { mapReduce, makeMapReducer } from '@/utils';
-
-function findAnnotationGroup(annotatedFieldId: string, annotationId: string, groups: NormalizedIndex['annotationGroups']): string|undefined {
-	const groupsForAnnotatedField = groups.filter(g => g.annotatedFieldId === annotatedFieldId);
-	const group = groupsForAnnotatedField.find(g => g.annotationIds.includes(annotationId));
-	return group ? group.name : undefined;
-}
-
-function findMetadataGroup(field: BLTypes.BLMetadataField, groups: BLTypes.BLIndexMetadata['metadataFieldGroups']): string|undefined {
-	const group = groups.find(g => g.fields.includes(field.fieldName));
-	return group != null ? group.name : undefined;
-}
+import { mapReduce } from '@/utils';
 
 /** Find the annotation that contains annotationId as on of its subAnnotations. */
 function findParentAnnotation(annotatedField: BLTypes.BLAnnotatedField, annotationId: string): string|undefined {
@@ -56,7 +45,7 @@ function normalizeAnnotationUIType(field: BLTypes.BLAnnotation): NormalizedAnnot
 	}
 }
 
-function normalizeAnnotation(annotatedField: BLTypes.BLAnnotatedField, annotationId: string, annotation: BLTypes.BLAnnotation, groups: NormalizedIndex['annotationGroups']): NormalizedAnnotation{
+function normalizeAnnotation(annotatedField: BLTypes.BLAnnotatedField, annotationId: string, annotation: BLTypes.BLAnnotation): NormalizedAnnotation{
 	const annotatedFieldId = annotatedField.fieldName;
 	const mainAnnotationId = BLTypes.isAnnotatedFieldV1(annotatedField) ? annotatedField.mainProperty : annotatedField.mainAnnotation;
 
@@ -65,7 +54,6 @@ function normalizeAnnotation(annotatedField: BLTypes.BLAnnotatedField, annotatio
 		caseSensitive: annotation.sensitivity === 'SENSITIVE_AND_INSENSITIVE',
 		description: annotation.description,
 		displayName: annotation.displayName || annotationId,
-		groupId: findAnnotationGroup(annotatedFieldId, annotationId, groups),
 		hasForwardIndex: annotation.hasForwardIndex,
 		id: annotationId,
 		isInternal: annotation.isInternal,
@@ -78,11 +66,10 @@ function normalizeAnnotation(annotatedField: BLTypes.BLAnnotatedField, annotatio
 	};
 }
 
-function normalizeMetadata(field: BLTypes.BLMetadataField, groups: BLTypes.BLIndexMetadata['metadataFieldGroups']): NormalizedMetadataField {
+function normalizeMetadata(field: BLTypes.BLMetadataField): NormalizedMetadataField {
 	return {
 		description: field.description,
 		displayName: field.displayName || field.fieldName,
-		groupId: findMetadataGroup(field, groups),
 		id: field.fieldName,
 		uiType: normalizeMetadataUIType(field),
 		values: ['select', 'checkbox', 'radio'].includes(normalizeMetadataUIType(field)) ? Object.keys(field.fieldValues).map(value => {
@@ -95,79 +82,121 @@ function normalizeMetadata(field: BLTypes.BLMetadataField, groups: BLTypes.BLInd
 	};
 }
 
+function normalizeAnnotatedField(field: BLTypes.BLAnnotatedField): NormalizedAnnotatedField {
+	const annotations: Array<[string, BLTypes.BLAnnotation]> = BLTypes.isAnnotatedFieldV1(field) ? Object.entries(field.properties) : Object.entries(field.annotations);
+	const mainAnnotationId: string = BLTypes.isAnnotatedFieldV1(field) ? field.mainProperty : field.mainAnnotation;
+
+	return {
+		annotations: mapReduce(annotations.map(([id, annot]) => normalizeAnnotation(field, id, annot)), 'id'),
+		description: field.description,
+		displayName: field.displayName,
+		// displayOrder: Object.keys(annotations).sort((a, b) => annotationDisplayOrder[field.fieldName][a] - annotationDisplayOrder[field.fieldName][b]),
+		hasContentStore: field.hasContentStore,
+		hasLengthTokens: field.hasLengthTokens,
+		hasXmlTags: field.hasXmlTags,
+		id: field.fieldName,
+		isAnnotatedField: field.isAnnotatedField,
+		mainAnnotationId,
+	};
+}
+
+function normalizeAnnotationGroups(blIndex: BLTypes.BLIndexMetadata): NormalizedAnnotationGroup[] {
+	let annotationGroupsNormalized: NormalizedAnnotationGroup[] = [];
+	for (const [fieldId, field] of Object.entries(BLTypes.isIndexMetadataV1(blIndex) ? blIndex.complexFields : blIndex.annotatedFields) as Array<[string, BLTypes.BLAnnotatedField]>) {
+		const annotations = BLTypes.isAnnotatedFieldV1(field) ? field.properties : field.annotations;
+		const idsNotInGroups = new Set(Object.keys(annotations));
+
+		let hasUserDefinedGroup = false;
+
+		// Copy all predefined groups, removing nonexistant annotations and groups
+		if (blIndex.annotationGroups) {
+			for (const group of blIndex.annotationGroups[fieldId]) {
+				const normalizedGroup: NormalizedAnnotationGroup = {
+					annotatedFieldId: fieldId,
+					id: group.name,
+					entries: group.annotations.filter(id => annotations[id] != null),
+					isRemainderGroup: false
+				}
+				if (normalizedGroup.entries.length) {
+					annotationGroupsNormalized.push(normalizedGroup);
+					normalizedGroup.entries.forEach(id => idsNotInGroups.delete(id));
+					hasUserDefinedGroup = true;
+				}
+			}
+		}
+
+		// Add all remaining annotations to the remainder group.
+		// First add all explicitly ordered annotations (annotatedField.displayOrder).
+		// Finally add everything else at the end, sorted by their displayNames.
+		if (idsNotInGroups.size) {
+			const remainingAnnotationsToAdd = new Set(idsNotInGroups);
+			const idsInRemainderGroup: string[] = [];
+
+			// annotations in displayOrder
+			if (!BLTypes.isAnnotatedFieldV1(field) && field.displayOrder) {
+				field.displayOrder.forEach(id => {
+					if (remainingAnnotationsToAdd.has(id)) {
+						remainingAnnotationsToAdd.delete(id);
+						idsInRemainderGroup.push(id);
+					}
+				});
+			}
+			// Finally all annotations without entry in displayOrder
+			idsInRemainderGroup.push(...[...remainingAnnotationsToAdd].sort((a, b) => annotations[a].displayName.localeCompare(annotations[b].displayName)));
+			// And create the group.
+			annotationGroupsNormalized.push({
+				annotatedFieldId: fieldId,
+				entries: idsInRemainderGroup,
+				id: 'Other',
+				// If there was a group defined from the index config, this is indeed the remainder group, otherwise this is just a normal group.
+				isRemainderGroup: hasUserDefinedGroup
+			});
+		}
+	}
+	return annotationGroupsNormalized;
+}
+
+function normalizeMetadataGroups(blIndex: BLTypes.BLIndexMetadata): NormalizedMetadataGroup[] {
+	const metadataGroupsNormalized: NormalizedMetadataGroup[] = [];
+	const idsNotInGroups = new Set(Object.keys(blIndex.metadataFields));
+
+	let hasUserDefinedGroup = false;
+
+	// Copy predefined groups, removing nonexistant fields and empty groups
+	for (const group of blIndex.metadataFieldGroups) {
+		const normalizedGroup: NormalizedMetadataGroup = {
+			entries: group.fields.filter(id => blIndex.metadataFields[id] != null),
+			isRemainderGroup: false,
+			id: group.name
+		};
+		if (normalizedGroup.entries.length) {
+			metadataGroupsNormalized.push(normalizedGroup);
+			normalizedGroup.entries.forEach(id => idsNotInGroups.delete(id));
+			hasUserDefinedGroup = true;
+		}
+	}
+
+	// Create remainder group
+	if(idsNotInGroups.size) {
+		metadataGroupsNormalized.push({
+			entries: [...idsNotInGroups].sort((a, b) => blIndex.metadataFields[a].displayName.localeCompare(blIndex.metadataFields[b].displayName)),
+			// If there was a group defined from the index config, this is indeed the remainder group, otherwise this is just a normal group.
+			isRemainderGroup: hasUserDefinedGroup,
+			id: 'Metadata'
+		});
+	}
+	return metadataGroupsNormalized;
+}
+
 // -------------
 
 export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedIndex {
-
-	const annotatedFields: BLTypes.BLAnnotatedField[] = BLTypes.isIndexMetadataV1(blIndex) ? Object.values(blIndex.complexFields) : Object.values(blIndex.annotatedFields);
-	let annotationGroupsNormalized: NormalizedIndex['annotationGroups'] = [];
-	if (blIndex.annotationGroups) {
-		annotationGroupsNormalized = Object.entries(blIndex.annotationGroups).flatMap(([fieldId, groups]) => groups.map(g => ({
-			// annotations in a group already have an order to them
-			// this should have higher priority than the global order of annotations within this annotatedfield.
-			// (which only applies to annotations not defined in a group)
-			annotationIds: g.annotations,
-			annotatedFieldId: fieldId,
-			name: g.name
-		})));
-	}
-
-	// No groups defined by blacklab.
-	// Add all known annotations to a default group
-	// (excluding internal annotations)
-	if (!annotationGroupsNormalized.length) {
-		annotationGroupsNormalized = Object.values(annotatedFields).map(f => BLTypes.isAnnotatedFieldV1(f) ? {
-			// this is an old index, displayOrder not supported yet, sort by displayName and remove internal annotations.
-			annotationIds:
-				Object.keys(f.properties)
-				.filter(id => !f.properties[id].isInternal)
-				.sort((a, b) => f.properties[a].displayName.localeCompare(f.properties[b].displayName)),
-			annotatedFieldId: f.fieldName,
-			name: 'Annotations'
-		} : {
-			// newer index, preserve displayOrder, but remove internal annotations.
-			annotationIds: f.displayOrder
-				? f.displayOrder
-					.filter(id => !f.annotations[id].isInternal)
-				: Object.keys(f.annotations)
-					.filter(id => !f.annotations[id].isInternal)
-					.sort((a, b) => f.annotations[a].displayName.localeCompare(f.annotations[b].displayName)),
-			annotatedFieldId: f.fieldName,
-			name: 'Annotations'
-		});
-	}
-
-	const annotatedFieldsNormalized: { [id: string]: NormalizedAnnotatedField; } = annotatedFields.map<NormalizedAnnotatedField>(f => {
-		const annotations: Array<[string, BLTypes.BLAnnotation]> = BLTypes.isAnnotatedFieldV1(f) ? Object.entries(f.properties) : Object.entries(f.annotations);
-		const mainAnnotationId: string = BLTypes.isAnnotatedFieldV1(f) ? f.mainProperty : f.mainAnnotation;
-
-		return {
-			annotations: annotations
-				.map(([annotationId, annotation]) => normalizeAnnotation(f, annotationId, annotation, annotationGroupsNormalized))
-				.reduce(makeMapReducer('id'), {}),
-			description: f.description,
-			displayName: f.displayName,
-			displayOrder: (!BLTypes.isAnnotatedFieldV1(f) && f.displayOrder != null) ?
-				f.displayOrder :
-				annotations
-				.sort(([aId, a], [bId, b]) => a.displayName.localeCompare(b.displayName)) // sort by displayname if no predefined order
-				.map(([id, annot]) => id),
-			hasContentStore: f.hasContentStore,
-			hasLengthTokens: f.hasLengthTokens,
-			hasXmlTags: f.hasXmlTags,
-			id: f.fieldName,
-			isAnnotatedField: f.isAnnotatedField,
-			mainAnnotationId,
-		};
-	})
-	.reduce(makeMapReducer('id'), {});
-
-	const metadataFieldGroupsNormalized =
-		blIndex.metadataFieldGroups.length > 0 ? blIndex.metadataFieldGroups :
-		[{ name: 'Metadata', fields: Object.keys(blIndex.metadataFields).sort((a, b) => blIndex.metadataFields[a].displayName.localeCompare(blIndex.metadataFields[b].displayName)) }]; // sort by display name
+	const annotationGroupsNormalized = normalizeAnnotationGroups(blIndex);
+	const metadataGroupsNormalized = normalizeMetadataGroups(blIndex);
+	const annotatedFields: BLTypes.BLAnnotatedField[] = Object.values(BLTypes.isIndexMetadataV1(blIndex) ? blIndex.complexFields : blIndex.annotatedFields);
 
 	return {
-		annotatedFields: annotatedFieldsNormalized,
+		annotatedFields: mapReduce(annotatedFields.map(normalizeAnnotatedField), 'id'),
 		annotationGroups: annotationGroupsNormalized,
 		contentViewable: blIndex.contentViewable,
 		description: blIndex.description,
@@ -179,15 +208,8 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 		documentFormat: blIndex.documentFormat,
 		fieldInfo: blIndex.fieldInfo,
 		id: blIndex.indexName,
-		metadataFieldGroups: metadataFieldGroupsNormalized,
-		metadataFields:
-			Object.values(blIndex.metadataFields)
-			.map(f => normalizeMetadata(f, metadataFieldGroupsNormalized))
-			.reduce<NormalizedIndex['metadataFields']>((acc, field) => {
-				acc[field.id] = field;
-				return acc;
-			}, {}),
-
+		metadataFieldGroups: metadataGroupsNormalized,
+		metadataFields: mapReduce(Object.values(blIndex.metadataFields).map(normalizeMetadata), 'id'),
 		owner: blIndex.indexName.substring(0, blIndex.indexName.indexOf(':')) || null,
 		shortId: blIndex.indexName.substr(blIndex.indexName.indexOf(':') + 1),
 		textDirection: blIndex.textDirection,

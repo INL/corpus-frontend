@@ -30,7 +30,8 @@ import * as PatternModule from '@/store/search/form/patterns';
 import * as FilterModule from '@/store/search/form/filters';
 import * as ExploreModule from '@/store/search/form/explore';
 import * as GapModule from '@/store/search/form/gap';
-import { getFilterString, getPatternString, getFilterSummary, escapeRegex } from '@/utils';
+import { getPatternString, escapeRegex } from '@/utils';
+import { getFilterSummary, getFilterString } from '@/components/filters/filterValueFunctions';
 
 type ModuleRootStateSearch<K extends keyof PatternModule.ModuleRootState> = {
 	form: 'search';
@@ -90,7 +91,7 @@ const get = {
 						.slice(0, stateHelper.formState.size)
 						// type select because we only ever want to output one cql token per n-gram input
 						.map(token => {
-							const tokenType = annots[token.id][0].uiType;
+							const tokenType = annots[token.id].uiType;
 							const correctedType = getCorrectUiType(uiTypeSupport.explore.ngram, tokenType);
 
 							return token.value ? `[${token.id}="${escapeRegex(token.value, correctedType !== 'select').replace(/"/g, '\\"')}"]` : '[]';

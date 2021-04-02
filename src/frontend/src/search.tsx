@@ -10,7 +10,7 @@ import VTooltip from 'v-tooltip';
 
 import Filters from '@/components/filters';
 
-import {QueryBuilder, AttributeDef as QueryBuilderAttributeDef} from '@/modules/cql_querybuilder';
+import {QueryBuilder, AttributeDef as QueryBuilderAttributeDef, QueryBuilderOptionsDef} from '@/modules/cql_querybuilder';
 import * as RootStore from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus';
 import * as UIStore from '@/store/search/ui';
@@ -24,10 +24,12 @@ import connectStreamsToVuex from '@/store/search/streams';
 import SearchPageComponent from '@/pages/search/SearchPage.vue';
 import DebugComponent from '@/components/Debug.vue';
 
-import {debugLog} from '@/utils/debug';
+import debug, {debugLog} from '@/utils/debug';
 
 import '@/global.scss';
-import { multimapReduce } from '@/utils';
+import { multimapReduce, getAnnotationSubset } from '@/utils';
+import annotationDistributions from './pages/article/annotationDistributions';
+import { Option } from './types/apptypes';
 
 const connectJqueryToPage = () => {
 	$('input[data-persistent][id != ""], input[data-persistent][data-pid != ""]').each(function(i, elem) {
@@ -60,25 +62,26 @@ const connectJqueryToPage = () => {
 function initQueryBuilder() {
 	debugLog('Begin initializing querybuilder');
 
-	const annots = CorpusStore.get.allAnnotationsMap();
-	const defaultAnnot = UIStore.getState().search.advanced.defaultSearchAnnotationId;
-	const groupOrder = CorpusStore.get.annotationGroups().map(g => g.name);
-	const groupsMap = multimapReduce(
-		UIStore.getState().search.advanced.searchAnnotationIds.map(id => annots[id][0]) as Array<Required<CorpusStore.NormalizedAnnotation>>,
-		'groupId',
-		(annotation): QueryBuilderAttributeDef => ({
-			attribute: annotation.id,
-			label: annotation.displayName,
-			caseSensitive: annotation.caseSensitive,
-			textDirection: annotation.isMainAnnotation ? CorpusStore.get.textDirection() : undefined,
-			values: annotation.values,
-		})
-	);
-	const sortedGroupsArray = Object.entries(groupsMap)
-	.map(([groupname, options]) => ({groupname: groupname !== 'undefined' ? groupname : 'Other', options}))
-	.sort(({groupname: a}, {groupname: b}) => a === 'Other' ? 1 : b === 'Other' ? -1 : groupOrder.indexOf(a) - groupOrder.indexOf(b));
 
-	const qbAttributesConfig = sortedGroupsArray.length > 1 ? sortedGroupsArray : sortedGroupsArray.flatMap(g => g.options);
+	const first = getAnnotationSubset(
+		UIStore.getState().search.advanced.searchAnnotationIds,
+		CorpusStore.get.annotationGroups(),
+		CorpusStore.get.allAnnotationsMap(),
+		'Search',
+		CorpusStore.get.textDirection(),
+		debug.debug
+	);
+
+	const annotationGroups = first.map(g => ({
+		groupname: g.label!,
+		options: g.entries.map<QueryBuilderAttributeDef>((annot, i) => ({
+			attribute: annot.id,
+			caseSensitive: annot.caseSensitive,
+			label: (g.options[i] as Option).label!,
+			textDirection: CorpusStore.get.textDirection(),
+			values: annot.values
+		}))
+	}));
 
 	const withinOptions = UIStore.getState().search.extended.within.elements;
 	// Initialize configuration
@@ -91,8 +94,8 @@ function initQueryBuilder() {
 		attribute: {
 			view: {
 				// Pass the available properties of tokens in this corpus (PoS, Lemma, Word, etc..) to the querybuilder
-				attributes: qbAttributesConfig,
-				defaultAttribute: defaultAnnot,
+				attributes: annotationGroups.length > 1 ? annotationGroups : annotationGroups.flatMap(g => g.options),
+				defaultAttribute: UIStore.getState().search.advanced.defaultSearchAnnotationId
 			}
 		}
 	});

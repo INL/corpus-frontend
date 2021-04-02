@@ -175,7 +175,7 @@ import debug, { debugLog } from '@/utils/debug';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import cloneDeep from 'clone-deep';
-import { selectPickerAnnotationOptions, selectPickerMetadataOptions } from '@/utils';
+import { getAnnotationSubset, getMetadataSubset } from '@/utils';
 
 export default Vue.extend({
 	components: {
@@ -470,10 +470,14 @@ export default Vue.extend({
 			}
 
 			if (this.isHits) {
-				const dir = CorpusStore.getState().textDirection;
-				const shownAnnotIds = UIStore.getState().results.shared.sortAnnotationIds;
-				const annots = CorpusStore.get.allAnnotationsMap();
-				opts.push(...selectPickerAnnotationOptions(shownAnnotIds, annots, 'Sort', dir));
+				opts.push(...getAnnotationSubset(
+					UIStore.getState().results.shared.sortAnnotationIds,
+					CorpusStore.get.annotationGroups(),
+					CorpusStore.get.allAnnotationsMap(),
+					'Sort',
+					CorpusStore.get.textDirection(),
+					this.debug.debug
+				));
 			}
 			if (this.isDocs) {
 				opts.push({
@@ -489,11 +493,13 @@ export default Vue.extend({
 			}
 
 			if (!this.isGroups) {
-				const metadataIds = UIStore.getState().results.shared.sortMetadataIds;
-				const metas = CorpusStore.get.allMetadataFieldsMap();
-				const groups = CorpusStore.getState().metadataFieldGroups;
-
-				opts.push(...selectPickerMetadataOptions(metadataIds, metas, groups, 'Sort', this.debug.debug));
+				opts.push(...getMetadataSubset(
+					UIStore.getState().results.shared.sortMetadataIds,
+					CorpusStore.get.metadataGroups(),
+					CorpusStore.get.allMetadataFieldsMap(),
+					'Sort',
+					this.debug.debug
+				));
 			}
 
 			return opts;

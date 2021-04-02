@@ -10,12 +10,12 @@ import cloneDeep from 'clone-deep';
 
 import * as Api from '@/api';
 
-import {RootState} from '@/store/search/';
+import {RootState, store} from '@/store/search/';
 
 import {normalizeIndex} from '@/utils/blacklabutils';
 
 import * as BLTypes from '@/types/blacklabtypes';
-import {NormalizedIndex, NormalizedAnnotation, NormalizedMetadataField, NormalizedAnnotatedField} from '@/types/apptypes';
+import {NormalizedIndex, NormalizedAnnotation, NormalizedMetadataField, NormalizedAnnotatedField, NormalizedMetadataGroup, NormalizedAnnotationGroup} from '@/types/apptypes';
 import { MapOf, multimapReduce, makeMapReducer, mapReduce } from '@/utils';
 
 declare const SINGLEPAGE: { INDEX: BLTypes.BLIndexMetadata; };
@@ -28,54 +28,17 @@ const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, normal
 const getState = b.state();
 
 const get = {
-	/** Get all annotations in display groups. May include internal annotations. Only has internal annotations when defined through yaml. Sorted by display order. */
-	shownAnnotations: b.read((state): NormalizedAnnotation[] =>
-		Object.values(state.annotationGroups).flatMap(g => g.annotationIds.map(id => state.annotatedFields[g.annotatedFieldId].annotations[id]))
-	, 'annotations'),
-	/** Get all annotations in display groups. May include internal annotations. Only has internal annotations when defined through yaml. */
-	shownAnnotationsMap: b.read((state): MapOf<NormalizedAnnotation[]> => multimapReduce(get.shownAnnotations(), 'id'), 'annotationsMap'),
+	/** All annotations, without duplicates and in no specific order */
+	allAnnotations: b.read((state): NormalizedAnnotation[] => Object.values(state.annotatedFields).flatMap(f => Object.values(f.annotations)), 'allAnnotations'),
+	allAnnotationsMap: b.read((state): MapOf<NormalizedAnnotation> => mapReduce(get.allAnnotations(), 'id'), 'allAnnotationsMap'),
 
-	/** Get all annotations, sorted by displayOrder. Annotations not in a group are at the end of the array. */
-	allAnnotations: b.read((state): NormalizedAnnotation[] =>
-		get.shownAnnotations() // first list all annotations in groups
-		.concat( // then append all annotations not in any group
-			Object.values(state.annotatedFields)
-			.flatMap(f =>
-				f.displayOrder
-				.map(id => f.annotations[id])
-				.filter(annot => annot.groupId == null)
-				.sort((a, b) => a.displayName.localeCompare(b.displayName))
-			)
-		)
-	, 'allAnnotations'),
-	/** Get all annotations. */
-	allAnnotationsMap: b.read((state): {[id: string]: NormalizedAnnotation[]} => multimapReduce(get.allAnnotations(), 'id'), 'allAnnotationsMap'),
-
-	/** Get all metadata fields in display groups. Sorted by display order. */
-	shownMetadataFields: b.read((state): NormalizedMetadataField[] => state.metadataFieldGroups.flatMap(g => g.fields).map(id => state.metadataFields[id]), 'shownMetadataFields'),
-	/** Get all metadata fields in display groups. */
-	shownMetadataFieldsMap: b.read((state): MapOf<NormalizedMetadataField> => mapReduce(get.shownMetadataFields(), 'id'), 'shownMetadataFieldsMap'),
-
-	/** Get all metadata fields in the index. Sorted by display order. Fields not in a group are at the end of the array. */
-	allMetadataFields: b.read((state): NormalizedMetadataField[] =>
-		get.shownMetadataFields()
-		.concat(
-			Object.values(state.metadataFields)
-			.filter(f => f.groupId == null)
-			.sort((a, b) => a.displayName.localeCompare(b.displayName))
-		)
-	, 'allMetadataFields'),
-	/** Get all metadata fields in the index. */
-	allMetadataFieldsMap: b.read((state): MapOf<NormalizedMetadataField> => mapReduce(get.allMetadataFields(), 'id'), 'allMetadataFieldsMap'),
+	allMetadataFields: b.read((state): NormalizedMetadataField[] => Object.values(state.metadataFields), 'allMetadataFields'),
+	allMetadataFieldsMap: b.read((state): MapOf<NormalizedMetadataField> => state.metadataFields, 'allMetadataFieldsMap'),
 
 	// TODO might be collisions between multiple annotatedFields, this is an unfinished part in blacklab
 	// like for instance, in a BLHitSnippet, how do we know which of the props comes from which annotatedfield.
 	/** Get all annotation displayNames, including for internal annotations */
-	annotationDisplayNames: b.read<MapOf<string>>(state =>
-		Object.values(state.annotatedFields)
-		.flatMap(f => Object.values(f.annotations))
-		.reduce(makeMapReducer('id', annot => annot.displayName), {})
-	, 'annotationDisplayNames'),
+	annotationDisplayNames: b.read((state): MapOf<string> => mapReduce(get.allAnnotations(), 'id', a => a.displayName), 'annotationDisplayNames'),
 
 	// TODO there can be multiple main annotations if there are multiple annotatedFields
 	// the ui needs to respect this (probably render more extensive results?)
@@ -86,31 +49,19 @@ const get = {
 	 * In that case a single generated group "metadata" is returned, containing all metadata fields.
 	 * If groups are defined, fields not in any group are omitted.
 	 */
-	metadataGroups: b.read((state) => {
-		return state.metadataFieldGroups.map(g => {
-			return {
-				name: g.name,
-				fieldIds: g.fields,
-				fields: g.fields.map(fieldId => state.metadataFields[fieldId]).filter(f => f != null)
-			};
-		});
-	}, 'metadataGroups'),
+	metadataGroups: b.read((state): Array<NormalizedMetadataGroup&{fields: NormalizedMetadataField[]}> => state.metadataFieldGroups.map(g => ({
+		...g,
+		fields: g.entries.map(id => state.metadataFields[id])
+	})), 'metadataGroups'),
 
 	/**
 	 * Returns all annotationGroups from the indexstructure.
 	 * May contain internal annotations if groups were defined through indexconfig.yaml.
 	 */
-	annotationGroups: b.read((state): Array<{
-		name: string;
-		annotatedFieldId: string;
-		annotations: NormalizedAnnotation[]
-	}> => {
-		return state.annotationGroups.map(g => ({
-			...g,
-			// use group's annotation order! not the parent annotatedField's displayOrder
-			annotations: g.annotationIds.map(id => state.annotatedFields[g.annotatedFieldId].annotations[id])
-		}));
-	}, 'annotationGroups'),
+	annotationGroups: b.read((state): Array<NormalizedAnnotationGroup&{fields: NormalizedAnnotation[]}> => state.annotationGroups.map(g => ({
+		...g,
+		fields: g.entries.map(id => state.annotatedFields[g.annotatedFieldId].annotations[id]),
+	})), 'annotationGroups'),
 
 	textDirection: b.read(state => state.textDirection, 'getTextDirection')
 };
@@ -137,6 +88,10 @@ const init = () => {
 			state.documentCount = r.summary.numberOfDocs;
 		});
 	}
+
+	// Filter bogus entries from groups (normally doesn't happen, but might happen when customjs interferes with the page).
+	state.annotationGroups.forEach(g => g.entries = g.entries.filter(id => state.annotatedFields[g.annotatedFieldId].annotations[id]));
+	state.metadataFieldGroups.forEach(g => g.entries = g.entries.filter(id => state.metadataFields[id]));
 };
 
 export {

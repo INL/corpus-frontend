@@ -1,10 +1,11 @@
 <template>
 	<div
 		class="form-group filterfield"
-		:id="id"
+		:id="htmlId"
 		:data-filterfield-type="definition.componentName"
 	>
-		<label class="col-xs-12" :for="inputId">{{displayName}} <Debug>(id: {{id}})</Debug></label>
+		<label v-if="showLabel" class="col-xs-12" :for="inputId">{{displayName}} <Debug>(id: {{id}})</Debug></label>
+		<Debug v-else><label class="col-xs-12">(id: {{id}})</label></Debug>
 		<div class="col-xs-12">
 			<Autocomplete
 				type="text"
@@ -44,8 +45,5 @@ export default FilterText.extend({
 		}
 	},
 });
+
 </script>
-
-<style lang="scss">
-
-</style>

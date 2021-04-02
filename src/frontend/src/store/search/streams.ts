@@ -23,7 +23,6 @@ import * as Api from '@/api';
 import * as BLTypes from '@/types/blacklabtypes';
 import jsonStableStringify from 'json-stable-stringify';
 import { debugLog } from '@/utils/debug';
-import { Cancel } from 'axios';
 
 type QueryState = {
 	params?: BLTypes.BLSearchParameters,

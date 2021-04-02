@@ -1,10 +1,11 @@
 <template>
 	<div
 		class="form-group filterfield"
-		:id="id"
+		:id="htmlId"
 		:data-filterfield-type="definition.componentName"
 	>
-		<label class="col-xs-12" :for="inputId">{{displayName}} <Debug>(id: {{id}})</Debug></label>
+		<label v-if="showLabel" class="col-xs-12" :for="inputId">{{displayName}} <Debug>(id: {{id}})</Debug></label>
+		<Debug v-else><label class="col-xs-12">(id: {{id}})</label></Debug>
 		<div class="col-xs-12">
 			<SelectPicker
 				data-width="100%"
@@ -20,7 +21,7 @@
 				:searchable="searchable"
 
 				:value="value"
-				@input="e_input($event)"
+				@input="log('input', $event); e_input($event);"
 			/>
 		</div>
 	</div>
@@ -30,8 +31,6 @@
 <script lang="ts">
 import BaseFilter from '@/components/filters/Filter';
 import SelectPicker, { Option } from '@/components/SelectPicker.vue';
-import { FilterValue } from '@/types/apptypes';
-import { MapOf, mapReduce, unescapeLucene, escapeLucene } from '@/utils';
 
 export default BaseFilter.extend({
 	components: {
@@ -46,30 +45,14 @@ export default BaseFilter.extend({
 	},
 	computed: {
 		options(): Option[] { return this.definition.metadata as Option[]; },
-		optionsMap(): MapOf<Option> { return mapReduce(this.options, 'value'); },
 		searchable(): boolean { return this.options.length > 10; },
-		luceneQuery(): string|null {
-			const value = this.value as string[];
-			return value.length ? `${this.id}:(${value.map(v => escapeLucene(v, false)).join(' ')})` : null;
-		},
-		// use option displaynames in the summary
-		luceneQuerySummary(): string|null {
-			const selected = (this.value as string[])
-			.map(v => this.optionsMap[v].label || v);
-
-			return selected.length >= 2 ? selected.map(v => `"${v}"`).join(', ') : selected[0] || null;
-		}
 	},
 	methods: {
-		decodeInitialState(filterValues: MapOf<FilterValue>): string[]|null {
-			const v = filterValues[this.id];
-			const values = v ? v.values.map(unescapeLucene).filter(val => this.optionsMap[val] != null) : [];
-			return values.length ? values : null;
-		}
+		log: console.log,
 	},
+	watch: {
+		value(cur) { console.log('received new value', JSON.stringify(cur)); }
+	}
 });
+
 </script>
-
-<style lang="scss">
-
-</style>

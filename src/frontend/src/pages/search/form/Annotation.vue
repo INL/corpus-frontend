@@ -1,6 +1,6 @@
 <template>
-	<div class="form-group propertyfield" :id="id"> <!-- behaves as .row when in .form-horizontal so .row may be omitted -->
-		<label :for="inputId" class="col-xs-12 col-md-3" :title="annotation.description || undefined">{{displayName}} <Debug>(id: {{id}})</Debug></label>
+	<div class="form-group propertyfield" :id="htmlId"> <!-- behaves as .row when in .form-horizontal so .row may be omitted -->
+		<label :for="inputId" class="col-xs-12 col-md-3" :title="annotation.description || undefined">{{displayName}} <Debug>(id: {{annotation.id}})</Debug></label>
 		<div class="col-xs-12 col-md-9">
 			<SelectPicker v-if="annotation.uiType === 'select'"
 				data-width="100%"
@@ -95,7 +95,6 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { Subscription } from 'rxjs';
 
 import * as RootStore from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus';
@@ -119,7 +118,8 @@ export default Vue.extend({
 		Lexicon
 	},
 	props: {
-		annotation: Object as () => NormalizedAnnotation
+		annotation: Object as () => NormalizedAnnotation,
+		htmlId: String
 	},
 	data: () => ({
 		subscriptions: [] as Array<() => void>,
@@ -130,11 +130,10 @@ export default Vue.extend({
 			// so we don't set rtl mode on things like part-of-speech etc.
 			return this.annotation.isMainAnnotation ? CorpusStore.get.textDirection() : undefined;
 		},
-		inputId(): string { return this.annotation.id + '_value'; },
-		fileInputId(): string { return this.annotation.id + '_file'; },
-		caseInputId(): string { return this.annotation.id + '_case'; },
+		inputId(): string { return this.htmlId + '_value'; },
+		fileInputId(): string { return this.htmlId + '_file'; },
+		caseInputId(): string { return this.htmlId + '_case'; },
 
-		id(): string { return /*this.annotation.annotatedFieldId + '_' +*/ this.annotation.id; },
 		displayName(): string { return this.annotation.displayName; },
 
 		options(): Option[] { return this.annotation.values || []; },
@@ -144,22 +143,22 @@ export default Vue.extend({
 
 		value: {
 			get(): string {
-				return PatternStore.get.annotationValue(this.annotation.annotatedFieldId, this.id).value;
+				return PatternStore.get.annotationValue(this.annotation.annotatedFieldId, this.annotation.id).value;
 			},
 			set(value: string) {
 				PatternStore.actions.extended.annotation({
-					id: this.id,
+					id: this.annotation.id,
 					value
 				});
 			}
 		},
 		caseSensitive: {
 			get(): boolean {
-				return PatternStore.get.annotationValue(this.annotation.annotatedFieldId, this.id).case;
+				return PatternStore.get.annotationValue(this.annotation.annotatedFieldId, this.annotation.id).case;
 			},
 			set(caseSensitive: boolean) {
 				PatternStore.actions.extended.annotation({
-					id: this.id,
+					id: this.annotation.id,
 					case: caseSensitive
 				});
 			}

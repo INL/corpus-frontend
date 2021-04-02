@@ -2,7 +2,8 @@ import URI from 'urijs';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
-import { FilterState, FullFilterState } from '@/store/search/form/filters';
+import { FullFilterState } from '@/store/search/form/filters';
+import { valueFunctions } from '@/components/filters/filterValueFunctions';
 
 export function escapeRegex(original: string, wildcardSupport: boolean) {
 	original = original.replace(/([\^$\-\\.(){}[\]+])/g, '\\$1'); // add slashes for regex characters
@@ -92,30 +93,6 @@ export function words(context: BLTypes.BLHitSnippetPart, prop: string, doPunctBe
 	return parts.join('');
 }
 
-/**
- * Converts the active filters into a parameter string blacklab-server can understand.
- *
- * Values from filters with types other than 'range' or 'select' will be split on whitespace and individual words will be surrounded by quotes.
- * Effectively transforming
- * "quoted value" not quoted value
- * into
- * "quoted value" "not" "quoted" "value"
- *
- * The result of this is that the filter will respond to any value within one set of quotes, so practially an OR on individual words.
- *
- * If the array is empty or null, undefined is returned,
- * so it can be placed directly in the request paremeters without populating the object if the value is not present.
- */
-export function getFilterString(filters: FilterState[]): string|undefined {
-	return filters.map(f => f.lucene).filter(lucene => !!lucene).join(' AND ') || undefined;
-}
-
-// NOTE: range filter has hidden defaults for unset field (min, max), see https://github.com/INL/corpus-frontend/issues/234
-export const getFilterSummary = (filters: FullFilterState[]): string|undefined => filters
-	.filter(f => !!f.lucene && !!f.summary)
-	.map(f => `${f.displayName}: ${f.summary}`)
-	.join(', ') || undefined;
-
 export const decodeAnnotationValue = (value: string|string[], type: Required<AppTypes.AnnotationValue>['type']): {case: boolean; value: string} => {
 	function isCase(v: string) { return v.startsWith('(?-i)') || v.startsWith('(?c)'); }
 	function stripCase(v: string) { return v.substr(v.startsWith('(?-i)') ? 5 : 4); }
@@ -186,6 +163,7 @@ type SplitString = {
 	start: number;
 	end: number;
 	value: string;
+	isQuoted: boolean;
 };
 
 /**
@@ -201,7 +179,7 @@ type SplitString = {
  * "wild* in split words" and such --> ["wild.* in split words", "and", "such"]
  * @param v the input string.
  */
-export const splitIntoTerms = (value: string, useQuoteDelimiters: boolean): Array<SplitString&{isQuoted: boolean}>  => {
+export const splitIntoTerms = (value: string, useQuoteDelimiters: boolean): SplitString[]  => {
 	let i = 0;
 	let inQuotes = false;
 	let seg = '';
@@ -410,6 +388,11 @@ type KeysOfType<Base, Condition> = keyof Pick<Base, {
 	[Key in keyof Base]: Base[Key] extends Condition ? Key : never
 }[keyof Base]>;
 
+/**
+ * Returns a reducer function that will place all values into a map/object at the key defined by the passed string.
+ * @param k key to pick from the objects
+ * @param m optional mapping function to transform the objects after picking the key
+ */
 export function makeMapReducer<T, V extends (t: T, i: number) => any = (t: T, i: number) => T>(k: KeysOfType<T, string>, m?: V): (m: MapOf<ReturnType<V>>, t: T, i: number) => MapOf<ReturnType<V>> {
 	return (acc: MapOf<ReturnType<V>>, v: T, i: number): MapOf<ReturnType<V>> => {
 		const kv = v[k] as any as string;
@@ -492,44 +475,97 @@ export function filterDuplicates<T>(t: T[]|null|undefined, k: KeysOfType<T, stri
 
 // --------------
 
-/**
- * Transforms the list of annotation ids into a list of groups containing the full annotation info.
- * Returned groups are sorted based on global group order.
- *
- * NOTE: groups are formed based on the groupId property of the individual fields.
- * We only use the list from blacklab (the "groups" argument) to determine the order of groups.
- */
-export function annotationGroups(
+/** Groups always have at least one member, empty array is returned if no groups would have members. */
+export function fieldSubset<T extends {id: string}>(
 	ids: string[],
-	annots: MapOf<AppTypes.NormalizedAnnotation[]>,
-	groups: AppTypes.NormalizedIndex['annotationGroups'],
-	defaultGroupName = 'Other'
-): Array<{groupId: string, annotations: AppTypes.NormalizedAnnotation[]}> {
-	const groupOrder = groups.map(g => g.name);
-	const groupsMap = multimapReduce(
-		ids.map(id => annots[id][0] as Required<AppTypes.NormalizedAnnotation>) ,
-		'groupId',
-	);
-	const sortedGroupsArray = Object.entries(groupsMap)
-	.map(([groupId, entries]) => ({groupId: groupId !== 'undefined' ? groupId : defaultGroupName, annotations: entries}))
-	.sort(({groupId: a}, {groupId: b}) => a === defaultGroupName ? 1 : b === defaultGroupName ? -1 : groupOrder.indexOf(a) - groupOrder.indexOf(b));
+	groups: Array<{id: string, entries: string[]}>,
+	fields: MapOf<T>,
+	addAllToOneGroup?: string
+): Array<{id: string, entries: T[]}> {
+	let ret: Array<{id: string, entries: T[]}> = groups
+	.map(g => ({
+		id: g.id,
+		entries: g.entries.filter(e => ids.includes(e)).map(id => fields[id]),
+	}))
+	.filter(g => g.entries.length);
 
-	// If there is only one metadata group to display: do not display the group names, instead display only 'Other'
-	// https://github.com/INL/corpus-frontend/issues/197#issuecomment-441475896
-	if (sortedGroupsArray.length === 1) {
-		sortedGroupsArray.forEach(g => g.groupId = defaultGroupName);
+	if (addAllToOneGroup != null) {
+		const seenIds = new Set<string>();
+		const asOneGroup = { id: addAllToOneGroup, entries: [] as T[] };
+		ret.forEach(group => {
+			const unseenEntriesInGroup = group.entries.filter(entry => {
+				const seen = seenIds.has(entry.id);
+				seenIds.add(entry.id);
+				return !seen;
+			});
+			asOneGroup.entries.push(...unseenEntriesInGroup);
+		});
+		ret = asOneGroup.entries.length ? [asOneGroup] : [];
 	}
-	return sortedGroupsArray;
+	return ret;
 }
 
-export function selectPickerAnnotationOptions(
+export function getMetadataSubset<T extends {id: string, displayName: string}>(
 	ids: string[],
-	annots: MapOf<AppTypes.NormalizedAnnotation[]>,
-	operation: 'Group'|'Sort',
-	corpusTextDirection: 'ltr'|'rtl',
+	groups: AppTypes.NormalizedMetadataGroup[],
+	metadata: MapOf<T>,
+	operation: 'Sort'|'Group',
 	debug = false
-): AppTypes.OptGroup[] {
-	// NOTE: grouping on annotations without a forward index is not supported - however has already been checked in the UIStore
+): Array<AppTypes.OptGroup&{entries: T[]}> {
+	const defaultMetadataOptGroupName = 'Metadata';
+	const subset = fieldSubset(ids, groups, metadata);
+
+	function mapToOptions(value: string, displayName: string, groupId: string): AppTypes.Option[] {
+		// @ts-ignore
+		const displayIdHtml = debug ? `<small><strong>[id: ${value}]</strong></small>` : '';
+		const displayNameHtml = displayName || value;
+		const displaySuffixHtml = groupId && `<small class="text-muted">${groupId}</small>`;
+		const r: AppTypes.Option[] = [];
+		r.push({
+			value: `field:${value}`,
+			label: `${operation} by ${displayNameHtml} ${displayIdHtml} ${displaySuffixHtml}`,
+		});
+		if (operation === 'Sort') {
+			r.push({
+				value: `-field:${value}`,
+				label: `${operation} by ${displayNameHtml} ${displayIdHtml} (descending) ${displaySuffixHtml}`,
+			});
+		}
+		return r;
+	}
+
+	const r = subset.map<AppTypes.OptGroup&{entries: T[]}>(group => ({
+		options: group.entries.flatMap(e => mapToOptions(e.id, e.displayName, group.id)),
+		entries: group.entries,
+		label: group.id
+	}));
+
+	// If there is only one metadata group to display: do not display the group names, instead display only 'Metadata'
+	// https://github.com/INL/corpus-frontend/issues/197#issuecomment-441475896
+	if (r.length === 1) { r[0].label = defaultMetadataOptGroupName; }
+	return r;
+}
+
+export function getAnnotationSubset(
+	ids: string[],
+	groups: AppTypes.NormalizedAnnotationGroup[],
+	annotations: MapOf<AppTypes.NormalizedAnnotation>,
+	operation: 'Search'|'Sort'|'Group',
+	corpusTextDirection: 'rtl'|'ltr',
+	debug = false
+): Array<AppTypes.OptGroup&{entries: AppTypes.NormalizedAnnotation[]}> {
+	const subset = fieldSubset(ids, groups, annotations, operation !== 'Search' ? 'Other' : undefined);
+	if (operation === 'Search')	{
+		return subset.map(group => ({
+			entries: group.entries,
+			options: group.entries.map(a => ({
+				value: a.id,
+				label: a.displayName + (debug ? ` (id: ${a.id})` : ''),
+				title: a.description
+			})),
+			label: group.id,
+		}));
+	}
 
 	// If sorting: do left/right
 	// if grouping: do wordleft/wordright
@@ -544,12 +580,13 @@ export function selectPickerAnnotationOptions(
 		[corpusTextDirection === 'rtl' ? operations.right : operations.left, 'Before hit', 'before'],
 		[corpusTextDirection === 'rtl' ? operations.left : operations.right, 'After hit', 'after']
 	]
-	.map<AppTypes.OptGroup>(([prefix, groupname, suffix]) =>({
+	.map<AppTypes.OptGroup&{entries: AppTypes.NormalizedAnnotation[]}>(([prefix, groupname, suffix]) =>({
 		label: groupname,
+		entries: subset[0].entries,
 		options: ids.flatMap(id => {
 			// @ts-ignore
 			const displayIdHtml = debug ? `<small><strong>[id: ${id}]</strong></small>` : '';
-			const displayNameHtml = annots[id][0].displayName || id; // in development mode - show IDs
+			const displayNameHtml = annotations[id].displayName || id; // in development mode - show IDs
 			const displaySuffixHtml = suffix && `<small class="text-muted">${suffix}</small>`;
 
 			const r: AppTypes.Option[] = [];
@@ -561,68 +598,6 @@ export function selectPickerAnnotationOptions(
 				r.push({
 					label: `${operation} by ${displayNameHtml} ${displayIdHtml} (descending) ${displaySuffixHtml}`,
 					value: `-${prefix}${id}`
-				});
-			}
-			return r;
-		})
-	}));
-}
-
-/**
- * NOTE: groups are formed based on the groupId property of the individual fields.
- * We only use the list from blacklab (the "groups" argument) to determined the order of groups.
- * This is because there may exist filter/metadata fields that do not exist in blacklab.
- * These fields' groups are not present in the groups array.
- */
-export function metadataGroups<T extends {id: string, groupId?: string}>(
-	ids: string[],
-	fields: MapOf<T>,
-	groups: AppTypes.NormalizedIndex['metadataFieldGroups'],
-	defaultGroupName = 'Metadata'
-): Array<{groupId: string, fields: T[]}> {
-	const groupOrder = groups.map(g => g.name).concat(defaultGroupName); // fallback group at the end.
-	const groupsMap = multimapReduce(
-		ids.map(id => fields[id] as any), // just pretend groupId exists, even if it's undefined it's fine and we handle that.
-		'groupId'
-	);
-	const sortedGroupsArray = Object.entries(groupsMap)
-	.map(([groupId, entries]) => ({groupId: groupId !== 'undefined' ? groupId : defaultGroupName, fields: entries}))
-	.sort(({groupId: a}, {groupId: b}) => a === defaultGroupName ? 1 : b === defaultGroupName ? -1 : groupOrder.indexOf(a) - groupOrder.indexOf(b));
-
-	// If there is only one metadata group to display: do not display the group names, instead display only 'Metadata'
-	// https://github.com/INL/corpus-frontend/issues/197#issuecomment-441475896
-	if (sortedGroupsArray.length === 1) {
-		sortedGroupsArray.forEach(g => g.groupId = defaultGroupName);
-	}
-	return sortedGroupsArray;
-}
-
-export function selectPickerMetadataOptions(
-	ids: string[],
-	fields: MapOf<AppTypes.NormalizedMetadataField>,
-	groups: AppTypes.NormalizedIndex['metadataFieldGroups'],
-	operation: 'Group'|'Sort',
-	debug = false
-): AppTypes.OptGroup[] {
-	return metadataGroups(ids, fields, groups)
-	.map<AppTypes.OptGroup>(g => ({
-		label: g.groupId,
-		options: g.fields.flatMap(({id, displayName}) => {
-			// @ts-ignore
-			const displayIdHtml = debug ? `<small><strong>[id: ${id}]</strong></small>` : '';
-			const displayNameHtml = displayName || id; // in development mode - show IDs
-			const displaySuffixHtml = g.groupId && `<small class="text-muted">${g.groupId}</small>`;
-
-			const r: AppTypes.Option[] = [];
-
-			r.push({
-				value: `field:${id}`,
-				label: `${operation} by ${displayNameHtml} ${displayIdHtml} ${displaySuffixHtml}`,
-			});
-			if (operation === 'Sort') {
-				r.push({
-					value: `-field:${id}`,
-					label: `${operation} by ${displayNameHtml} ${displayIdHtml} (descending) ${displaySuffixHtml}`,
 				});
 			}
 			return r;

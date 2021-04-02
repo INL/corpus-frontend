@@ -4,40 +4,48 @@
 
 		<template v-if="useTabs">
 		<ul class="nav nav-tabs">
-			<li v-for="tab in tabs" :class="{'active': activeTab===tab.name}" :key="tab.name" @click.prevent="activeTab=tab.name">
-				<a :href="'#'+tab.name">{{tab.name}} <span v-if="tab.activeFilters" class="badge" style="background-color:#aaa">{{tab.activeFilters}}</span></a>
+			<li v-for="tab in tabs" :class="{'active': activeTab===tab.name}" :key="tab.name" @click.prevent="activeTab=tab.name;">
+				<a :href="'#'+tab.name">
+					{{tab.name}}
+					<span v-if="activeFiltersMap[tab.name]" class="badge" style="background-color:#aaa">
+						{{activeFiltersMap[tab.name]}}
+					</span>
+				</a>
 			</li>
 		</ul>
 
 		<div class="tab-content">
-			<div v-for="tab in tabs"
+			<div v-for="(tab, i) in tabs"
 				:class="['tab-pane', 'form-horizontal', 'filter-container', {'active': activeTab===tab.name}]"
 				:key="tab.name"
 				:id="tab.name"
 			>
-				<Component v-for="filter in tab.filters" :key="filter.id"
-					:is="filter.componentName"
-					:definition="filter"
-					:textDirection="textDirection"
-					:value="filter.value != null ? filter.value : undefined"
+				<template v-for="(subtab, j) in tab.subtabs">
+					<h3 v-if="subtab.tabname" :key="j + subtab.tabname">{{subtab.tabname}}</h3>
+					<hr v-else :key="j + subtab.tabname">
+					<Component v-for="id in subtab.filters" :key="tab.tabname + id"
+						:is="filterMap[id].componentName"
+						:htmlId="i+(j+id) /* brackets or else i+j collapses before stringifying */"
+						:definition="filterMap[id]"
+						:textDirection="textDirection"
+						:showLabel="subtab.filters.length > 1 || !subtab.tabname"
+						:value="filterMap[id].value != null ? filterMap[id].value : undefined"
 
-					@change-value="updateFilterValue(filter.id, $event)"
-					@change-lucene="updateLuceneValue(filter.id, $event)"
-					@change-lucene-summary="updateLuceneSummary(filter.id, $event)"
-				/>
+						@change-value="updateFilterValue(id, $event)"
+					/>
+				</template>
 			</div>
 		</div>
 		</template>
-		<div v-else-if="allFilters.length" class="tab-content form-horizontal filter-container"> <!-- TODO don't use tab-content when no actually tabs -->
+		<div v-else-if="allFilters.length" class="tab-content form-horizontal filter-container"> <!-- TODO don't use tab-content when no tabs -->
 			<Component v-for="filter in allFilters" :key="filter.id"
 				:is="filter.componentName"
+				:htmlId="`filter_${filter.id}`"
 				:definition="filter"
 				:textDirection="textDirection"
 				:value="filter.value != null ? filter.value : undefined"
 
 				@change-value="updateFilterValue(filter.id, $event)"
-				@change-lucene="updateLuceneValue(filter.id, $event)"
-				@change-lucene-summary="updateLuceneSummary(filter.id, $event)"
 			/>
 		</div>
 		<div v-else class="text-muted well">
@@ -57,9 +65,11 @@ import * as UIStore from '@/store/search/ui';
 import * as FilterStore from '@/store/search/form/filters';
 
 import FilterOverview from '@/pages/search/form/FilterOverview.vue';
+import { MapOf, mapReduce } from '@/utils';
 
-import * as AppTypes from '@/types/apptypes';
-import { metadataGroups, mapReduce } from '../../../utils';
+import { valueFunctions } from '@/components/filters/filterValueFunctions';
+
+import * as RootStore from '@/store/search';
 
 export default Vue.extend({
 	components: {
@@ -67,40 +77,58 @@ export default Vue.extend({
 	},
 	data: () => ({
 		activeTab: null as string|null,
+		cancelFilterWatch: [] as Array<() => void>,
 	}),
 	methods: {
 		updateFilterValue(id: string, value: any) { FilterStore.actions.filterValue({id, value}); },
-		updateLuceneValue(id: string, lucene: string|null) { FilterStore.actions.filterLucene({id, lucene}); },
-		updateLuceneSummary(id: string, summary: string|null) { FilterStore.actions.filterSummary({id, summary}); },
 	},
 	computed: {
 		textDirection(): string { return CorpusStore.getState().textDirection; },
 		allFilters(): FilterStore.FullFilterState[] {
-			return this.tabs.flatMap(t => t.filters);
+			const seenIds = new Set<string>();
+			const filterMap = this.filterMap;
+			return this.tabs.flatMap(t => t.subtabs.flatMap(tab => tab.filters.map(id => filterMap[id]))).filter(f => {
+				const seen = seenIds.has(f.id);
+				seenIds.add(f.id);
+				return !seen;
+			});
 		},
 		tabs(): Array<{
 			name: string;
-			filters: FilterStore.FullFilterState[],
-			activeFilters: number
+			subtabs: Array<{
+				tabname?: string;
+				filters: string[],
+			}>;
+			query?: MapOf<string[]>;
 		}> {
 			const availableBuiltinFilters = CorpusStore.get.allMetadataFieldsMap();
 			const builtinFiltersToShow = UIStore.getState().search.shared.searchMetadataIds;
 			const customFilters = Object.keys(FilterStore.getState().filters).filter(id => !availableBuiltinFilters[id]);
-			const order = mapReduce(FilterStore.getState().filterGroups.flatMap(g => g.fields).flatMap(f => ({f})), 'f', (f, index) => index + 1);
-			const allIdsToShow = builtinFiltersToShow.concat(customFilters).sort((a, b) => (order[a] || Number.MAX_SAFE_INTEGER) - (order[b] || Number.MAX_SAFE_INTEGER));
-			return metadataGroups(
-				allIdsToShow,
-				FilterStore.getState().filters,
-				FilterStore.getState().filterGroups,
-			)
-			.map(g => ({
-				name: g.groupId,
-				filters: g.fields,
-				activeFilters: g.fields.filter(f => !!f.lucene).length
-			}));
+			const allIdsToShow = new Set(builtinFiltersToShow.concat(customFilters));
+
+			// the filters should be in the correct order already
+			return FilterStore.getState().filterGroups
+				.map(group => ({
+					name: group.tabname,
+					subtabs: group.subtabs
+						.map(subtab => ({
+							tabname: subtab.tabname,
+							filters: subtab.fields.filter(id => allIdsToShow.has(id))
+						}))
+						.filter(subtab => subtab.filters.length),
+					query: group.query
+				}))
+				.filter(g => g.subtabs.length);
 		},
-		useTabs(): boolean {
-			return this.tabs.length > 1;
+		filterMap(): MapOf<FilterStore.FullFilterState> { return FilterStore.getState().filters },
+		useTabs(): boolean { return this.tabs.length > 1; },
+		activeFiltersMap(): MapOf<number> {
+			const filterMap = this.filterMap;
+			return mapReduce(
+				this.tabs,
+				'name',
+				tab => tab.subtabs.reduce((num, {filters}) => num + filters.filter(f => filterMap[f].value != null).length, 0)
+			);
 		},
 		indexId(): string { return CorpusStore.getState().id; }
 	},
@@ -111,10 +139,54 @@ export default Vue.extend({
 	},
 	watch: {
 		tabs(cur, prev) {
-			if (cur.length !== prev.length) {
-				this.activeTab = cur.length ? cur[0].name : null;
+			this.activeTab = cur.length ? cur[0].name : null;
+		},
+		activeTab: {
+			immediate: true,
+			handler(cur: string, prev: string) {
+				const curQuery = this.tabs.find(t => t.name === cur)?.query;
+				const prevQuery = this.tabs.find(t => t.name === prev)?.query;
+				this.cancelFilterWatch.forEach(c => c());
+				this.cancelFilterWatch = [];
+
+				if (prevQuery) {
+					Object.keys(prevQuery).forEach(id => FilterStore.actions.filterValue({id, value: null}));
+				}
+
+				if (curQuery) {
+					const allFilters = FilterStore.getState().filters;
+					Object.entries(curQuery).forEach(([id, value]) => {
+						const filter = allFilters[id];
+						const actualValue = valueFunctions[filter.componentName].decodeInitialState(
+							id,
+							filter.metadata,
+							{ [id]: { id: id, values: value } },
+							undefined as any
+						);
+
+						FilterStore.actions.filterValue({
+							id,
+							value: actualValue,
+						});
+						// filthy! Reactivate filter query on global form reset (which otherwise removes it)
+						this.cancelFilterWatch.push(
+							RootStore.store.watch(state => state.filters.filters[id].value, (cur, prev) => {
+								if (cur != prev) {
+									FilterStore.actions.filterValue({
+										id,
+										value: actualValue,
+									});
+								}
+							})
+						);
+					});
+				}
 			}
-		}
+		},
+	},
+	destroyed() {
+		this.cancelFilterWatch.forEach(c => c());
+		this.cancelFilterWatch = [];
 	}
 });
 </script>

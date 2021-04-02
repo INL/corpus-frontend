@@ -6,9 +6,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-
 import * as QueryStore from '@/store/search/query';
-import {getFilterSummary} from '@/utils';
 
 export default Vue.extend({
 	computed: {
@@ -20,7 +18,7 @@ export default Vue.extend({
 				return 'all documents';
 			}
 
-			const metadataString = getFilterSummary(this.filters);
+			const metadataString = QueryStore.get.filterSummary();
 
 			let ret = '';
 

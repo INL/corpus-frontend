@@ -257,7 +257,7 @@ const actions = {
 			searchAnnotationIds: b.commit((state, ids: string[]) => validateAnnotations(ids,
 				id => `Trying to display Annotation ${id} in the extended search, but it does not exist`,
 				_ => true, _ => '',
-				r => state.search.extended.searchAnnotationIds = sortAnnotations(r)
+				r => state.search.extended.searchAnnotationIds = r
 			), 'search_extended_searchAnnotationIds'),
 
 			splitBatch: {
@@ -267,7 +267,7 @@ const actions = {
 				enable: b.commit((state, payload: boolean) => state.search.extended.within.enabled = payload, 'search_extended_within_enable'),
 				elements: b.commit((state, payload: ModuleRootState['search']['extended']['within']['elements']) => {
 					// explicitly retrieve this annotations as it's supposed to be internal and thus not included in any getters.
-					const annot = (CorpusStore.get.allAnnotationsMap().starttag || [])[0];
+					const annot = CorpusStore.get.allAnnotationsMap().starttag;
 					const validValuesMap = mapReduce(annot ? annot.values : undefined, 'value');
 
 					state.search.extended.within.elements = payload.filter(v => {
@@ -286,7 +286,7 @@ const actions = {
 				id => `Trying to display Annotation ${id} in the querybuilder, but it does not exist`,
 				_ => true, _ => '',
 				r => {
-					r = state.search.advanced.searchAnnotationIds = sortAnnotations(r);
+					r = state.search.advanced.searchAnnotationIds = r;
 					const defaultId = state.search.advanced.defaultSearchAnnotationId;
 					if (!r.includes(defaultId)) {
 						if (defaultId) { // don't warn when it was unconfigured before (e.g. '')
@@ -312,7 +312,7 @@ const actions = {
 			searchMetadataIds: b.commit((state, ids: string[]) => validateMetadata(ids,
 				id => `Trying to display metadata field '${id}' in the filters section, but it does not exist.`,
 				_ => true, _ => '',
-				r => state.search.shared.searchMetadataIds = sortMetadata(r)
+				r => state.search.shared.searchMetadataIds = r
 			), 'search_shared_searchMetadataIds')
 		}
 	},
@@ -344,7 +344,7 @@ const actions = {
 			_ => true, _ => '',
 			r => {
 				const defaultId = state.explore.defaultSearchAnnotationId;
-				r = state.explore.searchAnnotationIds = sortAnnotations(r);
+				r = state.explore.searchAnnotationIds = r;
 				if (!r.includes(defaultId)) {
 					if (defaultId) { // don't warn when it was unconfigured before (e.g. '')
 						console.warn(`[explore.searchAnnotationIds] - Resetting default selection from '${defaultId}' to '${r[0]}' because it's not in the configured list ${JSON.stringify(r)}`);
@@ -391,7 +391,7 @@ const actions = {
 						id => `Trying to display Annotation '${id}' in hit detail snippets, but it does not exist`,
 						a => a.hasForwardIndex,
 						id => `Trying to display Annotation '${id}' in hit detail snippets, but it does not have the required forward index.`,
-						r => state.results.shared.detailedAnnotationIds = sortAnnotations(r)
+						r => state.results.shared.detailedAnnotationIds = r
 					);
 				} else {
 					state.results.shared.detailedAnnotationIds = ids;
@@ -403,7 +403,7 @@ const actions = {
 					validateMetadata(ids,
 						id => `Trying to add document metadata field '${id}' to exports, but it does not exist`,
 						_ => true, _ => '',
-						r => state.results.shared.detailedMetadataIds = sortMetadata(r)
+						r => state.results.shared.detailedMetadataIds = r
 					);
 				} else {
 					state.results.shared.detailedMetadataIds = ids;
@@ -416,7 +416,7 @@ const actions = {
 				id => `Trying to allow grouping by Annotation '${id}', but it does not have the required forward index.`,
 				r => {
 					const defaultId = state.explore.defaultGroupAnnotationId;
-					r = state.results.shared.groupAnnotationIds = sortAnnotations(r);
+					r = state.results.shared.groupAnnotationIds = r;
 					if (!r.includes(defaultId)) {
 						if (defaultId) { // don't warn when it was unconfigured before (e.g. '')
 							console.warn(`[results.shared.groupAnnotationIds] - Resetting default selection for explore.defaultGroupAnnotationId from '${defaultId}' to '${r[0]}' because it's not in the configured list ${JSON.stringify(r)}`);
@@ -431,7 +431,7 @@ const actions = {
 				_ => true, _ => '',
 				r => {
 					const defaultId = state.explore.defaultGroupMetadataId;
-					r = state.results.shared.groupMetadataIds = sortMetadata(r);
+					r = state.results.shared.groupMetadataIds = r;
 					if (!r.includes(defaultId)) {
 						if (defaultId) { // don't warn when it was unconfigured before (e.g. '')
 							console.warn(`[results.shared.groupMetadataIds] - Resetting default selection for explore.defaultGroupMetadataId from '${defaultId}' to '${r[0]}' because it's not in the configured list ${JSON.stringify(r)}`);
@@ -445,13 +445,13 @@ const actions = {
 				id => `Trying to allow sorting by Annotation '${id}', but it does not exist`,
 				a => a.hasForwardIndex,
 				id => `Trying to allow sorting by Annotation '${id}', but it does not have the required forward index.`,
-				r => state.results.shared.sortAnnotationIds = sortAnnotations(r)
+				r => state.results.shared.sortAnnotationIds = r
 			), 'shared_sortAnnotationIds'),
 
 			sortMetadataIds: b.commit((state, ids: string[]) => validateMetadata(ids,
 				id => `Trying to allow sorting by metadata field '${id}', but it does not exist`,
 				_ => true, _ => '',
-				r => state.results.shared.sortMetadataIds = sortMetadata(r)
+				r => state.results.shared.sortMetadataIds = r
 			), 'shared_sortMetadataIds'),
 		}
 	},
@@ -513,51 +513,74 @@ const actions = {
 };
 
 const init = () => {
-	// Store can be configured by user scripts
-	// This should have happened before this code runs
-	// Now set the defaults based on what is configured
-	// Then detect any parts that haven't been configured, and set them to some sensible defaults
+	// Store can be configured by user scripts.
+	// This should have happened before this code runs.
+	// Now set the defaults based on what is configured.
+	// Then detect any parts that haven't been configured, and set them to some sensible defaults.
+	// Also validate the configured settings, and replace with defaults where invalid.
 	Object.assign(initialState, cloneDeep(getState()));
 
-	const allAnnotations= CorpusStore.get.allAnnotations();
-	const allAnnotationsMap = CorpusStore.get.allAnnotationsMap();
-	const allShownAnnotations = CorpusStore.get.shownAnnotations();
-	const allShownAnnotationsMap = CorpusStore.get.shownAnnotationsMap();
 
-	const allMetadataFields = CorpusStore.get.allMetadataFields();
+	const allAnnotationsMap = CorpusStore.get.allAnnotationsMap();
 	const allMetadataFieldsMap = CorpusStore.get.allMetadataFieldsMap();
-	const allShownMetadataFields = CorpusStore.get.shownMetadataFields();
-	const allShownMetadataFieldsMap = CorpusStore.get.shownMetadataFieldsMap();
+	const annotationGroups = CorpusStore.get.annotationGroups();
+	const metadataGroups = CorpusStore.get.metadataGroups();
 
 	const mainAnnotation = CorpusStore.get.firstMainAnnotation();
 
-	// ===========
-	// Search form
-	// ===========
 
-	// Annotations (extended, advanced, explore [n-grams])
-	// For all unconfigured sections: show all annotations in groups (groups are defined in the index format yaml file)
-	if (!initialState.search.extended.searchAnnotationIds.length) {
-		actions.search.extended.searchAnnotationIds(allShownAnnotations.map(a => a.id));
-	}
-	if (!initialState.search.advanced.searchAnnotationIds.length) {
-		actions.search.advanced.searchAnnotationIds(allShownAnnotations.map(a => a.id));
-	}
-	if (!initialState.explore.searchAnnotationIds.length) {
-		actions.explore.searchAnnotationIds(allShownAnnotations.map(a => a.id));
-	}
+	// Annotations (extended, advanced, explore [n-grams], sorting, grouping, hit details)
+	// If unconfigured, show the following annotations:
+	// - Those in non-remainder groups (which are the user-configured groups)
+	// - Non-internal annotations in the remainder group (which is the catch-all/fallback group), iff there are no other groups.
+	let defaultAnnotationsToShow = annotationGroups.flatMap((g, i) => {
+		if (!g.isRemainderGroup) return g.entries;
+		const hasNonRemainderGroup = i > 0; // remainder groups is always at the end
+		return hasNonRemainderGroup ? [] : g.entries.filter(id => !allAnnotationsMap[id].isInternal);
+	});
+
+	let cur: string[];
+	// Always remove any possible bogus annotations set by invalid configs
+	// And then replace with default values if not configured
+	cur = initialState.search.extended.searchAnnotationIds.filter(id => allAnnotationsMap[id]); // remove invalid entries
+	actions.search.extended.searchAnnotationIds(cur.length ? cur : defaultAnnotationsToShow); // replace with corrected settings
+
+	cur = initialState.search.advanced.searchAnnotationIds.filter(id => allAnnotationsMap[id]);
+	actions.search.advanced.searchAnnotationIds(cur.length ? cur : defaultAnnotationsToShow);
+
+	cur = initialState.explore.searchAnnotationIds.filter(id => allAnnotationsMap[id]);
+	actions.explore.searchAnnotationIds(cur.length ? cur : defaultAnnotationsToShow);
+
+	// Remove annotations without forward index, as grouping/sorting isn't supported for those
+	defaultAnnotationsToShow = defaultAnnotationsToShow.filter(id => allAnnotationsMap[id].hasForwardIndex);
+
+	cur = initialState.results.shared.groupAnnotationIds.filter(id => allAnnotationsMap[id].hasForwardIndex);
+	actions.results.shared.groupAnnotationIds(cur.length ? cur : defaultAnnotationsToShow);
+
+	cur = initialState.results.shared.sortAnnotationIds.filter(id => allAnnotationsMap[id].hasForwardIndex);
+	actions.results.shared.sortAnnotationIds(cur.length ? cur : defaultAnnotationsToShow);
 
 	// Metadata/filters (extended, advanced, expert, explore)
 	// If unconfigured: show all metadata in groups (groups are defined in the index format yaml file)
-	if (!initialState.search.shared.searchMetadataIds.length) {
-		actions.search.shared.searchMetadataIds(allShownMetadataFields.map(f => f.id));
-	}
+	let defaultMetadataToShow = metadataGroups.flatMap((g, i) => {
+		if (!g.isRemainderGroup) return g.entries;
+		const hasNonRemainderGroup = i > 0; // remainder group is always at the end
+		return hasNonRemainderGroup ? [] : g.entries;
+	});
+
+	cur = initialState.search.shared.searchMetadataIds.filter(id => allMetadataFieldsMap[id]);
+	actions.search.shared.searchMetadataIds(cur.length ? cur : defaultMetadataToShow);
+
+	cur = initialState.results.shared.groupMetadataIds.filter(id => allMetadataFieldsMap[id]);
+	actions.results.shared.groupMetadataIds(cur.length ? cur : defaultMetadataToShow);
+
+	cur = initialState.results.shared.sortMetadataIds.filter(id => allMetadataFieldsMap[id]);
+	actions.results.shared.sortMetadataIds(cur.length ? cur : defaultMetadataToShow);
 
 	// "within"
 	if (!initialState.search.extended.within.elements.length) {
 		// explicitly retrieve this annotations as it's supposed to be internal and thus not included in any getters.
-		const fields = allAnnotationsMap.starttag;
-		const annot = fields ? fields[0] : undefined;
+		const annot = allAnnotationsMap.starttag;
 		const validValues = cloneDeep(annot && annot.values ? annot.values : []);
 		validValues.forEach(v => {
 			if (!v.label.trim() || v.label === v.value) {
@@ -584,30 +607,25 @@ const init = () => {
 	// Results manipulation
 	// ====================
 
-	// Annotations (sorting, grouping, display in the table columns, display in opened condordances)
+	// Annotations (display in the table columns, display in opened condordances)
 	// Sorting/grouping: show all annotations in groups and that have a forward index (blacklab doesn't support sorting/grouping without FI)
-	if (!initialState.results.shared.groupAnnotationIds.length) {
-		actions.results.shared.groupAnnotationIds(allShownAnnotations.filter(a => a.hasForwardIndex).map(a => a.id));
-	}
-	if (!initialState.results.shared.sortAnnotationIds.length) {
-		actions.results.shared.sortAnnotationIds(allShownAnnotations.filter(a => a.hasForwardIndex).map(a => a.id));
-	}
+
 	// Results table columns
 	// Show 'lemma' and 'pos' (if they exist) and up to 3 more annotations in order of definition
 	// OR: show based on PROPS_IN_COLUMNS [legacy support] (configured in this corpus's search.xml)
 	if (!initialState.results.hits.shownAnnotationIds.length) {
-		const shownAnnotations = PROPS_IN_COLUMNS.filter(annot => allAnnotationsMap[annot] != null && allAnnotationsMap[annot][0].hasForwardIndex && annot !== mainAnnotation.id);
+		const shownAnnotations = PROPS_IN_COLUMNS.filter(annot => allAnnotationsMap[annot] != null && allAnnotationsMap[annot].hasForwardIndex && annot !== mainAnnotation.id);
 		if (!shownAnnotations.length) {
 			// These have precedence if they exist.
-			if (allAnnotationsMap.lemma != null && allAnnotationsMap.lemma[0].hasForwardIndex) { shownAnnotations.push('lemma'); }
-			if (allAnnotationsMap.pos != null && allAnnotationsMap.pos[0].hasForwardIndex) { shownAnnotations.push('pos'); }
+			if (allAnnotationsMap.lemma != null && allAnnotationsMap.lemma.hasForwardIndex) { shownAnnotations.push('lemma'); }
+			if (allAnnotationsMap.pos != null && allAnnotationsMap.pos.hasForwardIndex) { shownAnnotations.push('pos'); }
 
 			// Now add other annotations until we hit 3 annotations.
-			allShownAnnotations
-			.filter(annot => annot.id !== mainAnnotation.id && !shownAnnotations.includes(annot.id) && annot.hasForwardIndex)
-			.forEach(annot => {
+			defaultAnnotationsToShow
+			.filter(id => id !== mainAnnotation.id && !shownAnnotations.includes(id))
+			.forEach(id => {
 				if (shownAnnotations.length < 3) {
-					shownAnnotations.push(annot.id);
+					shownAnnotations.push(id);
 				}
 			});
 		}
@@ -617,16 +635,7 @@ const init = () => {
 
 	// Displaying of result context/snippets
 	if (!initialState.results.shared.concordanceAnnotationId) {
-		actions.results.shared.concordanceAnnotationId(mainAnnotation.hasForwardIndex ? mainAnnotation.id : allAnnotations.find(a => a.hasForwardIndex)!.id);
-	}
-
-	// Metadata
-	// Sorting/grouping: show all metadata in groups
-	if (!initialState.results.shared.groupMetadataIds.length) {
-		actions.results.shared.groupMetadataIds(allShownMetadataFields.map(f => f.id));
-	}
-	if (!initialState.results.shared.sortMetadataIds.length) {
-		actions.results.shared.sortMetadataIds(allShownMetadataFields.map(f => f.id));
+		actions.results.shared.concordanceAnnotationId(mainAnnotation.hasForwardIndex ? mainAnnotation.id : defaultAnnotationsToShow[0]);
 	}
 
 	// Results table columns
@@ -694,7 +703,7 @@ function validateAnnotations(
 	const all = CorpusStore.get.allAnnotationsMap();
 	const results = ids.filter(id => {
 		if (!all[id]) { console.warn(missing(id)); return false; }
-		if (!validate(all[id][0])) { console.warn(invalid(id)); return false; }
+		if (!validate(all[id])) { console.warn(invalid(id)); return false; }
 		return true;
 	});
 
@@ -702,11 +711,6 @@ function validateAnnotations(
 		cb(results);
 	}
 	// tslint:enable
-}
-
-function sortAnnotations(ids: string[]) {
-	const displayOrder: {[id: string]: number} = mapReduce(CorpusStore.get.allAnnotations(), 'id', (a, i) => i);
-	return ids.concat().sort((x, y) => displayOrder[x] - displayOrder[y]);
 }
 
 /** Validate all ids, triggering callbacks for failed ids, and triggering a final callback if there is any valid annotation. */
@@ -730,28 +734,36 @@ function validateMetadata(
 	// tslint:enable
 }
 
-function sortMetadata(ids: string[]) {
-	// use +1 so we can replace undefined results with max_int
-	const displayOrder: {[id: string]: number} = mapReduce(CorpusStore.get.allMetadataFields(), 'id', (a, i) => i+1);
-	return ids.concat().sort((x, y) => (displayOrder[x] || Number.MAX_SAFE_INTEGER) - (displayOrder[y] || Number.MAX_SAFE_INTEGER));
-}
-
 // =============
 
-function gatherchecks(config: MapOf<string[]>, entries: Array<{id: string, groupId?: string}>, defaultGroupName: string) {
-	const entryMap = mapReduce(entries, 'id', entry => ({
-		id: entry.id,
-		groupId: entry.groupId || defaultGroupName,
-		checkmarks: {} as MapOf<boolean>
-	}));
+function getCheckmarks(
+	config: MapOf<string[]>,
+	groups: Array<{id: string, entries: string[], isRemainderGroup: boolean}>,
+	remainderGroupName: string
+): Array<{
+	id: string;
+    entries: Array<{id: string, checkmarks: MapOf<boolean>}>
+}> {
+	// Initialize outputs
+	const entryMap: MapOf<{id: string, checkmarks: MapOf<boolean>}> = {};
+	groups.forEach(g => g.entries.forEach(id => entryMap[id] = {id, checkmarks: {}}));
 
+	// Fill outputs
 	Object.entries(config).forEach(([checkmarkName, checkmarkPath]) => {
 		const entriesToPutCheck: string[] = checkmarkPath.reduce((context, path) => (context as any)[path], getState()) || [];
 		entriesToPutCheck.forEach(id => entryMap[id].checkmarks[checkmarkName] = true);
 	});
 
-	// take care to preserve field order
-	return entries.map(e => entryMap[e.id]);
+	// Transform outputs into return
+	const seenIds = new Set<string>();
+	return groups.map(g => ({
+		entries: g.entries.filter(id => {
+			const seen = seenIds.has(id);
+			seenIds.add(id);
+			return !seen;
+		}).map(id => entryMap[id]),
+		id: g.isRemainderGroup ? remainderGroupName : g.id
+	}));
 }
 
 function getAsGroups(groupOrder: string[], entries: Array<{id: string, groupId: string, checkmarks: MapOf<boolean>}>) {
@@ -773,22 +785,20 @@ function printCustomizations() {
 	// Annotations
 	const defaultGroupName = '(not in any group)';
 
-	const annotGroupOrder = CorpusStore.getState().annotationGroups.map(g => g.name).concat(defaultGroupName);
-	const metadataGroupOrder = CorpusStore.getState().metadataFieldGroups.map(g => g.name).concat(defaultGroupName);
 	const annotColumns = actions.helpers.configureAnnotations.config;
 	const metadataColumns = actions.helpers.configureMetadata.config;
 
 	// output stuff
-	const annotationData = getAsGroups(annotGroupOrder, gatherchecks(annotColumns, CorpusStore.get.allAnnotations(), defaultGroupName));
-	const metadataData = getAsGroups(metadataGroupOrder, gatherchecks(metadataColumns, CorpusStore.get.allMetadataFields(), defaultGroupName));
+	const annotationData = getCheckmarks(annotColumns, CorpusStore.get.annotationGroups(), defaultGroupName);
+	const metadataData = getCheckmarks(metadataColumns, CorpusStore.get.metadataGroups(), defaultGroupName);
 	const annotationCells = getCells(Object.keys(annotColumns));
 	const metadataCells = getCells(Object.keys(metadataColumns));
-	const longestAnnotId = annotationData.flatMap(g => g.values).reduce((longest, cur) => Math.max(longest, cur.id.length), 0);
-	const longestMetadataId = metadataData.flatMap(g => g.values).reduce((longest, cur) => Math.max(longest, cur.id.length), 0);
+	const longestAnnotId = annotationData.flatMap(g => g.entries).reduce((longest, cur) => Math.max(longest, cur.id.length), 0);
+	const longestMetadataId = metadataData.flatMap(g => g.entries).reduce((longest, cur) => Math.max(longest, cur.id.length), 0);
 
 	// Sort entries in the default groups by ID (instead of their original sorting by displayName) - Reads much better in output
-	(annotationData.find(g => g.groupId === defaultGroupName) || {values: [] as Array<{id: string}>}).values.sort((a, b) => a.id.localeCompare(b.id));
-	(metadataData.find(g => g.groupId === defaultGroupName) || {values: [] as Array<{id: string}>}).values.sort((a, b) => a.id.localeCompare(b.id));
+	(annotationData.find(g => g.id === defaultGroupName) || {entries: [] as {id: string}[]}).entries.sort((a, b) => a.id.localeCompare(b.id));
+	(metadataData.find(g => g.id === defaultGroupName) || {entries: [] as {id: string}[]}).entries.sort((a, b) => a.id.localeCompare(b.id));
 
 	// tslint:disable-next-line
 	console.log(html`
@@ -798,8 +808,8 @@ function printCustomizations() {
 			[${' '.repeat(longestAnnotId+2)},${annotationCells.map(c => c.header).join(',')}],
 			${annotationData.flatMap(g => [
 				'',
-				`// ${g.groupId}`,
-				...g.values.map(v => stripIndent`
+				`// ${g.id}`,
+				...g.entries.map(v => stripIndent`
 					['${v.id}'${' '.repeat(longestAnnotId - v.id.length)},${annotationCells.map(c => v.checkmarks[c.propName] ? c.checked : c.unchecked).join(',')}],
 				`)
 			])}
@@ -809,8 +819,8 @@ function printCustomizations() {
 			[${' '.repeat(longestMetadataId+2)},${metadataCells.map(c => c.header).join(',')}],
 			${metadataData.flatMap(g => [
 				'',
-				`// ${g.groupId}`,
-				...g.values.map(v => stripIndent`
+				`// ${g.id}`,
+				...g.entries.map(v => stripIndent`
 					['${v.id}'${' '.repeat(longestMetadataId - v.id.length)},${metadataCells.map(c => v.checkmarks[c.propName] ? c.checked : c.unchecked).join(',')}],
 				`)
 			])}

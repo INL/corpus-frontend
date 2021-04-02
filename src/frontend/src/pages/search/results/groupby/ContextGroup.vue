@@ -118,7 +118,7 @@ export default Vue.extend({
 			const allAnnotationsMap = CorpusStore.get.allAnnotationsMap();
 			// Grouping on annotations without forward index is not supported by blacklab
 			return UIStore.getState().results.shared.groupAnnotationIds
-				.map(id => allAnnotationsMap[id][0])
+				.map(id => allAnnotationsMap[id])
 				.map(a => ({label: a.displayName, value: a.id}));
 		},
 

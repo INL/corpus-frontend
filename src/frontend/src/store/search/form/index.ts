@@ -10,11 +10,19 @@ import * as GapModule from '@/store/search/form/gap';
 
 type PartialRootState = {
 	explore: ExploreModule.ModuleRootState;
-	filters: FilterModule.ModuleRootState;
+	filters: FilterModule.FullModuleRootState;
 	interface: InterfaceModule.ModuleRootState;
 	patterns: PatternModule.ModuleRootState;
 	gap: GapModule.ModuleRootState;
 };
+
+type ResetState = {
+	explore: ExploreModule.ModuleRootState;
+	filters: FilterModule.ModuleRootState;
+	interface: InterfaceModule.ModuleRootState;
+	patterns: PatternModule.ModuleRootState;
+	gap: GapModule.ModuleRootState;
+}
 
 const b = getStoreBuilder<RootState>();
 
@@ -31,7 +39,7 @@ const actions = {
 		GapModule.actions.reset();
 	}, 'resetForm'),
 
-	replace: b.commit((state, payload: PartialRootState) => {
+	replace: b.commit((state, payload: ResetState) => {
 		ExploreModule.actions.replace(payload.explore);
 		FilterModule.actions.replace(payload.filters);
 		PatternModule.actions.replace(payload.patterns);

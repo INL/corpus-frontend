@@ -1,7 +1,7 @@
 <template>
 	<div class="filter-overview">
 		<div v-for="filter in activeFilters" :key="filter.id">
-			{{filter.displayName}}<small v-if="filter.groupId"> ({{filter.groupId}})</small>: <i>{{filter.summary}}</i>
+			{{filter.displayName}}<small v-if="filter.groupId"> ({{filter.groupId}})</small>: <i>{{summaryMap[filter.id]}}</i>
 		</div>
 		<!-- <div v-for="filter in activeFilters" :key="filter.id + '_lucene'">{{filter.displayName}}: <i>{{filter.lucene}}</i></div> -->
 
@@ -35,7 +35,7 @@
 <script lang="ts">
 import Vue from 'vue';
 
-import {Subscription, Notification} from 'rxjs';
+import {Subscription} from 'rxjs';
 
 import * as CorpusStore from '@/store/search/corpus';
 import * as FilterStore from '@/store/search/form/filters';
@@ -43,17 +43,11 @@ import * as FilterStore from '@/store/search/form/filters';
 import { selectedSubCorpus$ } from '@/store/search/streams';
 
 import * as BLTypes from '@/types/blacklabtypes';
-import * as AppTypes from '@/types/apptypes';
 import {ApiError} from '@/api';
-import {getFilterSummary} from '@/utils';
 
 import frac2Percent from '@/mixins/fractionalToPercent';
-
-type ExtendedFilter = {
-	id: string;
-	values: string[];
-	displayName: string;
-};
+import { MapOf } from '@/utils';
+import { valueFunctions } from '@/components/filters/filterValueFunctions';
 
 export default Vue.extend({
 	filters: {
@@ -66,6 +60,14 @@ export default Vue.extend({
 	}),
 	computed: {
 		activeFilters: FilterStore.get.activeFilters,
+		summaryMap(): MapOf<string> {
+			const r: MapOf<string> = {};
+			this.activeFilters.forEach(f => {
+				const summary = valueFunctions[f.componentName].luceneQuerySummary(f.id, f.metadata, f.value);
+				if (summary) { r[f.id] = summary; }
+			});
+			return r;
+		},
 
 		totalCorpusTokens(): number { return CorpusStore.getState().tokenCount; },
 		totalCorpusDocs(): number { return CorpusStore.getState().documentCount; }

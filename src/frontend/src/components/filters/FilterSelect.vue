@@ -49,9 +49,6 @@ export default BaseFilter.extend({
 	},
 	methods: {
 		log: console.log,
-	},
-	watch: {
-		value(cur) { console.log('received new value', JSON.stringify(cur)); }
 	}
 });
 

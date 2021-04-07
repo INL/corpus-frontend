@@ -4,8 +4,8 @@
 		:id="htmlId"
 		:data-filterfield-type="definition.componentName"
 	>
-		<label v-if="showLabel" class="col-xs-12" :for="inputId">{{displayName}} <Debug>(id: {{id}})</Debug></label>
-		<Debug v-else><label class="col-xs-12">(id: {{id}})</label></Debug>
+		<label v-if="showLabel" class="col-xs-12" :for="inputId">{{displayName}} <Debug>(id: {{id}} [{{fields.low}} - {{fields.high}}])</Debug></label>
+		<Debug v-else><label class="col-xs-12">(id: {{id}} [{{fields.low}} - {{fields.high}}])</label></Debug>
 		<div class="col-xs-4">
 			<input type="number"
 				placeholder="From"

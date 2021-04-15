@@ -201,8 +201,14 @@ export const valueFunctions: MapOf<FilterValueFunctions<any, any>> = {
 		},
 		luceneQuery: filterRangeMultipleFields_luceneQuery,
 		luceneQuerySummary(id, filterMetadata, value) {
+			const lowValue = value!.low;
+			const highValue = value!.high;
+			// We need to pad shorter the values with leading zeroes or lucene will behave strangely
+			// as they're usually indexed as text values, and not numeric values
+			const longestValue = Math.max(lowValue.length, highValue.length);
+
 			const luceneQuery = filterRangeMultipleFields_luceneQuery(id, filterMetadata, value);
-			return luceneQuery ? `${value!.low.padStart(4, '0')}-${value!.high.padStart(4, '0')}` : null;
+			return luceneQuery ? `${lowValue.padStart(longestValue, '0')}-${highValue.padStart(longestValue, '0')}` : null;
 		}
 	}),
 	'filter-select': cast<FilterValueFunctions<Option[], string[]>>({

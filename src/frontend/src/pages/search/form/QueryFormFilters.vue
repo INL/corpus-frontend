@@ -123,11 +123,12 @@ export default Vue.extend({
 		filterMap(): MapOf<FilterStore.FullFilterState> { return FilterStore.getState().filters },
 		useTabs(): boolean { return this.tabs.length > 1; },
 		activeFiltersMap(): MapOf<number> {
+			const automaticallyActiveFilters = (this.tabs.find(t => t.name === this.activeTab) || {}).query || {};
 			const filterMap = this.filterMap;
 			return mapReduce(
 				this.tabs,
 				'name',
-				tab => tab.subtabs.reduce((num, {filters}) => num + filters.filter(f => filterMap[f].value != null).length, 0)
+				tab => tab.subtabs.reduce((num, {filters}) => num + filters.filter(f => filterMap[f].value != null && !automaticallyActiveFilters[f]).length, 0)
 			);
 		},
 		indexId(): string { return CorpusStore.getState().id; }

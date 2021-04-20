@@ -108,9 +108,9 @@ type LexiconWordformsResponse = {
 };
 
 const config = {
-	getLemmaIdFromWordform: `http://sk.taalbanknederlands.inl.nl/LexiconService/lexicon/get_lemma/`,
-	getLemmaIdFromLemma: `http://sk.taalbanknederlands.inl.nl/LexiconService/lexicon/get_lemma_id_from_lemma/`,
-	getWordformsFromLemmaId: `http://sk.taalbanknederlands.inl.nl/LexiconService/lexicon/get_wordforms_from_lemma_id/`,
+	getLemmaIdFromWordform: `https://sk.taalbanknederlands.inl.nl/LexiconService/lexicon/get_lemma/`,
+	getLemmaIdFromLemma: `https://sk.taalbanknederlands.inl.nl/LexiconService/lexicon/get_lemma_id_from_lemma/`,
+	getWordformsFromLemmaId: `https://sk.taalbanknederlands.inl.nl/LexiconService/lexicon/get_wordforms_from_lemma_id/`,
 	case_sensitive: false,
 };
 

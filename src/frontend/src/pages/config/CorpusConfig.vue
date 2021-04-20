@@ -1,9 +1,20 @@
 <template>
 	<div>
-		<span v-if="loading" class="fa fa-spinner fa-spin fa-4x"></span>
-		<div v-else>
-			<POS style="border: 1px solid red; border-radius: 3px;" :index="index"/>
+
+
+		<div>
+			<ul class="nav nav-tabs">
+				<li v-for="tab in tabs"
+					:class="{active: activeTab === tab}"
+					:key="tab"
+				>
+					<router-link :to="{name: tab, params: {id}}">{{tab}}</router-link>
+				</li>
+			</ul>
 		</div>
+
+		<span v-if="loading" class="fa fa-spinner fa-spin fa-4x"></span>
+		<router-view v-else :index="index"/>
 	</div>
 </template>
 
@@ -19,12 +30,14 @@ export default Vue.extend({
 		POS
 	},
 	props: {
-		id: String
+		id: String,
+		tabs: Array as () => String[],
+		activeTab: String as () => String|undefined
 	},
 	data: () => ({
 		index: null as null|NormalizedIndex,
 		loading: false,
-		error: null as null|string
+		error: null as null|string,
 	}),
 	computed: {
 

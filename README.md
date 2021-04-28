@@ -471,7 +471,7 @@ Because the format config specifies the shape of a corpus (which metadata and an
 
       ![](docs/img/metadata_multi_range.png)
 
-      For example: your documents have an unknown date of writing, but the date of writing definitely lies between in a known range, for example between 1900-1950. This data is stored in two fields; `date_lower` and `date_upper`.
+      For example: your documents have an unknown date of writing, but the date of writing definitely lies in some known range, for example between 1900-1950. This data is stored in two fields; `date_lower` and `date_upper`.
       ```javascript
         vuexModules.filters.actions.registerFilter({
         filter: {
@@ -482,7 +482,8 @@ Because the format config specifies the shape of a corpus (which metadata and an
           id: 'my-date-range-filter', // a unique id for internal bookkeeping
           metadata: { // Info the widget needs to do its work
             low: 'date_lower', // the id of the metadata field containing the lower bound
-            high: 'date_upper' // the id of the metadata field containing the upper bound
+            high: 'date_upper', // the id of the metadata field containing the upper bound
+            strictness: null, // allowed values: 'strict' and 'permissive'. When this is set, hides the 'strictness' selector, and forces strictness to the set mode
           }
         },
         // Set the id of another filter here to append this filter behind that one.

@@ -18,7 +18,7 @@
 				@input="e_input({low: $event.target.value, high: value.high, mode: value.mode})"
 			>
 		</div>
-		<div class="col-xs-4">
+		<div class="col-xs-4" v-if="fields.strictness !== 'permissive' && fields.strictness !== 'strict'">
 			<input type="number"
 				placeholder="To"
 				class="form-control"
@@ -84,7 +84,7 @@ export default BaseFilter.extend({
 		},
 	},
 	computed: {
-		fields(): { low: string, high: string } { return this.definition.metadata; },
+		fields(): { low: string, high: string, strictness?: keyof typeof modes } { return this.definition.metadata; },
 		modes(): Option[] {
 			return Object.values(modes).map(m => ({
 				label: m.displayName,

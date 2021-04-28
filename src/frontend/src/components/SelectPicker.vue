@@ -804,9 +804,9 @@ export default Vue.extend({
 				// But maybe the model only changed because we got pushed a new value from props
 				// check that this is not the case.
 				const values = Object.keys(this.internalModel);
-				if (this.multiple && Array.isArray(this.value) && values.every(v => (this.value as string[]).includes(v))) { return; } // our value prop is already up to date - don't fire.
+				if (this.multiple && Array.isArray(this.value) && values.length === this.value.length && values.every(v => (this.value as string[]).includes(v))) { return; } // our value prop is already up to date - don't fire.
 				if (!this.multiple && typeof this.value === 'string' && values.length == 1 && values[0] === this.value) { return; }
-				this.$emit('input', this.multiple ? values : values.length ? values[0] : null);
+				this.$emit('input', values.length ? this.multiple ? values : values[0] : null);
 			}
 		},
 		isOpen: {

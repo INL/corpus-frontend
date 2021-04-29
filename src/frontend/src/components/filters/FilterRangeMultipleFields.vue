@@ -18,7 +18,7 @@
 				@input="e_input({low: $event.target.value, high: value.high, mode: value.mode})"
 			>
 		</div>
-		<div class="col-xs-4" v-if="fields.strictness !== 'permissive' && fields.strictness !== 'strict'">
+		<div class="col-xs-4">
 			<input type="number"
 				placeholder="To"
 				class="form-control"
@@ -30,7 +30,7 @@
 				@input="e_input({low: value.low, mode: value.mode, high: $event.target.value})"
 			>
 		</div>
-		<div class="btn-group col-xs-12" style="margin-top: 12px;">
+		<div class="btn-group col-xs-12" style="margin-top: 12px;" v-if="fields.strictness !== 'permissive' && fields.strictness !== 'strict'">
 			<button v-for="mode in modes"
 				type="button"
 				:class="['btn btn-default', {'active': value.mode === mode.value}]"

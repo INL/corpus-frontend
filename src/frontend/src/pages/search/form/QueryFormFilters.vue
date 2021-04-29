@@ -128,7 +128,7 @@ export default Vue.extend({
 			return mapReduce(
 				this.tabs,
 				'name',
-				tab => tab.subtabs.reduce((num, {filters}) => num + filters.filter(f => filterMap[f].value != null && !automaticallyActiveFilters[f]).length, 0)
+				tab => tab.subtabs.reduce((num, {filters}) => num + filters.filter(f => valueFunctions[filterMap[f].componentName].luceneQuery(f, filterMap[f].metadata, filterMap[f].value) && !automaticallyActiveFilters[f]).length, 0)
 			);
 		},
 		indexId(): string { return CorpusStore.getState().id; }

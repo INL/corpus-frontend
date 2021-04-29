@@ -15,7 +15,7 @@ import { FilterDefinition } from '@/types/apptypes';
 import { debugLog } from '@/utils/debug';
 import { paths } from '@/api';
 import { mapReduce, MapOf } from '@/utils';
-import { getFilterString, getFilterSummary } from '@/components/filters/filterValueFunctions';
+import { getFilterString, getFilterSummary, valueFunctions } from '@/components/filters/filterValueFunctions';
 
 export type FilterState = {
 	// lucene: string|null;
@@ -56,7 +56,7 @@ const getState = b.state();
 
 const get = {
 	/** Return all filters holding a value */
-	activeFilters: b.read(state => Object.values(state.filters).filter(f => !!f.value), 'activeFilters'),
+	activeFilters: b.read(state => Object.values(state.filters).filter(f => valueFunctions[f.componentName].luceneQuery(f.id, f.metadata, f.value)), 'activeFilters'),
 	/** Return activeFilters as associative map instead of array */
 	activeFiltersMap: b.read(state => {
 		const activeFilters: FullFilterState[] = get.activeFilters();

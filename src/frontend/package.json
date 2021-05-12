@@ -57,7 +57,7 @@
     "bootstrap": "file:src/vendor/bootstrap-3.3.7-edited",
     "bootstrap-select": "^1.13.5",
     "clone-deep": "^4.0.1",
-    "codemirror": "^5.39.2",
+    "codemirror": "^5.58.2",
     "common-tags": "^1.8.0",
     "file-saver": "^1.3.8",
     "highcharts": "^8.1.2",

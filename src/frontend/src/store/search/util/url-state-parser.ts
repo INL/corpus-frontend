@@ -86,8 +86,29 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 			const luceneQueryAST = LuceneQueryParser.parse(luceneString);
 			const parsedQuery: MapOf<FilterValue> = mapReduce(parseLucene(luceneString), 'id');
 
+			const metadataFields = CorpusModule.get.allMetadataFieldsMap();
+			const shownFilters = new Set<string>(UIModule.getState().search.shared.searchMetadataIds.concat(
+				Object.keys(FilterModule.getState().filters)
+				.filter(id => metadataFields[id] == null)
+			));
 			const filterValues: MapOf<FilterModule.FullFilterState> = {};
-			Object.values(FilterModule.getState().filters).forEach(filterDefinition => {
+			/*
+			Do not parse filters not in the ui
+			If we do, filter-range-multiple fields will decode into both the multi-field and the constituent fields
+			Multi-field range queries look like this: "year_from:[2000 TO 2010] AND year_to:[2000 TO 2010]"
+			Meaning: for a document with metadata field year_from and year_to, only return those where BOTH of those fields fall within 2000 and 2010.
+			This can be required for documents where the exact year of origin is unknown, but certainly within say, 2006 and 2008.
+			Those two values are then encoded in the fields year_from: 2006 and year_to: 2008.
+			So a single filter needs to query two fields.
+			Now.. back to the problem:
+			There are now 3 filter definitions in the store: one for the year_from, one from the year_to, and one for the combination field.
+			However, two of these fields are hidden, and only the combination field is shown in the interface usually.
+			So, when decoding the query, it matches all 3 of these definitions. But we only need to decode into the one that's actually shown.
+			If we don't do this, the filter will "double up" every time the query is generated and parsed again (such as on page refresh).
+			*/
+			Object.values(FilterModule.getState().filters)
+			.filter(filterDefinition => shownFilters.has(filterDefinition.id))
+			.forEach(filterDefinition => {
 				const value: unknown = valueFunctions[filterDefinition.componentName].decodeInitialState(
 					filterDefinition.id,
 					filterDefinition.metadata,

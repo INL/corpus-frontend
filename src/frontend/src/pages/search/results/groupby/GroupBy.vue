@@ -160,7 +160,8 @@ export default Vue.extend({
 					CorpusStore.get.allAnnotationsMap(),
 					'Group',
 					CorpusStore.get.textDirection(),
-					this.debug.debug
+					this.debug.debug,
+					UIStore.getState().dropdowns.groupBy.annotationGroupLabelsVisible
 				));
 			}
 
@@ -169,7 +170,8 @@ export default Vue.extend({
 				CorpusStore.get.metadataGroups(),
 				CorpusStore.get.allMetadataFieldsMap(),
 				'Group',
-				this.debug.debug
+				this.debug.debug,
+				UIStore.getState().dropdowns.groupBy.metadataGroupLabelsVisible
 			));
 			return opts;
 		},

@@ -146,6 +146,15 @@ type ModuleRootState = {
 		};
 	};
 
+	dropdowns: {
+		groupBy: {
+			/** Shows or hides the small muted text label showing the group of an annotation. Also hides the hit/before/after label. */
+			annotationGroupLabelsVisible: boolean
+			/** Shows or hides the small muted text label showing the group of a metadata field. */
+			metadataGroupLabelsVisible: boolean,
+		};
+	};
+
 	global: {
 		pageGuide: {
 			enabled: boolean;
@@ -225,6 +234,13 @@ const initialState: ModuleRootState = {
 		},
 		lexiconDb: 'lexiconservice_mnw_wnt'
 	},
+
+	dropdowns: {
+		groupBy: {
+			metadataGroupLabelsVisible: true,
+			annotationGroupLabelsVisible: true
+		}
+	}
 };
 
 const namespace = 'ui';
@@ -463,6 +479,13 @@ const actions = {
 		},
 		lexiconDb: b.commit((state, payload: string) => state.global.lexiconDb = payload, 'global_lexiconDb')
 	},
+	dropdowns: {
+		groupBy: {
+			annotationGroupLabelsVisible: b.commit((state, payload: boolean) => state.dropdowns.groupBy.annotationGroupLabelsVisible = payload, 'annotationGroupLabelsVisible'),
+			metadataGroupLabelsVisible: b.commit((state, payload: boolean) => state.dropdowns.groupBy.metadataGroupLabelsVisible = payload, 'metadataGroupLabelsVisible'),
+		},
+	},
+
 	replace: b.commit((state, payload: ModuleRootState) => Object.assign(state, cloneDeep(payload)), 'replace'),
 
 	helpers: {

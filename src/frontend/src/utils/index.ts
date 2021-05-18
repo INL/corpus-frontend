@@ -510,7 +510,9 @@ export function getMetadataSubset<T extends {id: string, displayName: string}>(
 	groups: AppTypes.NormalizedMetadataGroup[],
 	metadata: MapOf<T>,
 	operation: 'Sort'|'Group',
-	debug = false
+	debug = false,
+	/* show the <small/> labels at the end of options labels? */
+	showGroupLabels = true
 ): Array<AppTypes.OptGroup&{entries: T[]}> {
 	const defaultMetadataOptGroupName = 'Metadata';
 	const subset = fieldSubset(ids, groups, metadata);
@@ -519,7 +521,7 @@ export function getMetadataSubset<T extends {id: string, displayName: string}>(
 		// @ts-ignore
 		const displayIdHtml = debug ? `<small><strong>[id: ${value}]</strong></small>` : '';
 		const displayNameHtml = displayName || value;
-		const displaySuffixHtml = groupId && `<small class="text-muted">${groupId}</small>`;
+		const displaySuffixHtml = showGroupLabels && groupId ? `<small class="text-muted">${groupId}</small>` : '';
 		const r: AppTypes.Option[] = [];
 		r.push({
 			value: `field:${value}`,
@@ -552,7 +554,9 @@ export function getAnnotationSubset(
 	annotations: MapOf<AppTypes.NormalizedAnnotation>,
 	operation: 'Search'|'Sort'|'Group',
 	corpusTextDirection: 'rtl'|'ltr',
-	debug = false
+	debug = false,
+	/* show the <small/> labels at the end of options labels? */
+	showGroupLabels = true
 ): Array<AppTypes.OptGroup&{entries: AppTypes.NormalizedAnnotation[]}> {
 	const subset = fieldSubset(ids, groups, annotations, operation !== 'Search' ? 'Other' : undefined);
 	if (operation === 'Search')	{
@@ -587,7 +591,7 @@ export function getAnnotationSubset(
 			// @ts-ignore
 			const displayIdHtml = debug ? `<small><strong>[id: ${id}]</strong></small>` : '';
 			const displayNameHtml = annotations[id].displayName || id; // in development mode - show IDs
-			const displaySuffixHtml = suffix && `<small class="text-muted">${suffix}</small>`;
+			const displaySuffixHtml = showGroupLabels && suffix ? `<small class="text-muted">${suffix}</small>` : '';
 
 			const r: AppTypes.Option[] = [];
 			r.push({

@@ -758,6 +758,20 @@ Through javascript you can do many things, but outlined below are some of the mo
 
   </details>
 
+- <details>
+    <summary>Miscellaneous configuration</summary>
+    
+    ## Hide the small suffixes in the groupBy dropdown
+    This is currently not supported in other dropdowns.
+
+    `vuexModules.ui.actions.dropdowns.groupBy.annotationGroupLabelsVisible(false)`
+    `vuexModules.ui.actions.dropdowns.groupBy.metadataGroupLabelsVisible(false)`
+    
+    | With labels | Without labels |
+    |:---:|:---:|
+    | ![](docs/img/groupby_with_labels.png) | ![](docs/img/groupby_without_labels.png) |
+
+  </details>
 
 - <details>
     <summary>Override any other data you want</summary>

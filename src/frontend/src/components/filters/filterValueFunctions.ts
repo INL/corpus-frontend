@@ -6,6 +6,12 @@ import { modes } from './FilterRangeMultipleFields.vue';
 import { FullFilterState } from '@/store/search/form/filters';
 
 type FilterValueFunctions<M, V> = {
+	/**
+	 * Called once for every filter in the interface
+	 * Custom filters are called first.
+	 * If a custom filter wants to take "ownership" of a decoded filter value, it should delete the value from the map, to prevent
+	 * later (inbuilt) filters from decoding it.
+	 */
 	decodeInitialState(id: string, filterMetadata: M, filterValues: MapOf<FilterValue|undefined>, ast: ASTNode): V|null,
 	luceneQuery(id: string, filterMetadata: M, value: V|null): string|null;
 	luceneQuerySummary(id: string, filterMetadata: M, value: V|null): string|null;
@@ -193,6 +199,13 @@ export const valueFunctions: MapOf<FilterValueFunctions<any, any>> = {
 		decodeInitialState(id, filterMetadata, filterValues, ast) {
 			const {low, high} = filterMetadata;
 			const s = getFieldValues(ast, low, high);
+			// Prevent these fields from also being decoded by another filter later in the decoding stage.
+			// Otherwise the values would "double up".
+			// https://github.com/INL/corpus-frontend/issues/379
+			if (filterValues[low] && filterValues[high]) {
+				delete filterValues[low];
+				delete filterValues[high];
+			}
 			return s ? {
 				low: s.field1.low,
 				high: s.field2.high,

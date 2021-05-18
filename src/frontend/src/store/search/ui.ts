@@ -143,6 +143,11 @@ type ModuleRootState = {
 
 			/** Used for calculating page offsets in links to documents */
 			pageSize: number|undefined;
+
+			/** While a query is still running on the server, how long to keep polling for the total number of results. Default 90 seconds. 0 or below will keep polling indefinitely. */
+			totalsTimeoutDurationMs: number;
+			/** Polling interval for the above. Default 2 seconds. Minimum 100ms. */
+			totalsRefreshIntervalMs: number;
 		};
 	};
 
@@ -225,7 +230,10 @@ const initialState: ModuleRootState = {
 			groupMetadataIds: [],
 			sortAnnotationIds: [],
 			sortMetadataIds: [],
-			pageSize: PAGESIZE
+			pageSize: PAGESIZE,
+
+			totalsTimeoutDurationMs: 90_000,
+			totalsRefreshIntervalMs: 2_000
 		}
 	},
 	global: {
@@ -469,6 +477,15 @@ const actions = {
 				_ => true, _ => '',
 				r => state.results.shared.sortMetadataIds = r
 			), 'shared_sortMetadataIds'),
+
+			totalsTimeoutDurationMs: b.commit((state, timeoutMs: number) => {
+				const n = Number(timeoutMs);
+				state.results.shared.totalsTimeoutDurationMs = isNaN(n) ? 90_000 : n;
+			}, 'totalsTimeoutDurationMs'),
+			totalsRefreshIntervalMs: b.commit((state, intervalMs: number) => {
+				const n = Number(intervalMs);
+				state.results.shared.totalsRefreshIntervalMs = isNaN(n) ? 2_000 : Math.max(100, n);
+			}, 'totalsRefreshIntervalMs')
 		}
 	},
 	global: {

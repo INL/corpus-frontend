@@ -771,6 +771,16 @@ Through javascript you can do many things, but outlined below are some of the mo
     |:---:|:---:|
     | ![](docs/img/groupby_with_labels.png) | ![](docs/img/groupby_without_labels.png) |
 
+    ## Set the interval and duration of the totals counter
+    Set for how long the spinner will keep automatically refreshing until the user must continue it.  
+    `<=0` will keep refreshing indefinitely until the query finishes.  
+    `vuexModules.ui.results.shared.totalsTimeoutDurationMs(90_000)`  
+    Set how quickly the spinner will refresh while it's polling. This setting has a minimum of 100ms.  
+    `vuexModules.ui.results.shared.totalsRefreshIntervalMs(2_000)`  
+    
+    ![](docs/img/result_totals_in_progress.png)
+    
+
   </details>
 
 - <details>

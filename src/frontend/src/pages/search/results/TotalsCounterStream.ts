@@ -1,5 +1,6 @@
-import { ReplaySubject, Observable, pipe, of, empty } from 'rxjs';
-import { switchMap, map, expand, catchError, timeout } from 'rxjs/operators';
+import { Observable, pipe, of, empty } from 'rxjs';
+import { switchMap, map, expand } from 'rxjs/operators';
+import * as UIStore from '@/store/search/ui';
 
 import * as Api from '@/api';
 
@@ -31,18 +32,17 @@ function getCountState(results: BLTypes.BLSearchResult): 'limited'|'finished'|'c
 	);
 }
 
-const REFRESH_INTERVAL = 2_000;
-const REFRESH_DURATION = 90_000;
-
 export default pipe(
 	switchMap((initial: CounterInput) => {
 		return new Observable<CounterOutput>(subscriber => {
 			let unsubscribed = false;
 			let hitTimeout = false;
-			let timeoutHandle: number|null = setTimeout(() => {
+
+			const timeoutMs = UIStore.getState().results.shared.totalsTimeoutDurationMs;
+			let timeoutHandle: number|null = timeoutMs <= 0 ? null : setTimeout(() => {
 				hitTimeout = true;
 				timeoutHandle = null;
-			}, REFRESH_DURATION);
+			}, timeoutMs);
 
 			let cancel: Api.Canceler|null = null;
 			function teardown() {
@@ -79,9 +79,9 @@ export default pipe(
 						return empty();
 					}
 
-					// Delay for a second so we don't pummel the server with rapid requests if we don't need to
+					// Delay for a bit so we don't pummel the server with rapid requests if we don't need to
 					// Do this through a simple timeout so we don't have to nest so many streams
-					return new Promise(resolve => setTimeout(resolve, REFRESH_INTERVAL))
+					return new Promise(resolve => setTimeout(resolve, UIStore.getState().results.shared.totalsRefreshIntervalMs))
 					.then((): Promise<BLTypes.BLSearchResult> => {
 						const apiCall = operation === 'docs' ? Api.blacklab.getDocs : Api.blacklab.getHits;
 						const apiResult = apiCall(indexId, {

@@ -770,9 +770,10 @@ export default Vue.extend({
 						//  reverse! (apparently)
 					case 'dec': // no sens - no unescape
 					case 'int': // no sens -- no unescape
-					case 'str': // no sens -- do unescape
 					case 'doc': // no sens - no unescape
 						return decode(rest, 0, false);
+					case 'str': // no sens -- do unescape
+						return decode(rest, 0, true);
 					default:
 						// unknown property - newer version of blacklab? make some best effort guess.
 						const valueMightHaveSensitivitySpecifier = rest.includes('i') || rest.includes('s');

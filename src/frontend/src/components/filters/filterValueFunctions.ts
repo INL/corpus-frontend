@@ -4,6 +4,7 @@ import { ASTNode, ASTRange } from 'lucene-query-parser';
 // @ts-ignore (framework limitation) typechecking does not work for imports from .vue files
 import { modes } from './FilterRangeMultipleFields.vue';
 import { FullFilterState } from '@/store/search/form/filters';
+import { debugLog } from '@/utils/debug';
 
 type FilterValueFunctions<M, V> = {
 	/**
@@ -142,12 +143,15 @@ export const valueFunctions: MapOf<FilterValueFunctions<any, any>> = {
 	}),
 	'filter-checkbox': cast<FilterValueFunctions<Option[], MapOf<boolean>>>({
 		decodeInitialState(id, filterMetadata, filterValues) {
-			if (!filterValues[id]?.values.length) { return null; }
-			return mapReduce(
-				filterValues[id]!.values
-				.map(unescapeLucene)
-				.filter(value => filterMetadata.find(option => option.value === value))
-			);
+			const availableValues = filterValues[id]?.values
+				?.map(unescapeLucene)
+				.filter(value => { 
+					const valueIsPossible = filterMetadata.find(option => option.value === value);
+					if (!valueIsPossible) { debugLog(`Filter ${id} ignoring requested value ${value} while decoding - value is not in the available options.`); }
+					return valueIsPossible;
+				});
+			
+			return availableValues?.length ? mapReduce(availableValues) : null;
 		},
 		luceneQuery(id, filterMetadata, value) {
 			const selected = Object.entries(value || {})
@@ -165,9 +169,15 @@ export const valueFunctions: MapOf<FilterValueFunctions<any, any>> = {
 	}),
 	'filter-radio': cast<FilterValueFunctions<Option[], string>>({
 		decodeInitialState(id, filterMetadata, filterValues) {
-			const decodedValues = (filterValues[id]?.values || []).map(unescapeLucene);
-			const availableValues = decodedValues.filter(val => filterMetadata.find(v => v.value === val));
-			return availableValues.length ? availableValues[0] : null;
+			const availableValues = filterValues[id]?.values
+				?.map(unescapeLucene)
+				.filter(value => { 
+					const valueIsPossible = filterMetadata.find(option => option.value === value);
+					if (!valueIsPossible) { debugLog(`Filter ${id} ignoring requested value ${value} while decoding - value is not in the available options.`); }
+					return valueIsPossible;
+				});
+			
+			return availableValues?.length ? availableValues[0] : null;
 		},
 		luceneQuery(id, filterMetadata, value) {
 			return value ? `${id}:(${escapeLucene(value, false)})` : null;
@@ -226,9 +236,15 @@ export const valueFunctions: MapOf<FilterValueFunctions<any, any>> = {
 	}),
 	'filter-select': cast<FilterValueFunctions<Option[], string[]>>({
 		decodeInitialState(id, filterMetadata, filterValues) {
-			const values = (filterValues[id]?.values || []).map(unescapeLucene);
-			const availableValues = values.filter(val => filterMetadata.find(v => v.value === val));
-			return availableValues.length ? availableValues : null;
+			const availableValues = filterValues[id]?.values
+				?.map(unescapeLucene)
+				.filter(value => { 
+					const valueIsPossible = filterMetadata.find(option => option.value === value);
+					if (!valueIsPossible) { debugLog(`Filter ${id} ignoring requested value ${value} while decoding - value is not in the available options.`); }
+					return valueIsPossible;
+				});
+			
+			return availableValues?.length ? availableValues : null;
 		},
 		luceneQuery(id, filterMetadata, value) {
 			return (value && value.length) ? `${id}:(${value.map(v => escapeLucene(v, false)).join(' ')})` : null;

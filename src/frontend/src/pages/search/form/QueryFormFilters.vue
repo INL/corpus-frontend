@@ -70,6 +70,7 @@ import { MapOf, mapReduce } from '@/utils';
 import { valueFunctions } from '@/components/filters/filterValueFunctions';
 
 import * as RootStore from '@/store/search';
+import { Dictionary } from '@/../node_modules/highcharts/highcharts';
 
 export default Vue.extend({
 	components: {
@@ -123,13 +124,31 @@ export default Vue.extend({
 		filterMap(): MapOf<FilterStore.FullFilterState> { return FilterStore.getState().filters },
 		useTabs(): boolean { return this.tabs.length > 1; },
 		activeFiltersMap(): MapOf<number> {
-			const automaticallyActiveFilters = (this.tabs.find(t => t.name === this.activeTab) || {}).query || {};
+			const activeTab = this.tabs.find(t => t.name === this.activeTab);
 			const filterMap = this.filterMap;
-			return mapReduce(
-				this.tabs,
-				'name',
-				tab => tab.subtabs.reduce((num, {filters}) => num + filters.filter(f => valueFunctions[filterMap[f].componentName].luceneQuery(f, filterMap[f].metadata, filterMap[f].value) && !automaticallyActiveFilters[f]).length, 0)
-			);
+
+			const implicitlyActiveFilters: MapOf<string[]> = activeTab?.query || {}; // filters that are always active as long as this tab is active
+			const manuallyActiveFiltersInCurrentTab: MapOf<boolean> = activeTab ? mapReduce(activeTab.subtabs.flatMap(subtab => subtab.filters.filter(f => 
+				// keep only those filters that are -a: active and -b: not in the implicitly active set
+				// when is a filter active? when its value returns a non-null lucene query
+				!implicitlyActiveFilters[f] && valueFunctions[filterMap[f].componentName].luceneQuery(f, filterMap[f].metadata, filterMap[f].value)
+			))) : {}; // and if there's somehow no tab active, no filters are manually active in the current tab eh
+			
+			// Note: when a filter is implicitly active, it's never counted as active for any tab
+			// Note: when a filter is active in the current tab, it's never counted as active for other tabs
+			const numActiveFiltersPerTab: MapOf<number> = {};
+			this.tabs.forEach(tab => {
+				if (tab === activeTab) {
+					numActiveFiltersPerTab[tab.name] = Object.keys(manuallyActiveFiltersInCurrentTab).length;
+				} else {
+					numActiveFiltersPerTab[tab.name] = tab.subtabs.reduce((num, subtab) => num + subtab.filters.filter(filter => 
+						!implicitlyActiveFilters[filter] && 
+						!manuallyActiveFiltersInCurrentTab[filter] && 
+						valueFunctions[filterMap[filter].componentName].luceneQuery(filter, filterMap[filter].metadata, filterMap[filter].value)
+					).length, 0)
+				}
+			})
+			return numActiveFiltersPerTab;
 		},
 		indexId(): string { return CorpusStore.getState().id; }
 	},

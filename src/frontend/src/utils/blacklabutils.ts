@@ -17,10 +17,14 @@ function normalizeMetadataUIType(field: BLTypes.BLMetadataField): NormalizedMeta
 	}
 
 	switch (uiType) {
+		case 'autocomplete':
 		case 'combobox':
+			return 'combobox';
 		case 'range':
 			return uiType;
 		case 'select':
+		case 'dropdown':
+			return field.valueListComplete ? 'select' : 'combobox';
 		case 'checkbox':
 		case 'radio':
 			return field.valueListComplete ? uiType : 'combobox';
@@ -36,8 +40,12 @@ function normalizeAnnotationUIType(field: BLTypes.BLAnnotation): NormalizedAnnot
 	}
 
 	switch (uiType) {
-		case 'select': return field.values && field.valueListComplete ? 'select' : 'combobox';
+		case 'dropdown':
+		case 'select': 
+			return field.values && field.valueListComplete ? 'select' : 'combobox';
+		case 'autocomplete': 
 		case 'combobox':
+			return 'combobox';
 		case 'lexicon':
 		case 'pos':
 			return uiType;

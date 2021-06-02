@@ -357,13 +357,13 @@ Because the format config specifies the shape of a corpus (which metadata and an
 
       ![](docs/img/annotation_text.png)
 
-    - **Select**
+    - **Select/Dropdown**
       Select is automatically enabled when the field does not have a uiType set, and all values are known.
       **NOTE:** Limited to `500` values! When you specify `select`, we need to know all values beforehand, BlackLab only stores the first `500` values, and ignores values longer than `256` characters. When this happens, we transform the field into a `combobox` for you, so you don't inadvertently miss any options.
 
       ![](docs/img/annotation_select.png)
 
-    - **Combobox**
+    - **Combobox/Autocomplete**
       Just like `text`, but add a dropdown that gets autocompleted values from the server.
 
       ![](docs/img/annotation_combobox.png)

@@ -170,7 +170,7 @@ export interface BLAnnotation {
 	sensitivity: 'SENSITIVE_AND_INSENSITIVE'|'SENSITIVE'|'INSENSITIVE';
 	/** Contains ids of other BLAnnotations in the parent annotatedField if this field has subannotations. */
 	subannotations?: string[];
-	uiType: string|'select'|'combobox'|'text'|'pos';
+	uiType: string|'select'|'combobox'|'text'|'pos'|'dropdown'|'autocomplete';
 	/** Only when the indexMetadata was requested with ?listvalues=annotationId,annotationId etc. */
 	values?: string[];
 	/** Only when values present. */
@@ -222,7 +222,7 @@ export interface BLMetadataField {
 	isAnnotatedField: boolean;
 	type: 'TOKENIZED'|'UNTOKENIZED'|'NUMERIC';
 	/** All the types we support are listed here, though the types are user-defined so in anything can show up. */
-	uiType: string|'select'|'range'|'combobox'|'text'|'checkbox'|'radio';
+	uiType: string|'select'|'range'|'combobox'|'text'|'checkbox'|'radio'|'autocomplete'|'dropdown';
 	/** Internal blacklab property: when the unknownValue is used as the value for a document where the metadata for this field was unknown when indexing */
 	unknownCondition: 'NEVER'|'MISSING'|'EMPTY'|'MISSING_OR_EMPTY';
 	/** Internal blacklab property: what default value is substituted during indexing for document that are missing this metadata (depending on unknownCondition) */

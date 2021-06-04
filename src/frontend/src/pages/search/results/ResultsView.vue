@@ -213,6 +213,8 @@ export default Vue.extend({
 
 		// Should we scroll when next results arrive - set when main form submitted
 		scroll: true,
+		// Should we clear the results when we begin the next request? - set when main for submitted.
+		clearResults: false,
 
 		debug
 	}),
@@ -244,8 +246,11 @@ export default Vue.extend({
 				this.results = null;
 				this.paginationResults = null;
 				this.error = null;
+				this.clearResults = false;
 				return;
 			}
+			
+			if (this.clearResults) { this.results = this.error = null; this.clearResults = false; }
 
 			const params = RootStore.get.blacklabParameters()!;
 			const apiCall = this.type === 'hits' ? Api.blacklab.getHits : Api.blacklab.getDocs;
@@ -537,6 +542,13 @@ export default Vue.extend({
 		},
 	},
 	watch: {
+		querySettings: {
+			deep: true,
+			handler() {
+				this.scroll = true;
+				this.clearResults = true;
+			},
+		},
 		refreshParameters: {
 			handler(cur, prev) {
 				if (this.visible) {
@@ -553,13 +565,6 @@ export default Vue.extend({
 				}
 			},
 			immediate: true
-		},
-
-		querySettings: {
-			deep: true,
-			handler() {
-				this.scroll = true;
-			},
 		},
 	}
 });

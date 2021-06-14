@@ -37,7 +37,7 @@
 		</div>
 
 		<div v-if="viewGroup" style="color: #888; font-size: 85%;">
-			<button type="button" class="btn btn-sm btn-primary" :disabled="disabled" @click="viewGroup = null"><span class="fa fa-angle-double-right"></span> Go back to grouped view</button>
+			<button type="button" class="btn btn-sm btn-primary" :disabled="disabled" @click="$emit('viewgroupLeave')"><span class="fa fa-angle-double-right"></span> Go back to grouped view</button>
 		</div>
 
 		<div v-if="contextEnabled" class="groupby-context-container" >
@@ -76,8 +76,7 @@ export default Vue.extend({
 	},
 	props: {
 		type: String as () => ResultsStore.ViewId,
-		viewGroupName: String as () => null|string,
-		disabled: Boolean
+		disabled: Boolean,
 	},
 	data: () => ({
 		contextEnabled: false,

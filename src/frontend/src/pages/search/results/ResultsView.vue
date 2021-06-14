@@ -33,10 +33,13 @@
 				v-bind="resultComponentData"
 
 				@sort="sort = $event"
-				@viewgroup="viewGroup = $event.id; _viewGroupName = $event.displayName"
+				@viewgroup="originalGroupBySettings = {page, sort}; log(page, sort); viewGroup = $event.id; _viewGroupName = $event.displayName;"
 			>
-
-				<GroupBy slot="groupBy" :type="type" :viewGroupName="viewGroupName" :disabled="!!request"/>
+				<GroupBy slot="groupBy" :type="type" 
+					:disabled="!!request" 
+					:originalGroupBySettings="originalGroupBySettings"
+					@viewgroupLeave="leaveViewgroup"
+				/>
 
 				<Pagination slot="pagination"
 					style="display: block; margin: 10px 0;"
@@ -216,9 +219,15 @@ export default Vue.extend({
 		// Should we clear the results when we begin the next request? - set when main for submitted.
 		clearResults: false,
 
+		originalGroupBySettings: null as null|{
+			page: number;
+			sort: string;
+		},
+
 		debug
 	}),
 	methods: {
+		log: console.log,
 		markDirty() {
 			this.isDirty = true;
 			if (this.cancel) {
@@ -319,6 +328,12 @@ export default Vue.extend({
 					top: (this.$el as HTMLElement).offsetTop - 150
 				});
 			}
+		},
+		leaveViewgroup() {
+			this.viewGroup = null; 
+			this.page = this.originalGroupBySettings?.page || 0;
+			this.sort = this.originalGroupBySettings?.sort || null;
+			this.originalGroupBySettings = null;
 		}
 	},
 	computed: {
@@ -333,8 +348,8 @@ export default Vue.extend({
 			set(v: string[]) { this.storeModule.actions.groupByAdvanced(v); }
 		},
 		page: {
-			get(): number { return this.storeModule.getState().page; },
-			set(v: number) { this.storeModule.actions.page(v); }
+			get(): number { const n = this.storeModule.getState().page; console.log('got page', n); return n; },
+			set(v: number) { this.storeModule.actions.page(v); console.log('set page', v); }
 		},
 		sort: {
 			get(): string|null { return this.storeModule.getState().sort; },
@@ -435,7 +450,7 @@ export default Vue.extend({
 					label: 'Grouped by ' + this.groupBy.concat(this.groupByAdvanced).toString(),
 					title: 'Go back to grouped results',
 					active: this.viewGroup == null,
-					onClick: () => this.viewGroup = null
+					onClick: () => this.leaveViewgroup()
 				});
 			}
 			if (this.viewGroup != null) {

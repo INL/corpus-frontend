@@ -412,7 +412,6 @@ table {
 
 			&.concordance.open > td {
 				overflow: visible;
-				word-break: break-all;
 			}
 		}
 	}

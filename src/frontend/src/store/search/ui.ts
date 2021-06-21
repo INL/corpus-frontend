@@ -222,7 +222,7 @@ const initialState: ModuleRootState = {
 			getDocumentSummary: (doc: BLTypes.BLDocInfo, fields: BLTypes.BLDocFields): string => {
 				const { titleField = '', dateField = '', authorField = '' } = fields;
 				const { [titleField]: title = [], [dateField]: date = [], [authorField]: author = [] } = doc;
-				return (title[0] || 'UNKNOWN') + (author[0] ? ' by ' + author[0] : '');
+				return (title[0] || 'UNKNOWN') + (author.length ? ' by ' + author.join(', ') : '');
 			},
 			detailedAnnotationIds: null,
 			detailedMetadataIds: null,

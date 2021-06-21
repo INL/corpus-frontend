@@ -144,6 +144,9 @@ type ModuleRootState = {
 			/** Used for calculating page offsets in links to documents */
 			pageSize: number|undefined;
 
+			/** Are the export buttons allowed in the interface */
+			exportEnabled: boolean;
+
 			/** While a query is still running on the server, how long to keep polling for the total number of results. Default 90 seconds. 0 or below will keep polling indefinitely. */
 			totalsTimeoutDurationMs: number;
 			/** Polling interval for the above. Default 2 seconds. Minimum 100ms. */
@@ -231,6 +234,7 @@ const initialState: ModuleRootState = {
 			sortAnnotationIds: [],
 			sortMetadataIds: [],
 			pageSize: PAGESIZE,
+			exportEnabled: true,
 
 			totalsTimeoutDurationMs: 90_000,
 			totalsRefreshIntervalMs: 2_000
@@ -477,6 +481,8 @@ const actions = {
 				_ => true, _ => '',
 				r => state.results.shared.sortMetadataIds = r
 			), 'shared_sortMetadataIds'),
+
+			exportEnabled: b.commit((state, enabled: boolean) => state.results.shared.exportEnabled = enabled, 'exportEnabled'),
 
 			totalsTimeoutDurationMs: b.commit((state, timeoutMs: number) => {
 				const n = Number(timeoutMs);

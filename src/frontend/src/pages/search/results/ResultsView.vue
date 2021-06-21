@@ -101,7 +101,7 @@
 				{{showTitles ? 'Hide' : 'Show'}} Titles
 			</button>
 
-			<div class="btn-group" v-if="results">
+			<div class="btn-group" v-if="results && exportEnabled">
 				<button
 					type="button"
 					class="btn btn-default btn-sm"
@@ -359,6 +359,8 @@ export default Vue.extend({
 			get(): string|null { return this.storeModule.getState().viewGroup; },
 			set(v: string|null) { this.storeModule.actions.viewGroup(v); }
 		},
+
+		exportEnabled(): boolean { return UIStore.getState().results.shared.exportEnabled; },
 
 		refreshParameters(): string {
 			/*

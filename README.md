@@ -607,7 +607,30 @@ Through javascript you can do many things, but outlined below are some of the mo
   </details>
 
 - <details>
-    <summary>[Hits] Enable an audio player for spoken corpora</summary>
+    <summary>[Search] - Show/hide Split-Batch and Within</summary>
+
+    `vuexModules.ui.actions.search.extended.splitBatch.enable(false)`
+    `vuexModules.ui.actions.search.extended.within.enable(false)`
+
+    It's also possible to set which tags are shown (and how) in `within`.
+    You can only add tags that you actually index (using the [inlineTags options](http://inl.github.io/BlackLab/how-to-configure-indexing.html#annotated-input-format-configuration-file) in your index config yaml)
+    ```js
+    vuexModules.ui.actions.search.extended.within.elements({
+      title: 'Tooltip here (optional)',
+      label: 'Sentence',
+      value: 's'
+    });
+    ```
+  </details>
+
+- <details>
+    <summary>[Results] - Show/hide the export buttons</summary>
+
+    `vuexModules.ui.actions.results.exportEnabled(false)`
+  </details>
+
+- <details>
+    <summary>[Results/Hits] Enable an audio player for spoken corpora</summary>
 
     This will create small play buttons in concordances, allowing the user to listen to the fragment. We use this feature in the `CGN (Corpus Gesproken Nederlands)` corpus.
 
@@ -676,7 +699,7 @@ Through javascript you can do many things, but outlined below are some of the mo
   </details>
 
 - <details>
-    <summary>[Hits] configure which annotation is shown as context and snippet and enable html mode</summary>
+    <summary>[Results/Hits] configure which annotation is shown as context and snippet and enable html mode</summary>
 
     `vuexModules.ui.actions.results.shared.concordanceAnnotationId('word_xml')`
     `vuexModules.ui.actions.results.shared.concordanceAsHtml(true)`
@@ -737,7 +760,7 @@ Through javascript you can do many things, but outlined below are some of the mo
   </details>
 
 - <details>
-    <summary>Customize the display of document titles in the results table</summary>
+    <summary>[Results/Docs] Customize the display of document titles in the results table</summary>
     <a name="customizing-document-titles"></a>
     
     By setting a callback to generate or extract the title of the documents, you can have more control over it.

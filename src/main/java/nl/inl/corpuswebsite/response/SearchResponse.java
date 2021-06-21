@@ -46,7 +46,8 @@ public class SearchResponse extends BaseResponse {
         
         context.put("indexStructureJson", cfg.getJsonUnescaped());
         context.put("pageSize", servlet.getWebsiteConfig(corpus).usePagination() ? servlet.getWebsiteConfig(corpus).getPageSize() : "undefined");
-
+        context.put("debugInfo", servlet.debugInfo());
+        
         // display template
         displayHtmlTemplate(servlet.getTemplate("search"));
     }

@@ -2,8 +2,10 @@ import Vue from 'vue';
 import { Store } from 'vuex';
 
 declare const process: any;
+declare var DEBUG_INFO_VISIBLE: boolean; // search.vm
 let debug = Vue.observable({
-	debug: process.env.NODE_ENV === 'development'
+	debug: process.env.NODE_ENV === 'development',
+	debug_visible: DEBUG_INFO_VISIBLE || process.env.NODE_ENV === 'development'
 });
 
 let queued: IArguments[] = [];
@@ -28,6 +30,14 @@ export function enable() {
 
 export function disable() {
 	debug.debug = false;
+}
+
+export function show() {
+	debug.debug_visible = true;
+}
+
+export function hide() {
+	debug.debug_visible = false;
 }
 
 export function monitorRedraws() {
@@ -108,5 +118,7 @@ export default debug;
 (window as any).debug = {
 	enable,
 	disable,
+	show,
+	hide,
 	monitorRedraws,
 }

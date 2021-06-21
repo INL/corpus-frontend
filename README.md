@@ -123,6 +123,11 @@ bannerMessage=<span class="fa fa-exclamation-triangle"></span> Configure this ho
 # Disable xslt and search.xml caching, useful during development.
 cache=true
 
+# Show or hide the debug info checkbox in the settings menu on the search page.
+# N.B. The debug checkbox will always be visible when using webpack-dev-server during development.
+# It can also be toggled by calling `debug.show()` and `debug.hide()` in the browser console.
+debugInfo=false
+
 ```
 
 

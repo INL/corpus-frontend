@@ -130,6 +130,8 @@ public class MainServlet extends HttpServlet {
     public static final String PROP_JSPATH                  = "jspath"; // usually set to http://127.0.0.1/dist/ for development
     /** Development mode, disable caching of any corpus data (e.g. search.xml, article.xsl, meta.xsl etc) */
     public static final String PROP_CACHE                   = "cache";
+    /** Enable/disable the debug info checkbox in the interface */
+    public static final String PROP_DEBUG_CHECKBOX_VISIBLE  = "debugInfo";
     // @formatter:on
 
     /**
@@ -153,6 +155,7 @@ public class MainServlet extends HttpServlet {
         p.setProperty(PROP_DATA_DEFAULT,            "default");
         p.setProperty(PROP_JSPATH,                  contextPath+"/js");
         p.setProperty(PROP_CACHE, 					"false");
+        p.setProperty(PROP_DEBUG_CHECKBOX_VISIBLE,  "false");
         // not all properties may need defaults
         // @formatter:on
 
@@ -672,6 +675,11 @@ public class MainServlet extends HttpServlet {
 
     public boolean useCache() {
         return Boolean.parseBoolean(this.adminProps.getProperty(PROP_CACHE));
+    }
+    
+    /** Render debug info checkbox in the search interface? */
+    public boolean debugInfo() {
+        return Boolean.parseBoolean(this.adminProps.getProperty(PROP_DEBUG_CHECKBOX_VISIBLE));
     }
 
     /**

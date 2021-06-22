@@ -295,8 +295,20 @@ const actions = {
 				enable: b.commit((state, payload: boolean) => state.search.extended.within.enabled = payload, 'search_extended_within_enable'),
 				elements: b.commit((state, payload: ModuleRootState['search']['extended']['within']['elements']) => {
 					// explicitly retrieve this annotations as it's supposed to be internal and thus not included in any getters.
+					if (payload.findIndex(v => v.value == '') === -1) {
+						payload.unshift({
+							value: '',
+							label: 'Document',
+							title: null
+						});
+					}
 					const annot = CorpusStore.get.allAnnotationsMap().starttag;
 					const validValuesMap = mapReduce(annot ? annot.values : undefined, 'value');
+					validValuesMap[''] == validValuesMap[''] || {
+						value: '',
+						label: 'Document',
+						title: null
+					}
 
 					state.search.extended.within.elements = payload.filter(v => {
 						const valid = v.value in validValuesMap;

@@ -95,7 +95,7 @@
 					<div class="btn-group col-xs-12 col-md-9">
 						<button v-for="option in withinOptions"
 							type="button"
-							:class="['btn btn-primary', {'active': within === option.value}]"
+							:class="['btn', within === option.value ? 'active btn-primary' : 'btn-default']"
 							:key="option.value"
 							:value="option.value"
 							:title="option.title || undefined"

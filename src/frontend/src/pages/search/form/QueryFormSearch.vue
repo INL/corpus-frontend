@@ -99,7 +99,7 @@
 							:key="option.value"
 							:value="option.value"
 							:title="option.title || undefined"
-							@click="within = (within === option.value ? null : option.value)"
+							@click="within = option.value"
 						>{{option.label || option.value || 'document'}}</button> <!-- empty value searches across entire documents -->
 					</div>
 				</div>

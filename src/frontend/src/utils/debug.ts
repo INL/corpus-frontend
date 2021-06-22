@@ -5,7 +5,7 @@ declare const process: any;
 declare var DEBUG_INFO_VISIBLE: boolean; // search.vm
 let debug = Vue.observable({
 	debug: process.env.NODE_ENV === 'development',
-	debug_visible: DEBUG_INFO_VISIBLE || process.env.NODE_ENV === 'development'
+	debug_visible: (typeof DEBUG_INFO_VISIBLE != 'undefined') ? DEBUG_INFO_VISIBLE || process.env.NODE_ENV === 'development' : false
 });
 
 let queued: IArguments[] = [];

@@ -3,7 +3,7 @@
 		<h3>Filter search by &hellip;</h3>
 
 		<template v-if="useTabs">
-		<ul class="nav nav-tabs">
+		<ul class="nav nav-tabs" v-if="tabs.length > 1">
 			<li v-for="tab in tabs" :class="{'active': activeTab===tab.name}" :key="tab.name" @click.prevent="activeTab=tab.name;">
 				<a :href="'#'+tab.name">
 					{{tab.name}}
@@ -122,7 +122,7 @@ export default Vue.extend({
 				.filter(g => g.subtabs.length);
 		},
 		filterMap(): MapOf<FilterStore.FullFilterState> { return FilterStore.getState().filters },
-		useTabs(): boolean { return this.tabs.length > 1; },
+		useTabs(): boolean { return this.tabs.length > 1 || this.tabs.length > 0 && this.tabs[0].subtabs.length > 1; },
 		activeFiltersMap(): MapOf<number> {
 			const activeTab = this.tabs.find(t => t.name === this.activeTab);
 			const filterMap = this.filterMap;

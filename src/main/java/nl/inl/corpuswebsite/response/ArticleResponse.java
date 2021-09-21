@@ -28,6 +28,8 @@ import nl.inl.corpuswebsite.utils.XslTransformer;
 
 public class ArticleResponse extends BaseResponse {
 
+	private static class ArticleContentRestrictedException extends Exception {}
+	
     /** Default transformer that translates <hl> tags into highlighted spans and outputs all text */
     private static final XslTransformer defaultTransformer;
 
@@ -194,7 +196,7 @@ public class ArticleResponse extends BaseResponse {
             final QueryServiceHandler articleContentRequest = new QueryServiceHandler(servlet.getWebserviceUrl(corpus.get()) + "docs/" + URLEncoder.encode(documentId, StandardCharsets.UTF_8.toString()) + "/contents");
             final String documentContents = articleContentRequest.makeRequest(requestParameters);
             // TODO this should check 401 instead.
-            if (documentContents.contains("NOT_AUTHORIZED")) return Pair.of("<h1>Content restricted</h1>\nThe webmaster has disabled direct access to the documents in this corpus", Optional.empty());
+            if (documentContents.contains("NOT_AUTHORIZED")) return Pair.of("<h1>Content restricted</h1>\nThe webmaster has disabled direct access to the documents in this corpus", Optional.of(new ArticleContentRestrictedException()));
 
             Exception error = null;
             XslTransformer trans = null;
@@ -314,6 +316,7 @@ public class ArticleResponse extends BaseResponse {
 
             context.put("article_meta", transformedMetadata.getLeft());
             context.put("article_meta_error", transformedMetadata.getRight().orElse(null));
+            context.put("article_content_restricted", transformedContent.getRight().orElse(null) instanceof ArticleContentRestrictedException);
             context.put("article_content", transformedContent.getLeft());
             context.put("article_content_error", transformedContent.getRight().orElse(null));
             context.put("docId", pid);

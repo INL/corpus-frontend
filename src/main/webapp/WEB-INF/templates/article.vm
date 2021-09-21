@@ -14,34 +14,37 @@
 
 <div class="container article">
     <ul id="articleTabs" class="nav nav-tabs cf-panel-tab-header cf-panel-lg">
-        <li class="active"><a href="#content" data-toggle="tab">Content</a>
-        </li>
-        <li><a href="#metadata" data-toggle="tab">Metadata</a></li>
+        #if(!$article_content_restricted)
+        <li class="active"><a href="#content" data-toggle="tab">Content</a></li>
+        #end
+        <li #if($article_content_restricted)class="active"#end><a href="#metadata" data-toggle="tab">Metadata</a></li>
         <li><a href="#statistics" data-toggle="tab">Statistics</a></li>
     </ul>
     <div class="tab-content cf-panel-tab-body cf-panel-lg" style="padding-top: 35px;">
-         <div id="content" class="tab-pane active">
-            <div id="vue-root-pagination"></div>
+         #if(!$article_content_restricted)
+	         <div id="content" class="tab-pane active">
+	            <div id="vue-root-pagination"></div>
+	
+	            #set($unescaped = $article_content) ## see BaseResponse.java
+	            $!unescaped
+	
+	            #if ($article_content_error)
+	                <a class="btn btn-primary" role="button" data-toggle="collapse" href="#content_error" aria-expanded="false" aria-controls="content_error">
+	                  Click here to see errors
+	                </a><br>
+	                <div class="collapse" id="content_error"><div class="well" style="overflow: auto; max-height: 300px; white-space: pre-line;">
+	                   $article_content_error.getMessage()
+	                   #foreach($stack in $article_content_error.getStackTrace())
+	                       $stack.toString()
+	                   #end
+	                </div></div>
+	            #end
+	
+	
+	        </div>
+	   	#end
 
-            #set($unescaped = $article_content) ## see BaseResponse.java
-            $!unescaped
-
-            #if ($article_content_error)
-                <a class="btn btn-primary" role="button" data-toggle="collapse" href="#content_error" aria-expanded="false" aria-controls="content_error">
-                  Click here to see errors
-                </a><br>
-                <div class="collapse" id="content_error"><div class="well" style="overflow: auto; max-height: 300px; white-space: pre-line;">
-                   $article_content_error.getMessage()
-                   #foreach($stack in $article_content_error.getStackTrace())
-                       $stack.toString()
-                   #end
-                </div></div>
-            #end
-
-
-        </div>
-
-        <div id="metadata" class="tab-pane">
+        <div id="metadata" class="tab-pane #if($article_content_restricted) active #end">
             #set($unescaped = $article_meta) ## see BaseResponse.java
             $!unescaped
 

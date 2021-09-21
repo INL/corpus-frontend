@@ -170,6 +170,11 @@ type ModuleRootState = {
 
 		/** Database to use in the lexicon service component. To allow switching early dutch/middle dutch etc. */
 		lexiconDb: string;
+		/**
+		 * @param e the error
+		 * @param context snippet = large context around a hit, concordances = hits within a group. NOTE: context may be expanded in the future.
+		 */
+		errorMessage(e: AppTypes.ApiError, context: 'snippet'|'concordances'|'hits'|'docs'|'groups'): string;
 	}
 };
 
@@ -244,7 +249,13 @@ const initialState: ModuleRootState = {
 		pageGuide: {
 			enabled: true
 		},
-		lexiconDb: 'lexiconservice_mnw_wnt'
+		lexiconDb: 'lexiconservice_mnw_wnt',
+		errorMessage: (e, c) => {
+			switch (c) {
+				case 'concordances': return `${e.title}<br>${e.message}`;
+				default: return e.message;
+			}
+		}
 	},
 
 	dropdowns: {
@@ -295,7 +306,7 @@ const actions = {
 				enable: b.commit((state, payload: boolean) => state.search.extended.within.enabled = payload, 'search_extended_within_enable'),
 				elements: b.commit((state, payload: ModuleRootState['search']['extended']['within']['elements']) => {
 					// explicitly retrieve this annotations as it's supposed to be internal and thus not included in any getters.
-					if (payload.findIndex(v => v.value == '') === -1) {
+					if (payload.findIndex(v => v.value === '') === -1) {
 						payload.unshift({
 							value: '',
 							label: 'Document',
@@ -304,11 +315,11 @@ const actions = {
 					}
 					const annot = CorpusStore.get.allAnnotationsMap().starttag;
 					const validValuesMap = mapReduce(annot ? annot.values : undefined, 'value');
-					validValuesMap[''] == validValuesMap[''] || {
+					validValuesMap[''] = validValuesMap[''] || {
 						value: '',
 						label: 'Document',
 						title: null
-					}
+					};
 
 					state.search.extended.within.elements = payload.filter(v => {
 						const valid = v.value in validValuesMap;
@@ -578,7 +589,6 @@ const init = () => {
 	// Also validate the configured settings, and replace with defaults where invalid.
 	Object.assign(initialState, cloneDeep(getState()));
 
-
 	const allAnnotationsMap = CorpusStore.get.allAnnotationsMap();
 	const allMetadataFieldsMap = CorpusStore.get.allMetadataFieldsMap();
 	const annotationGroups = CorpusStore.get.annotationGroups();
@@ -586,13 +596,12 @@ const init = () => {
 
 	const mainAnnotation = CorpusStore.get.firstMainAnnotation();
 
-
 	// Annotations (extended, advanced, explore [n-grams], sorting, grouping, hit details)
 	// If unconfigured, show the following annotations:
 	// - Those in non-remainder groups (which are the user-configured groups)
 	// - Non-internal annotations in the remainder group (which is the catch-all/fallback group), iff there are no other groups.
 	let defaultAnnotationsToShow = annotationGroups.flatMap((g, i) => {
-		if (!g.isRemainderGroup) return g.entries;
+		if (!g.isRemainderGroup) { return g.entries; }
 		const hasNonRemainderGroup = i > 0; // remainder groups is always at the end
 		return hasNonRemainderGroup ? [] : g.entries.filter(id => !allAnnotationsMap[id].isInternal);
 	});
@@ -620,8 +629,8 @@ const init = () => {
 
 	// Metadata/filters (extended, advanced, expert, explore)
 	// If unconfigured: show all metadata in groups (groups are defined in the index format yaml file)
-	let defaultMetadataToShow = metadataGroups.flatMap((g, i) => {
-		if (!g.isRemainderGroup) return g.entries;
+	const defaultMetadataToShow = metadataGroups.flatMap((g, i) => {
+		if (!g.isRemainderGroup) { return g.entries; }
 		const hasNonRemainderGroup = i > 0; // remainder group is always at the end
 		return hasNonRemainderGroup ? [] : g.entries;
 	});
@@ -800,7 +809,7 @@ function getCheckmarks(
 	remainderGroupName: string
 ): Array<{
 	id: string;
-    entries: Array<{id: string, checkmarks: MapOf<boolean>}>
+	entries: Array<{id: string, checkmarks: MapOf<boolean>}>
 }> {
 	// Initialize outputs
 	const entryMap: MapOf<{id: string, checkmarks: MapOf<boolean>}> = {};

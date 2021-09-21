@@ -115,7 +115,7 @@
 						<tr v-if="citations[index]" v-show="citations[index].open" :key="index + '-citation'" :class="['concordance-details', {'open': citations[index].open}]">
 							<td :colspan="numColumns">
 								<p v-if="citations[index].error" class="text-danger">
-									<span class="fa fa-exclamation-triangle"></span> {{citations[index].error}}
+									<span class="fa fa-exclamation-triangle"></span> <span v-html="citations[index].error"></span>
 								</p>
 								<p v-else-if="citations[index].citation">
 									<AudioPlayer v-if="citations[index].audioPlayerData" v-bind="citations[index].audioPlayerData"/>
@@ -373,7 +373,7 @@ export default Vue.extend({
 				citation.audioPlayerData = this.getAudioPlayerData ? this.getAudioPlayerData(this.corpus, row.docPid, s) : null;
 			})
 			.catch((err: AppTypes.ApiError) => {
-				citation.error = err.message;
+				citation.error = UIStore.getState().global.errorMessage(err, 'snippet');
 				debugLog(err.stack);
 				ga('send', 'exception', { exDescription: err.message, exFatal: false });
 			})

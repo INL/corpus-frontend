@@ -35,8 +35,8 @@
 				@sort="sort = $event"
 				@viewgroup="originalGroupBySettings = {page, sort}; log(page, sort); viewGroup = $event.id; _viewGroupName = $event.displayName;"
 			>
-				<GroupBy slot="groupBy" :type="type" 
-					:disabled="!!request" 
+				<GroupBy slot="groupBy" :type="type"
+					:disabled="!!request"
 					:originalGroupBySettings="originalGroupBySettings"
 					@viewgroupLeave="leaveViewgroup"
 				/>
@@ -57,9 +57,9 @@
 		<div v-else-if="!valid" class="no-results-found">
 			This view is inactive because no search criteria for words were specified.
 		</div>
-		<div v-else-if="error" class="no-results-found">
+		<div v-else-if="error != null" class="no-results-found">
 			<span class="fa fa-exclamation-triangle text-danger"></span><br>
-			{{error.message}}
+			<span v-html="error"></span>
 			<br>
 			<br>
 			<button type="button" class="btn btn-default" title="Try again with current search settings" @click="markDirty();">Try again</button>
@@ -200,7 +200,7 @@ export default Vue.extend({
 		isDirty: true, // since we don't have any results yet
 		request: null as null|Promise<BLTypes.BLSearchResult>,
 		results: null as null|BLTypes.BLSearchResult,
-		error: null as null|Api.ApiError,
+		error: null as null|string,
 		cancel: null as null|Api.Canceler,
 
 		_viewGroupName: null as string|null,
@@ -258,7 +258,7 @@ export default Vue.extend({
 				this.clearResults = false;
 				return;
 			}
-			
+
 			if (this.clearResults) { this.results = this.error = null; this.clearResults = false; }
 
 			const params = RootStore.get.blacklabParameters()!;
@@ -272,7 +272,7 @@ export default Vue.extend({
 			setTimeout(() => this.scrollToResults(), 1500);
 
 			this.request
-			.then(this.setSuccess, this.setError)
+			.then(this.setSuccess, e => this.setError(e, !!params.group))
 			.finally(() => this.scrollToResults())
 		},
 		setSuccess(data: BLTypes.BLSearchResult) {
@@ -283,10 +283,10 @@ export default Vue.extend({
 			this.request = null;
 			this.cancel = null;
 		},
-		setError(data: Api.ApiError) {
+		setError(data: Api.ApiError, isGrouped?: boolean) {
 			if (data.title !== 'Request cancelled') { // TODO
 				debugLog('Request failed: ', data);
-				this.error = data;
+				this.error = UIStore.getState().global.errorMessage(data, isGrouped ? 'groups' : this.type);
 				this.results = null;
 				this.paginationResults = null;
 			}
@@ -330,7 +330,7 @@ export default Vue.extend({
 			}
 		},
 		leaveViewgroup() {
-			this.viewGroup = null; 
+			this.viewGroup = null;
 			this.page = this.originalGroupBySettings?.page || 0;
 			this.sort = this.originalGroupBySettings?.sort || null;
 			this.originalGroupBySettings = null;

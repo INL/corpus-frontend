@@ -519,7 +519,7 @@ Through javascript you can do many things, but outlined below are some of the mo
   </details>
 
 - <details>
-    <summary>[Global] - Configure which annotations & metadata can be used/is shown where</summary>
+    <summary>[Global] - Configure which annotations & metadata fields are visible</summary>
 
    >  This is just a shorthand method of configuring several parts of the UI. Individual features can also be configured one by one. Refer to the [source code](src/frontend/src/store/search/ui.ts) for more details (all of this module's exports are exposed under `window.vuexModules.ui`).
 
@@ -582,6 +582,27 @@ Through javascript you can do many things, but outlined below are some of the mo
     If you want to hide every single option in a category, use the dedicated function to configure that section of the ui and pass it an empty array.
 
   </details>
+
+- <details>
+    <summary>[Global] - Set custom error messages</summary>
+
+    A function that is called whenever an error is returned from BlackLab. 
+    Context is one of 'snippet', 'concordances', 'hits', 'docs', 'groups' detailing during what action the error occured.
+
+    `vuexModules.ui.getState().global.errorMessage = function(error, context) { return error.message; }`
+    Error looks like
+    ```ts
+    type ApiError = {
+      /** Short summary */
+      title: string;
+      /** Full error */
+      message: string;
+      /** Message for HTTP status, e.g. "Service unavailable" for 503 */
+      statusText: string;
+    }
+    ```
+  </details>
+
 
 - <details>
     <summary>[Search] - Hide the query builder</summary>

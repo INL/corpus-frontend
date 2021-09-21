@@ -83,7 +83,7 @@
 									<button type="button" class="close close-concordances" title="close" @click="openPreviewConcordances(row.id)"><span>&times;</span></button>
 								</div>
 
-								<div v-if="concordances[row.id].error" class="text-danger">{{concordances[row.id].error.title}}<br>{{concordances[row.id].error.message}}</div>
+								<div v-if="concordances[row.id].error != null" class="text-danger"><span v-html="concordances[row.id].error"></span></div>
 
 								<template v-if="type === 'hits' && concordances[row.id].concordances.length > 0">
 									<div class="clearfix" style="border-bottom:1px solid #ddd;">
@@ -440,7 +440,7 @@ export default Vue.extend({
 			[key: string]: {
 				available: number;
 				request: null|Promise<BLTypes.BLSearchResult>;
-				error: null|Api.ApiError;
+				error: null|string;
 				open: boolean;
 				// TODO
 				hasHits?: boolean, // only when this.type === docs
@@ -734,7 +734,7 @@ export default Vue.extend({
 				}
 			})
 			.catch((err: Api.ApiError) => {
-				cache.error = err;
+				cache.error = UIStore.getState().global.errorMessage(err, 'concordances');
 				ga('send', 'exception', { exDescription: err.message, exFatal: false });
 			})
 			.finally(() => cache.request = null);

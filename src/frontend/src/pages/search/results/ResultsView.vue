@@ -63,7 +63,6 @@
 			<br>
 			<br>
 			<button type="button" class="btn btn-default" title="Try again with current search settings" @click="markDirty();">Try again</button>
-			<button type="button" class="btn btn-default" title="Reset sorting+grouping and try again" @click="storeModule.actions.reset(); markDirty();">Clear settings and try again</button>
 		</div>
 
 		<div v-show="resultsHaveData" class="text-right">

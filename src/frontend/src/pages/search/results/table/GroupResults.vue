@@ -721,12 +721,11 @@ export default Vue.extend({
 					cache.available = data.summary.numberOfDocsRetrieved;
 					cache.hasHits = cache.hasHits || (data.docs.length > 0 && data.docs[0].numberOfHits != null);
 
-					const {titleField = ''} = data.summary.docFields;
-
+					const getSummary = UIStore.getState().results.shared.getDocumentSummary;
 					data.docs.forEach(doc => {
 						cache.hasHits = cache.hasHits || doc.numberOfHits != null;
 						cache.concordances.push({
-							title: doc.docInfo[titleField] ? doc.docInfo[titleField][0] : '',
+							title: getSummary(doc.docInfo, data.summary.docFields),
 							hits: doc.numberOfHits,
 							href: getDocumentUrl(doc.docPid, data.summary.searchParam.patt || undefined, data.summary.searchParam.pattgapdata || undefined),
 						});

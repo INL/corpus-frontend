@@ -121,7 +121,7 @@ public abstract class BaseResponse {
 
         logger.debug("jspath {}", servlet.getAdminProps().getProperty(MainServlet.PROP_JSPATH));
 
-        // Escape all data written into the velocity templates by default
+        // HTML-escape all data written into the velocity templates by default
         // Only allow access to the raw string if the expression contains the word "unescaped"
         EventCartridge cartridge = context.getEventCartridge();
         if (cartridge == null) {

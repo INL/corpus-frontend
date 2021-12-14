@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack --config webpack.config.prod.js --mode production",
-    "start": "webpack-dev-server --config webpack.config.dev.js --mode development --port 8081 --host 0.0.0.0",
+    "start": "webpack-dev-server --config webpack.config.dev.js --mode development --port 8081 --host 0.0.0.0 --disableHostCheck",
     "node": "node"
   },
   "author": "INT",

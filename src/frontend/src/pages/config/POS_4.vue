@@ -5,7 +5,7 @@
 		<div style="display: flex; flex-direction: row; flex-wrap: wrap;">
 			<ul v-for="a in stuff" :key="a.id" class="list-unstyled" style="padding: 0 5px;">
 				<li><strong>{{a.id}}</strong></li>
-				<li v-for="v in a.values" :key="v.value" :style="{outline: v.displayName === v.value ? '1px solid red' : undefined}">
+				<li v-for="v in a.values" :key="v.value" :style="{outline: (v.displayName === v.value || !v.displayName) ? '1px solid red' : undefined}">
 					{{v.value}}
 
 					<input type="text"
@@ -15,12 +15,18 @@
 				</li>
 			</ul>
 		</div>
+		<div style="margin: 0 25px;">
+			<h3>Paste a mapping object in the shape of {key: value}</h3>
+			<textarea v-model="displayNamesImport" placeholder="Paste a mapping object in the shape of {key: value}" style="width: 100%;"></textarea>
+			<button :disabled="!importValid" type="button" @click="importDisplayNames">Import display names</button>
+		</div>
 	</div>
 </template>
 
 <script lang="ts">
 import { mapReduce } from '@/utils';
 import cloneDeep from 'clone-deep';
+import { isObject } from 'highcharts';
 import Vue from 'vue';
 
 import {StepState} from './POS.vue';
@@ -36,6 +42,7 @@ export const step = Vue.extend({
 	},
 	data: () => ({
 		title,
+		displayNamesImport: '',
 
 		displays: {} as {
 			[annotationId: string]: {
@@ -49,6 +56,32 @@ export const step = Vue.extend({
 				id: a,
 				values: Object.entries(values).map(([value, displayName]) => ({value, displayName}))
 			}));
+		},
+		importJson(): undefined|{[key: string]: string} {
+			if (!this.displayNamesImport) return undefined;
+			try {
+				const t = JSON.parse(this.displayNamesImport);
+				if (isObject(t, true) && Object.values(t).every(v => typeof v === 'string')) return t;
+			} catch {
+				return undefined;
+			}
+		},
+		importValid(): boolean {
+			return !!this.importJson;
+		}
+	},
+	methods: {
+		importDisplayNames() {
+			Object
+				.entries(this.value.step4)
+				.forEach(([k, valuesForAnnotation]) => 
+					Object
+						.keys(valuesForAnnotation)
+						.forEach(value => {
+							const displayName = value.split('|').map(part => this.importJson![part] || part).join('|');
+							valuesForAnnotation[value] = displayName;
+						})
+				)
 		}
 	},
 	created() {

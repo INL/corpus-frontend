@@ -176,7 +176,7 @@ After indexing is complete, the user is redirected to the search page.
 ## Frontend configuration
 
 **Per corpus configuration is not supported for user corpora.**
-Though you can still configure them by overriding the defaults.
+Though you sort of can by overriding the defaults that apply to all corpora in your instance.
 
 By placing certain files in the `corporaInterfaceDataDir` it's possible to customize several aspects of a corpus.
 Files must be placed in a subdirectory with the same name as the corpus; files for `MyCorpus` should be placed in `corporaInterfaceDataDir/MyCorpus/...`

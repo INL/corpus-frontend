@@ -33,7 +33,7 @@ About
 ## Intro
 
 This is a corpus search application that works with [BlackLab Server](https://github.com/INL/BlackLab/).
-At the Dutch Language Institute, we use it to publish our corpora such as [CHN](http://chn.inl.nl/) (CLARIN login required), [Letters as Loot](http://brievenalsbuit.inl.nl/) and [AutoSearch](http://portal.clarin.inl.nl/autocorp/) (CLARIN login required).
+At the Dutch Language Institute, we use it to publish our corpora such as [CHN](http://corpushedendaagsnederlands.ivdnt.org/) (CLARIN login required), [Letters as Loot](http://brievenalsbuit.ivdnt.org/) and [AutoSearch](http://portal.clarin.inl.nl/autocorp/) (CLARIN login required).
 
 
 ## How to use

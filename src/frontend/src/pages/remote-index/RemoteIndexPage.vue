@@ -253,7 +253,7 @@ export default Vue.extend({
 				
 				const filename = r.headers["content-disposition"]?.split('filename=')[1]?.split(';')[0] ?? this.urlParams.file
 				file = new File([new Blob([r.data])], filename);
-				
+
 			} catch (e) {
 				this.error = e.message;
 				this.retryError = this.download;
@@ -300,9 +300,9 @@ export default Vue.extend({
 			}
 
 			try {
-				let indexProgress: BLTypes.BLIndexProgress|null = null;
-				while (({indexProgress} = await blacklab.getCorpusStatus(this.selectedCorpus!.id)) != null && !indexError) {
-					const {filesProcessed: files, docsDone: docs, tokensProcessed: tokens} = indexProgress!;
+				let r: AppTypes.NormalizedIndexOld;
+				while ((r = await blacklab.getCorpusStatus(this.selectedCorpus!.id)) && r.indexProgress && !indexError) {
+					const {filesProcessed: files, docsDone: docs, tokensProcessed: tokens} = r.indexProgress!;
 					this.action = `Indexing... - ${files} files, ${docs} documents, and ${tokens} tokens indexed so far...`;
 					await new Promise(resolve => setTimeout(resolve, 1000));
 				}

@@ -250,10 +250,10 @@ export default Vue.extend({
 						}
 					}
 				})
-
-				// throw new Error('Test error from download');
-
-				file = new File([new Blob([r.data])], this.urlParams.file);
+				
+				const filename = r.headers["content-disposition"]?.split('filename=')[1]?.split(';')[0] ?? this.urlParams.file
+				file = new File([new Blob([r.data])], filename);
+				
 			} catch (e) {
 				this.error = e.message;
 				this.retryError = this.download;

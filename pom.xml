@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-    http://maven.apache.org/maven-v4_0_0.xsd">
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>nl.inl.blacklab</groupId>
@@ -119,7 +119,7 @@
                         <version>2.9</version>
                     </dependency>
                     <dependency><!-- use external ssh (ssh or putty/pageant
-                            on windows) -->
+                             on windows) -->
                         <groupId>org.apache.maven.wagon</groupId>
                         <artifactId>wagon-ssh-external</artifactId>
                         <version>2.9</version>
@@ -129,7 +129,7 @@
             </plugin>
 
             <!-- Generates a "build number" (just a timestamp in our case)
-                to put in the manifest -->
+                 to put in the manifest -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>buildnumber-maven-plugin</artifactId>
@@ -166,7 +166,7 @@
                     <lineEnding>LF</lineEnding>
                     <configFile>${project.basedir}/src/data/formatter/Eclipse_format_INT_google.xml</configFile>
                     <overrideConfigCompilerVersion>true</overrideConfigCompilerVersion><!--
-                        use pom.xml compiler version -->
+                         use pom.xml compiler version -->
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
@@ -190,19 +190,19 @@
                         </goals>
                         <configuration>
                             <!-- See https://nodejs.org/en/download/ for
-                                latest node and npm (lts) versions -->
+                                 latest node and npm (lts) versions -->
                             <nodeVersion>v14.8.0</nodeVersion>
                             <npmVersion>6.14.7</npmVersion>
                         </configuration>
                     </execution>
-                    
+
                     <execution>
                         <id>npm install</id>
                         <goals>
                             <goal>npm</goal>
                         </goals>
                         <!-- Optional configuration which provides for running
-                            any npm command -->
+                             any npm command -->
                         <configuration>
                             <arguments>install</arguments>
                         </configuration>
@@ -216,7 +216,7 @@
                     </execution>
                     
                     <!-- rebuild node native bindings (required for node-sass) -->
-                     <execution>
+                    <execution>
                         <id>npm rebuild</id>
                         <goals>
                             <goal>npm</goal>
@@ -238,14 +238,14 @@
                         </configuration>
 
                         <!--
-                            skip compiling JS when compiling in eclipse.
-                            It's slow and unneeded as you can manually start a webpack-dev-server during development.
-                            Run "npm start" in the src/frontend/src folder, and configure corpus-frontend.properties jspath to "http://localhost:80/dist"
+                             skip compiling JS when compiling in eclipse.
+                             It's slow and unneeded as you can manually start a webpack-dev-server during development.
+                             Run "npm start" in the src/frontend/src folder, and configure corpus-frontend.properties jspath to "http://localhost:80/dist"
                         -->
                         <?m2e ignore?>
                     </execution>
 
-                   <!-- TODO lifecycle mapping, incremental builds. -->
+                    <!-- TODO lifecycle mapping, incremental builds. -->
 
                 </executions>
             </plugin>
@@ -333,16 +333,22 @@
             <artifactId>Saxon-HE</artifactId>
             <version>9.9.1-5</version>
         </dependency>
-     <dependency>
-      <groupId>commons-beanutils</groupId>
-      <artifactId>commons-beanutils</artifactId>
-      <version>1.9.4</version>
-     </dependency>
+        <dependency>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+            <version>1.9.4</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.8.9</version>
+        </dependency>
     </dependencies>
 
     <reporting>
         <plugins>
-
             <!-- Unit test reports -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

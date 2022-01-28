@@ -31,7 +31,7 @@ import nl.inl.corpuswebsite.utils.WebsiteConfig;
 public abstract class BaseResponse {
     protected static final Logger logger = LoggerFactory.getLogger(BaseResponse.class);
 
-    private static final String OUTPUT_ENCODING = "UTF-8";
+    protected static final String OUTPUT_ENCODING = "UTF-8";
 
     protected static final EscapeTool esc = new EscapeTool();
     protected static final DateTool date = new DateTool();

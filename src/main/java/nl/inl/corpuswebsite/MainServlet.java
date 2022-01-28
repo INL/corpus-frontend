@@ -57,6 +57,7 @@ import org.xml.sax.SAXException;
 
 import nl.inl.corpuswebsite.response.AboutResponse;
 import nl.inl.corpuswebsite.response.ArticleResponse;
+import nl.inl.corpuswebsite.response.ConfigResponse;
 import nl.inl.corpuswebsite.response.CorporaDataResponse;
 import nl.inl.corpuswebsite.response.CorporaResponse;
 import nl.inl.corpuswebsite.response.ErrorResponse;
@@ -221,6 +222,7 @@ public class MainServlet extends HttpServlet {
         responses.put("docs", ArticleResponse.class);
         responses.put("static", CorporaDataResponse.class);
         responses.put("upload", RemoteIndexResponse.class);
+        responses.put("config", ConfigResponse.class);
     }
 
     /**

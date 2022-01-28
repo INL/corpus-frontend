@@ -94,6 +94,9 @@ public abstract class BaseResponse {
         this.pathParameters = pathParameters;
         WebsiteConfig cfg = servlet.getWebsiteConfig(corpus);
 
+        // Allow all origins on all requests
+        this.response.addHeader("Access-Control-Allow-Origin", "*");
+        
         // Utils
         context.put("esc", esc);
         context.put("date", date);

@@ -2,8 +2,6 @@ import URI from 'urijs';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
-import { FullFilterState } from '@/store/search/form/filters';
-import { valueFunctions } from '@/components/filters/filterValueFunctions';
 
 export function escapeRegex(original: string, wildcardSupport: boolean) {
 	original = original.replace(/([\^$\-\\.(){}[\]+])/g, '\\$1'); // add slashes for regex characters
@@ -43,7 +41,7 @@ export function unescapeRegex(original: string, wildcardSupport: boolean) {
  */
 export function escapeLucene(original: string, preserveWildcards: boolean) {
 	if (!preserveWildcards || original.match(/\s+/)) {
-		return `"${original.replace(/"/g, '\\$1')}"`;
+		return `"${original.replace(/(")/g, '\\$1')}"`;
 	}
 	return original.replace(/(\+|-|&&|\|\||!|\(|\)|{|}|\[|]|\^|"|~|:|\\|\/)/g, '\\$1');
 }

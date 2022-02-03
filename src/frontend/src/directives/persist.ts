@@ -31,7 +31,7 @@ class Persist implements DirectiveOptions {
 		const lazy = binding.modifiers.lazy;
 
 		if (vBind) {
-			vnode.context!.$watch(vBind.expression, newValue => this.persist(key, newValue));
+			vnode.context!.$watch(vBind.expression!, newValue => this.persist(key, newValue));
 		} else {
 			vnode.context!.$on(lazy ? 'change' : 'input', (event: Event) => this.persist(key, event));
 		}

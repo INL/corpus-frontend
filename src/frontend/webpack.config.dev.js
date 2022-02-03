@@ -1,7 +1,7 @@
 const path = require('path');
 const webpack = require('webpack');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
-const VueLoaderPlugin = require('vue-loader/lib/plugin');
+const {VueLoaderPlugin} = require('vue-loader');
 const CircularDependencyPlugin = require('circular-dependency-plugin');
 
 module.exports = {
@@ -113,9 +113,7 @@ module.exports = {
 			'CodeMirror':       'codemirror',
 		}),
 
-		new ForkTsCheckerWebpackPlugin({
-			vue: true
-		}),
+		new ForkTsCheckerWebpackPlugin({}),
 		new VueLoaderPlugin(),
 		new CircularDependencyPlugin({
 			// `onStart` is called before the cycle detection starts
@@ -155,5 +153,8 @@ module.exports = {
 	// (that process happens in the ForkTsCheckerWebpackPlugin we enabled above)
 	stats: {
 	  warningsFilter: /export .* was not found in/
-	}
+	},
+	devServer: {
+		allowedHosts: "all"
+	}	
 };

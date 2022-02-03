@@ -548,17 +548,20 @@ export class QueryBuilder {
 export class Token {
 	public readonly id = generateId('token');
 	private readonly idSelector = '#' + this.id;
-	public readonly element =this._createElement();
-	private readonly $controls = {
-		optional: this.element.find(this.idSelector + '_property_optional'),
-		minRepeats: this.element.find(this.idSelector + '_property_repeats_min'),
-		maxRepeats: this.element.find(this.idSelector + '_property_repeats_max'),
-		beginOfSentence: this.element.find(this.idSelector + '_property_sentence_start'),
-		endOfSentence: this.element.find(this.idSelector + '_property_sentence_end')
-	};
-	public readonly rootAttributeGroup = this._createRootAttributeGroup();
+	public readonly element;  
+	private readonly $controls; 
+	public readonly rootAttributeGroup; 
 
 	constructor(private readonly builder: QueryBuilder) {
+		this.element = this._createElement();
+		this.$controls =  {
+			optional: this.element.find(this.idSelector + '_property_optional'),
+			minRepeats: this.element.find(this.idSelector + '_property_repeats_min'),
+			maxRepeats: this.element.find(this.idSelector + '_property_repeats_max'),
+			beginOfSentence: this.element.find(this.idSelector + '_property_sentence_start'),
+			endOfSentence: this.element.find(this.idSelector + '_property_sentence_end')
+		};
+		this.rootAttributeGroup = this._createRootAttributeGroup();
 		this.rootAttributeGroup.createAttribute();
 	}
 

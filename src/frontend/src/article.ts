@@ -71,7 +71,7 @@ $(document).ready(() => {
 							<th>Field</th>
 							<th>Values</th>
 						</tr>
-						${Object.entries(r.docInfo).map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}
+						${Object.entries(r.docInfo).sort((a, b) => a[0].localeCompare(b[0])).map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}
 					</table>
 
 					<a href="${BLS_URL}${INDEX_ID}/docs/${DOCUMENT_ID}/contents${q}" target="_blank">Open raw document</a>

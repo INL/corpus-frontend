@@ -33,7 +33,7 @@ About
 ## Intro
 
 This is a corpus search application that works with [BlackLab Server](https://github.com/INL/BlackLab/).
-At the Dutch Language Institute, we use it to publish our corpora such as [CHN](http://chn.inl.nl/) (CLARIN login required), [Letters as Loot](http://brievenalsbuit.inl.nl/) and [AutoSearch](http://portal.clarin.inl.nl/autocorp/) (CLARIN login required).
+At the Dutch Language Institute, we use it to publish our corpora such as [CHN](http://corpushedendaagsnederlands.ivdnt.org/) (CLARIN login required), [Letters as Loot](http://brievenalsbuit.ivdnt.org/) and [AutoSearch](http://portal.clarin.inl.nl/autocorp/) (CLARIN login required).
 
 
 ## How to use
@@ -176,7 +176,7 @@ After indexing is complete, the user is redirected to the search page.
 ## Frontend configuration
 
 **Per corpus configuration is not supported for user corpora.**
-Though you can still configure them by overriding the defaults.
+Though you sort of can by overriding the defaults that apply to all corpora in your instance.
 
 By placing certain files in the `corporaInterfaceDataDir` it's possible to customize several aspects of a corpus.
 Files must be placed in a subdirectory with the same name as the corpus; files for `MyCorpus` should be placed in `corporaInterfaceDataDir/MyCorpus/...`

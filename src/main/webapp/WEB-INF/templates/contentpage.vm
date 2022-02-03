@@ -9,7 +9,7 @@
 
 <div class="container">
 #set($unescaped = $content) ## see BaseResponse.java
-$!unescaped
+#evaluate($!unescaped)
 </div>
 
 #parse("footer.vm")

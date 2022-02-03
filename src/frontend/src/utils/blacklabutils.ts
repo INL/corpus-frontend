@@ -41,9 +41,9 @@ function normalizeAnnotationUIType(field: BLTypes.BLAnnotation): NormalizedAnnot
 
 	switch (uiType) {
 		case 'dropdown':
-		case 'select': 
+		case 'select':
 			return field.values && field.valueListComplete ? 'select' : 'combobox';
-		case 'autocomplete': 
+		case 'autocomplete':
 		case 'combobox':
 			return 'combobox';
 		case 'lexicon':
@@ -117,14 +117,14 @@ function normalizeAnnotationGroups(blIndex: BLTypes.BLIndexMetadata): Normalized
 		let hasUserDefinedGroup = false;
 
 		// Copy all predefined groups, removing nonexistant annotations and groups
-		if (blIndex.annotationGroups) {
+		if (blIndex.annotationGroups && blIndex.annotationGroups[fieldId]) {
 			for (const group of blIndex.annotationGroups[fieldId]) {
 				const normalizedGroup: NormalizedAnnotationGroup = {
 					annotatedFieldId: fieldId,
 					id: group.name,
 					entries: group.annotations.filter(id => annotations[id] != null),
 					isRemainderGroup: false
-				}
+				};
 				if (normalizedGroup.entries.length) {
 					annotationGroupsNormalized.push(normalizedGroup);
 					normalizedGroup.entries.forEach(id => idsNotInGroups.delete(id));

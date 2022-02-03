@@ -31,7 +31,7 @@ import nl.inl.corpuswebsite.utils.WebsiteConfig;
 public abstract class BaseResponse {
     protected static final Logger logger = LoggerFactory.getLogger(BaseResponse.class);
 
-    private static final String OUTPUT_ENCODING = "UTF-8";
+    protected static final String OUTPUT_ENCODING = "UTF-8";
 
     protected static final EscapeTool esc = new EscapeTool();
     protected static final DateTool date = new DateTool();
@@ -94,6 +94,9 @@ public abstract class BaseResponse {
         this.pathParameters = pathParameters;
         WebsiteConfig cfg = servlet.getWebsiteConfig(corpus);
 
+        // Allow all origins on all requests
+        this.response.addHeader("Access-Control-Allow-Origin", "*");
+        
         // Utils
         context.put("esc", esc);
         context.put("date", date);
@@ -121,7 +124,7 @@ public abstract class BaseResponse {
 
         logger.debug("jspath {}", servlet.getAdminProps().getProperty(MainServlet.PROP_JSPATH));
 
-        // Escape all data written into the velocity templates by default
+        // HTML-escape all data written into the velocity templates by default
         // Only allow access to the raw string if the expression contains the word "unescaped"
         EventCartridge cartridge = context.getEventCartridge();
         if (cartridge == null) {

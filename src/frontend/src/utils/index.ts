@@ -2,8 +2,6 @@ import URI from 'urijs';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
-import { FullFilterState } from '@/store/search/form/filters';
-import { valueFunctions } from '@/components/filters/filterValueFunctions';
 
 export function escapeRegex(original: string, wildcardSupport: boolean) {
 	original = original.replace(/([\^$\-\\.(){}[\]+])/g, '\\$1'); // add slashes for regex characters
@@ -43,7 +41,7 @@ export function unescapeRegex(original: string, wildcardSupport: boolean) {
  */
 export function escapeLucene(original: string, preserveWildcards: boolean) {
 	if (!preserveWildcards || original.match(/\s+/)) {
-		return `"${original.replace(/"/g, '\\$1')}"`;
+		return `"${original.replace(/(")/g, '\\$1')}"`;
 	}
 	return original.replace(/(\+|-|&&|\|\||!|\(|\)|{|}|\[|]|\^|"|~|:|\\|\/)/g, '\\$1');
 }
@@ -548,6 +546,16 @@ export function getMetadataSubset<T extends {id: string, displayName: string}>(
 	return r;
 }
 
+/**
+ * Given a list of annotation IDs, and some metadata about the corpus & annotations, convert them to a list of options for a <SelectPicker/>
+ * @param ids the list of annotation IDs to keep
+ * @param groups how annotations in the corpus are grouped into subsections. An annotation may be part of multiple groups.
+ * @param annotations all annotations in the corpus
+ * @param operation What section of the interface to generate the options list for: 'Search' will output every annotation only once per group, 'Sort' will generate additional entries to sort in reverse order, and 'Group' is just to generate appropriate option labels "Group by ...".
+ * @param corpusTextDirection important for the order of left/right context sorting
+ * @param debug is debug mode enabled? print raw annotation IDS in labels
+ * @param showGroupLabels show little group name headers between options?
+ */
 export function getAnnotationSubset(
 	ids: string[],
 	groups: AppTypes.NormalizedAnnotationGroup[],

@@ -13,7 +13,6 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { NormalizedScopedSlot } from 'vue/types/vnode';
 
 import $ from 'jquery';
 import 'jquery-ui';

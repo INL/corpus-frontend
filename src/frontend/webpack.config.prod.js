@@ -1,6 +1,6 @@
 const path = require('path');
 const webpack = require('webpack');
-const VueLoaderPlugin = require('vue-loader/lib/plugin');
+const {VueLoaderPlugin} = require('vue-loader');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
@@ -114,7 +114,7 @@ module.exports = {
 			'CodeMirror':       'codemirror',
 		}),
 		new ForkTsCheckerWebpackPlugin({
-			vue: true
+			// vue: true
 		}),
 		new VueLoaderPlugin(),
 		// new BundleAnalyzerPlugin(),

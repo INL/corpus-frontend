@@ -73,6 +73,8 @@ const namespace = 'query';
 const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, Object.assign({}, initialState));
 const getState = b.state();
 
+function e(t: never) {}
+
 const get = {
 	patternString: b.read((state): string|undefined => {
 		// Nothing submitted yet? This shouldn't be called in that case, but whatever.
@@ -98,7 +100,7 @@ const get = {
 						})
 						.join('');
 				}
-				default: throw new Error('Unknown submitted form ' + state.subForm + ' - cannot generate cql query');
+				default: throw new Error('Unknown submitted form - cannot generate cql query');
 			}
 		} else {
 			// For the normal search form,

@@ -30,7 +30,6 @@
     "@vue/babel-preset-jsx": "^1.1.2",
     "babel-loader": "^8.2.3",
     "babel-plugin-transform-es2015-modules-commonjs-simple": "^6.7.4",
-    "bootstrap-select": "^1.13.18",
     "circular-dependency-plugin": "^5.2.0",
     "clean-webpack-plugin": "^0.1.19",
     "core-js": "^3.21.0",
@@ -56,6 +55,7 @@
   "dependencies": {
     "axios": "^0.21.2",
     "bootstrap": "^3.4.1",
+    "bootstrap-select": "^1.13.18",
     "clone-deep": "^4.0.1",
     "codemirror": "^5.58.2",
     "common-tags": "^1.8.0",
@@ -71,6 +71,7 @@
     "mustache": "^2.3.2",
     "popper.js": "^1.15.0",
     "qs": "^6.5.2",
+    "rxjs": "^6.6.7",
     "urijs": "^1.19.7",
     "v-tooltip": "2.0.2",
     "vue": "^2.6.10",

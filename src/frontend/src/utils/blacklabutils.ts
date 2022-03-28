@@ -86,7 +86,7 @@ function normalizeMetadata(field: BLTypes.BLMetadataField): NormalizedMetadataFi
 				label: field.displayValues[value] != null ? field.displayValues[value] : value,
 				title: null
 			};
-		}) : undefined,
+		}).sort((a, b) => a.value.localeCompare(b.value)) : undefined,
 	};
 }
 

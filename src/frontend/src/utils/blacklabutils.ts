@@ -28,6 +28,8 @@ function normalizeMetadataUIType(field: BLTypes.BLMetadataField): NormalizedMeta
 		case 'checkbox':
 		case 'radio':
 			return field.valueListComplete ? uiType : 'combobox';
+		case 'date': 
+			return 'date';
 		default: return 'text';
 	}
 }

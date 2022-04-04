@@ -61,7 +61,7 @@ export type NormalizedMetadataField = {
 	 * but 'select' is replaced by 'combobox' if not all values are known.
 	 * Unknown types are replaced by 'text'
 	 */
-	uiType: 'select'|'combobox'|'text'|'range'|'checkbox'|'radio';
+	uiType: 'select'|'combobox'|'text'|'range'|'checkbox'|'radio'|'date';
 	/** Only when uiType === 'select' */
 	values?: Array<{value: string, label: string, title: string|null}>;
 };

@@ -108,7 +108,7 @@ const actions = {
 				});
 			}
 			const group = state.filterGroups.find(g => g.tabname === filter.groupId)!;
-			const subtabIndex = insertBefore != null ? group.subtabs.findIndex(subtab => subtab.fields.includes(insertBefore)) : 0;
+			const subtabIndex = insertBefore != null && state.filters[insertBefore] ? group.subtabs.findIndex(subtab => subtab.fields.includes(insertBefore)) : 0;
 			const index = subtabIndex != 0 ? group.subtabs[subtabIndex].fields.indexOf(insertBefore!) : -1;
 			group.subtabs[subtabIndex].fields.splice(index !== -1 ? index : group.subtabs[subtabIndex].fields.length, 0, filter.id);
 		}
@@ -165,6 +165,11 @@ const init = () => {
 					componentName = 'filter-select';
 					metadata = f.values || [];
 					break;
+				case 'date':
+					componentName = 'filter-date';
+					metadata = {
+						field: f.id
+					}
 				case 'text'    :
 				default        :
 					componentName = 'filter-text';

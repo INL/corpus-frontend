@@ -488,7 +488,7 @@ Because the format config specifies the shape of a corpus (which metadata and an
           metadata: { // Info the widget needs to do its work
             low: 'date_lower', // the id of the metadata field containing the lower bound
             high: 'date_upper', // the id of the metadata field containing the upper bound
-            strictness: null, // allowed values: 'strict' and 'permissive'. When this is set, hides the 'strictness' selector, and forces strictness to the set mode
+            mode: null, // allowed values: 'strict' and 'permissive'. When this is set, hides the 'strictness' selector, and forces strictness to the set mode
           }
         },
         // Set the id of another filter here to append this filter behind that one.
@@ -500,6 +500,31 @@ Because the format config specifies the shape of a corpus (which metadata and an
       The `Permissive`/`Strict` mode (see image) toggles whether to match documents that merely overlap with the provided range, or only documents that fall fully within the range.
       E.G.: the document has `date_lower=1900` and `date_upper=1950`. The query is `1900-1910`, this matches when using Permissive (as the values overlap somewhat), while Strict would not match, as the document's actual value could also be outside this range. To also match using Strict, the query would have to be at least `1899-1951`.
 
+    - **Date**
+      A calendar-based filter for dates. 
+      
+      ![](docs/img/metadata_date.png)
+
+      It expects dates to be formatted as YYYYMMDD e.g. 20220403 for 3rd of april 2022.  
+      It expects a leading zero for dates before the year 1000.
+      It works much like the `Multi-field Range` filter, only for full dates instead of only a single number.
+
+      Config as follows:
+      ```javascript
+      vuexModules.filters.actions.registerFilter({
+          filter: {
+            componentName: 'filter-date',
+            // description: 'Filters documents based on their date range',
+            // displayName: 'Date text witness',
+            // groupId: 'Date', // The filter tab under which this should be placed, missing tabs will be created
+            id: 'my-date-range-filter', // a unique id for internal bookkeeping
+            metadata: { // Info the widget needs to do its work
+              low: 'date_lower', // the id of the metadata field containing the lower bound
+              high: 'date_upper', // the id of the metadata field containing the upper bound
+              mode: null, // allowed values: 'strict' and 'permissive'. When this is set, hides the 'strictness' selector, and forces strictness to the set mode
+            }
+          },
+      ```
   </details>
 
 ### **Custom JS**

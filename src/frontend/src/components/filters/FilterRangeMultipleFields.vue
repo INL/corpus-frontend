@@ -15,7 +15,7 @@
 				:id="inputId+'_lower'"
 				:value="value.low"
 
-				@input="e_input({low: $event.target.value, high: value.high, mode: value.mode})"
+				@input="e_input({...value, low: $event.target.value})"
 			>
 		</div>
 		<div class="col-xs-4">
@@ -27,17 +27,17 @@
 				:id="inputId+'_upper'"
 				:value="value.high"
 
-				@input="e_input({low: value.low, mode: value.mode, high: $event.target.value})"
+				@input="e_input({...value, high: $event.target.value})"
 			>
 		</div>
-		<div class="btn-group col-xs-12" style="margin-top: 12px;" v-if="fields.strictness !== 'permissive' && fields.strictness !== 'strict'">
+		<div class="btn-group col-xs-12" style="margin-top: 12px;" v-if="!fields.mode">
 			<button v-for="mode in modes"
 				type="button"
 				:class="['btn btn-default', {'active': value.mode === mode.value}]"
 				:key="mode.value"
 				:value="mode.value"
 				:title="mode.title"
-				@click="e_input({low: value.low, high: value.high, mode: mode.value})"
+				@click="e_input({...value, mode: mode.value})"
 			>{{mode.label}}</button>
 		</div>
 	</div>
@@ -84,7 +84,7 @@ export default BaseFilter.extend({
 		},
 	},
 	computed: {
-		fields(): { low: string, high: string, strictness?: keyof typeof modes } { return this.definition.metadata; },
+		fields(): { low: string, high: string, mode?: keyof typeof modes } { return this.definition.metadata; },
 		modes(): Option[] {
 			return Object.values(modes).map(m => ({
 				label: m.displayName,

@@ -7,6 +7,7 @@ import FilterRange from './FilterRange.vue';
 import FilterRangeMultipleFields from './FilterRangeMultipleFields.vue';
 import FilterSelect from './FilterSelect.vue';
 import FilterText from './FilterText.vue';
+import FilterDate from './FilterDate.vue';
 
 const filterPlugin: PluginObject<never> = {
 	install(vue) {
@@ -17,6 +18,7 @@ const filterPlugin: PluginObject<never> = {
 		vue.component('filter-select', FilterSelect);
 		vue.component('filter-text', FilterText);
 		vue.component('filter-range-multiple-fields', FilterRangeMultipleFields);
+		vue.component('filter-date', FilterDate);
 	}
 };
 

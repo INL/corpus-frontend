@@ -503,6 +503,7 @@ Because the format config specifies the shape of a corpus (which metadata and an
     - **Date**
       A calendar-based filter for dates. 
       
+    
       ![](docs/img/metadata_date.png)
 
       It expects dates to be formatted as YYYYMMDD e.g. 20220403 for 3rd of april 2022.  
@@ -510,21 +511,30 @@ Because the format config specifies the shape of a corpus (which metadata and an
       It works much like the `Multi-field Range` filter, only for full dates instead of only a single number.
 
       Config as follows:
-      ```javascript
-      vuexModules.filters.actions.registerFilter({
-          filter: {
-            componentName: 'filter-date',
-            // description: 'Filters documents based on their date range',
-            // displayName: 'Date text witness',
-            // groupId: 'Date', // The filter tab under which this should be placed, missing tabs will be created
-            id: 'my-date-range-filter', // a unique id for internal bookkeeping
-            metadata: { // Info the widget needs to do its work
-              low: 'date_lower', // the id of the metadata field containing the lower bound
-              high: 'date_upper', // the id of the metadata field containing the upper bound
-              mode: null, // allowed values: 'strict' and 'permissive'. When this is set, hides the 'strictness' selector, and forces strictness to the set mode
-            }
-          },
-      ```
+        ```javascript
+        vuexModules.filters.actions.registerFilter({
+            filter: {
+              componentName: 'filter-date',
+              // description: 'Filters documents based on their date range',
+              // displayName: 'Date text witness',
+              // groupId: 'Date', // The filter tab under which this should be placed, missing tabs will be created
+              id: 'my-date-range-filter', // a unique id for internal bookkeeping
+              metadata: { // Info the widget needs to do its work
+                low: 'date_lower', // the id of the metadata field containing the lower bound
+                high: 'date_upper', // the id of the metadata field containing the upper bound
+                mode: null, // allowed values: 'strict' and 'permissive'. When this is set, hides the 'strictness' selector, and forces strictness to the set mode
+              }
+            },
+        ```
+
+        > Tip: Use blacklab's `concatDate` process  
+          `concatDate`: concatenate 3 separate date fields into one, substituting unknown months and days with the first or last possible value. The output format is YYYYMMDD. Numbers are padded with leading zeroes.  
+          Requires 4 arguments:  
+            * `yearField`: the metadata field containing the numeric year  
+            * `monthField`: the metadata field containing the numeric month (so "12" instead of "december" or "dec")  
+            * `dayField`: the metadata field containing the numeric day  
+            * `autofill`: `start` to autofill missing month and day to the first possible value (01), or `end` to autofill the last possible value (12 for months, last day of the month in that year for days - takes in to account leap years).
+            This step requires that at least the year is known. If the year is not known, no output is generated.  
   </details>
 
 ### **Custom JS**

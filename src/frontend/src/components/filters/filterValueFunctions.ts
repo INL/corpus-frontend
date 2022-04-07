@@ -6,10 +6,10 @@ import { modes } from './FilterRangeMultipleFields.vue';
 import { FullFilterState } from '@/store/search/form/filters';
 import { debugLog } from '@/utils/debug';
 
-
+/** Dates are in format yyyy-mm-dd with leading zeroes. */
 export type FilterDateValue = {
-	startDate: Date,
-	endDate: Date,
+	startDate: string,
+	endDate: string,
 	mode: 'strict'|'permissive'
 };
 
@@ -21,10 +21,10 @@ export type FilterDateMetadata = ({
 	mode?: 'strict'|'permissive';
 })&{
 	range: boolean;
-	/** If string: format YYYYMMDD */
-	min?: Date|string;
-	/** If string: format YYYYMMDD */
-	max?: Date|string;
+	/** format yyyymmdd, or yyyy-mm-dd, or a Date object */
+	min?: string|Date;
+	/** format yyyymmdd, or yyyy-mm-dd, or a Date object */
+	max?: string|Date;
 }
 
 
@@ -130,8 +130,7 @@ function getFieldValues(ast: ASTNode, field1: string, field2: string): {
 	return null;
 }
 
-
-function cast<T>(t: T): T { return t; }
+function cast<T>(t: T): T { return t; };
 
 function filterRangeMultipleFields_luceneQuery(id: string, filterMetadata: {low: string, high: string}, value: { low: string; high: string; mode: keyof typeof modes}|null): string|null {
 	if (!value) { return null; }
@@ -147,6 +146,32 @@ function filterRangeMultipleFields_luceneQuery(id: string, filterMetadata: {low:
 	const op = modes[value.mode as keyof typeof modes].operator;
 
 	return (value.low && value.high) ? `(${low}:[${ll} TO ${lh}] ${op} ${high}:[${hl} TO ${hh}])` : null;
+}
+
+export function dateToString(date?: Date|string): string|undefined {
+	if (date instanceof Date) {
+		const y = date.getFullYear().toString().padStart(4, '0');
+		const m = (date.getMonth() + 1).toString().padStart(2, '0');
+		const d = date.getDate().toString().padStart(2, '0');
+		return `${y}-${m}-${d}`;
+	}
+	if (typeof date === 'string') {
+		const match = date.match(/([\d]{4})-?([\d]{2})-?([\d]{2})/);
+		if (!match) return;
+		const [_, y, m, d] = match;
+		// Creating a date again normalizes weird values (such as 2022-23-78) which is otherwise nonsense.
+		return dateToString(new Date(+y, +m-1, +d));
+	}
+}
+
+export function toDate(date?: Date|string): Date|undefined {
+	if (date instanceof Date) return date;
+	if (typeof date === 'string') {
+		const match = date.match(/([\d]{4})-?([\d]{2})-?([\d]{2})/);
+		if (!match) return;
+		const [_, y, m, d] = match;
+		return new Date(+y, +m-1, +d);
+	}
 }
 
 export const valueFunctions: MapOf<FilterValueFunctions<any, any>> = {
@@ -292,26 +317,17 @@ export const valueFunctions: MapOf<FilterValueFunctions<any, any>> = {
 			return split.map(t => (t.isQuoted || split.length > 1) ? `"${t.value}"` : t.value).join(', ') || null;
 		}
 	}),
-	'filter-date': cast<FilterValueFunctions<FilterDateMetadata, FilterDateValue>>({
+	'filter-date': cast<FilterValueFunctions<any, any>>({
 		decodeInitialState(id, filterMetadata, filterValues, ast) {
 			if ('field' in filterMetadata) { 
 				if (!filterValues[filterMetadata.field]) return null;
 				// single field mode. i.e. the date is governed by a single metadata field
 				// we can just extract the values directly.
-				// one thing is that sometimes it will be field:(value) for an exact value, or field:[x TO y] for a range
 				const [from, to] = filterValues[filterMetadata.field]!.values;
-				// parse the dates.
-				const [_, yearFrom, monthFrom, dayFrom] = from.match(/([\d]{4})([\d]{2})([\d]{2})/)!;
-				const startDate = new Date(Number(yearFrom), Number(monthFrom)-1, Number(dayFrom));
+				const startDate = dateToString(from);
+				const endDate = dateToString(to);
 				delete filterValues[filterMetadata.field];
-
-				if (filterMetadata.range) {
-					const [_, yearTo, monthTo, dayTo] = to.match(/([\d]{4})([\d]{2})([\d]{2})/)!
-					const endDate = new Date(Number(yearTo), Number(monthTo)-1, Number(dayTo));
-					return { startDate, endDate, mode: 'permissive' }; // mode is ignored when only using a single field. set it anyway to prevent undefinedes
-				} else {
-					return { startDate, endDate: startDate, mode: 'permissive'}; // mode is ignored when only using a single field. set it anyway to prevent undefinedes
-				}
+				return {startDate, endDate, mode: 'permissive'};
 			}
 			// the value is in two fields.
 			// Query looks identical to that of range-multiple-fields
@@ -321,25 +337,17 @@ export const valueFunctions: MapOf<FilterValueFunctions<any, any>> = {
 			const to = r.field1.high;
 			delete filterValues[filterMetadata.from_field];
 			delete filterValues[filterMetadata.to_field];
-
-			const [_, yearFrom, monthFrom, dayFrom] = from.match(/([\d]{4})([\d]{2})([\d]{2})/)!;
-			const [__, yearTo, monthTo, dayTo] = to.match(/([\d]{4})([\d]{2})([\d]{2})/)!
-			const startDate = new Date(Number(yearFrom), Number(monthFrom)-1, Number(dayFrom));
-			const endDate = new Date(Number(yearTo), Number(monthTo)-1, Number(dayTo));
+			
+			const startDate = dateToString(from); 
+			const endDate = dateToString(to);
 			return { startDate, endDate, mode: r.mode };
 		},
 		luceneQuery(id, filterMetadata, value) {
 			// @ts-ignore isDefaultValue is defined in component.
 			if (!value || value.isDefaultValue) { return null; }
 			const {startDate, endDate, mode} = value;
-			const from = 
-				startDate.getFullYear().toString().padStart(4, '0') + 
-				(startDate.getMonth()+1).toString().padStart(2, '0') + 
-				startDate.getDate().toString().padStart(2, '0');
-			const to = 
-				endDate.getFullYear().toString().padStart(4, '0') + 
-				(endDate.getMonth()+1).toString().padStart(2, '0') + 
-				endDate.getDate().toString().padStart(2, '0');
+			const from = startDate.replace(/-/g, '');
+			const to = endDate.replace(/-/g, '');
 			const op = modes[mode].operator;
 			let low, high;
 			if ('field' in filterMetadata) {
@@ -355,14 +363,8 @@ export const valueFunctions: MapOf<FilterValueFunctions<any, any>> = {
 			if (!q || !value) return null;
 
 			const {startDate, endDate} = value;
-			const y1 = startDate.getFullYear().toString().padStart(4, '0');
-			const m1 = (startDate.getMonth()+1).toString().padStart(2, '0');
-			const d1 = startDate.getDate().toString().padStart(2, '0');
-			const y2 = endDate.getFullYear().toString().padStart(4, '0');
-			const m2 = (endDate.getMonth()+1).toString().padStart(2, '0');
-			const d2 = endDate.getDate().toString().padStart(2, '0');
-			return (startDate.toDateString() !== endDate.toDateString()) ? `${y1}/${m1}/${d1} - ${y2}/${m2}/${d2}` : `${y1}/${m1}/${d1}`;
-		}
+			return (startDate !== endDate) ? startDate + ' to ' + endDate : startDate;
+		},
 	})
 }
 

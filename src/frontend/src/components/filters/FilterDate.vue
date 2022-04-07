@@ -8,18 +8,31 @@
 		<Debug v-if="definition.metadata.field"><label class="col-xs-12">(id: {{id}} [{{definition.metadata.field}}])</label></Debug>
 		<Debug v-else-if="definition.metadata.from_field"><label class="col-xs-12">(id: {{id}} [{{definition.metadata.from_field}} - {{definition.metadata.to_field}}])</label></Debug>
 
-		<DatePicker 
-			style="padding-left: 15px; padding-right: 15px;"
-			append-to-body
-			show-dropdowns
-			:min-date="minDate"
-			:max-date="maxDate"
-			
-			:date-range="valueComputed"
-			:linked-calendars="false"
+		<div class="col-xs-4">
+			<DatePicker 
+				opens="right"
+				append-to-body
+				show-dropdowns
+				auto-apply
+				:min-date="minDate"
+				:max-date="maxDate"
+				:locale-data="{ firstDay: 1, format: 'yyyy-mm-dd' }"
+				:ranges="false"
 
-			@update="e_input({...value, ...$event, isDefaultValue: false})"
-		/>
+				:date-range="valueComputed"
+				:linked-calendars="false"
+
+				@update="update({...value, ...$event, isDefaultValue: false})"
+			>
+				<template #footer></template>
+			</DatePicker>
+		</div>
+		<div class="col-xs-4">
+			<input type="text" class="form-control" :value="valueComputed.startDate" @change="update({startDate: $event.target.value})"/>
+		</div>
+		<div class="col-xs-4">
+			<input type="text" class="form-control" :value="valueComputed.endDate" @change="update({endDate: $event.target.value})"/>
+		</div>
 		<div class="btn-group col-xs-12" style="margin-top: 12px;" v-if="!definition.metadata.mode"> <!-- only when mode isn't locked -->
 			<button v-for="mode in modes"
 				type="button"
@@ -34,12 +47,14 @@
 </template>
 
 <script lang="ts">
-import BaseFilter from '@/components/filters/Filter';
-import { Option } from '@/components/SelectPicker.vue';
 // @ts-ignore
 import DatePicker from 'vue2-daterange-picker';
+
+import BaseFilter from '@/components/filters/Filter';
+import { Option } from '@/components/SelectPicker.vue';
+import {FilterDateValue as Value, FilterDateMetadata as Metadata, dateToString} from './filterValueFunctions';
+
 import 'vue2-daterange-picker/dist/vue2-daterange-picker.css'
-import {FilterDateValue as Value, FilterDateMetadata as Metadata} from './filterValueFunctions';
 
 export const modes = {
 	permissive: {
@@ -67,8 +82,11 @@ export default BaseFilter.extend({
 			type: Object as () => Value,
 			required: true,
 			default: () => ({
-				startDate: new Date(),
-				endDate: new Date(),
+				...(() => {
+					const d = new Date();
+					const s = dateToString(d);
+					return {startDate: s, endDate: s}
+				})(),
 				mode: 'strict',
 				/** 
 				 * props.definition.metadata can contain a default value.
@@ -96,24 +114,10 @@ export default BaseFilter.extend({
 				range: false,
 			}
 		},
-		maxDate(): Date|undefined {
-			if (this.metadata.max) {
-				const {max} = this.metadata;
-				if (max instanceof Date) return max;
-				const [_, y, m, d] = max.match(/([\d]{4})([\d]{2})([\d]{2})/)!;
-				return new Date(+y,+m-1,+d);
-			}
-		},
-		minDate(): Date|undefined {
-			if (this.metadata.min) {
-				const {min} = this.metadata;
-				if (min instanceof Date) return min;
-				const [_, y, m, d] = min.match(/([\d]{4})([\d]{2})([\d]{2})/)!;
-				return new Date(+y,+m-1,+d);
-			}
-		},
-		valueComputed(): {startDate: Date, endDate: Date, mode: 'strict'|'permissive', isDefaultValue?: boolean} {
-			const r = {...this.value, }
+		maxDate(): string|undefined { return dateToString(this.metadata.max); },
+		minDate(): string|undefined { return dateToString(this.metadata.min); },
+		valueComputed(): Value {
+			const r: Value&{isDefaultValue?: boolean} = {...this.value, }
 			if (r.isDefaultValue) {
 				if (this.minDate) r.startDate = this.minDate;
 				if (this.maxDate) r.endDate = this.maxDate;
@@ -128,6 +132,20 @@ export default BaseFilter.extend({
 			}));
 		},
 	},
+	methods: {
+		update(v: {startDate?: Date|string, endDate?: Date|string}) {
+			const newState = {...this.value};
+			// cannot always parse (when using is in the middle of editing, so see if we can)
+			const startDate = dateToString(v.startDate);
+			const endDate = dateToString(v.endDate);
+			if (startDate) newState.startDate = startDate;
+			if (endDate) newState.endDate = endDate;
+			if (startDate || endDate) {
+				delete newState.isDefaultValue;
+				this.e_input(newState);
+			}
+		},
+	}
 });
 
 </script>

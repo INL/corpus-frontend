@@ -8,8 +8,10 @@
 		<Debug v-if="definition.metadata.field"><label class="col-xs-12">(id: {{id}} [{{definition.metadata.field}}])</label></Debug>
 		<Debug v-else-if="definition.metadata.from_field"><label class="col-xs-12">(id: {{id}} [{{definition.metadata.from_field}} - {{definition.metadata.to_field}}])</label></Debug>
 
-		<div class="col-xs-4">
+		<div style="display: flex; padding: 0 15px; width: 100%; flex-wrap: wrap;">
 			<DatePicker 
+				style="flex: none; margin-right: 15px;"
+
 				opens="right"
 				append-to-body
 				show-dropdowns
@@ -23,16 +25,12 @@
 				:linked-calendars="false"
 
 				@update="update({...value, ...$event, isDefaultValue: false})"
-			>
-				<template #footer></template>
-			</DatePicker>
+			/>
+		
+			<input type="text" class="form-control" placeholder="from" style="flex-basis: 0; flex-grow: 1; margin-right: 15px; min-width: 100px;" :value="valueComputed.startDate" @change="update({startDate: $event.target.value})"/>
+			<input type="text" class="form-control" placeholder="to" style="flex-basis: 0; flex-grow: 1; min-width: 100px;" :value="valueComputed.endDate" @change="update({endDate: $event.target.value})"/>
 		</div>
-		<div class="col-xs-4">
-			<input type="text" class="form-control" :value="valueComputed.startDate" @change="update({startDate: $event.target.value})"/>
-		</div>
-		<div class="col-xs-4">
-			<input type="text" class="form-control" :value="valueComputed.endDate" @change="update({endDate: $event.target.value})"/>
-		</div>
+		
 		<div class="btn-group col-xs-12" style="margin-top: 12px;" v-if="!definition.metadata.mode"> <!-- only when mode isn't locked -->
 			<button v-for="mode in modes"
 				type="button"
@@ -42,6 +40,7 @@
 				:title="mode.title"
 				@click="e_input({...value, mode: mode.value})"
 			>{{mode.label}}</button>
+			<button v-if="!value.isDefaultValue" class="btn btn-default" type="button" @click="e_input(null)">reset</button>
 		</div>
 	</div>
 </template>

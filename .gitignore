@@ -15,7 +15,7 @@ target
 /bin/
 
 # Visual Studio Code files
-.vscode/
+# .vscode/
 jsconfig.json
 
 # Javascript in webapp folder (this is output from compiling src/frontend)

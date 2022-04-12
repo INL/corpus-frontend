@@ -1,0 +1,29 @@
+{
+    "files.trimTrailingWhitespace": true,
+    "editor.insertSpaces": false,
+    "editor.tabSize": 4,
+    "files.eol": "\n",
+    "files.associations": {
+        "*.babelrc": "jsonc",
+        "*.tsconfig": "jsonc"
+    },
+    "todohighlight.keywords": [
+        "TODO",
+        "FIXME",
+        "XXX"
+    ],
+    "typescript.tsdk": "node_modules\\typescript\\lib",
+    "typescript.preferences.quoteStyle": "single",
+    "[markdown]": {
+        "files.trimTrailingWhitespace": false
+    },
+    "javascript.preferences.importModuleSpecifier": "non-relative",
+    "javascript.preferences.quoteStyle": "single",
+    "typescript.preferences.importModuleSpecifier": "non-relative",
+    "files.exclude": {
+        "**/.classpath": true,
+        "**/.project": true,
+        "**/.settings": true,
+        "**/.factorypath": true
+    },
+}

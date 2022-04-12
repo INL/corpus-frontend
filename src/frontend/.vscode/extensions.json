@@ -1,7 +1,7 @@
 {
 	"recommendations": [
 		"octref.vetur",
-		"prograhammer.tslint-vue",
+		// "prograhammer.tslint-vue",
 		"wayou.vscode-todo-highlight",
 		"ecmel.vscode-html-css"
 	]

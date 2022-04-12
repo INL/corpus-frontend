@@ -25,8 +25,7 @@ export type FilterDateMetadata = ({
 	min?: string|Date;
 	/** format yyyymmdd, or yyyy-mm-dd, or a Date object */
 	max?: string|Date;
-}
-
+};
 
 type FilterValueFunctions<M, V> = {
 	/**
@@ -38,7 +37,7 @@ type FilterValueFunctions<M, V> = {
 	decodeInitialState(id: string, filterMetadata: M, filterValues: MapOf<FilterValue|undefined>, ast: ASTNode): V|null,
 	luceneQuery(id: string, filterMetadata: M, value: V|null): string|null;
 	luceneQuerySummary(id: string, filterMetadata: M, value: V|null): string|null;
-}
+};
 
 function getFieldValues(ast: ASTNode, field1: string, field2: string): {
 	field1: {
@@ -61,6 +60,7 @@ function getFieldValues(ast: ASTNode, field1: string, field2: string): {
 	 * - (lower:[low TO high] and higher:[low TO high])
 	 *
 	 * it looks like this in the ast
+	 * NOTE: term_min and term_max may also be '*' (for unbounded range i.e. larger/smaller than)
 	 *
 	 * ```javacript
 	 * {
@@ -130,23 +130,7 @@ function getFieldValues(ast: ASTNode, field1: string, field2: string): {
 	return null;
 }
 
-function cast<T>(t: T): T { return t; };
-
-function filterRangeMultipleFields_luceneQuery(id: string, filterMetadata: {low: string, high: string}, value: { low: string; high: string; mode: keyof typeof modes}|null): string|null {
-	if (!value) { return null; }
-	const {low, high} = filterMetadata;
-
-	// pad using leading zeroes, for when the field is a string in lucene/bls, otherwise field:[1 TO 2] matches anything containing a 1 or 2
-	const ll = value.low.padStart(4, '0');
-	const lh = value.high.padStart(4, '0');
-
-	const hl = value.low.padStart(4, '0');
-	const hh = value.high.padStart(4, '0');
-
-	const op = modes[value.mode as keyof typeof modes].operator;
-
-	return (value.low && value.high) ? `(${low}:[${ll} TO ${lh}] ${op} ${high}:[${hl} TO ${hh}])` : null;
-}
+function cast<T>(t: T): T { return t; }
 
 export function dateToString(date?: Date|string): string|undefined {
 	if (date instanceof Date) {
@@ -192,22 +176,22 @@ export const valueFunctions: MapOf<FilterValueFunctions<any, any>> = {
 		decodeInitialState(id, filterMetadata, filterValues) {
 			const availableValues = filterValues[id]?.values
 				?.map(unescapeLucene)
-				.filter(value => { 
+				.filter(value => {
 					const valueIsPossible = filterMetadata.find(option => option.value === value);
 					if (!valueIsPossible) { debugLog(`Filter ${id} ignoring requested value ${value} while decoding - value is not in the available options.`); }
 					return valueIsPossible;
 				});
-			
+
 			return availableValues?.length ? mapReduce(availableValues) : null;
 		},
-		luceneQuery(id, filterMetadata, value) {
-			const selected = Object.entries(value || {})
+		luceneQuery(id, filterMetadata, filterValue) {
+			const selected = Object.entries(filterValue || {})
 					.filter(([value, isSelected]) => isSelected)
 					.map(([value, isSelected]) => escapeLucene(value, false));
 			return selected.length ? `${id}:(${selected.map(v => escapeLucene(v, false)).join(' ')})` : null;
 		},
-		luceneQuerySummary(id, filterMetadata, value) {
-			const selected = Object.entries(value || {})
+		luceneQuerySummary(id, filterMetadata, filterValue) {
+			const selected = Object.entries(filterValue || {})
 				.filter(([value, isSelected]) => isSelected)
 				.map(([value, isSelected]) => filterMetadata.find(option => option.value === value)?.label || value);
 
@@ -218,12 +202,12 @@ export const valueFunctions: MapOf<FilterValueFunctions<any, any>> = {
 		decodeInitialState(id, filterMetadata, filterValues) {
 			const availableValues = filterValues[id]?.values
 				?.map(unescapeLucene)
-				.filter(value => { 
+				.filter(value => {
 					const valueIsPossible = filterMetadata.find(option => option.value === value);
 					if (!valueIsPossible) { debugLog(`Filter ${id} ignoring requested value ${value} while decoding - value is not in the available options.`); }
 					return valueIsPossible;
 				});
-			
+
 			return availableValues?.length ? availableValues[0] : null;
 		},
 		luceneQuery(id, filterMetadata, value) {
@@ -269,7 +253,18 @@ export const valueFunctions: MapOf<FilterValueFunctions<any, any>> = {
 				mode: s.mode
 			} : null;
 		},
-		luceneQuery: filterRangeMultipleFields_luceneQuery,
+		luceneQuery(id: string, filterMetadata: {low: string, high: string}, value: { low: string; high: string; mode: keyof typeof modes}|null): string|null {
+			if (!value) { return null; }
+			const {low, high} = filterMetadata;
+
+			// pad using leading zeroes, for when the field is a string in lucene/bls, otherwise field:[1 TO 2] matches anything containing a 1 or 2
+			// NOTE: ranges can be unbounded ('*'), if so, skip padding.
+			const lowPadded = value.low.padStart(4, '0');
+			const highPadded = value.high ? value.high.padStart(4, '0') : '9999'; // unbounded query
+			const op = modes[value.mode as keyof typeof modes].operator;
+
+			return (value.low || value.high) ? `(${low}:[${lowPadded} TO ${highPadded}] ${op} ${high}:[${lowPadded} TO ${highPadded}])` : null;
+		},
 		luceneQuerySummary(id, filterMetadata, value) {
 			const lowValue = value!.low;
 			const highValue = value!.high;
@@ -277,7 +272,7 @@ export const valueFunctions: MapOf<FilterValueFunctions<any, any>> = {
 			// as they're usually indexed as text values, and not numeric values
 			const longestValue = Math.max(lowValue.length, highValue.length);
 
-			const luceneQuery = filterRangeMultipleFields_luceneQuery(id, filterMetadata, value);
+			const luceneQuery = this.luceneQuery(id, filterMetadata, value);
 			return luceneQuery ? `${lowValue.padStart(longestValue, '0')}-${highValue.padStart(longestValue, '0')}` : null;
 		}
 	}),
@@ -285,12 +280,12 @@ export const valueFunctions: MapOf<FilterValueFunctions<any, any>> = {
 		decodeInitialState(id, filterMetadata, filterValues) {
 			const availableValues = filterValues[id]?.values
 				?.map(unescapeLucene)
-				.filter(value => { 
+				.filter(value => {
 					const valueIsPossible = filterMetadata.find(option => option.value === value);
 					if (!valueIsPossible) { debugLog(`Filter ${id} ignoring requested value ${value} while decoding - value is not in the available options.`); }
 					return valueIsPossible;
 				});
-			
+
 			return availableValues?.length ? availableValues : null;
 		},
 		luceneQuery(id, filterMetadata, value) {
@@ -298,8 +293,7 @@ export const valueFunctions: MapOf<FilterValueFunctions<any, any>> = {
 		},
 		luceneQuerySummary(id, filterMetadata, value) {
 			const asDisplayValues = (value || []).map(v => {
-				const option = filterMetadata.find(option => option.value === v);
-				return option && option.label ? option.label : v;
+				return filterMetadata.find(option => option.value === v)?.label || v;
 			});
 			return asDisplayValues.length >= 2 ? asDisplayValues.map(v => `"${v}"`).join(', ') : asDisplayValues[0] || null;
 		}
@@ -319,7 +313,7 @@ export const valueFunctions: MapOf<FilterValueFunctions<any, any>> = {
 	}),
 	'filter-date': cast<FilterValueFunctions<any, any>>({
 		decodeInitialState(id, filterMetadata, filterValues, ast) {
-			if ('field' in filterMetadata) { 
+			if ('field' in filterMetadata) {
 				if (!filterValues[filterMetadata.field]) return null;
 				// single field mode. i.e. the date is governed by a single metadata field
 				// we can just extract the values directly.
@@ -337,8 +331,8 @@ export const valueFunctions: MapOf<FilterValueFunctions<any, any>> = {
 			const to = r.field1.high;
 			delete filterValues[filterMetadata.from_field];
 			delete filterValues[filterMetadata.to_field];
-			
-			const startDate = dateToString(from); 
+
+			const startDate = dateToString(from);
 			const endDate = dateToString(to);
 			return { startDate, endDate, mode: r.mode };
 		},
@@ -349,7 +343,8 @@ export const valueFunctions: MapOf<FilterValueFunctions<any, any>> = {
 			const from = startDate.replace(/-/g, '');
 			const to = endDate.replace(/-/g, '');
 			const op = modes[mode].operator;
-			let low, high;
+			let low: number;
+			let high: number;
 			if ('field' in filterMetadata) {
 				low = high = filterMetadata.field;
 			} else {
@@ -366,7 +361,7 @@ export const valueFunctions: MapOf<FilterValueFunctions<any, any>> = {
 			return (startDate !== endDate) ? startDate + ' to ' + endDate : startDate;
 		},
 	})
-}
+};
 
 /**
  * Converts the active filters into a parameter string blacklab-server can understand.
@@ -382,7 +377,7 @@ export const valueFunctions: MapOf<FilterValueFunctions<any, any>> = {
  * If the array is empty or null, undefined is returned,
  * so it can be placed directly in the request paremeters without populating the object if the value is not present.
  */
- export function getFilterString(filters: FullFilterState[]): string|undefined {
+export function getFilterString(filters: FullFilterState[]): string|undefined {
 	return filters
 		.map(f => valueFunctions[f.componentName].luceneQuery(f.id, f.metadata, f.value))
 		.filter(lucene => !!lucene).join(' AND ') || undefined;

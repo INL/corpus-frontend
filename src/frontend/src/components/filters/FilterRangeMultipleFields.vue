@@ -52,14 +52,14 @@ export const modes = {
 		id: 'permissive',
 		operator: 'OR',
 		displayName: 'Permissive',
-		description: "Matches documents that are partially contained within the entered range"
+		description: 'Matches documents that are partially contained within the entered range'
 	},
 
 	strict: {
 		id: 'strict',
 		operator: 'AND',
 		displayName: 'Strict',
-		description: "Matches documents that are completely contained within the entered range"
+		description: 'Matches documents that are completely contained within the entered range'
 	}
 };
 
@@ -94,5 +94,4 @@ export default BaseFilter.extend({
 		},
 	}
 });
-
 </script>

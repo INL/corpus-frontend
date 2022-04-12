@@ -307,9 +307,6 @@ export default Vue.extend({
 </script>
 
 <style lang="scss">
-.subtabs {
-	margin-top: -15px;
-}
 
 #querybox {
 	width: 100%;
@@ -332,19 +329,20 @@ export default Vue.extend({
 
 // Some bootstrap tab customization
 .nav-tabs.subtabs {
-	border-bottom: none;
+	// border-bottom: none;
+	margin-top: -10px;
 
 	>li {
-		margin-bottom: 0;
+		margin-bottom: -1px;
+		border-bottom: transparent;
 
 		> a {
-			border-radius: 0 0 4px 4px;
 			padding: 4px 15px;
 		}
 
 		&.active > a,
 		> a:hover {
-			border-color: transparent #ddd #ddd #ddd;
+			border-color: #ddd #ddd transparent #ddd;
 		}
 	}
 }

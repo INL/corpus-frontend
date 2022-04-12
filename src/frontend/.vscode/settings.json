@@ -2,10 +2,21 @@
     "files.trimTrailingWhitespace": true,
     "editor.insertSpaces": false,
     "editor.tabSize": 4,
+    "eslint.validate": [
+        "vue",
+        "javascript",
+        "javascriptreact",
+        "typescript",
+        "typescriptreact"
+    ],
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": true
+    },
     "files.eol": "\n",
     "files.associations": {
         "*.babelrc": "jsonc",
-        "*.tsconfig": "jsonc"
+        "*.tsconfig": "jsonc",
+        "tslint.json": "jsonc"
     },
     "todohighlight.keywords": [
         "TODO",

@@ -7,7 +7,7 @@
 			<li v-for="tab in tabs" :class="{'active': activeTab===tab.name}" :key="tab.name" @click.prevent="activeTab=tab.name;">
 				<a :href="'#'+tab.name">
 					{{tab.name}}
-					<span v-if="activeFiltersMap[tab.name]" class="badge" style="background-color:#aaa">
+					<span v-if="activeFiltersMap[tab.name]" class="badge" style="background-color:#aaa; vertical-align: baseline;">
 						{{activeFiltersMap[tab.name]}}
 					</span>
 				</a>
@@ -128,12 +128,12 @@ export default Vue.extend({
 			const filterMap = this.filterMap;
 
 			const implicitlyActiveFilters: MapOf<string[]> = activeTab?.query || {}; // filters that are always active as long as this tab is active
-			const manuallyActiveFiltersInCurrentTab: MapOf<boolean> = activeTab ? mapReduce(activeTab.subtabs.flatMap(subtab => subtab.filters.filter(f => 
+			const manuallyActiveFiltersInCurrentTab: MapOf<boolean> = activeTab ? mapReduce(activeTab.subtabs.flatMap(subtab => subtab.filters.filter(f =>
 				// keep only those filters that are -a: active and -b: not in the implicitly active set
 				// when is a filter active? when its value returns a non-null lucene query
 				!implicitlyActiveFilters[f] && valueFunctions[filterMap[f].componentName].luceneQuery(f, filterMap[f].metadata, filterMap[f].value)
 			))) : {}; // and if there's somehow no tab active, no filters are manually active in the current tab eh
-			
+
 			// Note: when a filter is implicitly active, it's never counted as active for any tab
 			// Note: when a filter is active in the current tab, it's never counted as active for other tabs
 			const numActiveFiltersPerTab: MapOf<number> = {};
@@ -141,9 +141,9 @@ export default Vue.extend({
 				if (tab === activeTab) {
 					numActiveFiltersPerTab[tab.name] = Object.keys(manuallyActiveFiltersInCurrentTab).length;
 				} else {
-					numActiveFiltersPerTab[tab.name] = tab.subtabs.reduce((num, subtab) => num + subtab.filters.filter(filter => 
-						!implicitlyActiveFilters[filter] && 
-						!manuallyActiveFiltersInCurrentTab[filter] && 
+					numActiveFiltersPerTab[tab.name] = tab.subtabs.reduce((num, subtab) => num + subtab.filters.filter(filter =>
+						!implicitlyActiveFilters[filter] &&
+						!manuallyActiveFiltersInCurrentTab[filter] &&
 						valueFunctions[filterMap[filter].componentName].luceneQuery(filter, filterMap[filter].metadata, filterMap[filter].value)
 					).length, 0)
 				}

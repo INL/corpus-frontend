@@ -30,7 +30,7 @@
 		// These should eventually be fixed
 		"prefer-const": {"severity": "warn"},
 		"no-var-keyword": {"severity": "warn"},
-		"curly": {"severity": "warn"},
+		"curly": {"severity": "warn", "options": ["ignore-same-line"]},
 		"semicolon": {"severity": "warn"},
 		"object-literal-shorthand": {"severity": "warn"},
 		"whitespace": { "severity": "warn" },
@@ -39,6 +39,8 @@
 			"alphabetize": true,
 			"order": "statics-first"
 		} },
+
+		"no-unused-variable": { "severity": "off" }, // annoying for callbacks etc.
 
 		// Eh.. consistent style I guess
 		"space-before-function-paren": {

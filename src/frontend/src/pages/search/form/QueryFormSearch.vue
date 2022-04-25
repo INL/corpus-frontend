@@ -60,7 +60,7 @@
 			</div>
 			<div :class="['tab-pane form-horizontal', {'active': activePattern==='extended'}]" id="extended">
 				<template v-if="useTabs">
-					<ul class="nav nav-tabs subtabs">
+					<ul class="nav nav-tabs subtabs" style="padding-left: 15px">
 						<li v-for="(tab, index) in tabs" :class="{'active': index === 0}" :key="index">
 							<a :href="'#'+getTabId(tab.label)" data-toggle="tab">{{tab.label}}</a>
 						</li>

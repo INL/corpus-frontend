@@ -77,7 +77,6 @@
     "vue": "^2.6.10",
     "vue-rx": "^6.0.1",
     "vue-slider-component": "^2.8.1",
-    "vue2-daterange-picker": "^0.6.8",
     "vuex": "^3.6.2",
     "vuex-typex": "^3.1.9"
   }

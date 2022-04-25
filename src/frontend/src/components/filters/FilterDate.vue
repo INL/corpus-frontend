@@ -42,8 +42,6 @@ import BaseFilter from '@/components/filters/Filter';
 import { Option } from '@/components/SelectPicker.vue';
 import {FilterDateValue as Value, FilterDateMetadata as Metadata, FilterDateValue, dateToLuceneString} from './filterValueFunctions';
 
-import 'vue2-daterange-picker/dist/vue2-daterange-picker.css'
-
 export const modes = {
 	permissive: {
 		id: 'permissive',

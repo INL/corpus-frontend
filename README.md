@@ -68,6 +68,14 @@ See the [Configuration section](#Backend-configuration) for more information.
 
 For further development and debugging help, see the [Development section](#Development).
 
+## Using Docker
+
+First, use docker-compose to create a blacklab-server. Then, to create this frontend run:
+
+```
+docker-compose build
+docker-compose up 
+```
 
 
 Configuration

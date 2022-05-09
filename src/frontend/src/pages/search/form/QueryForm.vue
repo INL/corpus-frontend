@@ -52,7 +52,6 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import URI from 'urijs';
 import {Subscription} from 'rxjs';
 import {stripIndent} from 'common-tags';
 

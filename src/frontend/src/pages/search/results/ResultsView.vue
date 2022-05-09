@@ -443,25 +443,44 @@ export default Vue.extend({
 			r.push({
 				label: this.type === 'hits' ? 'Hits' : 'Documents',
 				title: 'Go back to ungrouped results',
-				active: (this.groupBy.length + this.groupByAdvanced.length) === 0,
-				onClick: () => { this.groupBy = []; this.groupByAdvanced = []; }
+				active: false, //(this.groupBy.length + this.groupByAdvanced.length) === 0,
+				onClick: () => {
+					this.groupBy = [];
+					this.groupByAdvanced = [];
+					GlobalStore.actions.sampleSize(null);
+				}
 			});
 			if ((this.groupBy.length + this.groupByAdvanced.length) > 0) {
 				r.push({
 					label: 'Grouped by ' + this.groupBy.concat(this.groupByAdvanced).toString(),
 					title: 'Go back to grouped results',
-					active: this.viewGroup == null,
-					onClick: () => this.leaveViewgroup()
+					active: false, //this.viewGroup == null,
+					onClick: () => {
+						this.leaveViewgroup();
+						GlobalStore.actions.sampleSize(null);
+					}
 				});
 			}
 			if (this.viewGroup != null) {
 				r.push({
 					label: 'Viewing group ' + this.viewGroupName,
 					title: '',
-					active: true,
-					onClick: undefined
+					active: false,
+					onClick: () => GlobalStore.actions.sampleSize(null)
 				});
 			}
+			const {sampleMode, sampleSize} = GlobalStore.getState();
+			if (sampleSize != null) {
+				r.push({
+					label: `Random sample (${sampleSize}${sampleMode === 'percentage' ? '%' : ''})`,
+					title: `Showing only some (${sampleSize}${sampleMode === 'percentage' ? '%' : ''}) results`,
+					active: false,
+					onClick: () => {
+						$('#settings').modal('show')
+					}
+				})
+			}
+			r[r.length -1].active = true;
 			return r;
 		},
 		sortOptions(): OptGroup[] {

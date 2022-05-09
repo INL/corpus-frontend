@@ -153,30 +153,6 @@ export function luceneDateStringToDisplayString(date: string): string {
 	return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
 }
 
-
-// export function dateToNormalizedUnpacked(date?: Date|string): {
-// 	y: string;
-// 	m: string;
-// 	d: string;
-// } {
-// 	if (date instanceof Date) date = dateToString(date);
-// 	if (!date) return { y: '', m: '', d: '' };
-// 	const match = date.match(/([\d]{4})-?([\d]{2})-?([\d]{2})/);
-// 	if (!match) return { y: '', m: '', d: '' };
-// 	const [_, y, m, d] = match;
-// 	return {y, m, d};
-// }
-
-// export function toDate(date?: Date|string): Date|undefined {
-// 	if (date instanceof Date) return date;
-// 	if (typeof date === 'string') {
-// 		const match = date.match(/([\d]{4})-?([\d]{2})-?([\d]{2})/);
-// 		if (!match) return;
-// 		const [_, y, m, d] = match;
-// 		return new Date(+y, +m-1, +d);
-// 	}
-// }
-
 export const valueFunctions: MapOf<FilterValueFunctions<any, any>> = {
 	'filter-autocomplete': cast<FilterValueFunctions<never, string>>({
 		decodeInitialState(id, filterMetadata, filterValues) {

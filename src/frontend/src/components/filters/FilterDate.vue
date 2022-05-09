@@ -4,7 +4,9 @@
 		:id="htmlId"
 		:data-filterfield-type="definition.componentName"
 	>
-		<label v-if="showLabel" class="col-xs-12" :for="inputId">{{displayName}}</label>
+		<label v-if="showLabel" class="col-xs-12" :for="inputId">{{displayName}}
+			<small v-if="minDateDisplay && maxDateDisplay" class="text-muted" style="font-weight: normal;">({{minDateDisplay}} to {{maxDateDisplay}})</small>
+		</label>
 		<Debug v-if="definition.metadata.field"><label class="col-xs-12">(id: {{id}} [{{definition.metadata.field}}])</label></Debug>
 		<Debug v-else-if="definition.metadata.from_field"><label class="col-xs-12">(id: {{id}} [{{definition.metadata.from_field}} - {{definition.metadata.to_field}}])</label></Debug>
 
@@ -16,14 +18,14 @@
 				<input class="form-control" type="number" title="day" placeholder="day" v-model="dayFrom" min="1" :max="startMonthLength"/>
 			</div>
 			<div v-if="definition.metadata.range" class="dates">
-				<label v-if="definition.metadata.range">To: </label>
+				<label>To: </label>
 				<input class="form-control" type="number" title="year" placeholder="year" v-model="yearTo" :min="minYear" :max="maxYear"/>
 				<input class="form-control" type="number" title="month" placeholder="month" v-model="monthTo" min="1" max="12"/>
 				<input class="form-control" type="number" title="day" placeholder="day" v-model="dayTo" min="1" :max="endMonthLength"/>
 			</div>
 		</div>
 
-		<div class="btn-group col-xs-12" v-if="!definition.metadata.mode && definition.metadata.range"> <!-- only when mode isn't locked, and when we're defining ranges -->
+		<div class="btn-group col-xs-12" v-if="!definition.metadata.mode && definition.metadata.range" style="margin-left: calc(15px + 3em);"> <!-- only when mode isn't locked, and when we're defining ranges -->
 			<button v-for="mode in modes"
 				type="button"
 				:class="['btn btn-default', {'active': value.mode === mode.value}]"
@@ -40,7 +42,7 @@
 <script lang="ts">
 import BaseFilter from '@/components/filters/Filter';
 import { Option } from '@/components/SelectPicker.vue';
-import {FilterDateValue as Value, FilterDateMetadata as Metadata, FilterDateValue, dateToLuceneString} from './filterValueFunctions';
+import {FilterDateValue as Value, FilterDateMetadata as Metadata, FilterDateValue, dateToLuceneString, luceneDateStringToDisplayString} from './filterValueFunctions';
 
 export const modes = {
 	permissive: {
@@ -59,9 +61,6 @@ export const modes = {
 };
 
 type Mode = keyof typeof modes;
-
-// we hebben 2 waardes: een startdate en enddate, beide als ymd strings.
-// dan hebben we de filtervaluefunction en die zet het om in een waarde voor die andere meuk.
 
 function dateToValue(date: Date): FilterDateValue['startDate'] {
 	const y = date.getFullYear().toString().padStart(4, '0');
@@ -85,14 +84,19 @@ function normalizeBoundaryDate(date?: {y: string, m: string, d: string}|Date|str
 export default BaseFilter.extend({
 	props: {
 		value: {
-			type: Object as () => FilterDateValue, //Value,
+			type: Object as () => FilterDateValue, // comes in as all empty strings: see decodeInitialState in filterValueFunctions.ts
 			required: true,
 			default: () => ({
-				...(() => {
-					const d = new Date();
-					const s = dateToValue(d);
-					return {startDate: s, endDate: s}
-				})(),
+				startDate: {
+					y: '',
+					m: '',
+					d: ''
+				},
+				endDate: {
+					y: '',
+					m: '',
+					d: ''
+				},
 				mode: 'strict',
 				/**
 				 * props.definition.metadata can contain a default value.
@@ -119,13 +123,14 @@ export default BaseFilter.extend({
 		// of we moeten gewoon created() en dan de boel vervangen door de defaults..., doen we dat wel.
 
 		model(): FilterDateValue {
-			const v = this.value as FilterDateValue;
-			// @ts-ignore
-			if (v.isDefaultValue) { // replace with min and max when not set by the user (i.e. isDefaultValue)
-				if (this.minDate) v.startDate = this.minDate;
-				if (this.maxDate) v.endDate = this.maxDate;
-			}
 			return this.value;
+			// const v = this.value as FilterDateValue;
+			// // @ts-ignore
+			// if (v.isDefaultValue) { // replace with min and max when not set by the user (i.e. isDefaultValue)
+			// 	if (this.minDate) v.startDate = this.minDate;
+			// 	if (this.maxDate) v.endDate = this.maxDate;
+			// }
+			// return this.value;
 		},
 		metadata(): Metadata {
 			return this.definition.metadata || {
@@ -135,6 +140,8 @@ export default BaseFilter.extend({
 		},
 		minDate(): FilterDateValue['startDate']|null { return normalizeBoundaryDate(this.metadata.min); },
 		maxDate(): FilterDateValue['startDate']|null { return normalizeBoundaryDate(this.metadata.max); },
+		minDateDisplay(): string|null { return this.minDate ? luceneDateStringToDisplayString(dateToLuceneString(this.minDate, 'start')) : null;  },
+		maxDateDisplay(): string|null { return this.maxDate ? luceneDateStringToDisplayString(dateToLuceneString(this.maxDate, 'end')) : null;  },
 		minYear(): string|undefined { return this.minDate ? this.minDate.y : undefined; },
 		maxYear(): string|undefined { return this.maxDate ? this.maxDate.y : undefined; },
 		startMonthLength(): string { return dateToLuceneString({...this.model.startDate, d: ''}, 'end')!.substring(6, 8); },
@@ -187,8 +194,8 @@ export default BaseFilter.extend({
 		margin-bottom: 10px;
 		> *:not(:last-child) { margin-right: 15px; }
 		> label {
-			flex-basis: 25%;
-			min-width: auto;
+			width: 3em;
+			flex: none;
 		}
 	}
 </style>

@@ -6,13 +6,22 @@ import { modes } from './FilterRangeMultipleFields.vue';
 import { FullFilterState } from '@/store/search/form/filters';
 import { debugLog } from '@/utils/debug';
 
-/** Dates are in format yyyy-mm-dd with leading zeroes. */
+
+/** month (m) and day (d) may be empty strings. Month field starts at 1 instead of javascript Date's 0. */
+export type DateValue = {
+	d: string;
+	m: string;
+	y: string;
+};
+
+/** Value prop of the FilterDate component */
 export type FilterDateValue = {
-	startDate: {y: string, m: string, d: string},
-	endDate: {y: string, m: string, d: string},
+	startDate: DateValue,
+	endDate: DateValue,
 	mode: 'strict'|'permissive'
 };
 
+/** Metadata of the FilterDate component */
 export type FilterDateMetadata = ({
 	field: string;
 }|{
@@ -21,10 +30,10 @@ export type FilterDateMetadata = ({
 	mode?: 'strict'|'permissive';
 })&{
 	range: boolean;
-	/** format yyyymmdd, or yyyy-mm-dd, or a Date object, or {y: string, m: string, d: string} */
-	min?: string|Date;
-	/** format yyyymmdd, or yyyy-mm-dd, or a Date object, or {y: string, m: string, d: string}*/
-	max?: string|Date;
+	/** string in format yyyymmdd or yyyy-mm-dd */
+	min?: string|Date|DateValue;
+	/** string in format yyyymmdd or yyyy-mm-dd */
+	max?: string|Date|DateValue;
 };
 
 type FilterValueFunctions<M, V> = {
@@ -39,6 +48,33 @@ type FilterValueFunctions<M, V> = {
 	luceneQuerySummary(id: string, filterMetadata: M, value: V|null): string|null;
 };
 
+/**
+ * search for a construct like
+ * - (lower:[low TO high] or higher:[low TO high])
+ * - (lower:[low TO high] and higher:[low TO high])
+ *
+ * it looks like this in the ast
+ * NOTE: term_min and term_max may also be '*' (for unbounded range i.e. larger/smaller than)
+ *
+ * ```js
+ * {
+ *   field: '<implicit>',
+ *   operator: 'AND'|'OR',
+ *   left: {
+ *     field: lower/higher
+ *     term_min: 0
+ *     term_max: 100
+ *     inclusive: true
+ *   },
+ *   right: {
+ *     field: lower/higher
+ *     term_min: 0
+ *     term_max: 100
+ *     inclusive: true
+ *   }
+ * }
+ * ```
+ */
 function getFieldValues(ast: ASTNode, field1: string, field2: string): {
 	field1: {
 		low: string,
@@ -54,34 +90,7 @@ function getFieldValues(ast: ASTNode, field1: string, field2: string): {
 		return  !!(n && 'field' in n && 'term_min' in n);
 	}
 
-	/**
-	 * search for a construct like
-	 * - (lower:[low TO high] or higher:[low TO high])
-	 * - (lower:[low TO high] and higher:[low TO high])
-	 *
-	 * it looks like this in the ast
-	 * NOTE: term_min and term_max may also be '*' (for unbounded range i.e. larger/smaller than)
-	 *
-	 * ```javacript
-	 * {
-	 *   field: <implicit>
-	 *   operator: 'AND'|'OR'
-	 *   left: {
-	 *     field: lower/higher
-	 *     term_min: 0
-	 *     term_max: 100
-	 *     inclusive: true
-	 *   }
-	 *   right: {
-	 *     field: lower/higher
-	 *     term_min: 0
-	 *     term_max: 100
-	 *     inclusive: true
-	 *   }
-	 * }
-	 * ```
-	 */
-
+	
 	const stack: ASTNode[] = [ast];
 	while (stack.length) {
 		const cur = stack.shift()!;
@@ -130,28 +139,67 @@ function getFieldValues(ast: ASTNode, field1: string, field2: string): {
 	return null;
 }
 
+/** Compile time checking: ensure the passed parameter is of the template type and return it (no-op). Can use while setting variables initial value for example. */
 function cast<T>(t: T): T { return t; }
 
-export function dateToLuceneString(date: {y: string, m: string, d: string}, mode: 'start'|'end'): string {
-	let {y, m, d} = date;
-	if (!y.length || !y.match(/^[0-9]{1,4}$/)) { return ''; }
-	if (!m.length || !m.match(/^[0-9]{1,2}$/)) { m = mode === 'start' ? '1' : '12'; }
-	if (!d.length || !d.match(/^[0-9]{1,2}$/)) { d = mode === 'start' ? '1' : new Date(Number(y), Number(m), 0).getDate().toString(); }
-	return `${y.padStart(4, '0')}${m.padStart(2, '0')}${d.padStart(2, '0')}`;
+export const DateUtils = {
+	/** 
+	 * Conver the date object into a lucene filter string (which is just the concatenated numbers with zero-padding). 
+	 * Filling in blank months or days based on the mode. (first/last month of the year, first/last day of the month).
+	 * Ex. {d: '1', m: '4', y: '2022'} => '20220401'.
+	 * Returns an empty string if the date could not be parsed.
+	 */
+	dateValueToLucene(date: DateValue|null|undefined, mode: 'start'|'end'): string {
+		if (!date) return '';
+		let {y, m, d} = date;
+		if (!y.length || !y.match(/^[0-9]{1,4}$/)) { return ''; }
+		if (!m.length || !m.match(/^[0-9]{1,2}$/)) { m = mode === 'start' ? '1' : '12'; }
+		if (!d.length || !d.match(/^[0-9]{1,2}$/)) { d = mode === 'start' ? '1' : new Date(Number(y), Number(m), 0).getDate().toString(); }
+		return `${y.padStart(4, '0')}${m.padStart(2, '0')}${d.padStart(2, '0')}`;
+	},
+	/** 
+	 * The opposite of DateValueToLuceneString. Assumed to be used to decode initial value for FilterDate.
+	 * Can also handle date strings with separator char '-'.
+	 * Ex. 2022-04-01 => {d: '01', m: '04', y: '2022'}.
+	 * If date cannot be parsed, returns empty strings (which FilterDate can use).
+	 */
+	luceneToDateValue(date?: string): {y: string, m: string, d: string} {
+		if (!date) return { y: '', m: '', d: '' };
+		const match = date.match(/([\d]{4})-?([\d]{2})-?([\d]{2})/);
+		if (!match) return { y: '', m: '', d: '' };
+		const [_, y, m, d] = match;
+		return {y,m,d};
+	},
+	/** Format the lucene date filter string to a display string with separators and padded zeroes. */
+	luceneToDisplayString(date: string): string {
+		const [_,y,m,d] = date.match(/([\d]{4})-?([\d]{2})-?([\d]{2})/)!;
+		return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
+	},
+	/** 
+	 * Boundary dates are the minDate and maxDate settings for FilterDate. E.g. boundaries of what the user may enter (also used to inform the user about the contents of the corpus). 
+	 * For convenience we allow the admin to enter boundary dates in a couple of formats ('yyyymmdd', 'yyyy-mm-dd', new Date(), {y: string, m: string, d: string}).
+	 * Check which one it is, and convert it into a valid DateValue.
+	 * Semantics are a little different than the other conversion functions: this one returns null if the process fails at any step.
+	 */
+	normalizeBoundaryDate(date?: DateValue|Date|string): DateValue|null {
+		if (!date) return null;
+		if (date instanceof Date) return this.dateToValue(date);
+		if (typeof date === 'string') {
+			const match = date.match(/([\d]{4})-?([\d]{2})-?([\d]{2})/);
+			if (!match) return null;
+			const [_, y, m, d] = match;
+			return {y,m,d};
+		}
+		return date;
+	},
+	dateToValue(date: Date): DateValue {
+		const y = date.getFullYear().toString().padStart(4, '0');
+		const m = (date.getMonth() + 1).toString().padStart(2, '0');
+		const d = date.getDate().toString().padStart(2, '0');
+		return { y,m,d }
+	},
 }
 
-export function luceneStringToDate(date?: string): {y: string, m: string, d: string} {
-	if (!date) return { y: '', m: '', d: '' };
-	const match = date.match(/([\d]{4})-?([\d]{2})-?([\d]{2})/);
-	if (!match) return { y: '', m: '', d: '' };
-	const [_, y, m, d] = match;
-	return {y,m,d};
-}
-
-export function luceneDateStringToDisplayString(date: string): string {
-	const [_,y,m,d] = date.match(/([\d]{4})-?([\d]{2})-?([\d]{2})/)!;
-	return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
-}
 
 export const valueFunctions: MapOf<FilterValueFunctions<any, any>> = {
 	'filter-autocomplete': cast<FilterValueFunctions<never, string>>({
@@ -308,13 +356,17 @@ export const valueFunctions: MapOf<FilterValueFunctions<any, any>> = {
 	}),
 	'filter-date': cast<FilterValueFunctions<FilterDateMetadata, FilterDateValue>>({
 		decodeInitialState(id, filterMetadata, filterValues, ast) {
+			const minDate = DateUtils.dateValueToLucene(DateUtils.normalizeBoundaryDate(filterMetadata.min), 'start');
+			const maxDate = DateUtils.dateValueToLucene(DateUtils.normalizeBoundaryDate(filterMetadata.max), 'end');
+			
 			if ('field' in filterMetadata) {
 				if (!filterValues[filterMetadata.field]) return null;
 				// single field mode. i.e. the date is governed by a single metadata field
 				// we can just extract the values directly.
 				const [from, to] = filterValues[filterMetadata.field]!.values;
-				const startDate = luceneStringToDate(from);
-				const endDate = luceneStringToDate(to);
+				// If the value is equal to the boundary of the range, don't set it. It is the implicit value, so act as if it wasn't set
+				const startDate = from !== minDate ? DateUtils.luceneToDateValue(from) : {y: '', m: '', d: ''};
+				const endDate = to !== maxDate ? DateUtils.luceneToDateValue(to) : {y: '', m: '', d: ''};
 				delete filterValues[filterMetadata.field];
 				return {startDate, endDate, mode: 'permissive'};
 			}
@@ -327,54 +379,44 @@ export const valueFunctions: MapOf<FilterValueFunctions<any, any>> = {
 			delete filterValues[filterMetadata.from_field];
 			delete filterValues[filterMetadata.to_field];
 
-			const startDate = luceneStringToDate(from);
-			const endDate = luceneStringToDate(to);
+			// If the value is equal to the boundary of the range, don't set it. It is the implicit value, so act as if it wasn't set
+			const startDate = from !== minDate ? DateUtils.luceneToDateValue(from) : {y: '', m: '', d: ''};
+			const endDate = to !== maxDate ? DateUtils.luceneToDateValue(to) : {y: '', m: '', d: ''};
 			return { startDate, endDate, mode: r.mode };
 		},
 		luceneQuery(id, filterMetadata, value) {
-			// @ts-ignore isDefaultValue is defined in component.
+			// @ts-ignore isDefaultValue is set by FilterDate when value prop is unset and user hasn't interacted yet.
 			if (!value || value.isDefaultValue) { return null; }
-			let {startDate, endDate, mode} = value;
-			const op = modes[mode].operator;
+			
+			const startDate = value.startDate;
+			// value.endDate is only used when the filter is in range mode
+			const endDate = filterMetadata.range ? value.endDate : value.startDate;
+			const operator = modes[value.mode].operator; // OR or AND
+			// Which metadatafield are we filtering? either a single field ('field' prop), or two separate fields ('from_field' and 'to_field')
+			const lowFieldName = 'field' in filterMetadata ? filterMetadata.field : filterMetadata.from_field; 
+			const highFieldName = 'field' in filterMetadata ? filterMetadata.field : filterMetadata.to_field; 
 
-			let low: string;
-			let high: string;
-			// Which metadatafield are we filtering? either a single field, or two separate fields.
-			if ('field' in filterMetadata) {
-				low=high=filterMetadata.field;
-			} else {
-				low = filterMetadata.from_field;
-				high = filterMetadata.to_field;
+			// These are the boundaries (if defined by admin) - empty strings if not defined.
+			const minBoundaryLucene = DateUtils.dateValueToLucene(DateUtils.normalizeBoundaryDate(filterMetadata.min), 'start');
+			const maxBoundaryLucene = DateUtils.dateValueToLucene(DateUtils.normalizeBoundaryDate(filterMetadata.max), 'end');
+
+			// Convert the values into the lucene strings, sub in boundary values if no value set by filter itself.
+			const from = DateUtils.dateValueToLucene(startDate, 'start') || minBoundaryLucene;
+			const to = DateUtils.dateValueToLucene(endDate, 'end') || maxBoundaryLucene;
+			// finally, check if we have sensible values and at least one of the values is not the boundary
+			if (!from || !to || (from === minBoundaryLucene && to === maxBoundaryLucene)) {
+				return null;
 			}
-			if (!filterMetadata.range) {
-				// Are we filtering on a [start - end] range, or just a fixed value (when range === false)
-				// not a range - just two dates that are the same
-				// In that case we don't change the Value schema, instead just leave endDate empty and use only startDate.
-				// so copy it.
-				endDate = startDate;
-			}
 
-			let from = dateToLuceneString(startDate, 'start');
-			let to = dateToLuceneString(endDate, 'end');
-
-			if (!from || !to) { return null; } // we always have the value object, even when the user hasn't entered sensible things.
-			return `(${low}:[${from} TO ${to}] ${op} ${high}:[${from} TO ${to}])`;
+			return `(${lowFieldName}:[${from} TO ${to}] ${operator} ${highFieldName}:[${from} TO ${to}])`;
 		},
 		luceneQuerySummary(id, filterMetadata, value) {
-			const q = this.luceneQuery(id, filterMetadata, value);
-			if (!q || !value) return null;
-
-			let {startDate, endDate} = value;
-			if (!filterMetadata.range) endDate = startDate;
-			// hoe weten we wat er aan de hand is, we hebben die values
-			// dus dan maken we daar die lucene strings van
-
-			let start = dateToLuceneString(startDate, 'start');
-			let end = dateToLuceneString(endDate, 'end');
-			if (!start || !end) return null;
-			start = luceneDateStringToDisplayString(start);
-			end = luceneDateStringToDisplayString(end);
-
+			// Instead of repeating all the logic above, just regex out the relevant parts
+			const v = this.luceneQuery(id, filterMetadata, value);
+			if (!v) return null;
+			let [_, start, end] = v.match(/(\d+).+?(\d+)/)!; // capture the first two numbers.
+			start = DateUtils.luceneToDisplayString(start);
+			end = DateUtils.luceneToDisplayString(end);
 			return (start !== end) ? start + ' to ' + end : start;
 		},
 	})

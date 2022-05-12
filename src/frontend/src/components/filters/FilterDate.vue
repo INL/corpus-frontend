@@ -42,7 +42,7 @@
 <script lang="ts">
 import BaseFilter from '@/components/filters/Filter';
 import { Option } from '@/components/SelectPicker.vue';
-import {FilterDateValue as Value, FilterDateMetadata as Metadata, FilterDateValue, dateToLuceneString, luceneDateStringToDisplayString} from './filterValueFunctions';
+import {FilterDateValue as Value, FilterDateMetadata as Metadata, FilterDateValue, DateUtils} from './filterValueFunctions';
 
 export const modes = {
 	permissive: {
@@ -59,27 +59,6 @@ export const modes = {
 		description: "Matches documents that are completely contained within the entered range"
 	}
 };
-
-type Mode = keyof typeof modes;
-
-function dateToValue(date: Date): FilterDateValue['startDate'] {
-	const y = date.getFullYear().toString().padStart(4, '0');
-	const m = (date.getMonth() + 1).toString().padStart(2, '0');
-	const d = date.getDate().toString().padStart(2, '0');
-	return { y,m,d }
-}
-
-function normalizeBoundaryDate(date?: {y: string, m: string, d: string}|Date|string): FilterDateValue['startDate']|null {
-	if (!date) return null;
-	if (date instanceof Date) return dateToValue(date);
-	if (typeof date === 'string') {
-		const match = date.match(/([\d]{4})-?([\d]{2})-?([\d]{2})/);
-		if (!match) return null;
-		const [_, y, m, d] = match;
-		return {y,m,d};
-	}
-	return date;
-}
 
 export default BaseFilter.extend({
 	props: {
@@ -138,14 +117,15 @@ export default BaseFilter.extend({
 				range: false,
 			}
 		},
-		minDate(): FilterDateValue['startDate']|null { return normalizeBoundaryDate(this.metadata.min); },
-		maxDate(): FilterDateValue['startDate']|null { return normalizeBoundaryDate(this.metadata.max); },
-		minDateDisplay(): string|null { return this.minDate ? luceneDateStringToDisplayString(dateToLuceneString(this.minDate, 'start')) : null;  },
-		maxDateDisplay(): string|null { return this.maxDate ? luceneDateStringToDisplayString(dateToLuceneString(this.maxDate, 'end')) : null;  },
+		// This can probably be a little simpler, but whatever.
+		minDate(): FilterDateValue['startDate']|null { return DateUtils.normalizeBoundaryDate(this.metadata.min); },
+		maxDate(): FilterDateValue['startDate']|null { return DateUtils.normalizeBoundaryDate(this.metadata.max); },
+		minDateDisplay(): string|null { return this.minDate ? DateUtils.luceneToDisplayString(DateUtils.dateValueToLucene(this.minDate, 'start')) : null;  },
+		maxDateDisplay(): string|null { return this.maxDate ? DateUtils.luceneToDisplayString(DateUtils.dateValueToLucene(this.maxDate, 'end')) : null;  },
 		minYear(): string|undefined { return this.minDate ? this.minDate.y : undefined; },
 		maxYear(): string|undefined { return this.maxDate ? this.maxDate.y : undefined; },
-		startMonthLength(): string { return dateToLuceneString({...this.model.startDate, d: ''}, 'end')!.substring(6, 8); },
-		endMonthLength(): string { return dateToLuceneString({...this.model.endDate, d: ''}, 'end')!.substring(6, 8); },
+		startMonthLength(): string { return DateUtils.dateValueToLucene({...this.model.startDate, d: ''}, 'end')!.substring(6, 8); },
+		endMonthLength(): string { return DateUtils.dateValueToLucene({...this.model.endDate, d: ''}, 'end')!.substring(6, 8); },
 
 
 		modes(): Option[] {

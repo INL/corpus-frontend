@@ -227,6 +227,7 @@ export type FilterValue = {
 	values: string[];
 };
 
+/** Everything a filter needs to be rendered. Name of the component, the ID (to connect to the vuex store), list of possible values (when relevant), etc. */
 export type FilterDefinition<MetadataType = any, ValueType = any> = {
 	/** Id of the filters, this must be unique */
 	id: string;

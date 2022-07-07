@@ -689,7 +689,6 @@ export default Vue.extend({
 				first: cache.concordances.length,
 				viewgroup: id,
 				// Do not clear sample/samplenum/samplecount, or we could retrieve concordances that weren't included in the input results for the grouping
-				wordsaroundhit: undefined,
 				sort: undefined,
 			} as BLTypes.BLSearchParameters);
 

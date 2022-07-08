@@ -46,6 +46,9 @@ public class ArticleResponse extends BaseResponse {
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
                 "<xsl:stylesheet version=\"2.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">" +
                     "<xsl:output encoding=\"utf-8\" method=\"html\" omit-xml-declaration=\"yes\" />" +
+                    "<xsl:template match=\"text()\">\r\n" +
+                        "<xsl:value-of select=\"replace(., '[&#x007F;-&#x009F;]', ' ')\"/>\r\n" +
+                    "</xsl:template>" +
                     "<xsl:template match=\"*[local-name(.)='hl']\">" +
                         "<span class=\"hl\">" +
                         "<xsl:apply-templates select=\"node()\"/>" +

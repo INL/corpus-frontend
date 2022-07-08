@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xpath-default-namespace="http://ilk.uvt.nl/folia">
 	<xsl:output encoding="utf-8" method="html" omit-xml-declaration="yes" />
+	<!-- ignore illegal HTML characters (prevent breaking output entirely when a single character is somehow broken) -->
+	<xsl:template match="text()">
+		<xsl:value-of select="replace(., '[&#x007F;-&#x009F;]', ' ')"/>
+	</xsl:template>
 
 	<xsl:template match="//*[local-name()='error']">
 		<h1>Error</h1>

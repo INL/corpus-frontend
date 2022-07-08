@@ -603,7 +603,7 @@ public class MainServlet extends HttpServlet {
 
             // alright, file not found. Try getting from BlackLab and parse that
             if (name.equals("article") && corpusDataFormat.isPresent()) try { // for article files, we can use a fallback if there is no template file
-                logger.info("Attempting to get xsl {} for corpus {} from blacklab...", corpusDataFormat, corpus);
+                logger.info("Attempting to get xsl {} for corpus {} from blacklab...", corpusDataFormat.get(), corpus);
 
                 final QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(null) + "input-formats/" + URLEncoder.encode(corpusDataFormat.get(), StandardCharsets.UTF_8.toString()) + "/xslt");
                 final String sheet = handler.makeRequest(new HashMap<>());

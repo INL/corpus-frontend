@@ -94,6 +94,19 @@ type ModuleRootState = {
 			 * If manually configured, order from configuration is preserved. Otherwise uses the global metadata order.
 			 */
 			shownMetadataIds: string[];
+
+			addons: Array<((context: {
+				corpus: string,
+				docId: string,
+				snippet: BLTypes.BLHitSnippet,
+				document: BLTypes.BLDocInfo
+			}) => {
+				name: string;
+				component?: string;
+				props?: any;
+				content?: string
+				listeners?: any;
+			})>;
 		};
 		docs: {
 			/**
@@ -219,6 +232,7 @@ const initialState: ModuleRootState = {
 			getAudioPlayerData: null,
 			shownAnnotationIds: [],
 			shownMetadataIds: [],
+			addons: []
 		},
 		docs: {
 			shownMetadataIds: [],

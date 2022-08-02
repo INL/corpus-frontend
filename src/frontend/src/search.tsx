@@ -173,7 +173,10 @@ Vue.use(VTooltip, {
 	}
 });
 Vue.component('Debug', DebugComponent);
+import AudioPlayer from '@/components/AudioPlayer.vue';
 
+// register component plugins
+Vue.component('AudioPlayer', AudioPlayer);
 
 // Expose and declare some globals
 (window as any).Vue = Vue;

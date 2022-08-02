@@ -5,18 +5,16 @@
 			'fa-play': !isPlaying,
 			'fa-pause': isPlaying
 		}"></span>
+
+		{{JSON.stringify($props)}}
 	</button>
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+let activePlayer: any = null;
 
-import * as BLTypes from '@/types/blacklabtypes';
-
-let activePlayer: null|InstanceType<typeof audioPlayerConstructor> = null;
 const audioPlayerCache: {[key: string]: HTMLAudioElement} = {};
-
-const audioPlayerConstructor = Vue.extend({
+export default {
 	props: {
 		docId: String,
 		url: String,
@@ -82,8 +80,8 @@ const audioPlayerConstructor = Vue.extend({
 	beforeDestroy() {
 		this.stop();
 	}
-});
-export default audioPlayerConstructor;
+};
+
 
 </script>
 

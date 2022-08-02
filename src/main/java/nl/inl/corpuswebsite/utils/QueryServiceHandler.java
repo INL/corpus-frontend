@@ -62,20 +62,30 @@ public class QueryServiceHandler {
     }
 
     private static String fetchXml(String url) throws IOException, QueryException {
-        int code = -1;
-        String reason = null;
-        try {
+    	try {
             URL urlObj = new URL(url);
             HttpURLConnection connection = (HttpURLConnection) urlObj.openConnection();
             try {
+            	connection.setInstanceFollowRedirects(true);
                 connection.setRequestProperty("Accept", "application/xml");
                 connection.setRequestMethod("GET");
-                code = connection.getResponseCode();
+                connection.connect();
+                int code = connection.getResponseCode();
+                
+                // redirect is not followed into other protocol ex. http to https
+                // see https://stackoverflow.com/a/1884427
+                if (code >= 300 && code < 400) {
+                	String newUrl = connection.getHeaderField("location");
+                	if (newUrl != null && !newUrl.isEmpty()) {
+                		return fetchXml(newUrl);
+                	}
+                }
+                	
 
                 // Not an HTTP success (2xx) code or 401 Unauthorized?
                 // (we use the 401 to test if we are allowed to view the document contents)
                 if ((code < 200 || code > 299) && code != 401) {
-                    reason = connection.getResponseMessage();
+                    String reason = connection.getResponseMessage();
                     throw new QueryException(code, reason);
                 }
 

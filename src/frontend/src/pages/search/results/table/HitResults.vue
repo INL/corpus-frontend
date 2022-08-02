@@ -118,7 +118,16 @@
 									<span class="fa fa-exclamation-triangle"></span> <span v-html="citations[index].error"></span>
 								</p>
 								<p v-else-if="citations[index].citation">
-									<AudioPlayer v-if="citations[index].audioPlayerData" v-bind="citations[index].audioPlayerData"/>
+									count: {{citations[index].addons.length}}
+									<component v-for="addon in citations[index].addons"
+										:key="addon.name"
+										:is="addon.component ? addon.component : 'div'"
+										:class="`addon addon-${addon.name}`"
+
+										v-bind="addon.props"
+										v-on="addon.listeners"
+										v-html="addon.component ? undefined : addon.content"
+									>{{addon.component ? addon.content : ''}}</component>
 									<span :dir="textDirection">
 										<template v-if="concordanceAsHtml">
 											<span v-html="citations[index].citation.left"></span>
@@ -173,12 +182,12 @@ import * as UIStore from '@/store/search/ui';
 import { snippetParts, words, getDocumentUrl } from '@/utils';
 import * as Api from '@/api';
 
-import AudioPlayer from '@/components/AudioPlayer.vue';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
 
 import {debugLog} from '@/utils/debug';
+
 
 type HitRow = {
 	type: 'hit';
@@ -212,14 +221,15 @@ type CitationData = {
 	};
 	error?: null|string;
 	snippet: null|BLTypes.BLHitSnippet;
-	audioPlayerData: any;
+	// audioPlayerData: any;
+	addons: Array<ReturnType<UIStore.ModuleRootState['results']['hits']['addons'][number]>> // todo give type a name and export separately
 	href: string;
 };
 
 export default Vue.extend({
-	components: {
-		AudioPlayer
-	},
+	// components: {
+	// 	AudioPlayer
+	// },
 	props: {
 		results: Object as () => BLTypes.BLHitResults,
 		sort: String as () => string|null,
@@ -340,7 +350,7 @@ export default Vue.extend({
 			}
 
 			const row = this.rows[index] as HitRow;
-			const citation: CitationData = Vue.set(this.citations as any[], index, { // shut up vue
+			const citation: CitationData = Vue.set(this.citations, index, {
 				open: true,
 				loading: true,
 				citation: null,
@@ -357,8 +367,9 @@ export default Vue.extend({
 
 			ga('send', 'event', 'results', 'snippet/load', row.docPid);
 
+			const corpusId = CorpusStore.getState().id;
 			Api.blacklab
-			.getSnippet(CorpusStore.getState().id, row.docPid, row.start, row.end)
+			.getSnippet(corpusId, row.docPid, row.start, row.end)
 			.then(s => {
 				if (this.transformSnippets) {
 					this.transformSnippets(s);
@@ -370,7 +381,7 @@ export default Vue.extend({
 					right: snippet[this.rightIndex]
 				};
 				citation.snippet = s;
-				citation.audioPlayerData = this.getAudioPlayerData ? this.getAudioPlayerData(this.corpus, row.docPid, s) : null;
+				citation.addons = UIStore.getState().results.hits.addons.map(a => a({snippet: s, docId: row.docPid, corpus: corpusId, document: this.results.docInfos[row.docPid] })).filter(a => a != null);
 			})
 			.catch((err: AppTypes.ApiError) => {
 				citation.error = UIStore.getState().global.errorMessage(err, 'snippet');

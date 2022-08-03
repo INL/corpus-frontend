@@ -686,9 +686,9 @@ Through javascript you can do many things, but outlined below are some of the mo
   </details>
 
 - <details>
-    <summary>[Results/Hits] Enable an audio player for spoken corpora</summary>
+    <summary>[Results/Hits] Enable custom inserts in concordances, such as an audio player for spoken corpora</summary>
 
-    This will create small play buttons in concordances, allowing the user to listen to the fragment. We use this feature in the `CGN (Corpus Gesproken Nederlands)` corpus.
+    The following example will create small play buttons in concordances, allowing the user to listen to the fragment. We use this feature in the `CGN (Corpus Gesproken Nederlands)` corpus.
 
     ![](docs/img/concordance_audio_player.png)
 
@@ -700,36 +700,44 @@ Through javascript you can do many things, but outlined below are some of the mo
 
     Shown here is (an edited version of) the function we use in the `CGN`, but specific implementation will of course be unique to your situation.
     ```javascript
-    /**
-     * @param {string} corpus - name of the corpus
-     * @param {string} docId - id of the document from which this hit originated
-     * @param {BLHitSnippet} snippet - the hit, looks like the following:
-     * {
-     *   left: {
-     *     lemma: ["this", "is", "an", "example"]
-     *     begintime: [1,3,5,7]
-     *     endtime: [2,4,6,8]
-     *   },
-     *   match: {
-     *     begintime: [9]
-     *     endtime: [10]
-     *     // ... etc
-     *   },
-     *   right: {
-     *     // ...
-     *   }
-     * }
-     */
-    vuexModules.ui.getState().results.hits.getAudioPlayerData = function(corpus, docId, snippet) {
-      var s = 'begintime';
-      var e = 'endtime';
+    
+    /*  The context object contains the following information:
+      {
+        corpus: string, 
+        docId: string, // the document id
+        snippet: BLTypes.BLHitSnippet, // the raw hit info as returned by blacklab
+        document: BLTypes.BLDocInfo, // the document metadata
+        documentUrl: string, // url to view the document in the corpus-frontend
+        wordAnnotationId: string, // configured annotation to display for words (aka vuexModules.ui.results.hits.wordAnnotationId)
+        dir: 'ltr'|'rtl',
+        citation: {
+          left: string;
+          hit: string;
+          right: string;
+        }
+      }
 
-      // Find the first entry of 'begintime' in [left, match, right]
-      const startString = snippet.left[s].concat(snippet.match[s]).concat(snippet.right[s]).find(function(v) { return !!v; });
-      // Last entry of 'endtime' in [left, match, right]
-      const endString = snippet.left[e].concat(snippet.match[e]).concat(snippet.right[e]).reverse().find(function(v) { return !!v; });
+      The returned object should have the following shape:
+      {
+        name: string; // unique name for the widget you're rendering, can be anything
+        component?: string; // (optional) name of the Vue component to render, component MUST be globally installed using vue.component(...)
+        element?: string; // when not using a vue component, the name of the html element to render, defaults to 'div'
+        props?: any; // attributes on the html element (such as 'class', 'tabindex', 'style' etc.), or props on the vue component
+        content?: string // html content of the element, or content of the default slot when using a vue component
+        listeners?: any; // event listeners, passed to v-on, so 'click', 'hover', etc. 
+      }
+    */
+    vuexModules.ui.getState().results.hits.addons.push(function(context) {
+      var snippet = context.snippet;
+      var docId = context.docId;
+      var s = 'begintime'; // word property that stores the start time of the word
+      var e = 'endtime'; // word property that stores the end time of the word
+      
+      // find the first word that has a start time defined, and the first word that has an end time defined
+      var startString = snippet.left[s].concat(snippet.match[s]).concat(snippet.right[s]).find(function(v) { return !!v; });
+      var endString = snippet.left[e].concat(snippet.match[e]).concat(snippet.right[e]).reverse().find(function(v) { return !!v; });
 
-      // Returning undefined will disable the player for this hit
+      // Returning undefined will disable the addon for this hit
       if (!startString && !endString) {
         return undefined;
       }
@@ -737,20 +745,22 @@ Through javascript you can do many things, but outlined below are some of the mo
       // Transform format of HH:MM:SS.mm to a float
       var start = startString ? startString.split(':') : undefined;
       start = start ? Number.parseInt(start[0], 10) * 3600 + Number.parseInt(start[1], 10) * 60 + Number.parseFloat(start[2]) : 0;
-
+      
       // Transform format of HH:MM:SS:mm to a float
       var end = endString ? endString.split(':') : undefined;
       end = end ? Number.parseInt(end[0], 10) * 3600 + Number.parseInt(end[1], 10) * 60 + Number.parseFloat(end[2]) : Number.MAX_VALUE;
 
-      // Returns should have this format
-      // docId is echoed to allow caching of the audio player data between hits in the same document.
       return {
-        docId: docId,
-        startTime: start,
-        endTime: end,
-        url: config.audioUrlBase + docId + '.mp3'
+        component: 'AudioPlayer', // name for our component
+        name: 'audio-player', // render the vue component 'audio player', so <audio-player>
+        props: { // with these props, so <audio-player :docId="..." :startTime="..." :endTime="..." :url="...">
+          docId: docId,
+          startTime: start,
+          endTime: end,
+          url: config.audioUrlBase + docId + '.mp3'
+        },
       }
-    }
+   })
     ```
   </details>
 

@@ -27,8 +27,7 @@ import DebugComponent from '@/components/Debug.vue';
 import debug, {debugLog} from '@/utils/debug';
 
 import '@/global.scss';
-import { multimapReduce, getAnnotationSubset } from '@/utils';
-import annotationDistributions from './pages/article/annotationDistributions';
+import { getAnnotationSubset } from '@/utils';
 import { Option } from './types/apptypes';
 
 const connectJqueryToPage = () => {

@@ -5,8 +5,6 @@
 			'fa-play': !isPlaying,
 			'fa-pause': isPlaying
 		}"></span>
-
-		{{JSON.stringify($props)}}
 	</button>
 </template>
 

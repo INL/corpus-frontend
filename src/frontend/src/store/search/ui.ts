@@ -73,13 +73,6 @@ type ModuleRootState = {
 
 	results: {
 		hits: {
-			/** Function called to generate some data required to retrieve an audio file matching a hit. */
-			getAudioPlayerData: null|((corpus: string, docId: string, snippet: BLTypes.BLHitSnippet) => undefined|({
-				docId: string
-				start: number,
-				end: number,
-				url: string
-			})),
 			/**
 			 * Annotations columns to show in the hit results table, left, right and context columns are always shown.
 			 * Defaults to 'lemma' and 'pos' if they exist, and up to 3 other annotations in order of their displayOrder.
@@ -95,14 +88,35 @@ type ModuleRootState = {
 			 */
 			shownMetadataIds: string[];
 
+			/**
+			 * Addons are functions that may return additional content that is shown next to the snippet/citation when it is opened.
+			 * Examples could be:
+			 * - a button that plays some audio.
+			 * - a section that displays information about the document.
+			 * - a button that copies the citation into the clipboard.
+			 *
+			 * Every addon requires a name (for the v-for loop).
+			 * Addons can render a vue component if they want to by setting the 'component' property.
+			 * Otherwise, a div is rendered.
+			 * The 'content' is provided as content for the default slot when rendering a component, and provided as v-html for the div.
+			 */
 			addons: Array<((context: {
 				corpus: string,
 				docId: string,
 				snippet: BLTypes.BLHitSnippet,
-				document: BLTypes.BLDocInfo
+				document: BLTypes.BLDocInfo,
+				documentUrl: string,
+				wordAnnotationId: string,
+				dir: 'ltr'|'rtl',
+				citation: {
+					left: string;
+					hit: string;
+					right: string;
+				}
 			}) => {
 				name: string;
 				component?: string;
+				element?: string;
 				props?: any;
 				content?: string
 				listeners?: any;
@@ -229,7 +243,6 @@ const initialState: ModuleRootState = {
 	},
 	results: {
 		hits: {
-			getAudioPlayerData: null,
 			shownAnnotationIds: [],
 			shownMetadataIds: [],
 			addons: []

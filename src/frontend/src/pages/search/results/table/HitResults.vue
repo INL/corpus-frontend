@@ -118,16 +118,28 @@
 									<span class="fa fa-exclamation-triangle"></span> <span v-html="citations[index].error"></span>
 								</p>
 								<p v-else-if="citations[index].citation">
-									count: {{citations[index].addons.length}}
-									<component v-for="addon in citations[index].addons"
-										:key="addon.name"
-										:is="addon.component ? addon.component : 'div'"
-										:class="`addon addon-${addon.name}`"
+									<template v-for="addon in citations[index].addons">
+										<component v-if="addon.component"
+											:is="addon.component"
+											:key="addon.name"
+											:class="`addon addon-${addon.name} ${(addon.props && addon.props.class) || ''}`"
+											v-bind="addon.props"
+											v-on="addon.listeners"
+										>
+											<div v-if="addon.content" v-html="addon.content"></div>
+										</component>
 
-										v-bind="addon.props"
-										v-on="addon.listeners"
-										v-html="addon.component ? undefined : addon.content"
-									>{{addon.component ? addon.content : ''}}</component>
+										<component v-else
+											:is="addon.element || 'div'"
+											:key="addon.name"
+											:class="`addon addon-${addon.name} ${(addon.props && addon.props.class) || ''}`"
+											v-bind="addon.props"
+											v-on="addon.listeners"
+											v-html="addon.content"
+										/>
+
+									</template>
+
 									<span :dir="textDirection">
 										<template v-if="concordanceAsHtml">
 											<span v-html="citations[index].citation.left"></span>
@@ -173,9 +185,6 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import URI from 'urijs';
-
-import * as qs from 'qs';
 
 import * as CorpusStore from '@/store/search/corpus';
 import * as UIStore from '@/store/search/ui';
@@ -332,7 +341,6 @@ export default Vue.extend({
 		textDirection: CorpusStore.get.textDirection,
 
 		corpus(): string { return CorpusStore.getState().id; },
-		getAudioPlayerData() { return UIStore.getState().results.hits.getAudioPlayerData; },
 
 		transformSnippets(): null|((snippet: any)=> any){ return UIStore.getState().results.shared.transformSnippets; },
 		getDocumentSummary(): ((doc: any, info: any) => any) { return UIStore.getState().results.shared.getDocumentSummary },
@@ -381,7 +389,19 @@ export default Vue.extend({
 					right: snippet[this.rightIndex]
 				};
 				citation.snippet = s;
-				citation.addons = UIStore.getState().results.hits.addons.map(a => a({snippet: s, docId: row.docPid, corpus: corpusId, document: this.results.docInfos[row.docPid] })).filter(a => a != null);
+				// Run plugins defined for this corpora (ex. a copy citation to clipboard button, or an audio player/text to speech button)
+				citation.addons = UIStore.getState().results.hits.addons
+					.map(a => a({
+						snippet: s,
+						docId: row.docPid,
+						corpus: corpusId,
+						document: this.results.docInfos[row.docPid],
+						documentUrl: citation.href,
+						wordAnnotationId: this.concordanceAnnotationId,
+						dir: this.textDirection,
+						citation: citation.citation!
+					}))
+					.filter(a => a != null);
 			})
 			.catch((err: AppTypes.ApiError) => {
 				citation.error = UIStore.getState().global.errorMessage(err, 'snippet');

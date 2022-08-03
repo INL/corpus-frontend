@@ -76,10 +76,13 @@ $(document).ready(() => {
 
 					<a href="${BLS_URL}${INDEX_ID}/docs/${DOCUMENT_ID}/contents${q}" target="_blank">Open raw document</a>
 				</div>`
-				$('#content').append(s)
+
+				$('#articleTabs').append(`<li id="debug-tab"><a href="#debug" data-toggle="tab">Debug</a></li>`)
+				$('.tab-content').append(`<div id="debug" class="tab-pane">${s}</div>`)
 			})
 		} else {
-			$('#debug-info').remove();
+			$('#debug').remove();
+			$('#debug-tab').remove();
 		}
 	}, { immediate: true})
 

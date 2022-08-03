@@ -90,7 +90,7 @@ function getFieldValues(ast: ASTNode, field1: string, field2: string): {
 		return  !!(n && 'field' in n && 'term_min' in n);
 	}
 
-	
+
 	const stack: ASTNode[] = [ast];
 	while (stack.length) {
 		const cur = stack.shift()!;
@@ -143,8 +143,8 @@ function getFieldValues(ast: ASTNode, field1: string, field2: string): {
 function cast<T>(t: T): T { return t; }
 
 export const DateUtils = {
-	/** 
-	 * Conver the date object into a lucene filter string (which is just the concatenated numbers with zero-padding). 
+	/**
+	 * Conver the date object into a lucene filter string (which is just the concatenated numbers with zero-padding).
 	 * Filling in blank months or days based on the mode. (first/last month of the year, first/last day of the month).
 	 * Ex. {d: '1', m: '4', y: '2022'} => '20220401'.
 	 * Returns an empty string if the date could not be parsed.
@@ -157,7 +157,7 @@ export const DateUtils = {
 		if (!d.length || !d.match(/^[0-9]{1,2}$/)) { d = mode === 'start' ? '1' : new Date(Number(y), Number(m), 0).getDate().toString(); }
 		return `${y.padStart(4, '0')}${m.padStart(2, '0')}${d.padStart(2, '0')}`;
 	},
-	/** 
+	/**
 	 * The opposite of DateValueToLuceneString. Assumed to be used to decode initial value for FilterDate.
 	 * Can also handle date strings with separator char '-'.
 	 * Ex. 2022-04-01 => {d: '01', m: '04', y: '2022'}.
@@ -175,8 +175,8 @@ export const DateUtils = {
 		const [_,y,m,d] = date.match(/([\d]{4})-?([\d]{2})-?([\d]{2})/)!;
 		return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
 	},
-	/** 
-	 * Boundary dates are the minDate and maxDate settings for FilterDate. E.g. boundaries of what the user may enter (also used to inform the user about the contents of the corpus). 
+	/**
+	 * Boundary dates are the minDate and maxDate settings for FilterDate. E.g. boundaries of what the user may enter (also used to inform the user about the contents of the corpus).
 	 * For convenience we allow the admin to enter boundary dates in a couple of formats ('yyyymmdd', 'yyyy-mm-dd', new Date(), {y: string, m: string, d: string}).
 	 * Check which one it is, and convert it into a valid DateValue.
 	 * Semantics are a little different than the other conversion functions: this one returns null if the process fails at any step.
@@ -231,7 +231,7 @@ export const valueFunctions: MapOf<FilterValueFunctions<any, any>> = {
 			const selected = Object.entries(filterValue || {})
 					.filter(([value, isSelected]) => isSelected)
 					.map(([value, isSelected]) => escapeLucene(value, false));
-			return selected.length ? `${id}:(${selected.map(v => escapeLucene(v, false)).join(' ')})` : null;
+			return selected.length ? `${id}:(${selected.join(' ')})` : null;
 		},
 		luceneQuerySummary(id, filterMetadata, filterValue) {
 			const selected = Object.entries(filterValue || {})
@@ -358,7 +358,7 @@ export const valueFunctions: MapOf<FilterValueFunctions<any, any>> = {
 		decodeInitialState(id, filterMetadata, filterValues, ast) {
 			const minDate = DateUtils.dateValueToLucene(DateUtils.normalizeBoundaryDate(filterMetadata.min), 'start');
 			const maxDate = DateUtils.dateValueToLucene(DateUtils.normalizeBoundaryDate(filterMetadata.max), 'end');
-			
+
 			if ('field' in filterMetadata) {
 				if (!filterValues[filterMetadata.field]) return null;
 				// single field mode. i.e. the date is governed by a single metadata field
@@ -387,14 +387,14 @@ export const valueFunctions: MapOf<FilterValueFunctions<any, any>> = {
 		luceneQuery(id, filterMetadata, value) {
 			// @ts-ignore isDefaultValue is set by FilterDate when value prop is unset and user hasn't interacted yet.
 			if (!value || value.isDefaultValue) { return null; }
-			
+
 			const startDate = value.startDate;
 			// value.endDate is only used when the filter is in range mode
 			const endDate = filterMetadata.range ? value.endDate : value.startDate;
 			const operator = modes[value.mode].operator; // OR or AND
 			// Which metadatafield are we filtering? either a single field ('field' prop), or two separate fields ('from_field' and 'to_field')
-			const lowFieldName = 'field' in filterMetadata ? filterMetadata.field : filterMetadata.from_field; 
-			const highFieldName = 'field' in filterMetadata ? filterMetadata.field : filterMetadata.to_field; 
+			const lowFieldName = 'field' in filterMetadata ? filterMetadata.field : filterMetadata.from_field;
+			const highFieldName = 'field' in filterMetadata ? filterMetadata.field : filterMetadata.to_field;
 
 			// These are the boundaries (if defined by admin) - empty strings if not defined.
 			const minBoundaryLucene = DateUtils.dateValueToLucene(DateUtils.normalizeBoundaryDate(filterMetadata.min), 'start');

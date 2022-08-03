@@ -54,7 +54,6 @@ type FilterValueFunctions<M, V> = {
  * - (lower:[low TO high] and higher:[low TO high])
  *
  * it looks like this in the ast
- * NOTE: term_min and term_max may also be '*' (for unbounded range i.e. larger/smaller than)
  *
  * ```js
  * {

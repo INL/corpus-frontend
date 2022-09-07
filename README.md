@@ -7,6 +7,7 @@
     - [Requirements](#Requirements)
     - [Releases](#Download-a-release)
     - [Building from source](#Building-from-source)
+    - [Using Docker](#Using-Docker)
 - **[Configuration](#Configuration)**
     - [Backend configuration](#Backend-configuration)
     - [Adding corpora](#Adding-corpora)

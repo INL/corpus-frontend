@@ -345,7 +345,7 @@ Because the format config specifies the shape of a corpus (which metadata and an
         dateField: PublicationYear
     ```
 
-    These fields will be used to format document title rows in the results table (unless overridden: see [customizing document titles](#customizing-document-titles))
+    These fields will be used to format document title rows in the results table (unless overridden: see [customizing document titles](#customjs-configure-document-title))
 
     ![](docs/img/metadata_special_fields.png)
 
@@ -628,7 +628,65 @@ Through javascript you can do many things, but outlined below are some of the mo
   </details>
 
 - <details>
+    <summary>Group metadata into sections with more control</summary>
+    <a name="customjs-configure-metadata-subheadings"></a>
+    With customJS you can do two things you can't do with just config: 
+    - automatically activate filters when a filter tab is open
+    - add subheadings in between filters.
+
+    In this way you can divide your corpus into `sections` if you will, by giving 
+    every section its own tab in the `filters` section, and setting an automaticaly activating filter 
+    for that section.
+
+    ![](docs/img/ metadata_groups_with_sections.png)
+
+    ```typescript
+    type FilterGroup = {
+      tabname: string;
+      subtabs: Array<{
+        tabname?: string;
+        fields: string[];
+      }>;
+      query?: MapOf<string[]>;
+    }
+    ```
+
+
+    ```javascript
+    const filterState = vuexModules.filters.getState();
+    filterState.filterGroups = [{
+      tabname: 'My Filters' 
+      subtabs: [{
+        tabname: 'Title', // filters pertaining to titles
+        fields: ['newspaper_title', 'section_title', 'article_title'] // names of metadata fields in your source material
+      }, {
+        tabname: 'Author', // filters pertaining to author...
+        fields: ['author_name', 'author_birthdate']
+      }],
+      query: {
+        some_metadata_field: ['Some', 'Values'], // force the filter some_metadata_field to the value ['Some', 'Values'] while the tab 'My Filters' is opened
+        // ... other fields here
+      }
+    }, {
+      // Second tab .... follows the same config. The same filter may occur multiple times in different tabs.
+    }]
+    ```
+
+    -----------
+
+    **NOTE:** When using metadata groups, fields not in any group will be **hidden everywhere!** (unless manually re-added through `customjs`). This includes at least the following places:
+    - `Explore/Corpora`
+    - `Filter`
+    - `Per Hit/Group by`
+    - `Per Hit/Sort by`
+    - `Per Document/Group by`
+    - `Per Document/Sort by`
+
+  </details>
+
+- <details>
     <summary>[Global] - Set custom error messages</summary>
+    <a name="customjs-configure-error-message"></a>
 
     A function that is called whenever an error is returned from BlackLab. 
     Context is one of 'snippet', 'concordances', 'hits', 'docs', 'groups' detailing during what action the error occured.
@@ -690,6 +748,7 @@ Through javascript you can do many things, but outlined below are some of the mo
 
 - <details>
     <summary>[Results] - Show/hide the export buttons</summary>
+    <a name="customjs-toggle-export"></a>
 
     `vuexModules.ui.actions.results.exportEnabled(false)`
   </details>
@@ -836,7 +895,7 @@ Through javascript you can do many things, but outlined below are some of the mo
 
 - <details>
     <summary>[Results/Docs] Customize the display of document titles in the results table</summary>
-    <a name="customizing-document-titles"></a>
+    <a name="customjs-configure-document-title"></a>
     
     By setting a callback to generate or extract the title of the documents, you can have more control over it.
     

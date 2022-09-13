@@ -44,6 +44,10 @@
             var CONTEXT_URL = "$esc.javascript($pathToTop)";
             // Not suffixed with the corpus id
             var BLS_URL = "$esc.javascript($blsUrl)";
+
+            var PLAUSIBLE_DOMAIN = "$esc.javascript($websiteConfig.getPlausibleDomain().orElse(null))"
+            var PLAUSIBLE_APIHOST = "$esc.javascript($websiteConfig.getPlausibleApiHost().orElse(null))"
+            
             // Place to register CustomJS hook functions
             var hooks = {};
         </script>

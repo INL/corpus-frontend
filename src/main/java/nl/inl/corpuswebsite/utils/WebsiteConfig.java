@@ -94,6 +94,9 @@ public class WebsiteConfig {
     /** Google analytics key, analytics are disabled if not provided */
     private final Optional<String> analyticsKey;
 
+    private final Optional<String> plausibleDomain;
+    private final Optional<String> plausibleApiHost;
+
     /** Link to put in the top bar */
     private final List<LinkInTopBar> linksInTopBar;
 
@@ -111,55 +114,59 @@ public class WebsiteConfig {
      */
     
     public WebsiteConfig(File configFile, Optional<CorpusConfig> corpusConfig, String contextPath) throws ConfigurationException {
-    	 Parameters parameters = new Parameters();
-         ConfigurationBuilder<XMLConfiguration> cb = new FileBasedConfigurationBuilder<>(XMLConfiguration.class)
-                 .configure(parameters.fileBased()
-                 .setFile(configFile)
-                 .setListDelimiterHandler(new DisabledListDelimiterHandler())
-                 .setPrefixLookups(new HashMap<String, Lookup>(ConfigurationInterpolator.getDefaultPrefixLookups()) {{
-                     put("request", key -> {
-                         switch (key) {
-                             case "contextPath": return contextPath;
-                             case "corpusId": return corpusConfig.map(CorpusConfig::getCorpusId).orElse(""); // don't return null, or the interpolation string (${request:corpusId}) will be rendered
-                             case "corpusPath": return contextPath + corpusConfig.map(c -> "/" + c.getCorpusId()).orElse("");
-                             default: return key;
-                         }
-                     });
-                 }}));
-         // Load the specified config file
-         XMLConfiguration xmlConfig = cb.getConfiguration();
+        Parameters parameters = new Parameters();
+        ConfigurationBuilder<XMLConfiguration> cb = new FileBasedConfigurationBuilder<>(XMLConfiguration.class)
+                .configure(parameters.fileBased()
+                .setFile(configFile)
+                .setListDelimiterHandler(new DisabledListDelimiterHandler())
+                .setPrefixLookups(new HashMap<String, Lookup>(ConfigurationInterpolator.getDefaultPrefixLookups()) {{
+                    put("request", key -> {
+                        switch (key) {
+                            case "contextPath": return contextPath;
+                            case "corpusId": return corpusConfig.map(CorpusConfig::getCorpusId).orElse(""); // don't return null, or the interpolation string (${request:corpusId}) will be rendered
+                            case "corpusPath": return contextPath + corpusConfig.map(c -> "/" + c.getCorpusId()).orElse("");
+                            default: return key;
+                        }
+                    });
+                }}));
+        // Load the specified config file
+        XMLConfiguration xmlConfig = cb.getConfiguration();
 
-         corpusId = corpusConfig.map(CorpusConfig::getCorpusId);
-         // Can be specified in multiple places: search.xml, corpusConfig (in blacklab), or as a fallback, just the corpusname with some capitalization and any username removed.
-         corpusDisplayName = Arrays.asList(
-    		 xmlConfig.getString("InterfaceProperties.DisplayName"),
-    		 corpusConfig.flatMap(CorpusConfig::getDisplayName).orElse(""),
-    		 MainServlet.getCorpusName(corpusId).orElse("")
-		 )
-		 .stream().map(StringUtils::trimToNull).filter(s -> s != null).findFirst();	 
-         corpusOwner = MainServlet.getCorpusOwner(corpusId);
-         pathToCustomJs = Optional.ofNullable(StringUtils.trimToNull(xmlConfig.getString("InterfaceProperties.CustomJs")));
-         pathToCustomCss = Optional.ofNullable(StringUtils.trimToNull(xmlConfig.getString("InterfaceProperties.CustomCss")));
-         pathToFaviconDir = xmlConfig.getString("InterfaceProperties.FaviconDir", contextPath + "/img");
-         propColumns = Optional.ofNullable(StringUtils.trimToNull(xmlConfig.getString("InterfaceProperties.PropColumns")));
-         pagination = xmlConfig.getBoolean("InterfaceProperties.Article.Pagination", false);
-         pageSize = Math.max(1, xmlConfig.getInt("InterfaceProperties.Article.PageSize", 1000));
-         analyticsKey = Optional.ofNullable(StringUtils.trimToNull(xmlConfig.getString("InterfaceProperties.Analytics.Key")));
-         linksInTopBar = Stream.concat(
-			 corpusOwner.isPresent() ? Stream.of(new LinkInTopBar("My corpora", contextPath + "/corpora", false)) : Stream.empty(),
-			 xmlConfig.configurationsAt("InterfaceProperties.NavLinks.Link").stream().map(sub -> {
-				 String label = sub.getString("");
-				 String href = StringUtils.defaultIfEmpty(sub.getString("[@value]"), label);
-				 boolean newWindow = sub.getBoolean("[@newWindow]", false);
-				 boolean relative = sub.getBoolean("[@relative]", false); // No longer supported, keep around for compatibility
-				 if (relative)
-					 href = contextPath + "/" + href;
-				 
-				 return new LinkInTopBar(label, href, newWindow);
-			 })
-		 ).collect(Collectors.toList());
-         xsltParameters = xmlConfig.configurationsAt("XsltParameters.XsltParameter").stream()
-        		 .collect(Collectors.toMap(sub -> sub.getString("[@name]"), sub -> sub.getString("[@value]")));
+        corpusId = corpusConfig.map(CorpusConfig::getCorpusId);
+        // Can be specified in multiple places: search.xml, corpusConfig (in blacklab), or as a fallback, just the corpusname with some capitalization and any username removed.
+        corpusDisplayName = Arrays.asList(
+            xmlConfig.getString("InterfaceProperties.DisplayName"),
+            corpusConfig.flatMap(CorpusConfig::getDisplayName).orElse(""),
+            MainServlet.getCorpusName(corpusId).orElse("")
+    )
+        .stream().map(StringUtils::trimToNull).filter(s -> s != null).findFirst();	 
+        corpusOwner = MainServlet.getCorpusOwner(corpusId);
+        pathToCustomJs = Optional.ofNullable(StringUtils.trimToNull(xmlConfig.getString("InterfaceProperties.CustomJs")));
+        pathToCustomCss = Optional.ofNullable(StringUtils.trimToNull(xmlConfig.getString("InterfaceProperties.CustomCss")));
+        pathToFaviconDir = xmlConfig.getString("InterfaceProperties.FaviconDir", contextPath + "/img");
+        propColumns = Optional.ofNullable(StringUtils.trimToNull(xmlConfig.getString("InterfaceProperties.PropColumns")));
+        pagination = xmlConfig.getBoolean("InterfaceProperties.Article.Pagination", false);
+        pageSize = Math.max(1, xmlConfig.getInt("InterfaceProperties.Article.PageSize", 1000));
+        analyticsKey = Optional.ofNullable(StringUtils.trimToNull(xmlConfig.getString("InterfaceProperties.Analytics.Key")));
+        linksInTopBar = Stream.concat(
+            corpusOwner.isPresent() ? Stream.of(new LinkInTopBar("My corpora", contextPath + "/corpora", false)) : Stream.empty(),
+            xmlConfig.configurationsAt("InterfaceProperties.NavLinks.Link").stream().map(sub -> {
+                String label = sub.getString("");
+                String href = StringUtils.defaultIfEmpty(sub.getString("[@value]"), label);
+                boolean newWindow = sub.getBoolean("[@newWindow]", false);
+                boolean relative = sub.getBoolean("[@relative]", false); // No longer supported, keep around for compatibility
+                if (relative)
+                    href = contextPath + "/" + href;
+                
+                return new LinkInTopBar(label, href, newWindow);
+            })
+        ).collect(Collectors.toList());
+        xsltParameters = xmlConfig.configurationsAt("XsltParameters.XsltParameter").stream()
+                .collect(Collectors.toMap(sub -> sub.getString("[@name]"), sub -> sub.getString("[@value]")));
+
+        // plausible 
+        this.plausibleDomain = Optional.ofNullable(StringUtils.trimToNull(xmlConfig.getString("InterfaceProperties.Plausible.domain")));
+        this.plausibleApiHost = Optional.ofNullable(StringUtils.trimToNull(xmlConfig.getString("InterfaceProperties.Plausible.apiHost")));
     }
 
     public Optional<String> getCorpusId() {
@@ -213,10 +220,18 @@ public class WebsiteConfig {
     }
     
     public int getPageSize() {
-    	return pageSize;
+        return pageSize;
     }
 
     public Optional<String> getAnalyticsKey() {
         return analyticsKey;
+    }
+    
+    public Optional<String> getPlausibleDomain() {
+        return plausibleDomain;
+    }
+    
+    public Optional<String> getPlausibleApiHost() {
+    	return plausibleApiHost;
     }
 }

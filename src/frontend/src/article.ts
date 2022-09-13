@@ -10,6 +10,8 @@ import HighchartsExportingData from 'highcharts/modules/export-data';
 import HighchartsBoost from 'highcharts/modules/boost';
 
 import URI from 'urijs';
+//@ts-ignore
+import VuePlausible from 'vue-plausible/lib/esm/vue-plugin.js';
 
 import * as RootStore from '@/store/article';
 import ArticlePageComponent from '@/pages/article/ArticlePage.vue';
@@ -36,7 +38,17 @@ HighchartsExporting(Highcharts);
 HighchartsExportingData(Highcharts);
 HighchartsBoost(Highcharts);
 
-Vue.use(HighchartsVue);
+declare const PLAUSIBLE_DOMAIN: string|undefined;
+declare const PLAUSIBLE_APIHOST: string|undefined;
+if (PLAUSIBLE_DOMAIN && PLAUSIBLE_APIHOST) {
+	Vue.use(VuePlausible, {
+		domain: PLAUSIBLE_DOMAIN,
+		trackLocalhost: true,
+		apiHost: PLAUSIBLE_APIHOST,
+	});
+	//@ts-ignore
+	Vue.$plausible.trackPageview();
+}Vue.use(HighchartsVue);
 
 $(document).ready(() => {
 	RootStore.init();

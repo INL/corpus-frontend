@@ -7,6 +7,8 @@ import Vue from 'vue';
 
 // @ts-ignore
 import VTooltip from 'v-tooltip';
+//@ts-ignore
+import VuePlausible from 'vue-plausible/lib/esm/vue-plugin.js';
 
 import Filters from '@/components/filters';
 
@@ -135,7 +137,7 @@ function initQueryBuilder() {
 // --------------
 Vue.config.productionTip = false;
 Vue.config.errorHandler = (err, vm, info) => {
-	if (err.message !== '[vuex] Do not mutate vuex store state outside mutation handlers.') { // already logged and annoying
+	if (!err.message.includes('[vuex]' /* do not mutate vuex store state outside mutation handlers */)) { // already logged and annoying
 		ga('send', 'exception', { exDescription: err.message, exFatal: true });
 		console.error(err);
 	} else {
@@ -162,6 +164,18 @@ Vue.mixin({
 	// tslint:enable
 });
 
+
+declare const PLAUSIBLE_DOMAIN: string|undefined;
+declare const PLAUSIBLE_APIHOST: string|undefined;
+if (PLAUSIBLE_DOMAIN && PLAUSIBLE_APIHOST) {
+	Vue.use(VuePlausible, {
+		domain: PLAUSIBLE_DOMAIN,
+		trackLocalhost: true,
+		apiHost: PLAUSIBLE_APIHOST,
+	});
+	//@ts-ignore
+	Vue.$plausible.trackPageview();
+}
 Vue.use(Filters);
 Vue.use(VTooltip, {
 	popover: {

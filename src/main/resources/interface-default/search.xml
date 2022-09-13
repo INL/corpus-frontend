@@ -65,6 +65,12 @@
         </Analytics>
         -->
 
+        <!-- see https://github.com/moritzsternemann/vue-plausible -->
+        <!-- <Plausible>
+            <domain>The domain registered with plausible</domain>
+            <apiHost>The instance of plausible to use (for when self-hosting), normally https://plausible.io</apiHost>
+        </Plausible> -->
+
     </InterfaceProperties>
     <XsltParameters>
     <!--

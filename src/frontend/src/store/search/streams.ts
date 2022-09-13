@@ -23,6 +23,7 @@ import * as Api from '@/api';
 import * as BLTypes from '@/types/blacklabtypes';
 import jsonStableStringify from 'json-stable-stringify';
 import { debugLog } from '@/utils/debug';
+import Vue from 'vue';
 
 type QueryState = {
 	params?: BLTypes.BLSearchParameters,
@@ -307,9 +308,7 @@ export default () => {
 				query: state.query
 			}
 		}),
-		v => {
-			url$.next(cloneDeep(v));
-		},
+		v => url$.next(cloneDeep(v)),
 		{
 			immediate: true,
 			deep: true

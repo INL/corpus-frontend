@@ -308,7 +308,23 @@ export default () => {
 				query: state.query
 			}
 		}),
-		v => url$.next(cloneDeep(v)),
+		(cur, prev) => {
+			url$.next(cloneDeep(cur));
+			if (
+				(cur.params?.patt || cur.params?.filter) && 
+				(
+					(cur.params?.patt !== prev.params?.patt) || 
+					(cur.params?.filter || cur.params?.filter)
+				)
+			) {
+				// @ts-ignore
+				Vue.$plausible?.trackEvent('search', { props: {
+					pattern: cur.params?.patt || '',
+					filter: cur.params?.filter || ''
+				}});
+			}
+		
+		},
 		{
 			immediate: true,
 			deep: true

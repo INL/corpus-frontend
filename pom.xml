@@ -3,7 +3,7 @@
 
     <groupId>nl.inl.blacklab</groupId>
     <artifactId>corpus-frontend</artifactId>
-    <version>3.0.2-SNAPSHOT</version>
+    <version>3.0.2</version>
     <packaging>war</packaging>
 
     <name>INT Corpus Frontend</name>
@@ -28,7 +28,7 @@
         <url>https://github.com/inl/corpus-frontend</url>
         <connection>scm:git:https://github.com/inl/corpus-frontend.git</connection>
         <developerConnection>scm:git:https://github.com/inl/corpus-frontend.git</developerConnection>
-      <tag>HEAD</tag>
+      <tag>v3.0.2</tag>
   </scm>
 
     <issueManagement>

@@ -10,6 +10,8 @@ services:
     build:
         context: .
         dockerfile: docker/Dockerfile
+    volumes:
+      - ./docker/config/corpus-frontend.properties:/etc/blacklab/corpus-frontend.properties
     ports:
       - "8081:8080" # 8080 will be used by blacklab-server
 

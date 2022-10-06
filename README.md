@@ -74,10 +74,10 @@ For further development and debugging help, see the [Development section](#Devel
 First, use docker-compose to create a blacklab-server. Then, to create this frontend run:
 
 ```
-docker-compose build
+DOCKER_BUILDKIT=1 docker-compose build
 docker-compose up 
 ```
-
+The config file `./docker/config/corpus-frontend.properties` is mounted inside the container. See next section for the configuration details.
 
 Configuration
 ====================

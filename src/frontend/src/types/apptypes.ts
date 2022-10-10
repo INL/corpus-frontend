@@ -187,6 +187,9 @@ export type NormalizedFormatOld = INormalizedFormatOld & Subtract<BLTypes.BLForm
 // Types used on page
 // ------------------
 
+/**
+ * In the central Vuex store, this object represents the value of an "annotation" e.g. word/lemma/pos
+ */
 export type AnnotationValue = {
 	/** Unique id of the annotated field  */
 	// readonly annotatedFieldId: string;

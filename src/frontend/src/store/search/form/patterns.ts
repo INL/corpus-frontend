@@ -15,7 +15,7 @@ import { debugLog } from '@/utils/debug';
 import { AnnotationValue } from '@/types/apptypes';
 
 type ModuleRootState = {
-	simple: string|null;
+	simple: AnnotationValue;
 	extended: {
 		annotationValues: {
 			// [annotatedFieldId: string]: {
@@ -34,7 +34,7 @@ type ModuleRootState = {
 // Then: the basic state shape with the appropriate annotation and filters created
 // Finally: the values initialized from the page's url on first load.
 const defaults: ModuleRootState = {
-	simple: null,
+	simple: {case: false, id: '', value: '', type: 'text'},
 	extended: {
 		annotationValues: {},
 		within: null,
@@ -62,15 +62,18 @@ const get = {
 const privateActions = {
 	// initFilter: b.commit((state, payload: FilterValue) => Vue.set(state.filters, payload.id, payload), 'filter_init'),
 	// NOTE when re-integrating annotatedFieldId this needs to be updated to account.
-	initAnnotation: b.commit((state, payload: AnnotationValue) => Vue.set(state.extended.annotationValues, payload.id, payload), 'annotation_init'),
+	initExtendedAnnotation: b.commit((state, payload: AnnotationValue) => Vue.set(state.extended.annotationValues, payload.id, payload), 'annotation_init_extended'),
+	initSimpleAnnotation: b.commit((state, payload: AnnotationValue) => Object.assign(state.simple, payload), 'annotation_init_simple')
 };
 
 const actions = {
-	simple: b.commit((state, payload: string|null) => state.simple = payload, 'simple'),
+	simple: b.commit((state, {id, type, ...safeValues}: Partial<AnnotationValue>&{id: string}) => {
+		// Never overwrite annotatedFieldId or type, even when they're submitted through here.
+		Object.assign(state.simple, safeValues);
+	}, 'simple'),
 	extended: {
-		annotation: b.commit((state, {id, ...rest}: Partial<AnnotationValue>&{id: string}) => {
+		annotation: b.commit((state, {id, type, ...safeValues}: Partial<AnnotationValue>&{id: string}) => {
 			// Never overwrite annotatedFieldId or type, even when they're submitted through here.
-			const {type, ...safeValues} = rest;
 			Object.assign(state.extended.annotationValues[id], safeValues);
 		}, 'extended_annotation'),
 		within: b.commit((state, payload: string|null) => state.extended.within = payload, 'extended_within'),
@@ -88,7 +91,8 @@ const actions = {
 	expert: b.commit((state, payload: string|null) => state.expert = payload, 'expert'),
 
 	reset: b.commit(state => {
-		state.simple = null;
+		state.simple.value = '';
+		state.simple.case = false;
 		actions.extended.reset();
 		state.advanced = null;
 		state.expert = null;
@@ -108,13 +112,19 @@ const actions = {
 /** We need to call some function from the module before creating the root store or this module won't be evaluated (e.g. none of this code will run) */
 const init = () => {
 	CorpusStore.get.allAnnotations().forEach(({id, uiType}) =>
-		privateActions.initAnnotation({
+		privateActions.initExtendedAnnotation({
 			id,
 			value: '',
 			case: false,
 			type: uiType
 		})
 	);
+	privateActions.initSimpleAnnotation({
+		id: CorpusStore.get.firstMainAnnotation().id,
+		value: '',
+		case: false,
+		type: CorpusStore.get.firstMainAnnotation().uiType,
+	});
 	debugLog('Finished initializing pattern module state shape');
 };
 

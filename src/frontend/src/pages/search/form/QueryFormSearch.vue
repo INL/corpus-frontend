@@ -17,44 +17,11 @@
 					>{{firstMainAnnotation.displayName}}
 					</label>
 
-					<Lexicon v-if="firstMainAnnotation.uiType === 'lexicon'"
-						autofocus
-
-						:annotationId="firstMainAnnotation.id"
-						:definition="firstMainAnnotation"
-						v-model="simple"
-
-						ref="reset"
-					/>
-					<SelectPicker v-else-if="firstMainAnnotation.uiType === 'select'"
-						data-width="100%"
-						data-class="btn btn-lg btn-default"
-						autofocus
-
-						:searchable="firstMainAnnotation.values.length > 12"
-						:placeholder="firstMainAnnotation.displayName"
-						:data-id="firstMainAnnotation.id + '_' + uid"
-						:data-name="firstMainAnnotation.id + '_' + uid"
-						:data-dir="textDirection"
-
-						:options="firstMainAnnotation.values"
-
-						v-model="simple"
-					/>
-					<Autocomplete v-else
-						type="text"
-						class="form-control"
-						autofocus
-
-						useQuoteAsWordBoundary
-
-						:id="firstMainAnnotation.id + '_' + uid"
-						:placeholder="firstMainAnnotation.displayName"
-						:dir="textDirection"
-
-						:autocomplete="firstMainAnnotation.uiType === 'combobox'"
-						:url="firstMainAnnotationACUrl"
-						v-model="simple"
+					<Annotation
+						:key="'simple/' + firstMainAnnotation.annotatedFieldId + '/' + firstMainAnnotation.id"
+						:htmlId="'simple/' + firstMainAnnotation.annotatedFieldId + '/' + firstMainAnnotation.id"
+						:annotation="firstMainAnnotation"
+						bare
 					/>
 				</div>
 			</div>
@@ -155,10 +122,6 @@ import * as GapStore from '@/store/search/form/gap';
 import * as HistoryStore from '@/store/search/history';
 
 import Annotation from '@/pages/search/form/Annotation.vue';
-import Lexicon from '@/pages/search/form/Lexicon.vue';
-import SelectPicker, { Option } from '@/components/SelectPicker.vue';
-// @ts-ignore
-import Autocomplete from '@/components/Autocomplete.vue';
 import uid from '@/mixins/uid';
 
 import { QueryBuilder } from '@/modules/cql_querybuilder';
@@ -171,9 +134,6 @@ export default Vue.extend({
 	mixins: [uid],
 	components: {
 		Annotation,
-		Autocomplete,
-		SelectPicker,
-		Lexicon
 	},
 	data: () => ({
 		parseQueryError: null as string|null,
@@ -218,7 +178,7 @@ export default Vue.extend({
 			set: PatternStore.actions.extended.splitBatch
 		},
 		simple: {
-			get(): string|null { return PatternStore.getState().simple; },
+			get(): AppTypes.AnnotationValue { return PatternStore.getState().simple; },
 			set: PatternStore.actions.simple,
 		},
 		advancedEnabled(): boolean { return UIStore.getState().search.advanced.enabled; },
@@ -236,8 +196,8 @@ export default Vue.extend({
 		}
 	},
 	methods: {
-		getTabId(name: string) {
-			return name.replace(/[^\w]/g, '_') + '_annotations';
+		getTabId(name?: string) {
+			return name?.replace(/[^\w]/g, '_') + '_annotations';
 		},
 		parseQuery() {
 			// TODO dedicated component - port builder?

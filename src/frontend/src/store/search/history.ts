@@ -26,7 +26,9 @@ import { NormalizedIndex } from '@/types/apptypes';
 import { debugLog } from '@/utils/debug';
 import { getFilterSummary } from '@/components/filters/filterValueFunctions';
 
-const version = 6;
+// Update the version whenever one of the properties in type HistoryEntry changes
+// That is enough to prevent loading out-of-date history.
+const version = 7;
 
 type HistoryEntry = {
 	// always set

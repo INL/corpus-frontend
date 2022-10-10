@@ -48,7 +48,7 @@ Help is contained in the application in the form of a _page guide_ that can be o
 Installation
 ===================
 
-## Requirements:
+## Requirements
 
 - Java 1.8
 - A java servlet container such as [Apache Tomcat](https://tomcat.apache.org/).
@@ -510,14 +510,18 @@ Because the format config specifies the shape of a corpus (which metadata and an
       E.G.: the document has `date_lower=1900` and `date_upper=1950`. The query is `1900-1910`, this matches when using Permissive (as the values overlap somewhat), while Strict would not match, as the document's actual value could also be outside this range. To also match using Strict, the query would have to be at least `1899-1951`.
 
     - **Date**
-      A calendar-based filter for dates. 
+      A special filter for dates. 
+      It works much like the `Multi-field Range` filter, only for full dates instead of only a single number.
+
+      It can work on either one metadata field or two separate metadata fields (for when the exact date is unknown, but an earliest and latest possible date is known).
       
-    
       ![](docs/img/metadata_date.png)
 
-      It expects dates to be formatted as YYYYMMDD e.g. 20220403 for 3rd of april 2022.  
-      It expects a leading zero for dates before the year 1000.
-      It works much like the `Multi-field Range` filter, only for full dates instead of only a single number.
+      During setup, dates can be configured four ways: 
+      - A string in the format of `yyyymmdd`. January is 01.
+      - A string in the format of `yyyy-mm-dd`. January is 01.
+      - A javascript `Date` object
+      - A javascript object in the shape of `{y: '1900', m: '01', d: '01}`
 
       Config as follows:
         ```javascript
@@ -528,12 +532,33 @@ Because the format config specifies the shape of a corpus (which metadata and an
               // displayName: 'Date text witness',
               // groupId: 'Date', // The filter tab under which this should be placed, missing tabs will be created
               id: 'my-date-range-filter', // a unique id for internal bookkeeping
-              metadata: { // Info the widget needs to do its work
-                low: 'date_lower', // the id of the metadata field containing the lower bound
-                high: 'date_upper', // the id of the metadata field containing the upper bound
-                mode: null, // allowed values: 'strict' and 'permissive'. When this is set, hides the 'strictness' selector, and forces strictness to the set mode
+              
+              // Setup using only one metadata field:
+              metadata: { 
+                field: 'date', // the id of the metadata field containing the date
+                
+                // Optional:
+                range: boolean,
+                min: '1900-01-01', // see accepted values above.
+                max: '1900-01-01', // see accepted values above.
+              },
+
+              // Setup using two metadata fields:
+              metadata: {
+                from_field: 'date_start', // id of the metadata field for the start date in your documents
+                to_field: 'date_end', // id of the metadata field for the end date in your documents
+                mode: 'strict'|'permissive', // default mode.
+
+                // Optional:
+                range: boolean,
+                min: '1900-01-01', // see accepted values above.
+                max: '1900-01-01', // see accepted values above.
+
               }
             },
+            // Optional: ID of another filter in the same group before which to insert this filter, if omitted, the filter is appended at the end.
+		        insertBefore: 'some-other-filter'
+        }
         ```
 
         > Tip: Use blacklab's `concatDate` process  
@@ -730,21 +755,98 @@ Through javascript you can do many things, but outlined below are some of the mo
   </details>
 
 - <details>
-    <summary>[Search] - Show/hide Split-Batch and Within</summary>
+    <summary>[Search] - Write your own (annotation) search fields
 
-    `vuexModules.ui.actions.search.extended.splitBatch.enable(false)`
-    `vuexModules.ui.actions.search.extended.within.enable(false)`
+    It's possible to completely replace the rendering of an annotation with your own plugin.
 
-    It's also possible to set which tags are shown (and how) in `within`.
-    You can only add tags that you actually index (using the [inlineTags options](https://inl.github.io/BlackLab/guide/how-to-configure-indexing.html#annotated-configuration-file) in your index config yaml)
-    ```js
-    vuexModules.ui.actions.search.extended.within.elements({
-      title: 'Tooltip here (optional)',
-      label: 'Sentence',
-      value: 's'
-    });
+    ```javascript
+    /** 
+     * @typedef {Object} AnnotationValue  
+     * @property {string} value 
+     * @property {boolean} case is the case-sensitive checkbox ticked (only applicable if caseSensitive === true in the config for this annotation)
+     */
+
+    /** 
+     * @typedef {Object} NormalizedAnnotation 
+     * @property {string} annotatedFieldId id of the field this annotation resides in, usually 'contents'
+     * @property {boolean} caseSensitive does the annotation super case-sensitive search
+     * @property {string} description description of the annotation as set in the .blf.yaml
+     * @property {string} displayName 
+     * @property {boolean} hasForwardIndex without a forward index, an annotation can only be searched, but not displayed
+     * @property {string} id 'lemma', 'pos', etc. These are only unique within the same annotatedField
+     * @property {boolean} isInternal once upon a time this was used to hide certain annotations from the interface.
+     * @property {boolean} isMainAnnotation  True if this is the default annotation that is matched when a cql query does not specify the field. (e.g. just "searchTerm" instead of [fieldName="searchTerm"]
+     * @property {string} offsetsAlternative blacklab internal
+     * @property {string} [parentAnnotationId] (optional) if this is a subannotation, what is its parent annotation
+     * @property {string[]} [subAnnotations] (optional) only if this has any subannotation
+     * @property {'select'|'combobox'|'text'|'pos'|'lexicon'} uiType 
+     * @property {Array<{value: string, label: string, title: string|null}>} [values] (optional) list of of all possible values, omitted if too many values.
+     */
+
+    // OPTION 1: using jquery.
+    // Create a div and attach event handlers. 
+    // You will also need to implement the update() function
+    // Otherwise your component will go out of sync if the user presses the reset button, 
+    // or uses the history, or loads in from an existing url.
+    vuexModules.ui.getState().search.shared.customAnnotations.word = {
+      /** 
+       * @param {NormalizedAnnotation} config
+       * @param {AnnotationValue} value
+       * @param {Vue} vue the vue library
+       */
+      render(config, state, Vue) {
+        return $(`
+        <div>
+          <div>Custom render function for "word"</div>
+          <label>${config.description}
+            <input type="text" value="${state.value.replace('"', "&quot;")}">
+          </label>
+          <label><input type="checkbox" ${state.case ? 'checked' : ''}">custom case sensitive?</label>
+        </div>`)
+        .on('change', 'input[type="checkbox"]', e => state.case = e.target.checked)
+        .on('input', 'input[type="text"]', e => state.value = e.target.value)
+      },
+
+      /** 
+       * @param {AnnotationValue} cur new value
+       * @param {AnnotationValue} prev previous value
+       * @param {HTMLElement} element div 
+       */
+      update(cur, prev, element) {
+        element = $(element);
+        element.find('input[type="text"]').val(cur.value);
+        element.find('input[type="checkbox"]').prop('checked', cur.case);
+      }
+    }
+
+    // OPTION 2: use Vue directly.
+    // you may leave the update() function undefined,
+    // as the reactivity will do the work.
+    vuexModules.ui.getState().search.shared.customAnnotations.word = {
+        /** 
+        * @param {NormalizedAnnotation} config
+        * @param {AnnotationValue} value
+        * @param {Vue} vue the vue library
+        */
+        render(config, state, Vue) {
+            return new Vue({
+                ...Vue.compile(`
+                  <div>
+                    <h2>{{config.displayName}}</h2>
+                    <input v-model="state.value"> <input type="checkbox" v-model="state.case">
+                  </div>
+                `),
+                data: {
+                  state, 
+                  config
+                }
+            })
+        }
+    }    
     ```
+  
   </details>
+
 
 - <details>
     <summary>[Results] - Show/hide the export buttons</summary>

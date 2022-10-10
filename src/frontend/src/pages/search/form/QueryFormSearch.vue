@@ -298,7 +298,7 @@ export default Vue.extend({
 		const extendedValues = PatternStore.getState().extended.annotationValues;
 		const simpleValue = PatternStore.getState().simple;
 
-		function isVue(v: any): v is Vue { return !!v.template; }
+		function isVue(v: any): v is Vue { return v instanceof Vue; }
 		function isJQuery(v: any): v is JQuery { return v instanceof jQuery; }
 
 		// render custom annotation components (as defined by external js by setting a render function in the Vuex store)
@@ -319,7 +319,7 @@ export default Vue.extend({
 			if (typeof ui === 'string') container.innerHTML = ui;
 			else if (ui instanceof HTMLElement) container.appendChild(ui);
 			else if (isJQuery(ui)) ui.appendTo(container);
-			else ui.$mount(container);
+			else if (isVue(ui)) ui.$mount(container);
 
 			if (!isVue(ui)) {
 				RootStore.store.watch(state => key === '_simple' ? simpleValue : extendedValues[annotId], (cur, prev) => update(cur, prev, container), {deep: true});

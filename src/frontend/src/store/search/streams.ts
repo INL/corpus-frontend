@@ -311,10 +311,10 @@ export default () => {
 		(cur, prev) => {
 			url$.next(cloneDeep(cur));
 			if (
-				(cur.params?.patt || cur.params?.filter) && 
+				(cur.params?.patt || cur.params?.filter) &&
 				(
-					(cur.params?.patt !== prev.params?.patt) || 
-					(cur.params?.filter || cur.params?.filter)
+					(cur.params?.patt !== prev?.params?.patt) ||
+					(cur.params?.filter !== prev?.params?.filter)
 				)
 			) {
 				// @ts-ignore
@@ -323,7 +323,7 @@ export default () => {
 					filter: cur.params?.filter || ''
 				}});
 			}
-		
+
 		},
 		{
 			immediate: true,

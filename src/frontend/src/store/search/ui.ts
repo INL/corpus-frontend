@@ -56,6 +56,10 @@ type ModuleRootState = {
 			 * This remains a bit of a TODO but it requires some deep thinking and architectural changes.
 			 */
 			searchMetadataIds: string[];
+			customAnnotations: Record<string, {
+				render(config: AppTypes.NormalizedAnnotation, state: AppTypes.AnnotationValue, vue: Vue): HTMLElement|JQuery<HTMLElement>|string|Vue,
+				update(newState: AppTypes.AnnotationValue, oldState: AppTypes.AnnotationValue, element: HTMLElement): void
+			}>
 		}
 	};
 
@@ -232,6 +236,7 @@ const initialState: ModuleRootState = {
 
 		shared: {
 			searchMetadataIds: [],
+			customAnnotations: {}
 		}
 	},
 	explore: {

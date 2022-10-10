@@ -17,7 +17,12 @@
 					>{{firstMainAnnotation.displayName}}
 					</label>
 
-					<Annotation
+					<div v-if="customAnnotations[firstMainAnnotation.id]"
+						:data-custom-annotation-root="firstMainAnnotation.id"
+						ref="_simple"
+					/>
+
+					<Annotation v-else
 						:key="'simple/' + firstMainAnnotation.annotatedFieldId + '/' + firstMainAnnotation.id"
 						:htmlId="'simple/' + firstMainAnnotation.annotatedFieldId + '/' + firstMainAnnotation.id"
 						:annotation="firstMainAnnotation"
@@ -38,20 +43,39 @@
 							:key="index"
 							:id="getTabId(tab.label)"
 						>
-							<Annotation v-for="annotation in tab.entries"
-								:key="getTabId(tab.label) + '/' + annotation.annotatedFieldId + '/' + annotation.id"
-								:htmlId="getTabId(tab.label) + '/' + annotation.annotatedFieldId + '/' + annotation.id"
-								:annotation="annotation"
-							/>
+							<template v-for="annotation in tab.entries">
+								<div v-if="customAnnotations[annotation.id]"
+									:key="getTabId(tab.label) + '/' + annotation.annotatedFieldId + '/' + annotation.id"
+									:data-custom-annotation-root="annotation.id"
+									:ref="getTabId(tab.label) + '/' + annotation.annotatedFieldId + '/' + annotation.id"
+								/>
+
+								<Annotation v-else
+									:key="getTabId(tab.label) + '/' + annotation.annotatedFieldId + '/' + annotation.id"
+									:htmlId="getTabId(tab.label) + '/' + annotation.annotatedFieldId + '/' + annotation.id"
+									:annotation="annotation"
+								/>
+							</template>
+
 						</div>
 					</div>
 				</template>
 				<template v-else>
-					<Annotation v-for="annotation in allAnnotations"
-						:key="annotation.annotatedFieldId + '/' + annotation.id"
-						:htmlId="annotation.annotatedFieldId + '/' + annotation.id"
-						:annotation="annotation"
-					/>
+					<template v-for="annotation in allAnnotations">
+						<div v-if="customAnnotations[annotation.id]"
+							:key="annotation.annotatedFieldId + '/' + annotation.id + '/custom'"
+							:data-custom-annotation-root="annotation.id"
+							:ref="annotation.annotatedFieldId + '/' + annotation.id"
+						></div>
+
+						<Annotation v-else
+							:key="annotation.annotatedFieldId + '/' + annotation.id + '/builtin'"
+							:htmlId="annotation.annotatedFieldId + '/' + annotation.id"
+							:annotation="annotation"
+						/>
+					</template>
+
+
 				</template>
 
 				<!-- show this even if it's disabled when "within" contains a value, or you can never remove the value -->
@@ -193,6 +217,10 @@ export default Vue.extend({
 		gapValue: {
 			get: GapStore.get.gapValue,
 			set: GapStore.actions.gapValue
+		},
+
+		customAnnotations() {
+			return UIStore.getState().search.shared.customAnnotations;
 		}
 	},
 	methods: {
@@ -262,6 +290,46 @@ export default Vue.extend({
 				}
 			}));
 		}
+
+		// custom annotation widget setup.
+		const customAnnotations = UIStore.getState().search.shared.customAnnotations;
+
+		const configs = CorpusStore.get.allAnnotationsMap()
+		const extendedValues = PatternStore.getState().extended.annotationValues;
+		const simpleValue = PatternStore.getState().simple;
+
+		function isVue(v: any): v is Vue { return !!v.template; }
+		function isJQuery(v: any): v is JQuery { return v instanceof jQuery; }
+
+		// render custom annotation components (as defined by external js by setting a render function in the Vuex store)
+		// for custom annotations we render an empty div, which then gets filled by the result of that render function
+		// we assume the custom functions
+
+		function setupCustomComponent(key: string, div: Element|Vue) {
+			if (!(div instanceof HTMLElement) || !div.hasAttribute('data-custom-annotation-root')) return;
+
+			const container = div;
+			const annotId = div.getAttribute('data-custom-annotation-root')!;
+			const {render, update} = customAnnotations[annotId];
+
+			const config: AppTypes.NormalizedAnnotation = configs[annotId];
+			const value = key === '_simple' ? simpleValue : extendedValues[annotId];
+
+			const ui = render(config, value, Vue);
+			if (typeof ui === 'string') container.innerHTML = ui;
+			else if (ui instanceof HTMLElement) container.appendChild(ui);
+			else if (isJQuery(ui)) ui.appendTo(container);
+			else ui.$mount(container);
+
+			if (!isVue(ui)) {
+				RootStore.store.watch(state => key === '_simple' ? simpleValue : extendedValues[annotId], (cur, prev) => update(cur, prev, container), {deep: true});
+			}
+		}
+
+		Object.entries(this.$refs).forEach(([refId, ref]) => {
+			if (Array.isArray(ref)) ref.forEach(r => setupCustomComponent(refId, r));
+			else if (ref instanceof HTMLElement) setupCustomComponent(refId, ref);
+		});
 	}
 })
 </script>

@@ -46,11 +46,9 @@
 		// Allow @decorator
 		"experimentalDecorators": true,
 		"lib": [
-			"es2017",
 			"dom",
 			"dom.iterable",
-			"es2018.promise",
-			"esnext.array"
+			"ES2019"
 		],
 
 		// Enable importing source files by their absolute path by prefixing with "@/"
@@ -76,4 +74,7 @@
 			"@types/jqueryui"
 		]
 	},
+	"vueCompilerOptions": {
+		"target": 2
+	}
 }

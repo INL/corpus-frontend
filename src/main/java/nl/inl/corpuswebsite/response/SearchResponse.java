@@ -13,7 +13,7 @@ import nl.inl.corpuswebsite.utils.QueryServiceHandler.QueryException;
 public class SearchResponse extends BaseResponse {
 
     public SearchResponse() {
-        super(true);
+        super("search", true);
     }
 
     @Override

@@ -33,9 +33,12 @@
         <link rel="stylesheet" href="$pathToTop/css/vendor/pageguide.min.css?_$cache">
         <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
         <link rel="stylesheet" href="$pathToTop/css/main.css?_$cache">
-        ## Custom JS in footer
-        #if ($websiteConfig.getPathToCustomCss().isPresent())
-            <link rel="stylesheet" href="$websiteConfig.getPathToCustomCss().get()?_$cache">
+        ## custom JS in footer
+        #foreach($path in $websiteConfig.getCustomCSS($page))
+            <link rel="stylesheet" href="$path?_$cache">
+        #end
+        #foreach($path in $websiteConfig.getCustomCSS(""))
+            <link rel="stylesheet" href="$path?_$cache">
         #end
 
         <script>
@@ -47,7 +50,7 @@
 
             var PLAUSIBLE_DOMAIN = "$esc.javascript($websiteConfig.getPlausibleDomain().orElse(null))"
             var PLAUSIBLE_APIHOST = "$esc.javascript($websiteConfig.getPlausibleApiHost().orElse(null))"
-            
+
             // Place to register CustomJS hook functions
             var hooks = {};
         </script>
@@ -66,7 +69,7 @@
                 <div class="navbar-header">
                     <div class="navbar-logo-container">
                         <div class="navbar-logo"></div>
-                    </div> 
+                    </div>
 
                     #if($websiteConfig.getCorpusId().isPresent())
                     <a href='$pathToTop/$websiteConfig.getCorpusId().get()/search/' class='navbar-brand'>$websiteConfig.getCorpusDisplayName().get()</a>
@@ -93,7 +96,7 @@
 
         <noscript>
             <br/><br/><br/>
-            <div class="alert alert-error">    
+            <div class="alert alert-error">
                 <h1>Error: JavaScript disabled.</h1>
                 We notice that you have JavaScript disabled in your browser. This website requires JavaScript to be enabled. Please enable JavaScript to use this website.
             </div>

@@ -1,10 +1,12 @@
 package nl.inl.corpuswebsite.utils;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -73,12 +75,6 @@ public class WebsiteConfig {
     /** User for this corpus, unset if no corpus set or this corpus has no owner. */
     private final Optional<String> corpusOwner;
 
-    /** Custom css to use */
-    private final Optional<String> pathToCustomCss;
-
-    /** Custom js to use */
-    private final Optional<String> pathToCustomJs;
-
     /** Should be a directory */
     private final String pathToFaviconDir;
 
@@ -101,6 +97,9 @@ public class WebsiteConfig {
     private final List<LinkInTopBar> linksInTopBar;
 
     private final Map<String, String> xsltParameters;
+
+    private final Map<String, List<String>> customJS = new HashMap<>();
+    private final Map<String, List<String>> customCSS = new HashMap<>();
 
     /**
      * Note that corpus may be null, when parsing the default website settings for non-corpus pages (such as the landing page).
@@ -130,19 +129,34 @@ public class WebsiteConfig {
                     });
                 }}));
         // Load the specified config file
+
         XMLConfiguration xmlConfig = cb.getConfiguration();
 
         corpusId = corpusConfig.map(CorpusConfig::getCorpusId);
         // Can be specified in multiple places: search.xml, corpusConfig (in blacklab), or as a fallback, just the corpusname with some capitalization and any username removed.
-        corpusDisplayName = Arrays.asList(
-            xmlConfig.getString("InterfaceProperties.DisplayName"),
-            corpusConfig.flatMap(CorpusConfig::getDisplayName).orElse(""),
-            MainServlet.getCorpusName(corpusId).orElse("")
-    )
-        .stream().map(StringUtils::trimToNull).filter(s -> s != null).findFirst();	 
+        corpusDisplayName = Stream
+            .of(
+                xmlConfig.getString("InterfaceProperties.DisplayName"),
+                corpusConfig.flatMap(CorpusConfig::getDisplayName).orElse(""),
+                MainServlet.getCorpusName(corpusId).orElse("")
+            )
+            .map(StringUtils::trimToNull)
+            .filter(Objects::nonNull)
+            .findFirst();
+
         corpusOwner = MainServlet.getCorpusOwner(corpusId);
-        pathToCustomJs = Optional.ofNullable(StringUtils.trimToNull(xmlConfig.getString("InterfaceProperties.CustomJs")));
-        pathToCustomCss = Optional.ofNullable(StringUtils.trimToNull(xmlConfig.getString("InterfaceProperties.CustomCss")));
+        
+        xmlConfig.configurationsAt("InterfaceProperties.CustomJs").forEach(sub -> {
+            String page = sub.getString("[@page]", "").toLowerCase();
+            String url = sub.getString("", "");
+            if (!url.isEmpty()) customJS.computeIfAbsent(page, __ -> new ArrayList<>()).add(url);
+        });
+        xmlConfig.configurationsAt("InterfaceProperties.CustomCss").forEach(sub -> {
+            String page = sub.getString("[@page]", "").toLowerCase();
+            String url = sub.getString("", "");
+            if (!url.isEmpty()) customCSS.computeIfAbsent(page, __ -> new ArrayList<>()).add(url);
+        });
+
         pathToFaviconDir = xmlConfig.getString("InterfaceProperties.FaviconDir", contextPath + "/img");
         propColumns = Optional.ofNullable(StringUtils.trimToNull(xmlConfig.getString("InterfaceProperties.PropColumns")));
         pagination = xmlConfig.getBoolean("InterfaceProperties.Article.Pagination", false);
@@ -199,12 +213,12 @@ public class WebsiteConfig {
         return xsltParameters;
     }
 
-    public Optional<String> getPathToCustomCss() {
-        return pathToCustomCss;
+    public List<String> getCustomJS(String page) {
+        return customJS.computeIfAbsent(page, __ -> new ArrayList<>());
     }
 
-    public Optional<String> getPathToCustomJs() {
-        return pathToCustomJs;
+    public List<String> getCustomCSS(String page) {
+        return customCSS.computeIfAbsent(page, __ -> new ArrayList<>());
     }
 
     public String getPathToFaviconDir() {

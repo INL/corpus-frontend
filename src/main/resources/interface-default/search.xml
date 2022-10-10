@@ -27,11 +27,18 @@
         if that is not configured either, the internal corpus name is shown. -->
         <!--<DisplayName>BlackLab AutoSearch Corpus Search</DisplayName>-->
 
-        <!-- You can include custom js and css (usually from your corpus interface directory under /${contextPath}/corpusname/static/**), but external sites are supported. -->
-        <!--<CustomJs>${request:corpusPath}/static/your.js</CustomJs>-->
-        <!--<CustomCss>${request:corpusPath}/static/your.css</CustomCss>-->
+
         <!-- Should be a directory; see webapp/img/ for a full listing of files -->
         <FaviconDir>${request:contextPath}/img</FaviconDir>
+
+        <!-- 
+            You can include custom js and css (usually from your corpus interface directory under /${contextPath}/corpusname/static/**), but external sites are supported.
+            page attribute: only include script/css on specified page (default is all pages). (options: search, article, about, help, error, config, corpora, remote-index)
+        -->
+        <!-- 
+            <CustomJs page="search">${request:corpusPath}/static/some.other.js</CustomJs>
+            <CustomCss page="article">${request:corpusPath}/static/your.css</CustomCss> 
+        -->
 
         <!--
             You can define which properties/annotations to show as colummns in the results table.

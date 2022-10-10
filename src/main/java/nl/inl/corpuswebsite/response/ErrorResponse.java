@@ -10,7 +10,7 @@ import nl.inl.corpuswebsite.BaseResponse;
 public class ErrorResponse extends BaseResponse {
 
     public ErrorResponse() {
-        super(false);
+        super("error", false);
     }
 
     @Override

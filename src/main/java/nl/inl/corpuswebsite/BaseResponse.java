@@ -45,6 +45,8 @@ public abstract class BaseResponse {
     /** Velocity template variables */
     protected VelocityContext context = new VelocityContext();
 
+    protected String name = "";
+
     /** Does this response require a corpus to be set? */
     private boolean requiresCorpus = false;
 
@@ -66,7 +68,8 @@ public abstract class BaseResponse {
      * @param requiresCorpus when set, causes an exception to be thrown when {@link BaseResponse#corpus} is not set when
      *        {@link #completeRequest()} is called.
      */
-    protected BaseResponse(boolean requiresCorpus) {
+    protected BaseResponse(String name, boolean requiresCorpus) {
+        this.name = name;
         this.requiresCorpus = requiresCorpus;
     }
 
@@ -121,6 +124,7 @@ public abstract class BaseResponse {
         // Clientside js variables (some might be used in vm directly)
         context.put("pathToTop", servlet.getServletContext().getContextPath());
         context.put("blsUrl", servlet.getExternalWebserviceUrl());
+        context.put("page", this.name);
 
         logger.debug("jspath {}", servlet.getAdminProps().getProperty(MainServlet.PROP_JSPATH));
 

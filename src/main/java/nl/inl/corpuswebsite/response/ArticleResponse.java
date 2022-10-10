@@ -62,7 +62,7 @@ public class ArticleResponse extends BaseResponse {
     }
 
     public ArticleResponse() {
-        super(true);
+        super("article", true);
     }
 
     private static class ActionableException extends Exception {

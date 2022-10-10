@@ -14,7 +14,7 @@ import nl.inl.corpuswebsite.MainServlet;
 public class CorporaResponse extends BaseResponse {
 
     public CorporaResponse() {
-        super(false);
+        super("corpora", false);
     }
 
     @Override

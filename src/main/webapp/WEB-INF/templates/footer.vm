@@ -1,5 +1,5 @@
         <div class="container">
-            <footer class="row"> 
+            <footer class="row">
                 <hr>
                 <p class="col-xs-12">Dutch Language Institute Corpus Search Interface v1.3 &copy; <a href="http://www.ivdnt.org">INT</a> 2013-$date.get('yyyy')</p>
             </footer>
@@ -8,23 +8,27 @@
         #if($googleAnalyticsKey)
         #set($unescaped = $googleAnalyticsKey) ## see BaseResponse.java
         <script>
-        window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
-        ga('create', '$unescaped', 'auto');
-        ga('set', 'anonymizeIp', true);
-	ga('set','page',window.location.href);
-		ga('send', 'pageview');
+            window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+            ga('create', '$unescaped', 'auto');
+            ga('set', 'anonymizeIp', true);
+            ga('set','page',window.location.href);
+            ga('send', 'pageview');
         </script>
         <script async src='https://www.google-analytics.com/analytics.js'></script>
-        #else 
-        ## insert a no-op so we don't have to add conditionals to check if ga is enabled everywhere 
+        #else
+        ## insert a no-op so we don't have to add conditionals to check if ga is enabled everywhere
         <script>
         window.ga=window.ga||function(){};
         </script>
         #end
 
         ## custom css in header to prevent FOUT
-        #if ($websiteConfig.getPathToCustomJs().isPresent())
-            <script src="$websiteConfig.getPathToCustomJs().get()?_$cache"></script>
+        #foreach($path in $websiteConfig.getCustomJS($page))
+            <script src="$path?_$cache"></script>
+        #end
+        ## custom css in header to prevent FOUT
+        #foreach($path in $websiteConfig.getCustomJS(""))
+            <script src="$path?_$cache"></script>
         #end
     </body>
 </html>

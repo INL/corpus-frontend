@@ -5,7 +5,7 @@ import nl.inl.corpuswebsite.BaseResponse;
 public class RemoteIndexResponse extends BaseResponse {
 
     public RemoteIndexResponse() {
-        super(false);
+        super("remote-index", false);
     }
 
     @Override

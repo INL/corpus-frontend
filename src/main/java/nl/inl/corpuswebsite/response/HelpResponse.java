@@ -12,7 +12,7 @@ import nl.inl.corpuswebsite.BaseResponse;
 public class HelpResponse extends BaseResponse {
 
     public HelpResponse() {
-        super(false);
+        super("help", false);
     }
 
     @Override

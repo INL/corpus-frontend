@@ -17,7 +17,7 @@ public class ConfigResponse extends BaseResponse {
     }
     
     public ConfigResponse() {
-        super(false);
+        super("config", false);
     }
 
     @Override

@@ -22,7 +22,7 @@ import nl.inl.corpuswebsite.MainServlet;
 public class CorporaDataResponse extends BaseResponse {
 
     public CorporaDataResponse() {
-        super(false); // allow getting static files without corpus, this normally never happens, but we clear the corpus for /default/ static files
+        super("data", false); // allow getting static files without corpus, this normally never happens, but we clear the corpus for /default/ static files
     }
 
     @Override

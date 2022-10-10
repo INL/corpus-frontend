@@ -23,8 +23,8 @@
 					'col-xs-12': true,
 			 		'visible-xs': true,
 					'visible-sm': true,
-					'visible-md': queryBuilderVisible || this.activeForm === 'explore',
-					'visible-lg': queryBuilderVisible || this.activeForm === 'explore'
+					'visible-md': queryBuilderVisible || activeForm === 'explore',
+					'visible-lg': queryBuilderVisible || activeForm === 'explore'
 				}"
 			>
 				<hr/>

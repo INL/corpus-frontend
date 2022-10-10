@@ -1,7 +1,7 @@
 <template>
-	<div class="form-group propertyfield" :id="htmlId"> <!-- behaves as .row when in .form-horizontal so .row may be omitted -->
-		<label :for="inputId" class="col-xs-12 col-md-3" :title="annotation.description || undefined">{{displayName}} <Debug>(id: {{annotation.id}})</Debug></label>
-		<div class="col-xs-12 col-md-9">
+	<div :class="bare ? '' : 'form-group propertyfield'" :id="htmlId"> <!-- behaves as .row when in .form-horizontal so .row may be omitted -->
+		<label v-if="!bare" :for="inputId" class="col-xs-12 col-md-3" :title="annotation.description || undefined">{{displayName}} <Debug>(id: {{annotation.id}})</Debug></label>
+		<div :class="bare ? '' : 'col-xs-12 col-md-9'">
 			<SelectPicker v-if="annotation.uiType === 'select'"
 				data-width="100%"
 				container="body"
@@ -24,7 +24,7 @@
 
 				ref="reset"
 			/>
-			<div v-else class="input-group">
+			<div v-else :class="bare ? '' : 'input-group'">
 				<Autocomplete
 					type="text"
 					class="form-control"
@@ -41,7 +41,7 @@
 					:url="autocompleteUrl"
 					v-model="value"
 				/>
-				<div class="input-group-btn">
+				<div v-if="!bare" class="input-group-btn">
 					<a v-if="annotation.uiType === 'pos'"
 						data-toggle="modal"
 						class="btn btn-default"
@@ -75,7 +75,7 @@
 					ref="reset"
 				/>
 			</template>
-			<div v-if="annotation.caseSensitive" class="checkbox">
+			<div v-if="annotation.caseSensitive && !bare" class="checkbox">
 				<label :for="caseInputId">
 					<input
 						type="checkbox"
@@ -119,7 +119,8 @@ export default Vue.extend({
 	},
 	props: {
 		annotation: Object as () => NormalizedAnnotation,
-		htmlId: String
+		htmlId: String,
+		bare: Boolean
 	},
 	data: () => ({
 		subscriptions: [] as Array<() => void>,

@@ -109,14 +109,8 @@ const get = {
 			switch (state.subForm) {
 				case 'simple': {
 					const pattern = (state as ModuleRootStateSearch<'simple'>).formState;
-					if (!pattern) { return undefined; }
-					const {id, uiType} = CorpusModule.get.firstMainAnnotation();
-					return getPatternString([{
-						case: false,
-						id,
-						value: pattern,
-						type: getCorrectUiType(uiTypeSupport.search.simple, uiType)
-					}], null);
+
+					return getPatternString([pattern], null);
 				}
 				case 'extended': {
 					const pattern = (state as ModuleRootStateSearch<'extended'>).formState;

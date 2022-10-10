@@ -102,7 +102,6 @@ const actions = {
 			actions.searchSplitBatches();
 			return;
 		}
-
 		// Reset the grouping/page/sorting/etc
 		ResultsManager.actions.resetResults();
 
@@ -255,7 +254,7 @@ const actions = {
 				patterns: {
 					advanced: null,
 					expert: null,
-					simple: null,
+					simple: {...PatternModule.getState().simple, value: '', case: false},
 					extended: {
 						annotationValues: {
 							[a.id]: a

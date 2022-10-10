@@ -755,7 +755,7 @@ Through javascript you can do many things, but outlined below are some of the mo
   </details>
 
 - <details>
-    <summary>[Search] - Write your own (annotation) search fields
+    <summary>[Search] - Write your own (annotation) search fields</summary>
 
     It's possible to completely replace the rendering of an annotation with your own plugin.
 
@@ -930,7 +930,7 @@ Through javascript you can do many things, but outlined below are some of the mo
           url: config.audioUrlBase + docId + '.mp3'
         },
       }
-   })
+    })
     ```
   </details>
 

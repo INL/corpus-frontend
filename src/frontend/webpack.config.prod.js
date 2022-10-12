@@ -26,6 +26,10 @@ module.exports = {
 			// Enable importing source files by their absolute path by prefixing with "@/"
 			// Note: this also requires typescript to be able to find the imports (though it doesn't use them other than for type checking), see tsconfig.json
 			"@": path.join(__dirname, "src"),
+			// Make import Vue from 'vue' import the version that includes the template compiler.
+			// Normally you don't need this, but we allow plugin components that may have to be compiled runtime.
+			// Hence we need this alias.
+			'vue$': 'vue/dist/vue.esm.js'
 		}
 	},
 	module: {

@@ -85,8 +85,8 @@ Configuration
 
 ## Backend configuration
 
-The backend is configured through a config file `corpus-frontend.properties`.
-This file must be located in one of the following locations (in order of priority):
+The backend is configured through a config file (normally `corpus-frontend.properties`). **NOTE** the path of the configfile is determined by the servlet contextPath without the leading `/`, i.e. for `/TEST/corpus-frontend` a config file with the path `TEST/corpus-frontend.properties` will be looked for in the below locations!
+The config file must be located in one of the following locations (in order of priority):
 - `AUTOSEARCH_CONFIG_DIR` environment variable.
 - `/etc/blacklab/` (`C:\etc\blacklab` on windows)
 - `/vol1/etc/blacklab/` (`C:\vol1\etc\blacklab` on windows)

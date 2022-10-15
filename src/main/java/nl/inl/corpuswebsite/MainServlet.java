@@ -184,8 +184,8 @@ public class MainServlet extends HttpServlet {
 
             if (adminPropFile == null || !adminPropFile.exists()) {
                 logger
-                    .info("File {} (with blsUrl and blsUrlExternal settings) not found in webapps, /etc/blacklab/ or temp dir; will use defaults",
-                          adminPropFile);
+                    .warn("File {} (with blsUrl and blsUrlExternal settings) not found in webapps, /etc/blacklab/ or temp dir; will use defaults",
+                          adminPropFile==null?adminPropFileName:adminPropFile);
             } else if (!adminPropFile.isFile()) {
                 throw new ServletException("Annotation file " + adminPropFile + " is not a regular file!");
             } else if (!adminPropFile.canRead()) {

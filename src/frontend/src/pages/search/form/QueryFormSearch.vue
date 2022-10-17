@@ -19,6 +19,7 @@
 
 					<div v-if="customAnnotations[firstMainAnnotation.id]"
 						:data-custom-annotation-root="firstMainAnnotation.id"
+						data-is-simple="true"
 						ref="_simple"
 					/>
 
@@ -154,6 +155,9 @@ import { paths } from '@/api';
 import * as AppTypes from '@/types/apptypes';
 import { getAnnotationSubset } from '@/utils';
 
+function isVue(v: any): v is Vue { return v instanceof Vue; }
+function isJQuery(v: any): v is JQuery { return typeof v !== 'boolean' && v && v.jquery; }
+
 export default Vue.extend({
 	mixins: [uid],
 	components: {
@@ -278,6 +282,53 @@ export default Vue.extend({
 		copyAdvancedQuery() {
 			PatternStore.actions.expert(PatternStore.getState().advanced);
 			InterfaceStore.actions.patternMode('expert');
+		},
+
+		setupCustomAnnotation(div: HTMLElement, plugin: NonNullable<UIStore.ModuleRootState['search']['shared']['customAnnotations'][string]>) {
+			const annotId = div.getAttribute('data-custom-annotation-root')!;
+			const isSimpleAnnotation = div.hasAttribute('data-is-simple');
+
+			const config = CorpusStore.get.allAnnotationsMap()[annotId];
+			const value = isSimpleAnnotation ? PatternStore.getState().simple : PatternStore.getState().extended.annotationValues[annotId];
+
+			const {render, update} = plugin;
+			const ui = render(config, value, Vue);
+
+			if (typeof ui === 'string') div.innerHTML = ui;
+			else if (ui instanceof HTMLElement) div.appendChild(ui);
+			else if (isJQuery(ui)) ui.appendTo(div);
+			else if (isVue(ui)) ui.$mount(div);
+
+			if (!isVue(ui) && update != null) {
+				// setup watcher so custom component is notified of changes to its value by external processes (global form reset, history state restore, etc.)
+				RootStore.store.watch(state => value, (cur, prev) => update(cur, prev, div), {deep: true});
+			}
+		}
+	},
+	watch: {
+		customAnnotations: {
+			handler() {
+				console.log('customAnnotations change callback', JSON.stringify(this.customAnnotations, undefined, 2));
+				// custom annotation widget setup.
+				// listen for changes, so any late registration is also picked up
+				Vue.nextTick(() => {
+					// intermediate function, check if div is not already initialized, and should actually become the custom component.
+					const setup = (key: string, div: Element|Vue) => {
+						if (!(div instanceof HTMLElement) || !div.hasAttribute('data-custom-annotation-root') || div.children.length) return;
+						const annotId = div.getAttribute('data-custom-annotation-root')!;
+						this.setupCustomAnnotation(div, this.customAnnotations[annotId]!)
+					}
+
+					// by now our dom should have updates, and the extension point (div) should be present
+					// scan to find it.
+					Object.entries(this.$refs).forEach(([refId, ref]) => {
+						if (Array.isArray(ref)) ref.forEach(r => setup(refId, r));
+						else if (ref instanceof HTMLElement) setup(refId, ref);
+					});
+				})
+			},
+			immediate: true,
+			deep: true
 		}
 	},
 	mounted() {
@@ -290,46 +341,6 @@ export default Vue.extend({
 				}
 			}));
 		}
-
-		// custom annotation widget setup.
-		const customAnnotations = UIStore.getState().search.shared.customAnnotations;
-
-		const configs = CorpusStore.get.allAnnotationsMap()
-		const extendedValues = PatternStore.getState().extended.annotationValues;
-		const simpleValue = PatternStore.getState().simple;
-
-		function isVue(v: any): v is Vue { return v instanceof Vue; }
-		function isJQuery(v: any): v is JQuery { return v instanceof jQuery; }
-
-		// render custom annotation components (as defined by external js by setting a render function in the Vuex store)
-		// for custom annotations we render an empty div, which then gets filled by the result of that render function
-		// we assume the custom functions
-
-		function setupCustomComponent(key: string, div: Element|Vue) {
-			if (!(div instanceof HTMLElement) || !div.hasAttribute('data-custom-annotation-root')) return;
-
-			const container = div;
-			const annotId = div.getAttribute('data-custom-annotation-root')!;
-			const {render, update} = customAnnotations[annotId];
-
-			const config: AppTypes.NormalizedAnnotation = configs[annotId];
-			const value = key === '_simple' ? simpleValue : extendedValues[annotId];
-
-			const ui = render(config, value, Vue);
-			if (typeof ui === 'string') container.innerHTML = ui;
-			else if (ui instanceof HTMLElement) container.appendChild(ui);
-			else if (isJQuery(ui)) ui.appendTo(container);
-			else if (isVue(ui)) ui.$mount(container);
-
-			if (!isVue(ui)) {
-				RootStore.store.watch(state => key === '_simple' ? simpleValue : extendedValues[annotId], (cur, prev) => update(cur, prev, container), {deep: true});
-			}
-		}
-
-		Object.entries(this.$refs).forEach(([refId, ref]) => {
-			if (Array.isArray(ref)) ref.forEach(r => setupCustomComponent(refId, r));
-			else if (ref instanceof HTMLElement) setupCustomComponent(refId, ref);
-		});
 	}
 })
 </script>

@@ -15,6 +15,7 @@ import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
 import { mapReduce, MapOf, multimapReduce } from '@/utils';
 import { stripIndent, html } from 'common-tags';
+import Vue from 'vue';
 
 declare const PROPS_IN_COLUMNS: string[];
 declare const PAGESIZE: number|undefined;
@@ -56,7 +57,7 @@ type ModuleRootState = {
 			 * This remains a bit of a TODO but it requires some deep thinking and architectural changes.
 			 */
 			searchMetadataIds: string[];
-			customAnnotations: Record<string, {
+			customAnnotations: Record<string, null|{
 				render(config: AppTypes.NormalizedAnnotation, state: AppTypes.AnnotationValue, vue: Vue): HTMLElement|JQuery<HTMLElement>|string|Vue,
 				update(newState: AppTypes.AnnotationValue, oldState: AppTypes.AnnotationValue, element: HTMLElement): void
 			}>
@@ -320,6 +321,14 @@ const getState = (() => {
 const get = {
 
 };
+
+const privateActions = {
+	search: {
+		shared: {
+			initCustomAnnotationRegistrationPoint: b.commit((state, id: string) => Vue.set(state.search.shared.customAnnotations, id, state.search.shared.customAnnotations[id] ?? null), 'search_shared_initCustomAnnotation')
+		}
+	}
+}
 
 const actions = {
 	search: {
@@ -614,11 +623,19 @@ const actions = {
 };
 
 const init = () => {
-	// Store can be configured by user scripts.
-	// This should have happened before this code runs.
-	// Now set the defaults based on what is configured.
-	// Then detect any parts that haven't been configured, and set them to some sensible defaults.
-	// Also validate the configured settings, and replace with defaults where invalid.
+	/*
+	Store initialization happens in 3 steps:
+	- initial construction: 
+		this happens immediately when the script is evaluated. 
+		This is then the initialState objects are created. (hence the workaround in this module's getState())
+	- customization: 
+		CustomJs scripts load and can interact with the UI module
+	- init() function: CustomJs should now have done all its edits, 
+		and changes are validated and persisted into the initialState objects. 
+		This is where we are now.
+	*/
+
+	// So: CustomJS has finished interacting with this module, now propagate changes back to the defaults, and validate all settings.
 	Object.assign(initialState, cloneDeep(getState()));
 
 	const allAnnotationsMap = CorpusStore.get.allAnnotationsMap();
@@ -747,6 +764,9 @@ const init = () => {
 		}
 	}
 
+	// init custom annotation extension points, so vue reactivity will properly pick up on them
+	CorpusStore.get.allAnnotations().forEach(annot => privateActions.search.shared.initCustomAnnotationRegistrationPoint(annot.id));
+
 	Object.assign(initialState, cloneDeep(getState()));
 };
 
@@ -798,7 +818,6 @@ function validateAnnotations(
 	invalid: (id: string) => string,
 	cb: (ids: string[]) => void
 ) {
-	// tslint:disable
 	const all = CorpusStore.get.allAnnotationsMap();
 	const results = ids.filter(id => {
 		if (!all[id]) { console.warn(missing(id)); return false; }
@@ -806,10 +825,10 @@ function validateAnnotations(
 		return true;
 	});
 
+	// trigger if: list that was passed in is empty, or when any result remains after removing invalid ids.
 	if (!ids.length || results.length) {
 		cb(results);
 	}
-	// tslint:enable
 }
 
 /** Validate all ids, triggering callbacks for failed ids, and triggering a final callback if there is any valid annotation. */
@@ -820,17 +839,17 @@ function validateMetadata(
 	invalid: (id: string) => string,
 	cb: (ids: string[]) => void
 ) {
-	// tslint:disable
 	const all = CorpusStore.get.allMetadataFieldsMap();
 	const results = ids.filter(id => {
 		if (!all[id]) { console.warn(missing(id)); return false; }
 		if (!validate(all[id])) { console.warn(invalid(id)); return false; }
 		return true;
 	});
+
+	// trigger if: list that was passed in is empty, or when any result remains after removing invalid ids.
 	if (!ids.length || results.length) {
 		cb(results);
 	}
-	// tslint:enable
 }
 
 // =============
@@ -863,12 +882,6 @@ function getCheckmarks(
 		}).map(id => entryMap[id]),
 		id: g.isRemainderGroup ? remainderGroupName : g.id
 	}));
-}
-
-function getAsGroups(groupOrder: string[], entries: Array<{id: string, groupId: string, checkmarks: MapOf<boolean>}>) {
-	return Object.entries(multimapReduce(Object.values(entries), 'groupId'))
-	.map(([groupId, values]) => ({groupId, values}))
-	.sort((a, b) => groupOrder.indexOf(a.groupId) - groupOrder.indexOf(b.groupId));
 }
 
 function getCells(props: string[]) {

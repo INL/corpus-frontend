@@ -33,10 +33,12 @@
 
         <!-- 
             You can include custom js and css (usually from your corpus interface directory under /${contextPath}/corpusname/static/**), but external sites are supported.
-            page attribute: only include script/css on specified page (default is all pages). (options: search, article, about, help, error, config, corpora, remote-index)
+            Attributes on the <CustomJs> (such as 'type="module"') tag are copied to the <script> tag on the page.
+            The 'page' attribute is special, it's not copied, but controls lets you only run the script on the specified page (options: search, article, about, help, error, config, corpora, remote-index).
+            Simply remove the 'page' attribute to include the script on every page.
         -->
         <!-- 
-            <CustomJs page="search">${request:corpusPath}/static/some.other.js</CustomJs>
+            <CustomJs page="search" type="module">${request:corpusPath}/static/some.other.js</CustomJs>
             <CustomCss page="article">${request:corpusPath}/static/your.css</CustomCss> 
         -->
 

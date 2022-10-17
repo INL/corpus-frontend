@@ -65,6 +65,23 @@ public class WebsiteConfig {
         }
     }
 
+    public static class CustomJs {
+        private final String url;
+        private final Map<String, String> attributes = new HashMap<>();
+
+        public CustomJs(String url) {
+            this.url = url;
+        }
+
+        public String getUrl() {
+            return this.url;
+        }
+
+        public Map<String, String> getAttributes() {
+            return attributes;
+        }
+    }
+
     private final Optional<String> corpusId;
     
     /**
@@ -98,16 +115,14 @@ public class WebsiteConfig {
 
     private final Map<String, String> xsltParameters;
 
-    private final Map<String, List<String>> customJS = new HashMap<>();
+    private final Map<String, List<CustomJs>> customJS = new HashMap<>();
     private final Map<String, List<String>> customCSS = new HashMap<>();
 
     /**
      * Note that corpus may be null, when parsing the default website settings for non-corpus pages (such as the landing page).
      *
      * @param configFile the Search.xml file
-     * @param corpusId (optional) raw name of the corpus, including the username (if applicable), (null when loading the
-     *        config for the pages outside a corpus context, such as /about, /help, and / (root)))
-     * @param corpus (optional) the corpus as described by blacklab-server
+     * @param corpusConfig (optional) corpus info gotten from BlackLab
      * @param contextPath the application root url (usually /corpus-frontend). Required for string interpolation while loading the configFile.
      * @throws ConfigurationException
      */
@@ -147,9 +162,18 @@ public class WebsiteConfig {
         corpusOwner = MainServlet.getCorpusOwner(corpusId);
         
         xmlConfig.configurationsAt("InterfaceProperties.CustomJs").forEach(sub -> {
+            String url = sub.getString("", sub.getString("[@src]", ""));
+            if (url.isEmpty()) return;
+            CustomJs js = new CustomJs(url);
+
+            // src attribute handled separately above.
+            Stream.of("async", "crossorigin", "defer", "integrity", "nomodule", "nonce", "referrerpolicy", "type").forEach(att -> {
+                String v = sub.getString("[@" + att + "]");
+                if (v != null) js.getAttributes().put(att, StringUtils.trimToNull(v));
+            });
+
             String page = sub.getString("[@page]", "").toLowerCase();
-            String url = sub.getString("", "");
-            if (!url.isEmpty()) customJS.computeIfAbsent(page, __ -> new ArrayList<>()).add(url);
+            customJS.computeIfAbsent(page, __ -> new ArrayList<>()).add(js);
         });
         xmlConfig.configurationsAt("InterfaceProperties.CustomCss").forEach(sub -> {
             String page = sub.getString("[@page]", "").toLowerCase();
@@ -197,12 +221,6 @@ public class WebsiteConfig {
 
     /**
      * Get the links for use in the navbar
-     * Note that links where {@link LinkInTopBar#isRelative()} is true assume that the current page is
-     * the context root (by default /corpus-frontend/)
-     * Usually this is not the case (when looking at e.g. /corpus-frontend/my-corpus/search),
-     * so they will need to be prefixed by some ../../ segments first,
-     * this is done using the pathToTop variable in the velocity templates.
-     *
      * @return the list of links
      */
     public List<LinkInTopBar> getLinks() {
@@ -213,7 +231,7 @@ public class WebsiteConfig {
         return xsltParameters;
     }
 
-    public List<String> getCustomJS(String page) {
+    public List<CustomJs> getCustomJS(String page) {
         return customJS.computeIfAbsent(page, __ -> new ArrayList<>());
     }
 

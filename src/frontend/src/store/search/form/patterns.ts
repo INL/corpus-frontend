@@ -57,6 +57,8 @@ const get = {
 	annotationValue(annotatedFieldId: string, id: string) {
 		return getState().extended.annotationValues/*[annotatedFieldId]*/[id];
 	},
+
+	simple: b.read(state => state.simple, 'simple'),
 };
 
 const privateActions = {

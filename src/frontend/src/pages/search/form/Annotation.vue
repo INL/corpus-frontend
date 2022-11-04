@@ -107,7 +107,8 @@ import Lexicon from '@/pages/search/form/Lexicon.vue';
 import UID from '@/mixins/uid';
 
 import {paths} from '@/api';
-import { NormalizedAnnotation } from '@/types/apptypes';
+import { AnnotationValue, NormalizedAnnotation } from '@/types/apptypes';
+import { Annotation } from 'highcharts';
 
 export default Vue.extend({
 	mixins: [UID],
@@ -120,12 +121,23 @@ export default Vue.extend({
 	props: {
 		annotation: Object as () => NormalizedAnnotation,
 		htmlId: String,
-		bare: Boolean
+		bare: Boolean,
+		/** 
+		 * Set to true if this annotation is the "simple" annotation. I.e. the Annotation in the "simple" tab of the search form. 
+		 * This will change which field the value is written to the vuex store.
+		 */
+		simple: Boolean
 	},
 	data: () => ({
 		subscriptions: [] as Array<() => void>,
 	}),
 	computed: {
+		stateGetter(): () => AnnotationValue {
+			return this.simple ? PatternStore.get.simple : PatternStore.get.annotationValue.bind(this, this.annotation.annotatedFieldId, this.annotation.id);
+		},
+		stateSetter(): (payload: Partial<AnnotationValue> & { id: string }) => void {
+			return this.simple ? PatternStore.actions.simple : PatternStore.actions.extended.annotation;
+		},
 		textDirection(): string|undefined {
 			// only set direction if this is the main annotation
 			// so we don't set rtl mode on things like part-of-speech etc.
@@ -144,10 +156,10 @@ export default Vue.extend({
 
 		value: {
 			get(): string {
-				return PatternStore.get.annotationValue(this.annotation.annotatedFieldId, this.annotation.id).value;
+				return this.stateGetter().value;
 			},
 			set(value: string) {
-				PatternStore.actions.extended.annotation({
+				this.stateSetter({
 					id: this.annotation.id,
 					value
 				});
@@ -155,10 +167,10 @@ export default Vue.extend({
 		},
 		caseSensitive: {
 			get(): boolean {
-				return PatternStore.get.annotationValue(this.annotation.annotatedFieldId, this.annotation.id).case;
+				return this.stateGetter().case;
 			},
 			set(caseSensitive: boolean) {
-				PatternStore.actions.extended.annotation({
+				this.stateSetter({
 					id: this.annotation.id,
 					case: caseSensitive
 				});

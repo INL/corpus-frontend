@@ -28,6 +28,7 @@
 						:htmlId="'simple/' + firstMainAnnotation.annotatedFieldId + '/' + firstMainAnnotation.id"
 						:annotation="firstMainAnnotation"
 						bare
+						simple
 					/>
 				</div>
 			</div>
@@ -308,7 +309,6 @@ export default Vue.extend({
 	watch: {
 		customAnnotations: {
 			handler() {
-				console.log('customAnnotations change callback', JSON.stringify(this.customAnnotations, undefined, 2));
 				// custom annotation widget setup.
 				// listen for changes, so any late registration is also picked up
 				Vue.nextTick(() => {

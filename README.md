@@ -13,7 +13,7 @@
     - [Adding corpora](#Adding-corpora)
     - [User corpora](#Allowing-users-to-add-corpora)
     - [Frontend configuration](#Frontend-configuration)
-        - [Search.xml](#Search.xml)
+        - [Search.xml](#searchxml)
         - [Index formats](#Index-config)
         - [Custom JS](#Custom-JS)
         - [Custom CSS](#Custom-CSS)
@@ -34,7 +34,7 @@ About
 ## Intro
 
 This is a corpus search application that works with [BlackLab Server](https://github.com/INL/BlackLab/).
-At the Dutch Language Institute, we use it to publish our corpora such as [CHN](http://corpushedendaagsnederlands.ivdnt.org/) (CLARIN login required), [Letters as Loot](http://brievenalsbuit.ivdnt.org/) and [AutoSearch](http://portal.clarin.inl.nl/autocorp/) (CLARIN login required).
+At the Dutch Language Institute, we use it to publish our corpora such as [CHN](https://chn.ivdnt.org/) (CLARIN login required), [Letters as Loot](https://brievenalsbuit.ivdnt.org/) and [AutoSearch](https://portal.clarin.inl.nl/autocorp/) (CLARIN login required).
 
 
 ## How to use
@@ -51,7 +51,7 @@ Installation
 ## Requirements:
 
 - Java 1.8
-- A java servlet container such as [Apache Tomcat](http://tomcat.apache.org/).
+- A java servlet container such as [Apache Tomcat](https://tomcat.apache.org/).
 Use Tomcat 7 version `7.0.76` or newer or Tomcat 8 version `8.0.42` or newer. Using older versions will cause some [warnings from dependencies](https://bz.apache.org/bugzilla/show_bug.cgi?id=60688).
 - An instance of [BlackLab-Server](https://github.com/INL/BlackLab/).
 While we do our best to make the frontend work with older versions of BlackLab, use a matching version of BlackLab (so `corpus-frontend v2.0` with `blacklab-server v2.0`).
@@ -142,7 +142,7 @@ debugInfo=false
 
 ## Adding corpora
 
-Corpora may be [added manually](http://inl.github.io/BlackLab/indexing-with-blacklab.html) or [uploaded by users](#Allowing-users-to-add-corpora) (if configured).
+Corpora may be [added manually](https://inl.github.io/BlackLab/guide/indexing-with-blacklab.html) or [uploaded by users](#Allowing-users-to-add-corpora) (if configured).
 
 After a corpus has been added, the corpus-frontend will automatically detect it, a restart should not be required.
 
@@ -152,7 +152,7 @@ After a corpus has been added, the corpus-frontend will automatically detect it,
 ### Configuring BlackLab
 
 To allow this, BlackLab needs to be configured properly (user support needs to be enabled and user directories need to be configured).
-See [here](http://inl.github.io/BlackLab/blacklab-server-overview.html#examples) for the BlackLab documentation on this (scroll down a little).
+See [here](https://inl.github.io/BlackLab/server/howtos.html#let-users-manage-their-own-corpora) for the BlackLab documentation on this (scroll down a little).
 
 When this is done, two new sections will appear on the main corpus overview page.
 They allow you to define your own configurations to customize how blacklab will index your data, create private corpora (up to 10), and add data to them.
@@ -219,7 +219,7 @@ These files are public, and can be accessed through `MyCorpus/static/path/to/my.
 ---
 
 The interface may be customized in three different ways:
-- [search.xml](#search.xml)
+- [search.xml](#searchxml)
 - The config (`.blf.yaml` / `.blf.json`) used to create the corpus
 - Javascript & CSS
 
@@ -548,7 +548,7 @@ Because the format config specifies the shape of a corpus (which metadata and an
 
 ### **Custom JS**
 
-A custom javascript file can be injected by setting it in [search.xml](#Search.xml)
+A custom javascript file can be injected by setting it in [search.xml](#searchxml)
 > **NOTE:** your javascript file is shared between all pages!
 This means the vuex store might not be available! Check which page you're on beforehand by using the url or detecting whether the store exists and what exists inside it.
 All javascript should run _before_ `$(document).ready` unless otherwise stated.
@@ -719,7 +719,7 @@ Through javascript you can do many things, but outlined below are some of the mo
     `vuexModules.ui.actions.search.extended.within.enable(false)`
 
     It's also possible to set which tags are shown (and how) in `within`.
-    You can only add tags that you actually index (using the [inlineTags options](http://inl.github.io/BlackLab/how-to-configure-indexing.html#annotated-input-format-configuration-file) in your index config yaml)
+    You can only add tags that you actually index (using the [inlineTags options](https://inl.github.io/BlackLab/guide/how-to-configure-indexing.html#annotated-configuration-file) in your index config yaml)
     ```js
     vuexModules.ui.actions.search.extended.within.elements({
       title: 'Tooltip here (optional)',
@@ -736,7 +736,7 @@ Through javascript you can do many things, but outlined below are some of the mo
     `vuexModules.ui.actions.search.extended.within.enable(false)`
 
     It's also possible to set which tags are shown (and how) in `within`.
-    You can only add tags that you actually index (using the [inlineTags options](http://inl.github.io/BlackLab/how-to-configure-indexing.html#annotated-input-format-configuration-file) in your index config yaml)
+    You can only add tags that you actually index (using the [inlineTags options](https://inl.github.io/BlackLab/guide/how-to-configure-indexing.html#annotated-configuration-file) in your index config yaml)
     ```js
     vuexModules.ui.actions.search.extended.within.elements({
       title: 'Tooltip here (optional)',
@@ -1131,7 +1131,7 @@ One note is that by default the port is `8080`, but we changed it to `80`, as `t
 ## Backend development
 
 The backend is written in Java, and does comparitively little.
-Its most important tasks are serving the right javascript file and setting up a page skeleton (with [Apache Velocity](http://velocity.apache.org/)).
+Its most important tasks are serving the right javascript file and setting up a page skeleton (with [Apache Velocity](https://velocity.apache.org/)).
 
 When a request comes in, the `MainServlet` fetches the relevant corpus data from BlackLab, reads the matching `search.xml` file, and determines which page to serve (the `*Response` classes). Together this renders the header, footer, defines some client side variables (mainly urls to the corpus frontend server and blacklab servers).
 From there on out the rest happens clientside.
@@ -1146,4 +1146,4 @@ It also handles most of the `document` page, retrieving the xml and metadata and
 
 If you have any further questions or experience any issues, please contact [Jan Niestadt](mailto:jan.niestadt@ivdnt.org) and/or [Koen Mertens](mailto:koen.mertens@ivdnt.org).
 
-Like BlackLab, this corpus frontend is licensed under the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0).
+Like BlackLab, this corpus frontend is licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).

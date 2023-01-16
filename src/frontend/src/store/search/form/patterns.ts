@@ -26,6 +26,7 @@ type ModuleRootState = {
 		splitBatch: boolean;
 	},
 	advanced: string|null;
+	concept: string|null;
 	expert: string|null;
 };
 
@@ -41,6 +42,7 @@ const defaults: ModuleRootState = {
 		splitBatch: false,
 	},
 	advanced: null,
+	concept: null,
 	expert: null,
 };
 
@@ -90,6 +92,7 @@ const actions = {
 		}, 'extended_reset'),
 	},
 	advanced: b.commit((state, payload: string|null) =>state.advanced = payload, 'advanced'),
+	concept: b.commit((state, payload: string|null) =>state.advanced = payload, 'concept'),
 	expert: b.commit((state, payload: string|null) => state.expert = payload, 'expert'),
 
 	reset: b.commit(state => {
@@ -98,11 +101,13 @@ const actions = {
 		actions.extended.reset();
 		state.advanced = null;
 		state.expert = null;
+		state.concept = null;
 	}, 'reset'),
 
 	replace: b.commit((state, payload: ModuleRootState) => {
 		actions.simple(payload.simple);
 		actions.advanced(payload.advanced);
+		actions.concept(payload.concept);
 		actions.expert(payload.expert);
 		actions.extended.reset();
 		actions.extended.within(payload.extended.within);

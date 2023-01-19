@@ -110,7 +110,8 @@
 				<button type="button" class="btn btn-default btn-sm" @click="copyAdvancedQuery">Copy to CQL editor</button>
 			</div>
 			<div :class="['tab-pane', {'active': activePattern==='concept'}]" id="concept">
-				<h3>"Concept" search</h3>
+				<h3>"Concept" search (sort of)</h3>
+				<ConceptSearch/>
 				<textarea id="querybox_concept" class="form-control" name="querybox" rows="7" v-model.lazy="concept"></textarea>
 			</div> 
 			<div :class="['tab-pane', {'active': activePattern==='expert'}]" id="expert">
@@ -153,9 +154,7 @@ import * as GapStore from '@/store/search/form/gap';
 import * as HistoryStore from '@/store/search/history';
 
 import Annotation from '@/pages/search/form/Annotation.vue';
-import ConceptSearch from '@/pages/search/form/ConceptSearch.vue';
-import Lexicon from '@/pages/search/form/Lexicon.vue';
-import SelectPicker, { Option } from '@/components/SelectPicker.vue';
+import ConceptSearch from '@/pages/search/form/concept/ConceptSearch.vue';
 import uid from '@/mixins/uid';
 
 import { QueryBuilder } from '@/modules/cql_querybuilder';
@@ -171,6 +170,7 @@ export default Vue.extend({
 	mixins: [uid],
 	components: {
 		Annotation,
+		ConceptSearch
 	},
 	data: () => ({
 		parseQueryError: null as string|null,

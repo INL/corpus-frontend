@@ -1,0 +1,262 @@
+<template>
+   <div class='conceptbox' style='text-align: left'>
+    {{ main_fields }}
+      <table class="t1">
+        <tr>  
+          <td class="fn">Field:</td><td> <select type="text" v-model="search_field">
+             <option v-for="(f,i) in fields" :key="i">{{ f }}</option>
+          </select></td>
+        </tr>
+        <tr>
+          <td class="fn">Concept:</td><td> <Autocomplete 
+            id="ac1"
+						placeholder="...concept..."
+						
+
+						:autocomplete="true"
+						:url="completionURLForConcept"
+						v-model="current_concept"
+            v-on:select="setSearchConcept"/></td>
+        </tr>
+        <tr>
+          <td class="fn">Term:</td><td> <Autocomplete :responseHandler="responseHandler" :queryTemplate="queryTemplate" v-on:select="setSearchTerm"/></td>
+        </tr>
+      
+      </table>
+
+      <div class="terms">
+        <div v-for="(t,i) in terms" :key="i">
+          <input type="checkbox" v-model="checked_terms[t.term]" @click="() => toggleChecked(t.term)"/>
+           {{ t.term }}</div>
+      </div>
+
+      <button @click="buildQuery">Add selected terms to query</button>
+    
+      
+      
+   </div>
+</template>
+
+<script lang="JavaScript">
+ 
+
+import { toHandlers } from '@vue/runtime-core';
+import axios from 'axios'
+import { settings } from './settings.js'
+import Autocomplete from '@/components/Autocomplete.vue';
+//import AutoComplete from './AutoComplete.vue';
+import { uniq } from './utils'
+
+export default {
+  name: 'ConceptSearchBox', 
+  components: { Autocomplete},
+  props: {
+    id: String,
+    field: String
+  },
+  data() {
+    return { 
+      markdown: '# markdown-it rulezz!',
+      search_concept: "",
+      search_field: this.field,
+      search_term : "",
+      current_concept : "ja_wadde!",
+      checked_terms: {},
+      fields: ["hallo", "daar"],
+      terms: [],
+      server : 'http://localhost:8080/Oefenen/',
+      instance: 'quine_lexicon',
+      credentials :  { auth: {
+      username: 'fouke',
+      password: 'narawaseraretakunai'
+        }   }
+    }
+  },
+ 
+  methods : {
+    buildQuery: function() {
+      //alert(JSON.stringify(this.id))
+
+      const terms = Object.keys(this.checked_terms).filter(t => this.checked_terms[t])
+      const id = this.id
+      const query = {
+        [id] : terms
+      }
+      this.$emit(`update_query`, query)
+    },
+    toggleChecked: function(t) {
+      this.checked_terms[t] = !this.checked_terms[t]
+    },
+    setSearchTerm: function(e) {
+      this.search_term = e
+    },
+    setSearchConcept: function(e) {
+      this.search_concept = e
+    }
+  },
+  computed : {
+
+    terms_from_lexicon: {
+        
+        get() {
+          const wQuery = `
+              query Quine {
+                lexicon (field: "${this.search_field}", cluster: "${this.search_concept}") {
+                field,
+              cluster,
+                term
+            }
+          }`
+        const query= `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
+        
+        // console.log(query)
+
+        const geefMee={"headers":{"Accept":"application/json"},"auth":{"username":"fouke","password":"narawaseraretakunai"}}
+
+        axios.get(query, geefMee)
+            .then(response => { 
+               console.log(JSON.stringify(response.data.data))
+               this.terms = uniq(response.data.data)
+               this.terms.forEach(t => this.checked_terms[t.term] = false)
+               return response.data.data
+              })
+        },
+        default: []
+      },
+    main_fields: {
+      get() {
+        const wQuery = `
+              query Quine {
+                lexicon {
+                field
+            }
+          }`
+        
+        const query= `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
+        // alert("Main field query:" + JSON.stringify(wQuery))
+        /// console.log(query)
+        // alert("Something happens?")
+        const geefMee={"headers":{"Accept":"application/json"},"auth":{"username":"fouke","password":"narawaseraretakunai"}}
+        
+        axios.get(query, geefMee)
+            .then(response => { 
+                // alert("Fields query response: " + JSON.stringify(response.data.data))
+               const fields = uniq(response.data.data.map(x => x.field))
+               this.fields = fields
+               return fields
+              })
+
+      },
+        default: ["aap", "noot", "mies"]
+    },
+
+    queryTemplate()  {
+      const field = this.search_field
+      const concept = this.search_concept
+      return value =>  {
+        const wQuery = `
+              query Quine {
+                lexicon (term: "/^${value}/", field: "${field}", cluster: "${concept}") {
+                field,
+              cluster,
+                term
+            }
+          }`
+        console.log("AUTOCOMPLETE query: " + JSON.stringify(wQuery).replace(/\\n/, '\n'))
+        return `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
+      }
+    },
+    queryTemplateConcept()  {
+      const field = this.search_field
+      return value =>  {
+        const wQuery = `
+              query Quine {
+                lexicon (cluster: "/^${value}/", field: "${field}") {
+                field,
+              cluster,
+                term
+            }
+          }`
+        console.log("AUTOCOMPLETE query: " + JSON.stringify(wQuery).replace(/\\n/, '\n'))
+        return `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
+      }
+    },
+    completionURLForConcept () {
+       const field = this.search_field
+       const value = this.current_concept
+       const wQuery = `
+              query Quine {
+                lexicon (cluster: "/^${value}/", field: "${field}") {
+                field,
+              cluster,
+                term
+            }
+          }`
+       console.log("AUTOCOMPLETE query: " + JSON.stringify(wQuery).replace(/\\n/, '\n'))
+       return `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
+    },
+    responseHandler() {
+      return response => { 
+               console.log("RESPONSE: "  + JSON.stringify(response))
+               //console.log(JSON.stringify(response.data.data))
+               //this.terms = response.data.data
+               //this.terms.forEach(t => this.checked_terms[t.term] = false)
+               return uniq(response.data.data.map(t => t.term))
+              }
+    },
+    responseHandlerConcept() {
+      return response => { 
+               console.log("RESPONSE: "  + JSON.stringify(response))
+               //console.log(JSON.stringify(response.data.data))
+               //this.terms = response.data.data
+               //this.terms.forEach(t => this.checked_terms[t.term] = false)
+               return uniq(response.data.data.map(t => t.cluster))
+              }
+    }  
+  }
+}
+</script>
+
+<!-- Add "scoped" attribute to limit CSS to this component only -->
+<style scoped>
+h3 {
+  margin: 40px 0 0;
+}
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+li {
+  display: inline-block;
+  margin: 0 10px;
+}
+a {
+  color: #42b983;
+}
+ 
+img {
+  width: 400px;
+}
+
+.conceptbox {
+  background-color: rgb(230,230,255);
+  border-style: solid;
+  text-align: left;
+  margin: 1em;
+  padding: 1em;
+  box-shadow: 10px 5px 5px grey;
+  border-radius: 10px;
+  font-size: 9pt
+}
+
+.fn {
+  width: 9em;
+}
+.terms {
+  height: 15em;
+  overflow-y: scroll 
+}
+.t1 {
+  table-layout: auto;
+}
+</style>

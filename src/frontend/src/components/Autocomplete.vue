@@ -22,12 +22,27 @@ import {splitIntoTerms} from '@/utils';
 
 // Inherit jQueryUI autocomplete widget and customize the rendering
 // to apply some bootstrap classes and structure
+// Jesse: renderMenu en renderItem mee kunnen geven??
+
+function uniq(l) {return  Array.from(new Set(l)).sort() }
+
 $.widget('custom.autocomplete', $.ui.autocomplete, {
 	_renderMenu(ul: HTMLUListElement, items: any) {
-		const self = this;
-		$.each(items, function(index, item){
-			self._renderItem(ul, item);
-		});
+                if (Array.isArray(items) && items.length > 0 && 'label' in items && 'value'  in items) {
+                  alert("ITEMS (NORMAL): " + JSON.stringify(items))
+	  	  const self = this;
+		  $.each(items, function(index, item){
+		  	 self._renderItem(ul, item);
+		  });
+                } else if (Array.isArray(items) && items.length > 0) {
+                  // alert("ITEMS (other): " + JSON.stringify(items))
+                  const self = this;
+                 
+                  const vals =  uniq(Object.values(items[0]).map(x => x['cluster']))
+                  vals.forEach(v => {
+                     self._renderItem(ul, {'value': v, 'label' : v })
+                  })
+                }
 	},
 	_renderItem(ul: HTMLUListElement, item: {value: string, label: string}) {
 		$('<li></li>')
@@ -36,6 +51,14 @@ $.widget('custom.autocomplete', $.ui.autocomplete, {
 			.data('ui-autocomplete-item', item)
 			.appendTo(ul);
 	},
+        _renderItemX(ul: HTMLUListElement, item: {value: string, label: string}) {
+                $('<li></li>')
+                        .attr('value', item.value) 
+                        .html('<a>' + item.label + '</a>')
+                        .data('ui-autocomplete-item', item)
+                        .appendTo(ul);
+        },
+
 	_resizeMenu() {
 		$((this as any).menu.element).css({
 			'max-height': '300px',

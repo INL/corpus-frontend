@@ -19,7 +19,7 @@
             v-on:select="setSearchConcept"/></td>
         </tr>
         <tr>
-          <td class="fn">Term:</td><td> <Autocomplete :responseHandler="responseHandler" :queryTemplate="queryTemplate" v-on:select="setSearchTerm"/></td>
+          <td class="fn">Term:</td><td> <Autocomplete :responseHandler="responseHandler" :queryTemplate="queryTemplate" v-on:input="setSearchConcept"/></td>
         </tr>
       
       </table>
@@ -88,9 +88,11 @@ export default {
       this.checked_terms[t] = !this.checked_terms[t]
     },
     setSearchTerm: function(e) {
+      
       this.search_term = e
     },
     setSearchConcept: function(e) {
+      alert(`Search concept ${e}`)
       this.search_concept = e
     }
   },

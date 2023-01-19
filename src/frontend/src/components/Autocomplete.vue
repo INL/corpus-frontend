@@ -28,14 +28,14 @@ function uniq(l) {return  Array.from(new Set(l)).sort() }
 
 $.widget('custom.autocomplete', $.ui.autocomplete, {
 	_renderMenu(ul: HTMLUListElement, items: any) {
-                if (Array.isArray(items) && items.length > 0 && 'label' in items && 'value'  in items) {
-                  alert("ITEMS (NORMAL): " + JSON.stringify(items))
+                if (Array.isArray(items) && items.length > 0 && 'label' in items[0] && 'value'  in items[0]) {
+                  // alert("ITEMS (NORMAL): " + JSON.stringify(items))
 	  	  const self = this;
 		  $.each(items, function(index, item){
 		  	 self._renderItem(ul, item);
 		  });
                 } else if (Array.isArray(items) && items.length > 0) {
-                  // alert("ITEMS (other): " + JSON.stringify(items))
+                  alert("ITEMS (other): " + JSON.stringify(items))
                   const self = this;
                  
                   const vals =  uniq(Object.values(items[0]).map(x => x['cluster']))
@@ -195,6 +195,7 @@ export default Vue.extend({
 				event = document.createEvent('Event');
 				event.initEvent('input', true, true);
 			}
+                        // alert(`Dispatching ${JSON.stringify(event)} ${value} from autocomplete....`)
 			input.dispatchEvent(event);
 
 		}

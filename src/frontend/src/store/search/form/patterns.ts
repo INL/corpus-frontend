@@ -92,7 +92,7 @@ const actions = {
 		}, 'extended_reset'),
 	},
 	advanced: b.commit((state, payload: string|null) =>state.advanced = payload, 'advanced'),
-	concept: b.commit((state, payload: string|null) =>state.advanced = payload, 'concept'),
+	concept: b.commit((state, payload: string|null) =>state.concept = payload, 'concept'),
 	expert: b.commit((state, payload: string|null) => state.expert = payload, 'expert'),
 
 	reset: b.commit(state => {

@@ -111,7 +111,8 @@
 			</div>
 			<div :class="['tab-pane', {'active': activePattern==='concept'}]" id="concept">
 				<h3>"Concept" search (sort of)</h3>
-				<ConceptSearch/>
+				<ConceptSearch v-on:update_query="updateComplex"/>
+				Concept: {{ concept }}
 				<!--
 				<textarea id="querybox_concept" class="form-control" name="querybox" rows="7" v-model.lazy="concept"></textarea>
 				-->
@@ -299,6 +300,11 @@ export default Vue.extend({
 			InterfaceStore.actions.patternMode('expert');
 		},
 
+		updateComplex(e: String) {
+			alert("Update complex:"  + e)
+			this.expert = e
+		},
+
 		setupCustomAnnotation(div: HTMLElement, plugin: NonNullable<UIStore.ModuleRootState['search']['shared']['customAnnotations'][string]>) {
 			const annotId = div.getAttribute('data-custom-annotation-root')!;
 			const isSimpleAnnotation = div.hasAttribute('data-is-simple');
@@ -318,7 +324,7 @@ export default Vue.extend({
 				// setup watcher so custom component is notified of changes to its value by external processes (global form reset, history state restore, etc.)
 				RootStore.store.watch(state => value, (cur, prev) => update(cur, prev, div), {deep: true});
 			}
-		}
+		},
 	},
 	watch: {
 		customAnnotations: {

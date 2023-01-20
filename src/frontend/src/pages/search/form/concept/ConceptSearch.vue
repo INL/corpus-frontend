@@ -1,5 +1,8 @@
 <template>
    <div style='text-align: left'>
+      <div><input :value="modelValue"
+       @input="$emit('update:modelValue', $event.target.value)"/></div>
+        {{  modelValue }}
        <div><pre>
        Query (JSON) {{ queryFieldValue }}
        Query (CQL)  {{ cqlQuery }} {{ queryCQL }}
@@ -26,8 +29,10 @@ export default {
   name: 'ConceptSearch', 
   props: {
     msg: String,
-    src : String
+    src : String,
+    modelValue: String
   },
+  emits: ['update:modelValue'],
   data() {
     return { 
       search_in: "ab",
@@ -102,6 +107,7 @@ export default {
             .then(response => { 
               alert("INFO: cql=" + JSON.stringify(response.data.pattern))
               self.cqlQuery = response.data.pattern
+              this.$emit(`update_query`, self.cqlQuery)
               return response.data.pattern
               })
         },

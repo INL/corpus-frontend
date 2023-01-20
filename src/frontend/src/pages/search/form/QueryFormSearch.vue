@@ -5,7 +5,7 @@
 			<li :class="{'active': activePattern==='simple'}" @click.prevent="activePattern='simple'"><a href="#simple" class="querytype">Simple</a></li>
 			<li :class="{'active': activePattern==='extended'}" @click.prevent="activePattern='extended'"><a href="#extended" class="querytype">Extended</a></li>
 			<li :class="{'active': activePattern==='advanced'}" @click.prevent="activePattern='advanced'" v-if="advancedEnabled"><a href="#advanced" class="querytype">Advanced</a></li>
-			<li :class="{'active': activePattern==='concept_search'}" @click.prevent="activePattern='concept'"><a href="#concept" class="querytype">Concepts</a></li>
+			<li :class="{'active': activePattern==='concept'}" @click.prevent="activePattern='concept'"><a href="#concept" class="querytype">Concepts</a></li>
 			<li :class="{'active': activePattern==='expert'}" @click.prevent="activePattern='expert'"><a href="#expert" class="querytype">Expert</a></li>
 		</ul>
 		<div class="tab-content">
@@ -111,8 +111,8 @@
 			</div>
 			<div :class="['tab-pane', {'active': activePattern==='concept'}]" id="concept">
 				<h3>"Concept" search (sort of)</h3>
-				<ConceptSearch v-on:update_query="updateComplex"/>
-				Concept: {{ concept }}
+				<ConceptSearch v-on:update_concept_query="updateComplex"/>  
+				Concept: [ {{ concept?concept:'nopez' }} ]
 				<!--
 				<textarea id="querybox_concept" class="form-control" name="querybox" rows="7" v-model.lazy="concept"></textarea>
 				-->
@@ -301,8 +301,9 @@ export default Vue.extend({
 		},
 
 		updateComplex(e: String) {
-			alert("Update complex:"  + e)
-			this.expert = e
+			// alert("Update complex:"  + e)
+			// this.expert = e
+			this.concept = e
 		},
 
 		setupCustomAnnotation(div: HTMLElement, plugin: NonNullable<UIStore.ModuleRootState['search']['shared']['customAnnotations'][string]>) {

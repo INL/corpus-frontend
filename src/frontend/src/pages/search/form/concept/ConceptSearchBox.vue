@@ -113,7 +113,7 @@ export default {
       this.search_term = e
     },
     setSearchConcept: function(e) {
-      alert(`Search concept ${e}`)
+      // alert(`Search concept ${e}`)
       this.search_concept = e
     },
     get_cluster_values(d) {

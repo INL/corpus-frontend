@@ -1,11 +1,10 @@
 <template>
    <div style='text-align: left'>
-      <div><input :value="modelValue"
-       @input="$emit('update:modelValue', $event.target.value)"/></div>
-        {{  modelValue }}
-       <div><pre>
+ 
+       <div style="display:box"><pre>
        Query (JSON) {{ queryFieldValue }}
        Query (CQL)  {{ cqlQuery }} {{ queryCQL }}
+       Concept {{ concept }}
        To blackparank: <a target="_blank" :href="blackparank_request">{{ blackparank_request }}</a> 
        </pre></div>
       <div class='boxes' style='text-align: center'>
@@ -18,10 +17,36 @@
 
 <script lang="JavaScript">
 
+import Vue from 'vue';
+
+import * as RootStore from '@/store/search/';
+import * as CorpusStore from '@/store/search/corpus';
+import * as UIStore from '@/store/search/ui';
+import * as InterfaceStore from '@/store/search/form/interface';
+import * as PatternStore from '@/store/search/form/patterns';
+import * as GapStore from '@/store/search/form/gap';
+import * as HistoryStore from '@/store/search/history';
+
+import Annotation from '@/pages/search/form/Annotation.vue';
+
+import Lexicon from '@/pages/search/form/Lexicon.vue';
+import SelectPicker, { Option } from '@/components/SelectPicker.vue';
+// @ts-ignore
+import Autocomplete from '@/components/Autocomplete.vue';
+import uid from '@/mixins/uid';
+
+import { QueryBuilder } from '@/modules/cql_querybuilder';
+
+import { paths } from '@/api';
+import * as AppTypes from '@/types/apptypes';
+import { getAnnotationSubset } from '@/utils';
+
+/// 
 
 import { settings } from './settings.js'
 
 import axios from 'axios'
+
 
 import ConceptSearchBox from './ConceptSearchBox.vue' 
 export default {
@@ -29,10 +54,9 @@ export default {
   name: 'ConceptSearch', 
   props: {
     msg: String,
-    src : String,
-    modelValue: String
+    src : String
   },
-  emits: ['update:modelValue'],
+
   data() {
     return { 
       search_in: "ab",
@@ -91,26 +115,32 @@ export default {
      return query
     },
     
+    concept: {
+			get() { return PatternStore.getState().concept; },
+			set: PatternStore.actions.concept,
+      default: "[word='paard']"
+		},
+
     queryCQL: {
-    
-      get() {
-         const self = this
+         get() {
+          const self = this
 
     //const query= `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
     
     // console.log(query)
     // alert(`Info query: ${query}`)
 
-        const geefMee={"headers":{"Accept":"application/json"},"auth":{"username":"fouke","password":"narawaseraretakunai"}}
+            const geefMee={"headers":{"Accept":"application/json"},"auth":{"username":"fouke","password":"narawaseraretakunai"}}
 
-        axios.get(this.blackparank_request, geefMee)
+            axios.get(this.blackparank_request, geefMee)
             .then(response => { 
-              alert("INFO: cql=" + JSON.stringify(response.data.pattern))
+              // alert("INFO: cql=" + JSON.stringify(response.data.pattern))
               self.cqlQuery = response.data.pattern
-              this.$emit(`update_query`, self.cqlQuery)
+              this.$emit(`update_concept_query`, self.cqlQuery)
+              //this.concept.set(e)
               return response.data.pattern
               })
-        },
+          },
         default: ""
     }
   }

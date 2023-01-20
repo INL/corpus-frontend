@@ -112,7 +112,9 @@
 			<div :class="['tab-pane', {'active': activePattern==='concept'}]" id="concept">
 				<h3>"Concept" search (sort of)</h3>
 				<ConceptSearch/>
+				<!--
 				<textarea id="querybox_concept" class="form-control" name="querybox" rows="7" v-model.lazy="concept"></textarea>
+				-->
 			</div> 
 			<div :class="['tab-pane', {'active': activePattern==='expert'}]" id="expert">
 				<h3>Corpus Query Language:</h3>

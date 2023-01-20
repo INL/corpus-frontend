@@ -27,50 +27,38 @@ import {splitIntoTerms} from '@/utils';
 
 function uniq(l) {return  Array.from(new Set(l)).sort() }
 
-$.widget('custom.autocomplete', $.ui.autocomplete, {
-	_renderMenu(ul: HTMLUListElement, items: any) {
-                if (Array.isArray(items) && items.length > 0 && 'label' in items[0] && 'value'  in items[0]) {
-                  // alert("ITEMS (NORMAL): " + JSON.stringify(items))
-	  	  const self = this;
-		  $.each(items, function(index, item){
-		  	 self._renderItem(ul, item);
-		  });
-                } else if (Array.isArray(items) && items.length > 0) {
-                  alert("ITEMS (other): " + JSON.stringify(items))
-                  const self = this;
-                 
-                  const vals =  uniq(Object.values(items[0]).map(x => x['cluster']))
-                  vals.forEach(v => {
-                     self._renderItem(ul, {'value': v, 'label' : v })
-                  })
-                }
-	},
-	_renderItem(ul: HTMLUListElement, item: {value: string, label: string}) {
-		$('<li></li>')
-			.attr('value', item.value)
-			.html('<a>' + item.label + '</a>')
-			.data('ui-autocomplete-item', item)
-			.appendTo(ul);
-	},
-        _renderItemX(ul: HTMLUListElement, item: {value: string, label: string}) {
-                $('<li></li>')
-                        .attr('value', item.value) 
-                        .html('<a>' + item.label + '</a>')
-                        .data('ui-autocomplete-item', item)
-                        .appendTo(ul);
-        },
+function create_autocomplete_thingy() {
+	const widgetClass = 'custom.autocomplete'
+	$.widget(widgetClass, $.ui.autocomplete, {
 
-	_resizeMenu() {
-		$((this as any).menu.element).css({
-			'max-height': '300px',
-			'overflow-y': 'auto',
-			'overflow-x': 'hidden',
-			'width': 'auto',
-			'min-width': $(this.element).outerWidth(),
-			'max-width': '500px'
-		} as JQuery.PlainObject);
-	}
-});
+		_renderMenu(ul: HTMLUListElement, items: any) {
+			const self = this;
+			$.each(items, function (index, item) {
+				self._renderItem(ul, item);
+			});
+
+		},
+		_renderItem(ul: HTMLUListElement, item: { value: string, label: string }) {
+			$('<li></li>')
+				.attr('value', item.value)
+				.html('<a>' + item.label + '</a>')
+				.data('ui-autocomplete-item', item)
+				.appendTo(ul);
+		},
+		_resizeMenu() {
+			$((this as any).menu.element).css({
+				'max-height': '300px',
+				'overflow-y': 'auto',
+				'overflow-x': 'hidden',
+				'width': 'auto',
+				'min-width': $(this.element).outerWidth(),
+				'max-width': '500px'
+			} as JQuery.PlainObject);
+		}
+	});
+}
+
+create_autocomplete_thingy();
 
 export default Vue.extend({
 	props: {
@@ -80,7 +68,13 @@ export default Vue.extend({
 			default: true,
 			type: Boolean
 		},
-		useQuoteAsWordBoundary: Boolean
+		useQuoteAsWordBoundary: Boolean,
+		rendering: {  // Jesse: this is an added hoock to render arbitrary JSON data from url. TODO how to get function type in props??  
+			default() {
+            	return {}
+        	},
+		  	type:  Object
+		},
 	},
 	computed: {
 		modelvalue: {
@@ -89,6 +83,11 @@ export default Vue.extend({
 		}
 	},
 	methods: {
+		prepare_data(d:  any) {
+			if ('prepare_data' in this.rendering) {
+			return this.rendering['prepare_data'](d) 
+		  } else return d
+		},
 		_createAutocomplete() {
 			const $input = $(this.$el);
 			const self = this;
@@ -116,8 +115,9 @@ export default Vue.extend({
 							data: {term: value},
 							dataType: 'json',
 							success(data) {
-								lastSearchResults = data;
-								render(data);
+								lastSearchResults = self.prepare_data(data);
+								//alert(JSON.stringify(data))
+								render(self.prepare_data(data));
 							}
 						});
 					}
@@ -137,7 +137,7 @@ export default Vue.extend({
 					event.preventDefault();
 					// prevent jquery from previewing the entire value in the input field.
 					// since we run custom value logic
-				},
+				}
 			});
 		},
 		_destroyAutocomplete() { $(this.$el).autocomplete('destroy'); },
@@ -196,7 +196,6 @@ export default Vue.extend({
 				event = document.createEvent('Event');
 				event.initEvent('input', true, true);
 			}
-                        // alert(`Dispatching ${JSON.stringify(event)} ${value} from autocomplete....`)
 			input.dispatchEvent(event);
 
 		}

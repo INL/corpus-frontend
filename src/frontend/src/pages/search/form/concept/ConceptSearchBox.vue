@@ -1,6 +1,14 @@
 <template>
    <div class='conceptbox' style='text-align: left'>
-    {{ main_fields }}
+    <div>
+      <pre style="display:none">
+    Main fields: {{ main_fields }} 
+    Current concept: {{  current_concept }}
+    Term search URL: <a :href="term_search_url">Hiero</a>
+    Terms: {{  JSON.stringify(terms) }}
+    Terms2: {{  JSON.stringify(terms_from_lexicon) }}
+  </pre>
+   </div>
       <table class="t1">
         <tr>  
           <td class="fn">Field:</td><td> <select type="text" v-model="search_field">
@@ -14,12 +22,21 @@
 						
 
 						:autocomplete="true"
+            :rendering = "{'prepare_data' : d => get_cluster_values(d)}"
 						:url="completionURLForConcept"
-						v-model="current_concept"
-            v-on:select="setSearchConcept"/></td>
+						v-model="current_concept"/></td>
         </tr>
         <tr>
-          <td class="fn">Term:</td><td> <Autocomplete :responseHandler="responseHandler" :queryTemplate="queryTemplate" v-on:input="setSearchConcept"/></td>
+          <td class="fn">Term:</td><td> <Autocomplete 
+            id="ac2"
+						placeholder="...term..."
+						
+
+						:autocomplete="true"
+            :rendering = "{'prepare_data' : d => get_term_values(d)}"
+						:url="completionURLForTerm"
+						v-model="current_term"
+            /></td>
         </tr>
       
       </table>
@@ -60,7 +77,8 @@ export default {
       search_concept: "",
       search_field: this.field,
       search_term : "",
-      current_concept : "ja_wadde!",
+      current_concept : "",
+      current_term : "",
       checked_terms: {},
       fields: ["hallo", "daar"],
       terms: [],
@@ -74,6 +92,9 @@ export default {
   },
  
   methods : {
+    alert: function(s)  {
+      alert(s)
+    },
     buildQuery: function() {
       //alert(JSON.stringify(this.id))
 
@@ -94,36 +115,49 @@ export default {
     setSearchConcept: function(e) {
       alert(`Search concept ${e}`)
       this.search_concept = e
-    }
+    },
+    get_cluster_values(d) {
+      //alert(JSON.stringify(d))
+      const vals = uniq(d['data'].map(x => x['cluster']))
+      //alert(JSON.stringify(vals))
+      return vals
+     },
+     get_term_values(d) {
+      //alert(JSON.stringify(d))
+      const vals = uniq(d['data'].map(x => x['term']))
+      //alert(JSON.stringify(vals))
+      return vals
+     }
   },
   computed : {
 
-    terms_from_lexicon: {
+    terms_from_lexicon() {
+
         
-        get() {
-          const wQuery = `
+        // console.log(query)
+
+        const geefMee={"headers":{"Accept":"application/json"},"auth":{"username":"fouke","password":"narawaseraretakunai"}}
+        const query = this.term_search_url
+        axios.get(query, geefMee)
+            .then(response => { 
+               console.log(`found in lexicon for field: "${this.search_field}", cluster: "${this.current_concept}"`  + JSON.stringify(response.data.data))
+               this.terms = uniq(response.data.data)
+               this.terms.forEach(t => this.checked_terms[t.term] = false)
+               return response.data.data
+              })
+      },
+
+      term_search_url() {
+        const wQuery = `
               query Quine {
-                lexicon (field: "${this.search_field}", cluster: "${this.search_concept}") {
+                lexicon (field: "${this.search_field}", cluster: "${this.current_concept}") {
                 field,
               cluster,
                 term
             }
           }`
         const query= `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
-        
-        // console.log(query)
-
-        const geefMee={"headers":{"Accept":"application/json"},"auth":{"username":"fouke","password":"narawaseraretakunai"}}
-
-        axios.get(query, geefMee)
-            .then(response => { 
-               console.log(JSON.stringify(response.data.data))
-               this.terms = uniq(response.data.data)
-               this.terms.forEach(t => this.checked_terms[t.term] = false)
-               return response.data.data
-              })
-        },
-        default: []
+        return query
       },
     main_fields: {
       get() {
@@ -152,37 +186,23 @@ export default {
         default: ["aap", "noot", "mies"]
     },
 
-    queryTemplate()  {
+
+    completionURLForTerm()  {
       const field = this.search_field
-      const concept = this.search_concept
-      return value =>  {
-        const wQuery = `
+      const concept = this.current_concept
+      const term = this.current_term
+      const wQuery = `
               query Quine {
-                lexicon (term: "/^${value}/", field: "${field}", cluster: "${concept}") {
+                lexicon (term: "/^${term}/", field: "${field}", cluster: "${concept}") {
                 field,
               cluster,
                 term
             }
           }`
-        console.log("AUTOCOMPLETE query: " + JSON.stringify(wQuery).replace(/\\n/, '\n'))
-        return `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
-      }
+      //console.log("AUTOCOMPLETE query: " + JSON.stringify(wQuery).replace(/\\n/, '\n'))
+      return `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
     },
-    queryTemplateConcept()  {
-      const field = this.search_field
-      return value =>  {
-        const wQuery = `
-              query Quine {
-                lexicon (cluster: "/^${value}/", field: "${field}") {
-                field,
-              cluster,
-                term
-            }
-          }`
-        console.log("AUTOCOMPLETE query: " + JSON.stringify(wQuery).replace(/\\n/, '\n'))
-        return `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
-      }
-    },
+  
     completionURLForConcept () {
        const field = this.search_field
        const value = this.current_concept
@@ -194,9 +214,11 @@ export default {
                 term
             }
           }`
-       console.log("AUTOCOMPLETE query: " + JSON.stringify(wQuery).replace(/\\n/, '\n'))
+       //console.log("AUTOCOMPLETE query: " + JSON.stringify(wQuery).replace(/\\n/, '\n'))
        return `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
     },
+
+    /*
     responseHandler() {
       return response => { 
                console.log("RESPONSE: "  + JSON.stringify(response))
@@ -215,6 +237,7 @@ export default {
                return uniq(response.data.data.map(t => t.cluster))
               }
     }  
+    */
   }
 }
 </script>

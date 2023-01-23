@@ -48,9 +48,10 @@
       </div>
 
       <button @click="buildQuery">Add selected terms to query</button>
-    
-      
-      
+      <div>
+     Wappie: {{  wappie  }} <br/>
+     Wapwap: {{  wapwap }}
+    </div>
    </div>
 </template>
 
@@ -61,6 +62,7 @@ import { toHandlers } from '@vue/runtime-core';
 import axios from 'axios'
 import { settings } from './settings.js'
 import Autocomplete from '@/components/Autocomplete.vue';
+import * as CorpusStore from '@/store/search/corpus';
 //import AutoComplete from './AutoComplete.vue';
 import { uniq } from './utils'
 
@@ -80,8 +82,10 @@ export default {
       current_concept : "",
       current_term : "",
       checked_terms: {},
+      wapwap: "",
       fields: ["hallo", "daar"],
       terms: [],
+      corpus: CorpusStore.getState().id,
       server : 'http://localhost:8080/Oefenen/',
       instance: 'quine_lexicon',
       credentials :  { auth: {
@@ -159,17 +163,39 @@ export default {
         const query= `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
         return query
       },
+
+      term_search_promise() {
+        const self = this
+        const terms_from_database_url = this.term_search_url
+        const pdb = axios.get(terms_from_database_url)
+        const term_promise_corpus = axios.get(`http://localhost:8080/blacklab-server/${this.corpus}/autocomplete/contents/word_or_lemma/?term=${this.current_term}`).then(r => r.data)
+        // http://localhost:8080/blacklab-server/OGL/autocomplete/contents/word_or_lemma/?term=a
+        //alert(terms_from_database_url + " -->" + pdb +  "...." + JSON.stringify(pdb))
+        const term_promise_database = pdb.then(r => self.get_term_values(r.data))
+        //alert(term_promise_database)
+        const promise_both = Promise.all([term_promise_database, term_promise_corpus]).then(r => {
+            alert(JSON.stringify(r))
+        })
+        return promise_both
+        // const terms_from_blacklab = axios.get(terms_from_blacklab_term_url)
+      },
+
+      wappie() {
+        const self = this
+        return this.term_search_promise.then(d => self.wapwap = JSON.stringify(d))
+      },
+
     main_fields: {
       get() {
         const wQuery = `
               query Quine {
-                lexicon {
+                lexicon(corpus : "${this.corpus}") {
                 field
             }
           }`
         
         const query= `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
-        // alert("Main field query:" + JSON.stringify(wQuery))
+        alert("Main field query:" + JSON.stringify(wQuery))
         /// console.log(query)
         // alert("Something happens?")
         const geefMee={"headers":{"Accept":"application/json"},"auth":{"username":"fouke","password":"narawaseraretakunai"}}
@@ -210,7 +236,7 @@ export default {
               query Quine {
                 lexicon (cluster: "/^${value}/", field: "${field}") {
                 field,
-              cluster,
+                cluster,
                 term
             }
           }`
@@ -264,13 +290,13 @@ img {
 }
 
 .conceptbox {
-  background-color: rgb(230,230,255);
+  zbackground-color: rgb(230,230,255);
   border-style: solid;
   text-align: left;
   margin: 1em;
   padding: 1em;
-  box-shadow: 10px 5px 5px grey;
-  border-radius: 10px;
+  zbox-shadow: 10px 5px 5px grey;
+  zborder-radius: 10px;
   font-size: 9pt
 }
 

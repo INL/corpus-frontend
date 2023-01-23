@@ -2,6 +2,7 @@
    <div style='text-align: left'>
  
        <div style="display:box"><pre>
+       
        Query (JSON) {{ queryFieldValue }}
        Query (CQL)  {{ cqlQuery }} {{ queryCQL }}
        Concept {{ concept }}
@@ -62,12 +63,13 @@ export default {
       search_in: "ab",
       queries : {
         'b1' : {},
-        'b2' : {},
-        'b3' : {}
+        //'b2' : {},
+        //'b3' : {}
       },
       queryFieldValue: "",
       filterFieldValue: "", // TODO moet weg....
       cqlQuery: "",
+      corpus: CorpusStore.getState().id 
     }
   },
 
@@ -93,15 +95,13 @@ export default {
     //this.queryForConcordance = query
    }, 
 
-   updateQuery : function(e) {
-      const id = Object.keys(e)[0]
-      this.queries[id] = e[id]
-      // alert("updateQuery:" + JSON.stringify(this.queries))
+   updateQuery : function(e) {CorpusStore.getState().id
       this.updateQueryx(this.queries) // en daar gebeurt nu natuurlijk niks mee, dit moet naar de store
     }
   },
   computed : {
      blackparank_request() {
+      
       const wQuery = `
           query Quine {
             lexicon (field: "${this.search_field}", cluster: "${this.search_concept}") {

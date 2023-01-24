@@ -79,10 +79,17 @@ export default {
       const query = {
           "element" : this.search_in, "strict": true, "filter" : this.filterFieldValue
       }
+      const queries = {}
 
+      Object.keys(this.queries).forEach(k => {
+       const terms = this.queries[k]
+       if (terms.length > 0) {
+      // alert(JSON.stringify(terms))
+         queries[k] = terms.map(t => { const z = {"field" : "lemma", "value" : t.replace("*",".*")}; return z })
+      }})  //else delete q[k]
       //alert(JSON.stringify(query))
       
-      const queries = {}
+      
       query["queries"]  = queries
       Object.keys(q).forEach(k => {
        const terms = q[k]

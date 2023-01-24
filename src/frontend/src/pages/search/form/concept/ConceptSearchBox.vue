@@ -78,7 +78,7 @@ export default {
   },
   data() {
     return { 
-      debug: true,
+      debug: false,
       search_concept: "",
       search_field: this.field,
       search_term : "",

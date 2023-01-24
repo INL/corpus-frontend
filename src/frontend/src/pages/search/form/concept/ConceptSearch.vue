@@ -60,7 +60,7 @@ export default {
 
   data() {
     return { 
-      debug: true,
+      debug: false,
       corpus: CorpusStore.getState().id,
       search_in: c2e[CorpusStore.getState().id],
       nBoxes: 2,
@@ -84,7 +84,7 @@ export default {
       //alert(JSON.stringify(query))
       
       const queries = {}
-      query["queries"]  = queries+++
+      query["queries"]  = queries
       Object.keys(q).forEach(k => {
        const terms = q[k]
        if (q[k].length > 0) {

@@ -65,8 +65,7 @@ export default {
       search_in: c2e[CorpusStore.getState().id],
       nBoxes: 2,
       queries : { // this should be a computed field.....
-        'b1' : {},
-        'b2' : {}
+
       },
       queryFieldValue: "",
       filterFieldValue: "", // TODO moet weg....

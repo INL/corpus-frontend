@@ -1,7 +1,7 @@
 <template>
    <div style='text-align: left'>
  
-       <div style="display:box"><pre>
+       <div :style="{display: debug?'box':'none'}"><pre>
        
        Query (JSON) {{ queryFieldValue }}
        Query (CQL)  {{ cqlQuery }} {{ queryCQL }}
@@ -9,9 +9,7 @@
        To blackparank: <a target="_blank" :href="blackparank_request">{{ blackparank_request }}</a> 
        </pre></div>
       <div class='boxes' style='text-align: center'>
-         <ConceptSearchBox id="b1"  field='epistemology' v-on:update_query="updateQuery"/>
-         <ConceptSearchBox id="b2"  field='epistemology' v-on:update_query="updateQuery"/>
-         <ConceptSearchBox id="b3"  field='epistemology' v-on:update_query="updateQuery"/>
+        <ConceptSearchBox v-for="id in Array.from(Array(nBoxes).keys())" v-bind:key="id" :id="'b' +id.toString()" v-on:update_query="updateQuery"/>
       </div>
     </div>
 </template>
@@ -50,6 +48,8 @@ import axios from 'axios'
 
 
 import ConceptSearchBox from './ConceptSearchBox.vue' 
+
+const c2e = {"OGL" :"ab", "quine" : "p" }
 export default {
   components: { ConceptSearchBox }, 
   name: 'ConceptSearch', 
@@ -60,16 +60,18 @@ export default {
 
   data() {
     return { 
-      search_in: "ab",
-      queries : {
+      debug: true,
+      corpus: CorpusStore.getState().id,
+      search_in: c2e[CorpusStore.getState().id],
+      nBoxes: 2,
+      queries : { // this should be a computed field.....
         'b1' : {},
-        //'b2' : {},
-        //'b3' : {}
+        'b2' : {}
       },
       queryFieldValue: "",
       filterFieldValue: "", // TODO moet weg....
       cqlQuery: "",
-      corpus: CorpusStore.getState().id 
+      
     }
   },
 
@@ -82,7 +84,7 @@ export default {
       //alert(JSON.stringify(query))
       
       const queries = {}
-      query["queries"]  = queries
+      query["queries"]  = queries+++
       Object.keys(q).forEach(k => {
        const terms = q[k]
        if (q[k].length > 0) {
@@ -90,28 +92,31 @@ export default {
          queries[k] = terms.map(t => { const z = {"field" : "lemma", "value" : t.replace("*",".*")}; return z })
       }  else delete q[k]
     })
-    // alert("Updating query -- "  + JSON.stringify(query))
+    // alert("Updated query to "  + JSON.stringify(query))
     this.queryFieldValue = JSON.stringify(query)
     //this.queryForConcordance = query
    }, 
 
-   updateQuery : function(e) {CorpusStore.getState().id
-      this.updateQueryx(this.queries) // en daar gebeurt nu natuurlijk niks mee, dit moet naar de store
+   updateQuery : function(e) {
+      alert("Updating query with:" + JSON.stringify(e))
+      this.updateQueryx(e) // en daar gebeurt nu natuurlijk niks mee, dit moet naar de store
+      alert("Updated query:" + JSON.stringify(this.queries))
     }
   },
+  
   computed : {
      blackparank_request() {
       
       const wQuery = `
           query Quine {
-            lexicon (field: "${this.search_field}", cluster: "${this.search_concept}") {
+            lexicon ( field: "${this.search_field}", cluster: "${this.search_concept}") {
             field,
           cluster,
             term
         }
       }`
-    
-     const query = `${settings.backend_server}/BlackPaRank?server=${encodeURIComponent(settings.selectedScenario.corpus_server)}&corpus=${settings.selectedScenario.corpus}&action=info&query=${encodeURIComponent(this.queryFieldValue)}`
+      // get server from frontend info ....
+     const query = `${settings.backend_server}/BlackPaRank?server=${encodeURIComponent(settings.selectedScenario.corpus_server)}&corpus=${this.corpus}&action=info&query=${encodeURIComponent(this.queryFieldValue)}`
      return query
     },
     
@@ -125,12 +130,12 @@ export default {
          get() {
           const self = this
 
-    //const query= `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
+      // const query= `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
     
-    // console.log(query)
-    // alert(`Info query: ${query}`)
+      // console.log(query)
+      // alert(`Info query: ${query}`)
 
-            const geefMee={"headers":{"Accept":"application/json"},"auth":{"username":"fouke","password":"narawaseraretakunai"}}
+            const geefMee = {"headers": {"Accept":"application/json"}, "auth": {"username":"fouke","password":"narawaseraretakunai"}}
 
             axios.get(this.blackparank_request, geefMee)
             .then(response => { 

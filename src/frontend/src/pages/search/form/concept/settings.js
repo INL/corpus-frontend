@@ -14,6 +14,7 @@ export const servers = {
     svatje: 'http://svatkc10.ivdnt.loc/',
     lexit_loc : 'http://lexit.inl.loc:8080',
     lexit_extern : 'http://lex-it.inl.nl/',
+    localhost: 'localhost',
     onw_server : 'https://corpusoudnederlands.ivdnt.org/',
 }
 
@@ -52,7 +53,7 @@ export const scenarios = [
     'server' : 'http://localhost:8080/Oefenen',
     'corpus' : 'OGL',
     'type' : 'blackparank',
-    'corpus_server' : servers.ato_corpora,
+    'corpus_server' : servers.localhost,
     'query' : parameters => 'hallo',
     'search_in' : 'ab',
     'parameters' : {

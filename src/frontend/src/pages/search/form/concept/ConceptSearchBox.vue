@@ -1,5 +1,8 @@
 <template>
    <div class='conceptbox' style='text-align: left'>
+    <div class="box-header">
+      {<span v-bind:key="i" v-for="(t,i) in terms">{{ t.term }}</span>}
+    </div>
     <div>
       <pre style="display:none">
     Main fields: {{ main_fields }} 
@@ -48,7 +51,7 @@
       </div>
 
       <button @click="buildQuery">Add selected terms to query</button>
-      <div>
+      <div :style="{display: debug?'box':'none'}">
      Wappie: {{  wappie  }} <br/>
      Wapwap: {{  wapwap }}
     </div>
@@ -75,7 +78,7 @@ export default {
   },
   data() {
     return { 
-      markdown: '# markdown-it rulezz!',
+      debug: true,
       search_concept: "",
       search_field: this.field,
       search_term : "",
@@ -107,6 +110,7 @@ export default {
       const query = {
         [id] : terms
       }
+      alert("query box: " + JSON.stringify(query))
       this.$emit(`update_query`, query)
     },
     toggleChecked: function(t) {
@@ -133,13 +137,11 @@ export default {
       return vals
      }
   },
+ 
   computed : {
 
     terms_from_lexicon() {
-
-        
         // console.log(query)
-
         const geefMee={"headers":{"Accept":"application/json"},"auth":{"username":"fouke","password":"narawaseraretakunai"}}
         const query = this.term_search_url
         axios.get(query, geefMee)
@@ -173,9 +175,11 @@ export default {
         //alert(terms_from_database_url + " -->" + pdb +  "...." + JSON.stringify(pdb))
         const term_promise_database = pdb.then(r => self.get_term_values(r.data))
         //alert(term_promise_database)
+        
         const promise_both = Promise.all([term_promise_database, term_promise_corpus]).then(r => {
-            alert(JSON.stringify(r))
+            //alert(JSON.stringify(r))
         })
+        
         return promise_both
         // const terms_from_blacklab = axios.get(terms_from_blacklab_term_url)
       },
@@ -195,7 +199,7 @@ export default {
           }`
         
         const query= `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
-        alert("Main field query:" + JSON.stringify(wQuery))
+        //alert("Main field query:" + JSON.stringify(wQuery))
         /// console.log(query)
         // alert("Something happens?")
         const geefMee={"headers":{"Accept":"application/json"},"auth":{"username":"fouke","password":"narawaseraretakunai"}}
@@ -243,27 +247,6 @@ export default {
        //console.log("AUTOCOMPLETE query: " + JSON.stringify(wQuery).replace(/\\n/, '\n'))
        return `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
     },
-
-    /*
-    responseHandler() {
-      return response => { 
-               console.log("RESPONSE: "  + JSON.stringify(response))
-               //console.log(JSON.stringify(response.data.data))
-               //this.terms = response.data.data
-               //this.terms.forEach(t => this.checked_terms[t.term] = false)
-               return uniq(response.data.data.map(t => t.term))
-              }
-    },
-    responseHandlerConcept() {
-      return response => { 
-               console.log("RESPONSE: "  + JSON.stringify(response))
-               //console.log(JSON.stringify(response.data.data))
-               //this.terms = response.data.data
-               //this.terms.forEach(t => this.checked_terms[t.term] = false)
-               return uniq(response.data.data.map(t => t.cluster))
-              }
-    }  
-    */
   }
 }
 </script>
@@ -294,7 +277,7 @@ img {
   border-style: solid;
   text-align: left;
   margin: 1em;
-  padding: 1em;
+  padding: 0em;
   zbox-shadow: 10px 5px 5px grey;
   zborder-radius: 10px;
   font-size: 9pt
@@ -309,5 +292,10 @@ img {
 }
 .t1 {
   table-layout: auto;
+}
+.box-header
+{
+  color: white;
+  background-color: #ae0932 !important;
 }
 </style>

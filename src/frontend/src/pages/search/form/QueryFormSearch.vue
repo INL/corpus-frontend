@@ -110,7 +110,7 @@
 				<button type="button" class="btn btn-default btn-sm" @click="copyAdvancedQuery">Copy to CQL editor</button>
 			</div>
 			<div :class="['tab-pane', {'active': activePattern==='concept'}]" id="concept">
-				<h3>"Concept" search (sort of)</h3>
+			
 				<ConceptSearch v-on:update_concept_query="updateComplex"/>  
 				Concept: [ {{ concept?concept:'nopez' }} ]
 				<!--

@@ -11,6 +11,7 @@
       <div class='boxes' style='text-align: center'>
         <ConceptSearchBox v-for="id in Array.from(Array(nBoxes).keys())" v-bind:key="id" :id="'b' +id.toString()" v-on:update_query="updateQuery"/>
       </div>
+      <button @click="addBox">Add box</button> <button @click="removeBox">Remove box</button>
     </div>
 </template>
 
@@ -60,7 +61,7 @@ export default {
 
   data() {
     return { 
-      debug: true,
+      debug: false,
       corpus: CorpusStore.getState().id,
       search_in: c2e[CorpusStore.getState().id],
       nBoxes: 2,
@@ -75,9 +76,16 @@ export default {
   },
 
   methods : {
+    addBox: function() {
+      this.nBoxes++;
+    },
+    removeBox: function() {
+      this.nBoxes--;
+    },
     // transformSnippets: null|((snippet?: BLTypes.BLHitSnippet|BLTypes.BLHitSnippet[]) => void);
     setTransformSnippets: function() {
       UIStore.getState().results.shared.concordanceAsHtml = true
+      /*
       UIStore.getState().results.shared.transformSnippets = s0 => {
         // alert("Transforming:" + JSON.stringify(s))
         const s = JSON.parse(JSON.stringify(s0))
@@ -91,6 +99,7 @@ export default {
           return s
         })
       }
+      */
     },
     updateQueryx: function(q) {
       this.setTransformSnippets()
@@ -123,9 +132,9 @@ export default {
    }, 
 
    updateQuery : function(e) {
-      alert("Updating query with:" + JSON.stringify(e))
+      //alert("Updating query with:" + JSON.stringify(e))
       this.updateQueryx(e) // en daar gebeurt nu natuurlijk niks mee, dit moet naar de store
-      alert("Updated query:" + JSON.stringify(this.queries))
+      // alert("Updated query:" + JSON.stringify(this.queries))
     }
   },
   

@@ -33,8 +33,6 @@
           <td class="fn">Term:</td><td> <Autocomplete 
             id="ac2"
 						placeholder="...term..."
-						
-
 						:autocomplete="true"
             :rendering = "{'prepare_data_niet' : d => get_term_values(d), 'promise': term_search_promise}"
 						:url="completionURLForTerm"
@@ -44,7 +42,7 @@
       
       </table>
 
-      
+
       <div class="terms">
         <div v-for="(t,i) in terms" :key="i">
           <input type="checkbox" v-model="checked_terms[t.term]" @click="() => toggleChecked(t.term)"/>
@@ -121,7 +119,8 @@ export default {
       this.search_term = e
     },
     addTerm: function() {
-      this.terms.push({'term': this.current_term})
+      this.terms.push({'term': this.current_term});
+      this.insertTerm();
       //alert("Pushing:"  + this.current_term  + " to " + JSON.stringify(this.terms))
     },
     addConcept: function() {
@@ -142,7 +141,37 @@ export default {
       const vals = uniq(d['data'].map(x => x['term']))
       //alert(JSON.stringify(vals))
       return vals
-     }
+     },
+     insertTerm : function() {
+      const self = this
+      const insertIt = {corpus: self.corpus, field: self.search_field, concept:self.current_concept, term: self.current_term, author: 'corpus_frontend'}
+      const insertTerm =  encodeURIComponent(JSON.stringify(insertIt))
+   
+      const url = `${this.server}/api?instance=${this.instance}&insertTerm=${insertTerm}`
+      // ToDo authentication !!!!
+      alert(`Yep, post ${JSON.stringify(insertIt)} to ${url}`)
+      axios.get(url,{ auth: settings.credentials.auth }).then(r => {
+        // alert(`gepiept (${this.exerciseData.type}, ${this.database_id})!`)
+        
+        }).catch(e => log_error(e))
+      // this.$emit('reload')
+    },
+    insertConcept : function() {
+      const self = this
+      const insertIt = {corpus: self.corpus, field: self.search_field, concept:self.current_concept, author: 'corpus_frontend'}
+      const insertConcept =  encodeURIComponent(JSON.stringify(insertIt))
+   
+      const url = `${this.server}/api?instance=${this.instance}&insertConcept=${insertConcept}`
+      // ToDo authentication !!!!
+      alert(`Yep, post ${JSON.stringify(insertConcept)} to ${url}`)
+
+      axios.get(url,{ auth: settings.credentials.auth }).then(r => {
+        // alert(`gepiept (${this.exerciseData.type}, ${this.database_id})!`)
+        
+        }).catch(e => log_error(e))
+      // this.$emit('reload')
+    },
+
   },
  
   computed : {

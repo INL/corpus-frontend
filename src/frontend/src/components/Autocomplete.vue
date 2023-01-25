@@ -90,6 +90,7 @@ export default Vue.extend({
 		},
 		_createAutocomplete() {
 			const $input = $(this.$el);
+			//console.log($input.id)
 			const self = this;
 			let lastSearchValue = '';
 			let lastSearchResults: string[]|undefined;
@@ -100,7 +101,9 @@ export default Vue.extend({
 					'ui-autocomplete': 'dropdown-menu'
 				},
 				source(params: any, render: (v: string[]) => void) {
+					
 					const {value} = self._getWordAroundCursor(false);
+					//alert("Something happens: " + value + " " + self.url)
 					if (!value.length) {
 						return;
 					} else if (value === lastSearchValue) {
@@ -109,18 +112,29 @@ export default Vue.extend({
 						} // user typed quickly or something, results are in flight, will come in eventually...
 					} else {
 						lastSearchValue = value;
-						$.ajax({
-							method: 'GET',
-							url: self.url,
-							data: {term: value},
-							dataType: 'json',
-							success(data) {
-								lastSearchResults = self.prepare_data(data);
-								//alert(JSON.stringify(data))
-								render(self.prepare_data(data));
-							}
-						});
-					}
+						if ('promise' in self.rendering) { // Jesse: ipv URL ook promise mogelijk maken?? (prepare_data wordt dan overbodig)
+						  // alert("Using promise")
+						  const p = self.rendering.promise; // the promise does not use trhe custom prepare_data, postprocessing should be incorporated
+						  p.then(data => {
+								// alert(JSON.stringify(data))
+								render(data)
+							})
+						} else  { 
+							// alert("Autocomplete URL:" + self.url)
+							$.ajax({
+								method: 'GET',
+								url: self.url,
+								data: {term: value},
+								dataType: 'json',
+								success(data) {
+									lastSearchResults = self.prepare_data(data);
+								    //alert(JSON.stringify(data))
+									render(self.prepare_data(data));
+								}
+							});
+						}
+					 }
+					
 				},
 				create() {
 					// This element has a div appended every time an element is highlighted

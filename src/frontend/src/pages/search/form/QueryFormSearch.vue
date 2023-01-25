@@ -111,7 +111,7 @@
 			</div>
 			<div :class="['tab-pane', {'active': activePattern==='concept'}]" id="concept"> <!-- Jesse -->
 			
-				<ConceptSearch v-on:update_concept_query="updateComplex"/>  
+				<ConceptSearch/>   <!--  v-on:update_concept_query="updateComplex" (niet meer nodig??)-->
 				<!--
 				<textarea id="querybox_concept" class="form-control" name="querybox" rows="7" v-model.lazy="concept"></textarea>
 				-->

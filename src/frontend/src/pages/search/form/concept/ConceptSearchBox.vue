@@ -27,7 +27,7 @@
 						:autocomplete="true"
             :rendering = "{'prepare_data' : d => get_cluster_values(d)}"
 						:url="completionURLForConcept"
-						v-model="current_concept"/></td>
+						v-model="current_concept"/> <button @click="addConcept">Add to concepts</button></td>
         </tr>
         <tr>
           <td class="fn">Term:</td><td> <Autocomplete 
@@ -36,10 +36,10 @@
 						
 
 						:autocomplete="true"
-            :rendering = "{'prepare_data' : d => get_term_values(d)}"
+            :rendering = "{'prepare_data_niet' : d => get_term_values(d), 'promise': term_search_promise}"
 						:url="completionURLForTerm"
 						v-model="current_term"
-            /></td>
+            /> <button @click="addTerm">Add to terms</button></td>
         </tr>
       
       </table>
@@ -110,15 +110,21 @@ export default {
       const query = {
         [id] : terms
       }
-      alert("query box: " + JSON.stringify(query))
-      this.$emit(`update_query`, query)
+      // alert("query box: " + JSON.stringify(query))
+      this.$emit(`update_query`, query) // in state frotten. Submodule voor maken?
     },
     toggleChecked: function(t) {
       this.checked_terms[t] = !this.checked_terms[t]
     },
     setSearchTerm: function(e) {
-      
       this.search_term = e
+    },
+    addTerm: function() {
+      this.terms.push({'term': this.current_term})
+      //alert("Pushing:"  + this.current_term  + " to " + JSON.stringify(this.terms))
+    },
+    addConcept: function() {
+      // do something to add to database
     },
     setSearchConcept: function(e) {
       // alert(`Search concept ${e}`)
@@ -170,14 +176,15 @@ export default {
         const self = this
         const terms_from_database_url = this.term_search_url
         const pdb = axios.get(terms_from_database_url)
-        const term_promise_corpus = axios.get(`http://localhost:8080/blacklab-server/${this.corpus}/autocomplete/contents/word_or_lemma/?term=${this.current_term}`).then(r => r.data)
+        const term_promise_corpus = axios.get(`http://localhost:8080/blacklab-server/${this.corpus}/autocomplete/contents/lemma/?term=${this.current_term}`).then(r => r.data)
         // http://localhost:8080/blacklab-server/OGL/autocomplete/contents/word_or_lemma/?term=a
         //alert(terms_from_database_url + " -->" + pdb +  "...." + JSON.stringify(pdb))
         const term_promise_database = pdb.then(r => self.get_term_values(r.data))
         //alert(term_promise_database)
         
         const promise_both = Promise.all([term_promise_database, term_promise_corpus]).then(r => {
-            //alert(JSON.stringify(r))
+            console.log(JSON.stringify(r))
+            return r[0].concat(r[1])
         })
         
         return promise_both

@@ -91,7 +91,7 @@ export default {
     },
     // transformSnippets: null|((snippet?: BLTypes.BLHitSnippet|BLTypes.BLHitSnippet[]) => void);
     setTransformSnippets: function() {
-      UIStore.getState().results.shared.concordanceAsHtml = true
+     
       /*
       UIStore.getState().results.shared.transformSnippets = s0 => {
         // alert("Transforming:" + JSON.stringify(s))
@@ -181,14 +181,17 @@ export default {
             .then(response => { 
               // alert("INFO: cql=" + JSON.stringify(response.data.pattern))
               self.cqlQuery = response.data.pattern
-              this.$emit(`update_concept_query`, self.cqlQuery)
-              //this.concept.set(e)
+              //this.$emit(`update_concept_query`, self.cqlQuery)
+              this.concept = self.cqlQuery // .set(e)
               return response.data.pattern
               })
           },
         default: ""
     }
-  }
+  }, 
+  created() {
+    UIStore.getState().results.shared.concordanceAsHtml = true;
+}
 }
 
 </script>

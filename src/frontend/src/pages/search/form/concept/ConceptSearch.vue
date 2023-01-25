@@ -12,10 +12,20 @@
         <ConceptSearchBox v-for="id in Array.from(Array(nBoxes).keys())" v-bind:key="id" :id="'b' +id.toString()" v-on:update_query="updateQuery"/>
       </div>
       <button @click="addBox">Add box</button> <button @click="removeBox">Remove box</button>
+      <br/>
+      Search in: <select v-model="search_in"> 
+         <option v-for="(o,i) in search_in_options" v-bind:key="i">{{ o }}</option>
+      </select> 
+
+      <br/>
+      <div style="border-style: solid; margin-top: 1em;">
+      <input type="checkbox" v-model="showQuery">Show query</checkbox>
+       <div v-if="showQuery">Generated query: <div style="font-family:'Courier New', Courier, monospace"> {{ concept? concept:'nopez' }} </div> </div>
+      </div>
     </div>
 </template>
 
-<script lang="JavaScript">
+<script lang="ts">
 
 import Vue from 'vue';
 
@@ -27,15 +37,10 @@ import * as PatternStore from '@/store/search/form/patterns';
 import * as GapStore from '@/store/search/form/gap';
 import * as HistoryStore from '@/store/search/history';
 
-import Annotation from '@/pages/search/form/Annotation.vue';
 
-import Lexicon from '@/pages/search/form/Lexicon.vue';
-import SelectPicker, { Option } from '@/components/SelectPicker.vue';
 // @ts-ignore
-import Autocomplete from '@/components/Autocomplete.vue';
-import uid from '@/mixins/uid';
 
-import { QueryBuilder } from '@/modules/cql_querybuilder';
+
 
 import { paths } from '@/api';
 import * as AppTypes from '@/types/apptypes';
@@ -50,7 +55,7 @@ import axios from 'axios'
 
 import ConceptSearchBox from './ConceptSearchBox.vue' 
 
-const c2e = {"OGL" :"ab", "quine" : "p" }
+const c2e = {"OGL" :['ab'], "quine" : ['p','s'] }
 export default {
   components: { ConceptSearchBox }, 
   name: 'ConceptSearch', 
@@ -62,8 +67,10 @@ export default {
   data() {
     return { 
       debug: false,
+      showQuery : false,
       corpus: CorpusStore.getState().id,
-      search_in: c2e[CorpusStore.getState().id],
+      search_in_options: c2e[CorpusStore.getState().id],
+      search_in: c2e[CorpusStore.getState().id][0],
       nBoxes: 2,
       queries : { // this should be a computed field.....
 
@@ -154,10 +161,9 @@ export default {
      return query
     },
     
-    concept: {
-			get() { return PatternStore.getState().concept; },
+		concept: {
+			get(): string|null { return PatternStore.getState().concept; },
 			set: PatternStore.actions.concept,
-      default: "[word='paard']"
 		},
 
     queryCQL: {

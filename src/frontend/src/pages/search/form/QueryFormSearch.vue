@@ -109,10 +109,9 @@
 				<div id="querybuilder" ref="querybuilder"></div>
 				<button type="button" class="btn btn-default btn-sm" @click="copyAdvancedQuery">Copy to CQL editor</button>
 			</div>
-			<div :class="['tab-pane', {'active': activePattern==='concept'}]" id="concept">
+			<div :class="['tab-pane', {'active': activePattern==='concept'}]" id="concept"> <!-- Jesse -->
 			
 				<ConceptSearch v-on:update_concept_query="updateComplex"/>  
-				Concept: [ {{ concept?concept:'nopez' }} ]
 				<!--
 				<textarea id="querybox_concept" class="form-control" name="querybox" rows="7" v-model.lazy="concept"></textarea>
 				-->

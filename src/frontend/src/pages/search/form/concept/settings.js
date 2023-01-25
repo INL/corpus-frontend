@@ -28,7 +28,7 @@ export const scenarios = [
     'type' : 'blackparank',
     'corpus_server' : productie ? servers.ato_corpora_by_proxy : servers.svatje,
     'query' : parameters => 'hallo',
-    'search_in' : 'p',
+    'search_in' : ['p', 's'],
     'parameters' : {
 
     }
@@ -42,7 +42,7 @@ export const scenarios = [
     'type' : 'blackparank',
     'corpus_server' : servers.ato_corpora,
     'query' : parameters => 'hallo',
-    'search_in' : 'p',
+    'search_in' : ['p'],
     'parameters' : {
     }
   },
@@ -55,7 +55,7 @@ export const scenarios = [
     'type' : 'blackparank',
     'corpus_server' : servers.localhost,
     'query' : parameters => 'hallo',
-    'search_in' : 'ab',
+    'search_in' : ['ab'],
     'parameters' : {
     }
   },

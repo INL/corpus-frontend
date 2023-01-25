@@ -44,6 +44,7 @@
       
       </table>
 
+      
       <div class="terms">
         <div v-for="(t,i) in terms" :key="i">
           <input type="checkbox" v-model="checked_terms[t.term]" @click="() => toggleChecked(t.term)"/>

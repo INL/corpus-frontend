@@ -60,7 +60,7 @@ export default {
 
   data() {
     return { 
-      debug: false,
+      debug: true,
       corpus: CorpusStore.getState().id,
       search_in: c2e[CorpusStore.getState().id],
       nBoxes: 2,
@@ -75,7 +75,25 @@ export default {
   },
 
   methods : {
+    // transformSnippets: null|((snippet?: BLTypes.BLHitSnippet|BLTypes.BLHitSnippet[]) => void);
+    setTransformSnippets: function() {
+      UIStore.getState().results.shared.concordanceAsHtml = true
+      UIStore.getState().results.shared.transformSnippets = s0 => {
+        // alert("Transforming:" + JSON.stringify(s))
+        const s = JSON.parse(JSON.stringify(s0))
+        const start = s.start
+        s.captureGroups.forEach(g => {
+          const name = g.name
+          const gs = g.start - start
+          const ge = g.end - start
+          //alert(`${name} at ${gs} for ${s.match.word[gs]} `)
+          s.match.word[gs] = '<i>' + name + ":" + s.match.word[gs] + '</i>' // dit moet via een commit ..... // nee dit is niet de manier, moet via template ....
+          return s
+        })
+      }
+    },
     updateQueryx: function(q) {
+      this.setTransformSnippets()
       const query = {
           "element" : this.search_in, "strict": true, "filter" : this.filterFieldValue
       }
@@ -85,7 +103,7 @@ export default {
        const terms = this.queries[k]
        if (terms.length > 0) {
       // alert(JSON.stringify(terms))
-         queries[k] = terms.map(t => { const z = {"field" : "lemma", "value" : t.replace("*",".*")}; return z })
+         queries[k] = terms // .map(t => { const z = {"field" : "lemma", "value" : t.replace("*",".*")}; return z })
       }})  //else delete q[k]
       //alert(JSON.stringify(query))
       
@@ -99,6 +117,7 @@ export default {
       }  else delete q[k]
     })
     // alert("Updated query to "  + JSON.stringify(query))
+    this.queries = queries;
     this.queryFieldValue = JSON.stringify(query)
     //this.queryForConcordance = query
    }, 

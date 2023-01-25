@@ -66,7 +66,7 @@ export function NaNToNull(n: number) { return isNaN(n) ? null : n; }
 export function snippetParts(hit: BLTypes.BLHitSnippet, prop: string): [string, string, string] {
 	const punctAfterLeft = hit.match.word.length > 0 ? hit.match.punct[0] : '';
 	const before = words(hit.left, prop, false, punctAfterLeft);
-	const match = words(hit.match, prop, false, '');
+	const match = wordsWithCaptures(hit, hit.match, prop, false, ''); // Jesse
 	const after = words(hit.right, prop, true, '');
 	return [before, match, after];
 }
@@ -86,6 +86,51 @@ export function words(context: BLTypes.BLHitSnippetPart, prop: string, doPunctBe
 			parts.push(context.punct[i]);
 		}
 		parts.push(context[prop][i]);
+	}
+	parts.push(addPunctAfter);
+	return parts.join('');
+}
+
+interface int2string {
+    [key: number]:  string;
+}
+
+// ugly thing that should be in state 
+
+interface string2int {
+	[key: string]:  number;
+}
+
+const capturename2index : string2int = {}; // Jesse, gruwelijk
+
+// add styling to captures, in a hacky way. breaks clicking on concordance to get quotation!
+// Test with e.g. ((<s/> containing a:[word='man']) containing  b:[word='Socrates']) containing c:[word='morta.*'] in quine corpus
+
+export function wordsWithCaptures(hit: BLTypes.BLHitSnippet, context: BLTypes.BLHitSnippetPart, prop: string, doPunctBefore: boolean, addPunctAfter: string): string { // Jesse
+	const parts = [] as string[];
+	const n = context[prop] ? context[prop].length : 0;
+	const start = hit.start;
+	const p2c: int2string = {};
+
+	if (hit.captureGroups)  {
+			hit.captureGroups.forEach(g => {
+			const name = g.name;
+			if (!(name in capturename2index)) {
+				capturename2index[name] = Object.keys(capturename2index).length;
+			}
+			const gs = g.start - start;
+			const ge = g.end - start;
+			for (let k=gs; k < ge; k++) p2c[k] = name;
+		});
+	}
+
+	for (let i = 0; i < n; i++) {
+		if ((i === 0 && doPunctBefore) || i > 0) {
+			parts.push(context.punct[i]);
+		}
+		const w = context[prop][i];
+		const w_i = i in p2c?`<span style="font-style:italic" title="capture: ${p2c[i]}" class='capture capture_${capturename2index[p2c[i]]}'>${w}</span>`:w;
+		parts.push(w_i);
 	}
 	parts.push(addPunctAfter);
 	return parts.join('');

@@ -1,7 +1,7 @@
 <template>
    <div class='conceptbox' style='text-align: left'>
     <div class="box-header">
-     Subquery {{ id}} : {<span v-bind:key="i" v-for="(t,i) in terms">{{ t.term }}</span>}
+     Subquery {{ id}} : {<span v-bind:key="i" v-for="(t,i) in terms">{{ t.term }} </span>}
     </div>
     <div>
       <pre style="display:none">

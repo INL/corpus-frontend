@@ -423,7 +423,13 @@ export interface BLHitSnippetPart {
 	/** Punctuation always exists (even if only an empty string or a space) */
 	punct: string[];
 	/** Usually this contains fields like lemma, word, pos */
-	[key: string]: string[];
+	[key: string]: string[]; // Jesse: Need something for the captures here
+}
+
+export interface BLCaptureGroup  { // Jesse
+	name: string;
+	start: number;
+	end: number;
 }
 
 /** Contains all the AnnotatedField (previously token/word "properties") values for tokens in or around a hit */
@@ -431,6 +437,9 @@ export interface BLHitSnippet {
 	left: BLHitSnippetPart;
 	match: BLHitSnippetPart;
 	right: BLHitSnippetPart;
+	start: number;
+	end: number;
+	captureGroups: BLCaptureGroup[]; // Jesse
 }
 
 /** Contains occurance counts of terms in the index */

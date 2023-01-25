@@ -421,8 +421,35 @@ export default Vue.extend({
 });
 </script>
 
-<style lang="scss" scoped>
 
+<!-- gruwelijk, Jesse --> 
+<style lang="css">
+.capture {
+	border-style: solid;
+	border-color: goldenrod;
+}
+
+.capture_0 { 
+	color: blue; 	
+}
+
+.capture_1 {
+	color: red
+}
+.capture_2 {
+	color: green
+}
+
+.capture_3 {
+	color: purple
+}
+
+.capture_4 {
+	color: orange
+}
+
+</style>
+<style lang="scss" scoped>
 table {
 	> thead > tr > th,
 	> tbody > tr > td,

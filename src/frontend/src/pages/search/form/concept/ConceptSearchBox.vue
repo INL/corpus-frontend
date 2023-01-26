@@ -115,8 +115,13 @@ export default {
       }
 
       const scq: ConceptStore.SingleConceptQuery = { terms: new Set(terms.map(t => { const z: at = {field: 'lemma', 'value': t}; return z })) }
-      // ConceptStore.actions.setSubQuery( {id: this.id, subquery: scq} )
-
+      // console.log(scq)
+      try {
+        alert(JSON.stringify(ConceptStore.actions))
+        ConceptStore.actions.setSubQuery( {id: this.id, subquery: scq} )
+      } catch (e) {
+        alert("Whoops:" + e.message)
+      }
       // alert("query box: " + JSON.stringify(query))
       this.$emit(`update_query`, query) // in state frotten. Submodule voor maken?
     },

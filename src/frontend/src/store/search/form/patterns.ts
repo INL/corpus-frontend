@@ -42,7 +42,7 @@ const defaults: ModuleRootState = {
 		splitBatch: false,
 	},
 	advanced: null,
-	concept: null, // concept
+	concept: null, // 
 	expert: null,
 };
 

@@ -20,7 +20,10 @@
       <br/>
       <div style="border-style: solid; margin-top: 1em;">
       <input type="checkbox" v-model="showQuery">Show query</checkbox>
-       <div v-if="showQuery">Generated query: <div style="font-family:'Courier New', Courier, monospace"> {{ concept? concept:'nopez' }} </div> </div>
+       <div v-if="showQuery">Generated query: 
+        <div style="font-family:'Courier New', Courier, monospace"> {{ concept? concept:'nopez' }} </div> 
+        {{ query_from_store }}
+       </div>
       </div>
     </div>
 </template>
@@ -150,7 +153,7 @@ export default {
   },
   
   computed : {
-     query_from_store(): ConceptQuery { return ConceptStore.getState().query },
+     query_from_store() { return ConceptStore.getState().query },
      blackparank_request() {
       
       const wQuery = `

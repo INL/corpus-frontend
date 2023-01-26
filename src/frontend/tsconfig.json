@@ -1,5 +1,6 @@
 {
 	"compilerOptions": {
+		"allowJs": true,
 		// Output the most modern javascript instead of downcompiling, let babel handle that
 		"target": "esnext",
 		// Output the most modern import/export statements, instead of converting modules to CommonJs

@@ -31,7 +31,7 @@
 		"prefer-const": {"severity": "warn"},
 		"no-var-keyword": {"severity": "warn"},
 		"curly": {"severity": "warn", "options": ["ignore-same-line"]},
-		"semicolon": {"severity": "warn"},
+		"semicolon": {"severity": "off"},
 		"object-literal-shorthand": {"severity": "warn"},
 		"whitespace": { "severity": "warn" },
 		"one-line": { "severity": "warn" },
@@ -57,7 +57,7 @@
 			"options": ["single", "avoid-escape"]
 		},
 		"indent": {
-			"severity": "warn",
+			"severity": "off",
 			"options": "tabs"
 		},
 		"variable-name": {

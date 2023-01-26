@@ -57,7 +57,7 @@
    </div>
 </template>
 
-<script lang="JavaScript">
+<script lang="ts">
  
 
 import { toHandlers } from '@vue/runtime-core';
@@ -65,8 +65,10 @@ import axios from 'axios'
 import { settings } from './settings.js'
 import Autocomplete from '@/components/Autocomplete.vue';
 import * as CorpusStore from '@/store/search/corpus';
-//import AutoComplete from './AutoComplete.vue';
+import * as ConceptStore from '@/pages/search/form/concept/conceptStore' 
+// import AutoComplete from './AutoComplete.vue';
 import { uniq } from './utils'
+
 
 export default {
   name: 'ConceptSearchBox', 
@@ -102,7 +104,7 @@ export default {
       alert(s)
     },
     buildQuery: function() {
-      //alert(JSON.stringify(this.id))
+      // alert(JSON.stringify(this.id))
 
       const terms = Object.keys(this.checked_terms).filter(t => this.checked_terms[t])
       const id = this.id
@@ -146,13 +148,11 @@ export default {
       const self = this
       const insertIt = {corpus: self.corpus, field: self.search_field, concept:self.current_concept, term: self.current_term, author: 'corpus_frontend'}
       const insertTerm =  encodeURIComponent(JSON.stringify(insertIt))
-   
       const url = `${this.server}/api?instance=${this.instance}&insertTerm=${insertTerm}`
       // ToDo authentication !!!!
       alert(`Yep, post ${JSON.stringify(insertIt)} to ${url}`)
       axios.get(url,{ auth: settings.credentials.auth }).then(r => {
         // alert(`gepiept (${this.exerciseData.type}, ${this.database_id})!`)
-        
         }).catch(e => log_error(e))
       // this.$emit('reload')
     },
@@ -179,7 +179,7 @@ export default {
     terms_from_lexicon() {
         // console.log(query)
         const geefMee={"headers":{"Accept":"application/json"},"auth":{"username":"fouke","password":"narawaseraretakunai"}}
-        const query = this.term_search_url
+        const query: string = this.term_search_url
         axios.get(query, geefMee)
             .then(response => { 
                console.log(`found in lexicon for field: "${this.search_field}", cluster: "${this.current_concept}"`  + JSON.stringify(response.data.data))
@@ -189,7 +189,7 @@ export default {
               })
       },
 
-      term_search_url() {
+      term_search_url(): string {
         const wQuery = `
               query Quine {
                 lexicon (field: "${this.search_field}", cluster: "${this.current_concept}") {
@@ -198,7 +198,7 @@ export default {
                 term
             }
           }`
-        const query= `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
+        const query: string= `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
         return query
       },
 
@@ -207,7 +207,7 @@ export default {
         const terms_from_database_url = this.term_search_url
         const pdb = axios.get(terms_from_database_url)
         const term_promise_corpus = axios.get(`http://localhost:8080/blacklab-server/${this.corpus}/autocomplete/contents/lemma/?term=${this.current_term}`).then(r => r.data)
-        // http://localhost:8080/blacklab-server/OGL/autocomplete/contents/word_or_lemma/?term=a
+        //http://localhost:8080/blacklab-server/OGL/autocomplete/contents/word_or_lemma/?term=a
         //alert(terms_from_database_url + " -->" + pdb +  "...." + JSON.stringify(pdb))
         const term_promise_database = pdb.then(r => self.get_term_values(r.data))
         //alert(term_promise_database)

@@ -20,6 +20,7 @@ import * as InterfaceModule from '@/store/search/form/interface';
 import * as PatternModule from '@/store/search/form/patterns';
 import * as ExploreModule from '@/store/search/form/explore';
 import * as GapModule from '@/store/search/form/gap';
+import * as ConceptModule from '@/pages/search/form/concept/conceptStore' // Jesse
 
 // Results
 import * as ViewModule from '@/store/search/results/views';
@@ -39,6 +40,7 @@ type RootState = {
 	ui: UIModule.ModuleRootState;
 	views: ViewModule.ModuleRootState;
 	global: GlobalResultsModule.ModuleRootState;
+	concepts: ConceptModule.ModuleRootState; // Jesse
 }&FormManager.PartialRootState;
 
 const b = getStoreBuilder<RootState>();

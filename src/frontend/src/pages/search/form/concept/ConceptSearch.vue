@@ -34,6 +34,7 @@ import * as CorpusStore from '@/store/search/corpus';
 import * as UIStore from '@/store/search/ui';
 import * as InterfaceStore from '@/store/search/form/interface';
 import * as PatternStore from '@/store/search/form/patterns';
+import * as ConceptStore from '@/pages/search/form/concept/conceptStore';
 import * as GapStore from '@/store/search/form/gap';
 import * as HistoryStore from '@/store/search/history';
 
@@ -48,14 +49,16 @@ import { getAnnotationSubset } from '@/utils';
 
 /// 
 
+
 import { settings } from './settings.js'
 
 import axios from 'axios'
 
 
 import ConceptSearchBox from './ConceptSearchBox.vue' 
+import { ConceptQuery } from './conceptStore.js';
 
-const c2e = {"OGL" :['ab'], "quine" : ['p','s'] }
+const c2e = {'OGL' :['ab'], 'quine' : ['p','s'] }
 export default {
   components: { ConceptSearchBox }, 
   name: 'ConceptSearch', 
@@ -146,6 +149,7 @@ export default {
   },
   
   computed : {
+    query_from_store(): ConceptQuery { return ConceptStore.getState().query },
      blackparank_request() {
       
       const wQuery = `

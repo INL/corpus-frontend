@@ -97,7 +97,6 @@ const actions = {
 
 const getState = (() => {
 	const getter = b.state();
-
 	return (): ModuleRootState => {
 		try {
 			// throws if store not built yet

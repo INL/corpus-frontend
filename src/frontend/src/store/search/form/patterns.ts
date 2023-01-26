@@ -26,7 +26,7 @@ type ModuleRootState = {
 		splitBatch: boolean;
 	},
 	advanced: string|null;
-	concept: string|null;
+	concept: string|null; // Jesse
 	expert: string|null;
 };
 
@@ -42,7 +42,7 @@ const defaults: ModuleRootState = {
 		splitBatch: false,
 	},
 	advanced: null,
-	concept: null,
+	concept: null, // concept
 	expert: null,
 };
 

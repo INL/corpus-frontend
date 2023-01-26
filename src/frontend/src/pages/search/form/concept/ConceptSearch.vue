@@ -111,7 +111,8 @@ export default {
       }
       */
     },
-    updateQueryx: function(q) {
+    updateQueryx: function(q) { // params: {q: any, scq: ConceptStore.SingleConceptQuery}
+      
       this.setTransformSnippets()
       const query = {
           "element" : this.search_in, "strict": true, "filter" : this.filterFieldValue
@@ -149,7 +150,7 @@ export default {
   },
   
   computed : {
-    query_from_store(): ConceptQuery { return ConceptStore.getState().query },
+     query_from_store(): ConceptQuery { return ConceptStore.getState().query },
      blackparank_request() {
       
       const wQuery = `

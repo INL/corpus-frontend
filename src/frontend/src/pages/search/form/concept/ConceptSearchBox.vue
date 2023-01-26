@@ -65,13 +65,15 @@ import axios from 'axios'
 import { settings } from './settings.js'
 import Autocomplete from '@/components/Autocomplete.vue';
 import * as CorpusStore from '@/store/search/corpus';
-import * as ConceptStore from '@/pages/search/form/concept/conceptStore' 
+
+import * as ConceptStore from '@/pages/search/form/concept/conceptStore'; 
+type at = ConceptStore.AtomicQuery;
 // import AutoComplete from './AutoComplete.vue';
 import { uniq } from './utils'
 
 
 export default {
-  name: 'ConceptSearchBox', 
+  name: 'ConceptSearchBox',
   components: { Autocomplete},
   props: {
     id: String,
@@ -80,14 +82,14 @@ export default {
   data() {
     return { 
       debug: false,
-      search_concept: "",
+      search_concept: '',
       search_field: this.field,
-      search_term : "",
-      current_concept : "",
-      current_term : "",
+      search_term : '',
+      current_concept : '',
+      current_term : '',
       checked_terms: {},
-      wapwap: "",
-      fields: ["hallo", "daar"],
+      wapwap: '',
+      fields: ['hallo', 'daar'],
       terms: [],
       corpus: CorpusStore.getState().id,
       server : 'http://localhost:8080/Oefenen/',
@@ -111,6 +113,10 @@ export default {
       const query = {
         [id] : terms
       }
+
+      const scq: ConceptStore.SingleConceptQuery = { terms: new Set(terms.map(t => { const z: at = {field: 'lemma', 'value': t}; return z })) }
+      // ConceptStore.actions.setSubQuery( {id: this.id, subquery: scq} )
+
       // alert("query box: " + JSON.stringify(query))
       this.$emit(`update_query`, query) // in state frotten. Submodule voor maken?
     },
@@ -175,7 +181,7 @@ export default {
   },
  
   computed : {
-
+    subquery_from_store(): ConceptStore.SingleConceptQuery { return ConceptStore.getState().query[this.id] },
     terms_from_lexicon() {
         // console.log(query)
         const geefMee={"headers":{"Accept":"application/json"},"auth":{"username":"fouke","password":"narawaseraretakunai"}}

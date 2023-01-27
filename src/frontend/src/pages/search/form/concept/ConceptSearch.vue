@@ -43,25 +43,9 @@ import * as UIStore from '@/store/search/ui';
 import * as InterfaceStore from '@/store/search/form/interface';
 import * as PatternStore from '@/store/search/form/patterns';
 import * as ConceptStore from '@/pages/search/form/concept/conceptStore';
-import * as GapStore from '@/store/search/form/gap';
-import * as HistoryStore from '@/store/search/history';
-
-
-// @ts-ignore
-
-
-
-import { paths } from '@/api';
-import * as AppTypes from '@/types/apptypes';
-import { getAnnotationSubset } from '@/utils';
-
-/// 
-
-
 import { settings } from './settings.js'
 
 import axios from 'axios'
-
 
 import ConceptSearchBox from './ConceptSearchBox.vue' 
 import { ConceptQuery } from './conceptStore.js';
@@ -99,47 +83,7 @@ export default {
     removeBox: function() {
       this.nBoxes--;
     },
-    // transformSnippets: null|((snippet?: BLTypes.BLHitSnippet|BLTypes.BLHitSnippet[]) => void);
-
-    /*
-    updateQueryx: function(q) { // params: {q: any, scq: ConceptStore.SingleConceptQuery}
-      
-      const query = {
-          "element" : this.search_in, "strict": true, "filter" : this.filterFieldValue
-      }
-      const queries = {}
-
-      Object.keys(this.queries).forEach(k => {
-       const terms = this.queries[k]
-       if (terms.length > 0) {
-      // alert(JSON.stringify(terms))
-         queries[k] = terms // .map(t => { const z = {"field" : "lemma", "value" : t.replace("*",".*")}; return z })
-      }})  //else delete q[k]
-      //alert(JSON.stringify(query))
-      
-      
-      query["queries"]  = queries
-      Object.keys(q).forEach(k => {
-       const terms = q[k]
-       if (q[k].length > 0) {
-      // alert(JSON.stringify(terms))
-         queries[k] = terms.map(t => { const z = {"field" : "lemma", "value" : t.replace("*",".*")}; return z })
-      }  else delete q[k]
-    })
-    // alert("Updated query to "  + JSON.stringify(query))
-    this.queries = queries;
-    this.queryFieldValue = JSON.stringify(query)
-    //this.queryForConcordance = query
-   }, 
-
-   updateQuery : function(e) {
-      //alert("Updating query with:" + JSON.stringify(e))
-      this.updateQueryx(e) // en daar gebeurt nu natuurlijk niks mee, dit moet naar de store
-      // alert("Updated query:" + JSON.stringify(this.queries))
-    }
-    */
   },
-  
   computed : {
      query_from_store() { return ConceptStore.getState().query },
      query_cql_from_store() { return ConceptStore.getState().query_cql },
@@ -149,36 +93,10 @@ export default {
      const query = `${settings.backend_server}/BlackPaRank?server=${encodeURIComponent(settings.selectedScenario.corpus_server)}&corpus=${this.corpus}&action=info&query=${encodeURIComponent(this.queryFieldValue)}`
      return query
     },
-    
 		concept: {
 			get(): string|null { return PatternStore.getState().concept; },
 			set: PatternStore.actions.concept,
 		},
-
-    /*
-    queryCQL: {
-         get() {
-          const self = this
-
-      // const query= `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
-    
-      // console.log(query)
-      // alert(`Info query: ${query}`)
-
-            const geefMee = {"headers": {"Accept":"application/json"}, "auth": {"username":"fouke","password":"narawaseraretakunai"}}
-
-            axios.get(this.blackparank_request, geefMee)
-            .then(response => { 
-              // alert("INFO: cql=" + JSON.stringify(response.data.pattern))
-              self.cqlQuery = response.data.pattern
-              //this.$emit(`update_concept_query`, self.cqlQuery)
-              this.concept = self.cqlQuery // .set(e)
-              return response.data.pattern
-              })
-          },
-        default: ""
-    }
-    */
   }, 
   created() {
     UIStore.getState().results.shared.concordanceAsHtml = true;

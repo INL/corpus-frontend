@@ -50,10 +50,6 @@
       </div>
 
       <button @click="buildQuery">Add selected terms to query</button>
-      <div :style="{display: debug?'box':'none'}">
-     Wappie: {{  wappie  }} <br/>
-     Wapwap: {{  wapwap }}
-    </div>
    </div>
 </template>
 
@@ -80,7 +76,7 @@ export default {
     field: String
   },
   data() {
-    return { 
+    return {
       debug: false,
       search_concept: '',
       search_field: this.field,
@@ -88,7 +84,6 @@ export default {
       current_concept : '',
       current_term : '',
       checked_terms: {},
-      wapwap: '',
       fields: ['hallo', 'daar'],
       terms: [],
       corpus: CorpusStore.getState().id,
@@ -102,7 +97,7 @@ export default {
   },
  
   methods : {
-    alert: function(s)  {
+    alert: function(s:string)  {
       alert(s)
     },
     buildQuery: function() {
@@ -119,10 +114,10 @@ export default {
       }
     },
 
-    toggleChecked: function(t) {
+    toggleChecked: function(t:string) {
       this.checked_terms[t] = !this.checked_terms[t]
     },
-    setSearchTerm: function(e) {
+    setSearchTerm: function(e:string) {
       this.search_term = e
     },
     addTerm: function() {
@@ -133,7 +128,7 @@ export default {
     addConcept: function() {
       // do something to add to database
     },
-    setSearchConcept: function(e) {
+    setSearchConcept: function(e:string) {
       // alert(`Search concept ${e}`)
       this.search_concept = e
     },
@@ -226,11 +221,6 @@ export default {
         // const terms_from_blacklab = axios.get(terms_from_blacklab_term_url)
       },
 
-      wappie() {
-        const self = this
-        return this.term_search_promise.then(d => self.wapwap = JSON.stringify(d))
-      },
-
     main_fields: {
       get() {
         const wQuery = `
@@ -258,7 +248,6 @@ export default {
         default: ["aap", "noot", "mies"]
     },
 
-
     completionURLForTerm()  {
       const field = this.search_field
       const concept = this.current_concept
@@ -274,7 +263,7 @@ export default {
       //console.log("AUTOCOMPLETE query: " + JSON.stringify(wQuery).replace(/\\n/, '\n'))
       return `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
     },
-  
+
     completionURLForConcept () {
        const field = this.search_field
        const value = this.current_concept

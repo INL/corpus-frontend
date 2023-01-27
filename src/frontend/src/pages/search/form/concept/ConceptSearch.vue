@@ -1,6 +1,6 @@
 <template>
    <div style='text-align: left'>
- 
+      <!--
        <div :style="{display: debug?'box':'none'}"><pre>
        
        Query (JSON) {{ queryFieldValue }}
@@ -8,8 +8,10 @@
        Concept {{ concept }}
        To blackparank: <a target="_blank" :href="blackparank_request">{{ blackparank_request }}</a> 
        </pre></div>
+
+      -->
       <div class='boxes' style='text-align: center'>
-        <ConceptSearchBox v-for="id in Array.from(Array(nBoxes).keys())" v-bind:key="id" :id="'b' +id.toString()" v-on:update_query="updateQuery"/>
+        <ConceptSearchBox v-for="id in Array.from(Array(nBoxes).keys())" v-bind:key="id" :id="'b' +id.toString()"/>
       </div>
       <button @click="addBox">Add box</button> <button @click="removeBox">Remove box</button>
       <br/>
@@ -74,7 +76,7 @@ export default {
   },
 
   data() {
-    return { 
+    return {
       debug: false,
       showQuery : false,
       corpus: CorpusStore.getState().id,
@@ -84,10 +86,9 @@ export default {
       queries : { // this should be a computed field.....
 
       },
-      queryFieldValue: "",
-      filterFieldValue: "", // TODO moet weg....
-      cqlQuery: "",
-      
+      queryFieldValue: '',
+      filterFieldValue: '', // TODO moet weg....
+      cqlQuery: '',
     }
   },
 
@@ -100,6 +101,7 @@ export default {
     },
     // transformSnippets: null|((snippet?: BLTypes.BLHitSnippet|BLTypes.BLHitSnippet[]) => void);
 
+    /*
     updateQueryx: function(q) { // params: {q: any, scq: ConceptStore.SingleConceptQuery}
       
       const query = {
@@ -135,6 +137,7 @@ export default {
       this.updateQueryx(e) // en daar gebeurt nu natuurlijk niks mee, dit moet naar de store
       // alert("Updated query:" + JSON.stringify(this.queries))
     }
+    */
   },
   
   computed : {
@@ -152,6 +155,7 @@ export default {
 			set: PatternStore.actions.concept,
 		},
 
+    /*
     queryCQL: {
          get() {
           const self = this
@@ -174,6 +178,7 @@ export default {
           },
         default: ""
     }
+    */
   }, 
   created() {
     UIStore.getState().results.shared.concordanceAsHtml = true;

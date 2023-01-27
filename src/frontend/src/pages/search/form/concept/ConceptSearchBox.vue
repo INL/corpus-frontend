@@ -109,22 +109,16 @@ export default {
       // alert(JSON.stringify(this.id))
 
       const terms = Object.keys(this.checked_terms).filter(t => this.checked_terms[t])
-      const id = this.id
-      const query = {
-        [id] : terms
-      }
-
       const scq: ConceptStore.SingleConceptQuery = { terms: terms.map(t => { const z: at = {field: 'lemma', 'value': t}; return z }) }
       // console.log(scq)
       try {
         alert(JSON.stringify(ConceptStore.actions))
         ConceptStore.actions.setSubQuery( {id: this.id, subquery: scq} )
       } catch (e) {
-        alert("Whoops:" + e.message)
+        alert('Whoops:' + e.message)
       }
-      // alert("query box: " + JSON.stringify(query))
-      //this.$emit(`update_query`, query) // in state frotten. Submodule voor maken?
     },
+
     toggleChecked: function(t) {
       this.checked_terms[t] = !this.checked_terms[t]
     },

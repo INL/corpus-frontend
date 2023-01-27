@@ -96,27 +96,9 @@ export default {
       this.nBoxes--;
     },
     // transformSnippets: null|((snippet?: BLTypes.BLHitSnippet|BLTypes.BLHitSnippet[]) => void);
-    setTransformSnippets: function() {
-     
-      /*
-      UIStore.getState().results.shared.transformSnippets = s0 => {
-        // alert("Transforming:" + JSON.stringify(s))
-        const s = JSON.parse(JSON.stringify(s0))
-        const start = s.start
-        s.captureGroups.forEach(g => {
-          const name = g.name
-          const gs = g.start - start
-          const ge = g.end - start
-          //alert(`${name} at ${gs} for ${s.match.word[gs]} `)
-          s.match.word[gs] = '<i>' + name + ":" + s.match.word[gs] + '</i>' // dit moet via een commit ..... // nee dit is niet de manier, moet via template ....
-          return s
-        })
-      }
-      */
-    },
+
     updateQueryx: function(q) { // params: {q: any, scq: ConceptStore.SingleConceptQuery}
       
-      this.setTransformSnippets()
       const query = {
           "element" : this.search_in, "strict": true, "filter" : this.filterFieldValue
       }
@@ -155,15 +137,6 @@ export default {
   computed : {
      query_from_store() { return ConceptStore.getState().query },
      blackparank_request() {
-      
-      const wQuery = `
-          query Quine {
-            lexicon ( field: "${this.search_field}", cluster: "${this.search_concept}") {
-            field,
-          cluster,
-            term
-        }
-      }`
       // get server from frontend info ....
      const query = `${settings.backend_server}/BlackPaRank?server=${encodeURIComponent(settings.selectedScenario.corpus_server)}&corpus=${this.corpus}&action=info&query=${encodeURIComponent(this.queryFieldValue)}`
      return query

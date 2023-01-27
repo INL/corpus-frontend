@@ -6,14 +6,9 @@ import { getStoreBuilder } from 'vuex-typex';
 // import Vuex from 'vuex';
 
 import { RootState, store } from '@/store/search/';
-/*
 import * as CorpusStore from '@/store/search/corpus';
-import * as BLTypes from '@/types/blacklabtypes';
-import * as AppTypes from '@/types/apptypes';
-import { mapReduce, MapOf, multimapReduce } from '@/utils';
-import { stripIndent, html } from 'common-tags';
-*/
 
+import { settings } from './settings.js'
 import cloneDeep from 'clone-deep';
 
 import axios from 'axios'
@@ -32,16 +27,20 @@ type ConceptQuery = {
 }
 
 type ModuleRootState = {
+  target_element: string;
+  query_cql: string;
   query: ConceptQuery
 };
 
 const initialState: ModuleRootState = {
+  target_element: 'p',
+  query_cql: '',
   query: {
     'b0': {
       terms: new Set([
         {
           field: 'lemma',
-          value: 'aha'
+          value: 'apekop'
         }
       ])
     }
@@ -53,7 +52,7 @@ const defaults = initialState;
 const namespace = 'concepts';
 const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, cloneDeep(initialState));
 // b['_store'] = store
-//alert('b=' + JSON.stringify(b) + ' commit type: ' + typeof(b.commit)  + ' .... ' + b.commit.toString())
+// alert('b=' + JSON.stringify(b) + ' commit type: ' + typeof(b.commit)  + ' .... ' + b.commit.toString())
 
 const actions = {
 
@@ -67,7 +66,7 @@ const actions = {
   } , 'concept_add_term'),
 };
 
-// deze getter komt uit src/store/search/ui.ts
+// deze getState komt uit src/store/search/ui.ts:
 
 const getState = (() => {
 	const getter = b.state();
@@ -82,16 +81,45 @@ const getState = (() => {
 })();
 
 const init = () => {
-	// Store can be configured by user scripts.
-	// This should have happened before this code runs.
-	// Now set the defaults based on what is configured.
-	// Then detect any parts that haven't been configured, and set them to some sensible defaults.
-	// Also validate the configured settings, and replace with defaults where invalid.
 	Object.assign(initialState, cloneDeep(getState()));
 }
 
-const get = { // wat is hier het nut van??
+// zo kan de ene getter de andere niet aanroepen?
+type string_plus_atomics = [string,AtomicQuery[]]
+type strmap<T> =  { [key: string] : T }
 
+function object_from_entries<T>(a: [string,T][]) : strmap<T>  {
+  const o: strmap<T> = {}
+  a.forEach(p => o[p[0]] = p[1])
+  return o
+}
+
+const get = {
+
+   corpus()  { return  CorpusStore.getState().id },
+
+   // Meer gedoe dan je zou willen omdat we die Set in de state hebben. Misschien weghalen???
+
+   translate_query_to_cql_request()  {
+    const queriesJsonArray = b.read(state => {
+      const x: string_plus_atomics[] = Object.keys(state.query).map(k => {
+      const scp: SingleConceptQuery = state.query[k]
+      const scpj: AtomicQuery[] = Array.from(scp.terms)
+      return [k, scpj]
+      })
+      return x
+    })()
+
+    const queriesJsonObject = object_from_entries(queriesJsonArray)
+    const queryForBlackparank = {
+      queries: queriesJsonObject,
+      strict: true,
+      element: b.read(state => state.target_element)()
+    }
+    const encodedQuery = encodeURIComponent(JSON.stringify(queryForBlackparank))
+    const requestUrl = `${settings.backend_server}/BlackPaRank?server=${encodeURIComponent(settings.selectedScenario.corpus_server)}&corpus=${CorpusStore.getState().id}&action=info&query=${encodedQuery}`
+    return requestUrl
+   }
 };
 
 // hebben we de init nodig?

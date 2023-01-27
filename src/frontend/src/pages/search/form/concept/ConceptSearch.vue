@@ -22,7 +22,8 @@
       <input type="checkbox" v-model="showQuery">Show query</checkbox>
        <div v-if="showQuery">Generated query: 
         <div style="font-family:'Courier New', Courier, monospace"> {{ concept? concept:'nopez' }} </div> 
-        {{ query_from_store }}
+        Query in store: {{ query_from_store }} <br/>
+        Request in store: {{ false?request_from_store:'effeniet' }}
        </div>
       </div>
     </div>
@@ -136,6 +137,7 @@ export default {
   
   computed : {
      query_from_store() { return ConceptStore.getState().query },
+     request_from_store() { return ConceptStore.get.translate_query_to_cql_request() },
      blackparank_request() {
       // get server from frontend info ....
      const query = `${settings.backend_server}/BlackPaRank?server=${encodeURIComponent(settings.selectedScenario.corpus_server)}&corpus=${this.corpus}&action=info&query=${encodeURIComponent(this.queryFieldValue)}`

@@ -114,7 +114,7 @@ export default {
         [id] : terms
       }
 
-      const scq: ConceptStore.SingleConceptQuery = { terms: new Set(terms.map(t => { const z: at = {field: 'lemma', 'value': t}; return z })) }
+      const scq: ConceptStore.SingleConceptQuery = { terms: terms.map(t => { const z: at = {field: 'lemma', 'value': t}; return z }) }
       // console.log(scq)
       try {
         alert(JSON.stringify(ConceptStore.actions))

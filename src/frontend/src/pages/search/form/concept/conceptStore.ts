@@ -19,7 +19,7 @@ type AtomicQuery = {
 };
 
 type SingleConceptQuery = {
-  terms: Set<AtomicQuery>;
+  terms: AtomicQuery[];
 };
 
 type ConceptQuery = {
@@ -37,12 +37,12 @@ const initialState: ModuleRootState = {
   query_cql: '',
   query: {
     'b0': {
-      terms: new Set([
+      terms: [
         {
           field: 'lemma',
           value: 'apekop'
         }
-      ])
+      ]
     }
   }
 }
@@ -61,8 +61,8 @@ const actions = {
     state.query[payload.id] = payload.subquery}, 'concept_set_subquery' ),
 
   addTerm: b.commit((state, payload: { label: string, atom: AtomicQuery }) => {
-    if (!(payload.label in state.query)) state.query[payload.label] = { terms: new Set<AtomicQuery>() };
-    state.query[payload.label].terms.add(payload.atom);
+    if (!(payload.label in state.query)) state.query[payload.label] = { terms: new Array<AtomicQuery>() };
+    state.query[payload.label].terms.push(payload.atom);
   } , 'concept_add_term'),
 };
 
@@ -99,22 +99,38 @@ const get = {
    corpus()  { return  CorpusStore.getState().id },
 
    // Meer gedoe dan je zou willen omdat we die Set in de state hebben. Misschien weghalen???
+   translate_query_to_cql_request: () =>  {
+    
+    // wat is nuy het probleem??
 
-   translate_query_to_cql_request()  {
+    alert('wadde?')
+
     const queriesJsonArray = b.read(state => {
-      const x: string_plus_atomics[] = Object.keys(state.query).map(k => {
-      const scp: SingleConceptQuery = state.query[k]
-      const scpj: AtomicQuery[] = Array.from(scp.terms)
-      return [k, scpj]
-      })
-      return x
-    })()
+        const x = Object.keys(state.query).map(k => {
+          alert('Key:'  + k)
+          const scpj: SingleConceptQuery = state.query[k]
+          //const scpj: AtomicQuery[] = Array.from(scp.terms)
+          return [k, scpj]
+        })
+        return x
+    },'goeiemorgen')()
 
+    alert('huh?')
+    // Wat gaat hier mis??
+
+  
     const queriesJsonObject = object_from_entries(queriesJsonArray)
+
+    const str = JSON.stringify(queriesJsonObject)
+    return str
+
+    function y(state: ModuleRootState) { return state.target_element}
+    function z() { return  b.read(y) };
+  
     const queryForBlackparank = {
       queries: queriesJsonObject,
       strict: true,
-      element: b.read(state => state.target_element)()
+      element: z()
     }
     const encodedQuery = encodeURIComponent(JSON.stringify(queryForBlackparank))
     const requestUrl = `${settings.backend_server}/BlackPaRank?server=${encodeURIComponent(settings.selectedScenario.corpus_server)}&corpus=${CorpusStore.getState().id}&action=info&query=${encodedQuery}`

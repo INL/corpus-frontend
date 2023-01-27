@@ -61,43 +61,41 @@ import axios from 'axios'
 import { settings } from './settings.js'
 import Autocomplete from '@/components/Autocomplete.vue';
 import * as CorpusStore from '@/store/search/corpus';
-
+import Vue from 'vue';
 import * as ConceptStore from '@/pages/search/form/concept/conceptStore'; 
 type at = ConceptStore.AtomicQuery;
 // import AutoComplete from './AutoComplete.vue';
 import { uniq } from './utils'
 
 
-export default {
+export default Vue.extend ( {
   name: 'ConceptSearchBox',
   components: { Autocomplete},
   props: {
     id: String,
     field: String
   },
-  data() {
-    return {
-      debug: false,
-      search_concept: '',
-      search_field: this.field,
-      search_term : '',
-      current_concept : '',
-      current_term : '',
-      checked_terms: {},
-      fields: ['hallo', 'daar'],
-      terms: [],
-      corpus: CorpusStore.getState().id,
-      server : 'http://localhost:8080/Oefenen/',
-      instance: 'quine_lexicon',
+  data: () => ({
+      debug: false as boolean,
+      search_concept: '' as string,
+      search_field: '' as string,
+      search_term : '' as string,
+      current_concept : '' as string,
+      current_term : '' as string,
+      checked_terms: {} as {[key: string] : boolean},
+      fields: ['hallo', 'daar'] as string[],
+      terms: [] as string[],
+      corpus: CorpusStore.getState().id as string,
+      server : 'http://localhost:8080/Oefenen/' as string,
+      instance: 'quine_lexicon' as string,
       credentials :  { auth: {
       username: 'fouke',
       password: 'narawaseraretakunai'
         }   }
-    }
-  },
+  }),
  
   methods : {
-    alert: function(s:string)  {
+    alert: function(s: string)  {
       alert(s)
     },
     buildQuery: function() {
@@ -114,7 +112,7 @@ export default {
       }
     },
 
-    toggleChecked: function(t:string) {
+    toggleChecked: function(t: string) {
       this.checked_terms[t] = !this.checked_terms[t]
     },
     setSearchTerm: function(e:string) {
@@ -207,16 +205,16 @@ export default {
         const terms_from_database_url = this.term_search_url
         const pdb = axios.get(terms_from_database_url)
         const term_promise_corpus = axios.get(`http://localhost:8080/blacklab-server/${this.corpus}/autocomplete/contents/lemma/?term=${this.current_term}`).then(r => r.data)
-        //http://localhost:8080/blacklab-server/OGL/autocomplete/contents/word_or_lemma/?term=a
-        //alert(terms_from_database_url + " -->" + pdb +  "...." + JSON.stringify(pdb))
+        // http://localhost:8080/blacklab-server/OGL/autocomplete/contents/word_or_lemma/?term=a
+        // alert(terms_from_database_url + " -->" + pdb +  "...." + JSON.stringify(pdb))
         const term_promise_database = pdb.then(r => self.get_term_values(r.data))
         //alert(term_promise_database)
-        
+
         const promise_both = Promise.all([term_promise_database, term_promise_corpus]).then(r => {
             console.log(JSON.stringify(r))
             return r[0].concat(r[1])
         })
-        
+
         return promise_both
         // const terms_from_blacklab = axios.get(terms_from_blacklab_term_url)
       },
@@ -229,13 +227,8 @@ export default {
                 field
             }
           }`
-        
         const query= `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
-        //alert("Main field query:" + JSON.stringify(wQuery))
-        /// console.log(query)
-        // alert("Something happens?")
         const geefMee={"headers":{"Accept":"application/json"},"auth":{"username":"fouke","password":"narawaseraretakunai"}}
-        
         axios.get(query, geefMee)
             .then(response => { 
                 // alert("Fields query response: " + JSON.stringify(response.data.data))
@@ -245,7 +238,7 @@ export default {
               })
 
       },
-        default: ["aap", "noot", "mies"]
+      default: ["aap", "noot", "mies"]
     },
 
     completionURLForTerm()  {
@@ -279,7 +272,7 @@ export default {
        return `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
     },
   }
-}
+})
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->

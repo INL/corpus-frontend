@@ -51,7 +51,7 @@ import ConceptSearchBox from './ConceptSearchBox.vue'
 import { ConceptQuery } from './conceptStore.js';
 
 const c2e = {'OGL' :['ab'], 'quine' : ['p','s'] }
-export default {
+export default Vue.extend ({
   components: { ConceptSearchBox }, 
   name: 'ConceptSearch', 
   props: {
@@ -59,8 +59,7 @@ export default {
     src : String
   },
 
-  data() {
-    return {
+  data: () => ({
       debug: false,
       showQuery : false,
       corpus: CorpusStore.getState().id,
@@ -73,8 +72,7 @@ export default {
       queryFieldValue: '',
       filterFieldValue: '', // TODO moet weg....
       cqlQuery: '',
-    }
-  },
+  }),
 
   methods : {
     addBox: function() {
@@ -101,7 +99,7 @@ export default {
   created() {
     UIStore.getState().results.shared.concordanceAsHtml = true;
 }
-}
+})
 
 </script>
 

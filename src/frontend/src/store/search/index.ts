@@ -338,6 +338,7 @@ const init = () => {
 	TagsetModule.init();
 	HistoryModule.init();
 	QueryModule.init();
+	ConceptModule.init(); // Jesse
 };
 
 // Debugging helpers.
@@ -355,7 +356,7 @@ const init = () => {
 	query: QueryModule,
 	tagset: TagsetModule,
 	ui: UIModule,
-
+	concepts: ConceptModule, // Jesse
 	explore: ExploreModule,
 	form: FormManager,
 	filters: FilterModule,

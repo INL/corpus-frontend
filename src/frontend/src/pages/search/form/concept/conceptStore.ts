@@ -1,11 +1,11 @@
-
-// gedoe ... de patternStore (src/store/search/form/patterns.ts) is een goed voorbeeldje want redelijk simpel 
+// gedoe ... de patternStore (src/store/search/form/patterns.ts) is een goed voorbeeldje want redelijk simpel
+// Zie https://github.com/mrcrowl/vuex-typex/blob/master/src/index.ts voor de gebruikte ts implementatie
 
 import { getStoreBuilder } from 'vuex-typex';
 // import Vue from 'vue';
 // import Vuex from 'vuex';
 
-import { RootState } from '@/store/search/';
+import { RootState, store } from '@/store/search/';
 /*
 import * as CorpusStore from '@/store/search/corpus';
 import * as BLTypes from '@/types/blacklabtypes';
@@ -35,18 +35,6 @@ type ModuleRootState = {
   query: ConceptQuery
 };
 
-
-/*
-const myMutations =  {
-  setSubQuery(state: ConceptState, label: string, q: SingleConceptQuery) {
-    state.query[label] = q ;
-  },
-  addTerm(state: ConceptState, label: string, atom: AtomicQuery) {
-    state.query[label].terms.add(atom);
-  }
-}
-*/
-
 const initialState: ModuleRootState = {
   query: {
     'b0': {
@@ -64,44 +52,49 @@ const defaults = initialState;
 
 const namespace = 'concepts';
 const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, cloneDeep(initialState));
+// b['_store'] = store
+//alert('b=' + JSON.stringify(b) + ' commit type: ' + typeof(b.commit)  + ' .... ' + b.commit.toString())
 
-alert("b=" + JSON.stringify(b) + " commit type: " + typeof(b.commit)  + " .... " + b.commit.toString())
+const actions = {
 
-
-
-const actions =  {
-
-  setSubQuery: b.commit((state, payload: { id: string, subquery: SingleConceptQuery}) => state.query[payload.id] = payload.subquery, 'concept_set_subquery'),
+  setSubQuery: b.commit((state, payload: { id: string, subquery: SingleConceptQuery}) =>  {
+    console.log('whopz getting there: ' + JSON.stringify(payload.subquery));
+    state.query[payload.id] = payload.subquery}, 'concept_set_subquery' ),
 
   addTerm: b.commit((state, payload: { label: string, atom: AtomicQuery }) => {
-    if (!(payload.label in state.query)) state.query[payload.label] = { terms: new Set<AtomicQuery>()};
+    if (!(payload.label in state.query)) state.query[payload.label] = { terms: new Set<AtomicQuery>() };
     state.query[payload.label].terms.add(payload.atom);
   } , 'concept_add_term'),
 };
 
+// deze getter komt uit src/store/search/ui.ts
+
 const getState = (() => {
 	const getter = b.state();
 	return (): ModuleRootState => {
-    
 		try {
 			// throws if store not built yet
 			return getter();
 		} catch (e) {
-			// return the default state we already know
-      alert('aha:' + JSON.stringify(initialState));
 			return cloneDeep(initialState);
 		}
 	};
 })();
 
-
-//const getState = b.state();
+const init = () => {
+	// Store can be configured by user scripts.
+	// This should have happened before this code runs.
+	// Now set the defaults based on what is configured.
+	// Then detect any parts that haven't been configured, and set them to some sensible defaults.
+	// Also validate the configured settings, and replace with defaults where invalid.
+	Object.assign(initialState, cloneDeep(getState()));
+}
 
 const get = { // wat is hier het nut van??
 
 };
 
-// hebben we de init nodig? 
+// hebben we de init nodig?
 export {
   ModuleRootState,
   namespace,
@@ -109,8 +102,9 @@ export {
   getState,
   defaults,
   get,
-  AtomicQuery, 
-  SingleConceptQuery, 
+  init,
+  AtomicQuery,
+  SingleConceptQuery,
   ConceptQuery
 }
 

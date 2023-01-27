@@ -123,7 +123,7 @@ export default {
         alert("Whoops:" + e.message)
       }
       // alert("query box: " + JSON.stringify(query))
-      this.$emit(`update_query`, query) // in state frotten. Submodule voor maken?
+      //this.$emit(`update_query`, query) // in state frotten. Submodule voor maken?
     },
     toggleChecked: function(t) {
       this.checked_terms[t] = !this.checked_terms[t]

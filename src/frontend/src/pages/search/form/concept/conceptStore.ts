@@ -7,7 +7,7 @@ import { getStoreBuilder } from 'vuex-typex';
 
 import { RootState, store } from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus';
-
+import * as PatternStore from '@/store/search/form/patterns';
 import { settings } from './settings.js'
 import cloneDeep from 'clone-deep';
 
@@ -54,17 +54,7 @@ const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, cloneD
 // b['_store'] = store
 // alert('b=' + JSON.stringify(b) + ' commit type: ' + typeof(b.commit)  + ' .... ' + b.commit.toString())
 
-const actions = {
 
-  setSubQuery: b.commit((state, payload: { id: string, subquery: SingleConceptQuery}) =>  {
-    console.log('whopz getting there: ' + JSON.stringify(payload.subquery));
-    state.query[payload.id] = payload.subquery}, 'concept_set_subquery' ),
-
-  addTerm: b.commit((state, payload: { label: string, atom: AtomicQuery }) => {
-    if (!(payload.label in state.query)) state.query[payload.label] = { terms: new Array<AtomicQuery>() };
-    state.query[payload.label].terms.push(payload.atom);
-  } , 'concept_add_term'),
-};
 
 // deze getState komt uit src/store/search/ui.ts:
 
@@ -84,7 +74,7 @@ const init = () => {
 	Object.assign(initialState, cloneDeep(getState()));
 }
 
-// zo kan de ene getter de andere niet aanroepen?
+/*
 type string_plus_atomics = [string,AtomicQuery[]]
 type strmap<T> =  { [key: string] : T }
 
@@ -93,49 +83,77 @@ function object_from_entries<T>(a: [string,T][]) : strmap<T>  {
   a.forEach(p => o[p[0]] = p[1])
   return o
 }
+*/
+
+/**
+ * this is silly,  the difference needs to be eliminated between store and web service
+ * Query in store: { "b0": { "terms": [ { "field": "lemma", "value": "true" }, { "field": "lemma", "value": "false" } ] }, "b1": { "terms": [ { "field": "lemma", "value": "word" } ] } }
+ * Query as JSON {"element":"s","strict":true,"filter":"","queries":{"b0":[{"field":"lemma","value":"true"},{"field":"lemma","value":"false"}],"b1":[{"field":"lemma","value":"word"}]}}
+ */
+
+function reshuffle_query_for_blackparank(q: ConceptQuery, element: string): object {
+   const o: {[key: string]: any} = {}
+   const queries = Object.keys(q).map(k => {
+     const v = q[k].terms
+     o[k]  = v
+   })
+   return {'element': element, 'strict': true, 'filter': '', 'queries' : o}
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+// getters and actions
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+// zo kan de ene getter de andere niet gebruiken?
 
 const get = {
 
    corpus()  { return  CorpusStore.getState().id },
 
+   query_cql() { return getState().query_cql },
    // Meer gedoe dan je zou willen omdat we die Set in de state hebben. Misschien weghalen???
    translate_query_to_cql_request: () =>  {
-    
+
     // wat is nuy het probleem??
+    const state = getState()
+    // alert('wadde?' + JSON.stringify(state))
 
-    alert('wadde?')
+    const query = state.query
+    const targetElement =  state.target_element
 
-    const queriesJsonArray = b.read(state => {
-        const x = Object.keys(state.query).map(k => {
-          alert('Key:'  + k)
-          const scpj: SingleConceptQuery = state.query[k]
-          //const scpj: AtomicQuery[] = Array.from(scp.terms)
-          return [k, scpj]
-        })
-        return x
-    },'goeiemorgen')()
-
-    alert('huh?')
+    // alert('huh? ' + JSON.stringify(targetElement))
     // Wat gaat hier mis??
+    // const str = JSON.stringify(query)
 
-  
-    const queriesJsonObject = object_from_entries(queriesJsonArray)
-
-    const str = JSON.stringify(queriesJsonObject)
-    return str
-
-    function y(state: ModuleRootState) { return state.target_element}
-    function z() { return  b.read(y) };
-  
-    const queryForBlackparank = {
-      queries: queriesJsonObject,
-      strict: true,
-      element: z()
-    }
+    const queryForBlackparank = reshuffle_query_for_blackparank(query,targetElement)
     const encodedQuery = encodeURIComponent(JSON.stringify(queryForBlackparank))
     const requestUrl = `${settings.backend_server}/BlackPaRank?server=${encodeURIComponent(settings.selectedScenario.corpus_server)}&corpus=${CorpusStore.getState().id}&action=info&query=${encodedQuery}`
     return requestUrl
    }
+};
+
+const geefMee = {"headers": {"Accept":"application/json"}, "auth": {"username":"fouke","password":"narawaseraretakunai"}}
+const actions = {
+
+  setSubQuery: b.commit((state, payload: { id: string, subquery: SingleConceptQuery}) =>  {
+    console.log('whop whop getting there: ' + JSON.stringify(payload.subquery));
+    state.query[payload.id] = payload.subquery
+    const request = get.translate_query_to_cql_request()
+    alert('sending:' + request)
+    axios.get(request, geefMee).then(
+      response => {
+        alert('Set CQL to:' + response.data.pattern);
+        state.query_cql = response.data.pattern;
+        PatternStore.actions.concept(state.query_cql)
+        alert('Survived this....')
+      }
+    )
+  }, 'concept_set_subquery'),
+
+  addTerm: b.commit((state, payload: { label: string, atom: AtomicQuery }) => {
+    if (!(payload.label in state.query)) state.query[payload.label] = { terms: new Array<AtomicQuery>() };
+    state.query[payload.label].terms.push(payload.atom);
+  } , 'concept_add_term'),
 };
 
 // hebben we de init nodig?

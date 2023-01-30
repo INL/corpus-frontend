@@ -22,21 +22,23 @@
             id="ac1"
 						placeholder="...concept..."
 						
-
+            maxlength="3"
 						:autocomplete="true"
             :rendering = "{'prepare_data' : d => get_cluster_values(d)}"
 						:url="completionURLForConcept"
-						v-model="current_concept"/> <button @click="addConcept">Add to concepts</button></td>
+						v-model="current_concept"/> <button @click="addConcept">⤿ lexicon</button></td>
         </tr>
         <tr>
           <td class="fn">Term:</td><td> <Autocomplete 
             id="ac2"
 						placeholder="...term..."
+
+            maxlength="3"
 						:autocomplete="true"
             :rendering = "{'prepare_data_niet' : d => get_term_values(d), 'promise': term_search_promise}"
 						:url="completionURLForTerm"
 						v-model="current_term"
-            /> <button @click="addTerm">Add to terms</button></td>
+            /> <button @click="addTerm">⤿ lexicon</button></td>
         </tr>
       
       </table>
@@ -44,8 +46,8 @@
 
       <div class="terms">
         <div v-for="(t,i) in terms" :key="i">
-          <input type="checkbox" v-model="checked_terms[t.term]" @click="() => toggleChecked(t.term)"/>
-           {{ t.term }}</div>
+          <span v-if="t.term"><input type="checkbox" v-model="checked_terms[t.term]" @click="() => toggleChecked(t.term)"/>
+           {{ t.term }}</span></div>
       </div>
 
       <button @click="buildQuery">Add selected terms to query</button>
@@ -65,6 +67,9 @@ import * as ConceptStore from '@/pages/search/form/concept/conceptStore';
 type at = ConceptStore.AtomicQuery;
 // import AutoComplete from './AutoComplete.vue';
 import { uniq, log_error } from './utils'
+declare const BLS_URL: string;
+const blsUrl: string = BLS_URL;
+
 const requestHeaders = { 'headers': { 'Accept': 'application/json' }, 'auth': { 'username': 'fouke', 'password': 'narawaseraretakunai' } }
 type Term = { term: string}
 
@@ -82,10 +87,11 @@ export default Vue.extend ( {
       search_term : '' as string,
       current_concept : '' as string,
       current_term : '' as string,
-      checked_terms: {} as {[key: string] : boolean},
+      checked_terms: {} as {[key: string]: boolean},
       fields: ['hallo', 'daar'] as string[],
       terms: [] as Term[],
       corpus: CorpusStore.getState().id as string,
+      getters: ConceptStore.get,
       server : 'http://localhost:8080/Oefenen/' as string,
       instance: 'quine_lexicon' as string,
       credentials :  { auth: {
@@ -183,7 +189,7 @@ export default Vue.extend ( {
             .then(response => { 
                console.log(`found in lexicon for field: "${this.search_field}", cluster: "${this.current_concept}"`  + JSON.stringify(response.data.data))
                this.terms = uniq(response.data.data)
-               this.terms.map(t => this.checked_terms[t.term] = false)
+               this.terms.map(t => this.checked_terms[t.term] = true)
                return response.data.data
               })
       },
@@ -250,6 +256,7 @@ export default Vue.extend ( {
   },
   created() {
     this.getMainFields()
+    // alert(blsUrl)
   }
 })
 </script>
@@ -276,7 +283,7 @@ img {
 }
 
 .conceptbox {
-  zbackground-color: rgb(230,230,255);
+  
   border-style: solid;
   text-align: left;
   margin: 1em;
@@ -287,11 +294,19 @@ img {
 }
 
 .fn {
-  width: 9em;
+  width: 5em;
 }
 .terms {
   height: 15em;
-  overflow-y: scroll 
+  overflow-y: auto;
+  column-count: 2;
+  border-style: solid;
+  border-width: 1pt;
+  margin-top: 1em;
+  margin-left: 1em;
+  margin-right: 1em;
+  margin-bottom: 1em;
+
 }
 .t1 {
   table-layout: auto;

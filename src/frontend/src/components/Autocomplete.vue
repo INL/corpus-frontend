@@ -1,12 +1,13 @@
 <template>
 	<input
 		:autocomplete="!autocomplete"
-
+        size="12"
 		@keypress="_refreshList"
 		@keyup.left="_refreshList"
 		@keyup.right="_refreshList"
 		@click="_refreshList"
-
+		:maxlength="maxlength"
+		:minlength="minlength"
 		v-model="modelvalue"
 	/>
 </template>
@@ -64,6 +65,7 @@ export default Vue.extend({
 	props: {
 		value: String,
 		url: String,
+
 		autocomplete: {
 			default: true,
 			type: Boolean

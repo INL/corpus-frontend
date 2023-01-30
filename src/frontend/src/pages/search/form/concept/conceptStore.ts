@@ -13,6 +13,17 @@ import cloneDeep from 'clone-deep';
 
 import axios from 'axios'
 
+declare const BLS_URL: string;
+const blsUrl: string = BLS_URL;
+
+type Settings = {
+  blackparank_server: string,
+  blackparank_instance: string,
+  lexit_server: string,
+  lexit_instance: string,
+  searchable_elements: string[]
+}
+
 type AtomicQuery = {
   field: string;
   value: string;
@@ -28,6 +39,7 @@ type ConceptQuery = {
 
 type ModuleRootState = {
   target_element: string;
+  settings: Settings,
   query_cql: string;
   query: ConceptQuery
 };
@@ -41,13 +53,10 @@ type LexiconEntry = {
 const initialState: ModuleRootState = {
   target_element: 'p',
   query_cql: '',
+  settings: {blackparank_server: 'localhost',  blackparank_instance: 'weetikveel', lexit_server: 'http://lexit.inl.loc', lexit_instance: 'wadde?', searchable_elements: ['p', 's', 'nogwat']},
   query: {
     'b0': {
       terms: [
-        {
-          field: 'lemma',
-          value: 'apekop'
-        }
       ]
     }
   }
@@ -57,11 +66,9 @@ const defaults = initialState;
 
 const namespace = 'concepts';
 const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, cloneDeep(initialState));
+
 // b['_store'] = store
 // alert('b=' + JSON.stringify(b) + ' commit type: ' + typeof(b.commit)  + ' .... ' + b.commit.toString())
-
-
-
 // deze getState komt uit src/store/search/ui.ts:
 
 const getState = (() => {
@@ -135,6 +142,10 @@ const get = {
     const encodedQuery = encodeURIComponent(JSON.stringify(queryForBlackparank))
     const requestUrl = `${settings.backend_server}/BlackPaRank?server=${encodeURIComponent(settings.selectedScenario.corpus_server)}&corpus=${CorpusStore.getState().id}&action=info&query=${encodedQuery}`
     return requestUrl
+   },
+
+   settings() {
+    return getState().settings
    }
 };
 
@@ -160,6 +171,11 @@ const actions = {
     if (!(payload.label in state.query)) state.query[payload.label] = { terms: new Array<AtomicQuery>() };
     state.query[payload.label].terms.push(payload.atom);
   } , 'concept_add_term'),
+
+  loadSettings: b.commit((state, payload: Settings) => {
+    state.settings = payload
+    // alert('Settings changed, settings now: ' + JSON.stringify(state.settings))
+  } , 'concept_load_settings'),
 };
 
 // hebben we de init nodig?

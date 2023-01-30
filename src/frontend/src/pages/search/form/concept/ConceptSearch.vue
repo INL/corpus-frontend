@@ -13,10 +13,10 @@
       <div class='boxes' style='text-align: center'>
         <ConceptSearchBox v-for="id in Array.from(Array(nBoxes).keys())" v-bind:key="id" :id="'b' +id.toString()"/>
       </div>
-      <button @click="addBox">Add box</button> <button @click="removeBox">Remove box</button>
+      <button @click="addBox">Add box</button> <button @click="removeBox">Remove box</button> <button  target="_blank" @click="window.open(getters.settings().lexit_server + '?db=' + getters.settings().lexit_instance + '&table=lexicon', '_blank')">View lexicon</button>
       <br/>
       Search in: <select v-model="search_in"> 
-         <option v-for="(o,i) in search_in_options" v-bind:key="i">{{ o }}</option>
+         <option v-for="(o,i) in getters.settings().searchable_elements" v-bind:key="i">{{ o }}</option>
       </select> 
 
       <br/>
@@ -44,13 +44,14 @@ import * as InterfaceStore from '@/store/search/form/interface';
 import * as PatternStore from '@/store/search/form/patterns';
 import * as ConceptStore from '@/pages/search/form/concept/conceptStore';
 import { settings } from './settings.js'
-
+declare const BLS_URL: string;
+const blsUrl: string = BLS_URL;
 import axios from 'axios'
 
 import ConceptSearchBox from './ConceptSearchBox.vue' 
 import { ConceptQuery } from './conceptStore.js';
 
-const c2e = {'OGL' :['ab'], 'quine' : ['p','s'] }
+
 export default Vue.extend ({
   components: { ConceptSearchBox }, 
   name: 'ConceptSearch', 
@@ -63,8 +64,8 @@ export default Vue.extend ({
       debug: false,
       showQuery : false,
       corpus: CorpusStore.getState().id,
-      search_in_options: c2e[CorpusStore.getState().id],
-      search_in: c2e[CorpusStore.getState().id][0],
+      search_in_options: ConceptStore.get.settings().searchable_elements,  //,c2e[CorpusStore.getState().id],
+      search_in: 'p',
       nBoxes: 2,
       queries : { // this should be a computed field.....
 
@@ -72,6 +73,8 @@ export default Vue.extend ({
       queryFieldValue: '',
       filterFieldValue: '', // TODO moet weg....
       cqlQuery: '',
+      getters: ConceptStore.get,
+      window: window as Window
   }),
 
   methods : {

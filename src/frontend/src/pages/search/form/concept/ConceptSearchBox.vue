@@ -99,13 +99,9 @@ export default Vue.extend ( {
       alert(s)
     },
     buildQuery() {
-      // alert(JSON.stringify(this.id))
-
       const terms = Object.keys(this.checked_terms).filter(t => this.checked_terms[t])
       const scq: ConceptStore.SingleConceptQuery = { terms: terms.map(t => { const z: at = {field: 'lemma', 'value': t}; return z }) }
-      // console.log(scq)
       try {
-        // alert(JSON.stringify(ConceptStore.actions))
         ConceptStore.actions.setSubQuery( {id: this.id, subquery: scq} )
       } catch (e) {
         alert('Whoops:' + e.message)
@@ -115,13 +111,12 @@ export default Vue.extend ( {
     toggleChecked(t: string) {
       this.checked_terms[t] = !this.checked_terms[t]
     },
-    setSearchTerm(e:string) {
+    setSearchTerm(e: string) {
       this.search_term = e
     },
     addTerm() {
       this.terms.push({'term': this.current_term});
       this.insertTerm();
-      //alert("Pushing:"  + this.current_term  + " to " + JSON.stringify(this.terms))
     },
     addConcept() {
       // do something to add to database

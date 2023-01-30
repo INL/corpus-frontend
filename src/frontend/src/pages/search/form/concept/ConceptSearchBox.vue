@@ -5,7 +5,6 @@
     </div>
     <div>
       <pre style="display:none">
-    Main fields: {{ main_fields }} 
     Current concept: {{  current_concept }}
     Term search URL: <a :href="term_search_url">Hiero</a>
     Terms: {{  JSON.stringify(terms) }}
@@ -65,8 +64,9 @@ import Vue from 'vue';
 import * as ConceptStore from '@/pages/search/form/concept/conceptStore'; 
 type at = ConceptStore.AtomicQuery;
 // import AutoComplete from './AutoComplete.vue';
-import { uniq } from './utils'
-
+import { uniq, log_error } from './utils'
+const requestHeaders = { 'headers': { 'Accept': 'application/json' }, 'auth': { 'username': 'fouke', 'password': 'narawaseraretakunai' } }
+type Term = { term: string}
 
 export default Vue.extend ( {
   name: 'ConceptSearchBox',
@@ -84,7 +84,7 @@ export default Vue.extend ( {
       current_term : '' as string,
       checked_terms: {} as {[key: string] : boolean},
       fields: ['hallo', 'daar'] as string[],
-      terms: [] as string[],
+      terms: [] as Term[],
       corpus: CorpusStore.getState().id as string,
       server : 'http://localhost:8080/Oefenen/' as string,
       instance: 'quine_lexicon' as string,
@@ -95,54 +95,51 @@ export default Vue.extend ( {
   }),
  
   methods : {
-    alert: function(s: string)  {
+    alert(s: string)  {
       alert(s)
     },
-    buildQuery: function() {
+    buildQuery() {
       // alert(JSON.stringify(this.id))
 
       const terms = Object.keys(this.checked_terms).filter(t => this.checked_terms[t])
       const scq: ConceptStore.SingleConceptQuery = { terms: terms.map(t => { const z: at = {field: 'lemma', 'value': t}; return z }) }
       // console.log(scq)
       try {
-        alert(JSON.stringify(ConceptStore.actions))
+        // alert(JSON.stringify(ConceptStore.actions))
         ConceptStore.actions.setSubQuery( {id: this.id, subquery: scq} )
       } catch (e) {
         alert('Whoops:' + e.message)
       }
     },
 
-    toggleChecked: function(t: string) {
+    toggleChecked(t: string) {
       this.checked_terms[t] = !this.checked_terms[t]
     },
-    setSearchTerm: function(e:string) {
+    setSearchTerm(e:string) {
       this.search_term = e
     },
-    addTerm: function() {
+    addTerm() {
       this.terms.push({'term': this.current_term});
       this.insertTerm();
       //alert("Pushing:"  + this.current_term  + " to " + JSON.stringify(this.terms))
     },
-    addConcept: function() {
+    addConcept() {
       // do something to add to database
     },
-    setSearchConcept: function(e:string) {
+    setSearchConcept(e: string) {
       // alert(`Search concept ${e}`)
       this.search_concept = e
     },
-    get_cluster_values(d) {
-      //alert(JSON.stringify(d))
-      const vals = uniq(d['data'].map(x => x['cluster']))
-      //alert(JSON.stringify(vals))
+    get_cluster_values(d: { 'data': ConceptStore.LexiconEntry[] }): string[] {
+      const vals = uniq(d.data.map(x  => x.cluster))
       return vals
      },
-     get_term_values(d) {
-      //alert(JSON.stringify(d))
-      const vals = uniq(d['data'].map(x => x['term']))
-      //alert(JSON.stringify(vals))
+     get_term_values(d: { 'data': ConceptStore.LexiconEntry[] }) {
+
+      const vals = uniq(d.data.map(x => x.term))
       return vals
      },
-     insertTerm : function() {
+     insertTerm() {
       const self = this
       const insertIt = {corpus: self.corpus, field: self.search_field, concept:self.current_concept, term: self.current_term, author: 'corpus_frontend'}
       const insertTerm =  encodeURIComponent(JSON.stringify(insertIt))
@@ -154,35 +151,44 @@ export default Vue.extend ( {
         }).catch(e => log_error(e))
       // this.$emit('reload')
     },
-    insertConcept : function() {
+    insertConcept() {
       const self = this
       const insertIt = {corpus: self.corpus, field: self.search_field, concept:self.current_concept, author: 'corpus_frontend'}
       const insertConcept =  encodeURIComponent(JSON.stringify(insertIt))
-   
       const url = `${this.server}/api?instance=${this.instance}&insertConcept=${insertConcept}`
-      // ToDo authentication !!!!
-      alert(`Yep, post ${JSON.stringify(insertConcept)} to ${url}`)
 
       axios.get(url,{ auth: settings.credentials.auth }).then(r => {
         // alert(`gepiept (${this.exerciseData.type}, ${this.database_id})!`)
-        
         }).catch(e => log_error(e))
       // this.$emit('reload')
     },
-
+    getMainFields() {
+      const wQuery = `
+              query Quine {
+                lexicon(corpus : "${this.corpus}") {
+                field
+            }
+          }`
+      const query = `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
+      axios.get(query, requestHeaders)
+        .then(response => {
+          // alert("Fields query response: " + JSON.stringify(response.data.data))
+          const fields = uniq(response.data.data.map(x => x.field))
+          this.fields = fields
+          return fields
+        })
+    }
   },
  
   computed : {
     subquery_from_store(): ConceptStore.SingleConceptQuery { return ConceptStore.getState().query[this.id] },
     terms_from_lexicon() {
-        // console.log(query)
-        const geefMee={"headers":{"Accept":"application/json"},"auth":{"username":"fouke","password":"narawaseraretakunai"}}
-        const query: string = this.term_search_url
-        axios.get(query, geefMee)
+        const query: string = this.term_search_url as string
+        axios.get(query, requestHeaders)
             .then(response => { 
                console.log(`found in lexicon for field: "${this.search_field}", cluster: "${this.current_concept}"`  + JSON.stringify(response.data.data))
                this.terms = uniq(response.data.data)
-               this.terms.forEach(t => this.checked_terms[t.term] = false)
+               this.terms.map(t => this.checked_terms[t.term] = false)
                return response.data.data
               })
       },
@@ -200,48 +206,24 @@ export default Vue.extend ( {
         return query
       },
 
-      term_search_promise() {
+      term_search_promise(): Promise<string[]> {
         const self = this
-        const terms_from_database_url = this.term_search_url
-        const pdb = axios.get(terms_from_database_url)
-        const term_promise_corpus = axios.get(`http://localhost:8080/blacklab-server/${this.corpus}/autocomplete/contents/lemma/?term=${this.current_term}`).then(r => r.data)
-        // http://localhost:8080/blacklab-server/OGL/autocomplete/contents/word_or_lemma/?term=a
-        // alert(terms_from_database_url + " -->" + pdb +  "...." + JSON.stringify(pdb))
-        const term_promise_database = pdb.then(r => self.get_term_values(r.data))
-        //alert(term_promise_database)
+        const getTermsURL : string = this.term_search_url as string
+        const pdb = axios.get(getTermsURL)
+        const termPromiseCorpus: Promise<string[]> = axios.get(`http://localhost:8080/blacklab-server/${this.corpus}/autocomplete/contents/lemma/?term=${this.current_term}`).then(r => r.data)
+        const termPromiseDatabase: Promise<string[]>  = pdb.then(r => self.get_term_values(r.data))
+        // alert(term_promise_database)
 
-        const promise_both = Promise.all([term_promise_database, term_promise_corpus]).then(r => {
+        const promiseBoth: Promise<string[]> = Promise.all([termPromiseDatabase, termPromiseCorpus]).then(r => {
             console.log(JSON.stringify(r))
             return r[0].concat(r[1])
         })
 
-        return promise_both
+        return promiseBoth
         // const terms_from_blacklab = axios.get(terms_from_blacklab_term_url)
       },
 
-    main_fields: {
-      get() {
-        const wQuery = `
-              query Quine {
-                lexicon(corpus : "${this.corpus}") {
-                field
-            }
-          }`
-        const query= `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
-        const geefMee={"headers":{"Accept":"application/json"},"auth":{"username":"fouke","password":"narawaseraretakunai"}}
-        axios.get(query, geefMee)
-            .then(response => { 
-                // alert("Fields query response: " + JSON.stringify(response.data.data))
-               const fields = uniq(response.data.data.map(x => x.field))
-               this.fields = fields
-               return fields
-              })
-
-      },
-      default: ["aap", "noot", "mies"]
-    },
-
-    completionURLForTerm()  {
+    completionURLForTerm(): string  {
       const field = this.search_field
       const concept = this.current_concept
       const term = this.current_term
@@ -253,11 +235,10 @@ export default Vue.extend ( {
                 term
             }
           }`
-      //console.log("AUTOCOMPLETE query: " + JSON.stringify(wQuery).replace(/\\n/, '\n'))
       return `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
     },
 
-    completionURLForConcept () {
+    completionURLForConcept(): string {
        const field = this.search_field
        const value = this.current_concept
        const wQuery = `
@@ -271,6 +252,9 @@ export default Vue.extend ( {
        //console.log("AUTOCOMPLETE query: " + JSON.stringify(wQuery).replace(/\\n/, '\n'))
        return `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
     },
+  },
+  created() {
+    this.getMainFields()
   }
 })
 </script>

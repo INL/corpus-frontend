@@ -32,6 +32,12 @@ type ModuleRootState = {
   query: ConceptQuery
 };
 
+type LexiconEntry = {
+  field: string,
+  cluster: string,
+  term: string
+}
+
 const initialState: ModuleRootState = {
   target_element: 'p',
   query_cql: '',
@@ -139,13 +145,13 @@ const actions = {
     console.log('whop whop getting there: ' + JSON.stringify(payload.subquery));
     state.query[payload.id] = payload.subquery
     const request = get.translate_query_to_cql_request()
-    alert('sending:' + request)
+    //alert('sending:' + request)
     axios.get(request, geefMee).then(
       response => {
-        alert('Set CQL to:' + response.data.pattern);
+        //alert('Set CQL to:' + response.data.pattern);
         state.query_cql = response.data.pattern;
         PatternStore.actions.concept(state.query_cql)
-        alert('Survived this....')
+        //alert('Survived this....')
       }
     )
   }, 'concept_set_subquery'),
@@ -167,7 +173,8 @@ export {
   init,
   AtomicQuery,
   SingleConceptQuery,
-  ConceptQuery
+  ConceptQuery,
+  LexiconEntry
 }
 
 /*

@@ -43,7 +43,7 @@ import * as UIStore from '@/store/search/ui';
 import * as InterfaceStore from '@/store/search/form/interface';
 import * as PatternStore from '@/store/search/form/patterns';
 import * as ConceptStore from '@/pages/search/form/concept/conceptStore';
-import { settings } from './settings.js'
+//import { settings } from './settings.js'
 declare const BLS_URL: string;
 const blsUrl: string = BLS_URL;
 import axios from 'axios'
@@ -86,19 +86,26 @@ export default Vue.extend ({
     },
   },
   computed : {
+     settings(): ConceptStore.Settings {
+      return ConceptStore.get.settings()
+     },
      query_from_store() { return ConceptStore.getState().query },
      query_cql_from_store() { return ConceptStore.getState().query_cql },
      request_from_store() { return ConceptStore.get.translate_query_to_cql_request() },
+     /*
      blackparank_request() {
       // get server from frontend info ....
-     const query = `${settings.backend_server}/BlackPaRank?server=${encodeURIComponent(settings.selectedScenario.corpus_server)}&corpus=${this.corpus}&action=info&query=${encodeURIComponent(this.queryFieldValue)}`
+     const s: ConceptStore.Settings = this.settings
+     const query = `${s.blackparank_server}/BlackPaRank?server=${encodeURIComponent(s.corpus_server)}&corpus=${this.corpus}&action=info&query=${encodeURIComponent(this.queryFieldValue)}`
      return query
     },
+    */
 		concept: {
 			get(): string|null { return PatternStore.getState().concept; },
 			set: PatternStore.actions.concept,
 		},
-  }, 
+
+  },
   created() {
     UIStore.getState().results.shared.concordanceAsHtml = true;
 }

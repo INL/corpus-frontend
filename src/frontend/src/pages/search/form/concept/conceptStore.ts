@@ -19,6 +19,7 @@ const blsUrl: string = BLS_URL;
 type Settings = {
   blackparank_server: string,
   blackparank_instance: string,
+  corpus_server: string,
   lexit_server: string,
   lexit_instance: string,
   searchable_elements: string[]
@@ -53,7 +54,7 @@ type LexiconEntry = {
 const initialState: ModuleRootState = {
   target_element: 'p',
   query_cql: '',
-  settings: {blackparank_server: 'localhost',  blackparank_instance: 'weetikveel', lexit_server: 'http://lexit.inl.loc', lexit_instance: 'wadde?', searchable_elements: ['p', 's', 'nogwat']},
+  settings: { corpus_server: 'http://localhost:8080/blacklab-server', blackparank_server: 'localhost',  blackparank_instance: 'weetikveel', lexit_server: 'http://lexit.inl.loc', lexit_instance: 'wadde?', searchable_elements: ['p', 's', 'nogwat']},
   query: {
     'b0': {
       terms: [
@@ -140,7 +141,8 @@ const get = {
 
     const queryForBlackparank = reshuffle_query_for_blackparank(query,targetElement)
     const encodedQuery = encodeURIComponent(JSON.stringify(queryForBlackparank))
-    const requestUrl = `${settings.backend_server}/BlackPaRank?server=${encodeURIComponent(settings.selectedScenario.corpus_server)}&corpus=${CorpusStore.getState().id}&action=info&query=${encodedQuery}`
+    alert(JSON.stringify(state.settings))
+    const requestUrl = `${state.settings.blackparank_server}/BlackPaRank?server=${encodeURIComponent(state.settings.corpus_server)}&corpus=${CorpusStore.getState().id}&action=info&query=${encodedQuery}`
     return requestUrl
    },
 
@@ -149,7 +151,7 @@ const get = {
    }
 };
 
-const geefMee = {"headers": {"Accept":"application/json"}, "auth": {"username":"fouke","password":"narawaseraretakunai"}}
+const geefMee = {'headers': {'Accept':'application/json'}, 'auth': {'username':'fouke','password':'narawaseraretakunai'}}
 const actions = {
 
   setSubQuery: b.commit((state, payload: { id: string, subquery: SingleConceptQuery}) =>  {
@@ -190,7 +192,8 @@ export {
   AtomicQuery,
   SingleConceptQuery,
   ConceptQuery,
-  LexiconEntry
+  LexiconEntry,
+  Settings
 }
 
 /*

@@ -59,7 +59,7 @@
 
 import { toHandlers } from '@vue/runtime-core';
 import axios from 'axios'
-import { settings } from './settings.js'
+//import { settings } from './settings.js'
 import Autocomplete from '@/components/Autocomplete.vue';
 import * as CorpusStore from '@/store/search/corpus';
 import Vue from 'vue';
@@ -147,7 +147,7 @@ export default Vue.extend ( {
       const url = `${this.server}/api?instance=${this.instance}&insertTerm=${insertTerm}`
       // ToDo authentication !!!!
       alert(`Yep, post ${JSON.stringify(insertIt)} to ${url}`)
-      axios.get(url,{ auth: settings.credentials.auth }).then(r => {
+      axios.get(url,{ auth: requestHeaders.auth }).then(r => {
         // alert(`gepiept (${this.exerciseData.type}, ${this.database_id})!`)
         }).catch(e => log_error(e))
       // this.$emit('reload')
@@ -158,7 +158,7 @@ export default Vue.extend ( {
       const insertConcept =  encodeURIComponent(JSON.stringify(insertIt))
       const url = `${this.server}/api?instance=${this.instance}&insertConcept=${insertConcept}`
 
-      axios.get(url,{ auth: settings.credentials.auth }).then(r => {
+      axios.get(url,{ auth: requestHeaders.auth }).then(r => {
         // alert(`gepiept (${this.exerciseData.type}, ${this.database_id})!`)
         }).catch(e => log_error(e))
       // this.$emit('reload')
@@ -170,7 +170,7 @@ export default Vue.extend ( {
                 field
             }
           }`
-      const query = `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
+      const query = `${this.settings.blackparank_server}/api?instance=${this.settings.blackparank_instance}&query=${encodeURIComponent(wQuery)}`
       axios.get(query, requestHeaders)
         .then(response => {
           // alert("Fields query response: " + JSON.stringify(response.data.data))
@@ -182,11 +182,14 @@ export default Vue.extend ( {
   },
  
   computed : {
+    settings(): ConceptStore.Settings {
+      return ConceptStore.get.settings()
+     },
     subquery_from_store(): ConceptStore.SingleConceptQuery { return ConceptStore.getState().query[this.id] },
     terms_from_lexicon() {
         const query: string = this.term_search_url as string
         axios.get(query, requestHeaders)
-            .then(response => { 
+            .then(response => {
                console.log(`found in lexicon for field: "${this.search_field}", cluster: "${this.current_concept}"`  + JSON.stringify(response.data.data))
                this.terms = uniq(response.data.data)
                this.terms.map(t => this.checked_terms[t.term] = true)
@@ -203,7 +206,7 @@ export default Vue.extend ( {
                 term
             }
           }`
-        const query: string= `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
+        const query: string= `${this.settings.blackparank_server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
         return query
       },
 
@@ -211,7 +214,7 @@ export default Vue.extend ( {
         const self = this
         const getTermsURL : string = this.term_search_url as string
         const pdb = axios.get(getTermsURL)
-        const termPromiseCorpus: Promise<string[]> = axios.get(`http://localhost:8080/blacklab-server/${this.corpus}/autocomplete/contents/lemma/?term=${this.current_term}`).then(r => r.data)
+        const termPromiseCorpus: Promise<string[]> = axios.get(`http://${this.settings.corpus_server}/blacklab-server/${this.corpus}/autocomplete/contents/lemma/?term=${this.current_term}`).then(r => r.data)
         const termPromiseDatabase: Promise<string[]>  = pdb.then(r => self.get_term_values(r.data))
         // alert(term_promise_database)
 
@@ -236,7 +239,7 @@ export default Vue.extend ( {
                 term
             }
           }`
-      return `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
+      return `${this.settings.blackparank_server}/api?instance=${this.settings.blackparank_instance}&query=${encodeURIComponent(wQuery)}`
     },
 
     completionURLForConcept(): string {
@@ -251,7 +254,7 @@ export default Vue.extend ( {
             }
           }`
        //console.log("AUTOCOMPLETE query: " + JSON.stringify(wQuery).replace(/\\n/, '\n'))
-       return `${this.server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
+       return `${this.settings.blackparank_server}/api?instance=${this.settings.blackparank_instance}&query=${encodeURIComponent(wQuery)}`
     },
   },
   created() {

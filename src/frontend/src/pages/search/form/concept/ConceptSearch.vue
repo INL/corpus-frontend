@@ -13,16 +13,18 @@
       <div class='boxes' style='text-align: center'>
         <ConceptSearchBox v-for="id in Array.from(Array(nBoxes).keys())" v-bind:key="id" :id="'b' +id.toString()"/>
       </div>
-      <button @click="addBox">Add box</button> <button @click="removeBox">Remove box</button> <button  target="_blank" @click="window.open(getters.settings().lexit_server + '?db=' + getters.settings().lexit_instance + '&table=lexicon', '_blank')">View lexicon</button>
+      <button @click="addBox">Add box</button> <button @click="removeBox">Remove box</button> 
+      <button  target="_blank" @click="window.open(getters.settings().lexit_server + '?db=' + getters.settings().lexit_instance + '&table=lexicon', '_blank')">View lexicon</button>
+      <input type="checkbox" v-model="showQuery">Show query</checkbox>
       <br/>
       Search in: <select v-model="element_searched"> 
          <option v-for="(o,i) in getters.settings().searchable_elements" v-bind:key="i">{{ o }}</option>
       </select> 
 
       <br/>
-      <div style="border-style: solid; margin-top: 1em;">
-      <input type="checkbox" v-model="showQuery">Show query</checkbox>
-       <div v-if="showQuery">
+      <div>
+      
+       <div style="border-style: solid; margin-top: 1em;" v-if="showQuery">
         <div>
           <pre>
             {{  JSON.stringify(settings) }}
@@ -51,6 +53,7 @@ import * as ConceptStore from '@/pages/search/form/concept/conceptStore';
 //import { settings } from './settings.js'
 declare const BLS_URL: string;
 const blsUrl: string = BLS_URL;
+import debug from '@/utils/debug';
 import axios from 'axios'
 
 import ConceptSearchBox from './ConceptSearchBox.vue' 
@@ -117,6 +120,7 @@ export default Vue.extend ({
   },
   created() {
     UIStore.getState().results.shared.concordanceAsHtml = true;
+    debug.debug = false
 }
 })
 

@@ -109,9 +109,12 @@
 				<div id="querybuilder" ref="querybuilder"></div>
 				<button type="button" class="btn btn-default btn-sm" @click="copyAdvancedQuery">Copy to CQL editor</button>
 			</div>
-			<div :class="['tab-pane', {'active': activePattern==='concept'}]" id="concept"> <!-- Jesse -->
+			<div :class="['tab-pane', {'active': activePattern==='concept'}]" id="concept">
+				
+				<!-- Jesse -->
 			
 				<ConceptSearch/>   <!--  v-on:update_concept_query="updateComplex" (niet meer nodig??)-->
+				<button type="button" class="btn btn-default btn-sm" @click="copyConceptQuery">Copy to CQL editor (expert mode)</button>
 				<!--
 				<textarea id="querybox_concept" class="form-control" name="querybox" rows="7" v-model.lazy="concept"></textarea>
 				-->
@@ -298,7 +301,11 @@ export default Vue.extend({
 			PatternStore.actions.expert(PatternStore.getState().advanced);
 			InterfaceStore.actions.patternMode('expert');
 		},
-
+		copyConceptQuery() {
+			//PatternStore.actions.expert(PatternStore.getState().advanced);
+			this.expert = this.concept
+			InterfaceStore.actions.patternMode('expert');
+		},
 		updateComplex(e: String) {
 			// alert("Update complex:"  + e)
 			// this.expert = e

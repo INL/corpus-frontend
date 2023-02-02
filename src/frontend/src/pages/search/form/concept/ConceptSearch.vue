@@ -10,6 +10,9 @@
        </pre></div>
 
       -->
+      Search in: <select v-model="element_searched"> 
+         <option v-for="(o,i) in getters.settings().searchable_elements" v-bind:key="i">{{ o }}</option>
+      </select> 
       <div class='boxes' style='text-align: center'>
         <ConceptSearchBox v-for="id in Array.from(Array(nBoxes).keys())" v-bind:key="id" :id="'b' +id.toString()"/>
       </div>
@@ -17,9 +20,7 @@
       <button  target="_blank" @click="window.open(getters.settings().lexit_server + '?db=' + getters.settings().lexit_instance + '&table=lexicon', '_blank')">View lexicon</button>
       <input type="checkbox" v-model="showQuery">Show query</checkbox>
       <br/>
-      Search in: <select v-model="element_searched"> 
-         <option v-for="(o,i) in getters.settings().searchable_elements" v-bind:key="i">{{ o }}</option>
-      </select> 
+
 
       <br/>
       <div>

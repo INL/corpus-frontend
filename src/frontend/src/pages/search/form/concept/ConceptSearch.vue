@@ -15,7 +15,7 @@
       </div>
       <button @click="addBox">Add box</button> <button @click="removeBox">Remove box</button> <button  target="_blank" @click="window.open(getters.settings().lexit_server + '?db=' + getters.settings().lexit_instance + '&table=lexicon', '_blank')">View lexicon</button>
       <br/>
-      Search in: <select v-model="search_in"> 
+      Search in: <select v-model="element_searched"> 
          <option v-for="(o,i) in getters.settings().searchable_elements" v-bind:key="i">{{ o }}</option>
       </select> 
 
@@ -23,6 +23,11 @@
       <div style="border-style: solid; margin-top: 1em;">
       <input type="checkbox" v-model="showQuery">Show query</checkbox>
        <div v-if="showQuery">
+        <div>
+          <pre>
+            {{  JSON.stringify(settings) }}
+          </pre>
+        </div>
         <div style="font-family:'Courier New', Courier, monospace"> Generated query:  {{ concept? concept:'nopez' }} </div> 
         query_cql from store {{  query_cql_from_store }}<br/>
         Query as JSON {{  queryFieldValue }}<br/>
@@ -78,10 +83,10 @@ export default Vue.extend ({
   }),
 
   methods : {
-    addBox: function() {
+    addBox() {
       this.nBoxes++;
     },
-    removeBox: function() {
+    removeBox() {
       this.nBoxes--;
     },
   },
@@ -103,6 +108,10 @@ export default Vue.extend ({
 		concept: {
 			get(): string|null { return PatternStore.getState().concept; },
 			set: PatternStore.actions.concept,
+		},
+    element_searched: {
+			get(): string|null { return ConceptStore.getState().target_element; },
+			set: ConceptStore.actions.setTargetElement,
 		},
 
   },

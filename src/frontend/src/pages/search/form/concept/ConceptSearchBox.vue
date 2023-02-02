@@ -14,7 +14,7 @@
       <table class="t1">
         <tr>  
           <td class="fn">Field:</td><td> <select type="text" v-model="search_field">
-             <option v-for="(f,i) in fields" :key="i">{{ f }}</option>
+             <option v-for="(f,i) in main_fields" :key="i">{{ f }}</option>
           </select></td>
         </tr>
         <tr>
@@ -163,27 +163,15 @@ export default Vue.extend ( {
         }).catch(e => log_error(e))
       // this.$emit('reload')
     },
-    getMainFields() {
-      const wQuery = `
-              query Quine {
-                lexicon(corpus : "${this.corpus}") {
-                field
-            }
-          }`
-      const query = `${this.settings.blackparank_server}/api?instance=${this.settings.blackparank_instance}&query=${encodeURIComponent(wQuery)}`
-      axios.get(query, requestHeaders)
-        .then(response => {
-          // alert("Fields query response: " + JSON.stringify(response.data.data))
-          const fields = uniq(response.data.data.map(x => x.field))
-          this.fields = fields
-          return fields
-        })
-    }
+
   },
  
   computed : {
     settings(): ConceptStore.Settings {
       return ConceptStore.get.settings()
+     },
+     main_fields(): string[] {
+      return ConceptStore.get.main_fields()
      },
     subquery_from_store(): ConceptStore.SingleConceptQuery { return ConceptStore.getState().query[this.id] },
     terms_from_lexicon() {
@@ -196,7 +184,6 @@ export default Vue.extend ( {
                return response.data.data
               })
       },
-
       term_search_url(): string {
         const wQuery = `
               query Quine {
@@ -258,7 +245,7 @@ export default Vue.extend ( {
     },
   },
   created() {
-    this.getMainFields()
+    
     // alert(blsUrl)
   }
 })

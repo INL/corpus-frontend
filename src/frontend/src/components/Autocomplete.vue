@@ -6,8 +6,6 @@
 		@keyup.left="_refreshList"
 		@keyup.right="_refreshList"
 		@click="_refreshList"
-		:maxlength="maxlength"
-		:minlength="minlength"
 		v-model="modelvalue"
 	/>
 </template>

@@ -199,10 +199,14 @@ export default Vue.extend ( {
 
       term_search_promise(): Promise<string[]> {
         const self = this
-        const getTermsURL : string = this.term_search_url as string
+        const getTermsURL: string = this.term_search_url as string
+        const autocompleteURL = `${this.settings.corpus_server}/${this.corpus}/autocomplete/contents/lemma/?term=${this.current_term}`
+
+        console.log(`get Terms: ${getTermsURL}, autocomplete: ${autocompleteURL}`)
         const pdb = axios.get(getTermsURL)
-        const termPromiseCorpus: Promise<string[]> = axios.get(`http://${this.settings.corpus_server}/blacklab-server/${this.corpus}/autocomplete/contents/lemma/?term=${this.current_term}`).then(r => r.data)
+        const termPromiseCorpus: Promise<string[]> = axios.get(autocompleteURL).then(r => r.data)
         const termPromiseDatabase: Promise<string[]>  = pdb.then(r => self.get_term_values(r.data))
+
         // alert(term_promise_database)
 
         const promiseBoth: Promise<string[]> = Promise.all([termPromiseDatabase, termPromiseCorpus]).then(r => {

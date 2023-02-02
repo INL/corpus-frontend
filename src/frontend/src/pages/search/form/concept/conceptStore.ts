@@ -125,6 +125,7 @@ function get_main_fields_url(state: ModuleRootState): string {
       }
     }`
   const query = `${state.settings.blackparank_server}/api?instance=${state.settings.blackparank_instance}&query=${encodeURIComponent(wQuery)}`
+  // window.open(query, '_blank')
   return query
 }
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -154,7 +155,7 @@ const get = {
 
    const queryForBlackparank = reshuffle_query_for_blackparank(query,targetElement)
    const encodedQuery = encodeURIComponent(JSON.stringify(queryForBlackparank))
-   alert(JSON.stringify(state.settings))
+   //alert(JSON.stringify(state.settings))
    const requestUrl = `${state.settings.blackparank_server}/BlackPaRank?server=${encodeURIComponent(state.settings.corpus_server)}&corpus=${CorpusStore.getState().id}&action=info&query=${encodedQuery}`
    return requestUrl
   },
@@ -184,7 +185,9 @@ const actions = {
         PatternStore.actions.concept(state.query_cql)
         // alert('Survived this....')
       }
-    )
+    ).catch(e => {
+      alert(`setSubQuery: ${e.message} on ${request}`)
+    })
   }, 'concept_set_subquery'),
 
   addTerm: b.commit((state, payload: { label: string, atom: AtomicQuery }) => {
@@ -198,13 +201,16 @@ const actions = {
 
   loadSettings: b.commit((state, payload: Settings) => {
     state.settings = payload
-    axios.get(get_main_fields_url(state)).then(
+    const request = get_main_fields_url(state)
+    axios.get(request).then(
       response => {
         // alert("Fields query response: " + JSON.stringify(response.data.data))
         const entries: LexiconEntry[] = response.data.data
         const fields = uniq(entries.map(x => x.field))
         state.main_fields = fields
         return fields
+      }).catch(e => {
+        alert(`${e.message} on ${request}`)
       })
     // En de query moet ook weer opnieuw worden gezet ...
     // alert('Settings changed, settings now: ' + JSON.stringify(state.settings))

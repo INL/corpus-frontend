@@ -66,7 +66,7 @@ const initialState: ModuleRootState = {
     blackparank_instance: 'weetikveel',
     lexit_server: 'http://nolexit.inl.loc',
     lexit_instance: 'wadde?',
-    gloss_fields: ['sense'],
+    gloss_fields: ['lemma_correct', 'sense'],
     get_hit_id: h => h.docPid + '_' + h.start + '_' + h.end // dit is niet super persistent voor corpusversies....
   },
 }

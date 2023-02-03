@@ -110,6 +110,7 @@
 								<td><span :dir="textDirection">{{rowData.right}}</span>&hellip;</td>
 							</template>
 							<td v-for="(v, index) in rowData.other" :key="index">{{v}}</td>
+							<td v-for="(field, index) in rowData.gloss_fields" :key="index"><input @click.stop=";" type='text' :placeholder="field"/></td>
 							<td v-for="meta in shownMetadataCols" :key="meta.id">{{rowData.doc[meta.id] ? rowData.doc[meta.id].join(', ') : ''}}</td>
 						</tr>
 						<tr v-if="citations[index]" v-show="citations[index].open" :key="index + '-citation'" :class="['concordance-details', {'open': citations[index].open}]">
@@ -212,6 +213,7 @@ type HitRow = {
 	start: number;
 	end: number;
 	doc: BLTypes.BLDocInfo;
+	gloss_fields: string[];
 	//glosses: GlossModule.Glossing[]
 };
 
@@ -302,7 +304,8 @@ export default Vue.extend({
 					docPid: hit.docPid,
 					start: hit.start,
 					end: hit.end,
-					doc: infos[pid]
+					doc: infos[pid],
+					gloss_fields: GlossModule.get.gloss_fields()
 				});
 
 				return rows;
@@ -349,6 +352,9 @@ export default Vue.extend({
 		getDocumentSummary(): ((doc: any, info: any) => any) { return UIStore.getState().results.shared.getDocumentSummary },
 	},
 	methods: {
+		glossInputClick(e) {
+			alert(JSON.stringify(e))
+		},
 		changeSort(payload: string) {
 			if (!this.disabled) {
 				this.$emit('sort', payload === this.sort ? '-'+payload : payload);

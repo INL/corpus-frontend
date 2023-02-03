@@ -187,6 +187,7 @@
 import Vue from 'vue';
 
 import * as CorpusStore from '@/store/search/corpus';
+import * as GlossModule from '@/pages/search/form/concept/glossStore' // Jesse
 import * as UIStore from '@/store/search/ui';
 import { snippetParts, words, getDocumentUrl } from '@/utils';
 import * as Api from '@/api';
@@ -211,6 +212,7 @@ type HitRow = {
 	start: number;
 	end: number;
 	doc: BLTypes.BLDocInfo;
+	//glosses: GlossModule.Glossing[]
 };
 
 type DocRow = {

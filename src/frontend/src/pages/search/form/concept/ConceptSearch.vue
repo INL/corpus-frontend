@@ -28,7 +28,7 @@
       <br/>
       <div>
       
-       <div style="border-style: solid; border-width: 1pt; margin-top: 1em;" v-if="showQuery">
+       <div style="border-style: solid; border-width: 1pt; margin-top: 1em; padding: 4pt" v-if="showQuery">
         <div style="display: none">
           <pre>
             {{  JSON.stringify(settings) }}

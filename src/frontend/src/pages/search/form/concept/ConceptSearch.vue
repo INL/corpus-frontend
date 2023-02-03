@@ -14,10 +14,13 @@
          <option v-for="(o,i) in getters.settings().searchable_elements" v-bind:key="i">{{ o }}</option>
       </select> 
       <div class='boxes' style='text-align: center'>
-        <ConceptSearchBox v-for="id in Array.from(Array(nBoxes).keys())" v-bind:key="id" :id="'b' +id.toString()"/>
+        <ConceptSearchBox :ref="'b' +id.toString()" v-for="id in Array.from(Array(nBoxes).keys())" v-bind:key="id" :id="'b' +id.toString()"/>
       </div>
-      <button @click="addBox">Add box</button> <button @click="removeBox">Remove box</button> 
+      <button @click="resetQuery">Reset</button>
+      <button @click="addBox">Add box</button> 
+      <button @click="removeBox">Remove box</button> 
       <button  target="_blank" @click="window.open(getters.settings().lexit_server + '?db=' + getters.settings().lexit_instance + '&table=lexicon', '_blank')">View lexicon</button>
+      
       <input type="checkbox" v-model="showQuery">Show query</checkbox>
       <br/>
 
@@ -25,17 +28,18 @@
       <br/>
       <div>
       
-       <div style="border-style: solid; margin-top: 1em;" v-if="showQuery">
-        <div>
+       <div style="border-style: solid; border-width: 1pt; margin-top: 1em;" v-if="showQuery">
+        <div style="display: none">
           <pre>
             {{  JSON.stringify(settings) }}
           </pre>
         </div>
-        <div style="font-family:'Courier New', Courier, monospace"> Generated query:  {{ concept? concept:'nopez' }} </div> 
-        query_cql from store {{  query_cql_from_store }}<br/>
-        Query as JSON {{  queryFieldValue }}<br/>
-        Query in store: {{ query_from_store }} <br/>
-        Request in store: <a :href='request_from_store'> {{ true?request_from_store:'effeniet' }} </a>
+        <i>Query</i>
+        <div style="margin-bottom: 1em" v-for="(e,i) in Object.entries(query_from_store)" v-bind:key="i"><b>{{ e[0] }}</b> → [{{ e[1].terms.filter(t => t.value.length > 0).map(t => t.value).join("; ")}}] </div>
+        
+        <i>CQL rendition</i> <div class="code">{{  query_cql_from_store }}</div><br/>
+        
+        <!-- Request in store: <a target="_blank" :href='request_from_store'> .... </a> -->
        </div>
       </div>
     </div>
@@ -44,7 +48,7 @@
 <script lang="ts">
 
 import Vue from 'vue';
-
+import VueComponent from 'vue';
 import * as RootStore from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus';
 import * as UIStore from '@/store/search/ui';
@@ -93,6 +97,14 @@ export default Vue.extend ({
     removeBox() {
       this.nBoxes--;
     },
+    resetQuery() {
+      Object.keys(this.$refs).forEach(k => {
+        const ref_k = this.$refs[k]
+        //console.log(rk)
+        ref_k[0].resetQuery()
+      })
+      ConceptStore.actions.resetQuery()
+    }
   },
   computed : {
      settings(): ConceptStore.Settings {
@@ -117,7 +129,6 @@ export default Vue.extend ({
 			get(): string|null { return ConceptStore.getState().target_element; },
 			set: ConceptStore.actions.setTargetElement,
 		},
-
   },
   created() {
     UIStore.getState().results.shared.concordanceAsHtml = true;
@@ -150,5 +161,19 @@ img {
 
 .boxes {
   display: flex
+}
+
+.code {
+    display: block;
+    padding: 9.5px;
+    margin: 0 0 10px;
+    font-size: 13px;
+    line-height: 1.42857143;
+    color: #333;
+
+    background-color: #f5f5f5;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: Menlo,Monaco,Consolas,"Courier New",monospace;
 }
 </style>

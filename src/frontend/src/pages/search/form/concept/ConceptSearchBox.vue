@@ -22,23 +22,23 @@
             id="ac1"
 						placeholder="...concept..."
 						
-            maxlength="3"
+         
 						:autocomplete="true"
             :rendering = "{'prepare_data' : d => get_cluster_values(d)}"
 						:url="completionURLForConcept"
-						v-model="current_concept"/> <button @click="addConcept">⤿ lexicon</button></td>
+						v-model="current_concept"/> <button @click="addConcept" title="Add concept to lexicon">⤿ lexicon</button></td>
         </tr>
         <tr>
           <td class="fn">Term:</td><td> <Autocomplete 
             id="ac2"
 						placeholder="...term..."
 
-            maxlength="3"
+          
 						:autocomplete="true"
             :rendering = "{'prepare_data_niet' : d => get_term_values(d), 'promise': term_search_promise}"
 						:url="completionURLForTerm"
 						v-model="current_term"
-            /> <button @click="addTerm">⤿ lexicon</button></td>
+            /> <button @click="addTerm" title="Add term to lexicon">⤿ lexicon</button></td>
         </tr>
       
       </table>
@@ -51,6 +51,7 @@
       </div>
 
       <button @click="buildQuery">Add selected terms to query</button>
+      <button @click="resetQuery">Clear</button>
    </div>
 </template>
 
@@ -126,6 +127,7 @@ export default Vue.extend ( {
     },
     addConcept() {
       // do something to add to database
+      this.insertConcept()
     },
     setSearchConcept(e: string) {
       // alert(`Search concept ${e}`)
@@ -163,7 +165,12 @@ export default Vue.extend ( {
         }).catch(e => log_error(e))
       // this.$emit('reload')
     },
-
+    resetQuery() {
+       this.current_concept = ''
+       this.current_term = ''
+       this.terms = []
+       this.checked_terms = {}
+    }
   },
  
   computed : {
@@ -211,7 +218,8 @@ export default Vue.extend ( {
 
         const promiseBoth: Promise<string[]> = Promise.all([termPromiseDatabase, termPromiseCorpus]).then(r => {
             console.log(JSON.stringify(r))
-            return r[0].concat(r[1])
+            const r00 = r[0].filter(x => x)
+            return r00.concat(r[1]) // dit gaat mis als en null in db stuk zit....
         })
 
         return promiseBoth

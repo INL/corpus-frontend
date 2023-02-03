@@ -52,18 +52,19 @@ type LexiconEntry = {
   term: string
 }
 
+const emptyQuery = {
+  'b0': {
+    terms: [
+    ]
+  }
+}
 const initialState: ModuleRootState = {
   target_element: 'p',
   main_fields: ['cosmology', 'alchemy', 'cryptozoology'],
   query_cql: '',
   settings: { corpus_server: 'http://nohost:8080/blacklab-server', blackparank_server: 'nohost',
   blackparank_instance: 'weetikveel', lexit_server: 'http://nolexit.inl.loc', lexit_instance: 'wadde?', searchable_elements: ['tom', 'tiedom', 'nogwat']},
-  query: {
-    'b0': {
-      terms: [
-      ]
-    }
-  }
+  query: emptyQuery
 }
 
 const defaults = initialState;
@@ -171,6 +172,9 @@ const get = {
 
 const geefMee = {'headers': {'Accept':'application/json'}, 'auth': {'username':'fouke','password':'narawaseraretakunai'}}
 const actions = {
+  resetQuery: b.commit((state) => {
+    state.query = emptyQuery
+  }, 'reset_query'),
 
   setSubQuery: b.commit((state, payload: { id: string, subquery: SingleConceptQuery}) =>  {
     // tslint:disable-next-line:no-console

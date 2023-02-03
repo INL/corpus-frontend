@@ -180,6 +180,12 @@ const actions = {
     // tslint:disable-next-line:no-console
     console.log('whop whop getting there: ' + JSON.stringify(payload.subquery));
     state.query[payload.id] = payload.subquery
+    actions.updateCQL();
+  }, 'concept_set_subquery'),
+
+  updateCQL: b.commit((state) =>  {
+    // tslint:disable-next-line:no-console
+
     const request = get.translate_query_to_cql_request()
     // alert('sending:' + request)
     axios.get(request, geefMee).then(
@@ -192,7 +198,8 @@ const actions = {
     ).catch(e => {
       alert(`setSubQuery: ${e.message} on ${request}`)
     })
-  }, 'concept_set_subquery'),
+  }, 'concept_update_cql'),
+
 
   addTerm: b.commit((state, payload: { label: string, atom: AtomicQuery }) => {
     if (!(payload.label in state.query)) state.query[payload.label] = { terms: new Array<AtomicQuery>() };
@@ -201,6 +208,7 @@ const actions = {
 
   setTargetElement: b.commit((state, payload: string) => {
      state.target_element = payload
+     actions.updateCQL()
   } , 'concept_set_target_element'),
 
   loadSettings: b.commit((state, payload: Settings) => {

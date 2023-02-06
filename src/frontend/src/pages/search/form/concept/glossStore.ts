@@ -111,6 +111,16 @@ const get = {
   getGlossById(hitId: string) {
     return getState().glosses[hitId]
   },
+  getGlossValue(hitId: string, fieldName: string)  {
+    const glosses = getState().glosses
+    if (hitId in glosses) {
+      const glossing: Glossing = glosses[hitId]
+      const fieldValue =  glossing.gloss[fieldName];
+      console.log(`Gloss GET ${hitId} ${fieldName}=${fieldValue}`)
+      return fieldValue
+    }
+    else return ''
+  },
   settings() {
    return getState().settings
   },
@@ -160,25 +170,29 @@ const actions = {
      actions.addGlossing({gloss: glossing})
   }, 'add_gloss'),
 
-  setOneGlossField(hitId: string, fieldName: string) {
-    uglyK++;
-    return b.commit((state, payload: string)  => {
-     
+  setOneGlossField: b.commit((state, payload: { hitId: string, fieldName: string, fieldValue: string})  => {
+      const hitId = payload.hitId
+      const fieldName = payload.fieldName
+      const fieldValue = payload.fieldValue
+      console.log(`Gloss SET ${hitId} ${fieldName}=${fieldValue}`)
       let glossing: Glossing = state.glosses[hitId]
       if (!glossing) {
         const gloss = {
-          fieldName: payload
+          fieldName: fieldValue
         }
-        const glossing: Glossing = {
-          gloss: gloss,
+        glossing =   {
+          'gloss': gloss,
           author: 'piet',
           corpus: get.corpus(),
           hitId: hitId
         }
-        actions.addGlossing({gloss: glossing})
+        
+      } else {
+        glossing.gloss[fieldName]  = fieldValue
       }
-    }, `add_gloss_${hitId}_${fieldName}_uglyK:${uglyK}`) // als je dit twee keer doet gaat ie mis wegens dubbele dinges...
-  },
+      actions.addGlossing({gloss: glossing})
+    }, `set_gloss_field_value`), // als je dit twee keer doet gaat ie mis wegens dubbele dinges...
+  
   loadSettings: b.commit((state, payload: Settings) => {
     state.settings = payload
     const request = 'some_request';

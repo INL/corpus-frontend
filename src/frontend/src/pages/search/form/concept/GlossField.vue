@@ -1,6 +1,6 @@
 <template>
    <div style='text-align: left'>
-      <input v-model="value"/>
+      <input  :placeholder="fieldName" @click.stop=";" :value="getters.getGlossValue(hitId,fieldName)" @change=setValue($event.target.value) />
      </div>
 </template>
 
@@ -24,6 +24,11 @@ import axios from 'axios'
 import ConceptSearchBox from './ConceptSearchBox.vue' 
 import { ConceptQuery } from './conceptStore.js';
 
+type myProps =  {
+    fieldName: String,
+    hitId : String
+  }
+  
 export default Vue.extend ({
   name: 'GlossField',
   props: {
@@ -34,7 +39,8 @@ export default Vue.extend ({
   data: () => ({
       debug: false,
       corpus: CorpusStore.getState().id,
-      setter: null as any
+      setter: null as any,
+      getters: GlossStore.get,
   }),
 
   methods : {
@@ -42,20 +48,11 @@ export default Vue.extend ({
       alert(s)
     },
 
-    getSetter() {
-      if (!this.setter) this.setter = GlossStore.actions.setOneGlossField(this.hitId, this.fieldName);
-      return this.setter
-     }
+    setValue(s: string) {
+      GlossStore.actions.setOneGlossField({hitId: this.hitId, fieldName: this.fieldName, fieldValue: s})
+    }
   },
-  computed : {
-		value() {
-      const self = this
-      const v =  {
-			  get(): string|null { console.log(`${self.hitId} ${self.fieldName}}`); return GlossStore.get.getGlossById(self.hitId).gloss[self.fieldName] },
-        set: this.getSetter() // gaat waarschijnlijk niet werken zo... (inderdaad, die this moet eruit....)
-		  }
-      return v
-  }},
+  computed : {  },
   created() {
     UIStore.getState().results.shared.concordanceAsHtml = true;
     debug.debug = false

@@ -93,7 +93,7 @@ export default Vue.extend ( {
       terms: [] as Term[],
       corpus: CorpusStore.getState().id as string,
       getters: ConceptStore.get,
-      server : 'http://localhost:8080/Oefenen/' as string,
+      //server : 'http://localhost:8080/Oefenen/' as string,
       instance: 'quine_lexicon' as string,
       credentials :  { auth: {
       username: 'fouke',
@@ -146,7 +146,7 @@ export default Vue.extend ( {
       const self = this
       const insertIt = {corpus: self.corpus, field: self.search_field, concept:self.current_concept, term: self.current_term, author: 'corpus_frontend'}
       const insertTerm =  encodeURIComponent(JSON.stringify(insertIt))
-      const url = `${this.server}/api?instance=${this.instance}&insertTerm=${insertTerm}`
+      const url = `${this.settings.blackparank_server}/api?instance=${this.instance}&insertTerm=${insertTerm}`
       // ToDo authentication !!!!
       alert(`Yep, post ${JSON.stringify(insertIt)} to ${url}`)
       axios.get(url,{ auth: requestHeaders.auth }).then(r => {
@@ -158,7 +158,7 @@ export default Vue.extend ( {
       const self = this
       const insertIt = {corpus: self.corpus, field: self.search_field, concept:self.current_concept, author: 'corpus_frontend'}
       const insertConcept =  encodeURIComponent(JSON.stringify(insertIt))
-      const url = `${this.server}/api?instance=${this.instance}&insertConcept=${insertConcept}`
+      const url = `${this.settings.blackparank_server}/api?instance=${this.instance}&insertConcept=${insertConcept}`
 
       axios.get(url,{ auth: requestHeaders.auth }).then(r => {
         // alert(`gepiept (${this.exerciseData.type}, ${this.database_id})!`)

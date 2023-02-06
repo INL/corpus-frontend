@@ -110,7 +110,7 @@
 								<td><span :dir="textDirection">{{rowData.right}}</span>&hellip;</td>
 							</template>
 							<td v-for="(v, index) in rowData.other" :key="index">{{v}}</td>
-							<td v-for="(field, index) in rowData.gloss_fields" :key="index"><GlossField :fieldName="field" :hitId="get_hit_id(rowData)"/> <!---<input @click.stop=";" type='text' :placeholder="field"/>--></td> <!-- hier custom componentje GlossEdit van maken, dat is fijn voor de v-models -->
+							<td v-for="(field, findex) in rowData.gloss_fields" :key="index  + '_'  + findex"><GlossField :fieldName="field" :hitId="get_hit_id(rowData)"/> <!---<input @click.stop=";" type='text' :placeholder="field"/>--></td> <!-- hier custom componentje GlossEdit van maken, dat is fijn voor de v-models -->
 							<td v-for="meta in shownMetadataCols" :key="meta.id">{{rowData.doc[meta.id] ? rowData.doc[meta.id].join(', ') : ''}}</td>
 						</tr>
 						<tr v-if="citations[index]" v-show="citations[index].open" :key="index + '-citation'" :class="['concordance-details', {'open': citations[index].open}]">

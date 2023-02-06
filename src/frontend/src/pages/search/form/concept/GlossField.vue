@@ -48,11 +48,14 @@ export default Vue.extend ({
      }
   },
   computed : {
-		value: {
-			get(): string|null { return GlossStore.get.getGlossById(this.hitId).gloss[this.fieldName] },
-      set: this.getSetter() // gaat waarschijnlijk niet werken zo...
-		}
-  },
+		value() {
+      const self = this
+      const v =  {
+			  get(): string|null { console.log(`${self.hitId} ${self.fieldName}}`); return GlossStore.get.getGlossById(self.hitId).gloss[self.fieldName] },
+        set: this.getSetter() // gaat waarschijnlijk niet werken zo... (inderdaad, die this moet eruit....)
+		  }
+      return v
+  }},
   created() {
     UIStore.getState().results.shared.concordanceAsHtml = true;
     debug.debug = false

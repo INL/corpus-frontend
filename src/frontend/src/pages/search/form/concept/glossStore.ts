@@ -123,6 +123,7 @@ const geefMee = {'headers': {'Accept':'application/json'}, 'auth': {'username':'
 
 let uglyK = 0;
 
+
 const actions = {
   flushAllGlosses: b.commit((state) => {
     state.glosses = {}
@@ -160,8 +161,9 @@ const actions = {
   }, 'add_gloss'),
 
   setOneGlossField(hitId: string, fieldName: string) {
+    uglyK++;
     return b.commit((state, payload: string)  => {
-      uglyK++;
+     
       let glossing: Glossing = state.glosses[hitId]
       if (!glossing) {
         const gloss = {
@@ -175,7 +177,7 @@ const actions = {
         }
         actions.addGlossing({gloss: glossing})
       }
-    }, `add_gloss_${hitId}_${fieldName}_${uglyK}`) // als je dit twee keer doet gaat ie mis wegens dubbele dinges...
+    }, `add_gloss_${hitId}_${fieldName}_uglyK:${uglyK}`) // als je dit twee keer doet gaat ie mis wegens dubbele dinges...
   },
   loadSettings: b.commit((state, payload: Settings) => {
     state.settings = payload

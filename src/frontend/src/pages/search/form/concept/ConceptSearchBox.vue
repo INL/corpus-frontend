@@ -107,8 +107,9 @@ export default Vue.extend ( {
     },
     buildQuery() {
       const terms = Object.keys(this.checked_terms).filter(t => this.checked_terms[t])
-      const scq: ConceptStore.SingleConceptQuery = { terms: terms.map(t => { const z: at = {field: 'lemma', 'value': t}; return z }) }
+      const scq: ConceptStore.SingleConceptQuery = { terms: terms.filter(x=>x && x !== 'null').map(t => { const z: at = {field: 'lemma', 'value': t}; return z }) }
       try {
+        // alert(JSON.stringify(scq))
         ConceptStore.actions.setSubQuery( {id: this.id, subquery: scq} )
       } catch (e) {
         alert('Whoops:' + e.message)
@@ -220,7 +221,7 @@ export default Vue.extend ( {
         const promiseBoth: Promise<string[]> = Promise.all([termPromiseDatabase, termPromiseCorpus]).then(r => {
             console.log(JSON.stringify(r))
             const r00 = r[0].filter(x => x)
-            return r00.concat(r[1]) // dit gaat mis als en null in db stuk zit....
+            return r00.concat(r[1]).filter(x => x && x.length > 0) // dit gaat mis als en null in db stuk zit....
         })
 
         return promiseBoth

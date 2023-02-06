@@ -306,12 +306,6 @@ export default Vue.extend({
 			this.expert = this.concept
 			InterfaceStore.actions.patternMode('expert');
 		},
-		updateComplex(e: String) {
-			// alert("Update complex:"  + e)
-			// this.expert = e
-			this.concept = e
-		},
-
 		setupCustomAnnotation(div: HTMLElement, plugin: NonNullable<UIStore.ModuleRootState['search']['shared']['customAnnotations'][string]>) {
 			const annotId = div.getAttribute('data-custom-annotation-root')!;
 			const isSimpleAnnotation = div.hasAttribute('data-is-simple');

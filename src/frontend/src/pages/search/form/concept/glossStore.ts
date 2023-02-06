@@ -92,16 +92,7 @@ const init = () => {
 	Object.assign(initialState, cloneDeep(getState()));
 }
 
-/*
-type string_plus_atomics = [string,AtomicQuery[]]
-type strmap<T> =  { [key: string] : T }
 
-function object_from_entries<T>(a: [string,T][]) : strmap<T>  {
-  const o: strmap<T> = {}
-  a.forEach(p => o[p[0]] = p[1])
-  return o
-}
-*/
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 // getters and actions
@@ -117,7 +108,9 @@ const get = {
     const hit_id = state.settings.get_hit_id(h)
     return state.glosses[hit_id] // kan null zijn
   },
-
+  getGlossById(hitId: string) {
+    return getState().glosses[hitId]
+  },
   settings() {
    return getState().settings
   },
@@ -127,6 +120,9 @@ const get = {
 };
 
 const geefMee = {'headers': {'Accept':'application/json'}, 'auth': {'username':'fouke','password':'narawaseraretakunai'}}
+
+let uglyK = 0;
+
 const actions = {
   flushAllGlosses: b.commit((state) => {
     state.glosses = {}
@@ -163,6 +159,24 @@ const actions = {
      actions.addGlossing({gloss: glossing})
   }, 'add_gloss'),
 
+  setOneGlossField(hitId: string, fieldName: string) {
+    return b.commit((state, payload: string)  => {
+      uglyK++;
+      let glossing: Glossing = state.glosses[hitId]
+      if (!glossing) {
+        const gloss = {
+          fieldName: payload
+        }
+        const glossing: Glossing = {
+          gloss: gloss,
+          author: 'piet',
+          corpus: get.corpus(),
+          hitId: hitId
+        }
+        actions.addGlossing({gloss: glossing})
+      }
+    }, `add_gloss_${hitId}_${fieldName}_${uglyK}`) // als je dit twee keer doet gaat ie mis wegens dubbele dinges...
+  },
   loadSettings: b.commit((state, payload: Settings) => {
     state.settings = payload
     const request = 'some_request';

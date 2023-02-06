@@ -92,16 +92,6 @@ const init = () => {
 	Object.assign(initialState, cloneDeep(getState()));
 }
 
-/*
-type string_plus_atomics = [string,AtomicQuery[]]
-type strmap<T> =  { [key: string] : T }
-
-function object_from_entries<T>(a: [string,T][]) : strmap<T>  {
-  const o: strmap<T> = {}
-  a.forEach(p => o[p[0]] = p[1])
-  return o
-}
-*/
 
 /**
  * this is silly,  the difference needs to be eliminated between store and web service

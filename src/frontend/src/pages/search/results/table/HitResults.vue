@@ -110,7 +110,7 @@
 								<td><span :dir="textDirection">{{rowData.right}}</span>&hellip;</td>
 							</template>
 							<td v-for="(v, index) in rowData.other" :key="index">{{v}}</td>
-							<td v-for="(field, index) in rowData.gloss_fields" :key="index"><input @click.stop=";" type='text' :placeholder="field"/></td> <!-- hier custom componentje GlossEdit van maken, dat is fijn voor de v-models -->
+							<td v-for="(field, index) in rowData.gloss_fields" :key="index"><GlossField :fieldName="field" :hitId="get_hit_id(rowData)"/> <!---<input @click.stop=";" type='text' :placeholder="field"/>--></td> <!-- hier custom componentje GlossEdit van maken, dat is fijn voor de v-models -->
 							<td v-for="meta in shownMetadataCols" :key="meta.id">{{rowData.doc[meta.id] ? rowData.doc[meta.id].join(', ') : ''}}</td>
 						</tr>
 						<tr v-if="citations[index]" v-show="citations[index].open" :key="index + '-citation'" :class="['concordance-details', {'open': citations[index].open}]">
@@ -189,6 +189,7 @@ import Vue from 'vue';
 
 import * as CorpusStore from '@/store/search/corpus';
 import * as GlossModule from '@/pages/search/form/concept/glossStore' // Jesse
+import GlossField from '@/pages/search//form/concept/GlossField.vue' // Jesse
 import * as UIStore from '@/store/search/ui';
 import { snippetParts, words, getDocumentUrl } from '@/utils';
 import * as Api from '@/api';
@@ -239,10 +240,12 @@ type CitationData = {
 	href: string;
 };
 
+
+
 export default Vue.extend({
-	// components: {
-	// 	AudioPlayer
-	// },
+	components: {
+	 	GlossField
+	},
 	props: {
 		results: Object as () => BLTypes.BLHitResults,
 		sort: String as () => string|null,
@@ -355,6 +358,7 @@ export default Vue.extend({
 		glossInputClick(e) {
 			alert(JSON.stringify(e))
 		},
+		get_hit_id(h: HitRow) { return h.docPid + '_' + h.start + '_' + h.end },
 		changeSort(payload: string) {
 			if (!this.disabled) {
 				this.$emit('sort', payload === this.sort ? '-'+payload : payload);

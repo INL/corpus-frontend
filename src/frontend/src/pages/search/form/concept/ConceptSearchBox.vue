@@ -13,9 +13,11 @@
    </div>
       <table class="t1">
         <tr>  
-          <td class="fn">Field:</td><td> <select type="text" v-model="search_field">
+          <td class="fn">Field:</td><td> 
+            <select ref="selectedField" type="text" v-model="search_field">
              <option v-for="(f,i) in main_fields" :key="i">{{ f }}</option>
-          </select></td>
+          </select>
+        </td>
         </tr>
         <tr>
           <td class="fn">Concept:</td><td> <Autocomplete 
@@ -176,6 +178,9 @@ export default Vue.extend ( {
   },
  
   computed : {
+    selectedField():string {
+      return this.$refs.selectedField.value
+    },
     settings(): ConceptStore.Settings {
       return ConceptStore.get.settings()
      },
@@ -245,6 +250,7 @@ export default Vue.extend ( {
 
     completionURLForConcept(): string {
        const field = this.search_field
+
        const value = this.current_concept
        const wQuery = `
               query Quine {
@@ -257,6 +263,11 @@ export default Vue.extend ( {
        //console.log("AUTOCOMPLETE query: " + JSON.stringify(wQuery).replace(/\\n/, '\n'))
        return `${this.settings.blackparank_server}/api?instance=${this.settings.blackparank_instance}&query=${encodeURIComponent(wQuery)}`
     },
+  }, watch : {
+    main_fields : function(n,o) {
+      if (n && n.length > 1)
+       this.search_field = n[1]
+    }
   },
   created() {
     

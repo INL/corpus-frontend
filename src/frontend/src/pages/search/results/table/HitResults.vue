@@ -428,7 +428,7 @@ export default Vue.extend({
 	},
 	watch: {
 		results: function(n: BLTypes.BLHitResults, o: BLTypes.BLHitResults) {
-			alert('Watched i am...')
+			// alert('Being watched i am...')
 			this.citations = {};
 			this.pinnedTooltip = null;
 			const currentHits = n.hits.map(h => this.get_hit_id(h)) 

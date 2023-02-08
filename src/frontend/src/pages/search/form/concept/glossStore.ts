@@ -201,7 +201,7 @@ const actions = {
     actions.storeToDatabase({glossings: allGlossings})
   }, 'store_to_all_to_db'),
   setCurrentPage: b.commit((state, payload: string[]) => {
-    alert('Current page hit ids: ' + JSON.stringify(payload))
+    // alert('Current page hit ids: ' + JSON.stringify(payload))
     state.current_page = payload
     const params = {
           instance: state.settings.blackparank_instance,

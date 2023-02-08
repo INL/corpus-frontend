@@ -47,7 +47,6 @@ export default Vue.extend ({
     piep(s: string) {
       alert(s)
     },
-
     setValue(s: string) {
       GlossStore.actions.setOneGlossField({hitId: this.hitId, fieldName: this.fieldName, fieldValue: s})
     }

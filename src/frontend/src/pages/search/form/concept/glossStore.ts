@@ -46,7 +46,7 @@ type Settings = {
   gloss_fields: string[],
   blackparank_server: string,
   blackparank_instance: string,
-  corpus_server: string,
+  corpus_server: string, // irrelevant
   lexit_server: string,
   lexit_instance: string,
   get_hit_id: Hit2String
@@ -62,8 +62,8 @@ const initialState: ModuleRootState = {
   glosses: {},
   settings: {
     corpus_server: 'http://nohost:8080/blacklab-server',
-    blackparank_server: 'nohost',
-    blackparank_instance: 'weetikveel',
+    blackparank_server: 'http://localhost:8080/Oefenen',
+    blackparank_instance: 'quine',
     lexit_server: 'http://nolexit.inl.loc',
     lexit_instance: 'wadde?',
     gloss_fields: ['lemma_correct', 'sense'],
@@ -133,6 +133,7 @@ const geefMee = {'headers': {'Accept':'application/json'}, 'auth': {'username':'
 
 let uglyK = 0;
 
+const auth =  {'username':'fouke','password':'narawaseraretakunai'};
 
 const actions = {
   flushAllGlosses: b.commit((state) => {
@@ -184,15 +185,31 @@ const actions = {
           'gloss': gloss,
           author: 'piet',
           corpus: get.corpus(),
-          hitId: hitId
+          'hitId': hitId
         }
-        
       } else {
         glossing.gloss[fieldName]  = fieldValue
       }
       actions.addGlossing({gloss: glossing})
-    }, `set_gloss_field_value`), // als je dit twee keer doet gaat ie mis wegens dubbele dinges...
-  
+      actions.storeToDatabase({glossings: [glossing]})
+  }, `set_gloss_field_value`), // als je dit twee keer doet gaat ie mis wegens dubbele dinges...
+  storeToDatabase: b.commit((state, payload: {glossings: Glossing[]}) => {
+      alert('Will try to store!')
+      const params = {
+            instance: state.settings.blackparank_instance,
+            table : 'exercises',
+            glossings: JSON.stringify(payload.glossings),
+      }
+      const url = `${state.settings.blackparank_server}/GlossStore`
+      const z = new URLSearchParams(params) // todo hier moet ook authenticatie op?
+      axios.post(url, z, { auth: auth}).then(r => {
+         alert(`Store to db gepiept (URL: ${url}) (params: ${JSON.stringify(params)})!`)
+         }).catch(e => alert(e.message))
+  }, 'store_to_list_of_glissings_to_db'),
+  storeAllToDatabase: b.commit((state) => {
+    const allGlossings: Glossing[] = Object.values(state.glosses)
+    actions.storeToDatabase({glossings: allGlossings})
+  }, 'store_to_all_to_db'),
   loadSettings: b.commit((state, payload: Settings) => {
     state.settings = payload
     const request = 'some_request';

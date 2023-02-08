@@ -23,26 +23,21 @@
           <td class="fn">Concept:</td><td> <Autocomplete 
             id="ac1"
 						placeholder="...concept..."
-						
-         
 						:autocomplete="true"
             :rendering = "{'prepare_data' : d => get_cluster_values(d)}"
 						:url="completionURLForConcept"
-						v-model="current_concept"/> <button @click="addConcept" title="Add concept to lexicon">⤿ lexicon</button></td>
+						v-model="current_concept"/> <!-- <button @click="addConcept" title="Add concept to lexicon">⤿ lexicon</button> --> </td>
         </tr>
         <tr>
           <td class="fn">Term:</td><td> <Autocomplete 
             id="ac2"
-						placeholder="...term..."
-
-          
+						placeholder="...term..."          
 						:autocomplete="true"
             :rendering = "{'prepare_data_niet' : d => get_term_values(d), 'promise': term_search_promise}"
 						:url="completionURLForTerm"
 						v-model="current_term"
             /> <button @click="addTerm" title="Add term to lexicon">⤿ lexicon</button></td>
         </tr>
-      
       </table>
 
 

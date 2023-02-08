@@ -265,7 +265,9 @@ export default Vue.extend({
 		rightLabel(): string { return this.textDirection === 'ltr' ? 'After' : 'Before'; },
 		beforeField(): string { return this.textDirection === 'ltr' ? 'left' : 'right'; },
 		afterField(): string { return this.textDirection === 'ltr' ? 'right' : 'left'; },
-
+		currentPageHitsForGlossStore(): string[] {
+			return this.rows.filter(r => r.type === 'hit').map(r => this.get_hit_id(r as HitRow))
+		},
 		rows(): Array<DocRow|HitRow> {
 			const docFields = this.results.summary.docFields;
 			const infos = this.results.docInfos;
@@ -425,10 +427,13 @@ export default Vue.extend({
 		},
 	},
 	watch: {
-		results() {
+		results: function(n: BLTypes.BLHitResults, o: BLTypes.BLHitResults) {
+			alert('Watched i am...')
 			this.citations = {};
 			this.pinnedTooltip = null;
-		}
+			const currentHits = n.hits.map(h => this.get_hit_id(h)) 
+			GlossModule.actions.setCurrentPage(currentHits)
+		},
 	}
 });
 </script>

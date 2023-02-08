@@ -55,11 +55,13 @@ type str2glossing = { [key: string]: Glossing}
 
 type ModuleRootState = {
   glosses: str2glossing,
+  current_page: string[], // ids of hits currently visible in result display
   settings: Settings,
 };
 
 const initialState: ModuleRootState = {
   glosses: {},
+  current_page: [],
   settings: {
     corpus_server: 'http://nohost:8080/blacklab-server',
     blackparank_server: 'http://localhost:8080/Oefenen',
@@ -146,17 +148,6 @@ const actions = {
      state.glosses[payload.gloss.hitId] = payload.gloss
      // save in database
      const request = 'request_to_load_in_database'
-     if (1 == 0 + 0) axios.get(request, geefMee).then(
-      response => {
-        alert('1 = 0, congratulations')
-        // alert('Set CQL to:' + response.data.pattern);
-        //state.query_cql = response.data.pattern;
-        //PatternStore.actions.concept(state.query_cql)
-        // alert('Survived this....')
-      }
-    ).catch(e => {
-      alert(`setSubQuery: ${e.message} on ${request}`)
-    })
   }, 'add_glossing'),
 
   addGloss: b.commit((state, payload: {gloss: Gloss, hit: BLHit}) =>  {
@@ -197,7 +188,6 @@ const actions = {
       alert('Will try to store!')
       const params = {
             instance: state.settings.blackparank_instance,
-            table : 'exercises',
             glossings: JSON.stringify(payload.glossings),
       }
       const url = `${state.settings.blackparank_server}/GlossStore`
@@ -210,6 +200,22 @@ const actions = {
     const allGlossings: Glossing[] = Object.values(state.glosses)
     actions.storeToDatabase({glossings: allGlossings})
   }, 'store_to_all_to_db'),
+  setCurrentPage: b.commit((state, payload: string[]) => {
+    alert('Current page hit ids: ' + JSON.stringify(payload))
+    state.current_page = payload
+    const params = {
+          instance: state.settings.blackparank_instance,
+          corpus: get.corpus(),
+          author: 'piet',
+          hit_ids: JSON.stringify(payload),
+      }
+      const url = `${state.settings.blackparank_server}/GlossStore`
+      const z = new URLSearchParams(params) // todo hier moet ook authenticatie op?
+      axios.post(url, z, { auth: auth}).then(r => {
+         alert(`Posted page hit ids: (URL: ${url}) (params: ${JSON.stringify(params)})!`)
+         // to do load the glosses in r....
+         }).catch(e => alert(e.message))
+  }, 'set_current_page'),
   loadSettings: b.commit((state, payload: Settings) => {
     state.settings = payload
     const request = 'some_request';

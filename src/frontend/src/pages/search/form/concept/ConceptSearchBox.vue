@@ -173,9 +173,10 @@ export default Vue.extend ( {
   },
  
   computed : {
+    /*
     selectedField():string {
       return this.$refs.selectedField.value
-    },
+    }, */
     settings(): ConceptStore.Settings {
       return ConceptStore.get.settings()
      },

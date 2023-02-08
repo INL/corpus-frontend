@@ -179,7 +179,7 @@ const actions = {
       let glossing: Glossing = state.glosses[hitId]
       if (!glossing) {
         const gloss = {
-          fieldName: fieldValue
+          [fieldName]: fieldValue
         }
         glossing =   {
           'gloss': gloss,

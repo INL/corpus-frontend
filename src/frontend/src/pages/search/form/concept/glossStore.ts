@@ -12,9 +12,30 @@ import { uniq, log_error } from './utils'
 import cloneDeep from 'clone-deep';
 
 import axios from 'axios'
-
+ 
 declare const BLS_URL: string;
 const blsUrl: string = BLS_URL;
+
+type GlossFieldType = {
+   type: string,
+   values: string[]
+}
+
+type GlossFieldDescription = {
+  type: GlossFieldType,
+  fieldName: string
+}
+
+const BooleanField: GlossFieldType = {
+  type: 'boolean',
+  values: ['true', 'false'] 
+}
+
+const StringField: GlossFieldType = {
+  type: 'string',
+  values: []
+}
+
 
 type Gloss = {
   [key: string]: string;
@@ -43,7 +64,7 @@ type BLHit = {
 type Hit2String = (a: BLHit) => string;
 
 type Settings = {
-  gloss_fields: string[],
+  gloss_fields: GlossFieldDescription[],
   blackparank_server: string,
   blackparank_instance: string,
   corpus_server: string, // irrelevant
@@ -68,7 +89,7 @@ const initialState: ModuleRootState = {
     blackparank_instance: 'quine',
     lexit_server: 'http://nolexit.inl.loc',
     lexit_instance: 'wadde?',
-    gloss_fields: ['lemma_correct', 'sense'],
+    gloss_fields: [{fieldName: 'relevant', type: BooleanField}, {fieldName: 'comment', type: StringField}],
     get_hit_id: h => h.docPid + '_' + h.start + '_' + h.end // dit is niet super persistent voor corpusversies....
   },
 }
@@ -187,7 +208,7 @@ const actions = {
       actions.storeToDatabase({glossings: [glossing]})
   }, `set_gloss_field_value`), // als je dit twee keer doet gaat ie mis wegens dubbele dinges...
   storeToDatabase: b.commit((state, payload: {glossings: Glossing[]}) => {
-      alert('Will try to store!')
+      // alert('Will try to store!')
       const params = {
             instance: state.settings.blackparank_instance,
             glossings: JSON.stringify(payload.glossings),
@@ -195,7 +216,7 @@ const actions = {
       const url = `${state.settings.blackparank_server}/GlossStore`
       const z = new URLSearchParams(params) // todo hier moet ook authenticatie op?
       axios.post(url, z, { auth: auth}).then(r => {
-         alert(`Store to db gepiept (URL: ${url}) (params: ${JSON.stringify(params)})!`)
+         // alert(`Store to db gepiept (URL: ${url}) (params: ${JSON.stringify(params)})!`)
          }).catch(e => alert(e.message))
   }, 'store_to_list_of_glissings_to_db'),
   storeAllToDatabase: b.commit((state) => {
@@ -235,5 +256,7 @@ export {
   init,
   Gloss,
   Glossing,
-  Settings
+  Settings,
+  GlossFieldType,
+  GlossFieldDescription
 }

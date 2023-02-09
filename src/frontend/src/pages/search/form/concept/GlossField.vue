@@ -1,6 +1,13 @@
 <template>
-   <div style='text-align: left'>
-      <input  :placeholder="fieldName" @click.stop=";" :value="currentValue" @change=setValue($event.target.value) />
+   <div  @click.stop=";" style='text-align: left'>
+    <span  v-if="fieldDescription.type.values.length>0">
+      {{ fieldDescription.fieldName }}
+      <select :value="currentValue" @change=setValue($event.target.value)>
+        
+         <option v-for="(v,i) in fieldDescription.type.values" v-bind:key="i">{{ v }}</option>
+      </select>
+    </span>
+      <input  v-else :placeholder="fieldName" @click.stop=";" :value="currentValue" @change=setValue($event.target.value) />
      </div>
 </template>
 
@@ -32,8 +39,9 @@ type myProps =  {
 export default Vue.extend ({
   name: 'GlossField',
   props: {
+    fieldDescription: GlossStore.GlossFieldDescription,
     fieldName: String,
-    hitId : String
+    hitId : String,
   },
 
   data: () => ({

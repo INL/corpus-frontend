@@ -146,7 +146,7 @@ export default Vue.extend ( {
       const insertTerm =  encodeURIComponent(JSON.stringify(insertIt))
       const url = `${this.settings.blackparank_server}/api?instance=${this.instance}&insertTerm=${insertTerm}`
       // ToDo authentication !!!!
-      
+
       axios.get(url,{ auth: requestHeaders.auth }).then(r => {
         // alert(`gepiept (${this.exerciseData.type}, ${this.database_id})!`)
         }).catch(e => log_error(e))
@@ -261,8 +261,8 @@ export default Vue.extend ( {
     },
   }, watch : {
     main_fields : function(n,o) {
-      if (n && n.length > 1)
-       this.search_field = n[1]
+      if (n && n.length > 0)
+       this.search_field = n[0]
     }
   },
   created() {

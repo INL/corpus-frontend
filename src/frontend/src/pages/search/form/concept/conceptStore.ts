@@ -157,7 +157,7 @@ const get = {
 
   main_fields() {
     return getState().main_fields
-  }
+  },
 };
 
 const geefMee = {'headers': {'Accept':'application/json'}, 'auth': {'username':'fouke','password':'narawaseraretakunai'}}

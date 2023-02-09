@@ -52,7 +52,9 @@ type Glossing = {
   gloss: Gloss,
   author: string,
   corpus: string,
-  hitId: string
+  hitId: string,
+  first_word_id: string,
+  last_word_id: string
 }
 
 type BLHit = {
@@ -62,7 +64,7 @@ type BLHit = {
 } & BLHitSnippet
 
 type Hit2String = (a: BLHit) => string;
-
+type Hit2Range = (a: BLHit) => {startid: string, endid: string};
 type Settings = {
   gloss_fields: GlossFieldDescription[],
   blackparank_server: string,
@@ -70,7 +72,8 @@ type Settings = {
   corpus_server: string, // irrelevant
   lexit_server: string,
   lexit_instance: string,
-  get_hit_id: Hit2String
+  get_hit_id: Hit2String,
+  get_hit_range_id: Hit2Range,
 }
 type str2glossing = { [key: string]: Glossing}
 
@@ -90,7 +93,12 @@ const initialState: ModuleRootState = {
     lexit_server: 'http://nolexit.inl.loc',
     lexit_instance: 'wadde?',
     gloss_fields: [{fieldName: 'relevant', type: BooleanField}, {fieldName: 'comment', type: StringField}],
-    get_hit_id: h => h.docPid + '_' + h.start + '_' + h.end // dit is niet super persistent voor corpusversies....
+    get_hit_id: h => h.docPid + '_' + h.start + '_' + h.end,
+    get_hit_range_id: h => {
+      const idz = h.hit.match['_xmlid']
+      const r = { startid: idz[0], endid: idz[idz.length-1] }
+      return r
+    } // dit is niet super persistent voor corpusversies....
   },
 }
 

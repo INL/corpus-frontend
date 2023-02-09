@@ -1,6 +1,6 @@
 <template>
    <div style='text-align: left'>
-      <input  :placeholder="fieldName" @click.stop=";" :value="getters.getGlossValue(hitId,fieldName)" @change=setValue($event.target.value) />
+      <input  :placeholder="fieldName" @click.stop=";" :value="currentValue" @change=setValue($event.target.value) />
      </div>
 </template>
 
@@ -51,11 +51,21 @@ export default Vue.extend ({
       GlossStore.actions.setOneGlossField({hitId: this.hitId, fieldName: this.fieldName, fieldValue: s})
     }
   },
-  computed : {  },
+  computed : {
+    currentValue()  {
+      const v =  GlossStore.get.getGlossValue(this.hitId, this.fieldName)
+      return v
+    }
+  },
   created() {
     UIStore.getState().results.shared.concordanceAsHtml = true;
     debug.debug = false
-  }
+  }, watch: {
+		currentValue: function(n: string, o:string) { // !! dit gebeurt de eerste keer niet
+			// alert('Being watched i am...')
+		   // alert("Whahoop: " + n)
+		},
+	}
 })
 
 </script>

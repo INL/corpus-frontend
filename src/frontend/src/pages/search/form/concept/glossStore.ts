@@ -129,6 +129,7 @@ const get = {
   gloss_fields() {
     return getState().settings.gloss_fields
   },
+  get_hit_id_function() { return getState().settings.get_hit_id }
 };
 
 const geefMee = {'headers': {'Accept':'application/json'}, 'auth': {'username':'fouke','password':'narawaseraretakunai'}}
@@ -145,7 +146,8 @@ const actions = {
   addGlossing: b.commit((state, payload: {gloss: Glossing}) =>  {
     // tslint:disable-next-line:no-console
      // store locally
-     state.glosses[payload.gloss.hitId] = payload.gloss
+     state.glosses = Object.assign({}, state.glosses, {[payload.gloss.hitId]: payload.gloss})
+     // state.glosses[payload.gloss.hitId] = payload.gloss
      // save in database
      const request = 'request_to_load_in_database'
   }, 'add_glossing'),
@@ -207,30 +209,18 @@ const actions = {
           instance: state.settings.blackparank_instance,
           corpus: get.corpus(),
           author: 'piet',
-          hit_ids: JSON.stringify(payload),
+          hitIds: JSON.stringify(payload),
       }
-      const url = `${state.settings.blackparank_server}/GlossStore`
-      const z = new URLSearchParams(params) // todo hier moet ook authenticatie op?
-      axios.post(url, z, { auth: auth}).then(r => {
-         alert(`Posted page hit ids: (URL: ${url}) (params: ${JSON.stringify(params)})!`)
-         // to do load the glosses in r....
+    const url = `${state.settings.blackparank_server}/GlossStore`
+    const z = new URLSearchParams(params) // todo hier moet ook authenticatie op?
+    axios.post(url, z, { auth: auth}).then(r => {
+         // alert(`Posted page hit ids: (URL: ${url}) (params: ${JSON.stringify(params)}) (response data: ${JSON.stringify(r.data)})!`)
+         const glossings = r.data as Glossing[]
+         glossings.forEach(g => actions.addGlossing({gloss: g}))
          }).catch(e => alert(e.message))
   }, 'set_current_page'),
   loadSettings: b.commit((state, payload: Settings) => {
     state.settings = payload
-    const request = 'some_request';
-    axios.get(request).then(
-      response => {
-        // alert("Fields query response: " + JSON.stringify(response.data.data))
-        //const entries: LexiconEntry[] = response.data.data
-        //const fields = uniq(entries.map(x => x.field))
-        // state.main_fields = fields
-        //return fields
-      }).catch(e => {
-        alert(`${e.message} on ${request}`)
-      })
-    // En de query moet ook weer opnieuw worden gezet ...
-    // alert('Settings changed, settings now: ' + JSON.stringify(state.settings))
   } , 'gloss_load_settings'),
 };
 

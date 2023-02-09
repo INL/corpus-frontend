@@ -360,7 +360,7 @@ export default Vue.extend({
 		glossInputClick(e) {
 			alert(JSON.stringify(e))
 		},
-		get_hit_id(h: HitRow) { return h.docPid + '_' + h.start + '_' + h.end },
+		get_hit_id(h: HitRow) { return GlossModule.get.settings().get_hit_id(h); return h.docPid + '_' + h.start + '_' + h.end; },
 		changeSort(payload: string) {
 			if (!this.disabled) {
 				this.$emit('sort', payload === this.sort ? '-'+payload : payload);
@@ -427,13 +427,14 @@ export default Vue.extend({
 		},
 	},
 	watch: {
-		results: function(n: BLTypes.BLHitResults, o: BLTypes.BLHitResults) {
+		results: function(n: BLTypes.BLHitResults, o: BLTypes.BLHitResults) { // !! dit gebeurt de eerste keer niet
 			// alert('Being watched i am...')
 			this.citations = {};
 			this.pinnedTooltip = null;
 			const currentHits = n.hits.map(h => this.get_hit_id(h)) 
 			GlossModule.actions.setCurrentPage(currentHits)
 		},
+
 	}
 });
 </script>

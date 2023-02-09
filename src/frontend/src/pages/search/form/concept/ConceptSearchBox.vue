@@ -146,7 +146,7 @@ export default Vue.extend ( {
       const insertTerm =  encodeURIComponent(JSON.stringify(insertIt))
       const url = `${this.settings.blackparank_server}/api?instance=${this.instance}&insertTerm=${insertTerm}`
       // ToDo authentication !!!!
-      alert(`Yep, post ${JSON.stringify(insertIt)} to ${url}`)
+      
       axios.get(url,{ auth: requestHeaders.auth }).then(r => {
         // alert(`gepiept (${this.exerciseData.type}, ${this.database_id})!`)
         }).catch(e => log_error(e))

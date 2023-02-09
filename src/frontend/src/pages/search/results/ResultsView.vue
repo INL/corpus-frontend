@@ -163,6 +163,7 @@ import * as GlobalStore from '@/store/search/results/global';
 import * as QueryStore from '@/store/search/query';
 import * as InterfaceStore from '@/store/search/form/interface';
 import * as UIStore from '@/store/search/ui';
+import * as GlossModule from '@/pages/search/form/concept/glossStore' // Jesse
 
 import GroupResults from '@/pages/search/results/table/GroupResults.vue';
 import HitResults from '@/pages/search/results/table/HitResults.vue';
@@ -282,6 +283,12 @@ export default Vue.extend({
 			this.error = null;
 			this.request = null;
 			this.cancel = null;
+            
+			// Jesse (glosses): hier ook een keer de page hits in de gloss store updaten
+    
+            const currentHitIds = this.results.hits.map(h => GlossModule.get.settings().get_hit_id(h))
+    
+            GlossModule.actions.setCurrentPage(currentHitIds)
 		},
 		setError(data: Api.ApiError, isGrouped?: boolean) {
 			if (data.title !== 'Request cancelled') { // TODO

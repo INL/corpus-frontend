@@ -184,11 +184,14 @@ const actions = {
   addGloss: b.commit((state, payload: {gloss: Gloss, hit: BLHit}) =>  {
     // tslint:disable-next-line:no-console
      // store locally
+     const range = state.settings.get_hit_range_id(payload.hit)
      const glossing: Glossing = {
        gloss: payload.gloss,
        author: 'piet',
        corpus: get.corpus(),
-       hitId: state.settings.get_hit_id(payload.hit)
+       hitId: state.settings.get_hit_id(payload.hit),
+       first_word_id: range.startid,
+       last_word_id: range.endid
      }
      actions.addGlossing({gloss: glossing})
   }, 'add_gloss'),
@@ -268,3 +271,5 @@ export {
   GlossFieldType,
   GlossFieldDescription
 }
+
+

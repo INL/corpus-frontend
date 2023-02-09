@@ -215,6 +215,8 @@ type HitRow = {
 	end: number;
 	doc: BLTypes.BLDocInfo;
 	gloss_fields: GlossModule.GlossFieldDescription[];
+	hit_first_word_id: string; // Jesse
+	hit_last_word_id: string // jesse
 	//glosses: GlossModule.Glossing[]
 };
 
@@ -299,6 +301,7 @@ export default Vue.extend({
 				const parts = snippetParts(hit, this.concordanceAnnotationId);
 
 				// TODO condense this data..
+				const range = this.get_hit_range_id(hit)
 				rows.push({
 					type: 'hit',
 					left: parts[this.leftIndex],
@@ -310,7 +313,9 @@ export default Vue.extend({
 					start: hit.start,
 					end: hit.end,
 					doc: infos[pid],
-					gloss_fields: GlossModule.get.gloss_fields()
+					gloss_fields: GlossModule.get.gloss_fields(),
+					hit_first_word_id: range.startid,
+					hit_last_word_id: range.endid,
 				});
 
 				return rows;
@@ -361,6 +366,7 @@ export default Vue.extend({
 			alert(JSON.stringify(e))
 		},
 		get_hit_id(h: HitRow) { return GlossModule.get.settings().get_hit_id(h)},
+		get_hit_range_id(h: BLTypes.BLHitSnippet) { return GlossModule.get.settings().get_hit_range_id(h)},
 		changeSort(payload: string) {
 			if (!this.disabled) {
 				this.$emit('sort', payload === this.sort ? '-'+payload : payload);

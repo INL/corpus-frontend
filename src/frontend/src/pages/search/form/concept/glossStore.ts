@@ -95,8 +95,9 @@ const initialState: ModuleRootState = {
     gloss_fields: [{fieldName: 'relevant', type: BooleanField}, {fieldName: 'comment', type: StringField}],
     get_hit_id: h => h.docPid + '_' + h.start + '_' + h.end,
     get_hit_range_id: h => {
-      const idz = h.hit.match['_xmlid']
+      const idz = h.match['_xmlid']
       const r = { startid: idz[0], endid: idz[idz.length-1] }
+      // alert(JSON.stringify(r))
       return r
     } // dit is niet super persistent voor corpusversies....
   },
@@ -196,7 +197,7 @@ const actions = {
      actions.addGlossing({gloss: glossing})
   }, 'add_gloss'),
 
-  setOneGlossField: b.commit((state, payload: { hitId: string, fieldName: string, fieldValue: string})  => {
+  setOneGlossField: b.commit((state, payload: { hitId: string, fieldName: string, fieldValue: string, hit_first_word_id: string, hit_last_word_id: string})  => {
       const hitId = payload.hitId
       const fieldName = payload.fieldName
       const fieldValue = payload.fieldValue
@@ -210,7 +211,9 @@ const actions = {
           'gloss': gloss,
           author: 'piet',
           corpus: get.corpus(),
-          'hitId': hitId
+          'hitId': hitId,
+          first_word_id : payload.hit_first_word_id,
+          last_word_id: payload.hit_last_word_id
         }
       } else {
         glossing.gloss[fieldName]  = fieldValue

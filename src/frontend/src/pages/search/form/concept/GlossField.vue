@@ -1,5 +1,6 @@
 <template>
    <div  @click.stop=";" style='text-align: left'>
+    {{ hit_first_row_id }}
     <span  v-if="fieldDescription.type.values.length>0">
       {{ fieldDescription.fieldName }}
       <select :value="currentValue" @change=setValue($event.target.value)>
@@ -33,7 +34,9 @@ import { ConceptQuery } from './conceptStore.js';
 
 type myProps =  {
     fieldName: String,
-    hitId : String
+    hitId : String,
+    hit_first_word_id: String,
+    hit_last_word_id: String
   }
   
 export default Vue.extend ({
@@ -42,6 +45,8 @@ export default Vue.extend ({
     fieldDescription: GlossStore.GlossFieldDescription,
     fieldName: String,
     hitId : String,
+    hit_first_word_id: String,
+    hit_last_word_id: String
   },
 
   data: () => ({
@@ -56,7 +61,8 @@ export default Vue.extend ({
       alert(s)
     },
     setValue(s: string) {
-      GlossStore.actions.setOneGlossField({hitId: this.hitId, fieldName: this.fieldName, fieldValue: s})
+      alert(`Set value: ${this.fieldName}=${s} at ${this.hit_first_word_id}`)
+      GlossStore.actions.setOneGlossField({hitId: this.hitId, fieldName: this.fieldName, fieldValue: s, hit_first_word_id: this.hit_first_word_id, hit_last_word_id: this. hit_last_word_id })
     }
   },
   computed : {

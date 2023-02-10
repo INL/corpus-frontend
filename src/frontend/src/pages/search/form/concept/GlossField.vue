@@ -1,6 +1,6 @@
 <template>
    <div  @click.stop=";" style='text-align: left'>
-    {{ hit_first_row_id }}
+    {{ hitId }}
     <span  v-if="fieldDescription.type.values.length>0">
       {{ fieldDescription.fieldName }}
       <select :value="currentValue" @change=setValue($event.target.value)>
@@ -61,7 +61,7 @@ export default Vue.extend ({
       alert(s)
     },
     setValue(s: string) {
-      alert(`Set value: ${this.fieldName}=${s} at ${this.hit_first_word_id}`)
+      // alert(`Set value: ${this.fieldName}=${s} at ${this.hit_first_word_id}`)
       GlossStore.actions.setOneGlossField({hitId: this.hitId, fieldName: this.fieldName, fieldValue: s, hit_first_word_id: this.hit_first_word_id, hit_last_word_id: this. hit_last_word_id })
     }
   },
@@ -78,6 +78,7 @@ export default Vue.extend ({
 		currentValue: function(n: string, o:string) { // !! dit gebeurt de eerste keer niet
 			// alert('Being watched i am...')
 		   // alert("Whahoop: " + n)
+       console.log(`Whahoop ${this.fieldName}=${n} at ${this.hit_first_word_id}`)
 		},
 	}
 })

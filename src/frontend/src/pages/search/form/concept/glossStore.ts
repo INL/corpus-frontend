@@ -177,6 +177,7 @@ const actions = {
     // tslint:disable-next-line:no-console
      // store locally
      state.glosses = Object.assign({}, state.glosses, {[payload.gloss.hitId]: payload.gloss})
+     console.log("add Glossing: " + JSON.stringify(payload.gloss))
      // state.glosses[payload.gloss.hitId] = payload.gloss
      // save in database
      const request = 'request_to_load_in_database'
@@ -249,7 +250,7 @@ const actions = {
     const url = `${state.settings.blackparank_server}/GlossStore`
     const z = new URLSearchParams(params) // todo hier moet ook authenticatie op?
     axios.post(url, z, { auth: auth}).then(r => {
-         // alert(`Posted page hit ids: (URL: ${url}) (params: ${JSON.stringify(params)}) (response data: ${JSON.stringify(r.data)})!`)
+         alert(`Posted page hit ids: (URL: ${url}) (params: ${JSON.stringify(params)}) (response data: ${JSON.stringify(r.data)})!`)
          const glossings = r.data as Glossing[]
          glossings.forEach(g => actions.addGlossing({gloss: g}))
          }).catch(e => alert(e.message))

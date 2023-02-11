@@ -41,6 +41,12 @@ type Gloss = {
   [key: string]: string;
 }
 
+type GlossQuery = {
+  author: string,
+  corpus: string,
+  parts: { [key: string]: string; }
+}
+
 type Location = {
   corpus_id: string,
   document_pid: string,
@@ -79,6 +85,7 @@ type str2glossing = { [key: string]: Glossing}
 
 type ModuleRootState = {
   glosses: str2glossing,
+  gloss_query: GlossQuery, 
   current_page: string[], // ids of hits currently visible in result display
   settings: Settings,
 };
@@ -86,6 +93,11 @@ type ModuleRootState = {
 const initialState: ModuleRootState = {
   glosses: {},
   current_page: [],
+  gloss_query: {
+    author: 'piet',
+    corpus: 'quine',
+    parts: {comment : 'to be'}
+  },
   settings: {
     corpus_server: 'http://nohost:8080/blacklab-server',
     blackparank_server: 'http://localhost:8080/Oefenen',

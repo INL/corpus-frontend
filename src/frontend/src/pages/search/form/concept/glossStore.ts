@@ -242,6 +242,25 @@ const actions = {
       actions.addGlossing({gloss: glossing})
       actions.storeToDatabase({glossings: [glossing]})
   }, `set_gloss_field_value`), // als je dit twee keer doet gaat ie mis wegens dubbele dinges...
+
+  updateCQL: b.commit((state) =>  {
+    const params = {
+        instance: state.settings.blackparank_instance,
+        author: 'piet',
+        corpus: get.corpus(),
+        query: JSON.stringify(state.gloss_query.parts),
+      }
+    const url = `${state.settings.blackparank_server}/GlossStore`
+    const z = new URLSearchParams(params) // todo hier moet ook authenticatie op?
+    axios.post(url, z, { auth: auth}).then(response => {
+        const glossings = response.data as Glossing[]
+        alert(JSON.stringify(glossings))
+          // alert(`Store to db gepiept (URL: ${url}) (params: ${JSON.stringify(params)})!`)
+           // state.gloss_query_cql = response.data.pattern;
+         // PatternStore.actions.glosses(state.gloss_query_cql)  
+    }).catch(e => alert(e.message))
+
+  }, 'gloss_search_update_cql'),
   setOneGlossQueryField: b.commit((state, payload: {  fieldName: string, fieldValue: string })  => {
     
     const fieldName = payload.fieldName
@@ -249,6 +268,7 @@ const actions = {
     state.gloss_query.parts[fieldName] = fieldValue
     // and translate query to cql......?
     alert('Set gloss query field: ' + JSON.stringify(payload))
+    actions.updateCQL()
   }, `set_gloss_queryfield_value`), // als je dit twee keer doet gaat ie mis wegens dubbele dinges...
 
   storeToDatabase: b.commit((state, payload: {glossings: Glossing[]}) => {

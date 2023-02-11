@@ -26,22 +26,15 @@
       <br/>
       <div>
       
-        <!--
+      
        <div style="border-style: solid; border-width: 1pt; margin-top: 1em; padding: 4pt" v-if="showQuery">
         <div style="display: none">
           <pre>
-            {{  JSON.stringify(settings) }}
+            {{  JSON.stringify(query_from_store) }}
           </pre>
         </div>
-        <i>Query</i>
-        <div style="margin-bottom: 1em" v-for="(e,i) in Object.entries(query_from_store)" v-bind:key="i"><b>{{ e[0] }}</b> → [{{ e[1].terms.filter(t => t.value.length > 0).map(t => t.value).join("; ")}}] </div>
-        
-        <i>CQL rendition</i> <div class="code">{{  query_cql_from_store }}</div><br/>
-        
-      
-       </div>
       </div>
-      -->
+      
     </div>
     </div>
 </template>

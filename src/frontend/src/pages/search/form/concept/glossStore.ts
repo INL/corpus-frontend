@@ -170,6 +170,9 @@ const get = {
   getGlossQueryFieldValue(fieldName: string) {
     return `...${fieldName}...`
   },
+  glossQuery() {
+    return getState().gloss_query
+  },
   settings() {
    return getState().settings
   },
@@ -245,7 +248,7 @@ const actions = {
     const fieldValue = payload.fieldValue
     state.gloss_query.parts[fieldName] = fieldValue
     // and translate query to cql......?
-
+    alert('Set gloss query field: ' + JSON.stringify(payload))
   }, `set_gloss_queryfield_value`), // als je dit twee keer doet gaat ie mis wegens dubbele dinges...
 
   storeToDatabase: b.commit((state, payload: {glossings: Glossing[]}) => {

@@ -264,7 +264,8 @@ const actions = {
 				...sharedBatchState,
 				patterns: {
 					advanced: null,
-                                        concept: null,
+                    concept: null,
+					glosses: null,
 					expert: null,
 					simple: {...PatternModule.getState().simple, value: '', case: false},
 					extended: {

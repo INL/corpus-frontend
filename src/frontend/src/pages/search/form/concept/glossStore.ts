@@ -85,7 +85,8 @@ type str2glossing = { [key: string]: Glossing}
 
 type ModuleRootState = {
   glosses: str2glossing,
-  gloss_query: GlossQuery, 
+  gloss_query: GlossQuery,
+  gloss_query_cql: string,
   current_page: string[], // ids of hits currently visible in result display
   settings: Settings,
 };
@@ -98,6 +99,7 @@ const initialState: ModuleRootState = {
     corpus: 'quine',
     parts: {comment : 'to be'}
   },
+  gloss_query_cql: '',
   settings: {
     corpus_server: 'http://nohost:8080/blacklab-server',
     blackparank_server: 'http://localhost:8080/Oefenen',
@@ -164,6 +166,9 @@ const get = {
       return fieldValue
     }
     else return ''
+  },
+  getGlossQueryFieldValue(fieldName: string) {
+    return `...${fieldName}...`
   },
   settings() {
    return getState().settings
@@ -234,6 +239,15 @@ const actions = {
       actions.addGlossing({gloss: glossing})
       actions.storeToDatabase({glossings: [glossing]})
   }, `set_gloss_field_value`), // als je dit twee keer doet gaat ie mis wegens dubbele dinges...
+  setOneGlossQueryField: b.commit((state, payload: {  fieldName: string, fieldValue: string })  => {
+    
+    const fieldName = payload.fieldName
+    const fieldValue = payload.fieldValue
+    state.gloss_query.parts[fieldName] = fieldValue
+    // and translate query to cql......?
+
+  }, `set_gloss_queryfield_value`), // als je dit twee keer doet gaat ie mis wegens dubbele dinges...
+
   storeToDatabase: b.commit((state, payload: {glossings: Glossing[]}) => {
       // alert('Will try to store!')
       const params = {

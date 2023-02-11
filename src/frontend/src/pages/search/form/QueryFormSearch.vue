@@ -6,6 +6,7 @@
 			<li :class="{'active': activePattern==='extended'}" @click.prevent="activePattern='extended'"><a href="#extended" class="querytype">Extended</a></li>
 			<li :class="{'active': activePattern==='advanced'}" @click.prevent="activePattern='advanced'" v-if="advancedEnabled"><a href="#advanced" class="querytype">Advanced</a></li>
 			<li :class="{'active': activePattern==='concept'}" @click.prevent="activePattern='concept'"><a href="#concept" class="querytype">Concepts</a></li>
+			<li :class="{'active': activePattern==='glosses'}" @click.prevent="activePattern='glosses'"><a href="#glosses" class="querytype">Glosses</a></li>
 			<li :class="{'active': activePattern==='expert'}" @click.prevent="activePattern='expert'"><a href="#expert" class="querytype">Expert</a></li>
 		</ul>
 		<div class="tab-content">
@@ -115,9 +116,13 @@
 			
 				<ConceptSearch/>   <!--  v-on:update_concept_query="updateComplex" (niet meer nodig??)-->
 				<button type="button" class="btn btn-default btn-sm" @click="copyConceptQuery">Copy to CQL editor (expert mode)</button>
-				<!--
-				<textarea id="querybox_concept" class="form-control" name="querybox" rows="7" v-model.lazy="concept"></textarea>
-				-->
+			</div> 
+			<div :class="['tab-pane', {'active': activePattern==='glosses'}]" id="glosses">
+				
+				<!-- Jesse -->
+			
+				<GlossSearch/>   <!--  v-on:update_concept_query="updateComplex" (niet meer nodig??)-->
+				<button type="button" class="btn btn-default btn-sm" @click="copyGlossQuery">Copy to CQL editor (expert mode)</button>
 			</div> 
 			<div :class="['tab-pane', {'active': activePattern==='expert'}]" id="expert">
 				<h3>Corpus Query Language:</h3>
@@ -160,6 +165,7 @@ import * as HistoryStore from '@/store/search/history';
 
 import Annotation from '@/pages/search/form/Annotation.vue';
 import ConceptSearch from '@/pages/search/form/concept/ConceptSearch.vue';
+import GlossSearch from '@/pages/search/form/concept/GlossSearch.vue';
 import uid from '@/mixins/uid';
 
 import { QueryBuilder } from '@/modules/cql_querybuilder';
@@ -175,7 +181,8 @@ export default Vue.extend({
 	mixins: [uid],
 	components: {
 		Annotation,
-		ConceptSearch
+		ConceptSearch,
+		GlossSearch
 	},
 	data: () => ({
 		parseQueryError: null as string|null,
@@ -235,6 +242,10 @@ export default Vue.extend({
 		concept: {
 			get(): string|null { return PatternStore.getState().concept; },
 			set: PatternStore.actions.concept,
+		},
+		glosses: {
+			get(): string|null { return PatternStore.getState().glosses; },
+			set: PatternStore.actions.glosses,
 		},
 		gapValue: {
 			get: GapStore.get.gapValue,
@@ -304,6 +315,11 @@ export default Vue.extend({
 		copyConceptQuery() {
 			//PatternStore.actions.expert(PatternStore.getState().advanced);
 			this.expert = this.concept
+			InterfaceStore.actions.patternMode('expert');
+		},
+		copyGlossQuery() {
+			//PatternStore.actions.expert(PatternStore.getState().advanced);
+			this.expert = this.glosses
 			InterfaceStore.actions.patternMode('expert');
 		},
 		setupCustomAnnotation(div: HTMLElement, plugin: NonNullable<UIStore.ModuleRootState['search']['shared']['customAnnotations'][string]>) {

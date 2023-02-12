@@ -28,9 +28,10 @@
       
       
        <div style="border-style: solid; border-width: 1pt; margin-top: 1em; padding: 4pt" v-if="showQuery">
-        <div style="display: none">
+        <div style="display: box">
           <pre>
-            {{  JSON.stringify(query_from_store) }}
+            JSON: {{  JSON.stringify(query_from_store) }}
+            CQL {{  query_cql_from_store }}
           </pre>
         </div>
       </div>

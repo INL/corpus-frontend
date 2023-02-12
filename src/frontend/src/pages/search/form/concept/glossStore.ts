@@ -59,8 +59,8 @@ type Glossing = {
   author: string,
   corpus: string,
   hitId: string,
-  first_word_id: string,
-  last_word_id: string
+  hit_first_word_id: string,
+  hit_last_word_id: string
 }
 
 type BLHit = {
@@ -198,6 +198,7 @@ const actions = {
      // store locally
      state.glosses = Object.assign({}, state.glosses, {[payload.gloss.hitId]: payload.gloss})
      console.log("add Glossing: " + JSON.stringify(payload.gloss))
+     // alert("add Glossing: " + JSON.stringify(payload.gloss))
      // state.glosses[payload.gloss.hitId] = payload.gloss
      // save in database
      const request = 'request_to_load_in_database'
@@ -212,8 +213,8 @@ const actions = {
        author: 'piet',
        corpus: get.corpus(),
        hitId: state.settings.get_hit_id(payload.hit),
-       first_word_id: range.startid,
-       last_word_id: range.endid
+       hit_first_word_id: range.startid,
+       hit_last_word_id: range.endid
      }
      actions.addGlossing({gloss: glossing})
   }, 'add_gloss'),
@@ -233,8 +234,8 @@ const actions = {
           author: 'piet',
           corpus: get.corpus(),
           'hitId': hitId,
-          first_word_id : payload.hit_first_word_id,
-          last_word_id: payload.hit_last_word_id
+          hit_first_word_id : payload.hit_first_word_id,
+          hit_last_word_id: payload.hit_last_word_id
         }
       } else {
         glossing.gloss[fieldName]  = fieldValue
@@ -255,14 +256,19 @@ const actions = {
     axios.post(url, z, { auth: auth}).then(response => {
         const glossings = response.data as Glossing[]
         alert(JSON.stringify(glossings))
+        const cql = glossings.filter(g => g.hit_first_word_id && g.hit_first_word_id.length > 3).map(g => {
+          if (g.hit_first_word_id !== g.hit_last_word_id) return `([_xmlid='${g.hit_first_word_id}'][]*[_xmlid='${g.hit_last_word_id}'])`;
+          else return `([_xmlid='${g.hit_first_word_id}'])`
+        }).join("| ")
+        alert(cql)
+        state.gloss_query_cql = cql
+        // alert(JSON.stringify(glossings))
           // alert(`Store to db gepiept (URL: ${url}) (params: ${JSON.stringify(params)})!`)
            // state.gloss_query_cql = response.data.pattern;
-         // PatternStore.actions.glosses(state.gloss_query_cql)  
+         // PatternStore.actions.glosses(state.gloss_query_cql)
     }).catch(e => alert(e.message))
-
   }, 'gloss_search_update_cql'),
   setOneGlossQueryField: b.commit((state, payload: {  fieldName: string, fieldValue: string })  => {
-    
     const fieldName = payload.fieldName
     const fieldValue = payload.fieldValue
     state.gloss_query.parts[fieldName] = fieldValue

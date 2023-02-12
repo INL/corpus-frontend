@@ -127,11 +127,15 @@ const get = {
 					const pattern = (state as ModuleRootStateSearch<'expert'>).formState;
 					// trim leading/trailing whitespace, remove pattern if naught but whitespace
 					return (pattern || '').trim() || undefined;
-				} 
-                                case 'concept': {
-                                    const pattern = (state as ModuleRootStateSearch<'concept'>).formState;
-                                    return pattern || '' // '[word="de"]'
-                                }
+				}
+                case 'concept': {
+                    const pattern = (state as ModuleRootStateSearch<'concept'>).formState;
+                    return pattern || '' // '[word="de"]'
+                }
+				case 'glosses': {
+                    const pattern = (state as ModuleRootStateSearch<'glosses'>).formState;
+                    return pattern || '' // '[word="de"]'
+                }
 				default: throw new Error('Unimplemented pattern generation.');
 			}
 		}

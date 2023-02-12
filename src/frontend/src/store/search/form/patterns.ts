@@ -112,6 +112,7 @@ const actions = {
 		actions.simple(payload.simple);
 		actions.advanced(payload.advanced);
 		actions.concept(payload.concept);
+		actions.glosses(payload.glosses);
 		actions.expert(payload.expert);
 		actions.extended.reset();
 		actions.extended.within(payload.extended.within);

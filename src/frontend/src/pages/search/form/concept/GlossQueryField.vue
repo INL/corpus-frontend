@@ -1,14 +1,14 @@
 <template>
    <div  class='glossQueryField' @click.stop=";" style='text-align: left'>
     <span  v-if="fieldDescription.type.values.length>0">
-      {{ fieldDescription.fieldName }}:
+      <span class='fieldName'>{{ fieldDescription.fieldName }}:</span>
       <select :value="currentValue" @change=setValue($event.target.value)>
         
          <option v-for="(v,i) in fieldDescription.type.values" v-bind:key="i">{{ v }}</option>
       </select>
     </span>
     <span v-else>
-    {{ fieldDescription.fieldName }}: <input   :placeholder="fieldDescription.fieldName" @click.stop=";" :value="currentValue" @change=setValue($event.target.value) />
+      <span class='fieldName'>{{ fieldDescription.fieldName }}:</span> <input   :placeholder="fieldDescription.fieldName" @click.stop=";" :value="currentValue" @change=setValue($event.target.value) />
     </span>
      </div>
 </template>
@@ -95,6 +95,12 @@ img {
 }
 
 .glossQueryField {
+  margin-bottom: 4pt;
+}
+
+.fieldName {
+  display: inline-block;
+  width: 7em;
 }
 .code {
     display: block;

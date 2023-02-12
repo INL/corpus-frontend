@@ -10,8 +10,6 @@
        </pre></div>
 
       -->
-      <h3>Search user glosses</h3>
-
       
       <div class='glossfields' style='text-align: center'>
         <GlossQueryField  v-for="(o,i) in gloss_fields" v-bind:key="i" :fieldDescription="o"/>
@@ -19,14 +17,14 @@
 
       <button @click="resetQuery">Reset</button>
   
-      <input type="checkbox" v-model="showQuery">Show query</checkbox>
+      
       <br/>
 
 
       <br/>
       <div>
       
-      
+      <input type="checkbox" v-model="showQuery">Show query</checkbox>
        <div style="border-style: solid; border-width: 1pt; margin-top: 1em; padding: 4pt" v-if="showQuery">
         <div style="display: box">
           <pre>
@@ -82,12 +80,8 @@ export default Vue.extend ({
   methods : {
 
     resetQuery() {
-      Object.keys(this.$refs).forEach(k => {
-        const ref_k = this.$refs[k]
-        //console.log(rk)
-        //ref_k[0].resetQuery()
-      })
-      ConceptStore.actions.resetQuery()
+
+      GlossStore.actions.resetGlossQuery()
     }
   },
   computed : {
@@ -151,6 +145,9 @@ img {
   display: flex
 }
 
+.glossfields {
+  margin-bottom: 1em
+}
 .code {
     display: block;
     padding: 9.5px;

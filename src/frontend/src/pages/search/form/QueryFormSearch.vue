@@ -6,7 +6,7 @@
 			<li :class="{'active': activePattern==='extended'}" @click.prevent="activePattern='extended'"><a href="#extended" class="querytype">Extended</a></li>
 			<li :class="{'active': activePattern==='advanced'}" @click.prevent="activePattern='advanced'" v-if="advancedEnabled"><a href="#advanced" class="querytype">Advanced</a></li>
 			<li :class="{'active': activePattern==='concept'}" @click.prevent="activePattern='concept'"><a href="#concept" class="querytype">Concepts</a></li>
-			<li :class="{'active': activePattern==='glosses'}" @click.prevent="activePattern='glosses'"><a href="#glosses" class="querytype">Glosses</a></li>
+			<li :class="{'active': activePattern==='glosses'}" @click.prevent="activePattern='glosses'"><a href="#glosses" class="querytype">User glosses</a></li>
 			<li :class="{'active': activePattern==='expert'}" @click.prevent="activePattern='expert'"><a href="#expert" class="querytype">Expert</a></li>
 		</ul>
 		<div class="tab-content">
@@ -122,6 +122,7 @@
 				<!-- Jesse -->
 			
 				<GlossSearch/>   <!--  v-on:update_concept_query="updateComplex" (niet meer nodig??)-->
+				<div style="margin-top:2em"/>
 				<button type="button" class="btn btn-default btn-sm" @click="copyGlossQuery">Copy to CQL editor (expert mode)</button>
 			</div> 
 			<div :class="['tab-pane', {'active': activePattern==='expert'}]" id="expert">

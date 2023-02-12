@@ -2,7 +2,7 @@
    <div  @click.stop=";" style='text-align: left'>
     <!-- {{ hitId }} -->
     <span  v-if="fieldDescription.type.values.length>0">
-      {{ fieldDescription.fieldName }}
+      <!-- {{ fieldDescription.fieldName }} -->
       <select :value="currentValue" @change=setValue($event.target.value)>
         
          <option v-for="(v,i) in fieldDescription.type.values" v-bind:key="i">{{ v }}</option>

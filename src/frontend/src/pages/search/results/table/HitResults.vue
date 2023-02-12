@@ -74,6 +74,7 @@
 							{{meta.displayName}} <Debug>(id: {{meta.id}})</Debug>
 						</a>
 					</th>
+					<th v-for="(fieldName, i) in shownGlossCols" :key="i"><span class='gloss_field_heading' :title="`User gloss field: ${fieldName}`">{{ fieldName }}</span></th>
 				</tr>
 			</thead>
 
@@ -361,6 +362,9 @@ export default Vue.extend({
 			const configuredAnnotations = configuredIds.map(id => annots[id]);
 			return configuredAnnotations.filter(annot => annot.hasForwardIndex);
 		},
+		shownGlossCols()  {
+			return GlossModule.get.settings().gloss_fields.map(f => f.fieldName)
+		},
 		textDirection: CorpusStore.get.textDirection,
 
 		corpus(): string { return CorpusStore.getState().id; },
@@ -479,6 +483,9 @@ export default Vue.extend({
 	color: orange
 }
 
+.gloss_field_heading {
+	font-style: italic
+}
 </style>
 <style lang="scss" scoped>
 table {

@@ -1,6 +1,6 @@
 <template>
    <div  @click.stop=";" style='text-align: left'>
-    {{ hitId }}
+    <!-- {{ hitId }} -->
     <span  v-if="fieldDescription.type.values.length>0">
       {{ fieldDescription.fieldName }}
       <select :value="currentValue" @change=setValue($event.target.value)>

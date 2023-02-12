@@ -15,7 +15,7 @@
         <GlossQueryField  v-for="(o,i) in gloss_fields" v-bind:key="i" :fieldDescription="o"/>
       </div>
 
-      <button @click="resetQuery">Reset</button>
+      <button @click.prevent="resetQuery">Reset</button>
   
       
       <br/>

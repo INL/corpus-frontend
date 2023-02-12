@@ -28,7 +28,7 @@ type GlossFieldDescription = {
 
 const BooleanField: GlossFieldType = {
   type: 'boolean',
-  values: ['true', 'false'] 
+  values: ['', 'true', 'false']
 }
 
 const StringField: GlossFieldType = {
@@ -250,7 +250,7 @@ const actions = {
       state.gloss_query_cql = ''
       return
     }
-    
+
     const params = {
         instance: state.settings.blackparank_instance,
         author: 'piet',

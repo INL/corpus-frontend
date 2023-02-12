@@ -16,9 +16,9 @@
       <div class='boxes' style='text-align: center'>
         <ConceptSearchBox :ref="'b' +id.toString()" v-for="id in Array.from(Array(nBoxes).keys())" v-bind:key="id" :id="'b' +id.toString()"/>
       </div>
-      <button @click="resetQuery">Reset</button>
-      <button @click="addBox">Add box</button> 
-      <button @click="removeBox">Remove box</button> 
+      <button @click.prevent="resetQuery">Reset</button>
+      <button @click.prevent="addBox">Add box</button> 
+      <button @click.prevent="removeBox">Remove box</button> 
       <button  target="_blank" @click="window.open(getters.settings().lexit_server + '?db=' + getters.settings().lexit_instance + '&table=lexicon', '_blank')">View lexicon</button>
       
       <input type="checkbox" v-model="showQuery">Show query</checkbox>

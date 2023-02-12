@@ -47,8 +47,8 @@
            {{ t.term }}</span></div>
       </div>
 
-      <button @click.stop="buildQuery">Add selected terms to query</button>
-      <button @click.stop="resetQuery">Clear</button>
+      <button @click.prevent="buildQuery">Add selected terms to query</button>
+      <button @click.prevent="resetQuery">Clear</button>
    </div>
 </template>
 

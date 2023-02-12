@@ -2,13 +2,19 @@
    <div  class='glossQueryField' @click.stop=";" style='text-align: left'>
     <span  v-if="fieldDescription.type.values.length>0">
       <span class='fieldName'>{{ fieldDescription.fieldName }}:</span>
-      <select :value="currentValue" @change=setValue($event.target.value)>
+      <select :value="currentValue" @change.prevent=setValue($event.target.value)>
         
          <option v-for="(v,i) in fieldDescription.type.values" v-bind:key="i">{{ v }}</option>
       </select>
     </span>
     <span v-else>
-      <span class='fieldName'>{{ fieldDescription.fieldName }}:</span> <input   :placeholder="fieldDescription.fieldName" @click.stop=";" :value="currentValue" @change=setValue($event.target.value) />
+      <span class='fieldName'>{{ fieldDescription.fieldName }}:</span> <input   :placeholder="fieldDescription.fieldName" 
+      @keyup.enter.prevent="setValue($event.target.value)" 
+      @keydown.enter.prevent=";" 
+      @submit.prevent="setValue($event.target.value)" 
+      @click.prevent=";" 
+      :value="currentValue" 
+      @change.prevent="setValue($event.target.value)" />
     </span>
      </div>
 </template>
@@ -51,7 +57,8 @@ export default Vue.extend ({
       alert(s)
     },
     setValue(s: string) {
-      // alert(`Set value: ${this.fieldName}=${s} at ${this.hit_first_word_id}`)
+      // alert(`Set value: ${this.fieldDescription.fieldName}=${s}`)
+    
       GlossStore.actions.setOneGlossQueryField({fieldName: this.fieldDescription.fieldName, fieldValue : s })
     }
   },

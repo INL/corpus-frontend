@@ -31,6 +31,11 @@ const BooleanField: GlossFieldType = {
   values: ['', 'true', 'false']
 }
 
+const JobField: GlossFieldType = {
+  type: 'boolean',
+  values: ['meanings of the preposition in', 'god in logic', 'adjective collocations of truth']
+}
+
 const StringField: GlossFieldType = {
   type: 'string',
   values: []
@@ -106,7 +111,7 @@ const initialState: ModuleRootState = {
     blackparank_instance: 'quine',
     lexit_server: 'http://nolexit.inl.loc',
     lexit_instance: 'wadde?',
-    gloss_fields: [{fieldName: 'relevant', type: BooleanField}, {fieldName: 'comment', type: StringField}],
+    gloss_fields: [{fieldName: 'job', type: JobField}, {fieldName: 'relevant', type: BooleanField}, {fieldName: 'comment', type: StringField}],
     get_hit_id: h => h.docPid + '_' + h.start + '_' + h.end,
     get_hit_range_id: h => {
       const idz = h.match['_xmlid']
@@ -250,12 +255,15 @@ const actions = {
       state.gloss_query_cql = ''
       return
     }
-
+    const p = state.gloss_query.parts
+    const nontrivial = Object.keys(state.gloss_query.parts).filter(k => p[k] && p[k].length > 0)
+    const q = {} as { [key: string]: string}
+    nontrivial.forEach(n => q[n] = p[n])
     const params = {
         instance: state.settings.blackparank_instance,
         author: 'piet',
         corpus: get.corpus(),
-        query: JSON.stringify(state.gloss_query.parts),
+        query: JSON.stringify(q),
       }
     const url = `${state.settings.blackparank_server}/GlossStore`
     const z = new URLSearchParams(params) // todo hier moet ook authenticatie op?

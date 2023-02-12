@@ -262,6 +262,7 @@ const actions = {
         }).join("| ")
         alert(cql)
         state.gloss_query_cql = cql
+        PatternStore.actions.glosses(state.gloss_query_cql)
         // alert(JSON.stringify(glossings))
           // alert(`Store to db gepiept (URL: ${url}) (params: ${JSON.stringify(params)})!`)
            // state.gloss_query_cql = response.data.pattern;

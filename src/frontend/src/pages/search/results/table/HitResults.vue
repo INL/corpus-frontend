@@ -74,7 +74,7 @@
 							{{meta.displayName}} <Debug>(id: {{meta.id}})</Debug>
 						</a>
 					</th>
-					<th v-for="(fieldName, i) in shownGlossCols" :key="i"><span class='gloss_field_heading' :title="`User gloss field: ${fieldName}`">{{ fieldName }}</span></th>
+					<th v-for="(fieldName, i) in shownGlossCols" :key="i"><a class='sort gloss_field_heading' :title="`User gloss field: ${fieldName}`">{{ fieldName }}</a></th>
 				</tr>
 			</thead>
 

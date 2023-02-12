@@ -255,12 +255,12 @@ const actions = {
     const z = new URLSearchParams(params) // todo hier moet ook authenticatie op?
     axios.post(url, z, { auth: auth}).then(response => {
         const glossings = response.data as Glossing[]
-        alert(JSON.stringify(glossings))
+        //alert(JSON.stringify(glossings))
         const cql = glossings.filter(g => g.hit_first_word_id && g.hit_first_word_id.length > 3).map(g => {
           if (g.hit_first_word_id !== g.hit_last_word_id) return `([_xmlid='${g.hit_first_word_id}'][]*[_xmlid='${g.hit_last_word_id}'])`;
           else return `([_xmlid='${g.hit_first_word_id}'])`
         }).join("| ")
-        alert(cql)
+        //alert(cql)
         state.gloss_query_cql = cql
         PatternStore.actions.glosses(state.gloss_query_cql)
         // alert(JSON.stringify(glossings))
@@ -274,7 +274,7 @@ const actions = {
     const fieldValue = payload.fieldValue
     state.gloss_query.parts[fieldName] = fieldValue
     // and translate query to cql......?
-    alert('Set gloss query field: ' + JSON.stringify(payload))
+    //alert('Set gloss query field: ' + JSON.stringify(payload))
     actions.updateCQL()
   }, `set_gloss_queryfield_value`), // als je dit twee keer doet gaat ie mis wegens dubbele dinges...
 
@@ -306,7 +306,7 @@ const actions = {
     const url = `${state.settings.blackparank_server}/GlossStore`
     const z = new URLSearchParams(params) // todo hier moet ook authenticatie op?
     axios.post(url, z, { auth: auth}).then(r => {
-         alert(`Posted page hit ids: (URL: ${url}) (params: ${JSON.stringify(params)}) (response data: ${JSON.stringify(r.data)})!`)
+         // alert(`Posted page hit ids: (URL: ${url}) (params: ${JSON.stringify(params)}) (response data: ${JSON.stringify(r.data)})!`)
          const glossings = r.data as Glossing[]
          glossings.forEach(g => actions.addGlossing({gloss: g}))
          }).catch(e => alert(e.message))

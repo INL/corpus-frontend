@@ -33,7 +33,7 @@ const BooleanField: GlossFieldType = {
 
 const JobField: GlossFieldType = {
   type: 'boolean',
-  values: ['meanings of the preposition in', 'god in logic', 'adjective collocations of truth']
+  values: ['', 'logic and linguistics', 'meanings of the preposition in', 'god in logic', 'adjective collocations of truth']
 }
 
 const StringField: GlossFieldType = {

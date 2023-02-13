@@ -26,21 +26,20 @@ type GlossFieldDescription = {
   fieldName: string
 }
 
-const BooleanField: GlossFieldType = {
+const BooleanField: GlossFieldType = { //{"type":"boolean","values":["","true","false"]}
   type: 'boolean',
   values: ['', 'true', 'false']
 }
 
-const JobField: GlossFieldType = {
+const JobField: GlossFieldType = { // {"type":"boolean","values":["","logic and linguistics","meanings of the preposition in","god in logic","adjective collocations of truth"]}
   type: 'boolean',
   values: ['', 'logic and linguistics', 'meanings of the preposition in', 'god in logic', 'adjective collocations of truth']
 }
 
-const StringField: GlossFieldType = {
+const StringField: GlossFieldType = { // {"type":"string","values":[]}
   type: 'string',
   values: []
 }
-
 
 type Gloss = {
   [key: string]: string;
@@ -333,7 +332,7 @@ const actions = {
          }).catch(e => alert(e.message))
   }, 'set_current_page'),
   loadSettings: b.commit((state, payload: Settings) => {
-    alert('settings:'  + JSON.stringify(payload))
+    //alert('Gloss Settings:' + JSON.stringify(payload))
     state.settings = payload
   } , 'gloss_load_settings'),
 };

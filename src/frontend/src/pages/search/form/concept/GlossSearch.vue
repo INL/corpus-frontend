@@ -32,6 +32,11 @@
             CQL {{  query_cql_from_store }}
           </pre>
         </div>
+        <div style="display: block">
+          <pre>
+            Settings: {{  JSON.stringify(settings) }}
+          </pre>
+        </div>
       </div>
       
     </div>

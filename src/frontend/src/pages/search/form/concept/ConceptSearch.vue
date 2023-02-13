@@ -29,9 +29,9 @@
       <div>
       
        <div style="border-style: solid; border-width: 1pt; margin-top: 1em; padding: 4pt" v-if="showQuery">
-        <div style="display: none">
+        <div style="display: block">
           <pre>
-            {{  JSON.stringify(settings) }}
+            Settings: {{  JSON.stringify(settings) }}
           </pre>
         </div>
         <i>Query</i>

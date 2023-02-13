@@ -362,7 +362,7 @@ const init = () => {
 	tagset: TagsetModule,
 	ui: UIModule,
 	concepts: ConceptModule, // Jesse
-        gloss: GlossModule,
+    glosses: GlossModule,
 	explore: ExploreModule,
 	form: FormManager,
 	filters: FilterModule,

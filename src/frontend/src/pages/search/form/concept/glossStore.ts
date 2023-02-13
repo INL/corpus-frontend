@@ -333,6 +333,7 @@ const actions = {
          }).catch(e => alert(e.message))
   }, 'set_current_page'),
   loadSettings: b.commit((state, payload: Settings) => {
+    alert('settings:'  + JSON.stringify(payload))
     state.settings = payload
   } , 'gloss_load_settings'),
 };

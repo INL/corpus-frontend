@@ -1,0 +1,16 @@
+# use this docker-compose file to connect corpus-frontend to an existing blacklab-server
+# assume the blacklab-server was created using docker-compose.yml from the blacklab repo with project name 'blacklab'
+# it will have created a network named blacklab_default
+version: '3.9'
+
+services:
+
+  frontend:
+    image: instituutnederlandsetaal/blacklab-corpus-frontend:${IMAGE_VERSION}
+    build:
+        context: .
+        dockerfile: docker/Dockerfile.bls
+    volumes:
+      - ./docker/config.bls/corpus-frontend.properties:/etc/blacklab/corpus-frontend.properties
+    ports:
+      - "8080:8080" # 8080 will be used by blacklab-server

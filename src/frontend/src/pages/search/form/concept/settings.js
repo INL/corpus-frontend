@@ -76,8 +76,8 @@ export const settings = {
   database_instance : productie ? 'startkrant_prod'  : 'startkrant',
 
   credentials :    { auth: {
-    username: 'fouke',
-    password: 'narawaseraretakunai'
+    username: 'user',
+    password: 'password'
   } }
 }
 

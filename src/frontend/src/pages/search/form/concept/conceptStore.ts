@@ -160,7 +160,7 @@ const get = {
   },
 };
 
-const geefMee = {'headers': {'Accept':'application/json'}, 'auth': {'username':'fouke','password':'narawaseraretakunai'}}
+const geefMee = {'headers': {'Accept':'application/json'}, 'auth': {'username':'user','password':'password'}}
 const actions = {
   resetQuery: b.commit((state) => {
     state.query = emptyQuery

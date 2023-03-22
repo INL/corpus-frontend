@@ -186,11 +186,11 @@ const get = {
   get_hit_id_function() { return getState().settings.get_hit_id }
 };
 
-const geefMee = {'headers': {'Accept':'application/json'}, 'auth': {'username':'fouke','password':'narawaseraretakunai'}}
+const geefMee = {'headers': {'Accept':'application/json'}, 'auth': {'username':'user','password':'password'}}
 
 let uglyK = 0;
 
-const auth =  {'username':'fouke','password':'narawaseraretakunai'};
+const auth =  {'username':'user','password':'password'};
 
 const actions = {
   flushAllGlosses: b.commit((state) => {

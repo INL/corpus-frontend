@@ -68,7 +68,7 @@ import { uniq, log_error } from './utils'
 declare const BLS_URL: string;
 const blsUrl: string = BLS_URL;
 
-const requestHeaders = { 'headers': { 'Accept': 'application/json' }, 'auth': { 'username': 'fouke', 'password': 'narawaseraretakunai' } }
+const requestHeaders = { 'headers': { 'Accept': 'application/json' }, 'auth': { 'username': 'user', 'password': 'password' } }
 type Term = { term: string}
 
 export default Vue.extend ( {
@@ -93,8 +93,8 @@ export default Vue.extend ( {
       //server : 'http://localhost:8080/Oefenen/' as string,
       instance: 'quine_lexicon' as string,
       credentials :  { auth: {
-      username: 'fouke',
-      password: 'narawaseraretakunai'
+      username: 'user',
+      password: 'password'
         }   }
   }),
  

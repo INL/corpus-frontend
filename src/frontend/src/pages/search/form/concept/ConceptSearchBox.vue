@@ -1,7 +1,7 @@
 <template>
    <div class='conceptbox' style='text-align: left'>
     <div class="box-header">
-     Subquery {{ id}} 
+     Subquery {{ id}}
     </div>
     <div>
       <pre style="display:none">
@@ -12,15 +12,15 @@
   </pre>
    </div>
       <table class="t1">
-        <tr>  
-          <td class="fn">Field:</td><td> 
+        <tr>
+          <td class="fn">Field:</td><td>
             <select ref="selectedField" type="text" v-model="search_field">
              <option v-for="(f,i) in main_fields" :key="i">{{ f }}</option>
           </select>
         </td>
         </tr>
         <tr>
-          <td class="fn">Concept:</td><td> <Autocomplete 
+          <td class="fn">Concept:</td><td> <Autocomplete
             id="ac1"
 						placeholder="...concept..."
 						:autocomplete="true"
@@ -29,9 +29,9 @@
 						v-model="current_concept"/> <!-- <button @click="addConcept" title="Add concept to lexicon">⤿ lexicon</button> --> </td>
         </tr>
         <tr>
-          <td class="fn">Term:</td><td> <Autocomplete 
+          <td class="fn">Term:</td><td> <Autocomplete
             id="ac2"
-						placeholder="...term..."          
+						placeholder="...term..."
 						:autocomplete="true"
             :rendering = "{'prepare_data_niet' : d => get_term_values(d), 'promise': term_search_promise}"
 						:url="completionURLForTerm"
@@ -53,7 +53,7 @@
 </template>
 
 <script lang="ts">
- 
+
 
 import { toHandlers } from '@vue/runtime-core';
 import axios from 'axios'
@@ -61,7 +61,7 @@ import axios from 'axios'
 import Autocomplete from '@/components/Autocomplete.vue';
 import * as CorpusStore from '@/store/search/corpus';
 import Vue from 'vue';
-import * as ConceptStore from '@/pages/search/form/concept/conceptStore'; 
+import * as ConceptStore from '@/pages/search/form/concept/conceptStore';
 type at = ConceptStore.AtomicQuery;
 // import AutoComplete from './AutoComplete.vue';
 import { uniq, log_error } from './utils'
@@ -97,7 +97,7 @@ export default Vue.extend ( {
       password: 'password'
         }   }
   }),
- 
+
   methods : {
     alert(s: string)  {
       alert(s)
@@ -171,7 +171,7 @@ export default Vue.extend ( {
        this.buildQuery()
     }
   },
- 
+
   computed : {
     /*
     selectedField():string {
@@ -222,7 +222,7 @@ export default Vue.extend ( {
         const promiseBoth: Promise<string[]> = Promise.all([termPromiseDatabase, termPromiseCorpus]).then(r => {
             console.log(JSON.stringify(r))
             const r00 = r[0].filter(x => x)
-            return r00.concat(r[1]).filter(x => x && x.length > 0) // dit gaat mis als en null in db stuk zit....
+            return r00.concat(r[1]).filter(x => x && x.length > 0) // dit gaat mis als er null in db stuk zit....
         })
 
         return promiseBoth
@@ -247,10 +247,11 @@ export default Vue.extend ( {
     completionURLForConcept(): string {
        const field = this.search_field
 
-       const value = this.current_concept
+       const concept = this.current_concept
+
        const wQuery = `
               query Quine {
-                lexicon (cluster: "/^${value}/", field: "${field}") {
+                lexicon (cluster: "/^${concept}/", field: "${field}") {
                 field,
                 cluster,
                 term
@@ -266,7 +267,7 @@ export default Vue.extend ( {
     }
   },
   created() {
-    
+
     // alert(blsUrl)
   }
 })
@@ -288,13 +289,13 @@ li {
 a {
   color: #42b983;
 }
- 
+
 img {
   width: 400px;
 }
 
 .conceptbox {
-  
+
   border-style: solid;
   text-align: left;
   margin: 1em;

@@ -29,6 +29,8 @@ import { blacklab } from './api';
 declare const BLS_URL: string;
 declare const INDEX_ID: string;
 declare const DOCUMENT_ID: string;
+declare const PAGE_START: string;
+declare const PAGE_END: string;
 
 // ---------------------------
 // Vue initialization & config
@@ -65,11 +67,10 @@ $(document).ready(() => {
 	// And since debug.debug is observable, this works!
 	RootStore.store.watch(() => debug.debug, (isDebugEnabled) => {
 		if (isDebugEnabled) {
-			let {wordstart, wordend} = new URI().search(true);
-			wordstart = wordstart ? `wordstart=${wordstart}` : '';
-			wordend = wordend ? `wordend=${wordend}` : '';
+			let wordstart = PAGE_START;
+			let wordend = PAGE_END;
 
-			let q = [wordstart, wordend].filter(v => !!v).join('&');
+			let q = Object.entries({wordstart, wordend}).filter(([k, v]) => !!v).reduce((acc, [k, v]) => acc += `&${k}=${v}`, '');
 			q = q ? '?' + q : q;
 
 			blacklab.getDocumentInfo(INDEX_ID, DOCUMENT_ID).then(r => {

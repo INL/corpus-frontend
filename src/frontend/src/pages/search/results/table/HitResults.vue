@@ -112,11 +112,11 @@
 							</template>
 							<td v-for="(v, index) in rowData.other" :key="index">{{v}}</td>
 							<td v-for="(field, findex) in rowData.gloss_fields" :key="index  + '_'  + findex">
-								<GlossField 
+								<GlossField
 								:fieldName="field.fieldName"
 								:hit_first_word_id="rowData.hit_first_word_id"
-								:hit_last_word_id="rowData.hit_last_word_id" 
-								:fieldDescription="field" 
+								:hit_last_word_id="rowData.hit_last_word_id"
+								:fieldDescription="field"
 								:hitId="get_hit_id(rowData)"/> <!---<input @click.stop=";" type='text' :placeholder="field"/>--></td> <!-- hier custom componentje GlossEdit van maken, dat is fijn voor de v-models -->
 							<td v-for="meta in shownMetadataCols" :key="meta.id">{{rowData.doc[meta.id] ? rowData.doc[meta.id].join(', ') : ''}}</td>
 						</tr>
@@ -206,7 +206,6 @@ import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
 
 import {debugLog} from '@/utils/debug';
-
 
 type HitRow = {
 	type: 'hit';
@@ -309,7 +308,7 @@ export default Vue.extend({
 
 				// TODO condense this data..
 				const range = this.get_hit_range_id(hit)
-				
+
 				rows.push({
 					type: 'hit',
 					left: parts[this.leftIndex],
@@ -448,7 +447,7 @@ export default Vue.extend({
 			// alert('Being watched i am...')
 			this.citations = {};
 			this.pinnedTooltip = null;
-			const currentHits = n.hits.map(h => this.get_hit_id(h)) 
+			const currentHits = n.hits.map(h => this.get_hit_id(h))
 			GlossModule.actions.setCurrentPage(currentHits)
 		},
 
@@ -457,15 +456,15 @@ export default Vue.extend({
 </script>
 
 
-<!-- gruwelijk, Jesse --> 
+<!-- gruwelijk, Jesse -->
 <style lang="css">
 .capture {
 	border-style: solid;
 	border-color: goldenrod;
 }
 
-.capture_0 { 
-	color: blue; 	
+.capture_0 {
+	color: blue;
 }
 
 .capture_1 {

@@ -1,77 +1,50 @@
 <template>
-   <div  class='glossQueryField' @click.stop=";" style='text-align: left'>
-    <span  v-if="fieldDescription.type.values.length>0">
-      <span class='fieldName'>{{ fieldDescription.fieldName }}:</span>
-      <select :value="currentValue" @change.prevent=setValue($event.target.value)>
-        
-         <option v-for="(v,i) in fieldDescription.type.values" v-bind:key="i">{{ v }}</option>
-      </select>
-    </span>
-    <span v-else>
-      <span class='fieldName'>{{ fieldDescription.fieldName }}:</span> <input   :placeholder="fieldDescription.fieldName" 
-      @keyup.enter.prevent="setValue($event.target.value)" 
-      @keydown.enter.prevent=";" 
-      @submit.prevent="setValue($event.target.value)" 
-      @click.prevent=";" 
-      :value="currentValue" 
-      @change.prevent="setValue($event.target.value)" />
-    </span>
-     </div>
+	<div class='glossQueryField'>
+		<label>
+			{{ fieldDescription.fieldName }}
+			<SelectPicker v-if="fieldDescription.type.values.length" :options="fieldDescription.type.values" v-model="currentValue"/>
+			<input v-else
+				type="text"
+				:placeholder="fieldDescription.fieldName"
+				v-model.lazy="currentValue"
+			/>
+		</label>
+	</div>
 </template>
 
 <script lang="ts">
 
 import Vue from 'vue';
-import VueComponent from 'vue';
-import * as RootStore from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus';
 import * as UIStore from '@/store/search/ui';
-import * as InterfaceStore from '@/store/search/form/interface';
-import * as PatternStore from '@/store/search/form/patterns';
 import * as GlossStore from '@/pages/search/form/concept/glossStore';
 
-//import { settings } from './settings.js'
+import SelectPicker from '@/components/SelectPicker.vue'
+
 declare const BLS_URL: string;
 const blsUrl: string = BLS_URL;
 import debug from '@/utils/debug';
-import axios from 'axios'
 
-import ConceptSearchBox from './ConceptSearchBox.vue' 
-import { ConceptQuery } from './conceptStore.js';
-
-  
 export default Vue.extend ({
-  name: 'GlossQueryField',
-  props: {
-    fieldDescription: GlossStore.GlossFieldDescription
-  },
-
-  data: () => ({
-      debug: false,
-      corpus: CorpusStore.getState().id,
-      getters: GlossStore.get,
-  }),
-
-  methods : {
-    piep(s: string) {
-      alert(s)
-    },
-    setValue(s: string) {
-      // alert(`Set value: ${this.fieldDescription.fieldName}=${s}`)
-    
-      GlossStore.actions.setOneGlossQueryField({fieldName: this.fieldDescription.fieldName, fieldValue : s })
-    }
-  },
-  computed : {
-    currentValue()  {
-      const v =  GlossStore.get.getGlossQueryFieldValue(this.fieldDescription.fieldName)
-      return v
-    }
-  },
-  created() {
-    UIStore.getState().results.shared.concordanceAsHtml = true;
-    debug.debug = false
-  }, 
+	name: 'GlossQueryField',
+	components: { SelectPicker },
+	props: {
+		fieldDescription: Object as () => GlossStore.GlossFieldDescription
+	},
+	data: () => ({
+		debug: false,
+		corpus: CorpusStore.getState().id,
+		getters: GlossStore.get,
+	}),
+	computed : {
+		currentValue: {
+			get(): string { return GlossStore.get.getGlossQueryFieldValue(this.fieldDescription.fieldName); },
+			set(v: string) { GlossStore.actions.setOneGlossQueryField({fieldName: this.fieldDescription.fieldName, fieldValue : v }); }
+		}
+	},
+	created() {
+		UIStore.getState().results.shared.concordanceAsHtml = true;
+	},
 })
 
 </script>
@@ -79,47 +52,48 @@ export default Vue.extend ({
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
 h3 {
-  margin: 40px 0 0;
+	margin: 40px 0 0;
 }
 ul {
-  list-style-type: none;
-  padding: 0;
+	list-style-type: none;
+	padding: 0;
 }
 li {
-  display: inline-block;
-  margin: 0 10px;
+	display: inline-block;
+	margin: 0 10px;
 }
 a {
-  color: #42b983;
+	color: #42b983;
 }
- 
+
 img {
-  width: 400px;
+	width: 400px;
 }
 
 .boxes {
-  display: flex
+	display: flex
 }
 
 .glossQueryField {
-  margin-bottom: 4pt;
+	margin-bottom: 4pt;
+	text-align: left;
 }
 
 .fieldName {
-  display: inline-block;
-  width: 7em;
+	display: inline-block;
+	width: 7em;
 }
 .code {
-    display: block;
-    padding: 9.5px;
-    margin: 0 0 10px;
-    font-size: 13px;
-    line-height: 1.42857143;
-    color: #333;
+	display: block;
+	padding: 9.5px;
+	margin: 0 0 10px;
+	font-size: 13px;
+	line-height: 1.42857143;
+	color: #333;
 
-    background-color: #f5f5f5;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-family: Menlo,Monaco,Consolas,"Courier New",monospace;
+	background-color: #f5f5f5;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	font-family: Menlo,Monaco,Consolas,"Courier New",monospace;
 }
 </style>

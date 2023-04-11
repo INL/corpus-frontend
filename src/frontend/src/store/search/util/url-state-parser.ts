@@ -295,8 +295,8 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 			simple: this.simplePattern,
 			extended: this.extendedPattern,
 			advanced: this.advancedPattern,
-                        concept: this.conceptPattern,
-                        glosses: this.glossPattern,
+			concept: this.conceptPattern,
+			glosses: this.glossPattern,
 			expert: this.expertPattern,
 		};
 	}
@@ -464,17 +464,15 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 		return this._parsedCql ? this.expertPattern : null;
 	}
 
-        @memoize
-        private get conceptPattern(): string|null { // Jesse
-                return this.getString('patt', null, v=>v?v:null); // TODO dit zal wel anders moeten
-        }
+	@memoize
+	private get conceptPattern(): string|null { // Jesse
+		return this.getString('patt', null, v=>v?v:null); // TODO dit zal wel anders moeten
+	}
 
-        @memoize
-        private get glossPattern(): string|null { // Jesse
-                return this.getString('patt', null, v=>v?v:null); // TODO dit zal wel anders moeten
-        }
-
-
+	@memoize
+	private get glossPattern(): string|null { // Jesse
+		return this.getString('patt', null, v=>v?v:null); // TODO dit zal wel anders moeten
+	}
 
 	@memoize
 	private get expertPattern(): string|null {

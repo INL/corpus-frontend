@@ -1,7 +1,6 @@
 <template>
 	<input
 		:autocomplete="!autocomplete"
-        size="12"
 		@keypress="_refreshList"
 		@keyup.left="_refreshList"
 		@keyup.right="_refreshList"
@@ -9,7 +8,6 @@
 		v-model="modelvalue"
 	/>
 </template>
-
 
 <script lang="ts">
 import Vue from 'vue';
@@ -23,58 +21,45 @@ import {splitIntoTerms} from '@/utils';
 // Inherit jQueryUI autocomplete widget and customize the rendering
 // to apply some bootstrap classes and structure
 // Jesse: renderMenu en renderItem mee kunnen geven??
-
-function uniq(l) {return  Array.from(new Set(l)).sort() }
-
-function create_autocomplete_thingy() {
-	const widgetClass = 'custom.autocomplete'
-	$.widget(widgetClass, $.ui.autocomplete, {
-
-		_renderMenu(ul: HTMLUListElement, items: any) {
-			const self = this;
-			$.each(items, function (index, item) {
-				self._renderItem(ul, item);
-			});
-
-		},
-		_renderItem(ul: HTMLUListElement, item: { value: string, label: string }) {
-			$('<li></li>')
-				.attr('value', item.value)
-				.html('<a>' + item.label + '</a>')
-				.data('ui-autocomplete-item', item)
-				.appendTo(ul);
-		},
-		_resizeMenu() {
-			$((this as any).menu.element).css({
-				'max-height': '300px',
-				'overflow-y': 'auto',
-				'overflow-x': 'hidden',
-				'width': 'auto',
-				'min-width': $(this.element).outerWidth(),
-				'max-width': '500px'
-			} as JQuery.PlainObject);
-		}
-	});
-}
-
-create_autocomplete_thingy();
+$.widget('custom.autocomplete', $.ui.autocomplete, {
+	_renderMenu(ul: HTMLUListElement, items: any) {
+		const self = this;
+		$.each(items, function(index, item) {
+			self._renderItem(ul, item);
+		});
+	},
+	_renderItem(ul: HTMLUListElement, item: { value: string, label: string }) {
+		$('<li></li>')
+			.attr('value', item.value)
+			.html('<a>' + item.label + '</a>')
+			.data('ui-autocomplete-item', item)
+			.appendTo(ul);
+	},
+	_resizeMenu() {
+		$((this as any).menu.element).css({
+			'max-height': '300px',
+			'overflow-y': 'auto',
+			'overflow-x': 'hidden',
+			'width': 'auto',
+			'min-width': $(this.element).outerWidth(),
+			'max-width': '500px'
+		} as JQuery.PlainObject);
+	}
+});
 
 export default Vue.extend({
 	props: {
 		value: String,
 		url: String,
-
+		/** alternative to url, use this to get the data yourself. */
+		getData: Function as any as () => (term: string) => Promise<string[]>,
+		/** Process the data before it is displayed. Work on both getData and url. */
+		processData: Function as any as () => (data: any) => string[],
 		autocomplete: {
 			default: true,
 			type: Boolean
 		},
 		useQuoteAsWordBoundary: Boolean,
-		rendering: {  // Jesse: this is an added hoock to render arbitrary JSON data from url. TODO how to get function type in props??  
-			default() {
-            	return {}
-        	},
-		  	type:  Object
-		},
 	},
 	computed: {
 		modelvalue: {
@@ -83,11 +68,6 @@ export default Vue.extend({
 		}
 	},
 	methods: {
-		prepare_data(d:  any) {
-			if ('prepare_data' in this.rendering) {
-			return this.rendering['prepare_data'](d) 
-		  } else return d
-		},
 		_createAutocomplete() {
 			const $input = $(this.$el);
 			//console.log($input.id)
@@ -101,40 +81,23 @@ export default Vue.extend({
 					'ui-autocomplete': 'dropdown-menu'
 				},
 				source(params: any, render: (v: string[]) => void) {
-					
 					const {value} = self._getWordAroundCursor(false);
-					//alert("Something happens: " + value + " " + self.url)
-					if (!value.length) {
-						return;
-					} else if (value === lastSearchValue) {
-						if (lastSearchResults) {
-							render(lastSearchResults);
-						} // user typed quickly or something, results are in flight, will come in eventually...
-					} else {
-						lastSearchValue = value;
-						if ('promise' in self.rendering) { // Jesse: ipv URL ook promise mogelijk maken?? (prepare_data wordt dan overbodig)
-						  // alert("Using promise")
-						  const p = self.rendering.promise; // the promise does not use trhe custom prepare_data, postprocessing should be incorporated
-						  p.then(data => {
-								// alert(JSON.stringify(data))
-								render(data)
-							})
-						} else  { 
-							// alert("Autocomplete URL:" + self.url)
-							$.ajax({
-								method: 'GET',
-								url: self.url,
-								data: {term: value},
-								dataType: 'json',
-								success(data) {
-									lastSearchResults = self.prepare_data(data);
-								    //alert(JSON.stringify(data))
-									render(self.prepare_data(data));
-								}
-							});
-						}
-					 }
-					
+					if (!value.length) return;
+					if (value === lastSearchValue && lastSearchResults) return render(lastSearchResults);
+					lastSearchValue = value;
+
+					const getData = (self.getData && self.getData(value)) || $.ajax({
+						method: 'GET',
+						url: self.url,
+						data: {term: value},
+						dataType: 'json',
+					});
+
+					getData.then(r => {
+						if (self.processData) r = self.processData(r);
+						lastSearchResults = r;
+						render(r);
+					});
 				},
 				create() {
 					// This element has a div appended every time an element is highlighted

@@ -2,8 +2,6 @@
 // Zie https://github.com/mrcrowl/vuex-typex/blob/master/src/index.ts voor de gebruikte ts implementatie
 
 import { getStoreBuilder } from 'vuex-typex';
-// import Vue from 'vue';
-// import Vuex from 'vuex';
 
 import { RootState, store } from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus';
@@ -62,8 +60,14 @@ const initialState: ModuleRootState = {
   target_element: 'p',
   main_fields: ['cosmology', 'alchemy', 'cryptozoology'],
   query_cql: '',
-  settings: { corpus_server: 'http://nohost:8080/blacklab-server', blackparank_server: 'nohost',
-  blackparank_instance: 'weetikveel', lexit_server: 'http://nolexit.inl.loc', lexit_instance: 'wadde?', searchable_elements: ['tom', 'tiedom', 'nogwat']},
+  settings: {
+    corpus_server: 'http://nohost:8080/blacklab-server',
+    blackparank_server: 'nohost',
+    blackparank_instance: 'weetikveel',
+    lexit_server: 'http://nolexit.inl.loc',
+    lexit_instance: 'wadde?',
+    searchable_elements: ['tom', 'tiedom', 'nogwat']
+  },
   query: emptyQuery
 }
 

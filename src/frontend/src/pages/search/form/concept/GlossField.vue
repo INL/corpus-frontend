@@ -4,7 +4,7 @@
     <span  v-if="fieldDescription.type.values.length>0">
       <!-- {{ fieldDescription.fieldName }} -->
       <select :value="currentValue" @change=setValue($event.target.value)>
-        
+
          <option v-for="(v,i) in fieldDescription.type.values" v-bind:key="i">{{ v }}</option>
       </select>
     </span>
@@ -15,30 +15,14 @@
 <script lang="ts">
 
 import Vue from 'vue';
-import VueComponent from 'vue';
-import * as RootStore from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus';
 import * as UIStore from '@/store/search/ui';
-import * as InterfaceStore from '@/store/search/form/interface';
-import * as PatternStore from '@/store/search/form/patterns';
 
 import * as GlossStore from '@/pages/search/form/concept/glossStore';
-//import { settings } from './settings.js'
 declare const BLS_URL: string;
 const blsUrl: string = BLS_URL;
 import debug from '@/utils/debug';
-import axios from 'axios'
 
-import ConceptSearchBox from './ConceptSearchBox.vue' 
-import { ConceptQuery } from './conceptStore.js';
-
-type myProps =  {
-    fieldName: String,
-    hitId : String,
-    hit_first_word_id: String,
-    hit_last_word_id: String
-  }
-  
 export default Vue.extend ({
   name: 'GlossField',
   props: {
@@ -101,7 +85,7 @@ li {
 a {
   color: #42b983;
 }
- 
+
 img {
   width: 400px;
 }

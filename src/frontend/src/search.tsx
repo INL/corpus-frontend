@@ -140,8 +140,6 @@ Vue.config.errorHandler = (err, vm, info) => {
 	if (!err.message.includes('[vuex]' /* do not mutate vuex store state outside mutation handlers */)) { // already logged and annoying
 		ga('send', 'exception', { exDescription: err.message, exFatal: true });
 		console.error(err);
-	} else {
-		console.warn(err);
 	}
 };
 Vue.mixin({

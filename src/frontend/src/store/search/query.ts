@@ -73,8 +73,6 @@ const namespace = 'query';
 const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, Object.assign({}, initialState));
 const getState = b.state();
 
-function e(t: never) {}
-
 const get = {
 	patternString: b.read((state): string|undefined => {
 		// Nothing submitted yet? This shouldn't be called in that case, but whatever.
@@ -128,14 +126,14 @@ const get = {
 					// trim leading/trailing whitespace, remove pattern if naught but whitespace
 					return (pattern || '').trim() || undefined;
 				}
-                case 'concept': {
-                    const pattern = (state as ModuleRootStateSearch<'concept'>).formState;
-                    return pattern || '' // '[word="de"]'
-                }
+				case 'concept': {
+					const pattern = (state as ModuleRootStateSearch<'concept'>).formState;
+					return pattern || '' // '[word="de"]'
+				}
 				case 'glosses': {
-                    const pattern = (state as ModuleRootStateSearch<'glosses'>).formState;
-                    return pattern || '' // '[word="de"]'
-                }
+					const pattern = (state as ModuleRootStateSearch<'glosses'>).formState;
+					return pattern || '' // '[word="de"]'
+				}
 				default: throw new Error('Unimplemented pattern generation.');
 			}
 		}

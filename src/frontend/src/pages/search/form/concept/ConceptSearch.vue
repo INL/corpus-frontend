@@ -46,8 +46,6 @@ import * as ConceptStore from '@/pages/search/form/concept/conceptStore';
 
 import SelectPicker from '@/components/SelectPicker.vue';
 
-import debug from '@/utils/debug';
-
 
 import ConceptSearchBox from './ConceptSearchBox.vue'
 
@@ -60,7 +58,6 @@ export default Vue.extend ({
 	},
 
 	data: () => ({
-		debug: false,
 		showQuery : false,
 		corpus: CorpusStore.getState().id,
 		search_in_options: ConceptStore.get.settings().searchable_elements,  //,c2e[CorpusStore.getState().id],
@@ -109,7 +106,7 @@ export default Vue.extend ({
 	},
 	created() {
 		UIStore.getState().results.shared.concordanceAsHtml = true;
-		debug.debug = false
+
 }
 })
 

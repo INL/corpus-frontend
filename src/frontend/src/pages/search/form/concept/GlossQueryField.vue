@@ -21,10 +21,6 @@ import * as GlossStore from '@/pages/search/form/concept/glossStore';
 
 import SelectPicker from '@/components/SelectPicker.vue'
 
-declare const BLS_URL: string;
-const blsUrl: string = BLS_URL;
-import debug from '@/utils/debug';
-
 export default Vue.extend ({
 	name: 'GlossQueryField',
 	components: { SelectPicker },

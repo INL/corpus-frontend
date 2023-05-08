@@ -151,6 +151,7 @@ const get = {
 		}
 		else return ''
 	},
+	getGlossQueryFieldValue(fieldName: string) { return getState().gloss_query.parts[fieldName]; },
 	glossQuery: b.read(s => s.gloss_query, 'gloss_query'),
 	settings: b.read(s => s.settings, 'settings'),
 	gloss_fields: b.read(s => s.settings.gloss_fields, 'gloss_fields'),

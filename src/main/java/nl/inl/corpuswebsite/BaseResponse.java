@@ -126,6 +126,8 @@ public abstract class BaseResponse {
         context.put("blsUrl", servlet.getExternalWebserviceUrl());
         context.put("page", this.name);
 
+        context.put("username", request.getUserPrincipal() != null ? request.getUserPrincipal().getName() : "");
+
         logger.debug("jspath {}", servlet.getAdminProps().getProperty(MainServlet.PROP_JSPATH));
 
         // HTML-escape all data written into the velocity templates by default

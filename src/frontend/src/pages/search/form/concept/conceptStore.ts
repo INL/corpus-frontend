@@ -40,7 +40,7 @@ type ConceptQuery = {
 type ModuleRootState = {
 	target_element: string;
 	main_fields: string[]
-	settings: Settings,
+	settings: Settings|null,
 	query_cql: string;
 	query: ConceptQuery
 };
@@ -60,18 +60,9 @@ const initialState: ModuleRootState = {
 	target_element: 'p',
 	main_fields: ['cosmology', 'alchemy', 'cryptozoology'],
 	query_cql: '',
-	settings: {
-		corpus_server: 'http://nohost:8080/blacklab-server',
-		blackparank_server: 'nohost',
-		blackparank_instance: 'weetikveel',
-		lexit_server: 'http://nolexit.inl.loc',
-		lexit_instance: 'wadde?',
-		searchable_elements: ['tom', 'tiedom', 'nogwat']
-	},
+	settings: null,
 	query: emptyQuery
 }
-
-const defaults = initialState;
 
 const namespace = 'concepts';
 const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, cloneDeep(initialState));
@@ -100,24 +91,22 @@ ID
 
 
 function reshuffle_query_for_blackparank(q: ConceptQuery, element: string): object {
+	// remove the nesting of terms.
 	const o: {[key: string]: any} = {}
-	const queries = Object.keys(q).map(k => {
-		const v = q[k].terms
-		o[k]  = v
-	})
+	for (const k in q) o[k] = q[k].terms;
 	return {'element': element, 'strict': true, 'filter': '', 'queries' : o}
 }
 
 function get_main_fields_url(state: ModuleRootState): string {
+	if (!state.settings) return '';
 	const wQuery = `
 				query Quine {
 					lexicon(corpus : "${INDEX_ID}") {
 					field
 			}
 		}`
-	const query = `${state.settings.blackparank_server}/api?instance=${state.settings.blackparank_instance}&query=${encodeURIComponent(wQuery)}`
+	return `${state.settings.blackparank_server}/api?instance=${state.settings.blackparank_instance}&query=${encodeURIComponent(wQuery)}`
 	// window.open(query, '_blank')
-	return query
 }
 /////////////////////////////////////////////////////////////////////////////////////////////
 // getters and actions
@@ -129,6 +118,7 @@ const get = {
 	query_cql: b.read(s => s.query_cql, 'query_cql'),
 	// Meer gedoe dan je zou willen omdat we die Set in de state hebben. Misschien weghalen???
 	translate_query_to_cql_request: b.read(s => {
+		if (!s.settings) return null;
 		const query = s.query
 		const targetElement =  s.target_element
 
@@ -163,6 +153,7 @@ const actions = {
 
 	updateCQL: b.commit(state => {
 		const request =  get.translate_query_to_cql_request()
+		if (!request) return;
 		// alert('sending:' + request)
 		axios.get(request, {
 			headers: {

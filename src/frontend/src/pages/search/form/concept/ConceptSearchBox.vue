@@ -6,7 +6,6 @@
 			Current concept: {{  current_concept }}
 			Term search URL: <a :href="term_search_url">Hiero</a>
 			Terms: {{  JSON.stringify(terms) }}
-			Terms2: {{  JSON.stringify(terms_from_lexicon) }}
 		</pre>
 
 		<table>
@@ -30,7 +29,8 @@
 						:processData="get_cluster_values"
 						:url="completionURLForConcept"
 						v-model="current_concept"
-					/> <!-- <button @click="addConcept" title="Add concept to lexicon">⤿ lexicon</button> -->
+					/>
+					<!-- <button @click="addConcept" title="Add concept to lexicon">⤿ lexicon</button> -->
 				</td>
 			</tr>
 			<tr>
@@ -64,22 +64,19 @@
 </template>
 
 <script lang="ts">
+import Vue from 'vue';
 
 import axios from 'axios'
 import Autocomplete from '@/components/Autocomplete.vue';
 import * as CorpusStore from '@/store/search/corpus';
-import Vue from 'vue';
 import * as ConceptStore from '@/pages/search/form/concept/conceptStore';
-type at = ConceptStore.AtomicQuery;
-// import AutoComplete from './AutoComplete.vue';
 import { uniq, log_error } from './utils'
-declare const BLS_URL: string;
-const blsUrl: string = BLS_URL;
+
+import SelectPicker from '@/components/SelectPicker.vue';
 
 const requestHeaders = { 'headers': { 'Accept': 'application/json' }, 'auth': { 'username': 'user', 'password': 'password' } }
 type Term = { term: string}
-
-import SelectPicker from '@/components/SelectPicker.vue';
+declare const USER_ID: string;
 
 export default Vue.extend ( {
 	name: 'ConceptSearchBox',
@@ -89,32 +86,36 @@ export default Vue.extend ( {
 		field: String
 	},
 	data: () => ({
-			debug: false as boolean,
-			search_concept: '' as string,
-			search_field: '' as string,
-			search_term : '' as string,
-			current_concept : '' as string,
-			current_term : '' as string,
-			checked_terms: {} as {[key: string]: boolean},
-			fields: ['hallo', 'daar'] as string[],
-			terms: [] as Term[],
-			corpus: CorpusStore.getState().id as string,
-			getters: ConceptStore.get,
-			//server : 'http://localhost:8080/Oefenen/' as string,
-			instance: 'quine_lexicon' as string,
-			credentials :  { auth: {
-			username: 'user',
-			password: 'password'
-				}   }
+		debug: false,
+		search_concept: '',
+		search_field: '',
+		search_term : '',
+		current_concept : '',
+		current_term : '',
+		checked_terms: {} as Record<string, boolean>,
+		fields: ['hallo', 'daar'] as string[],
+		terms: [] as Term[],
+		corpus: CorpusStore.getState().id,
+		getters: ConceptStore.get,
+		//server : 'http://localhost:8080/Oefenen/' as string,
+		instance: 'quine_lexicon' as string,
+		credentials :  {
+			auth: {
+				username: 'user',
+				password: 'password'
+			}
+		}
 	}),
 
 	methods : {
-		alert(s: string)  {
-			alert(s)
-		},
+		alert,
 		buildQuery() {
 			const terms = Object.keys(this.checked_terms).filter(t => this.checked_terms[t])
-			const scq: ConceptStore.SingleConceptQuery = { terms: terms.filter(x=>x && x !== 'null').map(t => { const z: at = {field: 'lemma', 'value': t}; return z }) }
+			const scq: ConceptStore.SingleConceptQuery = {
+				terms: terms
+					.filter(x=>x && x !== 'null')
+					.map(t => ({field: 'lemma', value: t}))
+			}
 			try {
 				// alert(JSON.stringify(scq))
 				ConceptStore.actions.setSubQuery( {id: this.id, subquery: scq} )
@@ -124,10 +125,7 @@ export default Vue.extend ( {
 		},
 
 		toggleChecked(t: string) {
-			this.checked_terms[t] = !this.checked_terms[t]
-		},
-		setSearchTerm(e: string) {
-			this.search_term = e
+			Vue.set(this.checked_terms, t,  !this.checked_terms[t]);
 		},
 		addTerm() {
 			this.terms.push({'term': this.current_term});
@@ -144,137 +142,150 @@ export default Vue.extend ( {
 		get_cluster_values(d: { data: ConceptStore.LexiconEntry[] }): string[] {
 			const vals = uniq(d.data.map(x  => x.cluster))
 			return vals
-		 },
-		 get_term_values(d: { 'data': ConceptStore.LexiconEntry[] }) {
-
+		},
+		get_term_values(d: { 'data': ConceptStore.LexiconEntry[] }) {
 			const vals = uniq(d.data.map(x => x.term))
 			return vals
-		 },
-		 insertTerm() {
-			const self = this
-			const insertIt = {corpus: self.corpus, field: self.search_field, concept:self.current_concept, term: self.current_term, author: 'corpus_frontend'}
+		},
+		insertTerm() {
+			if (!USER_ID) {
+				alert('You need to be logged in to add terms to the lexicon')
+				return
+			}
+			if (!this.settings) return;
+
+			const insertIt = {
+				corpus: this.corpus,
+				field: this.search_field,
+				concept: this.current_concept,
+				term: this.current_term,
+				author: 'corpus_frontend'
+			}
 			const insertTerm =  encodeURIComponent(JSON.stringify(insertIt))
 			const url = `${this.settings.blackparank_server}/api?instance=${this.instance}&insertTerm=${insertTerm}`
-			// ToDo authentication !!!!
 
-			axios.get(url,{ auth: requestHeaders.auth }).then(r => {
-				// alert(`gepiept (${this.exerciseData.type}, ${this.database_id})!`)
-				}).catch(e => log_error(e))
-			// this.$emit('reload')
+			// TODO: authentication !!!!
+			axios.get(url,{ auth: requestHeaders.auth })
+				.then(r => console.log('inserted term'))
+				.catch(log_error)
 		},
 		insertConcept() {
+			if (!this.settings) return;
 			const self = this
 			const insertIt = {corpus: self.corpus, field: self.search_field, concept:self.current_concept, author: 'corpus_frontend'}
 			const insertConcept =  encodeURIComponent(JSON.stringify(insertIt))
 			const url = `${this.settings.blackparank_server}/api?instance=${this.instance}&insertConcept=${insertConcept}`
 
-			axios.get(url,{ auth: requestHeaders.auth }).then(r => {
-				// alert(`gepiept (${this.exerciseData.type}, ${this.database_id})!`)
-				}).catch(e => log_error(e))
-			// this.$emit('reload')
+			// TODO: authentication !!!!
+			axios.get(url,{ auth: requestHeaders.auth })
+				.then(r => console.log('inserted concept'))
+				.catch(log_error)
 		},
 		resetQuery() {
-			 this.current_concept = ''
-			 this.current_term = ''
-			 this.terms = []
-			 this.checked_terms = {}
-			 this.buildQuery()
+			this.current_concept = ''
+			this.current_term = ''
+			this.terms = []
+			this.checked_terms = {}
+			this.buildQuery()
 		}
 	},
 
 	computed : {
-		settings(): ConceptStore.Settings {
-			return ConceptStore.get.settings()
-		 },
-		 main_fields(): string[] {
+		settings: ConceptStore.get.settings,
+		main_fields(): string[] {
 			return ConceptStore.get.main_fields()
-		 },
+		},
 		subquery_from_store(): ConceptStore.SingleConceptQuery { return ConceptStore.getState().query[this.id] },
-		terms_from_lexicon() {
-				const query: string = this.term_search_url as string
-				axios.get(query, requestHeaders)
-						.then(response => {
-							 console.log(`found in lexicon for field: "${this.search_field}", cluster: "${this.current_concept}"`  + JSON.stringify(response.data.data))
-							 this.terms = uniq(response.data.data)
-							 this.terms.map(t => this.checked_terms[t.term] = true)
-							 return response.data.data
-							})
-			},
-			term_search_url(): string {
-				const wQuery = `
-						query Quine {
-							lexicon (field: "${this.search_field}", cluster: "${this.current_concept}") {
-								field,
-								cluster,
-								term
-							}
-						}`
-				const query: string= `${this.settings.blackparank_server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
-				return query
-			},
+		term_search_url(): string {
+			if (!this.settings) return '';
+			const wQuery = `
+				query Quine {
+					lexicon (field: "${this.search_field}", cluster: "${this.current_concept}") {
+						field,
+						cluster,
+						term
+					}
+				}`
+			const query: string= `${this.settings.blackparank_server}/api?instance=${this.instance}&query=${encodeURIComponent(wQuery)}`
+			return query
+		},
 
-			term_search_promise(): Promise<string[]> {
-				const self = this
-				const getTermsURL: string = this.term_search_url
-				const autocompleteURL = `${this.settings.corpus_server}/${this.corpus}/autocomplete/contents/lemma/?term=${this.current_term}`
+		term_search_promise(): Promise<string[]> {
+			if (!this.settings) return Promise.resolve([]);
+			const self = this
+			const getTermsURL: string = this.term_search_url
+			const autocompleteURL = `${this.settings.corpus_server}/${this.corpus}/autocomplete/contents/lemma/?term=${this.current_term}`
 
-				console.log(`get Terms: ${getTermsURL}, autocomplete: ${autocompleteURL}`)
-				const pdb = axios.get(getTermsURL)
-				const termPromiseCorpus: Promise<string[]> = axios.get(autocompleteURL).then(r => r.data)
-				const termPromiseDatabase: Promise<string[]>  = pdb.then(r => self.get_term_values(r.data))
+			console.log(`get Terms: ${getTermsURL}, autocomplete: ${autocompleteURL}`)
+			const pdb = axios.get(getTermsURL)
+			const termPromiseCorpus: Promise<string[]> = axios.get(autocompleteURL).then(r => r.data)
+			const termPromiseDatabase: Promise<string[]>  = pdb.then(r => self.get_term_values(r.data))
 
-				// alert(term_promise_database)
+			// alert(term_promise_database)
 
-				const promiseBoth: Promise<string[]> = Promise.all([termPromiseDatabase, termPromiseCorpus]).then(r => {
-					console.log(JSON.stringify(r))
-					const r00 = r[0].filter(x => x)
-					return r00.concat(r[1]).filter(x => x && x.length > 0) // dit gaat mis als er null in db stuk zit....
-				})
+			const promiseBoth: Promise<string[]> = Promise.all([termPromiseDatabase, termPromiseCorpus]).then(r => {
+				console.log(JSON.stringify(r))
+				const r00 = r[0].filter(x => x)
+				return r00.concat(r[1]).filter(x => x && x.length > 0) // dit gaat mis als er null in db stuk zit....
+			})
 
-				return promiseBoth
-				// const terms_from_blacklab = axios.get(terms_from_blacklab_term_url)
-			},
+			return promiseBoth
+			// const terms_from_blacklab = axios.get(terms_from_blacklab_term_url)
+		},
 
 		completionURLForTerm(): string  {
+			if (!this.settings) return '';
 			const field = this.search_field
 			const concept = this.current_concept
 			const term = this.current_term
 			const wQuery = `
-							query Quine {
-								lexicon (term: "/^${term}/", field: "${field}", cluster: "${concept}") {
-								field,
-							cluster,
-								term
-						}
-					}`
+				query Quine {
+					lexicon (term: "/^${term}/", field: "${field}", cluster: "${concept}") {
+						field,
+						cluster,
+						term
+					}
+				}`
 			return `${this.settings.blackparank_server}/api?instance=${this.settings.blackparank_instance}&query=${encodeURIComponent(wQuery)}`
 		},
 
 		completionURLForConcept(): string {
-			 const field = this.search_field
-
-			 const concept = this.current_concept
-
-			 const wQuery = `
-							query Quine {
-								lexicon (cluster: "/^${concept}/", field: "${field}") {
-								field,
-								cluster,
-								term
-						}
-					}`
-			 //console.log("AUTOCOMPLETE query: " + JSON.stringify(wQuery).replace(/\\n/, '\n'))
-			 return `${this.settings.blackparank_server}/api?instance=${this.settings.blackparank_instance}&query=${encodeURIComponent(wQuery)}`
+			if (!this.settings) return '';
+			const field = this.search_field
+			const concept = this.current_concept
+			const wQuery = `
+				query Quine {
+					lexicon (cluster: "/^${concept}/", field: "${field}") {
+						field,
+						cluster,
+						term
+					}
+				}`;
+			//console.log("AUTOCOMPLETE query: " + JSON.stringify(wQuery).replace(/\\n/, '\n'))
+			return `${this.settings.blackparank_server}/api?instance=${this.settings.blackparank_instance}&query=${encodeURIComponent(wQuery)}`
 		},
-	}, watch : {
-		main_fields : function(n,o) {
+	},
+	watch: {
+		main_fields(n, o) {
 			if (n && n.length > 0)
-			 this.search_field = n[0]
-		}
+				this.search_field = n[0]
+		},
 	},
 	created() {
-
-		// alert(blsUrl)
+		this.$watch(() => ({
+			search_field: this.search_field,
+			current_concept: this.current_concept,
+			term_search_url: this.term_search_url,
+		}), ({search_field, current_concept, term_search_url}) => {
+			const query: string = this.term_search_url as string
+			axios.get(query, requestHeaders)
+				.then(response => {
+					console.log(`found in lexicon for field: "${this.search_field}", cluster: "${this.current_concept}"`  + JSON.stringify(response.data.data))
+					this.terms = uniq(response.data.data)
+					this.terms.map(t => this.checked_terms[t.term] = true)
+					return response.data.data
+				})
+		})
 	}
 })
 </script>

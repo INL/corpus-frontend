@@ -1,6 +1,6 @@
 <template>
-	<div style='text-align: left'>
-		Search in: <SelectPicker v-model="element_searched" :options="getters.settings().searchable_elements"/>
+	<div v-if="settings" style='text-align: left'>
+		Search in: <SelectPicker v-model="element_searched" :options="settings.searchable_elements" />
 
 		<div class='boxes' style='text-align: center'>
 			<ConceptSearchBox
@@ -13,7 +13,7 @@
 		<button @click.prevent="resetQuery">Reset</button>
 		<button @click.prevent="addBox">Add box</button>
 		<button @click.prevent="removeBox">Remove box</button>
-		<button  target="_blank" @click="window.open(getters.settings().lexit_server + '?db=' + getters.settings().lexit_instance + '&table=lexicon', '_blank')">View lexicon</button>
+		<button v-if="settings" target="_blank" @click="window.open(settings.lexit_server + '?db=' + settings.lexit_instance + '&table=lexicon', '_blank')">View lexicon</button>
 
 		<label> <input type="checkbox" v-model="showQuery"> Show query</label>
 
@@ -40,7 +40,6 @@
 import Vue from 'vue';
 
 import * as CorpusStore from '@/store/search/corpus';
-import * as UIStore from '@/store/search/ui';
 import * as PatternStore from '@/store/search/form/patterns';
 import * as ConceptStore from '@/pages/search/form/concept/conceptStore';
 
@@ -60,7 +59,7 @@ export default Vue.extend ({
 	data: () => ({
 		showQuery : false,
 		corpus: CorpusStore.getState().id,
-		search_in_options: ConceptStore.get.settings().searchable_elements,  //,c2e[CorpusStore.getState().id],
+		search_in_options: ConceptStore.get.settings()?.searchable_elements,  //,c2e[CorpusStore.getState().id],
 		search_in: 'p',
 		nBoxes: 2,
 		queries : { // this should be a computed field.....
@@ -69,7 +68,6 @@ export default Vue.extend ({
 		queryFieldValue: '',
 		filterFieldValue: '', // TODO moet weg....
 		cqlQuery: '',
-		getters: ConceptStore.get,
 		window: window as Window
 	}),
 
@@ -84,6 +82,7 @@ export default Vue.extend ({
 			Object.keys(this.$refs).forEach(k => {
 				const ref_k = this.$refs[k]
 				//console.log(rk)
+				// @ts-ignore
 				ref_k[0].resetQuery()
 			})
 			ConceptStore.actions.resetQuery()
@@ -104,10 +103,6 @@ export default Vue.extend ({
 			set: ConceptStore.actions.setTargetElement,
 		},
 	},
-	created() {
-		UIStore.getState().results.shared.concordanceAsHtml = true;
-
-}
 })
 
 </script>

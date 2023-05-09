@@ -8,7 +8,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import nl.inl.corpuswebsite.BaseResponse;
 import nl.inl.corpuswebsite.utils.CorpusConfig;
-import nl.inl.corpuswebsite.utils.QueryServiceHandler.QueryException;
+import nl.inl.corpuswebsite.utils.QueryException;
 
 public class SearchResponse extends BaseResponse {
 

@@ -26,6 +26,7 @@ import org.apache.velocity.tools.generic.EscapeTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import nl.inl.corpuswebsite.utils.BlackLabApi;
 import nl.inl.corpuswebsite.utils.WebsiteConfig;
 
 public abstract class BaseResponse {
@@ -41,14 +42,16 @@ public abstract class BaseResponse {
     protected HttpServletRequest request;
 
     protected HttpServletResponse response;
+    
+    protected BlackLabApi blacklab;
 
     /** Velocity template variables */
-    protected VelocityContext context = new VelocityContext();
+    protected final VelocityContext context = new VelocityContext();
 
     protected String name = "";
 
     /** Does this response require a corpus to be set? */
-    private boolean requiresCorpus = false;
+    private final boolean requiresCorpus;
 
     /**
      * The corpus this response is being generated for.
@@ -92,6 +95,7 @@ public abstract class BaseResponse {
         }
         this.request = request;
         this.response = response;
+        this.blacklab = new BlackLabApi(request, response);
         this.servlet = servlet;
         this.corpus = corpus;
         this.pathParameters = pathParameters;

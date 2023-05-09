@@ -65,9 +65,9 @@ import nl.inl.corpuswebsite.response.ErrorResponse;
 import nl.inl.corpuswebsite.response.HelpResponse;
 import nl.inl.corpuswebsite.response.RemoteIndexResponse;
 import nl.inl.corpuswebsite.response.SearchResponse;
+import nl.inl.corpuswebsite.utils.BlackLabApi;
 import nl.inl.corpuswebsite.utils.CorpusConfig;
 import nl.inl.corpuswebsite.utils.QueryServiceHandler;
-import nl.inl.corpuswebsite.utils.QueryServiceHandler.QueryException;
 import nl.inl.corpuswebsite.utils.WebsiteConfig;
 import nl.inl.corpuswebsite.utils.XslTransformer;
 
@@ -208,6 +208,8 @@ public class MainServlet extends HttpServlet {
                 throw new ServletException(PROP_DATA_PATH + " setting should be an absolute path");
             }
             XslTransformer.setUseCache(this.useCache());
+            
+            BlackLabApi.setBlsUrl(adminProps.getProperty(PROP_BLS_SERVERSIDE));
         } catch (ServletException e) {
             throw e;
         } catch (Exception e) {
@@ -367,7 +369,7 @@ public class MainServlet extends HttpServlet {
 
                     // and store the config
                     return Pair.of(new CorpusConfig(c, xmlConfig, jsonResult), null);
-                } catch (QueryException | IOException | SAXException | ParserConfigurationException e) {
+                } catch (nl.inl.corpuswebsite.utils.QueryException | IOException | SAXException | ParserConfigurationException e) {
                     return Pair.of(null, e);
                 }
             })).orElse(Pair.of(null, null));
@@ -641,25 +643,25 @@ public class MainServlet extends HttpServlet {
         }
     }
 
-    /**
-     * Get the url to blacklab-server for this corpus. The url will always end
-     * in "/"
-     *
-     * @param corpus the corpus for which to generate the url, if null, the base
-     *        blacklab-server url will be returned.
-     * @return the url
-     */
-    public String getWebserviceUrl(String corpus) {
-        String url = adminProps.getProperty(PROP_BLS_SERVERSIDE);
-        if (!url.endsWith("/")) {
-            url += "/";
-        }
-
-        if (corpus != null && !corpus.isEmpty()) {
-            url += corpus + "/";
-        }
-        return url;
-    }
+//    /**
+//     * Get the url to blacklab-server for this corpus. The url will always end
+//     * in "/"
+//     *
+//     * @param corpus the corpus for which to generate the url, if null, the base
+//     *        blacklab-server url will be returned.
+//     * @return the url
+//     */
+//    public String getWebserviceUrl(String corpus) {
+//        String url = adminProps.getProperty(PROP_BLS_SERVERSIDE);
+//        if (!url.endsWith("/")) {
+//            url += "/";
+//        }
+//
+//        if (corpus != null && !corpus.isEmpty()) {
+//            url += corpus + "/";
+//        }
+//        return url;
+//    }
 
     /** NOTE: never suffixed with corpus id, to unify behavior on different pages. The url will always end in "/" */
     public String getExternalWebserviceUrl() {
@@ -714,35 +716,6 @@ public class MainServlet extends HttpServlet {
 
     public Properties getAdminProps() {
         return adminProps;
-    }
-
-    /**
-     *
-     * @param url
-     * @param request used to get the path for the current page
-     * @return relativized url
-     */
-    public static String getRelativeUrl(String url, HttpServletRequest request) {
-        String fromUrl = request.getServletPath();
-        boolean trailingSegment = fromUrl.endsWith("/"); // when source url does not end in '/' we need to do one less '../'
-
-        String[] from = StringUtils.split(fromUrl, "/");
-        String[] to = StringUtils.split(url, "/");
-
-        int i = 0;
-        while (i < from.length && i < to.length && from[i].equals(to[i]))
-            ++i;
-
-        List<String> parts = new ArrayList<>();
-        parts.add("."); // handle the case of empty urls
-
-        for (int j = i; j < from.length - (trailingSegment ? 0 : 1); ++j)
-            parts.add("..");
-
-        for (int j = i; j < to.length; ++j)
-            parts.add(to[j]);
-
-        return StringUtils.join(parts, "/");
     }
 
     public static boolean isUserCorpus(Optional<String> corpus) {

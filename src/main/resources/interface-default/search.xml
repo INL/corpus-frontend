@@ -43,7 +43,7 @@
         -->
 
         <!--
-            You can define which properties/annotations to show as colummns in the results table.
+            You can define which properties/annotations to show as columns in the results table.
             By default (up to) the first 3 properties are shown, but 'lemma' and 'pos' have precedence and are always shown if they exist in the corpus.
         -->
         <!-- <PropColumns>lemma,pos,tense, person,number</PropColumns> -->
@@ -75,16 +75,18 @@
         -->
 
         <!-- see https://github.com/moritzsternemann/vue-plausible -->
-        <!-- <Plausible>
+        <!-- 
+        <Plausible>
             <domain>The domain registered with plausible</domain>
             <apiHost>The instance of plausible to use (for when self-hosting), normally https://plausible.io</apiHost>
-        </Plausible> -->
+        </Plausible> 
+        -->
 
     </InterfaceProperties>
     <XsltParameters>
     <!--
         The following values are provided automatically:
-        <XsltParameter name="contextRoot" value="/corpus-frontend"/>
+        <XsltParameter name="contextRoot" value="${request:contextPath}"/>
      -->
     </XsltParameters>
 </SearchInterface>

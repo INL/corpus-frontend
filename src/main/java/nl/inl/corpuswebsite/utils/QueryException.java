@@ -1,9 +1,14 @@
 package nl.inl.corpuswebsite.utils;
 
 public class QueryException extends Exception {
-	private int code;
-	
-	public QueryException(Exception e) {
+	private final int code;
+
+	public static QueryException wrap(Exception e) {
+		if (e instanceof QueryException) return (QueryException) e;
+		return new QueryException(e);
+	}
+
+	private QueryException(Exception e) {
 		super(e);
 		this.code = 500;
 	}

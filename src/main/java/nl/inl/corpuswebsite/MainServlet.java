@@ -46,6 +46,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
+import nl.inl.corpuswebsite.utils.*;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
@@ -65,11 +66,6 @@ import nl.inl.corpuswebsite.response.ErrorResponse;
 import nl.inl.corpuswebsite.response.HelpResponse;
 import nl.inl.corpuswebsite.response.RemoteIndexResponse;
 import nl.inl.corpuswebsite.response.SearchResponse;
-import nl.inl.corpuswebsite.utils.BlackLabApi;
-import nl.inl.corpuswebsite.utils.CorpusConfig;
-import nl.inl.corpuswebsite.utils.QueryServiceHandler;
-import nl.inl.corpuswebsite.utils.WebsiteConfig;
-import nl.inl.corpuswebsite.utils.XslTransformer;
 
 /**
  * Main servlet class for the corpus application.
@@ -95,7 +91,7 @@ public class MainServlet extends HttpServlet {
     /**
      * Per-corpus structure and configuration gotten from blacklab-server (IndexStructure)
      */
-    private static final Map<String, Pair<CorpusConfig, Exception>> corpusConfigs = new HashMap<>();
+    private static final Map<String, AuthRequest.Result<CorpusConfig, Exception>> corpusConfigs = new HashMap<>();
 
     /**
      * Our Velocity templates
@@ -105,7 +101,7 @@ public class MainServlet extends HttpServlet {
     /**
      * Xslt transformers for corpora
      */
-    private static final Map<String, Pair<Optional<XslTransformer>, Optional<Exception>>> articleTransformers = new HashMap<>();
+    private static final Map<String, AuthRequest.Result<XslTransformer, Exception>> articleTransformers = new HashMap<>();
 
     /**
      * The response classes for our URI patterns
@@ -349,30 +345,11 @@ public class MainServlet extends HttpServlet {
      * @param corpus name of the corpus
      * @return the config
      */
-    public Pair<CorpusConfig, Exception> getCorpusConfig(Optional<String> corpus) {
+    public AuthRequest.Result<CorpusConfig, Exception> getCorpusConfig(Optional<String> corpus, HttpServletRequest request, HttpServletResponse response) {
         synchronized (corpusConfigs) {
-            return corpus.map(c -> corpusConfigs.computeIfAbsent(c, __ -> {
-                // Contact blacklab-server for the config xml file
-                QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(c));
-
-                try {
-                    Map<String, String[]> params = new HashMap<>();
-                    getCorpusOwner(corpus).ifPresent(owner -> params.put("userid", new String[] {owner}));
-
-                    params.put("outputformat", new String[] {"xml"});
-                    String xmlConfig = handler.makeRequest(params); // get initial index data
-                    String listValuesFor = CorpusConfig.getAnnotationsWithRequiredValues(xmlConfig); // extract annotations that we need all values for
-
-                    params.put("outputformat", new String[] { "json" });
-                    params.put("listvalues", new String[] { listValuesFor });
-                    String jsonResult = handler.makeRequest(params); // again get index data, this time with those values included, in json format (used by the frontend code)
-
-                    // and store the config
-                    return Pair.of(new CorpusConfig(c, xmlConfig, jsonResult), null);
-                } catch (nl.inl.corpuswebsite.utils.QueryException | IOException | SAXException | ParserConfigurationException e) {
-                    return Pair.of(null, e);
-                }
-            })).orElse(Pair.of(null, null));
+            // Contact blacklab-server for the config xml file if we have a corpus
+            return corpus.map(c -> corpusConfigs.computeIfAbsent(c, __ -> new BlackLabApi(request, response).getCorpusConfig(c)))
+            .orElseGet(() -> AuthRequest.Result.error(new FileNotFoundException("No corpus specified")));
         }
     }
 
@@ -579,46 +556,32 @@ public class MainServlet extends HttpServlet {
      * @param corpusDataFormat - optional name suffix to differentiate files for different formats
      * @return the xsl transformer to use for transformation, note that this is always the same transformer.
      */
-    public Pair<Optional<XslTransformer>, Optional<Exception>> getStylesheet(String corpus, String name, Optional<String> corpusDataFormat) {
+    public AuthRequest.Result<XslTransformer, Exception> getStylesheet(Optional<String> corpus, String name, Optional<String> corpusDataFormat, HttpServletRequest request, HttpServletResponse response) {
 
         // @formatter:off
-        Function<String, Pair<Optional<XslTransformer>, Optional<Exception>>> gen = __ -> {
+        Function<String, AuthRequest.Result<XslTransformer, Exception>> gen = __ -> {
+            // todo replace with .or() when we upgrade to java 9
             Optional<File> file = Stream.of(
-                getProjectFile(Optional.of(corpus), name + ".xsl").orElse(null),
-                corpusDataFormat.flatMap(f -> getProjectFile(Optional.of(corpus), name + "_" + f +".xsl")).orElse(null)
+                getProjectFile(corpus, name + ".xsl").orElse(null),
+                corpusDataFormat.flatMap(f -> getProjectFile(corpus, name + "_" + f +".xsl")).orElse(null)
             )
             .filter(Objects::nonNull)
             .findFirst();
 
             // File found - try loading it
             if (file.isPresent()) {
-                try {
-                    XslTransformer trans = new XslTransformer(file.get());
-                    return Pair.of(Optional.of(trans), Optional.empty());
-                 } catch (TransformerException | FileNotFoundException e) {
-                     logger.info("Error loading stylesheet {} for corpus {} : {}", file.get(), corpus, e.getMessage());
-                     return Pair.of(Optional.empty(), Optional.of(e));
-                 }
+                return AuthRequest.Result.attempt(() -> new XslTransformer(file.get()));
             }
-
 
             // alright, file not found. Try getting from BlackLab and parse that
-            if (name.equals("article") && corpusDataFormat.isPresent()) try { // for article files, we can use a fallback if there is no template file
+            if (name.equals("article") && corpusDataFormat.isPresent()) { // for article files, we can use a fallback if there is no template file
                 logger.info("Attempting to get xsl {} for corpus {} from blacklab...", corpusDataFormat.get(), corpus);
-
-                final QueryServiceHandler handler = new QueryServiceHandler(getWebserviceUrl(null) + "input-formats/" + URLEncoder.encode(corpusDataFormat.get(), StandardCharsets.UTF_8.toString()) + "/xslt");
-                final String sheet = handler.makeRequest(new HashMap<>());
-                return Pair.of(Optional.of(new XslTransformer(sheet, new StringReader(sheet))), Optional.empty());
-            } catch (TransformerException | IOException e)  {
-                logger.info("Error getting or using stylesheet for format {} from blacklab : {}", corpusDataFormat, e.getMessage());
-                return Pair.of(Optional.empty(), Optional.of(e));
-            } catch (QueryException e) {
-                logger.info("Error getting stylesheet for format {} from blacklab, the format might not exist (http {}).", corpusDataFormat, e.getHttpStatusCode());
-                return Pair.of(Optional.empty(), Optional.of(e));
+                return new BlackLabApi(request, response).getStylesheet(corpusDataFormat.get())
+                        .flatMapAnyError(XslTransformer::new);
             }
-
-            return Pair.of(Optional.empty(), Optional.empty());
+            return AuthRequest.Result.error(new FileNotFoundException("Stylesheet File not on disk, and not available from blacklab-server"));
         };
+
         // @formatter:on
 
         // need to use corpus name in the cache map

@@ -15,16 +15,14 @@ import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.TransformerException;
 
+import nl.inl.corpuswebsite.utils.*;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import nl.inl.corpuswebsite.BaseResponse;
 import nl.inl.corpuswebsite.MainServlet;
-import nl.inl.corpuswebsite.utils.CorpusConfig;
 import nl.inl.corpuswebsite.utils.QueryServiceHandler;
-import nl.inl.corpuswebsite.utils.QueryException;
-import nl.inl.corpuswebsite.utils.WebsiteConfig;
-import nl.inl.corpuswebsite.utils.XslTransformer;
 
 public class ArticleResponse extends BaseResponse {
 
@@ -65,23 +63,23 @@ public class ArticleResponse extends BaseResponse {
         super("article", true);
     }
 
-    private static class ActionableException extends Exception {
-        public final int httpCode;
-        private final Optional<String> message;
+//    private static class ActionableException extends Exception {
+//        public final int httpCode;
+//        private final Optional<String> message;
+//
+//        public ActionableException(int httpCode, String message) {
+//            super();
+//            this.httpCode = httpCode;
+//            this.message = Optional.ofNullable(message);
+//        }
+//        public ActionableException(int httpCode) {
+//            this(httpCode, null);
+//        }
+//    }
 
-        public ActionableException(int httpCode, String message) {
-            super();
-            this.httpCode = httpCode;
-            this.message = Optional.ofNullable(message);
-        }
-        public ActionableException(int httpCode) {
-            this(httpCode, null);
-        }
-    }
-
-    private String getDocPid() throws ActionableException {
+    private String getDocPid() {
         if (pathParameters.size() != 1) {
-            throw new ActionableException(
+            throw new ReturnToClientException(
                     HttpServletResponse.SC_BAD_REQUEST,
                     "Invalid document id format " + StringUtils.join(pathParameters, '/') + " - should just be a single string, with any contained slashes encoded."
             );
@@ -89,81 +87,81 @@ public class ArticleResponse extends BaseResponse {
 
         String pid = pathParameters.get(0);
         if (pid == null || pid.isEmpty()) {
-            throw new ActionableException(HttpServletResponse.SC_NOT_FOUND);
+            throw new ReturnToClientException(HttpServletResponse.SC_NOT_FOUND);
         }
         return pid;
     }
 
-    private CorpusConfig getCorpusConfig() throws ActionableException {
-        Pair<CorpusConfig, Exception> blackLabInfo = servlet.getCorpusConfig(corpus);
-        // surface errors about this config - if there are any
-        if (blackLabInfo.getRight() instanceof QueryException) {
-            QueryException e = (QueryException) blackLabInfo.getRight();
-            throw new ActionableException(
-                    e.getHttpStatusCode() == HttpServletResponse.SC_NOT_FOUND ? HttpServletResponse.SC_NOT_FOUND : HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    e.getHttpStatusCode() == HttpServletResponse.SC_NOT_FOUND ? "Unknown corpus '" + corpus.get() + "'" : e.getMessage()
-            );
-        } else if (blackLabInfo.getRight() != null) {
-            Exception e = blackLabInfo.getRight();
-            if (e instanceof UnknownHostException) {
-                throw new ActionableException(HttpServletResponse.SC_NOT_FOUND, "Error retrieving corpus information, unknown host: " + e.getMessage());
-            } else if (e instanceof QueryException) {
-                throw new ActionableException(((QueryException) e).getHttpStatusCode(), e.getMessage());
-            } else {
-                throw new ActionableException(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
-            }
-        } else if (blackLabInfo.getLeft() == null) {
-            throw new ActionableException(HttpServletResponse.SC_NOT_FOUND, "Unknown corpus '"+corpus.get()+"'");
-        }
-        return blackLabInfo.getLeft();
+    private CorpusConfig getCorpusConfig() {
+        BlackLabApi api = new BlackLabApi(request, response);
+        String corpus = this.corpus.orElseThrow(RuntimeException::new);
+        return api.getCorpusConfig(corpus)
+                .mapError(QueryException.class, e -> new ReturnToClientException(e.getHttpStatusCode(), e.getMessage()))
+                .mapError(ReturnToClientException::new)
+                .getOrThrow();
     }
 
-    /**
-     * Fetch the document's metadata from blacklab and return it.
-     * In case of errors, a string describing the error will be returned instead of the metadata. The error will also be returned in the right side.
-     * @param documentId
-     * @param corpusOwner
-     * @return
-     * @throws ActionableException when the document cannot be found
-     */
-    protected Pair<String, Optional<Exception>> getRawMetadata(String documentId, Optional<String> corpusOwner) throws ActionableException {
-        try {
-            final QueryServiceHandler articleMetadataRequest = new QueryServiceHandler(servlet.getWebserviceUrl(corpus.get()) + "docs/" + URLEncoder.encode(documentId, StandardCharsets.UTF_8.toString()));
-            final Map<String, String[]> requestParameters = new HashMap<>();
-            corpusOwner.ifPresent(s -> requestParameters.put("userid", new String[] { s }));
-            final String metadata = articleMetadataRequest.makeRequest(requestParameters);
-            return Pair.of(metadata, Optional.empty());
-        } catch (UnsupportedEncodingException e) { // is subclass of IOException, but is thrown by URLEncoder instead of signifying network error - consider this fatal
-            throw new RuntimeException(e);
-        } catch (QueryException e) {
-            if (e.getHttpStatusCode() == HttpServletResponse.SC_NOT_FOUND) {
-                throw new ActionableException(HttpServletResponse.SC_NOT_FOUND, "Unknown document '" + documentId + "'");
-            } else {
-                return Pair.of("Unexpected blacklab response: " + e.getMessage() + " (code " + e.getHttpStatusCode() + ")", Optional.of(e));
-            }
-        } catch (UnknownHostException e) {
-            return Pair.of("Error while retrieving document metadata, unknown host: " + e.getMessage(), Optional.of(e));
-        } catch (IOException e) {
-            return Pair.of("Error while retrieving document metadata: " + e.getMessage(), Optional.of(e));
-        }
+//    /**
+//     * Fetch the document's metadata from blacklab and return it.
+//     * In case of errors, a string describing the error will be returned instead of the metadata. The error will also be returned in the right side.
+//     * @param documentId
+//     * @param corpusOwner
+//     * @return
+//     * @throws ActionableException when the document cannot be found
+//     */
+//    protected Pair<String, Optional<Exception>> getRawMetadata(String documentId, Optional<String> corpusOwner) throws ActionableException {
+//        try {
+//            final QueryServiceHandler articleMetadataRequest = new QueryServiceHandler(servlet.getWebserviceUrl(corpus.get()) + "docs/" + URLEncoder.encode(documentId, StandardCharsets.UTF_8.toString()));
+//            final Map<String, String[]> requestParameters = new HashMap<>();
+//            corpusOwner.ifPresent(s -> requestParameters.put("userid", new String[] { s }));
+//            final String metadata = articleMetadataRequest.makeRequest(requestParameters);
+//            return Pair.of(metadata, Optional.empty());
+//        } catch (UnsupportedEncodingException e) { // is subclass of IOException, but is thrown by URLEncoder instead of signifying network error - consider this fatal
+//            throw new RuntimeException(e);
+//        } catch (QueryException e) {
+//            if (e.getHttpStatusCode() == HttpServletResponse.SC_NOT_FOUND) {
+//                throw new ActionableException(HttpServletResponse.SC_NOT_FOUND, "Unknown document '" + documentId + "'");
+//            } else {
+//                return Pair.of("Unexpected blacklab response: " + e.getMessage() + " (code " + e.getHttpStatusCode() + ")", Optional.of(e));
+//            }
+//        } catch (UnknownHostException e) {
+//            return Pair.of("Error while retrieving document metadata, unknown host: " + e.getMessage(), Optional.of(e));
+//        } catch (IOException e) {
+//            return Pair.of("Error while retrieving document metadata: " + e.getMessage(), Optional.of(e));
+//        }
+//    }
+
+//    protected Pair<String, Optional<Exception>> transformMetadata(Pair<String, Optional<Exception>> rawMetadata, Optional<String> corpusDataFormat) {
+//        try {
+//            if (rawMetadata.getRight().isPresent()) { return rawMetadata; } // There's something wrong with the metadata, pass on the error message and don't do anything here.
+//            final Pair<Optional<XslTransformer>, Optional<Exception>> transformerAndError = servlet.getStylesheet(corpus.get(), "meta", corpusDataFormat);
+//            if (transformerAndError.getRight().isPresent()) { return Pair.of("<h1>Error in metadata stylesheet</h1>", transformerAndError.getRight()); }
+//            if (!transformerAndError.getLeft().isPresent()) { // this should always exist, we have a builtin fallback stylesheet after all...
+//                return Pair.of("Cannot display metadata - misconfigured server, missing metadata stylesheet (meta.xsl) - see README.MD, section #frontend-configuration", Optional.empty());
+//            }
+//
+//            final XslTransformer trans = addParametersToStylesheet(transformerAndError.getLeft()).get();
+//            final String result = trans.transform(rawMetadata.getLeft());
+//            return Pair.of(result, Optional.empty());
+//        } catch (TransformerException e) {
+//            return Pair.of("<h1>Error during transformation of metadata</h1>", Optional.of(e));
+//        }
+//    }
+
+    protected AuthRequest.Result<String, Exception> transformMetadata(AuthRequest.Result<String, Exception> r) {
+
+        Optional<String> corpusDataFormat = getCorpusConfig().getCorpusDataFormat();
+
+        return r.flatMapAnyError(rawMetadata -> {
+            final AuthRequest.Result<XslTransformer, Exception> stylesheet = servlet.getStylesheet(corpus, "meta", corpusDataFormat, request, response);
+            XslTransformer trans = stylesheet
+                    .mapError(e -> new RuntimeException("<h1>Error in metadata stylesheet</h1>\n" + ExceptionUtils.getStackTrace(e)))
+                    .getOrThrow();
+
+            return trans.transform(rawMetadata);
+        });
     }
 
-    protected Pair<String, Optional<Exception>> transformMetadata(Pair<String, Optional<Exception>> rawMetadata, Optional<String> corpusDataFormat) {
-        try {
-            if (rawMetadata.getRight().isPresent()) { return rawMetadata; } // There's something wrong with the metadata, pass on the error message and don't do anything here.
-            final Pair<Optional<XslTransformer>, Optional<Exception>> transformerAndError = servlet.getStylesheet(corpus.get(), "meta", corpusDataFormat);
-            if (transformerAndError.getRight().isPresent()) { return Pair.of("<h1>Error in metadata stylesheet</h1>", transformerAndError.getRight()); }
-            if (!transformerAndError.getLeft().isPresent()) { // this should always exist, we have a builtin fallback stylesheet after all...
-                return Pair.of("Cannot display metadata - misconfigured server, missing metadata stylesheet (meta.xsl) - see README.MD, section #frontend-configuration", Optional.empty());
-            }
-
-            final XslTransformer trans = addParametersToStylesheet(transformerAndError.getLeft()).get();
-            final String result = trans.transform(rawMetadata.getLeft());
-            return Pair.of(result, Optional.empty());
-        } catch (TransformerException e) {
-            return Pair.of("<h1>Error during transformation of metadata</h1>", Optional.of(e));
-        }
-    }
 
     protected Optional<XslTransformer> addParametersToStylesheet(Optional<XslTransformer> transformer) {
         transformer.ifPresent(t -> {
@@ -305,15 +303,18 @@ public class ArticleResponse extends BaseResponse {
     @Override
     protected void completeRequest() throws IOException {
         try {
+            BlackLabApi api = new BlackLabApi(this.request, this.response);
+
             // parameters for the requesting of metadata and content from blacklab
             final String pid = getDocPid();
+            final String corpus = this.corpus.get();
             final Optional<String> userId = MainServlet.getCorpusOwner(corpus);
 
             final CorpusConfig blacklabCorpusInfo = getCorpusConfig();
             final WebsiteConfig interfaceConfig = servlet.getWebsiteConfig(corpus);
 
-            final Pair<String, Optional<Exception>> rawMetadata = getRawMetadata(pid, userId);
-            final Pair<String, Optional<Exception>> transformedMetadata = transformMetadata(rawMetadata, blacklabCorpusInfo.getCorpusDataFormat());
+            final AuthRequest.Result<String, QueryException> rawMetadata = api.getDocumentMetadata(corpus, pid);
+            final AuthRequest.Result<String, Exception> transformedMetadata = rawMetadata.flatMap(transformMetadata);
             PaginationInfo pi = new PaginationInfo(interfaceConfig.usePagination(), interfaceConfig.getPageSize(), rawMetadata, getParameter("wordstart", 0), getParameter("wordend", Integer.MAX_VALUE));
             final Pair<String, Optional<Exception>> transformedContent = getTransformedContent(pid, userId, blacklabCorpusInfo.getCorpusDataFormat(), pi.blacklabPageStart, pi.blacklabPageEnd);
 

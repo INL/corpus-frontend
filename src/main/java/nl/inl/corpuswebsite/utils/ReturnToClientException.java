@@ -7,7 +7,7 @@ import javax.servlet.http.HttpServletResponse;
  * Yes yes.. Exceptions as control flow is bad practice, but in this case it makes perfect sense because we never know when we need abort/return control to the client. 
  * We only use this in unrecoverable situations (blacklab returned 404, 401, that sort of thing).
  */
-public class ReturnToClientException extends Exception {
+public class ReturnToClientException extends RuntimeException {
 	int code;
 	String body;
 	

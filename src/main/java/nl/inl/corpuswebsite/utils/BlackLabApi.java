@@ -1,17 +1,18 @@
 package nl.inl.corpuswebsite.utils;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.parsers.ParserConfigurationException;
 
+import net.sf.saxon.ma.trie.ImmutableMap;
 import org.apache.commons.lang3.tuple.Pair;
-
-import nl.inl.corpuswebsite.MainServlet;
-import nl.inl.corpuswebsite.response.ArticleResponse.ActionableException;
+import org.xml.sax.SAXException;
 
 public class BlackLabApi {
 	protected static String blsUrl;
@@ -24,36 +25,29 @@ public class BlackLabApi {
 		this.clientResponse = clientResponse;
 	}
 	
-	public Optional<Pair<String, QueryException>> getDocumentMetadata(String corpus, String documentId) {
+	public AuthRequest.Result<String, QueryException> getDocumentMetadata(String corpus, String documentId) {
+		return AuthRequest.request("GET", AuthRequest.url(blsUrl, corpus, "docs", documentId), clientRequest, clientResponse, true);
+	}
 
-		try {
-			Optional<Pair<String, QueryException>> r = AuthRequest.request("GET", AuthRequest.url(blsUrl, corpus, "docs", documentId), clientRequest, clientResponse);
-		
-//    	final QueryServiceHandler articleMetadataRequest = new QueryServiceHandler(servlet.getWebserviceUrl(corpus.get()) + "docs/" + URLEncoder.encode(documentId, StandardCharsets.UTF_8.toString()));
-//        final Map<String, String[]> requestParameters = new HashMap<>();
-//        corpusOwner.ifPresent(s -> requestParameters.put("userid", new String[] { s }));
-//        final String metadata = articleMetadataRequest.makeRequest(requestParameters);
-//        return Pair.of(metadata, Optional.empty());
-    } catch (UnsupportedEncodingException e) { // is subclass of IOException, but is thrown by URLEncoder instead of signifying network error - consider this fatal
-        throw new RuntimeException(e);
-    } catch (QueryException e) {
-        if (e.getHttpStatusCode() == HttpServletResponse.SC_NOT_FOUND) {
-            throw new ActionableException(HttpServletResponse.SC_NOT_FOUND, "Unknown document '" + documentId + "'");
-        } else {
-            return Pair.of("Unexpected blacklab response: " + e.getMessage() + " (code " + e.getHttpStatusCode() + ")", Optional.of(e));
-        }
-    } catch (UnknownHostException e) {
-        return Pair.of("Error while retrieving document metadata, unknown host: " + e.getMessage(), Optional.of(e));
-    } catch (IOException e) {
-        return Pair.of("Error while retrieving document metadata: " + e.getMessage(), Optional.of(e));
-    }
-		
-		
+	public AuthRequest.Result<CorpusConfig, Exception> getCorpusConfig(String corpus) {
+		final String url = AuthRequest.url(blsUrl, corpus);
+		final HashMap<String, String> query = new HashMap<>();
+		query.put("outputformat", "xml");
+
+		return AuthRequest.request("GET",url,query,clientRequest,clientResponse,true)
+			.flatMapAnyError(xml -> {
+				query.put("outputformat", "json");
+				query.put("listvalues", CorpusConfig.getAnnotationsWithRequiredValues(xml));// extract annotations that we need all values for
+				final AuthRequest.Result<String, QueryException> jsonResponse = AuthRequest.request("GET", url, query, clientRequest, clientResponse, true);
+				String json = jsonResponse.getOrThrow();
+				return new CorpusConfig(corpus, xml, json);
+			});
+	}
+
+	public AuthRequest.Result<String, QueryException> getStylesheet(String formatName) {
+		return AuthRequest.request("GET", AuthRequest.url(blsUrl, "input-formats", formatName, "xslt"), clientRequest, clientResponse, true);
 	}
 	
-	public static String url(String...strings ) {
-		return "";
-	}
 	public static void setBlsUrl(String url) {
 		if (!url.endsWith("/")) {
 			url += "/";

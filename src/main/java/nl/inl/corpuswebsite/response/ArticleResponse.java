@@ -7,7 +7,6 @@ import java.net.URLEncoder;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -22,7 +21,6 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import nl.inl.corpuswebsite.BaseResponse;
 import nl.inl.corpuswebsite.MainServlet;
-import nl.inl.corpuswebsite.utils.QueryServiceHandler;
 
 public class ArticleResponse extends BaseResponse {
 
@@ -63,20 +61,6 @@ public class ArticleResponse extends BaseResponse {
         super("article", true);
     }
 
-//    private static class ActionableException extends Exception {
-//        public final int httpCode;
-//        private final Optional<String> message;
-//
-//        public ActionableException(int httpCode, String message) {
-//            super();
-//            this.httpCode = httpCode;
-//            this.message = Optional.ofNullable(message);
-//        }
-//        public ActionableException(int httpCode) {
-//            this(httpCode, null);
-//        }
-//    }
-
     private String getDocPid() {
         if (pathParameters.size() != 1) {
             throw new ReturnToClientException(
@@ -96,7 +80,7 @@ public class ArticleResponse extends BaseResponse {
         BlackLabApi api = new BlackLabApi(request, response);
         String corpus = this.corpus.orElseThrow(RuntimeException::new);
         return api.getCorpusConfig(corpus)
-                .mapError(QueryException.class, e -> new ReturnToClientException(e.getHttpStatusCode(), e.getMessage()))
+                .recover(QueryException.class, e -> new ReturnToClientException(e.getHttpStatusCode(), e.getMessage()))
                 .mapError(ReturnToClientException::new)
                 .getOrThrow();
     }
@@ -148,12 +132,11 @@ public class ArticleResponse extends BaseResponse {
 //        }
 //    }
 
-    protected AuthRequest.Result<String, Exception> transformMetadata(AuthRequest.Result<String, Exception> r) {
-
+    protected Result<String, Exception> transformMetadata(Result<String, Exception> r) {
         Optional<String> corpusDataFormat = getCorpusConfig().getCorpusDataFormat();
 
         return r.flatMapAnyError(rawMetadata -> {
-            final AuthRequest.Result<XslTransformer, Exception> stylesheet = servlet.getStylesheet(corpus, "meta", corpusDataFormat, request, response);
+            final Result<XslTransformer, Exception> stylesheet = servlet.getStylesheet(corpus, "meta", corpusDataFormat, request, response);
             XslTransformer trans = stylesheet
                     .mapError(e -> new RuntimeException("<h1>Error in metadata stylesheet</h1>\n" + ExceptionUtils.getStackTrace(e)))
                     .getOrThrow();
@@ -162,14 +145,6 @@ public class ArticleResponse extends BaseResponse {
         });
     }
 
-
-    protected Optional<XslTransformer> addParametersToStylesheet(Optional<XslTransformer> transformer) {
-        transformer.ifPresent(t -> {
-            t.addParameter("contextRoot", servlet.getServletContext().getContextPath());
-            servlet.getWebsiteConfig(corpus).getXsltParameters().forEach(t::addParameter);
-        });
-        return transformer;
-    }
 
     /**
      * Get the article content and transform it for display.
@@ -186,14 +161,24 @@ public class ArticleResponse extends BaseResponse {
      * @return
      * @throws ActionableException 404 when the article doesn't exist
      */
-    protected Pair<String, Optional<Exception>> getTransformedContent(String documentId, Optional<String> corpusOwner, Optional<String> corpusDataFormat, Optional<Integer> pageStart, Optional<Integer> pageEnd) throws ActionableException {
-        final HashMap<String, String[]> requestParameters = new HashMap<>();
-        corpusOwner.ifPresent(v -> requestParameters.put("userid", new String[] { v }));
-        Optional.ofNullable(this.getParameter("query", (String) null)).ifPresent(v -> requestParameters.put("patt", new String[] { v }));
-        Optional.ofNullable(this.getParameter("pattgapdata", (String) null)).ifPresent(v -> requestParameters.put("pattgapdata", new String[] { v }));
-        pageStart.ifPresent(s -> requestParameters.put("wordstart", new String[] { s.toString() }));
-        pageEnd.ifPresent(s -> requestParameters.put("wordend", new String[] { s.toString() }));
+    protected Pair<String, Optional<Exception>> getTransformedContent(String documentId, Optional<String> corpusDataFormat, Optional<Integer> pageStart, Optional<Integer> pageEnd) throws ActionableException {
+        final HashMap<String, String> requestParameters = new HashMap<>();
+
+        var contents = new BlackLabApi(request, response)
+                .getDocumentContents(
+                        corpus.orElseThrow(),
+                        documentId,
+                        Optional.ofNullable(this.getParameter("query", (String) null)),
+                        Optional.ofNullable(this.getParameter("pattgapdata", (String) null)),
+                        pageStart,
+                        pageEnd
+                );
+
+        contents.mapError()
+
         try {
+
+
             final QueryServiceHandler articleContentRequest = new QueryServiceHandler(servlet.getWebserviceUrl(corpus.get()) + "docs/" + URLEncoder.encode(documentId, StandardCharsets.UTF_8.toString()) + "/contents");
             final String documentContents = articleContentRequest.makeRequest(requestParameters);
             // TODO this should check 401 instead.
@@ -217,7 +202,17 @@ public class ArticleResponse extends BaseResponse {
             }
 
             // Always transform if we can.
-            String output = trans != null ? addParametersToStylesheet(Optional.of(trans)).get().transform(documentContents) : error != null ? "<h1>Error in article stylesheet</h1>" : "Could not prepare document for viewing - missing article stylesheet.";
+            String output;
+            if (trans != null) {
+                Optional<XslTransformer> transformer = Optional.of(trans);
+                transformer.ifPresent(t -> {
+                    t.addParameter("contextRoot", servlet.getServletContext().getContextPath());
+                    servlet.getWebsiteConfig(corpus).getXsltParameters().forEach(t::addParameter);
+                });
+                output = transformer.get().transform(documentContents);
+            } else {
+                output = error != null ? "<h1>Error in article stylesheet</h1>" : "Could not prepare document for viewing - missing article stylesheet.";
+            }
             return Pair.of(output, Optional.ofNullable(error));
         } catch (UnsupportedEncodingException e) { // is subclass of IOException, but is thrown by URLEncoder instead of signifying network error - consider this fatal
             throw new RuntimeException(e);
@@ -313,8 +308,8 @@ public class ArticleResponse extends BaseResponse {
             final CorpusConfig blacklabCorpusInfo = getCorpusConfig();
             final WebsiteConfig interfaceConfig = servlet.getWebsiteConfig(corpus);
 
-            final AuthRequest.Result<String, QueryException> rawMetadata = api.getDocumentMetadata(corpus, pid);
-            final AuthRequest.Result<String, Exception> transformedMetadata = rawMetadata.flatMap(transformMetadata);
+            final Result<String, QueryException> rawMetadata = api.getDocumentMetadata(corpus, pid);
+            final Result<String, Exception> transformedMetadata = rawMetadata.flatMap(transformMetadata);
             PaginationInfo pi = new PaginationInfo(interfaceConfig.usePagination(), interfaceConfig.getPageSize(), rawMetadata, getParameter("wordstart", 0), getParameter("wordend", Integer.MAX_VALUE));
             final Pair<String, Optional<Exception>> transformedContent = getTransformedContent(pid, userId, blacklabCorpusInfo.getCorpusDataFormat(), pi.blacklabPageStart, pi.blacklabPageEnd);
 

@@ -1,21 +1,22 @@
 package nl.inl.corpuswebsite.utils;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.function.Function;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
+import java.util.stream.Collectors;
 
 /** 
  * Make a request to url, passing the provided query and headers.
@@ -24,144 +25,143 @@ import org.apache.commons.lang.StringUtils;
  */
 public class AuthRequest {
 
-    public static class Result<R, E extends Exception> {
-        public interface ThrowableSupplier<R, E extends Exception> {
-            R apply() throws E;
-        }
+    private HttpServletRequest request;
+    private HttpServletResponse response;
+    private Map<String, String> headers = null;
 
-        public interface ThrowableFunction<A, R, E extends Exception> {
-            R apply(A a) throws E;
-        }
+    private Map<String, String[]> query = null;
 
-//        public interface ThrowableFunction2<A, R, E extends Exception, E2 extends Exception> {
-//            R apply(A a) throws E, E2;
-//        }
+    private String hash = null;
 
-        private final R result;
-        private final E error;
+    private String method = "GET";
 
-        public Result(R result, E error) {
-            this.result = result;
-            this.error = error;
-        }
+    private String url;
 
-        public static <R, E extends Exception> Result<R, E> empty() {
-            return new Result<>(null, null);
-        }
-
-        @SuppressWarnings("unchecked")
-        public static <R, E extends Exception> Result<R, E> attempt(ThrowableSupplier<R, E> gen) {
-            try {
-                return new Result<>(gen.apply(), null);
-            } catch (Exception e) {
-                if (e instanceof ReturnToClientException) throw (ReturnToClientException) e;
-                return Result.error((E) e);
-            }
-        }
-
-
-        // if E2 == E, result<R2, E2>
-        // if E2 != E, result<R2, Exception>
-        // if no E2, result<R2, E>
-
-        // first implementation: overload for E2 == E
-        @SuppressWarnings("unchecked")
-        public <R2, E2 extends E> Result<R2, E> flatMap(ThrowableFunction<R, R2, E2> gen) {
-            if (this.result != null) {
-                try {
-                    R2 r2 = gen.apply(this.result);
-                    return new Result<>(r2, null);
-                } catch (Exception e) {
-                    if (e instanceof ReturnToClientException) throw (ReturnToClientException) e;
-                    return Result.error((E)e);
-                }
-            } else {
-                return Result.error(this.error);
-            }
-        }
-
-        // second implementation, overload for E2 != E
-        public <R2, E2 extends Exception> Result<R2, Exception> flatMapAnyError(ThrowableFunction<R, R2, E2> gen) {
-            if (this.result != null) {
-                try {
-                    R2 r2 = gen.apply(this.result);
-                    return new Result<>(r2, null);
-                } catch (Exception e) {
-                    if (e instanceof ReturnToClientException) throw (ReturnToClientException) e;
-                    return Result.error(e);
-                }
-            } else {
-                return Result.error(this.error);
-            }
-        }
-
-        // third implementation, no E2
-        public <R2> Result<R2, E> flatMap(Function<R, R2> gen) {
-            if (this.result != null) {
-                return new Result<>(gen.apply(this.result), null);
-            } else {
-                return Result.error(this.error);
-            }
-        }
-
-        public static <R, E extends Exception> Result<R, E> success(R result) {
-            return new Result<>(result, null);
-        }
-
-        public static <R, E extends Exception> Result<R, E> error(E error) {
-            return new Result<>(null, error);
-        }
-
-        public <R2> Result<R2, E> map(Function<R, R2> handleSuccess) {
-            if (this.error != null) return new Result<>(null, this.error);
-            return new Result<>(handleSuccess.apply(result), null);
-        }
-
-        public <E2 extends Exception> Result<R, E2> mapError(Function<E, E2> handleError) {
-            if (this.error != null) return new Result<>(null, handleError.apply(this.error));
-            return new Result<>(result, null);
-        }
-
-        public <SpecificException extends E, E2 extends Exception> Result<R, E2> mapError(Class<SpecificException> clazz, Function<SpecificException, E2> handleError) {
-            if (this.error != null && clazz.isAssignableFrom(this.error.getClass())) return new Result<>(null, handleError.apply(clazz.cast(this.error)));
-            return new Result<>(result, null);
-        }
-
-        public Optional<E> getError() {
-            return Optional.ofNullable(error);
-        }
-
-        public Optional<R> getResult() {
-            return Optional.ofNullable(result);
-        }
-
-        public R getOrThrow() throws E {
-            if (this.error != null) throw this.error;
-            if (this.result == null) throw new IllegalStateException("Result is null");
-            return this.result;
-        }
-
-//        public <R2> Result<R2, E> flatMap(Function<R, Result<R2, E>> handleSuccess) {
-//            if (this.error != null) return new Result<>(null, this.error);
-//            return handleSuccess.apply(result);
-//        }
-
-        public <E2 extends Exception> Result<R, E2> flatMapError(Function<E, Result<R, E2>> handleError) {
-            if (this.error != null) return handleError.apply(this.error);
-            return new Result<>(result, null);
-        }
+    public AuthRequest(HttpServletRequest request, HttpServletResponse response) {
+        this.request = request;
+        this.response = response;
     }
 
+    public AuthRequest(HttpServletRequest request, HttpServletResponse response, String url) {
+        this.request = request;
+        this.response = response;
+        this.url = url;
+    }
 
+    /** Base url is used as-is (though query and hash are removed), pathParts are escaped and joined using '/' */
+    public AuthRequest url(String base, String... paths) {
+        if (base.contains("#")) {
+            String[] parts = base.split("#");
+            base = parts[0];
+            hash(parts[1]);
+        }
+
+        if (base.contains("?")) {
+            String[] parts = base.split("\\?");
+            base = parts[0];
+            query(parts[1]);
+        }
+
+        StringBuilder b = new StringBuilder(base);
+        for (String s : paths) {
+            // append a slash if the url does not end with one
+            if (b.length() > 0 && b.charAt(b.length() - 1) != '/') b.append('/');
+            b.append(URLEncoder.encode(s, StandardCharsets.UTF_8));
+        }
+        this.url = b.toString();
+        return this;
+    }
 
     /**
-     * return result.handleError(error -> {
-     *   return ...;
-     * })
-     * .handleSuccess(success -> {
-     * 	return ...;
-     * });
+     * Set a query parameter, overwriting any existing value for the key.
+     * @param key unescaped key
+     * @param value unescaped value(s)
+     * @return this
      */
+    public AuthRequest query(String key, String... value) {
+        if (query == null) {
+            query = new HashMap<>();
+        }
+        query.put(key, value);
+        return this;
+    }
+
+    public AuthRequest query(String key, Optional<String> value) {
+        value.ifPresent(s -> query(key, s));
+        return this;
+    }
+
+    /**
+     * Set the query from a string, overwriting any existing value for the keys.
+     * @param q url-escaped query string. May contain multiple values for the same key.
+     * @return this
+     */
+    public AuthRequest query(String q) {
+        Arrays.stream(q.replace("?", "").split("&"))
+                .map(s -> s.split("=")) // split key=value
+                .map(s -> Arrays.stream(s).map(v -> URLDecoder.decode(v, StandardCharsets.UTF_8)).collect(Collectors.toList())) // decode key and value
+                .collect(Collectors.groupingBy(s -> s.get(0), Collectors.mapping(s -> s.get(1), Collectors.toList()))) // group values by key
+                .forEach((k, v) -> query(k, v.toArray(new String[0]))); // for each key value(s) pair, set the query
+        return this;
+    }
+
+    /**
+     * @param hash The unescaped url hash
+     */
+    public AuthRequest hash(String hash) {
+        this.hash = hash;
+        return this;
+    }
+
+    public AuthRequest method(String method) {
+        this.method = method;
+        return this;
+    }
+
+    /**
+     * Set a header, overwriting any existing value for the key.
+     * @param key the unescaped key
+     * @param value the unescaped value
+     * @return this
+     */
+    public AuthRequest header(String key, String value) {
+        if (headers == null) {
+            headers = new HashMap<>();
+        }
+        headers.put(key, value);
+        return this;
+    }
+
+    /**
+     * Set the headers from a map, overwriting any existing value for the keys.
+     * @param headers the unescaped headers
+     * @return this
+     */
+    public AuthRequest headers(Map<String, String> headers) {
+        if (this.headers == null) {
+            this.headers = new HashMap<>();
+        }
+        this.headers.putAll(headers);
+        return this;
+    }
+
+    private static String url(String url, Map<String, String[]> query, String hash) {
+        StringBuilder builder = new StringBuilder();
+        if (query != null) {
+            for (Entry<String, String[]> e : query.entrySet()) {
+                for (String value : e.getValue()) {
+                    if (builder.length() > 0)
+                        builder.append("&");
+                    builder.append(URLEncoder.encode(e.getKey(), StandardCharsets.UTF_8));
+                    builder.append("=");
+                    builder.append(URLEncoder.encode(value, StandardCharsets.UTF_8));
+                }
+            }
+        }
+        return url
+                + (builder.length() > 0 ? "?" + builder.toString() : "")
+                + (hash != null ? "#" + URLEncoder.encode(hash, StandardCharsets.UTF_8) : "");
+    }
 
     // we only are interested in any web errors here.
     // which means a 500 on network errors
@@ -169,52 +169,57 @@ public class AuthRequest {
     // if the request succeeds, we return the content and a null error.
     /**
      * Return the response from the url.
-     * An empty optional might be returned if authentication is required for the url, and is not present on through the passed request.
+     * If the response is in the 200 range, the content is returned.
+     * If the response is in the 300 range, the request is followed.
+     * If the response is 401 range, the request is retried with the authentication header from the request (if present).
+     * In all other cases the error is returned.
      *
-     * In all other cases, the content (if response was in the OK range (200-299)) or error are returned.
-     * So a 404 will return Pair.of(null, new QueryException(404))
-     *
-     * A 401 might still be returned if the content is restricted for another reason rather than missing auth.
+     * A 401 might still be returned if the content is restricted for another reason rather than missing auth (or when invalid authentication is supplied).
      *
      * @throws ReturnToClientException when authentication is required but not provided. The response is modified to add the www-authorization header prior to throwing.
      */
-    public static Result<String, QueryException> request(String method, String url, HttpServletRequest request, HttpServletResponse response, boolean hardFailOnMissingAuth) { return request(method, url, null, request, response, hardFailOnMissingAuth); }
-    public static Result<String, QueryException> request(String method, String url, Map<String, String> headers, HttpServletRequest request, HttpServletResponse response, boolean hardFailOnMissingAuth) {
+    public Result<String, QueryException> request(boolean hardFailOnMissingAuth) {
         // first try without authenticating.
         try {
-            HttpURLConnection r = request(method, url, headers);
-            int code = r.getResponseCode();
-            if (code == -1)
-                return Result.error(new QueryException(-1, "Unexpected response from url " + url));
+            HttpURLConnection r = request(method, url, query, hash, headers);
+            int redirects = 0;
+            while (redirects < 10) {
+                int code = r.getResponseCode();
+                if (code == -1)
+                    return Result.error(new QueryException(-1, "Unexpected response from url " + url));
 
-            // redirect is not followed into other protocol ex. http to https
-            // see https://stackoverflow.com/a/1884427
-            if (code >= 300 && code < 400) {
-                String newUrl = r.getHeaderField("location");
-                if (newUrl != null && !newUrl.isEmpty()) {
-                    return request(method, newUrl, headers, request, response, hardFailOnMissingAuth);
+                // redirect is not followed into other protocol ex. http to https
+                // see https://stackoverflow.com/a/1884427
+                if (code >= 300 && code < 400) {
+                    String newUrl = r.getHeaderField("location");
+                    if (newUrl != null && !newUrl.isEmpty()) {
+                        r = request(method, newUrl, null, null, headers);
+                        ++redirects;
+                        continue;
+                    }
                 }
+
+                // request seems to not require any more authentication, so decode result (might still be an error through, but at least not an auth error)
+                if (!needsBasicAuth(r)) return decode(r);
+
+                String auth = getExistingAuth(request);
+                if (auth != null) {
+                    // cool, the request had an authentication header, copy it and try again.
+                    if (headers == null)
+                        headers = new HashMap<>();
+                    headers.put("Authorization", auth);
+                    r = request(method, url, query, hash, headers);
+                } else if (hardFailOnMissingAuth) {
+                    // unhappy path, we don't have auth, and we need it.
+                    // this should cause the client to try again with the auth header
+                    // so next time the getExistingAuth will return successfully.
+                    response.addHeader("WWW-Authenticate", "Basic realm=\"Blacklab\"");
+                    throw new ReturnToClientException(HttpServletResponse.SC_UNAUTHORIZED);
+                }
+
+                return decode(r);
             }
-
-            // request seems to not require any more authentication, so decode result (might still be an error through, but at least not an auth error)
-            if (!needsBasicAuth(r)) return decode(r);
-
-            String auth = getExistingAuth(request);
-            if (auth != null) {
-                // cool, the request had an authentication header, copy it and try again.
-                if (headers == null)
-                    headers = new HashMap<>();
-                headers.put("Authorization", auth);
-                r = request(method, url, headers);
-            } else if (hardFailOnMissingAuth) {
-                // unhappy path, we don't have auth, and we need it.
-                // this should cause the client to try again with the auth header
-                // so next time the getExistingAuth will return successfully.
-                response.addHeader("WWW-Authenticate", "Basic realm=\"Blacklab\"");
-                throw new ReturnToClientException(HttpServletResponse.SC_UNAUTHORIZED);
-            }
-
-            return decode(r);
+            return Result.error(new QueryException(HttpServletResponse.SC_BAD_GATEWAY, "Too many redirects"));
         } catch (IOException | QueryException e) {
             return Result.error(QueryException.wrap(e));
         }
@@ -251,9 +256,9 @@ public class AuthRequest {
         return auth != null && auth.startsWith("Basic");
     }
 
-    protected static HttpURLConnection request(String method, String url, Map<String, String> headers) throws QueryException {
+    protected static HttpURLConnection request(String method, String url, Map<String, String[]> query, String hash, Map<String, String> headers) throws QueryException {
         try {
-            URL urlObj = new URL(url);
+            URL urlObj = new URL(url(url, query, hash));
             HttpURLConnection connection = (HttpURLConnection) urlObj.openConnection();
             connection.setInstanceFollowRedirects(true);
             connection.setRequestMethod(method);
@@ -269,43 +274,5 @@ public class AuthRequest {
         } catch (IOException e) {
             throw QueryException.wrap(e);
         }
-    }
-
-    /** Base url is used as-is, pathParts are escaped and joined using '/' */
-    public static String url(String base, String... pathParts) {
-        try {
-            StringBuilder b = new StringBuilder(base);
-            for (String s : pathParts) {
-                b.append(URLEncoder.encode(s, "UTF-8"));
-            }
-            return b.toString();
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * @param base the url + any path + (optionally) some ENCODED query parameters (these are preserved)
-     * @param queryParams UNENCODED query parameters (optional)
-     * @param hash any hash (optional)
-     * @throws UnsupportedEncodingException
-     * */
-    public static String url(String base, Map<String, String[]> queryParams, String hash) throws UnsupportedEncodingException {
-        boolean baseHasQueryAlready = base.contains("?");
-
-        StringBuilder builder = new StringBuilder();
-        if (queryParams != null) {
-            for (Entry<String, String[]> e : queryParams.entrySet()) {
-                for (String value : e.getValue()) {
-                    if (builder.length() > 0)
-                        builder.append("&");
-                    builder.append(e.getKey());
-                    builder.append("=");
-                    builder.append(URLEncoder.encode(value, "UTF-8"));
-                }
-            }
-        }
-
-        return base + (baseHasQueryAlready ? "?" : "&") + builder + ((hash != null && !hash.isEmpty()) ? "#" + URLEncoder.encode(hash, "UTF-8") : "");
     }
 }

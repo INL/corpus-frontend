@@ -6,66 +6,34 @@
  */
 package nl.inl.corpuswebsite;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.function.Function;
-import java.util.jar.Manifest;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import nl.inl.corpuswebsite.response.*;
+import nl.inl.corpuswebsite.utils.*;
+import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.SystemUtils;
+import org.apache.velocity.Template;
+import org.apache.velocity.app.Velocity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerException;
-
-import nl.inl.corpuswebsite.utils.*;
-import org.apache.commons.configuration2.ex.ConfigurationException;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.SystemUtils;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.velocity.Template;
-import org.apache.velocity.app.Velocity;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
-
-import nl.inl.corpuswebsite.response.AboutResponse;
-import nl.inl.corpuswebsite.response.ArticleResponse;
-import nl.inl.corpuswebsite.response.ConfigResponse;
-import nl.inl.corpuswebsite.response.CorporaDataResponse;
-import nl.inl.corpuswebsite.response.CorporaResponse;
-import nl.inl.corpuswebsite.response.ErrorResponse;
-import nl.inl.corpuswebsite.response.HelpResponse;
-import nl.inl.corpuswebsite.response.RemoteIndexResponse;
-import nl.inl.corpuswebsite.response.SearchResponse;
+import java.io.*;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.function.Function;
+import java.util.jar.Manifest;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Main servlet class for the corpus application.
@@ -91,7 +59,7 @@ public class MainServlet extends HttpServlet {
     /**
      * Per-corpus structure and configuration gotten from blacklab-server (IndexStructure)
      */
-    private static final Map<String, AuthRequest.Result<CorpusConfig, Exception>> corpusConfigs = new HashMap<>();
+    private static final Map<String, Result<CorpusConfig, Exception>> corpusConfigs = new HashMap<>();
 
     /**
      * Our Velocity templates
@@ -101,7 +69,7 @@ public class MainServlet extends HttpServlet {
     /**
      * Xslt transformers for corpora
      */
-    private static final Map<String, AuthRequest.Result<XslTransformer, Exception>> articleTransformers = new HashMap<>();
+    private static final Map<String, Result<XslTransformer, Exception>> articleTransformers = new HashMap<>();
 
     /**
      * The response classes for our URI patterns
@@ -327,11 +295,11 @@ public class MainServlet extends HttpServlet {
      * @param corpus which corpus to read config for, may be null for the default config.
      * @return the website config
      */
-    public synchronized WebsiteConfig getWebsiteConfig(Optional<String> corpus) {
+    public synchronized WebsiteConfig getWebsiteConfig(Optional<String> corpus, HttpServletRequest request, HttpServletResponse response) {
         Function<String, WebsiteConfig> gen = __ ->
             getProjectFile(corpus, "search.xml")
             .map(configFile -> {
-                try { return new WebsiteConfig(configFile, Optional.ofNullable(getCorpusConfig(corpus).getLeft()), contextPath); }
+                try { return new WebsiteConfig(configFile, getCorpusConfig(corpus, request, response).getResult(), contextPath); }
                 catch (ConfigurationException e) { throw new RuntimeException("Could not read search.xml " + configFile, e); }
             })
             .orElseThrow(() -> new IllegalStateException("No search.xml, and no default in jar either"));
@@ -345,11 +313,11 @@ public class MainServlet extends HttpServlet {
      * @param corpus name of the corpus
      * @return the config
      */
-    public AuthRequest.Result<CorpusConfig, Exception> getCorpusConfig(Optional<String> corpus, HttpServletRequest request, HttpServletResponse response) {
+    public Result<CorpusConfig, Exception> getCorpusConfig(Optional<String> corpus, HttpServletRequest request, HttpServletResponse response) {
         synchronized (corpusConfigs) {
             // Contact blacklab-server for the config xml file if we have a corpus
             return corpus.map(c -> corpusConfigs.computeIfAbsent(c, __ -> new BlackLabApi(request, response).getCorpusConfig(c)))
-            .orElseGet(() -> AuthRequest.Result.error(new FileNotFoundException("No corpus specified")));
+            .orElseGet(() -> Result.error(new FileNotFoundException("No corpus specified")));
         }
     }
 
@@ -485,8 +453,8 @@ public class MainServlet extends HttpServlet {
             .filter(f -> f != null && f.exists() && f.canRead() && f.isFile())
             .findFirst()
             .orElseGet(() -> {
-                // both the regular data directories didn't contain the file (or aren't configured, etc),
-                // as a last resort, find a fallback file in the the jar directly
+                // both the regular data directories didn't contain the file (or aren't configured, etc.),
+                // as a last resort, find a fallback file in the jar directly
                 try {
                     URL fileInJar = MainServlet.class.getResource("/interface-default/" + filePath);
                     return fileInJar != null ? new File(fileInJar.toURI()) : null;
@@ -556,10 +524,10 @@ public class MainServlet extends HttpServlet {
      * @param corpusDataFormat - optional name suffix to differentiate files for different formats
      * @return the xsl transformer to use for transformation, note that this is always the same transformer.
      */
-    public AuthRequest.Result<XslTransformer, Exception> getStylesheet(Optional<String> corpus, String name, Optional<String> corpusDataFormat, HttpServletRequest request, HttpServletResponse response) {
+    public Result<XslTransformer, Exception> getStylesheet(Optional<String> corpus, String name, Optional<String> corpusDataFormat, HttpServletRequest request, HttpServletResponse response) {
 
         // @formatter:off
-        Function<String, AuthRequest.Result<XslTransformer, Exception>> gen = __ -> {
+        Function<String, Result<XslTransformer, Exception>> gen = __ -> {
             // todo replace with .or() when we upgrade to java 9
             Optional<File> file = Stream.of(
                 getProjectFile(corpus, name + ".xsl").orElse(null),
@@ -570,7 +538,7 @@ public class MainServlet extends HttpServlet {
 
             // File found - try loading it
             if (file.isPresent()) {
-                return AuthRequest.Result.attempt(() -> new XslTransformer(file.get()));
+                return Result.attempt(() -> new XslTransformer(file.get()));
             }
 
             // alright, file not found. Try getting from BlackLab and parse that
@@ -579,7 +547,7 @@ public class MainServlet extends HttpServlet {
                 return new BlackLabApi(request, response).getStylesheet(corpusDataFormat.get())
                         .flatMapAnyError(XslTransformer::new);
             }
-            return AuthRequest.Result.error(new FileNotFoundException("Stylesheet File not on disk, and not available from blacklab-server"));
+            return Result.error(new FileNotFoundException("Stylesheet File not on disk, and not available from blacklab-server"));
         };
 
         // @formatter:on
@@ -605,26 +573,6 @@ public class MainServlet extends HttpServlet {
             throw new IllegalStateException(e); // this file always exists
         }
     }
-
-//    /**
-//     * Get the url to blacklab-server for this corpus. The url will always end
-//     * in "/"
-//     *
-//     * @param corpus the corpus for which to generate the url, if null, the base
-//     *        blacklab-server url will be returned.
-//     * @return the url
-//     */
-//    public String getWebserviceUrl(String corpus) {
-//        String url = adminProps.getProperty(PROP_BLS_SERVERSIDE);
-//        if (!url.endsWith("/")) {
-//            url += "/";
-//        }
-//
-//        if (corpus != null && !corpus.isEmpty()) {
-//            url += corpus + "/";
-//        }
-//        return url;
-//    }
 
     /** NOTE: never suffixed with corpus id, to unify behavior on different pages. The url will always end in "/" */
     public String getExternalWebserviceUrl() {

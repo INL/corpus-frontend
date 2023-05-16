@@ -1,57 +1,60 @@
 package nl.inl.corpuswebsite.utils;
 
-import java.io.IOException;
-import java.net.UnknownHostException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.parsers.ParserConfigurationException;
-
-import net.sf.saxon.ma.trie.ImmutableMap;
-import org.apache.commons.lang3.tuple.Pair;
-import org.xml.sax.SAXException;
+import java.util.Optional;
 
 public class BlackLabApi {
 	protected static String blsUrl;
 	
-	protected final HttpServletRequest clientRequest;
-	protected final HttpServletResponse clientResponse;
+	protected final HttpServletRequest request;
+	protected final HttpServletResponse response;
 	
 	public BlackLabApi(HttpServletRequest clientRequest, HttpServletResponse clientResponse) {
-		this.clientRequest = clientRequest;
-		this.clientResponse = clientResponse;
+		this.request = clientRequest;
+		this.response = clientResponse;
 	}
 	
-	public AuthRequest.Result<String, QueryException> getDocumentMetadata(String corpus, String documentId) {
-		return AuthRequest.request("GET", AuthRequest.url(blsUrl, corpus, "docs", documentId), clientRequest, clientResponse, true);
+	public Result<String, QueryException> getDocumentMetadata(String corpus, String documentId) {
+		return new AuthRequest(request, response)
+				.url(blsUrl, corpus, "docs", documentId)
+				.query("outputformat", "xml")
+				.request(true);
 	}
 
-	public AuthRequest.Result<CorpusConfig, Exception> getCorpusConfig(String corpus) {
-		final String url = AuthRequest.url(blsUrl, corpus);
-		final HashMap<String, String> query = new HashMap<>();
-		query.put("outputformat", "xml");
-
-		return AuthRequest.request("GET",url,query,clientRequest,clientResponse,true)
-			.flatMapAnyError(xml -> {
-				query.put("outputformat", "json");
-				query.put("listvalues", CorpusConfig.getAnnotationsWithRequiredValues(xml));// extract annotations that we need all values for
-				final AuthRequest.Result<String, QueryException> jsonResponse = AuthRequest.request("GET", url, query, clientRequest, clientResponse, true);
-				String json = jsonResponse.getOrThrow();
-				return new CorpusConfig(corpus, xml, json);
-			});
+	public Result<CorpusConfig, Exception> getCorpusConfig(String corpus) {
+		return new AuthRequest(request, response)
+				.url(blsUrl, corpus)
+				.query("outputformat", "xml")
+				.request(true)
+				.flatMapAnyError(xml ->
+						new AuthRequest(request, response)
+							.url(blsUrl, corpus)
+							.query("outputformat", "json")
+							.query("listvalues", CorpusConfig.getAnnotationsWithRequiredValues(xml))
+							.request(true)
+							.flatMapAnyError(json -> new CorpusConfig(corpus, xml, json))
+							.getOrThrow()
+				);
 	}
 
-	public AuthRequest.Result<String, QueryException> getStylesheet(String formatName) {
-		return AuthRequest.request("GET", AuthRequest.url(blsUrl, "input-formats", formatName, "xslt"), clientRequest, clientResponse, true);
+	public Result<String, QueryException> getStylesheet(String formatName) {
+		return new AuthRequest(request, response)
+				.url(blsUrl, "input-formats", formatName, "xslt")
+				.request(true);
+	}
+
+	public Result<String, QueryException> getDocumentContents(String corpus, String docId, Optional<String> blacklabQuery, Optional<String> pattgap, Optional<Integer> pageStart, Optional<Integer> pageEnd) {
+		return new AuthRequest(request, response)
+				.url(blsUrl, corpus, "docs", docId, "contents")
+				.query("patt", blacklabQuery)
+				.query("pattgapdata", pattgap)
+				.query("wordstart", pageStart.map(Object::toString))
+				.query("wordend", pageEnd.map(Object::toString))
+				.request(true);
 	}
 	
 	public static void setBlsUrl(String url) {
-		if (!url.endsWith("/")) {
-			url += "/";
-		}
 		BlackLabApi.blsUrl = url;
 	}
 }

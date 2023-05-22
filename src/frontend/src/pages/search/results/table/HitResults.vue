@@ -312,6 +312,7 @@ export default Vue.extend({
 		/** Return all annotations shown in the main search form (provided they have a forward index) */
 		sortableAnnotations(): AppTypes.NormalizedAnnotation[] { return UIStore.getState().results.shared.sortAnnotationIds.map(id => CorpusStore.get.allAnnotationsMap()[id]); },
 		concordanceAnnotationId(): string { return UIStore.getState().results.shared.concordanceAnnotationId; },
+		concordanceSize(): number { return UIStore.getState().results.shared.concordanceSize; },
 		concordanceAsHtml(): boolean { return UIStore.getState().results.shared.concordanceAsHtml; },
 		shownAnnotationCols(): AppTypes.NormalizedAnnotation[] {
 			// Don't bother showing the value when we're sorting on the surrounding context and not the hit itself
@@ -377,7 +378,7 @@ export default Vue.extend({
 
 			const corpusId = CorpusStore.getState().id;
 			Api.blacklab
-			.getSnippet(corpusId, row.docPid, row.start, row.end)
+			.getSnippet(corpusId, row.docPid, row.start, row.end, this.concordanceSize)
 			.then(s => {
 				if (this.transformSnippets) {
 					this.transformSnippets(s);

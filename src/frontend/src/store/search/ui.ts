@@ -140,7 +140,9 @@ type ModuleRootState = {
 			/** What annotation to use for displaying of [before, hit, after] and snippets. Conventionally the main annotation. */
 			concordanceAnnotationId: string;
 			/** Optionally run a function on all retrieved snippets to arbitrarily process the data (we use this to format the values in some annotations for display purposes). */
-			transformSnippets: null|((snippet?: BLTypes.BLHitSnippet|BLTypes.BLHitSnippet[]) => void);
+			transformSnippets: null|((snippet: BLTypes.BLHitSnippet) => void);
+			/** Size of the details hit (number of words loaded before/after the hit when expanding a hit result). Max 1000 */
+			concordanceSize: number;
 			concordanceAsHtml: boolean;
 			getDocumentSummary: ((doc: BLTypes.BLDocInfo, fields: BLTypes.BLDocFields) => string);
 
@@ -258,6 +260,7 @@ const initialState: ModuleRootState = {
 		},
 		shared: {
 			concordanceAnnotationId: '',
+			concordanceSize: 50,
 			transformSnippets: null,
 			concordanceAsHtml: false,
 			getDocumentSummary: (doc: BLTypes.BLDocInfo, fields: BLTypes.BLDocFields): string => {
@@ -476,6 +479,8 @@ const actions = {
 				r => state.results.shared.concordanceAnnotationId = id
 			), 'shared_concordanceAnnotationId'),
 			concordanceAsHtml: b.commit((state, enable: boolean) => state.results.shared.concordanceAsHtml = enable, 'shared_concordanceAsHtml'),
+			concordanceSize: b.commit((state, size: number) => state.results.shared.concordanceSize = Math.min(Math.max(0, size), 1000), 'shared_concordanceSize'),
+			transformSnippets: b.commit((state, transform: (snippet: BLTypes.BLHitSnippet) => void) => state.results.shared.transformSnippets = transform, 'shared_transformSnippets'),
 
 			detailedAnnotationIds: b.commit((state, ids: string[]|null) => {
 				if (ids != null) {
@@ -753,6 +758,9 @@ const init = () => {
 	if (!initialState.results.shared.concordanceAnnotationId) {
 		actions.results.shared.concordanceAnnotationId(mainAnnotation.hasForwardIndex ? mainAnnotation.id : defaultAnnotationsToShow[0]);
 	}
+
+	if (initialState.results.shared.concordanceSize > 1000) 
+		actions.results.shared.concordanceSize(1000);
 
 	// Results table columns
 	// Hits table: Never show any metadata in the hits table

@@ -935,10 +935,14 @@ Through javascript you can do many things, but outlined below are some of the mo
   </details>
 
 - <details>
-    <summary>[Results/Hits] configure which annotation is shown as context and snippet and enable html mode</summary>
+    <summary>[Results/Hits] configure the displaying of hits and their surrounding words</summary>
 
     `vuexModules.ui.actions.results.shared.concordanceAnnotationId('word_xml')`
+    `vuexModules.ui.actions.results.shared.concordanceSize(100)`
     `vuexModules.ui.actions.results.shared.concordanceAsHtml(true)`
+    `vuexModules.ui.actions.results.shared.transformSnippets(snippet -> {/* modify snippet in place */})`
+
+    -------
 
     `concordanceAnnotationId` lets you set which annotation is used to display words in the results table:
 
@@ -953,6 +957,13 @@ Through javascript you can do many things, but outlined below are some of the mo
     but due to a limitation in the forward index, only the first value for an annotation can be shown in the results.
     Using this system you can use a different annotation for searching (with multiple indexed values)
     than you use for displaying the results (with the multiple words concatenated for example).
+
+    -------
+
+    `concordanceSize` controls the number of visible surrounding words when expanding hits to view details (default 50, max 1000).
+    ![](docs/img/concordance_size_50.png)
+    `vuexModules.ui.actions.results.shared.concordanceSize(10)`
+    ![](docs/img/concordance_size_10.png)
 
     -------
 
@@ -991,7 +1002,36 @@ Through javascript you can do many things, but outlined below are some of the mo
 
     Browser support for non-html elements is good, so arbitrary xml should work out of the box, given it is well-formed.
 
-    USE THIS FEATURE WITH CARE! It may break your page if the xml contains unexpected or malformed contents.
+    **USE THIS FEATURE WITH CARE!** It may break your page if the xml contains unexpected or malformed contents.
+
+    -------
+
+    `transformSnippets` can be used to replace some words, add warnings, or correct some things in your data (such as escape sequences) after the fact, when doing so would be hard to do in the source files.
+    Or it could be used to do some markup in combination with the `concordanceAsHtml` settings.
+    ```ts
+      /** E.g. {word: ['words', 'in', 'the', 'hit'], lemma: [...], pos: [...]} */
+      type SnippetPart = { [annotationId: string]: string[]; };
+      type Snippet = {
+        left: SnippetPart;
+        match: SnippetPart;
+        right: SnippetPart;
+        // Warning: there might be more!
+      };
+      type TransformFunction = ((snippet: Snippet): void);
+      vuexModules.ui.actions.results.shared.transformSnippets(snippet => {
+        const transform = (...snippets) => snippets.forEach(v => v.word = v.word.map(word => {
+          if (word === 'de') return `<span style="text-decoration: underline; text-shadow: 0 0 2px red;">${word}</span>`;
+          return word;
+        }))
+        transform(snippet.left, snippet.match, snippet.right);
+      });
+    ```
+
+    ### before:
+    ![](docs/img/snippet_transform_before.png)  
+    ### after:
+    ![](docs/img/snippet_transform_after.png)
+
 
   </details>
 
@@ -1043,7 +1083,6 @@ Through javascript you can do many things, but outlined below are some of the mo
     `vuexModules.ui.results.shared.totalsRefreshIntervalMs(2_000)`  
     
     ![](docs/img/result_totals_in_progress.png)
-    
 
   </details>
 

@@ -11,6 +11,7 @@ import nl.inl.corpuswebsite.utils.*;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.app.Velocity;
 import org.slf4j.Logger;
@@ -21,6 +22,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.transform.TransformerException;
+
 import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -69,7 +72,7 @@ public class MainServlet extends HttpServlet {
     /**
      * Xslt transformers for corpora
      */
-    private static final Map<String, Result<XslTransformer, Exception>> articleTransformers = new HashMap<>();
+    private static final Map<String, Result<XslTransformer, TransformerException>> articleTransformers = new HashMap<>();
 
     /**
      * The response classes for our URI patterns
@@ -524,10 +527,10 @@ public class MainServlet extends HttpServlet {
      * @param corpusDataFormat - optional name suffix to differentiate files for different formats
      * @return the xsl transformer to use for transformation, note that this is always the same transformer.
      */
-    public Result<XslTransformer, Exception> getStylesheet(Optional<String> corpus, String name, Optional<String> corpusDataFormat, HttpServletRequest request, HttpServletResponse response) {
+    public Result<XslTransformer, TransformerException> getStylesheet(Optional<String> corpus, String name, Optional<String> corpusDataFormat, HttpServletRequest request, HttpServletResponse response) {
 
         // @formatter:off
-        Function<String, Result<XslTransformer, Exception>> gen = __ -> {
+        Function<String, Result<XslTransformer, TransformerException>> gen = __ -> {
             // todo replace with .or() when we upgrade to java 9
             Optional<File> file = Stream.of(
                 getProjectFile(corpus, name + ".xsl").orElse(null),
@@ -538,16 +541,18 @@ public class MainServlet extends HttpServlet {
 
             // File found - try loading it
             if (file.isPresent()) {
-                return Result.attempt(() -> new XslTransformer(file.get()));
+                return Result.attempt(() -> new XslTransformer(file.get())).mapError(e -> new TransformerException("Error loading stylesheet from disk:\n" + file.get() + "\n" + e.getMessage() + "\n" + ExceptionUtils.getStackTrace(e)));
             }
 
             // alright, file not found. Try getting from BlackLab and parse that
             if (name.equals("article") && corpusDataFormat.isPresent()) { // for article files, we can use a fallback if there is no template file
                 logger.info("Attempting to get xsl {} for corpus {} from blacklab...", corpusDataFormat.get(), corpus);
-                return new BlackLabApi(request, response).getStylesheet(corpusDataFormat.get())
-                        .flatMapAnyError(XslTransformer::new);
+                return new BlackLabApi(request, response)
+                        .getStylesheet(corpusDataFormat.get())
+                        .mapWithErrorHandling(XslTransformer::new)
+                        .mapError(e -> new TransformerException("Error loading stylesheet from BlackLab:\n" + e.getMessage() + "\n" + ExceptionUtils.getStackTrace(e)));
             }
-            return Result.error(new FileNotFoundException("Stylesheet File not on disk, and not available from blacklab-server"));
+            return Result.error(new TransformerException("File not found on disk, and no fallback available: " + name + ".xsl"));
         };
 
         // @formatter:on

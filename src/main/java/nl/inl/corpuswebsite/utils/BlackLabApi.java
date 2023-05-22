@@ -27,14 +27,13 @@ public class BlackLabApi {
 				.url(blsUrl, corpus)
 				.query("outputformat", "xml")
 				.request(true)
-				.flatMapAnyError(xml ->
+				.flatMapWithErrorHandling(xml ->
 						new AuthRequest(request, response)
 							.url(blsUrl, corpus)
 							.query("outputformat", "json")
 							.query("listvalues", CorpusConfig.getAnnotationsWithRequiredValues(xml))
 							.request(true)
-							.flatMapAnyError(json -> new CorpusConfig(corpus, xml, json))
-							.getOrThrow()
+							.mapWithErrorHandling(json -> new CorpusConfig(corpus, xml, json))
 				);
 	}
 

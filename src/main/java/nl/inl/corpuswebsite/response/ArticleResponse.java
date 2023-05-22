@@ -78,11 +78,8 @@ public class ArticleResponse extends BaseResponse {
 
     private CorpusConfig getCorpusConfig() {
         BlackLabApi api = new BlackLabApi(request, response);
-        String corpus = this.corpus.orElseThrow(RuntimeException::new);
-        return api.getCorpusConfig(corpus)
-                .recover(QueryException.class, e -> new ReturnToClientException(e.getHttpStatusCode(), e.getMessage()))
-                .mapError(ReturnToClientException::new)
-                .getOrThrow();
+        String corpus = this.corpus.orElseThrow(RuntimeException::new); // should never happen
+        return api.getCorpusConfig(corpus).getOrThrow(ReturnToClientException::new);
     }
 
 //    /**
@@ -132,17 +129,12 @@ public class ArticleResponse extends BaseResponse {
 //        }
 //    }
 
-    protected Result<String, Exception> transformMetadata(Result<String, Exception> r) {
+    protected String transformMetadata(String rawMetadata) {
         Optional<String> corpusDataFormat = getCorpusConfig().getCorpusDataFormat();
-
-        return r.flatMapAnyError(rawMetadata -> {
-            final Result<XslTransformer, Exception> stylesheet = servlet.getStylesheet(corpus, "meta", corpusDataFormat, request, response);
-            XslTransformer trans = stylesheet
-                    .mapError(e -> new RuntimeException("<h1>Error in metadata stylesheet</h1>\n" + ExceptionUtils.getStackTrace(e)))
-                    .getOrThrow();
-
-            return trans.transform(rawMetadata);
-        });
+        return servlet.getStylesheet(corpus, "meta", corpusDataFormat, request, response)
+                .mapWithErrorHandling(trans -> trans.transform(rawMetadata))
+                .recover(Exception::getMessage)
+                .getResult().orElse("Error during transformation of metadata");
     }
 
 
@@ -154,79 +146,41 @@ public class ArticleResponse extends BaseResponse {
      * NOTE: assumes pageStart and pageEnd are validated and correct, they are not sent to BlackLab if they are -1
      *
      * @param documentId
-     * @param corpusOwner
      * @param corpusDataFormat
      * @param pageStart
      * @param pageEnd
      * @return
-     * @throws ActionableException 404 when the article doesn't exist
      */
-    protected Pair<String, Optional<Exception>> getTransformedContent(String documentId, Optional<String> corpusDataFormat, Optional<Integer> pageStart, Optional<Integer> pageEnd) throws ActionableException {
-        final HashMap<String, String> requestParameters = new HashMap<>();
+    protected Result<String, Exception> getTransformedContent(String documentId, Optional<String> corpusDataFormat, Optional<Integer> pageStart, Optional<Integer> pageEnd) {
 
-        var contents = new BlackLabApi(request, response)
-                .getDocumentContents(
+        return new BlackLabApi(request, response).getDocumentContents(
                         corpus.orElseThrow(),
                         documentId,
                         Optional.ofNullable(this.getParameter("query", (String) null)),
                         Optional.ofNullable(this.getParameter("pattgapdata", (String) null)),
                         pageStart,
                         pageEnd
-                );
+                ).flatMap(content -> {
+                    if (!XML_TAG_PATTERN.matcher(content).find()) {
+                        return Result.success("<pre>" + StringUtils.replaceEach(content, new String[] { "<hl>", "</hl>" },
+                                new String[] { "<span class=\"hl\">", "</span>" }) + "</pre>");
+                    }
 
-        contents.mapError()
-
-        try {
-
-
-            final QueryServiceHandler articleContentRequest = new QueryServiceHandler(servlet.getWebserviceUrl(corpus.get()) + "docs/" + URLEncoder.encode(documentId, StandardCharsets.UTF_8.toString()) + "/contents");
-            final String documentContents = articleContentRequest.makeRequest(requestParameters);
-            // TODO this should check 401 instead.
-            if (documentContents.contains("NOT_AUTHORIZED")) return Pair.of("<h1>Content restricted</h1>\nThe webmaster has disabled direct access to the documents in this corpus", Optional.of(new ArticleContentRestrictedException()));
-
-            Exception error = null;
-            XslTransformer trans = null;
-            Pair<Optional<XslTransformer>, Optional<Exception>> transformerAndError = servlet.getStylesheet(corpus.get(), "article", corpusDataFormat);
-
-            error = transformerAndError.getRight().orElse(null);
-            trans = transformerAndError.getLeft().orElse(null);
-
-            // No hand-written transformer for this type (article.xsl or our builtin article_tei.xsl and friends), and no blacklab auto-generated transformer either.
-            // load the fallback transformer that just outputs all text.
-            // NOTE: don't do this is the stylesheet simply failed to load due to an error, so that we can actually expose the error to devs/users.
-            if (trans == null && (error == null || error instanceof QueryException && ((QueryException) error).getHttpStatusCode() == 404)) {
-                // Only load the fallback if this is actually xml, otherwise just string-replace the highlighted words with spans and return as-is (this might not be an xml corpus!)
-                if (!XML_TAG_PATTERN.matcher(documentContents).find()) return Pair.of("<pre>" + StringUtils.replaceEach(documentContents, new String[] {"<hl>", "</hl>"}, new String[] { "<span class=\"hl\">", "</span>"}) + "</pre>", Optional.empty());
-                trans = defaultTransformer;
-                error = null;
-            }
-
-            // Always transform if we can.
-            String output;
-            if (trans != null) {
-                Optional<XslTransformer> transformer = Optional.of(trans);
-                transformer.ifPresent(t -> {
-                    t.addParameter("contextRoot", servlet.getServletContext().getContextPath());
-                    servlet.getWebsiteConfig(corpus).getXsltParameters().forEach(t::addParameter);
+                    return servlet
+                            .getStylesheet(corpus, "article", corpusDataFormat, request, response)
+                            .mapWithErrorHandling(transformer -> {
+                                transformer.addParameter("contextRoot", servlet.getServletContext().getContextPath());
+                                servlet.getWebsiteConfig(corpus, request, response).getXsltParameters()
+                                        .forEach(transformer::addParameter);
+                                return transformer.transform(content);
+                            });
+                })
+                .recoverWithErrorHandling(QueryException.class, e -> {
+                    if (e.getHttpStatusCode() == 401) throw new ArticleContentRestrictedException();
+                    return e.getMessage();
                 });
-                output = transformer.get().transform(documentContents);
-            } else {
-                output = error != null ? "<h1>Error in article stylesheet</h1>" : "Could not prepare document for viewing - missing article stylesheet.";
-            }
-            return Pair.of(output, Optional.ofNullable(error));
-        } catch (UnsupportedEncodingException e) { // is subclass of IOException, but is thrown by URLEncoder instead of signifying network error - consider this fatal
-            throw new RuntimeException(e);
-        } catch (QueryException e) {
-            if (e.getHttpStatusCode() == HttpServletResponse.SC_NOT_FOUND) { throw new ActionableException(HttpServletResponse.SC_NOT_FOUND, "Unknown document '" + documentId + "'"); }
-            else return Pair.of("Unexpected blacklab response: " + e.getMessage() + " (code " + e.getHttpStatusCode() + ")", Optional.of(e));
-        } catch (UnknownHostException e) {
-              return Pair.of("Error while retrieving document contents, unknown host: " + e.getMessage(), Optional.of(e));
-        } catch (IOException e) {
-            return Pair.of("Error while retrieving document contents: " + e.getMessage(), Optional.of(e));
-        } catch (TransformerException e) {
-            return Pair.of("Could not prepare document for viewing (it might be malformed xml, or there is an error in the stylesheet)\n" + e.getMessageAndLocation(), Optional.of(e)); // TODO: return this separately
-        }
     }
+
 
     /**
      * Since pagination can be disabled, edited by the user through the url, and BlackLab has some peculiarities with values touching document boundaries,
@@ -247,8 +201,8 @@ public class ArticleResponse extends BaseResponse {
         public final Optional<Integer> blacklabPageStart;
         public final Optional<Integer> blacklabPageEnd;
 
-        public PaginationInfo(boolean usePagination, int pageSize, Pair<String, Optional<Exception>> documentMetadata, int requestedPageStart, int requestedPageEnd) {
-            if (documentMetadata.getRight().isPresent()) { // uhh, an error in the metadata, can't determine document length. Shouldn't matter though, just show the entire document.
+        public PaginationInfo(boolean usePagination, int pageSize, Result<String, ? extends Exception> documentMetadata, int requestedPageStart, int requestedPageEnd) {
+            if (documentMetadata.getResult().isEmpty()) { // uhh, an error in the metadata, can't determine document length. Shouldn't matter though, just show the entire document.
                 this.pageSize = pageSize;
                 this.documentLength = 1000;
                 this.clientPageEnd = 0;
@@ -260,7 +214,7 @@ public class ArticleResponse extends BaseResponse {
             }
 
             this.pageSize = pageSize;
-            this.documentLength = getDocumentLength(documentMetadata.getLeft());
+            this.documentLength = getDocumentLength(documentMetadata.getResult().get());
             this.paginationEnabled = usePagination;
 
             if (!usePagination) {
@@ -297,38 +251,30 @@ public class ArticleResponse extends BaseResponse {
 
     @Override
     protected void completeRequest() throws IOException {
-        try {
-            BlackLabApi api = new BlackLabApi(this.request, this.response);
+        BlackLabApi api = new BlackLabApi(this.request, this.response);
 
-            // parameters for the requesting of metadata and content from blacklab
-            final String pid = getDocPid();
-            final String corpus = this.corpus.get();
-            final Optional<String> userId = MainServlet.getCorpusOwner(corpus);
+        // parameters for the requesting of metadata and content from blacklab
+        final String pid = getDocPid();
 
-            final CorpusConfig blacklabCorpusInfo = getCorpusConfig();
-            final WebsiteConfig interfaceConfig = servlet.getWebsiteConfig(corpus);
+        final CorpusConfig blacklabCorpusInfo = getCorpusConfig();
+        final WebsiteConfig interfaceConfig = servlet.getWebsiteConfig(this.corpus, this.request, this.response);
 
-            final Result<String, QueryException> rawMetadata = api.getDocumentMetadata(corpus, pid);
-            final Result<String, Exception> transformedMetadata = rawMetadata.flatMap(transformMetadata);
-            PaginationInfo pi = new PaginationInfo(interfaceConfig.usePagination(), interfaceConfig.getPageSize(), rawMetadata, getParameter("wordstart", 0), getParameter("wordend", Integer.MAX_VALUE));
-            final Pair<String, Optional<Exception>> transformedContent = getTransformedContent(pid, userId, blacklabCorpusInfo.getCorpusDataFormat(), pi.blacklabPageStart, pi.blacklabPageEnd);
+        final Result<String, QueryException> rawMetadata = api.getDocumentMetadata(corpus.get(), pid);
+        final Result<String, QueryException> transformedMetadata = rawMetadata.map(this::transformMetadata);
+        PaginationInfo pi = new PaginationInfo(interfaceConfig.usePagination(), interfaceConfig.getPageSize(), rawMetadata, getParameter("wordstart", 0), getParameter("wordend", Integer.MAX_VALUE));
+        final Result<String, Exception> transformedContent = getTransformedContent(pid, blacklabCorpusInfo.getCorpusDataFormat(), pi.blacklabPageStart, pi.blacklabPageEnd);
 
-            context.put("article_meta", transformedMetadata.getLeft());
-            context.put("article_meta_error", transformedMetadata.getRight().orElse(null));
-            context.put("article_content_restricted", transformedContent.getRight().orElse(null) instanceof ArticleContentRestrictedException);
-            context.put("article_content", transformedContent.getLeft());
-            context.put("article_content_error", transformedContent.getRight().orElse(null));
-            context.put("docId", pid);
-            context.put("docLength", pi.documentLength);
-            context.put("paginationEnabled", pi.paginationEnabled);
-            context.put("pageSize", pi.pageSize);
-            context.put("pageStart", pi.clientPageStart);
-            context.put("pageEnd", pi.clientPageEnd);
+        context.put("article_meta", transformedMetadata.getResult().orElse(""));
+        context.put("article_meta_error", transformedMetadata.getError().orElse(null));
+        context.put("article_content_restricted", transformedContent.getError().filter(e -> e instanceof ArticleContentRestrictedException).isPresent());
+        context.put("article_content", transformedContent);
+        context.put("docId", pid);
+        context.put("docLength", pi.documentLength);
+        context.put("paginationEnabled", pi.paginationEnabled);
+        context.put("pageSize", pi.pageSize);
+        context.put("pageStart", pi.clientPageStart);
+        context.put("pageEnd", pi.clientPageEnd);
 
-            displayHtmlTemplate(servlet.getTemplate("article"));
-        } catch (ActionableException e) {
-            response.sendError(e.httpCode, e.message.orElse(null));
-            return;
-        }
+        displayHtmlTemplate(servlet.getTemplate("article"));
     }
 }

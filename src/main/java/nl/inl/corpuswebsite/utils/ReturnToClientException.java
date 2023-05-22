@@ -13,7 +13,7 @@ public class ReturnToClientException extends RuntimeException {
 	
 	public ReturnToClientException(Exception e) {
 		super(e);
-		this.code = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+		this.code = e instanceof QueryException ? ((QueryException) e).getHttpStatusCode() : HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 		this.body = e.getMessage();
 	}
 	public ReturnToClientException(int code, String body) {

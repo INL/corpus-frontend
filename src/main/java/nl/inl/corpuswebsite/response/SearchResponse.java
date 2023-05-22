@@ -4,11 +4,10 @@ import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang3.tuple.Pair;
-
 import nl.inl.corpuswebsite.BaseResponse;
 import nl.inl.corpuswebsite.utils.CorpusConfig;
 import nl.inl.corpuswebsite.utils.QueryException;
+import nl.inl.corpuswebsite.utils.ReturnToClientException;
 
 public class SearchResponse extends BaseResponse {
 
@@ -18,34 +17,15 @@ public class SearchResponse extends BaseResponse {
 
     @Override
     protected void completeRequest() throws IOException {
-        Pair<CorpusConfig, Exception> blackLabInfo = servlet.getCorpusConfig(corpus);
-        if (blackLabInfo.getRight() != null) {
-            Exception e = blackLabInfo.getRight();
-            String message = "Error retrieving corpus information" + (e.getMessage() != null ? ": " + e.getMessage() : "");
-            int code = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
-            if (e instanceof QueryException) {
-                QueryException qe = (QueryException) e;
-                code = qe.getHttpStatusCode();
-                    
-                if (code == HttpServletResponse.SC_NOT_FOUND) {
-                    message = null;
-                } else {
-                    message = "Error retrieving corpus information - unexpected BlackLab response.";
-                }
-            }
+        CorpusConfig config = servlet
+                .getCorpusConfig(corpus, request, response)
+                .getOrThrow(e -> {
+                    String message = "Error retrieving corpus information" + (e.getMessage() != null ? ": " + e.getMessage() : "");
+                    return new ReturnToClientException(e instanceof QueryException ? ((QueryException) e).getHttpStatusCode() : HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message);
+                });
 
-            if (message != null) {
-                response.sendError(code, message);
-            } else { 
-                response.sendError(code);
-            }
-            return;
-        }
-
-        CorpusConfig cfg = blackLabInfo.getLeft();
-        
-        context.put("indexStructureJson", cfg.getJsonUnescaped());
-        context.put("pageSize", servlet.getWebsiteConfig(corpus).usePagination() ? servlet.getWebsiteConfig(corpus).getPageSize() : "undefined");
+        context.put("indexStructureJson", config.getJsonUnescaped());
+        context.put("pageSize", servlet.getWebsiteConfig(corpus, request, response).usePagination() ? servlet.getWebsiteConfig(corpus, request, response).getPageSize() : "undefined");
         context.put("debugInfo", servlet.debugInfo());
         
         // display template

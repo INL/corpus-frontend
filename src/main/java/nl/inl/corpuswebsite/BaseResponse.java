@@ -90,7 +90,7 @@ public abstract class BaseResponse {
      * @throws ServletException when corpus is required but missing.
      */
     public void init(HttpServletRequest request, HttpServletResponse response, MainServlet servlet, Optional<String> corpus, List<String> pathParameters) throws ServletException {
-        if (this.requiresCorpus && !corpus.isPresent()) {
+        if (this.requiresCorpus && corpus.isEmpty()) {
         	throw new ServletException("Response requires a corpus");
         }
         this.request = request;
@@ -99,7 +99,7 @@ public abstract class BaseResponse {
         this.servlet = servlet;
         this.corpus = corpus;
         this.pathParameters = pathParameters;
-        WebsiteConfig cfg = servlet.getWebsiteConfig(corpus);
+        WebsiteConfig cfg = servlet.getWebsiteConfig(corpus, request, response);
 
         // Allow all origins on all requests
         this.response.addHeader("Access-Control-Allow-Origin", "*");

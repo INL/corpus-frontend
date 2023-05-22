@@ -102,7 +102,7 @@ export default Vue.extend({
 	computed: {
 		concordanceAnnotationId(): string { return UIStore.getState().results.shared.concordanceAnnotationId; },
 		concordanceAsHtml(): boolean { return UIStore.getState().results.shared.concordanceAsHtml; },
-		transformSnippets(): null|((s?: BLHitSnippet|BLHitSnippet[]) => void) { return UIStore.getState().results.shared.transformSnippets; },
+		transformSnippets(): null|((s: BLHitSnippet) => void) { return UIStore.getState().results.shared.transformSnippets; },
 		getDocumentSummary(): ((doc: BLDocInfo, fields: BLDocFields) => string) { return UIStore.getState().results.shared.getDocumentSummary; },
 
 		textDirection: CorpusStore.get.textDirection,

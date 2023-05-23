@@ -440,7 +440,7 @@ export interface BLTermOccurances {
 	};
 }
 
-/** Contains all metadata for a document */
+/** Contains all metadata for a document. Fields without indexed values are omitted! */
 export type BLDocInfo = {
 	lengthInTokens: number;
 	mayView: boolean;

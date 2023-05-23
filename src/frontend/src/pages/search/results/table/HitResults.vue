@@ -110,7 +110,7 @@
 								<td><span :dir="textDirection">{{rowData.right}}</span>&hellip;</td>
 							</template>
 							<td v-for="(v, index) in rowData.other" :key="index">{{v}}</td>
-							<td v-for="meta in shownMetadataCols" :key="meta.id">{{rowData.doc[meta.id].join(', ')}}</td>
+							<td v-for="meta in shownMetadataCols" :key="meta.id">{{rowData.doc[meta.id] ? rowData.doc[meta.id].join(', ') : ''}}</td>
 						</tr>
 						<tr v-if="citations[index]" v-show="citations[index].open" :key="index + '-citation'" :class="['concordance-details', {'open': citations[index].open}]">
 							<td :colspan="numColumns">

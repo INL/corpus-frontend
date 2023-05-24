@@ -1,0 +1,30 @@
+# Ignore these when building Docker image
+**/.env
+**/target
+
+**/.settings
+**/.idea
+**/*.iml
+**/.vscode
+**/doc
+/*.md
+**/README.md
+**/.project
+**/.classpath
+**/.factorypath
+**/.apt_generated/
+**/.apt_generated_tests/
+
+.git
+
+# vi temporary files
+**/*.swp
+
+# log files, such as JVM crash files
+**/*.log
+
+# Ignore docker files, we don't need these inside the container.
+**/Dockerfile
+**/*.dockerfile
+**/.dockerignore
+**/docker-compose*.yml

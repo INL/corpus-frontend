@@ -71,13 +71,27 @@ For further development and debugging help, see the [Development section](#Devel
 
 ## Using Docker
 
-First, use docker-compose to create a blacklab-server. Then, to create this frontend run:
+Make sure you [enable BuildKit](https://docs.docker.com/build/buildkit/#getting-started) 
+(e.g. `export DOCKER_BUILDKIT=1`) before building the image.
 
+To create a container with BlackLab Frontend and Server, run:
+
+```bash
+docker-compose up --build 
 ```
-DOCKER_BUILDKIT=1 docker-compose build
-docker-compose up 
+
+The config file `./docker/config/corpus-frontend.properties` will be mounted inside the container. 
+(if you need to change some settings, you can set the `CONFIG_PATH` environment variable to read
+`corpus-frontend.properties` from a different directory).
+
+If you have an indexed BlackLab corpus that you want to access, you can set `CORPUS_DIR` to 
+this directory and `CORPUS_NAME` to the name this corpus should have, e.g.:
+
+```bash
+CORPUS_DIR="/tmp/mycorpus" CORPUS_NAME="my-awesome-corpus" docker-compose up --build
 ```
-The config file `./docker/config/corpus-frontend.properties` is mounted inside the container. See next section for the configuration details.
+
+See next section for how to configure BlackLab Frontend.
 
 Configuration
 ====================

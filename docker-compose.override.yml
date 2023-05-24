@@ -1,0 +1,14 @@
+# Development overrides for BLS+frontend Compose
+version: '3.9'
+
+services:
+
+  frontend:
+    # Bind mount properties file for quick updates during development
+    volumes:
+      - ./docker/config/corpus-frontend.properties:/etc/blacklab/corpus-frontend.properties
+
+  frontend-proxy:
+    # Bind mount properties file for quick updates during development
+    volumes:
+      - ./docker/config/corpus-frontend.properties:/etc/blacklab/corpus-frontend.properties

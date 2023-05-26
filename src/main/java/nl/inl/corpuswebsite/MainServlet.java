@@ -412,9 +412,16 @@ public class MainServlet extends HttpServlet {
             return;
         }
 
-        br.init(request, response, this, Optional.ofNullable(corpus), pathParameters);
         try {
-            br.completeRequest();
+            try {
+                br.init(request, response, this, Optional.ofNullable(corpus), pathParameters);
+                br.completeRequest();
+            } catch (ReturnToClientException e) {
+                if (e.getCode() != HttpServletResponse.SC_OK)
+                    response.sendError(e.getCode(), e.getMessage());
+                else if (e.getMessage() != null)
+                    response.getWriter().write(e.getMessage());
+            }
         } catch (IOException e) {
             throw new ServletException(e);
         }
@@ -432,7 +439,7 @@ public class MainServlet extends HttpServlet {
      * </pre>
      *
      * @param corpus - corpus for which to get the file. If null or a user-defined corpus only the default locations are
-     *        checked.
+     *         checked.
      * @param filePath - path to the file relative to the directory for the corpus.
      * @return the file, if found
      */
@@ -484,8 +491,6 @@ public class MainServlet extends HttpServlet {
      * Resolve the child again the parent and verify that the child is indeed a descendant.
      * Also handle null, illegal paths, empty strings and other such things.
      *
-     * @param parent
-     * @param child
      * @return the new path if everything is alright
      */
     private static Optional<Path> resolveIfValid(Path parent, Optional<String> child) {
@@ -522,7 +527,6 @@ public class MainServlet extends HttpServlet {
      * If we instead return empty optional when this happens, then we only need to inspect documents for which we can't get
      * a transformer, and can easily tell if they're xml documents or some other document/file type.
      *
-     * @param corpus
      * @param name - the name of the file, excluding extension
      * @param corpusDataFormat - optional name suffix to differentiate files for different formats
      * @return the xsl transformer to use for transformation, note that this is always the same transformer.

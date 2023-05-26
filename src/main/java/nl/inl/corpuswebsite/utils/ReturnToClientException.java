@@ -25,4 +25,12 @@ public class ReturnToClientException extends RuntimeException {
 		super();
 		this.code = code;
 	}
+
+	public int getCode() {
+		return code;
+	}
+
+	public String getBody() {
+		return body;
+	}
 }

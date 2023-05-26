@@ -9,9 +9,13 @@
 
 import Vue from 'vue';
 import * as GlossStore from '@/pages/search/form/concept/glossStore';
+import SelectPicker from '@/components/SelectPicker.vue'
 
 export default Vue.extend ({
 	name: 'GlossField',
+	components: {
+		SelectPicker
+	},
 	props: {
 		fieldDescription: Object as () => GlossStore.GlossFieldDescription,
 		fieldName: String,

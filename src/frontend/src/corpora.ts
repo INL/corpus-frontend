@@ -311,6 +311,9 @@ $('#corpora-private-container').on('click', '*[data-corpus-action="delete"]:not(
 				type: 'DELETE',
 				accepts: {json: 'application/json'},
 				dataType: 'json',
+				xhrFields: {
+					withCredentials: true
+				},
 				success () {
 					$('#waitDisplay').hide();
 					showSuccess('Corpus "' + corpus.displayName + '" deleted.');
@@ -369,6 +372,9 @@ $('#corpora-private-container').on('click', '*[data-corpus-action="share"]:not(.
 		accepts: {json: 'application/json' },
 		dataType: 'json',
 		cache: false,
+		xhrFields: {
+			withCredentials: true
+		},
 		success (data) {
 			$('#share-corpus-editor').val(data['users[]'].join('\n'));
 			$('#share-corpus-form').data('corpus', corpus);
@@ -391,6 +397,9 @@ $('#share-corpus-form').on('submit', function(event) {
 		type: 'POST',
 		accepts: {json: 'application/json'},
 		dataType: 'json',
+		xhrFields: {
+			withCredentials: true
+		},
 		data: {
 			'users[]': users,
 		},
@@ -464,6 +473,9 @@ function refreshIndexStatusWhileIndexing(indexId: string) {
 			type: 'GET',
 			accepts: {json: 'application/json'},
 			dataType: 'json',
+			xhrFields: {
+				withCredentials: true
+			},
 			success,
 			error: showXHRError(
 				'Could not retrieve status for corpus "' + indexId.substr(indexId.indexOf(':')+1) + '"',
@@ -521,6 +533,9 @@ function refreshFormatList() {
 		type: 'GET',
 		accepts: {json: 'application/json'},
 		dataType: 'json',
+		xhrFields: {
+			withCredentials: true
+		},
 		success (data: BLTypes.BLFormats) {
 			triggers.updateServer($.extend({}, serverInfo, {
 				user: data.user
@@ -618,6 +633,9 @@ function createIndex(displayName: string, shortName: string, format: string) {
 		type: 'POST',
 		accepts: {json: 'application/json'},
 		dataType: 'json',
+		xhrFields: {
+			withCredentials: true
+		},
 		data: {
 			name: indexName,
 			display: displayName,
@@ -913,6 +931,9 @@ function initNewFormat() {
 			type: 'POST',
 			accepts: {json: 'application/javascript'},
 			dataType: 'json',
+			xhrFields: {
+				withCredentials: true
+			},
 			success (data) {
 				$modal.modal('hide');
 				$formatName.val('');
@@ -983,6 +1004,9 @@ function initNewFormat() {
 			type: 'GET',
 			accepts: {json: 'application/javascript'},
 			dataType: 'json',
+			xhrFields: {
+				withCredentials: true
+			},
 			success (data) {
 				let configFileType = data.configFileType.toLowerCase();
 				if (configFileType === 'yml') {
@@ -1043,6 +1067,9 @@ function initDeleteFormat() {
 					type: 'DELETE',
 					accepts: {json: 'application/javascript'},
 					dataType: 'json',
+					xhrFields: {
+						withCredentials: true
+					},
 					success (data) {
 						showSuccess(data.status.message);
 						refreshFormatList();

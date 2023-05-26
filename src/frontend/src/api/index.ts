@@ -11,6 +11,7 @@ declare const BLS_URL: string;
 
 const blacklabEndpoint = createEndpoint({
 	baseURL: BLS_URL.replace(/\/*$/, '/'),
+	withCredentials: true,
 	params: {
 		outputformat: 'json',
 	},

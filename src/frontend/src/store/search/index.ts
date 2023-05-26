@@ -163,9 +163,7 @@ const actions = {
 		let submittedFormState: QueryModule.ModuleRootState;
 
 		// jump through some typescript hoops
-		console.log("Whaps")
 		const activeForm = InterfaceModule.get.form();
-		console.log("Whoeps")
 		switch (activeForm) {
 			case 'explore': {
 				const exploreMode = InterfaceModule.get.exploreMode();

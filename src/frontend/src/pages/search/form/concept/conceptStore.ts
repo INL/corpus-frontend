@@ -104,7 +104,7 @@ function get_main_fields_url(state: ModuleRootState): string {
 					lexicon(corpus : "${INDEX_ID}") {
 					field
 			}
-		}`
+		}`.replace(/\s+/g, ' ')
 	return `${state.settings.blackparank_server}/api?instance=${state.settings.blackparank_instance}&query=${encodeURIComponent(wQuery)}`
 	// window.open(query, '_blank')
 }

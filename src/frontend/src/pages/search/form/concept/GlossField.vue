@@ -1,7 +1,7 @@
 <template>
 	 <div>
-		<SelectPicker v-if="fieldDescription.type.values.length" :options="fieldDescription.type.values" v-model="currentValue"/>
-		<input v-else type="text" :placeholder="fieldName" v-model.lazy="currentValue" />
+		<SelectPicker v-if="fieldDescription.type.values.length" :options="fieldDescription.type.values" v-model="currentValue" @click.native.stop />
+		<input v-else type="text" class="form-control" :placeholder="fieldName" style="min-width: 250px;" v-model.lazy="currentValue" @click.stop />
 	</div>
 </template>
 

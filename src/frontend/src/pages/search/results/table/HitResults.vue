@@ -111,13 +111,15 @@
 								<td><span :dir="textDirection">{{rowData.right}}</span>&hellip;</td>
 							</template>
 							<td v-for="(v, index) in rowData.other" :key="index">{{v}}</td>
-							<td v-for="(field, findex) in rowData.gloss_fields" :key="index  + '_'  + findex">
+							<td v-for="(field, findex) in rowData.gloss_fields" :key="index  + '_'  + findex" style="overflow: visible;">
 								<GlossField
 								:fieldName="field.fieldName"
 								:hit_first_word_id="rowData.hit_first_word_id"
 								:hit_last_word_id="rowData.hit_last_word_id"
 								:fieldDescription="field"
-								:hitId="get_hit_id(rowData)"/> <!---<input @click.stop=";" type='text' :placeholder="field"/>--></td> <!-- hier custom componentje GlossEdit van maken, dat is fijn voor de v-models -->
+								:hitId="get_hit_id(rowData)"
+							/>
+							</td>
 							<td v-for="meta in shownMetadataCols" :key="meta.id">{{rowData.doc[meta.id] ? rowData.doc[meta.id].join(', ') : ''}}</td>
 						</tr>
 						<tr v-if="citations[index]" v-show="citations[index].open" :key="index + '-citation'" :class="['concordance-details', {'open': citations[index].open}]">
@@ -329,7 +331,7 @@ export default Vue.extend({
 			});
 		},
 		numColumns(): number {
-			return 3 + this.shownAnnotationCols.length + this.shownMetadataCols.length; // left - hit - right - (one per shown annotation) - (one per shown metadata)
+			return 3 + this.shownAnnotationCols.length + this.shownMetadataCols.length + this.shownGlossCols.length; // left - hit - right - (one per shown annotation) - (one per shown metadata)
 		},
 		/** Return all annotations shown in the main search form (provided they have a forward index) */
 		sortableAnnotations(): AppTypes.NormalizedAnnotation[] { return UIStore.getState().results.shared.sortAnnotationIds.map(id => CorpusStore.get.allAnnotationsMap()[id]); },

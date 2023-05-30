@@ -75,6 +75,7 @@
 			"@types/jqueryui"
 		]
 	},
+	"exclude": ["dist"],
 	"vueCompilerOptions": {
 		"target": 2,
 		"extensions": [

@@ -442,6 +442,12 @@ export interface BLHitSnippet {
 	captureGroups: BLCaptureGroup[]; // Jesse
 }
 
+export type BLHit = {
+	docPid: string;
+	hitStart: number;
+	hitEnd: number;
+} & BLHitSnippet;
+
 /** Contains occurance counts of terms in the index */
 export interface BLTermOccurances {
 	termFreq: {
@@ -457,30 +463,26 @@ export type BLDocInfo = {
 	[key: string]: string[];
 };
 
+export type BLDoc = {
+	docInfo: BLDocInfo;
+	docPid: string;
+	/* Only when query was performed with a cql pattern */
+	numberOfHits?: number;
+	/* Only when query was performed with a cql pattern */
+	snippets?: BLHitSnippet[];
+}
+
 /** Blacklab response to a query for documents without grouping */
 export interface BLDocResults {
-	docs: Array<{
-		docInfo: BLDocInfo;
-		docPid: string;
-		/* Only when query was performed with a cql pattern */
-		numberOfHits?: number;
-		/* Only when query was performed with a cql pattern */
-		snippets?: BLHitSnippet[];
-	}>;
+	docs: BLDoc[];
 	/** All of the hit properties exist or none of them do, depending on whether a pattern was supplied */
 	summary: BLSearchSummary & BLSearchSummaryTotalsDocs & Partial<BLSearchSummaryTotalsHits>;
 }
 
 /** Blacklab response to a query for hits without grouping */
 export interface BLHitResults {
-	docInfos: {
-		[key: string]: BLDocInfo;
-	};
-	hits: Array<{
-		docPid: string;
-		end: number;
-		start: number;
-	} & BLHitSnippet>;
+	docInfos: Record<string, BLDocInfo>;
+	hits: BLHit[];
 	summary: BLSearchSummary & BLSearchSummaryTotalsHits;
 }
 

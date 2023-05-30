@@ -12,6 +12,7 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.velocity.Template;
 import org.apache.velocity.app.Velocity;
 import org.slf4j.Logger;
@@ -23,7 +24,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.TransformerException;
-
 import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -58,11 +58,6 @@ public class MainServlet extends HttpServlet {
      * Per-corpus configuration parameters (from search.xml)
      */
     private static final Map<String, WebsiteConfig> configs = new HashMap<>();
-
-    /**
-     * Per-corpus structure and configuration gotten from blacklab-server (IndexStructure)
-     */
-    private static final Map<String, Result<CorpusConfig, Exception>> corpusConfigs = new HashMap<>();
 
     /**
      * Our Velocity templates
@@ -317,11 +312,10 @@ public class MainServlet extends HttpServlet {
      * @return the config
      */
     public Result<CorpusConfig, Exception> getCorpusConfig(Optional<String> corpus, HttpServletRequest request, HttpServletResponse response) {
-        synchronized (corpusConfigs) {
-            // Contact blacklab-server for the config xml file if we have a corpus
-            return corpus.map(c -> corpusConfigs.computeIfAbsent(c, __ -> new BlackLabApi(request, response).getCorpusConfig(c)))
-            .orElseGet(() -> Result.error(new FileNotFoundException("No corpus specified")));
-        }
+        // Contact blacklab-server for the config xml file if we have a corpus
+        // NOT CACHED ON PURPOSE: if blacklab has authentication, we need to re-authenticate every time
+        return corpus.map(c -> new BlackLabApi(request, response).getCorpusConfig(c))
+        .orElseGet(() -> Result.error(new FileNotFoundException("No corpus specified")));
     }
 
     @Override
@@ -332,6 +326,18 @@ public class MainServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException {
         processRequest(request, response);
+    }
+
+    public static Optional<Pair<String, String>> decodeBasicAuth(HttpServletRequest r) {
+        String auth = r.getHeader("Authorization");
+        if (auth == null || !auth.startsWith("Basic ")) {
+            return Optional.empty();
+        }
+        String[] userPass = new String(Base64.getDecoder().decode(auth.substring(6))).split(":", 2);
+        if (userPass.length != 2) {
+            return Optional.empty();
+        }
+        return Optional.of(Pair.of(userPass[0], userPass[1]));
     }
 
     private void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException {

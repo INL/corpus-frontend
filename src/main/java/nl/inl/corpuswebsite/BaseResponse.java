@@ -6,17 +6,8 @@
  */
 package nl.inl.corpuswebsite;
 
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import nl.inl.corpuswebsite.utils.BlackLabApi;
+import nl.inl.corpuswebsite.utils.WebsiteConfig;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.event.EventCartridge;
@@ -26,8 +17,15 @@ import org.apache.velocity.tools.generic.EscapeTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import nl.inl.corpuswebsite.utils.BlackLabApi;
-import nl.inl.corpuswebsite.utils.WebsiteConfig;
+import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 public abstract class BaseResponse {
     protected static final Logger logger = LoggerFactory.getLogger(BaseResponse.class);
@@ -130,7 +128,10 @@ public abstract class BaseResponse {
         context.put("blsUrl", servlet.getExternalWebserviceUrl());
         context.put("page", this.name);
 
-        context.put("username", request.getUserPrincipal() != null ? request.getUserPrincipal().getName() : "");
+        MainServlet.decodeBasicAuth(request).ifPresent(auth -> {
+            context.put("username", auth.getLeft());
+            context.put("password", auth.getRight());
+        });
 
         logger.debug("jspath {}", servlet.getAdminProps().getProperty(MainServlet.PROP_JSPATH));
 

@@ -2,7 +2,7 @@
 // Zie https://github.com/mrcrowl/vuex-typex/blob/master/src/index.ts voor de gebruikte ts implementatie
 
 import { getStoreBuilder } from 'vuex-typex';
-import { BLHitSnippet } from '@/types/blacklabtypes';
+import { BLHit, BLHitSnippet } from '@/types/blacklabtypes';
 import { RootState } from '@/store/search/';
 import * as PatternStore from '@/store/search/form/patterns';
 import cloneDeep from 'clone-deep';
@@ -46,13 +46,6 @@ type GlossQuery = {
 	parts: { [key: string]: string; }
 }
 
-type Location = {
-	corpus_id: string,
-	document_pid: string,
-	start: number,
-	end: number
-}
-
 type Glossing = {
 	gloss: Gloss,
 	author: string,
@@ -62,20 +55,12 @@ type Glossing = {
 	hit_last_word_id: string
 }
 
-type BLHit = {
-	docPid: string;
-	end: number;
-	start: number;
-} & BLHitSnippet
-
 type Hit2String = (a: BLHit) => string;
 type Hit2Range = (a: BLHit) => {startid: string, endid: string};
 type Settings = {
 	gloss_fields: GlossFieldDescription[],
 	blackparank_server: string,
 	blackparank_instance: string,
-	lexit_server: string,
-	lexit_instance: string,
 	get_hit_id: Hit2String,
 	get_hit_range_id: Hit2Range,
 }
@@ -102,8 +87,7 @@ const initialState: ModuleRootState = {
 	settings: {
 		blackparank_server: '',
 		blackparank_instance: 'quine',
-		lexit_server: 'http://nolexit.inl.loc',
-		lexit_instance: '',
+
 		gloss_fields: [{fieldName: 'job', type: JobField}, {fieldName: 'relevant', type: BooleanField}, {fieldName: 'comment', type: StringField}],
 		get_hit_id: h => h.docPid + '_' + h.start + '_' + h.end,
 		get_hit_range_id: h => {
@@ -115,7 +99,6 @@ const initialState: ModuleRootState = {
 	},
 }
 
-const defaults = initialState;
 
 const namespace = 'glosses';
 const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, cloneDeep(initialState));
@@ -134,7 +117,6 @@ const init = () => {};
 const get = {
 	getGloss: (h: BLHit): Glossing|null =>  {
 		const state = getState()
-	 // wat is nuy het probleem??
 		const hit_id = state.settings.get_hit_id(h)
 		return state.glosses[hit_id] // kan null zijn
 	},

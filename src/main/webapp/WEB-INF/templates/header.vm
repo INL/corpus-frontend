@@ -43,7 +43,9 @@
         <script>
             // Might be null if this page is not in a corpus!
             var INDEX_ID = "$esc.javascript($websiteConfig.getCorpusId().orElse(null))";
-            var USER_ID = "$esc.javascript($username)";
+            var USERNAME = "$esc.javascript($username)";
+            var PASSWORD = "$esc.javascript($password)";
+
             var CONTEXT_URL = "$esc.javascript($pathToTop)";
             // Not suffixed with the corpus id
             var BLS_URL = "$esc.javascript($blsUrl)";

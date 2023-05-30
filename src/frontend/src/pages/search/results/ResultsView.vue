@@ -76,8 +76,8 @@
 				allowUnknownValues
 				right
 
-				:searchable="sortOptions.flatMap(o => o.options && !o.disabled ? o.options.filter(opt => !opt.disabled) : o).length > 12"
-				:options="sortOptions"
+				:searchable="sortOptions.searchable"
+				:options="sortOptions.options"
 				:disabled="!!request"
 
 				v-model="sort"
@@ -283,12 +283,12 @@ export default Vue.extend({
 			this.error = null;
 			this.request = null;
 			this.cancel = null;
-            
+
 			// Jesse (glosses): hier ook een keer de page hits in de gloss store updaten
-    
-            const currentHitIds = this.results.hits.map(h => GlossModule.get.settings().get_hit_id(h))
-    
-            GlossModule.actions.setCurrentPage(currentHitIds)
+			if (BLTypes.isHitResults(data)) {
+				const currentHitIds = data.hits.map(h => GlossModule.get.settings().get_hit_id(h))
+				GlossModule.actions.setCurrentPage(currentHitIds)
+			}
 		},
 		setError(data: Api.ApiError, isGrouped?: boolean) {
 			if (data.title !== 'Request cancelled') { // TODO
@@ -444,7 +444,12 @@ export default Vue.extend({
 				this.viewGroup.substring(this.viewGroup.indexOf(':')+1) || '[unknown]';
 		},
 
-		breadCrumbs(): any {
+		breadCrumbs(): Array<{
+			label: string,
+			title: string,
+			active: boolean,
+			onClick: () => void
+		}> {
 			const r = [];
 			r.push({
 				label: this.id === 'hits' ? 'Hits' : 'Documents',
@@ -489,7 +494,10 @@ export default Vue.extend({
 			r[r.length -1].active = true;
 			return r;
 		},
-		sortOptions(): OptGroup[] {
+		sortOptions(): {
+			options: OptGroup[],
+			searchable: boolean
+		} {
 			// NOTE: we need to always pass all available options, then hide invalids based on displayed results
 			// if we don't do this, sorting will be cleared on initial page load
 			// This happens because results aren't loaded yet, thus isHits/isDocs/isGroups all return false, and no options would be available
@@ -548,7 +556,10 @@ export default Vue.extend({
 				));
 			}
 
-			return opts;
+			return {
+				options: opts,
+				searchable: opts.reduce((a, g) => a + g.options.length, 0) > 12
+			};
 		},
 
 		resultComponentName(): string {

@@ -16,7 +16,9 @@ declare const BLS_URL: string;
 declare const INDEX_ID: string;
 
 type Settings = {
+	/** guaranteed not to end in '/' */
 	blackparank_server: string,
+	blacklab_server: string,
 	blackparank_instance: string,
 	corpus_server: string,
 	lexit_server: string,
@@ -51,7 +53,7 @@ type LexiconEntry = {
 	term: string
 }
 
-const emptyQuery = {
+const emptyQuery: ConceptQuery = {
 	'b0': {
 		terms: []
 	}
@@ -90,11 +92,16 @@ ID
 */
 
 
-function reshuffle_query_for_blackparank(q: ConceptQuery, element: string): object {
+function reshuffle_query_for_blackparank(q: ConceptQuery, element: string): {element: string, strict: boolean, filter: string, queries: Record<string, AtomicQuery[]>} {
 	// remove the nesting of terms.
-	const o: {[key: string]: any} = {}
-	for (const k in q) o[k] = q[k].terms;
-	return {'element': element, 'strict': true, 'filter': '', 'queries' : o}
+	const queries: Record<string, AtomicQuery[]> = {};
+	for (const k in q) queries[k] = q[k].terms;
+	return {
+		element,
+		strict: true,
+		filter: '',
+		queries
+	}
 }
 
 function get_main_fields_url(state: ModuleRootState): string {
@@ -116,20 +123,21 @@ function get_main_fields_url(state: ModuleRootState): string {
 
 const get = {
 	query_cql: b.read(s => s.query_cql, 'query_cql'),
-	// Meer gedoe dan je zou willen omdat we die Set in de state hebben. Misschien weghalen???
 	translate_query_to_cql_request: b.read(s => {
 		if (!s.settings) return null;
 		const query = s.query
 		const targetElement =  s.target_element
 
-		const queryForBlackparank = reshuffle_query_for_blackparank(query, targetElement)
-		const encodedQuery = encodeURIComponent(JSON.stringify(queryForBlackparank))
+		// check if we have any queries
+		const hasQueries = Object.values(query).some(q => q.terms.length > 0);
+		if (!hasQueries) return null;
+
 		//alert(JSON.stringify(state.settings))
 		const requestUrl = `${s.settings.blackparank_server}/BlackPaRank?${qs.stringify({
-			server: BLS_URL,
+			server: s.settings.blacklab_server, /* direct IP, circumvent proxy etc. */
 			corpus: INDEX_ID,
 			action: 'info',
-			query: encodedQuery
+			query: JSON.stringify(reshuffle_query_for_blackparank(query, targetElement))
 		})}`
 		return requestUrl
 	}, 'translate_query_to_cql_request'),
@@ -146,7 +154,6 @@ const actions = {
 
 	setSubQuery: b.commit((state, payload: { id: string, subquery: SingleConceptQuery}) =>  {
 		// tslint:disable-next-line:no-console
-		console.log('whop whop getting there: ' + JSON.stringify(payload.subquery));
 		Vue.set(state.query, payload.id, payload.subquery);
 		actions.updateCQL();
 	}, 'concept_set_subquery'),
@@ -186,7 +193,10 @@ const actions = {
 	}, 'concept_set_target_element'),
 
 	loadSettings: b.commit((state, payload: Settings) => {
-		state.settings = payload
+		state.settings = payload;
+		state.settings.blackparank_server.replace(/\/$/, '');
+		state.settings.blacklab_server = state.settings.blacklab_server || BLS_URL;
+		state.settings.blacklab_server.replace(/\/$/, '');
 		const request = get_main_fields_url(state)
 		axios.get(request).then(
 			response => {

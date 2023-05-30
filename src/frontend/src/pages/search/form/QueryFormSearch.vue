@@ -111,20 +111,18 @@
 				<button type="button" class="btn btn-default btn-sm" @click="copyAdvancedQuery">Copy to CQL editor</button>
 			</div>
 			<div :class="['tab-pane', {'active': activePattern==='concept'}]" id="concept">
-				
+
 				<!-- Jesse -->
-			
-				<ConceptSearch/>   <!--  v-on:update_concept_query="updateComplex" (niet meer nodig??)-->
+				<ConceptSearch/>
 				<button type="button" class="btn btn-default btn-sm" @click="copyConceptQuery">Copy to CQL editor (expert mode)</button>
-			</div> 
+			</div>
 			<div :class="['tab-pane', {'active': activePattern==='glosses'}]" id="glosses">
-				
+
 				<!-- Jesse -->
-			
-				<GlossSearch/>   <!--  v-on:update_concept_query="updateComplex" (niet meer nodig??)-->
+				<GlossSearch/>
 				<div style="margin-top:2em"/>
 				<button type="button" class="btn btn-default btn-sm" @click="copyGlossQuery">Copy to CQL editor (expert mode)</button>
-			</div> 
+			</div>
 			<div :class="['tab-pane', {'active': activePattern==='expert'}]" id="expert">
 				<h3>Corpus Query Language:</h3>
 				<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model.lazy="expert"></textarea>
@@ -174,6 +172,7 @@ import { QueryBuilder } from '@/modules/cql_querybuilder';
 import { paths } from '@/api';
 import * as AppTypes from '@/types/apptypes';
 import { getAnnotationSubset } from '@/utils';
+import { Option } from '@/components/SelectPicker.vue';
 
 function isVue(v: any): v is Vue { return v instanceof Vue; }
 function isJQuery(v: any): v is JQuery { return typeof v !== 'boolean' && v && v.jquery; }
@@ -263,7 +262,7 @@ export default Vue.extend({
 		},
 		parseQuery() {
 			// TODO dedicated component - port builder?
-			const builder: QueryBuilder = $(this.$refs.querybuilder).data('builder');
+			const builder: QueryBuilder = $(this.$refs.querybuilder as HTMLElement).data('builder');
 			if (builder && builder.parse(this.expert)) {
 				InterfaceStore.actions.patternMode('advanced');
 				this.parseQueryError = null;

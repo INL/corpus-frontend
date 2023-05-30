@@ -3,17 +3,20 @@
 		Search in: <SelectPicker v-model="element_searched" :options="settings.searchable_elements" />
 
 		<div class='boxes' style='text-align: center'>
-			<ConceptSearchBox
-				v-for="id in nBoxes"
+			<ConceptSearchBox v-for="(v, id) in query_from_store"
 				:key="id"
 				:id="'b' + id"
-				:ref="'b' +id"
+				:settings="settings"
+
+				:value="v"
+				@input="updateSubquery(id, $event)"
 			/>
 		</div>
 		<button @click.prevent="resetQuery">Reset</button>
 		<button @click.prevent="addBox">Add box</button>
 		<button @click.prevent="removeBox">Remove box</button>
-		<button v-if="settings" target="_blank" @click="window.open(settings.lexit_server + '?db=' + settings.lexit_instance + '&table=lexicon', '_blank')">View lexicon</button>
+		<a role="button" class="btn" target="_blank" :href="settings.lexit_server + '?db=' + settings.lexit_instance + '&table=lexicon'">View lexicon</a>
+
 
 		<label> <input type="checkbox" v-model="showQuery"> Show query</label>
 
@@ -23,8 +26,8 @@
 
 			<i>Query</i>
 
-			<div style="margin-bottom: 1em" v-for="(e,i) in Object.entries(query_from_store)" v-bind:key="i">
-				<b>{{ e[0] }}</b> → [{{ e[1].terms.filter(t => t.value.length > 0).map(t => t.value).join("; ")}}]
+			<div style="margin-bottom: 1em" v-for="subquery, i in query_from_store" v-bind:key="i">
+				<b>b{{i}}</b> → [{{ subquery.map(t => t.value).join("; ")}}]
 			</div>
 
 			<i>CQL rendition</i>
@@ -39,60 +42,22 @@
 
 import Vue from 'vue';
 
-import * as CorpusStore from '@/store/search/corpus';
 import * as PatternStore from '@/store/search/form/patterns';
 import * as ConceptStore from '@/pages/search/form/concept/conceptStore';
 
 import SelectPicker from '@/components/SelectPicker.vue';
-
-
 import ConceptSearchBox from './ConceptSearchBox.vue'
 
 export default Vue.extend ({
 	components: { ConceptSearchBox, SelectPicker },
 	name: 'ConceptSearch',
-	props: {
-		msg: String,
-		src : String
-	},
-
 	data: () => ({
 		showQuery : false,
-		corpus: CorpusStore.getState().id,
-		search_in_options: ConceptStore.get.settings()?.searchable_elements,  //,c2e[CorpusStore.getState().id],
-		search_in: 'p',
-		nBoxes: 2,
-		queries : { // this should be a computed field.....
-
-		},
-		queryFieldValue: '',
-		filterFieldValue: '', // TODO moet weg....
-		cqlQuery: '',
-		window: window as Window
 	}),
-
-	methods : {
-		addBox() {
-			this.nBoxes++;
-		},
-		removeBox() {
-			this.nBoxes--;
-		},
-		resetQuery() {
-			Object.keys(this.$refs).forEach(k => {
-				const ref_k = this.$refs[k]
-				//console.log(rk)
-				// @ts-ignore
-				ref_k[0].resetQuery()
-			})
-			ConceptStore.actions.resetQuery()
-		}
-	},
 	computed : {
 		settings: ConceptStore.get.settings,
 		query_from_store() { return ConceptStore.getState().query },
 		query_cql_from_store() { return ConceptStore.getState().query_cql },
-		request_from_store() { return ConceptStore.get.translate_query_to_cql_request() },
 
 		concept: {
 			get(): string|null { return PatternStore.getState().concept; },
@@ -103,7 +68,16 @@ export default Vue.extend ({
 			set: ConceptStore.actions.setTargetElement,
 		},
 	},
-})
+
+	methods : {
+		updateSubquery(index: number, query: ConceptStore.AtomicQuery[]) {
+			ConceptStore.actions.updateSubquery({index, query});
+		},
+		addBox() { ConceptStore.actions.addSubquery(undefined); },
+		removeBox() { ConceptStore.actions.removeSubquery(undefined); },
+		resetQuery() { ConceptStore.actions.resetQuery(); },
+	}
+});
 
 </script>
 

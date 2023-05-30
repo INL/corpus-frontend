@@ -247,14 +247,7 @@ const actions = {
 		const annotations = PatternModule.get.activeAnnotations();
 		const submittedFormStates = annotations
 		.filter(a => a.type !== 'pos')
-		.flatMap(a => {
-			return a.value
-			.split('|')
-			.map(value => ({
-				...a,
-				value
-			}));
-		})
+		.flatMap(a => a.value.split('|').map(value => ({...a,value})))
 		.map<{
 			entry: HistoryModule.HistoryEntry,
 			pattern?: string,
@@ -264,7 +257,7 @@ const actions = {
 				...sharedBatchState,
 				patterns: {
 					advanced: null,
-                    concept: null,
+					concept: null,
 					glosses: null,
 					expert: null,
 					simple: {...PatternModule.getState().simple, value: '', case: false},
@@ -341,7 +334,7 @@ const init = () => {
 	HistoryModule.init();
 	QueryModule.init();
 	ConceptModule.init(); // Jesse
-        GlossModule.init();
+	GlossModule.init();
 };
 
 // Debugging helpers.
@@ -360,7 +353,7 @@ const init = () => {
 	tagset: TagsetModule,
 	ui: UIModule,
 	concepts: ConceptModule, // Jesse
-    glosses: GlossModule,
+	glosses: GlossModule,
 	explore: ExploreModule,
 	form: FormManager,
 	filters: FilterModule,

@@ -10,7 +10,6 @@ import cloneDeep from 'clone-deep';
 
 import axios from 'axios'
 import qs from 'qs'
-import Vue from 'vue';
 
 declare const BLS_URL: string;
 declare const INDEX_ID: string;
@@ -31,20 +30,13 @@ type AtomicQuery = {
 	value: string;
 };
 
-type SingleConceptQuery = {
-	terms: AtomicQuery[];
-};
-
-type ConceptQuery = {
-	[key: string]: SingleConceptQuery;
-}
-
 type ModuleRootState = {
 	target_element: string;
 	main_fields: string[]
 	settings: Settings|null,
 	query_cql: string;
-	query: ConceptQuery
+	/** One AtomicQuery[] per search box (based on index) */
+	query: AtomicQuery[][]
 };
 
 type LexiconEntry = {
@@ -53,17 +45,12 @@ type LexiconEntry = {
 	term: string
 }
 
-const emptyQuery: ConceptQuery = {
-	'b0': {
-		terms: []
-	}
-}
 const initialState: ModuleRootState = {
 	target_element: 'p',
 	main_fields: ['cosmology', 'alchemy', 'cryptozoology'],
 	query_cql: '',
 	settings: null,
-	query: emptyQuery
+	query: [[], []] // start with two boxes
 }
 
 const namespace = 'concepts';
@@ -92,15 +79,16 @@ ID
 */
 
 
-function reshuffle_query_for_blackparank(q: ConceptQuery, element: string): {element: string, strict: boolean, filter: string, queries: Record<string, AtomicQuery[]>} {
+function reshuffle_query_for_blackparank(q: AtomicQuery[][], element: string): {element: string, strict: boolean, filter: string, queries: Record<string, AtomicQuery[]>} {
 	// remove the nesting of terms.
-	const queries: Record<string, AtomicQuery[]> = {};
-	for (const k in q) queries[k] = q[k].terms;
 	return {
 		element,
 		strict: true,
 		filter: '',
-		queries
+		queries: q.reduce((acc, val, i) => {
+			acc[i] = val;
+			return acc;
+		}, {} as Record<string, AtomicQuery[]>)
 	}
 }
 
@@ -129,7 +117,7 @@ const get = {
 		const targetElement =  s.target_element
 
 		// check if we have any queries
-		const hasQueries = Object.values(query).some(q => q.terms.length > 0);
+		const hasQueries = Object.values(query).some(q => q.length > 0);
 		if (!hasQueries) return null;
 
 		//alert(JSON.stringify(state.settings))
@@ -149,14 +137,23 @@ const get = {
 
 const actions = {
 	resetQuery: b.commit((state) => {
-		state.query = emptyQuery
+		state.query = [[],[]]; // start with two boxes.
+		actions.updateCQL();
 	}, 'reset_query'),
 
-	setSubQuery: b.commit((state, payload: { id: string, subquery: SingleConceptQuery}) =>  {
-		// tslint:disable-next-line:no-console
-		Vue.set(state.query, payload.id, payload.subquery);
+	addSubquery: b.commit((state, payload: AtomicQuery[] = []) => {
+		state.query.push(payload);
 		actions.updateCQL();
-	}, 'concept_set_subquery'),
+	}, 'add_subquery'),
+	removeSubquery: b.commit((state, payload?: number) => {
+		payload = payload ?? state.query.length - 1;
+		state.query.splice(payload, 1);
+		actions.updateCQL();
+	}, 'remove_subquery'),
+	updateSubquery: b.commit((state, payload: {index: number, query: AtomicQuery[]}) => {
+		state.query[payload.index] = payload.query;
+		actions.updateCQL();
+	}, 'update_subquery'),
 
 	updateCQL: b.commit(state => {
 		const request =  get.translate_query_to_cql_request()
@@ -179,13 +176,6 @@ const actions = {
 			alert(`setSubQuery: ${e.message} on ${request}`)
 		})
 	}, 'concept_update_cql'),
-
-
-	addTerm: b.commit((state, payload: { label: string, atom: AtomicQuery }) => {
-		if (!(payload.label in state.query))
-			Vue.set(state.query, payload.label, { terms: new Array<AtomicQuery>() });
-		state.query[payload.label].terms.push(payload.atom);
-	}, 'concept_add_term'),
 
 	setTargetElement: b.commit((state, payload: string) => {
 		 state.target_element = payload
@@ -222,8 +212,6 @@ export {
 	get,
 	init,
 	AtomicQuery,
-	SingleConceptQuery,
-	ConceptQuery,
 	LexiconEntry,
 	Settings
 }

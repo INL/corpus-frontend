@@ -98,6 +98,13 @@ a.ui-menu-item-wrapper {
 	z-index: 9000;
 	background-image: url(../img/logo_100x100.png)
 }
+
+.navbar-username {
+	float: right;
+	flex: none;
+	flex-basis: 0;
+	white-space: nowrap;
+}
 /*
 .navbar-logo-margin {
 	margin-left: 100px !important;

@@ -24,21 +24,21 @@
 						:url="urls && urls.completionURLForConcept"
 						v-model="current_concept"
 					/>
-					<!-- <button @click="addConcept" title="Add concept to lexicon">⤿ lexicon</button> -->
+					<!-- <button @click="insertConcept" title="Add concept to lexicon">⤿ lexicon</button> -->
 				</td>
 			</tr>
 			<tr>
 				<td class="fn"><label :for="id + 'ac2'">Term: </label></td>
 				<td>
 					<Autocomplete
-						:id="id + 'ac2'"
 						class="form-control"
 						placeholder="...term..."
+						:id="id + 'ac2'"
 						:processData="get_term_values"
 						:url="urls && urls.completionURLForTerm"
 						v-model="current_term"
 					/>
-					<button @click="addTerm" title="Add term to lexicon">⤿ lexicon</button>
+					<button @click="insertTerm" title="Add term to lexicon">⤿ lexicon</button>
 				</td>
 			</tr>
 		</table>
@@ -47,12 +47,12 @@
 		<div class="terms">
 			<div v-for="(t,i) in terms" :key="i">
 				<label v-if="t.term">
-					<input type="checkbox" v-model="checked_terms[t.term]" @click="() => toggleChecked(t.term)"/>
-				{{ t.term }}</label>
+					<input type="checkbox" :value="t.term" :checked="checked_terms[t.term]" @input="$set(checked_terms, t.term, $event.target.checked)"/>
+					{{ t.term }}
+				</label>
 			</div>
 		</div>
 
-		<button type="button" @click="buildQuery">Add selected terms to query</button>
 		<button type="button" @click="resetQuery">Clear</button>
 	 </div>
 </template>
@@ -71,31 +71,28 @@ import SelectPicker from '@/components/SelectPicker.vue';
 // see header.vm
 declare const USERNAME: string;
 declare const PASSWORD: string;
-
 const credentials = USERNAME && PASSWORD ? {
 	username: USERNAME,
 	password: PASSWORD
 } : null;
 
-
-declare const BLS_URL: string;
+type Term = { term: string }
 
 export default Vue.extend ( {
 	name: 'ConceptSearchBox',
 	components: { Autocomplete, SelectPicker },
 	props: {
 		id: String,
-		field: String
+		field: String,
+		settings: Object as () => ConceptStore.Settings,
+		value: Array as () => Array<{field: string, value: string}>
 	},
 	data: () => ({
 		debug: false,
-		search_concept: '',
 		search_field: '',
-		search_term : '',
 		current_concept : '',
 		current_term : '',
 		checked_terms: {} as Record<string, boolean>,
-		fields: ['hallo', 'daar'] as string[],
 		terms: [] as Term[],
 		corpus: CorpusStore.getState().id,
 		quine_lexicon: 'quine_lexicon' as string,
@@ -103,34 +100,12 @@ export default Vue.extend ( {
 
 	methods : {
 		alert,
-		buildQuery() {
-			const terms = Object.keys(this.checked_terms).filter(t => this.checked_terms[t])
-			const scq: ConceptStore.SingleConceptQuery = {
-				terms: terms
-					.filter(x=>x && x !== 'null')
-					.map(t => ({field: 'lemma', value: t}))
-			}
-
-			ConceptStore.actions.setSubQuery( {id: this.id, subquery: scq} )
-		},
-
-		toggleChecked(t: string) {
-			Vue.set(this.checked_terms, t,  !this.checked_terms[t]);
-		},
 		addTerm() {
 			if (!this.current_term || this.terms.find(t => t.term === this.current_term)) {
 				return;
 			}
 			this.terms.push({'term': this.current_term});
 			this.insertTerm();
-		},
-		addConcept() {
-			// do something to add to database
-			this.insertConcept()
-		},
-		setSearchConcept(e: string) {
-			// alert(`Search concept ${e}`)
-			this.search_concept = e
 		},
 		get_cluster_values(d: { data: ConceptStore.LexiconEntry[] }): string[] {
 			const vals = uniq(d.data.map(x  => x.cluster))
@@ -140,43 +115,34 @@ export default Vue.extend ( {
 			const vals = uniq(d.data.map(x => x.term))
 			return vals
 		},
+		insertConcept() {
+			if (!this.current_concept) return;
+			this.addToDatabase(this.current_concept);
+		},
 		insertTerm() {
+			if (!this.current_term || this.checked_terms[this.current_term]) return;
+			this.$set(this.checked_terms, this.current_term, true);
+			this.addToDatabase(this.current_concept, this.current_term);
+		},
+		addToDatabase(concept: string, term?: string) {
+			if (!this.settings) return;
 			if (!credentials) {
 				alert('You need to be logged in to add terms to the lexicon')
 				return
 			}
-			if (!this.settings) return;
-
-			const insertIt = {
+			const insertIt: any = {
 				corpus: this.corpus,
 				field: this.search_field,
+				author: credentials.username,
 				concept: this.current_concept,
-				term: this.current_term,
-				author: 'corpus_frontend'
 			}
+			if (term) insertIt.term = term
+
 			const insertTerm =  encodeURIComponent(JSON.stringify(insertIt))
 			const url = `${this.settings.blackparank_server}/api?instance=${this.quine_lexicon}&insertTerm=${insertTerm}`
 
-			// TODO: authentication !!!!
 			axios.get(url,{ auth: credentials })
 				.then(r => console.log('inserted term'))
-				.catch(log_error)
-		},
-		insertConcept() {
-			if (!this.settings) return;
-			if (!credentials) {
-				alert('You need to be logged in to add concepts to the lexicon')
-				return
-			}
-
-			const self = this
-			const insertIt = {corpus: self.corpus, field: self.search_field, concept:self.current_concept, author: 'corpus_frontend'}
-			const insertConcept =  encodeURIComponent(JSON.stringify(insertIt))
-			const url = `${this.settings.blackparank_server}/api?instance=${this.quine_lexicon}&insertConcept=${insertConcept}`
-
-			// TODO: authentication !!!!
-			axios.get(url,{ auth: credentials })
-				.then(r => console.log('inserted concept'))
 				.catch(log_error)
 		},
 		resetQuery() {
@@ -184,14 +150,26 @@ export default Vue.extend ( {
 			this.current_term = ''
 			this.terms = []
 			this.checked_terms = {}
-			this.buildQuery()
 		}
 	},
 
 	computed : {
-		settings: ConceptStore.get.settings,
-		main_fields(): string[] {
-			return ConceptStore.get.main_fields()
+		main_fields: ConceptStore.get.main_fields,
+
+		newValue(): ConceptStore.AtomicQuery[] {
+			return Object
+			.keys(this.checked_terms)
+			.filter(t => this.checked_terms[t] && t !== 'null')
+			.map(t => ({field: this.search_field, value: t}));
+		},
+		term_search_url(): string|null {
+			return this.urls && this.urls.term_search_url;
+		},
+		completionURLForTerm(): string|null {
+			return this.urls && this.urls.completionURLForTerm;
+		},
+		completionURLForConcept(): string|null {
+			return this.urls && this.urls.completionURLForConcept;
 		},
 		urls(): {
 			term_search_url: string|null,
@@ -219,38 +197,17 @@ export default Vue.extend ( {
 					)}` : null,
 			}
 		},
-
-		term_search_promise(): Promise<string[]> {
-			const getTermsURL = this.urls?.term_search_url;
-			if (!getTermsURL) return Promise.resolve([]);
-
-			const self = this;
-			const autocompleteURL = `${BLS_URL}/${this.corpus}/autocomplete/contents/lemma/?term=${this.current_term}`
-
-			console.log(`get Terms: ${getTermsURL}, autocomplete: ${autocompleteURL}`)
-			const pdb = axios.get(getTermsURL)
-			const termPromiseCorpus: Promise<string[]> = axios.get(autocompleteURL).then(r => r.data)
-			const termPromiseDatabase: Promise<string[]>  = pdb.then(r => self.get_term_values(r.data))
-
-			const promiseBoth: Promise<string[]> = Promise.all([termPromiseDatabase, termPromiseCorpus]).then(r => {
-				console.log(JSON.stringify(r))
-				const r00 = r[0].filter(x => x)
-				return r00.concat(r[1]).filter(x => x && x.length > 0) // dit gaat mis als er null in db stuk zit....
-			})
-
-			return promiseBoth
-		},
 	},
 	watch: {
 		main_fields(n, o) {
 			if (n && n.length > 0)
 				this.search_field = n[0]
 		},
-		urls() {
-			const urls = this.urls;
-			if (!urls || !credentials) return;
+		term_search_url() {
+			const url = this.term_search_url;
+			if (!url || !credentials) return;
 
-			axios.get(urls.term_search_url, {
+			axios.get(url, {
 				headers: { 'Accept': 'application/json', },
 				auth: credentials
 			})
@@ -259,7 +216,11 @@ export default Vue.extend ( {
 				this.terms = uniq(response.data.data)
 				this.terms.map(t => this.checked_terms[t.term] = true)
 			})
-		}
+		},
+		newValue() {
+			// don't remove the type cast, so we get a warning here if we change something.
+			this.$emit('input', this.newValue as ConceptStore.AtomicQuery[]);
+		},
 	},
 })
 </script>

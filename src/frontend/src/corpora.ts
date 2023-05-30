@@ -144,7 +144,7 @@ createHandler({event: DataEvent.CORPORA_REFRESH, handler(newCorpora) {
 }});
 
 createHandlerOnce({selector: '*[data-autoupdate="username"]', event: DataEvent.SERVER_REFRESH, handler(newServerInfo) {
-	this.show().html(newServerInfo.user.loggedIn ? 'Logged in as <em>'+newServerInfo.user.id+'</em>' : 'Not logged in');
+	this.show().html(newServerInfo.user?.id || 'Not logged in');
 }});
 
 createHandler({selector: 'tbody[data-autoupdate="format"]', event: DataEvent.FORMATS_REFRESH, handler(newFormats) {

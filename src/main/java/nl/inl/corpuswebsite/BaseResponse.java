@@ -8,6 +8,8 @@ package nl.inl.corpuswebsite;
 
 import nl.inl.corpuswebsite.utils.BlackLabApi;
 import nl.inl.corpuswebsite.utils.WebsiteConfig;
+
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.event.EventCartridge;
@@ -128,10 +130,9 @@ public abstract class BaseResponse {
         context.put("blsUrl", servlet.getExternalWebserviceUrl());
         context.put("page", this.name);
 
-        MainServlet.decodeBasicAuth(request).ifPresent(auth -> {
-            context.put("username", auth.getLeft());
-            context.put("password", auth.getRight());
-        });
+        var user = MainServlet.decodeBasicAuth(request);
+        context.put("username", user.map(Pair::getLeft).orElse(""));
+        context.put("password", user.map(Pair::getRight).orElse(""));
 
         logger.debug("jspath {}", servlet.getAdminProps().getProperty(MainServlet.PROP_JSPATH));
 

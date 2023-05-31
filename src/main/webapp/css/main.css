@@ -100,11 +100,20 @@ a.ui-menu-item-wrapper {
 }
 
 .navbar-username {
-	float: right;
+	position: absolute;
+	right: 0;
+	top: 0;
 	flex: none;
 	flex-basis: 0;
 	white-space: nowrap;
 }
+
+@media (max-width: 768px) {
+	.navbar-username {
+		right: 50px;
+	}
+}
+
 /*
 .navbar-logo-margin {
 	margin-left: 100px !important;

@@ -84,6 +84,7 @@
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                     </button>
+                    <div class="username navbar-username navbar-brand"><span class="fa fa-solid fa-user"></span> <span class="username" data-autoupdate="username">$username</span></div>
                 </div>
 
                 <div class="navbar-collapse collapse navbar-logo-margin">
@@ -92,7 +93,6 @@
                             <li><a href="$link.href" #if($link.openInNewWindow) target="_blank" #end>$link</a></li>
                         #end
                     </ul>
-                    <div class="username navbar-username navbar-brand"><span class="fa fa-solid fa-user"></span> <span class="username" data-autoupdate="username">$username</span></div>
                 </div>
             </div>
         </div>

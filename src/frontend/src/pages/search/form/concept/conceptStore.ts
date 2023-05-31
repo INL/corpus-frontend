@@ -94,12 +94,7 @@ function reshuffle_query_for_blackparank(q: AtomicQuery[][], element: string): {
 
 function get_main_fields_url(state: ModuleRootState): string {
 	if (!state.settings) return '';
-	const wQuery = `
-				query Quine {
-					lexicon(corpus : "${INDEX_ID}") {
-					field
-			}
-		}`.replace(/\s+/g, ' ')
+	const wQuery = `query Quine { lexicon(corpus : "${INDEX_ID}") { field } }`;
 	return `${state.settings.blackparank_server}/api?instance=${state.settings.blackparank_instance}&query=${encodeURIComponent(wQuery)}`
 	// window.open(query, '_blank')
 }
@@ -184,9 +179,8 @@ const actions = {
 
 	loadSettings: b.commit((state, payload: Settings) => {
 		state.settings = payload;
-		state.settings.blackparank_server.replace(/\/$/, '');
-		state.settings.blacklab_server = state.settings.blacklab_server || BLS_URL;
-		state.settings.blacklab_server.replace(/\/$/, '');
+		state.settings.blacklab_server = (state.settings.blacklab_server || BLS_URL).replace(/\/$/, '');
+		state.settings.blackparank_server = state.settings.blackparank_server.replace(/\/$/, '');
 		const request = get_main_fields_url(state)
 		axios.get(request).then(
 			response => {

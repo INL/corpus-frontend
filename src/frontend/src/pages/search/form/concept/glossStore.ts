@@ -59,6 +59,7 @@ type Hit2String = (a: BLHit) => string;
 type Hit2Range = (a: BLHit) => {startid: string, endid: string};
 type Settings = {
 	gloss_fields: GlossFieldDescription[],
+	/** Any trailing '/' will be stripped. */
 	blackparank_server: string,
 	blackparank_instance: string,
 	get_hit_id: Hit2String,
@@ -285,6 +286,7 @@ const actions = {
 	loadSettings: b.commit((state, payload: Settings) => {
 		//alert('Gloss Settings:' + JSON.stringify(payload))
 		state.settings = payload
+		state.settings.blackparank_server = state.settings.blackparank_server.replace(/\/$/, '');
 	} , 'gloss_load_settings'),
 };
 

@@ -81,6 +81,8 @@ export default Vue.extend({
 					'ui-autocomplete': 'dropdown-menu'
 				},
 				source(params: any, render: (v: string[]) => void) {
+					if (!self.getData && !self.url) return;
+
 					const {value} = self._getWordAroundCursor(false);
 					if (!value.length) return;
 					if (value === lastSearchValue && lastSearchResults) return render(lastSearchResults);

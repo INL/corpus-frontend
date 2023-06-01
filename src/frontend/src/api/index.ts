@@ -321,13 +321,13 @@ export const glossPaths = {
 
 export const glossApi = {
 	getCql: (instance: string, author: string, corpus: string, query: string) => endpoints.gloss
-		.get<Glossing[]>(glossPaths.root(), { params: {
+		.get<''|Glossing[]>(glossPaths.root(), { params: {
 			instance,
 			author,
 			corpus,
 			query
 		}})
-		.then(glossings => glossings
+		.then(glossings => !glossings ? '' : glossings
 			.filter(g => g.hit_first_word_id?.length > 3)
 			.map(g => {
 				if (g.hit_first_word_id !== g.hit_last_word_id)
@@ -345,7 +345,7 @@ export const glossApi = {
 			}
 		}),
 	getGlosses: (instance: string, corpus: string, author: string, hitIds: string[]) => endpoints.gloss
-		.get<Glossing[]>(glossPaths.root(), {
+		.get<''|Glossing[]>(glossPaths.root(), {
 			params: {
 				instance,
 				corpus,

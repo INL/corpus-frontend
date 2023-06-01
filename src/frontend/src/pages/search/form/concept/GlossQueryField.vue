@@ -1,14 +1,14 @@
 <template>
 	<div class='glossQueryField'>
-		<label>
-			{{ fieldDescription.fieldName }}
-			<SelectPicker v-if="fieldDescription.type.values.length" :options="fieldDescription.type.values" v-model="currentValue"/>
-			<input v-else
-				type="text"
-				:placeholder="fieldDescription.fieldName"
-				v-model.lazy="currentValue"
-			/>
-		</label>
+		<label :for="id">{{ fieldDescription.fieldName }}</label>
+		<SelectPicker v-if="fieldDescription.type.values.length" :options="fieldDescription.type.values" v-model="currentValue" :id="id"/>
+		<input v-else
+			type="text"
+			class="form-control"
+			:placeholder="fieldDescription.fieldName"
+			:id="id"
+			v-model.lazy="currentValue"
+		/>
 	</div>
 </template>
 
@@ -33,6 +33,9 @@ export default Vue.extend ({
 		getters: GlossStore.get,
 	}),
 	computed : {
+		id(): string {
+			return 'gloss-query-field-' + this.fieldDescription.fieldName ;
+		},
 		currentValue: {
 			get(): string { return GlossStore.get.getGlossQueryFieldValue(this.fieldDescription.fieldName); },
 			set(v: string) { GlossStore.actions.setOneGlossQueryField({fieldName: this.fieldDescription.fieldName, fieldValue : v }); }

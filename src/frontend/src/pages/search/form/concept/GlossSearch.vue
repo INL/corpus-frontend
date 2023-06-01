@@ -4,7 +4,7 @@
 			<GlossQueryField  v-for="(o,i) in gloss_fields" v-bind:key="i" :fieldDescription="o"/>
 		</div>
 
-		<button type="button" @click="resetQuery">Reset</button>
+		<button type="button" class="btn btn-default" @click="resetQuery">Reset</button>
 
 		<div>
 			<label><input type="checkbox" v-model="showQuery"> Show query </label>

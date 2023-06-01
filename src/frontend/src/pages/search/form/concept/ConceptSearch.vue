@@ -4,6 +4,7 @@
 
 		<div class='boxes' style='text-align: center'>
 			<ConceptSearchBox v-for="(v, id) in query_from_store"
+				style="min-width: 250px;"
 				:key="id"
 				:id="'b' + id"
 				:settings="settings"
@@ -12,10 +13,10 @@
 				@input="updateSubquery(id, $event)"
 			/>
 		</div>
-		<button @click.prevent="resetQuery">Reset</button>
-		<button @click.prevent="addBox">Add box</button>
-		<button @click.prevent="removeBox">Remove box</button>
-		<a role="button" class="btn" target="_blank" :href="settings.lexit_server + '?db=' + settings.lexit_instance + '&table=lexicon'">View lexicon</a>
+		<button class="btn btn-sm btn-default" @click.prevent="resetQuery">Reset</button>
+		<button class="btn btn-sm btn-default" @click.prevent="addBox">Add box</button>
+		<button class="btn btn-sm btn-default" @click.prevent="removeBox">Remove box</button>
+		<a role="button" class="btn btn-sm btn-default" target="_blank" :href="settings.lexit_server + '?db=' + settings.lexit_instance + '&table=lexicon'">View lexicon</a>
 
 
 		<label> <input type="checkbox" v-model="showQuery"> Show query</label>
@@ -95,16 +96,16 @@ li {
 	display: inline-block;
 	margin: 0 10px;
 }
-a {
-	color: #42b983;
-}
 
 img {
 	width: 400px;
 }
 
 .boxes {
-	display: flex
+	overflow: auto;
+	display: flex;
+
+
 }
 
 .code {

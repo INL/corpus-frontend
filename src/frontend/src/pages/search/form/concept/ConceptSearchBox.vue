@@ -30,15 +30,20 @@
 			<tr>
 				<td class="fn"><label :for="id + 'ac2'">Term: </label></td>
 				<td>
-					<Autocomplete
-						class="form-control"
-						placeholder="...term..."
-						:id="id + 'ac2'"
-						:processData="get_term_values"
-						:url="urls && urls.completionURLForTerm"
-						v-model="current_term"
-					/>
-					<button @click="insertTerm" title="Add term to lexicon">⤿ lexicon</button>
+					<div class="input-group">
+						<Autocomplete
+							class="form-control"
+							placeholder="...term..."
+							:id="id + 'ac2'"
+							:processData="get_term_values"
+							:url="urls && urls.completionURLForTerm"
+							v-model="current_term"
+						/>
+
+						<div class="input-group-btn">
+							<button @click="insertTerm" title="Add term to lexicon" class="btn btn-default">⤿ lexicon</button>
+						</div>
+					</div>
 				</td>
 			</tr>
 		</table>
@@ -53,7 +58,7 @@
 			</div>
 		</div>
 
-		<button type="button" @click="resetQuery">Clear</button>
+		<button type="button" @click="resetQuery" class="btn btn-sm btn-default">Clear</button>
 	 </div>
 </template>
 
@@ -267,6 +272,11 @@ img {
 	margin-right: 1em;
 	margin-bottom: 1em;
 
+}
+
+tr {
+	border-spacing: 0 10px;
+	border-collapse: separate;
 }
 .t1 {
 	table-layout: auto;

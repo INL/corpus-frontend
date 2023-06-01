@@ -446,7 +446,6 @@ export default Vue.extend({
 	},
 	watch: {
 		results(n: BLTypes.BLHitResults, o: BLTypes.BLHitResults) {
-			// alert('Being watched i am...')
 			this.citations = {};
 			this.pinnedTooltip = null;
 		},

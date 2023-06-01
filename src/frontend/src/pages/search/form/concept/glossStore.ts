@@ -206,7 +206,10 @@ const actions = {
 				actions.setQueryCql(cql);
 				PatternStore.actions.glosses(state.gloss_query_cql);
 			})
-			.catch(e => alert(e.message));
+			.catch(e => {
+				console.error(e);
+				alert(e.message);
+			});
 	}, 'gloss_search_update_cql'),
 	setOneGlossQueryField: b.commit((state, payload: {  fieldName: string, fieldValue: string })  => {
 		const fieldName = payload.fieldName
@@ -223,14 +226,20 @@ const actions = {
 
 	storeToDatabase: b.commit((state, payload: {glossings: Glossing[]}) => glossApi
 		.storeGlosses(state.settings.blackparank_instance, payload.glossings)
-		.catch(e => alert(e.message))
+		.catch(e => {
+			console.error(e);
+			alert(e.message);
+		})
 	, 'store_to_database'),
 	setCurrentPage: b.commit((state, payload: string[]) => {
 		state.current_page = payload
 		glossApi
 			.getGlosses(state.settings.blackparank_instance, INDEX_ID, USERNAME, payload)
-			.then(glossings => glossings.forEach(g => actions.addGlossing(g)))
-			.catch(e => alert(e.message))
+			.then(glossings => { if (glossings) glossings.forEach(actions.addGlossing) })
+			.catch(e => {
+				console.error(e);
+				alert(e.message);
+			});
 	}, 'set_current_page'),
 	loadSettings: b.commit((state, payload: Settings) => {
 		state.settings = payload

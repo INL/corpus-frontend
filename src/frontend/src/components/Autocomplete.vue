@@ -93,6 +93,9 @@ export default Vue.extend({
 						url: self.url,
 						data: {term: value},
 						dataType: 'json',
+						xhrFields: {
+							withCredentials: true
+						}
 					});
 
 					getData.then(r => {

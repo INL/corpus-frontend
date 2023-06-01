@@ -445,14 +445,11 @@ export default Vue.extend({
 		},
 	},
 	watch: {
-		results: function(n: BLTypes.BLHitResults, o: BLTypes.BLHitResults) { // !! dit gebeurt de eerste keer niet
+		results(n: BLTypes.BLHitResults, o: BLTypes.BLHitResults) {
 			// alert('Being watched i am...')
 			this.citations = {};
 			this.pinnedTooltip = null;
-			const currentHits = n.hits.map(h => this.get_hit_id(h))
-			GlossModule.actions.setCurrentPage(currentHits)
 		},
-
 	}
 });
 </script>

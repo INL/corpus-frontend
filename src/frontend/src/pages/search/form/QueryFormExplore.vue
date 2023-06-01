@@ -168,7 +168,7 @@ import SelectPicker, {Option, OptGroup} from '@/components/SelectPicker.vue';
 import Autocomplete from '@/components/Autocomplete.vue';
 import Lexicon from '@/pages/search/form/Lexicon.vue';
 import { getAnnotationSubset, getMetadataSubset } from '@/utils';
-import { paths } from '@/api';
+import { blacklabPaths } from '@/api';
 
 import debug from '@/utils/debug';
 
@@ -270,7 +270,7 @@ export default Vue.extend({
 			});
 		},
 		autocompleteUrl(annot: CorpusStore.NormalizedAnnotation) {
-			return paths.autocompleteAnnotation(CorpusStore.getState().id, annot.annotatedFieldId, annot.id);
+			return blacklabPaths.autocompleteAnnotation(CorpusStore.getState().id, annot.annotatedFieldId, annot.id);
 		}
 	},
 	created() {

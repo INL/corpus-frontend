@@ -1,15 +1,24 @@
 // gedoe ... de patternStore (src/store/search/form/patterns.ts) is een goed voorbeeldje want redelijk simpel
 // Zie https://github.com/mrcrowl/vuex-typex/blob/master/src/index.ts voor de gebruikte ts implementatie
 
-import { getStoreBuilder } from 'vuex-typex';
-import { BLHit, BLHitSnippet } from '@/types/blacklabtypes';
-import { RootState } from '@/store/search/';
-import * as PatternStore from '@/store/search/form/patterns';
 import cloneDeep from 'clone-deep';
 
-import axios from 'axios'
+import { getStoreBuilder } from 'vuex-typex';
+import { BLHit } from '@/types/blacklabtypes';
+import { RootState } from '@/store/search/';
+import * as PatternStore from '@/store/search/form/patterns';
+
+import {glossApi, init as initGlossEndpoint} from '@/api';
+import Vue from 'vue';
+
+
+
+
 
 declare const INDEX_ID: string;
+// See header.vm
+declare const USERNAME: string;
+declare const PASSWORD: string;
 
 type GlossFieldType = {
 	 type: string,
@@ -65,10 +74,9 @@ type Settings = {
 	get_hit_id: Hit2String,
 	get_hit_range_id: Hit2Range,
 }
-type str2glossing = { [key: string]: Glossing}
 
 type ModuleRootState = {
-	glosses: str2glossing,
+	glosses: Record<string, Glossing>,
 	gloss_query: GlossQuery,
 	gloss_query_cql: string,
 	current_page: string[], // ids of hits currently visible in result display
@@ -80,8 +88,8 @@ const initialState: ModuleRootState = {
 	glosses: {},
 	current_page: [],
 	gloss_query: {
-		author: 'piet',
-		corpus: 'quine',
+		author: USERNAME,
+		corpus: INDEX_ID,
 		parts: {comment : ''}
 	},
 	gloss_query_cql: '',
@@ -141,152 +149,93 @@ const get = {
 	get_hit_id_function: b.read(s => s.settings.get_hit_id, 'get_hit_id_function'),
 };
 
-
-const auth =  {'username':'user','password':'password'};
-
 const actions = {
-	flushAllGlosses: b.commit((state) => {
+	reset: b.commit((state) => {
 		state.glosses = {}
 	}, 'flush_all_glosses'),
 
-	addGlossing: b.commit((state, payload: {gloss: Glossing}) =>  {
-		// tslint:disable-next-line:no-console
-		 // store locally
-		 state.glosses = Object.assign({}, state.glosses, {[payload.gloss.hitId]: payload.gloss})
-		 console.log("add Glossing: " + JSON.stringify(payload.gloss))
-		 // alert("add Glossing: " + JSON.stringify(payload.gloss))
-		 // state.glosses[payload.gloss.hitId] = payload.gloss
-		 // save in database
-		 const request = 'request_to_load_in_database'
-	}, 'add_glossing'),
-
 	addGloss: b.commit((state, payload: {gloss: Gloss, hit: BLHit}) =>  {
-		// tslint:disable-next-line:no-console
-		 // store locally
-		 const range = state.settings.get_hit_range_id(payload.hit)
-		 const glossing: Glossing = {
-			 gloss: payload.gloss,
-			 author: 'piet',
-			 corpus: INDEX_ID,
-			 hitId: state.settings.get_hit_id(payload.hit),
-			 hit_first_word_id: range.startid,
-			 hit_last_word_id: range.endid
-		 }
-		 actions.addGlossing({gloss: glossing})
+		// store locally
+		const range = state.settings.get_hit_range_id(payload.hit)
+		const hitId = state.settings.get_hit_id(payload.hit)
+		const glossing: Glossing = {
+			gloss: payload.gloss,
+			author: USERNAME,
+			corpus: INDEX_ID,
+			hitId,
+			hit_first_word_id: range.startid,
+			hit_last_word_id: range.endid
+		}
+		Vue.set(state.glosses, hitId, glossing);
 	}, 'add_gloss'),
 
-	setOneGlossField: b.commit((state, payload: { hitId: string, fieldName: string, fieldValue: string, hit_first_word_id: string, hit_last_word_id: string})  => {
-			const hitId = payload.hitId
-			const fieldName = payload.fieldName
-			const fieldValue = payload.fieldValue
-			console.log(`Gloss SET ${hitId} ${fieldName}=${fieldValue}`)
-			let glossing: Glossing = state.glosses[hitId]
-			if (!glossing) {
-				const gloss = {
-					[fieldName]: fieldValue
-				}
-				glossing =   {
-					'gloss': gloss,
-					author: 'piet',
-					corpus: INDEX_ID,
-					'hitId': hitId,
-					hit_first_word_id : payload.hit_first_word_id,
-					hit_last_word_id: payload.hit_last_word_id
-				}
-			} else {
-				glossing.gloss[fieldName]  = fieldValue
-			}
-			actions.addGlossing({gloss: glossing})
-			actions.storeToDatabase({glossings: [glossing]})
+	addGlossing: b.commit((state, payload: Glossing) => {
+		const hitId = payload.hitId
+		Vue.set(state.glosses, hitId, payload);
+	}, 'add_glossing'),
+
+	setOneGlossField: b.commit((state, payload: { hitId: string, fieldName: string, fieldValue: string, hit_first_word_id: string, hit_last_word_id: string}) => {
+		const {hitId, fieldName, fieldValue, hit_first_word_id, hit_last_word_id} = payload;
+		console.log(`Gloss SET ${hitId} ${fieldName}=${fieldValue}`)
+		const glossing = {
+			gloss: {
+				...state.glosses[hitId]?.gloss,
+				[fieldName]: fieldValue
+			},
+			author: USERNAME,
+			corpus: INDEX_ID,
+			hitId,
+			hit_first_word_id,
+			hit_last_word_id,
+		}
+		Vue.set(state.glosses, hitId, glossing);
+		actions.storeToDatabase({glossings: [glossing]})
 	}, `set_gloss_field_value`), // als je dit twee keer doet gaat ie mis wegens dubbele dinges...
 
+	setQueryCql: b.commit((state, payload: string) => {state.gloss_query_cql = payload}, 'set_cql'),
 	updateCQL: b.commit((state) =>  {
-
-		if (Object.keys(state.gloss_query.parts).length === 0) {
+		const p = state.gloss_query.parts
+		const validKeys = Object.keys(state.gloss_query.parts).filter(k => p[k]?.length);
+		if (validKeys.length === 0) {
 			state.gloss_query_cql = ''
 			return
-		}
-		const p = state.gloss_query.parts
-		const nontrivial = Object.keys(state.gloss_query.parts).filter(k => p[k] && p[k].length > 0)
-		const q = {} as { [key: string]: string}
-		nontrivial.forEach(n => q[n] = p[n])
-		const params = {
-			instance: state.settings.blackparank_instance,
-			author: 'piet',
-			corpus: INDEX_ID,
-			query: JSON.stringify(q),
-		}
-		const url = `${state.settings.blackparank_server}/GlossStore`
-		const z = new URLSearchParams(params) // todo hier moet ook authenticatie op?
-		axios.post(url, z, { auth: auth}).then(response => {
-			const glossings = response.data as Glossing[]
-			//alert(JSON.stringify(glossings))
-			const cql = glossings.filter(g => g.hit_first_word_id && g.hit_first_word_id.length > 3).map(g => {
-				if (g.hit_first_word_id !== g.hit_last_word_id) return `([_xmlid='${g.hit_first_word_id}'][]*[_xmlid='${g.hit_last_word_id}'])`;
-				else return `([_xmlid='${g.hit_first_word_id}'])`
-			}).join("| ")
-
-			state.gloss_query_cql = cql
-			PatternStore.actions.glosses(state.gloss_query_cql)
-			// alert(JSON.stringify(glossings))
-			// alert(`Store to db gepiept (URL: ${url}) (params: ${JSON.stringify(params)})!`)
-			// state.gloss_query_cql = response.data.pattern;
-			// PatternStore.actions.glosses(state.gloss_query_cql)
-		}).catch(e => alert(e.message))
+		};
+		const q = validKeys.reduce<Record<string, string>>((acc, k) => { acc[k] = p[k]; return acc; }, {});
+		glossApi.getCql(state.settings.blackparank_instance, USERNAME, INDEX_ID, JSON.stringify(q))
+			.then(cql => {
+				actions.setQueryCql(cql);
+				PatternStore.actions.glosses(state.gloss_query_cql);
+			})
+			.catch(e => alert(e.message));
 	}, 'gloss_search_update_cql'),
 	setOneGlossQueryField: b.commit((state, payload: {  fieldName: string, fieldValue: string })  => {
 		const fieldName = payload.fieldName
 		const fieldValue = payload.fieldValue
-		state.gloss_query.parts[fieldName] = fieldValue
+		Vue.set(state.gloss_query.parts, fieldName, fieldValue);
 		// and translate query to cql......?
 		//alert('Set gloss query field: ' + JSON.stringify(payload))
 		actions.updateCQL()
 	}, `set_gloss_queryfield_value`), // als je dit twee keer doet gaat ie mis wegens dubbele dinges...
 	resetGlossQuery: b.commit((state)  => {
-
 		state.gloss_query.parts = {}
-		// and translate query to cql......?
-		//alert('Set gloss query field: ' + JSON.stringify(payload))
 		actions.updateCQL()
 	}, `reset_gloss_query`), // als je dit twee keer doet gaat ie mis wegens dubbele dinges...
 
-	storeToDatabase: b.commit((state, payload: {glossings: Glossing[]}) => {
-			// alert('Will try to store!')
-			const params = {
-						instance: state.settings.blackparank_instance,
-						glossings: JSON.stringify(payload.glossings),
-			}
-			const url = `${state.settings.blackparank_server}/GlossStore`
-			const z = new URLSearchParams(params) // todo hier moet ook authenticatie op?
-			axios.post(url, z, { auth: auth}).then(r => {
-				 // alert(`Store to db gepiept (URL: ${url}) (params: ${JSON.stringify(params)})!`)
-				 }).catch(e => alert(e.message))
-	}, 'store_to_list_of_glissings_to_db'),
-	storeAllToDatabase: b.commit((state) => {
-		const allGlossings: Glossing[] = Object.values(state.glosses)
-		actions.storeToDatabase({glossings: allGlossings})
-	}, 'store_to_all_to_db'),
+	storeToDatabase: b.commit((state, payload: {glossings: Glossing[]}) => glossApi
+		.storeGlosses(state.settings.blackparank_instance, payload.glossings)
+		.catch(e => alert(e.message))
+	, 'store_to_database'),
 	setCurrentPage: b.commit((state, payload: string[]) => {
-		// alert('Current page hit ids: ' + JSON.stringify(payload))
 		state.current_page = payload
-		const params = {
-			instance: state.settings.blackparank_instance,
-			corpus: INDEX_ID,
-			author: 'piet',
-			hitIds: JSON.stringify(payload),
-		}
-		const url = `${state.settings.blackparank_server}/GlossStore`
-		const z = new URLSearchParams(params) // todo hier moet ook authenticatie op?
-		axios.post(url, z, { auth: auth}).then(r => {
-				 // alert(`Posted page hit ids: (URL: ${url}) (params: ${JSON.stringify(params)}) (response data: ${JSON.stringify(r.data)})!`)
-				 const glossings = r.data as Glossing[]
-				 glossings.forEach(g => actions.addGlossing({gloss: g}))
-				 }).catch(e => alert(e.message))
+		glossApi
+			.getGlosses(state.settings.blackparank_instance, INDEX_ID, USERNAME, payload)
+			.then(glossings => glossings.forEach(g => actions.addGlossing(g)))
+			.catch(e => alert(e.message))
 	}, 'set_current_page'),
 	loadSettings: b.commit((state, payload: Settings) => {
-		//alert('Gloss Settings:' + JSON.stringify(payload))
 		state.settings = payload
 		state.settings.blackparank_server = state.settings.blackparank_server.replace(/\/$/, '');
+		initGlossEndpoint('gloss', state.settings.blackparank_server);
 	} , 'gloss_load_settings'),
 };
 

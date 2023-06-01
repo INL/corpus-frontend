@@ -47,7 +47,7 @@
 		<div class="terms">
 			<div v-for="(t,i) in terms" :key="i">
 				<label v-if="t.term">
-					<input type="checkbox" :value="t.term" :checked="checked_terms[t.term]" @input="$set(checked_terms, t.term, $event.target.checked)"/>
+					<input type="checkbox" :value="t.term" v-model="checked_terms[t.term]"/>
 					{{ t.term }}
 				</label>
 			</div>
@@ -139,7 +139,7 @@ export default Vue.extend ( {
 			if (term) insertIt.term = term
 
 			const insertTerm =  encodeURIComponent(JSON.stringify(insertIt))
-			const url = `${this.settings.blackparank_server}/api?instance=${this.quine_lexicon}&insertTerm=${insertTerm}`
+			const url = `${this.settings.concept_server}/api?instance=${this.quine_lexicon}&insertTerm=${insertTerm}`
 
 			axios.get(url,{ auth: credentials })
 				.then(r => console.log('inserted term'))
@@ -160,7 +160,7 @@ export default Vue.extend ( {
 			return Object
 			.keys(this.checked_terms)
 			.filter(t => this.checked_terms[t] && t !== 'null')
-			.map(t => ({field: this.search_field, value: t}));
+			.map(t => ({field: 'lemma', value: t})); // TODO don't hardcode lemma!.
 		},
 		term_search_url(): string|null {
 			return this.urls && this.urls.term_search_url;
@@ -184,15 +184,15 @@ export default Vue.extend ( {
 			return {
 				// NOTE: different instances!
 				term_search_url: field && concept ?
-					`${this.settings.blackparank_server}/api?instance=${this.quine_lexicon}&query=${encodeURIComponent(
+					`${this.settings.concept_server}/api?instance=${this.quine_lexicon}&query=${encodeURIComponent(
 						`query Quine { lexicon (field: "${field}", cluster: "${concept}") { field, cluster, term } }`
 					)}` : null,
 				completionURLForTerm: term && field && concept ?
-					`${this.settings.blackparank_server}/api?instance=${this.settings.blackparank_instance}&query=${encodeURIComponent(
+					`${this.settings.concept_server}/api?instance=${this.settings.blackparank_instance}&query=${encodeURIComponent(
 						`query Quine { lexicon (term: "/^${term}/", field: "${field}", cluster: "${concept}") { field, cluster, term } }`
 					)}` : '',
 				completionURLForConcept: field && concept ?
-					`${this.settings.blackparank_server}/api?instance=${this.settings.blackparank_instance}&query=${encodeURIComponent(
+					`${this.settings.concept_server}/api?instance=${this.settings.blackparank_instance}&query=${encodeURIComponent(
 						`query Quine { lexicon (cluster: "/^${concept}/", field: "${field}") { field, cluster, term } }`
 					)}` : null,
 			}
@@ -214,7 +214,7 @@ export default Vue.extend ( {
 			.then(response => {
 				console.log(`found in lexicon for field: "${this.search_field}", cluster: "${this.current_concept}"`  + JSON.stringify(response.data.data))
 				this.terms = uniq(response.data.data)
-				this.terms.map(t => this.checked_terms[t.term] = true)
+				this.terms.map(t => this.$set(this.checked_terms, t.term, true))
 			})
 		},
 		newValue() {
@@ -237,9 +237,6 @@ ul {
 li {
 	display: inline-block;
 	margin: 0 10px;
-}
-a {
-	color: #42b983;
 }
 
 img {

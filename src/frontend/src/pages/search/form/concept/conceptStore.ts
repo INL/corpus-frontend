@@ -8,18 +8,18 @@ import * as PatternStore from '@/store/search/form/patterns';
 import { uniq } from './utils'
 import cloneDeep from 'clone-deep';
 
-import axios from 'axios'
-import qs from 'qs'
+import { init as initEndpoint, conceptApi } from '@/api';
+import Vue from 'vue';
 
 declare const BLS_URL: string;
 declare const INDEX_ID: string;
 
 type Settings = {
 	/** guaranteed not to end in '/' */
-	blackparank_server: string,
+	concept_server: string,
+	/** For sending to the back-end of the concept/blackparank stuff. Should live in backend config probably. */
 	blacklab_server: string,
 	blackparank_instance: string,
-	corpus_server: string,
 	lexit_server: string,
 	lexit_instance: string,
 	searchable_elements: string[]
@@ -62,23 +62,8 @@ const getState = b.state();
 const init = () => { /* */ }
 
 
-/**
- * this is silly,  the difference needs to be eliminated between store and web service
- * Query in store: { "b0": { "terms": [ { "field": "lemma", "value": "true" }, { "field": "lemma", "value": "false" } ] }, "b1": { "terms": [ { "field": "lemma", "value": "word" } ] } }
- * Query as JSON
- * {
- * 	"element": "s",
- * 	"strict": true,
- * 	"filter": "",
- * 	"queries": {
- * 		"b0": [{ "field": "lemma", "value": "true" }, { "field": "lemma", "value": "false" }],
- * 		"b1": [{ "field": "lemma", "value": "word" }]
- * 	}
- * }L
-ID
-*/
 
-
+/** TODO align query in store and in query parameters so we can just pass it along as-is. */
 function reshuffle_query_for_blackparank(q: AtomicQuery[][], element: string): {element: string, strict: boolean, filter: string, queries: Record<string, AtomicQuery[]>} {
 	// remove the nesting of terms.
 	return {
@@ -92,43 +77,29 @@ function reshuffle_query_for_blackparank(q: AtomicQuery[][], element: string): {
 	}
 }
 
-function get_main_fields_url(state: ModuleRootState): string {
-	if (!state.settings) return '';
-	const wQuery = `query Quine { lexicon(corpus : "${INDEX_ID}") { field } }`;
-	return `${state.settings.blackparank_server}/api?instance=${state.settings.blackparank_instance}&query=${encodeURIComponent(wQuery)}`
-	// window.open(query, '_blank')
-}
 /////////////////////////////////////////////////////////////////////////////////////////////
 // getters and actions
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-// zo kan de ene getter de andere niet gebruiken?
-
 const get = {
 	query_cql: b.read(s => s.query_cql, 'query_cql'),
-	translate_query_to_cql_request: b.read(s => {
-		if (!s.settings) return null;
-		const query = s.query
-		const targetElement =  s.target_element
-
-		// check if we have any queries
-		const hasQueries = Object.values(query).some(q => q.length > 0);
-		if (!hasQueries) return null;
-
-		//alert(JSON.stringify(state.settings))
-		const requestUrl = `${s.settings.blackparank_server}/BlackPaRank?${qs.stringify({
-			server: s.settings.blacklab_server, /* direct IP, circumvent proxy etc. */
-			corpus: INDEX_ID,
-			action: 'info',
-			query: JSON.stringify(reshuffle_query_for_blackparank(query, targetElement))
-		})}`
-		return requestUrl
-	}, 'translate_query_to_cql_request'),
-
 	settings: b.read(s => s.settings, 'settings'),
 	main_fields: b.read(s => s.main_fields, 'main_fields'),
+	/** Get the query for use with the backend if valid, otherwise null. */
+	query_for_blackparank: b.read(s => {
+		let hasValidQuery = false;
+		const r: Record<string, AtomicQuery[]> = {};
+		for (let i = 0; i < s.query.length; i++) {
+			const q = s.query[i];
+			const thisQueryIsValid = q.some(qq => qq.value);
+			if (thisQueryIsValid) {
+				hasValidQuery = true;
+				r['b' + i] = q.filter(qq => qq.value);
+			}
+		}
+		return hasValidQuery ? r : null;
+	}, 'atomic_query'),
 };
-
 
 const actions = {
 	resetQuery: b.commit((state) => {
@@ -146,30 +117,22 @@ const actions = {
 		actions.updateCQL();
 	}, 'remove_subquery'),
 	updateSubquery: b.commit((state, payload: {index: number, query: AtomicQuery[]}) => {
-		state.query[payload.index] = payload.query;
+		// Use Vue.set to make sure the change is recorded, otherwise it won't be detected by Vue.
+		// this can be removed when we switch to Vue 3.
+		Vue.set(state.query, payload.index, payload.query);
 		actions.updateCQL();
 	}, 'update_subquery'),
 
-	updateCQL: b.commit(state => {
-		const request =  get.translate_query_to_cql_request()
-		if (!request) return;
-		// alert('sending:' + request)
-		axios.get(request, {
-			headers: {
-				Accept:'application/json'
-			},
-			auth: {
-				username:'user',
-				password:'password'
-			}
-		}).then(response => {
-			// alert('Set CQL to:' + response.data.pattern);
-			state.query_cql = response.data.pattern;
-			PatternStore.actions.concept(state.query_cql)
-			// alert('Survived this....')
-		}).catch(e => {
-			alert(`setSubQuery: ${e.message} on ${request}`)
-		})
+	updateCQL: b.commit(s => {
+		const query = get.query_for_blackparank();
+		if (!query || !s.settings) return;
+		conceptApi
+			.translate_query_to_cql(s.settings.blacklab_server, INDEX_ID, s.target_element, query)
+			.then(r => {
+				s.query_cql = r.pattern;
+				PatternStore.actions.concept(s.query_cql);
+			})
+			.catch(e => alert(`setSubQuery: ${e.message}}`))
 	}, 'concept_update_cql'),
 
 	setTargetElement: b.commit((state, payload: string) => {
@@ -180,20 +143,11 @@ const actions = {
 	loadSettings: b.commit((state, payload: Settings) => {
 		state.settings = payload;
 		state.settings.blacklab_server = (state.settings.blacklab_server || BLS_URL).replace(/\/$/, '');
-		state.settings.blackparank_server = state.settings.blackparank_server.replace(/\/$/, '');
-		const request = get_main_fields_url(state)
-		axios.get(request).then(
-			response => {
-				// alert("Fields query response: " + JSON.stringify(response.data.data))
-				const entries: LexiconEntry[] = response.data.data
-				const fields = uniq(entries.map(x => x.field))
-				state.main_fields = fields
-				return fields
-			}).catch(e => {
-				alert(`${e.message} on ${request}`)
-			})
-		// En de query moet ook weer opnieuw worden gezet ...
-		// alert('Settings changed, settings now: ' + JSON.stringify(state.settings))
+		state.settings.concept_server = state.settings.concept_server.replace(/\/$/, '');
+		initEndpoint('concept', state.settings.concept_server);
+
+		conceptApi.getMainFields(state.settings.blackparank_instance, INDEX_ID)
+			.then(response => state.main_fields = uniq(response.data.map(x => x.field)));
 	}, 'concept_load_settings'),
 };
 

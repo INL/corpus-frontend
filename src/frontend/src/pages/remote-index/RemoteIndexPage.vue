@@ -73,8 +73,7 @@ import Vue from 'vue';
 import Axios from 'axios';
 
 import UrlStateParserBase from '@/store/util/url-state-parser-base';
-import {blacklab, paths} from '@/api';
-import {debugLog} from '@/utils/debug';
+import {blacklab} from '@/api';
 
 import SelectPicker, {OptGroup} from '@/components/SelectPicker.vue';
 
@@ -250,7 +249,7 @@ export default Vue.extend({
 						}
 					}
 				})
-				
+
 				const filename = r.headers["content-disposition"]?.split('filename=')[1]?.split(';')[0] ?? this.urlParams.file
 				file = new File([new Blob([r.data])], filename);
 

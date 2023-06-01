@@ -106,9 +106,8 @@ import Autocomplete from '@/components/Autocomplete.vue';
 import Lexicon from '@/pages/search/form/Lexicon.vue';
 import UID from '@/mixins/uid';
 
-import {paths} from '@/api';
+import {blacklabPaths} from '@/api';
 import { AnnotationValue, NormalizedAnnotation } from '@/types/apptypes';
-import { Annotation } from 'highcharts';
 
 export default Vue.extend({
 	mixins: [UID],
@@ -122,8 +121,8 @@ export default Vue.extend({
 		annotation: Object as () => NormalizedAnnotation,
 		htmlId: String,
 		bare: Boolean,
-		/** 
-		 * Set to true if this annotation is the "simple" annotation. I.e. the Annotation in the "simple" tab of the search form. 
+		/**
+		 * Set to true if this annotation is the "simple" annotation. I.e. the Annotation in the "simple" tab of the search form.
 		 * This will change which field the value is written to the vuex store.
 		 */
 		simple: Boolean
@@ -152,7 +151,7 @@ export default Vue.extend({
 		options(): Option[] { return this.annotation.values || []; },
 
 		autocomplete(): boolean { return this.annotation.uiType === 'combobox'; },
-		autocompleteUrl(): string { return paths.autocompleteAnnotation(CorpusStore.getState().id, this.annotation.annotatedFieldId, this.annotation.id); },
+		autocompleteUrl(): string { return blacklabPaths.autocompleteAnnotation(CorpusStore.getState().id, this.annotation.annotatedFieldId, this.annotation.id); },
 
 		value: {
 			get(): string {

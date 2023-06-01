@@ -1,6 +1,6 @@
 <template>
 	<div v-if="settings" style='text-align: left'>
-		Search in: <SelectPicker v-model="element_searched" :options="settings.searchable_elements" />
+		Search in: <SelectPicker v-model="element_searched" :options="settings.searchable_elements" hideEmpty/>
 
 		<div class='boxes' style='text-align: center'>
 			<ConceptSearchBox v-for="(v, id) in query_from_store"
@@ -71,6 +71,7 @@ export default Vue.extend ({
 
 	methods : {
 		updateSubquery(index: number, query: ConceptStore.AtomicQuery[]) {
+			debugger;
 			ConceptStore.actions.updateSubquery({index, query});
 		},
 		addBox() { ConceptStore.actions.addSubquery(undefined); },

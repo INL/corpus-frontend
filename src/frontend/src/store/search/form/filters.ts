@@ -13,7 +13,7 @@ import * as CorpusModule from '@/store/search/corpus';
 import { FilterDefinition } from '@/types/apptypes';
 
 import { debugLog } from '@/utils/debug';
-import { paths } from '@/api';
+import { blacklabPaths } from '@/api';
 import { mapReduce, MapOf } from '@/utils';
 import { getFilterString, getFilterSummary, valueFunctions } from '@/components/filters/filterValueFunctions';
 
@@ -151,7 +151,7 @@ const init = () => {
 					break;
 				case 'combobox':
 					componentName = 'filter-autocomplete';
-					metadata = paths.autocompleteMetadata(CorpusModule.getState().id, f.id);
+					metadata = blacklabPaths.autocompleteMetadata(CorpusModule.getState().id, f.id);
 					break;
 				case 'radio'   :
 					componentName = 'filter-radio';

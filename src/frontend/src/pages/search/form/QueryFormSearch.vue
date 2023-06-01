@@ -169,7 +169,7 @@ import uid from '@/mixins/uid';
 
 import { QueryBuilder } from '@/modules/cql_querybuilder';
 
-import { paths } from '@/api';
+import { blacklabPaths } from '@/api';
 import * as AppTypes from '@/types/apptypes';
 import { getAnnotationSubset } from '@/utils';
 import { Option } from '@/components/SelectPicker.vue';
@@ -211,7 +211,7 @@ export default Vue.extend({
 			return this.tabs.flatMap(tab => tab.entries);
 		},
 		firstMainAnnotation: CorpusStore.get.firstMainAnnotation,
-		firstMainAnnotationACUrl(): string { return paths.autocompleteAnnotation(CorpusStore.getState().id, this.firstMainAnnotation.annotatedFieldId, this.firstMainAnnotation.id); },
+		firstMainAnnotationACUrl(): string { return blacklabPaths.autocompleteAnnotation(CorpusStore.getState().id, this.firstMainAnnotation.annotatedFieldId, this.firstMainAnnotation.id); },
 		textDirection: CorpusStore.get.textDirection,
 		withinOptions(): Option[] {
 			const {enabled, elements} = UIStore.getState().search.extended.within;

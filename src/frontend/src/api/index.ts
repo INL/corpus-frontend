@@ -316,7 +316,8 @@ export const glossPaths = {
 		is performed by the servlet container and runs before any application code.
 		So ensure our requests end with a trailing slash to prevent the server from redirecting
 	*/
-	root: () => './'
+	root: () => './',
+	glosses: () => `GlossStore` // NOTE: no trailing slash!
 }
 
 export const glossApi = {
@@ -338,14 +339,12 @@ export const glossApi = {
 			.join("| ")
 		),
 	storeGlosses: (instance: string, glossings: Glossing[]) => endpoints.gloss
-		.post(glossPaths.root(), {
-			params: {
-				instance,
-				glossings: JSON.stringify(glossings)
-			}
-		}),
+		.post(glossPaths.glosses(), qs.stringify({
+			instance,
+			glossings: JSON.stringify(glossings)
+		})),
 	getGlosses: (instance: string, corpus: string, author: string, hitIds: string[]) => endpoints.gloss
-		.get<''|Glossing[]>(glossPaths.root(), {
+		.get<Glossing[]>(glossPaths.glosses(), {
 			params: {
 				instance,
 				corpus,

@@ -235,7 +235,7 @@ const actions = {
 		state.current_page = payload
 		glossApi
 			.getGlosses(state.settings.blackparank_instance, INDEX_ID, USERNAME, payload)
-			.then(glossings => { if (glossings) glossings.forEach(actions.addGlossing) })
+			.then(glossings => glossings.forEach(actions.addGlossing))
 			.catch(e => {
 				console.error(e);
 				alert(e.message);

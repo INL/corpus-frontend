@@ -322,7 +322,7 @@ export const glossPaths = {
 
 export const glossApi = {
 	getCql: (instance: string, author: string, corpus: string, query: string) => endpoints.gloss
-		.get<''|Glossing[]>(glossPaths.root(), { params: {
+		.get<''|Glossing[]>(glossPaths.glosses(), { params: {
 			instance,
 			author,
 			corpus,

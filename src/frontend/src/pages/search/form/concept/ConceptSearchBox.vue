@@ -35,8 +35,7 @@
 							class="form-control"
 							placeholder="...term..."
 							:id="id + 'ac2'"
-							:processData="get_term_values"
-							:url="urls && urls.completionURLForTerm"
+							:getData="get_term_values"
 							v-model="current_term"
 						/>
 
@@ -66,12 +65,16 @@
 import Vue from 'vue';
 
 import axios from 'axios'
+import qs from 'qs';
+
 import Autocomplete from '@/components/Autocomplete.vue';
 import * as CorpusStore from '@/store/search/corpus';
 import * as ConceptStore from '@/pages/search/form/concept/conceptStore';
 import { uniq, log_error } from './utils'
 
 import SelectPicker from '@/components/SelectPicker.vue';
+import { blacklabPaths } from '@/api';
+import { queueScheduler } from 'rxjs';
 
 // see header.vm
 declare const USERNAME: string;
@@ -116,9 +119,26 @@ export default Vue.extend ( {
 			const vals = uniq(d.data.map(x  => x.cluster))
 			return vals
 		},
-		get_term_values(d: { 'data': ConceptStore.LexiconEntry[] }) {
-			const vals = uniq(d.data.map(x => x.term))
-			return vals
+		get_term_values(term: string): Promise<string[]> {
+			if (!term) return Promise.resolve([]);
+			const getTermsURL: string = this.term_search_url as string // this is correct.
+			if (!getTermsURL) {
+				return Promise.resolve([]);
+			}
+			const mainAnnotation = CorpusStore.get.firstMainAnnotation();
+			// FIXME: hardcoded searching in lemma. Should be configurable
+			const getTermsFromBlackLabUrl = blacklabPaths.autocompleteAnnotation(CorpusStore.getState().id, mainAnnotation.annotatedFieldId, 'lemma');
+
+			return Promise.all([
+				axios.get<{data: ConceptStore.LexiconEntry[]}>(getTermsURL, {
+					withCredentials: true,
+					paramsSerializer: params => qs.stringify(params)
+				}).then(r => r.data.data.map(d => d.term).filter(t => !!t)),
+				axios.get<string[]>(getTermsFromBlackLabUrl, {
+					withCredentials: true,
+					params: { term }
+				}).then(r => r.data)
+			]).then(([pdb, corpus]) => uniq([...pdb, ...corpus]))
 		},
 		insertConcept() {
 			if (!this.current_concept) return;
@@ -179,7 +199,7 @@ export default Vue.extend ( {
 		urls(): {
 			term_search_url: string|null,
 			completionURLForTerm: string|null,
-			completionURLForConcept: string|null
+			completionURLForConcept: string|null,
 		} | null {
 			if (!this.settings) return null;
 

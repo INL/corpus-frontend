@@ -99,6 +99,7 @@ export default Vue.extend({
 					});
 
 					getData.then(r => {
+						if (value !== lastSearchValue) return; // stale data.
 						if (self.processData) r = self.processData(r);
 						lastSearchResults = r;
 						render(r);

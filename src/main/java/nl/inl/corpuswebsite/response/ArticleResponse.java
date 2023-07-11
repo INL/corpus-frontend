@@ -267,7 +267,7 @@ public class ArticleResponse extends BaseResponse {
         context.put("article_meta", transformedMetadata.getResult().orElse(""));
         context.put("article_meta_error", transformedMetadata.getError().orElse(null));
         context.put("article_content_restricted", transformedContent.getError().filter(e -> e instanceof ArticleContentRestrictedException).isPresent());
-        context.put("article_content", transformedContent);
+        context.put("article_content", transformedContent.getResult().orElseThrow());
         context.put("docId", pid);
         context.put("docLength", pi.documentLength);
         context.put("paginationEnabled", pi.paginationEnabled);

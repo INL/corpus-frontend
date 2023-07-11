@@ -1,13 +1,13 @@
-package nl.inl.corpuswebsite.response;
+package org.ivdnt.cf.response;
 
 import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
 
-import nl.inl.corpuswebsite.BaseResponse;
-import nl.inl.corpuswebsite.utils.CorpusConfig;
-import nl.inl.corpuswebsite.utils.QueryException;
-import nl.inl.corpuswebsite.utils.ReturnToClientException;
+import org.ivdnt.cf.BaseResponse;
+import org.ivdnt.cf.utils.CorpusConfig;
+import org.ivdnt.cf.utils.QueryException;
+import org.ivdnt.cf.utils.ReturnToClientException;
 
 public class SearchResponse extends BaseResponse {
 

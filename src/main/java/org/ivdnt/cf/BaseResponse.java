@@ -4,10 +4,10 @@
  *
  * @author VGeirnaert
  */
-package nl.inl.corpuswebsite;
+package org.ivdnt.cf;
 
-import nl.inl.corpuswebsite.utils.BlackLabApi;
-import nl.inl.corpuswebsite.utils.WebsiteConfig;
+import org.ivdnt.cf.utils.BlackLabApi;
+import org.ivdnt.cf.utils.WebsiteConfig;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.velocity.Template;

@@ -1,4 +1,4 @@
-package nl.inl.corpuswebsite.utils;
+package org.ivdnt.cf.utils;
 
 import java.io.File;
 import java.io.FileNotFoundException;

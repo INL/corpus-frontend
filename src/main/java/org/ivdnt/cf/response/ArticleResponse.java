@@ -1,26 +1,16 @@
-package nl.inl.corpuswebsite.response;
+package org.ivdnt.cf.response;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import org.apache.commons.lang.StringUtils;
+import org.ivdnt.cf.BaseResponse;
+import org.ivdnt.cf.utils.*;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.TransformerException;
-
-import nl.inl.corpuswebsite.utils.*;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.commons.lang3.tuple.Pair;
-
-import nl.inl.corpuswebsite.BaseResponse;
-import nl.inl.corpuswebsite.MainServlet;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ArticleResponse extends BaseResponse {
 

@@ -1,4 +1,4 @@
-package nl.inl.corpuswebsite.response;
+package org.ivdnt.cf.response;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -6,7 +6,7 @@ import java.io.InputStream;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 
-import nl.inl.corpuswebsite.BaseResponse;
+import org.ivdnt.cf.BaseResponse;
 
 /** Show help page. */
 public class HelpResponse extends BaseResponse {

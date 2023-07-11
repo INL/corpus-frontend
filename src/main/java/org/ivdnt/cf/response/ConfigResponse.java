@@ -1,10 +1,10 @@
-package nl.inl.corpuswebsite.response;
+package org.ivdnt.cf.response;
 
 import java.io.OutputStreamWriter;
 
 import com.google.gson.Gson;
 
-import nl.inl.corpuswebsite.BaseResponse;
+import org.ivdnt.cf.BaseResponse;
 
 /** Show the about page. */
 public class ConfigResponse extends BaseResponse {

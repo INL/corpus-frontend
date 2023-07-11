@@ -1,6 +1,6 @@
-package nl.inl.corpuswebsite.response;
+package org.ivdnt.cf.response;
 
-import nl.inl.corpuswebsite.BaseResponse;
+import org.ivdnt.cf.BaseResponse;
 
 public class RemoteIndexResponse extends BaseResponse {
 

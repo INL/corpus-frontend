@@ -9,7 +9,7 @@
 >
     <servlet>
         <servlet-name>corpus</servlet-name>
-        <servlet-class>nl.inl.corpuswebsite.MainServlet</servlet-class>
+        <servlet-class>org.ivdnt.cf.MainServlet</servlet-class>
     </servlet>
     <servlet>
         <servlet-name>default</servlet-name>

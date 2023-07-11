@@ -1,4 +1,4 @@
-package nl.inl.corpuswebsite.response;
+package org.ivdnt.cf.response;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,8 +16,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
 
-import nl.inl.corpuswebsite.BaseResponse;
-import nl.inl.corpuswebsite.MainServlet;
+import org.ivdnt.cf.BaseResponse;
+import org.ivdnt.cf.MainServlet;
 
 public class CorporaDataResponse extends BaseResponse {
 

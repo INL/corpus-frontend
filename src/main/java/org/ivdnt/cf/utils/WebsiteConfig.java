@@ -1,8 +1,7 @@
-package nl.inl.corpuswebsite.utils;
+package org.ivdnt.cf.utils;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +20,7 @@ import org.apache.commons.configuration2.interpol.ConfigurationInterpolator;
 import org.apache.commons.configuration2.interpol.Lookup;
 import org.apache.commons.lang.StringUtils;
 
-import nl.inl.corpuswebsite.MainServlet;
+import org.ivdnt.cf.MainServlet;
 
 /**
  * Configuration read from an XML config file.

@@ -1,4 +1,4 @@
-package nl.inl.corpuswebsite.utils;
+package org.ivdnt.cf.utils;
 
 import javax.servlet.http.HttpServletResponse;
 

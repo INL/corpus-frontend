@@ -1,4 +1,4 @@
-package nl.inl.corpuswebsite.utils;
+package org.ivdnt.cf.utils;
 
 public class QueryException extends Exception {
 	private final int code;

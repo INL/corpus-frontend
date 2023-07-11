@@ -1,10 +1,10 @@
-package nl.inl.corpuswebsite.response;
+package org.ivdnt.cf.response;
 
 import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
 
-import nl.inl.corpuswebsite.BaseResponse;
+import org.ivdnt.cf.BaseResponse;
 
 /** Show an error page. */
 public class ErrorResponse extends BaseResponse {

@@ -4,10 +4,8 @@
  *
  * @author VGeirnaert
  */
-package nl.inl.corpuswebsite;
+package org.ivdnt.cf;
 
-import nl.inl.corpuswebsite.response.*;
-import nl.inl.corpuswebsite.utils.*;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
@@ -15,6 +13,8 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.velocity.Template;
 import org.apache.velocity.app.Velocity;
+import org.ivdnt.cf.response.*;
+import org.ivdnt.cf.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

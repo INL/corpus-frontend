@@ -1,4 +1,4 @@
-package nl.inl.corpuswebsite.utils;
+package org.ivdnt.cf.utils;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;

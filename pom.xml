@@ -28,8 +28,8 @@
         <url>https://github.com/inl/corpus-frontend</url>
         <connection>scm:git:https://github.com/inl/corpus-frontend.git</connection>
         <developerConnection>scm:git:https://github.com/inl/corpus-frontend.git</developerConnection>
-      <tag>HEAD</tag>
-  </scm>
+        <tag>HEAD</tag>
+    </scm>
 
     <issueManagement>
         <url>https://github.com/INL/corpus-frontend/issues</url>
@@ -145,7 +145,6 @@
                 </configuration>
 
                 <executions>
-
                     <execution>
                         <id>install node and npm</id>
                         <goals>
@@ -158,7 +157,6 @@
                             <npmVersion>8.1.2</npmVersion>
                         </configuration>
                     </execution>
-
                     <execution>
                         <id>npm install</id>
                         <goals>
@@ -301,10 +299,44 @@
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
+        <!-- we use this for generating json from maps and arrays, might be able to be removed after update to jersey+jackson -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.8.9</version>
         </dependency>
+
+        <!-- JACKSON/JERSEY starts here. Deps for the /api endpoint. -->
+        <!-- jersey is the reference javaEE rest implementation. Also exist as spring rest, but we don't use spring here. -->
+        <dependency>
+            <groupId>org.glassfish.jersey.core</groupId>
+            <artifactId>jersey-server</artifactId>
+            <version>2.25.1</version>
+        </dependency>
+
+        <!-- jersey servlet implementation -->
+        <dependency>
+            <groupId>org.glassfish.jersey.containers</groupId>
+            <artifactId>jersey-container-servlet</artifactId>
+            <version>2.25.1</version>
+        </dependency>
+
+        <!-- Use jackson as xml/json converter -->
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-json-jackson</artifactId>
+            <version>2.25.1</version>
+        </dependency>
+
+        <!-- For jackson to be able to handle JSONObject/JSONArray types -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-json-org</artifactId>
+            <version>2.8.4</version>
+        </dependency>
+
+        <!-- JACKSON/JERSEY END -->
+
+
     </dependencies>
 </project>

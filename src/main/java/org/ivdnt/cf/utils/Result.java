@@ -207,6 +207,10 @@ public class Result<R, E extends Exception> {
         return new Result<>(null, error);
     }
 
+    public static <R> Result<R, Exception> error(String message) {
+        return new Result<>(null, new Exception(message));
+    }
+
     public Optional<E> getError() {
         return Optional.ofNullable(error);
     }

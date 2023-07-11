@@ -7,6 +7,30 @@
 	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee 
 		http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
 >
+
+    <filter>
+        <filter-name>jersey</filter-name>
+        <filter-class>org.glassfish.jersey.servlet.ServletContainer</filter-class>
+        <init-param>
+            <param-name>javax.ws.rs.Application</param-name>
+            <param-value>org.ivdnt.cf.rest.jersey.Setup</param-value>
+        </init-param>
+
+
+<!--
+todo delete old servlet handling, use the filter instead, even for normal operations.
+will require the frontend to become a proper spa, with a single entrypoint etc.
+-->
+<!--        <init-param>-->
+<!--            <param-name>jersey.config.servlet.filter.staticContentRegex</param-name>-->
+<!--            <param-value>/(css|favicon|fonts|img|js|jsp|WEB-INF|sw\.js)/?.*</param-value>-->
+<!--        </init-param>-->
+    </filter>
+    <filter-mapping>
+        <filter-name>jersey</filter-name>
+        <url-pattern>/api/*</url-pattern>
+    </filter-mapping>
+
     <servlet>
         <servlet-name>corpus</servlet-name>
         <servlet-class>org.ivdnt.cf.MainServlet</servlet-class>

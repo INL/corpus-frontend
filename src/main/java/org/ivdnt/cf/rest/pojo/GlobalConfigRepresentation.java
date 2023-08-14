@@ -1,4 +1,6 @@
-package org.ivdnt.cf.rest.jersey.pojo;
+package org.ivdnt.cf.rest.pojo;
+
+import jakarta.xml.bind.annotation.XmlElement;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
@@ -13,6 +15,7 @@ public class GlobalConfigRepresentation {
     }
 
     @JsonProperty("blacklab_server")
+    @XmlElement(name = "blacklab_server")
     public String blacklab() {
         return config.get(GlobalConfig.Keys.PROP_BLS_CLIENTSIDE);
     }

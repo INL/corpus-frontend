@@ -1,19 +1,19 @@
-package org.ivdnt.cf.rest.jersey.api;
+package org.ivdnt.cf.rest.api;
 
 import org.glassfish.jersey.server.JSONP;
 import org.ivdnt.cf.GlobalConfig;
-import org.ivdnt.cf.rest.jersey.pojo.GlobalConfigRepresentation;
+import org.ivdnt.cf.rest.pojo.GlobalConfigRepresentation;
 
-import javax.inject.Singleton;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Application;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Application;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
 
 @Singleton
-@Path("api/config/")
+@Path("/config/") // path is relative to Jersey root (see web.xml filter "jersey"), currently /api/* (so this is /api/config)
 public class ConfigResource {
     final GlobalConfig config;
     public ConfigResource(@Context Application app) {

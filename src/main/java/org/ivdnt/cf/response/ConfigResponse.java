@@ -1,10 +1,14 @@
 package org.ivdnt.cf.response;
 
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.ObjectMapper;
+//import com.google.gson.Gson;
 
 import org.ivdnt.cf.BaseResponse;
+import org.ivdnt.cf.GlobalConfig;
+import org.ivdnt.cf.rest.pojo.GlobalConfigRepresentation;
 
 /** Show the about page. */
 public class ConfigResponse extends BaseResponse {
@@ -21,13 +25,21 @@ public class ConfigResponse extends BaseResponse {
     }
 
     @Override
-    protected void completeRequest() {
+    protected void completeRequest() throws IOException {
         response.setCharacterEncoding(OUTPUT_ENCODING);
         response.setContentType("application/json");
 
+        // HACK: this class to be removed in favor of REST api implementation.
+        String warName = servlet.getServletContext().getContextPath().replaceAll("^/", "");
+        String adminPropFileName = warName + ".properties";
+        GlobalConfigRepresentation r = new GlobalConfigRepresentation(new GlobalConfig(servlet.findPropertiesFile(adminPropFileName)));
+
         // Merge context into the page template and write to output stream
-        try (OutputStreamWriter osw = new OutputStreamWriter(response.getOutputStream(), OUTPUT_ENCODING)) {   
-            osw.append(new Gson().toJson(new PublicConfig(servlet.getExternalWebserviceUrl())));
+        try (OutputStreamWriter osw = new OutputStreamWriter(response.getOutputStream(), OUTPUT_ENCODING)) {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.writeValue(osw, r);
+
+//            osw.append(new Gson().toJson(new PublicConfig(servlet.getExternalWebserviceUrl())));
             osw.flush();
         } catch (Exception e) {
             throw new RuntimeException(e);

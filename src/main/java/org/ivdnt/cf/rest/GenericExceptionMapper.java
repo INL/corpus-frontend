@@ -1,20 +1,28 @@
-package org.ivdnt.cf.rest.jersey;
+package org.ivdnt.cf.rest;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+//import com.fasterxml.jackson.annotation.JsonProperty;
 import org.glassfish.jersey.server.JSONP;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.ResponseBuilder;
+import jakarta.ws.rs.ext.ExceptionMapper;
+import jakarta.xml.bind.annotation.XmlElement;
+//import javax.xml.bind.annotation.XmlElement;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 /**
@@ -23,7 +31,9 @@ import java.util.Set;
  * The generated response will either contain a standard ResponseMessage detailing the error when the client requested JSON/XML/text,
  * or will contain the standard tomcat-generated page when the client requested HTML.
  */
-public class GenericExceptionMapper implements javax.ws.rs.ext.ExceptionMapper<Exception> {
+public class GenericExceptionMapper implements ExceptionMapper<Exception> {
+
+    private static final Logger logger = LoggerFactory.getLogger(GenericExceptionMapper.class);
 
     // An instance of @JSONP is required for jsonp support,
     // but we can't dynamically construct annotation instances, so instead get this via reflection.
@@ -34,13 +44,17 @@ public class GenericExceptionMapper implements javax.ws.rs.ext.ExceptionMapper<E
 
     public static class ErrorDetails {
         @JsonProperty
+        @XmlElement
         public int httpCode;
         @JsonProperty
+        @XmlElement
         public String httpMessage;
 
         @JsonProperty
+        @XmlElement
         public String message;
         @JsonProperty
+        @XmlElement
         public String trace;
 
         public ErrorDetails(int httpCode, String httpMessage, String message, String trace) {
@@ -105,6 +119,8 @@ public class GenericExceptionMapper implements javax.ws.rs.ext.ExceptionMapper<E
             else
                 response.entity(null, AnnotationMixin.class.getMethod("fn").getAnnotations());
 
+
+
             return response.type(responseType).build();
         } catch (NoSuchMethodException | SecurityException e) {
             throw new RuntimeException(e);
@@ -118,7 +134,7 @@ public class GenericExceptionMapper implements javax.ws.rs.ext.ExceptionMapper<E
         // Find the first type we can produce, or default to JSON
         MediaType producedType = MediaType.APPLICATION_JSON_TYPE;
         for (MediaType type : accepts) {
-            if (supportedMediaTypes.contains(type)) {
+            if (supportedMediaTypes.stream().anyMatch(type::isCompatible)) {
                 producedType = type;
                 break;
             }

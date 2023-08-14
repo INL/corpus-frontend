@@ -1,6 +1,6 @@
 package org.ivdnt.cf.utils;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 /** 
  * Should never be caught, only propagated to the top level, at which point the code and body should be returned to the client.

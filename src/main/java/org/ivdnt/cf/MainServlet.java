@@ -6,41 +6,66 @@
  */
 package org.ivdnt.cf;
 
-import org.apache.commons.configuration2.ex.ConfigurationException;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.SystemUtils;
-import org.apache.commons.lang.exception.ExceptionUtils;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.velocity.Template;
-import org.apache.velocity.app.Velocity;
-import org.ivdnt.cf.response.*;
-import org.ivdnt.cf.utils.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.xml.transform.TransformerException;
-import java.io.*;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.function.Function;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+import javax.xml.transform.TransformerException;
+
+import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.velocity.Template;
+import org.apache.velocity.app.Velocity;
+import org.ivdnt.cf.response.AboutResponse;
+import org.ivdnt.cf.response.ArticleResponse;
+import org.ivdnt.cf.response.ConfigResponse;
+import org.ivdnt.cf.response.CorporaDataResponse;
+import org.ivdnt.cf.response.CorporaResponse;
+import org.ivdnt.cf.response.ErrorResponse;
+import org.ivdnt.cf.response.HelpResponse;
+import org.ivdnt.cf.response.RemoteIndexResponse;
+import org.ivdnt.cf.response.SearchResponse;
+import org.ivdnt.cf.utils.BlackLabApi;
+import org.ivdnt.cf.utils.CorpusConfig;
+import org.ivdnt.cf.utils.CorpusFileUtil;
+import org.ivdnt.cf.utils.Result;
+import org.ivdnt.cf.utils.ReturnToClientException;
+import org.ivdnt.cf.utils.WebsiteConfig;
+import org.ivdnt.cf.utils.XslTransformer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Main servlet class for the corpus application.
- *
  * Reads the config, initializes stuff and dispatches requests.
  */
 public class MainServlet extends HttpServlet {
@@ -134,7 +159,7 @@ public class MainServlet extends HttpServlet {
         super.init(cfg);
 
         try {
-            startVelocity(cfg);
+            startVelocity(cfg.getServletContext());
 
             String warName = cfg.getServletContext().getContextPath().replaceAll("^/", "");
             contextPath = cfg.getServletContext().getContextPath();
@@ -198,7 +223,7 @@ public class MainServlet extends HttpServlet {
      * @param fileName property file name
      * @return the File or null if not found
      */
-    private File findPropertiesFile(String fileName) {
+    public File findPropertiesFile(String fileName) {
         String configDir = System.getenv("AUTOSEARCH_CONFIG_DIR");
         if (configDir != null) {
             File fileInConfigDir = new File(configDir, fileName);
@@ -245,11 +270,12 @@ public class MainServlet extends HttpServlet {
     /**
      * Start the templating engine
      *
-     * @param servletConfig configuration object
+     * @param ctx configuration object
      * @throws Exception
      */
-    private void startVelocity(ServletConfig servletConfig) throws Exception {
-        Velocity.setApplicationAttribute("javax.servlet.ServletContext", servletConfig.getServletContext());
+    private void startVelocity(ServletContext ctx) throws Exception {
+        // Read in the WebApplicationResourceLoader
+        Velocity.setApplicationAttribute(ServletContext.class.getName(), ctx);
 
         Properties p = new Properties();
         try (InputStream is = getServletContext().getResourceAsStream(VELOCITY_PROPERTIES)) {
@@ -284,6 +310,9 @@ public class MainServlet extends HttpServlet {
         // The template doesn't exist so we'll display an error page
         // it is important that the error template is available
         // or we'll end up in an infinite loop
+        if (templateName.equals("error.vm")) {
+            throw new RuntimeException("Could not find error template, giving up");
+        }
         return getTemplate("error");
     }
 
@@ -366,13 +395,7 @@ public class MainServlet extends HttpServlet {
 
         // Use apache stringutils split as it's much more sensible about omitting leading/trailing and empty strings.
         List<String> pathParts = Arrays.stream(StringUtils.split(requestUri, '/'))
-            .map(s -> {
-                try {
-                    return URLDecoder.decode(s, StandardCharsets.UTF_8.name());
-                } catch (UnsupportedEncodingException e) {
-                    throw new IllegalStateException(e);
-                }
-            })
+            .map(s -> URLDecoder.decode(s, StandardCharsets.UTF_8))
             .collect(Collectors.toList());
 
         String corpus = null;
@@ -433,79 +456,8 @@ public class MainServlet extends HttpServlet {
         }
     }
 
-    /**
-     * Get a file from the directory belonging to this corpus and return it, attempting to get a default if that fails.
-     * User corpora never have their own directory, and so will only use the locations for the defaults.
-     *
-     * <pre>
-     * Tries in several locations:
-     * - First try PROP_DATA_PATH/corpus/ directory (if configured, and this is not a user corpus)
-     * - Then try PROP_DATA_PATH/PROP_DATA_DEFAULT directory (if configured)
-     * - Finally try WEB-INF/interface-default
-     * </pre>
-     *
-     * @param corpus - corpus for which to get the file. If null or a user-defined corpus only the default locations are
-     *         checked.
-     * @param filePath - path to the file relative to the directory for the corpus.
-     * @return the file, if found
-     */
-    public final Optional<File> getProjectFile(Optional<String> corpus, String filePath) {
-        Optional<Path> dataDir = getIfValid(adminProps.getProperty(PROP_DATA_PATH));
 
-        // Path the file in the corpus' data directory, only when a valid non-user corpus
-        Optional<Path> corpusFile = dataDir
-            .filter(path -> !isUserCorpus(corpus))
-            .flatMap(p -> resolveIfValid(p, corpus))
-            .flatMap(p -> resolveIfValid(p, Optional.of(filePath)));
 
-        // Path to the file in the default data directory, always available if configured correctly
-        // see https://github.com/INL/corpus-frontend/pull/69
-        Optional<Path> corpusFileDefault = dataDir
-            .flatMap(p -> resolveIfValid(p, Optional.of(adminProps.getProperty(PROP_DATA_DEFAULT))))
-            .flatMap(p -> resolveIfValid(p, Optional.of(filePath)));
-
-        File file = Stream.of(corpusFile, corpusFileDefault)
-            .map(o -> o.map(Path::toFile).orElse(null))
-            .filter(f -> f != null && f.exists() && f.canRead() && f.isFile())
-            .findFirst()
-            .orElseGet(() -> {
-                // both the regular data directories didn't contain the file (or aren't configured, etc.),
-                // as a last resort, find a fallback file in the jar directly
-                try {
-                    URL fileInJar = MainServlet.class.getResource("/interface-default/" + filePath);
-                    return fileInJar != null ? new File(fileInJar.toURI()) : null;
-                } catch (URISyntaxException e) {
-                    return null;
-                }
-            });
-
-        return Optional.ofNullable(file);
-    }
-
-    private static Optional<Path> getIfValid(String path) {
-        if (path == null || path.isEmpty())
-            return Optional.empty();
-
-        try {
-            return Optional.of(Paths.get(path));
-        } catch (InvalidPathException e) {
-            return Optional.empty();
-        }
-    }
-
-    /**
-     * Resolve the child again the parent and verify that the child is indeed a descendant.
-     * Also handle null, illegal paths, empty strings and other such things.
-     *
-     * @return the new path if everything is alright
-     */
-    private static Optional<Path> resolveIfValid(Path parent, Optional<String> child) {
-        try {
-            return Optional.of(parent.resolve(child.get())).filter(resolved -> resolved.startsWith(parent) && !resolved.equals(parent)); // prevent upward directory traversal - child must be in parent
-        } catch (Exception e) { // catch anything, a bit lazy but allows passing in null and empty strings etc
-            return Optional.empty();
-        }
-    }
 
     /**
      * Get the stylesheet to convert a document or its metadata from this corpus into
@@ -516,7 +468,7 @@ public class MainServlet extends HttpServlet {
      * The data format suffix is supported to allow placing xsl files for all corpora in the same fallback directory.
      *
      * "meta.xsl" is used to transform the document's metadata, "article.xsl" for the content.
-     * see {@link ArticleResponse#completeRequest()}
+     * See {@link ArticleResponse}.
      *
      * Looks for a file by the name of "article_corpusDataFormat.xsl", so "article_tei" for tei, etc.
      * Separate xslt is used for metadata,
@@ -538,34 +490,13 @@ public class MainServlet extends HttpServlet {
      * @return the xsl transformer to use for transformation, note that this is always the same transformer.
      */
     public Result<XslTransformer, TransformerException> getStylesheet(Optional<String> corpus, String name, Optional<String> corpusDataFormat, HttpServletRequest request, HttpServletResponse response) {
+        String dataDir = adminProps.getProperty(PROP_DATA_PATH);
+        Optional<String> fallbackCorpus = Optional.ofNullable(adminProps.getProperty(PROP_DATA_DEFAULT)).filter(s -> !s.isEmpty());
 
-        // @formatter:off
-        Function<String, Result<XslTransformer, TransformerException>> gen = __ -> {
-            // todo replace with .or() when we upgrade to java 9
-            Optional<File> file = Stream.of(
-                getProjectFile(corpus, name + ".xsl").orElse(null),
-                corpusDataFormat.flatMap(f -> getProjectFile(corpus, name + "_" + f +".xsl")).orElse(null)
-            )
-            .filter(Objects::nonNull)
-            .findFirst();
+        String filename = name + ".xsl";
+        Optional<String> fallbackFilename = corpusDataFormat.map(f -> name + "_" + f + ".xsl");
 
-            // File found - try loading it
-            if (file.isPresent()) {
-                return Result.attempt(() -> new XslTransformer(file.get())).mapError(e -> new TransformerException("Error loading stylesheet from disk:\n" + file.get() + "\n" + e.getMessage() + "\n" + ExceptionUtils.getStackTrace(e)));
-            }
-
-            // alright, file not found. Try getting from BlackLab and parse that
-            if (name.equals("article") && corpusDataFormat.isPresent()) { // for article files, we can use a fallback if there is no template file
-                logger.info("Attempting to get xsl {} for corpus {} from blacklab...", corpusDataFormat.get(), corpus);
-                return new BlackLabApi(request, response)
-                        .getStylesheet(corpusDataFormat.get())
-                        .mapWithErrorHandling(XslTransformer::new)
-                        .mapError(e -> new TransformerException("Error loading stylesheet from BlackLab:\n" + e.getMessage() + "\n" + ExceptionUtils.getStackTrace(e)));
-            }
-            return Result.error(new TransformerException("File not found on disk, and no fallback available: " + name + ".xsl"));
-        };
-
-        // @formatter:on
+        Function<String, Result<XslTransformer, TransformerException>> gen = __ -> CorpusFileUtil.getStylesheet(dataDir, corpus, fallbackCorpus, filename, fallbackFilename, request, response);
 
         // need to use corpus name in the cache map
         // because corpora can define their own xsl files in their own data directory
@@ -573,20 +504,24 @@ public class MainServlet extends HttpServlet {
         return this.useCache() ? articleTransformers.computeIfAbsent(key, gen) : gen.apply(key);
     }
 
+    public Optional<File> getProjectFile(Optional<String> corpus, String file) {
+        return CorpusFileUtil.getProjectFile(
+                adminProps.getProperty(PROP_DATA_PATH),
+                corpus,
+                Optional.ofNullable(adminProps.getProperty(PROP_DATA_DEFAULT)),
+                Optional.of(file));
+    }
+
     public InputStream getHelpPage(Optional<String> corpus) {
-        try {
-            return new FileInputStream(getProjectFile(corpus, "help.inc").get());
-        } catch (FileNotFoundException e) {
-            throw new IllegalStateException(e); // this file always exists
-        }
+        return Result.from(getProjectFile(corpus, "help.inc"))
+                .mapWithErrorHandling(FileInputStream::new)
+                .getOrThrow(IllegalStateException::new); // this file always exists (at least the fallback in our own jar)
     }
 
     public InputStream getAboutPage(Optional<String> corpus) {
-        try {
-            return new FileInputStream(getProjectFile(corpus, "about.inc").get());
-        } catch (FileNotFoundException e) {
-            throw new IllegalStateException(e); // this file always exists
-        }
+        return Result.from(getProjectFile(corpus, "about.inc"))
+                .mapWithErrorHandling(FileInputStream::new)
+                .getOrThrow(IllegalStateException::new); // this file always exists (at least the fallback in our own jar)
     }
 
     /** NOTE: never suffixed with corpus id, to unify behavior on different pages. The url will always end in "/" */
@@ -642,17 +577,5 @@ public class MainServlet extends HttpServlet {
 
     public Properties getAdminProps() {
         return adminProps;
-    }
-
-    public static boolean isUserCorpus(Optional<String> corpus) {
-        return getCorpusOwner(corpus).isPresent();
-    }
-
-    public static Optional<String> getCorpusName(Optional<String> corpus) {
-        return corpus.map(id -> id.substring(Math.max(0, id.indexOf(':'))));
-    }
-
-    public static Optional<String> getCorpusOwner(Optional<String> corpus) {
-        return corpus.map(id -> { int i = id.indexOf(':'); return i != -1 ? id.substring(0, i) : null; });
     }
 }

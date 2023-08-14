@@ -1,15 +1,5 @@
 package org.ivdnt.cf.utils;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.commons.configuration2.builder.ConfigurationBuilder;
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
@@ -18,9 +8,12 @@ import org.apache.commons.configuration2.convert.DisabledListDelimiterHandler;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.interpol.ConfigurationInterpolator;
 import org.apache.commons.configuration2.interpol.Lookup;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
-import org.ivdnt.cf.MainServlet;
+import java.io.File;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Configuration read from an XML config file.
@@ -152,13 +145,13 @@ public class WebsiteConfig {
             .of(
                 xmlConfig.getString("InterfaceProperties.DisplayName"),
                 corpusConfig.flatMap(CorpusConfig::getDisplayName).orElse(""),
-                MainServlet.getCorpusName(corpusId).orElse("")
+                CorpusFileUtil.getCorpusName(corpusId).orElse("")
             )
             .map(StringUtils::trimToNull)
             .filter(Objects::nonNull)
             .findFirst();
 
-        corpusOwner = MainServlet.getCorpusOwner(corpusId);
+        corpusOwner = CorpusFileUtil.getCorpusOwner(corpusId);
         
         xmlConfig.configurationsAt("InterfaceProperties.CustomJs").forEach(sub -> {
             String url = sub.getString("", sub.getString("[@src]", ""));

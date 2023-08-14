@@ -1,30 +1,33 @@
-package org.ivdnt.cf.rest.jersey;
+package org.ivdnt.cf.rest;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
-import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
-import com.fasterxml.jackson.jaxrs.json.JsonMapperConfigurator;
+import java.io.File;
+import java.util.Optional;
+
+import jakarta.servlet.ServletContext;
+
+import org.apache.commons.lang3.SystemUtils;
 import org.glassfish.jersey.jackson.JacksonFeature;
+import org.glassfish.jersey.jackson.internal.jackson.jaxrs.json.JacksonJaxbJsonProvider;
+import org.glassfish.jersey.jackson.internal.jackson.jaxrs.json.JsonMapperConfigurator;
 import org.glassfish.jersey.message.DeflateEncoder;
 import org.glassfish.jersey.message.GZipEncoder;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.server.filter.EncodingFilter;
 import org.ivdnt.cf.GlobalConfig;
-import org.ivdnt.cf.rest.jersey.api.ConfigResource;
+import org.ivdnt.cf.rest.api.ConfigResource;
+import org.ivdnt.cf.rest.api.XsltResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletContext;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.UriInfo;
-import javax.ws.rs.ext.ContextResolver;
-import java.io.File;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.ext.ContextResolver;
+import jakarta.ws.rs.ext.Provider;
+
+@Provider
 public class Setup extends ResourceConfig {
     private static final Logger logger = LoggerFactory.getLogger(Setup.class);
-
-
-    public static String KEY_GLOBAL_CONFIG = "org.ivdnt.cf.config";
 
     /**
      * ObjectMapper is used by Jackson to determine how to serialize objects to/from xml/json.
@@ -43,7 +46,7 @@ public class Setup extends ResourceConfig {
             mapper = new JsonMapperConfigurator(null, JacksonJaxbJsonProvider.DEFAULT_ANNOTATIONS).getDefaultMapper();
 
             // Enable the mapper to serialize JSONObject/JSONArray
-            mapper.registerModule(new JsonOrgModule());
+//            mapper.registerModule(new JsonOrgModule());
 
             // TODO copied from VWS, but remove this if we don't end up using it, we don't do field filtering on json responses in this application
             // Add some mixins, allowing us to annotate classes with Jackson annotations without modifying the original class.
@@ -57,7 +60,7 @@ public class Setup extends ResourceConfig {
         }
     }
 
-    public Setup(@Context ServletContext context, @Context UriInfo uriInfo) {
+    public Setup(@Context ServletContext context) {
         super(
             // Enable gzip compression
             EncodingFilter.class,
@@ -66,14 +69,20 @@ public class Setup extends ResourceConfig {
 
             JacksonFeature.class, // Enable Jackson as our JAXB provider
 
+
+//            JaxbMessagingBinder.class, // Enable JAXB annotations
+//            JaxbAutoDiscoverable.class, // Enable JAXB annotations
+
+
             // Preprocess data in api responses and map exceptions in api to proper pages/messages
             ObjectMapperContextResolver.class,
             GenericExceptionMapper.class,
             CORSFilter.class,
+            OutputTypeFilter.class,
 
             // Register our api endpoints and pages
-            ConfigResource.class
-//            XsltResource.class,
+            ConfigResource.class,
+            XsltResource.class
 
 
 //            LemmaResource.class,
@@ -87,59 +96,59 @@ public class Setup extends ResourceConfig {
 //            ResultsPage.class
         );
 
+//        System.out.println("INIT SETUP\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+
+
         GlobalConfig cfg = loadGlobalConfig(context);
 
         property(cfg.getClass().getName(), cfg);
     }
 
+
+    /**
+     * Config file resolution order:
+     * Environment variables first (corpus frontend, then blacklab as fallback).
+     * Then /etc/corpus-frontend, then /etc/blacklab as fallback.
+     * Then the directory containing the webapp, then the user's home directory.
+     *
+     * @param ctx ServletContext
+     * @return GlobalConfig, with default settings if none was found
+     */
     protected static GlobalConfig loadGlobalConfig(ServletContext ctx) {
         final String applicationName = ctx.getContextPath().replaceAll("^/", "");
         final String configFileName = applicationName + ".properties";
+        Optional<GlobalConfig> config = tryLoadConfig(System.getenv("CORPUS_FRONTEND_CONFIG_DIR"), configFileName)
+                .or(() -> tryLoadConfig(System.getenv("AUTOSEARCH_CONFIG_DIR"), configFileName))
+                .or(() -> tryLoadConfig(System.getenv("BLACKLAB_CONFIG_DIR"), configFileName));
+        if (SystemUtils.IS_OS_LINUX) {
+            config = config
+                .or(() -> tryLoadConfig("/etc/" + applicationName + "/", configFileName))
+                .or(() -> tryLoadConfig("/etc/blacklab/", configFileName));
+        }
+        return config
+            .or(() -> tryLoadConfig(new File(ctx.getRealPath("/")).getParentFile().getPath(), configFileName))
+            .or(() -> tryLoadConfig(System.getProperty("user.home"), configFileName)) // user.home works on both linux and windows.
+            .orElseGet(GlobalConfig::getDefault);
+    }
 
-        env1:
-        {
-            String s = System.getenv("CORPUS_FRONTEND_CONFIG_DIR");
-            if (s == null) {
-                logger.debug("Environment variable CORPUS_FRONTEND_CONFIG_DIR not set");
-                break env1;
-            }
-            File f = new File(s, configFileName);
-            try {
-                return new GlobalConfig(f);
-            } catch (Exception e) {
-                logger.error("Error while reading config file {}", f.getAbsolutePath(), e);
-                break env1;
-            }
-        }
-        env2:
-        {
-            String s = System.getenv("AUTOSEARCH_CONFIG_DIR");
-            if (s == null) {
-                logger.debug("Environment variable CORPUS_FRONTEND_CONFIG_DIR not set");
-                break env2;
-            }
-            File f = new File(s, configFileName);
-            try {
-                return new GlobalConfig(f);
-            } catch (Exception e) {
-                logger.error("Error while reading config file {}", f.getAbsolutePath(), e);
-                break env2;
-            }
-        }
-        warpath:
-        {
-            String warPath = ctx.getRealPath("/");
-            if (warPath != null) {
-                File f = new File(new File(warPath).getParentFile(), configFileName);
+    private static Optional<GlobalConfig> tryLoadConfig(String path, String filename) {
+        return Optional.ofNullable(path)
+            .map(File::new)
+            .filter(File::isDirectory)
+            .map(f -> new File(f, filename))
+            .filter(f -> {
+                if (!f.canRead()) logger.debug("Config file not found at {}", f.getAbsolutePath());
+                return f.canRead();
+            })
+            .map(f -> {
                 try {
-                    return new GlobalConfig(f);
+                    GlobalConfig conf = new GlobalConfig(f);
+                    logger.info("Loaded config file at {}", f.getAbsolutePath());
+                    return conf;
                 } catch (Exception e) {
-                    logger.error("Error while reading config file {}", f.getAbsolutePath(), e);
-                    break warpath;
+                    logger.error("Error occurred while reading config file at " + f.getAbsolutePath(), e);
+                    return null;
                 }
-            }
-        }
-
-        return GlobalConfig.getDefault();
+            });
     }
 }

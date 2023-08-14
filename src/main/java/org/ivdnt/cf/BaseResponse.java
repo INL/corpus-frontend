@@ -6,6 +6,7 @@
  */
 package org.ivdnt.cf;
 
+import org.apache.velocity.context.Context;
 import org.ivdnt.cf.utils.BlackLabApi;
 import org.ivdnt.cf.utils.WebsiteConfig;
 
@@ -19,10 +20,10 @@ import org.apache.velocity.tools.generic.EscapeTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.Arrays;
@@ -147,7 +148,7 @@ public abstract class BaseResponse {
                  * @param value the resolved value
                  */
                 @Override
-                public Object referenceInsert(String expression, Object value) {
+                public Object referenceInsert(Context context, String expression, Object value) {
                     boolean escape = !expression.toLowerCase().contains("unescaped");
                     String val = value != null ? value.toString() : "";
 

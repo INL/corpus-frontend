@@ -1,14 +1,10 @@
 package org.ivdnt.cf.rest;
 
-import java.io.File;
-import java.util.Optional;
-
+import com.fasterxml.jackson.core.util.JacksonFeature;
 import jakarta.servlet.ServletContext;
-
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.ext.Provider;
 import org.apache.commons.lang3.SystemUtils;
-import org.glassfish.jersey.jackson.JacksonFeature;
-import org.glassfish.jersey.jackson.internal.jackson.jaxrs.json.JacksonJaxbJsonProvider;
-import org.glassfish.jersey.jackson.internal.jackson.jaxrs.json.JsonMapperConfigurator;
 import org.glassfish.jersey.message.DeflateEncoder;
 import org.glassfish.jersey.message.GZipEncoder;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -19,11 +15,8 @@ import org.ivdnt.cf.rest.api.XsltResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.ext.ContextResolver;
-import jakarta.ws.rs.ext.Provider;
+import java.io.File;
+import java.util.Optional;
 
 @Provider
 public class Setup extends ResourceConfig {
@@ -36,29 +29,29 @@ public class Setup extends ResourceConfig {
      * Jersey allows us to register a custom factory/provider-type class to dynamically provide the ObjectMapper used by Jersey.
      * So do that with this class, and return one that does support converting JSONObject/JSONarray.
      */
-    private static class ObjectMapperContextResolver implements ContextResolver<ObjectMapper> {
-        private final ObjectMapper mapper;
-
-        @SuppressWarnings("unused") // Is only called through reflection
-        public ObjectMapperContextResolver() {
-            // By default Jackson ignores Jaxb annotations, causing annotations like @XmlAccessorType to not work
-            // So we need to explicitly enable the annotations again
-            mapper = new JsonMapperConfigurator(null, JacksonJaxbJsonProvider.DEFAULT_ANNOTATIONS).getDefaultMapper();
-
-            // Enable the mapper to serialize JSONObject/JSONArray
-//            mapper.registerModule(new JsonOrgModule());
-
-            // TODO copied from VWS, but remove this if we don't end up using it, we don't do field filtering on json responses in this application
-            // Add some mixins, allowing us to annotate classes with Jackson annotations without modifying the original class.
-            // See JsonMediaInterceptor
-//            mapper.addMixIn(Object.class, JsonFieldFilterMixin.class);
-        }
-
-        @Override
-        public ObjectMapper getContext(Class<?> type) {
-            return mapper;
-        }
-    }
+//    private static class ObjectMapperContextResolver implements ContextResolver<ObjectMapper> {
+//        private final ObjectMapper mapper;
+//
+//        @SuppressWarnings("unused") // Is only called through reflection
+//        public ObjectMapperContextResolver() {
+//            // By default Jackson ignores Jaxb annotations, causing annotations like @XmlAccessorType to not work
+//            // So we need to explicitly enable the annotations again
+//            mapper = new JsonMapperConfigurator(null, JacksonJaxbJsonProvider.DEFAULT_ANNOTATIONS).getDefaultMapper();
+//
+//            // Enable the mapper to serialize JSONObject/JSONArray
+////            mapper.registerModule(new JsonOrgModule());
+//
+//            // TODO copied from VWS, but remove this if we don't end up using it, we don't do field filtering on json responses in this application
+//            // Add some mixins, allowing us to annotate classes with Jackson annotations without modifying the original class.
+//            // See JsonMediaInterceptor
+////            mapper.addMixIn(Object.class, JsonFieldFilterMixin.class);
+//        }
+//
+//        @Override
+//        public ObjectMapper getContext(Class<?> type) {
+//            return mapper;
+//        }
+//    }
 
     public Setup(@Context ServletContext context) {
         super(
@@ -67,15 +60,14 @@ public class Setup extends ResourceConfig {
             GZipEncoder.class,
             DeflateEncoder.class,
 
-            JacksonFeature.class, // Enable Jackson as our JAXB provider
-
-
-//            JaxbMessagingBinder.class, // Enable JAXB annotations
-//            JaxbAutoDiscoverable.class, // Enable JAXB annotations
-
+            org.glassfish.jersey.jaxb.internal.JaxbAutoDiscoverable.class,
 
             // Preprocess data in api responses and map exceptions in api to proper pages/messages
-            ObjectMapperContextResolver.class,
+
+            JacksonFeature.class, // register jackson into jersey (enable json/xml support)
+
+
+//            ObjectMapperContextResolver.class,
             GenericExceptionMapper.class,
             CORSFilter.class,
             OutputTypeFilter.class,
@@ -95,6 +87,7 @@ public class Setup extends ResourceConfig {
 //            SearchPage.class,
 //            ResultsPage.class
         );
+
 
 //        System.out.println("INIT SETUP\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
 

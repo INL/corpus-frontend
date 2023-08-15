@@ -59,6 +59,10 @@ public class GlobalConfig {
         return get(instanceProps, k);
     }
 
+    public GlobalConfig() {
+        this.instanceProps = new Properties(defaultProps);
+    }
+
     public GlobalConfig(File f) {
         if (!f.isFile())
             throw new IllegalArgumentException("File " + f + " does not exist");
@@ -67,7 +71,7 @@ public class GlobalConfig {
 
         this.instanceProps = new Properties(defaultProps);
         try (Reader in = new BufferedReader(new FileReader(f))) {
-            logger.info("Reading global config: {}", f);
+            logger.debug("Reading global config: {}", f);
             this.instanceProps.load(in);
         } catch (IOException e) {
             throw new IllegalArgumentException("File " + f + " does not exist");

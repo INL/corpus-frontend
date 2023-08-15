@@ -1,10 +1,10 @@
 package org.ivdnt.cf.rest;
 
-import java.io.IOException;
-import java.util.List;
-
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
+
+import java.io.IOException;
+import java.util.List;
 
 /**
  * check to see if there is an outputType= parameter in the query string
@@ -37,9 +37,7 @@ public class OutputTypeFilter implements ContainerRequestFilter {
             final String existing = request.getHeaders().getFirst("Accept");
             final String newAccept = existing == null ? outputType : outputType + "," + existing;
 
-//            System.out.println("Replaced accept header with " + newAccept);
-//                    existing == null ? outputType : outputType + "," +
-//                    Pattern.compile(outputType + "[,;]?").matcher(existing).replaceAll("");
+            System.out.println("Replaced accept header with " + newAccept);
 
             request.getHeaders().replace("Accept", List.of(newAccept));
         }

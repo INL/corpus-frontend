@@ -1,29 +1,27 @@
 # BlackLab Frontend
 
-- **[About](#About)**
-    - [Intro](#Intro)
-    - [Basic usage](#How-to-use)
-- **[Installation](#Installation)**
-    - [Requirements](#Requirements)
-    - [Releases](#Download-a-release)
-    - [Building from source](#Building-from-source)
-    - [Using Docker](#Using-Docker)
-- **[Configuration](#Configuration)**
-    - [Backend configuration](#Backend-configuration)
-    - [Adding corpora](#Adding-corpora)
-    - [User corpora](#Allowing-users-to-add-corpora)
-    - [Frontend configuration](#Frontend-configuration)
-        - [Search.xml](#searchxml)
-        - [Index formats](#Index-config)
-        - [Custom JS](#Custom-JS)
-        - [Custom CSS](#Custom-CSS)
-- **[Development](#Development)**
-    - [Frontend Javascript](#Frontend-Javascript)
-      - [Application structure](#Application-structure)
-      - [The Vuex store](#The-Vuex-store)
-      - [URL generation and parsing](#URL-generation-and-parsing)
-      - [Development tips](#Development-tips)
-    - [Backend development](#Backend-development)
+- **[About](#about)**
+    - [Intro](#intro)
+    - [Basic usage](#how-to-use)
+- **[Installation](#installation)**
+    - [Requirements](#requirements)
+    - [Releases](#download-a-release)
+    - [Building from source](#building-from-source)
+    - [Using Docker](#using-docker)
+- **[Configuration](#configuration)**
+    - [Backend configuration](#backend-configuration)
+    - [Adding corpora](#adding-corpora)
+    - [User corpora](#allowing-users-to-add-corpora)
+    - [Customizing the Frontend (Frontend configuration)](#customizing-the-frontend)
+        - [Custom JS](#custom-js)
+        - [Custom CSS](#custom-css)
+- **[Development](#development)**
+    - [Frontend Javascript](#frontend-javascript)
+      - [Application structure](#application-structure)
+      - [The Vuex store](#the-vuex-store)
+      - [URL generation and parsing](#url-generation-and-parsing)
+      - [Development tips](#development-tips)
+    - [Backend development](#backend-development)
 
 
 
@@ -156,7 +154,7 @@ debugInfo=false
 
 ## Adding corpora
 
-Corpora may be [added manually](https://inl.github.io/BlackLab/guide/indexing-with-blacklab.html) or [uploaded by users](#Allowing-users-to-add-corpora) (if configured).
+Corpora may be [added manually](https://inl.github.io/BlackLab/guide/indexing-with-blacklab.html) or [uploaded by users](#allowing-users-to-add-corpora) (if configured).
 
 After a corpus has been added, the corpus-frontend will automatically detect it, a restart should not be required.
 
@@ -196,33 +194,75 @@ If the user does not own a corpus with this name yet, it's automatically created
 After indexing is complete, the user is redirected to the search page.
 
 
-## Frontend configuration
+## Customizing the Frontend
 
-**Per corpus configuration is not supported for user corpora.**
-Though you sort of can by overriding the defaults that apply to all corpora in your instance.
+> Customization options have gradually grown over the years, and have become a little cumbersome. We're aware and we'll eventually improve on this.
 
-By placing certain files in the `corporaInterfaceDataDir` it's possible to customize several aspects of a corpus.
-Files must be placed in a subdirectory with the same name as the corpus; files for `MyCorpus` should be placed in `corporaInterfaceDataDir/MyCorpus/...`
+As an admin you can customize various aspects of the frontend, such as what data is shown in the results table, which filters are shown, etc.  
+Corpora can be individually customized/configured.  
+[Corpora uploaded by users](#allowing-users-to-add-corpora) **cannot be individually configured**, user corpora will however use the default set of customizations if they exist.
 
-When a file is not found for a corpus, the frontend will then check the following locations
-- The directory specified in `corporaInterfaceDefault`
-- [Inside the WAR](src/main/resources/interface-default/)
 
-------------
+#### First create the needed files
+1. Create the main customization directory. The default location is `/etc/blacklab/projectconfigs/` on linux, and `C:\\etc\blacklab\projectconfigs\` on windows.
+   It can be changed by changing the `corporaInterfaceDataDir` setting in `corpus-frontend.properties`.
+2. (Optionally) create a default configuration: create a directory `default/` inside the config dir.
+   It can be changed by changing the `corporaInterfaceDefault` setting in `corpus-frontend.properties`.
+3. Create a separate directory for every corpus you want to configure. The names should be equal to the ID of the corpus in `BlackLab`.
+4. In the corpus' directory, create a `static/` dir, files in this this will be available in the browser under `corpus-frontend/my_corpus/static/...`. This directory can be used for custom css and js, or whatever other files you need.
 
-The data directory may contain the following files and subdirectories:
+You should be left with the following directory structure:
+```
+etc/projectConfigs/ # the location set in the corporaInterfaceDataDir setting
+  corpus-1/
+    search.xml # see below.
+    help.inc # see below.
+    about.inc # see below.
+    article.xsl # see below.
+    meta.xsl # see below.
+    static/
+      # files needed by the website go here.
+      custom.css
+      custom.search.js # see below for what you can do in javascript.
+      custom.article.js
+  corpus-2/
+    ...
+  default/ # the name set in the corporaInterfaceDefault setting
+    # fallbacks/default configuration goes here
+    ... 
+```
 
-- `Search.xml`
+> Good to know: customization and `static` files 'overlay' each other, the frontend will check the following locations in order, using the first location where a file is found:
+>- the directory of the corpus itself (corporaInterfaceDataDir) 
+>- The default dir
+>- [Inside the WAR](src/main/resources/interface-default/)
+   
+
+#### Example customization.
+Let's perform a simple customization that will take you through the steps, adding a custom javascript file and change the displayed title of your documents.
+1. Follow the steps above to create the config directory for your corpus. I'll assume you left the config directory at its default location of `/etc/projectsconfigs/` and your corpus is called `example` in the following steps. Use your custom paths if necessary.
+2. Copy [the default search.xml](src/main/resources/interface-default/search.xml) into `etc/projectconfigs/example/search.xml`.
+3. Add a config option to include a custom script on the `search` page: `<CustomJs>${request:corpusPath}/static/js/custom.search.js</CustomJs>`
+4. Create a matching javascript file `/etc/projectconfigs/example/static/js/custom.search.js`
+5. Add the following snippet to your `custom.search.js`
+   ```js
+    vuexModules.ui.getState().results.shared.getDocumentSummary = function(metadata, specialFields) {
+      return 'This is everything we know about the document: ' + JSON.stringify(metadata);
+    }
+    ```
+6. Now restart your server and perform a search in your corpus, and see the new titles! [http://localhost:8080/corpus-frontend/example/search/docs?patt=""](http://localhost:8080/corpus-frontend/example/search/docs?patt="")
+
+
+#### Details about what customization/configuration file does what:
+- `search.xml`
 Allows you to (among other things) set the navbar links and inject custom css/js, or enable/disable pagination in documents.
-See [the default configuration](src/main/resources/interface-default/search.xml).
-- `help.inc`
-Html content placed in the body of the `MyCorpus/help/` page.
-- `about.inc`
-Html content placed in the body of the `MyCorpus/about/` page.
+[The default configuration](src/main/resources/interface-default/search.xml) details all options. 
+- `help.inc`, `about.inc`
+Html content placed in the body of the `MyCorpus/about/` and the `MyCorpus/help/` pages. [the default configuration](src/main/resources/interface-default/search.xml)
 - `.xsl` files
-These are used to transform documents in your corpus into something that can be displayed on the `article/` page.
+These are used to transform documents in your corpus from XML into HTML for display in the `MyCorpus/docs/some_doc/` page.
 Two files can be placed here:
-  - `article.xsl`, the most important one, for your document's content (previously this was `article_${formatName}.xsl` (e.g. `article_tei.xsl` or `article_folia.xsl`). This will still work for now, however, this is deprecated).
+  - `article.xsl`, the most important one, for your document's content.
   A small note: if you'd like to enable tooltips displaying more info on the words of your corpus, you can use the `data-tooltip-preview` (when just hovering) and `data-tooltip-content` (when clicking on the tooltip) attributes on any html element to create a tooltip. Alternatively if you don't want to write your own html, you can use `title` for the preview, combined with one or more `data-${valueName}` to create a little table. `title="greeting" data-lemma="hi" data-speaker="jim"` will create a preview containing `greeting` which can be clicked on to show a table with the details`.
   - `meta.xsl` for your document's metadata (shown under the metadata tab on the page)
   **Note:** this stylesheet does not receive the raw document, but rather the results of `/blacklab-server/docs/${documentId}`, containing only the indexed metadata.
@@ -230,27 +270,15 @@ Two files can be placed here:
 A sandbox where you can place whatever other files you may need, such as custom js, css, fonts, logo's etc.
 These files are public, and can be accessed through `MyCorpus/static/path/to/my.file`.
 
----
+### **Blacklab's Index settings (index format)**
 
-The interface may be customized in three different ways:
-- [search.xml](#searchxml)
-- The config (`.blf.yaml` / `.blf.json`) used to create the corpus
-- Javascript & CSS
+> The term `format` refers to the `*.blf.yaml` or `*.blf.json` file used to index data into the corpus.
 
-### **Search.xml**
-
-Allows you to set a custom display name, load custom JS/CSS, edit the shown columns for results, configure Google Analytics, and more.
-See [the default configuration](src/main/resources/interface-default/search.xml) for more information.
-
-### **Index config**
-
-> The term format config refers to the `*.blf.yaml` or `*.blf.json` file used to index data into the corpus.
-
-Because the format config specifies the shape of a corpus (which metadata and annotations a corpus contains, what type of data they hold, and how they are related), it made sense to let the format config specify some things about how to display them in the interface.
+Because the `format` specifies the shape of a corpus (which metadata and annotations a corpus contains, what type of data they hold, and how they are related), it made sense to let the `format` specify some things about how to display them in the interface.
 
 **NOTE:** These properties need to be set before the first data is added to a corpus, editing the format config file afterwards will not work (though if you know what your are doing, you can edit the `indexmetadata.yaml` or `indexmetadata.json` file by hand and perform the change that way).
 
-### Through the index config you can:
+### Through the format you can:
 
 - <details>
     <summary>Change the text direction of your corpus</summary>
@@ -587,10 +615,10 @@ Because the format config specifies the shape of a corpus (which metadata and an
 
 ### **Custom JS**
 
-A custom javascript file can be injected by setting it in [search.xml](#searchxml)
-> **NOTE:** your javascript file is shared between all pages!
-This means the vuex store might not be available! Check which page you're on beforehand by using the url or detecting whether the store exists and what exists inside it.
-All javascript should run _before_ `$(document).ready` unless otherwise stated.
+Custom javascript files can be included on any page by adding them to [search.xml](#searchxml)
+> **NOTE:** by default, your script will run on every page! Not all functions shown below are available everywhere!
+> **It is highly recommended** to use multiple scripts, and only include them on a single page (by using the `<CustomJS page="..."/>` (see search.xml).
+> All javascript should run _before_ `$(document).ready` unless otherwise stated.
 
 
 Through javascript you can do many things, but outlined below are some of the more interesting/useful features on the `/search/` page:
@@ -1113,7 +1141,7 @@ Through javascript you can do many things, but outlined below are some of the mo
 
 ----
 
-The `/article/` page has other features that can be enabled.
+The `/docs/` page has other features that can be enabled.
 Enabling any of these will show a new `Statistics` tab next to the default `Content` and `Metadata` tabs.
 
 - <details>

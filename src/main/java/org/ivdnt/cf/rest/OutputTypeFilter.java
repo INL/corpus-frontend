@@ -2,14 +2,18 @@ package org.ivdnt.cf.rest;
 
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
+import jakarta.ws.rs.container.PreMatching;
 
 import java.io.IOException;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * check to see if there is an outputType= parameter in the query string
  * if so, set the Accept header to prefer that type
  */
+@PreMatching // required to modify accept header, otherwise it's already been parsed/committed.
 public class OutputTypeFilter implements ContainerRequestFilter {
     @Override
     public void filter(ContainerRequestContext request) throws IOException {
@@ -32,10 +36,18 @@ public class OutputTypeFilter implements ContainerRequestFilter {
                 outputType = "application/xml";
                 break;
             }
+            default: {
+                return;
             }
+            }
+            outputType += ";q=1.0";
+
 
             final String existing = request.getHeaders().getFirst("Accept");
-            final String newAccept = existing == null ? outputType : outputType + "," + existing;
+//            final String newAccept = existing == null ? outputType : outputType + "," + existing;
+            final String newAccept = outputType;
+
+
 
             System.out.println("Replaced accept header with " + newAccept);
 

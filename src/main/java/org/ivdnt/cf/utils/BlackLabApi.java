@@ -4,6 +4,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Optional;
 
+/**
+ * Helper class for talking to BlackLab.
+ * Is initialized with the BlackLab server URL once on startup.
+ * Has methods for getting various things from BlackLab, with the ability to copy basic auth headers from the client request (which is why it needs the request and response objects).
+ */
 public class BlackLabApi {
 	protected static String blsUrl;
 	

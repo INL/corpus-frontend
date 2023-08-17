@@ -195,7 +195,7 @@ public class MainServlet extends HttpServlet {
                 throw new ServletException(PROP_DATA_PATH + " setting should be an absolute path");
             }
             XslTransformer.setUseCache(this.useCache());
-            
+
             BlackLabApi.setBlsUrl(adminProps.getProperty(PROP_BLS_SERVERSIDE));
         } catch (ServletException e) {
             throw e;
@@ -493,10 +493,7 @@ public class MainServlet extends HttpServlet {
         String dataDir = adminProps.getProperty(PROP_DATA_PATH);
         Optional<String> fallbackCorpus = Optional.ofNullable(adminProps.getProperty(PROP_DATA_DEFAULT)).filter(s -> !s.isEmpty());
 
-        String filename = name + ".xsl";
-        Optional<String> fallbackFilename = corpusDataFormat.map(f -> name + "_" + f + ".xsl");
-
-        Function<String, Result<XslTransformer, TransformerException>> gen = __ -> CorpusFileUtil.getStylesheet(dataDir, corpus, fallbackCorpus, filename, fallbackFilename, request, response);
+        Function<String, Result<XslTransformer, TransformerException>> gen = __ -> CorpusFileUtil.getStylesheet(dataDir, corpus, fallbackCorpus, name, corpusDataFormat, request, response);
 
         // need to use corpus name in the cache map
         // because corpora can define their own xsl files in their own data directory
@@ -540,7 +537,7 @@ public class MainServlet extends HttpServlet {
     public boolean useCache() {
         return Boolean.parseBoolean(this.adminProps.getProperty(PROP_CACHE));
     }
-    
+
     /** Render debug info checkbox in the search interface? */
     public boolean debugInfo() {
         return Boolean.parseBoolean(this.adminProps.getProperty(PROP_DEBUG_CHECKBOX_VISIBLE));

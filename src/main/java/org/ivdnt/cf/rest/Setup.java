@@ -5,6 +5,7 @@ import jakarta.servlet.ServletContext;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.ext.Provider;
 import org.apache.commons.lang3.SystemUtils;
+import org.glassfish.jersey.jaxb.internal.JaxbAutoDiscoverable;
 import org.glassfish.jersey.message.DeflateEncoder;
 import org.glassfish.jersey.message.GZipEncoder;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -22,37 +23,6 @@ import java.util.Optional;
 public class Setup extends ResourceConfig {
     private static final Logger logger = LoggerFactory.getLogger(Setup.class);
 
-    /**
-     * ObjectMapper is used by Jackson to determine how to serialize objects to/from xml/json.
-     * Jackson is responsible for generating xml/json content-types in Jersey,
-     * however, by default Jersey uses a default ObjectMapper instance to do so, and it doesn't support JSONObject/JSONArray.
-     * Jersey allows us to register a custom factory/provider-type class to dynamically provide the ObjectMapper used by Jersey.
-     * So do that with this class, and return one that does support converting JSONObject/JSONarray.
-     */
-//    private static class ObjectMapperContextResolver implements ContextResolver<ObjectMapper> {
-//        private final ObjectMapper mapper;
-//
-//        @SuppressWarnings("unused") // Is only called through reflection
-//        public ObjectMapperContextResolver() {
-//            // By default Jackson ignores Jaxb annotations, causing annotations like @XmlAccessorType to not work
-//            // So we need to explicitly enable the annotations again
-//            mapper = new JsonMapperConfigurator(null, JacksonJaxbJsonProvider.DEFAULT_ANNOTATIONS).getDefaultMapper();
-//
-//            // Enable the mapper to serialize JSONObject/JSONArray
-////            mapper.registerModule(new JsonOrgModule());
-//
-//            // TODO copied from VWS, but remove this if we don't end up using it, we don't do field filtering on json responses in this application
-//            // Add some mixins, allowing us to annotate classes with Jackson annotations without modifying the original class.
-//            // See JsonMediaInterceptor
-////            mapper.addMixIn(Object.class, JsonFieldFilterMixin.class);
-//        }
-//
-//        @Override
-//        public ObjectMapper getContext(Class<?> type) {
-//            return mapper;
-//        }
-//    }
-
     public Setup(@Context ServletContext context) {
         super(
             // Enable gzip compression
@@ -60,37 +30,23 @@ public class Setup extends ResourceConfig {
             GZipEncoder.class,
             DeflateEncoder.class,
 
-            org.glassfish.jersey.jaxb.internal.JaxbAutoDiscoverable.class,
+            // Should be automatically picked up, but isn't, so register it manually.
+            // this registers all JAXB classes with Jersey, allowing us to produce/consume XML.
+            JaxbAutoDiscoverable.class,
+            // Same deal for jackson, only this does JSON, not XML.
+            JacksonFeature.class,
 
-            // Preprocess data in api responses and map exceptions in api to proper pages/messages
-
-            JacksonFeature.class, // register jackson into jersey (enable json/xml support)
-
-
-//            ObjectMapperContextResolver.class,
+            // Some stuff of our own, like mappping exceptions to HTTP status codes and respons bodies
             GenericExceptionMapper.class,
+            // enable CORS
             CORSFilter.class,
+            // this maps &outputtype query param to Accept header, for easy content negotiation when manually testing
             OutputTypeFilter.class,
 
             // Register our api endpoints and pages
             ConfigResource.class,
             XsltResource.class
-
-
-//            LemmaResource.class,
-//            DictionaryResource.class,
-//            LanguageResource.class,
-//            CountryResource.class,
-//
-//            IndexPage.class,
-//            HelpPage.class,
-//            SearchPage.class,
-//            ResultsPage.class
         );
-
-
-//        System.out.println("INIT SETUP\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-
 
         GlobalConfig cfg = loadGlobalConfig(context);
 

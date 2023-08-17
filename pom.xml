@@ -221,19 +221,30 @@
     </properties>
 
     <dependencies>
+<!--
+Some terminology:
+- jersey is the framework we use to implement our REST API.
+  it implements JAX-RS, which is a JavaEE standard for defining REST APIs using @annotations (such as @Path, @GET, @POST, @Consumes, @Produces, etc.)
+  it doesn't natively know anything about servlets, so "glue" classes are needed to register it with our servlet container (tomcat/glassfish/etc.).
+- jackson allows our jersey API to consume and produce JSON.
+  it doesn't natively know anything about jersey, so "glue" classes are needed to register it with jersey.
+- jaxb allows our jersey API to consume and produce XML.
+  it implements JAXB, which is a JavaEE standard for defining XML <-> Java mappings using @annotations (such as @XmlRootElement, @XmlElement, @XmlAccessorType, etc.)
+  it also doesn't natively know anything about jersey, so "glue" classes are needed to register it with jersey.
+- jersey-hk2 is a dependency injection framework used by jersey. Allows using @Context and @Inject in our jersey resources (a resource is a class handling a specific path within the REST API)
+-->
 
 
-
-<!--    Some terminology:-->
-<!--    - "jersey" is the name of the framework we use to implement our REST API.-->
-<!--        Core jersey classes. Doesn't do anything on its own. -->
-<!--        https://eclipse-ee4j.github.io/jersey.github.io/documentation/3.0.0/modules-and-dependencies.html -->
+<!--        First up: jersey. -->
+        <!-- Core jersey classes. Doesn't do anything on its own. -->
+        <!-- https://eclipse-ee4j.github.io/jersey.github.io/documentation/3.0.0/modules-and-dependencies.html -->
         <dependency>
             <groupId>org.glassfish.jersey.core</groupId>
             <artifactId>jersey-server</artifactId>
             <version>3.1.3</version>
         </dependency>
-<!--        Adapter between java servlets and Jersey. Implements a java servlet that sends requests into the Jersey internals (in which we hook through resources, filters, mappers, etc.). -->
+        <!-- Adapter between java servlets and Jersey. Implements a java servlet that sends requests into the Jersey internals (in which we hook through resources, filters, mappers, etc.). -->
+        <!-- See web.xml for our configuration. -->
         <dependency>
             <groupId>org.glassfish.jersey.containers</groupId>
             <artifactId>jersey-container-servlet</artifactId>
@@ -241,17 +252,8 @@
         </dependency>
 
 
-<!--    - "jackson" is our JSON implementation, it takes to the form of a set of annotations to convert between JSON and Java objects.-->
-<!--        Things like @JsonProperty, @JsonCreator, @JsonInclude, etc.-->
-
-        <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.dataformat/jackson-dataformat-xml -->
-<!--        probably works if you manually call the ObjectMapper, but doesn't register itself with Jersey as MessageBodyWriter/MessageBodyReader, so @consumes and @produces don't work with xml. -->
-<!--        <dependency>-->
-<!--            <groupId>com.fasterxml.jackson.dataformat</groupId>-->
-<!--            <artifactId>jackson-dataformat-xml</artifactId>-->
-<!--            <version>2.15.2</version>-->
-<!--        </dependency>-->
-
+<!--        Next up: jaxb (xml support). -->
+        <!-- jaxb <-> jersey "glue", note this is not the actual jaxb implementation, as there are several to choose from. -->
         <!-- https://mvnrepository.com/artifact/org.glassfish.jersey.media/jersey-media-jaxb -->
         <dependency>
             <groupId>org.glassfish.jersey.media</groupId>
@@ -259,8 +261,16 @@
             <version>3.1.3</version>
         </dependency>
 
+        <!-- jaxb implementation of our choice. Pulls in the jaxb api transitively. -->
+        <!-- https://mvnrepository.com/artifact/org.glassfish.jaxb/jaxb-runtime -->
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>4.0.3</version>
+        </dependency>
 
-        <!--        allows using jackson as media provider (parsing/serializing from reset) in jersey. -->
+<!--        JSON support (jackson)-->
+        <!-- jackson <-> jersey, unlike jaxb, this dependency transitively pulls in everything required (api, implementation, glue classes) -->
         <!-- https://mvnrepository.com/artifact/org.glassfish.jersey.media/jersey-media-json-jackson -->
         <dependency>
             <groupId>org.glassfish.jersey.media</groupId>
@@ -268,81 +278,12 @@
             <version>3.1.3</version>
         </dependency>
 
-
-
-        <!--    - "jaxb" is our xml annotation, it takes the form of a set of annotations to convert between XML and Java objects.-->
-<!--        Things like @XmlRootElement, @XmlElement, @XmlAccessorType, etc.-->
-<!--        It used to be bundled with java, as javax.xml.bind, but it's been deprecated in java 9 and finally removed in java 11. -->
-<!--        It's not available under jakarta.xml.bind -->
-<!--        It has two parts:-->
-<!--            The "api" (a set of annotations) (this used to be included in javaEE, but since 9 it's a separate dependency)-->
-                <!-- https://mvnrepository.com/artifact/jakarta.xml.bind/jakarta.xml.bind-api -->
-<!--                <dependency>-->
-<!--                    <groupId>jakarta.xml.bind</groupId>-->
-<!--                    <artifactId>jakarta.xml.bind-api</artifactId>-->
-<!--                    <version>4.0.0</version>-->
-<!--                </dependency>-->
-<!--            The implementation. -->
-<!--        https://eclipse-ee4j.github.io/jaxb-ri/#:~:text=Implementation%20of%20Jakarta%20XML%20Binding&text=The%20Jakarta%20XML%20Binding%20provides,content%20into%20a%20Java%20representation-->
-<!--                <dependency>-->
-<!--                    <groupId>com.sun.xml.bind</groupId>-->
-<!--                    <artifactId>jaxb-impl</artifactId>-->
-<!--                    <version>4.0.3</version>-->
-<!--                </dependency>-->
-                    <!-- https://mvnrepository.com/artifact/org.glassfish.jaxb/jaxb-runtime -->
-                    <dependency>
-                        <groupId>org.glassfish.jaxb</groupId>
-                        <artifactId>jaxb-runtime</artifactId>
-                        <version>4.0.3</version>
-                    </dependency>
-
-
-
-        <!--            There is a third part, registering it as an XML provider with Jersey-->
-<!--            ???? (maybe this is included in jersey? - don't think so, right) -->
-
-<!--    - "jax-rs" is what we use to implement our REST API. It's a set of annotations that we use to configure jersey.-->
-<!--        Things like @Path, @GET, @POST, @Consumes, @Produces, etc.-->
-<!--        This is included by jersey-server (jakarta.ws.rs), nice! -->
-
-<!--         Enables configuring jersey (json mapping) through jaxb (xml) annotations -->
-<!--        not sure we use this at the moment. -->
-        <!-- https://mvnrepository.com/artifact/org.glassfish.jersey.media/jersey-media-jaxb -->
-<!--        <dependency>-->
-<!--            <groupId>org.glassfish.jersey.media</groupId>-->
-<!--            <artifactId>jersey-media-jaxb</artifactId>-->
-<!--            <version>3.1.3</version>-->
-<!--        </dependency>-->
-
-<!--        Required to consume and produce JSON from our Jersey request handlers. -->
-<!--        Jackson is our JSON provider, it enables json -> java and java -> json, using annotations (like @JsonProperty) to guide the result. -->
-        <!-- https://mvnrepository.com/artifact/org.glassfish.jersey.media/jersey-media-json-jackson -->
-<!--        <dependency>-->
-<!--            <groupId>org.glassfish.jersey.media</groupId>-->
-<!--            <artifactId>jersey-media-json-jackson</artifactId>-->
-<!--            <version>3.1.3</version>-->
-<!--        </dependency>-->
-
-<!--        Support for using JAXB annotations as an alternative to "native" Jackson annotations, for configuring data-binding.-->
-<!--        don't think we need this, we just use jackson annotations directly. -->
-<!--        <dependency>-->
-<!--            <groupId>com.fasterxml.jackson.module</groupId>-->
-<!--            <artifactId>jackson-module-jaxb-annotations</artifactId>-->
-<!--            <version>2.15.2</version>-->
-<!--        </dependency>-->
-
-
-<!--        jersey injection framework -->
+<!--        jersey injection framework, because somehow it's not included in jersey (???) -->
         <dependency>
             <groupId>org.glassfish.jersey.inject</groupId>
             <artifactId>jersey-hk2</artifactId>
             <version>3.1.3</version>
         </dependency>
-
-
-
-<!--        everything below here seems to work. don't touch them. -->
-
 
 <!--        tomcat specific classes -->
         <!-- just here so intellij/eclipse can download the sources, and we can step into tomcat classes while debugging. -->
@@ -355,7 +296,17 @@
         </dependency>
 
 
-<!--        generic servlet/server classes -->
+        <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.dataformat/jackson-dataformat-xml -->
+        <!--        probably works if you manually call the ObjectMapper, but doesn't contain code to register itself with Jersey as MessageBodyWriter/MessageBodyReader, so @consumes and @produces don't work with xml. -->
+        <!--        <dependency>-->
+        <!--            <groupId>com.fasterxml.jackson.dataformat</groupId>-->
+        <!--            <artifactId>jackson-dataformat-xml</artifactId>-->
+        <!--            <version>2.15.2</version>-->
+        <!--        </dependency>-->
+
+
+<!--        this is here to provide the Servlet api, etc. runtime it's provided by whatever server implementation you use (tomcat/glassfish, etc.) -->
+<!--        This used to be javax.servlet, but it was moved to jakarta.servlet on java 11 (starting with version 6.0.0) -->
         <!-- https://mvnrepository.com/artifact/jakarta.servlet/jakarta.servlet-api -->
         <dependency>
             <groupId>jakarta.servlet</groupId>
@@ -364,13 +315,14 @@
             <scope>provided</scope>
         </dependency>
 
+<!--        here start the regular dependencies that work standalone and don't have anything to do with the web server. -->
+
         <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>3.13.0</version>
         </dependency>
-
 
         <dependency>
             <groupId>org.apache.commons</groupId>

@@ -1,9 +1,5 @@
 package org.ivdnt.cf.utils;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.ivdnt.cf.MainServlet;
-import org.ivdnt.cf.response.ArticleResponse;
-
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -12,11 +8,15 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
-import java.util.function.Function;
+
+import javax.xml.transform.TransformerException;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.ivdnt.cf.MainServlet;
+import org.ivdnt.cf.response.ArticleResponse;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import javax.xml.transform.TransformerException;
 
 public class CorpusFileUtil {
 

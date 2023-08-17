@@ -32,6 +32,10 @@ public class OutputTypeFilter implements ContainerRequestFilter {
                 outputType = "text/html";
                 break;
             }
+            case "text": {
+                outputType = "text/plain";
+                break;
+            }
             case "xml": {
                 outputType = "application/xml";
                 break;
@@ -46,10 +50,6 @@ public class OutputTypeFilter implements ContainerRequestFilter {
             final String existing = request.getHeaders().getFirst("Accept");
 //            final String newAccept = existing == null ? outputType : outputType + "," + existing;
             final String newAccept = outputType;
-
-
-
-            System.out.println("Replaced accept header with " + newAccept);
 
             request.getHeaders().replace("Accept", List.of(newAccept));
         }

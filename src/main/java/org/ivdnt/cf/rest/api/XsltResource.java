@@ -11,6 +11,7 @@ import javax.xml.transform.TransformerException;
 import org.apache.commons.lang3.StringUtils;
 import org.ivdnt.cf.GlobalConfig;
 import org.ivdnt.cf.GlobalConfig.Keys;
+import org.ivdnt.cf.rest.pojo.GenericXmlJsonResult;
 import org.ivdnt.cf.utils.BlackLabApi;
 import org.ivdnt.cf.utils.CorpusFileUtil;
 import org.ivdnt.cf.utils.Result;
@@ -28,7 +29,6 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Application;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response.Status;
 
 @Singleton
 @Path("/xslt/")
@@ -61,7 +61,7 @@ public class XsltResource {
                     "</xsl:template>" +
                     "</xsl:stylesheet>"));
             // @formatter:on
-        } catch (TransformerException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -72,7 +72,7 @@ public class XsltResource {
     }
 
     @GET
-    @Produces({MediaType.TEXT_HTML})
+    @Produces({MediaType.TEXT_HTML, MediaType.TEXT_PLAIN}) // the generated html is not valid xml, so don't return it as such (multiple root elements etc)
     @Path("{corpus}/{document}/content")
     public String documentContents(
             @PathParam ("corpus") String corpus,
@@ -82,14 +82,29 @@ public class XsltResource {
             @QueryParam("type") String documentType,
             @Context HttpServletRequest request,
             @Context HttpServletResponse response
-    ) throws WebApplicationException {
+    ) throws Exception {
         return documentContents(corpus, document, query, pattgap, Optional.empty(), Optional.empty(), Optional.ofNullable(documentType), request, response).getOrThrow();
     }
 
     @GET
-    @Produces({MediaType.TEXT_HTML})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.TEXT_XML})
+    @Path("{corpus}/{document}/content")
+    public GenericXmlJsonResult documentContentsXmlJson(
+            @PathParam ("corpus") String corpus,
+            @PathParam ("document") String document,
+            @QueryParam("query") String query,
+            @QueryParam("pattgapdata") String pattgap,
+            @QueryParam("type") String documentType,
+            @Context HttpServletRequest request,
+            @Context HttpServletResponse response
+    ) throws Exception {
+        return new GenericXmlJsonResult(documentContents(corpus, document, query, pattgap, documentType, request, response));
+    }
+
+    @GET
+    @Produces({MediaType.TEXT_HTML, MediaType.TEXT_PLAIN}) // the generated html is not valid xml, so don't return it as such (multiple root elements etc)
     @Path("{corpus}/{document}/content/{start}-{end}")
-    public Object test(
+    public String test(
             @PathParam ("corpus") String corpus,
             @PathParam ("document") String document,
             @PathParam ("start") int start,
@@ -99,23 +114,52 @@ public class XsltResource {
             @QueryParam("type") String documentType,
             @Context HttpServletRequest request,
             @Context HttpServletResponse response
-    ) throws WebApplicationException {
+    ) throws Exception {
         return documentContents(corpus, document, query, pattgap, Optional.of(start), Optional.of(end), Optional.ofNullable(documentType), request, response).getOrThrow();
     }
 
     @GET
-    @Produces({MediaType.TEXT_HTML})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.TEXT_XML})
+    @Path("{corpus}/{document}/content/{start}-{end}")
+    public GenericXmlJsonResult testXmlJson(
+            @PathParam ("corpus") String corpus,
+            @PathParam ("document") String document,
+            @PathParam ("start") int start,
+            @PathParam ("end") int end,
+            @QueryParam("query") String query,
+            @QueryParam("pattgapdata") String pattgap,
+            @QueryParam("type") String documentType,
+            @Context HttpServletRequest request,
+            @Context HttpServletResponse response
+    ) throws Exception {
+        return new GenericXmlJsonResult(test(corpus, document, start, end, query, pattgap, documentType, request, response));
+    }
+
+    @GET
+    @Produces({MediaType.TEXT_HTML, MediaType.TEXT_PLAIN}) // the generated html is not valid xml, so don't return it as such (multiple root elements etc)
     @Path("{corpus}/{document}/meta")
     public String documentMeta(
             @PathParam ("corpus") String corpus,
             @PathParam ("document") String document,
             @Context HttpServletRequest request,
             @Context HttpServletResponse response
-    ) throws WebApplicationException {
+    ) throws Exception {
         return documentMetadata(corpus, document, request, response).getOrThrow();
     }
 
-    public Result<String, WebApplicationException> documentContents(
+    @GET
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.TEXT_XML})
+    @Path("{corpus}/{document}/meta")
+    public GenericXmlJsonResult documentMetaXmlJson(
+            @PathParam ("corpus") String corpus,
+            @PathParam ("document") String document,
+            @Context HttpServletRequest request,
+            @Context HttpServletResponse response
+    ) throws Exception {
+        return new GenericXmlJsonResult(documentMetadata(corpus, document, request, response).getOrThrow());
+    }
+
+    public Result<String, Exception> documentContents(
             String corpus,
             String document,
             String query,
@@ -151,10 +195,7 @@ public class XsltResource {
                 response
         )
         .or(defaultTransformer) // don't use recover() - we have to surface exceptions to the user (and recover() clears exceptions), or() doesn't.
-        .map(trans -> {
-            trans.addParameter("contextRoot", request.getServletContext().getContextPath());
-            return trans;
-        });
+        .tap(trans -> trans.addParameter("contextRoot", request.getServletContext().getContextPath()));
 
         return content.flatMapWithErrorHandling(c -> {
             if (!XML_TAG_PATTERN.matcher(c).find()) {
@@ -165,11 +206,11 @@ public class XsltResource {
             }
 
             return r.mapWithErrorHandling(t -> t.transform(c));
-        })
-        .mapError(e -> new WebApplicationException(e, Status.INTERNAL_SERVER_ERROR));
+        });
+//        .mapError(e -> new WebApplicationException(e, Status.INTERNAL_SERVER_ERROR));
     }
 
-    public Result<String, WebApplicationException> documentMetadata(
+    public Result<String, Exception> documentMetadata(
             String corpus,
             String document,
             HttpServletRequest request,
@@ -191,12 +232,9 @@ public class XsltResource {
                     request,
                     response
             )
-            .mapWithErrorHandling(trans -> {
-                trans.addParameter("contextRoot", request.getServletContext().getContextPath());
-                return trans;
-            })
+            .tap(trans -> trans.addParameter("contextRoot", request.getServletContext().getContextPath()))
             .mapWithErrorHandling(trans -> trans.transform(metadata))
-        )
-        .mapError(e -> new WebApplicationException(e, Status.INTERNAL_SERVER_ERROR));
+        );
+//        .mapError(e -> new WebApplicationException(e, Status.INTERNAL_SERVER_ERROR));
     }
 }

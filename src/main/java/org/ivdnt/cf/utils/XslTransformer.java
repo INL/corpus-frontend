@@ -98,12 +98,9 @@ public class XslTransformer {
      * @param id
      * @param source
      * @return
-     * @throws TransformerConfigurationException
+     * @throws TransformerException
      */
-    private static Transformer get(String id, StreamSource source) throws TransformerException {
-//        boolean put = id != null && useCache && !TEMPLATES.containsKey(id);
-//        boolean has = id != null && useCache && TEMPLATES.containsKey(id);
-
+    private static Transformer get(String id, StreamSource source) throws Exception {
         synchronized (TEMPLATES) {
             try {
                 FACTORY.setErrorListener(new CapturingErrorListener()); // renew to remove old exceptions
@@ -113,27 +110,22 @@ public class XslTransformer {
             } catch (Exception e) {
                 CapturingErrorListener l = (CapturingErrorListener) FACTORY.getErrorListener();
                 if (!l.getErrorList().isEmpty()) {
-                    throw new TransformerException(l.getErrorList().get(0).getLeft(), l.getErrorList().get(0).getRight());
-                } else if (e instanceof TransformerException) {
-                    throw (TransformerException) e;
-                } else if (e.getCause() instanceof TransformerException) {
-                    throw (TransformerException) e.getCause();
-                } else {
-                    throw new TransformerException(e.getMessage(), e);
+                    throw l.getErrorList().get(0).getRight();
                 }
+                throw e;
             }
         }
     }
 
-    public XslTransformer(File stylesheet) throws FileNotFoundException, TransformerException {
+    public XslTransformer(File stylesheet) throws Exception {
         transformer = get(stylesheet.getAbsolutePath(), new StreamSource(stylesheet));
     }
 
-    public XslTransformer(InputStream stylesheet) throws TransformerException {
+    public XslTransformer(InputStream stylesheet) throws Exception {
         transformer = get(null, new StreamSource(stylesheet));
     }
 
-    public XslTransformer(Reader stylesheet) throws TransformerException {
+    public XslTransformer(Reader stylesheet) throws Exception {
         transformer = get(null, new StreamSource(stylesheet));
     }
 
@@ -143,11 +135,11 @@ public class XslTransformer {
      * @param stylesheet
      * @throws TransformerException
      */
-    public XslTransformer(String stylesheet) throws TransformerException {
+    public XslTransformer(String stylesheet) throws Exception {
         transformer = get(stylesheet, new StreamSource(stylesheet));
     }
 
-    public XslTransformer(String stylesheet, Reader sheet) throws TransformerException {
+    public XslTransformer(String stylesheet, Reader sheet) throws Exception {
         transformer = get(stylesheet, new StreamSource(sheet));
     }
 

@@ -50,7 +50,7 @@ public class ArticleResponse extends BaseResponse {
                     "</xsl:template>" +
                 "</xsl:stylesheet>"));
             // @formatter:on
-        } catch (TransformerException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -218,7 +218,8 @@ public class ArticleResponse extends BaseResponse {
         context.put("article_meta", transformedMetadata.getResult().orElse(""));
         context.put("article_meta_error", transformedMetadata.getError().orElse(null));
         context.put("article_content_restricted", transformedContent.getError().filter(e -> e instanceof ArticleContentRestrictedException).isPresent());
-        context.put("article_content", transformedContent.getResult().orElseThrow());
+        context.put("article_content", transformedContent.getResult().orElse("An error occurred while retrieving the document contents"));
+        context.put("article_content_error", transformedContent.getError().orElse(null));
         context.put("docId", pid);
         context.put("docLength", pi.documentLength);
         context.put("paginationEnabled", pi.paginationEnabled);

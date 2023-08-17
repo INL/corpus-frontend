@@ -402,11 +402,7 @@ public class Result<R, E extends Exception> {
         return new Result<>(null, new Exception(message));
     }
 
-    public Optional<E> getError() {
-        return Optional.ofNullable(error);
-    }
-    public E getError(E defaultValue) { return error == null ? defaultValue : error; }
-
+    public Optional<E> getError() { return Optional.ofNullable(error); }
     public Optional<R> getResult() {
         return Optional.ofNullable(result);
     }

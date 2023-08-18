@@ -71,9 +71,7 @@ export default Vue.extend ({
 	},
 
 	methods : {
-		updateSubquery(index: number, query: ConceptStore.AtomicQuery[]) {
-			ConceptStore.actions.updateSubquery({index, query});
-		},
+		updateSubquery(index: number, query: ConceptStore.AtomicQuery[]) { ConceptStore.actions.updateSubquery({index, query}); },
 		addBox() { ConceptStore.actions.addSubquery(undefined); },
 		removeBox() { ConceptStore.actions.removeSubquery(undefined); },
 		resetQuery() { ConceptStore.actions.resetQuery(); },

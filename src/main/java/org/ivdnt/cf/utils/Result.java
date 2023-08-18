@@ -1,6 +1,7 @@
 package org.ivdnt.cf.utils;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -411,13 +412,13 @@ public class Result<R, E extends Exception> {
 
     public R getOrThrow() throws E {
         if (this.error != null) throw this.error;
-        if (this.result == null) throw new IllegalStateException("Result is null");
+        if (this.result == null) throw new NoSuchElementException("Result is null");
         return this.result;
     }
 
     public R getOrThrow(Function<E, RuntimeException> mapper) {
         if (this.error != null) throw mapper.apply(this.error);
-        if (this.result == null) throw new IllegalStateException("Result is null");
+        if (this.result == null) throw new NoSuchElementException("Result is null");
         return this.result;
     }
 

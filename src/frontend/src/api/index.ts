@@ -24,7 +24,6 @@ export function init(which: keyof typeof endpoints, url: string, settings: Parti
 	if (!(which in endpoints)) throw new Error(`Unknown endpoint ${which}`);
 	endpoints[which] = createEndpoint({
 		baseURL: url.replace(/\/*$/, '/'),
-		withCredentials: true,
 		paramsSerializer: params => qs.stringify(params),
 		...settings,
 	});

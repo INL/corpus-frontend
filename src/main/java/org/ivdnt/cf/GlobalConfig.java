@@ -25,6 +25,13 @@ public class GlobalConfig {
         FRONTEND_CONFIG_PATH("corporaInterfaceDataDir"),
         /** Name of the default fallback directory/corpus in the PROP_DATA_PATH */
         FRONTEND_CONFIG_PATH_DEFAULT("corporaInterfaceDefault"),
+        /**
+         * Set the "withCredentials" option for all ajax requests made from the client to the (blacklab/frontend)-server.
+         * Passes authentication cookies to blacklab-server.
+         * This may be required if your server is configured to use authentication.
+         * NOTE: this only works if the frontend and backend are hosted on the same domain, or when the server does not pass "*" for the Access-Control-Allow-Origin header.
+         */
+        FRONTEND_WITH_CREDENTIALS("withCredentials"),
         /** Development mode, allow script tags to load load js from an external server (webpack-dev-server), defaults to $pathToTop/js/ */
         PROP_JSPATH("jspath"),
         // todo remove and use a file watcher or something
@@ -51,6 +58,7 @@ public class GlobalConfig {
         set(defaultProps, Keys.FRONTEND_CONFIG_PATH,            SystemUtils.IS_OS_WINDOWS ? "C:\\etc\\blacklab\\projectconfigs" : "/etc/blacklab/projectconfigs");
         set(defaultProps, Keys.FRONTEND_CONFIG_PATH_DEFAULT,    "default");
         set(defaultProps, Keys.FRONTEND_SHOW_DEBUG_CHECKBOX,    "false");
+        set(defaultProps, Keys.FRONTEND_WITH_CREDENTIALS,       "false");
         set(defaultProps, Keys.PROP_CACHE,                      "true");
         // jspath is initialized later, because we need the servlet context path for that.
     }

@@ -7,6 +7,7 @@
 package org.ivdnt.cf;
 
 import org.apache.velocity.context.Context;
+import org.ivdnt.cf.GlobalConfig.Keys;
 import org.ivdnt.cf.utils.BlackLabApi;
 import org.ivdnt.cf.utils.WebsiteConfig;
 
@@ -116,6 +117,7 @@ public abstract class BaseResponse {
         context.put("websiteConfig", cfg);
         context.put("buildTime", servlet.getWarBuildTime());
         context.put("jspath", servlet.getGlobalConfig().get(Keys.PROP_JSPATH));
+        context.put("withCredentials", Boolean.parseBoolean(servlet.getGlobalConfig().get(Keys.FRONTEND_WITH_CREDENTIALS)));
         cfg.getAnalyticsKey().ifPresent(key -> context.put("googleAnalyticsKey", key));
 
         if (servlet.getBannerMessage().isPresent() && !this.isCookieSet("banner-hidden", Integer.toString(servlet.getBannerMessage().get().hashCode()))) {

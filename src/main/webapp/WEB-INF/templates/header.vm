@@ -45,6 +45,7 @@
             var INDEX_ID = "$esc.javascript($websiteConfig.getCorpusId().orElse(null))";
             var USERNAME = "$esc.javascript($username)";
             var PASSWORD = "$esc.javascript($password)";
+            var WITH_CREDENTIALS = $esc.javascript($withCredentials);
 
             var CONTEXT_URL = "$esc.javascript($pathToTop)";
             // Not suffixed with the corpus id

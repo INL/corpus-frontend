@@ -115,7 +115,7 @@ public abstract class BaseResponse {
         // Stuff for use in constructing the page
         context.put("websiteConfig", cfg);
         context.put("buildTime", servlet.getWarBuildTime());
-        context.put("jspath", servlet.getAdminProps().getProperty(MainServlet.PROP_JSPATH));
+        context.put("jspath", servlet.getGlobalConfig().get(Keys.PROP_JSPATH));
         cfg.getAnalyticsKey().ifPresent(key -> context.put("googleAnalyticsKey", key));
 
         if (servlet.getBannerMessage().isPresent() && !this.isCookieSet("banner-hidden", Integer.toString(servlet.getBannerMessage().get().hashCode()))) {
@@ -134,8 +134,6 @@ public abstract class BaseResponse {
         var user = MainServlet.decodeBasicAuth(request);
         context.put("username", user.map(Pair::getLeft).orElse(""));
         context.put("password", user.map(Pair::getRight).orElse(""));
-
-        logger.debug("jspath {}", servlet.getAdminProps().getProperty(MainServlet.PROP_JSPATH));
 
         // HTML-escape all data written into the velocity templates by default
         // Only allow access to the raw string if the expression contains the word "unescaped"

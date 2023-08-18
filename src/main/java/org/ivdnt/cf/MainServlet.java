@@ -6,21 +6,16 @@
  */
 package org.ivdnt.cf;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,10 +29,10 @@ import javax.xml.transform.TransformerException;
 
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.velocity.Template;
 import org.apache.velocity.app.Velocity;
+import org.ivdnt.cf.GlobalConfig.Keys;
 import org.ivdnt.cf.response.AboutResponse;
 import org.ivdnt.cf.response.ArticleResponse;
 import org.ivdnt.cf.response.ConfigResponse;
@@ -99,181 +94,56 @@ public class MainServlet extends HttpServlet {
      */
     private static final Map<String, Class<? extends BaseResponse>> responses = new HashMap<>();
 
+    private GlobalConfig config;
+
     /**
      * Our context path (first part of our URI path)
      */
     private String contextPath;
-
-    // @formatter:off
-    /** Message to display at the top of the page. Note that this may contain HTML. https://github.com/INL/corpus-frontend/issues/247 */
-    public static final String PROP_BANNER_MESSAGE          = "bannerMessage";
-    /** Url to reach blacklab-server from this application */
-    public static final String PROP_BLS_CLIENTSIDE          = "blsUrlExternal";
-    /** Url to reach blacklab-server from the browser */
-    public static final String PROP_BLS_SERVERSIDE          = "blsUrl";
-    /** Where static content, custom xslt and other per-corpus data is stored */
-    public static final String PROP_DATA_PATH               = "corporaInterfaceDataDir";
-    /** Name of the default fallback directory/corpus in the PROP_DATA_PATH */
-    public static final String PROP_DATA_DEFAULT            = "corporaInterfaceDefault";
-    /** Development mode, allow script tags to load load js from an external server (webpack-dev-server), defaults to $pathToTop/js/ */
-    public static final String PROP_JSPATH                  = "jspath"; // usually set to http://127.0.0.1/dist/ for development
-    /** Development mode, disable caching of any corpus data (e.g. search.xml, article.xsl, meta.xsl etc) */
-    public static final String PROP_CACHE                   = "cache";
-    /** Enable/disable the debug info checkbox in the interface */
-    public static final String PROP_DEBUG_CHECKBOX_VISIBLE  = "debugInfo";
-    // @formatter:on
-
-    /**
-     * Properties from the external config file, e.g. BLS URLs, Google Analytics
-     * key, etc.
-     * Several of these properties have defaults, take care to use getProperty() instead of direct get()
-     */
-    private Properties adminProps = new Properties();
 
     /**
      * Time the WAR was built. "UNKNOWN" if no WAR or some error occurs.
      */
     private static String warBuildTime = null;
 
-    private static Properties getDefaultProps(String contextPath) {
-        // @formatter:off
-        Properties p = new Properties();
-        p.setProperty(PROP_BLS_CLIENTSIDE,          "/blacklab-server"); // no domain to account for proxied servers
-        p.setProperty(PROP_BLS_SERVERSIDE,          "http://localhost:8080/blacklab-server/");
-        p.setProperty(PROP_DATA_PATH,               "/etc/blacklab/projectconfigs");
-        p.setProperty(PROP_DATA_DEFAULT,            "default");
-        p.setProperty(PROP_JSPATH,                  contextPath+"/js");
-        p.setProperty(PROP_CACHE, 					"false");
-        p.setProperty(PROP_DEBUG_CHECKBOX_VISIBLE,  "false");
-        // not all properties may need defaults
-        // @formatter:on
-
-        if (SystemUtils.IS_OS_WINDOWS)
-            p.setProperty(PROP_DATA_PATH, "C:\\etc\\blacklab\\projectconfigs");
-
-        return p;
-    }
-
     @Override
     public void init(ServletConfig cfg) throws ServletException {
-        super.init(cfg);
-
         try {
-            startVelocity(cfg.getServletContext());
+            super.init(cfg);
 
-            String warName = cfg.getServletContext().getContextPath().replaceAll("^/", "");
-            contextPath = cfg.getServletContext().getContextPath();
+            ServletContext ctx = cfg.getServletContext();
+            this.contextPath = ctx.getContextPath();
+            this.config = GlobalConfig.loadGlobalConfig(ctx);
+            startVelocity(ctx);
 
-            // Load the external properties file (for administration settings)
-            String adminPropFileName = warName + ".properties";
-            File adminPropFile = findPropertiesFile(adminPropFileName);
-            adminProps = new Properties(getDefaultProps(contextPath));
-
-            if (adminPropFile == null || !adminPropFile.exists()) {
-                logger
-                    .warn("File {} (with blsUrl and blsUrlExternal settings) not found in webapps, /etc/blacklab/ or temp dir; will use defaults",
-                          adminPropFile==null?adminPropFileName:adminPropFile);
-            } else if (!adminPropFile.isFile()) {
-                throw new ServletException("Annotation file " + adminPropFile + " is not a regular file!");
-            } else if (!adminPropFile.canRead()) {
-                throw new ServletException("Annotation file " + adminPropFile + " exists but is unreadable!");
-            } else {
-                // File exists and can be read. Read it.
-                logger.info("Reading corpus-frontend property file: {}", adminPropFile);
-                try (Reader in = new BufferedReader(new FileReader(adminPropFile))) {
-                    adminProps.load(in);
-                }
-            }
-
-            Enumeration<?> propKeys = adminProps.propertyNames();
-            while (propKeys.hasMoreElements()) {
-                String key = (String) propKeys.nextElement();
-                if (!adminProps.containsKey(key))
-                    logger.debug("Annotation {} not configured, using default: {}", key, adminProps.getProperty(key));
-            }
-            if (!Paths.get(adminProps.getProperty(PROP_DATA_PATH)).isAbsolute()) {
-                throw new ServletException(PROP_DATA_PATH + " setting should be an absolute path");
-            }
             XslTransformer.setUseCache(this.useCache());
+            BlackLabApi.setBlsUrl(config.get(Keys.PROP_BLS_SERVERSIDE));
 
-            BlackLabApi.setBlsUrl(adminProps.getProperty(PROP_BLS_SERVERSIDE));
+
+            // Map responses, the majority of these can be served for a specific corpus, or as a general autosearch page
+            // E.G. the AboutResponse is mapped to /<root>/<corpus>/about and /<root>/about
+            responses.put(DEFAULT_PAGE, CorporaResponse.class);
+            responses.put("about", AboutResponse.class);
+            responses.put("help", HelpResponse.class);
+            responses.put("search", SearchResponse.class);
+            responses.put("docs", ArticleResponse.class);
+            responses.put("static", CorporaDataResponse.class);
+            responses.put("upload", RemoteIndexResponse.class);
+            responses.put("config", ConfigResponse.class);
         } catch (ServletException e) {
             throw e;
         } catch (Exception e) {
             throw new ServletException(e);
         }
-
-        // Map responses, the majority of these can be served for a specific corpus, or as a general autosearch page
-        // E.G. the AboutResponse is mapped to /<root>/<corpus>/about and /<root>/about
-        responses.put(DEFAULT_PAGE, CorporaResponse.class);
-        responses.put("about", AboutResponse.class);
-        responses.put("help", HelpResponse.class);
-        responses.put("search", SearchResponse.class);
-        responses.put("docs", ArticleResponse.class);
-        responses.put("static", CorporaDataResponse.class);
-        responses.put("upload", RemoteIndexResponse.class);
-        responses.put("config", ConfigResponse.class);
     }
 
     /**
-     * Looks for a property file with the specified name, either in the Tomcat
-     * webapps dir, in /etc/blacklab on Unix or in the temp dir (/tmp on Unix,
-     * %temp% on Windows).
-     *
-     * @param fileName property file name
-     * @return the File or null if not found
-     */
-    public File findPropertiesFile(String fileName) {
-        String configDir = System.getenv("AUTOSEARCH_CONFIG_DIR");
-        if (configDir != null) {
-            File fileInConfigDir = new File(configDir, fileName);
-            if (fileInConfigDir.exists() && fileInConfigDir.canRead() && fileInConfigDir.isFile())
-                return fileInConfigDir;
-            else
-                logger.info("AUTOSEARCH_CONFIG_DIR specifies file {} but it cannot be read", fileInConfigDir);
-        }
-
-        String warPath = getServletContext().getRealPath("/");
-        if (warPath != null) {
-            File fileInWebappsDir = new File(new File(warPath).getParentFile(), fileName);
-            if (fileInWebappsDir.exists()) {
-                return fileInWebappsDir;
-            }
-        } else {
-            logger.info("(WAR was not extracted to file system; skip looking for {} file in webapps dir)", fileName);
-        }
-
-        boolean isWindows = SystemUtils.IS_OS_WINDOWS;
-        File fileInEtc = new File("/etc/blacklab", fileName);
-        if (!isWindows && !fileInEtc.exists()) {
-            fileInEtc = new File("/vol1/etc/blacklab", fileName); // UGLY, will fix later
-        }
-        if (!isWindows && fileInEtc.exists()) {
-            if (!fileInEtc.canRead()) {
-                log("Found " + fileInEtc + " but cannot read; check permissions and SELinux context.");
-            }
-            return fileInEtc;
-        }
-
-        File tmpDir = isWindows ? new File(System.getProperty("java.io.tmpdir")) : new File("/tmp");
-        File fileInTmpDir = new File(tmpDir, fileName);
-        if (fileInTmpDir.exists()) {
-            if (!fileInTmpDir.canRead()) {
-                log("Found " + fileInTmpDir + " but cannot read; check permissions and SELinux context.");
-            }
-            return fileInTmpDir;
-        }
-
-        return null;
-    }
-
-    /**
-     * Start the templating engine
+     * Start the templating engine. Loading settings from {@link #VELOCITY_PROPERTIES}
      *
      * @param ctx configuration object
-     * @throws Exception
+     * @throws IOException if the velocity config file could not be read
      */
-    private void startVelocity(ServletContext ctx) throws Exception {
+    private void startVelocity(ServletContext ctx) throws IOException {
         // Read in the WebApplicationResourceLoader
         Velocity.setApplicationAttribute(ServletContext.class.getName(), ctx);
 
@@ -373,12 +243,12 @@ public class MainServlet extends HttpServlet {
         try {
             request.setCharacterEncoding("utf-8");
         } catch (UnsupportedEncodingException ex) {
-            logger.warn(ex.getMessage(), ex);
+            logger.warn("Failed to set utf-8 encoding on request", ex);
         }
 
         /*
          * Map in the following way:
-         * when the full uri contains at least 2 parts after the root (such as <root>/zeebrieven/search)
+         * when the full uri contains at least 2 parts after the root (such as <root>/some_corpus/search)
          * treat the first of those parts as the corpus, the second as the response to send,
          * and everything after that as arguments to build the response.
          * When only one part is present (such as <root>/help) treat the first part as the response to send.
@@ -408,7 +278,7 @@ public class MainServlet extends HttpServlet {
         } else { // pathParts.size() >= 2 ... <corpus>/<page>/...
             corpus = pathParts.get(0);
             page = pathParts.get(1);
-            if (corpus.equals(adminProps.getProperty(PROP_DATA_DEFAULT)))
+            if (corpus.equals(config.get(Keys.FRONTEND_CONFIG_PATH_DEFAULT)))
                 corpus = null;
         }
 
@@ -456,12 +326,9 @@ public class MainServlet extends HttpServlet {
         }
     }
 
-
-
-
     /**
      * Get the stylesheet to convert a document or its metadata from this corpus into
-     * an html snippet suitable for inserting in the article.vm page.
+     * an HTML snippet suitable for inserting in the article.vm page.
      *
      * First attempts to find file "${name}.xsl" in all locations, then,
      * as a fallback, attempts to find "${name}_${corpusDataFormat}.xsl" in all locations.
@@ -490,8 +357,8 @@ public class MainServlet extends HttpServlet {
      * @return the xsl transformer to use for transformation, note that this is always the same transformer.
      */
     public Result<XslTransformer, TransformerException> getStylesheet(Optional<String> corpus, String name, Optional<String> corpusDataFormat, HttpServletRequest request, HttpServletResponse response) {
-        String dataDir = adminProps.getProperty(PROP_DATA_PATH);
-        Optional<String> fallbackCorpus = Optional.ofNullable(adminProps.getProperty(PROP_DATA_DEFAULT)).filter(s -> !s.isEmpty());
+        String dataDir = config.get(Keys.FRONTEND_CONFIG_PATH);
+        Optional<String> fallbackCorpus = Optional.ofNullable(config.get(Keys.FRONTEND_CONFIG_PATH_DEFAULT)).filter(s -> !s.isEmpty());
 
         Function<String, Result<XslTransformer, TransformerException>> gen = __ -> CorpusFileUtil.getStylesheet(dataDir, corpus, fallbackCorpus, name, corpusDataFormat, request, response);
 
@@ -503,9 +370,9 @@ public class MainServlet extends HttpServlet {
 
     public Optional<File> getProjectFile(Optional<String> corpus, String file) {
         return CorpusFileUtil.getProjectFile(
-                adminProps.getProperty(PROP_DATA_PATH),
+                config.get(Keys.FRONTEND_CONFIG_PATH),
                 corpus,
-                Optional.ofNullable(adminProps.getProperty(PROP_DATA_DEFAULT)),
+                Optional.ofNullable(config.get(Keys.FRONTEND_CONFIG_PATH_DEFAULT)),
                 Optional.of(file));
     }
 
@@ -523,7 +390,7 @@ public class MainServlet extends HttpServlet {
 
     /** NOTE: never suffixed with corpus id, to unify behavior on different pages. The url will always end in "/" */
     public String getExternalWebserviceUrl() {
-        String url = adminProps.getProperty(PROP_BLS_CLIENTSIDE);
+        String url = this.config.get(Keys.PROP_BLS_CLIENTSIDE);
         if (!url.endsWith("/")) {
             url += "/";
         }
@@ -531,16 +398,16 @@ public class MainServlet extends HttpServlet {
     }
 
     public Optional<String> getBannerMessage() {
-        return Optional.ofNullable(StringUtils.trimToNull(this.adminProps.getProperty(PROP_BANNER_MESSAGE)));
+        return Optional.ofNullable(StringUtils.trimToNull(this.config.get(Keys.PROP_BANNER_MESSAGE)));
     }
 
     public boolean useCache() {
-        return Boolean.parseBoolean(this.adminProps.getProperty(PROP_CACHE));
+        return Boolean.parseBoolean(this.config.get(Keys.PROP_CACHE));
     }
 
     /** Render debug info checkbox in the search interface? */
     public boolean debugInfo() {
-        return Boolean.parseBoolean(this.adminProps.getProperty(PROP_DEBUG_CHECKBOX_VISIBLE));
+        return Boolean.parseBoolean(this.config.get(Keys.FRONTEND_SHOW_DEBUG_CHECKBOX));
     }
 
     /**
@@ -572,7 +439,7 @@ public class MainServlet extends HttpServlet {
         }
     }
 
-    public Properties getAdminProps() {
-        return adminProps;
+    public GlobalConfig getGlobalConfig() {
+        return config;
     }
 }

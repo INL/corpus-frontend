@@ -2,7 +2,7 @@ import axios, {Canceler, AxiosRequestConfig} from 'axios';
 import * as qs from 'qs';
 
 import {createEndpoint} from '@/api/apiutils';
-import {normalizeIndexOld, normalizeFormatOld, normalizeIndex, fixDocInfo} from '@/utils/blacklabutils';
+import {normalizeIndex, fixDocInfo, normalizeFormat, normalizeIndexBase} from '@/utils/blacklabutils';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import { ApiError } from '@/types/apptypes';
@@ -86,12 +86,11 @@ export const blacklab = {
 
 	getCorpora: (requestParameters?: AxiosRequestConfig) => endpoints.blacklab
 		.get<BLTypes.BLServer>(blacklabPaths.root(), requestParameters)
-		.then(r => Object.entries(r.indices))
-		.then(r => r.map(([id, index]: [string, BLTypes.BLIndex]) => normalizeIndexOld(id, index))),
+		.then(r => Object.entries(r.indices).map(([id, c]) => normalizeIndexBase(c, id))),
 
 	getCorpusStatus: (id: string, requestParamers?: AxiosRequestConfig) => endpoints.blacklab
 		.get<BLTypes.BLIndex>(blacklabPaths.indexStatus(id), requestParamers)
-		.then(r => normalizeIndexOld(id, r)),
+		.then(r => normalizeIndexBase(r, id)),
 
 	getCorpus: (id: string, requestParameters?: AxiosRequestConfig) => endpoints.blacklab
 		.get<BLTypes.BLIndexMetadata>(blacklabPaths.index(id), requestParameters)
@@ -104,7 +103,7 @@ export const blacklab = {
 	getFormats: (requestParameters?: AxiosRequestConfig) => endpoints.blacklab
 		.get<BLTypes.BLFormats>(blacklabPaths.formats(), requestParameters)
 		.then(r => Object.entries(r.supportedInputFormats))
-		.then(r => r.map(([id, format]: [string, BLTypes.BLFormat]) => normalizeFormatOld(id, format))),
+		.then(r => r.map(([id, format]) => normalizeFormat(id, format))),
 
 	getFormatContent: (id: string, requestParameters?: AxiosRequestConfig) => endpoints.blacklab
 		.get<BLTypes.BLFormatContent>(blacklabPaths.formatContent(id), requestParameters),

@@ -100,8 +100,29 @@ export type NormalizedMetadataGroup = {
 	isRemainderGroup: boolean;
 };
 
+export type NormalizedIndexBase = {
+	/** Description as set by the creator */
+	description: string;
+	/** A user-friendly name, excluding the name of the owner (if any). */
+	displayName: string;
+	/** key of a BLFormat */
+	documentFormat?: string;
+	/** Id of this index. Contains the username if this is a user-owned index. (username:indexname) */
+	id: string;
+	/** Progress of indexing new documents, if currently indexing. Null otherwise. */
+	indexProgress: BLTypes.BLIndexProgress|null;
+	/** Owner of the corpus, if is a user owned corpus */
+	owner: string|null;
+	/** Whether the index is indexing new documents or is available for searching, etc. */
+	status: BLTypes.BLIndex['status'];
+	/** yyyy-mm-dd hh:mm:ss */
+	timeModified: string;
+	/** Number of tokens in this index (excluding those tokens added in any currently running indexing action). */
+	tokenCount: number;
+}
+
 /** Contains information about the internal structure of the index - which fields exist for tokens, which metadata fields exist for documents, etc */
-export type NormalizedIndex = {
+export type NormalizedIndex = NormalizedIndexBase&{
 	annotatedFields: { [id: string]: NormalizedAnnotatedField; };
 	/**
 	 * If no groups are defined by blacklab itself, all annotations of all annotatedFields are placed in generated groups.
@@ -110,16 +131,11 @@ export type NormalizedIndex = {
 	 */
 	annotationGroups: NormalizedAnnotationGroup[];
 	contentViewable: boolean;
-	/** Description of the main index */
-	description: string;
-	displayName: string;
 	/** If -1, the blacklab version is too old to support this property, and it needs to be requested from the server. (we do this on app startup, see corpusStore). */
 	documentCount: number;
-	/** key of a BLFormat */
-	documentFormat?: string;
+
 	fieldInfo: BLTypes.BLDocFields;
-	/** Id of this index */
-	id: string;
+
 	/**
 	 * If no groups are defined by blacklab itself, all metadata fields are placed in a single group called 'Metadata'.
 	 * Note that a single field may be part of more than one group.
@@ -127,14 +143,8 @@ export type NormalizedIndex = {
 	 */
 	metadataFieldGroups: NormalizedMetadataGroup[];
 	metadataFields: { [key: string]: NormalizedMetadataField; };
-	/** Owner of the corpus, if is a user owned corpus */
-	owner: string|null;
-	/** Id of the corpus minus the owner's username prefix */
-	shortId: string;
+
 	textDirection: 'ltr'|'rtl';
-	/** yyyy-mm-dd hh:mm:ss */
-	timeModified: string;
-	tokenCount: number;
 };
 
 // ---------
@@ -146,26 +156,7 @@ export type NormalizedIndex = {
 // Helper - get all props in A not in B
 type Subtract<A, B> = Pick<A, Exclude<keyof A, keyof B>>;
 
-interface INormalizedIndexOld {
-	// new props
-	/** ID in the form username:indexname */
-	id: string;
-	/** username extracted */
-	owner: string|null;
-	/** indexname extracted */
-	shortId: string;
-
-	/** Not available immediately - filled in after some time */
-	description: string|null;
-
-	// original props, with normalized values
-	documentFormat: string|null;
-	indexProgress: BLTypes.BLIndexProgress|null;
-	tokenCount: number|null;
-}
-export type NormalizedIndexOld = INormalizedIndexOld & Subtract<BLTypes.BLIndex, INormalizedIndexOld>;
-
-interface INormalizedFormatOld {
+interface INormalizedFormat {
 	// new props
 	id: string;
 	/** Username extracted */
@@ -181,7 +172,7 @@ interface INormalizedFormatOld {
 	/** set to shortId if originally empty */
 	displayName: string;
 }
-export type NormalizedFormatOld = INormalizedFormatOld & Subtract<BLTypes.BLFormat, INormalizedFormatOld>;
+export type NormalizedFormat = INormalizedFormat & Subtract<BLTypes.BLFormat, INormalizedFormat>;
 
 // ------------------
 // Types used on page

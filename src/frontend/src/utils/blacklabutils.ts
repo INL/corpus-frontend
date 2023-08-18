@@ -1,4 +1,4 @@
-import {NormalizedIndex, NormalizedAnnotation, NormalizedAnnotatedField, NormalizedMetadataField, NormalizedIndexOld, NormalizedFormatOld, NormalizedMetadataGroup, NormalizedAnnotationGroup} from '@/types/apptypes';
+import {NormalizedIndex, NormalizedAnnotation, NormalizedAnnotatedField, NormalizedMetadataField, NormalizedFormat, NormalizedMetadataGroup, NormalizedAnnotationGroup, NormalizedIndexBase} from '@/types/apptypes';
 import * as BLTypes from '@/types/blacklabtypes';
 import { mapReduce } from '@/utils';
 
@@ -28,7 +28,7 @@ function normalizeMetadataUIType(field: BLTypes.BLMetadataField): NormalizedMeta
 		case 'checkbox':
 		case 'radio':
 			return field.valueListComplete ? uiType : 'combobox';
-		case 'date': 
+		case 'date':
 			return 'date';
 		default: return 'text';
 	}
@@ -200,6 +200,20 @@ function normalizeMetadataGroups(blIndex: BLTypes.BLIndexMetadata): NormalizedMe
 
 // -------------
 
+export function normalizeIndexBase(blIndex: BLTypes.BLIndex, id: string): NormalizedIndexBase {
+	return {
+		description: blIndex.description || "",
+		displayName: blIndex.displayName || id.split(':')[1] || id,
+		documentFormat: blIndex.documentFormat,
+		id,
+		indexProgress: blIndex.indexProgress || null,
+		owner: id.substring(0, id.indexOf(':')) || null,
+		status: blIndex.status,
+		timeModified: blIndex.timeModified,
+		tokenCount: blIndex.tokenCount || 0,
+	}
+}
+
 export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedIndex {
 	const annotationGroupsNormalized = normalizeAnnotationGroups(blIndex);
 	const metadataGroupsNormalized = normalizeMetadataGroups(blIndex);
@@ -221,45 +235,20 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 		metadataFieldGroups: metadataGroupsNormalized,
 		metadataFields: mapReduce(Object.values(blIndex.metadataFields).map(normalizeMetadata), 'id'),
 		owner: blIndex.indexName.substring(0, blIndex.indexName.indexOf(':')) || null,
-		shortId: blIndex.indexName.substr(blIndex.indexName.indexOf(':') + 1),
 		textDirection: blIndex.textDirection,
 		timeModified: blIndex.versionInfo.timeModified,
-		tokenCount: blIndex.tokenCount || 0
+		tokenCount: blIndex.tokenCount || 0,
+		status: blIndex.status,
+		indexProgress: blIndex.indexProgress || null
 	};
 }
 
-// ----------------------------------------------------------
-// Old normalization functions, from corpora management page.
-// ----------------------------------------------------------
-
-// TODO merge the old and new NormalizedIndex types
-
-/**
- * Add some calculated properties to the index object (such as if it's a private index) and normalize some optional data to empty strings if missing.
- *
- * @param id full id of the index, including username portion (if applicable)
- * @param index the index json object as received from blacklab-server
- */
-export function normalizeIndexOld(id: string, index: BLTypes.BLIndex): NormalizedIndexOld {
-	return {
-		...index,
-
-		id,
-		owner: id.substring(0, id.indexOf(':')) || null,
-		shortId: id.substr(id.indexOf(':') + 1),
-
-		displayName: index.displayName || id.substr(id.indexOf(':') + 1),
-		documentFormat: index.documentFormat || null,
-		indexProgress: index.indexProgress || null,
-		tokenCount: index.tokenCount == null ? null : index.tokenCount,
-	};
-}
 
 /**
  * @param id - full id of the format, including userName portion (if applicable)
  * @param format as received from the server
  */
-export function normalizeFormatOld(id: string, format: BLTypes.BLFormat): NormalizedFormatOld {
+export function normalizeFormat(id: string, format: BLTypes.BLFormat): NormalizedFormat {
 	return {
 		...format,
 
@@ -273,9 +262,9 @@ export function normalizeFormatOld(id: string, format: BLTypes.BLFormat): Normal
 	};
 }
 
-export function normalizeFormatsOld(formats: BLTypes.BLFormats): NormalizedFormatOld[] {
+export function normalizeFormats(formats: BLTypes.BLFormats): NormalizedFormat[] {
 	return Object.entries(formats.supportedInputFormats)
-	.map(([key, value]) => normalizeFormatOld(key, value));
+	.map(([key, value]) => normalizeFormat(key, value));
 }
 
 // ---------------------------------------

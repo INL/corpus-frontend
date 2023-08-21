@@ -575,19 +575,19 @@ function initFileUpload() {
 		return false;
 	}
 
-	function handleUploadProgress(this: XMLHttpRequest, event: ProgressEvent) {
-		const progress = event.loaded / event.total * 100;
+	function handleUploadProgress(event: number): void {
+		const progress = event;
 		$progress
 			.text('Uploading... (' +  Math.floor(progress) + '%)')
 			.css('width', progress + '%')
 			.attr('aria-valuenow', progress);
 
-		if (event.loaded >= event.total) {
-			handleUploadComplete.call(this, event);
+		if (event === 100) {
+			handleUploadComplete();
 		}
 	}
 
-	function handleUploadComplete(/*event*/) {
+	function handleUploadComplete() {
 		$progress
 			.css('width', '')
 			.toggleClass('indexing', true)
@@ -597,11 +597,7 @@ function initFileUpload() {
 		refreshIndexStatusWhileIndexing(uploadToCorpus.id);
 	}
 
-	function handleIndexingComplete(this: XMLHttpRequest, event: ProgressEvent) {
-		if (this.status !== 200) {
-			return handleError.call(this, event);
-		}
-
+	function handleIndexingComplete() {
 		const message = 'Data added to "' + uploadToCorpus.displayName + '".';
 
 		$modal.off('hide.bs.modal', preventModalCloseEvent);
@@ -617,15 +613,8 @@ function initFileUpload() {
 		});
 	}
 
-	function handleError(this: XMLHttpRequest/*event*/) {
-		let msg = 'Could not add data to "' + uploadToCorpus.displayName + '"';
-		if (this.responseText) {
-			msg += ': ' + JSON.parse(this.responseText).error.message;
-		} else if (this.statusText) {
-			msg += ': ' + this.statusText;
-		} else {
-			msg += ': unknown error (are you trying to upload too much data?)';
-		}
+	function handleError(error: Api.ApiError /*this: XMLHttpRequest, event*/) {
+		const msg = error.message;
 
 		$modal.off('hide.bs.modal', preventModalCloseEvent);
 		$modal.find('[data-dismiss="modal"]').attr('disabled', null).toggleClass('disabled', false);
@@ -648,27 +637,17 @@ function initFileUpload() {
 			.css('width', '0%')
 			.parent().show();
 
-		const formData = new FormData();
-		$fileInputs.each(function() {
-			const self = this;
-			$.each(this.files!, function(index, file) {
-				formData.append(self.name, file, file.name);
-			});
-		});
+		const documentFiles = ($modal.find('#upload-docs-input')[0] as HTMLInputElement).files;
+		const metadataFiles = ($modal.find('#upload-metadata-input')[0] as HTMLInputElement).files;
 
-		const xhr = new XMLHttpRequest();
+		const {request, cancel} = Api.blacklab.postDocuments(
+			uploadToCorpus.id,
+			Array.from(documentFiles!),
+			Array.from(metadataFiles!),
+			handleUploadProgress,
+		);
 
-		xhr.upload.addEventListener('progress', handleUploadProgress.bind(xhr));
-		xhr.upload.addEventListener('error', handleError.bind(xhr));
-		xhr.upload.addEventListener('abort', handleError.bind(xhr));
-		// Don't bother attaching event listener 'load' on xhr.upload - it's broken in IE and Firefox
-		// Instead manually trigger uploadcomplete when we reach 100%
-		xhr.addEventListener('load', handleIndexingComplete.bind(xhr));
-		xhr.addEventListener('error', handleError.bind(xhr));
-		xhr.addEventListener('abort', handleError.bind(xhr));
-
-		xhr.open('POST', blsUrl + uploadToCorpus.id + '/docs?outputformat=json', true);
-		xhr.send(formData);
+		request.then(r => handleIndexingComplete).catch(handleError);
 
 		return false;
 	});

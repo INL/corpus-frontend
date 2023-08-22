@@ -27,6 +27,9 @@ public class Setup extends ResourceConfig {
             GZipEncoder.class,
             DeflateEncoder.class,
 
+            // Enable JWT, OIDC, and Keycloak
+            KeycloakFilter.class,
+
             // Should be automatically picked up, but isn't, so register it manually.
             // this registers all JAXB classes with Jersey, allowing us to produce/consume XML.
             JaxbAutoDiscoverable.class,

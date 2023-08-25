@@ -130,6 +130,7 @@
 						</tr>
 						<tr v-if="citations[index]" v-show="citations[index].open" :key="index + '-citation'" :class="['concordance-details', {'open': citations[index].open}]">
 							<td :colspan="numColumns">
+								<DepTree :hitRowJson="JSON.stringify(rowData)" :index="index + ''"></DepTree>
 								<p v-if="citations[index].error" class="text-danger">
 									<span class="fa fa-exclamation-triangle"></span> <span v-html="citations[index].error"></span>
 								</p>
@@ -232,7 +233,11 @@ import {debugLog} from '@/utils/debug';
 
 import GlossField from '@/pages/search//form/concept/GlossField.vue' // Jesse
 
-type HitRow = {
+import {ReactiveDepTree} from "@/../node_modules/reactive-dep-tree/dist/reactive-dep-tree.umd.js";
+import DepTree from "@/pages/search/results/table/DepTree.vue"
+import { stripIndent } from 'common-tags';
+
+export type HitRow = {
 	type: 'hit';
 	left: string;
 	hit: string;
@@ -250,6 +255,8 @@ type HitRow = {
 	hit_first_word_id: string; // Jesse
 	hit_last_word_id: string // jesse
 	hit_id: string; // jesse
+
+	matchInfos: BLTypes.BLMatchInfos;
 };
 
 type DocRow = {
@@ -277,7 +284,9 @@ type CitationData = {
 
 export default Vue.extend({
 	components: {
-	 	GlossField
+	 	GlossField,
+		ReactiveDepTree,
+		DepTree
 	},
 	props: {
 		results: Object as () => BLTypes.BLHitResults,
@@ -348,11 +357,13 @@ export default Vue.extend({
 					start: hit.start,
 					end: hit.end,
 					doc: infos[pid],
-					gloss_fields: GlossModule.get.gloss_fields(),
 
+					gloss_fields: GlossModule.get.gloss_fields(),
 					hit_first_word_id,
 					hit_last_word_id,
 					hit_id,
+
+					matchInfos: hit.matchInfos,
 				});
 
 				return rows;
@@ -463,6 +474,60 @@ export default Vue.extend({
 			})
 			.finally(() => citation.loading = false);
 		},
+
+		// {"type":"relation","relType":"dep::case","sourceStart":163,"sourceEnd":164,"targetStart":161,"targetEnd":162,"start":161,"end":164}
+		toConllu(row: HitRow, index: number, onlyMatchedRelations: boolean) : string {
+			const canned = stripIndent`
+				# text = I am eating a pineapple
+				1	I	_	PRON	_	_	2	suj	_	_
+				2	am	_	AUX	_	_	0	root	_	_
+				3	eating	_	VERB	_	_	2	aux	_	highlight=red
+				4	a	_	DET	_	_	5	det	_	_
+				5	pineapple	_	NOUN	_	_	3	obj	_	_
+			`
+			const word = row.props.word
+			const rel = row.props.deprel
+			const wordnum = row.props.wordnum
+			const lemma = row.props.lemma
+			const pos = row.props.pos
+			const xpos = row.props.xpos
+			const start: number = +wordnum[0]
+			//console.log(JSON.stringify(row.matchInfos))
+			//console.log(row.start)
+			interface x  { [key: number]: string }
+			const foundRels : x =  {}
+			const foundHeads : x = {}
+			if (('matchInfos' in row) && (row.matchInfos != null)) {
+				Object.keys(row.matchInfos).map(k => {
+					const v = row.matchInfos[k]
+					if (v.type == 'relation') {
+						const rel = v.relType.replace("dep::","")
+						const wordnum = v.targetStart - row.start + 1
+						const headnum = v.sourceStart - row.start + 1
+						foundRels[wordnum] = rel
+						foundHeads[headnum]  = rel
+					}
+				})
+			}
+
+			const dinges = /* `# sent_id = s${index}` + "\n" + */ '# text = ' + word.join(" ") + "\n" +
+				row.props.head.map((h, i) =>
+						{
+						const relIsMatched = i+1 in foundRels
+						const headIsMatched = i+1 in foundHeads
+						const headInHit = wordnum.includes(h)
+						const showRel = headInHit // && (relIsMatched)
+
+						const h1 = showRel?  +h -start + 1: '_';
+						const rel1 = showRel? rel[i] : '_';
+						const misc = (relIsMatched||headIsMatched)?  'highlight=red' : '_';
+						return '    ' + Array(+wordnum[i] - start + 1, word[i], lemma[i], pos[i], xpos[i], '_', h1, rel1, '_', misc).join("\t")
+					}).join("\n")
+			//console.log('matched targets:' + JSON.stringify(foundRels))
+			//console.log('matched sources:' + JSON.stringify(foundHeads))
+			//console.log(dinges)
+			return dinges;
+		}
 	},
 	watch: {
 		results(n: BLTypes.BLHitResults, o: BLTypes.BLHitResults) {

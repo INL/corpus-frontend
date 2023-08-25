@@ -460,12 +460,28 @@ export type BLHitSnippetApi = ({
 	end: number;
 }
 
+export interface BLRelationMatch { // Jesse
+	start: number,
+	end: number,
+	type: string,
+	relType: string,
+	sourceStart: number,
+	sourceEnd: number,
+	targetStart: number,
+	targetEnd: number
+}
+
+export interface BLMatchInfos {
+	[key: string] : BLRelationMatch
+}
+
 /** Contains all the AnnotatedField (previously token/word "properties") values for tokens in or around a hit */
 export interface BLHitSnippet {
 	left?: BLHitSnippetPart;
 	match: BLHitSnippetPart;
 	right?: BLHitSnippetPart;
 	captureGroups?: BLCaptureGroup[]; // Jesse
+	matchInfos?: BLMatchInfos // Jesse
 }
 
 export type BLHit = {

@@ -72,6 +72,7 @@
     "oidc-client-ts": "^2.4.0",
     "popper.js": "^1.15.0",
     "qs": "^6.5.2",
+    "reactive-dep-tree": "^0.5.2",
     "rxjs": "^6.6.7",
     "urijs": "^1.19.7",
     "v-tooltip": "2.0.2",

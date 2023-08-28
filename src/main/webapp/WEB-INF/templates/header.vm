@@ -3,7 +3,41 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        #if($googleAnalyticsKey)
+	#set($unescaped = $googleAnalyticsKey) ## see BaseResponse.java
+	    <script async src="https://www.googletagmanager.com/gtag/js?id=$unescaped"></script>
+	    <script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
+		
+		gtag('config', '$unescaped', {
+		    'anonymize_ip': true,
+		    'page_path': window.location.pathname,
+		    // Add any additional config options here
+		});
+	    </script>
+        <script>
+        window.ga=window.ga||function(){};
+        </script>
+        #end
 
+        ## custom css in header to prevent FOUT
+        #foreach($js in $websiteConfig.getCustomJS($page))
+        <script
+            src="$js.url?_$cache"
+            #foreach($attribute in $js.getAttributes().entrySet())
+                $attribute.getKey() #if($attribute.getValue()) ="$attribute.getValue()" #end
+            #end></script>
+        #end
+        ## custom css in header to prevent FOUT
+        #foreach($js in $websiteConfig.getCustomJS(""))
+        <script
+            src="$js.url?_$cache"
+            #foreach($attribute in $js.getAttributes().entrySet())
+                $attribute.getKey() #if($attribute.getValue()) ="$attribute.getValue()" #end
+            #end></script>
+        #end
         #if ($websiteConfig.getCorpusDisplayName().isPresent())
         <meta property="og:description" content="$websiteConfig.getCorpusDisplayName().get() provided by the Dutch Language Institute in Leiden.">
         <meta name="description" content="$websiteConfig.getCorpusDisplayName().get() search provided by the Dutch Language Institute in Leiden.">

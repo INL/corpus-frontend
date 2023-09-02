@@ -1051,22 +1051,31 @@ Through javascript you can do many things, but outlined below are some of the mo
     `transformSnippets` can be used to replace some words, add warnings, or correct some things in your data (such as escape sequences) after the fact, when doing so would be hard to do in the source files.
     Or it could be used to do some markup in combination with the `concordanceAsHtml` settings.
     ```ts
-      /** E.g. {word: ['words', 'in', 'the', 'hit'], lemma: [...], pos: [...]} */
-      type SnippetPart = { [annotationId: string]: string[]; };
-      type Snippet = {
-        left: SnippetPart;
-        match: SnippetPart;
-        right: SnippetPart;
-        // Warning: there might be more!
-      };
-      type TransformFunction = ((snippet: Snippet): void);
-      vuexModules.ui.actions.results.shared.transformSnippets(snippet => {
-        const transform = (...snippets) => snippets.forEach(v => v.word = v.word.map(word => {
-          if (word === 'de') return `<span style="text-decoration: underline; text-shadow: 0 0 2px red;">${word}</span>`;
-          return word;
-        }))
-        transform(snippet.left, snippet.match, snippet.right);
-      });
+	/**
+	 * E.g. {word: ['words', 'in', 'the', 'hit'], lemma: [...], pos: [...]} 
+	 * @typedef {Object.<string, string[]>} SnippetPart
+	 */
+
+	/**
+	 * @typedef {Object} Snippet
+	 * @property {SnippetPart} left
+	 * @property {SnippetPart} match
+	 * @property {SnippetPart} right
+	 * @property {string} [Warning] - Warning: there might be more!
+	 */
+
+	/**
+	 * @typedef {function} TransformFunction
+	 * @param {Snippet} snippet
+	 * @returns {void}
+	 */
+	vuexModules.ui.actions.results.shared.transformSnippets(snippet => {
+		const transform = (...snippets) => snippets.forEach(v => v.word = v.word.map(word => {
+			if (word === 'de') return `<span style="text-decoration: underline; text-shadow: 0 0 2px red;">${word}</span>`;
+			return word;
+		}))
+		transform(snippet.left, snippet.match, snippet.right);
+	});
     ```
 
     ### before:
@@ -1301,14 +1310,14 @@ Combining this with `jspath` in `corpus-frontend.properties` we can start the co
 
 ```properties
 # No trailing slash!
-jspath=http://localhost:80/dist
+jspath=http://localhost:8081/dist
 ```
 ```bash
 cd corpus-frontend/src/frontend/
 npm run start
 ```
 
-One note is that by default the port is `8080`, but we changed it to `80`, as `tomcat` already binds to `8080`. To change this, edit the `scripts.start` property in [package.json](src/frontend/package.json).
+One note is that by default the port is `8080`, but we changed it to `8081`, as `tomcat` already binds to `8080`. To change this, edit the `scripts.start` property in [package.json](src/frontend/package.json).
 
 
 ## Backend development

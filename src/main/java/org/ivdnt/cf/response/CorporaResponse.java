@@ -7,9 +7,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.ivdnt.cf.BaseResponse;
-import org.ivdnt.cf.MainServlet;
-
 /** Show the list of available corpora. */
 public class CorporaResponse extends BaseResponse {
 

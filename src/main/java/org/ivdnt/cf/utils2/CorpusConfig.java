@@ -1,4 +1,4 @@
-package org.ivdnt.cf.utils;
+package org.ivdnt.cf.utils2;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

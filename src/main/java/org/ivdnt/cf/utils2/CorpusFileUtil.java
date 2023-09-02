@@ -1,4 +1,4 @@
-package org.ivdnt.cf.utils;
+package org.ivdnt.cf.utils2;
 
 import java.io.File;
 import java.net.URI;
@@ -10,10 +10,6 @@ import java.nio.file.Paths;
 import java.util.Optional;
 
 import javax.xml.transform.TransformerException;
-
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.ivdnt.cf.MainServlet;
-import org.ivdnt.cf.response.ArticleResponse;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -31,10 +27,8 @@ public class CorpusFileUtil {
      * - Finally try WEB-INF/interface-default
      * </pre>
      *
-     * @param filesDir - the root dir where per-corpus files are stored (so not already resolved to the corpus name)
-     *                      (i.e. {@link org.ivdnt.cf.GlobalConfig.Keys#FRONTEND_CONFIG_PATH })
-     * @param corpus - corpus for which to get the file. If null or a user-defined corpus only the default locations are
-     *         checked.
+     * @param filesDir - the root dir where per-corpus files are stored (so the base dir that contains subdirectories for individual corpora)
+     * @param corpus - corpus for which to get the file. If null or a user-defined corpus, only the default locations are checked.
      * @param fallbackCorpus - for when the corpus does not exist, try this one instead (i.e. {@link org.ivdnt.cf.GlobalConfig.Keys#FRONTEND_CONFIG_PATH_DEFAULT}).
      * @param filePath - path to the file relative to the directory for the corpus.
      * @return the file, if found
@@ -64,7 +58,7 @@ public class CorpusFileUtil {
             // only available for a couple of standard items (search.xml, some builtin xslt files)
             .or(() -> {
                 try {
-                    URL url = MainServlet.class.getResource("/interface-default/" + filePath.get());
+                    URL url = CorpusFileUtil.class.getResource("/interface-default/" + filePath.get());
                     if (url == null) return Optional.empty();
                     URI uri = url.toURI();
                     return Optional.of(new File(uri)).filter(File::exists);
@@ -84,7 +78,6 @@ public class CorpusFileUtil {
      * The data format suffix is supported to allow placing xsl files for all corpora in the same fallback directory.
      *
      * "meta.xsl" is used to transform the document's metadata, "article.xsl" for the content.
-     * See {@link ArticleResponse}.
      *
      * Looks for a file by the name of "article_corpusDataFormat.xsl", so "article_tei" for tei, etc.
      * Separate xslt is used for metadata,
@@ -123,11 +116,9 @@ public class CorpusFileUtil {
                 .from(file)
                 .mapWithErrorHandling(XslTransformer::new)
                 .mapError(e -> new TransformerException(
-                        "Error loading stylesheet from disk:\n"
-                                + file.get() + "\n"
-                                + e.getMessage() + "\n"
-                                + ExceptionUtils.getStackTrace(e))
-                );
+                        "Error parsing xsl from file " + file.get().getName() + ".\n" +
+                        (e instanceof TransformerException ? ((TransformerException) e).getMessageAndLocation() : e.getMessage())
+                ));
         // if we used the file, return result or return error (since we want to be able to debug errors in files on disk)
         if (!r.isEmpty()) return r;
 
@@ -137,10 +128,9 @@ public class CorpusFileUtil {
                     .getStylesheet(corpusDataFormat.get())
                     .mapWithErrorHandling(XslTransformer::new)
                     .mapError(e -> new TransformerException(
-                            "Error loading stylesheet " + corpusDataFormat + " from BlackLab:\n"
-                                    + e.getMessage() + "\n"
-                                    + ExceptionUtils.getStackTrace(e))
-                    );
+                            "Error parsing xsl from blacklab-server.\n" +
+                            (e instanceof TransformerException ? ((TransformerException) e).getMessageAndLocation() : e.getMessage())
+                    ));
         }
         return Result.error(new TransformerException("File not found on disk, and no fallback available: " + name + ".xsl"));
     }

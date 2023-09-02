@@ -6,10 +6,7 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.xml.transform.TransformerException;
-
 import org.apache.commons.lang3.StringUtils;
-import org.ivdnt.cf.BaseResponse;
 import org.ivdnt.cf.utils.BlackLabApi;
 import org.ivdnt.cf.utils.CorpusConfig;
 import org.ivdnt.cf.utils.QueryException;

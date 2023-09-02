@@ -1,4 +1,4 @@
-package org.ivdnt.cf.rest;
+package org.ivdnt.cf.rest.todo;
 
 //import com.fasterxml.jackson.annotation.JsonProperty;
 import org.glassfish.jersey.server.JSONP;

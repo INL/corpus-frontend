@@ -1,7 +1,6 @@
-package org.ivdnt.cf.utils;
+package org.ivdnt.cf.utils2;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
@@ -24,6 +23,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +34,7 @@ public class XslTransformer {
     private static final Logger logger = LoggerFactory.getLogger(XslTransformer.class);
 
     private static class CapturingErrorListener implements ErrorListener {
-        private final List<Pair<String, Exception>> exceptions = new ArrayList<>();
+        private final List<Pair<String, TransformerException>> exceptions = new ArrayList<>();
 
         @Override
         public void error(TransformerException e) throws TransformerException {
@@ -52,7 +52,7 @@ public class XslTransformer {
             logger.warn(getDescriptiveMessage(e), e);
         }
 
-        public List<Pair<String, Exception>> getErrorList() {
+        public List<Pair<String, TransformerException>> getErrorList() {
             return this.exceptions;
         }
 
@@ -100,7 +100,7 @@ public class XslTransformer {
      * @return
      * @throws TransformerException
      */
-    private static Transformer get(String id, StreamSource source) throws Exception {
+    private static Transformer get(String id, StreamSource source) throws TransformerException {
         synchronized (TEMPLATES) {
             try {
                 FACTORY.setErrorListener(new CapturingErrorListener()); // renew to remove old exceptions
@@ -112,20 +112,22 @@ public class XslTransformer {
                 if (!l.getErrorList().isEmpty()) {
                     throw l.getErrorList().get(0).getRight();
                 }
-                throw e;
+
+                Throwable cause = ExceptionUtils.getRootCause(e);
+                throw e instanceof TransformerException ? (TransformerException) e : new TransformerException("Error creating transformer: " + cause.getMessage(), e);
             }
         }
     }
 
-    public XslTransformer(File stylesheet) throws Exception {
+    public XslTransformer(File stylesheet) throws TransformerException {
         transformer = get(stylesheet.getAbsolutePath(), new StreamSource(stylesheet));
     }
 
-    public XslTransformer(InputStream stylesheet) throws Exception {
+    public XslTransformer(InputStream stylesheet) throws TransformerException {
         transformer = get(null, new StreamSource(stylesheet));
     }
 
-    public XslTransformer(Reader stylesheet) throws Exception {
+    public XslTransformer(Reader stylesheet) throws TransformerException {
         transformer = get(null, new StreamSource(stylesheet));
     }
 
@@ -135,16 +137,15 @@ public class XslTransformer {
      * @param stylesheet
      * @throws TransformerException
      */
-    public XslTransformer(String stylesheet) throws Exception {
+    public XslTransformer(String stylesheet) throws TransformerException {
         transformer = get(stylesheet, new StreamSource(stylesheet));
     }
 
-    public XslTransformer(String stylesheet, Reader sheet) throws Exception {
+    public XslTransformer(String stylesheet, Reader sheet) throws TransformerException {
         transformer = get(stylesheet, new StreamSource(sheet));
     }
 
-    public String transform(String source)
-            throws TransformerException {
+    public String transform(String source) throws TransformerException {
         StreamSource ssSource = new StreamSource(new StringReader(source));
         StringWriter result = new StringWriter();
         StreamResult streamResult = new StreamResult(result);
@@ -163,8 +164,7 @@ public class XslTransformer {
         return result.toString();
     }
 
-    public <W extends Writer> W streamTransform(Reader source, W result)
-            throws TransformerException {
+    public <W extends Writer> W streamTransform(Reader source, W result) throws TransformerException {
         StreamSource ssSource = new StreamSource(source);
         StreamResult streamResult = new StreamResult(result);
 

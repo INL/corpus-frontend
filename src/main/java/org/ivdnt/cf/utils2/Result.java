@@ -1,12 +1,13 @@
-package org.ivdnt.cf.utils;
+package org.ivdnt.cf.utils2;
 
-import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+
+import org.ivdnt.cf.ReturnToClientException;
 
 /**
  * A class that represents the result of a computation that may throw an exception.
@@ -57,12 +58,12 @@ public class Result<R, E extends Exception> {
     public boolean hasResult() { return this.result != null; }
     public boolean hasError() { return this.error != null; }
 
-    /** If holding a result, call the consumer with it */
+    /** If holding a result, call the consumer with it, then continue with the existing value. */
     public Result<R, E> tap(Consumer<R> consumer) {
         if (this.result != null) consumer.accept(this.result);
         return this;
     }
-    /** If holding an error, call the consumer with it */
+    /** If holding an error, call the consumer with it, then continue with the existing error value. */
     public Result<R, E> tapError(Consumer<E> consumer) {
         if (this.error != null) consumer.accept(this.error);
         return this;

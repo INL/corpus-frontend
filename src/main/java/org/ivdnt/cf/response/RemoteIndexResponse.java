@@ -1,7 +1,5 @@
 package org.ivdnt.cf.response;
 
-import org.ivdnt.cf.BaseResponse;
-
 public class RemoteIndexResponse extends BaseResponse {
 
     public RemoteIndexResponse() {

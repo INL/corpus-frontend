@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.ivdnt.cf.BaseResponse;
 import org.ivdnt.cf.utils.CorpusConfig;
 import org.ivdnt.cf.utils.QueryException;
 import org.ivdnt.cf.utils.ReturnToClientException;

@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
-	<ShortName>Search corpus</ShortName>
-	<Description>Search an INL corpus</Description>
-	<InputEncoding>UTF-8</InputEncoding>
-	<Image height="16" width="16" type="image/x-icon">favicon.ico</Image>
-	<Image height="32" width="32" type="image/png">favicon.png</Image>
-	<Url type="text/html" template="../page/search?lemma={searchTerms}"/>
-</OpenSearchDescription>

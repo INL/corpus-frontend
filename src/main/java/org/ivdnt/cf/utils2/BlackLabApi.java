@@ -1,8 +1,11 @@
-package org.ivdnt.cf.utils;
+package org.ivdnt.cf.utils2;
+
+import java.util.Optional;
+
+import org.ivdnt.cf.CFApiException;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.Optional;
 
 /**
  * Helper class for talking to BlackLab.
@@ -20,7 +23,7 @@ public class BlackLabApi {
 		this.response = clientResponse;
 	}
 	
-	public Result<String, QueryException> getDocumentMetadata(String corpus, String documentId) {
+	public Result<String, CFApiException> getDocumentMetadata(String corpus, String documentId) {
 		return new AuthRequest(request, response)
 				.url(blsUrl, corpus, "docs", documentId)
 				.query("outputformat", "xml")
@@ -42,13 +45,13 @@ public class BlackLabApi {
 				);
 	}
 
-	public Result<String, QueryException> getStylesheet(String formatName) {
+	public Result<String, CFApiException> getStylesheet(String formatName) {
 		return new AuthRequest(request, response)
 				.url(blsUrl, "input-formats", formatName, "xslt")
 				.request(true);
 	}
 
-	public Result<String, QueryException> getDocumentContents(String corpus, String docId, Optional<String> blacklabQuery, Optional<String> pattgap, Optional<Integer> pageStart, Optional<Integer> pageEnd) {
+	public Result<String, CFApiException> getDocumentContents(String corpus, String docId, Optional<String> blacklabQuery, Optional<String> pattgap, Optional<Integer> pageStart, Optional<Integer> pageEnd) {
 		return new AuthRequest(request, response)
 				.url(blsUrl, corpus, "docs", docId, "contents")
 				.query("patt", blacklabQuery)

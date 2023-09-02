@@ -5,7 +5,6 @@ import java.io.OutputStreamWriter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.ivdnt.cf.BaseResponse;
 import org.ivdnt.cf.rest.pojo.GlobalConfigRepresentation;
 
 /** Show the about page. */

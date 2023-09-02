@@ -4,8 +4,6 @@ import java.io.IOException;
 
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.ivdnt.cf.BaseResponse;
-
 /** Show an error page. */
 public class ErrorResponse extends BaseResponse {
 

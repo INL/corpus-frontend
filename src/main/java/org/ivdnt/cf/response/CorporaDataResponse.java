@@ -16,9 +16,6 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
 
-import org.ivdnt.cf.BaseResponse;
-import org.ivdnt.cf.MainServlet;
-
 public class CorporaDataResponse extends BaseResponse {
 
     public CorporaDataResponse() {

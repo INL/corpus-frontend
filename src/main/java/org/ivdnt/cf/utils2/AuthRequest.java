@@ -1,10 +1,5 @@
-package org.ivdnt.cf.utils;
+package org.ivdnt.cf.utils2;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -17,6 +12,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.ivdnt.cf.CFApiException;
+import org.ivdnt.cf.ReturnToClientException;
+import org.springframework.http.HttpStatus;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /** 
  * Make a request to url, passing the provided query and headers.
@@ -178,7 +182,7 @@ public class AuthRequest {
      *
      * @throws ReturnToClientException when authentication is required but not provided. The response is modified to add the www-authorization header prior to throwing.
      */
-    public Result<String, QueryException> request(boolean hardFailOnMissingAuth) {
+    public Result<String, CFApiException> request(boolean hardFailOnMissingAuth) {
         // first try without authenticating.
         try {
             HttpURLConnection r = request(method, url, query, hash, headers);
@@ -186,7 +190,7 @@ public class AuthRequest {
             while (redirects < 10) {
                 int code = r.getResponseCode();
                 if (code == -1)
-                    return Result.error(new QueryException(-1, "Unexpected response from url " + url));
+                    return Result.error(new CFApiException(HttpStatus.SERVICE_UNAVAILABLE, "Unexpected response from url " + url));
 
                 // redirect is not followed into other protocol ex. http to https
                 // see https://stackoverflow.com/a/1884427
@@ -214,33 +218,33 @@ public class AuthRequest {
                     // this should cause the client to try again with the auth header
                     // so next time the getExistingAuth will return successfully.
                     response.addHeader("WWW-Authenticate", "Basic realm=\"Blacklab\"");
-                    throw new ReturnToClientException(HttpServletResponse.SC_UNAUTHORIZED);
+                    throw new ReturnToClientException(HttpStatus.UNAUTHORIZED);
                 }
 
                 return decode(r);
             }
-            return Result.error(new QueryException(HttpServletResponse.SC_BAD_GATEWAY, "Too many redirects"));
-        } catch (IOException | QueryException e) {
-            return Result.error(QueryException.wrap(e));
+            return Result.error(new CFApiException(HttpStatus.BAD_GATEWAY, "Too many redirects"));
+        } catch (IOException | CFApiException e) {
+            return Result.error(CFApiException.wrap(e));
         }
     }
 
-    protected static Result<String, QueryException> decode(HttpURLConnection conn) {
+    protected static Result<String, CFApiException> decode(HttpURLConnection conn) {
         try {
-            int code = conn.getResponseCode();
+            HttpStatus code = HttpStatus.resolve(conn.getResponseCode());
             if (conn.getErrorStream() != null) {
                 String body = StringUtils.join(IOUtils.readLines(conn.getErrorStream(), "utf-8"), "\n");
-                return Result.error(new QueryException(code, body));
-            } else if (code < 200 || code >= 300) {
-                return Result.error(new QueryException(code, "Unexpected response (http " + code + ") from url " + conn.getURL()));
-            } else if (code == 204) {
+                return Result.error(new CFApiException(code, body));
+            } else if (code == null || !code.is2xxSuccessful()) {
+                return Result.error(new CFApiException(code, "Unexpected response (http " + code + ") from url " + conn.getURL()));
+            } else if (code.equals(HttpStatus.NO_CONTENT)) {
                 return Result.success("");
             } else {
                 String body = StringUtils.join(IOUtils.readLines(conn.getInputStream(), "utf-8"), "\n");
                 return Result.success(body);
             }
         } catch (IOException e) {
-            return Result.error(QueryException.wrap(e));
+            return Result.error(CFApiException.wrap(e));
         }
     }
 
@@ -256,7 +260,7 @@ public class AuthRequest {
         return auth != null && auth.startsWith("Basic");
     }
 
-    protected static HttpURLConnection request(String method, String url, Map<String, String[]> query, String hash, Map<String, String> headers) throws QueryException {
+    protected static HttpURLConnection request(String method, String url, Map<String, String[]> query, String hash, Map<String, String> headers) throws CFApiException {
         try {
             URL urlObj = new URL(url(url, query, hash));
             HttpURLConnection connection = (HttpURLConnection) urlObj.openConnection();
@@ -272,7 +276,7 @@ public class AuthRequest {
             connection.connect();
             return connection;
         } catch (IOException e) {
-            throw QueryException.wrap(e);
+            throw CFApiException.wrap(e);
         }
     }
 }

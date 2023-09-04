@@ -1,0 +1,7 @@
+spring:
+    security:
+        oauth2:
+            resourceserver:
+                jwt:
+                    issuer-uri: http://172.16.10.105:8080/auth/realms/dev
+#                    jwk-set-uri: http://172.16.10.105:8080/auth/realms/dev/protocol/openid-connect/certs

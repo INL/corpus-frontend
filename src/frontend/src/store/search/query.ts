@@ -106,7 +106,7 @@ const get = {
 			// The advanced and expert views already contain a good-to-go cql query. We only need to take care not to emit an empty string.
 			switch (state.subForm) {
 				case 'simple': {
-					const pattern = (state as ModuleRootStateSearch<'simple'>).formState;
+					const pattern: AnnotationValue = (state as ModuleRootStateSearch<'simple'>).formState;
 
 					return getPatternString([pattern], null);
 				}

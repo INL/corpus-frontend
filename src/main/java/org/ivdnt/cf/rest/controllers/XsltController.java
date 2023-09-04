@@ -39,7 +39,7 @@ public class XsltController {
     private static final XslTransformer defaultTransformer;
 
     /** Matches xml open/void tags &lt;namespace:tagname attribute="value"/&gt; excluding hl tags, as those are inserted by blacklab and can result in false positives */
-private static final Pattern XML_TAG_PATTERN = Pattern.compile("<([\\w]+:)?((?!(hl|blacklabResponse|[xX][mM][lL])\\b)[\\w.]+)(\\s+[\\w\\.]+=\"[\\w\\s,]*\")*\\/?>");
+    private static final Pattern XML_TAG_PATTERN = Pattern.compile("<([\\w]+:)?((?!(hl|blacklabResponse|[xX][mM][lL])\\b)[\\w.]+)(\\s+[\\w\\.]+=\"[\\w\\s,]*\")*\\/?>");
 
 //    private static final Pattern CAPTURE_DOCLENGTH_PATTERN = Pattern.compile("<lengthInTokens>\\s*(\\d+)\\s*<\\/lengthInTokens>");
 
@@ -200,7 +200,7 @@ private static final Pattern XML_TAG_PATTERN = Pattern.compile("<([\\w]+:)?((?!(
                 response
         )
         .or(defaultTransformer) // don't use recover() - we have to surface exceptions to the user (and recover() clears exceptions), or() doesn't.
-        .tap(trans -> trans.addParameter("contextRoot", request.getServletContext().getContextPath()));
+        .tap(trans -> trans.addParameter("contextPath", request.getServletContext().getContextPath()));
 
         return content.flatMapWithErrorHandling(c -> {
             if (!XML_TAG_PATTERN.matcher(c).find()) {

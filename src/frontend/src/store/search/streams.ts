@@ -9,9 +9,9 @@ import * as CorpusStore from '@/store/search/corpus';
 import * as HistoryStore from '@/store/search/history';
 import * as PatternStore from '@/store/search/form/patterns';
 import * as ExploreStore from '@/store/search/form/explore';
-import * as HitsStore from '@/store/search/results/hits';
+// import * as HitsStore from '@/store/search/results/hits';
 import * as InterfaceStore from '@/store/search/form/interface';
-import * as DocsStore from '@/store/search/results/docs';
+// import * as DocsStore from '@/store/search/results/docs';
 import * as FilterStore from '@/store/search/form/filters';
 import * as GapStore from '@/store/search/form/gap';
 import * as QueryStore from '@/store/search/query';
@@ -27,7 +27,7 @@ import Vue from 'vue';
 
 type QueryState = {
 	params?: BLTypes.BLSearchParameters,
-	state: Pick<RootStore.RootState, 'query'|'interface'|'global'|'hits'|'docs'>
+	state: Pick<RootStore.RootState, 'query'|'interface'|'global'|'views'>
 };
 
 const metadata$ = new ReplaySubject<string>(1);
@@ -165,6 +165,14 @@ url$.pipe(
 			};
 		}
 
+		// NOTE:
+		// This part of the url-generation is pretty confusing
+		// If in doubt, read url-state-parser for any calls to getString(), getNumber(), etc.
+		// All those properties are the ones that we should set here.
+		// We should codify them in an enum sometime, and make this process type-safe
+		// So we get a compile error when we forget to add a property here.
+		// or when we try to add a property that doesn't exist in the url-state-parser.
+
 		// Remove null, undefined, empty strings and empty arrays from our query params
 		// Any missing/omitted parameters in the (frontend) url will be replaced by their defaults by the url-state-parser when the url might be decoded.
 		const queryParams: Partial<BLTypes.BLSearchParameters> = Object.entries(v.params).reduce((acc, [key, val]) => {
@@ -187,7 +195,8 @@ url$.pipe(
 				patternMode: v.state.query.form === 'search' ? v.state.query.subForm : undefined, // remove if not relevant
 				viewedResults: undefined, // remove from query parameters: is encoded in path (segmentcoded)
 			} as Partial<InterfaceStore.ModuleRootState>),
-			groupDisplayMode: v.state[viewedResults!].groupDisplayMode || undefined // remove null
+			groupDisplayMode: v.state.views[viewedResults!].groupDisplayMode || undefined, // remove null
+			resultViewCustomState: v.state.views[viewedResults!].customState || undefined, // remove null
 		});
 
 		// Generate the new frontend url
@@ -239,14 +248,13 @@ url$.pipe(
 		entry: HistoryStore.HistoryEntry
 		url: string,
 	} => {
-		const {query, docs, hits, global} = v.state;
+		const {query, views, global} = v.state;
 		// Store only those parts actively in use (so don't store the hits tab info when currently viewing docs for example)
 		// the rest is set to defaults so the rest of the page nicely clears if this entry is loaded later.
 		const entry: HistoryStore.HistoryEntry = {
 			filters: query.filters || {},
 			global,
-			hits: v.state.interface.viewedResults === 'hits' ? hits : HitsStore.defaults,
-			docs: v.state.interface.viewedResults === 'docs' ? docs : DocsStore.defaults,
+			view: views[v.state.interface.viewedResults!],
 			explore: query.form === 'explore' ? {
 				...ExploreStore.defaults,
 				[query.subForm]: query.formState
@@ -301,9 +309,8 @@ export default () => {
 		(state): QueryState => ({
 			params: RootStore.get.blacklabParameters(),
 			state: {
-				docs: state.docs,
+				views: state.views,
 				global: state.global,
-				hits: state.hits,
 				interface: state.interface,
 				query: state.query
 			}

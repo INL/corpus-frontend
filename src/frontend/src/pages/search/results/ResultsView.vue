@@ -1,5 +1,5 @@
 <template>
-	<div v-show="visible" class="results-container" :disabled="request">
+	<div class="results-container" :disabled="request">
 		<span v-if="request" class="fa fa-spinner fa-spin searchIndicator" style="position:absolute; left: 50%; top:15px"></span>
 
 		<div class="crumbs-totals">
@@ -20,7 +20,7 @@
 			<Totals v-if="results"
 				class="result-totals"
 				:initialResults="results"
-				:type="type"
+				:type="id"
 				:indexId="indexId"
 
 				@update="paginationResults = $event"
@@ -33,9 +33,9 @@
 				v-bind="resultComponentData"
 
 				@sort="sort = $event"
-				@viewgroup="originalGroupBySettings = {page, sort}; log(page, sort); viewGroup = $event.id; _viewGroupName = $event.displayName;"
+				@viewgroup="originalGroupBySettings = {page, sort}; viewGroup = $event.id; _viewGroupName = $event.displayName;"
 			>
-				<GroupBy slot="groupBy" :type="type"
+				<GroupBy slot="groupBy" :type="id"
 					:disabled="!!request"
 					:originalGroupBySettings="originalGroupBySettings"
 					@viewgroupLeave="leaveViewgroup"
@@ -158,7 +158,7 @@ import * as Api from '@/api';
 
 import * as RootStore from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus';
-import * as ResultsStore from '@/store/search/results';
+import * as ResultsStore from '@/store/search/results/views';
 import * as GlobalStore from '@/store/search/results/global';
 import * as QueryStore from '@/store/search/query';
 import * as InterfaceStore from '@/store/search/form/interface';
@@ -190,10 +190,11 @@ export default Vue.extend({
 		SelectPicker
 	},
 	props: {
-		type: {
-			type: String as () => ResultsStore.ViewId,
-			required: true,
-		}
+		id: String,
+		label: String,
+		active: Boolean,
+
+		store: Object as () => ResultsStore.ViewModule,
 	},
 	data: () => ({
 		isDirty: true, // since we don't have any results yet
@@ -220,7 +221,7 @@ export default Vue.extend({
 
 		originalGroupBySettings: null as null|{
 			page: number;
-			sort: string;
+			sort: string|null;
 		},
 
 		debug
@@ -235,7 +236,7 @@ export default Vue.extend({
 				this.cancel = null;
 				this.request = null;
 			}
-			if (this.visible) {
+			if (this.active) {
 				this.refresh();
 			}
 		},
@@ -261,8 +262,8 @@ export default Vue.extend({
 			if (this.clearResults) { this.results = this.error = null; this.clearResults = false; }
 
 			const params = RootStore.get.blacklabParameters()!;
-			const apiCall = this.type === 'hits' ? Api.blacklab.getHits : Api.blacklab.getDocs;
-			debugLog('starting search', this.type, params);
+			const apiCall = this.id === 'hits' ? Api.blacklab.getHits : Api.blacklab.getDocs;
+			debugLog('starting search', this.id, params);
 
 			const r = apiCall(this.indexId, params, {headers: { 'Cache-Control': 'no-cache' }});
 			this.request = r.request;
@@ -285,7 +286,7 @@ export default Vue.extend({
 		setError(data: Api.ApiError, isGrouped?: boolean) {
 			if (data.title !== 'Request cancelled') { // TODO
 				debugLog('Request failed: ', data);
-				this.error = UIStore.getState().global.errorMessage(data, isGrouped ? 'groups' : this.type);
+				this.error = UIStore.getState().global.errorMessage(data, isGrouped ? 'groups' : this.id as 'hits'|'docs');
 				this.results = null;
 				this.paginationResults = null;
 			}
@@ -298,7 +299,7 @@ export default Vue.extend({
 			}
 
 			this.downloadInProgress = true;
-			const apiCall = this.type === 'hits' ? Api.blacklab.getHitsCsv : Api.blacklab.getDocsCsv;
+			const apiCall = this.id === 'hits' ? Api.blacklab.getHitsCsv : Api.blacklab.getDocsCsv;
 			const params = cloneDeep(this.results.summary.searchParam);
 			if (UIStore.getState().results.shared.detailedAnnotationIds) {
 				params.listvalues = UIStore.getState().results.shared.detailedAnnotationIds!.join(',');
@@ -309,7 +310,7 @@ export default Vue.extend({
 			(params as any).csvsepline = !!excel;
 			(params as any).csvsummary = true;
 
-			debugLog('starting csv download', this.type, params);
+			debugLog('starting csv download', this.id, params);
 			apiCall(this.indexId, params).request
 			.then(
 				blob => saveAs(blob, 'data.csv'),
@@ -336,27 +337,26 @@ export default Vue.extend({
 		}
 	},
 	computed: {
-		// Store properties
-		storeModule(): ReturnType<(typeof ResultsStore)['get']['resultsModules']>[number] { return ResultsStore.get.resultsModules().find(m => m.namespace === this.type)!; },
+
 		groupBy: {
-			get(): string[] { return this.storeModule.getState().groupBy; },
-			set(v: string[]) { this.storeModule.actions.groupBy(v); }
+			get(): string[] { return this.store.getState().groupBy; },
+			set(v: string[]) { this.store.actions.groupBy(v); }
 		},
 		groupByAdvanced: {
-			get(): string[] { return this.storeModule.getState().groupByAdvanced; },
-			set(v: string[]) { this.storeModule.actions.groupByAdvanced(v); }
+			get(): string[] { return this.store.getState().groupByAdvanced; },
+			set(v: string[]) { this.store.actions.groupByAdvanced(v); }
 		},
 		page: {
-			get(): number { const n = this.storeModule.getState().page; console.log('got page', n); return n; },
-			set(v: number) { this.storeModule.actions.page(v); console.log('set page', v); }
+			get(): number { const n = this.store.getState().page; console.log('got page', n); return n; },
+			set(v: number) { this.store.actions.page(v); console.log('set page', v); }
 		},
 		sort: {
-			get(): string|null { return this.storeModule.getState().sort; },
-			set(v: string|null) { this.storeModule.actions.sort(v); }
+			get(): string|null { return this.store.getState().sort; },
+			set(v: string|null) { this.store.actions.sort(v); }
 		},
 		viewGroup: {
-			get(): string|null { return this.storeModule.getState().viewGroup; },
-			set(v: string|null) { this.storeModule.actions.viewGroup(v); }
+			get(): string|null { return this.store.getState().viewGroup; },
+			set(v: string|null) { this.store.actions.viewGroup(v); }
 		},
 
 		exportEnabled(): boolean { return UIStore.getState().results.shared.exportEnabled; },
@@ -371,9 +371,9 @@ export default Vue.extend({
 			return jsonStableStringify({
 				global: GlobalStore.getState(),
 				self: {
-					...this.storeModule.getState(),
+					...this.store.getState(),
 					groupDisplayMode: null // ignore this property
-				} as Partial<ResultsStore.PartialRootState[ResultsStore.ViewId]>,
+				} as Partial<ResultsStore.ViewRootState>,
 				query: QueryStore.getState()
 			});
 		},
@@ -400,7 +400,7 @@ export default Vue.extend({
 				BLTypes.isHitResults(r) ? r.summary.numberOfHitsRetrieved :
 				r.summary.numberOfDocsRetrieved;
 
-			// subtract one page if number of results exactly divisible by page size
+			// subtract one page if number of results exactly diactive by page size
 			// e.g. 20 results for a page size of 20 is still only one page instead of 2.
 			const pageCount = Math.floor(totalResults / pageSize) - ((totalResults % pageSize === 0 && totalResults > 0) ? 1 : 0);
 
@@ -410,9 +410,8 @@ export default Vue.extend({
 			};
 		},
 
-		visible(): boolean { return InterfaceStore.get.viewedResults() === this.type; },
 		valid(): boolean {
-			if (this.type === 'hits') {
+			if (this.id === 'hits') {
 				const params = RootStore.get.blacklabParameters();
 				return !!(params && params.patt);
 			} else {
@@ -441,7 +440,7 @@ export default Vue.extend({
 		breadCrumbs(): any {
 			const r = [];
 			r.push({
-				label: this.type === 'hits' ? 'Hits' : 'Documents',
+				label: this.id === 'hits' ? 'Hits' : 'Documents',
 				title: 'Go back to ungrouped results',
 				active: false, //(this.groupBy.length + this.groupByAdvanced.length) === 0,
 				onClick: () => {
@@ -586,16 +585,16 @@ export default Vue.extend({
 		},
 		refreshParameters: {
 			handler(cur, prev) {
-				if (this.visible) {
+				if (this.active) {
 					this.refresh();
 				} else {
 					this.markDirty();
 				}
 			},
 		},
-		visible: {
-			handler(visible) {
-				if (visible && this.isDirty) {
+		active: {
+			handler(active) {
+				if (active && this.isDirty) {
 					this.refresh();
 				}
 			},

@@ -6,19 +6,30 @@
  * Configure from external javascript through window.vuexModules.ui.getState() and assign things.
  */
 
+import Vue from 'vue';
 import cloneDeep from 'clone-deep';
 import { getStoreBuilder } from 'vuex-typex';
 
 import { RootState } from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus';
+import * as ViewsStore from '@/store/search/results/views';
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
-import { mapReduce, MapOf, multimapReduce } from '@/utils';
+import { mapReduce, MapOf } from '@/utils';
 import { stripIndent, html } from 'common-tags';
-import Vue from 'vue';
 
 declare const PROPS_IN_COLUMNS: string[];
 declare const PAGESIZE: number|undefined;
+
+type CustomView = {
+	id: string;
+	/** Label shown in result tabs */
+	label?: string;
+	/** Title shown when hovering over tab */
+	title: string;
+	/** Vue component name or a compiled component. */
+	component: string|Vue.Component;
+}
 
 type ModuleRootState = {
 	search: {
@@ -135,6 +146,8 @@ type ModuleRootState = {
 			 */
 			shownMetadataIds: string[];
 		};
+
+		customViews: CustomView[],
 
 		shared: {
 			/** What annotation to use for displaying of [before, hit, after] and snippets. Conventionally the main annotation. */
@@ -258,6 +271,15 @@ const initialState: ModuleRootState = {
 		docs: {
 			shownMetadataIds: [],
 		},
+		customViews: [{
+			id: 'hits',
+			title: 'Per Hit',
+			component: 'ResultsView'
+		}, {
+			id: 'docs',
+			title: 'Per Document',
+			component: 'ResultsView'
+		}],
 		shared: {
 			concordanceAnnotationId: '',
 			concordanceSize: 50,
@@ -471,6 +493,20 @@ const actions = {
 				r => state.results.docs.shownMetadataIds = r
 			), 'docs_shownMetadataIds')
 		},
+		addResultView: b.commit((state, view: CustomView&{customInitialState: any}) => {
+			if (!state.results.customViews.find(v => v.id === view.id)) {
+				ViewsStore.getOrCreateModule(view.id);
+				state.results.customViews.push(view);
+			}
+		}, 'registerCustomView'),
+		removeResultView: b.commit((state, viewId: string) => {
+			const index = state.results.customViews.findIndex(v => v.id === viewId);
+			if (index !== -1) {
+				state.results.customViews.splice(index, 1);
+			} else {
+				console.warn(`[results.removeResultView] - Trying to remove custom view '${viewId}', but it doesn't exist!`);
+			}
+		}, 'removeCustomView'),
 		shared: {
 			concordanceAnnotationId: b.commit((state, id: string) => validateAnnotations([id],
 				_ => `Trying to display Annotation '${id}' as concordance and snippet text, but it does not exist`,
@@ -630,13 +666,13 @@ const actions = {
 const init = () => {
 	/*
 	Store initialization happens in 3 steps:
-	- initial construction: 
-		this happens immediately when the script is evaluated. 
+	- initial construction:
+		this happens immediately when the script is evaluated.
 		This is then the initialState objects are created. (hence the workaround in this module's getState())
-	- customization: 
+	- customization:
 		CustomJs scripts load and can interact with the UI module
-	- init() function: CustomJs should now have done all its edits, 
-		and changes are validated and persisted into the initialState objects. 
+	- init() function: CustomJs should now have done all its edits,
+		and changes are validated and persisted into the initialState objects.
 		This is where we are now.
 	*/
 
@@ -759,7 +795,7 @@ const init = () => {
 		actions.results.shared.concordanceAnnotationId(mainAnnotation.hasForwardIndex ? mainAnnotation.id : defaultAnnotationsToShow[0]);
 	}
 
-	if (initialState.results.shared.concordanceSize > 1000) 
+	if (initialState.results.shared.concordanceSize > 1000)
 		actions.results.shared.concordanceSize(1000);
 
 	// Results table columns
@@ -952,6 +988,7 @@ function printCustomizations() {
 
 export {
 	ModuleRootState,
+	CustomView,
 
 	getState,
 	get,

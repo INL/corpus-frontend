@@ -33,7 +33,7 @@
 								<td>{{entry.interface.viewedResults === 'hits' ? 'Hits' : 'Documents'}}</td>
 								<td class="history-table-contain-text" :title="entry.displayValues.pattern.substring(0,1000) || undefined">{{entry.displayValues.pattern}}</td>
 								<td class="history-table-contain-text" :title="entry.displayValues.filters.substring(0,1000) || undefined">{{entry.displayValues.filters}}</td>
-								<td class="history-table-contain-text" :title="entry[entry.interface.viewedResults].groupBy.concat(entry[entry.interface.viewedResults].groupByAdvanced).join(' ') || '-'">{{entry[entry.interface.viewedResults].groupBy.concat(entry[entry.interface.viewedResults].groupByAdvanced).join(' ') || '-'}}</td>
+								<td class="history-table-contain-text" :title="entry.view.groupBy.concat(entry.view.groupByAdvanced).join(' ') || '-'">{{entry.view.groupBy.concat(entry.view.groupByAdvanced).join(' ') || '-'}}</td>
 								<td>
 									<div class="btn-group">
 										<button type="button" class="btn btn-default" @click="load(entry)">Search</button>

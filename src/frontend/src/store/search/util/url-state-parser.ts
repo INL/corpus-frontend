@@ -1,5 +1,3 @@
-import Vue from 'vue';
-
 import memoize from 'memoize-decorator';
 
 import BaseUrlStateParser from '@/store/util/url-state-parser-base';
@@ -24,10 +22,8 @@ import * as ExploreModule from '@/store/search/form/explore';
 import * as GapModule from '@/store/search/form/gap';
 
 // Results
-import * as ResultsManager from '@/store/search/results';
-import * as DocResultsModule from '@/store/search/results/docs';
+import * as ViewModule from '@/store/search/results/views';
 import * as GlobalResultsModule from '@/store/search/results/global';
-import * as HitResultsModule from '@/store/search/results/hits';
 
 import {FilterValue, AnnotationValue} from '@/types/apptypes';
 
@@ -58,10 +54,9 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 			patterns: this.patterns,
 			gap: this.gap,
 
-			docs: this.docs,
+			// settings for the active results view
+			view: this.view(this.interface.viewedResults),
 			global: this.global,
-			hits: this.hits,
-
 			// submitted query not parsed from url: is restored from rest of state later.
 		};
 	}
@@ -236,7 +231,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 
 		return {
 			groupBy: this.groupBy[0],
-			groupDisplayMode: this.hitsOrDocs('docs').groupDisplayMode || ExploreModule.defaults.corpora.groupDisplayMode
+			groupDisplayMode: this.view('docs').groupDisplayMode || ExploreModule.defaults.corpora.groupDisplayMode
 		};
 	}
 
@@ -305,14 +300,6 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 			advanced: this.advancedPattern,
 			expert: this.expertPattern,
 		};
-	}
-
-	private get hits(): HitResultsModule.ModuleRootState {
-		return this.hitsOrDocs('hits');
-	}
-
-	private get docs(): DocResultsModule.ModuleRootState {
-		return this.hitsOrDocs('docs');
 	}
 
 	@memoize
@@ -549,13 +536,19 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 		return groups.length > 0 && groups.every(g => g.endsWith(':s'));
 	}
 
-	// No memoize - has parameters
-	private hitsOrDocs(view: ResultsManager.ViewId): DocResultsModule.ModuleRootState { // they're the same anyway.
+	/**
+	 * Get the state for a specific view.
+	 * Or when a custom module has been defined, the custom module.
+	 * @param view
+	 * @returns
+	 */
+	private view(view?: string|null): ViewModule.ViewRootState { // they're the same anyway.
 		if (this.viewedResults !== view) {
-			return DocResultsModule.defaults;
+			return cloneDeep(ViewModule.initialViewState);
 		}
 
 		return {
+			customState: JSON.parse(this.getString('resultViewCustomState', 'null', v => v ?? 'null')!),
 			groupBy: this.groupBy,
 			groupByAdvanced: this.groupByAdvanced,
 			caseSensitive: this.caseSensitive,

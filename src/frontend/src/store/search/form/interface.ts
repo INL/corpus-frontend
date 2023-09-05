@@ -10,13 +10,12 @@ import cloneDeep from 'clone-deep';
 import {RootState} from '@/store/search/';
 import {ModuleRootState as PatternModuleRootState} from '@/store/search/form/patterns';
 import {ModuleRootState as ExploreModuleRootState} from '@/store/search/form/explore';
-import {ViewId as ResultViewId} from '@/store/search/results';
 
 type ModuleRootState = {
 	form: 'search'|'explore';
 	patternMode: keyof PatternModuleRootState;
 	exploreMode: keyof ExploreModuleRootState;
-	viewedResults: null|ResultViewId;
+	viewedResults: null|string;
 };
 
 const defaults: ModuleRootState = {

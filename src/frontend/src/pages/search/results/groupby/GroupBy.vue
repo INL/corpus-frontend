@@ -57,7 +57,7 @@
 import Vue from 'vue';
 
 import * as CorpusStore from '@/store/search/corpus';
-import * as ResultsStore from '@/store/search/results';
+import * as ResultsStore from '@/store/search/results/views';
 import * as UIStore from '@/store/search/ui';
 
 import SelectPicker, {OptGroup, Option} from '@/components/SelectPicker.vue';
@@ -75,7 +75,7 @@ export default Vue.extend({
 		ContextGroup,
 	},
 	props: {
-		type: String as () => ResultsStore.ViewId,
+		type: String, // grouping hits or docs?
 		disabled: Boolean,
 	},
 	data: () => ({
@@ -101,8 +101,8 @@ export default Vue.extend({
 		deleteContextGroup(index: number) { this.unappliedContextGroups.splice(index, 1); },
 	},
 	computed: {
-		storeModule(): ReturnType<(typeof ResultsStore)['get']['resultsModules']>[number] {
-			return ResultsStore.get.resultsModules().find(m => m.namespace === this.type)!;
+		storeModule(): ResultsStore.ViewModule {
+			return ResultsStore.getOrCreateModule(this.type);
 		},
 		caseSensitive: {
 			get(): boolean { return this.storeModule.getState().caseSensitive; },

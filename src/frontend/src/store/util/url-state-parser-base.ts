@@ -43,12 +43,12 @@ export default abstract class UrlStateParser<T> {
 	 * otherwise, the parameter is passed to the validate function (if present), and the result is returned.
 	 * NOTE: empty strings are preserved and need to removed using the validation function if needed.
 	 */
-	protected getString(paramname: string, fallback: string|null = null, validate?: (value: string)=>string|null): string|null {
+	protected getString(paramname: string, fallback: string|null = null, mapValue?: (value: string)=>string|null): string|null {
 		const {[paramname]: prop} = this.params;
 		if (typeof prop !== 'string') {
 			return fallback;
 		}
-		return validate ? validate(prop) : prop;
+		return mapValue ? mapValue(prop) : prop;
 	}
 	/** If the property is missing altogether or can't be parsed, fallback is returned, otherwise the value is parsed */
 	protected getBoolean(paramname: string, fallback: boolean|null = null, validate?: (value: boolean)=>boolean): boolean|null {

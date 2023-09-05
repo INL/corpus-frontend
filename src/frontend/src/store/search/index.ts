@@ -2,7 +2,7 @@ import Vue from 'vue';
 import Vuex from 'vuex';
 import VueRx from 'vue-rx';
 // @ts-ignore
-import VuePursue from 'vue-pursue';
+// import VuePursue from 'vue-pursue';
 
 import cloneDeep from 'clone-deep';
 import {getStoreBuilder} from 'vuex-typex';
@@ -22,10 +22,8 @@ import * as ExploreModule from '@/store/search/form/explore';
 import * as GapModule from '@/store/search/form/gap';
 
 // Results
-import * as ResultsManager from '@/store/search/results';
-import * as DocResultsModule from '@/store/search/results/docs';
+import * as ViewModule from '@/store/search/results/views';
 import * as GlobalResultsModule from '@/store/search/results/global';
-import * as HitResultsModule from '@/store/search/results/hits';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import { getPatternString } from '@/utils';
@@ -39,15 +37,18 @@ type RootState = {
 	query: QueryModule.ModuleRootState;
 	tagset: TagsetModule.ModuleRootState;
 	ui: UIModule.ModuleRootState;
-}&FormManager.PartialRootState&ResultsManager.PartialRootState;
+	views: ViewModule.ModuleRootState;
+	global: GlobalResultsModule.ModuleRootState;
+}&FormManager.PartialRootState;
 
 const b = getStoreBuilder<RootState>();
 
 const getState = b.state();
 
 const get = {
-	viewedResultsSettings: b.read(state => state.interface.viewedResults != null ? state[state.interface.viewedResults] : null, 'getViewedResultsSettings'),
+	viewedResultsSettings: b.read(state => state.views[state.interface.viewedResults!] ?? null, 'getViewedResultsSettings'),
 
+	/** Whether the filters section should be active (as it isn't active when in specific search modes (e.g. simple or explore)) */
 	filtersActive: b.read(state => {
 		return !(InterfaceModule.get.form() === 'search' && InterfaceModule.get.patternMode() === 'simple');
 	}, 'filtersActive'),
@@ -102,22 +103,28 @@ const actions = {
 			actions.searchSplitBatches();
 			return;
 		}
-		// Reset the grouping/page/sorting/etc
-		ResultsManager.actions.resetResults();
+		// Reset the grouping/page/sorting/etc, for all views
+		ViewModule.actions.resetAllViews();
 
 		// Apply the desired grouping for this form, if needed.
 		if (state.interface.form === 'explore') {
 			switch (state.interface.exploreMode) {
 				case 'corpora': {
+					// open the 'docs' tab
 					InterfaceModule.actions.viewedResults('docs');
-					DocResultsModule.actions.groupDisplayMode(state.explore.corpora.groupDisplayMode);
-					DocResultsModule.actions.groupBy(state.explore.corpora.groupBy ? [state.explore.corpora.groupBy] : []);
+
+					// apply the groupings in the docs tab.
+					const m = ViewModule.getOrCreateModule('docs');
+					m.actions.groupDisplayMode(state.explore.corpora.groupDisplayMode);
+					m.actions.groupBy(state.explore.corpora.groupBy ? [state.explore.corpora.groupBy] : []);
 					break;
 				}
 				case 'frequency':
 				case 'ngram': {
+					// open the 'hits' tab
 					InterfaceModule.actions.viewedResults('hits');
-					HitResultsModule.actions.groupBy(state.interface.exploreMode === 'ngram' ? [ExploreModule.get.ngram.groupBy()] : [ExploreModule.get.frequency.groupBy()]);
+					const m = ViewModule.getOrCreateModule('hits');
+					m.actions.groupBy(state.interface.exploreMode === 'ngram' ? [ExploreModule.get.ngram.groupBy()] : [ExploreModule.get.frequency.groupBy()]);
 					break;
 				}
 				default: throw new Error(`Unhandled explore mode ${state.interface.exploreMode} while submitting form`);
@@ -142,7 +149,7 @@ const actions = {
 	}, 'searchFromSubmit'),
 
 	/**
-	 * Same deal, parse the form and generate the appropriate query, but do not change which, and how results are displayed
+	 * Same deal as searchFromSubmit, parse the form and generate the appropriate query, but do not change which, and how results are displayed
 	 * This is for when the page is first loaded, the url is decoded and might have contained information about how the results are displayed.
 	 * This data is now already in the store, we don't want to clear this.
 	 *
@@ -224,10 +231,11 @@ const actions = {
 		}
 
 		const sharedBatchState: Pick<HistoryModule.HistoryEntry, Exclude<keyof HistoryModule.HistoryEntry, 'patterns'>> = {
-			docs: DocResultsModule.defaults,
+			// docs: DocResultsModule.defaults,
+			view: ViewModule.getOrCreateModule(InterfaceModule.getState().viewedResults!).getState(),
 			explore: ExploreModule.defaults,
 			global: GlobalResultsModule.getState(),
-			hits: HitResultsModule.defaults,
+			// hits: HitResultsModule.defaults,
 			interface: InterfaceModule.getState(),
 			filters: get.filtersActive() ? FilterModule.get.activeFiltersMap() : {},
 			gap: get.gapFillingActive() ? GapModule.getState() : GapModule.defaults,
@@ -287,14 +295,14 @@ const actions = {
 
 	reset: b.commit(state => {
 		FormManager.actions.reset();
-		ResultsManager.actions.resetResults();
+		ViewModule.actions.resetAllViews();
 		QueryModule.actions.reset();
 	}, 'resetRoot'),
 
 	replace: b.commit((state, payload: HistoryModule.HistoryEntry) => {
 		FormManager.actions.replace(payload);
-		ResultsManager.actions.replace(payload);
-
+		GlobalResultsModule.actions.replace(payload.global);
+		ViewModule.actions.replaceView({view: state.interface.viewedResults!, data: payload.view});
 		// The state we just restored has results open, so execute a search.
 		if (payload.interface.viewedResults != null) {
 			actions.searchAfterRestore();
@@ -308,7 +316,7 @@ declare const process: any;
 const store = b.vuexStore({
 	state: {} as RootState, // shut up typescript, the state we pass here is merged with the modules initial states internally.
 	strict: process.env.NODE_ENV === 'development',
-	plugins: process.env.NODE_ENV === 'development' ? [VuePursue] : undefined
+	// plugins: process.env.NODE_ENV === 'development' ? [VuePursue] : undefined
 });
 
 const init = () => {
@@ -321,7 +329,8 @@ const init = () => {
 	UIModule.init();
 
 	FormManager.init();
-	ResultsManager.init();
+	ViewModule.init();
+	GlobalResultsModule.init();
 
 	TagsetModule.init();
 	HistoryModule.init();
@@ -351,9 +360,15 @@ const init = () => {
 	patterns: PatternModule,
 	gap: GapModule,
 
-	results: ResultsManager,
-	docs: DocResultsModule,
-	hits: HitResultsModule,
+	// backwards-compatibility.
+	// docs and hits used to be under results.docs and results.hits. Now they are under views.docs and views.hits
+	// While the main module used to be under results. Now it's under views, and the submodules (including hits and docs) are no longer visible directly.
+	results: {
+		...ViewModule,
+		hits: ViewModule.getOrCreateModule('hits'),
+		docs: ViewModule.getOrCreateModule('docs'),
+	},
+	views: ViewModule,
 	global: GlobalResultsModule,
 };
 

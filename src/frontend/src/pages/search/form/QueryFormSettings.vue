@@ -79,7 +79,7 @@ import Vue from 'vue';
 
 import * as RootStore from '@/store/search/';
 import * as GlobalViewSettings from '@/store/search/results/global';
-import * as ResultsViewSettings from '@/store/search/results';
+import * as ResultsViewSettings from '@/store/search/results/views';
 
 import SelectPicker,{ Option } from '@/components/SelectPicker.vue';
 

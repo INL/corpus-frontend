@@ -14,11 +14,10 @@ import * as CorpusModule from '@/store/search/corpus';
 import * as InterfaceModule from '@/store/search/form/interface';
 import * as FilterModule from '@/store/search/form/filters';
 import * as GlobalModule from '@/store/search/results/global';
-import * as HitsModule from '@/store/search/results/hits';
-import * as DocsModule from '@/store/search/results/docs';
 import * as PatternModule from '@/store/search/form/patterns';
 import * as ExploreModule from '@/store/search/form/explore';
 import * as GapModule from '@/store/search/form/gap';
+import * as ViewModule from '@/store/search/results/views';
 
 import UrlStateParser from '@/store/search/util/url-state-parser';
 
@@ -28,7 +27,7 @@ import { getFilterSummary } from '@/components/filters/filterValueFunctions';
 
 // Update the version whenever one of the properties in type HistoryEntry changes
 // That is enough to prevent loading out-of-date history.
-const version = 7;
+const version = 8;
 
 type HistoryEntry = {
 	// always set
@@ -37,10 +36,9 @@ type HistoryEntry = {
 	global: GlobalModule.ModuleRootState;
 	interface: InterfaceModule.ModuleRootState;
 
-	// Depending on interface.viewedResults, one of these contains actual values,
-	// the other contains defaults (in order to reset inactive parts of the page)
-	hits: HitsModule.ModuleRootState;
-	docs: DocsModule.ModuleRootState;
+	/** The state of the currently active view.
+	Name of the active view is contained in interface.viewedResults */
+	view: ViewModule.ViewRootState,
 
 	// Depending on interface.form, one of these should contain the values, the other contains defaults.
 	// Depending on interface.subForm, one of the subproperties is set, the others contain defaults.
@@ -95,7 +93,7 @@ const get = {
 			# Results: ${entry.interface.form === 'search' ? entry.interface.viewedResults : entry.interface.exploreMode || '-'}
 			# Pattern: ${entry.displayValues.pattern || '-'}
 			# Filters: ${entry.displayValues.filters || '-'}
-			# Grouping: ${entry[entry.interface.viewedResults!].groupBy}
+			# Grouping: ${entry.view.groupBy}
 			# Contains gap values: ${entry.gap.value ? 'yes' : 'no'}
 
 			#####
@@ -153,7 +151,7 @@ const actions = {
 			filters: entry,
 			pattern,
 			gap: entry.gap,
-			groupBy: entry[entry.interface.viewedResults!].groupBy.concat(entry[entry.interface.viewedResults!].groupByAdvanced).sort((l, r) => l.localeCompare(r)),
+			groupBy: entry.view.groupBy.concat(entry.view.groupByAdvanced).sort((l, r) => l.localeCompare(r)),
 		};
 
 		const fullEntry: FullHistoryEntry = {

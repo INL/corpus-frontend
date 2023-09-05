@@ -18,7 +18,7 @@
 			<thead>
 				<tr class="rounded">
 					<th v-for="(header, i) in headers"
-						:key="header.id"
+						:key="header.key"
 						:title="header.title"
 						:style="{
 							width: header.isBar ? '60%' : undefined
@@ -130,11 +130,10 @@
 </template>
 
 <script lang="tsx">
-import Vue, {FunctionalComponentOptions} from 'vue';
-import {stripIndent} from 'common-tags';
+import Vue from 'vue';
 
 import * as CorpusStore from '@/store/search/corpus';
-import * as ResultsStore from '@/store/search/results';
+import * as ResultsStore from '@/store/search/results/views';
 import * as UIStore from '@/store/search/ui';
 
 import * as Api from '@/api';
@@ -329,7 +328,7 @@ const displayModes: {
  * (e.g. the column header for the "size" property sorts the groups based on size when clicked by the user - analogous to the Hits and Docs tables)
  */
 const tableHeaders: {
-	[K in (ResultsStore.ViewId|'default')]: {
+	[K in ('hits'|'docs'|'default')]: {
 		[ColumnId in keyof RowData]?: {
 			label?: string;
 			title?: string;
@@ -459,8 +458,8 @@ export default Vue.extend({
 		},
 	}),
 	computed: {
-		type(): ResultsStore.ViewId { return BLTypes.isDocGroupsOrResults(this.results) ? 'docs' : 'hits'; },
-		storeModule(): any { return ResultsStore.get.resultsModules().find(m => m.namespace === this.type)!; },
+		type(): 'hits'|'docs' { return BLTypes.isDocGroupsOrResults(this.results) ? 'docs' : 'hits'; },
+		storeModule(): ReturnType<typeof ResultsStore['getOrCreateModule']> { return ResultsStore.getOrCreateModule(this.type); },
 
 		// Display variables not influenced by results
 		concordanceAnnotationId(): string { return UIStore.getState().results.shared.concordanceAnnotationId; },

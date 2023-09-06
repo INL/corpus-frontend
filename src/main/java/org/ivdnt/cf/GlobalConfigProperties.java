@@ -1,5 +1,6 @@
 package org.ivdnt.cf;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +52,7 @@ public class GlobalConfigProperties {
     }
 
     public void setBlsUrl(String blsUrl) {
-        this.blsUrl = blsUrl;
+        this.blsUrl = StringUtils.stripEnd(blsUrl, "/");
     }
 
     public String getBlsUrlExternal() {
@@ -59,7 +60,7 @@ public class GlobalConfigProperties {
     }
 
     public void setBlsUrlExternal(String blsUrlExternal) {
-        this.blsUrlExternal = blsUrlExternal;
+        this.blsUrlExternal = StringUtils.stripEnd(blsUrlExternal, "/");
     }
 
     public String getCorporaInterfaceDataDir() {
@@ -67,7 +68,7 @@ public class GlobalConfigProperties {
     }
 
     public void setCorporaInterfaceDataDir(String corporaInterfaceDataDir) {
-        this.corporaInterfaceDataDir = corporaInterfaceDataDir;
+        this.corporaInterfaceDataDir = StringUtils.stripEnd(corporaInterfaceDataDir, "/\\");
     }
 
     public String getCorporaInterfaceDefault() {
@@ -83,7 +84,7 @@ public class GlobalConfigProperties {
     }
 
     public void setJspath(String jspath) {
-        this.jspath = jspath;
+        this.jspath = StringUtils.stripEnd(jspath, "/");
     }
 
     public boolean getCache() {

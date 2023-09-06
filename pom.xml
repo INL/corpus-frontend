@@ -268,8 +268,22 @@ Some terminology:
             <optional>true</optional>
         </dependency>
 
+<!--        oauth2, oidc, jwt -->
+        <!-- https://docs.spring.io/spring-security/reference/servlet/oauth2/resource-server/jwt.html#oauth2resourceserver-jwt-minimaldependencies -->
+        <!-- https://mvnrepository.com/artifact/org.springframework.security/spring-security-oauth2-resource-server -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-oauth2-resource-server</artifactId>
+        </dependency>
 
-    <!--        tomcat specific classes -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-oauth2-jose</artifactId>
+        </dependency>
+
+
+
+        <!--        tomcat specific classes -->
         <!-- just here so intellij/eclipse can download the sources, and we can step into tomcat classes while debugging. -->
         <!-- https://mvnrepository.com/artifact/org.apache.tomcat/tomcat-catalina -->
         <dependency>

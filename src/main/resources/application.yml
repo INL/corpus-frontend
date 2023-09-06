@@ -4,4 +4,17 @@ spring:
             resourceserver:
                 jwt:
                     issuer-uri: http://172.16.10.105:8080/auth/realms/dev
+#                    Normally the auth server must be online so this url can be retrieved
+#                    But if we set this url manually, we can run the app while the auth server is offline
 #                    jwk-set-uri: http://172.16.10.105:8080/auth/realms/dev/protocol/openid-connect/certs
+
+
+
+logging:
+    level:
+        org.springframework.security: DEBUG
+        root: debug
+
+cf:
+    security:
+        enabled: true

@@ -21,7 +21,7 @@
 				:searchable="searchable"
 
 				:value="value"
-				@input="log('input', $event); e_input($event);"
+				@input="e_input($event);"
 			/>
 		</div>
 	</div>

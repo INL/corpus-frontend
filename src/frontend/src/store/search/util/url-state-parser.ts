@@ -202,13 +202,10 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	}
 
 	@memoize
-	private get viewedResults(): 'hits'|'docs'|null {
-		const path = this.paths.length ? this.paths[this.paths.length-1].toLowerCase() : null;
-		if (path !== 'hits' && path !== 'docs') {
-			return null;
-		} else {
-			return path;
-		}
+	private get viewedResults(): string|null {
+		// length 3 = ['corpus', 'search', 'hits'|'docs'|string (custom view)]
+		const path = this.paths.length === 3 ? this.paths[this.paths.length-1].toLowerCase() : null;
+		return path;
 	}
 
 	/**

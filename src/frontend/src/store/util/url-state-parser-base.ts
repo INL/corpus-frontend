@@ -1,6 +1,8 @@
 import URI from 'urijs';
 import memoize from 'memoize-decorator';
 
+declare const CONTEXT_URL: string;
+
 /**
  * Decode the current url into a valid page state configuration.
  * Keep everything private except the getters
@@ -15,7 +17,9 @@ export default abstract class UrlStateParser<T> {
 	protected params: {[key: string]: string|string[]|null};
 
 	constructor(uri = new URI()) {
-		this.paths = uri.segmentCoded();
+		const fullPath = uri.segmentCoded();
+		const basePath = new URI(CONTEXT_URL).segmentCoded();
+		this.paths = fullPath.slice(basePath.length);
 		this.params = uri.search(true) || {};
 	}
 

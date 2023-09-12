@@ -13,12 +13,13 @@ import jakarta.servlet.http.HttpServletResponse;
  * Has methods for getting various things from BlackLab, with the ability to copy basic auth headers from the client request (which is why it needs the request and response objects).
  */
 public class BlackLabApi {
-	protected static String blsUrl;
+	protected final String blsUrl;
 	
 	protected final HttpServletRequest request;
 	protected final HttpServletResponse response;
-	
-	public BlackLabApi(HttpServletRequest clientRequest, HttpServletResponse clientResponse) {
+
+	public BlackLabApi(String blsUrl, HttpServletRequest clientRequest, HttpServletResponse clientResponse) {
+		this.blsUrl = blsUrl;
 		this.request = clientRequest;
 		this.response = clientResponse;
 	}
@@ -59,9 +60,5 @@ public class BlackLabApi {
 				.query("wordstart", pageStart.map(Object::toString))
 				.query("wordend", pageEnd.map(Object::toString))
 				.request(true);
-	}
-	
-	public static void setBlsUrl(String url) {
-		BlackLabApi.blsUrl = url;
 	}
 }

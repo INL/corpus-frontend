@@ -1,8 +1,11 @@
 package org.ivdnt.cf;
 
-import java.util.List;
-
+import org.apache.velocity.app.VelocityEngine;
+import org.ivdnt.cf.utils2.BlackLabApi;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
@@ -13,7 +16,13 @@ import org.springframework.security.config.annotation.web.configurers.CorsConfig
 import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
 import org.springframework.security.config.annotation.web.configurers.LogoutConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.context.annotation.RequestScope;
 import org.springframework.web.cors.CorsConfiguration;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import java.util.Properties;
 
 // locations from least- to most-specific:
 @Configuration
@@ -25,6 +34,7 @@ import org.springframework.web.cors.CorsConfiguration;
 @PropertySource(value = "file:${AUTOSEARCH_CONFIG_DIR}/corpus-frontend.properties", ignoreResourceNotFound = true)
 @PropertySource(value = "file:${CORPUS_FRONTEND_CONFIG_DIR}/corpus-frontend.properties", ignoreResourceNotFound = true)
 @EnableWebSecurity // is enabled by default, but let this be a reminder.
+@EnableCaching
 public class Setup {
 
     /**
@@ -45,16 +55,8 @@ public class Setup {
 //                        .requestMatchers(HttpMethod.GET, "/foos/**").hasAuthority("SCOPE_read")
 //                        .requestMatchers(HttpMethod.POST, "/foos").hasAuthority("SCOPE_write")
                                 .anyRequest().permitAll()
-//                                .anyRequest().permitAll()
                 )
-                // Meh, need to allow any address. Allowed origins * doesn't work when client is running on another address or port.
-                .cors(cors -> cors.configurationSource(request -> {
-                    var corsConfiguration = new org.springframework.web.cors.CorsConfiguration();
-                    corsConfiguration.setAllowedOrigins(java.util.List.of(request.getHeader("Origin")));
-                    corsConfiguration.setAllowedMethods(java.util.List.of("*"));
-                    corsConfiguration.setAllowedHeaders(java.util.List.of("*"));
-                    return corsConfiguration;
-                }))
+                .cors(Setup::enableCors)
                 .oauth2ResourceServer(oauth2 -> oauth2
                                 .jwt(Customizer.withDefaults())
                             // this only works with confidential clients, not with public clients
@@ -77,14 +79,38 @@ public class Setup {
                 .build();
     }
 
-    private static void enableCors(CorsConfigurer<HttpSecurity> cors) {
+    /** Meh, need to allow any address. Allowed origins * doesn't work when client is running on another address or port. */
+     private static void enableCors(CorsConfigurer<HttpSecurity> cors) {
         cors.configurationSource(request -> {
+            String origin = request.getHeader("Origin");
+            if (origin == null) return null; // origin not included on same-site requests, i.e. the happy path.
             var corsConfiguration = new CorsConfiguration();
-            corsConfiguration.setAllowedOrigins(List.of(request.getHeader("Origin")));
-            corsConfiguration.setAllowedMethods(List.of("*"));
-            corsConfiguration.setAllowedHeaders(List.of("*"));
+            corsConfiguration.setAllowedOrigins(java.util.List.of(origin));
+            corsConfiguration.setAllowedMethods(java.util.List.of("*"));
+            corsConfiguration.setAllowedHeaders(java.util.List.of("*"));
             return corsConfiguration;
         });
     }
 
+    @Bean(name="api")
+    @RequestScope
+    public BlackLabApi blacklabApi(GlobalConfigProperties config, HttpServletRequest request, HttpServletResponse response) {
+    	return new BlackLabApi(config.getBlsUrl(), request, response);
+    }
+
+    @Bean(name="cacheManager")
+    public CacheManager cacheManager() {
+        return new ConcurrentMapCacheManager();
+    }
+
+    @Bean
+    public VelocityEngine velocityEngine() {
+        Properties properties = new Properties();
+        properties.setProperty("input.encoding", "UTF-8");
+        properties.setProperty("output.encoding", "UTF-8");
+        properties.setProperty("resource.loader", "class");
+        properties.setProperty("class.resource.loader.class", "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
+        VelocityEngine velocityEngine = new VelocityEngine(properties);
+        return velocityEngine;
+    }
 }

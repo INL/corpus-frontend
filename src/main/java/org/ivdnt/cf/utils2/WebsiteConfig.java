@@ -1,4 +1,14 @@
-package org.ivdnt.cf.utils;
+package org.ivdnt.cf.utils2;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.commons.configuration2.builder.ConfigurationBuilder;
@@ -9,11 +19,6 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.interpol.ConfigurationInterpolator;
 import org.apache.commons.configuration2.interpol.Lookup;
 import org.apache.commons.lang3.StringUtils;
-
-import java.io.File;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Configuration read from an XML config file.
@@ -118,7 +123,6 @@ public class WebsiteConfig {
      * @param contextPath the application root url (usually /corpus-frontend). Required for string interpolation while loading the configFile.
      * @throws ConfigurationException
      */
-    
     public WebsiteConfig(File configFile, Optional<CorpusConfig> corpusConfig, String contextPath) throws ConfigurationException {
         Parameters parameters = new Parameters();
         ConfigurationBuilder<XMLConfiguration> cb = new FileBasedConfigurationBuilder<>(XMLConfiguration.class)

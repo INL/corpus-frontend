@@ -281,6 +281,11 @@ Some terminology:
             <artifactId>spring-security-oauth2-jose</artifactId>
         </dependency>
 
+<!-- Webclient support. Allow easy definition of classes for quering remote REST services -->
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-webflux</artifactId>-->
+<!--        </dependency>-->
 
 
         <!--        tomcat specific classes -->

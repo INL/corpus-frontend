@@ -7,7 +7,16 @@ spring:
 #                    Normally the auth server must be online so this url can be retrieved
 #                    But if we set this url manually, we can run the app while the auth server is offline
 #                    jwk-set-uri: http://172.16.10.105:8080/auth/realms/dev/protocol/openid-connect/certs
-
+    velocity:
+        resourceLoaderPath: classpath:/templates/
+        prefix: 
+        suffix: .vm
+        cache: false
+        check-template-location: true
+        content-type: text/html
+        charset: UTF-8
+        properties.input.encoding: UTF-8
+        properties.output.encoding: UTF-8
 
 
 logging:
@@ -18,3 +27,15 @@ logging:
 cf:
     security:
         enabled: true
+        
+        
+        
+       
+       
+       
+       
+       
+       
+       
+       
+       

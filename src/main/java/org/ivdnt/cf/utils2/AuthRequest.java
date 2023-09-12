@@ -28,9 +28,8 @@ import jakarta.servlet.http.HttpServletResponse;
  * If the provided request does not contain authentication, the response should be used to obtain http basic authentication credentials from the client.
  */
 public class AuthRequest {
-
-    private HttpServletRequest request;
-    private HttpServletResponse response;
+    private final HttpServletRequest request;
+    private final HttpServletResponse response;
     private Map<String, String> headers = null;
 
     private Map<String, String[]> query = null;
@@ -69,7 +68,7 @@ public class AuthRequest {
         StringBuilder b = new StringBuilder(base);
         for (String s : paths) {
             // append a slash if the url does not end with one
-            if (b.length() > 0 && b.charAt(b.length() - 1) != '/') b.append('/');
+            if (!b.isEmpty() && b.charAt(b.length() - 1) != '/') b.append('/');
             b.append(URLEncoder.encode(s, StandardCharsets.UTF_8));
         }
         this.url = b.toString();
@@ -154,7 +153,7 @@ public class AuthRequest {
         if (query != null) {
             for (Entry<String, String[]> e : query.entrySet()) {
                 for (String value : e.getValue()) {
-                    if (builder.length() > 0)
+                    if (!builder.isEmpty())
                         builder.append("&");
                     builder.append(URLEncoder.encode(e.getKey(), StandardCharsets.UTF_8));
                     builder.append("=");
@@ -163,7 +162,7 @@ public class AuthRequest {
             }
         }
         return url
-                + (builder.length() > 0 ? "?" + builder.toString() : "")
+                + (!builder.isEmpty() ? "?" + builder : "")
                 + (hash != null ? "#" + URLEncoder.encode(hash, StandardCharsets.UTF_8) : "");
     }
 
@@ -204,7 +203,7 @@ public class AuthRequest {
                 }
 
                 // request seems to not require any more authentication, so decode result (might still be an error through, but at least not an auth error)
-                if (!needsBasicAuth(r)) return decode(r);
+                if (!needsAuthentication(r)) return decode(r);
 
                 String auth = getExistingAuth(request);
                 if (auth != null) {
@@ -217,7 +216,7 @@ public class AuthRequest {
                     // unhappy path, we don't have auth, and we need it.
                     // this should cause the client to try again with the auth header
                     // so next time the getExistingAuth will return successfully.
-                    response.addHeader("WWW-Authenticate", "Basic realm=\"Blacklab\"");
+                    response.addHeader("WWW-Authenticate", r.getHeaderField("WWW-Authenticate"));
                     throw new ReturnToClientException(HttpStatus.UNAUTHORIZED);
                 }
 
@@ -249,15 +248,13 @@ public class AuthRequest {
     }
 
     protected static String getExistingAuth(HttpServletRequest request) {
-         String auth = request.getHeader("Authorization");
-         if (auth != null && auth.startsWith("Basic")) return auth;
-         return null;
+         return request.getHeader("Authorization");
     }
 
-    protected static boolean needsBasicAuth(HttpURLConnection connection) {
+    protected static boolean needsAuthentication(HttpURLConnection connection) {
         // Usually something like "WWW-Authenticate: Basic realm="Password Required""
         String auth = connection.getHeaderField("WWW-Authenticate");
-        return auth != null && auth.startsWith("Basic");
+        return auth != null;
     }
 
     protected static HttpURLConnection request(String method, String url, Map<String, String[]> query, String hash, Map<String, String> headers) throws CFApiException {

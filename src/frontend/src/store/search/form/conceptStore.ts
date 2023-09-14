@@ -5,7 +5,7 @@ import { getStoreBuilder } from 'vuex-typex';
 
 import { RootState } from '@/store/search/';
 import * as PatternStore from '@/store/search/form/patterns';
-import { uniq } from './utils'
+import { uniq } from '@/utils'
 import cloneDeep from 'clone-deep';
 
 import { init as initEndpoint, conceptApi } from '@/api';
@@ -31,13 +31,18 @@ type AtomicQuery = {
 };
 
 type ModuleRootState = {
+	/** If not set, the concept component is not active. */
+	settings: Settings|null,
+	
 	target_element: string;
 	main_fields: string[]
-	settings: Settings|null,
 	query_cql: string;
 	/** One AtomicQuery[] per search box (based on index) */
 	query: AtomicQuery[][]
 };
+
+/** Only that part of the state that makes sense to persist in query history. */
+type HistoryState = Omit<ModuleRootState, 'settings'>;
 
 type LexiconEntry = {
 	field: string,
@@ -45,16 +50,15 @@ type LexiconEntry = {
 	term: string
 }
 
-const initialState: ModuleRootState = {
-	target_element: 'p',
-	main_fields: ['cosmology', 'alchemy', 'cryptozoology'],
+const defaults: HistoryState = {
+	target_element: '',
+	main_fields: [],
 	query_cql: '',
-	settings: null,
 	query: [[], []] // start with two boxes
 }
 
 const namespace = 'concepts';
-const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, cloneDeep(initialState));
+const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, cloneDeep({...defaults, settings: null}));
 
 const getState = b.state();
 
@@ -102,10 +106,8 @@ const get = {
 };
 
 const actions = {
-	resetQuery: b.commit((state) => {
-		state.query = [[],[]]; // start with two boxes.
-		actions.updateCQL();
-	}, 'reset_query'),
+	reset: b.commit(state => Object.assign<ModuleRootState, HistoryState>(state, cloneDeep(defaults)), 'reset'),
+	replace: b.commit((state, payload: HistoryState) => Object.assign(state, payload), 'replace_query'),
 
 	addSubquery: b.commit((state, payload: AtomicQuery[] = []) => {
 		state.query.push(payload);
@@ -151,15 +153,17 @@ const actions = {
 	}, 'concept_load_settings'),
 };
 
-// hebben we de init nodig?
 export {
 	ModuleRootState,
+	HistoryState,
+	AtomicQuery,
+	LexiconEntry,
+	Settings,
+
 	namespace,
+	defaults,
 	actions,
 	getState,
 	get,
 	init,
-	AtomicQuery,
-	LexiconEntry,
-	Settings
 }

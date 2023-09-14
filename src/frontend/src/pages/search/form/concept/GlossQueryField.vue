@@ -16,8 +16,8 @@
 
 import Vue from 'vue';
 import * as CorpusStore from '@/store/search/corpus';
+import * as GlossStore from '@/store/search/form/glossStore';
 import * as UIStore from '@/store/search/ui';
-import * as GlossStore from '@/pages/search/form/concept/glossStore';
 
 import SelectPicker from '@/components/SelectPicker.vue'
 

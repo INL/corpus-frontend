@@ -1,7 +1,7 @@
 import URI from 'urijs';
 
-import { ReplaySubject, Observable, merge, fromEvent, of, Notification, from } from 'rxjs';
-import { debounceTime, switchMap, map, distinctUntilChanged, shareReplay, filter, materialize, tap } from 'rxjs/operators';
+import { ReplaySubject, Observable, merge, fromEvent, Notification, from } from 'rxjs';
+import { debounceTime, switchMap, map, shareReplay, filter, materialize } from 'rxjs/operators';
 import cloneDeep from 'clone-deep';
 
 import * as RootStore from '@/store/search/';
@@ -9,12 +9,12 @@ import * as CorpusStore from '@/store/search/corpus';
 import * as HistoryStore from '@/store/search/history';
 import * as PatternStore from '@/store/search/form/patterns';
 import * as ExploreStore from '@/store/search/form/explore';
-// import * as HitsStore from '@/store/search/results/hits';
 import * as InterfaceStore from '@/store/search/form/interface';
-// import * as DocsStore from '@/store/search/results/docs';
 import * as FilterStore from '@/store/search/form/filters';
 import * as GapStore from '@/store/search/form/gap';
 import * as QueryStore from '@/store/search/query';
+import * as ConceptStore from '@/store/search/form/conceptStore';
+import * as GlossStore from '@/store/search/form/glossStore';
 
 import UrlStateParser from '@/store/search/util/url-state-parser';
 
@@ -269,7 +269,9 @@ url$.pipe(
 				patternMode: query.form === 'search' ? query.subForm : 'simple',
 				viewedResults: v.state.interface.viewedResults,
 			},
-			gap: query.gap || GapStore.defaults
+			gap: query.gap || GapStore.defaults,
+			concepts: ConceptStore.defaults,
+			glosses: GlossStore.defaults,
 		};
 		return {
 			url: v.url,

@@ -111,14 +111,14 @@
 								<td><span :dir="textDirection">{{rowData.right}}</span>&hellip;</td>
 							</template>
 							<td v-for="(v, index) in rowData.other" :key="index">{{v}}</td>
-							<td v-for="(field, findex) in rowData.gloss_fields" :key="index  + '_'  + findex" style="overflow: visible;">
+							<td v-for="field in rowData.gloss_fields" :key="field.fieldName" style="overflow: visible;">
 								<GlossField
-								:fieldName="field.fieldName"
-								:hit_first_word_id="rowData.hit_first_word_id"
-								:hit_last_word_id="rowData.hit_last_word_id"
-								:fieldDescription="field"
-								:hitId="get_hit_id(rowData)"
-							/>
+									:fieldName="field.fieldName"
+									:hit_first_word_id="rowData.hit_first_word_id"
+									:hit_last_word_id="rowData.hit_last_word_id"
+									:fieldDescription="field"
+									:hitId="rowData.hit_id"
+								/>
 							</td>
 							<td v-for="meta in shownMetadataCols" :key="meta.id">{{rowData.doc[meta.id] ? rowData.doc[meta.id].join(', ') : ''}}</td>
 						</tr>
@@ -197,7 +197,7 @@
 import Vue from 'vue';
 
 import * as CorpusStore from '@/store/search/corpus';
-import * as GlossModule from '@/pages/search/form/concept/glossStore' // Jesse
+import * as GlossModule from '@/store/search/form/glossStore' // Jesse
 import GlossField from '@/pages/search//form/concept/GlossField.vue' // Jesse
 import * as UIStore from '@/store/search/ui';
 import { snippetParts, words, getDocumentUrl } from '@/utils';
@@ -222,10 +222,11 @@ type HitRow = {
 	start: number;
 	end: number;
 	doc: BLTypes.BLDocInfo;
+
 	gloss_fields: GlossModule.GlossFieldDescription[];
 	hit_first_word_id: string; // Jesse
 	hit_last_word_id: string // jesse
-	//glosses: GlossModule.Glossing[]
+	hit_id: string; // jesse
 };
 
 type DocRow = {
@@ -245,7 +246,6 @@ type CitationData = {
 	};
 	error?: null|string;
 	snippet: null|BLTypes.BLHitSnippet;
-	// audioPlayerData: any;
 	addons: Array<ReturnType<UIStore.ModuleRootState['results']['hits']['addons'][number]>> // todo give type a name and export separately
 	href: string;
 };
@@ -276,7 +276,7 @@ export default Vue.extend({
 		beforeField(): string { return this.textDirection === 'ltr' ? 'left' : 'right'; },
 		afterField(): string { return this.textDirection === 'ltr' ? 'right' : 'left'; },
 		currentPageHitsForGlossStore(): string[] {
-			return this.rows.filter(r => r.type === 'hit').map(r => this.get_hit_id(r as HitRow))
+			return this.rows.filter((r): r is HitRow => r.type === 'hit').map(r => r.hit_id)
 		},
 		rows(): Array<DocRow|HitRow> {
 			const docFields = this.results.summary.docFields;
@@ -308,14 +308,16 @@ export default Vue.extend({
 				}
 				const parts = snippetParts(hit, this.concordanceAnnotationId);
 
+				// ids of the hit, if gloss module is enabled.
+				const {startid: hit_first_word_id = '', endid: hit_last_word_id = ''} = GlossModule.get.settings()?.get_hit_range_id(hit) ?? {startid: '', endid: ''};
+				const hit_id = GlossModule.get.settings()?.get_hit_id(hit) ?? '';
+				
 				// TODO condense this data..
-				const range = this.get_hit_range_id(hit)
-
 				rows.push({
 					type: 'hit',
 					left: parts[this.leftIndex],
-					right: parts[this.rightIndex],
 					hit: parts[1],
+					right: parts[this.rightIndex],
 					props: hit.match,
 					other: this.shownAnnotationCols.map(annot => words(hit.match, annot.id, false, '')),
 					docPid: hit.docPid,
@@ -323,8 +325,10 @@ export default Vue.extend({
 					end: hit.end,
 					doc: infos[pid],
 					gloss_fields: GlossModule.get.gloss_fields(),
-					hit_first_word_id: range.startid,
-					hit_last_word_id: range.endid,
+
+					hit_first_word_id,
+					hit_last_word_id,
+					hit_id,
 				});
 
 				return rows;
@@ -363,8 +367,8 @@ export default Vue.extend({
 			const configuredAnnotations = configuredIds.map(id => annots[id]);
 			return configuredAnnotations.filter(annot => annot.hasForwardIndex);
 		},
-		shownGlossCols()  {
-			return GlossModule.get.settings().gloss_fields.map(f => f.fieldName)
+		shownGlossCols(): string[]  {
+			return GlossModule.get.settings()?.gloss_fields.map(f => f.fieldName) ?? []
 		},
 		textDirection: CorpusStore.get.textDirection,
 
@@ -374,11 +378,6 @@ export default Vue.extend({
 		getDocumentSummary(): ((doc: any, info: any) => any) { return UIStore.getState().results.shared.getDocumentSummary },
 	},
 	methods: {
-		glossInputClick(e) {
-			alert(JSON.stringify(e))
-		},
-		get_hit_id(h: HitRow) { return GlossModule.get.settings().get_hit_id(h)},
-		get_hit_range_id(h: BLTypes.BLHitSnippet) { return GlossModule.get.settings().get_hit_range_id(h)},
 		changeSort(payload: string) {
 			if (!this.disabled) {
 				this.$emit('sort', payload === this.sort ? '-'+payload : payload);

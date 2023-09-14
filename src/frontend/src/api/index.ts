@@ -6,8 +6,8 @@ import {normalizeIndexOld, normalizeFormatOld, normalizeIndex, fixDocInfo} from 
 
 import * as BLTypes from '@/types/blacklabtypes';
 import { ApiError } from '@/types/apptypes';
-import { Glossing } from '@/pages/search/form/concept/glossStore';
-import { AtomicQuery, LexiconEntry } from '@/pages/search/form/concept/conceptStore';
+import { Glossing } from '@/store/search/form/glossStore';
+import { AtomicQuery, LexiconEntry } from '@/store/search/form/conceptStore';
 
 declare const BLS_URL: string;
 
@@ -390,7 +390,8 @@ export const conceptApi = {
 					queries
 				})
 			}
-		})
+		}),
+		// TODO move queries in ConceptSearchBox.vue here.
 }
 
 // Server has issues with long urls.

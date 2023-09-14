@@ -18,6 +18,8 @@ import * as PatternModule from '@/store/search/form/patterns';
 import * as ExploreModule from '@/store/search/form/explore';
 import * as GapModule from '@/store/search/form/gap';
 import * as ViewModule from '@/store/search/results/views';
+import * as ConceptModule from '@/store/search/form/conceptStore';
+import * as GlossModule from '@/store/search/form/glossStore';
 
 import UrlStateParser from '@/store/search/util/url-state-parser';
 
@@ -45,6 +47,9 @@ type HistoryEntry = {
 	// (in order to reset inactive parts of the page)
 	patterns: PatternModule.ModuleRootState;
 	explore: ExploreModule.ModuleRootState;
+
+	concepts: ConceptModule.HistoryState;
+	glosses: GlossModule.HistoryState;
 };
 
 type FullHistoryEntry = HistoryEntry&{

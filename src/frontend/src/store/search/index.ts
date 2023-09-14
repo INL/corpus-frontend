@@ -20,8 +20,9 @@ import * as InterfaceModule from '@/store/search/form/interface';
 import * as PatternModule from '@/store/search/form/patterns';
 import * as ExploreModule from '@/store/search/form/explore';
 import * as GapModule from '@/store/search/form/gap';
-import * as ConceptModule from '@/pages/search/form/concept/conceptStore' // Jesse
-import * as GlossModule from '@/pages/search/form/concept/glossStore' // Jesse
+import * as GlossModule from '@/store/search/form/glossStore';
+import * as ConceptModule from '@/store/search/form/conceptStore';
+
 // Results
 import * as ViewModule from '@/store/search/results/views';
 import * as GlobalResultsModule from '@/store/search/results/global';
@@ -40,8 +41,6 @@ type RootState = {
 	ui: UIModule.ModuleRootState;
 	views: ViewModule.ModuleRootState;
 	global: GlobalResultsModule.ModuleRootState;
-	concepts: ConceptModule.ModuleRootState; // Jesse
-	glosses: GlossModule.ModuleRootState; // Jesse
 }&FormManager.PartialRootState;
 
 const b = getStoreBuilder<RootState>();
@@ -233,15 +232,15 @@ const actions = {
 			throw new Error('Attempting to submit split batches in wrong view');
 		}
 
-		const sharedBatchState: Pick<HistoryModule.HistoryEntry, Exclude<keyof HistoryModule.HistoryEntry, 'patterns'>> = {
-			// docs: DocResultsModule.defaults,
+		const sharedBatchState: Omit<HistoryModule.HistoryEntry, 'patterns'> = {
 			view: ViewModule.getOrCreateModule(InterfaceModule.getState().viewedResults!).getState(),
 			explore: ExploreModule.defaults,
 			global: GlobalResultsModule.getState(),
-			// hits: HitResultsModule.defaults,
 			interface: InterfaceModule.getState(),
 			filters: get.filtersActive() ? FilterModule.get.activeFiltersMap() : {},
 			gap: get.gapFillingActive() ? GapModule.getState() : GapModule.defaults,
+			concepts: ConceptModule.getState(),
+			glosses: GlossModule.getState(),
 		};
 
 		const annotations = PatternModule.get.activeAnnotations();
@@ -297,6 +296,10 @@ const actions = {
 		QueryModule.actions.reset();
 	}, 'resetRoot'),
 
+	/** 
+	 * Is called when loading a search history entry, or when navigating in browser history. 
+	 * Should fully reset and overwrite form state, and then execute a search.
+	*/
 	replace: b.commit((state, payload: HistoryModule.HistoryEntry) => {
 		FormManager.actions.replace(payload);
 		GlobalResultsModule.actions.replace(payload.global);
@@ -333,8 +336,6 @@ const init = () => {
 	TagsetModule.init();
 	HistoryModule.init();
 	QueryModule.init();
-	ConceptModule.init(); // Jesse
-	GlossModule.init();
 };
 
 // Debugging helpers.

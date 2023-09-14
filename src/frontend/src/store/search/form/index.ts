@@ -7,6 +7,8 @@ import * as FilterModule from '@/store/search/form/filters';
 import * as InterfaceModule from '@/store/search/form/interface';
 import * as PatternModule from '@/store/search/form/patterns';
 import * as GapModule from '@/store/search/form/gap';
+import * as GlossModule from '@/store/search/form/glossStore';
+import * as ConceptModule from '@/store/search/form/conceptStore';
 
 type PartialRootState = {
 	explore: ExploreModule.ModuleRootState;
@@ -14,6 +16,8 @@ type PartialRootState = {
 	interface: InterfaceModule.ModuleRootState;
 	patterns: PatternModule.ModuleRootState;
 	gap: GapModule.ModuleRootState;
+	glosses: GlossModule.ModuleRootState;
+	concepts: ConceptModule.ModuleRootState;
 };
 
 type ResetState = {
@@ -22,6 +26,8 @@ type ResetState = {
 	interface: InterfaceModule.ModuleRootState;
 	patterns: PatternModule.ModuleRootState;
 	gap: GapModule.ModuleRootState;
+	glosses: GlossModule.HistoryState;
+	concepts: ConceptModule.HistoryState;
 }
 
 const b = getStoreBuilder<RootState>();
@@ -37,6 +43,8 @@ const actions = {
 		InterfaceModule.actions.viewedResults(null);
 		PatternModule.actions.reset();
 		GapModule.actions.reset();
+		GlossModule.actions.reset();
+		ConceptModule.actions.reset();
 	}, 'resetForm'),
 
 	replace: b.commit((state, payload: ResetState) => {
@@ -45,6 +53,8 @@ const actions = {
 		PatternModule.actions.replace(payload.patterns);
 		InterfaceModule.actions.replace(payload.interface);
 		GapModule.actions.replace(payload.gap);
+		GlossModule.actions.replace(payload.glosses);
+		ConceptModule.actions.replace(payload.concepts);
 	}, 'replaceForm')
 };
 
@@ -54,6 +64,8 @@ const init = () => {
 	InterfaceModule.init();
 	PatternModule.init();
 	GapModule.init();
+	GlossModule.init();
+	ConceptModule.init();
 };
 
 export {

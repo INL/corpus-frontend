@@ -69,12 +69,11 @@ import qs from 'qs';
 
 import Autocomplete from '@/components/Autocomplete.vue';
 import * as CorpusStore from '@/store/search/corpus';
-import * as ConceptStore from '@/pages/search/form/concept/conceptStore';
-import { uniq, log_error } from './utils'
+import * as ConceptStore from '@/store/search/form/conceptStore';
+import { uniq } from '@/utils'
 
 import SelectPicker from '@/components/SelectPicker.vue';
 import { blacklabPaths } from '@/api';
-import { queueScheduler } from 'rxjs';
 
 // see header.vm
 declare const USERNAME: string;
@@ -168,7 +167,7 @@ export default Vue.extend ( {
 
 			axios.get(url,{ auth: credentials })
 				.then(r => console.log('inserted term'))
-				.catch(log_error)
+				.catch(console.error)
 		},
 		resetQuery() {
 			this.current_concept = ''
@@ -307,3 +306,4 @@ tr {
 	background-color: #ae0932 !important;
 }
 </style>
+@/store/search/form/conceptStore

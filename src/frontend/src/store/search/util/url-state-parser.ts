@@ -13,6 +13,8 @@ import * as UIModule from '@/store/search/ui';
 import * as HistoryModule from '@/store/search/history';
 import * as TagsetModule from '@/store/search/tagset';
 import * as QueryModule from '@/store/search/query';
+import * as ConceptModule from '@/store/search/form/conceptStore';
+import * as GlossModule from '@/store/search/form/glossStore';
 
 // Form
 import * as FilterModule from '@/store/search/form/filters';
@@ -57,6 +59,8 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 			// settings for the active results view
 			view: this.view(this.interface.viewedResults),
 			global: this.global,
+			concepts: this.concepts,
+			glosses: this.glosses,
 			// submitted query not parsed from url: is restored from rest of state later.
 		};
 	}
@@ -477,6 +481,30 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	@memoize
 	private get expertPattern(): string|null {
 		return this.getString('patt', null, v=>v?v:null);
+	}
+
+	@memoize 
+	private get concepts(): ConceptModule.HistoryState {
+		return {
+			main_fields: [],
+			query: [[],[]],
+			query_cql: this.conceptPattern ||'',
+			target_element: '',
+		}
+	}
+
+	@memoize
+	private get glosses(): GlossModule.HistoryState {
+		return {
+			current_page: [],
+			gloss_query: {
+				author: '',
+				corpus: '',
+				parts: {}
+			},
+			gloss_query_cql: '',
+			glosses: {},
+		}
 	}
 
 	@memoize

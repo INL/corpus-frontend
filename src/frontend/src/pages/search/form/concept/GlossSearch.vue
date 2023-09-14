@@ -1,5 +1,5 @@
 <template>
-	<div style='text-align: left'>
+	<div style='text-align: left' v-if="settings">
 		<div class='glossfields' style='text-align: center'>
 			<GlossQueryField  v-for="(o,i) in gloss_fields" v-bind:key="i" :fieldDescription="o"/>
 		</div>
@@ -23,9 +23,9 @@
 import Vue from 'vue';
 import * as CorpusStore from '@/store/search/corpus';
 import * as UIStore from '@/store/search/ui';
+import * as GlossStore from '@/store/search/form/glossStore.ts';
 
 import GlossQueryField from './GlossQueryField.vue'
-import * as GlossStore from '@/pages/search/form/concept/glossStore';
 
 export default Vue.extend ({
 	components: { GlossQueryField },

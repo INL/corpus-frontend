@@ -161,9 +161,8 @@ import * as CorpusStore from '@/store/search/corpus';
 import * as ResultsStore from '@/store/search/results/views';
 import * as GlobalStore from '@/store/search/results/global';
 import * as QueryStore from '@/store/search/query';
-import * as InterfaceStore from '@/store/search/form/interface';
 import * as UIStore from '@/store/search/ui';
-import * as GlossModule from '@/pages/search/form/concept/glossStore' // Jesse
+import * as GlossModule from '@/store/search/form/glossStore' // Jesse
 
 import GroupResults from '@/pages/search/results/table/GroupResults.vue';
 import HitResults from '@/pages/search/results/table/HitResults.vue';
@@ -285,9 +284,9 @@ export default Vue.extend({
 			this.cancel = null;
 
 			// Jesse (glosses): hier ook een keer de page hits in de gloss store updaten
-			if (BLTypes.isHitResults(data)) {
-				const currentHitIds = data.hits.map(h => GlossModule.get.settings().get_hit_id(h))
-				GlossModule.actions.setCurrentPage(currentHitIds)
+			const get_hit_id = GlossModule.get.settings()?.get_hit_id;
+			if (BLTypes.isHitResults(data) && get_hit_id) {
+				GlossModule.actions.setCurrentPage(data.hits.map(get_hit_id));
 			}
 		},
 		setError(data: Api.ApiError, isGrouped?: boolean) {

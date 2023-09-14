@@ -8,7 +8,7 @@
 <script lang="ts">
 
 import Vue from 'vue';
-import * as GlossStore from '@/pages/search/form/concept/glossStore';
+import * as GlossStore from '@/store/search/form/glossStore';
 import SelectPicker from '@/components/SelectPicker.vue'
 
 export default Vue.extend ({

@@ -597,9 +597,6 @@ const actions = {
 				const n = Number(intervalMs);
 				state.results.shared.totalsRefreshIntervalMs = isNaN(n) ? 2_000 : Math.max(100, n);
 			}, 'totalsRefreshIntervalMs'),
-			transformSnippets: b.commit((state, transformSnipz: any) => { // Jesse
-				state.results.shared.transformSnippets = transformSnipz;
-			}, 'results_shared_transformSnippets'),
 		}
 	},
 	global: {

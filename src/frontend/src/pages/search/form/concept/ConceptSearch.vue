@@ -44,7 +44,7 @@
 import Vue from 'vue';
 
 import * as PatternStore from '@/store/search/form/patterns';
-import * as ConceptStore from '@/pages/search/form/concept/conceptStore';
+import * as ConceptStore from '@/store/search/form/conceptStore';
 
 import SelectPicker from '@/components/SelectPicker.vue';
 import ConceptSearchBox from './ConceptSearchBox.vue'
@@ -72,7 +72,6 @@ export default Vue.extend ({
 
 	methods : {
 		updateSubquery(index: number, query: ConceptStore.AtomicQuery[]) {
-			debugger;
 			ConceptStore.actions.updateSubquery({index, query});
 		},
 		addBox() { ConceptStore.actions.addSubquery(undefined); },
@@ -122,3 +121,4 @@ img {
 		font-family: Menlo,Monaco,Consolas,"Courier New",monospace;
 }
 </style>
+@/store/search/form/conceptStore

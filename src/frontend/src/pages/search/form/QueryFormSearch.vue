@@ -4,9 +4,9 @@
 		<ul class="nav nav-tabs" id="searchTabs">
 			<li :class="{'active': activePattern==='simple'}" @click.prevent="activePattern='simple'"><a href="#simple" class="querytype">Simple</a></li>
 			<li :class="{'active': activePattern==='extended'}" @click.prevent="activePattern='extended'"><a href="#extended" class="querytype">Extended</a></li>
-			<li :class="{'active': activePattern==='advanced'}" @click.prevent="activePattern='advanced'" v-if="advancedEnabled"><a href="#advanced" class="querytype">Advanced</a></li>
-			<li :class="{'active': activePattern==='concept'}" @click.prevent="activePattern='concept'"><a href="#concept" class="querytype">Concepts</a></li>
-			<li :class="{'active': activePattern==='glosses'}" @click.prevent="activePattern='glosses'"><a href="#glosses" class="querytype">User glosses</a></li>
+			<li v-if="advancedEnabled" :class="{'active': activePattern==='advanced'}" @click.prevent="activePattern='advanced'" ><a href="#advanced" class="querytype">Advanced</a></li>
+			<li v-if="conceptEnabled" :class="{'active': activePattern==='concept'}" @click.prevent="activePattern='concept'"><a href="#concept" class="querytype">Concepts</a></li>
+			<li v-if="glossEnabled" :class="{'active': activePattern==='glosses'}" @click.prevent="activePattern='glosses'"><a href="#glosses" class="querytype">User glosses</a></li>
 			<li :class="{'active': activePattern==='expert'}" @click.prevent="activePattern='expert'"><a href="#expert" class="querytype">Expert</a></li>
 		</ul>
 		<div class="tab-content">
@@ -106,18 +106,17 @@
 					</div>
 				</div>
 			</div>
-			<div :class="['tab-pane', {'active': activePattern==='advanced'}]" id="advanced">
+			<div v-if="advancedEnabled" :class="['tab-pane', {'active': activePattern==='advanced'}]" id="advanced">
 				<div id="querybuilder" ref="querybuilder"></div>
 				<button type="button" class="btn btn-default btn-sm" @click="copyAdvancedQuery">Copy to CQL editor</button>
 			</div>
-			<div :class="['tab-pane', {'active': activePattern==='concept'}]" id="concept">
+			<div v-if="conceptEnabled" :class="['tab-pane', {'active': activePattern==='concept'}]" id="concept">
 
 				<!-- Jesse -->
 				<ConceptSearch/>
 				<button type="button" class="btn btn-default btn-sm" @click="copyConceptQuery">Copy to CQL editor (expert mode)</button>
 			</div>
-			<div :class="['tab-pane', {'active': activePattern==='glosses'}]" id="glosses">
-
+			<div v-if="glossEnabled" :class="['tab-pane', {'active': activePattern==='glosses'}]" id="glosses">
 				<!-- Jesse -->
 				<GlossSearch/>
 				<div style="margin-top:2em"/>
@@ -159,6 +158,8 @@ import * as CorpusStore from '@/store/search/corpus';
 import * as UIStore from '@/store/search/ui';
 import * as InterfaceStore from '@/store/search/form/interface';
 import * as PatternStore from '@/store/search/form/patterns';
+import * as GlossStore from '@/store/search/form/glossStore';
+import * as ConceptStore from '@/store/search/form/conceptStore';
 import * as GapStore from '@/store/search/form/gap';
 import * as HistoryStore from '@/store/search/history';
 
@@ -231,6 +232,8 @@ export default Vue.extend({
 			set: PatternStore.actions.simple,
 		},
 		advancedEnabled(): boolean { return UIStore.getState().search.advanced.enabled; },
+		glossEnabled(): boolean { return GlossStore.get.settings() != null; },
+		conceptEnabled(): boolean { return ConceptStore.get.settings() != null; },
 		advanced: {
 			get(): string|null { return PatternStore.getState().advanced; },
 			set: PatternStore.actions.advanced,

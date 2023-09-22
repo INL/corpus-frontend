@@ -6,8 +6,16 @@
  */
 package nl.inl.corpuswebsite;
 
-import nl.inl.corpuswebsite.utils.BlackLabApi;
-import nl.inl.corpuswebsite.utils.WebsiteConfig;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.velocity.Template;
@@ -19,15 +27,9 @@ import org.apache.velocity.tools.generic.EscapeTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import nl.inl.corpuswebsite.utils.BlackLabApi;
+import nl.inl.corpuswebsite.utils.GlobalConfig.Keys;
+import nl.inl.corpuswebsite.utils.WebsiteConfig;
 
 public abstract class BaseResponse {
     protected static final Logger logger = LoggerFactory.getLogger(BaseResponse.class);
@@ -114,7 +116,8 @@ public abstract class BaseResponse {
         // Stuff for use in constructing the page
         context.put("websiteConfig", cfg);
         context.put("buildTime", servlet.getWarBuildTime());
-        context.put("jspath", servlet.getAdminProps().getProperty(MainServlet.PROP_JSPATH));
+        context.put("jspath", servlet.getGlobalConfig().get(Keys.PROP_JSPATH));
+        context.put("withCredentials", Boolean.parseBoolean(servlet.getGlobalConfig().get(Keys.FRONTEND_WITH_CREDENTIALS)));
         cfg.getAnalyticsKey().ifPresent(key -> context.put("googleAnalyticsKey", key));
 
         if (servlet.getBannerMessage().isPresent() && !this.isCookieSet("banner-hidden", Integer.toString(servlet.getBannerMessage().get().hashCode()))) {
@@ -133,8 +136,6 @@ public abstract class BaseResponse {
         var user = MainServlet.decodeBasicAuth(request);
         context.put("username", user.map(Pair::getLeft).orElse(""));
         context.put("password", user.map(Pair::getRight).orElse(""));
-
-        logger.debug("jspath {}", servlet.getAdminProps().getProperty(MainServlet.PROP_JSPATH));
 
         // HTML-escape all data written into the velocity templates by default
         // Only allow access to the raw string if the expression contains the word "unescaped"

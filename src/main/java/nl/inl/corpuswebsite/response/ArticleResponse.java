@@ -2,25 +2,22 @@ package nl.inl.corpuswebsite.response;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.transform.TransformerException;
 
-import nl.inl.corpuswebsite.utils.*;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.corpuswebsite.BaseResponse;
-import nl.inl.corpuswebsite.MainServlet;
+import nl.inl.corpuswebsite.utils.BlackLabApi;
+import nl.inl.corpuswebsite.utils.CorpusConfig;
+import nl.inl.corpuswebsite.utils.QueryException;
+import nl.inl.corpuswebsite.utils.Result;
+import nl.inl.corpuswebsite.utils.ReturnToClientException;
+import nl.inl.corpuswebsite.utils.WebsiteConfig;
+import nl.inl.corpuswebsite.utils.XslTransformer;
 
 public class ArticleResponse extends BaseResponse {
 
@@ -52,7 +49,7 @@ public class ArticleResponse extends BaseResponse {
                     "</xsl:template>" +
                 "</xsl:stylesheet>"));
             // @formatter:on
-        } catch (TransformerException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -81,53 +78,6 @@ public class ArticleResponse extends BaseResponse {
         String corpus = this.corpus.orElseThrow(RuntimeException::new); // should never happen
         return api.getCorpusConfig(corpus).getOrThrow(ReturnToClientException::new);
     }
-
-//    /**
-//     * Fetch the document's metadata from blacklab and return it.
-//     * In case of errors, a string describing the error will be returned instead of the metadata. The error will also be returned in the right side.
-//     * @param documentId
-//     * @param corpusOwner
-//     * @return
-//     * @throws ActionableException when the document cannot be found
-//     */
-//    protected Pair<String, Optional<Exception>> getRawMetadata(String documentId, Optional<String> corpusOwner) throws ActionableException {
-//        try {
-//            final QueryServiceHandler articleMetadataRequest = new QueryServiceHandler(servlet.getWebserviceUrl(corpus.get()) + "docs/" + URLEncoder.encode(documentId, StandardCharsets.UTF_8.toString()));
-//            final Map<String, String[]> requestParameters = new HashMap<>();
-//            corpusOwner.ifPresent(s -> requestParameters.put("userid", new String[] { s }));
-//            final String metadata = articleMetadataRequest.makeRequest(requestParameters);
-//            return Pair.of(metadata, Optional.empty());
-//        } catch (UnsupportedEncodingException e) { // is subclass of IOException, but is thrown by URLEncoder instead of signifying network error - consider this fatal
-//            throw new RuntimeException(e);
-//        } catch (QueryException e) {
-//            if (e.getHttpStatusCode() == HttpServletResponse.SC_NOT_FOUND) {
-//                throw new ActionableException(HttpServletResponse.SC_NOT_FOUND, "Unknown document '" + documentId + "'");
-//            } else {
-//                return Pair.of("Unexpected blacklab response: " + e.getMessage() + " (code " + e.getHttpStatusCode() + ")", Optional.of(e));
-//            }
-//        } catch (UnknownHostException e) {
-//            return Pair.of("Error while retrieving document metadata, unknown host: " + e.getMessage(), Optional.of(e));
-//        } catch (IOException e) {
-//            return Pair.of("Error while retrieving document metadata: " + e.getMessage(), Optional.of(e));
-//        }
-//    }
-
-//    protected Pair<String, Optional<Exception>> transformMetadata(Pair<String, Optional<Exception>> rawMetadata, Optional<String> corpusDataFormat) {
-//        try {
-//            if (rawMetadata.getRight().isPresent()) { return rawMetadata; } // There's something wrong with the metadata, pass on the error message and don't do anything here.
-//            final Pair<Optional<XslTransformer>, Optional<Exception>> transformerAndError = servlet.getStylesheet(corpus.get(), "meta", corpusDataFormat);
-//            if (transformerAndError.getRight().isPresent()) { return Pair.of("<h1>Error in metadata stylesheet</h1>", transformerAndError.getRight()); }
-//            if (!transformerAndError.getLeft().isPresent()) { // this should always exist, we have a builtin fallback stylesheet after all...
-//                return Pair.of("Cannot display metadata - misconfigured server, missing metadata stylesheet (meta.xsl) - see README.MD, section #frontend-configuration", Optional.empty());
-//            }
-//
-//            final XslTransformer trans = addParametersToStylesheet(transformerAndError.getLeft()).get();
-//            final String result = trans.transform(rawMetadata.getLeft());
-//            return Pair.of(result, Optional.empty());
-//        } catch (TransformerException e) {
-//            return Pair.of("<h1>Error during transformation of metadata</h1>", Optional.of(e));
-//        }
-//    }
 
     protected String transformMetadata(String rawMetadata) {
         Optional<String> corpusDataFormat = getCorpusConfig().getCorpusDataFormat();
@@ -267,7 +217,8 @@ public class ArticleResponse extends BaseResponse {
         context.put("article_meta", transformedMetadata.getResult().orElse(""));
         context.put("article_meta_error", transformedMetadata.getError().orElse(null));
         context.put("article_content_restricted", transformedContent.getError().filter(e -> e instanceof ArticleContentRestrictedException).isPresent());
-        context.put("article_content", transformedContent.getResult().orElseThrow());
+        context.put("article_content", transformedContent.getResult().orElse("An error occurred while retrieving the document contents"));
+        context.put("article_content_error", transformedContent.getError().orElse(null));
         context.put("docId", pid);
         context.put("docLength", pi.documentLength);
         context.put("paginationEnabled", pi.paginationEnabled);

@@ -88,11 +88,11 @@ public class GlobalConfig {
     }
 
     static void set(Properties p, Keys k, String v) {
-        p.setProperty(k.toString().toLowerCase(), v);
+        p.setProperty(k.toString(), v);
     }
 
     static String get(Properties p, Keys k) {
-        return p.getProperty(k.toString().toLowerCase());
+        return p.getProperty(k.toString());
     }
 
     public String get(Keys k) {

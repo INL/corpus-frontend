@@ -18,6 +18,9 @@ import 'jquery-ui/ui/widgets/autocomplete';
 
 import {splitIntoTerms} from '@/utils';
 
+// See header.vm
+declare const WITH_CREDENTIALS: boolean;
+
 // Inherit jQueryUI autocomplete widget and customize the rendering
 // to apply some bootstrap classes and structure
 // Jesse: renderMenu en renderItem mee kunnen geven??
@@ -61,6 +64,9 @@ export default Vue.extend({
 		},
 		useQuoteAsWordBoundary: Boolean,
 	},
+	data: () => ({
+		withCredentials: WITH_CREDENTIALS,
+	}),
 	computed: {
 		modelvalue: {
 			get(): string { return this.value; },
@@ -94,7 +100,7 @@ export default Vue.extend({
 						data: {term: value},
 						dataType: 'json',
 						xhrFields: {
-							withCredentials: true
+							withCredentials: self.withCredentials
 						}
 					});
 

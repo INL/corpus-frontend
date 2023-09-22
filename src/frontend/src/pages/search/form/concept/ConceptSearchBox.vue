@@ -78,6 +78,8 @@ import { blacklabPaths } from '@/api';
 // see header.vm
 declare const USERNAME: string;
 declare const PASSWORD: string;
+declare const WITH_CREDENTIALS: boolean;
+
 const credentials = USERNAME && PASSWORD ? {
 	username: USERNAME,
 	password: PASSWORD
@@ -103,6 +105,8 @@ export default Vue.extend ( {
 		terms: [] as Term[],
 		corpus: CorpusStore.getState().id,
 		quine_lexicon: 'quine_lexicon' as string,
+
+		WITH_CREDENTIALS,
 	}),
 
 	methods : {
@@ -128,13 +132,14 @@ export default Vue.extend ( {
 			// FIXME: hardcoded searching in lemma. Should be configurable
 			const getTermsFromBlackLabUrl = blacklabPaths.autocompleteAnnotation(CorpusStore.getState().id, mainAnnotation.annotatedFieldId, 'lemma');
 
+			// TODO use api module.
 			return Promise.all([
 				axios.get<{data: ConceptStore.LexiconEntry[]}>(getTermsURL, {
-					withCredentials: true,
+					withCredentials: this.WITH_CREDENTIALS,
 					paramsSerializer: params => qs.stringify(params)
 				}).then(r => r.data.data.map(d => d.term).filter(t => !!t)),
 				axios.get<string[]>(getTermsFromBlackLabUrl, {
-					withCredentials: true,
+					withCredentials: this.WITH_CREDENTIALS,
 					params: { term }
 				}).then(r => r.data)
 			]).then(([pdb, corpus]) => uniq([...pdb, ...corpus]))

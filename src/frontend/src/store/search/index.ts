@@ -296,16 +296,18 @@ const actions = {
 		QueryModule.actions.reset();
 	}, 'resetRoot'),
 
-	/** 
-	 * Is called when loading a search history entry, or when navigating in browser history. 
+	/**
+	 * Is called when loading a search history entry, or when navigating in browser history.
 	 * Should fully reset and overwrite form state, and then execute a search.
 	*/
-	replace: b.commit((state, payload: HistoryModule.HistoryEntry) => {
+	replace: b.commit((_, payload: HistoryModule.HistoryEntry) => {
 		FormManager.actions.replace(payload);
 		GlobalResultsModule.actions.replace(payload.global);
-		ViewModule.actions.replaceView({view: state.interface.viewedResults!, data: payload.view});
+		// clear all views, otherwise inactive views would persist current settings.
+		ViewModule.actions.resetAllViews();
 		// The state we just restored has results open, so execute a search.
 		if (payload.interface.viewedResults != null) {
+			ViewModule.actions.replaceView({view: payload.interface.viewedResults, data: payload.view});
 			actions.searchAfterRestore();
 		}
 	}, 'replaceRoot'),

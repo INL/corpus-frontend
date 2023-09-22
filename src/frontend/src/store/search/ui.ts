@@ -271,6 +271,8 @@ const initialState: ModuleRootState = {
 		docs: {
 			shownMetadataIds: [],
 		},
+		// we have to do this here already, otherwise these views would be undefined during customjs evaluation.
+		// (which is done before the store is initialized)
 		customViews: [{
 			id: 'hits',
 			title: 'Per Hit',

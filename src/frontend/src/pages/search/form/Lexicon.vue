@@ -129,7 +129,7 @@ export default Vue.extend({
 	props: {
 		annotationId: String,
 		value: null as any as () => null|string,
-		definition: Object as () => any
+		definition: Object as () => CorpusStore.NormalizedAnnotation
 	},
 	data: () => ({
 		input$: new Observable.BehaviorSubject<string>(''),

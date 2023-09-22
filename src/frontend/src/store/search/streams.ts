@@ -36,6 +36,11 @@ const url$ = new ReplaySubject<QueryState>(1);
 
 // TODO handle errors gracefully, right now the entire stream is closed permanently.
 
+// TODO we could probably refactor this whole file to just be a couple of computeds in the store.
+// That would likely be simpler and more readable.
+// The only thing we'd need to figure out is the debounce and delay functions. But there might be small npm packages for that.
+
+
 /**
  * Reads the entered document metadata filters as they are in the main search form,
  * then periodically polls blacklab for the number of matching documents and tokens,
@@ -187,7 +192,10 @@ url$.pipe(
 		// Store some interface state in the url, so the query can be restored to the correct form
 		// even when loading the page from just the url. See UrlStateParser class in store/utils/url-state-parser.ts
 		// TODO we should probably output the form in the url as /${indexId}/('search'|'explore')/('simple'|'advanced' ...etc)/('hits'|'docs')
-		const {viewedResults} = v.state.interface;
+		// But for now, we keep parity with blacklab's urls. This allows just changing /corpus-frontend to /blacklab-server, which has some value I suppose.
+		// We only add a few query parameters of our own to restore some parts of the interface that can't be inferred from the blacklab parameters.
+		const viewedResults = v.state.interface.viewedResults;
+		const view = viewedResults ? v.state.views[viewedResults] : undefined;
 		Object.assign(queryParams, {
 			interface: JSON.stringify({
 				form: v.state.query.form,
@@ -195,8 +203,8 @@ url$.pipe(
 				patternMode: v.state.query.form === 'search' ? v.state.query.subForm : undefined, // remove if not relevant
 				viewedResults: undefined, // remove from query parameters: is encoded in path (segmentcoded)
 			} as Partial<InterfaceStore.ModuleRootState>),
-			groupDisplayMode: v.state.views[viewedResults!].groupDisplayMode || undefined, // remove null
-			resultViewCustomState: v.state.views[viewedResults!].customState || undefined, // remove null
+			groupDisplayMode: view?.groupDisplayMode || undefined, // remove null
+			resultViewCustomState: view?.customState || undefined, // remove null
 		});
 
 		// Generate the new frontend url
@@ -290,6 +298,7 @@ url$.pipe(
 	ga('send', 'pageview');
 });
 
+/** Here we attach listeners to the vuex store, and pump the relevant values into the streams defined above. That in turn runs the listeners on those streams, and we can compute the stuff we need. */
 export default () => {
 	debugLog('Begin attaching store to url and subcorpus calculations.');
 

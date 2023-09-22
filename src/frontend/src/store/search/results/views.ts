@@ -4,7 +4,7 @@
  * But addon scripts can add more views, if required.
  * Those will get their own sub-module here.
  */
-import {ModuleBuilder, getStoreBuilder, StoreBuilder} from 'vuex-typex';
+import {ModuleBuilder, getStoreBuilder} from 'vuex-typex';
 import cloneDeep from 'clone-deep';
 
 import {RootState} from '@/store/search/';
@@ -119,6 +119,7 @@ export const createViewModule = (viewName: string, customInitialState?: Partial<
 // store the sub-modules we create so we can access them later
 const moduleCache: Record<string, ReturnType<typeof createViewModule>> = {};
 function getOrCreateModule(view: string, initialState?: ViewRootState) {
+	if (view == null) { throw new Error('view is null'); }
 	if (!moduleCache[view]) {
 		moduleCache[view] = createViewModule(view, initialState);
 	}
@@ -126,30 +127,12 @@ function getOrCreateModule(view: string, initialState?: ViewRootState) {
 }
 
 const actions = {
-	// groupBy: b.commit((state, payload: string[]) => Object.values(moduleCache).forEach(m => m.actions.groupBy(payload)), 'groupBy'),
 	resetPage: viewsBuilder.commit(() => Object.values(moduleCache).forEach(m => m.actions.page(0)), 'resetPage'),
 	resetViewGroup: viewsBuilder.commit(() => Object.values(moduleCache).forEach(m => m.actions.viewGroup(null)), 'resetViewGroup'),
-
-
-	// resetGroup: b.commit(state => {
-	// 	actions.resetViewGroup();
-	// 	state.hits.groupBy = []; // take care not to alias
-	// 	state.docs.groupBy = [];
-	// 	state.hits.groupByAdvanced = [];
-	// 	state.docs.groupByAdvanced = [];
-	// 	state.hits.caseSensitive = false;
-	// 	state.docs.caseSensitive = false;
-	// }, 'resetGroup'),
-
 	resetAllViews: viewsBuilder.commit(() => Object.values(moduleCache).forEach(m => m.actions.reset()), 'reset'),
-	replaceView: viewsBuilder.commit((state, payload: {view: string, data: ViewRootState}) => {
-		getOrCreateModule(payload.view).actions.replace(payload.data);
+	replaceView: viewsBuilder.commit((_, payload: {view: string|null, data: ViewRootState}) => {
+		if (payload.view) getOrCreateModule(payload.view).actions.replace(payload.data);
 	}, 'replaceResultsView'),
-	// replace: b.commit((state, payload: PartialRootState) => {
-	// 	DocsModule.actions.replace(payload[DocsModule.namespace]);
-	// 	HitsModule.actions.replace(payload[HitsModule.namespace]);
-	// 	GlobalModule.actions.replace(payload[GlobalModule.namespace]);
-	// }, 'replaceResults'),
 };
 
 const get = {

@@ -149,6 +149,12 @@ cache=true
 # It can also be toggled by calling `debug.show()` and `debug.hide()` in the browser console.
 debugInfo=false
 
+# Set the "withCredentials" option for all ajax requests made from the client to the (blacklab/frontend)-server. 
+# Passes authentication cookies to blacklab-server.
+# This may be required if your server is configured to use authentication.
+# NOTE: this only works if the frontend and backend are hosted on the same domain, or when the server does not pass "*" for the Access-Control-Allow-Origin header. 
+withCredentials=false
+
 ```
 
 

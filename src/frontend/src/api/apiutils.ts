@@ -1,10 +1,23 @@
 import axios, {AxiosResponse, AxiosRequestConfig, AxiosError} from 'axios';
 
 import {ApiError} from '@/types/apptypes';
-import {BLError, isBLError} from '@/types/blacklabtypes';
+import {isBLError} from '@/types/blacklabtypes';
+
+// See header.vm
+declare const WITH_CREDENTIALS: boolean;
 
 const settings = {
+	// use a builtin delay to simulate network latency (in ms)
 	delay: 0,
+	// whether to set withCredentials in axios settings
+	// This will send cookies with requests, which is required for authentication
+	// HOWEVER, it requires a very specific setup to work, either of the following must be true:
+	// a) the server must not set the Access-Control-Allow-Origin header to '*'
+	// b) the client and the server must use the same protocol + domain + port
+	// Any other case will result in a CORS error, even when there are no cookies.
+	// so it's best to turn this off during development.
+
+	withCredentials: WITH_CREDENTIALS,
 };
 
 export function delayResponse<T>(r: AxiosResponse<T>): Promise<AxiosResponse<T>> {
@@ -13,19 +26,17 @@ export function delayResponse<T>(r: AxiosResponse<T>): Promise<AxiosResponse<T>>
 	});
 }
 
-export function delayError<T>(e: AxiosError): Promise<AxiosResponse<never>> {
+export function delayError(e: AxiosError): Promise<AxiosResponse<never>> {
 	return new Promise((resolve, reject) => {
 		setTimeout(() => reject(e), settings.delay);
 	});
 }
 
-export function swallowError(p: any) {/**/}
-
 /**
  * Maps network error and blacklab error to ApiError.
  * For use with axios. Always returns a rejected promise containing the error.
  */
-export async function handleError<T>(error: AxiosError): Promise<never> {
+export async function handleError(error: AxiosError): Promise<never> {
 	if (!error.config) { // is a cancelled request, message containing details
 		return Promise.reject(new ApiError('Request cancelled', `Request was cancelled: ${error}`, '')); // TODO some logic depends on the exact title to filter out cancelled requests
 	}
@@ -42,7 +53,6 @@ export async function handleError<T>(error: AxiosError): Promise<never> {
 	// Something else is going on, assume it's a blacklab-server error
 	const contentType: string = (response.headers['content-type'] || '');
 	if (isBLError(response.data)) {
-		const blErr: BLError = response.data;
 		return Promise.reject(new ApiError(
 			response.data.error.code,
 			response.data.error.message,
@@ -86,7 +96,10 @@ export async function handleError<T>(error: AxiosError): Promise<never> {
 }
 
 export function createEndpoint(options: AxiosRequestConfig) {
-	const endpoint = axios.create(options);
+	const endpoint = axios.create({
+		withCredentials: settings.withCredentials,
+		...options
+	});
 
 	return {
 		...endpoint,

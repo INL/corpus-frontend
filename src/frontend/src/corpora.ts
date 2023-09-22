@@ -18,7 +18,6 @@ import * as Mustache from 'mustache';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
-import { normalizeIndexOld, normalizeFormatOld } from './utils/blacklabutils';
 
 import * as Api from '@/api';
 
@@ -31,9 +30,9 @@ const enum DataEvent {
 
 interface DataEventPayloadMap {
 	[DataEvent.SERVER_REFRESH]: BLTypes.BLServer;
-	[DataEvent.FORMATS_REFRESH]: AppTypes.NormalizedFormatOld[];
-	[DataEvent.CORPORA_REFRESH]: AppTypes.NormalizedIndexOld[];
-	[DataEvent.CORPUS_REFRESH]: AppTypes.NormalizedIndexOld;
+	[DataEvent.FORMATS_REFRESH]: AppTypes.NormalizedFormat[];
+	[DataEvent.CORPORA_REFRESH]: AppTypes.NormalizedIndexBase[];
+	[DataEvent.CORPUS_REFRESH]: AppTypes.NormalizedIndexBase
 }
 
 // (Private) corpora management page.
@@ -46,9 +45,9 @@ interface DataEventPayloadMap {
 declare const BLS_URL: string;
 const blsUrl: string = BLS_URL;
 // Contains the full list of available corpora
-let corpora: AppTypes.NormalizedIndexOld[] = [];
+let corpora: AppTypes.NormalizedIndexBase[] = [];
 // Contains the full list of available formats
-let formats: AppTypes.NormalizedFormatOld[] = [];
+let formats: AppTypes.NormalizedFormat[] = [];
 // Serverinfo, contains user information etc
 let serverInfo: BLTypes.BLServer;
 
@@ -111,12 +110,10 @@ createHandler({event: DataEvent.CORPORA_REFRESH, handler(payload) { corpora = pa
 createHandler({event: DataEvent.FORMATS_REFRESH, handler(payload) { formats = payload.concat().sort((a, b) => a.displayName.localeCompare(b.displayName)); }});
 createHandler({event: DataEvent.CORPUS_REFRESH, handler(payload) {
 	// merge into list, trigger global corpora refresh
-	const i = corpora.findIndex(function(corpus) { return corpus.id === payload.id; });
-	i >= 0 ? corpora[i] = {
-		// merge with old data, to preserve retrieved async data
-		...corpora[i],
-		...payload
-	} : corpora.push(payload);
+	const i = corpora.find(c => c.id === payload.id);
+	// merge with old data, to preserve retrieved async data
+	if (i) Object.assign(i, payload);
+	else corpora.push(payload);
 	corpora.sort((a, b) => a.displayName.localeCompare(b.displayName));
 	triggers.updateCorpora(corpora);
 }});
@@ -306,24 +303,13 @@ $('#corpora-private-container').on('click', '*[data-corpus-action="delete"]:not(
 		'Delete',
 		function ok() {
 			$('#waitDisplay').show();
-
-			$.ajax(blsUrl + corpusId, {
-				type: 'DELETE',
-				accepts: {json: 'application/json'},
-				dataType: 'json',
-				xhrFields: {
-					withCredentials: true
-				},
-				success () {
+			Api.blacklab.deleteCorpus(corpusId)
+				.then(() => {
 					$('#waitDisplay').hide();
 					showSuccess('Corpus "' + corpus.displayName + '" deleted.');
 					refreshCorporaList();
-				},
-				error: showXHRError('Could not delete corpus "' + corpus.displayName + '"', function() {
-					$('#waitDisplay').hide();
 				})
-			});
-
+				.catch(showXHRError('Could not delete corpus "' + corpus.displayName + '"', () => $('#waitDisplay').hide()));
 		}
 	);
 });
@@ -367,22 +353,14 @@ $('#corpora-private-container').on('click', '*[data-corpus-action="share"]:not(.
 		return;
 	}
 
-	$.ajax(blsUrl + corpusId + '/sharing', {
-		type: 'GET',
-		accepts: {json: 'application/json' },
-		dataType: 'json',
-		cache: false,
-		xhrFields: {
-			withCredentials: true
-		},
-		success (data) {
-			$('#share-corpus-editor').val(data['users[]'].join('\n'));
+	Api.blacklab.getShares(corpusId)
+		.then(shares => {
+			$('#share-corpus-editor').val(shares.join('\n'));
 			$('#share-corpus-form').data('corpus', corpus);
 			$('#share-corpus-name').text(corpus.displayName);
 			$('#share-corpus-modal').modal('show');
-		},
-		error: showXHRError('Could not retrieve share list'),
-	});
+		})
+		.catch(showXHRError('Could not retrieve share list for corpus "' + corpus.displayName + '"'));
 });
 
 $('#share-corpus-form').on('submit', function(event) {
@@ -393,25 +371,13 @@ $('#share-corpus-form').on('submit', function(event) {
 	const $editor = $('#share-corpus-editor');
 	const users = ($editor.val() as string).trim().split(/\s*[\r\n]+\s*/g); // split on line breaks, ignore empty lines.
 
-	$.ajax(blsUrl + corpus.id + '/sharing/', {
-		type: 'POST',
-		accepts: {json: 'application/json'},
-		dataType: 'json',
-		xhrFields: {
-			withCredentials: true
-		},
-		data: {
-			'users[]': users,
-		},
-		success (data) {
-			showSuccess(data.status.message);
-		},
-		error: showXHRError('Could not share corpus "' + corpus.displayName + '"'),
-		complete () {
+	Api.blacklab.postShares(corpus.id, users)
+		.then(data => showSuccess(data.status.message))
+		.catch(showXHRError('Could not share corpus "' + corpus.displayName + '"'))
+		.finally(() => {
 			$editor.val('');
 			$modal.modal('hide');
-		}
-	});
+		});
 });
 
 // Abbreviate a number, i.e. 3426 becomes 3,4K,
@@ -451,62 +417,18 @@ function dateOnly(dateTimeString: string) {
  *
  * @param indexId full id including any username
  */
-function refreshIndexStatusWhileIndexing(indexId: string) {
-	const statusUrl = blsUrl + indexId + '/status/';
-
-	let timeoutHandle: number;
-
-	function success(index: BLTypes.BLIndex) {
-		triggers.updateCorpus(normalizeIndexOld(indexId, index));
-
-		if (index.status !== 'indexing') {
-			clearTimeout(timeoutHandle);
-		} else {
-			setTimeout(run, 2000);
+async function refreshIndexStatusWhileIndexing(indexId: string) {
+	let index = corpora.find(c => c.id === indexId)!;
+	try {
+		while (true) {
+			index = await Api.blacklab.getCorpusStatus(indexId);
+			triggers.updateCorpus(index);
+			if (index.status !== 'indexing') return;
+			await new Promise(resolve => setTimeout(resolve, 2000));
 		}
+	} catch (error) {
+		showXHRError(`Could not retrieve status for corpus "${index.displayName}"`)(error);
 	}
-
-	// api
-
-	function run() {
-		$.ajax(statusUrl, {
-			type: 'GET',
-			accepts: {json: 'application/json'},
-			dataType: 'json',
-			xhrFields: {
-				withCredentials: true
-			},
-			success,
-			error: showXHRError(
-				'Could not retrieve status for corpus "' + indexId.substr(indexId.indexOf(':')+1) + '"',
-				function() {
-					clearTimeout(timeoutHandle);
-				}
-			)
-		});
-	}
-
-	timeoutHandle = setTimeout(run, 2000);
-}
-
-function loadAdditionalCorpusData(corpusId: string) {
-	Api.blacklab.getCorpus(corpusId)
-	.then(corpus => {
-		const currentState = corpora.find(c => c.id === corpusId);
-		triggers.updateCorpus({
-			description: corpus.description,
-			displayName: corpus.displayName,
-			documentFormat: corpus.documentFormat || '',
-			id: corpusId,
-			indexProgress: currentState ? currentState.indexProgress : null,
-			owner: corpusId.substring(0, corpusId.indexOf(':')) || null,
-			shortId: corpusId.substr(corpusId.indexOf(':') + 1),
-			status: currentState ? currentState.status : 'available',
-			timeModified: corpus.timeModified,
-			tokenCount: corpus.tokenCount
-		});
-	})
-	.catch((e: AppTypes.ApiError) => showError(`Could not retrieve additional details for corpus ${corpusId}: ${e.message}`));
 }
 
 // Request the list of available corpora and
@@ -515,39 +437,25 @@ function refreshCorporaList() {
 	// Perform the AJAX request to get the list of corpora.
 	$('#waitDisplay').show();
 
-	Api.blacklab.getServerInfo()
-	.then(server => {
-		const indices = Object.entries(server.indices).map(([id, index]) => normalizeIndexOld(id, index));
-		triggers.updateServer(server);
-		triggers.updateCorpora(indices);
-		indices
+	return Api.blacklab.getCorpora()
+	.then(corpora => {
+		triggers.updateCorpora(corpora);
+		corpora
 			.filter(corpus => corpus.status === 'indexing')
 			.forEach(corpus => refreshIndexStatusWhileIndexing(corpus.id));
 	})
-	.catch((error: Api.ApiError) => showError(`Could not retrieve corpora: ${error.message}`))
+	.catch(showXHRError('Could not retrieve corpora'))
 	.finally(() => $('#waitDisplay').hide());
 }
 
+function refreshServerInfo() {
+	return Api.blacklab.getServerInfo().then(triggers.updateServer).catch(showXHRError('Could not retrieve server info'));
+}
+
 function refreshFormatList() {
-	$.ajax(blsUrl + 'input-formats/', {
-		type: 'GET',
-		accepts: {json: 'application/json'},
-		dataType: 'json',
-		xhrFields: {
-			withCredentials: true
-		},
-		success (data: BLTypes.BLFormats) {
-			triggers.updateServer($.extend({}, serverInfo, {
-				user: data.user
-			}));
-			triggers.updateFormats(
-				Object.entries(data.supportedInputFormats)
-				.map(([id, format]) => normalizeFormatOld(id, format))
-				.sort((a, b) => a.displayName.localeCompare(b.displayName)) // sort alphabetically.
-			);
-		},
-		error: showXHRError('Could not retrieve formats'),
-	});
+	return Api.blacklab.getFormats()
+	.then(formats => triggers.updateFormats(formats.sort((a, b) => a.displayName.localeCompare(b.displayName)))) // sort alphabetically.
+	.catch(showXHRError('Could not retrieve formats'));
 }
 
 // Get the currently logged-in user, or the empty string if no user is logged in.
@@ -575,37 +483,11 @@ function showError(msg: string) {
 	}, 500);
 }
 
-function showXHRError(message: string, callback?: () => void): JQueryAjaxSettings['error'] {
-	return function(jqXHR, textStatus, errorThrown) {
-		let errorMsg;
-
-		if (jqXHR.readyState === 0) {
-			errorMsg = 'Cannot connect to server.';
-		} else if (jqXHR.readyState === 4) {
-			const data = jqXHR.responseJSON;
-			if (data && data.error) {
-				errorMsg = data.error.message;
-			} else {
-				try { // not json? try xml.
-					const xmlDoc = $.parseXML( jqXHR.responseText );
-					const $xml = $( xmlDoc );
-					errorMsg = $xml.find( 'error code' ).text() + ' - ' +  $xml.find(' error message ').text();
-				} catch (error) {
-					if (textStatus && errorThrown) {
-						errorMsg = textStatus + ' - ' + errorThrown;
-					} else {
-						errorMsg = 'Unknown error.';
-					}
-				}
-			}
-		} else {
-			errorMsg = 'Unknown error.';
-		}
-
-		showError(message + ': ' + errorMsg);
-		if (typeof callback === 'function') {
-			callback();
-		}
+function showXHRError(message: string, callback?: () => void): ((error: Api.ApiError) => void) {
+	return function(error: Api.ApiError) {
+		showError(message + ': ' + error.message);
+		if (callback) callback();
+		console.log(error);
 	};
 }
 
@@ -617,39 +499,21 @@ function showXHRError(message: string, callback?: () => void): JQueryAjaxSetting
  *  @param format Name of the format type for the documents in the index
  */
 function createIndex(displayName: string, shortName: string, format: string) {
-	if (shortName == null || shortName.length === 0) {
-		return;
-	}
-	if (displayName == null) {
-		return;
-	}
+	if (!shortName || !displayName) return;
 
 	// Prefix the user name because it's a private index
 	const indexName = getUserId() + ':' + shortName;
 
 	// Create the index.
 	$('#waitDisplay').show();
-	$.ajax(blsUrl, {
-		type: 'POST',
-		accepts: {json: 'application/json'},
-		dataType: 'json',
-		xhrFields: {
-			withCredentials: true
-		},
-		data: {
-			name: indexName,
-			display: displayName,
-			format
-		},
-		success (/*data*/) {
-			refreshCorporaList();
-			showSuccess('Corpus "' + displayName + '" created.');
-		},
-		error: showXHRError('Could not create corpus "' + shortName + '"'),
-		complete () {
-			$('#waitDisplay').hide();
-		}
-	});
+	Api.blacklab
+	.postCorpus(indexName, displayName, format)
+	.then(() => {
+		refreshCorporaList();
+		showSuccess('Corpus "' + displayName + '" created.');
+	})
+	.catch(showXHRError('Could not create corpus "' + shortName + '"'))
+	.finally(() => $('#waitDisplay').hide());
 }
 
 createHandler({selector: '#uploadProgress', event: DataEvent.CORPORA_REFRESH, handler(newCorpora) {
@@ -678,7 +542,7 @@ createHandler({selector: '#uploadProgress', event: DataEvent.CORPORA_REFRESH, ha
 
 // What corpus are we uploading data to?
 // TODO not very tidy
-let uploadToCorpus: AppTypes.NormalizedIndexOld;
+let uploadToCorpus: AppTypes.NormalizedIndexBase;
 
 function initFileUpload() {
 
@@ -711,19 +575,19 @@ function initFileUpload() {
 		return false;
 	}
 
-	function handleUploadProgress(this: XMLHttpRequest, event: ProgressEvent) {
-		const progress = event.loaded / event.total * 100;
+	function handleUploadProgress(event: number): void {
+		const progress = event;
 		$progress
 			.text('Uploading... (' +  Math.floor(progress) + '%)')
 			.css('width', progress + '%')
 			.attr('aria-valuenow', progress);
 
-		if (event.loaded >= event.total) {
-			handleUploadComplete.call(this, event);
+		if (event === 100) {
+			handleUploadComplete();
 		}
 	}
 
-	function handleUploadComplete(/*event*/) {
+	function handleUploadComplete() {
 		$progress
 			.css('width', '')
 			.toggleClass('indexing', true)
@@ -733,11 +597,7 @@ function initFileUpload() {
 		refreshIndexStatusWhileIndexing(uploadToCorpus.id);
 	}
 
-	function handleIndexingComplete(this: XMLHttpRequest, event: ProgressEvent) {
-		if (this.status !== 200) {
-			return handleError.call(this, event);
-		}
-
+	function handleIndexingComplete() {
 		const message = 'Data added to "' + uploadToCorpus.displayName + '".';
 
 		$modal.off('hide.bs.modal', preventModalCloseEvent);
@@ -753,15 +613,8 @@ function initFileUpload() {
 		});
 	}
 
-	function handleError(this: XMLHttpRequest/*event*/) {
-		let msg = 'Could not add data to "' + uploadToCorpus.displayName + '"';
-		if (this.responseText) {
-			msg += ': ' + JSON.parse(this.responseText).error.message;
-		} else if (this.statusText) {
-			msg += ': ' + this.statusText;
-		} else {
-			msg += ': unknown error (are you trying to upload too much data?)';
-		}
+	function handleError(error: Api.ApiError /*this: XMLHttpRequest, event*/) {
+		const msg = error.message;
 
 		$modal.off('hide.bs.modal', preventModalCloseEvent);
 		$modal.find('[data-dismiss="modal"]').attr('disabled', null).toggleClass('disabled', false);
@@ -784,27 +637,17 @@ function initFileUpload() {
 			.css('width', '0%')
 			.parent().show();
 
-		const formData = new FormData();
-		$fileInputs.each(function() {
-			const self = this;
-			$.each(this.files!, function(index, file) {
-				formData.append(self.name, file, file.name);
-			});
-		});
+		const documentFiles = ($modal.find('#upload-docs-input')[0] as HTMLInputElement).files;
+		const metadataFiles = ($modal.find('#upload-metadata-input')[0] as HTMLInputElement).files;
 
-		const xhr = new XMLHttpRequest();
+		const {request, cancel} = Api.blacklab.postDocuments(
+			uploadToCorpus.id,
+			Array.from(documentFiles!),
+			Array.from(metadataFiles!),
+			handleUploadProgress,
+		);
 
-		xhr.upload.addEventListener('progress', handleUploadProgress.bind(xhr));
-		xhr.upload.addEventListener('error', handleError.bind(xhr));
-		xhr.upload.addEventListener('abort', handleError.bind(xhr));
-		// Don't bother attaching event listener 'load' on xhr.upload - it's broken in IE and Firefox
-		// Instead manually trigger uploadcomplete when we reach 100%
-		xhr.addEventListener('load', handleIndexingComplete.bind(xhr));
-		xhr.addEventListener('error', handleError.bind(xhr));
-		xhr.addEventListener('abort', handleError.bind(xhr));
-
-		xhr.open('POST', blsUrl + uploadToCorpus.id + '/docs?outputformat=json', true);
-		xhr.send(formData);
+		request.then(r => handleIndexingComplete).catch(handleError);
 
 		return false;
 	});
@@ -920,43 +763,23 @@ function initNewFormat() {
 		$('#format_error').hide();
 	}
 
-	function uploadFormat(file: File) {
-		const formData = new FormData();
-		formData.append('data', file, file.name);
+	function uploadFormat(name: string, contents: string) {
+		Api.blacklab.postFormat(name, contents)
+		.then(data => {
+			$modal.modal('hide');
+			$formatName.val('');
+			editor.setValue('');
 
-		$.ajax(blsUrl + 'input-formats/', {
-			data: formData,
-			processData: false,
-			contentType: false,
-			type: 'POST',
-			accepts: {json: 'application/javascript'},
-			dataType: 'json',
-			xhrFields: {
-				withCredentials: true
-			},
-			success (data) {
-				$modal.modal('hide');
-				$formatName.val('');
-				editor.setValue('');
-
-				refreshFormatList();
-				showSuccess(data.status.message);
-			},
-			error (jqXHR, textStatus/*, errorThrown*/) {
-				showFormatError(jqXHR.responseJSON && jqXHR.responseJSON.error.message || textStatus);
-			}
-		});
+			refreshFormatList();
+			showSuccess(data.status.message);
+		})
+		.catch((e: Api.ApiError) => showFormatError(e.message));
 	}
 
-	$modal.on('shown.bs.modal', function() {
-		// Required to fix line-number display width being calculated incorrectly
-		// (something to do with initializing the editor when the element is invisible or has width 0)
-		editor.refresh();
-	});
-
-	$modal.on('hidden.bs.modal', function() {
-		hideFormatError();
-	});
+	// Required to fix line-number display width being calculated incorrectly
+	// (something to do with initializing the editor when the element is invisible or has width 0)
+	$modal.on('shown.bs.modal', () => editor.refresh());
+	$modal.on('hidden.bs.modal', hideFormatError);
 
 	$presetInput.val($presetSelect.selectpicker('val')); // init with current value
 	$presetSelect.on('changed.bs.select, refreshed.bs.select, loaded.bs.select, change', function() {
@@ -965,14 +788,7 @@ function initNewFormat() {
 
 	$formatType.on('change', function() {
 		const newMode = $(this).selectpicker('val');
-		if (newMode === 'json') {
-			editor.setOption('mode', {
-				name: 'javascript',
-				json: true
-			});
-		} else {
-			editor.setOption('mode', newMode);
-		}
+		editor.setOption('mode', newMode === 'json' ? {name: 'javascript', json: true} : newMode);
 	});
 
 	$fileInput.on('change', function() {
@@ -987,7 +803,6 @@ function initNewFormat() {
 			};
 			fr.readAsText(file);
 		}
-
 	});
 
 	$downloadButton.on('click', function() {
@@ -1000,38 +815,27 @@ function initNewFormat() {
 
 		$this.prop('disabled', true).append('<span class="fa fa-spinner fa-spin"></span>');
 		hideFormatError();
-		$.ajax(blsUrl + 'input-formats/' + presetName, {
-			type: 'GET',
-			accepts: {json: 'application/javascript'},
-			dataType: 'json',
-			xhrFields: {
-				withCredentials: true
-			},
-			success (data) {
-				let configFileType = data.configFileType.toLowerCase();
-				if (configFileType === 'yml') {
-					configFileType = 'yaml';
-				}
-
-				$formatType.selectpicker('val', configFileType);
-				$formatType.trigger('change');
-				editor.setValue(data.configFile);
-
-				// is a user-owned format and no name for the format has been given yet
-				// set the format name to this format so the user can easily save over it
-				if (!$formatName.val() && presetName.indexOf(':') > 0) {
-					$formatName.val(presetName.substr(presetName.indexOf(':')+1));
-				}
-
-				$this.closest('.collapse').collapse('hide');
-			},
-			error (jqXHR, textStatus/*, errorThrown*/) {
-				showFormatError(jqXHR.responseJSON && jqXHR.responseJSON.error.message || textStatus);
-			},
-			complete () {
-				$this.prop('disabled', false).find('.fa-spinner').remove();
+		Api.blacklab.getFormatContent(presetName)
+		.then(data => {
+			let configFileType = data.configFileType.toLowerCase();
+			if (configFileType === 'yml') {
+				configFileType = 'yaml';
 			}
-		});
+
+			$formatType.selectpicker('val', configFileType);
+			$formatType.trigger('change');
+			editor.setValue(data.configFile);
+
+			// is a user-owned format and no name for the format has been given yet
+			// set the format name to this format so the user can easily save over it
+			if (!$formatName.val() && presetName.indexOf(':') > 0) {
+				$formatName.val(presetName.substr(presetName.indexOf(':')+1));
+			}
+
+			$this.closest('.collapse').collapse('hide');
+		})
+		.catch((e: Api.ApiError) => showFormatError(e.message))
+		.finally(() => $this.prop('disabled', false).find('.fa-spinner').remove());
 	});
 
 	$confirmButton.on('click', function() {
@@ -1042,12 +846,7 @@ function initNewFormat() {
 
 		const fileContents = editor.getValue();
 		const fileName = $formatName.val() + '.blf.' + $formatType.selectpicker('val');
-
-		// IE11 does not support File constructor.
-		// var file = new File([new Blob([fileContents])], fileName);
-		// const file = new Blob([fileContents]);
-		const file = new File([fileContents], fileName);
-		uploadFormat(file);
+		uploadFormat(fileName, fileContents);
 	});
 }
 
@@ -1062,21 +861,13 @@ function initDeleteFormat() {
 			'Delete import format?',
 			'You are about to delete the import format <i>' + formatId + '</i>.<br>Are you sure?',
 			'Delete',
-			function() {
-				$.ajax(blsUrl + 'input-formats/' + formatId, {
-					type: 'DELETE',
-					accepts: {json: 'application/javascript'},
-					dataType: 'json',
-					xhrFields: {
-						withCredentials: true
-					},
-					success (data) {
-						showSuccess(data.status.message);
-						refreshFormatList();
-					},
-					error: showXHRError('Could not delete format'),
-				});
-			}
+			() => Api.blacklab
+				.deleteFormat(formatId)
+				.then(data => {
+					showSuccess(data.status.message);
+					refreshFormatList();
+				})
+				.catch(showXHRError('Could not delete format')),
 		);
 	});
 }
@@ -1100,8 +891,9 @@ function initEditFormat() {
 	});
 }
 
-$(document).ready(function() {
+$(document).ready(async function() {
 	// Get the list of corpora.
+	await refreshServerInfo(); // server info needed before we can get other information
 	refreshCorporaList();
 	refreshFormatList();
 

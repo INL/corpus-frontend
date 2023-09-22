@@ -76,7 +76,7 @@ export default Vue.extend ({
 		},
 		addBox() { ConceptStore.actions.addSubquery(undefined); },
 		removeBox() { ConceptStore.actions.removeSubquery(undefined); },
-		resetQuery() { ConceptStore.actions.resetQuery(); },
+		resetQuery() { ConceptStore.actions.reset(); },
 	}
 });
 

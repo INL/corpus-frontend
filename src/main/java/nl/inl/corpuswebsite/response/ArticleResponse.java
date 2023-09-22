@@ -103,14 +103,16 @@ public class ArticleResponse extends BaseResponse {
      */
     protected Result<String, Exception> getTransformedContent(String documentId, Optional<String> corpusDataFormat, Optional<Integer> pageStart, Optional<Integer> pageEnd) {
 
-        return new BlackLabApi(request, response).getDocumentContents(
+        return new BlackLabApi(request, response)
+                .getDocumentContents(
                         corpus.orElseThrow(),
                         documentId,
                         Optional.ofNullable(this.getParameter("query", (String) null)),
                         Optional.ofNullable(this.getParameter("pattgapdata", (String) null)),
                         pageStart,
                         pageEnd
-                ).flatMap(content -> {
+                )
+                .flatMap(content -> {
                     if (!XML_TAG_PATTERN.matcher(content).find()) {
                         return Result.success("<pre>" + StringUtils.replaceEach(content, new String[] { "<hl>", "</hl>" },
                                 new String[] { "<span class=\"hl\">", "</span>" }) + "</pre>");
@@ -118,6 +120,7 @@ public class ArticleResponse extends BaseResponse {
 
                     return servlet
                             .getStylesheet(corpus, "article", corpusDataFormat, request, response)
+                            .or(defaultTransformer)
                             .mapWithErrorHandling(transformer -> {
                                 transformer.addParameter("contextRoot", servlet.getServletContext().getContextPath());
                                 servlet.getWebsiteConfig(corpus, request, response).getXsltParameters()

@@ -107,8 +107,7 @@ const get = {
 			switch (state.subForm) {
 				case 'simple': {
 					const pattern: AnnotationValue = (state as ModuleRootStateSearch<'simple'>).formState;
-
-					return getPatternString([pattern], null);
+					return pattern.value ? getPatternString([pattern], null) : undefined;
 				}
 				case 'extended': {
 					const pattern = (state as ModuleRootStateSearch<'extended'>).formState;
@@ -128,11 +127,11 @@ const get = {
 				}
 				case 'concept': {
 					const pattern = (state as ModuleRootStateSearch<'concept'>).formState;
-					return pattern || '' // '[word="de"]'
+					return pattern || '';
 				}
 				case 'glosses': {
 					const pattern = (state as ModuleRootStateSearch<'glosses'>).formState;
-					return pattern || '' // '[word="de"]'
+					return pattern || '';
 				}
 				default: throw new Error('Unimplemented pattern generation.');
 			}

@@ -18,7 +18,7 @@ public class AboutResponse extends BaseResponse {
     @Override
     protected void completeRequest() {
         try (InputStream is = servlet.getAboutPage(corpus)) {
-            context.put("content", StringUtils.join(IOUtils.readLines(is, "utf-8"), "\n"));
+            model.put("content", StringUtils.join(IOUtils.readLines(is, "utf-8"), "\n"));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

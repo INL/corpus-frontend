@@ -24,9 +24,9 @@ public class SearchResponse extends BaseResponse {
                     return new ReturnToClientException(e instanceof QueryException ? ((QueryException) e).getHttpStatusCode() : HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message);
                 });
 
-        context.put("indexStructureJson", config.getJsonUnescaped());
-        context.put("pageSize", servlet.getWebsiteConfig(corpus, request, response).usePagination() ? servlet.getWebsiteConfig(corpus, request, response).getPageSize() : "undefined");
-        context.put("debugInfo", servlet.debugInfo());
+        model.put("indexStructureJson", config.getJsonUnescaped());
+        model.put("pageSize", servlet.getWebsiteConfig(corpus, request, response).usePagination() ? servlet.getWebsiteConfig(corpus, request, response).getPageSize() : "undefined");
+        model.put("debugInfo", servlet.debugInfo());
         
         // display template
         displayHtmlTemplate(servlet.getTemplate("search"));

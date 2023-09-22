@@ -19,7 +19,7 @@ public class HelpResponse extends BaseResponse {
     protected void completeRequest() {
         try (InputStream is = servlet.getHelpPage(corpus)) {
             if (is != null) {
-                context.put("content", StringUtils.join(IOUtils.readLines(is, "utf-8"), "\n"));
+                model.put("content", StringUtils.join(IOUtils.readLines(is, "utf-8"), "\n"));
             }
         } catch (IOException e) {
             throw new RuntimeException(e);

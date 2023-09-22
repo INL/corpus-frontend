@@ -1,10 +1,5 @@
 package nl.inl.corpuswebsite.utils;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -17,6 +12,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 
 /** 
  * Make a request to url, passing the provided query and headers.
@@ -171,8 +172,8 @@ public class AuthRequest {
      * Return the response from the url.
      * If the response is in the 200 range, the content is returned.
      * If the response is in the 300 range, the request is followed.
-     * If the response is 401 range, the request is retried with the authentication header from the request (if present).
-     * In all other cases the error is returned.
+     * If the response is 401, the request is retried with the authentication header from the request (if present).
+     * In all other cases the error is returned (including 404).
      *
      * A 401 might still be returned if the content is restricted for another reason rather than missing auth (or when invalid authentication is supplied).
      *

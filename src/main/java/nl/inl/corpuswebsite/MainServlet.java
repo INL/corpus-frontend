@@ -118,8 +118,7 @@ public class MainServlet extends HttpServlet {
             startVelocity(ctx);
 
             XslTransformer.setUseCache(this.useCache());
-            BlackLabApi.setBlsUrl(config.get(Keys.PROP_BLS_SERVERSIDE));
-
+            BlackLabApi.setBlsUrl(config.get(Keys.BLS_URL_ON_SERVER));
 
             // Map responses, the majority of these can be served for a specific corpus, or as a general autosearch page
             // E.G. the AboutResponse is mapped to /<root>/<corpus>/about and /<root>/about
@@ -279,7 +278,7 @@ public class MainServlet extends HttpServlet {
         } else { // pathParts.size() >= 2 ... <corpus>/<page>/...
             corpus = pathParts.get(0);
             page = pathParts.get(1);
-            if (corpus.equals(config.get(Keys.FRONTEND_CONFIG_PATH_DEFAULT)))
+            if (corpus.equals(config.get(Keys.DEFAULT_CORPUS_CONFIG)))
                 corpus = null;
         }
 
@@ -358,8 +357,8 @@ public class MainServlet extends HttpServlet {
      * @return the xsl transformer to use for transformation, note that this is always the same transformer.
      */
     public Result<XslTransformer, TransformerException> getStylesheet(Optional<String> corpus, String name, Optional<String> corpusDataFormat, HttpServletRequest request, HttpServletResponse response) {
-        String dataDir = config.get(Keys.FRONTEND_CONFIG_PATH);
-        Optional<String> fallbackCorpus = Optional.ofNullable(config.get(Keys.FRONTEND_CONFIG_PATH_DEFAULT)).filter(s -> !s.isEmpty());
+        String dataDir = config.get(Keys.CORPUS_CONFIG_DIR);
+        Optional<String> fallbackCorpus = Optional.ofNullable(config.get(Keys.DEFAULT_CORPUS_CONFIG)).filter(s -> !s.isEmpty());
 
         Function<String, Result<XslTransformer, TransformerException>> gen = __ -> CorpusFileUtil.getStylesheet(dataDir, corpus, fallbackCorpus, name, corpusDataFormat, request, response);
 
@@ -371,9 +370,9 @@ public class MainServlet extends HttpServlet {
 
     public Optional<File> getProjectFile(Optional<String> corpus, String file) {
         return CorpusFileUtil.getProjectFile(
-                config.get(Keys.FRONTEND_CONFIG_PATH),
+                config.get(Keys.CORPUS_CONFIG_DIR),
                 corpus,
-                Optional.ofNullable(config.get(Keys.FRONTEND_CONFIG_PATH_DEFAULT)),
+                Optional.ofNullable(config.get(Keys.DEFAULT_CORPUS_CONFIG)),
                 Optional.of(file));
     }
 
@@ -394,20 +393,16 @@ public class MainServlet extends HttpServlet {
      * (we cannot fix this without breaking userscripts depending on this behavior, as this url is exposed as BLS_URL on the client side).
      * */
     public String getExternalWebserviceUrl() {
-        return this.config.get(Keys.PROP_BLS_CLIENTSIDE) + "/";
-    }
-
-    public Optional<String> getBannerMessage() {
-        return Optional.ofNullable(StringUtils.trimToNull(this.config.get(Keys.PROP_BANNER_MESSAGE)));
+        return this.config.get(Keys.BLS_URL_ON_CLIENT) + "/";
     }
 
     public boolean useCache() {
-        return Boolean.parseBoolean(this.config.get(Keys.PROP_CACHE));
+        return Boolean.parseBoolean(this.config.get(Keys.CACHE));
     }
 
     /** Render debug info checkbox in the search interface? */
     public boolean debugInfo() {
-        return Boolean.parseBoolean(this.config.get(Keys.FRONTEND_SHOW_DEBUG_CHECKBOX));
+        return Boolean.parseBoolean(this.config.get(Keys.SHOW_DEBUG_CHECKBOX_ON_CLIENT));
     }
 
     /**

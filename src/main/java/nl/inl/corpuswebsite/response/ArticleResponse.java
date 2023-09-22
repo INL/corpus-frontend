@@ -214,17 +214,17 @@ public class ArticleResponse extends BaseResponse {
         PaginationInfo pi = new PaginationInfo(interfaceConfig.usePagination(), interfaceConfig.getPageSize(), rawMetadata, getParameter("wordstart", 0), getParameter("wordend", Integer.MAX_VALUE));
         final Result<String, Exception> transformedContent = getTransformedContent(pid, blacklabCorpusInfo.getCorpusDataFormat(), pi.blacklabPageStart, pi.blacklabPageEnd);
 
-        context.put("article_meta", transformedMetadata.getResult().orElse(""));
-        context.put("article_meta_error", transformedMetadata.getError().orElse(null));
-        context.put("article_content_restricted", transformedContent.getError().filter(e -> e instanceof ArticleContentRestrictedException).isPresent());
-        context.put("article_content", transformedContent.getResult().orElse("An error occurred while retrieving the document contents"));
-        context.put("article_content_error", transformedContent.getError().orElse(null));
-        context.put("docId", pid);
-        context.put("docLength", pi.documentLength);
-        context.put("paginationEnabled", pi.paginationEnabled);
-        context.put("pageSize", pi.pageSize);
-        context.put("pageStart", pi.clientPageStart);
-        context.put("pageEnd", pi.clientPageEnd);
+        model.put("article_meta", transformedMetadata.getResult().orElse(""));
+        model.put("article_meta_error", transformedMetadata.getError().orElse(null));
+        model.put("article_content_restricted", transformedContent.getError().filter(e -> e instanceof ArticleContentRestrictedException).isPresent());
+        model.put("article_content", transformedContent.getResult().orElse("An error occurred while retrieving the document contents"));
+        model.put("article_content_error", transformedContent.getError().orElse(null));
+        model.put("docId", pid);
+        model.put("docLength", pi.documentLength);
+        model.put("paginationEnabled", pi.paginationEnabled);
+        model.put("pageSize", pi.pageSize);
+        model.put("pageStart", pi.clientPageStart);
+        model.put("pageEnd", pi.clientPageEnd);
 
         displayHtmlTemplate(servlet.getTemplate("article"));
     }

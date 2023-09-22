@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import nl.inl.corpuswebsite.utils.BlackLabApi;
+import nl.inl.corpuswebsite.utils.GlobalConfig;
 import nl.inl.corpuswebsite.utils.GlobalConfig.Keys;
 import nl.inl.corpuswebsite.utils.WebsiteConfig;
 
@@ -48,7 +49,7 @@ public abstract class BaseResponse {
     protected BlackLabApi blacklab;
 
     /** Velocity template variables */
-    protected final VelocityContext context = new VelocityContext();
+    protected final VelocityContext model = new VelocityContext();
 
     protected String name = "";
 
@@ -102,44 +103,47 @@ public abstract class BaseResponse {
         this.corpus = corpus;
         this.pathParameters = pathParameters;
         WebsiteConfig cfg = servlet.getWebsiteConfig(corpus, request, response);
+        GlobalConfig globalCfg = servlet.getGlobalConfig();
 
         // Allow all origins on all requests
         this.response.addHeader("Access-Control-Allow-Origin", "*");
         
         // Utils
-        context.put("esc", esc);
-        context.put("date", date);
+        model.put("esc", esc);
+        model.put("date", date);
         // For use in queryParameters to ensure clients don't cache old css/js when the application has updated.
         // During development, there's usually no WAR, so no build time either, but we assume the developer knows to ctrl+f5
-        context.put("cache", servlet.getWarBuildTime().hashCode());
+        model.put("cache", servlet.getWarBuildTime().hashCode());
 
         // Stuff for use in constructing the page
-        context.put("websiteConfig", cfg);
-        context.put("buildTime", servlet.getWarBuildTime());
-        context.put("jspath", servlet.getGlobalConfig().get(Keys.PROP_JSPATH));
-        context.put("withCredentials", Boolean.parseBoolean(servlet.getGlobalConfig().get(Keys.FRONTEND_WITH_CREDENTIALS)));
-        cfg.getAnalyticsKey().ifPresent(key -> context.put("googleAnalyticsKey", key));
+        model.put("websiteConfig", cfg);
+        model.put("buildTime", servlet.getWarBuildTime());
+        model.put("jspath", globalCfg.get(Keys.JSPATH));
+        model.put("withCredentials", Boolean.parseBoolean(globalCfg.get(Keys.FRONTEND_WITH_CREDENTIALS)));
+        cfg.getAnalyticsKey().ifPresent(key -> model.put("googleAnalyticsKey", key));
 
-        if (servlet.getBannerMessage().isPresent() && !this.isCookieSet("banner-hidden", Integer.toString(servlet.getBannerMessage().get().hashCode()))) {
-            context.put("bannerMessage", servlet.getBannerMessage().get());
-            context.put("bannerMessageCookie",
-                        "banner-hidden="+servlet.getBannerMessage().get().hashCode()+
-                        "; Max-Age="+24*7*3600+
-                        "; Path="+servlet.getServletContext().getContextPath()+"/");
-        }
+        Optional.ofNullable(globalCfg.get(Keys.BANNER_MESSAGE))
+                .filter(msg -> !this.isCookieSet("banner-hidden", Integer.toString(msg.hashCode())))
+                .ifPresent(msg -> {
+                    model.put("bannerMessage", msg);
+                    model.put("bannerMessageCookie",
+                                "banner-hidden="+msg.hashCode()+
+                                "; Max-Age="+24*7*3600+
+                                "; Path="+globalCfg.get(Keys.CF_URL_ON_CLIENT)+"/");
+        });
 
         // Clientside js variables (some might be used in vm directly)
         context.put("pathToTop", servlet.getServletContext().getContextPath());
-        context.put("blsUrl", servlet.getExternalWebserviceUrl());
-        context.put("page", this.name);
+        model.put("blsUrl", servlet.getExternalWebserviceUrl());
+        model.put("page", this.name);
 
         var user = MainServlet.decodeBasicAuth(request);
-        context.put("username", user.map(Pair::getLeft).orElse(""));
-        context.put("password", user.map(Pair::getRight).orElse(""));
+        model.put("username", user.map(Pair::getLeft).orElse(""));
+        model.put("password", user.map(Pair::getRight).orElse(""));
 
         // HTML-escape all data written into the velocity templates by default
         // Only allow access to the raw string if the expression contains the word "unescaped"
-        EventCartridge cartridge = context.getEventCartridge();
+        EventCartridge cartridge = model.getEventCartridge();
         if (cartridge == null) {
             cartridge = new EventCartridge();
             cartridge.addReferenceInsertionEventHandler(new ReferenceInsertionEventHandler() {
@@ -155,7 +159,7 @@ public abstract class BaseResponse {
                     return escape ? esc.html(val) : val;
                 }
             });
-            context.attachEventCartridge(cartridge);
+            model.attachEventCartridge(cartridge);
         }
 
     }
@@ -173,7 +177,7 @@ public abstract class BaseResponse {
 
         // Merge context into the page template and write to output stream
         try (OutputStreamWriter osw = new OutputStreamWriter(response.getOutputStream(), OUTPUT_ENCODING)) {
-            template.merge(context, osw);
+            template.merge(model, osw);
             osw.flush();
         } catch (Exception e) {
             throw new RuntimeException(e);

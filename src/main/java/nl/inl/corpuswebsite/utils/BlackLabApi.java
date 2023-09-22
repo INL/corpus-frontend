@@ -1,8 +1,9 @@
 package nl.inl.corpuswebsite.utils;
 
+import java.util.Optional;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.Optional;
 
 /**
  * Helper class for talking to BlackLab.

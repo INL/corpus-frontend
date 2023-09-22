@@ -165,7 +165,7 @@ public class Result<R, E extends Exception> {
 
     /**
      * Use other if this Result is currently empty.
-     * @return 'this' if either error or result is present, other otherwise.
+     * @return 'this' if either error or result is present, a new Result holding other otherwise.
      */
     public Result<R, E> or(R other) {
         if (this.result != null || this.error != null) return this;

@@ -39,15 +39,15 @@ public class GlobalConfig {
          * Message to display at the top of the page. Note that this may contain HTML. https://github.com/INL/corpus-frontend/issues/247
          * NULL if not set.
          */
-        PROP_BANNER_MESSAGE("bannerMessage"),
+        BANNER_MESSAGE("bannerMessage"),
         /** Url to reach blacklab-server from this application. Never ends with a slash. */
-        PROP_BLS_SERVERSIDE("blsUrl"),
+        BLS_URL_ON_SERVER("blsUrl"),
         /** Url to reach blacklab-server from the browser. Never ends with a slash. */
-        PROP_BLS_CLIENTSIDE("blsUrlExternal"),
+        BLS_URL_ON_CLIENT("blsUrlExternal"),
         /** Where static content, custom xslt and other per-corpus data is stored. Never ends with a slash. */
-        FRONTEND_CONFIG_PATH("corporaInterfaceDataDir"),
+        CORPUS_CONFIG_DIR("corporaInterfaceDataDir"),
         /** Name of the default fallback directory/corpus in the PROP_DATA_PATH. Never ends with a slash. */
-        FRONTEND_CONFIG_PATH_DEFAULT("corporaInterfaceDefault"),
+        DEFAULT_CORPUS_CONFIG("corporaInterfaceDefault"),
         /**
          * Set the "withCredentials" option for all ajax requests made from the client to the (blacklab/frontend)-server.
          * Passes authentication cookies to blacklab-server.
@@ -57,12 +57,12 @@ public class GlobalConfig {
          */
         FRONTEND_WITH_CREDENTIALS("withCredentials"),
         /** Development mode, allow script tags to load load js from an external server (webpack-dev-server), defaults to $pathToTop/js. Never ends in a slash. */
-        PROP_JSPATH("jspath"),
+        JSPATH("jspath"),
         // todo remove and use a file watcher or something
         /** Development mode, disable caching of any corpus data (e.g. search.xml, article.xsl, meta.xsl etc) */
-        PROP_CACHE("cache"),
+        CACHE("cache"),
         /** Enable/disable the debug info checkbox in the interface */
-        FRONTEND_SHOW_DEBUG_CHECKBOX("debugInfo");
+        SHOW_DEBUG_CHECKBOX_ON_CLIENT("debugInfo");
 
         public final String s;
         Keys(String s) {
@@ -77,48 +77,18 @@ public class GlobalConfig {
     private final Properties instanceProps;
     static {
         // Keep these in sync with what we document as defaults in README.md
-        set(defaultProps, Keys.PROP_BLS_CLIENTSIDE,             "/blacklab-server"); // no domain to account for proxied servers
-        set(defaultProps, Keys.PROP_BLS_SERVERSIDE,             "http://localhost:8080/blacklab-server");
-        set(defaultProps, Keys.FRONTEND_CONFIG_PATH,            SystemUtils.IS_OS_WINDOWS ? "C:\\etc\\blacklab\\projectconfigs" : "/etc/blacklab/projectconfigs");
-        set(defaultProps, Keys.FRONTEND_CONFIG_PATH_DEFAULT,    "default");
-        set(defaultProps, Keys.FRONTEND_SHOW_DEBUG_CHECKBOX,    "false");
+        set(defaultProps, Keys.BLS_URL_ON_CLIENT,               "/blacklab-server"); // no domain to account for proxied servers
+        set(defaultProps, Keys.BLS_URL_ON_SERVER,               "http://localhost:8080/blacklab-server");
+        set(defaultProps, Keys.CORPUS_CONFIG_DIR,               SystemUtils.IS_OS_WINDOWS ? "C:\\etc\\blacklab\\projectconfigs" : "/etc/blacklab/projectconfigs");
+        set(defaultProps, Keys.DEFAULT_CORPUS_CONFIG,           "default");
+        set(defaultProps, Keys.SHOW_DEBUG_CHECKBOX_ON_CLIENT,    "false");
         set(defaultProps, Keys.FRONTEND_WITH_CREDENTIALS,       "false");
-        set(defaultProps, Keys.PROP_CACHE,                      "true");
+        set(defaultProps, Keys.CACHE,                           "true");
         // jspath is initialized later, because we need the servlet context path for that.
     }
 
-    static void set(Properties p, Keys k, String v) {
-        p.setProperty(k.toString(), v);
-    }
-
-    static String get(Properties p, Keys k) {
-        return p.getProperty(k.toString());
-    }
-
-    public String get(Keys k) {
-        return get(instanceProps, k);
-    }
-
-    private void set(Keys k, String v) {
-        set(instanceProps, k, v);
-    }
-
-    public GlobalConfig(File f) {
-        if (!f.isFile())
-            throw new IllegalArgumentException("File " + f + " does not exist");
-        if (!f.canRead())
-            throw new IllegalArgumentException("File" + f + " is not readable");
-
-        // don't pass defaults, we set those manually later, so we can log which ones are used
-        this.instanceProps = new Properties();
-        try (Reader in = new BufferedReader(new FileReader(f))) {
-            logger.debug("Reading global config: {}", f);
-            this.instanceProps.load(in);
-        } catch (IOException e) {
-            throw new RuntimeException("Error reading global config file " + f, e);
-        }
-
-        this.validateAndNormalize();
+    private GlobalConfig(File f) {
+        this(loadProperties(f));
     }
 
     private GlobalConfig(Properties props) {
@@ -126,8 +96,26 @@ public class GlobalConfig {
         this.validateAndNormalize();
     }
 
+    public String get(Keys k) {
+        return get(instanceProps, k);
+    }
+
+    private static String get(Properties p, Keys k) {
+        return p.getProperty(k.toString());
+    }
+
+    private static void set(Properties p, Keys k, String v) {
+        p.setProperty(k.toString(), v);
+    }
+
+    private void set(Keys k, String v) {
+        set(instanceProps, k, v);
+    }
+
     /**
-     * Replace all properties with the properly capitalized versions
+     * To be called before finishing initialization.
+     *
+     * Replace all properties with the properly capitalized versions.
      * Warn about missing props.
      * Replace missing props with their defaults.
      */
@@ -158,12 +146,12 @@ public class GlobalConfig {
         }
 
         // perform some final checks, such as removing any trailing slash (just to be consistent)
-        if (StringUtils.trimToNull(get(Keys.PROP_BANNER_MESSAGE)) == null) instanceProps.remove(Keys.PROP_BANNER_MESSAGE.s);
-        set(Keys.PROP_BLS_SERVERSIDE, StringUtils.stripEnd(get(Keys.PROP_BLS_SERVERSIDE), "/\\"));
-        set(Keys.PROP_BLS_CLIENTSIDE, StringUtils.stripEnd(get(Keys.PROP_BLS_CLIENTSIDE), "/\\"));
-        set(Keys.FRONTEND_CONFIG_PATH, StringUtils.stripEnd(get(Keys.FRONTEND_CONFIG_PATH), "/\\"));
-        set(Keys.FRONTEND_CONFIG_PATH_DEFAULT, StringUtils.stripEnd(get(Keys.FRONTEND_CONFIG_PATH_DEFAULT), "/\\"));
-        set(Keys.PROP_JSPATH, StringUtils.stripEnd(get(Keys.PROP_JSPATH), "/\\"));
+        if (StringUtils.trimToNull(get(Keys.BANNER_MESSAGE)) == null) instanceProps.remove(Keys.BANNER_MESSAGE.s);
+        set(Keys.BLS_URL_ON_SERVER, StringUtils.stripEnd(get(Keys.BLS_URL_ON_SERVER), "/\\"));
+        set(Keys.BLS_URL_ON_CLIENT, StringUtils.stripEnd(get(Keys.BLS_URL_ON_CLIENT), "/\\"));
+        set(Keys.CORPUS_CONFIG_DIR, StringUtils.stripEnd(get(Keys.CORPUS_CONFIG_DIR), "/\\"));
+        set(Keys.DEFAULT_CORPUS_CONFIG, StringUtils.stripEnd(get(Keys.DEFAULT_CORPUS_CONFIG), "/\\"));
+        set(Keys.JSPATH, StringUtils.stripEnd(get(Keys.JSPATH), "/\\"));
     }
 
     public static GlobalConfig getDefault() {
@@ -180,10 +168,11 @@ public class GlobalConfig {
      * @return GlobalConfig, with default settings if none was found
      */
     public static GlobalConfig loadGlobalConfig(ServletContext ctx) {
-        set(defaultProps, Keys.PROP_JSPATH, ctx.getContextPath() + "/js");
-
         final String applicationName = ctx.getContextPath().replaceAll("^/", "");
         final String configFileName = applicationName + ".properties";
+
+        set(defaultProps, Keys.JSPATH, get(defaultProps, Keys.CF_URL_ON_CLIENT) + "/js");
+
         Optional<GlobalConfig> config = tryLoadConfig(System.getenv("CORPUS_FRONTEND_CONFIG_DIR"), configFileName)
                 .or(() -> tryLoadConfig(System.getenv("AUTOSEARCH_CONFIG_DIR"), configFileName))
                 .or(() -> tryLoadConfig(System.getenv("BLACKLAB_CONFIG_DIR"), configFileName));
@@ -217,6 +206,23 @@ public class GlobalConfig {
                         return null;
                     }
                 });
+    }
+
+    private static Properties loadProperties(File f) {
+        if (!f.isFile())
+            throw new IllegalArgumentException("File " + f + " does not exist");
+        if (!f.canRead())
+            throw new IllegalArgumentException("File" + f + " is not readable");
+
+        // don't pass defaults, we set those manually later, so we can log which ones are used
+        Properties loadedProps = new Properties();
+        try (Reader in = new BufferedReader(new FileReader(f))) {
+            logger.debug("Reading global config: {}", f);
+            loadedProps.load(in);
+        } catch (IOException e) {
+            throw new RuntimeException("Error reading global config file " + f, e);
+        }
+        return loadedProps;
     }
 
 }

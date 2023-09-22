@@ -15,7 +15,7 @@ public class ErrorResponse extends BaseResponse {
 
     @Override
     protected void completeRequest() {
-        context.put("error", "Response for '" + request.getRequestURI() + "' not found");
+        model.put("error", "Response for '" + request.getRequestURI() + "' not found");
 
         try {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);

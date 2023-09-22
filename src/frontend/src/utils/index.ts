@@ -95,7 +95,7 @@ interface int2string {
     [key: number]:  string;
 }
 
-// ugly thing that should be in state 
+// ugly thing that should be in state
 
 interface string2int {
 	[key: string]:  number;
@@ -388,20 +388,6 @@ export function getDocumentUrl(
 	/** HACK: Find the hit starting with this word index on the page -- see ArticlePagination.vue */
 	findHit?: number
 ) {
-	let docUrl;
-	switch (new URI().filename()) {
-	case '':
-		docUrl = new URI('../../docs/');
-		break;
-	case 'docs':
-	case 'hits':
-		docUrl = new URI('../docs/');
-		break;
-	case 'search':
-	default: // some weird proxy?
-		docUrl = new URI('./docs/');
-		break;
-	}
 
 	cql = (cql || '').trim();
 	pattgapdata = (pattgapdata || '').trim();
@@ -410,17 +396,15 @@ export function getDocumentUrl(
 		pattgapdata = undefined;
 	}
 
-	return docUrl
-		.absoluteTo(new URI().toString())
-		.filename(pid)
-		.search({
-			// parameter 'query' controls the hits that are highlighted in the document when it's opened
-			query: cql || undefined,
-			pattgapdata: pattgapdata || undefined,
-			wordstart: pageSize != null ? (Math.floor(wordstart / pageSize) * pageSize) || undefined : undefined,
-			findhit: findHit
-		})
-		.toString();
+	return new URI()
+	.segment([CONTEXT_URL, INDEX_ID, 'docs', pid])
+	.search({
+		// parameter 'query' controls the hits that are highlighted in the document when it's opened
+		query: cql || undefined,
+		pattgapdata: pattgapdata || undefined,
+		wordstart: pageSize != null ? (Math.floor(wordstart / pageSize) * pageSize) || undefined : undefined,
+		findhit: findHit
+	}).toString();
 }
 
 export type MapOf<T> = {

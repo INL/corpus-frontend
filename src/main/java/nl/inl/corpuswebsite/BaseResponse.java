@@ -133,7 +133,7 @@ public abstract class BaseResponse {
         });
 
         // Clientside js variables (some might be used in vm directly)
-        context.put("pathToTop", servlet.getServletContext().getContextPath());
+        model.put("pathToTop", globalCfg.get(Keys.CF_URL_ON_CLIENT));
         model.put("blsUrl", servlet.getExternalWebserviceUrl());
         model.put("page", this.name);
 

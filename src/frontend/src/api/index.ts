@@ -33,6 +33,19 @@ init('blacklab', BLS_URL, {params: {outputFormat: 'json'}});
 // i.e. polyfilling missing document info fields in responses.
 // const allMetadataFields = CorpusStore.get.allMetadataFields().map(f => f.id);
 
+export const frontendPaths = {
+	root: () => CONTEXT_URL,
+	currentCorpus: () => `${CONTEXT_URL}/${INDEX_ID}/search`,
+	results: (view: string|null) => `${CONTEXT_URL}/${INDEX_ID}/search/${view ?? ''}`,
+	document: (
+		pid: string,
+		query: string|undefined,
+		pattgapdata: string|undefined,
+		wordstart: number|undefined,
+		wordend: number|undefined,
+	) => `${CONTEXT_URL}/${INDEX_ID}/docs/${pid}?${qs.stringify({query, pattgapdata, wordstart, wordend})}`,
+}
+
 /** Contains url mappings for different requests to blacklab-server */
 export const blacklabPaths = {
 	/*

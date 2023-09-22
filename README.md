@@ -113,8 +113,13 @@ Example file and defaults:
 #  where the paths or ports may differ internally and externally.
 blsUrl=http://localhost:8080/blacklab-server/
 
-# The url under which the front-end can reach blacklab-server.
+# The url under which the client can reach blacklab-server.
 blsUrlExternal=/blacklab-server/
+
+# The url under which the client can reach the corpus-frontend.
+# May be needed if the corpus-frontend is proxied under a different path.
+# It defaults to the contextPath of the servlet, so it might not strictly be 'corpus-frontend', depending on your deployment.
+cfUrlExternal=/corpus-frontend/
 
 # Optional directory where you can place files to further configure and customize
 #  the interface on a per-corpus basis.

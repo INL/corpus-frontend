@@ -18,9 +18,6 @@ import 'jquery-ui/ui/widgets/autocomplete';
 
 import {splitIntoTerms} from '@/utils';
 
-// See header.vm
-declare const WITH_CREDENTIALS: boolean;
-
 // Inherit jQueryUI autocomplete widget and customize the rendering
 // to apply some bootstrap classes and structure
 // Jesse: renderMenu en renderItem mee kunnen geven??

@@ -1,6 +1,6 @@
 import URI from 'urijs';
 
-import { ReplaySubject, Observable, merge, fromEvent, Notification, from } from 'rxjs';
+import { ReplaySubject, Observable, merge, fromEvent, Notification, from, UnsubscriptionError } from 'rxjs';
 import { debounceTime, switchMap, map, shareReplay, filter, materialize } from 'rxjs/operators';
 import cloneDeep from 'clone-deep';
 
@@ -154,17 +154,10 @@ url$.pipe(
 		isTruncated: boolean;
 		url: string;
 	}>(v => {
-		const uri = new URI();
-
-		// Extract our current url path, up to and including 'search'
-		// Usually something like ['corpus-frontend', ${indexId}, 'search']
-		// But might be different depending on whether the application is proxied or deployed using a different name.
-		const basePath = uri.segmentCoded().slice(0, uri.segmentCoded().lastIndexOf('search')+1);
-
-		// If we're not searching, return a bare url pointing to /search/
+		// If we're not searching, return a bare url pointing to ${root}/${corpus}/search/
 		if (v.params == null) {
 			return {
-				url: uri.segmentCoded(basePath).search('').toString(),
+				url: Api.frontendPaths.currentCorpus(),
 				isTruncated: false,
 				state: v.state
 			};
@@ -208,14 +201,13 @@ url$.pipe(
 		});
 
 		// Generate the new frontend url
-		const uri2 = uri
-			.segmentCoded(basePath)
-			.segmentCoded(v.state.interface.viewedResults!)
+		const url = new URI()
+			.segment([CONTEXT_URL, INDEX_ID, 'search', v.state.interface.viewedResults!])
 			.search(queryParams);
 
-		const fullUrl = uri2.toString();
+		const fullUrl = url.toString();
 		return {
-			url: fullUrl.length <= 4000 ? fullUrl : uri2.search(Object.assign({}, queryParams, {patt: undefined, pattgapdata: undefined})).toString(),
+			url: fullUrl.length <= 4000 ? fullUrl : url.search(Object.assign({}, queryParams, {patt: undefined, pattgapdata: undefined})).toString(),
 			isTruncated: fullUrl.length > 4000,
 			state: v.state,
 			params: v.params
@@ -227,7 +219,7 @@ url$.pipe(
 	// (Or just when there are subtle differences such as a trailing slash or no trailing slash)
 	filter(v => {
 		// new urls are always generated without trailing slash (no empty trailing segment string)
-		// while current url might contain one for whatever reason (if user just landed on page)
+		// while current url might contain one for whatever reason (if user just landed on page - tomcat injects it)
 		// So strip it from the current url in order to properly compare.
 		const curUrl = new URI().toString().replace(/\/+$/, '');
 

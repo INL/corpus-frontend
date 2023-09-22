@@ -205,11 +205,14 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 		return value ? { value } : GapModule.defaults;
 	}
 
+	/** Usually hits or docs, but might be null if no results currently viewed. May also be something different if custom views were registered. */
 	@memoize
 	private get viewedResults(): string|null {
-		// length 3 = ['corpus', 'search', 'hits'|'docs'|string (custom view)]
-		const path = this.paths.length === 3 ? this.paths[this.paths.length-1].toLowerCase() : null;
-		return path;
+		// paths are already decoded, and have the base portion removed, so we can just use them directly
+		if (this.paths[1] === 'search' && this.paths.length === 3)
+			return this.paths[2] || null; // hits or docs, or custom view
+
+		return null;
 	}
 
 	/**
@@ -483,7 +486,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 		return this.getString('patt', null, v=>v?v:null);
 	}
 
-	@memoize 
+	@memoize
 	private get concepts(): ConceptModule.HistoryState {
 		return {
 			main_fields: [],

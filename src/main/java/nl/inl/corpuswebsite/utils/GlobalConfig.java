@@ -62,7 +62,12 @@ public class GlobalConfig {
         /** Development mode, disable caching of any corpus data (e.g. search.xml, article.xsl, meta.xsl etc) */
         CACHE("cache"),
         /** Enable/disable the debug info checkbox in the interface */
-        SHOW_DEBUG_CHECKBOX_ON_CLIENT("debugInfo");
+        SHOW_DEBUG_CHECKBOX_ON_CLIENT("debugInfo"),
+        /**
+         * Url to reach the corpus-frontend servlet (i.e. this) from the browser. Never ends with a slash. Usually not required, but might be necessary when server is behind a proxy.
+         * Never ends in a slash.
+         */
+        CF_URL_ON_CLIENT("cfUrlExternal");
 
         public final String s;
         Keys(String s) {
@@ -84,7 +89,7 @@ public class GlobalConfig {
         set(defaultProps, Keys.SHOW_DEBUG_CHECKBOX_ON_CLIENT,    "false");
         set(defaultProps, Keys.FRONTEND_WITH_CREDENTIALS,       "false");
         set(defaultProps, Keys.CACHE,                           "true");
-        // jspath is initialized later, because we need the servlet context path for that.
+        // jspath and cfUrlExternal initialized later, because we need the servlet context path for that.
     }
 
     private GlobalConfig(File f) {
@@ -152,6 +157,7 @@ public class GlobalConfig {
         set(Keys.CORPUS_CONFIG_DIR, StringUtils.stripEnd(get(Keys.CORPUS_CONFIG_DIR), "/\\"));
         set(Keys.DEFAULT_CORPUS_CONFIG, StringUtils.stripEnd(get(Keys.DEFAULT_CORPUS_CONFIG), "/\\"));
         set(Keys.JSPATH, StringUtils.stripEnd(get(Keys.JSPATH), "/\\"));
+        set(Keys.CF_URL_ON_CLIENT, StringUtils.stripEnd(get(Keys.CF_URL_ON_CLIENT), "/\\"));
     }
 
     public static GlobalConfig getDefault() {
@@ -171,6 +177,7 @@ public class GlobalConfig {
         final String applicationName = ctx.getContextPath().replaceAll("^/", "");
         final String configFileName = applicationName + ".properties";
 
+        set(defaultProps, Keys.CF_URL_ON_CLIENT, "/" + applicationName);
         set(defaultProps, Keys.JSPATH, get(defaultProps, Keys.CF_URL_ON_CLIENT) + "/js");
 
         Optional<GlobalConfig> config = tryLoadConfig(System.getenv("CORPUS_FRONTEND_CONFIG_DIR"), configFileName)

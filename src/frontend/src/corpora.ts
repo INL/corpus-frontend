@@ -213,14 +213,6 @@ createHandler({selector: 'tbody[data-autoupdate="corpora"]', event: DataEvent.CO
 			statusText = '';
 		}
 
-		let pageURL = window.location.href;
-		if (pageURL[pageURL.length-1] !== '/') {
-			pageURL += '/';
-		}
-		if (pageURL.endsWith('/corpora/')) {
-			pageURL = pageURL.substring(0, pageURL.length - 8); // keep trailing slash
-		}
-
 		const format = formats.find(f => f.id === corpus.documentFormat);
 
 		return {
@@ -231,7 +223,7 @@ createHandler({selector: 'tbody[data-autoupdate="corpora"]', event: DataEvent.CO
 			documentFormatOwner: format ? format.owner : '',
 			isUserFormat: format ? !!format.owner : false,
 			isPrivate: !!corpus.owner,
-			searchUrl: pageURL + corpus.id + '/search',
+			searchUrl: CONTEXT_URL + '/' + corpus.id + '/search/',
 			sizeString: abbrNumber(corpus.tokenCount),
 			statusText,
 			timeModified: dateOnly(corpus.timeModified),

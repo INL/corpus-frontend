@@ -163,8 +163,6 @@ Vue.mixin({
 });
 
 
-declare const PLAUSIBLE_DOMAIN: string|undefined;
-declare const PLAUSIBLE_APIHOST: string|undefined;
 if (PLAUSIBLE_DOMAIN && PLAUSIBLE_APIHOST) {
 	Vue.use(VuePlausible, {
 		domain: PLAUSIBLE_DOMAIN,

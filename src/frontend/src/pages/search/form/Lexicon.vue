@@ -29,7 +29,7 @@
 			</button>
 		</div>
 
-		<label v-for="opt in renderedWords" :key="opt.id"
+		<label v-for="opt in renderedWords" :key="opt.word"
 			style="width: 10vw; min-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
 			:role="opt.count > 0 ? 'button' : undefined"
 			:class="{'disabled': opt.count === 0}"

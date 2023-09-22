@@ -26,11 +26,6 @@ import { blacklab } from './api';
 // Article-related functions.
 // Takes care of tooltips and highlighting/scrolling to anchors.
 
-declare const BLS_URL: string;
-declare const INDEX_ID: string;
-declare const DOCUMENT_ID: string;
-declare const PAGE_START: string;
-declare const PAGE_END: string;
 
 // ---------------------------
 // Vue initialization & config
@@ -40,8 +35,6 @@ HighchartsExporting(Highcharts);
 HighchartsExportingData(Highcharts);
 HighchartsBoost(Highcharts);
 
-declare const PLAUSIBLE_DOMAIN: string|undefined;
-declare const PLAUSIBLE_APIHOST: string|undefined;
 if (PLAUSIBLE_DOMAIN && PLAUSIBLE_APIHOST) {
 	Vue.use(VuePlausible, {
 		domain: PLAUSIBLE_DOMAIN,

@@ -80,8 +80,6 @@ import SelectPicker, {OptGroup} from '@/components/SelectPicker.vue';
 import * as AppTypes from '@/types/apptypes';
 import * as BLTypes from '@/types/blacklabtypes';
 
-declare const CONTEXT_URL: string;
-
 class UrlStateParser extends UrlStateParserBase<{
 	file: string;
 	format: string;
@@ -107,7 +105,7 @@ export default Vue.extend({
 		retryError: null as null|(() => void),
 
 		blacklabData: {
-			corpora: [] as AppTypes.NormalizedIndexOld[],
+			corpora: [] as AppTypes.NormalizedIndexBase[],
 			user: null as null|BLTypes.BLUser
 		},
 
@@ -119,7 +117,7 @@ export default Vue.extend({
 		// Creating/selecting a new corpus
 		newCorpusName: '',
 		preselectedCorpus: '',
-		selectedCorpus: null as null|AppTypes.NormalizedIndexOld,
+		selectedCorpus: null as null|AppTypes.NormalizedIndexBase,
 
 		actionTitle: '',
 		action: '',
@@ -267,7 +265,7 @@ export default Vue.extend({
 
 			// we need to use a promise here because we want to continue before the request is wholly finished
 			try {
-				await new Promise((resolve, reject) => {
+				await new Promise<void>((resolve, reject) => {
 					let resolved = false;
 					const { request, cancel } = blacklab.postDocuments(
 						this.selectedCorpus!.id,
@@ -299,7 +297,7 @@ export default Vue.extend({
 			}
 
 			try {
-				let r: AppTypes.NormalizedIndexOld;
+				let r: AppTypes.NormalizedIndexBase;
 				while ((r = await blacklab.getCorpusStatus(this.selectedCorpus!.id)) && r.indexProgress && !indexError) {
 					const {filesProcessed: files, docsDone: docs, tokensProcessed: tokens} = r.indexProgress!;
 					this.action = `Indexing... - ${files} files, ${docs} documents, and ${tokens} tokens indexed so far...`;

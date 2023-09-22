@@ -1,7 +1,4 @@
 import URI from 'urijs';
-import memoize from 'memoize-decorator';
-
-declare const CONTEXT_URL: string;
 
 /**
  * Decode the current url into a valid page state configuration.
@@ -9,8 +6,8 @@ declare const CONTEXT_URL: string;
  */
 export default abstract class UrlStateParser<T> {
 	/**
-	 * Path segments of the url this was constructed with, typically something like ['corpus-frontend', ${corpus.id}, ('search'), ('docs'|'hits')]
-	 * But might contain extra leading segments if the application is proxied.
+	 * Path segments of the url this was constructed with, but omitting the root path of the application (usually /corpus-frontend/).
+	 * typically something like [INDEX_ID, 'search', 'docs'|'hits']
 	 */
 	protected paths: string[];
 	/** Query parameters parsed into an object, repeated fields are turned into an array, though all values are kept as-is as strings */

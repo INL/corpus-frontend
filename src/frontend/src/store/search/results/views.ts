@@ -95,7 +95,6 @@ export const createViewModule = (viewName: string, customInitialState?: Partial<
 	// we'll need to do it manually.
 	function registerModule(this: any, namespace: string) {
 		if (this._store && this._vuexModule) {
-			// debugger;
 			var mBuilder = this._moduleBuilders[namespace];
 			if (!mBuilder)
 				throw 'fail to register module: ' + namespace;
@@ -110,8 +109,6 @@ export const createViewModule = (viewName: string, customInitialState?: Partial<
 	}
 	registerModule.call(viewsBuilder, viewName);
 
-	// debugger;
-	// b.vuexModule(); // late registration, initialize now.
 	return m;
 };
 

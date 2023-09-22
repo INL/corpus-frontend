@@ -18,9 +18,6 @@ import * as AppTypes from '@/types/apptypes';
 import { mapReduce, MapOf } from '@/utils';
 import { stripIndent, html } from 'common-tags';
 
-declare const PROPS_IN_COLUMNS: string[];
-declare const PAGESIZE: number|undefined;
-
 type CustomView = {
 	id: string;
 	/** Label shown in result tabs */

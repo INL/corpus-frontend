@@ -9,8 +9,6 @@ import { ApiError } from '@/types/apptypes';
 import { Glossing } from '@/store/search/form/glossStore';
 import { AtomicQuery, LexiconEntry } from '@/store/search/form/conceptStore';
 
-declare const BLS_URL: string;
-
 type API = ReturnType<typeof createEndpoint>;
 
 const endpoints = {

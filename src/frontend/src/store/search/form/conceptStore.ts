@@ -11,9 +11,6 @@ import cloneDeep from 'clone-deep';
 import { init as initEndpoint, conceptApi } from '@/api';
 import Vue from 'vue';
 
-declare const BLS_URL: string;
-declare const INDEX_ID: string;
-
 type Settings = {
 	/** guaranteed not to end in '/' */
 	concept_server: string,
@@ -33,7 +30,7 @@ type AtomicQuery = {
 type ModuleRootState = {
 	/** If not set, the concept component is not active. */
 	settings: Settings|null,
-	
+
 	target_element: string;
 	main_fields: string[]
 	query_cql: string;

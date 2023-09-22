@@ -75,11 +75,6 @@ import { uniq } from '@/utils'
 import SelectPicker from '@/components/SelectPicker.vue';
 import { blacklabPaths } from '@/api';
 
-// see header.vm
-declare const USERNAME: string;
-declare const PASSWORD: string;
-declare const WITH_CREDENTIALS: boolean;
-
 const credentials = USERNAME && PASSWORD ? {
 	username: USERNAME,
 	password: PASSWORD

@@ -10,15 +10,12 @@ import cloneDeep from 'clone-deep';
 
 import * as Api from '@/api';
 
-import {RootState, store} from '@/store/search/';
+import {RootState} from '@/store/search/';
 
 import {normalizeIndex} from '@/utils/blacklabutils';
 
-import * as BLTypes from '@/types/blacklabtypes';
 import {NormalizedIndex, NormalizedAnnotation, NormalizedMetadataField, NormalizedAnnotatedField, NormalizedMetadataGroup, NormalizedAnnotationGroup} from '@/types/apptypes';
-import { MapOf, multimapReduce, makeMapReducer, mapReduce } from '@/utils';
-
-declare const SINGLEPAGE: { INDEX: BLTypes.BLIndexMetadata; };
+import { MapOf, mapReduce } from '@/utils';
 
 type ModuleRootState = NormalizedIndex;
 

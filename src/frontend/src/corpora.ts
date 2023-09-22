@@ -41,9 +41,6 @@ interface DataEventPayloadMap {
 // Allows user to create and delete private corpora
 // and add data to them.
 
-// blacklab-server url
-declare const BLS_URL: string;
-const blsUrl: string = BLS_URL;
 // Contains the full list of available corpora
 let corpora: AppTypes.NormalizedIndexBase[] = [];
 // Contains the full list of available formats

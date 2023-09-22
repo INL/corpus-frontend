@@ -3,9 +3,6 @@ import axios, {AxiosResponse, AxiosRequestConfig, AxiosError} from 'axios';
 import {ApiError} from '@/types/apptypes';
 import {isBLError} from '@/types/blacklabtypes';
 
-// See header.vm
-declare const WITH_CREDENTIALS: boolean;
-
 const settings = {
 	// use a builtin delay to simulate network latency (in ms)
 	delay: 0,

@@ -28,19 +28,26 @@
 			<tbody>
 				<!-- will be filled in from article.js -->
 				<tr><td>Hits in document:</td><td><div id="divHitsInDocument"></div></td></tr>
+				<xsl:variable name="groups" select="/blacklabResponse/metadataFieldGroups/metadataFieldGroup" />
 
 				<xsl:choose>
-					<xsl:when test="metadataFieldGroups/metadataFieldGroup">
-						<xsl:for-each select="metadataFieldGroups/metadataFieldGroup">
+					<xsl:when test="$groups">
+						<xsl:for-each select="$groups">
 							<tr><td colspan="2"><b><xsl:value-of select="name"/>:</b></td></tr>
 							<xsl:for-each select="fields/field">
-								<tr><td style="padding-left: 0.5em"><xsl:value-of select="/blacklabResponse/metadataFieldDisplayNames/*[name()=current()]" /></td><td><xsl:value-of select="//docInfo/*[name()=current()]" /></td></tr>
+								<xsl:variable name="fieldName" select="."/>
+								<xsl:variable name="fieldDisplayName" select="/blacklabResponse/metadataFieldDisplayNames/*[name()=$fieldName]" />
+
+								<tr><td style="padding-left: 0.5em"><xsl:value-of select="$fieldDisplayName" /></td><td><xsl:value-of select="." /></td></tr>
 							</xsl:for-each>
 						</xsl:for-each>
 					</xsl:when>
 					<xsl:otherwise>
+
 						<xsl:for-each select="*[name()!='mayView' and name() != 'lengthInTokens']">
-							<tr><td><xsl:value-of select="/blacklabResponse/metadataFieldDisplayNames/*[name()=current()]" /></td><td><xsl:value-of select="." /></td></tr>
+							<xsl:variable name="fieldName" select="name()"/>
+							<xsl:variable name="fieldDisplayName" select="/blacklabResponse/metadataFieldDisplayNames/*[name()=$fieldName]" />
+							<tr><td><xsl:value-of select="$fieldDisplayName" /></td><td><xsl:value-of select="." /></td></tr>
 						</xsl:for-each>
 					</xsl:otherwise>
 				</xsl:choose>

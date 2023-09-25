@@ -101,7 +101,7 @@ To configure the corpus-frontend, create a file `corpus-frontend.properties` (_s
 - `CORPUS_FRONTEND_CONFIG_DIR` Environment variable
 - `AUTOSEARCH_CONFIG_DIR` Environment variable
 - `BLACKLAB_CONFIG_DIR` Environment variable
-- (on linux) `/etc`, `/etc/blacklab`
+- (on unix) `/etc`, `/etc/blacklab`, `/vol1/etc/blacklab` (to mirror BlackLab's default locations)
 - in the same directory as the `.war` file
 - in the home dir (`~` on linux, `%userdir%` on windows)
 

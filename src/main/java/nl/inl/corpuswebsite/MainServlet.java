@@ -23,6 +23,8 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.function.Function;
 import java.util.jar.Manifest;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import javax.servlet.ServletConfig;
@@ -38,8 +40,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.velocity.Template;
 import org.apache.velocity.app.Velocity;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import nl.inl.corpuswebsite.response.AboutResponse;
 import nl.inl.corpuswebsite.response.ArticleResponse;
@@ -66,7 +66,7 @@ import nl.inl.corpuswebsite.utils.XslTransformer;
  */
 public class MainServlet extends HttpServlet {
 
-    private static final Logger logger = LoggerFactory.getLogger(MainServlet.class);
+    private static final Logger logger = Logger.getLogger(MainServlet.class.getName());
 
     private static final String DEFAULT_PAGE = "corpora";
 
@@ -243,7 +243,7 @@ public class MainServlet extends HttpServlet {
         try {
             request.setCharacterEncoding("utf-8");
         } catch (UnsupportedEncodingException ex) {
-            logger.warn("Failed to set utf-8 encoding on request", ex);
+            logger.log(Level.WARNING, "Failed to set utf-8 encoding on request", ex);
         }
 
         /*
@@ -287,7 +287,7 @@ public class MainServlet extends HttpServlet {
         // If requesting invalid page, redirect to ${page}/search/, as the user probably meant to go to ${corpus}/search/ but instead went to ${corpus}/
         // if they actually meant a page, the corpus probably doesn't exist, they will still get a 404 as usual
         if (brClass.equals(ErrorResponse.class) && page != null && corpus == null) {
-            logger.debug("Unknown raw page {} requested - might be a corpus, redirecting", page);
+            logger.fine(String.format("Unknown raw page %s requested - might be a corpus, redirecting", page));
             response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
             response.setHeader("location", this.getServletContext().getContextPath() + "/" + page + "/search/");
             return;

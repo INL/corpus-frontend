@@ -11,6 +11,7 @@ import java.io.OutputStreamWriter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
@@ -24,8 +25,6 @@ import org.apache.velocity.app.event.EventCartridge;
 import org.apache.velocity.app.event.ReferenceInsertionEventHandler;
 import org.apache.velocity.tools.generic.DateTool;
 import org.apache.velocity.tools.generic.EscapeTool;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import nl.inl.corpuswebsite.utils.BlackLabApi;
 import nl.inl.corpuswebsite.utils.GlobalConfig;
@@ -33,7 +32,7 @@ import nl.inl.corpuswebsite.utils.GlobalConfig.Keys;
 import nl.inl.corpuswebsite.utils.WebsiteConfig;
 
 public abstract class BaseResponse {
-    protected static final Logger logger = LoggerFactory.getLogger(BaseResponse.class);
+    protected static final Logger logger = Logger.getLogger(BaseResponse.class.getName());
 
     protected static final String OUTPUT_ENCODING = "UTF-8";
 
@@ -229,7 +228,7 @@ public abstract class BaseResponse {
         try {
             return Integer.parseInt(stringToParse);
         } catch (NumberFormatException e) {
-            logger.info("Could not parse parameter '{}', value '{}'. Using default ({})", name, stringToParse, defaultValue);
+            logger.info(String.format("Could not parse parameter '%s', value '%s'. Using default (%s)", name, stringToParse, defaultValue));
             return defaultValue;
         }
     }

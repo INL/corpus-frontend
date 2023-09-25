@@ -8,13 +8,13 @@ import java.io.Reader;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * <pre>
@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
  * </pre>
  */
 public class GlobalConfig {
-    private static final Logger logger = LoggerFactory.getLogger(GlobalConfig.class);
+    private static final Logger logger = Logger.getLogger(GlobalConfig.class.getName());
 
     public enum Keys {
         /**
@@ -145,7 +145,7 @@ public class GlobalConfig {
         for (String defaultPropName : defaultProps.stringPropertyNames()) {
             String defaultPropValue = defaultProps.getProperty(defaultPropName);
             if (!instanceProps.containsKey(defaultPropName) && defaultPropValue != null) {
-                logger.info("Config setting {} not configured, using default: {}", defaultPropName, defaultPropValue);
+                logger.info(String.format("Config setting not found '%s' : using default value '%s'", defaultPropName, defaultPropValue));
                 instanceProps.setProperty(defaultPropName, defaultPropValue);
             }
         }
@@ -180,36 +180,44 @@ public class GlobalConfig {
         set(defaultProps, Keys.CF_URL_ON_CLIENT, "/" + applicationName);
         set(defaultProps, Keys.JSPATH, get(defaultProps, Keys.CF_URL_ON_CLIENT) + "/js");
 
-        Optional<GlobalConfig> config = tryLoadConfig(System.getenv("CORPUS_FRONTEND_CONFIG_DIR"), configFileName)
-                .or(() -> tryLoadConfig(System.getenv("AUTOSEARCH_CONFIG_DIR"), configFileName))
-                .or(() -> tryLoadConfig(System.getenv("BLACKLAB_CONFIG_DIR"), configFileName));
-        if (SystemUtils.IS_OS_LINUX) {
+        Optional<GlobalConfig> config = tryLoadConfigEnv("CORPUS_FRONTEND_CONFIG_DIR", configFileName)
+                .or(() -> tryLoadConfigEnv("AUTOSEARCH_CONFIG_DIR", configFileName))
+                .or(() -> tryLoadConfigEnv("BLACKLAB_CONFIG_DIR", configFileName));
+        if (SystemUtils.IS_OS_UNIX) {
             config = config
-                    .or(() -> tryLoadConfig("/etc/" + applicationName + "/", configFileName))
-                    .or(() -> tryLoadConfig("/etc/blacklab/", configFileName));
+                    .or(() -> tryLoadConfigPath("/etc/" + applicationName + "/", configFileName))
+                    .or(() -> tryLoadConfigPath("/etc/blacklab/", configFileName))
+                    .or(() -> tryLoadConfigPath("/vol1/etc/blacklab", configFileName)); // mirror blacklab locations.
         }
         return config
-                .or(() -> tryLoadConfig(new File(ctx.getRealPath("/")).getParentFile().getPath(), configFileName))
-                .or(() -> tryLoadConfig(System.getProperty("user.home"), configFileName)) // user.home works on both linux and windows.
+                .or(() -> tryLoadConfigPath(new File(ctx.getRealPath("/")).getParentFile().getPath(), configFileName))
+                .or(() -> tryLoadConfigPath(System.getProperty("user.home"), configFileName)) // user.home works on both linux and windows.
                 .orElseGet(GlobalConfig::getDefault);
     }
 
-    private static Optional<GlobalConfig> tryLoadConfig(String path, String filename) {
-        return Optional.ofNullable(path)
+    private static Optional<GlobalConfig> tryLoadConfigEnv(String envName, String filename) {
+        String path = System.getenv(envName);
+        if (path == null) {
+            logger.fine("Config from env '" + envName + "': does not exist - ignoring.");
+            return Optional.empty();
+        }
+        return tryLoadConfigPath(path, filename);
+    }
+
+    private static Optional<GlobalConfig> tryLoadConfigPath(String path, String filename) {
+        return Optional.of(path)
                 .map(File::new)
-                .filter(File::isDirectory)
                 .map(f -> new File(f, filename))
                 .filter(f -> {
-                    if (!f.canRead()) logger.debug("Config file not found at {}", f.getAbsolutePath());
+                    if (!f.canRead()) logger.fine(String.format("Config from file '%s': does not exist/can't read - ignoring", f.getAbsolutePath()));
                     return f.canRead();
                 })
                 .map(f -> {
                     try {
                         GlobalConfig conf = new GlobalConfig(f);
-                        logger.info("Loaded config file at {}", f.getAbsolutePath());
                         return conf;
                     } catch (Exception e) {
-                        logger.error("Error occurred while reading config file at " + f.getAbsolutePath(), e);
+                        logger.log(Level.WARNING, String.format("Config file from '%s': ERROR", f.getAbsolutePath()), e);
                         return null;
                     }
                 });
@@ -224,7 +232,7 @@ public class GlobalConfig {
         // don't pass defaults, we set those manually later, so we can log which ones are used
         Properties loadedProps = new Properties();
         try (Reader in = new BufferedReader(new FileReader(f))) {
-            logger.debug("Reading global config: {}", f);
+            logger.info(String.format("Reading global config: %s", f));
             loadedProps.load(in);
         } catch (IOException e) {
             throw new RuntimeException("Error reading global config file " + f, e);

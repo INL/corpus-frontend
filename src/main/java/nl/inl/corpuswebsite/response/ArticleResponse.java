@@ -79,12 +79,10 @@ public class ArticleResponse extends BaseResponse {
         return api.getCorpusConfig(corpus).getOrThrow(ReturnToClientException::new);
     }
 
-    protected String transformMetadata(String rawMetadata) {
+    protected Result<String, Exception> transformMetadata(String rawMetadata) {
         Optional<String> corpusDataFormat = getCorpusConfig().getCorpusDataFormat();
         return servlet.getStylesheet(corpus, "meta", corpusDataFormat, request, response)
-                .mapWithErrorHandling(trans -> trans.transform(rawMetadata))
-                .recover(Exception::getMessage)
-                .getResult().orElse("Error during transformation of metadata");
+                .mapWithErrorHandling(trans -> trans.transform(rawMetadata));
     }
 
 
@@ -213,7 +211,7 @@ public class ArticleResponse extends BaseResponse {
         final WebsiteConfig interfaceConfig = servlet.getWebsiteConfig(this.corpus, this.request, this.response);
 
         final Result<String, QueryException> rawMetadata = api.getDocumentMetadata(corpus.get(), pid);
-        final Result<String, QueryException> transformedMetadata = rawMetadata.map(this::transformMetadata);
+        final Result<String, Exception> transformedMetadata = rawMetadata.flatMap(this::transformMetadata);
         PaginationInfo pi = new PaginationInfo(interfaceConfig.usePagination(), interfaceConfig.getPageSize(), rawMetadata, getParameter("wordstart", 0), getParameter("wordend", Integer.MAX_VALUE));
         final Result<String, Exception> transformedContent = getTransformedContent(pid, blacklabCorpusInfo.getCorpusDataFormat(), pi.blacklabPageStart, pi.blacklabPageEnd);
 

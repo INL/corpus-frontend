@@ -97,12 +97,16 @@ Configuration
 
 ## Backend configuration
 
-The backend is configured through a config file (normally `corpus-frontend.properties`). **NOTE** the path of the configfile is determined by the servlet contextPath without the leading `/`, i.e. for `/TEST/corpus-frontend` a config file with the path `TEST/corpus-frontend.properties` will be looked for in the below locations!
-The config file must be located in one of the following locations (in order of priority):
-- `AUTOSEARCH_CONFIG_DIR` environment variable.
-- `/etc/blacklab/` (`C:\etc\blacklab` on windows)
-- `/vol1/etc/blacklab/` (`C:\vol1\etc\blacklab` on windows)
-- `tmp` environment variable. (usually `C:\Users\%yourusername%\AppData\Local\Temp` or `C:\Windows\Temp` on windows. `/tmp` or `/var/tmp` on linux)
+To configure the corpus-frontend, create a file `corpus-frontend.properties` (_see note on naming_) in any of the following directories (in descending order of priority):
+- `CORPUS_FRONTEND_CONFIG_DIR` Environment variable
+- `AUTOSEARCH_CONFIG_DIR` Environment variable
+- `BLACKLAB_CONFIG_DIR` Environment variable
+- (on linux) `/etc`, `/etc/blacklab`
+- in the same directory as the `.war` file
+- in the home dir (`~` on linux, `%userdir%` on windows)
+
+> **NOTE:** the filename must match the name of your `.war`, but ending in `.properties`!  
+If you deployed `corpus-frontend-test.war`, your config should then be named `corpus-frontend-test.properties`
 
 Example file and defaults:
 
@@ -127,7 +131,7 @@ cfUrlExternal=/corpus-frontend/
 #  for a corpus 'MyCorpus' should be placed under 'corporaInterfaceDataDir/MyCorpus/'.
 corporaInterfaceDataDir=/etc/blacklab/projectconfigs/
 
-# For unconfigured corpora, the directory where defaults may be found (optional).
+# Optional directory for default/fallback settings across all your corpora.
 # The name of a directory directly under the corpusInterfaceDataDir.
 # Files such as the help and about page will be loaded from here
 #  if they are not configured/available for a corpus.
@@ -175,12 +179,13 @@ After a corpus has been added, the corpus-frontend will automatically detect it,
 ### Configuring BlackLab
 
 To allow this, BlackLab needs to be configured properly (user support needs to be enabled and user directories need to be configured).
-See [here](https://inl.github.io/BlackLab/server/howtos.html#let-users-manage-their-own-corpora) for the BlackLab documentation on this (scroll down a little).
+See [the BlackLab documentation](https://inl.github.io/BlackLab/server/howtos.html#let-users-manage-their-own-corpora).
 
-When this is done, two new sections will appear on the main corpus overview page.
-They allow you to define your own configurations to customize how blacklab will index your data, create private corpora (up to 10), and add data to them.
+When BlackLab is properly configured, two new sections will appear on the main corpus overview page.
+They allow you to define your own configurations to customize how blacklab will index your data, create private corpora (up to 10 by default, but can be customized in BlackLab), and add data to them.
 
-**Per corpus configuration is not supported for user corpora created through the Corpus-Frontend.**
+**Per corpus configuration is not supported for user corpora created through the Corpus-Frontend.**  
+This means adding directories for user corpora in `corporaInterfaceDataDir` won't work.
 
 ### Formats
 
@@ -191,7 +196,7 @@ In addition, users can also define their own formats or extend the builtin forma
 
 There is also a hidden/experimental page (`/corpus-frontend/upload/`) for externally linking to the corpus-frontend to automatically index a file from the web.
 It can be used it to link to the frontend from external web services that output indexable files.
-It requires user uploading to be enabled, and there should be a cookie/query parameter present to configure the user name.
+It requires user uploading to be enabled, and there should be a cookie/query parameter present to configure the user name (depending on how BlackLab's `authSystem` is configured, the frontend doesn't care and just passes everything along).
 Parameters are passed as query parameters:
 ```properties
 file=http://my-service.tld/my-file.zip

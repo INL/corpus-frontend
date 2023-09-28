@@ -198,9 +198,10 @@ public class GlobalConfig {
     private static Optional<GlobalConfig> tryLoadConfigEnv(String envName, String filename) {
         String path = System.getenv(envName);
         if (path == null) {
-            logger.fine("Config from env '" + envName + "': does not exist - ignoring.");
+            logger.fine("Config from env '" + envName + "': not set - ignoring.");
             return Optional.empty();
         }
+        logger.fine("Config from env '" + envName + "': " + path);
         return tryLoadConfigPath(path, filename);
     }
 
@@ -214,8 +215,7 @@ public class GlobalConfig {
                 })
                 .map(f -> {
                     try {
-                        GlobalConfig conf = new GlobalConfig(f);
-                        return conf;
+                        return new GlobalConfig(f);
                     } catch (Exception e) {
                         logger.log(Level.WARNING, String.format("Config file from '%s': ERROR", f.getAbsolutePath()), e);
                         return null;

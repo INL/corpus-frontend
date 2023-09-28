@@ -98,11 +98,6 @@ public class MainServlet extends HttpServlet {
     private GlobalConfig config;
 
     /**
-     * Our context path (first part of our URI path)
-     */
-    private String contextPath;
-
-    /**
      * Time the WAR was built. "UNKNOWN" if no WAR or some error occurs.
      */
     private static String warBuildTime = null;
@@ -113,7 +108,6 @@ public class MainServlet extends HttpServlet {
             super.init(cfg);
 
             ServletContext ctx = cfg.getServletContext();
-            this.contextPath = ctx.getContextPath();
             this.config = GlobalConfig.loadGlobalConfig(ctx);
             startVelocity(ctx);
 
@@ -196,7 +190,7 @@ public class MainServlet extends HttpServlet {
         Function<String, WebsiteConfig> gen = __ ->
             getProjectFile(corpus, "search.xml")
             .map(configFile -> {
-                try { return new WebsiteConfig(configFile, getCorpusConfig(corpus, request, response).getResult(), contextPath); }
+                try { return new WebsiteConfig(configFile, getCorpusConfig(corpus, request, response).getResult(), config.get(Keys.CF_URL_ON_CLIENT)); }
                 catch (ConfigurationException e) { throw new RuntimeException("Could not read search.xml " + configFile, e); }
             })
             .orElseThrow(() -> new IllegalStateException("No search.xml, and no default in jar either"));
@@ -265,7 +259,9 @@ public class MainServlet extends HttpServlet {
          * For instance <root>/help/searching would try to serve the nonexistant "searching" response in the context of the corpus "help"
          */
         // First strip out any leading items like "/" and our root
+        // (use the actual contextpath here, since we're already behind any proxy. In almost all other cases, we should use the external url as seen by the client, cfUrlExternal)
         String requestUri = request.getRequestURI();
+        String contextPath = getServletContext().getContextPath();
         if (requestUri.startsWith(contextPath)) {
             requestUri = requestUri.substring(contextPath.length());
         }
@@ -296,7 +292,7 @@ public class MainServlet extends HttpServlet {
         if (brClass.equals(ErrorResponse.class) && page != null && corpus == null) {
             logger.fine(String.format("Unknown raw page %s requested - might be a corpus, redirecting", page));
             response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
-            response.setHeader("location", this.getServletContext().getContextPath() + "/" + page + "/search/");
+            response.setHeader("location", this.config.get(Keys.CF_URL_ON_CLIENT) + "/" + page + "/search/");
             return;
         }
 

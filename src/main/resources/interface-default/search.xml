@@ -3,8 +3,8 @@
     <InterfaceProperties>
         <!--
         Limited variable interpolation is supported.
-        ${request:contextPath}  - the application root path, usually /corpus-frontend
-        ${request:corpusPath}   - the corpus root path, usually /corpus-frontend/${corpus-id}, equal to ${request:contextPath} if not viewing a corpus
+        ${request:contextPath}  - the application root path on the client, usually /corpus-frontend . Is equal to the cfUrlExternal setting. Does not contain a trailing slash.
+        ${request:corpusPath}   - the corpus root path on the client, usually /corpus-frontend/${corpus-id}, equal to ${request:contextPath} if not viewing a corpus. Does not contain a trailing slash.
         ${request:corpusId}     - the corpus id (including username portion for user corpora), so 'lassy' or 'username:corpus-name', empty if not viewing a corpus.
         Paths do not contain a trailing slash
         -->

@@ -1,5 +1,15 @@
 package nl.inl.corpuswebsite.utils;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.commons.configuration2.builder.ConfigurationBuilder;
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
@@ -9,11 +19,6 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.interpol.ConfigurationInterpolator;
 import org.apache.commons.configuration2.interpol.Lookup;
 import org.apache.commons.lang3.StringUtils;
-
-import java.io.File;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Configuration read from an XML config file.
@@ -115,7 +120,7 @@ public class WebsiteConfig {
      *
      * @param configFile the Search.xml file
      * @param corpusConfig (optional) corpus info gotten from BlackLab
-     * @param contextPath the application root url (usually /corpus-frontend). Required for string interpolation while loading the configFile.
+     * @param contextPath the application root url on the client (usually /corpus-frontend). Required for string interpolation while loading the configFile.
      * @throws ConfigurationException
      */
     
@@ -130,7 +135,7 @@ public class WebsiteConfig {
                         switch (key) {
                             case "contextPath": return contextPath;
                             case "corpusId": return corpusConfig.map(CorpusConfig::getCorpusId).orElse(""); // don't return null, or the interpolation string (${request:corpusId}) will be rendered
-                            case "corpusPath": return contextPath + corpusConfig.map(c -> "/" + c.getCorpusId()).orElse("");
+                            case "corpusPath": return contextPath + corpusConfig.map(CorpusConfig::getCorpusId).map(c -> "/" + c).orElse("");
                             default: return key;
                         }
                     });

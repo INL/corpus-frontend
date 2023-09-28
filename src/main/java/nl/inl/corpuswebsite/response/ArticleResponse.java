@@ -13,6 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import nl.inl.corpuswebsite.BaseResponse;
 import nl.inl.corpuswebsite.utils.BlackLabApi;
 import nl.inl.corpuswebsite.utils.CorpusConfig;
+import nl.inl.corpuswebsite.utils.GlobalConfig.Keys;
 import nl.inl.corpuswebsite.utils.QueryException;
 import nl.inl.corpuswebsite.utils.Result;
 import nl.inl.corpuswebsite.utils.ReturnToClientException;
@@ -120,7 +121,7 @@ public class ArticleResponse extends BaseResponse {
                             .getStylesheet(corpus, "article", corpusDataFormat, request, response)
                             .or(defaultTransformer)
                             .mapWithErrorHandling(transformer -> {
-                                transformer.addParameter("contextRoot", servlet.getServletContext().getContextPath());
+                                transformer.addParameter("contextRoot", servlet.getGlobalConfig().get(Keys.CF_URL_ON_CLIENT));
                                 servlet.getWebsiteConfig(corpus, request, response).getXsltParameters()
                                         .forEach(transformer::addParameter);
                                 return transformer.transform(content);

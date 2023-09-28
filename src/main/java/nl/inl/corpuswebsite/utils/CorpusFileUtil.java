@@ -50,6 +50,8 @@ public class CorpusFileUtil {
             .filter(path -> !isUserCorpus(corpus))
             .flatMap(p -> resolveIfValid(p, corpus))
             .flatMap(p -> resolveIfValid(p, filePath))
+            .map(Path::toFile)
+            .filter(File::canRead)
             // if the lookup above didn't work, try the fallback corpus
             // see https://github.com/INL/corpus-frontend/pull/69
             // In essence, this can be used to supply a default config which also applies to user corpora
@@ -57,9 +59,9 @@ public class CorpusFileUtil {
             .or(() -> dataDir
                 .flatMap(p -> resolveIfValid(p, fallbackCorpus))
                 .flatMap(p -> resolveIfValid(p, filePath))
+                .map(Path::toFile)
+                .filter(File::canRead)
             )
-            .map(Path::toFile)
-            .filter(File::canRead)
             // try default file inside .war
             // only available for a couple of standard items (search.xml, some builtin xslt files)
             .or(() -> {

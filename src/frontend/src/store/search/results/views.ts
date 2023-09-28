@@ -66,7 +66,7 @@ const createActions = (b: ModuleBuilder<ViewRootState, RootState>) => ({
 	},'viewgroup'),
 	groupDisplayMode: b.commit((state, payload: string|null) => state.groupDisplayMode = payload, 'groupDisplayMode'),
 
-	reset: b.commit(state => Object.assign(state, cloneDeep(initialState)), 'reset'),
+	reset: b.commit(state => Object.assign(state, cloneDeep(initialViewState)), 'reset'),
 	replace: b.commit((state, payload: ViewRootState) => Object.assign(state, cloneDeep(payload)), 'replace'),
 });
 

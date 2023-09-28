@@ -204,6 +204,8 @@ public class MainServlet extends HttpServlet {
         return useCache() ? configs.computeIfAbsent(corpus.orElse(null), gen) : gen.apply(corpus.orElse(null));
     }
 
+
+    private static Map<String, Result<CorpusConfig, Exception>> configCache = new HashMap<>();
     /**
      * Get the corpus config (as returned from blacklab-server), if this is a valid corpus
      *
@@ -211,10 +213,15 @@ public class MainServlet extends HttpServlet {
      * @return the config
      */
     public Result<CorpusConfig, Exception> getCorpusConfig(Optional<String> corpus, HttpServletRequest request, HttpServletResponse response) {
+        // Should only cache when not using authorization, otherwise result may be different across different requests.
+        boolean useCache = useCache() && request.getHeader("Authorization") == null;
+
         // Contact blacklab-server for the config xml file if we have a corpus
-        // NOT CACHED ON PURPOSE: if blacklab has authentication, we need to re-authenticate every time
-        return corpus.map(c -> new BlackLabApi(request, response).getCorpusConfig(c))
-        .orElseGet(() -> Result.error(new FileNotFoundException("No corpus specified")));
+        Function<String, Result<CorpusConfig, Exception>> gen = c -> new BlackLabApi(request, response).getCorpusConfig(c);
+        return Result
+                .from(corpus)
+                .flatMap(c -> useCache ? configCache.computeIfAbsent(c, gen) : gen.apply(c))
+                .orError(() -> new FileNotFoundException("No corpus specified"));
     }
 
     @Override

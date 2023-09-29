@@ -1,3 +1,6 @@
+# Base image of BlackLab to use.
+ARG IMAGE_VERSION=latest
+
 # Stage "builder": build the WAR file
 #--------------------------------------
 FROM maven:3.6-jdk-11 AS builder

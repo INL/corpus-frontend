@@ -9,12 +9,12 @@
 </template>
 
 <script lang="ts">
+import Vue from 'vue';
 let activePlayer: any = null;
 
 const audioPlayerCache: {[key: string]: HTMLAudioElement} = {};
-export default {
+export default Vue.extend({
 	props: {
-		docId: String,
 		url: String,
 		startTime: Number,
 		endTime: Number
@@ -24,10 +24,10 @@ export default {
 	}),
 	computed: {
 		audio(): HTMLAudioElement {
-			if (audioPlayerCache[this.docId]) {
-				return audioPlayerCache[this.docId];
+			if (audioPlayerCache[this.url]) {
+				return audioPlayerCache[this.url];
 			}
-			return audioPlayerCache[this.docId] = new Audio(this.url);
+			return audioPlayerCache[this.url] = new Audio(this.url);
 		},
 	},
 	methods: {
@@ -54,7 +54,7 @@ export default {
 			this.audio.currentTime = this.startTime;
 			this.audio.play();
 
-			ga('send', 'event', 'results', 'audio/play', this.docId);
+			ga('send', 'event', 'results', 'audio/play', this.url);
 		},
 		/** @return true if the active player was this */
 		stopActive(): boolean {
@@ -78,7 +78,7 @@ export default {
 	beforeDestroy() {
 		this.stop();
 	}
-};
+});
 
 
 </script>

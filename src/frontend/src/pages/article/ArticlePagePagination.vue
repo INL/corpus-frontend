@@ -174,6 +174,7 @@ export default Vue.extend({
 
 
 		// Load all hits in the document (also those outside this page)
+		// @ts-ignore
 		const { query }: { query: string|undefined } = new URI().search(true);
 
 		if (!query) { // no hits when no query, abort

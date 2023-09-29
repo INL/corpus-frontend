@@ -31,10 +31,10 @@
 									minute: 'numeric'
 								})}}</small></td>
 								<td>{{
-                    entry.interface.viewedResults === 'hits' ? 'Hits' :
-                    entry.interface.viewedResults === 'docs' ? 'Documents' :
-                    entry.interface.viewedResults
-                  }}</td>
+									entry.interface.viewedResults === 'hits' ? 'Hits' :
+									entry.interface.viewedResults === 'docs' ? 'Documents' :
+									entry.interface.viewedResults
+								}}</td>
 								<td class="history-table-contain-text" :title="entry.displayValues.pattern.substring(0,1000) || undefined">{{entry.displayValues.pattern}}</td>
 								<td class="history-table-contain-text" :title="entry.displayValues.filters.substring(0,1000) || undefined">{{entry.displayValues.filters}}</td>
 								<td class="history-table-contain-text" :title="entry.view.groupBy.concat(entry.view.groupByAdvanced).join(' ') || '-'">{{entry.view.groupBy.concat(entry.view.groupByAdvanced).join(' ') || '-'}}</td>
@@ -137,6 +137,7 @@ export default Vue.extend({
 		},
 
 		load(entry: HistoryStore.HistoryEntry) {
+			// @ts-ignore
 			$(this.$refs.modal).modal('toggle');
 			RootStore.actions.replace(entry);
 		},

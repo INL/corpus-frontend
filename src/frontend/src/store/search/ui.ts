@@ -66,7 +66,7 @@ type ModuleRootState = {
 			 */
 			searchMetadataIds: string[];
 			customAnnotations: Record<string, null|{
-				render(config: AppTypes.NormalizedAnnotation, state: AppTypes.AnnotationValue, vue: Vue): HTMLElement|JQuery<HTMLElement>|string|Vue,
+				render(config: AppTypes.NormalizedAnnotation, state: AppTypes.AnnotationValue, vue: typeof Vue): HTMLElement|JQuery<HTMLElement>|string|Vue,
 				update(newState: AppTypes.AnnotationValue, oldState: AppTypes.AnnotationValue, element: HTMLElement): void
 			}>
 		}

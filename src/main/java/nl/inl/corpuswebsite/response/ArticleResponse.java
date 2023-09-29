@@ -74,14 +74,8 @@ public class ArticleResponse extends BaseResponse {
         return pid;
     }
 
-    private CorpusConfig getCorpusConfig() {
-        BlackLabApi api = new BlackLabApi(request, response);
-        String corpus = this.corpus.orElseThrow(RuntimeException::new); // should never happen
-        return api.getCorpusConfig(corpus).getOrThrow(ReturnToClientException::new);
-    }
-
-    protected Result<String, Exception> transformMetadata(String rawMetadata) {
-        Optional<String> corpusDataFormat = getCorpusConfig().getCorpusDataFormat();
+    protected Result<String, Exception> transformMetadata(String rawMetadata, CorpusConfig corpusConfig) {
+        Optional<String> corpusDataFormat = corpusConfig.getCorpusDataFormat();
         return servlet.getStylesheet(corpus, "meta", corpusDataFormat, request, response)
                 .mapWithErrorHandling(trans -> trans.transform(rawMetadata));
     }
@@ -92,7 +86,7 @@ public class ArticleResponse extends BaseResponse {
      * If an error occurs at any point (failed to load content, failed to load stylesheet, failed to apply stylesheet) an informative
      * message is returned in the string, and the exception is returned separately so the client can debug it.
      *
-     * NOTE: assumes pageStart and pageEnd are validated and correct, they are not sent to BlackLab if they are -1
+     * NOTE: assumes pageStart and pageEnd have been validated and correct, they are not sent to BlackLab if they are -1
      *
      * @param documentId
      * @param corpusDataFormat
@@ -101,7 +95,6 @@ public class ArticleResponse extends BaseResponse {
      * @return
      */
     protected Result<String, Exception> getTransformedContent(String documentId, Optional<String> corpusDataFormat, Optional<Integer> pageStart, Optional<Integer> pageEnd) {
-
         return new BlackLabApi(request, response)
                 .getDocumentContents(
                         corpus.orElseThrow(),
@@ -208,11 +201,11 @@ public class ArticleResponse extends BaseResponse {
         // parameters for the requesting of metadata and content from blacklab
         final String pid = getDocPid();
 
-        final CorpusConfig blacklabCorpusInfo = getCorpusConfig();
+        final CorpusConfig blacklabCorpusInfo = servlet.getCorpusConfig(this.corpus, this.request, this.response).mapError(IOException::new).getOrThrow();
         final WebsiteConfig interfaceConfig = servlet.getWebsiteConfig(this.corpus, this.request, this.response);
 
         final Result<String, QueryException> rawMetadata = api.getDocumentMetadata(corpus.get(), pid);
-        final Result<String, Exception> transformedMetadata = rawMetadata.flatMap(this::transformMetadata);
+        final Result<String, Exception> transformedMetadata = rawMetadata.flatMap(metadata -> this.transformMetadata(metadata, blacklabCorpusInfo));
         PaginationInfo pi = new PaginationInfo(interfaceConfig.usePagination(), interfaceConfig.getPageSize(), rawMetadata, getParameter("wordstart", 0), getParameter("wordend", Integer.MAX_VALUE));
         final Result<String, Exception> transformedContent = getTransformedContent(pid, blacklabCorpusInfo.getCorpusDataFormat(), pi.blacklabPageStart, pi.blacklabPageEnd);
 

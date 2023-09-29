@@ -26,7 +26,6 @@ import org.apache.velocity.app.event.ReferenceInsertionEventHandler;
 import org.apache.velocity.tools.generic.DateTool;
 import org.apache.velocity.tools.generic.EscapeTool;
 
-import nl.inl.corpuswebsite.utils.BlackLabApi;
 import nl.inl.corpuswebsite.utils.GlobalConfig;
 import nl.inl.corpuswebsite.utils.GlobalConfig.Keys;
 import nl.inl.corpuswebsite.utils.WebsiteConfig;
@@ -44,8 +43,6 @@ public abstract class BaseResponse {
     protected HttpServletRequest request;
 
     protected HttpServletResponse response;
-    
-    protected BlackLabApi blacklab;
 
     /** Velocity template variables */
     protected final VelocityContext model = new VelocityContext();
@@ -97,7 +94,6 @@ public abstract class BaseResponse {
         }
         this.request = request;
         this.response = response;
-        this.blacklab = new BlackLabApi(request, response);
         this.servlet = servlet;
         this.corpus = corpus;
         this.pathParameters = pathParameters;

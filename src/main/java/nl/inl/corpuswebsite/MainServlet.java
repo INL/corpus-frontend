@@ -208,7 +208,7 @@ public class MainServlet extends HttpServlet {
      */
     public Result<CorpusConfig, Exception> getCorpusConfig(Optional<String> corpus, HttpServletRequest request, HttpServletResponse response) {
         // Should only cache when not using authorization, otherwise result may be different across different requests.
-        boolean useCache = useCache() && request.getHeader("Authorization") == null;
+        boolean useCache = useCache() && (request.getHeader("Authorization") == null || request.getHeader("Authorization").isEmpty());
 
         // Contact blacklab-server for the config xml file if we have a corpus
         Function<String, Result<CorpusConfig, Exception>> gen = c -> new BlackLabApi(request, response).getCorpusConfig(c);

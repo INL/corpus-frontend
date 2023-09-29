@@ -9,7 +9,6 @@ import HighchartsExporting from 'highcharts/modules/exporting';
 import HighchartsExportingData from 'highcharts/modules/export-data';
 import HighchartsBoost from 'highcharts/modules/boost';
 
-import URI from 'urijs';
 //@ts-ignore
 import VuePlausible from 'vue-plausible/lib/esm/vue-plugin.js';
 
@@ -21,7 +20,6 @@ import initTooltips from '@/modules/expandable-tooltips';
 
 import '@/global.scss';
 import '@/article.scss';
-import { blacklab } from './api';
 
 // Article-related functions.
 // Takes care of tooltips and highlighting/scrolling to anchors.
@@ -58,34 +56,32 @@ $(document).ready(() => {
 	// The easy way is through a store watcher, since that works even when the variable is outside the store
 	// and even when the store is completely ignored other than that.
 	// And since debug.debug is observable, this works!
-	RootStore.store.watch(() => debug.debug, (isDebugEnabled) => {
-		if (isDebugEnabled) {
+	RootStore.store.watch(store => ({debug: debug.debug, document: store.document}), ({debug, document}) => {
+		if (debug && document) {
 			let wordstart = PAGE_START;
 			let wordend = PAGE_END;
 
 			let q = Object.entries({wordstart, wordend}).filter(([k, v]) => !!v).reduce((acc, [k, v]) => acc += `&${k}=${v}`, '');
 			q = q ? '?' + q : q;
 
-			blacklab.getDocumentInfo(INDEX_ID, DOCUMENT_ID).then(r => {
-				const s =
-				`<div id="debug-info">
-					<hr>
-					<h2>Debug info</h2>
+			const s =
+			`<div id="debug-info">
+				<hr>
+				<h2>Debug info</h2>
 
-					<table class="table table-striped" style="table-layout: fixed">
-						<tr>
-							<th>Field</th>
-							<th>Values</th>
-						</tr>
-						${Object.entries(r.docInfo).sort((a, b) => a[0].localeCompare(b[0])).map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}
-					</table>
+				<table class="table table-striped" style="table-layout: fixed">
+					<tr>
+						<th>Field</th>
+						<th>Values</th>
+					</tr>
+					${Object.entries(document.docInfo).sort((a, b) => a[0].localeCompare(b[0])).map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}
+				</table>
 
-					<a href="${BLS_URL}${INDEX_ID}/docs/${DOCUMENT_ID}/contents${q}" target="_blank">Open raw document</a>
-				</div>`
+				<a href="${BLS_URL}${INDEX_ID}/docs/${DOCUMENT_ID}/contents${q}" target="_blank">Open raw document</a>
+			</div>`
 
-				$('#articleTabs').append(`<li id="debug-tab"><a href="#debug" data-toggle="tab">Debug</a></li>`)
-				$('.tab-content').append(`<div id="debug" class="tab-pane">${s}</div>`)
-			})
+			$('#articleTabs').append(`<li id="debug-tab"><a href="#debug" data-toggle="tab">Debug</a></li>`)
+			$('.tab-content').append(`<div id="debug" class="tab-pane">${s}</div>`)
 		} else {
 			$('#debug').remove();
 			$('#debug-tab').remove();

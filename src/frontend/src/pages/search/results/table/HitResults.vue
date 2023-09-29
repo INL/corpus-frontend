@@ -311,7 +311,7 @@ export default Vue.extend({
 				// ids of the hit, if gloss module is enabled.
 				const {startid: hit_first_word_id = '', endid: hit_last_word_id = ''} = GlossModule.get.settings()?.get_hit_range_id(hit) ?? {startid: '', endid: ''};
 				const hit_id = GlossModule.get.settings()?.get_hit_id(hit) ?? '';
-				
+
 				// TODO condense this data..
 				rows.push({
 					type: 'hit',
@@ -374,8 +374,8 @@ export default Vue.extend({
 
 		corpus(): string { return CorpusStore.getState().id; },
 
-		transformSnippets(): null|((snippet: any)=> any){ return UIStore.getState().results.shared.transformSnippets; },
-		getDocumentSummary(): ((doc: any, info: any) => any) { return UIStore.getState().results.shared.getDocumentSummary },
+		transformSnippets(): null|((snippet: BLTypes.BLHitSnippet)=> void){ return UIStore.getState().results.shared.transformSnippets; },
+		getDocumentSummary(): ((doc: BLTypes.BLDocInfo, fields: BLTypes.BLDocFields) => any) { return UIStore.getState().results.shared.getDocumentSummary },
 	},
 	methods: {
 		changeSort(payload: string) {

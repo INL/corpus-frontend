@@ -437,15 +437,13 @@ export interface BLHitSnippet {
 	left: BLHitSnippetPart;
 	match: BLHitSnippetPart;
 	right: BLHitSnippetPart;
-	start: number;
-	end: number;
-	captureGroups: BLCaptureGroup[]; // Jesse
+	captureGroups?: BLCaptureGroup[]; // Jesse
 }
 
 export type BLHit = {
 	docPid: string;
-	hitStart: number;
-	hitEnd: number;
+	start: number;
+	end: number;
 } & BLHitSnippet;
 
 /** Contains occurance counts of terms in the index */

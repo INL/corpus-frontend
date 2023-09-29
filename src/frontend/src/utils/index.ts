@@ -58,12 +58,12 @@ export function unescapeLucene(original: string) {
 export function NaNToNull(n: number) { return isNaN(n) ? null : n; }
 
 /**
- * @param hit - the hit
- * @param prop - property of the context to retrieve, defaults to PROPS.firstMainProp (usually 'word')
+ * @param hit - the hit, or most of the hit in case of doc results (which contain less info than hits)
+ * @param prop - annotation to print, usually 'word'.
  * @returns string[3] where [0] == before, [1] == hit and [2] == after, values are strings created by
  * concatenating and alternating the punctuation and values itself
  */
-export function snippetParts(hit: BLTypes.BLHitSnippet, prop: string): [string, string, string] {
+export function snippetParts(hit: BLTypes.BLHit|BLTypes.BLHitSnippet, prop: string): [string, string, string] {
 	const punctAfterLeft = hit.match.word.length > 0 ? hit.match.punct[0] : '';
 	const before = words(hit.left, prop, false, punctAfterLeft);
 	const match = wordsWithCaptures(hit, hit.match, prop, false, ''); // Jesse
@@ -106,14 +106,15 @@ const capturename2index : string2int = {}; // Jesse, gruwelijk
 // add styling to captures, in a hacky way. breaks clicking on concordance to get quotation!
 // Test with e.g. ((<s/> containing a:[word='man']) containing  b:[word='Socrates']) containing c:[word='morta.*'] in quine corpus
 
-export function wordsWithCaptures(hit: BLTypes.BLHitSnippet, context: BLTypes.BLHitSnippetPart, prop: string, doPunctBefore: boolean, addPunctAfter: string): string { // Jesse
+/** hit is not always a full-fledged hit object, for doc results, we have less information. So ensure this function works with both BLHit and BLHitSnippet. */
+export function wordsWithCaptures(hit: BLTypes.BLHitSnippet|BLTypes.BLHit, context: BLTypes.BLHitSnippetPart, prop: string, doPunctBefore: boolean, addPunctAfter: string): string { // Jesse
 	const parts = [] as string[];
-	const n = context[prop] ? context[prop].length : 0;
-	const start = hit.start;
+	const numTokens = context[prop] ? context[prop].length : 0;
 	const p2c: int2string = {};
 
-	if (hit.captureGroups)  {
-			hit.captureGroups.forEach(g => {
+	if (hit.captureGroups && 'start' in hit)  {
+		const start = hit.start;
+		hit.captureGroups.forEach(g => {
 			const name = g.name;
 			if (!(name in capturename2index)) {
 				capturename2index[name] = Object.keys(capturename2index).length;
@@ -124,12 +125,14 @@ export function wordsWithCaptures(hit: BLTypes.BLHitSnippet, context: BLTypes.BL
 		});
 	}
 
-	for (let i = 0; i < n; i++) {
-		if ((i === 0 && doPunctBefore) || i > 0) {
-			parts.push(context.punct[i]);
+	for (let i = 0; i < numTokens; i++) {
+		if (i > 0 || doPunctBefore) {
+			parts.push(context.punct[i] || '');
 		}
 		const w = context[prop][i];
-		const w_i = i in p2c?`<span style="font-style:italic" title="capture: ${p2c[i]}" class='capture capture_${capturename2index[p2c[i]]}'>${w}</span>`:w;
+		const w_i = i in p2c
+			? `<span style="font-style:italic" title="capture: ${p2c[i]}" class='capture capture_${capturename2index[p2c[i]]}'>${w}</span>`
+			: w;
 		parts.push(w_i);
 	}
 	parts.push(addPunctAfter);

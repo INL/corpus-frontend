@@ -303,7 +303,9 @@ export const blacklab = {
 		return getOrPost<BLTypes.BLHitSnippet>(blacklabPaths.snippet(indexId, docId), {
 			hitstart,
 			hitend,
-			wordsaroundhit
+			// when requesting 0, blacklab returns a differently shaped object (since 4), which causes issues.
+			// instead of {left, match, right}, we receive {snippet}
+			wordsaroundhit: Math.max(1, wordsaroundhit)
 		}, requestParameters);
 	},
 

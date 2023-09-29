@@ -32,7 +32,6 @@ module.exports = {
 		}
 	},
 	module: {
-		// import/exports
 		rules: [{
 			test: /\.css$/,
 			use: [ 'vue-style-loader', 'css-loader'],
@@ -117,7 +116,13 @@ module.exports = {
 			'CodeMirror':       'codemirror',
 		}),
 
-		new ForkTsCheckerWebpackPlugin({}),
+		new ForkTsCheckerWebpackPlugin({
+			typescript: {
+				extensions: {
+					vue: true,
+				},
+			  },
+		}),
 		new VueLoaderPlugin(),
 		new CircularDependencyPlugin({
 			// `onStart` is called before the cycle detection starts

@@ -300,13 +300,36 @@ export const blacklab = {
 	},
 
 	getSnippet: (indexId: string, docId: string, hitstart: number, hitend: number, wordsaroundhit: number = 50, requestParameters?: AxiosRequestConfig) => {
-		return getOrPost<BLTypes.BLHitSnippet>(blacklabPaths.snippet(indexId, docId), {
+		return getOrPost<BLTypes.BLHitSnippetApi>(blacklabPaths.snippet(indexId, docId), {
 			hitstart,
 			hitend,
 			// when requesting 0, blacklab returns a differently shaped object (since 4), which causes issues.
 			// instead of {left, match, right}, we receive {snippet}
 			wordsaroundhit: Math.max(1, wordsaroundhit)
-		}, requestParameters);
+		}, requestParameters)
+		.then<BLTypes.BLHitSnippet>(snippet => {
+			const match = 'match' in snippet ? snippet.match : snippet.snippet;
+			const leftPlaceholder: BLTypes.BLHitSnippetPart = Object.entries(match).reduce<BLTypes.BLHitSnippetPart>((acc, [key, value]) => {
+				acc[key] = [];
+				return acc;
+			}, {punct: []});
+			const rightPlaceholder = {...leftPlaceholder};
+
+			const r: BLTypes.BLHitSnippet = {
+				left: 'left' in snippet ? snippet.left! : leftPlaceholder,
+				match,
+				right: 'right' in snippet ? snippet.right! : rightPlaceholder,
+			}
+
+			// @ts-ignore
+			if (snippet.docPid != null) r.docPid = snippet.docPid;
+			// @ts-ignore
+			if (snippet.start != null) r.start = snippet.start;
+			// @ts-ignore
+			if (snippet.end != null) r.end = snippet.end;
+
+			return r;
+		});
 	},
 
 	getTermFrequencies: (indexId: string, annotationId: string, values?: string[], filter?: string, requestParameters?: AxiosRequestConfig) => {

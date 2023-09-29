@@ -432,11 +432,24 @@ export interface BLCaptureGroup  { // Jesse
 	end: number;
 }
 
+/** Whatever BlackLab returns. There's a couple versions, we do some massaging to unify them. */
+export type BLHitSnippetApi = ({
+	left?: BLHitSnippetPart;
+	right?: BLHitSnippetPart;
+	match: BLHitSnippetPart;
+}|{
+	snippet: BLHitSnippetPart;
+})&{
+	docPid: string;
+	start: number;
+	end: number;
+}
+
 /** Contains all the AnnotatedField (previously token/word "properties") values for tokens in or around a hit */
 export interface BLHitSnippet {
-	left: BLHitSnippetPart;
+	left?: BLHitSnippetPart;
 	match: BLHitSnippetPart;
-	right: BLHitSnippetPart;
+	right?: BLHitSnippetPart;
 	captureGroups?: BLCaptureGroup[]; // Jesse
 }
 

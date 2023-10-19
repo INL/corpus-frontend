@@ -27,7 +27,7 @@ export function init(which: keyof typeof endpoints, url: string, settings: Parti
 	});
 }
 
-init('blacklab', BLS_URL, {params: {outputFormat: 'json'}});
+init('blacklab', BLS_URL, {params: {outputformat: 'json'}});
 
 // We need this for transforming metadata fields in reponses from (optional) strings to (required) arrays
 // i.e. polyfilling missing document info fields in responses.

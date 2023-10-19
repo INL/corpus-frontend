@@ -36,14 +36,14 @@
 							<tr><td colspan="2"><b><xsl:value-of select="name"/>:</b></td></tr>
 							<xsl:for-each select="fields/field">
 								<xsl:variable name="fieldName" select="."/>
+								<xsl:variable name="fieldValue" select="string-join(/blacklabResponse/docInfo/*[name()=$fieldName]/value/text(), ', ')">
 								<xsl:variable name="fieldDisplayName" select="/blacklabResponse/metadataFieldDisplayNames/*[name()=$fieldName]" />
 
-								<tr><td style="padding-left: 0.5em"><xsl:value-of select="$fieldDisplayName" /></td><td><xsl:value-of select="." /></td></tr>
+								<tr><td style="padding-left: 0.5em"><xsl:value-of select="$fieldDisplayName" /></td><td><xsl:value-of select="$fieldValue" /></td></tr>
 							</xsl:for-each>
 						</xsl:for-each>
 					</xsl:when>
 					<xsl:otherwise>
-
 						<xsl:for-each select="*[name()!='mayView' and name() != 'lengthInTokens']">
 							<xsl:variable name="fieldName" select="name()"/>
 							<xsl:variable name="fieldDisplayName" select="/blacklabResponse/metadataFieldDisplayNames/*[name()=$fieldName]" />

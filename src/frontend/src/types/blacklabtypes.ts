@@ -88,6 +88,16 @@ export interface BLIndex {
 	tokenCount?: number;
 }
 
+export interface BLRelationInfo {
+	/** "inline tags" in the corpus, with their number of occurances. */
+	spans: Record<string, number>;
+	/** Only when relations have been indexed in this corpus. */
+	relations?: {
+		/** Relations are always stored in a "dep" property for now? */
+		dep: Record<string, number>;
+	}
+}
+
 export interface BLUser {
 	/** When !loggedIn: false, when loggedIn, true/false depending on whether user has hit the private corpora limit. */
 	canCreateIndex: boolean;

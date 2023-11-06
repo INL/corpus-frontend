@@ -59,6 +59,8 @@ export const blacklabPaths = {
 	root: () =>                                     './',
 	index: (indexId: string) =>                     `${indexId}/`,
 	indexStatus: (indexId: string) =>               `${indexId}/status/`,
+	/** Retrieve the relations/inline tags in the corpus. Since 4.0 */
+	relations: (indexId: string) =>                 `${indexId}/relations/`,
 	documentUpload: (indexId: string) =>            `${indexId}/docs/`,
 	shares: (indexId: string) =>                    `${indexId}/sharing/`,
 	formats: () =>                                  `input-formats/`,
@@ -196,6 +198,9 @@ export const blacklab = {
 
 	getDocumentInfo: (indexId: string, documentId: string, params: { query?: string; } = {}, requestParameters?: AxiosRequestConfig) =>
 		getOrPost<BLTypes.BLDocument>(blacklabPaths.docInfo(indexId, documentId), params, requestParameters),
+
+	getRelations: (indexId: string, requestParameters?: AxiosRequestConfig) => endpoints.blacklab
+		.get<BLTypes.BLRelationInfo>(blacklabPaths.relations(indexId), requestParameters),
 
 	getHits: (indexId: string, params: BLTypes.BLSearchParameters, requestParameters?: AxiosRequestConfig) => {
 		const {token: cancelToken, cancel} = axios.CancelToken.source();

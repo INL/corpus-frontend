@@ -17,6 +17,7 @@ import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
 import { mapReduce, MapOf } from '@/utils';
 import { stripIndent, html } from 'common-tags';
+import { blacklab } from '@/api';
 
 type CustomView = {
 	id: string;
@@ -370,7 +371,6 @@ const actions = {
 			within: {
 				enable: b.commit((state, payload: boolean) => state.search.extended.within.enabled = payload, 'search_extended_within_enable'),
 				elements: b.commit((state, payload: ModuleRootState['search']['extended']['within']['elements']) => {
-					// explicitly retrieve this annotations as it's supposed to be internal and thus not included in any getters.
 					if (payload.findIndex(v => v.value === '') === -1) {
 						payload.unshift({
 							value: '',
@@ -378,22 +378,7 @@ const actions = {
 							title: null
 						});
 					}
-					const annot = CorpusStore.get.allAnnotationsMap().starttag;
-					const validValuesMap = mapReduce(annot ? annot.values : undefined, 'value');
-					validValuesMap[''] = validValuesMap[''] || {
-						value: '',
-						label: 'Document',
-						title: null
-					};
-
-					state.search.extended.within.elements = payload.filter(v => {
-						const valid = v.value in validValuesMap;
-						if (!valid) { console.warn(stripIndent`
-							Trying to register element name ${v.value} for 'within' clause, but it doesn't exist in the index.
-							This might happen when there are too many tags recorded in the index, but also when it just doesn't occur (or tags aren't indexed).`);
-						}
-						return valid;
-					});
+					state.search.extended.within.elements = payload;
 				}, 'search_extended_within_annotations'),
 			},
 		},
@@ -733,29 +718,40 @@ const init = () => {
 	cur = initialState.results.shared.sortMetadataIds.filter(id => allMetadataFieldsMap[id]);
 	actions.results.shared.sortMetadataIds(cur.length ? cur : defaultMetadataToShow);
 
-	// "within"
+	// "within" selector (i.e. search within paragraphs/sentences/documents, whatever else is indexed (called "inline tags" in BlackLab)).
 	if (!initialState.search.extended.within.elements.length) {
-		// explicitly retrieve this annotations as it's supposed to be internal and thus not included in any getters.
-		const annot = allAnnotationsMap.starttag;
-		const validValues = cloneDeep(annot && annot.values ? annot.values : []);
-		validValues.forEach(v => {
-			if (!v.label.trim() || v.label === v.value) {
-				if (v.value === 'p') { v.label = 'paragraph'; }
-				else if (v.value === 's') { v.label = 'sentence'; }
-				else if (!v.value) { v.label = 'document'; }
-				else { v.label = v.value; }
-			}
-		});
+		function setValuesForWithin(validValues: AppTypes.NormalizedAnnotation['values']) {
+			if (!validValues || !validValues.length) {
+				console.warn('Within clause not supported in this corpus, no relations indexed');
+				actions.search.extended.within.enable(false);
+				return;
+			};
 
-		if (validValues.length) {
+			validValues.forEach(v => {
+				if (!v.label.trim() || v.label === v.value) {
+					if (v.value === 'p') { v.label = 'paragraph'; }
+					else if (v.value === 's') { v.label = 'sentence'; }
+					else if (!v.value) { v.label = 'document'; }
+					else { v.label = v.value; }
+				}
+			});
+
 			if (validValues.length <= 6) { // an arbitrary limit
 				actions.search.extended.within.elements(validValues);
 			} else {
 				console.warn(`Within clause can contain ${validValues.length} different values, ignoring...`);
 			}
-		} else {
-			console.warn('Within clause not supported in this corpus, no starttags indexed');
-			actions.search.extended.within.enable(false);
+		}
+
+		// explicitly retrieve this annotations as it's supposed to be internal and thus not included in any getters.
+		const annot = allAnnotationsMap.starttag;
+		if (annot) setValuesForWithin(annot.values?.length ? cloneDeep(annot.values) : undefined);
+		else { // blacklab 4.0 removed the 'starttag' annotation. We have to retrieve values from a separate endpoint now.
+			blacklab.getRelations(INDEX_ID)
+				.then(relations => Object.keys(relations.spans).map(v => ({value: v, label: v, title: null}))) // map back to the old format
+				.then(v => {
+					console.log(v); setValuesForWithin(v);
+				});
 		}
 	}
 

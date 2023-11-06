@@ -2,22 +2,20 @@
 	<div class="results-container" :disabled="request">
 		<span v-if="request" class="fa fa-spinner fa-spin searchIndicator" style="position:absolute; left: 50%; top:15px"></span>
 
-		<div class="crumbs-totals">
-			<ol class="breadcrumb resultscrumb">
-				<!-- no disabled state; use active class instead... -->
-				<li v-for="(crumb, index) in breadCrumbs" :key="index" :class="{'active': crumb.active || !!request}">
-					<a v-if="!crumb.active && !request"
-						role="button"
-						:title="crumb.title"
-						:disabled="request"
-						:class="request ? 'disabled' : undefined"
-						@click.prevent="!request && crumb.onClick ? crumb.onClick() : undefined"
-					>{{crumb.label}}</a>
-					<template v-else>{{crumb.label}}</template>
-				</li>
-			</ol>
+		<component v-if="resultsHaveData"
+			:is="resultComponentName"
+			v-bind="resultComponentData"
 
-			<Totals v-if="results"
+			@sort="sort = $event"
+			@viewgroup="originalGroupBySettings = {page, sort}; viewGroup = $event.id; _viewGroupName = $event.displayName;"
+		>
+
+			<BreadCrumbs slot="breadcrumbs"
+				:crumbs="breadCrumbs"
+				:disabled="!!request"
+			/>
+
+			<Totals slot="totals"
 				class="result-totals"
 				:initialResults="results"
 				:type="id"
@@ -25,34 +23,45 @@
 
 				@update="paginationResults = $event"
 			/>
-		</div>
 
-		<template v-if="resultsHaveData">
-			<component
-				:is="resultComponentName"
-				v-bind="resultComponentData"
+			<GroupBy slot="groupBy" :type="id"
+				:disabled="!!request"
+				:originalGroupBySettings="originalGroupBySettings"
+				@viewgroupLeave="leaveViewgroup"
+			/>
 
-				@sort="sort = $event"
-				@viewgroup="originalGroupBySettings = {page, sort}; viewGroup = $event.id; _viewGroupName = $event.displayName;"
-			>
-				<GroupBy slot="groupBy" :type="id"
-					:disabled="!!request"
-					:originalGroupBySettings="originalGroupBySettings"
-					@viewgroupLeave="leaveViewgroup"
-				/>
+			<Pagination slot="pagination"
+				style="display: block; margin: 10px 0;"
 
-				<Pagination slot="pagination"
-					style="display: block; margin: 10px 0;"
+				:page="pagination.shownPage"
+				:maxPage="pagination.maxShownPage"
+				:disabled="!!request"
 
-					:page="pagination.shownPage"
-					:maxPage="pagination.maxShownPage"
-					:disabled="!!request"
+				@change="page = $event"
+			/>
 
-					@change="page = $event"
-				/>
-			</component>
-			<hr>
-		</template>
+
+			<Sort slot="sort"
+				v-model="sort"
+				:hits="isHits"
+				:docs="isDocs"
+				:groups="isGroups"
+
+				:corpus="corpus"
+				:annotations="sortAnnotations"
+				:metadata="sortMetadata"
+
+				:disabled="!!request"
+			/>
+
+			<Export slot="export"
+				:results="results"
+				:disabled="!!request"
+				:annotations="exportAnnotations"
+				:metadata="exportMetadata"
+			/>
+
+		</component>
 		<div v-else-if="results" class="no-results-found">No results found.</div>
 		<div v-else-if="!valid" class="no-results-found">
 			This view is inactive because no search criteria for words were specified.
@@ -65,82 +74,11 @@
 			<button type="button" class="btn btn-default" title="Try again with current search settings" @click="markDirty();">Try again</button>
 		</div>
 
-		<div v-show="resultsHaveData" class="text-right">
-			<SelectPicker
-				data-class="btn-sm btn-default"
-				placeholder="Sort by..."
-				data-menu-width="grow"
 
-				allowHtml
-				hideDisabled
-				allowUnknownValues
-				right
 
-				:searchable="sortOptions.searchable"
-				:options="sortOptions.options"
-				:disabled="!!request"
-
-				v-model="sort"
-			/>
-
-			<button v-if="isDocs && resultsHaveHits"
-				type="button"
-				class="btn btn-primary btn-sm"
-
-				@click="showDocumentHits = !showDocumentHits"
-			>
-				{{showDocumentHits ? 'Hide Hits' : 'Show Hits'}}
-			</button>
-			<button v-if="isHits"
-				type="button"
-				class="btn btn-primary btn-sm"
-
-				@click="showTitles = !showTitles"
-			>
-				{{showTitles ? 'Hide' : 'Show'}} Titles
-			</button>
-
-			<div class="btn-group" v-if="results && exportEnabled">
-				<button
-					type="button"
-					class="btn btn-default btn-sm"
-					:disabled="downloadInProgress || !resultsHaveData || !!request"
-					:title="downloadInProgress ? 'Downloading...' : 'Export results as a CSV file'"
-
-					@click="downloadCsv(false)"
-				>
-					<template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner fa-spin"></span>&nbsp;</template>Export
-				</button>
-				<button
-					type="button"
-					class="btn btn-default btn-sm"
-					:disabled="downloadInProgress || !resultsHaveData || !!request"
-					:title="downloadInProgress ? 'Downloading...' : 'Export Results as a CSV file for use with Excel'"
-
-					@click="downloadCsv(true)"
-				>
-					<template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner fa-spin"></span>&nbsp;</template>Export for Excel
-				</button>
-				<!-- <button type="button"  class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-					<span class="caret"></span>
-				</button> -->
-				<!-- <ul class="dropdown-menu dropdown-menu-right" @click.stop>
-					<li><a class="checkbox" title="Adds a header describing the query used to generate these results.">
-						<label><input type="checkbox" v-model="exportSummary">Include summary</label></a>
-					</li>
-					<li><a class="checkbox"
-						title="Adds a header line declaring that the file is comma-separated,
-						for some versions of microsoft excel this is required to correctly display the file."
-					><label><input type="checkbox" v-model="exportSeparator">Export for excel</label></a></li>
-					<li v-if="isHits"><a class="checkbox"
-						title="Also export document metadata. Warning: this might result in very large exports!"
-					><label><input type="checkbox" v-model="exportHitMetadata">Export metadata</label></a></li>
-				</ul> -->
-			</div>
-		</div>
-		<hr>
 		<Debug>
 			<div>
+				<hr>
 				<div>BlackLab response: </div>
 				<pre v-if="results">{{JSON.stringify(results.summary, undefined, 2)}}</pre>
 			</div>
@@ -150,7 +88,6 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import {saveAs} from 'file-saver';
 
 import jsonStableStringify from 'json-stable-stringify';
 
@@ -169,15 +106,17 @@ import HitResults from '@/pages/search/results/table/HitResults.vue';
 import DocResults from '@/pages/search/results/table/DocResults.vue';
 import Totals from '@/pages/search/results/ResultTotals.vue';
 import GroupBy from '@/pages/search/results/groupby/GroupBy.vue';
+import Sort from '@/pages/search/results/Sort.vue';
+import BreadCrumbs from '@/pages/search/results/BreadCrumbs.vue';
+import Export from '@/pages/search/results/Export.vue';
 
 import Pagination from '@/components/Pagination.vue';
-import SelectPicker, {OptGroup} from '@/components/SelectPicker.vue';
+import SelectPicker from '@/components/SelectPicker.vue';
 
 import debug, { debugLog } from '@/utils/debug';
 
 import * as BLTypes from '@/types/blacklabtypes';
-import cloneDeep from 'clone-deep';
-import { getAnnotationSubset, getMetadataSubset } from '@/utils';
+import { NormalizedIndex } from '@/types/apptypes';
 
 export default Vue.extend({
 	components: {
@@ -187,7 +126,10 @@ export default Vue.extend({
 		DocResults,
 		Totals,
 		GroupBy,
-		SelectPicker
+		SelectPicker,
+		Sort,
+		BreadCrumbs,
+		Export
 	},
 	props: {
 		id: String,
@@ -204,8 +146,6 @@ export default Vue.extend({
 		cancel: null as null|Api.Canceler,
 
 		_viewGroupName: null as string|null,
-		showTitles: true,
-		showDocumentHits: false,
 
 		downloadInProgress: false, // csv download
 		// exportSummary: false,
@@ -299,33 +239,7 @@ export default Vue.extend({
 			this.request = null;
 			this.cancel= null;
 		},
-		downloadCsv(excel: boolean) {
-			if (this.downloadInProgress || !this.results) {
-				return;
-			}
 
-			this.downloadInProgress = true;
-			const apiCall = this.id === 'hits' ? Api.blacklab.getHitsCsv : Api.blacklab.getDocsCsv;
-			const params = cloneDeep(this.results.summary.searchParam);
-			if (UIStore.getState().results.shared.detailedAnnotationIds) {
-				params.listvalues = UIStore.getState().results.shared.detailedAnnotationIds!.join(',');
-			}
-			if (UIStore.getState().results.shared.detailedMetadataIds) {
-				params.listmetadatavalues = UIStore.getState().results.shared.detailedMetadataIds!.join(',');
-			}
-			(params as any).csvsepline = !!excel;
-			(params as any).csvsummary = true;
-
-			debugLog('starting csv download', this.id, params);
-			apiCall(this.indexId, params).request
-			.then(
-				blob => saveAs(blob, 'data.csv'),
-				error => debugLog('Error downloading csv file', error)
-			)
-			.finally(() => {
-				this.downloadInProgress = false;
-			});
-		},
 		scrollToResults() {
 			if (this.scroll) {
 				this.scroll = false;
@@ -343,7 +257,6 @@ export default Vue.extend({
 		}
 	},
 	computed: {
-
 		groupBy: {
 			get(): string[] { return this.store.getState().groupBy; },
 			set(v: string[]) { this.store.actions.groupBy(v); }
@@ -364,6 +277,13 @@ export default Vue.extend({
 			get(): string|null { return this.store.getState().viewGroup; },
 			set(v: string|null) { this.store.actions.viewGroup(v); }
 		},
+
+		corpus(): NormalizedIndex { return CorpusStore.getState(); },
+		sortAnnotations(): string[] { return UIStore.getState().results.shared.sortAnnotationIds; },
+		sortMetadata(): string[] { return UIStore.getState().results.shared.sortMetadataIds; },
+		exportAnnotations(): string[]|null { return UIStore.getState().results.shared.detailedAnnotationIds; },
+		exportMetadata(): string[]|null { return UIStore.getState().results.shared.detailedAnnotationIds; },
+
 
 		exportEnabled(): boolean { return UIStore.getState().results.shared.exportEnabled; },
 
@@ -436,7 +356,7 @@ export default Vue.extend({
 		isHits(): boolean { return BLTypes.isHitResults(this.results); },
 		isDocs(): boolean { return BLTypes.isDocResults(this.results); },
 		isGroups(): boolean { return BLTypes.isGroups(this.results); },
-		resultsHaveHits(): boolean { return this.results != null && !!this.results.summary.searchParam.patt; },
+
 		viewGroupName(): string {
 			if (this.viewGroup == null) { return ''; }
 			return this._viewGroupName ? this._viewGroupName :
@@ -493,73 +413,7 @@ export default Vue.extend({
 			r[r.length -1].active = true;
 			return r;
 		},
-		sortOptions(): {
-			options: OptGroup[],
-			searchable: boolean
-		} {
-			// NOTE: we need to always pass all available options, then hide invalids based on displayed results
-			// if we don't do this, sorting will be cleared on initial page load
-			// This happens because results aren't loaded yet, thus isHits/isDocs/isGroups all return false, and no options would be available
-			// then the selectpicker will reset value to undefined, which clears it in the store, which updates the url, etc.
-			const opts = [] as OptGroup[];
 
-			if (this.isGroups) {
-				opts.push({
-					label: 'Groups',
-					options: [{
-						label: 'Sort by Group Name',
-						value: 'identity',
-					}, {
-						label: 'Sort by Group Name (descending)',
-						value: '-identity',
-					}, {
-						label: 'Sort by Size',
-						value: 'size',
-					}, {
-						label: 'Sort by Size (ascending)',
-						value: '-size', // numeric sorting is inverted: https://github.com/INL/corpus-frontend/issues/340
-					}]
-				});
-			}
-
-			if (this.isHits) {
-				opts.push(...getAnnotationSubset(
-					UIStore.getState().results.shared.sortAnnotationIds,
-					CorpusStore.get.annotationGroups(),
-					CorpusStore.get.allAnnotationsMap(),
-					'Sort',
-					CorpusStore.get.textDirection(),
-					this.debug.debug
-				));
-			}
-			if (this.isDocs) {
-				opts.push({
-					label: 'Documents',
-					options: [{
-						label: 'Sort by hits',
-						value: 'numhits'
-					}, {
-						label: 'Sort by hits (ascending)',
-						value: '-numhits' // numeric sorting is inverted: https://github.com/INL/corpus-frontend/issues/340
-					}]
-				});
-			}
-
-			if (!this.isGroups) {
-				opts.push(...getMetadataSubset(
-					UIStore.getState().results.shared.sortMetadataIds,
-					CorpusStore.get.metadataGroups(),
-					CorpusStore.get.allMetadataFieldsMap(),
-					'Sort',
-					this.debug.debug
-				));
-			}
-
-			return {
-				options: opts,
-				searchable: opts.reduce((a, g) => a + g.options.length, 0) > 12
-			};
-		},
 
 		resultComponentName(): string {
 			if (this.isGroups) {
@@ -581,13 +435,12 @@ export default Vue.extend({
 					results: this.results,
 					disabled: !!this.request,
 					sort: this.sort,
-					showTitles: this.showTitles,
+
 				};
 				case 'DocResults': return {
 					results: this.results,
 					disabled: !!this.request,
 					sort: this.sort,
-					showDocumentHits: this.showDocumentHits
 				};
 			}
 		},
@@ -630,7 +483,7 @@ export default Vue.extend({
 	align-items:flex-start;
 	justify-content:space-between;
 
-	> .breadcrumb.resultscrumb {
+	@at-root .breadcrumb.resultscrumb {
 		background: white;
 		border-bottom: 1px solid rgba(0,0,0,0.1);
 		border-radius: 0;
@@ -638,7 +491,7 @@ export default Vue.extend({
 		margin-bottom: 0;
 		flex-grow: 1;
 	}
-	> .result-totals {
+	@at-root .result-totals {
 		background: white;
 		padding: 8px 8px 0 15px;
 		flex: none;

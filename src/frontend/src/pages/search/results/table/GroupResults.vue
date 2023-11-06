@@ -1,5 +1,9 @@
 <template>
 	<div>
+		<div class="crumbs-totals">
+			<slot name="breadcrumbs"/>
+			<slot name="totals"/>
+		</div>
 		<slot name="groupBy"/>
 		<slot name="pagination"/>
 
@@ -13,6 +17,7 @@
 				>{{option}}</button>
 			</div>
 		</div>
+
 
 		<table class="group-table">
 			<thead>
@@ -126,6 +131,13 @@
 				</template>
 			</tbody>
 		</table>
+
+		<hr>
+		<div class="text-right">
+			<slot name="sort"/>
+			<slot name="export"/>
+		</div>
+
 	</div>
 </template>
 
@@ -846,14 +858,6 @@ export default Vue.extend({
 	box-shadow: inset 0 1px 2px 0px rgba(0,0,0,0.1);
 	margin-bottom: 8px;
 	padding: 8px
-}
-
-.chart-mode-picker {
-	font-weight: bold;
-	> li:not(:last-child) {
-		border-right: 2px solid;
-		border-color: inherit;
-	}
 }
 
 </style>

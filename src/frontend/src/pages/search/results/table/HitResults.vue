@@ -1,5 +1,11 @@
 <template>
 	<div>
+
+		<div class="crumbs-totals">
+			<slot name="breadcrumbs"/>
+			<slot name="totals"/>
+		</div>
+
 		<slot name="groupBy"/>
 		<slot name="pagination"/>
 
@@ -190,6 +196,23 @@
 				</template>
 			</tbody>
 		</table>
+
+		<hr>
+
+		<div class="text-right">
+			<slot name="sort"/>
+			<button
+				type="button"
+				class="btn btn-primary btn-sm"
+
+				@click="showTitles = !showTitles"
+			>
+				{{showTitles ? 'Hide' : 'Show'}} Titles
+			</button>
+			<slot name="export"/>
+		</div>
+
+		<!-- moved -->
 	</div>
 </template>
 
@@ -259,14 +282,15 @@ export default Vue.extend({
 	props: {
 		results: Object as () => BLTypes.BLHitResults,
 		sort: String as () => string|null,
-		showTitles: Boolean as () => boolean,
+		// showTitles: Boolean as () => boolean,
 		disabled: Boolean
 	},
 	data: () => ({
 		citations: {} as {
 			[key: number]: CitationData;
 		},
-		pinnedTooltip: null as null|number
+		pinnedTooltip: null as null|number,
+		showTitles: true
 	}),
 	computed: {
 		leftIndex(): number { return this.textDirection === 'ltr' ? 0 : 2; },

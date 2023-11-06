@@ -203,7 +203,7 @@ export default Vue.extend({
 	display: inline-flex;
 	flex-wrap: nowrap;
 	max-width: 100%;
-	margin-bottom: 5px;
+	margin-bottom: 0;
 
 	&.context-enabled {
 		> .groupselect {

@@ -1,5 +1,10 @@
 <template>
 	<div>
+		<div class="crumbs-totals">
+			<slot name="breadcrumbs"/>
+			<slot name="totals"/>
+		</div>
+
 		<slot name="groupBy"/>
 		<slot name="pagination"/>
 
@@ -60,6 +65,21 @@
 				</template>
 			</tbody>
 		</table>
+
+		<hr>
+		<div class="text-right">
+			<slot name="sort"/>
+			<button v-if="resultsHaveHits"
+				type="button"
+				class="btn btn-primary btn-sm"
+
+				@click="showDocumentHits = !showDocumentHits"
+			>
+				{{showDocumentHits ? 'Hide Hits' : 'Show Hits'}}
+			</button>
+			<slot name="export"/>
+		</div>
+
 	</div>
 </template>
 
@@ -93,13 +113,15 @@ export default Vue.extend({
 	props: {
 		results: Object as () => BLDocResults,
 		sort: String as () => null|string,
-		showDocumentHits: Boolean,
 		disabled: Boolean
 	},
 	data: () => ({
 		pinnedTooltip: null as null|number,
+		showDocumentHits: false
 	}),
 	computed: {
+		resultsHaveHits(): boolean { return !!this.results?.summary.searchParam.patt;},
+
 		concordanceAnnotationId(): string { return UIStore.getState().results.shared.concordanceAnnotationId; },
 		concordanceAsHtml(): boolean { return UIStore.getState().results.shared.concordanceAsHtml; },
 		transformSnippets(): null|((s: BLHitSnippet) => void) { return UIStore.getState().results.shared.transformSnippets; },

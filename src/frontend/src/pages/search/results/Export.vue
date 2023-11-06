@@ -1,0 +1,87 @@
+<template>
+	<div class="btn-group">
+		<button
+			type="button"
+			class="btn btn-default btn-sm"
+			:disabled="downloadInProgress || disabled"
+			:title="downloadInProgress ? 'Downloading...' : 'Export results as a CSV file'"
+
+			@click="downloadCsv(false)"
+		>
+			<template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner fa-spin"></span>&nbsp;</template>Export
+		</button>
+		<button
+			type="button"
+			class="btn btn-default btn-sm"
+			:disabled="downloadInProgress || disabled"
+			:title="downloadInProgress ? 'Downloading...' : 'Export Results as a CSV file for use with Excel'"
+
+			@click="downloadCsv(true)"
+		>
+			<template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner fa-spin"></span>&nbsp;</template>Export for Excel
+		</button>
+		<!-- <button type="button"  class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+			<span class="caret"></span>
+		</button> -->
+		<!-- <ul class="dropdown-menu dropdown-menu-right" @click.stop>
+			<li><a class="checkbox" title="Adds a header describing the query used to generate these results.">
+				<label><input type="checkbox" v-model="exportSummary">Include summary</label></a>
+			</li>
+			<li><a class="checkbox"
+				title="Adds a header line declaring that the file is comma-separated,
+				for some versions of microsoft excel this is required to correctly display the file."
+			><label><input type="checkbox" v-model="exportSeparator">Export for excel</label></a></li>
+			<li v-if="isHits"><a class="checkbox"
+				title="Also export document metadata. Warning: this might result in very large exports!"
+			><label><input type="checkbox" v-model="exportHitMetadata">Export metadata</label></a></li>
+		</ul> -->
+	</div>
+</template>
+
+<script lang="ts">
+import Vue from 'vue';
+import cloneDeep from 'clone-deep';
+import {saveAs} from 'file-saver';
+
+import * as Api from '@/api';
+
+import { BLSearchResult } from '@/types/blacklabtypes';
+import { debugLog } from '@/utils/debug';
+
+export default Vue.extend({
+	props: {
+		results: Object as () => BLSearchResult,
+		type: String as () => 'hits'|'docs',
+		annotations: Array as () => string[],
+		metadata: Array as () => string[],
+
+		disabled: Boolean
+	},
+	data: () => ({
+		downloadInProgress: false,
+	}),
+	methods: {
+		downloadCsv(excel: boolean) {
+			if (this.downloadInProgress || !this.results) {
+				return;
+			}
+
+			this.downloadInProgress = true;
+			const apiCall = this.type === 'hits' ? Api.blacklab.getHitsCsv : Api.blacklab.getDocsCsv;
+			const params = cloneDeep(this.results.summary.searchParam);
+			if (this.annotations) params.listvalues = this.annotations!.join(',');
+			if (this.metadata) params.listmetadatavalues = this.metadata.join(',');
+			(params as any).csvsepline = !!excel;
+			(params as any).csvsummary = true;
+
+			debugLog('starting csv download', this.type, params);
+			apiCall(INDEX_ID, params).request
+			.then(
+				blob => saveAs(blob, 'data.csv'),
+				error => debugLog('Error downloading csv file', error)
+			)
+			.finally(() => this.downloadInProgress = false);
+		},
+	}
+})
+</script>

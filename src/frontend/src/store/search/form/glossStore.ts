@@ -55,10 +55,12 @@ type Glossing = {
 }
 
 type Settings = {
-	gloss_fields: GlossFieldDescription[],
 	/** Any trailing '/' will be stripped. */
-	blackparank_server: string,
-	blackparank_instance: string,
+	gloss_server: string,
+	/** Which lexicon inside the gloss_server. quine_lexicon in our demo. */
+	instance: string,
+
+	gloss_fields: GlossFieldDescription[],
 	get_hit_id(a: BLHit): string,
 	get_hit_range_id(a: BLHit): {startid: string, endid: string},
 }
@@ -177,7 +179,7 @@ const actions = {
 			return
 		};
 		const q = validKeys.reduce<Record<string, string>>((acc, k) => { acc[k] = p[k]; return acc; }, {});
-		glossApi.getCql(state.settings.blackparank_instance, INDEX_ID, JSON.stringify(q))
+		glossApi.getCql(state.settings.instance, INDEX_ID, JSON.stringify(q))
 			.then(cql => {
 				actions.setQueryCql(cql);
 				PatternStore.actions.glosses(state.gloss_query_cql);
@@ -203,7 +205,7 @@ const actions = {
 	storeToDatabase: b.commit((state, payload: {glossings: Glossing[]}) => {
 		if (!state.settings) { console.error('Trying to store gloss in database, but not configured.'); return; }
 		glossApi
-		.storeGlosses(state.settings.blackparank_instance, payload.glossings)
+		.storeGlosses(state.settings.instance, payload.glossings)
 		.catch(e => {
 			console.error(e);
 			alert(e.message);
@@ -213,7 +215,7 @@ const actions = {
 		if (!state.settings) { console.error('Trying to set current page, but not configured.'); return; }
 		state.current_page = payload
 		glossApi
-			.getGlosses(state.settings.blackparank_instance, INDEX_ID, payload)
+			.getGlosses(state.settings.instance, INDEX_ID, payload)
 			.then(glossings => glossings.forEach(actions.addGlossing))
 			.catch(e => {
 				console.error(e);
@@ -222,8 +224,8 @@ const actions = {
 	}, 'set_current_page'),
 	loadSettings: b.commit((state, payload: Settings) => {
 		state.settings = payload
-		state.settings.blackparank_server = state.settings.blackparank_server.replace(/\/$/, '');
-		initGlossEndpoint('gloss', state.settings.blackparank_server);
+		state.settings.gloss_server = state.settings.gloss_server.replace(/\/$/, '');
+		initGlossEndpoint('gloss', state.settings.gloss_server);
 	} , 'gloss_load_settings'),
 	replace: b.commit((state, payload: HistoryState) => {
 		Object.assign(state, payload);

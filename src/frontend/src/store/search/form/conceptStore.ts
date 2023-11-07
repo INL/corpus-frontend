@@ -8,15 +8,17 @@ import * as PatternStore from '@/store/search/form/patterns';
 import { uniq } from '@/utils'
 import cloneDeep from 'clone-deep';
 
-import { init as initEndpoint, conceptApi } from '@/api';
+import { init as initConceptEndpoint, conceptApi } from '@/api';
 import Vue from 'vue';
 
 type Settings = {
 	/** guaranteed not to end in '/' */
 	concept_server: string,
+	/** Which lexicon inside the concept_server. quine_lexicon in our demo. */
+	instance: string,
+
 	/** For sending to the back-end of the concept/blackparank stuff. Should live in backend config probably. */
 	blacklab_server: string,
-	blackparank_instance: string,
 	lexit_server: string,
 	lexit_instance: string,
 	searchable_elements: string[]
@@ -143,9 +145,9 @@ const actions = {
 		state.settings = payload;
 		state.settings.blacklab_server = (state.settings.blacklab_server || BLS_URL).replace(/\/$/, '');
 		state.settings.concept_server = state.settings.concept_server.replace(/\/$/, '');
-		initEndpoint('concept', state.settings.concept_server);
+		initConceptEndpoint('concept', state.settings.concept_server);
 
-		conceptApi.getMainFields(state.settings.blackparank_instance, INDEX_ID)
+		conceptApi.getMainFields(state.settings.instance, INDEX_ID)
 			.then(response => state.main_fields = uniq(response.data.map(x => x.field)));
 	}, 'concept_load_settings'),
 };

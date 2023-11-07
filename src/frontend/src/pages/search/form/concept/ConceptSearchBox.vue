@@ -20,8 +20,8 @@
 						class="form-control"
 						placeholder="...concept..."
 
-						:processData="get_cluster_values"
-						:url="urls && urls.completionURLForConcept"
+						:getData="getConceptAutocompletes"
+
 						v-model="current_concept"
 					/>
 					<!-- <button @click="insertConcept" title="Add concept to lexicon">⤿ lexicon</button> -->
@@ -35,7 +35,7 @@
 							class="form-control"
 							placeholder="...term..."
 							:id="id + 'ac2'"
-							:getData="get_term_values"
+							:getData="getTermAutocompletes"
 							v-model="current_term"
 						/>
 
@@ -49,10 +49,10 @@
 
 
 		<div class="terms">
-			<div v-for="(t,i) in terms" :key="i">
-				<label v-if="t.term">
-					<input type="checkbox" :value="t.term" v-model="checked_terms[t.term]"/>
-					{{ t.term }}
+			<div v-for="t in terms" :key="t">
+				<label>
+					<input type="checkbox" :value="t" v-model="checked_terms[t]"/>
+					{{ t }}
 				</label>
 			</div>
 		</div>
@@ -64,16 +64,13 @@
 <script lang="ts">
 import Vue from 'vue';
 
-import axios from 'axios'
-import qs from 'qs';
-
 import Autocomplete from '@/components/Autocomplete.vue';
 import * as CorpusStore from '@/store/search/corpus';
 import * as ConceptStore from '@/store/search/form/conceptStore';
-import { uniq } from '@/utils'
+import { mapReduce, uniq } from '@/utils'
 
 import SelectPicker from '@/components/SelectPicker.vue';
-import { blacklabPaths } from '@/api';
+import { conceptApi, blacklab } from '@/api';
 
 type Term = { term: string }
 
@@ -88,51 +85,46 @@ export default Vue.extend ( {
 	},
 	data: () => ({
 		debug: false,
+		/** A "field" of study, like "history", "philosophy", etc. */
 		search_field: '',
+		/** A "concept" within the "field", like the concept of "truth and falsehood" in the field of "philosophy" */
 		current_concept : '',
+		/** A world that falls within the concept, like "true", "false" */
 		current_term : '',
+		/** Which terms we're currently using. */
 		checked_terms: {} as Record<string, boolean>,
-		terms: [] as Term[],
+		/** All available terms. */
+		terms: [] as string[],
+		/** For cross-referencing which terms actually exist within the current corpus. */
 		corpus: CorpusStore.getState().id,
-		quine_lexicon: 'quine_lexicon' as string,
 
 		WITH_CREDENTIALS,
 	}),
 
 	methods : {
 		alert,
-		addTerm() {
-			if (!this.current_term || this.terms.find(t => t.term === this.current_term)) {
-				return;
-			}
-			this.terms.push({'term': this.current_term});
-			this.insertTerm();
+
+		getConceptAutocompletes(prefix: string): Promise<string[]> {
+			if (!prefix) return Promise.resolve([]);
+
+			return conceptApi.getTerms(this.settings.instance, this.search_field, prefix)
 		},
+		/** Autocomplete. Find all terms starting with the string. Search both the database and Blacklab. */
+		getTermAutocompletes(prefix: string): Promise<string[]> {
+			if (!prefix) return Promise.resolve([]);
+
+			const mainAnnotation = CorpusStore.get.firstMainAnnotation();
+			// TODO use api module.
+			return Promise.all([
+				conceptApi.getTerms(this.settings.instance, this.search_field, this.current_concept, prefix),
+				blacklab.getTermAutocomplete(CorpusStore.getState().id, mainAnnotation.annotatedFieldId, 'lemma', prefix)
+			])
+			.then(([pdb, corpus]) => uniq([...pdb, ...corpus]))
+		},
+
 		get_cluster_values(d: { data: ConceptStore.LexiconEntry[] }): string[] {
 			const vals = uniq(d.data.map(x  => x.cluster))
 			return vals
-		},
-		get_term_values(term: string): Promise<string[]> {
-			if (!term) return Promise.resolve([]);
-			const getTermsURL: string = this.term_search_url as string // this is correct.
-			if (!getTermsURL) {
-				return Promise.resolve([]);
-			}
-			const mainAnnotation = CorpusStore.get.firstMainAnnotation();
-			// FIXME: hardcoded searching in lemma. Should be configurable
-			const getTermsFromBlackLabUrl = blacklabPaths.autocompleteAnnotation(CorpusStore.getState().id, mainAnnotation.annotatedFieldId, 'lemma');
-
-			// TODO use api module.
-			return Promise.all([
-				axios.get<{data: ConceptStore.LexiconEntry[]}>(getTermsURL, {
-					withCredentials: this.WITH_CREDENTIALS,
-					paramsSerializer: params => qs.stringify(params)
-				}).then(r => r.data.data.map(d => d.term).filter(t => !!t)),
-				axios.get<string[]>(getTermsFromBlackLabUrl, {
-					withCredentials: this.WITH_CREDENTIALS,
-					params: { term }
-				}).then(r => r.data)
-			]).then(([pdb, corpus]) => uniq([...pdb, ...corpus]))
 		},
 		insertConcept() {
 			if (!this.current_concept) return;
@@ -145,23 +137,14 @@ export default Vue.extend ( {
 		},
 		addToDatabase(concept: string, term?: string) {
 			if (!this.settings) return;
-			if (!credentials) {
-				alert('You need to be logged in to add terms to the lexicon')
-				return
-			}
-			const insertIt: any = {
-				corpus: this.corpus,
-				field: this.search_field,
-				concept: this.current_concept,
-			}
-			if (term) insertIt.term = term
-
-			const insertTerm =  encodeURIComponent(JSON.stringify(insertIt))
-			const url = `${this.settings.concept_server}/api?instance=${this.quine_lexicon}&insertTerm=${insertTerm}`
-
-			axios.get(url,{ auth: credentials })
-				.then(r => console.log('inserted term'))
-				.catch(console.error)
+			conceptApi.addConceptOrTermToDatabase(
+				this.settings.instance,
+				this.corpus,
+				this.search_field,
+				concept,
+				term
+			)
+			.then(() => console.log('inserted term'), console.error);
 		},
 		resetQuery() {
 			this.current_concept = ''
@@ -173,68 +156,36 @@ export default Vue.extend ( {
 
 	computed : {
 		main_fields: ConceptStore.get.main_fields,
-
+		fieldAndConcept(): {field: string, concept: string} {
+			return {field: this.search_field, concept: this.current_concept}
+		},
 		newValue(): ConceptStore.AtomicQuery[] {
 			return Object
 			.keys(this.checked_terms)
-			.filter(t => this.checked_terms[t] && t !== 'null')
+			.filter(t => this.checked_terms[t])
 			.map(t => ({field: 'lemma', value: t})); // TODO don't hardcode lemma!.
-		},
-		term_search_url(): string|null {
-			return this.urls && this.urls.term_search_url;
-		},
-		completionURLForTerm(): string|null {
-			return this.urls && this.urls.completionURLForTerm;
-		},
-		completionURLForConcept(): string|null {
-			return this.urls && this.urls.completionURLForConcept;
-		},
-		urls(): {
-			term_search_url: string|null,
-			completionURLForTerm: string|null,
-			completionURLForConcept: string|null,
-		} | null {
-			if (!this.settings) return null;
-
-			const field = this.search_field;
-			const concept = this.current_concept;
-			const term = this.current_term;
-			return {
-				// NOTE: different instances!
-				term_search_url: field && concept ?
-					`${this.settings.concept_server}/api?instance=${this.quine_lexicon}&query=${encodeURIComponent(
-						`query Quine { lexicon (field: "${field}", cluster: "${concept}") { field, cluster, term } }`
-					)}` : null,
-				completionURLForTerm: term && field && concept ?
-					`${this.settings.concept_server}/api?instance=${this.settings.blackparank_instance}&query=${encodeURIComponent(
-						`query Quine { lexicon (term: "/^${term}/", field: "${field}", cluster: "${concept}") { field, cluster, term } }`
-					)}` : '',
-				completionURLForConcept: field && concept ?
-					`${this.settings.concept_server}/api?instance=${this.settings.blackparank_instance}&query=${encodeURIComponent(
-						`query Quine { lexicon (cluster: "/^${concept}/", field: "${field}") { field, cluster, term } }`
-					)}` : null,
-			}
 		},
 	},
 	watch: {
-		main_fields(n, o) {
+		/** Get the terms for the current field+concept from the database */
+		fieldAndConcept(): void {
+			const {field, concept} = this.fieldAndConcept;
+			conceptApi
+				.getTerms(this.settings.instance, field, concept)
+				.then(terms => {
+					this.terms = terms;
+					this.checked_terms = mapReduce(terms); // check all terms.
+				})
+				.catch(e => console.error(`Failed to retrieve terms for concept ${concept} in field ${field}`, e));
+		},
+		// Update selected field when main fields change.
+		// can be removed when we update selectpicker to the component library/vue 3 version
+		// as v-model autocorrects the value in that version.
+		main_fields(n: string[]) {
 			if (n && n.length > 0)
 				this.search_field = n[0]
 		},
-		term_search_url() {
-			const url = this.term_search_url;
-			if (!url || !credentials) return;
-
-			axios.get(url, {
-				headers: { 'Accept': 'application/json', },
-				auth: credentials
-			})
-			.then(response => {
-				console.log(`found in lexicon for field: "${this.search_field}", cluster: "${this.current_concept}"`  + JSON.stringify(response.data.data))
-				this.terms = uniq(response.data.data)
-				this.terms.map(t => this.$set(this.checked_terms, t.term, true))
-			})
-		},
+		// v-model helper.
 		newValue() {
 			// don't remove the type cast, so we get a warning here if we change something.
 			this.$emit('input', this.newValue as ConceptStore.AtomicQuery[]);
@@ -243,7 +194,6 @@ export default Vue.extend ( {
 })
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
 h3 {
 	margin: 40px 0 0;

@@ -8,6 +8,7 @@ import * as BLTypes from '@/types/blacklabtypes';
 import { ApiError } from '@/types/apptypes';
 import { Glossing } from '@/store/search/form/glossStore';
 import { AtomicQuery, LexiconEntry } from '@/store/search/form/conceptStore';
+import { uniq } from '@/utils';
 
 type API = ReturnType<typeof createEndpoint>;
 
@@ -343,18 +344,20 @@ export const blacklab = {
 			filter,
 			terms: values && values.length ? values.join(',') : undefined,
 		}, requestParameters);
-	}
+	},
+
+	getTermAutocomplete: (indexId: string, annotatedFieldId: string, annotationId: string, prefix: string, requestParameters?: AxiosRequestConfig) => {
+		return getOrPost<string[]>(blacklabPaths.autocompleteAnnotation(
+			indexId,
+			annotatedFieldId,
+			annotationId
+		), {
+			term: prefix
+		}, requestParameters)
+	},
 };
 
 export const glossPaths = {
-	/*
-		Stupid issue, sending a request to /blacklab-server redirects to /blacklab-server/
-		Problem is, the redirect response is missing the CORS header
-		so the browser doesn't allow the redirect.
-		There doesn't seem to be a way to fix this in the server as the redirect
-		is performed by the servlet container and runs before any application code.
-		So ensure our requests end with a trailing slash to prevent the server from redirecting
-	*/
 	root: () => './',
 	glosses: () => `GlossStore` // NOTE: no trailing slash!
 }
@@ -392,27 +395,65 @@ export const glossApi = {
 
 }
 
+/** API of the concept implementation is a bit weird. Everything happens through query parameters mostly. */
 export const conceptPaths = {
-	mainFields: () => `api`,
-	query_to_cql: () => `BlackPaRank`
+	api: () => `api`,
+	cql: () => `BlackPaRank`,
 }
 
 export const conceptApi = {
 	/** Data contains duplicates currently. */
 	getMainFields: (instance: string, corpus: string) => endpoints.concept
-		.get<{data: LexiconEntry[]}>(conceptPaths.mainFields(), {
+		.get<{data: LexiconEntry[]}>(conceptPaths.api(), {
 			params: {
 				instance,
 				query: `query Quine { lexicon(corpus : "${corpus}") { field } }`
 			}
 		}),
+	addConceptOrTermToDatabase: (
+		instance: string,
+		corpus: string,
+		field: string,
+		concept: string,
+		/** When omitted, only the concept is added to the database. */
+		term?: string
+	) => endpoints.concept.get(conceptPaths.api(), {
+		params: {
+			instance,
+			insertTerm: term
+				? { corpus, field, concept, term }
+				: { corpus, field, concept }
+		}
+	}),
+	getConcepts: (
+		instance: string,
+		field: string,
+		prefix?: string
+	) => endpoints.concept.get<{data: {data: Array<{cluster: string}>}}>(conceptPaths.api(), {
+		params: {
+			instance,
+			query: `query Quine { lexicon (${prefix ? `cluster: "/^${prefix}/",` : ''} field: "${field}") { field, cluster, term } }`
+		}
+	}).then(r => uniq(r.data.data.map(x => x.cluster))),
+	getTerms: (
+		instance: string,
+		field: string,
+		concept: string,
+		/** Optionally, return a list only with those terms starting with the prefix. All terms returned otherwise. */
+		prefix?: string
+	) => endpoints.concept.get<{data: {data: Array<{term: string}>}}>(conceptPaths.api(), {
+		params: {
+			instance,
+			query: `query Quine { lexicon (${prefix ? `term: "/^${prefix}/",` : ''} field: "${field}", cluster: "${concept}") { field, cluster, term } }`
+		}
+	}).then(r => uniq(r.data.data.map(x => x.term))),
 	translate_query_to_cql: (
 		blacklabBackendEndpoint: string,
 		corpus: string,
 		element: string,
 		queries: Record<string, AtomicQuery[]>,
 	): Promise<{pattern: string}> => endpoints.concept
-		.get<{pattern: string}>(conceptPaths.query_to_cql(), {
+		.get<{pattern: string}>(conceptPaths.cql(), {
 			headers: {
 				Accept: 'application/json'
 			},
@@ -428,12 +469,11 @@ export const conceptApi = {
 				})
 			}
 		}),
-		// TODO move queries in ConceptSearchBox.vue here.
 }
 
 // Server has issues with long urls.
-function getOrPost<R>(path: string, params: any, settings?: AxiosRequestConfig): Promise<R> {
-	const queryString = params ? qs.stringify(params) : '';
+function getOrPost<R>(path: string, queryParameters: any, settings?: AxiosRequestConfig): Promise<R> {
+	const queryString = queryParameters ? qs.stringify(queryParameters) : '';
 	const usePost = queryString.length > 1000;
 	// const usePost = params && (params.patt ? params.patt.length : 0)+(params.filter ? params.filter.length : 0)+(params.pattgapdata ? params.pattgapdata.length : 0) > 1000;
 	if (usePost) {
@@ -443,14 +483,14 @@ function getOrPost<R>(path: string, params: any, settings?: AxiosRequestConfig):
 
 		// override the default-set outputformat if another is provided.
 		// Or it will be sent in both the request body and the query string causing unpredictable behavior in what is actually returned.
-		if (params.outputformat) {
+		if (queryParameters.outputformat) {
 			settings.params = settings.params || {};
-			settings.params.outputformat = params.outputformat;
+			settings.params.outputformat = queryParameters.outputformat;
 		}
 
 		return endpoints.blacklab.post<R>(path, queryString, settings);
 	} else {
-		return endpoints.blacklab.get<R>(path, { ...settings, params});
+		return endpoints.blacklab.get<R>(path, { ...settings, params: queryParameters});
 	}
 }
 

@@ -501,7 +501,6 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 		return {
 			current_page: [],
 			gloss_query: {
-				author: '',
 				corpus: '',
 				parts: {}
 			},

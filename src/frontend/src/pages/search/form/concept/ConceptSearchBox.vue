@@ -75,11 +75,6 @@ import { uniq } from '@/utils'
 import SelectPicker from '@/components/SelectPicker.vue';
 import { blacklabPaths } from '@/api';
 
-const credentials = USERNAME && PASSWORD ? {
-	username: USERNAME,
-	password: PASSWORD
-} : null;
-
 type Term = { term: string }
 
 export default Vue.extend ( {
@@ -157,7 +152,6 @@ export default Vue.extend ( {
 			const insertIt: any = {
 				corpus: this.corpus,
 				field: this.search_field,
-				author: credentials.username,
 				concept: this.current_concept,
 			}
 			if (term) insertIt.term = term

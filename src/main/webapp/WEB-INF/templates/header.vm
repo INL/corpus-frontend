@@ -43,8 +43,6 @@
         <script>
             // Might be null if this page is not in a corpus!
             var INDEX_ID = "$esc.javascript($websiteConfig.getCorpusId().orElse(null))";
-            var USERNAME = "$esc.javascript($username)";
-            var PASSWORD = "$esc.javascript($password)";
             var WITH_CREDENTIALS = $esc.javascript($withCredentials);
 
             var CONTEXT_URL = "$esc.javascript($pathToTop)";
@@ -87,7 +85,7 @@
                     </button>
                 </div>
 
-                <div class="username navbar-username navbar-brand"><span class="username" data-autoupdate="username">$username</span><span class="fa fa-solid fa-user username-icon"></span></div>
+                <div class="username navbar-username navbar-brand"><span class="username" data-autoupdate="username">not logged in</span><span class="fa fa-solid fa-user username-icon"></span></div>
 
                 <div class="navbar-collapse collapse navbar-logo-margin">
                     <ul class="nav navbar-nav">

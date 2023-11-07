@@ -9,8 +9,6 @@ declare global {
 	// ---------------------------
 	const INDEX_ID: string;
 
-	const USERNAME: string|null;
-	const PASSWORD: string|null;
 	const WITH_CREDENTIALS: boolean;
 
 	/** URL for the root path of the frontend. Guaranteed NOT to end in a slash. */

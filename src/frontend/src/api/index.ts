@@ -360,10 +360,9 @@ export const glossPaths = {
 }
 
 export const glossApi = {
-	getCql: (instance: string, author: string, corpus: string, query: string) => endpoints.gloss
+	getCql: (instance: string, corpus: string, query: string) => endpoints.gloss
 		.get<''|Glossing[]>(glossPaths.glosses(), { params: {
 			instance,
-			author,
 			corpus,
 			query
 		}})
@@ -382,12 +381,11 @@ export const glossApi = {
 			instance,
 			glossings: JSON.stringify(glossings)
 		})),
-	getGlosses: (instance: string, corpus: string, author: string, hitIds: string[]) => endpoints.gloss
+	getGlosses: (instance: string, corpus: string, hitIds: string[]) => endpoints.gloss
 		.get<Glossing[]>(glossPaths.glosses(), {
 			params: {
 				instance,
 				corpus,
-				author,
 				hitIds: JSON.stringify(hitIds)
 			}
 		}),

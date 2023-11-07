@@ -201,22 +201,22 @@ public class AuthRequest {
                 }
 
                 // request seems to not require any more authentication, so decode result (might still be an error through, but at least not an auth error)
-                if (!needsBasicAuth(r)) return decode(r);
-
-                String auth = getExistingAuth(request);
-                if (auth != null) {
-                    // cool, the request had an authentication header, copy it and try again.
-                    if (headers == null)
-                        headers = new HashMap<>();
-                    headers.put("Authorization", auth);
-                    r = request(method, url, query, hash, headers);
-                } else if (hardFailOnMissingAuth) {
-                    // unhappy path, we don't have auth, and we need it.
-                    // this should cause the client to try again with the auth header
-                    // so next time the getExistingAuth will return successfully.
-                    response.addHeader("WWW-Authenticate", "Basic realm=\"Blacklab\"");
-                    throw new ReturnToClientException(HttpServletResponse.SC_UNAUTHORIZED);
-                }
+                // if (!needsBasicAuth(r)) return decode(r);
+                
+                // String auth = getExistingAuth(request);
+                // if (auth != null) {
+                //     // cool, the request had an authentication header, copy it and try again.
+                //     if (headers == null)
+                //         headers = new HashMap<>();
+                //     headers.put("Authorization", auth);
+                //     r = request(method, url, query, hash, headers);
+                // } else if (hardFailOnMissingAuth) {
+                //     // unhappy path, we don't have auth, and we need it.
+                //     // this should cause the client to try again with the auth header
+                //     // so next time the getExistingAuth will return successfully.
+                //     response.addHeader("WWW-Authenticate", "Basic realm=\"Blacklab\"");
+                //     throw new ReturnToClientException(HttpServletResponse.SC_UNAUTHORIZED);
+                // }
 
                 return decode(r);
             }
@@ -245,17 +245,17 @@ public class AuthRequest {
         }
     }
 
-    protected static String getExistingAuth(HttpServletRequest request) {
-         String auth = request.getHeader("Authorization");
-         if (auth != null && auth.startsWith("Basic")) return auth;
-         return null;
-    }
+    // protected static String getExistingAuth(HttpServletRequest request) {
+    //      String auth = request.getHeader("Authorization");
+    //      if (auth != null && auth.startsWith("Basic")) return auth;
+    //      return null;
+    // }
 
-    protected static boolean needsBasicAuth(HttpURLConnection connection) {
-        // Usually something like "WWW-Authenticate: Basic realm="Password Required""
-        String auth = connection.getHeaderField("WWW-Authenticate");
-        return auth != null && auth.startsWith("Basic");
-    }
+    // protected static boolean needsBasicAuth(HttpURLConnection connection) {
+    //     // Usually something like "WWW-Authenticate: Basic realm="Password Required""
+    //     String auth = connection.getHeaderField("WWW-Authenticate");
+    //     return auth != null && auth.startsWith("Basic");
+    // }
 
     protected static HttpURLConnection request(String method, String url, Map<String, String[]> query, String hash, Map<String, String> headers) throws QueryException {
         try {

@@ -42,14 +42,12 @@ type Gloss = {
 }
 
 type GlossQuery = {
-	author: string,
 	corpus: string,
 	parts: { [key: string]: string; }
 }
 
 type Glossing = {
 	gloss: Gloss,
-	author: string,
 	corpus: string,
 	hitId: string,
 	hit_first_word_id: string,
@@ -83,7 +81,6 @@ const defaults: HistoryState = {
 	glosses: {},
 	current_page: [],
 	gloss_query: {
-		author: USERNAME ?? '',
 		corpus: INDEX_ID,
 		parts: {comment : ''}
 	},
@@ -140,7 +137,6 @@ const actions = {
 		const hitId = state.settings.get_hit_id(payload.hit)
 		const glossing: Glossing = {
 			gloss: payload.gloss,
-			author: USERNAME ?? '',
 			corpus: INDEX_ID,
 			hitId,
 			hit_first_word_id: range.startid,
@@ -162,7 +158,6 @@ const actions = {
 				...state.glosses[hitId]?.gloss,
 				[fieldName]: fieldValue
 			},
-			author: USERNAME ?? '',
 			corpus: INDEX_ID,
 			hitId,
 			hit_first_word_id,
@@ -182,7 +177,7 @@ const actions = {
 			return
 		};
 		const q = validKeys.reduce<Record<string, string>>((acc, k) => { acc[k] = p[k]; return acc; }, {});
-		glossApi.getCql(state.settings.blackparank_instance, USERNAME ?? '', INDEX_ID, JSON.stringify(q))
+		glossApi.getCql(state.settings.blackparank_instance, INDEX_ID, JSON.stringify(q))
 			.then(cql => {
 				actions.setQueryCql(cql);
 				PatternStore.actions.glosses(state.gloss_query_cql);
@@ -218,7 +213,7 @@ const actions = {
 		if (!state.settings) { console.error('Trying to set current page, but not configured.'); return; }
 		state.current_page = payload
 		glossApi
-			.getGlosses(state.settings.blackparank_instance, INDEX_ID, USERNAME ?? '', payload)
+			.getGlosses(state.settings.blackparank_instance, INDEX_ID, payload)
 			.then(glossings => glossings.forEach(actions.addGlossing))
 			.catch(e => {
 				console.error(e);

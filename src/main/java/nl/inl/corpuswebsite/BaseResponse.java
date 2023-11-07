@@ -132,10 +132,6 @@ public abstract class BaseResponse {
         model.put("blsUrl", servlet.getExternalWebserviceUrl());
         model.put("page", this.name);
 
-        var user = MainServlet.decodeBasicAuth(request);
-        model.put("username", user.map(Pair::getLeft).orElse(""));
-        model.put("password", user.map(Pair::getRight).orElse(""));
-
         // HTML-escape all data written into the velocity templates by default
         // Only allow access to the raw string if the expression contains the word "unescaped"
         EventCartridge cartridge = model.getEventCartridge();

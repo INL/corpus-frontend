@@ -273,7 +273,7 @@ public class AuthRequest {
             connection.connect();
             return connection;
         } catch (IOException e) {
-            throw QueryException.wrap(e);
+            throw QueryException.wrap(e, "Error connecting to url " + url);
         }
     }
 }

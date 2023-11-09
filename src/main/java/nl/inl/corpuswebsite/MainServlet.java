@@ -198,7 +198,7 @@ public class MainServlet extends HttpServlet {
         return useCache() ? configs.computeIfAbsent(corpus.orElse(null), gen) : gen.apply(corpus.orElse(null));
     }
 
-
+    // TODO use network-level caching or something, so we automatically handle lifetime, authentication, etc.
     private static Map<String, Result<CorpusConfig, Exception>> configCache = new HashMap<>();
     /**
      * Get the corpus config (as returned from blacklab-server), if this is a valid corpus
@@ -208,7 +208,8 @@ public class MainServlet extends HttpServlet {
      */
     public Result<CorpusConfig, Exception> getCorpusConfig(Optional<String> corpus, HttpServletRequest request, HttpServletResponse response) {
         // Should only cache when not using authorization, otherwise result may be different across different requests.
-        boolean useCache = useCache() && (request.getHeader("Authorization") == null || request.getHeader("Authorization").isEmpty());
+        // Also disable caching for user-corpora, as access permissions may change.
+        boolean useCache = useCache() && (request.getHeader("Authorization") == null || request.getHeader("Authorization").isEmpty()) && CorpusFileUtil.getCorpusOwner(corpus).isEmpty();
 
         // Contact blacklab-server for the config xml file if we have a corpus
         Function<String, Result<CorpusConfig, Exception>> gen = c -> new BlackLabApi(request, response).getCorpusConfig(c);

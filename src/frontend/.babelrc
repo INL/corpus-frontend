@@ -20,7 +20,7 @@
 			"useBuiltIns": "usage",
 			"corejs": 3, //
 			"targets": {
-				"browsers": ["last 2 versions", "not ie < 11"]
+				"browsers": ["last 2 versions", "not ie 11"]
 			}
 			// "debug": true
 		}],

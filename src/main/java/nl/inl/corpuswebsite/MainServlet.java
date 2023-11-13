@@ -12,10 +12,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,10 +38,31 @@ import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.TransformerException;
 
 import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.velocity.Template;
 import org.apache.velocity.app.Velocity;
+import org.keycloak.authorization.client.AuthzClient;
+import org.keycloak.authorization.client.Configuration;
+import org.pac4j.core.client.Clients;
+import org.pac4j.core.config.Config;
+import org.pac4j.core.context.JEEContext;
+import org.pac4j.core.context.session.JEESessionStore;
+import org.pac4j.core.http.callback.QueryParameterCallbackUrlResolver;
+import org.pac4j.core.profile.ProfileManager;
+import org.pac4j.core.profile.UserProfile;
+import org.pac4j.oidc.client.KeycloakOidcClient;
+import org.pac4j.oidc.client.OidcClient;
+import org.pac4j.oidc.config.KeycloakOidcConfiguration;
+import org.pac4j.oidc.config.OidcConfiguration;
+import org.pac4j.oidc.credentials.OidcCredentials;
+
+import com.nimbusds.jwt.JWT;
+import com.nimbusds.oauth2.sdk.ParseException;
+import com.nimbusds.oauth2.sdk.token.AccessToken;
+import com.nimbusds.oauth2.sdk.token.AccessTokenType;
+import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
 
 import nl.inl.corpuswebsite.response.AboutResponse;
 import nl.inl.corpuswebsite.response.ArticleResponse;
@@ -210,6 +233,14 @@ public class MainServlet extends HttpServlet {
         // Should only cache when not using authorization, otherwise result may be different across different requests.
         // Also disable caching for user-corpora, as access permissions may change.
         boolean useCache = useCache() && (request.getHeader("Authorization") == null || request.getHeader("Authorization").isEmpty()) && CorpusFileUtil.getCorpusOwner(corpus).isEmpty();
+
+
+        // resource request, send access token if we have it.
+        // If the response is a 401 in the UMA case, we should redirect to keycloak.
+
+        // how do we even detect that.
+        // we have the flow, but what wil be returned.
+
 
         // Contact blacklab-server for the config xml file if we have a corpus
         Function<String, Result<CorpusConfig, Exception>> gen = c -> new BlackLabApi(request, response).getCorpusConfig(c);
@@ -435,4 +466,49 @@ public class MainServlet extends HttpServlet {
     public GlobalConfig getGlobalConfig() {
         return config;
     }
+
+
+
+    // wat willen we hier doen..
+    // iets met uh, als er een header nodig is, dan redirecten naar de keycloak dinges
+
+//    public void doUser(HttpServletRequest req, HttpServletResponse resp, boolean userRequired) throws ParseException {
+//        if (StringUtils.isAnyBlank(
+//                config.get(Keys.KEYCLOAK_URL),
+//                config.get(Keys.KEYCLOAK_REALM),
+//                config.get(Keys.KEYCLOAK_CLIENT_ID)
+//        ))
+//            return;
+//
+//        Map<String, Object> umacredentials = new HashMap<>();
+//        umacredentials.put("secret", config.get(Keys.KEYCLOAK_SECRET));
+//
+//        Configuration authzConfig = new Configuration();
+//        authzConfig.setAuthServerUrl(config.get(Keys.KEYCLOAK_URL));
+//        authzConfig.setRealm(config.get(Keys.KEYCLOAK_REALM));
+//        authzConfig.setResource(config.get(Keys.KEYCLOAK_CLIENT_ID));
+//        authzConfig.setCredentials(umacredentials);
+//
+//
+//        AuthzClient authz = AuthzClient.create(authzConfig);
+//        AuthorizationRequest request = new AuthorizationRequest();
+//        AuthorizationResponse response = authz.authorization()
+//
+//        // do we need a secret? Don't think so actually, unless we implement login ourselves.
+//        KeycloakOidcConfiguration oidcConfiguration = new KeycloakOidcConfiguration();
+//        oidcConfiguration.setRealm(config.get(Keys.KEYCLOAK_REALM));
+//        oidcConfiguration.setBaseUri(config.get(Keys.KEYCLOAK_URL));
+//        oidcConfiguration.setClientId(config.get(Keys.KEYCLOAK_CLIENT_ID));
+//        oidcConfiguration.setUseNonce(true);
+//
+//        //check with  uma whether anon may access resource if we have no user
+//        // if not, redirect to keycloak
+//
+//
+//        JEEContext context = new JEEContext(req, resp);
+//        ProfileManager manager = new ProfileManager(context, JEESessionStore.INSTANCE);
+//        manager.setConfig(new Config(new KeycloakOidcClient(oidcConfiguration)));
+//        Optional<UserProfile> profile = manager.getProfile();
+//
+//    }
 }

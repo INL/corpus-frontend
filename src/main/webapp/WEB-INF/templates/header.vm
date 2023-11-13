@@ -52,6 +52,10 @@
             var PLAUSIBLE_DOMAIN = "$esc.javascript($websiteConfig.getPlausibleDomain().orElse(null))"
             var PLAUSIBLE_APIHOST = "$esc.javascript($websiteConfig.getPlausibleApiHost().orElse(null))"
 
+            var KEYCLOAK_URL = "$esc.javascript($keycloakUrl)";
+            var KEYCLOAK_REALM = "$esc.javascript($keycloakRealm)";
+            var KEYCLOAK_CLIENT_ID = "$esc.javascript($keycloakClientId)";
+
             // Place to register CustomJS hook functions
             var hooks = {};
         </script>
@@ -85,7 +89,7 @@
                     </button>
                 </div>
 
-                <div class="username navbar-username navbar-brand"><span class="username" data-autoupdate="username">not logged in</span><span class="fa fa-solid fa-user username-icon"></span></div>
+                <div class="username navbar-username navbar-brand"><span class="username" data-autoupdate="username">Anonymous</span><span class="fa fa-solid fa-user username-icon"></span></div>
 
                 <div class="navbar-collapse collapse navbar-logo-margin">
                     <ul class="nav navbar-nav">

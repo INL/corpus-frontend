@@ -111,7 +111,7 @@ export type BLShareInfo = string[];
 
 export interface BLCacheStatus {
 	maxNumberOfSearches: number;
-	maxSearchAgeSex: number;
+	maxSearchAgeSec: number;
 	maxSizeBytes: number;
 	numberOfSearches: number;
 	sizeBytes: number;

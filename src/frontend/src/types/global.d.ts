@@ -2,8 +2,6 @@
 import { BLIndexMetadata } from '@/types/blacklabtypes';
 export {};
 declare global {
-
-
 	// ---------------------------
 	// valid on all pages
 	// ---------------------------
@@ -18,6 +16,10 @@ declare global {
 
 	const PLAUSIBLE_DOMAIN: string|null;
 	const PLAUSIBLE_APIHOST: string|null;
+
+	const KEYCLOAK_URL: string|null;
+	const KEYCLOAK_REALM: string|null;
+	const KEYCLOAK_CLIENT_ID: string|null;
 
 	// ---------------------------
 	// only valid on the article page (/docs/...)

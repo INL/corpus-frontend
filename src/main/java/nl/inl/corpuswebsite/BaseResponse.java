@@ -132,6 +132,10 @@ public abstract class BaseResponse {
         model.put("blsUrl", servlet.getExternalWebserviceUrl());
         model.put("page", this.name);
 
+        model.put("keycloakUrl", globalCfg.get(Keys.KEYCLOAK_URL));
+        model.put("keycloakRealm", globalCfg.get(Keys.KEYCLOAK_REALM));
+        model.put("keycloakClientId", globalCfg.get(Keys.KEYCLOAK_CLIENT_ID));
+
         // HTML-escape all data written into the velocity templates by default
         // Only allow access to the raw string if the expression contains the word "unescaped"
         EventCartridge cartridge = model.getEventCartridge();

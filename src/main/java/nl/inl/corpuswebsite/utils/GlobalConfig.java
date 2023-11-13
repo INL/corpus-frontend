@@ -64,10 +64,15 @@ public class GlobalConfig {
         /** Enable/disable the debug info checkbox in the interface */
         SHOW_DEBUG_CHECKBOX_ON_CLIENT("debugInfo"),
         /**
-         * Url to reach the corpus-frontend servlet (i.e. this) from the browser. Never ends with a slash. Usually not required, but might be necessary when server is behind a proxy.
+         * Url to reach the corpus-frontend servlet (i.e. this) from the browser. Usually not required, but might be necessary when server is behind a proxy.
          * Never ends in a slash.
          */
-        CF_URL_ON_CLIENT("cfUrlExternal");
+        CF_URL_ON_CLIENT("cfUrlExternal"),
+
+        KEYCLOAK_CLIENT_ID("keycloak.clientId"),
+        KEYCLOAK_REALM("keycloak.realm"),
+        KEYCLOAK_URL("keycloak.url"),
+        KEYCLOAK_SECRET("keycloak.secret");
 
         public final String s;
         Keys(String s) {
@@ -86,7 +91,7 @@ public class GlobalConfig {
         set(defaultProps, Keys.BLS_URL_ON_SERVER,               "http://localhost:8080/blacklab-server");
         set(defaultProps, Keys.CORPUS_CONFIG_DIR,               SystemUtils.IS_OS_WINDOWS ? "C:\\etc\\blacklab\\projectconfigs" : "/etc/blacklab/projectconfigs");
         set(defaultProps, Keys.DEFAULT_CORPUS_CONFIG,           "default");
-        set(defaultProps, Keys.SHOW_DEBUG_CHECKBOX_ON_CLIENT,    "false");
+        set(defaultProps, Keys.SHOW_DEBUG_CHECKBOX_ON_CLIENT,   "false");
         set(defaultProps, Keys.FRONTEND_WITH_CREDENTIALS,       "false");
         set(defaultProps, Keys.CACHE,                           "true");
         // jspath and cfUrlExternal initialized later, because we need the servlet context path for that.

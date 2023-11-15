@@ -12,12 +12,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,33 +36,13 @@ import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.TransformerException;
 
 import org.apache.commons.configuration2.ex.ConfigurationException;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.velocity.Template;
 import org.apache.velocity.app.Velocity;
-import org.keycloak.authorization.client.AuthzClient;
-import org.keycloak.authorization.client.Configuration;
-import org.pac4j.core.client.Clients;
-import org.pac4j.core.config.Config;
-import org.pac4j.core.context.JEEContext;
-import org.pac4j.core.context.session.JEESessionStore;
-import org.pac4j.core.http.callback.QueryParameterCallbackUrlResolver;
-import org.pac4j.core.profile.ProfileManager;
-import org.pac4j.core.profile.UserProfile;
-import org.pac4j.oidc.client.KeycloakOidcClient;
-import org.pac4j.oidc.client.OidcClient;
-import org.pac4j.oidc.config.KeycloakOidcConfiguration;
-import org.pac4j.oidc.config.OidcConfiguration;
-import org.pac4j.oidc.credentials.OidcCredentials;
-
-import com.nimbusds.jwt.JWT;
-import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.oauth2.sdk.token.AccessToken;
-import com.nimbusds.oauth2.sdk.token.AccessTokenType;
-import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
 
 import nl.inl.corpuswebsite.response.AboutResponse;
+import nl.inl.corpuswebsite.response.ApiResponse;
 import nl.inl.corpuswebsite.response.ArticleResponse;
 import nl.inl.corpuswebsite.response.ConfigResponse;
 import nl.inl.corpuswebsite.response.CorporaDataResponse;
@@ -78,6 +56,7 @@ import nl.inl.corpuswebsite.utils.CorpusConfig;
 import nl.inl.corpuswebsite.utils.CorpusFileUtil;
 import nl.inl.corpuswebsite.utils.GlobalConfig;
 import nl.inl.corpuswebsite.utils.GlobalConfig.Keys;
+import nl.inl.corpuswebsite.utils.QueryException;
 import nl.inl.corpuswebsite.utils.Result;
 import nl.inl.corpuswebsite.utils.ReturnToClientException;
 import nl.inl.corpuswebsite.utils.WebsiteConfig;
@@ -147,6 +126,9 @@ public class MainServlet extends HttpServlet {
             responses.put("static", CorporaDataResponse.class);
             responses.put("upload", RemoteIndexResponse.class);
             responses.put("config", ConfigResponse.class);
+            responses.put("api", ApiResponse.class);
+//            responses.put("docs-api", ArticleContentResponse.class);
+//            responses.put("metadata-api", CorpusMetadataResponse.class);
         } catch (ServletException e) {
             throw e;
         } catch (Exception e) {
@@ -350,6 +332,12 @@ public class MainServlet extends HttpServlet {
             try {
                 br.init(request, response, this, Optional.ofNullable(corpus), pathParameters);
                 br.completeRequest();
+            } catch (QueryException e ) {
+                if (e.getHttpStatusCode() != HttpServletResponse.SC_OK) {
+                    response.sendError(e.getHttpStatusCode(), e.getMessage());
+                } else {
+                    response.getWriter().write(e.getMessage());
+              }
             } catch (ReturnToClientException e) {
                 if (e.getCode() != HttpServletResponse.SC_OK)
                     response.sendError(e.getCode(), e.getMessage());

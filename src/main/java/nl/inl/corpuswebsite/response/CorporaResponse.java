@@ -18,12 +18,6 @@ public class CorporaResponse extends BaseResponse {
     }
 
     @Override
-    public void init(HttpServletRequest request, HttpServletResponse response, MainServlet servlet, Optional<String> corpus, List<String> pathParameters)
-        throws ServletException {
-        super.init(request, response, servlet, corpus, pathParameters);
-    }
-
-    @Override
     protected void completeRequest() {
         displayHtmlTemplate(servlet.getTemplate("corpora"));
     }

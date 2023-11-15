@@ -66,6 +66,11 @@ public class Result<R, E extends Exception> {
         if (this.error != null) consumer.accept(this.error);
         return this;
     }
+    /** Call the consumer with this. */
+    public Result<R, E> tapSelf(Consumer<Result<R, E>> consumer) {
+        consumer.accept(this);
+        return this;
+    }
 
     /**
      * Begin a chain of operations on the result of gen.
@@ -440,5 +445,11 @@ public class Result<R, E extends Exception> {
     public <ErrorClass extends Exception> Result<R, ErrorClass> throwIfError(Function<E, ErrorClass> mapper) throws ErrorClass {
         if (this.error != null) throw mapper.apply(this.error);
         return (Result<R, ErrorClass>) this;
+    }
+
+    /** Run the callback for either the result or the error, if present. */
+    public void ifPresentOrElse(Consumer<R> resultCallback, Consumer<E> errorCallback) {
+        if (this.result != null) resultCallback.accept(this.result);
+        else if (this.error != null) errorCallback.accept(this.error);
     }
 }

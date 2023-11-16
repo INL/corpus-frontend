@@ -3,10 +3,8 @@
 #set($unescapedIndexStructureJson = $indexStructureJson) ## variables with 'unescaped' in the name are not html-escaped, see BaseResponse.java
 
 <script>
-    var SINGLEPAGE = SINGLEPAGE || {};
-    SINGLEPAGE.INDEX = JSON.parse("$esc.javascript($unescapedIndexStructureJson)");
     var PROPS_IN_COLUMNS = "$websiteConfig.getPropColumns().orElse("")".split(',');
-    var PAGESIZE = $pageSize;
+    var PAGE_SIZE = $pageSize;
     var DEBUG_INFO_VISIBLE = $debugInfo;
 </script>
 

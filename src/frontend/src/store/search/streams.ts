@@ -66,9 +66,9 @@ export const selectedSubCorpus$ = merge(
 				subscriber.next(Notification.createNext<BLTypes.BLDocResults>({
 					docs: [],
 					summary: {
-						numberOfDocs: CorpusStore.getState().documentCount,
+						numberOfDocs: CorpusStore.getState().corpus!.documentCount,
 						stillCounting: false,
-						tokensInMatchingDocuments: CorpusStore.getState().tokenCount,
+						tokensInMatchingDocuments: CorpusStore.getState().corpus!.tokenCount,
 					}
 				} as any));
 
@@ -77,7 +77,7 @@ export const selectedSubCorpus$ = merge(
 				return;
 			}
 
-			const {request, cancel} = Api.blacklab.getDocs(CorpusStore.getState().id, params, {
+			const {request, cancel} = Api.blacklab.getDocs(INDEX_ID, params, {
 				headers: { 'Cache-Control': 'no-cache' }
 			}) as {
 				request: Promise<BLTypes.BLDocResults>;
@@ -117,15 +117,15 @@ export const submittedSubcorpus$ = submittedMetadata$.pipe(
 			subscriber.next({
 				docs: [],
 				summary: {
-					numberOfDocs: CorpusStore.getState().documentCount,
+					numberOfDocs: CorpusStore.getState().corpus!.documentCount,
 					stillCounting: false,
-					tokensInMatchingDocuments: CorpusStore.getState().tokenCount,
+					tokensInMatchingDocuments: CorpusStore.getState().corpus!.tokenCount,
 				}
 			} as any);
 			return;
 		}
 
-		const {request, cancel} = Api.blacklab.getDocs(CorpusStore.getState().id, params, {
+		const {request, cancel} = Api.blacklab.getDocs(INDEX_ID, params, {
 			headers: { 'Cache-Control': 'no-cache' }
 		});
 		request.then(

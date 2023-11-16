@@ -69,8 +69,8 @@ export default Vue.extend({
 			return r;
 		},
 
-		totalCorpusTokens(): number { return CorpusStore.getState().tokenCount; },
-		totalCorpusDocs(): number { return CorpusStore.getState().documentCount; }
+		totalCorpusTokens(): number { return CorpusStore.getState().corpus!.tokenCount; },
+		totalCorpusDocs(): number { return CorpusStore.getState().corpus!.documentCount; }
 	},
 	created() {
 		this.subscriptions.push(selectedSubCorpus$.subscribe(v => {

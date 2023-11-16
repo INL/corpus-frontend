@@ -221,16 +221,16 @@ import Vue from 'vue';
 
 import * as CorpusStore from '@/store/search/corpus';
 import * as GlossModule from '@/store/search/form/glossStore' // Jesse
-import GlossField from '@/pages/search//form/concept/GlossField.vue' // Jesse
 import * as UIStore from '@/store/search/ui';
 import { snippetParts, words, getDocumentUrl } from '@/utils';
 import * as Api from '@/api';
-
 
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
 
 import {debugLog} from '@/utils/debug';
+
+import GlossField from '@/pages/search//form/concept/GlossField.vue' // Jesse
 
 type HitRow = {
 	type: 'hit';
@@ -378,7 +378,7 @@ export default Vue.extend({
 		},
 		shownMetadataCols(): AppTypes.NormalizedMetadataField[] {
 			return UIStore.getState().results.hits.shownMetadataIds
-			.map(id => CorpusStore.getState().metadataFields[id]);
+			.map(id => CorpusStore.get.allMetadataFieldsMap()[id]);
 		},
 		/** Get annotations to show in concordances, if not configured, returns all annotations shown in the main search form. */
 		shownConcordanceAnnotationRows(): AppTypes.NormalizedAnnotation[] {
@@ -395,8 +395,6 @@ export default Vue.extend({
 			return GlossModule.get.settings()?.gloss_fields.map(f => f.fieldName) ?? []
 		},
 		textDirection: CorpusStore.get.textDirection,
-
-		corpus(): string { return CorpusStore.getState().id; },
 
 		transformSnippets(): null|((snippet: BLTypes.BLHitSnippet)=> void){ return UIStore.getState().results.shared.transformSnippets; },
 		getDocumentSummary(): ((doc: BLTypes.BLDocInfo, fields: BLTypes.BLDocFields) => any) { return UIStore.getState().results.shared.getDocumentSummary },
@@ -431,9 +429,8 @@ export default Vue.extend({
 
 			ga('send', 'event', 'results', 'snippet/load', row.docPid);
 
-			const corpusId = CorpusStore.getState().id;
 			Api.blacklab
-			.getSnippet(corpusId, row.docPid, row.start, row.end, this.concordanceSize)
+			.getSnippet(INDEX_ID, row.docPid, row.start, row.end, this.concordanceSize)
 			.then(s => {
 				if (this.transformSnippets) {
 					this.transformSnippets(s);
@@ -450,7 +447,7 @@ export default Vue.extend({
 					.map(a => a({
 						snippet: s,
 						docId: row.docPid,
-						corpus: corpusId,
+						corpus: INDEX_ID,
 						document: this.results.docInfos[row.docPid],
 						documentUrl: citation.href,
 						wordAnnotationId: this.concordanceAnnotationId,

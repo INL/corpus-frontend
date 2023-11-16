@@ -84,7 +84,7 @@ export default Vue.extend({
 		updateFilterValue(id: string, value: any) { FilterStore.actions.filterValue({id, value}); },
 	},
 	computed: {
-		textDirection(): string { return CorpusStore.getState().textDirection; },
+		textDirection(): string { return CorpusStore.get.textDirection(); },
 		allFilters(): FilterStore.FullFilterState[] {
 			const seenIds = new Set<string>();
 			const filterMap = this.filterMap;
@@ -150,7 +150,6 @@ export default Vue.extend({
 			})
 			return numActiveFiltersPerTab;
 		},
-		indexId(): string { return CorpusStore.getState().id; }
 	},
 	created() {
 		// Always set an active tab if there are any tabs at all

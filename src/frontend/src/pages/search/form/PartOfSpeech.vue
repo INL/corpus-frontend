@@ -1,4 +1,4 @@
-<template lang="jsx">
+<template>
 	<div class="modal fade modal-fullwidth">
 		<div class="modal-dialog">
 			<div class="modal-content">
@@ -11,7 +11,7 @@
 						<div class="list-group main">
 							<button v-for="value in tagset.values"
 								type="button"
-								:key="value.id"
+								:key="value.value"
 								:class="{
 									'list-group-item': true,
 									'active': annotationValue === value

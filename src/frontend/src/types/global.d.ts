@@ -28,15 +28,16 @@ declare global {
 	const DOCUMENT_LENGTH: number;
 
 	const PAGINATION_ENABLED: boolean;
-	const PAGE_SIZE: number;
+	/** PAGE_SIZE may be undefined on the search page, but is always defined in the document page. */
+	const PAGE_SIZE: number|undefined;
 	const PAGE_START: number;
 	const PAGE_END: number;
 
 	// ---------------------------
 	// only valid on the search page (/search/...)
 	// ---------------------------
-	const SINGLEPAGE: { INDEX: BLIndexMetadata; };
+	// const PAGE_SIZE: number; // also on the article page (but we can only define it once)
 	const PROPS_IN_COLUMNS: string[];
-	const PAGESIZE: number|undefined;
+
 	const DEBUG_INFO_VISIBLE: boolean;
 }

@@ -46,6 +46,8 @@ const b = getStoreBuilder<RootState>();
 const getState = b.state();
 
 const get = {
+	status: b.read(state => ({message: state.corpus.message, status: state.corpus.state}), 'status'),
+
 	viewedResultsSettings: b.read(state => state.views[state.interface.viewedResults!] ?? null, 'getViewedResultsSettings'),
 
 	/** Whether the filters section should be active (as it isn't active when in specific search modes (e.g. simple or explore)) */
@@ -320,10 +322,10 @@ const store = b.vuexStore({
 	// plugins: process.env.NODE_ENV === 'development' ? [VuePursue] : undefined
 });
 
-const init = () => {
+const init = async () => {
 	// Load the corpus data, so we can derive values, fallbacks and defaults in the following modules
 	// This must happen right at the beginning of the app startup
-	CorpusModule.init();
+	await CorpusModule.init();
 	// This is user-customizable data, it can be used to override various defaults from other modules,
 	// It needs to determine fallbacks and defaults for settings that haven't been configured,
 	// So initialize it before the other modules.

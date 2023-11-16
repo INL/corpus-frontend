@@ -84,7 +84,6 @@ export default Vue.extend ( {
 		value: Array as () => Array<{field: string, value: string}>
 	},
 	data: () => ({
-		debug: false,
 		/** A "field" of study, like "history", "philosophy", etc. */
 		search_field: '',
 		/** A "concept" within the "field", like the concept of "truth and falsehood" in the field of "philosophy" */
@@ -95,8 +94,6 @@ export default Vue.extend ( {
 		checked_terms: {} as Record<string, boolean>,
 		/** All available terms. */
 		terms: [] as string[],
-		/** For cross-referencing which terms actually exist within the current corpus. */
-		corpus: CorpusStore.getState().id,
 
 		WITH_CREDENTIALS,
 	}),
@@ -117,7 +114,7 @@ export default Vue.extend ( {
 			// TODO use api module.
 			return Promise.all([
 				conceptApi.getTerms(this.settings.instance, this.search_field, this.current_concept, prefix),
-				blacklab.getTermAutocomplete(CorpusStore.getState().id, mainAnnotation.annotatedFieldId, 'lemma', prefix)
+				blacklab.getTermAutocomplete(INDEX_ID, mainAnnotation.annotatedFieldId, 'lemma', prefix)
 			])
 			.then(([pdb, corpus]) => uniq([...pdb, ...corpus]))
 		},
@@ -139,7 +136,7 @@ export default Vue.extend ( {
 			if (!this.settings) return;
 			conceptApi.addConceptOrTermToDatabase(
 				this.settings.instance,
-				this.corpus,
+				INDEX_ID,
 				this.search_field,
 				concept,
 				term

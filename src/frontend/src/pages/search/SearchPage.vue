@@ -1,13 +1,23 @@
 <template>
+
 	<div class="container">
-		<QueryForm/>
+		<template v-if="loadingState === 'loaded'">
+			<QueryForm/>
+			<QuerySummary v-if="resultsVisible" class="cf-panel cf-panel-lg" id="summary"/>
+			<Debug><div><div>Full query: </div><pre>{{debugQuery}}</pre></div></Debug>
 
-		<QuerySummary v-if="resultsVisible" class="cf-panel cf-panel-lg" id="summary"/>
-		<Debug><div><div>Full query: </div><pre>{{debugQuery}}</pre></div></Debug>
+			<Results v-show="resultsVisible" id="results"/>
 
-		<Results v-show="resultsVisible" id="results"/>
-
-		<PageGuide v-if="pageGuideEnabled"/>
+			<PageGuide v-if="pageGuideEnabled"/>
+		</template>
+		<div v-else>
+			<h2>
+				<span v-if="loadingState !== 'loading'" class="fa fa-danger fa-4x"></span>
+				{{ loadingMessage }}
+			</h2>
+			<span v-if="loadingState === 'loading'" class="fa fa-spinner fa-spin searchIndicator" style="position:absolute; left: 50%; top:15px"></span>
+			<button v-else-if="loadingState === 'requiresLogin'" type="button" class="btn btn-lg btn-primary">login (todo)</button>
+		</div>
 	</div>
 </template>
 
@@ -30,6 +40,9 @@ export default Vue.extend({
 		PageGuide,
 	},
 	computed: {
+		loadingState() { return RootStore.get.status().status; },
+		loadingMessage() { return RootStore.get.status().message; },
+
 		resultsVisible(): boolean { return InterfaceStore.getState().viewedResults != null; },
 		pageGuideEnabled(): boolean { return UIStore.getState().global.pageGuide.enabled; },
 		debugQuery(): string { return JSON.stringify(RootStore.get.blacklabParameters(), undefined, 2); }

@@ -35,7 +35,7 @@ export function delayError(e: AxiosError): Promise<AxiosResponse<never>> {
  */
 export async function handleError(error: AxiosError): Promise<never> {
 	if (!error.config) { // is a cancelled request, message containing details
-		return Promise.reject(new ApiError('Request cancelled', `Request was cancelled: ${error}`, '')); // TODO some logic depends on the exact title to filter out cancelled requests
+		return Promise.reject(new ApiError('Request cancelled', `Request was cancelled: ${error}`, '', undefined)); // TODO some logic depends on the exact title to filter out cancelled requests
 	}
 
 	const response = error.response;
@@ -43,7 +43,8 @@ export async function handleError(error: AxiosError): Promise<never> {
 		return Promise.reject(new ApiError(
 			error.message,
 			'Could not connect to server at ' + error.config.url,
-			'Server Offline'
+			'Server Offline',
+			undefined
 		));
 	}
 
@@ -53,41 +54,52 @@ export async function handleError(error: AxiosError): Promise<never> {
 		return Promise.reject(new ApiError(
 			response.data.error.code,
 			response.data.error.message,
-			response.statusText
+			response.statusText,
+			response.status
 		));
-	} else if (contentType.toLowerCase().indexOf('xml') >= 0 && typeof response.data === 'string') {
+	} else if (contentType.toLowerCase().includes('xml') && typeof response.data === 'string' && response.data.length) {
 		try {
 			const text = response.data;
 			const xml = new DOMParser().parseFromString(text, 'application/xml');
 
-			const code = xml.querySelector('error code');
-			const message = xml.querySelector('error message');
+			/* blacklab errors in xml format look like this:
+			<error>
+				<code>PATT_SYNTAX_ERROR</code>
+				<message>Syntax error in CorpusQL pattern (JSON parse failed as well): Error parsing query: Encountered "<EOF>" at line 1, column 9. Was expecting one of: ":" ... ":" ... </message>
+			</error>
+			*/
+			const code = xml.querySelector('code');
+			const message = xml.querySelector('message');
 
 			if (code && message) {
 				return Promise.reject(new ApiError(
 					code.textContent!,
 					message.textContent!,
-					response.statusText
+					response.statusText,
+					response.status
 				));
 			} else {
 				return Promise.reject(new ApiError(
+					`Server returned an error (${response.statusText}) at: ${response.config.url}`,
+					xml.textContent || response.data, // return just the text of the xml document.
 					response.statusText,
-					`Server returned ${response.statusText} at: ${response.config.url}`,
-					response.statusText
+					response.status
 				));
 			}
 		} catch (e) {
 			return Promise.reject(new ApiError(
+				`Server returned an error (${response.statusText}) at: ${response.config.url}`,
+				response.data, // just print the raw text we received
 				response.statusText,
-				`Server returned ${response.statusText} at: ${response.config.url}`,
-				response.statusText
+				response.status
 			));
 		}
 	} else {
 		return Promise.reject(new ApiError(
+			`Server returned an unexpected error at: ${response.config.url}`,
+			response.data,
 			response.statusText,
-			`Server returned ${response.statusText} at: ${response.config.url}`,
-			response.statusText
+			response.status
 		));
 	}
 }

@@ -61,11 +61,11 @@
 			ref="focusOnEscClose"
 		>
 			<template v-if="displayValues.length && (showValues || !multiple)">
-				<span class="menu-value" v-if="allowHtml" :title="value" v-html="displayValues.join(', ')"/>
+				<span class="menu-value" v-if="allowHtml" :title="value + ''" v-html="displayValues.join(', ')"/>
 				<span class="menu-value" v-else :title="displayValues.join(',')">{{displayValues.join(', ')}}</span>
 			</template>
 			<span v-else class="menu-value placeholder">
-				{{placeholder || $attrs.title || (this.multiple ? 'Select values...' : 'Select a value...')}}
+				{{placeholder || $attrs.title || (multiple ? 'Select values...' : 'Select a value...')}}
 			</span>
 			<span v-if="loading" class="menu-icon fa fa-spinner fa-spin text-muted"></span>
 			<span v-else-if="!showValues && multiple && showValueCount" :class="['menu-icon badge',{'active': displayValues.length}]">
@@ -74,7 +74,7 @@
 			<span :class="['menu-icon', 'fa', 'fa-caret-down', {
 				//'fa-rotate-180': isOpen
 				'fa-flip-vertical': isOpen
-			}]"/>
+			}]"></span>
 		</button>
 
 		<!-- NOTE: might not actually be a child of root element at runtime! Event handling is rather specific -->
@@ -97,7 +97,7 @@
 			ref="menu"
 		>
 			<li class="menu-header">
-			<div v-if="loading && this.editable /* not visible in button when editable */" class="text-center">
+			<div v-if="loading && editable /* not visible in button when editable */" class="text-center">
 				<span class="fa fa-spinner fa-spin text-muted"></span>
 			</div><button v-if="resettable && filteredOptions.length"
 				type="button"
@@ -278,13 +278,13 @@ export default Vue.extend({
 		value: [String, Array] as any as () => string|string[]|null,
 
 		/** attached to top-level container */
-		'data-width': String,
+		dataWidth: String,
 		/** attached to main input/button */
-		'data-class': [String, Object],
-		'data-style': [String, Object],
-		'data-id': String,
-		'data-name': String,
-		'data-title': String,
+		dataClass: [String, Object],
+		dataStyle: [String, Object],
+		dataId: String,
+		dataName: String,
+		dataTitle: String,
 		/**
 		 * Controls the width of the dropdown menu
 		 * - stretch: grow and shrink with the input
@@ -292,11 +292,11 @@ export default Vue.extend({
 		 * - grow: exactly fit menu content, but grow with input if that is larger
 		 * - anything else: used as css-value ('auto' works!)
 		 */
-		'data-menu-width': {
+		dataMenuWidth: {
 			type: String as any as () => MenuWidthMode,
 			default: 'stretch'
 		},
-		'data-menu-class': [Array, String, Object],
+		dataMenuClass: [Array, String, Object],
 		/** Right-align the dropdown menu, only when menuWidth != 'stretch' */
 		right: Boolean
 	},
@@ -491,7 +491,7 @@ export default Vue.extend({
 				return r; // there is no need to declare any explicit width on our menu, as it's a child of our $el and our normal css classes handle everything
 			}
 
-			let widthMode = this['data-menu-width'];
+			let widthMode = this.dataMenuWidth;
 			(widthMode as any) = (this as any).dataMenuWidth;
 			const width = ownRootBoundingRect.width;
 
@@ -674,7 +674,7 @@ export default Vue.extend({
 			}
 		},
 
-		select(opt: _uiOpt): void {
+		select(opt: {disabled?: boolean, value: string}): void {
 			const {disabled, value} = opt;
 
 			if (disabled) {

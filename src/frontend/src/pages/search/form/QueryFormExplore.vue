@@ -226,7 +226,7 @@ export default Vue.extend({
 				CorpusStore.get.annotationGroups(),
 				CorpusStore.get.allAnnotationsMap(),
 				'Search',
-				CorpusStore.getState().textDirection
+				CorpusStore.get.textDirection()
 			);
 			return optGroups.length > 1 ? optGroups : optGroups.flatMap(g => g.options as Option[]);
 		},
@@ -236,7 +236,7 @@ export default Vue.extend({
 				CorpusStore.get.annotationGroups(),
 				CorpusStore.get.allAnnotationsMap(),
 				'Search', // we don't want the before hit/after hit context options, just do search mode, it'll be fine
-				CorpusStore.getState().textDirection
+				CorpusStore.get.textDirection()
 			);
 			return optGroups.length > 1 ? optGroups : optGroups.flatMap(g => g.options as Option[]);
 		},
@@ -270,7 +270,7 @@ export default Vue.extend({
 			});
 		},
 		autocompleteUrl(annot: CorpusStore.NormalizedAnnotation) {
-			return blacklabPaths.autocompleteAnnotation(CorpusStore.getState().id, annot.annotatedFieldId, annot.id);
+			return blacklabPaths.autocompleteAnnotation(INDEX_ID, annot.annotatedFieldId, annot.id);
 		}
 	},
 	created() {

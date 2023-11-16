@@ -12,7 +12,7 @@ import VuePlausible from 'vue-plausible/lib/esm/vue-plugin.js';
 
 import Filters from '@/components/filters';
 
-import {QueryBuilder, AttributeDef as QueryBuilderAttributeDef, QueryBuilderOptionsDef} from '@/modules/cql_querybuilder';
+import {QueryBuilder, AttributeDef as QueryBuilderAttributeDef} from '@/modules/cql_querybuilder';
 import * as RootStore from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus';
 import * as UIStore from '@/store/search/ui';
@@ -25,6 +25,7 @@ import connectStreamsToVuex from '@/store/search/streams';
 
 import SearchPageComponent from '@/pages/search/SearchPage.vue';
 import DebugComponent from '@/components/Debug.vue';
+import AudioPlayer from '@/components/AudioPlayer.vue';
 
 import debug, {debugLog} from '@/utils/debug';
 
@@ -32,6 +33,7 @@ import '@/global.scss';
 import { getAnnotationSubset } from '@/utils';
 import { Option } from './types/apptypes';
 
+/** This needs to happen AFTER vue render. Or the elements won't exist. */
 const connectJqueryToPage = () => {
 	$('input[data-persistent][id != ""], input[data-persistent][data-pid != ""]').each(function(i, elem) {
 		const $this = $(elem);
@@ -162,7 +164,6 @@ Vue.mixin({
 	// tslint:enable
 });
 
-
 if (PLAUSIBLE_DOMAIN && PLAUSIBLE_APIHOST) {
 	Vue.use(VuePlausible, {
 		domain: PLAUSIBLE_DOMAIN,
@@ -182,57 +183,46 @@ Vue.use(VTooltip, {
 	}
 });
 Vue.component('Debug', DebugComponent);
-import AudioPlayer from '@/components/AudioPlayer.vue';
-
-// register component plugins
 Vue.component('AudioPlayer', AudioPlayer);
 
 // Expose and declare some globals
 (window as any).Vue = Vue;
 
-type Hook = () => void|Promise<any>;
-const isHook = (hook: any): hook is Hook => typeof hook === 'function';
-declare const hooks: {
-	beforeStoreInit?: Hook;
-	beforeRender?: Hook;
-	beforeStateLoaded?: Hook;
-};
+/*
+Rethink page initialization
 
-async function runHook(hookName: keyof (typeof hooks)) {
-	const hook = hooks[hookName];
-	if (isHook(hook)) {
-		debugLog(`Running hook ${hookName}...`);
-		await hook();
-		debugLog(`Finished running hook ${hookName}`);
-	}
-}
+- first initialize login system, attempt to login
+- then initialize api objects with the login token
+- then fetch corpus info
+- initialize store?
+- fetch tagset info
+- initialize querybuilder
+- then restore state from url
+*/
+
+import * as loginSystem from '@/utils/loginsystem';
+import { init as initApi } from '@/api';
 
 $(document).ready(async () => {
-	await runHook('beforeStoreInit');
-
-	debugLog('Initializing vuex store...');
-	RootStore.init();
-	debugLog('Finished initializing vuex store');
-
-	await runHook('beforeRender');
-
+	const user = await loginSystem.awaitInit(); // LOGIN SYSTEM
+	initApi('blacklab', BLS_URL, { // API INIT
+		params: {outputformat: 'json'},
+		headers: { Authorization: user ? `Bearer ${user.access_token}` : undefined }
+	});
+	await RootStore.init(); // STORE INIT (CORPUS FETCH + TAGSET FETCH)
 	// We can render before the tagset loads, the form just won't be populated from the url yet.
 	(window as any).vueRoot = new Vue({
 		store: RootStore.store,
 		render: h => h(SearchPageComponent),
 		mounted() {
 			requestAnimationFrame(() => {
-				connectJqueryToPage();
+				connectJqueryToPage(); //
 
-				runHook('beforeStateLoaded')
-				.then(() => TagsetStore.actions.awaitInit())
+				TagsetStore.actions.awaitInit()
 				.then(() => new UrlStateParser(FilterStore.getState().filters).get())
 				.then(urlState => {
-					debugLog('Loading state from url', urlState);
 					RootStore.actions.reset();
 					RootStore.actions.replace(urlState);
-					debugLog('Finished initializing state shape and loading initial state from url.');
-
 					// Don't do this before the url is parsed, as it controls the page url (among other things derived from the state).
 					connectStreamsToVuex();
 					// And this needs the tagset to have been loaded (if available)

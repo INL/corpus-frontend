@@ -283,23 +283,27 @@ export class ApiError extends Error {
 	public readonly message: string;
 	/** http code, -1 if miscellaneous network error */
 	public readonly statusText: string;
+	public readonly httpCode: number|undefined;
 
-	constructor(title: string, message: string, statusText: string) {
-		super();
+	constructor(title: string, message: string, statusText: string, httpCode: number|undefined) {
+		super(message);
 		this.title = title;
 		this.message = message;
 		this.statusText = statusText;
+		this.httpCode = httpCode;
 	}
 }
 
 // Import quirks, duplicate these
-// TODO solve and allow importing types from .vue files in non-.vue files
+
+/** Generic object to represent an option in a dropdown multiple-choice, checkbox list, etc. */
 export type Option = {
 	value: string;
 	label?: string;
 	title?: string|null;
 	disabled?: boolean;
 };
+/** Generic object to represent a group of Options in a dropdown multiple-choide, checkbox list, etc. */
 export type OptGroup = {
 	label?: string;
 	title?: string|null;

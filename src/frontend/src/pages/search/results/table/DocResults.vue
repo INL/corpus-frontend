@@ -139,10 +139,10 @@ export default Vue.extend({
 
 			const colsToShow = UIStore.getState().results.docs.shownMetadataIds;
 			return (sortMetadataField && !colsToShow.includes(sortMetadataField) ? colsToShow.concat(sortMetadataField) : colsToShow)
-			.map(id => CorpusStore.getState().metadataFields[id]);
+			.map(id => CorpusStore.get.allMetadataFieldsMap()[id]);
 		},
 		specialMetaDisplayNames(): { [id: string]: string; } {
-			const specialFields = CorpusStore.getState().fieldInfo;
+			const specialFields = CorpusStore.getState().corpus!.fieldInfo;
 			const ret: {[id: string]: string} = {};
 			Object.entries(specialFields).forEach(([type, fieldId]) => { switch (type as keyof BLDocFields) {
 				case 'authorField': ret[fieldId!] = 'Author'; break;

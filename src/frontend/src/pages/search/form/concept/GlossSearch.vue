@@ -21,8 +21,6 @@
 <script lang="ts">
 
 import Vue from 'vue';
-import * as CorpusStore from '@/store/search/corpus';
-import * as UIStore from '@/store/search/ui';
 import * as GlossStore from '@/store/search/form/glossStore';
 
 import GlossQueryField from './GlossQueryField.vue'
@@ -38,7 +36,6 @@ export default Vue.extend ({
 	data: () => ({
 		debug: false,
 		showQuery : false,
-		corpus: CorpusStore.getState().id,
 	}),
 
 	methods : {
@@ -50,9 +47,6 @@ export default Vue.extend ({
 		query_from_store() { return GlossStore.getState().gloss_query },
 		query_cql_from_store() { return GlossStore.getState().gloss_query_cql },
 	},
-	created() {
-		UIStore.getState().results.shared.concordanceAsHtml = true;
-	}
 })
 
 </script>

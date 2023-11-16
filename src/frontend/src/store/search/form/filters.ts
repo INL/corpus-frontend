@@ -151,7 +151,7 @@ const init = () => {
 					break;
 				case 'combobox':
 					componentName = 'filter-autocomplete';
-					metadata = blacklabPaths.autocompleteMetadata(CorpusModule.getState().id, f.id);
+					metadata = blacklabPaths.autocompleteMetadata(INDEX_ID, f.id);
 					break;
 				case 'radio'   :
 					componentName = 'filter-radio';

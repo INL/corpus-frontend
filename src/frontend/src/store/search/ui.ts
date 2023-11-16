@@ -296,7 +296,7 @@ const initialState: ModuleRootState = {
 			groupMetadataIds: [],
 			sortAnnotationIds: [],
 			sortMetadataIds: [],
-			pageSize: PAGESIZE,
+			pageSize: PAGE_SIZE,
 			exportEnabled: true,
 
 			totalsTimeoutDurationMs: 90_000,
@@ -797,7 +797,7 @@ const init = () => {
 	// Hits table: Never show any metadata in the hits table
 	// Docs table: Show the date column if it is configured
 	if (!initialState.results.docs.shownMetadataIds.length) {
-		const dateField = CorpusStore.getState().fieldInfo.dateField;
+		const dateField = CorpusStore.getState().corpus!.fieldInfo.dateField;
 		if (dateField) {
 			actions.results.docs.shownMetadataIds([dateField]);
 		}

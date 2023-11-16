@@ -593,7 +593,7 @@ export function getAnnotationSubset(
 	groups: AppTypes.NormalizedAnnotationGroup[],
 	annotations: MapOf<AppTypes.NormalizedAnnotation>,
 	operation: 'Search'|'Sort'|'Group',
-	corpusTextDirection: 'rtl'|'ltr',
+	corpusTextDirection: 'rtl'|'ltr' = 'ltr',
 	debug = false,
 	/* show the <small/> labels at the end of options labels? */
 	showGroupLabels = true

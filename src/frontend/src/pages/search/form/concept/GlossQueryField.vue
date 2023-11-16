@@ -13,11 +13,9 @@
 </template>
 
 <script lang="ts">
-
 import Vue from 'vue';
-import * as CorpusStore from '@/store/search/corpus';
+
 import * as GlossStore from '@/store/search/form/glossStore';
-import * as UIStore from '@/store/search/ui';
 
 import SelectPicker from '@/components/SelectPicker.vue'
 
@@ -27,11 +25,6 @@ export default Vue.extend ({
 	props: {
 		fieldDescription: Object as () => GlossStore.GlossFieldDescription
 	},
-	data: () => ({
-		debug: false,
-		corpus: CorpusStore.getState().id,
-		getters: GlossStore.get,
-	}),
 	computed : {
 		id(): string {
 			return 'gloss-query-field-' + this.fieldDescription.fieldName ;
@@ -40,9 +33,6 @@ export default Vue.extend ({
 			get(): string { return GlossStore.get.getGlossQueryFieldValue(this.fieldDescription.fieldName); },
 			set(v: string) { GlossStore.actions.setOneGlossQueryField({fieldName: this.fieldDescription.fieldName, fieldValue : v }); }
 		}
-	},
-	created() {
-		UIStore.getState().results.shared.concordanceAsHtml = true;
 	},
 })
 

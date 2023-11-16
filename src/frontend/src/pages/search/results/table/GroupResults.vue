@@ -706,7 +706,7 @@ export default Vue.extend({
 			ga('send', 'event', 'results', 'concordances/load', id, requestParameters.first+requestParameters.number);
 
 			const apiCall = this.type === 'hits' ? Api.blacklab.getHits : Api.blacklab.getDocs;
-			const req: Promise<BLTypes.BLSearchResult> = apiCall(CorpusStore.getState().id, requestParameters).request;
+			const req: Promise<BLTypes.BLSearchResult> = apiCall(INDEX_ID, requestParameters).request;
 			cache.request = req;
 			cache.error = null;
 

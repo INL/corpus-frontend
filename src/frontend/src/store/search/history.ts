@@ -192,7 +192,7 @@ const actions = {
 };
 
 const init = () => {
-	index = CorpusModule.getState();
+	index = CorpusModule.getState().corpus!;
 	readFromLocalStorage();
 };
 

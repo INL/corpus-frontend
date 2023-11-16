@@ -283,7 +283,7 @@ export default Vue.extend({
 			set(v: string|null) { this.store.actions.viewGroup(v); }
 		},
 
-		corpus(): NormalizedIndex { return CorpusStore.getState(); },
+		corpus(): NormalizedIndex { return CorpusStore.getState().corpus!; },
 		sortAnnotations(): string[] { return UIStore.getState().results.shared.sortAnnotationIds; },
 		sortMetadata(): string[] { return UIStore.getState().results.shared.sortMetadataIds; },
 		exportAnnotations(): string[]|null { return UIStore.getState().results.shared.detailedAnnotationIds; },
@@ -350,7 +350,7 @@ export default Vue.extend({
 			}
 		},
 		// simple view variables
-		indexId(): string { return CorpusStore.getState().id; },
+		indexId(): string { return INDEX_ID; },
 		resultsHaveData(): boolean {
 			if (BLTypes.isDocGroups(this.results)) { return this.results.docGroups.length > 0; }
 			if (BLTypes.isHitGroups(this.results)) { return this.results.hitGroups.length > 0; }

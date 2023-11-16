@@ -202,7 +202,7 @@ export default Vue.extend({
 		tabs(): Array<{label?: string, entries: AppTypes.NormalizedAnnotation[]}> {
 			return getAnnotationSubset(
 				UIStore.getState().search.extended.searchAnnotationIds,
-				CorpusStore.getState().annotationGroups,
+				CorpusStore.get.annotationGroups(),
 				CorpusStore.get.allAnnotationsMap(),
 				'Search',
 				CorpusStore.get.textDirection()
@@ -212,7 +212,7 @@ export default Vue.extend({
 			return this.tabs.flatMap(tab => tab.entries);
 		},
 		firstMainAnnotation: CorpusStore.get.firstMainAnnotation,
-		firstMainAnnotationACUrl(): string { return blacklabPaths.autocompleteAnnotation(CorpusStore.getState().id, this.firstMainAnnotation.annotatedFieldId, this.firstMainAnnotation.id); },
+		firstMainAnnotationACUrl(): string { return blacklabPaths.autocompleteAnnotation(INDEX_ID, this.firstMainAnnotation.annotatedFieldId, this.firstMainAnnotation.id); },
 		textDirection: CorpusStore.get.textDirection,
 		withinOptions(): Option[] {
 			const {enabled, elements} = UIStore.getState().search.extended.within;

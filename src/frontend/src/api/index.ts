@@ -28,8 +28,6 @@ export function init(which: keyof typeof endpoints, url: string, settings: Parti
 	});
 }
 
-init('blacklab', BLS_URL, {params: {outputformat: 'json'}});
-
 // We need this for transforming metadata fields in reponses from (optional) strings to (required) arrays
 // i.e. polyfilling missing document info fields in responses.
 // const allMetadataFields = CorpusStore.get.allMetadataFields().map(f => f.id);
@@ -208,9 +206,9 @@ export const blacklab = {
 
 		let request: Promise<BLTypes.BLHitResults|BLTypes.BLHitGroupResults>;
 		if (!indexId) {
-			request = Promise.reject(new ApiError('Error', 'No index specified.', 'Internal error'));
+			request = Promise.reject(new ApiError('Error', 'No index specified.', 'Internal error', undefined));
 		} else if (!params.patt) {
-			request = Promise.reject(new ApiError('Info', 'Cannot get hits without pattern.', 'No results'));
+			request = Promise.reject(new ApiError('Info', 'Cannot get hits without pattern.', 'No results', undefined));
 		} else {
 			request = getOrPost(blacklabPaths.hits(indexId), params, { ...requestParameters, cancelToken });
 		}
@@ -231,9 +229,9 @@ export const blacklab = {
 
 		let request: Promise<Blob>;
 		if (!indexId) {
-			request = Promise.reject(new ApiError('Error', 'No index specified.', 'Internal error'));
+			request = Promise.reject(new ApiError('Error', 'No index specified.', 'Internal error', undefined));
 		} else if (!params.patt) {
-			request = Promise.reject(new ApiError('Info', 'Cannot get hits without pattern.', 'No results'));
+			request = Promise.reject(new ApiError('Info', 'Cannot get hits without pattern.', 'No results', undefined));
 		} else {
 			request = getOrPost(blacklabPaths.hitsCsv(indexId), csvParams, {
 				...requestParameters,
@@ -263,7 +261,7 @@ export const blacklab = {
 
 		let request: Promise<Blob>;
 		if (!indexId) {
-			request = Promise.reject(new ApiError('Error', 'No index specified', 'Internal error'));
+			request = Promise.reject(new ApiError('Error', 'No index specified', 'Internal error', undefined));
 		} else {
 			request = getOrPost<Blob>(blacklabPaths.docsCsv(indexId), csvParams, {
 				...requestParameters,
@@ -288,7 +286,7 @@ export const blacklab = {
 
 		let request: Promise<BLTypes.BLDocResults|BLTypes.BLDocGroupResults>;
 		if (!indexId) {
-			request = Promise.reject(new ApiError('Error', 'No index specified', 'Internal error'));
+			request = Promise.reject(new ApiError('Error', 'No index specified', 'Internal error', undefined));
 		} else {
 			request = getOrPost<BLTypes.BLDocResults|BLTypes.BLDocGroupResults>(blacklabPaths.docs(indexId), params, { ...requestParameters, cancelToken })
 			.then(res => {

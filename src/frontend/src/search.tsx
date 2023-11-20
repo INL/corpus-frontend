@@ -210,6 +210,10 @@ $(document).ready(async () => {
 		params: {outputformat: 'json'},
 		headers: user ? {Authorization: `Bearer ${user.access_token}` } : undefined
 	});
+	initApi('cf', CONTEXT_URL, {
+		headers: user ? {Authorization: `Bearer ${user.access_token}` } : undefined
+	})
+
 	await RootStore.init(); // STORE INIT (CORPUS FETCH + TAGSET FETCH)
 	// We can render before the tagset loads, the form just won't be populated from the url yet.
 	(window as any).vueRoot = new Vue({

@@ -13,6 +13,7 @@ import {RootState} from '@/store/search/';
 
 import {NormalizedIndex, NormalizedAnnotation, NormalizedMetadataField, NormalizedAnnotatedField, NormalizedMetadataGroup, NormalizedAnnotationGroup} from '@/types/apptypes';
 import { MapOf, mapReduce } from '@/utils';
+import { normalizeIndex } from '@/utils/blacklabutils';
 
 type ModuleRootState = {
 	state: 'loading'|'error'|'loaded'|'requiresLogin'|'unauthorized';
@@ -77,9 +78,10 @@ const privateActions = {
 	setCorpus: b.commit((state, newState: ModuleRootState) => Object.assign(state, newState), 'setCorpus'),
 }
 
-/** Expects the blacklab api to be initialized. */
-const init = () => Api.blacklab
-	.getCorpus(INDEX_ID)
+/** Expects the corpus-frontend api to be initialized. */
+const init = () => Api.frontend
+	.getCorpus()
+	.then(normalizeIndex)
 	.then(corpus => {
 		// We to finish up some state that might be missing.
 		if (corpus.documentCount === -1) {

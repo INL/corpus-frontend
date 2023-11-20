@@ -22,6 +22,7 @@ const endpoints = {
 /** Initialize an endpoint. In a function because urls might be set asynchronously (such as from customjs). */
 export function init(which: keyof typeof endpoints, url: string, settings: Partial<AxiosRequestConfig> = {}) {
 	if (!(which in endpoints)) throw new Error(`Unknown endpoint ${which}`);
+	if (endpoints[which]) throw new Error(`Endpoint ${which} already initialized`);
 	endpoints[which] = createEndpoint({
 		baseURL: url.replace(/\/*$/, '/'),
 		paramsSerializer: params => qs.stringify(params),
@@ -360,7 +361,7 @@ export const blacklab = {
 };
 
 export const frontend = {
-	getIndexInfo: () => endpoints.cf.get<BLTypes.BLIndex>(frontendPaths.indexInfo()),
+	getCorpus: () => endpoints.cf.get<BLTypes.BLIndexMetadata>(frontendPaths.indexInfo()),
 
 	getDocumentContents: (pid: string, params: {
 		patt?: string,

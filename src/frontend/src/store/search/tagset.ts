@@ -14,16 +14,26 @@ import * as CorpusStore from '@/store/search/corpus';
 import { NormalizedAnnotation, Tagset } from '@/types/apptypes';
 
 import { mapReduce } from '@/utils';
+import { bindNodeCallback } from 'rxjs';
 
 type ModuleRootState = Tagset&{
 	/** Uninitialized before init() or load() action called. loading/loaded during/after load() called. Disabled when load() not called before init(), or loading failed for any reason. */
 	state: 'uninitialized'|'loading'|'loaded'|'disabled';
 	message: string;
+	/**
+	 * Url from which the tagset will be loaded on initialization.
+	 * We must defer initialization because corpus info first has the be downloaded from the server.
+	 * We need that to validate the contents of the tagset (which annotations exist, which values are valid, etc...)
+	 * So that users can't create queries that won't work.
+	 * (we don't _have_ to do that, but it would make creating and debugging a tagset pretty difficult)
+	 */
+	url: string|null;
 };
 
 const namespace = 'tagset';
 const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, {
 	state: 'uninitialized',
+	url: null,
 	message: '',
 	subAnnotations: {},
 	values: {}
@@ -49,17 +59,45 @@ const internalActions = {
 	}, 'replace')
 };
 
-// TODO dirty global state :(
-let initPromise: Promise<void>;
 
 const actions = {
 	/** Load the tagset from the provided url. This should be called prior to decoding the page url. */
-	load: b.dispatch((context, url: string) => {
+	load: b.commit((state, url: string) => state.url = url, 'load'),
+
+
+	/**
+	 * Closes the loading window, if load() hasn't been called yet, disabled the module permanently and
+	 * returns a resolved promise.
+	 * If load has been called, returns a promise that resolves when the loading is completed.
+	 */
+	awaitInit: () => {
+		return init();
+	}
+};
+
+const init = async () => {
+	const state = getState();
+	if (state.state !== 'uninitialized') {
+		return Promise.resolve();
+	}
+
+	// At this point the global store is being initialized and the url has been (or is being) parsed, prevent a tagset from loading now (initialization order is pretty strict).
+	if (!) {
+		internalActions.state({state: 'disabled', message: 'No tagset loaded.\n Call "vuexModules.tagset.actions.load(CONTEXT_URL + /static/${path_to_tagset.json}) from custom js file before $document.ready()'});
+		initPromise = Promise.resolve();
+	}
+	return initPromise;
+
+
+	b.dispatch((context, url: string) => {
+
+
 		if (context.state.state !== 'uninitialized') {
 			throw new Error('Cannot load tagset after calling store.init(), and cannot replace existing tagset.');
 		}
 		internalActions.state({state: 'loading', message: 'Loading tagset...'});
 		initPromise = Axios.get<Tagset>(url, {
+			// Remove comment-lines in the returned json. (that's not strictly allowed by JSON, but we chose to support it)
 			transformResponse: [(r: string) => r.replace(/\/\/.*[\r\n]+/g, '')].concat(Axios.defaults.transformResponse!)
 		})
 		.then(t => {
@@ -173,25 +211,9 @@ const actions = {
 			console.warn('Could not load tagset: ' + e.message);
 			internalActions.state({state: 'disabled', message: 'Error loading tagset: ' + e.message});
 		});
-	}, 'load'),
 
-	/**
-	 * Closes the loading window, if load() hasn't been called yet, disabled the module permanently and
-	 * returns a resolved promise.
-	 * If load has been called, returns a promise that resolves when the loading is completed.
-	 */
-	awaitInit: () => {
-		return init();
-	}
-};
 
-const init = () => {
-	// At this point the global store is being initialized and the url has been (or is being) parsed, prevent a tagset from loading now (initialization order is pretty strict).
-	if (!initPromise) {
-		internalActions.state({state: 'disabled', message: 'No tagset loaded.\n Call "vuexModules.tagset.actions.load(CONTEXT_URL + /static/${path_to_tagset.json}) from custom js file before $document.ready()'});
-		initPromise = Promise.resolve();
-	}
-	return initPromise;
+
 };
 
 /** check if all annotations and their values exist */

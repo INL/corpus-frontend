@@ -49,6 +49,7 @@ import nl.inl.corpuswebsite.response.CorporaDataResponse;
 import nl.inl.corpuswebsite.response.CorporaResponse;
 import nl.inl.corpuswebsite.response.ErrorResponse;
 import nl.inl.corpuswebsite.response.HelpResponse;
+import nl.inl.corpuswebsite.response.OidcCallbackResponse;
 import nl.inl.corpuswebsite.response.RemoteIndexResponse;
 import nl.inl.corpuswebsite.response.SearchResponse;
 import nl.inl.corpuswebsite.utils.BlackLabApi;
@@ -127,6 +128,7 @@ public class MainServlet extends HttpServlet {
             responses.put("upload", RemoteIndexResponse.class);
             responses.put("config", ConfigResponse.class);
             responses.put("api", ApiResponse.class);
+            responses.put("callback", OidcCallbackResponse.class);
 //            responses.put("docs-api", ArticleContentResponse.class);
 //            responses.put("metadata-api", CorpusMetadataResponse.class);
         } catch (ServletException e) {
@@ -195,7 +197,7 @@ public class MainServlet extends HttpServlet {
         Function<String, WebsiteConfig> gen = __ ->
             getProjectFile(corpus, "search.xml")
             .map(configFile -> {
-                try { return new WebsiteConfig(configFile, getCorpusConfig(corpus, request, response).getResult(), config.get(Keys.CF_URL_ON_CLIENT)); }
+                try { return new WebsiteConfig(configFile, config.get(Keys.CF_URL_ON_CLIENT), corpus); }
                 catch (ConfigurationException e) { throw new RuntimeException("Could not read search.xml " + configFile, e); }
             })
             .orElseThrow(() -> new IllegalStateException("No search.xml, and no default in jar either"));
@@ -304,7 +306,7 @@ public class MainServlet extends HttpServlet {
         // If requesting invalid page, redirect to ${page}/search/, as the user probably meant to go to ${corpus}/search/ but instead went to ${corpus}/
         // if they actually meant a page, the corpus probably doesn't exist, they will still get a 404 as usual
         if (brClass.equals(ErrorResponse.class) && page != null && corpus == null) {
-            logger.fine(String.format("Unknown raw page %s requested - might be a corpus, redirecting", page));
+            logger.fine(String.format("Unknown page '%s' requested - might be a corpus, redirecting to search page", page));
             response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
             response.setHeader("location", this.config.get(Keys.CF_URL_ON_CLIENT) + "/" + page + "/search/");
             return;
@@ -454,49 +456,4 @@ public class MainServlet extends HttpServlet {
     public GlobalConfig getGlobalConfig() {
         return config;
     }
-
-
-
-    // wat willen we hier doen..
-    // iets met uh, als er een header nodig is, dan redirecten naar de keycloak dinges
-
-//    public void doUser(HttpServletRequest req, HttpServletResponse resp, boolean userRequired) throws ParseException {
-//        if (StringUtils.isAnyBlank(
-//                config.get(Keys.KEYCLOAK_URL),
-//                config.get(Keys.KEYCLOAK_REALM),
-//                config.get(Keys.KEYCLOAK_CLIENT_ID)
-//        ))
-//            return;
-//
-//        Map<String, Object> umacredentials = new HashMap<>();
-//        umacredentials.put("secret", config.get(Keys.KEYCLOAK_SECRET));
-//
-//        Configuration authzConfig = new Configuration();
-//        authzConfig.setAuthServerUrl(config.get(Keys.KEYCLOAK_URL));
-//        authzConfig.setRealm(config.get(Keys.KEYCLOAK_REALM));
-//        authzConfig.setResource(config.get(Keys.KEYCLOAK_CLIENT_ID));
-//        authzConfig.setCredentials(umacredentials);
-//
-//
-//        AuthzClient authz = AuthzClient.create(authzConfig);
-//        AuthorizationRequest request = new AuthorizationRequest();
-//        AuthorizationResponse response = authz.authorization()
-//
-//        // do we need a secret? Don't think so actually, unless we implement login ourselves.
-//        KeycloakOidcConfiguration oidcConfiguration = new KeycloakOidcConfiguration();
-//        oidcConfiguration.setRealm(config.get(Keys.KEYCLOAK_REALM));
-//        oidcConfiguration.setBaseUri(config.get(Keys.KEYCLOAK_URL));
-//        oidcConfiguration.setClientId(config.get(Keys.KEYCLOAK_CLIENT_ID));
-//        oidcConfiguration.setUseNonce(true);
-//
-//        //check with  uma whether anon may access resource if we have no user
-//        // if not, redirect to keycloak
-//
-//
-//        JEEContext context = new JEEContext(req, resp);
-//        ProfileManager manager = new ProfileManager(context, JEESessionStore.INSTANCE);
-//        manager.setConfig(new Config(new KeycloakOidcClient(oidcConfiguration)));
-//        Optional<UserProfile> profile = manager.getProfile();
-//
-//    }
 }

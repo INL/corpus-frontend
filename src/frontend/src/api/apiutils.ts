@@ -1,4 +1,5 @@
 import axios, {AxiosResponse, AxiosRequestConfig, AxiosError} from 'axios';
+import qs from 'qs';
 
 import {ApiError} from '@/types/apptypes';
 import {isBLError} from '@/types/blacklabtypes';
@@ -112,15 +113,38 @@ export function createEndpoint(options: AxiosRequestConfig) {
 
 	return {
 		...endpoint,
-		get<T>(url: string, config?: AxiosRequestConfig) {
-			return endpoint.get<T>(url, config)
+		get<T>(url: string, queryParams?: Record<string, string|number|boolean|Record<string, any>>, config?: AxiosRequestConfig) {
+			return endpoint.get<T>(url, {...config, params: queryParams})
 			.then(delayResponse, delayError)
 			.then(r => r.data, handleError);
 		},
-		post<T>(url: string, data?: any, config?: AxiosRequestConfig) {
-			return endpoint.post<T>(url, data, config)
+		post<T>(url: string, formData?: any, config?: AxiosRequestConfig) {
+			return endpoint.post<T>(url, formData, config)
 			.then(delayResponse, delayError)
 			.then(r => r.data, handleError);
+		},
+		// Server has issues with long urls in GET requests, so use POST instead when the query string is too long.
+		// (only works with BlackLab currently)
+		getOrPost<T>(url: string, queryParameters?: any, settings?: AxiosRequestConfig) {
+			const queryString = queryParameters ? qs.stringify(queryParameters) : '';
+			const usePost = queryString.length > 1000;
+			// const usePost = params && (params.patt ? params.patt.length : 0)+(params.filter ? params.filter.length : 0)+(params.pattgapdata ? params.pattgapdata.length : 0) > 1000;
+			if (usePost) {
+				settings = settings || {};
+				settings.headers = settings.headers || {};
+				settings.headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
+
+				// override the default-set outputformat if another is provided.
+				// Or it will be sent in both the request body and the query string causing unpredictable behavior in what is actually returned.
+				if (queryParameters.outputformat) {
+					settings.params = settings.params || {};
+					settings.params.outputformat = queryParameters.outputformat;
+				}
+
+				return this.post<T>(url, queryString, settings);
+			} else {
+				return this.get<T>(url, queryParameters, settings);
+			}
 		},
 		delete<T>(url: string, data?: any, config?: AxiosRequestConfig) {
 			// Need to use the generic .request function because .delete

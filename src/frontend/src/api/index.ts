@@ -14,6 +14,7 @@ type API = ReturnType<typeof createEndpoint>;
 
 const endpoints = {
 	blacklab: null as any as API,
+	cf: null as any as API,
 	gloss: null as any as API,
 	concept: null as any as API,
 };
@@ -43,6 +44,9 @@ export const frontendPaths = {
 		wordstart: number|undefined,
 		wordend: number|undefined,
 	) => `${CONTEXT_URL}/${INDEX_ID}/docs/${pid}?${qs.stringify({query, pattgapdata, wordstart, wordend})}`,
+	indexInfo: () => `${CONTEXT_URL}/${INDEX_ID}/api/info`,
+	documentContents: (pid: string) => `${CONTEXT_URL}/${INDEX_ID}/docs/${pid}/contents`,
+	documentMetadata: (pid: string) => `${CONTEXT_URL}/${INDEX_ID}/docs/${pid}`,
 }
 
 /** Contains url mappings for different requests to blacklab-server */
@@ -90,38 +94,38 @@ export const blacklabPaths = {
  */
 export const blacklab = {
 	getServerInfo: (requestParameters?: AxiosRequestConfig) => endpoints.blacklab
-		.get<BLTypes.BLServer>(blacklabPaths.root(), requestParameters),
+		.get<BLTypes.BLServer>(blacklabPaths.root(), undefined, requestParameters),
 
 	getUser: (requestParameters?: AxiosRequestConfig) => endpoints.blacklab
-		.get<BLTypes.BLServer>(blacklabPaths.root(), requestParameters)
+		.get<BLTypes.BLServer>(blacklabPaths.root(), undefined, requestParameters)
 		.then(r => r.user),
 
 	getCorpora: (requestParameters?: AxiosRequestConfig) => endpoints.blacklab
-		.get<BLTypes.BLServer>(blacklabPaths.root(), requestParameters)
+		.get<BLTypes.BLServer>(blacklabPaths.root(), undefined, requestParameters)
 		.then(r => Object.entries(r.indices).map(([id, c]) => normalizeIndexBase(c, id))),
 
 	getCorpusStatus: (id: string, requestParamers?: AxiosRequestConfig) => endpoints.blacklab
-		.get<BLTypes.BLIndex>(blacklabPaths.indexStatus(id), requestParamers)
+		.get<BLTypes.BLIndex>(blacklabPaths.indexStatus(id), undefined, requestParamers)
 		.then(r => normalizeIndexBase(r, id)),
 
 	getCorpus: (id: string, requestParameters?: AxiosRequestConfig) => endpoints.blacklab
-		.get<BLTypes.BLIndexMetadata>(blacklabPaths.index(id), requestParameters)
+		.get<BLTypes.BLIndexMetadata>(blacklabPaths.index(id), undefined, requestParameters)
 		.then(normalizeIndex),
 
 	getShares: (id: string, requestParameters?: AxiosRequestConfig) => endpoints.blacklab
-		.get<{'users[]': BLTypes.BLShareInfo}>(blacklabPaths.shares(id), requestParameters)
+		.get<{'users[]': BLTypes.BLShareInfo}>(blacklabPaths.shares(id), undefined, requestParameters)
 		.then(r => r['users[]']),
 
 	getFormats: (requestParameters?: AxiosRequestConfig) => endpoints.blacklab
-		.get<BLTypes.BLFormats>(blacklabPaths.formats(), requestParameters)
+		.get<BLTypes.BLFormats>(blacklabPaths.formats(), undefined, requestParameters)
 		.then(r => Object.entries(r.supportedInputFormats))
 		.then(r => r.map(([id, format]) => normalizeFormat(id, format))),
 
 	getFormatContent: (id: string, requestParameters?: AxiosRequestConfig) => endpoints.blacklab
-		.get<BLTypes.BLFormatContent>(blacklabPaths.formatContent(id), requestParameters),
+		.get<BLTypes.BLFormatContent>(blacklabPaths.formatContent(id), undefined, requestParameters),
 
 	getFormatXslt: (id: string, requestParameters?: AxiosRequestConfig) => endpoints.blacklab
-		.get<string>(blacklabPaths.formatXslt(id), requestParameters),
+		.get<string>(blacklabPaths.formatXslt(id), undefined, requestParameters),
 
 	postShares: (id: string, users: BLTypes.BLShareInfo, requestParameters?: AxiosRequestConfig) => endpoints.blacklab
 		.post<BLTypes.BLResponse>(blacklabPaths.shares(id),
@@ -195,11 +199,11 @@ export const blacklab = {
 	deleteCorpus: (id: string) => endpoints.blacklab
 		.delete<BLTypes.BLResponse>(blacklabPaths.index(id)),
 
-	getDocumentInfo: (indexId: string, documentId: string, params: { query?: string; } = {}, requestParameters?: AxiosRequestConfig) =>
-		getOrPost<BLTypes.BLDocument>(blacklabPaths.docInfo(indexId, documentId), params, requestParameters),
+	getDocumentInfo: (indexId: string, documentId: string, params: { query?: string; } = {}, requestParameters?: AxiosRequestConfig) => endpoints.blacklab
+		.getOrPost<BLTypes.BLDocument>(blacklabPaths.docInfo(indexId, documentId), params, requestParameters),
 
 	getRelations: (indexId: string, requestParameters?: AxiosRequestConfig) => endpoints.blacklab
-		.get<BLTypes.BLRelationInfo>(blacklabPaths.relations(indexId), requestParameters),
+		.get<BLTypes.BLRelationInfo>(blacklabPaths.relations(indexId), undefined, requestParameters),
 
 	getHits: (indexId: string, params: BLTypes.BLSearchParameters, requestParameters?: AxiosRequestConfig) => {
 		const {token: cancelToken, cancel} = axios.CancelToken.source();
@@ -210,7 +214,7 @@ export const blacklab = {
 		} else if (!params.patt) {
 			request = Promise.reject(new ApiError('Info', 'Cannot get hits without pattern.', 'No results', undefined));
 		} else {
-			request = getOrPost(blacklabPaths.hits(indexId), params, { ...requestParameters, cancelToken });
+			request = endpoints.blacklab.getOrPost(blacklabPaths.hits(indexId), params, { ...requestParameters, cancelToken });
 		}
 
 		return {
@@ -233,7 +237,7 @@ export const blacklab = {
 		} else if (!params.patt) {
 			request = Promise.reject(new ApiError('Info', 'Cannot get hits without pattern.', 'No results', undefined));
 		} else {
-			request = getOrPost(blacklabPaths.hitsCsv(indexId), csvParams, {
+			request = endpoints.blacklab.getOrPost(blacklabPaths.hitsCsv(indexId), csvParams, {
 				...requestParameters,
 				headers: {
 					...(requestParameters || {}).headers,
@@ -263,7 +267,7 @@ export const blacklab = {
 		if (!indexId) {
 			request = Promise.reject(new ApiError('Error', 'No index specified', 'Internal error', undefined));
 		} else {
-			request = getOrPost<Blob>(blacklabPaths.docsCsv(indexId), csvParams, {
+			request = endpoints.blacklab.getOrPost<Blob>(blacklabPaths.docsCsv(indexId), csvParams, {
 				...requestParameters,
 				headers: {
 					...(requestParameters || {}).headers,
@@ -288,7 +292,7 @@ export const blacklab = {
 		if (!indexId) {
 			request = Promise.reject(new ApiError('Error', 'No index specified', 'Internal error', undefined));
 		} else {
-			request = getOrPost<BLTypes.BLDocResults|BLTypes.BLDocGroupResults>(blacklabPaths.docs(indexId), params, { ...requestParameters, cancelToken })
+			request = endpoints.blacklab.getOrPost<BLTypes.BLDocResults|BLTypes.BLDocGroupResults>(blacklabPaths.docs(indexId), params, { ...requestParameters, cancelToken })
 			.then(res => {
 				if (!BLTypes.isDocGroups(res)) {
 					res.docs.forEach(d => fixDocInfo(d.docInfo));
@@ -304,7 +308,7 @@ export const blacklab = {
 	},
 
 	getSnippet: (indexId: string, docId: string, hitstart: number, hitend: number, wordsaroundhit: number = 50, requestParameters?: AxiosRequestConfig) => {
-		return getOrPost<BLTypes.BLHitSnippetApi>(blacklabPaths.snippet(indexId, docId), {
+		return endpoints.blacklab.getOrPost<BLTypes.BLHitSnippetApi>(blacklabPaths.snippet(indexId, docId), {
 			hitstart,
 			hitend,
 			// when requesting 0, blacklab returns a differently shaped object (since 4), which causes issues.
@@ -337,7 +341,7 @@ export const blacklab = {
 	},
 
 	getTermFrequencies: (indexId: string, annotationId: string, values?: string[], filter?: string, requestParameters?: AxiosRequestConfig) => {
-		return getOrPost<BLTypes.BLTermOccurances>(blacklabPaths.termFrequencies(indexId), {
+		return endpoints.blacklab.getOrPost<BLTypes.BLTermOccurances>(blacklabPaths.termFrequencies(indexId), {
 			annotation: annotationId,
 			filter,
 			terms: values && values.length ? values.join(',') : undefined,
@@ -345,7 +349,7 @@ export const blacklab = {
 	},
 
 	getTermAutocomplete: (indexId: string, annotatedFieldId: string, annotationId: string, prefix: string, requestParameters?: AxiosRequestConfig) => {
-		return getOrPost<string[]>(blacklabPaths.autocompleteAnnotation(
+		return endpoints.blacklab.getOrPost<string[]>(blacklabPaths.autocompleteAnnotation(
 			indexId,
 			annotatedFieldId,
 			annotationId
@@ -355,6 +359,21 @@ export const blacklab = {
 	},
 };
 
+export const frontend = {
+	getIndexInfo: () => endpoints.cf.get<BLTypes.BLIndex>(frontendPaths.indexInfo()),
+
+	getDocumentContents: (pid: string, params: {
+		patt?: string,
+		pattgapdata?: string,
+		wordstart?: number,
+		wordend?: number,
+	}) => endpoints.cf
+		.get<string>(frontendPaths.documentContents(pid), params),
+
+	getDocumentMetadata: (pid: string) => endpoints.cf
+		.get<BLTypes.BLDocument>(frontendPaths.documentMetadata(pid)),
+}
+
 export const glossPaths = {
 	root: () => './',
 	glosses: () => `GlossStore` // NOTE: no trailing slash!
@@ -362,11 +381,7 @@ export const glossPaths = {
 
 export const glossApi = {
 	getCql: (instance: string, corpus: string, query: string) => endpoints.gloss
-		.get<''|Glossing[]>(glossPaths.glosses(), { params: {
-			instance,
-			corpus,
-			query
-		}})
+		.get<''|Glossing[]>(glossPaths.glosses(), {instance,corpus,query})
 		.then(glossings => !glossings ? '' : glossings
 			.filter(g => g.hit_first_word_id?.length > 3)
 			.map(g => {
@@ -383,13 +398,7 @@ export const glossApi = {
 			glossings: JSON.stringify(glossings)
 		})),
 	getGlosses: (instance: string, corpus: string, hitIds: string[]) => endpoints.gloss
-		.get<Glossing[]>(glossPaths.glosses(), {
-			params: {
-				instance,
-				corpus,
-				hitIds: JSON.stringify(hitIds)
-			}
-		}),
+		.get<Glossing[]>(glossPaths.glosses(), {instance,corpus,hitIds: JSON.stringify(hitIds)}),
 
 }
 
@@ -403,10 +412,8 @@ export const conceptApi = {
 	/** Data contains duplicates currently. */
 	getMainFields: (instance: string, corpus: string) => endpoints.concept
 		.get<{data: LexiconEntry[]}>(conceptPaths.api(), {
-			params: {
-				instance,
-				query: `query Quine { lexicon(corpus : "${corpus}") { field } }`
-			}
+			instance,
+			query: `query Quine { lexicon(corpus : "${corpus}") { field } }`
 		}),
 	addConceptOrTermToDatabase: (
 		instance: string,
@@ -416,22 +423,18 @@ export const conceptApi = {
 		/** When omitted, only the concept is added to the database. */
 		term?: string
 	) => endpoints.concept.get(conceptPaths.api(), {
-		params: {
-			instance,
-			insertTerm: term
-				? { corpus, field, concept, term }
-				: { corpus, field, concept }
-		}
+		instance,
+		insertTerm: term
+			? { corpus, field, concept, term }
+			: { corpus, field, concept }
 	}),
 	getConcepts: (
 		instance: string,
 		field: string,
 		prefix?: string
 	) => endpoints.concept.get<{data: {data: Array<{cluster: string}>}}>(conceptPaths.api(), {
-		params: {
-			instance,
-			query: `query Quine { lexicon (${prefix ? `cluster: "/^${prefix}/",` : ''} field: "${field}") { field, cluster, term } }`
-		}
+		instance,
+		query: `query Quine { lexicon (${prefix ? `cluster: "/^${prefix}/",` : ''} field: "${field}") { field, cluster, term } }`
 	}).then(r => uniq(r.data.data.map(x => x.cluster))),
 	getTerms: (
 		instance: string,
@@ -440,10 +443,8 @@ export const conceptApi = {
 		/** Optionally, return a list only with those terms starting with the prefix. All terms returned otherwise. */
 		prefix?: string
 	) => endpoints.concept.get<{data: {data: Array<{term: string}>}}>(conceptPaths.api(), {
-		params: {
-			instance,
-			query: `query Quine { lexicon (${prefix ? `term: "/^${prefix}/",` : ''} field: "${field}", cluster: "${concept}") { field, cluster, term } }`
-		}
+		instance,
+		query: `query Quine { lexicon (${prefix ? `term: "/^${prefix}/",` : ''} field: "${field}", cluster: "${concept}") { field, cluster, term } }`
 	}).then(r => uniq(r.data.data.map(x => x.term))),
 	translate_query_to_cql: (
 		blacklabBackendEndpoint: string,
@@ -452,44 +453,20 @@ export const conceptApi = {
 		queries: Record<string, AtomicQuery[]>,
 	): Promise<{pattern: string}> => endpoints.concept
 		.get<{pattern: string}>(conceptPaths.cql(), {
+			server: blacklabBackendEndpoint,
+			corpus,
+			action: 'info',
+			query: JSON.stringify({
+				element,
+				strict: true,
+				filter: '',
+				queries
+			})
+		}, {
 			headers: {
 				Accept: 'application/json'
 			},
-			params: {
-				server: blacklabBackendEndpoint,
-				corpus,
-				action: 'info',
-				query: JSON.stringify({
-					element,
-					strict: true,
-					filter: '',
-					queries
-				})
-			}
 		}),
-}
-
-// Server has issues with long urls.
-function getOrPost<R>(path: string, queryParameters: any, settings?: AxiosRequestConfig): Promise<R> {
-	const queryString = queryParameters ? qs.stringify(queryParameters) : '';
-	const usePost = queryString.length > 1000;
-	// const usePost = params && (params.patt ? params.patt.length : 0)+(params.filter ? params.filter.length : 0)+(params.pattgapdata ? params.pattgapdata.length : 0) > 1000;
-	if (usePost) {
-		settings = settings || {};
-		settings.headers = settings.headers || {};
-		settings.headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
-
-		// override the default-set outputformat if another is provided.
-		// Or it will be sent in both the request body and the query string causing unpredictable behavior in what is actually returned.
-		if (queryParameters.outputformat) {
-			settings.params = settings.params || {};
-			settings.params.outputformat = queryParameters.outputformat;
-		}
-
-		return endpoints.blacklab.post<R>(path, queryString, settings);
-	} else {
-		return endpoints.blacklab.get<R>(path, { ...settings, params: queryParameters});
-	}
 }
 
 export {Canceler, ApiError};

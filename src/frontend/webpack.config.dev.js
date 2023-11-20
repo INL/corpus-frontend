@@ -7,10 +7,11 @@ const CircularDependencyPlugin = require('circular-dependency-plugin');
 module.exports = {
 	entry: {
 		// Output multiple files, one for each main page - important!: also include the polyfills in the output bundle
-		article:        ['./src/utils/enable-polyfills.ts', './src/utils/enable-keycloak.ts', './src/article.ts'],
-		corpora:        ['./src/utils/enable-polyfills.ts', './src/utils/enable-keycloak.ts', './src/corpora.ts'],
-		search:         ['./src/utils/enable-polyfills.ts', './src/utils/enable-keycloak.ts', './src/search.tsx'],
-		'remote-index': ['./src/utils/enable-polyfills.ts', './src/utils/enable-keycloak.ts', './src/remote-index.ts']
+		article:        ['./src/utils/enable-polyfills.ts', './src/article.ts'],
+		corpora:        ['./src/utils/enable-polyfills.ts', './src/corpora.ts'],
+		search:         ['./src/utils/enable-polyfills.ts', './src/search.tsx'],
+		'remote-index': ['./src/utils/enable-polyfills.ts', './src/remote-index.ts'],
+		callback:       ['./src/utils/enable-polyfills.ts', './src/callback.ts'],
 	},
 	output: {
 		filename: '[name].js',

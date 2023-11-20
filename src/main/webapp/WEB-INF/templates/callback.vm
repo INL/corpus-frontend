@@ -1,0 +1,19 @@
+<html>
+<head>
+    <meta charset="utf-8">
+
+    <script>
+        var CONTEXT_URL = "$esc.javascript($pathToTop)";
+        var KEYCLOAK_URL = "$esc.javascript($keycloakUrl)";
+        var KEYCLOAK_REALM = "$esc.javascript($keycloakRealm)";
+        var KEYCLOAK_CLIENT_ID = "$esc.javascript($keycloakClientId)";
+    </script>
+
+    <script src="$jspath/callback.js?_$cache"></script>
+</head>
+<body>
+    <div class="container">
+        Callback for oidc login process.
+    </div>
+</body>
+</html>

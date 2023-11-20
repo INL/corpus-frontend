@@ -80,7 +80,7 @@ public class WebsiteConfig {
     }
 
     private final Optional<String> corpusId;
-    
+
     /**
      * Name to display for this corpus, null if no corpus set. Falls back to the corpus name if not explicitly configured.
      */
@@ -119,12 +119,12 @@ public class WebsiteConfig {
      * Note that corpus may be null, when parsing the default website settings for non-corpus pages (such as the landing page).
      *
      * @param configFile the Search.xml file
-     * @param corpusConfig (optional) corpus info gotten from BlackLab
+     * @param corpusId (optional) corpus id if this is a corpus-specific config file
      * @param contextPath the application root url on the client (usually /corpus-frontend). Required for string interpolation while loading the configFile.
      * @throws ConfigurationException
      */
-    
-    public WebsiteConfig(File configFile, Optional<CorpusConfig> corpusConfig, String contextPath) throws ConfigurationException {
+    public WebsiteConfig(File configFile, String contextPath, Optional<String> corpusId) throws ConfigurationException {
+        this.corpusId = corpusId;
         Parameters parameters = new Parameters();
         ConfigurationBuilder<XMLConfiguration> cb = new FileBasedConfigurationBuilder<>(XMLConfiguration.class)
                 .configure(parameters.fileBased()
@@ -134,8 +134,8 @@ public class WebsiteConfig {
                     put("request", key -> {
                         switch (key) {
                             case "contextPath": return contextPath;
-                            case "corpusId": return corpusConfig.map(CorpusConfig::getCorpusId).orElse(""); // don't return null, or the interpolation string (${request:corpusId}) will be rendered
-                            case "corpusPath": return contextPath + corpusConfig.map(CorpusConfig::getCorpusId).map(c -> "/" + c).orElse("");
+                            case "corpusId": return corpusId.orElse(""); // don't return null, or the interpolation string (${request:corpusId}) will be rendered
+                            case "corpusPath": return contextPath + corpusId.map(c -> "/" + c).orElse("");
                             default: return key;
                         }
                     });
@@ -144,12 +144,10 @@ public class WebsiteConfig {
 
         XMLConfiguration xmlConfig = cb.getConfiguration();
 
-        corpusId = corpusConfig.map(CorpusConfig::getCorpusId);
         // Can be specified in multiple places: search.xml, corpusConfig (in blacklab), or as a fallback, just the corpusname with some capitalization and any username removed.
         corpusDisplayName = Stream
             .of(
                 xmlConfig.getString("InterfaceProperties.DisplayName"),
-                corpusConfig.flatMap(CorpusConfig::getDisplayName).orElse(""),
                 CorpusFileUtil.getCorpusName(corpusId).orElse("")
             )
             .map(StringUtils::trimToNull)

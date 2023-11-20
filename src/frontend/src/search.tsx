@@ -205,9 +205,10 @@ import { init as initApi } from '@/api';
 
 $(document).ready(async () => {
 	const user = await loginSystem.awaitInit(); // LOGIN SYSTEM
+
 	initApi('blacklab', BLS_URL, { // API INIT
 		params: {outputformat: 'json'},
-		headers: { Authorization: user ? `Bearer ${user.access_token}` : undefined }
+		headers: user ? {Authorization: `Bearer ${user.access_token}` } : undefined
 	});
 	await RootStore.init(); // STORE INIT (CORPUS FETCH + TAGSET FETCH)
 	// We can render before the tagset loads, the form just won't be populated from the url yet.

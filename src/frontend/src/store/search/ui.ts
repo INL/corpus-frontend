@@ -9,14 +9,14 @@
 import Vue from 'vue';
 import cloneDeep from 'clone-deep';
 import { getStoreBuilder } from 'vuex-typex';
+import { stripIndent, html } from 'common-tags';
 
 import { RootState } from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus';
 import * as ViewsStore from '@/store/search/results/views';
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
-import { mapReduce, MapOf } from '@/utils';
-import { stripIndent, html } from 'common-tags';
+import { MapOf } from '@/utils';
 import { blacklab } from '@/api';
 
 type CustomView = {
@@ -648,11 +648,13 @@ const actions = {
 };
 
 const init = () => {
+	if (CorpusStore.getState().state !== 'loaded') throw new Error('Cannot initialize UI module before corpus is loaded');
+
 	/*
 	Store initialization happens in 3 steps:
 	- initial construction:
 		this happens immediately when the script is evaluated.
-		This is then the initialState objects are created. (hence the workaround in this module's getState())
+		This is when the initialState objects are created. (hence the workaround in this module's getState())
 	- customization:
 		CustomJs scripts load and can interact with the UI module
 	- init() function: CustomJs should now have done all its edits,
@@ -857,6 +859,11 @@ function validateAnnotations(
 	invalid: (id: string) => string,
 	cb: (ids: string[]) => void
 ) {
+	if (CorpusStore.getState().state !== 'loaded') {
+		cb(ids);
+		return;
+		// assume we will re-check this on init()?
+	}
 	const all = CorpusStore.get.allAnnotationsMap();
 	const results = ids.filter(id => {
 		if (!all[id]) { console.warn(missing(id)); return false; }
@@ -878,6 +885,12 @@ function validateMetadata(
 	invalid: (id: string) => string,
 	cb: (ids: string[]) => void
 ) {
+	if (CorpusStore.getState().state !== 'loaded') {
+		cb(ids);
+		return;
+		// assume we will re-check this on init()?
+	}
+
 	const all = CorpusStore.get.allMetadataFieldsMap();
 	const results = ids.filter(id => {
 		if (!all[id]) { console.warn(missing(id)); return false; }

@@ -36,6 +36,7 @@ type ModuleRootState = {
 };
 
 // NOTE: This state shape is invalid, we correct it on store initialization
+// We need some references to the UI store, which is not initialized yet.
 const defaults: ModuleRootState = {
 	ngram: {
 		/** 1-indexed */

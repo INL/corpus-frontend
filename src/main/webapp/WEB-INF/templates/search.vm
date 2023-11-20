@@ -1,6 +1,6 @@
 #parse("header.vm")
 
-#set($unescapedIndexStructureJson = $indexStructureJson) ## variables with 'unescaped' in the name are not html-escaped, see BaseResponse.java
+###set($unescapedIndexStructureJson = $indexStructureJson) ## variables with 'unescaped' in the name are not html-escaped, see BaseResponse.java
 
 <script>
     var PROPS_IN_COLUMNS = "$websiteConfig.getPropColumns().orElse("")".split(',');

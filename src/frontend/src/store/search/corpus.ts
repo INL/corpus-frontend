@@ -6,13 +6,10 @@
  */
 
 import {getStoreBuilder} from 'vuex-typex';
-import cloneDeep from 'clone-deep';
 
 import * as Api from '@/api';
 
 import {RootState} from '@/store/search/';
-
-import {normalizeIndex} from '@/utils/blacklabutils';
 
 import {NormalizedIndex, NormalizedAnnotation, NormalizedMetadataField, NormalizedAnnotatedField, NormalizedMetadataGroup, NormalizedAnnotationGroup} from '@/types/apptypes';
 import { MapOf, mapReduce } from '@/utils';
@@ -81,8 +78,7 @@ const privateActions = {
 }
 
 /** Expects the blacklab api to be initialized. */
-const init = () => {
-	Api.blacklab
+const init = () => Api.blacklab
 	.getCorpus(INDEX_ID)
 	.then(corpus => {
 		// We to finish up some state that might be missing.
@@ -113,7 +109,7 @@ const init = () => {
 			privateActions.setCorpus({state: 'error', message: e.message, corpus: null})
 		}
 	});
-}
+
 
 
 

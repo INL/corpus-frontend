@@ -49,11 +49,11 @@ public class BlackLabApi {
 				.request(true);
 	}
 
-	public Result<String, QueryException> getDocumentContents(String corpus, String docId, Optional<String> blacklabQuery, Optional<String> pattgap, Optional<Integer> pageStart, Optional<Integer> pageEnd) {
+	public Result<String, QueryException> getDocumentContents(String corpus, String docId, Optional<String> blacklabQuery, Optional<String> pattgapdata, Optional<Integer> pageStart, Optional<Integer> pageEnd) {
 		return new AuthRequest(request, response)
 				.url(blsUrl, corpus, "docs", docId, "contents")
 				.query("patt", blacklabQuery)
-				.query("pattgapdata", pattgap)
+				.query("pattgapdata", pattgapdata)
 				.query("wordstart", pageStart.map(Object::toString))
 				.query("wordend", pageEnd.map(Object::toString))
 				.request(true);

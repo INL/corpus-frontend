@@ -21,7 +21,7 @@
 import Vue from 'vue';
 
 // import Keycloak, {KeycloakConfig} from '@/vendor/keycloak';
-import Keycloak, {KeycloakConfig} from 'keycloak-js';
+// import Keycloak, {KeycloakConfig} from 'keycloak-js';
 
 
 export default Vue.extend({
@@ -35,54 +35,54 @@ export default Vue.extend({
 	},
 	data: () => ({
 		username: null as null|string,
-		keycloak: null as null|Keycloak
+		// keycloak: null as null|Keycloak
 	}),
-	computed: {
-		keycloakOptions(): KeycloakConfig|null {
-			return {
-				url: this.url,
-				realm: this.realm,
-				clientId: this.clientId
-			};
-		}
-	},
+	// computed: {
+	// 	keycloakOptions(): KeycloakConfig|null {
+	// 		return {
+	// 			url: this.url,
+	// 			realm: this.realm,
+	// 			clientId: this.clientId
+	// 		};
+	// 	}
+	// },
 	methods: {
 		login() {
-			if (!this.keycloak) return;
-			this.keycloak.login();
+			// if (!this.keycloak) return;
+			// this.keycloak.login();
 		},
 		logout() {
-			if (!this.keycloak) return;
-			this.keycloak.logout();
+			// if (!this.keycloak) return;
+			// this.keycloak.logout();
 		}
 	},
-	watch: {
-		keycloakOptions: {
-			immediate: true,
-			handler(options: KeycloakConfig) {
-				if (this.keycloak) this.keycloak.logout();
-				if (!options?.clientId || !options?.realm || !options?.url) return;
+	// watch: {
+	// 	keycloakOptions: {
+	// 		immediate: true,
+	// 		handler(options: KeycloakConfig) {
+	// 			if (this.keycloak) this.keycloak.logout();
+	// 			if (!options?.clientId || !options?.realm || !options?.url) return;
 
-				const keycloak = this.keycloak = new Keycloak(options);
-				keycloak.init({
-					// onLoad: 'check-sso',
-					enableLogging: true,
-					checkLoginIframe: false
+	// 			const keycloak = this.keycloak = new Keycloak(options);
+	// 			keycloak.init({
+	// 				// onLoad: 'check-sso',
+	// 				enableLogging: true,
+	// 				checkLoginIframe: false
 
-					// onLoad: 'check-sso',
-				}).then(authenticated => {
-					if (authenticated) {
-						keycloak.loadUserProfile().then(profile => this.username = profile.username ?? 'unknown');
-					} else {
-						console.log('not authenticated');
-					}
-				});
-			},
-		}
-	},
-	beforeMount() {
+	// 				// onLoad: 'check-sso',
+	// 			}).then(authenticated => {
+	// 				if (authenticated) {
+	// 					keycloak.loadUserProfile().then(profile => this.username = profile.username ?? 'unknown');
+	// 				} else {
+	// 					console.log('not authenticated');
+	// 				}
+	// 			});
+	// 		},
+	// 	}
+	// },
+	// beforeMount() {
 
-	}
+	// }
 })
 
 </script>

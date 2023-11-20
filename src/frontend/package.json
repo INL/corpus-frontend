@@ -68,7 +68,6 @@
     "jquery-extendext": "^0.1.2",
     "jquery-ui": "1.13.0",
     "json-stable-stringify": "^1.0.1",
-    "keycloak-js": "22.0.1",
     "lucene-query-parser": "^1.2.0",
     "memoize-decorator": "^1.0.2",
     "mustache": "^2.3.2",

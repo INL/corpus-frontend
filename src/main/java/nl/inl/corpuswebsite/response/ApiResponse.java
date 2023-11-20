@@ -27,7 +27,7 @@ import nl.inl.corpuswebsite.utils.XslTransformer;
  * - document metadata      /${corpus}/api/docs/${id}           - show the metadata for the document, transformed with the 'meta.xsl' stylesheet for the corpus.
  * - document contents      /${corpus}/api/docs/${id}/contents  - show the document's content, transformed with the appropriate 'article.xsl' stylesheet for the corpus.
  * - index metadata         /${corpus}/api/info                 - Return a json of the indexmetadata from BlackLab, but with annotation values listed.
- *
+ * <br>
  *  We needed an API because there's a chicken-and-egg situation when rendering a page for which a user would need to log in.
  *  To show the search page, we require the corpus metadata from BL, but to get it, we need user credentials, but to get those, the user needs a page to log in.
  *  So that doesn't work. Instead, split up page loading into two stages
@@ -86,18 +86,18 @@ public class ApiResponse extends BaseResponse {
 
     protected void documentContents(String docId) {
         Optional<String> query = Optional.ofNullable(request.getParameter("query"));
-        Optional<String> pattgap = Optional.ofNullable(request.getParameter("pattgap"));
+        Optional<String> pattgapdata = Optional.ofNullable(request.getParameter("pattgapdata"));
         Optional<Integer> pagestart = Optional.ofNullable(request.getParameter("wordstart")).map(Integer::parseInt); // when non-parseable just throw a 500 (or bad request?), we don't care.
         Optional<Integer> pageend = Optional.ofNullable(request.getParameter("wordend")).map(Integer::parseInt);
         /* Which flavour of xml are the documents. Used to pick the right stylesheet. */
         Optional<String> documentType = Optional.ofNullable(request.getParameter("documentType"));
 
-        Result<String, QueryException> content = new BlackLabApi(request, response)
+        new BlackLabApi(request, response)
             .getDocumentContents(
                 corpus.orElseThrow(),
                 docId,
                 query,
-                pattgap,
+                pattgapdata,
                 pagestart.filter(s -> s > 0), // when start = 0, remove it entirely (or blacklab will strip off content before the first token, i.e. headers etc).
                 pageend.filter(e -> e > 0 && e > pagestart.orElse(0))
             )

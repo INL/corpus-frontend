@@ -695,7 +695,7 @@ const init = () => {
 	actions.explore.searchAnnotationIds(cur.length ? cur : defaultAnnotationsToShow);
 
 	// Remove annotations without forward index, as grouping/sorting isn't supported for those
-	defaultAnnotationsToShow = defaultAnnotationsToShow.filter(id => allAnnotationsMap[id].hasForwardIndex);
+	defaultAnnotationsToShow = defaultAnnotationsToShow.filter(id => allAnnotationsMap[id]?.hasForwardIndex);
 
 	cur = initialState.results.shared.groupAnnotationIds.filter(id => allAnnotationsMap[id].hasForwardIndex);
 	actions.results.shared.groupAnnotationIds(cur.length ? cur : defaultAnnotationsToShow);

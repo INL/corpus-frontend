@@ -145,7 +145,7 @@ const actions = {
 		state.settings = payload;
 		state.settings.blacklab_server = (state.settings.blacklab_server || BLS_URL).replace(/\/$/, '');
 		state.settings.concept_server = state.settings.concept_server.replace(/\/$/, '');
-		initConceptEndpoint('concept', state.settings.concept_server);
+		initConceptEndpoint('concept', state.settings.concept_server, null);
 
 		conceptApi.getMainFields(state.settings.instance, INDEX_ID)
 			.then(response => state.main_fields = uniq(response.data.map(x => x.field)));

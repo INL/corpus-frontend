@@ -14,7 +14,6 @@ import * as CorpusStore from '@/store/search/corpus';
 import { NormalizedAnnotation, Tagset } from '@/types/apptypes';
 
 import { mapReduce } from '@/utils';
-import { bindNodeCallback } from 'rxjs';
 
 type ModuleRootState = Tagset&{
 	/** Uninitialized before init() or load() action called. loading/loaded during/after load() called. Disabled when load() not called before init(), or loading failed for any reason. */
@@ -48,31 +47,12 @@ const get = {
 
 const internalActions = {
 	state: b.commit((state, payload: {state: ModuleRootState['state'], message: string}) => Object.assign(state, payload), 'state'),
-	replace: b.commit((state, payload: Tagset) => {
-		const annot = CorpusStore.get.allAnnotations().find(a => a.uiType === 'pos');
-		if (annot == null) {
-			throw new Error(`Tagset isn't attached to any annotation! Set uiType to 'pos' on a single annotation to enable.`);
-		}
-
-		validateTagset(annot, payload); // throws if invalid.
-		Object.assign(state, payload);
-	}, 'replace')
+	replace: b.commit((state, payload: Tagset) => Object.assign(state, payload), 'replace')
 };
-
 
 const actions = {
 	/** Load the tagset from the provided url. This should be called prior to decoding the page url. */
 	load: b.commit((state, url: string) => state.url = url, 'load'),
-
-
-	/**
-	 * Closes the loading window, if load() hasn't been called yet, disabled the module permanently and
-	 * returns a resolved promise.
-	 * If load has been called, returns a promise that resolves when the loading is completed.
-	 */
-	awaitInit: () => {
-		return init();
-	}
 };
 
 const init = async () => {
@@ -80,185 +60,170 @@ const init = async () => {
 	if (state.state !== 'uninitialized') {
 		return Promise.resolve();
 	}
-
-	// At this point the global store is being initialized and the url has been (or is being) parsed, prevent a tagset from loading now (initialization order is pretty strict).
-	if (!) {
+	if (!state.url) {
 		internalActions.state({state: 'disabled', message: 'No tagset loaded.\n Call "vuexModules.tagset.actions.load(CONTEXT_URL + /static/${path_to_tagset.json}) from custom js file before $document.ready()'});
-		initPromise = Promise.resolve();
+		return Promise.resolve();
 	}
-	return initPromise;
 
+	// by now the corpus module should be initialized.
+	// the url should be set.
+	// load the tagset.
 
-	b.dispatch((context, url: string) => {
-
-
-		if (context.state.state !== 'uninitialized') {
-			throw new Error('Cannot load tagset after calling store.init(), and cannot replace existing tagset.');
+	internalActions.state({state: 'loading', message: 'Loading tagset...'});
+	Axios.get<Tagset>(state.url, {
+		// Remove comment-lines in the returned json. (that's not strictly allowed by JSON, but we chose to support it)
+		transformResponse: [(r: string) => r.replace(/\/\/.*[\r\n]+/g, '')].concat(Axios.defaults.transformResponse!)
+	})
+	.then(t => {
+		const tagset = t.data;
+		const annots = CorpusStore.get.allAnnotationsMap();
+		const mainAnnot = Object.values(annots).flat().find(a => a.uiType === 'pos');
+		if (!mainAnnot) {
+			// We don't have any annotation to attach the tagset to
+			// Stop loading, and act as if no tagset was loaded (because it wasn't).
+			console.warn(`Attempting to loading tagset when no annotation has uiType "pos". Cannot load!`);
+			internalActions.state({state: 'disabled', 'message': 'No annotation has uiType "pos". Cannot load tagset.'});
+			return;
 		}
-		internalActions.state({state: 'loading', message: 'Loading tagset...'});
-		initPromise = Axios.get<Tagset>(url, {
-			// Remove comment-lines in the returned json. (that's not strictly allowed by JSON, but we chose to support it)
-			transformResponse: [(r: string) => r.replace(/\/\/.*[\r\n]+/g, '')].concat(Axios.defaults.transformResponse!)
-		})
-		.then(t => {
-			const tagset = t.data;
 
-			const annots = CorpusStore.get.allAnnotationsMap();
-			const mainAnnot = Object.values(annots).flat().find(a => a.uiType === 'pos');
-			if (!mainAnnot) {
-				// We don't have any annotation to attach the tagset to
-				// Stop loading, and act as if no tagset was loaded (because it wasn't).
-				console.warn(`Attempting to loading tagset when no annotation has uiType "pos". Cannot load!`);
-				(initPromise as any) = null;
-				init();
-				return;
-			}
-			validateTagset(mainAnnot, tagset);
+		validateTagset(mainAnnot, annots, tagset);
+		lowercaseValuesIfNeeded(mainAnnot, annots, tagset);
 
-			const mainAnnotationCS = mainAnnot.caseSensitive;
-			if (!mainAnnotationCS) {
-				tagset.values = mapReduce(Object.values(tagset.values).map<Tagset['values'][string]>(v => ({
-					value: v.value.toLowerCase(),
-					displayName: v.displayName,
-					subAnnotationIds: v.subAnnotationIds
-				})), 'value');
-			}
-
-			Object.values(tagset.subAnnotations).forEach(subAnnotInTagset => {
-				const subAnnot = annots[subAnnotInTagset.id];
-				const subAnnotCS = subAnnot.caseSensitive;
-
-				if (!subAnnotCS) {
-					subAnnotInTagset.values = subAnnotInTagset.values.map(v => ({
-						value: v.value.toLowerCase(),
-						displayName: v.displayName,
-						// if the main annotation is not case-sensitive, lowercase all its values here too
-						pos: v.pos ? mainAnnotationCS ? v.pos : v.pos.map(vv => vv.toLowerCase()) : undefined
-					}));
-				}
-			});
-
-			CorpusStore.actions.loadTagsetValues(state => {
-				// Apply top-level displaynames to the 'pos' annotation
-				Object.values(annots)
-				.flat()
-				.filter(a => a.uiType === 'pos')
-				.forEach(originalAnnotation => {
-					const originalValues = mapReduce(originalAnnotation.values, 'value');
-
-					for (const tagsetValue of Object.values(t.data.values)) {
-						const a = originalValues[tagsetValue.value];
-						const b = tagsetValue;
-
-						const value = a ? a.value : b.value;
-						const label = b.displayName || b.value;
-						const title = a ? a.title : null;
-
-						originalValues[value] = {
-							value,
-							label,
-							title
-						};
-					}
-
-					originalAnnotation.values = Object.values(originalValues)
-					.sort((a, b) =>
-						originalAnnotation.values ?
-							originalAnnotation.values.findIndex(v => v.value === a.value) -
-							originalAnnotation.values.findIndex(v => v.value === b.value) :
-						0
-					);
-				});
-
-				// apply subannotation displaynames
-				Object.values(t.data.subAnnotations)
-				.forEach(subAnnot => {
-					const originalAnnotation = annots[subAnnot.id];
-					const originalValues = mapReduce(originalAnnotation.values, 'value');
-
-					for (const tagsetValue of subAnnot.values) {
-						const a = originalValues[tagsetValue.value];
-						const b = tagsetValue;
-
-						const value = a ? a.value : b.value;
-						const label = b.displayName || b.value;
-						const title = a ? a.title : null;
-
-						originalValues[value] = {
-							value,
-							label,
-							title
-						};
-					}
-
-					originalAnnotation.values = Object.values(originalValues)
-					.sort((a, b) =>
-						originalAnnotation.values ?
-							originalAnnotation.values.findIndex(v => v.value === a.value) -
-							originalAnnotation.values.findIndex(v => v.value === b.value) :
-						0
-					);
-					if (originalAnnotation.uiType === 'text') {
-						originalAnnotation.uiType = 'select';
-					}
-				});
-			});
-
-			internalActions.replace(t.data);
-			internalActions.state({state: 'loaded', message: 'Tagset succesfully loaded'});
-		})
-		.catch(e => {
-			console.warn('Could not load tagset: ' + e.message);
-			internalActions.state({state: 'disabled', message: 'Error loading tagset: ' + e.message});
+		// we're modifying the corpus info here, so we need to commit the changes to the store.
+		CorpusStore.actions.loadTagsetValues(() => {
+			copyDisplaynamesAndValuesToCorpus(mainAnnot, Object.values(tagset.values));
+			Object.values(tagset.subAnnotations).forEach(sub => copyDisplaynamesAndValuesToCorpus(annots[sub.id], sub.values));
 		});
-
-
-
+		internalActions.replace(tagset);
+	})
+	.then(() => internalActions.state({state: 'loaded', message: ''}))
+	.catch(e => {
+		console.warn('Could not load tagset: ' + e.message);
+		internalActions.state({state: 'disabled', message: 'Error loading tagset: ' + e.message});
+	});
 };
 
-/** check if all annotations and their values exist */
-function validateTagset(annotation: NormalizedAnnotation, t: Tagset) {
-	const validAnnotations = CorpusStore.get.allAnnotationsMap();
+/**
+ * Copy displaynames and extra values defined in the tagset into the corpus info.
+ * This way any annotation that is defined in the tagset will have the same displaynames and values in the corpus info.
+ * That creates a uniform experience in all components that display those annotations.
+ */
+function copyDisplaynamesAndValuesToCorpus(annotation: NormalizedAnnotation, valuesInTagset: Array<{value: string, displayName: string}>) {
+	const originalValues = mapReduce(annotation.values, 'value');
 
-	function validateAnnotation(id: string, values: Tagset['subAnnotations'][string]['values']) {
-		const mainAnnotation = validAnnotations[id];
-		if (!mainAnnotation) {
-			throw new Error(`Annotation "${id}" does not exist in corpus.`);
+	for (const tagsetValue of valuesInTagset) {
+		const a = originalValues[tagsetValue.value];
+		const b = tagsetValue;
+
+		const value = a ? a.value : b.value;
+		const label = b.displayName || b.value;
+		const title = a ? a.title : null;
+
+		originalValues[value] = {
+			value,
+			label,
+			title
+		};
+	}
+	// Now we have (potentially) have new displaynames and values, sort the values again.
+	// preserve the original order where possible.
+	annotation.values = Object.values(originalValues)
+	.sort((a, b) =>
+		annotation.values ?
+			annotation.values.findIndex(v => v.value === a.value) -
+			annotation.values.findIndex(v => v.value === b.value) :
+			0
+	);
+
+	// Since we now have an exhaustive list of all values for the annotation, we can change the uiType to 'select'.
+	if (annotation.uiType === 'text') {
+		annotation.uiType = 'select';
+	}
+}
+
+/**
+ * Sometimes an annotation in the corpus is case-insensitive, but the tagset is case-sensitive.
+ * In that case, we need to lowercase all values in the tagset.
+ * It doesn't matter for query-generation purposes,
+ * but the tagset usually contains nice display names for all annotation values,
+ * and we can only copy them into the corpus annotations if the values match exactly.
+ * So we lowercase the values in the tagset if the annotation in the corpus is case-insensitive.
+ *
+ * Only do this after validating the tagset, because we don't check whether annotations in the tagset and corpus match, so we could crash if they don't.
+ */
+function lowercaseValuesIfNeeded(mainTagsetAnnotation: NormalizedAnnotation, corpusAnnotations: Record<string, NormalizedAnnotation>, tagset: Tagset) {
+	// for the main tagset annotations - lowercase values if the annotation in the corpus is not case sensitive.
+	const mainAnnotationCS = mainTagsetAnnotation.caseSensitive;
+	if (!mainAnnotationCS) {
+		for (const key in tagset.values) tagset.values[key].value = tagset.values[key].value.toLowerCase();
+	}
+
+	for (const id in tagset.subAnnotations) {
+		const cs = corpusAnnotations[id].caseSensitive;
+		if (cs) continue;
+		for (const value of tagset.subAnnotations[id].values) {
+			// lowercase the value
+			value.value = value.value.toLowerCase();
+			// lowercase references to main-pos values too
+			if (value.pos && !mainAnnotationCS)
+				value.pos = value.pos.map(v => v.toLowerCase());
+		}
+	}
+}
+
+
+/**
+ * Tagsets are tightly coupled to the contents of one or more of the part-of-speech annotations in the corpus.
+ * Check that all annotations defined in the tagset actually exist in the corpus, throws an error if they don't.
+ * Also validate internal constraints: that the main annotation doesn't reference any subannotations that don't exist,
+ * and that the subannotations don't reference any main-pos values that don't exist.
+ * Finally also warn if values for an annotation in the tagset values don't match the values in the corpus.
+ *
+ * @param mainTagsetAnnotation The annotation that the tagset is attached to.
+ * @param t The tagset to validate.
+ */
+function validateTagset(mainTagsetAnnotation: NormalizedAnnotation, otherAnnotations: Record<string, NormalizedAnnotation>, t: Tagset) {
+	/** Validate that subannotations exist within the corpus, and that they don't reference unknown values within the main annotation */
+	function validateAnnotation(annotationId: string, annotationValuesInTagset: Tagset['subAnnotations'][string]['values']) {
+		const annotationInCorpus = otherAnnotations[annotationId];
+		if (!annotationInCorpus) {
+			throw new Error(`Annotation "${annotationId}" does not exist in the corpus, but is referenced in the tagset.`);
 		}
 
-		if (!mainAnnotation.values) {
-			throw new Error(`Annotation "${id}" does not have any known values.`);
+		if (!annotationInCorpus.values) {
+			throw new Error(`Annotation "${annotationId}" does not have any known values in the corpus, but is referenced in the tagset.`);
 		}
 
 		// part-of-speech is almost always indexed case-insensitive
 		// so we always want to compare values in the tagset and values in the corpus in lowercase
-		const annotationValuesInCorpus = mapReduce(mainAnnotation.values, 'value');
-		values.forEach(v => {
-			if (!annotationValuesInCorpus[mainAnnotation.caseSensitive ? v.value : v.value.toLowerCase()]) {
-				console.warn(`Annotation "${id}" may have value "${v.value}" which does not exist in the corpus.`);
+		const annotationValuesInCorpus = mapReduce(annotationInCorpus.values, 'value');
+		annotationValuesInTagset.forEach(v => {
+			if (!annotationValuesInCorpus[annotationInCorpus.caseSensitive ? v.value : v.value.toLowerCase()]) {
+				console.warn(`Annotation "${annotationId}" may have value "${v.value}" which does not exist in the corpus.`);
 			}
 
 			if (v.pos) {
-				const unknownPosList = v.pos!.filter(pos => !t.values[pos]);
+				const unknownPosList = v.pos.filter(pos => !t.values[pos]);
 				if (unknownPosList.length > 0) {
-					console.warn(`SubAnnotation '${id}' value '${v.value}' declares unknown main-pos value(s): ${unknownPosList.toString()}`);
+					console.warn(`SubAnnotation '${annotationId}' value '${v.value}' declares unknown main-pos value(s): ${unknownPosList.toString()}`);
 				}
 			}
 		});
 	}
 
-	validateAnnotation(annotation.id, Object.values(t.values));
-	Object.values(t.subAnnotations).forEach(sub => {
-		validateAnnotation(sub.id, sub.values);
-	});
+	// validate the root annotation
+	validateAnnotation(mainTagsetAnnotation.id, Object.values(t.values));
+	// validate all subannotations
+	Object.values(t.subAnnotations).forEach(sub => validateAnnotation(sub.id, sub.values));
 
+	// validate that the main annotation doesn't reference any subannotations that don't exist
 	Object.values(t.values).forEach(({value, subAnnotationIds}) => {
 		const subAnnotsNotInTagset = subAnnotationIds.filter(id => t.subAnnotations[id] == null);
 		if (subAnnotsNotInTagset.length) {
 			throw new Error(`Value "${value}" declares subAnnotation(s) "${subAnnotsNotInTagset}" that do not exist in the tagset.`);
 		}
 
-		const subAnnotsNotInCorpus = subAnnotationIds.filter(subId => validAnnotations[subId] == null);
+		const subAnnotsNotInCorpus = subAnnotationIds.filter(subId => otherAnnotations[subId] == null);
 		if (subAnnotsNotInCorpus.length) {
 			throw new Error(`Value "${value}" declares subAnnotation(s) "${subAnnotsNotInCorpus}" that do not exist in the corpus.`);
 		}

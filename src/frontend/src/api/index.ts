@@ -9,6 +9,7 @@ import { ApiError } from '@/types/apptypes';
 import { Glossing } from '@/store/search/form/glossStore';
 import { AtomicQuery, LexiconEntry } from '@/store/search/form/conceptStore';
 import { uniq } from '@/utils';
+import { User } from 'oidc-client-ts';
 
 type API = ReturnType<typeof createEndpoint>;
 
@@ -20,13 +21,13 @@ const endpoints = {
 };
 
 /** Initialize an endpoint. In a function because urls might be set asynchronously (such as from customjs). */
-export function init(which: keyof typeof endpoints, url: string, settings: Partial<AxiosRequestConfig> = {}) {
+export function init(which: keyof typeof endpoints, url: string, user: User|null) {
 	if (!(which in endpoints)) throw new Error(`Unknown endpoint ${which}`);
 	if (endpoints[which]) throw new Error(`Endpoint ${which} already initialized`);
 	endpoints[which] = createEndpoint({
 		baseURL: url.replace(/\/*$/, '/'),
 		paramsSerializer: params => qs.stringify(params),
-		...settings,
+		headers: user ? { Authorization: `Bearer ${user.access_token}` } : {},
 	});
 }
 

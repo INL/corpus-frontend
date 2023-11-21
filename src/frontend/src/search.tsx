@@ -201,38 +201,27 @@ Rethink page initialization
 */
 
 import * as loginSystem from '@/utils/loginsystem';
-import { init as initApi } from '@/api';
+import { frontend, init as initApi } from '@/api';
 
 $(document).ready(async () => {
 	const user = await loginSystem.awaitInit(); // LOGIN SYSTEM
+	initApi('blacklab', BLS_URL, user);
+	initApi('cf', CONTEXT_URL, user);
+	await RootStore.init();
 
-	initApi('blacklab', BLS_URL, { // API INIT
-		params: {outputformat: 'json'},
-		headers: user ? {Authorization: `Bearer ${user.access_token}` } : undefined
-	});
-	initApi('cf', CONTEXT_URL, {
-		headers: user ? {Authorization: `Bearer ${user.access_token}` } : undefined
-	})
+	const stateFromUrl = new UrlStateParser(FilterStore.getState().filters).get();
+	RootStore.actions.replace(stateFromUrl);
+	// Don't do this before the url is parsed, as it controls the page url (among other things derived from the state).
+	connectStreamsToVuex();
 
-	await RootStore.init(); // STORE INIT (CORPUS FETCH + TAGSET FETCH)
 	// We can render before the tagset loads, the form just won't be populated from the url yet.
 	(window as any).vueRoot = new Vue({
 		store: RootStore.store,
 		render: h => h(SearchPageComponent),
 		mounted() {
 			requestAnimationFrame(() => {
-				connectJqueryToPage(); //
-
-				TagsetStore.actions.awaitInit()
-				.then(() => new UrlStateParser(FilterStore.getState().filters).get())
-				.then(urlState => {
-					RootStore.actions.reset();
-					RootStore.actions.replace(urlState);
-					// Don't do this before the url is parsed, as it controls the page url (among other things derived from the state).
-					connectStreamsToVuex();
-					// And this needs the tagset to have been loaded (if available)
-					initQueryBuilder();
-				});
+				connectJqueryToPage();
+				initQueryBuilder();
 			});
 		}
 	}).$mount(document.querySelector('#vue-root')!);

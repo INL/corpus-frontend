@@ -225,7 +225,7 @@ const actions = {
 	loadSettings: b.commit((state, payload: Settings) => {
 		state.settings = payload
 		state.settings.gloss_server = state.settings.gloss_server.replace(/\/$/, '');
-		initGlossEndpoint('gloss', state.settings.gloss_server);
+		initGlossEndpoint('gloss', state.settings.gloss_server, null);
 	} , 'gloss_load_settings'),
 	replace: b.commit((state, payload: HistoryState) => {
 		Object.assign(state, payload);

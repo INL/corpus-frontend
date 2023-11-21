@@ -54,7 +54,6 @@
     "whatwg-fetch": "^3.2.0"
   },
   "dependencies": {
-    "@vue/runtime-dom": "^3.2.47",
     "axios": "^0.21.2",
     "bootstrap": "^3.4.1",
     "bootstrap-select": "^1.13.18",

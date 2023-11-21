@@ -134,6 +134,7 @@ public abstract class BaseResponse {
         model.put("blsUrl", servlet.getExternalWebserviceUrl());
         model.put("page", this.name);
 
+        model.put("username", getUsername(request));
         model.put("keycloakUrl", globalCfg.get(Keys.KEYCLOAK_URL));
         model.put("keycloakRealm", globalCfg.get(Keys.KEYCLOAK_REALM));
         model.put("keycloakClientId", globalCfg.get(Keys.KEYCLOAK_CLIENT_ID));
@@ -159,6 +160,12 @@ public abstract class BaseResponse {
             model.attachEventCartridge(cartridge);
         }
 
+    }
+
+    protected static String getUsername(HttpServletRequest request) {
+        request.authenticate(response -> {)
+
+        return Optional.ofNullable(request.getUserPrincipal()).map(p -> p.getName()).orElse("anonymous");
     }
 
     /**

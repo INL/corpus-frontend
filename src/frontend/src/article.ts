@@ -51,8 +51,6 @@ $(document).ready(async () => {
 	initApi('cf', CONTEXT_URL, user);
 	await RootStore.init();
 
-
-
 	new ArticlePageComponent().$mount(document.getElementById('vue-root-statistics')!);
 	new ArticlePagePaginationComponent().$mount(document.getElementById('vue-root-pagination')!);
 

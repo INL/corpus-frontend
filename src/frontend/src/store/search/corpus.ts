@@ -83,6 +83,11 @@ const init = () => Api.frontend
 	.getCorpus()
 	.then(normalizeIndex)
 	.then(corpus => {
+		// TODO we probably need a proper navbar component for this.
+		document.querySelector('.navbar-brand')!.innerHTML = corpus.displayName || corpus.id;
+
+
+
 		// We to finish up some state that might be missing.
 		if (corpus.documentCount === -1) {
 			// Request a sum of all documents in the corpus

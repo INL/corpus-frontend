@@ -36,19 +36,12 @@ export function init(which: keyof typeof endpoints, url: string, user: User|null
 // const allMetadataFields = CorpusStore.get.allMetadataFields().map(f => f.id);
 
 export const frontendPaths = {
-	root: () => CONTEXT_URL,
 	currentCorpus: () => `${CONTEXT_URL}/${INDEX_ID}/search`,
-	results: (view: string|null) => `${CONTEXT_URL}/${INDEX_ID}/search/${view ?? ''}`,
-	document: (
-		pid: string,
-		query: string|undefined,
-		pattgapdata: string|undefined,
-		wordstart: number|undefined,
-		wordend: number|undefined,
-	) => `${CONTEXT_URL}/${INDEX_ID}/docs/${pid}?${qs.stringify({query, pattgapdata, wordstart, wordend})}`,
-	indexInfo: () => `${CONTEXT_URL}/${INDEX_ID}/api/info`,
-	documentContents: (pid: string) => `${CONTEXT_URL}/${INDEX_ID}/docs/${pid}/contents`,
-	documentMetadata: (pid: string) => `${CONTEXT_URL}/${INDEX_ID}/docs/${pid}`,
+
+	// The following paths are only for use with the api endpoint (they don't contain the context url - the endpoint will add it)
+	indexInfo: () => `${INDEX_ID}/api/info`,
+	documentContents: (pid: string) => `${INDEX_ID}/docs/${pid}/contents`,
+	documentMetadata: (pid: string) => `${INDEX_ID}/docs/${pid}`,
 }
 
 /** Contains url mappings for different requests to blacklab-server */

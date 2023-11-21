@@ -70,7 +70,7 @@ const init = async () => {
 	// load the tagset.
 
 	internalActions.state({state: 'loading', message: 'Loading tagset...'});
-	Axios.get<Tagset>(state.url, {
+	return Axios.get<Tagset>(state.url, {
 		// Remove comment-lines in the returned json. (that's not strictly allowed by JSON, but we chose to support it)
 		transformResponse: [(r: string) => r.replace(/\/\/.*[\r\n]+/g, '')].concat(Axios.defaults.transformResponse!)
 	})
@@ -101,6 +101,7 @@ const init = async () => {
 		console.warn('Could not load tagset: ' + e.message);
 		internalActions.state({state: 'disabled', message: 'Error loading tagset: ' + e.message});
 	});
+
 };
 
 /**

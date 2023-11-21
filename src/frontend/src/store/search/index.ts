@@ -329,15 +329,15 @@ const init = async () => {
 	// This is user-customizable data, it can be used to override various defaults from other modules,
 	// It needs to determine fallbacks and defaults for settings that haven't been configured,
 	// So initialize it before the other modules.
-	UIModule.init();
+	await UIModule.init();
 
-	FormManager.init();
-	ViewModule.init();
-	GlobalResultsModule.init();
+	await FormManager.init();
+	await ViewModule.init();
+	await GlobalResultsModule.init();
 
-	TagsetModule.init();
-	HistoryModule.init();
-	QueryModule.init();
+	await TagsetModule.init();
+	await HistoryModule.init();
+	await QueryModule.init();
 };
 
 // Debugging helpers.

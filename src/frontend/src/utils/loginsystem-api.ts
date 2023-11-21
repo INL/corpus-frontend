@@ -3,7 +3,7 @@ import {UserManager, Log} from 'oidc-client-ts'
 Log.setLogger(console);
 
 const hasSettings = !!(KEYCLOAK_CLIENT_ID && KEYCLOAK_REALM && KEYCLOAK_URL);
-const userManager = hasSettings ? new UserManager({
+export const userManager = hasSettings ? new UserManager({
 	// TODO remove realm from settings, put in url directly.
 	authority: KEYCLOAK_URL + '/realms/' + KEYCLOAK_REALM,
 	client_id: KEYCLOAK_CLIENT_ID,
@@ -31,5 +31,3 @@ export const logout = () => userManager?.signoutRedirect({post_logout_redirect_u
 // It will post a message to the parent frame (the main page) with the current url (of this iframe)
 // The url will contain tokens (or an error) in the query, which the parent frame (the actual corpus-frontend page) can use to retrieve the user (or show an error).
 export const callback = () => { userManager?.signinCallback(); }
-
-export { userManager };

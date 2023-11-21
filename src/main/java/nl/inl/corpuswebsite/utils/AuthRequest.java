@@ -1,6 +1,7 @@
 package nl.inl.corpuswebsite.utils;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -242,6 +243,8 @@ public class AuthRequest extends URLBuilder<AuthRequest> {
 
         // first try without authenticating.
         try {
+            getAuthHeader(request).ifPresent(auth -> header("Authorization", auth));
+
             HttpURLConnection r = connect();
             int redirects = 0;
             while (redirects < 10) {
@@ -254,37 +257,34 @@ public class AuthRequest extends URLBuilder<AuthRequest> {
                 if (code >= 300 && code < 400) {
                     String newUrl = r.getHeaderField("location");
                     if (newUrl != null && !newUrl.isEmpty()) {
-                        r = new URLBuilder<>(url)
-                                .method(method)
-                                .headers(headers)
+                        r = new URLBuilder<>(newUrl) // should already contain query and hash
+                                .method(this.method)
+                                .headers(this.headers)
                                 .connect();
                         ++redirects;
                         continue;
                     }
                 }
 
-                // in the case of forbidden, we're done.
-                // in the case of 401
-                // check whether it's basic auth we require, if so, return to client
-                // if it's uma we require, we need to redirect the client, and include the permission ticket from the response.
+                // No authentication provided: 401 with WWW-Authenticate header
+                // Authentication provided but UMA didn't work: 401 with permission ticket
+                // Authentication provided but no access: 403
+                // do we need to proxy the response from blacklab cleanly? probably right?
 
-                // request seems to not require any more authentication, so decode result (might still be an error through, but at least not an auth error)
-                if (!needsBasicAuth(r)) return decode(r);
-                
-                String auth = getExistingBasicAuthHeader(request);
-                if (auth != null) {
-                    // cool, the request had an authentication header, copy it and try again.
-                    header("Authorization", auth);
-                    r = connect();
-                } else if (hardFailOnMissingAuth) {
-                    // unhappy path, we don't have auth, and we need it.
-                    // this should cause the client to try again with the auth header
-                    // so next time the getExistingAuth will return successfully.
-                    if (response != null) {
-                        response.addHeader("WWW-Authenticate", "Basic realm=\"Blacklab\"");
-                        throw new ReturnToClientException(HttpServletResponse.SC_UNAUTHORIZED);
-                    }
-                    return Result.error(new QueryException(HttpServletResponse.SC_UNAUTHORIZED, "Authentication required"));
+                // if auth is missing, then proxy the request from blacklab.
+                // otherwise, just return the response
+
+                // is there a situation where we're inside this code and the client is not either
+                // requesting corpus info, document contents, or document metadata.
+                // dunno, don't think so.
+
+                // just transparently return whatever the endpoint returned/.
+
+                if (hardFailOnMissingAuth && r.getHeaderField("www-authenticate") != null) {
+                    r.getHeaderFields().forEach((k, v) -> v.forEach(w -> response.addHeader(k, w)));
+                    InputStream s = r.getErrorStream() != null ? r.getErrorStream() : r.getInputStream();
+                    String content = IOUtils.toString(s, "utf-8");
+                    throw new ReturnToClientException(code, content);
                 }
 
                 return decode(r);
@@ -295,6 +295,15 @@ public class AuthRequest extends URLBuilder<AuthRequest> {
         }
     }
 
+    /**
+     * Decode the result (or error), returning the contents in the String if it's a success.
+     * Returns a queryException containing the httpcode and body if it's an error.
+     * If an ioerror occurs, it's wrapped in a queryexception with code 500.
+     *
+     * @param conn the connection holding the response.
+     *
+     * @return the result of the above.
+     */
     protected static Result<String, QueryException> decode(HttpURLConnection conn) {
         try {
             int code = conn.getResponseCode();
@@ -315,10 +324,8 @@ public class AuthRequest extends URLBuilder<AuthRequest> {
     }
 
     /** Return the authorization header from the request, if present and of HTTP Basic type. */
-    protected static String getExistingBasicAuthHeader(HttpServletRequest request) {
-         String auth = request != null ? request.getHeader("Authorization") : null;
-         if (auth != null && auth.startsWith("Basic")) return auth;
-         return null;
+    protected static Optional<String> getAuthHeader(HttpServletRequest request) {
+         return Optional.ofNullable(request).map(r -> r.getHeader("Authorization"));
     }
 
     /** Does the response indicate basic auth is required? */

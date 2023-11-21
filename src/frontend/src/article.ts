@@ -17,9 +17,11 @@ import ArticlePageComponent from '@/pages/article/ArticlePage.vue';
 import ArticlePagePaginationComponent from '@/pages/article/ArticlePagePagination.vue';
 import debug from '@/utils/debug';
 import initTooltips from '@/modules/expandable-tooltips';
+import * as loginSystem from '@/utils/loginsystem';
 
 import '@/global.scss';
 import '@/article.scss';
+import { init as initApi, ApiError } from '@/api';
 
 // Article-related functions.
 // Takes care of tooltips and highlighting/scrolling to anchors.
@@ -43,8 +45,13 @@ if (PLAUSIBLE_DOMAIN && PLAUSIBLE_APIHOST) {
 	Vue.$plausible.trackPageview();
 }Vue.use(HighchartsVue);
 
-$(document).ready(() => {
-	RootStore.init();
+$(document).ready(async () => {
+	const user = await loginSystem.awaitInit();
+	initApi('blacklab', BLS_URL, user);
+	initApi('cf', CONTEXT_URL, user);
+	await RootStore.init();
+
+
 
 	new ArticlePageComponent().$mount(document.getElementById('vue-root-statistics')!);
 	new ArticlePagePaginationComponent().$mount(document.getElementById('vue-root-pagination')!);

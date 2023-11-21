@@ -20,6 +20,7 @@ import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
 
 import * as Api from '@/api';
+import * as loginsystem from '@/utils/loginsystem';
 
 const enum DataEvent {
 	SERVER_REFRESH = 'server/refresh',
@@ -881,6 +882,11 @@ function initEditFormat() {
 }
 
 $(document).ready(async function() {
+	const user = await loginsystem.awaitInit();
+	Api.init('blacklab', BLS_URL, user);
+	Api.init('cf', CONTEXT_URL, user);
+
+	console.log('loading corpora?');
 	// Get the list of corpora.
 	await refreshServerInfo(); // server info needed before we can get other information
 	refreshCorporaList();

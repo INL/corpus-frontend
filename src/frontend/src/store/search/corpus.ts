@@ -15,14 +15,10 @@ import {NormalizedIndex, NormalizedAnnotation, NormalizedMetadataField, Normaliz
 import { MapOf, mapReduce } from '@/utils';
 import { normalizeIndex } from '@/utils/blacklabutils';
 
-type ModuleRootState = {
-	state: 'loading'|'error'|'loaded'|'requiresLogin'|'unauthorized';
-	message: string;
-	corpus: NormalizedIndex|null;
-};
+type ModuleRootState = { corpus: NormalizedIndex|null };
 
 const namespace = 'corpus';
-const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, {corpus: null, state: 'loading', message: ''});
+const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, {corpus: null});
 
 const getState = b.state();
 
@@ -78,15 +74,16 @@ const privateActions = {
 	setCorpus: b.commit((state, newState: ModuleRootState) => Object.assign(state, newState), 'setCorpus'),
 }
 
-/** Expects the corpus-frontend api to be initialized. */
+/**
+ * Expects the corpus-frontend api to be initialized.
+ * Returned promise may contain ApiError if rejected.
+ */
 const init = () => Api.frontend
 	.getCorpus()
 	.then(normalizeIndex)
 	.then(corpus => {
 		// TODO we probably need a proper navbar component for this.
 		document.querySelector('.navbar-brand')!.innerHTML = corpus.displayName || corpus.id;
-
-
 
 		// We to finish up some state that might be missing.
 		if (corpus.documentCount === -1) {
@@ -105,21 +102,9 @@ const init = () => Api.frontend
 		corpus.annotationGroups.forEach(g => g.entries = g.entries.filter(id => corpus.annotatedFields[g.annotatedFieldId].annotations[id]));
 		corpus.metadataFieldGroups.forEach(g => g.entries = g.entries.filter(id => corpus.metadataFields[id]));
 
-		privateActions.setCorpus({state: 'loaded', message: '', corpus});
+		privateActions.setCorpus({corpus});
 	})
-	.catch((e: Api.ApiError) => {
-		if (e.httpCode === 401) {
-			privateActions.setCorpus({state: 'requiresLogin', message: e.message, corpus: null});
-		} else if (e.httpCode === 403) {
-			privateActions.setCorpus({state: 'unauthorized', message: e.message, corpus: null});
-		} else {
-			privateActions.setCorpus({state: 'error', message: e.message, corpus: null})
-		}
-	});
-
-
-
-
+	// can throw ApiError, caught in root store init function.
 
 
 export {

@@ -28,10 +28,16 @@ import * as GlobalResultsModule from '@/store/search/results/global';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import { getPatternString } from '@/utils';
+import { ApiError } from '@/api';
 
 Vue.use(Vuex);
 
 type RootState = {
+	// NOTE: any non-module properties need to be supplied to the initial state object passed to the b.vuexStore() call
+	// in order to be reactive. (vue needs an initial value to latch on to)
+	loadingState: 'loading'|'error'|'loaded'|'requiresLogin'|'unauthorized';
+	loadingMessage: string;
+
 	corpus: CorpusModule.ModuleRootState;
 	history: HistoryModule.ModuleRootState;
 	query: QueryModule.ModuleRootState;
@@ -46,7 +52,7 @@ const b = getStoreBuilder<RootState>();
 const getState = b.state();
 
 const get = {
-	status: b.read(state => ({message: state.corpus.message, status: state.corpus.state}), 'status'),
+	status: b.read(state => ({message: state.loadingMessage, status: state.loadingState}), 'status'),
 
 	viewedResultsSettings: b.read(state => state.views[state.interface.viewedResults!] ?? null, 'getViewedResultsSettings'),
 
@@ -96,6 +102,10 @@ const get = {
 		};
 	}, 'blacklabParameters')
 };
+
+const privateActions = {
+	setLoadingState: b.commit((state, newState: Pick<RootState, 'loadingState'|'loadingMessage'>) => Object.assign(state, newState), 'setLoadingState'),
+}
 
 const actions = {
 	/** Read the form state, build the query, reset the results page/grouping, etc. */
@@ -317,7 +327,7 @@ const actions = {
 // NOTE: process.env is empty at runtime, but webpack inlines all values at compile time, so this check works.
 declare const process: any;
 const store = b.vuexStore({
-	state: {} as RootState, // shut up typescript, the state we pass here is merged with the modules initial states internally.
+	state: {loadingState: 'loading', loadingMessage: 'Please wait while we get the corpus information...'} as RootState, // shut up typescript, the state we pass here is merged with the modules initial states internally.
 	strict: process.env.NODE_ENV === 'development',
 	// plugins: process.env.NODE_ENV === 'development' ? [VuePursue] : undefined
 });
@@ -325,19 +335,38 @@ const store = b.vuexStore({
 const init = async () => {
 	// Load the corpus data, so we can derive values, fallbacks and defaults in the following modules
 	// This must happen right at the beginning of the app startup
-	await CorpusModule.init();
-	// This is user-customizable data, it can be used to override various defaults from other modules,
-	// It needs to determine fallbacks and defaults for settings that haven't been configured,
-	// So initialize it before the other modules.
-	await UIModule.init();
+	try {
+		await CorpusModule.init();
 
-	await FormManager.init();
-	await ViewModule.init();
-	await GlobalResultsModule.init();
+		// This is user-customizable data, it can be used to override various defaults from other modules,
+		// It needs to determine fallbacks and defaults for settings that haven't been configured,
+		// So initialize it before the other modules.
+		await UIModule.init();
 
-	await TagsetModule.init();
-	await HistoryModule.init();
-	await QueryModule.init();
+		await FormManager.init();
+		await ViewModule.init();
+		await GlobalResultsModule.init();
+
+		await TagsetModule.init();
+		await HistoryModule.init();
+		await QueryModule.init();
+		privateActions.setLoadingState({loadingState: 'loaded', loadingMessage: ''});
+
+		return true;
+	} catch (e: any) {
+		if (e instanceof ApiError) {
+			if (e.httpCode === 401) {
+				privateActions.setLoadingState({loadingState: 'requiresLogin', loadingMessage: e.message});
+			} else if (e.httpCode === 403) {
+				privateActions.setLoadingState({loadingState: 'unauthorized', loadingMessage: e.message});
+			} else {
+				privateActions.setLoadingState({loadingState: 'error', loadingMessage: e.message});
+			}
+		} else {
+			privateActions.setLoadingState({loadingState: 'error', loadingMessage: e.message ?? e.toString()});
+		}
+		return false;
+	}
 };
 
 // Debugging helpers.

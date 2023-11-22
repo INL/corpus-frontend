@@ -648,7 +648,7 @@ const actions = {
 };
 
 const init = () => {
-	if (CorpusStore.getState().state !== 'loaded') throw new Error('Cannot initialize UI module before corpus is loaded');
+	if (!CorpusStore.getState().corpus) throw new Error('Cannot initialize UI module before corpus is loaded');
 
 	/*
 	Store initialization happens in 3 steps:
@@ -679,7 +679,7 @@ const init = () => {
 	let defaultAnnotationsToShow = annotationGroups.flatMap((g, i) => {
 		if (!g.isRemainderGroup) { return g.entries; }
 		const hasNonRemainderGroup = i > 0; // remainder groups is always at the end
-		return hasNonRemainderGroup ? [] : g.entries.filter(id => !allAnnotationsMap[id].isInternal);
+		return hasNonRemainderGroup ? [] : g.entries.filter(id => allAnnotationsMap[id]?.isInternal === false);
 	});
 
 	let cur: string[];
@@ -697,10 +697,10 @@ const init = () => {
 	// Remove annotations without forward index, as grouping/sorting isn't supported for those
 	defaultAnnotationsToShow = defaultAnnotationsToShow.filter(id => allAnnotationsMap[id]?.hasForwardIndex);
 
-	cur = initialState.results.shared.groupAnnotationIds.filter(id => allAnnotationsMap[id].hasForwardIndex);
+	cur = initialState.results.shared.groupAnnotationIds.filter(id => allAnnotationsMap[id]?.hasForwardIndex);
 	actions.results.shared.groupAnnotationIds(cur.length ? cur : defaultAnnotationsToShow);
 
-	cur = initialState.results.shared.sortAnnotationIds.filter(id => allAnnotationsMap[id].hasForwardIndex);
+	cur = initialState.results.shared.sortAnnotationIds.filter(id => allAnnotationsMap[id]?.hasForwardIndex);
 	actions.results.shared.sortAnnotationIds(cur.length ? cur : defaultAnnotationsToShow);
 
 	// Metadata/filters (extended, advanced, expert, explore)
@@ -768,11 +768,11 @@ const init = () => {
 	// Show 'lemma' and 'pos' (if they exist) and up to 3 more annotations in order of definition
 	// OR: show based on PROPS_IN_COLUMNS [legacy support] (configured in this corpus's search.xml)
 	if (!initialState.results.hits.shownAnnotationIds.length) {
-		const shownAnnotations = PROPS_IN_COLUMNS.filter(annot => allAnnotationsMap[annot] != null && allAnnotationsMap[annot].hasForwardIndex && annot !== mainAnnotation.id);
+		const shownAnnotations = PROPS_IN_COLUMNS.filter(annot => allAnnotationsMap[annot]?.hasForwardIndex && annot !== mainAnnotation.id);
 		if (!shownAnnotations.length) {
 			// These have precedence if they exist.
-			if (allAnnotationsMap.lemma != null && allAnnotationsMap.lemma.hasForwardIndex) { shownAnnotations.push('lemma'); }
-			if (allAnnotationsMap.pos != null && allAnnotationsMap.pos.hasForwardIndex) { shownAnnotations.push('pos'); }
+			if (allAnnotationsMap.lemma?.hasForwardIndex) { shownAnnotations.push('lemma'); }
+			if (allAnnotationsMap.pos?.hasForwardIndex) { shownAnnotations.push('pos'); }
 
 			// Now add other annotations until we hit 3 annotations.
 			defaultAnnotationsToShow
@@ -859,10 +859,10 @@ function validateAnnotations(
 	invalid: (id: string) => string,
 	cb: (ids: string[]) => void
 ) {
-	if (CorpusStore.getState().state !== 'loaded') {
+	if (!CorpusStore.getState().corpus) { // not loaded yet
 		cb(ids);
 		return;
-		// assume we will re-check this on init()?
+		// we will re-check this on init()?
 	}
 	const all = CorpusStore.get.allAnnotationsMap();
 	const results = ids.filter(id => {
@@ -885,7 +885,7 @@ function validateMetadata(
 	invalid: (id: string) => string,
 	cb: (ids: string[]) => void
 ) {
-	if (CorpusStore.getState().state !== 'loaded') {
+	if (!CorpusStore.getState().corpus) {
 		cb(ids);
 		return;
 		// assume we will re-check this on init()?

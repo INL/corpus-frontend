@@ -18,7 +18,6 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.event.EventCartridge;
@@ -99,7 +98,7 @@ public abstract class BaseResponse {
         this.servlet = servlet;
         this.corpus = corpus;
         this.pathParameters = pathParameters;
-        WebsiteConfig cfg = servlet.getWebsiteConfig(corpus, request, response);
+        WebsiteConfig cfg = servlet.getWebsiteConfig(corpus);
         GlobalConfig globalCfg = servlet.getGlobalConfig();
 
         // Allow all origins on all requests

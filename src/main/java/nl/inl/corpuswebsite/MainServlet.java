@@ -193,7 +193,7 @@ public class MainServlet extends HttpServlet {
      * @param corpus which corpus to read config for, may be null for the default config.
      * @return the website config
      */
-    public synchronized WebsiteConfig getWebsiteConfig(Optional<String> corpus, HttpServletRequest request, HttpServletResponse response) {
+    public synchronized WebsiteConfig getWebsiteConfig(Optional<String> corpus) {
         Function<String, WebsiteConfig> gen = __ ->
             getProjectFile(corpus, "search.xml")
             .map(configFile -> {

@@ -115,7 +115,7 @@ public class ArticleResponse extends BaseResponse {
                             .or(defaultTransformer)
                             .mapWithErrorHandling(transformer -> {
                                 transformer.addParameter("contextRoot", servlet.getGlobalConfig().get(Keys.CF_URL_ON_CLIENT));
-                                servlet.getWebsiteConfig(corpus, request, response).getXsltParameters()
+                                servlet.getWebsiteConfig(corpus).getXsltParameters()
                                         .forEach(transformer::addParameter);
                                 return transformer.transform(content);
                             });
@@ -202,7 +202,7 @@ public class ArticleResponse extends BaseResponse {
         final String pid = getDocPid();
 
         final CorpusConfig blacklabCorpusInfo = servlet.getCorpusConfig(this.corpus, this.request, this.response).mapError(IOException::new).getOrThrow();
-        final WebsiteConfig interfaceConfig = servlet.getWebsiteConfig(this.corpus, this.request, this.response);
+        final WebsiteConfig interfaceConfig = servlet.getWebsiteConfig(this.corpus);
 
         final Result<String, QueryException> rawMetadata = api.getDocumentMetadata(corpus.get(), pid);
         final Result<String, Exception> transformedMetadata = rawMetadata.flatMap(metadata -> this.transformMetadata(metadata, blacklabCorpusInfo));

@@ -2,12 +2,7 @@ package nl.inl.corpuswebsite.response;
 
 import java.io.IOException;
 
-import javax.servlet.http.HttpServletResponse;
-
 import nl.inl.corpuswebsite.BaseResponse;
-import nl.inl.corpuswebsite.utils.CorpusConfig;
-import nl.inl.corpuswebsite.utils.QueryException;
-import nl.inl.corpuswebsite.utils.ReturnToClientException;
 
 public class SearchResponse extends BaseResponse {
 
@@ -25,7 +20,7 @@ public class SearchResponse extends BaseResponse {
 //                });
 
 //        model.put("indexStructureJson", config.getJsonUnescaped());
-        model.put("pageSize", servlet.getWebsiteConfig(corpus, request, response).usePagination() ? servlet.getWebsiteConfig(corpus, request, response).getPageSize() : "undefined");
+        model.put("pageSize", servlet.getWebsiteConfig(corpus).usePagination() ? servlet.getWebsiteConfig(corpus).getPageSize() : "undefined");
         model.put("debugInfo", servlet.debugInfo());
         
         // display template

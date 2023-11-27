@@ -1,6 +1,5 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
-import VueRx from 'vue-rx';
 // @ts-ignore
 // import VuePursue from 'vue-pursue';
 
@@ -31,7 +30,6 @@ import * as BLTypes from '@/types/blacklabtypes';
 import { getPatternString } from '@/utils';
 
 Vue.use(Vuex);
-Vue.use(VueRx);
 
 type RootState = {
 	corpus: CorpusModule.ModuleRootState;

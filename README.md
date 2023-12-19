@@ -267,7 +267,7 @@ Let's perform a simple customization that will take you through the steps, addin
     }
     ```
 6. Now restart your server and perform a search in your corpus, and see the new titles! [http://localhost:8080/corpus-frontend/example/search/docs?patt=""](http://localhost:8080/corpus-frontend/example/search/docs?patt="")
-
+   **NOTE**: You don't need to restart the application constantly, simply set `cache=false`in the main `corpus-frontend.properties` config file to disable caching of files by the server.
 
 #### Details about what customization/configuration file does what:
 - `search.xml`

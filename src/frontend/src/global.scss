@@ -318,6 +318,12 @@ a.disabled {
 	cursor: not-allowed;
 }
 
+.navbar .container {
+	// required for username to be on the same line as the rest of the navbar
+	// when there is a banner message configured.
+	position: relative;
+}
+
 .navbar-username {
 	display: inline-flex;
 	&:empty {

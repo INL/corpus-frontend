@@ -85,7 +85,7 @@
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                     </button>
-                    <div class="username navbar-username navbar-brand"><span class="fa fa-solid fa-user"></span> <span class="username" data-autoupdate="username">$username</span></div>
+                    <div class="username navbar-username navbar-brand"><span class="username" data-autoupdate="username">$username</span><span class="fa fa-solid fa-user username-icon"></span></div>
                 </div>
 
                 <div class="navbar-collapse collapse navbar-logo-margin">

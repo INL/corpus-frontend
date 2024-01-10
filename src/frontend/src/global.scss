@@ -317,3 +317,23 @@ a.disabled {
 	opacity: 0.65;
 	cursor: not-allowed;
 }
+
+.navbar-username {
+	display: inline-flex;
+	&:empty {
+		display: none;
+	}
+
+	> .username {
+		&:empty { display: none;}
+		order: 2;
+	}
+	.username-icon {
+		order: 1;
+		margin-right: 0.25em;
+	}
+
+	.username:empty + .username-icon {
+		display: none;
+	}
+}

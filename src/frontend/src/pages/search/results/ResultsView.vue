@@ -54,8 +54,9 @@
 				:disabled="!!request"
 			/>
 
-			<Export slot="export"
+			<Export slot="export" v-if="exportEnabled"
 				:results="results"
+				:type="id"
 				:disabled="!!request"
 				:annotations="exportAnnotations"
 				:metadata="exportMetadata"

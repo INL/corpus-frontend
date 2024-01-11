@@ -283,7 +283,7 @@ export default Vue.extend({
 		sortAnnotations(): string[] { return UIStore.getState().results.shared.sortAnnotationIds; },
 		sortMetadata(): string[] { return UIStore.getState().results.shared.sortMetadataIds; },
 		exportAnnotations(): string[]|null { return UIStore.getState().results.shared.detailedAnnotationIds; },
-		exportMetadata(): string[]|null { return UIStore.getState().results.shared.detailedAnnotationIds; },
+		exportMetadata(): string[]|null { return UIStore.getState().results.shared.detailedMetadataIds; },
 
 
 		exportEnabled(): boolean { return UIStore.getState().results.shared.exportEnabled; },

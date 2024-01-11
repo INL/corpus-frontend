@@ -108,6 +108,26 @@ a.ui-menu-item-wrapper {
 	white-space: nowrap;
 }
 
+
+.navbar .container {
+	/* required for username to be on the same line as the rest of the navbar
+	 when there is a banner message configured. */
+	position: relative;
+}
+
+.navbar-username { display: inline-flex; }
+.navbar-username:empty { display: none; }
+.navbar-username > .username { order: 2; }
+.navbar-username > .username:empty { display: none;}
+.username-icon {
+	order: 1;
+	margin-right: 0.25em;
+}
+
+.username:empty + .username-icon {
+	display: none;
+}
+
 @media (max-width: 768px) {
 	.navbar-username {
 		right: 50px;
@@ -241,4 +261,3 @@ table {
 	position: absolute;
 	width: 100vw;
 }
-

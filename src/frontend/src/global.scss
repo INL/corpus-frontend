@@ -1,3 +1,5 @@
+// NOTE: this file is only included on article, search, corpora, and remote-index pages (those with a dedicated javascript bundle)
+// For *actual* global styles, see main.css
 body {
 	background-image: none;
 }
@@ -316,30 +318,4 @@ tr.rounded {
 a.disabled {
 	opacity: 0.65;
 	cursor: not-allowed;
-}
-
-.navbar .container {
-	// required for username to be on the same line as the rest of the navbar
-	// when there is a banner message configured.
-	position: relative;
-}
-
-.navbar-username {
-	display: inline-flex;
-	&:empty {
-		display: none;
-	}
-
-	> .username {
-		&:empty { display: none;}
-		order: 2;
-	}
-	.username-icon {
-		order: 1;
-		margin-right: 0.25em;
-	}
-
-	.username:empty + .username-icon {
-		display: none;
-	}
 }

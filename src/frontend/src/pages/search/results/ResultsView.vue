@@ -133,7 +133,11 @@ export default Vue.extend({
 		Export
 	},
 	props: {
-		id: String,
+		/**
+		 * In our case, always 'hits' or 'docs', we don't support adding another ResultsView tab with a different ID.
+		 * Since we use this ID to determine whether we're getting hits or docs from blacklab, and some rendering or logic may depend on it being 'hits' or 'docs' as well.
+		 */
+		id: String as () => 'hits'|'docs',
 		label: String,
 		active: Boolean,
 
@@ -426,24 +430,11 @@ export default Vue.extend({
 			}
 		},
 		resultComponentData(): any {
-			switch (this.resultComponentName) {
-				case 'GroupResults': return {
+			return {
 					results: this.results,
 					disabled: !!this.request,
 					sort: this.sort,
-				};
-				case 'HitResults': return {
-					results: this.results,
-					disabled: !!this.request,
-					sort: this.sort,
-
-				};
-				case 'DocResults': return {
-					results: this.results,
-					disabled: !!this.request,
-					sort: this.sort,
-				};
-			}
+			};
 		},
 	},
 	watch: {
@@ -477,28 +468,6 @@ export default Vue.extend({
 
 <style lang="scss">
 
-.crumbs-totals {
-	margin: 0 -15px 10px;
-	display:flex;
-	flex-wrap:nowrap;
-	align-items:flex-start;
-	justify-content:space-between;
-
-	@at-root .breadcrumb.resultscrumb {
-		background: white;
-		border-bottom: 1px solid rgba(0,0,0,0.1);
-		border-radius: 0;
-		padding: 12px 15px;
-		margin-bottom: 0;
-		flex-grow: 1;
-	}
-	@at-root .result-totals {
-		background: white;
-		padding: 8px 8px 0 15px;
-		flex: none;
-	}
-}
-
 .no-results-found {
 	padding: 1.25em;
 	text-align: center;
@@ -506,8 +475,6 @@ export default Vue.extend({
 	font-size: 16px;
 	color: #777;
 }
-
-
 
 table {
 	> thead > tr > th {
@@ -529,6 +496,12 @@ table {
 // Make entire row clickable even when the document title is short
 .doctitle {
 	display: block;
+}
+
+.result-totals {
+	background: white;
+	padding: 8px 8px 0 15px;
+	flex: none;
 }
 
 </style>

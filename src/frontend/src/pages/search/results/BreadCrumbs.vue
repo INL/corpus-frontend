@@ -32,3 +32,23 @@ export default Vue.extend({
 	}
 })
 </script>
+
+<style lang="scss">
+
+.crumbs-totals {
+	margin: 0 -15px 10px;
+	display:flex;
+	flex-wrap:nowrap;
+	align-items:flex-start;
+	justify-content:space-between;
+
+	@at-root .breadcrumb.resultscrumb {
+		background: white;
+		border-bottom: 1px solid rgba(0,0,0,0.1);
+		border-radius: 0;
+		padding: 12px 15px;
+		margin-bottom: 0;
+		flex-grow: 1;
+	}
+}
+</style>

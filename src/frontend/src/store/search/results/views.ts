@@ -76,10 +76,9 @@ const createGetters = (b: ModuleBuilder<ViewRootState, RootState>) => {
 
 /**
  * Create a module with the given namespace and initial state.
- * @param parent global store builder
- * @param namespace key of this module in the root store
- * @param customInitialState if you want to override part of the initial state for this part of the store
- * @returns
+ * @param viewName key of this module in the root store
+ * @param customInitialState if you want to override part of the initial state for this part of the store. Usually only change the customState property.
+ * @returns a module object with actions, getters, namespace, getState and a vuex module.
  */
 export const createViewModule = (viewName: string, customInitialState?: Partial<ViewRootState>) => {
 	const b = viewsBuilder.module<ViewRootState>(viewName, cloneDeep(Object.assign(initialViewState, customInitialState))); // Don't alias initialstate of different modules!
@@ -93,6 +92,7 @@ export const createViewModule = (viewName: string, customInitialState?: Partial<
 	// this is a bit hacky, since it isn't supported officially.
 	// On the root builder we could call registerModule(), but since this is a ModuleBuilder and not a StoreBuilder,
 	// we'll need to do it manually.
+	// This was reverse-engineered from the vuex-typex source code.
 	function registerModule(this: any, namespace: string) {
 		if (this._store && this._vuexModule) {
 			var mBuilder = this._moduleBuilders[namespace];

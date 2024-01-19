@@ -11,7 +11,8 @@ export const userManager = hasSettings ? new UserManager({
 	prompt: 'login',
 	redirect_uri: window.location.origin + CONTEXT_URL + '/callback',
 	// prevent hitting timeouts while debugging?
-	silentRequestTimeoutInSeconds: 10000,
+	// @ts-ignore
+	silentRequestTimeoutInSeconds: process.env.NODE_ENV === 'development' ? 999999999 : 10,
 
 
 	//monitorSession: true,
@@ -22,8 +23,9 @@ export const userManager = hasSettings ? new UserManager({
 	// scope: 'openid profile email',
 }) : null;
 
-
+/** In-flow login. I.E. redirect the current page to the auth server, and have it (the auth server) redirect back to the current page. After which we will run the userManager.signinCallback() function (see loginsystem.ts::awaitinit) which should pick up the info returned by the auth server. */
 export const login = () => userManager?.signinRedirect({redirect_uri: window.location.href});
+/** In-flow logout. I.E. redirect the current page to the auth server, and have it (the auth server) redirect back to the current page. After which we will run the userManager.signinCallback() function (see loginsystem.ts::awaitinit) which should pick up that no user is logged in anymore. */
 export const logout = () => userManager?.signoutRedirect({post_logout_redirect_uri: window.location.href});
 
 // ONLY to be called when we're the callback page (i.e. the page that the login system redirects to after login - running in an iframe)

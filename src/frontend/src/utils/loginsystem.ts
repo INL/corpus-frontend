@@ -7,11 +7,11 @@ import LoginButton from '@/components/LoginButton.vue';
 // and adds the init function
 
 /**
+ * This function is meant to run on the main content pages.
+ * 
  * You should await this before doing other things.
  * Initialize the login system, check if user is currently logged in, and start an automatic refresh of access tokens if they are.
  */
-
-
 export const awaitInit = async () => {
 	const userManager = LoginSystem.userManager;
 	if (!userManager) return null;
@@ -27,6 +27,18 @@ export const awaitInit = async () => {
 		try { user = await userManager.signinSilent() }
 		catch { } // oh well... no user.
 	}
+	try {
+		// clear the hash and query info related to the callback
+		const url = new URL(window.location.href);
+		url.searchParams.delete('error');
+		url.searchParams.delete('state');
+		url.searchParams.delete('session_state');
+		url.searchParams.delete('code');
+		url.searchParams.delete('scope');
+		// place back the url without the callback info
+		window.history.replaceState({}, '', url);
+	} catch (e) { }
+
 	if (user) userManager.startSilentRenew();
 	return user || null; // normalize weird void type to null.
 };

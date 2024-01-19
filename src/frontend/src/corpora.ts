@@ -21,6 +21,7 @@ import * as AppTypes from '@/types/apptypes';
 
 import * as Api from '@/api';
 import * as loginsystem from '@/utils/loginsystem';
+import { normalizeIndexBase } from './utils/blacklabutils';
 
 const enum DataEvent {
 	SERVER_REFRESH = 'server/refresh',
@@ -297,7 +298,7 @@ $('#corpora-private-container').on('click', '*[data-corpus-action="delete"]:not(
 				.then(() => {
 					$('#waitDisplay').hide();
 					showSuccess('Corpus "' + corpus.displayName + '" deleted.');
-					refreshCorporaList();
+					refreshCorporaListAndBlacklabInfo();
 				})
 				.catch(showXHRError('Could not delete corpus "' + corpus.displayName + '"', () => $('#waitDisplay').hide()));
 		}
@@ -423,23 +424,23 @@ async function refreshIndexStatusWhileIndexing(indexId: string) {
 
 // Request the list of available corpora and
 // update the corpora page with it.
-function refreshCorporaList() {
+// also updates the server info object
+function refreshCorporaListAndBlacklabInfo() {
 	// Perform the AJAX request to get the list of corpora.
 	$('#waitDisplay').show();
 
-	return Api.blacklab.getCorpora()
-	.then(corpora => {
-		triggers.updateCorpora(corpora);
-		corpora
+	return Api.blacklab.getServerInfo()
+	.then(blacklabinfo => {
+		const newCorpora = Object.entries(blacklabinfo.indices).map(([id, index]) => normalizeIndexBase(index, id))
+
+		triggers.updateServer(blacklabinfo);
+		triggers.updateCorpora(newCorpora);
+		newCorpora
 			.filter(corpus => corpus.status === 'indexing')
 			.forEach(corpus => refreshIndexStatusWhileIndexing(corpus.id));
 	})
 	.catch(showXHRError('Could not retrieve corpora'))
 	.finally(() => $('#waitDisplay').hide());
-}
-
-function refreshServerInfo() {
-	return Api.blacklab.getServerInfo().then(triggers.updateServer).catch(showXHRError('Could not retrieve server info'));
 }
 
 function refreshFormatList() {
@@ -499,7 +500,7 @@ function createIndex(displayName: string, shortName: string, format: string) {
 	Api.blacklab
 	.postCorpus(indexName, displayName, format)
 	.then(() => {
-		refreshCorporaList();
+		refreshCorporaListAndBlacklabInfo();
 		showSuccess('Corpus "' + displayName + '" created.');
 	})
 	.catch(showXHRError('Could not create corpus "' + shortName + '"'))
@@ -886,10 +887,8 @@ $(document).ready(async function() {
 	Api.init('blacklab', BLS_URL, user);
 	Api.init('cf', CONTEXT_URL, user);
 
-	console.log('loading corpora?');
-	// Get the list of corpora.
-	await refreshServerInfo(); // server info needed before we can get other information
-	refreshCorporaList();
+	console.log('loading corpora');
+	await refreshCorporaListAndBlacklabInfo(); // do this first as it also pulls in the server info
 	refreshFormatList();
 
 	// Wire up the AJAX uploading functionality.
@@ -897,7 +896,6 @@ $(document).ready(async function() {
 
 	// Wire up the "new corpus" and "delete corpus" buttons.
 	initNewCorpus();
-
 	initNewFormat();
 	initDeleteFormat();
 	initEditFormat();

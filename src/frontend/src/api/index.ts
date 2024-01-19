@@ -5,7 +5,7 @@ import {createEndpoint} from '@/api/apiutils';
 import {normalizeIndex, fixDocInfo, normalizeFormat, normalizeIndexBase} from '@/utils/blacklabutils';
 
 import * as BLTypes from '@/types/blacklabtypes';
-import { ApiError } from '@/types/apptypes';
+import { ApiError, NormalizedIndex, NormalizedIndexBase } from '@/types/apptypes';
 import { Glossing } from '@/store/search/form/glossStore';
 import { AtomicQuery, LexiconEntry } from '@/store/search/form/conceptStore';
 import { uniq } from '@/utils';

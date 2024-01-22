@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.TransformerException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import nl.inl.corpuswebsite.MainServlet;
@@ -174,11 +175,11 @@ public class CorpusFileUtil {
 
     /** User corpora are identified by having a colon in their id separating username:corpusname */
     public static Optional<String> getCorpusName(Optional<String> corpus) {
-        return corpus.map(id -> id.substring(Math.max(0, id.indexOf(':'))));
+        return corpus.map(id -> StringUtils.substringAfter(id, ":")).or(() -> corpus);
     }
 
     /** User corpora are identified by having a colon in their id separating username:corpusname */
     public static Optional<String> getCorpusOwner(Optional<String> corpus) {
-        return corpus.map(id -> { int i = id.indexOf(':'); return i != -1 ? id.substring(0, i) : null; });
+        return corpus.map(id -> StringUtils.substringBefore(id, ":"));
     }
 }

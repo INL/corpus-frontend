@@ -1,8 +1,11 @@
 import {UserManager, Log} from 'oidc-client-ts'
 
-Log.setLogger(console);
+// Separate from loginsystem.ts to prevent circular dependency between LoginButton and loginsystem.
+//@ts-ignore
+if (process.env.NODE_ENV === 'development') Log.setLogger(console);
 
-const hasSettings = !!(KEYCLOAK_CLIENT_ID && KEYCLOAK_REALM && KEYCLOAK_URL);
+const hasSettings = typeof KEYCLOAK_CLIENT_ID === 'string' && typeof KEYCLOAK_REALM === 'string' && typeof KEYCLOAK_URL === 'string' && 
+	KEYCLOAK_CLIENT_ID.length && KEYCLOAK_REALM.length && KEYCLOAK_URL.length;
 export const userManager = hasSettings ? new UserManager({
 	// TODO remove realm from settings, put in url directly.
 	authority: KEYCLOAK_URL + '/realms/' + KEYCLOAK_REALM,
@@ -12,7 +15,7 @@ export const userManager = hasSettings ? new UserManager({
 	redirect_uri: window.location.origin + CONTEXT_URL + '/callback',
 	// prevent hitting timeouts while debugging?
 	// @ts-ignore
-	silentRequestTimeoutInSeconds: process.env.NODE_ENV === 'development' ? 999999999 : 10,
+	silentRequestTimeoutInSeconds: process.env.NODE_ENV === 'development' ? 300 : 10,
 
 
 	//monitorSession: true,

@@ -2,17 +2,16 @@ import { User } from 'oidc-client-ts';
 import * as LoginSystem from './loginsystem-api';
 import LoginButton from '@/components/LoginButton.vue';
 
-
-// this one re-exports the loginsystem-api.ts, but also adds a LoginButton component.
-// and adds the init function
-
 /**
- * This function is meant to run on the main content pages.
+ * This function is meant to run on the main content pages, before other code.
  * 
- * You should await this before doing other things.
+ * Mounts the LoginButton component on the '.username' element.
  * Initialize the login system, check if user is currently logged in, and start an automatic refresh of access tokens if they are.
+ * Returns the user (if any).
+ * 
+ * It's a separate implementation from the API because otherwise we have a recursive dependency with LoginButton to loginsystem.
  */
-export const awaitInit = async () => {
+export const awaitInit = async (): Promise<User|null> => {
 	const userManager = LoginSystem.userManager;
 	if (!userManager) return null;
 	// first up: mount the button, so it will exist when the login event fires.
@@ -21,7 +20,7 @@ export const awaitInit = async () => {
 	let user: User | null | undefined | void = null;
 	// first see if we're currently in a callback
 	try { user = await userManager.signinCallback() }
-	catch {
+	catch (e) {
 		// not a signincallback, but maybe there's a session alive still
 		// check in an iframe.
 		try { user = await userManager.signinSilent() }

@@ -133,9 +133,11 @@ createHandler({event: DataEvent.CORPORA_REFRESH, handler(newCorpora) {
 	if (newCorpora.find(function(corpus) { return !corpus.owner; }) != null) {
 		$('#corpora-public-container').show();
 	}
-
 	if (newCorpora.find(function(corpus) { return !!corpus.owner; }) != null) {
 		$('#corpora-private-container').show();
+	}
+	if (newCorpora.length === 0) {
+		$('#corpora-none-container').show();
 	}
 }});
 

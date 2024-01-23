@@ -266,20 +266,9 @@ public class AuthRequest extends URLBuilder<AuthRequest> {
                     }
                 }
 
-                // No authentication provided: 401 with WWW-Authenticate header
-                // Authentication provided but UMA didn't work: 401 with permission ticket
-                // Authentication provided but no access: 403
-                // do we need to proxy the response from blacklab cleanly? probably right?
-
-                // if auth is missing, then proxy the request from blacklab.
-                // otherwise, just return the response
-
-                // is there a situation where we're inside this code and the client is not either
-                // requesting corpus info, document contents, or document metadata.
-                // dunno, don't think so.
-
-                // just transparently return whatever the endpoint returned/.
-
+                // in all cases this request is performed on behalf of a user's request to this application
+                // therefor, if this request fails because of missing authentication, we should forward the request for authentication to the client.
+                // if there is a www-authenticate header, we should forward it to the user
                 if (hardFailOnMissingAuth && r.getHeaderField("www-authenticate") != null) {
                     r.getHeaderFields().forEach((k, v) -> v.forEach(w -> response.addHeader(k, w)));
                     InputStream s = r.getErrorStream() != null ? r.getErrorStream() : r.getInputStream();

@@ -24,10 +24,20 @@ const endpoints = {
 export function init(which: keyof typeof endpoints, url: string, user: User|null) {
 	if (!(which in endpoints)) throw new Error(`Unknown endpoint ${which}`);
 	if (endpoints[which]) throw new Error(`Endpoint ${which} already initialized`);
+	const headers = {};
+	if (user) {
+		Object.defineProperty(headers, 'Authorization', {
+			get() { return `Bearer ${user.access_token}`; },
+			enumerable: true,
+		});
+	}
+	
 	endpoints[which] = createEndpoint({
 		baseURL: url.replace(/\/*$/, '/'),
 		paramsSerializer: params => qs.stringify(params),
-		headers: user ? { Authorization: `Bearer ${user.access_token}` } : {},
+		// Authorization header must be re-created on each request, as the token might have changed
+		// So wrap in a getter
+		headers
 	});
 }
 

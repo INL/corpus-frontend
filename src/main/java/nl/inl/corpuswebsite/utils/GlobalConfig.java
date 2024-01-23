@@ -71,8 +71,8 @@ public class GlobalConfig {
 
         KEYCLOAK_CLIENT_ID("keycloak.clientId"),
         KEYCLOAK_REALM("keycloak.realm"),
-        KEYCLOAK_URL("keycloak.url"),
-        KEYCLOAK_SECRET("keycloak.secret");
+        KEYCLOAK_URL("keycloak.url");
+//        KEYCLOAK_SECRET("keycloak.secret");
 
         public final String s;
         Keys(String s) {

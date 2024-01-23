@@ -59,6 +59,7 @@ export async function handleError(error: AxiosError): Promise<never> {
 			response.status
 		));
 	} else if (contentType.toLowerCase().includes('xml') && typeof response.data === 'string' && response.data.length) {
+		debugger;
 		try {
 			const text = response.data;
 			const xml = new DOMParser().parseFromString(text, 'application/xml');

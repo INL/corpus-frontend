@@ -1,6 +1,6 @@
 #parse("header.vm")
 
-<script src="$jspath/remote-index.js?_$cache"></script>
+<script src="$JSPATH/remote-index.js?_$cache"></script>
 
 <div id="vue-root"></div>
 

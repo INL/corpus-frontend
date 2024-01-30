@@ -8,7 +8,7 @@
     var DEBUG_INFO_VISIBLE = $debugInfo;
 </script>
 
-<script src="$jspath/search.js?_$cache"></script>
+<script src="$JSPATH/search.js?_$cache"></script>
 
 <div id="vue-root"></div>
 

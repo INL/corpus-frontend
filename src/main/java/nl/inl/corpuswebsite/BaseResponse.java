@@ -18,6 +18,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.event.EventCartridge;
@@ -103,19 +104,19 @@ public abstract class BaseResponse {
 
         // Allow all origins on all requests
         this.response.addHeader("Access-Control-Allow-Origin", "*");
-        
+
         // Utils
         model.put("esc", esc);
         model.put("date", date);
         // For use in queryParameters to ensure clients don't cache old css/js when the application has updated.
         // During development, there's usually no WAR, so no build time either, but we assume the developer knows to ctrl+f5
         model.put("cache", servlet.getWarBuildTime().hashCode());
+        // title of the current page
+        model.put("page", this.name);
 
         // Stuff for use in constructing the page
         model.put("websiteConfig", cfg);
         model.put("buildTime", servlet.getWarBuildTime());
-        model.put("jspath", globalCfg.get(Keys.JSPATH));
-        model.put("withCredentials", Boolean.parseBoolean(globalCfg.get(Keys.FRONTEND_WITH_CREDENTIALS)));
         cfg.getAnalyticsKey().ifPresent(key -> model.put("googleAnalyticsKey", key));
 
         Optional.ofNullable(globalCfg.get(Keys.BANNER_MESSAGE))
@@ -128,15 +129,19 @@ public abstract class BaseResponse {
                                 "; Path="+globalCfg.get(Keys.CF_URL_ON_CLIENT)+"/");
         });
 
-        // Clientside js variables (some might be used in vm directly)
-        model.put("pathToTop", globalCfg.get(Keys.CF_URL_ON_CLIENT));
-        // this url must end with a slash to preserve backwards compatibility. CustomJS might rely on this.
-        model.put("blsUrl", globalCfg.get(Keys.BLS_URL_ON_CLIENT) + "/");
-        model.put("page", this.name);
+        model.put("JSPATH", globalCfg.get(Keys.JSPATH));
+        model.put("FRONTEND_WITH_CREDENTIALS", globalCfg.getBool(Keys.FRONTEND_WITH_CREDENTIALS));
 
-        model.put("keycloakUrl", globalCfg.get(Keys.KEYCLOAK_URL));
-        model.put("keycloakRealm", globalCfg.get(Keys.KEYCLOAK_REALM));
-        model.put("keycloakClientId", globalCfg.get(Keys.KEYCLOAK_CLIENT_ID));
+        // Clientside js variables (some might be used in vm directly)
+        model.put("CF_URL_ON_CLIENT", globalCfg.get(Keys.CF_URL_ON_CLIENT));
+        // The config setting never ends in a slash, but in the past it did,
+        // Preserve this as clientside js/user scripts might rely on this.
+        model.put("BLS_URL_ON_CLIENT", globalCfg.get(Keys.BLS_URL_ON_CLIENT) + "/");
+
+        // OIDC
+        model.put("OIDC_AUTHORITY", globalCfg.get(Keys.OIDC_AUTHORITY));
+        model.put("OIDC_METADATA_URL", globalCfg.get(Keys.OIDC_METADATA_URL));
+        model.put("OIDC_CLIENT_ID", globalCfg.get(Keys.OIDC_CLIENT_ID));
 
         // HTML-escape all data written into the velocity templates by default
         // Only allow access to the raw string if the expression contains the word "unescaped"
@@ -198,20 +203,7 @@ public abstract class BaseResponse {
      * @return value of the paramater
      */
     public String getParameter(String name, String defaultValue) {
-        // get the trimmed parameter value
-        String value = request.getParameter(name);
-
-        if (value != null) {
-            value = value.trim();
-
-            // if the parameter value is an empty string
-            if (value.length() == 0)
-                value = defaultValue;
-        } else {
-            value = defaultValue;
-        }
-
-        return value;
+        return Optional.ofNullable(request.getParameter(name)).map(StringUtils::trimToNull).orElse(defaultValue);
     }
 
     /**
@@ -222,43 +214,13 @@ public abstract class BaseResponse {
      * @return value of the paramater
      */
     public int getParameter(String name, int defaultValue) {
-        final String stringToParse = getParameter(name, "" + defaultValue);
+        String value = getParameter(name, Integer.toString(defaultValue));
         try {
-            return Integer.parseInt(stringToParse);
+            return Integer.parseInt(value);
         } catch (NumberFormatException e) {
-            logger.info(String.format("Could not parse parameter '%s', value '%s'. Using default (%s)", name, stringToParse, defaultValue));
+            logger.fine(String.format("Could not parse parameter '%s', value '%s'. Using default (%s)", name, value, defaultValue));
             return defaultValue;
         }
-    }
-
-    /**
-     * Returns the value of a servlet parameter, or the default value.
-     *
-     * @param name name of the parameter
-     * @param defaultValue default value
-     * @return value of the paramater
-     */
-    public boolean getParameter(String name, boolean defaultValue) {
-        return getParameter(name, defaultValue ? "on" : "").equals("on");
-    }
-
-    public Integer getParameter(String name, Integer defaultValue) {
-        final String stringToParse = getParameter(name, "" + defaultValue);
-
-        return Integer.parseInt(stringToParse);
-    }
-
-    public String[] getParameterValues(String name, String defaultValue) {
-        String[] values = request.getParameterValues(name);
-
-        if (values == null)
-            values = new String[] { defaultValue };
-
-        return values;
-    }
-
-    public List<String> getParameterValuesAsList(String name, String defaultValue) {
-        return Arrays.asList(getParameterValues(name, defaultValue));
     }
 
     /**

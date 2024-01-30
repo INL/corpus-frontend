@@ -220,14 +220,6 @@ public class MainServlet extends HttpServlet {
         // Also disable caching for user-corpora, as access permissions may change.
         boolean useCache = useCache() && (request.getHeader("Authorization") == null || request.getHeader("Authorization").isEmpty()) && CorpusFileUtil.getCorpusOwner(corpus).isEmpty();
 
-
-        // resource request, send access token if we have it.
-        // If the response is a 401 in the UMA case, we should redirect to keycloak.
-
-        // how do we even detect that.
-        // we have the flow, but what wil be returned.
-
-
         // Contact blacklab-server for the config xml file if we have a corpus
         Function<String, Result<CorpusConfig, Exception>> gen = c -> new BlackLabApi(request, response).getCorpusConfig(c);
         return Result
@@ -277,12 +269,8 @@ public class MainServlet extends HttpServlet {
          * For instance <root>/help/searching would try to serve the nonexistant "searching" response in the context of the corpus "help"
          */
         // First strip out any leading items like "/" and our root
-        // (use the actual contextpath here, since we're already behind any proxy. In almost all other cases, we should use the external url as seen by the client, cfUrlExternal)
-        String requestUri = request.getRequestURI();
-        String contextPath = getServletContext().getContextPath();
-        if (requestUri.startsWith(contextPath)) {
-            requestUri = requestUri.substring(contextPath.length());
-        }
+        // (use the actual contextpath here, since we're already behind any proxy.
+        String requestUri = StringUtils.substringAfter(request.getRequestURI(), request.getContextPath());
 
         // Use apache stringutils split as it's much more sensible about omitting leading/trailing and empty strings.
         List<String> pathParts = Arrays.stream(StringUtils.split(requestUri, '/'))

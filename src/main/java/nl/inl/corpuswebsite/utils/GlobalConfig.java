@@ -56,7 +56,7 @@ public class GlobalConfig {
          * (BlackLab does pass "*" by default, so you'll need a proxy to make this setup work).
          */
         FRONTEND_WITH_CREDENTIALS("withCredentials"),
-        /** Development mode, allow script tags to load load js from an external server (webpack-dev-server), defaults to $pathToTop/js. Never ends in a slash. */
+        /** Development mode, allow script tags to load js from an external server (e.g. webpack-dev-server), defaults to ${CF_URL_ON_CLIENT}/js. Never ends in a slash. */
         JSPATH("jspath"),
         // todo remove and use a file watcher or something
         /** Development mode, disable caching of any corpus data (e.g. search.xml, article.xsl, meta.xsl etc) */
@@ -64,15 +64,17 @@ public class GlobalConfig {
         /** Enable/disable the debug info checkbox in the interface */
         SHOW_DEBUG_CHECKBOX_ON_CLIENT("debugInfo"),
         /**
-         * Url to reach the corpus-frontend servlet (i.e. this) from the browser. Usually not required, but might be necessary when server is behind a proxy.
-         * Never ends in a slash.
+         * Url to reach the corpus-frontend servlet (i.e. this) from the browser. Usually not required, but might be necessary when server is behind a proxy,
+         * defaults to the servlet context path. Never ends in a slash.
          */
         CF_URL_ON_CLIENT("cfUrlExternal"),
 
-        KEYCLOAK_CLIENT_ID("keycloak.clientId"),
-        KEYCLOAK_REALM("keycloak.realm"),
-        KEYCLOAK_URL("keycloak.url");
-//        KEYCLOAK_SECRET("keycloak.secret");
+        /** ClientID for OpenID Connect authentication. Defaults to "corpus-frontend" */
+        OIDC_CLIENT_ID("oidc.clientId"),
+        /** Authority for OpenID Connect authentication. This is usually the root of the oidc server. Ex. for Keycloak, https://login.ivdnt.org/realms/blacklab/ */
+        OIDC_AUTHORITY("oidc.authority"),
+        /** Metadata URL for the OpenID Connect server passed in the "oidc.authority" setting. Ex. https://login.ivdnt.org/realms/blacklab/.well-known/openid-configuration */
+        OIDC_METADATA_URL("oidc.metadataUrl");
 
         public final String s;
         Keys(String s) {
@@ -94,7 +96,8 @@ public class GlobalConfig {
         set(defaultProps, Keys.SHOW_DEBUG_CHECKBOX_ON_CLIENT,   "false");
         set(defaultProps, Keys.FRONTEND_WITH_CREDENTIALS,       "false");
         set(defaultProps, Keys.CACHE,                           "true");
-        // jspath and cfUrlExternal initialized later, because we need the servlet context path for that.
+        set(defaultProps, Keys.OIDC_CLIENT_ID,                  "corpus-frontend");
+        // JSPATH and CF_URL_ON_CLIENT initialized later, because we need the servlet context path for that.
     }
 
     private GlobalConfig(File f) {
@@ -108,6 +111,10 @@ public class GlobalConfig {
 
     public String get(Keys k) {
         return get(instanceProps, k);
+    }
+
+    public boolean getBool(Keys k) {
+        return Boolean.parseBoolean(get(instanceProps, k));
     }
 
     private static String get(Properties p, Keys k) {

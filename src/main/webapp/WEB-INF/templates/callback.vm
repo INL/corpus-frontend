@@ -3,13 +3,13 @@
     <meta charset="utf-8">
 
     <script>
-        var CONTEXT_URL = "$esc.javascript($pathToTop)";
-        var KEYCLOAK_URL = "$esc.javascript($keycloakUrl)";
-        var KEYCLOAK_REALM = "$esc.javascript($keycloakRealm)";
-        var KEYCLOAK_CLIENT_ID = "$esc.javascript($keycloakClientId)";
+        var CONTEXT_URL = "$esc.javascript($CF_URL_ON_CLIENT)";
+        var OIDC_AUTHORITY = "$esc.javascript($OIDC_AUTHORITY)";
+        var OIDC_METADATA_URL = "$esc.javascript($OIDC_METADATA_URL)";
+        var OIDC_CLIENT_ID = "$esc.javascript($OIDC_CLIENT_ID)";
     </script>
 
-    <script src="$jspath/callback.js?_$cache"></script>
+    <script src="$JSPATH/callback.js?_$cache"></script>
 </head>
 <body>
     <div class="container">

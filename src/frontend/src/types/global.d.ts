@@ -17,9 +17,9 @@ declare global {
 	const PLAUSIBLE_DOMAIN: string|null;
 	const PLAUSIBLE_APIHOST: string|null;
 
-	const KEYCLOAK_URL: string|null;
-	const KEYCLOAK_REALM: string|null;
-	const KEYCLOAK_CLIENT_ID: string|null;
+	const OIDC_METADATA_URL: string|null;
+	const OIDC_CLIENT_ID: string|null;
+	const OIDC_AUTHORITY: string|null;
 
 	// ---------------------------
 	// only valid on the article page (/docs/...)

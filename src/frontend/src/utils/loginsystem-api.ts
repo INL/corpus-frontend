@@ -4,12 +4,12 @@ import {UserManager, Log} from 'oidc-client-ts'
 //@ts-ignore
 if (process.env.NODE_ENV === 'development') Log.setLogger(console);
 
-const hasSettings = typeof KEYCLOAK_CLIENT_ID === 'string' && typeof KEYCLOAK_REALM === 'string' && typeof KEYCLOAK_URL === 'string' && 
-	KEYCLOAK_CLIENT_ID.length && KEYCLOAK_REALM.length && KEYCLOAK_URL.length;
+const hasSettings = typeof OIDC_AUTHORITY === 'string' && typeof OIDC_CLIENT_ID === 'string' && typeof OIDC_METADATA_URL === 'string' &&
+	OIDC_AUTHORITY.length && OIDC_CLIENT_ID.length && OIDC_METADATA_URL.length;
 export const userManager = hasSettings ? new UserManager({
-	// TODO remove realm from settings, put in url directly.
-	authority: KEYCLOAK_URL + '/realms/' + KEYCLOAK_REALM,
-	client_id: KEYCLOAK_CLIENT_ID,
+	authority: OIDC_AUTHORITY,
+	client_id: OIDC_CLIENT_ID,
+	metadataUrl: OIDC_METADATA_URL,
 	checkSessionIntervalInSeconds: 10,
 	prompt: 'login',
 	redirect_uri: window.location.origin + CONTEXT_URL + '/callback',

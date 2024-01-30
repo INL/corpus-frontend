@@ -10,7 +10,7 @@
     PAGE_END = $pageEnd;
 </script>
 
-<script src="$jspath/article.js?_$cache"></script>
+<script src="$JSPATH/article.js?_$cache"></script>
 
 <div class="container article">
     <ul id="articleTabs" class="nav nav-tabs cf-panel-tab-header cf-panel-lg">

@@ -5,6 +5,7 @@ import java.io.OutputStreamWriter;
 import com.google.gson.Gson;
 
 import nl.inl.corpuswebsite.BaseResponse;
+import nl.inl.corpuswebsite.utils.GlobalConfig;
 
 /** Show the about page. */
 public class ConfigResponse extends BaseResponse {
@@ -27,7 +28,7 @@ public class ConfigResponse extends BaseResponse {
 
         // Merge context into the page template and write to output stream
         try (OutputStreamWriter osw = new OutputStreamWriter(response.getOutputStream(), OUTPUT_ENCODING)) {   
-            osw.append(new Gson().toJson(new PublicConfig(servlet.getExternalWebserviceUrl())));
+            osw.append(new Gson().toJson(new PublicConfig(servlet.getGlobalConfig().get(GlobalConfig.Keys.BLS_URL_ON_CLIENT))));
             osw.flush();
         } catch (Exception e) {
             throw new RuntimeException(e);

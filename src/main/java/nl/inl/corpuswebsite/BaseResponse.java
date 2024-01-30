@@ -130,7 +130,8 @@ public abstract class BaseResponse {
 
         // Clientside js variables (some might be used in vm directly)
         model.put("pathToTop", globalCfg.get(Keys.CF_URL_ON_CLIENT));
-        model.put("blsUrl", servlet.getExternalWebserviceUrl());
+        // this url must end with a slash to preserve backwards compatibility. CustomJS might rely on this.
+        model.put("blsUrl", globalCfg.get(Keys.BLS_URL_ON_CLIENT) + "/");
         model.put("page", this.name);
 
         model.put("keycloakUrl", globalCfg.get(Keys.KEYCLOAK_URL));

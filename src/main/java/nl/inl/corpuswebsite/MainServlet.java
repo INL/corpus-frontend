@@ -415,14 +415,6 @@ public class MainServlet extends HttpServlet {
                 .getOrThrow(IllegalStateException::new); // this file always exists (at least the fallback in our own jar)
     }
 
-    /**
-     * NOTE: never suffixed with corpus id, to unify behavior on different pages. Unlike when gotten from the GlobalConfig object, this url will always end in "/"
-     * (we cannot fix this without breaking userscripts depending on this behavior, as this url is exposed as BLS_URL on the client side).
-     * */
-    public String getExternalWebserviceUrl() {
-        return this.config.get(Keys.BLS_URL_ON_CLIENT) + "/";
-    }
-
     public boolean useCache() {
         return Boolean.parseBoolean(this.config.get(Keys.CACHE));
     }

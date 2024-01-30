@@ -256,7 +256,8 @@ export type HitRow = {
 	hit_last_word_id: string // jesse
 	hit_id: string; // jesse
 
-	matchInfos: BLTypes.BLMatchInfos;
+	/** Not every hit has matches */
+	matchInfos?: BLTypes.BLMatchInfos;
 };
 
 type DocRow = {
@@ -498,8 +499,7 @@ export default Vue.extend({
 			const foundRels : x =  {}
 			const foundHeads : x = {}
 			if (('matchInfos' in row) && (row.matchInfos != null)) {
-				Object.keys(row.matchInfos).map(k => {
-					const v = row.matchInfos[k]
+				Object.values(row.matchInfos).map(v => {
 					if (v.type == 'relation') {
 						const rel = v.relType.replace("dep::","")
 						const wordnum = v.targetStart - row.start + 1

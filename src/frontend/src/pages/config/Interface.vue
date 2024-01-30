@@ -35,6 +35,8 @@ const component = Vue.extend({
 		index: Object as () => NormalizedIndex
 	},
 	data: () => ({
+		activePattern: '',
+		advancedEnabled: true
 	}),
 	computed: {
 		annotationArray(): NormalizedAnnotation[] {

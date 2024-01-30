@@ -17,7 +17,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import { blacklab } from '@/api';
-import { NormalizedIndex, NormalizedIndexOld } from '@/types/apptypes';
+import { NormalizedIndex, NormalizedIndexBase } from '@/types/apptypes';
 
 import  CorpusConfig from './CorpusConfig.vue';
 
@@ -28,7 +28,7 @@ export default Vue.extend({
 	data: () => ({
 		loading: false,
 		error: null as null|string,
-		corpora: null as null|NormalizedIndexOld[],
+		corpora: null as null|NormalizedIndexBase[],
 		corpus: null as null|NormalizedIndex
 	}),
 	methods: {
@@ -36,7 +36,7 @@ export default Vue.extend({
 			if (this.loading) { return; }
 			this.loading = true;
 
-			blacklab.getCorporaOld()
+			blacklab.getCorpora()
 			.then(c => this.corpora = c)
 			.catch(e => this.error = e.message)
 			.finally(() => this.loading = false);

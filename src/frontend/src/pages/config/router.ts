@@ -1,5 +1,5 @@
 import Vue from 'vue';
-import VueRouter from 'vue-router';
+import VueRouter, {RouteConfig} from 'vue-router';
 
 import ConfigPage from './ConfigPage.vue';
 import CorpusConfig from './CorpusConfig.vue';
@@ -12,38 +12,46 @@ declare const INDEX_ID: string|null;
 
 Vue.use(VueRouter);
 
+
 const router = new VueRouter({
-	base: CONTEXT_URL,
+	base: CONTEXT_URL, // guaranteed not to end in a slash
 	mode: 'history',
 
+	// Routers in the corpus-frontend are interesting, this is a legacy holdover
+	// without corpus: /corpus-frontend/${page}
+	// with corpus: /corpus-frontend/${corpus}/${page}
+
+	// since this page (the configwizard) is only served on paths where /configwizard is part of the url (as the ${page} part)
+	// we don't have to take into account all other possible urls.
+	// just bind on '/' and handle both /configwizard and /${corpus}/configwizard
 	routes: [{
 		name: 'config',
-		path: '/',
+		path: '/configwizard/',
 		component: ConfigPage,
 		children: [{
 			name: 'no_corpus',
-			path: '/config',
+			path: '/',
 			component: CorpusPicker,
-		}, {
-			name: 'corpus',
-			path: '/:id/config/:tab?',
-			component: CorpusConfig,
-			props: route => ({
-				id: route.params.id,
-				activeTab: route.params.tab,
-				tabs: ['pos', 'interface']
-			}),
-			children: [{
-				name: 'pos',
-				path: '/:id/config/pos',
-				component: ConfigPOS
-			}, {
-				name: 'interface',
-				path: '/:id/config/interface',
-				component: ConfigInterface
-			}]
 		}]
-	}]
+	}, {
+		name: 'corpus',
+		path: '/:id/configwizard/:tab?/',
+		component: CorpusConfig,
+		props: route => ({
+			id: route.params.id,
+			activeTab: route.params.tab,
+			tabs: ['tagset builder', 'interface']
+		}),
+		children: [{
+			name: 'tagset builder',
+			path: '/:id/configwizard/pos',
+			component: ConfigPOS
+		}, {
+			name: 'interface',
+			path: '/:id/configwizard/interface',
+			component: ConfigInterface
+		}]
+	}],
 });
 
 export default router;

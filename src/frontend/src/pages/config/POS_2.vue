@@ -2,7 +2,7 @@
 	<div>
 		<h3>{{title}}</h3>
 		<button type="button" @click="$emit('submit')" :disabled="!value.subAnnotations">OK</button>
-		<button type="button" :disabled="defaultSubAnnotations.length === 0" @click="$emit('input', {...value, subAnnotations: defaultSubAnnotations})">select defaults</button>
+		<button type="button" title="select subannotations of the main annotation" :disabled="defaultSubAnnotations.length === 0" @click="$emit('input', {...value, subAnnotations: defaultSubAnnotations})">select defaults</button>
 		<div style="display:flex">
 			<div style="width: auto; max-width: 50%; padding: 10px 15px; min-width: 200px;">
 				<ul class="list-unstyled">

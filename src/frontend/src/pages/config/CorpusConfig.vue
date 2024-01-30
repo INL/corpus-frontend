@@ -31,8 +31,8 @@ export default Vue.extend({
 	},
 	props: {
 		id: String,
-		tabs: Array as () => String[],
-		activeTab: String as () => String|undefined
+		tabs: Array as () => string[],
+		activeTab: String as () => string|undefined
 	},
 	data: () => ({
 		index: null as null|NormalizedIndex,

@@ -180,6 +180,9 @@ public class CorpusFileUtil {
 
     /** User corpora are identified by having a colon in their id separating username:corpusname */
     public static Optional<String> getCorpusOwner(Optional<String> corpus) {
-        return corpus.map(id -> StringUtils.substringBefore(id, ":"));
+        return corpus.map(id -> {
+            String[] parts = StringUtils.split(id, ":");
+            return parts.length > 1 ? parts[0] : null;
+        }).map(StringUtils::trimToNull);
     }
 }

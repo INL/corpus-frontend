@@ -4,9 +4,9 @@ import java.io.IOException;
 
 import nl.inl.corpuswebsite.BaseResponse;
 
-public class ConfigResponse extends BaseResponse {
-    public ConfigResponse() {
-        super(false);
+public class ConfigWizardResponse extends BaseResponse {
+    public ConfigWizardResponse() {
+        super("configwizard", false);
     }
 
     @Override

@@ -19,7 +19,7 @@ module.exports = {
 		// Path on disk for output file
 		path: path.resolve(__dirname, 'dist'),
 		// Path in webpack-dev-server for compiled files (has priority over disk files in case both exist)
-		publicPath: '/dist/',
+		publicPath: 'http://localhost:8081/dist/', // add port because application runs on 8080 but js runs on 8081, breaking hot reload (it would try to download js from 8080)
 	},
 	resolve: {
 		extensions: ['.js', '.ts'], // enable autocompleting .ts and .js extensions when using import '...'
@@ -166,6 +166,11 @@ module.exports = {
 	  warningsFilter: /export .* was not found in/
 	},
 	devServer: {
-		allowedHosts: "all"
+		allowedHosts: "all",
+		headers: {
+			// allow fetching updates on port 8081 from site at port 8080
+			"Access-Control-Allow-Origin": "*",
+		}
+
 	}
 };

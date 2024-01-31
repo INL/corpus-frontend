@@ -751,9 +751,7 @@ const init = () => {
 		else { // blacklab 4.0 removed the 'starttag' annotation. We have to retrieve values from a separate endpoint now.
 			blacklab.getRelations(INDEX_ID)
 				.then(relations => Object.keys(relations.spans).map(v => ({value: v, label: v, title: null}))) // map back to the old format
-				.then(v => {
-					console.log(v); setValuesForWithin(v);
-				});
+				.then(v => setValuesForWithin(v));
 		}
 	}
 

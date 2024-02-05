@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
+import net.sf.saxon.lib.Logger;
 import nl.inl.corpuswebsite.BaseResponse;
 import nl.inl.corpuswebsite.utils.BlackLabApi;
 import nl.inl.corpuswebsite.utils.CorpusConfig;
@@ -170,10 +171,15 @@ public class ApiResponse extends BaseResponse {
     }
 
     protected void indexMetadata() {
+        long now = System.currentTimeMillis();
+
         servlet.getCorpusConfig(corpus, request, response)
             .mapError(QueryException::wrap)
             .map(CorpusConfig::getJsonUnescaped)
-            .tapSelf(r -> sendResult(r, "application/json; charset=utf-8"));
+            .tapSelf(r -> {
+                sendResult(r, "application/json; charset=utf-8");
+                logger.info("Corpus metadata request took " + (System.currentTimeMillis() - now) + "ms");
+            });
     }
 
     protected void sendResult(Result<String, QueryException> r, String contentType) {

@@ -240,6 +240,26 @@ export type FilterDefinition<MetadataType = any, ValueType = any> = {
 	metadata: any;
 };
 
+export type GroupByAnnotationSettings = {
+	type: 'annotation';
+	field: string;
+	contextPart: 'hit'|'before'|'after'|'wordleft'|'wordright';
+	context?: [number, number];
+	caseSensitive: boolean;
+}
+
+export type GroupByMetadataSettings = {
+	type: 'metadata';
+	field: string;
+	caseSensitive: boolean;
+}
+
+export type GroupByCaptureSettings = {
+	type: 'capture';
+}
+
+export type GroupBySettings = GroupByAnnotationSettings|GroupByMetadataSettings|GroupByCaptureSettings;
+
 // -------------------
 // Configuration types
 // -------------------

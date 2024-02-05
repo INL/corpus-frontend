@@ -102,7 +102,7 @@ const init = () => Api.frontend
 		corpus.annotationGroups.forEach(g => g.entries = g.entries.filter(id => corpus.annotatedFields[g.annotatedFieldId].annotations[id]));
 		corpus.metadataFieldGroups.forEach(g => g.entries = g.entries.filter(id => corpus.metadataFields[id]));
 
-		privateActions.setCorpus({corpus});
+		privateActions.setCorpus({corpus: Object.freeze(corpus)});
 	})
 	// can throw ApiError, caught in root store init function.
 

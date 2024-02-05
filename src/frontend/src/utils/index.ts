@@ -177,6 +177,7 @@ export const decodeAnnotationValue = (value: string|string[], type: Required<App
 	}
 };
 
+/** Turn an annotation object into a "pattern" (cql) string ready for BlackLab. */
 export const getAnnotationPatternString = (annotation: AppTypes.AnnotationValue): string[] => {
 	const {id, case: caseSensitive, value, type} = annotation;
 
@@ -224,6 +225,7 @@ type SplitString = {
  * "split word" behind another few --> ["split word", "behind", "another", "few"]
  * "wild* in split words" and such --> ["wild.* in split words", "and", "such"]
  * @param v the input string.
+ * @param useQuoteDelimiters whether to use double quotes (") as delimiters or not. If not, the quotes are treated as regular characters.
  */
 export const splitIntoTerms = (value: string, useQuoteDelimiters: boolean): SplitString[]  => {
 	let i = 0;
@@ -650,3 +652,98 @@ export function getAnnotationSubset(
 }
 
 export function uniq<T>(l: T[]): T[] {return Array.from(new Set(l)).sort() }
+
+
+
+
+
+function parseGroupByMetadata(group: string): AppTypes.GroupBySettings {
+	return {} as any;
+}
+
+function parseGroupByCapture(group: string): AppTypes.GroupBySettings {
+	return {} as any;
+}
+
+function parseGroupByAnnotation(type: 'left'|'right'|'wordleft'|'wordright'|'before'|'after', group: string): AppTypes.GroupByAnnotationSettings {
+	if (!['left', 'right', 'wordleft', 'wordright', 'before', 'after'].includes(type)) {
+		throw new Error('Invalid group type');
+	}
+
+
+	const patt = /(\w+):(i|s)/;
+	const match = group.match(patt);
+
+	if (match == null) {
+		throw new Error('Invalid group');
+	}
+
+	return {
+		type: 'annotation',
+		caseSensitive: match[2] === 's',
+		field: match[1],
+		contextPart: type as any
+	}
+
+	// return {
+	// 	context: match[1] as 'hit'|'before'|'after'|'wordleft'|'wordright',
+	// 	range: [Number.parseInt(match[2], 10), Number.parseInt(match[3], 10)]
+	// };
+}
+
+function parseGroupByContext(group: string): AppTypes.GroupBySettings {
+	// context:annotation:case:range
+	// range in format of [RLHE] for left/right/hit/(hit-)end
+	return {} as any;
+
+}
+
+/**
+ * Parse a GroupBy string as passed to BlackLab, comma-separated.
+ * http://inl.github.io/BlackLab/blacklab-server-overview.html#sorting-grouping-filtering-faceting
+ */
+export function parseGroupBy(groupBy: string): AppTypes.GroupBySettings[] {
+	return groupBy.split(',').map(part => {
+		const [type, details] = part.split(':');
+		switch (type) {
+			case 'capture': return parseGroupByCapture(details);
+			case 'metadata': return parseGroupByMetadata(details);
+			case 'context': return parseGroupByContext(details);
+			default: return parseGroupByAnnotation(type as any, details);
+		}
+
+
+
+		// See http://inl.github.io/BlackLab/blacklab-server-overview.html#sorting-grouping-filtering-faceting
+	// 	const patt = /context:(\w+):(s|i):(L|R|H|E)(\d+)\-(\d+)/;
+
+	// 	const match = v.match(patt);
+	// 	if (match == null) {
+	// 		this.resetToDefaults();
+	// 		return;
+	// 	}
+
+	// 	const contextLetter = match[3] as 'L'|'R'|'H'|'E';
+
+	// 	this.annotation = this.isValidAnnotation(match[1]) ? match[1] : this.defaultAnnotation;
+	// 	this.caseSensitive = match[2] === 's';
+	// 	this.range = [Number.parseInt(match[4], 10), Number.parseInt(match[5], 10)];
+	// 	this.fromEndOfHit = (contextLetter === 'E');
+
+	// 	switch (contextLetter) {
+	// 		case 'L': this.context = 'before'; break;
+	// 		case 'R': this.context = 'after'; break;
+	// 		case 'H':
+	// 		case 'E': this.context = 'hit'; break;
+	// 		default: throw new Error('wat');
+	// 	}
+	// }
+	})
+
+
+	// return [];
+}
+
+export function serializeGroupBy(groupBy: any[]): string {
+	return groupBy.join(', ');
+}

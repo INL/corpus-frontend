@@ -24,11 +24,34 @@
 				@update="paginationResults = $event"
 			/>
 
-			<GroupBy slot="groupBy" :type="id"
-				:disabled="!!request"
-				:originalGroupBySettings="originalGroupBySettings"
-				@viewgroupLeave="leaveViewgroup"
-			/>
+			<template #groupBy>
+
+				<SelectPicker :options="['GroupBy1', 'GroupBy2', 'GroupBy3']" v-model="selectedGroupBy" />
+
+					<!-- <GroupBy :type="id"
+						:disabled="!!request"
+						:originalGroupBySettings="originalGroupBySettings"
+						@viewgroupLeave="leaveViewgroup"
+					/> -->
+
+					<component :is="selectedGroupBy"
+						:type="id"
+						:results="results"
+						:disabled="!!request"
+						:originalGroupBySettings="originalGroupBySettings"
+						@viewgroupLeave="leaveViewgroup"
+					/>
+					<!-- <GroupBy3 slot="groupBy"
+						:type="id"
+						:results="results"
+						:disabled="!!request"
+						:originalGroupBySettings="originalGroupBySettings"
+						@viewgroupLeave="leaveViewgroup"
+					/> -->
+			</template>
+
+
+
 
 			<Pagination slot="pagination"
 				style="display: block; margin: 10px 0;"
@@ -78,10 +101,10 @@
 
 
 		<Debug>
-			<div>
+			<div v-if="results">
 				<hr>
 				<div>BlackLab response: </div>
-				<pre v-if="results">{{JSON.stringify(results.summary, undefined, 2)}}</pre>
+				<pre>{{JSON.stringify(results.summary, undefined, 2)}}</pre>
 			</div>
 		</Debug>
 	</div>
@@ -106,7 +129,10 @@ import GroupResults from '@/pages/search/results/table/GroupResults.vue';
 import HitResults from '@/pages/search/results/table/HitResults.vue';
 import DocResults from '@/pages/search/results/table/DocResults.vue';
 import Totals from '@/pages/search/results/ResultTotals.vue';
-import GroupBy from '@/pages/search/results/groupby/GroupBy.vue';
+import GroupBy1 from '@/pages/search/results/groupby/GroupBy.vue';
+import GroupBy2 from '@/pages/search/results/groupby/GroupBy2.vue';
+import GroupBy3 from '@/pages/search/results/groupby/GroupBy3.vue';
+
 import Sort from '@/pages/search/results/Sort.vue';
 import BreadCrumbs from '@/pages/search/results/BreadCrumbs.vue';
 import Export from '@/pages/search/results/Export.vue';
@@ -126,7 +152,9 @@ export default Vue.extend({
 		HitResults,
 		DocResults,
 		Totals,
-		GroupBy,
+		GroupBy1,
+		GroupBy2,
+		GroupBy3,
 		SelectPicker,
 		Sort,
 		BreadCrumbs,
@@ -168,6 +196,9 @@ export default Vue.extend({
 			page: number;
 			sort: string|null;
 		},
+
+		// temp
+		selectedGroupBy: 'GroupBy1',
 
 		debug
 	}),

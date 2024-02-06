@@ -1,4 +1,4 @@
-import { MapOf, unescapeLucene, escapeLucene, splitIntoTerms, mapReduce } from '@/utils';
+import { MapOf, unescapeLucene, escapeLucene, splitIntoTerms, mapReduce, cast } from '@/utils';
 import { FilterValue, Option } from '@/types/apptypes';
 import { ASTNode, ASTRange } from 'lucene-query-parser';
 // @ts-ignore (framework limitation) typechecking does not work for imports from .vue files
@@ -137,9 +137,6 @@ function getFieldValues(ast: ASTNode, field1: string, field2: string): {
 	}
 	return null;
 }
-
-/** Compile time checking: ensure the passed parameter is of the template type and return it (no-op). Can use while setting variables initial value for example. */
-function cast<T>(t: T): T { return t; }
 
 export const DateUtils = {
 	/**

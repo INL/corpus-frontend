@@ -240,12 +240,17 @@ export type FilterDefinition<MetadataType = any, ValueType = any> = {
 	metadata: any;
 };
 
-export type GroupByAnnotationSettings = {
+/**
+ * Settings for grouping by annotations in/around the hit.
+ * See http://inl.github.io/BlackLab/server/rest-api/corpus/hits/get.html#criteria-for-sorting-grouping-and-faceting
+*/
+export type GroupByContextSettings = {
 	type: 'annotation';
-	field: string;
-	contextPart: 'hit'|'before'|'after'|'wordleft'|'wordright';
-	context?: [number, number];
+	annotation: string;
 	caseSensitive: boolean;
+	position: 'L'|'R'|'H'|'E';
+	start: number;
+	end?: number;
 }
 
 export type GroupByMetadataSettings = {
@@ -256,9 +261,12 @@ export type GroupByMetadataSettings = {
 
 export type GroupByCaptureSettings = {
 	type: 'capture';
+	annotation: string;
+	caseSensitive: boolean;
+	groupname: string;
 }
 
-export type GroupBySettings = GroupByAnnotationSettings|GroupByMetadataSettings|GroupByCaptureSettings;
+export type GroupBySettings = GroupByContextSettings|GroupByMetadataSettings|GroupByCaptureSettings;
 
 // -------------------
 // Configuration types

@@ -654,96 +654,85 @@ export function getAnnotationSubset(
 export function uniq<T>(l: T[]): T[] {return Array.from(new Set(l)).sort() }
 
 
-
-
-
-function parseGroupByMetadata(group: string): AppTypes.GroupBySettings {
-	return {} as any;
-}
-
-function parseGroupByCapture(group: string): AppTypes.GroupBySettings {
-	return {} as any;
-}
-
-function parseGroupByAnnotation(type: 'left'|'right'|'wordleft'|'wordright'|'before'|'after', group: string): AppTypes.GroupByAnnotationSettings {
-	if (!['left', 'right', 'wordleft', 'wordright', 'before', 'after'].includes(type)) {
-		throw new Error('Invalid group type');
-	}
-
-
-	const patt = /(\w+):(i|s)/;
-	const match = group.match(patt);
-
-	if (match == null) {
-		throw new Error('Invalid group');
-	}
-
-	return {
-		type: 'annotation',
-		caseSensitive: match[2] === 's',
-		field: match[1],
-		contextPart: type as any
-	}
-
-	// return {
-	// 	context: match[1] as 'hit'|'before'|'after'|'wordleft'|'wordright',
-	// 	range: [Number.parseInt(match[2], 10), Number.parseInt(match[3], 10)]
-	// };
-}
-
-function parseGroupByContext(group: string): AppTypes.GroupBySettings {
-	// context:annotation:case:range
-	// range in format of [RLHE] for left/right/hit/(hit-)end
-	return {} as any;
-
-}
-
 /**
  * Parse a GroupBy string as passed to BlackLab, comma-separated.
  * http://inl.github.io/BlackLab/blacklab-server-overview.html#sorting-grouping-filtering-faceting
  */
 export function parseGroupBy(groupBy: string): AppTypes.GroupBySettings[] {
-	return groupBy.split(',').map(part => {
-		const [type, details] = part.split(':');
+	return groupBy.split(',').map<AppTypes.GroupBySettings>(part => {
+		const [type] = part.split(':', 1);
+
 		switch (type) {
-			case 'capture': return parseGroupByCapture(details);
-			case 'metadata': return parseGroupByMetadata(details);
-			case 'context': return parseGroupByContext(details);
-			default: return parseGroupByAnnotation(type as any, details);
+			// grouping by metadata
+			case 'field': return cast<AppTypes.GroupByMetadataSettings>({
+				type: 'metadata',
+				field: part.split(':')[1],
+				caseSensitive: part.split(':')[2] === 's'
+			});
+
+			// grouping by capture
+			case 'capture': return cast<AppTypes.GroupByCaptureSettings>({
+				type: 'capture',
+				annotation: part.split(':')[1],
+				caseSensitive: part.split(':')[2] === 's',
+				groupname: part.split(':')[3]
+			});
+
+			// grouping by words in/around the hit
+			case 'hit': return cast<AppTypes.GroupByContextSettings>({
+				type: 'annotation',
+				annotation: part.split(':')[1],
+				caseSensitive: part.split(':')[2] === 's',
+				position: 'H', // 'H' is the hit itself
+				start: 1,
+			})
+			case 'left':
+			case 'before':
+			case 'right':
+			case 'after': return cast<AppTypes.GroupByContextSettings>({
+				type: 'annotation',
+				annotation: part.split(':')[1],
+				caseSensitive: part.split(':')[2] === 's',
+				position: (type === 'left' || type === 'before') ? 'L' : 'R',
+				start: Number(part.split(':')[3]) || 1, // if no start was given, Number will create NaN, which we replace with 1 (i.e. start of section)
+				end: Number(part.split(':')[3]) || undefined // start and end are the same for this
+			});
+			// deprecated, but parse into before/after:1
+			case 'wordleft':
+			case 'wordright': return cast<AppTypes.GroupByContextSettings>({
+				type: 'annotation',
+				annotation: part.split(':')[1],
+				caseSensitive: part.split(':')[2] === 's',
+				position: type === 'wordleft' ? 'L' : 'R',
+				start: 1,
+				end: 1
+			});
+			// grouping by specific context (e.g. at (a) specific offset(s) within/before/after the hit)
+			case 'context': return cast<AppTypes.GroupByContextSettings>({
+				type: 'annotation',
+				annotation: part.split(':')[1],
+				caseSensitive: part.split(':')[2] === 's',
+				position: part.split(':')[3][0] as 'L'|'R'|'H'|'E',
+				start: Number(part.split(':')[3].match(/\w(\d+)/)![1]),
+				end: Number(part.split(':')[3].match(/\w\d+-(\d+)?/)?.[1]) || undefined // again with the NaN to undefined.
+			});
+			default: throw new Error('Unimplemented groupby type: ' + type);
 		}
-
-
-
-		// See http://inl.github.io/BlackLab/blacklab-server-overview.html#sorting-grouping-filtering-faceting
-	// 	const patt = /context:(\w+):(s|i):(L|R|H|E)(\d+)\-(\d+)/;
-
-	// 	const match = v.match(patt);
-	// 	if (match == null) {
-	// 		this.resetToDefaults();
-	// 		return;
-	// 	}
-
-	// 	const contextLetter = match[3] as 'L'|'R'|'H'|'E';
-
-	// 	this.annotation = this.isValidAnnotation(match[1]) ? match[1] : this.defaultAnnotation;
-	// 	this.caseSensitive = match[2] === 's';
-	// 	this.range = [Number.parseInt(match[4], 10), Number.parseInt(match[5], 10)];
-	// 	this.fromEndOfHit = (contextLetter === 'E');
-
-	// 	switch (contextLetter) {
-	// 		case 'L': this.context = 'before'; break;
-	// 		case 'R': this.context = 'after'; break;
-	// 		case 'H':
-	// 		case 'E': this.context = 'hit'; break;
-	// 		default: throw new Error('wat');
-	// 	}
-	// }
-	})
-
-
-	// return [];
+	});
 }
 
-export function serializeGroupBy(groupBy: any[]): string {
-	return groupBy.join(', ');
+export function serializeGroupBy(groupBy: AppTypes.GroupBySettings|AppTypes.GroupBySettings[]): string {
+	return (Array.isArray(groupBy) ? groupBy : [groupBy]).map(g => {
+		switch (g.type) {
+			case 'metadata': return `field:${g.field}:${g.caseSensitive ? 's' : 'i'}`;
+			case 'annotation': return `context:${g.annotation}:${g.caseSensitive ? 's' : 'i'}:${g.position}${g.start}${g.end ? '-' + g.end : ''}`;
+			case 'capture': return `capture:${g.annotation}:${g.caseSensitive ? 's' : 'i'}:${g.groupname}`;
+			// @ts-ignore
+			default: throw new Error('Unimplemented groupby type: ' + g.type);
+		}
+	}).join(', ');
 }
+
+/** Compile time checking: ensure the passed parameter is of the template type and return it (no-op).
+ * Can use while setting variables initial value for example. */
+export function cast<T>(t: T): T { return t; }

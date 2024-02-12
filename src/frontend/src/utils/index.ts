@@ -2,6 +2,7 @@ import URI from 'urijs';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
+import { arrayMax } from 'highcharts';
 
 export function escapeRegex(original: string, wildcardSupport: boolean) {
 	original = original.replace(/([\^$\-\\.(){}[\]+])/g, '\\$1'); // add slashes for regex characters
@@ -655,11 +656,11 @@ export function uniq<T>(l: T[]): T[] {return Array.from(new Set(l)).sort() }
 
 
 /**
- * Parse a GroupBy string as passed to BlackLab, comma-separated.
+ * Parse a GroupBy string. It should be pre-separated on comma's.
  * http://inl.github.io/BlackLab/blacklab-server-overview.html#sorting-grouping-filtering-faceting
  */
-export function parseGroupBy(groupBy: string): AppTypes.GroupBySettings[] {
-	return groupBy.split(',').map<AppTypes.GroupBySettings>(part => {
+export function parseGroupBy(groupBy: string[]): AppTypes.GroupBySettings[] {
+	return groupBy.map<AppTypes.GroupBySettings>(part => {
 		const [type] = part.split(':', 1);
 
 		switch (type) {
@@ -721,8 +722,10 @@ export function parseGroupBy(groupBy: string): AppTypes.GroupBySettings[] {
 	});
 }
 
-export function serializeGroupBy(groupBy: AppTypes.GroupBySettings|AppTypes.GroupBySettings[]): string {
-	return (Array.isArray(groupBy) ? groupBy : [groupBy]).map(g => {
+export function serializeGroupBy(groupBy: AppTypes.GroupBySettings): string;
+export function serializeGroupBy(groupBy: AppTypes.GroupBySettings[]): string[]
+export function serializeGroupBy(groupBy: AppTypes.GroupBySettings|AppTypes.GroupBySettings[]): string|string[] {
+	function single(g: AppTypes.GroupBySettings): string {
 		switch (g.type) {
 			case 'metadata': return `field:${g.field}:${g.caseSensitive ? 's' : 'i'}`;
 			case 'annotation': return `context:${g.annotation}:${g.caseSensitive ? 's' : 'i'}:${g.position}${g.start}${g.end ? '-' + g.end : ''}`;
@@ -730,7 +733,84 @@ export function serializeGroupBy(groupBy: AppTypes.GroupBySettings|AppTypes.Grou
 			// @ts-ignore
 			default: throw new Error('Unimplemented groupby type: ' + g.type);
 		}
-	}).join(', ');
+	};
+
+	return Array.isArray(groupBy) ? groupBy.map(single) : single(groupBy);
+}
+
+/** We use a weird almost untyped object in the groupby builder because it's much easier to attach to the UI this way. */
+export type GroupBySettings2 = {
+	type: 'annotation'|'metadata',
+	/** only used when type === 'annotation' */
+	annotation: string,
+	/** Always relevant */
+	caseSensitive: boolean,
+	/** when undefined, use groupname instead of positional, and ignore start+end */
+	position: 'L'|'H'|'R'|'E'|undefined,
+	start: number,
+	/** only used when position != null. When blank, entire context is used.  */
+	end: number|undefined,
+	/** only used when type === 'metadata' */
+	field: string,
+	/** Only used when type === 'annotation' && position == null */
+	groupname: string,
+};
+
+/** Interop between the UI object and the formal groupby object. Invalid objects will be filtered out. */
+export function serializeGroupBy2(g: GroupBySettings2[]): string[];
+/** Interop between the UI object and the formal groupby object. Invalid objects will result in an invalid string. */
+export function serializeGroupBy2(g: GroupBySettings2, filter: false): string;
+/** Interop between the UI object and the formal groupby object. Invalid objects will result in undefined. */
+export function serializeGroupBy2(g: GroupBySettings2): string|undefined;
+/** Interop between the UI object and the formal groupby object. Invalid objects will result in undefined. */
+export function serializeGroupBy2(g: GroupBySettings2, filter: true): string|undefined;
+export function serializeGroupBy2(g: GroupBySettings2|GroupBySettings2[], filter = true): string|string[]|undefined {
+	function serialize(g: GroupBySettings2): string|undefined {
+		const cs = g.caseSensitive ? 's' : 'i';
+
+		switch (g.type) {
+			case 'metadata': {
+				if (!g.field && filter) return undefined;
+				return `field:${g.field}:${cs}`;
+			}
+			case 'annotation': {
+				if (!g.annotation && filter) return undefined;
+				if (g.position == null) {
+					if (!g.groupname && filter) return undefined;
+					return `capture:${g.annotation}:${cs}:${g.groupname}`;
+				}
+				if (g.start == null && filter) return undefined;
+				return `context:${g.annotation}:${cs}:${g.position}${g.start}${g.end != null ? '-' + g.end : ''}`;
+			}
+			default: {
+				if (g.type != null) console.error(`Unknown grouping property ${g.type}. Cannot create string for BlackLab.`);
+				return undefined;
+			}
+		}
+	}
+
+	if (Array.isArray(g)) {
+		filter = true;
+		return g.map(serialize).filter(g => g != null) as string[]
+	}
+	else return serialize(g);
+
+}
+
+/** Interop between the UI object and the formal groupby object. */
+export function parseGroupBy2(groupby: string): GroupBySettings2 {
+	const g = parseGroupBy([groupby])[0];
+
+	return {
+		type: g.type === 'metadata'? 'metadata' : 'annotation',
+		field: g.type === 'metadata' ? g.field : '',
+		annotation: g.type === 'metadata' ? '' : g.annotation,
+		caseSensitive: g.caseSensitive,
+		end: g.type === 'annotation' ? g.end || 1 : 1,
+		groupname: g.type === 'capture' ? g.groupname : '',
+		position: g.type === 'annotation' ? g.position : undefined,
+		start: g.type === 'annotation' ? g.start : 1
+	}
 }
 
 /** Compile time checking: ensure the passed parameter is of the template type and return it (no-op).

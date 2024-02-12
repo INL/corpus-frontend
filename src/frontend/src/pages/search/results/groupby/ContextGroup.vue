@@ -198,7 +198,7 @@ export default Vue.extend({
 	mounted() {
 		// This is required because the slider component is shuffled around a little after rendering
 		// and throws off the click handling of the slider handles (an ofset is introduced)
-		requestAnimationFrame(() => (this.$refs.slider as any).refresh());
+		// requestAnimationFrame(() => (this.$refs.slider as any).refresh());
 	}
 });
 </script>

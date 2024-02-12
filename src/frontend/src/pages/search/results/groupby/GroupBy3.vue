@@ -1,69 +1,99 @@
 <template>
-	<div class="groupby layout" style="position: relative;">
-		<Tabs class="tabs selector" v-model="tab">
-			<template #annotation v-if="isHits"><ul class="list-unstyled" style="overflow: auto; height: 300px;">
-				<li v-for="{id, active} of annotations" :key="id">
-					<button type="button" @click="annotation = id" class="btn-link" :class="{selected: id === annotation, active}">{{ id }}</button>
-				</li>
-			</ul></template>
-			<template #metadata><ul class="list-unstyled" style="overflow: auto; height: 300px;">
-				<li v-for="m of metadatas" :key="m">
-					<button type="button" @click="metadata = m" class="btn-link" :class="{active: m === metadata}">{{ m }}</button>
-				</li>
-			</ul></template>
 
-		</Tabs>
 
-		<div class="content" style="position: relative;">
-			<div style="height: 100%; display: inline-flex; align-items: center;">>></div>
+	<div style="display: flex; flex-direction: row; padding-top: 25px;">
+		<div style="display: flex; flex-direction: column; border: 1px solid #CCC;">
+			<div class="btn-group" style="display: flex; width: 100%;">
+				<button type="button" @click="addAnnotation" style="flex-basis: 0; flex-grow: 1; min-width: 50%; border-radius: 0;" class="btn btn-success" v-if="type === 'hits'">+ Annotation</button>
+				<button type="button" @click="addMetadata" style="flex-basis: 0; flex-grow: 1; min-width: 50%; border-radius: 0;" class="btn btn-primary">+ Metadata</button>
+			</div>
 
-			<Tabs v-if="tab === 'annotation' && annotation">
-				<template #context><div class="annotation-context-select">
+			<!-- list of current groups -->
+			<div style="display: flex; flex-wrap: nowrap;" v-for="(a, i) in localModel">
+				<button
+					type="button"
+					:key="i"
+					style="text-align: left; border-radius: 0; border-right: 0; border-left: 0; flex-grow: 1;"
+					:class="['btn btn-default', currentIndex === i ? 'active' : '']"
+					@click="currentIndex = i;"
+				>
+					<span class="text-primary" style="font-family: monospace;">[{{ a.type.substring(0, 1).toUpperCase() }}]</span> {{humanizeGroupBy(a)}}
+					<span v-if="!isValidGroup(a)" class="fa fas fa-warning text-danger" title="This grouping is not valid."></span>
+				</button>
+				<button type="button" class="btn btn-danger" style="flex: 0; border-left: 0; border-radius: 0; padding-right: 4px; padding-left: 4px;" @click="removeGroup">&times;</button>
+			</div>
+
+
+			<div style="flex-grow: 1; min-height: 50px;">
+				<!-- placeholder -->
+			</div>
+
+			<div class="btn-group" style="border: 0;">
+				<button class="btn btn-danger" style="min-width: 50%; border-radius: 0; border-left: 0;" @click="reset">reset</button>
+				<button class="btn btn-primary" style="margin: 0; min-width: 50%; border-radius: 0; border-right: 0;" @click="apply">apply</button>
+			</div>
+		</div>
+
+		<div style="flex-grow: 1; border: 1px solid #ccc; border-left: 0; padding: 10px 15px; min-width: 0;">
+			<template v-if="current">
+				<button type="button" class="btn btn-link pull-right" @click="removeGroup">&times;</button>
+
+				<template v-if="current.type === 'annotation'">
+					<section class="text-muted col-m-6">
+						Select the annotation to group on.<br>
+						<SelectPicker placeholder="Annotation" hideEmpty searchable v-model="current.annotation" :options="annotations2" v-if="current.type === 'annotation'"/>
+						<!-- :options="annotations.map(a => a.id)"  -->
+					</section>
+					<label><input type="checkbox" v-model="current.caseSensitive"> Case sensitive</label>
+					<hr>
+
 					<section class="text-muted">
 						Select the part of the hit to group on
+
+						<div class="btn-group" style="display: flex; flex-wrap: nowrap;">
+							<button type="button" @click="current.position = 'L'" class="btn btn-default" :class="{active: current.position === 'L'}">before</button>
+							<button type="button" @click="current.position !== 'H' && current.position !== 'E' ? current.position = 'H' : void 0" class="btn btn-default" :class="{active: current.position === 'H' || current.position === 'E'}">hit</button>
+							<button type="button" @click="current.position = 'R'" class="btn btn-default" :class="{active: current.position === 'R'}">after</button>
+							<button type="button" @click="current.position = undefined" class="btn btn-default" :class="{active: current.position == null}">capture group</button>
+						</div>
 					</section>
-					<div class="btn-group" style="display: flex; flex-wrap: nowrap;">
-						<button v-for="{p, active} in positions" @click="setPosition(p)" :class="{btn: true, active}">{{ p }}</button>
-					</div>
-					<div class="hit-preview">
-						<template v-for="section in preview">
-							<template v-for="{word, active, title} in section"><span :title="title" :class="{'text-danger': active, active}">{{ word }}</span>&nbsp;</template>
-							<span class="text-muted">||</span>&nbsp;
-						</template>
-						<!-- <span v-for="{word, active, title} in preview.hit" :title="title" :class="{'text-danger': active, active}">{{ word }}&nbsp;</span>
-						<span v-for="{word, active, title} in preview.after" :title="title" :class="{'text-danger': active, active}">{{word }}&nbsp;</span> -->
 
-						<!-- <span v-for="word in preview" :class="{}">{{ word }}&nbsp;</span> -->
-					</div>
-					<label><input :disabled="hitpart === 'wordleft' || hitpart === 'wordright'" type="radio" name="type" :value="false" v-model="context"> all words</label><br>
-					<label><input :disabled="hitpart === 'wordleft' || hitpart === 'wordright'" type="radio" name="type" :value="true" v-model="context"> only some words</label>
-					<Slider v-if="context && hitpart !== 'wordleft' && hitpart !== 'wordright'" ref="slider"
-						:min="1"
-						:max="contextsize"
-						:data="Array.apply(null, {length: contextsize}).map((_, i) => ({value: i + 1, tooltip: i+1, label: `${i+1}\n${preview[hitpart][i]?.word || '[empty]'}`}))"
-						v-model="range"
-					/>
+					<template v-if="current.position">
+						<!-- if position disabled, use capture labels, no preview to render, and selecting which words is not possible -->
+						<div class="hit-preview">
+							<template v-for="(section, i) of preview">
+								<span v-if="i !== 0" class="text-muted separator">||</span>
+								<component v-for="{word, active, title} in section" :key="word" :is="active ? 'b' : 'span'" :title="title" :class="{'word': true, 'text-primary': active, active}">{{ word }}</component>
+							</template>
+						</div>
 
-				</div></template>
-				<template #capture><div class="annotation-capture-select">
-					Group by a labeled capture:
-					<SelectPicker :options="captures" v-model="capture"/>
-					<br>
-					<label><input type="checkbox" v-model="caseSensitive"> Case sensitive grouping</label>
-				</div>
+						<label><input type="radio" name="type" value="first" v-model="context"> first word</label><br>
+						<label><input type="radio" name="type" value="all" v-model="context"> all words</label><br>
+						<label><input type="radio" name="type" value="context" v-model="context"> specific words</label>
+						<Slider v-if="context === 'context'"
+						inline
+							:min="1"
+							:max="contextsize"
+							:data="contextSliderPreview"
+							v-model="contextRange"
+						/>
+					</template>
+					<div v-else>
+						Group by a labeled capture:
+						<SelectPicker :options="captures" v-model="current.groupname" container="body" allowUnknownValues/>
+						<br>
+					</div>
 
 				</template>
-
-			</Tabs>
-
-
-			<button class="btn btn-primary" type="button" style="align-self: flex-end; justify-self: flex-end;" @click="apply">save</button>
-		</div>
-		<div>
-			<div v-for="(a, i) in applied" :key="a.annotation?.annotation || a.metadata || a.annotation?.capture">
-				<button type="button" @click="applied.splice(applied.indexOf(a), 1)">{{serialized[i]}} &times;</button>
-			</div>
-			<div>{{ serialized }}</div>
+				<template v-else>
+					<section class="text-muted">
+						Select the document metadata to group on.<br>
+						<SelectPicker placeholder="Metadata" hideEmpty v-model="current.field" :options="metadatas.map(a => a.id)" v-if="current.type === 'metadata'"/>
+					</section>
+					<label><input type="checkbox" v-model="current.caseSensitive"> Case sensitive</label>
+				</template>
+			</template>
+			<h4 v-else class="text-secondary">In this window you can apply grouping to the results. Click the Annotation or Metadata buttons to left to get started.</h4>
 		</div>
 	</div>
 </template>
@@ -71,49 +101,43 @@
 <script lang="ts">
 import Vue from 'vue';
 
-import * as CorpusStore from '@/store/search/corpus';
+// import * as CorpusStore from '@/store/search/corpus';
 import * as ResultsStore from '@/store/search/results/views';
 import * as UIStore from '@/store/search/ui';
 
-import SelectPicker, {OptGroup, Option} from '@/components/SelectPicker.vue';
+import SelectPicker from '@/components/SelectPicker.vue';
 import ContextGroup from '@/pages/search/results/groupby/ContextGroup.vue';
-import { getAnnotationSubset, getMetadataSubset, serializeGroupBy } from '@/utils';
-import debug from '@/utils/debug';
+import { GroupBySettings2, getAnnotationSubset, parseGroupBy, parseGroupBy2, serializeGroupBy, serializeGroupBy2 } from '@/utils';
 
 import * as GlobalSettingsStore from '@/store/search/results/global'
+import * as CorpusStore from '@/store/search/corpus';
+
+import debug from '@/utils/debug';
 
 // @ts-ignore
 import Slider from 'vue-slider-component';
 import 'vue-slider-component/theme/default.css'
 
 import Tabs from './Tabs.vue';
-import {isHitResults, BLSearchResult} from '@/types/blacklabtypes';
-import { GroupByCaptureSettings, GroupByContextSettings, GroupByMetadataSettings, GroupBySettings } from '@/types/apptypes';
+import {isHitResults, BLSearchResult, BLMatchInfos, BLSearchParameters, BLHit, BLHitResults} from '@/types/blacklabtypes';
 
-import {cast} from '@/utils';
+import cloneDeep from 'clone-deep';
 
-import clonedeep from 'clone-deep';
+import * as SearchModule from '@/store/search/index';
+import { blacklab } from '@/api';
+import { trimResultTransformer } from 'common-tags';
 
-const initialSettings = {
-	annotation: cast<GroupByContextSettings>({
-		annotation: CorpusStore.get.firstMainAnnotation().id,
-		caseSensitive: false,
-		position: 'H',
-		start: 1,
-		end: 1,
-		type: 'annotation'
-	}),
-	metadata: cast<GroupByMetadataSettings>({
-		type: 'metadata',
-		field: '',
-		caseSensitive: false
-	}),
-	capture: cast<GroupByCaptureSettings>({
-		type: 'capture',
-		annotation: CorpusStore.get.firstMainAnnotation().id,
-		groupname: '',
-		caseSensitive: false
-	}),
+
+const initialGroupBySettings: GroupBySettings2 = {
+	type: 'annotation' as  'annotation'|'metadata',
+	annotation: '',
+	caseSensitive: false,
+	/** when undefined, use groupname instead of positional, and ignore start+end */
+	position: 'H' as 'L'|'H'|'R'|'E'|undefined,
+	start: 1,
+	end: 1 as number|undefined,
+	field: '',
+	groupname: '',
 }
 
 export default Vue.extend({
@@ -129,110 +153,209 @@ export default Vue.extend({
 		results: Object as () => BLSearchResult|undefined
 	},
 	data: () => ({
-		tab: 'annotation' as 'annotation'|'metadata'|'capture',
-		annotation: clonedeep(initialSettings.annotation),
-		metadata: clonedeep(initialSettings.metadata),
-		capture: clonedeep(initialSettings.capture),
 
-		applied: [] as GroupBySettings[]
+		display: 'advanced' as 'advanced'|'simple',
+
+		// tab: 'annotation' as 'annotation'|'metadata',
+		// annotation: clonedeep(initialSettings.annotation),
+		// metadata: clonedeep(initialSettings.metadata),
+		// capture: clonedeep(initialSettings.capture),
+		forceContext: false,
+
+		/** index into localModel that is displayed in the UI */
+		currentIndex: 0,
+		/** micro optimization: whether to skip next parse since the new value came from us anyway. */
+		localModelUpToDate: false,
+		localModel: [] as GroupBySettings2[],
+
+		hits: undefined as undefined|BLHitResults
 	}),
-	methods: {
-		apply() {
-			this.applied.push(this[this.tab]);
-			// @ts-ignore
-			this[this.tab] = clonedeep(initialSettings[this.tab]);
-		},
-	},
 	computed: {
 		storeModule(): ResultsStore.ViewModule { return ResultsStore.getOrCreateModule(this.type); },
+		storeValue(): string[] { return this.storeModule.getState().groupByAdvanced; },
+		current(): GroupBySettings2|undefined { return this.localModel[this.currentIndex]; },
+		firstHitPreviewQuery(): BLSearchParameters|undefined {
+			const params = SearchModule.get.blacklabParameters();
+			if (!params) return undefined;
+			delete params.group;
+			delete params.includetokencount;
+			delete params.listvalues;
+			params.listmetadatavalues = '__nothing__';
+			params.first = 0;
+			params.number = 1;
+			params.waitfortotal = false;
+			return params;
+		},
+
+
 		isHits(): boolean { return isHitResults(this.results); },
 		annotations(): Array<{id: string, active: boolean}> {
 			return UIStore.getState().results.shared.groupAnnotationIds.map(id => ({
 				id,
-				active: this.applied.find(a => a.type === 'annotation' && a.annotation === id) !== undefined
+				active: this.localModel.find(a => a.type === 'annotation' && a.annotation === id) !== undefined
 			}));
 		},
-		metadatas(): string[] { return UIStore.getState().results.shared.groupMetadataIds },
+		annotations2(): any[] {
+			return getAnnotationSubset(
+				UIStore.getState().results.shared.groupAnnotationIds,
+				CorpusStore.get.annotationGroups(),
+				CorpusStore.get.allAnnotationsMap(),
+				'Search',
+				CorpusStore.get.textDirection(),
+				debug.debug, // is debug enabled - i.e. show debug labels in dropdown
+				UIStore.getState().dropdowns.groupBy.annotationGroupLabelsVisible
+			).map(group => ({label: group.label, title: group.title, options: group.options}))
+		},
+		metadatas(): Array<{id: string, active: boolean}> {
+			return UIStore.getState().results.shared.groupMetadataIds.map(id => ({
+				id,
+				active: this.localModel.find(a => a.type === 'metadata' && a.field === id) !== undefined
+			}))
+		},
 		contextsize(): number { return GlobalSettingsStore.getState().wordsAroundHit ?? 5; },
 		captures(): string[]|undefined {
 			// TODO update types for blacklab 4
-			if (!isHitResults(this.results)) return;
-			const matchInfos = this.results?.hits?.[0]?.matchInfos;
-			if (!matchInfos) return;
-
-			return Object.entries(matchInfos).filter(([k, v]) => v.type === 'span').map(([k, v]) => k);
+			// @ts-ignore
+			const mi: BLMatchInfos = this.hits?.summary?.pattern?.matchInfos;
+			return Object.entries(mi|| {}).filter(([k, v]) => v.type === 'span').map(([k,v]) => k)
 		},
 
-		positions(): Array<{p: string, active: boolean}> {
-			return [
-				{p: 'before', active: this.annotation.position === 'L' && this.annotation.start === 1 && this.annotation.end === undefined},
-				{p: 'before', active: this.annotation.position === 'L' && this.annotation.start === 1 && this.annotation.end === undefined},
-				{p: 'before', active: this.annotation.position === 'L' && this.annotation.start === 1 && this.annotation.end === undefined},
+		preview(): {active: boolean, word: string, title: string}[][] {
+			if (!this.current) return [];
 
-				{p: 'H', active: this.annotation.position === 'H'},
-				{p: 'R', active: this.annotation.position === 'R'}
-			];
-		},
-		preview(): { before: Array<{active: boolean, word: string}>, hit: Array<{active: boolean, word: string}>, after: Array<{active: boolean, word: string}> } {
-			const contextsize = this.contextsize;
-			const firstHit = isHitResults(this.results) ? this.results.hits[0] : undefined;
-			if (!firstHit || this.tab !== 'annotation') return { before: [], hit: [], after: [] };
+			/** Shorten the string, accounting for the ellipsis we add at the end */
+			function shorten(w: string, maxLengthIncludingEllipsis = 8) {
+				if (w.length > maxLengthIncludingEllipsis)
+					return w.substring(0, maxLengthIncludingEllipsis - 3) + '…';
+				return w;
+			}
+			if (this.current.type !== 'annotation' || !this.current.annotation || !isHitResults(this.hits) || !this.hits.hits.length)
+				return [];
 
-			let {annotation, position, start, end} = this.annotation;
-			if (!end) end = contextsize;
+			const firstHit = this.hits.hits[0];
+			const {annotation, position, start, end} = this.current;
 
 			const left = firstHit.left?.[annotation] || [];
 			const right = firstHit.right?.[annotation] || [];
 			const match = firstHit.match?.[annotation] || [];
 
-			// todo from slider
+			const startindex: number = start - 1; // correct for 1-indexed vs 0-indexed
+			const endindex: number = end ?? Number.MAX_SAFE_INTEGER; // if end is not set, use entire context.
 
+			// left/before context ('L') and hit-from-end context ('E') use inverted index in BlackLab, mimic this.
+			const leftstart = left.length - endindex; // inclusive
+			const leftend = left.length - startindex; // exclusive
 
-			// we need to know which words are actually being used to group
-			// for left context, the numbers are inverted, and for hit end, also.
-			// that is L and E.
-
-			// assume this is okay?
-			// we need to transform those
-
-			let wordstart: number =
-				position === 'R' || position === 'H' ? start - 1 :
-				contextsize - start;
-
-			let wordend: number =
-				position === 'L' || position === 'H' ? end - 1:
-				contextsize - end + 1;
-
-
-			return {
-				before: left.map((w, i) => ({
-					word: w.substring(0, 6) + (w.length > 6 ? '…' : '') || '[empty]',
+			return [
+				left.map((w, i) => ({
+					word: shorten(w) || '[]',
 					title: w,
-					active: i >= wordstart && i < wordend
+					active: position === 'L' && i >= leftstart && i < leftend
 				})),
-				hit: match.map((w, i) => ({
-					word: w.substring(0, 6) + (w.length > 6 ? '…' : '') || '[empty]',
+				match.map((w, i) => ({
+					word: shorten(w) || '[]',
 					title: w,
-					active: i >= wordstart && i < wordend
+					active:
+						position === 'H' ? i >= startindex && i < endindex :
+						position === 'E' ? i >= leftstart && i < leftend :
+						false
 				})),
-				after: right.map((w, i) => ({
-					word: w.substring(0, 6) + (w.length > 6 ? '…' : '') || '[empty]',
+				right.map((w, i) => ({
+					word: shorten(w) || '[]',
 					title: w,
-					active: i >= wordstart && i < wordend
+					active: position === 'R' && i >= startindex && i < endindex
 				}))
+			];
+		},
+		context: {
+			get(): 'first'|'all'|'context' {
+				if (!this.current) return 'context';
+
+				if (this.forceContext) return 'context';
+				if (this.current.end == null) return 'all';
+				if (this.current.start === 1 && this.current.end === 1) return 'first';
+				return 'context';
+			},
+			set(v: 'first'|'all'|'context') {
+				if (!this.current) return;
+
+				// prevent setting to 'first' automatically when the slider becomes [1,1]
+				this.forceContext = v === 'context';
+				if (v === 'first') {
+					this.current.start = 1;
+					this.current.end = 1;
+				} else if (v === 'all') {
+					this.current.start = 1;
+					this.current.end = undefined;
+				} else {
+					this.current.start = 1;
+					this.current.end = this.contextsize;
+				}
 			}
 		},
-		serialized(): string[] {
-			return this.applied.map(serializeGroupBy);
+		contextRange: {
+			get(): [number, number] { return this.current ? [this.current.start, this.current.end || this.contextsize] : [1,1] },
+			set(v: [number, number]) { if (this.current) { this.current.start = v[0]; this.current.end = v[1]; } }
+		},
+		contextSliderPreview(): any[] {
+			return Array.from({length: this.contextsize}, (_, i) => i + 1).map(i => ({value: i, label: i}));
 		}
 	},
+	methods: {
+		apply() {
+			this.localModelUpToDate = true;
+			this.storeModule.actions.groupByAdvanced(serializeGroupBy2(this.localModel));
+		},
+		serializeGroupBy: serializeGroupBy2,
+		humanizeGroupBy(g: GroupBySettings2): string {
+			if (g.type === 'annotation') return `${g.annotation} ${g.position === 'H' || 'E' ? 'in' : g.position === 'L' ? 'before' : 'after'} hit`;
+			else return `document ${g.field}`;
+		},
+
+		isValidGroup(group: GroupBySettings2): boolean {
+			return serializeGroupBy2(group, true) != null;
+		},
+		removeGroup() {
+			this.localModel.splice(this.currentIndex, 1);
+			--this.currentIndex;
+		},
+		reset() {
+			this.localModel = this.storeValue.map(parseGroupBy2);
+			this.currentIndex = this.localModel.length - 1;
+		},
+		addAnnotation() { this.localModel.push({...cloneDeep(initialGroupBySettings), type: 'annotation', annotation: this.annotations[0]?.id}); this.currentIndex = this.localModel.length -1; },
+		addMetadata() { this.localModel.push({...cloneDeep(initialGroupBySettings), type: 'metadata', field: this.metadatas[0]?.id}); this.currentIndex = this.localModel.length -1; }
+
+	},
 	watch: {
-		serialized() {
-			this.storeModule.actions.groupBy([]); // clear regular groupby
-			this.storeModule.actions.groupByAdvanced(this.serialized); // apply advanced groupby
+		storeValue: {
+			immediate: true,
+			handler() {
+				if (!this.localModelUpToDate) this.localModel = this.storeValue.map(parseGroupBy2);
+				this.localModelUpToDate = false;
+				if (this.currentIndex >= this.localModel.length) {
+					this.currentIndex = this.localModel.length - 1;
+				}
+			},
+		},
+		firstHitPreviewQuery: {
+			immediate: true,
+			handler() {
+				this.hits = undefined;
+				if (this.firstHitPreviewQuery) {
+					blacklab.getHits(INDEX_ID, this.firstHitPreviewQuery).request.then(r => this.hits = r as BLHitResults);
+				}
+			}
+		},
+		// since forceContext isn't tracked in every individual group, update this when the current group changes.
+		currentIndex() {
+			if (!this.current) return;
+			// First disable forceContext. This will allow this.context to become something other than 'context'
+			this.forceContext = false;
+			// Now, if this.context still is 'context', re-enable forceContext.
+			this.forceContext = this.context === 'context';
 		}
 	}
-
 });
 </script>
 
@@ -246,14 +369,7 @@ export default Vue.extend({
 	overflow: auto;
 
 	// the tabs + content
-	.tabs.selector {
-		display: inline-flex;
-		flex-direction: column;
-		border-right: 1px solid #ddd;
-		flex-basis: auto;
-		flex-grow: 0;
-		flex-shrink: 0;
-
+	.tabs {
 		// the tab selector
 		.nav-item a {
 			padding: 2px 3px;
@@ -287,25 +403,35 @@ export default Vue.extend({
 		padding-top: 0;
 
 	}
-	.hit-preview {
-		display: flex;
-		flex-wrap: nowrap;
+}
 
-		.active {
-			// red underline
-			text-decoration: underline;
-			text-decoration-color: red;
-			text-decoration-style: solid;
-			text-decoration-thickness: 2px;
-			text-decoration-skip: none;
-			text-decoration-skip-ink: none;
-		}
+.hit-preview {
+	display: flex;
+	flex-wrap: nowrap;
+	overflow: auto;
 
+	.separator {
+		padding: 0 0.5em;
+		font-weight: bold;
+	}
+
+	.word+.word {
+		padding-left: 0.5em;
 	}
 
 
+	.word.active {
+		border-top: 1px solid black;
+		border-bottom: 1px solid black;
+	}
 
+	.word.active:first-of-type {
+		border-left: 1px solid black;
+	}
 
+	.word.active:last-of-type {
+		border-right: 1px solid black;
+	}
 }
 
 </style>

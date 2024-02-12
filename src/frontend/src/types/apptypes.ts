@@ -249,7 +249,9 @@ export type GroupByContextSettings = {
 	annotation: string;
 	caseSensitive: boolean;
 	position: 'L'|'R'|'H'|'E';
+	/** 1-indexed inclusive */
 	start: number;
+	/** 1-indexed inclusive */
 	end?: number;
 }
 

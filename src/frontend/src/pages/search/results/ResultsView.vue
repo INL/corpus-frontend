@@ -198,7 +198,7 @@ export default Vue.extend({
 		},
 
 		// temp
-		selectedGroupBy: 'GroupBy1',
+		selectedGroupBy: 'GroupBy3',
 
 		debug
 	}),

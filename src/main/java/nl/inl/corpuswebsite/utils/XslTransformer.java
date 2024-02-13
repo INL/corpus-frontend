@@ -6,6 +6,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -120,26 +121,16 @@ public class XslTransformer {
         transformer = get(stylesheet.getAbsolutePath(), new StreamSource(stylesheet));
     }
 
-    public XslTransformer(InputStream stylesheet) throws Exception {
-        transformer = get(null, new StreamSource(stylesheet));
+    public XslTransformer(String id, URI uri) throws Exception {
+        transformer = get(id, new StreamSource(uri.toString()));
     }
 
-    public XslTransformer(Reader stylesheet) throws Exception {
-        transformer = get(null, new StreamSource(stylesheet));
+    public XslTransformer(String id, Reader sheet) throws Exception {
+        transformer = get(id, new StreamSource(sheet));
     }
 
-    /**
-     * stylesheet is assumed to be a resource URI
-     *
-     * @param stylesheet
-     * @throws TransformerException
-     */
-    public XslTransformer(String stylesheet) throws Exception {
-        transformer = get(stylesheet, new StreamSource(stylesheet));
-    }
-
-    public XslTransformer(String stylesheet, Reader sheet) throws Exception {
-        transformer = get(stylesheet, new StreamSource(sheet));
+    public XslTransformer(String id, String xsl) throws Exception {
+        this(id, new StringReader(xsl));
     }
 
     public String transform(String source)

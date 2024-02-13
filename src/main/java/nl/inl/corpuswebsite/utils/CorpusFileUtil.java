@@ -133,7 +133,7 @@ public class CorpusFileUtil {
             return new BlackLabApi(request, response)
                     .getStylesheet(corpusDataFormat.get())
                     .flatRecover(e -> e.getHttpStatusCode() == 404 ? Result.empty() : Result.error(e)) // if blacklab returns a 404, return empty instead of the http error.
-                    .mapWithErrorHandling(XslTransformer::new)
+                    .mapWithErrorHandling(xsl -> new XslTransformer(corpusDataFormat.get(), xsl))
                     .mapError(e -> new TransformerException(
                             "Error loading stylesheet " + corpusDataFormat + " from BlackLab:\n"
                                     + e.getMessage() + "\n"

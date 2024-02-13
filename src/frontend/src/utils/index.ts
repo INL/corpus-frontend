@@ -64,7 +64,7 @@ export function NaNToNull(n: number) { return isNaN(n) ? null : n; }
  * concatenating and alternating the punctuation and values itself
  */
 export function snippetParts(hit: BLTypes.BLHit|BLTypes.BLHitSnippet, prop: string): [string, string, string] {
-	const punctAfterLeft = hit.match.word.length > 0 ? hit.match.punct[0] : '';
+	const punctAfterLeft = hit.match[prop].length > 0 ? hit.match.punct[0] : '';
 	const before = hit.left ? words(hit.left, prop, false, punctAfterLeft) : '';
 	const match = wordsWithCaptures(hit, hit.match, prop, false, ''); // Jesse
 	const after = hit.right ? words(hit.right, prop, true, '') : '';

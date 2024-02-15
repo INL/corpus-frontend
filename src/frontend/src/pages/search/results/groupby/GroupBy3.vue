@@ -24,14 +24,16 @@
 			</div>
 
 
-			<div style="flex-grow: 1; min-height: 50px;">
-				<!-- placeholder -->
-			</div>
+			<template v-if="localModel.length">
+				<div style="flex-grow: 1; min-height: 50px;">
+					<!-- placeholder -->
+				</div>
 
-			<div class="btn-group" style="border: 0;">
-				<button class="btn btn-danger" style="min-width: 50%; border-radius: 0; border-left: 0;" @click="reset">reset</button>
-				<button class="btn btn-primary" style="margin: 0; min-width: 50%; border-radius: 0; border-right: 0;" @click="apply">apply</button>
-			</div>
+				<div class="btn-group" style="border: 0;">
+					<button class="btn btn-danger" style="min-width: 50%; border-radius: 0; border-left: 0;" @click="reset">reset</button>
+					<button class="btn btn-primary" style="margin: 0; min-width: 50%; border-radius: 0; border-right: 0;" @click="apply">apply</button>
+				</div>
+			</template>
 		</div>
 
 		<div style="flex-grow: 1; border: 1px solid #ccc; border-left: 0; padding: 10px 15px; min-width: 0;">
@@ -63,7 +65,7 @@
 						<div class="hit-preview">
 							<template v-for="(section, i) of preview">
 								<span v-if="i !== 0" class="text-muted separator">||</span>
-								<component v-for="{word, active, title} in section" :key="word" :is="active ? 'b' : 'span'" :title="title" :class="{'word': true, 'text-primary': active, active}">{{ word }}</component>
+								<component v-for="({word, active, title}, j) of section" :key="word + i + '_' + j " :is="active ? 'b' : 'span'" :title="title" :class="{'word': true, 'text-primary': active, active}">{{ word }}</component>
 							</template>
 						</div>
 
@@ -93,7 +95,7 @@
 					<label><input type="checkbox" v-model="current.caseSensitive"> Case sensitive</label>
 				</template>
 			</template>
-			<h4 v-else class="text-secondary">In this window you can apply grouping to the results. Click the Annotation or Metadata buttons to left to get started.</h4>
+			<h4 v-else class="text-secondary">In this window you can apply grouping to the results. Click the Annotation or Metadata buttons on the left to get started.</h4>
 		</div>
 	</div>
 </template>
@@ -172,7 +174,7 @@ export default Vue.extend({
 	}),
 	computed: {
 		storeModule(): ResultsStore.ViewModule { return ResultsStore.getOrCreateModule(this.type); },
-		storeValue(): string[] { return this.storeModule.getState().groupByAdvanced; },
+		storeValue(): string[] { return this.storeModule.getState().groupBy.concat(this.storeModule.getState().groupByAdvanced); },
 		current(): GroupBySettings2|undefined { return this.localModel[this.currentIndex]; },
 		firstHitPreviewQuery(): BLSearchParameters|undefined {
 			const params = SearchModule.get.blacklabParameters();
@@ -304,6 +306,7 @@ export default Vue.extend({
 	methods: {
 		apply() {
 			this.localModelUpToDate = true;
+			this.storeModule.actions.groupBy([]);
 			this.storeModule.actions.groupByAdvanced(serializeGroupBy2(this.localModel));
 		},
 		serializeGroupBy: serializeGroupBy2,

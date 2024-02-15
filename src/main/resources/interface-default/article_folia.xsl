@@ -30,7 +30,7 @@
 	<xsl:template match="//*[local-name()='p' or local-name()='s']/*[local-name()='t']"/>
 
 	<xsl:template match="//*[local-name()='w']">
-		<xsl:variable name="lemma" select="./*[local-name()='lemma' and @class]/@class[0]"/>
+		<xsl:variable name="lemma" select="./*[local-name()='lemma' and @class]/@class"/>
 		<span class="word" data-toggle="tooltip">
 			<xsl:attribute name="data-lemma">
 				<xsl:value-of select="$lemma" />

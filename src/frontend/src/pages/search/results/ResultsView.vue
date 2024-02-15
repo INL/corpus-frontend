@@ -26,32 +26,16 @@
 
 			<template #groupBy>
 
-				<SelectPicker :options="['GroupBy1', 'GroupBy2', 'GroupBy3']" v-model="selectedGroupBy" />
+				<SelectPicker :options="['GroupBy1', 'GroupBy3']" v-model="selectedGroupBy" />
 
-					<!-- <GroupBy :type="id"
-						:disabled="!!request"
-						:originalGroupBySettings="originalGroupBySettings"
-						@viewgroupLeave="leaveViewgroup"
-					/> -->
-
-					<component :is="selectedGroupBy"
-						:type="id"
-						:results="results"
-						:disabled="!!request"
-						:originalGroupBySettings="originalGroupBySettings"
-						@viewgroupLeave="leaveViewgroup"
-					/>
-					<!-- <GroupBy3 slot="groupBy"
-						:type="id"
-						:results="results"
-						:disabled="!!request"
-						:originalGroupBySettings="originalGroupBySettings"
-						@viewgroupLeave="leaveViewgroup"
-					/> -->
+				<component :is="selectedGroupBy"
+					:type="id"
+					:results="results"
+					:disabled="!!request"
+					:originalGroupBySettings="originalGroupBySettings"
+					@viewgroupLeave="leaveViewgroup"
+				/>
 			</template>
-
-
-
 
 			<Pagination slot="pagination"
 				style="display: block; margin: 10px 0;"
@@ -130,7 +114,6 @@ import HitResults from '@/pages/search/results/table/HitResults.vue';
 import DocResults from '@/pages/search/results/table/DocResults.vue';
 import Totals from '@/pages/search/results/ResultTotals.vue';
 import GroupBy1 from '@/pages/search/results/groupby/GroupBy.vue';
-import GroupBy2 from '@/pages/search/results/groupby/GroupBy2.vue';
 import GroupBy3 from '@/pages/search/results/groupby/GroupBy3.vue';
 
 import Sort from '@/pages/search/results/Sort.vue';
@@ -153,7 +136,6 @@ export default Vue.extend({
 		DocResults,
 		Totals,
 		GroupBy1,
-		GroupBy2,
 		GroupBy3,
 		SelectPicker,
 		Sort,

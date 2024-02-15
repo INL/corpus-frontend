@@ -121,14 +121,12 @@ import Slider from 'vue-slider-component';
 import 'vue-slider-component/theme/default.css'
 
 import Tabs from './Tabs.vue';
-import {isHitResults, BLSearchResult, BLMatchInfos, BLSearchParameters, BLHit, BLHitResults} from '@/types/blacklabtypes';
+import {isHitResults, BLSearchResult, BLSearchParameters, BLHitResults} from '@/types/blacklabtypes';
 
 import cloneDeep from 'clone-deep';
 
 import * as SearchModule from '@/store/search/index';
 import { blacklab } from '@/api';
-import { trimResultTransformer } from 'common-tags';
-
 
 const initialGroupBySettings: GroupBySettings2 = {
 	type: 'annotation' as  'annotation'|'metadata',
@@ -219,6 +217,7 @@ export default Vue.extend({
 			// TODO update types for blacklab 4
 			// @ts-ignore
 			const mi: BLMatchInfos = this.hits?.summary?.pattern?.matchInfos;
+			// @ts-ignore
 			return Object.entries(mi|| {}).filter(([k, v]) => v.type === 'span').map(([k,v]) => k)
 		},
 

@@ -557,14 +557,14 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	@memoize
 	private get groupBy(): string[] {
 		return this._groups
-		.filter(g => !g.startsWith('context:'))
+		.filter(g => !g.startsWith('context:') && !g.startsWith('capture:'))
 		.map(g => g.replace(/\:[is]$/, '')); // strip case-sensitivity flag from value, is only visible in url
 	}
 
 	@memoize
 	private get groupByAdvanced(): string[] {
 		return this._groups
-		.filter(g => g.startsWith('context:'));
+		.filter(g => g.startsWith('context:') || g.startsWith('capture:'));
 	}
 
 	@memoize

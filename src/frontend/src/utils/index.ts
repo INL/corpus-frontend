@@ -66,9 +66,9 @@ export function NaNToNull(n: number) { return isNaN(n) ? null : n; }
  */
 export function snippetParts(hit: BLTypes.BLHit|BLTypes.BLHitSnippet, prop: string): [string, string, string] {
 	const punctAfterLeft = hit.match[prop].length > 0 ? hit.match.punct[0] : '';
-	const before = hit.left ? words(hit.left, prop, false, punctAfterLeft) : '';
+	const before = hit.left ? wordsWithCaptures(hit, hit.left, prop, false, punctAfterLeft) : '';
 	const match = wordsWithCaptures(hit, hit.match, prop, false, ''); // Jesse
-	const after = hit.right ? words(hit.right, prop, true, '') : '';
+	const after = hit.right ? wordsWithCaptures(hit, hit.right, prop, true, '') : '';
 	return [before, match, after];
 }
 

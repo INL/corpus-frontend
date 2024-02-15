@@ -30,7 +30,7 @@
 				</div>
 
 				<div class="btn-group" style="border: 0;">
-					<button class="btn btn-danger" style="min-width: 50%; border-radius: 0; border-left: 0;" @click="reset">reset</button>
+					<button class="btn btn-danger" style="min-width: 50%; border-radius: 0; border-left: 0;" @click="clear">clear</button>
 					<button class="btn btn-primary" style="margin: 0; min-width: 50%; border-radius: 0; border-right: 0;" @click="apply">apply</button>
 				</div>
 			</template>
@@ -322,9 +322,10 @@ export default Vue.extend({
 			this.localModel.splice(this.currentIndex, 1);
 			--this.currentIndex;
 		},
-		reset() {
-			this.localModel = this.storeValue.map(parseGroupBy2);
-			this.currentIndex = this.localModel.length - 1;
+		clear() {
+			this.localModel = [];
+			this.currentIndex = -1;
+			this.apply();
 		},
 		addAnnotation() { this.localModel.push({...cloneDeep(initialGroupBySettings), type: 'annotation', annotation: this.annotations[0]?.id}); this.currentIndex = this.localModel.length -1; },
 		addMetadata() { this.localModel.push({...cloneDeep(initialGroupBySettings), type: 'metadata', field: this.metadatas[0]?.id}); this.currentIndex = this.localModel.length -1; }

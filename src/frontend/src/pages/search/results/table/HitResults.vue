@@ -9,6 +9,8 @@
 		<slot name="groupBy"/>
 		<slot name="pagination"/>
 
+		<!-- <pre v-if="results">{{ {...results.hits[0], left: undefined, right: undefined} }}</pre> -->
+
 		<table class="hits-table">
 			<thead>
 				<tr class="rounded">
@@ -130,7 +132,7 @@
 						</tr>
 						<tr v-if="citations[index]" v-show="citations[index].open" :key="index + '-citation'" :class="['concordance-details', {'open': citations[index].open}]">
 							<td :colspan="numColumns">
-								<DepTree :hit="rowData"/>
+								<!-- <DepTree :hit="rowData"/> -->
 								<p v-if="citations[index].error" class="text-danger">
 									<span class="fa fa-exclamation-triangle"></span> <span v-html="citations[index].error"></span>
 								</p>
@@ -236,7 +238,6 @@ import GlossField from '@/pages/search//form/concept/GlossField.vue' // Jesse
 //@ts-ignore
 import {ReactiveDepTree} from "@/../node_modules/reactive-dep-tree/dist/reactive-dep-tree.umd.js";
 import DepTree from "@/pages/search/results/table/DepTree.vue"
-import { stripIndent } from 'common-tags';
 
 export type HitRow = {
 	type: 'hit';
@@ -258,7 +259,7 @@ export type HitRow = {
 	hit_id: string; // jesse
 
 	/** Not every hit has matches */
-	matchInfos?: BLTypes.BLMatchInfos;
+	matchInfos?: BLTypes.BLHit['matchInfos'];
 };
 
 type DocRow = {

@@ -140,6 +140,11 @@ export function wordsWithCaptures(hit: BLTypes.BLHitSnippet|BLTypes.BLHit, conte
 	return parts.join('');
 }
 
+/**
+ * Decode a value as passed to BlackLab back into a value for the UI.
+ * @param value the value to be parsed
+ * @param type the type that the value should be parsed to, see uiType in the annotation object. Different annotation search widgets have different escaping properties (i.e. can they contain multiple values, or just one, etc.)
+ */
 export const decodeAnnotationValue = (value: string|string[], type: Required<AppTypes.AnnotationValue>['type']): {case: boolean; value: string} => {
 	function isCase(v: string) { return v.startsWith('(?-i)') || v.startsWith('(?c)'); }
 	function stripCase(v: string) { return v.substr(v.startsWith('(?-i)') ? 5 : 4); }

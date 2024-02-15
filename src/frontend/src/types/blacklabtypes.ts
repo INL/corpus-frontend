@@ -460,19 +460,34 @@ export type BLHitSnippetApi = ({
 	end: number;
 }
 
-export interface BLRelationMatch { // Jesse
-	start: number,
-	end: number,
-	type: string,
-	relType: string,
-	sourceStart: number,
-	sourceEnd: number,
-	targetStart: number,
-	targetEnd: number
+export interface BLRelationMatchSpan {
+	type: 'span';
+	start: number;
+	end: number;
 }
 
-export interface BLMatchInfos {
-	[key: string] : BLRelationMatch
+export interface BLRelationMatchRelation {
+	type: 'relation';
+	/** Usually "dep" for "dependency", but ultimately up to the user.
+	 * multiple types of relations can be indexed if the user wishes to. (such as between equal words in different languages, grammatical relations between words in the same sentence, etc.)
+	 */
+	relClass: string;
+	/** The value of the relation. */
+	relType: string;
+
+	/** Inclusive index */
+	sourceStart: number;
+	/** Exclusive index */
+	sourceEnd: number;
+	/** Inclusive index */
+	targetStart: number;
+	/** Exclusive index */
+	targetEnd: number;
+
+	/** Smallest of sourceStart and targetStart? */
+	start: number;
+	/** Smallest of targetStart and targetEnd? */
+	end: number;
 }
 
 /** Contains all the AnnotatedField (previously token/word "properties") values for tokens in or around a hit */
@@ -480,8 +495,25 @@ export interface BLHitSnippet {
 	left?: BLHitSnippetPart;
 	match: BLHitSnippetPart;
 	right?: BLHitSnippetPart;
-	captureGroups?: BLCaptureGroup[]; // Jesse
-	matchInfos?: BLMatchInfos // Jesse
+	captureGroups?: BLCaptureGroup[];
+	/**
+	 * Contains the relevant info about <br>
+	 * A) capture groups: tokens with a label in the query, such as a:[pos="..."] would result in {a: {start: x, end: y, type: 'span'}})
+	 * B) relations: if querying for tokens with a relation (for example _ -obj-> _), the info about this relation and the (source, target) tokens are also stored here.
+	 * The above query could result for example in:
+	 *  obj: {
+	 *    type: "relation",
+     *    relClass: "dep",
+     *    relType: "obj",
+     *    sourceStart: 26,
+     *    sourceEnd: 27,
+     *    targetStart: 25,
+     *    targetEnd: 26,
+     *    start: 25,
+     *    end: 27
+	 *  }
+	 */
+	matchInfos?: Record<string, BLRelationMatchSpan|BLRelationMatchRelation>
 }
 
 export type BLHit = {

@@ -3,6 +3,7 @@ import URI from 'urijs';
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
 import { arrayMax } from 'highcharts';
+import { ObjectUnsubscribedError } from 'rxjs';
 
 export function escapeRegex(original: string, wildcardSupport: boolean) {
 	original = original.replace(/([\^$\-\\.(){}[\]+])/g, '\\$1'); // add slashes for regex characters
@@ -58,18 +59,106 @@ export function unescapeLucene(original: string) {
 
 export function NaNToNull(n: number) { return isNaN(n) ? null : n; }
 
+
+
 /**
  * @param hit - the hit, or most of the hit in case of doc results (which contain less info than hits)
- * @param prop - annotation to print, usually 'word'.
- * @returns string[3] where [0] == before, [1] == hit and [2] == after, values are strings created by
- * concatenating and alternating the punctuation and values itself
+ * @param annotationId - annotation to print, usually 'word'.
+ * @returns the hit split into before, match, and after parts, with capture and relation info added to the tokens. The punct is to be shown after the word.
  */
-export function snippetParts(hit: BLTypes.BLHit|BLTypes.BLHitSnippet, prop: string): [string, string, string] {
-	const punctAfterLeft = hit.match[prop].length > 0 ? hit.match.punct[0] : '';
-	const before = hit.left ? wordsWithCaptures(hit, hit.left, prop, false, punctAfterLeft) : '';
-	const match = wordsWithCaptures(hit, hit.match, prop, false, ''); // Jesse
-	const after = hit.right ? wordsWithCaptures(hit, hit.right, prop, true, '') : '';
-	return [before, match, after];
+export function snippetParts(hit: BLTypes.BLHit|BLTypes.BLHitSnippet, annotationId: string, dir: 'ltr'|'rtl'): AppTypes.HitContext {
+	/**
+	 * @param h - hue in [0,360]
+	 * @param s - saturation in [0,1]
+	 * @param v - value in [0,1]
+	 * @returns [r, g, b] in [0,1]
+	 */
+	function hsv2rgb(h: number,s: number,v: number) {
+		const f = (n: number) => {
+			const k = (n+h/60) % 6;
+			return v - v*s*Math.max( Math.min(k,4-k,1), 0);
+		};
+		return [f(5),f(3),f(1)];
+	}
+
+	const indexToRgb = (i: number): string => {
+		const hueBits = [...i.toString(3)];
+		const hueBitsNumbers = hueBits.map((c: string) => parseInt(c, 3));
+		const hueBitsNumbersWeighted = hueBitsNumbers.map((c: number, i) => c * (120 / (1 + i)));
+		const hue = hueBitsNumbersWeighted.reduce((a: number, b: number) => a + b, 0);
+
+		//const hue = [...i.toString(3)].map((c: string) => parseInt(c, 3)).map((c: number, i) => c * (120 / (1 + i))).reduce((a: number, b: number) => a + b, 0);
+		console.log({i, hue, hueBits, hueBitsNumbers, hueBitsNumbersWeighted});
+		return `rgb(${hsv2rgb(hue, 0.8, 1).map(c => Math.round(c * 255)).join(',')})`;
+	}
+
+	/**
+	 * Flatten a set of arrays into an array of sets.
+	 * { a: [], b: [] } ==> [ { a: '', b: '' }, { a: '', b: '' }]
+	 *
+	 * @param part The part of the hit on which to do this.
+	 * @param annotationId the annotation to extract
+	 */
+	function flatten(part: BLTypes.BLHitSnippetPart|undefined, annotationId: string): AppTypes.HitToken[] {
+		if (!part) return [];
+		/** The result array */
+		const r: AppTypes.HitToken[] = [];
+		for (let i = 0; i < part[annotationId].length; i++) {
+			const word = part[annotationId][i];
+			const punct = part.punct[i] || '';
+			r.push({punct, text: word});
+		}
+		return r;
+	}
+
+	/** Undefined if the array would be empty */
+	function getCaptureInfo(localIndex: number, localOffset: number, hit: BLTypes.BLHit): undefined|Array<{name: string, info: BLTypes.BLRelationMatchRelation|BLTypes.BLRelationMatchSpan}> {
+		if (!hit.matchInfos) return undefined;
+		const infos = Object.entries(hit.matchInfos).flatMap(([name, info]) => {
+			if (info.start <= localIndex + localOffset && info.end > localIndex + localOffset)
+				return {name, info};
+			else
+				return [];
+		});
+		return infos.length ? infos : undefined;
+	}
+
+	const seenCaptures = new Map<string, number>();
+	function getCaptureIndex(name: string): number {
+		if (seenCaptures.has(name)) return seenCaptures.get(name)!;
+		seenCaptures.set(name, seenCaptures.size);
+		return seenCaptures.size - 1;
+	}
+
+	const r: AppTypes.HitContext = {
+		before: flatten(dir === 'ltr' ? hit.left : hit.right, annotationId),
+		match: flatten(hit.match, annotationId),
+		after: flatten(dir === 'ltr' ? hit.right : hit.left, annotationId)
+	};
+	if (!('start' in hit)) return r;
+
+	// we have a full hit, enrich the tokens with capture/relation info.
+	for (const [part, context] of Object.entries(r)) {
+		const offset = -(part === 'before' ? hit.start - context.length : part === 'hit' ? hit.start : hit.end);
+
+		for (let localIndex = 0; localIndex < context.length; localIndex++) {
+			const token = context[localIndex];
+			const captureInfo = getCaptureInfo(localIndex, offset, hit);
+			token.captureAndRelation = captureInfo?.map(({name, info}) => ({
+				color: indexToRgb(getCaptureIndex(name)),
+				key: info.type === 'span' ? name : info.relClass,
+				value: info.type === 'span' ? name : info.relType
+			}));
+		}
+	}
+	return r;
+
+
+	// const punctAfterLeft = hit.match.word.length > 0 ? hit.match.punct[0] : '';
+	// const before = hit.left ? wordsWithCaptures(hit, hit.left, annotationId, false, punctAfterLeft) : '';
+	// const match = wordsWithCaptures(hit, hit.match, annotationId, false, ''); // Jesse
+	// const after = hit.right ? wordsWithCaptures(hit, hit.right, annotationId, true, '') : '';
+	// return [before, match, after];
 }
 
 /**
@@ -108,37 +197,48 @@ const capturename2index : string2int = {}; // Jesse, gruwelijk
 // Test with e.g. ((<s/> containing a:[word='man']) containing  b:[word='Socrates']) containing c:[word='morta.*'] in quine corpus
 
 /** hit is not always a full-fledged hit object, for doc results, we have less information. So ensure this function works with both BLHit and BLHitSnippet. */
-export function wordsWithCaptures(hit: BLTypes.BLHitSnippet|BLTypes.BLHit, context: BLTypes.BLHitSnippetPart, prop: string, doPunctBefore: boolean, addPunctAfter: string): string { // Jesse
-	const parts = [] as string[];
-	const numTokens = context[prop] ? context[prop].length : 0;
-	const p2c: int2string = {};
+// export function wordsWithCaptures(hit: BLTypes.BLHitSnippet|BLTypes.BLHit, context: BLTypes.BLHitSnippetPart, prop: string, doPunctBefore: boolean, addPunctAfter: string): string { // Jesse
 
-	if (hit.captureGroups && 'start' in hit)  {
-		const start = hit.start;
-		hit.captureGroups.forEach(g => {
-			const name = g.name;
-			if (!(name in capturename2index)) {
-				capturename2index[name] = Object.keys(capturename2index).length;
-			}
-			const gs = g.start - start;
-			const ge = g.end - start;
-			for (let k=gs; k < ge; k++) p2c[k] = name;
-		});
-	}
 
-	for (let i = 0; i < numTokens; i++) {
-		if (i > 0 || doPunctBefore) {
-			parts.push(context.punct[i] || '');
-		}
-		const w = context[prop][i];
-		const w_i = i in p2c
-			? `<span style="font-style:italic" title="capture: ${p2c[i]}" class='capture capture_${capturename2index[p2c[i]]}'>${w}</span>`
-			: w;
-		parts.push(w_i);
-	}
-	parts.push(addPunctAfter);
-	return parts.join('');
-}
+// 	// return both the captured groups, and the relations.
+// 	// maybe we need overlapping classes to indicate which is which?
+// 	// (at the very least we'll need a legend.)
+// 	// and some tooltips would be great.
+
+
+
+
+
+// 	const parts = [] as string[];
+// 	const numTokens = context[prop] ? context[prop].length : 0;
+// 	const p2c: int2string = {};
+
+// 	if (hit.captureGroups && 'start' in hit)  {
+// 		const start = hit.start;
+// 		hit.captureGroups.forEach(g => {
+// 			const name = g.name;
+// 			if (!(name in capturename2index)) {
+// 				capturename2index[name] = Object.keys(capturename2index).length;
+// 			}
+// 			const gs = g.start - start;
+// 			const ge = g.end - start;
+// 			for (let k=gs; k < ge; k++) p2c[k] = name;
+// 		});
+// 	}
+
+// 	for (let i = 0; i < numTokens; i++) {
+// 		if (i > 0 || doPunctBefore) {
+// 			parts.push(context.punct[i] || '');
+// 		}
+// 		const w = context[prop][i];
+// 		const w_i = i in p2c
+// 			? `<span style="font-style:italic" title="capture: ${p2c[i]}" class='capture capture_${capturename2index[p2c[i]]}'>${w}</span>`
+// 			: w;
+// 		parts.push(w_i);
+// 	}
+// 	parts.push(addPunctAfter);
+// 	return parts.join('');
+// }
 
 /**
  * Decode a value as passed to BlackLab back into a value for the UI.

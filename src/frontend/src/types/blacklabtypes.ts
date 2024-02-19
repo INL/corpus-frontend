@@ -495,7 +495,8 @@ export interface BLHitSnippet {
 	left?: BLHitSnippetPart;
 	match: BLHitSnippetPart;
 	right?: BLHitSnippetPart;
-	captureGroups?: BLCaptureGroup[];
+	// DEPRECATED: use matchInfos instead
+	// captureGroups?: BLCaptureGroup[];
 	/**
 	 * Contains the relevant info about <br>
 	 * A) capture groups: tokens with a label in the query, such as a:[pos="..."] would result in {a: {start: x, end: y, type: 'span'}})

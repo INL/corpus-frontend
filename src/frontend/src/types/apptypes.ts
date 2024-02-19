@@ -147,12 +147,6 @@ export type NormalizedIndex = NormalizedIndexBase&{
 	textDirection: 'ltr'|'rtl';
 };
 
-// ---------
-// Old types
-// ---------
-
-// TODO merge the old and new NormalizedIndex types
-
 // Helper - get all props in A not in B
 type Subtract<A, B> = Pick<A, Exclude<keyof A, keyof B>>;
 
@@ -240,6 +234,11 @@ export type FilterDefinition<MetadataType = any, ValueType = any> = {
 	metadata: any;
 };
 
+// TODO remove groupby settings
+// We re-implemented the grouping windows, it uses GroupBySettings2, which is a more flexible version of GroupBySettings
+// The old GroupBySettings is still used in the legacy component, but it should be removed probably.
+// The context settings should completely be removed,
+
 /**
  * Settings for grouping by annotations in/around the hit.
  * See http://inl.github.io/BlackLab/server/rest-api/corpus/hits/get.html#criteria-for-sorting-grouping-and-faceting
@@ -269,6 +268,31 @@ export type GroupByCaptureSettings = {
 }
 
 export type GroupBySettings = GroupByContextSettings|GroupByMetadataSettings|GroupByCaptureSettings;
+
+// ---------------
+// Hits displaying
+// ---------------
+
+export type HitToken = {
+	text: string;
+	/** after the text */
+	punct: string;
+	captureAndRelation?: Array<{
+		/** css color in the form of rgb(x,y,z) */
+		color: string;
+		/** name of the capture group, or set of relation. */
+		key: string;
+		/** value of captured info, or value of relation. */
+		value: string;
+	}>
+}
+
+/** Interop between blacklab Hit objects and the UI. */
+export type HitContext = {
+	before: HitToken[];
+	match: HitToken[];
+	after: HitToken[];
+}
 
 // -------------------
 // Configuration types

@@ -19,7 +19,7 @@
 
 			<span class="totals-percentage">
 				<template v-if="searchSpaceCount > 0 /* might also be -1, in this case don't render -- see corpus store documentCount property */">
-				({{this.numResults / this.searchSpaceCount | frac2Percent}})
+				({{frac2Percent(numResults / searchSpaceCount)}})
 				</template>
 			</span>
 		</div>
@@ -61,7 +61,6 @@ import frac2Percent from '@/mixins/fractionalToPercent';
  */
 
 export default Vue.extend({
-	filters: { frac2Percent },
 	props: {
 		initialResults: {
 			required: true,
@@ -122,6 +121,7 @@ export default Vue.extend({
 		}
 	},
 	methods: {
+		frac2Percent,
 		continueCounting() {
 			this.error = null;
 			this.resultCount$.next({

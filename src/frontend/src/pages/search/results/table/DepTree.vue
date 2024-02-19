@@ -17,7 +17,7 @@ import Vue from 'vue';
 
 // @ts-ignore
 import {ReactiveDepTree} from "@/../node_modules/reactive-dep-tree/dist/reactive-dep-tree.umd.js";
-import {HitRow} from "@/pages/search/results/table/HitResults.vue"
+import {HitRowData} from "@/pages/search/results/table/HitRow.vue"
 
 const conllExample = `# text = I am eating a pineapple
     1	I	_	PRON	_	_	2	suj	_	_
@@ -29,7 +29,7 @@ const conllExample = `# text = I am eating a pineapple
 
 export default Vue.extend({
 	props: {
-		hit: Object as () => HitRow,
+		hit: Object as () => HitRowData,
 		index: String
 	},
 	data: () => ({

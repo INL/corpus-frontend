@@ -117,16 +117,11 @@ type ModuleRootState = {
 			addons: Array<((context: {
 				corpus: string,
 				docId: string,
-				snippet: BLTypes.BLHitSnippet,
 				document: BLTypes.BLDocInfo,
 				documentUrl: string,
 				wordAnnotationId: string,
 				dir: 'ltr'|'rtl',
-				citation: {
-					left: string;
-					hit: string;
-					right: string;
-				}
+				citation: BLTypes.BLHitSnippet
 			}) => {
 				name: string;
 				component?: string;

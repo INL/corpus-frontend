@@ -38,6 +38,7 @@ import { BLHit, BLDoc, BLSearchParameters, BLHitResults, BLDocResults } from '@/
 
 import DocRowHitsComponent from '@/pages/search/results/table/DocRowHits.vue';
 import DocRowDocsComponent from '@/pages/search/results/table/DocRowDocs.vue';
+import { GroupRowdata } from '@/pages/search/results/table/groupTable';
 
 export default Vue.extend({
 	components: {

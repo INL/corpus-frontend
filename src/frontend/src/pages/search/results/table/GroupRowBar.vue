@@ -1,5 +1,5 @@
 <template>
-	<tr class="grouprow rounded interactable" >
+	<tr class="grouprow rounded interactable">
 		<td v-for="col in columns" :key="col.toString()">
 			<template v-if="typeof col === 'string'">
 				<template v-if="col.indexOf('relative') === -1">{{data[col] != null ? data[col].toLocaleString() : '[unknown]'}}</template> <!-- HACK! all division keys contain spaces for now, probably pretty slow too -->
@@ -21,6 +21,7 @@
 import Vue from 'vue';
 
 import frac2Percent from '@/mixins/fractionalToPercent';
+import { GroupRowdata } from '@/pages/search/results/table/groupTable';
 
 export default Vue.extend({
 	props: {

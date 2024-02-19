@@ -29,7 +29,6 @@ export interface GroupData {
 	id: string;
 	size: number;
 	displayname: string;
-	open: boolean;
 
 	/** results.documents (total number of documents in the total resultset) */
 	'r.d': number;

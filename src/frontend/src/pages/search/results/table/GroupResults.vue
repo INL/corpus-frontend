@@ -95,6 +95,7 @@ import SelectPicker from '@/components/SelectPicker.vue';
 
 import GroupRowBar from './GroupRowBar.vue';
 import GroupRowConcordance from './GroupRowConcordance.vue';
+import { displayModes, TableDef, tableHeaders, definitions, GroupRowdata, GroupData, MaxCounter, LocalMaxima } from '@/pages/search/results/table/groupTable';
 
 
 export default Vue.extend({

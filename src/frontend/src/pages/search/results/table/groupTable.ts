@@ -9,7 +9,7 @@
  * To keep the displaying manageable we use shortcodes for those, this is a definition list.
  * also for developer documentation :)
  */
-const definitions = [
+export const definitions = [
 	['c',   '[corpus]',            'The entire corpus'],
 	['sc',  '[subcorpus]',         'A set of documents within c. Defined by a specific set of metadata.'],
 	['gsc', '[grouped subcorpus]', 'A set of documents within sc. Creating by matching a set of metadata against documents in sc. If not grouping by metadata, gsc=sc'],
@@ -25,7 +25,7 @@ const definitions = [
  * The BlackLab api response for groups has data in several different places.
  * We unpack and simplify it a little so that every entry has the same data available. Names are according to the definitions above
  */
-interface GroupData {
+export interface GroupData {
 	id: string;
 	size: number;
 	displayname: string;
@@ -55,7 +55,7 @@ interface GroupData {
 }
 
 /** For UI purposes: holds derived statistics about groups. E.G. size of this group vs the largest group. */
-interface GroupRowdata extends GroupData {
+export interface GroupRowdata extends GroupData {
 	// adds to 1 across all groups
 	'relative group size [gr.d/r.d]': number;
 	'relative group size [gr.t/r.t]'?: number; // FIXME remove option flag when Jan implements
@@ -73,13 +73,13 @@ interface GroupRowdata extends GroupData {
 }
 
 /** What properties are available to display in the columns */
-type Column = keyof GroupRowdata;
+export type Column = keyof GroupRowdata;
 /**
  * A "table" layout is just an array of columns.
  * A column in our case is a cell holding a number, or a horizontal bar (the table represents a sideways bar chart)
  * The subarray represents a bar, and a string ("column") represents a cell holding a number (like rowData[cell.key])
  */
-type TableDef = Array<Column|[Column, Column]>;
+export type TableDef = Array<Column|[Column, Column]>;
 
 /**
  * These are the table layouts we can show.
@@ -94,7 +94,7 @@ type TableDef = Array<Column|[Column, Column]>;
  *     Then the rest are the same columns but in a wider view using a horizontal bar to illustrate the magnitude of the group,
  *     instead of just a cell with a fractional number.
  */
-const displayModes: {
+export const displayModes: {
 	hits: {
 		metadata: {
 			'table': TableDef,
@@ -196,7 +196,7 @@ const displayModes: {
  *
  * So just a mapping for every internal column id to a display name, tooltip and sort property.
  */
-const tableHeaders: {
+export const tableHeaders: {
 	[K in ('hits'|'docs'|'default')]: {
 		[ColumnId in keyof GroupRowdata]?: {
 			label?: string;
@@ -280,8 +280,8 @@ const tableHeaders: {
 // NOTE: sometimes we know the absolute maximum across all groups (such as the size), because BlackLab tells us,
 // but sometimes we only have the maximum value in the currently displayed page (such as for properties we compute locally, such as relative sizes).
 // Fixing this would be a substantial amount of extra work for BlackLab.
-type LocalMaxima = {  [P in keyof GroupRowdata]-?: number extends GroupRowdata[P] ? number : never; };
-class MaxCounter {
+export type LocalMaxima = {  [P in keyof GroupRowdata]-?: number extends GroupRowdata[P] ? number : never; };
+export class MaxCounter {
 	public values: {[key: string]: number} = {};
 
 	public add(key: string, v?: number) {

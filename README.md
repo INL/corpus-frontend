@@ -933,16 +933,11 @@ Through javascript you can do many things, but outlined below are some of the mo
       {
         corpus: string, 
         docId: string, // the document id
-        snippet: BLTypes.BLHitSnippet, // the raw hit info as returned by blacklab
+        context: BLTypes.BLHitSnippet, // the raw hit info as returned by blacklab
         document: BLTypes.BLDocInfo, // the document metadata
         documentUrl: string, // url to view the document in the corpus-frontend
         wordAnnotationId: string, // configured annotation to display for words (aka vuexModules.ui.results.hits.wordAnnotationId)
         dir: 'ltr'|'rtl',
-        citation: {
-          left: string;
-          hit: string;
-          right: string;
-        }
       }
 
       The returned object should have the following shape:
@@ -956,7 +951,7 @@ Through javascript you can do many things, but outlined below are some of the mo
       }
     */
     vuexModules.ui.getState().results.hits.addons.push(function(context) {
-      var snippet = context.snippet;
+      var snippet = context.context;
       var docId = context.docId;
       var s = 'begintime'; // word property that stores the start time of the word
       var e = 'endtime'; // word property that stores the end time of the word

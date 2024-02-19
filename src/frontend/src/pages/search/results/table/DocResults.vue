@@ -22,7 +22,17 @@
 			</thead>
 			<tbody>
 				<template v-for="(rowData, index) in rows">
-					<tr class="rounded"
+					<DocRowComponent
+						:data="rowData"
+						:metadata="shownMetadataCols"
+					/>
+					<DocRowHitsComponent v-if="showDocumentHits"
+						:data="rowData"
+						:annotation="concordanceAnnotationId"
+						:dir="textDirection"
+						:html="concordanceAsHtml"
+					/>
+					<!-- <tr class="rounded"
 						v-tooltip="{
 							show: pinnedTooltip === index,
 							content: `Document id: ${rowData.docPid}`,
@@ -61,7 +71,7 @@
 							</template>
 						</div>
 						<div class="text-muted clearfix col-xs-12" v-if="hasHits && rowData.hits > rowData.snippets.length">...({{rowData.hits - rowData.snippets.length}} more hidden hits)</div>
-					</td></tr>
+					</td></tr> -->
 				</template>
 			</tbody>
 		</table>
@@ -89,27 +99,18 @@ import Vue from 'vue';
 import * as CorpusStore from '@/store/search/corpus';
 import * as UIStore from '@/store/search/ui';
 
-import { snippetParts, getDocumentUrl } from '@/utils';
+import { getDocumentUrl } from '@/utils';
 import { BLDocResults, BLDocFields, BLHitSnippet, BLDocInfo } from '@/types/blacklabtypes';
 import { NormalizedMetadataField } from '@/types/apptypes';
 
-type DocRow = {
-	snippets: Array<{
-		left: string;
-		hit: string;
-		right: string;
-	}>
-	/** Title + year + author of the document */
-	summary: string;
-	/** Url to open the article view */
-	href: string;
-	// date: string;
-	hits?: number;
-	docPid: string;
-	doc: BLDocResults['docs'][number];
-};
+import DocRowComponent, {DocRowData} from './DocRow.vue';
+import DocRowHitsComponent from './DocRowHits.vue';
 
 export default Vue.extend({
+	components: {
+		DocRowComponent,
+		DocRowHitsComponent,
+	},
 	props: {
 		results: Object as () => BLDocResults,
 		sort: String as () => null|string,
@@ -153,29 +154,34 @@ export default Vue.extend({
 
 			return ret;
 		},
-		rows(): DocRow[] {
+		rows(): DocRowData[] {
 			const docFields = this.results.summary.docFields;
 
 			return this.results.docs.map(doc => {
 				const { docPid: pid, docInfo: info } = doc;
 
 				return {
-					snippets: doc.snippets ? doc.snippets.map(s => {
-						if (this.transformSnippets) {
-							this.transformSnippets(s);
-						}
-						const snippet = snippetParts(s, this.concordanceAnnotationId);
-						return {
-							left: snippet[this.leftIndex],
-							hit: snippet[1],
-							right: snippet[this.rightIndex]
-						};
-					}) : [],
-					summary: this.getDocumentSummary(info, docFields),
+					doc,
 					href: getDocumentUrl(pid, this.results.summary.searchParam.patt || undefined, this.results.summary.searchParam.pattgapdata || undefined),
-					hits: doc.numberOfHits,
-					docPid: pid,
-					doc
+					summary: this.getDocumentSummary(info, docFields),
+					type: 'doc'
+
+					// snippets: doc.snippets ? doc.snippets.map(s => {
+					// 	if (this.transformSnippets) {
+					// 		this.transformSnippets(s);
+					// 	}
+					// 	const snippet = snippetParts(s, this.concordanceAnnotationId);
+					// 	return {
+					// 		left: snippet[this.leftIndex],
+					// 		hit: snippet[1],
+					// 		right: snippet[this.rightIndex]
+					// 	};
+					// }) : [],
+					// summary: this.getDocumentSummary(info, docFields),
+					// href: getDocumentUrl(pid, this.results.summary.searchParam.patt || undefined, this.results.summary.searchParam.pattgapdata || undefined),
+					// hits: doc.numberOfHits,
+					// docPid: pid,
+					// doc
 				};
 			});
 		},

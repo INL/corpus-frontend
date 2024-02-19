@@ -58,8 +58,9 @@
 						:data="row"
 						:columns="columns"
 						:maxima="maxima"
-						@click="row.open = !row.open"
+						@click.native="open[row.id] = true"
 					/>
+					{{{ open: open[row.id] }}}
 					<GroupRowConcordance :key="`${row.id}-concordances`"
 						:data="row"
 						:query="results.summary.searchParam"
@@ -108,6 +109,7 @@ export default Vue.extend({
 	},
 	data: () => ({
 		definitions,
+		open: {} as Record<string, boolean>
 	}),
 	computed: {
 		type(): 'hits'|'docs' { return BLTypes.isDocGroupsOrResults(this.results) ? 'docs' : 'hits'; },
@@ -209,7 +211,6 @@ export default Vue.extend({
 						id: g.identity || '[unknown]',
 						size: g.size,
 						displayname: this.decodePropertyValue(g.identity) || '[unknown]',
-						open: false,
 
 						'r.d': summary.numberOfDocs,
 						'r.t': summary.tokensInMatchingDocuments!, // FIXME augment request to make this available
@@ -245,7 +246,6 @@ export default Vue.extend({
 						id: g.identity,
 						size: g.size,
 						displayname: this.decodePropertyValue(g.identity) || '[unknown]',
-						open: false,
 
 						'r.d': summary.numberOfDocs,
 						'r.t': summary.tokensInMatchingDocuments!, // FIXME augment request to make this available
@@ -345,6 +345,11 @@ export default Vue.extend({
 			if (!v.includes(this.chartMode)) {
 				this.chartMode = 'table';
 			}
+		},
+		results() {
+			/** reset as we now have new groups */
+			this.open = {};
+			for (const r of this.rows) Vue.set(this.open, r.id, false);
 		}
 	}
 });

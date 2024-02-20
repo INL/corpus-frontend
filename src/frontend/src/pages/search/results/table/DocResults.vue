@@ -8,38 +8,20 @@
 		<slot name="groupBy"/>
 		<slot name="pagination"/>
 
-		<table class="docs-table">
-			<thead>
-				<tr class="rounded">
-					<th><a role="button" @click="changeSort(`field:${results.summary.docFields.titleField}`)" :class="['sort', {'disabled': disabled}]" title="Sort by document title">Document</a></th>
-					<th v-for="meta in shownMetadataCols" :key="meta.id">
-						<a role="button" @click="changeSort(`field:${meta.id}`)" :class="['sort', {'disabled': disabled}]" :title="`Sort by ${specialMetaDisplayNames[meta.id] || meta.displayName}`">
-							{{specialMetaDisplayNames[meta.id] || meta.displayName}} <Debug>(id: {{meta.id}})</Debug>
-						</a>
-					</th>
-					<th v-if="hasHits"><a role="button" @click="changeSort(`numhits`)" :class="['sort', {'disabled': disabled}]" title="Sort by number of hits">Hits</a></th>
-				</tr>
-			</thead>
-			<tbody>
-				<template v-for="(rowData, index) in rows">
-					<DocRowComponent
-						:data="rowData"
-						:metadata="shownMetadataCols"
-					/>
-					<DocRowHitsComponent v-if="showDocumentHits"
-						:data="rowData"
-						:annotation="concordanceAnnotationId"
-						:dir="textDirection"
-						:html="concordanceAsHtml"
-					/>
-				</template>
-			</tbody>
-		</table>
+		<DocsTable
+			:mainAnnotation="mainAnnotation"
+			:metadata="metadata"
+			:dir="dir"
+			:html="html"
+			:disabled="disabled"
+			:showHits="showDocumentHits"
+			:data="docRows"
+		/>
 
 		<hr>
 		<div class="text-right">
 			<slot name="sort"/>
-			<button v-if="resultsHaveHits"
+			<button v-if="hasHits"
 				type="button"
 				class="btn btn-primary btn-sm"
 
@@ -63,13 +45,14 @@ import { getDocumentUrl } from '@/utils';
 import { BLDocResults, BLDocFields, BLHitSnippet, BLDocInfo } from '@/types/blacklabtypes';
 import { NormalizedMetadataField } from '@/types/apptypes';
 
-import DocRowComponent, {DocRowData} from './DocRow.vue';
-import DocRowHitsComponent from './DocRowHits.vue';
+import DocRowComponent, {DocRowData} from './newtable/DocRow.vue';
+import DocsTable from './newtable/DocsTable.vue';
 
 export default Vue.extend({
 	components: {
-		DocRowComponent,
-		DocRowHitsComponent,
+		// DocRowComponent,
+		// DocRowHitsComponent,
+		DocsTable,
 	},
 	props: {
 		results: Object as () => BLDocResults,
@@ -81,20 +64,9 @@ export default Vue.extend({
 		showDocumentHits: false
 	}),
 	computed: {
-		resultsHaveHits(): boolean { return !!this.results?.summary.searchParam.patt;},
-
-		concordanceAnnotationId(): string { return UIStore.getState().results.shared.concordanceAnnotationId; },
-		concordanceAsHtml(): boolean { return UIStore.getState().results.shared.concordanceAsHtml; },
-		transformSnippets(): null|((s: BLHitSnippet) => void) { return UIStore.getState().results.shared.transformSnippets; },
-		getDocumentSummary(): ((doc: BLDocInfo, fields: BLDocFields) => string) { return UIStore.getState().results.shared.getDocumentSummary; },
-
-		textDirection: CorpusStore.get.textDirection,
-		leftIndex(): number { return this.textDirection === 'ltr' ? 0 : 2; },
-		rightIndex(): number { return this.textDirection === 'ltr' ? 2 : 0; },
-		leftLabel(): string { return this.textDirection === 'ltr' ? 'Before' : 'After'; },
-		rightLabel(): string { return this.textDirection === 'ltr' ? 'After' : 'Before'; },
-
-		shownMetadataCols(): NormalizedMetadataField[] {
+		mainAnnotation(): CorpusStore.NormalizedAnnotation { return CorpusStore.get.firstMainAnnotation(); },
+		/** explicitly shown metadata fields + whatever field is currently being sorted on (if any). */
+		metadata(): NormalizedMetadataField[]|undefined {
 			const sortMetadataFieldMatch = this.sort && this.sort.match(/^-?field:(.+)$/);
 			const sortMetadataField = sortMetadataFieldMatch ? sortMetadataFieldMatch[1] : undefined;
 
@@ -102,29 +74,66 @@ export default Vue.extend({
 			return (sortMetadataField && !colsToShow.includes(sortMetadataField) ? colsToShow.concat(sortMetadataField) : colsToShow)
 			.map(id => CorpusStore.get.allMetadataFieldsMap()[id]);
 		},
-		specialMetaDisplayNames(): { [id: string]: string; } {
+		dir(): 'ltr'|'rtl' { return CorpusStore.get.textDirection(); },
+		html(): boolean { return UIStore.getState().results.shared.concordanceAsHtml; },
+		docRows(): DocRowData[] {
+			const getDocumentSummary = UIStore.getState().results.shared.getDocumentSummary;
 			const specialFields = CorpusStore.getState().corpus!.fieldInfo;
-			const ret: {[id: string]: string} = {};
-			Object.entries(specialFields).forEach(([type, fieldId]) => { switch (type as keyof BLDocFields) {
-				case 'authorField': ret[fieldId!] = 'Author'; break;
-				case 'dateField': ret[fieldId!] = 'Date'; break;
-				case 'pidField': ret[fieldId!] = 'ID'; break;
-				case 'titleField': ret[fieldId!] = 'Title'; break;
-			}});
-
-			return ret;
-		},
-		rows(): DocRowData[] {
-			const docFields = this.results.summary.docFields;
 
 			return this.results.docs.map(doc => {
-				const { docPid: pid, docInfo: info } = doc;
-
 				return {
 					doc,
-					href: getDocumentUrl(pid, this.results.summary.searchParam.patt || undefined, this.results.summary.searchParam.pattgapdata || undefined),
-					summary: this.getDocumentSummary(info, docFields),
+					href: getDocumentUrl(doc.docPid, this.results.summary.searchParam.patt || undefined, this.results.summary.searchParam.pattgapdata || undefined),
+					summary: getDocumentSummary(doc.docInfo, specialFields),
 					type: 'doc'
+				};
+			});
+		},
+		hasHits(): boolean { return !!this.results.summary.searchParam.patt; } // if there's a cql pattern there are hits.
+
+
+		// concordanceAnnotationId(): string { return UIStore.getState().results.shared.concordanceAnnotationId; },
+		// concordanceAsHtml(): boolean { return UIStore.getState().results.shared.concordanceAsHtml; },
+		// transformSnippets(): null|((s: BLHitSnippet) => void) { return UIStore.getState().results.shared.transformSnippets; },
+		// getDocumentSummary(): ((doc: BLDocInfo, fields: BLDocFields) => string) { return UIStore.getState().results.shared.getDocumentSummary; },
+
+		// textDirection: CorpusStore.get.textDirection,
+		// leftIndex(): number { return this.textDirection === 'ltr' ? 0 : 2; },
+		// rightIndex(): number { return this.textDirection === 'ltr' ? 2 : 0; },
+		// leftLabel(): string { return this.textDirection === 'ltr' ? 'Before' : 'After'; },
+		// rightLabel(): string { return this.textDirection === 'ltr' ? 'After' : 'Before'; },
+
+		// shownMetadataCols(): NormalizedMetadataField[] {
+		// 	const sortMetadataFieldMatch = this.sort && this.sort.match(/^-?field:(.+)$/);
+		// 	const sortMetadataField = sortMetadataFieldMatch ? sortMetadataFieldMatch[1] : undefined;
+
+		// 	const colsToShow = UIStore.getState().results.docs.shownMetadataIds;
+		// 	return (sortMetadataField && !colsToShow.includes(sortMetadataField) ? colsToShow.concat(sortMetadataField) : colsToShow)
+		// 	.map(id => CorpusStore.get.allMetadataFieldsMap()[id]);
+		// },
+		// specialMetaDisplayNames(): { [id: string]: string; } {
+		// 	const specialFields = CorpusStore.getState().corpus!.fieldInfo;
+		// 	const ret: {[id: string]: string} = {};
+		// 	Object.entries(specialFields).forEach(([type, fieldId]) => { switch (type as keyof BLDocFields) {
+		// 		case 'authorField': ret[fieldId!] = 'Author'; break;
+		// 		case 'dateField': ret[fieldId!] = 'Date'; break;
+		// 		case 'pidField': ret[fieldId!] = 'ID'; break;
+		// 		case 'titleField': ret[fieldId!] = 'Title'; break;
+		// 	}});
+
+		// 	return ret;
+		// },
+		// rows(): DocRowData[] {
+		// 	const docFields = this.results.summary.docFields;
+
+		// 	return this.results.docs.map(doc => {
+		// 		const { docPid: pid, docInfo: info } = doc;
+
+		// 		return {
+		// 			doc,
+		// 			href: getDocumentUrl(pid, this.results.summary.searchParam.patt || undefined, this.results.summary.searchParam.pattgapdata || undefined),
+		// 			summary: this.getDocumentSummary(info, docFields),
+		// 			type: 'doc'
 
 					// snippets: doc.snippets ? doc.snippets.map(s => {
 					// 	if (this.transformSnippets) {
@@ -142,12 +151,12 @@ export default Vue.extend({
 					// hits: doc.numberOfHits,
 					// docPid: pid,
 					// doc
-				};
-			});
-		},
-		hasHits(): boolean {
-			return this.results.docs.length > 0 && this.results.docs[0].numberOfHits != null;
-		}
+		// 		};
+		// 	});
+		// },
+		// hasHits(): boolean {
+		// 	return this.results.docs.length > 0 && this.results.docs[0].numberOfHits != null;
+		// }
 	},
 	methods: {
 		changeSort(payload: string) {
@@ -156,7 +165,6 @@ export default Vue.extend({
 			}
 		},
 	},
-
 	watch: {
 		results: {
 			handler() {

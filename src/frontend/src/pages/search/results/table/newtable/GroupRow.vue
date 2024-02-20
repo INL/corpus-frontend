@@ -21,13 +21,14 @@
 import Vue from 'vue';
 
 import frac2Percent from '@/mixins/fractionalToPercent';
-import { GroupRowdata } from '@/pages/search/results/table/groupTable';
+import { GroupRowData } from './groupTable';
+export { GroupRowData } from './groupTable';
 
 export default Vue.extend({
 	props: {
-		columns: Array as () => Array<keyof GroupRowdata|[keyof GroupRowdata, keyof GroupRowdata]>,
-		data: Object as () => GroupRowdata,
-		maxima: Object as () => Record<keyof GroupRowdata, number>,
+		data: Object as () => GroupRowData,
+		columns: Array as () => Array<keyof GroupRowData|[keyof GroupRowData, keyof GroupRowData]>,
+		maxima: Object as () => Record<keyof GroupRowData, number>,
 	},
 	methods: {
 		frac2Percent

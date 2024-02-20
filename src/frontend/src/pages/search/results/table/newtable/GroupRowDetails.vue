@@ -1,0 +1,134 @@
+<template>
+	<tr class="concordance">
+		<td colspan="10">
+			<div class="well-light">
+				<div class="concordance-controls clearfix">
+					<button type="button" class="btn btn-sm btn-primary open-concordances" :disabled="disabled" @click="$emit('openFullConcordances')"><span class="fa fa-angle-double-left"></span> View detailed concordances</button>
+					<button type="button" v-if="!concordances.done" :disabled="concordances.loading" class="btn btn-sm btn-default" @click="concordances.next">
+						<template v-if="concordances.loading">
+							<span class="fa fa-spin fa-spinner"></span> Loading...
+						</template>
+						<template v-else>Load more concordances</template>
+					</button>
+
+					<button type="button" class="close close-concordances" title="close" @click="$emit('close')"><span>&times;</span></button>
+				</div>
+
+				<div v-if="concordances.error != null" class="text-danger" v-html="concordances.error"></div>
+
+				<HitsTable v-if="type === 'hits'"
+					:data="concordances.concordances"
+					:mainAnnotation="mainAnnotation"
+					:dir="dir"
+					:html="html"
+				/>
+				<DocsTable v-else
+					:mainAnnotation="mainAnnotation"
+					:metadata="metadata"
+					:dir="dir"
+					:html="html"
+					:data="concordances.concordances"
+				/>
+				<!-- <DocRowDocsComponent v-else :data="concordances.concordances"/> -->
+			</div>
+		</td>
+	</tr>
+</template>
+
+<script lang="ts">
+import Vue from 'vue';
+
+import frac2Percent from '@/mixins/fractionalToPercent';
+import ConcordanceGetter from '@/pages/search/results/table/ConcordanceGetter';
+import {blacklab} from '@/api';
+import { BLHit, BLDoc, BLSearchParameters, BLHitResults, BLDocResults } from '@/types/blacklabtypes';
+
+// import DocRowHitsComponent from '@/pages/search/results/table/DocRowHits.vue';
+// import DocRowDocsComponent from '@/pages/search/results/table/DocRowDocs.vue';
+// import { GroupRowdata } from '@/pages/search/results/table/groupTable';
+// import { HitRowData } from '@/pages/search/results/table/newtable/HitRow.vue';
+import HitsTable, {HitRowData} from './HitsTable.vue'
+import DocsTable, {DocRowData} from './DocsTable.vue';
+import { NormalizedAnnotation, NormalizedMetadataField } from '@/types/apptypes';
+import { GroupRowData } from './groupTable';
+
+import * as UIStore from '@/store/search/ui';
+import * as CorpusStore from '@/store/search/corpus';
+import { getDocumentUrl } from '@/utils';
+
+
+export default Vue.extend({
+	components: {
+		HitsTable, DocsTable
+	},
+	props: {
+		query: Object as () => BLSearchParameters,
+		type: String as () => 'hits'|'docs',
+		data: Object as () => GroupRowData,
+
+		// query: Object as () => BLSearchParameters,
+		mainAnnotation: Object as () => NormalizedAnnotation,
+		otherAnnotations: Array as () => NormalizedAnnotation[]|undefined,
+		metadata: Array as () => NormalizedMetadataField[]|undefined,
+
+		dir: String as () => 'ltr'|'rtl',
+		html: Boolean,
+		disabled: Boolean,
+	},
+	data: () => ({
+		concordances: null as any as ConcordanceGetter<HitRowData|DocRowData>,
+	}),
+	methods: {
+		frac2Percent
+	},
+	created() {
+		const getDocumentSummary = UIStore.getState().results.shared.getDocumentSummary;
+		const fieldInfo = CorpusStore.getState().corpus!.fieldInfo;
+
+		this.concordances = new ConcordanceGetter<HitRowData|DocRowData>((first, number) => {
+			// make a copy of the parameters so we don't clear them for all components using the summary
+			const requestParameters: BLSearchParameters = Object.assign({}, this.query, {
+				// Do not clear sample/samplenum/samplecount,
+				// or we could retrieve concordances that weren't included in the input results for the grouping
+				number,
+				first,
+				viewgroup: this.data.id,
+				sort: undefined,
+			} as BLSearchParameters);
+
+			if (this.type === 'hits') {
+				let {request, cancel} = blacklab.getHits(INDEX_ID, requestParameters);
+				return {
+					cancel,
+					request: request.then((r: BLHitResults) => r.hits.map<HitRowData>(h => ({
+						type: 'hit',
+						hit: h,
+						doc: {
+							docInfo: r.docInfos[h.docPid],
+							docPid: h.docPid,
+						},
+						gloss_fields: [],
+						hit_first_word_id: '',
+						hit_id: '',
+						hit_last_word_id: '',
+					})))
+				}
+			} else {
+				let {request, cancel} = blacklab.getDocs(INDEX_ID, requestParameters);
+				return {
+					cancel,
+					request: request.then((r: BLDocResults) => r.docs.map<DocRowData>(doc => ({
+						type: 'doc',
+						doc,
+						href: getDocumentUrl(doc.docPid, this.query.patt || undefined, this.query.pattgapdata || undefined),
+						summary: getDocumentSummary(doc.docInfo, fieldInfo)
+					})))
+				}
+			}
+		}, this.data.size)
+	}
+});
+</script>
+
+<style lang="scss" scoped>
+</style>

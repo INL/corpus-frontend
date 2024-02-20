@@ -3,7 +3,7 @@
 		<thead>
 			<tr class="rounded">
 				<th class="text-right">
-					<span v-if="sortableAnnotations.length" class="dropdown">
+					<span v-if="sortableAnnotations && sortableAnnotations.length" class="dropdown">
 						<a role="button" data-toggle="dropdown" :class="['dropdown-toggle', {'disabled': disabled}]">
 							{{leftLabel}} hit
 							<span class="caret"></span>
@@ -19,7 +19,7 @@
 				</th>
 
 				<th class="text-center">
-					<span v-if="sortableAnnotations.length" class="dropdown">
+					<span v-if="sortableAnnotations && sortableAnnotations.length" class="dropdown">
 						<a role="button" data-toggle="dropdown" :class="['dropdown-toggle', {'disabled': disabled}]">
 							Hit
 							<span class="caret"/>
@@ -35,7 +35,7 @@
 				</th>
 
 				<th class="text-left">
-					<span v-if="sortableAnnotations.length" class="dropdown">
+					<span v-if="sortableAnnotations && sortableAnnotations.length" class="dropdown">
 						<a role="button" data-toggle="dropdown" :class="['dropdown-toggle', {'disabled': disabled}]">
 							{{rightLabel}} hit
 							<span class="caret"></span>
@@ -49,6 +49,7 @@
 					</span>
 					<template v-else>{{rightLabel}} hit</template>
 				</th>
+				<!-- might crash? no null check -->
 				<th v-for="annotation in otherAnnotations" :key="annotation.id">
 					<a v-if="annotation.hasForwardIndex"
 						role="button"
@@ -76,22 +77,34 @@
 		</thead>
 		<tbody>
 			<template v-for="(h, i) in data">
-				<HitRow :key="i"
-					:data="data"
-					:mainAnnotation="mainAnnotation"
-					:otherAnnotations="otherAnnotations"
-					:metadata="metadata"
-					:dir="dir"
-					:html="html"
-					:disabled="disabled"
-				/>
+				<template v-if="h.type === 'hit'">
+					<HitRow :key="`${i}-hit`"
+						:class="{open: open[i]}"
+						:data="h"
+						:mainAnnotation="mainAnnotation"
+						:otherAnnotations="otherAnnotations"
+						:metadata="metadata"
+						:dir="dir"
+						:html="html"
+						:disabled="disabled"
+						@click.native="$set(open, i, !open[i])"
+					/>
 
-				<HitRowContext :key="i"
-					:data="data"
-					:annotation="mainAnnotation"
-					:otherAnnotations="otherAnnotations"
-					:dir="dir"
-					:html="html"
+					<HitRowDetails :key="`${i}-details`"
+						:colspan="colspan"
+						:data="h"
+						:open="open[i]"
+						:query="query"
+						:mainAnnotation="mainAnnotation"
+						:otherAnnotations="otherAnnotations"
+						:dir="dir"
+						:html="html"
+					/>
+				</template>
+				<DocRow v-else :key="`${i}-doc`"
+					:data="h"
+					:metadata="metadata"
+					:colspan="colspan"
 				/>
 			</template>
 		</tbody>
@@ -101,35 +114,34 @@
 <script lang="ts">
 import Vue from 'vue';
 import { NormalizedAnnotation, NormalizedMetadataField } from '@/types/apptypes';
-import { BLDoc, BLHit, BLHitSnippet, BLSearchParameters } from '@/types/blacklabtypes';
-import { GlossFieldDescription } from '@/store/search/form/glossStore';
-import { CitationRowData } from '@/pages/search/results/table/HitContextRow.vue';
+import { BLSearchParameters } from '@/types/blacklabtypes';
 
-export type HitRowData = {
-	type: 'hit';
-	/** We might only have partial hits, if the parent of this hit was a document. */
-	hit: BLHit|BLHitSnippet;
-	doc?: BLDoc;
+import HitRow, {HitRowData} from './HitRow.vue'
+import HitRowDetails from './HitRowDetails.vue'
+import DocRow, {DocRowData} from './DocRow.vue';
 
-	// TODO jesse
-	gloss_fields: GlossFieldDescription[];
-	hit_first_word_id: string; // Jesse
-	hit_last_word_id: string // jesse
-	hit_id: string; // jesse
-}
+export {HitRowData} from './HitRow.vue';
 
+/**
+ * TODO maybe move transformation of blacklab results -> hit row into this component?
+ * Might be difficult as we can render this in three places which all have slightly different data.
+ */
 export default Vue.extend({
+	components: {
+		DocRow,
+		HitRow,
+		HitRowDetails,
+	},
 	props: {
-		/** To generate links to the source document with the correct query, etc. */
-		query: Object as () => BLSearchParameters,
+		query: Object as () => BLSearchParameters|undefined,
 		// what is the main text to show in the column
 		mainAnnotation: Object as () => NormalizedAnnotation,
 		/** Optional */
-		otherAnnotations: Array as () => NormalizedAnnotation[],
+		otherAnnotations: Array as () => NormalizedAnnotation[]|undefined,
 		/** Optional */
-		metadata: Array as () => NormalizedMetadataField[],
+		metadata: Array as () => NormalizedMetadataField[]|undefined,
 		/** Optional */
-		sortableAnnotations: Array as () => NormalizedAnnotation[],
+		sortableAnnotations: Array as () => NormalizedAnnotation[]|undefined,
 
 		dir: String as () => 'ltr'|'rtl',
 		/** Render contents as html or text */
@@ -138,10 +150,10 @@ export default Vue.extend({
 		disabled: Boolean,
 
 		/** The results */
-		data: Array as () => HitRowData[],
+		data: Array as () => Array<HitRowData|DocRowData>,
 	},
 	data: () => ({
-		contexts: {} as Record<number, CitationRowData>
+		open: {} as Record<string, boolean>
 	}),
 	computed: {
 		// ltr, rtl stuff
@@ -149,32 +161,21 @@ export default Vue.extend({
 		rightLabel(): string { return this.dir === 'rtl' ? 'Before' : 'After'; },
 		beforeField(): string { return this.dir === 'rtl' ? 'after' : 'before'; },
 		afterField(): string { return this.dir === 'rtl' ? 'before' : 'after'; },
+		colspan(): number {
+			let c = 3; // hit, before, after
+			if (this.otherAnnotations) c += this.otherAnnotations.length;
+			if (this.metadata) c += this.metadata.length;
+			return c;
+		}
 	},
 	methods: {
 		changeSort(sort: string) {
 			this.$emit('changeSort', sort)
 		},
-		openContext(i: number) {
-			if (!this.contexts[i]) {
-				const newContext: CitationRowData = {
-					addons: [],
-					citation: null,
-					href: '',
-					loading: false,
-					open: false,
-					error: null
-				}
-			}
-
-			this.$set(this.contexts, i, {
-				open: true,
-				data: this.data[i],
-			});
-		},
 	},
 	watch: {
 		data() {
-			this.contexts = {};
+			this.open = {};
 		}
 	}
 })

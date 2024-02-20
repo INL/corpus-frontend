@@ -18,61 +18,25 @@
 			</div>
 		</div>
 
+		<GroupTable
+			:type="type"
+			:headers="headers"
+			:columns="columns"
+			:data="rows"
+			:maxima="maxima"
 
-		<table class="group-table">
-			<thead>
-				<tr class="rounded">
-					<th v-for="(header, i) in headers"
-						:key="header.key"
-						:title="header.title"
-						:style="header.isBar ? 'width: 60%;' : ''"
-					>
-						<v-popover v-if="i === 0" offset="5" style="display:inline-block;">
-							<a role="button" title="Column meanings"><span class="fa fa-lg fa-question-circle"></span></a>
-							<template slot="popover">
-								<table class="table table-condensed" style="table-layout:auto; max-width:calc(100vw - 75px);width:500px;">
-									<tbody>
-										<tr v-for="(row, i) in definitions" :key="i">
-											<td v-for="(cell, j) in row" :key="j">{{cell}}</td>
-										</tr>
-									</tbody>
-								</table>
-							</template>
-						</v-popover>
+			:mainAnnotation="mainAnnotation"
+			:otherAnnotations="otherAnnotations"
+			:metadata="metadata"
 
-						<a v-if="header.sortProp"
-							role="button"
-							:class="['sort', {'disabled':disabled}]"
-							:title="`${header.title} (click to sort)`"
-							@click="changeSort(header.sortProp)"
-						>
-							{{header.label}}
-						</a>
-						<template v-else>{{header.label}}</template>
-					</th>
-				</tr>
-			</thead>
-			<tbody>
-				<template v-for="row in rows">
-					<GroupRowBar :key="row.id"
-						:data="row"
-						:columns="columns"
-						:maxima="maxima"
-						@click.native="open[row.id] = true"
-					/>
-					{{{ open: open[row.id] }}}
-					<GroupRowConcordance :key="`${row.id}-concordances`"
-						:data="row"
-						:query="results.summary.searchParam"
-						:type="type"
-						:disabled="disabled"
-						:annotation="concordanceAnnotationId"
-						:dir="textDirection"
-						:html="concordanceAsHtml"
-					/>
-				</template>
-			</tbody>
-		</table>
+			:query="results.summary.searchParam"
+			:disabled="disabled"
+			:html="html"
+			:dir="dir"
+
+			@changeSort="changeSort"
+			@openFullConcordances="openFullConcordances"
+		/>
 
 		<hr>
 		<div class="text-right">
@@ -94,13 +58,15 @@ import * as BLTypes from '@/types/blacklabtypes';
 
 import SelectPicker from '@/components/SelectPicker.vue';
 
-import GroupRowBar from './GroupRowBar.vue';
-import GroupRowConcordance from './GroupRowConcordance.vue';
-import { displayModes, TableDef, tableHeaders, definitions, GroupRowdata, GroupData, MaxCounter, LocalMaxima } from '@/pages/search/results/table/groupTable';
+import { displayModes, TableDef, tableHeaders, definitions, GroupRowData, GroupData, MaxCounter, LocalMaxima } from './newtable/groupTable';
 
 
+
+/**
+ * TODO fix metadata in hits table vs metadata in docs table.
+ */
 export default Vue.extend({
-	components: { SelectPicker,GroupRowBar, GroupRowConcordance },
+	components: { SelectPicker },
 
 	props: {
 		results: Object as () => BLTypes.BLHitGroupResults|BLTypes.BLDocGroupResults,
@@ -114,39 +80,6 @@ export default Vue.extend({
 	computed: {
 		type(): 'hits'|'docs' { return BLTypes.isDocGroupsOrResults(this.results) ? 'docs' : 'hits'; },
 		storeModule(): ReturnType<typeof ResultsStore['getOrCreateModule']> { return ResultsStore.getOrCreateModule(this.type); },
-
-		// Display variables not influenced by results
-		concordanceAnnotationId(): string { return UIStore.getState().results.shared.concordanceAnnotationId; },
-		transformSnippets() { return UIStore.getState().results.shared.transformSnippets; },
-		concordanceAsHtml(): boolean { return UIStore.getState().results.shared.concordanceAsHtml; },
-
-		textDirection: CorpusStore.get.textDirection,
-
-		/** True if the results were created from a search containing a cql pattern, e.g. not just a raw document query */
-		isTokenResults(): boolean { return !!this.results.summary.searchParam.patt; },
-
-		groupMode(): 'annotation'|'metadata' {
-			// eventually needs a mixed mode for when grouping on metadata + annotation values
-			// but we can't detect this from the blacklab response alone since it looks the same as when grouping on metadata only
-			const groupMode =
-				this.type === 'docs' ? 'metadata' :
-				this.results.summary.searchParam.group!.match(/^(field|decade):/) ? 'metadata' : 'annotation'
-			return groupMode;
-		},
-
-		chartModeOptions(): string[] {
-			// FIXME hardcoded
-			const options = Object.keys((displayModes as any)[this.type][this.groupMode]);
-			if (this.type === 'docs' && this.isTokenResults) {
-				// Hide the relative tokens view when results are filtered based on a cql pattern
-				return options.filter(o => o !== 'tokens');
-			}
-			return options;
-		},
-		chartMode: {
-			get(): string { return this.storeModule.getState().groupDisplayMode || this.chartModeOptions[1]; },
-			set(v: string): void { this.storeModule.actions.groupDisplayMode(v === this.chartModeOptions[1] ? null : v); },
-		},
 
 		/** Columns in the table */
 		columns(): TableDef {
@@ -189,12 +122,58 @@ export default Vue.extend({
 			return r;
 		},
 
-		rows(): GroupRowdata[] { return this._rowsData.rows; },
+		rows(): GroupRowData[] { return this._rowsData.rows; },
 		maxima(): LocalMaxima { return this._rowsData.maxima; },
+
+		// Display variables not influenced by results
+		mainAnnotation(): CorpusStore.NormalizedAnnotation { return CorpusStore.get.allAnnotationsMap()[UIStore.getState().results.shared.concordanceAnnotationId]; },
+		otherAnnotations(): CorpusStore.NormalizedAnnotation[] {
+			const allAnnotationsMap = CorpusStore.get.allAnnotationsMap();
+			return UIStore.getState().results.hits.shownAnnotationIds.map(id => allAnnotationsMap[id]);
+		},
+		metadata(): CorpusStore.NormalizedMetadataField[] {
+			const allMetadataFields = CorpusStore.get.allMetadataFieldsMap();
+			return UIStore.getState().results.docs.shownMetadataIds.map(id => allMetadataFields[id]);
+		},
+		html(): boolean { return UIStore.getState().results.shared.concordanceAsHtml; },
+		dir: CorpusStore.get.textDirection,
+
+
+
+
+
+		/** True if the results were created from a search containing a cql pattern, e.g. not just a raw document query */
+		isTokenResults(): boolean { return !!this.results.summary.searchParam.patt; },
+
+		groupMode(): 'annotation'|'metadata' {
+			// eventually needs a mixed mode for when grouping on metadata + annotation values
+			// but we can't detect this from the blacklab response alone since it looks the same as when grouping on metadata only
+			const groupMode =
+				this.type === 'docs' ? 'metadata' :
+				this.results.summary.searchParam.group!.match(/^(field|decade):/) ? 'metadata' : 'annotation'
+			return groupMode;
+		},
+
+		chartModeOptions(): string[] {
+			// FIXME hardcoded
+			const options = Object.keys((displayModes as any)[this.type][this.groupMode]);
+			if (this.type === 'docs' && this.isTokenResults) {
+				// Hide the relative tokens view when results are filtered based on a cql pattern
+				return options.filter(o => o !== 'tokens');
+			}
+			return options;
+		},
+		chartMode: {
+			get(): string { return this.storeModule.getState().groupDisplayMode || this.chartModeOptions[1]; },
+			set(v: string): void { this.storeModule.actions.groupDisplayMode(v === this.chartModeOptions[1] ? null : v); },
+		},
+
+
+
 
 		/** Convert results into ready to display bits of info */
 		_rowsData(): {
-			rows: GroupRowdata[],
+			rows: GroupRowData[],
 			maxima: LocalMaxima
 		} {
 			const max = new MaxCounter();
@@ -264,8 +243,8 @@ export default Vue.extend({
 				});
 			}
 
-			const rows = stage1.map<GroupRowdata>((row: GroupData) => {
-				const r: GroupRowdata = {
+			const rows = stage1.map<GroupRowData>((row: GroupData) => {
+				const r: GroupRowData = {
 					...row,
 					'relative group size [gr.d/r.d]': row['gr.d'] / row['r.d'],
 					'relative group size [gr.t/r.t]': row['gr.t'] ? row['gr.t']! / row['r.t'] : undefined,
@@ -289,11 +268,6 @@ export default Vue.extend({
 				rows,
 				maxima: max.values as any
 			};
-		},
-
-		sortModel: {
-			get(): string|null { return this.sort; },
-			set(v: string|null): void { this.$emit('sort', v); }
 		},
 	},
 	methods: {

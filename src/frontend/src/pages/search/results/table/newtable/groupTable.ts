@@ -54,7 +54,7 @@ export interface GroupData {
 }
 
 /** For UI purposes: holds derived statistics about groups. E.G. size of this group vs the largest group. */
-export interface GroupRowdata extends GroupData {
+export interface GroupRowData extends GroupData {
 	// adds to 1 across all groups
 	'relative group size [gr.d/r.d]': number;
 	'relative group size [gr.t/r.t]'?: number; // FIXME remove option flag when Jan implements
@@ -72,7 +72,7 @@ export interface GroupRowdata extends GroupData {
 }
 
 /** What properties are available to display in the columns */
-export type Column = keyof GroupRowdata;
+export type Column = keyof GroupRowData;
 /**
  * A "table" layout is just an array of columns.
  * A column in our case is a cell holding a number, or a horizontal bar (the table represents a sideways bar chart)
@@ -197,7 +197,7 @@ export const displayModes: {
  */
 export const tableHeaders: {
 	[K in ('hits'|'docs'|'default')]: {
-		[ColumnId in keyof GroupRowdata]?: {
+		[ColumnId in keyof GroupRowData]?: {
 			label?: string;
 			title?: string;
 			/** annotation, meta field or other property to sort on should this header be clicked by the user */
@@ -279,7 +279,7 @@ export const tableHeaders: {
 // NOTE: sometimes we know the absolute maximum across all groups (such as the size), because BlackLab tells us,
 // but sometimes we only have the maximum value in the currently displayed page (such as for properties we compute locally, such as relative sizes).
 // Fixing this would be a substantial amount of extra work for BlackLab.
-export type LocalMaxima = {  [P in keyof GroupRowdata]-?: number extends GroupRowdata[P] ? number : never; };
+export type LocalMaxima = {  [P in keyof GroupRowData]-?: number extends GroupRowData[P] ? number : never; };
 export class MaxCounter {
 	public values: {[key: string]: number} = {};
 

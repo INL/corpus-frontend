@@ -32,46 +32,6 @@
 						:dir="textDirection"
 						:html="concordanceAsHtml"
 					/>
-					<!-- <tr class="rounded"
-						v-tooltip="{
-							show: pinnedTooltip === index,
-							content: `Document id: ${rowData.docPid}`,
-							trigger: pinnedTooltip === index ? 'manual' : 'hover',
-							targetClasses: pinnedTooltip === index ? 'pinned' : undefined,
-							hideOnTargetClick: false,
-							autoHide: false,
-						}"
-
-						:key="index"
-
-						@click="pinnedTooltip = (pinnedTooltip === index ? null : index)"
-					>
-						<td>
-							<a class="doctitle" target="_blank" :href="rowData.href">{{rowData.summary}}</a>
-						</td>
-						<td v-for="meta in shownMetadataCols" :key="meta.id">{{(rowData.doc.docInfo[meta.id] || []).join(', ')}}</td>
-						<td v-if="hasHits">{{rowData.hits}}</td>
-					</tr>
-					<tr v-if="showDocumentHits" :key="index + '_hits'" class="hit-details"><td colspan="600">
-						<div class="clearfix" style="border-bottom:1px solid #ddd;">
-							<div class="col-xs-5 text-right"><strong>{{leftLabel}}</strong></div>
-							<div class="col-xs-2 text-center" style="padding: 0;"><strong>Hit</strong></div>
-							<div class="col-xs-5"><strong>{{rightLabel}}</strong></div>
-						</div>
-						<div v-for="(conc, index) in rowData.snippets" :key="index" class="clearfix concordance" :dir="textDirection">
-							<template v-if="concordanceAsHtml">
-								<div class="col-xs-5 text-right" v-html="conc.left"></div>
-								<div class="col-xs-2 text-center"><strong v-html="conc.hit"></strong></div>
-								<div class="col-xs-5" v-html="conc.right"></div>
-							</template>
-							<template v-else>
-								<div class="col-xs-5 text-right">&hellip; {{conc.left}}</div>
-								<div class="col-xs-2 text-center"><strong>{{conc.hit}}&nbsp;</strong></div>
-								<div class="col-xs-5">{{conc.right}} &hellip;</div>
-							</template>
-						</div>
-						<div class="text-muted clearfix col-xs-12" v-if="hasHits && rowData.hits > rowData.snippets.length">...({{rowData.hits - rowData.snippets.length}} more hidden hits)</div>
-					</td></tr> -->
 				</template>
 			</tbody>
 		</table>

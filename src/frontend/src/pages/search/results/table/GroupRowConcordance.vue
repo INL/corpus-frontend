@@ -1,5 +1,5 @@
 <template>
-	<tr class="concordance" v-if="data.open">
+	<tr class="concordance">
 		<td colspan="10">
 			<div class="well-light">
 				<div class="concordance-controls clearfix">

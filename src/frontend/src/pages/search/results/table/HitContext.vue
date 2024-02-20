@@ -1,7 +1,5 @@
 <template>
-	<component :is="tag" v-if="html">
-		<!-- <pre>{{ data }}</pre> -->
-
+	<component :is="tag" v-if="html" :style="{fontWeight: bold ? 'bold' : undefined}">
 		<template v-for="token in data">
 			<span
 				v-html="token.text"
@@ -11,8 +9,7 @@
 			<span v-html="token.punct"></span>
 		</template>
 	</component>
-	<component v-else :is="tag">
-		<!-- <pre>{{ data }}</pre> -->
+	<component v-else :is="tag" :style="{fontWeight: bold ? 'bold' : undefined}">
 		<template v-for="token in data">
 			<template v-if="token.captureAndRelation">
 				<span
@@ -38,7 +35,8 @@ export default Vue.extend({
 			default: 'div',
 			required: false,
 			type: String as () => keyof HTMLElementTagNameMap
-		}
+		},
+		bold: Boolean
 	},
 });
 </script>

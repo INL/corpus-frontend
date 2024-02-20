@@ -11,7 +11,7 @@
 
 		<pre v-if="results">{{ {...results.hits[0], left: undefined, right: undefined, match: undefined} }}</pre>
 
-		<table class="hits-table">
+		<!-- <table class="hits-table">
 			<thead>
 				<tr class="rounded">
 					<th class="text-right">
@@ -122,7 +122,19 @@
 
 				</template>
 			</tbody>
-		</table>
+		</table> -->
+		<HitsTable
+			:query="results.summary.searchParam"
+			:mainAnnotation="mainAnnotation"
+			:otherAnnotations="shownAnnotationCols"
+			:metadata="shownMetadataCols"
+			:sortableAnnotations="sortableAnnotations"
+			:dir="textDirection"
+			:html="concordanceAsHtml"
+			:disabled="disabled"
+			:data="rows"
+		/>
+
 
 		<hr>
 
@@ -165,18 +177,21 @@ import GlossField from '@/pages/search//form/concept/GlossField.vue' // Jesse
 // import {ReactiveDepTree} from "@/../node_modules/reactive-dep-tree/dist/reactive-dep-tree.umd.js";
 // import DepTree from "@/pages/search/results/table/DepTree.vue"
 
-import HitRowComponent, {HitRowData} from './HitRow.vue';
-import DocRowComponent, {DocRowData} from './DocRow.vue';
-import HitContextRowComponent, {CitationRowData} from './HitContextRow.vue';
+// import HitRowComponent, {HitRowData} from './HitRow.vue';
+import {DocRowData} from './newtable/DocRow.vue';
+// import HitContextRowComponent, {CitationRowData} from './HitContextRow.vue';
+
+import HitsTable, {HitRowData} from './newtable/HitsTable.vue';
 
 export default Vue.extend({
 	components: {
 	 	GlossField,
 		// ReactiveDepTree,
 		// DepTree,
-		HitRowComponent,
-		HitContextRowComponent,
-		DocRowComponent
+		// HitRowComponent,
+		// HitContextRowComponent,
+		// DocRowComponent,
+		HitsTable
 	},
 	props: {
 		results: Object as () => BLTypes.BLHitResults,
@@ -185,9 +200,9 @@ export default Vue.extend({
 		disabled: Boolean
 	},
 	data: () => ({
-		citations: {} as {
-			[key: number]: CitationRowData;
-		},
+		// citations: {} as {
+		// 	[key: number]: CitationRowData;
+		// },
 		// pinnedTooltip: null as null|number,
 		showTitles: true
 	}),
@@ -234,7 +249,10 @@ export default Vue.extend({
 
 				rows.push({
 					type: 'hit',
-					doc: docInfo,
+					doc: {
+						docPid: pid,
+						docInfo,
+					},
 					gloss_fields: GlossModule.get.gloss_fields(),
 					hit,
 					hit_first_word_id,
@@ -251,6 +269,7 @@ export default Vue.extend({
 		/** Return all annotations shown in the main search form (provided they have a forward index) */
 		sortableAnnotations(): AppTypes.NormalizedAnnotation[] { return UIStore.getState().results.shared.sortAnnotationIds.map(id => CorpusStore.get.allAnnotationsMap()[id]); },
 		concordanceAnnotationId(): string { return UIStore.getState().results.shared.concordanceAnnotationId; },
+		mainAnnotation(): AppTypes.NormalizedAnnotation { return CorpusStore.get.allAnnotationsMap()[this.concordanceAnnotationId]; },
 		concordanceSize(): number { return UIStore.getState().results.shared.concordanceSize; },
 		concordanceAsHtml(): boolean { return UIStore.getState().results.shared.concordanceAsHtml; },
 		shownAnnotationCols(): AppTypes.NormalizedAnnotation[] {
@@ -292,65 +311,65 @@ export default Vue.extend({
 				this.$emit('sort', payload === this.sort ? '-'+payload : payload);
 			}
 		},
-		showCitation(index: number /*row: HitRow*/) {
-			debugger;
-			if (this.citations[index]) {
-				this.citations[index].open = !this.citations[index].open;
-				return;
-			}
+		// showCitation(index: number /*row: HitRow*/) {
+		// 	debugger;
+		// 	if (this.citations[index]) {
+		// 		this.citations[index].open = !this.citations[index].open;
+		// 		return;
+		// 	}
 
-			const row = this.rows[index] as HitRowData;
-			const citation: CitationRowData = Vue.set(this.citations, index, {
-				open: true,
-				loading: true,
-				citation: null,
-				error: null,
-				hit: this.results.hits[index],
-				href: getDocumentUrl(
-					row.hit.docPid,
-					this.results.summary.searchParam.patt || undefined,
-					this.results.summary.searchParam.pattgapdata || undefined,
-					row.hit.start,
-					UIStore.getState().results.shared.pageSize,
-					row.hit.start),
-				addons: []
-			});
+		// 	const row = this.rows[index] as HitRowData;
+		// 	const citation: CitationRowData = Vue.set(this.citations, index, {
+		// 		open: true,
+		// 		loading: true,
+		// 		citation: null,
+		// 		error: null,
+		// 		hit: this.results.hits[index],
+		// 		href: getDocumentUrl(
+		// 			row.hit.docPid,
+		// 			this.results.summary.searchParam.patt || undefined,
+		// 			this.results.summary.searchParam.pattgapdata || undefined,
+		// 			row.hit.start,
+		// 			UIStore.getState().results.shared.pageSize,
+		// 			row.hit.start),
+		// 		addons: []
+		// 	});
 
-			ga('send', 'event', 'results', 'snippet/load', row.hit.docPid);
+		// 	ga('send', 'event', 'results', 'snippet/load', row.hit.docPid);
 
-			Api.blacklab
-			.getSnippet(INDEX_ID, row.hit.docPid, row.hit.start, row.hit.end, this.concordanceSize)
-			.then(s => {
-				if (this.transformSnippets) {
-					this.transformSnippets(s);
-				}
-				citation.citation = s;
-				// Run plugins defined for this corpus (ex. a copy citation to clipboard button, or an audio player/text to speech button)
-				citation.addons = UIStore.getState().results.hits.addons
-					.map(a => a({
-						docId: row.hit.docPid,
-						corpus: INDEX_ID,
-						document: this.results.docInfos[row.hit.docPid],
-						documentUrl: citation.href,
-						wordAnnotationId: this.concordanceAnnotationId,
-						dir: this.textDirection,
-						citation: citation.citation!
-					}))
-					.filter(a => a != null);
-			})
-			.catch((err: AppTypes.ApiError) => {
-				citation.error = UIStore.getState().global.errorMessage(err, 'snippet');
-				debugLog(err.stack);
-				ga('send', 'exception', { exDescription: err.message, exFatal: false });
-			})
-			.finally(() => citation.loading = false);
-		},
+		// 	Api.blacklab
+		// 	.getSnippet(INDEX_ID, row.hit.docPid, row.hit.start, row.hit.end, this.concordanceSize)
+		// 	.then(s => {
+		// 		if (this.transformSnippets) {
+		// 			this.transformSnippets(s);
+		// 		}
+		// 		citation.citation = s;
+		// 		// Run plugins defined for this corpus (ex. a copy citation to clipboard button, or an audio player/text to speech button)
+		// 		citation.addons = UIStore.getState().results.hits.addons
+		// 			.map(a => a({
+		// 				docId: row.hit.docPid,
+		// 				corpus: INDEX_ID,
+		// 				document: this.results.docInfos[row.hit.docPid],
+		// 				documentUrl: citation.href,
+		// 				wordAnnotationId: this.concordanceAnnotationId,
+		// 				dir: this.textDirection,
+		// 				citation: citation.citation!
+		// 			}))
+		// 			.filter(a => a != null);
+		// 	})
+		// 	.catch((err: AppTypes.ApiError) => {
+		// 		citation.error = UIStore.getState().global.errorMessage(err, 'snippet');
+		// 		debugLog(err.stack);
+		// 		ga('send', 'exception', { exDescription: err.message, exFatal: false });
+		// 	})
+		// 	.finally(() => citation.loading = false);
+		// },
 	},
 	watch: {
-		results(n: BLTypes.BLHitResults, o: BLTypes.BLHitResults) {
-			this.citations = {};
-			// this.pinnedTooltip = null;
-		},
+		// results(n: BLTypes.BLHitResults, o: BLTypes.BLHitResults) {
+		// 	this.citations = {};
+		// 	// this.pinnedTooltip = null;
+		// },
 	}
 });
 </script>

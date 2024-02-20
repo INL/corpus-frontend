@@ -104,7 +104,7 @@
 							:html="concordanceAsHtml"
 							:metadata="shownMetadataCols"
 
-							@click="showCitation(index)"
+							@click.native="showCitation(index)"
 						/>
 						<HitContextRowComponent v-if="citations[index] && citations[index].open"
 							:key="index + '-citation'"
@@ -114,7 +114,8 @@
 							:html="concordanceAsHtml"
 							:colspan="numColumns"
 							:dir="textDirection"
-							:annotations="shownConcordanceAnnotationRows"
+							:mainAnnotation="concordanceAnnotationId"
+							:otherAnnotations="shownConcordanceAnnotationRows"
 						/>
 					</template>
 
@@ -227,8 +228,6 @@ export default Vue.extend({
 				if (this.transformSnippets) {
 					this.transformSnippets(hit);
 				}
-				// const parts = snippetParts(hit, this.concordanceAnnotationId);
-
 				// ids of the hit, if gloss module is enabled.
 				const {startid: hit_first_word_id = '', endid: hit_last_word_id = ''} = GlossModule.get.settings()?.get_hit_range_id(hit) ?? {startid: '', endid: ''};
 				const hit_id = GlossModule.get.settings()?.get_hit_id(hit) ?? '';
@@ -241,23 +240,6 @@ export default Vue.extend({
 					hit_first_word_id,
 					hit_id,
 					hit_last_word_id
-
-					// left: parts[this.leftIndex],
-					// hit: parts[1],
-					// right: parts[this.rightIndex],
-					// props: hit.match,
-					// other: this.shownAnnotationCols.map(annot => words(hit.match, annot.id, false, '')),
-					// docPid: hit.docPid,
-					// start: hit.start,
-					// end: hit.end,
-					// doc: infos[pid],
-
-					// gloss_fields: GlossModule.get.gloss_fields(),
-					// hit_first_word_id,
-					// hit_last_word_id,
-					// hit_id,
-
-					// matchInfos: hit.matchInfos,
 				});
 
 				return rows;
@@ -311,7 +293,8 @@ export default Vue.extend({
 			}
 		},
 		showCitation(index: number /*row: HitRow*/) {
-			if (this.citations[index] != null) {
+			debugger;
+			if (this.citations[index]) {
 				this.citations[index].open = !this.citations[index].open;
 				return;
 			}
@@ -362,59 +345,6 @@ export default Vue.extend({
 			})
 			.finally(() => citation.loading = false);
 		},
-
-		// {"type":"relation","relType":"dep::case","sourceStart":163,"sourceEnd":164,"targetStart":161,"targetEnd":162,"start":161,"end":164}
-		// toConllu(row: HitRow, index: number, onlyMatchedRelations: boolean) : string {
-		// 	const canned = stripIndent`
-		// 		# text = I am eating a pineapple
-		// 		1	I	_	PRON	_	_	2	suj	_	_
-		// 		2	am	_	AUX	_	_	0	root	_	_
-		// 		3	eating	_	VERB	_	_	2	aux	_	highlight=red
-		// 		4	a	_	DET	_	_	5	det	_	_
-		// 		5	pineapple	_	NOUN	_	_	3	obj	_	_
-		// 	`
-		// 	const word = row.props.word
-		// 	const rel = row.props.deprel
-		// 	const wordnum = row.props.wordnum
-		// 	const lemma = row.props.lemma
-		// 	const pos = row.props.pos
-		// 	const xpos = row.props.xpos
-		// 	const start: number = +wordnum[0]
-		// 	//console.log(JSON.stringify(row.matchInfos))
-		// 	//console.log(row.start)
-		// 	interface x  { [key: number]: string }
-		// 	const foundRels : x =  {}
-		// 	const foundHeads : x = {}
-		// 	if (('matchInfos' in row) && (row.matchInfos != null)) {
-		// 		Object.values(row.matchInfos).map(v => {
-		// 			if (v.type == 'relation') {
-		// 				const rel = v.relType.replace("dep::","")
-		// 				const wordnum = v.targetStart - row.start + 1
-		// 				const headnum = v.sourceStart - row.start + 1
-		// 				foundRels[wordnum] = rel
-		// 				foundHeads[headnum]  = rel
-		// 			}
-		// 		})
-		// 	}
-
-		// 	const dinges = /* `# sent_id = s${index}` + "\n" + */ '# text = ' + word.join(" ") + "\n" +
-		// 		row.props.head.map((h, i) =>
-		// 				{
-		// 				const relIsMatched = i+1 in foundRels
-		// 				const headIsMatched = i+1 in foundHeads
-		// 				const headInHit = wordnum.includes(h)
-		// 				const showRel = headInHit // && (relIsMatched)
-
-		// 				const h1 = showRel?  +h -start + 1: '_';
-		// 				const rel1 = showRel? rel[i] : '_';
-		// 				const misc = (relIsMatched||headIsMatched)?  'highlight=red' : '_';
-		// 				return '    ' + Array(+wordnum[i] - start + 1, word[i], lemma[i], pos[i], xpos[i], '_', h1, rel1, '_', misc).join("\t")
-		// 			}).join("\n")
-		// 	//console.log('matched targets:' + JSON.stringify(foundRels))
-		// 	//console.log('matched sources:' + JSON.stringify(foundHeads))
-		// 	//console.log(dinges)
-		// 	return dinges;
-		// }
 	},
 	watch: {
 		results(n: BLTypes.BLHitResults, o: BLTypes.BLHitResults) {
@@ -431,25 +361,6 @@ export default Vue.extend({
 .capture {
 	border-style: solid;
 	border-color: goldenrod;
-}
-
-.capture_0 {
-	color: blue;
-}
-
-.capture_1 {
-	color: red
-}
-.capture_2 {
-	color: green
-}
-
-.capture_3 {
-	color: purple
-}
-
-.capture_4 {
-	color: orange
 }
 
 .gloss_field_heading {
@@ -484,45 +395,6 @@ table {
 
 	&.concordance-details-table {
 		table-layout: auto;
-	}
-}
-
-tr.concordance {
-	> td {
-		transition: padding 0.1s;
-	}
-
-	&.open {
-		> td {
-			background: white;
-			border-top: 2px solid #ddd;
-			border-bottom: 1px solid #ddd;
-			padding-top: 8px;
-			padding-bottom: 8px;
-			&:first-child {
-				border-left: 2px solid #ddd;
-				border-top-left-radius: 4px;
-				border-bottom-left-radius: 0;
-			}
-			&:last-child {
-				border-right: 2px solid #ddd;
-				border-top-right-radius: 4px;
-				border-bottom-right-radius: 0;
-			}
-		}
-	}
-	&-details {
-		> td {
-			background: white;
-			border: 2px solid #ddd;
-			border-top: none;
-			border-radius: 0px 0px 4px 4px;
-			padding: 15px 20px;
-
-			> p {
-				margin: 0 6px 10px;
-			}
-		}
 	}
 }
 

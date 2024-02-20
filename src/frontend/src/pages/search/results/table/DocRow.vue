@@ -4,10 +4,10 @@
 			content: `Document id: ${data.doc.docPid}`,
 			trigger: 'hover',
 			hideOnTargetClick: false,
-			autoHide: false,
+		autoHide: false,
 		}"
 	>
-		<td><a class="doctitle" target="_blank" :href="data.href">{{data.summary}}</a></td>
+		<td :colspan="colspan ? colspan - (metadata ? metadata.length : 0) - (data.doc.numberOfHits ? 1 : 0) : undefined" ><a class="doctitle" target="_blank" :href="data.href">{{data.summary}}</a></td>
 		<td v-for="meta in metadata" :key="meta.id">{{(data.doc.docInfo[meta.id] || []).join(', ')}}</td>
 		<td v-if="data.doc.numberOfHits">{{data.doc.numberOfHits}}</td>
 	</tr>
@@ -29,8 +29,11 @@ export type DocRowData = {
 export default Vue.extend({
 	props: {
 		data: Object as () => DocRowData,
+		/** Optional! */
 		metadata: Array as () => NormalizedMetadataField[],
+		colspan: Number
 	},
+
 });
 </script>
 

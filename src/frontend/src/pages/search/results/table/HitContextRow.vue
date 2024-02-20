@@ -88,15 +88,8 @@ import { snippetParts } from '@/utils';
 export type CitationRowData = {
 	open: boolean;
 	loading: boolean;
-	// citation: null|{
-	// 	left: string;
-	// 	hit: string;
-	// 	right: string;
-	// };
 	error?: null|string;
 	citation: null|BLTypes.BLHitSnippet;
-
-	// hit: BLTypes.BLHit;
 	addons: Array<ReturnType<UIStore.ModuleRootState['results']['hits']['addons'][number]>> // todo give type a name and export separately
 	href: string;
 };

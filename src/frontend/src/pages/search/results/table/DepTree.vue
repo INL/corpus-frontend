@@ -39,14 +39,15 @@ export default Vue.extend({
 	computed: {
 		conllu(): string {
 			debugger;
-			const hit = this.hit;
+			const hit = this.hit.hit;
 
-			const word = hit.props.word
-			const rel = hit.props.deprel
-			const wordnum = hit.props.wordnum
-			const lemma = hit.props.lemma
-			const pos = hit.props.pos
-			const xpos = hit.props.xpos
+
+			const word = hit.match.word
+			const rel = hit.match.deprel
+			const wordnum = hit.match.wordnum
+			const lemma = hit.match.lemma
+			const pos = hit.match.pos
+			const xpos = hit.match.xpos
 			const start: number = +wordnum[0]
 			//console.log(JSON.stringify(row.matchInfos))
 			//console.log(row.start)
@@ -89,23 +90,21 @@ export default Vue.extend({
 			MISC:   Any other annotation.
 			*/
 
-			const conllu =
-				(
-				// `# sent_id = s${index}` + "\n" +
-				'# text = ' + word.join(" ") + "\n" +
-				hit.props.head.map((h, i) =>
-						{
-						const relIsMatched = i+1 in foundRels
-						const headIsMatched = i+1 in foundHeads
-						const headInHit = wordnum.includes(h)
+			// `# sent_id = s${index}` + "\n" +
+			const conllu = `# text = '${word.join(' ')}\n${
+				hit.match.head.map((h, i) => {
+					const relIsMatched = i+1 in foundRels
+					const headIsMatched = i+1 in foundHeads
+					const headInHit = wordnum.includes(h)
 
-						const showRel = headInHit && (relIsMatched || !this.showOnlyMatchedRels)
-						//console.log(`i: ${i}, headInHit: ${headInHit}, relIsMatched: ${relIsMatched}, onlyMatchedRelations: ${onlyMatchedRelations}, showRel: ${showRel}`)
-						const h1 = showRel?  +h -start + 1: '_';
-						const rel1 = showRel? rel[i] : '_';
-						const misc = (relIsMatched||headIsMatched)?  'highlight=red' : '_';
-						return '    ' + Array(+wordnum[i] - start + 1, word[i], lemma[i], pos[i], xpos[i], '_', h1, rel1, '_', misc).join("\t")
-					}).join("\n"))
+					const showRel = headInHit && (relIsMatched || !this.showOnlyMatchedRels)
+					//console.log(`i: ${i}, headInHit: ${headInHit}, relIsMatched: ${relIsMatched}, onlyMatchedRelations: ${onlyMatchedRelations}, showRel: ${showRel}`)
+					const h1 = showRel?  +h -start + 1: '_';
+					const rel1 = showRel? rel[i] : '_';
+					const misc = (relIsMatched||headIsMatched)?  'highlight=red' : '_';
+					return '    ' + Array(+wordnum[i] - start + 1, word[i], lemma[i], pos[i], xpos[i], '_', h1, rel1, '_', misc).join("\t")
+				}).join("\n")
+			}`;
 			//console.log('matched targets:' + JSON.stringify(foundRels))
 			//console.log('matched sources:' + JSON.stringify(foundHeads))
 			//console.log(conllu)

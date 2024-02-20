@@ -20,7 +20,7 @@
 					<span class="text-primary" style="font-family: monospace;">[{{ a.type.substring(0, 1).toUpperCase() }}]</span> {{humanizeGroupBy(a)}}
 					<span v-if="!isValidGroup(a)" class="fa fas fa-warning text-danger" title="This grouping is not valid."></span>
 				</button>
-				<button type="button" class="btn btn-danger" style="flex: 0; border-left: 0; border-radius: 0; padding-right: 4px; padding-left: 4px;" @click="removeGroup">&times;</button>
+				<button type="button" class="btn btn-danger" style="flex: 0; border-left: 0; border-radius: 0; padding-right: 4px; padding-left: 4px;" @click="removeGroup(i)">&times;</button>
 			</div>
 
 
@@ -38,7 +38,7 @@
 
 		<div style="flex-grow: 1; border: 1px solid #ccc; border-left: 0; padding: 10px 15px; min-width: 0;">
 			<template v-if="current">
-				<button type="button" class="btn btn-link pull-right" @click="removeGroup">&times;</button>
+				<button type="button" class="btn btn-link pull-right" @click="removeGroup(currentIndex)">&times;</button>
 
 				<template v-if="current.type === 'annotation'">
 					<section class="text-muted col-m-6">
@@ -310,16 +310,31 @@ export default Vue.extend({
 		},
 		serializeGroupBy: serializeGroupBy2,
 		humanizeGroupBy(g: GroupBySettings2): string {
-			if (g.type === 'annotation') return `${g.annotation} ${g.position === 'H' || 'E' ? 'in' : g.position === 'L' ? 'before' : 'after'} hit`;
-			else return `document ${g.field}`;
+			let r = '';
+			if (g.type === 'annotation') {
+				const position = g.position === 'H' ? 'in' : g.position === 'L' ? 'before' : g.position === 'R' ? 'after' : ''; // position | '' when using group
+				let wordcount = position ? g.end != null ? g.end + '' : 'all' : undefined; // number | 'all' | undefined when using group
+
+				// when start is not 1, prepend it. ex. 3 --> 1-3
+				if (wordcount != null && g.start !== 1) wordcount = g.start + '-' + wordcount;
+
+				r = `${g.annotation}${wordcount != null ? `(${wordcount})` : ''} ${position + ' '}hit`;
+			}
+			else r= `document ${g.field}`;
+			console.log(g, r);
+			return r;
 		},
 
 		isValidGroup(group: GroupBySettings2): boolean {
 			return serializeGroupBy2(group, true) != null;
 		},
-		removeGroup() {
-			this.localModel.splice(this.currentIndex, 1);
-			--this.currentIndex;
+		removeGroup(i: number) {
+			this.localModel.splice(i, 1);
+			if (i === this.currentIndex)
+				--this.currentIndex;
+			if (this.localModel.length === 0) {
+				this.clear();
+			}
 		},
 		clear() {
 			this.localModel = [];

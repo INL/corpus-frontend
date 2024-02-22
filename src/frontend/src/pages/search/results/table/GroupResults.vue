@@ -56,17 +56,16 @@ import * as UIStore from '@/store/search/ui';
 
 import * as BLTypes from '@/types/blacklabtypes';
 
+import { displayModes, TableDef, tableHeaders, definitions, GroupRowData, GroupData, MaxCounter, LocalMaxima } from '@/pages/search/results/table/groupTable';
+
+import GroupTable from '@/pages/search/results/table/GroupTable.vue';
 import SelectPicker from '@/components/SelectPicker.vue';
-
-import { displayModes, TableDef, tableHeaders, definitions, GroupRowData, GroupData, MaxCounter, LocalMaxima } from './newtable/groupTable';
-
-
 
 /**
  * TODO fix metadata in hits table vs metadata in docs table.
  */
 export default Vue.extend({
-	components: { SelectPicker },
+	components: { SelectPicker, GroupTable },
 
 	props: {
 		results: Object as () => BLTypes.BLHitGroupResults|BLTypes.BLDocGroupResults,
@@ -107,7 +106,7 @@ export default Vue.extend({
 				const defaultHeader = tableHeaders.default[headerId] || {};
 				const fallback = {
 					label: headerId,
-					title: undefined
+					title: headerId
 				};
 
 				return {
@@ -138,10 +137,6 @@ export default Vue.extend({
 		html(): boolean { return UIStore.getState().results.shared.concordanceAsHtml; },
 		dir: CorpusStore.get.textDirection,
 
-
-
-
-
 		/** True if the results were created from a search containing a cql pattern, e.g. not just a raw document query */
 		isTokenResults(): boolean { return !!this.results.summary.searchParam.patt; },
 
@@ -167,9 +162,6 @@ export default Vue.extend({
 			get(): string { return this.storeModule.getState().groupDisplayMode || this.chartModeOptions[1]; },
 			set(v: string): void { this.storeModule.actions.groupDisplayMode(v === this.chartModeOptions[1] ? null : v); },
 		},
-
-
-
 
 		/** Convert results into ready to display bits of info */
 		_rowsData(): {
@@ -248,7 +240,7 @@ export default Vue.extend({
 					...row,
 					'relative group size [gr.d/r.d]': row['gr.d'] / row['r.d'],
 					'relative group size [gr.t/r.t]': row['gr.t'] ? row['gr.t']! / row['r.t'] : undefined,
-					'relative group size [gr.h/r.h]': row['gr.h'] && row['r.h'] ? row['gr.h']! / row['r.h']! : undefined,
+					'relative group size [gr.h/r.h]': (row['gr.h'] && row['r.h']) ? row['gr.h']! / row['r.h']! : undefined,
 
 					'relative frequency (docs) [gr.d/gsc.d]':   row['gsc.d']                 ? row['gr.d']  / row['gsc.d']! : undefined,
 					'relative frequency (tokens) [gr.t/gsc.t]': row['gr.t']  && row['gsc.t'] ? row['gr.t']! / row['gsc.t']! : undefined,

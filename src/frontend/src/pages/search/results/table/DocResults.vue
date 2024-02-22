@@ -42,16 +42,13 @@ import * as CorpusStore from '@/store/search/corpus';
 import * as UIStore from '@/store/search/ui';
 
 import { getDocumentUrl } from '@/utils';
-import { BLDocResults, BLDocFields, BLHitSnippet, BLDocInfo } from '@/types/blacklabtypes';
+import { BLDocResults } from '@/types/blacklabtypes';
 import { NormalizedMetadataField } from '@/types/apptypes';
 
-import DocRowComponent, {DocRowData} from './newtable/DocRow.vue';
-import DocsTable from './newtable/DocsTable.vue';
+import DocsTable, {DocRowData} from '@/pages/search/results/table/DocsTable.vue';
 
 export default Vue.extend({
 	components: {
-		// DocRowComponent,
-		// DocRowHitsComponent,
 		DocsTable,
 	},
 	props: {
@@ -90,73 +87,6 @@ export default Vue.extend({
 			});
 		},
 		hasHits(): boolean { return !!this.results.summary.searchParam.patt; } // if there's a cql pattern there are hits.
-
-
-		// concordanceAnnotationId(): string { return UIStore.getState().results.shared.concordanceAnnotationId; },
-		// concordanceAsHtml(): boolean { return UIStore.getState().results.shared.concordanceAsHtml; },
-		// transformSnippets(): null|((s: BLHitSnippet) => void) { return UIStore.getState().results.shared.transformSnippets; },
-		// getDocumentSummary(): ((doc: BLDocInfo, fields: BLDocFields) => string) { return UIStore.getState().results.shared.getDocumentSummary; },
-
-		// textDirection: CorpusStore.get.textDirection,
-		// leftIndex(): number { return this.textDirection === 'ltr' ? 0 : 2; },
-		// rightIndex(): number { return this.textDirection === 'ltr' ? 2 : 0; },
-		// leftLabel(): string { return this.textDirection === 'ltr' ? 'Before' : 'After'; },
-		// rightLabel(): string { return this.textDirection === 'ltr' ? 'After' : 'Before'; },
-
-		// shownMetadataCols(): NormalizedMetadataField[] {
-		// 	const sortMetadataFieldMatch = this.sort && this.sort.match(/^-?field:(.+)$/);
-		// 	const sortMetadataField = sortMetadataFieldMatch ? sortMetadataFieldMatch[1] : undefined;
-
-		// 	const colsToShow = UIStore.getState().results.docs.shownMetadataIds;
-		// 	return (sortMetadataField && !colsToShow.includes(sortMetadataField) ? colsToShow.concat(sortMetadataField) : colsToShow)
-		// 	.map(id => CorpusStore.get.allMetadataFieldsMap()[id]);
-		// },
-		// specialMetaDisplayNames(): { [id: string]: string; } {
-		// 	const specialFields = CorpusStore.getState().corpus!.fieldInfo;
-		// 	const ret: {[id: string]: string} = {};
-		// 	Object.entries(specialFields).forEach(([type, fieldId]) => { switch (type as keyof BLDocFields) {
-		// 		case 'authorField': ret[fieldId!] = 'Author'; break;
-		// 		case 'dateField': ret[fieldId!] = 'Date'; break;
-		// 		case 'pidField': ret[fieldId!] = 'ID'; break;
-		// 		case 'titleField': ret[fieldId!] = 'Title'; break;
-		// 	}});
-
-		// 	return ret;
-		// },
-		// rows(): DocRowData[] {
-		// 	const docFields = this.results.summary.docFields;
-
-		// 	return this.results.docs.map(doc => {
-		// 		const { docPid: pid, docInfo: info } = doc;
-
-		// 		return {
-		// 			doc,
-		// 			href: getDocumentUrl(pid, this.results.summary.searchParam.patt || undefined, this.results.summary.searchParam.pattgapdata || undefined),
-		// 			summary: this.getDocumentSummary(info, docFields),
-		// 			type: 'doc'
-
-					// snippets: doc.snippets ? doc.snippets.map(s => {
-					// 	if (this.transformSnippets) {
-					// 		this.transformSnippets(s);
-					// 	}
-					// 	const snippet = snippetParts(s, this.concordanceAnnotationId);
-					// 	return {
-					// 		left: snippet[this.leftIndex],
-					// 		hit: snippet[1],
-					// 		right: snippet[this.rightIndex]
-					// 	};
-					// }) : [],
-					// summary: this.getDocumentSummary(info, docFields),
-					// href: getDocumentUrl(pid, this.results.summary.searchParam.patt || undefined, this.results.summary.searchParam.pattgapdata || undefined),
-					// hits: doc.numberOfHits,
-					// docPid: pid,
-					// doc
-		// 		};
-		// 	});
-		// },
-		// hasHits(): boolean {
-		// 	return this.results.docs.length > 0 && this.results.docs[0].numberOfHits != null;
-		// }
 	},
 	methods: {
 		changeSort(payload: string) {

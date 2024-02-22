@@ -30,8 +30,8 @@ export default Vue.extend({
 	props: {
 		data: Object as () => DocRowData,
 		/** Optional! */
-		metadata: Array as () => NormalizedMetadataField[],
-		colspan: Number
+		metadata: Array as () => NormalizedMetadataField[]|undefined,
+		colspan: Number as () => number|undefined,
 	},
 
 });

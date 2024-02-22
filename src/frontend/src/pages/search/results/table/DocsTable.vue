@@ -41,8 +41,11 @@ import * as CorpusStore from '@/store/search/corpus';
 import { NormalizedAnnotation, NormalizedMetadataField } from '@/types/apptypes';
 import { BLDocFields } from '@/types/blacklabtypes';
 
-import HitsTable, {HitRowData} from './HitsTable.vue';
-import DocRow, {DocRowData} from './DocRow.vue';
+import HitsTable, {HitRowData} from '@/pages/search/results/table/HitsTable.vue';
+import DocRow, {DocRowData} from '@/pages/search/results/table/DocRow.vue';
+
+export {DocRowData} from '@/pages/search/results/table/DocRow.vue';
+export {HitRowData} from '@/pages/search/results/table/HitsTable.vue';
 
 export default Vue.extend({
 	components: {HitsTable, DocRow},

@@ -21,12 +21,13 @@
 import Vue from 'vue';
 
 import frac2Percent from '@/mixins/fractionalToPercent';
-import { GroupRowData } from './groupTable';
-export { GroupRowData } from './groupTable';
+import { GroupRowData } from '@/pages/search/results/table/groupTable';
+export { GroupRowData } from '@/pages/search/results/table/groupTable';
 
 export default Vue.extend({
 	props: {
 		data: Object as () => GroupRowData,
+		// columns can represent 3 things: a barchart, indicated by an array of 2 keys, and a regular cell, indicated by a string
 		columns: Array as () => Array<keyof GroupRowData|[keyof GroupRowData, keyof GroupRowData]>,
 		maxima: Object as () => Record<keyof GroupRowData, number>,
 	},

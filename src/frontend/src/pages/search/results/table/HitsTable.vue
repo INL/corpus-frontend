@@ -116,11 +116,11 @@ import Vue from 'vue';
 import { NormalizedAnnotation, NormalizedMetadataField } from '@/types/apptypes';
 import { BLSearchParameters } from '@/types/blacklabtypes';
 
-import HitRow, {HitRowData} from './HitRow.vue'
-import HitRowDetails from './HitRowDetails.vue'
-import DocRow, {DocRowData} from './DocRow.vue';
+import HitRow, {HitRowData} from '@/pages/search/results/table/HitRow.vue'
+import HitRowDetails from '@/pages/search/results/table/HitRowDetails.vue'
+import DocRow, {DocRowData} from '@/pages/search/results/table/DocRow.vue';
 
-export {HitRowData} from './HitRow.vue';
+export {HitRowData} from '@/pages/search/results/table/HitRow.vue';
 
 /**
  * TODO maybe move transformation of blacklab results -> hit row into this component?

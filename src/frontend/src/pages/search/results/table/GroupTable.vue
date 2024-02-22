@@ -40,7 +40,7 @@
 					:maxima="maxima"
 					@click.native="$set(open, row.id, !open[row.id])"
 				/>
-				<GroupRowDetails :key="`${row.id}-concordances`"
+				<GroupRowDetails :key="`${row.id}-concordances`" v-show="open[row.id]"
 					:type="type"
 
 					:query="query"
@@ -52,6 +52,10 @@
 					:dir="dir"
 					:html="html"
 					:data="row"
+					:open="open[row.id]"
+
+					@openFullConcordances="$emit('openFullConcordances', row.id, row.displayname)"
+					@close="$set(open, row.id, false)"
 				/>
 			</template>
 		</tbody>
@@ -62,12 +66,14 @@
 <script lang="ts">
 import Vue from 'vue';
 
-import {GroupRowData, definitions} from './groupTable';
 import { BLSearchParameters } from '@/types/blacklabtypes';
-
-import GroupRow from './GroupRow.vue';
-import GroupRowDetails from './GroupRowDetails.vue';
 import { NormalizedAnnotation, NormalizedMetadataField } from '@/types/apptypes';
+
+import {GroupRowData, definitions} from '@/pages/search/results/table/groupTable';
+import GroupRow from '@/pages/search/results/table/GroupRow.vue';
+import GroupRowDetails from '@/pages/search/results/table/GroupRowDetails.vue';
+
+export {GroupRowData} from '@/pages/search/results/table/groupTable';
 
 export default Vue.extend({
 	components: {

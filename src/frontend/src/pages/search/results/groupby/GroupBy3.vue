@@ -97,6 +97,10 @@
 			</template>
 			<h4 v-else class="text-secondary">In this window you can apply grouping to the results. Click the Annotation or Metadata buttons on the left to get started.</h4>
 		</div>
+		<div v-if="viewGroup" style="color: #888; font-size: 85%;">
+			<button type="button" class="btn btn-sm btn-primary" :disabled="disabled" @click="$emit('viewgroupLeave')"><span class="fa fa-angle-double-right"></span> Go back to grouped view</button>
+		</div>
+
 	</div>
 </template>
 
@@ -173,11 +177,13 @@ export default Vue.extend({
 	computed: {
 		storeModule(): ResultsStore.ViewModule { return ResultsStore.getOrCreateModule(this.type); },
 		storeValue(): string[] { return this.storeModule.getState().groupBy.concat(this.storeModule.getState().groupByAdvanced); },
+		viewGroup(): string|null { return this.storeModule.getState().viewGroup; },
 		current(): GroupBySettings2|undefined { return this.localModel[this.currentIndex]; },
 		firstHitPreviewQuery(): BLSearchParameters|undefined {
 			const params = SearchModule.get.blacklabParameters();
 			if (!params) return undefined;
-			delete params.group;
+			if (!params.viewgroup)
+				delete params.group;
 			delete params.includetokencount;
 			delete params.listvalues;
 			params.listmetadatavalues = '__nothing__';
@@ -312,13 +318,13 @@ export default Vue.extend({
 		humanizeGroupBy(g: GroupBySettings2): string {
 			let r = '';
 			if (g.type === 'annotation') {
-				const position = g.position === 'H' ? 'in' : g.position === 'L' ? 'before' : g.position === 'R' ? 'after' : ''; // position | '' when using group
-				let wordcount = position ? g.end != null ? g.end + '' : 'all' : undefined; // number | 'all' | undefined when using group
+				const position = g.position === 'H' ? 'in' : g.position === 'L' ? 'before' : g.position === 'R' ? 'after' : ''; // position | '' when using capture
+				let wordcount = position ? g.end != null ? g.end + '' : 'all' : undefined; // number | 'all' | undefined when using capture
 
 				// when start is not 1, prepend it. ex. 3 --> 1-3
 				if (wordcount != null && g.start !== 1) wordcount = g.start + '-' + wordcount;
 
-				r = `${g.annotation}${wordcount != null ? `(${wordcount})` : ''} ${position + ' '}hit`;
+				r = `${g.annotation}${wordcount != null ? `(${wordcount})` : ''} ${position ? position + ' hit' : 'in capture ' + g.groupname}`;
 			}
 			else r= `document ${g.field}`;
 			console.log(g, r);

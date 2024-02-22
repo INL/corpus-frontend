@@ -16,8 +16,8 @@
 import Vue from 'vue';
 
 // @ts-ignore
-import {ReactiveDepTree} from "@/../node_modules/reactive-dep-tree/dist/reactive-dep-tree.umd.js";
-import {HitRowData} from "@/pages/search/results/table/HitRow.vue"
+import {ReactiveDepTree} from '@/../node_modules/reactive-dep-tree/dist/reactive-dep-tree.umd.js';
+import {HitRowData} from '@/pages/search/results/table/HitRow.vue';
 
 const conllExample = `# text = I am eating a pineapple
     1	I	_	PRON	_	_	2	suj	_	_
@@ -38,9 +38,8 @@ export default Vue.extend({
 	}),
 	computed: {
 		conllu(): string {
-			debugger;
 			const hit = this.hit.hit;
-
+			if (!('start' in hit)) return '';
 
 			const word = hit.match.word
 			const rel = hit.match.deprel

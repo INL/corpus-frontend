@@ -28,7 +28,7 @@
 
 				<SelectPicker :options="['GroupBy1', 'GroupBy3']" v-model="selectedGroupBy" />
 
-				<component :is="selectedGroupBy"
+				<GroupBy3 :is="selectedGroupBy"
 					:type="id"
 					:results="results"
 					:disabled="!!request"

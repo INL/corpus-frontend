@@ -15,7 +15,7 @@
 				:hitId="data.hit_id"
 			/>
 		</td>
-		<td v-if="data.doc" v-for="meta in metadata" :key="meta">{{data.doc.docInfo[meta] ? data.doc.docInfo[meta].join(', ') : ''}}</td>
+		<td v-if="data.doc" v-for="meta in metadata" :key="meta.id">{{data.doc.docInfo[meta.id] ? data.doc.docInfo[meta.id].join(', ') : ''}}</td>
 	</tr>
 
 </template>
@@ -30,7 +30,7 @@ import { GlossFieldDescription } from '@/store/search/form/glossStore';
 import { HitContext, NormalizedAnnotation, NormalizedMetadataField } from '@/types/apptypes';
 import { snippetParts } from '@/utils';
 
-import HitContextComponent from './HitContext.vue';
+import HitContextComponent from '@/pages/search/results/table/HitContext.vue';
 
 export type HitRowData = {
 	type: 'hit';
@@ -53,7 +53,7 @@ export default Vue.extend({
 		data: Object as () => HitRowData,
 		mainAnnotation: Object as () => NormalizedAnnotation,
 		otherAnnotations: Array as () => NormalizedAnnotation[]|undefined,
-		metadata: Array as () => NormalizedMetadataField[],
+		metadata: Array as () => NormalizedMetadataField[]|undefined,
 		dir: String as () => 'ltr'|'rtl',
 		html: Boolean,
 	},
@@ -62,7 +62,7 @@ export default Vue.extend({
 			return snippetParts(this.data.hit, this.mainAnnotation.id, this.dir) || [];
 		},
 		otherContexts(): HitContext[]|undefined {
-			return this.otherAnnotations?.map(a => snippetParts(this.data.hit, a.id, this.dir));
+			return this.otherAnnotations?.map(a => snippetParts(this.data.hit, a.id, this.dir, false));
 		},
 	},
 

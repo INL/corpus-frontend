@@ -36,7 +36,7 @@
 				<HitContextComponent tag="span" :dir="dir" :data="context.after" :html="html"/>
 			</p>
 
-			<div v-if="otherAnnotations.length" style="overflow: auto; max-width: 100%; padding-bottom: 15px;">
+			<div v-if="otherAnnotations && otherAnnotations.length" style="overflow: auto; max-width: 100%; padding-bottom: 15px;">
 				<table class="concordance-details-table">
 					<thead>
 						<tr>
@@ -67,6 +67,7 @@ import { getDocumentUrl, snippetParts } from '@/utils';
 import { HitRowData } from './HitRow.vue';
 
 import * as UIStore from '@/store/search/ui';
+import * as CorpusStore from '@/store/search/corpus';
 import * as Api from '@/api';
 import { debugLog } from '@/utils/debug';
 
@@ -82,8 +83,8 @@ export default Vue.extend({
 		html: Boolean,
 		colspan: Number,
 		dir: String as () => 'ltr'|'rtl',
-		mainAnnotation: Object as () => NormalizedAnnotation,
-		otherAnnotations: Array as () => NormalizedAnnotation[],
+		// mainAnnotation: Object as () => NormalizedAnnotation,
+		// otherAnnotations: Array as () => NormalizedAnnotation[]|undefined,
 
 		open: Boolean
 	},
@@ -96,6 +97,15 @@ export default Vue.extend({
 		initialized: false,
 	}),
 	computed: {
+		mainAnnotation(): NormalizedAnnotation {
+			return CorpusStore.get.allAnnotationsMap()[UIStore.getState().results.shared.concordanceAnnotationId];
+		},
+		otherAnnotations(): NormalizedAnnotation[] {
+			const all = CorpusStore.get.allAnnotationsMap();
+			return (UIStore.getState().results.shared.detailedAnnotationIds || []).map(id => all[id]);
+		},
+
+
 		href(): string|undefined {
 			// we don't always have full-fledged hit objects here.
 			// If we're rendering the hits in a document search response
@@ -105,7 +115,7 @@ export default Vue.extend({
 			return getDocumentUrl(this.data.doc.docPid, this.query?.patt, this.query?.pattgapdata, this.data.hit.start, PAGE_SIZE, this.data.hit.start);
 		},
 		otherContexts(): HitContext[] {
-			return this.otherAnnotations.map(a => snippetParts(this.data.hit, a.id, this.dir) || []);
+			return (this.otherAnnotations || []).map(a => snippetParts(this.data.hit, a.id, this.dir, false) || []);
 		},
 	},
 	watch: {
@@ -132,7 +142,7 @@ export default Vue.extend({
 				.getSnippet(INDEX_ID, this.data.doc.docPid, this.data.hit.start, this.data.hit.end, concordanceSize)
 				.then(s => {
 					transformSnippets?.(s);
-					this.context = snippetParts(s, this.mainAnnotation.id, this.dir);
+					this.context = snippetParts({matchInfos: this.data.hit.matchInfos, ...s}, this.mainAnnotation.id, this.dir);
 
 					// Run plugins defined for this corpus (ex. a copy citation to clipboard button, or an audio player/text to speech button)
 					this.addons = addons.map(a => a({

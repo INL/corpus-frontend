@@ -208,6 +208,7 @@ export const tableHeaders: {
 	default: {
 		'displayname': {
 			label: 'Group',
+			title: 'Group name',
 			sortProp: 'identity'
 		},
 		'average document length [gr.t/gr.d]': {

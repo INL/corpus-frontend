@@ -9,120 +9,6 @@
 		<slot name="groupBy"/>
 		<slot name="pagination"/>
 
-		<pre v-if="results">{{ {...results.hits[0], left: undefined, right: undefined, match: undefined} }}</pre>
-
-		<!-- <table class="hits-table">
-			<thead>
-				<tr class="rounded">
-					<th class="text-right">
-						<span v-if="sortableAnnotations.length" class="dropdown">
-							<a role="button" data-toggle="dropdown" :class="['dropdown-toggle', {'disabled': disabled}]">
-								{{leftLabel}} hit
-								<span class="caret"/>
-							</a>
-
-							<ul class="dropdown-menu" role="menu">
-								<li v-for="annotation in sortableAnnotations" :key="annotation.id" :class="{'disabled': disabled}">
-									<a @click="changeSort(`${beforeField}:${annotation.id}`)" class="sort" role="button">{{annotation.displayName}} <Debug>(id: {{annotation.id}})</Debug></a>
-								</li>
-							</ul>
-						</span>
-						<template v-else>{{leftLabel}} hit</template>
-					</th>
-
-					<th class="text-center">
-						<span v-if="sortableAnnotations.length" class="dropdown">
-							<a role="button" data-toggle="dropdown" :class="['dropdown-toggle', {'disabled': disabled}]">
-								Hit
-								<span class="caret"/>
-							</a>
-
-							<ul class="dropdown-menu" role="menu">
-								<li v-for="annotation in sortableAnnotations" :key="annotation.id" :class="{'disabled': disabled}">
-									<a @click="changeSort(`hit:${annotation.id}`)" class="sort" role="button">{{annotation.displayName}} <Debug>(id: {{annotation.id}})</Debug></a>
-								</li>
-							</ul>
-						</span>
-						<template v-else>Hit</template>
-					</th>
-
-					<th class="text-left">
-						<span v-if="sortableAnnotations.length" class="dropdown">
-							<a role="button" data-toggle="dropdown" :class="['dropdown-toggle', {'disabled': disabled}]">
-								{{rightLabel}} hit
-								<span class="caret"/>
-							</a>
-
-							<ul class="dropdown-menu" role="menu">
-								<li v-for="annotation in sortableAnnotations" :key="annotation.id" :class="{'disabled': disabled}">
-									<a @click="changeSort(`${afterField}:${annotation.id}`)" :class="['sort', {'disabled':disabled}]" role="button">{{annotation.displayName}} <Debug>(id: {{annotation.id}})</Debug></a>
-								</li>
-							</ul>
-						</span>
-						<template v-else>{{rightLabel}} hit</template>
-					</th>
-					<th v-for="annotation in shownAnnotationCols" :key="annotation.id">
-						<a v-if="annotation.hasForwardIndex"
-							role="button"
-							:class="['sort', {'disabled':disabled}]"
-							:title="`Sort by ${annotation.displayName}`"
-							@click="changeSort(`hit:${annotation.id}`)"
-						>
-							{{annotation.displayName}} <Debug>(id: {{annotation.id}})</Debug>
-						</a>
-						<template v-else>{{annotation.displayName}}</template>
-					</th>
-					<th v-for="meta in shownMetadataCols" :key="meta.id">
-						<a
-							role="button"
-							:class="['sort', {'disabled':disabled}]"
-							:title="`Sort by ${meta.displayName}`"
-							@click="changeSort(`field:${meta.id}`)"
-						>
-							{{meta.displayName}} <Debug>(id: {{meta.id}})</Debug>
-						</a>
-					</th>
-					<th v-for="(fieldName, i) in shownGlossCols" :key="i"><a class='sort gloss_field_heading' :title="`User gloss field: ${fieldName}`">{{ fieldName }}</a></th>
-				</tr>
-			</thead>
-
-			<tbody>
-				<template v-for="(rowData, index) in rows">
-					<DocRowComponent v-if="rowData.type === 'doc' && showTitles"
-						:key="index"
-						:data="rowData"
-						:colspan="numColumns"
-					/>
-					<template v-else-if="rowData.type === 'hit'">
-						<HitRowComponent
-							:key="index"
-							:class="{open: citations[index] && citations[index].open}"
-
-							:data="rowData"
-							:mainAnnotation="concordanceAnnotationId"
-							:otherAnnotations="shownAnnotationCols"
-							:html="concordanceAsHtml"
-							:metadata="shownMetadataCols"
-
-							@click.native="showCitation(index)"
-						/>
-						<HitContextRowComponent v-if="citations[index] && citations[index].open"
-							:key="index + '-citation'"
-							:class="['concordance-details', {'open': citations[index].open}]"
-
-							:data="citations[index]"
-							:html="concordanceAsHtml"
-							:colspan="numColumns"
-							:dir="textDirection"
-							:mainAnnotation="concordanceAnnotationId"
-							:otherAnnotations="shownConcordanceAnnotationRows"
-						/>
-					</template>
-
-
-				</template>
-			</tbody>
-		</table> -->
 		<HitsTable
 			:query="results.summary.searchParam"
 			:mainAnnotation="mainAnnotation"
@@ -138,9 +24,10 @@
 
 		<hr>
 
-		<slot name="pagination"/>
+		<!-- TODO align pagination etc.-->
+		<div style="display: flex; align-items: center; ">
+			<slot name="pagination"/>
 
-		<div class="text-right">
 			<slot name="sort"/>
 			<button
 				type="button"
@@ -163,47 +50,28 @@ import Vue from 'vue';
 import * as CorpusStore from '@/store/search/corpus';
 import * as GlossModule from '@/store/search/form/glossStore' // Jesse
 import * as UIStore from '@/store/search/ui';
-import { getDocumentUrl } from '@/utils';
-import * as Api from '@/api';
+import { getDocumentUrl, snippetParts } from '@/utils';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
 
-import {debugLog, show} from '@/utils/debug';
-
 import GlossField from '@/pages/search//form/concept/GlossField.vue' // Jesse
 
-//@ts-ignore
-// import {ReactiveDepTree} from "@/../node_modules/reactive-dep-tree/dist/reactive-dep-tree.umd.js";
-// import DepTree from "@/pages/search/results/table/DepTree.vue"
+import {DocRowData} from './DocRow.vue';
 
-// import HitRowComponent, {HitRowData} from './HitRow.vue';
-import {DocRowData} from './newtable/DocRow.vue';
-// import HitContextRowComponent, {CitationRowData} from './HitContextRow.vue';
-
-import HitsTable, {HitRowData} from './newtable/HitsTable.vue';
+import HitsTable, {HitRowData} from './HitsTable.vue';
 
 export default Vue.extend({
 	components: {
 	 	GlossField,
-		// ReactiveDepTree,
-		// DepTree,
-		// HitRowComponent,
-		// HitContextRowComponent,
-		// DocRowComponent,
 		HitsTable
 	},
 	props: {
 		results: Object as () => BLTypes.BLHitResults,
 		sort: String as () => string|null,
-		// showTitles: Boolean as () => boolean,
 		disabled: Boolean
 	},
 	data: () => ({
-		// citations: {} as {
-		// 	[key: number]: CitationRowData;
-		// },
-		// pinnedTooltip: null as null|number,
 		showTitles: true
 	}),
 	computed: {
@@ -304,6 +172,10 @@ export default Vue.extend({
 
 		transformSnippets(): null|((snippet: BLTypes.BLHitSnippet)=> void){ return UIStore.getState().results.shared.transformSnippets; },
 		getDocumentSummary(): ((doc: BLTypes.BLDocInfo, fields: BLTypes.BLDocFields) => any) { return UIStore.getState().results.shared.getDocumentSummary },
+
+		firstContext(): any {
+			return snippetParts(this.results.hits[0], this.concordanceAnnotationId, this.textDirection);
+		}
 	},
 	methods: {
 		changeSort(payload: string) {
@@ -311,66 +183,7 @@ export default Vue.extend({
 				this.$emit('sort', payload === this.sort ? '-'+payload : payload);
 			}
 		},
-		// showCitation(index: number /*row: HitRow*/) {
-		// 	debugger;
-		// 	if (this.citations[index]) {
-		// 		this.citations[index].open = !this.citations[index].open;
-		// 		return;
-		// 	}
-
-		// 	const row = this.rows[index] as HitRowData;
-		// 	const citation: CitationRowData = Vue.set(this.citations, index, {
-		// 		open: true,
-		// 		loading: true,
-		// 		citation: null,
-		// 		error: null,
-		// 		hit: this.results.hits[index],
-		// 		href: getDocumentUrl(
-		// 			row.hit.docPid,
-		// 			this.results.summary.searchParam.patt || undefined,
-		// 			this.results.summary.searchParam.pattgapdata || undefined,
-		// 			row.hit.start,
-		// 			UIStore.getState().results.shared.pageSize,
-		// 			row.hit.start),
-		// 		addons: []
-		// 	});
-
-		// 	ga('send', 'event', 'results', 'snippet/load', row.hit.docPid);
-
-		// 	Api.blacklab
-		// 	.getSnippet(INDEX_ID, row.hit.docPid, row.hit.start, row.hit.end, this.concordanceSize)
-		// 	.then(s => {
-		// 		if (this.transformSnippets) {
-		// 			this.transformSnippets(s);
-		// 		}
-		// 		citation.citation = s;
-		// 		// Run plugins defined for this corpus (ex. a copy citation to clipboard button, or an audio player/text to speech button)
-		// 		citation.addons = UIStore.getState().results.hits.addons
-		// 			.map(a => a({
-		// 				docId: row.hit.docPid,
-		// 				corpus: INDEX_ID,
-		// 				document: this.results.docInfos[row.hit.docPid],
-		// 				documentUrl: citation.href,
-		// 				wordAnnotationId: this.concordanceAnnotationId,
-		// 				dir: this.textDirection,
-		// 				citation: citation.citation!
-		// 			}))
-		// 			.filter(a => a != null);
-		// 	})
-		// 	.catch((err: AppTypes.ApiError) => {
-		// 		citation.error = UIStore.getState().global.errorMessage(err, 'snippet');
-		// 		debugLog(err.stack);
-		// 		ga('send', 'exception', { exDescription: err.message, exFatal: false });
-		// 	})
-		// 	.finally(() => citation.loading = false);
-		// },
 	},
-	watch: {
-		// results(n: BLTypes.BLHitResults, o: BLTypes.BLHitResults) {
-		// 	this.citations = {};
-		// 	// this.pinnedTooltip = null;
-		// },
-	}
 });
 </script>
 

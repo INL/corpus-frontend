@@ -4,7 +4,7 @@
 			<div class="well-light">
 				<div class="concordance-controls clearfix">
 					<button type="button" class="btn btn-sm btn-primary open-concordances" :disabled="disabled" @click="$emit('openFullConcordances')"><span class="fa fa-angle-double-left"></span> View detailed concordances</button>
-					<button type="button" v-if="!concordances.done" :disabled="concordances.loading" class="btn btn-sm btn-default" @click="concordances.next">
+					<button type="button" v-if="!concordances.done" :disabled="concordances.loading" class="btn btn-sm btn-default" @click="concordances.next()">
 						<template v-if="concordances.loading">
 							<span class="fa fa-spin fa-spinner"></span> Loading...
 						</template>
@@ -16,20 +16,31 @@
 
 				<div v-if="concordances.error != null" class="text-danger" v-html="concordances.error"></div>
 
-				<HitsTable v-if="type === 'hits'"
-					:data="concordances.concordances"
+				<HitsTable v-if="type === 'hits' && concordances.results.length"
+					:data="concordances.results"
 					:mainAnnotation="mainAnnotation"
 					:dir="dir"
 					:html="html"
 				/>
-				<DocsTable v-else
+				<DocsTable v-else-if="type === 'docs' && concordances.results.length"
 					:mainAnnotation="mainAnnotation"
 					:metadata="metadata"
 					:dir="dir"
 					:html="html"
-					:data="concordances.concordances"
+					:data="concordances.results"
 				/>
-				<!-- <DocRowDocsComponent v-else :data="concordances.concordances"/> -->
+				<div class="concordance-controls clearfix" v-if="concordances.results.length > 10">
+					<button type="button" class="btn btn-sm btn-primary open-concordances" :disabled="disabled" @click="$emit('openFullConcordances')"><span class="fa fa-angle-double-left"></span> View detailed concordances</button>
+					<button type="button" v-if="!concordances.done" :disabled="concordances.loading" class="btn btn-sm btn-default" @click="concordances.next()">
+						<template v-if="concordances.loading">
+							<span class="fa fa-spin fa-spinner"></span> Loading...
+						</template>
+						<template v-else>Load more concordances</template>
+					</button>
+
+					<button type="button" class="close close-concordances" title="close" @click="$emit('close')"><span>&times;</span></button>
+				</div>
+
 			</div>
 		</td>
 	</tr>
@@ -39,18 +50,14 @@
 import Vue from 'vue';
 
 import frac2Percent from '@/mixins/fractionalToPercent';
-import ConcordanceGetter from '@/pages/search/results/table/ConcordanceGetter';
+import PaginatedGetter from '@/pages/search/results/table/ConcordanceGetter';
 import {blacklab} from '@/api';
-import { BLHit, BLDoc, BLSearchParameters, BLHitResults, BLDocResults } from '@/types/blacklabtypes';
+import { BLSearchParameters, BLHitResults, BLDocResults } from '@/types/blacklabtypes';
 
-// import DocRowHitsComponent from '@/pages/search/results/table/DocRowHits.vue';
-// import DocRowDocsComponent from '@/pages/search/results/table/DocRowDocs.vue';
-// import { GroupRowdata } from '@/pages/search/results/table/groupTable';
-// import { HitRowData } from '@/pages/search/results/table/newtable/HitRow.vue';
-import HitsTable, {HitRowData} from './HitsTable.vue'
-import DocsTable, {DocRowData} from './DocsTable.vue';
+import HitsTable, {HitRowData} from '@/pages/search/results/table/HitsTable.vue'
+import DocsTable, {DocRowData} from '@/pages/search/results/table/DocsTable.vue';
 import { NormalizedAnnotation, NormalizedMetadataField } from '@/types/apptypes';
-import { GroupRowData } from './groupTable';
+import { GroupRowData } from '@/pages/search/results/table/GroupTable.vue';
 
 import * as UIStore from '@/store/search/ui';
 import * as CorpusStore from '@/store/search/corpus';
@@ -74,9 +81,10 @@ export default Vue.extend({
 		dir: String as () => 'ltr'|'rtl',
 		html: Boolean,
 		disabled: Boolean,
+		open: Boolean
 	},
 	data: () => ({
-		concordances: null as any as ConcordanceGetter<HitRowData|DocRowData>,
+		concordances: null as any as PaginatedGetter<HitRowData|DocRowData>,
 	}),
 	methods: {
 		frac2Percent
@@ -85,7 +93,7 @@ export default Vue.extend({
 		const getDocumentSummary = UIStore.getState().results.shared.getDocumentSummary;
 		const fieldInfo = CorpusStore.getState().corpus!.fieldInfo;
 
-		this.concordances = new ConcordanceGetter<HitRowData|DocRowData>((first, number) => {
+		this.concordances = new PaginatedGetter<HitRowData|DocRowData>((first, number) => {
 			// make a copy of the parameters so we don't clear them for all components using the summary
 			const requestParameters: BLSearchParameters = Object.assign({}, this.query, {
 				// Do not clear sample/samplenum/samplecount,
@@ -126,6 +134,11 @@ export default Vue.extend({
 				}
 			}
 		}, this.data.size)
+	},
+	watch: {
+		open() {
+			if (this.open && !this.concordances.done) this.concordances.next();
+		}
 	}
 });
 </script>

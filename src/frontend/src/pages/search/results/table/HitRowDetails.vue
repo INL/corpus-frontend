@@ -1,40 +1,42 @@
 <template>
 	<tr class="concordance-details" v-if="open">
 		<td :colspan="colspan">
-			<!-- <DepTree :hit="rowData"/> -->
 			<p v-if="loading" :class="{'text-danger': !!error}">
 				<span class="fa fa-spinner fa-spin"></span> Loading...
 			</p>
 			<p v-else-if="error" class="text-danger">
 				<span class="fa fa-exclamation-triangle"></span> <span v-html="error"></span>
 			</p>
-			<p v-else-if="context"> <!-- check if context is set! We don't always have one. -->
-				<template v-for="addon in addons">
-					<component v-if="addon.component"
-						:is="addon.component"
-						:key="addon.name"
-						:class="`addon addon-${addon.name} ${(addon.props && addon.props.class) || ''}`"
-						v-bind="addon.props"
-						v-on="addon.listeners"
-					>
-						<div v-if="addon.content" v-html="addon.content"></div>
-					</component>
+			<template v-else-if="context"> <!-- check if context is set! We don't always have one. -->
+				<DepTree :context="context" :data="data"/>
+				<p>
+					<template v-for="addon in addons">
+						<component v-if="addon.component"
+							:is="addon.component"
+							:key="addon.name"
+							:class="`addon addon-${addon.name} ${(addon.props && addon.props.class) || ''}`"
+							v-bind="addon.props"
+							v-on="addon.listeners"
+						>
+							<div v-if="addon.content" v-html="addon.content"></div>
+						</component>
 
-					<component v-else
-						:is="addon.element || 'div'"
-						:key="addon.name"
-						:class="`addon addon-${addon.name} ${(addon.props && addon.props.class) || ''}`"
-						v-bind="addon.props"
-						v-on="addon.listeners"
-						v-html="addon.content"
-					/>
-				</template>
+						<component v-else
+							:is="addon.element || 'div'"
+							:key="addon.name"
+							:class="`addon addon-${addon.name} ${(addon.props && addon.props.class) || ''}`"
+							v-bind="addon.props"
+							v-on="addon.listeners"
+							v-html="addon.content"
+						/>
+					</template>
 
-				<HitContextComponent tag="span" :dir="dir" :data="context.before" :html="html"/>
-				<HitContextComponent tag="strong" :dir="dir" :data="context.match" :html="html"/>
-				<a v-if="href" :href="href" title="Go to hit in document" target="_blank"><sup class="fa fa-link" style="margin-left: -5px;"></sup></a>
-				<HitContextComponent tag="span" :dir="dir" :data="context.after" :html="html"/>
-			</p>
+					<HitContextComponent tag="span" :dir="dir" :data="context.before" :html="html"/>
+					<HitContextComponent tag="strong" :dir="dir" :data="context.match" :html="html"/>
+					<a v-if="href" :href="href" title="Go to hit in document" target="_blank"><sup class="fa fa-link" style="margin-left: -5px;"></sup></a>
+					<HitContextComponent tag="span" :dir="dir" :data="context.after" :html="html"/>
+				</p>
+			</template>
 
 			<div v-if="otherAnnotations && otherAnnotations.length" style="overflow: auto; max-width: 100%; padding-bottom: 15px;">
 				<table class="concordance-details-table">
@@ -62,9 +64,11 @@ import Vue from 'vue';
 import * as BLTypes from '@/types/blacklabtypes';
 
 import { HitContext, NormalizedAnnotation } from '@/types/apptypes';
-import HitContextComponent from './HitContext.vue';
-import { getDocumentUrl, snippetParts } from '@/utils';
-import { HitRowData } from './HitRow.vue';
+import HitContextComponent from '@/pages/search/results/table/HitContext.vue';
+import { getDocumentUrl } from '@/utils';
+import { snippetParts } from '@/utils/hit-highlighting';
+import { HitRowData } from '@/pages/search/results/table/HitRow.vue';
+import DepTree from '@/pages/search/results/table/DepTree.vue';
 
 import * as UIStore from '@/store/search/ui';
 import * as CorpusStore from '@/store/search/corpus';
@@ -75,6 +79,7 @@ import { debugLog } from '@/utils/debug';
 export default Vue.extend({
 	components: {
 		HitContextComponent,
+		DepTree
 	},
 	props: {
 		data: Object as () => HitRowData,

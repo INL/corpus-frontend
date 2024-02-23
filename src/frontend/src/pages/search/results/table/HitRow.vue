@@ -28,7 +28,7 @@ import * as BLTypes from '@/types/blacklabtypes';
 import GlossField from '@/pages/search/form/concept/GlossField.vue';
 import { GlossFieldDescription } from '@/store/search/form/glossStore';
 import { HitContext, NormalizedAnnotation, NormalizedMetadataField } from '@/types/apptypes';
-import { snippetParts } from '@/utils';
+import { snippetParts } from '@/utils/hit-highlighting';
 
 import HitContextComponent from '@/pages/search/results/table/HitContext.vue';
 

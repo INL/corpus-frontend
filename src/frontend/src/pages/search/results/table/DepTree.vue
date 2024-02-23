@@ -1,13 +1,18 @@
 <template>
-	<div style="border-style: solid; padding: 1em; border-width: 1pt; border-color: lightblue;">
-		<reactive-dep-tree v-if="renderComponent"
-			ref="tree"
-			interactive="true"
-			minimal="true"
-			:conll="conllu" >
-		</reactive-dep-tree>
+	<div v-if="hasRelations" style="border-style: solid; padding: 1em; border-width: 1pt; border-color: lightblue;" >
+		<reactive-dep-tree
+			minimal
+			interactive
+			conll="
+# text = I am eating a pineapple
+1	I	_	PRON	_	_	2	suj	_	_
+2	am	be	AUX	_	_	0	root	_	_
+3	eating	_	VERBtastic	_	_	2	aux	_	highlight=red
+4	a	_	DET	_	_	5	det	_	_
+5	pineapple	_	NOUN	_	_	3	obj	_	_
+"></reactive-dep-tree>
 
-		Show only matched relations: <input type="checkbox" id="checkbox" @change="forceRender" v-model="showOnlyMatchedRels"/>
+		Show only matched relations: <input type="checkbox" id="checkbox" @change="$forceUpdate()" v-model="showOnlyMatchedRels"/>
 	</div>
 </template>
 
@@ -28,42 +33,61 @@ const conllExample = `# text = I am eating a pineapple
 `
 
 export default Vue.extend({
+	components: {
+		ReactiveDepTree
+	},
 	props: {
-		hit: Object as () => HitRowData,
-		index: String
+		data: Object as () => HitRowData,
 	},
 	data: () => ({
 		showOnlyMatchedRels : true,
-		renderComponent: true
 	}),
 	computed: {
+		hasRelations(): boolean {
+			return !!this.data.hit.matchInfos?.captured_rels?.infos?.length;
+		},
 		conllu(): string {
-			const hit = this.hit.hit;
-			if (!('start' in hit)) return '';
+			const hit = this.data.hit;
+			if (!('start' in hit || !hit.matchInfos)) return '';
 
-			const word = hit.match.word
-			const rel = hit.match.deprel
-			const wordnum = hit.match.wordnum
-			const lemma = hit.match.lemma
-			const pos = hit.match.pos
-			const xpos = hit.match.xpos
-			const start: number = +wordnum[0]
-			//console.log(JSON.stringify(row.matchInfos))
-			//console.log(row.start)
-			interface x  { [key: number]: string }
-			const foundRels : x =  {}
-			const foundHeads : x = {}
-			if (('matchInfos' in hit) && (hit.matchInfos != null)) {
-				Object.values(hit.matchInfos).map(v => {
-					if (v.type == 'relation') {
-						const rel = v.relType.replace("dep::","")
-						const wordnum = v.targetStart - hit.start + 1
-						const headnum = v.sourceStart - hit.start + 1
-						foundRels[wordnum] = rel
-						foundHeads[headnum]  = rel
-					}
-				})
-			}
+			// TODO make the relation dynamic.
+
+			// connlu is a bottom-up format?
+			// i.e. everything points to the parent, not to the children.
+
+			// ID   FORM     LEMMA   UPOS    XPOS     FEATS  HEAD    DEPREL   DEPS   MISC
+			return `
+			# text = I am eating a pineapple
+			1    I         _      PRON    _        _      2       suj      _      _
+			2    am        _      AUX     _        _      0       root     _      _
+			3    eating    _      VERB    _        _      2       aux      _      highlight=red
+			4    a         _      DET     _        _      5       det      _      _
+			5    pineapple _      NOUN    _        _      3       obj      _      _
+			`
+
+			// const word = hit.match.word
+			// const rel = hit.match.deprel
+			// const wordnum = hit.match.wordnum
+			// const lemma = hit.match.lemma
+			// const pos = hit.match.pos
+			// const xpos = hit.match.xpos
+			// const start: number = +wordnum[0]
+			// //console.log(JSON.stringify(row.matchInfos))
+			// //console.log(row.start)
+			// interface x  { [key: number]: string }
+			// const foundRels : x =  {}
+			// const foundHeads : x = {}
+			// if (('matchInfos' in hit) && (hit.matchInfos != null)) {
+			// 	Object.values(hit.matchInfos).map(v => {
+			// 		if (v.type == 'relation') {
+			// 			const rel = v.relType.replace("dep::","")
+			// 			const wordnum = v.targetStart - hit.start + 1
+			// 			const headnum = v.sourceStart - hit.start + 1
+			// 			foundRels[wordnum] = rel
+			// 			foundHeads[headnum]  = rel
+			// 		}
+			// 	})
+			// }
 
 			// ID   FORM     LEMMA   UPOS    XPOS     FEATS  HEAD    DEPREL   DEPS   MISC
 			// # text = I am eating a pineapple
@@ -90,39 +114,30 @@ export default Vue.extend({
 			*/
 
 			// `# sent_id = s${index}` + "\n" +
-			const conllu = `# text = '${word.join(' ')}\n${
-				hit.match.head.map((h, i) => {
-					const relIsMatched = i+1 in foundRels
-					const headIsMatched = i+1 in foundHeads
-					const headInHit = wordnum.includes(h)
+			// const conllu = `# text = '${word.join(' ')}\n${
+			// 	hit.match.head.map((h, i) => {
+			// 		const relIsMatched = i+1 in foundRels
+			// 		const headIsMatched = i+1 in foundHeads
+			// 		const headInHit = wordnum.includes(h)
 
-					const showRel = headInHit && (relIsMatched || !this.showOnlyMatchedRels)
-					//console.log(`i: ${i}, headInHit: ${headInHit}, relIsMatched: ${relIsMatched}, onlyMatchedRelations: ${onlyMatchedRelations}, showRel: ${showRel}`)
-					const h1 = showRel?  +h -start + 1: '_';
-					const rel1 = showRel? rel[i] : '_';
-					const misc = (relIsMatched||headIsMatched)?  'highlight=red' : '_';
-					return '    ' + Array(+wordnum[i] - start + 1, word[i], lemma[i], pos[i], xpos[i], '_', h1, rel1, '_', misc).join("\t")
-				}).join("\n")
-			}`;
+			// 		const showRel = headInHit && (relIsMatched || !this.showOnlyMatchedRels)
+			// 		//console.log(`i: ${i}, headInHit: ${headInHit}, relIsMatched: ${relIsMatched}, onlyMatchedRelations: ${onlyMatchedRelations}, showRel: ${showRel}`)
+			// 		const h1 = showRel?  +h -start + 1: '_';
+			// 		const rel1 = showRel? rel[i] : '_';
+			// 		const misc = (relIsMatched||headIsMatched)?  'highlight=red' : '_';
+			// 		return '    ' + Array(+wordnum[i] - start + 1, word[i], lemma[i], pos[i], xpos[i], '_', h1, rel1, '_', misc).join("\t")
+			// 	}).join("\n")
+			// }`;
 			//console.log('matched targets:' + JSON.stringify(foundRels))
 			//console.log('matched sources:' + JSON.stringify(foundHeads))
 			//console.log(conllu)
-			return conllu;
+			// return conllu;
 		}
 
 	},
-	methods: {
-		async forceRender() {
-			// Remove MyComponent from the DOM
-			this.renderComponent = false;
-
-			// Then, wait for the change to get flushed to the DOM
-			await this.$nextTick();
-
-			// Add MyComponent back in
-			this.renderComponent = true;
-		},
-	},
+	mounted() {
+		this.$forceUpdate();
+	}
 });
 </script>
 

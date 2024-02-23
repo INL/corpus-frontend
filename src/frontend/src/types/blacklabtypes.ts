@@ -441,13 +441,7 @@ export interface BLHitSnippetPart {
 	[key: string]: string[]; // Jesse: Need something for the captures here
 }
 
-export interface BLCaptureGroup  { // Jesse
-	name: string;
-	start: number;
-	end: number;
-}
-
-/** Whatever BlackLab returns. There's a couple versions, we do some massaging to unify them. */
+/** Whatever BlackLab returns. There's a couple versions, we do some massaging in our blacklab api class/object to unify them. */
 export type BLHitSnippetApi = ({
 	left?: BLHitSnippetPart;
 	right?: BLHitSnippetPart;
@@ -460,8 +454,16 @@ export type BLHitSnippetApi = ({
 	end: number;
 }
 
+/** When tagging part of the query like a:[] returns the start and end of the [] */
 export interface BLRelationMatchSpan {
 	type: 'span';
+	start: number;
+	end: number;
+}
+
+/** Something like "within <s/>" */
+export interface BLRelationMatchTag {
+	type: 'tag';
 	start: number;
 	end: number;
 }
@@ -490,6 +492,20 @@ export interface BLRelationMatchRelation {
 	end: number;
 }
 
+export interface BLRelationMatchList {
+	type: 'list';
+	start: number;
+	end: number;
+	infos: Array<BLRelationMatchRelation>
+}
+
+// DEPRECATED: use matchInfos instead
+// export interface BLCaptureGroup  { // Jesse
+// 	name: string;
+// 	start: number;
+// 	end: number;
+// }
+
 /** Contains all the AnnotatedField (previously token/word "properties") values for tokens in or around a hit */
 export interface BLHitSnippet {
 	left?: BLHitSnippetPart;
@@ -514,7 +530,9 @@ export interface BLHitSnippet {
      *    end: 27
 	 *  }
 	 */
-	matchInfos?: Record<string, BLRelationMatchSpan|BLRelationMatchRelation>
+	matchInfos?: {
+		captured_rels?: BLRelationMatchList;
+	}&Record<string, BLRelationMatchSpan|BLRelationMatchRelation|BLRelationMatchTag>
 }
 
 export type BLHit = {

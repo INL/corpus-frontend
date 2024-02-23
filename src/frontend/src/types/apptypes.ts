@@ -273,18 +273,23 @@ export type GroupBySettings = GroupByContextSettings|GroupByMetadataSettings|Gro
 // Hits displaying
 // ---------------
 
+export type CaptureAndRelation = {
+	/** css color in the form of rgb(x,y,z) */
+	color: string;
+	/** name of the capture group, or set of relation. */
+	key: string;
+	/** value of captured info, or value of relation. */
+	value: string;
+	/** true if this is a relation source */
+	isSource: boolean;
+	/** true if this is a relation target */
+	isTarget: boolean;
+}
 export type HitToken = {
 	text: string;
 	/** after the text */
 	punct: string;
-	captureAndRelation?: Array<{
-		/** css color in the form of rgb(x,y,z) */
-		color: string;
-		/** name of the capture group, or set of relation. */
-		key: string;
-		/** value of captured info, or value of relation. */
-		value: string;
-	}>
+	captureAndRelation?: CaptureAndRelation[];
 }
 
 /** Interop between blacklab Hit objects and the UI. */

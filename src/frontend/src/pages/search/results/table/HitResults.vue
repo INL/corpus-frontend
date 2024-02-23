@@ -21,7 +21,6 @@
 			:data="rows"
 		/>
 
-
 		<hr>
 
 		<!-- TODO align pagination etc.-->
@@ -50,7 +49,7 @@ import Vue from 'vue';
 import * as CorpusStore from '@/store/search/corpus';
 import * as GlossModule from '@/store/search/form/glossStore' // Jesse
 import * as UIStore from '@/store/search/ui';
-import { getDocumentUrl, snippetParts } from '@/utils';
+import { getDocumentUrl } from '@/utils';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
@@ -173,9 +172,6 @@ export default Vue.extend({
 		transformSnippets(): null|((snippet: BLTypes.BLHitSnippet)=> void){ return UIStore.getState().results.shared.transformSnippets; },
 		getDocumentSummary(): ((doc: BLTypes.BLDocInfo, fields: BLTypes.BLDocFields) => any) { return UIStore.getState().results.shared.getDocumentSummary },
 
-		firstContext(): any {
-			return snippetParts(this.results.hits[0], this.concordanceAnnotationId, this.textDirection);
-		}
 	},
 	methods: {
 		changeSort(payload: string) {

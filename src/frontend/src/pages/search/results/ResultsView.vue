@@ -9,7 +9,6 @@
 			@sort="sort = $event"
 			@viewgroup="originalGroupBySettings = {page, sort}; viewGroup = $event.id; _viewGroupName = $event.displayName;"
 		>
-
 			<BreadCrumbs slot="breadcrumbs"
 				:crumbs="breadCrumbs"
 				:disabled="!!request"
@@ -24,18 +23,13 @@
 				@update="paginationResults = $event"
 			/>
 
-			<template #groupBy>
-
-				<SelectPicker :options="['GroupBy1', 'GroupBy3']" v-model="selectedGroupBy" />
-
-				<GroupBy3 :is="selectedGroupBy"
-					:type="id"
-					:results="results"
-					:disabled="!!request"
-					:originalGroupBySettings="originalGroupBySettings"
-					@viewgroupLeave="leaveViewgroup"
-				/>
-			</template>
+			<GroupBy slot="groupBy"
+				:type="id"
+				:results="results"
+				:disabled="!!request"
+				:originalGroupBySettings="originalGroupBySettings"
+				@viewgroupLeave="leaveViewgroup"
+			/>
 
 			<Pagination slot="pagination"
 				style="display: block; margin: 10px 0;"
@@ -46,7 +40,6 @@
 
 				@change="page = $event"
 			/>
-
 
 			<Sort slot="sort"
 				v-model="sort"
@@ -82,8 +75,6 @@
 			<button type="button" class="btn btn-default" title="Try again with current search settings" @click="markDirty();">Try again</button>
 		</div>
 
-
-
 		<Debug>
 			<div v-if="results">
 				<hr>
@@ -113,8 +104,7 @@ import GroupResults from '@/pages/search/results/table/GroupResults.vue';
 import HitResults from '@/pages/search/results/table/HitResults.vue';
 import DocResults from '@/pages/search/results/table/DocResults.vue';
 import Totals from '@/pages/search/results/ResultTotals.vue';
-import GroupBy1 from '@/pages/search/results/groupby/GroupBy.vue';
-import GroupBy3 from '@/pages/search/results/groupby/GroupBy3.vue';
+import GroupBy from '@/pages/search/results/groupby/GroupBy.vue';
 
 import Sort from '@/pages/search/results/Sort.vue';
 import BreadCrumbs from '@/pages/search/results/BreadCrumbs.vue';
@@ -135,8 +125,7 @@ export default Vue.extend({
 		HitResults,
 		DocResults,
 		Totals,
-		GroupBy1,
-		GroupBy3,
+		GroupBy,
 		SelectPicker,
 		Sort,
 		BreadCrumbs,
@@ -178,9 +167,6 @@ export default Vue.extend({
 			page: number;
 			sort: string|null;
 		},
-
-		// temp
-		selectedGroupBy: 'GroupBy3',
 
 		debug
 	}),
@@ -444,9 +430,9 @@ export default Vue.extend({
 		},
 		resultComponentData(): any {
 			return {
-					results: this.results,
-					disabled: !!this.request,
-					sort: this.sort,
+				results: this.results,
+				disabled: !!this.request,
+				sort: this.sort,
 			};
 		},
 	},

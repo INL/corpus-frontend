@@ -3,8 +3,8 @@
 		<template v-for="token in data">
 			<span
 				v-html="token.text"
-				:style="{boxShadow: token.captureAndRelation && `0 0 0 2px ${token.captureAndRelation[0].color}`}"
-				:title="token.captureAndRelation && `${token.captureAndRelation[0].key}: ${token.captureAndRelation[0].value}`"
+				:style="{boxShadow: token.captureAndRelation && token.captureAndRelation.length && `0 0 0 2px ${token.captureAndRelation[0].color}`}"
+				:title="token.captureAndRelation && token.captureAndRelation.length && token.captureAndRelation[0].key"
 			></span>
 			<span v-html="token.punct"></span>
 		</template>
@@ -13,8 +13,8 @@
 		<template v-for="token in data">
 			<template v-if="token.captureAndRelation">
 				<span
-					:style="{boxShadow: token.captureAndRelation && `0 0 0 2px ${token.captureAndRelation[0].color}`}"
-					:title="token.captureAndRelation && `${token.captureAndRelation[0].key}: ${token.captureAndRelation[0].value}`"
+					:style="{boxShadow: token.captureAndRelation && token.captureAndRelation.length && `0 0 0 2px ${token.captureAndRelation[0].color}`}"
+					:title="token.captureAndRelation && token.captureAndRelation.length && token.captureAndRelation[0].key"
 				>{{ token.text }}</span>
 			</template>
 			<template v-else>{{ token.text }}</template>

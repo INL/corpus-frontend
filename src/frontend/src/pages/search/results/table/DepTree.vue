@@ -4,13 +4,13 @@
 		<!-- <pre>{{ {sentenceLength: sensibleArray.length, relationInfo, relations: hit?.matchInfos?.captured_rels?.infos} }}</pre> -->
 
 		<!-- Table to debug the connlu string. -->
-		<div v-if="connlu" style="max-width: 1000px; overflow: auto;">
+		<!-- <div v-if="connlu" style="max-width: 1000px; overflow: auto;">
 			<table style="width: 100%; table-layout: fixed;">
 				<tr v-for="row in connlu.split('\n')">
 					<td style="white-space: nowrap; border: 1px solid #ccc; text-overflow: ellipsis; overflow: hidden;" :title="cell" v-for="cell in row.split('\t')">{{ cell }}</td>
 				</tr>
 			</table>
-		</div>
+		</div> -->
 
 		<reactive-dep-tree v-if="connlu && renderTree" ref="tree"
 			minimal

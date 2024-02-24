@@ -477,10 +477,10 @@ export interface BLRelationMatchRelation {
 	/** The value of the relation. */
 	relType: string;
 
-	/** Inclusive index */
-	sourceStart: number;
-	/** Exclusive index */
-	sourceEnd: number;
+	/** Inclusive index. Not present for root relations */
+	sourceStart?: number;
+	/** Exclusive index. Not present for root relations */
+	sourceEnd?: number;
 	/** Inclusive index */
 	targetStart: number;
 	/** Exclusive index */

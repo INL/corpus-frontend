@@ -1,18 +1,25 @@
 <template>
-	<div v-if="hasRelations" style="border-style: solid; padding: 1em; border-width: 1pt; border-color: lightblue;" >
-		<reactive-dep-tree
+	<div>
+		<!-- Debug whatever we computed -->
+		<!-- <pre>{{ {sentenceLength: sensibleArray.length, relationInfo, relations: hit?.matchInfos?.captured_rels?.infos} }}</pre> -->
+
+		<!-- Table to debug the connlu string. -->
+		<div v-if="connlu" style="max-width: 1000px; overflow: auto;">
+			<table style="width: 100%; table-layout: fixed;">
+				<tr v-for="row in connlu.split('\n')">
+					<td style="white-space: nowrap; border: 1px solid #ccc; text-overflow: ellipsis; overflow: hidden;" :title="cell" v-for="cell in row.split('\t')">{{ cell }}</td>
+				</tr>
+			</table>
+		</div>
+
+		<reactive-dep-tree v-if="connlu && renderTree" ref="tree"
 			minimal
 			interactive
-			conll="
-# text = I am eating a pineapple
-1	I	_	PRON	_	_	2	suj	_	_
-2	am	be	AUX	_	_	0	root	_	_
-3	eating	_	VERBtastic	_	_	2	aux	_	highlight=red
-4	a	_	DET	_	_	5	det	_	_
-5	pineapple	_	NOUN	_	_	3	obj	_	_
-"></reactive-dep-tree>
+			:conll="connlu"
+		></reactive-dep-tree>
 
-		Show only matched relations: <input type="checkbox" id="checkbox" @change="$forceUpdate()" v-model="showOnlyMatchedRels"/>
+
+		<label>Show only matched relations: <input type="checkbox" id="checkbox" v-model="showOnlyMatchedRels"/></label>
 	</div>
 </template>
 
@@ -23,14 +30,39 @@ import Vue from 'vue';
 // @ts-ignore
 import {ReactiveDepTree} from '@/../node_modules/reactive-dep-tree/dist/reactive-dep-tree.umd.js';
 import {HitRowData} from '@/pages/search/results/table/HitRow.vue';
+import { BLHit, BLHitSnippet, BLHitSnippetPart, BLRelationMatchRelation } from '@/types/blacklabtypes';
 
-const conllExample = `# text = I am eating a pineapple
-    1	I	_	PRON	_	_	2	suj	_	_
-    2	am	_	AUX	_	_	0	root	_	_
-    3	eating	_	VERB	_	_	2	aux	_	highlight=red
-    4	a	_	DET	_	_	5	det	_	_
-    5	pineapple	_	NOUN	_	_	3	obj	_	_
-`
+const conllExample =
+`# text = I am eating a pineapple
+1	I	_	PRON	_	_	2	suj	_	_
+2	am	_	AUX	_	_	0	root	_	_
+3	eating	_	VERB	_	_	2	aux	_	highlight=red
+4	a	_	DET	_	_	5	det	_	_
+5	pineapple	_	NOUN	_	_	3	obj	_	_`
+
+
+function flatten(h?: BLHitSnippetPart, values?: string[]): Array<Record<string, string>> {
+	const r = [] as Array<Record<string, string>>;
+	if (!h) return r;
+	if (values) {
+		values.forEach(k => {
+			if (k in h) {
+				h[k].forEach((v, i) => {
+					r[i] = r[i] || {};
+					r[i][k] = v;
+				})
+			}
+		});
+	} else {
+		Object.entries(h).forEach(([k, v]) => {
+			v.forEach((vv, i) => {
+				r[i] = r[i] || {};
+				r[i][k] = vv;
+			})
+		})
+	}
+	return r;
+}
 
 export default Vue.extend({
 	components: {
@@ -38,65 +70,121 @@ export default Vue.extend({
 	},
 	props: {
 		data: Object as () => HitRowData,
+		snippet: Object as () => BLHitSnippet|undefined,
+
+		// TODO
+		dir: String as () => 'ltr'|'rtl',
+		mainAnnotation: String,
+		otherAnnotations: Object as () => Record<'lemma'|'upos'|'xpos'|'feats', string>,
 	},
 	data: () => ({
-		showOnlyMatchedRels : true,
+		showOnlyMatchedRels: true,
+		renderTree: true,
 	}),
 	computed: {
-		hasRelations(): boolean {
-			return !!this.data.hit.matchInfos?.captured_rels?.infos?.length;
+		connlu(): string {
+			let header = '# text = ';
+			let rows: string[][] = [];
+
+			for (let i = 0; i < this.sensibleArray.length; ++i) {
+				const rel = this.relationInfo[i];
+				const token = this.sensibleArray[i];
+				// Sometimes relations contains relations point outside the matched hit.
+				// We could compute the sensibleArray based on the hit snippet
+				// (which is larger and probably does contain the tokens), but then the tree component would end up rendering something like 50 tokens, which is way too wide.
+				if (!token) continue;
+
+				// ID   FORM     LEMMA   UPOS    XPOS     FEATS  HEAD    DEPREL   DEPS   MISC
+				// # text = I am eating a pineapple
+				// 1    I         _      PRON    _        _      2       suj      _      _
+				// 2    am        _      AUX     _        _      0       root     _      _
+				// 3    eating    _      VERB    _        _      2       aux      _      highlight=red
+				// 4    a         _      DET     _        _      5       det      _      _
+				// 5    pineapple _      NOUN    _        _      3       obj      _      _
+
+				// omit punctuation before first word of sentence.
+				if (i !== 0) header = header + token.punct;
+				header += token[this.mainAnnotation];
+
+				const row = [] as string[];
+				row.push((1+i).toString()); // index
+				row.push(token[this.mainAnnotation]); // form
+				if (this.otherAnnotations.lemma) row.push(token[this.otherAnnotations.lemma]); else row.push('_'); // lemma
+				if (this.otherAnnotations.upos)  row.push(token[this.otherAnnotations.upos]);  else row.push('_'); // upos
+				if (this.otherAnnotations.xpos)  row.push(token[this.otherAnnotations.xpos]);  else row.push('_'); // xpos
+				if (this.otherAnnotations.feats) row.push(token[this.otherAnnotations.feats]); else row.push('_'); // feats
+				row.push(rel && rel.parentIndex < this.sensibleArray.length  ? (rel.parentIndex + 1).toString() : '_'); // head
+				row.push(rel ? rel.label : '_'); // deprel
+				row.push('_'); // deps
+				row.push(i + this.indexOffset >= this.hit!.start && i + this.indexOffset < this.hit!.end ? `highlight=red` : '_'); // misc
+
+				rows.push(row);
+			}
+
+			if (!rows.length) return '';
+
+			// This code slices off tokens before and after the first and last relation.
+			// Maybe make this a checkbox?
+			if (this.showOnlyMatchedRels) {
+				let firstIndex = Number.MAX_SAFE_INTEGER;
+				let lastIndex = -1;
+				rows.forEach((r, i) => {
+					const parent = r[6];
+					if (parent != null && parent !== '_') {
+						firstIndex = Math.min(i, Math.min(firstIndex, +r[6]));
+						lastIndex = Math.max(i, Math.max(lastIndex, +r[6] - 1));
+					}
+				})
+				rows = rows.slice(firstIndex, lastIndex + 1);
+			}
+			if (!rows.length) return '';
+
+			return header + '\n' + rows.map(row => row.join('\t')).join('\n');
 		},
-		conllu(): string {
+
+		hit(): BLHit|undefined { return 'start' in this.data.hit ? this.data.hit : undefined; },
+		indexOffset(): number { return this.hit ? this.hit.start - (this.hit.left?.punct || []).length : 0; },
+		sensibleArray(): Array<Record<string, string>> {
+			if (!this.hit || !this.hit.matchInfos) return [];
+			const extract = ['punct', this.mainAnnotation].concat(Object.values(this.otherAnnotations));
+
+			const {left, match, right} =  this.hit;
+
+			return flatten(left, extract).concat(flatten(match, extract)).concat(flatten(right, extract));
+		},
+		relationInfo(): Array<undefined|{parentIndex: number; label: string;}> {
 			const hit = this.data.hit;
-			if (!('start' in hit || !hit.matchInfos)) return '';
+			if (!this.hit?.matchInfos) return [];
 
-			// TODO make the relation dynamic.
+			const r: Array<{parentIndex: number;label: string;}> = [];
 
-			// connlu is a bottom-up format?
-			// i.e. everything points to the parent, not to the children.
+			const doRelation = (v: BLRelationMatchRelation) => {
+				// Connlu can only have one parent,
+				if (!(v.targetEnd - v.targetStart > 1) && (v.sourceStart == null || !(v.sourceEnd! - v.sourceStart > 1))) {
+					// translate the indices to something that makes sense
+					const sourceIndex = v.sourceStart != null ? v.sourceStart - this.indexOffset : -1; // 0 signifies root.
+					const targetIndex = v.targetStart - this.indexOffset;
+					// add the relation to the sensible array
 
-			// ID   FORM     LEMMA   UPOS    XPOS     FEATS  HEAD    DEPREL   DEPS   MISC
-			return `
-			# text = I am eating a pineapple
-			1    I         _      PRON    _        _      2       suj      _      _
-			2    am        _      AUX     _        _      0       root     _      _
-			3    eating    _      VERB    _        _      2       aux      _      highlight=red
-			4    a         _      DET     _        _      5       det      _      _
-			5    pineapple _      NOUN    _        _      3       obj      _      _
-			`
+					r[targetIndex] = {
+						// might be undefined for root?
 
-			// const word = hit.match.word
-			// const rel = hit.match.deprel
-			// const wordnum = hit.match.wordnum
-			// const lemma = hit.match.lemma
-			// const pos = hit.match.pos
-			// const xpos = hit.match.xpos
-			// const start: number = +wordnum[0]
-			// //console.log(JSON.stringify(row.matchInfos))
-			// //console.log(row.start)
-			// interface x  { [key: number]: string }
-			// const foundRels : x =  {}
-			// const foundHeads : x = {}
-			// if (('matchInfos' in hit) && (hit.matchInfos != null)) {
-			// 	Object.values(hit.matchInfos).map(v => {
-			// 		if (v.type == 'relation') {
-			// 			const rel = v.relType.replace("dep::","")
-			// 			const wordnum = v.targetStart - hit.start + 1
-			// 			const headnum = v.sourceStart - hit.start + 1
-			// 			foundRels[wordnum] = rel
-			// 			foundHeads[headnum]  = rel
-			// 		}
-			// 	})
-			// }
+						parentIndex: sourceIndex,
+						//@ts-ignore
+						label: v.relType,
+						// @ts-ignore
+						sourceObject: v
+					}
+				}
+			}
 
-			// ID   FORM     LEMMA   UPOS    XPOS     FEATS  HEAD    DEPREL   DEPS   MISC
-			// # text = I am eating a pineapple
-
-			// 1    I         _      PRON    _        _      2       suj      _      _
-			// 2    am        _      AUX     _        _      0       root     _      _
-			// 3    eating    _      VERB    _        _      2       aux      _      highlight=red
-			// 4    a         _      DET     _        _      5       det      _      _
-			// 5    pineapple _      NOUN    _        _      3       obj      _      _
+			Object.entries(hit.matchInfos || {}).forEach(mi => {
+				const [k, v] = mi;
+				// Not interested in non-relation matches.
+				if (v.type === 'relation') doRelation(v);
+				else if (v.type === 'list') v.infos.forEach(doRelation);
+			})
+			return r;
 
 			/* https://universaldependencies.org/format.html
 			Sentences consist of one or more word lines, and word lines contain the following fields:
@@ -112,31 +200,14 @@ export default Vue.extend({
 			DEPS:   Enhanced dependency graph in the form of a list of head-deprel pairs.
 			MISC:   Any other annotation.
 			*/
-
-			// `# sent_id = s${index}` + "\n" +
-			// const conllu = `# text = '${word.join(' ')}\n${
-			// 	hit.match.head.map((h, i) => {
-			// 		const relIsMatched = i+1 in foundRels
-			// 		const headIsMatched = i+1 in foundHeads
-			// 		const headInHit = wordnum.includes(h)
-
-			// 		const showRel = headInHit && (relIsMatched || !this.showOnlyMatchedRels)
-			// 		//console.log(`i: ${i}, headInHit: ${headInHit}, relIsMatched: ${relIsMatched}, onlyMatchedRelations: ${onlyMatchedRelations}, showRel: ${showRel}`)
-			// 		const h1 = showRel?  +h -start + 1: '_';
-			// 		const rel1 = showRel? rel[i] : '_';
-			// 		const misc = (relIsMatched||headIsMatched)?  'highlight=red' : '_';
-			// 		return '    ' + Array(+wordnum[i] - start + 1, word[i], lemma[i], pos[i], xpos[i], '_', h1, rel1, '_', misc).join("\t")
-			// 	}).join("\n")
-			// }`;
-			//console.log('matched targets:' + JSON.stringify(foundRels))
-			//console.log('matched sources:' + JSON.stringify(foundHeads))
-			//console.log(conllu)
-			// return conllu;
 		}
-
 	},
-	mounted() {
-		this.$forceUpdate();
+	watch: {
+		connlu() {
+			// Tree component is somehow not reactive..
+			this.renderTree = false;
+			this.$nextTick(() => this.renderTree = true);
+		}
 	}
 });
 </script>

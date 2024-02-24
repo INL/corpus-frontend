@@ -8,7 +8,16 @@
 				<span class="fa fa-exclamation-triangle"></span> <span v-html="error"></span>
 			</p>
 			<template v-else-if="context"> <!-- check if context is set! We don't always have one. -->
-				<DepTree :context="context" :data="data"/>
+				<DepTree
+					:data="data"
+					:snippet="snippet"
+					:mainAnnotation="mainAnnotation.id"
+					:otherAnnotations="{
+						lemma: 'lemma',
+						upos: 'pos',
+						xpos: 'xpos',
+					}"
+				/>
 				<p>
 					<template v-for="addon in addons">
 						<component v-if="addon.component"
@@ -97,6 +106,8 @@ export default Vue.extend({
 		loading: false,
 		error: null as null|string,
 		context: null as null|HitContext,
+		/** Required for deptree, since sometimes relations point outside the matched hit, so provide as much info as possible. */
+		snippet: null as null|BLTypes.BLHitSnippet,
 		addons: [] as Array<ReturnType<UIStore.ModuleRootState['results']['hits']['addons'][number]>>,
 
 		initialized: false,
@@ -148,6 +159,7 @@ export default Vue.extend({
 				.then(s => {
 					transformSnippets?.(s);
 					this.context = snippetParts({matchInfos: this.data.hit.matchInfos, ...s}, this.mainAnnotation.id, this.dir);
+					this.snippet = s;
 
 					// Run plugins defined for this corpus (ex. a copy citation to clipboard button, or an audio player/text to speech button)
 					this.addons = addons.map(a => a({

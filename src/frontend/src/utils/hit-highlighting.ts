@@ -3,8 +3,10 @@ import { CaptureAndRelation, HitContext, HitToken } from '@/types/apptypes';
 
 
 type NormalizedCapture = {
-	sourceStart: number;
-	sourceEnd: number;
+	/** Null for root */
+	sourceStart?: number;
+	/** Null for root */
+	sourceEnd?: number;
 	targetStart: number;
 	targetEnd: number;
 
@@ -128,15 +130,14 @@ export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir:
 
 			const token = context[localIndex];
 			const matchedRelations = capturesToUse
-				.filter(c => c.sourceStart <= globalIndex && globalIndex < c.sourceEnd || c.targetStart <= globalIndex && globalIndex < c.targetEnd)
-			console.log('matched relations for token global index ', globalIndex, matchedRelations);
+				.filter(c => (c.sourceStart ?? -1) <= globalIndex && globalIndex < (c.sourceEnd ?? Number.MAX_SAFE_INTEGER) || c.targetStart <= globalIndex && globalIndex < c.targetEnd)
 
 			token.captureAndRelation = matchedRelations
 				.map<CaptureAndRelation>(c => ({
 					key: c.name,
 					value: c.name,
 					color: c.color,
-					isSource: c.isRelation && c.sourceStart <= globalIndex && globalIndex < c.sourceEnd,
+					isSource: c.isRelation && c.sourceStart != null && c.sourceEnd != null && c.sourceStart <= globalIndex && globalIndex < c.sourceEnd,
 					isTarget: c.isRelation && c.targetStart <= globalIndex && globalIndex < c.targetEnd,
 				}));
 		}

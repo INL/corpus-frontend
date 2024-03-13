@@ -75,10 +75,11 @@ export default Vue.extend({
 			}
 
 			if (this.hits) {
+			    const afk = Object.keys(this.corpus.annotatedFields)[0]
 				opts.push(...getAnnotationSubset(
 					this.annotations,
 					this.corpus.annotationGroups,
-					this.corpus.annotatedFields.contents.annotations,
+					this.corpus.annotatedFields[afk].annotations,
 					'Sort',
 					this.corpus.textDirection,
 					debug.debug

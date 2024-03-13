@@ -125,6 +125,20 @@ export function wordsWithCaptures(hit: BLTypes.BLHitSnippet|BLTypes.BLHit, conte
 		});
 	}
 
+	if ('matchInfos' in hit && 'start' in hit && hit.matchInfos) {
+		//alert("Hoera, er zijn matchinfos.....")
+		const start = hit.start
+		for (const name in hit.matchInfos) {
+			if (!(name in capturename2index)) {
+				capturename2index[name] = Object.keys(capturename2index).length;
+			}
+			const g = hit.matchInfos[name]
+			const gs = g.start - start;
+			const ge = g.end - start;
+			for (let k=gs; k < ge; k++) p2c[k] = name;
+		}
+	}
+
 	for (let i = 0; i < numTokens; i++) {
 		if (i > 0 || doPunctBefore) {
 			parts.push(context.punct[i] || '');

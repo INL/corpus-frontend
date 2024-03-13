@@ -106,9 +106,10 @@
 					</tr>
 					<template v-else-if="rowData.type === 'hit'">
 						<tr :key="index" :class="['concordance', 'rounded interactable', {'open': citations[index] && citations[index].open}]" @click="showCitation(index)">
-							<template v-if="concordanceAsHtml">
+							<template v-if="concordanceAsHtml || true">
 								<td class="text-right">&hellip;<span :dir="textDirection" v-html="rowData.left"></span></td>
-								<td class="text-center"><strong :dir="textDirection" v-html="rowData.hit"></strong></td>
+								<td class="text-center"><strong :dir="textDirection" v-html="rowData.hit"></strong>
+								</td>
 								<td><span :dir="textDirection" v-html="rowData.right"></span>&hellip;</td>
 							</template>
 							<template v-else>
@@ -128,6 +129,15 @@
 							</td>
 							<td v-for="meta in shownMetadataCols" :key="meta.id">{{rowData.doc[meta.id] ? rowData.doc[meta.id].join(', ') : ''}}</td>
 						</tr>
+						<tr v-for="(k,j) in Object.keys(rowData.otherFields)">
+					       
+						    <td  colspan="3" style="border=bottom: solid; border-bottom-" >
+								<div style="margin-left: 6em; background-color: pink">
+								<i style="background-color: lightblue">{{  k }}</i> : <span :dir="textDirection" v-html="snippetParts(rowData.otherFields[k])[1]"></span> 
+							    </div>
+							</td>
+						</tr>
+						
 						<tr v-if="citations[index]" v-show="citations[index].open" :key="index + '-citation'" :class="['concordance-details', {'open': citations[index].open}]">
 							<td :colspan="numColumns">
 								<p v-if="citations[index].error" class="text-danger">
@@ -239,7 +249,7 @@ type HitRow = {
 	right: string;
 	other: string[];
 	props: BLTypes.BLHitSnippetPart;
-
+  
 	// For requesting snippets
 	docPid: string;
 	start: number;
@@ -250,6 +260,7 @@ type HitRow = {
 	hit_first_word_id: string; // Jesse
 	hit_last_word_id: string // jesse
 	hit_id: string; // jesse
+	otherFields: BLTypes.BLOtherFields;
 };
 
 type DocRow = {
@@ -335,7 +346,7 @@ export default Vue.extend({
 				// ids of the hit, if gloss module is enabled.
 				const {startid: hit_first_word_id = '', endid: hit_last_word_id = ''} = GlossModule.get.settings()?.get_hit_range_id(hit) ?? {startid: '', endid: ''};
 				const hit_id = GlossModule.get.settings()?.get_hit_id(hit) ?? '';
-
+                // alert(JSON.stringify(hit.otherFields))
 				// TODO condense this data..
 				rows.push({
 					type: 'hit',
@@ -353,6 +364,7 @@ export default Vue.extend({
 					hit_first_word_id,
 					hit_last_word_id,
 					hit_id,
+					otherFields: hit.otherFields
 				});
 
 				return rows;
@@ -400,6 +412,9 @@ export default Vue.extend({
 		getDocumentSummary(): ((doc: BLTypes.BLDocInfo, fields: BLTypes.BLDocFields) => any) { return UIStore.getState().results.shared.getDocumentSummary },
 	},
 	methods: {
+		snippetParts(hit: BLTypes.BLHit) {
+          return snippetParts(hit,'word')
+		},
 		changeSort(payload: string) {
 			if (!this.disabled) {
 				this.$emit('sort', payload === this.sort ? '-'+payload : payload);

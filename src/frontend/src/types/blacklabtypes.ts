@@ -447,6 +447,16 @@ export interface BLCaptureGroup  { // Jesse
 	end: number;
 }
 
+export interface BLMatchInfo  { // Jesse
+	type: string;
+	start: number;
+	end: number;
+}
+
+export interface BLMatchInfos  { // Jesse
+	[key: string]: BLMatchInfo;
+}
+
 /** Whatever BlackLab returns. There's a couple versions, we do some massaging to unify them. */
 export type BLHitSnippetApi = ({
 	left?: BLHitSnippetPart;
@@ -460,6 +470,10 @@ export type BLHitSnippetApi = ({
 	end: number;
 }
 
+export interface BLOtherFields {
+	[key: string]: BLHit;
+};
+
 /** Contains all the AnnotatedField (previously token/word "properties") values for tokens in or around a hit */
 export interface BLHitSnippet {
 	left?: BLHitSnippetPart;
@@ -472,7 +486,8 @@ export type BLHit = {
 	docPid: string;
 	start: number;
 	end: number;
-} & BLHitSnippet;
+	matchInfos?: BLMatchInfos
+} & BLHitSnippet & BLOtherFields ;
 
 /** Contains occurance counts of terms in the index */
 export interface BLTermOccurances {

@@ -8,9 +8,6 @@ FROM maven:3.6-jdk-11 AS builder
 # Copy source
 WORKDIR /app
 
-COPY src ./src
-
-
 COPY . .
 
 # Build the WAR.

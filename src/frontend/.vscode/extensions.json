@@ -2,7 +2,6 @@
 	"recommendations": [
 		"wayou.vscode-todo-highlight",
 		"ecmel.vscode-html-css",
-		"vue.vscode-typescript-vue-plugin",
 		"vue.volar"
 	]
 }

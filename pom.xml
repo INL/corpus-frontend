@@ -5,16 +5,13 @@
     <artifactId>corpus-frontend</artifactId>
     <version>3.1.1-SNAPSHOT</version>
     <packaging>war</packaging>
-
     <name>INT Corpus Frontend</name>
     <description>A web application to search corpora through the BlackLab Server web service.</description>
     <url>https://github.com/INL/corpus-frontend</url>
-
     <organization>
         <url>https://www.ivdnt.org/</url>
         <name>Dutch Language Institute</name>
     </organization>
-
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
@@ -23,19 +20,16 @@
             <comments>A business-friendly OSS license</comments>
         </license>
     </licenses>
-
     <scm>
         <url>https://github.com/inl/corpus-frontend</url>
         <connection>scm:git:https://github.com/inl/corpus-frontend.git</connection>
         <developerConnection>scm:git:https://github.com/inl/corpus-frontend.git</developerConnection>
-      <tag>HEAD</tag>
-  </scm>
-
+        <tag>HEAD</tag>
+    </scm>
     <issueManagement>
         <url>https://github.com/INL/corpus-frontend/issues</url>
         <system>GitHub Issues</system>
     </issueManagement>
-
     <developers>
         <developer>
             <id>jan-niestadt</id>
@@ -63,14 +57,30 @@
         </developer>
     </developers>
 
+
+
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Java version. -->
+        <maven.compiler.release>11</maven.compiler.release>
+    </properties>
+
     <build>
         <plugins>
+            <!-- Used in GlobalConfig.java -->
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.10.1</version>
+                <groupId>io.github.git-commit-id</groupId>
+                <artifactId>git-commit-id-maven-plugin</artifactId>
+                <version>5.0.0</version>
+                <executions>
+                    <execution>
+                        <phase></phase>
+                        <goals><goal>build</goal></goals>
+                    </execution>
+                </executions>
                 <configuration>
-                    <release>11</release>
+                    <dotGitDirectory>${project.basedir}/.git</dotGitDirectory>
                 </configuration>
             </plugin>
 
@@ -79,16 +89,6 @@
                 <artifactId>maven-war-plugin</artifactId>
                 <version>3.2.2</version>
                 <configuration>
-                    <archive>
-                        <manifest>
-                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                        </manifest>
-                        <manifestEntries>
-                            <Build-Time>${buildNumber}</Build-Time>
-                        </manifestEntries>
-                    </archive>
-
                     <webResources>
                         <resource>
                             <!-- Input directory: this is relative to the pom.xml directory -->
@@ -98,41 +98,8 @@
                             <!-- Output directory is root of the war, which is already correct for our purposes. -->
                         </resource>
                     </webResources>
-
                 </configuration>
             </plugin>
-
-            <!-- Generates a "build number" (just a timestamp in our case)
-                 to put in the manifest -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>buildnumber-maven-plugin</artifactId>
-                <version>1.3</version>
-                <configuration>
-                    <format>{0,date,yyyy-MM-dd HH:mm:ss}</format>
-                    <items>
-                        <item>timestamp</item>
-                    </items>
-                </configuration>
-                <executions>
-                    <execution>
-                        <phase>validate</phase>
-                        <goals>
-                            <goal>create</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>2.5.2</version>
-                <configuration>
-                    <tagNameFormat>v@{project.version}</tagNameFormat>
-                </configuration>
-            </plugin>
-
 
             <!-- https://repo1.maven.org/maven2/com/github/eirslett/frontend-maven-plugin/ -->
             <plugin>
@@ -145,7 +112,6 @@
                 </configuration>
 
                 <executions>
-
                     <execution>
                         <id>install node and npm</id>
                         <goals>
@@ -158,7 +124,6 @@
                             <npmVersion>8.1.2</npmVersion>
                         </configuration>
                     </execution>
-
                     <execution>
                         <id>npm install</id>
                         <goals>
@@ -173,12 +138,12 @@
                         <!--
                             skip compiling JS when compiling in eclipse.
                             It's slow and unneeded as you can manually start a webpack-dev-server during development.
-                            Run "npm start" in the src/frontend/src folder, and configure corpus-frontend.properties jspath to "http://localhost:80/dist"
+                            Run "npm start" in the src/frontend folder, and configure corpus-frontend.properties jspath to "http://localhost:8081/dist/js"
                         -->
                         <?m2e ignore?>
                     </execution>
                     
-                    <!-- rebuild node native bindings (required for node-sass) -->
+                    <!-- rebuild node native bindings (required for node-sass) (this fixes build errors when a library version is updated, but the CI server has cached the old libs) -->
                     <execution>
                         <id>npm rebuild</id>
                         <goals>
@@ -209,18 +174,9 @@
                     </execution>
                 </executions>
             </plugin>
-
         </plugins>
     </build>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-        <!-- Java versions -->
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <maven.compiler.release>11</maven.compiler.release>
-    </properties>
 
     <dependencies>
         <dependency>

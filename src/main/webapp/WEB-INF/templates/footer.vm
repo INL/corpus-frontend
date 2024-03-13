@@ -39,4 +39,9 @@
             #end></script>
         #end
     </body>
+
+    <!-- Commit hash: $commitHash -->
+    <!-- Commit time: $commitTime -->
+    <!-- Commit message: $commitMessage -->
+    <!-- Version: $version -->
 </html>

@@ -101,11 +101,6 @@ public class MainServlet extends HttpServlet {
 
     private GlobalConfig config;
 
-    /**
-     * Time the WAR was built. "UNKNOWN" if no WAR or some error occurs.
-     */
-    private static String warBuildTime = null;
-
     @Override
     public void init(ServletConfig cfg) throws ServletException {
         try {
@@ -409,29 +404,6 @@ public class MainServlet extends HttpServlet {
     /** Render debug info checkbox in the search interface? */
     public boolean debugInfo() {
         return Boolean.parseBoolean(this.config.get(Keys.SHOW_DEBUG_CHECKBOX_ON_CLIENT));
-    }
-
-    /**
-     * Return a timestamp for when the application was built.
-     *
-     * @return build timestamp (format: yyyy-MM-dd HH:mm:ss), or UNKNOWN if the
-     *         timestamp could not be found for some reason (i.e. not running from a
-     *         JAR, or JAR was not created with the Ant buildscript).
-     */
-    public String getWarBuildTime() {
-        if (warBuildTime != null)
-            return warBuildTime;
-
-        try (InputStream inputStream = getServletContext().getResourceAsStream("/META-INF/MANIFEST.MF")) {
-            return warBuildTime = Result.attempt(() -> new Manifest(inputStream))
-                .map(Manifest::getMainAttributes)
-                .map(a -> a.getValue("Build-Time"))
-                .getResult()
-                .filter(s -> !s.isEmpty())
-                .orElse("UNKNOWN");
-        } catch (IOException e) {
-            return warBuildTime = "UNKNOWN";
-        }
     }
 
     public GlobalConfig getGlobalConfig() {

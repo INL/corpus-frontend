@@ -109,14 +109,19 @@ public abstract class BaseResponse {
         model.put("esc", esc);
         model.put("date", date);
         // For use in queryParameters to ensure clients don't cache old css/js when the application has updated.
-        // During development, there's usually no WAR, so no build time either, but we assume the developer knows to ctrl+f5
-        model.put("cache", servlet.getWarBuildTime().hashCode());
+        model.put("cache", GlobalConfig.commitHash);
         // title of the current page
         model.put("page", this.name);
 
         // Stuff for use in constructing the page
         model.put("websiteConfig", cfg);
-        model.put("buildTime", servlet.getWarBuildTime());
+
+        // Version info
+        model.put("commitHash", GlobalConfig.commitHash);
+        model.put("commitTime", GlobalConfig.commitTime);
+        model.put("commitMessage", GlobalConfig.commitMessage);
+        model.put("version", GlobalConfig.version);
+
         cfg.getAnalyticsKey().ifPresent(key -> model.put("googleAnalyticsKey", key));
 
         Optional.ofNullable(globalCfg.get(Keys.BANNER_MESSAGE))

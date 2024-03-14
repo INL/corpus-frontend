@@ -22,7 +22,7 @@
 					<template v-for="addon in addons">
 						<component v-if="addon.component"
 							:is="addon.component"
-							:key="addon.name"
+							:key="addon.name + '_vue'"
 							:class="`addon addon-${addon.name} ${(addon.props && addon.props.class) || ''}`"
 							v-bind="addon.props"
 							v-on="addon.listeners"
@@ -32,7 +32,7 @@
 
 						<component v-else
 							:is="addon.element || 'div'"
-							:key="addon.name"
+							:key="addon.name + '_html'"
 							:class="`addon addon-${addon.name} ${(addon.props && addon.props.class) || ''}`"
 							v-bind="addon.props"
 							v-on="addon.listeners"

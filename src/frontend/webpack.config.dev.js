@@ -52,7 +52,8 @@ module.exports = {
 		}, {
 			test: /\.tsx$/,
 			use: [{
-				loader: 'babel-loader',
+				// required for jsx
+				loader: 'babel-loader'
 			}, {
 				loader: 'ts-loader',
 				options: {
@@ -77,8 +78,6 @@ module.exports = {
 		}, {
 			test: /\.ts$/,
 			use: [{
-				loader: 'babel-loader',
-			}, {
 				loader: 'ts-loader',
 				options: {
 					/*
@@ -99,10 +98,6 @@ module.exports = {
 					appendTsSuffixTo: [/\.vue$/],
 				}
 			}]
-		}, {
-			test: /\.js$/,
-			exclude: [/node_modules/, '/src/vendor'],
-			loader: 'babel-loader',
 		}]
 	},
 	plugins: [

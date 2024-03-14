@@ -89,7 +89,7 @@
 
                 </div>
 
-                <div class="username navbar-username navbar-brand"><span class="username" data-autoupdate="username">Anonymous</span><span class="fa fa-solid fa-user username-icon"></span></div>
+                <div class="username"></div>
                 <div class="navbar-collapse collapse navbar-logo-margin">
                     <ul class="nav navbar-nav">
                         #foreach($link in $websiteConfig.getLinks())

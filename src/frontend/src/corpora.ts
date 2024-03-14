@@ -22,6 +22,7 @@ import * as AppTypes from '@/types/apptypes';
 import * as Api from '@/api';
 import * as loginsystem from '@/utils/loginsystem';
 import { normalizeIndexBase } from './utils/blacklabutils';
+import { debugLog } from '@/utils/debug';
 
 const enum DataEvent {
 	SERVER_REFRESH = 'server/refresh',
@@ -139,10 +140,6 @@ createHandler({event: DataEvent.CORPORA_REFRESH, handler(newCorpora) {
 	if (newCorpora.length === 0) {
 		$('#corpora-none-container').show();
 	}
-}});
-
-createHandlerOnce({selector: '*[data-autoupdate="username"]', event: DataEvent.SERVER_REFRESH, handler(newServerInfo) {
-	this.show().html(newServerInfo.user?.id || 'Not logged in');
 }});
 
 createHandler({selector: 'tbody[data-autoupdate="format"]', event: DataEvent.FORMATS_REFRESH, handler(newFormats) {
@@ -889,7 +886,7 @@ $(document).ready(async function() {
 	Api.init('blacklab', BLS_URL, user);
 	Api.init('cf', CONTEXT_URL, user);
 
-	console.log('loading corpora');
+	debugLog('loading corpora');
 	await refreshCorporaListAndBlacklabInfo(); // do this first as it also pulls in the server info
 	refreshFormatList();
 

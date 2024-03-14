@@ -276,6 +276,8 @@ export type GroupBySettings = GroupByContextSettings|GroupByMetadataSettings|Gro
 export type CaptureAndRelation = {
 	/** css color in the form of rgb(x,y,z) */
 	color: string;
+	/** Because background color might be dark, in that case text should be white */
+	textcolor: string;
 	/** name of the capture group, or set of relation. */
 	key: string;
 	/** value of captured info, or value of relation. */

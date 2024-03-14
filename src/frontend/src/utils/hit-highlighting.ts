@@ -16,6 +16,8 @@ type NormalizedCapture = {
 	name: string;
 	/** Color that it should be highlighed in */
 	color: string;
+	/** Color text should be on top of the colored background */
+	textcolor: string;
 }
 
 const hues = [
@@ -43,8 +45,28 @@ function hsv2rgb(h: number,s: number,v: number) {
 	return [f(5),f(3),f(1)];
 }
 
-const indexToRgb = (i: number): string => {
-	return `rgb(${hsv2rgb(hues[i % hues.length], 0.8, 0.93).map(c => Math.round(c * 255)).join(',')})`;
+/**
+ * @param h - hue in [0,360]
+ * @param s - saturation in [0,1]
+ * @param l - lightness in [0,1]
+ */
+function hsl2rgb(h: number, s: number, l: number) {
+	const a = s * Math.min(l, 1 - l);
+	const f = (n: number) => {
+	  const k = (n + h / 30) % 12;
+	  return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+	};
+	return [f(0), f(8), f(4)];
+  }
+
+const indexToRgb = (i: number): {color: string, textcolor: string} => {
+	const [red, green, blue] = hsl2rgb(hues[i % hues.length], 0.9, 0.7);
+	const textcolor = (red*0.299 + green*0.587 + blue*0.114) > (160/255) ? 'black' : 'white';
+
+	return {
+		color: `rgb(${red*255}, ${green*255}, ${blue*255})`,
+		textcolor
+	}
 }
 
 
@@ -96,19 +118,17 @@ export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir:
 	const explicitCaptures: NormalizedCapture[] = [];
 	const relations: NormalizedCapture[] = [];
 
-
-
-	Object.entries(hit.matchInfos).flatMap<Omit<NormalizedCapture, 'color'>>(([blackLabReportedName, info]) => {
-		if (info.type === 'list') return info.infos.map<Omit<NormalizedCapture, 'color'>>(info => ({name: info.relClass + ': ' + info.relType, ...info, isRelation: true}));
+	const allMatches = Object.entries(hit.matchInfos).flatMap<Omit<NormalizedCapture, 'color'|'textcolor'>>(([blackLabReportedName, info]) => {
+		if (info.type === 'list') return info.infos.map<Omit<NormalizedCapture, 'color'|'textcolor'>>(info => ({name: info.relClass + ': ' + info.relType, ...info, isRelation: true}));
 		else if (info.type === 'relation') return { name: info.relClass + ': ' + info.relType, ...info, isRelation: true };
 		else if (info.type === 'span') return { name: blackLabReportedName, sourceEnd: info.end, sourceStart: info.start, targetEnd: info.end, targetStart: info.start, isRelation: false };
 		else return []; // type === 'tag'
 	})
 	// make sure the indices are consistent, as we assign colors based on the index (so that the same capture always has the same color)
-	.sort((a, b) => a.name.localeCompare(b.name))
+	.sort((a, b) => a.name.localeCompare(b.name));
 	// at this point this list is gone and we have a list of relevant captures and relations.
-	.forEach((capture, index) => {
-		(capture as NormalizedCapture).color = indexToRgb(index);
+	allMatches.forEach((capture, index) => {
+		Object.assign((capture as NormalizedCapture), indexToRgb(index));
 		if (capture.isRelation) relations.push(capture as NormalizedCapture);
 		else explicitCaptures.push(capture as NormalizedCapture);
 	});
@@ -123,7 +143,7 @@ export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir:
 
 	// we have a full hit, enrich the tokens with capture/relation info.
 	for (const [part, context] of Object.entries(r)) {
-		const offset = part === 'before' ? hit.start - context.length : part === 'hit' ? hit.start : hit.end;
+		const offset = part === 'before' ? hit.start - context.length : part === 'match' ? hit.start : hit.end;
 
 		for (let localIndex = 0; localIndex < context.length; localIndex++) {
 			const globalIndex = offset + localIndex;
@@ -137,6 +157,7 @@ export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir:
 					key: c.name,
 					value: c.name,
 					color: c.color,
+					textcolor: c.textcolor,
 					isSource: c.isRelation && c.sourceStart != null && c.sourceEnd != null && c.sourceStart <= globalIndex && globalIndex < c.sourceEnd,
 					isTarget: c.isRelation && c.targetStart <= globalIndex && globalIndex < c.targetEnd,
 				}));

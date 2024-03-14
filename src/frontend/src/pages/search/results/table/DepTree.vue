@@ -17,9 +17,6 @@
 			interactive
 			:conll="connlu"
 		></reactive-dep-tree>
-
-
-		<label>Show only matched relations: <input type="checkbox" id="checkbox" v-model="showOnlyMatchedRels"/></label>
 	</div>
 </template>
 
@@ -78,7 +75,6 @@ export default Vue.extend({
 		otherAnnotations: Object as () => Record<'lemma'|'upos'|'xpos'|'feats', string>,
 	},
 	data: () => ({
-		showOnlyMatchedRels: true,
 		renderTree: true,
 	}),
 	computed: {
@@ -121,22 +117,6 @@ export default Vue.extend({
 				rows.push(row);
 			}
 
-			if (!rows.length) return '';
-
-			// This code slices off tokens before and after the first and last relation.
-			// Maybe make this a checkbox?
-			if (this.showOnlyMatchedRels) {
-				let firstIndex = Number.MAX_SAFE_INTEGER;
-				let lastIndex = -1;
-				rows.forEach((r, i) => {
-					const parent = r[6];
-					if (parent != null && parent !== '_') {
-						firstIndex = Math.min(i, Math.min(firstIndex, +r[6]));
-						lastIndex = Math.max(i, Math.max(lastIndex, +r[6] - 1));
-					}
-				})
-				rows = rows.slice(firstIndex, lastIndex + 1);
-			}
 			if (!rows.length) return '';
 
 			return header + '\n' + rows.map(row => row.join('\t')).join('\n');

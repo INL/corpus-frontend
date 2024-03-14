@@ -12,4 +12,4 @@
 
 import * as loginSystem from '@/utils/loginsystem';
 
-loginSystem.callback();
+loginSystem.awaitInit();

@@ -46,6 +46,9 @@
 					<HitContextComponent tag="span" :dir="dir" :data="context.after" :html="html"/>
 				</p>
 			</template>
+			<template v-else-if="!otherAnnotations || !otherAnnotations.length">
+				<p>No context available.</p>
+			</template>
 
 			<div v-if="otherAnnotations && otherAnnotations.length" style="overflow: auto; max-width: 100%; padding-bottom: 15px;">
 				<table class="concordance-details-table">
@@ -140,7 +143,7 @@ export default Vue.extend({
 			handler() {
 				if (!this.open || this.initialized) return;
 				if (!('start' in this.data.hit)) {
-					// we don't have a fat hit. We can't get any larger context.
+					// we don't have a fat hit. We can't get any larger context (because we don't know the start/end of the hit)
 					// Don't do anything else, we just won't render the larger context.
 					// The small table will still be shown.
 					return;

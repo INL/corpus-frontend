@@ -2,6 +2,7 @@
 	<div class="results-container" :disabled="request">
 		<span v-if="request" class="fa fa-spinner fa-spin searchIndicator" style="position:absolute; left: 50%; top:15px"></span>
 
+		<!-- i.e. HitResults, DocResults, GroupResults -->
 		<component v-if="resultsHaveData"
 			:is="resultComponentName"
 			v-bind="resultComponentData"

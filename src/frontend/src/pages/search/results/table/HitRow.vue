@@ -1,5 +1,5 @@
 <template>
-	<tr class="concordance rounded interactable">
+	<tr class="concordance rounded">
 		<HitContextComponent tag="td" class="text-right" :dir="dir" :data="context.before" :html="html"/>
 		<HitContextComponent tag="td" bold class="text-center" :dir="dir" :data="context.match" :html="html"/>
 		<HitContextComponent tag="td" class="" :dir="dir" :data="context.after" :html="html"/>
@@ -32,6 +32,10 @@ import { snippetParts } from '@/utils/hit-highlighting';
 
 import HitContextComponent from '@/pages/search/results/table/HitContext.vue';
 
+/**
+ * Can contain either a full hit or a partial hit (without capture/relations info)
+ * Partials hits are returned when requesting /docs.
+ */
 export type HitRowData = {
 	type: 'hit';
 	doc: BLTypes.BLDoc;

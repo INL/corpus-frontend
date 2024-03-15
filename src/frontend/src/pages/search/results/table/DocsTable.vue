@@ -25,6 +25,7 @@
 							:dir="dir"
 							:html="html"
 							:disabled="true"
+							:disableDetails="true"
 						/>
 						<div class="text-muted clearfix col-xs-12" v-if="hiddenHits(rowData)">...({{hiddenHits(rowData)}} more hidden hits)</div>
 					</td>

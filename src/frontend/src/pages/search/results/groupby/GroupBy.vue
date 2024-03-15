@@ -3,10 +3,6 @@
 
 	<div style="display: flex; flex-direction: row; padding-top: 25px;">
 		<div style="display: flex; flex-direction: column; border: 1px solid #CCC;">
-			<div class="btn-group" style="display: flex; width: 100%;">
-				<button type="button" @click="addAnnotation" style="flex-basis: 0; flex-grow: 1; min-width: 50%; border-radius: 0;" class="btn btn-success" v-if="type === 'hits'">+ Annotation</button>
-				<button type="button" @click="addMetadata" style="flex-basis: 0; flex-grow: 1; min-width: 50%; border-radius: 0;" class="btn btn-primary">+ Metadata</button>
-			</div>
 
 			<!-- list of current groups -->
 			<div style="display: flex; flex-wrap: nowrap;" v-for="(a, i) in localModel">
@@ -23,15 +19,20 @@
 				<button type="button" class="btn btn-danger" style="flex: 0; border-left: 0; border-radius: 0; padding-right: 4px; padding-left: 4px;" @click="removeGroup(i)">&times;</button>
 			</div>
 
+			<div class="btn-group" style="display: flex; width: 100%;">
+				<button type="button" @click="addAnnotation" style="flex-basis: 0; flex-grow: 1; min-width: 50%; border-radius: 0;" class="btn btn-default" v-if="type === 'hits'">+ Annotation</button>
+				<button type="button" @click="addMetadata" style="flex-basis: 0; flex-grow: 1; min-width: 50%; border-radius: 0;" class="btn btn-default">+ Metadata</button>
+			</div>
+
 
 			<template v-if="localModel.length">
-				<div style="flex-grow: 1; min-height: 50px;">
+				<div style="flex-grow: 1; min-height: 15px;">
 					<!-- placeholder -->
 				</div>
 
 				<div class="btn-group" style="border: 0;">
-					<button class="btn btn-danger" style="min-width: 50%; border-radius: 0; border-left: 0;" @click="clear">clear</button>
-					<button class="btn btn-primary" style="margin: 0; min-width: 50%; border-radius: 0; border-right: 0;" @click="apply">apply</button>
+					<button class="btn btn-default" style="min-width: 50%; border-radius: 0; border-left: 0;" @click="clear">clear</button>
+					<button class="btn btn-default" style="margin: 0; min-width: 50%; border-radius: 0; border-right: 0;" @click="apply">apply</button>
 				</div>
 			</template>
 		</div>
@@ -44,7 +45,6 @@
 					<section class="text-muted col-m-6">
 						Select the annotation to group on.<br>
 						<SelectPicker placeholder="Annotation" hideEmpty searchable v-model="current.annotation" :options="annotations2" v-if="current.type === 'annotation'"/>
-						<!-- :options="annotations.map(a => a.id)"  -->
 					</section>
 					<label><input type="checkbox" v-model="current.caseSensitive"> Case sensitive</label>
 					<hr>
@@ -56,7 +56,7 @@
 							<button type="button" @click="current.position = 'L'" class="btn btn-default" :class="{active: current.position === 'L'}">before</button>
 							<button type="button" @click="current.position !== 'H' && current.position !== 'E' ? current.position = 'H' : void 0" class="btn btn-default" :class="{active: current.position === 'H' || current.position === 'E'}">hit</button>
 							<button type="button" @click="current.position = 'R'" class="btn btn-default" :class="{active: current.position === 'R'}">after</button>
-							<button type="button" @click="current.position = undefined" class="btn btn-default" :class="{active: current.position == null}">capture group</button>
+							<button type="button" @click="current.position = undefined" class="btn btn-default" :class="{active: current.position == null}" :disabled="!captures || !captures.length" :title="(!captures || !captures.length) ? 'Grouping by capture is disabled, as no captures are present in the query.' : ''">capture group</button>
 						</div>
 					</section>
 
@@ -73,7 +73,8 @@
 						<label><input type="radio" name="type" value="all" v-model="context"> all words</label><br>
 						<label><input type="radio" name="type" value="context" v-model="context"> specific words</label>
 						<Slider v-if="context === 'context'"
-						inline
+							:direction="(current.position === 'E' || current.position === 'L') ? 'rtl' : 'ltr'"
+							inline
 							:min="1"
 							:max="contextsize"
 							:data="contextSliderPreview"
@@ -107,7 +108,6 @@
 <script lang="ts">
 import Vue from 'vue';
 
-// import * as CorpusStore from '@/store/search/corpus';
 import * as ResultsStore from '@/store/search/results/views';
 import * as UIStore from '@/store/search/ui';
 

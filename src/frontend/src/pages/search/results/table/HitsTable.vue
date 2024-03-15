@@ -79,7 +79,7 @@
 			<template v-for="(h, i) in data">
 				<template v-if="h.type === 'hit'">
 					<HitRow :key="`${i}-hit`"
-						:class="{open: open[i]}"
+						:class="{open: open[i], interactable: !disableDetails && !disabled}"
 						:data="h"
 						:mainAnnotation="mainAnnotation"
 						:otherAnnotations="otherAnnotations"
@@ -87,10 +87,10 @@
 						:dir="dir"
 						:html="html"
 						:disabled="disabled"
-						@click.native="$set(open, i, !open[i])"
+						@click.native="!disableDetails && $set(open, i, !open[i])"
 					/>
 
-					<HitRowDetails :key="`${i}-details`"
+					<HitRowDetails v-if="!disableDetails" :key="`${i}-details`"
 						:colspan="colspan"
 						:data="h"
 						:open="open[i]"
@@ -148,6 +148,7 @@ export default Vue.extend({
 		html: Boolean,
 		/** Prevent interaction with sorting, expanding/collapsing, etc. */
 		disabled: Boolean,
+		disableDetails: Boolean,
 
 		/** The results */
 		data: Array as () => Array<HitRowData|DocRowData>,

@@ -75,14 +75,6 @@
 			<br>
 			<button type="button" class="btn btn-default" title="Try again with current search settings" @click="markDirty();">Try again</button>
 		</div>
-
-		<Debug>
-			<div v-if="results">
-				<hr>
-				<div>BlackLab response: </div>
-				<pre>{{JSON.stringify(results.summary, undefined, 2)}}</pre>
-			</div>
-		</Debug>
 	</div>
 </template>
 

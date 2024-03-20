@@ -61,7 +61,7 @@ export default Vue.extend({
 
 		data: Array as () => DocRowData[]
 	},
-	computed: {
+computed: {
 		hasHits(): boolean { return this.data[0]?.doc.numberOfHits != null; },
 		specialFields(): BLDocFields { return CorpusStore.getState().corpus!.fieldInfo; },
 		specialMetaDisplayNames(): { [id: string]: string; } {

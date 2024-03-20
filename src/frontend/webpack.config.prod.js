@@ -4,6 +4,7 @@ const {VueLoaderPlugin} = require('vue-loader');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 module.exports = {
 	entry: {
@@ -105,6 +106,9 @@ module.exports = {
 			test: /\.js$/,
 			exclude: [/node_modules/, '/src/vendor'],
 			loader: 'babel-loader',
+		}, {
+			test: /\.ttf$/,
+			type: 'asset/resource'
 		}]
 	},
 	plugins: [
@@ -127,6 +131,7 @@ module.exports = {
 		new CleanWebpackPlugin(['dist'], {
 			verbose: false,
 		}),
+		new MonacoWebpackPlugin(),
 	],
 	devtool: 'source-map',
 	// Sometimes we get false-positive errors when importing a typescript type definition from a file which itself imported it from a third file

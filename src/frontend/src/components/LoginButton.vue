@@ -12,7 +12,7 @@
 			</ul>
 		</div>
 		<div v-else>
-			<span class="fa fa-solid fa-user"></span> <!-- bootstrap 3 user icon -->
+			<span class="fa fa-solid fa-user"></span>
 			<span class="username">{{ username }}</span>
 		</div>
 	</div>

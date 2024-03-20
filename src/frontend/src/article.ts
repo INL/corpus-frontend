@@ -43,7 +43,8 @@ if (PLAUSIBLE_DOMAIN && PLAUSIBLE_APIHOST) {
 	});
 	//@ts-ignore
 	Vue.$plausible.trackPageview();
-}Vue.use(HighchartsVue);
+}
+Vue.use(HighchartsVue);
 
 $(document).ready(async () => {
 	const user = await loginSystem.awaitInit();

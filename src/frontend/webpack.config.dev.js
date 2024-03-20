@@ -3,6 +3,7 @@ const webpack = require('webpack');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const {VueLoaderPlugin} = require('vue-loader');
 const CircularDependencyPlugin = require('circular-dependency-plugin');
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 module.exports = {
 	entry: {
@@ -98,6 +99,9 @@ module.exports = {
 					appendTsSuffixTo: [/\.vue$/],
 				}
 			}]
+		}, {
+			test: /\.ttf$/,
+			type: 'asset/resource'
 		}]
 	},
 	plugins: [
@@ -138,7 +142,8 @@ module.exports = {
 			// onEnd({ compilation }) {
 			//   console.log('end detecting webpack modules cycles');
 			// },
-		})
+		}),
+		new MonacoWebpackPlugin()
 	],
 	devtool: 'eval-source-map',
 	// Sometimes we get false-positive errors when importing a typescript type definition from a file which itself imported it from a third file

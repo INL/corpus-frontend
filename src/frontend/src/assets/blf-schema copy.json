@@ -1,0 +1,224 @@
+
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "displayName": {
+      "type": "string",
+      "description": "For displaying in user interface (optional, recommended)"
+    },
+    "description": {
+      "type": "string",
+      "description": "For describing input format in user interface (optional, recommended)"
+    },
+    "type": {
+      "type": "string",
+      "description": "What type of input files does this handle? (content, metadata?) (optional; not used by BlackLab; could be used in user interface)"
+    },
+    "processor": {
+      "type": "string",
+      "description": "What XML processor to use (optional; current default is VTD, but Saxon is recommended because it supports XPath 3.1 and is faster. Future format file versions will probably default to Saxon)"
+    },
+    "namespaces": {
+      "type": "object",
+      "patternProperties": {
+        "^.*$": {"type": "string"}
+      },
+      "description": "What namespaces do we use in our XPaths? (if omitted: ignore namespaces)"
+    },
+    "documentPath": {
+      "type": "string",
+      "description": "What element starts a new document? (the only absolute XPath; the rest is relative)"
+    },
+    "store": {
+      "type": "boolean",
+      "description": "Should documents be stored in the content store? This defaults to true, but you can turn it off if you don't need this."
+    },
+    "annotatedFields": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "displayName": {"type": "string"},
+          "description": {"type": "string"},
+          "containerPath": {"type": "string"},
+          "wordPath": {"type": "string"},
+          "tokenIdPath": {"type": "string"},
+          "annotations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "displayName": {"type": "string"},
+                "description": {"type": "string"},
+                "valuePath": {"type": "string"},
+                "sensitivity": {"type": "string"},
+                "uiType": {"type": "string"},
+                "forwardIndex": {"type": "boolean"}
+              },
+              "required": ["name", "valuePath"]
+            }
+          },
+          "standoffAnnotations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {"type": "string"},
+                "tokenRefPath": {"type": "string"},
+                "annotations": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {"type": "string"},
+                      "valuePath": {"type": "string"}
+                    },
+                    "required": ["name", "valuePath"]
+                  }
+                }
+              },
+              "required": ["path", "tokenRefPath", "annotations"]
+            }
+          },
+          "inlineTags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {"type": "string"},
+                "excludeAttributes": {
+                  "type": "array",
+                  "items": {"type": "string"}
+                },
+                "includeAttributes": {
+                  "type": "array",
+                  "items": {"type": "string"}
+                },
+                "displayAs": {"type": "string"}
+              },
+              "required": ["path"]
+            }
+          }
+        },
+        "required": ["wordPath", "annotations"]
+      }
+    },
+    "metadataDefaultAnalyzer": {
+      "type": "string",
+      "description": "Analyzer to use for metadata fields if not overridden (default|standard|whitespace|your own analyzer)"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "containerPath": {"type": "string"},
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "valuePath": {"type": "string"},
+              "forEachPath": {"type": "string"}
+            },
+            "required": ["name", "valuePath"]
+          }
+        }
+      },
+      "required": ["containerPath", "fields"]
+    },
+    "indexFieldAs": {
+      "type": "object",
+      "patternProperties": {
+        "^.*$": {"type": "string"}
+      }
+    },
+    "linkedDocuments": {
+      "type": "object",
+      "properties": {
+        "metadata": {
+          "type": "object",
+          "properties": {
+            "store": {"type": "boolean"},
+            "linkValues": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "valueField": {"type": "string"},
+                  "process": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "action": {"type": "string"},
+                        "find": {"type": "string"},
+                        "replace": {"type": "string"}
+                      },
+                      "required": ["action", "find"]
+                    }
+                  }
+                },
+                "required": ["valueField"]
+              }
+            },
+            "inputFile": {"type": "string"},
+            "pathInsideArchive": {"type": "string"},
+            "inputFormat": {"type": "string"}
+          },
+          "required": ["store", "linkValues", "inputFile", "inputFormat"]
+        }
+      }
+    },
+    "corpusConfig": {
+      "type": "object",
+      "properties": {
+        "displayName": {"type": "string"},
+        "description": {"type": "string"},
+        "contentViewable": {"type": "boolean"},
+        "textDirection": {"type": "string"},
+        "annotationGroups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "annotations": {
+                "type": "array",
+                "items": {"type": "string"}
+              },
+              "addRemainingAnnotations": {"type": "boolean"}
+            },
+            "required": ["name", "annotations"]
+          }
+        },
+		"metadataFieldGroups": {
+			"type": "array",
+			"items": {
+			  "type": "object",
+			  "properties": {
+				"name": {"type": "string"},
+				"fields": {
+				  "type": "array",
+				  "items": {"type": "string"}
+				},
+				"addRemainingFields": {"type": "boolean"}
+			  },
+			  "required": ["name"]
+			}
+		  },
+		  "specialFields": {
+			"type": "object",
+			"properties": {
+			  "pidField": {"type": "string"},
+			  "titleField": {"type": "string"},
+			  "authorField": {"type": "string"},
+			  "dateField": {"type": "string"}
+			}
+		  }
+		}
+	  }
+	},
+	"required": ["displayName", "documentPath"]
+}

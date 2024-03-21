@@ -38,7 +38,7 @@
 	<ModalCreateFormat v-if="modal === 'create-format'" :publicFormats="publicFormats" :privateFormats="privateFormats" :loading="loadingFormats" @create="refreshFormats" @success="success" @error="error" @close="close"/>
 	<ModalUpload       v-if="modal === 'upload'"        :corpus="corpus" :formats="formats" @index="refreshCorpus" @success="success" @error="error" @close="close"/>
 	<ModalShareCorpus  v-if="modal === 'share-corpus'"  :corpus="corpus" @success="success" @error="error" @close="close"/>
-	<ModalConfirm      v-if="modal === 'confirm'"       :message="confirmMessage" @confirm="confirm" @cancel="close"/>
+	<ModalConfirm      v-if="modal === 'confirm'"       :message="confirmMessage" @confirm="confirm" @close="close"/>
 </div>
 
 </template>

@@ -43,6 +43,9 @@ export type BLSearchParameters = {
 	maxcount?: number;
 	/** maximum hits to actually retrieve (only does something when > first+number) */
 	maxretrieve?: number;
+
+	/** When using relation matching in pattern, widen the match part of the hit to contain both source and target. */
+	adjusthits?: 'yes';
 };
 
 // --------------

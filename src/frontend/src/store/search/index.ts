@@ -99,6 +99,7 @@ const get = {
 			sort: activeView.sort != null ? activeView.sort : undefined,
 			viewgroup: activeView.viewGroup != null ? activeView.viewGroup : undefined,
 			wordsaroundhit: state.global.wordsAroundHit != null ? state.global.wordsAroundHit : undefined,
+			adjusthits: 'yes'
 		};
 	}, 'blacklabParameters')
 };

@@ -1,5 +1,6 @@
 import { BLHit, BLHitSnippet, BLHitSnippetPart, BLRelationMatchList, BLRelationMatchRelation, BLRelationMatchSpan } from '@/types/blacklabtypes';
 import { CaptureAndRelation, HitContext, HitToken } from '@/types/apptypes';
+import { debugLog } from '@/utils/debug';
 
 
 type NormalizedCapture = {
@@ -128,18 +129,16 @@ export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir:
 	.sort((a, b) => a.name.localeCompare(b.name));
 	// at this point this list is gone and we have a list of relevant captures and relations.
 	allMatches.forEach((capture, index) => {
-		Object.assign((capture as NormalizedCapture), indexToRgb(index));
-		if (capture.isRelation) relations.push(capture as NormalizedCapture);
-		else explicitCaptures.push(capture as NormalizedCapture);
-	});
+		// Object.assign((capture as NormalizedCapture), indexToRgb(index));
+		let n = 0;
 
+		if (capture.isRelation) n = relations.push(capture as NormalizedCapture);
+		else n = explicitCaptures.push(capture as NormalizedCapture);
+		Object.assign((capture as NormalizedCapture), indexToRgb(n-1));
+	});
 
 	// we used to have a fallback to relations, but that just highlights every single word, not very useful.
 	const capturesToUse = explicitCaptures;
-
-	// const capturesToUse = explicitCaptures.length ? explicitCaptures : relations;
-	// console.log(capturesToUse.sort((a, b) => a.sourceStart - b.sourceStart));
-
 
 	// we have a full hit, enrich the tokens with capture/relation info.
 	for (const [part, context] of Object.entries(r)) {
@@ -149,6 +148,7 @@ export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir:
 			const globalIndex = offset + localIndex;
 
 			const token = context[localIndex];
+			// find any relation that intersects with this token.
 			const matchedRelations = capturesToUse
 				.filter(c => (c.sourceStart ?? -1) <= globalIndex && globalIndex < (c.sourceEnd ?? Number.MAX_SAFE_INTEGER) || c.targetStart <= globalIndex && globalIndex < c.targetEnd)
 
@@ -158,7 +158,9 @@ export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir:
 					value: c.name,
 					color: c.color,
 					textcolor: c.textcolor,
+					// we're the source if we're in the source range (we check for null first to make typescript happy, as there's no source for the root relation)
 					isSource: c.isRelation && c.sourceStart != null && c.sourceEnd != null && c.sourceStart <= globalIndex && globalIndex < c.sourceEnd,
+					// we're the target if we're in the target range
 					isTarget: c.isRelation && c.targetStart <= globalIndex && globalIndex < c.targetEnd,
 				}));
 		}

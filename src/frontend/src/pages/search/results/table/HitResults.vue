@@ -23,14 +23,15 @@
 
 		<hr>
 
-		<!-- TODO align pagination etc.-->
-		<div style="display: flex; align-items: center; ">
+
+		<div class="bottom-layout">
 			<slot name="pagination"/>
+			<div class="spacer"></div>
 
 			<slot name="sort"/>
 			<button
 				type="button"
-				class="btn btn-primary btn-sm"
+				class="btn btn-primary btn-sm show-titles"
 
 				@click="showTitles = !showTitles"
 			>
@@ -196,6 +197,18 @@ export default Vue.extend({
 }
 </style>
 <style lang="scss" scoped>
+
+.bottom-layout {
+	display: flex;
+	align-items: center;
+	.spacer {
+		flex-grow: 1;
+	}
+	.show-titles {
+		margin: 0 0.5em;
+	}
+}
+
 table {
 	> thead > tr > th,
 	> tbody > tr > td,

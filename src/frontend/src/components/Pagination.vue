@@ -140,6 +140,7 @@ export default Vue.extend({
 	$border-color: lighten(#337ab7, 20);
 	margin: 0;
 	font-size: 0;
+	display: inline-block!important;
 
 	>li {
 		> a,

@@ -1,5 +1,6 @@
 <template>
 	<SelectPicker
+		class="sort"
 		data-class="btn-sm btn-default"
 		placeholder="Sort by..."
 		data-menu-width="grow"

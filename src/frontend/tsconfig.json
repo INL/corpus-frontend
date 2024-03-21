@@ -43,6 +43,7 @@
 			See https://github.com/vuejs/jsx/tree/dev/packages/babel-preset-jsx
 		*/
 		"jsx": "preserve",
+		"resolveJsonModule": true,
 
 		// Allow @decorator
 		"experimentalDecorators": true,

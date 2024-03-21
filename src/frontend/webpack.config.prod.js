@@ -131,7 +131,14 @@ module.exports = {
 		new CleanWebpackPlugin(['dist'], {
 			verbose: false,
 		}),
-		new MonacoWebpackPlugin(),
+		new MonacoWebpackPlugin({
+			customLanguages: [{
+				worker: {
+					id: 'yaml',
+					entry: path.resolve(__dirname, 'node_modules/monaco-yaml/yaml.worker.js')
+				}
+			}]
+		})
 	],
 	devtool: 'source-map',
 	// Sometimes we get false-positive errors when importing a typescript type definition from a file which itself imported it from a third file

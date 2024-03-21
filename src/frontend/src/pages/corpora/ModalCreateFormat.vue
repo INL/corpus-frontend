@@ -6,6 +6,7 @@
 		title="New import format"
 
 		@confirm="uploadFormat"
+		@close="$emit('close')"
 	>
 		<template #body>
 			<div style="display:flex; align-items: flex-start; justify-content: space-between; margin-bottom: 15px;">
@@ -29,7 +30,7 @@
 
 						<div style="display: inline-flex; flex-wrap: nowrap; flex-direction: row;">
 							<SelectPicker :options="formatOptions" data-style="border-right: none; border-top-right-radius: 0; border-bottom-right-radius: 0;" right :showValues="false" placeholder="Select an existing format" hideEmpty allowHtml data-menu-width="auto" container="body" v-model="formatPresetName"/>
-							<button @click="downloadFormat" :disabled="!formatPresetName" class="btn btn-primary" style="border-top-left-radius: 0; border-bottom-left-radius: 0">Load</button>
+							<button @click="downloadFormat" :disabled="!formatPresetName || downloading" class="btn btn-primary" style="border-top-left-radius: 0; border-bottom-left-radius: 0">Load</button>
 						</div>
 					</div>
 
@@ -42,7 +43,12 @@
 			</div>
 
 
-			<MonacoEditor v-model="formatContents" :options="editorOptions" style="height: 500px;"/>
+			<MonacoEditor style="height: 500px;"
+				:options="editorOptions"
+				:language="formatLanguage"
+				:filename="fullFormatName"
+				v-model="formatContents"
+			/>
 			<div v-if="error" class="alert alert-danger" style="margin-top:20px; flex: none;">{{ error }}</div>
 	</template>
 	<template #footer>
@@ -80,6 +86,7 @@ export default Vue.extend({
 		// during upload
 		error: '',
 		uploading: false,
+		downloading: false,
 
 		formatTypes: [{
 			label: 'JSON',
@@ -90,16 +97,14 @@ export default Vue.extend({
 		}] as Option[]
 	}),
 	computed: {
+		fullFormatName(): string {
+			return `${this.formatName || 'my-custom-format'}.blf.${this.formatLanguage}`;
+		},
 		editorOptions(): monaco.editor.IStandaloneEditorConstructionOptions {
 			return {
-				language: this.formatLanguage.toLowerCase(),
-				theme: 'light',
 				automaticLayout: true,
-				minimap: { autohide: true, }
+				minimap: { autohide: true, },
 			}
-		},
-		editor(): monaco.editor.IStandaloneCodeEditor {
-			return (this.$refs.editor as any).editor as any;
 		},
 		formatOptions(): Options {
 			const r: Options = [];
@@ -112,6 +117,7 @@ export default Vue.extend({
 		downloadFormat() {
 			if (!this.formatPresetName) { return; }
 			const presetName = this.formatPresetName;
+			this.downloading = true;
 
 			Api.blacklab.getFormatContent(this.formatPresetName)
 			.then(data => {
@@ -125,6 +131,8 @@ export default Vue.extend({
 				if (!this.formatName)
 					this.formatName = presetName.split(':')[1] || presetName; // default to the preset name
 			})
+			.catch((e: Api.ApiError) => this.error = e.message)
+			.finally(() => this.downloading = false)
 		},
 		loadFormatFromDisk(e: InputEvent) {
 			const input = e.target as HTMLInputElement;

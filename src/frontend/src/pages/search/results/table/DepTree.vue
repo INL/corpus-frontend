@@ -15,6 +15,7 @@
 		<reactive-dep-tree v-if="connlu && renderTree" ref="tree"
 			minimal
 			interactive
+			shown-features="FORM,LEMMA,UPOS"
 			:conll="connlu"
 		></reactive-dep-tree>
 	</div>
@@ -161,7 +162,8 @@ export default Vue.extend({
 				row.push(rel && rel.parentIndex < this.sensibleArray.length  ? (rel.parentIndex + 1).toString() : '_'); // head
 				row.push(rel ? rel.label : '_'); // deprel
 				row.push('_'); // deps
-				row.push(i + this.indexOffset >= this.hit!.start && i + this.indexOffset < this.hit!.end ? `highlight=red` : '_'); // misc
+				row.push('_'); // highlight.
+				// row.push(i + this.indexOffset >= this.hit!.start && i + this.indexOffset < this.hit!.end ? `highlight=red` : '_'); // misc
 
 				rows.push(row);
 			}

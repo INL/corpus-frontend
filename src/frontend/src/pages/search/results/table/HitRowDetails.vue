@@ -15,7 +15,7 @@
 					:otherAnnotations="{
 						lemma: 'lemma',
 						upos: 'pos',
-						xpos: 'xpos',
+						// xpos: 'xpos',
 					}"
 				/>
 				<p>

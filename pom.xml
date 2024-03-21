@@ -75,12 +75,16 @@
                 <version>5.0.0</version>
                 <executions>
                     <execution>
-                        <phase></phase>
-                        <goals><goal>build</goal></goals>
+                        <id>get-the-git-infos</id>
+                        <goals><goal>revision</goal></goals>
+                        <phase>initialize</phase>
                     </execution>
                 </executions>
                 <configuration>
                     <dotGitDirectory>${project.basedir}/.git</dotGitDirectory>
+                    <generateGitPropertiesFile>true</generateGitPropertiesFile>
+                    <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
+                    <commitIdGenerationMode>full</commitIdGenerationMode>
                 </configuration>
             </plugin>
 

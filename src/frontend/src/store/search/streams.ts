@@ -320,20 +320,18 @@ export default () => {
 		}),
 		(cur, prev) => {
 			url$.next(cloneDeep(cur));
-			if (
+			// @ts-ignore
+			if ( Vue.$plausible &&
 				(cur.params?.patt || cur.params?.filter) &&
-				(
-					(cur.params?.patt !== prev?.params?.patt) ||
-					(cur.params?.filter !== prev?.params?.filter)
-				)
+				((cur.params?.patt !== prev?.params?.patt) ||
+				(cur.params?.filter !== prev?.params?.filter))
 			) {
 				// @ts-ignore
-				Vue.$plausible?.trackEvent('search', { props: {
+				Vue.$plausible.trackEvent('search', { props: {
 					pattern: cur.params?.patt || '',
 					filter: cur.params?.filter || ''
 				}});
 			}
-
 		},
 		{
 			immediate: true,

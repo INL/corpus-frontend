@@ -120,8 +120,8 @@
                         <configuration>
                             <!-- See https://nodejs.org/en/download/ for
                                  latest node and npm (lts) versions -->
-                            <nodeVersion>v16.13.2</nodeVersion>
-                            <npmVersion>8.1.2</npmVersion>
+                            <nodeVersion>v20.11.1</nodeVersion>
+                            <npmVersion>10.2.4</npmVersion>
                         </configuration>
                     </execution>
                     <execution>
@@ -142,7 +142,7 @@
                         -->
                         <?m2e ignore?>
                     </execution>
-                    
+
                     <!-- rebuild node native bindings (required for node-sass) (this fixes build errors when a library version is updated, but the CI server has cached the old libs) -->
                     <execution>
                         <id>npm rebuild</id>

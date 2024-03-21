@@ -29,13 +29,27 @@ import {ReactiveDepTree} from '@/../node_modules/reactive-dep-tree/dist/reactive
 import {HitRowData} from '@/pages/search/results/table/HitRow.vue';
 import { BLHit, BLHitSnippet, BLHitSnippetPart, BLRelationMatchRelation } from '@/types/blacklabtypes';
 
-const conllExample =
-`# text = I am eating a pineapple
-1	I	_	PRON	_	_	2	suj	_	_
-2	am	_	AUX	_	_	0	root	_	_
-3	eating	_	VERB	_	_	2	aux	_	highlight=red
-4	a	_	DET	_	_	5	det	_	_
-5	pineapple	_	NOUN	_	_	3	obj	_	_`
+/* https://universaldependencies.org/format.html
+Sentences consist of one or more word lines, and word lines contain the following fields:
+
+ID:     Word index, integer starting at 1 for each new sentence; may be a range for multiword tokens; may be a decimal number for empty nodes (decimal numbers can be lower than 1 but must be greater than 0).
+FORM:   Word form or punctuation symbol.
+LEMMA:  Lemma or stem of word form.
+UPOS:   Universal part-of-speech tag.
+XPOS:   Optional language-specific (or treebank-specific) part-of-speech / morphological tag; underscore if not available.
+FEATS:  List of morphological features from the universal feature inventory or from a defined language-specific extension; underscore if not available.
+HEAD:   Head of the current word, which is either a value of ID or zero (0).
+DEPREL: Universal dependency relation to the HEAD (root iff HEAD = 0) or a defined language-specific subtype of one.
+DEPS:   Enhanced dependency graph in the form of a list of head-deprel pairs.
+MISC:   Any other annotation.
+*/
+// const conllExample =
+// `# text = I am eating a pineapple
+// 1	I	_	PRON	_	_	2	suj	_	_
+// 2	am	_	AUX	_	_	0	root	_	_
+// 3	eating	_	VERB	_	_	2	aux	_	highlight=red
+// 4	a	_	DET	_	_	5	det	_	_
+// 5	pineapple	_	NOUN	_	_	3	obj	_	_`
 
 
 function flatten(h?: BLHitSnippetPart, values?: string[]): Array<Record<string, string>> {
@@ -78,7 +92,42 @@ export default Vue.extend({
 		renderTree: true,
 	}),
 	computed: {
+		relationInfo(): undefined|Array<undefined|{parentIndex: number; label: string;}> {
+			const hit = this.data.hit;
+			if (!this.hit?.matchInfos) return undefined;
+
+			const r: Array<{parentIndex: number;label: string;}> = [];
+			const doRelation = (v: BLRelationMatchRelation) => {
+				// Connlu can only have one parent, so skip if the relation is not one-to-one
+
+				if (!(v.targetEnd - v.targetStart > 1) && (v.sourceStart == null || !(v.sourceEnd! - v.sourceStart > 1))) {
+					// translate the indices to something that makes sense
+					const sourceIndex = v.sourceStart != null ? v.sourceStart - this.indexOffset : -1; // 0 signifies root.
+					const targetIndex = v.targetStart - this.indexOffset;
+					// add the relation to the sensible array
+
+					r[targetIndex] = {
+						// might be undefined for root?
+						parentIndex: sourceIndex,
+						//@ts-ignore
+						label: v.relType,
+						// @ts-ignore
+						sourceObject: v
+					}
+				}
+			}
+
+			Object.entries(hit.matchInfos || {}).forEach(mi => {
+				const [k, v] = mi;
+				// Not interested in non-relation matches.
+				if (v.type === 'relation') doRelation(v);
+				else if (v.type === 'list') v.infos.forEach(doRelation);
+			})
+			return r.length ? r : undefined;
+		},
 		connlu(): string {
+			if (!this.relationInfo) return '';
+
 			let header = '# text = ';
 			let rows: string[][] = [];
 
@@ -124,6 +173,8 @@ export default Vue.extend({
 
 		hit(): BLHit|undefined { return 'start' in this.data.hit ? this.data.hit : undefined; },
 		indexOffset(): number { return this.hit ? this.hit.start - (this.hit.left?.punct || []).length : 0; },
+		// Make the hit array make sense, since indexing into three non-0 indexed objects is a bit of a pain.
+		// Basically just make an array of key-value maps that contain the annotations for each token. e.g. [{word: 'I', lemma: 'i'}, {word: 'am', lemma: 'be'}, ...]
 		sensibleArray(): Array<Record<string, string>> {
 			if (!this.hit || !this.hit.matchInfos) return [];
 			const extract = ['punct', this.mainAnnotation].concat(Object.values(this.otherAnnotations));
@@ -132,55 +183,6 @@ export default Vue.extend({
 
 			return flatten(left, extract).concat(flatten(match, extract)).concat(flatten(right, extract));
 		},
-		relationInfo(): Array<undefined|{parentIndex: number; label: string;}> {
-			const hit = this.data.hit;
-			if (!this.hit?.matchInfos) return [];
-
-			const r: Array<{parentIndex: number;label: string;}> = [];
-
-			const doRelation = (v: BLRelationMatchRelation) => {
-				// Connlu can only have one parent,
-				if (!(v.targetEnd - v.targetStart > 1) && (v.sourceStart == null || !(v.sourceEnd! - v.sourceStart > 1))) {
-					// translate the indices to something that makes sense
-					const sourceIndex = v.sourceStart != null ? v.sourceStart - this.indexOffset : -1; // 0 signifies root.
-					const targetIndex = v.targetStart - this.indexOffset;
-					// add the relation to the sensible array
-
-					r[targetIndex] = {
-						// might be undefined for root?
-
-						parentIndex: sourceIndex,
-						//@ts-ignore
-						label: v.relType,
-						// @ts-ignore
-						sourceObject: v
-					}
-				}
-			}
-
-			Object.entries(hit.matchInfos || {}).forEach(mi => {
-				const [k, v] = mi;
-				// Not interested in non-relation matches.
-				if (v.type === 'relation') doRelation(v);
-				else if (v.type === 'list') v.infos.forEach(doRelation);
-			})
-			return r;
-
-			/* https://universaldependencies.org/format.html
-			Sentences consist of one or more word lines, and word lines contain the following fields:
-
-			ID:     Word index, integer starting at 1 for each new sentence; may be a range for multiword tokens; may be a decimal number for empty nodes (decimal numbers can be lower than 1 but must be greater than 0).
-			FORM:   Word form or punctuation symbol.
-			LEMMA:  Lemma or stem of word form.
-			UPOS:   Universal part-of-speech tag.
-			XPOS:   Optional language-specific (or treebank-specific) part-of-speech / morphological tag; underscore if not available.
-			FEATS:  List of morphological features from the universal feature inventory or from a defined language-specific extension; underscore if not available.
-			HEAD:   Head of the current word, which is either a value of ID or zero (0).
-			DEPREL: Universal dependency relation to the HEAD (root iff HEAD = 0) or a defined language-specific subtype of one.
-			DEPS:   Enhanced dependency graph in the form of a list of head-deprel pairs.
-			MISC:   Any other annotation.
-			*/
-		}
 	},
 	watch: {
 		connlu() {

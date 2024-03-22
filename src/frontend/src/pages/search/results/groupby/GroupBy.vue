@@ -112,7 +112,7 @@ import * as ResultsStore from '@/store/search/results/views';
 import * as UIStore from '@/store/search/ui';
 
 import SelectPicker from '@/components/SelectPicker.vue';
-import { GroupBySettings2, getAnnotationSubset, parseGroupBy2, serializeGroupBy2 } from '@/utils';
+import { GroupBySettingsUI, getAnnotationSubset, serializeGroupBySettingsUI, isValidGroupBySettingsUI } from '@/utils';
 
 import * as GlobalSettingsStore from '@/store/search/results/global'
 import * as CorpusStore from '@/store/search/corpus';
@@ -130,15 +130,16 @@ import cloneDeep from 'clone-deep';
 import * as SearchModule from '@/store/search/index';
 import { blacklab } from '@/api';
 import jsonStableStringify from 'json-stable-stringify';
+import { parseGroupBySettingsUI } from '@/utils';
 
-const initialGroupBySettings: GroupBySettings2 = {
+const initialGroupBySettings: GroupBySettingsUI = {
 	type: 'annotation' as  'annotation'|'metadata',
 	annotation: '',
 	caseSensitive: false,
 	/** when undefined, use groupname instead of positional, and ignore start+end */
 	position: 'H' as 'L'|'H'|'R'|'E'|undefined,
 	start: 1,
-	end: 1 as number|undefined,
+	end: undefined,
 	field: '',
 	groupname: '',
 }
@@ -167,7 +168,7 @@ export default Vue.extend({
 		currentIndex: 0,
 		/** micro optimization: whether to skip next parse since the new value came from us anyway. */
 		localModelUpToDate: false,
-		localModel: [] as GroupBySettings2[],
+		localModel: [] as GroupBySettingsUI[],
 
 		hits: undefined as undefined|BLHitResults
 	}),
@@ -175,7 +176,7 @@ export default Vue.extend({
 		storeModule(): ResultsStore.ViewModule { return ResultsStore.getOrCreateModule(this.type); },
 		storeValue(): string[] { return this.storeModule.getState().groupBy.concat(this.storeModule.getState().groupByAdvanced); },
 		viewGroup(): string|null { return this.storeModule.getState().viewGroup; },
-		current(): GroupBySettings2|undefined { return this.localModel[this.currentIndex]; },
+		current(): GroupBySettingsUI|undefined { return this.localModel[this.currentIndex]; },
 		firstHitPreviewQuery(): BLSearchParameters|undefined {
 			const params = SearchModule.get.blacklabParameters();
 			if (!params) return undefined;
@@ -312,10 +313,9 @@ export default Vue.extend({
 		apply() {
 			this.localModelUpToDate = true;
 			this.storeModule.actions.groupBy([]);
-			this.storeModule.actions.groupByAdvanced(serializeGroupBy2(this.localModel));
+			this.storeModule.actions.groupByAdvanced(serializeGroupBySettingsUI(this.localModel));
 		},
-		serializeGroupBy: serializeGroupBy2,
-		humanizeGroupBy(g: GroupBySettings2): string {
+		humanizeGroupBy(g: GroupBySettingsUI): string {
 			let r = '';
 			if (g.type === 'annotation') {
 				const position = g.position === 'H' ? 'in' : g.position === 'L' ? 'before' : g.position === 'R' ? 'after' : ''; // position | '' when using capture
@@ -331,9 +331,7 @@ export default Vue.extend({
 			return r;
 		},
 
-		isValidGroup(group: GroupBySettings2): boolean {
-			return serializeGroupBy2(group, true) != null;
-		},
+		isValidGroup: isValidGroupBySettingsUI,
 		removeGroup(i: number) {
 			this.localModel.splice(i, 1);
 			if (i === this.currentIndex)
@@ -355,7 +353,7 @@ export default Vue.extend({
 		storeValue: {
 			immediate: true,
 			handler() {
-				if (!this.localModelUpToDate) this.localModel = this.storeValue.map(parseGroupBy2);
+				if (!this.localModelUpToDate) this.localModel = this.storeValue.map(parseGroupBySettingsUI);
 				this.localModelUpToDate = false;
 				if (this.currentIndex >= this.localModel.length) {
 					this.currentIndex = this.localModel.length - 1;

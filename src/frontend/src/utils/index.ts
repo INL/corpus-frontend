@@ -686,7 +686,7 @@ export function serializeGroupBy(groupBy: AppTypes.GroupBySettings|AppTypes.Grou
 }
 
 /** We use a weird almost untyped object in the groupby builder because it's much easier to attach to the UI this way. */
-export type GroupBySettings2 = {
+export type GroupBySettingsUI = {
 	type: 'annotation'|'metadata',
 	/** only used when type === 'annotation' */
 	annotation: string,
@@ -703,49 +703,43 @@ export type GroupBySettings2 = {
 	groupname: string,
 };
 
-/** Interop between the UI object and the formal groupby object. Invalid objects will be filtered out. */
-export function serializeGroupBy2(g: GroupBySettings2[]): string[];
-/** Interop between the UI object and the formal groupby object. Invalid objects will result in an invalid string. */
-export function serializeGroupBy2(g: GroupBySettings2, filter: false): string;
-/** Interop between the UI object and the formal groupby object. Invalid objects will result in undefined. */
-export function serializeGroupBy2(g: GroupBySettings2): string|undefined;
-/** Interop between the UI object and the formal groupby object. Invalid objects will result in undefined. */
-export function serializeGroupBy2(g: GroupBySettings2, filter: true): string|undefined;
-export function serializeGroupBy2(g: GroupBySettings2|GroupBySettings2[], filter = true): string|string[]|undefined {
-	function serialize(g: GroupBySettings2): string|undefined {
+export function isValidGroupBySettingsUI(g: GroupBySettingsUI): boolean {
+	if (!g.type) return false;
+	if (g.type === 'metadata' && !g.field) return false;
+	if (g.type === 'annotation') {
+		if (!g.annotation) return false;
+		if (g.position != null && g.start == null) return false;
+		if (!g.position && !g.groupname) return false;
+	}
+	return true;
+}
+
+export function serializeGroupBySettingsUI(g: GroupBySettingsUI[]): string[];
+export function serializeGroupBySettingsUI(g: GroupBySettingsUI): string|undefined;
+export function serializeGroupBySettingsUI(g: GroupBySettingsUI|GroupBySettingsUI[]): string|string[]|undefined {
+	const returnArray = Array.isArray(g);
+	if (!Array.isArray(g)) g = [g];
+
+	const r = g.filter(isValidGroupBySettingsUI).map(g => {
 		const cs = g.caseSensitive ? 's' : 'i';
-
 		switch (g.type) {
-			case 'metadata': {
-				if (!g.field && filter) return undefined;
-				return `field:${g.field}:${cs}`;
-			}
+			case 'metadata': return `field:${g.field}:${cs}`;
 			case 'annotation': {
-				if (!g.annotation && filter) return undefined;
-				if (g.position == null) {
-					if (!g.groupname && filter) return undefined;
+				if (g.position == null) // group by a capture label
 					return `capture:${g.annotation}:${cs}:${g.groupname}`;
-				}
-				if (g.start == null && filter) return undefined;
-				return `context:${g.annotation}:${cs}:${g.position}${g.start}${g.end != null ? '-' + g.end : ''}`;
+				else if (g.position === 'H' && g.end == null) // group by entire hit. Since hits are dynamic length, omit start
+					return `hit:${g.annotation}:${cs}`;
+				else // group by positional.
+					return `context:${g.annotation}:${cs}:${g.position}${g.end != null ? `${g.start}-${g.end}` : ''}`;
 			}
-			default: {
-				if (g.type != null) console.error(`Unknown grouping property ${g.type}. Cannot create string for BlackLab.`);
-				return undefined;
-			}
+			default: throw new Error('Unknown grouping property ' + g.type);
 		}
-	}
-
-	if (Array.isArray(g)) {
-		filter = true;
-		return g.map(serialize).filter(g => g != null) as string[]
-	}
-	else return serialize(g);
-
+	});
+	return returnArray ? r : r[0];
 }
 
 /** Interop between the UI object and the formal groupby object. */
-export function parseGroupBy2(groupby: string): GroupBySettings2 {
+export function parseGroupBySettingsUI(groupby: string): GroupBySettingsUI {
 	const g = parseGroupBy([groupby])[0];
 
 	return {

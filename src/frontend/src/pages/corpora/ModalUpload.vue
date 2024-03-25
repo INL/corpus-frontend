@@ -1,5 +1,5 @@
 <template>
-    <Modal :closable="closable">
+    <Modal :closable="closable" @close="$emit('close')" confirmMessage="upload" @confirm="upload" :canConfirm="canUpload">
 		<template #title>Upload new data to corpus <em>{{ corpus.displayName }}</em></template>
 		<template #body>
 			<p>You may upload:</p>
@@ -24,10 +24,10 @@
 					</label>
 
 					<small id="uploadFormatDescription" class="text-muted" style="display: block; margin: 12px 0px; width: 100%;">
+						The corpus accepts the following files:<br>
 						<template v-if="format">{{ format.description }}</template>
 						<template v-else>Unknown format (it may have been deleted from the server), uploads might fail</template>
 					</small>
-					<button type="submit" class="btn btn-primary" @click="upload">upload</button>
 				</form>
 
 				<div class="progress" v-if="uploading">
@@ -88,6 +88,9 @@ export default Vue.extend({
 				return 'Select linked files';
 			}
 		},
+		canUpload(): boolean {
+			return !!this.documentFiles?.length && !this.uploading;
+		},
 	},
 	methods: {
 		upload() {
@@ -102,8 +105,8 @@ export default Vue.extend({
 			// Then once the original request succeeds, we stop polling and show the success message.
 			const {request, cancel} = Api.blacklab.postDocuments(
 				corpus.id,
-				Array.from(this.documentFiles!),
-				Array.from(this.metadataFiles!),
+				Array.from(this.documentFiles || []),
+				Array.from(this.metadataFiles || []),
 				progress => this.handleUploadProgress(progress),
 			);
 

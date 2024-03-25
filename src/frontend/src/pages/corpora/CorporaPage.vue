@@ -49,7 +49,12 @@
 	<ModalCreateCorpus v-if="modal === 'create-corpus'" :publicFormats="publicFormats" :privateFormats="privateFormats" :loading="loadingFormats" @create="refreshCorpora" @success="success" @error="error" @close="close"/>
 	<ModalUpload       v-if="modal === 'upload'"        :corpus="corpus" :formats="formats" @index="refreshCorpus" @success="success" @error="error" @close="close"/>
 	<ModalShareCorpus  v-if="modal === 'share-corpus'"  :corpus="corpus" @success="success" @error="error" @close="close"/>
-	<ModalConfirm      v-if="modal === 'confirm'"       :message="confirmMessage" @confirm="confirm" @close="close"/>
+	<ModalConfirm      v-if="modal === 'confirm'"
+		:title="confirmTitle"
+		:message="confirmMessage"
+		@confirm="confirmAction"
+		@close="close"
+	/>
 </div>
 
 </template>
@@ -78,7 +83,7 @@ export default Vue.extend({
 		successMessage: '',
 		confirmMessage: '',
 		confirmTitle: '',
-		confirmAction: null as (() => void)|null,
+		confirmAction: undefined as (() => void)|undefined,
 
 		loadingFormats: false,
 		loadingCorpora: false,
@@ -88,8 +93,6 @@ export default Vue.extend({
 
 		corpus: null as null|NormalizedIndexBase,
 		format: null as null|NormalizedFormat,
-
-		confirm: null as any,
 	}),
 
 	computed: {
@@ -150,6 +153,7 @@ export default Vue.extend({
 			this.confirmMessage = `Are you sure you want to delete corpus "${corpus.displayName}"?`;
 			this.modal = 'confirm';
 			this.confirmAction = () => {
+				debugger;
 				this.close();
 				this.loadingCorpora = true;
 				Api.blacklab.deleteCorpus(corpus.id)
@@ -159,7 +163,7 @@ export default Vue.extend({
 				})
 				.catch((e: Api.ApiError) => this.errorMessage = `Could not delete corpus "${corpus.displayName}": ${e.message}`)
 				.finally(() => {
-					this.confirmAction = null;
+					this.confirmAction = undefined;
 					this.loadingCorpora = false;
 				});
 			}
@@ -178,7 +182,7 @@ export default Vue.extend({
 				})
 				.catch((e: Api.ApiError) => this.errorMessage = `Could not delete format "${format.displayName}": ${e.message}`)
 				.finally(() => {
-					this.confirmAction = null;
+					this.confirmAction = undefined;
 					this.loadingFormats = false;
 				});
 			}

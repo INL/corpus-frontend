@@ -143,7 +143,14 @@ module.exports = {
 			//   console.log('end detecting webpack modules cycles');
 			// },
 		}),
-		new MonacoWebpackPlugin()
+		new MonacoWebpackPlugin({
+			customLanguages: [{
+				worker: {
+					id: 'yaml',
+					entry: path.resolve(__dirname, 'node_modules/monaco-yaml/yaml.worker.js')
+				}
+			}]
+		})
 	],
 	devtool: 'eval-source-map',
 	// Sometimes we get false-positive errors when importing a typescript type definition from a file which itself imported it from a third file
@@ -170,7 +177,14 @@ module.exports = {
 		headers: {
 			// allow fetching updates on port 8081 from site at port 8080
 			"Access-Control-Allow-Origin": "*",
-		}
-
+		},
+		// Proxying is required to load the webworkers in the monaco-editor
+		// as serving them from a different port does not work
+		// So proxy the tomcat instance through webpack-dev-server so everything can run off port 8081 in the browser.
+		proxy: [{
+			context: ['/corpus-frontend', '/blacklab-server'],
+			target: 'http://127.0.0.1:8080',
+			secure: false
+		}]
 	}
 };

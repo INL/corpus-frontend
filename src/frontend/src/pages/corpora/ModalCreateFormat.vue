@@ -102,7 +102,6 @@ export default Vue.extend({
 		},
 		editorOptions(): monaco.editor.IStandaloneEditorConstructionOptions {
 			return {
-				theme: 'light',
 				automaticLayout: true,
 				minimap: { autohide: true, },
 			}

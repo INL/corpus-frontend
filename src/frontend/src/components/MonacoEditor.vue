@@ -1,5 +1,8 @@
 <template>
-	<div ref="editor" min-height="200px;"></div>
+	<div style="min-height: 200px;">
+		<div ref="editor" style="width: 100%; height: calc(100% - 1.5em);"></div>
+		<label><input type=checkbox v-model="darkmode"> Dark mode</label>
+	</div>
 </template>
 
 <script lang="ts">
@@ -7,85 +10,57 @@ import Vue from 'vue';
 
 import * as monaco from 'monaco-editor';
 import { configureMonacoYaml } from 'monaco-yaml';
-// @ts-ignore
-import YamlWorker from 'monaco-yaml/yaml.worker';
-
+import type {JSONSchema7} from 'json-schema';
 import blfschema from '@/assets/blf-schema.json';
 
 configureMonacoYaml(monaco, {
 	enableSchemaRequest: false,
 	schemas: [{
 		fileMatch: ['*.blf.*'],
+
 		// @ts-ignore
-		schema: JSON.stringify(blfschema),
-		uri: 'https://github.com/remcohaszing/monaco-yaml#usage'
-	}]
+		schema: blfschema as JSONSchema7,
+		uri: new URL('@/assets/blf-schema.json', import.meta.url).toString(),
+		// JSON.stringify(blfschema),
+		// uri: 'https://github.com/remcohaszing/monaco-yaml#usage'
+	}],
 });
 
+monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+	validate: true,
+	schemas: [{
+		uri: new URL('@/assets/blf-schema.json', import.meta.url).toString(),
+		fileMatch: ['*.blf.*'],
+		schema: blfschema
+	}],
+	allowComments: true,
+});
 
-const originalEnv = window.MonacoEnvironment;
 window.MonacoEnvironment = {
-	...originalEnv,
-	getWorkerUrl(moduleId: string, label: string) {
-		if (label === 'yaml' || label === 'yml') {
-			const blob = new Blob([`importScripts("${new URL('monaco-yaml/yaml.worker', import.meta.url).toString()}");`],{ type: 'application/javascript' });
-			return URL.createObjectURL(blob);
+	getWorker(moduleId, label) {
+		switch (label) {
+		case 'editorWorkerService':
+			return new Worker(new URL('monaco-editor/esm/vs/editor/editor.worker', import.meta.url))
+		case 'css':
+		case 'less':
+		case 'scss':
+			return new Worker(new URL('monaco-editor/esm/vs/language/css/css.worker', import.meta.url))
+		case 'handlebars':
+		case 'html':
+		case 'razor':
+			return new Worker(new URL('monaco-editor/esm/vs/language/html/html.worker', import.meta.url))
+		case 'javascript':
+		case 'typescript':
+			return new Worker(new URL('monaco-editor/esm/vs/language/typescript/ts.worker', import.meta.url))
+		case 'json':
+			return new Worker(new URL('monaco-editor/esm/vs/language/json/json.worker', import.meta.url))
+		case 'yaml':
+			return new Worker(new URL('monaco-yaml/yaml.worker', import.meta.url))
+		default:
+			throw new Error(`Unknown label ${label}`)
 		}
-		return originalEnv!.getWorkerUrl!(moduleId, label);
 	}
 }
-
-// @ts-ignore
-// const wrapUrl = (url: URL): Promise<URL> => process.env.NODE_ENV === 'development' ? fetch(url.toString())
-// 		.then(response => response.blob())
-// 		.then(blob => URL.createObjectURL(blob))
-// 		.then(url => new URL(url)) : Promise.resolve(url)
-
-// const wrapUrl = url => Promise.resolve(url);
-	// @ts-ignore
-	// var BlobBuilder = window.MozBlobBuilder || window.WebKitBlobBuilder || window.BlobBuilder,
-	// URL = window.URL || window.webkitURL;
-	// const mainString = url.toString(),
-	// bodyString = mainString.substring(mainString.indexOf("{")+1, mainString.lastIndexOf("}") );
-	// const bb = new BlobBuilder();
-	// bb.append(bodyString);
-	// return URL.createObjectURL(bb.getBlob());
-// }
-// window.MonacoEnvironment = {
-// 	// getWorkerUrl: function(workerId, label) {
-// 	// 	switch (label) {
-// 	// 		case 'json': return new URL('monaco-editor/esm/vs/language/json/json.worker', import.meta.url).toString();
-// 	// 		case 'yaml': return new URL('monaco-yaml/yaml.worker', import.meta.url).toString();
-// 	// 		case 'editorWorkerService': return new URL('monaco-editor/esm/vs/editor/editor.worker?worker', import.meta.url).toString();
-// 	// 		default: throw new Error(`Unknown label ${label}`);
-// 	// 	}
-// 	// },
-// 	getWorker(moduleId, label) {
-// 		debugger;
-// 		switch (label) {
-// 			case 'editorWorkerService': return wrapUrl(new URL('monaco-editor/esm/vs/editor/editor.worker?worker', import.meta.url)).then(url => new Worker(url, {type: 'module'}))
-// 			// case 'css':
-// 			// case 'less':
-// 			// case 'scss':
-// 			//   return new Worker(new URL('monaco-editor/esm/vs/language/css/css.worker', import.meta.url))
-// 			// case 'handlebars':
-// 			// case 'html':
-// 			// case 'razor':
-// 			//   return new Worker(
-// 			// 	new URL('monaco-editor/esm/vs/language/html/html.worker', import.meta.url)
-// 			//   )
-// 			case 'json': return wrapUrl(new URL('monaco-editor/esm/vs/language/json/json.worker?worker', import.meta.url)).then(url => new Worker(url, {type: 'module'}))
-// 			// case 'javascript':
-// 			// case 'typescript':
-// 			//   return new Worker(
-// 			// 	new URL('monaco-editor/esm/vs/language/typescript/ts.worker', import.meta.url)
-// 			//   )
-// 			case 'yaml': return new YamlWorker();
-// 				//  return wrapUrl(new URL('monaco-yaml/yaml.worker?worker', import.meta.url)).then(url => new Worker(url,{type: 'module'}))
-// 			default: throw new Error(`Unknown label ${label}`)
-// 		}
-// 	}
-// }
 
 export default Vue.extend({
 	props: {
@@ -97,13 +72,20 @@ export default Vue.extend({
 	data: () => ({
 		editor: null as any as monaco.editor.IStandaloneCodeEditor,
 		emittedValue: '',
+		darkmode: true,
 	}),
+	computed: {
+		effectiveOptions(): monaco.editor.IStandaloneEditorConstructionOptions {
+			return {
+				theme: this.darkmode ? 'vs-dark' : 'vs',
+				...this.options,
+			};
+		}
+	},
 	mounted() {
 		this.editor = monaco.editor.create(this.$refs.editor as HTMLElement, {
-			// value: this.value,
 			model: monaco.editor.createModel(this.value, this.language, monaco.Uri.file(this.filename)),
-			// language: this.language,
-			...this.options
+			...this.effectiveOptions
 		});
 		this.editor.onDidChangeModelContent(() => {
 			this.emittedValue = this.editor.getValue();
@@ -112,8 +94,9 @@ export default Vue.extend({
 	},
 	watch: {
 		value(newVal: string) {
-			// just going to assume that the browser will optimize this and first check reference equality
-			// otherwise we'd be in a bit of pain for very long strings
+			// Assume a reference comparison is made first
+			// https://stackoverflow.com/questions/23836825/is-javascript-string-comparison-just-as-fast-as-number-comparison
+			// So long models *should* be okay, as long as vue doesn't copy the emitted input event string internally.
 			if (newVal !== this.emittedValue)
 				this.editor.setValue(newVal);
 		},
@@ -122,9 +105,17 @@ export default Vue.extend({
 		},
 		// if this changes we need to recreate the model unfortunately
 		filename(newVal: string) {
+			// A model can only exist once, globally it seems.
+			// The editor is really just a view on one of a set of models that are floating somewhere in global space.
+			// So we need to take care that we don't create a new model with the same path.
+			const newUri = monaco.Uri.file(newVal);
+			monaco.editor.getModels().forEach(model => {
+				if (model.uri.path === newUri.path)
+					model.dispose();
+			});
 			this.editor.setModel(monaco.editor.createModel(this.value, this.language, monaco.Uri.file(newVal)));
 		},
-		options: {
+		effectiveOptions: {
 			deep: true,
 			handler(newVal: monaco.editor.IStandaloneEditorConstructionOptions) {
 				this.editor.updateOptions(newVal);

@@ -17,9 +17,9 @@
 		<p>No corpora have been added to BlackLab. Corpora will appear here when when they become available.</p>
 	</div>
 	<template v-else>
-		<CorpusTable v-if="publicCorpora.length" :corpora="publicCorpora" :formats="formats" title="Public corpora"/>
+		<CorpusTable v-if="publicCorpora.length" :loading="loadingCorpora" :corpora="publicCorpora" :formats="formats" title="Public corpora"/>
 		<!-- always shown if logged in -->
-		<CorpusTable v-if="loggedIn" :corpora="privateCorpora" :formats="formats" title="Your corpora" isPrivate :canCreateCorpus="canCreateCorpus"
+		<CorpusTable v-if="loggedIn" :loading="loadingCorpora" :corpora="privateCorpora" :formats="formats" title="Your corpora" isPrivate :canCreateCorpus="canCreateCorpus"
 			@share="doShareCorpus"
 			@upload="doUploadCorpus"
 			@delete="doDeleteCorpus"
@@ -28,14 +28,25 @@
 
 	<FormatsTable v-if="loggedIn"
 		:formats="privateFormats"
+		:loading="loadingFormats"
 		@create="doCreateFormat"
 		@edit="doEditFormat"
 		@delete="doDeleteFormat"
 	/>
 
 	<!-- Modals -->
+	<ModalCreateFormat v-if="modal === 'create-format'"
+		:publicFormats="publicFormats"
+		:privateFormats="privateFormats"
+		:loading="loadingFormats"
+		:format="format"
+
+		@create="refreshFormats"
+		@success="success"
+		@error="error"
+		@close="close"
+	/>
 	<ModalCreateCorpus v-if="modal === 'create-corpus'" :publicFormats="publicFormats" :privateFormats="privateFormats" :loading="loadingFormats" @create="refreshCorpora" @success="success" @error="error" @close="close"/>
-	<ModalCreateFormat v-if="modal === 'create-format'" :publicFormats="publicFormats" :privateFormats="privateFormats" :loading="loadingFormats" @create="refreshFormats" @success="success" @error="error" @close="close"/>
 	<ModalUpload       v-if="modal === 'upload'"        :corpus="corpus" :formats="formats" @index="refreshCorpus" @success="success" @error="error" @close="close"/>
 	<ModalShareCorpus  v-if="modal === 'share-corpus'"  :corpus="corpus" @success="success" @error="error" @close="close"/>
 	<ModalConfirm      v-if="modal === 'confirm'"       :message="confirmMessage" @confirm="confirm" @close="close"/>
@@ -130,7 +141,10 @@ export default Vue.extend({
 		doCreateFormat() { this.modal = 'create-format'; },
 		doUploadCorpus(corpus: NormalizedIndexBase) { this.corpus = corpus; this.modal = 'upload'; },
 		doShareCorpus(corpus: NormalizedIndexBase) { this.corpus = corpus; this.modal = 'share-corpus'; },
-		doEditFormat(format: NormalizedFormat) { this.format = format; this.modal = 'edit-format'; },
+		doEditFormat(format: NormalizedFormat) {
+			this.format = format;
+			this.modal = 'create-format';
+		},
 		doDeleteCorpus(corpus: NormalizedIndexBase) {
 			this.corpus = corpus;
 			this.confirmMessage = `Are you sure you want to delete corpus "${corpus.displayName}"?`;

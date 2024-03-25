@@ -13,7 +13,7 @@
 				<div class="form-group" style="margin-right: 50px; margin-bottom: 0; flex: 1 1 auto;">
 					<label for="format_name">Format name</label>
 					<div class="input-group" style="width:100%">
-						<input type="text" id="format_name" name="format_name" class="form-control" v-model="formatName">
+						<input type="text" id="format_name" name="format_name" class="form-control" v-model.lazy="formatName">
 						<SelectPicker v-model="formatLanguage" :options="formatTypes" hideEmpty data-class="btn-primary dropdown-toggle" class="input-group-btn"/>
 					</div>
 				</div>
@@ -46,7 +46,7 @@
 			<MonacoEditor style="height: 500px;"
 				:options="editorOptions"
 				:language="formatLanguage"
-				:filename="fullFormatName"
+				:filename="formatName"
 				v-model="formatContents"
 			/>
 			<div v-if="error" class="alert alert-danger" style="margin-top:20px; flex: none;">{{ error }}</div>
@@ -154,6 +154,7 @@ export default Vue.extend({
 			this.uploading = true;
 			Api.blacklab.postFormat(`${this.formatName}.blf.${this.formatLanguage}`, this.formatContents)
 			.then(data => {
+				this.$emit('create');
 				this.$emit('success', data.status.message);
 				this.$emit('close');
 			})

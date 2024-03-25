@@ -1,6 +1,7 @@
 <template>
 
 	<div class="cf-panel cf-panel-lg" style="position: relative; min-height: 150px; display: block;">
+		<Spinner v-if="loading" class="overlay"/>
 		<h2>{{ title }}</h2>
 		<table class="corpora public table">
 			<thead>
@@ -56,8 +57,9 @@
 </template>
 
 <script lang="ts">
-import { NormalizedFormat, NormalizedIndexBase } from '@/types/apptypes';
 import Vue from 'vue';
+import Spinner from '@/components/Spinner.vue';
+import { NormalizedFormat, NormalizedIndexBase } from '@/types/apptypes';
 
 type IndexWithExtraInfo = NormalizedIndexBase&{
 	canSearch: boolean,
@@ -70,12 +72,14 @@ type IndexWithExtraInfo = NormalizedIndexBase&{
 };
 
 export default Vue.extend({
+	components: {Spinner},
 	props: {
 		corpora: Array as () => NormalizedIndexBase[],
 		formats: Array as () => NormalizedFormat[],
 		title: String,
 		isPrivate: Boolean,
-		canCreateCorpus: Boolean
+		canCreateCorpus: Boolean,
+		loading: Boolean
 	},
 	data: () => ({
 		details: {} as Record<string, boolean>

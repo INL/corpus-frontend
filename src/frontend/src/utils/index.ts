@@ -310,7 +310,6 @@ export const splitIntoTerms = (value: string, useQuoteDelimiters: boolean): Spli
 		const expand = part.isQuoted ? 1 : 0;
 		if (fullValue.substring(part.start + expand, part.end - expand) !== value) {
 			console.log('part: ', part, 'expect: ', expect[index]);
-			debugger;
 		}
 	})
 });

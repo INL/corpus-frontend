@@ -12,8 +12,8 @@
 				</div>
 				<div class="modal-footer">
 					<slot name="footer"></slot>
-					<button v-if="showClose" type="button" class="btn btn-default" :disabled="!canClose" @click="$emit('close')">{{ closeMessage }}</button>
-					<button v-if="showConfirm" type="button" class="btn btn-primary" :disabled="!canConfirm" @click="$emit('confirm')">{{ confirmMessage }}</button>
+					<button v-if="showClose" type="button" class="btn" :class="closeClass" :disabled="!canClose" @click="$emit('close')">{{ closeMessage }}</button>
+					<button v-if="showConfirm" type="button" class="btn" :class="confirmClass" :disabled="!canConfirm" @click="$emit('confirm')">{{ confirmMessage }}</button>
 				</div>
 			</div>
 		</div>
@@ -30,6 +30,8 @@ export default Vue.extend({
 		canConfirm: {default: true},
 		closeMessage: {default: 'Close'},
 		confirmMessage: {default: 'OK'},
+		closeClass: {default: 'btn-default'},
+		confirmClass: {default: 'btn-primary'},
 		title: {default: 'Title'},
 		large: Boolean,
 	},

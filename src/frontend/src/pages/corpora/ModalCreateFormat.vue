@@ -42,14 +42,12 @@
 				{{ error }}
 			</div>
 
-
 			<MonacoEditor style="height: 500px;"
 				:options="editorOptions"
 				:language="formatLanguage"
 				:filename="formatName"
 				v-model="formatContents"
 			/>
-			<div v-if="error" class="alert alert-danger" style="margin-top:20px; flex: none;">{{ error }}</div>
 	</template>
 	<template #footer>
 		<h5 class="pull-left"><span class="fa fa-question-circle text-muted"></span> <a href="http://inl.github.io/BlackLab/how-to-configure-indexing.html" target="_blank" style="font-weight: bold">How to write your own format</a></h5>

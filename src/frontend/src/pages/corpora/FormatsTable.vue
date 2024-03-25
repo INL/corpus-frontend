@@ -1,5 +1,6 @@
 <template>
 	<div id="formats-all-container" class="cf-panel cf-panel-lg" style="display: block;">
+		<Spinner v-if="loading" class="lg overlay"/>
 		<h2>Your import formats</h2>
 		<table class="table corpora">
 			<thead>
@@ -14,8 +15,8 @@
 				<tr v-for="f in formats">
 					<td>{{f.shortId}}</td>
 					<td>{{f.displayName}}</td>
-					<td><a role="button" class="fa fa-fw fa-pencil" :title="`Edit format '${f.displayName}'`" @click="$emit('edit', f.id)"></a></td>
-					<td><a role="button" class="fa fa-fw fa-trash" :title="`Delete format '${f.displayName}'`" @click="$emit('delete', f.id)"></a></td>
+					<td><a role="button" class="fa fa-fw fa-pencil" :title="`Edit format '${f.displayName}'`" @click="$emit('edit', f)"></a></td>
+					<td><a role="button" class="fa fa-fw fa-trash" :title="`Delete format '${f.displayName}'`" @click="$emit('delete', f)"></a></td>
 				</tr>
 			</tbody>
 		</table>
@@ -26,9 +27,12 @@
 <script lang="ts">
 import { NormalizedFormat } from '@/types/apptypes';
 import Vue from 'vue';
+import Spinner from '@/components/Spinner.vue';
 export default Vue.extend({
+	components: {Spinner},
 	props: {
-		formats: Array as () => NormalizedFormat[]
+		formats: Array as () => NormalizedFormat[],
+		loading: Boolean
 	},
 })
 </script>

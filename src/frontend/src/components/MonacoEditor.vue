@@ -72,19 +72,34 @@ export default Vue.extend({
 	data: () => ({
 		editor: null as any as monaco.editor.IStandaloneCodeEditor,
 		emittedValue: '',
-		darkmode: true,
+		// get system property
+		darkmode: window.matchMedia('(prefers-color-scheme: dark)').matches,
 	}),
 	computed: {
 		effectiveOptions(): monaco.editor.IStandaloneEditorConstructionOptions {
-			return {
-				theme: this.darkmode ? 'vs-dark' : 'vs',
-				...this.options,
-			};
+			return { theme: this.darkmode ? 'vs-dark' : 'vs', ...this.options, };
 		}
+	},
+	methods: {
+		/** Name should include the language as extension. The language is supplied separately to enable highlighting. */
+		createOrUpdateEditor(contents: string, name: string, language: string) {
+			const newUri = monaco.Uri.file(name);
+			let newModel = monaco.editor.getModels().find(m => m.uri.path === newUri.path);
+			if (newModel) newModel.setValue(contents);
+			else newModel = monaco.editor.createModel(contents, language, newUri);
+
+			if (this.editor)
+				this.editor.setModel(newModel);
+			return newModel;
+		},
+		updateValue(newValue: string) { if (this.editor) this.editor.setValue(newValue); },
+		updateFileName(newName: string) { if (this.editor) this.createOrUpdateEditor(this.editor.getValue(), newName, this.language); },
+		updateLanguage(newLang: string) { if (this.editor) monaco.editor.setModelLanguage(this.editor.getModel()!, newLang); },
+		updateOptions(newOptions: monaco.editor.IStandaloneEditorConstructionOptions) { if (this.editor) this.editor.updateOptions(newOptions); }
 	},
 	mounted() {
 		this.editor = monaco.editor.create(this.$refs.editor as HTMLElement, {
-			model: monaco.editor.createModel(this.value, this.language, monaco.Uri.file(this.filename)),
+			model: this.createOrUpdateEditor(this.value, this.filename, this.language),
 			...this.effectiveOptions
 		});
 		this.editor.onDidChangeModelContent(() => {
@@ -92,38 +107,19 @@ export default Vue.extend({
 			this.$emit('input', this.emittedValue);
 		});
 	},
+
 	watch: {
-		value(newVal: string) {
-			// Assume a reference comparison is made first
-			// https://stackoverflow.com/questions/23836825/is-javascript-string-comparison-just-as-fast-as-number-comparison
-			// So long models *should* be okay, as long as vue doesn't copy the emitted input event string internally.
-			if (newVal !== this.emittedValue)
-				this.editor.setValue(newVal);
-		},
-		language(newVal: string) {
-			monaco.editor.setModelLanguage(this.editor.getModel()!, newVal);
-		},
+		// Assume a reference comparison is made first
+		// https://stackoverflow.com/questions/23836825/is-javascript-string-comparison-just-as-fast-as-number-comparison
+		// So long models *should* be okay, as long as vue doesn't copy the emitted input event string internally.
+		value(newVal: string) {  if (newVal !== this.emittedValue) this.editor.setValue(newVal); },
+		language(newVal: string) { this.updateLanguage(newVal); },
 		// if this changes we need to recreate the model unfortunately
-		filename(newVal: string) {
-			// A model can only exist once, globally it seems.
-			// The editor is really just a view on one of a set of models that are floating somewhere in global space.
-			// So we need to take care that we don't create a new model with the same path.
-			const newUri = monaco.Uri.file(newVal);
-			monaco.editor.getModels().forEach(model => {
-				if (model.uri.path === newUri.path)
-					model.dispose();
-			});
-			this.editor.setModel(monaco.editor.createModel(this.value, this.language, monaco.Uri.file(newVal)));
-		},
-		effectiveOptions: {
-			deep: true,
-			handler(newVal: monaco.editor.IStandaloneEditorConstructionOptions) {
-				this.editor.updateOptions(newVal);
-			}
-		}
+		filename(newVal: string) { this.updateFileName(newVal); },
+		effectiveOptions: { deep: true, handler(newVal: monaco.editor.IStandaloneEditorConstructionOptions) { this.updateOptions(newVal); } }
 	},
 	beforeDestroy() {
-		this.editor.dispose();
+		if (this.editor) this.editor.dispose();
 		// @ts-ignore
 		this.editor = null;
 	}

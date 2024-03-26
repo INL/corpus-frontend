@@ -149,7 +149,7 @@ export default Vue.extend({
 		},
 		uploadFormat() {
 			this.uploading = true;
-			Api.blacklab.postFormat(`${this.formatName}.blf.${this.formatLanguage}`, this.formatContents)
+			Api.blacklab.postFormat(`${this.formatName}.blf.${this.formatLanguage.toLowerCase()}`, this.formatContents)
 			.then(data => {
 				this.$emit('create');
 				this.$emit('success', data.status.message);

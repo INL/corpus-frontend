@@ -1,5 +1,11 @@
 <template>
-	<Modal :closable="closable" @close="$emit('close')" confirmMessage="upload" @confirm="upload" :confirmEnabled="canUpload">
+	<Modal
+		confirmMessage="Upload"
+		:closeEnabled="!uploading"
+		:confirmEnabled="canUpload"
+		@confirm="upload"
+		@close="$emit('close')"
+	>
 		<template #title>Upload new data to corpus <em>{{ corpus.displayName }}</em></template>
 
 		<p>You may upload:</p>
@@ -38,7 +44,7 @@
 					aria-valuemax="100"
 					:aria-valuenow="uploadProgress"
 					:style="`width: ${uploadProgress}%;`"
-				>{{uploadProgressMessage}}</div>
+				>{{indexing ? indexProgressMessage : uploadProgressMessage}}</div>
 			</div>
 
 			<div v-if="uploadError" class="alert alert-danger">{{ uploadError }}</div>
@@ -59,7 +65,6 @@ export default Vue.extend({
 		formats: Array as () => NormalizedFormat[],
 	},
 	data: () => ({
-		closable: true,
 		uploadProgress: 0,
 		uploadProgressMessage: '',
 		uploading: false,
@@ -90,12 +95,21 @@ export default Vue.extend({
 		canUpload(): boolean {
 			return !!this.documentFiles?.length && !this.uploading;
 		},
+		indexProgressMessage(): string|null {
+			const corpus = this.corpus;
+			if (corpus && corpus.status === 'indexing') {
+				const {filesProcessed: files, docsDone: docs, tokensProcessed: tokens} = corpus.indexProgress!;
+				return  `${files} files, ' ${docs} documents, and ${tokens} tokens indexed so far...`;
+			}
+			return null;
+		}
 	},
 	methods: {
 		upload() {
 			const corpus = this.corpus;
 
-			this.closable = false;
+			this.uploading = true;
+			this.uploadError = '';
 			this.uploadProgress = 0;
 			this.uploadProgressMessage = 'Connecting...';
 
@@ -117,11 +131,13 @@ export default Vue.extend({
 			})
 			.catch((e: Api.ApiError) => {
 				const msg = e.message;
-				this.closable = true;
+				this.uploadError = msg;
+			})
+			.finally(() => {
 				this.uploading = false;
 				this.indexing = false;
-				this.uploadError = msg;
-			});
+
+			})
 		},
 		handleUploadProgress(event: number): void {
 			const progress = event;

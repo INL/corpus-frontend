@@ -16,7 +16,7 @@ import blfschema from '@/assets/blf-schema.json';
 configureMonacoYaml(monaco, {
 	enableSchemaRequest: false,
 	schemas: [{
-		fileMatch: ['*.blf.*'],
+		fileMatch: ['*'],
 
 		// @ts-ignore
 		schema: blfschema as JSONSchema7,
@@ -30,7 +30,7 @@ monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
 	validate: true,
 	schemas: [{
 		uri: new URL('@/assets/blf-schema.json', import.meta.url).toString(),
-		fileMatch: ['*.blf.*'],
+		fileMatch: ['*'],
 		schema: blfschema
 	}],
 	allowComments: true,

@@ -1,7 +1,7 @@
 <template>
 <div class="totals">
 	<div class="totals-content">
-		<span v-show="(isCounting || !subcorpus) && !error" class="fa fa-spinner fa-spin searchIndicator totals-spinner"/>
+		<Spinner v-if="(isCounting || !subcorpus) && !error" size="25"/>
 
 		<div class="totals-text" :title="percentOfSearchSpaceClarification">
 			<div class="totals-type">
@@ -55,12 +55,15 @@ import * as BLTypes from '@/types/blacklabtypes';
 
 import frac2Percent from '@/mixins/fractionalToPercent';
 
+import Spinner from '@/components/Spinner.vue';
+
 /**
  * Emits update events that contain the new set of totals, so we can update the pagination through our parent components
  * TODO tidy this!
  */
 
 export default Vue.extend({
+	components: {Spinner},
 	props: {
 		initialResults: {
 			required: true,

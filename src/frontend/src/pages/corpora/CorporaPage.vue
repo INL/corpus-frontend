@@ -2,7 +2,6 @@
 <div class="container">
 
 	<Spinner v-if="loadingServerInfo" lg overlay/>
-	<!-- <span v-if="busy" class="fa fa-spinner fa-spin searchIndicator" style="position: absolute; left: 50%; display: none;"></span> -->
 
 	<div v-if="!busy && !serverInfo && errorMessage" class="alert alert-danger">
 		Error loading BlackLab info, try refreshing the page.

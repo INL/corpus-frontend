@@ -96,7 +96,7 @@
 					<label><input type="checkbox" v-model="current.caseSensitive"> Case sensitive</label>
 				</template>
 			</template>
-			<h4 v-else class="text-secondary">In this window you can apply grouping to the results. Click the Annotation or Metadata buttons on the left to get started.</h4>
+			<h4 v-else class="text-secondary" style="margin: 0;">In this window you can apply grouping to the results. Click the Annotation or Metadata buttons on the left to get started.</h4>
 		</div>
 		<div v-if="viewGroup" style="color: #888; font-size: 85%;">
 			<button type="button" class="btn btn-sm btn-primary" :disabled="disabled" @click="$emit('viewgroupLeave')"><span class="fa fa-angle-double-right"></span> Go back to grouped view</button>

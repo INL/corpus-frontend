@@ -15,7 +15,7 @@
 				<span v-if="loadingState !== 'loading'" class="fa fa-danger fa-4x"></span>
 				{{ loadingMessage }}
 			</h2>
-			<span v-if="loadingState === 'loading'" class="fa fa-spinner fa-spin searchIndicator" style="position:absolute; left: 50%; top:15px"></span>
+			<Spinner v-if="loadingState === 'loading'" overlay/>
 			<button v-else-if="loadingState === 'requiresLogin'" type="button" class="btn btn-lg btn-primary">login (todo)</button>
 		</div>
 	</div>
@@ -31,6 +31,7 @@ import QueryForm from '@/pages/search/form/QueryForm.vue';
 import QuerySummary from '@/pages/search/results/QuerySummary.vue';
 import Results from '@/pages/search/results/Results.vue';
 import PageGuide from '@/pages/search/PageGuide.vue';
+import Spinner from '@/components/Spinner.vue';
 
 export default Vue.extend({
 	components: {
@@ -38,6 +39,7 @@ export default Vue.extend({
 		QuerySummary,
 		Results,
 		PageGuide,
+		Spinner
 	},
 	computed: {
 		loadingState() { return RootStore.get.status().status; },

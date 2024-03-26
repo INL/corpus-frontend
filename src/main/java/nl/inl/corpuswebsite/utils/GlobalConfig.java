@@ -106,7 +106,9 @@ public class GlobalConfig {
         try (InputStream stream = GlobalConfig.class.getResourceAsStream("/git.properties")) {
             if (stream == null) {
                 // Set it all to the current time so cache busting works properly in development mode.
-                commitHash = commitTime = commitMessage = version = new Date().toString();
+                String date = new Date().toString();
+                commitTime = commitMessage = version = date;
+                commitHash = date.hashCode() + ""; // we use this to cache-bust resources so make it a hash without spaces etc.
             } else {
                 props.load(stream);
 
@@ -221,7 +223,9 @@ public class GlobalConfig {
         set(defaultProps, Keys.CF_URL_ON_CLIENT, "/" + applicationName);
         set(defaultProps, Keys.JSPATH, get(defaultProps, Keys.CF_URL_ON_CLIENT) + "/js");
 
-        Optional<GlobalConfig> config = tryLoadConfigEnv("CORPUS_FRONTEND_CONFIG_DIR", configFileName)
+        Optional<GlobalConfig> config =
+                tryLoadConfigEnv(applicationName.toUpperCase()+"_CONFIG_DIR", configFileName)
+                .or(() -> tryLoadConfigEnv("CORPUS_FRONTEND_CONFIG_DIR", configFileName))
                 .or(() -> tryLoadConfigEnv("AUTOSEARCH_CONFIG_DIR", configFileName))
                 .or(() -> tryLoadConfigEnv("BLACKLAB_CONFIG_DIR", configFileName));
         if (SystemUtils.IS_OS_UNIX) {

@@ -1,7 +1,7 @@
 <template>
 	<Modal
 		confirmMessage="Upload"
-		:closeEnabled="!uploading"
+		:closeEnabled="!uploading || indexing"
 		:confirmEnabled="canUpload"
 		@confirm="upload"
 		@close="$emit('close')"

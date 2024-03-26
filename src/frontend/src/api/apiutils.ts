@@ -54,7 +54,7 @@ export async function handleError(error: AxiosError): Promise<never> {
 	if (isBLError(response.data)) {
 		return Promise.reject(new ApiError(
 			response.data.error.code,
-			response.data.error.message,
+			response.data.error.message + (response.data.error.stackTrace ? '\nStack Trace:\n' + response.data.error.stackTrace : ''),
 			response.statusText,
 			response.status
 		));
@@ -67,15 +67,18 @@ export async function handleError(error: AxiosError): Promise<never> {
 			<error>
 				<code>PATT_SYNTAX_ERROR</code>
 				<message>Syntax error in CorpusQL pattern (JSON parse failed as well): Error parsing query: Encountered "<EOF>" at line 1, column 9. Was expecting one of: ":" ... ":" ... </message>
+				<!-- sometimes there's a stack trace (if we're in the debug list, usually localhost ip) -->
+				<stackTrace>...</stackTrace>
 			</error>
 			*/
 			const code = xml.querySelector('code');
 			const message = xml.querySelector('message');
+			const stackTrace = xml.querySelector('stackTrace');
 
 			if (code && message) {
 				return Promise.reject(new ApiError(
 					code.textContent!,
-					message.textContent!,
+					message.textContent! + (stackTrace ? '\nStack Trace:\n' + stackTrace.textContent : ''),
 					response.statusText,
 					response.status
 				));
@@ -88,6 +91,7 @@ export async function handleError(error: AxiosError): Promise<never> {
 				));
 			}
 		} catch (e) {
+			// failed to parse xml but response indicated it was xml... Return the raw text instead.
 			return Promise.reject(new ApiError(
 				`Server returned an error (${response.statusText}) at: ${response.config.url}`,
 				response.data, // just print the raw text we received

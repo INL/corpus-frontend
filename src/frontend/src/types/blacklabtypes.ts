@@ -63,6 +63,7 @@ export interface BLError {
 	error: {
 		code: string;
 		message: string;
+		stackTrace?: string;
 	};
 }
 

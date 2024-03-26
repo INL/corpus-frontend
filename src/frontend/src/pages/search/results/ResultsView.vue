@@ -1,6 +1,6 @@
 <template>
 	<div class="results-container" :disabled="request">
-		<span v-if="request" class="fa fa-spinner fa-spin searchIndicator" style="position:absolute; left: 50%; top:15px"></span>
+		<Spinner v-if="request" overlay size="25"/>
 
 		<!-- i.e. HitResults, DocResults, GroupResults -->
 		<component v-if="resultsHaveData"
@@ -105,6 +105,7 @@ import Export from '@/pages/search/results/Export.vue';
 
 import Pagination from '@/components/Pagination.vue';
 import SelectPicker from '@/components/SelectPicker.vue';
+import Spinner from '@/components/Spinner.vue';
 
 import debug, { debugLog } from '@/utils/debug';
 
@@ -122,7 +123,8 @@ export default Vue.extend({
 		SelectPicker,
 		Sort,
 		BreadCrumbs,
-		Export
+		Export,
+		Spinner
 	},
 	props: {
 		/**

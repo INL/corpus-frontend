@@ -1,5 +1,5 @@
 <template>
-	<div class="fa fa-spinner fa-spin cf-spinner" :class="classes">&ZeroWidthSpace;</div>
+	<div class="fa fa-spinner fa-spin cf-spinner" :class="classes" :style="style">&ZeroWidthSpace;</div>
 </template>
 
 <script lang="ts">
@@ -7,12 +7,17 @@ import Vue from 'vue';
 export default Vue.extend({
 	props: {
 		lg: Boolean,
+		xs: Boolean,
 		sm: Boolean,
 		inline: Boolean,
 		overlay: Boolean,
+		size: [Number, String]
 	},
 	data: () => ({ observer: null as ResizeObserver|null, }),
-	computed: { classes(): any { return {lg: this.lg, sm: this.sm, overlay: this.overlay, inline: this.inline} }, },
+	computed: {
+		classes(): any { return {lg: this.lg, sm: this.sm, overlay: this.overlay, inline: this.inline, xs: this.xs} },
+		style(): any { return { fontSize: this.size ? (typeof this.size === 'number' || this.size.match(/^\d+$/)) ? this.size + 'px' : this.size : undefined,} }
+	},
 	mounted() {
 		if (this.$el.classList.contains('overlay')) {
 			const parent = this.$el.parentElement as HTMLElement;
@@ -58,6 +63,10 @@ export default Vue.extend({
 	&.inline {
 		display: inline-block;
 		font-size: 1em;
+	}
+	&.xs {
+		font-size: 20px;
+		padding: 2px;
 	}
 	&.sm {
 		font-size: 40px;

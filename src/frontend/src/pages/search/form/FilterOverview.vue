@@ -25,7 +25,7 @@
 				</span>
 			</template>
 			<template v-else>
-				<span class="fa fa-spinner fa-spin searchIndicator totals-spinner"></span>
+				<Spinner xs inline/>
 				Calculating size of selected subcorpus...
 			</template>
 		</div>
@@ -49,7 +49,10 @@ import frac2Percent from '@/mixins/fractionalToPercent';
 import { MapOf } from '@/utils';
 import { valueFunctions } from '@/components/filters/filterValueFunctions';
 
+import Spinner from '@/components/Spinner.vue';
+
 export default Vue.extend({
+	components: {Spinner},
 	filters: {
 		frac2Percent
 	},

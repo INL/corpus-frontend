@@ -107,7 +107,7 @@ export const blacklab = {
 
 	getCorpora: (requestParameters?: AxiosRequestConfig) => endpoints.blacklab
 		.get<BLTypes.BLServer>(blacklabPaths.root(), undefined, requestParameters)
-		.then(r => Object.entries(r.indices).map(([id, c]) => normalizeIndexBase(c, id))),
+		.then(r => Object.entries(r.corpora).map(([id, c]) => normalizeIndexBase(c, id))),
 
 	getCorpusStatus: (id: string, requestParamers?: AxiosRequestConfig) => endpoints.blacklab
 		.get<BLTypes.BLIndex>(blacklabPaths.indexStatus(id), undefined, requestParamers)

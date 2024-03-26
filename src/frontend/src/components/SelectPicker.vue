@@ -254,6 +254,7 @@ export default Vue.extend({
 		 * If false, immediately emit a change event with a corrected value prop
 		 */
 		allowUnknownValues: Boolean,
+		allowEmptyGroups: Boolean,
 		/** Show selected values in the selection button, only when multiple */
 		showValues: { type: Boolean, default: true },
 		/** Show value count, only when showValues === false */
@@ -365,7 +366,7 @@ export default Vue.extend({
 					const h = mapGroup(o);
 					const subs: uiOption[] = o.options.map(sub => isSimpleOption(sub) ? mapSimple(sub, o) : mapOption(sub, o));
 					subs.unshift(h);
-					return subs;
+					return (this.allowEmptyGroups || subs.length > 1) ? subs : [];
 				}
 			});
 

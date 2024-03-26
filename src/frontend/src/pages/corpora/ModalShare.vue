@@ -1,14 +1,14 @@
 <template>
-	<Modal>
+	<Modal confirmMessage="Save" @confirm="save" @close="$emit('close')" :confirmEnabled="!loading">
 		<template #title>Sharing options for corpus <em>{{ corpus.displayName }}</em></template>
 		<template #header><small class="text-muted">One username per line</small></template>
 
 		<textarea v-model="content" style="width:100%; height: 400px; resize: vertical;" class="form-control"></textarea>
 
-		<template #footer>
-			<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-			<button type="button" class="btn btn-primary" @click="save" :disabled="loading">Save</button>
-		</template>
+		<div v-if="error" class="alert alert-danger">
+			<a href="#" class="close" aria-label="close" @click="error = ''">×</a>
+			{{ error }}
+		</div>
 	</Modal>
 </template>
 
@@ -24,7 +24,8 @@ export default Vue.extend({
 	},
 	data: () => ({
 		content: '',
-		loading: false
+		loading: false,
+		error: ''
 	}),
 	methods: {
 		save() {
@@ -34,16 +35,15 @@ export default Vue.extend({
 				this.$emit('success', r.status.message)
 				this.$emit('close');
 			})
-			.catch((e: Api.ApiError) => this.$emit('error', `Could not save shares for corpus "${this.corpus.displayName}": ${e.message}`))
+			.catch((e: Api.ApiError) => this.error = `Could not save shares for corpus "${this.corpus.displayName}": ${e.message}`)
 			.finally(() => this.loading = false);
-
 		}
 	},
 	created() {
 		this.loading = true;
 		Api.blacklab.getShares(this.corpus.id)
 		.then(shares => this.content = shares.join('\n'))
-		.catch((e: Api.ApiError) => this.$emit('error', `Could not retrieve share list for corpus "${this.corpus.displayName}": ${e.message}`))
+		.catch((e: Api.ApiError) => this.error = `Could not retrieve share list for corpus "${this.corpus.displayName}": ${e.message}`)
 		.finally(() => this.loading = false);
 	}
 });

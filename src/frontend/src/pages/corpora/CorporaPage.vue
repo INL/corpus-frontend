@@ -23,12 +23,26 @@
 			<p>No corpora have been added to BlackLab. Corpora will appear here when when they become available.</p>
 		</div>
 		<template v-else>
-			<CorpusTable v-if="publicCorpora.length" :loading="loadingCorpora" :corpora="publicCorpora" :formats="formats" title="Public corpora"/>
+			<CorpusTable v-if="publicCorpora.length"
+				:loading="loadingCorpora"
+				:corpora="publicCorpora"
+				:formats="formats"
+				title="Public corpora"
+			/>
 			<!-- always shown if logged in -->
-			<CorpusTable v-if="loggedIn" :loading="loadingCorpora" :corpora="privateCorpora" :formats="formats" title="Your corpora" isPrivate :canCreateCorpus="canCreateCorpus"
+			<CorpusTable v-if="loggedIn"
+				title="Your corpora"
+				isPrivate
+
+				:loading="loadingCorpora"
+				:corpora="privateCorpora"
+				:formats="formats"
+				:canCreateCorpus="canCreateCorpus"
+
 				@share="doShareCorpus"
 				@upload="doUploadCorpus"
 				@delete="doDeleteCorpus"
+				@create="doCreateCorpus"
 			/>
 		</template>
 
@@ -52,15 +66,29 @@
 			@error="error"
 			@close="close"
 		/>
-		<ModalCreateCorpus v-if="modal === 'create-corpus'" :publicFormats="publicFormats" :privateFormats="privateFormats" :loading="loadingFormats" @create="refreshCorpora" @success="success" @error="error" @close="close"/>
-		<ModalUpload       v-if="modal === 'upload'"        :corpus="corpus" :formats="formats" @index="refreshCorpus" @success="success" @error="error" @close="close"/>
-		<ModalShareCorpus  v-if="modal === 'share-corpus'"  :corpus="corpus" @success="success" @error="error" @close="close"/>
-		<ModalConfirm      v-if="modal === 'confirm'"
-			:title="confirmTitle"
-			:message="confirmMessage"
-			@confirm="confirmAction"
+		<ModalCreateCorpus v-if="modal === 'create-corpus'"
+			:publicFormats="publicFormats"
+			:privateFormats="privateFormats"
+			:loading="loadingFormats"
+			:user="serverInfo.user"
+
+			@create="refreshCorpora"
+			@success="success"
+			@error="error"
 			@close="close"
 		/>
+		<ModalUpload       v-if="modal === 'upload'"        :corpus="corpus" :formats="formats" @index="refreshCorpus" @success="success" @error="error" @close="close"/>
+		<ModalShareCorpus  v-if="modal === 'share-corpus'"  :corpus="corpus" @success="success" @error="error" @close="close"/>
+		<Modal v-if="modal === 'confirm'"
+			closeMessage="Cancel"
+			confirmMessage="Delete"
+			confirmClass="btn-danger"
+			@confirm="confirmAction"
+			@close="close"
+		>
+			<template #title><h4 v-html="confirmTitle" class="modal-title"></h4></template>
+			<p v-html="confirmMessage"></p>
+		</Modal>
 	</template>
 </div>
 
@@ -75,14 +103,14 @@ import { normalizeIndexBase } from '@/utils/blacklabutils';
 import Spinner from '@/components/Spinner.vue';
 import CorpusTable from './CorpusTable.vue';
 import FormatsTable from './FormatsTable.vue';
-import ModalConfirm from '@/pages/corpora/ModalConfirm.vue';
+import Modal from '@/pages/corpora/Modal.vue';
 import ModalCreateCorpus from '@/pages/corpora/ModalCreateCorpus.vue';
 import ModalCreateFormat from '@/pages/corpora/ModalCreateFormat.vue';
 import ModalUpload from '@/pages/corpora/ModalUpload.vue';
 import ModalShareCorpus from '@/pages/corpora/ModalShare.vue';
 
 export default Vue.extend({
-	components: {Spinner, CorpusTable, FormatsTable, ModalCreateCorpus, ModalCreateFormat, ModalUpload, ModalShareCorpus, ModalConfirm},
+	components: {Spinner, CorpusTable, FormatsTable, ModalCreateCorpus, ModalCreateFormat, ModalUpload, ModalShareCorpus, Modal},
 	data: () => ({
 		corpora: [] as NormalizedIndexBase[],
 		formats: [] as NormalizedFormat[],
@@ -158,10 +186,10 @@ export default Vue.extend({
 		},
 		doDeleteCorpus(corpus: NormalizedIndexBase) {
 			this.corpus = corpus;
+			this.confirmTitle= `Delete corpus <em>${corpus.displayName}</em>?`;
 			this.confirmMessage = `Are you sure you want to delete corpus "${corpus.displayName}"?`;
 			this.modal = 'confirm';
 			this.confirmAction = () => {
-				debugger;
 				this.close();
 				this.loadingCorpora = true;
 				Api.blacklab.deleteCorpus(corpus.id)
@@ -177,7 +205,7 @@ export default Vue.extend({
 			}
 		},
 		doDeleteFormat(format: NormalizedFormat) {
-			this.confirmTitle = 'Delete import format?';
+			this.confirmTitle = `Delete import format <em>${format.displayName}</em>?`;
 			this.confirmMessage = `You are about to delete the import format <i>${format.id}</i>.<br>Are you sure?`,
 			this.modal = 'confirm';
 			this.confirmAction = () => {

@@ -1,57 +1,56 @@
 <template>
-    <Modal ref="modal"
+	<Modal ref="modal"
 		large
-		:canClose="!uploading"
+		:close="!uploading"
 		:confirmMessage="uploading ? 'Saving...' : 'Save'"
 		title="New import format"
 
 		@confirm="uploadFormat"
 		@close="$emit('close')"
 	>
-		<template #body>
-			<div style="display:flex; align-items: flex-start; justify-content: space-between; margin-bottom: 15px;">
-				<div class="form-group" style="margin-right: 50px; margin-bottom: 0; flex: 1 1 auto;">
-					<label for="format_name">Format name</label>
-					<div class="input-group" style="width:100%">
-						<input type="text" id="format_name" name="format_name" class="form-control" v-model.lazy="formatName">
-						<SelectPicker v-model="formatLanguage" :options="formatTypes" hideEmpty data-class="btn-primary dropdown-toggle" class="input-group-btn"/>
-					</div>
-				</div>
-
-				<div>
-					<label style="display:block;">Load a file</label>
-					<div style="display: inline-flex; flex-wrap: nowrap;">
-						<label class="btn btn-primary" style="position:relative;" for="format_file">
-							<input type="file" name="format_file" id="format_file" title="Open a file from your computer" style="position:absolute;left:0;top:0;width:0px;height:100%;padding-left:100%;opacity:0;cursor:pointer;overflow:hidden;" @change="loadFormatFromDisk">
-							Open file...
-						</label>
-
-						<label style="padding: 0 0.5em; align-self: flex-end;">Or</label>
-
-						<div style="display: inline-flex; flex-wrap: nowrap; flex-direction: row;">
-							<SelectPicker :options="formatOptions" data-style="border-right: none; border-top-right-radius: 0; border-bottom-right-radius: 0;" right :showValues="false" placeholder="Select an existing format" hideEmpty allowHtml data-menu-width="auto" container="body" v-model="formatPresetName"/>
-							<button @click="downloadFormat" :disabled="!formatPresetName || downloading" class="btn btn-primary" style="border-top-left-radius: 0; border-bottom-left-radius: 0">Load</button>
-						</div>
-					</div>
-
+		<div style="display:flex; align-items: flex-start; justify-content: space-between; margin-bottom: 15px;">
+			<div class="form-group" style="margin-right: 50px; margin-bottom: 0; flex: 1 1 auto;">
+				<label for="format_name">Format name</label>
+				<div class="input-group" style="width:100%">
+					<input type="text" id="format_name" name="format_name" class="form-control" v-model.lazy="formatName">
+					<SelectPicker v-model="formatLanguage" :options="formatTypes" hideEmpty data-class="btn-primary dropdown-toggle" class="input-group-btn"/>
 				</div>
 			</div>
 
-			<div v-if="error" class="alert alert-danger">
-				<a href="#" class="close" aria-label="close" @click="error = ''">×</a>
-				{{ error }}
-			</div>
+			<div>
+				<label style="display:block;">Load a file</label>
+				<div style="display: inline-flex; flex-wrap: nowrap;">
+					<label class="btn btn-primary" style="position:relative;" for="format_file">
+						<input type="file" name="format_file" id="format_file" title="Open a file from your computer" style="position:absolute;left:0;top:0;width:0px;height:100%;padding-left:100%;opacity:0;cursor:pointer;overflow:hidden;" @change="loadFormatFromDisk">
+						Open file...
+					</label>
 
-			<MonacoEditor style="height: 500px;"
-				:options="editorOptions"
-				:language="formatLanguage"
-				:filename="formatName"
-				v-model="formatContents"
-			/>
-	</template>
-	<template #footer>
-		<h5 class="pull-left"><span class="fa fa-question-circle text-muted"></span> <a href="http://inl.github.io/BlackLab/how-to-configure-indexing.html" target="_blank" style="font-weight: bold">How to write your own format</a></h5>
-	</template>
+					<label style="padding: 0 0.5em; align-self: flex-end;">Or</label>
+
+					<div style="display: inline-flex; flex-wrap: nowrap; flex-direction: row;">
+						<SelectPicker :options="formatOptions" data-style="border-right: none; border-top-right-radius: 0; border-bottom-right-radius: 0;" right :showValues="false" placeholder="Select an existing format" hideEmpty allowHtml data-menu-width="auto" container="body" v-model="formatPresetName"/>
+						<button @click="downloadFormat" :disabled="!formatPresetName || downloading" class="btn btn-primary" style="border-top-left-radius: 0; border-bottom-left-radius: 0">Load</button>
+					</div>
+				</div>
+
+			</div>
+		</div>
+
+		<div v-if="error" class="alert alert-danger">
+			<a href="#" class="close" aria-label="close" @click="error = ''">×</a>
+			{{ error }}
+		</div>
+
+		<MonacoEditor style="height: 500px;"
+			:options="editorOptions"
+			:language="formatLanguage"
+			:filename="formatName"
+			v-model="formatContents"
+		/>
+
+		<template #footer>
+			<h5 class="pull-left"><span class="fa fa-question-circle text-muted"></span> <a href="http://inl.github.io/BlackLab/how-to-configure-indexing.html" target="_blank" style="font-weight: bold">How to write your own format</a></h5>
+		</template>
 	</Modal>
 </template>
 

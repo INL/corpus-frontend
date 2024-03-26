@@ -1,6 +1,8 @@
 import { User, UserManager, Log } from 'oidc-client-ts';
 import LoginButton from '@/components/LoginButton.vue';
 import { BLServer } from '@/types/blacklabtypes';
+import axios from 'axios';
+import { handleError } from '@/api/apiutils';
 
 
 // Separate from loginsystem.ts to prevent circular dependency between LoginButton and loginsystem.
@@ -29,10 +31,13 @@ export async function awaitInit(settings: {
 		client_id: OIDC_CLIENT_ID || '',
 		metadataUrl: OIDC_METADATA_URL || '',
 	},
-	fallbackUsername: () => fetch(BLS_URL, {
+	fallbackUsername: () => axios.get(BLS_URL, {
 		method: 'GET',
 		headers: { 'Accept': 'application/json', }
-	}).then(r => r.json()).then((r: BLServer) => r.user.id)
+	})
+	.then(r => r.data as BLServer)
+	.then(r => r.user.id)
+	.catch(handleError)
 }): Promise<User|null> {
 	const loginButton= new LoginButton();
 	loginButton.$mount('.username');
@@ -85,10 +90,14 @@ export async function awaitInit(settings: {
 		return user || null; // normalize weird void type to null.
 	} else if (settings.fallbackUsername) {
 		// username provided by some other mechanism
-		const username = await settings.fallbackUsername();
-		if (username) {
-			loginButton.$props.username = username;
-			loginButton.$props.enabled = true;
+		try {
+			const username = await settings.fallbackUsername();
+			if (username) {
+				loginButton.$props.username = username;
+				loginButton.$props.enabled = true;
+			}
+		} catch (e) {
+			console.error('Failed to get username from fallbackUsernameGetter', e);
 		}
 	}
 	return null;

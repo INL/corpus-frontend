@@ -1,49 +1,48 @@
 <template>
-    <Modal :closable="closable" @close="$emit('close')" confirmMessage="upload" @confirm="upload" :canConfirm="canUpload">
+	<Modal :closable="closable" @close="$emit('close')" confirmMessage="upload" @confirm="upload" :confirmEnabled="canUpload">
 		<template #title>Upload new data to corpus <em>{{ corpus.displayName }}</em></template>
-		<template #body>
-			<p>You may upload:</p>
-			<ul>
-				<li>Normal files to be indexed</li>
-				<li><em>.zip</em> or <em>.tar.gz</em> archives containing multiple files at once.
-					Archives should not contain files that cannot be indexed!
-				</li>
-				<li>External metadata files separately</li>
-			</ul>
 
-			<div style="padding: 10px 25px 0px;">
-				<form v-if="!uploading">
-					<label for="data[]" class="btn btn-info file-input-button document-upload-button">
-						<span class="document-upload-button-text">{{ fileLabel }}</span>
-						<input type="file" name="data[]" multiple @change="documentFiles = $event.target.files">
-					</label>
+		<p>You may upload:</p>
+		<ul>
+			<li>Normal files to be indexed</li>
+			<li><em>.zip</em> or <em>.tar.gz</em> archives containing multiple files at once.
+				Archives should not contain files that cannot be indexed!
+			</li>
+			<li>External metadata files separately</li>
+		</ul>
 
-					<label for="linkeddata[]" class="btn btn-default file-input-button document-upload-button">
-						<span id="upload-metadata-label" class="document-upload-button-text">{{metadataFileLabel}}</span>
-						<input type="file" name="linkeddata[]" multiple @change="metadataFiles = $event.target.files">
-					</label>
+		<div style="padding: 10px 25px 0px;">
+			<form v-if="!uploading">
+				<label for="data[]" class="btn btn-info file-input-button document-upload-button">
+					<span class="document-upload-button-text">{{ fileLabel }}</span>
+					<input type="file" name="data[]" multiple @change="documentFiles = $event.target.files">
+				</label>
 
-					<small id="uploadFormatDescription" class="text-muted" style="display: block; margin: 12px 0px; width: 100%;">
-						The corpus accepts the following files:<br>
-						<template v-if="format">{{ format.description }}</template>
-						<template v-else>Unknown format (it may have been deleted from the server), uploads might fail</template>
-					</small>
-				</form>
+				<label for="linkeddata[]" class="btn btn-default file-input-button document-upload-button">
+					<span id="upload-metadata-label" class="document-upload-button-text">{{metadataFileLabel}}</span>
+					<input type="file" name="linkeddata[]" multiple @change="metadataFiles = $event.target.files">
+				</label>
 
-				<div class="progress" v-if="uploading">
-					<div id="uploadProgress"
-						:class="`progress-bar progress-bar-info progress-bar-striped ${indexing ? 'indexing' : ''}`"
-						role="progressbar"
-						aria-valuemin="0"
-						aria-valuemax="100"
-						:aria-valuenow="uploadProgress"
-						:style="`width: ${uploadProgress}%;`"
-					>{{uploadProgressMessage}}</div>
-				</div>
+				<small id="uploadFormatDescription" class="text-muted" style="display: block; margin: 12px 0px; width: 100%;">
+					The corpus accepts the following files:<br>
+					<template v-if="format">{{ format.description }}</template>
+					<template v-else>Unknown format (it may have been deleted from the server), uploads might fail</template>
+				</small>
+			</form>
 
-				<div v-if="uploadError" class="alert alert-danger">{{ uploadError }}</div>
+			<div class="progress" v-if="uploading">
+				<div id="uploadProgress"
+					:class="`progress-bar progress-bar-info progress-bar-striped ${indexing ? 'indexing' : ''}`"
+					role="progressbar"
+					aria-valuemin="0"
+					aria-valuemax="100"
+					:aria-valuenow="uploadProgress"
+					:style="`width: ${uploadProgress}%;`"
+				>{{uploadProgressMessage}}</div>
 			</div>
-		</template>
+
+			<div v-if="uploadError" class="alert alert-danger">{{ uploadError }}</div>
+		</div>
 	</Modal>
 </template>
 <script lang="ts">

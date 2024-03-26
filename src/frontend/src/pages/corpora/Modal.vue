@@ -3,17 +3,18 @@
 		<div class="modal-dialog">
 			<div class="modal-content">
 				<div class="modal-header">
-					<button v-if="showClose" type="button" :disabled="!canClose" class="close" aria-hidden="true" @click="$emit('close')">×</button>
-					<slot name="title"><h4>{{ title }}</h4></slot>
+					<button v-if="close" type="button" :disabled="!close" class="close" aria-hidden="true" @click="$emit('close')">×</button>
+					<slot name="title"><h4 class="modal-title">{{ title }}</h4></slot>
 					<slot name="header"></slot>
 				</div>
 				<div class="modal-body">
 					<slot name="body"></slot>
+					<slot name="default"></slot>
 				</div>
 				<div class="modal-footer">
 					<slot name="footer"></slot>
-					<button v-if="showClose" type="button" class="btn" :class="closeClass" :disabled="!canClose" @click="$emit('close')">{{ closeMessage }}</button>
-					<button v-if="showConfirm" type="button" class="btn" :class="confirmClass" :disabled="!canConfirm" @click="$emit('confirm')">{{ confirmMessage }}</button>
+					<button v-if="close" type="button" class="btn" :class="closeClass" :disabled="!close" @click="$emit('close')">{{ closeMessage }}</button>
+					<button v-if="confirm" type="button" class="btn" :class="confirmClass" :disabled="!confirmEnabled" @click="$emit('confirm')">{{ confirmMessage }}</button>
 				</div>
 			</div>
 		</div>
@@ -24,14 +25,16 @@
 import Vue from 'vue';
 export default Vue.extend({
 	props: {
-		showClose: { default: true, },
-		canClose: { default: true, },
-		showConfirm: {default: true},
-		canConfirm: {default: true},
+		close: {default: true},
+		closeEnabled: {default: true},
 		closeMessage: {default: 'Close'},
-		confirmMessage: {default: 'OK'},
 		closeClass: {default: 'btn-default'},
+
+		confirm: {default: true},
+		confirmEnabled: {default: true},
+		confirmMessage: {default: 'OK'},
 		confirmClass: {default: 'btn-primary'},
+
 		title: {default: 'Title'},
 		large: Boolean,
 	},

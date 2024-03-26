@@ -2,9 +2,9 @@
 	<Modal>
 		<template #title>Sharing options for corpus <em>{{ corpus.displayName }}</em></template>
 		<template #header><small class="text-muted">One username per line</small></template>
-		<template #body>
-			<textarea v-model="content" style="width:100%; height: 400px; resize: vertical;" class="form-control"></textarea>
-		</template>
+
+		<textarea v-model="content" style="width:100%; height: 400px; resize: vertical;" class="form-control"></textarea>
+
 		<template #footer>
 			<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
 			<button type="button" class="btn btn-primary" @click="save" :disabled="loading">Save</button>

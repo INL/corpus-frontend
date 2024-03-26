@@ -10,7 +10,7 @@
 					<th>Corpus</th>
 					<th>Size</th>
 					<th class="table-icon"></th>
-					<th v-if="isPrivate"></th>
+					<th v-if="isPrivate" class="table-icon"></th>
 					<th v-if="isPrivate" class="table-icon"></th>
 					<th v-if="isPrivate" class="table-icon"></th>
 				</tr>
@@ -21,9 +21,9 @@
 					<td class="corpus-name"><a :title="`Search the '${corpus.displayName}' corpus`" :class="`${!corpus.canSearch ? 'disabled' : ''}`" :href="corpus.canSearch ? corpus.searchUrl : undefined">{{corpus.displayName}} {{corpus.statusText}}</a></td>
 					<td>{{corpus.sizeString}}</td>
 					<template v-if="isPrivate">
-						<td><a role="button" :title="`Upload documents to the '${corpus.displayName}' corpus`" :class="`icon fa fa-fw fa-plus-square ${!corpus.canSearch? 'disabled' : ''}`" @click="$emit('upload', corpus)"></a></td>
+						<td><a role="button" :title="`Upload documents to the '${corpus.displayName}' corpus`" :class="`icon fa fa-fw fa-cloud-upload ${!corpus.canIndex? 'disabled' : ''}`" @click="$emit('upload', corpus)"></a></td>
 						<td><a role="button" :title="`Share the '${corpus.displayName}' corpus`" class="icon fa fa-fw fa-user-plus" @click="$emit('share', corpus)"></a></td>
-						<td><a role="button" :title="`Delete the '${corpus.displayName}' corpus`" :class="`icon fa fa-fw fa-trash ${!corpus.canSearch ? 'disabled' : ''}`" @click="$emit('delete', corpus)"></a></td>
+						<td><a role="button" :title="`Delete the '${corpus.displayName}' corpus`" :class="`icon fa fa-fw fa-trash ${!corpus.canIndex ? 'disabled' : ''}`" @click="$emit('delete', corpus)"></a></td>
 					</template>
 					<td><a role="button" @click="$set(details, corpus.id, !details[corpus.id])"><span class="icon fa fa-fw fa-caret-down" title="show details"></span></a></td>
 				</tr>
@@ -49,7 +49,7 @@
 			</template></tbody>
 		</table>
 		<div v-if="isPrivate">
-			<button v-if="canCreateCorpus" class="btn btn-default btn-lg" id="create-corpus" type="button" data-toggle="modal" data-target="#new-corpus-modal">New corpus</button>
+			<button v-if="canCreateCorpus" class="btn btn-default btn-lg" id="create-corpus" type="button" @click="$emit('create')">New corpus</button>
 			<div v-else class="text-danger" style="padding-left: 8px;"><em>You have reached the private corpora limit.<br>You will have to delete one of your corpora before you may create another.</em></div>
 		</div>
 	</div>
@@ -63,6 +63,7 @@ import { NormalizedFormat, NormalizedIndexBase } from '@/types/apptypes';
 
 type IndexWithExtraInfo = NormalizedIndexBase&{
 	canSearch: boolean,
+	canIndex: boolean,
 	format: NormalizedFormat|undefined,
 	searchUrl: string,
 	sizeString: string,
@@ -104,6 +105,7 @@ export default Vue.extend({
 				return {
 					...corpus,
 					canSearch: corpus.status === 'available',
+					canIndex: corpus.status !== 'indexing' && corpus.status !== 'opening',
 					format,
 					searchUrl: CONTEXT_URL + '/' + corpus.id + '/search/',
 					sizeString: this.abbrNumber(corpus.tokenCount),

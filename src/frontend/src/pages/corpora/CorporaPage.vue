@@ -1,60 +1,67 @@
 <template>
 <div class="container">
 
-	<span v-if="busy" class="fa fa-spinner fa-spin searchIndicator" style="position: absolute; left: 50%; display: none;"></span>
+	<Spinner v-if="busy" lg overlay/>
+	<!-- <span v-if="busy" class="fa fa-spinner fa-spin searchIndicator" style="position: absolute; left: 50%; display: none;"></span> -->
 
-	<div v-if="successMessage" class="alert alert-success">
+	<div v-if="!busy && !serverInfo && errorMessage" class="alert alert-danger">
+		Error loading BlackLab info, try refreshing the page.
+		<p>{{ errorMessage }}</p>
+	</div>
+	<div v-else-if="successMessage" class="alert alert-success">
 		<a href="#" class="close" data-dismiss="alert" aria-label="close" @click="successMessage = ''">×</a>
 		{{ successMessage }}
 	</div>
-	<div v-if="errorMessage" class="alert alert-danger">
+	<div v-else-if="errorMessage" class="alert alert-danger">
 		<a href="#" class="close" aria-label="close" @click="errorMessage = ''">×</a>
 		{{ errorMessage }}
 	</div>
 
-	<div v-if="!corpora.length && !loadingCorpora" class="cf-panel cf-panel-lg" >
-		<h2>No corpora available</h2>
-		<p>No corpora have been added to BlackLab. Corpora will appear here when when they become available.</p>
-	</div>
-	<template v-else>
-		<CorpusTable v-if="publicCorpora.length" :loading="loadingCorpora" :corpora="publicCorpora" :formats="formats" title="Public corpora"/>
-		<!-- always shown if logged in -->
-		<CorpusTable v-if="loggedIn" :loading="loadingCorpora" :corpora="privateCorpora" :formats="formats" title="Your corpora" isPrivate :canCreateCorpus="canCreateCorpus"
-			@share="doShareCorpus"
-			@upload="doUploadCorpus"
-			@delete="doDeleteCorpus"
+	<template v-if="serverInfo">
+		<div v-if="!corpora.length && !loadingCorpora" class="cf-panel cf-panel-lg" >
+			<h2>No corpora available</h2>
+			<p>No corpora have been added to BlackLab. Corpora will appear here when when they become available.</p>
+		</div>
+		<template v-else>
+			<CorpusTable v-if="publicCorpora.length" :loading="loadingCorpora" :corpora="publicCorpora" :formats="formats" title="Public corpora"/>
+			<!-- always shown if logged in -->
+			<CorpusTable v-if="loggedIn" :loading="loadingCorpora" :corpora="privateCorpora" :formats="formats" title="Your corpora" isPrivate :canCreateCorpus="canCreateCorpus"
+				@share="doShareCorpus"
+				@upload="doUploadCorpus"
+				@delete="doDeleteCorpus"
+			/>
+		</template>
+
+		<FormatsTable v-if="loggedIn"
+			:formats="privateFormats"
+			:loading="loadingFormats"
+			@create="doCreateFormat"
+			@edit="doEditFormat"
+			@delete="doDeleteFormat"
+		/>
+
+		<!-- Modals -->
+		<ModalCreateFormat v-if="modal === 'create-format'"
+			:publicFormats="publicFormats"
+			:privateFormats="privateFormats"
+			:loading="loadingFormats"
+			:format="format"
+
+			@create="refreshFormats"
+			@success="success"
+			@error="error"
+			@close="close"
+		/>
+		<ModalCreateCorpus v-if="modal === 'create-corpus'" :publicFormats="publicFormats" :privateFormats="privateFormats" :loading="loadingFormats" @create="refreshCorpora" @success="success" @error="error" @close="close"/>
+		<ModalUpload       v-if="modal === 'upload'"        :corpus="corpus" :formats="formats" @index="refreshCorpus" @success="success" @error="error" @close="close"/>
+		<ModalShareCorpus  v-if="modal === 'share-corpus'"  :corpus="corpus" @success="success" @error="error" @close="close"/>
+		<ModalConfirm      v-if="modal === 'confirm'"
+			:title="confirmTitle"
+			:message="confirmMessage"
+			@confirm="confirmAction"
+			@close="close"
 		/>
 	</template>
-
-	<FormatsTable v-if="loggedIn"
-		:formats="privateFormats"
-		:loading="loadingFormats"
-		@create="doCreateFormat"
-		@edit="doEditFormat"
-		@delete="doDeleteFormat"
-	/>
-
-	<!-- Modals -->
-	<ModalCreateFormat v-if="modal === 'create-format'"
-		:publicFormats="publicFormats"
-		:privateFormats="privateFormats"
-		:loading="loadingFormats"
-		:format="format"
-
-		@create="refreshFormats"
-		@success="success"
-		@error="error"
-		@close="close"
-	/>
-	<ModalCreateCorpus v-if="modal === 'create-corpus'" :publicFormats="publicFormats" :privateFormats="privateFormats" :loading="loadingFormats" @create="refreshCorpora" @success="success" @error="error" @close="close"/>
-	<ModalUpload       v-if="modal === 'upload'"        :corpus="corpus" :formats="formats" @index="refreshCorpus" @success="success" @error="error" @close="close"/>
-	<ModalShareCorpus  v-if="modal === 'share-corpus'"  :corpus="corpus" @success="success" @error="error" @close="close"/>
-	<ModalConfirm      v-if="modal === 'confirm'"
-		:title="confirmTitle"
-		:message="confirmMessage"
-		@confirm="confirmAction"
-		@close="close"
-	/>
 </div>
 
 </template>
@@ -65,6 +72,7 @@ import { BLServer } from '@/types/blacklabtypes';
 import * as Api from '@/api';
 import { normalizeIndexBase } from '@/utils/blacklabutils';
 
+import Spinner from '@/components/Spinner.vue';
 import CorpusTable from './CorpusTable.vue';
 import FormatsTable from './FormatsTable.vue';
 import ModalConfirm from '@/pages/corpora/ModalConfirm.vue';
@@ -74,11 +82,11 @@ import ModalUpload from '@/pages/corpora/ModalUpload.vue';
 import ModalShareCorpus from '@/pages/corpora/ModalShare.vue';
 
 export default Vue.extend({
-	components: {CorpusTable, FormatsTable, ModalCreateCorpus, ModalCreateFormat, ModalUpload, ModalShareCorpus, ModalConfirm},
+	components: {Spinner, CorpusTable, FormatsTable, ModalCreateCorpus, ModalCreateFormat, ModalUpload, ModalShareCorpus, ModalConfirm},
 	data: () => ({
 		corpora: [] as NormalizedIndexBase[],
 		formats: [] as NormalizedFormat[],
-		serverInfo: {} as BLServer,
+		serverInfo: undefined as any as BLServer,
 		errorMessage: '',
 		successMessage: '',
 		confirmMessage: '',
@@ -101,7 +109,7 @@ export default Vue.extend({
 		privateCorpora(): NormalizedIndexBase[] { return this.corpora.filter(c => c.owner); },
 		publicFormats(): NormalizedFormat[] { return this.formats.filter(f => !f.owner); },
 		privateFormats(): NormalizedFormat[] { return this.formats.filter(f => f.owner); },
-		canCreateCorpus(): boolean { return this.loggedIn && this.serverInfo.user.canCreateIndex; },
+		canCreateCorpus(): boolean { return this.loggedIn && this.serverInfo?.user.canCreateIndex; },
 
 		busy(): boolean { return this.loadingFormats || this.loadingCorpora || this.loadingServerInfo; },
 	},
@@ -191,13 +199,17 @@ export default Vue.extend({
 	async created() {
 		try {
 			this.loadingFormats = this.loadingCorpora = this.loadingServerInfo = true;
-			const serverInfo = await Api.blacklab.getServerInfo();
-			this.serverInfo = serverInfo;
+			try { this.serverInfo = await Api.blacklab.getServerInfo(); }
+			catch (e) {
+				this.errorMessage = `Error loading BlackLab info: ${e.message}`;
+				this.loadingCorpora = this.loadingFormats = this.loadingServerInfo = false;
+				return;
+			}
+
 			this.loadingServerInfo = false;
-			this.corpora = Object.entries(serverInfo.indices).map(([id, index]) => normalizeIndexBase(index, id));
+			this.corpora = Object.entries(this.serverInfo.indices).map(([id, index]) => normalizeIndexBase(index, id));
 			this.loadingCorpora = false;
-			this.formats = await Api.blacklab.getFormats();
-			this.loadingFormats = false;
+			this.refreshFormats();
 		} catch (error) {
 			if (error instanceof Api.ApiError)
 				this.errorMessage = error.message;
@@ -209,3 +221,10 @@ export default Vue.extend({
 })
 
 </script>
+
+<style scoped>
+.alert {
+	margin-left: -15px;
+	margin-right: -15px;
+}
+</style>

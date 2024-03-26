@@ -1,7 +1,7 @@
 <template>
 <div class="container">
 
-	<Spinner v-if="busy" lg overlay/>
+	<Spinner v-if="loadingServerInfo" lg overlay/>
 	<!-- <span v-if="busy" class="fa fa-spinner fa-spin searchIndicator" style="position: absolute; left: 50%; display: none;"></span> -->
 
 	<div v-if="!busy && !serverInfo && errorMessage" class="alert alert-danger">
@@ -77,8 +77,20 @@
 			@error="error"
 			@close="close"
 		/>
-		<ModalUpload       v-if="modal === 'upload'"        :corpus="corpus" :formats="formats" @index="refreshCorpus" @success="success" @error="error" @close="close"/>
-		<ModalShareCorpus  v-if="modal === 'share-corpus'"  :corpus="corpus" @success="success" @error="error" @close="close"/>
+		<ModalUpload v-if="modal === 'upload'"
+			:corpus="corpus"
+			:formats="formats"
+			@indexing="refreshCorpus"
+			@success="success"
+			@error="error"
+			@close="close"
+		/>
+		<ModalShareCorpus v-if="modal === 'share-corpus'"
+			:corpus="corpus"
+			@success="success"
+			@error="error"
+			@close="close"
+		/>
 		<Modal v-if="modal === 'confirm'"
 			closeMessage="Cancel"
 			confirmMessage="Delete"
@@ -127,8 +139,8 @@ export default Vue.extend({
 
 		modal: '',
 
-		corpus: null as null|NormalizedIndexBase,
-		format: null as null|NormalizedFormat,
+		corpusId: null as null|string,
+		formatId: null as null|string,
 	}),
 
 	computed: {
@@ -140,6 +152,9 @@ export default Vue.extend({
 		canCreateCorpus(): boolean { return this.loggedIn && this.serverInfo?.user.canCreateIndex; },
 
 		busy(): boolean { return this.loadingFormats || this.loadingCorpora || this.loadingServerInfo; },
+
+		corpus(): null|NormalizedIndexBase { return this.corpusId ? this.corpora.find(c => c.id === this.corpusId) || null : null; },
+		format(): null|NormalizedFormat { return this.formatId ? this.formats.find(f => f.id === this.formatId) || null : null; },
 	},
 	methods: {
 		success(message: string) {
@@ -152,7 +167,7 @@ export default Vue.extend({
 		},
 		refreshCorpora() {
 			this.loadingCorpora = true;
-			Api.blacklab.getCorpora().then(corpora => this.corpora = corpora)
+			Api.blacklab.getCorpora().then(corpora => this.corpora = corpora.sort((a, b) => a.displayName.localeCompare(b.displayName)))
 			.catch((e: Api.ApiError) => this.errorMessage = e.message)
 			.finally(() => this.loadingCorpora = false)
 		},
@@ -162,12 +177,13 @@ export default Vue.extend({
 			.catch((e: Api.ApiError) => this.errorMessage = e.message)
 			.finally(() => this.loadingFormats = false)
 		},
-		async refreshCorpus(id: string) {
-			let i = this.corpora.findIndex(c => c.id === id);
+		/** Begin periodically refreshing the corpus for as long as the status is indexing. */
+		async refreshCorpus(corpusId: string) {
+			let i = this.corpora.findIndex(c => c.id === corpusId);
 			try {
 				while (true) {
-					const index = await Api.blacklab.getCorpusStatus(id);
-					this.corpora.splice(i, 1, index);
+					const index = await Api.blacklab.getCorpusStatus(corpusId);
+					Object.assign(this.corpora[i], index);
 					if (index.status !== 'indexing') return;
 					await new Promise(resolve => setTimeout(resolve, 2000));
 				}
@@ -175,27 +191,28 @@ export default Vue.extend({
 				this.errorMessage = `Could not retrieve status for corpus "${this.corpora[i].displayName}": ${error.message}`;
 			}
 		},
-		close() { this.modal = ''; this.corpus = this.format = null; },
+		close() { this.modal = ''; this.corpusId = this.formatId = null; },
 		doCreateCorpus() { this.modal = 'create-corpus'; },
 		doCreateFormat() { this.modal = 'create-format'; },
-		doUploadCorpus(corpus: NormalizedIndexBase) { this.corpus = corpus; this.modal = 'upload'; },
-		doShareCorpus(corpus: NormalizedIndexBase) { this.corpus = corpus; this.modal = 'share-corpus'; },
-		doEditFormat(format: NormalizedFormat) {
-			this.format = format;
+		doUploadCorpus(corpusId: string) { this.corpusId = corpusId; this.modal = 'upload'; },
+		doShareCorpus(corpusId: string) { this.corpusId = corpusId; this.modal = 'share-corpus'; },
+		doEditFormat(formatId: string) {
+			this.formatId = formatId;
 			this.modal = 'create-format';
 		},
-		doDeleteCorpus(corpus: NormalizedIndexBase) {
-			this.corpus = corpus;
+		doDeleteCorpus(corpusId: string) {
+			this.corpusId = corpusId;
+			const corpus = this.corpus!;
 			this.confirmTitle= `Delete corpus <em>${corpus.displayName}</em>?`;
 			this.confirmMessage = `Are you sure you want to delete corpus "${corpus.displayName}"?`;
 			this.modal = 'confirm';
 			this.confirmAction = () => {
 				this.close();
 				this.loadingCorpora = true;
-				Api.blacklab.deleteCorpus(corpus.id)
+				Api.blacklab.deleteCorpus(corpusId)
 				.then(r => {
 					this.successMessage = r.status.message;
-					this.corpora = this.corpora.filter(c => c.id !== corpus.id);
+					this.corpora = this.corpora.filter(c => c.id !== corpusId);
 				})
 				.catch((e: Api.ApiError) => this.errorMessage = `Could not delete corpus "${corpus.displayName}": ${e.message}`)
 				.finally(() => {
@@ -204,7 +221,9 @@ export default Vue.extend({
 				});
 			}
 		},
-		doDeleteFormat(format: NormalizedFormat) {
+		doDeleteFormat(formatId: string) {
+			this.formatId = formatId;
+			const format = this.format!;
 			this.confirmTitle = `Delete import format <em>${format.displayName}</em>?`;
 			this.confirmMessage = `You are about to delete the import format <i>${format.id}</i>.<br>Are you sure?`,
 			this.modal = 'confirm';
@@ -235,7 +254,7 @@ export default Vue.extend({
 			}
 
 			this.loadingServerInfo = false;
-			this.corpora = Object.entries(this.serverInfo.indices).map(([id, index]) => normalizeIndexBase(index, id));
+			this.corpora = Object.entries(this.serverInfo.indices).map(([id, index]) => normalizeIndexBase(index, id)).sort((a, b) => a.displayName.localeCompare(b.displayName));
 			this.loadingCorpora = false;
 			this.refreshFormats();
 		} catch (error) {
@@ -244,6 +263,17 @@ export default Vue.extend({
 			else
 				this.errorMessage = 'An unknown error occurred: ' + JSON.stringify(error);
 			this.loadingCorpora = this.loadingFormats = this.loadingServerInfo = false;
+		}
+	},
+	watch: {
+		corpora: {
+			deep: false,
+			immediate: false,
+			handler() {
+				this.corpora.forEach(c => {
+					if (c.status === 'indexing') this.refreshCorpus(c.id);
+				})
+			}
 		}
 	}
 })

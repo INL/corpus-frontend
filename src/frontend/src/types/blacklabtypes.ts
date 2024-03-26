@@ -95,6 +95,10 @@ export interface BLIndex {
 	timeModified: string;
 	/** Number of tokens in this index (excluding those tokens added in any currently running indexing action). */
 	tokenCount?: number;
+	/** v4 and up: token count per annotatedField. */
+	tokenCounts?: Array<{fieldName: string; tokenCount: number}>
+	/** Number of documents in this index (excluding any added in a currently running indexing action). Not present pre-v4 */
+	documentCount?: number;
 }
 
 export interface BLRelationInfo {
@@ -158,7 +162,7 @@ export interface BLServer {
 	blacklabVersion: string;
 	cacheStatus?: BLCacheStatus;
 	helpPageUrl: string;
-	indices: {
+	corpora: {
 		[key: string]: BLIndex;
 	};
 	user: BLUser;

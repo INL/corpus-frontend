@@ -43,6 +43,14 @@
 								<th>Description</th>
 								<td>{{corpus.description || 'No description'}}</td>
 							</tr>
+							<tr>
+								<th>Documents</th>
+								<td>{{corpus.documentCount.toLocaleString()}}</td>
+							</tr>
+							<tr>
+								<th>Tokens</th>
+								<td>{{corpus.tokenCount.toLocaleString()}}</td>
+							</tr>
 						</table>
 					</td>
 				</tr>

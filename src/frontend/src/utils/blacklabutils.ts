@@ -211,6 +211,7 @@ export function normalizeIndexBase(blIndex: BLTypes.BLIndex, id: string): Normal
 		status: blIndex.status,
 		timeModified: blIndex.timeModified,
 		tokenCount: blIndex.tokenCount || 0,
+		documentCount: blIndex.documentCount || 0
 	}
 }
 

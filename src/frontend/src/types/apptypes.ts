@@ -119,6 +119,8 @@ export type NormalizedIndexBase = {
 	timeModified: string;
 	/** Number of tokens in this index (excluding those tokens added in any currently running indexing action). */
 	tokenCount: number;
+	/** Number of documents in this index excluding those tokens added in any currently running indexing action). */
+	documentCount: number;
 }
 
 /** Contains information about the internal structure of the index - which fields exist for tokens, which metadata fields exist for documents, etc */

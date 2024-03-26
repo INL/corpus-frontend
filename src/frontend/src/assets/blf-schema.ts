@@ -1,6 +1,9 @@
 export type BLFSchema = {
+	/** Displayname of this format. I.e. without the owner's username etc. */
 	displayName?: string;
+	/** Description of the format. E.g. which files it's meant for. */
 	description?: string;
+	/** Url where more information can be found (optional) */
 	helpUrl?: string;
 	/** DEPRECATED.  */
 	baseFormat?: string;
@@ -130,7 +133,9 @@ type InlineTag = {
 type Annotation = {
 	/** Name of the annotation */
 	name: string;
+	/** Name of the annotation in the interface. Defaults to the regular name. */
 	displayName?: string;
+	/** Description of the annotation in the interface. */
 	description?: string;
 
 	/** Xpath: what element contains the value of this annotation */
@@ -214,12 +219,15 @@ type StandoffAnnotationDependencyRelation = {
 
 type MetadataField= MetadataFieldSingle | MetadataFieldForEach;
 type MetadataFieldSingle = {
+	/** Name of the metadata field in BlackLab */
 	name: string;
+	/** Name that will be displayed in the interface */
 	displayName?: string;
+	/** Description that will be displayed in the interface */
 	description?: string;
 
 	/** Xpath for the value of this metadata. Relative to metadata.containerPath */
-	valuePath: string;
+	valuePath?: string;
 	/** Hardcoded value for this metadata field. Will replace 'valuePath' with the string value. */
 	value?: string;
 	/** Can this metadata field have multiple values? Useful for things like Authors. Defaults to true. */

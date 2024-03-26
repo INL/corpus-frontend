@@ -6,13 +6,16 @@
       "type": "object",
       "properties": {
         "displayName": {
-          "type": "string"
+          "type": "string",
+          "description": "Displayname of this format. I.e. without the owner's username etc."
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "description": "Description of the format. E.g. which files it's meant for."
         },
         "helpUrl": {
-          "type": "string"
+          "type": "string",
+          "description": "Url where more information can be found (optional)"
         },
         "baseFormat": {
           "type": "string",
@@ -136,10 +139,12 @@
                       "description": "Name of the annotation"
                     },
                     "displayName": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Name of the annotation in the interface. Defaults to the regular name."
                     },
                     "description": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Description of the annotation in the interface."
                     },
                     "valuePath": {
                       "type": "string",
@@ -490,10 +495,12 @@
                                 "description": "Name of the annotation"
                               },
                               "displayName": {
-                                "type": "string"
+                                "type": "string",
+                                "description": "Name of the annotation in the interface. Defaults to the regular name."
                               },
                               "description": {
-                                "type": "string"
+                                "type": "string",
+                                "description": "Description of the annotation in the interface."
                               },
                               "valuePath": {
                                 "type": "string",
@@ -860,10 +867,12 @@
                                 "description": "Name of the annotation"
                               },
                               "displayName": {
-                                "type": "string"
+                                "type": "string",
+                                "description": "Name of the annotation in the interface. Defaults to the regular name."
                               },
                               "description": {
-                                "type": "string"
+                                "type": "string",
+                                "description": "Description of the annotation in the interface."
                               },
                               "valuePath": {
                                 "type": "string",
@@ -1296,13 +1305,16 @@
                     "type": "object",
                     "properties": {
                       "name": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Name of the metadata field in BlackLab"
                       },
                       "displayName": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Name that will be displayed in the interface"
                       },
                       "description": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Description that will be displayed in the interface"
                       },
                       "valuePath": {
                         "type": "string",
@@ -1622,8 +1634,7 @@
                       }
                     },
                     "required": [
-                      "name",
-                      "valuePath"
+                      "name"
                     ],
                     "additionalProperties": false
                   },

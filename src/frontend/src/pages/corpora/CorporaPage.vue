@@ -179,16 +179,18 @@ export default Vue.extend({
 		},
 		/** Begin periodically refreshing the corpus for as long as the status is indexing. */
 		async refreshCorpus(corpusId: string) {
-			let i = this.corpora.findIndex(c => c.id === corpusId);
+			const displayName = this.corpora.find(c => c.id === corpusId)?.displayName || corpusId;
 			try {
 				while (true) {
-					const index = await Api.blacklab.getCorpusStatus(corpusId);
-					Object.assign(this.corpora[i], index);
-					if (index.status !== 'indexing') return;
+					const newCorpusState = await Api.blacklab.getCorpusStatus(corpusId);
+					let corpus = this.corpora.find(c => c.id === corpusId);
+					if (!corpus) return; // corpus was deleted?
+					Object.assign(corpus, newCorpusState);
+					if (newCorpusState.status !== 'indexing') return;
 					await new Promise(resolve => setTimeout(resolve, 2000));
 				}
 			} catch (error) {
-				this.errorMessage = `Could not retrieve status for corpus "${this.corpora[i].displayName}": ${error.message}`;
+				this.errorMessage = `Could not retrieve status for corpus "${displayName}": ${error.message}`;
 			}
 		},
 		close() { this.modal = ''; this.corpusId = this.formatId = null; },

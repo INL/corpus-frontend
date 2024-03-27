@@ -23,10 +23,6 @@
 }
 
 body {
-	background-repeat: no-repeat;
-	background-position: -350px -310px;
-	background-attachment: scroll;
-	
 	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif,"Inl vmnw wnt";
 	padding-top: 60px;
 	padding-bottom: 40px;
@@ -50,26 +46,6 @@ a.ui-menu-item-wrapper {
 	cursor: pointer;
 }
 
-.ui-autocomplete.dropdown-menu:before {
-	/*content: "Values found";*/
-	display: block;
-	color: white;
-	background-color: #337ab7;
-	border-bottom: 1px solid #2e6da4;
-	box-shadow: 0px 0px 8px #DDD;
-	font-weight: 700;
-	padding: 3px 12px;
-	margin-bottom: 5px;
-	margin-top: -5px;
-}
-
-.dropdown-menu>li>a:active, .dropdown-menu>li>a:focus, .dropdown-menu>li>a:hover,
-	.ui-menu .ui-menu-item .ui-state-hover, .ui-menu .ui-menu-item .ui-state-active
-	{
-	color: #262626;
-	text-decoration: none;
-	background-color: #ddd;
-}
 
 .navbar-logo-container {
 	float: left;
@@ -99,39 +75,11 @@ a.ui-menu-item-wrapper {
 	background-image: url(../img/logo_100x100.png)
 }
 
-.navbar-username {
-	position: absolute;
-	right: 0;
-	top: 0;
-	flex: none;
-	flex-basis: 0;
-	white-space: nowrap;
-}
-
 
 .navbar .container {
 	/* required for username to be on the same line as the rest of the navbar
 	 when there is a banner message configured. */
 	position: relative;
-}
-
-.navbar-username { display: inline-flex; }
-.navbar-username:empty { display: none; }
-.navbar-username > .username { order: 2; }
-.navbar-username > .username:empty { display: none;}
-.username-icon {
-	order: 1;
-	margin-right: 0.25em;
-}
-
-.username:empty + .username-icon {
-	display: none;
-}
-
-@media (max-width: 768px) {
-	.navbar-username {
-		right: 50px;
-	}
 }
 
 /*
@@ -163,24 +111,6 @@ a.ui-menu-item-wrapper {
 	padding-top: 15px;
 }
 
-.modal-fullwidth {
-	width: 100%;
-	padding-left: 17px;
-	padding-right: 17px;
-}
-
-.modal-fullwidth>.modal-dialog {
-	margin: 30px auto;
-	width: 100%;
-	max-width: 1170px;
-}
-
-/* CodeMirror editor */
-.cm-s-default {
-	border: 1px solid #CCC;
-	border-radius: 4px;
-	box-shadow: inset 0px 1px 1px rgba(0, 0, 0, 0.075);
-}
 
 .btn.nohover {
 	cursor: initial;

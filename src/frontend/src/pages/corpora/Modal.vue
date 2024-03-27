@@ -1,6 +1,6 @@
 <template>
-	<div :class="classes" tabindex="-1" role="dialog" style="display: block; padding-right: 17px; opacity: 1;">
-		<div class="modal-dialog">
+	<div :class="classes" tabindex="-1" role="dialog">
+		<div class="modal-dialog" :style="{height, width}">
 			<div class="modal-content">
 				<div class="modal-header">
 					<button v-if="close" type="button" :disabled="!closeEnabled" class="close" aria-hidden="true" @click="$emit('close')">×</button>
@@ -37,6 +37,8 @@ export default Vue.extend({
 
 		title: {default: 'Title'},
 		large: Boolean,
+		height: String,
+		width: String,
 	},
 	computed: {
 		classes(): Record<string, boolean> {
@@ -44,20 +46,37 @@ export default Vue.extend({
 				'modal': true,
 				'fade': true,
 				'in': true,
-				'custom-modal': true,
-				'modal-fullwidth': this.large
+				'large': this.large
 			}
 		}
 	},
 })
 </script>
 
-<style lang="scss">
-.custom-modal {
+<style lang="scss" scoped>
+.modal { // wrapper
 	background: rgba(0, 0, 0, 0.5);
-	.modal-dialog {
-		display: flex;
-		max-height: calc(100vh - 60px); // builtin margins.
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 30px;
+	@media (max-width: 767px) { padding: 17px; }
+	&.large {
+		padding: 17px;
+		@media (max-width: 767px) { padding: 0; }
+
+		.modal-dialog {
+			width: auto;
+			height: auto;
+		}
+	}
+
+	.modal-dialog { // actual window
+		display: inline-flex;
+		max-width: 100%;
+		max-height: 100%;
+		margin: 0;
+
 
 		> .modal-content {
 			max-height: 100%;
@@ -71,6 +90,10 @@ export default Vue.extend({
 			}
 		}
 	}
+
+
+
 }
+
 
 </style>

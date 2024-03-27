@@ -103,8 +103,11 @@ export default Vue.extend({
 			...this.effectiveOptions
 		});
 		this.editor.onDidChangeModelContent(() => {
-			this.emittedValue = this.editor.getValue();
-			this.$emit('input', this.emittedValue);
+			const value = this.editor.getValue();
+			if (value !== this.value) {
+				this.emittedValue = value;
+				this.$emit('input', this.emittedValue);
+			}
 		});
 	},
 

@@ -1,8 +1,9 @@
 <template>
-	<Modal ref="modal"
-		:close="!uploading"
-		:confirmMessage="uploading ? 'Saving...' : 'Save'"
+	<Modal
 		title="New import format"
+		:closeEnabled="!uploading"
+		:confirmEnabled="!uploading"
+		:confirmMessage="uploading ? 'Saving...' : dirty ? 'Save*' : 'Save'"
 
 		large
 		height="100%"
@@ -50,6 +51,7 @@
 				:language="formatLanguage"
 				:filename="formatName"
 				v-model="formatContents"
+				@input="dirty = true"
 			/>
 
 		</div>
@@ -65,14 +67,17 @@ import Modal from './Modal.vue';
 import { NormalizedFormat, Option } from '@/types/apptypes';
 import * as Api from '@/api';
 
-
-import MonacoEditor from '@/components/MonacoEditor.vue'
 import SelectPicker from '@/components/SelectPicker.vue'
 import * as monaco from 'monaco-editor';
 import { Options } from '@/components/SelectPicker.vue';
 
 export default Vue.extend({
-    components: {Modal, SelectPicker, MonacoEditor},
+    components: {
+		Modal,
+		SelectPicker,
+		// this causes the monaco editor to become its own js bundle, nice, since it's literally bigger than all of our other code combined
+		MonacoEditor: () => import('@/components/MonacoEditor.vue')
+	},
 	props: {
 		/** When clicking the pencil to edit an existing format. */
 		format: Object as () => undefined|NormalizedFormat,
@@ -89,6 +94,7 @@ export default Vue.extend({
 		error: '',
 		uploading: false,
 		downloading: false,
+		dirty: false,
 
 		formatTypes: [{
 			label: 'JSON',
@@ -132,6 +138,7 @@ export default Vue.extend({
 
 				if (!this.formatName)
 					this.formatName = presetName.split(':')[1] || presetName; // default to the preset name
+				this.dirty = false;
 			})
 			.catch((e: Api.ApiError) => this.error = e.message)
 			.finally(() => this.downloading = false)
@@ -142,6 +149,7 @@ export default Vue.extend({
 			const file = input.files[0];
 			const reader = new FileReader();
 			reader.onload = () => {
+				this.dirty = true;
 				this.formatContents = reader.result as string;
 				const parsedLanguage = file.name.split('.').pop()!.toLowerCase();
 				if (this.formatTypes.find(t => t.value === parsedLanguage))
@@ -158,7 +166,7 @@ export default Vue.extend({
 			.then(data => {
 				this.$emit('create');
 				this.$emit('success', data.status.message);
-				this.$emit('close');
+				this.dirty = false;
 			})
 			.catch((e: Api.ApiError) => this.error = e.message)
 			.finally(() => this.uploading = false);
@@ -172,7 +180,7 @@ export default Vue.extend({
 				this.formatPresetName = this.format?.id ?? '';
 				this.downloadFormat();
 			}
-		}
+		},
 	}
 })
 

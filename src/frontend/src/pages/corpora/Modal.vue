@@ -1,5 +1,5 @@
 <template>
-	<div :class="classes" tabindex="-1" role="dialog">
+	<div :class="classes" tabindex="-1" role="dialog" @input="(e) => { if (closeEnabled && e.keycode === 27) $emit('close'); else debugger; }">
 		<div class="modal-dialog" :style="{height, width}">
 			<div class="modal-content">
 				<div class="modal-header">

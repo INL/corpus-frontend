@@ -108,7 +108,7 @@ import UID from '@/mixins/uid';
 import * as BLTypes from '@/types/blacklabtypes';
 
 export default Vue.extend({
-	mixins: [UID],
+	mixins: [uid] as any,
 	data: () => ({
 		sessionStart: new Date().getTime(),
 		shownOlderEntries: 0,

@@ -123,7 +123,7 @@ type WordOption = {
 };
 
 export default Vue.extend({
-	mixins: [UID],
+	mixins: [uid] as any,
 	components: { SelectPicker },
 	inheritAttrs: false,
 	props: {

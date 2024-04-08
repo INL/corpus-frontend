@@ -179,7 +179,7 @@ function isVue(v: any): v is Vue { return v instanceof Vue; }
 function isJQuery(v: any): v is JQuery { return typeof v !== 'boolean' && v && v.jquery; }
 
 export default Vue.extend({
-	mixins: [uid],
+	mixins: [uid] as any,
 	components: {
 		Annotation,
 		ConceptSearch,

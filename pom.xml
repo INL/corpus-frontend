@@ -68,6 +68,13 @@
 
     <build>
         <plugins>
+            <!-- should be okay by default, but sometimes seems to mess up in older maven versions -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+            </plugin>
+
             <!-- Used in GlobalConfig.java -->
             <plugin>
                 <groupId>io.github.git-commit-id</groupId>
@@ -217,7 +224,7 @@
         </dependency>
 
         <dependency>
-            <groupId>org.apache.commons</groupId>
+            <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>1.3.2</version>
         </dependency>

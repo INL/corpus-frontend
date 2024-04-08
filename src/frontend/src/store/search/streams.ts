@@ -30,8 +30,8 @@ type QueryState = {
 	state: Pick<RootStore.RootState, 'query'|'interface'|'global'|'views'>
 };
 
-const metadata$ = new ReplaySubject<string>(1);
-const submittedMetadata$ = new ReplaySubject<string>(1);
+const metadata$ = new ReplaySubject<string|undefined>(1);
+const submittedMetadata$ = new ReplaySubject<string|undefined>(1);
 const url$ = new ReplaySubject<QueryState>(1);
 
 // TODO handle errors gracefully, right now the entire stream is closed permanently.

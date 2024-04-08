@@ -940,6 +940,7 @@ export default Vue.extend({
 			flex-grow: 0;
 			flex-shrink: 0;
 			flex-basis: auto;
+			margin-right: 0;
 		}
 		>.badge {
 			background-color: #999;

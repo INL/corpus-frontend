@@ -70,7 +70,6 @@ import { MapOf, mapReduce } from '@/utils';
 import { valueFunctions } from '@/components/filters/filterValueFunctions';
 
 import * as RootStore from '@/store/search';
-import { Dictionary } from '@/../node_modules/highcharts/highcharts';
 
 export default Vue.extend({
 	components: {

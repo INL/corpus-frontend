@@ -1,11 +1,20 @@
 <template>
 
+	<div class="group-by">
+		<!-- Group selector/creator container -->
+		<div class="left-sidebar">
 
-	<div style="display: flex; flex-direction: row; padding-top: 25px;">
-		<div style="display: flex; flex-direction: column; border: 1px solid #CCC;">
+			<label style="padding: 5px 15px; margin: 0; vertical-align: bottom; white-space: nowrap;" title="Keep these group settings when performing a new search">
+				<input type="checkbox" v-model="preserveGroupByWhenSearching"> Do not reset on search
+			</label>
+
+			<div :class="{'two-button-container': true, 'flex-row': localModel.length > 0, 'flex-col': localModel.length === 0}">
+				<button type="button" @click="addAnnotation" class="create-group-btn btn btn-default" v-if="type === 'hits'">+ Annotation</button>
+				<button type="button" @click="addMetadata" class="create-group-btn btn btn-default">+ Metadata</button>
+			</div>
 
 			<!-- list of current groups -->
-			<div style="display: flex; flex-wrap: nowrap;" v-for="(a, i) in localModel">
+			<div class="group" v-for="(a, i) in localModel">
 				<button
 					type="button"
 					:key="i"
@@ -13,95 +22,79 @@
 					:class="['btn btn-default', currentIndex === i ? 'active' : '']"
 					@click="currentIndex = i;"
 				>
-					<span class="text-primary" style="font-family: monospace;">[{{ a.type.substring(0, 1).toUpperCase() }}]</span> {{humanizeGroupBy(a)}}
+					<span class="text-primary" style="font-family: monospace;">[{{ a.type.substring(0, 1).toUpperCase() }}]</span> {{humanized[i]}}
 					<span v-if="!isValidGroup(a)" class="fa fas fa-warning text-danger" title="This grouping is not valid."></span>
 				</button>
-				<button type="button" class="btn btn-danger" style="flex: 0; border-left: 0; border-radius: 0; padding-right: 4px; padding-left: 4px;" @click="removeGroup(i)">&times;</button>
+				<button type="button" class="btn btn-danger" style="flex: 0; padding-right: 4px; padding-left: 4px;" @click="removeGroup(i)">&times;</button>
 			</div>
 
-			<div class="btn-group" style="display: flex; width: 100%;">
-				<button type="button" @click="addAnnotation" style="flex-basis: 0; flex-grow: 1; min-width: 50%; border-radius: 0;" class="btn btn-default" v-if="type === 'hits'">+ Annotation</button>
-				<button type="button" @click="addMetadata" style="flex-basis: 0; flex-grow: 1; min-width: 50%; border-radius: 0;" class="btn btn-default">+ Metadata</button>
+			<!-- new group buttons -->
+			<div style="flex-grow: 1; min-height: 15px;" v-if="localModel.length"></div>
+
+
+			<!-- clear/apply -->
+			<div class="two-button-container flex-row" v-if="localModel.length">
+				<button class="btn btn-default" @click="clear">clear</button>
+				<button class="btn btn-default" @click="apply">apply</button>
 			</div>
 
 
-			<template v-if="localModel.length">
-				<div style="flex-grow: 1; min-height: 15px;">
-					<!-- placeholder -->
-				</div>
-
-				<div class="btn-group" style="border: 0;">
-					<button class="btn btn-default" style="min-width: 50%; border-radius: 0; border-left: 0;" @click="clear">clear</button>
-					<button class="btn btn-default" style="margin: 0; min-width: 50%; border-radius: 0; border-right: 0;" @click="apply">apply</button>
-				</div>
-			</template>
 		</div>
 
-		<div style="flex-grow: 1; border: 1px solid #ccc; border-left: 0; padding: 10px 15px; min-width: 0;">
-			<template v-if="current">
-				<button type="button" class="btn btn-link pull-right" @click="removeGroup(currentIndex)">&times;</button>
-
-				<template v-if="current.type === 'annotation'">
-					<section class="text-muted col-m-6">
-						Select the annotation to group on.<br>
-						<SelectPicker placeholder="Annotation" hideEmpty searchable v-model="current.annotation" :options="annotations2" v-if="current.type === 'annotation'"/>
-					</section>
-					<label><input type="checkbox" v-model="current.caseSensitive"> Case sensitive</label>
-					<hr>
-
-					<section class="text-muted">
-						Select the part of the hit to group on
-
-						<div class="btn-group" style="display: flex; flex-wrap: nowrap;">
-							<button type="button" @click="current.position = 'L'" class="btn btn-default" :class="{active: current.position === 'L'}">before</button>
-							<button type="button" @click="current.position !== 'H' && current.position !== 'E' ? current.position = 'H' : void 0" class="btn btn-default" :class="{active: current.position === 'H' || current.position === 'E'}">hit</button>
-							<button type="button" @click="current.position = 'R'" class="btn btn-default" :class="{active: current.position === 'R'}">after</button>
-							<button type="button" @click="current.position = undefined" class="btn btn-default" :class="{active: current.position == null}" :disabled="!captures || !captures.length" :title="(!captures || !captures.length) ? 'Grouping by capture is disabled, as no captures are present in the query.' : ''">capture group</button>
-						</div>
-					</section>
-
-					<template v-if="current.position">
-						<!-- if position disabled, use capture labels, no preview to render, and selecting which words is not possible -->
-						<div class="hit-preview">
-							<template v-for="(section, i) of preview">
-								<span v-if="i !== 0" class="text-muted separator">||</span>
-								<component v-for="({word, active, title}, j) of section" :key="word + i + '_' + j " :is="active ? 'b' : 'span'" :title="title" :class="{'word': true, 'text-primary': active, active}">{{ word }}</component>
-							</template>
-						</div>
-
-						<label><input type="radio" name="type" value="first" v-model="context"> first word</label><br>
-						<label><input type="radio" name="type" value="all" v-model="context"> all words</label><br>
-						<label><input type="radio" name="type" value="context" v-model="context"> specific words</label>
-						<Slider v-if="context === 'context'"
-							:direction="(current.position === 'E' || current.position === 'L') ? 'rtl' : 'ltr'"
-							inline
-							:min="1"
-							:max="contextsize"
-							:data="contextSliderPreview"
-							v-model="contextRange"
-						/>
+		<div class="current-group-editor panel-default">
+			<template v-if="current && current.type === 'annotation'">
+				<div style="border: 1px solid #ddd; padding: 10px 15px; margin: -10px -15px 15px; border-top: 0; border-right: 0; border-left: 0; justify-content: center; " class="hit-preview panel-heading">
+					<template v-for="(section, i) of preview">
+						<span v-if="i !== 0" class="text-muted separator">||</span>
+						<component v-for="({word, active, title}, j) of section" :key="word + i + '_' + j " :is="active ? 'b' : 'span'" :title="title" :class="{'word': true, 'text-primary': active, active}">{{ word }}</component>
 					</template>
-					<div v-else>
-						Group by a labeled capture:
-						<SelectPicker :options="captures" v-model="current.groupname" container="body" allowUnknownValues/>
-						<br>
-					</div>
+				</div>
 
-				</template>
-				<template v-else>
-					<section class="text-muted">
-						Select the document metadata to group on.<br>
-						<SelectPicker placeholder="Metadata" hideEmpty v-model="current.field" :options="metadatas.map(a => a.id)" v-if="current.type === 'metadata'"/>
-					</section>
-					<label><input type="checkbox" v-model="current.caseSensitive"> Case sensitive</label>
-				</template>
+				I want to group on <SelectPicker
+					:options="contextOptions"
+					v-model="context"
+					data-width="auto"
+					data-menu-width="auto"
+					hideEmpty
+				/>
+				<SelectPicker v-if="!context.startsWith('capture_')"
+					v-model="current.position"
+					hideEmpty
+					data-width="auto"
+					data-menu-width="auto"
+					:options="positionOptions"
+				/> using annotation <SelectPicker v-if="current.type === 'annotation'"
+					placeholder="Annotation"
+					data-width="auto"
+					data-menu-width="auto"
+					right
+					hideEmpty
+					searchable
+					:options="annotations"
+					v-model="current.annotation"
+				/>.
+
+				<div style="margin: 0.75em 0 1.5em 0;"  v-if="context === 'context'">
+					Choose the <strong>specific word</strong> positions to group on here, the preview at the top will show you which words you have selected.
+					<Slider
+						:direction="(current.position === 'E' || current.position === 'L') ? 'rtl' : 'ltr'"
+						inline
+						:min="1"
+						:max="contextsize"
+						:data="contextSliderPreview"
+						v-model="contextRange"
+					/>
+				</div>
 			</template>
-			<h4 v-else class="text-secondary" style="margin: 0;">In this window you can apply grouping to the results. Click the Annotation or Metadata buttons on the left to get started.</h4>
+			<template v-else-if="current && current.type === 'metadata'">
+				<section class="text-muted">
+					Select the document metadata to group on.<br>
+					<SelectPicker placeholder="Metadata" allowHtml hideEmpty v-model="current.field" :options="metadata" v-if="current.type === 'metadata'"/>
+				</section>
+				<label><input type="checkbox" v-model="current.caseSensitive"> Case sensitive</label>
+			</template>
+			<div v-else class="text-secondary h4" style="height: 100%; width: 100%; margin: 0; display: flex; align-items: center;">In this window you can apply grouping to the results. Click the buttons on the left to create a grouping criteria to get started.</div>
 		</div>
-		<div v-if="viewGroup" style="color: #888; font-size: 85%;">
-			<button type="button" class="btn btn-sm btn-primary" :disabled="disabled" @click="$emit('viewgroupLeave')"><span class="fa fa-angle-double-right"></span> Go back to grouped view</button>
-		</div>
-
 	</div>
 </template>
 
@@ -110,11 +103,11 @@ import Vue from 'vue';
 
 import * as ResultsStore from '@/store/search/results/views';
 import * as UIStore from '@/store/search/ui';
+import * as GlobalSearchSettingsStore from '@/store/search/results/global';
 
-import SelectPicker from '@/components/SelectPicker.vue';
-import { GroupBySettingsUI, getAnnotationSubset, serializeGroupBySettingsUI, isValidGroupBySettingsUI } from '@/utils';
+import SelectPicker, { Options } from '@/components/SelectPicker.vue';
+import { GroupBySettingsUI, getAnnotationSubset, serializeGroupBySettingsUI, isValidGroupBySettingsUI, getMetadataSubset } from '@/utils';
 
-import * as GlobalSettingsStore from '@/store/search/results/global'
 import * as CorpusStore from '@/store/search/corpus';
 
 import debug from '@/utils/debug';
@@ -131,6 +124,7 @@ import * as SearchModule from '@/store/search/index';
 import { blacklab } from '@/api';
 import jsonStableStringify from 'json-stable-stringify';
 import { parseGroupBySettingsUI } from '@/utils';
+import { Option } from '@/types/apptypes';
 
 const initialGroupBySettings: GroupBySettingsUI = {
 	type: 'annotation' as  'annotation'|'metadata',
@@ -167,19 +161,26 @@ export default Vue.extend({
 		/** index into localModel that is displayed in the UI */
 		currentIndex: 0,
 		/** micro optimization: whether to skip next parse since the new value came from us anyway. */
-		localModelUpToDate: false,
+		storeValueUpdateIsOurs: false,
 		localModel: [] as GroupBySettingsUI[],
 
 		hits: undefined as undefined|BLHitResults
 	}),
 	computed: {
+
+		preserveGroupByWhenSearching: {
+			get(): boolean { return !GlobalSearchSettingsStore.get.resetGroupByOnSearch() },
+			set(v: boolean) { GlobalSearchSettingsStore.actions.resetGroupByOnSearch(!v) }
+		},
 		storeModule(): ResultsStore.ViewModule { return ResultsStore.getOrCreateModule(this.type); },
-		storeValue(): string[] { return this.storeModule.getState().groupBy.concat(this.storeModule.getState().groupByAdvanced); },
+		storeValue(): string[] { return this.storeModule.getState().groupBy; },
 		viewGroup(): string|null { return this.storeModule.getState().viewGroup; },
 		current(): GroupBySettingsUI|undefined { return this.localModel[this.currentIndex]; },
 		firstHitPreviewQuery(): BLSearchParameters|undefined {
-			const params = SearchModule.get.blacklabParameters();
-			if (!params) return undefined;
+			let params = SearchModule.get.blacklabParameters();
+			if (!params || !params.patt) return undefined; // can't get hits without a query
+
+			params = {...params}; // make a copy before modifying
 			if (!params.viewgroup)
 				delete params.group;
 			delete params.includetokencount;
@@ -196,13 +197,10 @@ export default Vue.extend({
 
 
 		isHits(): boolean { return isHitResults(this.results); },
-		annotations(): Array<{id: string, active: boolean}> {
-			return UIStore.getState().results.shared.groupAnnotationIds.map(id => ({
-				id,
-				active: this.localModel.find(a => a.type === 'annotation' && a.annotation === id) !== undefined
-			}));
-		},
-		annotations2(): any[] {
+
+		defaultGroupingAnnotation(): string|undefined { return UIStore.getState().results.shared.groupAnnotationIds[0]; },
+		defaultGroupingMetadata(): string|undefined { return UIStore.getState().results.shared.groupMetadataIds[0]; },
+		annotations(): any[] {
 			return getAnnotationSubset(
 				UIStore.getState().results.shared.groupAnnotationIds,
 				CorpusStore.get.annotationGroups(),
@@ -213,13 +211,20 @@ export default Vue.extend({
 				UIStore.getState().dropdowns.groupBy.annotationGroupLabelsVisible
 			).map(group => ({label: group.label, title: group.title, options: group.options}))
 		},
-		metadatas(): Array<{id: string, active: boolean}> {
-			return UIStore.getState().results.shared.groupMetadataIds.map(id => ({
-				id,
-				active: this.localModel.find(a => a.type === 'metadata' && a.field === id) !== undefined
-			}))
+		metadata(): any[] {
+			const r = getMetadataSubset(
+				UIStore.getState().results.shared.groupMetadataIds,
+				CorpusStore.get.metadataGroups(),
+				CorpusStore.get.allMetadataFieldsMap(),
+				'Group',
+				false,
+				true
+			)
+			console.log(r);
+			return r;
 		},
-		contextsize(): number { return GlobalSettingsStore.getState().wordsAroundHit ?? 5; },
+
+		contextsize(): number { return GlobalSearchSettingsStore.getState().wordsAroundHit ?? 5; },
 		captures(): string[]|undefined {
 			// TODO update types for blacklab 4
 			// @ts-ignore
@@ -254,6 +259,9 @@ export default Vue.extend({
 			const leftstart = left.length - endindex; // inclusive
 			const leftend = left.length - startindex; // exclusive
 
+			const fromEndOfHitStartIndex = match.length - endindex;
+			const fromEndOfHitEndIndex = match.length - startindex;
+
 			return [
 				left.map((w, i) => ({
 					word: shorten(w) || '[]',
@@ -265,7 +273,7 @@ export default Vue.extend({
 					title: w,
 					active:
 						position === 'H' ? i >= startindex && i < endindex :
-						position === 'E' ? i >= leftstart && i < leftend :
+						position === 'E' ? i >= fromEndOfHitStartIndex && i < fromEndOfHitEndIndex :
 						false
 				})),
 				right.map((w, i) => ({
@@ -276,49 +284,94 @@ export default Vue.extend({
 			];
 		},
 		context: {
-			get(): 'first'|'all'|'context' {
+			get(): 'first'|'all'|'context'|string {
 				if (!this.current) return 'context';
+
+				if (this.current.groupname) return 'capture_' + this.current.groupname;
 
 				if (this.forceContext) return 'context';
 				if (this.current.end == null) return 'all';
 				if (this.current.start === 1 && this.current.end === 1) return 'first';
 				return 'context';
 			},
-			set(v: 'first'|'all'|'context') {
+			set(v: 'first'|'all'|'context'|string) {
+				console.log('set', v)
 				if (!this.current) return;
+
+				if (v.startsWith('capture_')) {
+					this.current.groupname = v.substring(8);
+					this.current.position = undefined;
+					this.current.start = 1;
+					this.current.end = undefined;
+					return;
+				}
 
 				// prevent setting to 'first' automatically when the slider becomes [1,1]
 				this.forceContext = v === 'context';
+				this.current.groupname = '';
+				if (!this.current.position) this.current.position = 'H';
 				if (v === 'first') {
 					this.current.start = 1;
 					this.current.end = 1;
 				} else if (v === 'all') {
 					this.current.start = 1;
 					this.current.end = undefined;
+					if (this.current.position === 'E') this.current.position = 'H'; // can't group all words in reverse (causes an exception in BlackLab)
 				} else {
 					this.current.start = 1;
 					this.current.end = this.contextsize;
 				}
-			}
+
+
+			},
 		},
 		contextRange: {
 			get(): [number, number] { return this.current ? [this.current.start, this.current.end || this.contextsize] : [1,1] },
 			set(v: [number, number]) { if (this.current) { this.current.start = v[0]; this.current.end = v[1]; } }
 		},
+		positionOptions(): Options {
+			return [
+			{ label: 'before the hit', value: 'L'},
+			{ label: 'in the hit', value: 'H' },
+			// grouping from the end of the hit when grouping on entire hit is not possible (causes an exception in BlackLab)
+			...(this.current?.end != null ? [{label: 'from the end of the hit',value: 'E'}] : []),
+			{ label: 'after the hit', value: 'R' }];
+		},
+		contextOptions(): Options {
+			return [{
+				label: 'the first word',
+				value: 'first'
+			}, {
+				label: 'all words',
+				value: 'all'
+			}, {
+				label: 'specific words',
+				value: 'context'
+			}, {
+				label: 'Capture groups',
+				options: (this.captures || []).map(c => ({label: `capture group ${c}`, value: 'capture_' + c}))
+			}];
+		},
 		contextSliderPreview(): any[] {
 			return Array.from({length: this.contextsize}, (_, i) => i + 1).map(i => ({value: i, label: i}));
+		},
+		humanized(): string[] {
+			return this.localModel.map(g => this.humanizeGroupBy(g));
 		}
 	},
 	methods: {
 		apply() {
-			this.localModelUpToDate = true;
-			this.storeModule.actions.groupBy([]);
-			this.storeModule.actions.groupByAdvanced(serializeGroupBySettingsUI(this.localModel));
+			this.storeValueUpdateIsOurs = true;
+			this.storeModule.actions.groupBy(serializeGroupBySettingsUI(this.localModel));
 		},
 		humanizeGroupBy(g: GroupBySettingsUI): string {
 			let r = '';
 			if (g.type === 'annotation') {
-				const position = g.position === 'H' ? 'in' : g.position === 'L' ? 'before' : g.position === 'R' ? 'after' : ''; // position | '' when using capture
+				if (g.groupname) return `label '${g.groupname}' (${g.annotation})`
+
+
+
+				const position = (g.position === 'H' || g.position === 'E') ? 'in' : g.position === 'L' ? 'before' : g.position === 'R' ? 'after' : ''; // position | '' when using capture
 				let wordcount = position ? g.end != null ? g.end + '' : 'all' : undefined; // number | 'all' | undefined when using capture
 
 				// when start is not 1, prepend it. ex. 3 --> 1-3
@@ -327,14 +380,13 @@ export default Vue.extend({
 				r = `${g.annotation}${wordcount != null ? `(${wordcount})` : ''} ${position ? position + ' hit' : 'in capture ' + g.groupname}`;
 			}
 			else r= `document ${g.field}`;
-			console.log(g, r);
 			return r;
 		},
 
 		isValidGroup: isValidGroupBySettingsUI,
 		removeGroup(i: number) {
 			this.localModel.splice(i, 1);
-			if (i === this.currentIndex)
+			if (i === this.currentIndex && i > 0)
 				--this.currentIndex;
 			if (this.localModel.length === 0) {
 				this.clear();
@@ -345,16 +397,19 @@ export default Vue.extend({
 			this.currentIndex = -1;
 			this.apply();
 		},
-		addAnnotation() { this.localModel.push({...cloneDeep(initialGroupBySettings), type: 'annotation', annotation: this.annotations[0]?.id}); this.currentIndex = this.localModel.length -1; },
-		addMetadata() { this.localModel.push({...cloneDeep(initialGroupBySettings), type: 'metadata', field: this.metadatas[0]?.id}); this.currentIndex = this.localModel.length -1; }
-
+		addAnnotation() { this.localModel.push({...cloneDeep(initialGroupBySettings), type: 'annotation', annotation: this.defaultGroupingAnnotation!}); this.currentIndex = this.localModel.length -1; },
+		addMetadata() { this.localModel.push({...cloneDeep(initialGroupBySettings), type: 'metadata', field: this.defaultGroupingMetadata!}); this.currentIndex = this.localModel.length -1; }
 	},
 	watch: {
 		storeValue: {
 			immediate: true,
 			handler() {
-				if (!this.localModelUpToDate) this.localModel = this.storeValue.map(parseGroupBySettingsUI);
-				this.localModelUpToDate = false;
+				if (this.storeValueUpdateIsOurs) {
+					this.storeValueUpdateIsOurs = false;
+					return;
+				}
+				debugger;
+				this.localModel = this.storeValue.map(parseGroupBySettingsUI);
 				if (this.currentIndex >= this.localModel.length) {
 					this.currentIndex = this.localModel.length - 1;
 				}
@@ -417,6 +472,74 @@ export default Vue.extend({
 
 	.word.active:last-of-type {
 		border-right: 1px solid black;
+	}
+}
+
+.group-by {
+	display: flex;
+	flex-direction: row;
+	margin-top: 25px; // todo move into parent?
+	border: 1px solid #ddd;
+	border-radius: 4px;
+
+	> *:not(:last-child) {
+		border-right: 1px solid #ddd;
+	}
+
+	.left-sidebar {
+		display: flex;
+		flex-direction: column;
+		> *:not(:last-child) {
+			border-bottom: 1px solid #ddd;
+		}
+
+		.group {
+			display: flex;
+			flex-direction: row;
+			flex-wrap: nowrap;
+
+			 > .btn {
+				border-width: 0;
+				border-radius: 0;
+				&:not(:last-child) { border-right-width: 1px; }
+			 }
+		}
+
+		.two-button-container {
+			display: flex;
+			width: 100%;
+			flex-direction: column;
+
+			> .btn {
+				border-width: 0;
+				flex-basis: 0;
+				flex-grow: 1;
+				min-width: 50%;
+				border-radius: 0;
+			}
+
+			&.flex-col {
+				flex-grow: 1;
+				flex-direction: column;
+				> .btn:not(:last-child) {
+					border-bottom-width: 1px!important;
+				}
+				> .btn {flex-grow: 1;}
+			}
+			&.flex-row {
+				flex-direction: row;
+				> .btn {
+					&:not(:last-child) { border-right-width: 1px; }
+				}
+
+			}
+		}
+	}
+
+	.current-group-editor {
+		flex-grow: 1;
+		padding: 10px 15px;
+		min-width: 0;
 	}
 }
 

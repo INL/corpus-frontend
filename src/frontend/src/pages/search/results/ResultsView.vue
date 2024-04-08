@@ -1,6 +1,7 @@
 <template>
-	<div class="results-container" :disabled="request">
-		<Spinner v-if="request" overlay size="25"/>
+	<div class="results-container" :disabled="request" :style="{minHeight: request ? '100px' : undefined}">
+
+		<Spinner v-if="request" overlay size="75"/>
 
 		<!-- i.e. HitResults, DocResults, GroupResults -->
 		<component v-if="resultsHaveData"
@@ -24,13 +25,14 @@
 				@update="paginationResults = $event"
 			/>
 
-			<GroupBy slot="groupBy"
+			<GroupBy slot="groupBy" v-if="!viewGroup"
 				:type="id"
 				:results="results"
 				:disabled="!!request"
 				:originalGroupBySettings="originalGroupBySettings"
 				@viewgroupLeave="leaveViewgroup"
 			/>
+			<button v-else slot="groupBy" class="btn btn-sm btn-primary" @click="leaveViewgroup"><span class="fa fa-angle-double-left"></span> Back to group overview</button>
 
 			<Pagination slot="pagination"
 				style="display: block; margin: 10px 0;"
@@ -260,10 +262,6 @@ export default Vue.extend({
 			get(): string[] { return this.store.getState().groupBy; },
 			set(v: string[]) { this.store.actions.groupBy(v); }
 		},
-		groupByAdvanced: {
-			get(): string[] { return this.store.getState().groupByAdvanced; },
-			set(v: string[]) { this.store.actions.groupByAdvanced(v); }
-		},
 		page: {
 			get(): number { const n = this.store.getState().page; console.log('got page', n); return n; },
 			set(v: number) { this.store.actions.page(v); console.log('set page', v); }
@@ -294,7 +292,12 @@ export default Vue.extend({
 				This would cause new results to be requested even when just changing the table display mode...
 			*/
 			return jsonStableStringify({
-				global: GlobalStore.getState(),
+				global: {
+					...GlobalStore.getState(),
+					// hidden setting, exclude it from triggering a results refresh
+					resetGroupByOnSearch: undefined,
+				},
+
 				self: {
 					...this.store.getState(),
 					groupDisplayMode: null // ignore this property
@@ -372,16 +375,15 @@ export default Vue.extend({
 			r.push({
 				label: this.id === 'hits' ? 'Hits' : 'Documents',
 				title: 'Go back to ungrouped results',
-				active: false, //(this.groupBy.length + this.groupByAdvanced.length) === 0,
+				active: false,
 				onClick: () => {
 					this.groupBy = [];
-					this.groupByAdvanced = [];
 					GlobalStore.actions.sampleSize(null);
 				}
 			});
-			if ((this.groupBy.length + this.groupByAdvanced.length) > 0) {
+			if (this.groupBy.length > 0) {
 				r.push({
-					label: 'Grouped by ' + this.groupBy.concat(this.groupByAdvanced).toString(),
+					label: 'Grouped by ' + this.groupBy.toString(),
 					title: 'Go back to grouped results',
 					active: false, //this.viewGroup == null,
 					onClick: () => {

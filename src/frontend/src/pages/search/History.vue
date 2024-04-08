@@ -37,7 +37,7 @@
 								}}</td>
 								<td class="history-table-contain-text" :title="entry.displayValues.pattern.substring(0,1000) || undefined">{{entry.displayValues.pattern}}</td>
 								<td class="history-table-contain-text" :title="entry.displayValues.filters.substring(0,1000) || undefined">{{entry.displayValues.filters}}</td>
-								<td class="history-table-contain-text" :title="entry.view.groupBy.concat(entry.view.groupByAdvanced).join(' ') || '-'">{{entry.view.groupBy.concat(entry.view.groupByAdvanced).join(' ') || '-'}}</td>
+								<td class="history-table-contain-text" :title="entry.view.groupBy.join(' ') || '-'">{{entry.view.groupBy.join(' ') || '-'}}</td>
 								<td>
 									<div class="btn-group">
 										<button type="button" class="btn btn-default" @click="load(entry)">Search</button>
@@ -97,7 +97,6 @@ import $ from 'jquery';
 import {saveAs} from 'file-saver';
 
 import * as RootStore from '@/store/search/';
-import * as CorpusStore from '@/store/search/corpus';
 import * as HistoryStore from '@/store/search/history';
 import * as FilterStore from '@/store/search/form/filters';
 
@@ -105,10 +104,8 @@ import UrlStateParser from '@/store/search/util/url-state-parser';
 
 import UID from '@/mixins/uid';
 
-import * as BLTypes from '@/types/blacklabtypes';
-
 export default Vue.extend({
-	mixins: [uid] as any,
+	mixins: [UID] as any,
 	data: () => ({
 		sessionStart: new Date().getTime(),
 		shownOlderEntries: 0,

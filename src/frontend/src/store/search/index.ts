@@ -86,7 +86,7 @@ const get = {
 		return {
 			filter: QueryModule.get.filterString(),
 			first: state.global.pageSize * activeView.page,
-			group: activeView.groupBy.map(g => g + (activeView.caseSensitive ? ':s':':i')).concat(activeView.groupByAdvanced).join(',') || undefined,
+			group: activeView.groupBy.join(','),
 
 			number: state.global.pageSize,
 			patt: QueryModule.get.patternString(),
@@ -117,7 +117,7 @@ const actions = {
 			return;
 		}
 		// Reset the grouping/page/sorting/etc, for all views
-		ViewModule.actions.resetAllViews();
+		ViewModule.actions.resetAllViews({resetGroupBy: state.global.resetGroupByOnSearch});
 
 		// Apply the desired grouping for this form, if needed.
 		if (state.interface.form === 'explore') {
@@ -303,7 +303,7 @@ const actions = {
 
 	reset: b.commit(state => {
 		FormManager.actions.reset();
-		ViewModule.actions.resetAllViews();
+		ViewModule.actions.resetAllViews({resetGroupBy: true});
 		QueryModule.actions.reset();
 	}, 'resetRoot'),
 
@@ -315,7 +315,7 @@ const actions = {
 		FormManager.actions.replace(payload);
 		GlobalResultsModule.actions.replace(payload.global);
 		// clear all views, otherwise inactive views would persist current settings.
-		ViewModule.actions.resetAllViews();
+		ViewModule.actions.resetAllViews({resetGroupBy: true});
 		// The state we just restored has results open, so execute a search.
 		if (payload.interface.viewedResults != null) {
 			ViewModule.actions.replaceView({view: payload.interface.viewedResults, data: payload.view});

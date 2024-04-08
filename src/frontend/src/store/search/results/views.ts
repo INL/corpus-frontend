@@ -15,9 +15,7 @@ type ModuleRootState = Record<string, ViewRootState>;
 type ViewRootState = {
 	customState: any;
 	/** case-sensitive grouping */
-	caseSensitive: boolean;
 	groupBy: string[];
-	groupByAdvanced: string[];
 	page: number;
 	sort: string|null;
 	viewGroup: string|null;
@@ -27,9 +25,7 @@ type ViewRootState = {
 const initialState: ModuleRootState = {};
 const initialViewState: ViewRootState = {
 	customState: null,
-	caseSensitive: false,
 	groupBy: [],
-	groupByAdvanced: [],
 	page: 0,
 	sort: null,
 	viewGroup: null,
@@ -40,23 +36,13 @@ const viewsBuilder = getStoreBuilder<RootState>().module<ModuleRootState>(namesp
 
 const createActions = (b: ModuleBuilder<ViewRootState, RootState>) => ({
 	customState: b.commit((state, payload: any) => state.customState = payload, 'customState'),
-	caseSensitive: b.commit((state, payload: boolean) => {
-		state.caseSensitive = payload;
-		state.page = 0;
-	}, 'casesensitive'),
 	groupBy: b.commit((state, payload: string[]) => {
-		state.groupBy = payload;
-		state.viewGroup = null;
-		state.sort = null;
-		state.page = 0;
-	} , 'groupby'),
-	groupByAdvanced: b.commit((state, payload: string[]) => {
 		// can't just replace array since listeners might be attached to properties in a single entry, and they won't be updated.
-		state.groupByAdvanced.splice(0, state.groupByAdvanced.length, ...payload);
+		state.groupBy.splice(0, state.groupBy.length, ...payload);
 		state.viewGroup = null;
 		state.sort = null;
 		state.page = 0;
-	}, 'groupByAdvanced'),
+	}, 'groupBy'),
 	sort: b.commit((state, payload: string|null) => state.sort = payload, 'sort'),
 	page: b.commit((state, payload: number) => state.page = payload, 'page'),
 	viewGroup: b.commit((state, payload: string|null) => {
@@ -66,7 +52,12 @@ const createActions = (b: ModuleBuilder<ViewRootState, RootState>) => ({
 	},'viewgroup'),
 	groupDisplayMode: b.commit((state, payload: string|null) => state.groupDisplayMode = payload, 'groupDisplayMode'),
 
-	reset: b.commit(state => Object.assign(state, cloneDeep(initialViewState)), 'reset'),
+	reset: b.commit((state, props: {resetGroupBy: boolean}) => {
+		// This may case an error if the current group settings are invalid for the new view.
+		let prevGroupBy = state.groupBy;
+		Object.assign(state, cloneDeep(initialViewState))
+		if (!props.resetGroupBy) state.groupBy = prevGroupBy;
+	}, 'reset'),
 	replace: b.commit((state, payload: ViewRootState) => Object.assign(state, cloneDeep(payload)), 'replace'),
 });
 
@@ -126,7 +117,7 @@ function getOrCreateModule(view: string, initialState?: ViewRootState) {
 const actions = {
 	resetPage: viewsBuilder.commit(() => Object.values(moduleCache).forEach(m => m.actions.page(0)), 'resetPage'),
 	resetViewGroup: viewsBuilder.commit(() => Object.values(moduleCache).forEach(m => m.actions.viewGroup(null)), 'resetViewGroup'),
-	resetAllViews: viewsBuilder.commit(() => Object.values(moduleCache).forEach(m => m.actions.reset()), 'reset'),
+	resetAllViews: viewsBuilder.commit((state, props: {resetGroupBy: boolean}) => Object.values(moduleCache).forEach(m => m.actions.reset(props)), 'reset'),
 	replaceView: viewsBuilder.commit((_, payload: {view: string|null, data: ViewRootState}) => {
 		if (payload.view) getOrCreateModule(payload.view).actions.replace(payload.data);
 	}, 'replaceResultsView'),

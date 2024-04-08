@@ -13,7 +13,7 @@ const defaults = {
 };
 
 const namespace = 'global';
-type ModuleRootState = {
+type ExternalModuleRootState = {
 	pageSize: number;
 	sampleMode: 'percentage'|'count';
 	sampleSeed: number|null;
@@ -21,20 +21,30 @@ type ModuleRootState = {
 	wordsAroundHit: number|null;
 };
 
-const initialState: ModuleRootState = {
+// We don't want to expose this internal state to the outside world
+// It's easier this way, since we don't have to worry about this setting in history parsing/generation, url parsing/generation, etc.
+type ModuleRootState=ExternalModuleRootState&{
+	resetGroupByOnSearch: boolean;
+}
+
+const initialState: ExternalModuleRootState = {
 	pageSize: defaults.pageSize as number,
 	sampleMode: defaults.sampleMode,
 	sampleSeed: null,
 	sampleSize: null,
-	wordsAroundHit: null
+	wordsAroundHit: null,
 };
 
-const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, Object.assign({}, initialState));
+const internalInitialState: ModuleRootState = {
+	...initialState, resetGroupByOnSearch: true
+}
+
+const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, Object.assign({}, internalInitialState));
 
 const getState = b.state();
 
 const get = {
-
+	resetGroupByOnSearch: b.read((state) => state.resetGroupByOnSearch, 'resetGroupByOnSearch'),
 };
 
 const actions = {
@@ -75,9 +85,10 @@ const actions = {
 
 	}, 'samplesize'),
 	wordsAroundHit: b.commit((state, payload: number|null) => state.wordsAroundHit = payload, 'wordsaroundhit'),
+	resetGroupByOnSearch: b.commit((state, payload: boolean) => state.resetGroupByOnSearch = payload, 'resetGroupByOnSearch'),
 
-	reset: b.commit(state => Object.assign(state, initialState), 'reset'),
-	replace: b.commit((state, payload: ModuleRootState) => {
+	reset: b.commit(state => Object.assign(state, internalInitialState), 'reset'),
+	replace: b.commit((state, payload: ExternalModuleRootState) => {
 		// Use actions so we can verify data
 		actions.pageSize(payload.pageSize);
 		actions.sampleMode(payload.sampleMode);
@@ -91,6 +102,7 @@ const actions = {
 const init = () => {/**/};
 
 export {
+	ExternalModuleRootState,
 	ModuleRootState,
 
 	getState,

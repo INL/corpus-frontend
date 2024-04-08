@@ -123,7 +123,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	 */
 	@memoize
 	private get frequencies(): null|ExploreModule.ModuleRootState['frequency'] {
-		if (this.expertPattern !== '[]' || this._groups.length !== 1 || this.groupBy.length !== 1) {
+		if (this.expertPattern !== '[]' || this.groupBy.length !== 1) {
 			return null;
 		}
 
@@ -225,7 +225,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 			return null;
 		}
 
-		if (this.groupByAdvanced.length !== 0 || this.groupBy.length === 0) {
+		if (this.groupBy.length === 0) {
 			return null;
 		}
 
@@ -247,7 +247,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	private get ngrams(): null|ExploreModule.ModuleRootState['ngram'] {
 		const allAnnotations = CorpusModule.get.allAnnotationsMap();
 
-		if (this.groupByAdvanced.length || this.groupBy.length === 0) {
+		if (this.groupBy.length === 0) {
 			return null;
 		}
 
@@ -309,7 +309,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	}
 
 	@memoize
-	private get global(): GlobalResultsModule.ModuleRootState {
+	private get global(): GlobalResultsModule.ExternalModuleRootState {
 		return {
 			pageSize: this.pageSize,
 			sampleMode: this.sampleMode,
@@ -545,9 +545,8 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 		return this.getNumber('wordsaroundhit', null, v => v != null && v >= 0 && v <= 10 ? v : null);
 	}
 
-	/** Return the group variables unprocessed, including their case flags and context groups intact */
 	@memoize
-	private get _groups(): string[] {
+	private get groupBy(): string[] {
 		return this.getString('group', '')!
 		.split(',')
 		.map(g => g.trim())
@@ -555,22 +554,8 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	}
 
 	@memoize
-	private get groupBy(): string[] {
-		return this._groups
-		.filter(g => !g.startsWith('context:') && !g.startsWith('capture:'))
-		.map(g => g.replace(/\:[is]$/, '')); // strip case-sensitivity flag from value, is only visible in url
-	}
-
-	@memoize
-	private get groupByAdvanced(): string[] {
-		return this._groups
-		.filter(g => g.startsWith('context:') || g.startsWith('capture:'));
-	}
-
-	@memoize
 	private get caseSensitive(): boolean {
-		const groups = this._groups
-		.filter(g => !g.startsWith('context:'));
+		const groups = this.groupBy.filter(g => !g.startsWith('context:'));
 
 		return groups.length > 0 && groups.every(g => g.endsWith(':s'));
 	}
@@ -589,10 +574,8 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 		return {
 			customState: JSON.parse(this.getString('resultViewCustomState', 'null', v => v ?? 'null')!),
 			groupBy: this.groupBy,
-			groupByAdvanced: this.groupByAdvanced,
-			caseSensitive: this.caseSensitive,
 			sort: this.getString('sort', null, v => v?v:null),
-			viewGroup: this.getString('viewgroup', undefined, v => (v && this._groups.length > 0)?v:null),
+			viewGroup: this.getString('viewgroup', undefined, v => (v && this.groupBy.length > 0)?v:null),
 			page: this.getNumber('first', 0, v => Math.floor(Math.max(0, v)/this.pageSize)/* round down to nearest page containing the starting index */)!,
 			groupDisplayMode: this.getString('groupDisplayMode', null, v => v?v:null),
 		};

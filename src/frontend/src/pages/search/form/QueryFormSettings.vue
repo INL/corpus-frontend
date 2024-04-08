@@ -125,7 +125,7 @@ export default Vue.extend({
 			get(): string { return this.itoa(GlobalViewSettings.getState().sampleSeed); },
 			set(v: string) {
 				GlobalViewSettings.actions.sampleSeed(this.atoi(v));
-				if (this.viewedResultsSettings && (this.viewedResultsSettings.groupBy.length || this.viewedResultsSettings.groupByAdvanced.length)) {
+				if (this.viewedResultsSettings && this.viewedResultsSettings.groupBy.length) {
 					// No need to do this when ungrouped - the raw number of results
 					// will stay as it is, but the distribution (and number of) groups may change and
 					// cause the number of pages to shift

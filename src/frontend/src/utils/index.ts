@@ -503,7 +503,7 @@ export function getMetadataSubset<T extends {id: string, displayName: string}>(
 		const displaySuffixHtml = showGroupLabels && groupId ? `<small class="text-muted">${groupId}</small>` : '';
 		const r: AppTypes.Option[] = [];
 		r.push({
-			value: `field:${value}`,
+			value: operation === 'Sort' ? `field:${value}` : value, // groupby prepends field: on its own
 			label: `${operation} by ${displayNameHtml} ${displayIdHtml} ${displaySuffixHtml}`,
 		});
 		if (operation === 'Sort') {

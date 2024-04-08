@@ -15,7 +15,7 @@
 		<template v-for="({text, punct, captureAndRelation: cap}, i) in data">
 			<span v-if="cap && cap.length"
 				:key="text + '_' + cap[0].key + '_' + i"
-				:style="{background: cap[0].color, display: 'inline-block', color: cap[0].textcolor, 'border-radius': '2px', }"
+				:style="{background: cap[0].color, display: 'inline-block', color: cap[0].textcolor, 'border-radius': '2px', padding: '0 2px'}"
 				:title="cap[0].key"
 			>{{ text }}</span>
 			<template v-else>{{ text }}</template>

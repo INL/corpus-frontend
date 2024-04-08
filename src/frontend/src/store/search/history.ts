@@ -35,7 +35,7 @@ type HistoryEntry = {
 	// always set
 	filters: FilterModule.ModuleRootState;
 	gap: GapModule.ModuleRootState;
-	global: GlobalModule.ModuleRootState;
+	global: GlobalModule.ExternalModuleRootState;
 	interface: InterfaceModule.ModuleRootState;
 
 	/** The state of the currently active view.
@@ -156,7 +156,7 @@ const actions = {
 			filters: entry,
 			pattern,
 			gap: entry.gap,
-			groupBy: entry.view.groupBy.concat(entry.view.groupByAdvanced).sort((l, r) => l.localeCompare(r)),
+			groupBy: entry.view.groupBy.sort((l, r) => l.localeCompare(r)),
 		};
 
 		const fullEntry: FullHistoryEntry = {

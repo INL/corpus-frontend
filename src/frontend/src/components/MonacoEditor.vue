@@ -1,7 +1,7 @@
 <template>
-	<div style="min-height: 200px;">
-		<div ref="editor" style="width: 100%; height: calc(100% - 1.5em);"></div>
-		<label><input type=checkbox v-model="darkmode"> Dark mode</label>
+	<div style="height: 200px; min-height: 200px;">
+		<div ref="editor" :style="{width: '100%', minHeight: options.theme? '100%' : `calc(100% - 1.5em)`}"></div>
+		<label v-if="!options?.theme"><input type=checkbox v-model="darkmode"> Dark mode</label>
 	</div>
 </template>
 
@@ -16,7 +16,7 @@ import blfschema from '@/assets/blf-schema.json';
 configureMonacoYaml(monaco, {
 	enableSchemaRequest: false,
 	schemas: [{
-		fileMatch: ['*'],
+		fileMatch: ['*.blf.yaml'],
 
 		// @ts-ignore
 		schema: blfschema as JSONSchema7,
@@ -30,7 +30,7 @@ monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
 	validate: true,
 	schemas: [{
 		uri: new URL('@/assets/blf-schema.json', import.meta.url).toString(),
-		fileMatch: ['*'],
+		fileMatch: ['*.blf.json'],
 		schema: blfschema
 	}],
 	allowComments: true,
@@ -115,7 +115,7 @@ export default Vue.extend({
 		// Assume a reference comparison is made first
 		// https://stackoverflow.com/questions/23836825/is-javascript-string-comparison-just-as-fast-as-number-comparison
 		// So long models *should* be okay, as long as vue doesn't copy the emitted input event string internally.
-		value(newVal: string) {  if (newVal !== this.emittedValue) this.editor.setValue(newVal); },
+		value(newVal: string) {  if (newVal !== this.emittedValue) this.editor.setValue(newVal || ''); },
 		language(newVal: string) { this.updateLanguage(newVal); },
 		// if this changes we need to recreate the model unfortunately
 		filename(newVal: string) { this.updateFileName(newVal); },

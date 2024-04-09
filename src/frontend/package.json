@@ -5,8 +5,8 @@
   "private": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "node src/assets/compile-schema.js && webpack --config webpack.config.prod.js --mode production",
-    "build:blfschema": "cd src/assets && node compile-schema.js && cd ../../",
+    "build": "npm run build:blfschema && webpack --config webpack.config.prod.js --mode production",
+    "build:blfschema": "cd src/assets && node compile-schema.js && cd ../..",
     "start": "webpack-dev-server --hot --config webpack.config.dev.js --mode development --port 8081 --host 0.0.0.0",
     "node": "node"
   },

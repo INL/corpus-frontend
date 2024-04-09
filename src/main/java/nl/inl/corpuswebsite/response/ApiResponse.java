@@ -178,7 +178,7 @@ public class ApiResponse extends BaseResponse {
             .map(CorpusConfig::getJsonUnescaped)
             .tapSelf(r -> {
                 sendResult(r, "application/json; charset=utf-8");
-                logger.info("Corpus metadata request took " + (System.currentTimeMillis() - now) + "ms");
+                logger.fine("Corpus metadata request took " + (System.currentTimeMillis() - now) + "ms");
             });
     }
 

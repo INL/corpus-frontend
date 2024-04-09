@@ -79,7 +79,7 @@ export default Vue.extend({
 				opts.push(...getAnnotationSubset(
 					this.annotations,
 					this.corpus.annotationGroups,
-					this.corpus.annotatedFields.contents.annotations,
+					this.corpus.annotatedFields[this.corpus.mainAnnotatedField].annotations,
 					'Sort',
 					this.corpus.textDirection,
 					debug.debug

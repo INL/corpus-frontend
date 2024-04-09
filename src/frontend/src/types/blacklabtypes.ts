@@ -255,7 +255,7 @@ export interface BLMetadataField {
 }
 
 /** Contains information about the internal structure of the index - which fields exist for tokens, which metadata fields exist for documents, etc */
-export interface BLIndexMetadataInternal {
+export interface BLIndexMetadata {
 	/** Always present, except in really old versions of blacklab */
 	annotationGroups?: {
 		[annotatedFieldId: string]: Array<{
@@ -297,18 +297,13 @@ export interface BLIndexMetadataInternal {
 		/** yyyy-mm-dd hh:mm:ss */
 		timeModified: string;
 	};
-}
-type BLIndexMetadataV1 = BLIndexMetadataInternal&{
-	complexFields: {[id: string]: BLAnnotatedFieldV1};
-};
-type BLIndexMetadataV2 = BLIndexMetadataInternal&{
-	annotatedFields: {[id: string]: BLAnnotatedFieldV2};
-	/** Only available if index contains actual documents and if versionInfo.blackLabVersion >= 2.0.0 */
-	documentCount?: number;
-};
 
-export type BLIndexMetadata = BLIndexMetadataV1|BLIndexMetadataV2;
-export function isIndexMetadataV1(v: BLIndexMetadata): v is BLIndexMetadataV1 { return (v as any).complexFields != null; }
+	annotatedFields: {[id: string]: BLAnnotatedFieldV2};
+	/** key into annotatedFields */
+	mainAnnotatedField: string;
+	/** Only available if index contains actual documents and if versionInfo.blackLabVersion >= 2.0.0 */
+	documentCount: number;
+};
 
 export type BLDocument = {
 	docPid: string;

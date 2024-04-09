@@ -112,57 +112,59 @@ function normalizeAnnotatedField(field: BLTypes.BLAnnotatedField): NormalizedAnn
 
 function normalizeAnnotationGroups(blIndex: BLTypes.BLIndexMetadata): NormalizedAnnotationGroup[] {
 	let annotationGroupsNormalized: NormalizedAnnotationGroup[] = [];
-	for (const [fieldId, field] of Object.entries(BLTypes.isIndexMetadataV1(blIndex) ? blIndex.complexFields : blIndex.annotatedFields) as Array<[string, BLTypes.BLAnnotatedField]>) {
-		const annotations = BLTypes.isAnnotatedFieldV1(field) ? field.properties : field.annotations;
-		const idsNotInGroups = new Set(Object.keys(annotations));
+	const fieldId = blIndex.mainAnnotatedField;
+	const field = blIndex.annotatedFields[fieldId];
 
-		let hasUserDefinedGroup = false;
+	const annotations = BLTypes.isAnnotatedFieldV1(field) ? field.properties : field.annotations;
+	const idsNotInGroups = new Set(Object.keys(annotations));
 
-		// Copy all predefined groups, removing nonexistant annotations and groups
-		if (blIndex.annotationGroups && blIndex.annotationGroups[fieldId]) {
-			for (const group of blIndex.annotationGroups[fieldId]) {
-				const normalizedGroup: NormalizedAnnotationGroup = {
-					annotatedFieldId: fieldId,
-					id: group.name,
-					entries: group.annotations.filter(id => annotations[id] != null),
-					isRemainderGroup: false
-				};
-				if (normalizedGroup.entries.length) {
-					annotationGroupsNormalized.push(normalizedGroup);
-					normalizedGroup.entries.forEach(id => idsNotInGroups.delete(id));
-					hasUserDefinedGroup = true;
-				}
-			}
-		}
+	let hasUserDefinedGroup = false;
 
-		// Add all remaining annotations to the remainder group.
-		// First add all explicitly ordered annotations (annotatedField.displayOrder).
-		// Finally add everything else at the end, sorted by their displayNames.
-		if (idsNotInGroups.size) {
-			const remainingAnnotationsToAdd = new Set(idsNotInGroups);
-			const idsInRemainderGroup: string[] = [];
-
-			// annotations in displayOrder
-			if (!BLTypes.isAnnotatedFieldV1(field) && field.displayOrder) {
-				field.displayOrder.forEach(id => {
-					if (remainingAnnotationsToAdd.has(id)) {
-						remainingAnnotationsToAdd.delete(id);
-						idsInRemainderGroup.push(id);
-					}
-				});
-			}
-			// Finally all annotations without entry in displayOrder
-			idsInRemainderGroup.push(...[...remainingAnnotationsToAdd].sort((a, b) => annotations[a].displayName.localeCompare(annotations[b].displayName)));
-			// And create the group.
-			annotationGroupsNormalized.push({
+	// Copy all predefined groups, removing nonexistant annotations and groups
+	if (blIndex.annotationGroups && blIndex.annotationGroups[fieldId]) {
+		for (const group of blIndex.annotationGroups[fieldId]) {
+			const normalizedGroup: NormalizedAnnotationGroup = {
 				annotatedFieldId: fieldId,
-				entries: idsInRemainderGroup,
-				id: 'Other',
-				// If there was a group defined from the index config, this is indeed the remainder group, otherwise this is just a normal group.
-				isRemainderGroup: hasUserDefinedGroup
-			});
+				id: group.name,
+				entries: group.annotations.filter(id => annotations[id] != null),
+				isRemainderGroup: false
+			};
+			if (normalizedGroup.entries.length) {
+				annotationGroupsNormalized.push(normalizedGroup);
+				normalizedGroup.entries.forEach(id => idsNotInGroups.delete(id));
+				hasUserDefinedGroup = true;
+			}
 		}
 	}
+
+	// Add all remaining annotations to the remainder group.
+	// First add all explicitly ordered annotations (annotatedField.displayOrder).
+	// Finally add everything else at the end, sorted by their displayNames.
+	if (idsNotInGroups.size) {
+		const remainingAnnotationsToAdd = new Set(idsNotInGroups);
+		const idsInRemainderGroup: string[] = [];
+
+		// annotations in displayOrder
+		if (!BLTypes.isAnnotatedFieldV1(field) && field.displayOrder) {
+			field.displayOrder.forEach(id => {
+				if (remainingAnnotationsToAdd.has(id)) {
+					remainingAnnotationsToAdd.delete(id);
+					idsInRemainderGroup.push(id);
+				}
+			});
+		}
+		// Finally all annotations without entry in displayOrder
+		idsInRemainderGroup.push(...[...remainingAnnotationsToAdd].sort((a, b) => annotations[a].displayName.localeCompare(annotations[b].displayName)));
+		// And create the group.
+		annotationGroupsNormalized.push({
+			annotatedFieldId: fieldId,
+			entries: idsInRemainderGroup,
+			id: 'Other',
+			// If there was a group defined from the index config, this is indeed the remainder group, otherwise this is just a normal group.
+			isRemainderGroup: hasUserDefinedGroup
+		});
+	}
+
 	return annotationGroupsNormalized;
 }
 
@@ -218,7 +220,7 @@ export function normalizeIndexBase(blIndex: BLTypes.BLIndex, id: string): Normal
 export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedIndex {
 	const annotationGroupsNormalized = normalizeAnnotationGroups(blIndex);
 	const metadataGroupsNormalized = normalizeMetadataGroups(blIndex);
-	const annotatedFields: BLTypes.BLAnnotatedField[] = Object.values(BLTypes.isIndexMetadataV1(blIndex) ? blIndex.complexFields : blIndex.annotatedFields);
+	const annotatedFields: BLTypes.BLAnnotatedField[] = Object.values(blIndex.annotatedFields);
 
 	return {
 		annotatedFields: mapReduce(annotatedFields.map(normalizeAnnotatedField), 'id'),
@@ -229,7 +231,7 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 		// If BlackLab is an old format, this property doesn't exist
 		// If BlackLab is new, and the property is still missing, it's 0 (tokenCount and documentCount are always omitted when 0)
 		// Encode this in the fallback value, then later request the actual number of documents
-		documentCount: !BLTypes.isIndexMetadataV1(blIndex) ? blIndex.documentCount || 0 : -1,
+		documentCount: blIndex.documentCount,
 		documentFormat: blIndex.documentFormat,
 		fieldInfo: blIndex.fieldInfo,
 		id: blIndex.indexName,
@@ -240,7 +242,8 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 		timeModified: blIndex.versionInfo.timeModified,
 		tokenCount: blIndex.tokenCount || 0,
 		status: blIndex.status,
-		indexProgress: blIndex.indexProgress || null
+		indexProgress: blIndex.indexProgress || null,
+		mainAnnotatedField: blIndex.mainAnnotatedField,
 	};
 }
 

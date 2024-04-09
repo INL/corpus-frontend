@@ -73,6 +73,7 @@
 					:options="annotations"
 					v-model="current.annotation"
 				/>.
+				<br>
 				<label><input type="checkbox" v-model="current.caseSensitive"> Case sensitive</label>
 
 				<div style="margin: 0.75em 0 1.5em 0;"  v-if="context === 'context'">
@@ -100,6 +101,7 @@
 						:options="metadata"
 					/>
 				</section>
+				<br>
 				<label><input type="checkbox" v-model="current.caseSensitive"> Case sensitive</label>
 			</template>
 			<div v-else class="text-secondary h4" style="height: 100%; width: 100%; margin: 0; display: flex; align-items: center;">In this window you can apply grouping to the results. Click the buttons on the left to create a grouping criteria to get started.</div>

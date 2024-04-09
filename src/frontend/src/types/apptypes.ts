@@ -126,6 +126,8 @@ export type NormalizedIndexBase = {
 /** Contains information about the internal structure of the index - which fields exist for tokens, which metadata fields exist for documents, etc */
 export type NormalizedIndex = NormalizedIndexBase&{
 	annotatedFields: { [id: string]: NormalizedAnnotatedField; };
+	/** Key info annotatedFields */
+	mainAnnotatedField: string;
 	/**
 	 * If no groups are defined by blacklab itself, all annotations of all annotatedFields are placed in generated groups.
 	 * Note that an annotation may be part of more than one group.

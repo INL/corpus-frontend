@@ -24,7 +24,7 @@ const getState = b.state();
 
 const get = {
 	/** All annotations, without duplicates and in no specific order */
-	allAnnotations: b.read((state): NormalizedAnnotation[] => Object.values(state.corpus?.annotatedFields ?? {}).flatMap(f => Object.values(f.annotations)), 'allAnnotations'),
+	allAnnotations: b.read((state): NormalizedAnnotation[] => Object.values(state.corpus?.annotatedFields[state.corpus.mainAnnotatedField].annotations ?? {}), 'allAnnotations'),
 	allAnnotationsMap: b.read((state): MapOf<NormalizedAnnotation> => mapReduce(get.allAnnotations(), 'id'), 'allAnnotationsMap'),
 
 	allMetadataFields: b.read((state): NormalizedMetadataField[] => Object.values(state.corpus?.metadataFields || {}), 'allMetadataFields'),

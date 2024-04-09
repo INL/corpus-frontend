@@ -73,6 +73,7 @@
 					:options="annotations"
 					v-model="current.annotation"
 				/>.
+				<label><input type="checkbox" v-model="current.caseSensitive"> Case sensitive</label>
 
 				<div style="margin: 0.75em 0 1.5em 0;"  v-if="context === 'context'">
 					Choose the <strong>specific word</strong> positions to group on here, the preview at the top will show you which words you have selected.
@@ -89,7 +90,15 @@
 			<template v-else-if="current && current.type === 'metadata'">
 				<section class="text-muted">
 					Select the document metadata to group on.<br>
-					<SelectPicker placeholder="Metadata" allowHtml hideEmpty v-model="current.field" :options="metadata" v-if="current.type === 'metadata'"/>
+					<SelectPicker
+						placeholder="Metadata"
+						allowHtml
+						hideEmpty
+						data-width="auto"
+						data-menu-width="auto"
+						v-model="current.field"
+						:options="metadata"
+					/>
 				</section>
 				<label><input type="checkbox" v-model="current.caseSensitive"> Case sensitive</label>
 			</template>
@@ -220,7 +229,6 @@ export default Vue.extend({
 				false,
 				true
 			)
-			console.log(r);
 			return r;
 		},
 
@@ -408,7 +416,6 @@ export default Vue.extend({
 					this.storeValueUpdateIsOurs = false;
 					return;
 				}
-				debugger;
 				this.localModel = this.storeValue.map(parseGroupBySettingsUI);
 				if (this.currentIndex >= this.localModel.length) {
 					this.currentIndex = this.localModel.length - 1;

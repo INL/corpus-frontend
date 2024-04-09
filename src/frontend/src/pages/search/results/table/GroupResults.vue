@@ -181,7 +181,7 @@ export default Vue.extend({
 					stage1.push({
 						id: g.identity || '[unknown]',
 						size: g.size,
-						displayname: this.decodePropertyValue(g.identity) || '[unknown]',
+						displayname: this.decodePropertyValue(g) || '[unknown]',
 
 						'r.d': summary.numberOfDocs,
 						'r.t': summary.tokensInMatchingDocuments!, // FIXME augment request to make this available
@@ -216,7 +216,7 @@ export default Vue.extend({
 					stage1.push({
 						id: g.identity,
 						size: g.size,
-						displayname: this.decodePropertyValue(g.identity) || '[unknown]',
+						displayname: this.decodePropertyValue(g) || '[unknown]',
 
 						'r.d': summary.numberOfDocs,
 						'r.t': summary.tokensInMatchingDocuments!, // FIXME augment request to make this available
@@ -274,36 +274,8 @@ export default Vue.extend({
 			this.$emit('viewgroup', {id, displayName});
 		},
 
-		decodePropertyValue(v: string): string {
-			function decode(value: string[], skipParts: number, unescape: boolean) {
-				value.splice(0, skipParts);
-				if (unescape) value = value.map(p => p.replace(/\$CL/g, ':').replace(/\$CM/g, ',').replace(/\$DL/g, '$'));
-				return value.join(' ');
-			}
-
-			return v
-			.split(',')
-			.map(p => {
-				const [type, ...rest] = p.split(':');
-				switch (type) {
-					case 'cwo':
-					case 'cws':
-					case 'cwsr':
-						return decode(rest, 2, true);
-						//  reverse! (apparently)
-					case 'dec': // no sens - no unescape
-					case 'int': // no sens -- no unescape
-					case 'doc': // no sens - no unescape
-						return decode(rest, 0, false);
-					case 'str': // no sens -- do unescape
-						return decode(rest, 0, true);
-					default:
-						// unknown property - newer version of blacklab? make some best effort guess.
-						const valueMightHaveSensitivitySpecifier = rest.includes('i') || rest.includes('s');
-						return decode(rest, valueMightHaveSensitivitySpecifier ? 2 : 0, valueMightHaveSensitivitySpecifier);
-				}
-			})
-			.join('·');
+		decodePropertyValue(g: BLTypes.BLGroupResult): string {
+			return g.properties.map(p => p.value).join('·');
 		}
 	},
 	watch: {

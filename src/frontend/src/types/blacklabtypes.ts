@@ -403,6 +403,11 @@ export interface BLGroupResult {
 	identity: string;
 	identityDisplay: string;
 	size: number;
+	/** Individual property values that identify this group. Whereas identity and identityDisplay are encoded cq. preformatted, these are the raw values. */
+	properties: Array<{
+		name: string,
+		value: string
+	}>
 }
 
 export interface BLHitGroupResult extends BLGroupResult {

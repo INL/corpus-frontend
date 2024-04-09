@@ -33,6 +33,11 @@ import * as GapModule from '@/store/search/form/gap';
 import { getPatternString, escapeRegex } from '@/utils';
 import { getFilterSummary, getFilterString } from '@/components/filters/filterValueFunctions';
 
+// todo migrate these weirdo state shapes to mapped types?
+// might be a cleaner way of doing this...
+// weird template parameter is just a way to avoid having to write out all permutations of the subForm type.
+// (which is any of the root state keys of the pattern module)
+// basically we just want "one of" the entries in the pattern module root state.
 type ModuleRootStateSearch<K extends keyof PatternModule.ModuleRootState> = {
 	form: 'search';
 	subForm: K;

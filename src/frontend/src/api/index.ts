@@ -312,15 +312,18 @@ export const blacklab = {
 		};
 	},
 
-	getSnippet: (indexId: string, docId: string, hitstart: number, hitend: number, wordsaroundhit: number = 50, requestParameters?: AxiosRequestConfig) => {
+	getSnippet: (indexId: string, docId: string, hitstart: number, hitend: number, wordsaroundhit: number|undefined = 50, context: string|undefined = undefined, requestParameters?: AxiosRequestConfig) => {
+		// TODO check if the snippet is still weird.
 		return endpoints.blacklab.getOrPost<BLTypes.BLHitSnippetApi>(blacklabPaths.snippet(indexId, docId), {
 			hitstart,
 			hitend,
 			// when requesting 0, blacklab returns a differently shaped object (since 4), which causes issues.
 			// instead of {left, match, right}, we receive {snippet}
-			wordsaroundhit: Math.max(1, wordsaroundhit)
+			// this might have been a bug? should test again
+			wordsaroundhit: wordsaroundhit != null ? Math.max(1, wordsaroundhit) : undefined,
+			context
 		}, requestParameters)
-		.then<BLTypes.BLHitSnippet>(snippet => {
+		.then<BLTypes.BLHit>(snippet => {
 			const match = 'match' in snippet ? snippet.match : snippet.snippet;
 			const leftPlaceholder: BLTypes.BLHitSnippetPart = Object.entries(match).reduce<BLTypes.BLHitSnippetPart>((acc, [key, value]) => {
 				acc[key] = [];
@@ -328,20 +331,14 @@ export const blacklab = {
 			}, {punct: []});
 			const rightPlaceholder = {...leftPlaceholder};
 
-			const r: BLTypes.BLHitSnippet = {
+			return {
 				left: 'left' in snippet ? snippet.left! : leftPlaceholder,
 				match,
 				right: 'right' in snippet ? snippet.right! : rightPlaceholder,
+				docPid: snippet.docPid,
+				start: snippet.start,
+				end: snippet.end
 			}
-
-			// @ts-ignore
-			if (snippet.docPid != null) r.docPid = snippet.docPid;
-			// @ts-ignore
-			if (snippet.start != null) r.start = snippet.start;
-			// @ts-ignore
-			if (snippet.end != null) r.end = snippet.end;
-
-			return r;
 		});
 	},
 

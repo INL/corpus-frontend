@@ -86,7 +86,7 @@ function initQueryBuilder() {
 		}))
 	}));
 
-	const withinOptions = UIStore.getState().search.extended.within.elements;
+	const withinOptions = UIStore.getState().search.shared.within.elements;
 	// Initialize configuration
 	const instance = new QueryBuilder($('#querybuilder'), {
 		queryBuilder: {

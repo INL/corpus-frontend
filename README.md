@@ -799,17 +799,22 @@ Through javascript you can do many things, but outlined below are some of the mo
     <summary>[Search] - Show/hide Split-Batch and Within</summary>
 
     `vuexModules.ui.actions.search.extended.splitBatch.enable(false)`
-    `vuexModules.ui.actions.search.extended.within.enable(false)`
+    `vuexModules.ui.actions.search.shared.within.enable(false)`
 
     It's also possible to set which tags are shown (and how) in `within`.
     You can only add tags that you actually index (using the [inlineTags options](https://inl.github.io/BlackLab/guide/how-to-configure-indexing.html#annotated-configuration-file) in your index config yaml)
     ```js
-    vuexModules.ui.actions.search.extended.within.elements({
+    vuexModules.ui.actions.search.shared.within.elements({
       title: 'Tooltip here (optional)',
       label: 'Sentence',
       value: 's'
-    });
+    }); 
     ```
+
+    Lastly, if your corpus has dependency relations, you can set which inline tag is used for the sentence boundary when viewing a hit's dependency tree.
+    The tree component will then show all words between two of these tags.
+    There is rudimentary autodetection that tries to find the most likely tag, but you can override this by setting the tag manually.
+    `vuexModules.ui.acions.search.shared.within.sentenceBoundary('s')`
   </details>
 
 - <details>

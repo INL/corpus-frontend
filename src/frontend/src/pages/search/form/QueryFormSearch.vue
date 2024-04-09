@@ -215,7 +215,7 @@ export default Vue.extend({
 		firstMainAnnotationACUrl(): string { return blacklabPaths.autocompleteAnnotation(INDEX_ID, this.firstMainAnnotation.annotatedFieldId, this.firstMainAnnotation.id); },
 		textDirection: CorpusStore.get.textDirection,
 		withinOptions(): Option[] {
-			const {enabled, elements} = UIStore.getState().search.extended.within;
+			const {enabled, elements} = UIStore.getState().search.shared.within;
 			return enabled ? elements : [];
 		},
 		within: {

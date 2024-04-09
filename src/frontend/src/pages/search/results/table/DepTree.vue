@@ -11,6 +11,10 @@
 				</tr>
 			</table>
 		</div> -->
+		<button type="button" class="btn btn-default" @click="$emit('loadSentence')" v-if="!fullSentence">
+			<template v-if="!loadingFullSentence">Load complete sentence</template>
+			<template v-else><Spinner/> Loading...</template>
+		</button>
 
 		<reactive-dep-tree v-if="connlu && renderTree" ref="tree"
 			minimal
@@ -18,6 +22,7 @@
 			shown-features="FORM,LEMMA,UPOS"
 			:conll="connlu"
 		></reactive-dep-tree>
+
 	</div>
 </template>
 
@@ -29,6 +34,8 @@ import Vue from 'vue';
 import {ReactiveDepTree} from '@/../node_modules/reactive-dep-tree/dist/reactive-dep-tree.umd.js';
 import {HitRowData} from '@/pages/search/results/table/HitRow.vue';
 import { BLHit, BLHitSnippet, BLHitSnippetPart, BLRelationMatchRelation } from '@/types/blacklabtypes';
+import Spinner from '@/components/Spinner.vue';
+
 
 /* https://universaldependencies.org/format.html
 Sentences consist of one or more word lines, and word lines contain the following fields:
@@ -78,11 +85,13 @@ function flatten(h?: BLHitSnippetPart, values?: string[]): Array<Record<string, 
 
 export default Vue.extend({
 	components: {
-		ReactiveDepTree
+		ReactiveDepTree,
+		Spinner
 	},
 	props: {
 		data: Object as () => HitRowData,
-		snippet: Object as () => BLHitSnippet|undefined,
+		fullSentence: Object as () => BLHit|undefined,
+		loadingFullSentence: Boolean,
 
 		// TODO
 		dir: String as () => 'ltr'|'rtl',
@@ -93,18 +102,35 @@ export default Vue.extend({
 		renderTree: true,
 	}),
 	computed: {
+		// We only need this to know where our hit starts and ends.
+		hit(): BLHit|undefined { return 'start' in this.data.hit ? this.data.hit : undefined; },
+		// The full sentence is the context in which the hit was found. Unless we don't have the sentence (yet), then it's the same hit ;)
+		context(): BLHit|undefined { return this.fullSentence || this.hit },
+
+		// Make the hit array make sense, since indexing into three non-0 indexed objects is a bit of a pain.
+		// Basically just make an array of key-value maps that contain the annotations for each token. e.g. [{word: 'I', lemma: 'i'}, {word: 'am', lemma: 'be'}, ...]
+		sensibleArray(): undefined|Array<Record<string, string>> {
+			if (!this.context?.matchInfos) return undefined;
+			/** Which annotations are we interested in, punct and the main annotation, but maybe more. */
+			const extract = ['punct', this.mainAnnotation].concat(Object.values(this.otherAnnotations));
+			const {left, match, right} =  this.context;
+			return flatten(left, extract).concat(flatten(match, extract)).concat(flatten(right, extract));
+		},
+
 		relationInfo(): undefined|Array<undefined|{parentIndex: number; label: string;}> {
-			const hit = this.data.hit;
-			if (!this.hit?.matchInfos) return undefined;
+			if (!this.hit || !this.context || !this.sensibleArray) return undefined;
+
+			const {start} = this.hit!;
+			const leftLength = this.context!.left?.punct?.length || 0;
+			const indexOffset = start - leftLength;
 
 			const r: Array<{parentIndex: number;label: string;}> = [];
 			const doRelation = (v: BLRelationMatchRelation) => {
 				// Connlu can only have one parent, so skip if the relation is not one-to-one
-
 				if (!(v.targetEnd - v.targetStart > 1) && (v.sourceStart == null || !(v.sourceEnd! - v.sourceStart > 1))) {
 					// translate the indices to something that makes sense
-					const sourceIndex = v.sourceStart != null ? v.sourceStart - this.indexOffset : -1; // 0 signifies root.
-					const targetIndex = v.targetStart - this.indexOffset;
+					const sourceIndex = v.sourceStart != null ? v.sourceStart - indexOffset : -1; // 0 signifies root.
+					const targetIndex = v.targetStart - indexOffset;
 					// add the relation to the sensible array
 
 					r[targetIndex] = {
@@ -118,7 +144,7 @@ export default Vue.extend({
 				}
 			}
 
-			Object.entries(hit.matchInfos || {}).forEach(mi => {
+			Object.entries(this.context.matchInfos || {}).forEach(mi => {
 				const [k, v] = mi;
 				// Not interested in non-relation matches.
 				if (v.type === 'relation') doRelation(v);
@@ -132,9 +158,9 @@ export default Vue.extend({
 			let header = '# text = ';
 			let rows: string[][] = [];
 
-			for (let i = 0; i < this.sensibleArray.length; ++i) {
+			for (let i = 0; i < this.sensibleArray!.length; ++i) {
 				const rel = this.relationInfo[i];
-				const token = this.sensibleArray[i];
+				const token = this.sensibleArray![i];
 				// Sometimes relations contains relations point outside the matched hit.
 				// We could compute the sensibleArray based on the hit snippet
 				// (which is larger and probably does contain the tokens), but then the tree component would end up rendering something like 50 tokens, which is way too wide.
@@ -159,7 +185,7 @@ export default Vue.extend({
 				if (this.otherAnnotations.upos)  row.push(token[this.otherAnnotations.upos]);  else row.push('_'); // upos
 				if (this.otherAnnotations.xpos)  row.push(token[this.otherAnnotations.xpos]);  else row.push('_'); // xpos
 				if (this.otherAnnotations.feats) row.push(token[this.otherAnnotations.feats]); else row.push('_'); // feats
-				row.push(rel && rel.parentIndex < this.sensibleArray.length  ? (rel.parentIndex + 1).toString() : '_'); // head
+				row.push(rel && rel.parentIndex < this.sensibleArray!.length  ? (rel.parentIndex + 1).toString() : '_'); // head
 				row.push(rel ? rel.label : '_'); // deprel
 				row.push('_'); // deps
 				row.push('_'); // highlight.
@@ -171,19 +197,6 @@ export default Vue.extend({
 			if (!rows.length) return '';
 
 			return header + '\n' + rows.map(row => row.join('\t')).join('\n');
-		},
-
-		hit(): BLHit|undefined { return 'start' in this.data.hit ? this.data.hit : undefined; },
-		indexOffset(): number { return this.hit ? this.hit.start - (this.hit.left?.punct || []).length : 0; },
-		// Make the hit array make sense, since indexing into three non-0 indexed objects is a bit of a pain.
-		// Basically just make an array of key-value maps that contain the annotations for each token. e.g. [{word: 'I', lemma: 'i'}, {word: 'am', lemma: 'be'}, ...]
-		sensibleArray(): Array<Record<string, string>> {
-			if (!this.hit || !this.hit.matchInfos) return [];
-			const extract = ['punct', this.mainAnnotation].concat(Object.values(this.otherAnnotations));
-
-			const {left, match, right} =  this.hit;
-
-			return flatten(left, extract).concat(flatten(match, extract)).concat(flatten(right, extract));
 		},
 	},
 	watch: {

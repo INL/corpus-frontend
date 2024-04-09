@@ -39,14 +39,6 @@ type ModuleRootState = {
 			splitBatch: {
 				enabled: boolean;
 			};
-			within: {
-				enabled: boolean;
-				elements: Array<{
-					title: string|null;
-					label: string;
-					value: string;
-				}>;
-			};
 		};
 		advanced: {
 			enabled: boolean,
@@ -69,7 +61,22 @@ type ModuleRootState = {
 			customAnnotations: Record<string, null|{
 				render(config: AppTypes.NormalizedAnnotation, state: AppTypes.AnnotationValue, vue: typeof Vue): HTMLElement|JQuery<HTMLElement>|string|Vue,
 				update(newState: AppTypes.AnnotationValue, oldState: AppTypes.AnnotationValue, element: HTMLElement): void
-			}>
+			}>;
+
+			within: {
+				enabled: boolean;
+				elements: Array<{
+					title: string|null;
+					label: string;
+					value: string;
+				}>;
+				/**
+				 * What element denotes sentence boundaries.
+				 * Used when (for example) requesting surrounding context in the dependency tree.
+				 * Defaults to the first element in the within.elements array, but null if none are defined.
+				 */
+				sentenceElement: string|null;
+			};
 		}
 	};
 
@@ -231,10 +238,6 @@ const initialState: ModuleRootState = {
 			splitBatch: {
 				enabled: true,
 			},
-			within: {
-				enabled: true,
-				elements: [],
-			},
 		},
 		advanced: {
 			enabled: true,
@@ -245,7 +248,13 @@ const initialState: ModuleRootState = {
 
 		shared: {
 			searchMetadataIds: [],
-			customAnnotations: {}
+			customAnnotations: {},
+
+			within: {
+				enabled: true,
+				elements: [],
+				sentenceElement: null
+			},
 		}
 	},
 	explore: {
@@ -363,18 +372,13 @@ const actions = {
 			splitBatch: {
 				enable: b.commit((state, payload: boolean) => state.search.extended.splitBatch.enabled = payload, 'search_extended_splitbatch_enable'),
 			},
+
+			/** @deprecated 9-04-2024 backwards compatibility. Moved to search.shared.within */
 			within: {
-				enable: b.commit((state, payload: boolean) => state.search.extended.within.enabled = payload, 'search_extended_within_enable'),
-				elements: b.commit((state, payload: ModuleRootState['search']['extended']['within']['elements']) => {
-					if (payload.findIndex(v => v.value === '') === -1) {
-						payload.unshift({
-							value: '',
-							label: 'Document',
-							title: null
-						});
-					}
-					state.search.extended.within.elements = payload;
-				}, 'search_extended_within_annotations'),
+				/** @deprecated 9-04-2024 backwards compatibility. Moved to search.shared.within */
+				enable: (p: boolean) => actions.search.shared.within.enable(p),
+				/** @deprecated 9-04-2024 backwards compatibility. Moved to search.shared.within */
+				elements: (e: ModuleRootState['search']['shared']['within']['elements']) => actions.search.shared.within.elements(e)
 			},
 		},
 		advanced: {
@@ -409,7 +413,24 @@ const actions = {
 				id => `Trying to display metadata field '${id}' in the filters section, but it does not exist.`,
 				_ => true, _ => '',
 				r => state.search.shared.searchMetadataIds = r
-			), 'search_shared_searchMetadataIds')
+			), 'search_shared_searchMetadataIds'),
+			within: {
+				enable: b.commit((state, payload: boolean) => state.search.shared.within.enabled = payload, 'search_shared_within_enable'),
+				elements: b.commit((state, payload: ModuleRootState['search']['shared']['within']['elements']) => {
+					if (payload.findIndex(v => v.value === '') === -1) {
+						payload.unshift({
+							value: '',
+							label: 'Document',
+							title: null
+						});
+					}
+					state.search.shared.within.elements = payload;
+				}, 'search_shared_within_annotations'),
+				sentenceElement: b.commit((state, payload: string|null) => {
+					if (state.search.shared.within.elements.findIndex(e => e.value === payload) >= 0 )
+						state.search.shared.within.sentenceElement = payload;
+				}, 'search_shared_within_sentenceElement')
+			},
 		}
 	},
 	explore: {
@@ -716,11 +737,11 @@ const init = () => {
 	actions.results.shared.sortMetadataIds(cur.length ? cur : defaultMetadataToShow);
 
 	// "within" selector (i.e. search within paragraphs/sentences/documents, whatever else is indexed (called "inline tags" in BlackLab)).
-	if (!initialState.search.extended.within.elements.length) {
+	if (!initialState.search.shared.within.elements.length) {
 		function setValuesForWithin(validValues: AppTypes.NormalizedAnnotation['values']) {
 			if (!validValues || !validValues.length) {
 				console.warn('Within clause not supported in this corpus, no relations indexed');
-				actions.search.extended.within.enable(false);
+				actions.search.shared.within.enable(false);
 				return;
 			};
 
@@ -734,20 +755,27 @@ const init = () => {
 			});
 
 			if (validValues.length <= 6) { // an arbitrary limit
-				actions.search.extended.within.elements(validValues);
+				actions.search.shared.within.elements(validValues);
 			} else {
 				console.warn(`Within clause can contain ${validValues.length} different values, ignoring...`);
 			}
 		}
 
-		// explicitly retrieve this annotations as it's supposed to be internal and thus not included in any getters.
-		const annot = allAnnotationsMap.starttag;
-		if (annot) setValuesForWithin(annot.values?.length ? cloneDeep(annot.values) : undefined);
-		else { // blacklab 4.0 removed the 'starttag' annotation. We have to retrieve values from a separate endpoint now.
-			blacklab.getRelations(INDEX_ID)
-				.then(relations => Object.keys(relations.spans).map(v => ({value: v, label: v, title: null}))) // map back to the old format
-				.then(v => setValuesForWithin(v));
-		}
+		// blacklab 4.0 removed the 'starttag' annotation. We have to retrieve values from a separate endpoint now.
+		blacklab.getRelations(INDEX_ID)
+			.then(relations => Object.keys(relations.spans).map(v => ({value: v, label: v, title: null}))) // map back to the old format
+			.then(v => setValuesForWithin(v))
+			.then(() => {
+				// default sentence boundary element. For use with dependency trees.
+				const state = getState(); // since we did it async, the init is already finished, and the data we set is not in the initial state anymore.
+				if (!state.search.shared.within.sentenceElement && state.search.shared.within.elements.length) {
+					const labelsOrValues = ['sentence', 'paragraph', 'p', 's', 'sen', 'par', 'sent', 'para', 'verse'];
+					const defaultWithin = state.search.shared.within.elements.find(e => labelsOrValues.includes(e.value) || labelsOrValues.includes(e.label));
+					if (defaultWithin) {
+						actions.search.shared.within.sentenceElement(defaultWithin.value);
+					}
+				}
+			})
 	}
 
 	// ====================

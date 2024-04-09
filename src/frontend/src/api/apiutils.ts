@@ -132,7 +132,6 @@ export function createEndpoint(options: AxiosRequestConfig) {
 		getOrPost<T>(url: string, queryParameters?: any, settings?: AxiosRequestConfig) {
 			const queryString = queryParameters ? qs.stringify(queryParameters) : '';
 			const usePost = queryString.length > 1000;
-			// const usePost = params && (params.patt ? params.patt.length : 0)+(params.filter ? params.filter.length : 0)+(params.pattgapdata ? params.pattgapdata.length : 0) > 1000;
 			if (usePost) {
 				settings = settings || {};
 				settings.headers = settings.headers || {};

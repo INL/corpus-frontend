@@ -10,13 +10,16 @@
 			<template v-else-if="context"> <!-- check if context is set! We don't always have one. -->
 				<DepTree
 					:data="data"
-					:snippet="snippet"
+					:canLoadFullSentence="!!canLoadSentence"
+					:fullSentence="sentenceSnippet"
+					:loadingFullSentence="loadingSentenceSnippet"
 					:mainAnnotation="mainAnnotation.id"
 					:otherAnnotations="{
 						lemma: 'lemma',
 						upos: 'pos',
 						// xpos: 'xpos',
 					}"
+					@loadSentence="loadSentence"
 				/>
 				<p>
 					<template v-for="addon in addons">
@@ -100,8 +103,6 @@ export default Vue.extend({
 		html: Boolean,
 		colspan: Number,
 		dir: String as () => 'ltr'|'rtl',
-		// mainAnnotation: Object as () => NormalizedAnnotation,
-		// otherAnnotations: Array as () => NormalizedAnnotation[]|undefined,
 
 		open: Boolean
 	},
@@ -114,6 +115,9 @@ export default Vue.extend({
 		addons: [] as Array<ReturnType<UIStore.ModuleRootState['results']['hits']['addons'][number]>>,
 
 		initialized: false,
+
+		loadingSentenceSnippet: false,
+		sentenceSnippet: null as null|BLTypes.BLHit,
 	}),
 	computed: {
 		mainAnnotation(): NormalizedAnnotation {
@@ -136,6 +140,31 @@ export default Vue.extend({
 		otherContexts(): HitContext[] {
 			return (this.otherAnnotations || []).map(a => snippetParts(this.data.hit, a.id, this.dir, false) || []);
 		},
+		canLoadSentence(): boolean { return !!UIStore.getState().search.shared.within.sentenceElement; }
+	},
+	methods: {
+		/**
+		 * Separate from the snippet/context, as that can run over sentence boundaries, but this doesn't.
+		 * We use it to render the dependency tree for the entire sentence.
+		 */
+		loadSentence() {
+			if (this.sentenceSnippet || this.loadingSentenceSnippet || !('start' in this.data.hit)) return;
+			const context = UIStore.getState().search.shared.within.sentenceElement;
+			if (!context) return; // unavailable.
+
+			this.loadingSentenceSnippet = true;
+			Api.blacklab.getSnippet(
+				INDEX_ID,
+				this.data.doc.docPid,
+				this.data.hit.start,
+				this.data.hit.end,
+				undefined,
+				context
+			)
+			.then(r => this.sentenceSnippet = r)
+			.catch(e => this.error = e.message)
+			.finally(() => this.loadingSentenceSnippet = false);
+		}
 	},
 	watch: {
 		open: {

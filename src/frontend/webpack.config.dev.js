@@ -1,9 +1,9 @@
 const path = require('path');
 const webpack = require('webpack');
-const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const {VueLoaderPlugin} = require('vue-loader');
-const CircularDependencyPlugin = require('circular-dependency-plugin');
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
+const CircularDependencyPlugin = require('circular-dependency-plugin');
 
 module.exports = {
 	entry: {
@@ -79,6 +79,7 @@ module.exports = {
 		}, {
 			test: /\.ts$/,
 			use: [{
+				// babel-loader omitted because we don't need transpilation during development.
 				loader: 'ts-loader',
 				options: {
 					/*
@@ -99,6 +100,8 @@ module.exports = {
 					appendTsSuffixTo: [/\.vue$/],
 				}
 			}]
+			// js files omitted because defaults are fine for dev builds.
+			// prod builds will use babel to transpile
 		}, {
 			test: /\.ttf$/,
 			type: 'asset/resource'
@@ -170,7 +173,7 @@ module.exports = {
 	// We run a second typescript compiler in a separate thread that does do actual deep validation, so we will still get warnings for genuine typescript errors.
 	// (that process happens in the ForkTsCheckerWebpackPlugin we enabled above)
 	stats: {
-	  warningsFilter: /export .* was not found in/
+		warningsFilter: /export .* was not found in/
 	},
 	devServer: {
 		allowedHosts: "all",

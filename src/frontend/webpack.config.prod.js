@@ -36,7 +36,6 @@ module.exports = {
 		}
 	},
 	module: {
-		// import/exports
 		rules: [{
 			test: /\.css$/,
 			use: [ 'vue-style-loader', 'css-loader'],
@@ -55,7 +54,8 @@ module.exports = {
 		}, {
 			test: /\.tsx$/,
 			use: [{
-				loader: 'babel-loader',
+				// required for jsx
+				loader: 'babel-loader'
 			}, {
 				loader: 'ts-loader',
 				options: {

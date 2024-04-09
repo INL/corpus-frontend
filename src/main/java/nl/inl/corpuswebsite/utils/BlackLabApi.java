@@ -56,6 +56,7 @@ public class BlackLabApi {
 				.query("pattgapdata", pattgapdata)
 				.query("wordstart", pageStart.map(Object::toString))
 				.query("wordend", pageEnd.map(Object::toString))
+				.query("escapexmlfragments", "false")
 				.request(true);
 	}
 	

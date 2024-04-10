@@ -322,7 +322,6 @@ export default Vue.extend({
 		context: {
 			get(): 'first'|'all'|'context'|string {
 				if (!this.current) return 'context';
-				debugger;
 
 				if (this.current.groupname) return 'capture_' + this.current.groupname;
 

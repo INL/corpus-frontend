@@ -11,9 +11,9 @@
 				</tr>
 			</table>
 		</div> -->
-		<button type="button" class="btn btn-default" @click="$emit('loadSentence')" v-if="!fullSentence">
+		<button type="button" class="btn btn-default" @click="$emit('loadSentence')" v-if="!fullSentence && connlu">
 			<template v-if="!loadingFullSentence">Load complete sentence</template>
-			<template v-else><Spinner/> Loading...</template>
+			<template v-else><Spinner inline/> Loading...</template>
 		</button>
 
 		<reactive-dep-tree v-if="connlu && renderTree" ref="tree"

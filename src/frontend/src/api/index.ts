@@ -21,10 +21,10 @@ const endpoints = {
 	// Communicatets with the frontend's own Java backend (which in turn can communicate with BLS)
 	cf: null as any as API,
 
-	// JN: ?
+	// JN: something to do with concept search (which is...?)
 	gloss: null as any as API,
 
-	// JN: ?
+	// JN: something to do with concept search (which is...?)
 	concept: null as any as API,
 };
 
@@ -364,6 +364,9 @@ export const blacklab = {
 	},
 };
 
+/**
+ * API for corpus-frontend's own webservice
+ */
 export const frontend = {
 	getCorpus: () => endpoints.cf.get<BLTypes.BLIndexMetadata>(frontendPaths.indexInfo()),
 

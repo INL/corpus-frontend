@@ -43,11 +43,27 @@
 
 		<div class="current-group-editor panel-default">
 			<template v-if="current && current.type === 'annotation'">
-				<div style="border: 1px solid #ddd; padding: 10px 15px; margin: -10px -15px 15px; border-top: 0; border-right: 0; border-left: 0; justify-content: center; " class="hit-preview panel-heading">
-					<template v-for="(section, i) of preview">
-						<span v-if="i !== 0" class="text-muted separator">||</span>
-						<component v-for="({word, active, title}, j) of section" :key="word + i + '_' + j " :is="active ? 'b' : 'span'" :title="title" :class="{'word': true, 'text-primary': active, active}">{{ word }}</component>
-					</template>
+				<div class="hit-preview panel-heading">
+					<div class="overflow-container">
+						<template v-for="(section, i) of preview">
+							<div v-if="i !== 0" class="separator"></div>
+							<!--
+								Make sure only "active" words get a <b/> tag, or the css :first-of-type selector won't match them and we lose borders
+								for the main portion of the hit, we use <strong/> instead of <b/> to keep the boldness, but avoid the css issue.
+							-->
+							<template v-for="({word, punct, active, title}, j) of section">
+								<component
+									:key="word + i + '_' + j "
+									:is="active ? 'b' :  i === 1 ? 'strong' : 'span'"
+									:title="title"
+									:class="{
+										'text-primary': active,
+										word: true,
+										active
+									}">{{ word }}</component><component :is="active ? 'b' : 'span'" :class="{punct: true, active}">{{ punct }}</component>
+							</template>
+						</template>
+					</div>
 				</div>
 
 				I want to group on <SelectPicker
@@ -135,7 +151,6 @@ import * as SearchModule from '@/store/search/index';
 import { blacklab } from '@/api';
 import jsonStableStringify from 'json-stable-stringify';
 import { parseGroupBySettingsUI } from '@/utils';
-import { Option } from '@/types/apptypes';
 
 const initialGroupBySettings: GroupBySettingsUI = {
 	type: 'annotation' as  'annotation'|'metadata',
@@ -243,14 +258,15 @@ export default Vue.extend({
 			return Object.entries(mi|| {}).filter(([k, v]) => v.type === 'span').map(([k,v]) => k)
 		},
 
-		preview(): {active: boolean, word: string, title: string}[][] {
+		preview(): {active: boolean, word: string, punct: string, title: string}[][] {
 			if (!this.current) return [];
 
 			/** Shorten the string, accounting for the ellipsis we add at the end */
 			function shorten(w: string, maxLengthIncludingEllipsis = 8) {
-				if (w.length > maxLengthIncludingEllipsis)
-					return w.substring(0, maxLengthIncludingEllipsis - 3) + '…';
 				return w;
+				// if (w.length > maxLengthIncludingEllipsis)
+				// 	return w.substring(0, maxLengthIncludingEllipsis - 3) + '…';
+				// return w;
 			}
 			if (this.current.type !== 'annotation' || !this.current.annotation || !isHitResults(this.hits) || !this.hits.hits.length)
 				return [];
@@ -262,6 +278,8 @@ export default Vue.extend({
 			const right = firstHit.right?.[annotation] || [];
 			const match = firstHit.match?.[annotation] || [];
 
+			const punct = (firstHit.left?.punct || []).concat(firstHit.match.punct).concat(firstHit.right?.punct || []);
+
 			const startindex: number = start - 1; // correct for 1-indexed vs 0-indexed
 			const endindex: number = end ?? Number.MAX_SAFE_INTEGER; // if end is not set, use entire context.
 
@@ -272,14 +290,21 @@ export default Vue.extend({
 			const fromEndOfHitStartIndex = match.length - endindex;
 			const fromEndOfHitEndIndex = match.length - startindex;
 
+
+			// skip first punct, it's before the first word, so pretty meaningless
+			// instead, we'll shift the array one over to make the punct be the after the current word.
+			let punctIndex = 1;
+
 			return [
 				left.map((w, i) => ({
-					word: shorten(w) || '[]',
+					word: shorten(w) || '·',
+					punct: punct[punctIndex++] || ' ',
 					title: w,
 					active: position === 'L' && i >= leftstart && i < leftend
 				})),
 				match.map((w, i) => ({
-					word: shorten(w) || '[]',
+					word: shorten(w) || '·',
+					punct: punct[punctIndex++] || ' ',
 					title: w,
 					active:
 						position === 'H' ? i >= startindex && i < endindex :
@@ -287,7 +312,8 @@ export default Vue.extend({
 						false
 				})),
 				right.map((w, i) => ({
-					word: shorten(w) || '[]',
+					word: shorten(w) || '·',
+					punct: punct[punctIndex++] || ' ',
 					title: w,
 					active: position === 'R' && i >= startindex && i < endindex
 				}))
@@ -296,6 +322,7 @@ export default Vue.extend({
 		context: {
 			get(): 'first'|'all'|'context'|string {
 				if (!this.current) return 'context';
+				debugger;
 
 				if (this.current.groupname) return 'capture_' + this.current.groupname;
 
@@ -456,30 +483,59 @@ export default Vue.extend({
 }
 
 .hit-preview {
-	display: flex;
-	flex-wrap: nowrap;
 	overflow: auto;
+	border: 1px solid #ddd;
+	padding: 10px 15px;
+	margin: -10px -15px 15px;
+	border-top: 0;
+	border-right: 0;
+	border-left: 0;
+
+	.overflow-container {
+		min-width: 400px;
+		display: flex;
+		flex-wrap: nowrap;
+		justify-content: center;
+	}
+
+	.word {
+		// allow some shrinkage, but not entirely.
+		flex-basis: auto;
+		flex-shrink: 1;
+		flex-grow: 0;
+
+		display: inline-block;
+		white-space: pre;
+
+		overflow: hidden;
+		position: relative;
+	}
+	.punct {
+		display: inline-block;
+		white-space: pre;
+		flex: none;
+	}
 
 	.separator {
-		padding: 0 0.5em;
-		font-weight: bold;
+		flex: none;
+		width: 2px;
+		height: auto;
+		margin: 0 0.5em;
+		background: #555;
+		border-radius: 2px;
+		flex-shrink: 0;
 	}
 
-	.word+.word {
-		padding-left: 0.5em;
-	}
-
-
-	.word.active {
+	.active {
 		border-top: 1px solid black;
 		border-bottom: 1px solid black;
 	}
 
-	.word.active:first-of-type {
+	.active:first-of-type {
 		border-left: 1px solid black;
 	}
 
-	.word.active:last-of-type {
+	.active:last-of-type {
 		border-right: 1px solid black;
 	}
 }

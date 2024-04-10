@@ -445,7 +445,13 @@ export interface BLDocGroupResults {
 
 /** Contains a hit's tokens, deconstructed into the individual annotations/properties, such as lemma, pos, word, always contains punctuation in between tokens */
 export interface BLHitSnippetPart {
-	/** Punctuation always exists (even if only an empty string or a space) */
+	/**
+	 * Punctuation always exists (even if only an empty string or a space).
+	 * Punctuation at a token comes BEFORE the word.
+	 * The final punctuation (e.g. trailing '?', '.', etc.) is therefor at document length + 1.
+	 * This gives a bit of mess in hits, because the punctuation trailing the "before" part of the hit is contained in the match at index 0.
+	 * Likewise, punctuation at the end of the hit is contained in the "after" context at index 0.
+	 */
 	punct: string[];
 	/** Usually this contains fields like lemma, word, pos */
 	[key: string]: string[]; // Jesse: Need something for the captures here

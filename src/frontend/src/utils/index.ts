@@ -660,7 +660,7 @@ export function parseGroupBy(groupBy: string[]): AppTypes.GroupBySettings[] {
 				annotation: part.split(':')[1],
 				caseSensitive: part.split(':')[2] === 's',
 				position: part.split(':')[3][0] as 'L'|'R'|'H'|'E',
-				start: Number(part.split(':')[3].match(/\w(\d+)/)![1]),
+				start: Number(part.split(':')[3].match(/\w(\d+)/)?.[1] ?? 1),
 				end: Number(part.split(':')[3].match(/\w\d+-(\d+)?/)?.[1]) || undefined // again with the NaN to undefined.
 			});
 			default: throw new Error('Unimplemented groupby type: ' + type);
@@ -746,7 +746,7 @@ export function parseGroupBySettingsUI(groupby: string): GroupBySettingsUI {
 		field: g.type === 'metadata' ? g.field : '',
 		annotation: g.type === 'metadata' ? '' : g.annotation,
 		caseSensitive: g.caseSensitive,
-		end: g.type === 'annotation' ? g.end || 1 : 1,
+		end: g.type === 'annotation' ? g.end : 1,
 		groupname: g.type === 'capture' ? g.groupname : '',
 		position: g.type === 'annotation' ? g.position : undefined,
 		start: g.type === 'annotation' ? g.start : 1

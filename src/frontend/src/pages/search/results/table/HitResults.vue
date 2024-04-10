@@ -13,6 +13,7 @@
 			:query="results.summary.searchParam"
 			:mainAnnotation="mainAnnotation"
 			:otherAnnotations="shownAnnotationCols"
+			:detailedAnnotations="detailedAnnotations"
 			:metadata="shownMetadataCols"
 			:sortableAnnotations="sortableAnnotations"
 			:dir="textDirection"
@@ -155,14 +156,15 @@ export default Vue.extend({
 			.map(id => CorpusStore.get.allMetadataFieldsMap()[id]);
 		},
 		/** Get annotations to show in concordances, if not configured, returns all annotations shown in the main search form. */
-		shownConcordanceAnnotationRows(): AppTypes.NormalizedAnnotation[] {
+		detailedAnnotations(): AppTypes.NormalizedAnnotation[] {
 			let configuredIds = UIStore.getState().results.shared.detailedAnnotationIds;
-			if (!configuredIds || !configuredIds.length) {
+			if (!configuredIds?.length) {
 				configuredIds = CorpusStore.get.annotationGroups().flatMap(g => g.isRemainderGroup ? [] : g.entries)
 			}
 
 			const annots = CorpusStore.get.allAnnotationsMap();
 			const configuredAnnotations = configuredIds.map(id => annots[id]);
+			// annotations need a forward index to be able to show values (blacklab can't provide them otherwise)
 			return configuredAnnotations.filter(annot => annot.hasForwardIndex);
 		},
 		shownGlossCols(): string[]  {

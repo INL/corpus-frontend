@@ -96,7 +96,7 @@
 						:open="open[i]"
 						:query="query"
 						:mainAnnotation="mainAnnotation"
-						:otherAnnotations="otherAnnotations"
+						:detailedAnnotations="detailedAnnotations"
 						:dir="dir"
 						:html="html"
 					/>
@@ -134,11 +134,13 @@ export default Vue.extend({
 	},
 	props: {
 		query: Object as () => BLSearchParameters|undefined,
-		// what is the main text to show in the column
+		/** Annotation shown in the before/hit/after columns and expanded concordance */
 		mainAnnotation: Object as () => NormalizedAnnotation,
-		/** Optional */
+		/** Optional. Additional annotation columns to show (besides before/hit/after) */
 		otherAnnotations: Array as () => NormalizedAnnotation[]|undefined,
-		/** Optional */
+		/** Optional. Annotations shown in the expanded concordance.  */
+		detailedAnnotations: Array as () => NormalizedAnnotation[]|undefined,
+		/** Optional. Additional metadata columns to show. Normally nothing, but could show document id or something */
 		metadata: Array as () => NormalizedMetadataField[]|undefined,
 		/** Optional */
 		sortableAnnotations: Array as () => NormalizedAnnotation[]|undefined,

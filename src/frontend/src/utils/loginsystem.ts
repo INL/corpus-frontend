@@ -90,15 +90,15 @@ export async function awaitInit(settings: {
 		return user || null; // normalize weird void type to null.
 	} else if (settings.fallbackUsername) {
 		// username provided by some other mechanism
-		try {
-			const username = await settings.fallbackUsername();
-			if (username) {
-				loginButton.$props.username = username;
-				loginButton.$props.enabled = true;
-			}
-		} catch (e) {
-			console.error('Failed to get username from fallbackUsernameGetter', e);
-		}
+		// no user object, so we can just return 0 and do this async
+		settings
+		.fallbackUsername()
+		.then(username => {
+			loginButton.$props.username = username;
+			loginButton.$props.enabled = true;
+		})
+		.catch(e => console.error('Failed to get username from fallbackUsernameGetter', e));
+		return null;
 	}
 	return null;
 }

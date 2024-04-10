@@ -48,9 +48,9 @@ Installation
 
 ## Requirements
 
-- Java 1.8
+- Java 11 (Jdk up to 15 will work, 16+ might cause some reflection errors, we'll fix these once BlackLab migrates to `jakarta`)
 - A java servlet container such as [Apache Tomcat](https://tomcat.apache.org/).
-Use Tomcat 7 version `7.0.76` or newer or Tomcat 8 version `8.0.42` or newer. Using older versions will cause some [warnings from dependencies](https://bz.apache.org/bugzilla/show_bug.cgi?id=60688).
+Use Tomcat 7 version `7.0.76` or newer or Tomcat 8 version `8.0.42` or newer. Using older versions will cause some [warnings from dependencies](https://bz.apache.org/bugzilla/show_bug.cgi?id=60688). Tomcat `9` also works, `10` is **not supported** (due to the `javax`->`jakarta` migration). This will be fixed once `SOLR`, used by BlackLab migrates to `jakarta`. 
 - An instance of [BlackLab-Server](https://github.com/INL/BlackLab/).
 While we do our best to make the frontend work with older versions of BlackLab, use a matching version of BlackLab (so `corpus-frontend v2.0` with `blacklab-server v2.0`).
 

@@ -315,7 +315,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 			sampleMode: this.sampleMode,
 			sampleSeed: this.sampleSeed,
 			sampleSize: this.sampleSize,
-			wordsAroundHit: this.wordsAroundHit
+			context: this.context
 		};
 	}
 
@@ -541,8 +541,8 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	}
 
 	@memoize
-	private get wordsAroundHit(): number|null {
-		return this.getNumber('wordsaroundhit', null, v => v != null && v >= 0 && v <= 10 ? v : null);
+	private get context(): number|null {
+		return this.getNumber('context', null, v => v != null && v >= 0 && v <= 10 ? v : null);
 	}
 
 	@memoize

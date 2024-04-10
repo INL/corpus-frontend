@@ -312,15 +312,21 @@ export const blacklab = {
 		};
 	},
 
-	getSnippet: (indexId: string, docId: string, hitstart: number, hitend: number, wordsaroundhit: number|undefined = 50, context: string|undefined = undefined, requestParameters?: AxiosRequestConfig) => {
+	/**
+	 *
+	 * @param indexId
+	 * @param docId
+	 * @param hitstart
+	 * @param hitend
+	 * @param context either a number (n words before and after, or a "span" type relation (ui.search.shared.within.elements in the store))
+	 * @param requestParameters
+	 * @returns
+	 */
+	getSnippet: (indexId: string, docId: string, hitstart: number, hitend: number, context?: string|number, requestParameters?: AxiosRequestConfig) => {
 		// TODO check if the snippet is still weird.
 		return endpoints.blacklab.getOrPost<BLTypes.BLHitSnippetApi>(blacklabPaths.snippet(indexId, docId), {
 			hitstart,
 			hitend,
-			// when requesting 0, blacklab returns a differently shaped object (since 4), which causes issues.
-			// instead of {left, match, right}, we receive {snippet}
-			// this might have been a bug? should test again
-			wordsaroundhit: wordsaroundhit != null ? Math.max(1, wordsaroundhit) : undefined,
 			context
 		}, requestParameters)
 		.then<BLTypes.BLHit>(snippet => {

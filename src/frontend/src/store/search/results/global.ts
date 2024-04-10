@@ -18,7 +18,7 @@ type ExternalModuleRootState = {
 	sampleMode: 'percentage'|'count';
 	sampleSeed: number|null;
 	sampleSize: number|null;
-	wordsAroundHit: number|null;
+	context: number|string|null;
 };
 
 // We don't want to expose this internal state to the outside world
@@ -32,7 +32,7 @@ const initialState: ExternalModuleRootState = {
 	sampleMode: defaults.sampleMode,
 	sampleSeed: null,
 	sampleSize: null,
-	wordsAroundHit: null,
+	context: null,
 };
 
 const internalInitialState: ModuleRootState = {
@@ -84,7 +84,7 @@ const actions = {
 		}
 
 	}, 'samplesize'),
-	wordsAroundHit: b.commit((state, payload: number|null) => state.wordsAroundHit = payload, 'wordsaroundhit'),
+	context: b.commit((state, payload: number|string|null) => state.context = payload, 'context'),
 	resetGroupByOnSearch: b.commit((state, payload: boolean) => state.resetGroupByOnSearch = payload, 'resetGroupByOnSearch'),
 
 	reset: b.commit(state => Object.assign(state, internalInitialState), 'reset'),
@@ -94,7 +94,7 @@ const actions = {
 		actions.sampleMode(payload.sampleMode);
 		actions.sampleSeed(payload.sampleSeed);
 		actions.sampleSize(payload.sampleSize);
-		actions.wordsAroundHit(payload.wordsAroundHit);
+		actions.context(payload.context);
 	}, 'replace'),
 };
 

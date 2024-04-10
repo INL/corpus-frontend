@@ -1,5 +1,7 @@
 /** BlackLab query parameters. Is a stricter subset of query parameters blacklab accepts. */
 export type BLSearchParameters = {
+	/** Limit results to just this document */
+	docpid?: string;
 	/** Number of results to request */
 	number: number;
 	/** Index of first result to request */
@@ -10,8 +12,8 @@ export type BLSearchParameters = {
 	samplenum?: number;
 	/** Seed from which the samples are generated */
 	sampleseed?: number;
-	/** Context size, may be limited by blacklab */
-	wordsaroundhit?: number;
+	/** Context size, may be limited by blacklab. A number for words before and after the hit, or an inline element such as "s", "p", etc. Depending on corpus. See "inlineTags" in input format (*.blf.yaml), or available from getRelations in the api. */
+	context?: number|string;
 	/** How to filter results: a lucene query */
 	filter?: string;
 	/** How to sort results, comma-separated list of field:${someMetadataFieldId} or (wordleft|hit|wordright):${someAnnotationId} */

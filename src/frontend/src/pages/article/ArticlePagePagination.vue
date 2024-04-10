@@ -189,10 +189,10 @@ export default Vue.extend({
 			patt: query,
 			first: 0,
 			number: Math.pow(2, 31)-1,
-			wordsaroundhit: 0,
+			context: 0,
 			includetokencount: false,
 			listvalues: "__do_not_send_anything__", // we don't need this info
-		} as any).request
+		}).request
 		.then((r: BLHitResults) => r.hits.map(h => [h.start, h.end] as [number, number]))
 		.then(hits => {
 			// if specific hit passed from the previous page, find it in this page

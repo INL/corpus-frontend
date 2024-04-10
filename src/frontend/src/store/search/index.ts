@@ -98,7 +98,7 @@ const get = {
 
 			sort: activeView.sort != null ? activeView.sort : undefined,
 			viewgroup: activeView.viewGroup != null ? activeView.viewGroup : undefined,
-			wordsaroundhit: state.global.wordsAroundHit != null ? state.global.wordsAroundHit : undefined,
+			context: state.global.context != null ? state.global.context : undefined,
 			adjusthits: 'yes'
 		};
 	}, 'blacklabParameters')

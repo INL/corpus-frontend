@@ -54,9 +54,9 @@
 						</div>
 
 						<div class="form-group">
-							<label for="wordsAroundHit" class="col-xs-3">Context size:</label>
+							<label for="context" class="col-xs-3">Context size:</label>
 							<div class="col-xs-9">
-								<input id="wordsAroundHit" name="wordsAroundHit" placeholder="Context size" type="number" class="form-control" v-model.lazy="wordsAroundHit">
+								<input id="context" name="context" placeholder="Context size" type="number" class="form-control" v-model.lazy="context">
 							</div>
 						</div>
 					</div>
@@ -133,9 +133,12 @@ export default Vue.extend({
 				}
 			}
 		},
-		wordsAroundHit: {
-			get(): string { return this.itoa(GlobalViewSettings.getState().wordsAroundHit); },
-			set(v: string) { GlobalViewSettings.actions.wordsAroundHit(this.atoi(v)); }
+		context: {
+			// context can be a string or number in BlackLab, but for now in the form we only allow numbers.
+			// hence the atoi so BlackLab receives a number
+			// the .value interface of html input field only deals in strings...
+			get(): string { return GlobalViewSettings.getState().context + ''; },
+			set(v: string) { GlobalViewSettings.actions.context(this.atoi(v)); }
 		},
 	},
 	methods: {

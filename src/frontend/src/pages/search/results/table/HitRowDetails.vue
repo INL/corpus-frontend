@@ -158,7 +158,6 @@ export default Vue.extend({
 				this.data.doc.docPid,
 				this.data.hit.start,
 				this.data.hit.end,
-				undefined,
 				context
 			)
 			.then(r => this.sentenceSnippet = r)

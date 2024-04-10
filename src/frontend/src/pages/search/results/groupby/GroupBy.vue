@@ -234,7 +234,7 @@ export default Vue.extend({
 			return r;
 		},
 
-		contextsize(): number { return GlobalSearchSettingsStore.getState().wordsAroundHit ?? 5; },
+		contextsize(): number { return typeof GlobalSearchSettingsStore.getState().context === 'number' ? GlobalSearchSettingsStore.getState().context as number : 5; },
 		captures(): string[]|undefined {
 			// TODO update types for blacklab 4
 			// @ts-ignore

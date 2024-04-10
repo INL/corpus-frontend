@@ -1,6 +1,5 @@
 import { BLHit, BLHitSnippet, BLHitSnippetPart, BLRelationMatchList, BLRelationMatchRelation, BLRelationMatchSpan } from '@/types/blacklabtypes';
 import { CaptureAndRelation, HitContext, HitToken } from '@/types/apptypes';
-import { debugLog } from '@/utils/debug';
 
 
 type NormalizedCapture = {

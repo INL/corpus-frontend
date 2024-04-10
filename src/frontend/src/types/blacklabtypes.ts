@@ -451,17 +451,13 @@ export interface BLHitSnippetPart {
 	[key: string]: string[]; // Jesse: Need something for the captures here
 }
 
-/** Whatever BlackLab returns. There's a couple versions, we do some massaging in our blacklab api class/object to unify them. */
-export type BLHitSnippetApi = ({
+/** A subset of a BLHit, returned in document requests (/docs) when there are also hits. */
+export type BLHitSnippet = {
+	/** Omitted if snippet is at start of document */
 	left?: BLHitSnippetPart;
+	/** Omitted if snippet is at end of document */
 	right?: BLHitSnippetPart;
 	match: BLHitSnippetPart;
-}|{
-	snippet: BLHitSnippetPart;
-})&{
-	docPid: string;
-	start: number;
-	end: number;
 }
 
 /** When tagging part of the query like a:[] returns the start and end of the [] */
@@ -516,13 +512,10 @@ export interface BLRelationMatchList {
 // 	end: number;
 // }
 
-/** Contains all the AnnotatedField (previously token/word "properties") values for tokens in or around a hit */
-export interface BLHitSnippet {
-	left?: BLHitSnippetPart;
-	match: BLHitSnippetPart;
-	right?: BLHitSnippetPart;
-	// DEPRECATED: use matchInfos instead
-	// captureGroups?: BLCaptureGroup[];
+export type BLHit = BLHitSnippet&{
+	docPid: string;
+	start: number;
+	end: number;
 	/**
 	 * Contains the relevant info about <br>
 	 * A) capture groups: tokens with a label in the query, such as a:[pos="..."] would result in {a: {start: x, end: y, type: 'span'}})
@@ -541,15 +534,9 @@ export interface BLHitSnippet {
 	 *  }
 	 */
 	matchInfos?: {
-		captured_rels?: BLRelationMatchList;
+		context_rels?: BLRelationMatchList;
 	}&Record<string, BLRelationMatchSpan|BLRelationMatchRelation|BLRelationMatchTag>
-}
-
-export type BLHit = {
-	docPid: string;
-	start: number;
-	end: number;
-} & BLHitSnippet;
+};
 
 /** Contains occurance counts of terms in the index */
 export interface BLTermOccurances {

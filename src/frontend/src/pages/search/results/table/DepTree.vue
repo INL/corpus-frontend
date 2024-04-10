@@ -1,16 +1,5 @@
 <template>
 	<div>
-		<!-- Debug whatever we computed -->
-		<!-- <pre>{{ {sentenceLength: sensibleArray.length, relationInfo, relations: hit?.matchInfos?.captured_rels?.infos} }}</pre> -->
-
-		<!-- Table to debug the connlu string. -->
-		<!-- <div v-if="connlu" style="max-width: 1000px; overflow: auto;">
-			<table style="width: 100%; table-layout: fixed;">
-				<tr v-for="row in connlu.split('\n')">
-					<td style="white-space: nowrap; border: 1px solid #ccc; text-overflow: ellipsis; overflow: hidden;" :title="cell" v-for="cell in row.split('\t')">{{ cell }}</td>
-				</tr>
-			</table>
-		</div> -->
 		<button type="button" class="btn btn-default" @click="$emit('loadSentence')" v-if="!fullSentence && connlu">
 			<template v-if="!loadingFullSentence">Load complete sentence</template>
 			<template v-else><Spinner inline/> Loading...</template>
@@ -92,6 +81,7 @@ export default Vue.extend({
 		data: Object as () => HitRowData,
 		fullSentence: Object as () => BLHit|undefined,
 		loadingFullSentence: Boolean,
+		canLoadFullSentence: Boolean,
 
 		// TODO
 		dir: String as () => 'ltr'|'rtl',

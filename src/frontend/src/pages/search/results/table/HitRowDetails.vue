@@ -189,7 +189,12 @@ export default Vue.extend({
 				.getSnippet(INDEX_ID, this.data.doc.docPid, this.data.hit.start, this.data.hit.end, concordanceSize)
 				.then(s => {
 					transformSnippets?.(s);
-					this.context = snippetParts({matchInfos: this.data.hit.matchInfos, ...s}, this.mainAnnotation.id, this.dir);
+					this.context = snippetParts({
+						// matchInfos not included in document search results. If we're expanding one of those context,
+						// @ts-ignore
+						matchInfos: s.matchInfos || this.data.hit.matchInfos,
+						...s
+					}, this.mainAnnotation.id, this.dir);
 					this.snippet = s;
 
 					// Run plugins defined for this corpus (ex. a copy citation to clipboard button, or an audio player/text to speech button)

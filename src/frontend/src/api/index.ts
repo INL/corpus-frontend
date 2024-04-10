@@ -324,27 +324,15 @@ export const blacklab = {
 	 */
 	getSnippet: (indexId: string, docId: string, hitstart: number, hitend: number, context?: string|number, requestParameters?: AxiosRequestConfig) => {
 		// TODO check if the snippet is still weird.
-		return endpoints.blacklab.getOrPost<BLTypes.BLHitSnippetApi>(blacklabPaths.snippet(indexId, docId), {
+		return endpoints.blacklab.getOrPost<BLTypes.BLHit>(blacklabPaths.snippet(indexId, docId), {
 			hitstart,
 			hitend,
 			context
 		}, requestParameters)
-		.then<BLTypes.BLHit>(snippet => {
-			const match = 'match' in snippet ? snippet.match : snippet.snippet;
-			const leftPlaceholder: BLTypes.BLHitSnippetPart = Object.entries(match).reduce<BLTypes.BLHitSnippetPart>((acc, [key, value]) => {
-				acc[key] = [];
-				return acc;
-			}, {punct: []});
-			const rightPlaceholder = {...leftPlaceholder};
-
-			return {
-				left: 'left' in snippet ? snippet.left! : leftPlaceholder,
-				match,
-				right: 'right' in snippet ? snippet.right! : rightPlaceholder,
-				docPid: snippet.docPid,
-				start: snippet.start,
-				end: snippet.end
-			}
+		.then<BLTypes.BLHit>(r => {
+			if (!r.left) r.left = Object.entries(r.match).reduce((acc, [key, value]) => { acc[key] = []; return acc; }, {} as BLTypes.BLHitSnippetPart);
+			if (!r.right) r.right = Object.entries(r.match).reduce((acc, [key, value]) => { acc[key] = []; return acc; }, {} as BLTypes.BLHitSnippetPart);
+			return r;
 		});
 	},
 

@@ -68,11 +68,11 @@ import { NormalizedFormat, Option } from '@/types/apptypes';
 import * as Api from '@/api';
 
 import SelectPicker from '@/components/SelectPicker.vue'
-import * as monaco from 'monaco-editor';
+import type * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import { Options } from '@/components/SelectPicker.vue';
 
 export default Vue.extend({
-    components: {
+	components: {
 		Modal,
 		SelectPicker,
 		// this causes the monaco editor to become its own js bundle, nice, since it's literally bigger than all of our other code combined

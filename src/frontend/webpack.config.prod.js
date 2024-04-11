@@ -3,7 +3,6 @@ const webpack = require('webpack');
 const {VueLoaderPlugin} = require('vue-loader');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const CleanWebpackPlugin = require('clean-webpack-plugin');
-const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 module.exports = {
 	entry: {
@@ -112,15 +111,6 @@ module.exports = {
 		new CleanWebpackPlugin(['dist'], {
 			verbose: false,
 		}),
-		new MonacoWebpackPlugin({
-			customLanguages: [{
-				worker: {
-					id: 'yaml',
-					entry: path.resolve(__dirname, 'node_modules/monaco-yaml/yaml.worker.js')
-				}
-			}],
-			languages: ['yaml', 'json'],
-		})
 	],
 	devtool: 'source-map',
 	// Sometimes we get false-positive errors when importing a typescript type definition from a file which itself imported it from a third file

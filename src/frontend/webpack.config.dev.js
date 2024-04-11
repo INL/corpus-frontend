@@ -2,8 +2,8 @@ const path = require('path');
 const webpack = require('webpack');
 const {VueLoaderPlugin} = require('vue-loader');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
-const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 const CircularDependencyPlugin = require('circular-dependency-plugin');
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 module.exports = {
 	entry: {
@@ -108,6 +108,8 @@ module.exports = {
 		}]
 	},
 	plugins: [
+		new BundleAnalyzerPlugin(),
+
 		// ProvidePlugin makes modules globally available under certain symbols, for both our own files as well as our imported dependencies.
 		// This is unfortunately required to allow dependencies to augment other dependencies (such as jquery-ui and bootstrap augmenting jquery)
 		// which requires the same instance of jquery to be visible to both the jquery-ui module as our own files
@@ -145,14 +147,6 @@ module.exports = {
 			//   console.log('end detecting webpack modules cycles');
 			// },
 		}),
-		new MonacoWebpackPlugin({
-			customLanguages: [{
-				worker: {
-					id: 'yaml',
-					entry: path.resolve(__dirname, 'node_modules/monaco-yaml/yaml.worker.js')
-				}
-			}]
-		})
 	],
 	devtool: 'eval-source-map',
 	// Sometimes we get false-positive errors when importing a typescript type definition from a file which itself imported it from a third file

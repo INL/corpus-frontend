@@ -26,7 +26,6 @@
 <script lang="ts">
 import { mapReduce } from '@/utils';
 import cloneDeep from 'clone-deep';
-import { isObject } from 'highcharts';
 import Vue from 'vue';
 
 import {StepState} from './POS.vue';
@@ -61,7 +60,7 @@ export const step = Vue.extend({
 			if (!this.displayNamesImport) return undefined;
 			try {
 				const t = JSON.parse(this.displayNamesImport);
-				if (isObject(t, true) && Object.values(t).every(v => typeof v === 'string')) return t;
+				if (typeof t === 'object' && t != null && Object.values(t).every(v => typeof v === 'string')) return t;
 			} catch {
 				return undefined;
 			}
@@ -74,7 +73,7 @@ export const step = Vue.extend({
 		importDisplayNames() {
 			Object
 				.entries(this.value.step4)
-				.forEach(([k, valuesForAnnotation]) => 
+				.forEach(([k, valuesForAnnotation]) =>
 					Object
 						.keys(valuesForAnnotation)
 						.forEach(value => {

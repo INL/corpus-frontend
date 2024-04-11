@@ -82,7 +82,7 @@ const get = {
 		if (!state.form) { return undefined; }
 		if (state.form !== 'explore') {
 			if (state.subForm === 'simple') {
-				//return 'de_1871';
+				return (state as ModuleRootStateSearch<'simple'>).formState.parallelVersion || undefined;
 			}
 		}
 		return CorpusModule.get.mainAnnotatedField();

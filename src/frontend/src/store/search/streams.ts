@@ -251,6 +251,10 @@ url$.pipe(
 		const {query, views, global} = v.state;
 		// Store only those parts actively in use (so don't store the hits tab info when currently viewing docs for example)
 		// the rest is set to defaults so the rest of the page nicely clears if this entry is loaded later.
+
+		// JN hier gebleven, ergens verdwijnt field uit de URL
+		// debugger;
+
 		const entry: HistoryStore.HistoryEntry = {
 			filters: query.filters || {},
 			global,

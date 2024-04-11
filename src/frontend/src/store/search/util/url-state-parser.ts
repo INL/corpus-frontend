@@ -445,7 +445,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 		// Simple view is just a single annotation without any within query or filters
 		// NOTE: do not use extendedPattern, as the annotation used for simple may not be available for extended searching!
 		return {
-			parallelVersion: undefined, //TODO
+			parallelVersion: this.getString('field'),
 			annotationValue: this.annotationValues[CorpusModule.get.firstMainAnnotation().id] || {}
 		};
 	}

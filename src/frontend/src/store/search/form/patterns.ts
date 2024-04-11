@@ -16,7 +16,7 @@ import { AnnotationValue } from '@/types/apptypes';
 
 type ModuleRootState = {
 	simple: {
-		parallelVersion?: string,
+		parallelVersion: string|null,
 		annotationValue: AnnotationValue
 	},
 	extended: {
@@ -40,7 +40,7 @@ type ModuleRootState = {
 // Finally: the values initialized from the page's url on first load.
 const defaults: ModuleRootState = {
 	simple: {
-		parallelVersion: undefined,
+		parallelVersion: null,
 		annotationValue: {case: false, id: '', value: '', type: 'text'}
 	},
 	extended: {
@@ -75,7 +75,7 @@ const privateActions = {
 	// initFilter: b.commit((state, payload: FilterValue) => Vue.set(state.filters, payload.id, payload), 'filter_init'),
 	// NOTE when re-integrating annotatedFieldId this needs to be updated to account.
 	initExtendedAnnotation: b.commit((state, payload: AnnotationValue) => Vue.set(state.extended.annotationValues, payload.id, payload), 'annotation_init_extended'),
-	initSimpleAnnotation: b.commit((state, payload: AnnotationValue) => Object.assign(state.simple.annotationValue, payload), 'annotation_init_simple')
+	initSimpleAnnotation: b.commit((state, payload: ModuleRootState['simple']) => Object.assign<ModuleRootState['simple'], ModuleRootState['simple']>(state.simple, payload), 'annotation_init_simple')
 };
 
 const actions = {
@@ -83,11 +83,12 @@ const actions = {
 		annotation: b.commit((state, {id, type, ...safeValues}: Partial<AnnotationValue>&{id: string}) => {
 			// Never overwrite annotatedFieldId or type, even when they're submitted through here.
 			Object.assign(state.simple.annotationValue, safeValues);
-		}, 'simple'),
+		}, 'simple_annotation'),
+		parallelVersion: b.commit((state, payload: string) => state.simple.parallelVersion = payload, 'simple_parallel_version'),
 		reset: b.commit(state => {
 			state.simple.annotationValue.value = '';
 			state.simple.annotationValue.case = false;
-			state.simple.parallelVersion = undefined;
+			state.simple.parallelVersion = null;
 		}, 'simple_reset'),
 	},
 	extended: {
@@ -147,10 +148,13 @@ const init = () => {
 		})
 	);
 	privateActions.initSimpleAnnotation({
-		id: CorpusStore.get.firstMainAnnotation().id,
-		value: '',
-		case: false,
-		type: CorpusStore.get.firstMainAnnotation().uiType,
+		parallelVersion: CorpusStore.get.parallelFieldVersions()[0],
+		annotationValue: {
+			id: CorpusStore.get.firstMainAnnotation().id,
+			value: '',
+			case: false,
+			type: CorpusStore.get.firstMainAnnotation().uiType,
+		}
 	});
 	debugLog('Finished initializing pattern module state shape');
 };

@@ -14,13 +14,14 @@
 				<!-- TODO render the full annotation instance? requires some changes to bind to store correctly and apply appropriate classes though -->
 				<div class="form-group form-group-lg">
 
-          <!-- Is this a parallel corpus? -->
-          <div v-if="isParallelCorpus">
-            <label class="control-label">Search version:</label>
-            <div>
-              <SelectPicker :options="parallelVersionOptions" :value="parallelDefaultSourceVersion" data-menu-width="grow" hideEmpty/>
-            </div>
-          </div>
+					<!-- Is this a parallel corpus? -->
+					<div v-if="isParallelCorpus">
+						<label class="control-label">Search version:</label>
+						<div>
+						<SelectPicker :options="parallelVersionOptions"
+								v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
+						</div>
+					</div>
 
 					<label class="control-label"
 						:for="firstMainAnnotation.id + '_' + uid"
@@ -202,16 +203,21 @@ export default Vue.extend({
 		subscriptions: [] as Array<() => void>
 	}),
 	computed: {
-    // Is this a parallel corpus?
-    isParallelCorpus: CorpusStore.get.isParallelCorpus,
+		// Is this a parallel corpus?
+		isParallelCorpus: CorpusStore.get.isParallelCorpus,
 
-    // What parallel versions are there (e.g. "en", "nl", etc.)
-    parallelVersionOptions: (): Option[] =>
-      	CorpusStore.get.parallelFieldVersions().map(value => ({value, label: `Version ${value}`})),
+		// What parallel versions are there (e.g. "en", "nl", etc.)
+		parallelVersionOptions: (): Option[] =>
+			CorpusStore.get.parallelFieldVersions().map(value => ({value, label: `Version ${value}`})),
 
-    // Which parallel source version should be selected initially?
-    // (the first one found)
-    parallelDefaultSourceVersion: (): string => CorpusStore.get.parallelFieldVersions()[0],
+		// Which parallel source version should be selected initially?
+		// (the first one found)
+		parallelDefaultSourceVersion: (): string => CorpusStore.get.parallelFieldVersions()[0],
+
+		parallelSourceVersion: {
+			get(): string|null { return PatternStore.get.simple().parallelVersion; },
+			set: PatternStore.actions.simple.parallelVersion
+		},
 
 		activePattern: {
 			get(): string { return InterfaceStore.getState().patternMode; },

@@ -106,7 +106,6 @@
 </ul>
 </div>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.37.0/codemirror.min.css" integrity="sha256-I8NyGs4wjbMuBSUE40o55W6k6P7tu/7G28/JGUUYCIs=" crossorigin="anonymous" />
 <link rel="stylesheet" href="$CF_URL_ON_CLIENT/css/corpora.css?_$cache" >
 
 <script src="$JSPATH/corpora.js?_$cache"></script>

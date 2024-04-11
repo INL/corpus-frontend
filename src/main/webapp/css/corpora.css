@@ -67,10 +67,6 @@ table.corpora a.disabled {
     margin-top: 1em;
 }
 
-.CodeMirror {
-	height: 500px;
-}
-
 /* upload modal */
 #document-upload-form {
 	display: flex;

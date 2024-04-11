@@ -49,7 +49,7 @@
 			<MonacoEditor style="flex-grow: 1"
 				:options="editorOptions"
 				:language="formatLanguage"
-				:filename="formatName"
+				:filename="fullFormatName"
 				v-model="formatContents"
 				@input="dirty = true"
 			/>

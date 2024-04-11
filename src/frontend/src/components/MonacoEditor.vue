@@ -41,17 +41,17 @@ window.MonacoEnvironment = {
 		switch (label) {
 		case 'editorWorkerService':
 			return new Worker(new URL('monaco-editor/esm/vs/editor/editor.worker', import.meta.url))
-		case 'css':
-		case 'less':
-		case 'scss':
-			return new Worker(new URL('monaco-editor/esm/vs/language/css/css.worker', import.meta.url))
-		case 'handlebars':
-		case 'html':
-		case 'razor':
-			return new Worker(new URL('monaco-editor/esm/vs/language/html/html.worker', import.meta.url))
-		case 'javascript':
-		case 'typescript':
-			return new Worker(new URL('monaco-editor/esm/vs/language/typescript/ts.worker', import.meta.url))
+//		case 'css':
+//		case 'less':
+//		case 'scss':
+//			return new Worker(new URL('monaco-editor/esm/vs/language/css/css.worker', import.meta.url))
+//		case 'handlebars':
+//		case 'html':
+//		case 'razor':
+//			return new Worker(new URL('monaco-editor/esm/vs/language/html/html.worker', import.meta.url))
+//		case 'javascript':
+//		case 'typescript':
+//			return new Worker(new URL('monaco-editor/esm/vs/language/typescript/ts.worker', import.meta.url))
 		case 'json':
 			return new Worker(new URL('monaco-editor/esm/vs/language/json/json.worker', import.meta.url))
 		case 'yaml':
@@ -85,7 +85,10 @@ export default Vue.extend({
 		createOrUpdateEditor(contents: string, name: string, language: string) {
 			const newUri = monaco.Uri.file(name);
 			let newModel = monaco.editor.getModels().find(m => m.uri.path === newUri.path);
-			if (newModel) newModel.setValue(contents);
+			if (newModel) {
+				newModel.setValue(contents);
+				monaco.editor.setModelLanguage(newModel, language);
+			}
 			else newModel = monaco.editor.createModel(contents, language, newUri);
 
 			if (this.editor)

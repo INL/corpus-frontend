@@ -117,7 +117,6 @@ module.exports = {
 			'window.jQuery':    'jquery',
 			'jQuery':           'jquery',
 			'$':                'jquery',
-			'CodeMirror':       'codemirror',
 		}),
 
 		new ForkTsCheckerWebpackPlugin({

@@ -15,7 +15,8 @@
 **/.apt_generated/
 **/.apt_generated_tests/
 
-.git
+# don't ignore git, or we can't get the commit id/hash etc to put in the application.
+#.git
 
 # vi temporary files
 **/*.swp
@@ -28,3 +29,7 @@
 **/*.dockerfile
 **/.dockerignore
 **/docker-compose*.yml
+
+# node_modules
+src/frontend/node_modules
+src/frontend/node

@@ -23,6 +23,38 @@ const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, {corpu
 const getState = b.state();
 
 const get = {
+
+	allAnnotatedFields: b.read((state): NormalizedAnnotatedField[] =>
+		Object.values(state.corpus?.annotatedFields ?? {}), 'allAnnotatedFields'),
+
+	allAnnotatedFieldsMap: b.read((state): MapOf<NormalizedAnnotatedField> =>
+		state.corpus?.annotatedFields ?? {}, 'allAnnotatedFieldsMap'),
+
+	mainAnnotatedField: b.read((state): string =>
+		state.corpus?.mainAnnotatedField || 'contents', 'mainAnnotatedField'),
+
+	isParallelCorpus: b.read((state): boolean =>
+		get.allAnnotatedFields().some( f => f.id.indexOf('__') > 0), 'isParallelCorpus'),
+ 
+	parallelFieldPrefix: b.read((state): string => {
+		for (const f of get.allAnnotatedFields()) {
+			let index = f.id.indexOf('__');
+			if (index > 0) {
+				// Note that we don't support multiple parallel fields in one corpus,
+				// so we just return the first parallel prefix we find.
+				return f.id.substring(0, index);
+			}
+		}
+		return '';
+	}, 'parallelFieldPrefix'),
+
+	parallelFieldVersions: b.read((state): string[] => {
+		const prefix = get.parallelFieldPrefix() + '__';
+		return get.allAnnotatedFields()
+			.filter(f => f.id.startsWith(prefix))
+			.map(f => f.id.substring(prefix.length));
+	}, 'parallelFieldVersions'),
+
 	/** All annotations, without duplicates and in no specific order */
 	allAnnotations: b.read((state): NormalizedAnnotation[] => Object.values(state.corpus?.annotatedFields[state.corpus.mainAnnotatedField].annotations ?? {}), 'allAnnotations'),
 	allAnnotationsMap: b.read((state): MapOf<NormalizedAnnotation> => mapReduce(get.allAnnotations(), 'id'), 'allAnnotationsMap'),

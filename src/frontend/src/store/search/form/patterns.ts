@@ -15,7 +15,10 @@ import { debugLog } from '@/utils/debug';
 import { AnnotationValue } from '@/types/apptypes';
 
 type ModuleRootState = {
-	simple: AnnotationValue;
+	simple: {
+		parallelVersion?: string,
+		annotationValue: AnnotationValue
+	},
 	extended: {
 		annotationValues: {
 			// [annotatedFieldId: string]: {
@@ -36,7 +39,10 @@ type ModuleRootState = {
 // Then: the basic state shape with the appropriate annotation and filters created
 // Finally: the values initialized from the page's url on first load.
 const defaults: ModuleRootState = {
-	simple: {case: false, id: '', value: '', type: 'text'},
+	simple: {
+		parallelVersion: undefined,
+		annotationValue: {case: false, id: '', value: '', type: 'text'}
+	},
 	extended: {
 		annotationValues: {},
 		within: null,
@@ -69,14 +75,21 @@ const privateActions = {
 	// initFilter: b.commit((state, payload: FilterValue) => Vue.set(state.filters, payload.id, payload), 'filter_init'),
 	// NOTE when re-integrating annotatedFieldId this needs to be updated to account.
 	initExtendedAnnotation: b.commit((state, payload: AnnotationValue) => Vue.set(state.extended.annotationValues, payload.id, payload), 'annotation_init_extended'),
-	initSimpleAnnotation: b.commit((state, payload: AnnotationValue) => Object.assign(state.simple, payload), 'annotation_init_simple')
+	initSimpleAnnotation: b.commit((state, payload: AnnotationValue) => Object.assign(state.simple.annotationValue, payload), 'annotation_init_simple')
 };
 
 const actions = {
-	simple: b.commit((state, {id, type, ...safeValues}: Partial<AnnotationValue>&{id: string}) => {
-		// Never overwrite annotatedFieldId or type, even when they're submitted through here.
-		Object.assign(state.simple, safeValues);
-	}, 'simple'),
+	simple: {
+		annotation: b.commit((state, {id, type, ...safeValues}: Partial<AnnotationValue>&{id: string}) => {
+			// Never overwrite annotatedFieldId or type, even when they're submitted through here.
+			Object.assign(state.simple.annotationValue, safeValues);
+		}, 'simple'),
+		reset: b.commit(state => {
+			state.simple.annotationValue.value = '';
+			state.simple.annotationValue.case = false;
+			state.simple.parallelVersion = undefined;
+		}, 'simple_reset'),
+	},
 	extended: {
 		annotation: b.commit((state, {id, type, ...safeValues}: Partial<AnnotationValue>&{id: string}) => {
 			// Never overwrite annotatedFieldId or type, even when they're submitted through here.
@@ -99,8 +112,8 @@ const actions = {
 	expert: b.commit((state, payload: string|null) => state.expert = payload, 'expert'),
 
 	reset: b.commit(state => {
-		state.simple.value = '';
-		state.simple.case = false;
+		state.simple.annotationValue.value = '';
+		state.simple.annotationValue.case = false;
 		actions.extended.reset();
 		state.advanced = null;
 		state.expert = null;
@@ -109,7 +122,9 @@ const actions = {
 	}, 'reset'),
 
 	replace: b.commit((state, payload: ModuleRootState) => {
-		actions.simple(payload.simple);
+		actions.simple.reset();
+		actions.simple.annotation(payload.simple.annotationValue);
+
 		actions.advanced(payload.advanced);
 		actions.concept(payload.concept);
 		actions.glosses(payload.glosses);

@@ -207,7 +207,7 @@ export default Vue.extend({
 
     // What parallel versions are there (e.g. "en", "nl", etc.)
     parallelVersionOptions: (): Option[] =>
-      CorpusStore.get.parallelFieldVersions().map(value => ({value, label: `Version ${value}`})),
+      	CorpusStore.get.parallelFieldVersions().map(value => ({value, label: `Version ${value}`})),
 
     // Which parallel source version should be selected initially?
     // (the first one found)
@@ -249,8 +249,8 @@ export default Vue.extend({
 			set: PatternStore.actions.extended.splitBatch
 		},
 		simple: {
-			get(): AppTypes.AnnotationValue { return PatternStore.getState().simple; },
-			set: PatternStore.actions.simple,
+			get(): AppTypes.AnnotationValue { return PatternStore.getState().simple.annotationValue; },
+			set: PatternStore.actions.simple.annotation,
 		},
 		advancedEnabled(): boolean { return UIStore.getState().search.advanced.enabled; },
 		glossEnabled(): boolean { return GlossStore.get.settings() != null; },
@@ -351,7 +351,7 @@ export default Vue.extend({
 			const isSimpleAnnotation = div.hasAttribute('data-is-simple');
 
 			const config = CorpusStore.get.allAnnotationsMap()[annotId];
-			const value = isSimpleAnnotation ? PatternStore.getState().simple : PatternStore.getState().extended.annotationValues[annotId];
+			const value = isSimpleAnnotation ? PatternStore.getState().simple.annotationValue : PatternStore.getState().extended.annotationValues[annotId];
 
 			const {render, update} = plugin;
 			const ui = render(config, value, Vue);

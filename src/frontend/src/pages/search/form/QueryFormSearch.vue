@@ -13,6 +13,15 @@
 			<div :class="['tab-pane form-horizontal', {'active': activePattern==='simple'}]" id="simple">
 				<!-- TODO render the full annotation instance? requires some changes to bind to store correctly and apply appropriate classes though -->
 				<div class="form-group form-group-lg">
+
+          <!-- Is this a parallel corpus? -->
+          <div v-if="isParallelCorpus">
+            <label class="control-label">Search version:</label>
+            <div>
+              <SelectPicker :options="parallelVersionOptions" :value="parallelDefaultSourceVersion" data-menu-width="grow" hideEmpty/>
+            </div>
+          </div>
+
 					<label class="control-label"
 						:for="firstMainAnnotation.id + '_' + uid"
 						:title="firstMainAnnotation.description || undefined"
@@ -173,7 +182,7 @@ import { QueryBuilder } from '@/modules/cql_querybuilder';
 import { blacklabPaths } from '@/api';
 import * as AppTypes from '@/types/apptypes';
 import { getAnnotationSubset } from '@/utils';
-import { Option } from '@/components/SelectPicker.vue';
+import SelectPicker, { Option } from '@/components/SelectPicker.vue';
 
 function isVue(v: any): v is Vue { return v instanceof Vue; }
 function isJQuery(v: any): v is JQuery { return typeof v !== 'boolean' && v && v.jquery; }
@@ -181,6 +190,7 @@ function isJQuery(v: any): v is JQuery { return typeof v !== 'boolean' && v && v
 export default Vue.extend({
 	mixins: [uid] as any,
 	components: {
+    SelectPicker,
 		Annotation,
 		ConceptSearch,
 		GlossSearch
@@ -192,6 +202,17 @@ export default Vue.extend({
 		subscriptions: [] as Array<() => void>
 	}),
 	computed: {
+    // Is this a parallel corpus?
+    isParallelCorpus: CorpusStore.get.isParallelCorpus,
+
+    // What parallel versions are there (e.g. "en", "nl", etc.)
+    parallelVersionOptions: (): Option[] =>
+      CorpusStore.get.parallelFieldVersions().map(value => ({value, label: `Version ${value}`})),
+
+    // Which parallel source version should be selected initially?
+    // (the first one found)
+    parallelDefaultSourceVersion: (): string => CorpusStore.get.parallelFieldVersions()[0],
+
 		activePattern: {
 			get(): string { return InterfaceStore.getState().patternMode; },
 			set: InterfaceStore.actions.patternMode,

@@ -78,6 +78,15 @@ const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, Object
 const getState = b.state();
 
 const get = {
+	annotatedFieldName: b.read((state): string|undefined => {
+		if (!state.form) { return undefined; }
+		if (state.form !== 'explore') {
+			if (state.subForm === 'simple') {
+				//return 'de_1871';
+			}
+		}
+		return CorpusModule.get.mainAnnotatedField();
+	}, 'annotatedFieldName'),
 	patternString: b.read((state): string|undefined =>
 		state.form === 'search' ? getPatternStringSearch(state.subForm, {[state.subForm]: state.formState} as any /** egh, feel free to refactor */, CorpusModule.get.allAnnotationsMap()) :
 		state.form === 'explore' ? getPatternStringExplore(state.subForm, {[state.subForm]: state.formState} as any /** egh, feel free to refactor */, CorpusModule.get.allAnnotationsMap()) :

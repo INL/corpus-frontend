@@ -5,7 +5,7 @@ export type BLSearchParameters = {
 	/** Number of results to request */
 	number: number;
 	/** Index of first result to request */
-	first: number;
+	first?: number;
 	/** Percentage of results to return (0-100), mutually exclusive with 'samplenum' */
 	sample?: number;
 	/** Sample up to a flat number of results from the total result set, mutually exclusive with 'sample' */
@@ -18,6 +18,8 @@ export type BLSearchParameters = {
 	filter?: string;
 	/** How to sort results, comma-separated list of field:${someMetadataFieldId} or (wordleft|hit|wordright):${someAnnotationId} */
 	group?: string;
+	/** Annotated field to search (defaults to main annotated field) */
+	field?: string;
 	/** CQL query */
 	patt?: string;
 	/**

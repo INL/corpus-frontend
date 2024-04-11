@@ -24,18 +24,24 @@ const getState = b.state();
 
 const get = {
 
+	/** List of annotated fields */
 	allAnnotatedFields: b.read((state): NormalizedAnnotatedField[] =>
 		Object.values(state.corpus?.annotatedFields ?? {}), 'allAnnotatedFields'),
 
+	/** Map of annotated fields */
 	allAnnotatedFieldsMap: b.read((state): MapOf<NormalizedAnnotatedField> =>
 		state.corpus?.annotatedFields ?? {}, 'allAnnotatedFieldsMap'),
 
+	/** Main annotated field name */
 	mainAnnotatedField: b.read((state): string =>
 		state.corpus?.mainAnnotatedField || 'contents', 'mainAnnotatedField'),
 
+	/** Is this a parallel corpus? */
 	isParallelCorpus: b.read((state): boolean =>
 		get.allAnnotatedFields().some( f => f.id.indexOf('__') > 0), 'isParallelCorpus'),
- 
+
+	/** If this is a parallel corpus, what's the parallel field prefix?
+	 *  (e.g. "contents" if there's fields "contents__en" and "contents__nl") */
 	parallelFieldPrefix: b.read((state): string => {
 		for (const f of get.allAnnotatedFields()) {
 			let index = f.id.indexOf('__');
@@ -48,6 +54,8 @@ const get = {
 		return '';
 	}, 'parallelFieldPrefix'),
 
+	/** If this is a parallel corpus, what parallel versions does it contain?
+	 *  (e.g. ["en", "nl"] if there's fields "contents__en" and "contents__nl") */
 	parallelFieldVersions: b.read((state): string[] => {
 		const prefix = get.parallelFieldPrefix() + '__';
 		return get.allAnnotatedFields()

@@ -20,12 +20,14 @@ export function debugLog(...args: any[]) {
 }
 
 /** Enable/disable categories of debug messages here */
-const SHOW_CATEGORIES = ['history'];
+const SHOW_CATEGORIES = ['history', 'parallel'];
 
 /** A debug message in a category that we may want to show or not */
 export function debugLogCat(category: string, message: string) {
-	if (category in SHOW_CATEGORIES) {
+	if (SHOW_CATEGORIES.indexOf(category) >= 0 || SHOW_CATEGORIES.indexOf('*') >= 0) {
 		debugLog(`[${category}] ${message}`);
+	} else {
+		debugLog(`HIDDEN: [${category}] ${message}`)
 	}
 }
 

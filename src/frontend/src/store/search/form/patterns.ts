@@ -10,7 +10,7 @@ import cloneDeep from 'clone-deep';
 import { RootState } from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus';
 
-import { debugLog } from '@/utils/debug';
+import { debugLog, debugLogCat } from '@/utils/debug';
 
 import { AnnotationValue } from '@/types/apptypes';
 
@@ -86,12 +86,22 @@ const actions = {
 			// Never overwrite annotatedFieldId or type, even when they're submitted through here.
 			Object.assign(state.simple.annotationValue, safeValues);
 		}, 'simple_annotation'),
-		parallelVersion: b.commit((state, payload: string|null) => state.simple.parallelVersion = payload, 
-			'simple_parallel_version'),
+		parallelVersion: b.commit((state, payload: string|null) => {
+			debugLogCat('parallel', `simple.parallelVersion: Setting to ${payload}`);
+			console.trace();
+			
+			// JN DEBUGGER STATEMENT DOESN'T WORK HERE, WHY?
+			//eslint-disable-next-line
+			//debugger;
+
+			return (state.simple.parallelVersion = payload);
+		}, 'simple_parallel_version'),
 		reset: b.commit(state => {
 			state.simple.annotationValue.value = '';
 			state.simple.annotationValue.case = false;
-			state.simple.parallelVersion = null;
+			const parVersion = CorpusStore.get.parallelFieldVersions()[0];
+			debugLogCat('parallel', `simple.reset: Selecting default version ${parVersion}`);
+			state.simple.parallelVersion = parVersion;
 		}, 'simple_reset'),
 	},
 	extended: {
@@ -116,9 +126,7 @@ const actions = {
 	expert: b.commit((state, payload: string|null) => state.expert = payload, 'expert'),
 
 	reset: b.commit(state => {
-		state.simple.annotationValue.value = '';
-		state.simple.annotationValue.case = false;
-		state.simple.parallelVersion = null;
+		actions.simple.reset();
 		actions.extended.reset();
 		state.advanced = null;
 		state.expert = null;
@@ -152,8 +160,10 @@ const init = () => {
 			type: uiType
 		})
 	);
+	const defaultParallelVersion = CorpusStore.get.parallelFieldVersions()[0];
+	debugLogCat('parallel', `init: Set default parallel version: ${defaultParallelVersion}`);
 	privateActions.initSimpleAnnotation({
-		parallelVersion: CorpusStore.get.parallelFieldVersions()[0],
+		parallelVersion: defaultParallelVersion,
 		annotationValue: {
 			id: CorpusStore.get.firstMainAnnotation().id,
 			value: '',

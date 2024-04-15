@@ -18,8 +18,9 @@ module.exports = {
 		filename: '[name].js',
 		// Path on disk for output file
 		path: path.resolve(__dirname, 'dist'),
-		// Path in webpack-dev-server for compiled files (has priority over disk files in case both exist)
-		publicPath: '/dist/',
+		// Have bundle paths be relative to the root of the website (e.g. relative to the script requesting another part of the bundle, so basically to themselves)
+		// This is required for monaco editor to work correctly, as it loads additional files from the same directory as the main bundle
+		publicPath: 'auto',
 	},
 	resolve: {
 		extensions: ['.js', '.ts'], // enable autocompleting .ts and .js extensions when using import '...'

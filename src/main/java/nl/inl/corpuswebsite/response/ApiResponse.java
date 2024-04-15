@@ -93,7 +93,7 @@ public class ApiResponse extends BaseResponse {
         /* Which flavour of xml are the documents. Used to pick the right stylesheet. */
         Optional<String> documentType = Optional.ofNullable(request.getParameter("documentType"));
 
-        new BlackLabApi(request, response)
+        new BlackLabApi(request, response, servlet.getGlobalConfig())
             .getDocumentContents(
                 corpus.orElseThrow(),
                 docId,
@@ -131,7 +131,8 @@ public class ApiResponse extends BaseResponse {
                     "article",
                     documentType,
                     request,
-                    response
+                    response,
+                    config
                 )
                 .or(defaultTransformer) // don't use recover() - we have to surface exceptions to the user (and recover() clears exceptions), or() doesn't.
                 .tap(trans -> trans.addParameter("contextRoot", request.getServletContext().getContextPath())) // search.xml - this variable should always be defined.
@@ -144,7 +145,7 @@ public class ApiResponse extends BaseResponse {
     protected void documentMetadata(String docId) {
         GlobalConfig config = servlet.getGlobalConfig();
 
-        Result<String, QueryException> result = new BlackLabApi(request, response)
+        Result<String, QueryException> result = new BlackLabApi(request, response, servlet.getGlobalConfig())
             .getDocumentMetadata(corpus.orElseThrow(), docId)
             .mapError(e -> {
                 // when blacklab returns 401, we need to return a 401 to the user (unauthorized - IE you can't do this unless you log in - please log in and try again)
@@ -161,7 +162,8 @@ public class ApiResponse extends BaseResponse {
                         "meta",
                         Optional.empty(),
                         request,
-                        response
+                        response,
+                        config
                 )
                 .tap(trans -> trans.addParameter("contextRoot", request.getServletContext().getContextPath())) // search.xml - this variable should always be defined.
                 .mapWithErrorHandling(trans -> trans.transform(metadata))

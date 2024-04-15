@@ -24,7 +24,9 @@ import org.apache.commons.lang.StringUtils;
 class URLBuilder<T extends URLBuilder<T>> {
     protected String url;
     protected Map<String, String> headers;
+    protected Map<String, String> cookies;
     protected Map<String, String[]> query;
+
     protected String hash;
     protected String method = "GET";
 
@@ -133,6 +135,22 @@ class URLBuilder<T extends URLBuilder<T>> {
         return (T) this;
     }
 
+    public T cookie(String key, String value) {
+        if (cookies == null) {
+            cookies = new HashMap<>();
+        }
+        cookies.put(key, value);
+        return (T) this;
+    }
+
+    public T cookies(Map<String, String> cookies) {
+        if (this.cookies == null) {
+            this.cookies = new HashMap<>();
+        }
+        this.cookies.putAll(cookies);
+        return (T) this;
+    }
+
     public String getUrl() {
         return getUrl(url, query, hash);
     }
@@ -165,6 +183,9 @@ class URLBuilder<T extends URLBuilder<T>> {
             if (headers != null) {
                 for (Entry<String, String> header: headers.entrySet()) {
                     connection.addRequestProperty(header.getKey(), header.getValue());
+                }
+                if (cookies != null) {
+                    connection.addRequestProperty("Cookie", cookies.entrySet().stream().map(c -> c.getKey() + "=" + c.getValue()).collect(Collectors.joining(";")));
                 }
             }
 
@@ -224,27 +245,17 @@ public class AuthRequest extends URLBuilder<AuthRequest> {
      * Return the response from the url.
      * If the response is in the 200 range, the content is returned.
      * If the response is in the 300 range, the request is followed.
-     * If the response is 401, the request is retried with the authentication header from the request (if present and the bearer type matches).
+     * If the response is 401, the request is retried with the authorization header from the request (if present and the bearer type matches).
      * In all other cases the error is returned (including 404).
      *
      * A 401 might still be returned if the content is restricted for another reason rather than missing auth (or when invalid authentication is supplied).
      *
+     * @param hardFailOnMissingAuth iff true and the upstream returns a 401 not authorized, it will be forwarded as-is to the client. If false, a regular 401 QueryException will be returned in the Result.
+     *
      * @throws ReturnToClientException when authentication is required but not provided. The response is modified to add the www-authorization header prior to throwing.
      */
     public Result<String, QueryException> request(boolean hardFailOnMissingAuth) {
-
-        // check if we received the OIDC/Oauth2 authorization code (one time pass), exchange it for an access token
-        // if we have an access token, add it to the request and retry.
-        // NOTE: this won't work either, the client now won't be logged in, the javascript hasn't received the one-time code, since we used it
-        // so it can't complete the login when the page actually loads.
-
-        // we just really need to refactor so the page becomes a two-step load, where the secured payload is only retrieved after
-        // the login logic has been performed. (and the login logic is performed in the javascript, not in the servlet)
-
-        // first try without authenticating.
         try {
-            getAuthHeader(request).ifPresent(auth -> header("Authorization", auth));
-
             HttpURLConnection r = connect();
             int redirects = 0;
             while (redirects < 10) {
@@ -260,6 +271,7 @@ public class AuthRequest extends URLBuilder<AuthRequest> {
                         r = new URLBuilder<>(newUrl) // should already contain query and hash
                                 .method(this.method)
                                 .headers(this.headers)
+                                .cookies(this.cookies)
                                 .connect();
                         ++redirects;
                         continue;
@@ -310,17 +322,5 @@ public class AuthRequest extends URLBuilder<AuthRequest> {
         } catch (IOException e) {
             return Result.error(QueryException.wrap(e));
         }
-    }
-
-    /** Return the authorization header from the request, if present and of HTTP Basic type. */
-    protected static Optional<String> getAuthHeader(HttpServletRequest request) {
-         return Optional.ofNullable(request).map(r -> r.getHeader("Authorization"));
-    }
-
-    /** Does the response indicate basic auth is required? */
-    protected static boolean needsBasicAuth(HttpURLConnection connection) {
-        // Usually something like "WWW-Authenticate: Basic realm="Password Required""
-        String auth = connection.getHeaderField("WWW-Authenticate");
-        return auth != null && auth.startsWith("Basic");
     }
 }

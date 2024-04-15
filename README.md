@@ -164,6 +164,15 @@ debugInfo=false
 # NOTE: this only works if the frontend and backend are hosted on the same domain, or when the server does not pass "*" for the Access-Control-Allow-Origin header. 
 withCredentials=false
 
+# Make the server side of corpus-frontend pass some authentication headers to BlackLab 
+# The following property is proxied to BlackLab 
+# In this case, the Authorization header, which will be sufficient for most needs (basic auth, oauth2, oidc)
+# When running behind something like oauth2-proxy, you could set these to x-forwarded-email for example, to pass along the email header from corpus-frontend to BlackLab (BlackLab will need its AuthSystem to be configured to use this header as well, of course)
+auth.source.name=Authorization
+auth.source.type=header
+auth.target.name=Authorization
+auth.target.type=header
+
 ```
 
 

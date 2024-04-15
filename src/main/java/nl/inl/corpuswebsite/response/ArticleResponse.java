@@ -95,7 +95,7 @@ public class ArticleResponse extends BaseResponse {
      * @return
      */
     protected Result<String, Exception> getTransformedContent(String documentId, Optional<String> corpusDataFormat, Optional<Integer> pageStart, Optional<Integer> pageEnd) {
-        return new BlackLabApi(request, response)
+        return new BlackLabApi(request, response, servlet.getGlobalConfig())
                 .getDocumentContents(
                         corpus.orElseThrow(),
                         documentId,
@@ -196,7 +196,7 @@ public class ArticleResponse extends BaseResponse {
 
     @Override
     protected void completeRequest() throws IOException {
-        BlackLabApi api = new BlackLabApi(this.request, this.response);
+        BlackLabApi api = new BlackLabApi(this.request, this.response, servlet.getGlobalConfig());
 
         // parameters for the requesting of metadata and content from blacklab
         final String pid = getDocPid();

@@ -100,14 +100,15 @@ public class CorpusFileUtil {
      *
      * @param filesDir - top-level directory where per-corpus files are stored.
      * @param corpus - which corpus to load the file for
-     * @param fallbackCorpus - if corpus is not found, try this one instead (for defaults)
+     * @param fallbackCorpus - if corpus is not found or doesn't have the file, try this one instead (for defaults)
      * @param name - the name of the file, excluding extension
      * @param corpusDataFormat - optional name suffix to differentiate files for different formats
-     * @param request - the request, used to retrieve basic auth credentials for blacklab-server in case they're needed.
+     * @param request - the request, used to retrieve auth credentials for blacklab-server in case they're needed.
      * @param response - the response, used to return to the client when no credentials are available, and they're needed.
+     * @param config - the global configuration, used to copy auth headers from the client request to the blacklab request.
      * @return the xsl transformer to use for transformation, note that this is always the same transformer.
      */
-    public static Result<XslTransformer, TransformerException> getStylesheet(String filesDir, Optional<String> corpus, Optional<String> fallbackCorpus, String name, Optional<String> corpusDataFormat, HttpServletRequest request, HttpServletResponse response) {
+    public static Result<XslTransformer, TransformerException> getStylesheet(String filesDir, Optional<String> corpus, Optional<String> fallbackCorpus, String name, Optional<String> corpusDataFormat, HttpServletRequest request, HttpServletResponse response, GlobalConfig config) {
         Optional<String> filename = Optional.of(name + ".xsl");
         Optional<String> fallbackFilename = corpusDataFormat.map(f -> name + "_" + f + ".xsl");
 
@@ -130,7 +131,7 @@ public class CorpusFileUtil {
 
         // alright, file not found. Try getting from BlackLab and parse that
         if (name.equals("article") && corpusDataFormat.isPresent()) { // for article files, we can try blacklab if there is no file on disk
-            return new BlackLabApi(request, response)
+            return new BlackLabApi(request, response, config)
                     .getStylesheet(corpusDataFormat.get())
                     .flatRecover(e -> e.getHttpStatusCode() == 404 ? Result.empty() : Result.error(e)) // if blacklab returns a 404, return empty instead of the http error.
                     .mapWithErrorHandling(xsl -> new XslTransformer(corpusDataFormat.get(), xsl))

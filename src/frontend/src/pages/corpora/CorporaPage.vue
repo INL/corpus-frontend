@@ -17,33 +17,32 @@
 	</div>
 
 	<template v-if="serverInfo">
-		<div v-if="!corpora.length && !loadingCorpora" class="cf-panel cf-panel-lg" >
+		<div v-if="!publicCorpora.length && !loadingCorpora && !canCreateCorpus" class="cf-panel cf-panel-lg" >
 			<h2>No corpora available</h2>
 			<p>No corpora have been added to BlackLab. Corpora will appear here when when they become available.</p>
 		</div>
-		<template v-else>
-			<CorpusTable v-if="publicCorpora.length"
-				:loading="loadingCorpora"
-				:corpora="publicCorpora"
-				:formats="formats"
-				title="Public corpora"
-			/>
-			<!-- always shown if logged in -->
-			<CorpusTable v-if="loggedIn"
-				title="Your corpora"
-				isPrivate
+		<CorpusTable v-if="publicCorpora.length"
+			:loading="loadingCorpora"
+			:corpora="publicCorpora"
+			:formats="formats"
+			title="Public corpora"
+		/>
 
-				:loading="loadingCorpora"
-				:corpora="privateCorpora"
-				:formats="formats"
-				:canCreateCorpus="canCreateCorpus"
+		<!-- always shown if logged in -->
+		<CorpusTable v-if="loggedIn"
+			title="Your corpora"
+			isPrivate
 
-				@share="doShareCorpus"
-				@upload="doUploadCorpus"
-				@delete="doDeleteCorpus"
-				@create="doCreateCorpus"
-			/>
-		</template>
+			:loading="loadingCorpora"
+			:corpora="privateCorpora"
+			:formats="formats"
+			:canCreateCorpus="canCreateCorpus"
+
+			@share="doShareCorpus"
+			@upload="doUploadCorpus"
+			@delete="doDeleteCorpus"
+			@create="doCreateCorpus"
+		/>
 
 		<FormatsTable v-if="loggedIn"
 			:formats="privateFormats"
@@ -148,7 +147,7 @@ export default Vue.extend({
 		privateCorpora(): NormalizedIndexBase[] { return this.corpora.filter(c => c.owner); },
 		publicFormats(): NormalizedFormat[] { return this.formats.filter(f => !f.owner); },
 		privateFormats(): NormalizedFormat[] { return this.formats.filter(f => f.owner); },
-		canCreateCorpus(): boolean { return this.loggedIn && this.serverInfo?.user.canCreateIndex; },
+		canCreateCorpus(): boolean { return this.serverInfo?.user.canCreateIndex; },
 
 		busy(): boolean { return this.loadingFormats || this.loadingCorpora || this.loadingServerInfo; },
 

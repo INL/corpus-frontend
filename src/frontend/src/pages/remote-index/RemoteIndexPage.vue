@@ -79,6 +79,7 @@ import SelectPicker, {OptGroup} from '@/components/SelectPicker.vue';
 
 import * as AppTypes from '@/types/apptypes';
 import * as BLTypes from '@/types/blacklabtypes';
+import { debugLogCat } from '@/utils/debug';
 
 class UrlStateParser extends UrlStateParserBase<{
 	file: string;
@@ -321,12 +322,17 @@ export default Vue.extend({
 			}
 
 			this.action = 'Finished! Opening search page...';
-			window.setTimeout(() => window.location.href = CONTEXT_URL + '/' + this.selectedCorpus!.id + '/search/', 5000);
+			window.setTimeout(() => {
+				const url = CONTEXT_URL + '/' + this.selectedCorpus!.id + '/search/';
+				debugLogCat('history', `Setting window.location.href to ${url}`);
+				window.location.href = url }, 5000
+			);
 		},
 	},
 	created() {
 		if (!this.urlParams.file) {
 			this.error = 'No file specified, redirecting...';
+			debugLogCat('history', `Setting window.location.href to ${CONTEXT_URL}`);
 			window.location.href = CONTEXT_URL;
 			return;
 		}

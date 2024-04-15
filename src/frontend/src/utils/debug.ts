@@ -19,6 +19,16 @@ export function debugLog(...args: any[]) {
 	}
 }
 
+/** Enable/disable categories of debug messages here */
+const SHOW_CATEGORIES = ['history'];
+
+/** A debug message in a category that we may want to show or not */
+export function debugLogCat(category: string, message: string) {
+	if (category in SHOW_CATEGORIES) {
+		debugLog(`[${category}] ${message}`);
+	}
+}
+
 export function enable() {
 	debug.debug = true;
 	for (const argArray of queued) {

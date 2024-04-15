@@ -74,8 +74,10 @@ const get = {
 const privateActions = {
 	// initFilter: b.commit((state, payload: FilterValue) => Vue.set(state.filters, payload.id, payload), 'filter_init'),
 	// NOTE when re-integrating annotatedFieldId this needs to be updated to account.
-	initExtendedAnnotation: b.commit((state, payload: AnnotationValue) => Vue.set(state.extended.annotationValues, payload.id, payload), 'annotation_init_extended'),
-	initSimpleAnnotation: b.commit((state, payload: ModuleRootState['simple']) => Object.assign<ModuleRootState['simple'], ModuleRootState['simple']>(state.simple, payload), 'annotation_init_simple')
+	initExtendedAnnotation: b.commit((state, payload: AnnotationValue) => 
+			Vue.set(state.extended.annotationValues, payload.id, payload), 'annotation_init_extended'),
+	initSimpleAnnotation: b.commit((state, payload: ModuleRootState['simple']) => Object.assign<ModuleRootState['simple'], 
+			ModuleRootState['simple']>(state.simple, payload), 'annotation_init_simple')
 };
 
 const actions = {
@@ -84,7 +86,8 @@ const actions = {
 			// Never overwrite annotatedFieldId or type, even when they're submitted through here.
 			Object.assign(state.simple.annotationValue, safeValues);
 		}, 'simple_annotation'),
-		parallelVersion: b.commit((state, payload: string) => state.simple.parallelVersion = payload, 'simple_parallel_version'),
+		parallelVersion: b.commit((state, payload: string|null) => state.simple.parallelVersion = payload, 
+			'simple_parallel_version'),
 		reset: b.commit(state => {
 			state.simple.annotationValue.value = '';
 			state.simple.annotationValue.case = false;
@@ -115,6 +118,7 @@ const actions = {
 	reset: b.commit(state => {
 		state.simple.annotationValue.value = '';
 		state.simple.annotationValue.case = false;
+		state.simple.parallelVersion = null;
 		actions.extended.reset();
 		state.advanced = null;
 		state.expert = null;
@@ -125,6 +129,7 @@ const actions = {
 	replace: b.commit((state, payload: ModuleRootState) => {
 		actions.simple.reset();
 		actions.simple.annotation(payload.simple.annotationValue);
+		actions.simple.parallelVersion(payload.simple.parallelVersion);
 
 		actions.advanced(payload.advanced);
 		actions.concept(payload.concept);

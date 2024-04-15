@@ -3,6 +3,7 @@ import LoginButton from '@/components/LoginButton.vue';
 import { BLServer } from '@/types/blacklabtypes';
 import axios from 'axios';
 import { handleError } from '@/api/apiutils';
+import { debugLogCat } from './debug';
 
 
 // Separate from loginsystem.ts to prevent circular dependency between LoginButton and loginsystem.
@@ -75,6 +76,7 @@ export async function awaitInit(settings: {
 			url.searchParams.delete('code');
 			url.searchParams.delete('scope');
 			// place back the url without the callback info
+			debugLogCat('history', `Calling replaceState with URL: ${url}`);
 			window.history.replaceState({}, '', url);
 		} catch (e) { }
 

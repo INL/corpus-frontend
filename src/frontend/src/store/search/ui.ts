@@ -76,7 +76,9 @@ type ModuleRootState = {
 				 * Defaults to the first element in the within.elements array, but null if none are defined.
 				 */
 				sentenceElement: string|null;
-			};
+			},
+
+			parallelVersionSelectorHeading: string,
 		}
 	};
 
@@ -255,6 +257,8 @@ const initialState: ModuleRootState = {
 				elements: [],
 				sentenceElement: null
 			},
+
+			parallelVersionSelectorHeading: 'Select source version:',
 		}
 	},
 	explore: {
@@ -431,6 +435,9 @@ const actions = {
 						state.search.shared.within.sentenceElement = payload;
 				}, 'search_shared_within_sentenceElement')
 			},
+			parallelVersionSelectorHeading: b.commit((state, heading: string) => {
+				return (state.search.shared.parallelVersionSelectorHeading = heading);
+			}, 'search_shared_parallelVersionSelectorHeading'),
 		}
 	},
 	explore: {

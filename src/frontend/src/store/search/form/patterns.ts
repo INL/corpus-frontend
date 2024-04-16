@@ -74,9 +74,9 @@ const get = {
 const privateActions = {
 	// initFilter: b.commit((state, payload: FilterValue) => Vue.set(state.filters, payload.id, payload), 'filter_init'),
 	// NOTE when re-integrating annotatedFieldId this needs to be updated to account.
-	initExtendedAnnotation: b.commit((state, payload: AnnotationValue) => 
+	initExtendedAnnotation: b.commit((state, payload: AnnotationValue) =>
 			Vue.set(state.extended.annotationValues, payload.id, payload), 'annotation_init_extended'),
-	initSimpleAnnotation: b.commit((state, payload: ModuleRootState['simple']) => Object.assign<ModuleRootState['simple'], 
+	initSimpleAnnotation: b.commit((state, payload: ModuleRootState['simple']) => Object.assign<ModuleRootState['simple'],
 			ModuleRootState['simple']>(state.simple, payload), 'annotation_init_simple')
 };
 
@@ -88,18 +88,18 @@ const actions = {
 		}, 'simple_annotation'),
 		parallelVersion: b.commit((state, payload: string|null) => {
 			debugLogCat('parallel', `simple.parallelVersion: Setting to ${payload}`);
-			console.trace();
-			
-			// JN DEBUGGER STATEMENT DOESN'T WORK HERE, WHY?
+
+			// JN DEBUGGER STATEMENT SOMETIMES DOESN'T WORK HERE, WHY?
 			//eslint-disable-next-line
 			//debugger;
+			//console.trace(); // stack trace is hard to understand
 
 			return (state.simple.parallelVersion = payload);
 		}, 'simple_parallel_version'),
 		reset: b.commit(state => {
 			state.simple.annotationValue.value = '';
 			state.simple.annotationValue.case = false;
-			const parVersion = CorpusStore.get.parallelFieldVersions()[0];
+			const parVersion = CorpusStore.get.parallelFieldVersions()[0].name;
 			debugLogCat('parallel', `simple.reset: Selecting default version ${parVersion}`);
 			state.simple.parallelVersion = parVersion;
 		}, 'simple_reset'),
@@ -160,7 +160,7 @@ const init = () => {
 			type: uiType
 		})
 	);
-	const defaultParallelVersion = CorpusStore.get.parallelFieldVersions()[0];
+	const defaultParallelVersion = CorpusStore.get.parallelFieldVersions()[0].name;
 	debugLogCat('parallel', `init: Set default parallel version: ${defaultParallelVersion}`);
 	privateActions.initSimpleAnnotation({
 		parallelVersion: defaultParallelVersion,

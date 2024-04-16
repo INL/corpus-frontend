@@ -76,7 +76,7 @@ export default Vue.extend({
 		Modal,
 		SelectPicker,
 		// this causes the monaco editor to become its own js bundle, nice, since it's literally bigger than all of our other code combined
-		//MonacoEditor: () => import('@/components/MonacoEditor.vue')
+		MonacoEditor: () => import('@/components/MonacoEditor.vue')
 	},
 	props: {
 		/** When clicking the pencil to edit an existing format. */

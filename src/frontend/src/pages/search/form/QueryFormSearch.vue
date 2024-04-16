@@ -16,7 +16,7 @@
 
 					<!-- Is this a parallel corpus? -->
 					<div v-if="isParallelCorpus">
-						<label class="control-label">Search version:</label>
+						<label class="control-label">{{ parallelVersionSelectorHeading }}</label>
 						<div>
 						<SelectPicker :options="parallelVersionOptions"
 								v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
@@ -206,13 +206,24 @@ export default Vue.extend({
 		// Is this a parallel corpus?
 		isParallelCorpus: CorpusStore.get.isParallelCorpus,
 
+		parallelVersionSelectorHeading: (): string => {
+
+			return UIStore.getState().search.shared.parallelVersionSelectorHeading;
+			// JN TODO: customizable, in custom.js or search.xml?
+			//const parallelField = CorpusStore.get.parallelFieldPrefix();
+			//return `Search version of ${parallelField}:`;
+		},
+
 		// What parallel versions are there (e.g. "en", "nl", etc.)
 		parallelVersionOptions: (): Option[] =>
-			CorpusStore.get.parallelFieldVersions().map(value => ({value, label: `Version ${value}`})),
+			CorpusStore.get.parallelFieldVersions().map(value => ({
+				value: value.name,
+				label: value.displayName || value.name
+			})),
 
 		// Which parallel source version should be selected initially?
 		// (the first one found)
-		parallelDefaultSourceVersion: (): string => CorpusStore.get.parallelFieldVersions()[0],
+		//parallelDefaultSourceVersion: (): string => CorpusStore.get.parallelFieldVersions()[0].name,
 
 		parallelSourceVersion: {
 			get(): string|null { return PatternStore.get.simple().parallelVersion; },

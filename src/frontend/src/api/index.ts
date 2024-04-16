@@ -21,10 +21,10 @@ const endpoints = {
 	// Communicatets with the frontend's own Java backend (which in turn can communicate with BLS)
 	cf: null as any as API,
 
-	// JN: something to do with concept search (which is...?)
+	// (JN: related to concept search..?)
 	gloss: null as any as API,
 
-	// JN: something to do with concept search (which is...?)
+	// (JN: related to concept search..?)
 	concept: null as any as API,
 };
 

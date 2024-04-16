@@ -16,7 +16,8 @@ import { AnnotationValue } from '@/types/apptypes';
 
 type ModuleRootState = {
 	simple: {
-		parallelVersion: string|null,
+		parallelSourceVersion: string|null,
+		parallelTargetVersions: string[]|null,
 		annotationValue: AnnotationValue
 	},
 	extended: {
@@ -40,7 +41,8 @@ type ModuleRootState = {
 // Finally: the values initialized from the page's url on first load.
 const defaults: ModuleRootState = {
 	simple: {
-		parallelVersion: null,
+		parallelSourceVersion: null,
+		parallelTargetVersions: null,
 		annotationValue: {case: false, id: '', value: '', type: 'text'}
 	},
 	extended: {
@@ -86,16 +88,21 @@ const actions = {
 			// Never overwrite annotatedFieldId or type, even when they're submitted through here.
 			Object.assign(state.simple.annotationValue, safeValues);
 		}, 'simple_annotation'),
-		parallelVersion: b.commit((state, payload: string|null) => {
+		parallelSourceVersion: b.commit((state, payload: string|null) => {
 			debugLogCat('parallel', `simple.parallelVersion: Setting to ${payload}`);
-			return (state.simple.parallelVersion = payload);
-		}, 'simple_parallel_version'),
+			return (state.simple.parallelSourceVersion = payload);
+		}, 'simple_parallel_source_version'),
+		parallelTargetVersions: b.commit((state, payload: string[]|null) => {
+			debugLogCat('parallel', `simple.parallelTargetVersions: Setting to ${payload}`);
+			return Vue.set(state.simple, 'parallelTargetVersions', payload);
+		}, 'simple_parallel_target_versions'),
 		reset: b.commit(state => {
 			state.simple.annotationValue.value = '';
 			state.simple.annotationValue.case = false;
 			const parVersion = CorpusStore.get.parallelFieldVersions()[0].name;
 			debugLogCat('parallel', `simple.reset: Selecting default version ${parVersion}`);
-			state.simple.parallelVersion = parVersion;
+			state.simple.parallelSourceVersion = parVersion;
+			state.simple.parallelTargetVersions = null;
 		}, 'simple_reset'),
 	},
 	extended: {
@@ -131,7 +138,8 @@ const actions = {
 	replace: b.commit((state, payload: ModuleRootState) => {
 		actions.simple.reset();
 		actions.simple.annotation(payload.simple.annotationValue);
-		actions.simple.parallelVersion(payload.simple.parallelVersion);
+		actions.simple.parallelSourceVersion(payload.simple.parallelSourceVersion);
+		actions.simple.parallelTargetVersions(payload.simple.parallelTargetVersions);
 
 		actions.advanced(payload.advanced);
 		actions.concept(payload.concept);
@@ -157,7 +165,8 @@ const init = () => {
 	const defaultParallelVersion = CorpusStore.get.parallelFieldVersions()[0].name;
 	debugLogCat('parallel', `init: Set default parallel version: ${defaultParallelVersion}`);
 	privateActions.initSimpleAnnotation({
-		parallelVersion: defaultParallelVersion,
+		parallelSourceVersion: defaultParallelVersion,
+		parallelTargetVersions: null,
 		annotationValue: {
 			id: CorpusStore.get.firstMainAnnotation().id,
 			value: '',

@@ -18,8 +18,10 @@ export type BLSearchParameters = {
 	filter?: string;
 	/** How to sort results, comma-separated list of field:${someMetadataFieldId} or (wordleft|hit|wordright):${someAnnotationId} */
 	group?: string;
-	/** Annotated field to search (defaults to main annotated field) */
-	field?: string;
+	/** Parallel corpus source field to search (defaults to main version) */
+	sourceVersion?: string;
+	/** Parallel corpus target fields to align with (defaults to none) */
+	targetVersions?: string[];
 	/** CQL query */
 	patt?: string;
 	/**

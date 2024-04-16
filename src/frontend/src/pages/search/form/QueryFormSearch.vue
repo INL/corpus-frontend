@@ -41,6 +41,12 @@
 							<SelectPicker :options="parallelVersionOptions"
 									v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
 						</div>
+
+						<label class="control-label">{{ andCompareWithTargetVersionsHeading }}</label>
+						<div>
+							<MultiValuePicker :options="parallelVersionOptions"
+									v-model="parallelTargetVersions" />
+						</div>
 					</div>
 
 				</div>
@@ -185,6 +191,7 @@ import { blacklabPaths } from '@/api';
 import * as AppTypes from '@/types/apptypes';
 import { getAnnotationSubset } from '@/utils';
 import SelectPicker, { Option } from '@/components/SelectPicker.vue';
+import MultiValuePicker from '@/components/MultiValuePicker.vue';
 
 function isVue(v: any): v is Vue { return v instanceof Vue; }
 function isJQuery(v: any): v is JQuery { return typeof v !== 'boolean' && v && v.jquery; }
@@ -193,6 +200,7 @@ export default Vue.extend({
 	mixins: [uid] as any,
 	components: {
 		SelectPicker,
+		MultiValuePicker,
 		Annotation,
 		ConceptSearch,
 		GlossSearch
@@ -210,6 +218,8 @@ export default Vue.extend({
 		// Heading to show above the parallel version selector
 		inSourceVersionHeading: (): string => UIStore.getState().search.shared.inSourceVersionHeading,
 
+		andCompareWithTargetVersionsHeading: (): string => UIStore.getState().search.shared.andCompareWithTargetVersionsHeading,
+
 		// What parallel versions are there (e.g. "en", "nl", etc.)
 		parallelVersionOptions: (): Option[] =>
 			CorpusStore.get.parallelFieldVersions().map(value => ({
@@ -218,8 +228,12 @@ export default Vue.extend({
 			})),
 
 		parallelSourceVersion: {
-			get(): string|null { return PatternStore.get.simple().parallelVersion; },
-			set: PatternStore.actions.simple.parallelVersion
+			get(): string|null { return PatternStore.get.simple().parallelSourceVersion; },
+			set: PatternStore.actions.simple.parallelSourceVersion
+		},
+		parallelTargetVersions: {
+			get(): string[]|null { return PatternStore.get.simple().parallelTargetVersions; },
+			set: PatternStore.actions.simple.parallelTargetVersions
 		},
 
 		activePattern: {

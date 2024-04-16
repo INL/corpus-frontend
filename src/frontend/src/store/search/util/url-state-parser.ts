@@ -444,8 +444,10 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	private get simplePattern() {
 		// Simple view is just a single annotation without any within query or filters
 		// NOTE: do not use extendedPattern, as the annotation used for simple may not be available for extended searching!
+		const strTargetVersions = this.getString('targetVersions', null);
 		return {
-			parallelVersion: this.getString('field', CorpusModule.get.parallelFieldVersions()[0].name),
+			parallelSourceVersion: this.getString('sourceVersion', CorpusModule.get.parallelFieldVersions()[0].name),
+			parallelTargetVersions: strTargetVersions ? strTargetVersions.split(',') : [],
 			annotationValue: this.annotationValues[CorpusModule.get.firstMainAnnotation().id] || {}
 		};
 	}

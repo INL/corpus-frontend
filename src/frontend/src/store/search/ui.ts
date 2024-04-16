@@ -79,6 +79,8 @@ type ModuleRootState = {
 			},
 
 			inSourceVersionHeading: string,
+
+			andCompareWithTargetVersionsHeading: string,
 		}
 	};
 
@@ -259,6 +261,8 @@ const initialState: ModuleRootState = {
 			},
 
 			inSourceVersionHeading: 'in source version:',
+
+			andCompareWithTargetVersionsHeading: 'and compare with target versions:'
 		}
 	},
 	explore: {
@@ -438,6 +442,9 @@ const actions = {
 			inSourceVersionHeading: b.commit((state, heading: string) => {
 				return (state.search.shared.inSourceVersionHeading = heading);
 			}, 'search_shared_inSourceVersionHeading'),
+			andCompareWithTargetVersionsHeading: b.commit((state, heading: string) => {
+				return (state.search.shared.andCompareWithTargetVersionsHeading = heading);
+			}, 'search_shared_andCompareWithTargetVersionsHeading'),
 		}
 	},
 	explore: {

@@ -18,8 +18,8 @@
 					<div v-if="isParallelCorpus">
 						<label class="control-label">{{ parallelVersionSelectorHeading }}</label>
 						<div>
-						<SelectPicker :options="parallelVersionOptions"
-								v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
+							<SelectPicker :options="parallelVersionOptions"
+									v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
 						</div>
 					</div>
 
@@ -191,7 +191,7 @@ function isJQuery(v: any): v is JQuery { return typeof v !== 'boolean' && v && v
 export default Vue.extend({
 	mixins: [uid] as any,
 	components: {
-    SelectPicker,
+	SelectPicker,
 		Annotation,
 		ConceptSearch,
 		GlossSearch

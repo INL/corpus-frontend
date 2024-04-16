@@ -11,7 +11,8 @@
 				<li><a href="#" role="button" @click="username ? $emit('logout') : $emit('login')">Log {{username ? 'out' : 'in'}}</a></li>
 			</ul>
 		</div>
-		<div v-else>
+		<!-- if there's no username, and we can't login, don't bother showing anything -->
+		<div v-else-if="username">
 			<span class="fa fa-solid fa-user"></span>
 			<span class="username">{{ username }}</span>
 		</div>

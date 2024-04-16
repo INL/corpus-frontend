@@ -30,14 +30,6 @@
                 $attribute.getKey() #if($attribute.getValue()) ="$attribute.getValue()" #end
             #end></script>
         #end
-        ## custom css in header to prevent FOUT
-        #foreach($js in $websiteConfig.getCustomJS(""))
-        <script
-            src="$js.url?_$cache"
-            #foreach($attribute in $js.getAttributes().entrySet())
-                $attribute.getKey() #if($attribute.getValue()) ="$attribute.getValue()" #end
-            #end></script>
-        #end
     </body>
 
     <!-- Commit hash: $commitHash -->

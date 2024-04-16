@@ -1,12 +1,8 @@
 package nl.inl.corpuswebsite.utils;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -17,7 +13,6 @@ import org.apache.commons.configuration2.builder.fluent.Parameters;
 import org.apache.commons.configuration2.convert.DisabledListDelimiterHandler;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.interpol.ConfigurationInterpolator;
-import org.apache.commons.configuration2.interpol.Lookup;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -62,12 +57,14 @@ public class WebsiteConfig {
         }
     }
 
-    public static class CustomJs {
+    public static class CustomJs implements Comparable<CustomJs> {
         private final String url;
         private final Map<String, String> attributes = new HashMap<>();
+        private final int index;
 
-        public CustomJs(String url) {
+        public CustomJs(String url, int index) {
             this.url = url;
+            this.index = index;
         }
 
         public String getUrl() {
@@ -76,6 +73,14 @@ public class WebsiteConfig {
 
         public Map<String, String> getAttributes() {
             return attributes;
+        }
+
+        public int getIndex() {
+            return index;
+        }
+
+        public int compareTo(CustomJs other) {
+            return Integer.compare(this.index, other.index);
         }
     }
 
@@ -100,7 +105,7 @@ public class WebsiteConfig {
 
     /** Page size to use for paginating documents in this corpus, defaults to 1000 if omitted (also see default Search.xml) */
     private final int pageSize;
-    
+
     /** Google analytics key, analytics are disabled if not provided */
     private final Optional<String> analyticsKey;
 
@@ -130,7 +135,7 @@ public class WebsiteConfig {
                 .configure(parameters.fileBased()
                 .setFile(configFile)
                 .setListDelimiterHandler(new DisabledListDelimiterHandler())
-                .setPrefixLookups(new HashMap<String, Lookup>(ConfigurationInterpolator.getDefaultPrefixLookups()) {{
+                .setPrefixLookups(new HashMap<>(ConfigurationInterpolator.getDefaultPrefixLookups()) {{
                     put("request", key -> {
                         switch (key) {
                             case "contextPath": return contextPath;
@@ -155,11 +160,12 @@ public class WebsiteConfig {
             .findFirst();
 
         corpusOwner = CorpusFileUtil.getCorpusOwner(corpusId);
-        
+
+        AtomicInteger i = new AtomicInteger();
         xmlConfig.configurationsAt("InterfaceProperties.CustomJs").forEach(sub -> {
             String url = sub.getString("", sub.getString("[@src]", ""));
             if (url.isEmpty()) return;
-            CustomJs js = new CustomJs(url);
+            CustomJs js = new CustomJs(url, i.getAndIncrement()); // preserve order as the scripts may depend on each other.
 
             // src attribute handled separately above.
             Stream.of("async", "crossorigin", "defer", "integrity", "nomodule", "nonce", "referrerpolicy", "type").forEach(att -> {
@@ -190,14 +196,14 @@ public class WebsiteConfig {
                 boolean relative = sub.getBoolean("[@relative]", false); // No longer supported, keep around for compatibility
                 if (relative)
                     href = contextPath + "/" + href;
-                
+
                 return new LinkInTopBar(label, href, newWindow);
             })
         ).collect(Collectors.toList());
         xsltParameters = xmlConfig.configurationsAt("XsltParameters.XsltParameter").stream()
                 .collect(Collectors.toMap(sub -> sub.getString("[@name]"), sub -> sub.getString("[@value]")));
 
-        // plausible 
+        // plausible
         this.plausibleDomain = Optional.ofNullable(StringUtils.trimToNull(xmlConfig.getString("InterfaceProperties.Plausible.domain")));
         this.plausibleApiHost = Optional.ofNullable(StringUtils.trimToNull(xmlConfig.getString("InterfaceProperties.Plausible.apiHost")));
     }
@@ -227,7 +233,11 @@ public class WebsiteConfig {
     }
 
     public List<CustomJs> getCustomJS(String page) {
-        return customJS.computeIfAbsent(page, __ -> new ArrayList<>());
+        Stream<CustomJs> s = customJS.computeIfAbsent(page, __ -> new ArrayList<>()).stream();
+        // add the default scripts to the stream if the page is not empty
+        if (!page.isEmpty()) s = Stream.concat(s, customJS.computeIfAbsent("", __ -> new ArrayList<>()).stream());
+        // sort the scripts by index in the config, and return
+        return s.sorted().collect(Collectors.toList());
     }
 
     public List<String> getCustomCSS(String page) {
@@ -245,7 +255,7 @@ public class WebsiteConfig {
     public boolean usePagination() {
         return pagination;
     }
-    
+
     public int getPageSize() {
         return pageSize;
     }
@@ -253,11 +263,11 @@ public class WebsiteConfig {
     public Optional<String> getAnalyticsKey() {
         return analyticsKey;
     }
-    
+
     public Optional<String> getPlausibleDomain() {
         return plausibleDomain;
     }
-    
+
     public Optional<String> getPlausibleApiHost() {
     	return plausibleApiHost;
     }

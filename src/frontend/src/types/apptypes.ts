@@ -100,6 +100,7 @@ export type NormalizedMetadataGroup = {
 	isRemainderGroup: boolean;
 };
 
+/** A smaller version of the index object without actual description of the contents. */
 export type NormalizedIndexBase = {
 	/** Description as set by the creator */
 	description: string;

@@ -95,7 +95,7 @@ export async function awaitInit(settings: {
 		.fallbackUsername()
 		.then(username => {
 			loginButton.$props.username = username;
-			loginButton.$props.enabled = true;
+			if (username) loginButton.$props.enabled = true;
 		})
 		.catch(e => console.error('Failed to get username from fallbackUsernameGetter', e));
 		return null;

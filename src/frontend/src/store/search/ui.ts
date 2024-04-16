@@ -746,7 +746,6 @@ const init = () => {
 
 	// SEARCH
 
-	let cur: string[];
 	// Always remove any possible bogus annotations set by invalid configs
 	// And then replace with default values if not configured
 	// The setters have builtin validation. So call them, then check if a valid was set, and if not, replace with default.
@@ -975,7 +974,7 @@ function validateMetadata(
 	const results = ids.filter(id => {
 		if (!all[id]) { console.warn(missing(id)); return false; }
 		if (!validate(all[id])) { console.warn(invalid(id)); return false; }
-		return;
+		return true;
 	});
 
 	// trigger if: list that was passed in is empty, or when any result remains after removing invalid ids.

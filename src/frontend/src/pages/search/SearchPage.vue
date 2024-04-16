@@ -15,7 +15,7 @@
 				<span v-if="loadingState !== 'loading'" class="fa fa-danger fa-4x"></span>
 				{{ loadingMessage }}
 			</h2>
-			<Spinner v-if="loadingState === 'loading'" overlay/>
+			<Spinner v-if="loadingState === 'loading'" center/>
 			<button v-else-if="loadingState === 'requiresLogin'" type="button" class="btn btn-lg btn-primary">login (todo)</button>
 		</div>
 	</div>

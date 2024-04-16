@@ -1,5 +1,8 @@
 <template>
-	<div class="fa fa-spinner fa-spin cf-spinner" :class="classes" :style="style">&ZeroWidthSpace;</div>
+	<div v-if="position" :class="`cf-spinner-${position}`">
+		<div class="fa fa-spinner fa-spin cf-spinner" :class="classes" :style="style">&ZeroWidthSpace;</div>
+	</div>
+	<div v-else class="fa fa-spinner fa-spin cf-spinner" :class="classes" :style="style">&ZeroWidthSpace;</div>
 </template>
 
 <script lang="ts">
@@ -9,17 +12,35 @@ export default Vue.extend({
 		lg: Boolean,
 		xs: Boolean,
 		sm: Boolean,
+		size: [Number, String],
+
+
+		// Only one of these should be set
+		// inline is inline-block
+		// overlay is absolute center of parent element
+		// left, center, right are a block, with the spinner in the left, center or right
+		// We default to 'center' if none are set.
 		inline: Boolean,
 		overlay: Boolean,
-		size: [Number, String]
+		left: Boolean,
+		center: Boolean,
+		right: Boolean,
 	},
 	data: () => ({ observer: null as ResizeObserver|null, }),
 	computed: {
+		position(): 'left'|'center'|'right'|undefined {
+			if (this.left == this.right == this.center == null) return 'center';
+			if (this.inline || this.overlay) return undefined;
+			if (this.left) return 'left';
+			if (this.right) return 'right';
+			if (this.center) return 'center';
+			return undefined;
+		},
 		classes(): any { return {lg: this.lg, sm: this.sm, overlay: this.overlay, inline: this.inline, xs: this.xs} },
 		style(): any { return { fontSize: this.size ? (typeof this.size === 'number' || this.size.match(/^\d+$/)) ? this.size + 'px' : this.size : undefined,} }
 	},
 	mounted() {
-		if (this.$el.classList.contains('overlay')) {
+		if (this.overlay) {
 			const parent = this.$el.parentElement as HTMLElement;
 			parent.style.position='relative';
 			// size observer and center spinner
@@ -44,6 +65,17 @@ export default Vue.extend({
 </script>
 
 <style lang="scss" scoped>
+
+.cf-spinner-center {
+	text-align: center;
+}
+.cf-spinner-right {
+	text-align: right;
+}
+.cf-spinner-left {
+	text-align: left;
+}
+
 .cf-spinner {
 	color: white;
 	background-color: black;
@@ -54,9 +86,6 @@ export default Vue.extend({
 
 	&.overlay {
 		position: absolute;
-		left: 50%;
-		top: 50%;
-		transform: translate(-50%, -50%);
 		z-index: 1000;
 	}
 

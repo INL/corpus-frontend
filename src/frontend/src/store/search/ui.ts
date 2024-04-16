@@ -663,8 +663,38 @@ const actions = {
 	}
 };
 
+/**
+ * This function is not great.
+ * The issue is that customjs can call our setters before we know the corpus shape (because that's loaded async).
+ * When this happens, we store those settings in the initialState.
+ * But when the corpus is loaded, we have to validate those settings.
+ * It would be better to queue up the setters until we have loaded the corpus, but that's complex.
+ * It would be even better to get rid of customjs, or at least have it evaluate after the corpus is loaded
+ * Perhaps it could just return a json object that we can use to configure the store.
+ * But that's a future refactor. It would be most useful to do before we migrate to vue 3.
+ *
+ * There's no real way to get around this validation for now.
+ * If we didnt't do this, and someone made a typo in their setup javascript and sets a nonexistant annotation somewhere the page would probably crash.
+ */
 const init = () => {
 	if (!CorpusStore.getState().corpus) throw new Error('Cannot initialize UI module before corpus is loaded');
+
+	// XXX: hack!
+	/**
+	 * If we don't do this, imagine the following
+	 *
+	 * initialState.some_annotation_list = ['some_invalid_id']
+	 *
+	 * // we think this will validate, but what actually happens is that the setter is called,
+	 * // the value is deemed invalid, and nothing happens
+	 * // the net result is that value is still ['some_invalid_id']
+	 * // and the app will crash when it tries to use that value
+	 * actions.some_annotation_list(initialState.some_annotation_list)
+	 *
+	 * // instead we set this, so the validator will just return an empty array, and the setting will becomed either [] or undefined, which is fine
+	 * // we can then detect this during init, and replace the setting with the default.
+	 */
+	alwaysCallbackAfterValidating = true;
 
 	/*
 	Store initialization happens in 3 steps:
@@ -678,46 +708,26 @@ const init = () => {
 		This is where we are now.
 	*/
 
-	// So: CustomJS has finished interacting with this module, now propagate changes back to the defaults, and validate all settings.
-	Object.assign(initialState, cloneDeep(getState()));
+	// ====================
+	// Set up some defaults
+	// ====================
 
 	const allAnnotationsMap = CorpusStore.get.allAnnotationsMap();
 	const allMetadataFieldsMap = CorpusStore.get.allMetadataFieldsMap();
 	const annotationGroups = CorpusStore.get.annotationGroups();
 	const metadataGroups = CorpusStore.get.metadataGroups();
-
 	const mainAnnotation = CorpusStore.get.firstMainAnnotation();
 
 	// Annotations (extended, advanced, explore [n-grams], sorting, grouping, hit details)
 	// If unconfigured, show the following annotations:
 	// - Those in non-remainder groups (which are the user-configured groups)
 	// - Non-internal annotations in the remainder group (which is the catch-all/fallback group), iff there are no other groups.
-	let defaultAnnotationsToShow = annotationGroups.flatMap((g, i) => {
+	const defaultAnnotationsToShow = annotationGroups.flatMap((g, i) => {
 		if (!g.isRemainderGroup) { return g.entries; }
 		const hasNonRemainderGroup = i > 0; // remainder groups is always at the end
+		// remainder group is hidden unless there's no other group. Also internal annotations in the remainder group are always hidden.
 		return hasNonRemainderGroup ? [] : g.entries.filter(id => allAnnotationsMap[id]?.isInternal === false);
 	});
-
-	let cur: string[];
-	// Always remove any possible bogus annotations set by invalid configs
-	// And then replace with default values if not configured
-	cur = initialState.search.extended.searchAnnotationIds.filter(id => allAnnotationsMap[id]); // remove invalid entries
-	actions.search.extended.searchAnnotationIds(cur.length ? cur : defaultAnnotationsToShow); // replace with corrected settings
-
-	cur = initialState.search.advanced.searchAnnotationIds.filter(id => allAnnotationsMap[id]);
-	actions.search.advanced.searchAnnotationIds(cur.length ? cur : defaultAnnotationsToShow);
-
-	cur = initialState.explore.searchAnnotationIds.filter(id => allAnnotationsMap[id]);
-	actions.explore.searchAnnotationIds(cur.length ? cur : defaultAnnotationsToShow);
-
-	// Remove annotations without forward index, as grouping/sorting isn't supported for those
-	defaultAnnotationsToShow = defaultAnnotationsToShow.filter(id => allAnnotationsMap[id]?.hasForwardIndex);
-
-	cur = initialState.results.shared.groupAnnotationIds.filter(id => allAnnotationsMap[id]?.hasForwardIndex);
-	actions.results.shared.groupAnnotationIds(cur.length ? cur : defaultAnnotationsToShow);
-
-	cur = initialState.results.shared.sortAnnotationIds.filter(id => allAnnotationsMap[id]?.hasForwardIndex);
-	actions.results.shared.sortAnnotationIds(cur.length ? cur : defaultAnnotationsToShow);
 
 	// Metadata/filters (extended, advanced, expert, explore)
 	// If unconfigured: show all metadata in groups (groups are defined in the index format yaml file)
@@ -727,19 +737,33 @@ const init = () => {
 		return hasNonRemainderGroup ? [] : g.entries;
 	});
 
-	cur = initialState.search.shared.searchMetadataIds.filter(id => allMetadataFieldsMap[id]);
-	actions.search.shared.searchMetadataIds(cur.length ? cur : defaultMetadataToShow);
+	// So: CustomJS has finished interacting with this module, now propagate changes back to the defaults, and validate all settings.
+	Object.assign(initialState, cloneDeep(getState()));
 
-	cur = initialState.results.shared.groupMetadataIds.filter(id => allMetadataFieldsMap[id]);
-	actions.results.shared.groupMetadataIds(cur.length ? cur : defaultMetadataToShow);
+	// ============================================
+	// Now validate the settings one by one (ugh..)
+	// ============================================
 
-	cur = initialState.results.shared.sortMetadataIds.filter(id => allMetadataFieldsMap[id]);
-	actions.results.shared.sortMetadataIds(cur.length ? cur : defaultMetadataToShow);
+	// SEARCH
+
+	let cur: string[];
+	// Always remove any possible bogus annotations set by invalid configs
+	// And then replace with default values if not configured
+	// The setters have builtin validation. So call them, then check if a valid was set, and if not, replace with default.
+	actions.search.extended.searchAnnotationIds(initialState.search.extended.searchAnnotationIds);
+	if (!getState().search.extended.searchAnnotationIds.length) actions.search.extended.searchAnnotationIds(defaultAnnotationsToShow);
+
+	actions.search.advanced.searchAnnotationIds(initialState.search.advanced.searchAnnotationIds);
+	if (!getState().search.advanced.searchAnnotationIds.length) actions.search.advanced.searchAnnotationIds(defaultAnnotationsToShow);
+	// no need to check defaultSearchAnnotationId, is corrected in the setter already
+
+	actions.search.shared.searchMetadataIds(initialState.search.shared.searchMetadataIds);
+	if (!getState().search.shared.searchMetadataIds.length) actions.search.shared.searchMetadataIds(defaultMetadataToShow);
 
 	// "within" selector (i.e. search within paragraphs/sentences/documents, whatever else is indexed (called "inline tags" in BlackLab)).
 	if (!initialState.search.shared.within.elements.length) {
-		function setValuesForWithin(validValues: AppTypes.NormalizedAnnotation['values']) {
-			if (!validValues || !validValues.length) {
+		function setValuesForWithin(validValues?: AppTypes.NormalizedAnnotation['values']) {
+			if (!validValues?.length) {
 				console.warn('Within clause not supported in this corpus, no relations indexed');
 				actions.search.shared.within.enable(false);
 				return;
@@ -769,7 +793,7 @@ const init = () => {
 				// default sentence boundary element. For use with dependency trees.
 				const state = getState(); // since we did it async, the init is already finished, and the data we set is not in the initial state anymore.
 				if (!state.search.shared.within.sentenceElement && state.search.shared.within.elements.length) {
-					const labelsOrValues = ['sentence', 'paragraph', 'p', 's', 'sen', 'par', 'sent', 'para', 'verse'];
+					const labelsOrValues = ['sentence', 's', 'sen', 'sent', 'paragraph', 'p', 'par', 'para', 'verse'];
 					const defaultWithin = state.search.shared.within.elements.find(e => labelsOrValues.includes(e.value) || labelsOrValues.includes(e.label));
 					if (defaultWithin) {
 						actions.search.shared.within.sentenceElement(defaultWithin.value);
@@ -778,17 +802,21 @@ const init = () => {
 			})
 	}
 
-	// ====================
-	// Results manipulation
-	// ====================
+	// EXPLORE
 
-	// Annotations (display in the table columns, display in opened condordances)
-	// Sorting/grouping: show all annotations in groups and that have a forward index (blacklab doesn't support sorting/grouping without FI)
+	actions.explore.searchAnnotationIds(initialState.explore.searchAnnotationIds);
+	if (!getState().explore.searchAnnotationIds.length) actions.explore.searchAnnotationIds(defaultAnnotationsToShow);
+	// no need to check defaultSearchAnnotationId, already done in the setter
+	// no need to check defaultGroupAnnotationId, already done in the setter
+	// no need to check defualtGroupMetadataId, done in shared groupMetadataIds setter
 
-	// Results table columns
+	// RESULTS
+
+	// annotation ids in the results table follow their own rules
 	// Show 'lemma' and 'pos' (if they exist) and up to 3 more annotations in order of definition
 	// OR: show based on PROPS_IN_COLUMNS [legacy support] (configured in this corpus's search.xml)
-	if (!initialState.results.hits.shownAnnotationIds.length) {
+	actions.results.hits.shownAnnotationIds(initialState.results.hits.shownAnnotationIds);
+	if (!getState().results.hits.shownAnnotationIds.length) {
 		const shownAnnotations = PROPS_IN_COLUMNS.filter(annot => allAnnotationsMap[annot]?.hasForwardIndex && annot !== mainAnnotation.id);
 		if (!shownAnnotations.length) {
 			// These have precedence if they exist.
@@ -806,30 +834,54 @@ const init = () => {
 		}
 		actions.results.hits.shownAnnotationIds(shownAnnotations);
 	}
-	// Concordances show all non-internal annotations when not set.
 
-	// Displaying of result context/snippets
-	if (!initialState.results.shared.concordanceAnnotationId) {
-		actions.results.shared.concordanceAnnotationId(mainAnnotation.hasForwardIndex ? mainAnnotation.id : defaultAnnotationsToShow[0]);
-	}
-
-	if (initialState.results.shared.concordanceSize > 1000)
-		actions.results.shared.concordanceSize(1000);
-
-	// Results table columns
-	// Hits table: Never show any metadata in the hits table
+	// Hits table, nothing shown by default, but call the setter to validate what was set.
+	actions.results.hits.shownMetadataIds(initialState.results.hits.shownMetadataIds);
 	// Docs table: Show the date column if it is configured
-	if (!initialState.results.docs.shownMetadataIds.length) {
+	if (!getState().results.docs.shownMetadataIds.length) {
 		const dateField = CorpusStore.getState().corpus!.fieldInfo.dateField;
 		if (dateField) {
 			actions.results.docs.shownMetadataIds([dateField]);
 		}
 	}
 
+	// SHARED
+
+	// This one needs manual validation, because the setter just won't do anything if the id is invalid.
+	// And then the invalid id will remain in the state.
+	{
+		const annot = allAnnotationsMap[initialState.results.shared.concordanceAnnotationId];
+		if (!annot?.hasForwardIndex)
+			actions.results.shared.concordanceAnnotationId(mainAnnotation.hasForwardIndex ? mainAnnotation.id : defaultAnnotationsToShow.find(id => allAnnotationsMap[id]?.hasForwardIndex)!);
+	}
+
+	actions.results.shared.concordanceSize(Math.min(Math.max(1, initialState.results.shared.concordanceSize), 1000));
+
+	actions.results.shared.detailedAnnotationIds(initialState.results.shared.detailedAnnotationIds);
+	if (!getState().results.shared.detailedAnnotationIds?.length) actions.results.shared.detailedAnnotationIds(null);
+
+	actions.results.shared.detailedMetadataIds(initialState.results.shared.detailedMetadataIds);
+	// no default for this one.
+
+	actions.results.shared.groupAnnotationIds(initialState.results.shared.groupAnnotationIds);
+	if (!getState().results.shared.groupAnnotationIds.length) actions.results.shared.groupAnnotationIds(defaultAnnotationsToShow);
+
+	actions.results.shared.groupMetadataIds(initialState.results.shared.groupMetadataIds);
+	if (!getState().results.shared.groupMetadataIds.length) actions.results.shared.groupMetadataIds(defaultMetadataToShow);
+
+	actions.results.shared.sortAnnotationIds(initialState.results.shared.sortAnnotationIds);
+	if (!getState().results.shared.sortAnnotationIds.length) actions.results.shared.sortAnnotationIds(defaultAnnotationsToShow);
+
+	actions.results.shared.sortMetadataIds(initialState.results.shared.sortMetadataIds);
+	if (!getState().results.shared.sortMetadataIds.length) actions.results.shared.sortMetadataIds(defaultMetadataToShow);
+
 	// init custom annotation extension points, so vue reactivity will properly pick up on them
 	CorpusStore.get.allAnnotations().forEach(annot => privateActions.search.shared.initCustomAnnotationRegistrationPoint(annot.id));
 
 	Object.assign(initialState, cloneDeep(getState()));
+
+	// disable our terrible hack
+	alwaysCallbackAfterValidating = false;
 };
 
 // =======================
@@ -872,6 +924,13 @@ function createConfigurator<T extends MapOf<string[]>>(proppaths: T) {
 	return r;
 }
 
+/**
+ * Terrible hack to validate settings that are set before the corpus is loaded.
+ * This is because the setters have validation, but they don't do anything if the value is invalid.
+ * This setting makes it so the setters clear the setting if the value is invalid (instead of doing nothing).
+ * We can then detect this and set a default afterwards.
+ */
+let alwaysCallbackAfterValidating = false;
 /** Validate all ids, triggering callbacks for failed ids, and triggering a final callback if there is any valid annotation. */
 function validateAnnotations(
 	ids: string[],
@@ -893,7 +952,7 @@ function validateAnnotations(
 	});
 
 	// trigger if: list that was passed in is empty, or when any result remains after removing invalid ids.
-	if (!ids.length || results.length) {
+	if (!ids.length || results.length || alwaysCallbackAfterValidating) {
 		cb(results);
 	}
 }
@@ -916,11 +975,11 @@ function validateMetadata(
 	const results = ids.filter(id => {
 		if (!all[id]) { console.warn(missing(id)); return false; }
 		if (!validate(all[id])) { console.warn(invalid(id)); return false; }
-		return true;
+		return;
 	});
 
 	// trigger if: list that was passed in is empty, or when any result remains after removing invalid ids.
-	if (!ids.length || results.length) {
+	if (!ids.length || results.length || alwaysCallbackAfterValidating) {
 		cb(results);
 	}
 }

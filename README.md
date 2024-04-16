@@ -971,8 +971,8 @@ Through javascript you can do many things, but outlined below are some of the mo
       var e = 'endtime'; // word property that stores the end time of the word
       
       // find the first word that has a start time defined, and the first word that has an end time defined
-      var startString = snippet.left[s].concat(snippet.match[s]).concat(snippet.right[s]).find(function(v) { return !!v; });
-      var endString = snippet.left[e].concat(snippet.match[e]).concat(snippet.right[e]).reverse().find(function(v) { return !!v; });
+      var startString = snippet.before[s].concat(snippet.match[s]).concat(snippet.after[s]).find(function(v) { return !!v; });
+      var endString = snippet.before[e].concat(snippet.match[e]).concat(snippet.after[e]).reverse().find(function(v) { return !!v; });
 
       // Returning undefined will disable the addon for this hit
       if (!startString && !endString) {
@@ -1099,7 +1099,7 @@ Through javascript you can do many things, but outlined below are some of the mo
 			if (word === 'de') return `<span style="text-decoration: underline; text-shadow: 0 0 2px red;">${word}</span>`;
 			return word;
 		}))
-		transform(snippet.left, snippet.match, snippet.right);
+		transform(snippet.before, snippet.match, snippet.after);
 	});
     ```
 

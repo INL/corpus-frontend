@@ -110,7 +110,7 @@ public class MainServlet extends HttpServlet {
             this.config = GlobalConfig.loadGlobalConfig(ctx);
             startVelocity(ctx);
 
-            XslTransformer.setUseCache(this.useCache());
+            XslTransformer.setUseCache(this.useCache(null));
             BlackLabApi.setBlsUrl(config.get(Keys.BLS_URL_ON_SERVER));
 
             // Map responses, the majority of these can be served for a specific corpus, or as a general autosearch page
@@ -197,7 +197,7 @@ public class MainServlet extends HttpServlet {
             })
             .orElseThrow(() -> new IllegalStateException("No search.xml, and no default in jar either"));
 
-        return useCache() ? configs.computeIfAbsent(corpus.orElse(null), gen) : gen.apply(corpus.orElse(null));
+        return useCache(null) ? configs.computeIfAbsent(corpus.orElse(null), gen) : gen.apply(corpus.orElse(null));
     }
 
     // TODO use network-level caching or something, so we automatically handle lifetime, authentication, etc.
@@ -211,12 +211,12 @@ public class MainServlet extends HttpServlet {
     public Result<CorpusConfig, Exception> getCorpusConfig(Optional<String> corpus, HttpServletRequest request, HttpServletResponse response) {
         // Should only cache when not using authorization, otherwise result may be different across different requests.
         // Also disable caching for user-corpora, as access permissions may change.
-        boolean useCache = useCache() && (request.getHeader("Authorization") == null || request.getHeader("Authorization").isEmpty()) && CorpusFileUtil.getCorpusOwner(corpus).isEmpty();
+
         // Contact blacklab-server for the config xml file if we have a corpus
         Function<String, Result<CorpusConfig, Exception>> gen = c -> new BlackLabApi(request, response, this.config).getCorpusConfig(c);
         return Result
                 .from(corpus)
-                .flatMap(c -> useCache ? configCache.computeIfAbsent(c, gen) : gen.apply(c))
+                .flatMap(c -> useCache(request) ? configCache.computeIfAbsent(c, gen) : gen.apply(c))
                 .orError(() -> new FileNotFoundException("No corpus specified"));
     }
 
@@ -359,7 +359,7 @@ public class MainServlet extends HttpServlet {
         // need to use corpus name in the cache map
         // because corpora can define their own xsl files in their own data directory
         String key = corpus + "_" + corpusDataFormat.orElse("missing-format") + "_" + name;
-        return this.useCache() ? articleTransformers.computeIfAbsent(key, gen) : gen.apply(key);
+        return this.useCache(request) ? articleTransformers.computeIfAbsent(key, gen) : gen.apply(key);
     }
 
     public Optional<File> getProjectFile(Optional<String> corpus, String file) {
@@ -382,8 +382,15 @@ public class MainServlet extends HttpServlet {
                 .getOrThrow(IllegalStateException::new); // this file always exists (at least the fallback in our own jar)
     }
 
-    public boolean useCache() {
-        return Boolean.parseBoolean(this.config.get(Keys.CACHE));
+    /**
+     * Check whether caching of things is enabled.
+     * @param request if supplied, check if the request contains authentication parameters (according to AUTH_SOURCE_NAME and AUTH_SOURCE_TYPE), and return false if it does.
+     *                If not supplied, check if the global config allows caching.
+     * @return whether the use the cache for this request
+     */
+    public boolean useCache(HttpServletRequest request) {
+        Optional<String> auth = Optional.ofNullable(request).flatMap(r -> BlackLabApi.readRequestParameter(r, config.get(Keys.AUTH_SOURCE_TYPE), config.get(Keys.AUTH_SOURCE_NAME)));
+        return Boolean.parseBoolean(this.config.get(Keys.CACHE)) && auth.isEmpty();
     }
 
     /** Render debug info checkbox in the search interface? */

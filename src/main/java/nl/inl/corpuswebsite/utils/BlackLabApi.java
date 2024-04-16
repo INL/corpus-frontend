@@ -31,7 +31,7 @@ public class BlackLabApi {
 	private AuthRequest authRequest() {
 		var req = new AuthRequest(request, response);
 
-		readRequestParameter(config.get(Keys.AUTH_SOURCE_TYPE), config.get(Keys.AUTH_SOURCE_NAME))
+		readRequestParameter(request, config.get(Keys.AUTH_SOURCE_TYPE), config.get(Keys.AUTH_SOURCE_NAME))
 				.ifPresent(auth -> setParameter(req, config.get(Keys.AUTH_TARGET_TYPE), config.get(Keys.AUTH_TARGET_NAME), auth));
 
 		return req;
@@ -81,7 +81,7 @@ public class BlackLabApi {
 	}
 
 	private static boolean warned = false;
-	private Optional<String> readRequestParameter(String type, String name) {
+	public static Optional<String> readRequestParameter(HttpServletRequest request, String type, String name) {
 		return Optional
 			.ofNullable(type)
 			.filter(t -> name != null)

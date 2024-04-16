@@ -191,7 +191,7 @@ function isJQuery(v: any): v is JQuery { return typeof v !== 'boolean' && v && v
 export default Vue.extend({
 	mixins: [uid] as any,
 	components: {
-	SelectPicker,
+		SelectPicker,
 		Annotation,
 		ConceptSearch,
 		GlossSearch
@@ -206,13 +206,8 @@ export default Vue.extend({
 		// Is this a parallel corpus?
 		isParallelCorpus: CorpusStore.get.isParallelCorpus,
 
-		parallelVersionSelectorHeading: (): string => {
-
-			return UIStore.getState().search.shared.parallelVersionSelectorHeading;
-			// JN TODO: customizable, in custom.js or search.xml?
-			//const parallelField = CorpusStore.get.parallelFieldPrefix();
-			//return `Search version of ${parallelField}:`;
-		},
+		// Heading to show above the parallel version selector
+		parallelVersionSelectorHeading: (): string => UIStore.getState().search.shared.parallelVersionSelectorHeading,
 
 		// What parallel versions are there (e.g. "en", "nl", etc.)
 		parallelVersionOptions: (): Option[] =>
@@ -220,10 +215,6 @@ export default Vue.extend({
 				value: value.name,
 				label: value.displayName || value.name
 			})),
-
-		// Which parallel source version should be selected initially?
-		// (the first one found)
-		//parallelDefaultSourceVersion: (): string => CorpusStore.get.parallelFieldVersions()[0].name,
 
 		parallelSourceVersion: {
 			get(): string|null { return PatternStore.get.simple().parallelVersion; },

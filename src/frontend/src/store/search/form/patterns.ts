@@ -88,12 +88,6 @@ const actions = {
 		}, 'simple_annotation'),
 		parallelVersion: b.commit((state, payload: string|null) => {
 			debugLogCat('parallel', `simple.parallelVersion: Setting to ${payload}`);
-
-			// JN DEBUGGER STATEMENT SOMETIMES DOESN'T WORK HERE, WHY?
-			//eslint-disable-next-line
-			//debugger;
-			//console.trace(); // stack trace is hard to understand
-
 			return (state.simple.parallelVersion = payload);
 		}, 'simple_parallel_version'),
 		reset: b.commit(state => {

@@ -14,15 +14,6 @@
 				<!-- TODO render the full annotation instance? requires some changes to bind to store correctly and apply appropriate classes though -->
 				<div class="form-group form-group-lg">
 
-					<!-- Is this a parallel corpus? -->
-					<div v-if="isParallelCorpus">
-						<label class="control-label">{{ parallelVersionSelectorHeading }}</label>
-						<div>
-							<SelectPicker :options="parallelVersionOptions"
-									v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
-						</div>
-					</div>
-
 					<label class="control-label"
 						:for="firstMainAnnotation.id + '_' + uid"
 						:title="firstMainAnnotation.description || undefined"
@@ -42,6 +33,16 @@
 						bare
 						simple
 					/>
+
+					<!-- Is this a parallel corpus? -->
+					<div v-if="isParallelCorpus">
+						<label class="control-label">{{ inSourceVersionHeading }}</label>
+						<div>
+							<SelectPicker :options="parallelVersionOptions"
+									v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
+						</div>
+					</div>
+
 				</div>
 			</div>
 			<div :class="['tab-pane form-horizontal', {'active': activePattern==='extended'}]" id="extended">
@@ -207,7 +208,7 @@ export default Vue.extend({
 		isParallelCorpus: CorpusStore.get.isParallelCorpus,
 
 		// Heading to show above the parallel version selector
-		parallelVersionSelectorHeading: (): string => UIStore.getState().search.shared.parallelVersionSelectorHeading,
+		inSourceVersionHeading: (): string => UIStore.getState().search.shared.inSourceVersionHeading,
 
 		// What parallel versions are there (e.g. "en", "nl", etc.)
 		parallelVersionOptions: (): Option[] =>

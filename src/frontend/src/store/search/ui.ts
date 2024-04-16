@@ -78,7 +78,7 @@ type ModuleRootState = {
 				sentenceElement: string|null;
 			},
 
-			parallelVersionSelectorHeading: string,
+			inSourceVersionHeading: string,
 		}
 	};
 
@@ -258,7 +258,7 @@ const initialState: ModuleRootState = {
 				sentenceElement: null
 			},
 
-			parallelVersionSelectorHeading: 'Select source version:',
+			inSourceVersionHeading: 'in source version:',
 		}
 	},
 	explore: {
@@ -435,9 +435,9 @@ const actions = {
 						state.search.shared.within.sentenceElement = payload;
 				}, 'search_shared_within_sentenceElement')
 			},
-			parallelVersionSelectorHeading: b.commit((state, heading: string) => {
-				return (state.search.shared.parallelVersionSelectorHeading = heading);
-			}, 'search_shared_parallelVersionSelectorHeading'),
+			inSourceVersionHeading: b.commit((state, heading: string) => {
+				return (state.search.shared.inSourceVersionHeading = heading);
+			}, 'search_shared_inSourceVersionHeading'),
 		}
 	},
 	explore: {

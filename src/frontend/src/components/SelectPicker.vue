@@ -871,11 +871,16 @@ export default Vue.extend({
 		if (this.container) {
 			this.containerEl = document.querySelector(this.container);
 		}
+		// @ts-ignore
+		(this.$el).setValue = (v: string|string[]) => this.$emit('input', [v].flat().filter(v => v != null));
 	},
 	beforeDestroy() {
 		this.removeGlobalListeners();
 		// In case container has been set.
 		(this.$refs.menu as HTMLElement).parentElement!.removeChild(this.$refs.menu as HTMLElement);
+
+		// @ts-ignore
+		this.$el.setValue = undefined;
 	},
 });
 </script>

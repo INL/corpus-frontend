@@ -8,18 +8,19 @@
 
 		<div class="container-fluid">
 			<div class="form-group">
-				<label>Corpus Name <input maxlength="80" class="form-control" v-model="corpusName" placeholder="Corpus name"></label>
+				<label style="width: 100%;">Corpus Name <input id="corpus_name" maxlength="80" class="form-control" v-model="corpusName" placeholder="Corpus name"></label>
 			</div>
 			<div class="form-group">
 				<label for="corpus_document_type" title="The format of the documents that will be stored in the corpus">Document Format</label>
 				<br>
 				<SelectPicker
+					id="corpus_document_type"
 					hideEmpty
 					allowHtml
 					placeholder="Select a document format..."
 					container="body"
 					data-menu-width="auto"
-					data-width="auto"
+					data-width="100%"
 					:loading="loading"
 					:options="formatOptions"
 

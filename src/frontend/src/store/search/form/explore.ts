@@ -155,6 +155,7 @@ const actions = {
 	},
 
 	replace: b.commit((state, payload: ModuleRootState) => {
+		actions.corpora.replace(payload.corpora);
 		actions.frequency.replace(payload.frequency);
 		actions.ngram.replace(payload.ngram);
 	}, 'replace'),

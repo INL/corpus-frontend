@@ -241,12 +241,20 @@ export default Vue.extend({
 			return optGroups.length > 1 ? optGroups : optGroups.flatMap(g => g.options as Option[]);
 		},
 		metadataGroupByOptions(): OptGroup[] {
+			// we removed the field:prefix from metadata grouping options
+			// since the new groupby window. so we need to fix this here
+			function fix(o: OptGroup|Option) {
+				if ('value' in o) {o.value = 'field:'+o.value;}
+				else o.options.forEach(opt => {if (!(typeof opt === 'string')) fix(opt);});
+			}
+
 			const optGroups = getMetadataSubset(
 				UIStore.getState().results.shared.groupMetadataIds,
 				CorpusStore.get.metadataGroups(),
 				CorpusStore.get.allMetadataFieldsMap(),
 				'Group'
 			);
+			optGroups.forEach(fix);
 			return optGroups;
 		},
 		corporaGroupDisplayModeOptions(): string[] {

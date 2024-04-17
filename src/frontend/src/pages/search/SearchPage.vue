@@ -4,7 +4,12 @@
 		<template v-if="loadingState === 'loaded'">
 			<QueryForm/>
 			<QuerySummary v-if="resultsVisible" class="cf-panel cf-panel-lg" id="summary"/>
-			<Debug><div><div>Full query: </div><pre>{{debugQuery}}</pre></div></Debug>
+			<Debug style="margin: 0 -15px; margin-bottom: 40px;">
+				<div>
+					<div>Full query: </div>
+					<pre><template v-for="(v, k) in debugQuery"><template v-if="v != null && v !== ''">{{k}}: {{ v }}<br></template></template></pre>
+				</div>
+			</Debug>
 
 			<Results v-show="resultsVisible" id="results"/>
 
@@ -32,6 +37,7 @@ import QuerySummary from '@/pages/search/results/QuerySummary.vue';
 import Results from '@/pages/search/results/Results.vue';
 import PageGuide from '@/pages/search/PageGuide.vue';
 import Spinner from '@/components/Spinner.vue';
+import { BLSearchParameters } from '@/types/blacklabtypes';
 
 export default Vue.extend({
 	components: {
@@ -47,7 +53,7 @@ export default Vue.extend({
 
 		resultsVisible(): boolean { return InterfaceStore.getState().viewedResults != null; },
 		pageGuideEnabled(): boolean { return UIStore.getState().global.pageGuide.enabled; },
-		debugQuery(): string { return JSON.stringify(RootStore.get.blacklabParameters(), undefined, 2); }
+		debugQuery: RootStore.get.blacklabParameters
 	},
 });
 </script>

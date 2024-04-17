@@ -1,3 +1,6 @@
+// TODO split this file into patternUtils, groupUtils and generic utils.
+
+
 import URI from 'urijs';
 
 import * as BLTypes from '@/types/blacklabtypes';
@@ -754,3 +757,109 @@ export function parseGroupBySettingsUI(groupby: string): GroupBySettingsUI {
 /** Compile time checking: ensure the passed parameter is of the template type and return it (no-op).
  * Can use while setting variables initial value for example. */
 export function cast<T>(t: T): T { return t; }
+
+export const uiTypeSupport: {[key: string]: {[key: string]: Array<AppTypes.NormalizedAnnotation['uiType']>}} = {
+	search: {
+		simple: ['combobox', 'select', 'lexicon'],
+		extended: ['combobox', 'select', 'pos'],
+	},
+	explore: {
+		ngram: ['combobox', 'select']
+	}
+};
+
+export function getCorrectUiType<T extends AppTypes.NormalizedAnnotation['uiType']>(allowed: T[], actual: T): T {
+	return allowed.includes(actual) ? actual : 'text' as any;
+}
+
+import type {ModuleRootState as ModuleRootStateExplore} from '@/store/search/form/explore';
+import type {ModuleRootState as ModuleRootStateSearch} from '@/store/search/form/patterns';
+import cloneDeep from 'clone-deep';
+export function getPatternStringExplore(
+	subForm: keyof ModuleRootStateExplore,
+	state: ModuleRootStateExplore,
+	annots: Record<string, AppTypes.NormalizedAnnotation>
+): string|undefined {
+	switch (subForm) {
+		case 'corpora': return undefined;
+		case 'frequency': return '[]';
+		case 'ngram': return state.ngram.tokens
+				.slice(0, state.ngram.size)
+				// type select because we only ever want to output one cql token per n-gram input
+				.map(token => {
+					const tokenType = annots[token.id].uiType;
+					const correctedType = getCorrectUiType(uiTypeSupport.explore.ngram, tokenType);
+
+					return token.value ? `[${token.id}="${escapeRegex(token.value, correctedType !== 'select').replace(/"/g, '\\"')}"]` : '[]';
+				})
+				.join('');
+		default: throw new Error('Unknown submitted form - cannot generate cql query');
+	}
+}
+export function getPatternStringSearch(
+	subForm: keyof ModuleRootStateSearch,
+	state: ModuleRootStateSearch,
+	annots: Record<string, AppTypes.NormalizedAnnotation>
+): string|undefined {
+	// For the normal search form,
+	// the simple and extended views require the values to be processed before converting them to cql.
+	// The advanced and expert views already contain a good-to-go cql query. We only need to take care not to emit an empty string.
+	switch (subForm) {
+		case 'simple': return state.simple.value && getPatternString([state.simple], null);
+		case 'extended': {
+			const r = cloneDeep(Object.values(state.extended.annotationValues))
+				.filter(annot => !!annot.value)
+				.map(annot => ({
+					...annot,
+					type: getCorrectUiType(uiTypeSupport.search.extended, annot.type!)
+				}));
+			return r.length ? getPatternString(r, state.extended.within) : undefined;
+		}
+		case 'advanced': return state.advanced?.trim() || undefined;
+		case 'expert': return state.expert?.trim() || undefined;
+		case 'concept': return state.concept?.trim() || undefined;
+		case 'glosses': return state.glosses?.trim() || undefined;
+		default: throw new Error('Unimplemented pattern generation.');
+	}
+
+}
+
+export function getPatternSummaryExplore<K extends keyof ModuleRootStateExplore>(
+	subForm: K,
+	state: ModuleRootStateExplore,
+	annots: Record<string, AppTypes.NormalizedAnnotation>
+): string|undefined {
+	switch (subForm) {
+		case 'corpora': return undefined;
+		case 'frequency': return `${annots[state.frequency.annotationId].displayName} frequency`;
+		case 'ngram': return `${annots[state.ngram.groupAnnotationId].displayName} ${state.ngram.size}-grams`
+		default: return undefined;
+	}
+}
+export function getPatternSummarySearch<K extends keyof ModuleRootStateSearch>(
+	subForm: K,
+	state: ModuleRootStateSearch,
+) {
+	// For the normal search form,
+	// the simple and extended views require the values to be processed before converting them to cql.
+	// The advanced and expert views already contain a good-to-go cql query. We only need to take care not to emit an empty string.
+	switch (subForm) {
+		case 'simple': return state.simple.value || undefined;
+		case 'extended': {
+			const annotations: AppTypes.AnnotationValue[] = cloneDeep(Object.values(state.extended.annotationValues).filter(annot => !!annot.value))
+				.map(annot => ({
+					...annot,
+					type: getCorrectUiType(uiTypeSupport.search.extended, annot.type!)
+				}));
+			if (annotations.length === 0) { return undefined; }
+			// remove escape backslashes as this is just a summary
+			return getPatternString(annotations, state.extended.within)?.replace(/\\(.)/g, '$1');
+		}
+		case 'advanced': return state.advanced?.trim() || undefined;
+		case 'expert': return state.expert?.trim() || undefined;
+		case 'concept': return state.concept || undefined;
+		case 'glosses': return state.glosses || undefined;
+		default: return undefined;
+	}
+}
+

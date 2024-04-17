@@ -26,6 +26,7 @@ import UrlStateParser from '@/store/search/util/url-state-parser';
 import { NormalizedIndex } from '@/types/apptypes';
 import { debugLog } from '@/utils/debug';
 import { getFilterSummary } from '@/components/filters/filterValueFunctions';
+import { getPatternSummaryExplore, getPatternSummarySearch } from '@/utils';
 
 // Update the version whenever one of the properties in type HistoryEntry changes
 // That is enough to prevent loading out-of-date history.
@@ -149,6 +150,11 @@ const actions = {
 
 		// Order needs to be consistent or hash will be different.
 		const filterSummary: string|undefined = getFilterSummary(Object.values(entry.filters).sort((l, r) => l.id.localeCompare(r.id)));
+		const patternSummary: string|undefined =
+			entry.interface.form === 'search' ? getPatternSummarySearch(entry.interface.patternMode, entry.patterns) :
+			entry.interface.form === 'explore' ? getPatternSummaryExplore(entry.interface.exploreMode, entry.explore, CorpusModule.get.allAnnotationsMap()) :
+			undefined;
+
 		// Should only contain items that uniquely identify a query
 		// Normally this would only be the pattern (including gap values) and filters,
 		// but we've agreed that grouping differently constitutes a new query, so we also need to compare those
@@ -166,7 +172,7 @@ const actions = {
 			timestamp: new Date().getTime(),
 			displayValues: {
 				filters: filterSummary || '-',
-				pattern: pattern || '-'
+				pattern: patternSummary || '-'
 			}
 		};
 

@@ -10,23 +10,19 @@ import * as QueryStore from '@/store/search/query';
 
 export default Vue.extend({
 	computed: {
-		filters() { return Object.values(QueryStore.getState().filters  || {}); },
-		cqlPattern(): string|undefined { return QueryStore.get.patternString(); },
+		pattern: QueryStore.get.patternSummary,
+		filters: QueryStore.get.filterSummary,
 		summary(): string {
-
-			if (!this.cqlPattern && this.filters.length === 0) {
+			if (!this.pattern && !this.filters) {
 				return 'all documents';
 			}
 
-			const metadataString = QueryStore.get.filterSummary();
-
 			let ret = '';
-
-			if (this.cqlPattern) {
-				ret += '"' + this.cqlPattern + '"' + ' within ';
+			if (this.pattern) {
+				ret += this.pattern + ' within ';
 			}
-			if (metadataString) {
-				ret += 'documents where ' + metadataString;
+			if (this.filters) {
+				ret += 'documents where ' + this.filters;
 			} else {
 				ret += 'all documents';
 			}

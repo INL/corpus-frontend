@@ -24,14 +24,13 @@ import cloneDeep from 'clone-deep';
 import {getStoreBuilder} from 'vuex-typex';
 
 import {RootState} from '@/store/search/';
-import { AnnotationValue} from '@/types/apptypes';
 import * as CorpusModule from '@/store/search/corpus';
 import * as PatternModule from '@/store/search/form/patterns';
 import * as FilterModule from '@/store/search/form/filters';
 import * as ExploreModule from '@/store/search/form/explore';
 import * as GapModule from '@/store/search/form/gap';
-import { getPatternString, escapeRegex } from '@/utils';
 import { getFilterSummary, getFilterString } from '@/components/filters/filterValueFunctions';
+import { getPatternStringExplore, getPatternStringSearch, getPatternSummaryExplore, getPatternSummarySearch } from '@/utils';
 
 // todo migrate these weirdo state shapes to mapped types?
 // might be a cleaner way of doing this...
@@ -48,7 +47,7 @@ type ModuleRootStateSearch<K extends keyof PatternModule.ModuleRootState> = {
 };
 
 type ModuleRootStateExplore<K extends keyof ExploreModule.ModuleRootState> = {
-	form: 'explore';
+	form:'explore';
 	subForm: K;
 
 	formState: ExploreModule.ModuleRootState[K];
@@ -79,69 +78,17 @@ const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, Object
 const getState = b.state();
 
 const get = {
-	patternString: b.read((state): string|undefined => {
-		// Nothing submitted yet? This shouldn't be called in that case, but whatever.
-		if (!state.form) { return undefined; }
-
-		// Quite a bit of how we generate the cql pattern hinges on which part of the form was submitted.
-		if (state.form === 'explore') {
-			switch (state.subForm) {
-				case 'corpora': return undefined;
-				case 'frequency': return '[]';
-				case 'ngram': {
-					const annots = CorpusModule.get.allAnnotationsMap();
-					const stateHelper = state as ModuleRootStateExplore<'ngram'>;
-
-					return stateHelper.formState.tokens
-						.slice(0, stateHelper.formState.size)
-						// type select because we only ever want to output one cql token per n-gram input
-						.map(token => {
-							const tokenType = annots[token.id].uiType;
-							const correctedType = getCorrectUiType(uiTypeSupport.explore.ngram, tokenType);
-
-							return token.value ? `[${token.id}="${escapeRegex(token.value, correctedType !== 'select').replace(/"/g, '\\"')}"]` : '[]';
-						})
-						.join('');
-				}
-				default: throw new Error('Unknown submitted form - cannot generate cql query');
-			}
-		} else {
-			// For the normal search form,
-			// the simple and extended views require the values to be processed before converting them to cql.
-			// The advanced and expert views already contain a good-to-go cql query. We only need to take care not to emit an empty string.
-			switch (state.subForm) {
-				case 'simple': {
-					const pattern: AnnotationValue = (state as ModuleRootStateSearch<'simple'>).formState;
-					return pattern.value ? getPatternString([pattern], null) : undefined;
-				}
-				case 'extended': {
-					const pattern = (state as ModuleRootStateSearch<'extended'>).formState;
-					const annotations: AnnotationValue[] = cloneDeep(Object.values(pattern.annotationValues).filter(annot => !!annot.value))
-					.map(annot => ({
-						...annot,
-						type: getCorrectUiType(uiTypeSupport.search.extended, annot.type!)
-					}));
-					if (annotations.length === 0) { return undefined; }
-					return getPatternString(annotations, pattern.within);
-				}
-				case 'advanced':
-				case 'expert': {
-					const pattern = (state as ModuleRootStateSearch<'expert'>).formState;
-					// trim leading/trailing whitespace, remove pattern if naught but whitespace
-					return (pattern || '').trim() || undefined;
-				}
-				case 'concept': {
-					const pattern = (state as ModuleRootStateSearch<'concept'>).formState;
-					return pattern || '';
-				}
-				case 'glosses': {
-					const pattern = (state as ModuleRootStateSearch<'glosses'>).formState;
-					return pattern || '';
-				}
-				default: throw new Error('Unimplemented pattern generation.');
-			}
-		}
-	}, 'patternString'),
+	patternString: b.read((state): string|undefined =>
+		state.form === 'search' ? getPatternStringSearch(state.subForm, {[state.subForm]: state.formState} as any /** egh, feel free to refactor */, CorpusModule.get.allAnnotationsMap()) :
+		state.form === 'explore' ? getPatternStringExplore(state.subForm, {[state.subForm]: state.formState} as any /** egh, feel free to refactor */, CorpusModule.get.allAnnotationsMap()) :
+		undefined,
+	'patternString'),
+	/** Human-readable version of the query for use in history, summaries, etc. */
+	patternSummary: b.read((state): string|undefined =>
+		state.form === 'search' ? getPatternSummarySearch(state.subForm, {[state.subForm]: state.formState} as any /** egh, feel free to refactor */) :
+		state.form === 'explore' ? getPatternSummaryExplore(state.subForm, {[state.subForm]: state.formState} as any /** egh, feel free to refactor */, CorpusModule.get.allAnnotationsMap()) :
+		undefined,
+	'patternSummary'),
 	filterString: b.read((state): string|undefined => {
 		if (!state.form) { return undefined; }
 		return getFilterString(Object.values(state.filters).sort((a, b) => a.id.localeCompare(b.id)));
@@ -163,23 +110,6 @@ const actions = {
 
 /** We need to call some function from the module before creating the root store or this module won't be evaluated (e.g. none of this code will run) */
 const init = () => {/**/};
-
-type UITypeArray = Array<CorpusModule.NormalizedAnnotation['uiType']>;
-// type ValueType = UITypeArray|{[key: string]: ValueType};
-
-export const uiTypeSupport: {[key: string]: {[key: string]: UITypeArray}} = {
-	search: {
-		simple: ['combobox', 'select', 'lexicon'],
-		extended: ['combobox', 'select', 'pos'],
-	},
-	explore: {
-		ngram: ['combobox', 'select']
-	}
-};
-
-export function getCorrectUiType<T extends CorpusModule.NormalizedAnnotation['uiType']>(allowed: T[], actual: T): T {
-	return allowed.includes(actual) ? actual : 'text' as any;
-}
 
 export {
 	ModuleRootState,

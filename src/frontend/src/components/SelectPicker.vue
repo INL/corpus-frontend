@@ -872,7 +872,7 @@ export default Vue.extend({
 			this.containerEl = document.querySelector(this.container);
 		}
 		// @ts-ignore
-		(this.$el).setValue = (v: string|string[]) => this.$emit('input', [v].flat().filter(v => v != null));
+		(this.$el).setValue = (v: string|string[]) => this.$emit('input', this.multiple ? [v].flat().filter(v => v != null) : v || null);
 	},
 	beforeDestroy() {
 		this.removeGlobalListeners();

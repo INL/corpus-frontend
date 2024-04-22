@@ -8,7 +8,6 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -256,21 +255,30 @@ public class GlobalConfig {
         set(defaultProps, Keys.CF_URL_ON_CLIENT, "/" + applicationName);
         set(defaultProps, Keys.JSPATH, get(defaultProps, Keys.CF_URL_ON_CLIENT) + "/js");
 
+        // Get config dir from environment variable
+        String envNameFromAppName = applicationName.replaceAll("\\W", "_").toUpperCase() + "_CONFIG_DIR";
         Optional<GlobalConfig> config =
-                tryLoadConfigEnv(applicationName.toUpperCase()+"_CONFIG_DIR", configFileName)
-                .or(() -> tryLoadConfigEnv("CORPUS_FRONTEND_CONFIG_DIR", configFileName))
-                .or(() -> tryLoadConfigEnv("AUTOSEARCH_CONFIG_DIR", configFileName))
-                .or(() -> tryLoadConfigEnv("BLACKLAB_CONFIG_DIR", configFileName));
+                tryLoadConfigEnv(envNameFromAppName, configFileName) // use when running multiple frontends on the same server
+                .or(() -> tryLoadConfigEnv("CORPUS_FRONTEND_CONFIG_DIR", configFileName)) // use to override BLACKLAB_CONFIG_DIR
+                .or(() -> tryLoadConfigEnv("AUTOSEARCH_CONFIG_DIR", configFileName)) // deprecated?
+                .or(() -> tryLoadConfigEnv("BLACKLAB_CONFIG_DIR", configFileName)); // same as BlackLab
+
+        // Look in the same dir as the WAR file, or in .blacklab under the user's home dir
+        File userHomeDir = new File(System.getProperty("user.home")); // works on both linux and windows.
+        config = config
+                .or(() -> tryLoadConfigPath(new File(ctx.getRealPath("/")).getParentFile().getPath(), configFileName)) // WAR path; also works for multiple frontends
+                .or(() -> tryLoadConfigPath(userHomeDir.getPath(), configFileName)) // deprecated?
+                .or(() -> tryLoadConfigPath(new File(userHomeDir, ".blacklab").getPath(), configFileName)); // same as BlackLab
+
+        // Look in /etc/blacklab/
         if (SystemUtils.IS_OS_UNIX) {
             config = config
-                    .or(() -> tryLoadConfigPath("/etc/" + applicationName + "/", configFileName))
-                    .or(() -> tryLoadConfigPath("/etc/blacklab/", configFileName))
-                    .or(() -> tryLoadConfigPath("/vol1/etc/blacklab", configFileName)); // mirror blacklab locations.
+                    .or(() -> tryLoadConfigPath("/etc/" + applicationName + "/", configFileName)) // deprecated?
+                    .or(() -> tryLoadConfigPath("/etc/blacklab/", configFileName)); // same as BlackLab
         }
-        return config
-                .or(() -> tryLoadConfigPath(new File(ctx.getRealPath("/")).getParentFile().getPath(), configFileName))
-                .or(() -> tryLoadConfigPath(System.getProperty("user.home"), configFileName)) // user.home works on both linux and windows.
-                .orElseGet(GlobalConfig::getDefault);
+
+        // Return config, or default values if none found
+        return config.orElseGet(GlobalConfig::getDefault);
     }
 
     private static Optional<GlobalConfig> tryLoadConfigEnv(String envName, String filename) {

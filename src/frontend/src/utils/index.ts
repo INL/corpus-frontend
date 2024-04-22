@@ -805,7 +805,7 @@ export function getPatternStringSearch(
 	// the simple and extended views require the values to be processed before converting them to cql.
 	// The advanced and expert views already contain a good-to-go cql query. We only need to take care not to emit an empty string.
 	switch (subForm) {
-		case 'simple': return state.simple.value && getPatternString([state.simple], null);
+		case 'simple': return state.simple.annotationValue.value && getPatternString([state.simple.annotationValue], null);
 		case 'extended': {
 			const r = cloneDeep(Object.values(state.extended.annotationValues))
 				.filter(annot => !!annot.value)
@@ -844,7 +844,7 @@ export function getPatternSummarySearch<K extends keyof ModuleRootStateSearch>(
 	// the simple and extended views require the values to be processed before converting them to cql.
 	// The advanced and expert views already contain a good-to-go cql query. We only need to take care not to emit an empty string.
 	switch (subForm) {
-		case 'simple': return state.simple.value || undefined;
+		case 'simple': return state.simple.annotationValue.value || undefined;
 		case 'extended': {
 			const annotations: AppTypes.AnnotationValue[] = cloneDeep(Object.values(state.extended.annotationValues).filter(annot => !!annot.value))
 				.map(annot => ({

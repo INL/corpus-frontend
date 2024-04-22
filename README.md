@@ -95,20 +95,21 @@ Configuration
 ====================
 
 
-## Backend configuration
+## Main configuration file
 
-To configure the corpus-frontend, create a file `corpus-frontend.properties` (_see note on naming_) in any of the following directories (in descending order of priority):
-- `CORPUS_FRONTEND_CONFIG_DIR` Environment variable
-- `AUTOSEARCH_CONFIG_DIR` Environment variable
-- `BLACKLAB_CONFIG_DIR` Environment variable
-- (on unix) `/etc`, `/etc/blacklab`, `/vol1/etc/blacklab` (to mirror BlackLab's default locations)
-- in the same directory as the `.war` file
-- in the home dir (`~` on linux, `%userdir%` on windows)
+The main settings for the corpus-frontend application are configured in a file named `corpus-frontend.properties`.
 
-> **NOTE:** the filename must match the name of your `.war`, but ending in `.properties`!  
-If you deployed `corpus-frontend-test.war`, your config should then be named `corpus-frontend-test.properties`
+> **NOTE:** actually, the filename must match the name of your `.war`, so if your war is not named `corpus-frontend.war` but `corpus-ui.war`, the config file should be named `corpus-ui.properties`.
 
-Example file and defaults:
+The application will normally look for this file in the same configuration directory as BlackLab. That is, the following locations will be searched, starting from the first:
+
+- `BLACKLAB_CONFIG_DIR` environment variable (configure this in your servlet container, e.g. Tomcat)
+- `$HOME/.blacklab` (Linux) or `%USERDIR%/.blacklab` (Windows)
+- `/etc/blacklab` (Linux)
+
+> **NOTE:** if you don't want to use BlackLab's config directory, specify the `CORPUS_FRONTEND_CONFIG_DIR` environment variable or place the file in the same directory as the `.war` file. The latter method also works if you want to run multiple instances of the frontend on the same server.
+
+Example file (most values shown here are the default values):
 
 ```properties
 

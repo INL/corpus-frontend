@@ -76,7 +76,11 @@ type ModuleRootState = {
 				 * Defaults to the first element in the within.elements array, but null if none are defined.
 				 */
 				sentenceElement: string|null;
+<<<<<<< HEAD
 			};
+=======
+			},
+>>>>>>> dbc103f2 (Headings using i18n working.)
 		}
 	};
 

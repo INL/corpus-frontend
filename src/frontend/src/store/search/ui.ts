@@ -76,7 +76,7 @@ type ModuleRootState = {
 				 * Defaults to the first element in the within.elements array, but null if none are defined.
 				 */
 				sentenceElement: string|null;
-			},
+			};
 		}
 	};
 

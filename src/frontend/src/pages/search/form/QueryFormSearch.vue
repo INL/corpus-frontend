@@ -36,7 +36,7 @@
 
 					<!-- Is this a parallel corpus? -->
 					<div v-if="isParallelCorpus">
-						<label class="control-label">{{ inSourceVersionHeading }}</label>
+						<label class="control-label">{{ inSourceVersionHeading }} (@@@ {{ $t('hello') }})</label>
 						<div>
 							<SelectPicker :options="parallelVersionOptions"
 									v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>

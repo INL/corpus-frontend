@@ -32,6 +32,25 @@
 						bare
 						simple
 					/>
+<<<<<<< HEAD
+=======
+
+					<!-- Is this a parallel corpus? -->
+					<div v-if="isParallelCorpus">
+						<label class="control-label">{{ $t('inSourceVersionHeading') }}</label>
+						<div>
+							<SelectPicker :options="parallelVersionOptions"
+									v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
+						</div>
+
+						<label class="control-label">{{ $t('andCompareWithTargetVersionsHeading') }}</label>
+						<div>
+							<MultiValuePicker :options="parallelVersionOptions"
+									v-model="parallelTargetVersions" />
+						</div>
+					</div>
+
+>>>>>>> dbc103f2 (Headings using i18n working.)
 				</div>
 			</div>
 			<div :class="['tab-pane form-horizontal', {'active': activePattern==='extended'}]" id="extended">
@@ -192,6 +211,28 @@ export default Vue.extend({
 		subscriptions: [] as Array<() => void>
 	}),
 	computed: {
+<<<<<<< HEAD
+=======
+		// Is this a parallel corpus?
+		isParallelCorpus: CorpusStore.get.isParallelCorpus,
+
+		// What parallel versions are there (e.g. "en", "nl", etc.)
+		parallelVersionOptions: (): Option[] =>
+			CorpusStore.get.parallelFieldVersions().map(value => ({
+				value: value.name,
+				label: value.displayName || value.name
+			})),
+
+		parallelSourceVersion: {
+			get(): string|null { return PatternStore.get.simple().parallelSourceVersion; },
+			set: PatternStore.actions.simple.parallelSourceVersion
+		},
+		parallelTargetVersions: {
+			get(): string[]|null { return PatternStore.get.simple().parallelTargetVersions; },
+			set: PatternStore.actions.simple.parallelTargetVersions
+		},
+
+>>>>>>> dbc103f2 (Headings using i18n working.)
 		activePattern: {
 			get(): string { return InterfaceStore.getState().patternMode; },
 			set: InterfaceStore.actions.patternMode,

@@ -89,8 +89,7 @@ const get = {
 			group: activeView.groupBy.join(','),
 
 			number: state.global.pageSize,
-			sourceVersion: QueryModule.get.annotatedFieldName(),
-			targetVersions: undefined,
+			field: QueryModule.get.annotatedFieldName(),
 			patt: QueryModule.get.patternString(),
 			pattgapdata: (QueryModule.get.patternString() && QueryModule.getState().gap) ? QueryModule.getState().gap!.value || undefined : undefined,
 

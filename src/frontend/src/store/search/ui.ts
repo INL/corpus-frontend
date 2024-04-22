@@ -262,7 +262,7 @@ const initialState: ModuleRootState = {
 
 			inSourceVersionHeading: 'in source version:',
 
-			andCompareWithTargetVersionsHeading: 'and compare with target versions:'
+			andCompareWithTargetVersionsHeading: 'and compare with target version(s):'
 		}
 	},
 	explore: {

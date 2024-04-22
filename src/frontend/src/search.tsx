@@ -202,11 +202,13 @@ Rethink page initialization
 
 import * as loginSystem from '@/utils/loginsystem';
 import { init as initApi } from '@/api';
+import i18n from './i18n'
 
 $(document).ready(async () => {
 
 	// We can render before the tagset loads, the form just won't be populated from the url yet.
 	(window as any).vueRoot = new Vue({
+		i18n,
 		store: RootStore.store,
 		render: h => h(SearchPageComponent),
 		mounted: async () => {

@@ -36,7 +36,7 @@
 
 					<!-- Is this a parallel corpus? -->
 					<div v-if="isParallelCorpus">
-						<label class="control-label">{{ $('inSourceVersionHeading') }} (@@@ {{ $t('hello') }})</label>
+						<label class="control-label">{{ $t('inSourceVersionHeading') }}</label>
 						<div>
 							<SelectPicker :options="parallelVersionOptions"
 									v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
@@ -214,11 +214,6 @@ export default Vue.extend({
 	computed: {
 		// Is this a parallel corpus?
 		isParallelCorpus: CorpusStore.get.isParallelCorpus,
-
-		// Heading to show above the parallel version selector
-		inSourceVersionHeading: (): string => UIStore.getState().search.shared.inSourceVersionHeading,
-
-		andCompareWithTargetVersionsHeading: (): string => UIStore.getState().search.shared.andCompareWithTargetVersionsHeading,
 
 		// What parallel versions are there (e.g. "en", "nl", etc.)
 		parallelVersionOptions: (): Option[] =>

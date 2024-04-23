@@ -1,5 +1,7 @@
 {
 	"search": {
-		"tabSimple": "Simple"
+		"simple": {
+			"heading": "Simple"
+		}
 	}
 }

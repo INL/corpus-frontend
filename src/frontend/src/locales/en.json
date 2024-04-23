@@ -3,7 +3,15 @@
 		"simple": {
 			"heading": "Simple"
 		},
+
 		"inSourceVersion": "in version",
 		"andCompareWithTargetVersions": "and compare with version(s)"
+	},
+
+	"widget": {
+		"multiValuePicker": {
+			"textNoneSelected": "Nothing selected. Select one or more options.",
+			"textSelected": "Selected"
+		}
 	}
 }

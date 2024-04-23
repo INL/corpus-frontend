@@ -20,6 +20,7 @@
       - [Application structure](#application-structure)
       - [The Vuex store](#the-vuex-store)
       - [URL generation and parsing](#url-generation-and-parsing)
+      - [Internationalization](#internationalization)
       - [Development tips](#development-tips)
     - [Backend development](#backend-development)
 
@@ -1324,7 +1325,7 @@ The url parsing is a little involved, because depending on whether a `tagset` is
 Because of this, the store is first initialized (with empty values everywhere), then the url is parsed, after which the state is updated with the parsed values (see [search.ts](src/frontend/src/search.ts)).
 When navigating back and forth through browser history, the url is not parsed, instead the state is attached to the history entry and read directly.
 
-### Internationalization
+### **Internationalization**
 
 The app is internationalized using [vue-i18n](https://kazupon.github.io/vue-i18n/). Please note that the app is only partially translatable right now; I18n is a work in progress. Contributions are welcome.
 

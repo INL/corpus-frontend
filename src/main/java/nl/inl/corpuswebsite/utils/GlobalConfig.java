@@ -258,7 +258,7 @@ public class GlobalConfig {
         // Get config dir from environment variable
         String envNameFromAppName = applicationName.replaceAll("\\W", "_").toUpperCase() + "_CONFIG_DIR";
         Optional<GlobalConfig> config =
-                tryLoadConfigEnv(envNameFromAppName, configFileName) // use when running multiple frontends on the same server
+                tryLoadConfigEnv(envNameFromAppName, configFileName) // deprecated? properties files already use the app name
                 .or(() -> tryLoadConfigEnv("CORPUS_FRONTEND_CONFIG_DIR", configFileName)) // use to override BLACKLAB_CONFIG_DIR
                 .or(() -> tryLoadConfigEnv("AUTOSEARCH_CONFIG_DIR", configFileName)) // deprecated?
                 .or(() -> tryLoadConfigEnv("BLACKLAB_CONFIG_DIR", configFileName)); // same as BlackLab

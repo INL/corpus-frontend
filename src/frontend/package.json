@@ -78,6 +78,7 @@
     "qs": "^6.5.2",
     "reactive-dep-tree": "^0.5.2",
     "rxjs": "^7.8.1",
+    "ts-deepmerge": "^7.0.0",
     "urijs": "^1.19.7",
     "v-tooltip": "2.0.2",
     "vue": "^2.7.14",

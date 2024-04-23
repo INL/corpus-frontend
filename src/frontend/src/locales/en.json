@@ -1,4 +1,5 @@
 {
-	"inSourceVersionHeading": "in version",
-	"andCompareWithTargetVersionsHeading": "and compare with version(s)"
+	"search": {
+		"tabSimple": "Simple"
+	}
 }

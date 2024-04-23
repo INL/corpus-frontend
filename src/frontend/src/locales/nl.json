@@ -1,4 +1,5 @@
 {
-	"inSourceVersionHeading": "in bronversie",
-	"andCompareWithTargetVersionsHeading": "en vergelijk met doelversie(s)"
+	"search": {
+		"tabSimple": "Simpel"
+	}
 }

@@ -202,9 +202,32 @@ Rethink page initialization
 
 import * as loginSystem from '@/utils/loginsystem';
 import { init as initApi } from '@/api';
-import i18n from './i18n'
+import VueI18n, { LocaleMessageObject } from 'vue-i18n';
+import axios from 'axios';
 
 $(document).ready(async () => {
+
+	async function loadLocaleMessages(locale: string): Promise<LocaleMessageObject> {
+		let messages: LocaleMessageObject = await import(`./locales/${locale}.json`);
+		try {
+			// Load any overrides for the current index and merge them with the default messages
+			const overrides = await axios.get(`${CONTEXT_URL}/${INDEX_ID}/static/locales/${locale}.json`);
+			messages = { ...messages, ...overrides.data };
+		} catch (e) {
+			// no overrides, that's fine
+		}
+		return messages;
+	}
+
+	const defaultLocale = 'en';
+
+	const messages: VueI18n.LocaleMessages = { [defaultLocale]: await loadLocaleMessages(defaultLocale) };
+
+	Vue.use(VueI18n);
+	const i18n = new VueI18n({
+		locale: defaultLocale,
+		messages,
+	});
 
 	// We can render before the tagset loads, the form just won't be populated from the url yet.
 	(window as any).vueRoot = new Vue({
@@ -226,6 +249,32 @@ $(document).ready(async () => {
 			connectStreamsToVuex();
 			connectJqueryToPage();
 			initQueryBuilder();
-		}
+		},
+		watch: {
+			// When the chosen locale changes, load the messages for that locale
+			'$i18n.locale': {
+				immediate: true,
+				handler(newLocale) {
+			  		this.loadMessages(newLocale);
+				},
+			},
+		},
+		methods: {
+			// Load the messages for the given locale
+			async loadMessages(locale: string) {
+				if (!this.$i18n.availableLocales.includes(locale)) {
+					// Load the default messages file included in the application
+					let messages = await import(`./locales/${locale}.json`);
+					try {
+						// Load any overrides for the current index and merge them with the default messages
+						const overrides = await axios.get(`${CONTEXT_URL}/${INDEX_ID}/static/locales/${locale}.json`);
+						messages = { ...messages, ...overrides.data };
+					} catch (e) {
+						// no overrides, that's fine
+					}
+					this.$i18n.setLocaleMessage(locale, messages);
+				}
+			},
+		},
 	}).$mount(document.querySelector('#vue-root')!);
 });

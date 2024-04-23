@@ -204,6 +204,7 @@ import * as loginSystem from '@/utils/loginsystem';
 import { init as initApi } from '@/api';
 import VueI18n, { LocaleMessageObject } from 'vue-i18n';
 import axios from 'axios';
+import { merge } from 'ts-deepmerge';
 
 $(document).ready(async () => {
 
@@ -212,7 +213,7 @@ $(document).ready(async () => {
 		try {
 			// Load any overrides for the current index and merge them with the default messages
 			const overrides = await axios.get(`${CONTEXT_URL}/${INDEX_ID}/static/locales/${locale}.json`);
-			messages = { ...messages, ...overrides.data };
+			messages = merge(messages, overrides.data);
 		} catch (e) {
 			// no overrides, that's fine
 		}
@@ -263,15 +264,7 @@ $(document).ready(async () => {
 			// Load the messages for the given locale
 			async loadMessages(locale: string) {
 				if (!this.$i18n.availableLocales.includes(locale)) {
-					// Load the default messages file included in the application
-					let messages = await import(`./locales/${locale}.json`);
-					try {
-						// Load any overrides for the current index and merge them with the default messages
-						const overrides = await axios.get(`${CONTEXT_URL}/${INDEX_ID}/static/locales/${locale}.json`);
-						messages = { ...messages, ...overrides.data };
-					} catch (e) {
-						// no overrides, that's fine
-					}
+					const messages = await loadLocaleMessages(locale);
 					this.$i18n.setLocaleMessage(locale, messages);
 				}
 			},

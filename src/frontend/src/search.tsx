@@ -213,7 +213,11 @@ $(document).ready(async () => {
 		try {
 			// Load any overrides for the current index and merge them with the default messages
 			const overrides = await axios.get(`${CONTEXT_URL}/${INDEX_ID}/static/locales/${locale}.json`);
-			messages = merge(messages, overrides.data);
+			if (typeof overrides.data === 'string') {
+				console.warn(`Override ${INDEX_ID}/static/locales/${locale}.json does not appear to be valid JSON! Skipping overrides.`);
+			} else {
+				messages = merge(messages, overrides.data);
+			}
 		} catch (e) {
 			// no overrides, that's fine
 		}

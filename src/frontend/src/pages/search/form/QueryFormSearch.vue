@@ -36,13 +36,13 @@
 
 					<!-- Is this a parallel corpus? -->
 					<div v-if="isParallelCorpus">
-						<label class="control-label">{{ $t('inSourceVersionHeading') }}</label>
+						<label class="control-label">{{ $t('search.inSourceVersion') }}</label>
 						<div>
 							<SelectPicker :options="parallelVersionOptions"
 									v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
 						</div>
 
-						<label class="control-label">{{ $t('andCompareWithTargetVersionsHeading') }}</label>
+						<label class="control-label">{{ $t('search.andCompareWithTargetVersions') }}</label>
 						<div>
 							<MultiValuePicker :options="parallelVersionOptions"
 									v-model="parallelTargetVersions" />

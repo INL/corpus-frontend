@@ -1,16 +1,16 @@
 <template>
 	<div class="multi-value-picker">
-		<SelectPicker :options="options" :value="selectValue" @input="add($event)" data-menu-width="grow" hideEmpty/>
 		<div class="selected">
-			<p v-if="selected.length > 0">
-				{{ textSelected || $t('widget.multiValuePicker.textSelected') }}:
-				<ul>
-					<li v-for="v in selected" :key="v.value" :data-value="v.value" title="Click to remove" @click="clickLabel($event?.target)">
-						{{ v.label || v.value }}
-					</li>
-				</ul>
-			</p>
-			<p v-else>{{ textNoneSelected || $t('widget.multiValuePicker.textNoneSelected') }}</p>
+			<!-- <p v-if="selected.length > 0">{{ textSelected || $t('widget.multiValuePicker.textSelected') }}:</p> -->
+			<ul>
+				<li class='option' v-for="v in selected" :key="v.value" :data-value="v.value" title="Click to remove" @click="clickLabel($event?.target)">
+					{{ v.label || v.value }}
+				</li>
+				<li v-if="optionsNotYetSelected.length > 0">
+					<SelectPicker :options="optionsNotYetSelected" :value="selectValue" @input="add($event)" data-menu-width="grow" hideEmpty/>
+				</li>
+			</ul>
+			<!-- <p v-if="selected.length === 0">{{ textNoneSelected || $t('widget.multiValuePicker.textNoneSelected') }}</p> -->
 		</div>
 	</div>
 </template>
@@ -58,25 +58,27 @@ export default Vue.extend({
 			default: ''
 		},
 	},
+	computed: {
+		optionsNotYetSelected(): Option[] {
+			return this.options.filter(o => !this.selected.includes(o));
+		},
+	},
 	methods: {
 		add(v: string) {
 			const opt = this.options.find(o => (o as Option).value === v);
 			if (opt) {
 				const i = this.selected.indexOf(opt);
-				if (i >= 0) {
-					// Already selected: unselect it
-					this.selected.splice(i, 1);
-				} else {
+				if (i < 0) {
 					// Not yet selected: add it at the end
 					this.selected.push(opt);
 				}
 			}
 
 			// Clear SelectPicker selection (kinda ugly...)
-			this.selectValue = v;
-			setTimeout(() => {
-				this.selectValue = null;
-			}, 10);
+			// this.selectValue = v;
+			// setTimeout(() => {
+			// 	this.selectValue = null;
+			// }, 10);
 		},
 		clickLabel(target: EventTarget|null) {
 			if (target && target instanceof HTMLElement) {
@@ -100,8 +102,8 @@ export default Vue.extend({
 	}),
 	watch: {
 		selected() {
-			console.log('selected:', this.selected);
-			this.$emit('input', this.selected);
+			//console.log('selected:', this.selected);
+			this.$emit('input', this.selected.map(o => o.value));
 		},
 	},
 	mounted() {
@@ -123,14 +125,20 @@ div.selected {
 		li {
 			list-style-type: none;
 			display: inline-block;
-			background-color: lightblue;
-			padding: 5px;
-			border-radius: 3px;
 			margin: 2px;
+			user-select: none;
+		}
+		li.option {
+			position: relative;
+			top: 1px;
+			background-color: lighten(#337ab7, 40); // $panel-color (global.scss); maybe separate variables into file we can import here?
+			color: black;
+			padding: 7px;
+			border-radius: 3px;
 			cursor: pointer;
 			&::after {
 				font-weight: bold;
-				content: '✖';
+				content: '✕';
 				margin-left: 5px;
 			}
 		}

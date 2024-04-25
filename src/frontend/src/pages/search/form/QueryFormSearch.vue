@@ -408,7 +408,10 @@ export default Vue.extend({
 			},
 			immediate: true,
 			deep: true
-		}
+		},
+		parallelTargetVersions(v) {
+			console.log('parallelTargetVersions', v)
+		},
 	},
 	mounted() {
 		if (this.$refs.reset) {

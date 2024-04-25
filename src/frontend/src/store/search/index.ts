@@ -198,6 +198,7 @@ const actions = {
 					// Also cast back into correct type after parsing/stringifying so we don't lose type-safety (parse returns any)
 					filters: get.filtersActive() ? cloneDeep(FilterModule.get.activeFiltersMap()) as ReturnType<typeof FilterModule['get']['activeFiltersMap']> : {},
 					formState: cloneDeep(PatternModule.getState()[patternMode]) as PatternModule.ModuleRootState[typeof patternMode],
+					parallelVersions: cloneDeep(PatternModule.getState().parallelVersions),
 					gap: get.gapFillingActive() ? GapModule.getState() : GapModule.defaults,
 				};
 				break;
@@ -271,6 +272,9 @@ const actions = {
 					concept: null,
 					glosses: null,
 					expert: null,
+					// @@@JN is this okay?
+					parallelVersions: PatternModule.getState().parallelVersions,
+					// @@@JN this seems wrong..? (why are value and case here?)
 					simple: {...PatternModule.getState().simple, value: '', case: false},
 					extended: {
 						annotationValues: {

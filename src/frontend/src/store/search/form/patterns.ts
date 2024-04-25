@@ -15,9 +15,12 @@ import { debugLog, debugLogCat } from '@/utils/debug';
 import { AnnotationValue } from '@/types/apptypes';
 
 type ModuleRootState = {
+	// Parallel versions (shared between multiple states, e.g. simple, extended, etc.)
+	parallelVersions: {
+		source: string|null,
+		targets: string[],
+	},
 	simple: {
-		parallelSourceVersion: string|null,
-		parallelTargetVersions: string[]|null,
 		annotationValue: AnnotationValue
 	},
 	extended: {
@@ -40,9 +43,11 @@ type ModuleRootState = {
 // Then: the basic state shape with the appropriate annotation and filters created
 // Finally: the values initialized from the page's url on first load.
 const defaults: ModuleRootState = {
+	parallelVersions: {
+		source: null,
+		targets: [],
+	},
 	simple: {
-		parallelSourceVersion: null,
-		parallelTargetVersions: null,
 		annotationValue: {case: false, id: '', value: '', type: 'text'}
 	},
 	extended: {
@@ -71,6 +76,8 @@ const get = {
 	},
 
 	simple: b.read(state => state.simple, 'simple'),
+
+	parallelVersions: b.read(state => state.parallelVersions, 'parallelVersions'),
 };
 
 const privateActions = {
@@ -79,30 +86,36 @@ const privateActions = {
 	initExtendedAnnotation: b.commit((state, payload: AnnotationValue) =>
 			Vue.set(state.extended.annotationValues, payload.id, payload), 'annotation_init_extended'),
 	initSimpleAnnotation: b.commit((state, payload: ModuleRootState['simple']) => Object.assign<ModuleRootState['simple'],
-			ModuleRootState['simple']>(state.simple, payload), 'annotation_init_simple')
+			ModuleRootState['simple']>(state.simple, payload), 'annotation_init_simple'),
+	initParallelVersions: b.commit((state, payload: ModuleRootState['parallelVersions']) => Object.assign<ModuleRootState['parallelVersions'],
+			ModuleRootState['parallelVersions']>(state.parallelVersions, payload), 'parallelVersions_init'),
 };
 
 const actions = {
+	parallelVersions: {
+		parallelSourceVersion: b.commit((state, payload: string|null) => {
+			debugLogCat('parallel', `parallelVersions.source: Setting to ${payload}`);
+			return (state.parallelVersions.source = payload);
+		}, 'parallelVersions_source_version'),
+		parallelTargetVersions: b.commit((state, payload: string[]|null) => {
+			debugLogCat('parallel', `parallelVersions.parallelTargetVersions: Setting to ${payload}`);
+			return Vue.set(state.parallelVersions, 'targets', payload);
+		}, 'parallelVersions_targets'),
+		reset: b.commit(state => {
+			const defaultSourceVersion = CorpusStore.get.parallelVersions()[0].name;
+			debugLogCat('parallel', `parallelVersions.reset: Selecting default source version ${defaultSourceVersion}`);
+			state.parallelVersions.source = defaultSourceVersion;
+			state.parallelVersions.targets = [];
+		}, 'parallelVersions_reset'),
+	},
 	simple: {
 		annotation: b.commit((state, {id, type, ...safeValues}: Partial<AnnotationValue>&{id: string}) => {
 			// Never overwrite annotatedFieldId or type, even when they're submitted through here.
 			Object.assign(state.simple.annotationValue, safeValues);
 		}, 'simple_annotation'),
-		parallelSourceVersion: b.commit((state, payload: string|null) => {
-			debugLogCat('parallel', `simple.parallelVersion: Setting to ${payload}`);
-			return (state.simple.parallelSourceVersion = payload);
-		}, 'simple_parallel_source_version'),
-		parallelTargetVersions: b.commit((state, payload: string[]|null) => {
-			debugLogCat('parallel', `simple.parallelTargetVersions: Setting to ${payload}`);
-			return Vue.set(state.simple, 'parallelTargetVersions', payload);
-		}, 'simple_parallel_target_versions'),
 		reset: b.commit(state => {
 			state.simple.annotationValue.value = '';
 			state.simple.annotationValue.case = false;
-			const parVersion = CorpusStore.get.parallelFieldVersions()[0].name;
-			debugLogCat('parallel', `simple.reset: Selecting default version ${parVersion}`);
-			state.simple.parallelSourceVersion = parVersion;
-			state.simple.parallelTargetVersions = null;
 		}, 'simple_reset'),
 	},
 	extended: {
@@ -138,8 +151,10 @@ const actions = {
 	replace: b.commit((state, payload: ModuleRootState) => {
 		actions.simple.reset();
 		actions.simple.annotation(payload.simple.annotationValue);
-		actions.simple.parallelSourceVersion(payload.simple.parallelSourceVersion);
-		actions.simple.parallelTargetVersions(payload.simple.parallelTargetVersions);
+
+		actions.parallelVersions.reset();
+		actions.parallelVersions.parallelSourceVersion(payload.parallelVersions.source);
+		actions.parallelVersions.parallelTargetVersions(payload.parallelVersions.targets);
 
 		actions.advanced(payload.advanced);
 		actions.concept(payload.concept);
@@ -154,6 +169,12 @@ const actions = {
 
 /** We need to call some function from the module before creating the root store or this module won't be evaluated (e.g. none of this code will run) */
 const init = () => {
+	const defaultParallelVersion = CorpusStore.get.parallelVersions()[0].name;
+	debugLogCat('parallel', `init: Set default parallel version: ${defaultParallelVersion}`);
+	privateActions.initParallelVersions({
+		source: defaultParallelVersion,
+		targets: [],
+	})
 	CorpusStore.get.allAnnotations().forEach(({id, uiType}) =>
 		privateActions.initExtendedAnnotation({
 			id,
@@ -162,11 +183,7 @@ const init = () => {
 			type: uiType
 		})
 	);
-	const defaultParallelVersion = CorpusStore.get.parallelFieldVersions()[0].name;
-	debugLogCat('parallel', `init: Set default parallel version: ${defaultParallelVersion}`);
 	privateActions.initSimpleAnnotation({
-		parallelSourceVersion: defaultParallelVersion,
-		parallelTargetVersions: null,
 		annotationValue: {
 			id: CorpusStore.get.firstMainAnnotation().id,
 			value: '',

@@ -42,6 +42,7 @@ type ModuleRootStateSearch<K extends keyof PatternModule.ModuleRootState> = {
 	subForm: K;
 
 	formState: PatternModule.ModuleRootState[K];
+	parallelVersions: PatternModule.ModuleRootState['parallelVersions'];
 	filters: FilterModule.ModuleRootState;
 	gap: GapModule.ModuleRootState;
 };
@@ -82,7 +83,9 @@ const get = {
 		if (!state.form) { return undefined; }
 		if (state.form !== 'explore') {
 			if (state.subForm === 'simple') {
-				return (state as ModuleRootStateSearch<'simple'>).formState.parallelSourceVersion || undefined;
+				return (state as ModuleRootStateSearch<'simple'>).parallelVersions.source || undefined;
+			} else if (state.subForm === 'extended') {
+				return (state as ModuleRootStateSearch<'extended'>).parallelVersions.source || undefined;
 			}
 		}
 		return CorpusModule.get.mainAnnotatedField();

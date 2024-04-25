@@ -62,6 +62,9 @@ export default Vue.extend({
 		optionsNotYetSelected(): Option[] {
 			return this.options.filter(o => !this.selected.includes(o));
 		},
+		selected(): Option[] {
+			return this.value?.map(v => this.options.find(o => (o as Option).value === v) as Option) || [];
+		},
 	},
 	methods: {
 		add(v: string) {
@@ -70,7 +73,8 @@ export default Vue.extend({
 				const i = this.selected.indexOf(opt);
 				if (i < 0) {
 					// Not yet selected: add it at the end
-					this.selected.push(opt);
+					this.$emit('input', this.selected.concat([opt]).map(o => o.value));
+					//this.selected.push(opt);
 				}
 			}
 
@@ -87,25 +91,25 @@ export default Vue.extend({
 			}
 		},
 		remove(v: string) {
-			const opt = this.options.find(o => (o as Option).value === v);
-			if (opt) {
-				const i = this.selected.indexOf(opt);
-				if (i >= 0) {
-					this.selected.splice(i, 1);
-				}
-			}
+			this.$emit('input', this.selected.filter(o => o.value !== v).map(o => o.value));
+			// const opt = this.options.find(o => (o as Option).value === v);
+			// if (opt) {
+			// 	const i = this.selected.indexOf(opt);
+			// 	if (i >= 0) {
+			// 		this.selected.splice(i, 1);
+			// 	}
+			// }
 		},
 	},
 	data: () =>  ({
-		selected: [] as Option[],
 		selectValue: null as string|null,
 	}),
-	watch: {
-		selected() {
-			//console.log('selected:', this.selected);
-			this.$emit('input', this.selected.map(o => o.value));
-		},
-	},
+	// watch: {
+	// 	selected() {
+	// 		//console.log('selected:', this.selected);
+	// 		this.$emit('input', this.selected.map(o => o.value));
+	// 	},
+	// },
 	mounted() {
 	},
 	beforeDestroy() {

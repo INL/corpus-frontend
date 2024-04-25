@@ -299,6 +299,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	@memoize
 	private get patterns(): PatternModule.ModuleRootState {
 		return {
+			parallelVersions: this.parallelVersions,
 			simple: this.simplePattern,
 			extended: this.extendedPattern,
 			advanced: this.advancedPattern,
@@ -441,13 +442,20 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	}
 
 	@memoize
+	private get parallelVersions() {
+		const strTargetVersions = this.getString('targetVersions', null);
+		return {
+			source: this.getString('sourceVersion', CorpusModule.get.parallelVersions()[0].name),
+			targets: strTargetVersions ? strTargetVersions.split(',') : [],
+		};
+	}
+
+	@memoize
 	private get simplePattern() {
 		// Simple view is just a single annotation without any within query or filters
 		// NOTE: do not use extendedPattern, as the annotation used for simple may not be available for extended searching!
-		const strTargetVersions = this.getString('targetVersions', null);
+		// const strTargetVersions = this.getString('targetVersions', null);
 		return {
-			parallelSourceVersion: this.getString('sourceVersion', CorpusModule.get.parallelFieldVersions()[0].name),
-			parallelTargetVersions: strTargetVersions ? strTargetVersions.split(',') : [],
 			annotationValue: this.annotationValues[CorpusModule.get.firstMainAnnotation().id] || {}
 		};
 	}

@@ -122,6 +122,22 @@
 						</label>
 					</div>
 				</div>
+
+				<!-- Is this a parallel corpus? -->
+				<div v-if="isParallelCorpus">
+					<label class="control-label">{{ $t('search.inSourceVersion') }}</label>
+					<div>
+						<SelectPicker :options="parallelVersionOptions"
+								v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
+					</div>
+
+					<label class="control-label">{{ $t('search.andCompareWithTargetVersions') }}</label>
+					<div>
+						<MultiValuePicker :options="parallelVersionOptions"
+								v-model="parallelTargetVersions" />
+					</div>
+				</div>
+
 			</div>
 			<div v-if="advancedEnabled" :class="['tab-pane', {'active': activePattern==='advanced'}]" id="advanced">
 				<div id="querybuilder" ref="querybuilder"></div>
@@ -217,18 +233,18 @@ export default Vue.extend({
 
 		// What parallel versions are there (e.g. "en", "nl", etc.)
 		parallelVersionOptions: (): Option[] =>
-			CorpusStore.get.parallelFieldVersions().map(value => ({
+			CorpusStore.get.parallelVersions().map(value => ({
 				value: value.name,
 				label: value.displayName || value.name
 			})),
 
 		parallelSourceVersion: {
-			get(): string|null { return PatternStore.get.simple().parallelSourceVersion; },
-			set: PatternStore.actions.simple.parallelSourceVersion
+			get(): string|null { return PatternStore.get.parallelVersions().source; },
+			set: PatternStore.actions.parallelVersions.parallelSourceVersion
 		},
 		parallelTargetVersions: {
-			get(): string[]|null { return PatternStore.get.simple().parallelTargetVersions; },
-			set: PatternStore.actions.simple.parallelTargetVersions
+			get(): string[]|null { return PatternStore.get.parallelVersions().targets; },
+			set: PatternStore.actions.parallelVersions.parallelTargetVersions
 		},
 
 		activePattern: {

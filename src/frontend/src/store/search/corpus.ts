@@ -56,7 +56,7 @@ const get = {
 
 	/** If this is a parallel corpus, what parallel versions does it contain?
 	 *  (e.g. ["en", "nl"] if there's fields "contents__en" and "contents__nl") */
-	parallelFieldVersions: b.read((state): { prefix: string, name: string, displayName: string }[] => {
+	parallelVersions: b.read((state): { prefix: string, name: string, displayName: string }[] => {
 		const prefix = get.parallelFieldPrefix() + '__';
 		return get.allAnnotatedFields()
 			.filter(f => f.id.startsWith(prefix))
@@ -65,7 +65,7 @@ const get = {
 				name: f.id.substring(prefix.length),
 				displayName: f.displayName
 			}));
-	}, 'parallelFieldVersions'),
+	}, 'parallelVersions'),
 
 	/** All annotations, without duplicates and in no specific order */
 	allAnnotations: b.read((state): NormalizedAnnotation[] => Object.values(state.corpus?.annotatedFields[state.corpus.mainAnnotatedField].annotations ?? {}), 'allAnnotations'),

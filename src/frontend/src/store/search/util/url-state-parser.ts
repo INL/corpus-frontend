@@ -265,6 +265,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 		if ( // all tokens need to be very simple [annotation="value"] tokens.
 			!cql ||
 			cql.within ||
+			(cql.targetVersions && cql.targetVersions.length > 0) ||
 			cql.tokens.length > ExploreModule.defaults.ngram.maxSize ||
 			cql.tokens.find(t =>
 				t.leadingXmlTag != null ||
@@ -443,10 +444,9 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 
 	@memoize
 	private get parallelVersions() {
-		const strTargetVersions = this.getString('targetVersions', null);
 		return {
-			source: this.getString('sourceVersion', CorpusModule.get.parallelVersions()[0].name),
-			targets: strTargetVersions ? strTargetVersions.split(',') : [],
+			source: this.getString('field', CorpusModule.get.parallelVersions()[0].name),
+			targets: this._parsedCql ? this._parsedCql.targetVersions || [] : [],
 		};
 	}
 
@@ -551,6 +551,11 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	@memoize
 	private get within(): string|null {
 		return this._parsedCql ? this._parsedCql.within || null : null;
+	}
+
+	@memoize
+	private get targetVersions(): string[]|null {
+		return this._parsedCql ? this._parsedCql.targetVersions || null : null;
 	}
 
 	@memoize

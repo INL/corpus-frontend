@@ -3,27 +3,27 @@
 	<div v-if="mode === 'simple'">
 		<label class="control-label">{{ $t('search.inSourceVersion') }}</label>
 		<div>
-			<SelectPicker :options="parallelVersionOptions"
+			<SelectPicker :options="parallelSourceVersionOptions"
 					v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
 		</div>
 
 		<label class="control-label">{{ $t('search.andCompareWithTargetVersions') }}</label>
 		<div>
-			<MultiValuePicker :options="parallelVersionOptions" v-model="parallelTargetVersions" />
+			<MultiValuePicker :options="parallelTargetVersionOptions" v-model="parallelTargetVersions" />
 		</div>
 	</div>
 	<div v-else>
 		<div class="form-group">
 			<label class="col-xs-12 col-md-3">{{ $t('search.inSourceVersion') }}</label>
 			<div class="col-xs-12 col-md-9">
-				<SelectPicker :options="parallelVersionOptions"
+				<SelectPicker :options="parallelSourceVersionOptions"
 						v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
 			</div>
 		</div>
 		<div class="form-group">
 			<label class="col-xs-12 col-md-3">{{ $t('search.andCompareWithTargetVersions') }}</label>
 			<div class="col-xs-12 col-md-9">
-				<MultiValuePicker :options="parallelVersionOptions" v-model="parallelTargetVersions" />
+				<MultiValuePicker :options="parallelTargetVersionOptions" v-model="parallelTargetVersions" />
 			</div>
 		</div>
 	</div>
@@ -53,12 +53,17 @@ export default Vue.extend({
 	}),
 	computed: {
 		// What parallel versions are there (e.g. "en", "nl", etc.)
-		parallelVersionOptions: (): Option[] =>
-			CorpusStore.get.parallelVersions().map(value => ({
-				value: value.name,
-				label: value.displayName || value.name
-			})),
-
+		parallelSourceVersionOptions: function (): Option[] {
+			return CorpusStore.get.parallelVersions()
+				.map(value => ({
+					value: value.name,
+					label: value.displayName || value.name
+				}));
+		},
+		parallelTargetVersionOptions: function (): Option[] {
+			const src = PatternStore.get.parallelVersions().source || '';
+			return this.parallelSourceVersionOptions.filter(value => value.value !== src);
+		},
 		parallelSourceVersion: {
 			get(): string|null { return PatternStore.get.parallelVersions().source; },
 			set: PatternStore.actions.parallelVersions.parallelSourceVersion

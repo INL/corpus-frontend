@@ -52,6 +52,7 @@ type ModuleRootStateExplore<K extends keyof ExploreModule.ModuleRootState> = {
 	subForm: K;
 
 	formState: ExploreModule.ModuleRootState[K];
+	parallelVersions: PatternModule.ModuleRootState['parallelVersions'];
 	filters: FilterModule.ModuleRootState;
 	gap: GapModule.ModuleRootState;
 };
@@ -60,6 +61,7 @@ type ModuleRootStateNone = {
 	form: null;
 	subForm: null;
 	formState: null;
+	parallelVersions: null;
 	filters: null;
 	gap: null;
 };
@@ -70,6 +72,7 @@ const initialState: ModuleRootStateNone = {
 	form: null,
 	subForm: null,
 	formState: null,
+	parallelVersions: null,
 	filters: null,
 	gap: null
 };
@@ -90,16 +93,15 @@ const get = {
 		}
 		return CorpusModule.get.mainAnnotatedField();
 	}, 'annotatedFieldName'),
-	patternString: b.read((state): string|undefined =>
-		state.form === 'search' ? getPatternStringSearch(state.subForm, {[state.subForm]: state.formState} as any /** egh, feel free to refactor */, CorpusModule.get.allAnnotationsMap()) :
-		state.form === 'explore' ? getPatternStringExplore(state.subForm, {[state.subForm]: state.formState} as any /** egh, feel free to refactor */, CorpusModule.get.allAnnotationsMap()) :
-		undefined,
+	patternString: b.read((state): string|undefined => {
+		return state.form === 'search' ? getPatternStringSearch(state.subForm, {[state.subForm]: state.formState} as any /** egh, feel free to refactor */, CorpusModule.get.allAnnotationsMap()) :
+			(state.form === 'explore' ? getPatternStringExplore(state.subForm, {[state.subForm]: state.formState} as any /** egh, feel free to refactor */, CorpusModule.get.allAnnotationsMap()) : undefined)
+	},
 	'patternString'),
 	/** Human-readable version of the query for use in history, summaries, etc. */
 	patternSummary: b.read((state): string|undefined =>
 		state.form === 'search' ? getPatternSummarySearch(state.subForm, {[state.subForm]: state.formState} as any /** egh, feel free to refactor */) :
-		state.form === 'explore' ? getPatternSummaryExplore(state.subForm, {[state.subForm]: state.formState} as any /** egh, feel free to refactor */, CorpusModule.get.allAnnotationsMap()) :
-		undefined,
+		(state.form === 'explore' ? getPatternSummaryExplore(state.subForm, {[state.subForm]: state.formState} as any /** egh, feel free to refactor */, CorpusModule.get.allAnnotationsMap()) : undefined),
 	'patternSummary'),
 	filterString: b.read((state): string|undefined => {
 		if (!state.form) { return undefined; }

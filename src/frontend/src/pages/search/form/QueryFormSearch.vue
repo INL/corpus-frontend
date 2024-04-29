@@ -34,20 +34,7 @@
 						simple
 					/>
 
-					<!-- Is this a parallel corpus? -->
-					<div v-if="isParallelCorpus">
-						<label class="control-label">{{ $t('search.inSourceVersion') }}</label>
-						<div>
-							<SelectPicker :options="parallelVersionOptions"
-									v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
-						</div>
-
-						<label class="control-label">{{ $t('search.andCompareWithTargetVersions') }}</label>
-						<div>
-							<MultiValuePicker :options="parallelVersionOptions"
-									v-model="parallelTargetVersions" />
-						</div>
-					</div>
+					<ParallelSourceAndTargets v-if="isParallelCorpus" />
 
 				</div>
 			</div>
@@ -122,21 +109,7 @@
 						</label>
 					</div>
 				</div>
-
-				<!-- Is this a parallel corpus? -->
-				<div v-if="isParallelCorpus">
-					<label class="control-label">{{ $t('search.inSourceVersion') }}</label>
-					<div>
-						<SelectPicker :options="parallelVersionOptions"
-								v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
-					</div>
-
-					<label class="control-label">{{ $t('search.andCompareWithTargetVersions') }}</label>
-					<div>
-						<MultiValuePicker :options="parallelVersionOptions"
-								v-model="parallelTargetVersions" />
-					</div>
-				</div>
+				<ParallelSourceAndTargets v-if="isParallelCorpus" mode="extended" />
 
 			</div>
 			<div v-if="advancedEnabled" :class="['tab-pane', {'active': activePattern==='advanced'}]" id="advanced">
@@ -199,6 +172,7 @@ import * as HistoryStore from '@/store/search/history';
 import Annotation from '@/pages/search/form/Annotation.vue';
 import ConceptSearch from '@/pages/search/form/concept/ConceptSearch.vue';
 import GlossSearch from '@/pages/search/form/concept/GlossSearch.vue';
+import ParallelSourceAndTargets from '@/pages/search/form/ParallelSourceAndTargets.vue';
 import uid from '@/mixins/uid';
 
 import { QueryBuilder } from '@/modules/cql_querybuilder';
@@ -206,8 +180,8 @@ import { QueryBuilder } from '@/modules/cql_querybuilder';
 import { blacklabPaths } from '@/api';
 import * as AppTypes from '@/types/apptypes';
 import { getAnnotationSubset } from '@/utils';
+
 import SelectPicker, { Option } from '@/components/SelectPicker.vue';
-import MultiValuePicker from '@/components/MultiValuePicker.vue';
 
 function isVue(v: any): v is Vue { return v instanceof Vue; }
 function isJQuery(v: any): v is JQuery { return typeof v !== 'boolean' && v && v.jquery; }
@@ -216,7 +190,7 @@ export default Vue.extend({
 	mixins: [uid] as any,
 	components: {
 		SelectPicker,
-		MultiValuePicker,
+		ParallelSourceAndTargets,
 		Annotation,
 		ConceptSearch,
 		GlossSearch
@@ -230,22 +204,6 @@ export default Vue.extend({
 	computed: {
 		// Is this a parallel corpus?
 		isParallelCorpus: CorpusStore.get.isParallelCorpus,
-
-		// What parallel versions are there (e.g. "en", "nl", etc.)
-		parallelVersionOptions: (): Option[] =>
-			CorpusStore.get.parallelVersions().map(value => ({
-				value: value.name,
-				label: value.displayName || value.name
-			})),
-
-		parallelSourceVersion: {
-			get(): string|null { return PatternStore.get.parallelVersions().source; },
-			set: PatternStore.actions.parallelVersions.parallelSourceVersion
-		},
-		parallelTargetVersions: {
-			get(): string[]|null { return PatternStore.get.parallelVersions().targets; },
-			set: PatternStore.actions.parallelVersions.parallelTargetVersions
-		},
 
 		activePattern: {
 			get(): string { return InterfaceStore.getState().patternMode; },
@@ -424,9 +382,6 @@ export default Vue.extend({
 			},
 			immediate: true,
 			deep: true
-		},
-		parallelTargetVersions(v) {
-			console.log('parallelTargetVersions', v)
 		},
 	},
 	mounted() {

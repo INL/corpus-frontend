@@ -548,9 +548,9 @@ export class QueryBuilder {
 export class Token {
 	public readonly id = generateId('token');
 	private readonly idSelector = '#' + this.id;
-	public readonly element;  
-	private readonly $controls; 
-	public readonly rootAttributeGroup; 
+	public readonly element;
+	private readonly $controls;
+	public readonly rootAttributeGroup;
 
 	constructor(private readonly builder: QueryBuilder) {
 		this.element = this._createElement();
@@ -1211,6 +1211,7 @@ function populateQueryBuilder(queryBuilder: QueryBuilder, pattern: string|null|u
 		const parsedCql = parseCql(pattern, queryBuilder.settings.attribute.view.defaultAttribute);
 		const tokens = parsedCql.tokens;
 		const within = parsedCql.within;
+		// @@@ JN TODO parallel!
 		if (tokens === null) {
 			return false;
 		}

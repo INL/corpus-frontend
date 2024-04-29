@@ -63,6 +63,9 @@ export default Vue.extend({
 	},
 	computed: {
 		context(): HitContext {
+			if (this.data.hit === undefined) {
+				console.error('HitRow: data.hit is undefined', this.data);
+			}
 			return snippetParts(this.data.hit, this.mainAnnotation.id, this.dir) || [];
 		},
 		otherContexts(): HitContext[]|undefined {

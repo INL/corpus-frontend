@@ -520,8 +520,11 @@ export interface BLRelationMatchList {
 // 	end: number;
 // }
 
-export type BLHit = BLHitSnippet&{
-	docPid: string;
+/** A subset of a BLHit, returned in otherFields hits
+ *  (hits in other annotated fields, i.e. in parallel corpora)
+ *  (these don't repeat docPid, and can't have otherFields themselves).
+ */
+export type BLHitInOtherField = BLHitSnippet&{ // (otherFields hits don't repeat the docPid)
 	start: number;
 	end: number;
 	/**
@@ -541,9 +544,15 @@ export type BLHit = BLHitSnippet&{
 	 *    end: 27
 	 *  }
 	 */
-	matchInfos?: {
-		context_rels?: BLRelationMatchList;
-	}&Record<string, BLRelationMatchSpan|BLRelationMatchRelation|BLRelationMatchTag>
+	matchInfos?: Record<string, BLRelationMatchSpan|BLRelationMatchRelation|BLRelationMatchTag|BLRelationMatchList>;
+};
+
+/** A hit in the BlackLab hits response.
+ *  (based on BLHitInOtherField which is in turn based on BLHitSnippet)
+ */
+export type BLHit = BLHitInOtherField&{
+	docPid: string;
+	otherFields?: Record<string, BLHitInOtherField[]>; // parallel corpus: aligned hits in other (requested) versions
 };
 
 /** Contains occurance counts of terms in the index */

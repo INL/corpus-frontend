@@ -102,6 +102,10 @@ function flatten(part: BLHitSnippetPart|undefined, annotationId: string, lastPun
  * @returns the hit split into before, match, and after parts, with capture and relation info added to the tokens. The punct is to be shown after the word.
  */
 export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir: 'ltr'|'rtl', returnCaptures = true): HitContext {
+
+	if (hit === undefined)
+		console.error('hit is undefined');
+
 	// We always need to do this.
 
 	const r: HitContext = {

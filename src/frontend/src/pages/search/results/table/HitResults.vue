@@ -116,6 +116,7 @@ export default Vue.extend({
 				const {startid: hit_first_word_id = '', endid: hit_last_word_id = ''} = GlossModule.get.settings()?.get_hit_range_id(hit) ?? {startid: '', endid: ''};
 				const hit_id = GlossModule.get.settings()?.get_hit_id(hit) ?? '';
 
+				// @@@ JN here is how HitRowData gets created. We need to do the same for otherFields.
 				rows.push({
 					type: 'hit',
 					doc: {

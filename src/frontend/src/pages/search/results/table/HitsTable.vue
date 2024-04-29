@@ -100,6 +100,18 @@
 						:dir="dir"
 						:html="html"
 					/>
+
+					<!-- @@@ JN Here's where we try to show otherFields results, but we don't have HitRowData -->
+					<!-- <HitRow :key="`${i}-${name}-hit`" v-for="(oh, name) in otherFields(h.hit)"
+						:data="oh"
+						:mainAnnotation="mainAnnotation"
+						:otherAnnotations="otherAnnotations"
+						:metadata="metadata"
+						:dir="dir"
+						:html="html"
+						:disabled="disabled"
+					/> -->
+
 				</template>
 				<DocRow v-else :key="`${i}-doc`"
 					:data="h"
@@ -114,7 +126,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import { NormalizedAnnotation, NormalizedMetadataField } from '@/types/apptypes';
-import { BLSearchParameters } from '@/types/blacklabtypes';
+import { BLHit, BLHitInOtherField, BLHitSnippet, BLSearchParameters } from '@/types/blacklabtypes';
 
 import HitRow, {HitRowData} from '@/pages/search/results/table/HitRow.vue'
 import HitRowDetails from '@/pages/search/results/table/HitRowDetails.vue'
@@ -174,6 +186,12 @@ export default Vue.extend({
 	methods: {
 		changeSort(sort: string) {
 			this.$emit('changeSort', sort)
+		},
+		otherFields(h: BLHit|BLHitSnippet): Record<string, BLHitInOtherField[]> {
+			if (!('otherFields' in h) || h.otherFields === undefined)
+				return {};
+			console.log(h.otherFields);
+			return h.otherFields;
 		},
 	},
 	watch: {

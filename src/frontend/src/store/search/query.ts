@@ -94,8 +94,19 @@ const get = {
 		return CorpusModule.get.mainAnnotatedField();
 	}, 'annotatedFieldName'),
 	patternString: b.read((state): string|undefined => {
-		return state.form === 'search' ? getPatternStringSearch(state.subForm, {[state.subForm]: state.formState} as any /** egh, feel free to refactor */, CorpusModule.get.allAnnotationsMap()) :
-			(state.form === 'explore' ? getPatternStringExplore(state.subForm, {[state.subForm]: state.formState} as any /** egh, feel free to refactor */, CorpusModule.get.allAnnotationsMap()) : undefined)
+		const formState = {
+			[state.subForm as string]: state.formState,
+			parallelVersions: state.parallelVersions,
+		} as any; /** egh, feel free to refactor */
+		const annotations = CorpusModule.get.allAnnotationsMap();
+		switch (state.form) {
+		case 'search':
+			return getPatternStringSearch(state.subForm, formState, annotations);
+		case 'explore':
+			return getPatternStringExplore(state.subForm, formState, annotations);
+		default:
+			return undefined;
+		}
 	},
 	'patternString'),
 	/** Human-readable version of the query for use in history, summaries, etc. */

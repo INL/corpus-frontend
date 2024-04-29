@@ -315,7 +315,7 @@ export const splitIntoTerms = (value: string, useQuoteDelimiters: boolean): Spli
 	})
 });
 
-export const getPatternString = (annotations: AppTypes.AnnotationValue[], within: null|string) => {
+export const getPatternString = (annotations: AppTypes.AnnotationValue[], within: null|string, parallelTargetVersions: string[] = []) => {
 	const tokens = [] as string[][];
 
 	annotations.forEach(annot => getAnnotationPatternString(annot).forEach((value, index) => {
@@ -326,6 +326,11 @@ export const getPatternString = (annotations: AppTypes.AnnotationValue[], within
 	if (query.length > 0 && within) {
 		query += ` within <${within}/>`;
 	}
+
+	if (parallelTargetVersions.length > 0) {
+		query = `(${query})` + parallelTargetVersions.map(v => ` -->${v} _`).join('; ');
+	}
+
 	return query || undefined;
 };
 
@@ -805,7 +810,9 @@ export function getPatternStringSearch(
 	// the simple and extended views require the values to be processed before converting them to cql.
 	// The advanced and expert views already contain a good-to-go cql query. We only need to take care not to emit an empty string.
 	switch (subForm) {
-		case 'simple': return state.simple.annotationValue.value && getPatternString([state.simple.annotationValue], null);
+		case 'simple':
+			return state.simple.annotationValue.value &&
+			getPatternString([state.simple.annotationValue], null, state.parallelVersions?.targets || []);
 		case 'extended': {
 			const r = cloneDeep(Object.values(state.extended.annotationValues))
 				.filter(annot => !!annot.value)
@@ -813,7 +820,9 @@ export function getPatternStringSearch(
 					...annot,
 					type: getCorrectUiType(uiTypeSupport.search.extended, annot.type!)
 				}));
-			return r.length ? getPatternString(r, state.extended.within) : undefined;
+			return r.length ?
+				getPatternString(r, state.extended.within, state.parallelVersions?.targets || []) :
+				undefined;
 		}
 		case 'advanced': return state.advanced?.trim() || undefined;
 		case 'expert': return state.expert?.trim() || undefined;

@@ -43,15 +43,49 @@
 
 		<div class="current-group-editor panel-default">
 			<template v-if="current && current.type === 'annotation'">
+				<div class="content">
+					I want to group on <SelectPicker
+						:options="contextOptions"
+						v-model="context"
+						data-width="auto"
+						data-menu-width="auto"
+						hideEmpty
+					/>
+					<SelectPicker v-if="!context.startsWith('capture_')"
+						v-model="current.position"
+						hideEmpty
+						data-width="auto"
+						data-menu-width="auto"
+						:options="positionOptions"
+					/> using annotation <SelectPicker v-if="current.type === 'annotation'"
+						placeholder="Annotation"
+						data-width="auto"
+						data-menu-width="auto"
+						right
+						hideEmpty
+						searchable
+						:options="annotations"
+						v-model="current.annotation"
+					/>.
+					<br>
+					<label><input type="checkbox" v-model="current.caseSensitive"> Case sensitive</label>
+
+					<div style="margin: 0.75em 0 1.5em 0;"  v-if="context === 'context'">
+						Choose the <strong>specific word</strong> positions to group on here, the preview at the top will show you which words you have selected.
+						<Slider
+							:direction="(current.position === 'E' || current.position === 'L') ? 'rtl' : 'ltr'"
+							inline
+							:min="1"
+							:max="contextsize"
+							:data="contextSliderPreview"
+							v-model="contextRange"
+						/>
+					</div>
+				</div>
 				<div class="hit-preview panel-heading">
 					<div class="overflow-container">
 						<template v-for="(section, i) of preview">
 							<div v-if="i !== 0" class="separator"></div>
-							<!--
-								Make sure only "active" words get a <b/> tag, or the css :first-of-type selector won't match them and we lose borders
-								for the main portion of the hit, we use <strong/> instead of <b/> to keep the boldness, but avoid the css issue.
-							-->
-
 							<template v-for="({selectedAnnotation, word, punct, active, title}, j) of section">
 								<component
 									:is="active ? 'section' : 'div'"
@@ -84,44 +118,6 @@
 							</template> -->
 						</template>
 					</div>
-				</div>
-
-				I want to group on <SelectPicker
-					:options="contextOptions"
-					v-model="context"
-					data-width="auto"
-					data-menu-width="auto"
-					hideEmpty
-				/>
-				<SelectPicker v-if="!context.startsWith('capture_')"
-					v-model="current.position"
-					hideEmpty
-					data-width="auto"
-					data-menu-width="auto"
-					:options="positionOptions"
-				/> using annotation <SelectPicker v-if="current.type === 'annotation'"
-					placeholder="Annotation"
-					data-width="auto"
-					data-menu-width="auto"
-					right
-					hideEmpty
-					searchable
-					:options="annotations"
-					v-model="current.annotation"
-				/>.
-				<br>
-				<label><input type="checkbox" v-model="current.caseSensitive"> Case sensitive</label>
-
-				<div style="margin: 0.75em 0 1.5em 0;"  v-if="context === 'context'">
-					Choose the <strong>specific word</strong> positions to group on here, the preview at the top will show you which words you have selected.
-					<Slider
-						:direction="(current.position === 'E' || current.position === 'L') ? 'rtl' : 'ltr'"
-						inline
-						:min="1"
-						:max="contextsize"
-						:data="contextSliderPreview"
-						v-model="contextRange"
-					/>
 				</div>
 			</template>
 			<template v-else-if="current && current.type === 'metadata'">
@@ -498,11 +494,36 @@ export default Vue.extend({
 	overflow: auto;
 }
 
+.current-group-editor {
+	flex-grow: 1; // take up remainder of horizontal space
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+
+	> .content {
+		padding: 10px 15px;
+		flex-grow: 1; // push down preview
+	}
+	> .hit-preview {
+		align-self: flex-end;
+		width: 100%;
+		margin: 0;
+		border-bottom: 0;
+		border-top: 1px solid #ddd;
+		border-top-left-radius: 0;
+		border-top-right-radius: 0;
+		border-bottom-right-radius: 4px;;
+	}
+}
+
+
+
+
 .hit-preview {
 	overflow: auto;
 	border: 1px solid #ddd;
 	padding: 10px 15px;
-	margin: -10px -15px 15px;
+	margin: 0 -15px 0;
 	border-top: 0;
 	border-right: 0;
 	border-left: 0;
@@ -641,12 +662,6 @@ export default Vue.extend({
 
 			}
 		}
-	}
-
-	.current-group-editor {
-		flex-grow: 1;
-		padding: 10px 15px;
-		min-width: 0;
 	}
 }
 

@@ -102,7 +102,7 @@ const actions = {
 			return Vue.set(state.parallelVersions, 'targets', payload);
 		}, 'parallelVersions_targets'),
 		reset: b.commit(state => {
-			const defaultSourceVersion = CorpusStore.get.parallelVersions()[0].name;
+			const defaultSourceVersion = CorpusStore.get.parallelVersions()[0]?.name;
 			debugLogCat('parallel', `parallelVersions.reset: Selecting default source version ${defaultSourceVersion}`);
 			state.parallelVersions.source = defaultSourceVersion;
 			state.parallelVersions.targets = [];

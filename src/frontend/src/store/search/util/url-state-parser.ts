@@ -445,7 +445,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	@memoize
 	private get parallelVersions() {
 		return {
-			source: this.getString('field', CorpusModule.get.parallelVersions()[0].name),
+			source: this.getString('field', CorpusModule.get.parallelVersions()[0]?.name),
 			targets: this._parsedCql ? this._parsedCql.targetVersions || [] : [],
 		};
 	}

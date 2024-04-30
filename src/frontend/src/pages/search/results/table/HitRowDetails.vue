@@ -101,6 +101,10 @@ export default Vue.extend({
 		data: Object as () => HitRowData,
 		query: Object as () => BLTypes.BLSearchParameters|undefined,
 
+		annotatedField: {
+			type: String,
+			default: '',
+		},
 		mainAnnotation: Object as () => NormalizedAnnotation,
 		detailedAnnotations: Array as () => NormalizedAnnotation[]|undefined,
 
@@ -151,6 +155,7 @@ export default Vue.extend({
 			Api.blacklab.getSnippet(
 				INDEX_ID,
 				this.data.doc.docPid,
+				this.annotatedField,
 				this.data.hit.start,
 				this.data.hit.end,
 				context
@@ -181,7 +186,7 @@ export default Vue.extend({
 				const concordanceSize = UIStore.getState().results.shared.concordanceSize;
 
 				Api.blacklab
-				.getSnippet(INDEX_ID, this.data.doc.docPid, this.data.hit.start, this.data.hit.end, concordanceSize)
+				.getSnippet(INDEX_ID, this.data.doc.docPid, this.annotatedField, this.data.hit.start, this.data.hit.end, concordanceSize)
 				.then(s => {
 					transformSnippets?.(s);
 					this.context = snippetParts({

@@ -95,22 +95,39 @@
 						:data="h"
 						:open="open[i]"
 						:query="query"
+						:annotatedField="annotatedField"
 						:mainAnnotation="mainAnnotation"
 						:detailedAnnotations="detailedAnnotations"
 						:dir="dir"
 						:html="html"
 					/>
 
-					<HitRow :key="`${i}-${name}-hit`" v-for="(oh, name) in otherFields(h.hit)"
-						class="foreign-hit"
-						:data="oh"
-						:mainAnnotation="mainAnnotation"
-						:otherAnnotations="otherAnnotations"
-						:metadata="metadata"
-						:dir="dir"
-						:html="html"
-						:disabled="disabled"
-					/>
+					<!-- Show hits in other fields (parallel corpora) -->
+					<template v-for="(oh, annotatedField) in otherFields(h.hit)">
+						<HitRow :key="`${i}-${annotatedField}-hit`"
+							:class="{open: open[i], interactable: !disableDetails && !disabled}"
+							class="foreign-hit"
+							:data="oh"
+							:mainAnnotation="mainAnnotation"
+							:otherAnnotations="otherAnnotations"
+							:metadata="metadata"
+							:dir="dir"
+							:html="html"
+							:disabled="disabled"
+							@click.native="!disableDetails && $set(open, i, !open[i])"
+						/>
+						<HitRowDetails v-if="!disableDetails" :key="`${i}-${annotatedField}-details`"
+							:colspan="colspan"
+							:data="oh"
+							:open="open[i]"
+							:query="query"
+							:annotatedField="annotatedField"
+							:mainAnnotation="mainAnnotation"
+							:detailedAnnotations="detailedAnnotations"
+							:dir="dir"
+							:html="html"
+						/>
+					</template>
 
 				</template>
 				<DocRow v-else :key="`${i}-doc`"
@@ -146,6 +163,11 @@ export default Vue.extend({
 	},
 	props: {
 		query: Object as () => BLSearchParameters|undefined,
+		/** The field that was searched (for parallel corpora queries, the source field) */
+		annotatedField: {
+			type: String,
+			default: '',
+		},
 		/** Annotation shown in the before/hit/after columns and expanded concordance */
 		mainAnnotation: Object as () => NormalizedAnnotation,
 		/** Optional. Additional annotation columns to show (besides before/hit/after) */

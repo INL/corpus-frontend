@@ -341,6 +341,9 @@ export type BLSearchSummary = {
 	windowFirstResult: number;
 	windowHasNext: boolean;
 	windowHasPrevious: boolean;
+	pattern?: {
+		fieldName: string;
+	}
 } & BLSearchSummarySampleSettings;
 
 export interface BLSearchSummaryTotalsDocs {

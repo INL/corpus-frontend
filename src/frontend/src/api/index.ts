@@ -330,12 +330,13 @@ export const blacklab = {
 	 * @param requestParameters
 	 * @returns
 	 */
-	getSnippet: (indexId: string, docId: string, hitstart: number, hitend: number, context?: string|number, requestParameters?: AxiosRequestConfig) => {
+	getSnippet: (indexId: string, docId: string, field: string, hitstart: number, hitend: number, context?: string|number, requestParameters?: AxiosRequestConfig) => {
 		// TODO check if the snippet is still weird.
 		return endpoints.blacklab.getOrPost<BLTypes.BLHit>(blacklabPaths.snippet(indexId, docId), {
 			hitstart,
 			hitend,
-			context
+			context,
+			field,
 		}, requestParameters)
 		.then<BLTypes.BLHit>(r => {
 			if (!r.left) r.left = Object.entries(r.match).reduce((acc, [key, value]) => { acc[key] = []; return acc; }, {} as BLTypes.BLHitSnippetPart);

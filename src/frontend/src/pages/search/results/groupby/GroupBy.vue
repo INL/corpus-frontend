@@ -51,7 +51,27 @@
 								Make sure only "active" words get a <b/> tag, or the css :first-of-type selector won't match them and we lose borders
 								for the main portion of the hit, we use <strong/> instead of <b/> to keep the boldness, but avoid the css issue.
 							-->
-							<template v-for="({word, punct, active, title}, j) of section">
+
+							<template v-for="({selectedAnnotation, word, punct, active, title}, j) of section">
+								<component
+									:is="active ? 'section' : 'div'"
+									:key="word + i + '_' + j"
+									:class="{
+										'word': true,
+										'active': active,
+										'text-primary': active,
+										'bold': i === 1
+									}"
+									:style="{flexShrink: word.length}"
+								>
+									<div :title="word" class="main">{{ word }}</div>
+									<div :title="selectedAnnotation" class="annotation">{{ selectedAnnotation }}</div>
+								</component>
+								<!-- punctuation between words, as we don't want it to shrink. -->
+								<component :is="active ? 'section' : 'div'" :class="{punct: true, active}" :title="punct">{{ punct || ' ' }}</component>
+							</template>
+
+							<!-- <template v-for="({word, punct, active, title}, j) of section">
 								<component
 									:key="word + i + '_' + j "
 									:is="active ? 'b' :  i === 1 ? 'strong' : 'span'"
@@ -61,7 +81,7 @@
 										word: true,
 										active
 									}">{{ word }}</component><component :is="active ? 'b' : 'span'" :class="{punct: true, active}">{{ punct }}</component>
-							</template>
+							</template> -->
 						</template>
 					</div>
 				</div>
@@ -143,7 +163,7 @@ import debug from '@/utils/debug';
 import Slider from 'vue-slider-component';
 import 'vue-slider-component/theme/default.css'
 
-import {isHitResults, BLSearchResult, BLSearchParameters, BLHitResults} from '@/types/blacklabtypes';
+import {isHitResults, BLSearchResult, BLSearchParameters, BLHitResults, BLHitSnippetPart} from '@/types/blacklabtypes';
 
 import cloneDeep from 'clone-deep';
 
@@ -175,9 +195,6 @@ export default Vue.extend({
 		results: Object as () => BLSearchResult|undefined
 	},
 	data: () => ({
-
-		display: 'advanced' as 'advanced'|'simple',
-
 		// tab: 'annotation' as 'annotation'|'metadata',
 		// annotation: clonedeep(initialSettings.annotation),
 		// metadata: clonedeep(initialSettings.metadata),
@@ -221,7 +238,6 @@ export default Vue.extend({
 			return jsonStableStringify(this.firstHitPreviewQuery);
 		},
 
-
 		isHits(): boolean { return isHitResults(this.results); },
 
 		defaultGroupingAnnotation(): string|undefined { return UIStore.getState().results.shared.groupAnnotationIds[0]; },
@@ -249,7 +265,9 @@ export default Vue.extend({
 			return r;
 		},
 
-		contextsize(): number { return typeof GlobalSearchSettingsStore.getState().context === 'number' ? GlobalSearchSettingsStore.getState().context as number : 5; },
+		contextsize(): number {
+			return typeof GlobalSearchSettingsStore.getState().context === 'number' ? GlobalSearchSettingsStore.getState().context as number : 5;
+		},
 		captures(): string[]|undefined {
 			// TODO update types for blacklab 4
 			// @ts-ignore
@@ -258,25 +276,31 @@ export default Vue.extend({
 			return Object.entries(mi|| {}).filter(([k, v]) => v.type === 'span').map(([k,v]) => k)
 		},
 
-		preview(): {active: boolean, word: string, punct: string, title: string}[][] {
+		preview(): {
+			active: boolean,
+			word: string,
+			selectedAnnotation: string,
+			punct: string,
+		}[][] {
 			if (!this.current) return [];
-
-			/** Shorten the string, accounting for the ellipsis we add at the end */
-			function shorten(w: string, maxLengthIncludingEllipsis = 8) {
-				return w;
-				// if (w.length > maxLengthIncludingEllipsis)
-				// 	return w.substring(0, maxLengthIncludingEllipsis - 3) + '…';
-				// return w;
-			}
 			if (this.current.type !== 'annotation' || !this.current.annotation || !isHitResults(this.hits) || !this.hits.hits.length)
 				return [];
 
 			const firstHit = this.hits.hits[0];
 			const {annotation, position, start, end} = this.current;
 
-			const left = firstHit.left?.[annotation] || [];
-			const right = firstHit.right?.[annotation] || [];
-			const match = firstHit.match?.[annotation] || [];
+
+			const wordAnnotation = UIStore.getState().results.shared.concordanceAnnotationId;
+
+
+			const leftSelected = firstHit.left?.[annotation] || [];
+			const rightSelected = firstHit.right?.[annotation] || [];
+			const matchSelected = firstHit.match?.[annotation] || [];
+
+			const leftWords = firstHit.left?.[wordAnnotation] || [];
+			const rightWords = firstHit.right?.[wordAnnotation] || [];
+			const matchWords = firstHit.match?.[wordAnnotation] || [];
+
 
 			const punct = (firstHit.left?.punct || []).concat(firstHit.match.punct).concat(firstHit.right?.punct || []);
 
@@ -284,11 +308,11 @@ export default Vue.extend({
 			const endindex: number = end ?? Number.MAX_SAFE_INTEGER; // if end is not set, use entire context.
 
 			// left/before context ('L') and hit-from-end context ('E') use inverted index in BlackLab, mimic this.
-			const leftstart = left.length - endindex; // inclusive
-			const leftend = left.length - startindex; // exclusive
+			const leftstart = leftSelected.length - endindex; // inclusive
+			const leftend = leftSelected.length - startindex; // exclusive
 
-			const fromEndOfHitStartIndex = match.length - endindex;
-			const fromEndOfHitEndIndex = match.length - startindex;
+			const fromEndOfHitStartIndex = matchSelected.length - endindex;
+			const fromEndOfHitEndIndex = matchSelected.length - startindex;
 
 
 			// skip first punct, it's before the first word, so pretty meaningless
@@ -296,25 +320,25 @@ export default Vue.extend({
 			let punctIndex = 1;
 
 			return [
-				left.map((w, i) => ({
-					word: shorten(w) || '·',
+				leftSelected.map((w, i) => ({
+					word: leftWords[i] || '·',
+					selectedAnnotation: w || '·',
 					punct: punct[punctIndex++] || ' ',
-					title: w,
 					active: position === 'L' && i >= leftstart && i < leftend
 				})),
-				match.map((w, i) => ({
-					word: shorten(w) || '·',
+				matchSelected.map((w, i) => ({
+					word: matchWords[i] || '·',
+					selectedAnnotation: w || '·',
 					punct: punct[punctIndex++] || ' ',
-					title: w,
 					active:
 						position === 'H' ? i >= startindex && i < endindex :
 						position === 'E' ? i >= fromEndOfHitStartIndex && i < fromEndOfHitEndIndex :
 						false
 				})),
-				right.map((w, i) => ({
-					word: shorten(w) || '·',
+				rightSelected.map((w, i) => ({
+					word: rightWords[i] || '·',
+					selectedAnnotation: w || '·',
 					punct: punct[punctIndex++] || ' ',
-					title: w,
 					active: position === 'R' && i >= startindex && i < endindex
 				}))
 			];
@@ -491,28 +515,50 @@ export default Vue.extend({
 	border-left: 0;
 
 	.overflow-container {
-		min-width: 400px;
+		min-width: 600px;
 		display: flex;
 		flex-wrap: nowrap;
 		justify-content: center;
 	}
 
+
+	/**
+		Container for a word in the preview.
+		It has the word at the top, and hovering just below it, the annotation's value
+		It can shrink if the parent container is out of space.
+	*/
 	.word {
-		// allow some shrinkage, but not entirely.
+		font-size: 125%;
+		display: inline-flex;
+		flex-direction: column;
+		flex-shrink: 1; // overridden on the element itself, based on word length
 		flex-basis: auto;
+		flex-grow: 0;
+		overflow: hidden; // hide the annotation if it's too long.
+		position: relative; // we don't need this I think?
+		padding-bottom: 0.5em; // space for the annotation value that hovers below the word.
+	}
+
+	.punct {
+		flex: none;
+		white-space: pre;
+	}
+
+	.word > .main {
+		display: flex;
 		flex-shrink: 1;
 		flex-grow: 0;
-
-		display: inline-block;
+		flex-basis: auto;
 		white-space: pre;
-
-		overflow: hidden;
-		position: relative;
 	}
-	.punct {
-		display: inline-block;
-		white-space: pre;
-		flex: none;
+
+	.word > .annotation {
+		font-size: 75%;
+		opacity: 0.75;
+		font-style: italic;
+		position: absolute;
+		left: 0.5em;
+		bottom: 0;
 	}
 
 	.separator {
@@ -532,10 +578,14 @@ export default Vue.extend({
 
 	.active:first-of-type {
 		border-left: 1px solid black;
+		border-top-left-radius: 6px;
+		border-bottom-left-radius: 6px;
 	}
 
 	.active:last-of-type {
 		border-right: 1px solid black;
+		border-top-right-radius: 6px;
+		border-bottom-right-radius: 6px;
 	}
 }
 

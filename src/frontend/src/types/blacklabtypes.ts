@@ -454,7 +454,7 @@ export interface BLHitSnippetPart {
 	 */
 	punct: string[];
 	/** Usually this contains fields like lemma, word, pos */
-	[key: string]: string[]; // Jesse: Need something for the captures here
+	[key: string]: string[];
 }
 
 /** A subset of a BLHit, returned in document requests (/docs) when there are also hits. */

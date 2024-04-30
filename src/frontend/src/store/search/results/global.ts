@@ -18,6 +18,7 @@ type ExternalModuleRootState = {
 	sampleMode: 'percentage'|'count';
 	sampleSeed: number|null;
 	sampleSize: number|null;
+	/** context can be a string or number in BlackLab, but for now in the form we only allow numbers. */
 	context: number|string|null;
 };
 

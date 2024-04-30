@@ -1,5 +1,6 @@
 <template>
 	<tr class="concordance rounded">
+		<td v-if="displayField">{{ displayField }}</td>
 		<HitContextComponent tag="td" class="text-right" :dir="dir" :data="context.before" :html="html" before/>
 		<HitContextComponent tag="td" bold class="text-center" :dir="dir" :data="context.match" :html="html"/>
 		<HitContextComponent tag="td" class="" :dir="dir" :data="context.after" :html="html" after/>
@@ -55,6 +56,10 @@ export default Vue.extend({
 	},
 	props: {
 		data: Object as () => HitRowData,
+		displayField: {
+			type: String,
+			default: '',
+		},
 		mainAnnotation: Object as () => NormalizedAnnotation,
 		otherAnnotations: Array as () => NormalizedAnnotation[]|undefined,
 		metadata: Array as () => NormalizedMetadataField[]|undefined,
@@ -81,6 +86,10 @@ export default Vue.extend({
 tr.foreign-hit {
 	color: #666;
 	font-style: italic;
+}
+
+tr.concordance.foreign-hit + tr.concordance:not(.foreign-hit) > td {
+	padding-top: 0.6em;
 }
 
 tr.concordance {

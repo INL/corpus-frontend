@@ -81,6 +81,7 @@
 					<HitRow :key="`${i}-hit`"
 						:class="{open: open[i], interactable: !disableDetails && !disabled}"
 						:data="h"
+						:displayField="fieldOrVersion(annotatedField)"
 						:mainAnnotation="mainAnnotation"
 						:otherAnnotations="otherAnnotations"
 						:metadata="metadata"
@@ -103,11 +104,12 @@
 					/>
 
 					<!-- Show hits in other fields (parallel corpora) -->
-					<template v-for="(oh, annotatedField) in otherFields(h.hit)">
-						<HitRow :key="`${i}-${annotatedField}-hit`"
+					<template v-for="(oh, foreignField) in otherFields(h.hit)">
+						<HitRow :key="`${i}-${foreignField}-hit`"
 							:class="{open: open[i], interactable: !disableDetails && !disabled}"
 							class="foreign-hit"
 							:data="oh"
+							:displayField="fieldOrVersion(foreignField)"
 							:mainAnnotation="mainAnnotation"
 							:otherAnnotations="otherAnnotations"
 							:metadata="metadata"
@@ -116,12 +118,12 @@
 							:disabled="disabled"
 							@click.native="!disableDetails && $set(open, i, !open[i])"
 						/>
-						<HitRowDetails v-if="!disableDetails" :key="`${i}-${annotatedField}-details`"
+						<HitRowDetails v-if="!disableDetails" :key="`${i}-${foreignField}-details`"
 							:colspan="colspan"
 							:data="oh"
 							:open="open[i]"
 							:query="query"
-							:annotatedField="annotatedField"
+							:annotatedField="foreignField"
 							:mainAnnotation="mainAnnotation"
 							:detailedAnnotations="detailedAnnotations"
 							:dir="dir"
@@ -198,8 +200,12 @@ export default Vue.extend({
 		rightLabel(): string { return this.dir === 'rtl' ? 'Before' : 'After'; },
 		beforeField(): string { return this.dir === 'rtl' ? 'after' : 'before'; },
 		afterField(): string { return this.dir === 'rtl' ? 'before' : 'after'; },
+		isParallel(): boolean { return this.data.length > 0 && this.data[0].type === 'hit' && 'otherFields' in this.data[0].hit; },
 		colspan(): number {
 			let c = 3; // hit, before, after
+			if (this.isParallel) {
+				c++; // parallel results, show field name in extra column
+			}
 			if (this.otherAnnotations) c += this.otherAnnotations.length;
 			if (this.metadata) c += this.metadata.length;
 			return c;
@@ -238,6 +244,7 @@ export default Vue.extend({
 			}).reduce((acc, val) => ({ ...acc, ...val }), {});
 			return x;
 		},
+		fieldOrVersion(name: string): string { return name.replace(/^.+__/, ''); },
 	},
 	watch: {
 		data() {

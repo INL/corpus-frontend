@@ -82,7 +82,7 @@
                     <a href='$CF_URL_ON_CLIENT/' class='navbar-brand'>AutoSearch</a>
                     #end
 
-                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <button type="button" class="navbar-toggle" onclick="document.querySelector('.navbar-collapse').classList.toggle('collapse')">
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>

@@ -195,10 +195,6 @@ export default Vue.extend({
 		results: Object as () => BLSearchResult|undefined
 	},
 	data: () => ({
-		// tab: 'annotation' as 'annotation'|'metadata',
-		// annotation: clonedeep(initialSettings.annotation),
-		// metadata: clonedeep(initialSettings.metadata),
-		// capture: clonedeep(initialSettings.capture),
 		forceContext: false,
 
 		/** index into localModel that is displayed in the UI */
@@ -242,7 +238,7 @@ export default Vue.extend({
 
 		defaultGroupingAnnotation(): string|undefined { return UIStore.getState().results.shared.groupAnnotationIds[0]; },
 		defaultGroupingMetadata(): string|undefined { return UIStore.getState().results.shared.groupMetadataIds[0]; },
-		annotations(): any[] {
+		annotations(): Options {
 			return getAnnotationSubset(
 				UIStore.getState().results.shared.groupAnnotationIds,
 				CorpusStore.get.annotationGroups(),
@@ -253,13 +249,13 @@ export default Vue.extend({
 				UIStore.getState().dropdowns.groupBy.annotationGroupLabelsVisible
 			).map(group => ({label: group.label, title: group.title, options: group.options}))
 		},
-		metadata(): any[] {
+		metadata(): Options {
 			const r = getMetadataSubset(
 				UIStore.getState().results.shared.groupMetadataIds,
 				CorpusStore.get.metadataGroups(),
 				CorpusStore.get.allMetadataFieldsMap(),
 				'Group',
-				false,
+				debug.debug, // is debug enabled - i.e. show debug labels in dropdown
 				true
 			)
 			return r;
@@ -289,22 +285,21 @@ export default Vue.extend({
 			const firstHit = this.hits.hits[0];
 			const {annotation, position, start, end} = this.current;
 
-
+			// We assume that whatever annotation is shown in the concordances is the main "word" annotation.
 			const wordAnnotation = UIStore.getState().results.shared.concordanceAnnotationId;
 
-
+			// Collect the values of the words and the values of the selected annotation.
 			const leftSelected = firstHit.left?.[annotation] || [];
 			const rightSelected = firstHit.right?.[annotation] || [];
 			const matchSelected = firstHit.match?.[annotation] || [];
-
 			const leftWords = firstHit.left?.[wordAnnotation] || [];
 			const rightWords = firstHit.right?.[wordAnnotation] || [];
 			const matchWords = firstHit.match?.[wordAnnotation] || [];
 
-
+			// We'll also need the punctuation between words.
 			const punct = (firstHit.left?.punct || []).concat(firstHit.match.punct).concat(firstHit.right?.punct || []);
 
-			const startindex: number = start - 1; // correct for 1-indexed vs 0-indexed
+			const startindex: number = start - 1; // correct this for 1-indexed vs 0-indexed. BlackLab returns 1-indexed hits (i.e. first word in the document is 1)
 			const endindex: number = end ?? Number.MAX_SAFE_INTEGER; // if end is not set, use entire context.
 
 			// left/before context ('L') and hit-from-end context ('E') use inverted index in BlackLab, mimic this.
@@ -381,8 +376,6 @@ export default Vue.extend({
 					this.current.start = 1;
 					this.current.end = this.contextsize;
 				}
-
-
 			},
 		},
 		contextRange: {
@@ -425,11 +418,11 @@ export default Vue.extend({
 			this.storeModule.actions.groupBy(serializeGroupBySettingsUI(this.localModel));
 		},
 		humanizeGroupBy(g: GroupBySettingsUI): string {
+			this.metadata
+
 			let r = '';
 			if (g.type === 'annotation') {
 				if (g.groupname) return `label '${g.groupname}' (${g.annotation})`
-
-
 
 				const position = (g.position === 'H' || g.position === 'E') ? 'in' : g.position === 'L' ? 'before' : g.position === 'R' ? 'after' : ''; // position | '' when using capture
 				let wordcount = position ? g.end != null ? g.end + '' : 'all' : undefined; // number | 'all' | undefined when using capture
@@ -437,9 +430,9 @@ export default Vue.extend({
 				// when start is not 1, prepend it. ex. 3 --> 1-3
 				if (wordcount != null && g.start !== 1) wordcount = g.start + '-' + wordcount;
 
-				r = `${g.annotation}${wordcount != null ? `(${wordcount})` : ''} ${position ? position + ' hit' : 'in capture ' + g.groupname}`;
+				r = `${g.annotation}${wordcount != null ? ` (${wordcount})` : ''} ${position ? position + ' hit' : 'in capture ' + g.groupname}`;
 			}
-			else r= `document ${g.field}`;
+			else r = `document ${CorpusStore.get.allMetadataFieldsMap()[g.field].displayName}`;
 			return r;
 		},
 

@@ -169,7 +169,8 @@ const actions = {
 
 /** We need to call some function from the module before creating the root store or this module won't be evaluated (e.g. none of this code will run) */
 const init = () => {
-	const defaultParallelVersion = CorpusStore.get.parallelVersions()[0].name;
+	const parallelVersions = CorpusStore.get.parallelVersions();
+	const defaultParallelVersion = parallelVersions.length === 0 ? '' : parallelVersions[0].name;
 	debugLogCat('parallel', `init: Set default parallel version: ${defaultParallelVersion}`);
 	privateActions.initParallelVersions({
 		source: defaultParallelVersion,

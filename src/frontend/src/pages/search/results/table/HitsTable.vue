@@ -81,7 +81,7 @@
 					<HitRow :key="`${i}-hit`"
 						:class="{open: open[i], interactable: !disableDetails && !disabled}"
 						:data="h"
-						:displayField="fieldOrVersion(annotatedField)"
+						:displayField="isParallel ? parallelVersion(annotatedField) : ''"
 						:mainAnnotation="mainAnnotation"
 						:otherAnnotations="otherAnnotations"
 						:metadata="metadata"
@@ -109,7 +109,7 @@
 							:class="{open: open[i], interactable: !disableDetails && !disabled}"
 							class="foreign-hit"
 							:data="oh"
-							:displayField="fieldOrVersion(foreignField)"
+							:displayField="isParallel ? parallelVersion(foreignField) : ''"
 							:mainAnnotation="mainAnnotation"
 							:otherAnnotations="otherAnnotations"
 							:metadata="metadata"
@@ -200,7 +200,9 @@ export default Vue.extend({
 		rightLabel(): string { return this.dir === 'rtl' ? 'Before' : 'After'; },
 		beforeField(): string { return this.dir === 'rtl' ? 'after' : 'before'; },
 		afterField(): string { return this.dir === 'rtl' ? 'before' : 'after'; },
-		isParallel(): boolean { return this.data.length > 0 && this.data[0].type === 'hit' && 'otherFields' in this.data[0].hit; },
+		isParallel(): boolean {
+			return this.data.find(d => d.type === 'hit' && 'otherFields' in d.hit) !== undefined;
+		},
 		colspan(): number {
 			let c = 3; // hit, before, after
 			if (this.isParallel) {
@@ -244,7 +246,7 @@ export default Vue.extend({
 			}).reduce((acc, val) => ({ ...acc, ...val }), {});
 			return x;
 		},
-		fieldOrVersion(name: string): string { return name.replace(/^.+__/, ''); },
+		parallelVersion(name: string): string { return name.replace(/^.+__/, ''); },
 	},
 	watch: {
 		data() {

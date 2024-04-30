@@ -117,7 +117,7 @@ const actions = {
 			return;
 		}
 		// Reset the grouping/page/sorting/etc, for all views
-		ViewModule.actions.resetAllViews({resetGroupBy: state.global.resetGroupByOnSearch});
+		ViewModule.actions.resetAllViews({resetGroupBy: false});
 
 		// Apply the desired grouping for this form, if needed.
 		if (state.interface.form === 'explore') {

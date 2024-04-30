@@ -3,11 +3,6 @@
 	<div class="group-by">
 		<!-- Group selector/creator container -->
 		<div class="left-sidebar">
-
-			<label style="padding: 5px 15px; margin: 0; vertical-align: bottom; white-space: nowrap;" title="Keep these group settings when performing a new search">
-				<input type="checkbox" v-model="preserveGroupByWhenSearching"> Do not reset on search
-			</label>
-
 			<div :class="{'two-button-container': true, 'flex-row': localModel.length > 0, 'flex-col': localModel.length === 0}">
 				<button type="button" @click="addAnnotation" class="create-group-btn btn btn-default" v-if="type === 'hits'">+ Annotation</button>
 				<button type="button" @click="addMetadata" class="create-group-btn btn btn-default">+ Metadata</button>
@@ -136,7 +131,7 @@
 				<br>
 				<label><input type="checkbox" v-model="current.caseSensitive"> Case sensitive</label>
 			</template>
-			<div v-else class="text-secondary h4" style="height: 100%; width: 100%; margin: 0; display: flex; align-items: center;">In this window you can apply grouping to the results. Click the buttons on the left to create a grouping criteria to get started.</div>
+			<div v-else class="text-secondary h4 content" style="margin: 0; justify-self: center;">In this window you can apply grouping to the results. Click the buttons on the left to create a grouping criteria to get started.</div>
 		</div>
 	</div>
 </template>
@@ -202,11 +197,6 @@ export default Vue.extend({
 		hits: undefined as undefined|BLHitResults
 	}),
 	computed: {
-
-		preserveGroupByWhenSearching: {
-			get(): boolean { return !GlobalSearchSettingsStore.get.resetGroupByOnSearch() },
-			set(v: boolean) { GlobalSearchSettingsStore.actions.resetGroupByOnSearch(!v) }
-		},
 		storeModule(): ResultsStore.ViewModule { return ResultsStore.getOrCreateModule(this.type); },
 		storeValue(): string[] { return this.storeModule.getState().groupBy; },
 		viewGroup(): string|null { return this.storeModule.getState().viewGroup; },

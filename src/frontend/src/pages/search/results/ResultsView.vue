@@ -292,12 +292,7 @@ export default Vue.extend({
 				This would cause new results to be requested even when just changing the table display mode...
 			*/
 			return jsonStableStringify({
-				global: {
-					...GlobalStore.getState(),
-					// hidden setting, exclude it from triggering a results refresh
-					resetGroupByOnSearch: undefined,
-				},
-
+				global: GlobalStore.getState(),
 				self: {
 					...this.store.getState(),
 					groupDisplayMode: null // ignore this property

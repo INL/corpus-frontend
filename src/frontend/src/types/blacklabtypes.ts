@@ -552,7 +552,7 @@ export type BLHitInOtherField = BLHitSnippet&{ // (otherFields hits don't repeat
  */
 export type BLHit = BLHitInOtherField&{
 	docPid: string;
-	otherFields?: Record<string, BLHitInOtherField[]>; // parallel corpus: aligned hits in other (requested) versions
+	otherFields?: Record<string, BLHitInOtherField>; // parallel corpus: aligned hits in other (requested) versions
 };
 
 /** Contains occurance counts of terms in the index */

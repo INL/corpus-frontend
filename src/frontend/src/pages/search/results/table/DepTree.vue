@@ -22,7 +22,7 @@ import Vue from 'vue';
 // @ts-ignore
 import {ReactiveDepTree} from '@/../node_modules/reactive-dep-tree/dist/reactive-dep-tree.umd.js';
 import {HitRowData} from '@/pages/search/results/table/HitRow.vue';
-import { BLHit, BLHitSnippet, BLHitSnippetPart, BLRelationMatchRelation } from '@/types/blacklabtypes';
+import { BLHit, BLHitInOtherField, BLHitSnippet, BLHitSnippetPart, BLRelationMatchRelation } from '@/types/blacklabtypes';
 import Spinner from '@/components/Spinner.vue';
 
 
@@ -93,9 +93,9 @@ export default Vue.extend({
 	}),
 	computed: {
 		// We only need this to know where our hit starts and ends.
-		hit(): BLHit|undefined { return 'start' in this.data.hit ? this.data.hit : undefined; },
+		hit(): BLHit|BLHitInOtherField|undefined { return 'start' in this.data.hit ? this.data.hit : undefined; },
 		// The full sentence is the context in which the hit was found. Unless we don't have the sentence (yet), then it's the same hit ;)
-		context(): BLHit|undefined { return this.fullSentence || this.hit },
+		context(): BLHit|BLHitInOtherField|undefined { return this.fullSentence || this.hit },
 
 		// Make the hit array make sense, since indexing into three non-0 indexed objects is a bit of a pain.
 		// Basically just make an array of key-value maps that contain the annotations for each token. e.g. [{word: 'I', lemma: 'i'}, {word: 'am', lemma: 'be'}, ...]

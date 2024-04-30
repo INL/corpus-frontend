@@ -39,7 +39,7 @@ import HitContextComponent from '@/pages/search/results/table/HitContext.vue';
 export type HitRowData = {
 	type: 'hit';
 	doc: BLTypes.BLDoc;
-	hit: BLTypes.BLHit|BLTypes.BLHitSnippet;
+	hit: BLTypes.BLHit|BLTypes.BLHitInOtherField|BLTypes.BLHitSnippet;
 
 	// TODO jesse
 	gloss_fields: GlossFieldDescription[];
@@ -77,6 +77,11 @@ export default Vue.extend({
 </script>
 
 <style lang="scss">
+
+tr.foreign-hit {
+	color: #666;
+	font-style: italic;
+}
 
 tr.concordance {
 	> td {

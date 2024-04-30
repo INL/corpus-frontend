@@ -261,7 +261,8 @@ url$.pipe(
 			} : ExploreStore.defaults,
 			patterns: query.form === 'search' ? {
 				...PatternStore.defaults,
-				[query.subForm]: query.formState
+				[query.subForm]: query.formState,
+				parallelVersions: query.parallelVersions,
 			} : PatternStore.defaults,
 			interface: {
 				form: query.form ? query.form : 'search',

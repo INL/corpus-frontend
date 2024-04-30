@@ -328,7 +328,7 @@ export const getPatternString = (annotations: AppTypes.AnnotationValue[], within
 	}
 
 	if (parallelTargetVersions.length > 0) {
-		query = query + parallelTargetVersions.map(v => ` -->${v} _`).join('; ');
+		query = query + parallelTargetVersions.map(v => ` -->${v} _`).join(' ; ');
 	}
 
 	return query || undefined;

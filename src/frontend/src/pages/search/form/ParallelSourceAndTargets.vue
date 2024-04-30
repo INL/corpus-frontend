@@ -74,11 +74,6 @@ export default Vue.extend({
 		},
 
 	},
-	watch: {
-		parallelTargetVersions(v) {
-			console.log('parallelTargetVersions', v)
-		},
-	},
 });
 </script>
 

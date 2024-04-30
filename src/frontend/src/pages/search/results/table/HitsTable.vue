@@ -101,8 +101,8 @@
 						:html="html"
 					/>
 
-					<!-- @@@ JN Here's where we try to show otherFields results, but we don't have HitRowData -->
-					<!-- <HitRow :key="`${i}-${name}-hit`" v-for="(oh, name) in otherFields(h.hit)"
+					<HitRow :key="`${i}-${name}-hit`" v-for="(oh, name) in otherFields(h.hit)"
+						class="foreign-hit"
 						:data="oh"
 						:mainAnnotation="mainAnnotation"
 						:otherAnnotations="otherAnnotations"
@@ -110,7 +110,7 @@
 						:dir="dir"
 						:html="html"
 						:disabled="disabled"
-					/> -->
+					/>
 
 				</template>
 				<DocRow v-else :key="`${i}-doc`"
@@ -126,7 +126,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import { NormalizedAnnotation, NormalizedMetadataField } from '@/types/apptypes';
-import { BLHit, BLHitInOtherField, BLHitSnippet, BLSearchParameters } from '@/types/blacklabtypes';
+import { BLDocInfo, BLHit, BLHitInOtherField, BLHitSnippet, BLSearchParameters } from '@/types/blacklabtypes';
 
 import HitRow, {HitRowData} from '@/pages/search/results/table/HitRow.vue'
 import HitRowDetails from '@/pages/search/results/table/HitRowDetails.vue'
@@ -187,11 +187,34 @@ export default Vue.extend({
 		changeSort(sort: string) {
 			this.$emit('changeSort', sort)
 		},
-		otherFields(h: BLHit|BLHitSnippet): Record<string, BLHitInOtherField[]> {
+		otherFields(h: BLHit|BLHitSnippet): Record<string, HitRowData> {
 			if (!('otherFields' in h) || h.otherFields === undefined)
 				return {};
-			console.log(h.otherFields);
-			return h.otherFields;
+			//console.log(h.otherFields);
+			const x = Object.entries(h.otherFields).map(([name, hit]) => {
+				//console.log('hit', hit);
+				const docInfo = {
+						lengthInTokens: 0,
+						mayView: false,
+					} as BLDocInfo;
+				return {
+					[name]: {
+						type: 'hit',
+						doc: {
+							docInfo,
+							docPid: h.docPid,
+						},
+						hit,
+
+						gloss_fields: [], //jesse
+						hit_first_word_id: '', //jesse
+						hit_last_word_id: '', //jesse
+						hit_id: '' //jesse
+
+					} as HitRowData
+				}
+			}).reduce((acc, val) => ({ ...acc, ...val }), {});
+			return x;
 		},
 	},
 	watch: {

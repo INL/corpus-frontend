@@ -20,7 +20,7 @@ export function debugLog(...args: any[]) {
 }
 
 /** Enable/disable categories of debug messages here */
-const SHOW_CATEGORIES: string[] = ['parallel'];
+const SHOW_CATEGORIES: string[] = ['parallel', 'history'];
 
 /** A debug message in a category that we may want to show or not */
 export function debugLogCat(category: string, message: string) {

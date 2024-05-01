@@ -124,7 +124,14 @@
 			</div>
 			<div :class="['tab-pane', {'active': activePattern==='expert'}]" id="expert">
 				<h3>Corpus Query Language:</h3>
-				<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model.lazy="expert"></textarea>
+
+				<!-- <textarea id="querybox" class="form-control" name="querybox" rows="7" v-model.lazy="expert"></textarea> -->
+				<MonacoEditor id="querybody" v-model.lazy="expert"
+					language="cql"
+					filename="query.cql"
+					:options="{wordWrap: 'on', minimap: {enabled: false}, automaticLayout: true, theme: 'cql'}"
+				/>
+
 				<button v-if="advancedEnabled" type="button" class="btn btn-sm btn-default" name="parseQuery" id="parseQuery" title="Edit your query in the querybuilder" @click="parseQuery">Copy to query builder</button>
 				<label class="btn btn-sm btn-default file-input-button" for="importQuery">
 					Import query
@@ -167,6 +174,7 @@ import Annotation from '@/pages/search/form/Annotation.vue';
 import ConceptSearch from '@/pages/search/form/concept/ConceptSearch.vue';
 import GlossSearch from '@/pages/search/form/concept/GlossSearch.vue';
 import uid from '@/mixins/uid';
+import MonacoEditor from '@/components/MonacoEditor.vue';
 
 import { QueryBuilder } from '@/modules/cql_querybuilder';
 
@@ -183,7 +191,8 @@ export default Vue.extend({
 	components: {
 		Annotation,
 		ConceptSearch,
-		GlossSearch
+		GlossSearch,
+		MonacoEditor
 	},
 	data: () => ({
 		parseQueryError: null as string|null,
@@ -381,6 +390,8 @@ export default Vue.extend({
 				}
 			}));
 		}
+
+		if (!this.expert) this.expert = '[word="test"]';
 	}
 })
 </script>

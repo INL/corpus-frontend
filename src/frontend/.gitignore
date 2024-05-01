@@ -3,3 +3,5 @@ node_modules/
 # maven installs nodejs locally
 node/
 npm.tar.gz
+
+src/components/cql-editor/parser/

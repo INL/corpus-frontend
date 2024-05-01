@@ -28,6 +28,8 @@
     "@types/urijs": "^1.19.18",
     "@vue/babel-helper-vue-jsx-merge-props": "^1.0.0",
     "@vue/babel-preset-jsx": "^1.1.2",
+    "antlr4ng-cli": "^2.0.0",
+    "antlr4ts-cli": "^0.5.0-alpha.4",
     "babel-loader": "^8.2.3",
     "babel-plugin-transform-es2015-modules-commonjs-simple": "^6.7.4",
     "circular-dependency-plugin": "^5.2.0",
@@ -56,6 +58,9 @@
     "whatwg-fetch": "^3.2.0"
   },
   "dependencies": {
+    "antlr4-c3": "^3.4.1",
+    "antlr4ng": "^3.0.4",
+    "antlr4ts": "^0.5.0-alpha.4",
     "axios": "^0.21.2",
     "bootstrap": "^3.4.1",
     "bootstrap-select": "^1.13.18",

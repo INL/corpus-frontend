@@ -150,6 +150,10 @@ import { configureMonacoYaml } from 'monaco-yaml';
 import type {JSONSchema7} from 'json-schema';
 import blfschema from '@/assets/blf-schema.json';
 
+import {setup} from './cql-editor/cqlTokensProvider';
+
+setup();
+
 configureMonacoYaml(monaco, {
 	enableSchemaRequest: false,
 	schemas: [{

@@ -39,6 +39,8 @@ export default pipe(
 			let hitTimeout = false;
 
 			const timeoutMs = UIStore.getState().results.shared.totalsTimeoutDurationMs;
+			// TODO fish out which dependency has a transitive dependency on @types/node and remove it
+			// @ts-ignore
 			let timeoutHandle: number|null = timeoutMs <= 0 ? null : setTimeout(() => {
 				hitTimeout = true;
 				timeoutHandle = null;

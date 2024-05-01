@@ -147,6 +147,8 @@ import Vue from 'vue';
 import { NormalizedAnnotation, NormalizedMetadataField } from '@/types/apptypes';
 import { BLDocInfo, BLHit, BLHitInOtherField, BLHitSnippet, BLSearchParameters } from '@/types/blacklabtypes';
 
+import * as CorpusStore from '@/store/search/corpus';
+
 import HitRow, {HitRowData} from '@/pages/search/results/table/HitRow.vue'
 import HitRowDetails from '@/pages/search/results/table/HitRowDetails.vue'
 import DocRow, {DocRowData} from '@/pages/search/results/table/DocRow.vue';
@@ -246,7 +248,10 @@ export default Vue.extend({
 			}).reduce((acc, val) => ({ ...acc, ...val }), {});
 			return x;
 		},
-		parallelVersion(name: string): string { return name.replace(/^.+__/, ''); },
+		parallelVersion(fieldName: string): string {
+			const versionName = fieldName.replace(/^.+__/, '');
+			return CorpusStore.get.parallelVersions().find(v => v.name === versionName)?.displayName || versionName;
+		},
 	},
 	watch: {
 		data() {

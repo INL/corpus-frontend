@@ -44,17 +44,17 @@
 							/>
 						</template>
 
-						<HitContextComponent tag="span" :dir="dir" :data="context.before" :html="html"/>
+						<HitContextComponent tag="span" :dir="dir" :data="context.before" :html="html" before/>
 						<HitContextComponent tag="strong" :dir="dir" :data="context.match" :html="html"/>
 						<a v-if="href" :href="href" title="Go to hit in document" target="_blank"><sup class="fa fa-link" style="margin-left: -5px;"></sup></a>
-						<HitContextComponent tag="span" :dir="dir" :data="context.after" :html="html"/>
+						<HitContextComponent tag="span" :dir="dir" :data="context.after" :html="html" after/>
 					</p>
 				</template>
 				<template v-else-if="!detailedAnnotations?.length">
 					<p>No context available.</p>
 				</template>
 
-				<div v-if="detailedAnnotations?.length" style="overflow: auto; max-width: 100%; padding-bottom: 15px;">
+				<div v-if="detailedAnnotations?.length" class="concordance-details-wrapper">
 					<table class="concordance-details-table">
 						<thead>
 							<tr>
@@ -65,7 +65,7 @@
 						<tbody>
 							<tr v-for="(annot, index) in detailedAnnotations" :key="annot.id">
 								<th>{{annot.displayName}}</th>
-								<HitContextComponent tag="td" :data="otherContexts[index].match" :html="html" :dir="dir" :key="index"/>
+								<HitContextComponent v-for="(token, ti) in otherContexts[index].match" tag="td" :data="[token]" :html="html" :dir="dir" :key="annot.id + ti" :punct="false"/>
 							</tr>
 						</tbody>
 					</table>
@@ -216,3 +216,32 @@ export default Vue.extend({
 });
 </script>
 
+<style lang="scss">
+
+$screen-xs: 480px;
+$screen-sm: 768px;
+$screen-md: 992px;
+$screen-lg: 1200px;
+
+
+.concordance-details-wrapper {
+	overflow-x: auto;
+	max-width: calc(100vw - 125px);
+	@media(max-width: $screen-md - 1px) { max-width: calc(100vw - 100px); }
+}
+.concordance-details-table {
+	table-layout: auto;
+
+	td {
+		padding: 0 0.25em;
+	}
+}
+
+.container:not(.container-fluid) .concordance-details-table {
+	@media(min-width: $screen-xs) { max-width: calc($screen-xs - 75px); }
+	@media(min-width: $screen-sm) { max-width: calc($screen-sm - 100px); }
+	@media(min-width: $screen-md) { max-width: calc($screen-md - 125px); }
+	@media(min-width: $screen-lg) { max-width: calc($screen-lg - 125px); }
+}
+
+</style>

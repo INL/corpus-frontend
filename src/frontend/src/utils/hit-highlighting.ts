@@ -76,14 +76,19 @@ const indexToRgb = (i: number): {color: string, textcolor: string} => {
  *
  * @param part The part of the hit on which to do this.
  * @param annotationId the annotation to extract
+ * @param lastPunctuation the punctuation after the last word.
+ *                        BlackLab sends punctuation BEFORE the token, with a trailing value at the end,
+ *                        we prefer to put punct AFTER the token, because it makes more sense when rendering before/hit/after.
+ *                        E.G. "punctuation is dumb, " | "he said", instead of "punctuation is dumb" | ", he said"
  */
-function flatten(part: BLHitSnippetPart|undefined, annotationId: string): HitToken[] {
+function flatten(part: BLHitSnippetPart|undefined, annotationId: string, lastPunctuation?: string): HitToken[] {
 	if (!part) return [];
 	/** The result array */
 	const r: HitToken[] = [];
+	const length = part[annotationId].length;
 	for (let i = 0; i < part[annotationId].length; i++) {
 		const word = part[annotationId][i];
-		const punct = part.punct[i] || '';
+		const punct =  (i === length - 1 ? lastPunctuation : part.punct[i+1]) || ''; // punctuation is the whitespace before the current word. There is always one more punctuation than there are words in a document (fencepost problem).
 		r.push({punct, text: word});
 	}
 	return r;
@@ -98,9 +103,10 @@ function flatten(part: BLHitSnippetPart|undefined, annotationId: string): HitTok
  */
 export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir: 'ltr'|'rtl', returnCaptures = true): HitContext {
 	// We always need to do this.
+
 	const r: HitContext = {
-		before: flatten(dir === 'ltr' ? hit.left : hit.right, annotationId),
-		match: flatten(hit.match, annotationId),
+		before: flatten(dir === 'ltr' ? hit.left : hit.right, annotationId, hit.match.punct[0]),
+		match: flatten(hit.match, annotationId, (dir === 'ltr' ? hit.right : hit.left)?.punct[0]),
 		after: flatten(dir === 'ltr' ? hit.right : hit.left, annotationId)
 	};
 

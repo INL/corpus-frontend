@@ -4,12 +4,12 @@
 			<div class="modal-content">
 				<div class="modal-header">
 					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-					<h4 class="modal-title">Global settings</h4>
+					<h4 class="modal-title">{{$t('setting.heading')}}</h4>
 				</div>
 				<div class="modal-body">
 					<div class="form-horizontal">
 						<div class="form-group"> <!-- behaves as .row when in .form-horizontal so .row may be omitted -->
-							<label for="resultsPerPage" class="col-xs-3">Results per page:</label>
+							<label for="resultsPerPage" class="col-xs-3">{{$t('setting.resultsPerPage')}}:</label>
 							<div class="col-xs-9">
 								<SelectPicker
 									data-id="resultsPerPage"
@@ -24,7 +24,7 @@
 						</div>
 
 						<div class="form-group">
-							<label for="sampleSize" class="col-xs-3">Sample size:</label>
+							<label for="sampleSize" class="col-xs-3">{{$t('setting.sampleSize')}}:</label>
 							<div class="col-xs-9">
 								<div class="input-group">
 									<SelectPicker
@@ -41,32 +41,32 @@
 										v-model="sampleMode"
 									/>
 
-									<input id="sampleSize" name="sampleSize" placeholder="sample size" type="number" class="form-control" v-model.lazy="sampleSize" ref="sampleSize"/>
+									<input id="sampleSize" name="sampleSize" :placeholder="$t('setting.sampleSize')" type="number" class="form-control" v-model.lazy="sampleSize" ref="sampleSize"/>
 								</div>
 							</div>
 						</div>
 
 						<div class="form-group">
-							<label for="sampleSeed" class="col-xs-3">Seed:</label>
+							<label for="sampleSeed" class="col-xs-3">{{$t('setting.sampleSeed')}}:</label>
 							<div class="col-xs-9">
-								<input id="sampleSeed" name="sampleSeed" placeholder="seed" type="number" class="form-control" v-model.lazy="sampleSeed">
+								<input id="sampleSeed" name="sampleSeed" :placeholder="$t('setting.sampleSeed')" type="number" class="form-control" v-model.lazy="sampleSeed">
 							</div>
 						</div>
 
 						<div class="form-group">
-							<label for="context" class="col-xs-3">Context size:</label>
+							<label for="context" class="col-xs-3">{{$t('setting.context')}}:</label>
 							<div class="col-xs-9">
-								<input id="context" name="context" placeholder="Context size" type="number" class="form-control" v-model.lazy="context">
+								<input id="context" name="context" :placeholder="$t('setting.context')" type="number" class="form-control" v-model.lazy="context">
 							</div>
 						</div>
 					</div>
 					<hr>
-					<div class="checkbox-inline"><label for="wide-view"><input type="checkbox" id="wide-view" name="wide-view" data-persistent checked> Wide View</label></div>
+					<div class="checkbox-inline"><label for="wide-view"><input type="checkbox" id="wide-view" name="wide-view" data-persistent checked>{{$t('setting.wideView')}}</label></div>
 					<br>
-					<div v-if="debug.debug_visible || debug.debug" class="checkbox-inline"><label for="debug" class="text-muted"><input type="checkbox" id="debug" name="debug" v-model="debug.debug"> Debug info</label></div>
+					<div v-if="debug.debug_visible || debug.debug" class="checkbox-inline"><label for="debug" class="text-muted"><input type="checkbox" id="debug" name="debug" v-model="debug.debug">{{ $t('setting.debug') }}</label></div>
 				</div>
 				<div class="modal-footer">
-					<button type="button" name="closeSettings" class="btn btn-primary" data-dismiss="modal">Close</button>
+					<button type="button" name="closeSettings" class="btn btn-primary" data-dismiss="modal">{{$t('setting.close')}}</button>
 				</div>
 			</div>
 		</div>

@@ -1,8 +1,8 @@
 <template>
 	<div>
 		<ul class="nav nav-tabs cf-panel-tab-header cf-panel-lg">
-			<li :class="{'active': activeForm==='search'}" @click.prevent="activeForm='search'"><a href="#form-search">Search</a></li>
-			<li :class="{'active': activeForm==='explore'}" @click.prevent="activeForm='explore'"><a href="#form-explore">Explore</a></li>
+			<li :class="{'active': activeForm==='search'}" @click.prevent="activeForm='search'"><a href="#form-search">{{$t('queryFrom.search')}}</a></li>
+			<li :class="{'active': activeForm==='explore'}" @click.prevent="activeForm='explore'"><a href="#form-explore">{{$t('queryFrom.explore')}}</a></li>
 		</ul>
 		<form class="tab-content cf-panel-tab-body cf-panel-lg clearfix" style="padding-top: 0;" @submit.prevent.stop="submit" @reset.prevent.stop="reset">
 			<QueryFormSearch  id="form-search" v-show="activeForm === 'search'"
@@ -38,9 +38,9 @@
 			/>
 			<div class="col-xs-12">
 				<hr/>
-				<button type="submit" class="btn btn-primary btn-lg">Search</button>
-				<button type="reset" class="btn btn-default btn-lg" title="Start a new search">Reset</button>
-				<button type="button" class="btn btn-lg btn-default" data-toggle="modal" data-target="#history">History</button>
+				<button type="submit" class="btn btn-primary btn-lg">{{$t('queryFrom.search')}}</button>
+				<button type="reset" class="btn btn-default btn-lg" title="Start a new search">{{$t('queryFrom.reset')}}</button>
+				<button type="button" class="btn btn-lg btn-default" data-toggle="modal" data-target="#history">{{$t('queryFrom.history')}}</button>
 				<button type="button" class="btn btn-lg btn-default" data-toggle="modal" data-target="#settings"><span class="glyphicon glyphicon-cog" style="vertical-align:text-top;"></span></button>
 			</div>
 		</form>

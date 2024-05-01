@@ -1,11 +1,11 @@
 <template>
 	<div class='conceptbox' style='text-align: left'>
-		<div class="box-header">Subquery {{ id }}</div>
+		<div class="box-header">{{ $t('formConcept.conceptSearchBox.subquery') }} {{ id }}</div>
 
 		<table>
 			<tr>
 				<td class="fn">
-					<label :for="id + 'main_fields'">Field: </label>
+					<label :for="id + 'main_fields'">{{ $t('formConcept.conceptSearchBox.field') }}: </label>
 				</td>
 				<td>
 					<SelectPicker data-width="100%" :data-id="id + 'main_fields'" v-model="search_field" :options="main_fields"/>
@@ -13,7 +13,8 @@
 			</tr>
 			<tr>
 				<td class="fn">
-					<label :for="id + 'ac1'">Concept: </label></td>
+					<label :for="id + 'ac1'">{{ $t('formConcept.conceptSearchBox.concept') }}: </label>
+				</td>
 				<td>
 					<Autocomplete
 						:id="id + 'ac1'"
@@ -28,7 +29,9 @@
 				</td>
 			</tr>
 			<tr>
-				<td class="fn"><label :for="id + 'ac2'">Term: </label></td>
+				<td class="fn">
+					<label :for="id + 'ac2'">{{ $t('formConcept.conceptSearchBox.term') }}: </label>
+				</td>
 				<td>
 					<div class="input-group">
 						<Autocomplete
@@ -40,7 +43,7 @@
 						/>
 
 						<div class="input-group-btn">
-							<button @click="insertTerm" title="Add term to lexicon" class="btn btn-default">⤿ lexicon</button>
+							<button @click="insertTerm" :title="$t('formConcept.conceptSearchBox.addToLexicon')" class="btn btn-default">⤿ lexicon</button>
 						</div>
 					</div>
 				</td>
@@ -57,7 +60,7 @@
 			</div>
 		</div>
 
-		<button type="button" @click="resetQuery" class="btn btn-sm btn-default">Clear</button>
+		<button type="button" @click="resetQuery" class="btn btn-sm btn-default">{{ $t('formConcept.conceptSearchBox.clear') }}</button>
 	 </div>
 </template>
 

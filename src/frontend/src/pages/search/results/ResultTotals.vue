@@ -5,9 +5,9 @@
 
 		<div class="totals-text" :title="percentOfSearchSpaceClarification">
 			<div class="totals-type">
-				<div>Total {{resultType}}<template v-if="!isFinished"> so far</template>:</div>
-				<div v-if="isGroups">Total groups<template v-if="!isFinished"> so far</template>:</div>
-				<div>Search time:</div>
+				<div>{{ $t('results.resultsTotals.total') }} {{resultType}}<template v-if="!isFinished"> {{ $t('results.resultsTotals.soFar') }}</template>:</div>
+				<div v-if="isGroups">{{ $t('results.resultsTotals.totalGroups') }}<template v-if="!isFinished"> {{ $t('results.resultsTotals.soFar') }}</template>:</div>
+				<div>{{ $t('results.resultsTotals.searchTime') }}:</div>
 				<!-- <div>Total pages<template v-if="!isFinished"> so far</template>:</div> -->
 			</div>
 			<div class="totals-count">
@@ -26,16 +26,16 @@
 	</div>
 
 	<div v-if="error" class="totals-message text-danger" @click="continueCounting" :title="error.message">
-		<span class="fa fa-exclamation-triangle text-danger"/> Network error! <button type="button" class="totals-button" @click="continueCounting"><span class="fa fa-rotate-right text-danger"></span> Retry</button>
+		<span class="fa fa-exclamation-triangle text-danger"/> {{ $t('results.resultsTotals.networkError') }}! <button type="button" class="totals-button" @click="continueCounting"><span class="fa fa-rotate-right text-danger"></span> {{ $t('results.resultsTotals.retry') }}</button>
 	</div>
 	<div v-else-if="isLimited" class="totals-message text-danger" :title="`You may view up to ${numResultsRetrieved.toLocaleString()}. Additionally, BlackLab stopped counting after ${numResults.toLocaleString()}.`">
-		<span class="fa fa-exclamation-triangle text-danger"/> <b>Query limited;</b> stopped after {{numResultsRetrieved.toLocaleString()}} from a total of more than {{numResults.toLocaleString()}}
+		<span class="fa fa-exclamation-triangle text-danger"/> <b>{{ $t('results.resultsTotals.queryLimited') }};</b> stopped after {{numResultsRetrieved.toLocaleString()}} from a total of more than {{numResults.toLocaleString()}}
 	</div>
 	<div v-else-if="isFinished && numResults > numResultsRetrieved" class="totals-message text-danger" :title="`You may only view up to ${numResultsRetrieved.toLocaleString()} results` ">
-		<span class="fa fa-exclamation-triangle text-danger"/> <b>Query limited;</b> stopped after {{numResultsRetrieved.toLocaleString()}} from a total of {{numResults.toLocaleString()}}
+		<span class="fa fa-exclamation-triangle text-danger"/> <b>{{ $t('results.resultsTotals.queryLimited') }};</b> stopped after {{numResultsRetrieved.toLocaleString()}} from a total of {{numResults.toLocaleString()}}
 	</div>
 	<div v-else-if="isPaused" class="totals-message text-info">
-		Heavy query - search paused <button type="button" class="totals-button" @click="continueCounting"><span class="fa fa-rotate-right text-info"></span> Continue </button>
+		{{ $t('results.resultsTotals.heavyQuery') }} - search paused <button type="button" class="totals-button" @click="continueCounting"><span class="fa fa-rotate-right text-info"></span> {{ $t('results.resultsTotals.continue') }} </button>
 	</div>
 </div>
 </template>
@@ -95,7 +95,7 @@ export default Vue.extend({
 		isPaused(): boolean { return !this.error && this.resultCount.state === 'paused'; },
 		isFinished(): boolean { return this.isLimited || !(this.isCounting || this.isPaused); },
 
-		resultType(): string { return BLTypes.isHitGroupsOrResults(this.stats) ? 'hits' : 'documents'; },
+		resultType(): string { return BLTypes.isHitGroupsOrResults(this.stats) ? this.$t('results.resultsTotals.hits') as string : this.$t('results.resultsTotals.documents') as string; },
 		isGroups(): boolean { return BLTypes.isGroups(this.stats); },
 		searchTime(): string { return frac2Percent(this.stats.summary.searchTime / 100000, 1).replace('%', 's'); },
 
@@ -106,7 +106,7 @@ export default Vue.extend({
 		numGroups(): number { return BLTypes.isGroups(this.stats) ? this.stats.summary.numberOfGroups : 0; },
 		// numPages(): number { return Math.ceil((this.isGroups ? this.numGroups : this.numResultsRetrieved) / this.initialResults.summary.searchParam.number); },
 
-		searchSpaceType(): string { return BLTypes.isHitGroupsOrResults(this.stats) ? 'tokens' : 'documents'; },
+		searchSpaceType(): string { return BLTypes.isHitGroupsOrResults(this.stats) ? this.$t('results.resultsTotals.tokens') as string : this.$t('results.resultsTotals.documents') as string; },
 		/** The total number of relevant items in the searched subcorpus, tokens if viewing tokens, docs if viewing documents */
 		searchSpaceCount(): number {
 			if (this.subcorpus == null) {

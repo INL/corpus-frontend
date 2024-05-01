@@ -3,12 +3,12 @@
 		<td colspan="10">
 			<div class="well-light">
 				<div class="concordance-controls clearfix">
-					<button type="button" class="btn btn-sm btn-primary open-concordances" :disabled="disabled" @click="$emit('openFullConcordances')"><span class="fa fa-angle-double-left"></span> View detailed concordances</button>
+					<button type="button" class="btn btn-sm btn-primary open-concordances" :disabled="disabled" @click="$emit('openFullConcordances')"><span class="fa fa-angle-double-left"></span> {{$t('results.table.viewDetailedConcordances')}}</button>
 					<button type="button" v-if="!concordances.done" :disabled="concordances.loading" class="btn btn-sm btn-default" @click="concordances.next()">
 						<template v-if="concordances.loading">
-							<span class="fa fa-spin fa-spinner"></span> Loading...
+							<span class="fa fa-spin fa-spinner"></span> {{$t('results.table.loading')}}
 						</template>
-						<template v-else>Load more concordances</template>
+						<template v-else>{{$t('results.table.loadMoreConcordances')}}</template>
 					</button>
 
 					<button type="button" class="close close-concordances" title="close" @click="$emit('close')"><span>&times;</span></button>
@@ -30,15 +30,15 @@
 					:data="concordances.results"
 				/>
 				<div class="concordance-controls clearfix" v-if="concordances.results.length > 10">
-					<button type="button" class="btn btn-sm btn-primary open-concordances" :disabled="disabled" @click="$emit('openFullConcordances')"><span class="fa fa-angle-double-left"></span> View detailed concordances</button>
+					<button type="button" class="btn btn-sm btn-primary open-concordances" :disabled="disabled" @click="$emit('openFullConcordances')"><span class="fa fa-angle-double-left"></span> {{$t('results.table.viewDetailedConcordances')}}</button>
 					<button type="button" v-if="!concordances.done" :disabled="concordances.loading" class="btn btn-sm btn-default" @click="concordances.next()">
 						<template v-if="concordances.loading">
-							<span class="fa fa-spin fa-spinner"></span> Loading...
+							<span class="fa fa-spin fa-spinner"></span> {{$t('results.table.loading')}}
 						</template>
-						<template v-else>Load more concordances</template>
+						<template v-else>{{$t('results.table.loadMoreConcordances')}}</template>
 					</button>
 
-					<button type="button" class="close close-concordances" title="close" @click="$emit('close')"><span>&times;</span></button>
+					<button type="button" class="close close-concordances" :title="$t('results.table.close')" @click="$emit('close')"><span>&times;</span></button>
 				</div>
 
 			</div>

@@ -38,7 +38,7 @@
 									</label>
 								</li>
 							</ul>
-							<em v-if="annotationValue.subAnnotationIds.length === 0">No options</em>
+							<em v-if="annotationValue.subAnnotationIds.length === 0">{{$t('partOfSpeech.noOptions')}}</em>
 						</div>
 					</div>
 					<hr>
@@ -51,8 +51,8 @@
 				</div>
 				<div class="modal-footer">
 					<!-- Don't use submit/reset, since these are not in their own form it messes up submitting any parent form using enter key in input -->
-					<button type="button" class="btn btn-primary" @click.prevent="submit" data-dismiss="modal">Ok</button>
-					<button type="button" class="btn btn-default" @click.prevent="reset">Reset</button>
+					<button type="button" class="btn btn-primary" @click.prevent="submit" data-dismiss="modal">{{$t('partOfSpeech.submit')}}</button>
+					<button type="button" class="btn btn-default" @click.prevent="reset">{{$t('partOfSpeech.reset')}}</button>
 				</div>
 			</div>
 		</div>

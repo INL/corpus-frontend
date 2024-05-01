@@ -36,7 +36,7 @@
 
 				@click="showTitles = !showTitles"
 			>
-				{{showTitles ? 'Hide' : 'Show'}} Titles
+				{{showTitles ? $t('results.table.hide') : $t('results.table.show')}} {{ $t('results.table.titles') }}
 			</button>
 			<slot name="export"/>
 		</div>

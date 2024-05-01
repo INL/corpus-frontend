@@ -32,7 +32,7 @@
 				:originalGroupBySettings="originalGroupBySettings"
 				@viewgroupLeave="leaveViewgroup"
 			/>
-			<button v-else slot="groupBy" class="btn btn-sm btn-primary" @click="leaveViewgroup"><span class="fa fa-angle-double-left"></span> Back to group overview</button>
+			<button v-else slot="groupBy" class="btn btn-sm btn-primary" @click="leaveViewgroup"><span class="fa fa-angle-double-left"></span> {{ $t('results.resultsView.backToGroupOverview') }}</button>
 
 			<Pagination slot="pagination"
 				style="display: block; margin: 10px 0;"
@@ -66,16 +66,16 @@
 			/>
 
 		</component>
-		<div v-else-if="results" class="no-results-found">No results found.</div>
+		<div v-else-if="results" class="no-results-found">{{ $t('results.resultsView.noResultsFound') }}</div>
 		<div v-else-if="!valid" class="no-results-found">
-			This view is inactive because no search criteria for words were specified.
+			{{ $t('results.resultsView.inactiveView') }}
 		</div>
 		<div v-else-if="error != null" class="no-results-found">
 			<span class="fa fa-exclamation-triangle text-danger"></span><br>
 			<span v-html="error"></span>
 			<br>
 			<br>
-			<button type="button" class="btn btn-default" title="Try again with current search settings" @click="markDirty();">Try again</button>
+			<button type="button" class="btn btn-default" :title="$t('results.resultsView.tryAgainTitle')" @click="markDirty();">{{ $t('results.resultsView.tryAgain') }}</button>
 		</div>
 	</div>
 </template>

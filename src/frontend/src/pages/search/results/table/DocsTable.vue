@@ -2,13 +2,13 @@
 	<table class="docs-table">
 		<thead>
 			<tr class="rounded">
-				<th><a role="button" @click="changeSort(`field:${specialFields.titleField}`)" :class="['sort', {'disabled': disabled}]" title="Sort by document title">Document</a></th>
+				<th><a role="button" @click="changeSort(`field:${specialFields.titleField}`)" :class="['sort', {'disabled': disabled}]" :title="$t('results.table.sortByDocument')">{{ $t('results.table.document') }}</a></th>
 				<th v-for="meta in metadata" :key="meta.id">
-					<a role="button" @click="changeSort(`field:${meta.id}`)" :class="['sort', {'disabled': disabled}]" :title="`Sort by ${specialMetaDisplayNames[meta.id] || meta.displayName}`">
+					<a role="button" @click="changeSort(`field:${meta.id}`)" :class="['sort', {'disabled': disabled}]" :title="`${$t('results.table.sortBy')} ${specialMetaDisplayNames[meta.id] || meta.displayName}`">
 						{{specialMetaDisplayNames[meta.id] || meta.displayName}} <Debug>(id: {{meta.id}})</Debug>
 					</a>
 				</th>
-				<th v-if="hasHits"><a role="button" @click="changeSort(`numhits`)" :class="['sort', {'disabled': disabled}]" title="Sort by number of hits">Hits</a></th>
+				<th v-if="hasHits"><a role="button" @click="changeSort(`numhits`)" :class="['sort', {'disabled': disabled}]" :title="$t('results.table.sortByHits')">{{ $t('results.table.hits') }}</a></th>
 			</tr>
 		</thead>
 		<tbody>
@@ -27,7 +27,7 @@
 							:disabled="true"
 							:disableDetails="true"
 						/>
-						<div class="text-muted clearfix col-xs-12" v-if="hiddenHits(rowData)">...({{hiddenHits(rowData)}} more hidden hits)</div>
+						<div class="text-muted clearfix col-xs-12" v-if="hiddenHits(rowData)">...({{hiddenHits(rowData)}} {{ $t('results.table.moreHiddenHits') }})</div>
 					</td>
 				</tr>
 			</template>

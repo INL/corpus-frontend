@@ -4,14 +4,14 @@
 			<GlossQueryField  v-for="(o,i) in gloss_fields" v-bind:key="i" :fieldDescription="o"/>
 		</div>
 
-		<button type="button" class="btn btn-default" @click="resetQuery">Reset</button>
+		<button type="button" class="btn btn-default" @click="resetQuery">{{ $t('formConcept.glossSearch.reset') }}</button>
 
 		<div>
-			<label><input type="checkbox" v-model="showQuery"> Show query </label>
+			<label><input type="checkbox" v-model="showQuery"> {{ $t('formConcept.glossSearch.showQuery') }} </label>
 			<div style="border: 1px solid black; margin-top: 1em; padding: 4pt" v-if="showQuery">
 				JSON: <pre v-text="query_from_store"></pre>
 				CQL: <pre v-text="query_cql_from_store"></pre>
-				Settings: <pre v-text="settings"></pre>
+				{{ $t('formConcept.glossSearch.settings') }}: <pre v-text="settings"></pre>
 			</div>
 		</div>
 

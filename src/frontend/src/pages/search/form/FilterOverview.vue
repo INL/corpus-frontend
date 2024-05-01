@@ -7,13 +7,13 @@
 
 		<div class="sub-corpus-size">
 			<template v-if="error">
-				Error: {{error.message}}
+				{{$t('filterOverview.error')}}: {{error.message}}
 			</template>
 			<template v-else-if="subCorpusStats">
-				Selected subcorpus:<br>
+				{{$t('filterOverview.subCorpus')}}:<br>
 				<span style="display: inline-block; vertical-align:top;">
-					Total documents:<br>
-					Total tokens:
+					{{$t('filterOverview.totalDocuments')}}:<br>
+					{{$t('filterOverview.totalTokens')}}:
 				</span>
 				<span style="display: inline-block; vertical-align:top; text-align: right; font-family: monospace;">
 					 {{subCorpusStats.summary.numberOfDocs.toLocaleString()}}<br>
@@ -26,7 +26,7 @@
 			</template>
 			<template v-else>
 				<Spinner xs inline/>
-				Calculating size of selected subcorpus...
+				{{$t('filterOverview.calculating')}}
 			</template>
 		</div>
 	</div>

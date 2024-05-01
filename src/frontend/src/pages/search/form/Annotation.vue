@@ -85,7 +85,7 @@
 
 						v-model="caseSensitive"
 					>
-					Case-&nbsp;and&nbsp;diacritics-sensitive
+					{{$t('annotation.caseSensitive')}}
 				</label>
 			</div>
 		</div>

@@ -5,7 +5,7 @@
 				<th class="text-right">
 					<span v-if="sortableAnnotations && sortableAnnotations.length" class="dropdown">
 						<a role="button" data-toggle="dropdown" :class="['dropdown-toggle', {'disabled': disabled}]">
-							{{leftLabel}} hit
+							{{leftLabel}} {{$t('results.table.hit')}}
 							<span class="caret"></span>
 						</a>
 
@@ -15,13 +15,13 @@
 							</li>
 						</ul>
 					</span>
-					<template v-else>{{leftLabel}} hit</template>
+					<template v-else>{{leftLabel}} {{$t('results.table.hit')}}</template>
 				</th>
 
 				<th class="text-center">
 					<span v-if="sortableAnnotations && sortableAnnotations.length" class="dropdown">
 						<a role="button" data-toggle="dropdown" :class="['dropdown-toggle', {'disabled': disabled}]">
-							Hit
+							{{$t('results.table.hit')}}
 							<span class="caret"/>
 						</a>
 
@@ -31,13 +31,13 @@
 							</li>
 						</ul>
 					</span>
-					<template v-else>Hit</template>
+					<template v-else>{{$t('results.table.hit')}}</template>
 				</th>
 
 				<th class="text-left">
 					<span v-if="sortableAnnotations && sortableAnnotations.length" class="dropdown">
 						<a role="button" data-toggle="dropdown" :class="['dropdown-toggle', {'disabled': disabled}]">
-							{{rightLabel}} hit
+							{{rightLabel}} {{$t('results.table.hit')}}
 							<span class="caret"></span>
 						</a>
 
@@ -47,7 +47,7 @@
 							</li>
 						</ul>
 					</span>
-					<template v-else>{{rightLabel}} hit</template>
+					<template v-else>{{rightLabel}} {{$t('results.table.hit')}}</template>
 				</th>
 				<!-- might crash? no null check -->
 				<th v-for="annotation in otherAnnotations" :key="annotation.id">
@@ -160,10 +160,10 @@ export default Vue.extend({
 	}),
 	computed: {
 		// ltr, rtl stuff
-		leftLabel(): string { return this.dir === 'rtl' ? 'After' : 'Before'; },
-		rightLabel(): string { return this.dir === 'rtl' ? 'Before' : 'After'; },
-		beforeField(): string { return this.dir === 'rtl' ? 'after' : 'before'; },
-		afterField(): string { return this.dir === 'rtl' ? 'before' : 'after'; },
+		leftLabel(): string { return this.dir === 'rtl' ? this.$t('results.table.After') as string : this.$t('results.table.Before') as string; },
+		rightLabel(): string { return this.dir === 'rtl' ? this.$t('results.table.Before') as string : this.$t('results.table.After') as string; },
+		beforeField(): string { return this.dir === 'rtl' ? this.$t('results.table.after') as string : this.$t('results.table.before') as string; },
+		afterField(): string { return this.dir === 'rtl' ? this.$t('results.table.before') as string : this.$t('results.table.after') as string; },
 		colspan(): number {
 			let c = 3; // hit, before, after
 			if (this.otherAnnotations) c += this.otherAnnotations.length;

@@ -1,6 +1,7 @@
 <template>
 	<div v-if="settings" style='text-align: left'>
-		Search in: <SelectPicker v-model="element_searched" :options="settings.searchable_elements" hideEmpty/>
+		{{ $t('formConcept.conceptSearch.searchIn') }} 
+		<SelectPicker v-model="element_searched" :options="settings.searchable_elements" hideEmpty/>
 
 		<div class='boxes' style='text-align: center'>
 			<ConceptSearchBox v-for="(v, id) in query_from_store"
@@ -13,25 +14,25 @@
 				@input="updateSubquery(id, $event)"
 			/>
 		</div>
-		<button class="btn btn-sm btn-default" @click.prevent="resetQuery">Reset</button>
-		<button class="btn btn-sm btn-default" @click.prevent="addBox">Add box</button>
-		<button class="btn btn-sm btn-default" @click.prevent="removeBox">Remove box</button>
-		<a role="button" class="btn btn-sm btn-default" target="_blank" :href="settings.lexit_server + '?db=' + settings.lexit_instance + '&table=lexicon'">View lexicon</a>
+		<button class="btn btn-sm btn-default" @click.prevent="resetQuery">{{ $t('formConcept.conceptSearch.reset') }}</button>
+		<button class="btn btn-sm btn-default" @click.prevent="addBox">{{ $t('formConcept.conceptSearch.addBox') }}</button>
+		<button class="btn btn-sm btn-default" @click.prevent="removeBox">{{ $t('formConcept.conceptSearch.removeBox') }}</button>
+		<a role="button" class="btn btn-sm btn-default" target="_blank" :href="settings.lexit_server + '?db=' + settings.lexit_instance + '&table=lexicon'">{{ $t('formConcept.conceptSearch.viewLexicon') }}</a>
 
 
-		<label> <input type="checkbox" v-model="showQuery"> Show query</label>
+		<label> <input type="checkbox" v-model="showQuery"> {{ $t('formConcept.conceptSearch.showQuery') }}</label>
 
 		<div style="border: 1px solid black; margin-top: 1em; padding: 4pt" v-if="showQuery">
-			Settings:
+			{{ $t('formConcept.conceptSearch.settings') }}:
 			<pre v-text="settings"></pre>
 
-			<i>Query</i>
+			<i>{{ $t('formConcept.conceptSearch.query') }}</i>
 
 			<div style="margin-bottom: 1em" v-for="subquery, i in query_from_store" v-bind:key="i">
 				<b>b{{i}}</b> → [{{ subquery.map(t => t.value).join("; ")}}]
 			</div>
 
-			<i>CQL rendition</i>
+			<i>{{ $t('formConcept.conceptSearch.cqlRendition') }}</i>
 
 			<div class="code" v-text="query_cql_from_store"></div>
 		</div>

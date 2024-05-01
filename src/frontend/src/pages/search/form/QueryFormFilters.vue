@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<h3>Filter search by &hellip;</h3>
+		<h3>{{$t('filter.heading')}}</h3>
 
 		<template v-if="useTabs">
 		<ul class="nav nav-tabs" v-if="tabs.length > 1">
@@ -49,8 +49,8 @@
 			/>
 		</div>
 		<div v-else class="text-muted well">
-			<h4>No filters available</h4>
-			<em>This corpus does not contain metadata, or the author has chosen not to allow filtering on metadata.</em>
+			<h4>{{$t('filter.noFilter.title')}}</h4>
+			<em>{{$t('filter.noFilter.content')}}</em>
 		</div>
 
 		<FilterOverview/>

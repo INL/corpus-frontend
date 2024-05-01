@@ -227,7 +227,7 @@ $screen-lg: 1200px;
 .concordance-details-wrapper {
 	overflow-x: auto;
 	max-width: calc(100vw - 125px);
-	@media(max-width: $screen-md - 1px) { max-width: calc(100vw - 100px); }
+	@media(max-width: ($screen-md - 1px)) { max-width: calc(100vw - 100px); }
 }
 .concordance-details-table {
 	table-layout: auto;

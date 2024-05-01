@@ -1,7 +1,7 @@
 <template>
 <div class="totals">
 	<div class="totals-content">
-		<Spinner v-if="(isCounting || !subcorpus) && !error" size="25"/>
+		<Spinner v-if="(isCounting || !subcorpus) && !error" size="25" style="margin-right: 0.25em;"/>
 
 		<div class="totals-text" :title="percentOfSearchSpaceClarification">
 			<div class="totals-type">

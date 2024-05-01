@@ -1,7 +1,7 @@
 <template>
 	<tr class="concordance-details" v-if="open">
 		<td :colspan="colspan">
-			<div style="overflow: auto; max-width: 100%;">
+			<div class="concordance-details-wrapper">
 				<p v-if="loading" :class="{'text-danger': !!error}">
 					<span class="fa fa-spinner fa-spin"></span> Loading...
 				</p>
@@ -54,22 +54,20 @@
 					<p>No context available.</p>
 				</template>
 
-				<div v-if="detailedAnnotations?.length" class="concordance-details-wrapper">
-					<table class="concordance-details-table">
-						<thead>
-							<tr>
-								<th>Property</th>
-								<th :colspan="data.hit.match.punct.length">Value</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr v-for="(annot, index) in detailedAnnotations" :key="annot.id">
-								<th>{{annot.displayName}}</th>
-								<HitContextComponent v-for="(token, ti) in otherContexts[index].match" tag="td" :data="[token]" :html="html" :dir="dir" :key="annot.id + ti" :punct="false"/>
-							</tr>
-						</tbody>
-					</table>
-				</div>
+				<table v-if="detailedAnnotations?.length" class="concordance-details-table">
+					<thead>
+						<tr>
+							<th>Property</th>
+							<th :colspan="data.hit.match.punct.length">Value</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr v-for="(annot, index) in detailedAnnotations" :key="annot.id">
+							<th>{{annot.displayName}}</th>
+							<HitContextComponent v-for="(token, ti) in otherContexts[index].match" tag="td" :data="[token]" :html="html" :dir="dir" :key="annot.id + ti" :punct="false"/>
+						</tr>
+					</tbody>
+				</table>
 			</div>
 		</td>
 	</tr>
@@ -229,19 +227,20 @@ $screen-lg: 1200px;
 	max-width: calc(100vw - 125px);
 	@media(max-width: ($screen-md - 1px)) { max-width: calc(100vw - 100px); }
 }
-.concordance-details-table {
-	table-layout: auto;
-
-	td {
-		padding: 0 0.25em;
-	}
-}
-
-.container:not(.container-fluid) .concordance-details-table {
+.container:not(.container-fluid) .concordance-details-wrapper {
 	@media(min-width: $screen-xs) { max-width: calc($screen-xs - 75px); }
 	@media(min-width: $screen-sm) { max-width: calc($screen-sm - 100px); }
 	@media(min-width: $screen-md) { max-width: calc($screen-md - 125px); }
 	@media(min-width: $screen-lg) { max-width: calc($screen-lg - 125px); }
 }
+
+
+.concordance-details-table {
+	table-layout: auto;
+	td {
+		padding: 0 0.25em;
+	}
+}
+
 
 </style>

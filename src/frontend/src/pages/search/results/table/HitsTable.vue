@@ -104,12 +104,12 @@
 					/>
 
 					<!-- Show hits in other fields (parallel corpora) -->
-					<template v-for="(oh, foreignField) in otherFields(h.hit)">
-						<HitRow :key="`${i}-${foreignField}-hit`"
+					<template v-for="(of) in otherFields(h.hit)">
+						<HitRow :key="`${i}-${of.name}-hit`"
 							:class="{open: open[i], interactable: !disableDetails && !disabled}"
 							class="foreign-hit"
-							:data="oh"
-							:displayField="isParallel ? parallelVersion(foreignField) : ''"
+							:data="of.hit"
+							:displayField="isParallel ? parallelVersion(of.name) : ''"
 							:mainAnnotation="mainAnnotation"
 							:otherAnnotations="otherAnnotations"
 							:metadata="metadata"
@@ -118,12 +118,12 @@
 							:disabled="disabled"
 							@click.native="!disableDetails && $set(open, i, !open[i])"
 						/>
-						<HitRowDetails v-if="!disableDetails" :key="`${i}-${foreignField}-details`"
+						<HitRowDetails v-if="!disableDetails" :key="`${i}-${of.name}-details`"
 							:colspan="colspan"
-							:data="oh"
+							:data="of.hit"
 							:open="open[i]"
 							:query="query"
-							:annotatedField="foreignField"
+							:annotatedField="of.name"
 							:mainAnnotation="mainAnnotation"
 							:detailedAnnotations="detailedAnnotations"
 							:dir="dir"
@@ -145,9 +145,10 @@
 <script lang="ts">
 import Vue from 'vue';
 import { NormalizedAnnotation, NormalizedMetadataField } from '@/types/apptypes';
-import { BLDocInfo, BLHit, BLHitInOtherField, BLHitSnippet, BLSearchParameters } from '@/types/blacklabtypes';
+import { BLDocInfo, BLHit, BLHitSnippet, BLSearchParameters } from '@/types/blacklabtypes';
 
 import * as CorpusStore from '@/store/search/corpus';
+import * as QueryStore from '@/store/search/query';
 
 import HitRow, {HitRowData} from '@/pages/search/results/table/HitRow.vue'
 import HitRowDetails from '@/pages/search/results/table/HitRowDetails.vue'
@@ -219,34 +220,67 @@ export default Vue.extend({
 		changeSort(sort: string) {
 			this.$emit('changeSort', sort)
 		},
-		otherFields(h: BLHit|BLHitSnippet): Record<string, HitRowData> {
+		otherFields(h: BLHit|BLHitSnippet)/*: Record<string, HitRowData>*/ {
 			if (!('otherFields' in h) || h.otherFields === undefined)
-				return {};
+				return [];
 			//console.log(h.otherFields);
-			const x = Object.entries(h.otherFields).map(([name, hit]) => {
-				//console.log('hit', hit);
-				const docInfo = {
-						lengthInTokens: 0,
-						mayView: false,
-					} as BLDocInfo;
-				return {
-					[name]: {
-						type: 'hit',
-						doc: {
-							docInfo,
-							docPid: h.docPid,
-						},
-						hit,
 
-						gloss_fields: [], //jesse
-						hit_first_word_id: '', //jesse
-						hit_last_word_id: '', //jesse
-						hit_id: '' //jesse
+			const prefix = CorpusStore.get.parallelFieldPrefix();
+			const otherFieldsInOrder = QueryStore.getState().parallelVersions?.targets || [];
+			const y = otherFieldsInOrder
+				.map(name => {
+					const fieldName = `${prefix}__${name}`;
+					const hit = h.otherFields![fieldName];
+					//console.log('hit', hit);
+					const docInfo = {
+							lengthInTokens: 0,
+							mayView: false,
+						} as BLDocInfo;
+					return {
+						name,
+						hit: {
+							type: 'hit',
+							doc: {
+								docInfo,
+								docPid: h.docPid,
+							},
+							hit,
 
-					} as HitRowData
-				}
-			}).reduce((acc, val) => ({ ...acc, ...val }), {});
-			return x;
+							gloss_fields: [], //jesse
+							hit_first_word_id: '', //jesse
+							hit_last_word_id: '', //jesse
+							hit_id: '' //jesse
+
+						} as HitRowData
+					};
+				});
+			console.log('y', y);
+			return y;
+
+			// const x = Object.entries(h.otherFields).map(([name, hit]) => {
+			// 	//console.log('hit', hit);
+			// 	const docInfo = {
+			// 			lengthInTokens: 0,
+			// 			mayView: false,
+			// 		} as BLDocInfo;
+			// 	return {
+			// 		[name]: {
+			// 			type: 'hit',
+			// 			doc: {
+			// 				docInfo,
+			// 				docPid: h.docPid,
+			// 			},
+			// 			hit,
+
+			// 			gloss_fields: [], //jesse
+			// 			hit_first_word_id: '', //jesse
+			// 			hit_last_word_id: '', //jesse
+			// 			hit_id: '' //jesse
+
+			// 		} as HitRowData
+			// 	}
+			// }).reduce((acc, val) => ({ ...acc, ...val }), {});
+			// return x;
 		},
 		parallelVersion(fieldName: string): string {
 			const versionName = fieldName.replace(/^.+__/, '');

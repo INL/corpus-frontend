@@ -292,8 +292,8 @@ export default function(input: string, defaultAttribute = DEFAULT_ATTRIBUTE): Re
 	function parseParallel(): string[] {
 		const targetVersions = [];
 		while (true) {
-			expect('-');
-			expect('-');
+			expect('=');
+			expect('=');
 			expect('>');
 			const targetVersion = until(' ').trim(); // This should really be "until anything BUT a-zA-z" but eh
 			targetVersions.push(targetVersion);

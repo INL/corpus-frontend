@@ -1,6 +1,6 @@
 {
 	"search": {
-		"heading": "Search for &hellip;",
+		"heading": "Search for …",
 		"simple": {
 			"heading": "Simple"
 		},
@@ -34,7 +34,7 @@
 		}
 	},
 	"filter": {
-		"heading": "Filter search by &hellip;",
+		"heading": "Filter search by …",
 		"noFilter": {
 			"title": "No filters available",
 			"content": "This corpus does not contain metadata, or the author has chosen not to allow filtering on metadata."
@@ -67,7 +67,7 @@
 		"debug": " Debug info",
 		"close": "Close"
 	},
-	"queryFrom": {
+	"queryForm": {
 		"search": "Search",
 		"explore": "Explore",
 		"reset": "Reset",
@@ -91,7 +91,7 @@
 		"calculating": "Calculating size of selected subcorpus..."
 	},
 	"annotation": {
-		"caseSensitive": "Case-&nbsp;and&nbsp;diacritics-sensitive"
+		"caseSensitive": "Case- and diacritics-sensitive"
 	},
 	"formConcept": {
 		"conceptSearch": {
@@ -197,7 +197,7 @@
 			"tokens": "tokens"
 		},
 		"sort": {
-			"sortBy": "Sort by..."
+			"sortBy": "Sort by…"
 		}
 	},
 	"history": {
@@ -223,7 +223,7 @@
 	},
 	"searchPage": {
 		"fullQuery": "Full query"
-	},	
+	},
 	"remoteIndex": {
 		"loadingCorpora": "Loading your corpora...",
 		"pickCorpus": "Please pick a corpus",

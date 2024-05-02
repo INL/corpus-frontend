@@ -67,7 +67,7 @@
 		"debug": "调试信息",
 		"close": "关闭"
 	},
-	"queryFrom": {
+	"queryForm": {
 		"search": "查询",
 		"explore": "探索",
 		"reset": "重置",
@@ -223,7 +223,7 @@
 	},
 	"searchPage": {
 		"fullQuery": "完整查询"
-	},	
+	},
 	"remoteIndex": {
 		"loadingCorpora": "正在加载您的语料库...",
 		"pickCorpus": "请选择一个语料库",

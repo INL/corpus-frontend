@@ -130,7 +130,29 @@
 			</div>
 			<div :class="['tab-pane', {'active': activePattern==='expert'}]" id="expert">
 				<h3>{{$t('search.expert.corpusQueryLanguage')}}:</h3>
+				<div class="parallel" v-if="isParallelCorpus">
+					<label class="control-label" for="sourceVersion">{{$t('search.parallel.sourceVersion')}}</label>
+					<div>
+						<SelectPicker id="sourceVersion" :options="parallelSourceVersionOptions"
+								v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
+					</div>
+				</div>
 				<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model.lazy="expert"></textarea>
+
+				<div class="parallel" v-if="isParallelCorpus">
+
+					<div v-for="version in parallelTargetVersions" :key="version">
+						<label class="control-label">{{`${$t('search.parallel.targetVersion')} ${version}`}}</label>
+						<textarea :id="`querybox-${version}`" class="form-control" rows="7"></textarea>
+					</div>
+
+					<label class="control-label">{{ $t('search.parallel.addTargetVersion') }}</label>
+					<div>
+						<SelectPicker :options="parallelTargetVersionOptions" @input="addTargetVersion($event)" />
+					</div>
+				</div>
+
+				<!-- Copy to builder, import, gap filling buttons -->
 				<button v-if="advancedEnabled" type="button" class="btn btn-sm btn-default" name="parseQuery" id="parseQuery" :title="$t('search.expert.parseQueryTitle')" @click="parseQuery">{{$t('search.expert.parseQuery')}}</button>
 				<label class="btn btn-sm btn-default file-input-button" for="importQuery">
 					{{$t('search.expert.importQuery')}}
@@ -151,6 +173,7 @@
 				<textarea type="area" v-if="gapValue != null" class="form-control gap-value-editor" v-model.lazy="gapValue" @keydown.tab.prevent="insertTabInText"/>
 				<span v-show="parseQueryError" id="parseQueryError" class="text-danger"><span class="fa fa-exclamation-triangle"></span> {{parseQueryError}}</span>
 				<span v-show="importQueryError" id="importQueryError" class="text-danger"><span class="fa fa-exclamation-triangle"></span> {{importQueryError}}</span>
+
 			</div>
 		</div>
 	</div>
@@ -204,6 +227,25 @@ export default Vue.extend({
 	computed: {
 		// Is this a parallel corpus?
 		isParallelCorpus: CorpusStore.get.isParallelCorpus,
+
+		// What parallel versions should be shown as source options?
+		// (all except already chosen target ones)
+		parallelSourceVersionOptions: function (): Option[] {
+			return PatternStore.get.parallelSourceVersionOptions();
+		},
+		// What parallel versions should be shown as target options?
+		// (all except already chosen source and target ones)
+		parallelTargetVersionOptions: function (): Option[] {
+			return PatternStore.get.parallelTargetVersionOptions();
+		},
+		parallelSourceVersion: {
+			get(): string|null { return PatternStore.get.parallelVersions().source; },
+			set: PatternStore.actions.parallelVersions.parallelSourceVersion
+		},
+		parallelTargetVersions: {
+			get(): string[]|null { return PatternStore.get.parallelVersions().targets; },
+			set: PatternStore.actions.parallelVersions.parallelTargetVersions
+		},
 
 		activePattern: {
 			get(): string { return InterfaceStore.getState().patternMode; },
@@ -358,6 +400,10 @@ export default Vue.extend({
 				RootStore.store.watch(state => value, (cur, prev) => update(cur, prev, div), {deep: true});
 			}
 		},
+		addTargetVersion(version: string) {
+			const targets = this.parallelTargetVersions?.concat([version]) || [version];
+			PatternStore.actions.parallelVersions.parallelTargetVersions(targets);
+		},
 	},
 	watch: {
 		customAnnotations: {
@@ -452,6 +498,10 @@ textarea.gap-value-editor {
 	overflow: auto;
 	overflow-x: hidden;
 	margin-bottom: 15px;
+}
+
+.parallel {
+	margin: 15px 0;
 }
 
 </style>

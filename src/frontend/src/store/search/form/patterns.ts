@@ -66,6 +66,14 @@ const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, cloneD
 
 const getState = b.state();
 
+// What parallel versions are there (e.g. "en", "nl", etc.)
+function parallelVersionOptions(state: ModuleRootState): { value: string, label: string }[] {
+	return CorpusStore.get.parallelVersions().map((value) => ({
+		value: value.name,
+		label: value.displayName || value.name
+	}));
+}
+
 const get = {
 	/** Last submitted properties, these are already filtered to remove empty values, etc */
 	activeAnnotations: b.read(state => Object.values(state.extended.annotationValues)/*.flatMap(f => Object.values(f))*/.filter(p => !!p.value), 'activeAnnotations'),
@@ -78,6 +86,20 @@ const get = {
 	simple: b.read(state => state.simple, 'simple'),
 
 	parallelVersions: b.read(state => state.parallelVersions, 'parallelVersions'),
+
+	// What parallel versions should be shown as source options?
+	// (all except already chosen target ones)
+	parallelSourceVersionOptions: b.read((state: ModuleRootState): { value: string, label: string }[] => {
+		const targets = state.parallelVersions.targets;
+		return parallelVersionOptions(state).filter(value => !targets.includes(value.value));
+	}, 'parallelSourceVersionOptions'),
+
+	// What parallel versions should be shown as target options?
+	// (all except already chosen source and target ones)
+	parallelTargetVersionOptions: b.read((state: ModuleRootState): { value: string, label: string }[] => {
+		const src = state.parallelVersions.source || '';
+		return parallelVersionOptions(state).filter(value => value.value !== src);
+	}, 'parallelTargetVersionOptions'),
 };
 
 const privateActions = {

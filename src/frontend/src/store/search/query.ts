@@ -85,11 +85,7 @@ const get = {
 	annotatedFieldName: b.read((state): string|undefined => {
 		if (!state.form) { return undefined; }
 		if (state.form !== 'explore') {
-			if (state.subForm === 'simple') {
-				return (state as ModuleRootStateSearch<'simple'>).parallelVersions.source || undefined;
-			} else if (state.subForm === 'extended') {
-				return (state as ModuleRootStateSearch<'extended'>).parallelVersions.source || undefined;
-			}
+			return (state as ModuleRootStateSearch<keyof PatternModule.ModuleRootState>).parallelVersions.source || undefined;
 		}
 		return CorpusModule.get.mainAnnotatedField();
 	}, 'annotatedFieldName'),

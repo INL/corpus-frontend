@@ -34,7 +34,10 @@
 		},
 		"parallel": {
 			"inSourceVersion": "In source version",
-			"andCompareWithTargetVersions": "and compare with target versions"
+			"sourceVersion": "Source version",
+			"targetVersion": "Target version",
+			"andCompareWithTargetVersions": "and compare with target versions",
+			"addTargetVersion": "Add a target version"
 		}
 	},
 	"filter": {

@@ -52,25 +52,15 @@ export default Vue.extend({
 	data: () => ({
 	}),
 	computed: {
-		// What parallel versions are there (e.g. "en", "nl", etc.)
-		parallelVersionOptions: function (): Option[] {
-			return CorpusStore.get.parallelVersions()
-				.map(value => ({
-					value: value.name,
-					label: value.displayName || value.name
-				}));
-		},
 		// What parallel versions should be shown as source options?
 		// (all except already chosen target ones)
 		parallelSourceVersionOptions: function (): Option[] {
-			const targets = PatternStore.get.parallelVersions().targets;
-			return this.parallelVersionOptions.filter(value => !targets.includes(value.value));
+			return PatternStore.get.parallelSourceVersionOptions();
 		},
 		// What parallel versions should be shown as target options?
 		// (all except already chosen source and target ones)
 		parallelTargetVersionOptions: function (): Option[] {
-			const src = PatternStore.get.parallelVersions().source || '';
-			return this.parallelVersionOptions.filter(value => value.value !== src);
+			return PatternStore.get.parallelTargetVersionOptions();
 		},
 		parallelSourceVersion: {
 			get(): string|null { return PatternStore.get.parallelVersions().source; },

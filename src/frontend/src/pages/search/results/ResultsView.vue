@@ -157,7 +157,7 @@ export default Vue.extend({
 
 		// Should we scroll when next results arrive - set when main form submitted
 		scroll: true,
-		// Should we clear the results when we begin the next request? - set when main for submitted.
+		// Should we clear the results when we begin the next request? - set when main form is submitted.
 		clearResults: false,
 
 		originalGroupBySettings: null as null|{

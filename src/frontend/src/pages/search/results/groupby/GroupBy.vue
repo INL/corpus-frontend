@@ -429,9 +429,8 @@ export default Vue.extend({
 		isEmptyGroup(group: GroupBySettingsUI) { return !group.annotation && !group.field; },
 		isInvalidGroup(group: GroupBySettingsUI) { return !this.isEmptyGroup(group) && !isValidGroupBySettingsUI(group); },
 		removeGroup(i: number) {
+			if (this.currentIndex >= i) this.currentIndex--;
 			this.localModel.splice(i, 1);
-			if (i === this.currentIndex && i > 0)
-				--this.currentIndex;
 		},
 		clear() {
 			this.localModel = [];
@@ -451,6 +450,7 @@ export default Vue.extend({
 					return;
 				}
 				this.localModel = this.storeValue.map(parseGroupBySettingsUI);
+				this.active = this.active || this.localModel.length > 0;
 				if (this.currentIndex >= this.localModel.length) {
 					this.currentIndex = this.localModel.length - 1;
 				}

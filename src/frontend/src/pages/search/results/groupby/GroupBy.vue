@@ -46,9 +46,12 @@
 			<div class="current-group-editor panel-default">
 				<template v-if="current && current.type === 'annotation'">
 					<div class="content">
-						I want to group on <SelectPicker
+						I want to group on
+						<!-- allow unknown values here. If grouping on a capture group, they're not always available immediately (we need the first hit to decode them). -->
+						<SelectPicker
 							:options="contextOptions"
 							v-model="context"
+							allowUnknownValues
 							data-width="auto"
 							data-menu-width="auto"
 							hideEmpty

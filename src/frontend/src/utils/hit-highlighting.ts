@@ -64,7 +64,7 @@ const indexToRgb = (i: number): {color: string, textcolor: string} => {
 	const textcolor = (red*0.299 + green*0.587 + blue*0.114) > (160/255) ? 'black' : 'white';
 
 	return {
-		color: `rgb(${red*255}, ${green*255}, ${blue*255})`,
+		color: `rgb(${Math.floor(red*255)}, ${Math.floor(green*255)}, ${Math.floor(blue*255)})`,
 		textcolor
 	}
 }
@@ -117,33 +117,80 @@ export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir:
 	// first up: determine which captures to return, just map them into something that's sorted.
 
 	// if there are explicit captures, we want to use those.
-	// if there are none, we should fall back to the relation information
+	// if there are none, we should fall back to the returned relations
 	// we discard the tag information, as that's just document structure, and not very relevant for the user.
 
 
+	/**
+	 * For example: a:"word"
+	 * The matchInfos will have this property:
+	 *
+	 * a: { start: number, end: number, type: 'span' }
+	 */
 	const explicitCaptures: NormalizedCapture[] = [];
-	const relations: NormalizedCapture[] = [];
+	/**
+	 * When running a query with a relation
+	 * For example: _ --> a:"word"
+	 *
+	 * rel: { start: number, end: number, type: 'relation', sourceStart: number, sourceEnd: number, targetStart: number, targetEnd: number, relClass: string, relType: string }
+	 * a: { start: number, end: number, type: 'span' }
+	 */
 
-	const allMatches = Object.entries(hit.matchInfos).flatMap<Omit<NormalizedCapture, 'color'|'textcolor'>>(([blackLabReportedName, info]) => {
-		if (info.type === 'list') return info.infos.map<Omit<NormalizedCapture, 'color'|'textcolor'>>(info => ({name: info.relClass + ': ' + info.relType, ...info, isRelation: true}));
-		else if (info.type === 'relation') return { name: info.relClass + ': ' + info.relType, ...info, isRelation: true };
-		else if (info.type === 'span') return { name: blackLabReportedName, sourceEnd: info.end, sourceStart: info.start, targetEnd: info.end, targetStart: info.start, isRelation: false };
+	const defaultRelations: NormalizedCapture[] = [];
+	/** When running a query with rcapture. */
+	const capturedRelations: NormalizedCapture[] = [];
+
+	let allMatches = Object.entries(hit.matchInfos).flatMap<Omit<NormalizedCapture, 'color'|'textcolor'>>(([blackLabReportedName, info]) => {
+		if (blackLabReportedName === 'captured_rels') return [];
+
+		if (info.type === 'list') return info.infos.map<Omit<NormalizedCapture, 'color'|'textcolor'>>(info => ({
+			name: info.relType,
+			...info,
+			isRelation: true
+		}));
+		else if (info.type === 'relation') return {
+			name: info.relType,
+			...info,
+			isRelation: true
+		};
+		else if (info.type === 'span') return {
+			name: blackLabReportedName,
+			sourceEnd: info.end,
+			sourceStart: info.start,
+			targetEnd: info.end,
+			targetStart: info.start,
+			isRelation: false
+		};
 		else return []; // type === 'tag'
 	})
 	// make sure the indices are consistent, as we assign colors based on the index (so that the same capture always has the same color)
 	.sort((a, b) => a.name.localeCompare(b.name));
 	// at this point this list is gone and we have a list of relevant captures and relations.
-	allMatches.forEach((capture, index) => {
-		// Object.assign((capture as NormalizedCapture), indexToRgb(index));
-		let n = 0;
 
-		if (capture.isRelation) n = relations.push(capture as NormalizedCapture);
-		else n = explicitCaptures.push(capture as NormalizedCapture);
-		Object.assign((capture as NormalizedCapture), indexToRgb(n-1));
+
+	// If there's explicit captures, use only those.
+	if (allMatches.find(c => !c.isRelation)) {
+		allMatches = allMatches.filter(c => !c.isRelation);
+	}
+
+	const allMatchesWithColors: NormalizedCapture[] = allMatches.map((c, i) => {
+		return {
+			...c,
+			...indexToRgb(i)
+		}
 	});
 
+	// allMatches.forEach((capture, index) => {
+	// 	// Object.assign((capture as NormalizedCapture), indexToRgb(index));
+	// 	let n = 0;
+
+	// 	if (capture.isRelation) n = capturedRelations.push(capture as NormalizedCapture);
+	// 	else n = explicitCaptures.push(capture as NormalizedCapture);
+	// 	Object.assign((capture as NormalizedCapture), indexToRgb(n-1));
+	// });
+
 	// we used to have a fallback to relations, but that just highlights every single word, not very useful.
-	const capturesToUse = explicitCaptures;
+	const capturesToUse = allMatchesWithColors;
 
 	// we have a full hit, enrich the tokens with capture/relation info.
 	for (const [part, context] of Object.entries(r)) {
@@ -154,12 +201,26 @@ export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir:
 
 			const token = context[localIndex];
 			// find any relation that intersects with this token.
+			// for the root, sourceStart and sourceEnd are null, if they are, don't match it.
+			// (because nearly every token is pointed at by the root. We don't want to highlight everything.)
 			const matchedRelations = capturesToUse
-				.filter(c => (c.sourceStart ?? -1) <= globalIndex && globalIndex < (c.sourceEnd ?? Number.MAX_SAFE_INTEGER) || c.targetStart <= globalIndex && globalIndex < c.targetEnd)
+				.map(relation => {
+					const isSource = (relation.sourceStart ?? Number.MAX_SAFE_INTEGER) <= globalIndex && globalIndex < (relation.sourceEnd ?? -1);
+					const isTarget = relation.targetStart <= globalIndex && globalIndex < relation.targetEnd;
+					const isMatch = isSource || isTarget;
+
+					return {
+						...relation,
+						isMatch,
+						isSource: relation.isRelation && isSource,
+						isTarget: relation.isRelation && isTarget
+					};
+				})
+				.filter(c => c.isMatch);
 
 			token.captureAndRelation = matchedRelations
 				.map<CaptureAndRelation>(c => ({
-					key: c.name,
+					key: c.isSource ? c.name + '-->' : c.isTarget ? '-->' + c.name : c.name,
 					value: c.name,
 					color: c.color,
 					textcolor: c.textcolor,

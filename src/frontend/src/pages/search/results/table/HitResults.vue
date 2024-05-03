@@ -20,6 +20,8 @@
 			:html="concordanceAsHtml"
 			:disabled="disabled"
 			:data="rows"
+
+			@changeSort="changeSort"
 		/>
 
 		<hr>

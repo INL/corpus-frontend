@@ -13,7 +13,7 @@ import {RootState} from '@/store/search/';
 
 import {NormalizedIndex, NormalizedAnnotation, NormalizedMetadataField, NormalizedAnnotatedField, NormalizedMetadataGroup, NormalizedAnnotationGroup} from '@/types/apptypes';
 import { MapOf, mapReduce } from '@/utils';
-import { normalizeIndex } from '@/utils/blacklabutils';
+import { getParallelFieldParts, isParallelField, normalizeIndex } from '@/utils/blacklabutils';
 
 type ModuleRootState = { corpus: NormalizedIndex|null };
 
@@ -38,17 +38,18 @@ const get = {
 
 	/** Is this a parallel corpus? */
 	isParallelCorpus: b.read((state): boolean =>
-		get.allAnnotatedFields().some( f => f.id.indexOf('__') > 0), 'isParallelCorpus'),
+		get.allAnnotatedFields().some(f => isParallelField(f.id)), 'isParallelCorpus'),
 
 	/** If this is a parallel corpus, what's the parallel field prefix?
 	 *  (e.g. "contents" if there's fields "contents__en" and "contents__nl") */
 	parallelFieldPrefix: b.read((state): string => {
 		for (const f of get.allAnnotatedFields()) {
-			let index = f.id.indexOf('__');
-			if (index > 0) {
+			console.log(f.id);
+			const parts = getParallelFieldParts(f.id);
+			if (parts.version !== '') {
 				// Note that we don't support multiple parallel fields in one corpus,
 				// so we just return the first parallel prefix we find.
-				return f.id.substring(0, index);
+				return parts.prefix;
 			}
 		}
 		return '';
@@ -57,12 +58,12 @@ const get = {
 	/** If this is a parallel corpus, what parallel versions does it contain?
 	 *  (e.g. ["en", "nl"] if there's fields "contents__en" and "contents__nl") */
 	parallelVersions: b.read((state): { prefix: string, name: string, displayName: string }[] => {
-		const prefix = get.parallelFieldPrefix() + '__';
+		const prefix = get.parallelFieldPrefix();
 		return get.allAnnotatedFields()
 			.filter(f => f.id.startsWith(prefix))
 			.map(f => ({
 				prefix,
-				name: f.id.substring(prefix.length),
+				name: getParallelFieldParts(f.id).version,
 				displayName: f.displayName
 			}));
 	}, 'parallelVersions'),

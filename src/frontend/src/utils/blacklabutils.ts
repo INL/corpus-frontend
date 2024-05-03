@@ -271,6 +271,39 @@ export function normalizeFormats(formats: BLTypes.BLFormats): NormalizedFormat[]
 	.map(([key, value]) => normalizeFormat(key, value));
 }
 
+const PARALLEL_FIELD_SEPARATOR = '__';
+
+/**
+ * Given a parallel field name, return the prefix and version parts separately.
+ *
+ * For example, for field name "contents__en", will return prefix "contents" and
+ * version "en".
+ *
+ * For a non-parallel field name, the version part will be an empty string.
+ *
+ * @param fieldName parallel field name
+ * @returns an object containing the prefix and version.
+ */
+export function getParallelFieldParts(fieldName: string) {
+	const parts = fieldName.split(PARALLEL_FIELD_SEPARATOR, 2);
+	if (parts.length === 1) {
+		// non-parallel field; return empty string as version
+		parts.push('');
+	}
+	return {
+		prefix: parts[0],
+		version: parts[1]
+	};
+}
+
+export function getParallelFieldName(prefix: string, version: string) {
+	return `${prefix}${PARALLEL_FIELD_SEPARATOR}${version}`;
+}
+
+export function isParallelField(fieldName: string) {
+	return fieldName.includes(PARALLEL_FIELD_SEPARATOR);
+}
+
 // ---------------------------------------
 // Fixup function for BlackLab 2.0 release
 // ---------------------------------------

@@ -153,6 +153,7 @@ import * as QueryStore from '@/store/search/query';
 import HitRow, {HitRowData} from '@/pages/search/results/table/HitRow.vue'
 import HitRowDetails from '@/pages/search/results/table/HitRowDetails.vue'
 import DocRow, {DocRowData} from '@/pages/search/results/table/DocRow.vue';
+import { getParallelFieldName, getParallelFieldParts } from '@/utils/blacklabutils';
 
 export {HitRowData} from '@/pages/search/results/table/HitRow.vue';
 
@@ -220,70 +221,42 @@ export default Vue.extend({
 		changeSort(sort: string) {
 			this.$emit('changeSort', sort)
 		},
-		otherFields(h: BLHit|BLHitSnippet)/*: Record<string, HitRowData>*/ {
+		otherFields(h: BLHit|BLHitSnippet) {
 			if (!('otherFields' in h) || h.otherFields === undefined)
 				return [];
-			//console.log(h.otherFields);
-
 			const prefix = CorpusStore.get.parallelFieldPrefix();
-			const otherFieldsInOrder = QueryStore.getState().parallelVersions?.targets || [];
-			const y = otherFieldsInOrder
-				.map(name => {
-					const fieldName = `${prefix}__${name}`;
-					const hit = h.otherFields![fieldName];
-					//console.log('hit', hit);
-					const docInfo = {
-							lengthInTokens: 0,
-							mayView: false,
-						} as BLDocInfo;
-					return {
-						name,
-						hit: {
-							type: 'hit',
-							doc: {
-								docInfo,
-								docPid: h.docPid,
-							},
-							hit,
+			const selectedTargets = QueryStore.getState().parallelVersions?.targets || [];
+			const otherFieldsInOrder = selectedTargets.length > 0 ? selectedTargets :
+				Object.keys(h.otherFields).map(f => getParallelFieldParts(f).version);
+			const y = otherFieldsInOrder.map(name => {
+				const fieldName = getParallelFieldName(prefix, name);
+				const hit = h.otherFields![fieldName];
+				const docInfo = {
+						lengthInTokens: 0,
+						mayView: false,
+					} as BLDocInfo;
+				return {
+					name,
+					hit: {
+						type: 'hit',
+						doc: {
+							docInfo,
+							docPid: h.docPid,
+						},
+						hit,
 
-							gloss_fields: [], //jesse
-							hit_first_word_id: '', //jesse
-							hit_last_word_id: '', //jesse
-							hit_id: '' //jesse
+						gloss_fields: [], //jesse
+						hit_first_word_id: '', //jesse
+						hit_last_word_id: '', //jesse
+						hit_id: '' //jesse
 
-						} as HitRowData
-					};
-				});
-			console.log('y', y);
+					} as HitRowData
+				};
+			});
 			return y;
-
-			// const x = Object.entries(h.otherFields).map(([name, hit]) => {
-			// 	//console.log('hit', hit);
-			// 	const docInfo = {
-			// 			lengthInTokens: 0,
-			// 			mayView: false,
-			// 		} as BLDocInfo;
-			// 	return {
-			// 		[name]: {
-			// 			type: 'hit',
-			// 			doc: {
-			// 				docInfo,
-			// 				docPid: h.docPid,
-			// 			},
-			// 			hit,
-
-			// 			gloss_fields: [], //jesse
-			// 			hit_first_word_id: '', //jesse
-			// 			hit_last_word_id: '', //jesse
-			// 			hit_id: '' //jesse
-
-			// 		} as HitRowData
-			// 	}
-			// }).reduce((acc, val) => ({ ...acc, ...val }), {});
-			// return x;
 		},
 		parallelVersion(fieldName: string): string {
-			const versionName = fieldName.replace(/^.+__/, '');
+			const versionName = getParallelFieldParts(fieldName).version || fieldName;
 			return CorpusStore.get.parallelVersions().find(v => v.name === versionName)?.displayName || versionName;
 		},
 	},

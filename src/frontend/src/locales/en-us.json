@@ -31,6 +31,10 @@
 			"gapFilling": "Gap-filling",
 			"gapFillingTitle": "Upload a tab-separated list of values to substitute for gap values ('@@' in your query).",
 			"clearGapValues": "Clear gap values"
+		},
+		"parallel": {
+			"inSourceVersion": "In source version",
+			"andCompareWithTargetVersions": "and compare with target versions"
 		}
 	},
 	"filter": {

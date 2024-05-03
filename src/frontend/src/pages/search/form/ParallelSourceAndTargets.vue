@@ -1,27 +1,27 @@
 <template>
 	<!-- Is this a parallel corpus? -->
 	<div v-if="mode === 'simple'">
-		<label class="control-label">{{ $t('search.inSourceVersion') }}</label>
+		<label class="control-label">{{ $t('search.parallel.inSourceVersion') }}</label>
 		<div>
 			<SelectPicker :options="parallelSourceVersionOptions"
 					v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
 		</div>
 
-		<label class="control-label">{{ $t('search.andCompareWithTargetVersions') }}</label>
+		<label class="control-label">{{ $t('search.parallel.andCompareWithTargetVersions') }}</label>
 		<div>
 			<MultiValuePicker :options="parallelTargetVersionOptions" v-model="parallelTargetVersions" />
 		</div>
 	</div>
 	<div v-else>
 		<div class="form-group">
-			<label class="col-xs-12 col-md-3">{{ $t('search.inSourceVersion') }}</label>
+			<label class="col-xs-12 col-md-3">{{ $t('search.parallel.inSourceVersion') }}</label>
 			<div class="col-xs-12 col-md-9">
 				<SelectPicker :options="parallelSourceVersionOptions"
 						v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-xs-12 col-md-3">{{ $t('search.andCompareWithTargetVersions') }}</label>
+			<label class="col-xs-12 col-md-3">{{ $t('search.parallel.andCompareWithTargetVersions') }}</label>
 			<div class="col-xs-12 col-md-9">
 				<MultiValuePicker :options="parallelTargetVersionOptions" v-model="parallelTargetVersions" />
 			</div>

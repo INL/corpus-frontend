@@ -180,32 +180,6 @@ Rethink page initialization
 
 $(document).ready(async () => {
 
-	async function loadLocaleMessages(locale: string): Promise<LocaleMessageObject> {
-		let messages: LocaleMessageObject = await import(`./locales/${locale}.json`);
-		try {
-			// Load any overrides for the current index and merge them with the default messages
-			const overrides = await axios.get(`${CONTEXT_URL}/${INDEX_ID}/static/locales/${locale}.json`);
-			if (typeof overrides.data === 'string') {
-				console.warn(`Override ${INDEX_ID}/static/locales/${locale}.json does not appear to be valid JSON! Skipping overrides.`);
-			} else {
-				messages = merge(messages, overrides.data);
-			}
-		} catch (e) {
-			// no overrides, that's fine
-		}
-		return messages;
-	}
-
-	const defaultLocale = 'en';
-
-	const messages: VueI18n.LocaleMessages = { [defaultLocale]: await loadLocaleMessages(defaultLocale) };
-
-	Vue.use(VueI18n);
-	const i18n = new VueI18n({
-		locale: defaultLocale,
-		messages,
-	});
-
 	// We can render before the tagset loads, the form just won't be populated from the url yet.
 	(window as any).vueRoot = new Vue({
 		i18n,

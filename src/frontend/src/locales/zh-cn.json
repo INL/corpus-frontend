@@ -31,6 +31,10 @@
 			"gapFilling": "替换分隔符",
 			"gapFillingTitle": "上传以制表符分隔的值列表以替换查询中的分隔符（即查询中的'@@'）",
 			"clearGapValues": "清除分割"
+		},
+		"parallel": {
+			"inSourceVersion": "In source version",
+			"andCompareWithTargetVersions": "and compare with target versions"
 		}
 	},
 	"filter": {

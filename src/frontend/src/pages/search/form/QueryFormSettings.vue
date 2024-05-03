@@ -61,7 +61,7 @@
 						</div>
 					</div>
 					<hr>
-					<div class="checkbox-inline"><label for="wide-view"><input type="checkbox" id="wide-view" name="wide-view" data-persistent checked>{{$t('setting.wideView')}}</label></div>
+					<div class="checkbox-inline"><label for="wide-view"><input type="checkbox" id="wide-view" name="wide-view" v-model="wideView.value">{{$t('setting.wideView')}}</label></div>
 					<br>
 					<div v-if="debug.debug_visible || debug.debug" class="checkbox-inline"><label for="debug" class="text-muted"><input type="checkbox" id="debug" name="debug" v-model="debug.debug">{{ $t('setting.debug') }}</label></div>
 				</div>
@@ -84,19 +84,17 @@ import * as ResultsViewSettings from '@/store/search/results/views';
 import SelectPicker,{ Option } from '@/components/SelectPicker.vue';
 
 import debug from '@/utils/debug';
+import { localStorageSynced } from '@/utils/localstore';
 
 export default Vue.extend({
 	components: {
 		SelectPicker,
 	},
-	data: (): {
-		sampleModeOptions: Array<GlobalViewSettings.ModuleRootState['sampleMode']>,
-		pageSizeOptions: Option[],
-		debug: typeof debug
-	} => ({
-		sampleModeOptions: ['percentage', 'count'],
-		pageSizeOptions: ['20','50','100','200'].map(value => ({value, label: `${value} results`})),
-		debug
+	data: () => ({
+		sampleModeOptions: ['percentage', 'count'] as Array<GlobalViewSettings.ModuleRootState['sampleMode']>,
+		pageSizeOptions: ['20','50','100','200'].map(value => ({value, label: `${value} results`})) as Option[],
+		debug,
+		wideView: localStorageSynced('cf/wideView', false),
 	}),
 	computed: {
 		viewedResultsSettings: RootStore.get.viewedResultsSettings,
@@ -137,7 +135,10 @@ export default Vue.extend({
 			// context can be a string or number in BlackLab, but for now in the form we only allow numbers.
 			// hence the atoi so BlackLab receives a number
 			// the .value interface of html input field only deals in strings...
-			get(): string { return GlobalViewSettings.getState().context + ''; },
+			get(): string {
+				const c = GlobalViewSettings.getState().context;
+				return c != null ? c.toString() : '';
+			},
 			set(v: string) { GlobalViewSettings.actions.context(this.atoi(v)); }
 		},
 	},
@@ -148,5 +149,13 @@ export default Vue.extend({
 		itoa(n: number|null): string { return n == null ? '' : n.toString(); },
 		atoi(s: string): number|null { return s ? Number.parseInt(s, 10) : null; }
 	},
+	watch: {
+		'wideView.value': {
+			immediate: true,
+			handler(v: boolean) {
+				$('.container, .container-fluid').toggleClass('container', !v).toggleClass('container-fluid', v);
+			},
+		}
+	}
 })
 </script>

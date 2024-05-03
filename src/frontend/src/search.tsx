@@ -38,34 +38,6 @@ import { init as initApi } from '@/api';
 import '@/global.scss';
 
 
-/** This needs to happen AFTER vue render. Or the elements won't exist. */
-const connectJqueryToPage = () => {
-	$('input[data-persistent][id != ""], input[data-persistent][data-pid != ""]').each(function(i, elem) {
-		const $this = $(elem);
-		const key = 'input_' + ($this.attr('data-pid') || $this.attr('id'));
-		$this.on('change', function() {
-			const curVal: any = $this.is(':checkbox') ? $this.is(':checked') : $this.val();
-			window.localStorage.setItem(key, curVal);
-		});
-
-		if (window.localStorage) {
-			const storedVal = window.localStorage.getItem(key);
-			if (storedVal != null) {
-				$this.is(':checkbox') ? $this.attr('checked', (storedVal.toLowerCase() === 'true') as any) : $this.val(storedVal);
-			}
-		}
-
-		// run handler once, init localstorage if required
-		// Only do next tick so handlers have a change to register
-		setTimeout(function() { $this.trigger('change'); });
-	});
-
-	// Enable wide view toggle
-	$('#wide-view').on('change', function() {
-		$('.container, .container-fluid').toggleClass('container', !$(this).is(':checked')).toggleClass('container-fluid', $(this).is(':checked'));
-	});
-};
-
 // Init the querybuilder with the supported attributes/properties
 function initQueryBuilder() {
 	debugLog('Begin initializing querybuilder');

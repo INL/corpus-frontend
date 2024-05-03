@@ -29,9 +29,14 @@ import AudioPlayer from '@/components/AudioPlayer.vue';
 
 import debug, {debugLog} from '@/utils/debug';
 
-import '@/global.scss';
 import { getAnnotationSubset } from '@/utils';
 import { Option } from './types/apptypes';
+
+import * as loginSystem from '@/utils/loginsystem';
+import { init as initApi } from '@/api';
+
+import '@/global.scss';
+
 
 /** This needs to happen AFTER vue render. Or the elements won't exist. */
 const connectJqueryToPage = () => {
@@ -199,12 +204,6 @@ Rethink page initialization
 - initialize querybuilder
 - then restore state from url
 */
-
-import * as loginSystem from '@/utils/loginsystem';
-import { init as initApi } from '@/api';
-import VueI18n, { LocaleMessageObject } from 'vue-i18n';
-import axios from 'axios';
-import { merge } from 'ts-deepmerge';
 
 $(document).ready(async () => {
 

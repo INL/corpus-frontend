@@ -309,3 +309,40 @@ a.disabled {
 	opacity: 0.65;
 	cursor: not-allowed;
 }
+
+.navbar > .container,
+.navbar > .container-fluid {
+	display: flex;
+}
+
+.navbar-toggle {
+	margin-right: 0;
+}
+
+@media (min-width: 768px) {
+	.navbar-logo-margin {
+		margin-left: 0px!important
+	}
+}
+
+
+@media (min-width: 768px) {
+	.navbar-collapse {
+		flex-grow: 1;
+}
+@media (max-width: 767px) {
+	.navbar > .container,
+	.navbar > .container-fluid {
+		flex-wrap: wrap;
+	}
+
+	.navbar-header {
+		flex-grow: 1;
+	}
+
+	.navbar .navbar-collapse {
+		order: 3;
+		width: 100%;
+	}
+	}
+

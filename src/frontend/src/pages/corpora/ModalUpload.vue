@@ -124,8 +124,9 @@ export default Vue.extend({
 			);
 
 			request.then(r => {
-				// This doesn't always hit. If the user closes the modal before indexing is complete this won't be called.
 				// But if it does, close our model and pop a success message.
+				// do one more refresh, sometimes the regular refresh actually happens _before_ the indexing begins
+				this.$emit('indexing', this.corpus.id);
 				this.$emit('success', 'Data added to ' + this.corpus.displayName);
 				this.$emit('close');
 			})

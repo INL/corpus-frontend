@@ -93,6 +93,7 @@
 
                 <div class="navbar-buttons">
                     <div id="username"></div>
+                    <div id="locale-selector"></div>
 
                     <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse" onclick="document.querySelector('.navbar-collapse').classList.toggle('collapse')">
                         <span class="icon-bar"></span>

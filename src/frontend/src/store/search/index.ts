@@ -1,7 +1,5 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
-// @ts-ignore
-// import VuePursue from 'vue-pursue';
 
 import cloneDeep from 'clone-deep';
 import {getStoreBuilder} from 'vuex-typex';
@@ -330,7 +328,6 @@ declare const process: any;
 const store = b.vuexStore({
 	state: {loadingState: 'loading', loadingMessage: 'Please wait while we get the corpus information...'} as RootState, // shut up typescript, the state we pass here is merged with the modules initial states internally.
 	strict: process.env.NODE_ENV === 'development',
-	// plugins: process.env.NODE_ENV === 'development' ? [VuePursue] : undefined
 });
 
 const init = async () => {

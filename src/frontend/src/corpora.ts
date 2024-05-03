@@ -8,6 +8,8 @@ import DebugComponent from '@/components/Debug.vue';
 import * as loginSystem from '@/utils/loginsystem';
 import { init as initApi } from '@/api';
 
+import '@/utils/i18n';
+
 import '@/global.scss';
 
 if (PLAUSIBLE_DOMAIN && PLAUSIBLE_APIHOST) {

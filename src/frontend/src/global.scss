@@ -325,11 +325,22 @@ a.disabled {
 	}
 }
 
+// override bootstrap negative margin...
+.locale-select-button {
+	margin-left: 0!important;
+	float: none;
+}
 
 @media (min-width: 768px) {
 	.navbar-collapse {
 		flex-grow: 1;
+	}
+	.locale-select {
+		// align when navbar wraps.
+		margin-left: -19px;
+	}
 }
+
 @media (max-width: 767px) {
 	.navbar > .container,
 	.navbar > .container-fluid {
@@ -344,5 +355,5 @@ a.disabled {
 		order: 3;
 		width: 100%;
 	}
-	}
+}
 

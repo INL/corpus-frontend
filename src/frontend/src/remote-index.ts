@@ -6,6 +6,8 @@ import * as loginSystem from '@/utils/loginsystem';
 import {init as initApi} from '@/api';
 
 import '@/global.scss';
+import '@/utils/i18n';
+
 
 $(document).ready(async () => {
 	const user = await loginSystem.awaitInit();

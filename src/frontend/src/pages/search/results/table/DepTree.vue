@@ -1,8 +1,8 @@
 <template>
 	<div>
 		<button type="button" class="btn btn-default" @click="$emit('loadSentence')" v-if="!fullSentence && connlu">
-			<template v-if="!loadingFullSentence">Load complete sentence</template>
-			<template v-else><Spinner inline/> Loading...</template>
+			<template v-if="!loadingFullSentence">{{ $t('results.table.loadCompleteSentence') }}</template>
+			<template v-else><Spinner inline/> {{ $t('results.table.loading') }}</template>
 		</button>
 
 		<reactive-dep-tree v-if="connlu && renderTree" ref="tree"

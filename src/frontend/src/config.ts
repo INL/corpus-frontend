@@ -11,7 +11,7 @@ import * as loginSystem from '@/utils/loginsystem';
 import { init as initApi } from '@/api/index';
 
 import '@/global.scss';
-
+import '@/utils/i18n';
 
 
 $(document).ready(async () => {

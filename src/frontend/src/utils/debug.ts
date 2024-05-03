@@ -1,5 +1,5 @@
 import Vue from 'vue';
-import { Store } from 'vuex';
+import { syncPropertyWithLocalStorage } from '@/utils/localstore';
 
 declare const process: any;
 let debug = Vue.observable({
@@ -105,21 +105,9 @@ export function monitorRedraws() {
 	});
 }
 
-// monitorRedraws();
-if (window.localStorage && process.env.NODE_ENV !== 'development') {
-	// only bind to localstorage if not running in development environment (as debug mode is always enabled when running from webpack)
-
-	// wait for other modules to finish initializing, as otherwise there are weird initialization order issues between Vue and Vuex
-	setTimeout(() => {
-		const initial = localStorage.getItem('cf/debug');
-		if (initial != null) {
-			debug.debug = JSON.parse(initial);
-		}
-
-		(new Vue()).$watch(() => debug.debug, v => {
-			localStorage.setItem('cf/debug', JSON.stringify(v));
-		})
-	})
+// only bind to localstorage if not running in development environment (as debug mode is always enabled when running from webpack)
+if (process.env.NODE_ENV !== 'development') {
+	syncPropertyWithLocalStorage('cf/debug', debug, 'debug');
 }
 
 export default debug;

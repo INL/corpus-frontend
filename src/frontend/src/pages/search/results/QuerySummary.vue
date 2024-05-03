@@ -1,6 +1,6 @@
 <template>
 	<div class="querysummary" ref="root">
-		Results for: <span class="small text-muted content" :title="summary">{{summary.substr(0, 1000)}}</span>
+		{{ $t('results.querySummary.heading') }}<span class="small text-muted content" :title="summary">{{summary.substr(0, 1000)}}</span>
 	</div>
 </template>
 
@@ -14,17 +14,17 @@ export default Vue.extend({
 		filters: QueryStore.get.filterSummary,
 		summary(): string {
 			if (!this.pattern && !this.filters) {
-				return 'all documents';
+				return this.$t('results.querySummary.allDocuments') as string ;
 			}
 
 			let ret = '';
 			if (this.pattern) {
-				ret += this.pattern + ' within ';
+				ret += this.pattern + ' ' + this.$t('results.querySummary.within') + ' ';
 			}
 			if (this.filters) {
-				ret += 'documents where ' + this.filters;
+				ret += this.$t('results.querySummary.documentsWhere') + ' ' + this.filters;
 			} else {
-				ret += 'all documents';
+				ret += this.$t('results.querySummary.allDocuments');
 			}
 
 			return ret;

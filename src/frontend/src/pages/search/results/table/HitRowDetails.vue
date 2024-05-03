@@ -3,7 +3,7 @@
 		<td :colspan="colspan">
 			<div style="overflow: auto; max-width: 100%;">
 				<p v-if="loading" :class="{'text-danger': !!error}">
-					<span class="fa fa-spinner fa-spin"></span> Loading...
+					<span class="fa fa-spinner fa-spin"></span> {{$t('results.table.loading')}}
 				</p>
 				<p v-else-if="error" class="text-danger">
 					<span class="fa fa-exclamation-triangle"></span> <span v-html="error"></span>
@@ -51,15 +51,15 @@
 					</p>
 				</template>
 				<template v-else-if="!detailedAnnotations?.length">
-					<p>No context available.</p>
+					<p>{{$t('results.table.noContext')}}</p>
 				</template>
 
 				<div v-if="detailedAnnotations?.length" class="concordance-details-wrapper">
 					<table class="concordance-details-table">
 						<thead>
 							<tr>
-								<th>Property</th>
-								<th :colspan="data.hit.match.punct.length">Value</th>
+								<th>{{$t('results.table.property')}}</th>
+								<th :colspan="data.hit.match.punct.length">{{$t('results.table.value')}}</th>
 							</tr>
 						</thead>
 						<tbody>

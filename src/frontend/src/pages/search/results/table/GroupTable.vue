@@ -23,7 +23,7 @@
 					<a v-if="header.sortProp"
 						role="button"
 						:class="{sort: true, disabled}"
-						:title="`${header.title} (click to sort)`"
+						:title="`${header.title} ${$t('results.table.clickToSort')}`"
 						@click="changeSort(header.sortProp)"
 					>
 						{{header.label}}

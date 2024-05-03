@@ -4,13 +4,13 @@
 		<!-- Group selector/creator container -->
 		<div class="left-sidebar">
 
-			<label style="padding: 5px 15px; margin: 0; vertical-align: bottom; white-space: nowrap;" title="Keep these group settings when performing a new search">
-				<input type="checkbox" v-model="preserveGroupByWhenSearching"> Do not reset on search
+			<label style="padding: 5px 15px; margin: 0; vertical-align: bottom; white-space: nowrap;" :title="$t('results.groupBy.preserveSettings')">
+				<input type="checkbox" v-model="preserveGroupByWhenSearching"> {{ $t('results.groupBy.doNotReset') }}
 			</label>
 
 			<div :class="{'two-button-container': true, 'flex-row': localModel.length > 0, 'flex-col': localModel.length === 0}">
-				<button type="button" @click="addAnnotation" class="create-group-btn btn btn-default" v-if="type === 'hits'">+ Annotation</button>
-				<button type="button" @click="addMetadata" class="create-group-btn btn btn-default">+ Metadata</button>
+				<button type="button" @click="addAnnotation" class="create-group-btn btn btn-default" v-if="type === 'hits'">+ {{ $t('results.groupBy.annotation') }}</button>
+				<button type="button" @click="addMetadata" class="create-group-btn btn btn-default">+ {{ $t('results.groupBy.metadata') }}</button>
 			</div>
 
 			<!-- list of current groups -->
@@ -20,10 +20,9 @@
 					:key="i"
 					style="text-align: left; border-radius: 0; border-right: 0; border-left: 0; flex-grow: 1;"
 					:class="['btn btn-default', currentIndex === i ? 'active' : '']"
-					@click="currentIndex = i;"
-				>
-					<span class="text-primary" style="font-family: monospace;">[{{ a.type.substring(0, 1).toUpperCase() }}]</span> {{humanized[i]}}
-					<span v-if="!isValidGroup(a)" class="fa fas fa-warning text-danger" title="This grouping is not valid."></span>
+					@click="currentIndex = i;">
+					<span class="text-primary" style="font-family: monospace;">[{{ a.type.substring(0, 1).toUpperCase() }}]</span> {{ humanized[i] }}
+					<span v-if="!isValidGroup(a)" class="fa fas fa-warning text-danger" :title="$t('results.groupBy.invalidGrouping')"></span>
 				</button>
 				<button type="button" class="btn btn-danger" style="flex: 0; padding-right: 4px; padding-left: 4px;" @click="removeGroup(i)">&times;</button>
 			</div>
@@ -34,8 +33,8 @@
 
 			<!-- clear/apply -->
 			<div class="two-button-container flex-row" v-if="localModel.length">
-				<button class="btn btn-default" @click="clear">clear</button>
-				<button class="btn btn-default" @click="apply">apply</button>
+				<button class="btn btn-default" @click="clear">{{ $t('results.groupBy.clear') }}</button>
+				<button class="btn btn-default" @click="apply">{{ $t('results.groupBy.apply') }}</button>
 			</div>
 
 
@@ -66,7 +65,7 @@
 					</div>
 				</div>
 
-				I want to group on <SelectPicker
+				{{ $t('results.groupBy.iWantToGroupOn') }} <SelectPicker
 					:options="contextOptions"
 					v-model="context"
 					data-width="auto"
@@ -79,8 +78,8 @@
 					data-width="auto"
 					data-menu-width="auto"
 					:options="positionOptions"
-				/> using annotation <SelectPicker v-if="current.type === 'annotation'"
-					placeholder="Annotation"
+				/> {{ $t('results.groupBy.usingAnnotation') }} <SelectPicker v-if="current.type === 'annotation'"
+					:placeholder="$t('results.groupBy.annotation')"
 					data-width="auto"
 					data-menu-width="auto"
 					right
@@ -90,10 +89,10 @@
 					v-model="current.annotation"
 				/>.
 				<br>
-				<label><input type="checkbox" v-model="current.caseSensitive"> Case sensitive</label>
+				<label><input type="checkbox" v-model="current.caseSensitive"> {{ $t('results.groupBy.caseSensitive') }}</label>
 
 				<div style="margin: 0.75em 0 1.5em 0;"  v-if="context === 'context'">
-					Choose the <strong>specific word</strong> positions to group on here, the preview at the top will show you which words you have selected.
+					<div v-html="$t('results.groupBy.chooseWordPositions')"></div>
 					<Slider
 						:direction="(current.position === 'E' || current.position === 'L') ? 'rtl' : 'ltr'"
 						inline
@@ -106,9 +105,9 @@
 			</template>
 			<template v-else-if="current && current.type === 'metadata'">
 				<section class="text-muted">
-					Select the document metadata to group on.<br>
+					{{ $t('results.groupBy.selectDocumentMetadata') }}<br>
 					<SelectPicker
-						placeholder="Metadata"
+						:placeholder="$t('results.groupBy.metadata')"
 						allowHtml
 						hideEmpty
 						data-width="auto"
@@ -118,9 +117,9 @@
 					/>
 				</section>
 				<br>
-				<label><input type="checkbox" v-model="current.caseSensitive"> Case sensitive</label>
+				<label><input type="checkbox" v-model="current.caseSensitive"> {{ $t('results.groupBy.caseSensitive') }}</label>
 			</template>
-			<div v-else class="text-secondary h4" style="height: 100%; width: 100%; margin: 0; display: flex; align-items: center;">In this window you can apply grouping to the results. Click the buttons on the left to create a grouping criteria to get started.</div>
+			<div v-else class="text-secondary h4" style="height: 100%; width: 100%; margin: 0; display: flex; align-items: center;">{{ $t('results.groupBy.clickButtonsToStart') }}</div>
 		</div>
 	</div>
 </template>

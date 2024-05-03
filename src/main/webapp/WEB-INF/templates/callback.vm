@@ -7,6 +7,7 @@
         var OIDC_AUTHORITY = "$esc.javascript($OIDC_AUTHORITY)";
         var OIDC_METADATA_URL = "$esc.javascript($OIDC_METADATA_URL)";
         var OIDC_CLIENT_ID = "$esc.javascript($OIDC_CLIENT_ID)";
+        var WITH_CREDENTIALS = false; // must be defined for api to initialize.
     </script>
 
     <script src="$JSPATH/callback.js?_$cache"></script>

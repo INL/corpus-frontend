@@ -29,37 +29,15 @@ import AudioPlayer from '@/components/AudioPlayer.vue';
 
 import debug, {debugLog} from '@/utils/debug';
 
-import '@/global.scss';
 import { getAnnotationSubset } from '@/utils';
 import { Option } from './types/apptypes';
 
-/** This needs to happen AFTER vue render. Or the elements won't exist. */
-const connectJqueryToPage = () => {
-	$('input[data-persistent][id != ""], input[data-persistent][data-pid != ""]').each(function(i, elem) {
-		const $this = $(elem);
-		const key = 'input_' + ($this.attr('data-pid') || $this.attr('id'));
-		$this.on('change', function() {
-			const curVal: any = $this.is(':checkbox') ? $this.is(':checked') : $this.val();
-			window.localStorage.setItem(key, curVal);
-		});
+import * as loginSystem from '@/utils/loginsystem';
+import { init as initApi } from '@/api';
+import i18n from '@/utils/i18n';
 
-		if (window.localStorage) {
-			const storedVal = window.localStorage.getItem(key);
-			if (storedVal != null) {
-				$this.is(':checkbox') ? $this.attr('checked', (storedVal.toLowerCase() === 'true') as any) : $this.val(storedVal);
-			}
-		}
+import '@/global.scss';
 
-		// run handler once, init localstorage if required
-		// Only do next tick so handlers have a change to register
-		setTimeout(function() { $this.trigger('change'); });
-	});
-
-	// Enable wide view toggle
-	$('#wide-view').on('change', function() {
-		$('.container, .container-fluid').toggleClass('container', !$(this).is(':checked')).toggleClass('container-fluid', $(this).is(':checked'));
-	});
-};
 
 // Init the querybuilder with the supported attributes/properties
 function initQueryBuilder() {
@@ -200,12 +178,6 @@ Rethink page initialization
 - then restore state from url
 */
 
-import * as loginSystem from '@/utils/loginsystem';
-import { init as initApi } from '@/api';
-import VueI18n, { LocaleMessageObject } from 'vue-i18n';
-import axios from 'axios';
-import { merge } from 'ts-deepmerge';
-
 $(document).ready(async () => {
 
 	async function loadLocaleMessages(locale: string): Promise<LocaleMessageObject> {
@@ -252,26 +224,7 @@ $(document).ready(async () => {
 			RootStore.actions.replace(stateFromUrl);
 			// Don't do this before the url is parsed, as it controls the page url (among other things derived from the state).
 			connectStreamsToVuex();
-			connectJqueryToPage();
 			initQueryBuilder();
-		},
-		watch: {
-			// When the chosen locale changes, load the messages for that locale
-			'$i18n.locale': {
-				immediate: true,
-				handler(newLocale) {
-			  		this.loadMessages(newLocale);
-				},
-			},
-		},
-		methods: {
-			// Load the messages for the given locale
-			async loadMessages(locale: string) {
-				if (!this.$i18n.availableLocales.includes(locale)) {
-					const messages = await loadLocaleMessages(locale);
-					this.$i18n.setLocaleMessage(locale, messages);
-				}
-			},
 		},
 	}).$mount(document.querySelector('#vue-root')!);
 });

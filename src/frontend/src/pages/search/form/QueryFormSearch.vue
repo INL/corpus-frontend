@@ -129,45 +129,11 @@
 				<button type="button" class="btn btn-default btn-sm" @click="copyGlossQuery">{{$t('search.glosses.copyGlossQuery')}}</button>
 			</div>
 			<div :class="['tab-pane', {'active': activePattern==='expert'}]" id="expert">
-				<h3>{{$t('search.expert.corpusQueryLanguage') + (isParallelCorpus ? '' : ':') }}
-					<a class='help' target='_blank' href='https://inl.github.io/BlackLab/guide/corpus-query-language.html'
-						:title="$t('widgets.learnMore').toString()">🛈</a>
-				</h3>
-				<template v-if="!isParallelCorpus">
-					<!-- Regular case -->
-					<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model.lazy="expert"></textarea>
-				</template>
-				<div v-else class="parallel">
-					<!-- Parallel corpus -->
-					<label class="control-label" for="sourceVersion">{{$t('search.parallel.sourceVersion')}}
-						<SelectPicker id="sourceVersion" :options="parallelSourceVersionOptions"
-							v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
-					</label>
-					<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model.lazy="expert"></textarea>
-
-					<div v-for="(version, index) in parallelTargetVersions" :key="version">
-						<label class="control-label">{{$t('search.parallel.targetVersion')}}
-							<span @click="removeTargetVersion(version)" class="targetVersion" :title="$t('widgets.clickToRemove').toString()" href="#">
-								{{versionDisplayName(version)}}
-							</span>
-						</label>
-						<textarea :id="`querybox-${version}`" class="form-control" rows="7"
-							v-model="expertTargetQueries[index]"></textarea>
-					</div>
-
-					<label class="control-label">
-						{{ parallelTargetVersions && parallelTargetVersions.length > 0 ?
-						$t('search.parallel.addTargetVersion') :
-						$t('search.parallel.chooseTargetVersion')
-						}}</label>
-					<div>
-						<SelectPicker :options="parallelTargetVersionOptions" @input="addTargetVersion($event)" />
-					</div>
-				</div>
+				<ExpertSearch />
 
 				<!-- Copy to builder, import, gap filling buttons -->
-				<template v-if="!isParallelCorpus"><!-- things are complex enough already with parallel -->
-					<button v-if="advancedEnabled" type="button" class="btn btn-sm btn-default" name="parseQuery" id="parseQuery" :title="$t('search.expert.parseQueryTitle')" @click="parseQuery">{{$t('search.expert.parseQuery')}}</button>
+				<template v-if="!isParallelCorpus"><!-- disable in parallel for now, things are complex enough -->
+					<button v-if="advancedEnabled" type="button" class="btn btn-sm btn-default" name="parseQuery" id="parseQuery" :title="$t('search.expert.parseQueryTitle').toString()" @click="parseQuery">{{$t('search.expert.parseQuery')}}</button>
 					<label class="btn btn-sm btn-default file-input-button" for="importQuery">
 						{{$t('search.expert.importQuery')}}
 						<input type="file" name="importQuery" id="importQuery" accept=".txt,text/plain" @change="importQuery" :title="$t('search.expert.importQueryTitle')">
@@ -180,7 +146,7 @@
 						<button v-if="gapValue != null"
 							type="button"
 							class="btn btn-default btn-sm"
-							:title="$t('search.expert.clearGapValues')"
+							:title="$t('search.expert.clearGapValues').toString()"
 							@click="gapValue = null"
 						><span class="fa fa-times"></span></button>
 					</div>
@@ -208,6 +174,7 @@ import * as GapStore from '@/store/search/form/gap';
 import * as HistoryStore from '@/store/search/history';
 
 import Annotation from '@/pages/search/form/Annotation.vue';
+import ExpertSearch from '@/pages/search/form/ExpertSearch.vue';
 import ConceptSearch from '@/pages/search/form/concept/ConceptSearch.vue';
 import GlossSearch from '@/pages/search/form/concept/GlossSearch.vue';
 import ParallelSourceAndTargets from '@/pages/search/form/ParallelSourceAndTargets.vue';
@@ -230,6 +197,7 @@ export default Vue.extend({
 		SelectPicker,
 		ParallelSourceAndTargets,
 		Annotation,
+		ExpertSearch,
 		ConceptSearch,
 		GlossSearch
 	},
@@ -308,14 +276,6 @@ export default Vue.extend({
 			get(): string|null { return PatternStore.getState().advanced.query; },
 			set: PatternStore.actions.advanced.query,
 		},
-		expert: {
-			get(): string|null { return PatternStore.getState().expert.query; },
-			set: PatternStore.actions.expert.query,
-		},
-		expertTargetQueries: {
-			get(): string[] { return PatternStore.getState().expert.targetQueries; },
-			set: PatternStore.actions.expert.targetQueries,
-		},
 		concept: {
 			get(): string|null { return PatternStore.getState().concept; },
 			set: PatternStore.actions.concept,
@@ -340,7 +300,7 @@ export default Vue.extend({
 		parseQuery() {
 			// TODO dedicated component - port builder?
 			const builder: QueryBuilder = $(this.$refs.querybuilder as HTMLElement).data('builder');
-			if (builder && builder.parse(this.expert)) {
+			if (builder && builder.parse(PatternStore.getState().expert.query)) {
 				InterfaceStore.actions.patternMode('advanced');
 				this.parseQueryError = null;
 			} else {
@@ -393,12 +353,12 @@ export default Vue.extend({
 		},
 		copyConceptQuery() {
 			//PatternStore.actions.expert.query(PatternStore.getState().advanced.query);
-			this.expert = this.concept
+			PatternStore.actions.expert.query(this.concept);
 			InterfaceStore.actions.patternMode('expert');
 		},
 		copyGlossQuery() {
 			//PatternStore.actions.expert.query(PatternStore.getState().advanced.query);
-			this.expert = this.glosses
+			PatternStore.actions.expert.query(this.glosses);
 			InterfaceStore.actions.patternMode('expert');
 		},
 		setupCustomAnnotation(div: HTMLElement, plugin: NonNullable<UIStore.ModuleRootState['search']['shared']['customAnnotations'][string]>) {
@@ -420,22 +380,6 @@ export default Vue.extend({
 				// setup watcher so custom component is notified of changes to its value by external processes (global form reset, history state restore, etc.)
 				RootStore.store.watch(state => value, (cur, prev) => update(cur, prev, div), {deep: true});
 			}
-		},
-		addTargetVersion(version: string) {
-			if (version == null) {
-				console.warn('tried to add null target version');
-				return;
-			}
-			const targets = this.parallelTargetVersions?.concat([version]) || [version];
-			PatternStore.actions.parallelVersions.parallelTargetVersions(targets);
-		},
-		removeTargetVersion(version: string) {
-			const targets = this.parallelTargetVersions?.filter(v => v !== version) || [];
-			PatternStore.actions.parallelVersions.parallelTargetVersions(targets);
-		},
-		versionDisplayName(version: string) {
-			const option = PatternStore.get.parallelVersionOptions().find(o => o.value === version);
-			return option?.label || version;
 		},
 	},
 	watch: {
@@ -478,22 +422,6 @@ export default Vue.extend({
 </script>
 
 <style lang="scss">
-
-h3 .help {
-	font-size: 0.8em;
-
-	// superscript
-	position: relative;
-	top: -0.5em;
-	color: black;
-	opacity: 0.5;
-}
-
-#querybox {
-	width: 100%;
-	resize: none;
-	margin-bottom: 10px;
-}
 
 #querybuilder {
 	background-color: rgba(255, 255, 255, 0.7);
@@ -541,41 +469,6 @@ textarea.gap-value-editor {
 	overflow: auto;
 	overflow-x: hidden;
 	margin-bottom: 15px;
-}
-
-.parallel {
-	margin: 15px 0;
-
-	label {
-		margin-top: 10px;
-	}
-	textarea, #querybox {
-		width: 100%;
-		resize: none;
-		margin: 0;
-	}
-	#sourceVersion, .targetVersion {
-		font-weight: normal;
-	}
-	span.targetVersion {
-		display: inline-block;
-		margin: 2px;
-		user-select: none;
-
-		// position: relative;
-		// top: 1px;
-
-		background-color: lighten(#337ab7, 40); // $panel-color (global.scss); maybe separate variables into file we can import here?
-		color: black;
-		padding: 7px;
-		border-radius: 3px;
-		cursor: pointer;
-		&::after {
-			font-weight: bold;
-			content: '✕';
-			margin-left: 5px;
-		}
-	}
 }
 
 </style>

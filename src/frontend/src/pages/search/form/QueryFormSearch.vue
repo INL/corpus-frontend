@@ -129,7 +129,10 @@
 				<button type="button" class="btn btn-default btn-sm" @click="copyGlossQuery">{{$t('search.glosses.copyGlossQuery')}}</button>
 			</div>
 			<div :class="['tab-pane', {'active': activePattern==='expert'}]" id="expert">
-				<h3>{{$t('search.expert.corpusQueryLanguage') + (isParallelCorpus ? '' : ':') }} <a class='help' target='_blank' href='https://inl.github.io/BlackLab/guide/corpus-query-language.html'>🛈</a></h3>
+				<h3>{{$t('search.expert.corpusQueryLanguage') + (isParallelCorpus ? '' : ':') }}
+					<a class='help' target='_blank' href='https://inl.github.io/BlackLab/guide/corpus-query-language.html'
+						:title="$t('widgets.learnMore').toString()">🛈</a>
+				</h3>
 				<template v-if="!isParallelCorpus">
 					<!-- Regular case -->
 					<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model.lazy="expert"></textarea>

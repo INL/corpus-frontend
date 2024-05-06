@@ -85,7 +85,14 @@ const get = {
 
 	simple: b.read(state => state.simple, 'simple'),
 
+	// Selected parallel source and target versions
 	parallelVersions: b.read(state => state.parallelVersions, 'parallelVersions'),
+
+	// What parallel version options are there?
+	// (all except already chosen target ones)
+	parallelVersionOptions: b.read((state: ModuleRootState): { value: string, label: string }[] => {
+		return parallelVersionOptions(state);
+	}, 'parallelVersionOptions'),
 
 	// What parallel versions should be shown as source options?
 	// (all except already chosen target ones)
@@ -95,9 +102,11 @@ const get = {
 	}, 'parallelSourceVersionOptions'),
 
 	// What parallel versions should be shown as target options?
-	// (all except already chosen source and target ones)
+	// (all except already chosen source one; the widget will also filter out already chosen target ones, so we
+    //  shouldn't do that here)
 	parallelTargetVersionOptions: b.read((state: ModuleRootState): { value: string, label: string }[] => {
 		const src = state.parallelVersions.source || '';
+		const targets = state.parallelVersions.targets || [];
 		return parallelVersionOptions(state).filter(value => value.value !== src);
 	}, 'parallelTargetVersionOptions'),
 };

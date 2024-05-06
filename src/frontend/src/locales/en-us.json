@@ -1,4 +1,7 @@
 {
+	"widgets": {
+		"clickToRemove": "Click to remove"
+	},
 	"search": {
 		"heading": "Search for …",
 		"simple": {
@@ -33,11 +36,12 @@
 			"clearGapValues": "Clear gap values"
 		},
 		"parallel": {
-			"inSourceVersion": "In source version",
+			"inSourceVersion": "in source version",
+			"andCompareWithTargetVersions": "and compare with target version(s)",
 			"sourceVersion": "Source version",
 			"targetVersion": "Target version",
-			"andCompareWithTargetVersions": "and compare with target versions",
-			"addTargetVersion": "Add a target version"
+			"chooseTargetVersion": "Choose a target version",
+			"addTargetVersion": "Add another target version"
 		}
 	},
 	"filter": {

@@ -44,7 +44,6 @@ const get = {
 	 *  (e.g. "contents" if there's fields "contents__en" and "contents__nl") */
 	parallelFieldPrefix: b.read((state): string => {
 		for (const f of get.allAnnotatedFields()) {
-			console.log(f.id);
 			const parts = getParallelFieldParts(f.id);
 			if (parts.version !== '') {
 				// Note that we don't support multiple parallel fields in one corpus,

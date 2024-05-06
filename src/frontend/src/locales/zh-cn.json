@@ -1,4 +1,7 @@
 {
+	"widgets": {
+		"clickToRemove": "Click to remove"
+	},
 	"search": {
 		"heading": "搜索方式",
 		"simple": {
@@ -33,10 +36,11 @@
 			"clearGapValues": "清除分割"
 		},
 		"parallel": {
-			"inSourceVersion": "In source version",
+			"inSourceVersion": "in source version",
+			"queryFor": "Query for",
 			"sourceVersion": "source version",
 			"targetVersion": "target version",
-			"andCompareWithTargetVersions": "and compare with target versions",
+			"andCompareWithTargetVersions": "and compare with target version(s)",
 			"addTargetVersion": "Add a target version"
 		}
 	},

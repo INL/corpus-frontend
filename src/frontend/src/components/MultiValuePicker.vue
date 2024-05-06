@@ -1,16 +1,14 @@
 <template>
 	<div class="multi-value-picker">
 		<div class="selected">
-			<!-- <p v-if="selected.length > 0">{{ textSelected || $t('widget.multiValuePicker.textSelected') }}:</p> -->
 			<ul>
-				<li class='option' v-for="v in selected" :key="v.value" :data-value="v.value" title="Click to remove" @click="clickLabel($event?.target)">
+				<li class='option' v-for="v in selected" :key="v ? v.value : 'x'" :data-value="v ? v.value : 'x'" :title="$t('widgets.clickToRemove').toString()" @click="clickLabel($event?.target)">
 					{{ v.label || v.value }}
 				</li>
 				<li v-if="optionsNotYetSelected.length > 0">
 					<SelectPicker :options="optionsNotYetSelected" :value="selectValue" @input="add($event)" data-menu-width="grow" hideEmpty/>
 				</li>
 			</ul>
-			<!-- <p v-if="selected.length === 0">{{ textNoneSelected || $t('widget.multiValuePicker.textNoneSelected') }}</p> -->
 		</div>
 	</div>
 </template>
@@ -63,26 +61,23 @@ export default Vue.extend({
 			return this.options.filter(o => !this.selected.includes(o));
 		},
 		selected(): Option[] {
-			return this.value?.map(v => this.options.find(o => (o as Option).value === v) as Option) || [];
+			const result = this.value?.map(v => this.options.find(o => (o as Option).value === v) as Option)
+				.filter(v => v !== undefined) || [];
+			//console.log('computing selected:', this.value, 'options:', this.options, 'result:', result);
+			return result;
 		},
 	},
 	methods: {
 		add(v: string) {
+			//console.log('add:', v, 'selected:', this.selected)
 			const opt = this.options.find(o => (o as Option).value === v);
 			if (opt) {
 				const i = this.selected.indexOf(opt);
 				if (i < 0) {
 					// Not yet selected: add it at the end
 					this.$emit('input', this.selected.concat([opt]).map(o => o.value));
-					//this.selected.push(opt);
 				}
 			}
-
-			// Clear SelectPicker selection (kinda ugly...)
-			// this.selectValue = v;
-			// setTimeout(() => {
-			// 	this.selectValue = null;
-			// }, 10);
 		},
 		clickLabel(target: EventTarget|null) {
 			if (target && target instanceof HTMLElement) {
@@ -91,25 +86,13 @@ export default Vue.extend({
 			}
 		},
 		remove(v: string) {
+			//console.log('remove:', v, 'selected:', this.selected)
 			this.$emit('input', this.selected.filter(o => o.value !== v).map(o => o.value));
-			// const opt = this.options.find(o => (o as Option).value === v);
-			// if (opt) {
-			// 	const i = this.selected.indexOf(opt);
-			// 	if (i >= 0) {
-			// 		this.selected.splice(i, 1);
-			// 	}
-			// }
 		},
 	},
 	data: () =>  ({
 		selectValue: null as string|null,
 	}),
-	// watch: {
-	// 	selected() {
-	// 		//console.log('selected:', this.selected);
-	// 		this.$emit('input', this.selected.map(o => o.value));
-	// 	},
-	// },
 	mounted() {
 	},
 	beforeDestroy() {

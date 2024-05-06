@@ -129,50 +129,61 @@
 				<button type="button" class="btn btn-default btn-sm" @click="copyGlossQuery">{{$t('search.glosses.copyGlossQuery')}}</button>
 			</div>
 			<div :class="['tab-pane', {'active': activePattern==='expert'}]" id="expert">
-				<h3>{{$t('search.expert.corpusQueryLanguage')}}:</h3>
-				<div class="parallel" v-if="isParallelCorpus">
-					<label class="control-label" for="sourceVersion">{{$t('search.parallel.sourceVersion')}}</label>
-					<div>
+				<h3>{{$t('search.expert.corpusQueryLanguage') + (isParallelCorpus ? '' : ':') }} <a class='help' target='_blank' href='https://inl.github.io/BlackLab/guide/corpus-query-language.html'>🛈</a></h3>
+				<template v-if="!isParallelCorpus">
+					<!-- Regular case -->
+					<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model.lazy="expert"></textarea>
+				</template>
+				<div v-else class="parallel">
+					<!-- Parallel corpus -->
+					<label class="control-label" for="sourceVersion">{{$t('search.parallel.sourceVersion')}}
 						<SelectPicker id="sourceVersion" :options="parallelSourceVersionOptions"
-								v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
-					</div>
-				</div>
-				<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model.lazy="expert"></textarea>
-
-				<div class="parallel" v-if="isParallelCorpus">
+							v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
+					</label>
+					<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model.lazy="expert"></textarea>
 
 					<div v-for="version in parallelTargetVersions" :key="version">
-						<label class="control-label">{{`${$t('search.parallel.targetVersion')} ${version}`}}</label>
+						<label class="control-label">{{$t('search.parallel.targetVersion')}}
+							<span @click="removeTargetVersion(version)" class="targetVersion" :title="$t('widgets.clickToRemove').toString()" href="#">
+								{{versionDisplayName(version)}}
+							</span>
+						</label>
 						<textarea :id="`querybox-${version}`" class="form-control" rows="7"></textarea>
 					</div>
 
-					<label class="control-label">{{ $t('search.parallel.addTargetVersion') }}</label>
+					<label class="control-label">
+						{{ parallelTargetVersions && parallelTargetVersions.length > 0 ?
+						$t('search.parallel.addTargetVersion') :
+						$t('search.parallel.chooseTargetVersion')
+						}}</label>
 					<div>
 						<SelectPicker :options="parallelTargetVersionOptions" @input="addTargetVersion($event)" />
 					</div>
 				</div>
 
 				<!-- Copy to builder, import, gap filling buttons -->
-				<button v-if="advancedEnabled" type="button" class="btn btn-sm btn-default" name="parseQuery" id="parseQuery" :title="$t('search.expert.parseQueryTitle')" @click="parseQuery">{{$t('search.expert.parseQuery')}}</button>
-				<label class="btn btn-sm btn-default file-input-button" for="importQuery">
-					{{$t('search.expert.importQuery')}}
-					<input type="file" name="importQuery" id="importQuery" accept=".txt,text/plain" @change="importQuery" :title="$t('search.expert.importQueryTitle')">
-				</label>
-				<div class="btn-group">
-					<label class="btn btn-sm btn-default file-input-button" for="gapFilling">
-						{{$t('search.expert.gapFilling')}}
-						<input type="file" name="gapFilling" id="gapFilling" accept=".tsv,.csv,text/plain" @change="importGapFile" :title="$t('search.expert.gapFillingTitle')">
+				<template v-if="!isParallelCorpus"><!-- things are complex enough already with parallel -->
+					<button v-if="advancedEnabled" type="button" class="btn btn-sm btn-default" name="parseQuery" id="parseQuery" :title="$t('search.expert.parseQueryTitle')" @click="parseQuery">{{$t('search.expert.parseQuery')}}</button>
+					<label class="btn btn-sm btn-default file-input-button" for="importQuery">
+						{{$t('search.expert.importQuery')}}
+						<input type="file" name="importQuery" id="importQuery" accept=".txt,text/plain" @change="importQuery" :title="$t('search.expert.importQueryTitle')">
 					</label>
-					<button v-if="gapValue != null"
-						type="button"
-						class="btn btn-default btn-sm"
-						:title="$t('search.expert.clearGapValues')"
-						@click="gapValue = null"
-					><span class="fa fa-times"></span></button>
-				</div>
-				<textarea type="area" v-if="gapValue != null" class="form-control gap-value-editor" v-model.lazy="gapValue" @keydown.tab.prevent="insertTabInText"/>
-				<span v-show="parseQueryError" id="parseQueryError" class="text-danger"><span class="fa fa-exclamation-triangle"></span> {{parseQueryError}}</span>
-				<span v-show="importQueryError" id="importQueryError" class="text-danger"><span class="fa fa-exclamation-triangle"></span> {{importQueryError}}</span>
+					<div class="btn-group">
+						<label class="btn btn-sm btn-default file-input-button" for="gapFilling">
+							{{$t('search.expert.gapFilling')}}
+							<input type="file" name="gapFilling" id="gapFilling" accept=".tsv,.csv,text/plain" @change="importGapFile" :title="$t('search.expert.gapFillingTitle')">
+						</label>
+						<button v-if="gapValue != null"
+							type="button"
+							class="btn btn-default btn-sm"
+							:title="$t('search.expert.clearGapValues')"
+							@click="gapValue = null"
+						><span class="fa fa-times"></span></button>
+					</div>
+					<textarea type="area" v-if="gapValue != null" class="form-control gap-value-editor" v-model.lazy="gapValue" @keydown.tab.prevent="insertTabInText"/>
+					<span v-show="parseQueryError" id="parseQueryError" class="text-danger"><span class="fa fa-exclamation-triangle"></span> {{parseQueryError}}</span>
+					<span v-show="importQueryError" id="importQueryError" class="text-danger"><span class="fa fa-exclamation-triangle"></span> {{importQueryError}}</span>
+				</template>
 
 			</div>
 		</div>
@@ -401,8 +412,20 @@ export default Vue.extend({
 			}
 		},
 		addTargetVersion(version: string) {
+			if (version == null) {
+				console.warn('tried to add null target version');
+				return;
+			}
 			const targets = this.parallelTargetVersions?.concat([version]) || [version];
 			PatternStore.actions.parallelVersions.parallelTargetVersions(targets);
+		},
+		removeTargetVersion(version: string) {
+			const targets = this.parallelTargetVersions?.filter(v => v !== version) || [];
+			PatternStore.actions.parallelVersions.parallelTargetVersions(targets);
+		},
+		versionDisplayName(version: string) {
+			const option = PatternStore.get.parallelVersionOptions().find(o => o.value === version);
+			return option?.label || version;
 		},
 	},
 	watch: {
@@ -445,6 +468,16 @@ export default Vue.extend({
 </script>
 
 <style lang="scss">
+
+h3 .help {
+	font-size: 0.8em;
+
+	// superscript
+	position: relative;
+	top: -0.5em;
+	color: black;
+	opacity: 0.5;
+}
 
 #querybox {
 	width: 100%;
@@ -502,6 +535,37 @@ textarea.gap-value-editor {
 
 .parallel {
 	margin: 15px 0;
+
+	label {
+		margin-top: 10px;
+	}
+	textarea, #querybox {
+		width: 100%;
+		resize: none;
+		margin: 0;
+	}
+	#sourceVersion, .targetVersion {
+		font-weight: normal;
+	}
+	span.targetVersion {
+		display: inline-block;
+		margin: 2px;
+		user-select: none;
+
+		// position: relative;
+		// top: 1px;
+
+		background-color: lighten(#337ab7, 40); // $panel-color (global.scss); maybe separate variables into file we can import here?
+		color: black;
+		padding: 7px;
+		border-radius: 3px;
+		cursor: pointer;
+		&::after {
+			font-weight: bold;
+			content: '✕';
+			margin-left: 5px;
+		}
+	}
 }
 
 </style>

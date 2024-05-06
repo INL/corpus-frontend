@@ -29,13 +29,17 @@ type ModuleRootState = {
 				[annotationId: string]: AnnotationValue
 			// }
 		},
-		within: string|null;
-		splitBatch: boolean;
+		within: string|null,
+		splitBatch: boolean,
 	},
-	advanced: string|null;
-	concept: string|null; // Jesse
-	glosses: string|null; // Jesse
-	expert: string|null;
+	advanced: {
+		query: string|null,
+	},
+	expert: {
+		query: string|null,
+	},
+	concept: string|null, // Jesse
+	glosses: string|null, // Jesse
 };
 
 // There are three levels of state initialization
@@ -55,10 +59,14 @@ const defaults: ModuleRootState = {
 		within: null,
 		splitBatch: false,
 	},
-	advanced: null,
-	concept: null, //
+	advanced: {
+		query: null,
+	},
+	expert: {
+		query: null,
+	},
+	concept: null,
 	glosses: null,
-	expert: null,
 };
 
 const namespace = 'patterns';
@@ -165,36 +173,55 @@ const actions = {
 			state.extended.splitBatch = false;
 		}, 'extended_reset'),
 	},
-	advanced: b.commit((state, payload: string|null) =>state.advanced = payload, 'advanced'),
+	advanced: {
+		query: b.commit((state, payload: string|null) => {
+			return (state.advanced.query = payload);
+		}, 'advanced_query'),
+		reset: b.commit(state => {
+			state.advanced.query = null
+		}, 'advanced_reset'),
+	},
+	expert: {
+		query: b.commit((state, payload: string|null) => {
+			return (state.expert.query = payload);
+		}, 'expert_query'),
+		reset: b.commit(state => {
+			state.expert.query = null
+		}, 'expert_reset'),
+	},
 	concept: b.commit((state, payload: string|null) =>state.concept = payload, 'concept'),
 	glosses: b.commit((state, payload: string|null) =>state.glosses = payload, 'glosses'),
-	expert: b.commit((state, payload: string|null) => state.expert = payload, 'expert'),
 
 	reset: b.commit(state => {
 		actions.simple.reset();
 		actions.extended.reset();
-		state.advanced = null;
-		state.expert = null;
+		actions.advanced.reset();
+		actions.expert.reset();
 		state.concept = null;
 		state.glosses = null;
 	}, 'reset'),
 
 	replace: b.commit((state, payload: ModuleRootState) => {
-		actions.simple.reset();
-		actions.simple.annotation(payload.simple.annotationValue);
-
 		actions.parallelVersions.reset();
 		actions.parallelVersions.parallelSourceVersion(payload.parallelVersions.source);
 		actions.parallelVersions.parallelTargetVersions(payload.parallelVersions.targets);
 
-		actions.advanced(payload.advanced);
-		actions.concept(payload.concept);
-		actions.glosses(payload.glosses);
-		actions.expert(payload.expert);
+		actions.simple.reset();
+		actions.simple.annotation(payload.simple.annotationValue);
+
 		actions.extended.reset();
 		actions.extended.within(payload.extended.within);
 		state.extended.splitBatch = payload.extended.splitBatch;
 		Object.values(payload.extended.annotationValues).forEach(actions.extended.annotation);
+
+		actions.advanced.reset();
+		actions.advanced.query(payload.advanced.query);
+
+		actions.expert.reset();
+		actions.expert.query(payload.expert.query);
+
+		actions.concept(payload.concept);
+		actions.glosses(payload.glosses);
 	}, 'replace'),
 };
 

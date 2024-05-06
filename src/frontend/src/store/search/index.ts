@@ -267,10 +267,14 @@ const actions = {
 			entry: {
 				...sharedBatchState,
 				patterns: {
-					advanced: null,
+					advanced: {
+						query: null,
+					},
 					concept: null,
 					glosses: null,
-					expert: null,
+					expert: {
+						query: null,
+					},
 					// @@@JN is this okay?
 					parallelVersions: PatternModule.getState().parallelVersions,
 					// @@@JN this seems wrong..? (why are value and case here?)

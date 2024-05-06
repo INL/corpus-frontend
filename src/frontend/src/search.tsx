@@ -82,22 +82,22 @@ function initQueryBuilder() {
 	});
 
 	// Set initial value
-	let lastPattern: PatternStore.ModuleRootState['advanced'] = null;
-	if (PatternStore.getState().advanced == null) {
+	let lastPattern: string|null = null;
+	if (PatternStore.getState().advanced.query == null) {
 		// not initialized in store, set to default from querybuilder
 		lastPattern = instance.getCql();
-		PatternStore.actions.advanced(lastPattern);
+		PatternStore.actions.advanced.query(lastPattern);
 	} else {
 		// already something in store - copy to querybuilder.
-		lastPattern = PatternStore.getState().advanced;
+		lastPattern = PatternStore.getState().advanced.query;
 		if (!instance.parse(lastPattern)) {
 			// Apparently it's invalid? reset to default.
-			PatternStore.actions.advanced(instance.getCql());
+			PatternStore.actions.advanced.query(instance.getCql());
 		}
 	}
 
 	// Enable two-way binding.
-	RootStore.store.watch(state => state.patterns.advanced, v => {
+	RootStore.store.watch(state => state.patterns.advanced.query, v => {
 		if (v !== lastPattern) {
 			lastPattern = v;
 			instance.parse(v);
@@ -106,7 +106,7 @@ function initQueryBuilder() {
 	instance.element.on('cql:modified', () => {
 		const pattern = instance.getCql();
 		lastPattern = pattern;
-		PatternStore.actions.advanced(pattern);
+		PatternStore.actions.advanced.query(pattern);
 	});
 
 	debugLog('Finished initializing querybuilder');

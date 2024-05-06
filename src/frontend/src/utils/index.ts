@@ -824,8 +824,8 @@ export function getPatternStringSearch(
 				getPatternString(r, state.extended.within, state.parallelVersions?.targets || []) :
 				undefined;
 		}
-		case 'advanced': return state.advanced?.trim() || undefined;
-		case 'expert': return state.expert?.trim() || undefined;
+		case 'advanced': return state.advanced.query?.trim() || undefined;
+		case 'expert': return state.expert.query?.trim() || undefined;
 		case 'concept': return state.concept?.trim() || undefined;
 		case 'glosses': return state.glosses?.trim() || undefined;
 		default: throw new Error('Unimplemented pattern generation.');
@@ -864,8 +864,8 @@ export function getPatternSummarySearch<K extends keyof ModuleRootStateSearch>(
 			// remove escape backslashes as this is just a summary
 			return getPatternString(annotations, state.extended.within)?.replace(/\\(.)/g, '$1');
 		}
-		case 'advanced': return state.advanced?.trim() || undefined;
-		case 'expert': return state.expert?.trim() || undefined;
+		case 'advanced': return state.advanced.query?.trim() || undefined;
+		case 'expert': return state.expert.query?.trim() || undefined;
 		case 'concept': return state.concept || undefined;
 		case 'glosses': return state.glosses || undefined;
 		default: return undefined;

@@ -123,7 +123,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	 */
 	@memoize
 	private get frequencies(): null|ExploreModule.ModuleRootState['frequency'] {
-		if (this.expertPattern !== '[]' || this.groupBy.length !== 1) {
+		if (this.expertPattern.query !== '[]' || this.groupBy.length !== 1) {
 			return null;
 		}
 
@@ -171,9 +171,9 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 				ui.patternMode = 'simple';
 			} else if ((Object.keys(this.extendedPattern.annotationValues).length > 0) && !hasGapValue) {
 				ui.patternMode = 'extended';
-			} else if (this.advancedPattern && !hasGapValue && UIModule.getState().search.advanced.enabled) {
+			} else if (this.advancedPattern.query && !hasGapValue && UIModule.getState().search.advanced.enabled) {
 				ui.patternMode = 'advanced';
-			} else if (this.expertPattern) {
+			} else if (this.expertPattern.query) {
 				ui.patternMode = 'expert';
 			} else {
 				ui.patternMode = hasFilters ? hasGapValue ? 'expert' : 'extended' : 'simple';
@@ -229,7 +229,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 			return null;
 		}
 
-		if (this.expertPattern) {
+		if (this.expertPattern.query) {
 			return null;
 		}
 
@@ -479,9 +479,8 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	}
 
 	@memoize
-	private get advancedPattern(): string|null {
-		// If the pattern can't be parsed, the querybuilder can't use it either.
-		return this._parsedCql ? this.expertPattern : null;
+	private get advancedPattern() {
+		return this._parsedCql ? this.expertPattern : { query: null };
 	}
 
 	@memoize
@@ -495,8 +494,10 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	}
 
 	@memoize
-	private get expertPattern(): string|null {
-		return this.getString('patt', null, v=>v?v:null);
+	private get expertPattern() {
+		return {
+			query: this.getString('patt', null, v=>v?v:null)
+		};
 	}
 
 	@memoize
@@ -606,7 +607,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	@memoize
 	private get _parsedCql(): null|ReturnType<typeof parseCql> {
 		try {
-			const result = parseCql(this.expertPattern || '', CorpusModule.get.firstMainAnnotation().id);
+			const result = parseCql(this.expertPattern.query || '', CorpusModule.get.firstMainAnnotation().id);
 			return result.tokens.length > 0 ? result : null;
 		} catch (e) {
 			return null; // meh, can't parse

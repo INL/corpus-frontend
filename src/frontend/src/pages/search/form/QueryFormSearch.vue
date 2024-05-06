@@ -304,12 +304,12 @@ export default Vue.extend({
 		glossEnabled(): boolean { return GlossStore.get.settings() != null; },
 		conceptEnabled(): boolean { return ConceptStore.get.settings() != null; },
 		advanced: {
-			get(): string|null { return PatternStore.getState().advanced; },
-			set: PatternStore.actions.advanced,
+			get(): string|null { return PatternStore.getState().advanced.query; },
+			set: PatternStore.actions.advanced.query,
 		},
 		expert: {
-			get(): string|null { return PatternStore.getState().expert; },
-			set: PatternStore.actions.expert,
+			get(): string|null { return PatternStore.getState().expert.query; },
+			set: PatternStore.actions.expert.query,
 		},
 		concept: {
 			get(): string|null { return PatternStore.getState().concept; },
@@ -381,16 +381,18 @@ export default Vue.extend({
 		},
 
 		copyAdvancedQuery() {
-			PatternStore.actions.expert(PatternStore.getState().advanced);
+			const q = PatternStore.getState().advanced.query;
+			console.log('copying advanced query', q);
+			PatternStore.actions.expert.query(q);
 			InterfaceStore.actions.patternMode('expert');
 		},
 		copyConceptQuery() {
-			//PatternStore.actions.expert(PatternStore.getState().advanced);
+			//PatternStore.actions.expert.query(PatternStore.getState().advanced.query);
 			this.expert = this.concept
 			InterfaceStore.actions.patternMode('expert');
 		},
 		copyGlossQuery() {
-			//PatternStore.actions.expert(PatternStore.getState().advanced);
+			//PatternStore.actions.expert.query(PatternStore.getState().advanced.query);
 			this.expert = this.glosses
 			InterfaceStore.actions.patternMode('expert');
 		},

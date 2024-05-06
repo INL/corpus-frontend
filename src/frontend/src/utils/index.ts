@@ -344,11 +344,11 @@ export const getPatternStringFromCql = (sourceCql: string, targetVersions: strin
 		return sourceCql;
 	}
 
-	const queryParts = [`(${sourceCql.trim()})`];
+	const queryParts = [sourceCql.trim()];
 	for (let i = 0; i < targetVersions.length; i++) {
 		if (i > 0)
 			queryParts.push(' ; ');
-		queryParts.push(` ==>${targetVersions[i].trim()} (${targetCql[i].trim()})`)
+		queryParts.push(` ==>${targetVersions[i].trim()} ${targetCql[i].trim()}`)
 	}
 
 	const query = queryParts.join('');
@@ -848,11 +848,13 @@ export function getPatternStringSearch(
 				undefined;
 		}
 		case 'advanced':
-			return state.advanced.query?.trim() || undefined;
+			if (!state.advanced.query)
+				return undefined;
+			return getPatternStringFromCql(state.advanced.query, state.parallelVersions.targets || [], state.advanced.targetQueries);
 		case 'expert':
 			if (!state.expert.query)
 				return undefined;
-			return getPatternStringFromCql(state.expert.query || '', state.parallelVersions.targets || [], state.expert.targetQueries);
+			return getPatternStringFromCql(state.expert.query, state.parallelVersions.targets || [], state.expert.targetQueries);
 		case 'concept': return state.concept?.trim() || undefined;
 		case 'glosses': return state.glosses?.trim() || undefined;
 		default: throw new Error('Unimplemented pattern generation.');

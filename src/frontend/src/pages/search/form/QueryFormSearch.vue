@@ -145,13 +145,14 @@
 					</label>
 					<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model.lazy="expert"></textarea>
 
-					<div v-for="version in parallelTargetVersions" :key="version">
+					<div v-for="(version, index) in parallelTargetVersions" :key="version">
 						<label class="control-label">{{$t('search.parallel.targetVersion')}}
 							<span @click="removeTargetVersion(version)" class="targetVersion" :title="$t('widgets.clickToRemove').toString()" href="#">
 								{{versionDisplayName(version)}}
 							</span>
 						</label>
-						<textarea :id="`querybox-${version}`" class="form-control" rows="7"></textarea>
+						<textarea :id="`querybox-${version}`" class="form-control" rows="7"
+							v-model="expertTargetQueries[index]"></textarea>
 					</div>
 
 					<label class="control-label">
@@ -310,6 +311,10 @@ export default Vue.extend({
 		expert: {
 			get(): string|null { return PatternStore.getState().expert.query; },
 			set: PatternStore.actions.expert.query,
+		},
+		expertTargetQueries: {
+			get(): string[] { return PatternStore.getState().expert.targetQueries; },
+			set: PatternStore.actions.expert.targetQueries,
 		},
 		concept: {
 			get(): string|null { return PatternStore.getState().concept; },

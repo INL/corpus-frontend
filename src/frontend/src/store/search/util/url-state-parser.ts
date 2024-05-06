@@ -480,7 +480,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 
 	@memoize
 	private get advancedPattern() {
-		return this._parsedCql ? this.expertPattern : { query: null };
+		return this._parsedCql ? this.expertPattern : { query: null, targetQueries: [] };
 	}
 
 	@memoize
@@ -496,7 +496,8 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	@memoize
 	private get expertPattern() {
 		return {
-			query: this.getString('patt', null, v=>v?v:null)
+			query: this.getString('patt', null, v=>v?v:null),
+			targetQueries: [], // @@@ JN TODO parse
 		};
 	}
 

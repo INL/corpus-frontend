@@ -269,11 +269,13 @@ const actions = {
 				patterns: {
 					advanced: {
 						query: null,
+						targetQueries: [],
 					},
 					concept: null,
 					glosses: null,
 					expert: {
 						query: null,
+						targetQueries: [],
 					},
 					// @@@JN is this okay?
 					parallelVersions: PatternModule.getState().parallelVersions,

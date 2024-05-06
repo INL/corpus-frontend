@@ -334,6 +334,29 @@ export const getPatternString = (annotations: AppTypes.AnnotationValue[], within
 	return query || undefined;
 };
 
+export const getPatternStringFromCql = (sourceCql: string, targetVersions: string[], targetCql: string[]) => {
+	if (targetVersions.length > targetCql.length) {
+		console.error('There must be a CQL query for each selected parallel version!', targetVersions, targetCql);
+		throw new Error(`There must be a CQL query for each selected parallel version!`);
+	}
+
+	if (targetVersions.length === 0) {
+		return sourceCql;
+	}
+
+	const queryParts = [`(${sourceCql.trim()})`];
+	for (let i = 0; i < targetVersions.length; i++) {
+		if (i > 0)
+			queryParts.push(' ; ');
+		queryParts.push(` ==>${targetVersions[i].trim()} (${targetCql[i].trim()})`)
+	}
+
+	const query = queryParts.join('');
+	console.log('query', query);
+
+	return query;
+};
+
 // TODO the clientside url generation story... https://github.com/INL/corpus-frontend/issues/95
 // Ideally use absolute urls everywhere, if the application needs to be proxied, let the proxy server handle it.
 // Have a configurable url in the backend that's made available on the client that we can use here.
@@ -824,8 +847,12 @@ export function getPatternStringSearch(
 				getPatternString(r, state.extended.within, state.parallelVersions?.targets || []) :
 				undefined;
 		}
-		case 'advanced': return state.advanced.query?.trim() || undefined;
-		case 'expert': return state.expert.query?.trim() || undefined;
+		case 'advanced':
+			return state.advanced.query?.trim() || undefined;
+		case 'expert':
+			if (!state.expert.query)
+				return undefined;
+			return getPatternStringFromCql(state.expert.query || '', state.parallelVersions.targets || [], state.expert.targetQueries);
 		case 'concept': return state.concept?.trim() || undefined;
 		case 'glosses': return state.glosses?.trim() || undefined;
 		default: throw new Error('Unimplemented pattern generation.');

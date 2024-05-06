@@ -34,9 +34,11 @@ type ModuleRootState = {
 	},
 	advanced: {
 		query: string|null,
+		targetQueries: string[],
 	},
 	expert: {
 		query: string|null,
+		targetQueries: string[],
 	},
 	concept: string|null, // Jesse
 	glosses: string|null, // Jesse
@@ -61,9 +63,11 @@ const defaults: ModuleRootState = {
 	},
 	advanced: {
 		query: null,
+		targetQueries: [],
 	},
 	expert: {
 		query: null,
+		targetQueries: [],
 	},
 	concept: null,
 	glosses: null,
@@ -138,6 +142,14 @@ const actions = {
 		}, 'parallelVersions_source_version'),
 		parallelTargetVersions: b.commit((state, payload: string[]|null) => {
 			debugLogCat('parallel', `parallelVersions.parallelTargetVersions: Setting to ${payload}`);
+			if (payload && payload.length > 0) {
+				while (state.advanced.targetQueries.length < payload.length) {
+					state.advanced.targetQueries.push('');
+				}
+				while (state.expert.targetQueries.length < payload.length) {
+					state.expert.targetQueries.push('');
+				}
+			}
 			return Vue.set(state.parallelVersions, 'targets', payload);
 		}, 'parallelVersions_targets'),
 		reset: b.commit(state => {
@@ -177,16 +189,24 @@ const actions = {
 		query: b.commit((state, payload: string|null) => {
 			return (state.advanced.query = payload);
 		}, 'advanced_query'),
+		targetQueries: b.commit((state, payload: string[]) => {
+			return (state.advanced.targetQueries = payload);
+		}, 'advanced_target_queries'),
 		reset: b.commit(state => {
 			state.advanced.query = null
+			state.advanced.targetQueries = [];
 		}, 'advanced_reset'),
 	},
 	expert: {
 		query: b.commit((state, payload: string|null) => {
 			return (state.expert.query = payload);
 		}, 'expert_query'),
+		targetQueries: b.commit((state, payload: string[]) => {
+			return (state.expert.targetQueries = payload);
+		}, 'expert_target_queries'),
 		reset: b.commit(state => {
-			state.expert.query = null
+			state.expert.query = null;
+			state.expert.targetQueries = [];
 		}, 'expert_reset'),
 	},
 	concept: b.commit((state, payload: string|null) =>state.concept = payload, 'concept'),
@@ -216,9 +236,11 @@ const actions = {
 
 		actions.advanced.reset();
 		actions.advanced.query(payload.advanced.query);
+		actions.advanced.targetQueries(payload.expert.targetQueries);
 
 		actions.expert.reset();
 		actions.expert.query(payload.expert.query);
+		actions.expert.targetQueries(payload.expert.targetQueries);
 
 		actions.concept(payload.concept);
 		actions.glosses(payload.glosses);

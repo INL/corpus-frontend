@@ -84,8 +84,7 @@ export default Vue.extend({
 	methods: {
 		changeTargetQuery(index: number, event: InputEvent) {
 			const textarea = event.target as HTMLTextAreaElement;
-			Vue.set(this.targetQueries, index, textarea.value);
-			console.log(textarea, textarea.value)
+			PatternStore.actions.expert.changeTargetQuery({index, value: textarea.value});
 		},
 		addTargetVersion(version: string) {
 			if (version != null) // can happen when select is reset to empty option

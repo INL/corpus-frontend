@@ -122,7 +122,7 @@ const privateActions = {
 			ModuleRootState['parallelVersions']>(state.parallelVersions, payload), 'parallelVersions_init'),
 };
 
-const setTargetVersions = (state: ModuleRootState, payload: string[]|null) => {
+const setTargetVersions = (state: ModuleRootState, payload: string[]): string[] => {
 	debugLogCat('parallel', `parallelVersions.parallelTargetVersions: Setting to ${payload}`);
 	if (payload && payload.length > 0) {
 		while (state.advanced.targetQueries.length < payload.length) {
@@ -152,8 +152,18 @@ const actions = {
 		}, 'parallelVersions_addTarget'),
 		removeTarget: b.commit((state, version: string) => {
 			debugLogCat('parallel', `parallelVersions.removeTargetVersion: Removing ${version}`);
-			const payload = state.parallelVersions.targets.filter(v => v !== version);
-			return setTargetVersions(state, payload);
+			const index = state.parallelVersions.targets.indexOf(version);
+			if (index < 0) {
+				console.warn('tried to remove non-existent target version');
+				return;
+			}
+			state.parallelVersions.targets.splice(index, 1);
+			if (state.advanced.targetQueries.length > index)
+				state.advanced.targetQueries.splice(index, 1);
+			if (state.expert.targetQueries.length > index)
+				state.expert.targetQueries.splice(index, 1);
+			// const payload = state.parallelVersions.targets.filter(v => v !== version);
+			// return setTargetVersions(state, payload);
 		}, 'parallelVersions_removeTarget'),
 		targetVersions: b.commit(setTargetVersions, 'parallelVersions_targets'),
 		reset: b.commit(state => {
@@ -205,6 +215,13 @@ const actions = {
 		query: b.commit((state, payload: string|null) => {
 			return (state.expert.query = payload);
 		}, 'expert_query'),
+		changeTargetQuery: b.commit((state, {index, value}: {index: number, value: string}) => {
+			if (index >= state.expert.targetQueries.length) {
+				console.error('Tried to set target query for non-existent index');
+				return;
+			}
+			Vue.set(state.expert.targetQueries, index, value);
+		}, 'expert_change_target_query'),
 		targetQueries: b.commit((state, payload: string[]) => {
 			return (state.expert.targetQueries = payload);
 		}, 'expert_target_queries'),

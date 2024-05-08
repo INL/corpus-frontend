@@ -41,7 +41,7 @@ import '@/global.scss';
 
 // Init the querybuilder with the supported attributes/properties
 function initQueryBuilder() {
-	debugLog('Begin initializing querybuilder');
+	debugLog('Begin initializing querybuilder(s)');
 
 
 	const first = getAnnotationSubset(
@@ -66,7 +66,7 @@ function initQueryBuilder() {
 
 	const withinOptions = UIStore.getState().search.shared.within.elements;
 	// Initialize configuration
-	const instance = new QueryBuilder($('#querybuilder'), {
+	const instance = new QueryBuilder($('.querybuilder'), {
 		queryBuilder: {
 			view: {
 				withinSelectOptions: withinOptions

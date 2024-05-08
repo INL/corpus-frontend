@@ -113,7 +113,8 @@
 
 			</div>
 			<div v-if="advancedEnabled" :class="['tab-pane', {'active': activePattern==='advanced'}]" id="advanced">
-				<div id="querybuilder" ref="querybuilder"></div>
+				<!-- <SearchAdvanced	/> -->
+				<div id="querybuilder" class="querybuilder" ref="querybuilder"></div>
 				<button type="button" class="btn btn-default btn-sm" @click="copyAdvancedQuery">{{$t('search.advanced.copyAdvancedQuery')}}</button>
 			</div>
 			<div v-if="conceptEnabled" :class="['tab-pane', {'active': activePattern==='concept'}]" id="concept">
@@ -129,10 +130,10 @@
 				<button type="button" class="btn btn-default btn-sm" @click="copyGlossQuery">{{$t('search.glosses.copyGlossQuery')}}</button>
 			</div>
 			<div :class="['tab-pane', {'active': activePattern==='expert'}]" id="expert">
-				<ExpertSearch />
+				<SearchExpert />
 
 				<!-- Copy to builder, import, gap filling buttons -->
-				<template v-if="!isParallelCorpus"><!-- disable in parallel for now, things are complex enough -->
+				<template v-if="!isParallelCorpus || true"><!-- disable in parallel for now, things are complex enough -->
 					<button v-if="advancedEnabled" type="button" class="btn btn-sm btn-default" name="parseQuery" id="parseQuery" :title="$t('search.expert.parseQueryTitle').toString()" @click="parseQuery">{{$t('search.expert.parseQuery')}}</button>
 					<label class="btn btn-sm btn-default file-input-button" for="importQuery">
 						{{$t('search.expert.importQuery')}}
@@ -174,7 +175,8 @@ import * as GapStore from '@/store/search/form/gap';
 import * as HistoryStore from '@/store/search/history';
 
 import Annotation from '@/pages/search/form/Annotation.vue';
-import ExpertSearch from '@/pages/search/form/ExpertSearch.vue';
+//import SearchAdvanced from '@/pages/search/form/SearchAdvanced.vue';
+import SearchExpert from '@/pages/search/form/SearchExpert.vue';
 import ConceptSearch from '@/pages/search/form/concept/ConceptSearch.vue';
 import GlossSearch from '@/pages/search/form/concept/GlossSearch.vue';
 import ParallelSourceAndTargets from '@/pages/search/form/ParallelSourceAndTargets.vue';
@@ -197,7 +199,8 @@ export default Vue.extend({
 		SelectPicker,
 		ParallelSourceAndTargets,
 		Annotation,
-		ExpertSearch,
+		//SearchAdvanced,
+		SearchExpert,
 		ConceptSearch,
 		GlossSearch
 	},
@@ -298,9 +301,11 @@ export default Vue.extend({
 			return name?.replace(/[^\w]/g, '_') + '_annotations';
 		},
 		parseQuery() {
+			const expertQuery = PatternStore.getState().expert.query;
+
 			// TODO dedicated component - port builder?
 			const builder: QueryBuilder = $(this.$refs.querybuilder as HTMLElement).data('builder');
-			if (builder && builder.parse(PatternStore.getState().expert.query)) {
+			if (builder && builder.parse(expertQuery)) {
 				InterfaceStore.actions.patternMode('advanced');
 				this.parseQueryError = null;
 			} else {
@@ -423,7 +428,7 @@ export default Vue.extend({
 
 <style lang="scss">
 
-#querybuilder {
+.querybuilder {
 	background-color: rgba(255, 255, 255, 0.7);
 	border-radius: 4px;
 	box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);

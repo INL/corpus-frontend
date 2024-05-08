@@ -6,7 +6,7 @@
 		</h3>
 		<template v-if="!isParallelCorpus">
 			<!-- Regular case -->
-			<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model.lazy="mainQuery"></textarea>
+			<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model="mainQuery"></textarea>
 		</template>
 		<div v-else class="parallel">
 			<!-- Parallel corpus -->
@@ -14,7 +14,7 @@
 				<SelectPicker id="sourceVersion" :options="parallelSourceVersionOptions"
 					v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
 			</label>
-			<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model.lazy="mainQuery"></textarea>
+			<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model="mainQuery"></textarea>
 
 			<div v-for="(version, index) in parallelTargetVersions" :key="version">
 				<label class="control-label">{{$t('search.parallel.targetVersion')}}
@@ -23,7 +23,8 @@
 					</span>
 				</label>
 				<textarea :id="`querybox-${version}`" class="form-control" rows="7"
-					v-model="targetQueries[index]"></textarea>
+					:value="targetQueries[index]"
+					@input="changeTargetQuery(index, $event)"></textarea>
 			</div>
 
 			<label class="control-label">
@@ -57,7 +58,10 @@ export default Vue.extend({
 	computed: {
 		isParallelCorpus: CorpusStore.get.isParallelCorpus,
 		parallelSourceVersionOptions: PatternStore.get.parallelSourceVersionOptions,
-		parallelTargetVersionOptions: PatternStore.get.parallelTargetVersionOptions,
+		parallelTargetVersionOptions() {
+			return PatternStore.get.parallelTargetVersionOptions().filter(v =>
+				!this.parallelTargetVersions.includes(v.value));
+		},
 		parallelSourceVersion: {
 			get() { return PatternStore.get.parallelVersions().source; },
 			set: PatternStore.actions.parallelVersions.sourceVersion
@@ -78,6 +82,11 @@ export default Vue.extend({
 
 	},
 	methods: {
+		changeTargetQuery(index: number, event: InputEvent) {
+			const textarea = event.target as HTMLTextAreaElement;
+			Vue.set(this.targetQueries, index, textarea.value);
+			console.log(textarea, textarea.value)
+		},
 		addTargetVersion(version: string) {
 			if (version != null) // can happen when select is reset to empty option
 				PatternStore.actions.parallelVersions.addTarget(version);

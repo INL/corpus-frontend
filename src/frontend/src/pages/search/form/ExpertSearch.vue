@@ -6,7 +6,7 @@
 		</h3>
 		<template v-if="!isParallelCorpus">
 			<!-- Regular case -->
-			<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model.lazy="expert"></textarea>
+			<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model.lazy="mainQuery"></textarea>
 		</template>
 		<div v-else class="parallel">
 			<!-- Parallel corpus -->
@@ -14,7 +14,7 @@
 				<SelectPicker id="sourceVersion" :options="parallelSourceVersionOptions"
 					v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
 			</label>
-			<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model.lazy="expert"></textarea>
+			<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model.lazy="mainQuery"></textarea>
 
 			<div v-for="(version, index) in parallelTargetVersions" :key="version">
 				<label class="control-label">{{$t('search.parallel.targetVersion')}}
@@ -23,7 +23,7 @@
 					</span>
 				</label>
 				<textarea :id="`querybox-${version}`" class="form-control" rows="7"
-					v-model="expertTargetQueries[index]"></textarea>
+					v-model="targetQueries[index]"></textarea>
 			</div>
 
 			<label class="control-label">
@@ -52,64 +52,39 @@ export default Vue.extend({
 		SelectPicker,
 		MultiValuePicker
 	},
-	props: {
-		isParallelCorpus: {
-			type: Boolean,
-			default: false
-		}
-	},
 	data: () => ({
 	}),
 	computed: {
-		// Is this a parallel corpus?
 		isParallelCorpus: CorpusStore.get.isParallelCorpus,
-
-		// What parallel versions should be shown as source options?
-		// (all except already chosen target ones)
-		parallelSourceVersionOptions: function (): Option[] {
-			return PatternStore.get.parallelSourceVersionOptions();
-		},
-		// What parallel versions should be shown as target options?
-		// (all except already chosen source and target ones)
-		parallelTargetVersionOptions: function (): Option[] {
-			return PatternStore.get.parallelTargetVersionOptions();
-		},
+		parallelSourceVersionOptions: PatternStore.get.parallelSourceVersionOptions,
+		parallelTargetVersionOptions: PatternStore.get.parallelTargetVersionOptions,
 		parallelSourceVersion: {
-			get(): string|null { return PatternStore.get.parallelVersions().source; },
-			set: PatternStore.actions.parallelVersions.parallelSourceVersion
+			get() { return PatternStore.get.parallelVersions().source; },
+			set: PatternStore.actions.parallelVersions.sourceVersion
 		},
 		parallelTargetVersions: {
-			get(): string[]|null { return PatternStore.get.parallelVersions().targets; },
-			set: PatternStore.actions.parallelVersions.parallelTargetVersions
+			get() { return PatternStore.get.parallelVersions().targets; },
+			set: PatternStore.actions.parallelVersions.targetVersions
 		},
 
-		expert: {
-			get(): string|null { return PatternStore.getState().expert.query; },
+		mainQuery: {
+			get() { return PatternStore.getState().expert.query || undefined; },
 			set: PatternStore.actions.expert.query,
 		},
-		expertTargetQueries: {
-			get(): string[] { return PatternStore.getState().expert.targetQueries; },
+		targetQueries: {
+			get() { return PatternStore.getState().expert.targetQueries; },
 			set: PatternStore.actions.expert.targetQueries,
 		},
 
 	},
 	methods: {
 		addTargetVersion(version: string) {
-			if (version == null) {
-				console.warn('tried to add null target version');
-				return;
-			}
-			const targets = this.parallelTargetVersions?.concat([version]) || [version];
-			PatternStore.actions.parallelVersions.parallelTargetVersions(targets);
+			if (version != null) // can happen when select is reset to empty option
+				PatternStore.actions.parallelVersions.addTarget(version);
 		},
-		removeTargetVersion(version: string) {
-			const targets = this.parallelTargetVersions?.filter(v => v !== version) || [];
-			PatternStore.actions.parallelVersions.parallelTargetVersions(targets);
-		},
-		versionDisplayName(version: string) {
-			const option = PatternStore.get.parallelVersionOptions().find(o => o.value === version);
-			return option?.label || version;
-		},
+		removeTargetVersion: PatternStore.actions.parallelVersions.removeTarget,
+		versionDisplayName: (version: string): string =>
+			CorpusStore.get.parallelVersionOptions().find(v => v.value === version)?.label || version,
 	}
 });
 </script>

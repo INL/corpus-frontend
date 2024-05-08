@@ -223,11 +223,11 @@ export default Vue.extend({
 		},
 		parallelSourceVersion: {
 			get(): string|null { return PatternStore.get.parallelVersions().source; },
-			set: PatternStore.actions.parallelVersions.parallelSourceVersion
+			set: PatternStore.actions.parallelVersions.sourceVersion
 		},
 		parallelTargetVersions: {
 			get(): string[]|null { return PatternStore.get.parallelVersions().targets; },
-			set: PatternStore.actions.parallelVersions.parallelTargetVersions
+			set: PatternStore.actions.parallelVersions.targetVersions
 		},
 
 		activePattern: {

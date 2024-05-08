@@ -3,27 +3,27 @@
 	<div v-if="mode === 'simple'">
 		<label class="control-label">{{ $t('search.parallel.inSourceVersion') }}</label>
 		<div>
-			<SelectPicker :options="parallelSourceVersionOptions"
-					v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
+			<SelectPicker :options="sourceOptions"
+					v-model="sourceVersion" data-menu-width="grow" hideEmpty/>
 		</div>
 
 		<label class="control-label">{{ $t('search.parallel.andCompareWithTargetVersions') }}</label>
 		<div>
-			<MultiValuePicker :options="parallelTargetVersionOptions" v-model="parallelTargetVersions" />
+			<MultiValuePicker :options="targetOptions" v-model="targetVersions" />
 		</div>
 	</div>
 	<div v-else>
 		<div class="form-group">
 			<label class="col-xs-12 col-md-3">{{ $t('search.parallel.inSourceVersion') }}</label>
 			<div class="col-xs-12 col-md-9">
-				<SelectPicker :options="parallelSourceVersionOptions"
-						v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
+				<SelectPicker :options="sourceOptions"
+						v-model="sourceVersion" data-menu-width="grow" hideEmpty/>
 			</div>
 		</div>
 		<div class="form-group">
 			<label class="col-xs-12 col-md-3">{{ $t('search.parallel.andCompareWithTargetVersions') }}</label>
 			<div class="col-xs-12 col-md-9">
-				<MultiValuePicker :options="parallelTargetVersionOptions" v-model="parallelTargetVersions" />
+				<MultiValuePicker :options="targetOptions" v-model="targetVersions" />
 			</div>
 		</div>
 	</div>
@@ -54,21 +54,21 @@ export default Vue.extend({
 	computed: {
 		// What parallel versions should be shown as source options?
 		// (all except already chosen target ones)
-		parallelSourceVersionOptions: function (): Option[] {
+		sourceOptions: function (): Option[] {
 			return PatternStore.get.parallelSourceVersionOptions();
 		},
 		// What parallel versions should be shown as target options?
 		// (all except already chosen source and target ones)
-		parallelTargetVersionOptions: function (): Option[] {
+		targetOptions: function (): Option[] {
 			return PatternStore.get.parallelTargetVersionOptions();
 		},
-		parallelSourceVersion: {
+		sourceVersion: {
 			get(): string|null { return PatternStore.get.parallelVersions().source; },
-			set: PatternStore.actions.parallelVersions.parallelSourceVersion
+			set: PatternStore.actions.parallelVersions.sourceVersion
 		},
-		parallelTargetVersions: {
+		targetVersions: {
 			get(): string[]|null { return PatternStore.get.parallelVersions().targets; },
-			set: PatternStore.actions.parallelVersions.parallelTargetVersions
+			set: PatternStore.actions.parallelVersions.targetVersions
 		},
 
 	},

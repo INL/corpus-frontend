@@ -78,14 +78,6 @@ const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, cloneD
 
 const getState = b.state();
 
-// What parallel versions are there (e.g. "en", "nl", etc.)
-function parallelVersionOptions(state: ModuleRootState): { value: string, label: string }[] {
-	return CorpusStore.get.parallelVersions().map((value) => ({
-		value: value.name,
-		label: value.displayName || value.name
-	}));
-}
-
 const get = {
 	/** Last submitted properties, these are already filtered to remove empty values, etc */
 	activeAnnotations: b.read(state => Object.values(state.extended.annotationValues)/*.flatMap(f => Object.values(f))*/.filter(p => !!p.value), 'activeAnnotations'),
@@ -97,29 +89,25 @@ const get = {
 
 	simple: b.read(state => state.simple, 'simple'),
 
-	// Selected parallel source and target versions
+	/** Selected parallel source and target versions */
 	parallelVersions: b.read(state => state.parallelVersions, 'parallelVersions'),
 
-	// What parallel version options are there?
-	// (all except already chosen target ones)
-	parallelVersionOptions: b.read((state: ModuleRootState): { value: string, label: string }[] => {
-		return parallelVersionOptions(state);
-	}, 'parallelVersionOptions'),
-
-	// What parallel versions should be shown as source options?
-	// (all except already chosen target ones)
+	/** What parallel versions should be shown as source options?
+	 *  (all except already chosen target ones)
+	 */
 	parallelSourceVersionOptions: b.read((state: ModuleRootState): { value: string, label: string }[] => {
 		const targets = state.parallelVersions.targets;
-		return parallelVersionOptions(state).filter(value => !targets.includes(value.value));
+		return CorpusStore.get.parallelVersionOptions().filter(value => !targets.includes(value.value));
 	}, 'parallelSourceVersionOptions'),
 
-	// What parallel versions should be shown as target options?
-	// (all except already chosen source one; the widget will also filter out already chosen target ones, so we
-    //  shouldn't do that here)
+	/** What parallel versions should be shown as target options?
+	 *  (all except already chosen source one; the widget will also filter out already chosen target ones, so we
+	 *  shouldn't do that here)
+	 */
 	parallelTargetVersionOptions: b.read((state: ModuleRootState): { value: string, label: string }[] => {
 		const src = state.parallelVersions.source || '';
 		const targets = state.parallelVersions.targets || [];
-		return parallelVersionOptions(state).filter(value => value.value !== src);
+		return CorpusStore.get.parallelVersionOptions().filter(value => value.value !== src);
 	}, 'parallelTargetVersionOptions'),
 };
 
@@ -134,24 +122,40 @@ const privateActions = {
 			ModuleRootState['parallelVersions']>(state.parallelVersions, payload), 'parallelVersions_init'),
 };
 
+const setTargetVersions = (state: ModuleRootState, payload: string[]|null) => {
+	debugLogCat('parallel', `parallelVersions.parallelTargetVersions: Setting to ${payload}`);
+	if (payload && payload.length > 0) {
+		while (state.advanced.targetQueries.length < payload.length) {
+			state.advanced.targetQueries.push('');
+		}
+		while (state.expert.targetQueries.length < payload.length) {
+			state.expert.targetQueries.push('');
+		}
+	}
+	return Vue.set(state.parallelVersions, 'targets', payload);
+};
+
 const actions = {
 	parallelVersions: {
-		parallelSourceVersion: b.commit((state, payload: string|null) => {
+		sourceVersion: b.commit((state, payload: string|null) => {
 			debugLogCat('parallel', `parallelVersions.source: Setting to ${payload}`);
 			return (state.parallelVersions.source = payload);
 		}, 'parallelVersions_source_version'),
-		parallelTargetVersions: b.commit((state, payload: string[]|null) => {
-			debugLogCat('parallel', `parallelVersions.parallelTargetVersions: Setting to ${payload}`);
-			if (payload && payload.length > 0) {
-				while (state.advanced.targetQueries.length < payload.length) {
-					state.advanced.targetQueries.push('');
-				}
-				while (state.expert.targetQueries.length < payload.length) {
-					state.expert.targetQueries.push('');
-				}
+		addTarget: b.commit((state, version: string) => {
+			debugLogCat('parallel', `parallelVersions.addTargetVersion: Adding ${version}`);
+			if (!version) {
+				console.warn('tried to add null target version');
+				return;
 			}
-			return Vue.set(state.parallelVersions, 'targets', payload);
-		}, 'parallelVersions_targets'),
+			const payload = state.parallelVersions.targets.concat([version]);
+			return setTargetVersions(state, payload);
+		}, 'parallelVersions_addTarget'),
+		removeTarget: b.commit((state, version: string) => {
+			debugLogCat('parallel', `parallelVersions.removeTargetVersion: Removing ${version}`);
+			const payload = state.parallelVersions.targets.filter(v => v !== version);
+			return setTargetVersions(state, payload);
+		}, 'parallelVersions_removeTarget'),
+		targetVersions: b.commit(setTargetVersions, 'parallelVersions_targets'),
 		reset: b.commit(state => {
 			const defaultSourceVersion = CorpusStore.get.parallelVersions()[0]?.name;
 			debugLogCat('parallel', `parallelVersions.reset: Selecting default source version ${defaultSourceVersion}`);
@@ -223,8 +227,8 @@ const actions = {
 
 	replace: b.commit((state, payload: ModuleRootState) => {
 		actions.parallelVersions.reset();
-		actions.parallelVersions.parallelSourceVersion(payload.parallelVersions.source);
-		actions.parallelVersions.parallelTargetVersions(payload.parallelVersions.targets);
+		actions.parallelVersions.sourceVersion(payload.parallelVersions.source);
+		actions.parallelVersions.targetVersions(payload.parallelVersions.targets);
 
 		actions.simple.reset();
 		actions.simple.annotation(payload.simple.annotationValue);

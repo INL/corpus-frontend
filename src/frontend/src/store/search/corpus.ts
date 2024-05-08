@@ -67,9 +67,17 @@ const get = {
 			}));
 	}, 'parallelVersions'),
 
+	/** Return the parallel versions as options with a label (i.e. displayName) and a value. */
+	parallelVersionOptions: b.read((state): { value: string, label: string }[] => {
+		return get.parallelVersions().map((value) => ({
+			value: value.name,
+			label: value.displayName || value.name
+		}));
+	}, 'parallelVersionOptions'),
+
 	/** All annotations, without duplicates and in no specific order */
 	allAnnotations: b.read((state): NormalizedAnnotation[] => Object.values(state.corpus?.annotatedFields[state.corpus.mainAnnotatedField].annotations ?? {}), 'allAnnotations'),
-	allAnnotationsMap: b.read((state): MapOf<NormalizedAnnotation> => mapReduce(get.allAnnotations(), 'id'), 'allAnnotationsMap'),
+	allAnnotationsMap: b.read((): MapOf<NormalizedAnnotation> => mapReduce(get.allAnnotations(), 'id'), 'allAnnotationsMap'),
 
 	allMetadataFields: b.read((state): NormalizedMetadataField[] => Object.values(state.corpus?.metadataFields || {}), 'allMetadataFields'),
 	allMetadataFieldsMap: b.read((state): MapOf<NormalizedMetadataField> => state.corpus?.metadataFields ?? {}, 'allMetadataFieldsMap'),

@@ -449,6 +449,26 @@ export default Vue.extend({
 	}
 }
 
+.parallel .qb-par-wrap {
+
+	background-color: rgba(255, 255, 255, 0.7);
+	border-radius: 4px;
+	box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+	border: 1px solid #ccc;
+	margin-bottom: 10px;
+	padding: 20px 20px 0px 20px;
+
+	label { margin: 0 0 20px 0; }
+
+	.querybuilder {
+		border: 0;
+		box-shadow: none;
+		margin-bottom: 0;
+		&.bl-querybuilder-root { padding: 0; }
+	}
+
+}
+
 #simple > .form-group {
 	margin: auto;
 	max-width: 1170px;

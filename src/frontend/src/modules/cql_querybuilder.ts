@@ -92,7 +92,7 @@ const templates = {
 			withinSelect: `
 				{{#withinSelectOptions.0}}
 				<label>Within:</label>
-				<div class="btn-group bl-within-select clearfix" data-toggle="buttons" id="within_select" style="display:block;">
+				<div class="btn-group bl-within-select clearfix" data-toggle="buttons" style="display:block;">
 				{{/withinSelectOptions.0}}
 					{{#withinSelectOptions}}
 						<label class="btn btn-default">
@@ -447,7 +447,7 @@ export class QueryBuilder {
 		this.element = $rootElement;
 		this.createTokenButton = $rootElement.find('.bl-token-create');
 		this.modalEditor = this.element.find('.bl-modal-editor');
-		this.withinSelect = this.element.find('#within_select');
+		this.withinSelect = this.element.find('.bl-within-select');
 
 		this.createTokenButton.click();
 	}
@@ -478,7 +478,7 @@ export class QueryBuilder {
 		});
 
 		$element.find('.bl-token-create').on('click', this.createToken.bind(this));
-		$element.find('#within_select')
+		$element.find('.bl-within-select')
 			.on('change', function() { $element.trigger('cql:modified'); })
 			.find('input').first().attr('checked', 'checked')
 			.parent().addClass('active');

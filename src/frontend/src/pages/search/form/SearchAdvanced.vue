@@ -2,23 +2,26 @@
 	<div>
 		<template v-if="!isParallelCorpus">
 			<!-- Regular (non-parallel) corpus -->
-			<div id="querybuilder" class="querybuilder"></div>
+			<div class="querybuilder"></div>
 		</template>
 		<div v-else class="parallel">
 			<!-- Parallel corpus -->
-			<label class="control-label" for="sourceVersion">{{$t('search.parallel.queryForSourceVersion')}}
-				<SelectPicker id="sourceVersion" :options="parallelSourceVersionOptions"
-					v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
-			</label>
-			<div id="querybuilder" class="querybuilder"></div>
-
-			<div v-for="(version, index) in parallelTargetVersions" :key="version">
-				<label class="control-label">{{$t('search.parallel.queryForTargetVersion')}}
-					<span @click="removeTargetVersion(version)" class="targetVersion" :title="$t('widgets.clickToRemove').toString()" href="#">
-						{{versionDisplayName(version)}}
-					</span>
+			<div class="qb-par-wrap">
+				<label class="control-label" for="sourceVersion">{{$t('search.parallel.queryForSourceVersion')}}
+					<SelectPicker id="sourceVersion" :options="parallelSourceVersionOptions"
+						v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
 				</label>
-				<div :id="`querybuilder-target-${version}`" class="querybuilder"></div>
+				<div class="querybuilder"></div>
+			</div>
+			<div v-for="(version, index) in parallelTargetVersions" :key="version">
+				<div class="qb-par-wrap">
+					<label class="control-label">{{$t('search.parallel.queryForTargetVersion')}}
+						<span @click="removeTargetVersion(version)" class="targetVersion" :title="$t('widgets.clickToRemove').toString()" href="#">
+							{{versionDisplayName(version)}}
+						</span>
+					</label>
+					<div class="querybuilder"></div>
+				</div>
 			</div>
 
 			<label class="control-label">
@@ -103,11 +106,11 @@ h3 .help {
 	opacity: 0.5;
 }
 
-#querybox {
-	width: 100%;
-	resize: none;
-	margin-bottom: 10px;
-}
+// .querybox {
+// 	width: 100%;
+// 	resize: none;
+// 	margin-bottom: 10px;
+// }
 
 .parallel {
 	margin: 15px 0;
@@ -115,7 +118,7 @@ h3 .help {
 	label {
 		margin-top: 10px;
 	}
-	textarea, #querybox {
+	textarea/*, .querybox*/ {
 		width: 100%;
 		resize: none;
 		margin: 0;

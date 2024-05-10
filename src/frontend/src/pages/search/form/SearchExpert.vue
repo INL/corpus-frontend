@@ -6,7 +6,7 @@
 		</h3>
 		<template v-if="!isParallelCorpus">
 			<!-- Regular (non-parallel) corpus -->
-			<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model="mainQuery"></textarea>
+			<textarea class="form-control querybox" name="querybox" rows="7" v-model="mainQuery"></textarea>
 		</template>
 		<div v-else class="parallel">
 			<!-- Parallel corpus -->
@@ -14,7 +14,7 @@
 				<SelectPicker id="sourceVersion" :options="parallelSourceVersionOptions"
 					v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
 			</label>
-			<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model="mainQuery"></textarea>
+			<textarea class="form-control querybox" name="querybox" rows="7" v-model="mainQuery"></textarea>
 
 			<div v-for="(version, index) in parallelTargetVersions" :key="version">
 				<label class="control-label">{{$t('search.parallel.queryForTargetVersion')}}
@@ -22,7 +22,7 @@
 						{{versionDisplayName(version)}}
 					</span>
 				</label>
-				<textarea :id="`querybox-${version}`" class="form-control" rows="7"
+				<textarea class="form-control querybox" rows="7"
 					:value="targetQueries[index]"
 					@input="changeTargetQuery(index, $event)"></textarea>
 			</div>
@@ -109,7 +109,7 @@ h3 .help {
 	opacity: 0.5;
 }
 
-#querybox {
+.querybox {
 	width: 100%;
 	resize: none;
 	margin-bottom: 10px;
@@ -121,7 +121,7 @@ h3 .help {
 	label {
 		margin-top: 10px;
 	}
-	textarea, #querybox {
+	textarea, .querybox {
 		width: 100%;
 		resize: none;
 		margin: 0;

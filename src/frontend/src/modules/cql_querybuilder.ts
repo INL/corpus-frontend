@@ -852,6 +852,8 @@ export class AttributeGroup {
 
 		this.element.children('.bl-token-attribute, .bl-token-attribute-group').each(function(index, element) {
 			const instance = $(element).data('attributeGroup') || $(element).data('attribute');
+			if (!instance)
+				console.error('AttributeGroup.getCql: element has no data-attributeGroup or data-attribute', element);
 			const elemCql = instance.getCql();
 
 			if (elemCql && elemCql !== '') { // Do not push null, undefined or empty strings

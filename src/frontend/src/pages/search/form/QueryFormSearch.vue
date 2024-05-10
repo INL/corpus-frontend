@@ -113,8 +113,8 @@
 
 			</div>
 			<div v-if="advancedEnabled" :class="['tab-pane', {'active': activePattern==='advanced'}]" id="advanced">
-				<!-- <SearchAdvanced	/> -->
-				<div id="querybuilder" class="querybuilder" ref="querybuilder"></div>
+				<SearchAdvanced	/>
+				<!-- <div id="querybuilder" class="querybuilder" ref="querybuilder"></div> -->
 				<button type="button" class="btn btn-default btn-sm" @click="copyAdvancedQuery">{{$t('search.advanced.copyAdvancedQuery')}}</button>
 			</div>
 			<div v-if="conceptEnabled" :class="['tab-pane', {'active': activePattern==='concept'}]" id="concept">
@@ -175,7 +175,7 @@ import * as GapStore from '@/store/search/form/gap';
 import * as HistoryStore from '@/store/search/history';
 
 import Annotation from '@/pages/search/form/Annotation.vue';
-//import SearchAdvanced from '@/pages/search/form/SearchAdvanced.vue';
+import SearchAdvanced from '@/pages/search/form/SearchAdvanced.vue';
 import SearchExpert from '@/pages/search/form/SearchExpert.vue';
 import ConceptSearch from '@/pages/search/form/concept/ConceptSearch.vue';
 import GlossSearch from '@/pages/search/form/concept/GlossSearch.vue';
@@ -199,7 +199,7 @@ export default Vue.extend({
 		SelectPicker,
 		ParallelSourceAndTargets,
 		Annotation,
-		//SearchAdvanced,
+		SearchAdvanced,
 		SearchExpert,
 		ConceptSearch,
 		GlossSearch
@@ -302,6 +302,8 @@ export default Vue.extend({
 		},
 		parseQuery() {
 			const expertQuery = PatternStore.getState().expert.query;
+
+			// @@@ TODO JN FIX THIS (probably move to SearchAdvanced)
 
 			// TODO dedicated component - port builder?
 			const builder: QueryBuilder = $(this.$refs.querybuilder as HTMLElement).data('builder');
@@ -434,6 +436,11 @@ export default Vue.extend({
 	box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
 	border: 1px solid #ccc;
 	margin-bottom: 10px;
+
+	.close {
+		opacity: 0.4; // make close buttons a little more visible
+		&:hover, &:focus { opacity: 0.6; }
+	}
 }
 
 #simple > .form-group {

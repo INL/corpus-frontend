@@ -203,6 +203,13 @@ const actions = {
 		query: b.commit((state, payload: string|null) => {
 			return (state.advanced.query = payload);
 		}, 'advanced_query'),
+		changeTargetQuery: b.commit((state, {index, value}: {index: number, value: string}) => {
+			if (index >= state.advanced.targetQueries.length) {
+				console.error('Tried to set target query for non-existent index');
+				return;
+			}
+			Vue.set(state.advanced.targetQueries, index, value);
+		}, 'advanced_change_target_query'),
 		targetQueries: b.commit((state, payload: string[]) => {
 			return (state.advanced.targetQueries = payload);
 		}, 'advanced_target_queries'),

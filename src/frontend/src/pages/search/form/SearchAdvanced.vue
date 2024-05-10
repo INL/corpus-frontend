@@ -1,18 +1,39 @@
 <template>
 	<div>TEST
-		<div id="querybuilder-test" class="querybuilder"></div>
+		<div id="querybuilder" class="querybuilder"></div>
+
+		<div class="parallel" v-if="isParallelCorpus">
+			<div v-for="(version, index) in parallelTargetVersions" :key="version">
+				<label class="control-label">{{$t('search.parallel.targetVersion')}}
+					<span @click="removeTargetVersion(version)" class="targetVersion" :title="$t('widgets.clickToRemove').toString()" href="#">
+						{{versionDisplayName(version)}}
+					</span>
+				</label>
+				<div :id="`querybuilder-target-${version}`" class="querybuilder"></div>
+			</div>
+
+			<label class="control-label">
+				{{ parallelTargetVersions && parallelTargetVersions.length > 0 ?
+				$t('search.parallel.addTargetVersion') :
+				$t('search.parallel.chooseTargetVersion')
+				}}</label>
+			<div>
+				<SelectPicker :options="parallelTargetVersionOptions" @input="addTargetVersion($event)" />
+			</div>
+		</div>
+
 	</div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
 
-import { QueryBuilder } from '@/modules/cql_querybuilder';
 import * as CorpusStore from '@/store/search/corpus';
 import * as PatternStore from '@/store/search/form/patterns';
 
 import SelectPicker, { Option } from '@/components/SelectPicker.vue';
 import MultiValuePicker from '@/components/MultiValuePicker.vue';
+import { initQueryBuilders } from '@/initQueryBuilders';
 
 export default Vue.extend({
 	components: {
@@ -48,6 +69,11 @@ export default Vue.extend({
 		addTargetVersion(version: string) {
 			if (version != null) // can happen when select is reset to empty option
 				PatternStore.actions.parallelVersions.addTarget(version);
+
+			// init
+			setTimeout(() => {
+				initQueryBuilders();
+			}, 100);
 		},
 		removeTargetVersion: PatternStore.actions.parallelVersions.removeTarget,
 		versionDisplayName: (version: string): string =>

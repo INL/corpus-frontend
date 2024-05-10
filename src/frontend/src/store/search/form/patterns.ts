@@ -257,7 +257,7 @@ const actions = {
 
 		actions.advanced.reset();
 		actions.advanced.query(payload.advanced.query);
-		actions.advanced.targetQueries(payload.expert.targetQueries);
+		actions.advanced.targetQueries(payload.advanced.targetQueries);
 
 		actions.expert.reset();
 		actions.expert.query(payload.expert.query);

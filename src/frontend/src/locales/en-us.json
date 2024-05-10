@@ -39,8 +39,8 @@
 		"parallel": {
 			"inSourceVersion": "in source version",
 			"andCompareWithTargetVersions": "and compare with target version(s)",
-			"sourceVersion": "Source version",
-			"targetVersion": "Target version",
+			"queryForSourceVersion": "Query for source version",
+			"queryForTargetVersion": "Query for target version",
 			"chooseTargetVersion": "Choose a target version",
 			"addTargetVersion": "Add another target version"
 		}

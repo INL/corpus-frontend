@@ -356,6 +356,12 @@ export default Vue.extend({
 			const q = PatternStore.getState().advanced.query;
 			console.log('copying advanced query', q);
 			PatternStore.actions.expert.query(q);
+			for (let i = 0; i < PatternStore.getState().advanced.targetQueries.length; i++) {
+				PatternStore.actions.expert.changeTargetQuery({
+					index: i,
+					value: PatternStore.getState().advanced.targetQueries[i]
+				});
+			}
 			InterfaceStore.actions.patternMode('expert');
 		},
 		copyConceptQuery() {

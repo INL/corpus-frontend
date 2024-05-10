@@ -5,19 +5,19 @@
 				:title="$t('widgets.learnMore').toString()">🛈</a>
 		</h3>
 		<template v-if="!isParallelCorpus">
-			<!-- Regular case -->
+			<!-- Regular (non-parallel) corpus -->
 			<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model="mainQuery"></textarea>
 		</template>
 		<div v-else class="parallel">
 			<!-- Parallel corpus -->
-			<label class="control-label" for="sourceVersion">{{$t('search.parallel.sourceVersion')}}
+			<label class="control-label" for="sourceVersion">{{$t('search.parallel.queryForSourceVersion')}}
 				<SelectPicker id="sourceVersion" :options="parallelSourceVersionOptions"
 					v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
 			</label>
 			<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model="mainQuery"></textarea>
 
 			<div v-for="(version, index) in parallelTargetVersions" :key="version">
-				<label class="control-label">{{$t('search.parallel.targetVersion')}}
+				<label class="control-label">{{$t('search.parallel.queryForTargetVersion')}}
 					<span @click="removeTargetVersion(version)" class="targetVersion" :title="$t('widgets.clickToRemove').toString()" href="#">
 						{{versionDisplayName(version)}}
 					</span>

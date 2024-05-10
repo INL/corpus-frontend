@@ -1,10 +1,19 @@
 <template>
-	<div>TEST
-		<div id="querybuilder" class="querybuilder"></div>
+	<div>
+		<template v-if="!isParallelCorpus">
+			<!-- Regular (non-parallel) corpus -->
+			<div id="querybuilder" class="querybuilder"></div>
+		</template>
+		<div v-else class="parallel">
+			<!-- Parallel corpus -->
+			<label class="control-label" for="sourceVersion">{{$t('search.parallel.queryForSourceVersion')}}
+				<SelectPicker id="sourceVersion" :options="parallelSourceVersionOptions"
+					v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
+			</label>
+			<div id="querybuilder" class="querybuilder"></div>
 
-		<div class="parallel" v-if="isParallelCorpus">
 			<div v-for="(version, index) in parallelTargetVersions" :key="version">
-				<label class="control-label">{{$t('search.parallel.targetVersion')}}
+				<label class="control-label">{{$t('search.parallel.queryForTargetVersion')}}
 					<span @click="removeTargetVersion(version)" class="targetVersion" :title="$t('widgets.clickToRemove').toString()" href="#">
 						{{versionDisplayName(version)}}
 					</span>

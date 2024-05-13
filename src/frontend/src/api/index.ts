@@ -89,6 +89,7 @@ export const blacklabPaths = {
 	docs: (indexId: string) =>                      `${indexId}/docs/`,
 	docsCsv: (indexId: string) =>                   `${indexId}/docs-csv/`,
 	snippet: (indexId: string, docId: string) =>    `${indexId}/docs/${docId}/snippet/`,
+	parsePattern: (indexId: string) =>              `${indexId}/parse-pattern/`,
 
 	// Is used outside the axios endpoint we created above, so prefix with the correct location
 	autocompleteAnnotation: (
@@ -217,6 +218,18 @@ export const blacklab = {
 
 	getRelations: (indexId: string, requestParameters?: AxiosRequestConfig) => endpoints.blacklab
 		.get<BLTypes.BLRelationInfo>(blacklabPaths.relations(indexId), undefined, requestParameters),
+
+	getParsePattern: (indexId: string, pattern: string, requestParameters?: AxiosRequestConfig) => {
+		let request: Promise<{ parsed: { bcql: string, json: any } }>;
+		if (!indexId) {
+			request = Promise.reject(new ApiError('Error', 'No index specified.', 'Internal error', undefined));
+		} else if (!pattern) {
+			request = Promise.reject(new ApiError('Info', 'Cannot parse without pattern.', 'No results', undefined));
+		} else {
+			request = endpoints.blacklab.getOrPost(blacklabPaths.parsePattern(indexId), { patt: pattern }, { ...requestParameters });
+		}
+		return request;
+	},
 
 	getHits: (indexId: string, params: BLTypes.BLSearchParameters, requestParameters?: AxiosRequestConfig) => {
 		const {token: cancelToken, cancel} = axios.CancelToken.source();

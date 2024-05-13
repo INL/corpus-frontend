@@ -139,7 +139,7 @@ export default Vue.extend({
 			RootStore.actions.replace(entry);
 		},
 
-		importFromUrl() {
+		async importFromUrl() {
 			const input = (this.$refs.importUrlInput as HTMLInputElement);
 			const importUrl = input.value;
 			if (!importUrl) {
@@ -152,7 +152,7 @@ export default Vue.extend({
 			}
 
 			const uri = new URI(importUrl);
-			const state = new UrlStateParser(FilterStore.getState().filters, uri).get();
+			const state = await new UrlStateParser(FilterStore.getState().filters, uri).get();
 			HistoryStore.actions.addEntry({
 				entry: state,
 				pattern: (uri.query(true) as any).patt,

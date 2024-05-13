@@ -15,7 +15,7 @@ import { getAnnotationSubset } from '@/utils';
 import { Option } from './types/apptypes';
 
 // Init the querybuilder with the supported attributes/properties
-export function initQueryBuilders() {
+export async function initQueryBuilders() {
 	debugLog('Begin initializing querybuilder(s)');
 
 
@@ -41,7 +41,9 @@ export function initQueryBuilders() {
 
 	const withinOptions = UIStore.getState().search.shared.within.elements;
 	// Initialize configuration
-	$('.querybuilder').each((i, el) => {
+	const queryBuilderElements = $('.querybuilder');
+	for (let i = 0; i < queryBuilderElements.length; i++) {
+		const el = queryBuilderElements[i];
 		if (el.classList.contains('bl-querybuilder-root'))
 			return; // already initialized
 
@@ -72,7 +74,8 @@ export function initQueryBuilders() {
 			} else {
 				// already something in store - copy to querybuilder.
 				lastPattern = PatternStore.getState().advanced.query;
-				if (!instance.parse(lastPattern)) {
+				const success = await instance.parse(lastPattern);
+				if (!success) {
 					// Apparently it's invalid? reset to default.
 					PatternStore.actions.advanced.query(instance.getCql());
 				}
@@ -103,7 +106,8 @@ export function initQueryBuilders() {
 			} else {
 				// already something in store - copy to querybuilder.
 				lastPattern = PatternStore.getState().advanced.targetQueries[targetIndex];
-				if (!instance.parse(lastPattern)) {
+				const success = await instance.parse(lastPattern);
+				if (!success) {
 					// Apparently it's invalid? reset to default.
 					PatternStore.actions.advanced.changeTargetQuery({ index: targetIndex, value: instance.getCql() || '' });
 				}
@@ -123,7 +127,7 @@ export function initQueryBuilders() {
 			});
 
 		}
-	});
+	}
 
 	debugLog('Finished initializing querybuilder');
 }

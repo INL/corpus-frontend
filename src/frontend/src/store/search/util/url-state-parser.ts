@@ -4,7 +4,8 @@ import BaseUrlStateParser from '@/store/util/url-state-parser-base';
 import LuceneQueryParser from 'lucene-query-parser';
 
 import {mapReduce, MapOf, decodeAnnotationValue, uiTypeSupport, getCorrectUiType} from '@/utils';
-import parseCql, {Attribute} from '@/utils/cqlparser';
+//import parseCql, {Attribute} from '@/utils/cqlparser';
+import {parseBcql, Attribute, Result} from '@/utils/bcql-json-interpreter';
 import parseLucene from '@/utils/luceneparser';
 import {debugLog} from '@/utils/debug';
 
@@ -48,7 +49,11 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	}
 
 	@memoize
-	public get(): HistoryModule.HistoryEntry {
+	public async get(): Promise<HistoryModule.HistoryEntry> {
+
+		// Make sure our parsed cql is up to date (used to be a memoized getter, but we need it to be async)
+		await this.updateParsedCql(this.expertPattern.query);
+
 		return {
 			explore: this.explore,
 			filters: this.filters,
@@ -605,13 +610,20 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	// Some intermediate values
 	// ------------------------
 
-	@memoize
-	private get _parsedCql(): null|ReturnType<typeof parseCql> {
-		try {
-			const result = parseCql(this.expertPattern.query || '', CorpusModule.get.firstMainAnnotation().id);
-			return result.tokens.length > 0 ? result : null;
-		} catch (e) {
-			return null; // meh, can't parse
-		}
+	private async updateParsedCql(bcql: string|null) {
+		this._parsedCql = bcql == null ? null :
+			await parseBcql(INDEX_ID, bcql, CorpusModule.get.firstMainAnnotation().id);
 	}
+
+	_parsedCql: null|Result = null;
+
+	// @memoize
+	// private get _parsedCql(): null|Promise<Result> {
+	// 	try {
+	// 		const result = parseBcql(this.expertPattern.query || '', CorpusModule.get.firstMainAnnotation().id);
+	// 		return result.tokens.length > 0 ? result : null;
+	// 	} catch (e) {
+	// 		return null; // meh, can't parse
+	// 	}
+	// }
 }

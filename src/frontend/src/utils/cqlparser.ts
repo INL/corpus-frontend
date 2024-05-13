@@ -283,12 +283,6 @@ export default function(input: string, defaultAttribute = DEFAULT_ATTRIBUTE): Re
 		return elementName;
 	}
 
-	if (typeof input !== 'string' || (input = input.trim()).length === 0) {
-		return {
-			tokens: [],
-		};
-	}
-
 	function parseParallel(): string[] {
 		const targetVersions = [];
 		while (true) {
@@ -302,6 +296,12 @@ export default function(input: string, defaultAttribute = DEFAULT_ATTRIBUTE): Re
 				break;
 		}
 		return targetVersions;
+	}
+
+	if (typeof input !== 'string' || (input = input.trim()).length === 0) {
+		return {
+			tokens: [],
+		};
 	}
 
 	pos = 0;

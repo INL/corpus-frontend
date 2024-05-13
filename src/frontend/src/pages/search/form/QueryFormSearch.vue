@@ -299,19 +299,22 @@ export default Vue.extend({
 		getTabId(name?: string) {
 			return name?.replace(/[^\w]/g, '_') + '_annotations';
 		},
-		parseQuery() {
+		async parseQuery() {
 			const expertQuery = PatternStore.getState().expert.query;
 
 			// @@@ TODO JN FIX THIS (probably move to SearchAdvanced)
 
 			// TODO dedicated component - port builder?
 			const builder: QueryBuilder = $(this.$refs.querybuilder as HTMLElement).data('builder');
-			if (builder && builder.parse(expertQuery)) {
-				InterfaceStore.actions.patternMode('advanced');
-				this.parseQueryError = null;
-			} else {
-				this.parseQueryError = 'The querybuilder could not parse your query.';
+			if (builder) {
+				const success = await builder.parse(expertQuery);
+				if (success) {
+					InterfaceStore.actions.patternMode('advanced');
+					this.parseQueryError = null;
+					return;
+				}
 			}
+			this.parseQueryError = 'The querybuilder could not parse your query.';
 		},
 		importQuery(event: Event) {
 			const el = (event.target as HTMLInputElement);

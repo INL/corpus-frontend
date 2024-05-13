@@ -5,7 +5,8 @@ import 'jquery-ui/ui/widgets/sortable';
 import $ from 'jquery';
 import * as Mustache from 'mustache';
 
-import parseCql, {BinaryOp as CQLBinaryOp, Attribute as CQLAttribute, DEFAULT_ATTRIBUTE} from '@/utils/cqlparser';
+//import parseCql, {BinaryOp as CQLBinaryOp, Attribute as CQLAttribute} from '@/utils/cqlparser';
+import {parseBcql, BinaryOp as CQLBinaryOp, Attribute as CQLAttribute} from '@/utils/bcql-json-interpreter';
 import {debugLog} from '@/utils/debug';
 
 import {RecursivePartial} from '@/types/helpers';
@@ -536,8 +537,8 @@ export class QueryBuilder {
 		this.withinSelect.find('input').first().parent().button('toggle');
 	}
 
-	public parse(cql: string|null): boolean {
-		return populateQueryBuilder(this, cql);
+	public async parse(cql: string|null): Promise<boolean> {
+		return await populateQueryBuilder(this, cql);
 	}
 }
 
@@ -1201,7 +1202,7 @@ function getOperatorLabel(builder: QueryBuilder, operator: string) {
  * @param {string} pattern - cql query
  * @returns True or false indicating success or failure respectively
  */
-function populateQueryBuilder(queryBuilder: QueryBuilder, pattern: string|null|undefined): boolean {
+async function populateQueryBuilder(queryBuilder: QueryBuilder, pattern: string|null|undefined): Promise<boolean> {
 	if (pattern == null) {
 		queryBuilder.reset();
 		return true;
@@ -1210,7 +1211,7 @@ function populateQueryBuilder(queryBuilder: QueryBuilder, pattern: string|null|u
 	}
 
 	try {
-		const parsedCql = parseCql(pattern, queryBuilder.settings.attribute.view.defaultAttribute);
+		const parsedCql = await parseBcql(INDEX_ID, pattern, queryBuilder.settings.attribute.view.defaultAttribute);
 		const tokens = parsedCql.tokens;
 		const within = parsedCql.within;
 		// @@@ JN TODO parallel!

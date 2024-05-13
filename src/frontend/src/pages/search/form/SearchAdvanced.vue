@@ -124,7 +124,7 @@ h3 .help {
 	textarea/*, .querybox*/ {
 		width: 100%;
 		resize: none;
-		margin: 0;
+		margin: 0 0 10px 0;
 	}
 	#sourceVersion, .targetVersion {
 		font-weight: normal;

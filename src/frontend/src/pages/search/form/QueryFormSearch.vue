@@ -114,7 +114,6 @@
 			</div>
 			<div v-if="advancedEnabled" :class="['tab-pane', {'active': activePattern==='advanced'}]" id="advanced">
 				<SearchAdvanced	/>
-				<!-- <div id="querybuilder" class="querybuilder" ref="querybuilder"></div> -->
 				<button type="button" class="btn btn-default btn-sm" @click="copyAdvancedQuery">{{$t('search.advanced.copyAdvancedQuery')}}</button>
 			</div>
 			<div v-if="conceptEnabled" :class="['tab-pane', {'active': activePattern==='concept'}]" id="concept">
@@ -456,9 +455,9 @@ export default Vue.extend({
 	box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
 	border: 1px solid #ccc;
 	margin-bottom: 10px;
-	padding: 20px 20px 0px 20px;
+	padding: 20px;
 
-	label { margin: 0 0 20px 0; }
+	label.control-label { margin: 0 0 20px 0; }
 
 	.querybuilder {
 		border: 0;

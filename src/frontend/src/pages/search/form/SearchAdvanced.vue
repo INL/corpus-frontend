@@ -83,13 +83,16 @@ export default Vue.extend({
 				PatternStore.actions.parallelVersions.addTarget(version);
 
 			// init
-			setTimeout(() => {
-				initQueryBuilders();
-			}, 100);
+			// setTimeout(initQueryBuilders, 100);
 		},
 		removeTargetVersion: PatternStore.actions.parallelVersions.removeTarget,
 		versionDisplayName: (version: string): string =>
 			CorpusStore.get.parallelVersionOptions().find(v => v.value === version)?.label || version,
+	},
+	watch: {
+		parallelTargetVersions() {
+			setTimeout(initQueryBuilders, 100);
+		}
 	}
 });
 </script>

@@ -6,7 +6,7 @@ import $ from 'jquery';
 import * as Mustache from 'mustache';
 
 //import parseCql, {BinaryOp as CQLBinaryOp, Attribute as CQLAttribute} from '@/utils/cqlparser';
-import {parseBcql, BinaryOp as CQLBinaryOp, Attribute as CQLAttribute} from '@/utils/bcql-json-interpreter';
+import {parseBcql, BinaryOp as CQLBinaryOp, Attribute as CQLAttribute, Result} from '@/utils/bcql-json-interpreter';
 import {debugLog} from '@/utils/debug';
 
 import {RecursivePartial} from '@/types/helpers';
@@ -538,7 +538,25 @@ export class QueryBuilder {
 	}
 
 	public async parse(cql: string|null): Promise<boolean> {
-		return await populateQueryBuilder(this, cql);
+		if (cql === null) {
+			this.reset();
+			return true;
+		} else if (!cql) {
+			return false;
+		}
+
+		try {
+			const parallelQueries = (await parseBcql(INDEX_ID, cql, this.settings.attribute.view.defaultAttribute));
+			if (parallelQueries.length !== 1) {
+				debugLog('Cql parser could not decode query pattern', cql);
+				return false;
+			}
+			return populateQueryBuilder(this, parallelQueries[0]);
+		} catch (e) {
+			// couldn't decode query
+			debugLog('Cql parser could not decode query pattern', e, cql);
+			return false;
+		}
 	}
 }
 
@@ -1196,23 +1214,32 @@ function getOperatorLabel(builder: QueryBuilder, operator: string) {
 }
 
 /**
+ * Parse the query pattern and update the query builders to match it.
+ *
+ * @param {string} queryBuilders - array of query builders
+ * @param {string} pattern - parsed queries (only one unless it is a parallel query)
+ * @returns True or false indicating success or failure respectively
+ */
+function populateQueryBuilders(queryBuilders: QueryBuilder[], parallelQueries: Result[]): boolean {
+	let success = true;
+	parallelQueries.forEach((parsedCql, i) => {
+		const queryBuilder = queryBuilders[i];
+		success = populateQueryBuilder(queryBuilder, parsedCql) && success;
+	});
+
+	return success;
+}
+
+/**
  * Attempt to parse the query pattern and update the state of the query builder
  * to match it as much as possible.
  *
- * @param {string} pattern - cql query
+ * @param {QueryBuilder} queryBuilder - query builder to populate
+ * @param {string} parsedCql - parsed BCQL query
  * @returns True or false indicating success or failure respectively
  */
-async function populateQueryBuilder(queryBuilder: QueryBuilder, pattern: string|null|undefined): Promise<boolean> {
-	if (pattern == null) {
-		queryBuilder.reset();
-		return true;
-	} else if (!pattern) {
-		return false;
-	}
-
+function populateQueryBuilder(queryBuilder: QueryBuilder, parsedCql: Result): boolean {
 	try {
-		const parallelQueries = (await parseBcql(INDEX_ID, pattern, queryBuilder.settings.attribute.view.defaultAttribute));
-		const parsedCql = parallelQueries[0];
 		const tokens = parsedCql.tokens;
 		const within = parsedCql.within;
 		// @@@ JN TODO parallel!
@@ -1303,7 +1330,7 @@ async function populateQueryBuilder(queryBuilder: QueryBuilder, pattern: string|
 		});
 	} catch (e) {
 		// couldn't decode query
-		debugLog('Cql parser could not decode query pattern', e, pattern);
+		debugLog('Cql parser could not decode query pattern', e, parsedCql);
 
 		return false;
 	}

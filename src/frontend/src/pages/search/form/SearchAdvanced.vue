@@ -34,6 +34,7 @@
 			</div>
 		</div>
 
+		<button type="button" class="btn btn-default btn-sm" @click="copyAdvancedQuery">{{$t('search.advanced.copyAdvancedQuery')}}</button>
 	</div>
 </template>
 
@@ -42,6 +43,7 @@ import Vue from 'vue';
 
 import * as CorpusStore from '@/store/search/corpus';
 import * as PatternStore from '@/store/search/form/patterns';
+import * as InterfaceStore from '@/store/search/form/interface';
 
 import SelectPicker, { Option } from '@/components/SelectPicker.vue';
 import MultiValuePicker from '@/components/MultiValuePicker.vue';
@@ -88,6 +90,19 @@ export default Vue.extend({
 		removeTargetVersion: PatternStore.actions.parallelVersions.removeTarget,
 		versionDisplayName: (version: string): string =>
 			CorpusStore.get.parallelVersionOptions().find(v => v.value === version)?.label || version,
+
+		copyAdvancedQuery() {
+			const q = PatternStore.getState().advanced.query;
+			console.log('copying advanced query', q);
+			PatternStore.actions.expert.query(q);
+			for (let i = 0; i < PatternStore.getState().advanced.targetQueries.length; i++) {
+				PatternStore.actions.expert.changeTargetQuery({
+					index: i,
+					value: PatternStore.getState().advanced.targetQueries[i]
+				});
+			}
+			InterfaceStore.actions.patternMode('expert');
+		},
 	},
 	watch: {
 		parallelTargetVersions() {

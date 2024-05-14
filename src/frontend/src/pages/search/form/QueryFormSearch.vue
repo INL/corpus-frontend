@@ -114,7 +114,6 @@
 			</div>
 			<div v-if="advancedEnabled" :class="['tab-pane', {'active': activePattern==='advanced'}]" id="advanced">
 				<SearchAdvanced	/>
-				<button type="button" class="btn btn-default btn-sm" @click="copyAdvancedQuery">{{$t('search.advanced.copyAdvancedQuery')}}</button>
 			</div>
 			<div v-if="conceptEnabled" :class="['tab-pane', {'active': activePattern==='concept'}]" id="concept">
 
@@ -133,7 +132,9 @@
 
 				<!-- Copy to builder, import, gap filling buttons -->
 				<template v-if="!isParallelCorpus || true"><!-- disable in parallel for now, things are complex enough -->
-					<button v-if="advancedEnabled" type="button" class="btn btn-sm btn-default" name="parseQuery" id="parseQuery" :title="$t('search.expert.parseQueryTitle').toString()" @click="parseQuery">{{$t('search.expert.parseQuery')}}</button>
+					<button v-if="advancedEnabled" type="button" class="btn btn-sm btn-default" name="parseQuery" id="parseQuery"
+						:title="$t('search.expert.parseQueryTitle').toString()"
+						@click="parseQuery">{{$t('search.expert.parseQuery')}}</button>
 					<label class="btn btn-sm btn-default file-input-button" for="importQuery">
 						{{$t('search.expert.importQuery')}}
 						<input type="file" name="importQuery" id="importQuery" accept=".txt,text/plain" @change="importQuery" :title="$t('search.expert.importQueryTitle')">
@@ -300,20 +301,37 @@ export default Vue.extend({
 			return name?.replace(/[^\w]/g, '_') + '_annotations';
 		},
 		async parseQuery() {
-			const expertQuery = PatternStore.getState().expert.query;
+			const expertQueries = [PatternStore.getState().expert.query, ...PatternStore.getState().expert.targetQueries];
+
+			const queryBuilders = $('.querybuilder').map((_, el) => $(el).data('builder')).get();
+			let success = true;
+			for (let i = 0; i < queryBuilders.length; i++) {
+				const builder = queryBuilders[i];
+				if (builder) {
+					if (!(await builder.parse(expertQueries[i]))) {
+						success = false;
+						break;
+					}
+				}
+			}
+			if (success) {
+				InterfaceStore.actions.patternMode('advanced');
+				this.parseQueryError = null;
+				return;
+			}
 
 			// @@@ TODO JN FIX THIS (probably move to SearchAdvanced)
 
 			// TODO dedicated component - port builder?
-			const builder: QueryBuilder = $(this.$refs.querybuilder as HTMLElement).data('builder');
-			if (builder) {
-				const success = await builder.parse(expertQuery);
-				if (success) {
-					InterfaceStore.actions.patternMode('advanced');
-					this.parseQueryError = null;
-					return;
-				}
-			}
+			// const builder: QueryBuilder = $(this.$refs.querybuilder as HTMLElement).data('builder');
+			// if (builder) {
+			// 	const success = await builder.parse(expertQuery);
+			// 	if (success) {
+			// 		InterfaceStore.actions.patternMode('advanced');
+			// 		this.parseQueryError = null;
+			// 		return;
+			// 	}
+			// }
 			this.parseQueryError = 'The querybuilder could not parse your query.';
 		},
 		importQuery(event: Event) {
@@ -354,18 +372,18 @@ export default Vue.extend({
 			el.selectionEnd = el.selectionStart = originalSelectionStart + 1;
 		},
 
-		copyAdvancedQuery() {
-			const q = PatternStore.getState().advanced.query;
-			console.log('copying advanced query', q);
-			PatternStore.actions.expert.query(q);
-			for (let i = 0; i < PatternStore.getState().advanced.targetQueries.length; i++) {
-				PatternStore.actions.expert.changeTargetQuery({
-					index: i,
-					value: PatternStore.getState().advanced.targetQueries[i]
-				});
-			}
-			InterfaceStore.actions.patternMode('expert');
-		},
+		// copyAdvancedQuery() {
+		// 	const q = PatternStore.getState().advanced.query;
+		// 	console.log('copying advanced query', q);
+		// 	PatternStore.actions.expert.query(q);
+		// 	for (let i = 0; i < PatternStore.getState().advanced.targetQueries.length; i++) {
+		// 		PatternStore.actions.expert.changeTargetQuery({
+		// 			index: i,
+		// 			value: PatternStore.getState().advanced.targetQueries[i]
+		// 		});
+		// 	}
+		// 	InterfaceStore.actions.patternMode('expert');
+		// },
 		copyConceptQuery() {
 			//PatternStore.actions.expert.query(PatternStore.getState().advanced.query);
 			PatternStore.actions.expert.query(this.concept);

@@ -15,7 +15,7 @@ import { getAnnotationSubset } from '@/utils';
 import { Option } from './types/apptypes';
 
 // Init the querybuilder with the supported attributes/properties
-export async function initQueryBuilders() {
+export async function initQueryBuilders(): Promise<QueryBuilder[]> {
 	debugLog('Begin initializing querybuilder(s)');
 
 	const first = getAnnotationSubset(
@@ -42,16 +42,17 @@ export async function initQueryBuilders() {
 
 	// Initialize configuration
 	const queryBuilderElements = $('.querybuilder');
+	const queryBuilders: QueryBuilder[] = [];
 	for (let i = 0; i < queryBuilderElements.length; i++) {
 		const el = queryBuilderElements[i];
-		initQueryBuilder(el, i); // see below
+		queryBuilders.push(await initQueryBuilder(el, i)); // see below
 	}
-
 	debugLog('Finished initializing querybuilder');
+	return queryBuilders;
 
-	async function initQueryBuilder(el: HTMLElement, i: number) {
+	async function initQueryBuilder(el: HTMLElement, i: number): Promise<QueryBuilder> {
 		if (el.classList.contains('bl-querybuilder-root'))
-			return; // already initialized
+			return $(el).data('builder'); // already initialized
 
 		const instance = new QueryBuilder($(el), {
 			queryBuilder: {
@@ -133,6 +134,8 @@ export async function initQueryBuilders() {
 			});
 
 		}
+
+		return instance;
 	}
 }
 

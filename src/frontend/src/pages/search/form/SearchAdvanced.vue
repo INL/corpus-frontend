@@ -68,12 +68,12 @@ export default Vue.extend({
 		},
 
 		mainQuery: {
-			get() { return PatternStore.getState().expert.query || undefined; },
-			set: PatternStore.actions.expert.query,
+			get() { return PatternStore.getState().advanced.query || undefined; },
+			set: PatternStore.actions.advanced.query,
 		},
 		targetQueries: {
-			get() { return PatternStore.getState().expert.targetQueries; },
-			set: PatternStore.actions.expert.targetQueries,
+			get() { return PatternStore.getState().advanced.targetQueries; },
+			set: PatternStore.actions.advanced.targetQueries,
 		},
 
 	},

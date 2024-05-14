@@ -1211,7 +1211,8 @@ async function populateQueryBuilder(queryBuilder: QueryBuilder, pattern: string|
 	}
 
 	try {
-		const parsedCql = await parseBcql(INDEX_ID, pattern, queryBuilder.settings.attribute.view.defaultAttribute);
+		const parallelQueries = (await parseBcql(INDEX_ID, pattern, queryBuilder.settings.attribute.view.defaultAttribute));
+		const parsedCql = parallelQueries[0];
 		const tokens = parsedCql.tokens;
 		const within = parsedCql.within;
 		// @@@ JN TODO parallel!

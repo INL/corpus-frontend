@@ -5,6 +5,9 @@
  *
  * This means we don't have to implement a full parser for the BCQL language in the
  * frontend as well, but just rely on BlackLab's parser.
+ *
+ * Obviously, that means the JSON tree structure returned by BlackLab's parser must
+ * be stable and well-documented.
  */
 
 import * as api from '@/api';
@@ -49,22 +52,22 @@ export type Token = {
 };
 
 export type Result = {
+	query?: string; // the (partial) BCQL query (only set for source and target queries, for expert/advanced)
 	tokens: Token[];
 	/** xml token name excluding namespace, brackets, attributes etc */
 	within?: string;
-	targetVersions?: string[];
+	targetVersion?: string; // target version for this quer, or undefined if this is the source query
 };
 
-function interpretBcqlJson(json: any, defaultAnnotation: string): Result {
+function interpretBcqlJson(bcql: string, json: any, defaultAnnotation: string): Result[] {
+
 	function _not(clause: any): Attribute {
 		if (clause.type !== 'regex') {
 			throw new Error('Can only interpret not on regex');
 		}
 		return {
-			type: 'attribute',
-			name: clause.annotation || DEFAULT_ANNOTATION,
+			..._regex(clause.annotation, clause.value),
 			operator: '!=',
-			value: clause.value
 		};
 	}
 
@@ -99,15 +102,30 @@ function interpretBcqlJson(json: any, defaultAnnotation: string): Result {
 		throw new Error('Unknown token expression type: ' + input.type);
 	}
 
-	function _tokenFromTokenExpression(input: any): Token {
-		return {
-			expression: _tokenExpression(input),
-			optional: false
-		};
-	}
-
 	function _sequence(clauses: any[]): Token[] {
-		return clauses.map(_token);
+		const tokens = clauses.map(_token);
+
+		// <s> and </s> are still separate "tokens"; join them with the appropriate real token
+		for (let i = 0; i < tokens.length - 1; i++) {
+			if (tokens[i].leadingXmlTag && !tokens[i].leadingXmlTag?.isClosingTag && tokens[i].repeats?.min || 0 < 0) {
+				// <s> token followed by a regular [word="..."] token; join with next token
+				tokens[i] = {
+					...tokens[i + 1],
+					leadingXmlTag: tokens[i].leadingXmlTag,
+				}
+				tokens.splice(i + 1, 1);
+				i--;
+				continue;
+			} else if (tokens[i + 1].leadingXmlTag && tokens[i + 1].leadingXmlTag?.isClosingTag && tokens[i + 1].repeats?.min || 0 < 0) {
+				// Regular [word="..."] token followed by a </s> token; join with previous token
+				tokens[i].trailingXmlTag = tokens[i + 1].leadingXmlTag;
+				tokens.splice(i + 1, 1);
+				i--;
+				continue;
+			}
+		}
+
+		return tokens;
 	}
 
 	function _posFilter(producer: any, operation: string, filter: any): Result {
@@ -134,11 +152,36 @@ function interpretBcqlJson(json: any, defaultAnnotation: string): Result {
 		return token;
 	}
 
-	function _token(input: any): Token {
-		const tokens = [] as Token[];
-		let within: string|undefined;
-		let targetVersions: string[]|undefined;
+	function _tags(input: any): Token {
+		if (input.attribute || input.capture)
+			throw new Error('Unsupported tags attribute or capture');
+		if (input.name !== 's')
+			throw new Error('Unsupported tag type: ' + input.name);
+		const token: Token = {
+			optional: false,
+			leadingXmlTag: {
+				type: 'xml',
+				name: input.name,
+				isClosingTag: false,
+			},
+			repeats: {
+				min: -1, // invalid values indicate that we need to join this "token" with the previous or next one
+				max: -1,
+			},
+		};
+		switch (input.adjust) {
+		case 'leading_edge':
+			break;
+		case 'trailing_edge':
+			token.leadingXmlTag!.isClosingTag = true;
+			break;
+		default:
+			throw new Error('Unsupported tags adjust: ' + input.adjust);
+		}
+		return token;
+	}
 
+	function _token(input: any): Token {
 		switch (input.type) {
 		case 'anytoken': // [] or []{min,max}
 			{
@@ -158,8 +201,21 @@ function interpretBcqlJson(json: any, defaultAnnotation: string): Result {
 					};
 				}
 			}
+
+		case 'defval':   // _, which generally means []*
+			return {
+				optional: true,
+				repeats: {
+					min: 0,
+					max: null,
+				},
+			};
+
 		case 'repeat':   // {min,max} or ?, *, +
 			return _repeat(input);
+
+		case 'tags':     // <s> or </s>   (and eventually <s/> also)
+			return _tags(input);
 
 		default:
 			// Excluded any special token-level nodes; must be a token expression
@@ -179,11 +235,6 @@ function interpretBcqlJson(json: any, defaultAnnotation: string): Result {
 		case 'posfilter': // (within expression)
 			return _posFilter(input.producer, input.operation, input.filter);
 
-		// @@@ TODO JN relations/parallel
-		// case 'relmatch':
-		// 	tokens.push(relmatch(input.parent, input.children));
-		//  break;
-
 		default:
 			// Must be a single token
 			return {
@@ -192,17 +243,38 @@ function interpretBcqlJson(json: any, defaultAnnotation: string): Result {
 		}
 	}
 
-	const result = _query(json);
-	console.log('RESULT', result);
+	function _relTarget(input: any): Result {
+		if (input.type !== 'reltarget')
+			throw new Error('Unknown reltarget type: ' + input.type);
+		if (input.relType !== '.*')
+			throw new Error('Unsupported reltarget relType: ' + input.relType);
+
+		return { ..._query(input.clause), targetVersion: input.targetVersion };
+	}
+
+	function _parallelQuery(bcql: string, input: any): Result[] {
+		if (input.type == 'relmatch') {
+			const queries = bcql.split(/\s*==>\w+\s*/); // extract partial queries for advanced/expert view
+			const parent = { ..._query(input.parent), query: queries.shift() };
+			const children = input.children.map(_relTarget).map( (r: Result) => ({ ...r, query: queries.shift() }));
+			// if (queries.length !== children.length + 1)
+			// 	throw new Error('Mismatch in number of queries and children');
+			return [parent, ...children];
+		}
+
+		return [ { ..._query(input), query: bcql } ];
+	}
+
+	const result = _parallelQuery(bcql, json);
 	return result;
 }
 
-async function parseBcql(indexId: string, bcql: string, defaultAnnotation: string): Promise<Result> {
+async function parseBcql(indexId: string, bcql: string, defaultAnnotation: string): Promise<Result[]> {
 	const response = await api.blacklab.getParsePattern(indexId, bcql);
-	return interpretBcqlJson(response.parsed.json, defaultAnnotation);
+	return interpretBcqlJson(bcql, response.parsed.json, defaultAnnotation);
 }
 
 export {
-	interpretBcqlJson,
+	//interpretBcqlJson,
 	parseBcql
 };

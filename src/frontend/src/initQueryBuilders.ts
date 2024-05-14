@@ -18,7 +18,6 @@ import { Option } from './types/apptypes';
 export async function initQueryBuilders() {
 	debugLog('Begin initializing querybuilder(s)');
 
-
 	const first = getAnnotationSubset(
 		UIStore.getState().search.advanced.searchAnnotationIds,
 		CorpusStore.get.annotationGroups(),
@@ -40,10 +39,17 @@ export async function initQueryBuilders() {
 	}));
 
 	const withinOptions = UIStore.getState().search.shared.within.elements;
+
 	// Initialize configuration
 	const queryBuilderElements = $('.querybuilder');
 	for (let i = 0; i < queryBuilderElements.length; i++) {
 		const el = queryBuilderElements[i];
+		initQueryBuilder(el, i); // see below
+	}
+
+	debugLog('Finished initializing querybuilder');
+
+	async function initQueryBuilder(el: HTMLElement, i: number) {
 		if (el.classList.contains('bl-querybuilder-root'))
 			return; // already initialized
 
@@ -128,7 +134,5 @@ export async function initQueryBuilders() {
 
 		}
 	}
-
-	debugLog('Finished initializing querybuilder');
 }
 

@@ -3,7 +3,7 @@ import memoize from 'memoize-decorator';
 import BaseUrlStateParser from '@/store/util/url-state-parser-base';
 import LuceneQueryParser from 'lucene-query-parser';
 
-import {mapReduce, MapOf, decodeAnnotationValue, uiTypeSupport, getCorrectUiType} from '@/utils';
+import {mapReduce, MapOf, decodeAnnotationValue, uiTypeSupport, getCorrectUiType, unparenQueryPart} from '@/utils';
 //import parseCql, {Attribute} from '@/utils/cqlparser';
 import {parseBcql, Attribute, Result} from '@/utils/bcql-json-interpreter';
 import parseLucene from '@/utils/luceneparser';
@@ -52,7 +52,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	public async get(): Promise<HistoryModule.HistoryEntry> {
 
 		// Make sure our parsed cql is up to date (used to be a memoized getter, but we need it to be async)
-		await this.updateParsedCql(this.expertPattern.query);
+		await this.updateParsedCql(this.getString('patt', null, v => v ? v : null));
 
 		return {
 			explore: this.explore,
@@ -266,11 +266,14 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 			return null;
 		}
 
-		const cql = this._parsedCql;
+		if (this._parsedCql == null || this._parsedCql.length > 1)
+			return null; // no query, or parallel query; can't interpret as ngram
+
+		const cql = this._parsedCql[0];
 		if ( // all tokens need to be very simple [annotation="value"] tokens.
 			!cql ||
 			cql.within ||
-			(cql.targetVersions && cql.targetVersions.length > 0) ||
+			cql.targetVersion ||
 			cql.tokens.length > ExploreModule.defaults.ngram.maxSize ||
 			cql.tokens.find(t =>
 				t.leadingXmlTag != null ||
@@ -338,7 +341,11 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 			throw new Error('Attempting to parse url before tagset is loaded or disabled, await tagset.awaitInit() before parsing url.');
 		}
 
-		const result = this._parsedCql;
+		if (this._parsedCql === null) {
+			return {}; // no query; can't interpret as annotation values
+		}
+
+		const result = this._parsedCql[0];
 		if (result == null) {
 			return {};
 		}
@@ -451,7 +458,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	private get parallelVersions() {
 		return {
 			source: this.getString('field', CorpusModule.get.parallelVersions()[0]?.name),
-			targets: this._parsedCql ? this._parsedCql.targetVersions || [] : [],
+			targets: this._parsedCql ? this._parsedCql.slice(1).map(result => result.targetVersion || '') : [],
 		};
 	}
 
@@ -501,8 +508,8 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	@memoize
 	private get expertPattern() {
 		return {
-			query: this.getString('patt', null, v=>v?v:null),
-			targetQueries: [], // @@@ JN TODO parse
+			query: this._parsedCql ? unparenQueryPart(this._parsedCql[0].query) || null : null,
+			targetQueries: this._parsedCql ? this._parsedCql.slice(1).map(r => unparenQueryPart(r.query) || '') : [],
 		};
 	}
 
@@ -557,12 +564,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	// TODO these might become dynamic in the future, then we need extra manual checking to see if the value is even supported in this corpus
 	@memoize
 	private get within(): string|null {
-		return this._parsedCql ? this._parsedCql.within || null : null;
-	}
-
-	@memoize
-	private get targetVersions(): string[]|null {
-		return this._parsedCql ? this._parsedCql.targetVersions || null : null;
+		return this._parsedCql ? this._parsedCql[0].within || null : null;
 	}
 
 	@memoize
@@ -613,17 +615,9 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	private async updateParsedCql(bcql: string|null) {
 		this._parsedCql = bcql == null ? null :
 			await parseBcql(INDEX_ID, bcql, CorpusModule.get.firstMainAnnotation().id);
+		if (this._parsedCql && this._parsedCql.length === 0)
+			this._parsedCql = null;
 	}
 
-	_parsedCql: null|Result = null;
-
-	// @memoize
-	// private get _parsedCql(): null|Promise<Result> {
-	// 	try {
-	// 		const result = parseBcql(this.expertPattern.query || '', CorpusModule.get.firstMainAnnotation().id);
-	// 		return result.tokens.length > 0 ? result : null;
-	// 	} catch (e) {
-	// 		return null; // meh, can't parse
-	// 	}
-	// }
+	_parsedCql: Result[]|null = null;
 }

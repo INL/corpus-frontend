@@ -315,6 +315,27 @@ export const splitIntoTerms = (value: string, useQuoteDelimiters: boolean): Spli
 	})
 });
 
+/** Parenthesize part of a BCQL query if it's not already */
+function parenQueryPart(query: string) {
+	query = query.trim();
+	if (query.match(/^\(.+\)$/)) {
+		return query;
+	}
+	return `(${query})`;
+}
+
+/** Remove parentheses from a BCQL query part if it's parenthesized */
+export function unparenQueryPart(query?: string) {
+	if (query) {
+		query = query.trim();
+		if (query.match(/^\(.+\)$/)) {
+			const result = query.substring(1, query.length - 1);
+			return result;
+		}
+	}
+	return query;
+}
+
 export const getPatternString = (annotations: AppTypes.AnnotationValue[], within: null|string, parallelTargetVersions: string[] = []) => {
 	const tokens = [] as string[][];
 
@@ -328,7 +349,7 @@ export const getPatternString = (annotations: AppTypes.AnnotationValue[], within
 	}
 
 	if (parallelTargetVersions.length > 0) {
-		query = query + parallelTargetVersions.map(v => ` ==>${v} _`).join(' ; ');
+		query = `${parenQueryPart(query)}` + parallelTargetVersions.map(v => ` ==>${v} _`).join(' ; ');
 	}
 
 	return query || undefined;
@@ -344,15 +365,14 @@ export const getPatternStringFromCql = (sourceCql: string, targetVersions: strin
 		return sourceCql;
 	}
 
-	const queryParts = [sourceCql.trim()];
+	const queryParts = [parenQueryPart(sourceCql.trim())];
 	for (let i = 0; i < targetVersions.length; i++) {
 		if (i > 0)
 			queryParts.push(' ; ');
-		queryParts.push(` ==>${targetVersions[i].trim()} ${targetCql[i].trim()}`)
+		queryParts.push(` ==>${targetVersions[i].trim()} ${parenQueryPart(targetCql[i].trim())}`)
 	}
 
 	const query = queryParts.join('');
-	console.log('query', query);
 
 	return query;
 };

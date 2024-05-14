@@ -211,7 +211,7 @@ const actions = {
 			Vue.set(state.advanced.targetQueries, index, value);
 		}, 'advanced_change_target_query'),
 		targetQueries: b.commit((state, payload: string[]) => {
-			return (state.advanced.targetQueries = payload);
+			return (state.advanced.targetQueries = [...payload]); // copy, don't reference
 		}, 'advanced_target_queries'),
 		reset: b.commit(state => {
 			state.advanced.query = null
@@ -230,7 +230,7 @@ const actions = {
 			Vue.set(state.expert.targetQueries, index, value);
 		}, 'expert_change_target_query'),
 		targetQueries: b.commit((state, payload: string[]) => {
-			return (state.expert.targetQueries = payload);
+			return (state.expert.targetQueries = [...payload]); // copy, don't reference
 		}, 'expert_target_queries'),
 		reset: b.commit(state => {
 			state.expert.query = null;

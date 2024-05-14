@@ -846,8 +846,7 @@ export function getPatternStringExplore(
 }
 export function getPatternStringSearch(
 	subForm: keyof ModuleRootStateSearch,
-	state: ModuleRootStateSearch,
-	annots: Record<string, AppTypes.NormalizedAnnotation>
+	state: ModuleRootStateSearch
 ): string|undefined {
 	// For the normal search form,
 	// the simple and extended views require the values to be processed before converting them to cql.
@@ -870,11 +869,11 @@ export function getPatternStringSearch(
 		case 'advanced':
 			if (!state.advanced.query)
 				return undefined;
-			return getPatternStringFromCql(state.advanced.query, state.parallelVersions.targets || [], state.advanced.targetQueries);
+			return getPatternStringFromCql(state.advanced.query, state.parallelVersions?.targets || [], state.advanced.targetQueries);
 		case 'expert':
 			if (!state.expert.query)
 				return undefined;
-			return getPatternStringFromCql(state.expert.query, state.parallelVersions.targets || [], state.expert.targetQueries);
+			return getPatternStringFromCql(state.expert.query, state.parallelVersions?.targets || [], state.expert.targetQueries);
 		case 'concept': return state.concept?.trim() || undefined;
 		case 'glosses': return state.glosses?.trim() || undefined;
 		default: throw new Error('Unimplemented pattern generation.');
@@ -898,26 +897,30 @@ export function getPatternSummarySearch<K extends keyof ModuleRootStateSearch>(
 	subForm: K,
 	state: ModuleRootStateSearch,
 ) {
+	const patt = getPatternStringSearch(subForm, state);
+	console.log('patt', patt, state);
+	return patt?.replace(/\\(.)/g, '$1') || '';
+
 	// For the normal search form,
 	// the simple and extended views require the values to be processed before converting them to cql.
 	// The advanced and expert views already contain a good-to-go cql query. We only need to take care not to emit an empty string.
-	switch (subForm) {
-		case 'simple': return state.simple.annotationValue.value || undefined;
-		case 'extended': {
-			const annotations: AppTypes.AnnotationValue[] = cloneDeep(Object.values(state.extended.annotationValues).filter(annot => !!annot.value))
-				.map(annot => ({
-					...annot,
-					type: getCorrectUiType(uiTypeSupport.search.extended, annot.type!)
-				}));
-			if (annotations.length === 0) { return undefined; }
-			// remove escape backslashes as this is just a summary
-			return getPatternString(annotations, state.extended.within)?.replace(/\\(.)/g, '$1');
-		}
-		case 'advanced': return state.advanced.query?.trim() || undefined;
-		case 'expert': return state.expert.query?.trim() || undefined;
-		case 'concept': return state.concept || undefined;
-		case 'glosses': return state.glosses || undefined;
-		default: return undefined;
-	}
+	// switch (subForm) {
+	// 	case 'simple': return state.simple.annotationValue.value || undefined;
+	// 	case 'extended': {
+	// 		const annotations: AppTypes.AnnotationValue[] = cloneDeep(Object.values(state.extended.annotationValues).filter(annot => !!annot.value))
+	// 			.map(annot => ({
+	// 				...annot,
+	// 				type: getCorrectUiType(uiTypeSupport.search.extended, annot.type!)
+	// 			}));
+	// 		if (annotations.length === 0) { return undefined; }
+	// 		// remove escape backslashes as this is just a summary
+	// 		return getPatternString(annotations, state.extended.within, state.parallelVersions?.targets || [])?.replace(/\\(.)/g, '$1');
+	// 	}
+	// 	case 'advanced': return state.advanced.query?.trim() || undefined;
+	// 	case 'expert': return state.expert.query?.trim() || undefined;
+	// 	case 'concept': return state.concept || undefined;
+	// 	case 'glosses': return state.glosses || undefined;
+	// 	default: return undefined;
+	// }
 }
 

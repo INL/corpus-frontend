@@ -97,7 +97,7 @@ const get = {
 		const annotations = CorpusModule.get.allAnnotationsMap();
 		switch (state.form) {
 		case 'search':
-			return getPatternStringSearch(state.subForm, formState, annotations);
+			return getPatternStringSearch(state.subForm, formState);
 		case 'explore':
 			return getPatternStringExplore(state.subForm, formState, annotations);
 		default:
@@ -106,10 +106,20 @@ const get = {
 	},
 	'patternString'),
 	/** Human-readable version of the query for use in history, summaries, etc. */
-	patternSummary: b.read((state): string|undefined =>
-		state.form === 'search' ? getPatternSummarySearch(state.subForm, {[state.subForm]: state.formState} as any /** egh, feel free to refactor */) :
-		(state.form === 'explore' ? getPatternSummaryExplore(state.subForm, {[state.subForm]: state.formState} as any /** egh, feel free to refactor */, CorpusModule.get.allAnnotationsMap()) : undefined),
-	'patternSummary'),
+	patternSummary: b.read((state): string|undefined => {
+		const formState = {
+			[state.subForm as string]: state.formState,
+			parallelVersions: state.parallelVersions,
+		} as any; /** egh, feel free to refactor */
+		switch (state.form) {
+		case 'search':
+			return getPatternSummarySearch(state.subForm, formState);
+		case 'explore':
+			return getPatternSummaryExplore(state.subForm, formState, CorpusModule.get.allAnnotationsMap());
+		default:
+			return undefined;
+		}
+	}, 'patternSummary'),
 	filterString: b.read((state): string|undefined => {
 		if (!state.form) { return undefined; }
 		return getFilterString(Object.values(state.filters).sort((a, b) => a.id.localeCompare(b.id)));

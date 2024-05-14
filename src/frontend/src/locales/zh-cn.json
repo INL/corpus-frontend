@@ -37,6 +37,7 @@
 			"clearGapValues": "清除分割"
 		},
 		"parallel": {
+			"alignBy": "Align by",
 			"inSourceVersion": "in source version",
 			"queryFor": "Query for",
 			"sourceVersion": "source version",

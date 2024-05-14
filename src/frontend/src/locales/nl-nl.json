@@ -37,6 +37,7 @@
 			"clearGapValues": "Gap-waarden wissen"
 		},
 		"parallel": {
+			"alignBy": "Aligneer op",
 			"inSourceVersion": "in bronversie",
 			"andCompareWithTargetVersions": "en vergelijk met doelversie(s)",
 			"sourceVersion": "Bronversie",

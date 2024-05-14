@@ -1,6 +1,20 @@
 <template>
 	<!-- Is this a parallel corpus? -->
 	<div v-if="mode === 'simple'">
+		<label class="control-label">{{ $t('search.parallel.alignBy') }}</label>
+		<div>
+			<div class="btn-group">
+				<button v-for="option in alignByOptions"
+					type="button"
+					:class="['btn', alignBy === option.value ? 'active btn-primary' : 'btn-default']"
+					:key="option.value"
+					:value="option.value"
+					:title="option.title || undefined"
+					@click="alignBy = option.value"
+				>{{option.label || option.value || 'document'}}</button> <!-- empty value searches across entire documents -->
+			</div>
+		</div>
+
 		<label class="control-label">{{ $t('search.parallel.inSourceVersion') }}</label>
 		<div>
 			<SelectPicker :options="sourceOptions"
@@ -13,6 +27,19 @@
 		</div>
 	</div>
 	<div v-else>
+		<div class="form-group">
+			<label class="col-xs-12 col-md-3">{{ $t('search.parallel.alignBy') }}</label>
+			<div class="btn-group col-xs-12 col-md-9">
+				<button v-for="option in alignByOptions"
+					type="button"
+					:class="['btn', alignBy === option.value ? 'active btn-primary' : 'btn-default']"
+					:key="option.value"
+					:value="option.value"
+					:title="option.title || undefined"
+					@click="alignBy = option.value"
+				>{{option.label || option.value || 'document'}}</button> <!-- empty value searches across entire documents -->
+			</div>
+		</div>
 		<div class="form-group">
 			<label class="col-xs-12 col-md-3">{{ $t('search.parallel.inSourceVersion') }}</label>
 			<div class="col-xs-12 col-md-9">
@@ -34,6 +61,7 @@ import Vue from 'vue';
 
 import * as CorpusStore from '@/store/search/corpus';
 import * as PatternStore from '@/store/search/form/patterns';
+import * as UIStore from '@/store/search/ui';
 
 import SelectPicker, { Option } from '@/components/SelectPicker.vue';
 import MultiValuePicker from '@/components/MultiValuePicker.vue';
@@ -70,6 +98,21 @@ export default Vue.extend({
 			get(): string[]|null { return PatternStore.get.parallelVersions().targets; },
 			set: PatternStore.actions.parallelVersions.targetVersions
 		},
+
+		alignByOptions(): Option[] {
+			return UIStore.getState().search.shared.within.elements.map(
+				o => o.value == '' ? { ...o, label: 'Word' } : o
+			);
+			// return [
+			// 	{ value: '', label: 'Word' },
+			// 	{ value: 'verse', label: 'Verse' },
+			// ];
+		},
+
+		alignBy: {
+			get(): string { return ''; },
+			set(value: string) { console.log('change alignBy', value); },
+		}
 
 	},
 });

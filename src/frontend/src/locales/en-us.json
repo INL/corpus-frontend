@@ -37,6 +37,7 @@
 			"clearGapValues": "Clear gap values"
 		},
 		"parallel": {
+			"alignBy": "Align by",
 			"inSourceVersion": "in source version",
 			"andCompareWithTargetVersions": "and compare with target version(s)",
 			"queryForSourceVersion": "Query for source version",

@@ -726,7 +726,7 @@ const init = () => {
 		if (!g.isRemainderGroup) { return g.entries; }
 		const hasNonRemainderGroup = i > 0; // remainder groups is always at the end
 		// remainder group is hidden unless there's no other group. Also internal annotations in the remainder group are always hidden.
-		return hasNonRemainderGroup ? [] : g.entries.filter(id => allAnnotationsMap[id]?.isInternal === false);
+		return hasNonRemainderGroup ? [] : g.entries.filter(annotationName => allAnnotationsMap[annotationName]?.isInternal === false);
 	});
 
 	// Metadata/filters (extended, advanced, expert, explore)

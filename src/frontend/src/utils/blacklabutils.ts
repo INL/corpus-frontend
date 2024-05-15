@@ -111,12 +111,13 @@ function normalizeAnnotatedField(field: BLTypes.BLAnnotatedField): NormalizedAnn
 }
 
 function normalizeAnnotationGroups(blIndex: BLTypes.BLIndexMetadata): NormalizedAnnotationGroup[] {
+	console.log('normalizeAnnotationGroups', blIndex);
 	let annotationGroupsNormalized: NormalizedAnnotationGroup[] = [];
 	const fieldId = blIndex.mainAnnotatedField;
 	const field = blIndex.annotatedFields[fieldId];
 
 	const annotations = BLTypes.isAnnotatedFieldV1(field) ? field.properties : field.annotations;
-	const idsNotInGroups = new Set(Object.keys(annotations));
+	const annotationNamesNotInGroups = new Set(Object.keys(annotations));
 
 	let hasUserDefinedGroup = false;
 
@@ -126,12 +127,12 @@ function normalizeAnnotationGroups(blIndex: BLTypes.BLIndexMetadata): Normalized
 			const normalizedGroup: NormalizedAnnotationGroup = {
 				annotatedFieldId: fieldId,
 				id: group.name,
-				entries: group.annotations.filter(id => annotations[id] != null),
+				entries: group.annotations.filter(annotationName => annotations[annotationName] != null),
 				isRemainderGroup: false
 			};
 			if (normalizedGroup.entries.length) {
 				annotationGroupsNormalized.push(normalizedGroup);
-				normalizedGroup.entries.forEach(id => idsNotInGroups.delete(id));
+				normalizedGroup.entries.forEach(annotationName => annotationNamesNotInGroups.delete(annotationName));
 				hasUserDefinedGroup = true;
 			}
 		}
@@ -140,25 +141,28 @@ function normalizeAnnotationGroups(blIndex: BLTypes.BLIndexMetadata): Normalized
 	// Add all remaining annotations to the remainder group.
 	// First add all explicitly ordered annotations (annotatedField.displayOrder).
 	// Finally add everything else at the end, sorted by their displayNames.
-	if (idsNotInGroups.size) {
-		const remainingAnnotationsToAdd = new Set(idsNotInGroups);
-		const idsInRemainderGroup: string[] = [];
+	if (annotationNamesNotInGroups.size) {
+		const remainingAnnotationsToAdd = new Set(annotationNamesNotInGroups);
+		const annotationNamesInRemainderGroup: string[] = [];
 
 		// annotations in displayOrder
 		if (!BLTypes.isAnnotatedFieldV1(field) && field.displayOrder) {
-			field.displayOrder.forEach(id => {
-				if (remainingAnnotationsToAdd.has(id)) {
-					remainingAnnotationsToAdd.delete(id);
-					idsInRemainderGroup.push(id);
+			field.displayOrder.forEach(annotationName => {
+				if (remainingAnnotationsToAdd.has(annotationName)) {
+					remainingAnnotationsToAdd.delete(annotationName);
+					annotationNamesInRemainderGroup.push(annotationName);
 				}
 			});
 		}
-		// Finally all annotations without entry in displayOrder
-		idsInRemainderGroup.push(...[...remainingAnnotationsToAdd].sort((a, b) => annotations[a].displayName.localeCompare(annotations[b].displayName)));
+		// Finally all non-internal annotations without entry in displayOrder
+		const sortedFilteredAnnotations = [...remainingAnnotationsToAdd]
+			.filter(annotationName => !annotations[annotationName].isInternal) // don't add _relation, punct, etc.
+			.sort((a, b) => annotations[a].displayName.localeCompare(annotations[b].displayName));
+		annotationNamesInRemainderGroup.push(...sortedFilteredAnnotations);
 		// And create the group.
 		annotationGroupsNormalized.push({
 			annotatedFieldId: fieldId,
-			entries: idsInRemainderGroup,
+			entries: annotationNamesInRemainderGroup,
 			id: 'Other',
 			// If there was a group defined from the index config, this is indeed the remainder group, otherwise this is just a normal group.
 			isRemainderGroup: hasUserDefinedGroup

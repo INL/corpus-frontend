@@ -257,13 +257,16 @@ export default Vue.extend({
 		textDirection: CorpusStore.get.textDirection,
 		withinOptions(): Option[] {
 			const {enabled, elements} = UIStore.getState().search.shared.within;
-			return enabled ? elements : [];
+			return enabled && !this.isParallelCorpus ? elements : [];  // (parallel corpus has "align by" widget)
 		},
 		within: {
 			get(): string|null { return PatternStore.getState().extended.within; },
 			set: PatternStore.actions.extended.within,
 		},
-		splitBatchEnabled(): boolean { return UIStore.getState().search.extended.splitBatch.enabled; },
+		splitBatchEnabled(): boolean {
+			return UIStore.getState().search.extended.splitBatch.enabled &&
+				!this.isParallelCorpus; // hide for parallel
+		},
 		splitBatch: {
 			get(): boolean { return PatternStore.getState().extended.splitBatch; },
 			set: PatternStore.actions.extended.splitBatch

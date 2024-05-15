@@ -110,8 +110,10 @@ export default Vue.extend({
 		},
 
 		alignBy: {
-			get(): string { return ''; },
-			set(value: string) { console.log('change alignBy', value); },
+			get(): string { return PatternStore.get.parallelVersions().alignBy || ''; },
+			set(value: string) {
+				PatternStore.actions.parallelVersions.alignBy(value === '' ? null : value);
+			},
 		}
 
 	},

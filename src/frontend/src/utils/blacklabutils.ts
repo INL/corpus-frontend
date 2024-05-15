@@ -111,7 +111,6 @@ function normalizeAnnotatedField(field: BLTypes.BLAnnotatedField): NormalizedAnn
 }
 
 function normalizeAnnotationGroups(blIndex: BLTypes.BLIndexMetadata): NormalizedAnnotationGroup[] {
-	console.log('normalizeAnnotationGroups', blIndex);
 	let annotationGroupsNormalized: NormalizedAnnotationGroup[] = [];
 	const fieldId = blIndex.mainAnnotatedField;
 	const field = blIndex.annotatedFields[fieldId];

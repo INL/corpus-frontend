@@ -459,6 +459,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 		return {
 			source: this.getString('field', CorpusModule.get.parallelVersions()[0]?.name),
 			targets: this._parsedCql ? this._parsedCql.slice(1).map(result => result.targetVersion || '') : [],
+			alignBy: '', // @@@ JN TODO
 		};
 	}
 

@@ -19,6 +19,7 @@ type ModuleRootState = {
 	parallelVersions: {
 		source: string|null,
 		targets: string[],
+		alignBy: string|null,
 	},
 	simple: {
 		annotationValue: AnnotationValue
@@ -52,6 +53,7 @@ const defaults: ModuleRootState = {
 	parallelVersions: {
 		source: null,
 		targets: [],
+		alignBy: null,
 	},
 	simple: {
 		annotationValue: {case: false, id: '', value: '', type: 'text'}
@@ -166,6 +168,9 @@ const actions = {
 			// return setTargetVersions(state, payload);
 		}, 'parallelVersions_removeTarget'),
 		targetVersions: b.commit(setTargetVersions, 'parallelVersions_targets'),
+		alignBy: b.commit((state, payload: string|null) => {
+			return (state.parallelVersions.alignBy = payload);
+		}, 'parallelVersions_align_by'),
 		reset: b.commit(state => {
 			const defaultSourceVersion = CorpusStore.get.parallelVersions()[0]?.name;
 			debugLogCat('parallel', `parallelVersions.reset: Selecting default source version ${defaultSourceVersion}`);
@@ -283,6 +288,7 @@ const init = () => {
 	privateActions.initParallelVersions({
 		source: defaultParallelVersion,
 		targets: [],
+		alignBy: null,
 	})
 	CorpusStore.get.allAnnotations().forEach(({id, uiType}) =>
 		privateActions.initExtendedAnnotation({

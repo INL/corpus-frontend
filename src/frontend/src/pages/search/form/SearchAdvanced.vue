@@ -4,7 +4,7 @@
 			<!-- Regular (non-parallel) corpus -->
 			<div class="querybuilder"></div>
 		</template>
-		<div v-else class="parallel">
+		<div v-else>
 			<!-- Parallel corpus -->
 			<div class="qb-par-wrap">
 				<label class="control-label" for="sourceVersion">{{$t('search.parallel.queryForSourceVersion')}}

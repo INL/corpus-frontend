@@ -72,21 +72,27 @@ export default Vue.extend({
 		},
 
 		mainQuery: {
-			get() { return PatternStore.getState().expert.query || undefined; },
+			get() {
+				const query = PatternStore.getState().expert.query;
+				return query == null || query == '_' ? '' : query;
+			},
 			set: PatternStore.actions.expert.query,
 		},
 		targetQueries: {
-			get() { return PatternStore.getState().expert.targetQueries; },
+			get() {
+				const queries = PatternStore.getState().expert.targetQueries;
+				return queries.map(q => q == null || q == '_' ? '' : q);
+			},
 			set: PatternStore.actions.expert.targetQueries,
 		},
 
 	},
 	methods: {
-		changeTargetQuery(index: number, event: InputEvent) {
+		changeTargetQuery(index: number, event: InputEvent): void {
 			const textarea = event.target as HTMLTextAreaElement;
 			PatternStore.actions.expert.changeTargetQuery({index, value: textarea.value});
 		},
-		addTargetVersion(version: string) {
+		addTargetVersion(version: string): void {
 			if (version != null) // can happen when select is reset to empty option
 				PatternStore.actions.parallelVersions.addTarget(version);
 		},

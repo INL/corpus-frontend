@@ -365,11 +365,12 @@ export const getPatternStringFromCql = (sourceCql: string, targetVersions: strin
 		return sourceCql;
 	}
 
-	const queryParts = [parenQueryPart(sourceCql.trim())];
+	const defaultSourceQuery = targetVersions.length > 0 ? '_': '';
+	const queryParts = [parenQueryPart(sourceCql.trim() || defaultSourceQuery)];
 	for (let i = 0; i < targetVersions.length; i++) {
 		if (i > 0)
 			queryParts.push(' ; ');
-		queryParts.push(` ==>${targetVersions[i].trim()} ${parenQueryPart(targetCql[i].trim())}`)
+		queryParts.push(` ==>${targetVersions[i].trim()} ${parenQueryPart(targetCql[i].trim() || '_')}`)
 	}
 
 	const query = queryParts.join('');

@@ -5,7 +5,7 @@ import LuceneQueryParser from 'lucene-query-parser';
 
 import {mapReduce, MapOf, decodeAnnotationValue, uiTypeSupport, getCorrectUiType, unparenQueryPart} from '@/utils';
 //import parseCql, {Attribute} from '@/utils/cqlparser';
-import {parseBcql, Attribute, Result} from '@/utils/bcql-json-interpreter';
+import {parseBcql, Attribute, Result, Token} from '@/utils/bcql-json-interpreter';
 import parseLucene from '@/utils/luceneparser';
 import {debugLog} from '@/utils/debug';
 
@@ -274,7 +274,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 			!cql ||
 			cql.within ||
 			cql.targetVersion ||
-			cql.tokens.length > ExploreModule.defaults.ngram.maxSize ||
+			cql.tokens === undefined || cql.tokens.length > ExploreModule.defaults.ngram.maxSize ||
 			cql.tokens.find(t =>
 				t.leadingXmlTag != null ||
 				t.trailingXmlTag != null ||
@@ -346,7 +346,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 		}
 
 		const result = this._parsedCql[0];
-		if (result == null) {
+		if (result == null || result.tokens === undefined) {
 			return {};
 		}
 
@@ -376,7 +376,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 
 			const annotationValues: {[key: string]: string[]} = {};
 			for (let i = 0; i < result.tokens.length; ++i) {
-				const token = result.tokens[i];
+				const token: Token = result.tokens[i];
 				if (token.leadingXmlTag || token.optional || token.repeats || token.trailingXmlTag) {
 					throw new Error('Token contains settings too complex for simple search');
 				}
@@ -614,10 +614,20 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	// ------------------------
 
 	private async updateParsedCql(bcql: string|null) {
-		this._parsedCql = bcql == null ? null :
-			await parseBcql(INDEX_ID, bcql, CorpusModule.get.firstMainAnnotation().id);
-		if (this._parsedCql && this._parsedCql.length === 0)
-			this._parsedCql = null;
+		try {
+			this._parsedCql = bcql == null ? null :
+				await parseBcql(INDEX_ID, bcql, CorpusModule.get.firstMainAnnotation().id);
+			if (this._parsedCql && this._parsedCql.length === 0)
+				this._parsedCql = null;
+		} catch (e) {
+			// Just accept that we cannot interpret it for use in the simple, extended or advanced
+			// search modes, and use the entire query for the Expert view.
+			this._parsedCql = [
+				{
+					query: bcql || ''
+				}
+			];
+		}
 	}
 
 	_parsedCql: Result[]|null = null;

@@ -1242,8 +1242,7 @@ function populateQueryBuilder(queryBuilder: QueryBuilder, parsedCql: Result): bo
 	try {
 		const tokens = parsedCql.tokens;
 		const within = parsedCql.within;
-		// @@@ JN TODO parallel!
-		if (tokens === null) {
+		if (tokens === undefined) {
 			return false;
 		}
 

@@ -54,7 +54,7 @@ export type Token = {
 
 export type Result = {
 	query?: string; // the (partial) BCQL query (only set for source and target queries, for expert/advanced)
-	tokens: Token[];
+	tokens?: Token[];
 	/** xml token name excluding namespace, brackets, attributes etc */
 	within?: string;
 	targetVersion?: string; // target version for this quer, or undefined if this is the source query

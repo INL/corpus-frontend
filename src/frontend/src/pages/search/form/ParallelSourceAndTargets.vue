@@ -100,17 +100,11 @@ export default Vue.extend({
 		},
 
 		alignByOptions(): Option[] {
-			return UIStore.getState().search.shared.within.elements.map(
-				o => o.value == '' ? { ...o, label: 'Word' } : o
-			);
-			// return [
-			// 	{ value: '', label: 'Word' },
-			// 	{ value: 'verse', label: 'Verse' },
-			// ];
+			return UIStore.getState().search.shared.alignBy.elements;
 		},
 
 		alignBy: {
-			get(): string { return PatternStore.get.parallelVersions().alignBy || ''; },
+			get(): string { return PatternStore.get.parallelVersions().alignBy || UIStore.get.search.shared.defaultAlignBy(); },
 			set(value: string) {
 				PatternStore.actions.parallelVersions.alignBy(value === '' ? null : value);
 			},

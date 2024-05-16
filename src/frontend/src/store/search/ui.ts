@@ -77,6 +77,16 @@ type ModuleRootState = {
 				 */
 				sentenceElement: string|null;
 			};
+
+			/** Alignment relation types available in a parallel corpus, e.g. word, sentence or paragraph alignment. */
+			alignBy: {
+				enabled: boolean;
+				elements: Array<{
+					title: string|null;
+					label: string;
+					value: string;
+				}>;
+			};
 		}
 	};
 
@@ -255,6 +265,11 @@ const initialState: ModuleRootState = {
 				elements: [],
 				sentenceElement: null
 			},
+
+			alignBy: {
+				enabled: false,
+				elements: []
+			}
 		}
 	},
 	explore: {
@@ -348,7 +363,13 @@ const getState = (() => {
 })();
 
 const get = {
-
+	search: {
+		shared: {
+			defaultAlignBy() {
+				return getState().search.shared.alignBy.elements[0]?.value ?? '';
+			}
+		},
+	},
 };
 
 const privateActions = {
@@ -430,6 +451,13 @@ const actions = {
 					if (state.search.shared.within.elements.findIndex(e => e.value === payload) >= 0 )
 						state.search.shared.within.sentenceElement = payload;
 				}, 'search_shared_within_sentenceElement')
+			},
+			/** Alignment relation types available in a parallel corpus, e.g. word, sentence or paragraph alignment. */
+			alignBy: {
+				enable: b.commit((state, payload: boolean) => state.search.shared.alignBy.enabled = payload, 'search_shared_alignBy_enable'),
+				elements: b.commit((state, payload: ModuleRootState['search']['shared']['alignBy']['elements']) => {
+					state.search.shared.alignBy.elements = payload;
+				}, 'search_shared_alignBy_annotations'),
 			},
 		}
 	},
@@ -784,11 +812,47 @@ const init = () => {
 			}
 		}
 
-		// blacklab 4.0 removed the 'starttag' annotation. We have to retrieve values from a separate endpoint now.
+		function setValuesForAlignBy(validValues?: AppTypes.NormalizedAnnotation['values']) {
+			if (!validValues?.length) {
+				console.warn('Align by not supported in this corpus, no parallel relations indexed');
+				actions.search.shared.alignBy.enable(false);
+				return;
+			};
+
+			validValues.forEach(v => {
+				if (!v.label.trim() || v.label === v.value) {
+					if (v.value.endsWith('-alignment'))
+						v.label = v.value.slice(0, -10); // e.g. word-alignment -> word
+					else if (!v.value) { v.label = 'EMPTY'; }
+					else { v.label = v.value; }
+				}
+			});
+
+			validValues.sort((a, b) => {
+				// "word" should be the first option, if it exists
+				if (a.label.toLowerCase() === 'word') {
+					if (a.label === b.label)
+						return 0;
+					return -1;
+				} else if (b.label.toLowerCase() === 'word') {
+					return 1;
+				}
+				return a.label.localeCompare(b.label)
+			});
+
+			actions.search.shared.alignBy.elements(validValues);
+		}
+
+		// In BlackLab 4.0, the 'starttag' annotation was renamed to '_relation' and is now used to index
+		// (dependency, parallel) relations as well. We get the list of values for this annotation and decode
+		// them, but this makes us depend on implementation details. The new /relations endpoint gives us
+		// the same information in a portable way.
 		blacklab.getRelations(INDEX_ID)
-			.then(relations => Object.keys(relations.spans).map(v => ({value: v, label: v, title: null}))) // map back to the old format
-			.then(v => setValuesForWithin(v))
-			.then(() => {
+			.then(relations => {
+				// map back to the old format
+				const withinValues = Object.keys(relations.spans).map(v => ({value: v, label: v, title: null}));
+				setValuesForWithin(withinValues);
+
 				// default sentence boundary element. For use with dependency trees.
 				const state = getState(); // since we did it async, the init is already finished, and the data we set is not in the initial state anymore.
 				if (!state.search.shared.within.sentenceElement && state.search.shared.within.elements.length) {
@@ -798,7 +862,17 @@ const init = () => {
 						actions.search.shared.within.sentenceElement(defaultWithin.value);
 					}
 				}
-			})
+
+				// get parallel relations types for "align by" selector
+				if (relations.relations) {
+					// Get relation types for parallel relations to all target fields in a set
+					const relTypes = new Set(Object.keys(relations.relations)
+						.filter(v => v.startsWith('al__')) // by convention, parallel relations use class 'al__TARGETVERSION', e.g. 'al__nl'
+						.flatMap(v => Object.keys(relations.relations![v])));
+					const alignByValues = [...relTypes].map(v => ({value: v, label: v, title: null}));
+					setValuesForAlignBy(alignByValues);
+				}
+			});
 	}
 
 	// EXPLORE

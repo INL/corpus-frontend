@@ -109,10 +109,7 @@ export interface BLRelationInfo {
 	/** "inline tags" in the corpus, with their number of occurances. */
 	spans: Record<string, number>;
 	/** Only when relations have been indexed in this corpus. */
-	relations?: {
-		/** Relations are always stored in a "dep" property for now? */
-		dep: Record<string, number>;
-	}
+	relations?: Record<string, Record<string, number>>; // {relClass: {relType: count}}
 }
 
 export interface BLUser {

@@ -9,6 +9,7 @@ import cloneDeep from 'clone-deep';
 
 import { RootState } from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus';
+import * as UIStore from '@/store/search/ui';
 
 import { debugLog, debugLogCat } from '@/utils/debug';
 
@@ -169,13 +170,16 @@ const actions = {
 		}, 'parallelVersions_removeTarget'),
 		targetVersions: b.commit(setTargetVersions, 'parallelVersions_targets'),
 		alignBy: b.commit((state, payload: string|null) => {
-			return (state.parallelVersions.alignBy = payload);
+			return (state.parallelVersions.alignBy = payload == null ? UIStore.get.search.shared.defaultAlignBy() : payload);
 		}, 'parallelVersions_align_by'),
 		reset: b.commit(state => {
 			const defaultSourceVersion = CorpusStore.get.parallelVersions()[0]?.name;
 			debugLogCat('parallel', `parallelVersions.reset: Selecting default source version ${defaultSourceVersion}`);
 			state.parallelVersions.source = defaultSourceVersion;
 			state.parallelVersions.targets = [];
+			const v = UIStore.get.search.shared.defaultAlignBy();
+			console.log('default align by', v);
+			state.parallelVersions.alignBy = v;
 		}, 'parallelVersions_reset'),
 	},
 	simple: {

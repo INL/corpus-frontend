@@ -170,6 +170,7 @@ const actions = {
 		}, 'parallelVersions_removeTarget'),
 		targetVersions: b.commit(setTargetVersions, 'parallelVersions_targets'),
 		alignBy: b.commit((state, payload: string|null) => {
+			debugLogCat('parallel', `parallelVersions.alignBy: Setting to ${payload}`);
 			return (state.parallelVersions.alignBy = payload == null ? UIStore.get.search.shared.defaultAlignBy() : payload);
 		}, 'parallelVersions_align_by'),
 		reset: b.commit(state => {
@@ -260,6 +261,7 @@ const actions = {
 
 	replace: b.commit((state, payload: ModuleRootState) => {
 		actions.parallelVersions.reset();
+		actions.parallelVersions.alignBy(payload.parallelVersions.alignBy);
 		actions.parallelVersions.sourceVersion(payload.parallelVersions.source);
 		actions.parallelVersions.targetVersions(payload.parallelVersions.targets);
 

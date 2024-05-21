@@ -456,11 +456,14 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 
 	@memoize
 	private get parallelVersions() {
-		return {
+		const defaultAlignBy = UIModule.get.search.shared.defaultAlignBy();
+		const result = {
 			source: this.getString('field', CorpusModule.get.parallelVersions()[0]?.name),
 			targets: this._parsedCql ? this._parsedCql.slice(1).map(result => result.targetVersion || '') : [],
-			alignBy: '', // @@@ JN TODO
+			alignBy: (this._parsedCql ? this._parsedCql[1]?.relationType : defaultAlignBy) ?? defaultAlignBy,
 		};
+		console.log('parallelVersions', result)
+		return result;
 	}
 
 	@memoize

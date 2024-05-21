@@ -57,7 +57,8 @@ export type Result = {
 	tokens?: Token[];
 	/** xml token name excluding namespace, brackets, attributes etc */
 	within?: string;
-	targetVersion?: string; // target version for this quer, or undefined if this is the source query
+	targetVersion?: string; // target version for this query, or undefined if this is the source query
+	relationType?: string; // relation type for this (target) query, or undefined if this is the source query
 };
 
 function interpretBcqlJson(bcql: string, json: any, defaultAnnotation: string): Result[] {
@@ -247,17 +248,37 @@ function interpretBcqlJson(bcql: string, json: any, defaultAnnotation: string): 
 	function _relTarget(input: any): Result {
 		if (input.type !== 'reltarget')
 			throw new Error('Unknown reltarget type: ' + input.type);
-		if (input.relType !== '.*')
-			throw new Error('Unsupported reltarget relType: ' + input.relType);
+		// if (input.relType !== '.*')
+		// 	throw new Error('Unsupported reltarget relType: ' + input.relType);
 
-		return { ..._query(input.clause), targetVersion: input.targetVersion };
+		return {
+			..._query(input.clause),
+			targetVersion: input.targetVersion,
+			relationType: input.relType,
+		};
 	}
 
 	function _parallelQuery(bcql: string, input: any): Result[] {
 		if (input.type == 'relmatch') {
-			const queries = bcql.split(/\s*==>\w+\s*/); // extract partial queries for advanced/expert view
+
+			// Determine what relationtype we're filtering by
+			// (must all be the same for the query to be interpretable here)
+			const regex = /\s*=([\w\-]*)=>\w+\s*/g;
+			let result, relationType: string|undefined = undefined;
+			while ((result = regex.exec(bcql)) !== null) {
+				const type = result[1] || '';
+				if (relationType !== undefined && relationType !== type)
+					throw new Error('Mismatch in relation types');
+				relationType = type;
+			}
+
+			const queries = bcql.split(/\s*=[\w\-]*=>\w+\s*/); // extract partial queries for advanced/expert view
 			const parent = { ..._query(input.parent), query: queries.shift() };
-			const children = input.children.map(_relTarget).map( (r: Result) => ({ ...r, query: queries.shift() }));
+			const children: Result[] = input.children.map(_relTarget).map( (r: Result, index: number) => ({
+				...r,
+				query: queries.shift(),
+				relationType
+			}));
 			// if (queries.length !== children.length + 1)
 			// 	throw new Error('Mismatch in number of queries and children');
 			return [parent, ...children];

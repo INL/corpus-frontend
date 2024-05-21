@@ -290,7 +290,8 @@ const actions = {
 					}
 				}
 			},
-			pattern: getPatternString([a], state.patterns.extended.within),
+			pattern: getPatternString([a], state.patterns.extended.within, state.patterns.parallelVersions.targets,
+				state.patterns.parallelVersions.alignBy || ''),
 			// TODO :( url generation is too encapsulated to completely repro here
 			url: ''
 		}))

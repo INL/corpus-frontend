@@ -336,7 +336,7 @@ export function unparenQueryPart(query?: string) {
 	return query;
 }
 
-export const getPatternString = (annotations: AppTypes.AnnotationValue[], within: null|string, parallelTargetVersions: string[] = []) => {
+export const getPatternString = (annotations: AppTypes.AnnotationValue[], within: null|string, parallelTargetVersions: string[] = [], alignBy?: string) => {
 	const tokens = [] as string[][];
 
 	annotations.forEach(annot => getAnnotationPatternString(annot).forEach((value, index) => {
@@ -349,13 +349,14 @@ export const getPatternString = (annotations: AppTypes.AnnotationValue[], within
 	}
 
 	if (parallelTargetVersions.length > 0) {
-		query = `${parenQueryPart(query)}` + parallelTargetVersions.map(v => ` ==>${v} _`).join(' ; ');
+		const relationType = alignBy ?? '';
+		query = `${parenQueryPart(query)}` + parallelTargetVersions.map(v => ` =${relationType}=>${v} _`).join(' ; ');
 	}
 
 	return query || undefined;
 };
 
-export const getPatternStringFromCql = (sourceCql: string, targetVersions: string[], targetCql: string[]) => {
+export const getPatternStringFromCql = (sourceCql: string, targetVersions: string[], targetCql: string[], alignBy?: string) => {
 	if (targetVersions.length > targetCql.length) {
 		console.error('There must be a CQL query for each selected parallel version!', targetVersions, targetCql);
 		throw new Error(`There must be a CQL query for each selected parallel version!`);
@@ -367,10 +368,11 @@ export const getPatternStringFromCql = (sourceCql: string, targetVersions: strin
 
 	const defaultSourceQuery = targetVersions.length > 0 ? '_': '';
 	const queryParts = [parenQueryPart(sourceCql.trim() || defaultSourceQuery)];
+	const relationType = alignBy ?? '';
 	for (let i = 0; i < targetVersions.length; i++) {
 		if (i > 0)
 			queryParts.push(' ; ');
-		queryParts.push(` ==>${targetVersions[i].trim()} ${parenQueryPart(targetCql[i].trim() || '_')}`)
+		queryParts.push(` =${relationType}=>${targetVersions[i].trim()} ${parenQueryPart(targetCql[i].trim() || '_')}`)
 	}
 
 	const query = queryParts.join('');
@@ -855,7 +857,8 @@ export function getPatternStringSearch(
 	switch (subForm) {
 		case 'simple':
 			return state.simple.annotationValue.value &&
-			getPatternString([state.simple.annotationValue], null, state.parallelVersions?.targets || []);
+			getPatternString([state.simple.annotationValue], null, state.parallelVersions?.targets || [],
+				state.parallelVersions?.alignBy || '');
 		case 'extended': {
 			const r = cloneDeep(Object.values(state.extended.annotationValues))
 				.filter(annot => !!annot.value)
@@ -864,17 +867,20 @@ export function getPatternStringSearch(
 					type: getCorrectUiType(uiTypeSupport.search.extended, annot.type!)
 				}));
 			return r.length ?
-				getPatternString(r, state.extended.within, state.parallelVersions?.targets || []) :
+				getPatternString(r, state.extended.within, state.parallelVersions?.targets || [],
+					state.parallelVersions?.alignBy || '') :
 				undefined;
 		}
 		case 'advanced':
 			if (!state.advanced.query)
 				return undefined;
-			return getPatternStringFromCql(state.advanced.query, state.parallelVersions?.targets || [], state.advanced.targetQueries);
+			return getPatternStringFromCql(state.advanced.query, state.parallelVersions?.targets || [],
+				state.advanced.targetQueries, state.parallelVersions?.alignBy || '');
 		case 'expert':
 			if (!state.expert.query)
 				return undefined;
-			return getPatternStringFromCql(state.expert.query, state.parallelVersions?.targets || [], state.expert.targetQueries);
+			return getPatternStringFromCql(state.expert.query, state.parallelVersions?.targets || [],
+				state.expert.targetQueries, state.parallelVersions?.alignBy || '');
 		case 'concept': return state.concept?.trim() || undefined;
 		case 'glosses': return state.glosses?.trim() || undefined;
 		default: throw new Error('Unimplemented pattern generation.');

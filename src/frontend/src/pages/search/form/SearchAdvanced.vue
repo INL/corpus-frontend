@@ -24,13 +24,24 @@
 				</div>
 			</div>
 
-			<label class="control-label">
-				{{ parallelTargetVersions && parallelTargetVersions.length > 0 ?
-				$t('search.parallel.addTargetVersion') :
-				$t('search.parallel.chooseTargetVersion')
-				}}</label>
-			<div>
-				<SelectPicker :options="parallelTargetVersionOptions" @input="addTargetVersion($event)" />
+			<div class="add-target-version">
+				<label class="control-label">
+					{{ parallelTargetVersions && parallelTargetVersions.length > 0 ?
+					$t('search.parallel.addTargetVersion') :
+					$t('search.parallel.chooseTargetVersion')
+					}}</label>
+				<div>
+					<SelectPicker :options="parallelTargetVersionOptions" @input="addTargetVersion($event)" />
+				</div>
+			</div>
+
+			<div class="align-by">
+				<label class="control-label">{{ $t('search.parallel.alignBy') }}</label>
+				<div>
+					<div class="btn-group">
+						<AlignBy />
+					</div>
+				</div>
 			</div>
 		</div>
 
@@ -47,12 +58,14 @@ import * as InterfaceStore from '@/store/search/form/interface';
 
 import SelectPicker, { Option } from '@/components/SelectPicker.vue';
 import MultiValuePicker from '@/components/MultiValuePicker.vue';
+import AlignBy from '@/pages/search/form/AlignBy.vue';
 import { initQueryBuilders } from '@/initQueryBuilders';
 
 export default Vue.extend({
 	components: {
 		SelectPicker,
-		MultiValuePicker
+		MultiValuePicker,
+		AlignBy,
 	},
 	data: () => ({
 	}),
@@ -162,6 +175,12 @@ h3 .help {
 			content: '✕';
 			margin-left: 5px;
 		}
+	}
+
+	.add-target-version, .align-by {
+		margin-bottom: 20px;
+
+		label { display: block; }
 	}
 }
 

@@ -1,20 +1,6 @@
 <template>
 	<!-- Is this a parallel corpus? -->
 	<div v-if="mode === 'simple'">
-		<label class="control-label">{{ $t('search.parallel.alignBy') }}</label>
-		<div>
-			<div class="btn-group">
-				<button v-for="option in alignByOptions"
-					type="button"
-					:class="['btn', alignBy === option.value ? 'active btn-primary' : 'btn-default']"
-					:key="option.value"
-					:value="option.value"
-					:title="option.title || undefined"
-					@click="alignBy = option.value"
-				>{{option.label || option.value || 'document'}}</button> <!-- empty value searches across entire documents -->
-			</div>
-		</div>
-
 		<label class="control-label">{{ $t('search.parallel.inSourceVersion') }}</label>
 		<div>
 			<SelectPicker :options="sourceOptions"
@@ -25,21 +11,16 @@
 		<div>
 			<MultiValuePicker :options="targetOptions" v-model="targetVersions" />
 		</div>
-	</div>
-	<div v-else>
-		<div class="form-group">
-			<label class="col-xs-12 col-md-3">{{ $t('search.parallel.alignBy') }}</label>
-			<div class="btn-group col-xs-12 col-md-9">
-				<button v-for="option in alignByOptions"
-					type="button"
-					:class="['btn', alignBy === option.value ? 'active btn-primary' : 'btn-default']"
-					:key="option.value"
-					:value="option.value"
-					:title="option.title || undefined"
-					@click="alignBy = option.value"
-				>{{option.label || option.value || 'document'}}</button> <!-- empty value searches across entire documents -->
+
+		<label class="control-label">{{ $t('search.parallel.alignBy') }}</label>
+		<div>
+			<div class="btn-group">
+				<AlignBy />
 			</div>
 		</div>
+
+	</div>
+	<div v-else>
 		<div class="form-group">
 			<label class="col-xs-12 col-md-3">{{ $t('search.parallel.inSourceVersion') }}</label>
 			<div class="col-xs-12 col-md-9">
@@ -51,6 +32,12 @@
 			<label class="col-xs-12 col-md-3">{{ $t('search.parallel.andCompareWithTargetVersions') }}</label>
 			<div class="col-xs-12 col-md-9">
 				<MultiValuePicker :options="targetOptions" v-model="targetVersions" />
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-xs-12 col-md-3">{{ $t('search.parallel.alignBy') }}</label>
+			<div class="btn-group col-xs-12 col-md-9">
+				<AlignBy />
 			</div>
 		</div>
 	</div>
@@ -65,11 +52,13 @@ import * as UIStore from '@/store/search/ui';
 
 import SelectPicker, { Option } from '@/components/SelectPicker.vue';
 import MultiValuePicker from '@/components/MultiValuePicker.vue';
+import AlignBy from '@/pages/search/form/AlignBy.vue';
 
 export default Vue.extend({
 	components: {
 		SelectPicker,
-		MultiValuePicker
+		MultiValuePicker,
+		AlignBy,
 	},
 	props: {
 		mode: {

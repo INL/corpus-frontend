@@ -35,6 +35,13 @@
 			<div>
 				<SelectPicker :options="parallelTargetVersionOptions" @input="addTargetVersion($event)" />
 			</div>
+
+			<label class="control-label">{{ $t('search.parallel.alignBy') }}</label>
+			<div>
+				<div class="btn-group">
+					<AlignBy />
+				</div>
+			</div>
 		</div>
 	</div>
 </template>
@@ -47,11 +54,13 @@ import * as PatternStore from '@/store/search/form/patterns';
 
 import SelectPicker, { Option } from '@/components/SelectPicker.vue';
 import MultiValuePicker from '@/components/MultiValuePicker.vue';
+import AlignBy from '@/pages/search/form/AlignBy.vue';
 
 export default Vue.extend({
 	components: {
 		SelectPicker,
-		MultiValuePicker
+		MultiValuePicker,
+		AlignBy,
 	},
 	data: () => ({
 	}),

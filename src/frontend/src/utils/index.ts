@@ -854,11 +854,12 @@ export function getPatternStringSearch(
 	// For the normal search form,
 	// the simple and extended views require the values to be processed before converting them to cql.
 	// The advanced and expert views already contain a good-to-go cql query. We only need to take care not to emit an empty string.
+	const alignBy = state.parallelVersions.alignBy || '';
+	const targets = state.parallelVersions.targets || [];
 	switch (subForm) {
 		case 'simple':
 			return state.simple.annotationValue.value &&
-			getPatternString([state.simple.annotationValue], null, state.parallelVersions?.targets || [],
-				state.parallelVersions?.alignBy || '');
+			getPatternString([state.simple.annotationValue], null, targets, alignBy);
 		case 'extended': {
 			const r = cloneDeep(Object.values(state.extended.annotationValues))
 				.filter(annot => !!annot.value)
@@ -867,20 +868,17 @@ export function getPatternStringSearch(
 					type: getCorrectUiType(uiTypeSupport.search.extended, annot.type!)
 				}));
 			return r.length ?
-				getPatternString(r, state.extended.within, state.parallelVersions?.targets || [],
-					state.parallelVersions?.alignBy || '') :
+				getPatternString(r, state.extended.within, targets, alignBy) :
 				undefined;
 		}
 		case 'advanced':
 			if (!state.advanced.query)
 				return undefined;
-			return getPatternStringFromCql(state.advanced.query, state.parallelVersions?.targets || [],
-				state.advanced.targetQueries, state.parallelVersions?.alignBy || '');
+			return getPatternStringFromCql(state.advanced.query, targets, state.advanced.targetQueries, alignBy);
 		case 'expert':
 			if (!state.expert.query)
 				return undefined;
-			return getPatternStringFromCql(state.expert.query, state.parallelVersions?.targets || [],
-				state.expert.targetQueries, state.parallelVersions?.alignBy || '');
+			return getPatternStringFromCql(state.expert.query, targets, state.expert.targetQueries, alignBy);
 		case 'concept': return state.concept?.trim() || undefined;
 		case 'glosses': return state.glosses?.trim() || undefined;
 		default: throw new Error('Unimplemented pattern generation.');
@@ -921,7 +919,7 @@ export function getPatternSummarySearch<K extends keyof ModuleRootStateSearch>(
 	// 			}));
 	// 		if (annotations.length === 0) { return undefined; }
 	// 		// remove escape backslashes as this is just a summary
-	// 		return getPatternString(annotations, state.extended.within, state.parallelVersions?.targets || [])?.replace(/\\(.)/g, '$1');
+	// 		return getPatternString(annotations, state.extended.within, alignBy, state.parallelVersions?.targets || [])?.replace(/\\(.)/g, '$1');
 	// 	}
 	// 	case 'advanced': return state.advanced.query?.trim() || undefined;
 	// 	case 'expert': return state.expert.query?.trim() || undefined;

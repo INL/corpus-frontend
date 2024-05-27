@@ -83,14 +83,14 @@ export default Vue.extend({
 		mainQuery: {
 			get() {
 				const query = PatternStore.getState().expert.query;
-				return query == null || query == '_' ? '' : query;
+				return query == null || query == '_' || query == '[]*' ? '' : query;
 			},
 			set: PatternStore.actions.expert.query,
 		},
 		targetQueries: {
 			get() {
 				const queries = PatternStore.getState().expert.targetQueries;
-				return queries.map(q => q == null || q == '_' ? '' : q);
+				return queries.map(q => q == null || q == '_' || q == '[]*' ? '' : q);
 			},
 			set: PatternStore.actions.expert.targetQueries,
 		},

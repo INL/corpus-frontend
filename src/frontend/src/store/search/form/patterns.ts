@@ -171,14 +171,14 @@ const actions = {
 		targetVersions: b.commit(setTargetVersions, 'parallelVersions_targets'),
 		alignBy: b.commit((state, payload: string|null) => {
 			debugLogCat('parallel', `parallelVersions.alignBy: Setting to ${payload}`);
-			return (state.parallelVersions.alignBy = payload == null ? UIStore.get.search.shared.defaultAlignBy() : payload);
+			return (state.parallelVersions.alignBy = payload == null ? UIStore.getState().search.shared.alignBy.defaultValue : payload);
 		}, 'parallelVersions_align_by'),
 		reset: b.commit(state => {
 			const defaultSourceVersion = CorpusStore.get.parallelVersions()[0]?.name;
 			debugLogCat('parallel', `parallelVersions.reset: Selecting default source version ${defaultSourceVersion}`);
 			state.parallelVersions.source = defaultSourceVersion;
 			state.parallelVersions.targets = [];
-			const v = UIStore.get.search.shared.defaultAlignBy();
+			const v = UIStore.getState().search.shared.alignBy.defaultValue;
 			console.log('default align by', v);
 			state.parallelVersions.alignBy = v;
 		}, 'parallelVersions_reset'),

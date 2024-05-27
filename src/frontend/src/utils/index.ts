@@ -5,6 +5,7 @@ import URI from 'urijs';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
+import * as UIModule from '@/store/search/ui';
 
 export function escapeRegex(original: string, wildcardSupport: boolean) {
 	original = original.replace(/([\^$\-\\.(){}[\]+])/g, '\\$1'); // add slashes for regex characters
@@ -316,9 +317,9 @@ export const splitIntoTerms = (value: string, useQuoteDelimiters: boolean): Spli
 });
 
 /** Parenthesize part of a BCQL query if it's not already */
-function parenQueryPart(query: string) {
+function parenQueryPart(query: string, exceptions: string[] = []) {
 	query = query.trim();
-	if (query.match(/^\(.+\)$/)) {
+	if (query.match(/^\(.+\)$/) || query.match(/^\[[^\]]*\]$/) || exceptions.includes(query)) {
 		return query;
 	}
 	return `(${query})`;
@@ -336,7 +337,9 @@ export function unparenQueryPart(query?: string) {
 	return query;
 }
 
-export const getPatternString = (annotations: AppTypes.AnnotationValue[], within: null|string, parallelTargetVersions: string[] = [], alignBy?: string) => {
+export const getPatternString = (annotations: AppTypes.AnnotationValue[], within: null|string,
+	parallelTargetVersions: string[] = [], alignBy?: string) => {
+
 	const tokens = [] as string[][];
 
 	annotations.forEach(annot => getAnnotationPatternString(annot).forEach((value, index) => {
@@ -350,11 +353,16 @@ export const getPatternString = (annotations: AppTypes.AnnotationValue[], within
 
 	if (parallelTargetVersions.length > 0) {
 		const relationType = alignBy ?? '';
-		query = `${parenQueryPart(query)}` + parallelTargetVersions.map(v => ` =${relationType}=>${v} _`).join(' ; ');
+		query = `${parenQueryPart(query, ['[]*', '_'])}` + parallelTargetVersions.map(v => ` =${relationType}=>${v} _`).join(' ; ');
 	}
 
 	return query || undefined;
 };
+
+function parenQueryPartParallel(query: string) {
+	const parenExceptions = ['[]*', '_'];
+	return parenQueryPart(query === '[]*' ? '_' : query, parenExceptions);
+}
 
 export const getPatternStringFromCql = (sourceCql: string, targetVersions: string[], targetCql: string[], alignBy?: string) => {
 	if (targetVersions.length > targetCql.length) {
@@ -367,12 +375,12 @@ export const getPatternStringFromCql = (sourceCql: string, targetVersions: strin
 	}
 
 	const defaultSourceQuery = targetVersions.length > 0 ? '_': '';
-	const queryParts = [parenQueryPart(sourceCql.trim() || defaultSourceQuery)];
+	const queryParts = [parenQueryPartParallel(sourceCql.trim() || defaultSourceQuery)];
 	const relationType = alignBy ?? '';
 	for (let i = 0; i < targetVersions.length; i++) {
 		if (i > 0)
 			queryParts.push(' ; ');
-		queryParts.push(` =${relationType}=>${targetVersions[i].trim()} ${parenQueryPart(targetCql[i].trim() || '_')}`)
+		queryParts.push(` =${relationType}=>${targetVersions[i].trim()} ${parenQueryPartParallel(targetCql[i].trim() || '_')}`)
 	}
 
 	const query = queryParts.join('');
@@ -849,12 +857,13 @@ export function getPatternStringExplore(
 }
 export function getPatternStringSearch(
 	subForm: keyof ModuleRootStateSearch,
-	state: ModuleRootStateSearch
+	state: ModuleRootStateSearch,
+	defaultAlignBy: string,
 ): string|undefined {
 	// For the normal search form,
 	// the simple and extended views require the values to be processed before converting them to cql.
 	// The advanced and expert views already contain a good-to-go cql query. We only need to take care not to emit an empty string.
-	const alignBy = state.parallelVersions.alignBy || '';
+	const alignBy = state.parallelVersions.alignBy || defaultAlignBy;
 	const targets = state.parallelVersions.targets || [];
 	switch (subForm) {
 		case 'simple':
@@ -876,9 +885,7 @@ export function getPatternStringSearch(
 				return undefined;
 			return getPatternStringFromCql(state.advanced.query, targets, state.advanced.targetQueries, alignBy);
 		case 'expert':
-			if (!state.expert.query)
-				return undefined;
-			return getPatternStringFromCql(state.expert.query, targets, state.expert.targetQueries, alignBy);
+			return getPatternStringFromCql(state.expert.query || '', targets, state.expert.targetQueries, alignBy);
 		case 'concept': return state.concept?.trim() || undefined;
 		case 'glosses': return state.glosses?.trim() || undefined;
 		default: throw new Error('Unimplemented pattern generation.');
@@ -901,8 +908,9 @@ export function getPatternSummaryExplore<K extends keyof ModuleRootStateExplore>
 export function getPatternSummarySearch<K extends keyof ModuleRootStateSearch>(
 	subForm: K,
 	state: ModuleRootStateSearch,
+	defaultAlignBy: string,
 ) {
-	const patt = getPatternStringSearch(subForm, state);
+	const patt = getPatternStringSearch(subForm, state, defaultAlignBy);
 	console.log('patt', patt, state);
 	return patt?.replace(/\\(.)/g, '$1') || '';
 

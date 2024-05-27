@@ -14,6 +14,7 @@ import { stripIndent, html } from 'common-tags';
 import { RootState } from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus';
 import * as ViewsStore from '@/store/search/results/views';
+import * as PatternsStore from '@/store/search/form/patterns';
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
 import { MapOf } from '@/utils';
@@ -86,6 +87,7 @@ type ModuleRootState = {
 					label: string;
 					value: string;
 				}>;
+				defaultValue: string;
 			};
 		}
 	};
@@ -268,8 +270,9 @@ const initialState: ModuleRootState = {
 
 			alignBy: {
 				enabled: false,
-				elements: []
-			}
+				elements: [],
+				defaultValue: '',
+			},
 		}
 	},
 	explore: {
@@ -363,13 +366,13 @@ const getState = (() => {
 })();
 
 const get = {
-	search: {
-		shared: {
-			defaultAlignBy() {
-				return getState().search.shared.alignBy.elements[0]?.value ?? '';
-			}
-		},
-	},
+	// search: {
+	// 	shared: {
+	// 		defaultAlignBy() {
+	// 			return getState().search.shared.alignBy.elements[0]?.value ?? '';
+	// 		}
+	// 	},
+	// },
 };
 
 const privateActions = {
@@ -457,6 +460,8 @@ const actions = {
 				enable: b.commit((state, payload: boolean) => state.search.shared.alignBy.enabled = payload, 'search_shared_alignBy_enable'),
 				elements: b.commit((state, payload: ModuleRootState['search']['shared']['alignBy']['elements']) => {
 					state.search.shared.alignBy.elements = payload;
+					const defaultValue = payload[0]?.value ?? '';
+					state.search.shared.alignBy.defaultValue = defaultValue;
 				}, 'search_shared_alignBy_annotations'),
 			},
 		}

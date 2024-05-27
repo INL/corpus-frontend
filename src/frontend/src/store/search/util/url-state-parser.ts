@@ -456,7 +456,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 
 	@memoize
 	private get parallelVersions() {
-		const defaultAlignBy = UIModule.get.search.shared.defaultAlignBy();
+		const defaultAlignBy = UIModule.getState().search.shared.alignBy.defaultValue;
 		const result = {
 			source: this.getString('field', CorpusModule.get.parallelVersions()[0]?.name),
 			targets: this._parsedCql ? this._parsedCql.slice(1).map(result => result.targetVersion || '') : [],

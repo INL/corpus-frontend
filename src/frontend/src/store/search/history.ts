@@ -20,6 +20,7 @@ import * as GapModule from '@/store/search/form/gap';
 import * as ViewModule from '@/store/search/results/views';
 import * as ConceptModule from '@/store/search/form/conceptStore';
 import * as GlossModule from '@/store/search/form/glossStore';
+import * as UIModule from '@/store/search/ui';
 
 import UrlStateParser from '@/store/search/util/url-state-parser';
 
@@ -150,8 +151,9 @@ const actions = {
 
 		// Order needs to be consistent or hash will be different.
 		const filterSummary: string|undefined = getFilterSummary(Object.values(entry.filters).sort((l, r) => l.id.localeCompare(r.id)));
+		const defaultAlignBy = UIModule.getState().search.shared.alignBy.defaultValue;
 		const patternSummary: string|undefined =
-			entry.interface.form === 'search' ? getPatternSummarySearch(entry.interface.patternMode, entry.patterns) :
+			entry.interface.form === 'search' ? getPatternSummarySearch(entry.interface.patternMode, entry.patterns, defaultAlignBy) :
 			entry.interface.form === 'explore' ? getPatternSummaryExplore(entry.interface.exploreMode, entry.explore, CorpusModule.get.allAnnotationsMap()) :
 			undefined;
 

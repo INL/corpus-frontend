@@ -25,7 +25,7 @@ export default Vue.extend({
 			return UIStore.getState().search.shared.alignBy.elements;
 		},
 		alignBy: {
-			get(): string { return PatternStore.get.parallelVersions().alignBy || UIStore.get.search.shared.defaultAlignBy(); },
+			get(): string { return PatternStore.get.parallelVersions().alignBy || UIStore.getState().search.shared.alignBy.defaultValue; },
 			set(value: string) {
 				PatternStore.actions.parallelVersions.alignBy(value === '' ? null : value);
 			},

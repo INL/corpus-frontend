@@ -656,9 +656,9 @@ export class Token {
 			outputParts.push('<s> ');
 		}
 
-		outputParts.push('[ ');
+		outputParts.push('[');
 		outputParts.push(this.rootAttributeGroup.getCql());
-		outputParts.push(' ]');
+		outputParts.push(']');
 
 		if (!isNaN(minRepeats) || !isNaN(maxRepeats)) { // Only output when at least one of them is entered
 			minRepeats = minRepeats || 0;			// Set some default values in case of omitted field
@@ -666,16 +666,26 @@ export class Token {
 
 			if (minRepeats < maxRepeats) {
 				if (maxRepeats !== Infinity) { // infinite is empty field instead of max value
-					outputParts.push('{'+minRepeats+','+maxRepeats+'}');
+					if (minRepeats === 0 && maxRepeats === 1) {
+						outputParts.push('?');
+					} else {
+						outputParts.push('{'+minRepeats+','+maxRepeats+'}');
+					}
 				} else {
-					outputParts.push('{'+minRepeats+', }');
+					if (minRepeats === 0) {
+						outputParts.push('*');
+					} else if (minRepeats === 1) {
+						outputParts.push('+');
+					} else {
+						outputParts.push('{'+minRepeats+',}');
+					}
 				}
 			} else if (minRepeats === maxRepeats && minRepeats !== 1) { // 1 is the default so if min == max == 1 then we don't need to do anything
 				outputParts.push('{'+minRepeats+'}');
 			}
 		}
 
-		if (optional) {
+		if (optional && minRepeats !== 0) {
 			outputParts.push('?');
 		}
 

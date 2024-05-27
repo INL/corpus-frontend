@@ -29,6 +29,7 @@ import * as PatternModule from '@/store/search/form/patterns';
 import * as FilterModule from '@/store/search/form/filters';
 import * as ExploreModule from '@/store/search/form/explore';
 import * as GapModule from '@/store/search/form/gap';
+import * as UIModule from '@/store/search/ui';
 import { getFilterSummary, getFilterString } from '@/components/filters/filterValueFunctions';
 import { getPatternStringExplore, getPatternStringSearch, getPatternSummaryExplore, getPatternSummarySearch } from '@/utils';
 
@@ -97,7 +98,7 @@ const get = {
 		const annotations = CorpusModule.get.allAnnotationsMap();
 		switch (state.form) {
 		case 'search':
-			return getPatternStringSearch(state.subForm, formState);
+			return getPatternStringSearch(state.subForm, formState, UIModule.getState().search.shared.alignBy.defaultValue);
 		case 'explore':
 			return getPatternStringExplore(state.subForm, formState, annotations);
 		default:
@@ -113,7 +114,7 @@ const get = {
 		} as any; /** egh, feel free to refactor */
 		switch (state.form) {
 		case 'search':
-			return getPatternSummarySearch(state.subForm, formState);
+			return getPatternSummarySearch(state.subForm, formState, UIModule.getState().search.shared.alignBy.defaultValue);
 		case 'explore':
 			return getPatternSummaryExplore(state.subForm, formState, CorpusModule.get.allAnnotationsMap());
 		default:

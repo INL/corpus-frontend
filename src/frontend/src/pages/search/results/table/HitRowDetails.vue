@@ -2,25 +2,23 @@
 	<tr class="concordance-details" v-if="open">
 		<td :colspan="colspan">
 			<div class="concordance-details-wrapper">
-				<p v-if="loading" :class="{'text-danger': !!error}">
-					<span class="fa fa-spinner fa-spin"></span> Loading...
+				<p v-if="loading">
+					<Spinner inline/> Loading...
 				</p>
 				<p v-else-if="error" class="text-danger">
 					<span class="fa fa-exclamation-triangle"></span> <span v-html="error"></span>
 				</p>
-				<template v-else-if="context"> <!-- context is the larger surrounding context of the hit. We don't always have one (when rendering docs we only have the immediate hit and no context, so this is meaningless.) -->
+				<template v-else-if="context"> <!-- context is the larger surrounding context of the hit. We don't always have one (when rendering docs we only have the immediate hit) -->
+					<label>
+						<input v-if="sentenceAvailable" type="checkbox" v-model="sentenceShown" class="show-sentence-checkbox" />
+						<Spinner v-if="sentenceLoading" inline style="margin-right: 0.5em"/>Show full sentence
+					</label>
+					<!-- Will not render anything if no relation info is available in the passed hit/sentence. -->
 					<DepTree
 						:data="data"
-						:canLoadFullSentence="!!canLoadSentence"
-						:fullSentence="sentenceSnippet"
-						:loadingFullSentence="loadingSentenceSnippet"
+						:fullSentence="sentenceShown ? sentence : undefined"
 						:mainAnnotation="mainAnnotation.id"
-						:otherAnnotations="{
-							lemma: 'lemma',
-							upos: 'pos',
-							// xpos: 'xpos',
-						}"
-						@loadSentence="loadSentence"
+						:otherAnnotations="depTreeAnnotations"
 					/>
 					<p>
 						<template v-for="addon in addons">
@@ -84,6 +82,7 @@ import { getDocumentUrl } from '@/utils';
 import { snippetParts } from '@/utils/hit-highlighting';
 import { HitRowData } from '@/pages/search/results/table/HitRow.vue';
 import DepTree from '@/pages/search/results/table/DepTree.vue';
+import Spinner from '@/components/Spinner.vue';
 
 import * as UIStore from '@/store/search/ui';
 import * as Api from '@/api';
@@ -93,7 +92,8 @@ import { debugLog } from '@/utils/debug';
 export default Vue.extend({
 	components: {
 		HitContextComponent,
-		DepTree
+		DepTree,
+		Spinner
 	},
 	props: {
 		data: Object as () => HitRowData,
@@ -106,20 +106,20 @@ export default Vue.extend({
 		colspan: Number,
 		dir: String as () => 'ltr'|'rtl',
 
-		open: Boolean
+		open: Boolean,
+
 	},
 	data: () => ({
 		loading: false,
 		error: null as null|string,
 		context: null as null|HitContext,
-		/** Required for deptree, since sometimes relations point outside the matched hit, so provide as much info as possible. */
-		snippet: null as null|BLTypes.BLHitSnippet,
 		addons: [] as Array<ReturnType<UIStore.ModuleRootState['results']['hits']['addons'][number]>>,
 
-		initialized: false,
-
-		loadingSentenceSnippet: false,
-		sentenceSnippet: null as null|BLTypes.BLHit,
+		// whether full sentence is shown (instead of just n words before and after the hit)
+		// For this to be available, the sentenceElement must be set (in the ui store)
+		sentenceShown: false,
+		sentenceLoading: false,
+		sentence: null as null|BLTypes.BLHit,
 	}),
 	computed: {
 		href(): string|undefined {
@@ -130,10 +130,15 @@ export default Vue.extend({
 			if (!('start' in this.data.hit)) return;
 			return getDocumentUrl(this.data.doc.docPid, this.query?.patt, this.query?.pattgapdata, this.data.hit.start, PAGE_SIZE, this.data.hit.start);
 		},
+		/** Context info for things besides the main 'word' (e.g. 'lemma', 'part of speech', etc.) */
 		otherContexts(): HitContext[] {
 			return (this.detailedAnnotations || []).map(a => snippetParts(this.data.hit, a.id, this.dir, false) || []);
 		},
-		canLoadSentence(): boolean { return !!UIStore.getState().search.shared.within.sentenceElement; }
+
+		/** Exact surrounding sentence can only be loaded if we the start location of the current hit, and when the boundery element has been set. */
+		sentenceAvailable(): boolean { return !!UIStore.getState().search.shared.within.sentenceElement && 'start' in this.data.hit; },
+		/** What properties/annotations to show for tokens in the deptree, e.g. lemma, pos, etc. */
+		depTreeAnnotations(): Record<'lemma'|'upos'|'xpos'|'feats', string|null> { return UIStore.getState().results.shared.dependencies; }
 	},
 	methods: {
 		/**
@@ -141,11 +146,16 @@ export default Vue.extend({
 		 * We use it to render the dependency tree for the entire sentence.
 		 */
 		loadSentence() {
-			if (this.sentenceSnippet || this.loadingSentenceSnippet || !('start' in this.data.hit)) return;
+			if (!this.sentenceAvailable || this.sentence || this.sentenceLoading) return;
+			if (!('start' in this.data.hit)) // should always be true if this.sentenceAvailable is true, but typescript doesn't know this.
+				return;
+
 			const context = UIStore.getState().search.shared.within.sentenceElement;
 			if (!context) return; // unavailable.
 
-			this.loadingSentenceSnippet = true;
+			const formatError = UIStore.getState().global.errorMessage;
+
+			this.sentenceLoading = true;
 			Api.blacklab.getSnippet(
 				INDEX_ID,
 				this.data.doc.docPid,
@@ -153,62 +163,63 @@ export default Vue.extend({
 				this.data.hit.end,
 				context
 			)
-			.then(r => this.sentenceSnippet = r)
-			.catch(e => this.error = e.message)
-			.finally(() => this.loadingSentenceSnippet = false);
+			.then(r => this.sentence = r)
+			.catch(e => this.error = formatError(e, 'snippet'))
+			.finally(() => this.sentenceLoading = false);
+		},
+		loadContext() {
+			// If we don't have a fat hit, we can't get any larger context (because we don't know the start/end of the hit)
+			// Don't do anything else, we just won't render the larger context.
+			// The small table will still be shown.
+			if (this.loading || this.context || !('start' in this.data.hit)) return;
+
+			ga('send', 'event', 'results', 'snippet/load', this.data.doc.docPid);
+			this.loading = true;
+
+			const transformSnippets = UIStore.getState().results.shared.transformSnippets;
+			const addons = UIStore.getState().results.hits.addons;
+			const formatError = UIStore.getState().global.errorMessage;
+			const concordanceSize = UIStore.getState().results.shared.concordanceSize;
+
+			Api.blacklab
+			.getSnippet(INDEX_ID, this.data.doc.docPid, this.data.hit.start, this.data.hit.end, concordanceSize)
+			.then(s => {
+				transformSnippets?.(s);
+				this.context = snippetParts({
+					// matchInfos not included in document search results. If we're expanding one of those context,
+					// @ts-ignore
+					matchInfos: s.matchInfos || this.data.hit.matchInfos,
+					...s
+				}, this.mainAnnotation.id, this.dir);
+
+				// Run plugins defined for this corpus (e.g. a copy to clipboard button, or an audio player/text to speech button)
+				this.addons = addons.map(a => a({
+					docId: this.data.doc.docPid,
+					corpus: INDEX_ID,
+					document: this.data.doc.docInfo,
+					documentUrl: this.href || '',
+					wordAnnotationId: this.mainAnnotation.id,
+					dir: this.dir,
+					citation: s
+				}))
+				.filter(a => a != null);
+			})
+			.catch((err: Api.ApiError) => {
+				this.error = formatError(err, 'snippet');
+				if (err.stack) debugLog(err.stack);
+				ga('send', 'exception', { exDescription: err.message, exFatal: false });
+			})
+			.finally(() => this.loading = false);
 		}
 	},
 	watch: {
 		open: {
 			immediate: true,
-			handler() {
-				if (!this.open || this.initialized) return;
-				if (!('start' in this.data.hit)) {
-					// we don't have a fat hit. We can't get any larger context (because we don't know the start/end of the hit)
-					// Don't do anything else, we just won't render the larger context.
-					// The small table will still be shown.
-					return;
-				}
-
-				ga('send', 'event', 'results', 'snippet/load', this.data.doc.docPid);
-				this.loading = true;
-
-				const transformSnippets = UIStore.getState().results.shared.transformSnippets;
-				const addons = UIStore.getState().results.hits.addons;
-				const formatError = UIStore.getState().global.errorMessage;
-				const concordanceSize = UIStore.getState().results.shared.concordanceSize;
-
-				Api.blacklab
-				.getSnippet(INDEX_ID, this.data.doc.docPid, this.data.hit.start, this.data.hit.end, concordanceSize)
-				.then(s => {
-					transformSnippets?.(s);
-					this.context = snippetParts({
-						// matchInfos not included in document search results. If we're expanding one of those context,
-						// @ts-ignore
-						matchInfos: s.matchInfos || this.data.hit.matchInfos,
-						...s
-					}, this.mainAnnotation.id, this.dir);
-					this.snippet = s;
-
-					// Run plugins defined for this corpus (ex. a copy citation to clipboard button, or an audio player/text to speech button)
-					this.addons = addons.map(a => a({
-						docId: this.data.doc.docPid,
-						corpus: INDEX_ID,
-						document: this.data.doc.docInfo,
-						documentUrl: this.href || '',
-						wordAnnotationId: this.mainAnnotation.id,
-						dir: this.dir,
-						citation: s
-					}))
-					.filter(a => a != null);
-				})
-				.catch((err: Api.ApiError) => {
-					this.error = formatError(err, 'snippet');
-					if (err.stack) debugLog(err.stack);
-					ga('send', 'exception', { exDescription: err.message, exFatal: false });
-				})
-				.finally(() => this.loading = false);
-			}
+			handler() { if (this.open) this.loadContext(); }
+		},
+		sentenceShown: {
+			immediate: true,
+			handler() { if (this.sentenceShown) this.loadSentence(); }
 		}
 	}
 });
@@ -216,6 +227,10 @@ export default Vue.extend({
 
 <style lang="scss">
 
+// copy of bootstrap's breakpoints.
+// we need to do this to limit the width of the table-contents.
+// especially the dependency tree can get very wide, so we need to surround it with a scrollable container.
+// we can't use a constant or 'vw' because bootstrap has different paddings on the main container for different widths.
 $screen-xs: 480px;
 $screen-sm: 768px;
 $screen-md: 992px;

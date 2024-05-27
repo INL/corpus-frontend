@@ -1018,13 +1018,13 @@ Through javascript you can do many things, but outlined below are some of the mo
     2.  `vuexModules.ui.actions.results.shared.concordanceAnnotationId('pos_id')`
     3.  ![](docs/img/concordance_annot_posId.png)
 
-    For a more interesting example consider the following:
+    While this example is a little contrived, consider the following:
 
-    In diacritic words, there are usually two words, but only one lemma shared between them.
-    Indexing multiple words per token is supported by blacklab,
-    but due to a limitation in the forward index, only the first value for an annotation can be shown in the results.
-    Using this system you can use a different annotation for searching (with multiple indexed values)
-    than you use for displaying the results (with the multiple words concatenated for example).
+    In Clitic words (e.g. _they've_), there are usually two lemmata (_they_ and _have_), but only one word shared between them.
+    Indexing multiple values per token is supported by blacklab, and searching for either value will find the result,
+    but due to a limitation in the forward index, only the first value for an annotation can be displayed.
+    Using this system you can use a different annotation for searching, e.g. match on _they_ and _have_, but show the original from the text (_they've_).
+    Another case could be preserving markup such as --strikethrough--, _italics_ or **bold**. You could index the words including markup and the version without as another annotation, then show the version with markup in the results table. (using the `concordanceAsHtml`).
 
     -------
 

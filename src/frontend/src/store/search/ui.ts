@@ -198,6 +198,13 @@ type ModuleRootState = {
 			totalsTimeoutDurationMs: number;
 			/** Polling interval for the above. Default 2 seconds. Minimum 100ms. */
 			totalsRefreshIntervalMs: number;
+
+			dependencies: {
+				lemma: string|null;
+				upos: string|null;
+				xpos: string|null;
+				feats: string|null;
+			}
 		};
 	};
 
@@ -304,7 +311,14 @@ const initialState: ModuleRootState = {
 			exportEnabled: true,
 
 			totalsTimeoutDurationMs: 90_000,
-			totalsRefreshIntervalMs: 2_000
+			totalsRefreshIntervalMs: 2_000,
+
+			dependencies: {
+				feats: null,
+				lemma: null,
+				upos: null,
+				xpos: null
+			}
 		}
 	},
 	global: {
@@ -597,6 +611,15 @@ const actions = {
 				const n = Number(intervalMs);
 				state.results.shared.totalsRefreshIntervalMs = isNaN(n) ? 2_000 : Math.max(100, n);
 			}, 'totalsRefreshIntervalMs'),
+
+			dependencies: b.commit((state, payload: { lemma: string|null, upos: string|null, xpos: string|null, feats: string|null }) => {
+				state.results.shared.dependencies = {
+					lemma: payload.lemma || null,
+					upos: payload.upos || null,
+					xpos: payload.xpos || null,
+					feats: payload.feats || null,
+				};
+			}, 'dependencies')
 		}
 	},
 	global: {
@@ -675,6 +698,18 @@ const actions = {
  *
  * There's no real way to get around this validation for now.
  * If we didnt't do this, and someone made a typo in their setup javascript and sets a nonexistant annotation somewhere the page would probably crash.
+ *
+ *
+ * Store initialization happens in 3 steps:
+ * - initial construction:
+ *   this happens immediately when the script is evaluated.
+ *   This is when the initialState objects are created. (hence the workaround in this module's getState())
+ * - customization:
+ *   CustomJs scripts load and can interact with the UI module
+ * - init() function: CustomJs should now have done all its edits,
+ *   and changes are validated and persisted into the initialState objects.
+ *   This is where we are now.
+ *
  */
 const init = () => {
 	if (!CorpusStore.getState().corpus) throw new Error('Cannot initialize UI module before corpus is loaded');
@@ -696,17 +731,7 @@ const init = () => {
 	 */
 	alwaysCallbackAfterValidating = true;
 
-	/*
-	Store initialization happens in 3 steps:
-	- initial construction:
-		this happens immediately when the script is evaluated.
-		This is when the initialState objects are created. (hence the workaround in this module's getState())
-	- customization:
-		CustomJs scripts load and can interact with the UI module
-	- init() function: CustomJs should now have done all its edits,
-		and changes are validated and persisted into the initialState objects.
-		This is where we are now.
-	*/
+
 
 	// ====================
 	// Set up some defaults
@@ -793,7 +818,8 @@ const init = () => {
 				const state = getState(); // since we did it async, the init is already finished, and the data we set is not in the initial state anymore.
 				if (!state.search.shared.within.sentenceElement && state.search.shared.within.elements.length) {
 					const labelsOrValues = ['sentence', 's', 'sen', 'sent', 'paragraph', 'p', 'par', 'para', 'verse'];
-					const defaultWithin = state.search.shared.within.elements.find(e => labelsOrValues.includes(e.value) || labelsOrValues.includes(e.label));
+					// process the labels in order or preference.
+					const defaultWithin = labelsOrValues.flatMap(l => state.search.shared.within.elements.find(e => e.label.includes(l) || e.value.includes(l)) || [])[0]
 					if (defaultWithin) {
 						actions.search.shared.within.sentenceElement(defaultWithin.value);
 					}
@@ -873,6 +899,35 @@ const init = () => {
 
 	actions.results.shared.sortMetadataIds(initialState.results.shared.sortMetadataIds);
 	if (!getState().results.shared.sortMetadataIds.length) actions.results.shared.sortMetadataIds(defaultMetadataToShow);
+
+
+	/**
+	 * Search for likely annotations to map to the connlu properties shown in the dependency tree.
+	 * find all likely matches, then dedupe them.
+	 * Null values won't shown anything.
+	 * The word property itself is hardcoded to be the same as the concordance (i.e. words shown in the hit), so we don't need to configure that.
+	 */
+	function findAnnotation(keywords: string[]): string[] {
+		const ids = Object.keys(allAnnotationsMap).filter(id => allAnnotationsMap[id].hasForwardIndex);
+
+		// return best match first. If multiple annotations match the same keyword, prefer the shortest one i.e. best match (e.g. pos > pos_with_features)
+		const matches = ids.flatMap(id => {
+			const matchIndex = keywords.findIndex(kw => id.toLowerCase().includes(kw));
+			if (matchIndex === -1) return [];
+			return {id, matchIndex};
+		});
+		const sortedMatches = matches.sort((a, b) => a.matchIndex - b.matchIndex === 0 ? a.id.length - b.id.length : a.matchIndex - b.matchIndex);
+		return sortedMatches.map(m => m.id);
+	}
+	const lemmaCandidates = [getState().results.shared.dependencies.lemma || findAnnotation(['lemma', 'lem'])].flat();
+	const uposCandidates = [getState().results.shared.dependencies.upos || findAnnotation(['upos', 'pos', 'part', 'speech'])].flat();
+	const xposCandidates = [getState().results.shared.dependencies.xpos || findAnnotation(['xpos', 'pos', 'part', 'speech'])].flat();
+	const featsCandidates = [getState().results.shared.dependencies.feats || findAnnotation(['feats', 'features'])].flat();
+	let lemma = lemmaCandidates[0] || null;
+	let upos = uposCandidates.find(candidate => candidate != lemma) || null;
+	let xpos = xposCandidates.find(candidate => candidate != lemma && candidate != upos) || null;
+	let feats = featsCandidates.find(candidate => candidate != lemma && candidate != upos && candidate != xpos) || null;
+	actions.results.shared.dependencies({lemma, upos, xpos, feats});
 
 	// init custom annotation extension points, so vue reactivity will properly pick up on them
 	CorpusStore.get.allAnnotations().forEach(annot => privateActions.search.shared.initCustomAnnotationRegistrationPoint(annot.id));

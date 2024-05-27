@@ -1,18 +1,10 @@
 <template>
-	<div>
-		<button type="button" class="btn btn-default" @click="$emit('loadSentence')" v-if="!fullSentence && connlu">
-			<template v-if="!loadingFullSentence">Load complete sentence</template>
-			<template v-else><Spinner inline/> Loading...</template>
-		</button>
-
-		<reactive-dep-tree v-if="connlu && renderTree" ref="tree"
-			minimal
-			interactive
-			shown-features="FORM,LEMMA,UPOS"
-			:conll="connlu"
-		></reactive-dep-tree>
-
-	</div>
+	<reactive-dep-tree v-if="connlu && renderTree" ref="tree"
+		minimal
+		interactive
+		shown-features="FORM,LEMMA,UPOS"
+		:conll="connlu"
+	></reactive-dep-tree>
 </template>
 
 <script lang="ts">
@@ -22,7 +14,7 @@ import Vue from 'vue';
 // @ts-ignore
 import {ReactiveDepTree} from '@/../node_modules/reactive-dep-tree/dist/reactive-dep-tree.umd.js';
 import {HitRowData} from '@/pages/search/results/table/HitRow.vue';
-import { BLHit, BLHitSnippet, BLHitSnippetPart, BLRelationMatchRelation } from '@/types/blacklabtypes';
+import { BLHit, BLHitSnippetPart, BLRelationMatchRelation } from '@/types/blacklabtypes';
 import Spinner from '@/components/Spinner.vue';
 
 
@@ -48,7 +40,15 @@ MISC:   Any other annotation.
 // 4	a	_	DET	_	_	5	det	_	_
 // 5	pineapple	_	NOUN	_	_	3	obj	_	_`
 
-
+/**
+ * Transform from arrays of strings to an array of objects with keys.
+ * E.g: {
+ *   word: ['I', 'am', 'eating', 'a', 'pineapple'],
+ *   lemma: ['i', 'be', 'eat', 'a', 'pineapple'],
+ * }
+ * to
+ * [{word: 'I', lemma: 'i'}, {word: 'am', lemma: 'be'}, ...]
+ */
 function flatten(h?: BLHitSnippetPart, values?: string[]): Array<Record<string, string>> {
 	const r = [] as Array<Record<string, string>>;
 	if (!h) return r;
@@ -80,8 +80,6 @@ export default Vue.extend({
 	props: {
 		data: Object as () => HitRowData,
 		fullSentence: Object as () => BLHit|undefined,
-		loadingFullSentence: Boolean,
-		canLoadFullSentence: Boolean,
 
 		// TODO
 		dir: String as () => 'ltr'|'rtl',

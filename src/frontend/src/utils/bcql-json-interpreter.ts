@@ -259,6 +259,12 @@ function interpretBcqlJson(bcql: string, json: any, defaultAnnotation: string): 
 	}
 
 	function _parallelQuery(bcql: string, input: any): Result[] {
+		if (input.type === 'callfunc' && input.name === 'rspan' && input.args.length === 2 &&
+			input.args[1] === 'all') {
+			// rspan(..., 'all') is added automatically. Ignore here.
+			return _parallelQuery(bcql, input.args[0]);
+		}
+
 		if (input.type == 'relmatch') {
 
 			// Determine what relationtype we're filtering by
@@ -272,7 +278,7 @@ function interpretBcqlJson(bcql: string, json: any, defaultAnnotation: string): 
 				relationType = type;
 			}
 
-			const queries = bcql.split(/\s*=[\w\-]*=>\w+\s*/); // extract partial queries for advanced/expert view
+			const queries = bcql.split(/;?\s*=[\w\-]*=>\w+\s*/); // extract partial queries for advanced/expert view
 			const parent = { ..._query(input.parent), query: queries.shift() };
 			const children: Result[] = input.children.map(_relTarget).map( (r: Result, index: number) => ({
 				...r,

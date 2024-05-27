@@ -47,7 +47,7 @@
 	</div>
 </template>
 
-<script lang="tsx">
+<script lang="ts">
 import Vue from 'vue';
 
 import * as CorpusStore from '@/store/search/corpus';
@@ -61,9 +61,11 @@ import { displayModes, TableDef, tableHeaders, definitions, GroupRowData, GroupD
 import GroupTable from '@/pages/search/results/table/GroupTable.vue';
 import SelectPicker from '@/components/SelectPicker.vue';
 
-/**
- * TODO fix metadata in hits table vs metadata in docs table.
- */
+
+function decodePropertyValue(g: BLTypes.BLGroupResult): string {
+	return g.properties.map(p => p.value).join('·');
+}
+
 export default Vue.extend({
 	components: { SelectPicker, GroupTable },
 
@@ -181,7 +183,7 @@ export default Vue.extend({
 					stage1.push({
 						id: g.identity || '[unknown]',
 						size: g.size,
-						displayname: this.decodePropertyValue(g) || '[unknown]',
+						displayname: decodePropertyValue(g) || '[unknown]',
 
 						'r.d': summary.numberOfDocs,
 						'r.t': summary.tokensInMatchingDocuments!, // FIXME augment request to make this available
@@ -216,7 +218,7 @@ export default Vue.extend({
 					stage1.push({
 						id: g.identity,
 						size: g.size,
-						displayname: this.decodePropertyValue(g) || '[unknown]',
+						displayname: decodePropertyValue(g) || '[unknown]',
 
 						'r.d': summary.numberOfDocs,
 						'r.t': summary.tokensInMatchingDocuments!, // FIXME augment request to make this available
@@ -274,9 +276,6 @@ export default Vue.extend({
 			this.$emit('viewgroup', {id, displayName});
 		},
 
-		decodePropertyValue(g: BLTypes.BLGroupResult): string {
-			return g.properties.map(p => p.value).join('·');
-		}
 	},
 	watch: {
 		chartModeOptions(v: string[]) {
@@ -294,7 +293,7 @@ export default Vue.extend({
 </script>
 
 <style lang="scss">
-
+/*
 .group-table {
 	table-layout: auto;
 
@@ -339,5 +338,5 @@ export default Vue.extend({
 	margin-bottom: 8px;
 	padding: 8px
 }
-
+*/
 </style>

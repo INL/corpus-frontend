@@ -283,6 +283,8 @@ export type CaptureAndRelation = {
 	color: string;
 	/** Because background color might be dark, in that case text should be white */
 	textcolor: string;
+	/** Invert of textcolor */
+	textcolorcontrast: string;
 	/** name of the capture group, or set of relation. */
 	key: string;
 	/** value of captured info, or value of relation. */

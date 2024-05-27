@@ -18,57 +18,30 @@ type NormalizedCapture = {
 	color: string;
 	/** Color text should be on top of the colored background */
 	textcolor: string;
+	textcolorcontrast: string;
 }
 
-const hues = [
-	0, 120, 240,
-	60, 180, 300,
-	30, 150, 270,
-	90, 210, 330,
-	15, 135, 255,
-	75, 195, 315,
-	45, 165, 285,
-	105, 225, 345,
-];
+// these should be alright for colorblind people.
+// taken from https://personal.sron.nl/~pault/#sec:qualitative
+const colors = [
+	'#77AADD',
+	'#EE8866',
+	'#EEDD88',
+	'#FFAABB',
+	'#99DDFF',
+	'#44BB99',
+	'#BBCC33',
+	'#AAAA00',
+	'#DDDDDD',
+]
 
-/**
- * @param h - hue in [0,360]
- * @param s - saturation in [0,1]
- * @param v - value in [0,1]
- * @returns [r, g, b] in [0,1]
- */
-function hsv2rgb(h: number,s: number,v: number) {
-	const f = (n: number) => {
-		const k = (n+h/60) % 6;
-		return v - v*s*Math.max( Math.min(k,4-k,1), 0);
-	};
-	return [f(5),f(3),f(1)];
-}
-
-/**
- * @param h - hue in [0,360]
- * @param s - saturation in [0,1]
- * @param l - lightness in [0,1]
- */
-function hsl2rgb(h: number, s: number, l: number) {
-	const a = s * Math.min(l, 1 - l);
-	const f = (n: number) => {
-	  const k = (n + h / 30) % 12;
-	  return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-	};
-	return [f(0), f(8), f(4)];
-  }
-
-const indexToRgb = (i: number): {color: string, textcolor: string} => {
-	const [red, green, blue] = hsl2rgb(hues[i % hues.length], 0.9, 0.7);
-	const textcolor = (red*0.299 + green*0.587 + blue*0.114) > (160/255) ? 'black' : 'white';
-
+const color = (i: number): {color: string, textcolor: string, textcolorcontrast: string} => {
 	return {
-		color: `rgb(${Math.floor(red*255)}, ${Math.floor(green*255)}, ${Math.floor(blue*255)})`,
-		textcolor
+		color: colors[i % colors.length],
+		textcolor: 'black',
+		textcolorcontrast: 'white'
 	}
 }
-
 
 /**
  * Flatten a set of arrays into an array of sets.
@@ -140,10 +113,10 @@ export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir:
 	/** When running a query with rcapture. */
 	const capturedRelations: NormalizedCapture[] = [];
 
-	let allMatches = Object.entries(hit.matchInfos).flatMap<Omit<NormalizedCapture, 'color'|'textcolor'>>(([blackLabReportedName, info]) => {
+	let allMatches = Object.entries(hit.matchInfos).flatMap<Omit<NormalizedCapture, 'color'|'textcolor'|'textcolorcontrast'>>(([blackLabReportedName, info]) => {
 		if (blackLabReportedName === 'captured_rels') return [];
 
-		if (info.type === 'list') return info.infos.map<Omit<NormalizedCapture, 'color'|'textcolor'>>(info => ({
+		if (info.type === 'list') return info.infos.map<Omit<NormalizedCapture, 'color'|'textcolor'|'textcolorcontrast'>>(info => ({
 			name: info.relType,
 			...info,
 			isRelation: true
@@ -176,7 +149,7 @@ export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir:
 	const allMatchesWithColors: NormalizedCapture[] = allMatches.map((c, i) => {
 		return {
 			...c,
-			...indexToRgb(i)
+			...color(i)
 		}
 	});
 
@@ -224,6 +197,7 @@ export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir:
 					value: c.name,
 					color: c.color,
 					textcolor: c.textcolor,
+					textcolorcontrast: c.textcolorcontrast,
 					// we're the source if we're in the source range (we check for null first to make typescript happy, as there's no source for the root relation)
 					isSource: c.isRelation && c.sourceStart != null && c.sourceEnd != null && c.sourceStart <= globalIndex && globalIndex < c.sourceEnd,
 					// we're the target if we're in the target range

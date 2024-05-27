@@ -13,7 +13,8 @@
 					display: 'inline-block',
 					color: cap[0].textcolor,
 					'border-radius': '2px',
-					padding: '0 2px'
+					padding: '0 2px',
+					textShadow: `0 0 1.25px ${cap[0].textcolorcontrast},`.repeat(10).replace(/,$/, '')
 				}"
 				:title="cap.map(c => c.key)"
 			></span
@@ -32,7 +33,8 @@
 					display: 'inline-block',
 					color: cap[0].textcolor,
 					'border-radius': '2px',
-					padding: '0 2px'
+					padding: '0 2px',
+					textShadow: `0 0 1.25px ${cap[0].textcolorcontrast},`.repeat(10).replace(/,$/, '')
 				}"
 				:title="cap.map(c => c.key)"
 			>{{ text }}</span

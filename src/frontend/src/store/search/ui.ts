@@ -199,6 +199,7 @@ type ModuleRootState = {
 			/** Polling interval for the above. Default 2 seconds. Minimum 100ms. */
 			totalsRefreshIntervalMs: number;
 
+			/** Which annotations should be shown in the dependency tree. (for corpora with dependencies indexed) */
 			dependencies: {
 				lemma: string|null;
 				upos: string|null;
@@ -612,12 +613,20 @@ const actions = {
 				state.results.shared.totalsRefreshIntervalMs = isNaN(n) ? 2_000 : Math.max(100, n);
 			}, 'totalsRefreshIntervalMs'),
 
+			/** Edit which annotations are shown in the dependency tree in the hits result table. */
 			dependencies: b.commit((state, payload: { lemma: string|null, upos: string|null, xpos: string|null, feats: string|null }) => {
+				const allAnnotations= CorpusStore.get.allAnnotationsMap();
+				const validate = (id: string|null): string|null => {
+					if (id == null || allAnnotations[id].hasForwardIndex) return id;
+					if (!allAnnotations[id]) console.warn(`[results.shared.dependencies] - Trying to show dependency tree with annotation '${id}', but it does not exist.`);
+					if (!allAnnotations[id]?.hasForwardIndex) console.warn(`[results.shared.dependencies] - Trying to show dependency tree with annotation '${id}', but it does not have the required forward index.`);
+					return null;
+				}
 				state.results.shared.dependencies = {
-					lemma: payload.lemma || null,
-					upos: payload.upos || null,
-					xpos: payload.xpos || null,
-					feats: payload.feats || null,
+					lemma: validate(payload.lemma),
+					upos: validate(payload.upos),
+					xpos: validate(payload.xpos),
+					feats: validate(payload.feats)
 				};
 			}, 'dependencies')
 		}
@@ -919,10 +928,10 @@ const init = () => {
 		const sortedMatches = matches.sort((a, b) => a.matchIndex - b.matchIndex === 0 ? a.id.length - b.id.length : a.matchIndex - b.matchIndex);
 		return sortedMatches.map(m => m.id);
 	}
-	const lemmaCandidates = [getState().results.shared.dependencies.lemma || findAnnotation(['lemma', 'lem'])].flat();
-	const uposCandidates = [getState().results.shared.dependencies.upos || findAnnotation(['upos', 'pos', 'part', 'speech'])].flat();
-	const xposCandidates = [getState().results.shared.dependencies.xpos || findAnnotation(['xpos', 'pos', 'part', 'speech'])].flat();
-	const featsCandidates = [getState().results.shared.dependencies.feats || findAnnotation(['feats', 'features'])].flat();
+	const lemmaCandidates = [getState().results.shared.dependencies.lemma || findAnnotation(['lemma', 'lem', 'lexeme', 'root', 'stem', 'canon'])].flat();
+	const uposCandidates = [getState().results.shared.dependencies.upos || findAnnotation(['upos', 'pos', 'part', 'morph', 'speech', 'lex', 'class', 'cat'])].flat();
+	const xposCandidates = [getState().results.shared.dependencies.xpos || findAnnotation(['xpos', 'pos', 'part', 'morph', 'speech', 'lex', 'class', 'cat'])].flat();
+	const featsCandidates = [getState().results.shared.dependencies.feats || findAnnotation(['feats', 'features', 'pos', 'part', 'morph', 'speech', 'lex', 'class', 'cat'])].flat();
 	let lemma = lemmaCandidates[0] || null;
 	let upos = uposCandidates.find(candidate => candidate != lemma) || null;
 	let xpos = xposCandidates.find(candidate => candidate != lemma && candidate != upos) || null;

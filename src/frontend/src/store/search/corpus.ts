@@ -58,7 +58,9 @@ const get = {
 		fields: g.entries.map(id => state.corpus!.annotatedFields[g.annotatedFieldId].annotations[id]),
 	})) ?? [], 'annotationGroups'),
 
-	textDirection: b.read(state => state.corpus?.textDirection ?? 'ltr', 'getTextDirection')
+	textDirection: b.read(state => state.corpus?.textDirection ?? 'ltr', 'getTextDirection'),
+
+	hasRelations: b.read(state => state.corpus?.relations.relations != null, 'hasRelations'),
 };
 
 const actions = {
@@ -78,9 +80,8 @@ const privateActions = {
  * Expects the corpus-frontend api to be initialized.
  * Returned promise may contain ApiError if rejected.
  */
-const init = () => Api.frontend
-	.getCorpus()
-	.then(normalizeIndex)
+const init = () => Promise.all([Api.frontend.getCorpus(), Api.blacklab.getRelations(INDEX_ID)])
+	.then(([index, relations]) => normalizeIndex(index, relations))
 	.then(corpus => {
 		// TODO we probably need a proper navbar component for this.
 		document.querySelector('.navbar-brand')!.innerHTML = corpus.displayName || corpus.id;

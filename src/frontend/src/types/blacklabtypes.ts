@@ -103,13 +103,35 @@ export interface BLIndex {
 	documentCount?: number;
 }
 
+export interface BLSpanInfo {
+	/** Number of occurances of this span in the corpus. */
+	count: number;
+	attributes: {
+		[attributeName: string]: {
+			/** Every value encountered for this attribute on this span, and number of occurances */
+			values: {[value: string]: number};
+			/** Does the values property contain all values or was it truncated? */
+			valueListComplete: boolean;
+		}
+	};
+}
+
 export interface BLRelationInfo {
-	/** "inline tags" in the corpus, with their number of occurances. */
-	spans: Record<string, number>;
+	/**
+	 * Spans (previously "inline tags") in the corpus, with their number of occurances.
+	 * A Span is a set of two markers in the text, such as <s> and </s> for a sentence.
+	 * They can optionally have attributes, etc.
+	 * BlackLab can ensure queries fully occur within these spans, etc.
+	*/
+	spans: Record<string, BLSpanInfo>;
 	/** Only when relations have been indexed in this corpus. */
 	relations?: {
 		/** Relations are always stored in a "dep" property for now? */
-		dep: Record<string, number>;
+		dep: {
+			[relationType: string]: {
+				count: number;
+			}
+		}
 	}
 }
 

@@ -150,6 +150,12 @@ export type NormalizedIndex = NormalizedIndexBase&{
 	metadataFields: { [key: string]: NormalizedMetadataField; };
 
 	textDirection: 'ltr'|'rtl';
+
+	/**
+	 * BlackLab doesn't return this with the normal index metadata, but we pull them together for ease of use.
+	 * See store/search/corpus.ts::init and blacklabutils::NormalizeIndex
+	 * */
+	relations: BLTypes.BLRelationInfo;
 };
 
 // Helper - get all props in A not in B

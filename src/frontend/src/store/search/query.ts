@@ -90,7 +90,7 @@ const get = {
 		}
 		return CorpusModule.get.mainAnnotatedField();
 	}, 'annotatedFieldName'),
-	patternString: b.read((state): string|undefined => {
+	patternString: b.read((state, getters, rootState): string|undefined => {
 		const formState = {
 			[state.subForm as string]: state.formState,
 			parallelVersions: state.parallelVersions,
@@ -98,7 +98,7 @@ const get = {
 		const annotations = CorpusModule.get.allAnnotationsMap();
 		switch (state.form) {
 		case 'search':
-			return getPatternStringSearch(state.subForm, formState, UIModule.getState().search.shared.alignBy.defaultValue);
+			return getPatternStringSearch(state.subForm, formState, rootState.ui.search.shared.alignBy.defaultValue);
 		case 'explore':
 			return getPatternStringExplore(state.subForm, formState, annotations);
 		default:
@@ -107,14 +107,14 @@ const get = {
 	},
 	'patternString'),
 	/** Human-readable version of the query for use in history, summaries, etc. */
-	patternSummary: b.read((state): string|undefined => {
+	patternSummary: b.read((state, getters, rootState): string|undefined => {
 		const formState = {
 			[state.subForm as string]: state.formState,
 			parallelVersions: state.parallelVersions,
 		} as any; /** egh, feel free to refactor */
 		switch (state.form) {
 		case 'search':
-			return getPatternSummarySearch(state.subForm, formState, UIModule.getState().search.shared.alignBy.defaultValue);
+			return getPatternSummarySearch(state.subForm, formState, rootState.ui.search.shared.alignBy.defaultValue);
 		case 'explore':
 			return getPatternSummaryExplore(state.subForm, formState, CorpusModule.get.allAnnotationsMap());
 		default:

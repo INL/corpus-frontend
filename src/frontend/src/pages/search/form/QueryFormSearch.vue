@@ -216,18 +216,19 @@ export default Vue.extend({
 
 		// What parallel versions should be shown as source options?
 		// (all except already chosen target ones)
-		parallelSourceVersionOptions: function (): Option[] {
-			return PatternStore.get.parallelSourceVersionOptions();
-		},
+		parallelSourceVersionOptions: PatternStore.get.parallelSourceVersionOptions,
+
 		// What parallel versions should be shown as target options?
 		// (all except already chosen source and target ones)
-		parallelTargetVersionOptions: function (): Option[] {
-			return PatternStore.get.parallelTargetVersionOptions();
-		},
+		parallelTargetVersionOptions: PatternStore.get.parallelTargetVersionOptions,
+
+		// If this is a parallel corpus: the selected source version
 		parallelSourceVersion: {
 			get(): string|null { return PatternStore.get.parallelVersions().source; },
 			set: PatternStore.actions.parallelVersions.sourceVersion
 		},
+
+		// If this is a parallel corpus: the selected target version(s)
 		parallelTargetVersions: {
 			get(): string[]|null { return PatternStore.get.parallelVersions().targets; },
 			set: PatternStore.actions.parallelVersions.targetVersions

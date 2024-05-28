@@ -88,10 +88,12 @@ export default Vue.extend({
 			set: PatternStore.actions.parallelVersions.targetVersions
 		},
 
+		// Options to show for "align by" widget (spans that occur in the corpus such as p or s)
 		alignByOptions(): Option[] {
 			return UIStore.getState().search.shared.alignBy.elements;
 		},
 
+		// Currently selected align by value
 		alignBy: {
 			get(): string { return PatternStore.get.parallelVersions().alignBy || UIStore.getState().search.shared.alignBy.defaultValue; },
 			set(value: string) {

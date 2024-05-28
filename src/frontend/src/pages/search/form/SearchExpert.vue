@@ -65,21 +65,31 @@ export default Vue.extend({
 	data: () => ({
 	}),
 	computed: {
+		// Is this a parallel corpus?
 		isParallelCorpus: CorpusStore.get.isParallelCorpus,
+
+		// If this is a parallel corpus: the available source version options (all except chosen targets)
 		parallelSourceVersionOptions: PatternStore.get.parallelSourceVersionOptions,
+
+		// If this is a parallel corpus: the available target version options (all except chosen sources and targets)
 		parallelTargetVersionOptions() {
 			return PatternStore.get.parallelTargetVersionOptions().filter(v =>
 				!this.parallelTargetVersions.includes(v.value));
 		},
+
+		// If this is a parallel corpus: the currently selected source version
 		parallelSourceVersion: {
 			get() { return PatternStore.get.parallelVersions().source; },
 			set: PatternStore.actions.parallelVersions.sourceVersion
 		},
+
+		// If this is a parallel corpus: the currently selected target versions
 		parallelTargetVersions: {
 			get() { return PatternStore.get.parallelVersions().targets; },
 			set: PatternStore.actions.parallelVersions.targetVersions
 		},
 
+		// The query (or source query, for parallel corpora)
 		mainQuery: {
 			get() {
 				const query = PatternStore.getState().expert.query;
@@ -87,6 +97,8 @@ export default Vue.extend({
 			},
 			set: PatternStore.actions.expert.query,
 		},
+
+		// If this is a parallel corpus: the target queries
 		targetQueries: {
 			get() {
 				const queries = PatternStore.getState().expert.targetQueries;

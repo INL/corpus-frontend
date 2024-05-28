@@ -312,6 +312,7 @@ const init = () => {
 			type: CorpusStore.get.firstMainAnnotation().uiType,
 		}
 	});
+
 	debugLog('Finished initializing pattern module state shape');
 };
 

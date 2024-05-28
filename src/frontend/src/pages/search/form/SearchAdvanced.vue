@@ -70,24 +70,42 @@ export default Vue.extend({
 	data: () => ({
 	}),
 	computed: {
+		// Is this a parallel corpus?
 		isParallelCorpus: CorpusStore.get.isParallelCorpus,
+
+		// If this is a parallel corpus: the available source version options (all except chosen targets)
 		parallelSourceVersionOptions: PatternStore.get.parallelSourceVersionOptions,
-		parallelTargetVersionOptions: PatternStore.get.parallelTargetVersionOptions,
+
+		// If this is a parallel corpus: the available target version options (all except chosen sources and targets)
+		parallelTargetVersionOptions() {
+			return PatternStore.get.parallelTargetVersionOptions().filter(v =>
+				!this.parallelTargetVersions.includes(v.value));
+		},
+
+		// If this is a parallel corpus: the currently selected source version
 		parallelSourceVersion: {
 			get() { return PatternStore.get.parallelVersions().source; },
 			set: PatternStore.actions.parallelVersions.sourceVersion
 		},
+
+		// If this is a parallel corpus: the currently selected target versions
 		parallelTargetVersions: {
 			get() { return PatternStore.get.parallelVersions().targets; },
 			set: PatternStore.actions.parallelVersions.targetVersions
 		},
 
+		// The query (or source query, for parallel corpora)
 		mainQuery: {
 			get() { return PatternStore.getState().advanced.query || undefined; },
 			set: PatternStore.actions.advanced.query,
 		},
+
+		// If this is a parallel corpus: the target queries
 		targetQueries: {
-			get() { return PatternStore.getState().advanced.targetQueries; },
+			get() {
+				const queries = PatternStore.getState().expert.targetQueries;
+				return queries.map(q => q == null || q == '_' || q == '[]*' ? '' : q);
+			},
 			set: PatternStore.actions.advanced.targetQueries,
 		},
 
@@ -96,11 +114,10 @@ export default Vue.extend({
 		addTargetVersion(version: string) {
 			if (version != null) // can happen when select is reset to empty option
 				PatternStore.actions.parallelVersions.addTarget(version);
-
-			// init
-			// setTimeout(initQueryBuilders, 100);
 		},
+
 		removeTargetVersion: PatternStore.actions.parallelVersions.removeTarget,
+
 		versionDisplayName: (version: string): string =>
 			CorpusStore.get.parallelVersionOptions().find(v => v.value === version)?.label || version,
 

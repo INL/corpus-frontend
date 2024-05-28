@@ -121,20 +121,37 @@
 	},
 	"results": {
 		"groupBy": {
-			"preserveSettings": "Keep these group settings when performing a new search",
-			"doNotReset": "Do not reset on search",
+			"groupResults": "Group Results",
 			"clear": "clear",
 			"apply": "apply",
 			"invalidGrouping": "This grouping is not valid.",
-			"iWantToGroupOn": "I want to group on",
-			"usingAnnotation": "using annotation",
+
+			"iWantToGroupOnAnnotation": "I want to group on {some_words} {in_this_location_with_text} using annotation {this_annotation}.",
+			"in_this_location_with_text": "{in_this_location}",
+
+			"some_words": {
+				"theFirstWord": "the first word",
+				"allWords": "all words",
+				"specificWords": "specific words",
+				"captureGroupsLabel": "Capture groups",
+				"captureGroup": "capture group {group_name}"
+			},
+			"in_this_location": {
+				"beforeTheHit": "within the same sentence",
+				"inTheHit": "within the same document",
+				"afterTheHit": "within the same hit",
+				"fromTheEnd": "from the end of the hit"
+			},
+
 			"caseSensitive": "Case sensitive",
 			"chooseWordPositions": "Choose the <strong>specific word</strong> positions to group on here, the preview at the top will show you which words you have selected.",
 			"selectDocumentMetadata": "Select the document metadata to group on.",
 			"clickButtonsToStart": "In this window you can apply grouping to the results. Click the buttons on the left to create a grouping criteria to get started.",
 			"metadata": "Metadata",
 			"annotation": "Annotation",
-			"specify": "Specify"
+			"specify": "Specify",
+			"label": "label {label} ({annotation})",
+			"document": "document"
 		},
 		"table": {
 			"showFullSentence": "Show full sentence",

@@ -12,7 +12,7 @@
 					<template v-if="hasRelations">
 						<label v-if="sentenceAvailable">
 							<input type="checkbox" v-model="sentenceShown" class="show-sentence-checkbox" />
-							<Spinner v-if="sentenceLoading" inline style="margin-right: 0.5em"/>$t('results.table.showFullSentence')
+							<Spinner v-if="sentenceLoading" inline style="margin-right: 0.5em"/>{{$t('results.table.showFullSentence')}}
 						</label>
 
 						<!-- Will not render anything if no relation info is available in the passed hit/sentence. -->

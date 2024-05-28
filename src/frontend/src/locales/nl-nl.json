@@ -121,20 +121,37 @@
 	},
 	"results": {
 		"groupBy": {
-			"preserveSettings": "Keep these group settings when performing a new search",
-			"doNotReset": "Do not reset on search",
+			"groupResults": "Groeperen",
 			"clear": "Wissen",
 			"apply": "Toepassen",
 			"invalidGrouping": "Deze groepering is niet geldig.",
-			"iWantToGroupOn": "Ik wil groeperen op",
-			"usingAnnotation": "met annotatie",
+
+			"iWantToGroupOnAnnotation": "Ik wil {some_words} {in_this_location_with_text} groeperen op {this_annotation}.",
+			"in_this_location_with_text": "{in_this_location}",
+
+			"some_words": {
+				"theFirstWord": "het eerste woord",
+				"allWords": "alle woorden",
+				"specificWords": "specifieke woorden",
+				"captureGroupsLabel": "Labels",
+				"captureGroup": "label {group_name}"
+			},
+			"in_this_location": {
+				"beforeTheHit": "voor het resultaat",
+				"inTheHit": "in het resultaat",
+				"afterTheHit": "na het resultaat",
+				"fromTheEnd": "vanaf het einde van het resultaat"
+			},
+
 			"caseSensitive": "Hoofdlettergevoelig",
-			"chooseWordPositions": "Choose the <strong>specific word</strong> positions to group on here, the preview at the top will show you which words you have selected.",
+			"chooseWordPositions": "Kies hier de <strong>specifieke woorden</strong> om op te groeperen, in het voorbeeld hieronder ziet u welke woorden zijn geselecteerd.",
 			"selectDocumentMetadata": "Select the document metadata to group on.",
-			"clickButtonsToStart": "Hier kunt u een groepering toepassen op de resultaten. Klik een van de knoppen links om een groepeercriterium te maken.",
+			"clickButtonsToStart": "Hier kunt u een groepering toepassen op de resultaten. Gebruik de knoppen links om een groepeercriterium te maken.",
 			"metadata": "Metadata",
 			"annotation": "Annotatie",
-			"specify": "Specificeer"
+			"specify": "Specificeer",
+			"label": "label {label} ({annotation})",
+			"document": "document"
 		},
 		"table": {
 			"showFullSentence": "Toon complete zin",

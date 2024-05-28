@@ -1,11 +1,11 @@
 <template>
 
 	<button v-if="!active && !localModel.length" class="btn btn-default btn-secondary btn-sm" type="button" @click="active=true">
-		Group results
+		{{$t('results.groupBy.groupResults')}}
 	</button>
 
 	<div v-else class="panel panel-default" style="margin: 0;">
-		<div class="panel-heading" style="margin: 0" >Group results <button class="pull-right close" type="button" @click="clear">&times;</button></div>
+		<div class="panel-heading" style="margin: 0">{{$t('results.groupBy.groupResults')}} <button class="pull-right close" type="button" @click="clear">&times;</button></div>
 
 		<div class="group-by">
 
@@ -46,32 +46,45 @@
 			<div class="current-group-editor panel-default">
 				<template v-if="current && current.type === 'annotation'">
 					<div class="content">
-						{{ $t('results.groupBy.iWantToGroupOn') }}
-						<!-- allow unknown values here. If grouping on a capture group, they're not always available immediately (we need the first hit to decode them). -->
-						<SelectPicker
-							:options="contextOptions"
-							v-model="context"
-							allowUnknownValues
-							data-width="auto"
-							data-menu-width="auto"
-							hideEmpty
-						/>
-						<SelectPicker v-if="!context.startsWith('capture_')"
-							v-model="current.position"
-							hideEmpty
-							data-width="auto"
-							data-menu-width="auto"
-							:options="positionOptions"
-						/> {{ $t('results.groupBy.usingAnnotation') }} <SelectPicker
-							:placeholder="$t('results.groupBy.annotation')"
-							data-width="auto"
-							data-menu-width="auto"
-							right
-							searchable
-							hideEmpty
-							:options="annotations"
-							v-model="current.annotation"
-						/>.
+						<i18n path="results.groupBy.iWantToGroupOnAnnotation" tag="div">
+							<!-- allow unknown values here. If grouping on a capture group, they're not always available immediately (we need the first hit to decode them). -->
+							<template #some_words><SelectPicker
+								:options="contextOptions"
+								v-model="context"
+								allowUnknownValues
+								data-width="auto"
+								data-menu-width="auto"
+								hideEmpty
+							/></template>
+							<!-- Specific layout, we want to hide the selectpicker, but there might be surrounding text that also needs to be hidden... -->
+							<template #in_this_location_with_text>
+								<i18n v-if="!context.startsWith('capture_')" path="results.groupBy.in_this_location_with_text">
+									<template #in_this_location> <!-- doesn't seem to work if we don't wrap the selectpicker in a template. -->
+										<SelectPicker
+											v-model="current.position"
+											hideEmpty
+											data-width="auto"
+											data-menu-width="auto"
+											:options="positionOptions"
+										/>
+									</template>
+								</i18n>
+							</template>
+							<template #this_annotation>
+							<SelectPicker
+								:placeholder="$t('results.groupBy.annotation')"
+								data-width="auto"
+								data-menu-width="auto"
+								right
+								searchable
+								hideEmpty
+								:options="annotations"
+								v-model="current.annotation"
+							/></template>
+						</i18n>
+
+						<!-- {{ $t('results.groupBy.iWantToGroupOn') }} -->
+
 						<br>
 						<label><input type="checkbox" v-model="current.caseSensitive">  {{ $t('results.groupBy.caseSensitive') }}</label>
 
@@ -341,7 +354,6 @@ export default Vue.extend({
 				return 'context';
 			},
 			set(v: 'first'|'all'|'context'|string) {
-				console.log('set', v)
 				if (!this.current) return;
 
 				if (v.startsWith('capture_')) {
@@ -375,25 +387,28 @@ export default Vue.extend({
 		},
 		positionOptions(): Options {
 			return [
-			{ label: 'before the hit', value: 'L'},
-			{ label: 'in the hit', value: 'H' },
+			{ label: this.$t('results.groupBy.in_this_location.beforeTheHit').toString(), value: 'L'},
+			{ label: this.$t('results.groupBy.in_this_location.inTheHit').toString(), value: 'H' },
 			// grouping from the end of the hit when grouping on entire hit is not possible (causes an exception in BlackLab)
-			...(this.current?.end != null ? [{label: 'from the end of the hit',value: 'E'}] : []),
-			{ label: 'after the hit', value: 'R' }];
+			...(this.current?.end != null ? [{label: this.$t('results.groupBy.in_this_location.fromTheEnd').toString(), value: 'E'}] : []),
+			{ label: this.$t('results.groupBy.in_this_location.afterTheHit').toString(), value: 'R' }];
 		},
 		contextOptions(): Options {
 			return [{
-				label: 'the first word',
+				label: this.$t('results.groupBy.some_words.theFirstWord').toString(),
 				value: 'first'
 			}, {
-				label: 'all words',
+				label: this.$t('results.groupBy.some_words.allWords').toString(),
 				value: 'all'
 			}, {
-				label: 'specific words',
+				label: this.$t('results.groupBy.some_words.specificWords').toString(),
 				value: 'context'
 			}, {
-				label: 'Capture groups',
-				options: (this.captures || []).map(c => ({label: `capture group ${c}`, value: 'capture_' + c}))
+				label: this.$t('results.groupBy.some_words.captureGroupsLabel').toString(),
+				options: (this.captures || []).map(c => ({
+					label: this.$t('results.groupBy.some_words.captureGroup', {group_name: c}).toString(),
+					value: 'capture_' + c
+				}))
 			}];
 		},
 		contextSliderPreview(): any[] {
@@ -411,9 +426,9 @@ export default Vue.extend({
 		humanizeGroupBy(g: GroupBySettingsUI): string {
 			let r = '';
 			if (g.type === 'annotation') {
-				if (!g.annotation) return this.$t('results.groupBy.specify');
+				if (!g.annotation) return this.$t('results.groupBy.specify').toString();
 
-				if (g.groupname) return `label '${g.groupname}' (${g.annotation})`
+				if (g.groupname) return this.$t('results.groupBy.label', {label: g.groupname, annotation: g.annotation}).toString();// `label '${g.groupname}' (${g.annotation})`
 
 				const position = (g.position === 'H' || g.position === 'E') ? 'in' : g.position === 'L' ? 'before' : g.position === 'R' ? 'after' : ''; // position | '' when using capture
 				let wordcount = position ? g.end != null ? g.end + '' : 'all' : undefined; // number | 'all' | undefined when using capture
@@ -423,7 +438,7 @@ export default Vue.extend({
 
 				r = `${g.annotation}${wordcount != null ? ` (${wordcount})` : ''} ${position ? position + ' hit' : 'in capture ' + g.groupname}`;
 			} else {
-				if (!g.field) return this.$t('results.groupBy.specify');
+				if (!g.field) return this.$t('results.groupBy.specify').toString();
 				r = `document ${CorpusStore.get.allMetadataFieldsMap()[g.field].displayName}`;
 			}
 			return r;

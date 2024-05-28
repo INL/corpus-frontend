@@ -20,6 +20,7 @@
       - [Application structure](#application-structure)
       - [The Vuex store](#the-vuex-store)
       - [URL generation and parsing](#url-generation-and-parsing)
+      - [Internationalization](#internationalization)
       - [Development tips](#development-tips)
     - [Backend development](#backend-development)
 
@@ -1324,6 +1325,18 @@ The url parsing is a little involved, because depending on whether a `tagset` is
 Because of this, the store is first initialized (with empty values everywhere), then the url is parsed, after which the state is updated with the parsed values (see [search.ts](src/frontend/src/search.ts)).
 When navigating back and forth through browser history, the url is not parsed, instead the state is attached to the history entry and read directly.
 
+### **Internationalization**
+
+The app is internationalized using [vue-i18n](https://kazupon.github.io/vue-i18n/). Please note that the app is only partially translatable right now; I18n is a work in progress. Contributions are welcome.
+
+There is no locale switcher widget yet, but you can test it by executing `vueRoot._i18n.locale = 'nl'` in the browser console to switch to a different locale.
+
+If you want to help add translation keys, look for e.g. `{{ $t('search.simple.heading') }}` in the code to see how it's done.
+
+If you want to help translate the app to a new language, you can do so by adding a new language file in the `src/frontend/src/locales` directory. This is where the default translation files live. Copy one of the files (e.g. `en.json`) and name it for the new locale (e.g. `fr.json` for French). Then you can start translating the strings.
+
+You can also override some default translations per corpus by creating a directory named `locales` in the `static` directory of the corpus' interface data dir (see the `corporaInterfaceDataDir` setting) and create a file with the same name as above (e.g. `fr.json` for French) with the desired overrides. The file should be read automatically by the app.
+
 ### **Development tips**
 
 Install the Vue devtools! ([chrome](https://chrome.google.com/webstore/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd), [firefox](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)).
@@ -1344,7 +1357,6 @@ npm run start
 ```
 
 One note is that by default the port is `8080`, but we changed it to `8081`, as `tomcat` already binds to `8080`. To change this, edit the `scripts.start` property in [package.json](src/frontend/package.json).
-
 
 ## Backend development
 

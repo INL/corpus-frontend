@@ -60,7 +60,7 @@
 
 			ref="focusOnEscClose"
 		>
-			<template v-if="displayValues.length && (showValues || !multiple)">
+			<template v-if="displayValues.length && showValues">
 				<span class="menu-value" v-if="allowHtml" :title="value + ''" v-html="displayValues.join(', ')"/>
 				<span class="menu-value" v-else :title="displayValues.join(',')">{{displayValues.join(', ')}}</span>
 			</template>
@@ -255,7 +255,7 @@ export default Vue.extend({
 		 */
 		allowUnknownValues: Boolean,
 		allowEmptyGroups: Boolean,
-		/** Show selected values in the selection button, only when multiple */
+		/** Show selected values in the selection button or not */
 		showValues: { type: Boolean, default: true },
 		/** Show value count, only when showValues === false */
 		showValueCount: { type: Boolean, default: true },

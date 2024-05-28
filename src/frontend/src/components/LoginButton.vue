@@ -37,35 +37,9 @@ export default Vue.extend({
 
 <style lang="scss">
 
-
 .navbar-username {
-	position: absolute;
-	right: 0;
-	top: 0;
-	flex: none;
-	flex-basis: 0;
 	white-space: nowrap;
-}
-
-
-.navbar-username { display: inline-flex; }
-.navbar-username:empty { display: none; }
-.navbar-username > .username { order: 2; }
-.navbar-username > .username:empty { display: none;}
-.username-icon {
-	order: 1;
-	margin-right: 0.25em;
-}
-
-.username:empty + .username-icon {
-	display: none;
-}
-
-
-@media (max-width: 768px) {
-	.navbar-username {
-		right: 50px;
-	}
+	display: inline-block;
 }
 
 

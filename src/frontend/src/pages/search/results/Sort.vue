@@ -2,7 +2,7 @@
 	<SelectPicker
 		class="sort"
 		data-class="btn-sm btn-default"
-		placeholder="Sort by..."
+		:placeholder="$t('results.sort.sortBy')"
 		data-menu-width="grow"
 
 		allowHtml

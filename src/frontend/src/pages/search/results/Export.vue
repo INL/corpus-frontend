@@ -4,21 +4,23 @@
 			type="button"
 			class="btn btn-default btn-sm"
 			:disabled="downloadInProgress || disabled"
-			:title="downloadInProgress ? 'Downloading...' : 'Export results as a CSV file'"
+			:title="downloadInProgress ? $t('results.export.downloading') : $t('results.export.csvTooltip')"
 
 			@click="downloadCsv(false)"
 		>
-			<template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner fa-spin"></span>&nbsp;</template>Export
+			<template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner fa-spin"></span>&nbsp;</template>
+			{{ $t('results.export.exportCSV') }}
 		</button>
 		<button
 			type="button"
 			class="btn btn-default btn-sm"
 			:disabled="downloadInProgress || disabled"
-			:title="downloadInProgress ? 'Downloading...' : 'Export Results as a CSV file for use with Excel'"
+			:title="downloadInProgress ? $t('results.export.downloading') : $t('results.export.excelTooltip')"
 
 			@click="downloadCsv(true)"
 		>
-			<template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner fa-spin"></span>&nbsp;</template>Export for Excel
+			<template v-if="downloadInProgress">&nbsp;<span class="fa fa-spinner fa-spin"></span>&nbsp;</template>
+			{{ $t('results.export.exportExcel') }}
 		</button>
 		<!-- <button type="button"  class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
 			<span class="caret"></span>

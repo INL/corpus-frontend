@@ -19,13 +19,13 @@
 				type="button"
 				class="btn btn-default"
 				:disabled="selectedWords.length === renderedWords.length"
-				@click="renderedWords.forEach(w => w.selected = w.count > 0)">Select all
+				@click="renderedWords.forEach(w => w.selected = w.count > 0)">{{$t('lexicon.selectAll')}}
 			</button>
 			<button
 				type="button"
 				class="btn btn-default"
 				:disabled="!selectedWords.length"
-				@click="renderedWords.forEach(w => w.selected = false)">Deselect all
+				@click="renderedWords.forEach(w => w.selected = false)">{{$t('lexicon.deselectAll')}}
 			</button>
 		</div>
 
@@ -43,7 +43,7 @@
 			> {{opt.word}}<!-- ({{opt.count}})-->
 		</label>
 		<template v-if="wordOptions && wordOptions.length"> <!-- if we have wordOptions, we also have pos options -->
-			<h4>Limit to Part of Speech</h4>
+			<h4>{{$t('lexicon.limit')}}</h4>
 			<label v-for="(checked, pos) in posOptions" :key="pos"
 				style="width: 10vw; min-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
 				role="button"

@@ -29,7 +29,7 @@
 
 				@click="showDocumentHits = !showDocumentHits"
 			>
-				{{showDocumentHits ? 'Hide Hits' : 'Show Hits'}}
+				{{showDocumentHits ? $t('results.table.hideHits') : $t('results.table.showHits')}}
 			</button>
 			<slot name="export"/>
 		</div>

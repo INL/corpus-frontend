@@ -77,20 +77,12 @@
                     </div>
 
                     #if($websiteConfig.getCorpusId().isPresent())
-                    <a href='$CF_URL_ON_CLIENT/$websiteConfig.getCorpusId().get()/search/' class='navbar-brand'>$websiteConfig.getCorpusDisplayName().orElse("")</a>
+                    <a class='navbar-brand' href='$CF_URL_ON_CLIENT/$websiteConfig.getCorpusId().get()/search/'>$websiteConfig.getCorpusDisplayName().orElse("")</a>
                     #else
-                    <a href='$CF_URL_ON_CLIENT/' class='navbar-brand'>AutoSearch</a>
+                    <a class='navbar-brand' href='$CF_URL_ON_CLIENT/'>AutoSearch</a>
                     #end
-
-                    <button type="button" class="navbar-toggle" onclick="document.querySelector('.navbar-collapse').classList.toggle('collapse')">
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
-
                 </div>
 
-                <div class="username"></div>
                 <div class="navbar-collapse collapse navbar-logo-margin">
                     <ul class="nav navbar-nav">
                         #foreach($link in $websiteConfig.getLinks())
@@ -98,6 +90,18 @@
                         #end
                     </ul>
                 </div>
+
+                <div class="navbar-buttons">
+                    <div id="username"></div>
+                    <div id="locale-selector"></div>
+
+                    <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse" onclick="document.querySelector('.navbar-collapse').classList.toggle('collapse')">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                </div>
+
             </div>
         </div>
 

@@ -21,7 +21,8 @@ import * as loginSystem from '@/utils/loginsystem';
 
 import '@/global.scss';
 import '@/article.scss';
-import { init as initApi, ApiError } from '@/api';
+import { init as initApi } from '@/api';
+import '@/utils/i18n';
 
 // Article-related functions.
 // Takes care of tooltips and highlighting/scrolling to anchors.

@@ -40,7 +40,7 @@ export async function awaitInit(settings: {
 	.catch(handleError)
 }): Promise<User|null> {
 	const loginButton= new LoginButton();
-	loginButton.$mount('.username');
+	loginButton.$mount('#username');
 
 	if (settings.oidc && settings.oidc.authority && settings.oidc.client_id && settings.oidc.metadataUrl) {
 		// loading doesn't apply for OIDC flow.
@@ -58,17 +58,11 @@ export async function awaitInit(settings: {
 		});
 		let user: User | null | undefined | void = null;
 
-		// first see if we're currently in a callback
-		try { user = await userManager.signinCallback() }
-		catch (e) {
-			// not a signincallback, but maybe there's a session alive still
-			// check in an iframe.
-			try { user = await userManager.signinSilent() }
-			catch { } // oh well... no user.
-		}
-		try {
-			// clear the hash and query info related to the callback
-			const url = new URL(window.location.href);
+		const url = new URL(window.location.href);
+		if (url.searchParams.has('code') || url.searchParams.has('error')) {
+			// seems we're in a callback
+			try { user = await userManager.signinCallback(); }
+			catch { }
 			url.searchParams.delete('error');
 			url.searchParams.delete('state');
 			url.searchParams.delete('session_state');
@@ -76,7 +70,19 @@ export async function awaitInit(settings: {
 			url.searchParams.delete('scope');
 			// place back the url without the callback info
 			window.history.replaceState({}, '', url);
-		} catch (e) { }
+		} else {
+			// check if we're already logged in
+			try {
+				const status = await userManager.querySessionStatus();
+				if (status?.sub) {
+					// we're logged in, get the user object
+					try { user = await userManager.signinSilent(); }
+					catch { }
+				}
+			} catch (e) {
+				// not logged in.
+			}
+		}
 
 		loginButton.$on('login', () => userManager?.signinRedirect({redirect_uri: window.location.href}));
 		loginButton.$on('logout', () => userManager?.signoutRedirect({post_logout_redirect_uri: window.location.href}));

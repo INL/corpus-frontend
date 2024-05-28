@@ -1,16 +1,16 @@
 <template>
 	<div>
-		<h3>Explore ...</h3>
+		<h3>{{$t('explore.heading')}}</h3>
 		<ul class="nav nav-tabs">
-			<li :class="{'active': exploreMode==='corpora'}"   @click.prevent="exploreMode='corpora'"><a href="#explore-corpora">Documents</a></li>
-			<li :class="{'active': exploreMode==='ngram'}"     @click.prevent="exploreMode='ngram'"><a href="#explore-n-grams">N-grams</a></li>
-			<li :class="{'active': exploreMode==='frequency'}" @click.prevent="exploreMode='frequency'"><a href="#explore-frequency">Statistics</a></li>
+			<li :class="{'active': exploreMode==='corpora'}"   @click.prevent="exploreMode='corpora'"><a href="#explore-corpora">{{$t('explore.corpora.heading')}}</a></li>
+			<li :class="{'active': exploreMode==='ngram'}"     @click.prevent="exploreMode='ngram'"><a href="#explore-n-grams">{{$t('explore.ngram.heading')}}</a></li>
+			<li :class="{'active': exploreMode==='frequency'}" @click.prevent="exploreMode='frequency'"><a href="#explore-frequency">{{$t('explore.frequency.heading')}}</a></li>
 		</ul>
 
 		<div class="tab-content">
 			<div id="explore-corpora" :class="['tab-pane form-horizontal', {'active': exploreMode==='corpora'}]">
 				<div class="form-group">
-					<label class="col-xs-4 col-md-2" for="corpora-group-by">Group documents by metadata</label>
+					<label class="col-xs-4 col-md-2" for="corpora-group-by">{{$t('explore.corpora.groupBy')}}</label>
 					<div class="col-xs-8">
 						<SelectPicker
 							placeholder="Group by..."
@@ -28,7 +28,7 @@
 					</div>
 				</div>
 				<div class="form-group">
-					<label class="col-xs-4 col-md-2" for="corpora-display-mode">Show groups as</label>
+					<label class="col-xs-4 col-md-2" for="corpora-display-mode">{{$t('explore.corpora.showAs')}}</label>
 					<div class="col-xs-8">
 						<SelectPicker
 							placeholder="Show as"
@@ -47,7 +47,7 @@
 			</div>
 			<div id="explore-n-grams" :class="['tab-pane form-horizontal', {'active': exploreMode==='ngram'}]">
 				<div class="form-group">
-					<label class="col-xs-4 col-md-2" for="n-gram-size">N-gram size</label>
+					<label class="col-xs-4 col-md-2" for="n-gram-size">{{$t('explore.ngram.ngramSize')}}</label>
 					<div class="col-xs-8 col-md-5">
 						<input
 							class="form-control"
@@ -63,7 +63,7 @@
 					</div>
 				</div>
 				<div class="form-group">
-					<label class="col-xs-4 col-md-2" for="n-gram-type">N-gram type</label>
+					<label class="col-xs-4 col-md-2" for="n-gram-type">{{$t('explore.ngram.ngramType')}}</label>
 
 					<div class="col-xs-8 col-md-5">
 						<SelectPicker
@@ -138,7 +138,7 @@
 			</div>
 			<div id="explore-frequency" :class="['tab-pane form-horizontal', {'active': exploreMode==='frequency'}]">
 				<div class="form-group form-group-lg" style="margin: 0;">
-					<label for="frequency-type" class="control-label">Frequency list type</label>
+					<label for="frequency-type" class="control-label">{{$t('explore.frequency.frequencyType')}}</label>
 					<SelectPicker
 						data-id="frequency-type"
 						data-name="frequency-type"

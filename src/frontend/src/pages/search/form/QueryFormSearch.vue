@@ -1,13 +1,13 @@
 <template>
 	<div>
-		<h3>Search for &hellip;</h3>
+		<h3>{{$t('search.heading')}}</h3>
 		<ul class="nav nav-tabs" id="searchTabs">
-			<li :class="{'active': activePattern==='simple'}" @click.prevent="activePattern='simple'"><a href="#simple" class="querytype">Simple</a></li>
-			<li :class="{'active': activePattern==='extended'}" @click.prevent="activePattern='extended'"><a href="#extended" class="querytype">Extended</a></li>
-			<li v-if="advancedEnabled" :class="{'active': activePattern==='advanced'}" @click.prevent="activePattern='advanced'" ><a href="#advanced" class="querytype">Advanced</a></li>
-			<li v-if="conceptEnabled" :class="{'active': activePattern==='concept'}" @click.prevent="activePattern='concept'"><a href="#concept" class="querytype">Concepts</a></li>
-			<li v-if="glossEnabled" :class="{'active': activePattern==='glosses'}" @click.prevent="activePattern='glosses'"><a href="#glosses" class="querytype">User glosses</a></li>
-			<li :class="{'active': activePattern==='expert'}" @click.prevent="activePattern='expert'"><a href="#expert" class="querytype">Expert</a></li>
+			<li :class="{'active': activePattern==='simple'}" @click.prevent="activePattern='simple'"><a href="#simple" class="querytype">{{$t('search.simple.heading')}}</a></li>
+			<li :class="{'active': activePattern==='extended'}" @click.prevent="activePattern='extended'"><a href="#extended" class="querytype">{{$t('search.extended.heading')}}</a></li>
+			<li v-if="advancedEnabled" :class="{'active': activePattern==='advanced'}" @click.prevent="activePattern='advanced'" ><a href="#advanced" class="querytype">{{$t('search.advanced.heading')}}</a></li>
+			<li v-if="conceptEnabled" :class="{'active': activePattern==='concept'}" @click.prevent="activePattern='concept'"><a href="#concept" class="querytype">{{$t('search.concept.heading')}}</a></li>
+			<li v-if="glossEnabled" :class="{'active': activePattern==='glosses'}" @click.prevent="activePattern='glosses'"><a href="#glosses" class="querytype">{{$t('search.glosses.heading')}}</a></li>
+			<li :class="{'active': activePattern==='expert'}" @click.prevent="activePattern='expert'"><a href="#expert" class="querytype">{{$t('search.expert.heading')}}</a></li>
 		</ul>
 		<div class="tab-content">
 			<div :class="['tab-pane form-horizontal', {'active': activePattern==='simple'}]" id="simple">
@@ -85,7 +85,7 @@
 				<!-- show this even if it's disabled when "within" contains a value, or you can never remove the value -->
 				<!-- this will probably never happen, but it could, if someone imports a query with a "within" clause active from somewhere -->
 				<div v-if="withinOptions.length || within" class="form-group">
-					<label class="col-xs-12 col-md-3">Within:</label>
+					<label class="col-xs-12 col-md-3">{{$t('search.extended.within')}}</label>
 
 					<div class="btn-group col-xs-12 col-md-9">
 						<button v-for="option in withinOptions"
@@ -101,44 +101,44 @@
 				<div v-if="splitBatchEnabled" class="form-group">
 					<div class="col-xs-12 col-md-9 col-md-push-3 checkbox">
 						<label for="extended_split_batch">
-							<input type="checkbox" name="extended_split_batch" id="extended_split_batch" v-model="splitBatch"/> Split batch queries
+							<input type="checkbox" name="extended_split_batch" id="extended_split_batch" v-model="splitBatch"/> {{$t('search.extended.splitBatch')}}
 						</label>
 					</div>
 				</div>
 			</div>
 			<div v-if="advancedEnabled" :class="['tab-pane', {'active': activePattern==='advanced'}]" id="advanced">
 				<div id="querybuilder" ref="querybuilder"></div>
-				<button type="button" class="btn btn-default btn-sm" @click="copyAdvancedQuery">Copy to CQL editor</button>
+				<button type="button" class="btn btn-default btn-sm" @click="copyAdvancedQuery">{{$t('search.advanced.copyAdvancedQuery')}}</button>
 			</div>
 			<div v-if="conceptEnabled" :class="['tab-pane', {'active': activePattern==='concept'}]" id="concept">
 
 				<!-- Jesse -->
 				<ConceptSearch/>
-				<button type="button" class="btn btn-default btn-sm" @click="copyConceptQuery">Copy to CQL editor (expert mode)</button>
+				<button type="button" class="btn btn-default btn-sm" @click="copyConceptQuery">{{$t('search.concept.copyConceptQuery')}}</button>
 			</div>
 			<div v-if="glossEnabled" :class="['tab-pane', {'active': activePattern==='glosses'}]" id="glosses">
 				<!-- Jesse -->
 				<GlossSearch/>
 				<div style="margin-top:2em"/>
-				<button type="button" class="btn btn-default btn-sm" @click="copyGlossQuery">Copy to CQL editor (expert mode)</button>
+				<button type="button" class="btn btn-default btn-sm" @click="copyGlossQuery">{{$t('search.glosses.copyGlossQuery')}}</button>
 			</div>
 			<div :class="['tab-pane', {'active': activePattern==='expert'}]" id="expert">
-				<h3>Corpus Query Language:</h3>
+				<h3>{{$t('search.expert.corpusQueryLanguage')}}:</h3>
 				<textarea id="querybox" class="form-control" name="querybox" rows="7" v-model.lazy="expert"></textarea>
-				<button v-if="advancedEnabled" type="button" class="btn btn-sm btn-default" name="parseQuery" id="parseQuery" title="Edit your query in the querybuilder" @click="parseQuery">Copy to query builder</button>
+				<button v-if="advancedEnabled" type="button" class="btn btn-sm btn-default" name="parseQuery" id="parseQuery" :title="$t('search.expert.parseQueryTitle')" @click="parseQuery">{{$t('search.expert.parseQuery')}}</button>
 				<label class="btn btn-sm btn-default file-input-button" for="importQuery">
-					Import query
-					<input type="file" name="importQuery" id="importQuery" accept=".txt,text/plain" @change="importQuery" title="Import a previously downloaded query">
+					{{$t('search.expert.importQuery')}}
+					<input type="file" name="importQuery" id="importQuery" accept=".txt,text/plain" @change="importQuery" :title="$t('search.expert.importQueryTitle')">
 				</label>
 				<div class="btn-group">
 					<label class="btn btn-sm btn-default file-input-button" for="gapFilling">
-						Gap-filling
-						<input type="file" name="gapFilling" id="gapFilling" accept=".tsv,.csv,text/plain" @change="importGapFile" title="Upload a tab-separated list of values to substitute for gap values ('@@' in your query).">
+						{{$t('search.expert.gapFilling')}}
+						<input type="file" name="gapFilling" id="gapFilling" accept=".tsv,.csv,text/plain" @change="importGapFile" :title="$t('search.expert.gapFillingTitle')">
 					</label>
 					<button v-if="gapValue != null"
 						type="button"
 						class="btn btn-default btn-sm"
-						title="Clear gap values"
+						:title="$t('search.expert.clearGapValues')"
 						@click="gapValue = null"
 					><span class="fa fa-times"></span></button>
 				</div>

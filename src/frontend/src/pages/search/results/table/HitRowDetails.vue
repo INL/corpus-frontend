@@ -2,8 +2,8 @@
 	<tr class="concordance-details" v-if="open">
 		<td :colspan="colspan">
 			<div class="concordance-details-wrapper">
-				<p v-if="loading">
-					<Spinner inline/> Loading...
+				<p v-if="loading" :class="{'text-danger': !!error}">
+					<Spinner inline/> {{$t('results.table.loading')}}
 				</p>
 				<p v-else-if="error" class="text-danger">
 					<span class="fa fa-exclamation-triangle"></span> <span v-html="error"></span>
@@ -12,8 +12,9 @@
 					<template v-if="hasRelations">
 						<label v-if="sentenceAvailable">
 							<input type="checkbox" v-model="sentenceShown" class="show-sentence-checkbox" />
-							<Spinner v-if="sentenceLoading" inline style="margin-right: 0.5em"/>Show full sentence
+							<Spinner v-if="sentenceLoading" inline style="margin-right: 0.5em"/>$t('results.table.showFullSentence')
 						</label>
+
 						<!-- Will not render anything if no relation info is available in the passed hit/sentence. -->
 						<DepTree
 							:data="data"
@@ -51,14 +52,14 @@
 					</p>
 				</template>
 				<template v-else-if="!detailedAnnotations?.length">
-					<p>No context available.</p>
+					<p>{{$t('results.table.noContext')}}</p>
 				</template>
 
 				<table v-if="detailedAnnotations?.length" class="concordance-details-table">
 					<thead>
 						<tr>
-							<th>Property</th>
-							<th :colspan="data.hit.match.punct.length">Value</th>
+							<th>{{$t('results.table.property')}}</th>
+							<th :colspan="data.hit.match.punct.length">{{$t('results.table.value')}}</th>
 						</tr>
 					</thead>
 					<tbody>

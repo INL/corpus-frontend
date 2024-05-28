@@ -9,17 +9,19 @@
 					<span class="fa fa-exclamation-triangle"></span> <span v-html="error"></span>
 				</p>
 				<template v-else-if="context"> <!-- context is the larger surrounding context of the hit. We don't always have one (when rendering docs we only have the immediate hit) -->
-					<label>
-						<input v-if="sentenceAvailable" type="checkbox" v-model="sentenceShown" class="show-sentence-checkbox" />
-						<Spinner v-if="sentenceLoading" inline style="margin-right: 0.5em"/>Show full sentence
-					</label>
-					<!-- Will not render anything if no relation info is available in the passed hit/sentence. -->
-					<DepTree
-						:data="data"
-						:fullSentence="sentenceShown ? sentence : undefined"
-						:mainAnnotation="mainAnnotation.id"
-						:otherAnnotations="depTreeAnnotations"
-					/>
+					<template v-if="hasRelations">
+						<label v-if="sentenceAvailable">
+							<input type="checkbox" v-model="sentenceShown" class="show-sentence-checkbox" />
+							<Spinner v-if="sentenceLoading" inline style="margin-right: 0.5em"/>Show full sentence
+						</label>
+						<!-- Will not render anything if no relation info is available in the passed hit/sentence. -->
+						<DepTree
+							:data="data"
+							:fullSentence="sentenceShown ? sentence : undefined"
+							:mainAnnotation="mainAnnotation.id"
+							:otherAnnotations="depTreeAnnotations"
+						/>
+					</template>
 					<p>
 						<template v-for="addon in addons">
 							<component v-if="addon.component"
@@ -85,6 +87,7 @@ import DepTree from '@/pages/search/results/table/DepTree.vue';
 import Spinner from '@/components/Spinner.vue';
 
 import * as UIStore from '@/store/search/ui';
+import * as CorpusStore from '@/store/search/corpus';
 import * as Api from '@/api';
 import { debugLog } from '@/utils/debug';
 
@@ -135,8 +138,9 @@ export default Vue.extend({
 			return (this.detailedAnnotations || []).map(a => snippetParts(this.data.hit, a.id, this.dir, false) || []);
 		},
 
+		hasRelations: CorpusStore.get.hasRelations,
 		/** Exact surrounding sentence can only be loaded if we the start location of the current hit, and when the boundery element has been set. */
-		sentenceAvailable(): boolean { return !!UIStore.getState().search.shared.within.sentenceElement && 'start' in this.data.hit; },
+		sentenceAvailable(): boolean { return this.hasRelations && !!UIStore.getState().search.shared.within.sentenceElement && 'start' in this.data.hit; },
 		/** What properties/annotations to show for tokens in the deptree, e.g. lemma, pos, etc. */
 		depTreeAnnotations(): Record<'lemma'|'upos'|'xpos'|'feats', string|null> { return UIStore.getState().results.shared.dependencies; }
 	},

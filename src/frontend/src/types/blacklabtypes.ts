@@ -488,24 +488,30 @@ export type BLHitSnippet = {
 	match: BLHitSnippetPart;
 }
 
-/** When tagging part of the query like a:[] returns the start and end of the [] */
+/** When tagging part of the query like a:[] returns the start and end of the part labelled with the 'a' (so in this case, the []) */
 export interface BLRelationMatchSpan {
+	/** When tagging part of the query like a:[] returns the start and end of the part labelled with the 'a' (so in this case, the []) */
 	type: 'span';
 	start: number;
 	end: number;
 }
 
-/** Something like "within <s/>" */
+/** Something like "within <s/>". Represents the start and end of the span surrounded with the <s/>. */
 export interface BLRelationMatchTag {
+	/** Something like "within <s/>". Represents the start and end of the span surrounded with the <s/>. */
 	type: 'tag';
 	start: number;
 	end: number;
 }
 
+/** Represents the info captured by an arrow in the query (-->, ==>). So the source, target, and value. */
 export interface BLRelationMatchRelation {
+	/** Represents the info captured by an arrow in the query (-->, ==>). So the source, target, and value. */
 	type: 'relation';
-	/** Usually "dep" for "dependency", but ultimately up to the user.
-	 * multiple types of relations can be indexed if the user wishes to. (such as between equal words in different languages, grammatical relations between words in the same sentence, etc.)
+	/**
+	 * Usually "dep" (for "dependency"), but ultimately decided by the user when they indexed their corpus.
+	 * Multiple sets of relations can be indexed if the user wishes to.
+	 * Such as relations between equal words in different languages, grammatical relations between words in the same sentence, etc.
 	 */
 	relClass: string;
 	/** The value of the relation. */
@@ -520,25 +526,27 @@ export interface BLRelationMatchRelation {
 	/** Exclusive index */
 	targetEnd: number;
 
-	/** Smallest of sourceStart and targetStart? */
+	/** Smallest of sourceStart and targetStart */
 	start: number;
-	/** Smallest of targetStart and targetEnd? */
+	/** Smallest of targetStart and targetEnd */
 	end: number;
 }
 
+/**
+ * Usually when requesting all relations within a tag (with query parameter "context=s" when corpus contains <s/> tags for example)
+ * The infos will contain a multitude of RelationMatchRelation objects, each representing a relation between two tokens within the span.
+ * The start and end of the entirity of the span are also included.
+ */
 export interface BLRelationMatchList {
+	/**
+	 * Usually when requesting all relations within a tag (with query parameter "context=s" when corpus contains <s/> tags for example)
+	 * The infos will contain a multitude of RelationMatchRelation objects, each representing a relation between two tokens within the span.
+	 */
 	type: 'list';
 	start: number;
 	end: number;
 	infos: Array<BLRelationMatchRelation>
 }
-
-// DEPRECATED: use matchInfos instead
-// export interface BLCaptureGroup  { // Jesse
-// 	name: string;
-// 	start: number;
-// 	end: number;
-// }
 
 export type BLHit = BLHitSnippet&{
 	docPid: string;

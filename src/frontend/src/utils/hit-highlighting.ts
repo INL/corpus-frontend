@@ -77,14 +77,14 @@ function flatten(part: BLHitSnippetPart|undefined, annotationId: string, lastPun
 export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir: 'ltr'|'rtl', returnCaptures = true): HitContext {
 	// We always need to do this.
 
-	const r: HitContext = {
+	const tokensPerHitPart: HitContext = {
 		before: flatten(dir === 'ltr' ? hit.left : hit.right, annotationId, hit.match.punct[0]),
 		match: flatten(hit.match, annotationId, (dir === 'ltr' ? hit.right : hit.left)?.punct[0]),
 		after: flatten(dir === 'ltr' ? hit.right : hit.left, annotationId)
 	};
 
 	// Check if we have the necessary info to continue.
-	if (!('start' in hit) || !returnCaptures || !hit.matchInfos) return r;
+	if (!('start' in hit) || !returnCaptures || !hit.matchInfos) return tokensPerHitPart;
 
 
 	// first up: determine which captures to return, just map them into something that's sorted.
@@ -93,27 +93,8 @@ export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir:
 	// if there are none, we should fall back to the returned relations
 	// we discard the tag information, as that's just document structure, and not very relevant for the user.
 
-
-	/**
-	 * For example: a:"word"
-	 * The matchInfos will have this property:
-	 *
-	 * a: { start: number, end: number, type: 'span' }
-	 */
-	const explicitCaptures: NormalizedCapture[] = [];
-	/**
-	 * When running a query with a relation
-	 * For example: _ --> a:"word"
-	 *
-	 * rel: { start: number, end: number, type: 'relation', sourceStart: number, sourceEnd: number, targetStart: number, targetEnd: number, relClass: string, relType: string }
-	 * a: { start: number, end: number, type: 'span' }
-	 */
-
-	const defaultRelations: NormalizedCapture[] = [];
-	/** When running a query with rcapture. */
-	const capturedRelations: NormalizedCapture[] = [];
-
 	let allMatches = Object.entries(hit.matchInfos).flatMap<Omit<NormalizedCapture, 'color'|'textcolor'|'textcolorcontrast'>>(([blackLabReportedName, info]) => {
+		// don't process the captured relations, as we'd be highlighting every word in the sentence if we did.
 		if (blackLabReportedName === 'captured_rels') return [];
 
 		if (info.type === 'list') return info.infos.map<Omit<NormalizedCapture, 'color'|'textcolor'|'textcolorcontrast'>>(info => ({
@@ -146,33 +127,26 @@ export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir:
 		allMatches = allMatches.filter(c => !c.isRelation);
 	}
 
-	const allMatchesWithColors: NormalizedCapture[] = allMatches.map((c, i) => {
-		return {
-			...c,
-			...color(i)
-		}
-	});
-
-	// allMatches.forEach((capture, index) => {
-	// 	// Object.assign((capture as NormalizedCapture), indexToRgb(index));
-	// 	let n = 0;
-
-	// 	if (capture.isRelation) n = capturedRelations.push(capture as NormalizedCapture);
-	// 	else n = explicitCaptures.push(capture as NormalizedCapture);
-	// 	Object.assign((capture as NormalizedCapture), indexToRgb(n-1));
-	// });
+	// Now that we only have the captures/relations we're interested in, we can assign colors to them.
+	const allMatchesWithColors: NormalizedCapture[] = allMatches.map((c, i) => ({...c,...color(i)}));
 
 	// we used to have a fallback to relations, but that just highlights every single word, not very useful.
 	const capturesToUse = allMatchesWithColors;
 
 	// we have a full hit, enrich the tokens with capture/relation info.
-	for (const [part, context] of Object.entries(r)) {
-		const offset = part === 'before' ? hit.start - context.length : part === 'match' ? hit.start : hit.end;
+	for (const [part, tokens] of Object.entries(tokensPerHitPart)) {
+		// offset is the index of the token in the larger document.
+		// ex.
+		// hit.before starts at index 1000 in the document
+		// hit.match starts at index 1005 in the document
+		// we need to match this up with the captures, whose start and end indices are document-wide.
+		// so we need to offset the token index by the start of the current part (before, match, after)
+		const offset = part === 'before' ? hit.start - tokens.length : part === 'match' ? hit.start : hit.end;
 
-		for (let localIndex = 0; localIndex < context.length; localIndex++) {
+		for (let localIndex = 0; localIndex < tokens.length; localIndex++) {
 			const globalIndex = offset + localIndex;
 
-			const token = context[localIndex];
+			const token = tokens[localIndex];
 			// find any relation that intersects with this token.
 			// for the root, sourceStart and sourceEnd are null, if they are, don't match it.
 			// (because nearly every token is pointed at by the root. We don't want to highlight everything.)
@@ -205,5 +179,5 @@ export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir:
 				}));
 		}
 	}
-	return r;
+	return tokensPerHitPart;
 }

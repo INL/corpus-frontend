@@ -818,22 +818,20 @@ const init = () => {
 			}
 		}
 
-		// blacklab 4.0 removed the 'starttag' annotation. We have to retrieve values from a separate endpoint now.
-		blacklab.getRelations(INDEX_ID)
-			.then(relations => Object.keys(relations.spans).map(v => ({value: v, label: v, title: null}))) // map back to the old format
-			.then(v => setValuesForWithin(v))
-			.then(() => {
-				// default sentence boundary element. For use with dependency trees.
-				const state = getState(); // since we did it async, the init is already finished, and the data we set is not in the initial state anymore.
-				if (!state.search.shared.within.sentenceElement && state.search.shared.within.elements.length) {
-					const labelsOrValues = ['sentence', 's', 'sen', 'sent', 'paragraph', 'p', 'par', 'para', 'verse'];
-					// process the labels in order or preference.
-					const defaultWithin = labelsOrValues.flatMap(l => state.search.shared.within.elements.find(e => e.label.includes(l) || e.value.includes(l)) || [])[0]
-					if (defaultWithin) {
-						actions.search.shared.within.sentenceElement(defaultWithin.value);
-					}
-				}
-			})
+		// blacklab 4.0 removed the 'starttag' annotation. We have to retrieve values from the relations object instead
+		const relations = CorpusStore.getState().corpus!.relations;
+		setValuesForWithin(Object.keys(relations.spans).map(v => ({value: v, label: v, title: null})));
+
+		// Set default sentence boundary element. For use with dependency trees and getting the sentence around a hit.
+		const state = getState(); // since we did it async, the init is already finished, and the data we set is not in the initial state anymore.
+		if (!getState().search.shared.within.sentenceElement && getState().search.shared.within.elements.length) {
+			const labelsOrValues = ['sentence', 's', 'sen', 'sent', 'paragraph', 'p', 'par', 'para', 'verse'];
+			// process the labels in order or preference.
+			const defaultWithin = labelsOrValues.flatMap(l => state.search.shared.within.elements.find(e => e.label.includes(l) || e.value.includes(l)) || [])[0]
+			if (defaultWithin) {
+				actions.search.shared.within.sentenceElement(defaultWithin.value);
+			}
+		}
 	}
 
 	// EXPLORE

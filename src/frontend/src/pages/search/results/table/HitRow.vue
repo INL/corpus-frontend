@@ -1,10 +1,10 @@
 <template>
 	<tr class="concordance rounded">
-		<HitContextComponent tag="td" class="text-right" :dir="dir" :data="context.before" :html="html" before/>
-		<HitContextComponent tag="td" bold class="text-center" :dir="dir" :data="context.match" :html="html"/>
-		<HitContextComponent tag="td" class="" :dir="dir" :data="context.after" :html="html" after/>
+		<HitContextComponent tag="td" class="text-right"  :dir="dir" :data="context" :html="html" before/>
+		<HitContextComponent tag="td" class="text-center" :dir="dir" :data="context" :html="html" bold/>
+		<HitContextComponent tag="td" class="text-left"   :dir="dir" :data="context" :html="html" after/>
 
-		<HitContextComponent v-for="(c, i) in otherContexts" tag="td" :data="c.match" :html="html" :dir="dir" :key="i"/>
+		<HitContextComponent tag="td" :annotation="a.id" :data="context" :html="html" :dir="dir" :key="a.id" :highlight="false" v-for="a in otherAnnotations" />
 
 		<td v-for="field in data.gloss_fields" :key="field.fieldName" style="overflow: visible;">
 			<GlossField
@@ -63,10 +63,7 @@ export default Vue.extend({
 	},
 	computed: {
 		context(): HitContext {
-			return snippetParts(this.data.hit, this.mainAnnotation.id, this.dir) || [];
-		},
-		otherContexts(): HitContext[]|undefined {
-			return this.otherAnnotations?.map(a => snippetParts(this.data.hit, a.id, this.dir, false));
+			return snippetParts(this.data.hit, this.mainAnnotation.id, this.otherAnnotations?.map(a => a.id) || [], this.dir);
 		},
 	},
 

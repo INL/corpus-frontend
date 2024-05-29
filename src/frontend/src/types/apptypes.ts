@@ -291,7 +291,7 @@ export type CaptureAndRelation = {
 	textcolor: string;
 	/** Invert of textcolor */
 	textcolorcontrast: string;
-	/** name of the capture group, or set of relation. */
+	/** name of the capture group, or the relation's set name (usually "dep", but can be anything). */
 	key: string;
 	/** value of captured info, or value of relation. */
 	value: string;
@@ -301,7 +301,10 @@ export type CaptureAndRelation = {
 	isTarget: boolean;
 }
 export type HitToken = {
+	/** Value of the main annotation. For ease of use. */
 	text: string;
+	/** Raw values of the extracted annotations. */
+	annotations: Record<string, string>
 	/** after the text */
 	punct: string;
 	captureAndRelation?: CaptureAndRelation[];

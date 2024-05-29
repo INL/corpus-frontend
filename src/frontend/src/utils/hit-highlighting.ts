@@ -54,7 +54,7 @@ const color = (i: number): {color: string, textcolor: string, textcolorcontrast:
  *                        we prefer to put punct AFTER the token, because it makes more sense when rendering before/hit/after.
  *                        E.G. "punctuation is dumb, " | "he said", instead of "punctuation is dumb" | ", he said"
  */
-function flatten(part: BLHitSnippetPart|undefined, annotationId: string, lastPunctuation?: string): HitToken[] {
+function flatten(part: BLHitSnippetPart|undefined, annotationId: string, otherAnnotations: string[], lastPunctuation?: string): HitToken[] {
 	if (!part) return [];
 	/** The result array */
 	const r: HitToken[] = [];
@@ -62,7 +62,12 @@ function flatten(part: BLHitSnippetPart|undefined, annotationId: string, lastPun
 	for (let i = 0; i < part[annotationId].length; i++) {
 		const word = part[annotationId][i];
 		const punct =  (i === length - 1 ? lastPunctuation : part.punct[i+1]) || ''; // punctuation is the whitespace before the current word. There is always one more punctuation than there are words in a document (fencepost problem).
-		r.push({punct, text: word});
+		r.push({punct, text: word, annotations: {[annotationId]: word}});
+	}
+	for (const otherAnnotation of otherAnnotations) {
+		for (let i = 0; i < part[otherAnnotation].length; i++) {
+			r[i].annotations[otherAnnotation] = part[otherAnnotation][i];
+		}
 	}
 	return r;
 }
@@ -71,20 +76,24 @@ function flatten(part: BLHitSnippetPart|undefined, annotationId: string, lastPun
  * Disaster of a function. Should refactor this when it all works to satisfaction.
  *
  * @param hit - the hit, or most of the hit in case of doc results (which contain less info than hits)
- * @param annotationId - annotation to print, usually 'word'.
+ * @param annotationId - annotation to put in the token's main 'text' property. Usually whatever annotation contains the words.
+ * @param otherAnnotations - other annotations to return in the tokens. Lemma, pos, etc. depending on corpus and where in the UI we're showing this.
+ * @param dir - direction of the text. LTR or RTL.
+ * @param returnCaptures - whether to return captures or not. If false, we don't return any capture info.
+ *
  * @returns the hit split into before, match, and after parts, with capture and relation info added to the tokens. The punct is to be shown after the word.
  */
-export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir: 'ltr'|'rtl', returnCaptures = true): HitContext {
+export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, otherAnnotations: string[], dir: 'ltr'|'rtl'): HitContext {
 	// We always need to do this.
 
 	const tokensPerHitPart: HitContext = {
-		before: flatten(dir === 'ltr' ? hit.left : hit.right, annotationId, hit.match.punct[0]),
-		match: flatten(hit.match, annotationId, (dir === 'ltr' ? hit.right : hit.left)?.punct[0]),
-		after: flatten(dir === 'ltr' ? hit.right : hit.left, annotationId)
+		before: flatten(dir === 'ltr' ? hit.left : hit.right, annotationId, otherAnnotations, hit.match.punct[0]),
+		match: flatten(hit.match, annotationId, otherAnnotations, (dir === 'ltr' ? hit.right : hit.left)?.punct[0]),
+		after: flatten(dir === 'ltr' ? hit.right : hit.left, annotationId, otherAnnotations)
 	};
 
-	// Check if we have the necessary info to continue.
-	if (!('start' in hit) || !returnCaptures || !hit.matchInfos) return tokensPerHitPart;
+	// Only extract captures if have the necessary info to do so.
+	if (!('start' in hit) || !hit.matchInfos) return tokensPerHitPart;
 
 
 	// first up: determine which captures to return, just map them into something that's sorted.

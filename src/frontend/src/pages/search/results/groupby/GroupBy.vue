@@ -235,8 +235,6 @@ export default Vue.extend({
 
 		isHits(): boolean { return isHitResults(this.results); },
 
-		defaultGroupingAnnotation(): string|undefined { return UIStore.getState().results.shared.groupAnnotationIds[0]; },
-		defaultGroupingMetadata(): string|undefined { return UIStore.getState().results.shared.groupMetadataIds[0]; },
 		annotations(): Options {
 			return getAnnotationSubset(
 				UIStore.getState().results.shared.groupAnnotationIds,

@@ -137,9 +137,9 @@
 				"captureGroup": "capture group {group_name}"
 			},
 			"in_this_location": {
-				"beforeTheHit": "within the same sentence",
-				"inTheHit": "within the same document",
-				"afterTheHit": "within the same hit",
+				"beforeTheHit": "before the hit",
+				"inTheHit": "within the hit",
+				"afterTheHit": "after the same hit",
 				"fromTheEnd": "from the end of the hit"
 			},
 

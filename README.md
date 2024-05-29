@@ -1329,8 +1329,6 @@ When navigating back and forth through browser history, the url is not parsed, i
 
 The app is internationalized using [vue-i18n](https://kazupon.github.io/vue-i18n/). Please note that the app is only partially translatable right now; I18n is a work in progress. Contributions are welcome.
 
-There is no locale switcher widget yet, but you can test it by executing `vueRoot._i18n.locale = 'nl'` in the browser console to switch to a different locale.
-
 If you want to help add translation keys, look for e.g. `{{ $t('search.simple.heading') }}` in the code to see how it's done.
 
 If you want to help translate the app to a new language, you can do so by adding a new language file in the `src/frontend/src/locales` directory. This is where the default translation files live. Copy one of the files (e.g. `en.json`) and name it for the new locale (e.g. `fr.json` for French). Then you can start translating the strings.

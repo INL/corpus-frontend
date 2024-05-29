@@ -1,7 +1,7 @@
 <template>
 <div class="container">
 
-	<Spinner v-if="loadingServerInfo" lg overlay/>
+	<Spinner v-if="loadingServerInfo" lg center/>
 
 	<div v-if="!busy && !serverInfo && errorMessage" class="alert alert-danger">
 		Error loading BlackLab info, try refreshing the page.

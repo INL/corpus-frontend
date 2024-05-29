@@ -2,7 +2,7 @@
 	<reactive-dep-tree v-if="connlu && renderTree" ref="tree"
 		minimal
 		interactive
-		shown-features="FORM,LEMMA,UPOS"
+		:shown-features="shownFeatures"
 		:conll="connlu"
 	></reactive-dep-tree>
 </template>
@@ -90,6 +90,11 @@ export default Vue.extend({
 		renderTree: true,
 	}),
 	computed: {
+		shownFeatures(): string {
+			const extraFeatures = Object.entries(this.otherAnnotations).filter(([featureName, annotationForFeature]) => annotationForFeature != null).map(([k, v]) => k.toUpperCase()).join(',');
+			return `FORM${extraFeatures ? ',' + extraFeatures : ''}`;
+		},
+
 		// We only need this to know where our hit starts and ends.
 		hit(): BLHit|undefined { return 'start' in this.data.hit ? this.data.hit : undefined; },
 		// The full sentence is the context in which the hit was found. Unless we don't have the sentence (yet), then it's the same hit ;)

@@ -236,7 +236,6 @@ export default Vue.extend({
 // we need to do this to limit the width of the table-contents.
 // especially the dependency tree can get very wide, so we need to surround it with a scrollable container.
 // we can't use a constant or 'vw' because bootstrap has different paddings on the main container for different widths.
-$screen-xs: 480px;
 $screen-sm: 768px;
 $screen-md: 992px;
 $screen-lg: 1200px;
@@ -245,13 +244,14 @@ $screen-lg: 1200px;
 .concordance-details-wrapper {
 	overflow-x: auto;
 	max-width: calc(100vw - 125px);
-	@media(max-width: ($screen-md - 1px)) { max-width: calc(100vw - 100px); }
+	@media(max-width: ($screen-md - 1px)) { max-width: calc(100vw - 95px); }
 }
 .container:not(.container-fluid) .concordance-details-wrapper {
-	@media(min-width: $screen-xs) { max-width: calc($screen-xs - 75px); }
-	@media(min-width: $screen-sm) { max-width: calc($screen-sm - 100px); }
-	@media(min-width: $screen-md) { max-width: calc($screen-md - 125px); }
-	@media(min-width: $screen-lg) { max-width: calc($screen-lg - 125px); }
+	// everything below sm is fluid, so no more breakpoints below that.
+	max-width: calc(100vw - 95px);
+	@media(min-width: $screen-sm) { max-width: calc($screen-sm - 125px); }
+	@media(min-width: $screen-md) { max-width: calc($screen-md - 130px); }
+	@media(min-width: $screen-lg) { max-width: calc($screen-lg - 130px); }
 }
 
 

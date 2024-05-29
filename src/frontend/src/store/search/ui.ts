@@ -17,7 +17,6 @@ import * as ViewsStore from '@/store/search/results/views';
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
 import { MapOf } from '@/utils';
-import { blacklab } from '@/api';
 
 type CustomView = {
 	id: string;
@@ -616,8 +615,10 @@ const actions = {
 			/** Edit which annotations are shown in the dependency tree in the hits result table. */
 			dependencies: b.commit((state, payload: { lemma: string|null, upos: string|null, xpos: string|null, feats: string|null }) => {
 				const allAnnotations= CorpusStore.get.allAnnotationsMap();
+				const storeIsInitialized = Object.keys(allAnnotations).length > 0;
 				const validate = (id: string|null): string|null => {
-					if (id == null || allAnnotations[id].hasForwardIndex) return id;
+					if (!storeIsInitialized) return id; // validate in this module's init() function. allow for now.
+					if (id == null || allAnnotations[id]?.hasForwardIndex) return id;
 					if (!allAnnotations[id]) console.warn(`[results.shared.dependencies] - Trying to show dependency tree with annotation '${id}', but it does not exist.`);
 					if (!allAnnotations[id]?.hasForwardIndex) console.warn(`[results.shared.dependencies] - Trying to show dependency tree with annotation '${id}', but it does not have the required forward index.`);
 					return null;
@@ -908,33 +909,36 @@ const init = () => {
 	if (!getState().results.shared.sortMetadataIds.length) actions.results.shared.sortMetadataIds(defaultMetadataToShow);
 
 
-	/**
-	 * Search for likely annotations to map to the connlu properties shown in the dependency tree.
+	/* Validate the annotations shown in the dependency tree in the hits result table.
+	 * If none are set, search for likely annotations to map to the connlu properties in the tree.
 	 * find all likely matches, then dedupe them.
 	 * Null values won't shown anything.
 	 * The word property itself is hardcoded to be the same as the concordance (i.e. words shown in the hit), so we don't need to configure that.
 	 */
-	function findAnnotation(keywords: string[]): string[] {
-		const ids = Object.keys(allAnnotationsMap).filter(id => allAnnotationsMap[id].hasForwardIndex);
+	actions.results.shared.dependencies(initialState.results.shared.dependencies);
+	if (!Object.values(initialState.results.shared.dependencies).some(v => v != null)) {
+		function findAnnotation(keywords: string[]): string[] {
+			const ids = Object.keys(allAnnotationsMap).filter(id => allAnnotationsMap[id].hasForwardIndex);
 
-		// return best match first. If multiple annotations match the same keyword, prefer the shortest one i.e. best match (e.g. pos > pos_with_features)
-		const matches = ids.flatMap(id => {
-			const matchIndex = keywords.findIndex(kw => id.toLowerCase().includes(kw));
-			if (matchIndex === -1) return [];
-			return {id, matchIndex};
-		});
-		const sortedMatches = matches.sort((a, b) => a.matchIndex - b.matchIndex === 0 ? a.id.length - b.id.length : a.matchIndex - b.matchIndex);
-		return sortedMatches.map(m => m.id);
+			// return best match first. If multiple annotations match the same keyword, prefer the shortest one i.e. best match (e.g. pos > pos_with_features)
+			const matches = ids.flatMap(id => {
+				const matchIndex = keywords.findIndex(kw => id.toLowerCase().includes(kw));
+				if (matchIndex === -1) return [];
+				return {id, matchIndex};
+			});
+			const sortedMatches = matches.sort((a, b) => a.matchIndex - b.matchIndex === 0 ? a.id.length - b.id.length : a.matchIndex - b.matchIndex);
+			return sortedMatches.map(m => m.id);
+		}
+		const lemmaCandidates = [getState().results.shared.dependencies.lemma || findAnnotation(['lemma', 'lem', 'lexeme', 'root', 'stem', 'canon'])].flat();
+		const uposCandidates = [getState().results.shared.dependencies.upos || findAnnotation(['upos', 'pos', 'part', 'morph', 'speech', 'lex', 'class', 'cat'])].flat();
+		const xposCandidates = [getState().results.shared.dependencies.xpos || findAnnotation(['xpos', 'pos', 'part', 'morph', 'speech', 'lex', 'class', 'cat'])].flat();
+		const featsCandidates = [getState().results.shared.dependencies.feats || findAnnotation(['feats', 'features', 'pos', 'part', 'morph', 'speech', 'lex', 'class', 'cat'])].flat();
+		let lemma = lemmaCandidates[0] || null;
+		let upos = uposCandidates.find(candidate => candidate != lemma) || null;
+		let xpos = xposCandidates.find(candidate => candidate != lemma && candidate != upos) || null;
+		let feats = featsCandidates.find(candidate => candidate != lemma && candidate != upos && candidate != xpos) || null;
+		actions.results.shared.dependencies({lemma, upos, xpos, feats});
 	}
-	const lemmaCandidates = [getState().results.shared.dependencies.lemma || findAnnotation(['lemma', 'lem', 'lexeme', 'root', 'stem', 'canon'])].flat();
-	const uposCandidates = [getState().results.shared.dependencies.upos || findAnnotation(['upos', 'pos', 'part', 'morph', 'speech', 'lex', 'class', 'cat'])].flat();
-	const xposCandidates = [getState().results.shared.dependencies.xpos || findAnnotation(['xpos', 'pos', 'part', 'morph', 'speech', 'lex', 'class', 'cat'])].flat();
-	const featsCandidates = [getState().results.shared.dependencies.feats || findAnnotation(['feats', 'features', 'pos', 'part', 'morph', 'speech', 'lex', 'class', 'cat'])].flat();
-	let lemma = lemmaCandidates[0] || null;
-	let upos = uposCandidates.find(candidate => candidate != lemma) || null;
-	let xpos = xposCandidates.find(candidate => candidate != lemma && candidate != upos) || null;
-	let feats = featsCandidates.find(candidate => candidate != lemma && candidate != upos && candidate != xpos) || null;
-	actions.results.shared.dependencies({lemma, upos, xpos, feats});
 
 	// init custom annotation extension points, so vue reactivity will properly pick up on them
 	CorpusStore.get.allAnnotations().forEach(annot => privateActions.search.shared.initCustomAnnotationRegistrationPoint(annot.id));

@@ -202,6 +202,7 @@ export default Vue.extend({
 
 			if (this.clearResults) { this.results = this.error = null; this.clearResults = false; }
 
+			const nonce = this.refreshParameters;
 			const params = RootStore.get.blacklabParameters()!;
 			const apiCall = this.id === 'hits' ? Api.blacklab.getHits : Api.blacklab.getDocs;
 			debugLog('starting search', this.id, params);
@@ -213,7 +214,10 @@ export default Vue.extend({
 			setTimeout(() => this.scrollToResults(), 1500);
 
 			this.request
-			.then(this.setSuccess, e => this.setError(e, !!params.group))
+			.then(
+				r => { if (nonce === this.refreshParameters) this.setSuccess(r)},
+				e => { if (nonce === this.refreshParameters) this.setError(e, !!params.group)}
+			)
 			.finally(() => this.scrollToResults())
 		},
 		setSuccess(data: BLTypes.BLSearchResult) {

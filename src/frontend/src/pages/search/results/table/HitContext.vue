@@ -9,8 +9,8 @@
 				:style="style"
 				:title="title"
 			></span
-			><span v-else v-html="text" :key="text + '_' + i"></span
-			><span v-if="doPunct" v-html="punct" :key="punct + '_' + i"></span
+			><span v-else v-html="text" :key="'text' + '_' + text + '_' + i"></span
+			><span v-if="doPunct" v-html="punct" :key="'punct_' + punct + '_' + i"></span
 		></template
 		><template v-if="after">…</template
 	></component

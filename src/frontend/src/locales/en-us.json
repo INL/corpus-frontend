@@ -133,20 +133,19 @@
 				"theFirstWord": "the first word",
 				"allWords": "all words",
 				"specificWords": "specific words",
-				"captureGroupsLabel": "Capture groups",
-				"captureGroup": "capture group {group_name}"
+				"captureGroupsLabel": "Labels and relations"
 			},
 			"in_this_location": {
 				"beforeTheHit": "before the hit",
 				"inTheHit": "within the hit",
-				"afterTheHit": "after the same hit",
+				"afterTheHit": "after the hit",
 				"fromTheEnd": "from the end of the hit"
 			},
 
 			"caseSensitive": "Case sensitive",
 			"chooseWordPositions": "Choose the <strong>specific word</strong> positions to group on here, the preview at the top will show you which words you have selected.",
 			"selectDocumentMetadata": "Select the document metadata to group on.",
-			"clickButtonsToStart": "In this window you can apply grouping to the results. Click the buttons on the left to create a grouping criteria to get started.",
+			"clickButtonsToStart": "In this window you can apply grouping to the results. Click the buttons on the left to create a grouping criterium to get started.",
 			"metadata": "Metadata",
 			"annotation": "Annotation",
 			"specify": "Specify",

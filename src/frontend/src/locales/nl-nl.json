@@ -133,8 +133,7 @@
 				"theFirstWord": "het eerste woord",
 				"allWords": "alle woorden",
 				"specificWords": "specifieke woorden",
-				"captureGroupsLabel": "Labels",
-				"captureGroup": "label {group_name}"
+				"captureGroupsLabel": "Labels en relaties"
 			},
 			"in_this_location": {
 				"beforeTheHit": "voor het resultaat",

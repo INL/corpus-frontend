@@ -9,7 +9,7 @@
 			v-bind="resultComponentData"
 
 			@sort="sort = $event"
-			@viewgroup="originalGroupBySettings = {page, sort}; viewGroup = $event.id; _viewGroupName = $event.displayName;"
+			@viewgroup="restoreOnViewGroupLeave = {page, sort}; viewGroup = $event.id; _viewGroupName = $event.displayName;"
 		>
 			<BreadCrumbs slot="breadcrumbs"
 				:crumbs="breadCrumbs"
@@ -29,7 +29,6 @@
 				:type="id"
 				:results="results"
 				:disabled="!!request"
-				:originalGroupBySettings="originalGroupBySettings"
 				@viewgroupLeave="leaveViewgroup"
 			/>
 			<button v-else slot="groupBy" class="btn btn-sm btn-primary" @click="leaveViewgroup"><span class="fa fa-angle-double-left"></span> {{ $t('results.resultsView.backToGroupOverview') }}</button>
@@ -160,7 +159,8 @@ export default Vue.extend({
 		// Should we clear the results when we begin the next request? - set when main form is submitted.
 		clearResults: false,
 
-		originalGroupBySettings: null as null|{
+		/** When no longer viewing contents of a group, restore the page and sorting (i.e. user's position in the results). */
+		restoreOnViewGroupLeave: null as null|{
 			page: number;
 			sort: string|null;
 		},
@@ -252,9 +252,9 @@ export default Vue.extend({
 		},
 		leaveViewgroup() {
 			this.viewGroup = null;
-			this.page = this.originalGroupBySettings?.page || 0;
-			this.sort = this.originalGroupBySettings?.sort || null;
-			this.originalGroupBySettings = null;
+			this.page = this.restoreOnViewGroupLeave?.page || 0;
+			this.sort = this.restoreOnViewGroupLeave?.sort || null;
+			this.restoreOnViewGroupLeave = null;
 		}
 	},
 	computed: {

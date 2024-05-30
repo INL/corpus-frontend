@@ -1,5 +1,4 @@
 // an import or export is required for this to be a "module", which it must be to declare globals (??? - https://stackoverflow.com/questions/42233987/how-to-configure-custom-global-interfaces-d-ts-files-for-typescript/42257742#42257742)
-import { BLIndexMetadata } from '@/types/blacklabtypes';
 export {};
 declare global {
 	// ---------------------------

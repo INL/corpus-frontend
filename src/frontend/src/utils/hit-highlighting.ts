@@ -10,10 +10,15 @@ type NormalizedCapture = {
 	targetStart: number;
 	targetEnd: number;
 
+	/** Is this a capture group or a relation */
 	isRelation: boolean;
 
-	/** name of the capture group (key in matchInfos), or the concatenation of relClass and relType. */
-	name: string;
+	/** Key of this info. i.e. relation index or capture group name. Can be used for e.g. grouping (and we do use this, mind when refactoring.) */
+	key: string;
+
+	/** Display string, key if !isRelation, relation value + arrow if isRelation == true */
+	display: string;
+
 	/** Color that it should be highlighed in */
 	color: string;
 	/** Color text should be on top of the colored background */
@@ -107,27 +112,33 @@ export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, othe
 		if (blackLabReportedName === 'captured_rels') return [];
 
 		if (info.type === 'list') return info.infos.map<Omit<NormalizedCapture, 'color'|'textcolor'|'textcolorcontrast'>>(info => ({
-			name: info.relType,
 			...info,
-			isRelation: true
+			isRelation: true,
+
+			key: blackLabReportedName,
+			display: info.relType,
 		}));
 		else if (info.type === 'relation') return {
-			name: info.relType,
 			...info,
-			isRelation: true
+			isRelation: true,
+
+			key: blackLabReportedName,
+			display: info.relType,
 		};
 		else if (info.type === 'span') return {
-			name: blackLabReportedName,
 			sourceEnd: info.end,
 			sourceStart: info.start,
 			targetEnd: info.end,
 			targetStart: info.start,
-			isRelation: false
+			isRelation: false,
+
+			key: blackLabReportedName,
+			display: blackLabReportedName,
 		};
 		else return []; // type === 'tag'
 	})
 	// make sure the indices are consistent, as we assign colors based on the index (so that the same capture always has the same color)
-	.sort((a, b) => a.name.localeCompare(b.name));
+	.sort((a, b) => a.key.localeCompare(b.key));
 	// at this point this list is gone and we have a list of relevant captures and relations.
 
 
@@ -176,8 +187,8 @@ export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, othe
 
 			token.captureAndRelation = matchedRelations
 				.map<CaptureAndRelation>(c => ({
-					key: c.isSource ? c.name + '-->' : c.isTarget ? '-->' + c.name : c.name,
-					value: c.name,
+					key: c.key,
+					display: c.isSource ? c.display + '-->' : c.isTarget ? '-->' + c.display : c.display,
 					color: c.color,
 					textcolor: c.textcolor,
 					textcolorcontrast: c.textcolorcontrast,

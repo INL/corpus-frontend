@@ -245,41 +245,6 @@ export type FilterDefinition<MetadataType = any, ValueType = any> = {
 	metadata: any;
 };
 
-// TODO remove groupby settings
-// We re-implemented the grouping windows, it uses GroupBySettings2, which is a more flexible version of GroupBySettings
-// The old GroupBySettings is still used in the legacy component, but it should be removed probably.
-// The context settings should completely be removed,
-
-/**
- * Settings for grouping by annotations in/around the hit.
- * See http://inl.github.io/BlackLab/server/rest-api/corpus/hits/get.html#criteria-for-sorting-grouping-and-faceting
-*/
-export type GroupByContextSettings = {
-	type: 'annotation';
-	annotation: string;
-	caseSensitive: boolean;
-	position: 'L'|'R'|'H'|'E';
-	/** 1-indexed inclusive */
-	start: number;
-	/** 1-indexed inclusive */
-	end?: number;
-}
-
-export type GroupByMetadataSettings = {
-	type: 'metadata';
-	field: string;
-	caseSensitive: boolean;
-}
-
-export type GroupByCaptureSettings = {
-	type: 'capture';
-	annotation: string;
-	caseSensitive: boolean;
-	groupname: string;
-}
-
-export type GroupBySettings = GroupByContextSettings|GroupByMetadataSettings|GroupByCaptureSettings;
-
 // ---------------
 // Hits displaying
 // ---------------
@@ -294,7 +259,7 @@ export type CaptureAndRelation = {
 	/** name of the capture group, or the relation's set name (usually "dep", but can be anything). */
 	key: string;
 	/** value of captured info, or value of relation. */
-	value: string;
+	display: string;
 	/** true if this is a relation source */
 	isSource: boolean;
 	/** true if this is a relation target */

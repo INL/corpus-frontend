@@ -251,11 +251,23 @@ export default Vue.extend({
 					return false;
 				};
 
-				// Keep only relations with us as the target field
+				// Mark targetField as __THIS__ so we'll know it is us later
+				function markTargetField(matchInfo: BLMatchInfo) {
+					return 'targetField' in matchInfo ? ({ ...matchInfo, targetField: '__THIS__'}) : matchInfo;
+				}
+
+				// Keep only relations with us as the target field (and mark it, see above)
 				const toMerge = Object.entries(mainHitMatchInfos)
 					.filter(matchInfoHasUsAsTargets)
 					.reduce((acc, [name, matchInfo]) => {
-						acc[name] = matchInfo;
+						if ('infos' in matchInfo) {
+							acc[name] = acc[name] = {
+								...matchInfo,
+								infos: matchInfo.infos.map(markTargetField) as BLMatchInfoRelation[]
+							};
+						} else {
+							acc[name] = markTargetField(matchInfo);
+						}
 						return acc;
 					}, {} as Record<string, BLMatchInfo>);
 

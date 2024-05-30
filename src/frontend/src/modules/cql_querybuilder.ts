@@ -5,7 +5,6 @@ import 'jquery-ui/ui/widgets/sortable';
 import $ from 'jquery';
 import * as Mustache from 'mustache';
 
-//import parseCql, {BinaryOp as CQLBinaryOp, Attribute as CQLAttribute} from '@/utils/cqlparser';
 import {parseBcql, BinaryOp as CQLBinaryOp, Attribute as CQLAttribute, Result} from '@/utils/bcql-json-interpreter';
 import {debugLog} from '@/utils/debug';
 

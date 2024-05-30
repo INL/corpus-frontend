@@ -97,7 +97,7 @@ export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir:
 	// if there are none, we should fall back to the returned relations
 	// we discard the tag information, as that's just document structure, and not very relevant for the user.
 
-	let allMatches = Object.entries(hit.matchInfos).flatMap<Omit<NormalizedCapture, 'color'|'textcolor'|'textcolorcontrast'>>(([blackLabReportedName, info]) => {
+	let allMatchInfosExceptTags = Object.entries(hit.matchInfos).flatMap<Omit<NormalizedCapture, 'color'|'textcolor'|'textcolorcontrast'>>(([blackLabReportedName, info]) => {
 		// don't process the captured relations, as we'd be highlighting every word in the sentence if we did.
 		// (NOTE: "captured_rels" is the default capture name for rcap() operations,
 		//        so if the query is "(...SOME_QUERY...) within rcap(<s/>)", the "captured_rels" capture
@@ -120,7 +120,7 @@ export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir:
 				isRelation: true
 			};
 		} else if (info.type === 'span') {
-			// A span, e.g. a sentence.
+			// A span, e.g. an explicit capture.
 			// Set the source and target to the same span so it's the same structure as a relation.
 			return {
 				name: blackLabReportedName,
@@ -131,6 +131,7 @@ export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir:
 				isRelation: false
 			};
 		} else {
+			// A tag, e.g. <s> or <p>. Ignore these here.
 			return []; // type === 'tag'
 		}
 	})
@@ -143,14 +144,15 @@ export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir:
 	//
 	// NOTE JN: This feels maybe a little bit surprising and arbitrary; queries that differ only
 	//          slightly may highlight very different things, and it might not be obvious to the
-	//          average user why. Not sure what a better approach would be, though.
+	//          average user why. Why not just highlight everything? Or maybe make it configurable
+	//          in custom.js.
 	//
-	if (allMatches.find(c => !c.isRelation)) {
-		allMatches = allMatches.filter(c => !c.isRelation);
+	if (allMatchInfosExceptTags.find(c => !c.isRelation)) {
+		allMatchInfosExceptTags = allMatchInfosExceptTags.filter(c => !c.isRelation);
 	}
 
 	// Now that we only have the captures/relations we're interested in, we can assign colors to them.
-	const allMatchesWithColors: NormalizedCapture[] = allMatches.map((c, i) => ({...c,...color(i)}));
+	const allMatchesWithColors: NormalizedCapture[] = allMatchInfosExceptTags.map((c, i) => ({...c,...color(i)}));
 
 	// we used to have a fallback to relations, but that just highlights every single word, not very useful.
 	const capturesToUse = allMatchesWithColors;
@@ -174,8 +176,16 @@ export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir:
 			// (because nearly every token is pointed at by the root. We don't want to highlight everything.)
 			const matchedRelations = capturesToUse
 				.map(relation => {
-					const isSource = (relation.sourceStart ?? Number.MAX_SAFE_INTEGER) <= globalIndex && globalIndex < (relation.sourceEnd ?? -1);
-					const isTarget = relation.targetStart <= globalIndex && globalIndex < relation.targetEnd;
+					// For cross-field relations in parallel corpora, we want to make sure we only
+					// highlight either source or target. If targetField is '__THIS__', we're the target,
+					// otherwise we're the source.
+					// (for single-field relations, we always want to highlight both source and target)
+					const isCrossFieldRelation = 'targetField' in relation;
+					const areWeTarget = !isCrossFieldRelation || relation.targetField === '__THIS__';
+					const areWeSource = !isCrossFieldRelation || !areWeTarget;
+
+					const isSource = areWeSource && (relation.sourceStart ?? Number.MAX_SAFE_INTEGER) <= globalIndex && globalIndex < (relation.sourceEnd ?? -1);
+					const isTarget = areWeTarget && relation.targetStart <= globalIndex && globalIndex < relation.targetEnd;
 					const isMatch = isSource || isTarget;
 
 					return {

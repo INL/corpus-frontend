@@ -134,22 +134,39 @@
 	},
 	"results": {
 		"groupBy": {
-			"preserveSettings": "执行新搜索时保留这些分组设置",
-			"doNotReset": "搜索时不重置",
+			"groupResults": "分组结果",
 			"clear": "清除",
 			"apply": "应用",
 			"invalidGrouping": "此分组无效。",
-			"iWantToGroupOn": "我想分组",
-			"usingAnnotation": "使用标注",
+			"iWantToGroupOnAnnotation": "我想使用注释 {this_annotation} 对 {in_this_location_with_text} {some_words} 进行分组.",
+			"in_this_location_with_text": "{in_this_location} 的",
+
+			"some_words": {
+				"theFirstWord": "第一个词",
+				"allWords": "所有词",
+				"specificWords": "特定词",
+				"captureGroupsLabel": "捕获组",
+				"captureGroup": "捕获组 {group_name}"
+			},
+			"in_this_location": {
+				"beforeTheHit": "在同一句内",
+				"inTheHit": "在同一文档内",
+				"afterTheHit": "在同一命中内",
+				"fromTheEnd": "从命中的结尾"
+			},
+
 			"caseSensitive": "区分大小写",
 			"chooseWordPositions": "在这里选择要分组的<strong>特定单词</strong>位置，上方的预览将显示您选择了哪些单词。",
 			"selectDocumentMetadata": "选择要分组的文档元数据",
 			"clickButtonsToStart": "在此窗口中，您可以对结果应用分组。单击左侧的按钮创建分组标准以开始。",
 			"metadata": "元数据",
-			"annotation": "标注"
+			"annotation": "标注",
+			"specify": "待填",
+			"label": "标签{label} ({annotation})",
+			"document": "文档"
 		},
 		"table": {
-			"loadCompleteSentence": "加载完整句子",
+			"showFullSentence": "显示整个句子",
 			"loading": "加载中...",
 			"loadMoreConcordances": "加载更多索引",
 			"viewDetailedConcordances": "显示隐藏的索引",

@@ -18,7 +18,6 @@ import * as PatternsStore from '@/store/search/form/patterns';
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
 import { MapOf } from '@/utils';
-import { blacklab } from '@/api';
 
 type CustomView = {
 	id: string;
@@ -210,6 +209,14 @@ type ModuleRootState = {
 			totalsTimeoutDurationMs: number;
 			/** Polling interval for the above. Default 2 seconds. Minimum 100ms. */
 			totalsRefreshIntervalMs: number;
+
+			/** Which annotations should be shown in the dependency tree. (for corpora with dependencies indexed) */
+			dependencies: {
+				lemma: string|null;
+				upos: string|null;
+				xpos: string|null;
+				feats: string|null;
+			}
 		};
 	};
 
@@ -322,7 +329,14 @@ const initialState: ModuleRootState = {
 			exportEnabled: true,
 
 			totalsTimeoutDurationMs: 90_000,
-			totalsRefreshIntervalMs: 2_000
+			totalsRefreshIntervalMs: 2_000,
+
+			dependencies: {
+				feats: null,
+				lemma: null,
+				upos: null,
+				xpos: null
+			}
 		}
 	},
 	global: {
@@ -630,6 +644,25 @@ const actions = {
 				const n = Number(intervalMs);
 				state.results.shared.totalsRefreshIntervalMs = isNaN(n) ? 2_000 : Math.max(100, n);
 			}, 'totalsRefreshIntervalMs'),
+
+			/** Edit which annotations are shown in the dependency tree in the hits result table. */
+			dependencies: b.commit((state, payload: { lemma: string|null, upos: string|null, xpos: string|null, feats: string|null }) => {
+				const allAnnotations= CorpusStore.get.allAnnotationsMap();
+				const storeIsInitialized = Object.keys(allAnnotations).length > 0;
+				const validate = (id: string|null): string|null => {
+					if (!storeIsInitialized) return id; // validate in this module's init() function. allow for now.
+					if (id == null || allAnnotations[id]?.hasForwardIndex) return id;
+					if (!allAnnotations[id]) console.warn(`[results.shared.dependencies] - Trying to show dependency tree with annotation '${id}', but it does not exist.`);
+					if (!allAnnotations[id]?.hasForwardIndex) console.warn(`[results.shared.dependencies] - Trying to show dependency tree with annotation '${id}', but it does not have the required forward index.`);
+					return null;
+				}
+				state.results.shared.dependencies = {
+					lemma: validate(payload.lemma),
+					upos: validate(payload.upos),
+					xpos: validate(payload.xpos),
+					feats: validate(payload.feats)
+				};
+			}, 'dependencies')
 		}
 	},
 	global: {
@@ -708,6 +741,18 @@ const actions = {
  *
  * There's no real way to get around this validation for now.
  * If we didnt't do this, and someone made a typo in their setup javascript and sets a nonexistant annotation somewhere the page would probably crash.
+ *
+ *
+ * Store initialization happens in 3 steps:
+ * - initial construction:
+ *   this happens immediately when the script is evaluated.
+ *   This is when the initialState objects are created. (hence the workaround in this module's getState())
+ * - customization:
+ *   CustomJs scripts load and can interact with the UI module
+ * - init() function: CustomJs should now have done all its edits,
+ *   and changes are validated and persisted into the initialState objects.
+ *   This is where we are now.
+ *
  */
 const init = () => {
 	if (!CorpusStore.getState().corpus) throw new Error('Cannot initialize UI module before corpus is loaded');
@@ -729,17 +774,7 @@ const init = () => {
 	 */
 	alwaysCallbackAfterValidating = true;
 
-	/*
-	Store initialization happens in 3 steps:
-	- initial construction:
-		this happens immediately when the script is evaluated.
-		This is when the initialState objects are created. (hence the workaround in this module's getState())
-	- customization:
-		CustomJs scripts load and can interact with the UI module
-	- init() function: CustomJs should now have done all its edits,
-		and changes are validated and persisted into the initialState objects.
-		This is where we are now.
-	*/
+
 
 	// ====================
 	// Set up some defaults
@@ -852,32 +887,29 @@ const init = () => {
 		// (dependency, parallel) relations as well. We get the list of values for this annotation and decode
 		// them, but this makes us depend on implementation details. The new /relations endpoint gives us
 		// the same information in a portable way.
-		blacklab.getRelations(INDEX_ID)
-			.then(relations => {
-				// map back to the old format
-				const withinValues = Object.keys(relations.spans).map(v => ({value: v, label: v, title: null}));
-				setValuesForWithin(withinValues);
+		const relations = CorpusStore.getState().corpus!.relations;
+		setValuesForWithin(Object.keys(relations.spans).map(v => ({value: v, label: v, title: null})));
 
-				// default sentence boundary element. For use with dependency trees.
-				const state = getState(); // since we did it async, the init is already finished, and the data we set is not in the initial state anymore.
-				if (!state.search.shared.within.sentenceElement && state.search.shared.within.elements.length) {
-					const labelsOrValues = ['sentence', 's', 'sen', 'sent', 'paragraph', 'p', 'par', 'para', 'verse'];
-					const defaultWithin = state.search.shared.within.elements.find(e => labelsOrValues.includes(e.value) || labelsOrValues.includes(e.label));
-					if (defaultWithin) {
-						actions.search.shared.within.sentenceElement(defaultWithin.value);
-					}
-				}
+		// Set default sentence boundary element. For use with dependency trees and getting the sentence around a hit.
+		const state = getState(); // since we did it async, the init is already finished, and the data we set is not in the initial state anymore.
+		if (!getState().search.shared.within.sentenceElement && getState().search.shared.within.elements.length) {
+			const labelsOrValues = ['sentence', 's', 'sen', 'sent', 'paragraph', 'p', 'par', 'para', 'verse'];
+			// process the labels in order or preference.
+			const defaultWithin = labelsOrValues.flatMap(l => state.search.shared.within.elements.find(e => e.label.includes(l) || e.value.includes(l)) || [])[0]
+			if (defaultWithin) {
+				actions.search.shared.within.sentenceElement(defaultWithin.value);
+			}
+		}
 
-				// get parallel relations types for "align by" selector
-				if (relations.relations) {
-					// Get relation types for parallel relations to all target fields in a set
-					const relTypes = new Set(Object.keys(relations.relations)
-						.filter(v => v.startsWith('al__')) // by convention, parallel relations use class 'al__TARGETVERSION', e.g. 'al__nl'
-						.flatMap(v => Object.keys(relations.relations![v])));
-					const alignByValues = [...relTypes].map(v => ({value: v, label: v, title: null}));
-					setValuesForAlignBy(alignByValues);
-				}
-			});
+		// get parallel relations types for "align by" selector
+		if (relations.relations) {
+			// Get relation types for parallel relations to all target fields in a set
+			const relTypes = new Set(Object.keys(relations.relations)
+				.filter(v => v.startsWith('al__')) // by convention, parallel relations use class 'al__TARGETVERSION', e.g. 'al__nl'
+				.flatMap(v => Object.keys(relations.relations![v])));
+			const alignByValues = [...relTypes].map(v => ({value: v, label: v, title: null}));
+			setValuesForAlignBy(alignByValues);
+		}
 	}
 
 	// EXPLORE
@@ -952,6 +984,38 @@ const init = () => {
 
 	actions.results.shared.sortMetadataIds(initialState.results.shared.sortMetadataIds);
 	if (!getState().results.shared.sortMetadataIds.length) actions.results.shared.sortMetadataIds(defaultMetadataToShow);
+
+
+	/* Validate the annotations shown in the dependency tree in the hits result table.
+	 * If none are set, search for likely annotations to map to the connlu properties in the tree.
+	 * find all likely matches, then dedupe them.
+	 * Null values won't shown anything.
+	 * The word property itself is hardcoded to be the same as the concordance (i.e. words shown in the hit), so we don't need to configure that.
+	 */
+	actions.results.shared.dependencies(initialState.results.shared.dependencies);
+	if (!Object.values(initialState.results.shared.dependencies).some(v => v != null)) {
+		function findAnnotation(keywords: string[]): string[] {
+			const ids = Object.keys(allAnnotationsMap).filter(id => allAnnotationsMap[id].hasForwardIndex);
+
+			// return best match first. If multiple annotations match the same keyword, prefer the shortest one i.e. best match (e.g. pos > pos_with_features)
+			const matches = ids.flatMap(id => {
+				const matchIndex = keywords.findIndex(kw => id.toLowerCase().includes(kw));
+				if (matchIndex === -1) return [];
+				return {id, matchIndex};
+			});
+			const sortedMatches = matches.sort((a, b) => a.matchIndex - b.matchIndex === 0 ? a.id.length - b.id.length : a.matchIndex - b.matchIndex);
+			return sortedMatches.map(m => m.id);
+		}
+		const lemmaCandidates = [getState().results.shared.dependencies.lemma || findAnnotation(['lemma', 'lem', 'lexeme', 'root', 'stem', 'canon'])].flat();
+		const uposCandidates = [getState().results.shared.dependencies.upos || findAnnotation(['upos', 'pos', 'part', 'morph', 'speech', 'lex', 'class', 'cat'])].flat();
+		const xposCandidates = [getState().results.shared.dependencies.xpos || findAnnotation(['xpos', 'pos', 'part', 'morph', 'speech', 'lex', 'class', 'cat'])].flat();
+		const featsCandidates = [getState().results.shared.dependencies.feats || findAnnotation(['feats', 'features', 'pos', 'part', 'morph', 'speech', 'lex', 'class', 'cat'])].flat();
+		let lemma = lemmaCandidates[0] || null;
+		let upos = uposCandidates.find(candidate => candidate != lemma) || null;
+		let xpos = xposCandidates.find(candidate => candidate != lemma && candidate != upos) || null;
+		let feats = featsCandidates.find(candidate => candidate != lemma && candidate != upos && candidate != xpos) || null;
+		actions.results.shared.dependencies({lemma, upos, xpos, feats});
+	}
 
 	// init custom annotation extension points, so vue reactivity will properly pick up on them
 	CorpusStore.get.allAnnotations().forEach(annot => privateActions.search.shared.initCustomAnnotationRegistrationPoint(annot.id));

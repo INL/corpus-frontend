@@ -13,21 +13,16 @@ const defaults = {
 };
 
 const namespace = 'global';
-type ExternalModuleRootState = {
+type ModuleRootState = {
 	pageSize: number;
 	sampleMode: 'percentage'|'count';
 	sampleSeed: number|null;
 	sampleSize: number|null;
+	/** context can be a string or number in BlackLab, but for now in the form we only allow numbers. */
 	context: number|string|null;
 };
 
-// We don't want to expose this internal state to the outside world
-// It's easier this way, since we don't have to worry about this setting in history parsing/generation, url parsing/generation, etc.
-type ModuleRootState=ExternalModuleRootState&{
-	resetGroupByOnSearch: boolean;
-}
-
-const initialState: ExternalModuleRootState = {
+const initialState: ModuleRootState = {
 	pageSize: defaults.pageSize as number,
 	sampleMode: defaults.sampleMode,
 	sampleSeed: null,
@@ -35,17 +30,10 @@ const initialState: ExternalModuleRootState = {
 	context: null,
 };
 
-const internalInitialState: ModuleRootState = {
-	...initialState, resetGroupByOnSearch: true
-}
-
-const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, Object.assign({}, internalInitialState));
+const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, Object.assign({}, initialState));
 
 const getState = b.state();
-
-const get = {
-	resetGroupByOnSearch: b.read((state) => state.resetGroupByOnSearch, 'resetGroupByOnSearch'),
-};
+const get = {}; //nothing for now.
 
 const actions = {
 	pageSize: b.commit((state, payload: number) => {
@@ -85,10 +73,9 @@ const actions = {
 
 	}, 'samplesize'),
 	context: b.commit((state, payload: number|string|null) => state.context = payload, 'context'),
-	resetGroupByOnSearch: b.commit((state, payload: boolean) => state.resetGroupByOnSearch = payload, 'resetGroupByOnSearch'),
 
-	reset: b.commit(state => Object.assign(state, internalInitialState), 'reset'),
-	replace: b.commit((state, payload: ExternalModuleRootState) => {
+	reset: b.commit(state => Object.assign(state, initialState), 'reset'),
+	replace: b.commit((state, payload: ModuleRootState) => {
 		// Use actions so we can verify data
 		actions.pageSize(payload.pageSize);
 		actions.sampleMode(payload.sampleMode);
@@ -102,7 +89,7 @@ const actions = {
 const init = () => {/**/};
 
 export {
-	ExternalModuleRootState,
+	ModuleRootState as ExternalModuleRootState,
 	ModuleRootState,
 
 	getState,

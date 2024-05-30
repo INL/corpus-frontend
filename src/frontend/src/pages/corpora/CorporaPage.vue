@@ -1,7 +1,7 @@
 <template>
 <div class="container">
 
-	<Spinner v-if="loadingServerInfo" lg overlay/>
+	<Spinner v-if="loadingServerInfo" lg center/>
 
 	<div v-if="!busy && !serverInfo && errorMessage" class="alert alert-danger">
 		Error loading BlackLab info, try refreshing the page.
@@ -139,6 +139,8 @@ export default Vue.extend({
 
 		corpusId: null as null|string,
 		formatId: null as null|string,
+
+		refreshingCorpora: new Set() as Set<string>
 	}),
 
 	computed: {
@@ -171,22 +173,26 @@ export default Vue.extend({
 		},
 		refreshFormats() {
 			this.loadingFormats = true;
-			Api.blacklab.getFormats().then(formats => this.formats = formats)
+			Api.blacklab.getFormats().then(formats => this.formats = formats.sort((a, b) => a.displayName.localeCompare(b.displayName)))
 			.catch((e: Api.ApiError) => this.errorMessage = e.message)
 			.finally(() => this.loadingFormats = false)
 		},
 		/** Begin periodically refreshing the corpus for as long as the status is indexing. */
 		async refreshCorpus(corpusId: string) {
+			if (this.refreshingCorpora.has(corpusId)) return;
+			this.refreshingCorpora.add(corpusId);
+
 			const displayName = this.corpora.find(c => c.id === corpusId)?.displayName || corpusId;
 			try {
 				while (true) {
 					const newCorpusState = await Api.blacklab.getCorpusStatus(corpusId);
 					let corpus = this.corpora.find(c => c.id === corpusId);
-					if (!corpus) return; // corpus was deleted?
+					if (!corpus) break; // corpus was deleted?
 					Object.assign(corpus, newCorpusState);
-					if (newCorpusState.status !== 'indexing') return;
+					if (newCorpusState.status !== 'indexing') break;
 					await new Promise(resolve => setTimeout(resolve, 2000));
 				}
+				this.refreshingCorpora.delete(corpusId);
 			} catch (error) {
 				this.errorMessage = `Could not retrieve status for corpus "${displayName}": ${error.message}`;
 			}
@@ -268,7 +274,7 @@ export default Vue.extend({
 	watch: {
 		corpora: {
 			deep: false,
-			immediate: false,
+			immediate: true,
 			handler() {
 				this.corpora.forEach(c => {
 					if (c.status === 'indexing') this.refreshCorpus(c.id);

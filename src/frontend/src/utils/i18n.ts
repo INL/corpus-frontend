@@ -33,7 +33,7 @@ export async function loadLocaleMessages(locale: string) {
 	let overrides: LocaleMessageObject|null = null;
 
 	try { messages = await import(`@/locales/${locale}.json`); }
-	catch (e) { console.info(`Failed to load locale messages for ${locale}: ${e}`); }
+	catch (e) { console.info(`Failed to load builtin locale messages for ${locale}: ${e}`); }
 
 	overrides = await fetch(`${CONTEXT_URL}/${INDEX_ID}/static/locales/${locale}.json`)
 		.then(r => {

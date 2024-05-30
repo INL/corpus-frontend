@@ -150,6 +150,12 @@ export type NormalizedIndex = NormalizedIndexBase&{
 	metadataFields: { [key: string]: NormalizedMetadataField; };
 
 	textDirection: 'ltr'|'rtl';
+
+	/**
+	 * BlackLab doesn't return this with the normal index metadata, but we pull them together for ease of use.
+	 * See store/search/corpus.ts::init and blacklabutils::NormalizeIndex
+	 * */
+	relations: BLTypes.BLRelationInfo;
 };
 
 // Helper - get all props in A not in B
@@ -283,6 +289,8 @@ export type CaptureAndRelation = {
 	color: string;
 	/** Because background color might be dark, in that case text should be white */
 	textcolor: string;
+	/** Invert of textcolor */
+	textcolorcontrast: string;
 	/** name of the capture group, or set of relation. */
 	key: string;
 	/** value of captured info, or value of relation. */

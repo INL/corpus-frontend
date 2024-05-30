@@ -4,7 +4,7 @@
 		<template v-if="loadingState === 'loaded'">
 			<QueryForm/>
 			<QuerySummary v-if="resultsVisible" class="cf-panel cf-panel-lg" id="summary"/>
-			<Debug style="margin: 0 -15px; margin-bottom: 40px;">
+			<Debug v-if="resultsVisible" style="margin: 0 -15px; margin-bottom: 40px;">
 				<div>
 					<div>{{ $t('searchPage.fullQuery') }}: </div>
 					<pre><template v-for="(v, k) in debugQuery"><template v-if="v != null && v !== ''">{{k}}: {{ v }}<br></template></template></pre>

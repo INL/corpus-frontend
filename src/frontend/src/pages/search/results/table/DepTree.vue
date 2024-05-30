@@ -1,18 +1,10 @@
 <template>
-	<div>
-		<button type="button" class="btn btn-default" @click="$emit('loadSentence')" v-if="!fullSentence && connlu">
-			<template v-if="!loadingFullSentence">{{ $t('results.table.loadCompleteSentence') }}</template>
-			<template v-else><Spinner inline/> {{ $t('results.table.loading') }}</template>
-		</button>
-
-		<reactive-dep-tree v-if="connlu && renderTree" ref="tree"
-			minimal
-			interactive
-			shown-features="FORM,LEMMA,UPOS"
-			:conll="connlu"
-		></reactive-dep-tree>
-
-	</div>
+	<reactive-dep-tree v-if="connlu && renderTree" ref="tree"
+		minimal
+		interactive
+		:shown-features="shownFeatures"
+		:conll="connlu"
+	></reactive-dep-tree>
 </template>
 
 <script lang="ts">
@@ -22,7 +14,7 @@ import Vue from 'vue';
 // @ts-ignore
 import {ReactiveDepTree} from '@/../node_modules/reactive-dep-tree/dist/reactive-dep-tree.umd.js';
 import {HitRowData} from '@/pages/search/results/table/HitRow.vue';
-import { BLHit, BLHitInOtherField, BLHitSnippet, BLHitSnippetPart, BLRelationMatchRelation } from '@/types/blacklabtypes';
+import { BLHit, BLHitInOtherField, BLHitSnippet, BLHitSnippetPart, BLMatchInfoRelation } from '@/types/blacklabtypes';
 import Spinner from '@/components/Spinner.vue';
 
 
@@ -48,7 +40,15 @@ MISC:   Any other annotation.
 // 4	a	_	DET	_	_	5	det	_	_
 // 5	pineapple	_	NOUN	_	_	3	obj	_	_`
 
-
+/**
+ * Transform from arrays of strings to an array of objects with keys.
+ * E.g: {
+ *   word: ['I', 'am', 'eating', 'a', 'pineapple'],
+ *   lemma: ['i', 'be', 'eat', 'a', 'pineapple'],
+ * }
+ * to
+ * [{word: 'I', lemma: 'i'}, {word: 'am', lemma: 'be'}, ...]
+ */
 function flatten(h?: BLHitSnippetPart, values?: string[]): Array<Record<string, string>> {
 	const r = [] as Array<Record<string, string>>;
 	if (!h) return r;
@@ -80,8 +80,6 @@ export default Vue.extend({
 	props: {
 		data: Object as () => HitRowData,
 		fullSentence: Object as () => BLHit|undefined,
-		loadingFullSentence: Boolean,
-		canLoadFullSentence: Boolean,
 
 		// TODO
 		dir: String as () => 'ltr'|'rtl',
@@ -92,6 +90,11 @@ export default Vue.extend({
 		renderTree: true,
 	}),
 	computed: {
+		shownFeatures(): string {
+			const extraFeatures = Object.entries(this.otherAnnotations).filter(([featureName, annotationForFeature]) => annotationForFeature != null).map(([k, v]) => k.toUpperCase()).join(',');
+			return `FORM${extraFeatures ? ',' + extraFeatures : ''}`;
+		},
+
 		// We only need this to know where our hit starts and ends.
 		hit(): BLHit|BLHitInOtherField|undefined { return 'start' in this.data.hit ? this.data.hit : undefined; },
 		// The full sentence is the context in which the hit was found. Unless we don't have the sentence (yet), then it's the same hit ;)
@@ -115,8 +118,8 @@ export default Vue.extend({
 			const indexOffset = start - leftLength;
 
 			const r: Array<{parentIndex: number;label: string;}> = [];
-			const doRelation = (v: BLRelationMatchRelation) => {
-				// Connlu can only have one parent, so skip if the relation is not one-to-one
+			const doRelation = (v: BLMatchInfoRelation) => {
+				// CoNNL-U can only have one parent, so skip if the relation is not one-to-one
 				if (!(v.targetEnd - v.targetStart > 1) && (v.sourceStart == null || !(v.sourceEnd! - v.sourceStart > 1))) {
 					// translate the indices to something that makes sense
 					const sourceIndex = v.sourceStart != null ? v.sourceStart - indexOffset : -1; // 0 signifies root.

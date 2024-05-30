@@ -122,9 +122,10 @@ export const blacklab = {
 		.get<BLTypes.BLIndex>(blacklabPaths.indexStatus(id), undefined, requestParamers)
 		.then(r => normalizeIndexBase(r, id)),
 
-	getCorpus: (id: string, requestParameters?: AxiosRequestConfig) => endpoints.blacklab
-		.get<BLTypes.BLIndexMetadata>(blacklabPaths.index(id), undefined, requestParameters)
-		.then(normalizeIndex),
+	getCorpus: (id: string, requestParameters?: AxiosRequestConfig) => Promise.all([
+		endpoints.blacklab.get<BLTypes.BLIndexMetadata>(blacklabPaths.index(id), undefined, requestParameters),
+		endpoints.blacklab.get<BLTypes.BLRelationInfo>(blacklabPaths.relations(id), undefined, requestParameters)
+	]).then(([index, relations]) => normalizeIndex(index, relations)),
 
 	getShares: (id: string, requestParameters?: AxiosRequestConfig) => endpoints.blacklab
 		.get<{'users[]': BLTypes.BLShareInfo}>(blacklabPaths.shares(id), undefined, requestParameters)

@@ -16,6 +16,8 @@
 			:disabled="disabled"
 			:showHits="showDocumentHits"
 			:data="docRows"
+
+			@changeSort="changeSort"
 		/>
 
 		<hr>

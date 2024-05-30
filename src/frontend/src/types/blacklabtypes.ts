@@ -105,9 +105,27 @@ export interface BLIndex {
 	documentCount?: number;
 }
 
+export interface BLSpanInfo {
+	/** Number of occurances of this span in the corpus. */
+	count: number;
+	attributes: {
+		[attributeName: string]: {
+			/** Every value encountered for this attribute on this span, and number of occurances */
+			values: {[value: string]: number};
+			/** Does the values property contain all values or was it truncated? */
+			valueListComplete: boolean;
+		}
+	};
+}
+
 export interface BLRelationInfo {
-	/** "inline tags" in the corpus, with their number of occurances. */
-	spans: Record<string, number>;
+	/**
+	 * Spans (previously "inline tags") in the corpus, with their number of occurances.
+	 * A Span is a set of two markers in the text, such as <s> and </s> for a sentence.
+	 * They can optionally have attributes, etc.
+	 * BlackLab can ensure queries fully occur within these spans, etc.
+	*/
+	spans: Record<string, BLSpanInfo>;
 	/** Only when relations have been indexed in this corpus. */
 	relations?: Record<string, Record<string, number>>; // {relClass: {relType: count}}
 }
@@ -456,7 +474,7 @@ export interface BLHitSnippetPart {
 	 */
 	punct: string[];
 	/** Usually this contains fields like lemma, word, pos */
-	[key: string]: string[]; // Jesse: Need something for the captures here
+	[key: string]: string[];
 }
 
 /** A subset of a BLHit, returned in document requests (/docs) when there are also hits. */
@@ -468,24 +486,30 @@ export type BLHitSnippet = {
 	match: BLHitSnippetPart;
 }
 
-/** When tagging part of the query like a:[] returns the start and end of the [] */
-export interface BLRelationMatchSpan {
+/** When tagging part of the query like a:[] returns the start and end of the part labelled with the 'a' (so in this case, the []) */
+export interface BLMatchInfoSpan {
+	/** When tagging part of the query like a:[] returns the start and end of the part labelled with the 'a' (so in this case, the []) */
 	type: 'span';
 	start: number;
 	end: number;
 }
 
-/** Something like "within <s/>" */
-export interface BLRelationMatchTag {
+/** Something like "within <s/>". Represents the start and end of the span surrounded with the <s/>. */
+export interface BLMatchInfoTag {
+	/** Something like "within <s/>". Represents the start and end of the span surrounded with the <s/>. */
 	type: 'tag';
 	start: number;
 	end: number;
 }
 
-export interface BLRelationMatchRelation {
+/** Represents the info captured by an arrow in the query (-->, ==>). So the source, target, and value. */
+export interface BLMatchInfoRelation {
+	/** Represents the info captured by an arrow in the query (-->, ==>). So the source, target, and value. */
 	type: 'relation';
-	/** Usually "dep" for "dependency", but ultimately up to the user.
-	 * multiple types of relations can be indexed if the user wishes to. (such as between equal words in different languages, grammatical relations between words in the same sentence, etc.)
+	/**
+	 * Usually "dep" (for "dependency"), but ultimately decided by the user when they indexed their corpus.
+	 * Multiple sets of relations can be indexed if the user wishes to.
+	 * Such as relations between equal words in different languages, grammatical relations between words in the same sentence, etc.
 	 */
 	relClass: string;
 	/** The value of the relation. */
@@ -499,26 +523,32 @@ export interface BLRelationMatchRelation {
 	targetStart: number;
 	/** Exclusive index */
 	targetEnd: number;
+	/** Target field, if different from source field */
+	targetField?: string;
 
-	/** Smallest of sourceStart and targetStart? */
+	/** Smallest of sourceStart and targetStart */
 	start: number;
-	/** Smallest of targetStart and targetEnd? */
+	/** Smallest of targetStart and targetEnd */
 	end: number;
 }
 
-export interface BLRelationMatchList {
+/**
+ * Usually when requesting all relations within a tag (with query parameter "context=s" when corpus contains <s/> tags for example)
+ * The infos will contain a multitude of RelationMatchRelation objects, each representing a relation between two tokens within the span.
+ * The start and end of the entirity of the span are also included.
+ */
+export interface BLMatchInfoList {
+	/**
+	 * Usually when requesting all relations within a tag (with query parameter "context=s" when corpus contains <s/> tags for example)
+	 * The infos will contain a multitude of RelationMatchRelation objects, each representing a relation between two tokens within the span.
+	 */
 	type: 'list';
 	start: number;
 	end: number;
-	infos: Array<BLRelationMatchRelation>
+	infos: Array<BLMatchInfoRelation>
 }
 
-// DEPRECATED: use matchInfos instead
-// export interface BLCaptureGroup  { // Jesse
-// 	name: string;
-// 	start: number;
-// 	end: number;
-// }
+export type BLMatchInfo = BLMatchInfoSpan|BLMatchInfoRelation|BLMatchInfoTag|BLMatchInfoList;
 
 /** A subset of a BLHit, returned in otherFields hits
  *  (hits in other annotated fields, i.e. in parallel corpora)
@@ -544,7 +574,7 @@ export type BLHitInOtherField = BLHitSnippet&{ // (otherFields hits don't repeat
 	 *    end: 27
 	 *  }
 	 */
-	matchInfos?: Record<string, BLRelationMatchSpan|BLRelationMatchRelation|BLRelationMatchTag|BLRelationMatchList>;
+	matchInfos?: Record<string, BLMatchInfo>;
 };
 
 /** A hit in the BlackLab hits response.

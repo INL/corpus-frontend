@@ -145,7 +145,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import { NormalizedAnnotation, NormalizedMetadataField } from '@/types/apptypes';
-import { BLDocInfo, BLHit, BLHitSnippet, BLSearchParameters } from '@/types/blacklabtypes';
+import { BLDocInfo, BLHit, BLHitInOtherField, BLHitSnippet, BLMatchInfo, BLMatchInfoRelation, BLSearchParameters } from '@/types/blacklabtypes';
 
 import * as CorpusStore from '@/store/search/corpus';
 import * as QueryStore from '@/store/search/query';
@@ -224,9 +224,62 @@ export default Vue.extend({
 		otherFields(h: BLHit|BLHitSnippet) {
 			if (!('otherFields' in h) || h.otherFields === undefined)
 				return [];
+
+			// Copy the matchInfos from the main hit that have the correct target field to a hit in another field,
+			// so that the targets can be higlighted there
+			function mergeMatchInfos(fieldName: string, hit: BLHitInOtherField, mainHitMatchInfos: Record<string, BLMatchInfo>) {
+				// console.log('mergeMatchInfos fieldName', JSON.stringify(fieldName));
+				// console.log('  hit', JSON.stringify(hit));
+				// console.log('  mainHitMatchInfos', JSON.stringify(mainHitMatchInfos));
+				if (Object.keys(mainHitMatchInfos).length === 0) {
+					// Nothing to merge
+					// console.log('Nothing to merge');
+					return hit;
+				}
+
+				/** Does the given matchInfo's targetField point to us?
+				 * If it's a list, do any of the list's elements target us?
+				 */
+				function matchInfoHasUsAsTargets([name, matchInfo]: [string, BLMatchInfo]): boolean {
+					if ('targetField' in matchInfo && matchInfo.targetField === fieldName)
+						return true;
+					if (matchInfo.type === 'list') {
+						const infos = matchInfo.infos as BLMatchInfo[];
+						if (infos.some(l => 'targetField' in l && l.targetField === fieldName))
+							return true;
+					}
+					return false;
+				};
+
+				// Keep only relations with us as the target field
+				const toMerge = Object.entries(mainHitMatchInfos)
+					.filter(matchInfoHasUsAsTargets)
+					.reduce((acc, [name, matchInfo]) => {
+						acc[name] = matchInfo;
+						return acc;
+					}, {} as Record<string, BLMatchInfo>);
+
+				if (!hit.matchInfos || Object.keys(hit.matchInfos).length === 0) {
+					// Hit has no matchInfos of its own; just use the infos from the main hit
+					// console.log('No matchInfos in hit, just use main hit matchInfos', toMerge);
+					return {
+						...hit,
+						matchInfos: toMerge
+					};
+				}
+
+				// Construct a new hit with matchInfos merged together
+				const newHit = {...hit};
+				newHit.matchInfos = {...toMerge, ...hit.matchInfos};
+				return newHit;
+
+			}
+
+			const mainHitMatchInfos = h.matchInfos || {};
 			const prefix = CorpusStore.get.parallelFieldPrefix();
 			const selectedTargets = QueryStore.getState().parallelVersions?.targets || [];
-			const otherFieldsInOrder = selectedTargets.length > 0 ? selectedTargets :
+			const otherFieldsInOrder = selectedTargets.length > 0 ?
+				selectedTargets :
 				Object.keys(h.otherFields).map(f => getParallelFieldParts(f).version);
 			const y = otherFieldsInOrder.map(name => {
 				const fieldName = getParallelFieldName(prefix, name);
@@ -243,7 +296,7 @@ export default Vue.extend({
 							docInfo,
 							docPid: h.docPid,
 						},
-						hit,
+						hit: mergeMatchInfos(fieldName, hit, mainHitMatchInfos),
 
 						gloss_fields: [], //jesse
 						hit_first_word_id: '', //jesse

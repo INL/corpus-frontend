@@ -135,12 +135,13 @@ export default Vue.extend({
 
 <style lang="scss" scoped>
 .pagination {
-
 	$color: darken(#337ab7, 5);
 	$border-color: lighten(#337ab7, 20);
 	margin: 0;
 	font-size: 0;
 	display: inline-block!important;
+
+	vertical-align: middle; // this is done for buttons, but not for ul? align with neighboring buttons.
 
 	>li {
 		> a,

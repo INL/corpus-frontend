@@ -220,7 +220,7 @@ export function normalizeIndexBase(blIndex: BLTypes.BLIndex, id: string): Normal
 	}
 }
 
-export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedIndex {
+export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata, relations: BLTypes.BLRelationInfo): NormalizedIndex {
 	const annotationGroupsNormalized = normalizeAnnotationGroups(blIndex);
 	const metadataGroupsNormalized = normalizeMetadataGroups(blIndex);
 	const annotatedFields: BLTypes.BLAnnotatedField[] = Object.values(blIndex.annotatedFields);
@@ -247,6 +247,7 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata): NormalizedInde
 		status: blIndex.status,
 		indexProgress: blIndex.indexProgress || null,
 		mainAnnotatedField: blIndex.mainAnnotatedField,
+		relations
 	};
 }
 

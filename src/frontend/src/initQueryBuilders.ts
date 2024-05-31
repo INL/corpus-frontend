@@ -38,7 +38,7 @@ export async function initQueryBuilders(): Promise<QueryBuilder[]> {
 		}))
 	}));
 
-	const withinOptions = UIStore.getState().search.shared.within.elements;
+	const withinSelectOptions = UIStore.getState().search.shared.within.elements;
 
 	// Initialize configuration
 	const queryBuilderElements = $('.querybuilder');
@@ -57,7 +57,7 @@ export async function initQueryBuilders(): Promise<QueryBuilder[]> {
 		const instance = new QueryBuilder($(el), {
 			queryBuilder: {
 				view: {
-					withinSelectOptions: withinOptions
+					withinSelectOptions
 				}
 			},
 			attribute: {

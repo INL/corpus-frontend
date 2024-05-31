@@ -125,7 +125,7 @@ $(document).ready(async () => {
 			RootStore.actions.replace(stateFromUrl);
 			// Don't do this before the url is parsed, as it controls the page url (among other things derived from the state).
 			connectStreamsToVuex();
-			setTimeout(initQueryBuilders, 500); // @@@ TODO JN UGLY, but we need withinSelectOptions to be available
+			initQueryBuilders();
 		},
 	}).$mount(document.querySelector('#vue-root')!);
 });

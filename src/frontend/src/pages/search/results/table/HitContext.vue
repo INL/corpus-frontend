@@ -17,9 +17,9 @@
 					textShadow: `0 0 1.25px ${cap[0].textcolorcontrast},`.repeat(10).replace(/,$/, '')
 				}"
 				:title="cap.map(c => c.key)"
-				@mouseover="$emit('hover', cap[0].key + '_' + i)"
-				@mouseout="$emit('unhover', cap[0].key + '_' + i)"
-				:class="{ 'hover': hoverMatchInfoKey === cap[0].key + '_' + i }"
+				@mouseover="$emit('hover', cap[0].key.replace(/-->/, '') + '_' + i)"
+				@mouseout="$emit('unhover', cap[0].key.replace(/-->/, '') + '_' + i)"
+				:class="{ hoverable: true, hover: hoverMatchInfoKey === cap[0].key.replace(/-->/, '') + '_' + i }"
 			></span
 			><span v-else v-html="text"></span
 			><span v-if="doPunct" v-html="punct" :key="punct + '_' + i"></span
@@ -40,9 +40,9 @@
 					textShadow: `0 0 1.25px ${cap[0].textcolorcontrast},`.repeat(10).replace(/,$/, '')
 				}"
 				:title="cap.map(c => c.key)"
-				@mouseover="$emit('hover', cap[0].key + '_' + i)"
-				@mouseout="$emit('unhover', cap[0].key + '_' + i)"
-				:class="{ 'hover': hoverMatchInfoKey === cap[0].key + '_' + i }"
+				@mouseover="$emit('hover', cap[0].key.replace(/-->/, '') + '_' + i)"
+				@mouseout="$emit('unhover', cap[0].key.replace(/-->/, '') + '_' + i)"
+				:class="{ hoverable: true, hover: hoverMatchInfoKey === cap[0].key.replace(/-->/, '') + '_' + i }"
 			>{{ text }}</span
 			><template v-else>{{ text }}</template
 			><template v-if="doPunct">{{punct}}</template
@@ -84,6 +84,11 @@ export default Vue.extend({
 </script>
 
 <style>
+
+span.hoverable {
+	border: 1px solid transparent;
+}
+
 span.hover {
 	/*background-color: black;
 	color: white;*/

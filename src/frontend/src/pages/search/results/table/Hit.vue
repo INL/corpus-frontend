@@ -1,105 +1,64 @@
 <template>
-	<table class="hits-table">
-		<thead>
-			<tr class="rounded">
-				<th class="text-right">
-					<span v-if="sortableAnnotations && sortableAnnotations.length" class="dropdown">
-						<a role="button" data-toggle="dropdown" :class="['dropdown-toggle', {'disabled': disabled}]">
-							{{leftLabel}} {{$t('results.table.hit')}}
-							<span class="caret"></span>
-						</a>
+	<div>
+		<HitRow :key="`${i}-hit`"
+			:class="{open: open, interactable: !disableDetails && !disabled}"
+			:data="h"
+			:displayField="isParallel ? parallelVersion(annotatedField) : ''"
+			:mainAnnotation="mainAnnotation"
+			:otherAnnotations="otherAnnotations"
+			:metadata="metadata"
+			:dir="dir"
+			:html="html"
+			:disabled="disabled"
+			:hoverMatchInfoKey="hoverMatchInfoKey"
+			@hover="hover($event)"
+			@unhover="unhover($event)"
+			@click.native="clickNative()"
+		/>
 
-						<ul class="dropdown-menu" role="menu">
-							<li v-for="annotation in sortableAnnotations" :key="annotation.id" :class="{'disabled': disabled}">
-								<a @click="changeSort(`${beforeField}:${annotation.id}`)" class="sort" role="button">{{annotation.displayName}} <Debug>(id: {{annotation.id}})</Debug></a>
-							</li>
-						</ul>
-					</span>
-					<template v-else>{{leftLabel}} {{$t('results.table.hit')}}</template>
-				</th>
+		<HitRowDetails v-if="!disableDetails" :key="`${i}-details`"
+			:colspan="colspan"
+			:data="h"
+			:open="open"
+			:query="query"
+			:annotatedField="annotatedField"
+			:mainAnnotation="mainAnnotation"
+			:detailedAnnotations="detailedAnnotations"
+			:dir="dir"
+			:html="html"
+		/>
 
-				<th class="text-center">
-					<span v-if="sortableAnnotations && sortableAnnotations.length" class="dropdown">
-						<a role="button" data-toggle="dropdown" :class="['dropdown-toggle', {'disabled': disabled}]">
-							{{$t('results.table.hit')}}
-							<span class="caret"/>
-						</a>
-
-						<ul class="dropdown-menu" role="menu">
-							<li v-for="annotation in sortableAnnotations" :key="annotation.id" :class="{'disabled': disabled}">
-								<a @click="changeSort(`hit:${annotation.id}`)" class="sort" role="button">{{annotation.displayName}} <Debug>(id: {{annotation.id}})</Debug></a>
-							</li>
-						</ul>
-					</span>
-					<template v-else>{{$t('results.table.hit')}}</template>
-				</th>
-
-				<th class="text-left">
-					<span v-if="sortableAnnotations && sortableAnnotations.length" class="dropdown">
-						<a role="button" data-toggle="dropdown" :class="['dropdown-toggle', {'disabled': disabled}]">
-							{{rightLabel}} {{$t('results.table.hit')}}
-							<span class="caret"></span>
-						</a>
-
-						<ul class="dropdown-menu" role="menu">
-							<li v-for="annotation in sortableAnnotations" :key="annotation.id" :class="{'disabled': disabled}">
-								<a @click="changeSort(`${afterField}:${annotation.id}`)" :class="['sort', {'disabled':disabled}]" role="button">{{annotation.displayName}} <Debug>(id: {{annotation.id}})</Debug></a>
-							</li>
-						</ul>
-					</span>
-					<template v-else>{{rightLabel}} {{$t('results.table.hit')}}</template>
-				</th>
-				<!-- might crash? no null check -->
-				<th v-for="annotation in otherAnnotations" :key="annotation.id">
-					<a v-if="annotation.hasForwardIndex"
-						role="button"
-						:class="['sort', {'disabled':disabled}]"
-						:title="`Sort by ${annotation.displayName}`"
-						@click="changeSort(`hit:${annotation.id}`)"
-					>
-						{{annotation.displayName}} <Debug>(id: {{annotation.id}})</Debug>
-					</a>
-					<template v-else>{{annotation.displayName}}</template>
-				</th>
-				<th v-for="meta in metadata" :key="meta.id">
-					<a
-						role="button"
-						:class="['sort', {'disabled':disabled}]"
-						:title="`Sort by ${meta.displayName}`"
-						@click="changeSort(`field:${meta.id}`)"
-					>
-						{{meta.displayName}} <Debug>(id: {{meta.id}})</Debug>
-					</a>
-				</th>
-				<!-- glosses todo -->
-				<!-- <th v-for="(fieldName, i) in shownGlossCols" :key="i"><a class='sort gloss_field_heading' :title="`User gloss field: ${fieldName}`">{{ fieldName }}</a></th> -->
-			</tr>
-		</thead>
-		<tbody>
-			<template v-for="(h, i) in data">
-				<Hit v-if="h.type === 'hit'"
-					:query="query"
-					:annotatedField="annotatedField"
-					:mainAnnotation="mainAnnotation"
-					:otherAnnotations="otherAnnotations"
-					:detailedAnnotations="detailedAnnotations"
-					:metadata="metadata"
-					:dir="dir"
-					:html="html"
-					:disabled="disabled"
-					:disableDetails="disableDetails"
-					:h="h"
-					:i="i"
-					:isParallel="isParallel"
-				/>
-				<DocRow v-else :key="`${i}-doc`"
-					:data="h"
-					:metadata="metadata"
-					:colspan="colspan"
-				/>
-			</template>
-		</tbody>
-	</table>
+		<!-- Show hits in other fields (parallel corpora) -->
+		<template v-for="(of) in otherFields(h.hit)">
+			<HitRow :key="`${i}-${of.name}-hit`"
+				:class="{open: open, interactable: !disableDetails && !disabled}"
+				class="foreign-hit"
+				:data="of.hit"
+				:displayField="isParallel ? parallelVersion(of.name) : ''"
+				:mainAnnotation="mainAnnotation"
+				:otherAnnotations="otherAnnotations"
+				:metadata="metadata"
+				:dir="dir"
+				:html="html"
+				:disabled="disabled"
+				:hoverMatchInfoKey="hoverMatchInfoKey"
+				@hover="hover($event)"
+				@unhover="unhover($event)"
+				@click.native="clickNative()"
+			/>
+			<HitRowDetails v-if="!disableDetails" :key="`${i}-${of.name}-details`"
+				:colspan="colspan"
+				:data="of.hit"
+				:open="open"
+				:query="query"
+				:annotatedField="of.name"
+				:mainAnnotation="mainAnnotation"
+				:detailedAnnotations="detailedAnnotations"
+				:dir="dir"
+				:html="html"
+			/>
+		</template>
+	</div>
 </template>
 
 <script lang="ts">
@@ -110,11 +69,10 @@ import { BLDocInfo, BLHit, BLHitInOtherField, BLHitSnippet, BLMatchInfo, BLMatch
 import * as CorpusStore from '@/store/search/corpus';
 import * as QueryStore from '@/store/search/query';
 
-import Hit from '@/pages/search/results/table/Hit.vue';
 import HitRow, {HitRowData} from '@/pages/search/results/table/HitRow.vue'
 import HitRowDetails from '@/pages/search/results/table/HitRowDetails.vue'
 import DocRow, {DocRowData} from '@/pages/search/results/table/DocRow.vue';
-import { getParallelFieldName, getParallelFieldParts, isParallelField } from '@/utils/blacklabutils';
+import { getParallelFieldName, getParallelFieldParts } from '@/utils/blacklabutils';
 
 export {HitRowData} from '@/pages/search/results/table/HitRow.vue';
 
@@ -125,7 +83,6 @@ export {HitRowData} from '@/pages/search/results/table/HitRow.vue';
 export default Vue.extend({
 	components: {
 		DocRow,
-		Hit,
 		HitRow,
 		HitRowDetails,
 	},
@@ -144,8 +101,6 @@ export default Vue.extend({
 		detailedAnnotations: Array as () => NormalizedAnnotation[]|undefined,
 		/** Optional. Additional metadata columns to show. Normally nothing, but could show document id or something */
 		metadata: Array as () => NormalizedMetadataField[]|undefined,
-		/** Optional */
-		sortableAnnotations: Array as () => NormalizedAnnotation[]|undefined,
 
 		dir: String as () => 'ltr'|'rtl',
 		/** Render contents as html or text */
@@ -155,21 +110,16 @@ export default Vue.extend({
 		disableDetails: Boolean,
 
 		/** The results */
-		data: Array as () => Array<HitRowData|DocRowData>,
+		h: Object as () => HitRowData,
+		i: Number,
+
+		isParallel: Boolean,
 	},
 	data: () => ({
-		open: {} as Record<string, boolean>,
-		hoverMatchInfoKey: [] as string[], // hovered match info (if any) for each row
+		open: false,
+		hoverMatchInfoKey: '',
 	}),
 	computed: {
-		// ltr, rtl stuff
-		leftLabel(): string { return this.dir === 'rtl' ? this.$t('results.table.After') as string : this.$t('results.table.Before') as string; },
-		rightLabel(): string { return this.dir === 'rtl' ? this.$t('results.table.Before') as string : this.$t('results.table.After') as string; },
-		beforeField(): string { return this.dir === 'rtl' ? this.$t('results.table.after') as string : this.$t('results.table.before') as string; },
-		afterField(): string { return this.dir === 'rtl' ? this.$t('results.table.before') as string : this.$t('results.table.after') as string; },
-		isParallel(): boolean {
-			return this.data.find(d => d.type === 'hit' && 'otherFields' in d.hit) !== undefined;
-		},
 		colspan(): number {
 			let c = 3; // hit, before, after
 			if (this.isParallel) {
@@ -181,8 +131,10 @@ export default Vue.extend({
 		}
 	},
 	methods: {
-		changeSort(sort: string) {
-			this.$emit('changeSort', sort)
+		clickNative() {
+			if (!this.disableDetails) {
+				this.open = !this.open;
+			}
 		},
 		otherFields(h: BLHit|BLHitSnippet) {
 			if (!('otherFields' in h) || h.otherFields === undefined)
@@ -287,10 +239,17 @@ export default Vue.extend({
 			const versionName = getParallelFieldParts(fieldName).version || fieldName;
 			return CorpusStore.get.parallelVersions().find(v => v.name === versionName)?.displayName || versionName;
 		},
+		hover(matchInfoKey: string) {
+			this.hoverMatchInfoKey = matchInfoKey;
+		},
+		unhover(matchInfoKey: string) {
+			if (this.hoverMatchInfoKey === matchInfoKey)
+				this.hoverMatchInfoKey = '';
+		}
 	},
 	watch: {
 		data() {
-			this.open = {};
+			this.open = false;
 		}
 	}
 })

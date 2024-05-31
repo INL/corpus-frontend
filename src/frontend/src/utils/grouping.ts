@@ -15,6 +15,7 @@ export type ContextPositional = {
 export type ContextLabel = {
 	type: 'label';
 	label: string;
+	relation?: 'source'|'target'|'full'|undefined;
 }
 
 /** Represents grouping by one or more tokens in the hit */
@@ -64,7 +65,8 @@ export function parseGroupBy(groupBy: string[]): GroupBy[] {
 					// but for the relation, all tokens between source and target are used for the grouping
 					// so not what we want. Will need new BlackLab feature to support this.
 					// probably want to group on the VALUE of the relation itself, not the tokens.
-					label: part.split(':')[3]
+					label: part.split(':')[3],
+					relation: part.split(':')[4] as 'source'|'target'|'full'|undefined
 				}
 			})
 			case 'hit': return cast<GroupByContext>({
@@ -170,7 +172,7 @@ export function serializeGroupBy(groupBy: GroupBy|GroupBy[]): string|string[] {
 			case 'metadata': return `field:${g.field}:${g.caseSensitive ? 's' : 'i'}`;
 			case 'context': {
 
-				if (g.context.type === 'label') return `capture:${g.annotation}:${g.caseSensitive ? 's' : 'i'}:${g.context.label}`;
+				if (g.context.type === 'label') return `capture:${g.annotation}:${g.caseSensitive ? 's' : 'i'}:${g.context.label}${g.context.relation ? ':' + g.context.relation : ''}`;
 				else if (g.context.type === 'positional') {
 					/*
 						Examples:

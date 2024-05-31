@@ -142,6 +142,11 @@
 				"fromTheEnd": "vanaf het einde van het resultaat"
 			},
 
+			"relationPartLabel": "Deel van relatie",
+			"relationSource": "oorsprong",
+			"relationTarget": "doel",
+			"relationBoth": "beide",
+
 			"caseSensitive": "Hoofdlettergevoelig",
 			"chooseWordPositions": "Kies hier de <strong>specifieke woorden</strong> om op te groeperen, in het voorbeeld hieronder ziet u welke woorden zijn geselecteerd.",
 			"selectDocumentMetadata": "Select the document metadata to group on.",

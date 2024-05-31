@@ -82,10 +82,36 @@
 								/></template>
 							</i18n>
 
-							<br>
-							<label><input type="checkbox" v-model="current.caseSensitive">  {{ $t('results.groupBy.caseSensitive') }}</label>
 
-							<div style="margin: 0.75em 0 1.5em 0;"  v-if="sliderVisible">
+							<form class="case-and-context">
+								<div class="labels">
+									<label for="group-case-sensitive">{{ $t('results.groupBy.caseSensitive') }}: </label>
+									<label v-if="current.context.type === 'label' && relations?.includes(current.context.label)" for="group-relation">{{ $t('results.groupBy.relationPartLabel') }}:</label>
+								</div>
+								<div class="inputs">
+									<input id="group-case-sensitive" type="checkbox" v-model="current.caseSensitive">
+									<div v-if="current.context.type === 'label' && relations?.includes(current.context.label)" class="btn-group">
+										<button type="button"
+											class="btn btn-default btn-sm"
+											:class="{active: current.context.relation === 'source'}"
+											@click="current.context.relation = 'source'"
+										>{{$t('results.groupBy.relationSource')}}</button>
+										<button type="button"
+											class="btn btn-default btn-sm"
+											:class="{active: current.context.relation === 'full' || !current.context.relation}"
+											@click="current.context.relation = 'full'"
+										>{{$t('results.groupBy.relationBoth')}}</button>
+										<button type="button"
+											class="btn btn-default btn-sm"
+											:class="{active: current.context.relation === 'target'}"
+											@click="current.context.relation = 'target'"
+										>{{$t('results.groupBy.relationTarget')}}</button>
+									</div>
+								</div>
+							</form>
+
+
+							<div style="padding: 10px 0 25px;"  v-if="sliderVisible">
 								<div v-html="$t('results.groupBy.chooseWordPositions')"></div>
 								<Slider
 									:direction="sliderInverted ? 'rtl' : 'ltr'"
@@ -136,7 +162,7 @@
 										...style,
 										flexShrink: word.length
 									}"
-									@click="handlePreviewClick(i, j)"
+									@click="handlePreviewClick($event, i, j)"
 								>
 									<div :title="word" class="main">{{ word }}</div>
 									<div :title="selectedAnnotation" class="annotation">{{ selectedAnnotation }}</div>
@@ -178,7 +204,7 @@ import jsonStableStringify from 'json-stable-stringify';
 
 import SelectPicker, { Options } from '@/components/SelectPicker.vue';
 import { snippetParts } from '@/utils/hit-highlighting';
-import { HitToken } from '@/types/apptypes';
+import { CaptureAndRelation, HitToken } from '@/types/apptypes';
 
 export default Vue.extend({
 	components: {
@@ -294,12 +320,12 @@ export default Vue.extend({
 		},
 
 		preview(): {
-			active: boolean,
-			word: string,
-			selectedAnnotation: string,
-			punct: string,
-			style: object,
-			relation?: string
+			active: boolean;
+			word: string;
+			selectedAnnotation: string;
+			punct: string;
+			style: object;
+			captureAndRelation: CaptureAndRelation[]|undefined;
 		}[][] {
 			if (this.current?.type !== 'context' || !isHitResults(this.hits) || !this.hits.hits.length) return [];
 
@@ -331,18 +357,25 @@ export default Vue.extend({
 				}
 			}
 
-			function getPreviewStyle(t: HitToken): object {
+			const isActiveIndex = (i: number): boolean => i >= start && i <= end;
+
+			const isActiveRelationOrCapture = (t: HitToken): boolean => {
+				/** might be null if not grouping on a capture at the moment */
+				const currentlyGroupedOnCaptureOrRelation =  t.captureAndRelation?.find(c => c.key === this.currentAsLabel?.context.label);
+				if (!currentlyGroupedOnCaptureOrRelation) return false;
+
+				if (this.currentAsLabel?.context.relation === 'source') { return currentlyGroupedOnCaptureOrRelation.isSource; }
+				else if (this.currentAsLabel?.context.relation === 'target') { return currentlyGroupedOnCaptureOrRelation.isTarget; }
+				else return true;
+			}
+
+			const getPreviewStyle = (t: HitToken): object => {
 				return t.captureAndRelation?.length ? {
 					background: `linear-gradient(90deg, ${t.captureAndRelation.map((c, i) => `${c.color} ${i / t.captureAndRelation!.length * 100}%, ${c.color} ${(i + 1) / t.captureAndRelation!.length * 100}%`)})`,
 					color: t.captureAndRelation[0].textcolor,
-					// 'border-radius': '2px',
-					// padding: '0 2px',
 					textShadow: `0 0 1.25px ${t.captureAndRelation[0].textcolorcontrast},`.repeat(10).replace(/,$/, ''),
-					cursor: 'pointer'
+					cursor: 'pointer',
 				} : {}
-			}
-			function getRelation(t: HitToken): string|undefined {
-				return t.captureAndRelation?.[0]?.key;
 			}
 
 			return [
@@ -350,26 +383,25 @@ export default Vue.extend({
 					word: t.text || '·',
 					selectedAnnotation: t.annotations[annotation!] || '·',
 					punct: t.punct,
-					active: position === 'B' && i >= start && i <= end,
+					active: (position === 'B' && isActiveIndex(i)) || isActiveRelationOrCapture(t),
 					style: getPreviewStyle(t),
-					relation: getRelation(t)
+					captureAndRelation: t.captureAndRelation,
 				})),
 				snippet.match.map((t, i) => ({
 					word: t.text || '·',
 					selectedAnnotation: t.annotations[annotation!] || '·',
 					punct: t.punct,
-					active: (position === 'H' || position === 'E') && i >= start && i <= end,
+					active: ((position === 'H' || position === 'E') && isActiveIndex(i)) || isActiveRelationOrCapture(t),
 					style: getPreviewStyle(t),
-					relation: getRelation(t)
+					captureAndRelation: t.captureAndRelation,
 				})),
 				snippet.after.map((t, i) => ({
 					word: t.text || '·',
 					selectedAnnotation: t.annotations[annotation!] || '·',
 					punct: t.punct,
-					active: position === 'A' && i >= start && i <= end,
+					active: (position === 'A' && isActiveIndex(i)) || isActiveRelationOrCapture(t),
 					style: getPreviewStyle(t),
-					relation: getRelation(t)
-
+					captureAndRelation: t.captureAndRelation,
 				}))
 			];
 		},
@@ -435,7 +467,8 @@ export default Vue.extend({
 				} else {
 					this.current.context = {
 						type: 'label',
-						label: v
+						label: v,
+						relation: this.relations?.includes(v) ? 'full' : undefined
 					}
 				}
 			},
@@ -528,12 +561,41 @@ export default Vue.extend({
 			});
 			this.currentIndex = this.localModel.length -1;
 		},
-		handlePreviewClick(section: number, index: number) {
+		/**
+		 * When a highlighted word in the preview is clicked, retrieve what it represents (a capture group, or relation source/target)
+		 * And update the current grouping criterium to be that.
+		 *
+		 * When a word has multiple things it represents, use the position of the click to determine which one was clicked.
+		 * When a relation is clicked and it's already the current relation, toggle between source/target and full context.
+		 */
+		handlePreviewClick(event: MouseEvent, section: number, index: number) {
 			const preview = this.preview[section][index];
-			if (!preview.relation || this.current?.type !== 'context') return;
+			if (!preview.captureAndRelation?.length || this.current?.type !== 'context') return;
+
+			const elementRect = (event.target as HTMLElement).getBoundingClientRect();
+			const elementLeftBorder = elementRect.left + window.scrollX;
+			const clickPositionInElement = event.pageX - elementLeftBorder;
+			const elementWidth = elementRect.width;
+
+			// sometimes a click slightly outside the element can cause a negative or overflow value, so clamp it.
+			const relationIndex = Math.max(0, Math.min(Math.floor((clickPositionInElement / elementWidth) * preview.captureAndRelation.length), preview.captureAndRelation.length - 1));
+			const relation = preview.captureAndRelation[relationIndex];
+
+			// Implement the toggling, check if the current state === the new state, and invert it.
+			const isRelation = relation.isSource || relation.isTarget;
+			let toSet: 'source'|'target'|'full'|undefined;
+			if (isRelation) {
+				if (this.currentAsLabel?.context.relation === 'full' || !this.currentAsLabel?.context.relation) {
+					toSet = relation.isSource ? 'source' : relation.isTarget ? 'target' : undefined;
+				} else {
+					toSet = 'full';
+				}
+			}
+
 			this.current.context = {
 				type: 'label',
-				label: preview.relation
+				label: relation.key,
+				relation: toSet
 			}
 		},
 
@@ -606,6 +668,35 @@ export default Vue.extend({
 }
 
 
+.case-and-context {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	padding: 10px 0;
+
+
+	> .labels {
+		padding-right: 10px;
+		flex-shrink: 1;
+		flex-basis: auto;
+		> * {
+			margin-bottom: 0.5em;
+			display: block;
+			line-height: 30px;
+		}
+	}
+	>.inputs {
+		flex-grow: 1;
+		flex-basis: auto;
+		> * {
+			margin-bottom: 0.5em;
+			height: 30px;
+			display: block;
+		}
+
+	}
+}
 
 
 .hit-preview {

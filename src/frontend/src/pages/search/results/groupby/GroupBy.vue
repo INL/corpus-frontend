@@ -509,7 +509,7 @@ export default Vue.extend({
 				// when using capture label or relation, done.
 				if (g.context.type === 'label') {
 					return this.$t('results.groupBy.label', {
-						label: g.context.type === 'label',
+						label: g.context.label,
 						annotation: g.annotation
 					}).toString();
 				}

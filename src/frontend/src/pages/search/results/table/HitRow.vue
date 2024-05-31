@@ -1,11 +1,11 @@
 <template>
 	<tr class="concordance rounded">
 		<td v-if="displayField">{{ displayField }}</td>
-		<HitContextComponent tag="td" class="text-right" :dir="dir" :data="context.before" :html="html" before/>
-		<HitContextComponent tag="td" bold class="text-center" :dir="dir" :data="context.match" :html="html"/>
-		<HitContextComponent tag="td" class="" :dir="dir" :data="context.after" :html="html" after/>
+		<HitContextComponent tag="td" class="text-right" :dir="dir" :data="context.before" :html="html" before :hoverMatchInfoKey="hoverMatchInfoKey" @hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
+		<HitContextComponent tag="td" bold class="text-center" :dir="dir" :data="context.match" :html="html" :hoverMatchInfoKey="hoverMatchInfoKey" @hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)"/>
+		<HitContextComponent tag="td" class="" :dir="dir" :data="context.after" :html="html" after :hoverMatchInfoKey="hoverMatchInfoKey" @hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)"/>
 
-		<HitContextComponent v-for="(c, i) in otherContexts" tag="td" :data="c.match" :html="html" :dir="dir" :key="i"/>
+		<HitContextComponent v-for="(c, i) in otherContexts" tag="td" :data="c.match" :html="html" :dir="dir" :key="i" :hoverMatchInfoKey="hoverMatchInfoKey" @hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)"/>
 
 		<td v-for="field in data.gloss_fields" :key="field.fieldName" style="overflow: visible;">
 			<GlossField
@@ -65,6 +65,12 @@ export default Vue.extend({
 		metadata: Array as () => NormalizedMetadataField[]|undefined,
 		dir: String as () => 'ltr'|'rtl',
 		html: Boolean,
+
+		// which match info (capture/relation) is being hovered over? (parallel corpora)
+		hoverMatchInfoKey: {
+			type: String,
+			default: '',
+		},
 	},
 	computed: {
 		context(): HitContext {
@@ -77,7 +83,6 @@ export default Vue.extend({
 			return this.otherAnnotations?.map(a => snippetParts(this.data.hit, a.id, this.dir, false));
 		},
 	},
-
 });
 </script>
 

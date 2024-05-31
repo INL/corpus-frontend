@@ -17,6 +17,9 @@
 					textShadow: `0 0 1.25px ${cap[0].textcolorcontrast},`.repeat(10).replace(/,$/, '')
 				}"
 				:title="cap.map(c => c.key)"
+				@mouseover="$emit('hover', cap[0].key + '_' + i)"
+				@mouseout="$emit('unhover', cap[0].key + '_' + i)"
+				:class="{ 'hover': hoverMatchInfoKey === cap[0].key + '_' + i }"
 			></span
 			><span v-else v-html="text"></span
 			><span v-if="doPunct" v-html="punct" :key="punct + '_' + i"></span
@@ -37,6 +40,9 @@
 					textShadow: `0 0 1.25px ${cap[0].textcolorcontrast},`.repeat(10).replace(/,$/, '')
 				}"
 				:title="cap.map(c => c.key)"
+				@mouseover="$emit('hover', cap[0].key + '_' + i)"
+				@mouseout="$emit('unhover', cap[0].key + '_' + i)"
+				:class="{ 'hover': hoverMatchInfoKey === cap[0].key + '_' + i }"
 			>{{ text }}</span
 			><template v-else>{{ text }}</template
 			><template v-if="doPunct">{{punct}}</template
@@ -61,6 +67,12 @@ export default Vue.extend({
 		},
 		bold: Boolean,
 
+		// which match info (capture/relation) is being hovered over? (parallel corpora)
+		hoverMatchInfoKey: {
+			type: String,
+			default: ''
+		},
+
 		before: Boolean,
 		after: Boolean,
 		punct: {default: true},
@@ -71,3 +83,10 @@ export default Vue.extend({
 });
 </script>
 
+<style>
+span.hover {
+	/*background-color: black;
+	color: white;*/
+	border: 1px solid black;
+}
+</style>

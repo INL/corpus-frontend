@@ -88,6 +88,9 @@
 						:dir="dir"
 						:html="html"
 						:disabled="disabled"
+						:hoverMatchInfoKey="getHover(i)"
+						@hover="hover(i, $event)"
+						@unhover="unhover(i, $event)"
 						@click.native="!disableDetails && $set(open, i, !open[i])"
 					/>
 
@@ -116,6 +119,9 @@
 							:dir="dir"
 							:html="html"
 							:disabled="disabled"
+							:hoverMatchInfoKey="getHover(i)"
+							@hover="hover(i, $event)"
+							@unhover="unhover(i, $event)"
 							@click.native="!disableDetails && $set(open, i, !open[i])"
 						/>
 						<HitRowDetails v-if="!disableDetails" :key="`${i}-${of.name}-details`"
@@ -196,7 +202,8 @@ export default Vue.extend({
 		data: Array as () => Array<HitRowData|DocRowData>,
 	},
 	data: () => ({
-		open: {} as Record<string, boolean>
+		open: {} as Record<string, boolean>,
+		hoverMatchInfoKey: [] as string[], // hovered match info (if any) for each row
 	}),
 	computed: {
 		// ltr, rtl stuff
@@ -324,6 +331,25 @@ export default Vue.extend({
 			const versionName = getParallelFieldParts(fieldName).version || fieldName;
 			return CorpusStore.get.parallelVersions().find(v => v.name === versionName)?.displayName || versionName;
 		},
+		hover(i: number, matchInfoKey: string) {
+			console.log('hover', i, matchInfoKey);
+			while (this.hoverMatchInfoKey.length <= i)
+				this.hoverMatchInfoKey.push('');
+			this.hoverMatchInfoKey[i] = matchInfoKey;
+		},
+		unhover(i: number, matchInfoKey: string) {
+			// console.log('unhover', i, matchInfoKey);
+			// while (this.hoverMatchInfoKey.length <= i)
+			// 	this.hoverMatchInfoKey.push('');
+			// if (this.hoverMatchInfoKey[i] === matchInfoKey)
+			// 	this.hoverMatchInfoKey[i] = '';
+		},
+		getHover(i: number) {
+			while (this.hoverMatchInfoKey.length <= i)
+				this.hoverMatchInfoKey.push('');
+			console.log('getHover', i, this.hoverMatchInfoKey[i]);
+			return this.hoverMatchInfoKey[i];
+		}
 	},
 	watch: {
 		data() {

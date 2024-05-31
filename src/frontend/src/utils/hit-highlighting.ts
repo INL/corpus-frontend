@@ -106,9 +106,9 @@ export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir:
 
 		if (info.type === 'list') {
 			// A list of relations, such as returned by the ==>TARGETVERSION (parallel alignment) operator
-			// or a call to rcap(). Return the captured relations.
-			return info.infos.map<Omit<NormalizedCapture, 'color'|'textcolor'|'textcolorcontrast'>>(info => ({
-				name: info.relType,
+			// or a call to rcap(). Return the captured relations, but include the list index in the name.
+			return info.infos.map<Omit<NormalizedCapture, 'color'|'textcolor'|'textcolorcontrast'>>( (info, index) => ({
+				name: info.relType + '[' + index + ']',
 				...info,
 				isRelation: true
 			}));

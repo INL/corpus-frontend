@@ -1,11 +1,19 @@
 <template>
 	<tr class="concordance rounded">
 		<td v-if="displayField">{{ displayField }}</td>
-		<HitContextComponent tag="td" class="text-right" :dir="dir" :data="context.before" :html="html" before :hoverMatchInfoKey="hoverMatchInfoKey" @hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
-		<HitContextComponent tag="td" bold class="text-center" :dir="dir" :data="context.match" :html="html" :hoverMatchInfoKey="hoverMatchInfoKey" @hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)"/>
-		<HitContextComponent tag="td" class="" :dir="dir" :data="context.after" :html="html" after :hoverMatchInfoKey="hoverMatchInfoKey" @hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)"/>
+		<HitContextComponent tag="td" class="text-right" :dir="dir" :data="context.before" :html="html" before
+			:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+			@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
+		<HitContextComponent tag="td" bold class="text-center" :dir="dir" :data="context.match" :html="html"
+			:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+			@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)"/>
+		<HitContextComponent tag="td" class="" :dir="dir" :data="context.after" :html="html" after
+			:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+			@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)"/>
 
-		<HitContextComponent v-for="(c, i) in otherContexts" tag="td" :data="c.match" :html="html" :dir="dir" :key="i" :hoverMatchInfoKey="hoverMatchInfoKey" @hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)"/>
+		<HitContextComponent v-for="(c, i) in otherContexts" tag="td" :data="c.match" :html="html" :dir="dir" :key="i"
+			:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+			@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)"/>
 
 		<td v-for="field in data.gloss_fields" :key="field.fieldName" style="overflow: visible;">
 			<GlossField
@@ -32,6 +40,7 @@ import { HitContext, NormalizedAnnotation, NormalizedMetadataField } from '@/typ
 import { snippetParts } from '@/utils/hit-highlighting';
 
 import HitContextComponent from '@/pages/search/results/table/HitContext.vue';
+import { isParallelField } from '@/utils/blacklabutils';
 
 /**
  * Can contain either a full hit or a partial hit (without capture/relations info)
@@ -66,11 +75,12 @@ export default Vue.extend({
 		dir: String as () => 'ltr'|'rtl',
 		html: Boolean,
 
-		// which match info (capture/relation) is being hovered over? (parallel corpora)
-		hoverMatchInfoKey: {
-			type: String,
-			default: '',
+		// which match infos (capture/relation) should be highlighted because we're hovering over a token? (parallel corpora)
+		hoverMatchInfos: {
+			type: Array as () => string[],
+			default: () => [],
 		},
+		isParallel: { default: false },
 	},
 	computed: {
 		context(): HitContext {

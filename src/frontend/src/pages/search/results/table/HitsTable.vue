@@ -157,10 +157,6 @@ export default Vue.extend({
 		/** The results */
 		data: Array as () => Array<HitRowData|DocRowData>,
 	},
-	data: () => ({
-		open: {} as Record<string, boolean>,
-		hoverMatchInfoKey: [] as string[], // hovered match info (if any) for each row
-	}),
 	computed: {
 		// ltr, rtl stuff
 		leftLabel(): string { return this.dir === 'rtl' ? this.$t('results.table.After') as string : this.$t('results.table.Before') as string; },
@@ -288,11 +284,6 @@ export default Vue.extend({
 			return CorpusStore.get.parallelVersions().find(v => v.name === versionName)?.displayName || versionName;
 		},
 	},
-	watch: {
-		data() {
-			this.open = {};
-		}
-	}
 })
 
 </script>

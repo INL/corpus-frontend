@@ -10,7 +10,8 @@
 			:dir="dir"
 			:html="html"
 			:disabled="disabled"
-			:hoverMatchInfoKey="hoverMatchInfoKey"
+			:isParallel="isParallel"
+			:hoverMatchInfos="hoverMatchInfos"
 			@hover="hover($event)"
 			@unhover="unhover($event)"
 			@click.native="clickNative()"
@@ -41,7 +42,8 @@
 				:dir="dir"
 				:html="html"
 				:disabled="disabled"
-				:hoverMatchInfoKey="hoverMatchInfoKey"
+				:isParallel="isParallel"
+				:hoverMatchInfos="hoverMatchInfos"
 				@hover="hover($event)"
 				@unhover="unhover($event)"
 				@click.native="clickNative()"
@@ -117,7 +119,7 @@ export default Vue.extend({
 	},
 	data: () => ({
 		open: false,
-		hoverMatchInfoKey: '',
+		hoverMatchInfos: [] as string[],
 	}),
 	computed: {
 		colspan(): number {
@@ -239,12 +241,11 @@ export default Vue.extend({
 			const versionName = getParallelFieldParts(fieldName).version || fieldName;
 			return CorpusStore.get.parallelVersions().find(v => v.name === versionName)?.displayName || versionName;
 		},
-		hover(matchInfoKey: string) {
-			this.hoverMatchInfoKey = matchInfoKey;
+		hover(matchInfos: string[]) {
+			this.hoverMatchInfos = matchInfos;
 		},
-		unhover(matchInfoKey: string) {
-			if (this.hoverMatchInfoKey === matchInfoKey)
-				this.hoverMatchInfoKey = '';
+		unhover() {
+			this.hoverMatchInfos = [];
 		}
 	},
 	watch: {

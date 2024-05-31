@@ -13,7 +13,7 @@
 			:isParallel="isParallel"
 			:hoverMatchInfos="hoverMatchInfos"
 			@hover="hover($event)"
-			@unhover="unhover($event)"
+			@unhover="unhover()"
 			@click.native="clickNative()"
 		/>
 
@@ -27,6 +27,10 @@
 			:detailedAnnotations="detailedAnnotations"
 			:dir="dir"
 			:html="html"
+			:isParallel="isParallel"
+			:hoverMatchInfos="hoverMatchInfos"
+			@hover="hover($event)"
+			@unhover="unhover()"
 		/>
 
 		<!-- Show hits in other fields (parallel corpora) -->
@@ -45,7 +49,7 @@
 				:isParallel="isParallel"
 				:hoverMatchInfos="hoverMatchInfos"
 				@hover="hover($event)"
-				@unhover="unhover($event)"
+				@unhover="unhover()"
 				@click.native="clickNative()"
 			/>
 			<HitRowDetails v-if="!disableDetails" :key="`${i}-${of.name}-details`"
@@ -58,6 +62,10 @@
 				:detailedAnnotations="detailedAnnotations"
 				:dir="dir"
 				:html="html"
+				:isParallel="isParallel"
+				:hoverMatchInfos="hoverMatchInfos"
+				@hover="hover($event)"
+				@unhover="unhover()"
 			/>
 		</template>
 	</div>

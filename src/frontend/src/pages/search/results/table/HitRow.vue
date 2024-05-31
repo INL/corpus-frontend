@@ -40,7 +40,6 @@ import { HitContext, NormalizedAnnotation, NormalizedMetadataField } from '@/typ
 import { snippetParts } from '@/utils/hit-highlighting';
 
 import HitContextComponent from '@/pages/search/results/table/HitContext.vue';
-import { isParallelField } from '@/utils/blacklabutils';
 
 /**
  * Can contain either a full hit or a partial hit (without capture/relations info)

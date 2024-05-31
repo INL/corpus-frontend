@@ -45,10 +45,16 @@
 							/>
 						</template>
 
-						<HitContextComponent tag="span" :dir="dir" :data="context.before" :html="html" before/>
-						<HitContextComponent tag="strong" :dir="dir" :data="context.match" :html="html"/>
+						<HitContextComponent tag="span" :dir="dir" :data="context.before" :html="html" before
+							:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+							@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
+						<HitContextComponent tag="strong" :dir="dir" :data="context.match" :html="html"
+							:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+							@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
 						<a v-if="href" :href="href" title="Go to hit in document" target="_blank"><sup class="fa fa-link" style="margin-left: -5px;"></sup></a>
-						<HitContextComponent tag="span" :dir="dir" :data="context.after" :html="html" after/>
+						<HitContextComponent tag="span" :dir="dir" :data="context.after" :html="html" after
+							:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+							@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
 					</p>
 				</template>
 				<template v-else-if="!detailedAnnotations?.length">
@@ -65,7 +71,9 @@
 					<tbody>
 						<tr v-for="(annot, index) in detailedAnnotations" :key="annot.id">
 							<th>{{annot.displayName}}</th>
-							<HitContextComponent v-for="(token, ti) in otherContexts[index].match" tag="td" :data="[token]" :html="html" :dir="dir" :key="annot.id + ti" :punct="false"/>
+							<HitContextComponent v-for="(token, ti) in otherContexts[index].match" tag="td" :data="[token]" :html="html" :dir="dir" :key="annot.id + ti" :punct="false"
+							:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+							@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
 						</tr>
 					</tbody>
 				</table>
@@ -115,6 +123,13 @@ export default Vue.extend({
 		dir: String as () => 'ltr'|'rtl',
 
 		open: Boolean,
+
+		// which match infos (capture/relation) should be highlighted because we're hovering over a token? (parallel corpora)
+		hoverMatchInfos: {
+			type: Array as () => string[],
+			default: () => [],
+		},
+		isParallel: { default: false },
 
 	},
 	data: () => ({

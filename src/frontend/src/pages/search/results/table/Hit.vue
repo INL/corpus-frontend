@@ -1,5 +1,5 @@
 <template>
-	<div>
+	<tbody>
 		<HitRow :key="`${i}-hit`"
 			:class="{open: open, interactable: !disableDetails && !disabled}"
 			:data="h"
@@ -68,7 +68,7 @@
 				@unhover="unhover()"
 			/>
 		</template>
-	</div>
+	</tbody>
 </template>
 
 <script lang="ts">

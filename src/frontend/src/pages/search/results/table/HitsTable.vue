@@ -75,30 +75,28 @@
 				<!-- <th v-for="(fieldName, i) in shownGlossCols" :key="i"><a class='sort gloss_field_heading' :title="`User gloss field: ${fieldName}`">{{ fieldName }}</a></th> -->
 			</tr>
 		</thead>
-		<tbody>
-			<template v-for="(h, i) in data">
-				<Hit v-if="h.type === 'hit'"
-					:query="query"
-					:annotatedField="annotatedField"
-					:mainAnnotation="mainAnnotation"
-					:otherAnnotations="otherAnnotations"
-					:detailedAnnotations="detailedAnnotations"
-					:metadata="metadata"
-					:dir="dir"
-					:html="html"
-					:disabled="disabled"
-					:disableDetails="disableDetails"
-					:h="h"
-					:i="i"
-					:isParallel="isParallel"
-				/>
-				<DocRow v-else :key="`${i}-doc`"
-					:data="h"
-					:metadata="metadata"
-					:colspan="colspan"
-				/>
-			</template>
-		</tbody>
+		<template v-for="(h, i) in data">
+			<Hit v-if="h.type === 'hit'"
+				:query="query"
+				:annotatedField="annotatedField"
+				:mainAnnotation="mainAnnotation"
+				:otherAnnotations="otherAnnotations"
+				:detailedAnnotations="detailedAnnotations"
+				:metadata="metadata"
+				:dir="dir"
+				:html="html"
+				:disabled="disabled"
+				:disableDetails="disableDetails"
+				:h="h"
+				:i="i"
+				:isParallel="isParallel"
+			/>
+			<DocRow v-else :key="`${i}-doc`"
+				:data="h"
+				:metadata="metadata"
+				:colspan="colspan"
+			/>
+		</template>
 	</table>
 </template>
 

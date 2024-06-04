@@ -131,7 +131,7 @@
 				<SearchExpert />
 
 				<!-- Copy to builder, import, gap filling buttons -->
-				<template v-if="!isParallelCorpus || true"><!-- disable in parallel for now, things are complex enough -->
+				<template>
 					<button v-if="advancedEnabled" type="button" class="btn btn-sm btn-default" name="parseQuery" id="parseQuery"
 						:title="$t('search.expert.parseQueryTitle').toString()"
 						@click="parseQuery">{{$t('search.expert.parseQuery')}}</button>
@@ -258,7 +258,7 @@ export default Vue.extend({
 		textDirection: CorpusStore.get.textDirection,
 		withinOptions(): Option[] {
 			const {enabled, elements} = UIStore.getState().search.shared.within;
-			return enabled && !this.isParallelCorpus ? elements : [];  // (parallel corpus has "align by" widget)
+			return enabled ? elements : [];
 		},
 		within: {
 			get(): string|null { return PatternStore.getState().extended.within; },

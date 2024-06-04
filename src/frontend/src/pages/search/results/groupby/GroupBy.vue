@@ -3,7 +3,7 @@
 	<button v-if="!active && !localModel.length" class="btn btn-default btn-secondary btn-sm" type="button" @click="active=true">
 		{{$t('results.groupBy.groupResults')}}
 	</button>
-	<div v-else class="panel panel-default" style="margin: 0;">
+	<div v-else class="panel panel-default">
 		<div class="panel-heading" style="margin: 0">{{$t('results.groupBy.groupResults')}} <button class="pull-right close" type="button" @click="clear">&times;</button></div>
 
 		<div class="group-by">
@@ -53,6 +53,7 @@
 									data-width="auto"
 									data-menu-width="auto"
 									hideEmpty
+									allowHtml
 								/></template>
 								<!-- Specific layout, we want to hide the selectpicker, but there might be surrounding text that also needs to be hidden... -->
 								<template #in_this_location_with_text>
@@ -71,7 +72,7 @@
 								</template>
 								<template #this_annotation>
 								<SelectPicker
-									:placeholder="$t('results.groupBy.annotation')"
+									:placeholder="'...' + '\xa0'.repeat(20) /*nbsp*/"
 									data-width="auto"
 									data-menu-width="auto"
 									right
@@ -93,19 +94,20 @@
 									<div v-if="current.context.type === 'label' && relations?.includes(current.context.label)" class="btn-group">
 										<button type="button"
 											class="btn btn-default btn-sm"
+											:class="{active: current.context.relation === 'target'}"
+											@click="current.context.relation = 'target'"
+											>{{$t('results.groupBy.relationTarget')}}</button>
+										<button type="button"
+											class="btn btn-default btn-sm"
 											:class="{active: current.context.relation === 'source'}"
 											@click="current.context.relation = 'source'"
 										>{{$t('results.groupBy.relationSource')}}</button>
-										<button type="button"
+										<!-- Never want to group on things in between source and target of a relation apparently. So don't show this button. -->
+										<!-- <button type="button"
 											class="btn btn-default btn-sm"
 											:class="{active: current.context.relation === 'full' || !current.context.relation}"
 											@click="current.context.relation = 'full'"
-										>{{$t('results.groupBy.relationBoth')}}</button>
-										<button type="button"
-											class="btn btn-default btn-sm"
-											:class="{active: current.context.relation === 'target'}"
-											@click="current.context.relation = 'target'"
-										>{{$t('results.groupBy.relationTarget')}}</button>
+										>{{$t('results.groupBy.relationBoth')}}</button> -->
 									</div>
 								</div>
 							</form>
@@ -122,6 +124,8 @@
 									v-model="sliderValue"
 								/>
 							</div>
+
+							<em class="text-secondary" v-if="relations || captures"><span class="fa fa-exclamation-triangle text-primary"></span> {{$t('')}}Tip: click on highlighted words for syntactic grouping. ⤵</em>
 						</div>
 					</template>
 					<div v-else-if="current.type === 'metadata'" class="content">
@@ -143,7 +147,7 @@
 						{{current.value}}
 					</div>
 				</div>
-				<div v-else class="text-secondary h4 content" style="margin: 0; justify-self: center;">{{ $t('results.groupBy.clickButtonsToStart') }}</div>
+				<em v-else class="text-italic h5 text-muted content" style="display: flex; align-items: center; margin: 0; justify-self: center;">{{ $t('results.groupBy.clickButtonsToStart') }}</em>
 				<div v-if="current && current.type === 'context'" class="hit-preview panel-heading">
 					<template v-for="(section, i) of preview">
 						<div v-if="i !== 0" class="separator"></div>
@@ -198,8 +202,8 @@ import 'vue-slider-component/theme/default.css'
 import jsonStableStringify from 'json-stable-stringify';
 
 import SelectPicker, { Options } from '@/components/SelectPicker.vue';
-import { snippetParts } from '@/utils/hit-highlighting';
-import { CaptureAndRelation, HitToken } from '@/types/apptypes';
+import { getHighlightColors, snippetParts } from '@/utils/hit-highlighting';
+import { CaptureAndRelation, HitToken, TokenHighlight } from '@/types/apptypes';
 
 export default Vue.extend({
 	components: {
@@ -225,7 +229,6 @@ export default Vue.extend({
 	computed: {
 		storeModule(): ResultsStore.ViewModule { return ResultsStore.getOrCreateModule(this.type); },
 		storeValue(): string[] { return this.storeModule.getState().groupBy; },
-		viewGroup(): string|null { return this.storeModule.getState().viewGroup; },
 		current(): GroupBy|undefined { return this.localModel[this.currentIndex]; },
 		firstHitPreviewQuery(): BLSearchParameters|undefined {
 			let params = SearchModule.get.blacklabParameters();
@@ -245,8 +248,6 @@ export default Vue.extend({
 		firstHitPreviewQueryHash(): string {
 			return jsonStableStringify(this.firstHitPreviewQuery);
 		},
-
-		isHits(): boolean { return isHitResults(this.results); },
 
 		annotations(): Options {
 			return getAnnotationSubset(
@@ -279,17 +280,17 @@ export default Vue.extend({
 			       5; // use default
 		},
 		captures(): string[]|undefined {
-			// TODO update types for blacklab 4
-			// @ts-ignore
-			const mi: BLMatchInfos = this.hits?.summary?.pattern?.matchInfos;
+			const mi = this.hits?.summary?.pattern?.matchInfos;
 			// @ts-ignore
 			return Object.entries(mi|| {}).filter(([k, v]) => v.type === 'span').map(([k,v]) => k)
 		},
 		relations(): string[]|undefined {
-			// @ts-ignore
-			const mi: BLMatchInfos = this.hits?.summary?.pattern?.matchInfos;
+			const mi = this.hits?.summary?.pattern?.matchInfos;
 			// @ts-ignore
 			return Object.entries(mi|| {}).filter(([k, v]) => v.type === 'relation').map(([k,v]) => k)
+		},
+		colors(): Record<string, TokenHighlight> {
+			return this.hits ? getHighlightColors(this.hits.summary) : {};
 		},
 
 		// Some utils to cast the current group to a specific type.
@@ -297,9 +298,6 @@ export default Vue.extend({
 		currentAsLabel(): undefined|GroupByContext<ContextLabel> { if (this.current?.type === 'context' && this.current.context.type === 'label') return this.current as GroupByContext<ContextLabel>; },
 		currentAsPositional(): undefined|GroupByContext<ContextPositional> { if (this.current?.type === 'context' && this.current.context.type === 'positional') return this.current as GroupByContext<ContextPositional>; },
 		currentAsSlider(): undefined|GroupByContext<ContextPositional> { if (this.currentAsPositional?.context.info.type === 'specific') return this.currentAsPositional; },
-
-		isPositional(): boolean { return this.current?.type === 'context' && this.current.context.type === 'positional'; },
-		isLabel(): boolean { return this.current?.type === 'context' && this.current.context.type === 'label'; },
 
 		sliderVisible(): boolean { return !!this.currentAsSlider; },
 		sliderInverted(): boolean { const p = this.currentAsSlider?.context.position; return p === 'E' || p === 'B'; },
@@ -328,7 +326,7 @@ export default Vue.extend({
 			const firstHit = this.hits.hits[0];
 			const {annotation, context} = this.current;
 
-			const snippet = snippetParts(firstHit, wordAnnotation, annotation ? [annotation] : [], CorpusStore.get.textDirection())
+			const snippet = snippetParts(firstHit, wordAnnotation, CorpusStore.get.textDirection(), this.colors)
 			const position = context.type === 'positional' ? context.position : undefined;
 
 			// Now extact the indices of the tokens that are active (i.e. being grouped on).
@@ -366,9 +364,9 @@ export default Vue.extend({
 
 			const getPreviewStyle = (t: HitToken): object => {
 				return t.captureAndRelation?.length ? {
-					background: `linear-gradient(90deg, ${t.captureAndRelation.map((c, i) => `${c.color} ${i / t.captureAndRelation!.length * 100}%, ${c.color} ${(i + 1) / t.captureAndRelation!.length * 100}%`)})`,
-					color: t.captureAndRelation[0].textcolor,
-					textShadow: `0 0 1.25px ${t.captureAndRelation[0].textcolorcontrast},`.repeat(10).replace(/,$/, ''),
+					background: `linear-gradient(90deg, ${t.captureAndRelation.map((c, i) => `${c.highlight.color} ${i / t.captureAndRelation!.length * 100}%, ${c.highlight.color} ${(i + 1) / t.captureAndRelation!.length * 100}%`)})`,
+					color: t.captureAndRelation[0].highlight.textcolor,
+					textShadow: `0 0 1.25px ${t.captureAndRelation[0].highlight.textcolorcontrast},`.repeat(10).replace(/,$/, ''),
 					cursor: 'pointer',
 				} : {}
 			}
@@ -417,13 +415,13 @@ export default Vue.extend({
 					const r = [];
 					if (this.relations?.length) {
 						r.push(...this.relations.map(c => ({
-							label: `relation ${c}`,
+							label: `<span class="color-ball" style="background-color: ${this.colors[c].color};">&nbsp;</span> relation ${c}`,
 							value: c
 						})));
 					}
 					if (this.captures?.length) {
 						r.push(...this.captures.map(c => ({
-							label: `capture ${c}`,
+							label: `<span class="color-ball" style="background-color: ${this.colors[c].color};">&nbsp;</span> capture ${c}`,
 							value: c
 						})));
 					}
@@ -463,7 +461,7 @@ export default Vue.extend({
 					this.current.context = {
 						type: 'label',
 						label: v,
-						relation: this.relations?.includes(v) ? 'full' : undefined
+						relation: this.relations?.includes(v) ? 'target' : undefined
 					}
 				}
 			},
@@ -576,15 +574,10 @@ export default Vue.extend({
 			const relationIndex = Math.max(0, Math.min(Math.floor((clickPositionInElement / elementWidth) * preview.captureAndRelation.length), preview.captureAndRelation.length - 1));
 			const relation = preview.captureAndRelation[relationIndex];
 
-			// Implement the toggling, check if the current state === the new state, and invert it.
-			let next:'source'|'target'|'full'|undefined = relation.isSource ? 'source' : relation.isTarget ? 'target' : undefined;
-			const current = this.currentAsLabel?.context.relation;
-			if (next != null && current === next) { next = 'full'; }
-
 			this.current.context = {
 				type: 'label',
 				label: relation.key,
-				relation: next
+				relation: relation.isSource ? 'source' : relation.isTarget ? 'target' : undefined
 			}
 		},
 	},
@@ -821,6 +814,15 @@ export default Vue.extend({
 			}
 		}
 	}
+}
+
+.color-ball {
+	border-radius: 100%;
+	width: 16px;
+	height: 16px;
+
+	display: inline-block;
+	vertical-align: center;
 }
 
 </style>

@@ -3,7 +3,7 @@ import memoize from 'memoize-decorator';
 import BaseUrlStateParser from '@/store/util/url-state-parser-base';
 import LuceneQueryParser from 'lucene-query-parser';
 
-import {mapReduce, MapOf, decodeAnnotationValue, uiTypeSupport, getCorrectUiType} from '@/utils';
+import {mapReduce, decodeAnnotationValue, uiTypeSupport, getCorrectUiType} from '@/utils';
 import parseCql, {Attribute} from '@/utils/cqlparser';
 import parseLucene from '@/utils/luceneparser';
 import {debugLog} from '@/utils/debug';
@@ -83,7 +83,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 
 		try {
 			const luceneQueryAST = LuceneQueryParser.parse(luceneString);
-			const parsedQuery: MapOf<FilterValue> = mapReduce(parseLucene(luceneString), 'id');
+			const parsedQuery: Record<string, FilterValue> = mapReduce(parseLucene(luceneString), 'id');
 
 			const metadataFields = CorpusModule.get.allMetadataFieldsMap();
 			const filterDefinitions = FilterModule.getState().filters;
@@ -92,7 +92,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 				.filter(id => metadataFields[id] == null) // that way, they can delete values from the filtervalues and prevent other filters from parsing those values as well, which would lead to the filter being "doubled" on url decode
 				.concat(UIModule.getState().search.shared.searchMetadataIds)
 
-			const filterValues: MapOf<FilterModule.FullFilterState> = {};
+			const filterValues: Record<string, FilterModule.FullFilterState> = {};
 
 			Object.values(FilterModule.getState().filters)
 			.forEach(filterDefinition => {

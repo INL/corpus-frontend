@@ -62,6 +62,7 @@ import { GroupRowData } from '@/pages/search/results/table/GroupTable.vue';
 import * as UIStore from '@/store/search/ui';
 import * as CorpusStore from '@/store/search/corpus';
 import { getDocumentUrl } from '@/utils';
+import { getHighlightColors, snippetParts } from '@/utils/hit-highlighting';
 
 
 export default Vue.extend({
@@ -108,18 +109,22 @@ export default Vue.extend({
 				let {request, cancel} = blacklab.getHits(INDEX_ID, requestParameters);
 				return {
 					cancel,
-					request: request.then((r: BLHitResults) => r.hits.map<HitRowData>(h => ({
-						type: 'hit',
-						hit: h,
-						doc: {
-							docInfo: r.docInfos[h.docPid],
-							docPid: h.docPid,
-						},
-						gloss_fields: [],
-						hit_first_word_id: '',
-						hit_id: '',
-						hit_last_word_id: '',
-					})))
+					request: request.then((r: BLHitResults) => r.hits.map<HitRowData>(h => {
+						const colors = getHighlightColors(r.summary);
+						return {
+							type: 'hit',
+							hit: h,
+							context: snippetParts(h, this.mainAnnotation.id, this.dir, colors),
+							doc: {
+								docInfo: r.docInfos[h.docPid],
+								docPid: h.docPid,
+							},
+							gloss_fields: [],
+							hit_first_word_id: '',
+							hit_id: '',
+							hit_last_word_id: '',
+						}
+					}))
 				}
 			} else {
 				let {request, cancel} = blacklab.getDocs(INDEX_ID, requestParameters);

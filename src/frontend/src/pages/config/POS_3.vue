@@ -54,7 +54,7 @@ import Vue from 'vue';
 import { NormalizedAnnotation } from '@/types/apptypes';
 
 import {StepState} from './POS.vue';
-import { MapOf, mapReduce } from '@/utils';
+import { mapReduce } from '@/utils';
 import { blacklab } from '@/api';
 
 import SelectPicker from '@/components/SelectPicker.vue';

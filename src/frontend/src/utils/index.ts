@@ -357,10 +357,6 @@ export function getDocumentUrl(
 	}).toString();
 }
 
-export type MapOf<T> = {
-	[key: string]: T;
-};
-
 type KeysOfType<Base, Condition> = keyof Pick<Base, {
 	[Key in keyof Base]: Base[Key] extends Condition ? Key : never
 }[keyof Base]>;
@@ -370,16 +366,16 @@ type KeysOfType<Base, Condition> = keyof Pick<Base, {
  * @param k key to pick from the objects
  * @param m optional mapping function to transform the objects after picking the key
  */
-export function makeMapReducer<T, V extends (t: T, i: number) => any = (t: T, i: number) => T>(k: KeysOfType<T, string>, m?: V): (m: MapOf<ReturnType<V>>, t: T, i: number) => MapOf<ReturnType<V>> {
-	return (acc: MapOf<ReturnType<V>>, v: T, i: number): MapOf<ReturnType<V>> => {
+export function makeMapReducer<T, V extends (t: T, i: number) => any = (t: T, i: number) => T>(k: KeysOfType<T, string>, m?: V): (m: Record<string, ReturnType<V>>, t: T, i: number) => Record<string, ReturnType<V>> {
+	return (acc: Record<string, ReturnType<V>>, v: T, i: number): Record<string, ReturnType<V>> => {
 		const kv = v[k] as any as string;
 		acc[kv] = m ? m(v, i) : v;
 		return acc;
 	};
 }
 
-export function makeMultimapReducer<T, V extends (t: T, i: number) => any = (t: T, i: number) => T>(k: KeysOfType<T, string>, m?: V): (m: MapOf<Array<ReturnType<V>>>, t: T, i: number) => MapOf<Array<ReturnType<V>>> {
-	return (acc: MapOf<Array<ReturnType<V>>>, v: T, i: number): MapOf<Array<ReturnType<V>>> => {
+export function makeMultimapReducer<T, V extends (t: T, i: number) => any = (t: T, i: number) => T>(k: KeysOfType<T, string>, m?: V): (m: Record<string, Array<ReturnType<V>>>, t: T, i: number) => Record<string, Array<ReturnType<V>>> {
+	return (acc: Record<string, Array<ReturnType<V>>>, v: T, i: number): Record<string, Array<ReturnType<V>>> => {
 		const kv = v[k] as any as string;
 		acc[kv] ? acc[kv].push(m ? m(v, i) : v) : acc[kv] = [m ? m(v, i) : v];
 		return acc;
@@ -393,16 +389,16 @@ export function makeMultimapReducer<T, V extends (t: T, i: number) => any = (t: 
  * @param t the array of strings to place in a map.
  * @param m (optional) a mapping function to apply to values.
  */
-export function mapReduce<VS extends (t: string, i: number) => any = (t: string, i: number) => true>(t: string[]|undefined|null, m?: VS): MapOf<ReturnType<VS>>;
+export function mapReduce<VS extends (t: string, i: number) => any = (t: string, i: number) => true>(t: string[]|undefined|null, m?: VS): Record<string, ReturnType<VS>>;
 /**
  * Turn an array of type T[] into a map of type {[key: string]: T}.
- * Optionally mapping the values to be something other than "true".
+ * Optionally mapping the values to be something other than T.
  *
  * @param t the array of objects to place in a map.
  * @param k a key in the objects to use as key in the map.
  * @param m (optional) a mapping function to apply to values.
  */
-export function mapReduce<T, VT extends (t: T, i: number) => any = (t: T, i: number) => T>(t: T[]|undefined|null, k: KeysOfType<T, string>, m?: VT): MapOf<ReturnType<VT>>;
+export function mapReduce<T, VT extends (t: T, i: number) => any = (t: T, i: number) => T>(t: T[]|undefined|null, k: KeysOfType<T, string>, m?: VT): Record<string, ReturnType<VT>>;
 export function mapReduce<
 	T,
 	VT extends (t: T, i: number) => any = (t: T, i: number) => T,
@@ -415,7 +411,7 @@ export function mapReduce<
 	if (t && t.length > 0 && typeof t[0] === 'string') {
 		const values = t as string[];
 		const mapper = a as VS|undefined;
-		return values.reduce<MapOf<ReturnType<VS>>>((acc, cur, index) => {
+		return values.reduce<Record<string, ReturnType<VS>>>((acc, cur, index) => {
 			acc[cur] = mapper ? mapper(cur, index) : true;
 			return acc;
 		}, {});
@@ -435,7 +431,7 @@ export function mapReduce<
  * @param k a key in the objects to use as key in the map.
  * @param m (optional) a mapping function to apply to values.
  */
-export function multimapReduce<T, V extends (t: T, i: number) => any = (t: T, i: number) => T>(t: T[]|undefined|null, k: KeysOfType<T, string>, m?: V): MapOf<Array<ReturnType<V>>> {
+export function multimapReduce<T, V extends (t: T, i: number) => any = (t: T, i: number) => T>(t: T[]|undefined|null, k: KeysOfType<T, string>, m?: V): Record<string, Array<ReturnType<V>>> {
 	return t ? t.reduce(makeMultimapReducer<T, V>(k, m), {}) : {};
 }
 
@@ -456,7 +452,7 @@ export function filterDuplicates<T>(t: T[]|null|undefined, k: KeysOfType<T, stri
 export function fieldSubset<T extends {id: string}>(
 	ids: string[],
 	groups: Array<{id: string, entries: string[]}>,
-	fields: MapOf<T>,
+	fields: Record<string, T>,
 	addAllToOneGroup?: string
 ): Array<{id: string, entries: T[]}> {
 	let ret: Array<{id: string, entries: T[]}> = groups
@@ -485,7 +481,7 @@ export function fieldSubset<T extends {id: string}>(
 export function getMetadataSubset<T extends {id: string, displayName: string}>(
 	ids: string[],
 	groups: AppTypes.NormalizedMetadataGroup[],
-	metadata: MapOf<T>,
+	metadata: Record<string, T>,
 	operation: 'Sort'|'Group',
 	debug = false,
 	/* show the <small/> labels at the end of options labels? */
@@ -538,7 +534,7 @@ export function getMetadataSubset<T extends {id: string, displayName: string}>(
 export function getAnnotationSubset(
 	ids: string[],
 	groups: AppTypes.NormalizedAnnotationGroup[],
-	annotations: MapOf<AppTypes.NormalizedAnnotation>,
+	annotations: Record<string, AppTypes.NormalizedAnnotation>,
 	operation: 'Search'|'Sort'|'Group',
 	corpusTextDirection: 'rtl'|'ltr' = 'ltr',
 	debug = false,

@@ -122,8 +122,8 @@
 	"results": {
 		"groupBy": {
 			"groupResults": "Group Results",
-			"clear": "clear",
-			"apply": "apply",
+			"clear": "Clear",
+			"apply": "Apply",
 			"invalidGrouping": "This grouping is not valid.",
 
 			"iWantToGroupOnAnnotation": "I want to group on {some_words} {in_this_location_with_text} using annotation {this_annotation}.",
@@ -143,14 +143,16 @@
 			},
 
 			"relationPartLabel": "Relation part",
-			"relationSource": "source",
-			"relationTarget": "target",
+			"relationSource": "head",
+			"relationTarget": "dependent",
 			"relationBoth": "both",
+
+			"tipClickOnHighlightedWords": "Tip: click on highlighted words for syntactic grouping.",
 
 			"caseSensitive": "Case sensitive",
 			"chooseWordPositions": "Choose the <strong>specific word</strong> positions to group on here, the preview at the top will show you which words you have selected.",
 			"selectDocumentMetadata": "Select the document metadata to group on.",
-			"clickButtonsToStart": "In this window you can apply grouping to the results. Click the buttons on the left to create a grouping criterium to get started.",
+			"clickButtonsToStart": "Click on Annotation or Metadata to define grouping criteria.",
 			"metadata": "Metadata",
 			"annotation": "Annotation",
 			"specify": "Specify",

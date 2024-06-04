@@ -56,17 +56,18 @@ export default Vue.extend({
 		doPunct(): boolean { return this.punct; }, // avoid conflict with props.data in template
 		renderInfo(): Array<{text: string, punct: string, style?: object, title?: string}> {
 			const tokens = this.before ? this.data.before : this.after ? this.data.after : this.data.match;
+
 			return tokens.map(token => ({
 				text: this.annotation ? token.annotations[this.annotation] : token.text,
 				punct: token.punct,
 				title: this.highlight ? token.captureAndRelation?.map(c => c.display).join(' · ') : undefined,
 				style: this.highlight && token.captureAndRelation?.length ? {
-					background: `linear-gradient(90deg, ${token.captureAndRelation.map((c, i) => `${c.color} ${i / token.captureAndRelation!.length * 100}%, ${c.color} ${(i + 1) / token.captureAndRelation!.length * 100}%`)})`,
+					background: `linear-gradient(90deg, ${token.captureAndRelation.map((c, i) => `${c.highlight.color} ${i / token.captureAndRelation!.length * 100}%, ${c.highlight.color} ${(i + 1) / token.captureAndRelation!.length * 100}%`)})`,
 					display: 'inline-block',
-					color: token.captureAndRelation[0].textcolor,
+					color: 'black',
 					'border-radius': '2px',
 					padding: '0 2px',
-					textShadow: `0 0 1.25px ${token.captureAndRelation[0].textcolorcontrast},`.repeat(10).replace(/,$/, '')
+					textShadow: `0 0 1.25px white,`.repeat(10).replace(/,$/, '')
 				} : undefined
 			}));
 		}

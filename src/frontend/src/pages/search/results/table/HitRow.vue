@@ -1,10 +1,10 @@
 <template>
 	<tr class="concordance rounded">
-		<HitContextComponent tag="td" class="text-right"  :dir="dir" :data="context" :html="html" before/>
-		<HitContextComponent tag="td" class="text-center" :dir="dir" :data="context" :html="html" bold/>
-		<HitContextComponent tag="td" class="text-left"   :dir="dir" :data="context" :html="html" after/>
+		<HitContextComponent tag="td" class="text-right"  :dir="dir" :data="data.context" :html="html" before/>
+		<HitContextComponent tag="td" class="text-center" :dir="dir" :data="data.context" :html="html" bold/>
+		<HitContextComponent tag="td" class="text-left"   :dir="dir" :data="data.context" :html="html" after/>
 
-		<HitContextComponent tag="td" :annotation="a.id" :data="context" :html="html" :dir="dir" :key="a.id" :highlight="false" v-for="a in otherAnnotations" />
+		<HitContextComponent tag="td" :annotation="a.id" :data="data.context" :html="html" :dir="dir" :key="a.id" :highlight="false" v-for="a in otherAnnotations" />
 
 		<td v-for="field in data.gloss_fields" :key="field.fieldName" style="overflow: visible;">
 			<GlossField
@@ -40,6 +40,7 @@ export type HitRowData = {
 	type: 'hit';
 	doc: BLTypes.BLDoc;
 	hit: BLTypes.BLHit|BLTypes.BLHitSnippet;
+	context: HitContext;
 
 	// TODO jesse
 	gloss_fields: GlossFieldDescription[];
@@ -61,12 +62,6 @@ export default Vue.extend({
 		dir: String as () => 'ltr'|'rtl',
 		html: Boolean,
 	},
-	computed: {
-		context(): HitContext {
-			return snippetParts(this.data.hit, this.mainAnnotation.id, this.otherAnnotations?.map(a => a.id) || [], this.dir);
-		},
-	},
-
 });
 </script>
 

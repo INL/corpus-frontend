@@ -79,7 +79,7 @@ import Vue from 'vue';
 
 import * as BLTypes from '@/types/blacklabtypes';
 
-import { HitContext, NormalizedAnnotation } from '@/types/apptypes';
+import { HitContext, NormalizedAnnotation, TokenHighlight } from '@/types/apptypes';
 import HitContextComponent from '@/pages/search/results/table/HitContext.vue';
 import { getDocumentUrl } from '@/utils';
 import { snippetParts } from '@/utils/hit-highlighting';
@@ -185,12 +185,22 @@ export default Vue.extend({
 			.getSnippet(INDEX_ID, this.data.doc.docPid, this.data.hit.start, this.data.hit.end, concordanceSize)
 			.then(s => {
 				transformSnippets?.(s);
-				this.context = snippetParts({
-					// matchInfos not included in document search results. If we're expanding one of those context,
-					// @ts-ignore
-					matchInfos: s.matchInfos || this.data.hit.matchInfos,
-					...s
-				}, this.mainAnnotation.id, this.detailedAnnotations?.map(a => a.id) || [], this.dir);
+
+				// HACK! copy the colors from the existing hit. There's no easy way to get the entire Results object here to get the colors from there.
+				// At least there's never be more highlights in the surrounding snippet than in the hit itself, so this works...
+				const highlightColors = [...this.data.context.before, ...this.data.context.match, ...this.data.context.after]
+				.reduce<Record<string, TokenHighlight>>((acc, t) => {
+					t.captureAndRelation?.forEach(c => acc[c.highlight.key] = c.highlight);
+					return acc;
+				}, {});
+
+				this.context = snippetParts(
+					// @ts-ignore matchinfos not included in snippets. copy from the original hit.
+					{matchInfos: this.data.hit.matchInfos,...s},
+					this.mainAnnotation.id,
+					this.dir,
+					highlightColors
+				);
 
 				// Run plugins defined for this corpus (e.g. a copy to clipboard button, or an audio player/text to speech button)
 				this.addons = addons.map(a => a({

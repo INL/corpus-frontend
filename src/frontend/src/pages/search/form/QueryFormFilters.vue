@@ -65,7 +65,7 @@ import * as UIStore from '@/store/search/ui';
 import * as FilterStore from '@/store/search/form/filters';
 
 import FilterOverview from '@/pages/search/form/FilterOverview.vue';
-import { MapOf, mapReduce } from '@/utils';
+import { mapReduce } from '@/utils';
 
 import { valueFunctions } from '@/components/filters/filterValueFunctions';
 
@@ -99,7 +99,7 @@ export default Vue.extend({
 				tabname?: string;
 				filters: string[],
 			}>;
-			query?: MapOf<string[]>;
+			query?: Record<string, string[]>;
 		}> {
 			const availableBuiltinFilters = CorpusStore.get.allMetadataFieldsMap();
 			const builtinFiltersToShow = UIStore.getState().search.shared.searchMetadataIds;
@@ -120,14 +120,14 @@ export default Vue.extend({
 				}))
 				.filter(g => g.subtabs.length);
 		},
-		filterMap(): MapOf<FilterStore.FullFilterState> { return FilterStore.getState().filters },
+		filterMap(): Record<string, FilterStore.FullFilterState> { return FilterStore.getState().filters },
 		useTabs(): boolean { return this.tabs.length > 1 || this.tabs.length > 0 && this.tabs[0].subtabs.length > 1; },
-		activeFiltersMap(): MapOf<number> {
+		activeFiltersMap(): Record<string, number> {
 			const activeTab = this.tabs.find(t => t.name === this.activeTab);
 			const filterMap = this.filterMap;
 
-			const implicitlyActiveFilters: MapOf<string[]> = activeTab?.query || {}; // filters that are always active as long as this tab is active
-			const manuallyActiveFiltersInCurrentTab: MapOf<boolean> = activeTab ? mapReduce(activeTab.subtabs.flatMap(subtab => subtab.filters.filter(f =>
+			const implicitlyActiveFilters: Record<string, string[]> = activeTab?.query || {}; // filters that are always active as long as this tab is active
+			const manuallyActiveFiltersInCurrentTab: Record<string, boolean> = activeTab ? mapReduce(activeTab.subtabs.flatMap(subtab => subtab.filters.filter(f =>
 				// keep only those filters that are -a: active and -b: not in the implicitly active set
 				// when is a filter active? when its value returns a non-null lucene query
 				!implicitlyActiveFilters[f] && valueFunctions[filterMap[f].componentName].luceneQuery(f, filterMap[f].metadata, filterMap[f].value)
@@ -135,7 +135,7 @@ export default Vue.extend({
 
 			// Note: when a filter is implicitly active, it's never counted as active for any tab
 			// Note: when a filter is active in the current tab, it's never counted as active for other tabs
-			const numActiveFiltersPerTab: MapOf<number> = {};
+			const numActiveFiltersPerTab: Record<string, number> = {};
 			this.tabs.forEach(tab => {
 				if (tab === activeTab) {
 					numActiveFiltersPerTab[tab.name] = Object.keys(manuallyActiveFiltersInCurrentTab).length;

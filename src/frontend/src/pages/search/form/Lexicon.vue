@@ -68,7 +68,7 @@ import * as UIStore from '@/store/search/ui';
 import * as api from '@/api';
 import SelectPicker, { Option } from '@/components/SelectPicker.vue';
 import UID from '@/mixins/uid';
-import { escapeRegex, filterDuplicates, MapOf, mapReduce, getAnnotationPatternString } from '@/utils';
+import { escapeRegex, filterDuplicates, mapReduce, getAnnotationPatternString } from '@/utils';
 
 type LexiconParams1 = {lemma: string}|{wordform: string}
 type LexiconParams = LexiconParams1&{
@@ -137,7 +137,7 @@ export default Vue.extend({
 
 		wordOptions: [] as null|WordOption[],
 
-		posOptions: {} as MapOf<boolean>,
+		posOptions: {} as Record<string, boolean>,
 
 		displayValue: '',
 	}),
@@ -160,7 +160,7 @@ export default Vue.extend({
 	},
 	created() {
 		const isValidWord = /^[\w]+$/;
-		const emptyResult = {posOptions: {} as MapOf<boolean>, wordList: [] as WordOption[]};
+		const emptyResult = {posOptions: {} as Record<string, boolean>, wordList: [] as WordOption[]};
 
 		// don't ever do anything (clear or search...) while a suggestion is selected, also not when search term is emptied (such as when deselecting all suggestions)
 		const filteredInput$ = this.input$.pipe(filter(v => !this.selectedWords.length && !!v));
@@ -211,7 +211,7 @@ export default Vue.extend({
 						// Request occurance counts in the corpus from blacklab. Note we also request occurance count for the entered search term.
 						const {termFreq: frequencies} = await api.blacklab.getTermFrequencies(INDEX_ID, this.annotationId, lemmata.flatMap(r => r.wordforms).concat(term));
 
-						const options: MapOf<WordOption> = {};
+						const options: Record<string, WordOption> = {};
 						lemmata.forEach(({pos, wordforms, lemma}) => {
 							wordforms.forEach((word, i) => {
 								options[word] = options[word] || {

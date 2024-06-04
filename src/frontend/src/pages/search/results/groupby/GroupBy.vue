@@ -35,8 +35,8 @@
 
 				<!-- clear/apply -->
 				<div class="two-button-container flex-row" v-if="localModel.length">
+					<button class="btn btn-primary" @click="apply">{{ $t('results.groupBy.apply') }}</button>
 					<button class="btn btn-default" @click="clear">{{ $t('results.groupBy.clear') }}</button>
-					<button class="btn btn-default" @click="apply">{{ $t('results.groupBy.apply') }}</button>
 				</div>
 			</div>
 

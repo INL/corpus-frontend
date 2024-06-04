@@ -145,33 +145,28 @@
 				</div>
 				<div v-else class="text-secondary h4 content" style="margin: 0; justify-self: center;">{{ $t('results.groupBy.clickButtonsToStart') }}</div>
 				<div v-if="current && current.type === 'context'" class="hit-preview panel-heading">
-					<div class="overflow-container">
-						<template v-for="(section, i) of preview">
-							<div v-if="i !== 0" class="separator"></div>
-							<template v-for="({selectedAnnotation, word, punct, active, style}, j) of section">
-								<component
-									:is="active ? 'section' : 'div'"
-									:key="word + i + '_' + j"
-									:class="{
-										'word': true,
-										'active': active,
-										'text-primary': active,
-										'bold': i === 1
-									}"
-									:style="{
-										...style,
-										flexShrink: word.length
-									}"
-									@click="handlePreviewClick($event, i, j)"
-								>
-									<div :title="word" class="main">{{ word }}</div>
-									<div :title="selectedAnnotation" class="annotation">{{ selectedAnnotation }}</div>
-								</component>
-								<!-- punctuation between words, as we don't want it to shrink. -->
-								<component :is="active ? 'section' : 'div'" :class="{punct: true, active}" :title="punct">{{ punct || ' ' }}</component>
-							</template>
+					<template v-for="(section, i) of preview">
+						<div v-if="i !== 0" class="separator"></div>
+						<template v-for="({selectedAnnotation, word, punct, active, style}, j) of section">
+							<component
+								:is="active ? 'section' : 'div'"
+								:key="word + i + '_' + j"
+								:class="{
+									'word': true,
+									'active': active,
+									'text-primary': active,
+									'bold': i === 1
+								}"
+								:style="style"
+								@click="handlePreviewClick($event, i, j)"
+							>
+								<div :title="word" class="main">{{ word }}</div>
+								<div :title="selectedAnnotation" class="annotation">{{ selectedAnnotation }}</div>
+							</component>
+							<!-- punctuation between words. -->
+							<component :is="active && section[j+1]?.active ? 'section' : 'div'" :class="{punct: true, active: active && section[j+1]?.active}" :title="punct">{{ punct || ' ' }}</component>
 						</template>
-					</div>
+					</template>
 				</div>
 				<!-- <Debug v-if="current"><pre>Debug: {{ current }} <br> {{ {contextValue, preview} }}</pre></Debug> -->
 			</div>
@@ -281,7 +276,7 @@ export default Vue.extend({
 			if (!params || !params.patt) return 5; // default
 			return typeof params.context === 'number' ? params.context as number :  // use actual value from query if set
 			       typeof GlobalSearchSettingsStore.getState().context === 'number' ? GlobalSearchSettingsStore.getState().context as number :  // use global default if set
-				   5; // use default
+			       5; // use default
 		},
 		captures(): string[]|undefined {
 			// TODO update types for blacklab 4
@@ -656,7 +651,7 @@ export default Vue.extend({
 		border-top: 1px solid #ddd;
 		border-top-left-radius: 0;
 		border-top-right-radius: 0;
-		border-bottom-right-radius: 4px;;
+		border-bottom-right-radius: 4px;
 	}
 }
 
@@ -701,41 +696,31 @@ export default Vue.extend({
 	border-right: 0;
 	border-left: 0;
 
-	.overflow-container {
-		min-width: 600px;
-		display: flex;
-		flex-wrap: nowrap;
-		justify-content: center;
-	}
 
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	justify-content: safe center;
 
 	/**
 		Container for a word in the preview.
 		It has the word at the top, and hovering just below it, the annotation's value
-		It can shrink if the parent container is out of space.
 	*/
 	.word {
 		font-size: 125%;
-		display: inline-flex;
-		flex-direction: column;
-		flex-shrink: 1; // overridden on the element itself, based on word length
-		flex-basis: auto;
-		flex-grow: 0;
+		flex: none;
 		overflow: hidden; // hide the annotation if it's too long.
-		position: relative; // we don't need this I think?
+		position: relative;
 		padding-bottom: 0.5em; // space for the annotation value that hovers below the word.
 	}
 
+	/** In between words. Is separate from the word container because in the past words could be shrunk, but punctuation was exempt from that. */
 	.punct {
 		flex: none;
 		white-space: pre;
 	}
 
 	.word > .main {
-		display: flex;
-		flex-shrink: 1;
-		flex-grow: 0;
-		flex-basis: auto;
 		white-space: pre;
 	}
 

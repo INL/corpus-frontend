@@ -582,23 +582,16 @@ export default Vue.extend({
 			const relation = preview.captureAndRelation[relationIndex];
 
 			// Implement the toggling, check if the current state === the new state, and invert it.
-			const isRelation = relation.isSource || relation.isTarget;
-			let toSet: 'source'|'target'|'full'|undefined;
-			if (isRelation) {
-				if (this.currentAsLabel?.context.relation === 'full' || !this.currentAsLabel?.context.relation) {
-					toSet = relation.isSource ? 'source' : relation.isTarget ? 'target' : undefined;
-				} else {
-					toSet = 'full';
-				}
-			}
+			let next:'source'|'target'|'full'|undefined = relation.isSource ? 'source' : relation.isTarget ? 'target' : undefined;
+			const current = this.currentAsLabel?.context.relation;
+			if (next != null && current === next) { next = 'full'; }
 
 			this.current.context = {
 				type: 'label',
 				label: relation.key,
-				relation: toSet
+				relation: next
 			}
 		},
-
 	},
 	watch: {
 		storeValue: {

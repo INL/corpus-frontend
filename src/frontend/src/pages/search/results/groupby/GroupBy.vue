@@ -125,7 +125,7 @@
 								/>
 							</div>
 
-							<em class="text-secondary" v-if="relations || captures"><span class="fa fa-exclamation-triangle text-primary"></span> {{$t('')}}Tip: click on highlighted words for syntactic grouping. ⤵</em>
+							<em class="text-muted" v-if="relations.length + captures.length"><span class="fa fa-exclamation-triangle text-primary"></span> {{$t('results.groupBy.tipClickOnHighlightedWords')}} ⤵</em>
 						</div>
 					</template>
 					<div v-else-if="current.type === 'metadata'" class="content">
@@ -279,12 +279,12 @@ export default Vue.extend({
 			       typeof GlobalSearchSettingsStore.getState().context === 'number' ? GlobalSearchSettingsStore.getState().context as number :  // use global default if set
 			       5; // use default
 		},
-		captures(): string[]|undefined {
+		captures(): string[] {
 			const mi = this.hits?.summary?.pattern?.matchInfos;
 			// @ts-ignore
 			return Object.entries(mi|| {}).filter(([k, v]) => v.type === 'span').map(([k,v]) => k)
 		},
-		relations(): string[]|undefined {
+		relations(): string[] {
 			const mi = this.hits?.summary?.pattern?.matchInfos;
 			// @ts-ignore
 			return Object.entries(mi|| {}).filter(([k, v]) => v.type === 'relation').map(([k,v]) => k)
@@ -411,22 +411,15 @@ export default Vue.extend({
 				value: 'specific'
 			}, {
 				label: this.$t('results.groupBy.some_words.captureGroupsLabel').toString(),
-				options: (() => {
-					const r = [];
-					if (this.relations?.length) {
-						r.push(...this.relations.map(c => ({
-							label: `<span class="color-ball" style="background-color: ${this.colors[c].color};">&nbsp;</span> relation ${c}`,
-							value: c
-						})));
-					}
-					if (this.captures?.length) {
-						r.push(...this.captures.map(c => ({
-							label: `<span class="color-ball" style="background-color: ${this.colors[c].color};">&nbsp;</span> capture ${c}`,
-							value: c
-						})));
-					}
-					return r;
-				})()
+				options:
+					this.relations.map(c => ({
+						label: `<span class="color-ball" style="background-color: ${this.colors[c].color};">&nbsp;</span> relation ${c}`,
+						value: c
+					}))
+					.concat(this.captures.map(c => ({
+						label: `<span class="color-ball" style="background-color: ${this.colors[c].color};">&nbsp;</span> capture ${c}`,
+						value: c
+					})))
 			}];
 		},
 		contextValue: {

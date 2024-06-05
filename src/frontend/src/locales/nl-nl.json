@@ -143,9 +143,10 @@
 			},
 
 			"relationPartLabel": "Deel van relatie",
-			"relationSource": "oorsprong",
-			"relationTarget": "doel",
+			"relationSource": "hoofd",
+			"relationTarget": "afhankelijke",
 			"relationBoth": "beide",
+			"tipClickOnHighlightedWords": "Tip: klik op uitgelichte woorden om te groeperen op syntactische relaties.",
 
 			"caseSensitive": "Hoofdlettergevoelig",
 			"chooseWordPositions": "Kies hier de <strong>specifieke woorden</strong> om op te groeperen, in het voorbeeld hieronder ziet u welke woorden zijn geselecteerd.",
@@ -154,7 +155,7 @@
 			"metadata": "Metadata",
 			"annotation": "Annotatie",
 			"specify": "Specificeer",
-			"label": "label {label} ({annotation})",
+			"label": "{label} ({annotation})",
 			"document": "document"
 		},
 		"table": {

@@ -103,7 +103,7 @@
 					</div>
 					<div class="btn-group col-xs-12 col-md-9 col-md-push-3 attr form-inline" v-for="attr in withinAttributes()">
 						<label>{{ attr.label || attr.value }}</label>
-						<input class='form-control' type="text" :title="attr.title || undefined" />
+						<input class='form-control' type="text" :title="attr.title || undefined" @change="changeWithinAttribute(attr, $event)" />
 					</div>
 				</div>
 				<div v-if="splitBatchEnabled" class="form-group">
@@ -435,7 +435,12 @@ export default Vue.extend({
 
 			return (corpusCustomizations.search.within.attributes(option) || [])
 				.map(el => typeof el === 'string' ? { value: el } : el);
-		}
+		},
+		changeWithinAttribute(option: Option, event: Event) {
+			const el = event.target as HTMLInputElement;
+			console.log(`Attribute ${option.value} changed to ${el.value}`);
+			//PatternStore.actions.extended.withinAttribute({ name: option.value, value: el.value });
+		},
 	},
 	watch: {
 		customAnnotations: {

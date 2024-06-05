@@ -32,6 +32,7 @@ type ModuleRootState = {
 			// }
 		},
 		within: string|null,
+		//withinAttribute: {[key: string]: string},
 		splitBatch: boolean,
 	},
 	advanced: {
@@ -196,6 +197,11 @@ const actions = {
 			Object.assign(state.extended.annotationValues[id], safeValues);
 		}, 'extended_annotation'),
 		within: b.commit((state, payload: string|null) => state.extended.within = payload, 'extended_within'),
+		// withinAttributes: b.commit((state, payload: {name: string, value: string}) => {
+		// 	if (value === '' || value === null || value === undefined)
+		// 		delete state.extended.withinAttribute[payload.name];
+		// 	state.extended.withinAttribute[payload.name] = payload.value;
+		// }, 'extended_within_attribute'),
 		splitBatch: b.commit((state, payload: boolean) => state.extended.splitBatch = payload, 'extended_split_batch'),
 		reset: b.commit(state => {
 			Object.values(state.extended.annotationValues).forEach(annot => {

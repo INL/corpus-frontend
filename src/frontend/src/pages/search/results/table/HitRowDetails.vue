@@ -60,7 +60,7 @@
 						<tbody>
 							<tr v-for="(annot, index) in detailedAnnotations" :key="annot.id">
 								<th>{{annot.displayName}}</th>
-								<HitContextComponent v-for="(token, ti) in context.match" tag="td" :data="{match: [token]}" :html="html" :dir="dir" :key="annot.id + ti" :punct="false" :highlight="false"/>
+								<HitContextComponent v-for="(token, ti) in context.match" tag="td" :data="{match: [token]}" :html="html" :dir="dir" :key="annot.id + ti" :punct="false" :highlight="false" :annotation="annot.id"/>
 							</tr>
 						</tbody>
 					</table>

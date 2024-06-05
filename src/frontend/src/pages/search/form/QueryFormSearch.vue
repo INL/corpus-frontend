@@ -101,6 +101,10 @@
 							@click="within = option.value"
 						>{{withinOptionDisplayName(option)}}</button> <!-- empty value searches across entire documents -->
 					</div>
+					<div class="btn-group col-xs-12 col-md-9 col-md-push-3 attr form-inline" v-for="attr in withinAttributes()">
+						<label>{{ attr.label || attr.value }}</label>
+						<input class='form-control' type="text" :title="attr.title || undefined" />
+					</div>
 				</div>
 				<div v-if="splitBatchEnabled" class="form-group">
 					<div class="col-xs-12 col-md-9 col-md-push-3 checkbox">
@@ -422,6 +426,16 @@ export default Vue.extend({
 		withinOptionDisplayName(option: Option): string {
 			return corpusCustomizations.search.within.displayName(option) || option.label || option.value || 'document';
 		},
+		withinAttributes(): Option[] {
+			const within = this.within;
+			if (!within) return [];
+
+			const option = this.withinOptions.find(o => o.value === within);
+			if (!option) return [];
+
+			return (corpusCustomizations.search.within.attributes(option) || [])
+				.map(el => typeof el === 'string' ? { value: el } : el);
+		}
 	},
 	watch: {
 		customAnnotations: {
@@ -535,6 +549,11 @@ textarea.gap-value-editor {
 	overflow: auto;
 	overflow-x: hidden;
 	margin-bottom: 15px;
+}
+
+div.attr {
+	margin-top: 4px;
+	label, input { width: 6em; }
 }
 
 </style>

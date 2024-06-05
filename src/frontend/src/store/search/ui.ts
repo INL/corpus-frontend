@@ -68,7 +68,7 @@ type ModuleRootState = {
 				enabled: boolean;
 				elements: Array<{
 					title: string|null;
-					label: string;
+					label?: string;
 					value: string;
 				}>;
 				/**
@@ -84,7 +84,7 @@ type ModuleRootState = {
 				enabled: boolean;
 				elements: Array<{
 					title: string|null;
-					label: string;
+					label?: string;
 					value: string;
 				}>;
 				defaultValue: string;
@@ -896,7 +896,7 @@ const init = () => {
 		if (!getState().search.shared.within.sentenceElement && getState().search.shared.within.elements.length) {
 			const labelsOrValues = ['sentence', 's', 'sen', 'sent', 'paragraph', 'p', 'par', 'para', 'verse'];
 			// process the labels in order or preference.
-			const defaultWithin = labelsOrValues.flatMap(l => state.search.shared.within.elements.find(e => e.label.includes(l) || e.value.includes(l)) || [])[0]
+			const defaultWithin = labelsOrValues.flatMap(l => state.search.shared.within.elements.find(e => (e.label && e.label.includes(l)) || e.value.includes(l)) || [])[0]
 			if (defaultWithin) {
 				actions.search.shared.within.sentenceElement(defaultWithin.value);
 			}
@@ -1227,9 +1227,28 @@ const corpusCustomizations = {
 			},
 
 			/** Customize display name for a within element (return null for default behaviour) */
-			displayName(element: Option) {
+			displayName(element: Option): string|null {
 				return null;
+			},
+
+			/** Which, if any, attribute filter fields should be displayed for this element? */
+			attributes(element: Option): string[]|Option[] {
+				return [];
+			},
+
+			/*
+			// Alternative approach: allow direct access to the elements array, so custom JS
+			// can change that. But this relies on the corpus being loaded before the custom JS
+			// (currently not the case), and might run into issues with reactivity(?)
+
+			get elements(): Option[] {
+				return getState().search.shared.within.elements;
+			},
+
+			set elements(elements: { value: string, title: string|null, label?: string }[]) {
+				actions.search.shared.within.elements(elements);
 			}
+			*/
 		}
 	}
 };

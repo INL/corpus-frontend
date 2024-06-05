@@ -99,7 +99,7 @@
 							:value="option.value"
 							:title="option.title || undefined"
 							@click="within = option.value"
-						>{{option.label || option.value || 'document'}}</button> <!-- empty value searches across entire documents -->
+						>{{withinOptionDisplayName(option)}}</button> <!-- empty value searches across entire documents -->
 					</div>
 				</div>
 				<div v-if="splitBatchEnabled" class="form-group">
@@ -189,6 +189,7 @@ import * as AppTypes from '@/types/apptypes';
 import { getAnnotationSubset } from '@/utils';
 
 import SelectPicker, { Option } from '@/components/SelectPicker.vue';
+import { corpusCustomizations } from '@/store/search/ui';
 
 function isVue(v: any): v is Vue { return v instanceof Vue; }
 function isJQuery(v: any): v is JQuery { return typeof v !== 'boolean' && v && v.jquery; }
@@ -258,7 +259,7 @@ export default Vue.extend({
 		textDirection: CorpusStore.get.textDirection,
 		withinOptions(): Option[] {
 			const {enabled, elements} = UIStore.getState().search.shared.within;
-			return enabled ? elements : [];
+			return enabled ? elements.filter(corpusCustomizations.search.within.include) : [];
 		},
 		within: {
 			get(): string|null { return PatternStore.getState().extended.within; },
@@ -417,6 +418,9 @@ export default Vue.extend({
 				// setup watcher so custom component is notified of changes to its value by external processes (global form reset, history state restore, etc.)
 				RootStore.store.watch(state => value, (cur, prev) => update(cur, prev, div), {deep: true});
 			}
+		},
+		withinOptionDisplayName(option: Option): string {
+			return corpusCustomizations.search.within.displayName(option) || option.label || option.value || 'document';
 		},
 	},
 	watch: {

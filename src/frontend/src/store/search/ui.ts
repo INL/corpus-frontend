@@ -18,6 +18,7 @@ import * as PatternsStore from '@/store/search/form/patterns';
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
 import { MapOf } from '@/utils';
+import { Option } from '@/components/SelectPicker.vue';
 
 type CustomView = {
 	id: string;
@@ -1214,6 +1215,44 @@ function printCustomizations() {
 	`);
 }
 
+/** This object contains any customization "hook" functions for this corpus.
+ *  It defines defaults that can be overridden from custom JS file(s); see below.
+ */
+const corpusCustomizations = {
+	search: {
+		within: {
+			/** Customize which element(s) to include */
+			include(element: Option) {
+				return true;
+			},
+
+			/** Customize display name for a within element (return null for default behaviour) */
+			displayName(element: Option) {
+				return null;
+			}
+		}
+	}
+};
+
+/** This lets custom JS files call frontend.customize((corpus) => { ... });
+  * to customize any of the above "hooks". Doing this via a function instead of
+  * direct access to a global object gives us more flexibility to change things
+  * in the future.
+  *
+  * Example of a simple custom.js file using this:
+  * <code>
+  * frontend.customize((corpus) => {
+  *   corpus.search.within.include = (element) => element.value === 'p';
+  *   corpus.search.within.displayName = (element) => element.value === 'p' ? 'Paragraph' : null;
+  * });
+  * </code>
+  */
+(window as any).frontend = {
+	customize(callback: ((corpus: any) => void)) {
+		callback(corpusCustomizations);
+	}
+};
+
 (window as any).printCustomJs = printCustomizations;
 
 export {
@@ -1226,4 +1265,6 @@ export {
 	init,
 
 	namespace,
+
+	corpusCustomizations,
 };

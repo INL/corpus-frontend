@@ -12,6 +12,7 @@
  */
 
 import * as api from '@/api';
+import { MapOf } from '@/utils';
 
 export const DEFAULT_ANNOTATION = '__default__';
 
@@ -57,6 +58,8 @@ export type Result = {
 	tokens?: Token[];
 	/** xml token name excluding namespace, brackets, attributes etc */
 	within?: string;
+	/** any attribute filters on the within xml token */
+	withinAttributes?: MapOf<string>;
 	targetVersion?: string; // target version for this query, or undefined if this is the source query
 	relationType?: string; // relation type for this (target) query, or undefined if this is the source query
 };

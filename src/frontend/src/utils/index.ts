@@ -338,7 +338,7 @@ export function unparenQueryPart(query?: string) {
 }
 
 export const getPatternString = (annotations: AppTypes.AnnotationValue[], within: null|string,
-	parallelTargetVersions: string[] = [], alignBy?: string) => {
+	withinAttributes: null|MapOf<string>, parallelTargetVersions: string[] = [], alignBy?: string) => {
 
 	const tokens = [] as string[][];
 
@@ -347,8 +347,16 @@ export const getPatternString = (annotations: AppTypes.AnnotationValue[], within
 	}));
 
 	let query = tokens.map(t => `[${t.join('&')}]`).join('');
-	if (query.length > 0 && within) {
-		query += ` within <${within}/>`;
+	if (within) {
+		const attr = withinAttributes ? Object.entries(withinAttributes).map(([k, v]) => ` ${k}="${v.replace(/"/g, '\\"')}"`).join('') : '';
+		const tags = `<${within}${attr}/>`;
+		if (query.length > 0) {
+			// Actual within
+			query += ` within ${tags}`;
+		} else {
+			// No query given; just find the tags themselves
+			query = tags;
+		}
 	}
 
 	if (parallelTargetVersions.length > 0) {
@@ -867,8 +875,10 @@ export function getPatternStringSearch(
 	const targets = state.parallelVersions.targets || [];
 	switch (subForm) {
 		case 'simple':
-			return state.simple.annotationValue.value &&
-			getPatternString([state.simple.annotationValue], null, targets, alignBy);
+			const q = state.simple.annotationValue.value ? [state.simple.annotationValue] : [];
+			return q.length || state.extended.within ?
+				getPatternString(q, null, null, targets, alignBy) :
+				undefined;
 		case 'extended': {
 			const r = cloneDeep(Object.values(state.extended.annotationValues))
 				.filter(annot => !!annot.value)
@@ -876,8 +886,8 @@ export function getPatternStringSearch(
 					...annot,
 					type: getCorrectUiType(uiTypeSupport.search.extended, annot.type!)
 				}));
-			return r.length ?
-				getPatternString(r, state.extended.within, targets, alignBy) :
+			return r.length || state.extended.within ?
+				getPatternString(r, state.extended.within, state.extended.withinAttributes, targets, alignBy) :
 				undefined;
 		}
 		case 'advanced':

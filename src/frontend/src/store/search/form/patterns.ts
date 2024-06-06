@@ -14,6 +14,7 @@ import * as UIStore from '@/store/search/ui';
 import { debugLog, debugLogCat } from '@/utils/debug';
 
 import { AnnotationValue } from '@/types/apptypes';
+import { MapOf } from '@/utils';
 
 type ModuleRootState = {
 	// Parallel versions (shared between multiple states, e.g. simple, extended, etc.)
@@ -32,7 +33,7 @@ type ModuleRootState = {
 			// }
 		},
 		within: string|null,
-		//withinAttribute: {[key: string]: string},
+		withinAttributes: MapOf<string>,
 		splitBatch: boolean,
 	},
 	advanced: {
@@ -63,6 +64,7 @@ const defaults: ModuleRootState = {
 	extended: {
 		annotationValues: {},
 		within: null,
+		withinAttributes: {},
 		splitBatch: false,
 	},
 	advanced: {
@@ -196,12 +198,17 @@ const actions = {
 			// Never overwrite annotatedFieldId or type, even when they're submitted through here.
 			Object.assign(state.extended.annotationValues[id], safeValues);
 		}, 'extended_annotation'),
-		within: b.commit((state, payload: string|null) => state.extended.within = payload, 'extended_within'),
-		// withinAttributes: b.commit((state, payload: {name: string, value: string}) => {
-		// 	if (value === '' || value === null || value === undefined)
-		// 		delete state.extended.withinAttribute[payload.name];
-		// 	state.extended.withinAttribute[payload.name] = payload.value;
-		// }, 'extended_within_attribute'),
+		within: b.commit((state, payload: string|null) => {
+			if (payload !== state.extended.within) {
+				state.extended.within = payload;
+				state.extended.withinAttributes = {};
+			}
+		}, 'extended_within'),
+		withinAttributes: b.commit((state, payload: {name: string, value: string}) => {
+			if (payload.value === '' || payload.value === null || payload.value === undefined)
+				delete state.extended.withinAttributes[payload.name];
+			state.extended.withinAttributes[payload.name] = payload.value;
+		}, 'extended_within_attribute'),
 		splitBatch: b.commit((state, payload: boolean) => state.extended.splitBatch = payload, 'extended_split_batch'),
 		reset: b.commit(state => {
 			Object.values(state.extended.annotationValues).forEach(annot => {

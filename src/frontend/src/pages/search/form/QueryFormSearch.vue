@@ -103,7 +103,8 @@
 					</div>
 					<div class="btn-group col-xs-12 col-md-9 col-md-push-3 attr form-inline" v-for="attr in withinAttributes()">
 						<label>{{ attr.label || attr.value }}</label>
-						<input class='form-control' type="text" :title="attr.title || undefined" @change="changeWithinAttribute(attr, $event)" />
+						<input class='form-control' type="text" :title="attr.title || undefined"
+								:value="withinAttributeValue(attr)" @change="changeWithinAttribute(attr, $event)" />
 					</div>
 				</div>
 				<div v-if="splitBatchEnabled" class="form-group">
@@ -436,10 +437,14 @@ export default Vue.extend({
 			return (corpusCustomizations.search.within.attributes(option) || [])
 				.map(el => typeof el === 'string' ? { value: el } : el);
 		},
+		withinAttributeValue(option: Option) {
+			const value = PatternStore.getState().extended.withinAttributes[option.value];
+			return value == null ? '' : value;
+		},
 		changeWithinAttribute(option: Option, event: Event) {
 			const el = event.target as HTMLInputElement;
 			console.log(`Attribute ${option.value} changed to ${el.value}`);
-			//PatternStore.actions.extended.withinAttribute({ name: option.value, value: el.value });
+			PatternStore.actions.extended.withinAttributes({ name: option.value, value: el.value });
 		},
 	},
 	watch: {

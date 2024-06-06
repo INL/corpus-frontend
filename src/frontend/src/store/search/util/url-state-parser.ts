@@ -489,6 +489,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 		return {
 			annotationValues: parsedAnnotationValues,
 			within: this.within,
+			withinAttributes: this.withinAttributes,
 			// This is always false, it's just a checkbox that will split up the query when it's submitted, then untick itself
 			splitBatch: false
 		};
@@ -569,6 +570,11 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	@memoize
 	private get within(): string|null {
 		return this._parsedCql ? this._parsedCql[0].within || null : null;
+	}
+
+	@memoize
+	private get withinAttributes(): MapOf<string> {
+		return this._parsedCql ? this._parsedCql[0].withinAttributes || {} : {};
 	}
 
 	@memoize

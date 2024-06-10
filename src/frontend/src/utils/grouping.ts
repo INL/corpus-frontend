@@ -125,7 +125,7 @@ export function parseGroupBy(groupBy: string[]): GroupBy[] {
 			// when we encounter one we can't parse fully, we'll just returns the parts we can parse.
 			case 'context': {
 				const [_, annot, caseSensitive, spec] = part.split(':');
-				const parsedSpec = spec.match(/(L|R|H|E|B|A)(\d+)-?(\d+)?/);
+				const parsedSpec = spec.match(/(L|R|H|E|B|A)(\d*)-?(\d*)/);
 				if (parsedSpec) { // this can contain more, like ; and a second(+) set of positions. We'll ignore that for now.
 					let [_, position, startMaybe, endMaybe] = parsedSpec;
 					// right/left -> before/after. Since BL 4

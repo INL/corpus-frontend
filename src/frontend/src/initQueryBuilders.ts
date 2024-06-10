@@ -38,7 +38,12 @@ export async function initQueryBuilders(): Promise<QueryBuilder[]> {
 		}))
 	}));
 
-	const withinSelectOptions = UIStore.getState().search.shared.within.elements;
+	const withinSelectOptions = UIStore.getState().search.shared.within.elements
+			.filter(UIStore.corpusCustomizations.search.within.include)
+			.map(opt => ({
+				...opt,
+				label: UIStore.corpusCustomizations.search.within.displayName(opt) || opt.label || opt.value || 'document',
+			}));
 
 	// Initialize configuration
 	const queryBuilderElements = $('.querybuilder');

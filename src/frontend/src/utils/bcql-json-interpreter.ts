@@ -238,8 +238,16 @@ function interpretBcqlJson(bcql: string, json: any, defaultAnnotation: string): 
 			return {
 				tokens: _sequence(input.clauses),
 			};
+
 		case 'posfilter': // (within expression)
 			return _posFilter(input.producer, input.operation, input.filter);
+
+		case 'tags':
+			// "show me these tags" (not really within, no query given)
+			return {
+				within: input.name,
+				withinAttributes: input.attributes,
+			};
 
 		default:
 			// Must be a single token
@@ -301,9 +309,16 @@ function interpretBcqlJson(bcql: string, json: any, defaultAnnotation: string): 
 	return result;
 }
 
+const parsePatternCache: Map<string, Result[]> = new Map();
+
 async function parseBcql(indexId: string, bcql: string, defaultAnnotation: string): Promise<Result[]> {
+	const cacheKey = indexId + ':::' + bcql;
+	if (parsePatternCache.has(cacheKey))
+		return parsePatternCache.get(cacheKey)!;
 	const response = await api.blacklab.getParsePattern(indexId, bcql);
-	return interpretBcqlJson(bcql, response.parsed.json, defaultAnnotation);
+	const result = interpretBcqlJson(bcql, response.parsed.json, defaultAnnotation);
+	parsePatternCache.set(cacheKey, result);
+	return result;
 }
 
 export {

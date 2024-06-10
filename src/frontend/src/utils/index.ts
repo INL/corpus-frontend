@@ -348,7 +348,8 @@ export const getPatternString = (annotations: AppTypes.AnnotationValue[], within
 
 	let query = tokens.map(t => `[${t.join('&')}]`).join('');
 	if (within) {
-		const attr = withinAttributes ? Object.entries(withinAttributes).map(([k, v]) => ` ${k}="${v.replace(/"/g, '\\"')}"`).join('') : '';
+		const attr = withinAttributes ? Object.entries(withinAttributes).filter(([k, v]) => !!v)
+			.map(([k, v]) => ` ${k}="${v.replace(/"/g, '\\"')}"`).join('') : '';
 		const tags = `<${within}${attr}/>`;
 		if (query.length > 0) {
 			// Actual within

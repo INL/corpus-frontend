@@ -444,7 +444,7 @@ export default Vue.extend({
 		changeWithinAttribute(option: Option, event: Event) {
 			const el = event.target as HTMLInputElement;
 			console.log(`Attribute ${option.value} changed to ${el.value}`);
-			PatternStore.actions.extended.withinAttributes({ name: option.value, value: el.value });
+			PatternStore.actions.extended.setWithinAttribute({ name: option.value, value: el.value });
 		},
 	},
 	watch: {

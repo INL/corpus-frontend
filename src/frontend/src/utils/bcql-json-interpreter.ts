@@ -140,6 +140,7 @@ function interpretBcqlJson(bcql: string, json: any, defaultAnnotation: string): 
 			throw new Error('Unknown posfilter filter type: ' + filter.type);
 		const query = _query(producer);
 		query.within = filter.name;
+		query.withinAttributes = filter.attributes;
 		return query;
 	}
 

@@ -199,16 +199,26 @@ const actions = {
 			Object.assign(state.extended.annotationValues[id], safeValues);
 		}, 'extended_annotation'),
 		within: b.commit((state, payload: string|null) => {
+
+			console.log('within', payload);
+
 			if (payload !== state.extended.within) {
 				state.extended.within = payload;
 				state.extended.withinAttributes = {};
 			}
 		}, 'extended_within'),
-		withinAttributes: b.commit((state, payload: {name: string, value: string}) => {
+		withinAttributes: b.commit((state, payload: MapOf<string>) => {
+			console.log('withinAttributes', payload);
+			state.extended.withinAttributes = payload;
+		}, 'extended_within_attributes'),
+		setWithinAttribute: b.commit((state, payload: {name: string, value: string}) => {
+
+			console.log('withinAttributes', payload);
+
 			if (payload.value === '' || payload.value === null || payload.value === undefined)
 				delete state.extended.withinAttributes[payload.name];
 			state.extended.withinAttributes[payload.name] = payload.value;
-		}, 'extended_within_attribute'),
+		}, 'extended_set_within_attribute'),
 		splitBatch: b.commit((state, payload: boolean) => state.extended.splitBatch = payload, 'extended_split_batch'),
 		reset: b.commit(state => {
 			Object.values(state.extended.annotationValues).forEach(annot => {
@@ -280,6 +290,7 @@ const actions = {
 
 		actions.extended.reset();
 		actions.extended.within(payload.extended.within);
+		actions.extended.withinAttributes(payload.extended.withinAttributes);
 		state.extended.splitBatch = payload.extended.splitBatch;
 		Object.values(payload.extended.annotationValues).forEach(actions.extended.annotation);
 

@@ -18,7 +18,7 @@ import * as PatternsStore from '@/store/search/form/patterns';
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
 import { MapOf } from '@/utils';
-import { Option } from '@/components/SelectPicker.vue';
+import { Option } from '@/types/apptypes';
 
 type CustomView = {
 	id: string;

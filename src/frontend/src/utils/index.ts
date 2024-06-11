@@ -397,65 +397,6 @@ export const getPatternStringFromCql = (sourceCql: string, targetVersions: strin
 	return query;
 };
 
-function parenQueryPartParallel(query: string) {
-	const parenExceptions = ['[]*', '_'];
-	return parenQueryPart(query === '[]*' ? '_' : query, parenExceptions);
-}
-
-export const getPatternStringFromCql = (sourceCql: string, targetVersions: string[], targetCql: string[], alignBy?: string) => {
-	if (targetVersions.length > targetCql.length) {
-		console.error('There must be a CQL query for each selected parallel version!', targetVersions, targetCql);
-		throw new Error(`There must be a CQL query for each selected parallel version!`);
-	}
-
-	if (targetVersions.length === 0) {
-		return sourceCql;
-	}
-
-	const defaultSourceQuery = targetVersions.length > 0 ? '_': '';
-	const queryParts = [parenQueryPartParallel(sourceCql.trim() || defaultSourceQuery)];
-	const relationType = alignBy ?? '';
-	for (let i = 0; i < targetVersions.length; i++) {
-		if (i > 0)
-			queryParts.push(' ; ');
-		queryParts.push(` =${relationType}=>${targetVersions[i].trim()} ${parenQueryPartParallel(targetCql[i].trim() || '_')}`)
-	}
-
-	const query = queryParts.join('');
-
-	return query;
-};
-
-function parenQueryPartParallel(query: string) {
-	const parenExceptions = ['[]*', '_'];
-	return parenQueryPart(query === '[]*' ? '_' : query, parenExceptions);
-}
-
-export const getPatternStringFromCql = (sourceCql: string, targetVersions: string[], targetCql: string[], alignBy?: string) => {
-	if (targetVersions.length > targetCql.length) {
-		console.error('There must be a CQL query for each selected parallel version!', targetVersions, targetCql);
-		throw new Error(`There must be a CQL query for each selected parallel version!`);
-	}
-
-	if (targetVersions.length === 0) {
-		return sourceCql;
-	}
-
-	const defaultSourceQuery = targetVersions.length > 0 ? '_': '';
-	const queryParts = [parenQueryPartParallel(sourceCql.trim() || defaultSourceQuery)];
-	const relationType = alignBy ?? '';
-	for (let i = 0; i < targetVersions.length; i++) {
-		if (i > 0)
-			queryParts.push(' ; ');
-		queryParts.push(` =${relationType}=>${targetVersions[i].trim()} ${parenQueryPartParallel(targetCql[i].trim() || '_')}`)
-	}
-
-	const query = queryParts.join('');
-
-	return query;
-};
-
-
 export function getDocumentUrl(
 	pid: string,
 	cql?: string,

@@ -135,8 +135,8 @@
 	"results": {
 		"groupBy": {
 			"groupResults": "Group Results",
-			"clear": "clear",
-			"apply": "apply",
+			"clear": "Clear",
+			"apply": "Apply",
 			"invalidGrouping": "This grouping is not valid.",
 
 			"iWantToGroupOnAnnotation": "I want to group on {some_words} {in_this_location_with_text} using annotation {this_annotation}.",
@@ -146,20 +146,26 @@
 				"theFirstWord": "the first word",
 				"allWords": "all words",
 				"specificWords": "specific words",
-				"captureGroupsLabel": "Capture groups",
-				"captureGroup": "capture group {group_name}"
+				"captureGroupsLabel": "Labels and relations"
 			},
 			"in_this_location": {
-				"beforeTheHit": "within the same sentence",
-				"inTheHit": "within the same document",
-				"afterTheHit": "within the same hit",
+				"beforeTheHit": "before the hit",
+				"inTheHit": "within the hit",
+				"afterTheHit": "after the hit",
 				"fromTheEnd": "from the end of the hit"
 			},
+
+			"relationPartLabel": "Relation part",
+			"relationSource": "head",
+			"relationTarget": "dependent",
+			"relationBoth": "both",
+
+			"tipClickOnHighlightedWords": "Tip: click on highlighted words for syntactic grouping.",
 
 			"caseSensitive": "Case sensitive",
 			"chooseWordPositions": "Choose the <strong>specific word</strong> positions to group on here, the preview at the top will show you which words you have selected.",
 			"selectDocumentMetadata": "Select the document metadata to group on.",
-			"clickButtonsToStart": "In this window you can apply grouping to the results. Click the buttons on the left to create a grouping criteria to get started.",
+			"clickButtonsToStart": "Click on Annotation or Metadata to define grouping criteria.",
 			"metadata": "Metadata",
 			"annotation": "Annotation",
 			"specify": "Specify",

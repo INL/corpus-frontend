@@ -14,7 +14,7 @@ import { FilterDefinition } from '@/types/apptypes';
 
 import { debugLog } from '@/utils/debug';
 import { blacklabPaths } from '@/api';
-import { mapReduce, MapOf } from '@/utils';
+import { mapReduce } from '@/utils';
 import { getFilterString, getFilterSummary, valueFunctions } from '@/components/filters/filterValueFunctions';
 
 export type FilterState = {
@@ -36,7 +36,7 @@ type ModuleRootState = {
 			tabname?: string;
 			fields: string[];
 		}>;
-		query?: MapOf<string[]>;
+		query?: Record<string, string[]>;
 	}>
 };
 

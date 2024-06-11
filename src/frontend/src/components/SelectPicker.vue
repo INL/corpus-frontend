@@ -65,7 +65,7 @@
 				<span class="menu-value" v-else :title="displayValues.join(',')">{{displayValues.join(', ')}}</span>
 			</template>
 			<span v-else class="menu-value placeholder">
-				{{placeholder || $attrs.title || (multiple ? 'Select values...' : 'Select a value...')}}
+				{{ placeholder || $attrs.title || (multiple ? 'Select values...' : 'Select a value...')}}
 			</span>
 			<span v-if="loading" class="menu-icon fa fa-spinner fa-spin text-muted"></span>
 			<span v-else-if="!showValues && multiple && showValueCount" :class="['menu-icon badge',{'active': displayValues.length}]">
@@ -177,7 +177,7 @@
 // tslint:disable
 
 import Vue from 'vue';
-import { mapReduce, MapOf } from '@/utils';
+import { mapReduce } from '@/utils';
 
 export type SimpleOption = string;
 
@@ -309,7 +309,7 @@ export default Vue.extend({
 		/** Search/custom input value, role depends on editable, searchable */
 		inputValue: '',
 
-		internalModel: {} as MapOf<boolean>,
+		internalModel: {} as Record<string, boolean>,
 
 		// Can't be computed, need to wait until we are mounted
 		// (as container might be a parent element that hasn't fully mounted yet when we init)
@@ -394,7 +394,7 @@ export default Vue.extend({
 
 			return uiOptions;
 		},
-		uiOptionsMap(): MapOf<_uiOpt> { return mapReduce(this.uiOptions.filter(o => o.type === 1) as _uiOpt[], 'value'); },
+		uiOptionsMap(): Record<string, _uiOpt> { return mapReduce(this.uiOptions.filter(o => o.type === 1) as _uiOpt[], 'value'); },
 
 		filteredOptions(): uiOption[] {
 			let options = this.uiOptions;

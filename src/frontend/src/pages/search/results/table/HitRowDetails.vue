@@ -45,38 +45,37 @@
 							/>
 						</template>
 
-						<HitContextComponent tag="span" :dir="dir" :data="context.before" :html="html" before
+						<HitContextComponent tag="span" :dir="dir" :data="context" :html="html" before
 							:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
 							@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
-						<HitContextComponent tag="strong" :dir="dir" :data="context.match" :html="html"
+						<HitContextComponent tag="strong" :dir="dir" :data="context" :html="html"
 							:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
 							@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
 						<a v-if="href" :href="href" title="Go to hit in document" target="_blank"><sup class="fa fa-link" style="margin-left: -5px;"></sup></a>
-						<HitContextComponent tag="span" :dir="dir" :data="context.after" :html="html" after
+						<HitContextComponent tag="span" :dir="dir" :data="context" :html="html" after
 							:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
 							@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
 					</p>
+					<table v-if="detailedAnnotations?.length" class="concordance-details-table">
+						<thead>
+							<tr>
+								<th>{{$t('results.table.property')}}</th>
+								<th :colspan="data.hit.match.punct.length">{{$t('results.table.value')}}</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr v-for="(annot, index) in detailedAnnotations" :key="annot.id">
+								<th>{{annot.displayName}}</th>
+								<HitContextComponent v-for="(token, ti) in context.match" tag="td" :data="{match: [token]}" :html="html" :dir="dir" :key="annot.id + ti" :punct="false" :highlight="false" :annotation="annot.id"
+								:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+								@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
+							</tr>
+						</tbody>
+					</table>
 				</template>
 				<template v-else-if="!detailedAnnotations?.length">
 					<p>{{$t('results.table.noContext')}}</p>
 				</template>
-
-				<table v-if="detailedAnnotations?.length" class="concordance-details-table">
-					<thead>
-						<tr>
-							<th>{{$t('results.table.property')}}</th>
-							<th :colspan="data.hit.match.punct.length">{{$t('results.table.value')}}</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr v-for="(annot, index) in detailedAnnotations" :key="annot.id">
-							<th>{{annot.displayName}}</th>
-							<HitContextComponent v-for="(token, ti) in otherContexts[index].match" tag="td" :data="[token]" :html="html" :dir="dir" :key="annot.id + ti" :punct="false"
-							:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
-							@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
-						</tr>
-					</tbody>
-				</table>
 			</div>
 		</td>
 	</tr>
@@ -87,7 +86,7 @@ import Vue from 'vue';
 
 import * as BLTypes from '@/types/blacklabtypes';
 
-import { HitContext, NormalizedAnnotation } from '@/types/apptypes';
+import { HitContext, NormalizedAnnotation, TokenHighlight } from '@/types/apptypes';
 import HitContextComponent from '@/pages/search/results/table/HitContext.vue';
 import { getDocumentUrl } from '@/utils';
 import { snippetParts } from '@/utils/hit-highlighting';
@@ -153,11 +152,6 @@ export default Vue.extend({
 			if (!('start' in this.data.hit)) return;
 			return getDocumentUrl(this.data.doc.docPid, this.query?.patt, this.query?.pattgapdata, this.data.hit.start, PAGE_SIZE, this.data.hit.start);
 		},
-		/** Context info for things besides the main 'word' (e.g. 'lemma', 'part of speech', etc.) */
-		otherContexts(): HitContext[] {
-			return (this.detailedAnnotations || []).map(a => snippetParts(this.data.hit, a.id, this.dir, false) || []);
-		},
-
 		hasRelations: CorpusStore.get.hasRelations,
 		/** Exact surrounding sentence can only be loaded if we the start location of the current hit, and when the boundery element has been set. */
 		sentenceAvailable(): boolean { return this.hasRelations && !!UIStore.getState().search.shared.within.sentenceElement && 'start' in this.data.hit; },
@@ -210,12 +204,22 @@ export default Vue.extend({
 			.getSnippet(INDEX_ID, this.data.doc.docPid, this.annotatedField, this.data.hit.start, this.data.hit.end, concordanceSize)
 			.then(s => {
 				transformSnippets?.(s);
-				this.context = snippetParts({
-					// matchInfos not included in document search results. If we're expanding one of those context,
-					// @ts-ignore
-					matchInfos: s.matchInfos || this.data.hit.matchInfos,
-					...s
-				}, this.mainAnnotation.id, this.dir);
+
+				// HACK! copy the colors from the existing hit. There's no easy way to get the entire Results object here to get the colors from there.
+				// At least there's never be more highlights in the surrounding snippet than in the hit itself, so this works...
+				const highlightColors = [...this.data.context.before, ...this.data.context.match, ...this.data.context.after]
+				.reduce<Record<string, TokenHighlight>>((acc, t) => {
+					t.captureAndRelation?.forEach(c => acc[c.highlight.key] = c.highlight);
+					return acc;
+				}, {});
+
+				this.context = snippetParts(
+					// @ts-ignore matchinfos not included in snippets. copy from the original hit.
+					{matchInfos: this.data.hit.matchInfos,...s},
+					this.mainAnnotation.id,
+					this.dir,
+					highlightColors
+				);
 
 				// Run plugins defined for this corpus (e.g. a copy to clipboard button, or an audio player/text to speech button)
 				this.addons = addons.map(a => a({

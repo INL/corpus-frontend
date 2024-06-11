@@ -293,7 +293,7 @@ export default Vue.extend({
 </script>
 
 <style lang="scss">
-/*
+
 .group-table {
 	table-layout: auto;
 
@@ -338,5 +338,5 @@ export default Vue.extend({
 	margin-bottom: 8px;
 	padding: 8px
 }
-*/
+
 </style>

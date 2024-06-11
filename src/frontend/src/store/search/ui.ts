@@ -17,8 +17,7 @@ import * as ViewsStore from '@/store/search/results/views';
 import * as PatternsStore from '@/store/search/form/patterns';
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
-import { MapOf } from '@/utils';
-import { Option } from '@/components/SelectPicker.vue';
+import { Option } from '@/types/apptypes';
 
 type CustomView = {
 	id: string;
@@ -1031,7 +1030,7 @@ const init = () => {
 // Some helpers
 // =======================
 
-function createConfigurator<T extends MapOf<string[]>>(proppaths: T) {
+function createConfigurator<T extends Record<string, string[]>>(proppaths: T) {
 	const r = function(config: [[undefined, ...Array<keyof T>],  [string, ...Array<boolean|undefined>]]) {
 		const props = config.shift() as string[];
 		const propvalues = {} as {[K in keyof T]: string[]};
@@ -1130,15 +1129,15 @@ function validateMetadata(
 // =============
 
 function getCheckmarks(
-	config: MapOf<string[]>,
+	config: Record<string, string[]>,
 	groups: Array<{id: string, entries: string[], isRemainderGroup: boolean}>,
 	remainderGroupName: string
 ): Array<{
 	id: string;
-	entries: Array<{id: string, checkmarks: MapOf<boolean>}>
+	entries: Array<{id: string, checkmarks: Record<string, boolean>}>
 }> {
 	// Initialize outputs
-	const entryMap: MapOf<{id: string, checkmarks: MapOf<boolean>}> = {};
+	const entryMap: Record<string, {id: string, checkmarks: Record<string, boolean>}> = {};
 	groups.forEach(g => g.entries.forEach(id => entryMap[id] = {id, checkmarks: {}}));
 
 	// Fill outputs

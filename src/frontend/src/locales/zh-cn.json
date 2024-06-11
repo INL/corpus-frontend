@@ -145,15 +145,20 @@
 				"theFirstWord": "第一个词",
 				"allWords": "所有词",
 				"specificWords": "特定词",
-				"captureGroupsLabel": "捕获组",
-				"captureGroup": "捕获组 {group_name}"
+				"captureGroupsLabel": "标签和关系"
 			},
 			"in_this_location": {
-				"beforeTheHit": "在同一句内",
-				"inTheHit": "在同一文档内",
-				"afterTheHit": "在同一命中内",
-				"fromTheEnd": "从命中的结尾"
+				"beforeTheHit": "命中前",
+				"inTheHit": "命中内",
+				"afterTheHit": "同一次命中后",
+				"fromTheEnd": "从命中结束"
 			},
+
+			"relationPartLabel": "关系部分",
+			"relationSource": "中心词",
+			"relationTarget": "依存词",
+			"relationBoth": "两者",
+			"tipClickOnHighlightedWords": "提示：点击高亮的词语进行句法分组。",
 
 			"caseSensitive": "区分大小写",
 			"chooseWordPositions": "在这里选择要分组的<strong>特定单词</strong>位置，上方的预览将显示您选择了哪些单词。",

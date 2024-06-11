@@ -46,7 +46,6 @@ import * as BLTypes from '@/types/blacklabtypes';
 import {ApiError} from '@/api';
 
 import frac2Percent from '@/mixins/fractionalToPercent';
-import { MapOf } from '@/utils';
 import { valueFunctions } from '@/components/filters/filterValueFunctions';
 
 import Spinner from '@/components/Spinner.vue';
@@ -63,8 +62,8 @@ export default Vue.extend({
 	}),
 	computed: {
 		activeFilters: FilterStore.get.activeFilters,
-		summaryMap(): MapOf<string> {
-			const r: MapOf<string> = {};
+		summaryMap(): Record<string, string> {
+			const r: Record<string, string> = {};
 			this.activeFilters.forEach(f => {
 				const summary = valueFunctions[f.componentName].luceneQuerySummary(f.id, f.metadata, f.value);
 				if (summary) { r[f.id] = summary; }

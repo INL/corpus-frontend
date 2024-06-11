@@ -6,6 +6,14 @@
 			<slot name="totals"/>
 		</div>
 
+
+		<!-- <ul v-if="colors" class="list-unstyled pull-right text-right">
+			<li v-for="c in colors">
+				{{c.key}}
+				<span class="color-ball" :style="{backgroundColor: c.color}"></span>
+			</li>
+		</ul> -->
+
 		<slot name="groupBy"/>
 		<slot name="pagination"/>
 
@@ -64,6 +72,7 @@ import GlossField from '@/pages/search//form/concept/GlossField.vue' // Jesse
 import {DocRowData} from './DocRow.vue';
 
 import HitsTable, {HitRowData} from './HitsTable.vue';
+import { getHighlightColors, snippetParts } from '@/utils/hit-highlighting';
 
 export default Vue.extend({
 	components: {
@@ -88,9 +97,16 @@ export default Vue.extend({
 		currentPageHitsForGlossStore(): string[] {
 			return this.rows.filter((r): r is HitRowData => r.type === 'hit').map(r => r.hit_id)
 		},
+		colors(): undefined|Record<string, AppTypes.TokenHighlight> {
+			const colors = getHighlightColors(this.results.summary);
+			return Object.keys(colors).length ? colors : undefined;
+		},
+
 		rows(): Array<DocRowData|HitRowData> {
 			const docFields = this.results.summary.docFields;
 			const infos = this.results.docInfos;
+
+			const highlightColors = this.colors;
 
 			let prevPid: string;
 			return this.results.hits.flatMap(hit => {
@@ -116,7 +132,7 @@ export default Vue.extend({
 					this.transformSnippets(hit);
 				}
 				// ids of the hit, if gloss module is enabled.
-				const {startid: hit_first_word_id = '', endid: hit_last_word_id = ''} = GlossModule.get.settings()?.get_hit_range_id(hit) ?? {startid: '', endid: ''};
+				const {startid, endid} = GlossModule.get.settings()?.get_hit_range_id(hit) ?? {startid: '', endid: ''};
 				const hit_id = GlossModule.get.settings()?.get_hit_id(hit) ?? '';
 
 				rows.push({
@@ -127,9 +143,10 @@ export default Vue.extend({
 					},
 					gloss_fields: GlossModule.get.gloss_fields(),
 					hit,
-					hit_first_word_id,
+					context: snippetParts(hit, this.concordanceAnnotationId, this.textDirection, highlightColors),
+					hit_first_word_id: startid,
 					hit_id,
-					hit_last_word_id
+					hit_last_word_id: endid
 				});
 
 				return rows;

@@ -44,6 +44,7 @@ import { BLDocFields } from '@/types/blacklabtypes';
 
 import HitsTable, {HitRowData} from '@/pages/search/results/table/HitsTable.vue';
 import DocRow, {DocRowData} from '@/pages/search/results/table/DocRow.vue';
+import { snippetParts } from '@/utils/hit-highlighting';
 
 export {DocRowData} from '@/pages/search/results/table/DocRow.vue';
 export {HitRowData} from '@/pages/search/results/table/HitsTable.vue';
@@ -85,6 +86,7 @@ computed: {
 			return docRow.doc.snippets!.map(s => ({
 				type: 'hit',
 				hit: s,
+				context: snippetParts(s, this.mainAnnotation.id, this.dir),
 				doc: docRow.doc,
 				gloss_fields: [],
 				hit_first_word_id: '',

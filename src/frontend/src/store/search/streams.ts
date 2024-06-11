@@ -203,6 +203,7 @@ url$.pipe(
 		// Generate the new frontend url
 		const url = new URI()
 			.segment([CONTEXT_URL, INDEX_ID, 'search', v.state.interface.viewedResults!])
+			.host('').protocol('').port('') // remove these, we're only interested in the path and query.
 			.search(queryParams);
 
 		const fullUrl = url.toString();
@@ -221,7 +222,10 @@ url$.pipe(
 		// new urls are always generated without trailing slash (no empty trailing segment string)
 		// while current url might contain one for whatever reason (if user just landed on page - tomcat injects it)
 		// So strip it from the current url in order to properly compare.
-		const curUrl = new URI().toString().replace(/\/+$/, '');
+		// also remove domain, port, protocol, since the new url may be generated without them.
+		// if CONTEXT_URL (cfUrlExternal in corpus-frontend.properties) doesn't contain them.
+		// If we don't check this here, we might end up with a history entry for the same page, but with a different trailing slash, or even the exact same url.
+		const curUrl = new URI().host('').protocol('').port('').toString().replace(/\/+$/, '');
 
 		if (curUrl !== v.url) {
 			return true;

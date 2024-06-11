@@ -1,17 +1,17 @@
 <template>
 	<tr class="concordance rounded">
 		<td v-if="displayField">{{ displayField }}</td>
-		<HitContextComponent tag="td" class="text-right" :dir="dir" :data="context.before" :html="html" before
+		<HitContextComponent tag="td" class="text-right"  :dir="dir" :data="data.context" :html="html" before
 			:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
 			@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
-		<HitContextComponent tag="td" bold class="text-center" :dir="dir" :data="context.match" :html="html"
+		<HitContextComponent tag="td" class="text-center" :dir="dir" :data="data.context" :html="html" bold
 			:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
 			@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)"/>
-		<HitContextComponent tag="td" class="" :dir="dir" :data="context.after" :html="html" after
+		<HitContextComponent tag="td" class="text-left"   :dir="dir" :data="data.context" :html="html" after
 			:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
 			@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)"/>
 
-		<HitContextComponent v-for="(c, i) in otherContexts" tag="td" :data="c.match" :html="html" :dir="dir" :key="i"
+		<HitContextComponent tag="td" :annotation="a.id" :data="data.context" :html="html" :dir="dir" :key="a.id" :highlight="false" v-for="a in otherAnnotations" 
 			:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
 			@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)"/>
 
@@ -49,6 +49,7 @@ export type HitRowData = {
 	type: 'hit';
 	doc: BLTypes.BLDoc;
 	hit: BLTypes.BLHit|BLTypes.BLHitInOtherField|BLTypes.BLHitSnippet;
+	context: HitContext;
 
 	// TODO jesse
 	gloss_fields: GlossFieldDescription[];
@@ -80,17 +81,6 @@ export default Vue.extend({
 			default: () => [],
 		},
 		isParallel: { default: false },
-	},
-	computed: {
-		context(): HitContext {
-			if (this.data.hit === undefined) {
-				console.error('HitRow: data.hit is undefined', this.data);
-			}
-			return snippetParts(this.data.hit, this.mainAnnotation.id, this.dir) || [];
-		},
-		otherContexts(): HitContext[]|undefined {
-			return this.otherAnnotations?.map(a => snippetParts(this.data.hit, a.id, this.dir, false));
-		},
 	},
 });
 </script>

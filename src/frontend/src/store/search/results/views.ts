@@ -14,7 +14,6 @@ const namespace = 'views';
 type ModuleRootState = Record<string, ViewRootState>;
 type ViewRootState = {
 	customState: any;
-	/** case-sensitive grouping */
 	groupBy: string[];
 	page: number;
 	sort: string|null;

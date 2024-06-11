@@ -356,8 +356,21 @@ export type BLSearchSummary = {
 	windowFirstResult: number;
 	windowHasNext: boolean;
 	windowHasPrevious: boolean;
+
+	/** Only for queries with a pattern. */
 	pattern?: {
+		/** The serialization of the query object BlackLab actually executed. */
+		bcql: string;
+		/** One of the annotatedFields */
 		fieldName: string;
+		/** Json representation of the query. Not present when requesting results as xml output. */
+		json?: any;
+		/* MatchInfos only available when hits are returned (i.e. not a docs request, not grouped) */
+		matchInfos?: {
+			[key: string]: {
+				type: 'span'|'tag'|'relation'|'list';
+			}
+		}
 	}
 } & BLSearchSummarySampleSettings;
 

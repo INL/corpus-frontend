@@ -12,7 +12,7 @@ import * as Api from '@/api';
 import {RootState} from '@/store/search/';
 
 import {NormalizedIndex, NormalizedAnnotation, NormalizedMetadataField, NormalizedAnnotatedField, NormalizedMetadataGroup, NormalizedAnnotationGroup} from '@/types/apptypes';
-import { MapOf, mapReduce } from '@/utils';
+import { mapReduce } from '@/utils';
 import { getParallelFieldParts, isParallelField, normalizeIndex } from '@/utils/blacklabutils';
 
 type ModuleRootState = { corpus: NormalizedIndex|null };
@@ -77,15 +77,15 @@ const get = {
 
 	/** All annotations, without duplicates and in no specific order */
 	allAnnotations: b.read((state): NormalizedAnnotation[] => Object.values(state.corpus?.annotatedFields[state.corpus.mainAnnotatedField].annotations ?? {}), 'allAnnotations'),
-	allAnnotationsMap: b.read((): MapOf<NormalizedAnnotation> => mapReduce(get.allAnnotations(), 'id'), 'allAnnotationsMap'),
+	allAnnotationsMap: b.read((): Record<string, NormalizedAnnotation> => mapReduce(get.allAnnotations(), 'id'), 'allAnnotationsMap'),
 
 	allMetadataFields: b.read((state): NormalizedMetadataField[] => Object.values(state.corpus?.metadataFields || {}), 'allMetadataFields'),
-	allMetadataFieldsMap: b.read((state): MapOf<NormalizedMetadataField> => state.corpus?.metadataFields ?? {}, 'allMetadataFieldsMap'),
+	allMetadataFieldsMap: b.read((state): Record<string, NormalizedMetadataField> => state.corpus?.metadataFields ?? {}, 'allMetadataFieldsMap'),
 
 	// TODO might be collisions between multiple annotatedFields, this is an unfinished part in blacklab
 	// like for instance, in a BLHitSnippet, how do we know which of the props comes from which annotatedfield.
 	/** Get all annotation displayNames, including for internal annotations */
-	annotationDisplayNames: b.read((state): MapOf<string> => mapReduce(get.allAnnotations(), 'id', a => a.displayName), 'annotationDisplayNames'),
+	annotationDisplayNames: b.read((state): Record<string, string> => mapReduce(get.allAnnotations(), 'id', a => a.displayName), 'annotationDisplayNames'),
 
 	// TODO there can be multiple main annotations if there are multiple annotatedFields
 	// the ui needs to respect this (probably render more extensive results?)

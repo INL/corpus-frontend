@@ -397,9 +397,65 @@ export const getPatternStringFromCql = (sourceCql: string, targetVersions: strin
 	return query;
 };
 
-// TODO the clientside url generation story... https://github.com/INL/corpus-frontend/issues/95
-// Ideally use absolute urls everywhere, if the application needs to be proxied, let the proxy server handle it.
-// Have a configurable url in the backend that's made available on the client that we can use here.
+function parenQueryPartParallel(query: string) {
+	const parenExceptions = ['[]*', '_'];
+	return parenQueryPart(query === '[]*' ? '_' : query, parenExceptions);
+}
+
+export const getPatternStringFromCql = (sourceCql: string, targetVersions: string[], targetCql: string[], alignBy?: string) => {
+	if (targetVersions.length > targetCql.length) {
+		console.error('There must be a CQL query for each selected parallel version!', targetVersions, targetCql);
+		throw new Error(`There must be a CQL query for each selected parallel version!`);
+	}
+
+	if (targetVersions.length === 0) {
+		return sourceCql;
+	}
+
+	const defaultSourceQuery = targetVersions.length > 0 ? '_': '';
+	const queryParts = [parenQueryPartParallel(sourceCql.trim() || defaultSourceQuery)];
+	const relationType = alignBy ?? '';
+	for (let i = 0; i < targetVersions.length; i++) {
+		if (i > 0)
+			queryParts.push(' ; ');
+		queryParts.push(` =${relationType}=>${targetVersions[i].trim()} ${parenQueryPartParallel(targetCql[i].trim() || '_')}`)
+	}
+
+	const query = queryParts.join('');
+
+	return query;
+};
+
+function parenQueryPartParallel(query: string) {
+	const parenExceptions = ['[]*', '_'];
+	return parenQueryPart(query === '[]*' ? '_' : query, parenExceptions);
+}
+
+export const getPatternStringFromCql = (sourceCql: string, targetVersions: string[], targetCql: string[], alignBy?: string) => {
+	if (targetVersions.length > targetCql.length) {
+		console.error('There must be a CQL query for each selected parallel version!', targetVersions, targetCql);
+		throw new Error(`There must be a CQL query for each selected parallel version!`);
+	}
+
+	if (targetVersions.length === 0) {
+		return sourceCql;
+	}
+
+	const defaultSourceQuery = targetVersions.length > 0 ? '_': '';
+	const queryParts = [parenQueryPartParallel(sourceCql.trim() || defaultSourceQuery)];
+	const relationType = alignBy ?? '';
+	for (let i = 0; i < targetVersions.length; i++) {
+		if (i > 0)
+			queryParts.push(' ; ');
+		queryParts.push(` =${relationType}=>${targetVersions[i].trim()} ${parenQueryPartParallel(targetCql[i].trim() || '_')}`)
+	}
+
+	const query = queryParts.join('');
+
+	return query;
+};
+
+
 export function getDocumentUrl(
 	pid: string,
 	cql?: string,
@@ -428,10 +484,6 @@ export function getDocumentUrl(
 	}).toString();
 }
 
-export type MapOf<T> = {
-	[key: string]: T;
-};
-
 type KeysOfType<Base, Condition> = keyof Pick<Base, {
 	[Key in keyof Base]: Base[Key] extends Condition ? Key : never
 }[keyof Base]>;
@@ -441,16 +493,16 @@ type KeysOfType<Base, Condition> = keyof Pick<Base, {
  * @param k key to pick from the objects
  * @param m optional mapping function to transform the objects after picking the key
  */
-export function makeMapReducer<T, V extends (t: T, i: number) => any = (t: T, i: number) => T>(k: KeysOfType<T, string>, m?: V): (m: MapOf<ReturnType<V>>, t: T, i: number) => MapOf<ReturnType<V>> {
-	return (acc: MapOf<ReturnType<V>>, v: T, i: number): MapOf<ReturnType<V>> => {
+export function makeMapReducer<T, V extends (t: T, i: number) => any = (t: T, i: number) => T>(k: KeysOfType<T, string>, m?: V): (m: Record<string, ReturnType<V>>, t: T, i: number) => Record<string, ReturnType<V>> {
+	return (acc: Record<string, ReturnType<V>>, v: T, i: number): Record<string, ReturnType<V>> => {
 		const kv = v[k] as any as string;
 		acc[kv] = m ? m(v, i) : v;
 		return acc;
 	};
 }
 
-export function makeMultimapReducer<T, V extends (t: T, i: number) => any = (t: T, i: number) => T>(k: KeysOfType<T, string>, m?: V): (m: MapOf<Array<ReturnType<V>>>, t: T, i: number) => MapOf<Array<ReturnType<V>>> {
-	return (acc: MapOf<Array<ReturnType<V>>>, v: T, i: number): MapOf<Array<ReturnType<V>>> => {
+export function makeMultimapReducer<T, V extends (t: T, i: number) => any = (t: T, i: number) => T>(k: KeysOfType<T, string>, m?: V): (m: Record<string, Array<ReturnType<V>>>, t: T, i: number) => Record<string, Array<ReturnType<V>>> {
+	return (acc: Record<string, Array<ReturnType<V>>>, v: T, i: number): Record<string, Array<ReturnType<V>>> => {
 		const kv = v[k] as any as string;
 		acc[kv] ? acc[kv].push(m ? m(v, i) : v) : acc[kv] = [m ? m(v, i) : v];
 		return acc;
@@ -464,16 +516,16 @@ export function makeMultimapReducer<T, V extends (t: T, i: number) => any = (t: 
  * @param t the array of strings to place in a map.
  * @param m (optional) a mapping function to apply to values.
  */
-export function mapReduce<VS extends (t: string, i: number) => any = (t: string, i: number) => true>(t: string[]|undefined|null, m?: VS): MapOf<ReturnType<VS>>;
+export function mapReduce<VS extends (t: string, i: number) => any = (t: string, i: number) => true>(t: string[]|undefined|null, m?: VS): Record<string, ReturnType<VS>>;
 /**
  * Turn an array of type T[] into a map of type {[key: string]: T}.
- * Optionally mapping the values to be something other than "true".
+ * Optionally mapping the values to be something other than T.
  *
  * @param t the array of objects to place in a map.
  * @param k a key in the objects to use as key in the map.
  * @param m (optional) a mapping function to apply to values.
  */
-export function mapReduce<T, VT extends (t: T, i: number) => any = (t: T, i: number) => T>(t: T[]|undefined|null, k: KeysOfType<T, string>, m?: VT): MapOf<ReturnType<VT>>;
+export function mapReduce<T, VT extends (t: T, i: number) => any = (t: T, i: number) => T>(t: T[]|undefined|null, k: KeysOfType<T, string>, m?: VT): Record<string, ReturnType<VT>>;
 export function mapReduce<
 	T,
 	VT extends (t: T, i: number) => any = (t: T, i: number) => T,
@@ -486,7 +538,7 @@ export function mapReduce<
 	if (t && t.length > 0 && typeof t[0] === 'string') {
 		const values = t as string[];
 		const mapper = a as VS|undefined;
-		return values.reduce<MapOf<ReturnType<VS>>>((acc, cur, index) => {
+		return values.reduce<Record<string, ReturnType<VS>>>((acc, cur, index) => {
 			acc[cur] = mapper ? mapper(cur, index) : true;
 			return acc;
 		}, {});
@@ -506,7 +558,7 @@ export function mapReduce<
  * @param k a key in the objects to use as key in the map.
  * @param m (optional) a mapping function to apply to values.
  */
-export function multimapReduce<T, V extends (t: T, i: number) => any = (t: T, i: number) => T>(t: T[]|undefined|null, k: KeysOfType<T, string>, m?: V): MapOf<Array<ReturnType<V>>> {
+export function multimapReduce<T, V extends (t: T, i: number) => any = (t: T, i: number) => T>(t: T[]|undefined|null, k: KeysOfType<T, string>, m?: V): Record<string, Array<ReturnType<V>>> {
 	return t ? t.reduce(makeMultimapReducer<T, V>(k, m), {}) : {};
 }
 
@@ -527,7 +579,7 @@ export function filterDuplicates<T>(t: T[]|null|undefined, k: KeysOfType<T, stri
 export function fieldSubset<T extends {id: string}>(
 	ids: string[],
 	groups: Array<{id: string, entries: string[]}>,
-	fields: MapOf<T>,
+	fields: Record<string, T>,
 	addAllToOneGroup?: string
 ): Array<{id: string, entries: T[]}> {
 	let ret: Array<{id: string, entries: T[]}> = groups
@@ -556,7 +608,7 @@ export function fieldSubset<T extends {id: string}>(
 export function getMetadataSubset<T extends {id: string, displayName: string}>(
 	ids: string[],
 	groups: AppTypes.NormalizedMetadataGroup[],
-	metadata: MapOf<T>,
+	metadata: Record<string, T>,
 	operation: 'Sort'|'Group',
 	debug = false,
 	/* show the <small/> labels at the end of options labels? */
@@ -609,7 +661,7 @@ export function getMetadataSubset<T extends {id: string, displayName: string}>(
 export function getAnnotationSubset(
 	ids: string[],
 	groups: AppTypes.NormalizedAnnotationGroup[],
-	annotations: MapOf<AppTypes.NormalizedAnnotation>,
+	annotations: Record<string, AppTypes.NormalizedAnnotation>,
 	operation: 'Search'|'Sort'|'Group',
 	corpusTextDirection: 'rtl'|'ltr' = 'ltr',
 	debug = false,
@@ -668,159 +720,6 @@ export function getAnnotationSubset(
 }
 
 export function uniq<T>(l: T[]): T[] {return Array.from(new Set(l)).sort() }
-
-
-/**
- * Parse a GroupBy string. It should be pre-separated on comma's.
- * http://inl.github.io/BlackLab/blacklab-server-overview.html#sorting-grouping-filtering-faceting
- */
-export function parseGroupBy(groupBy: string[]): AppTypes.GroupBySettings[] {
-	return groupBy.map<AppTypes.GroupBySettings>(part => {
-		const [type] = part.split(':', 1);
-
-		switch (type) {
-			// grouping by metadata
-			case 'field': return cast<AppTypes.GroupByMetadataSettings>({
-				type: 'metadata',
-				field: part.split(':')[1],
-				caseSensitive: part.split(':')[2] === 's'
-			});
-
-			// grouping by capture
-			case 'capture': return cast<AppTypes.GroupByCaptureSettings>({
-				type: 'capture',
-				annotation: part.split(':')[1],
-				caseSensitive: part.split(':')[2] === 's',
-				groupname: part.split(':')[3]
-			});
-
-			// grouping by words in/around the hit
-			case 'hit': return cast<AppTypes.GroupByContextSettings>({
-				type: 'annotation',
-				annotation: part.split(':')[1],
-				caseSensitive: part.split(':')[2] === 's',
-				position: 'H', // 'H' is the hit itself
-				start: 1,
-			})
-			case 'left':
-			case 'before':
-			case 'right':
-			case 'after': return cast<AppTypes.GroupByContextSettings>({
-				type: 'annotation',
-				annotation: part.split(':')[1],
-				caseSensitive: part.split(':')[2] === 's',
-				position: (type === 'left' || type === 'before') ? 'L' : 'R',
-				start: Number(part.split(':')[3]) || 1, // if no start was given, Number will create NaN, which we replace with 1 (i.e. start of section)
-				end: Number(part.split(':')[3]) || undefined // start and end are the same for this
-			});
-			// deprecated, but parse into before/after:1
-			case 'wordleft':
-			case 'wordright': return cast<AppTypes.GroupByContextSettings>({
-				type: 'annotation',
-				annotation: part.split(':')[1],
-				caseSensitive: part.split(':')[2] === 's',
-				position: type === 'wordleft' ? 'L' : 'R',
-				start: 1,
-				end: 1
-			});
-			// grouping by specific context (e.g. at (a) specific offset(s) within/before/after the hit)
-			case 'context': return cast<AppTypes.GroupByContextSettings>({
-				type: 'annotation',
-				annotation: part.split(':')[1],
-				caseSensitive: part.split(':')[2] === 's',
-				position: part.split(':')[3][0] as 'L'|'R'|'H'|'E',
-				start: Number(part.split(':')[3].match(/\w(\d+)/)?.[1] ?? 1),
-				end: Number(part.split(':')[3].match(/\w\d+-(\d+)?/)?.[1]) || undefined // again with the NaN to undefined.
-			});
-			default: throw new Error('Unimplemented groupby type: ' + type);
-		}
-	});
-}
-
-export function serializeGroupBy(groupBy: AppTypes.GroupBySettings): string;
-export function serializeGroupBy(groupBy: AppTypes.GroupBySettings[]): string[]
-export function serializeGroupBy(groupBy: AppTypes.GroupBySettings|AppTypes.GroupBySettings[]): string|string[] {
-	function single(g: AppTypes.GroupBySettings): string {
-		switch (g.type) {
-			case 'metadata': return `field:${g.field}:${g.caseSensitive ? 's' : 'i'}`;
-			case 'annotation': return `context:${g.annotation}:${g.caseSensitive ? 's' : 'i'}:${g.position}${g.start}${g.end ? '-' + g.end : ''}`;
-			case 'capture': return `capture:${g.annotation}:${g.caseSensitive ? 's' : 'i'}:${g.groupname}`;
-			// @ts-ignore
-			default: throw new Error('Unimplemented groupby type: ' + g.type);
-		}
-	};
-
-	return Array.isArray(groupBy) ? groupBy.map(single) : single(groupBy);
-}
-
-/** We use a weird almost untyped object in the groupby builder because it's much easier to attach to the UI this way. */
-export type GroupBySettingsUI = {
-	type: 'annotation'|'metadata',
-	/** only used when type === 'annotation' */
-	annotation: string,
-	/** Always relevant */
-	caseSensitive: boolean,
-	/** when undefined, use groupname instead of positional, and ignore start+end */
-	position: 'L'|'H'|'R'|'E'|undefined,
-	start: number,
-	/** only used when position != null. When blank, entire context is used.  */
-	end: number|undefined,
-	/** only used when type === 'metadata' */
-	field: string,
-	/** Only used when type === 'annotation' && position == null */
-	groupname: string,
-};
-
-export function isValidGroupBySettingsUI(g: GroupBySettingsUI): boolean {
-	if (!g.type) return false;
-	if (g.type === 'metadata' && !g.field) return false;
-	if (g.type === 'annotation') {
-		if (!g.annotation) return false;
-		if (g.position != null && g.start == null) return false;
-		if (!g.position && !g.groupname) return false;
-	}
-	return true;
-}
-
-export function serializeGroupBySettingsUI(g: GroupBySettingsUI[]): string[];
-export function serializeGroupBySettingsUI(g: GroupBySettingsUI): string|undefined;
-export function serializeGroupBySettingsUI(g: GroupBySettingsUI|GroupBySettingsUI[]): string|string[]|undefined {
-	const returnArray = Array.isArray(g);
-	if (!Array.isArray(g)) g = [g];
-
-	const r = g.filter(isValidGroupBySettingsUI).map(g => {
-		const cs = g.caseSensitive ? 's' : 'i';
-		switch (g.type) {
-			case 'metadata': return `field:${g.field}:${cs}`;
-			case 'annotation': {
-				if (g.position == null) // group by a capture label
-					return `capture:${g.annotation}:${cs}:${g.groupname}`;
-				else if (g.position === 'H' && g.end == null) // group by entire hit. Since hits are dynamic length, omit start
-					return `hit:${g.annotation}:${cs}`;
-				else // group by positional.
-					return `context:${g.annotation}:${cs}:${g.position}${g.end != null ? `${g.start}-${g.end}` : ''}`;
-			}
-			default: throw new Error('Unknown grouping property ' + g.type);
-		}
-	});
-	return returnArray ? r : r[0];
-}
-
-/** Interop between the UI object and the formal groupby object. */
-export function parseGroupBySettingsUI(groupby: string): GroupBySettingsUI {
-	const g = parseGroupBy([groupby])[0];
-
-	return {
-		type: g.type === 'metadata'? 'metadata' : 'annotation',
-		field: g.type === 'metadata' ? g.field : '',
-		annotation: g.type === 'metadata' ? '' : g.annotation,
-		caseSensitive: g.caseSensitive,
-		end: g.type === 'annotation' ? g.end : 1,
-		groupname: g.type === 'capture' ? g.groupname : '',
-		position: g.type === 'annotation' ? g.position : undefined,
-		start: g.type === 'annotation' ? g.start : 1
-	}
-}
 
 /** Compile time checking: ensure the passed parameter is of the template type and return it (no-op).
  * Can use while setting variables initial value for example. */

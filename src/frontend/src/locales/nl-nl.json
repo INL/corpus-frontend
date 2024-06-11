@@ -146,8 +146,7 @@
 				"theFirstWord": "het eerste woord",
 				"allWords": "alle woorden",
 				"specificWords": "specifieke woorden",
-				"captureGroupsLabel": "Labels",
-				"captureGroup": "label {group_name}"
+				"captureGroupsLabel": "Labels en relaties"
 			},
 			"in_this_location": {
 				"beforeTheHit": "voor het resultaat",
@@ -156,6 +155,12 @@
 				"fromTheEnd": "vanaf het einde van het resultaat"
 			},
 
+			"relationPartLabel": "Deel van relatie",
+			"relationSource": "hoofd",
+			"relationTarget": "afhankelijke",
+			"relationBoth": "beide",
+			"tipClickOnHighlightedWords": "Tip: klik op uitgelichte woorden om te groeperen op syntactische relaties.",
+
 			"caseSensitive": "Hoofdlettergevoelig",
 			"chooseWordPositions": "Kies hier de <strong>specifieke woorden</strong> om op te groeperen, in het voorbeeld hieronder ziet u welke woorden zijn geselecteerd.",
 			"selectDocumentMetadata": "Select the document metadata to group on.",
@@ -163,7 +168,7 @@
 			"metadata": "Metadata",
 			"annotation": "Annotatie",
 			"specify": "Specificeer",
-			"label": "label {label} ({annotation})",
+			"label": "{label} ({annotation})",
 			"document": "document"
 		},
 		"table": {

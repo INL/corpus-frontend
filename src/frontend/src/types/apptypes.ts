@@ -245,69 +245,48 @@ export type FilterDefinition<MetadataType = any, ValueType = any> = {
 	metadata: any;
 };
 
-// TODO remove groupby settings
-// We re-implemented the grouping windows, it uses GroupBySettings2, which is a more flexible version of GroupBySettings
-// The old GroupBySettings is still used in the legacy component, but it should be removed probably.
-// The context settings should completely be removed,
-
-/**
- * Settings for grouping by annotations in/around the hit.
- * See http://inl.github.io/BlackLab/server/rest-api/corpus/hits/get.html#criteria-for-sorting-grouping-and-faceting
-*/
-export type GroupByContextSettings = {
-	type: 'annotation';
-	annotation: string;
-	caseSensitive: boolean;
-	position: 'L'|'R'|'H'|'E';
-	/** 1-indexed inclusive */
-	start: number;
-	/** 1-indexed inclusive */
-	end?: number;
-}
-
-export type GroupByMetadataSettings = {
-	type: 'metadata';
-	field: string;
-	caseSensitive: boolean;
-}
-
-export type GroupByCaptureSettings = {
-	type: 'capture';
-	annotation: string;
-	caseSensitive: boolean;
-	groupname: string;
-}
-
-export type GroupBySettings = GroupByContextSettings|GroupByMetadataSettings|GroupByCaptureSettings;
-
 // ---------------
 // Hits displaying
 // ---------------
 
-export type CaptureAndRelation = {
+export type TokenHighlight = {
 	/** css color in the form of rgb(x,y,z) */
 	color: string;
 	/** Because background color might be dark, in that case text should be white */
 	textcolor: string;
 	/** Invert of textcolor */
 	textcolorcontrast: string;
-	/** name of the capture group, or set of relation. */
+	/** name of the capture group, or the relation's name */
+	key: string;
+};
+
+export type CaptureAndRelation = {
+	/** name of the capture group, or the relation's name as decided by BlackLab (usually the infix of the arrow e.g. obj when "-obj->", or dep1, dep2, etc. when using bare arrow operator "-->" in the query). */
 	key: string;
 	/** value of captured info, or value of relation. */
-	value: string;
+	display: string;
 	/** true if this is a relation source */
 	isSource: boolean;
 	/** true if this is a relation target */
 	isTarget: boolean;
+
+	/** Color info for highlighting the word. */
+	highlight: TokenHighlight;
 }
 export type HitToken = {
+	/** Value of the main annotation. For ease of use. */
 	text: string;
+	/** Raw values of the extracted annotations. */
+	annotations: Record<string, string>
 	/** after the text */
 	punct: string;
 	captureAndRelation?: CaptureAndRelation[];
 }
 
-/** Interop between blacklab Hit objects and the UI. */
+/**
+ * Interop between blacklab Hit objects and the UI.
+ * Contains info about highlighted words, and the words themselves.
+ */
 export type HitContext = {
 	before: HitToken[];
 	match: HitToken[];

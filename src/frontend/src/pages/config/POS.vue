@@ -15,7 +15,7 @@ import Vue from 'vue';
 import { NormalizedAnnotation, NormalizedIndex, Option } from '@/types/apptypes';
 
 import SelectPicker from '@/components/SelectPicker.vue';
-import { MapOf, mapReduce } from '@/utils';
+import { mapReduce } from '@/utils';
 import { blacklab } from '@/api';
 
 import Steps from './Steps.vue';
@@ -84,9 +84,9 @@ const component = Vue.extend({
 		// mainPosAnnotation: null as NormalizedAnnotation|null,
 		// pendingPosAnnotationId: null as string|null,
 
-		// subAnnotationSelections: {} as MapOf<boolean>,
-		// subAnnotationDetails: {} as MapOf<boolean>,
-		// details: {} as MapOf<{
+		// subAnnotationSelections: {} as Record<string, boolean>,
+		// subAnnotationDetails: {} as Record<string, boolean>,
+		// details: {} as Record<string, {
 		// 	selected: boolean,
 		// 	open: boolean,
 		// 	values: null|string[]
@@ -111,7 +111,7 @@ const component = Vue.extend({
 	computed: {
 		localStorageKey(): string { return `cf/config/${this.index.id}/stepstate`; }
 		// annotations(): NormalizedAnnotation[] { return Object.values(this.index.annotatedFields).flatMap(f => Object.values(f.annotations)); },
-		// annotationsMap(): MapOf<NormalizedAnnotation> { return mapReduce(this.annotations, 'id'); },
+		// annotationsMap(): Record<string, NormalizedAnnotation> { return mapReduce(this.annotations, 'id'); },
 		// actualSubAnnotations(): null|string[] { return this.mainPosAnnotation ? this.mainPosAnnotation.subAnnotations || null : null; },
 
 		// selectedSubAnnotations(): NormalizedAnnotation[] { return Object.entries(this.subAnnotationSelections).filter(([k, v]) => v).map(([k]) => this.annotationsMap[k]); },
@@ -147,7 +147,7 @@ const component = Vue.extend({
 		// 		}
 		// 	}
 		// 	*/
-		// 	const combinations: MapOf<MapOf<string[]>> = mapReduce(mainposterms, () => ({}));
+		// 	const combinations: Record<string, Record<string, string[]>> = mapReduce(mainposterms, () => ({}));
 		// 	const allinterestingannotations = [this.mainPosAnnotation!, ...this.selectedSubAnnotations].map(a => `hit:${a.id}:i`).join(', ');
 
 		// 	const usePartialStrategy = this.index.tokenCount > 100_000_000;

@@ -80,18 +80,18 @@ function flatten(part: BLHitSnippetPart|undefined, annotationId: string, lastPun
 }
 
 
-function mapCaptureList(key: string, list: BLRelationMatchList): HighlightSection[] {
-	return list.infos.map(info => ({
+function mapCaptureList(key: string, list: BLMatchInfoList): HighlightSection[] {
+	return list.infos.map((info, index) => ({
 		...info,
 		isRelation: true,
 		sourceEnd: info.sourceEnd ?? -1,
 		sourceStart: info.sourceStart ?? -1,
-		key,
+		key: `${key}[${index}]`,
 		display: info.relType,
 	}));
 }
 
-function mapCaptureRelation(key: string, relation: BLRelationMatchRelation): HighlightSection {
+function mapCaptureRelation(key: string, relation: BLMatchInfoRelation): HighlightSection {
 	return {
 		...relation,
 		sourceStart: relation.sourceStart ?? -1,
@@ -102,7 +102,7 @@ function mapCaptureRelation(key: string, relation: BLRelationMatchRelation): Hig
 	};
 }
 
-function mapCaptureSpan(key: string, span: BLRelationMatchSpan): HighlightSection {
+function mapCaptureSpan(key: string, span: BLMatchInfoSpan): HighlightSection {
 	return {
 		sourceEnd: span.end,
 		sourceStart: span.start,
@@ -135,12 +135,12 @@ function getHighlightSections(matchInfos: NonNullable<BLHit['matchInfos']>): Hig
 		if (key === 'captured_rels') return [];
 
 		// A list of relations, such as returned by the ==>TARGETVERSION (parallel alignment) operator
-		// or a call to rcap(). Return the captured relations, but include the list index in the name.	
+		// or a call to rcap(). Return the captured relations, but include the list index in the name.
 		if (info.type === 'list') return mapCaptureList(key, info);
 		// A single relation
 		else if (info.type === 'relation') return mapCaptureRelation(key, info);
 		// A span, e.g. an explicit capture.
-		// Set the source and target to the same span so it's the same structure as a relation.	
+		// Set the source and target to the same span so it's the same structure as a relation.
 		else if (info.type === 'span') return mapCaptureSpan(key, info);
 		else return []; // type === 'tag'. We don't care about highlighting stuff in between tags (that would be for example every word in a sentence - not very useful)
 	})
@@ -173,7 +173,7 @@ export function getHighlightColors(summary: BLSearchSummary): Record<string, Tok
  *
  * @returns the hit split into before, match, and after parts, with capture and relation info added to the tokens. The punct is to be shown after the word.
  */
-export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir: 'ltr'|'rtl', returnCaptures = true): HitContext {
+export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir: 'ltr'|'rtl', colors?: Record<string, TokenHighlight>): HitContext {
 	// We always need to do this.
 
 	if (hit === undefined)

@@ -29,7 +29,7 @@ const get = {
 		Object.values(state.corpus?.annotatedFields ?? {}), 'allAnnotatedFields'),
 
 	/** Map of annotated fields */
-	allAnnotatedFieldsMap: b.read((state): MapOf<NormalizedAnnotatedField> =>
+	allAnnotatedFieldsMap: b.read((state): Record<string, NormalizedAnnotatedField> =>
 		state.corpus?.annotatedFields ?? {}, 'allAnnotatedFieldsMap'),
 
 	/** Main annotated field name */

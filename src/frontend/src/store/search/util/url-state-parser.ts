@@ -573,7 +573,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	}
 
 	@memoize
-	private get withinAttributes(): MapOf<string> {
+	private get withinAttributes(): Record<string, string> {
 		return this._parsedCql ? this._parsedCql[0].withinAttributes || {} : {};
 	}
 

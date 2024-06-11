@@ -14,7 +14,6 @@ import * as UIStore from '@/store/search/ui';
 import { debugLog, debugLogCat } from '@/utils/debug';
 
 import { AnnotationValue } from '@/types/apptypes';
-import { MapOf } from '@/utils';
 
 type ModuleRootState = {
 	// Parallel versions (shared between multiple states, e.g. simple, extended, etc.)
@@ -33,7 +32,7 @@ type ModuleRootState = {
 			// }
 		},
 		within: string|null,
-		withinAttributes: MapOf<string>,
+		withinAttributes: Record<string, string>,
 		splitBatch: boolean,
 	},
 	advanced: {
@@ -207,7 +206,7 @@ const actions = {
 				state.extended.withinAttributes = {};
 			}
 		}, 'extended_within'),
-		withinAttributes: b.commit((state, payload: MapOf<string>) => {
+		withinAttributes: b.commit((state, payload: Record<string, string>) => {
 			console.log('withinAttributes', payload);
 			state.extended.withinAttributes = payload;
 		}, 'extended_within_attributes'),

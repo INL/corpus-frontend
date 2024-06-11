@@ -338,7 +338,7 @@ export function unparenQueryPart(query?: string) {
 }
 
 export const getPatternString = (annotations: AppTypes.AnnotationValue[], within: null|string,
-	withinAttributes: null|MapOf<string>, parallelTargetVersions: string[] = [], alignBy?: string) => {
+	withinAttributes: null|Record<string, string>, parallelTargetVersions: string[] = [], alignBy?: string) => {
 
 	const tokens = [] as string[][];
 

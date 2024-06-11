@@ -83,6 +83,7 @@ import HitRow, {HitRowData} from '@/pages/search/results/table/HitRow.vue'
 import HitRowDetails from '@/pages/search/results/table/HitRowDetails.vue'
 import DocRow, {DocRowData} from '@/pages/search/results/table/DocRow.vue';
 import { getParallelFieldName, getParallelFieldParts } from '@/utils/blacklabutils';
+import { snippetParts } from '@/utils/hit-highlighting';
 
 export {HitRowData} from '@/pages/search/results/table/HitRow.vue';
 
@@ -225,6 +226,7 @@ export default Vue.extend({
 						lengthInTokens: 0,
 						mayView: false,
 					} as BLDocInfo;
+				const s = mergeMatchInfos(fieldName, hit, mainHitMatchInfos);
 				return {
 					name,
 					hit: {
@@ -233,7 +235,8 @@ export default Vue.extend({
 							docInfo,
 							docPid: h.docPid,
 						},
-						hit: mergeMatchInfos(fieldName, hit, mainHitMatchInfos),
+						hit: s,
+						context: snippetParts(s, this.mainAnnotation.id, this.dir),
 
 						gloss_fields: [], //jesse
 						hit_first_word_id: '', //jesse

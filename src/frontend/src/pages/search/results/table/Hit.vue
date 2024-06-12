@@ -227,6 +227,9 @@ export default Vue.extend({
 						mayView: false,
 					} as BLDocInfo;
 				const s = mergeMatchInfos(fieldName, hit, mainHitMatchInfos);
+				const dummyHighlightColors = { KEEP_GOING: { color: 'DUMMY', textcolor: 'DUMMY', textcolorcontrast: 'DUMMY', key: 'DUMMY' } };
+				const t = snippetParts(s, this.mainAnnotation.id, this.dir, dummyHighlightColors);
+				console.log(fieldName, t);
 				return {
 					name,
 					hit: {
@@ -236,7 +239,7 @@ export default Vue.extend({
 							docPid: h.docPid,
 						},
 						hit: s,
-						context: snippetParts(s, this.mainAnnotation.id, this.dir),
+						context: t,
 
 						gloss_fields: [], //jesse
 						hit_first_word_id: '', //jesse
@@ -254,9 +257,11 @@ export default Vue.extend({
 		},
 		hover(matchInfos: string[]) {
 			this.hoverMatchInfos = matchInfos;
+			console.log('hover', matchInfos);
 		},
 		unhover() {
 			this.hoverMatchInfos = [];
+			console.log('unhover');
 		}
 	},
 	watch: {

@@ -113,7 +113,6 @@ import HitRow, {HitRowData} from '@/pages/search/results/table/HitRow.vue'
 import HitRowDetails from '@/pages/search/results/table/HitRowDetails.vue'
 import DocRow, {DocRowData} from '@/pages/search/results/table/DocRow.vue';
 import { getParallelFieldName, getParallelFieldParts, isParallelField } from '@/utils/blacklabutils';
-import { snippetParts } from '@/utils/hit-highlighting';
 
 export {HitRowData} from '@/pages/search/results/table/HitRow.vue';
 
@@ -178,107 +177,6 @@ export default Vue.extend({
 	methods: {
 		changeSort(sort: string) {
 			this.$emit('changeSort', sort)
-		},
-		otherFields(h: BLHit|BLHitSnippet) {
-			if (!('otherFields' in h) || h.otherFields === undefined)
-				return [];
-
-			// Copy the matchInfos from the main hit that have the correct target field to a hit in another field,
-			// so that the targets can be higlighted there
-			function mergeMatchInfos(fieldName: string, hit: BLHitInOtherField, mainHitMatchInfos: Record<string, BLMatchInfo>) {
-				// console.log('mergeMatchInfos fieldName', JSON.stringify(fieldName));
-				// console.log('  hit', JSON.stringify(hit));
-				// console.log('  mainHitMatchInfos', JSON.stringify(mainHitMatchInfos));
-				if (Object.keys(mainHitMatchInfos).length === 0) {
-					// Nothing to merge
-					// console.log('Nothing to merge');
-					return hit;
-				}
-
-				/** Does the given matchInfo's targetField point to us?
-				 * If it's a list, do any of the list's elements target us?
-				 */
-				function matchInfoHasUsAsTargets([name, matchInfo]: [string, BLMatchInfo]): boolean {
-					if ('targetField' in matchInfo && matchInfo.targetField === fieldName)
-						return true;
-					if (matchInfo.type === 'list') {
-						const infos = matchInfo.infos as BLMatchInfo[];
-						if (infos.some(l => 'targetField' in l && l.targetField === fieldName))
-							return true;
-					}
-					return false;
-				};
-
-				// Mark targetField as __THIS__ so we'll know it is us later
-				function markTargetField(matchInfo: BLMatchInfo) {
-					return 'targetField' in matchInfo ? ({ ...matchInfo, targetField: '__THIS__'}) : matchInfo;
-				}
-
-				// Keep only relations with us as the target field (and mark it, see above)
-				const toMerge = Object.entries(mainHitMatchInfos)
-					.filter(matchInfoHasUsAsTargets)
-					.reduce((acc, [name, matchInfo]) => {
-						if ('infos' in matchInfo) {
-							acc[name] = acc[name] = {
-								...matchInfo,
-								infos: matchInfo.infos.map(markTargetField) as BLMatchInfoRelation[]
-							};
-						} else {
-							acc[name] = markTargetField(matchInfo);
-						}
-						return acc;
-					}, {} as Record<string, BLMatchInfo>);
-
-				if (!hit.matchInfos || Object.keys(hit.matchInfos).length === 0) {
-					// Hit has no matchInfos of its own; just use the infos from the main hit
-					// console.log('No matchInfos in hit, just use main hit matchInfos', toMerge);
-					return {
-						...hit,
-						matchInfos: toMerge
-					};
-				}
-
-				// Construct a new hit with matchInfos merged together
-				const newHit = {...hit};
-				newHit.matchInfos = {...toMerge, ...hit.matchInfos};
-				return newHit;
-
-			}
-
-			const mainHitMatchInfos = h.matchInfos || {};
-			const prefix = CorpusStore.get.parallelFieldPrefix();
-			const selectedTargets = QueryStore.getState().parallelVersions?.targets || [];
-			const otherFieldsInOrder = selectedTargets.length > 0 ?
-				selectedTargets :
-				Object.keys(h.otherFields).map(f => getParallelFieldParts(f).version);
-			const y = otherFieldsInOrder.map(name => {
-				const fieldName = getParallelFieldName(prefix, name);
-				const hit = h.otherFields![fieldName];
-				const docInfo = {
-						lengthInTokens: 0,
-						mayView: false,
-					} as BLDocInfo;
-				const s = mergeMatchInfos(fieldName, hit, mainHitMatchInfos);
-				return {
-					name,
-					hit: {
-						type: 'hit',
-						doc: {
-							docInfo,
-							docPid: h.docPid,
-						},
-						hit: s,
-						context: snippetParts(s, this.mainAnnotation.id, this.dir),
-
-						gloss_fields: [], //jesse
-						hit_first_word_id: '', //jesse
-						hit_last_word_id: '', //jesse
-						hit_id: '' //jesse
-
-					} as HitRowData
-				};
-			});
-			return y;
 		},
 		parallelVersion(fieldName: string): string {
 			const versionName = getParallelFieldParts(fieldName).version || fieldName;

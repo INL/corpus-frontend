@@ -11,7 +11,7 @@
 			:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
 			@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)"/>
 
-		<HitContextComponent tag="td" :annotation="a.id" :data="data.context" :html="html" :dir="dir" :key="a.id" :highlight="false" v-for="a in otherAnnotations" 
+		<HitContextComponent tag="td" :annotation="a.id" :data="data.context" :html="html" :dir="dir" :key="a.id" :highlight="false" v-for="a in otherAnnotations"
 			:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
 			@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)"/>
 
@@ -37,7 +37,6 @@ import * as BLTypes from '@/types/blacklabtypes';
 import GlossField from '@/pages/search/form/concept/GlossField.vue';
 import { GlossFieldDescription } from '@/store/search/form/glossStore';
 import { HitContext, NormalizedAnnotation, NormalizedMetadataField } from '@/types/apptypes';
-import { snippetParts } from '@/utils/hit-highlighting';
 
 import HitContextComponent from '@/pages/search/results/table/HitContext.vue';
 

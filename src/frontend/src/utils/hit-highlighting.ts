@@ -10,6 +10,7 @@ type HighlightSection = {
 	sourceEnd: number;
 	targetStart: number;
 	targetEnd: number;
+	targetField?: string;
 
 	/** True if this is a relation, false if this is a capture group */
 	isRelation: boolean;
@@ -83,7 +84,7 @@ function flatten(part: BLHitSnippetPart|undefined, annotationId: string, lastPun
 function mapCaptureList(key: string, list: BLMatchInfoList): HighlightSection[] {
 	return list.infos.map((info, index) => ({
 		...info,
-		isRelation: true,
+		isRelation: info.type === 'relation',
 		sourceEnd: info.sourceEnd ?? -1,
 		sourceStart: info.sourceStart ?? -1,
 		key: `${key}[${index}]`,
@@ -149,6 +150,11 @@ function getHighlightSections(matchInfos: NonNullable<BLHit['matchInfos']>): Hig
 
 	// If there's explicit captures, use only those.
 	// I.E. when the user selects part of the query to highlight, return only those captures.
+	//
+	// NOTE JN: This feels maybe a little bit surprising and arbitrary; queries that differ only
+	//          slightly may highlight very different things, and it might not be obvious to the
+	//          average user why. Not sure what a better approach would be, though.
+	//
 	if (interestingCaptures.find(c => !c.isRelation)) {
 		interestingCaptures = interestingCaptures.filter(c => !c.isRelation);
 	}
@@ -184,23 +190,43 @@ export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir:
 	const after = flatten(dir === 'ltr' ? hit.right : hit.left, annotationId);
 
 	// Only extract captures if have the necessary info to do so.
-	if (!('start' in hit) || !hit.matchInfos || !colors) return {before, match, after};
+	if (!('start' in hit) || !hit.matchInfos || !colors) {
+		console.log('no matchInfos or colors, returning without highlights.', colors);
+		return {
+			before,
+			match,
+			after
+		};
+	}
 
 	const highlights = getHighlightSections(hit.matchInfos);
 
 	/** Return those entries in the highlights array where source/target overlaps with the globalTokenIndex */
 	const findHighlightsByTokenIndex = (globalTokenIndex: number): undefined|CaptureAndRelation[] => highlights.reduce<undefined|CaptureAndRelation[]>((matches, c) => {
 		// first see if we're in the matched area for the capture/relation
-		const isSource = c.sourceStart <= globalTokenIndex && globalTokenIndex < c.sourceEnd;
-		const isTarget = c.targetStart <= globalTokenIndex && globalTokenIndex < c.targetEnd;
-		// we matched, add it to the matches.
+
+		// For cross-field relations in parallel corpora, we want to make sure we only
+		// highlight either source or target. If targetField is '__THIS__', we're the target,
+		// otherwise we're the source.
+		// (for single-field relations, we always want to highlight both source and target)
+		const isCrossFieldRelation = 'targetField' in c;
+		const areWeTarget = !isCrossFieldRelation || c.targetField === '__THIS__';
+		const areWeSource = !isCrossFieldRelation || !areWeTarget;
+
+		const isSource = areWeSource && c.sourceStart <= globalTokenIndex && globalTokenIndex < c.sourceEnd;
+		const isTarget = areWeTarget && c.targetStart <= globalTokenIndex && globalTokenIndex < c.targetEnd;
 		if (isSource || isTarget) {
+			// we matched, add it to the matches.
 			const colorIndex = c.key.replace(/\[\d+\]$/g, '');
 			matches = matches ?? [];
+
+			// "fix" for not having highlight colors in otherFields....
+			const FALLBACK_COLOR = {color: 'black', textcolor: 'white', textcolorcontrast: 'black'};
+
 			matches.push({
 				key: c.key,
 				display: c.isRelation ? (isSource ? c.display + '-->' : /*isTarget*/ '-->' + c.display) : c.display,
-				highlight: colors[colorIndex],
+				highlight: colors[colorIndex] || FALLBACK_COLOR,
 				isSource: c.isRelation && isSource,
 				isTarget: c.isRelation && isTarget
 			});

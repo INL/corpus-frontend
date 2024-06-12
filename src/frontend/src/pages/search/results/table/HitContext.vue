@@ -76,7 +76,7 @@ export default Vue.extend({
 				text: this.annotation ? token.annotations[this.annotation] : token.text,
 				punct: token.punct,
 				title: this.highlight ? token.captureAndRelation?.map(c => c.display).join(' · ') : undefined,
-				style: !this.isParallel && this.highlight && token.captureAndRelation?.length ? {
+				style: this.highlight && token.captureAndRelation?.length ? {
 					background: `linear-gradient(90deg, ${token.captureAndRelation.map((c, i) => `${c.highlight.color} ${i / token.captureAndRelation!.length * 100}%, ${c.highlight.color} ${(i + 1) / token.captureAndRelation!.length * 100}%`)})`,
 					display: 'inline-block',
 					color: 'black',

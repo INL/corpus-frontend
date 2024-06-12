@@ -195,11 +195,12 @@ export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir:
 		const isTarget = c.targetStart <= globalTokenIndex && globalTokenIndex < c.targetEnd;
 		// we matched, add it to the matches.
 		if (isSource || isTarget) {
+			const colorIndex = c.key.replace(/\[\d+\]$/g, '');
 			matches = matches ?? [];
 			matches.push({
 				key: c.key,
 				display: c.isRelation ? (isSource ? c.display + '-->' : /*isTarget*/ '-->' + c.display) : c.display,
-				highlight: colors[c.key],
+				highlight: colors[colorIndex],
 				isSource: c.isRelation && isSource,
 				isTarget: c.isRelation && isTarget
 			});

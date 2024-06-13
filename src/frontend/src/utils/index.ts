@@ -329,7 +329,7 @@ function parenQueryPart(query: string, exceptions: string[] = []) {
 export function unparenQueryPart(query?: string) {
 	if (query) {
 		query = query.trim();
-		if (query.match(/^\(.+\)$/)) {
+		if (query.match(/^\([^)]+\)$/)) {
 			const result = query.substring(1, query.length - 1);
 			return result;
 		}

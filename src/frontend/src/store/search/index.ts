@@ -277,9 +277,8 @@ const actions = {
 						query: null,
 						targetQueries: [],
 					},
-					// @@@JN is this okay?
-					parallelVersions: PatternModule.getState().parallelVersions,
-					// @@@JN this seems wrong..? (why are value and case here?)
+					parallelVersions: PatternModule.getState().parallelVersions, // <-- is this ok?
+					// TODO: this seems wrong..? (why are value and case here?) (JN)
 					simple: {...PatternModule.getState().simple, value: '', case: false},
 					extended: {
 						annotationValues: {

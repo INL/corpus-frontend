@@ -4,7 +4,6 @@ import BaseUrlStateParser from '@/store/util/url-state-parser-base';
 import LuceneQueryParser from 'lucene-query-parser';
 
 import {mapReduce, decodeAnnotationValue, uiTypeSupport, getCorrectUiType, unparenQueryPart} from '@/utils';
-//import parseCql, {Attribute} from '@/utils/cqlparser';
 import {parseBcql, Attribute, Result, Token} from '@/utils/bcql-json-interpreter';
 import parseLucene from '@/utils/luceneparser';
 import {debugLog} from '@/utils/debug';
@@ -462,7 +461,6 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 			targets: this._parsedCql ? this._parsedCql.slice(1).map(result => result.targetVersion || '') : [],
 			alignBy: (this._parsedCql ? this._parsedCql[1]?.relationType : defaultAlignBy) ?? defaultAlignBy,
 		};
-		console.log('parallelVersions', result)
 		return result;
 	}
 
@@ -470,7 +468,6 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	private get simplePattern() {
 		// Simple view is just a single annotation without any within query or filters
 		// NOTE: do not use extendedPattern, as the annotation used for simple may not be available for extended searching!
-		// const strTargetVersions = this.getString('targetVersions', null);
 		return {
 			annotationValue: this.annotationValues[CorpusModule.get.firstMainAnnotation().id] || {}
 		};

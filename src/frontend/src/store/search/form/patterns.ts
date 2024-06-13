@@ -165,8 +165,6 @@ const actions = {
 				state.advanced.targetQueries.splice(index, 1);
 			if (state.expert.targetQueries.length > index)
 				state.expert.targetQueries.splice(index, 1);
-			// const payload = state.parallelVersions.targets.filter(v => v !== version);
-			// return setTargetVersions(state, payload);
 		}, 'parallelVersions_removeTarget'),
 		targetVersions: b.commit(setTargetVersions, 'parallelVersions_targets'),
 		alignBy: b.commit((state, payload: string|null) => {
@@ -178,7 +176,6 @@ const actions = {
 			state.parallelVersions.source = defaultSourceVersion;
 			state.parallelVersions.targets = [];
 			const v = UIStore.getState().search.shared.alignBy.defaultValue;
-			console.log('default align by', v);
 			state.parallelVersions.alignBy = v;
 		}, 'parallelVersions_reset'),
 	},
@@ -198,22 +195,15 @@ const actions = {
 			Object.assign(state.extended.annotationValues[id], safeValues);
 		}, 'extended_annotation'),
 		within: b.commit((state, payload: string|null) => {
-
-			console.log('within', payload);
-
 			if (payload !== state.extended.within) {
 				state.extended.within = payload;
 				state.extended.withinAttributes = {};
 			}
 		}, 'extended_within'),
 		withinAttributes: b.commit((state, payload: Record<string, string>) => {
-			console.log('withinAttributes', payload);
 			state.extended.withinAttributes = payload;
 		}, 'extended_within_attributes'),
 		setWithinAttribute: b.commit((state, payload: {name: string, value: string}) => {
-
-			console.log('withinAttributes', payload);
-
 			if (payload.value === '' || payload.value === null || payload.value === undefined)
 				delete state.extended.withinAttributes[payload.name];
 			state.extended.withinAttributes[payload.name] = payload.value;

@@ -151,9 +151,8 @@ function getHighlightSections(matchInfos: NonNullable<BLHit['matchInfos']>): Hig
 	// If there's explicit captures, use only those.
 	// I.E. when the user selects part of the query to highlight, return only those captures.
 	//
-	// NOTE JN: This feels maybe a little bit surprising and arbitrary; queries that differ only
-	//          slightly may highlight very different things, and it might not be obvious to the
-	//          average user why. Not sure what a better approach would be, though.
+	// (JN) It might not be obvious to most users why slightly different queries highlight
+	// very different things. Just highlight everything? Or make it configurable somehow?
 	//
 	if (interestingCaptures.find(c => !c.isRelation)) {
 		interestingCaptures = interestingCaptures.filter(c => !c.isRelation);
@@ -180,24 +179,15 @@ export function getHighlightColors(summary: BLSearchSummary): Record<string, Tok
  * @returns the hit split into before, match, and after parts, with capture and relation info added to the tokens. The punct is to be shown after the word.
  */
 export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir: 'ltr'|'rtl', colors?: Record<string, TokenHighlight>): HitContext {
-	// We always need to do this.
-
 	if (hit === undefined)
 		console.error('hit is undefined');
-
 	const before = flatten(dir === 'ltr' ? hit.left : hit.right, annotationId, hit.match.punct[0]);
 	const match = flatten(hit.match, annotationId, (dir === 'ltr' ? hit.right : hit.left)?.punct[0]);
 	const after = flatten(dir === 'ltr' ? hit.right : hit.left, annotationId);
 
 	// Only extract captures if have the necessary info to do so.
-	if (!('start' in hit) || !hit.matchInfos || !colors) {
-		console.log('no matchInfos or colors, returning without highlights.', colors);
-		return {
-			before,
-			match,
-			after
-		};
-	}
+	if (!('start' in hit) || !hit.matchInfos || !colors)
+		return { before, match, after };
 
 	const highlights = getHighlightSections(hit.matchInfos);
 

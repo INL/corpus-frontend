@@ -76,6 +76,7 @@
 				<template v-else-if="!detailedAnnotations?.length">
 					<p>{{$t('results.table.noContext')}}</p>
 				</template>
+
 			</div>
 		</td>
 	</tr>

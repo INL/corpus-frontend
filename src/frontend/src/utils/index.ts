@@ -762,7 +762,6 @@ export function getPatternSummarySearch<K extends keyof ModuleRootStateSearch>(
 	defaultAlignBy: string,
 ) {
 	const patt = getPatternStringSearch(subForm, state, defaultAlignBy);
-	console.log('patt', patt, state);
 	return patt?.replace(/\\(.)/g, '$1') || '';
 
 	// For the normal search form,

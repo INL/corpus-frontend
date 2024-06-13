@@ -63,13 +63,11 @@ export default Vue.extend({
 		selected(): Option[] {
 			const result = this.value?.map(v => this.options.find(o => (o as Option).value === v) as Option)
 				.filter(v => v !== undefined) || [];
-			//console.log('computing selected:', this.value, 'options:', this.options, 'result:', result);
 			return result;
 		},
 	},
 	methods: {
 		add(v: string) {
-			//console.log('add:', v, 'selected:', this.selected)
 			const opt = this.options.find(o => (o as Option).value === v);
 			if (opt) {
 				const i = this.selected.indexOf(opt);
@@ -86,7 +84,6 @@ export default Vue.extend({
 			}
 		},
 		remove(v: string) {
-			//console.log('remove:', v, 'selected:', this.selected)
 			this.$emit('input', this.selected.filter(o => o.value !== v).map(o => o.value));
 		},
 	},

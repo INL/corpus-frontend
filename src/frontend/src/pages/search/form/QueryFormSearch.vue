@@ -312,19 +312,6 @@ export default Vue.extend({
 				this.parseQueryError = null;
 				return;
 			}
-
-			// @@@ TODO JN FIX THIS (probably move to SearchAdvanced)
-
-			// TODO dedicated component - port builder?
-			// const builder: QueryBuilder = $(this.$refs.querybuilder as HTMLElement).data('builder');
-			// if (builder) {
-			// 	const success = await builder.parse(expertQuery);
-			// 	if (success) {
-			// 		InterfaceStore.actions.patternMode('advanced');
-			// 		this.parseQueryError = null;
-			// 		return;
-			// 	}
-			// }
 			this.parseQueryError = 'The querybuilder could not parse your query.';
 		},
 		importQuery(event: Event) {
@@ -365,25 +352,11 @@ export default Vue.extend({
 			el.selectionEnd = el.selectionStart = originalSelectionStart + 1;
 		},
 
-		// copyAdvancedQuery() {
-		// 	const q = PatternStore.getState().advanced.query;
-		// 	console.log('copying advanced query', q);
-		// 	PatternStore.actions.expert.query(q);
-		// 	for (let i = 0; i < PatternStore.getState().advanced.targetQueries.length; i++) {
-		// 		PatternStore.actions.expert.changeTargetQuery({
-		// 			index: i,
-		// 			value: PatternStore.getState().advanced.targetQueries[i]
-		// 		});
-		// 	}
-		// 	InterfaceStore.actions.patternMode('expert');
-		// },
 		copyConceptQuery() {
-			//PatternStore.actions.expert.query(PatternStore.getState().advanced.query);
 			PatternStore.actions.expert.query(this.concept);
 			InterfaceStore.actions.patternMode('expert');
 		},
 		copyGlossQuery() {
-			//PatternStore.actions.expert.query(PatternStore.getState().advanced.query);
 			PatternStore.actions.expert.query(this.glosses);
 			InterfaceStore.actions.patternMode('expert');
 		},
@@ -426,7 +399,6 @@ export default Vue.extend({
 		},
 		changeWithinAttribute(option: Option, event: Event) {
 			const el = event.target as HTMLInputElement;
-			console.log(`Attribute ${option.value} changed to ${el.value}`);
 			PatternStore.actions.extended.setWithinAttribute({ name: option.value, value: el.value });
 		},
 	},
@@ -453,7 +425,7 @@ export default Vue.extend({
 			},
 			immediate: true,
 			deep: true
-		},
+		}
 	},
 	mounted() {
 		if (this.$refs.reset) {

@@ -123,7 +123,6 @@ export default Vue.extend({
 
 		copyAdvancedQuery() {
 			const q = PatternStore.getState().advanced.query;
-			console.log('copying advanced query', q);
 			PatternStore.actions.expert.query(q);
 			for (let i = 0; i < PatternStore.getState().advanced.targetQueries.length; i++) {
 				PatternStore.actions.expert.changeTargetQuery({
@@ -136,7 +135,7 @@ export default Vue.extend({
 	},
 	watch: {
 		parallelTargetVersions() {
-			setTimeout(initQueryBuilders, 100);
+			setTimeout(initQueryBuilders, 100); // TODO: setTimeout necessary or not?
 		}
 	}
 });
@@ -153,12 +152,6 @@ h3 .help {
 	color: black;
 	opacity: 0.5;
 }
-
-// .querybox {
-// 	width: 100%;
-// 	resize: none;
-// 	margin-bottom: 10px;
-// }
 
 .parallel {
 	margin: 15px 0;

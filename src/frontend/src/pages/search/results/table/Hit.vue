@@ -154,12 +154,8 @@ export default Vue.extend({
 			// Copy the matchInfos from the main hit that have the correct target field to a hit in another field,
 			// so that the targets can be higlighted there
 			function mergeMatchInfos(fieldName: string, hit: BLHitInOtherField, mainHitMatchInfos: Record<string, BLMatchInfo>) {
-				// console.log('mergeMatchInfos fieldName', JSON.stringify(fieldName));
-				// console.log('  hit', JSON.stringify(hit));
-				// console.log('  mainHitMatchInfos', JSON.stringify(mainHitMatchInfos));
 				if (Object.keys(mainHitMatchInfos).length === 0) {
 					// Nothing to merge
-					// console.log('Nothing to merge');
 					return hit;
 				}
 
@@ -199,7 +195,6 @@ export default Vue.extend({
 
 				if (!hit.matchInfos || Object.keys(hit.matchInfos).length === 0) {
 					// Hit has no matchInfos of its own; just use the infos from the main hit
-					// console.log('No matchInfos in hit, just use main hit matchInfos', toMerge);
 					return {
 						...hit,
 						matchInfos: toMerge
@@ -229,7 +224,6 @@ export default Vue.extend({
 				const s = mergeMatchInfos(fieldName, hit, mainHitMatchInfos);
 				const dummyHighlightColors = { KEEP_GOING: { color: 'DUMMY', textcolor: 'DUMMY', textcolorcontrast: 'DUMMY', key: 'DUMMY' } };
 				const t = snippetParts(s, this.mainAnnotation.id, this.dir, dummyHighlightColors);
-				console.log(fieldName, t);
 				return {
 					name,
 					hit: {
@@ -257,11 +251,9 @@ export default Vue.extend({
 		},
 		hover(matchInfos: string[]) {
 			this.hoverMatchInfos = matchInfos;
-			console.log('hover', matchInfos);
 		},
 		unhover() {
 			this.hoverMatchInfos = [];
-			console.log('unhover');
 		}
 	},
 	watch: {

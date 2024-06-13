@@ -23,7 +23,7 @@
         "FIXME",
         "XXX"
     ],
-    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.tsdk": "node_modules\\typescript\\lib",
     "typescript.preferences.quoteStyle": "single",
     "[markdown]": {
         "files.trimTrailingWhitespace": false

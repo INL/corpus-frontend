@@ -380,13 +380,6 @@ const getState = (() => {
 })();
 
 const get = {
-	// search: {
-	// 	shared: {
-	// 		defaultAlignBy() {
-	// 			return getState().search.shared.alignBy.elements[0]?.value ?? '';
-	// 		}
-	// 	},
-	// },
 };
 
 const privateActions = {
@@ -884,9 +877,9 @@ const init = () => {
 		}
 
 		// In BlackLab 4.0, the 'starttag' annotation was renamed to '_relation' and is now used to index
-		// (dependency, parallel) relations as well. We get the list of values for this annotation and decode
-		// them, but this makes us depend on implementation details. The new /relations endpoint gives us
-		// the same information in a portable way.
+		// (dependency, parallel) relations as well. We could get the list of values for this annotation and
+		// decode them, but this makes us depend on implementation details. The new /relations endpoint gives
+		// us the same information in a portable way.
 		const relations = CorpusStore.getState().corpus!.relations;
 		setValuesForWithin(Object.keys(relations.spans).map(v => ({value: v, label: v, title: null})));
 

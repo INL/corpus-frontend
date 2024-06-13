@@ -93,9 +93,16 @@ export default Vue.extend({
 		mainQuery: {
 			get() {
 				const query = PatternStore.getState().expert.query;
+				console.log('get', query);
+				// FIXME: because we use v-model, this causes weird issues while typing
+				//        move these special cases to where we parse the pattern from the URL instead!
 				return query == null || query == '_' || query == '[]*' ? '' : query;
 			},
-			set: PatternStore.actions.expert.query,
+			//set: PatternStore.actions.expert.query,
+			set(v: string|null) {
+				console.log('set', v);
+				return PatternStore.actions.expert.query(v);
+			},
 		},
 
 		// If this is a parallel corpus: the target queries

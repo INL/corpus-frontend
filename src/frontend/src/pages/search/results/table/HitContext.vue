@@ -76,14 +76,14 @@ export default Vue.extend({
 				text: this.annotation ? token.annotations[this.annotation] : token.text,
 				punct: token.punct,
 				title: this.highlight ? token.captureAndRelation?.map(c => c.display).join(' · ') : undefined,
-				style: this.highlight && token.captureAndRelation?.length ? {
+				style: this.highlight && token.captureAndRelation?.length ? (this.isParallel ? {} : {
 					background: `linear-gradient(90deg, ${token.captureAndRelation.map((c, i) => `${c.highlight.color} ${i / token.captureAndRelation!.length * 100}%, ${c.highlight.color} ${(i + 1) / token.captureAndRelation!.length * 100}%`)})`,
 					display: 'inline-block',
 					color: 'black',
 					'border-radius': '2px',
 					padding: '0 2px',
 					textShadow: `0 0 1.25px white,`.repeat(10).replace(/,$/, '')
-				} : undefined
+				}) : undefined
 			}));
 		}
 	},

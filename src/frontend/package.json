@@ -76,7 +76,7 @@
     "oidc-client-ts": "^2.4.0",
     "popper.js": "^1.15.0",
     "qs": "^6.5.2",
-    "reactive-dep-tree": "^0.5.2",
+    "reactive-dep-tree": "^1.0.1",
     "rxjs": "^7.8.1",
     "ts-deepmerge": "^7.0.0",
     "urijs": "^1.19.7",

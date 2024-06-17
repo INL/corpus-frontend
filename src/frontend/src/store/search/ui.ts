@@ -820,7 +820,7 @@ const init = () => {
 
 		// blacklab 4.0 removed the 'starttag' annotation. We have to retrieve values from the relations object instead
 		const relations = CorpusStore.getState().corpus!.relations;
-		setValuesForWithin(Object.keys(relations.spans).map(v => ({value: v, label: v, title: null})));
+		setValuesForWithin(Object.keys(relations.spans||{}).map(v => ({value: v, label: v, title: null})));
 
 		// Set default sentence boundary element. For use with dependency trees and getting the sentence around a hit.
 		const state = getState(); // since we did it async, the init is already finished, and the data we set is not in the initial state anymore.

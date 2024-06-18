@@ -10,7 +10,7 @@
 				:title="title"
 				@mouseover="$emit('hover', relationKeys)"
 				@mouseout="$emit('unhover', relationKeys)"
-				:class="{ hoverable: true, hover: relationKeys.some(c => hoverMatchInfos.includes(c)) }"
+				:class="{ hoverable: true, hover: relationKeys?.some(c => hoverMatchInfos.includes(c)) }"
 			></span
 			><span v-else v-html="text" :key="'text' + '_' + text + '_' + i"></span
 			><span v-if="doPunct" v-html="punct" :key="'punct_' + punct + '_' + i"></span
@@ -26,7 +26,7 @@
 				:title="title"
 				@mouseover="$emit('hover', relationKeys)"
 				@mouseout="$emit('unhover', relationKeys)"
-				:class="{ hoverable: true, hover: relationKeys.some(c => hoverMatchInfos.includes(c)) }"
+				:class="{ hoverable: true, hover: relationKeys?.some(c => hoverMatchInfos.includes(c)) }"
 			>{{ text }}</span
 			><template v-else>{{ text }}</template
 			><template v-if="doPunct">{{punct}}</template
@@ -70,21 +70,36 @@ export default Vue.extend({
 		renderInfo(): Array<{text: string, punct: string, style?: object, title?: string, relationKeys?: string[]}> {
 			const tokens = this.before ? this.data.before : this.after ? this.data.after : this.data.match;
 
-			return tokens.map(token => ({
-				// Ex. "A" for a capture group "A:[]", or parallel field name, or relation name
-				relationKeys: token.captureAndRelation?.map(c => c.key),
-				text: this.annotation ? token.annotations[this.annotation] : token.text,
-				punct: token.punct,
-				title: this.highlight ? token.captureAndRelation?.map(c => c.display).join(' · ') : undefined,
-				style: this.highlight && token.captureAndRelation?.length ? (this.isParallel ? {} : {
-					background: `linear-gradient(90deg, ${token.captureAndRelation.map((c, i) => `${c.highlight.color} ${i / token.captureAndRelation!.length * 100}%, ${c.highlight.color} ${(i + 1) / token.captureAndRelation!.length * 100}%`)})`,
-					display: 'inline-block',
-					color: 'black',
-					'border-radius': '2px',
-					padding: '0 2px',
-					textShadow: `0 0 1.25px white,`.repeat(10).replace(/,$/, '')
-				}) : undefined
-			}));
+			return tokens.map(token => {
+
+				let style = undefined; // undefined means word is not highlighted or hoverable
+				if (this.highlight && token.captureAndRelation?.length) {
+					if (!this.isParallel && token.captureAndRelation?.some(c => c.showHighlight)) {
+						// Permanent highlight, used for e.g. dependency relations
+						style = {
+							background: `linear-gradient(90deg, ${token.captureAndRelation.filter(c => c.showHighlight).map((c, i) => `${c.highlight.color} ${i / token.captureAndRelation!.length * 100}%, ${c.highlight.color} ${(i + 1) / token.captureAndRelation!.length * 100}%`)})`,
+							display: 'inline-block',
+							color: 'black',
+							'border-radius': '2px',
+							padding: '0 2px',
+							textShadow: `0 0 1.25px white,`.repeat(10).replace(/,$/, '')
+						};
+					} else {
+						// Hoverable highlight, used for parallel corpora
+						// (we set style to empty object, not undefined, so we will still generate a span for the word)
+						style = {};
+					}
+				}
+
+				return ({
+					// Ex. "A" for a capture group "A:[]", or parallel field name, or relation name
+					relationKeys: token.captureAndRelation?.map(c => c.key),
+					text: this.annotation ? token.annotations[this.annotation] : token.text,
+					punct: token.punct,
+					title: this.highlight ? token.captureAndRelation?.map(c => c.display).join(' · ') : undefined,
+					style
+				})
+			});
 		}
 	},
 });

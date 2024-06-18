@@ -272,6 +272,9 @@ export type CaptureAndRelation = {
 
 	/** Color info for highlighting the word. */
 	highlight: TokenHighlight;
+
+	/** Should we permanently highlight this? If not, we may still highlight it on hover (parallel corpora) */
+	showHighlight: boolean;
 }
 export type HitToken = {
 	/** Value of the main annotation. For ease of use. */

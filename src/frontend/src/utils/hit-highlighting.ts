@@ -15,6 +15,9 @@ type HighlightSection = {
 	/** True if this is a relation, false if this is a capture group */
 	isRelation: boolean;
 
+	/** Should this be permanently higlighted? (if not, may still be hoverable if this is a parallel corpus) */
+	showHighlight: boolean;
+
 	/**
 	 * Key of this info as reported by BlackLab.
 	 * E.g. for a query "_ -obj-> _" this would be "obj".
@@ -85,6 +88,7 @@ function mapCaptureList(key: string, list: BLMatchInfoList): HighlightSection[] 
 	return list.infos.map((info, index) => ({
 		...info,
 		isRelation: info.type === 'relation',
+		showHighlight: true,
 		sourceEnd: info.sourceEnd ?? -1,
 		sourceStart: info.sourceStart ?? -1,
 		key: `${key}[${index}]`,
@@ -98,6 +102,7 @@ function mapCaptureRelation(key: string, relation: BLMatchInfoRelation): Highlig
 		sourceStart: relation.sourceStart ?? -1,
 		sourceEnd: relation.sourceEnd ?? -1,
 		isRelation: true,
+		showHighlight: true,
 		key,
 		display: relation.relType,
 	};
@@ -110,6 +115,7 @@ function mapCaptureSpan(key: string, span: BLMatchInfoSpan): HighlightSection {
 		targetEnd: span.end,
 		targetStart: span.start,
 		isRelation: false,
+		showHighlight: true,
 		key,
 		display: key,
 	};
@@ -152,10 +158,11 @@ function getHighlightSections(matchInfos: NonNullable<BLHit['matchInfos']>): Hig
 	// I.E. when the user selects part of the query to highlight, return only those captures.
 	//
 	// (JN) It might not be obvious to most users why slightly different queries highlight
-	// very different things. Just highlight everything? Or make it configurable somehow?
+	// very different things. Just highlight everything? Or make it configurable?
 	//
 	if (interestingCaptures.find(c => !c.isRelation)) {
-		interestingCaptures = interestingCaptures.filter(c => !c.isRelation);
+		interestingCaptures.forEach(c => c.showHighlight = !c.isRelation);
+		//interestingCaptures = interestingCaptures.filter(c => !c.isRelation);
 	}
 
 	return interestingCaptures;
@@ -217,6 +224,7 @@ export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir:
 				key: c.key,
 				display: c.isRelation ? (isSource ? c.display + '-->' : /*isTarget*/ '-->' + c.display) : c.display,
 				highlight: colors[colorIndex] || FALLBACK_COLOR,
+				showHighlight: c.showHighlight,
 				isSource: c.isRelation && isSource,
 				isTarget: c.isRelation && isTarget
 			});

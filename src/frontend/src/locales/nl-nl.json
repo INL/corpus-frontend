@@ -199,11 +199,12 @@
 			"documentsWhere": "documenten waar"
 		},
 		"resultsView": {
-			"backToGroupOverview": "Back to group overview",
-			"noResultsFound": "No results found.",
-			"inactiveView": "This view is inactive because no search criteria for words were specified.",
-			"tryAgainTitle": "Try again with current search settings",
-			"tryAgain": "Opnieuw proberen"
+			"backToGroupOverview": "Terug naar groepen",
+			"noResultsFound": "Geen resultaten gevonden.",
+			"inactiveView": "Deze weergave is niet actief omdat er niet naar woorden gezocht is.",
+			"tryAgainTitle": "Probeer opnieuw met huidige parameters",
+			"tryAgain": "Opnieuw proberen",
+			"selectAnnotation": "Annotatie"
 		},
 		"resultsTotals": {
 			"total": "Totaal",

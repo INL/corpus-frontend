@@ -33,8 +33,8 @@
 			/>
 			<button v-else slot="groupBy" class="btn btn-sm btn-primary" @click="leaveViewgroup"><span class="fa fa-angle-double-left"></span> {{ $t('results.resultsView.backToGroupOverview') }}</button>
 
-			<div slot="annotation-switcher" v-if="concordanceAnnotationOptions.length">
-				<label>Select annotation: </label>
+			<div slot="annotation-switcher" v-if="concordanceAnnotationOptions.length > 1">
+				<label>{{$t('results.resultsView.selectAnnotation')}}: </label>
 				<div class="btn-group" >
 					<button v-for="a in concordanceAnnotationOptions" type="button"
 						class="btn btn-default btn-sm"

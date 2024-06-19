@@ -204,7 +204,8 @@
 			"noResultsFound": "No results found.",
 			"inactiveView": "This view is inactive because no search criteria for words were specified.",
 			"tryAgainTitle": "Try again with current search settings",
-			"tryAgain": "Try again"
+			"tryAgain": "Try again",
+			"selectAnnotation": "Select annotation"
 		},
 		"resultsTotals": {
 			"total": "Total",

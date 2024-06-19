@@ -91,7 +91,7 @@ export async function awaitInit(settings: {
 
 		if (user) {
 			userManager.startSilentRenew();
-			loginButton.$props.username = user.profile.email || user.profile.name;
+			loginButton.$props.username = user.profile.preferred_username || user.profile.email || user.profile.sub;
 		}
 		return user || null; // normalize weird void type to null.
 	} else if (settings.fallbackUsername) {

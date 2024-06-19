@@ -49,8 +49,10 @@ export default Vue.extend({
 		after: Boolean,
 		punct: {default: true},
 		/** If set, render one of the values in HitToken.annotation, instead of the main 'text' property of the HitToken */
-		annotation: String,
-
+		annotation: {
+			required: true,
+			type: String,
+		}
 	},
 	computed: {
 		doPunct(): boolean { return this.punct; }, // avoid conflict with props.data in template
@@ -58,7 +60,7 @@ export default Vue.extend({
 			const tokens = this.before ? this.data.before : this.after ? this.data.after : this.data.match;
 
 			return tokens.map(token => ({
-				text: this.annotation ? token.annotations[this.annotation] : token.text,
+				text: token.annotations[this.annotation],
 				punct: token.punct,
 				title: this.highlight ? token.captureAndRelation?.map(c => c.display).join(' · ') : undefined,
 				style: this.highlight && token.captureAndRelation?.length ? {

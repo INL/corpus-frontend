@@ -1,8 +1,8 @@
 <template>
 	<tr class="concordance rounded">
-		<HitContextComponent tag="td" class="text-right"  :dir="dir" :data="data.context" :html="html" before/>
-		<HitContextComponent tag="td" class="text-center" :dir="dir" :data="data.context" :html="html" bold/>
-		<HitContextComponent tag="td" class="text-left"   :dir="dir" :data="data.context" :html="html" after/>
+		<HitContextComponent tag="td" class="text-right"  :dir="dir" :data="data.context" :html="html" :annotation="mainAnnotation.id" before/>
+		<HitContextComponent tag="td" class="text-center" :dir="dir" :data="data.context" :html="html" :annotation="mainAnnotation.id" bold/>
+		<HitContextComponent tag="td" class="text-left"   :dir="dir" :data="data.context" :html="html" :annotation="mainAnnotation.id" after/>
 
 		<HitContextComponent tag="td" :annotation="a.id" :data="data.context" :html="html" :dir="dir" :key="a.id" :highlight="false" v-for="a in otherAnnotations" />
 

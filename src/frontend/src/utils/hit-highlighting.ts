@@ -68,7 +68,7 @@ function flatten(part: BLHitSnippetPart|undefined, annotationId: string, lastPun
 	for (let i = 0; i < part[annotationId].length; i++) {
 		const word = part[annotationId][i];
 		const punct =  (i === length - 1 ? lastPunctuation : part.punct[i+1]) || ''; // punctuation is the whitespace before the current word. There is always one more punctuation than there are words in a document (fencepost problem).
-		r.push({punct, text: word, annotations: {}});
+		r.push({punct, annotations: {}});
 	}
 	for (const annotationId in part) {
 		if (annotationId !== 'punct') // we already handled this.

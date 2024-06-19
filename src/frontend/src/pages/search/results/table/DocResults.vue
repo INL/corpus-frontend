@@ -64,7 +64,7 @@ export default Vue.extend({
 		showDocumentHits: false
 	}),
 	computed: {
-		mainAnnotation(): CorpusStore.NormalizedAnnotation { return CorpusStore.get.firstMainAnnotation(); },
+		mainAnnotation(): CorpusStore.NormalizedAnnotation { return CorpusStore.get.allAnnotationsMap()[UIStore.getState().results.shared.concordanceAnnotationId]; },
 		/** explicitly shown metadata fields + whatever field is currently being sorted on (if any). */
 		metadata(): NormalizedMetadataField[]|undefined {
 			const sortMetadataFieldMatch = this.sort && this.sort.match(/^-?field:(.+)$/);

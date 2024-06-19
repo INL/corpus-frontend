@@ -274,8 +274,6 @@ export type CaptureAndRelation = {
 	highlight: TokenHighlight;
 }
 export type HitToken = {
-	/** Value of the main annotation. For ease of use. */
-	text: string;
 	/** Raw values of the extracted annotations. */
 	annotations: Record<string, string>
 	/** after the text */

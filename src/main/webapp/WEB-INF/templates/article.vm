@@ -4,7 +4,6 @@
     DOCUMENT_ID = "$esc.javascript($docId)";
     DOCUMENT_LENGTH = $docLength;
 
-    PAGINATION_ENABLED = $paginationEnabled;
     PAGE_SIZE = $pageSize;
     PAGE_START = $pageStart;
     PAGE_END = $pageEnd;

@@ -26,7 +26,6 @@ declare global {
 	const DOCUMENT_ID: string;
 	const DOCUMENT_LENGTH: number;
 
-	const PAGINATION_ENABLED: boolean;
 	/** PAGE_SIZE may be undefined on the search page, but is always defined in the document page. */
 	const PAGE_SIZE: number|undefined;
 	const PAGE_START: number;

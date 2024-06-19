@@ -12,15 +12,7 @@ public class SearchResponse extends BaseResponse {
 
     @Override
     protected void completeRequest() throws IOException {
-//        CorpusConfig config = servlet
-//                .getCorpusConfig(corpus, request, response)
-//                .getOrThrow(e -> {
-//                    String message = "Error retrieving corpus information" + (e.getMessage() != null ? ": " + e.getMessage() : "");
-//                    return new ReturnToClientException(e instanceof QueryException ? ((QueryException) e).getHttpStatusCode() : HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message);
-//                });
-
-//        model.put("indexStructureJson", config.getJsonUnescaped());
-        model.put("pageSize", servlet.getWebsiteConfig(corpus).usePagination() ? servlet.getWebsiteConfig(corpus).getPageSize() : "undefined");
+        model.put("pageSize", servlet.getWebsiteConfig(corpus).getPageSize().map(Object::toString).orElse("undefined"));
         model.put("debugInfo", servlet.debugInfo());
         
         // display template

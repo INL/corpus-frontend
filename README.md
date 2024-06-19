@@ -62,8 +62,7 @@ Releases can be downloaded [here](https://github.com/INL/corpus-frontend/release
 ## Building from source
 
 - Clone this repository, use `mvn package` to build the WAR file (or download the .war from the latest release) and add corpus-frontend.war to Tomcat's webapps directory.
-- Optionally, create a file `corpus-frontend.properties` (name must be the same as the .war file) in the same directory as the BlackLab Server config file (e.g. `/etc/blacklab/`).
-See the [Configuration section](#Backend-configuration) for more information.
+- Optionally, create a config file for the frontend. See the [Configuration section](#backend-configuration) for more information.
 - Navigate to `http://localhost:8080/corpus-frontend/` and you will see a list of available corpora you can search.
 
 For further development and debugging help, see the [Development section](#Development).
@@ -98,17 +97,21 @@ Configuration
 
 ## Main configuration file
 
-The main settings for the corpus-frontend application are configured in a file named `corpus-frontend.properties`.
+Corpus-Frontend is configured using a `properties` file.
 
-> **NOTE:** actually, the filename must match the name of your `.war`, so if your war is not named `corpus-frontend.war` but `corpus-ui.war`, the config file should be named `corpus-ui.properties`.
-
-The application will normally look for this file in the same configuration directory as BlackLab. That is, the following locations will be searched, starting from the first:
+The application will normally look for this file in the same places as BlackLab. That is, the following locations, starting from the top:
 
 - `BLACKLAB_CONFIG_DIR` environment variable (configure this in your servlet container, e.g. Tomcat)
 - `$HOME/.blacklab` (Linux) or `%USERDIR%/.blacklab` (Windows)
 - `/etc/blacklab` (Linux)
 
-> **NOTE:** if you don't want to use BlackLab's config directory, specify the `CORPUS_FRONTEND_CONFIG_DIR` environment variable or place the file in the same directory as the `.war` file. The latter method also works if you want to run multiple instances of the frontend on the same server.
+The file name must be the same as the `context path` of the corpus-frontend application.
+That's the URL under which the corpus-frontend is reachable in the browser.
+Unless you changed it, it's just the name of the `.war` file.
+For example: 
+- for `corpus-frontend.war` -> `/corpus-frontend` in browser -> `corpus-frontend.properties` in any of the above locations
+- for `my-frontend.war` -> `/my-frontend` in browser -> `my-frontend.properties` file name
+- for `/test/corpus-frontend` in browser, the file should be in the `test/corpus-frontend.properties` dir in above locations.
 
 Example file (most values shown here are the default values):
 
@@ -123,8 +126,8 @@ blsUrl=http://localhost:8080/blacklab-server/
 blsUrlExternal=/blacklab-server/
 
 # The url under which the client can reach the corpus-frontend.
-# May be needed if the corpus-frontend is proxied under a different path.
-# It defaults to the contextPath of the servlet, so it might not strictly be 'corpus-frontend', depending on your deployment.
+# May be needed if the corpus-frontend is behind a proxy that changes the url.
+# This setting actually defaults to the contextPath of the servlet, so this is just an example.
 cfUrlExternal=/corpus-frontend/
 
 # Optional directory where you can place files to further configure and customize

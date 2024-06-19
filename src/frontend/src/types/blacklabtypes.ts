@@ -575,14 +575,14 @@ export type BLHit = BLHitSnippet&{
 	 * The above query could result for example in:
 	 *  obj: {
 	 *    type: "relation",
-     *    relClass: "dep",
-     *    relType: "obj",
-     *    sourceStart: 26,
-     *    sourceEnd: 27,
-     *    targetStart: 25,
-     *    targetEnd: 26,
-     *    start: 25,
-     *    end: 27
+	 *    relClass: "dep",
+	 *    relType: "obj",
+	 *    sourceStart: 26,
+	 *    sourceEnd: 27,
+	 *    targetStart: 25,
+	 *    targetEnd: 26,
+	 *    start: 25,
+	 *    end: 27
 	 *  }
 	 */
 	matchInfos?: {

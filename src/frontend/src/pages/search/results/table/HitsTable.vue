@@ -177,10 +177,10 @@ export default Vue.extend({
 		},
 	},
 	watch: {
-		data() {
+		query() {
 			this.open = {};
 		}
-	}
+	},
 })
 
 </script>

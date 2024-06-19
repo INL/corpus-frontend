@@ -16,6 +16,7 @@
 
 		<slot name="groupBy"/>
 		<slot name="pagination"/>
+		<slot name="annotation-switcher"/>
 
 		<HitsTable
 			:query="results.summary.searchParam"

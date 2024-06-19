@@ -7,6 +7,7 @@
 
 		<slot name="groupBy"/>
 		<slot name="pagination"/>
+		<slot name="annotation-switcher"/>
 
 		<DocsTable
 			:mainAnnotation="mainAnnotation"

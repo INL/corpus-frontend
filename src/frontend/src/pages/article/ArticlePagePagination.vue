@@ -215,8 +215,6 @@ export default Vue.extend({
 
 				if (index >= 0) {
 					let firstVisibleHitIndex = Math.abs(binarySearch(hits, h => PAGE_START - h[0]));
-					debugger;
-
 					if (this.currentHitInPage != null) {
 						this.hitElements[this.currentHitInPage].classList.remove('active');
 					}

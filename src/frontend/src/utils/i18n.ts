@@ -70,7 +70,21 @@ const LocaleSelector = Vue.extend({
 	i18n,
 	components: { SelectPicker },
 	data: () => ({ availableLocales, loading: false, locale }),
-	template: `<SelectPicker :options="availableLocales" v-model="locale.value" :loading="loading" data-width="auto" right data-menu-width="auto" hideEmpty :showValues="false" placeholder="🌐" class="locale-select" data-class="btn-link navbar-brand locale-select-button"/>`,
+	template: `
+		<SelectPicker
+			class="locale-select navbar-dropdown"
+			data-class="btn-link navbar-brand navbar-dropdown-button"
+			data-width="auto"
+			data-menu-width="auto"
+			right
+			hideEmpty
+			placeholder="🌐"
+
+			:options="availableLocales"
+			:loading="loading"
+			:showValues="false"
+			v-model="locale.value"
+		/>`,
 
 	watch: {
 		async 'locale.value'() {

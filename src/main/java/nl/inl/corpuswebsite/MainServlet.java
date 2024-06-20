@@ -14,15 +14,14 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.function.Function;
-import java.util.jar.Manifest;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -37,7 +36,6 @@ import javax.xml.transform.TransformerException;
 
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.velocity.Template;
 import org.apache.velocity.app.Velocity;
 
@@ -257,66 +255,60 @@ public class MainServlet extends HttpServlet {
             .map(s -> URLDecoder.decode(s, StandardCharsets.UTF_8))
             .collect(Collectors.toList());
 
-        String corpus = null;
-        final String page;
-        List<String> pathParameters = pathParts.subList(Math.min(pathParts.size(), 2), pathParts.size()); // remainder of the url after the context root and page url, split on '/' and decoded.
-        if (pathParts.isEmpty()) { // requested application root
-            page = DEFAULT_PAGE;
-        } else if (pathParts.size() == 1) { // <page>
-            page = pathParts.get(0);
-        } else { // pathParts.size() >= 2 ... <corpus>/<page>/...
-            corpus = pathParts.get(0);
-            page = pathParts.get(1);
-            if (corpus.equals(config.get(Keys.DEFAULT_CORPUS_CONFIG)))
+        Class<? extends BaseResponse> responseClass;
+        String corpus;
+        List<String> pathParameters;
+
+        if (pathParts.isEmpty()) {
+            // don't have any path. E.g. /corpus-frontend
+            responseClass = responses.get(DEFAULT_PAGE);
+            corpus = null;
+            pathParameters = new ArrayList<>();
+        } else {
+            String part1 = pathParts.remove(0);
+            if (responses.containsKey(part1)) {
+                // matched a page directly. E.g. /corpus-frontend/help
+                responseClass = responses.get(part1);
                 corpus = null;
-        }
-
-        // Get response class
-        Class<? extends BaseResponse> brClass = responses.getOrDefault(page, ErrorResponse.class);
-        // If requesting invalid page, redirect to ${page}/search/, as the user probably meant to go to ${corpus}/search/ but instead went to ${corpus}/
-        // if they actually meant a page, the corpus probably doesn't exist, they will still get a 404 as usual
-        if (brClass.equals(ErrorResponse.class) && page != null && corpus == null) {
-            logger.fine(String.format("Unknown page '%s' requested - might be a corpus, redirecting to search page", page));
-            response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
-            response.setHeader("location", this.config.get(Keys.CF_URL_ON_CLIENT) + "/" + page + "/search/");
-            return;
-        }
-
-        // Instantiate response class
-        BaseResponse br;
-        try {
-            br = brClass.getConstructor().newInstance();
-        } catch (Exception e) {
-            throw new ServletException(e);
-        }
-
-        if (br.isCorpusRequired() && (corpus == null || corpus.isEmpty())) {
-            try {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND);
-            } catch (IOException e) {
-                throw new ServletException(e);
+                pathParameters = new ArrayList<>(pathParts);
+            } else if (pathParts.isEmpty()) {
+                // Didn't match a page, and there's nothing else. Redirect to search page. E.g. /corpus-frontend/corpus
+                logger.fine(String.format("Unknown page '%s' requested - might be a corpus, redirecting to search page", part1));
+                response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
+                response.setHeader("location", this.config.get(Keys.CF_URL_ON_CLIENT) + "/" + part1 + "/search/");
+                return;
+            } else {
+                // Didn't match a page, and there's more parts. This is a corpus, the second part is the page. E.g. /corpus-frontend/corpus/search
+                corpus = part1;
+                String pageOrCorpus = pathParts.remove(0);
+                responseClass = responses.getOrDefault(pageOrCorpus, ErrorResponse.class);
+                pathParameters = new ArrayList<>(pathParts);
             }
-
-            return;
         }
 
         try {
             try {
+                BaseResponse br = responseClass.getConstructor().newInstance();
+                if (br.isCorpusRequired() && (corpus == null || corpus.isBlank())) {
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                    return;
+                }
+
                 br.init(request, response, this, Optional.ofNullable(corpus), pathParameters);
                 br.completeRequest();
-            } catch (QueryException e ) {
+            } catch (QueryException e) {
                 if (e.getHttpStatusCode() != HttpServletResponse.SC_OK) {
                     response.sendError(e.getHttpStatusCode(), e.getMessage());
                 } else {
                     response.getWriter().write(e.getMessage());
-              }
+                }
             } catch (ReturnToClientException e) {
                 if (e.getCode() != HttpServletResponse.SC_OK)
                     response.sendError(e.getCode(), e.getMessage());
                 else if (e.getMessage() != null)
                     response.getWriter().write(e.getMessage());
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new ServletException(e);
         }
     }

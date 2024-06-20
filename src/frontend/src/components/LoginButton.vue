@@ -1,13 +1,13 @@
 <template>
-	<SelectPicker v-if="enabled" class="username navbar-username locale-select"
-		data-class="btn-link navbar-brand locale-select-button"
-		data-menu-width="auto"
+	<SelectPicker v-if="enabled"
+		class="username navbar-username navbar-dropdown"
+		data-class="btn-link navbar-brand navbar-dropdown-button"
 		data-width="auto"
-
+		data-menu-width="auto"
+		right
+		hideEmpty
 		placeholder="Not logged in"
 		allowUnknownValues
-		hideEmpty
-		right
 
 		:disabled="!canLogin"
 		:value="username"

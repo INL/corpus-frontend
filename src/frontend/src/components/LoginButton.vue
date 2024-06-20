@@ -1,28 +1,28 @@
 <template>
-	<div class="username navbar-username navbar-brand" v-if="enabled">
-		<!-- bootstrap 3 caret with with logout button in dropdown -->
-		<div class="dropdown" v-if="canLogin">
-			<a href="#" class="dropdown-toggle" data-toggle="dropdown">
-				<span class="fa fa-solid fa-user"></span>
-				<span class="username">{{username || 'Not logged in'}}</span>
-				<span class="caret"></span>
-			</a>
-			<ul class="dropdown-menu pull-left" style="z-index: 10000; transform: none; position: absolute;">
-				<li><a href="#" role="button" @click="username ? $emit('logout') : $emit('login')">Log {{username ? 'out' : 'in'}}</a></li>
-			</ul>
-		</div>
-		<!-- if there's no username, and we can't login, don't bother showing anything -->
-		<div v-else-if="username">
-			<span class="fa fa-solid fa-user"></span>
-			<span class="username">{{ username }}</span>
-		</div>
-	</div>
+	<SelectPicker v-if="enabled" class="username navbar-username locale-select"
+		data-class="btn-link navbar-brand locale-select-button"
+		data-menu-width="auto"
+		data-width="auto"
+
+		placeholder="Not logged in"
+		allowUnknownValues
+		hideEmpty
+		right
+
+		:disabled="!canLogin"
+		:value="username"
+		:options="options"
+
+		@input="handle"
+	/>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
+import SelectPicker, { Option } from '@/components/SelectPicker.vue';
 
 export default Vue.extend({
+	components: {SelectPicker},
 	props: {
 		enabled: {
 			type: Boolean,
@@ -31,15 +31,42 @@ export default Vue.extend({
 		canLogin: Boolean,
 		username: String as () => string|undefined,
 	},
+	computed: {
+		options(): Option[] {
+			const r: Option[] = [];
+			if (this.canLogin && !this.username) {
+				r.push({label: 'Log in', value: 'login'});
+			}
+			if (this.canLogin && this.username) {
+				r.push({label: 'Log out', value: 'logout'});
+			}
+			return r;
+		}
+	},
+	methods: {
+		handle(value: string) {
+			if (value === 'login') {
+				this.$emit('login');
+			} else if (value === 'logout') {
+				this.$emit('logout');
+			}
+		}
+	}
 })
 
 </script>
 
 <style lang="scss">
 
-.navbar-username {
-	white-space: nowrap;
+.username [disabled] .menu-caret {
+	display: none;
+}
+
+.username .menu-value:before {
+	content: '\f007'; // fa-user
+	font-family: 'FontAwesome';
 	display: inline-block;
+	width: 1em;
 }
 
 

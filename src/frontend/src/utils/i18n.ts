@@ -41,6 +41,7 @@ export async function loadLocaleMessages(locale: string) {
 				// If the file doesn't exist, that's fine, we just won't have any overrides.
 				// NOTE: browsers will typically log the 404 in the console anyway, there's no way to suppress that from code AFAIK.
 				if (r.status !== 404) console.info(`Failed to fetch locale overrides for ${locale}: ${r.statusText}`)
+				else console.info(`No locale overrides found for ${locale}. It's safe to ignore the 404 error.`)
 				return null;
 			} else {
 				return r.json();

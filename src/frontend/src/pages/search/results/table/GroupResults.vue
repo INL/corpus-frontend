@@ -6,6 +6,7 @@
 		</div>
 		<slot name="groupBy"/>
 		<slot name="pagination"/>
+		<slot name="annotation-switcher"/>
 
 		<div class="form-group">
 			<div class="btn-group" style="margin: auto;">

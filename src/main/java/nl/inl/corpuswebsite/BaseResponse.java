@@ -18,7 +18,6 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.event.EventCartridge;
@@ -198,34 +197,6 @@ public abstract class BaseResponse {
      */
     protected void displayHtmlTemplate(Template template) {
         displayTemplate(template, "text/html");
-    }
-
-    /**
-     * Returns the value of a servlet parameter, or the default value
-     *
-     * @param name name of the parameter
-     * @param defaultValue default value
-     * @return value of the paramater
-     */
-    public String getParameter(String name, String defaultValue) {
-        return Optional.ofNullable(request.getParameter(name)).map(StringUtils::trimToNull).orElse(defaultValue);
-    }
-
-    /**
-     * Returns the value of a servlet parameter, or the default value
-     *
-     * @param name name of the parameter
-     * @param defaultValue default value
-     * @return value of the paramater
-     */
-    public int getParameter(String name, int defaultValue) {
-        String value = getParameter(name, Integer.toString(defaultValue));
-        try {
-            return Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            logger.fine(String.format("Could not parse parameter '%s', value '%s'. Using default (%s)", name, value, defaultValue));
-            return defaultValue;
-        }
     }
 
     /**

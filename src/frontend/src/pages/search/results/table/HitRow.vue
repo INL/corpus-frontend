@@ -1,13 +1,13 @@
 <template>
 	<tr class="concordance rounded">
 		<td v-if="displayField">{{ displayField }}</td>
-		<HitContextComponent tag="td" class="text-right"  :dir="dir" :data="data.context" :html="html" before
+		<HitContextComponent tag="td" class="text-right"  :dir="dir" :data="data.context" :html="html" :annotation="mainAnnotation.id" before
 			:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
 			@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
-		<HitContextComponent tag="td" class="text-center" :dir="dir" :data="data.context" :html="html" bold
+		<HitContextComponent tag="td" class="text-center" :dir="dir" :data="data.context" :html="html" :annotation="mainAnnotation.id" bold
 			:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
 			@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)"/>
-		<HitContextComponent tag="td" class="text-left"   :dir="dir" :data="data.context" :html="html" after
+		<HitContextComponent tag="td" class="text-left"   :dir="dir" :data="data.context" :html="html" :annotation="mainAnnotation.id" after
 			:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
 			@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)"/>
 

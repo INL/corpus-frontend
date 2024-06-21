@@ -373,7 +373,7 @@ export default Vue.extend({
 
 			return [
 				snippet.before.map((t, i) => ({
-					word: t.text || '·',
+					word: t.annotations[wordAnnotation] || '·',
 					selectedAnnotation: t.annotations[annotation!] || '·',
 					punct: t.punct,
 					active: (position === 'B' && isActiveIndex(i)) || isActiveRelationOrCapture(t),
@@ -381,7 +381,7 @@ export default Vue.extend({
 					captureAndRelation: t.captureAndRelation,
 				})),
 				snippet.match.map((t, i) => ({
-					word: t.text || '·',
+					word: t.annotations[wordAnnotation] || '·',
 					selectedAnnotation: t.annotations[annotation!] || '·',
 					punct: t.punct,
 					active: ((position === 'H' || position === 'E') && isActiveIndex(i)) || isActiveRelationOrCapture(t),
@@ -389,7 +389,7 @@ export default Vue.extend({
 					captureAndRelation: t.captureAndRelation,
 				})),
 				snippet.after.map((t, i) => ({
-					word: t.text || '·',
+					word: t.annotations[wordAnnotation] || '·',
 					selectedAnnotation: t.annotations[annotation!] || '·',
 					punct: t.punct,
 					active: (position === 'A' && isActiveIndex(i)) || isActiveRelationOrCapture(t),

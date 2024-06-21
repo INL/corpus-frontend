@@ -71,7 +71,7 @@
 			<span v-else-if="!showValues && multiple && showValueCount" :class="['menu-icon badge',{'active': displayValues.length}]">
 				{{displayValues.length || totalOptionCount}}
 			</span>
-			<span :class="['menu-icon', 'fa', 'fa-caret-down', {
+			<span :class="['menu-icon', 'menu-caret', 'fa', 'fa-caret-down', {
 				//'fa-rotate-180': isOpen
 				'fa-flip-vertical': isOpen
 			}]"></span>

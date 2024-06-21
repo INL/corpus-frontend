@@ -16,7 +16,7 @@ import org.apache.commons.configuration2.interpol.ConfigurationInterpolator;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * Configuration read from an XML config file.
+ * Configuration read from the Search.xml config file specific to a corpus.
  */
 public class WebsiteConfig {
     /** One of the links shown in the top bar */
@@ -252,12 +252,9 @@ public class WebsiteConfig {
         return propColumns;
     }
 
-    public boolean usePagination() {
-        return pagination;
-    }
-
-    public int getPageSize() {
-        return pageSize;
+    /** Return the pagination size, if pagination is enabled for this corpus */
+    public Optional<Integer> getPageSize() {
+        return Optional.of(pageSize).filter(p -> this.pagination && p > 0);
     }
 
     public Optional<String> getAnalyticsKey() {

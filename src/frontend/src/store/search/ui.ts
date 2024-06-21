@@ -161,6 +161,8 @@ type ModuleRootState = {
 		customViews: CustomView[],
 
 		shared: {
+			/** Show a widget to enable quick switching of the concordanceAnnotationId if there are multiple possibilities (example - show phonetic texts vs written texts ?). */
+			concordanceAnnotationIdOptions: string[],
 			/** What annotation to use for displaying of [before, hit, after] and snippets. Conventionally the main annotation. */
 			concordanceAnnotationId: string;
 			/** Optionally run a function on all retrieved snippets to arbitrarily process the data (we use this to format the values in some annotations for display purposes). */
@@ -310,6 +312,7 @@ const initialState: ModuleRootState = {
 			component: 'ResultsView'
 		}],
 		shared: {
+			concordanceAnnotationIdOptions: [],
 			concordanceAnnotationId: '',
 			concordanceSize: 50,
 			transformSnippets: null,
@@ -548,6 +551,12 @@ const actions = {
 			}
 		}, 'removeCustomView'),
 		shared: {
+			concordanceAnnotationIdOptions: b.commit((state, ids: string[]) => validateAnnotations(ids,
+				id => `Trying to set available option for concordance Annotation '${id}', but it does not exist`,
+				a => a.hasForwardIndex,
+				id => `Trying to set available option for concordance Annotation '${id}', but it does not have the required forward index.`,
+				r => state.results.shared.concordanceAnnotationIdOptions = r
+			), 'shared_concordanceAnnotationIdOptions'),
 			concordanceAnnotationId: b.commit((state, id: string) => validateAnnotations([id],
 				_ => `Trying to display Annotation '${id}' as concordance and snippet text, but it does not exist`,
 				a => a.hasForwardIndex,
@@ -881,7 +890,7 @@ const init = () => {
 		// decode them, but this makes us depend on implementation details. The new /relations endpoint gives
 		// us the same information in a portable way.
 		const relations = CorpusStore.getState().corpus!.relations;
-		setValuesForWithin(Object.keys(relations.spans).map(v => ({value: v, label: v, title: null})));
+		setValuesForWithin(Object.keys(relations.spans||{}).map(v => ({value: v, label: v, title: null})));
 
 		// Set default sentence boundary element. For use with dependency trees and getting the sentence around a hit.
 		const state = getState(); // since we did it async, the init is already finished, and the data we set is not in the initial state anymore.
@@ -952,6 +961,8 @@ const init = () => {
 
 	// This one needs manual validation, because the setter just won't do anything if the id is invalid.
 	// And then the invalid id will remain in the state.
+	actions.results.shared.concordanceAnnotationIdOptions(initialState.results.shared.concordanceAnnotationIdOptions);
+	if (!getState().results.shared.concordanceAnnotationIdOptions.length) actions.results.shared.concordanceAnnotationIdOptions([mainAnnotation.id]);
 	{
 		const annot = allAnnotationsMap[initialState.results.shared.concordanceAnnotationId];
 		if (!annot?.hasForwardIndex)

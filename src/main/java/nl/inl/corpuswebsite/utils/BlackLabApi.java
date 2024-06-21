@@ -53,7 +53,7 @@ public class BlackLabApi {
 						authRequest()
 							.url(blsUrl, corpus)
 							.query("outputformat", "json")
-							.query("listvalues", CorpusConfig.getAnnotationsWithRequiredValues(xml))
+							.query("listvalues", new CorpusConfig(corpus, xml, "").getListValues())
 							.request(true)
 							.mapWithErrorHandling(json -> new CorpusConfig(corpus, xml, json))
 				);

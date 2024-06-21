@@ -33,6 +33,16 @@
 			/>
 			<button v-else slot="groupBy" class="btn btn-sm btn-primary" @click="leaveViewgroup"><span class="fa fa-angle-double-left"></span> {{ $t('results.resultsView.backToGroupOverview') }}</button>
 
+			<div slot="annotation-switcher" v-if="concordanceAnnotationOptions.length > 1">
+				<label>{{$t('results.resultsView.selectAnnotation')}}: </label>
+				<div class="btn-group" >
+					<button v-for="a in concordanceAnnotationOptions" type="button"
+						class="btn btn-default btn-sm"
+						:class="{active: a.id === concordanceAnnotationId}"
+						@click="concordanceAnnotationId = a.id">{{ a.displayName }}</button>
+				</div>
+			</div>
+
 			<Pagination slot="pagination"
 				style="display: block; margin: 10px 0;"
 
@@ -280,6 +290,12 @@ export default Vue.extend({
 		},
 
 		corpus(): NormalizedIndex { return CorpusStore.getState().corpus!; },
+		concordanceAnnotationOptions(): CorpusStore.NormalizedAnnotation[] { return UIStore.getState().results.shared.concordanceAnnotationIdOptions.map(id => CorpusStore.get.allAnnotationsMap()[id]); },
+		concordanceAnnotationId: {
+			get(): string { return UIStore.getState().results.shared.concordanceAnnotationId; },
+			set(v: string) { UIStore.actions.results.shared.concordanceAnnotationId(v); }
+		},
+
 		sortAnnotations(): string[] { return UIStore.getState().results.shared.sortAnnotationIds; },
 		sortMetadata(): string[] { return UIStore.getState().results.shared.sortMetadataIds; },
 		exportAnnotations(): string[]|null { return UIStore.getState().results.shared.detailedAnnotationIds; },

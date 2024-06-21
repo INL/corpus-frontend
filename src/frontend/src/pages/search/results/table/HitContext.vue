@@ -62,8 +62,10 @@ export default Vue.extend({
 		after: Boolean,
 		punct: {default: true},
 		/** If set, render one of the values in HitToken.annotation, instead of the main 'text' property of the HitToken */
-		annotation: String,
-
+		annotation: {
+			required: true,
+			type: String,
+		}
 	},
 	computed: {
 		doPunct(): boolean { return this.punct; }, // avoid conflict with props.data in template
@@ -94,7 +96,7 @@ export default Vue.extend({
 				return ({
 					// Ex. "A" for a capture group "A:[]", or parallel field name, or relation name
 					relationKeys: token.captureAndRelation?.map(c => c.key),
-					text: this.annotation ? token.annotations[this.annotation] : token.text,
+					text: token.annotations[this.annotation],
 					punct: token.punct,
 					title: this.highlight ? token.captureAndRelation?.map(c => c.display).join(' · ') : undefined,
 					style

@@ -125,7 +125,7 @@ export interface BLRelationInfo {
 	 * They can optionally have attributes, etc.
 	 * BlackLab can ensure queries fully occur within these spans, etc.
 	*/
-	spans: Record<string, BLSpanInfo>;
+	spans?: Record<string, BLSpanInfo>;
 	/** Only when relations have been indexed in this corpus. */
 	relations?: Record<string, Record<string, number>>; // {relClass: {relType: count}}
 }

@@ -75,7 +75,12 @@ export async function awaitInit(settings: {
 		} else {
 			// check if we're already logged in
 			try {
-				const status = await userManager.querySessionStatus();
+				const status = await userManager.querySessionStatus({
+					// otherwise, we get a hang if the server isn't responding.
+					// this can happen for example when the Client isn't whitelisted for the current domain
+					// in that case the iframe will fail to load and the promise will never resolve.
+					silentRequestTimeoutInSeconds: 5,
+				});
 				if (status?.sub) {
 					// we're logged in, get the user object
 					try { user = await userManager.signinSilent(); }
@@ -93,7 +98,7 @@ export async function awaitInit(settings: {
 
 		if (user) {
 			userManager.startSilentRenew();
-			loginButton.$props.username = user.profile.email || user.profile.name;
+			loginButton.$props.username = user.profile.preferred_username || user.profile.email || user.profile.sub;
 		}
 		return user || null; // normalize weird void type to null.
 	} else if (settings.fallbackUsername) {

@@ -215,7 +215,8 @@
 			"noResultsFound": "未找到结果。",
 			"inactiveView": "此视图不活跃，因为未指定单词的搜索条件。",
 			"tryAgainTitle": "使用当前搜索设置重试",
-			"tryAgain": "重试"
+			"tryAgain": "重试",
+			"selectAnnotation": "选择注释"
 		},
 		"resultsTotals": {
 			"total": "总计",

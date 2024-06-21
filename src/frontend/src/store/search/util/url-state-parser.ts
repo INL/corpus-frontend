@@ -631,6 +631,19 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 				await parseBcql(INDEX_ID, bcql, CorpusModule.get.firstMainAnnotation().id);
 			if (this._parsedCql && this._parsedCql.length === 0)
 				this._parsedCql = null;
+			if (this._parsedCql && this._parsedCql.length > 1) {
+				const relType = this._parsedCql[1].relationType;
+				// Check if this is a valid alignBy type
+				const alignBy = UIModule.getState().search.shared.alignBy.elements.find(v => v.value === relType);
+				if (!alignBy) {
+					// Not a valid align by type; just put the whole query in the first expert box
+					this._parsedCql = [
+						{
+							query: bcql || ''
+						}
+					];
+				}
+			}
 		} catch (e) {
 			// Just accept that we cannot interpret it for use in the simple, extended or advanced
 			// search modes, and use the entire query for the Expert view.

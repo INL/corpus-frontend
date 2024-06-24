@@ -321,6 +321,5 @@ async function parseBcql(indexId: string, bcql: string, defaultAnnotation: strin
 }
 
 export {
-	//interpretBcqlJson,
 	parseBcql
 };

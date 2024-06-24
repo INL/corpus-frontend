@@ -1,5 +1,5 @@
 <template>
-	<table class="hits-table">
+	<table class="hits-table" :class="{ parallel: isParallel }">
 		<thead>
 			<tr class="rounded">
 				<th class="text-right">

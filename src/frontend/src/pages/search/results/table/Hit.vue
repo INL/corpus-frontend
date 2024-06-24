@@ -1,5 +1,5 @@
 <template>
-	<tbody>
+	<tbody class="interactable">
 		<HitRow :key="`${i}-hit`"
 			:class="{open: open, interactable: !disableDetails && !disabled}"
 			:data="h"
@@ -264,3 +264,16 @@ export default Vue.extend({
 })
 
 </script>
+
+<style>
+
+.parallel tbody tr:first-child td {
+	padding-top: 0.5em;
+}
+
+.parallel tbody tr:last-child td {
+	padding-bottom: 0.5em;
+	border-bottom: 1px solid #ddd;
+}
+
+</style>

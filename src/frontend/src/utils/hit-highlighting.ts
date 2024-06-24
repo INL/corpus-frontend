@@ -1,9 +1,10 @@
 import { BLHit, BLHitSnippet, BLHitSnippetPart, BLMatchInfoList, BLMatchInfoRelation, BLMatchInfoSpan, BLSearchSummary, BLSearchSummaryTotalsHits } from '@/types/blacklabtypes';
 import { CaptureAndRelation, HitContext, HitToken, TokenHighlight } from '@/types/apptypes';
 import { mapReduce } from '@/utils';
+import { corpusCustomizations } from '@/store/search/ui';
 
 /** Part of a hit/context to highlight, with a label, display and boolean whether it's a relation or a section of the query/result labelled by the user. */
-type HighlightSection = {
+export type HighlightSection = {
 	/** -1 for root */
 	sourceStart: number;
 	/** -1 for root */
@@ -154,17 +155,22 @@ function getHighlightSections(matchInfos: NonNullable<BLHit['matchInfos']>): Hig
 	// Important that this returns a sorted list, as we assign colors based on the index.
 	.sort((a, b) => a.key.localeCompare(b.key))
 
-	// If there's explicit captures, use only those.
-	// I.E. when the user selects part of the query to highlight, return only those captures.
+	// Allow custom script to determine what to highlight for this hit
+	// (i.e. "do (hover)highlight word alignments, but not verse alignments")
+	const result = corpusCustomizations.results.matchInfosToHighlight(interestingCaptures)
+	if (result !== null)
+		return result;
+
+	// Fall back to default behaviour:
+	// If there's explicit captures, highlight only those.
+	// i.e. when the user selects part of the query to highlight, return only those captures.
 	//
 	// (JN) It might not be obvious to most users why slightly different queries highlight
-	// very different things. Just highlight everything? Or make it configurable?
+	// very different things. Maybe just highlight everything by default..?
 	//
 	if (interestingCaptures.find(c => !c.isRelation)) {
-		interestingCaptures.forEach(c => c.showHighlight = !c.isRelation);
-		//interestingCaptures = interestingCaptures.filter(c => !c.isRelation);
+		return interestingCaptures.map((mi) => ({ ...mi, showHighlight: !mi.isRelation }));
 	}
-
 	return interestingCaptures;
 }
 

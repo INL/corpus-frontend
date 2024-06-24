@@ -18,6 +18,7 @@ import * as PatternsStore from '@/store/search/form/patterns';
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
 import { Option } from '@/types/apptypes';
+import { HighlightSection } from '@/utils/hit-highlighting';
 
 type CustomView = {
 	id: string;
@@ -1252,6 +1253,12 @@ const corpusCustomizations = {
 				actions.search.shared.within.elements(elements);
 			}
 			*/
+		}
+	},
+
+	results: {
+		matchInfosToHighlight: (matchInfos: HighlightSection[]) => {
+			return null; // fall back to default behaviour
 		}
 	}
 };

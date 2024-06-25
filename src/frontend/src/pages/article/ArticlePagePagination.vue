@@ -28,6 +28,7 @@ import { blacklab } from '@/api';
 import { BLHitResults } from '@/types/blacklabtypes';
 
 import Pagination from '@/components/Pagination.vue';
+import { debugLogCat } from '@/utils/debug';
 import { binarySearch } from '@/utils';
 
 import 'jquery-ui';
@@ -112,6 +113,7 @@ export default Vue.extend({
 			if (wordend >= DOCUMENT_LENGTH) { wordend = undefined; }
 
 			const newUrl = new URI().setSearch({wordstart, wordend, findhit: undefined}).fragment(hit ? hit.toString() : '').toString();
+			debugLogCat('history', `Setting window.location.href to ${newUrl}`);
 			window.location.href = newUrl;
 		},
 		handleHitNavigation(index: number) {
@@ -147,7 +149,9 @@ export default Vue.extend({
 	},
 	watch: {
 		currentHitInPage() {
-			window.history.replaceState(undefined, '', window.location.pathname + window.location.search + (this.currentHitInPage == null ? '' : `#${this.currentHitInPage.toString(10)}`));
+			const url = window.location.pathname + window.location.search + (this.currentHitInPage == null ? '' : `#${this.currentHitInPage.toString(10)}`);
+			debugLogCat('history', `Calling replaceState with URL: ${url}`);
+			window.history.replaceState(undefined, '', url);
 		},
 	},
 	updated() {
@@ -167,7 +171,9 @@ export default Vue.extend({
 		// otherwise just remove the window hash
 		if (!this.hitElements.length) {
 			this.currentHitInPage = undefined;
-			window.history.replaceState(undefined, '', window.location.pathname + window.location.search); // setting hash to '' won't remove '#'
+			const url = window.location.pathname + window.location.search;
+			debugLogCat('history', `Calling replaceState with URL: ${url}`);
+			window.history.replaceState(undefined, '', url); // setting hash to '' won't remove '#'
 		} else {
 			let hitInPage = Number(window.location.hash ? window.location.hash.substring(1) : '0') || 0;
 			if (hitInPage >= this.hitElements.length || hitInPage < 0) {

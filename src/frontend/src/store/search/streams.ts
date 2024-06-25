@@ -22,7 +22,7 @@ import * as Api from '@/api';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import jsonStableStringify from 'json-stable-stringify';
-import { debugLog } from '@/utils/debug';
+import { debugLog, debugLogCat, showDebugCat } from '@/utils/debug';
 import Vue from 'vue';
 
 type QueryState = {
@@ -265,7 +265,8 @@ url$.pipe(
 			} : ExploreStore.defaults,
 			patterns: query.form === 'search' ? {
 				...PatternStore.defaults,
-				[query.subForm]: query.formState
+				[query.subForm]: query.formState,
+				parallelVersions: query.parallelVersions,
 			} : PatternStore.defaults,
 			interface: {
 				form: query.form ? query.form : 'search',
@@ -286,8 +287,10 @@ url$.pipe(
 	})
 )
 .subscribe(v => {
-	debugLog('Adding/updating query in query history, adding browser history entry, and reporting to ga', v.url, v.entry);
+	if (showDebugCat('history'))
+		debugLog('Adding/updating query in query history, adding browser history entry, and reporting to ga', v.url, v.entry);
 	HistoryStore.actions.addEntry({entry: v.entry, pattern: v.params && v.params.patt, url: v.url});
+	debugLogCat('history', `Calling pushState with entry: ${JSON.stringify(v.entry)} and url: ${v.url}`);
 	history.pushState(v.entry, '', v.url);
 
 	ga('set', v.url);

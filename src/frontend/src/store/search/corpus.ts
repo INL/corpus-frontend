@@ -13,7 +13,7 @@ import {RootState} from '@/store/search/';
 
 import {NormalizedIndex, NormalizedAnnotation, NormalizedMetadataField, NormalizedAnnotatedField, NormalizedMetadataGroup, NormalizedAnnotationGroup} from '@/types/apptypes';
 import { mapReduce } from '@/utils';
-import { normalizeIndex } from '@/utils/blacklabutils';
+import { getParallelFieldParts, isParallelField, normalizeIndex } from '@/utils/blacklabutils';
 
 type ModuleRootState = { corpus: NormalizedIndex|null };
 
@@ -23,9 +23,61 @@ const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, {corpu
 const getState = b.state();
 
 const get = {
+
+	/** List of annotated fields */
+	allAnnotatedFields: b.read((state): NormalizedAnnotatedField[] =>
+		Object.values(state.corpus?.annotatedFields ?? {}), 'allAnnotatedFields'),
+
+	/** Map of annotated fields */
+	allAnnotatedFieldsMap: b.read((state): Record<string, NormalizedAnnotatedField> =>
+		state.corpus?.annotatedFields ?? {}, 'allAnnotatedFieldsMap'),
+
+	/** Main annotated field name */
+	mainAnnotatedField: b.read((state): string =>
+		state.corpus?.mainAnnotatedField || 'contents', 'mainAnnotatedField'),
+
+	/** Is this a parallel corpus? */
+	isParallelCorpus: b.read((state): boolean =>
+		get.allAnnotatedFields().some(f => isParallelField(f.id)), 'isParallelCorpus'),
+
+	/** If this is a parallel corpus, what's the parallel field prefix?
+	 *  (e.g. "contents" if there's fields "contents__en" and "contents__nl") */
+	parallelFieldPrefix: b.read((state): string => {
+		for (const f of get.allAnnotatedFields()) {
+			const parts = getParallelFieldParts(f.id);
+			if (parts.version !== '') {
+				// Note that we don't support multiple parallel fields in one corpus,
+				// so we just return the first parallel prefix we find.
+				return parts.prefix;
+			}
+		}
+		return '';
+	}, 'parallelFieldPrefix'),
+
+	/** If this is a parallel corpus, what parallel versions does it contain?
+	 *  (e.g. ["en", "nl"] if there's fields "contents__en" and "contents__nl") */
+	parallelVersions: b.read((state): { prefix: string, name: string, displayName: string }[] => {
+		const prefix = get.parallelFieldPrefix();
+		return get.allAnnotatedFields()
+			.filter(f => f.id.startsWith(prefix))
+			.map(f => ({
+				prefix,
+				name: getParallelFieldParts(f.id).version,
+				displayName: f.displayName
+			}));
+	}, 'parallelVersions'),
+
+	/** Return the parallel versions as options with a label (i.e. displayName) and a value. */
+	parallelVersionOptions: b.read((state): { value: string, label: string }[] => {
+		return get.parallelVersions().map((value) => ({
+			value: value.name,
+			label: value.displayName || value.name
+		}));
+	}, 'parallelVersionOptions'),
+
 	/** All annotations, without duplicates and in no specific order */
 	allAnnotations: b.read((state): NormalizedAnnotation[] => Object.values(state.corpus?.annotatedFields[state.corpus.mainAnnotatedField].annotations ?? {}), 'allAnnotations'),
-	allAnnotationsMap: b.read((state): Record<string, NormalizedAnnotation> => mapReduce(get.allAnnotations(), 'id'), 'allAnnotationsMap'),
+	allAnnotationsMap: b.read((): Record<string, NormalizedAnnotation> => mapReduce(get.allAnnotations(), 'id'), 'allAnnotationsMap'),
 
 	allMetadataFields: b.read((state): NormalizedMetadataField[] => Object.values(state.corpus?.metadataFields || {}), 'allMetadataFields'),
 	allMetadataFieldsMap: b.read((state): Record<string, NormalizedMetadataField> => state.corpus?.metadataFields ?? {}, 'allMetadataFieldsMap'),

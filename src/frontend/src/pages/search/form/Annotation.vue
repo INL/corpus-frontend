@@ -132,10 +132,12 @@ export default Vue.extend({
 	}),
 	computed: {
 		stateGetter(): () => AnnotationValue {
-			return this.simple ? PatternStore.get.simple : PatternStore.get.annotationValue.bind(this, this.annotation.annotatedFieldId, this.annotation.id);
+			return this.simple ?
+				() => PatternStore.get.simple().annotationValue :
+				PatternStore.get.annotationValue.bind(this, this.annotation.annotatedFieldId, this.annotation.id);
 		},
 		stateSetter(): (payload: Partial<AnnotationValue> & { id: string }) => void {
-			return this.simple ? PatternStore.actions.simple : PatternStore.actions.extended.annotation;
+			return this.simple ? PatternStore.actions.simple.annotation : PatternStore.actions.extended.annotation;
 		},
 		textDirection(): string|undefined {
 			// only set direction if this is the main annotation

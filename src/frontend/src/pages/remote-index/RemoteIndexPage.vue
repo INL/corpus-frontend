@@ -79,13 +79,14 @@ import SelectPicker, {OptGroup} from '@/components/SelectPicker.vue';
 
 import * as AppTypes from '@/types/apptypes';
 import * as BLTypes from '@/types/blacklabtypes';
+import { debugLogCat } from '@/utils/debug';
 
 class UrlStateParser extends UrlStateParserBase<{
 	file: string;
 	format: string;
 	corpus: null|string,
 }> {
-	public get() {
+	public async get() {
 		return {
 			file: this.getString('file', '')!,
 			format: this.getString('format', 'folia')!,
@@ -99,7 +100,7 @@ export default Vue.extend({
 		SelectPicker
 	},
 	data: () => ({
-		urlParams: new UrlStateParser().get(),
+		urlParams: null as null|{file:string, format:string, corpus:string|null},
 
 		error: null as null|string, // TODO
 		retryError: null as null|(() => void),
@@ -134,7 +135,7 @@ export default Vue.extend({
 			return [{
 				label: this.blacklabData.user!.id,
 				options: this.blacklabData.corpora
-					.filter(c => c.owner === this.blacklabData.user!.id && c.documentFormat === this.urlParams.format)
+					.filter(c => c.owner === this.blacklabData.user!.id && c.documentFormat === this.urlParams!.format)
 					.sort((a, b) => a.displayName.localeCompare(b.displayName))
 					.map(c => ({
 						label: `${c.displayName} ${c.tokenCount ? `<small class="text-muted">(${Math.floor(c.tokenCount!).toLocaleString()} tokens)</small>` : ''}`,
@@ -149,7 +150,8 @@ export default Vue.extend({
 	methods: {
 		log() { console.log(...arguments); },
 
-		init(): void {
+		init() {
+
 			this.error = null;
 			this.retryError = null;
 
@@ -162,20 +164,20 @@ export default Vue.extend({
 				this.blacklabData.corpora = corpora;
 				this.blacklabData.user = user;
 
-				if (this.urlParams.corpus) {
+				if (this.urlParams && this.urlParams.corpus) {
 					if (this.urlParams.corpus.indexOf(':') === -1) {
 						this.urlParams.corpus = `${user.id}:${this.urlParams.corpus}`;
 					}
 
 					Vue.nextTick(() => {
-						this.preselectedCorpus = this.urlParams.corpus!;
+						this.preselectedCorpus = this.urlParams!.corpus!;
 						Vue.nextTick(() => {
 							// hack, if urlParams.corpus is invalid, the selectPicker will reset the value to empty the next frame
 							// check that here, then, initiate the download if it's valid, otherwise initiate corpus creation
 							if (this.preselectedCorpus) {
 								this.download();
 							} else {
-								this.newCorpusName = this.urlParams.corpus!.substring(this.urlParams.corpus!.indexOf(':')+1);
+								this.newCorpusName = this.urlParams!.corpus!.substring(this.urlParams!.corpus!.indexOf(':')+1);
 								this.createCorpus();
 							}
 						})
@@ -200,7 +202,7 @@ export default Vue.extend({
 
 			const id = `${this.blacklabData.user!.id}:${this.newCorpusName.replace(/[^\w-]/g, '_')}`;
 			this.isCreatingCorpus = true;
-			blacklab.postCorpus(id, this.newCorpusName, this.urlParams.format)
+			blacklab.postCorpus(id, this.newCorpusName, this.urlParams!.format)
 			.then(() => {
 				this.isCreatingCorpus = false;
 				this.isLoadingCorpora = true;
@@ -234,7 +236,7 @@ export default Vue.extend({
 
 			let file: File;
 			try {
-				const r = await Axios.get(this.urlParams.file, {
+				const r = await Axios.get(this.urlParams!.file, {
 					responseType: 'blob',
 					onDownloadProgress: (event: ProgressEvent) => {
 						if (!event.total) {
@@ -248,7 +250,7 @@ export default Vue.extend({
 					}
 				})
 
-				const filename = r.headers["content-disposition"]?.split('filename=')[1]?.split(';')[0] ?? this.urlParams.file
+				const filename = r.headers["content-disposition"]?.split('filename=')[1]?.split(';')[0] ?? this.urlParams!.file
 				file = new File([new Blob([r.data])], filename);
 
 			} catch (e) {
@@ -321,12 +323,18 @@ export default Vue.extend({
 			}
 
 			this.action = 'Finished! Opening search page...';
-			window.setTimeout(() => window.location.href = CONTEXT_URL + '/' + this.selectedCorpus!.id + '/search/', 5000);
+			window.setTimeout(() => {
+				const url = CONTEXT_URL + '/' + this.selectedCorpus!.id + '/search/';
+				debugLogCat('history', `Setting window.location.href to ${url}`);
+				window.location.href = url }, 5000
+			);
 		},
 	},
-	created() {
+	async created() {
+		this.urlParams = await new UrlStateParser().get();
 		if (!this.urlParams.file) {
 			this.error = 'No file specified, redirecting...';
+			debugLogCat('history', `Setting window.location.href to ${CONTEXT_URL}`);
 			window.location.href = CONTEXT_URL;
 			return;
 		}

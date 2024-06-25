@@ -21,7 +21,7 @@
 				<li v-else class="font-italic text-muted">No values!</li>
 			</ul>
 
-			<div style="paddingL: 5px;">
+			<div style="padding: 5px;">
 				<span v-if="!display" class="font-italic text-muted">Click a value to see resolve progress</span>
 
 				<div v-else style="display: flex; flex-grow: 1; overflow-y: auto; flex-direction: row; flex-wrap: wrap;">

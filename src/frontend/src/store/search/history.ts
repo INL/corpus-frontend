@@ -20,6 +20,7 @@ import * as GapModule from '@/store/search/form/gap';
 import * as ViewModule from '@/store/search/results/views';
 import * as ConceptModule from '@/store/search/form/conceptStore';
 import * as GlossModule from '@/store/search/form/glossStore';
+import * as UIModule from '@/store/search/ui';
 
 import UrlStateParser from '@/store/search/util/url-state-parser';
 
@@ -111,7 +112,7 @@ const get = {
 	},
 	fromFile: (f: File) => new Promise<{entry: HistoryEntry, pattern: string, url: string}>((resolve, reject) => {
 		const fr = new FileReader();
-		fr.onload = function() {
+		fr.onload = async function() {
 			try {
 				const base64 = (fr.result as string).replace(/#.*(?:\r\n|\n|\r|$)/g, '').trim();
 				let originalEntry: FullHistoryEntry&{version: number};
@@ -119,7 +120,7 @@ const get = {
 				if (!originalEntry || originalEntry.version == null) { throw new Error('Cannot import: file does not appear to be a valid query.'); }
 
 				// Rountrip from url if not compatible.
-				const entry = originalEntry.version === version ? originalEntry : new UrlStateParser(FilterModule.getState().filters, new URI(originalEntry.url)).get();
+				const entry = originalEntry.version === version ? originalEntry : await new UrlStateParser(FilterModule.getState().filters, new URI(originalEntry.url)).get();
 
 				resolve({
 					entry,
@@ -150,8 +151,9 @@ const actions = {
 
 		// Order needs to be consistent or hash will be different.
 		const filterSummary: string|undefined = getFilterSummary(Object.values(entry.filters).sort((l, r) => l.id.localeCompare(r.id)));
+		const defaultAlignBy = UIModule.getState().search.shared.alignBy.defaultValue;
 		const patternSummary: string|undefined =
-			entry.interface.form === 'search' ? getPatternSummarySearch(entry.interface.patternMode, entry.patterns) :
+			entry.interface.form === 'search' ? getPatternSummarySearch(entry.interface.patternMode, entry.patterns, defaultAlignBy) :
 			entry.interface.form === 'explore' ? getPatternSummaryExplore(entry.interface.exploreMode, entry.explore, CorpusModule.get.allAnnotationsMap()) :
 			undefined;
 

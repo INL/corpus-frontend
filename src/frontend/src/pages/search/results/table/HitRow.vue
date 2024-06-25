@@ -1,10 +1,19 @@
 <template>
 	<tr class="concordance rounded">
-		<HitContextComponent tag="td" class="text-right"  :dir="dir" :data="data.context" :html="html" :annotation="mainAnnotation.id" before/>
-		<HitContextComponent tag="td" class="text-center" :dir="dir" :data="data.context" :html="html" :annotation="mainAnnotation.id" bold/>
-		<HitContextComponent tag="td" class="text-left"   :dir="dir" :data="data.context" :html="html" :annotation="mainAnnotation.id" after/>
+		<td v-if="displayField">{{ displayField }}</td>
+		<HitContextComponent tag="td" class="text-right"  :dir="dir" :data="data.context" :html="html" :annotation="mainAnnotation.id" before
+			:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+			@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
+		<HitContextComponent tag="td" class="text-center" :dir="dir" :data="data.context" :html="html" :annotation="mainAnnotation.id" bold
+			:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+			@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)"/>
+		<HitContextComponent tag="td" class="text-left"   :dir="dir" :data="data.context" :html="html" :annotation="mainAnnotation.id" after
+			:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+			@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)"/>
 
-		<HitContextComponent tag="td" :annotation="a.id" :data="data.context" :html="html" :dir="dir" :key="a.id" :highlight="false" v-for="a in otherAnnotations" />
+		<HitContextComponent tag="td" :annotation="a.id" :data="data.context" :html="html" :dir="dir" :key="a.id" :highlight="false" v-for="a in otherAnnotations"
+			:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+			@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)"/>
 
 		<td v-for="field in data.gloss_fields" :key="field.fieldName" style="overflow: visible;">
 			<GlossField
@@ -28,7 +37,6 @@ import * as BLTypes from '@/types/blacklabtypes';
 import GlossField from '@/pages/search/form/concept/GlossField.vue';
 import { GlossFieldDescription } from '@/store/search/form/glossStore';
 import { HitContext, NormalizedAnnotation, NormalizedMetadataField } from '@/types/apptypes';
-import { snippetParts } from '@/utils/hit-highlighting';
 
 import HitContextComponent from '@/pages/search/results/table/HitContext.vue';
 
@@ -39,7 +47,7 @@ import HitContextComponent from '@/pages/search/results/table/HitContext.vue';
 export type HitRowData = {
 	type: 'hit';
 	doc: BLTypes.BLDoc;
-	hit: BLTypes.BLHit|BLTypes.BLHitSnippet;
+	hit: BLTypes.BLHit|BLTypes.BLHitInOtherField|BLTypes.BLHitSnippet;
 	context: HitContext;
 
 	// TODO jesse
@@ -56,16 +64,36 @@ export default Vue.extend({
 	},
 	props: {
 		data: Object as () => HitRowData,
+		displayField: {
+			type: String,
+			default: '',
+		},
 		mainAnnotation: Object as () => NormalizedAnnotation,
 		otherAnnotations: Array as () => NormalizedAnnotation[]|undefined,
 		metadata: Array as () => NormalizedMetadataField[]|undefined,
 		dir: String as () => 'ltr'|'rtl',
 		html: Boolean,
+
+		// which match infos (capture/relation) should be highlighted because we're hovering over a token? (parallel corpora)
+		hoverMatchInfos: {
+			type: Array as () => string[],
+			default: () => [],
+		},
+		isParallel: { default: false },
 	},
 });
 </script>
 
 <style lang="scss">
+
+tr.foreign-hit {
+	color: #666;
+	font-style: italic;
+}
+
+tr.concordance.foreign-hit + tr.concordance:not(.foreign-hit) > td {
+	padding-top: 0.6em;
+}
 
 tr.concordance {
 	> td {

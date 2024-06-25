@@ -5,6 +5,7 @@ import URI from 'urijs';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
+import * as UIModule from '@/store/search/ui';
 
 export function escapeRegex(original: string, wildcardSupport: boolean) {
 	original = original.replace(/([\^$\-\\.(){}[\]+])/g, '\\$1'); // add slashes for regex characters
@@ -315,7 +316,30 @@ export const splitIntoTerms = (value: string, useQuoteDelimiters: boolean): Spli
 	})
 });
 
-export const getPatternString = (annotations: AppTypes.AnnotationValue[], within: null|string) => {
+/** Parenthesize part of a BCQL query if it's not already */
+function parenQueryPart(query: string, exceptions: string[] = []) {
+	query = query.trim();
+	if (query.match(/^\(.+\)$/) || query.match(/^\[[^\]]*\]$/) || exceptions.includes(query)) {
+		return query;
+	}
+	return `(${query})`;
+}
+
+/** Remove parentheses from a BCQL query part if it's parenthesized */
+export function unparenQueryPart(query?: string) {
+	if (query) {
+		query = query.trim();
+		if (query.match(/^\([^)]+\)$/)) {
+			const result = query.substring(1, query.length - 1);
+			return result;
+		}
+	}
+	return query;
+}
+
+export const getPatternString = (annotations: AppTypes.AnnotationValue[], within: null|string,
+	withinAttributes: null|Record<string, string>, parallelTargetVersions: string[] = [], alignBy?: string) => {
+
 	const tokens = [] as string[][];
 
 	annotations.forEach(annot => getAnnotationPatternString(annot).forEach((value, index) => {
@@ -323,10 +347,54 @@ export const getPatternString = (annotations: AppTypes.AnnotationValue[], within
 	}));
 
 	let query = tokens.map(t => `[${t.join('&')}]`).join('');
-	if (query.length > 0 && within) {
-		query += ` within <${within}/>`;
+	if (within) {
+		const attr = withinAttributes ? Object.entries(withinAttributes).filter(([k, v]) => !!v)
+			.map(([k, v]) => ` ${k}="${v.replace(/"/g, '\\"')}"`).join('') : '';
+		const tags = `<${within}${attr}/>`;
+		if (query.length > 0) {
+			// Actual within
+			query += ` within ${tags}`;
+		} else {
+			// No query given; just find the tags themselves
+			query = tags;
+		}
 	}
+
+	if (parallelTargetVersions.length > 0) {
+		const relationType = alignBy ?? '';
+		query = `${parenQueryPart(query, ['[]*', '_'])}` + parallelTargetVersions.map(v => ` =${relationType}=>${v} _`).join(' ; ');
+	}
+
 	return query || undefined;
+};
+
+function parenQueryPartParallel(query: string) {
+	const parenExceptions = ['[]*', '_'];
+	return parenQueryPart(query === '[]*' ? '_' : query, parenExceptions);
+}
+
+export const getPatternStringFromCql = (sourceCql: string, targetVersions: string[], targetCql: string[], alignBy?: string) => {
+	if (targetVersions.length > targetCql.length) {
+		console.error('There must be a CQL query for each selected parallel version!', targetVersions, targetCql);
+		throw new Error(`There must be a CQL query for each selected parallel version!`);
+	}
+
+	if (targetVersions.length === 0) {
+		return sourceCql;
+	}
+
+	const defaultSourceQuery = targetVersions.length > 0 ? '_': '';
+	const queryParts = [parenQueryPartParallel(sourceCql.trim() || defaultSourceQuery)];
+	const relationType = alignBy ?? '';
+	for (let i = 0; i < targetVersions.length; i++) {
+		if (i > 0)
+			queryParts.push(' ; ');
+		queryParts.push(` =${relationType}=>${targetVersions[i].trim()} ${parenQueryPartParallel(targetCql[i].trim() || '_')}`)
+	}
+
+	const query = queryParts.join('');
+
+	return query;
 };
 
 export function getDocumentUrl(
@@ -664,13 +732,19 @@ export function getPatternStringExplore(
 export function getPatternStringSearch(
 	subForm: keyof ModuleRootStateSearch,
 	state: ModuleRootStateSearch,
-	annots: Record<string, AppTypes.NormalizedAnnotation>
+	defaultAlignBy: string,
 ): string|undefined {
 	// For the normal search form,
 	// the simple and extended views require the values to be processed before converting them to cql.
 	// The advanced and expert views already contain a good-to-go cql query. We only need to take care not to emit an empty string.
+	const alignBy = state.parallelVersions.alignBy || defaultAlignBy;
+	const targets = state.parallelVersions.targets || [];
 	switch (subForm) {
-		case 'simple': return state.simple.value && getPatternString([state.simple], null);
+		case 'simple':
+			const q = state.simple.annotationValue.value ? [state.simple.annotationValue] : [];
+			return q.length || state.extended.within ?
+				getPatternString(q, null, null, targets, alignBy) :
+				undefined;
 		case 'extended': {
 			const r = cloneDeep(Object.values(state.extended.annotationValues))
 				.filter(annot => !!annot.value)
@@ -678,10 +752,16 @@ export function getPatternStringSearch(
 					...annot,
 					type: getCorrectUiType(uiTypeSupport.search.extended, annot.type!)
 				}));
-			return r.length ? getPatternString(r, state.extended.within) : undefined;
+			return r.length || state.extended.within ?
+				getPatternString(r, state.extended.within, state.extended.withinAttributes, targets, alignBy) :
+				undefined;
 		}
-		case 'advanced': return state.advanced?.trim() || undefined;
-		case 'expert': return state.expert?.trim() || undefined;
+		case 'advanced':
+			if (!state.advanced.query)
+				return undefined;
+			return getPatternStringFromCql(state.advanced.query, targets, state.advanced.targetQueries, alignBy);
+		case 'expert':
+			return getPatternStringFromCql(state.expert.query || '', targets, state.expert.targetQueries, alignBy);
 		case 'concept': return state.concept?.trim() || undefined;
 		case 'glosses': return state.glosses?.trim() || undefined;
 		default: throw new Error('Unimplemented pattern generation.');
@@ -704,27 +784,31 @@ export function getPatternSummaryExplore<K extends keyof ModuleRootStateExplore>
 export function getPatternSummarySearch<K extends keyof ModuleRootStateSearch>(
 	subForm: K,
 	state: ModuleRootStateSearch,
+	defaultAlignBy: string,
 ) {
+	const patt = getPatternStringSearch(subForm, state, defaultAlignBy);
+	return patt?.replace(/\\(.)/g, '$1') || '';
+
 	// For the normal search form,
 	// the simple and extended views require the values to be processed before converting them to cql.
 	// The advanced and expert views already contain a good-to-go cql query. We only need to take care not to emit an empty string.
-	switch (subForm) {
-		case 'simple': return state.simple.value || undefined;
-		case 'extended': {
-			const annotations: AppTypes.AnnotationValue[] = cloneDeep(Object.values(state.extended.annotationValues).filter(annot => !!annot.value))
-				.map(annot => ({
-					...annot,
-					type: getCorrectUiType(uiTypeSupport.search.extended, annot.type!)
-				}));
-			if (annotations.length === 0) { return undefined; }
-			// remove escape backslashes as this is just a summary
-			return getPatternString(annotations, state.extended.within)?.replace(/\\(.)/g, '$1');
-		}
-		case 'advanced': return state.advanced?.trim() || undefined;
-		case 'expert': return state.expert?.trim() || undefined;
-		case 'concept': return state.concept || undefined;
-		case 'glosses': return state.glosses || undefined;
-		default: return undefined;
-	}
+	// switch (subForm) {
+	// 	case 'simple': return state.simple.annotationValue.value || undefined;
+	// 	case 'extended': {
+	// 		const annotations: AppTypes.AnnotationValue[] = cloneDeep(Object.values(state.extended.annotationValues).filter(annot => !!annot.value))
+	// 			.map(annot => ({
+	// 				...annot,
+	// 				type: getCorrectUiType(uiTypeSupport.search.extended, annot.type!)
+	// 			}));
+	// 		if (annotations.length === 0) { return undefined; }
+	// 		// remove escape backslashes as this is just a summary
+	// 		return getPatternString(annotations, state.extended.within, alignBy, state.parallelVersions?.targets || [])?.replace(/\\(.)/g, '$1');
+	// 	}
+	// 	case 'advanced': return state.advanced.query?.trim() || undefined;
+	// 	case 'expert': return state.expert.query?.trim() || undefined;
+	// 	case 'concept': return state.concept || undefined;
+	// 	case 'glosses': return state.glosses || undefined;
+	// 	default: return undefined;
+	// }
 }
 

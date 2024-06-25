@@ -14,8 +14,11 @@ import { stripIndent, html } from 'common-tags';
 import { RootState } from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus';
 import * as ViewsStore from '@/store/search/results/views';
+import * as PatternsStore from '@/store/search/form/patterns';
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
+import { Option } from '@/types/apptypes';
+import { HighlightSection } from '@/utils/hit-highlighting';
 
 type CustomView = {
 	id: string;
@@ -65,7 +68,7 @@ type ModuleRootState = {
 				enabled: boolean;
 				elements: Array<{
 					title: string|null;
-					label: string;
+					label?: string;
 					value: string;
 				}>;
 				/**
@@ -74,6 +77,17 @@ type ModuleRootState = {
 				 * Defaults to the first element in the within.elements array, but null if none are defined.
 				 */
 				sentenceElement: string|null;
+			};
+
+			/** Alignment relation types available in a parallel corpus, e.g. word, sentence or paragraph alignment. */
+			alignBy: {
+				enabled: boolean;
+				elements: Array<{
+					title: string|null;
+					label?: string;
+					value: string;
+				}>;
+				defaultValue: string;
 			};
 		}
 	};
@@ -263,6 +277,12 @@ const initialState: ModuleRootState = {
 				elements: [],
 				sentenceElement: null
 			},
+
+			alignBy: {
+				enabled: false,
+				elements: [],
+				defaultValue: '',
+			},
 		}
 	},
 	explore: {
@@ -364,7 +384,6 @@ const getState = (() => {
 })();
 
 const get = {
-
 };
 
 const privateActions = {
@@ -446,6 +465,15 @@ const actions = {
 					if (state.search.shared.within.elements.findIndex(e => e.value === payload) >= 0 )
 						state.search.shared.within.sentenceElement = payload;
 				}, 'search_shared_within_sentenceElement')
+			},
+			/** Alignment relation types available in a parallel corpus, e.g. word, sentence or paragraph alignment. */
+			alignBy: {
+				enable: b.commit((state, payload: boolean) => state.search.shared.alignBy.enabled = payload, 'search_shared_alignBy_enable'),
+				elements: b.commit((state, payload: ModuleRootState['search']['shared']['alignBy']['elements']) => {
+					state.search.shared.alignBy.elements = payload;
+					const defaultValue = payload[0]?.value ?? '';
+					state.search.shared.alignBy.defaultValue = defaultValue;
+				}, 'search_shared_alignBy_annotations'),
 			},
 		}
 	},
@@ -769,7 +797,7 @@ const init = () => {
 		if (!g.isRemainderGroup) { return g.entries; }
 		const hasNonRemainderGroup = i > 0; // remainder groups is always at the end
 		// remainder group is hidden unless there's no other group. Also internal annotations in the remainder group are always hidden.
-		return hasNonRemainderGroup ? [] : g.entries.filter(id => allAnnotationsMap[id]?.isInternal === false);
+		return hasNonRemainderGroup ? [] : g.entries.filter(annotationName => allAnnotationsMap[annotationName]?.isInternal === false);
 	});
 
 	// Metadata/filters (extended, advanced, expert, explore)
@@ -827,7 +855,41 @@ const init = () => {
 			}
 		}
 
-		// blacklab 4.0 removed the 'starttag' annotation. We have to retrieve values from the relations object instead
+		function setValuesForAlignBy(validValues?: AppTypes.NormalizedAnnotation['values']) {
+			if (!validValues?.length) {
+				console.warn('Align by not supported in this corpus, no parallel relations indexed');
+				actions.search.shared.alignBy.enable(false);
+				return;
+			};
+
+			validValues.forEach(v => {
+				if (!v.label.trim() || v.label === v.value) {
+					if (v.value.endsWith('-alignment'))
+						v.label = v.value.slice(0, -10); // e.g. word-alignment -> word
+					else if (!v.value) { v.label = 'EMPTY'; }
+					else { v.label = v.value; }
+				}
+			});
+
+			validValues.sort((a, b) => {
+				// "word" should be the first option, if it exists
+				if (a.label.toLowerCase() === 'word') {
+					if (a.label === b.label)
+						return 0;
+					return -1;
+				} else if (b.label.toLowerCase() === 'word') {
+					return 1;
+				}
+				return a.label.localeCompare(b.label)
+			});
+
+			actions.search.shared.alignBy.elements(validValues);
+		}
+
+		// In BlackLab 4.0, the 'starttag' annotation was renamed to '_relation' and is now used to index
+		// (dependency, parallel) relations as well. We could get the list of values for this annotation and
+		// decode them, but this makes us depend on implementation details. The new /relations endpoint gives
+		// us the same information in a portable way.
 		const relations = CorpusStore.getState().corpus!.relations;
 		setValuesForWithin(Object.keys(relations.spans||{}).map(v => ({value: v, label: v, title: null})));
 
@@ -836,10 +898,20 @@ const init = () => {
 		if (!getState().search.shared.within.sentenceElement && getState().search.shared.within.elements.length) {
 			const labelsOrValues = ['sentence', 's', 'sen', 'sent', 'paragraph', 'p', 'par', 'para', 'verse'];
 			// process the labels in order or preference.
-			const defaultWithin = labelsOrValues.flatMap(l => state.search.shared.within.elements.find(e => e.label.includes(l) || e.value.includes(l)) || [])[0]
+			const defaultWithin = labelsOrValues.flatMap(l => state.search.shared.within.elements.find(e => (e.label && e.label.includes(l)) || e.value.includes(l)) || [])[0]
 			if (defaultWithin) {
 				actions.search.shared.within.sentenceElement(defaultWithin.value);
 			}
+		}
+
+		// get parallel relations types for "align by" selector
+		if (relations.relations) {
+			// Get relation types for parallel relations to all target fields in a set
+			const relTypes = new Set(Object.keys(relations.relations)
+				.filter(v => v.startsWith('al__')) // by convention, parallel relations use class 'al__TARGETVERSION', e.g. 'al__nl'
+				.flatMap(v => Object.keys(relations.relations![v])));
+			const alignByValues = [...relTypes].map(v => ({value: v, label: v, title: null}));
+			setValuesForAlignBy(alignByValues);
 		}
 	}
 
@@ -1147,6 +1219,69 @@ function printCustomizations() {
 	`);
 }
 
+/** This object contains any customization "hook" functions for this corpus.
+ *  It defines defaults that can be overridden from custom JS file(s); see below.
+ */
+const corpusCustomizations = {
+	search: {
+		within: {
+			/** Customize which element(s) to include */
+			include(element: Option) {
+				return true;
+			},
+
+			/** Customize display name for a within element (return null for default behaviour) */
+			displayName(element: Option): string|null {
+				return null;
+			},
+
+			/** Which, if any, attribute filter fields should be displayed for this element? */
+			attributes(element: Option): string[]|Option[] {
+				return [];
+			},
+
+			/*
+			// Alternative approach: allow direct access to the elements array, so custom JS
+			// can change that. But this relies on the corpus being loaded before the custom JS
+			// (currently not the case), and might run into issues with reactivity(?)
+
+			get elements(): Option[] {
+				return getState().search.shared.within.elements;
+			},
+
+			set elements(elements: { value: string, title: string|null, label?: string }[]) {
+				actions.search.shared.within.elements(elements);
+			}
+			*/
+		}
+	},
+
+	results: {
+		matchInfosToHighlight: (matchInfos: HighlightSection[]) => {
+			return null; // fall back to default behaviour
+		}
+	}
+};
+
+/** This lets custom JS files call frontend.customize((corpus) => { ... });
+  * to customize any of the above "hooks". Doing this via a function instead of
+  * direct access to a global object gives us more flexibility to change things
+  * in the future.
+  *
+  * Example of a simple custom.js file using this:
+  * <code>
+  * frontend.customize((corpus) => {
+  *   corpus.search.within.include = (element) => element.value === 'p';
+  *   corpus.search.within.displayName = (element) => element.value === 'p' ? 'Paragraph' : null;
+  * });
+  * </code>
+  */
+(window as any).frontend = {
+	customize(callback: ((corpus: any) => void)) {
+		callback(corpusCustomizations);
+	}
+};
+
 (window as any).printCustomJs = printCustomizations;
 
 export {
@@ -1159,4 +1294,6 @@ export {
 	init,
 
 	namespace,
+
+	corpusCustomizations,
 };

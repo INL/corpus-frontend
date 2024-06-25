@@ -20,6 +20,7 @@
 
 		<HitsTable
 			:query="results.summary.searchParam"
+			:annotatedField="results.summary.pattern?.fieldName || ''"
 			:mainAnnotation="mainAnnotation"
 			:otherAnnotations="shownAnnotationCols"
 			:detailedAnnotations="detailedAnnotations"

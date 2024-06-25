@@ -14,9 +14,17 @@ import { User } from 'oidc-client-ts';
 type API = ReturnType<typeof createEndpoint>;
 
 const endpoints = {
+
+	// Communicates with the BlackLab Server instance
 	blacklab: null as any as API,
+
+	// Communicates with the frontend's own Java backend (which in turn can communicate with BLS)
 	cf: null as any as API,
+
+	//
 	gloss: null as any as API,
+
+	//
 	concept: null as any as API,
 };
 
@@ -26,6 +34,8 @@ export function init(which: keyof typeof endpoints, url: string, user: User|null
 	if (endpoints[which]) throw new Error(`Endpoint ${which} already initialized`);
 	const headers = {};
 	if (user) {
+		// Authorization header must be re-created on each request, as the token might have changed
+		// So wrap in a getter
 		Object.defineProperty(headers, 'Authorization', {
 			get() { return `Bearer ${user.access_token}`; },
 			enumerable: true,
@@ -35,8 +45,6 @@ export function init(which: keyof typeof endpoints, url: string, user: User|null
 	endpoints[which] = createEndpoint({
 		baseURL: url.replace(/\/*$/, '/'),
 		paramsSerializer: params => qs.stringify(params),
-		// Authorization header must be re-created on each request, as the token might have changed
-		// So wrap in a getter
 		headers
 	});
 }
@@ -81,6 +89,7 @@ export const blacklabPaths = {
 	docs: (indexId: string) =>                      `${indexId}/docs/`,
 	docsCsv: (indexId: string) =>                   `${indexId}/docs-csv/`,
 	snippet: (indexId: string, docId: string) =>    `${indexId}/docs/${docId}/snippet/`,
+	parsePattern: (indexId: string) =>              `${indexId}/parse-pattern/`,
 
 	// Is used outside the axios endpoint we created above, so prefix with the correct location
 	autocompleteAnnotation: (
@@ -211,6 +220,18 @@ export const blacklab = {
 	getRelations: (indexId: string, requestParameters?: AxiosRequestConfig) => endpoints.blacklab
 		.get<BLTypes.BLRelationInfo>(blacklabPaths.relations(indexId), undefined, requestParameters),
 
+	getParsePattern: (indexId: string, pattern: string, requestParameters?: AxiosRequestConfig) => {
+		let request: Promise<{ parsed: { bcql: string, json: any } }>;
+		if (!indexId) {
+			request = Promise.reject(new ApiError('Error', 'No index specified.', 'Internal error', undefined));
+		} else if (!pattern) {
+			request = Promise.reject(new ApiError('Info', 'Cannot parse without pattern.', 'No results', undefined));
+		} else {
+			request = endpoints.blacklab.getOrPost(blacklabPaths.parsePattern(indexId), { patt: pattern }, { ...requestParameters });
+		}
+		return request;
+	},
+
 	getHits: (indexId: string, params: BLTypes.BLSearchParameters, requestParameters?: AxiosRequestConfig) => {
 		const {token: cancelToken, cancel} = axios.CancelToken.source();
 
@@ -323,12 +344,13 @@ export const blacklab = {
 	 * @param requestParameters
 	 * @returns
 	 */
-	getSnippet: (indexId: string, docId: string, hitstart: number, hitend: number, context?: string|number, requestParameters?: AxiosRequestConfig) => {
+	getSnippet: (indexId: string, docId: string, field: string, hitstart: number, hitend: number, context?: string|number, requestParameters?: AxiosRequestConfig) => {
 		// TODO check if the snippet is still weird.
 		return endpoints.blacklab.getOrPost<BLTypes.BLHit>(blacklabPaths.snippet(indexId, docId), {
 			hitstart,
 			hitend,
-			context
+			context,
+			field,
 		}, requestParameters)
 		.then<BLTypes.BLHit>(r => {
 			if (!r.left) r.left = Object.entries(r.match).reduce((acc, [key, value]) => { acc[key] = []; return acc; }, {} as BLTypes.BLHitSnippetPart);
@@ -357,6 +379,9 @@ export const blacklab = {
 	},
 };
 
+/**
+ * API for corpus-frontend's own webservice
+ */
 export const frontend = {
 	getCorpus: () => endpoints.cf.get<BLTypes.BLIndexMetadata>(frontendPaths.indexInfo()),
 

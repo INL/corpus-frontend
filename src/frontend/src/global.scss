@@ -277,7 +277,7 @@ ul.nav-tabs.cf-panel-tab-header {
 	border-top: 1px solid #ddd;
 }
 
-tr.interactable {
+tr.interactable, tbody.interactable {
 	cursor: pointer;
 
 	&:hover,

@@ -1,4 +1,8 @@
 {
+	"widgets": {
+		"learnMore": "Learn more",
+		"clickToRemove": "Click to remove"
+	},
 	"search": {
 		"heading": "搜索方式",
 		"simple": {
@@ -31,6 +35,15 @@
 			"gapFilling": "替换分隔符",
 			"gapFillingTitle": "上传以制表符分隔的值列表以替换查询中的分隔符（即查询中的'@@'）",
 			"clearGapValues": "清除分割"
+		},
+		"parallel": {
+			"alignBy": "Align by",
+			"inSourceVersion": "in source version",
+			"queryFor": "Query for",
+			"sourceVersion": "source version",
+			"targetVersion": "target version",
+			"andCompareWithTargetVersions": "and compare with target version(s)",
+			"addTargetVersion": "Add a target version"
 		}
 	},
 	"filter": {

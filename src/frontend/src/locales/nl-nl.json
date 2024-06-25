@@ -1,4 +1,8 @@
 {
+	"widgets": {
+		"learnMore": "Meer informatie",
+		"clickToRemove": "Klik om te verwijderen"
+	},
 	"search": {
 		"heading": "Zoeken naar ...",
 		"simple": {
@@ -31,6 +35,15 @@
 			"gapFilling": "Gap-filling",
 			"gapFillingTitle": "Upload a tab-separated list of values to substitute for gap values ('@@' in your query).",
 			"clearGapValues": "Gap-waarden wissen"
+		},
+		"parallel": {
+			"alignBy": "Aligneer op",
+			"inSourceVersion": "in bronversie",
+			"andCompareWithTargetVersions": "en vergelijk met doelversie(s)",
+			"sourceVersion": "Bronversie",
+			"targetVersion": "Doelversie",
+			"chooseTargetVersion": "Kies een doelversie",
+			"addTargetVersion": "Voeg nog een doelversie toe"
 		}
 	},
 	"filter": {

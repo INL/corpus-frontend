@@ -1,4 +1,8 @@
 {
+	"widgets": {
+		"learnMore": "Learn more",
+		"clickToRemove": "Click to remove"
+	},
 	"search": {
 		"heading": "Search for …",
 		"simple": {
@@ -31,6 +35,15 @@
 			"gapFilling": "Gap-filling",
 			"gapFillingTitle": "Upload a tab-separated list of values to substitute for gap values ('@@' in your query).",
 			"clearGapValues": "Clear gap values"
+		},
+		"parallel": {
+			"alignBy": "Align by",
+			"inSourceVersion": "in source version",
+			"andCompareWithTargetVersions": "and compare with target version(s)",
+			"queryForSourceVersion": "Query for source version",
+			"queryForTargetVersion": "Query for target version",
+			"chooseTargetVersion": "Choose a target version",
+			"addTargetVersion": "Add another target version"
 		}
 	},
 	"filter": {

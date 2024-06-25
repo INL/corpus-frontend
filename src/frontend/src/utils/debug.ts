@@ -19,6 +19,20 @@ export function debugLog(...args: any[]) {
 	}
 }
 
+/** Enable/disable categories of debug messages here, or add '*' to show everything */
+const SHOW_DEBUG_CATEGORIES: string[] = []; // e.g. ['parallel', 'history'];
+
+export function showDebugCat(category: string) {
+	return SHOW_DEBUG_CATEGORIES.indexOf(category) >= 0 || SHOW_DEBUG_CATEGORIES.indexOf('*') >= 0;
+}
+
+/** A debug message in a category that we may want to show or not */
+export function debugLogCat(category: string, message: string) {
+	if (showDebugCat(category)) {
+		debugLog(`[${category}] ${message}`);
+	}
+}
+
 export function enable() {
 	debug.debug = true;
 	for (const argArray of queued) {

@@ -41,6 +41,7 @@ export type Result = {
 	tokens: Token[];
 	/** xml token name excluding namespace, brackets, attributes etc */
 	within?: string;
+	targetVersions?: string[];
 };
 
 const WHITESPACE = [' ', '\t', '\n', '\r'];
@@ -282,6 +283,21 @@ export default function(input: string, defaultAttribute = DEFAULT_ATTRIBUTE): Re
 		return elementName;
 	}
 
+	function parseParallel(): string[] {
+		const targetVersions = [];
+		while (true) {
+			expect('=');
+			expect('=');
+			expect('>');
+			const targetVersion = until(' ').trim(); // This should really be "until anything BUT a-zA-z" but eh
+			targetVersions.push(targetVersion);
+			expect('_');
+			if (!accept([';'])) // another parallel version?
+				break;
+		}
+		return targetVersions;
+	}
+
 	if (typeof input !== 'string' || (input = input.trim()).length === 0) {
 		return {
 			tokens: [],
@@ -293,12 +309,15 @@ export default function(input: string, defaultAttribute = DEFAULT_ATTRIBUTE): Re
 
 	const tokens = [] as Token[];
 	let within: string|undefined;
+	let targetVersions: string[]|undefined;
 
 	// we always start with a token
 	tokens.push(parseToken());
 	while (pos < input.length) {
 		if (test('within')) {
 			within = parseWithin();
+		} else if (test('-')) {
+			targetVersions = parseParallel();
 		} else {
 			tokens.push(parseToken());
 		}
@@ -306,6 +325,7 @@ export default function(input: string, defaultAttribute = DEFAULT_ATTRIBUTE): Re
 
 	return {
 		tokens,
-		within
+		within,
+		targetVersions
 	};
 }

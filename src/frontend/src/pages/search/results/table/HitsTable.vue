@@ -1,5 +1,5 @@
 <template>
-	<table class="hits-table">
+	<table class="hits-table" :class="{ parallel: isParallel }">
 		<thead>
 			<tr class="rounded">
 				<th class="text-right">
@@ -75,50 +75,44 @@
 				<!-- <th v-for="(fieldName, i) in shownGlossCols" :key="i"><a class='sort gloss_field_heading' :title="`User gloss field: ${fieldName}`">{{ fieldName }}</a></th> -->
 			</tr>
 		</thead>
-		<tbody>
-			<template v-for="(h, i) in data">
-				<template v-if="h.type === 'hit'">
-					<HitRow :key="`${i}-hit`"
-						:class="{open: open[i], interactable: !disableDetails && !disabled}"
-						:data="h"
-						:mainAnnotation="mainAnnotation"
-						:otherAnnotations="otherAnnotations"
-						:metadata="metadata"
-						:dir="dir"
-						:html="html"
-						:disabled="disabled"
-						@click.native="!disableDetails && $set(open, i, !open[i])"
-					/>
-
-					<HitRowDetails v-if="!disableDetails" :key="`${i}-details`"
-						:colspan="colspan"
-						:data="h"
-						:open="open[i]"
-						:query="query"
-						:mainAnnotation="mainAnnotation"
-						:detailedAnnotations="detailedAnnotations"
-						:dir="dir"
-						:html="html"
-					/>
-				</template>
-				<DocRow v-else :key="`${i}-doc`"
-					:data="h"
-					:metadata="metadata"
-					:colspan="colspan"
-				/>
-			</template>
-		</tbody>
+		<template v-for="(h, i) in data">
+			<Hit v-if="h.type === 'hit'"
+				:query="query"
+				:annotatedField="annotatedField"
+				:mainAnnotation="mainAnnotation"
+				:otherAnnotations="otherAnnotations"
+				:detailedAnnotations="detailedAnnotations"
+				:metadata="metadata"
+				:dir="dir"
+				:html="html"
+				:disabled="disabled"
+				:disableDetails="disableDetails"
+				:h="h"
+				:i="i"
+				:isParallel="isParallel"
+			/>
+			<DocRow v-else :key="`${i}-doc`"
+				:data="h"
+				:metadata="metadata"
+				:colspan="colspan"
+			/>
+		</template>
 	</table>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
 import { NormalizedAnnotation, NormalizedMetadataField } from '@/types/apptypes';
-import { BLSearchParameters } from '@/types/blacklabtypes';
+import { BLDocInfo, BLHit, BLHitInOtherField, BLHitSnippet, BLMatchInfo, BLMatchInfoRelation, BLSearchParameters } from '@/types/blacklabtypes';
 
+import * as CorpusStore from '@/store/search/corpus';
+import * as QueryStore from '@/store/search/query';
+
+import Hit from '@/pages/search/results/table/Hit.vue';
 import HitRow, {HitRowData} from '@/pages/search/results/table/HitRow.vue'
 import HitRowDetails from '@/pages/search/results/table/HitRowDetails.vue'
 import DocRow, {DocRowData} from '@/pages/search/results/table/DocRow.vue';
+import { getParallelFieldName, getParallelFieldParts, isParallelField } from '@/utils/blacklabutils';
 
 export {HitRowData} from '@/pages/search/results/table/HitRow.vue';
 
@@ -129,11 +123,17 @@ export {HitRowData} from '@/pages/search/results/table/HitRow.vue';
 export default Vue.extend({
 	components: {
 		DocRow,
+		Hit,
 		HitRow,
 		HitRowDetails,
 	},
 	props: {
 		query: Object as () => BLSearchParameters|undefined,
+		/** The field that was searched (for parallel corpora queries, the source field) */
+		annotatedField: {
+			type: String,
+			default: '',
+		},
 		/** Annotation shown in the before/hit/after columns and expanded concordance */
 		mainAnnotation: Object as () => NormalizedAnnotation,
 		/** Optional. Additional annotation columns to show (besides before/hit/after) */
@@ -155,17 +155,20 @@ export default Vue.extend({
 		/** The results */
 		data: Array as () => Array<HitRowData|DocRowData>,
 	},
-	data: () => ({
-		open: {} as Record<string, boolean>
-	}),
 	computed: {
 		// ltr, rtl stuff
 		leftLabel(): string { return this.dir === 'rtl' ? this.$t('results.table.After') as string : this.$t('results.table.Before') as string; },
 		rightLabel(): string { return this.dir === 'rtl' ? this.$t('results.table.Before') as string : this.$t('results.table.After') as string; },
 		beforeField(): string { return this.dir === 'rtl' ? this.$t('results.table.after') as string : this.$t('results.table.before') as string; },
 		afterField(): string { return this.dir === 'rtl' ? this.$t('results.table.before') as string : this.$t('results.table.after') as string; },
+		isParallel(): boolean {
+			return this.data.find(d => d.type === 'hit' && 'otherFields' in d.hit) !== undefined;
+		},
 		colspan(): number {
 			let c = 3; // hit, before, after
+			if (this.isParallel) {
+				c++; // parallel results, show field name in extra column
+			}
 			if (this.otherAnnotations) c += this.otherAnnotations.length;
 			if (this.metadata) c += this.metadata.length;
 			return c;
@@ -175,11 +178,10 @@ export default Vue.extend({
 		changeSort(sort: string) {
 			this.$emit('changeSort', sort)
 		},
-	},
-	watch: {
-		query() {
-			this.open = {};
-		}
+		parallelVersion(fieldName: string): string {
+			const versionName = getParallelFieldParts(fieldName).version || fieldName;
+			return CorpusStore.get.parallelVersions().find(v => v.name === versionName)?.displayName || versionName;
+		},
 	},
 })
 

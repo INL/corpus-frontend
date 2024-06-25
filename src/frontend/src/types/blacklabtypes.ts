@@ -5,7 +5,7 @@ export type BLSearchParameters = {
 	/** Number of results to request */
 	number: number;
 	/** Index of first result to request */
-	first: number;
+	first?: number;
 	/** Percentage of results to return (0-100), mutually exclusive with 'samplenum' */
 	sample?: number;
 	/** Sample up to a flat number of results from the total result set, mutually exclusive with 'sample' */
@@ -18,6 +18,8 @@ export type BLSearchParameters = {
 	filter?: string;
 	/** How to sort results, comma-separated list of field:${someMetadataFieldId} or (wordleft|hit|wordright):${someAnnotationId} */
 	group?: string;
+	/** Parallel corpus source field to search (defaults to main version) */
+	field?: string;
 	/** CQL query */
 	patt?: string;
 	/**
@@ -125,14 +127,7 @@ export interface BLRelationInfo {
 	*/
 	spans?: Record<string, BLSpanInfo>;
 	/** Only when relations have been indexed in this corpus. */
-	relations?: {
-		/** Relations are always stored in a "dep" property for now? */
-		dep: {
-			[relationType: string]: {
-				count: number;
-			}
-		}
-	}
+	relations?: Record<string, Record<string, number>>; // {relClass: {relType: count}}
 }
 
 export interface BLUser {
@@ -505,7 +500,7 @@ export type BLHitSnippet = {
 }
 
 /** When tagging part of the query like a:[] returns the start and end of the part labelled with the 'a' (so in this case, the []) */
-export interface BLRelationMatchSpan {
+export interface BLMatchInfoSpan {
 	/** When tagging part of the query like a:[] returns the start and end of the part labelled with the 'a' (so in this case, the []) */
 	type: 'span';
 	start: number;
@@ -513,7 +508,7 @@ export interface BLRelationMatchSpan {
 }
 
 /** Something like "within <s/>". Represents the start and end of the span surrounded with the <s/>. */
-export interface BLRelationMatchTag {
+export interface BLMatchInfoTag {
 	/** Something like "within <s/>". Represents the start and end of the span surrounded with the <s/>. */
 	type: 'tag';
 	start: number;
@@ -521,7 +516,7 @@ export interface BLRelationMatchTag {
 }
 
 /** Represents the info captured by an arrow in the query (-->, ==>). So the source, target, and value. */
-export interface BLRelationMatchRelation {
+export interface BLMatchInfoRelation {
 	/** Represents the info captured by an arrow in the query (-->, ==>). So the source, target, and value. */
 	type: 'relation';
 	/**
@@ -541,6 +536,8 @@ export interface BLRelationMatchRelation {
 	targetStart: number;
 	/** Exclusive index */
 	targetEnd: number;
+	/** Target field, if different from source field */
+	targetField?: string;
 
 	/** Smallest of sourceStart and targetStart */
 	start: number;
@@ -553,7 +550,7 @@ export interface BLRelationMatchRelation {
  * The infos will contain a multitude of RelationMatchRelation objects, each representing a relation between two tokens within the span.
  * The start and end of the entirity of the span are also included.
  */
-export interface BLRelationMatchList {
+export interface BLMatchInfoList {
 	/**
 	 * Usually when requesting all relations within a tag (with query parameter "context=s" when corpus contains <s/> tags for example)
 	 * The infos will contain a multitude of RelationMatchRelation objects, each representing a relation between two tokens within the span.
@@ -561,11 +558,16 @@ export interface BLRelationMatchList {
 	type: 'list';
 	start: number;
 	end: number;
-	infos: Array<BLRelationMatchRelation>
+	infos: Array<BLMatchInfoRelation>
 }
 
-export type BLHit = BLHitSnippet&{
-	docPid: string;
+export type BLMatchInfo = BLMatchInfoSpan|BLMatchInfoRelation|BLMatchInfoTag|BLMatchInfoList;
+
+/** A subset of a BLHit, returned in otherFields hits
+ *  (hits in other annotated fields, i.e. in parallel corpora)
+ *  (these don't repeat docPid, and can't have otherFields themselves).
+ */
+export type BLHitInOtherField = BLHitSnippet&{ // (otherFields hits don't repeat the docPid)
 	start: number;
 	end: number;
 	/**
@@ -585,9 +587,15 @@ export type BLHit = BLHitSnippet&{
 	 *    end: 27
 	 *  }
 	 */
-	matchInfos?: {
-		context_rels?: BLRelationMatchList;
-	}&Record<string, BLRelationMatchSpan|BLRelationMatchRelation|BLRelationMatchTag>
+	matchInfos?: Record<string, BLMatchInfo>;
+};
+
+/** A hit in the BlackLab hits response.
+ *  (based on BLHitInOtherField which is in turn based on BLHitSnippet)
+ */
+export type BLHit = BLHitInOtherField&{
+	docPid: string;
+	otherFields?: Record<string, BLHitInOtherField>; // parallel corpus: aligned hits in other (requested) versions
 };
 
 /** Contains occurance counts of terms in the index */

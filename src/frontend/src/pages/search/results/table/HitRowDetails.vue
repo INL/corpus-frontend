@@ -45,10 +45,16 @@
 							/>
 						</template>
 
-						<HitContextComponent tag="span" :dir="dir" :data="context" :html="html" :annotation="mainAnnotation.id" before/>
-						<HitContextComponent tag="span" :dir="dir" :data="context" :html="html" :annotation="mainAnnotation.id" bold/>
+						<HitContextComponent tag="span" :dir="dir" :data="context" :html="html" :annotation="mainAnnotation.id" before
+							:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+							@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
+						<HitContextComponent tag="strong" :dir="dir" :data="context" :html="html" :annotation="mainAnnotation.id" bold
+							:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+							@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
 						<a v-if="href" :href="href" title="Go to hit in document" target="_blank"><sup class="fa fa-link" style="margin-left: -5px;"></sup></a>
-						<HitContextComponent tag="span" :dir="dir" :data="context" :html="html" :annotation="mainAnnotation.id" after/>
+						<HitContextComponent tag="span" :dir="dir" :data="context" :html="html" :annotation="mainAnnotation.id" after
+							:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+							@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
 					</p>
 					<table v-if="detailedAnnotations?.length" class="concordance-details-table">
 						<thead>
@@ -60,7 +66,9 @@
 						<tbody>
 							<tr v-for="(annot, index) in detailedAnnotations" :key="annot.id">
 								<th>{{annot.displayName}}</th>
-								<HitContextComponent v-for="(token, ti) in context.match" tag="td" :data="{match: [token]}" :html="html" :dir="dir" :key="annot.id + ti" :punct="false" :highlight="false" :annotation="annot.id"/>
+								<HitContextComponent v-for="(token, ti) in context.match" tag="td" :data="{match: [token]}" :html="html" :dir="dir" :key="annot.id + ti" :punct="false" :highlight="false" :annotation="annot.id"
+								:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+								@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
 							</tr>
 						</tbody>
 					</table>
@@ -103,6 +111,10 @@ export default Vue.extend({
 		data: Object as () => HitRowData,
 		query: Object as () => BLTypes.BLSearchParameters|undefined,
 
+		annotatedField: {
+			type: String,
+			default: '',
+		},
 		mainAnnotation: Object as () => NormalizedAnnotation,
 		detailedAnnotations: Array as () => NormalizedAnnotation[]|undefined,
 
@@ -111,6 +123,13 @@ export default Vue.extend({
 		dir: String as () => 'ltr'|'rtl',
 
 		open: Boolean,
+
+		// which match infos (capture/relation) should be highlighted because we're hovering over a token? (parallel corpora)
+		hoverMatchInfos: {
+			type: Array as () => string[],
+			default: () => [],
+		},
+		isParallel: { default: false },
 
 	},
 	data: () => ({
@@ -159,6 +178,7 @@ export default Vue.extend({
 			Api.blacklab.getSnippet(
 				INDEX_ID,
 				this.data.doc.docPid,
+				this.annotatedField,
 				this.data.hit.start,
 				this.data.hit.end,
 				context
@@ -182,7 +202,7 @@ export default Vue.extend({
 			const concordanceSize = UIStore.getState().results.shared.concordanceSize;
 
 			Api.blacklab
-			.getSnippet(INDEX_ID, this.data.doc.docPid, this.data.hit.start, this.data.hit.end, concordanceSize)
+			.getSnippet(INDEX_ID, this.data.doc.docPid, this.annotatedField, this.data.hit.start, this.data.hit.end, concordanceSize)
 			.then(s => {
 				transformSnippets?.(s);
 

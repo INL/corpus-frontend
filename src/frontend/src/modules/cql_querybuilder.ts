@@ -5,7 +5,7 @@ import 'jquery-ui/ui/widgets/sortable';
 import $ from 'jquery';
 import * as Mustache from 'mustache';
 
-import parseCql, {BinaryOp as CQLBinaryOp, Attribute as CQLAttribute, DEFAULT_ATTRIBUTE} from '@/utils/cqlparser';
+import {parseBcql, BinaryOp as CQLBinaryOp, Attribute as CQLAttribute, Result} from '@/utils/bcql-json-interpreter';
 import {debugLog} from '@/utils/debug';
 
 import {RecursivePartial} from '@/types/helpers';
@@ -92,7 +92,7 @@ const templates = {
 			withinSelect: `
 				{{#withinSelectOptions.0}}
 				<label>Within:</label>
-				<div class="btn-group bl-within-select clearfix" data-toggle="buttons" id="within_select" style="display:block;">
+				<div class="btn-group bl-within-select clearfix" data-toggle="buttons" style="display:block;">
 				{{/withinSelectOptions.0}}
 					{{#withinSelectOptions}}
 						<label class="btn btn-default">
@@ -447,7 +447,7 @@ export class QueryBuilder {
 		this.element = $rootElement;
 		this.createTokenButton = $rootElement.find('.bl-token-create');
 		this.modalEditor = this.element.find('.bl-modal-editor');
-		this.withinSelect = this.element.find('#within_select');
+		this.withinSelect = this.element.find('.bl-within-select');
 
 		this.createTokenButton.click();
 	}
@@ -478,7 +478,7 @@ export class QueryBuilder {
 		});
 
 		$element.find('.bl-token-create').on('click', this.createToken.bind(this));
-		$element.find('#within_select')
+		$element.find('.bl-within-select')
 			.on('change', function() { $element.trigger('cql:modified'); })
 			.find('input').first().attr('checked', 'checked')
 			.parent().addClass('active');
@@ -536,8 +536,26 @@ export class QueryBuilder {
 		this.withinSelect.find('input').first().parent().button('toggle');
 	}
 
-	public parse(cql: string|null): boolean {
-		return populateQueryBuilder(this, cql);
+	public async parse(cql: string|null): Promise<boolean> {
+		if (cql === null) {
+			this.reset();
+			return true;
+		} else if (!cql) {
+			return false;
+		}
+
+		try {
+			const parallelQueries = (await parseBcql(INDEX_ID, cql, this.settings.attribute.view.defaultAttribute));
+			if (parallelQueries.length !== 1) {
+				debugLog('Cql parser could not decode query pattern', cql);
+				return false;
+			}
+			return populateQueryBuilder(this, parallelQueries[0]);
+		} catch (e) {
+			// couldn't decode query
+			debugLog('Cql parser could not decode query pattern', e, cql);
+			return false;
+		}
 	}
 }
 
@@ -548,9 +566,9 @@ export class QueryBuilder {
 export class Token {
 	public readonly id = generateId('token');
 	private readonly idSelector = '#' + this.id;
-	public readonly element;  
-	private readonly $controls; 
-	public readonly rootAttributeGroup; 
+	public readonly element;
+	private readonly $controls;
+	public readonly rootAttributeGroup;
 
 	constructor(private readonly builder: QueryBuilder) {
 		this.element = this._createElement();
@@ -637,9 +655,9 @@ export class Token {
 			outputParts.push('<s> ');
 		}
 
-		outputParts.push('[ ');
+		outputParts.push('[');
 		outputParts.push(this.rootAttributeGroup.getCql());
-		outputParts.push(' ]');
+		outputParts.push(']');
 
 		if (!isNaN(minRepeats) || !isNaN(maxRepeats)) { // Only output when at least one of them is entered
 			minRepeats = minRepeats || 0;			// Set some default values in case of omitted field
@@ -647,16 +665,26 @@ export class Token {
 
 			if (minRepeats < maxRepeats) {
 				if (maxRepeats !== Infinity) { // infinite is empty field instead of max value
-					outputParts.push('{'+minRepeats+','+maxRepeats+'}');
+					if (minRepeats === 0 && maxRepeats === 1) {
+						outputParts.push('?');
+					} else {
+						outputParts.push('{'+minRepeats+','+maxRepeats+'}');
+					}
 				} else {
-					outputParts.push('{'+minRepeats+', }');
+					if (minRepeats === 0) {
+						outputParts.push('*');
+					} else if (minRepeats === 1) {
+						outputParts.push('+');
+					} else {
+						outputParts.push('{'+minRepeats+',}');
+					}
 				}
 			} else if (minRepeats === maxRepeats && minRepeats !== 1) { // 1 is the default so if min == max == 1 then we don't need to do anything
 				outputParts.push('{'+minRepeats+'}');
 			}
 		}
 
-		if (optional) {
+		if (optional && minRepeats !== 0) {
 			outputParts.push('?');
 		}
 
@@ -852,6 +880,8 @@ export class AttributeGroup {
 
 		this.element.children('.bl-token-attribute, .bl-token-attribute-group').each(function(index, element) {
 			const instance = $(element).data('attributeGroup') || $(element).data('attribute');
+			if (!instance)
+				console.error('AttributeGroup.getCql: element has no data-attributeGroup or data-attribute', element);
 			const elemCql = instance.getCql();
 
 			if (elemCql && elemCql !== '') { // Do not push null, undefined or empty strings
@@ -1193,25 +1223,35 @@ function getOperatorLabel(builder: QueryBuilder, operator: string) {
 }
 
 /**
+ * Parse the query pattern and update the query builders to match it.
+ *
+ * @param {string} queryBuilders - array of query builders
+ * @param {string} pattern - parsed queries (only one unless it is a parallel query)
+ * @returns True or false indicating success or failure respectively
+ */
+function populateQueryBuilders(queryBuilders: QueryBuilder[], parallelQueries: Result[]): boolean {
+	let success = true;
+	parallelQueries.forEach((parsedCql, i) => {
+		const queryBuilder = queryBuilders[i];
+		success = populateQueryBuilder(queryBuilder, parsedCql) && success;
+	});
+
+	return success;
+}
+
+/**
  * Attempt to parse the query pattern and update the state of the query builder
  * to match it as much as possible.
  *
- * @param {string} pattern - cql query
+ * @param {QueryBuilder} queryBuilder - query builder to populate
+ * @param {string} parsedCql - parsed BCQL query
  * @returns True or false indicating success or failure respectively
  */
-function populateQueryBuilder(queryBuilder: QueryBuilder, pattern: string|null|undefined): boolean {
-	if (pattern == null) {
-		queryBuilder.reset();
-		return true;
-	} else if (!pattern) {
-		return false;
-	}
-
+function populateQueryBuilder(queryBuilder: QueryBuilder, parsedCql: Result): boolean {
 	try {
-		const parsedCql = parseCql(pattern, queryBuilder.settings.attribute.view.defaultAttribute);
 		const tokens = parsedCql.tokens;
 		const within = parsedCql.within;
-		if (tokens === null) {
+		if (tokens === undefined) {
 			return false;
 		}
 
@@ -1298,7 +1338,7 @@ function populateQueryBuilder(queryBuilder: QueryBuilder, pattern: string|null|u
 		});
 	} catch (e) {
 		// couldn't decode query
-		debugLog('Cql parser could not decode query pattern', e, pattern);
+		debugLog('Cql parser could not decode query pattern', e, parsedCql);
 
 		return false;
 	}

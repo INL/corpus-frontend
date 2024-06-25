@@ -37,80 +37,7 @@ import { init as initApi } from '@/api';
 import i18n from '@/utils/i18n';
 
 import '@/global.scss';
-
-
-// Init the querybuilder with the supported attributes/properties
-function initQueryBuilder() {
-	debugLog('Begin initializing querybuilder');
-
-
-	const first = getAnnotationSubset(
-		UIStore.getState().search.advanced.searchAnnotationIds,
-		CorpusStore.get.annotationGroups(),
-		CorpusStore.get.allAnnotationsMap(),
-		'Search',
-		CorpusStore.get.textDirection(),
-		debug.debug
-	);
-
-	const annotationGroups = first.map(g => ({
-		groupname: g.label!,
-		options: g.entries.map<QueryBuilderAttributeDef>((annot, i) => ({
-			attribute: annot.id,
-			caseSensitive: annot.caseSensitive,
-			label: (g.options[i] as Option).label!,
-			textDirection: CorpusStore.get.textDirection(),
-			values: annot.values
-		}))
-	}));
-
-	const withinOptions = UIStore.getState().search.shared.within.elements;
-	// Initialize configuration
-	const instance = new QueryBuilder($('#querybuilder'), {
-		queryBuilder: {
-			view: {
-				withinSelectOptions: withinOptions
-			}
-		},
-		attribute: {
-			view: {
-				// Pass the available properties of tokens in this corpus (PoS, Lemma, Word, etc..) to the querybuilder
-				attributes: annotationGroups.length > 1 ? annotationGroups : annotationGroups.flatMap(g => g.options),
-				defaultAttribute: UIStore.getState().search.advanced.defaultSearchAnnotationId
-			}
-		}
-	});
-
-	// Set initial value
-	let lastPattern: PatternStore.ModuleRootState['advanced'] = null;
-	if (PatternStore.getState().advanced == null) {
-		// not initialized in store, set to default from querybuilder
-		lastPattern = instance.getCql();
-		PatternStore.actions.advanced(lastPattern);
-	} else {
-		// already something in store - copy to querybuilder.
-		lastPattern = PatternStore.getState().advanced;
-		if (!instance.parse(lastPattern)) {
-			// Apparently it's invalid? reset to default.
-			PatternStore.actions.advanced(instance.getCql());
-		}
-	}
-
-	// Enable two-way binding.
-	RootStore.store.watch(state => state.patterns.advanced, v => {
-		if (v !== lastPattern) {
-			lastPattern = v;
-			instance.parse(v);
-		}
-	});
-	instance.element.on('cql:modified', () => {
-		const pattern = instance.getCql();
-		lastPattern = pattern;
-		PatternStore.actions.advanced(pattern);
-	});
-
-	debugLog('Finished initializing querybuilder');
-}
+import { initQueryBuilders } from '@/initQueryBuilders';
 
 // --------------
 // Initialize vue
@@ -194,11 +121,11 @@ $(document).ready(async () => {
 			if (!success) {
 				return;
 			}
-			const stateFromUrl = new UrlStateParser(FilterStore.getState().filters).get();
+			const stateFromUrl = await new UrlStateParser(FilterStore.getState().filters).get();
 			RootStore.actions.replace(stateFromUrl);
 			// Don't do this before the url is parsed, as it controls the page url (among other things derived from the state).
 			connectStreamsToVuex();
-			initQueryBuilder();
+			initQueryBuilders();
 		},
 	}).$mount(document.querySelector('#vue-root')!);
 });

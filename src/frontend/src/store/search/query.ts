@@ -29,6 +29,7 @@ import * as PatternModule from '@/store/search/form/patterns';
 import * as FilterModule from '@/store/search/form/filters';
 import * as ExploreModule from '@/store/search/form/explore';
 import * as GapModule from '@/store/search/form/gap';
+import * as UIModule from '@/store/search/ui';
 import { getFilterSummary, getFilterString } from '@/components/filters/filterValueFunctions';
 import { getPatternStringExplore, getPatternStringSearch, getPatternSummaryExplore, getPatternSummarySearch } from '@/utils';
 
@@ -42,6 +43,7 @@ type ModuleRootStateSearch<K extends keyof PatternModule.ModuleRootState> = {
 	subForm: K;
 
 	formState: PatternModule.ModuleRootState[K];
+	parallelVersions: PatternModule.ModuleRootState['parallelVersions'];
 	filters: FilterModule.ModuleRootState;
 	gap: GapModule.ModuleRootState;
 };
@@ -51,6 +53,7 @@ type ModuleRootStateExplore<K extends keyof ExploreModule.ModuleRootState> = {
 	subForm: K;
 
 	formState: ExploreModule.ModuleRootState[K];
+	parallelVersions: PatternModule.ModuleRootState['parallelVersions'];
 	filters: FilterModule.ModuleRootState;
 	gap: GapModule.ModuleRootState;
 };
@@ -59,6 +62,7 @@ type ModuleRootStateNone = {
 	form: null;
 	subForm: null;
 	formState: null;
+	parallelVersions: null;
 	filters: null;
 	gap: null;
 };
@@ -69,6 +73,7 @@ const initialState: ModuleRootStateNone = {
 	form: null,
 	subForm: null,
 	formState: null,
+	parallelVersions: null,
 	filters: null,
 	gap: null
 };
@@ -78,17 +83,44 @@ const b = getStoreBuilder<RootState>().module<ModuleRootState>(namespace, Object
 const getState = b.state();
 
 const get = {
-	patternString: b.read((state): string|undefined =>
-		state.form === 'search' ? getPatternStringSearch(state.subForm, {[state.subForm]: state.formState} as any /** egh, feel free to refactor */, CorpusModule.get.allAnnotationsMap()) :
-		state.form === 'explore' ? getPatternStringExplore(state.subForm, {[state.subForm]: state.formState} as any /** egh, feel free to refactor */, CorpusModule.get.allAnnotationsMap()) :
-		undefined,
+	annotatedFieldName: b.read((state): string|undefined => {
+		if (!state.form) { return undefined; }
+		if (state.form !== 'explore') {
+			return (state as ModuleRootStateSearch<keyof PatternModule.ModuleRootState>).parallelVersions.source || undefined;
+		}
+		return CorpusModule.get.mainAnnotatedField();
+	}, 'annotatedFieldName'),
+	patternString: b.read((state, getters, rootState): string|undefined => {
+		const formState = {
+			[state.subForm as string]: state.formState,
+			parallelVersions: state.parallelVersions,
+		} as any; /** egh, feel free to refactor */
+		const annotations = CorpusModule.get.allAnnotationsMap();
+		switch (state.form) {
+		case 'search':
+			return getPatternStringSearch(state.subForm, formState, rootState.ui.search.shared.alignBy.defaultValue);
+		case 'explore':
+			return getPatternStringExplore(state.subForm, formState, annotations);
+		default:
+			return undefined;
+		}
+	},
 	'patternString'),
 	/** Human-readable version of the query for use in history, summaries, etc. */
-	patternSummary: b.read((state): string|undefined =>
-		state.form === 'search' ? getPatternSummarySearch(state.subForm, {[state.subForm]: state.formState} as any /** egh, feel free to refactor */) :
-		state.form === 'explore' ? getPatternSummaryExplore(state.subForm, {[state.subForm]: state.formState} as any /** egh, feel free to refactor */, CorpusModule.get.allAnnotationsMap()) :
-		undefined,
-	'patternSummary'),
+	patternSummary: b.read((state, getters, rootState): string|undefined => {
+		const formState = {
+			[state.subForm as string]: state.formState,
+			parallelVersions: state.parallelVersions,
+		} as any; /** egh, feel free to refactor */
+		switch (state.form) {
+		case 'search':
+			return getPatternSummarySearch(state.subForm, formState, rootState.ui.search.shared.alignBy.defaultValue);
+		case 'explore':
+			return getPatternSummaryExplore(state.subForm, formState, CorpusModule.get.allAnnotationsMap());
+		default:
+			return undefined;
+		}
+	}, 'patternSummary'),
 	filterString: b.read((state): string|undefined => {
 		if (!state.form) { return undefined; }
 		return getFilterString(Object.values(state.filters).sort((a, b) => a.id.localeCompare(b.id)));

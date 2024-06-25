@@ -1,18 +1,23 @@
-import { BLHit, BLHitSnippet, BLHitSnippetPart, BLRelationMatchList, BLRelationMatchRelation, BLRelationMatchSpan, BLSearchSummary, BLSearchSummaryTotalsHits } from '@/types/blacklabtypes';
+import { BLHit, BLHitSnippet, BLHitSnippetPart, BLMatchInfoList, BLMatchInfoRelation, BLMatchInfoSpan, BLSearchSummary, BLSearchSummaryTotalsHits } from '@/types/blacklabtypes';
 import { CaptureAndRelation, HitContext, HitToken, TokenHighlight } from '@/types/apptypes';
 import { mapReduce } from '@/utils';
+import { corpusCustomizations } from '@/store/search/ui';
 
 /** Part of a hit/context to highlight, with a label, display and boolean whether it's a relation or a section of the query/result labelled by the user. */
-type HighlightSection = {
+export type HighlightSection = {
 	/** -1 for root */
 	sourceStart: number;
 	/** -1 for root */
 	sourceEnd: number;
 	targetStart: number;
 	targetEnd: number;
+	targetField?: string;
 
 	/** True if this is a relation, false if this is a capture group */
 	isRelation: boolean;
+
+	/** Should this be permanently higlighted? (if not, may still be hoverable if this is a parallel corpus) */
+	showHighlight: boolean;
 
 	/**
 	 * Key of this info as reported by BlackLab.
@@ -80,35 +85,38 @@ function flatten(part: BLHitSnippetPart|undefined, annotationId: string, lastPun
 }
 
 
-function mapCaptureList(key: string, list: BLRelationMatchList): HighlightSection[] {
-	return list.infos.map(info => ({
+function mapCaptureList(key: string, list: BLMatchInfoList): HighlightSection[] {
+	return list.infos.map((info, index) => ({
 		...info,
-		isRelation: true,
+		isRelation: info.type === 'relation',
+		showHighlight: true,
 		sourceEnd: info.sourceEnd ?? -1,
 		sourceStart: info.sourceStart ?? -1,
-		key,
+		key: `${key}[${index}]`,
 		display: info.relType,
 	}));
 }
 
-function mapCaptureRelation(key: string, relation: BLRelationMatchRelation): HighlightSection {
+function mapCaptureRelation(key: string, relation: BLMatchInfoRelation): HighlightSection {
 	return {
 		...relation,
 		sourceStart: relation.sourceStart ?? -1,
 		sourceEnd: relation.sourceEnd ?? -1,
 		isRelation: true,
+		showHighlight: true,
 		key,
 		display: relation.relType,
 	};
 }
 
-function mapCaptureSpan(key: string, span: BLRelationMatchSpan): HighlightSection {
+function mapCaptureSpan(key: string, span: BLMatchInfoSpan): HighlightSection {
 	return {
 		sourceEnd: span.end,
 		sourceStart: span.start,
 		targetEnd: span.end,
 		targetStart: span.start,
 		isRelation: false,
+		showHighlight: true,
 		key,
 		display: key,
 	};
@@ -129,22 +137,40 @@ function getHighlightSections(matchInfos: NonNullable<BLHit['matchInfos']>): Hig
 		// This is when we ask BlackLab to explicitly return all relations in the hit,
 		// So ignore that, as we'd be highlighting every word in the sentence if we did.
 		// (this happens when requesting context to display in the UI, for example.)
+		// (NOTE: "captured_rels" is the default capture name for rcap() operations,
+		//        so if the query is "(...SOME_QUERY...) within rcap(<s/>)", the "captured_rels" capture
+		//        will contain all relations in the sentence)
 		if (key === 'captured_rels') return [];
 
+		// A list of relations, such as returned by the ==>TARGETVERSION (parallel alignment) operator
+		// or a call to rcap(). Return the captured relations, but include the list index in the name.
 		if (info.type === 'list') return mapCaptureList(key, info);
+		// A single relation
 		else if (info.type === 'relation') return mapCaptureRelation(key, info);
+		// A span, e.g. an explicit capture.
+		// Set the source and target to the same span so it's the same structure as a relation.
 		else if (info.type === 'span') return mapCaptureSpan(key, info);
 		else return []; // type === 'tag'. We don't care about highlighting stuff in between tags (that would be for example every word in a sentence - not very useful)
 	})
 	// Important that this returns a sorted list, as we assign colors based on the index.
 	.sort((a, b) => a.key.localeCompare(b.key))
 
-	// If there's explicit captures, use only those.
-	// I.E. when the user selects part of the query to highlight, return only those captures.
-	if (interestingCaptures.find(c => !c.isRelation)) {
-		interestingCaptures = interestingCaptures.filter(c => !c.isRelation);
-	}
+	// Allow custom script to determine what to highlight for this hit
+	// (i.e. "do (hover)highlight word alignments, but not verse alignments")
+	const result = corpusCustomizations.results.matchInfosToHighlight(interestingCaptures)
+	if (result !== null)
+		return result;
 
+	// Fall back to default behaviour:
+	// If there's explicit captures, highlight only those.
+	// i.e. when the user selects part of the query to highlight, return only those captures.
+	//
+	// (JN) It might not be obvious to most users why slightly different queries highlight
+	// very different things. Maybe just highlight everything by default..?
+	//
+	if (interestingCaptures.find(c => !c.isRelation)) {
+		return interestingCaptures.map((mi) => ({ ...mi, showHighlight: !mi.isRelation }));
+	}
 	return interestingCaptures;
 }
 
@@ -166,27 +192,45 @@ export function getHighlightColors(summary: BLSearchSummary): Record<string, Tok
  * @returns the hit split into before, match, and after parts, with capture and relation info added to the tokens. The punct is to be shown after the word.
  */
 export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir: 'ltr'|'rtl', colors?: Record<string, TokenHighlight>): HitContext {
+	if (hit === undefined)
+		console.error('hit is undefined');
 	const before = flatten(dir === 'ltr' ? hit.left : hit.right, annotationId, hit.match.punct[0]);
 	const match = flatten(hit.match, annotationId, (dir === 'ltr' ? hit.right : hit.left)?.punct[0]);
 	const after = flatten(dir === 'ltr' ? hit.right : hit.left, annotationId);
 
 	// Only extract captures if have the necessary info to do so.
-	if (!('start' in hit) || !hit.matchInfos || !colors) return {before, match, after};
+	if (!('start' in hit) || !hit.matchInfos || !colors)
+		return { before, match, after };
 
 	const highlights = getHighlightSections(hit.matchInfos);
 
 	/** Return those entries in the highlights array where source/target overlaps with the globalTokenIndex */
 	const findHighlightsByTokenIndex = (globalTokenIndex: number): undefined|CaptureAndRelation[] => highlights.reduce<undefined|CaptureAndRelation[]>((matches, c) => {
 		// first see if we're in the matched area for the capture/relation
-		const isSource = c.sourceStart <= globalTokenIndex && globalTokenIndex < c.sourceEnd;
-		const isTarget = c.targetStart <= globalTokenIndex && globalTokenIndex < c.targetEnd;
-		// we matched, add it to the matches.
+
+		// For cross-field relations in parallel corpora, we want to make sure we only
+		// highlight either source or target. If targetField is '__THIS__', we're the target,
+		// otherwise we're the source.
+		// (for single-field relations, we always want to highlight both source and target)
+		const isCrossFieldRelation = 'targetField' in c;
+		const areWeTarget = !isCrossFieldRelation || c.targetField === '__THIS__';
+		const areWeSource = !isCrossFieldRelation || !areWeTarget;
+
+		const isSource = areWeSource && c.sourceStart <= globalTokenIndex && globalTokenIndex < c.sourceEnd;
+		const isTarget = areWeTarget && c.targetStart <= globalTokenIndex && globalTokenIndex < c.targetEnd;
 		if (isSource || isTarget) {
+			// we matched, add it to the matches.
+			const colorIndex = c.key.replace(/\[\d+\]$/g, '');
 			matches = matches ?? [];
+
+			// "fix" for not having highlight colors in otherFields....
+			const FALLBACK_COLOR = {color: 'black', textcolor: 'white', textcolorcontrast: 'black'};
+
 			matches.push({
 				key: c.key,
 				display: c.isRelation ? (isSource ? c.display + '-->' : /*isTarget*/ '-->' + c.display) : c.display,
-				highlight: colors[c.key],
+				highlight: colors[colorIndex] || FALLBACK_COLOR,
+				showHighlight: c.showHighlight,
 				isSource: c.isRelation && isSource,
 				isTarget: c.isRelation && isTarget
 			});

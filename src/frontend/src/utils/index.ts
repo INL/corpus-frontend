@@ -742,7 +742,7 @@ export function getPatternStringSearch(
 	switch (subForm) {
 		case 'simple':
 			const q = state.simple.annotationValue.value ? [state.simple.annotationValue] : [];
-			return q.length || state.extended.within ?
+			return q.length ?
 				getPatternString(q, null, null, targets, alignBy) :
 				undefined;
 		case 'extended': {

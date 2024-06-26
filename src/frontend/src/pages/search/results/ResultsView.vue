@@ -122,6 +122,7 @@ import debug, { debugLog } from '@/utils/debug';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import { NormalizedIndex } from '@/types/apptypes';
+import { parseGroupBy, serializeGroupBy } from '@/utils/grouping';
 
 export default Vue.extend({
 	components: {
@@ -156,11 +157,6 @@ export default Vue.extend({
 		cancel: null as null|Api.Canceler,
 
 		_viewGroupName: null as string|null,
-
-		downloadInProgress: false, // csv download
-		// exportSummary: false,
-		// exportSeparator: false,
-		// exportHitMetadata: false,
 
 		paginationResults: null as null|BLTypes.BLSearchResult,
 
@@ -226,7 +222,22 @@ export default Vue.extend({
 			this.request
 			.then(
 				r => { if (nonce === this.refreshParameters) this.setSuccess(r)},
-				e => { if (nonce === this.refreshParameters) this.setError(e, !!params.group)}
+				e => {
+					if (nonce === this.refreshParameters) {
+						// This happens when grouping on a capture group that no longer exists.
+						// We can only detect it after trying to do so unfortunately.
+						// (Blacklab does not return the group info when calling the parse query endpoint, so we can't check beforehand.)
+						// We simply remove the offending grouping clause and try again.
+						if (e.title === 'UNKNOWN_MATCH_INFO' && this.groupBy.length > 0) {
+							// remove the group on label.
+							debugLog('grouping failed, clearing groupBy');
+							const okayGroups = parseGroupBy(this.groupBy).filter(g => !(g.type === 'context' && g.context.type === 'label'));
+							const newGroupBy = serializeGroupBy(okayGroups);
+							this.groupBy = newGroupBy;
+						}
+						this.setError(e, !!params.group)
+					}
+				}
 			)
 			.finally(() => this.scrollToResults())
 		},

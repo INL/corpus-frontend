@@ -61,6 +61,7 @@ export type Result = {
 	withinAttributes?: Record<string, string>;
 	targetVersion?: string; // target version for this query, or undefined if this is the source query
 	relationType?: string; // relation type for this (target) query, or undefined if this is the source query
+	optional?: boolean; // whether alignment relation target is optional
 };
 
 function interpretBcqlJson(bcql: string, json: any, defaultAnnotation: string): Result[] {
@@ -266,6 +267,7 @@ function interpretBcqlJson(bcql: string, json: any, defaultAnnotation: string): 
 			..._query(input.clause),
 			targetVersion: input.targetVersion,
 			relationType: input.relType,
+			optional: input.optional,
 		};
 	}
 
@@ -280,7 +282,7 @@ function interpretBcqlJson(bcql: string, json: any, defaultAnnotation: string): 
 
 			// Determine what relationtype we're filtering by
 			// (must all be the same for the query to be interpretable here)
-			const regex = /\s*=([\w\-]*)=>\w+\s*/g;
+			const regex = /\s*=([\w\-]*)=>\w+\??\s*/g;
 			let result, relationType: string|undefined = undefined;
 			while ((result = regex.exec(bcql)) !== null) {
 				const type = result[1] || '';
@@ -289,7 +291,7 @@ function interpretBcqlJson(bcql: string, json: any, defaultAnnotation: string): 
 				relationType = type;
 			}
 
-			const queries = bcql.split(/;?\s*=[\w\-]*=>\w+\s*/); // extract partial queries for advanced/expert view
+			const queries = bcql.split(/;?\s*=[\w\-]*=>\w+\??\s*/); // extract partial queries for advanced/expert view
 			const parent = { ..._query(input.parent), query: queries.shift() };
 			const children: Result[] = input.children.map(_relTarget).map( (r: Result, index: number) => ({
 				...r,

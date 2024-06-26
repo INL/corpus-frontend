@@ -362,7 +362,7 @@ export const getPatternString = (annotations: AppTypes.AnnotationValue[], within
 
 	if (parallelTargetVersions.length > 0) {
 		const relationType = alignBy ?? '';
-		query = `${parenQueryPart(query, ['[]*', '_'])}` + parallelTargetVersions.map(v => ` =${relationType}=>${v} _`).join(' ; ');
+		query = `${parenQueryPart(query, ['[]*', '_'])}` + parallelTargetVersions.map(v => ` =${relationType}=>${v}? _`).join(' ; ');
 	}
 
 	return query || undefined;
@@ -389,7 +389,7 @@ export const getPatternStringFromCql = (sourceCql: string, targetVersions: strin
 	for (let i = 0; i < targetVersions.length; i++) {
 		if (i > 0)
 			queryParts.push(' ; ');
-		queryParts.push(` =${relationType}=>${targetVersions[i].trim()} ${parenQueryPartParallel(targetCql[i].trim() || '_')}`)
+		queryParts.push(` =${relationType}=>${targetVersions[i].trim()}? ${parenQueryPartParallel(targetCql[i].trim() || '_')}`)
 	}
 
 	const query = queryParts.join('');

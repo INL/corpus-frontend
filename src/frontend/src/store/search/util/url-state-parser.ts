@@ -635,8 +635,9 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 				const relType = this._parsedCql[1].relationType;
 				// Check if this is a valid alignBy type
 				const alignBy = UIModule.getState().search.shared.alignBy.elements.find(v => v.value === relType);
-				if (!alignBy) {
-					// Not a valid align by type; just put the whole query in the first expert box
+				const optional = this._parsedCql[1].optional ?? false;
+				if (!alignBy || !optional) {
+					// Not a valid align by type, or a required alignment match; just put the whole query in the first expert box
 					this._parsedCql = [
 						{
 							query: bcql || ''

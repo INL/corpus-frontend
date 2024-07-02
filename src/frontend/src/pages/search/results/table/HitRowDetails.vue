@@ -17,6 +17,7 @@
 
 						<!-- Will not render anything if no relation info is available in the passed hit/sentence. -->
 						<DepTree
+						    v-if="!isParallel"
 							:data="data"
 							:fullSentence="sentenceShown ? sentence : undefined"
 							:mainAnnotation="mainAnnotation.id"
@@ -99,6 +100,7 @@ import * as UIStore from '@/store/search/ui';
 import * as CorpusStore from '@/store/search/corpus';
 import * as Api from '@/api';
 import { debugLog } from '@/utils/debug';
+import { isParallelField } from '@/utils/blacklabutils';
 
 /** TODO disconnect from the store? */
 export default Vue.extend({

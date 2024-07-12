@@ -55,6 +55,8 @@ import * as PatternStore from '@/store/search/form/patterns';
 import SelectPicker, { Option } from '@/components/SelectPicker.vue';
 import MultiValuePicker from '@/components/MultiValuePicker.vue';
 import AlignBy from '@/pages/search/form/AlignBy.vue';
+import { annotatedFieldDisplayName, annotatedFieldOption } from '@/utils/i18n';
+import { getParallelFieldName } from '@/utils/blacklabutils';
 
 export default Vue.extend({
 	components: {
@@ -69,12 +71,17 @@ export default Vue.extend({
 		isParallelCorpus: CorpusStore.get.isParallelCorpus,
 
 		// If this is a parallel corpus: the available source version options (all except chosen targets)
-		parallelSourceVersionOptions: PatternStore.get.parallelSourceVersionOptions,
+		parallelSourceVersionOptions() {
+			const prefix = CorpusStore.get.parallelFieldPrefix();
+			return PatternStore.get.parallelSourceVersionOptions().map(o => annotatedFieldOption(this.$i18n, prefix, o));
+		},
 
 		// If this is a parallel corpus: the available target version options (all except chosen sources and targets)
 		parallelTargetVersionOptions() {
-			return PatternStore.get.parallelTargetVersionOptions().filter(v =>
-				!this.parallelTargetVersions.includes(v.value));
+			const prefix = CorpusStore.get.parallelFieldPrefix();
+			return PatternStore.get.parallelTargetVersionOptions()
+				.filter(v => !this.parallelTargetVersions.includes(v.value))
+				.map(o => annotatedFieldOption(this.$i18n, prefix, o));
 		},
 
 		// If this is a parallel corpus: the currently selected source version
@@ -116,8 +123,13 @@ export default Vue.extend({
 				PatternStore.actions.parallelVersions.addTarget(version);
 		},
 		removeTargetVersion: PatternStore.actions.parallelVersions.removeTarget,
-		versionDisplayName: (version: string): string =>
-			CorpusStore.get.parallelVersionOptions().find(v => v.value === version)?.label || version,
+		versionDisplayName: function (version: string): string {
+			const opt = CorpusStore.get.parallelVersionOptions().find(v => v.value === version);
+			const prefix = CorpusStore.get.parallelFieldPrefix();
+			if (opt)
+				return annotatedFieldDisplayName(this.$i18n, getParallelFieldName(prefix, opt.value), opt.label);
+			return version;
+		},
 	}
 });
 </script>

@@ -1,6 +1,6 @@
 <template>
 
-	<button v-if="!active && !localModel.length" class="btn btn-default btn-secondary btn-sm" type="button" @click="active=true">
+	<button v-if="!active && !addedCriteria.length" class="btn btn-default btn-secondary btn-sm" type="button" @click="active=true">
 		{{$t('results.groupBy.groupResults')}}
 	</button>
 	<div v-else class="panel panel-default">
@@ -9,19 +9,19 @@
 		<div class="group-by">
 			<!-- Group selector/creator container -->
 			<div class="left-sidebar">
-				<div :class="{'two-button-container': true, 'flex-row': localModel.length > 0, 'flex-col': localModel.length === 0}">
+				<div :class="{'two-button-container': true, 'flex-row': addedCriteria.length > 0, 'flex-col': addedCriteria.length === 0}">
 					<button type="button" @click="addAnnotation" class="create-group-btn btn btn-default" v-if="type === 'hits'">+ {{ $t('results.groupBy.annotation') }}</button>
 					<button type="button" @click="addMetadata" class="create-group-btn btn btn-default">+ {{ $t('results.groupBy.metadata') }}</button>
 				</div>
 
 				<!-- list of current groups -->
-				<div v-if="localModel.length" class="groups">
-					<div class="group" v-for="(a, i) in localModel">
+				<div v-if="addedCriteria.length" class="groups">
+					<div class="group" v-for="(a, i) in addedCriteria">
 						<button
 							type="button"
 							:key="i"
-							:class="['btn btn-default group-select-button', currentIndex === i ? 'active' : '']"
-							@click="currentIndex = i;"
+							:class="['btn btn-default group-select-button', selectedCriteriumIndex === i ? 'active' : '']"
+							@click="selectedCriteriumIndex = i;"
 						>
 							<span class="text-primary" style="font-family: monospace;">[{{ a.type === 'metadata' ? 'M' : 'A' }}]</span>
 							<span :class="isEmptyGroup(a) ? 'text-muted' : ''">{{humanized[i]}}</span>
@@ -31,19 +31,27 @@
 					</div>
 				</div>
 
-				<div v-if="localModel.length" style="flex-grow: 1; margin-top: -1px; /*collapse borders between groups and bottom buttons*/"></div>
+				<div v-if="addedCriteria.length" style="flex-grow: 1; margin-top: -1px; /*collapse borders between groups and bottom buttons*/"></div>
 
 				<!-- clear/apply -->
-				<div class="two-button-container flex-row" v-if="localModel.length">
+				<div class="two-button-container flex-row" v-if="addedCriteria.length">
 					<button class="btn btn-primary" @click="apply">{{ $t('results.groupBy.apply') }}</button>
 					<button class="btn btn-default" @click="clear">{{ $t('results.groupBy.clear') }}</button>
 				</div>
 			</div>
 
 			<div class="current-group-editor panel-default">
-				<div class="content" v-if="current">
-					<template v-if="current.type === 'context'">
+				<div class="content" v-if="selectedCriterium">
+					<template v-if="selectedCriterium.type === 'context'">
 						<div class="content">
+							<span v-if="isParallel">{{ $t('results.groupBy.parallelCorpusVersion') }}</span>
+							<SelectPicker v-if="isParallel"
+									:options="parallelVersionOptions"
+									v-model="targetField"
+									allowUnknownValues
+									data-width="auto"
+									data-menu-width="auto"
+									hideEmpty />
 							<i18n path="results.groupBy.iWantToGroupOnAnnotation" tag="div">
 								<!-- allow unknown values here. If grouping on a capture group/relation, they're not always available immediately (we need the first hit to decode them). -->
 								<template #some_words><SelectPicker
@@ -58,7 +66,7 @@
 								<!-- Specific layout, we want to hide the selectpicker, but there might be surrounding text that also needs to be hidden... -->
 								<template #in_this_location_with_text>
 									<!-- if not grouping on a label but on a specific position, then show the position picker. -->
-									<i18n v-if="currentAsPositional" path="results.groupBy.in_this_location_with_text">
+									<i18n v-if="selectedCriteriumAsPositional" path="results.groupBy.in_this_location_with_text">
 										<template #in_this_location> <!-- doesn't seem to work if we don't wrap the selectpicker in a template. -->
 											<SelectPicker
 												v-model="positionValue"
@@ -79,7 +87,7 @@
 									searchable
 									hideEmpty
 									:options="annotations"
-									v-model="current.annotation"
+									v-model="selectedCriterium.annotation"
 								/></template>
 							</i18n>
 
@@ -87,20 +95,20 @@
 							<form class="case-and-context">
 								<div class="labels">
 									<label for="group-case-sensitive">{{ $t('results.groupBy.caseSensitive') }}: </label>
-									<label v-if="current.context.type === 'label' && relations?.includes(current.context.label)" for="group-relation">{{ $t('results.groupBy.relationPartLabel') }}:</label>
+									<label v-if="selectedCriterium.context.type === 'label' && relationNames?.includes(selectedCriterium.context.label)" for="group-relation">{{ $t('results.groupBy.relationPartLabel') }}:</label>
 								</div>
 								<div class="inputs">
-									<input id="group-case-sensitive" type="checkbox" v-model="current.caseSensitive">
-									<div v-if="current.context.type === 'label' && relations?.includes(current.context.label)" class="btn-group">
+									<input id="group-case-sensitive" type="checkbox" v-model="selectedCriterium.caseSensitive">
+									<div v-if="selectedCriterium.context.type === 'label' && relationNames?.includes(selectedCriterium.context.label)" class="btn-group">
 										<button type="button"
 											class="btn btn-default btn-sm"
-											:class="{active: current.context.relation === 'target'}"
-											@click="current.context.relation = 'target'"
+											:class="{active: selectedCriterium.context.relation === 'target'}"
+											@click="selectedCriterium.context.relation = 'target'"
 											>{{$t('results.groupBy.relationTarget')}}</button>
 										<button type="button"
 											class="btn btn-default btn-sm"
-											:class="{active: current.context.relation === 'source'}"
-											@click="current.context.relation = 'source'"
+											:class="{active: selectedCriterium.context.relation === 'source'}"
+											@click="selectedCriterium.context.relation = 'source'"
 										>{{$t('results.groupBy.relationSource')}}</button>
 										<!-- Never want to group on things in between source and target of a relation apparently. So don't show this button. -->
 										<!-- <button type="button"
@@ -128,7 +136,7 @@
 							<em class="text-muted" v-if="relations.length + captures.length"><span class="fa fa-exclamation-triangle text-primary"></span> {{$t('results.groupBy.tipClickOnHighlightedWords')}} ⤵</em>
 						</div>
 					</template>
-					<div v-else-if="current.type === 'metadata'" class="content">
+					<div v-else-if="selectedCriterium.type === 'metadata'" class="content">
 						{{ $t('results.groupBy.selectDocumentMetadata') }}<br>
 						<SelectPicker
 							:placeholder="$t('results.groupBy.metadata')"
@@ -136,19 +144,19 @@
 							hideEmpty
 							data-width="auto"
 							data-menu-width="auto"
-							v-model="current.field"
+							v-model="selectedCriterium.field"
 							:options="metadata"
 						/>
 
 						<br>
-						<label><input type="checkbox" v-model="current.caseSensitive"> {{ $t('results.groupBy.caseSensitive') }}</label>
+						<label><input type="checkbox" v-model="selectedCriterium.caseSensitive"> {{ $t('results.groupBy.caseSensitive') }}</label>
 					</div>
-					<div v-else-if="current.type === 'custom'">
-						{{current.value}}
+					<div v-else-if="selectedCriterium.type === 'custom'">
+						{{selectedCriterium.value}}
 					</div>
 				</div>
 				<em v-else class="text-italic h5 text-muted content" style="display: flex; align-items: center; margin: 0; justify-self: center;">{{ $t('results.groupBy.clickButtonsToStart') }}</em>
-				<div v-if="current && current.type === 'context'" class="hit-preview panel-heading">
+				<div v-if="selectedCriterium && selectedCriterium.type === 'context'" class="hit-preview panel-heading">
 					<template v-for="(section, i) of preview">
 						<div v-if="i !== 0" class="separator"></div>
 						<template v-for="({selectedAnnotation, word, punct, active, style}, j) of section">
@@ -203,7 +211,9 @@ import jsonStableStringify from 'json-stable-stringify';
 
 import SelectPicker, { Options } from '@/components/SelectPicker.vue';
 import { getHighlightColors, snippetParts } from '@/utils/hit-highlighting';
-import { CaptureAndRelation, HitToken, TokenHighlight } from '@/types/apptypes';
+import { CaptureAndRelation, HitToken, Option, TokenHighlight } from '@/types/apptypes';
+import { getParallelFieldName } from '@/utils/blacklabutils';
+import { annotatedFieldDisplayName } from '@/utils/i18n';
 
 export default Vue.extend({
 	components: {
@@ -216,11 +226,13 @@ export default Vue.extend({
 		results: Object as () => BLSearchResult|undefined
 	},
 	data: () => ({
-		/** index into localModel that is displayed in the UI */
-		currentIndex: 0,
+		/** The criteria the user has added to group on */
+		addedCriteria: [] as GroupBy[],
+		/** which of the addedCriteria is currently selected (to be edited on the right side) */
+		selectedCriteriumIndex: 0,
+
 		/** micro optimization: whether to skip next parse since the new value came from us anyway. */
 		storeValueUpdateIsOurs: false,
-		localModel: [] as GroupBy[],
 
 		hits: undefined as undefined|BLHitResults,
 
@@ -229,7 +241,6 @@ export default Vue.extend({
 	computed: {
 		storeModule(): ResultsStore.ViewModule { return ResultsStore.getOrCreateModule(this.type); },
 		storeValue(): string[] { return this.storeModule.getState().groupBy; },
-		current(): GroupBy|undefined { return this.localModel[this.currentIndex]; },
 		firstHitPreviewQuery(): BLSearchParameters|undefined {
 			let params = SearchModule.get.blacklabParameters();
 			if (!params || !params.patt) return undefined; // can't get hits without a query
@@ -276,38 +287,92 @@ export default Vue.extend({
 			let params = SearchModule.get.blacklabParameters();
 			if (!params || !params.patt) return 5; // default
 			return typeof params.context === 'number' ? params.context as number :  // use actual value from query if set
-			       typeof GlobalSearchSettingsStore.getState().context === 'number' ? GlobalSearchSettingsStore.getState().context as number :  // use global default if set
-			       5; // use default
+			    (typeof GlobalSearchSettingsStore.getState().context === 'number' ?
+				   	GlobalSearchSettingsStore.getState().context as number :  // use global default if set
+			       	5); // use default
 		},
-		captures(): string[] {
+
+		captures(): { name: string, label: string, targetField: string }[] {
 			const mi = this.hits?.summary?.pattern?.matchInfos;
 			// @ts-ignore
-			return Object.entries(mi|| {}).filter(([k, v]) => v.type === 'span').map(([k,v]) => k)
+			return Object.entries(mi|| {})
+				.filter(([k, v]) => v.type === 'span' && (v.fieldName === this.selectedCriteriumAsPositional?.context.targetField))
+				.map(([k,v]) => {
+					return {
+						name: k,
+						label: k,
+						targetField: v.fieldName ?? '',
+					}
+				});
 		},
-		relations(): string[] {
+		relations() {
 			const mi = this.hits?.summary?.pattern?.matchInfos;
+			const result: { name: string, label: string, targetField: string }[] = [];
 			// @ts-ignore
-			return Object.entries(mi|| {}).filter(([k, v]) => v.type === 'relation').map(([k,v]) => k)
+			Object.entries(mi|| {})
+				.filter(([k, v]) => v.type === 'relation')
+				.forEach(([k,v]: [string, any]) => {
+					if (v.fieldName === this.selectedCriteriumAsPositional?.context.targetField) {
+						result.push({
+							label: k,
+							name: `${k}@source`,
+							targetField: v.fieldName ?? '',
+						});
+					}
+					if (v.targetField === this.selectedCriteriumAsPositional?.context.targetField) {
+						result.push({
+							label: k,
+							name: `${k}@target`,
+							targetField: v.targetField ?? '',
+						});
+					}
+				});
+			return result;
 		},
+		relationNames(): string[] {
+			return this.relations.map(c => c.name);
+		},
+
+		targetField: {
+			get(): string {
+				return this.selectedCriteriumAsPositional?.context.targetField ?? '';
+			},
+			set(v: string) {
+				if (this.selectedCriteriumAsPositional) {
+					this.selectedCriteriumAsPositional.context.targetField = v;
+				}
+			},
+		},
+
 		colors(): Record<string, TokenHighlight> {
 			return this.hits ? getHighlightColors(this.hits.summary) : {};
 		},
 
+		selectedCriterium(): GroupBy|undefined { return this.addedCriteria[this.selectedCriteriumIndex]; },
 		// Some utils to cast the current group to a specific type.
 		// so we can use it in computeds for the template.
-		currentAsLabel(): undefined|GroupByContext<ContextLabel> { if (this.current?.type === 'context' && this.current.context.type === 'label') return this.current as GroupByContext<ContextLabel>; },
-		currentAsPositional(): undefined|GroupByContext<ContextPositional> { if (this.current?.type === 'context' && this.current.context.type === 'positional') return this.current as GroupByContext<ContextPositional>; },
-		currentAsSlider(): undefined|GroupByContext<ContextPositional> { if (this.currentAsPositional?.context.info.type === 'specific') return this.currentAsPositional; },
+		selectedCriteriumAsLabel(): undefined|GroupByContext<ContextLabel> {
+			if (this.selectedCriterium?.type === 'context' && this.selectedCriterium.context.type === 'label')
+				return this.selectedCriterium as GroupByContext<ContextLabel>;
+		},
+		selectedCriteriumAsPositional(): undefined|GroupByContext<ContextPositional> {
+			if (this.selectedCriterium?.type === 'context' && this.selectedCriterium.context.type === 'positional')
+				return this.selectedCriterium as GroupByContext<ContextPositional>;
+		},
+		selectedCriteriumAsSlider(): undefined|GroupByContext<ContextPositional> {
+			if (this.selectedCriteriumAsPositional?.context.info.type === 'specific')
+				return this.selectedCriteriumAsPositional;
+		},
 
-		sliderVisible(): boolean { return !!this.currentAsSlider; },
-		sliderInverted(): boolean { const p = this.currentAsSlider?.context.position; return p === 'E' || p === 'B'; },
+		sliderVisible(): boolean { return !!this.selectedCriteriumAsSlider; },
+		sliderInverted(): boolean { const p = this.selectedCriteriumAsSlider?.context.position; return p === 'E' || p === 'B'; },
 		sliderLabels(): any[] { return Array.from({length: this.contextsize}, (_, i) => i + 1).map(i => ({value: i, label: i})); },
 		sliderValue: {
-			get(): [number, number] { return this.currentAsSlider ? [this.currentAsSlider.context.info.start, this.currentAsSlider.context.info.end] : [1, 1]; },
+			get(): [number, number] { return this.selectedCriteriumAsSlider ? [this.selectedCriteriumAsSlider.context.info.start, this.selectedCriteriumAsSlider.context.info.end] : [1, 1]; },
 			set(v: [number, number]) {
-				if (this.currentAsSlider) {
-					this.currentAsSlider.context.info.start = v[0];
-					this.currentAsSlider.context.info.end = v[1];
+				if (this.selectedCriteriumAsSlider) {
+					this.selectedCriteriumAsSlider.context.info.start = v[0];
+					this.selectedCriteriumAsSlider.context.info.end = v[1];
 				}
 			}
 		},
@@ -320,16 +385,19 @@ export default Vue.extend({
 			style: object;
 			captureAndRelation: CaptureAndRelation[]|undefined;
 		}[][] {
-			if (this.current?.type !== 'context' || !isHitResults(this.hits) || !this.hits.hits.length) return [];
+			if (this.selectedCriterium?.type !== 'context' || !isHitResults(this.hits) || !this.hits.hits.length) return [];
 
 			const wordAnnotation = UIStore.getState().results.shared.concordanceAnnotationId;
 			const firstHit = this.hits.hits[0];
-			const {annotation, context} = this.current;
+			const mainSearchField = this.hits.summary.pattern?.fieldName ?? '';
+			const targetField = this.selectedCriteriumAsPositional?.context.targetField;
+			const hitInField = targetField && targetField.length > 0 && targetField !== mainSearchField && firstHit.otherFields ? firstHit.otherFields[targetField] : firstHit;
+			const {annotation, context} = this.selectedCriterium;
 
-			const snippet = snippetParts(firstHit, wordAnnotation, CorpusStore.get.textDirection(), this.colors)
+			const snippet = snippetParts(hitInField, wordAnnotation, CorpusStore.get.textDirection(), this.colors)
 			const position = context.type === 'positional' ? context.position : undefined;
 
-			// Now extact the indices of the tokens that are active (i.e. being grouped on).
+			// Now extract the indices of the tokens that are active (i.e. being grouped on).
 			// start and end here are INCLUSIVE and 0-indexed. While start + end in the GroupBy object are 1-indexed.
 			// If we're not grouping on a specific word, we'll just show the entire snippet without anything highlighted.
 			let start =  Number.MAX_SAFE_INTEGER;
@@ -354,11 +422,11 @@ export default Vue.extend({
 
 			const isActiveRelationOrCapture = (t: HitToken): boolean => {
 				/** might be null if not grouping on a capture at the moment */
-				const currentlyGroupedOnCaptureOrRelation =  t.captureAndRelation?.find(c => c.key === this.currentAsLabel?.context.label);
+				const currentlyGroupedOnCaptureOrRelation =  t.captureAndRelation?.find(c => c.key === this.selectedCriteriumAsLabel?.context.label);
 				if (!currentlyGroupedOnCaptureOrRelation) return false;
 
-				if (this.currentAsLabel?.context.relation === 'source') { return currentlyGroupedOnCaptureOrRelation.isSource; }
-				else if (this.currentAsLabel?.context.relation === 'target') { return currentlyGroupedOnCaptureOrRelation.isTarget; }
+				if (this.selectedCriteriumAsLabel?.context.relation === 'source') { return currentlyGroupedOnCaptureOrRelation.isSource; }
+				else if (this.selectedCriteriumAsLabel?.context.relation === 'target') { return currentlyGroupedOnCaptureOrRelation.isTarget; }
 				else return true;
 			}
 
@@ -413,80 +481,109 @@ export default Vue.extend({
 				label: this.$t('results.groupBy.some_words.captureGroupsLabel').toString(),
 				options:
 					this.relations.map(c => ({
-						label: `<span class="color-ball" style="background-color: ${this.colors[c].color};">&nbsp;</span> relation ${c}`,
-						value: c
+						label: `<span class="color-ball" style="background-color: ${this.colors[c.label].color};">&nbsp;</span> relation ${c.name}`,
+						value: c.name
 					}))
 					.concat(this.captures.map(c => ({
-						label: `<span class="color-ball" style="background-color: ${this.colors[c].color};">&nbsp;</span> capture ${c}`,
-						value: c
+						label: `<span class="color-ball" style="background-color: ${this.colors[c.label].color};">&nbsp;</span> capture ${c.name}`,
+						value: c.name
 					})))
 			}];
 		},
 		contextValue: {
 			/** The string value is when grouping on a capture group or relation. */
 			get(): 'first'|'all'|'context'|string {
-				if (this.currentAsLabel) return this.currentAsLabel.context.label;
-				else if (this.currentAsPositional) return this.currentAsPositional.context.info.type;
+				if (this.selectedCriteriumAsLabel)
+					return this.selectedCriteriumAsLabel.context.label;
+				else if (this.selectedCriteriumAsPositional)
+					return this.selectedCriteriumAsPositional.context.info.type;
 				return '';
 			},
 			/** The string value is when grouping on a capture group or relation. */
 			set(v: 'first'|'all'|'specific'|string) {
-				if (this.current?.type !== 'context') return;
+				if (this.selectedCriterium?.type !== 'context') return;
 
 				// should never happen we receive one of these options when type is not 'positional'
 				// but make typescript happy.
 				if (v === 'first' || v === 'all' || v === 'specific') {
-					if (this.currentAsPositional) {
-						this.currentAsPositional.context.info.type = v;
+					if (this.selectedCriteriumAsPositional) {
+						this.selectedCriteriumAsPositional.context.info.type = v;
 					} else {
 						// update context object as we're currently grouping on a label.
-						this.current.context = {
+						this.selectedCriterium.context = {
 							type: 'positional',
+							targetField: undefined,
+							position: 'H',
 							info: {type: v, start: 1, end: this.contextsize},
-							position: 'H'
 						}
 					}
 					// if we're grouping on the entire hit, we can't group from the end. (blacklab limitation)
-					if (v === 'all' && this.currentAsPositional?.context.position === 'E') {
-						this.currentAsPositional.context.position = 'H';
+					if (v === 'all' && this.selectedCriteriumAsPositional?.context.position === 'E') {
+						this.selectedCriteriumAsPositional.context.position = 'H';
 					}
 				} else {
-					this.current.context = {
+					this.selectedCriterium.context = {
 						type: 'label',
 						label: v,
-						relation: this.relations?.includes(v) ? 'target' : undefined
+						relation: this.relationNames?.includes(v) ? 'target' : undefined
 					}
 				}
 			},
 		},
 
 		positionOptions(): Options {
-			if (!(this.current?.type === 'context' && this.current.context.type === 'positional')) return [];
+			if (!(this.selectedCriterium?.type === 'context' && this.selectedCriterium.context.type === 'positional')) return [];
 
 			return [
 			{ label: this.$t('results.groupBy.in_this_location.beforeTheHit').toString(), value: 'B'},
 			{ label: this.$t('results.groupBy.in_this_location.inTheHit').toString(), value: 'H' },
 			// grouping from the end of the hit when grouping on entire hit is not possible (causes an exception in BlackLab)
-			...(this.current?.context.info.type !== 'all' ? [{label: this.$t('results.groupBy.in_this_location.fromTheEnd').toString(), value: 'E'}] : []),
+			...(this.selectedCriterium?.context.info.type !== 'all' ? [{label: this.$t('results.groupBy.in_this_location.fromTheEnd').toString(), value: 'E'}] : []),
 			{ label: this.$t('results.groupBy.in_this_location.afterTheHit').toString(), value: 'A' }];
 		},
 		positionValue: {
-			get(): 'B'|'H'|'E'|'A' { return this.current?.type === 'context' && this.current.context.type === 'positional' ? this.current.context.position : 'H'; },
+			get(): 'B'|'H'|'E'|'A' { return this.selectedCriterium?.type === 'context' && this.selectedCriterium.context.type === 'positional' ? this.selectedCriterium.context.position : 'H'; },
 			set(v: 'B'|'H'|'E'|'A') {
-				if (this.current?.type === 'context' && this.current.context.type === 'positional')
-					this.current.context.position = v ;
+				if (this.selectedCriterium?.type === 'context' && this.selectedCriterium.context.type === 'positional')
+					this.selectedCriterium.context.position = v ;
 			}
 		},
 
 
 		humanized(): string[] {
-			return this.localModel.map(g => this.humanizeGroupBy(g));
+			return this.addedCriteria.map(g => this.humanizeGroupBy(g));
+		},
+
+		isParallel(): boolean { return CorpusStore.get.isParallelCorpus() ?? false; },
+
+		parallelVersionOptions(): Option[] {
+			const fieldNames: string[] = [];
+			fieldNames.push(this.hits?.summary.pattern?.fieldName ?? '');
+			if (this.hits?.summary.pattern?.otherFields)
+				fieldNames.push(...this.hits.summary.pattern.otherFields);
+
+			const pvs = CorpusStore.get.parallelVersions();
+			return fieldNames.map(value => {
+				if (value === '') {
+					// (should never happen)
+					return {
+						label: 'main search field',
+						value: '',
+					};
+				}
+				const version = pvs.find(pv => getParallelFieldName(pv.prefix, pv.name) === value);
+				const label = version ? annotatedFieldDisplayName(this.$i18n, value, version.displayName || value) : value;
+				return {
+					label,
+					value
+				};
+			});
 		}
 	},
 	methods: {
 		apply() {
 			this.storeValueUpdateIsOurs = true;
-			this.storeModule.actions.groupBy(serializeGroupBy(this.localModel.filter(isValidGroupBy)));
+			this.storeModule.actions.groupBy(serializeGroupBy(this.addedCriteria.filter(isValidGroupBy)));
 		},
 		humanizeGroupBy(g: GroupBy): string {
 			if (g.type === 'context') {
@@ -521,31 +618,40 @@ export default Vue.extend({
 		isEmptyGroup(group: GroupBy) { return (group.type === 'context' && !group.annotation) || (group.type === 'metadata' && !group.field); },
 		isInvalidGroup(group: GroupBy) { return !this.isEmptyGroup(group) && !isValidGroupBy(group); },
 		removeGroup(i: number) {
-			if (this.currentIndex >= i) this.currentIndex--;
-			this.localModel.splice(i, 1);
+			if (this.selectedCriteriumIndex >= i) this.selectedCriteriumIndex--;
+			this.addedCriteria.splice(i, 1);
 		},
 		clear() {
-			this.localModel = [];
-			this.currentIndex = -1;
+			this.addedCriteria = [];
+			this.selectedCriteriumIndex = -1;
 			this.active = false;
 			this.apply();
 		},
 		addAnnotation() {
-			this.localModel.push({
+			this.addedCriteria.push({
 				type: 'context',
 				annotation: '',
-				context: {type: 'positional', info: {type: 'all', start: 1, end: this.contextsize}, position: 'H'},
+				context: {
+					type: 'positional',
+					targetField: undefined,
+					position: 'H',
+					info: {
+						type: 'all',
+						start: 1,
+						end: this.contextsize
+					},
+				},
 				caseSensitive: false
 			});
-			this.currentIndex = this.localModel.length -1;
+			this.selectedCriteriumIndex = this.addedCriteria.length -1;
 		},
 		addMetadata() {
-			this.localModel.push({
+			this.addedCriteria.push({
 				type: 'metadata',
 				field: '',
 				caseSensitive: false
 			});
-			this.currentIndex = this.localModel.length -1;
+			this.selectedCriteriumIndex = this.addedCriteria.length -1;
 		},
 		/**
 		 * When a highlighted word in the preview is clicked, retrieve what it represents (a capture group, or relation source/target)
@@ -556,7 +662,7 @@ export default Vue.extend({
 		 */
 		handlePreviewClick(event: MouseEvent, section: number, index: number) {
 			const preview = this.preview[section][index];
-			if (!preview.captureAndRelation?.length || this.current?.type !== 'context') return;
+			if (!preview.captureAndRelation?.length || this.selectedCriterium?.type !== 'context') return;
 
 			const elementRect = (event.target as HTMLElement).getBoundingClientRect();
 			const elementLeftBorder = elementRect.left + window.scrollX;
@@ -567,10 +673,10 @@ export default Vue.extend({
 			const relationIndex = Math.max(0, Math.min(Math.floor((clickPositionInElement / elementWidth) * preview.captureAndRelation.length), preview.captureAndRelation.length - 1));
 			const relation = preview.captureAndRelation[relationIndex];
 
-			this.current.context = {
+			this.selectedCriterium.context = {
 				type: 'label',
 				label: relation.key,
-				relation: relation.isSource ? 'source' : relation.isTarget ? 'target' : undefined
+				relation: relation.isSource ? 'source' : relation.isTarget ? 'target' : undefined,
 			}
 		},
 	},
@@ -582,10 +688,10 @@ export default Vue.extend({
 					this.storeValueUpdateIsOurs = false;
 					return;
 				}
-				this.localModel = parseGroupBy(this.storeValue);
-				this.active = this.active || this.localModel.length > 0;
-				if (this.currentIndex >= this.localModel.length) {
-					this.currentIndex = this.localModel.length - 1;
+				this.addedCriteria = parseGroupBy(this.storeValue);
+				this.active = this.active || this.addedCriteria.length > 0;
+				if (this.selectedCriteriumIndex >= this.addedCriteria.length) {
+					this.selectedCriteriumIndex = this.addedCriteria.length - 1;
 				}
 			},
 		},

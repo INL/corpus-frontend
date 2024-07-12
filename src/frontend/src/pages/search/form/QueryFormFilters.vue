@@ -95,12 +95,15 @@ export default Vue.extend({
 		},
 		tabs(): Array<{
 			name: string;
+		}&({
 			subtabs: Array<{
 				tabname?: string;
 				filters: string[],
 			}>;
 			query?: Record<string, string[]>;
-		}> {
+		}/*|{
+			within: any;
+		}*/)> {
 			const availableBuiltinFilters = CorpusStore.get.allMetadataFieldsMap();
 			const builtinFiltersToShow = UIStore.getState().search.shared.searchMetadataIds;
 			const customFilters = Object.keys(FilterStore.getState().filters).filter(id => !availableBuiltinFilters[id]);

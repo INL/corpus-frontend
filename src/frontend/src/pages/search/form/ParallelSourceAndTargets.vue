@@ -53,6 +53,8 @@ import * as UIStore from '@/store/search/ui';
 import SelectPicker, { Option } from '@/components/SelectPicker.vue';
 import MultiValuePicker from '@/components/MultiValuePicker.vue';
 import AlignBy from '@/pages/search/form/AlignBy.vue';
+import VueI18n from 'vue-i18n';
+import { annotatedFieldOption } from '@/utils/i18n';
 
 export default Vue.extend({
 	components: {
@@ -72,12 +74,14 @@ export default Vue.extend({
 		// What parallel versions should be shown as source options?
 		// (all except already chosen target ones)
 		sourceOptions: function (): Option[] {
-			return PatternStore.get.parallelSourceVersionOptions();
+			const prefix = CorpusStore.get.parallelFieldPrefix();
+			return PatternStore.get.parallelSourceVersionOptions().map(o => annotatedFieldOption(this.$i18n, prefix, o));
 		},
 		// What parallel versions should be shown as target options?
 		// (all except already chosen source and target ones)
 		targetOptions: function (): Option[] {
-			return PatternStore.get.parallelTargetVersionOptions();
+			const prefix = CorpusStore.get.parallelFieldPrefix();
+			return PatternStore.get.parallelTargetVersionOptions().map(o => annotatedFieldOption(this.$i18n, prefix, o));
 		},
 		sourceVersion: {
 			get(): string|null { return PatternStore.get.parallelVersions().source; },
@@ -102,6 +106,11 @@ export default Vue.extend({
 		}
 
 	},
+	methods: {
+		customizeLabel: function (o: Option): Option {
+			return annotatedFieldOption(this.$i18n, CorpusStore.get.parallelFieldPrefix(), o);
+		},
+	}
 });
 </script>
 

@@ -4,6 +4,7 @@ import { merge } from 'ts-deepmerge';
 import { Option } from '@/types/apptypes';
 import SelectPicker from '@/components/SelectPicker.vue';
 import { localStorageSynced } from '@/utils/localstore';
+import { getParallelFieldName } from '@/utils/blacklabutils';
 
 
 Vue.use(VueI18n);
@@ -99,3 +100,28 @@ const LocaleSelector = Vue.extend({
 	}
 });
 new LocaleSelector().$mount('#locale-selector');
+
+
+/** Get option with correct display name for an annotated field from (custom) locale message bundle,
+    or fall back to label in option.  */
+export function annotatedFieldOption(i18n: VueI18n, prefix: string, o: Option): Option {
+	return {
+		...o,
+		label: annotatedFieldDisplayName(i18n, getParallelFieldName(prefix, o.value), o.label || o.value),
+	};
+}
+
+/** Get display name for an annotated field from (custom) locale message bundle,
+    or fall back to label in option.  */
+export function annotatedFieldDisplayName(i18n: VueI18n, fieldName: string, defaultLabel: string): string {
+	const key = `search.annotatedFieldDisplay.${fieldName}`;
+	return textOrDefault(i18n, key, defaultLabel);
+}
+
+/** Get the i18n text or fall back to a default value if the key doesn't exist.
+ *  Useful for dynamic key values such as field names.
+ */
+export function textOrDefault(i18n: VueI18n, key: string, defaultText: string): string {
+	const result = i18n.te(key) ? i18n.t(key) : (i18n.te(key, defaultLocale) ? i18n.t(key, defaultLocale) : defaultText);
+	return result.toString();
+}

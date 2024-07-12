@@ -210,7 +210,7 @@ In addition, users can also define their own formats or extend the builtin forma
 
 There is also a hidden/experimental page (`/corpus-frontend/upload/`) for externally linking to the corpus-frontend to automatically index a file from the web.
 It can be used it to link to the frontend from external web services that output indexable files.
-It requires user uploading to be enabled, and there should be a cookie/query parameter present to configure the user name (depending on how BlackLab's `authSystem` is configured, the frontend doesn't care and just passes everything along).
+It requires user uploading to be enabled, and there should be a cookie/query parameter present to configure the user name (depending on how BlackLab's authentication is configured, the frontend doesn't care and just passes everything along).
 Parameters are passed as query parameters:
 ```properties
 file=http://my-service.tld/my-file.zip

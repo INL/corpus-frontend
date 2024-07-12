@@ -1,6 +1,7 @@
 /** Group by some tokens at a fixed position in the hit. */
 export type ContextPositional = {
 	type: 'positional';
+	targetField?: string;
 	/** B === 'before', H === 'from start of hit', A === 'after hit', E === 'from end of hit (reverse)' */
 	position: 'B'|'H'|'A'|'E';
 	info: {
@@ -44,57 +45,62 @@ export type GroupBy = GroupByContext|GroupByMetadata|GroupByCustom;
  * https://inl.github.io/BlackLab/server/rest-api/corpus/hits/get.html#criteria-for-sorting-grouping-and-faceting
  */
 export function parseGroupBy(groupBy: string[]): GroupBy[] {
+	console.log('groupBy', groupBy);
 	const cast = <T>(x: T): T => x;
 	return groupBy.map<GroupBy>(part => {
-		const [type] = part.split(':', 1);
+		const parts = part.split(':');
+		const type = parts.length > 0 ? parts[0] : '';
 
 		switch (type) {
 			// grouping by metadata
 			case 'field': return {
 				type: 'metadata',
-				field: part.split(':')[1],
-				caseSensitive: part.split(':')[2] === 's'
-			}
+				field: parts[1],
+				caseSensitive: parts[2] === 's'
+			};
 			case 'capture': return cast<GroupByContext>({
 				type: 'context',
-				annotation: part.split(':')[1],
-				caseSensitive: part.split(':')[2] === 's',
+				annotation: parts[1],
+				caseSensitive: parts[2] === 's',
 				context: {
 					type: 'label',
 					// label can be either a capture label (a:"word") or a relation (whether explicitly captured or not, e.g. _ a:--> _).
 					// but for the relation, all tokens between source and target are used for the grouping
 					// so not what we want. Will need new BlackLab feature to support this.
 					// probably want to group on the VALUE of the relation itself, not the tokens.
-					label: part.split(':')[3],
-					relation: part.split(':')[4] as 'source'|'target'|'full'|undefined
+					label: parts[3],
+					relation: parts[4] as 'source'|'target'|'full'|undefined
 				}
 			})
-			case 'hit': return cast<GroupByContext>({
-				type: 'context',
-				annotation: part.split(':')[1],
-				caseSensitive: part.split(':')[2] === 's',
-				context: {
-					type: 'positional',
-					position: 'H',
-					info: { type: 'all', start: 1, end: 1 }
-				}
-			})
+			case 'hit':
+				return cast<GroupByContext>({
+					type: 'context',
+					annotation: parts[1],
+					caseSensitive: parts[2] === 's',
+					context: {
+						type: 'positional',
+						targetField: parts.length >= 3 ? parts[3] : undefined,
+						position: 'H',
+						info: { type: 'all', start: 1, end: 1 }
+					}
+				})
 			// grouping by words in/around the hit
 			case 'left':
 			case 'before':
 			case 'right':
 			case 'after': {
-				const [_, annot, caseSensitive, howManyWords] = part.split(':');
+				const [_, annot, caseSensitive, howManyWords, targetField] = parts;
 				const start = 1; // these always start at 1. The number is just "how many words before or after"
 				const end = Number(howManyWords) ;
 				const fullContext = isNaN(end);
 
 				return cast<GroupByContext>({
 					type: 'context',
-					annotation: part.split(':')[1],
-					caseSensitive: part.split(':')[2] === 's',
+					annotation: annot,
+					caseSensitive: caseSensitive === 's',
 					context: {
 						type: 'positional',
+						targetField,
 						position: (type === 'left' || type === 'before') ? 'B' : 'A',
 						info: {
 							type: fullContext ? 'all' : 'specific',
@@ -107,10 +113,11 @@ export function parseGroupBy(groupBy: string[]): GroupBy[] {
 			case 'wordleft':
 			case 'wordright': return cast<GroupByContext>({
 				type: 'context',
-				annotation: part.split(':')[1],
-				caseSensitive: part.split(':')[2] === 's',
+				annotation: parts[1],
+				caseSensitive: parts[2] === 's',
 				context: {
 					type: 'positional',
+					targetField: parts.length >= 3 ? parts[3] : undefined,
 					position: type === 'wordleft' ? 'B' : 'A',
 					info: {
 						type: 'specific',
@@ -124,7 +131,7 @@ export function parseGroupBy(groupBy: string[]): GroupBy[] {
 			// these are a bit more complex, and we don't support all options in the UI.
 			// when we encounter one we can't parse fully, we'll just returns the parts we can parse.
 			case 'context': {
-				const [_, annot, caseSensitive, spec] = part.split(':');
+				const [_, annot, caseSensitive, spec, targetField] = parts;
 				const parsedSpec = spec.match(/(L|R|H|E|B|A)(\d*)-?(\d*)/);
 				if (parsedSpec) { // this can contain more, like ; and a second(+) set of positions. We'll ignore that for now.
 					let [_, position, startMaybe, endMaybe] = parsedSpec;
@@ -138,10 +145,11 @@ export function parseGroupBy(groupBy: string[]): GroupBy[] {
 
 					return cast<GroupByContext>({
 						type: 'context',
-						annotation: part.split(':')[1],
-						caseSensitive: part.split(':')[2] === 's',
+						annotation: annot,
+						caseSensitive: caseSensitive === 's',
 						context: {
 							type: 'positional',
+							targetField,
 							position: position as any,
 							info: {
 								type: fullContext ? 'all' : 'specific',
@@ -168,11 +176,17 @@ export function serializeGroupBy(groupBy: GroupBy): string;
 export function serializeGroupBy(groupBy: GroupBy[]): string[]
 export function serializeGroupBy(groupBy: GroupBy|GroupBy[]): string|string[] {
 	function single(g: GroupBy): string {
+		const optTargetField = g.type === 'context' && g.context.type === 'positional' && g.context.targetField ?
+			`:${g.context.targetField}` : '';
+		if (g.type === 'context')
+			console.log('g.context', g.context);
+		console.log('optTargetField', optTargetField);
 		switch (g.type) {
-			case 'metadata': return `field:${g.field}:${g.caseSensitive ? 's' : 'i'}`;
+			case 'metadata': return `field:${g.field}:${g.caseSensitive ? 's' : 'i'}${optTargetField}`;
 			case 'context': {
 
-				if (g.context.type === 'label') return `capture:${g.annotation}:${g.caseSensitive ? 's' : 'i'}:${g.context.label}${g.context.relation ? ':' + g.context.relation : ''}`;
+				if (g.context.type === 'label')
+					return `capture:${g.annotation}:${g.caseSensitive ? 's' : 'i'}:${g.context.label}${g.context.relation ? ':' + g.context.relation : ''}`;
 				else if (g.context.type === 'positional') {
 					/*
 						Examples:
@@ -192,7 +206,7 @@ export function serializeGroupBy(groupBy: GroupBy|GroupBy[]): string|string[] {
 						never(info.type);
 					}
 
-					return `context:${g.annotation}:${g.caseSensitive ? 's' : 'i'}:${spec}`;
+					return `context:${g.annotation}:${g.caseSensitive ? 's' : 'i'}:${spec}${optTargetField}`;
 				} else {
 					// this will start to error compile-time if we ever add a new type.
 					function never(x: never): never { throw new Error('Unimplemented context type: ' + x); }

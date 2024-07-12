@@ -139,6 +139,7 @@
 			"apply": "Toepassen",
 			"invalidGrouping": "Deze groepering is niet geldig.",
 
+			"parallelCorpusVersion": "Kijkend naar versie ",
 			"iWantToGroupOnAnnotation": "Ik wil {some_words} {in_this_location_with_text} groeperen op {this_annotation}.",
 			"in_this_location_with_text": "{in_this_location}",
 

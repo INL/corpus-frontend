@@ -361,14 +361,18 @@ export type BLSearchSummary = {
 	pattern?: {
 		/** The serialization of the query object BlackLab actually executed. */
 		bcql: string;
-		/** One of the annotatedFields */
+		/** The main annotatedField that was searched */
 		fieldName: string;
+		/** Any other annotatedFields involved in the search (in case of parallel corpora) */
+		otherFields?: string[];
 		/** Json representation of the query. Not present when requesting results as xml output. */
 		json?: any;
 		/* MatchInfos only available when hits are returned (i.e. not a docs request, not grouped) */
 		matchInfos?: {
 			[key: string]: {
 				type: 'span'|'tag'|'relation'|'list';
+				fieldName?: string;     // field this capture is in (if not default field)
+				targetField?: string;   // field the relation target is in (if not default field)
 			}
 		}
 	}

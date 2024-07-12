@@ -138,6 +138,8 @@
 			"clear": "清除",
 			"apply": "应用",
 			"invalidGrouping": "此分组无效。",
+
+			"parallelCorpusVersion": "Looking at version ",
 			"iWantToGroupOnAnnotation": "我想使用注释 {this_annotation} 对 {in_this_location_with_text} {some_words} 进行分组.",
 			"in_this_location_with_text": "{in_this_location} 的",
 

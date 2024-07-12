@@ -139,6 +139,7 @@
 			"apply": "Apply",
 			"invalidGrouping": "This grouping is not valid.",
 
+			"parallelCorpusVersion": "Looking at version ",
 			"iWantToGroupOnAnnotation": "I want to group on {some_words} {in_this_location_with_text} using annotation {this_annotation}.",
 			"in_this_location_with_text": "{in_this_location}",
 

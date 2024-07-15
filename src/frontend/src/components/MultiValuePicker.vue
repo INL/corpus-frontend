@@ -5,10 +5,10 @@
 				<li class='option' v-for="v in selected" :key="v ? v.value : 'x'" :data-value="v ? v.value : 'x'" :title="$t('widgets.clickToRemove').toString()" @click="clickLabel($event?.target)">
 					{{ v.label || v.value }}
 				</li>
-				<li v-if="optionsNotYetSelected.length > 0">
-					<SelectPicker :options="optionsNotYetSelected" :value="selectValue" @input="add($event)" data-menu-width="grow" hideEmpty/>
-				</li>
 			</ul>
+		</div>
+		<div class="add" v-if="optionsNotYetSelected.length > 0">
+			<SelectPicker :options="optionsNotYetSelected" :value="selectValue" @input="add($event)" data-menu-width="grow" hideEmpty/>
 		</div>
 	</div>
 </template>
@@ -102,6 +102,8 @@ export default Vue.extend({
 div.selected {
 
 	margin-top: 0.5rem;
+	max-height: 3cm;
+	overflow: auto;
 
 	ul {
 		display: inline;
@@ -127,6 +129,10 @@ div.selected {
 			}
 		}
 	}
+}
+
+div.add {
+	margin-top: 0.5rem;
 }
 
 </style>

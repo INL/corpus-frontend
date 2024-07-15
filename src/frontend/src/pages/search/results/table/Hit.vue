@@ -214,35 +214,40 @@ export default Vue.extend({
 			const otherFieldsInOrder = selectedTargets.length > 0 ?
 				selectedTargets :
 				Object.keys(h.otherFields).map(f => getParallelFieldParts(f).version);
-			const y = otherFieldsInOrder.map(name => {
-				const fieldName = getParallelFieldName(prefix, name);
-				const hit = h.otherFields![fieldName];
-				const docInfo = {
-						lengthInTokens: 0,
-						mayView: false,
-					} as BLDocInfo;
-				const s = mergeMatchInfos(fieldName, hit, mainHitMatchInfos);
-				const dummyHighlightColors = { KEEP_GOING: { color: 'DUMMY', textcolor: 'DUMMY', textcolorcontrast: 'DUMMY', key: 'DUMMY' } };
-				const t = snippetParts(s, this.mainAnnotation.id, this.dir, dummyHighlightColors);
-				return {
-					name,
-					hit: {
-						type: 'hit',
-						doc: {
-							docInfo,
-							docPid: h.docPid,
-						},
-						hit: s,
-						context: t,
+			const y = otherFieldsInOrder
+				.filter(name => {
+					const fieldName = getParallelFieldName(prefix, name);
+					return h.otherFields![fieldName] !== undefined;
+				})
+				.map(name => {
+					const fieldName = getParallelFieldName(prefix, name);
+					const hit = h.otherFields![fieldName];
+					const docInfo = {
+							lengthInTokens: 0,
+							mayView: false,
+						} as BLDocInfo;
+					const s = mergeMatchInfos(fieldName, hit, mainHitMatchInfos);
+					const dummyHighlightColors = { KEEP_GOING: { color: 'DUMMY', textcolor: 'DUMMY', textcolorcontrast: 'DUMMY', key: 'DUMMY' } };
+					const t = snippetParts(s, this.mainAnnotation.id, this.dir, dummyHighlightColors);
+					return {
+						name,
+						hit: {
+							type: 'hit',
+							doc: {
+								docInfo,
+								docPid: h.docPid,
+							},
+							hit: s,
+							context: t,
 
-						gloss_fields: [], //jesse
-						hit_first_word_id: '', //jesse
-						hit_last_word_id: '', //jesse
-						hit_id: '' //jesse
+							gloss_fields: [], //jesse
+							hit_first_word_id: '', //jesse
+							hit_last_word_id: '', //jesse
+							hit_id: '' //jesse
 
-					} as HitRowData
-				};
-			});
+						} as HitRowData
+					};
+				});
 			return y;
 		},
 		parallelVersion(fieldName: string): string {

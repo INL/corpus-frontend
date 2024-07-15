@@ -86,6 +86,7 @@ import { getParallelFieldName, getParallelFieldParts } from '@/utils/blacklabuti
 import { snippetParts } from '@/utils/hit-highlighting';
 
 export {HitRowData} from '@/pages/search/results/table/HitRow.vue';
+import { annotatedFieldDisplayName } from '@/utils/i18n';
 
 /**
  * TODO maybe move transformation of blacklab results -> hit row into this component?
@@ -252,7 +253,8 @@ export default Vue.extend({
 		},
 		parallelVersion(fieldName: string): string {
 			const versionName = getParallelFieldParts(fieldName).version || fieldName;
-			return CorpusStore.get.parallelVersions().find(v => v.name === versionName)?.displayName || versionName;
+			const opt = CorpusStore.get.parallelVersions().find(v => v.name === versionName);
+			return opt ? annotatedFieldDisplayName(this.$i18n, getParallelFieldName(opt.prefix, opt.name), opt.displayName) : versionName;
 		},
 		hover(matchInfos: string[]) {
 			this.hoverMatchInfos = matchInfos;

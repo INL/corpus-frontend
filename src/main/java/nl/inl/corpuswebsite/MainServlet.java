@@ -71,7 +71,7 @@ public class MainServlet extends HttpServlet {
 
     private static final Logger logger = Logger.getLogger(MainServlet.class.getName());
 
-    private static final String DEFAULT_PAGE = "corpora";
+    private static final Class<? extends BaseResponse> DEFAULT_PAGE = IndexResponse.class;
 
     /**
      * Where to find the Velocity properties file
@@ -255,7 +255,7 @@ public class MainServlet extends HttpServlet {
 
         if (pathParts.isEmpty()) {
             // don't have any path. E.g. /corpus-frontend
-            responseClass = responses.get(DEFAULT_PAGE);
+            responseClass = DEFAULT_PAGE;
             corpus = null;
             pathParameters = new ArrayList<>();
         } else {

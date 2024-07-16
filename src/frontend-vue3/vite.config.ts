@@ -28,7 +28,7 @@ export default defineConfig({
     origin: 'http://localhost:8081', // for embedded links to asset files in the vite project
     host: '0.0.0.0',
     proxy: {
-      '/corpus-frontend': 'http://127.0.0.1:8080/corpus-frontend',
+      '/corpus-frontend': 'http://127.0.0.1:8080/',
     },
   }
 })

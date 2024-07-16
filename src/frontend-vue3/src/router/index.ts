@@ -1,13 +1,16 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import CorporaView from '../views/CorporaView.vue'
+
+/** Base url of the app on the client. Never ends in '/' */
+declare const CONTEXT_URL: string;
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(CONTEXT_URL),
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: HomeView
+      name: 'corpora',
+      component: CorporaView
     },
     {
       path: '/about',

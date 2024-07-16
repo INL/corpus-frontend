@@ -3,20 +3,24 @@ import { RouterLink, RouterView } from 'vue-router'
 import HelloWorld from './components/HelloWorld.vue'
 
 import {NavBar} from 'int-components';
+// import 'my-overrides.scss';
+import 'int-components/dist/lib/base.css';
+import 'int-components/dist/lib/int.css';
+
 </script>
 
 <template>
-  <NavBar md/>
-  <header>
-    <!-- <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" /> -->
+  <NavBar s title="Autosearch" :int-logo="false">
+    <template #links="{className, linkClassName, activeLinkClassName}"><div :class="className">
+      <RouterLink :class="linkClassName" activeClass="active" exactActiveClass="active" to="/">Corpora</RouterLink>
+      <RouterLink :class="linkClassName" activeClass="active" exactActiveClass="active" to="/about">About</RouterLink>
+    </div></template>
+    
+  </NavBar>
 
+  <header>
     <div class="wrapper">
       <HelloWorld msg="You did it!" />
-
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-      </nav>
     </div>
   </header>
 

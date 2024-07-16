@@ -7,6 +7,17 @@ import {NavBar} from 'int-components';
 import 'int-components/dist/lib/base.css';
 import 'int-components/dist/lib/int.css';
 
+import * as Api from '@/api';
+import { ref } from 'vue';
+
+
+const loaded = ref(false);
+
+Api.init('blacklab', BLS_URL, null);
+Api.init('cf', CONTEXT_URL, null);
+
+loaded.value = true;
+
 </script>
 
 <template>
@@ -24,7 +35,7 @@ import 'int-components/dist/lib/int.css';
     </div>
   </header>
 
-  <RouterView />
+  <RouterView v-if="loaded"/>
 </template>
 
 <style scoped>

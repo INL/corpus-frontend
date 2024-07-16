@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import CorporaView from '../views/CorporaView.vue'
+import CorporaView from '@/views/corpora/CorporaView.vue'
 
 /** Base url of the app on the client. Never ends in '/' */
 declare const CONTEXT_URL: string;

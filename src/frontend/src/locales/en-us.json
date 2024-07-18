@@ -198,7 +198,8 @@
 			"after": "after",
 			"before": "before",
 			"After": "After",
-			"Before": "Before"
+			"Before": "Before",
+			"parallelVersion": "Version"
 		},
 		"export": {
 			"downloading": "Downloading...",

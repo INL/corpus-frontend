@@ -2,6 +2,10 @@
 	<table class="hits-table" :class="{ parallel: isParallel }">
 		<thead>
 			<tr class="rounded">
+				<th v-if="isParallel">
+					{{ $t('results.table.parallelVersion') }}
+				</th>
+
 				<th class="text-right">
 					<span v-if="sortableAnnotations && sortableAnnotations.length" class="dropdown">
 						<a role="button" data-toggle="dropdown" :class="['dropdown-toggle', {'disabled': disabled}]">

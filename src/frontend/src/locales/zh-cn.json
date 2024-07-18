@@ -197,7 +197,8 @@
 			"after": "之后",
 			"before": "之前",
 			"After": "之后",
-			"Before": "之前"
+			"Before": "之前",
+			"parallelVersion": "Version"
 		},
 		"export": {
 			"downloading": "下载中...",

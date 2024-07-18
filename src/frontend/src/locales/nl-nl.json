@@ -197,7 +197,8 @@
 			"after": "na",
 			"before": "voor",
 			"After": "Na",
-			"Before": "Voor"
+			"Before": "Voor",
+			"parallelVersion": "Versie"
 		},
 		"export": {
 			"downloading": "Downloaden...",

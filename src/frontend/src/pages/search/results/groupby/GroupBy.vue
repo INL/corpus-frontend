@@ -296,7 +296,7 @@ export default Vue.extend({
 			const mi = this.hits?.summary?.pattern?.matchInfos;
 			// @ts-ignore
 			return Object.entries(mi|| {})
-				.filter(([k, v]) => v.type === 'span' && (v.fieldName === this.selectedCriteriumAsPositional?.context.targetField))
+				.filter(([k, v]) => v.type === 'span' && (v.fieldName === this.selectedCriteriumAsPositional?.fieldName))
 				.map(([k,v]) => {
 					return {
 						name: k,
@@ -312,14 +312,14 @@ export default Vue.extend({
 			Object.entries(mi|| {})
 				.filter(([k, v]) => v.type === 'relation')
 				.forEach(([k,v]: [string, any]) => {
-					if (v.fieldName === this.selectedCriteriumAsPositional?.context.targetField) {
+					if (v.fieldName === this.selectedCriteriumAsPositional?.fieldName) {
 						result.push({
 							label: k,
 							name: `${k}@source`,
 							targetField: v.fieldName ?? '',
 						});
 					}
-					if (v.targetField === this.selectedCriteriumAsPositional?.context.targetField) {
+					if (v.targetField === this.selectedCriteriumAsPositional?.fieldName) {
 						result.push({
 							label: k,
 							name: `${k}@target`,
@@ -335,11 +335,11 @@ export default Vue.extend({
 
 		targetField: {
 			get(): string {
-				return this.selectedCriteriumAsPositional?.context.targetField ?? '';
+				return this.selectedCriteriumAsPositional?.fieldName ?? '';
 			},
 			set(v: string) {
 				if (this.selectedCriteriumAsPositional) {
-					this.selectedCriteriumAsPositional.context.targetField = v;
+					this.selectedCriteriumAsPositional.fieldName = v;
 				}
 			},
 		},
@@ -390,7 +390,7 @@ export default Vue.extend({
 			const wordAnnotation = UIStore.getState().results.shared.concordanceAnnotationId;
 			const firstHit = this.hits.hits[0];
 			const mainSearchField = this.hits.summary.pattern?.fieldName ?? '';
-			const targetField = this.selectedCriteriumAsPositional?.context.targetField;
+			const targetField = this.selectedCriteriumAsPositional?.fieldName;
 			const hitInField = targetField && targetField.length > 0 && targetField !== mainSearchField && firstHit.otherFields ? firstHit.otherFields[targetField] : firstHit;
 			const {annotation, context} = this.selectedCriterium;
 
@@ -512,7 +512,6 @@ export default Vue.extend({
 						// update context object as we're currently grouping on a label.
 						this.selectedCriterium.context = {
 							type: 'positional',
-							targetField: undefined,
 							position: 'H',
 							info: {type: v, start: 1, end: this.contextsize},
 						}
@@ -633,7 +632,6 @@ export default Vue.extend({
 				annotation: '',
 				context: {
 					type: 'positional',
-					targetField: undefined,
 					position: 'H',
 					info: {
 						type: 'all',

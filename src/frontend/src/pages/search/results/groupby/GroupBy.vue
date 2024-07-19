@@ -333,6 +333,9 @@ export default Vue.extend({
 			return this.relations.map(c => c.name);
 		},
 
+		mainSearchField(): string {
+			return this.hits?.summary.pattern?.fieldName ?? '';
+		},
 		targetField: {
 			get(): string {
 				return this.selectedCriteriumAsPositional?.fieldName ?? '';
@@ -389,9 +392,8 @@ export default Vue.extend({
 
 			const wordAnnotation = UIStore.getState().results.shared.concordanceAnnotationId;
 			const firstHit = this.hits.hits[0];
-			const mainSearchField = this.hits.summary.pattern?.fieldName ?? '';
 			const targetField = this.selectedCriteriumAsPositional?.fieldName;
-			const hitInField = targetField && targetField.length > 0 && targetField !== mainSearchField && firstHit.otherFields ? firstHit.otherFields[targetField] : firstHit;
+			const hitInField = targetField && targetField.length > 0 && targetField !== this.mainSearchField && firstHit.otherFields ? firstHit.otherFields[targetField] : firstHit;
 			const {annotation, context} = this.selectedCriterium;
 
 			const snippet = snippetParts(hitInField, wordAnnotation, CorpusStore.get.textDirection(), this.colors)
@@ -557,7 +559,7 @@ export default Vue.extend({
 
 		parallelVersionOptions(): Option[] {
 			const fieldNames: string[] = [];
-			fieldNames.push(this.hits?.summary.pattern?.fieldName ?? '');
+			fieldNames.push(this.mainSearchField);
 			if (this.hits?.summary.pattern?.otherFields)
 				fieldNames.push(...this.hits.summary.pattern.otherFields);
 
@@ -629,6 +631,7 @@ export default Vue.extend({
 		addAnnotation() {
 			this.addedCriteria.push({
 				type: 'context',
+				fieldName: this.mainSearchField ?? '',
 				annotation: '',
 				context: {
 					type: 'positional',

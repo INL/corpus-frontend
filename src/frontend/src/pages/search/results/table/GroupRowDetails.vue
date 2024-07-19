@@ -18,6 +18,7 @@
 
 				<HitsTable v-if="type === 'hits' && concordances.results.length"
 					:data="concordances.results"
+			        :annotatedField="annotatedField"
 					:mainAnnotation="mainAnnotation"
 					:dir="dir"
 					:html="html"
@@ -74,7 +75,11 @@ export default Vue.extend({
 		type: String as () => 'hits'|'docs',
 		data: Object as () => GroupRowData,
 
-		// query: Object as () => BLSearchParameters,
+		/** The field that was searched (for parallel corpora queries, the source field) */
+		annotatedField: {
+			type: String,
+			default: '',
+		},
 		mainAnnotation: Object as () => NormalizedAnnotation,
 		otherAnnotations: Array as () => NormalizedAnnotation[]|undefined,
 		metadata: Array as () => NormalizedMetadataField[]|undefined,

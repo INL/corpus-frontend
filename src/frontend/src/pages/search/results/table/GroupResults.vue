@@ -26,6 +26,7 @@
 			:data="rows"
 			:maxima="maxima"
 
+			:annotatedField="results.summary.pattern?.fieldName || ''"
 			:mainAnnotation="mainAnnotation"
 			:otherAnnotations="otherAnnotations"
 			:metadata="metadata"

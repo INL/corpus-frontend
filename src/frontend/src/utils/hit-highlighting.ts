@@ -157,21 +157,28 @@ function getHighlightSections(matchInfos: NonNullable<BLHit['matchInfos']>): Hig
 
 	// Allow custom script to determine what to highlight for this hit
 	// (i.e. "do (hover)highlight word alignments, but not verse alignments")
-	const result = corpusCustomizations.results.matchInfosToHighlight(interestingCaptures)
-	if (result !== null)
-		return result;
-
-	// Fall back to default behaviour:
-	// If there's explicit captures, highlight only those.
-	// i.e. when the user selects part of the query to highlight, return only those captures.
-	//
-	// (JN) It might not be obvious to most users why slightly different queries highlight
-	// very different things. Maybe just highlight everything by default..?
-	//
-	if (interestingCaptures.find(c => !c.isRelation)) {
-		return interestingCaptures.map((mi) => ({ ...mi, showHighlight: !mi.isRelation }));
-	}
-	return interestingCaptures;
+	const hasExplicitCaptures = interestingCaptures.find(c => !c.isRelation) !== undefined;
+	const result: HighlightSection[] = interestingCaptures
+		.map(mi => {
+			const style = corpusCustomizations.results.matchInfoHighlightStyle(mi);
+			if (style === 'none' || style === null && hasExplicitCaptures && mi.isRelation) {
+				// Exclude based on custom function result
+				// or default behaviour ("exclude relations if there's explicit captures").
+				//
+				// (JN) It might not be obvious to most users why slightly different queries highlight
+				// very different things. Maybe just highlight everything by default..?
+				return null;
+			}
+			if (style === 'static') {
+				// Indicate that we want this to be highlighted permanently.
+				return mi.showHighlight ? mi : { ...mi, showHighlight: true };
+			}
+			// Not static, highlight on hover (parallel corpora).
+			return !mi.showHighlight ? mi : { ...mi, showHighlight: false };
+		})
+		.filter(mi => mi !== null)
+		.map(mi => mi as HighlightSection); // appease TS compiler
+	return result;
 }
 
 export function getHighlightColors(summary: BLSearchSummary): Record<string, TokenHighlight> {

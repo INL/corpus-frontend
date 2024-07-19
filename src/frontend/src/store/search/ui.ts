@@ -1257,7 +1257,7 @@ const corpusCustomizations = {
 	},
 
 	results: {
-		matchInfosToHighlight: (matchInfos: HighlightSection[]) => {
+		matchInfoHighlightStyle: (matchInfo: HighlightSection): string|null => {
 			return null; // fall back to default behaviour
 		}
 	}

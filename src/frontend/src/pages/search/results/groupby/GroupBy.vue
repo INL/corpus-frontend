@@ -239,6 +239,10 @@ export default Vue.extend({
 		active: false
 	}),
 	computed: {
+		defaultAnnotation(): string {
+			const a = this.annotations.find(a => typeof a === 'object' && 'options' in a) as any;
+			return a?.options[0]?.value ?? '';
+		},
 		storeModule(): ResultsStore.ViewModule { return ResultsStore.getOrCreateModule(this.type); },
 		storeValue(): string[] { return this.storeModule.getState().groupBy; },
 		firstHitPreviewQuery(): BLSearchParameters|undefined {
@@ -632,7 +636,7 @@ export default Vue.extend({
 			this.addedCriteria.push({
 				type: 'context',
 				fieldName: this.mainSearchField ?? '',
-				annotation: '',
+				annotation: this.defaultAnnotation,
 				context: {
 					type: 'positional',
 					position: 'H',

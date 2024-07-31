@@ -9,7 +9,7 @@
 					<span class="fa fa-exclamation-triangle"></span> <span v-html="error"></span>
 				</p>
 				<template v-else-if="context"> <!-- context is the larger surrounding context of the hit. We don't always have one (when rendering docs we only have the immediate hit) -->
-					<template v-if="hasRelations">
+					<template v-if="hasRelations && !isParallel">
 						<label v-if="sentenceAvailable">
 							<input type="checkbox" v-model="sentenceShown" class="show-sentence-checkbox" />
 							<Spinner v-if="sentenceLoading" inline style="margin-right: 0.5em"/>{{$t('results.table.showFullSentence')}}
@@ -17,7 +17,6 @@
 
 						<!-- Will not render anything if no relation info is available in the passed hit/sentence. -->
 						<DepTree
-						    v-if="!isParallel"
 							:data="data"
 							:fullSentence="sentenceShown ? sentence : undefined"
 							:mainAnnotation="mainAnnotation.id"

@@ -121,7 +121,12 @@ export default Vue.extend({
 					rows.push({
 						type: 'doc',
 						summary: this.getDocumentSummary(docInfo, docFields),
-						href: getDocumentUrl(pid, this.results.summary.searchParam.patt || undefined, this.results.summary.searchParam.pattgapdata || undefined, hit.start, UIStore.getState().results.shared.pageSize),
+						href: getDocumentUrl(pid,
+								this.results.summary.pattern?.fieldName || '',
+								this.results.summary.searchParam.patt || undefined,
+								this.results.summary.searchParam.pattgapdata || undefined,
+								hit.start,
+								UIStore.getState().results.shared.pageSize),
 						// Document Row components expect a complete BLDoc object, whereas all we have is a BlDocInfo object
 						// map it to a complete BLDoc object (with all hit data removed, as that's optional, and we don't need it here)
 						doc: { docInfo, docPid: pid }

@@ -152,7 +152,14 @@ export default Vue.extend({
 			// they won't contain the start/end/parent document.
 			// in that case, don't bother with the url.
 			if (!('start' in this.data.hit)) return;
-			return getDocumentUrl(this.data.doc.docPid, this.query?.patt, this.query?.pattgapdata, this.data.hit.start, PAGE_SIZE, this.data.hit.start);
+			return getDocumentUrl(
+				this.data.doc.docPid,
+				this.query?.field ?? '',
+				this.query?.patt,
+				this.query?.pattgapdata,
+				this.data.hit.start,
+				PAGE_SIZE,
+				this.data.hit.start);
 		},
 		hasRelations: CorpusStore.get.hasRelations,
 		/** Exact surrounding sentence can only be loaded if we the start location of the current hit, and when the boundery element has been set. */

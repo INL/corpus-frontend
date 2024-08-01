@@ -424,7 +424,10 @@ export default Vue.extend({
 
 		///////////////
 
-		displayValues(): string[] { return Object.keys(this.internalModel).map(k => this.uiOptionsMap[k] /* check first - might be unknown value */ ? this.uiOptionsMap[k].label : k); },
+		displayValues(): string[] {
+			return Object.keys(this.internalModel)
+					.map(k => this.uiOptionsMap[k] /* check first - might be unknown value */ ? this.uiOptionsMap[k].label : k);
+		},
 		computedMenuClass(): any {
 			return {
 				[(this as any).dataMenuWidth]: ['grow', 'shrink', 'stretch'].includes((this as any).dataMenuWidth),

@@ -60,6 +60,7 @@ public class ArticleUtil {
             .getDocumentContents(
                     corpusConfig.getCorpusId().orElseThrow(),
                     docId,
+                    getParameter("field", request),
                     getParameter("query", request),
                     getParameter("pattgapdata", request),
                     page.blacklabPageStart,

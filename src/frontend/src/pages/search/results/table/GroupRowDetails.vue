@@ -138,7 +138,10 @@ export default Vue.extend({
 					request: request.then((r: BLDocResults) => r.docs.map<DocRowData>(doc => ({
 						type: 'doc',
 						doc,
-						href: getDocumentUrl(doc.docPid, this.query.patt || undefined, this.query.pattgapdata || undefined),
+						href: getDocumentUrl(doc.docPid,
+							this.query.field ?? '',
+							this.query.patt || undefined,
+							this.query.pattgapdata || undefined),
 						summary: getDocumentSummary(doc.docInfo, fieldInfo)
 					})))
 				}

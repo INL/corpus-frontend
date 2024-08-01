@@ -46,6 +46,7 @@
 import Vue from 'vue';
 
 import * as RootStore from '@/store/article';
+import * as PatternStore from '@/store/search/form/patterns';
 import {blacklab} from '@/api';
 
 import * as BLTypes from '@/types/blacklabtypes';
@@ -105,7 +106,7 @@ export default Vue.extend({
 				return;
 			}
 
-			const annotatedFieldName = ''; //@@@ TODO PARALLEL use the correct field
+			const annotatedFieldName = PatternStore.getState().parallelVersions.source || '';
 			this.request = blacklab.getSnippet(RootStore.getState().indexId, RootStore.getState().docId, annotatedFieldName, 0, this.document!.docInfo.lengthInTokens, 0)
 			.then(snippet => this.snippet = snippet)
 			.catch(error => this.error = error)

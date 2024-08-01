@@ -399,6 +399,7 @@ export const getPatternStringFromCql = (sourceCql: string, targetVersions: strin
 
 export function getDocumentUrl(
 	pid: string,
+	fieldName: string,
 	cql?: string,
 	pattgapdata?: string,
 	wordstart: number = 0,
@@ -418,6 +419,7 @@ export function getDocumentUrl(
 	.segment([CONTEXT_URL, INDEX_ID, 'docs', pid])
 	.search({
 		// parameter 'query' controls the hits that are highlighted in the document when it's opened
+		field: fieldName,
 		query: cql || undefined,
 		pattgapdata: pattgapdata || undefined,
 		wordstart: pageSize != null ? (Math.floor(wordstart / pageSize) * pageSize) || undefined : undefined,

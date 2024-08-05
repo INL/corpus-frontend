@@ -147,19 +147,7 @@ export default Vue.extend({
 	}),
 	computed: {
 		href(): string|undefined {
-			// we don't always have full-fledged hit objects here.
-			// If we're rendering the hits in a document search response
-			// they won't contain the start/end/parent document.
-			// in that case, don't bother with the url.
-			if (!('start' in this.data.hit)) return;
-			return getDocumentUrl(
-				this.data.doc.docPid,
-				this.query?.field ?? '',
-				this.query?.patt,
-				this.query?.pattgapdata,
-				this.data.hit.start,
-				PAGE_SIZE,
-				this.data.hit.start);
+			return this.getDocUrlForHit(this.data, this.annotatedField, this.query);
 		},
 		hasRelations: CorpusStore.get.hasRelations,
 		/** Exact surrounding sentence can only be loaded if we the start location of the current hit, and when the boundery element has been set. */
@@ -168,6 +156,21 @@ export default Vue.extend({
 		depTreeAnnotations(): Record<'lemma'|'upos'|'xpos'|'feats', string|null> { return UIStore.getState().results.shared.dependencies; }
 	},
 	methods: {
+		getDocUrlForHit(h: HitRowData, annotatedField: string, query: BLTypes.BLSearchParameters|undefined): string|undefined {
+			// we don't always have full-fledged hit objects here.
+			// If we're rendering the hits in a document search response
+			// they won't contain the start/end/parent document.
+			// in that case, don't bother with the url.
+			if (!('start' in h.hit)) return;
+			return getDocumentUrl(
+				h.doc.docPid,
+				annotatedField,
+				query?.patt,
+				query?.pattgapdata,
+				h.hit.start,
+				PAGE_SIZE,
+				h.hit.start);
+		},
 		/**
 		 * Separate from the snippet/context, as that can run over sentence boundaries, but this doesn't.
 		 * We use it to render the dependency tree for the entire sentence.

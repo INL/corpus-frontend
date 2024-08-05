@@ -1,6 +1,6 @@
 <template>
 	<tr class="concordance rounded">
-		<td v-if="displayField">{{ displayField }}</td>
+		<td v-if="displayField"><a @click.stop="" :href="href" title="Go to hit in document" target="_blank">{{ displayField }}</a></td>
 		<HitContextComponent tag="td" class="text-right"  :dir="dir" :data="data.context" :html="html" :annotation="mainAnnotation.id" before
 			:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
 			@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
@@ -64,6 +64,7 @@ export default Vue.extend({
 	},
 	props: {
 		data: Object as () => HitRowData,
+		href: Object as () => string|undefined,
 		displayField: {
 			type: String,
 			default: '',

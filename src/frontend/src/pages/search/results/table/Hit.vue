@@ -3,6 +3,7 @@
 		<HitRow :key="`${i}-hit`"
 			:class="{open: open, interactable: !disableDetails && !disabled}"
 			:data="h"
+			:href="getDocUrlForHit(h, annotatedField, query)"
 			:displayField="isParallel ? parallelVersion(annotatedField) : ''"
 			:mainAnnotation="mainAnnotation"
 			:otherAnnotations="otherAnnotations"
@@ -39,6 +40,7 @@
 				:class="{open: open, interactable: !disableDetails && !disabled}"
 				class="foreign-hit"
 				:data="of.hit"
+				:href="getDocUrlForHit(of.hit, of.name, query)"
 				:displayField="isParallel ? parallelVersion(of.name) : ''"
 				:mainAnnotation="mainAnnotation"
 				:otherAnnotations="otherAnnotations"
@@ -84,6 +86,7 @@ import HitRowDetails from '@/pages/search/results/table/HitRowDetails.vue'
 import DocRow, {DocRowData} from '@/pages/search/results/table/DocRow.vue';
 import { getParallelFieldName, getParallelFieldParts } from '@/utils/blacklabutils';
 import { snippetParts } from '@/utils/hit-highlighting';
+import { getDocumentUrl } from '@/utils';
 
 export {HitRowData} from '@/pages/search/results/table/HitRow.vue';
 import { annotatedFieldDisplayName } from '@/utils/i18n';
@@ -143,6 +146,21 @@ export default Vue.extend({
 		}
 	},
 	methods: {
+		getDocUrlForHit(h: HitRowData, annotatedField: string, query: BLSearchParameters|undefined): string|undefined {
+			// we don't always have full-fledged hit objects here.
+			// If we're rendering the hits in a document search response
+			// they won't contain the start/end/parent document.
+			// in that case, don't bother with the url.
+			if (!('start' in h.hit)) return;
+			return getDocumentUrl(
+				h.doc.docPid,
+				annotatedField,
+				query?.patt,
+				query?.pattgapdata,
+				h.hit.start,
+				PAGE_SIZE,
+				h.hit.start);
+		},
 		clickNative() {
 			if (!this.disableDetails) {
 				this.open = !this.open;

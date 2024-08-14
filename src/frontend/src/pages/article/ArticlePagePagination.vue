@@ -43,6 +43,7 @@ export default Vue.extend({
 	data: () => ({
 		hits: null as null|Array<[number, number]>,
 		hitElements: [...document.querySelectorAll('.hl')] as HTMLElement[],
+		/** Set during init. */
 		currentHitInPage: undefined as number|undefined,
 		loadingForAwhile: false,
 		pageSize: PAGE_SIZE,
@@ -51,10 +52,9 @@ export default Vue.extend({
 		PAGE_END
 	}),
 	computed: {
-		// If we're loading, we will have hits, if the page is not entire document, we have pages
-		// If either is true we are enabled and should perform our computations.
-		shouldRender(): boolean { return this.loadingForAwhile || !!this.hits?.length || (PAGE_END - PAGE_START) < DOCUMENT_LENGTH; },
-		ready(): boolean { return this.hits != null && this.shouldRender; },
+		ready(): boolean { return !!this.hits; },
+		shouldRender(): boolean { return !!(this.ready || this.loadingForAwhile || this.paginationInfo || this.hitInfo); },
+
 
 		firstVisibleHitIndex(): number {
 			if (!this.ready) { return 0; }
@@ -72,6 +72,10 @@ export default Vue.extend({
 			pageActive: boolean
 		} {
 			if (!this.ready) { return undefined; }
+			// Don't bother if we're showing the entire document
+			if (PAGE_START <= 0 && PAGE_END >= DOCUMENT_LENGTH) {
+				return undefined;
+			}
 
 			// It can happen we're not showing a page as intended, but showing a larger or smaller part.
 			// (if the user edited the url manually for example)
@@ -93,6 +97,7 @@ export default Vue.extend({
 			pageActive: boolean
 		} {
 			if (!this.ready) { return undefined; }
+			if (this.hits!.length <= 1) return undefined;
 
 			const isOnHit = this.currentHitInPage != null;
 			return {

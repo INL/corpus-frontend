@@ -1,20 +1,24 @@
 <template>
 	<div v-if="shouldRender" :class="['article-pagination', ready ? '' : 'loading']" title="Hold to drag">
-		<span v-if="!ready" class="fa fa-spinner fa-spin fa-4x"></span>
-		<template v-else>
-			<div v-if="paginationInfo" class="pagination-container">
+		<template v-if="paginationInfo">
+			<div class="pagination-container">
 				<label style="white-space: nowrap;">Page</label>
 				<div class="pagination-wrapper">
 					<Pagination v-bind="paginationInfo" :editable="false" :showOffsets="false" @change="handlePageNavigation"/><br>
 				</div>
 			</div>
-			<hr v-if="hitInfo && paginationInfo != null">
-			<div v-if="hitInfo" class="pagination-container">
-				<label>Hit</label>
-				<div class="pagination-wrapper">
-					<Pagination v-bind="hitInfo" :editable="false" :showOffsets="false" @change="handleHitNavigation"/><br>
-				</div>
+			<hr v-if="hitInfo || loadingForAwhile">
+		</template>
+
+		<div v-if="hitInfo" class="pagination-container">
+			<label>Hit</label>
+			<div class="pagination-wrapper">
+				<Pagination v-bind="hitInfo" :editable="false" :showOffsets="false" @change="handleHitNavigation"/><br>
 			</div>
+		</div>
+		<template v-else-if="loadingForAwhile">
+			<Spinner size="20"/>
+			<label>Loading hits...</label>
 		</template>
 	</div>
 </template>
@@ -31,6 +35,8 @@ import Pagination from '@/components/Pagination.vue';
 import { debugLogCat } from '@/utils/debug';
 import { binarySearch } from '@/utils';
 
+import Spinner from '@/components/Spinner.vue';
+
 import 'jquery-ui';
 import 'jquery-ui/ui/widgets/draggable';
 
@@ -39,7 +45,7 @@ import 'jquery-ui/ui/widgets/draggable';
 
 // NOTE: this is a ugly piece of code, but hey it works /shrug
 export default Vue.extend({
-	components: { Pagination },
+	components: { Pagination, Spinner },
 	data: () => ({
 		hits: null as null|Array<[number, number]>,
 		hitElements: [...document.querySelectorAll('.hl')] as HTMLElement[],
@@ -54,7 +60,6 @@ export default Vue.extend({
 	computed: {
 		ready(): boolean { return !!this.hits; },
 		shouldRender(): boolean { return !!(this.ready || this.loadingForAwhile || this.paginationInfo || this.hitInfo); },
-
 
 		firstVisibleHitIndex(): number {
 			if (!this.ready) { return 0; }
@@ -71,7 +76,6 @@ export default Vue.extend({
 			disabled: boolean,
 			pageActive: boolean
 		} {
-			if (!this.ready) { return undefined; }
 			// Don't bother if we're showing the entire document
 			if (PAGE_START <= 0 && PAGE_END >= DOCUMENT_LENGTH) {
 				return undefined;
@@ -261,10 +265,6 @@ export default Vue.extend({
 	border-radius: 3px;
 
 	padding: 5px;
-
-	&.loading {
-		border-radius: 50%;
-	}
 
 	> hr {
 		margin: 5px 0;

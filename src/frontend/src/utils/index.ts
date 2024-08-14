@@ -404,7 +404,7 @@ export function getDocumentUrl(
 	pattgapdata?: string,
 	wordstart: number = 0,
 	pageSize?: number,
-	/** HACK: Find the hit starting with this word index on the page -- see ArticlePagination.vue */
+	/** HACK: make the backend figure out which page to display based on the start index of the hit -- see ArticlePagination.vue/PaginationInfo.java */
 	findHit?: number
 ) {
 

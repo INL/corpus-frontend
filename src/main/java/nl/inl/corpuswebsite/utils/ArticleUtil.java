@@ -162,7 +162,7 @@ public class ArticleUtil {
         Optional<Integer> pageSize = corpusConfig.getPageSize();
         Optional<Integer> pageStart = getIntParameter("wordstart", request);
         Optional<Integer> pageEnd = getIntParameter("wordend", request);
-        Optional<Integer> hitStart = getIntParameter("findHit", request);
+        Optional<Integer> hitStart = getIntParameter("findhit", request);
         return new PaginationInfo(pageSize, documentMetadata, pageStart, pageEnd, hitStart);
     }
 }

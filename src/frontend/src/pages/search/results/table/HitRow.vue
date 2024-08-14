@@ -64,7 +64,7 @@ export default Vue.extend({
 	},
 	props: {
 		data: Object as () => HitRowData,
-		href: Object as () => string|undefined,
+		href: String as () => string|undefined,
 		displayField: {
 			type: String,
 			default: '',

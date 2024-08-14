@@ -281,6 +281,11 @@ $screen-lg: 1200px;
 	overflow-x: auto;
 	max-width: calc(100vw - 125px);
 	@media(max-width: ($screen-md - 1px)) { max-width: calc(100vw - 95px); }
+	// overflow-x will clip overflows at the top
+	// which causes the link to the document to be clipped.
+	// This is a bit of a hack, but at least it wille be visible in full.
+	padding-top: 10px;
+	margin-top: -10px;
 }
 .container:not(.container-fluid) .concordance-details-wrapper {
 	// everything below sm is fluid, so no more breakpoints below that.

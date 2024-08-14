@@ -116,7 +116,7 @@ export const blacklab = {
 
 	getCorpora: (requestParameters?: AxiosRequestConfig) => endpoints.blacklab
 		.get<BLTypes.BLServer>(blacklabPaths.root(), undefined, requestParameters)
-		.then(r => Object.entries(r.corpora).map(([id, c]) => normalizeIndexBase(c, id))),
+		.then(r => Object.entries(r.corpora || {}).concat(Object.entries(r.indices || {})).map(([id, c]) => normalizeIndexBase(c, id))),
 
 	getCorpusStatus: (id: string, requestParamers?: AxiosRequestConfig) => endpoints.blacklab
 		.get<BLTypes.BLIndex>(blacklabPaths.indexStatus(id), undefined, requestParamers)
@@ -336,16 +336,16 @@ export const blacklab = {
 
 	/**
 	 *
-	 * @param indexId
-	 * @param docId
+	 * @param indexId the index
+	 * @param docId the document
+	 * @param field the annotatedField to get the snippet from (for parallel documents/corpora which have multiple versions of the same document). If undefined, BlackLab will return the default field.
 	 * @param hitstart
 	 * @param hitend
 	 * @param context either a number (n words before and after, or a "span" type relation (ui.search.shared.within.elements in the store))
 	 * @param requestParameters
 	 * @returns
 	 */
-	getSnippet: (indexId: string, docId: string, field: string, hitstart: number, hitend: number, context?: string|number, requestParameters?: AxiosRequestConfig) => {
-		// TODO check if the snippet is still weird.
+	getSnippet: (indexId: string, docId: string, field: string|undefined, hitstart: number, hitend: number, context?: string|number, requestParameters?: AxiosRequestConfig) => {
 		return endpoints.blacklab.getOrPost<BLTypes.BLHit>(blacklabPaths.snippet(indexId, docId), {
 			hitstart,
 			hitend,
@@ -353,6 +353,8 @@ export const blacklab = {
 			field,
 		}, requestParameters)
 		.then<BLTypes.BLHit>(r => {
+			// BlackLab doesn't always return the left/right/before/after context fields (at document boundaries)
+			// Fill them in with blanks to simplify rendering code.
 			if (!r.left) r.left = Object.entries(r.match).reduce((acc, [key, value]) => { acc[key] = []; return acc; }, {} as BLTypes.BLHitSnippetPart);
 			if (!r.right) r.right = Object.entries(r.match).reduce((acc, [key, value]) => { acc[key] = []; return acc; }, {} as BLTypes.BLHitSnippetPart);
 			return r;

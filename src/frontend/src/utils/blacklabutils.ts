@@ -112,7 +112,7 @@ function normalizeAnnotatedField(field: BLTypes.BLAnnotatedField): NormalizedAnn
 
 function normalizeAnnotationGroups(blIndex: BLTypes.BLIndexMetadata): NormalizedAnnotationGroup[] {
 	let annotationGroupsNormalized: NormalizedAnnotationGroup[] = [];
-	const fieldId = blIndex.mainAnnotatedField;
+	const fieldId = blIndex.mainAnnotatedField || Object.keys(blIndex.annotatedFields)[0];
 	const field = blIndex.annotatedFields[fieldId];
 
 	const annotations = BLTypes.isAnnotatedFieldV1(field) ? field.properties : field.annotations;
@@ -246,7 +246,7 @@ export function normalizeIndex(blIndex: BLTypes.BLIndexMetadata, relations: BLTy
 		tokenCount: blIndex.tokenCount || 0,
 		status: blIndex.status,
 		indexProgress: blIndex.indexProgress || null,
-		mainAnnotatedField: blIndex.mainAnnotatedField,
+		mainAnnotatedField: blIndex.mainAnnotatedField || Object.keys(blIndex.annotatedFields)[0],
 		relations
 	};
 }

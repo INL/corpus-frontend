@@ -260,7 +260,9 @@ export default Vue.extend({
 			}
 
 			this.loadingServerInfo = false;
-			this.corpora = Object.entries(this.serverInfo.corpora).map(([id, index]) => normalizeIndexBase(index, id)).sort((a, b) => a.displayName.localeCompare(b.displayName));
+			this.corpora = Object.entries(this.serverInfo.corpora || {}).concat(Object.entries(this.serverInfo.indices || {}))
+				.map(([id, index]) => normalizeIndexBase(index, id))
+				.sort((a, b) => a.displayName.localeCompare(b.displayName));
 			this.loadingCorpora = false;
 			this.refreshFormats();
 		} catch (error) {

@@ -181,9 +181,9 @@ export interface BLServer {
 	blacklabVersion: string;
 	cacheStatus?: BLCacheStatus;
 	helpPageUrl: string;
-	corpora: {
-		[key: string]: BLIndex;
-	};
+	// Interop with older servers.
+	corpora?: Record<string, BLIndex>
+	indices?: Record<string, BLIndex>;
 	user: BLUser;
 }
 
@@ -319,7 +319,7 @@ export interface BLIndexMetadata {
 
 	annotatedFields: {[id: string]: BLAnnotatedFieldV2};
 	/** key into annotatedFields */
-	mainAnnotatedField: string;
+	mainAnnotatedField?: string;
 	/** Only available if index contains actual documents and if versionInfo.blackLabVersion >= 2.0.0 */
 	documentCount: number;
 };

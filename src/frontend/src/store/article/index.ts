@@ -14,6 +14,15 @@ type RootState = {
 	indexId: string;
 	docId: string;
 	document: null|BLTypes.BLDocument;
+	/**
+	 * Name of the AnnotatedField in which we're viewing the document.
+	 * Relevant for parallel corpora, where a document perhaps has a Dutch and an English version (or perhaps event more).
+	 * When this is a regular corpus with only one version of documents, the field will usually be named 'contents' (but not necessarily).
+	 *
+	 * We retrieve this from the URL (query parameter "field").
+	 * If not supplied/set, we can just omit it in requests to BlackLab and it will use whatever default it has.
+	 */
+	field: string|null;
 
 	distributionAnnotation: null|{
 		/** Id of the annotation */
@@ -41,6 +50,7 @@ const initialState: RootState = {
 	indexId: INDEX_ID,
 	docId: DOCUMENT_ID,
 	document: null,
+	field: null,
 	distributionAnnotation: null,
 	growthAnnotations: null,
 	statisticsTableFn: null,
@@ -70,6 +80,10 @@ const actions = {
 	replace: b.commit((state, payload: RootState) => Object.assign(state, payload), 'replaceRoot'),
 };
 
+const internalActions = {
+	field: b.commit((state, payload: string|null) => state.field = payload, 'field')
+}
+
 // shut up typescript, the state we pass here is merged with the modules initial states internally.
 // NOTE: only call this after creating all getters and actions etc.
 // NOTE: process.env is empty at runtime, but webpack inlines all values at compile time, so this check works.
@@ -77,6 +91,9 @@ declare const process: any;
 const store = b.vuexStore({state: cloneDeep(initialState) as RootState, strict: process.env.NODE_ENV === 'development'});
 
 const init = () => {
+	// Set annotatedField from URL.
+	// Required to get correct hit counts and statistics.
+	internalActions.field(new URLSearchParams(window.location.search).get('field'));
 	blacklab.getDocumentInfo(INDEX_ID, DOCUMENT_ID)
 	.then(actions.document);
 };

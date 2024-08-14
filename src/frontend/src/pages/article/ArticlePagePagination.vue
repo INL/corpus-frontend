@@ -154,8 +154,11 @@ export default Vue.extend({
 			window.history.replaceState(undefined, '', url);
 		},
 	},
+	mounted() {
+		this.$forceUpdate(); // updated() sometimes not called?
+	},
 	updated() {
-		if (this.$el) {
+		if (this.$el && this.$el.nodeType === 1) { // sometimes it's a comment if our top v-if is false.
 			//@ts-ignore
 			$(this.$el).draggable();
 		}

@@ -599,7 +599,7 @@ const actions = {
 				id => `Trying to allow grouping by Annotation '${id}', but it does not have the required forward index.`,
 				r => {
 					const defaultId = state.explore.defaultGroupAnnotationId;
-					r = state.results.shared.groupAnnotationIds = r;
+					state.results.shared.groupAnnotationIds = r;
 					if (!r.includes(defaultId)) {
 						if (defaultId) { // don't warn when it was unconfigured before (e.g. '')
 							console.warn(`[results.shared.groupAnnotationIds] - Resetting default selection for explore.defaultGroupAnnotationId from '${defaultId}' to '${r[0]}' because it's not in the configured list ${JSON.stringify(r)}`);
@@ -614,7 +614,7 @@ const actions = {
 				_ => true, _ => '',
 				r => {
 					const defaultId = state.explore.defaultGroupMetadataId;
-					r = state.results.shared.groupMetadataIds = r;
+					state.results.shared.groupMetadataIds = r;
 					if (!r.includes(defaultId)) {
 						if (defaultId) { // don't warn when it was unconfigured before (e.g. '')
 							console.warn(`[results.shared.groupMetadataIds] - Resetting default selection for explore.defaultGroupMetadataId from '${defaultId}' to '${r[0]}' because it's not in the configured list ${JSON.stringify(r)}`);
@@ -950,6 +950,9 @@ const init = () => {
 
 	// Hits table, nothing shown by default, but call the setter to validate what was set.
 	actions.results.hits.shownMetadataIds(initialState.results.hits.shownMetadataIds);
+	// Docs table: validate shown metadata
+	actions.results.docs.shownMetadataIds(initialState.results.docs.shownMetadataIds);
+
 	// Docs table: Show the date column if it is configured
 	if (!getState().results.docs.shownMetadataIds.length) {
 		const dateField = CorpusStore.getState().corpus!.fieldInfo.dateField;

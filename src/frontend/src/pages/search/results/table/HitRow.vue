@@ -1,13 +1,13 @@
 <template>
 	<tr class="concordance rounded">
 		<td v-if="displayField"><a @click.stop="" :href="href" title="Go to hit in document" target="_blank">{{ displayField }}</a></td>
-		<HitContextComponent tag="td" class="text-right"  :dir="dir" :data="data.context" :html="html" :annotation="mainAnnotation.id" before
+		<HitContextComponent tag="td" class="text-right"  :dir="dir" :data="data.context" :html="html" :annotation="mainAnnotation.id" :before="dir === 'ltr'" :after="dir === 'rtl'"
 			:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
 			@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
 		<HitContextComponent tag="td" class="text-center" :dir="dir" :data="data.context" :html="html" :annotation="mainAnnotation.id" bold
 			:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
 			@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)"/>
-		<HitContextComponent tag="td" class="text-left"   :dir="dir" :data="data.context" :html="html" :annotation="mainAnnotation.id" after
+		<HitContextComponent tag="td" class="text-left"   :dir="dir" :data="data.context" :html="html" :annotation="mainAnnotation.id" :after="dir === 'ltr'"  :before="dir === 'rtl'"
 			:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
 			@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)"/>
 
@@ -26,7 +26,6 @@
 		</td>
 		<td v-if="data.doc" v-for="meta in metadata" :key="meta.id">{{data.doc.docInfo[meta.id] ? data.doc.docInfo[meta.id].join(', ') : ''}}</td>
 	</tr>
-
 </template>
 
 <script lang="ts">

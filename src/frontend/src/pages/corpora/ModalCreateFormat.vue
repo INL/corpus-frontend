@@ -33,7 +33,7 @@
 						<label style="padding: 0 0.5em; align-self: flex-end;">Or</label>
 
 						<div style="display: inline-flex; flex-wrap: nowrap; flex-direction: row;">
-							<SelectPicker :options="formatOptions" data-style="border-right: none; border-top-right-radius: 0; border-bottom-right-radius: 0;" right :showValues="false" placeholder="Select an existing format" hideEmpty allowHtml data-menu-width="auto" container="body" v-model="formatPresetName"/>
+							<SelectPicker :options="formatOptions" data-style="border-right: none; border-top-right-radius: 0; border-bottom-right-radius: 0;" right :showValues="true" searchable placeholder="Select an existing format" hideEmpty allowHtml data-menu-width="auto" container="body" v-model="formatPresetName"/>
 							<button @click="downloadFormat" :disabled="!formatPresetName || downloading" class="btn btn-primary" style="border-top-left-radius: 0; border-bottom-left-radius: 0">Load</button>
 						</div>
 					</div>

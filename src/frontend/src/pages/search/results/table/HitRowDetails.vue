@@ -23,7 +23,7 @@
 							:otherAnnotations="depTreeAnnotations"
 						/>
 					</template>
-					<p>
+					<p :dir="dir">
 						<template v-for="addon in addons">
 							<component v-if="addon.component"
 								:is="addon.component"
@@ -45,14 +45,14 @@
 							/>
 						</template>
 
-						<HitContextComponent tag="span" :dir="dir" :data="context" :html="html" :annotation="mainAnnotation.id" before
+						<HitContextComponent tag="span" :dir="dir" :data="context" :html="html" :annotation="mainAnnotation.id" :before="dir === 'ltr'" :after="dir === 'rtl'"
 							:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
 							@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
 						<HitContextComponent tag="strong" :dir="dir" :data="context" :html="html" :annotation="mainAnnotation.id" bold
 							:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
 							@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
 						<a v-if="href" :href="href" title="Go to hit in document" target="_blank"><sup class="fa fa-link" style="margin-left: -5px;"></sup></a>
-						<HitContextComponent tag="span" :dir="dir" :data="context" :html="html" :annotation="mainAnnotation.id" after
+						<HitContextComponent tag="span" :dir="dir" :data="context" :html="html" :annotation="mainAnnotation.id" :after="dir === 'ltr'"  :before="dir === 'rtl'"
 							:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
 							@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
 					</p>
@@ -60,7 +60,7 @@
 						<thead>
 							<tr>
 								<th>{{$t('results.table.property')}}</th>
-								<th :colspan="data.hit.match.punct.length">{{$t('results.table.value')}}</th>
+								<th :colspan="data.hit.match.punct.length" :style="`text-align: ${dir === 'rtl' ? 'right' : 'left'}`">{{$t('results.table.value')}}</th>
 							</tr>
 						</thead>
 						<tbody>

@@ -42,12 +42,11 @@ public class PaginationInfo {
             Optional<Integer> requestedPageEnd,
             Optional<Integer> hitStart
     ) {
-        // If we don't know the document length, pretend pagination is disabled.
-        if (pageSize.isEmpty() || !documentMetadata.hasResult()) {
-            // Just set a default if we don't have the doc length here.
-            this.documentLength = documentMetadata.map(PaginationInfo::getDocumentLength).getResult(Integer.MAX_VALUE);
-            this.pageSize = Integer.MAX_VALUE;
-            this.clientPageEnd = Integer.MAX_VALUE;
+        this.documentLength = documentMetadata.map(PaginationInfo::getDocumentLength).getResult().orElse(Integer.MAX_VALUE);
+        this.pageSize = pageSize.orElse(Integer.MAX_VALUE);
+        if (pageSize.isEmpty()) {
+            // Pagination is disabled.
+            this.clientPageEnd = this.documentLength;
             this.clientPageStart = 0;
             this.blacklabPageEnd = Optional.empty();
             this.blacklabPageStart = Optional.empty();
@@ -55,8 +54,6 @@ public class PaginationInfo {
         }
 
         // Pagination is enabled.
-        this.pageSize = pageSize.get();
-        this.documentLength = documentMetadata.map(PaginationInfo::getDocumentLength).mapError(e -> new RuntimeException("Document metadata not available", e)).getOrThrow();
 
         // if the user wants a specific hit, generate the correct page, and ignore the requested page start and end.
         if (hitStart.isPresent()) {

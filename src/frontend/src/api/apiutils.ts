@@ -44,7 +44,7 @@ export async function handleError(error: AxiosError): Promise<never> {
 	if (!response) {
 		return Promise.reject(new ApiError(
 			error.message,
-			'Could not connect to server at ' + error.config.url,
+			'Could not connect to server at ' + new URL(error.config.url || '', error.config.baseURL),
 			'Server Offline',
 			undefined
 		));

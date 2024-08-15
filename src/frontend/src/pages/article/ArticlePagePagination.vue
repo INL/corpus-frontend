@@ -59,7 +59,7 @@ export default Vue.extend({
 	}),
 	computed: {
 		ready(): boolean { return !!this.hits; },
-		shouldRender(): boolean { return !!(this.ready || this.loadingForAwhile || this.paginationInfo || this.hitInfo); },
+		shouldRender(): boolean { return !!(this.loadingForAwhile || this.paginationInfo || this.hitInfo); },
 
 		firstVisibleHitIndex(): number {
 			if (!this.ready) { return 0; }

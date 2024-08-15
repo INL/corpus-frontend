@@ -135,8 +135,12 @@ const privateActions = {
 const init = () => Promise.all([Api.frontend.getCorpus(), Api.blacklab.getRelations(INDEX_ID)])
 	.then(([index, relations]) => normalizeIndex(index, relations))
 	.then(corpus => {
-		// TODO we probably need a proper navbar component for this.
-		document.querySelector('.navbar-brand')!.innerHTML = corpus.displayName || corpus.id;
+		// Set displayname in navbar if it's currently a fallback.
+		// (which is when search.xml doesn't specify a displayname)
+		const displayNameInNavbar = document.querySelector('.navbar-brand')!;
+		if (corpus.displayName && displayNameInNavbar.hasAttribute('data-is-fallback')) {
+			displayNameInNavbar.innerHTML = corpus.displayName || corpus.id;
+		}
 
 		// We to finish up some state that might be missing.
 		if (corpus.documentCount === -1) {

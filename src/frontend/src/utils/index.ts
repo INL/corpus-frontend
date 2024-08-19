@@ -400,6 +400,7 @@ export const getPatternStringFromCql = (sourceCql: string, targetVersions: strin
 export function getDocumentUrl(
 	pid: string,
 	fieldName: string,
+	searchField?: string, // if searchfield differs from field (parallel corpus)
 	cql?: string,
 	pattgapdata?: string,
 	wordstart: number = 0,
@@ -420,6 +421,7 @@ export function getDocumentUrl(
 	.search({
 		// parameter 'query' controls the hits that are highlighted in the document when it's opened
 		field: fieldName,
+		searchfield: searchField,
 		query: cql || undefined,
 		pattgapdata: pattgapdata || undefined,
 		wordstart: pageSize != null ? (Math.floor(wordstart / pageSize) * pageSize) || undefined : undefined,

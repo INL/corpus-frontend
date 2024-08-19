@@ -165,6 +165,7 @@ export default Vue.extend({
 			return getDocumentUrl(
 				h.doc.docPid,
 				annotatedField,
+				query?.field,
 				query?.patt,
 				query?.pattgapdata,
 				h.hit.start,

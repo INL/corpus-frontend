@@ -7,10 +7,10 @@ import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import nl.inl.corpuswebsite.MainServlet;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
+import nl.inl.corpuswebsite.MainServlet;
 import nl.inl.corpuswebsite.utils.GlobalConfig.Keys;
 
 /**
@@ -56,12 +56,21 @@ public class ArticleUtil {
     }
 
     public Result<String, QueryException> getDocumentContent(WebsiteConfig corpusConfig, GlobalConfig config, String docId, PaginationInfo page) {
+
+        // Search a different field than the one we're displaying content from?
+        // (used for parallel corpora, where a query can return hits from a different field than the one that was searched,
+        //  e.g. search the contents__en field using query rfield('the' -->nl _, 'nl') to find the Dutch translation of 'the')
+        Optional<String> fieldToShow = getParameter("field", request); // required
+        Optional<String> fieldToSearch = getParameter("searchfield", request); // optional, only if different
+        Optional<String> queryTargetField = fieldToSearch.isPresent() ? fieldToShow : Optional.empty();
+
         return new BlackLabApi(request, response, config)
             .getDocumentContents(
                     corpusConfig.getCorpusId().orElseThrow(),
                     docId,
-                    getParameter("field", request),
-                    getParameter("query", request),
+                    fieldToShow,
+                    fieldToSearch,
+                    optTargetField(getParameter("query", request), queryTargetField),
                     getParameter("pattgapdata", request),
                     page.blacklabPageStart,
                     page.blacklabPageEnd
@@ -73,6 +82,19 @@ public class ArticleUtil {
                 if (e.getHttpStatusCode() == HttpServletResponse.SC_FORBIDDEN) return new QueryException(HttpServletResponse.SC_FORBIDDEN, "Documents in this corpus cannot be displayed, because the owner has disabled this feature.");
                 else return new QueryException(e.getHttpStatusCode(), "An error occurred while retrieving document contents from BlackLab: \n" + e.getMessage());
             });
+    }
+
+    /**
+     * Optionally request hits from a specific target field (parallel corpora).
+     *
+     * This is done by adding <code>rfield(..., targetField)</code> to the query.
+     */
+    private Optional<String> optTargetField(Optional<String> query, Optional<String> targetfield) {
+        if (query.isPresent() && targetfield.isPresent()) {
+            String f = targetfield.get().replaceAll("'", "\\'");
+            return Optional.of("rfield(" + query.get() + ", '" + f + "')");
+        }
+        return query;
     }
 
     /**

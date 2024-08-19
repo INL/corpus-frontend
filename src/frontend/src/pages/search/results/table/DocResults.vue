@@ -85,6 +85,7 @@ export default Vue.extend({
 					doc,
 					href: getDocumentUrl(doc.docPid,
 						this.results.summary.pattern?.fieldName ?? '',
+						undefined,
 						this.results.summary.searchParam.patt || undefined,
 						this.results.summary.searchParam.pattgapdata || undefined),
 					summary: getDocumentSummary(doc.docInfo, specialFields),

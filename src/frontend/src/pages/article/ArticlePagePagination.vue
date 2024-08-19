@@ -204,7 +204,11 @@ export default Vue.extend({
 
 		// Load all hits in the document (also those outside this page)
 		// @ts-ignore
-		const { query }: { query: string|undefined } = new URI().search(true);
+		const { query, field, searchfield }: {
+			query: string|undefined,
+			field: string|undefined,
+			searchfield: string|undefined, // override in parallel corpus (e.g. show contents from field a; search starts from field B)
+		} = new URI().search(true);
 
 		if (!query) { // no hits when no query, abort
 			this.hits = [];
@@ -215,6 +219,7 @@ export default Vue.extend({
 		blacklab
 		.getHits(INDEX_ID, {
 			docpid: DOCUMENT_ID,
+			field: searchfield ?? field,
 			patt: query,
 			first: 0,
 			number: Math.pow(2, 31)-1,

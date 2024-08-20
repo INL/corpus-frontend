@@ -1,6 +1,6 @@
 <template>
 	<tr class="concordance rounded">
-		<td v-if="displayField"><a @click.stop="" :href="href" title="Go to hit in document" target="_blank">{{ displayField }}</a></td>
+		<td v-if="displayField" class='doc-version'><a @click.stop="" :href="href" title="Go to hit in document" target="_blank">{{ displayField }}</a></td>
 		<HitContextComponent tag="td" class="text-right"  :dir="dir" :data="data.context" :html="html" :annotation="mainAnnotation.id" :before="dir === 'ltr'" :after="dir === 'rtl'"
 			:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
 			@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
@@ -93,6 +93,10 @@ tr.foreign-hit {
 
 tr.concordance.foreign-hit + tr.concordance:not(.foreign-hit) > td {
 	padding-top: 0.6em;
+}
+
+tr.rounded > td.doc-version {
+	padding-left: 1.5em;
 }
 
 tr.concordance {

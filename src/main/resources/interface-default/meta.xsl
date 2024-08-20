@@ -44,7 +44,7 @@
 						</xsl:for-each>
 					</xsl:when>
 					<xsl:otherwise>
-						<xsl:for-each select="*[name()!='mayView' and name() != 'lengthInTokens' and name() != 'tokenCounts']">
+						<xsl:for-each select="*[name()!='mayView' and name() != 'fromInputFile' and name() != 'lengthInTokens' and name() != 'tokenCounts']">
 							<xsl:variable name="fieldName" select="name()"/>
 							<xsl:variable name="fieldDisplayName" select="/blacklabResponse/metadataFieldDisplayNames/*[name()=$fieldName]" />
 							<tr><td><xsl:value-of select="$fieldDisplayName" /></td><td><xsl:value-of select="." /></td></tr>

@@ -65,6 +65,7 @@ $(document).ready(async () => {
 	// And since debug.debug is observable, this works!
 	RootStore.store.watch(store => ({debug: debug.debug, document: store.document}), ({debug, document}) => {
 		if (debug && document) {
+			// Add the debug tab
 			let wordstart = PAGE_START;
 			let wordend = PAGE_END;
 
@@ -81,7 +82,7 @@ $(document).ready(async () => {
 						<th>Field</th>
 						<th>Values</th>
 					</tr>
-					${Object.entries(document.docInfo).sort((a, b) => a[0].localeCompare(b[0])).map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}
+					${Object.entries(document.docInfo).sort((a, b) => a[0].localeCompare(b[0])).map(([k, v]) => `<tr><td>${k}</td><td>${JSON.stringify(v)}</td></tr>`).join('')}
 				</table>
 
 				<a href="${BLS_URL}${INDEX_ID}/docs/${DOCUMENT_ID}/contents${q}" target="_blank">Open raw document</a>
@@ -90,6 +91,7 @@ $(document).ready(async () => {
 			$('#articleTabs').append(`<li id="debug-tab"><a href="#debug" data-toggle="tab">Debug</a></li>`)
 			$('.tab-content').append(`<div id="debug" class="tab-pane">${s}</div>`)
 		} else {
+			// Remove debug tab if present
 			$('#debug').remove();
 			$('#debug-tab').remove();
 		}

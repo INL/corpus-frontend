@@ -1256,6 +1256,13 @@ const corpusCustomizations = {
 				actions.search.shared.within.elements(elements);
 			}
 			*/
+		},
+
+		metadata: {
+			/** Show this metadata search field? (return null for default behaviour) */
+			show(name: string): boolean|null {
+				return null;
+			}
 		}
 	},
 

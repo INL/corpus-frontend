@@ -116,7 +116,10 @@ export default Vue.extend({
 					subtabs: group.subtabs
 						.map(subtab => ({
 							tabname: subtab.tabname,
-							filters: subtab.fields.filter(id => allIdsToShow.has(id))
+							filters: subtab.fields.filter(id => {
+								const showField = UIStore.corpusCustomizations.search.metadata.show(id);
+								return showField === true || showField === null && allIdsToShow.has(id);
+							})
 						}))
 						.filter(subtab => subtab.filters.length),
 					query: group.query

@@ -4,10 +4,17 @@ import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
 
-import nl.inl.corpuswebsite.utils.*;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.corpuswebsite.BaseResponse;
+import nl.inl.corpuswebsite.utils.ArticleUtil;
+import nl.inl.corpuswebsite.utils.CorpusConfig;
+import nl.inl.corpuswebsite.utils.GlobalConfig;
+import nl.inl.corpuswebsite.utils.PaginationInfo;
+import nl.inl.corpuswebsite.utils.QueryException;
+import nl.inl.corpuswebsite.utils.Result;
+import nl.inl.corpuswebsite.utils.ReturnToClientException;
+import nl.inl.corpuswebsite.utils.WebsiteConfig;
 
 public class ArticleResponse extends BaseResponse {
 
@@ -63,6 +70,7 @@ public class ArticleResponse extends BaseResponse {
         model.put("pageSize", pagination.pageSize);
         model.put("pageStart", pagination.clientPageStart);
         model.put("pageEnd", pagination.clientPageEnd);
+        request.getParameter("field");
 
         // override corpus display set in base response
         // Only do this if the corpus defines a displayName and search.xml does not

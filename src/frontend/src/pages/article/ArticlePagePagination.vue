@@ -198,8 +198,9 @@ export default Vue.extend({
 		}
 
 
-		// now request all hits from blacklab, we need this to solve the second case with the ?findhit parameter, but also so we know whether there are more hits
-		// outside this page (so we can navigate the user there).
+		// case 2: the ?findhit parameter
+		// we need to request all hits from blacklab for this
+		//   (but we need these anyway, so we know how many hits there are and where, for navigating through them)
 
 
 		// Load all hits in the document (also those outside this page)
@@ -215,12 +216,25 @@ export default Vue.extend({
 			return;
 		}
 
+		/**
+		 * Optionally request hits from a specific target field (parallel corpora).
+		 *
+		 * This is done by adding <code>rfield(..., targetField)</code> to the query.
+		 */
+		function optTargetField(query?: string, targetfield?: string) {
+			if (query && targetfield) {
+				const f = targetfield.replace(/'/g, "\\'");
+				return "rfield(" + query + ", '" + f + "')";
+			}
+			return query;
+		}
+
 		const spinnerTimeout = setTimeout(() => this.loadingForAwhile = true, 3000);
 		blacklab
 		.getHits(INDEX_ID, {
 			docpid: DOCUMENT_ID,
 			field: searchfield ?? field,
-			patt: query,
+			patt: optTargetField(query, searchfield ? field : undefined),
 			first: 0,
 			number: Math.pow(2, 31)-1,
 			context: 0,

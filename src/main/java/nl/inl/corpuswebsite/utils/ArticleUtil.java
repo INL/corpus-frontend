@@ -185,6 +185,7 @@ public class ArticleUtil {
         Optional<Integer> pageStart = getIntParameter("wordstart", request);
         Optional<Integer> pageEnd = getIntParameter("wordend", request);
         Optional<Integer> hitStart = getIntParameter("findhit", request);
-        return new PaginationInfo(pageSize, documentMetadata, pageStart, pageEnd, hitStart);
+        String field = getParameter("field", request).orElse(null);
+        return new PaginationInfo(pageSize, documentMetadata, pageStart, pageEnd, hitStart, field);
     }
 }

@@ -22,6 +22,7 @@
 	<xsl:template match="docInfo">
 		<h2 style="word-break:break-all;">
 			<xsl:value-of select="*[name()=/*//titleField]" />
+			<span id="parallel-version"></span>
 		</h2>
 
 		<table class="table-striped">
@@ -51,7 +52,7 @@
 						</xsl:for-each>
 					</xsl:otherwise>
 				</xsl:choose>
-				<tr><td>Document length (tokens)</td><td><xsl:value-of select="lengthInTokens"/></td></tr>
+				<tr><td>Document length (tokens)</td><td id="docLengthTokens"><xsl:value-of select="lengthInTokens"/></td></tr>
 			</tbody>
 		</table>
 	</xsl:template>

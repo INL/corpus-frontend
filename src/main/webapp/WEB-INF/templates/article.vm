@@ -22,7 +22,8 @@
     <div class="tab-content cf-panel-tab-body cf-panel-lg" style="padding-top: 35px;">
          #if(!$article_content_restricted)
              <div id="content" class="tab-pane active">
-                <div id="vue-root-pagination"></div>
+                 <div id="vue-root-pagination"></div>
+                 <div id="vue-root-parallel-version"></div><!-- parallel corpus: version name and length -->
 
                 #set($unescaped = $article_content) ## see BaseResponse.java
                 $!unescaped

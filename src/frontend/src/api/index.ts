@@ -75,6 +75,8 @@ export const blacklabPaths = {
 	root: () =>                                     './',
 	index: (indexId: string) =>                     `${indexId}/`,
 	indexStatus: (indexId: string) =>               `${indexId}/status/`,
+	field: (indexId: string, fieldName: string) =>  `${indexId}/fields/${fieldName}/`,
+
 	/** Retrieve the relations/inline tags in the corpus. Since 4.0 */
 	relations: (indexId: string) =>                 `${indexId}/relations/`,
 	documentUpload: (indexId: string) =>            `${indexId}/docs/`,
@@ -126,6 +128,9 @@ export const blacklab = {
 		endpoints.blacklab.get<BLTypes.BLIndexMetadata>(blacklabPaths.index(id), undefined, requestParameters),
 		endpoints.blacklab.get<BLTypes.BLRelationInfo>(blacklabPaths.relations(id), undefined, requestParameters)
 	]).then(([index, relations]) => normalizeIndex(index, relations)),
+
+	getAnnotatedField: (corpusId: string, fieldName: string, requestParameters?: AxiosRequestConfig) => endpoints.blacklab
+		.get<BLTypes.BLAnnotatedField>(blacklabPaths.field(corpusId, fieldName), undefined, requestParameters),
 
 	getShares: (id: string, requestParameters?: AxiosRequestConfig) => endpoints.blacklab
 		.get<{'users[]': BLTypes.BLShareInfo}>(blacklabPaths.shares(id), undefined, requestParameters)

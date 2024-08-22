@@ -614,6 +614,7 @@ export interface BLTermOccurances {
 /** Contains all metadata for a document. Fields without indexed values are omitted! */
 export type BLDocInfo = {
 	lengthInTokens: number;
+	tokenCounts?: Array<{fieldName: string; tokenCount: number}>
 	mayView: boolean;
 }&{
 	[key: string]: string[];

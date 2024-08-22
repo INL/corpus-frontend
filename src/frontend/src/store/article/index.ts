@@ -91,11 +91,29 @@ declare const process: any;
 const store = b.vuexStore({state: cloneDeep(initialState) as RootState, strict: process.env.NODE_ENV === 'development'});
 
 const init = () => {
-	// Set annotatedField from URL.
+	// Get annotated field from URL.
 	// Required to get correct hit counts and statistics.
-	internalActions.field(new URLSearchParams(window.location.search).get('field'));
+	// (note that this may be a full field name or a version name (parallel corpus), see below)
+	const fieldOrVersion = new URLSearchParams(window.location.search).get('field');
+
+	// Fetch document info and determine full annotated field name.
 	blacklab.getDocumentInfo(INDEX_ID, DOCUMENT_ID)
-	.then(actions.document);
+	.then(document => {
+		// Store document info
+		actions.document(document);
+
+		// If the field name from the URL was just a version (e.g. nl), find the full field name
+		// (e.g. contents__nl) in the document info and set that.
+		if (fieldOrVersion) {
+			const matchingFieldName = ({ fieldName }: { fieldName: string }) => {
+				return fieldName === fieldOrVersion ||
+					fieldName.length - fieldOrVersion.length - 2 >= 0 &&
+					fieldName.substring(fieldName.length - fieldOrVersion.length - 2) === `__${fieldOrVersion}`;
+			}
+			const fullFieldName = document.docInfo.tokenCounts?.find(matchingFieldName)?.fieldName ?? fieldOrVersion;
+			internalActions.field(fullFieldName);
+		}
+	});
 };
 
 // Debugging helpers.

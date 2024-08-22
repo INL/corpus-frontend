@@ -13,8 +13,10 @@ import HighchartsBoost from 'highcharts/modules/boost';
 import VuePlausible from 'vue-plausible/lib/esm/vue-plugin.js';
 
 import * as RootStore from '@/store/article';
+import * as UIStore from '@/store/search/ui';
 import ArticlePageComponent from '@/pages/article/ArticlePage.vue';
 import ArticlePagePaginationComponent from '@/pages/article/ArticlePagePagination.vue';
+import ArticlePageParallelComponent from '@/pages/article/ArticlePageParallel.vue';
 import debug from '@/utils/debug';
 import initTooltips from '@/modules/expandable-tooltips';
 import * as loginSystem from '@/utils/loginsystem';
@@ -53,13 +55,24 @@ $(document).ready(async () => {
 	initApi('cf', CONTEXT_URL, user);
 	await RootStore.init();
 
+	// Trick to get ui.ts to load (and window.frontend object to be created, for custom.js)
+	UIStore.get;
+
+	// Statistics tab
 	new ArticlePageComponent().$mount(document.getElementById('vue-root-statistics')!);
+
+	// Pagination widget
 	new ArticlePagePaginationComponent().$mount(document.getElementById('vue-root-pagination')!);
+
+	// Show document version name and length
+	// (i.e. the display name and length of the specific annotated field we're showing, e.g. contents__nl, shown as "Dutch")
+	new ArticlePageParallelComponent().$mount(document.getElementById('vue-root-parallel-version')!);
 
 	(window as any).Vue = Vue;
 
-	// This is pretty horrendous
-	// We need a callback when some Vue.observable changes
+	// Add debug tab if we're in debug mode.
+	//
+	// This is pretty horrendous: we need a callback when some Vue.observable changes
 	// The easy way is through a store watcher, since that works even when the variable is outside the store
 	// and even when the store is completely ignored other than that.
 	// And since debug.debug is observable, this works!

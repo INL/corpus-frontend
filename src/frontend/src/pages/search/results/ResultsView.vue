@@ -388,7 +388,7 @@ export default Vue.extend({
 		viewGroupName(): string {
 			if (this.viewGroup == null) { return ''; }
 			return this._viewGroupName ? this._viewGroupName :
-				this.viewGroup.substring(this.viewGroup.indexOf(':')+1) || '[unknown]';
+				this.viewGroup.substring(this.viewGroup.indexOf(':')+1) || ResultsStore.GROUP_NAME_NO_VALUE;
 		},
 
 		breadCrumbs(): Array<{

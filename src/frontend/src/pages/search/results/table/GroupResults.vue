@@ -183,9 +183,9 @@ export default Vue.extend({
 
 				hitGroups.forEach(g => {
 					stage1.push({
-						id: g.identity || '[unknown]',
+						id: g.identity || ResultsStore.GROUP_NAME_NO_VALUE,
 						size: g.size,
-						displayname: decodePropertyValue(g) || '[unknown]',
+						displayname: decodePropertyValue(g) || ResultsStore.GROUP_NAME_NO_VALUE,
 
 						'r.d': summary.numberOfDocs,
 						'r.t': summary.tokensInMatchingDocuments!, // FIXME augment request to make this available
@@ -220,7 +220,7 @@ export default Vue.extend({
 					stage1.push({
 						id: g.identity,
 						size: g.size,
-						displayname: decodePropertyValue(g) || '[unknown]',
+						displayname: decodePropertyValue(g) || ResultsStore.GROUP_NAME_NO_VALUE,
 
 						'r.d': summary.numberOfDocs,
 						'r.t': summary.tokensInMatchingDocuments!, // FIXME augment request to make this available

@@ -133,7 +133,12 @@ const init = () => {
 
 type ViewModule = ReturnType<typeof createViewModule>;
 
+/** What name to show for a group if it doesn't have a value
+ *  (e.g. grouped by left context, but some hits have none) */
+const GROUP_NAME_NO_VALUE = '[none]';
+
 export {
+	GROUP_NAME_NO_VALUE,
 	ViewRootState,
 	ModuleRootState,
 	ViewModule,

@@ -283,7 +283,7 @@ export default Vue.extend({
 		}
 	},
 	watch: {
-		data() {
+		h() {
 			this.open = false;
 		}
 	}

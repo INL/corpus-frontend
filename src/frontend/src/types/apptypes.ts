@@ -243,6 +243,9 @@ export type FilterDefinition<MetadataType = any, ValueType = any> = {
 	 * Custom filter types may place whatever data they require here and it will be made available as a prop.
 	 */
 	metadata: any;
+
+	/** For custom fields: what to do when the value changes */
+	onChange?: (id: string, value: string) => void;
 };
 
 // ---------------

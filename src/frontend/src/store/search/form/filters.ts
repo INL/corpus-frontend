@@ -25,19 +25,21 @@ export type FilterState = {
 
 export type FullFilterState = FilterDefinition<any, any>&FilterState;
 
+export type FilterGroupType = {
+	tabname: string;
+	subtabs: Array<{
+		tabname?: string;
+		fields: string[];
+	}>;
+	query?: Record<string, string[]>;
+};
+
 type ModuleRootState = {
 	filters: {
 		[filterId: string]: FullFilterState;
 	},
 	// Differently structured from the normal BlackLab MetadataFieldGroups, because we allow inserting subheaders between fields, and activating a query on tab activation
-	filterGroups: Array<{
-		tabname: string;
-		subtabs: Array<{
-			tabname?: string;
-			fields: string[];
-		}>;
-		query?: Record<string, string[]>;
-	}>
+	filterGroups: FilterGroupType[];
 };
 
 type ExternalModuleRootState = ModuleRootState['filters'];

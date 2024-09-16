@@ -105,7 +105,7 @@ public class MainServlet extends HttpServlet {
             super.init(cfg);
 
             ServletContext ctx = cfg.getServletContext();
-            this.config = GlobalConfig.loadGlobalConfig(ctx);
+            this.config = GlobalConfig.getInstance();
             startVelocity(ctx);
 
             XslTransformer.setUseCache(this.useCache(null));

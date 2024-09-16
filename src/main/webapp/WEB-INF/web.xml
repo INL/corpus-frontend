@@ -25,10 +25,6 @@
         <load-on-startup>1</load-on-startup>
     </servlet>
     <servlet-mapping>
-        <servlet-name>corpus</servlet-name>
-        <url-pattern>/page/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
         <servlet-name>default</servlet-name>
         <url-pattern>/css/*</url-pattern>
     </servlet-mapping>
@@ -52,4 +48,8 @@
         <servlet-name>corpus</servlet-name>
         <url-pattern>/</url-pattern>
     </servlet-mapping>
+
+    <listener>
+        <listener-class>nl.inl.corpuswebsite.utils.GlobalConfig</listener-class>
+    </listener>
 </web-app>

@@ -5,6 +5,10 @@ import vue from '@vitejs/plugin-vue'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  // this causes it to be included in livereload?
+  // optimizeDeps: {
+  //   exclude: ['int-components'],
+  // },
   plugins: [
     vue(),
   ],
@@ -26,9 +30,9 @@ export default defineConfig({
   server: {
     port: 8081,
     origin: 'http://localhost:8081', // for embedded links to asset files in the vite project
-    host: '0.0.0.0',
-    proxy: {
-      '/corpus-frontend': 'http://127.0.0.1:8080/',
-    },
+    host: '0.0.0.0', // respond no matter what url the browser uses (127.0.0.1, 'localhost', 192.168.* etc.)
+    // proxy: {
+    //   '/corpus-frontend': 'http://127.0.0.1:8080/',
+    // },
   }
 })

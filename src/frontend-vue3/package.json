@@ -12,8 +12,9 @@
     "type-check": "vue-tsc --build --force"
   },
   "dependencies": {
-    "axios": "^1.7.2",
-    "int-components": "file:../../../component-library",
+    "axios": "^1.7.7",
+    "frontend-vue3": "file:",
+    "int-components": "file:../../../int-components",
     "json-schema": "^0.4.0",
     "monaco-editor": "^0.50.0",
     "monaco-yaml": "^5.2.1",

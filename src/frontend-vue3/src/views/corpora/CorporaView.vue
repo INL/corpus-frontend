@@ -255,7 +255,6 @@ export default defineComponent({
 		},
 	},
 	async created() {
-		debugger;
 		try {
 			this.loadingFormats = this.loadingCorpora = this.loadingServerInfo = true;
 			try { this.serverInfo = await Api.blacklab.getServerInfo(); }

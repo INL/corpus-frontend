@@ -1,39 +1,30 @@
-# frontend-vue3
+## Development setup
 
-This template should help get you started developing with Vue 3 in Vite.
+- clone [int components](https://github.com/INL/vue-component-library.git) into a folder next to the frontend e.g. `../int-components` (as from the root of this entire project).
+- install the deps and build the component library project.
+**TODO figure out and document how to make livereload work for the component library**
 
-## Recommended IDE Setup
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
 
-## Type Support for `.vue` Imports in TS
+- Create corpus-frontend.properties
+- Configure the frontend to use an external blacklab and load the javascript from the vite server
+  In frontend.properties:
+	```properties
+	blsUrl=http://some-server.ivdnt.loc/blacklab-server/
+	blsUrlExternal=http://some-server.ivdnt.loc/blacklab-server/
+	# The path after the host should match the location of the source files on disk as seen from the frontend-vue3 directory. As of writing this is `src`
+	jsPath=http://localhost:8081/src/
+	```
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+- install deps
+  `npm ci` in the `frontend-vue3` directory
+- Start the vite server
+  `npm run dev` in `frontend-vue3` 
 
-## Customize configuration
 
-See [Vite Configuration Reference](https://vitejs.dev/config/).
+- start the Java backend in IntelliJ/Eclipse
 
-## Project Setup
+- go to `http://localhost:8080/corpus-frontend/` to access the Java backend
+  It will serve the page scaffold (contentpage.vm) (basically an empty div and a link to the `main.ts` file from the build).
+  The javascript will mount on the div and handle routing etc.
 
-```sh
-npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
-npm run dev
-```
-
-### Type-Check, Compile and Minify for Production
-
-```sh
-npm run build
-```
-
-### Run Unit Tests with [Vitest](https://vitest.dev/)
-
-```sh
-npm run test:unit
-```

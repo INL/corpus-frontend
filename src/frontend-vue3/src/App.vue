@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
 
-import {NavBar} from 'int-components';
+import {NavBar, Spinner} from 'int-components';
 // import 'my-overrides.scss';
 import 'int-components/dist/lib/base.css';
 import 'int-components/dist/lib/int.css';
@@ -29,13 +28,8 @@ loaded.value = true;
     
   </NavBar>
 
-  <header>
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-    </div>
-  </header>
-
   <RouterView v-if="loaded"/>
+  <Spinner v-else/>
 </template>
 
 <style scoped>

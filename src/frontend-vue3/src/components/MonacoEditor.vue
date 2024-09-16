@@ -199,7 +199,7 @@ window.MonacoEnvironment = {
 	}
 }
 
-export default Vue.extend({
+export default defineComponent({
 	props: {
 		value: String,
 		language: { default: 'text' },

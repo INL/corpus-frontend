@@ -105,8 +105,19 @@ export default Vue.extend({
 					tab.subtabs = [{ fields: tab.fields }];
 					delete tab.fields;
 				}
+				// Just keep the id for the fields (full object will go in customFilters)
+				tab.subtabs.forEach((subtab: any) => {
+					subtab.fields = subtab.fields.map((t: any) => typeof(t) === 'string' ? t : t.id);
+				});
 				return tab;
 			});
+		},
+		customFilters(): Record<string, FilterStore.FullFilterState> {
+			// Get the custom filters from the custom tab definition
+			const f = UIStore.corpusCustomizations.search.metadata.customTabs
+				.flatMap(t => t.fields ?? t.subtabs.flatMap( (s: any) => s.fields))
+				.filter(t => t.id) as FilterStore.FullFilterState[];
+			return f.reduce((acc, cur) => ({ ...acc, [cur.id]: cur }), {});
 		},
 		tabs(): FilterStore.FilterGroupType[] {
 			const availableBuiltinFilters = CorpusStore.get.allMetadataFieldsMap();
@@ -135,8 +146,7 @@ export default Vue.extend({
 		},
 		filterMap(): Record<string, FilterStore.FullFilterState> {
 			const metadataFilters = FilterStore.getState().filters;
-			const customFilters = UIStore.corpusCustomizations.search.metadata.customFilters;
-			return { ...metadataFilters, ...customFilters };
+			return { ...metadataFilters, ...this.customFilters };
 		},
 		useTabs(): boolean { return this.tabs.length > 1 || this.tabs.length > 0 && this.tabs[0].subtabs.length > 1; },
 		activeFiltersMap(): Record<string, number> {

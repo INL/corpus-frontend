@@ -99,6 +99,7 @@ export default Vue.extend({
 			const customFilters = Object.keys(FilterStore.getState().filters).filter(id => !availableBuiltinFilters[id]);
 			const allIdsToShow = new Set(builtinFiltersToShow.concat(customFilters));
 
+			console.log('Add custom tab');
 			const customTabs: FilterStore.FilterGroupType[] = [{
 				tabname: 'Custom',
 				subtabs: [{
@@ -108,8 +109,13 @@ export default Vue.extend({
 				query: {}
 			}];
 
+			// Make sure all custom fields are always visible.
+			const customFieldsToShow = customTabs.flatMap(t => t.subtabs.flatMap(s => s.fields));
+			const combinedFieldsToShow: Set<string> = new Set(allIdsToShow);
+			customFieldsToShow.forEach(f => combinedFieldsToShow.add(f));
+
 			// the filters should be in the correct order already
-			return FilterStore.getState().filterGroups.concat(customTabs)
+			let result = FilterStore.getState().filterGroups.concat(customTabs)
 				.map(group => ({
 					tabname: group.tabname,
 					subtabs: group.subtabs
@@ -117,13 +123,15 @@ export default Vue.extend({
 							tabname: subtab.tabname,
 							fields: subtab.fields.filter(id => {
 								const showField = UIStore.corpusCustomizations.search.metadata.show(id);
-								return showField === true || showField === null && allIdsToShow.has(id);
+								return showField === true || showField === null && combinedFieldsToShow.has(id);
 							})
 						}))
 						.filter(subtab => subtab.fields.length),
 					query: group.query
-				}))
-				.filter(g => g.subtabs.length);
+				}));
+			console.log('Tabs', result);
+			result = result.filter(g => g.subtabs.length);
+			return result;
 		},
 		filterMap(): Record<string, FilterStore.FullFilterState> {
 			const metadataFilters = FilterStore.getState().filters;

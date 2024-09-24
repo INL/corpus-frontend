@@ -93,29 +93,29 @@ export default Vue.extend({
 				return !seen;
 			});
 		},
+		customTabs(): FilterStore.FilterGroupType[] {
+			const customTabs = UIStore.corpusCustomizations.search.metadata.customTabs;
+			return customTabs.map(tab => {
+				tab = { ...tab }; // copy
+				if (!tab.tabname && tab.name) {
+					tab.tabname = tab.name;
+					delete tab.name;
+				}
+				if (!tab.subtabs && tab.fields) {
+					tab.subtabs = [{ fields: tab.fields }];
+					delete tab.fields;
+				}
+				return tab;
+			});
+		},
 		tabs(): FilterStore.FilterGroupType[] {
 			const availableBuiltinFilters = CorpusStore.get.allMetadataFieldsMap();
 			const builtinFiltersToShow = UIStore.getState().search.shared.searchMetadataIds;
 			const customFilters = Object.keys(FilterStore.getState().filters).filter(id => !availableBuiltinFilters[id]);
 			const allIdsToShow = new Set(builtinFiltersToShow.concat(customFilters));
 
-			console.log('Add custom tab');
-			const customTabs: FilterStore.FilterGroupType[] = [{
-				tabname: 'Custom',
-				subtabs: [{
-					tabname: undefined,
-					fields: ['myCustomThing']
-				}],
-				query: {}
-			}];
-
-			// Make sure all custom fields are always visible.
-			const customFieldsToShow = customTabs.flatMap(t => t.subtabs.flatMap(s => s.fields));
-			const combinedFieldsToShow: Set<string> = new Set(allIdsToShow);
-			customFieldsToShow.forEach(f => combinedFieldsToShow.add(f));
-
 			// the filters should be in the correct order already
-			let result = FilterStore.getState().filterGroups.concat(customTabs)
+			let result = FilterStore.getState().filterGroups
 				.map(group => ({
 					tabname: group.tabname,
 					subtabs: group.subtabs
@@ -123,28 +123,19 @@ export default Vue.extend({
 							tabname: subtab.tabname,
 							fields: subtab.fields.filter(id => {
 								const showField = UIStore.corpusCustomizations.search.metadata.show(id);
-								return showField === true || showField === null && combinedFieldsToShow.has(id);
+								return showField === true || showField === null && allIdsToShow.has(id);
 							})
 						}))
 						.filter(subtab => subtab.fields.length),
 					query: group.query
-				}));
+				}) as FilterStore.FilterGroupType).concat(this.customTabs);
 			console.log('Tabs', result);
 			result = result.filter(g => g.subtabs.length);
 			return result;
 		},
 		filterMap(): Record<string, FilterStore.FullFilterState> {
 			const metadataFilters = FilterStore.getState().filters;
-			const customFilters: Record<string, FilterStore.FullFilterState> = {
-				'myCustomThing': {
-					id: 'myCustomThing',
-					componentName: 'filter-text',
-					displayName: 'My Custom Thing',
-					metadata: '',
-					value: null,
-					onChange: (id: string, value: string) => { console.log('CUSTOM', id, value); },
-				},
-			};
+			const customFilters = UIStore.corpusCustomizations.search.metadata.customFilters;
 			return { ...metadataFilters, ...customFilters };
 		},
 		useTabs(): boolean { return this.tabs.length > 1 || this.tabs.length > 0 && this.tabs[0].subtabs.length > 1; },

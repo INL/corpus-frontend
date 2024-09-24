@@ -14,7 +14,7 @@ import { stripIndent, html } from 'common-tags';
 import { RootState } from '@/store/search/';
 import * as CorpusStore from '@/store/search/corpus';
 import * as ViewsStore from '@/store/search/results/views';
-import * as PatternsStore from '@/store/search/form/patterns';
+import * as FilterStore from '@/store/search/form/filters';
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
 import { Option } from '@/types/apptypes';
@@ -1262,7 +1262,13 @@ const corpusCustomizations = {
 			/** Show this metadata search field? (return null for default behaviour) */
 			show(name: string): boolean|null {
 				return null;
-			}
+			},
+
+			/** any custom metadata tabs to add */
+			customTabs: [] as any[],
+
+			/** any custom metadata fields we want to use */
+			customFilters: {} as Record<string, FilterStore.FullFilterState>,
 		}
 	},
 

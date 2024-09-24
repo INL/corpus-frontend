@@ -25,12 +25,16 @@ export type FilterState = {
 
 export type FullFilterState = FilterDefinition<any, any>&FilterState;
 
+/** A group of metadata filters (i.e. a tab in the search interface) */
 export type FilterGroupType = {
+	/** Name on the tab */
 	tabname: string;
+	/** Groups of related fields on this tab ("subtabs") */
 	subtabs: Array<{
 		tabname?: string;
 		fields: string[];
 	}>;
+	/** Filter query that is always included if this filter group (tab) is active. */
 	query?: Record<string, string[]>;
 };
 

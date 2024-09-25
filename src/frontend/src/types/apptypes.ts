@@ -232,10 +232,22 @@ export type FilterDefinition<MetadataType = any, ValueType = any> = {
 	id: string;
 	displayName: string;
 	description?: string;
+
 	/** Name of the component, for filters generated from the blacklab index metadata, `filter-${uiType}` */
 	componentName: string;
+
+	/** If defined, overrides the component name when determining how the widget should behave.
+	 *  (by default, all widgets behave as document-level metadata widgets)
+	 */
+	behaviourName?: string;
+
+	/** Is this a span-based filter, i.e. selecting parts documents instead of entire documents?
+	 *  (i.e. filter on speaker in documents with multiple speakers; done using a "within" BCQL query) */
+	isSpanFilter?: boolean;
+
 	/** The group this filter is part of, only for ui purposes. */
 	groupId?: string;
+
 	/**
 	 * Other info the filter component may require, such as options in a dropdown list for a filter of type Select.
 	 * This is usually empty for the normal text, range, autocomplete types. But for select, radio, and checkbox this contains the available options.
@@ -243,9 +255,6 @@ export type FilterDefinition<MetadataType = any, ValueType = any> = {
 	 * Custom filter types may place whatever data they require here and it will be made available as a prop.
 	 */
 	metadata: any;
-
-	/** For custom fields: what to do when the value changes */
-	onChange?: (id: string, value: string) => void;
 };
 
 // ---------------

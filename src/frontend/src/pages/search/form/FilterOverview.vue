@@ -65,7 +65,7 @@ export default Vue.extend({
 		summaryMap(): Record<string, string> {
 			const r: Record<string, string> = {};
 			this.activeFilters.forEach(f => {
-				const summary = valueFunctions[f.componentName].luceneQuerySummary(f.id, f.metadata, f.value);
+				const summary = valueFunctions[f.behaviourName ?? f.componentName].luceneQuerySummary(f.id, f.metadata, f.value);
 				if (summary) { r[f.id] = summary; }
 			});
 			return r;

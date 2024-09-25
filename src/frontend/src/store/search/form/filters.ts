@@ -62,7 +62,7 @@ const getState = b.state();
 
 const get = {
 	/** Return all filters holding a value */
-	activeFilters: b.read(state => Object.values(state.filters).filter(f => valueFunctions[f.componentName].luceneQuery(f.id, f.metadata, f.value)), 'activeFilters'),
+	activeFilters: b.read(state => Object.values(state.filters).filter(f => valueFunctions[f.behaviourName ?? f.componentName].luceneQuery(f.id, f.metadata, f.value)), 'activeFilters'),
 	/** Return activeFilters as associative map instead of array */
 	activeFiltersMap: b.read(state => {
 		const activeFilters: FullFilterState[] = get.activeFilters();

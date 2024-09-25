@@ -100,7 +100,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 
 			Object.values(FilterModule.getState().filters)
 			.forEach(filterDefinition => {
-				const value: unknown = valueFunctions[filterDefinition.componentName].decodeInitialState(
+				const value: unknown = valueFunctions[filterDefinition.behaviourName ?? filterDefinition.componentName].decodeInitialState(
 					filterDefinition.id,
 					filterDefinition.metadata,
 					parsedQuery,

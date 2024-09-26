@@ -9,13 +9,15 @@ import { getStoreBuilder } from 'vuex-typex';
 
 import { RootState } from '@/store/search/';
 import * as CorpusModule from '@/store/search/corpus';
+import * as UIStore from '@/store/search/ui';
+import * as FilterStore from '@/store/search/form/filters';
 
 import { FilterDefinition } from '@/types/apptypes';
 
 import { debugLog } from '@/utils/debug';
 import { blacklabPaths } from '@/api';
 import { mapReduce } from '@/utils';
-import { getFilterString, getFilterSummary, valueFunctions } from '@/components/filters/filterValueFunctions';
+import { getFilterString, getFilterSummary, getValueFunctions, valueFunctions } from '@/components/filters/filterValueFunctions';
 
 export type FilterState = {
 	// lucene: string|null;
@@ -62,7 +64,7 @@ const getState = b.state();
 
 const get = {
 	/** Return all filters holding a value */
-	activeFilters: b.read(state => Object.values(state.filters).filter(f => valueFunctions[f.behaviourName ?? f.componentName].luceneQuery(f.id, f.metadata, f.value)), 'activeFilters'),
+	activeFilters: b.read(state => Object.values(state.filters).filter(f => getValueFunctions(f).isActive(f.id, f.metadata, f.value)), 'activeFilters'),
 	/** Return activeFilters as associative map instead of array */
 	activeFiltersMap: b.read(state => {
 		const activeFilters: FullFilterState[] = get.activeFilters();
@@ -126,7 +128,14 @@ const actions = {
 		Vue.set<FullFilterState>(state.filters, filter.id, {...filter, value: null});
 	}, 'registerFilter'),
 
-	filterValue: b.commit((state, {id, value}: Pick<FullFilterState, 'id'|'value'>) => state.filters[id].value = value != null ? value : null, 'filter_value'),
+	filterValue: b.commit((state, {id, value}: Pick<FullFilterState, 'id'|'value'>) => {
+		const filterObj = state.filters[id];
+		if (!filterObj) {
+			console.error(`Filter ${id} does not exist`);
+		}
+		return (filterObj.value = value != null ? value : null);
+	}, 'filter_value'),
+
 	// filterLucene: b.commit((state, {id, lucene}: Pick<FullFilterState, 'id'|'lucene'>) => state.filters[id].lucene = lucene || null , 'filter_lucene'),
 	// filterSummary: b.commit((state, {id, summary}: Pick<FullFilterState, 'id'|'summary'>) => state.filters[id].summary = summary || null, 'filter_summary'),
 	reset: b.commit(state => Object.keys(state.filters).forEach(k => {
@@ -195,6 +204,16 @@ const init = () => {
 			});
 		});
 	});
+
+	// Make sure we register all fields in any custom tabs
+	UIStore.corpusCustomizations.search.metadata.customTabs
+		.flatMap(t => t.fields ?? t.subtabs.flatMap( (s: any) => s.fields))
+		.filter(t => t.id)
+		.forEach(f => {
+			actions.registerFilter({
+				filter: f as FilterDefinition
+			});
+		});
 
 	debugLog('Finished initializing filter module state shape');
 };

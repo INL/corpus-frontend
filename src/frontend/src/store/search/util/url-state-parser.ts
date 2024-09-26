@@ -30,7 +30,7 @@ import * as GlobalResultsModule from '@/store/search/results/global';
 import {FilterValue, AnnotationValue} from '@/types/apptypes';
 
 import cloneDeep from 'clone-deep';
-import { valueFunctions } from '@/components/filters/filterValueFunctions';
+import { getValueFunctions, valueFunctions } from '@/components/filters/filterValueFunctions';
 
 /**
  * Decode the current url into a valid page state configuration.
@@ -89,6 +89,8 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 			const luceneQueryAST = LuceneQueryParser.parse(luceneString);
 			const parsedQuery: Record<string, FilterValue> = mapReduce(parseLucene(luceneString), 'id');
 
+			const parsedCqlQuery = this._parsedCql;
+
 			const metadataFields = CorpusModule.get.allMetadataFieldsMap();
 			const filterDefinitions = FilterModule.getState().filters;
 			const allFilters = Object
@@ -100,11 +102,12 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 
 			Object.values(FilterModule.getState().filters)
 			.forEach(filterDefinition => {
-				const value: unknown = valueFunctions[filterDefinition.behaviourName ?? filterDefinition.componentName].decodeInitialState(
+				let value: unknown = getValueFunctions(filterDefinition).decodeInitialState(
 					filterDefinition.id,
 					filterDefinition.metadata,
 					parsedQuery,
-					luceneQueryAST
+					luceneQueryAST,
+					parsedCqlQuery
 				);
 
 				if (value) {

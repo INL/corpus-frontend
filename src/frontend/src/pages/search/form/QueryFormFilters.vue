@@ -67,7 +67,7 @@ import * as FilterStore from '@/store/search/form/filters';
 import FilterOverview from '@/pages/search/form/FilterOverview.vue';
 import { mapReduce } from '@/utils';
 
-import { valueFunctions } from '@/components/filters/filterValueFunctions';
+import { getValueFunctions, valueFunctions } from '@/components/filters/filterValueFunctions';
 
 import * as RootStore from '@/store/search';
 
@@ -93,32 +93,6 @@ export default Vue.extend({
 				return !seen;
 			});
 		},
-		customTabs(): FilterStore.FilterGroupType[] {
-			const customTabs = UIStore.corpusCustomizations.search.metadata.customTabs;
-			return customTabs.map(tab => {
-				tab = { ...tab }; // copy
-				if (!tab.tabname && tab.name) {
-					tab.tabname = tab.name;
-					delete tab.name;
-				}
-				if (!tab.subtabs && tab.fields) {
-					tab.subtabs = [{ fields: tab.fields }];
-					delete tab.fields;
-				}
-				// Just keep the id for the fields (full object will go in customFilters)
-				tab.subtabs.forEach((subtab: any) => {
-					subtab.fields = subtab.fields.map((t: any) => typeof(t) === 'string' ? t : t.id);
-				});
-				return tab;
-			});
-		},
-		customFilters(): Record<string, FilterStore.FullFilterState> {
-			// Get the custom filters from the custom tab definition
-			const f = UIStore.corpusCustomizations.search.metadata.customTabs
-				.flatMap(t => t.fields ?? t.subtabs.flatMap( (s: any) => s.fields))
-				.filter(t => t.id) as FilterStore.FullFilterState[];
-			return f.reduce((acc, cur) => ({ ...acc, [cur.id]: cur }), {});
-		},
 		tabs(): FilterStore.FilterGroupType[] {
 			const availableBuiltinFilters = CorpusStore.get.allMetadataFieldsMap();
 			const builtinFiltersToShow = UIStore.getState().search.shared.searchMetadataIds;
@@ -139,14 +113,14 @@ export default Vue.extend({
 						}))
 						.filter(subtab => subtab.fields.length),
 					query: group.query
-				}) as FilterStore.FilterGroupType).concat(this.customTabs);
+				}) as FilterStore.FilterGroupType);
 			console.log('Tabs', result);
 			result = result.filter(g => g.subtabs.length);
 			return result;
 		},
 		filterMap(): Record<string, FilterStore.FullFilterState> {
 			const metadataFilters = FilterStore.getState().filters;
-			return { ...metadataFilters, ...this.customFilters };
+			return { ...metadataFilters };
 		},
 		useTabs(): boolean { return this.tabs.length > 1 || this.tabs.length > 0 && this.tabs[0].subtabs.length > 1; },
 		activeFiltersMap(): Record<string, number> {
@@ -157,7 +131,7 @@ export default Vue.extend({
 			const manuallyActiveFiltersInCurrentTab: Record<string, boolean> = activeTab ? mapReduce(activeTab.subtabs.flatMap(subtab => subtab.fields.filter(f =>
 				// keep only those filters that are -a: active and -b: not in the implicitly active set
 				// when is a filter active? when its value returns a non-null lucene query
-				!implicitlyActiveFilters[f] && valueFunctions[filterMap[f].behaviourName ?? filterMap[f].componentName].isActive(f, filterMap[f].metadata, filterMap[f].value)
+				!implicitlyActiveFilters[f] && getValueFunctions(filterMap[f]).isActive(f, filterMap[f].metadata, filterMap[f].value)
 			))) : {}; // and if there's somehow no tab active, no filters are manually active in the current tab eh
 
 			// Note: when a filter is implicitly active, it's never counted as active for any tab
@@ -170,7 +144,7 @@ export default Vue.extend({
 					numActiveFiltersPerTab[tab.tabname] = tab.subtabs.reduce((num, subtab) => num + subtab.fields.filter(filter =>
 						!implicitlyActiveFilters[filter] &&
 						!manuallyActiveFiltersInCurrentTab[filter] &&
-						valueFunctions[filterMap[filter].behaviourName ?? filterMap[filter].componentName].isActive(filter, filterMap[filter].metadata, filterMap[filter].value)
+						getValueFunctions(filterMap[filter]).isActive(filter, filterMap[filter].metadata, filterMap[filter].value)
 					).length, 0)
 				}
 			})
@@ -202,11 +176,12 @@ export default Vue.extend({
 					const allFilters = FilterStore.getState().filters;
 					Object.entries(curQuery).forEach(([id, value]) => {
 						const filter = allFilters[id];
-						const actualValue = valueFunctions[filter.behaviourName ?? filter.componentName].decodeInitialState(
+						const actualValue = getValueFunctions(filter).decodeInitialState(
 							id,
 							filter.metadata,
 							{ [id]: { id: id, values: value } },
-							undefined as any
+							undefined as any,
+							null
 						);
 
 						FilterStore.actions.filterValue({

@@ -55,10 +55,14 @@ export type Token = {
 export type Result = {
 	query?: string; // the (partial) BCQL query (only set for source and target queries, for expert/advanced)
 	tokens?: Token[];
-	/** xml token name excluding namespace, brackets, attributes etc */
+
+	/** any within clauses on this query (replaces within/withinAttributes, to be removed) */
+	withinClauses?: Record<string, Record<string, string>>;
+	/** [@@@ JN DEPRECATED by withinClauses] xml token name excluding namespace, brackets, attributes etc */
 	within?: string;
-	/** any attribute filters on the within xml token */
+	/** [@@@ JN DEPRECATED by withinClauses] any attribute filters on the within xml token */
 	withinAttributes?: Record<string, string>;
+
 	targetVersion?: string; // target version for this query, or undefined if this is the source query
 	relationType?: string; // relation type for this (target) query, or undefined if this is the source query
 	optional?: boolean; // whether alignment relation target is optional
@@ -139,8 +143,13 @@ function interpretBcqlJson(bcql: string, json: any, defaultAnnotation: string): 
 		if (filter.type !== 'tags')
 			throw new Error('Unknown posfilter filter type: ' + filter.type);
 		const query = _query(producer);
+
+		query.withinClauses = query.withinClauses ?? {};
+		query.withinClauses[filter.name.toString()] = filter.attributes ?? {};
+		// @@@ JN DEPRECATED, REMOVE
 		query.within = filter.name;
 		query.withinAttributes = filter.attributes;
+
 		return query;
 	}
 
@@ -245,6 +254,10 @@ function interpretBcqlJson(bcql: string, json: any, defaultAnnotation: string): 
 		case 'tags':
 			// "show me these tags" (not really within, no query given)
 			return {
+				withinClauses: {
+					[input.name]: input.attributes,
+				},
+				// @@@ JN DEPRECATED, REMOVE
 				within: input.name,
 				withinAttributes: input.attributes,
 			};

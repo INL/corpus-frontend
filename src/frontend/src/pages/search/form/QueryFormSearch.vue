@@ -249,9 +249,11 @@ export default Vue.extend({
 			const {enabled, elements} = UIStore.getState().search.shared.within;
 			return enabled ? elements.filter(corpusCustomizations.search.within.include) : [];
 		},
-		within: {
-			get(): string|null { return PatternStore.getState().extended.within; },
-			set: PatternStore.actions.extended.within,
+		within(): string|null {
+			// Find active within clause that matches one of the withinOptions (older radiobutton-style within widget)
+			const withinClauses = PatternStore.getState().extended.withinClauses;
+			return Object.keys(withinClauses).find(w => this.withinOptions.some(o => o.value === w)) || null;
+			//OLD return PatternStore.getState().extended.within;
 		},
 		splitBatchEnabled(): boolean {
 			return UIStore.getState().search.extended.splitBatch.enabled &&
@@ -379,27 +381,6 @@ export default Vue.extend({
 				// setup watcher so custom component is notified of changes to its value by external processes (global form reset, history state restore, etc.)
 				RootStore.store.watch(state => value, (cur, prev) => update(cur, prev, div), {deep: true});
 			}
-		},
-		withinOptionDisplayName(option: Option): string {
-			return corpusCustomizations.search.within.displayName(option) || option.label || option.value || 'document';
-		},
-		withinAttributes(): Option[] {
-			const within = this.within;
-			if (!within) return [];
-
-			const option = this.withinOptions.find(o => o.value === within);
-			if (!option) return [];
-
-			return (corpusCustomizations.search.within.attributes(option) || [])
-				.map(el => typeof el === 'string' ? { value: el } : el);
-		},
-		withinAttributeValue(option: Option) {
-			const value = PatternStore.getState().extended.withinAttributes[option.value];
-			return value == null ? '' : value;
-		},
-		changeWithinAttribute(option: Option, event: Event) {
-			const el = event.target as HTMLInputElement;
-			PatternStore.actions.extended.setWithinAttribute({ name: option.value, value: el.value });
 		},
 	},
 	watch: {

@@ -337,8 +337,8 @@ export function unparenQueryPart(query?: string) {
 	return query;
 }
 
-export const getPatternString = (annotations: AppTypes.AnnotationValue[], within: null|string,
-	withinAttributes: null|Record<string, string>, parallelTargetVersions: string[] = [], alignBy?: string) => {
+export const getPatternString = (annotations: AppTypes.AnnotationValue[], withinClauses: Record<string, Record<string, string>>,
+	parallelTargetVersions: string[] = [], alignBy?: string) => {
 
 	const tokens = [] as string[][];
 
@@ -347,16 +347,21 @@ export const getPatternString = (annotations: AppTypes.AnnotationValue[], within
 	}));
 
 	let query = tokens.map(t => `[${t.join('&')}]`).join('');
-	if (within) {
-		const attr = withinAttributes ? Object.entries(withinAttributes).filter(([k, v]) => !!v)
-			.map(([k, v]) => ` ${k}="${v.replace(/"/g, '\\"')}"`).join('') : '';
-		const tags = `<${within}${attr}/>`;
-		if (query.length > 0) {
-			// Actual within
-			query += ` within ${tags}`;
-		} else {
-			// No query given; just find the tags themselves
-			query = tags;
+	const queryGiven = query.length > 0;
+	if (Object.entries(withinClauses).length > 0) {
+		for (const [within, withinAttributes] of Object.entries(withinClauses)) {
+			const attr = withinAttributes ? Object.entries(withinAttributes).filter(([k, v]) => !!v)
+				.map(([k, v]) => ` ${k}="${v.replace(/"/g, '\\"')}"`).join('') : '';
+			const tags = `<${within}${attr}/>`;
+			if (queryGiven) {
+				// Actual within
+				query += ` within ${tags}`;
+			} else {
+				// No query given; just find the tags themselves
+				if (query.length > 0)
+					query += ' overlap ';
+				query = tags;
+			}
 		}
 	}
 
@@ -747,7 +752,7 @@ export function getPatternStringSearch(
 		case 'simple':
 			const q = state.simple.annotationValue.value ? [state.simple.annotationValue] : [];
 			return q.length ?
-				getPatternString(q, null, null, targets, alignBy) :
+				getPatternString(q, {}, targets, alignBy) :
 				undefined;
 		case 'extended': {
 			const r = cloneDeep(Object.values(state.extended.annotationValues))
@@ -757,7 +762,7 @@ export function getPatternStringSearch(
 					type: getCorrectUiType(uiTypeSupport.search.extended, annot.type!)
 				}));
 			return r.length || state.extended.within ?
-				getPatternString(r, state.extended.within, state.extended.withinAttributes, targets, alignBy) :
+				getPatternString(r, state.extended.withinClauses, targets, alignBy) :
 				undefined;
 		}
 		case 'advanced':

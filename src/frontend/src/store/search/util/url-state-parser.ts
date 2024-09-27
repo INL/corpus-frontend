@@ -488,8 +488,12 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 
 		return {
 			annotationValues: parsedAnnotationValues,
+
+			withinClauses: this.withinClauses,
+			// @@@ JN DEPRECATED by withinClauses
 			within: this.within,
 			withinAttributes: this.withinAttributes,
+
 			// This is always false, it's just a checkbox that will split up the query when it's submitted, then untick itself
 			splitBatch: false
 		};
@@ -574,10 +578,18 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 
 	// TODO these might become dynamic in the future, then we need extra manual checking to see if the value is even supported in this corpus
 	@memoize
+	private get withinClauses(): Record<string, Record<string, string>> {
+		return this._parsedCql ? this._parsedCql[0].withinClauses || {} : {};
+	}
+
+	// @@@ JN DEPRECATED by withinClauses
+	// TODO these might become dynamic in the future, then we need extra manual checking to see if the value is even supported in this corpus
+	@memoize
 	private get within(): string|null {
 		return this._parsedCql ? this._parsedCql[0].within || null : null;
 	}
 
+	// @@@ JN DEPRECATED by withinClauses
 	@memoize
 	private get withinAttributes(): Record<string, string> {
 		return this._parsedCql ? this._parsedCql[0].withinAttributes || {} : {};

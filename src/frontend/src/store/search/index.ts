@@ -285,12 +285,13 @@ const actions = {
 							[a.id]: a
 						},
 						splitBatch: false,
+						withinClauses: state.patterns.extended.withinClauses,
 						within: state.patterns.extended.within,
 						withinAttributes: state.patterns.extended.withinAttributes,
 					}
 				}
 			},
-			pattern: getPatternString([a], state.patterns.extended.within, state.patterns.extended.withinAttributes,
+			pattern: getPatternString([a], state.patterns.extended.withinClauses,
 				state.patterns.parallelVersions.targets,
 				state.patterns.parallelVersions.alignBy || state.ui.search.shared.alignBy.defaultValue),
 			// TODO :( url generation is too encapsulated to completely repro here

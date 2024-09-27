@@ -40,8 +40,25 @@ export default Vue.extend({
 			return enabled ? elements.filter(corpusCustomizations.search.within.include) : [];
 		},
 		within: {
-			get(): string|null { return PatternStore.getState().extended.within; },
-			set: PatternStore.actions.extended.within,
+			get(): string|null {
+				const withinClauses = PatternStore.getState().extended.withinClauses;
+				return Object.keys(withinClauses).find(w => this.withinOptions.some(o => o.value === w)) || null;
+				//return PatternStore.getState().extended.within;
+			},
+			set(v: string|null) {
+				if (v === null)
+					return;
+				// Ensure only the active within element is part of withinClauses; remove the rest
+				const withinClauses = PatternStore.getState().extended.withinClauses;
+				this.withinOptions.forEach(o => {
+					const isActive = o.value === v;
+					if (isActive)
+						Vue.set(withinClauses, v, {});
+					else
+						Vue.delete(withinClauses, v);
+				});
+				//PatternStore.actions.extended.within(v);
+			}
 		},
 	},
 	methods: {
@@ -59,12 +76,18 @@ export default Vue.extend({
 				.map(el => typeof el === 'string' ? { value: el } : el);
 		},
 		withinAttributeValue(option: Option) {
-			const value = PatternStore.getState().extended.withinAttributes[option.value];
-			return value == null ? '' : value;
+			if (this.within === null)
+			 	return '';
+			return PatternStore.getState().extended.withinClauses[this.within][option.value] || '';
 		},
 		changeWithinAttribute(option: Option, event: Event) {
+			const spanName = this.within;
+			if (spanName === null)
+				return;
 			const el = event.target as HTMLInputElement;
-			PatternStore.actions.extended.setWithinAttribute({ name: option.value, value: el.value });
+			const curVal = PatternStore.getState().extended.withinClauses[option.value] || {};
+			curVal[option.value] = el.value;
+			Vue.set(PatternStore.getState().extended.withinClauses, spanName, curVal);
 		},
 	},
 })

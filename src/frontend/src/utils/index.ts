@@ -355,7 +355,7 @@ export const getPatternString = (annotations: AppTypes.AnnotationValue[], within
 			const tags = `<${within}${attr}/>`;
 			if (queryGiven) {
 				// Actual within
-				query += ` within ${tags}`;
+				query = `(${query}) within ${tags}`;
 			} else {
 				// No query given; just find the tags themselves
 				if (query.length > 0)

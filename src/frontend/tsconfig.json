@@ -74,7 +74,8 @@
 			"@types/google.analytics",
 			"@types/jquery",
 			"@types/jqueryui"
-		]
+		],
+		"outDir": "dist",
 	},
 	"exclude": ["dist"],
 	"vueCompilerOptions": {

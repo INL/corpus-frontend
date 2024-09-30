@@ -67,6 +67,7 @@ const defaults: ModuleRootState = {
 	extended: {
 		annotationValues: {},
 		withinClauses: {},
+		// @@@ JN DEPRECATED by withinClauses
 		within: null,
 		withinAttributes: {},
 		splitBatch: false,

@@ -348,7 +348,7 @@ export const getPatternString = (annotations: AppTypes.AnnotationValue[], within
 
 	let query = tokens.map(t => `[${t.join('&')}]`).join('');
 	const queryGiven = query.length > 0;
-	if (Object.entries(withinClauses).length > 0) {
+	if (Object.keys(withinClauses).length > 0) {
 		for (const [within, withinAttributes] of Object.entries(withinClauses)) {
 			const attr = withinAttributes ? Object.entries(withinAttributes).filter(([k, v]) => !!v)
 				.map(([k, v]) => ` ${k}="${v.replace(/"/g, '\\"')}"`).join('') : '';
@@ -761,7 +761,7 @@ export function getPatternStringSearch(
 					...annot,
 					type: getCorrectUiType(uiTypeSupport.search.extended, annot.type!)
 				}));
-			return r.length || state.extended.within ?
+			return r.length || Object.keys(state.extended.withinClauses).length > 0 ?
 				getPatternString(r, state.extended.withinClauses, targets, alignBy) :
 				undefined;
 		}

@@ -286,6 +286,7 @@ const actions = {
 						},
 						splitBatch: false,
 						withinClauses: state.patterns.extended.withinClauses,
+						// @@@ JN DEPRECATED by withinClauses
 						within: state.patterns.extended.within,
 						withinAttributes: state.patterns.extended.withinAttributes,
 					}

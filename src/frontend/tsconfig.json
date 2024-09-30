@@ -75,7 +75,7 @@
 			"@types/jquery",
 			"@types/jqueryui"
 		],
-		"outDir": "dist"
+		"outDir": "dist",
 	},
 	"exclude": ["dist"],
 	"vueCompilerOptions": {

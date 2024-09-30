@@ -33,9 +33,6 @@ type ModuleRootState = {
 		},
 
 		withinClauses: Record<string, Record<string, string>>,
-		// @@@ JN DEPRECATED by withinClauses
-		within: string|null,
-		withinAttributes: Record<string, string>,
 
 		splitBatch: boolean,
 	},
@@ -67,9 +64,6 @@ const defaults: ModuleRootState = {
 	extended: {
 		annotationValues: {},
 		withinClauses: {},
-		// @@@ JN DEPRECATED by withinClauses
-		within: null,
-		withinAttributes: {},
 		splitBatch: false,
 	},
 	advanced: {
@@ -203,21 +197,6 @@ const actions = {
 		withinClauses: b.commit((state, payload: Record<string, Record<string, string>>) => {
 			state.extended.withinClauses = payload;
 		}, 'extended_within_clauses'),
-		/*
-		within: b.commit((state, payload: string|null) => {
-			if (payload !== state.extended.within) {
-				state.extended.within = payload;
-				state.extended.withinAttributes = {};
-			}
-		}, 'extended_within'),
-		withinAttributes: b.commit((state, payload: Record<string, string>) => {
-			state.extended.withinAttributes = payload;
-		}, 'extended_within_attributes'),
-		setWithinAttribute: b.commit((state, payload: {name: string, value: string}) => {
-			if (payload.value === '' || payload.value === null || payload.value === undefined)
-				delete state.extended.withinAttributes[payload.name];
-			state.extended.withinAttributes[payload.name] = payload.value;
-		}, 'extended_set_within_attribute'),*/
 		splitBatch: b.commit((state, payload: boolean) => state.extended.splitBatch = payload, 'extended_split_batch'),
 		reset: b.commit(state => {
 			Object.values(state.extended.annotationValues).forEach(annot => {
@@ -225,8 +204,6 @@ const actions = {
 				annot.case = false;
 			});
 			state.extended.withinClauses = {};
-			// state.extended.within = null;
-			// state.extended.withinAttributes = {};
 			state.extended.splitBatch = false;
 		}, 'extended_reset'),
 	},
@@ -291,8 +268,6 @@ const actions = {
 
 		actions.extended.reset();
 		actions.extended.withinClauses(payload.extended.withinClauses);
-		// actions.extended.within(payload.extended.within);
-		// actions.extended.withinAttributes(payload.extended.withinAttributes);
 		state.extended.splitBatch = payload.extended.splitBatch;
 		Object.values(payload.extended.annotationValues).forEach(actions.extended.annotation);
 

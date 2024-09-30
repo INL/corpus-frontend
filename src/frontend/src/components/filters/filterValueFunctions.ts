@@ -4,6 +4,8 @@ import { ASTNode, ASTRange } from 'lucene-query-parser';
 // @ts-ignore (framework limitation) typechecking does not work for imports from .vue files
 import { modes } from './FilterRangeMultipleFields.vue';
 import { FullFilterState } from '@/store/search/form/filters';
+import * as PatternStore from '@/store/search/form/patterns';
+import Vue from 'vue';
 import { debugLog } from '@/utils/debug';
 import { Result } from '@/utils/bcql-json-interpreter';
 
@@ -46,8 +48,10 @@ type FilterValueFunctions<M, V> = {
 	 */
 	decodeInitialState(id: string, filterMetadata: M, filterValues: Record<string, FilterValue|undefined>, ast: ASTNode, parsedCqlQuery: Result[]|null): V|null,
 	luceneQuery?(id: string, filterMetadata: M, value: V|null): string|null;
+	withinClause?(id: string, filterMetadata: M, value: V|null): [string, Record<string, string>]|null;
 	luceneQuerySummary(id: string, filterMetadata: M, value: V|null): string|null;
 	isActive(id: string, filterMetadata: M, value: V|null): boolean;
+	onChange?(id: string, filterMetadata: M, newValue: V|null): void;
 };
 
 /**
@@ -447,11 +451,26 @@ export const valueFunctions: Record<string, FilterValueFunctions<any, any>> = {
 			console.log('looking for relevant within clauses...', parsedCqlQuery);
 			return (filterValues[id]?.values || []).map(unescapeLucene).map(val => val.match(/\s+/) ? `"${val}"` : val).join(' ') || null;
 		},
+		withinClause(id, filterMetadata, value) {
+			if (!value) return null;
+			return [id, { value }];
+		},
 		luceneQuerySummary(id, filterMetadata, value) {
-			return `within span ${value}`;
+			const name = filterMetadata['name'] || 'span';
+			const attribute = filterMetadata['attribute'] || 'value';
+			return `within <${name} ${attribute} = "${value}"/>`;
 		},
 		isActive(id, filterMetadata, value) {
 			return !!value;
+		},
+		onChange(id, filterMetadata, newValue) {
+			const withinClauses = PatternStore.getState().extended.withinClauses;
+			const name = filterMetadata['name'] || 'span';
+			const attribute = filterMetadata['attribute'] || 'value';
+			if (newValue)
+				Vue.set(withinClauses, name, { [attribute]: newValue });
+			else
+				Vue.delete(withinClauses, name);
 		}
 	}),
 };
@@ -494,6 +513,7 @@ export function getFilterString(filters: FullFilterState[]): string|undefined {
 
 // NOTE: range filter has hidden defaults for unset field (min, max), see https://github.com/INL/corpus-frontend/issues/234
 export const getFilterSummary = (filters: FullFilterState[]): string|undefined => filters
+	.filter( f => !f.isSpanFilter)
 	.map(f => ({f, summary: getValueFunctions(f).luceneQuerySummary(f.id, f.metadata, f.value)}))
 	.filter(f => !!f.summary)
 	.map(f => `${f.f.displayName}: ${f.summary}`)

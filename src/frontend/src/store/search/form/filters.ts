@@ -133,6 +133,9 @@ const actions = {
 		if (!filterObj) {
 			console.error(`Filter ${id} does not exist`);
 		}
+		const funcs = getValueFunctions(filterObj);
+		if (funcs.onChange)
+			funcs.onChange(id, filterObj.metadata, value);
 		return (filterObj.value = value != null ? value : null);
 	}, 'filter_value'),
 

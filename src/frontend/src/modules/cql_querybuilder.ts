@@ -1250,10 +1250,12 @@ function populateQueryBuilders(queryBuilders: QueryBuilder[], parallelQueries: R
 function populateQueryBuilder(queryBuilder: QueryBuilder, parsedCql: Result): boolean {
 	try {
 		const tokens = parsedCql.tokens;
-		const within = parsedCql.within;
-		if (tokens === undefined) {
+		if (tokens === undefined)
 			return false;
-		}
+
+		const withinSelectOptions = queryBuilder.settings.queryBuilder.view.withinSelectOptions;
+		const within = Object.keys(parsedCql.withinClauses ?? {})
+				.find(spanName => withinSelectOptions.find(o => o.value === spanName));
 
 		queryBuilder.reset();
 		if (tokens.length > 0) {

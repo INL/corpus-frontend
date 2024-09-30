@@ -7,7 +7,7 @@
 		<div class="btn-group col-xs-12 col-md-9">
 			<button v-for="option in withinOptions"
 				type="button"
-				:class="['btn', within === option.value ? 'active btn-primary' : 'btn-default']"
+				:class="['btn', within === option.value || within === null && option.value === '' ? 'active btn-primary' : 'btn-default']"
 				:key="option.value"
 				:value="option.value"
 				:title="option.title || undefined"
@@ -42,8 +42,8 @@ export default Vue.extend({
 		within: {
 			get(): string|null {
 				const withinClauses = PatternStore.getState().extended.withinClauses;
-				return Object.keys(withinClauses).find(w => this.withinOptions.some(o => o.value === w)) || null;
-				//return PatternStore.getState().extended.within;
+				let result = Object.keys(withinClauses).find(w => this.withinOptions.some(o => o.value === w)) || null;
+				return result;
 			},
 			set(v: string|null) {
 				if (v === null)
@@ -52,12 +52,15 @@ export default Vue.extend({
 				const withinClauses = PatternStore.getState().extended.withinClauses;
 				this.withinOptions.forEach(o => {
 					const isActive = o.value === v;
-					if (isActive)
-						Vue.set(withinClauses, v, {});
-					else
-						Vue.delete(withinClauses, v);
+					if (isActive) {
+						// Add within clause for selected option
+						if (o.value !== '') // ("entire document" option doesn't generate a within clause)
+							Vue.set(withinClauses, o.value, {});
+					} else {
+						// Clear within clause for unselected option
+						Vue.delete(withinClauses, o.value);
+					}
 				});
-				//PatternStore.actions.extended.within(v);
 			}
 		},
 	},

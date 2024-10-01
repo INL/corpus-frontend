@@ -80,14 +80,15 @@ export default Vue.extend({
 		withinAttributeValue(option: Option) {
 			if (this.within === null)
 			 	return '';
-			return PatternStore.getState().extended.withinClauses[this.within][option.value] || '';
+			const within = PatternStore.getState().extended.withinClauses[this.within];
+			return within ? within[option.value] ?? '' : '';
 		},
 		changeWithinAttribute(option: Option, event: Event) {
 			const spanName = this.within;
 			if (spanName === null)
 				return;
 			const el = event.target as HTMLInputElement;
-			const curVal = PatternStore.getState().extended.withinClauses[option.value] || {};
+			const curVal = PatternStore.getState().extended.withinClauses[spanName] || {};
 			curVal[option.value] = el.value;
 			Vue.set(PatternStore.getState().extended.withinClauses, spanName, curVal);
 		},

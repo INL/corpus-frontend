@@ -359,8 +359,9 @@ export const getPatternString = (annotations: AppTypes.AnnotationValue[], within
 			} else {
 				// No query given; just find the tags themselves
 				if (query.length > 0)
-					query += ' overlap ';
-				query = tags;
+					query = `${query} overlap ${tags}`;
+				else
+					query = tags;
 			}
 		}
 	}

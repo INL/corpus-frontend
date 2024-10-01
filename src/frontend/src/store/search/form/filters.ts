@@ -140,8 +140,17 @@ const actions = {
 	}, 'filter_value'),
 
 	setFiltersFromWithinClauses: b.commit((state, withinClauses: Record<string, Record<string, string>>) => {
-		Object.keys(withinClauses).forEach(id => {
-			actions.filterValue({id, value: Object.values(withinClauses[id])[0]});
+		// For each within clause...
+		Object.entries(withinClauses).forEach( ([el, attr]) => {
+			// For each attribute in this clause...
+			Object.entries(attr ?? {}).forEach( ([attrName, attrValue]) => {
+				// Find the matching filter and set the value
+				Object.values(state.filters)
+					.filter(f => f.isSpanFilter && f.metadata.name === el && f.metadata.attribute === attrName)
+					.forEach(f => {
+						f.value = attrValue;
+					});
+			});
 		});
 	}, 'set_filters_from_within_clauses'),
 

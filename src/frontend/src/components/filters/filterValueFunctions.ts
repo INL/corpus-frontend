@@ -48,7 +48,6 @@ type FilterValueFunctions<M, V> = {
 	 */
 	decodeInitialState(id: string, filterMetadata: M, filterValues: Record<string, FilterValue|undefined>, ast: ASTNode, parsedCqlQuery: Result[]|null): V|null,
 	luceneQuery?(id: string, filterMetadata: M, value: V|null): string|null;
-	withinClause?(id: string, filterMetadata: M, value: V|null): [string, Record<string, string>]|null;
 	luceneQuerySummary(id: string, filterMetadata: M, value: V|null): string|null;
 	isActive(id: string, filterMetadata: M, value: V|null): boolean;
 	onChange?(id: string, filterMetadata: M, newValue: V|null): void;
@@ -448,17 +447,10 @@ export const valueFunctions: Record<string, FilterValueFunctions<any, any>> = {
 	}),
 	'span-text': cast<FilterValueFunctions<never, string>>({
 		decodeInitialState(id, filterMetadata, filterValues, ast, parsedCqlQuery) {
-			console.log('looking for relevant within clauses...', parsedCqlQuery);
-			return (filterValues[id]?.values || []).map(unescapeLucene).map(val => val.match(/\s+/) ? `"${val}"` : val).join(' ') || null;
-		},
-		withinClause(id, filterMetadata, value) {
-			if (!value) return null;
-			return [id, { value }];
+			return null; // this is determined while parsing the pattern, not the lucene document metadata query
 		},
 		luceneQuerySummary(id, filterMetadata, value) {
-			const name = filterMetadata['name'] || 'span';
-			const attribute = filterMetadata['attribute'] || 'value';
-			return `within <${name} ${attribute} = "${value}"/>`;
+			return value ?? null;
 		},
 		isActive(id, filterMetadata, value) {
 			return !!value;

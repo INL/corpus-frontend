@@ -46,7 +46,7 @@ type FilterValueFunctions<M, V> = {
 	 * If a custom filter wants to take "ownership" of a decoded filter value, it should delete the value from the map, to prevent
 	 * later (inbuilt) filters from decoding it.
 	 */
-	decodeInitialState(id: string, filterMetadata: M, filterValues: Record<string, FilterValue|undefined>, ast: ASTNode, parsedCqlQuery: Result[]|null): V|null,
+	decodeInitialState?(id: string, filterMetadata: M, filterValues: Record<string, FilterValue|undefined>, ast: ASTNode, parsedCqlQuery: Result[]|null): V|null,
 	luceneQuery?(id: string, filterMetadata: M, value: V|null): string|null;
 	luceneQuerySummary(id: string, filterMetadata: M, value: V|null): string|null;
 	isActive(id: string, filterMetadata: M, value: V|null): boolean;
@@ -360,32 +360,6 @@ export const valueFunctions: Record<string, FilterValueFunctions<any, any>> = {
 			return this.luceneQuery!(id, filterMetadata, value) !== null;
 		}
 	}),
-	'span-select': cast<FilterValueFunctions<any, string[]>>({
-		decodeInitialState(id, filterMetadata, filterValues, ast, parsedCqlQuery) {
-			return null; // this is determined while parsing the pattern, not the lucene document metadata query
-		},
-		luceneQuerySummary(id, filterMetadata, value) {
-			const options: Option[] = filterMetadata.options || filterMetadata;
-			const asDisplayValues = (value || []).map(v => {
-				return options.find(option => option.value === v)?.label || v;
-			});
-			return asDisplayValues.length >= 2 ? asDisplayValues.map(v => `"${v}"`).join(', ') : asDisplayValues[0] || null;
-		},
-		isActive(id, filterMetadata, value) {
-			return !!(value && value.length > 0);
-		},
-		onChange(id, filterMetadata, newValuesWildcard) {
-			const withinClauses = PatternStore.getState().extended.withinClauses;
-			const name = filterMetadata['name'] || 'span';
-			const attribute = filterMetadata['attribute'] || 'value';
-			const newValuesRegex = newValuesWildcard ? newValuesWildcard.map(v => escapeRegex(v, true)) :
-				newValuesWildcard;
-			if (newValuesRegex)
-				Vue.set(withinClauses, name, { [attribute]: newValuesRegex.join("|") });
-			else
-				Vue.delete(withinClauses, name);
-		}
-	}),
 	'filter-text': cast<FilterValueFunctions<never, string>>({
 		decodeInitialState(id, filterMetadata, filterValues) {
 			return (filterValues[id]?.values || []).map(unescapeLucene).map(val => val.match(/\s+/) ? `"${val}"` : val).join(' ') || null;
@@ -472,9 +446,6 @@ export const valueFunctions: Record<string, FilterValueFunctions<any, any>> = {
 		}
 	}),
 	'span-text': cast<FilterValueFunctions<never, string>>({
-		decodeInitialState(id, filterMetadata, filterValues, ast, parsedCqlQuery) {
-			return null; // this is determined while parsing the pattern, not the lucene document metadata query
-		},
 		luceneQuerySummary(id, filterMetadata, value) {
 			return value ?? null;
 		},
@@ -485,9 +456,32 @@ export const valueFunctions: Record<string, FilterValueFunctions<any, any>> = {
 			const withinClauses = PatternStore.getState().extended.withinClauses;
 			const name = filterMetadata['name'] || 'span';
 			const attribute = filterMetadata['attribute'] || 'value';
-			const newValueRegex = newValueWildcard ? escapeRegex(newValueWildcard, true) : newValueWildcard;
-			if (newValueRegex)
+			if (newValueWildcard) {
+				const newValueRegex = newValueWildcard ? escapeRegex(newValueWildcard, true) : newValueWildcard;
 				Vue.set(withinClauses, name, { [attribute]: newValueRegex });
+			} else
+				Vue.delete(withinClauses, name);
+		}
+	}),
+	'span-select': cast<FilterValueFunctions<any, string[]>>({
+		luceneQuerySummary(id, filterMetadata, value) {
+			const options: Option[] = filterMetadata.options || filterMetadata;
+			const asDisplayValues = (value || []).map(v => {
+				return options.find(option => option.value === v)?.label || v;
+			});
+			return asDisplayValues.length >= 2 ? asDisplayValues.map(v => `"${v}"`).join(', ') : asDisplayValues[0] || null;
+		},
+		isActive(id, filterMetadata, value) {
+			return !!(value && value.length > 0);
+		},
+		onChange(id, filterMetadata, newValuesWildcard) {
+			const withinClauses = PatternStore.getState().extended.withinClauses;
+			const name = filterMetadata['name'] || 'span';
+			const attribute = filterMetadata['attribute'] || 'value';
+			const newValuesRegex = newValuesWildcard ? newValuesWildcard.map(v => escapeRegex(v, true)) :
+				newValuesWildcard;
+			if (newValuesRegex)
+				Vue.set(withinClauses, name, { [attribute]: newValuesRegex.join("|") });
 			else
 				Vue.delete(withinClauses, name);
 		}
@@ -502,8 +496,6 @@ export function getValueFunctions(filter: FullFilterState): FilterValueFunctions
 	// Referencing nonexistent filter functions; report and return a dummy value
 	console.error(`No value functions for filter ${name}; returning dummy`);
 	return {
-		decodeInitialState: () => null,
-		luceneQuery: () => null,
 		luceneQuerySummary: () => null,
 		isActive: () => false
 	};

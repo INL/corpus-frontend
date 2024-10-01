@@ -102,13 +102,14 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 
 			Object.values(FilterModule.getState().filters)
 			.forEach(filterDefinition => {
-				let value: unknown = getValueFunctions(filterDefinition).decodeInitialState(
+				const valueFuncs = getValueFunctions(filterDefinition);
+				let value: unknown = valueFuncs.decodeInitialState ? valueFuncs.decodeInitialState(
 					filterDefinition.id,
 					filterDefinition.metadata,
 					parsedQuery,
 					luceneQueryAST,
 					parsedCqlQuery
-				);
+				) : null;
 
 				if (value) {
 					filterValues[filterDefinition.id] = {

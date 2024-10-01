@@ -176,13 +176,14 @@ export default Vue.extend({
 					const allFilters = FilterStore.getState().filters;
 					Object.entries(curQuery).forEach(([id, value]) => {
 						const filter = allFilters[id];
-						const actualValue = getValueFunctions(filter).decodeInitialState(
+						const valueFuncs = getValueFunctions(filter);
+						const actualValue = valueFuncs.decodeInitialState ? valueFuncs.decodeInitialState(
 							id,
 							filter.metadata,
 							{ [id]: { id: id, values: value } },
 							undefined as any,
 							null
-						);
+						) : null;
 
 						FilterStore.actions.filterValue({
 							id,

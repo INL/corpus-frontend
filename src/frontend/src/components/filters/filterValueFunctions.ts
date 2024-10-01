@@ -1,4 +1,4 @@
-import { unescapeLucene, escapeLucene, splitIntoTerms, mapReduce, cast } from '@/utils';
+import { unescapeLucene, escapeLucene, splitIntoTerms, mapReduce, cast, escapeRegex } from '@/utils';
 import { FilterValue, Option } from '@/types/apptypes';
 import { ASTNode, ASTRange } from 'lucene-query-parser';
 // @ts-ignore (framework limitation) typechecking does not work for imports from .vue files
@@ -374,12 +374,14 @@ export const valueFunctions: Record<string, FilterValueFunctions<any, any>> = {
 		isActive(id, filterMetadata, value) {
 			return !!(value && value.length > 0);
 		},
-		onChange(id, filterMetadata, newValue) {
+		onChange(id, filterMetadata, newValuesWildcard) {
 			const withinClauses = PatternStore.getState().extended.withinClauses;
 			const name = filterMetadata['name'] || 'span';
 			const attribute = filterMetadata['attribute'] || 'value';
-			if (newValue)
-				Vue.set(withinClauses, name, { [attribute]: newValue.join("|") });
+			const newValuesRegex = newValuesWildcard ? newValuesWildcard.map(v => escapeRegex(v, true)) :
+				newValuesWildcard;
+			if (newValuesRegex)
+				Vue.set(withinClauses, name, { [attribute]: newValuesRegex.join("|") });
 			else
 				Vue.delete(withinClauses, name);
 		}
@@ -479,12 +481,13 @@ export const valueFunctions: Record<string, FilterValueFunctions<any, any>> = {
 		isActive(id, filterMetadata, value) {
 			return !!value;
 		},
-		onChange(id, filterMetadata, newValue) {
+		onChange(id, filterMetadata, newValueWildcard) {
 			const withinClauses = PatternStore.getState().extended.withinClauses;
 			const name = filterMetadata['name'] || 'span';
 			const attribute = filterMetadata['attribute'] || 'value';
-			if (newValue)
-				Vue.set(withinClauses, name, { [attribute]: newValue });
+			const newValueRegex = newValueWildcard ? escapeRegex(newValueWildcard, true) : newValueWildcard;
+			if (newValueRegex)
+				Vue.set(withinClauses, name, { [attribute]: newValueRegex });
 			else
 				Vue.delete(withinClauses, name);
 		}

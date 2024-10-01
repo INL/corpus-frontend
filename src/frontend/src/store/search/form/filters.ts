@@ -16,7 +16,7 @@ import { FilterDefinition } from '@/types/apptypes';
 
 import { debugLog } from '@/utils/debug';
 import { blacklabPaths } from '@/api';
-import { mapReduce } from '@/utils';
+import { mapReduce, unescapeRegex } from '@/utils';
 import { getFilterString, getFilterSummary, getValueFunctions, valueFunctions } from '@/components/filters/filterValueFunctions';
 
 export type FilterState = {
@@ -143,12 +143,13 @@ const actions = {
 		// For each within clause...
 		Object.entries(withinClauses).forEach( ([el, attr]) => {
 			// For each attribute in this clause...
-			Object.entries(attr ?? {}).forEach( ([attrName, attrValue]) => {
+			Object.entries(attr ?? {}).forEach( ([attrName, attrValueRegex]) => {
+				const attrValueWildcard = unescapeRegex(attrValueRegex, true); // convert to wildcard form (pipes are unaffected)
 				// Find the matching filter and set the value
 				Object.values(state.filters)
 					.filter(f => f.isSpanFilter && f.metadata.name === el && f.metadata.attribute === attrName)
 					.forEach(f => {
-						f.value = f.componentName === 'filter-select' ? attrValue.split('|') : attrValue;
+						f.value = f.componentName === 'filter-select' ? attrValueWildcard.split('|') : attrValueWildcard;
 					});
 			});
 		});

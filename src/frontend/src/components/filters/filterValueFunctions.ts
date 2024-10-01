@@ -360,6 +360,30 @@ export const valueFunctions: Record<string, FilterValueFunctions<any, any>> = {
 			return this.luceneQuery!(id, filterMetadata, value) !== null;
 		}
 	}),
+	'span-select': cast<FilterValueFunctions<any, string[]>>({
+		decodeInitialState(id, filterMetadata, filterValues, ast, parsedCqlQuery) {
+			return null; // this is determined while parsing the pattern, not the lucene document metadata query
+		},
+		luceneQuerySummary(id, filterMetadata, value) {
+			const options: Option[] = filterMetadata.options || filterMetadata;
+			const asDisplayValues = (value || []).map(v => {
+				return options.find(option => option.value === v)?.label || v;
+			});
+			return asDisplayValues.length >= 2 ? asDisplayValues.map(v => `"${v}"`).join(', ') : asDisplayValues[0] || null;
+		},
+		isActive(id, filterMetadata, value) {
+			return !!(value && value.length > 0);
+		},
+		onChange(id, filterMetadata, newValue) {
+			const withinClauses = PatternStore.getState().extended.withinClauses;
+			const name = filterMetadata['name'] || 'span';
+			const attribute = filterMetadata['attribute'] || 'value';
+			if (newValue)
+				Vue.set(withinClauses, name, { [attribute]: newValue.join("|") });
+			else
+				Vue.delete(withinClauses, name);
+		}
+	}),
 	'filter-text': cast<FilterValueFunctions<never, string>>({
 		decodeInitialState(id, filterMetadata, filterValues) {
 			return (filterValues[id]?.values || []).map(unescapeLucene).map(val => val.match(/\s+/) ? `"${val}"` : val).join(' ') || null;

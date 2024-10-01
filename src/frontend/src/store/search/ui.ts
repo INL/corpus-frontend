@@ -1295,7 +1295,37 @@ const corpusCustomizations = {
 (window as any).frontend = {
 	customize(callback: ((corpus: any) => void)) {
 		callback(corpusCustomizations);
+	},
+
+	// Create a span filter for corpus.search.metadata.customTabs
+	createSpanFilter(displayName: string, spanName: string, attrName: string, widget: string = 'text', metadata: any = {}) {
+
+		if (widget === 'select') {
+			// If user passed in just an array, assume these are the options.
+			if (Array.isArray(metadata)) {
+				metadata = { options: metadata };
+			}
+			// If the options are just strings, convert them to simple Option objects.
+			metadata.options = metadata.options.map((option: any) => {
+				return typeof option === 'string' ? { value: option } : option;
+			});
+		}
+
+		return {
+			id: `${spanName}-${attrName}`,
+			componentName: `filter-${widget}`,
+			behaviourName: `span-${widget}`, // i.e. generate a "within ..." BCQL query
+			isSpanFilter: true,
+			displayName,
+			metadata: {
+				name: spanName,
+				attribute: attrName,
+				...metadata
+			},
+			value: null,
+		};
 	}
+
 };
 
 (window as any).printCustomJs = printCustomizations;

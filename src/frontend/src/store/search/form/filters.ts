@@ -148,7 +148,7 @@ const actions = {
 				Object.values(state.filters)
 					.filter(f => f.isSpanFilter && f.metadata.name === el && f.metadata.attribute === attrName)
 					.forEach(f => {
-						f.value = attrValue;
+						f.value = f.componentName === 'filter-select' ? attrValue.split('|') : attrValue;
 					});
 			});
 		});
@@ -225,8 +225,10 @@ const init = () => {
 
 	// Make sure we register all fields in any custom tabs
 	UIStore.corpusCustomizations.search.metadata.customTabs
-		.flatMap(t => t.fields ?? t.subtabs.flatMap( (s: any) => s.fields))
-		.filter(t => t.id)
+		.map(t => ({ name: t.name, fields: t.fields ?? t.subtabs.flatMap( (s: any) => s.fields)})) // flatten subtabs
+		.map(t => t.fields.map( (f: any) => ({ groupId: t.name, ...f })) ) // fill in missing groupId if any
+		.flat() // flatten tabs
+		.filter(f => f.id)
 		.forEach(f => {
 			actions.registerFilter({
 				filter: f as FilterDefinition

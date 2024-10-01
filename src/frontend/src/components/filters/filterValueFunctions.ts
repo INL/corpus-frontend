@@ -456,10 +456,15 @@ export const valueFunctions: Record<string, FilterValueFunctions<any, any>> = {
 			const withinClauses = PatternStore.getState().extended.withinClauses;
 			const name = filterMetadata['name'] || 'span';
 			const attribute = filterMetadata['attribute'] || 'value';
-			if (newValueWildcard) {
-				const newValueRegex = newValueWildcard ? escapeRegex(newValueWildcard, true) : newValueWildcard;
-				Vue.set(withinClauses, name, { [attribute]: newValueRegex });
-			} else
+			const newValueRegex = newValueWildcard ? escapeRegex(newValueWildcard, true) : newValueWildcard;
+			const current = { ...(withinClauses[name] || {}) };
+			if (newValueRegex)
+				current[attribute] = newValueRegex;
+			else
+				delete current[attribute];
+			if (Object.keys(current).length > 0)
+				Vue.set(withinClauses, name, current);
+			else
 				Vue.delete(withinClauses, name);
 		}
 	}),
@@ -478,10 +483,14 @@ export const valueFunctions: Record<string, FilterValueFunctions<any, any>> = {
 			const withinClauses = PatternStore.getState().extended.withinClauses;
 			const name = filterMetadata['name'] || 'span';
 			const attribute = filterMetadata['attribute'] || 'value';
-			const newValuesRegex = newValuesWildcard ? newValuesWildcard.map(v => escapeRegex(v, true)) :
-				newValuesWildcard;
+			const newValuesRegex = newValuesWildcard ? newValuesWildcard.map(v => escapeRegex(v, true)) : newValuesWildcard;
+			const current = { ...(withinClauses[name] || {}) };
 			if (newValuesRegex)
-				Vue.set(withinClauses, name, { [attribute]: newValuesRegex.join("|") });
+				current[attribute] = newValuesRegex.join("|");
+			else
+				delete current[attribute];
+			if (Object.keys(current).length > 0)
+				Vue.set(withinClauses, name, current);
 			else
 				Vue.delete(withinClauses, name);
 		}

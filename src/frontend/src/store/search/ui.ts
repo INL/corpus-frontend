@@ -1264,8 +1264,13 @@ const corpusCustomizations = {
 				return null;
 			},
 
-			/** any custom metadata tabs to add */
+			/** Any custom metadata tabs to add */
 			customTabs: [] as any[],
+
+			/** Add a custom tab with some (span) filter fields */
+			addCustomTab(name: string, fields: any[]) {
+				this.customTabs.push({ name, fields });
+			},
 
 			/** any custom metadata fields we want to use */
 			customFilters: {} as Record<string, FilterStore.FullFilterState>,
@@ -1298,7 +1303,7 @@ const corpusCustomizations = {
 	},
 
 	// Create a span filter for corpus.search.metadata.customTabs
-	createSpanFilter(displayName: string, spanName: string, attrName: string, widget: string = 'text', metadata: any = {}) {
+	createSpanFilter(displayName: string, spanName: string, attrName: string, widget: string = 'text', metadata: any = {}): AppTypes.FilterDefinition {
 
 		if (widget === 'select') {
 			// If user passed in just an array, assume these are the options.
@@ -1322,7 +1327,7 @@ const corpusCustomizations = {
 				attribute: attrName,
 				...metadata
 			},
-			value: null,
+			// (groupId will be set automatically when creating the custom tabs)
 		};
 	}
 

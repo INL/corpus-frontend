@@ -42,8 +42,7 @@ export default Vue.extend({
 		within: {
 			get(): string|null {
 				const withinClauses = PatternStore.getState().extended.withinClauses;
-				let result = Object.keys(withinClauses).find(w => this.withinOptions.some(o => o.value === w)) || null;
-				return result;
+				return Object.keys(withinClauses).find(w => this.withinOptions.some(o => o.value === w)) || null;
 			},
 			set(v: string|null) {
 				if (v === null)

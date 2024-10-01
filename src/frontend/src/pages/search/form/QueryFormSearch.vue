@@ -253,7 +253,6 @@ export default Vue.extend({
 			// Find active within clause that matches one of the withinOptions (older radiobutton-style within widget)
 			const withinClauses = PatternStore.getState().extended.withinClauses;
 			return Object.keys(withinClauses).find(w => this.withinOptions.some(o => o.value === w)) || null;
-			//OLD return PatternStore.getState().extended.within;
 		},
 		splitBatchEnabled(): boolean {
 			return UIStore.getState().search.extended.splitBatch.enabled &&

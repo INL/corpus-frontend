@@ -139,6 +139,12 @@ const actions = {
 		return (filterObj.value = value != null ? value : null);
 	}, 'filter_value'),
 
+	setFiltersFromWithinClauses: b.commit((state, withinClauses: Record<string, Record<string, string>>) => {
+		Object.keys(withinClauses).forEach(id => {
+			actions.filterValue({id, value: Object.values(withinClauses[id])[0]});
+		});
+	}, 'set_filters_from_within_clauses'),
+
 	// filterLucene: b.commit((state, {id, lucene}: Pick<FullFilterState, 'id'|'lucene'>) => state.filters[id].lucene = lucene || null , 'filter_lucene'),
 	// filterSummary: b.commit((state, {id, summary}: Pick<FullFilterState, 'id'|'summary'>) => state.filters[id].summary = summary || null, 'filter_summary'),
 	reset: b.commit(state => Object.keys(state.filters).forEach(k => {

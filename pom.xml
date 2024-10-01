@@ -242,12 +242,6 @@
         </dependency>
 
         <dependency>
-            <groupId>velocity-tools</groupId>
-            <artifactId>velocity-tools-view</artifactId>
-            <version>1.4</version>
-        </dependency>
-
-        <dependency>
             <groupId>net.sf.saxon</groupId>
             <artifactId>Saxon-HE</artifactId>
             <version>9.9.1-5</version>

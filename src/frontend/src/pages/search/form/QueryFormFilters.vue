@@ -114,7 +114,6 @@ export default Vue.extend({
 						.filter(subtab => subtab.fields.length),
 					query: group.query
 				}) as FilterStore.FilterGroupType);
-			console.log('Tabs', result);
 			result = result.filter(g => g.subtabs.length);
 			return result;
 		},

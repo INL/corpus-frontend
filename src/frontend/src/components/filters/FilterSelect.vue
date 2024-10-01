@@ -45,7 +45,6 @@ export default BaseFilter.extend({
 	},
 	computed: {
 		options(): Option[] {
-			console.log(this.definition);
 			if (Array.isArray(this.definition.metadata))
 				return this.definition.metadata as Option[];
 			return this.definition.metadata.options as Option[];

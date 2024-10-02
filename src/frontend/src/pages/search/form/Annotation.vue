@@ -110,7 +110,6 @@ import {blacklabPaths} from '@/api';
 import { AnnotationValue, NormalizedAnnotation } from '@/types/apptypes';
 
 export default Vue.extend({
-	mixins: [UID],
 	components: {
 		SelectPicker,
 		PartOfSpeech,
@@ -128,6 +127,7 @@ export default Vue.extend({
 		simple: Boolean
 	},
 	data: () => ({
+		uid: UID(),
 		subscriptions: [] as Array<() => void>,
 	}),
 	computed: {

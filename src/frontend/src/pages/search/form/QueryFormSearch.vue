@@ -175,7 +175,6 @@ function isVue(v: any): v is Vue { return v instanceof Vue; }
 function isJQuery(v: any): v is JQuery { return typeof v !== 'boolean' && v && v.jquery; }
 
 export default Vue.extend({
-	mixins: [uid],
 	components: {
 		SelectPicker,
 		ParallelSourceAndTargets,
@@ -187,6 +186,7 @@ export default Vue.extend({
 		Within,
 	},
 	data: () => ({
+		uid: uid(),
 		parseQueryError: null as string|null,
 		importQueryError: null as string|null,
 

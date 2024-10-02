@@ -123,7 +123,6 @@ type WordOption = {
 };
 
 export default Vue.extend({
-	mixins: [UID] as any,
 	components: { SelectPicker },
 	inheritAttrs: false,
 	props: {
@@ -132,6 +131,7 @@ export default Vue.extend({
 		definition: Object as () => CorpusStore.NormalizedAnnotation
 	},
 	data: () => ({
+		uid: UID(),
 		input$: new Observable.BehaviorSubject<string>(''),
 		subscriptions: [] as Observable.Subscription[],
 

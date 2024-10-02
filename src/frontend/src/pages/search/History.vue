@@ -102,17 +102,17 @@ import * as FilterStore from '@/store/search/form/filters';
 
 import UrlStateParser from '@/store/search/util/url-state-parser';
 
-import UID from '@/mixins/uid';
+import uid from '@/mixins/uid';
 
 export default Vue.extend({
-	mixins: [UID],
 	data: () => ({
 		sessionStart: new Date().getTime(),
 		shownOlderEntries: 0,
 		sharingUrl: null as null|string,
 		importUrlError: null as null|string,
 		importUrlVisible: false,
-		clearHistoryVisible: false
+		clearHistoryVisible: false,
+		uid: uid()
 	}),
 	computed: {
 		history(): HistoryStore.ModuleRootState { return HistoryStore.getState() },

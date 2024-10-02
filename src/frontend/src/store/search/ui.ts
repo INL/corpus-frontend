@@ -1338,10 +1338,12 @@ const corpusCustomizations = {
 			});
 		}
 
+		const behaviourName = widget === 'select' ? 'span-select' : 'span-text';
+
 		return {
 			id: `${spanName}-${attrName}`,
 			componentName: `filter-${widget}`,
-			behaviourName: `span-${widget}`, // i.e. generate a "within ..." BCQL query
+			behaviourName, // i.e. generate a "within ..." BCQL query
 			isSpanFilter: true,
 			displayName,
 			metadata: {

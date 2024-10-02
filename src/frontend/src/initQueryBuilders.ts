@@ -15,7 +15,7 @@ import { getAnnotationSubset } from '@/utils';
 import { Option } from './types/apptypes';
 
 // Init the querybuilder with the supported attributes/properties
-export async function initQueryBuilders(): Promise<QueryBuilder[]> {
+export async function initQueryBuilders(i18n: Vue): Promise<QueryBuilder[]> {
 	debugLog('Begin initializing querybuilder(s)');
 
 	const first = getAnnotationSubset(
@@ -23,18 +23,19 @@ export async function initQueryBuilders(): Promise<QueryBuilder[]> {
 		CorpusStore.get.annotationGroups(),
 		CorpusStore.get.allAnnotationsMap(),
 		'Search',
+		i18n,
 		CorpusStore.get.textDirection(),
 		debug.debug
 	);
 
 	const annotationGroups = first.map(g => ({
 		groupname: g.label!,
-		options: g.entries.map<QueryBuilderAttributeDef>((annot, i) => ({
-			attribute: annot.id,
-			caseSensitive: annot.caseSensitive,
-			label: (g.options[i] as Option).label!,
+		options: (g.options as Option[]).map<QueryBuilderAttributeDef>(({value: annotationId, label: localizedAnnotationDisplayName, title: localizedAnnotationDescription}, i) => ({
+			attribute: annotationId,
+			caseSensitive: g.entries[i].caseSensitive,
+			label: localizedAnnotationDisplayName || annotationId,
 			textDirection: CorpusStore.get.textDirection(),
-			values: annot.values
+			values: g.entries[i].values
 		}))
 	}));
 
@@ -72,7 +73,7 @@ export async function initQueryBuilders(): Promise<QueryBuilder[]> {
 					defaultAttribute: UIStore.getState().search.advanced.defaultSearchAnnotationId
 				}
 			}
-		});
+		}, i18n);
 
 		if (i == 0) {
 			// SOURCE

@@ -9,8 +9,8 @@ export type NormalizedAnnotation = {
 	/** id of the field this annotation resides in, usually 'contents' */
 	annotatedFieldId: string;
 	caseSensitive: boolean;
-	description: string;
-	displayName: string;
+	defaultDescription: string;
+	defaultDisplayName: string;
 	hasForwardIndex: boolean;
 	/** 'lemma', 'pos', etc. These are only unique within the same annotatedField */
 	id: string;
@@ -32,14 +32,17 @@ export type NormalizedAnnotation = {
 };
 
 /** A set of annotations that form one data set on a token, usually there is only one of these in an index, called 'content' */
-export type NormalizedAnnotatedField = {
+type NormalizedAnnotatedFieldBase  = {
 	annotations: { [annotationId: string]: NormalizedAnnotation };
-	description: string;
-	displayName: string;
+	defaultDescription: string;
+	defaultDisplayName: string;
 	hasContentStore: boolean;
 	hasLengthTokens: boolean;
 	hasXmlTags: boolean;
-	/** usually 'contents', annotatedFieldId in NormalizedAnnotation refers to this */
+	/**
+	 * usually 'contents', annotatedFieldId in NormalizedAnnotation refers to this.
+	 * In parallel corpora, consists of a prefix (e.g. "contents") and a suffix (e.g. "en").
+	 */
 	id: string;
 	isAnnotatedField: boolean;
 	/**
@@ -50,11 +53,21 @@ export type NormalizedAnnotatedField = {
 	mainAnnotationId: string;
 };
 
+export type NormalizedAnnotatedFieldParallel = NormalizedAnnotatedFieldBase&{
+	isParallel: true;
+	/** The prefix of the parallel field. e.g. "contents" */
+	prefix: string;
+	/** The version of the parallel field. e.g. "nl" or "en" */
+	version: string;
+}
+export type NormalizedAnnotatedFieldNotParallel = NormalizedAnnotatedFieldBase&{
+	isParallel: false;
+}
+export type NormalizedAnnotatedField = NormalizedAnnotatedFieldParallel|NormalizedAnnotatedFieldNotParallel;
+
 export type NormalizedMetadataField = {
-	description: string;
-	displayName: string;
-	// /** Id of the metadataFieldGroup, if part of a group */
-	// groupId?: string;
+	defaultDescription: string;
+	defaultDisplayName: string;
 	id: string;
 	/**
 	 * Based on the uiType of the original metadata field,
@@ -230,8 +243,10 @@ export type FilterValue = {
 export type FilterDefinition<MetadataType = any, ValueType = any> = {
 	/** Id of the filters, this must be unique */
 	id: string;
-	displayName: string;
-	description?: string;
+	/** Display name to show if there is no localized version in the i18n bundle */
+	defaultDisplayName: string;
+	/** Description to show if there is no localized version in the i18n bundle */
+	defaultDescription?: string;
 	/** Name of the component, for filters generated from the blacklab index metadata, `filter-${uiType}` */
 	componentName: string;
 	/** The group this filter is part of, only for ui purposes. */

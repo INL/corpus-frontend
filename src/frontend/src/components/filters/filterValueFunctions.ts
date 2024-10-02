@@ -443,5 +443,5 @@ export function getFilterString(filters: FullFilterState[]): string|undefined {
 export const getFilterSummary = (filters: FullFilterState[]): string|undefined => filters
 	.map(f => ({f, summary: valueFunctions[f.componentName].luceneQuerySummary(f.id, f.metadata, f.value)}))
 	.filter(f => !!f.summary)
-	.map(f => `${f.f.displayName}: ${f.summary}`)
+	.map(f => `${f.f.defaultDisplayName}: ${f.summary}`)
 	.join(', ') || undefined;

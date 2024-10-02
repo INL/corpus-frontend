@@ -1,6 +1,6 @@
 <template>
 	<tr class="concordance rounded">
-		<td v-if="displayField" class='doc-version'><a @click.stop="" :href="href" title="Go to hit in document" target="_blank">{{ displayField }}</a></td>
+		<td v-if="data.annotatedField" class='doc-version'><a @click.stop="" :href="data.href" title="Go to hit in document" target="_blank">{{ $tAnnotatedFieldDisplayName(data.annotatedField) }}</a></td>
 		<HitContextComponent tag="td" class="text-right"  :dir="dir" :data="data.context" :html="html" :annotation="mainAnnotation.id" :before="dir === 'ltr'" :after="dir === 'rtl'"
 			:hoverMatchInfos="hoverMatchInfos"
 			@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
@@ -35,25 +35,36 @@ import * as BLTypes from '@/types/blacklabtypes';
 
 import GlossField from '@/pages/search/form/concept/GlossField.vue';
 import { GlossFieldDescription } from '@/store/search/form/glossStore';
-import { HitContext, NormalizedAnnotation, NormalizedMetadataField } from '@/types/apptypes';
+import { HitContext, NormalizedAnnotatedField, NormalizedAnnotation, NormalizedMetadataField } from '@/types/apptypes';
 
 import HitContextComponent from '@/pages/search/results/table/HitContext.vue';
 
-/**
- * Can contain either a full hit or a partial hit (without capture/relations info)
- * Partials hits are returned when requesting /docs.
- */
 export type HitRowData = {
-	type: 'hit';
 	doc: BLTypes.BLDoc;
-	hit: BLTypes.BLHit|BLTypes.BLHitInOtherField|BLTypes.BLHitSnippet;
+	hit: BLTypes.BLHit|BLTypes.BLHitSnippet;
+	/** Is the data in this hit from the searched field or from the parallel/related/target field. False if source, true if target. */
+	isForeign: boolean;
 	context: HitContext;
+	/** For parallel corpora. The url to view the hit in the document's version in the target field. */
+	href: string;
+	/** For parallel corpora. The field in which this version of the hit exists. */
+	annotatedField?: NormalizedAnnotatedField;
 
 	// TODO jesse
 	gloss_fields: GlossFieldDescription[];
 	hit_first_word_id: string; // Jesse
 	hit_last_word_id: string // jesse
 	hit_id: string; // jesse
+}
+
+/**
+ * Can contain either a full hit or a partial hit (without capture/relations info)
+ * Partials hits are returned when requesting /docs.
+ */
+export type HitRows = {
+	type: 'hit';
+	doc: BLTypes.BLDoc;
+	rows: HitRowData[];
 };
 
 export default Vue.extend({
@@ -63,11 +74,6 @@ export default Vue.extend({
 	},
 	props: {
 		data: Object as () => HitRowData,
-		href: String as () => string|undefined,
-		displayField: {
-			type: String,
-			default: '',
-		},
 		mainAnnotation: Object as () => NormalizedAnnotation,
 		otherAnnotations: Array as () => NormalizedAnnotation[]|undefined,
 		metadata: Array as () => NormalizedMetadataField[]|undefined,
@@ -79,7 +85,6 @@ export default Vue.extend({
 			type: Array as () => string[],
 			default: () => [],
 		},
-		isParallel: { default: false },
 	},
 });
 </script>

@@ -178,8 +178,8 @@ const init = () => {
 			actions.registerFilter({
 				filter: {
 					componentName,
-					description: f.description,
-					displayName: f.displayName,
+					defaultDescription: f.defaultDescription,
+					defaultDisplayName: f.defaultDisplayName,
 					groupId: g.id,
 					id: f.id,
 					metadata,

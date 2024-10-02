@@ -183,7 +183,7 @@ const actions = {
 					// Also cast back into correct type after parsing/stringifying so we don't lose type-safety (parse returns any)
 					filters: get.filtersActive() ? cloneDeep(FilterModule.get.activeFiltersMap()) as ReturnType<typeof FilterModule['get']['activeFiltersMap']> : {},
 					formState: cloneDeep(ExploreModule.getState()[exploreMode]) as ExploreModule.ModuleRootState[typeof exploreMode],
-					parallelVersions: cloneDeep(PatternModule.get.parallelVersions()) as PatternModule.ModuleRootState['parallelVersions'],
+					parallelFields: cloneDeep(PatternModule.get.parallelAnnotatedFields()) as PatternModule.ModuleRootState['parallelFields'],
 					gap: get.gapFillingActive() ? GapModule.getState() : GapModule.defaults,
 				};
 				break;
@@ -197,7 +197,7 @@ const actions = {
 					// Also cast back into correct type after parsing/stringifying so we don't lose type-safety (parse returns any)
 					filters: get.filtersActive() ? cloneDeep(FilterModule.get.activeFiltersMap()) as ReturnType<typeof FilterModule['get']['activeFiltersMap']> : {},
 					formState: cloneDeep(PatternModule.getState()[patternMode]) as PatternModule.ModuleRootState[typeof patternMode],
-					parallelVersions: cloneDeep(PatternModule.get.parallelVersions()) as PatternModule.ModuleRootState['parallelVersions'],
+					parallelFields: cloneDeep(PatternModule.get.parallelAnnotatedFields()) as PatternModule.ModuleRootState['parallelFields'],
 					gap: get.gapFillingActive() ? GapModule.getState() : GapModule.defaults,
 				};
 				break;
@@ -277,9 +277,8 @@ const actions = {
 						query: null,
 						targetQueries: [],
 					},
-					parallelVersions: PatternModule.getState().parallelVersions, // <-- is this ok?
-					// TODO: this seems wrong..? (why are value and case here?) (JN)
-					simple: {...PatternModule.getState().simple, value: '', case: false},
+					parallelFields: PatternModule.getState().parallelFields, // <-- is this ok?
+					simple: PatternModule.getState().simple,
 					extended: {
 						annotationValues: {
 							[a.id]: a
@@ -291,8 +290,8 @@ const actions = {
 				}
 			},
 			pattern: getPatternString([a], state.patterns.extended.within, state.patterns.extended.withinAttributes,
-				state.patterns.parallelVersions.targets,
-				state.patterns.parallelVersions.alignBy || state.ui.search.shared.alignBy.defaultValue),
+				state.patterns.parallelFields.targets,
+				state.patterns.parallelFields.alignBy || state.ui.search.shared.alignBy.defaultValue),
 			// TODO :( url generation is too encapsulated to completely repro here
 			url: ''
 		}))

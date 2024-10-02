@@ -264,7 +264,7 @@ url$.pipe(
 			patterns: query.form === 'search' ? {
 				...PatternStore.defaults,
 				[query.subForm]: query.formState,
-				parallelVersions: query.parallelVersions,
+				parallelFields: query.parallelFields,
 			} : PatternStore.defaults,
 			interface: {
 				form: query.form ? query.form : 'search',

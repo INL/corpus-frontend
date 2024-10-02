@@ -8,41 +8,35 @@
 			<!-- Parallel corpus -->
 			<div class="qb-par-wrap">
 				<label class="control-label" for="sourceVersion">{{$t('search.parallel.queryForSourceVersion')}}
-					<SelectPicker id="sourceVersion" :options="parallelSourceVersionOptions"
-						v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
+					<SelectPicker id="sourceVersion" :options="pSourceOptions"
+						v-model="pSourceValue" data-menu-width="grow" hideEmpty/>
 				</label>
 				<div class="querybuilder"></div>
 			</div>
-			<div v-for="(version, index) in parallelTargetVersions" :key="version">
+			<div v-for="field in pTargets" :key="field.value">
 				<div class="qb-par-wrap">
 					<label class="control-label">{{$t('search.parallel.queryForTargetVersion')}}
-						<span @click="removeTargetVersion(version)" class="targetVersion" :title="$t('widgets.clickToRemove').toString()" href="#">
-							{{versionDisplayName(version)}}
-						</span>
+						<button type="button" class="targetVersion" @click="removeTarget(field.value)" :title="$t('widgets.clickToRemove').toString()">
+							{{ field.label }}
+						</button>
 					</label>
 					<div class="querybuilder"></div>
 				</div>
 			</div>
 
-			<div class="add-target-version">
-				<label class="control-label">
-					{{ parallelTargetVersions && parallelTargetVersions.length > 0 ?
-					$t('search.parallel.addTargetVersion') :
-					$t('search.parallel.chooseTargetVersion')
-					}}</label>
+			<div v-if="pTargetOptions.length" class="add-target-version">
+				<label class="control-label" :v-t="pTargetValue.length ? 'search.parallel.addTargetVersion' : 'search.parallel.chooseTargetVersion'"></label>
 				<div>
-					<SelectPicker :options="parallelTargetVersionOptions" @input="addTargetVersion($event)" />
+					<!--
+						Note: this selectpicker only allows a single value. Then every time the user selects something, the selected value is removed
+						 from the available options.
+						Deselecting happens in a list elsewhere in the UI.
+					-->
+					<SelectPicker :options="pTargetOptions" @input="addTarget($event)" hideEmpty/>
 				</div>
 			</div>
 
-			<div class="align-by">
-				<label class="control-label">{{ $t('search.parallel.alignBy') }}</label>
-				<div>
-					<div class="btn-group">
-						<AlignBy />
-					</div>
-				</div>
-			</div>
+			<AlignBy />
 		</div>
 
 		<button type="button" class="btn btn-default btn-sm" @click="copyAdvancedQuery">{{$t('search.advanced.copyAdvancedQuery')}}</button>
@@ -50,20 +44,17 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
-
-import * as CorpusStore from '@/store/search/corpus';
 import * as PatternStore from '@/store/search/form/patterns';
 import * as InterfaceStore from '@/store/search/form/interface';
 
-import SelectPicker, { Option } from '@/components/SelectPicker.vue';
+import SelectPicker from '@/components/SelectPicker.vue';
 import MultiValuePicker from '@/components/MultiValuePicker.vue';
 import AlignBy from '@/pages/search/form/AlignBy.vue';
 import { initQueryBuilders } from '@/initQueryBuilders';
-import { annotatedFieldDisplayName, annotatedFieldOption } from '@/utils/i18n';
-import { getParallelFieldName } from '@/utils/blacklabutils';
 
-export default Vue.extend({
+import ParallelFields from '@/pages/search/form/parallel/ParallelFields';
+
+export default ParallelFields.extend({
 	components: {
 		SelectPicker,
 		MultiValuePicker,
@@ -72,35 +63,6 @@ export default Vue.extend({
 	data: () => ({
 	}),
 	computed: {
-		// Is this a parallel corpus?
-		isParallelCorpus: CorpusStore.get.isParallelCorpus,
-
-		// If this is a parallel corpus: the available source version options (all except chosen targets)
-		parallelSourceVersionOptions() {
-			const prefix = CorpusStore.get.parallelFieldPrefix();
-			return PatternStore.get.parallelSourceVersionOptions().map(o => annotatedFieldOption(this.$i18n, prefix, o));
-		},
-
-		// If this is a parallel corpus: the available target version options (all except chosen sources and targets)
-		parallelTargetVersionOptions() {
-			const prefix = CorpusStore.get.parallelFieldPrefix();
-			return PatternStore.get.parallelTargetVersionOptions()
-				.filter(v => !this.parallelTargetVersions.includes(v.value))
-				.map(o => annotatedFieldOption(this.$i18n, prefix, o));
-		},
-
-		// If this is a parallel corpus: the currently selected source version
-		parallelSourceVersion: {
-			get() { return PatternStore.get.parallelVersions().source; },
-			set: PatternStore.actions.parallelVersions.sourceVersion
-		},
-
-		// If this is a parallel corpus: the currently selected target versions
-		parallelTargetVersions: {
-			get() { return PatternStore.get.parallelVersions().targets; },
-			set: PatternStore.actions.parallelVersions.targetVersions
-		},
-
 		// The query (or source query, for parallel corpora)
 		mainQuery: {
 			get() { return PatternStore.getState().advanced.query || undefined; },
@@ -115,24 +77,8 @@ export default Vue.extend({
 			},
 			set: PatternStore.actions.advanced.targetQueries,
 		},
-
 	},
 	methods: {
-		addTargetVersion(version: string) {
-			if (version != null) // can happen when select is reset to empty option
-				PatternStore.actions.parallelVersions.addTarget(version);
-		},
-
-		removeTargetVersion: PatternStore.actions.parallelVersions.removeTarget,
-
-		versionDisplayName: function (version: string): string {
-			const opt = CorpusStore.get.parallelVersionOptions().find(v => v.value === version);
-			const prefix = CorpusStore.get.parallelFieldPrefix();
-			if (opt)
-				return annotatedFieldDisplayName(this.$i18n, getParallelFieldName(prefix, opt.value), opt.label);
-			return version;
-		},
-
 		copyAdvancedQuery() {
 			const q = PatternStore.getState().advanced.query;
 			PatternStore.actions.expert.query(q);
@@ -146,8 +92,9 @@ export default Vue.extend({
 		},
 	},
 	watch: {
-		parallelTargetVersions() {
-			setTimeout(initQueryBuilders, 100); // TODO: setTimeout necessary or not?
+		pTargetValue() {
+			// Timeout necessary to wait for the divs to appear in the template
+			setTimeout(() => initQueryBuilders(this), 100);
 		}
 	}
 });
@@ -179,19 +126,16 @@ h3 .help {
 	#sourceVersion, .targetVersion {
 		font-weight: normal;
 	}
-	span.targetVersion {
+	button.targetVersion {
 		display: inline-block;
 		margin: 2px;
 		user-select: none;
-
-		// position: relative;
-		// top: 1px;
 
 		background-color: lighten(#337ab7, 40); // $panel-color (global.scss); maybe separate variables into file we can import here?
 		color: black;
 		padding: 7px;
 		border-radius: 3px;
-		cursor: pointer;
+		border: none;
 		&::after {
 			font-weight: bold;
 			content: '✕';

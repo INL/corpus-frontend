@@ -134,6 +134,8 @@
 	},
 	"results": {
 		"groupBy": {
+			"groupNameWithoutValue": "[无值]",
+
 			"groupResults": "分组结果",
 			"clear": "清除",
 			"apply": "应用",
@@ -182,7 +184,10 @@
 			"document": "文件",
 			"hits": "命中",
 			"hit": "命中",
-			"sortBy": "分类依据：",
+			"columnLabelBeforehit": "之前 命中",
+			"columnLabelHit": "命中",
+			"columnLabelAfterhit": "之后 命中",
+			"sortBy": "分类依据：{field}",
 			"sortByDocument": "分类依据：文章标题",
 			"sortByHits": "分类依据：命中数",
 			"moreHiddenHits": "更多隐藏的命中",
@@ -194,10 +199,6 @@
 			"property": "属性",
 			"value": "值",
 			"noContext": "没有可用的文本",
-			"after": "之后",
-			"before": "之前",
-			"After": "之后",
-			"Before": "之前",
 			"parallelVersion": "Version"
 		},
 		"export": {

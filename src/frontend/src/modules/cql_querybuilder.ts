@@ -438,8 +438,10 @@ export class QueryBuilder {
 	private createTokenButton: JQuery<HTMLElement>;
 	public modalEditor: JQuery<HTMLElement>;
 	private withinSelect: JQuery<HTMLElement>;
+	private i18n: Vue;
 
-	constructor($rootElement: JQuery<HTMLElement>, options: QueryBuilderOptions) {
+	constructor($rootElement: JQuery<HTMLElement>, options: QueryBuilderOptions, i18n: Vue) {
+		this.i18n = i18n;
 		// Use extendext so arrays in the defaults are replaced instead of merged with those in options
 		this.settings = $.extendext(true, 'replace', {}, DEFAULTS, options);
 		this._prepareElement($rootElement);

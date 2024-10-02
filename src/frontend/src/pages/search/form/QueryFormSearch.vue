@@ -16,8 +16,8 @@
 
 					<label class="control-label"
 						:for="firstMainAnnotation.id + '_' + uid"
-						:title="firstMainAnnotation.description || undefined"
-					>{{firstMainAnnotation.displayName}}
+						:title="$tAnnotDescription(firstMainAnnotation)"
+					>{{$tAnnotDisplayName(firstMainAnnotation)}}
 					</label>
 
 					<div v-if="customAnnotations[firstMainAnnotation.id]"
@@ -174,7 +174,9 @@ import { corpusCustomizations } from '@/store/search/ui';
 function isVue(v: any): v is Vue { return v instanceof Vue; }
 function isJQuery(v: any): v is JQuery { return typeof v !== 'boolean' && v && v.jquery; }
 
-export default Vue.extend({
+import ParallelFields from './parallel/ParallelFields';
+
+export default ParallelFields.extend({
 	components: {
 		SelectPicker,
 		ParallelSourceAndTargets,
@@ -193,29 +195,6 @@ export default Vue.extend({
 		subscriptions: [] as Array<() => void>
 	}),
 	computed: {
-		// Is this a parallel corpus?
-		isParallelCorpus: CorpusStore.get.isParallelCorpus,
-
-		// What parallel versions should be shown as source options?
-		// (all except already chosen target ones)
-		parallelSourceVersionOptions: PatternStore.get.parallelSourceVersionOptions,
-
-		// What parallel versions should be shown as target options?
-		// (all except already chosen source and target ones)
-		parallelTargetVersionOptions: PatternStore.get.parallelTargetVersionOptions,
-
-		// If this is a parallel corpus: the selected source version
-		parallelSourceVersion: {
-			get(): string|null { return PatternStore.get.parallelVersions().source; },
-			set: PatternStore.actions.parallelVersions.sourceVersion
-		},
-
-		// If this is a parallel corpus: the selected target version(s)
-		parallelTargetVersions: {
-			get(): string[]|null { return PatternStore.get.parallelVersions().targets; },
-			set: PatternStore.actions.parallelVersions.targetVersions
-		},
-
 		activePattern: {
 			get(): string { return InterfaceStore.getState().patternMode; },
 			set: InterfaceStore.actions.patternMode,
@@ -229,6 +208,7 @@ export default Vue.extend({
 				CorpusStore.get.annotationGroups(),
 				CorpusStore.get.allAnnotationsMap(),
 				'Search',
+				this,
 				CorpusStore.get.textDirection()
 			);
 		},

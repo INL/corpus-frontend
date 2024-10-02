@@ -134,6 +134,8 @@
 	},
 	"results": {
 		"groupBy": {
+			"groupNameWithoutValue": "[none]",
+
 			"groupResults": "Group Results",
 			"clear": "Clear",
 			"apply": "Apply",
@@ -182,8 +184,11 @@
 			"hideHits": "Hide Hits",
 			"document": "Document",
 			"hits": "Hits",
-			"hit": "Hit",
-			"sortBy": "Sort by",
+			"columnLabelBeforeHit": "Before Hit",
+			"columnLabelHit": "Hit",
+			"columnLabelAfterHit": "After Hit",
+			"sortBy": "Sort by {field}",
+			"sortByDescending": "Sort by {field} (descending)",
 			"sortByDocument": "Sort by document title",
 			"sortByHits": "Sort by number of hits",
 			"moreHiddenHits": "more hidden hits",
@@ -195,10 +200,6 @@
 			"property": "Property",
 			"value": "value",
 			"noContext": "No context available.",
-			"after": "after",
-			"before": "before",
-			"After": "After",
-			"Before": "Before",
 			"parallelVersion": "Version"
 		},
 		"export": {
@@ -296,5 +297,28 @@
 		"clickGroup": "Click a <code>group</code> to show or hide the <code>hits</code> within that group.",
 		"clickGoBack": "Click here to go back to the normal <code>hits</code> view to see more detailed information for the hits in this group.<br>A small indicator will appear to let you know that you're looking at hits from a specific group only.",
 		"documentInfo": "Information about a <code>document</code>.<br>Click the document's title or the <code>view document info</code> button to open this document in a new window.<br>This functionality is only available when the corpus has not disabled the viewing of documents.<br>"
+	},
+
+	"index": {
+		"annotatedFields": {
+			"$exampleAnnotatedField": "Translated display name for annotated field $exampleAnnotatedField",
+			"$exampleAnnotatedField_description": "Translated description for annotated field $exampleAnnotatedField"
+		},
+		"annotations": {
+			"$exampleAnnotation": "Translated display name for annotation $exampleAnnotation",
+			"$exampleAnnotation_description": "Translated description for annotation $exampleAnnotation"
+		},
+		"annotationGroups": {
+			"$exampleAnnotationGroup": "Translated display name for annotation group $exampleAnnotationGroup"
+		},
+		"metadata": {
+			"$exampleMetadataField": "Translated display name for metadata field $exampleMetadataField"
+		},
+		"metadataGroups": {
+			"$exampleMetadataGroup": "Translated display name for metadata group $exampleMetadataGroup"
+		},
+		"within": {
+			"$exampleWithinValue": "Translated display name for within value $exampleWithinValue"
+		}
 	}
 }

@@ -3,35 +3,26 @@
 	<div v-if="mode === 'simple'">
 		<label class="control-label">{{ $t('search.parallel.inSourceVersion') }}</label>
 		<div>
-			<SelectPicker :options="sourceOptions"
-					v-model="sourceVersion" data-menu-width="grow" hideEmpty/>
+			<SelectPicker :options="pSourceOptions" v-model="pSourceValue" data-menu-width="grow" hideEmpty/>
 		</div>
 
 		<label class="control-label">{{ $t('search.parallel.andCompareWithTargetVersions') }}</label>
 		<div>
-			<MultiValuePicker :options="targetOptions" v-model="targetVersions" />
+			<MultiValuePicker :options="pTargetOptionsWithCurrent" v-model="pTargetValue" />
 		</div>
-
-		<label class="control-label">{{ $t('search.parallel.alignBy') }}</label>
-		<div>
-			<div class="btn-group">
-				<AlignBy />
-			</div>
-		</div>
-
+		<AlignBy />
 	</div>
 	<div v-else>
 		<div class="form-group">
 			<label class="col-xs-12 col-md-3">{{ $t('search.parallel.inSourceVersion') }}</label>
 			<div class="col-xs-12 col-md-9">
-				<SelectPicker :options="sourceOptions"
-						v-model="sourceVersion" data-menu-width="grow" hideEmpty/>
+				<SelectPicker :options="pSourceOptions" v-model="pSourceValue" data-menu-width="grow" hideEmpty/>
 			</div>
 		</div>
 		<div class="form-group">
 			<label class="col-xs-12 col-md-3">{{ $t('search.parallel.andCompareWithTargetVersions') }}</label>
 			<div class="col-xs-12 col-md-9">
-				<MultiValuePicker :options="targetOptions" v-model="targetVersions" />
+				<MultiValuePicker :options="pTargetOptionsWithCurrent" v-model="pTargetValue" />
 			</div>
 		</div>
 		<div class="form-group">
@@ -44,19 +35,13 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import ParallelFields from '@/pages/search/form/parallel/ParallelFields';
 
-import * as CorpusStore from '@/store/search/corpus';
-import * as PatternStore from '@/store/search/form/patterns';
-import * as UIStore from '@/store/search/ui';
-
-import SelectPicker, { Option } from '@/components/SelectPicker.vue';
+import SelectPicker from '@/components/SelectPicker.vue';
 import MultiValuePicker from '@/components/MultiValuePicker.vue';
 import AlignBy from '@/pages/search/form/AlignBy.vue';
-import VueI18n from 'vue-i18n';
-import { annotatedFieldOption } from '@/utils/i18n';
 
-export default Vue.extend({
+export default ParallelFields.extend({
 	components: {
 		SelectPicker,
 		MultiValuePicker,
@@ -68,49 +53,6 @@ export default Vue.extend({
 			default: 'simple'
 		}
 	},
-	data: () => ({
-	}),
-	computed: {
-		// What parallel versions should be shown as source options?
-		// (all except already chosen target ones)
-		sourceOptions: function (): Option[] {
-			const prefix = CorpusStore.get.parallelFieldPrefix();
-			return PatternStore.get.parallelSourceVersionOptions().map(o => annotatedFieldOption(this.$i18n, prefix, o));
-		},
-		// What parallel versions should be shown as target options?
-		// (all except already chosen source and target ones)
-		targetOptions: function (): Option[] {
-			const prefix = CorpusStore.get.parallelFieldPrefix();
-			return PatternStore.get.parallelTargetVersionOptions().map(o => annotatedFieldOption(this.$i18n, prefix, o));
-		},
-		sourceVersion: {
-			get(): string|null { return PatternStore.get.parallelVersions().source; },
-			set: PatternStore.actions.parallelVersions.sourceVersion
-		},
-		targetVersions: {
-			get(): string[]|null { return PatternStore.get.parallelVersions().targets; },
-			set: PatternStore.actions.parallelVersions.targetVersions
-		},
-
-		// Options to show for "align by" widget (spans that occur in the corpus such as p or s)
-		alignByOptions(): Option[] {
-			return UIStore.getState().search.shared.alignBy.elements;
-		},
-
-		// Currently selected align by value
-		alignBy: {
-			get(): string { return PatternStore.get.parallelVersions().alignBy || UIStore.getState().search.shared.alignBy.defaultValue; },
-			set(value: string) {
-				PatternStore.actions.parallelVersions.alignBy(value === '' ? null : value);
-			},
-		}
-
-	},
-	methods: {
-		customizeLabel: function (o: Option): Option {
-			return annotatedFieldOption(this.$i18n, CorpusStore.get.parallelFieldPrefix(), o);
-		},
-	}
 });
 </script>
 

@@ -134,6 +134,8 @@
 	},
 	"results": {
 		"groupBy": {
+			"groupNameWithoutValue": "[geen waarde]",
+
 			"groupResults": "Groeperen",
 			"clear": "Wissen",
 			"apply": "Toepassen",
@@ -182,7 +184,10 @@
 			"document": "Document",
 			"hits": "Hits",
 			"hit": "Hit",
-			"sortBy": "Sorteer op",
+			"columnLabelBeforeHit": "Voor Hit",
+			"columnLabelHit": "Hit",
+			"columnLabelAfterHit": "Na Hit",
+			"sortBy": "Sorteer op {field}",
 			"sortByDocument": "Sorteer op documenttitel",
 			"sortByHits": "Sorteer op aantal hits",
 			"moreHiddenHits": "meer verborgen hits",
@@ -194,10 +199,6 @@
 			"property": "Eigenschap",
 			"value": "waarde",
 			"noContext": "Geen context beschikbaar.",
-			"after": "na",
-			"before": "voor",
-			"After": "Na",
-			"Before": "Voor",
 			"parallelVersion": "Versie"
 		},
 		"export": {

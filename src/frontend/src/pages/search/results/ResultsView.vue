@@ -39,7 +39,7 @@
 					<button v-for="a in concordanceAnnotationOptions" type="button"
 						class="btn btn-default btn-sm"
 						:class="{active: a.id === concordanceAnnotationId}"
-						@click="concordanceAnnotationId = a.id">{{ a.displayName }}</button>
+						@click="concordanceAnnotationId = a.id">{{ $tAnnotDisplayName(a) }}</button>
 				</div>
 			</div>
 
@@ -387,8 +387,7 @@ export default Vue.extend({
 
 		viewGroupName(): string {
 			if (this.viewGroup == null) { return ''; }
-			return this._viewGroupName ? this._viewGroupName :
-				this.viewGroup.substring(this.viewGroup.indexOf(':')+1) || ResultsStore.GROUP_NAME_NO_VALUE;
+			return this._viewGroupName?.substring(this.viewGroup.indexOf(':')+1) ?? this.$t('results.groupBy.groupNameWithoutValue').toString();
 		},
 
 		breadCrumbs(): Array<{

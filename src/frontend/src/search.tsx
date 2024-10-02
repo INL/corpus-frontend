@@ -25,7 +25,7 @@ import SearchPageComponent from '@/pages/search/SearchPage.vue';
 
 
 import { init as initApi } from '@/api';
-import i18n from '@/utils/i18n';
+import {i18n} from '@/utils/i18n';
 import * as loginSystem from '@/utils/loginsystem';
 
 import '@/global.scss';
@@ -120,7 +120,7 @@ $(document).ready(async () => {
 		i18n,
 		store: RootStore.store,
 		render: h => h(SearchPageComponent),
-		mounted: async () => {
+		async mounted() {
 			// we do this after render, so the user has something to look at while we're loading.
 			const user = await loginSystem.awaitInit(); // LOGIN SYSTEM
 			initApi('blacklab', BLS_URL, user);
@@ -135,7 +135,7 @@ $(document).ready(async () => {
 			RootStore.actions.replace(stateFromUrl);
 			// Don't do this before the url is parsed, as it controls the page url (among other things derived from the state).
 			connectStreamsToVuex();
-			initQueryBuilders();
+			initQueryBuilders(this);
 		},
 	}).$mount(document.querySelector('#vue-root')!);
 });

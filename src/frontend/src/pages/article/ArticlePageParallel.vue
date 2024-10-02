@@ -9,7 +9,7 @@ import {blacklab} from '@/api';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
-import i18n, { annotatedFieldDisplayName } from '@/utils/i18n';
+import {i18n}  from '@/utils/i18n';
 
 export default Vue.extend({
 	i18n,
@@ -36,8 +36,8 @@ export default Vue.extend({
 				this.lengthTokens = this.document?.docInfo.tokenCounts?.find(t => t.fieldName === annotatedFieldName)?.tokenCount ?? -1;
 
 				// The display name either comes from i18n, or from BlackLab.
-				this.fieldDisplayName = annotatedFieldDisplayName(this.$i18n, annotatedFieldName, '');
-				if (this.fieldDisplayName.length === 0) {
+				this.fieldDisplayName = this.$tAnnotatedFieldDisplayName({id: annotatedFieldName} as any);
+				if (this.fieldDisplayName?.length === 0) {
 					// Not in i18n; use the value from BlackLab.
 					this.request = blacklab.getAnnotatedField(RootStore.getState().indexId, annotatedFieldName)
 					.then(fieldInfo => {

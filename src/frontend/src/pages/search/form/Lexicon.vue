@@ -7,7 +7,7 @@
 
 			:id="inputId"
 			:name="inputId"
-			:placeholder="definition.displayName"
+			:placeholder="$tAnnotDisplayName(definition)"
 
 			v-bind="$attrs"
 			v-model="modelValue"

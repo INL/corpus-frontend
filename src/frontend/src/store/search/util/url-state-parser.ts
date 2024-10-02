@@ -3,7 +3,7 @@ import memoize from 'memoize-decorator';
 import BaseUrlStateParser from '@/store/util/url-state-parser-base';
 import LuceneQueryParser from 'lucene-query-parser';
 
-import {mapReduce, decodeAnnotationValue, uiTypeSupport, getCorrectUiType, unparenQueryPart} from '@/utils';
+import {mapReduce, decodeAnnotationValue, uiTypeSupport, getCorrectUiType, unparenQueryPart, getParallelFieldName} from '@/utils';
 import {parseBcql, Attribute, Result, Token} from '@/utils/bcql-json-interpreter';
 import parseLucene from '@/utils/luceneparser';
 import {debugLog} from '@/utils/debug';
@@ -307,7 +307,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	@memoize
 	private get patterns(): PatternModule.ModuleRootState {
 		return {
-			parallelVersions: this.parallelVersions,
+			parallelFields: this.parallelFields,
 			simple: this.simplePattern,
 			extended: this.extendedPattern,
 			advanced: this.advancedPattern,
@@ -454,11 +454,15 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 	}
 
 	@memoize
-	private get parallelVersions() {
+	private get parallelFields() {
+		// The query typically doesn't contain the entire parallel field name.
+		// BlackLab allows passing just "en" instead of "contents__en" in some spots
+		// So we need to reconstruct the full field name from the query here.
+		const prefix = CorpusModule.get.parallelFieldPrefix();
 		const defaultAlignBy = UIModule.getState().search.shared.alignBy.defaultValue;
 		const result = {
-			source: this.getString('field', CorpusModule.get.parallelVersions()[0]?.name),
-			targets: this._parsedCql ? this._parsedCql.slice(1).map(result => result.targetVersion || '') : [],
+			source: this.getString('field', CorpusModule.get.parallelAnnotatedFields()[0]?.id),
+			targets: this._parsedCql ? this._parsedCql.slice(1).map(result => result.targetVersion ? getParallelFieldName(prefix, result.targetVersion) : '') : [],
 			alignBy: (this._parsedCql ? this._parsedCql[1]?.relationType : defaultAlignBy) ?? defaultAlignBy,
 		};
 		return result;

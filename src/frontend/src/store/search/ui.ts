@@ -1226,6 +1226,9 @@ function printCustomizations() {
  *  It defines defaults that can be overridden from custom JS file(s); see below.
  */
 const corpusCustomizations = {
+	// Customize function, to be called once the corpus info has been loaded
+	customize: () => {},
+
 	search: {
 		within: {
 			/** Customize which element(s) to include */
@@ -1299,17 +1302,36 @@ const corpusCustomizations = {
   */
 (window as any).frontend = {
 	customize(callback: ((corpus: any) => void)) {
-		callback(corpusCustomizations);
+		corpusCustomizations.customize = () => callback(corpusCustomizations);
 	},
 
 	// Create a span filter for corpus.search.metadata.customTabs
-	createSpanFilter(displayName: string, spanName: string, attrName: string, widget: string = 'text', metadata: any = {}): AppTypes.FilterDefinition {
+	createSpanFilter(displayName: string, spanName: string, attrName: string, widget: string = 'auto', metadata: any = {}): AppTypes.FilterDefinition {
+
+		// No options specified; try to get them from the corpus.
+		let optionsFromCorpus;
+		const corpus = CorpusStore.getState().corpus;
+		if (!metadata.options && corpus && corpus.relations.spans) {
+			const span: BLTypes.BLSpanInfo = corpus.relations.spans[spanName];
+			const attr = span.attributes[attrName];
+			if (attr?.valueListComplete) {
+				optionsFromCorpus = Object.keys(attr.values).map((value: string) => ({ value }));
+			}
+		}
+
+		if (widget === 'auto') {
+			widget = optionsFromCorpus ? 'select' : 'text';
+		}
 
 		if (widget === 'select') {
 			// If user passed in just an array, assume these are the options.
 			if (Array.isArray(metadata)) {
 				metadata = { options: metadata };
 			}
+
+			if (!metadata.options)
+				metadata.options = optionsFromCorpus ?? [];
+
 			// If the options are just strings, convert them to simple Option objects.
 			metadata.options = metadata.options.map((option: any) => {
 				return typeof option === 'string' ? { value: option } : option;

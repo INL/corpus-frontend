@@ -28,7 +28,6 @@
 
 		<hr>
 
-
 		<div class="bottom-layout">
 			<slot name="pagination"/>
 			<div class="spacer"></div>

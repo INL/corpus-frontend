@@ -137,7 +137,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 		}
 
 		const annotationId = group.substring(4);
-		if (!CorpusModule.get.annotationDisplayNames().hasOwnProperty(annotationId)) {
+		if (!CorpusModule.get.allAnnotationsMap().hasOwnProperty(annotationId)) {
 			return null;
 		}
 
@@ -356,7 +356,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 
 		try {
 			/**
-			 * A requirement of the PropertyFields is that there are no gaps in the values
+			 * A requirement of the PropertyFields/Annotations is that there are no gaps in the values
 			 * So a valid config is
 			 * ```
 			 * lemma: [these, are, words]

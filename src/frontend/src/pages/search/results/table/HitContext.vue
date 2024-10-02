@@ -56,7 +56,6 @@ export default Vue.extend({
 			type: Array as () => string[],
 			default: () => [],
 		},
-		isParallel: { default: false },
 
 		before: Boolean,
 		after: Boolean,

@@ -46,14 +46,14 @@
 						</template>
 
 						<HitContextComponent tag="span" :dir="dir" :data="context" :html="html" :annotation="mainAnnotation.id" :before="dir === 'ltr'" :after="dir === 'rtl'"
-							:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+							:hoverMatchInfos="hoverMatchInfos"
 							@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
 						<HitContextComponent tag="strong" :dir="dir" :data="context" :html="html" :annotation="mainAnnotation.id" bold
-							:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+							:hoverMatchInfos="hoverMatchInfos"
 							@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
-						<a v-if="href" :href="href" title="Go to hit in document" target="_blank"><sup class="fa fa-link" style="margin-left: -5px;"></sup></a>
+						<a v-if="data.href" :href="data.href" title="Go to hit in document" target="_blank"><sup class="fa fa-link" style="margin-left: -5px;"></sup></a>
 						<HitContextComponent tag="span" :dir="dir" :data="context" :html="html" :annotation="mainAnnotation.id" :after="dir === 'ltr'"  :before="dir === 'rtl'"
-							:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+							:hoverMatchInfos="hoverMatchInfos"
 							@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
 					</p>
 					<table v-if="detailedAnnotations?.length" class="concordance-details-table">
@@ -67,7 +67,7 @@
 							<tr v-for="(annot, index) in detailedAnnotations" :key="annot.id">
 								<th>{{annot.displayName}}</th>
 								<HitContextComponent v-for="(token, ti) in context.match" tag="td" :data="{match: [token]}" :html="html" :dir="dir" :key="annot.id + ti" :punct="false" :highlight="false" :annotation="annot.id"
-								:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+									:hoverMatchInfos="hoverMatchInfos"
 								@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
 							</tr>
 						</tbody>

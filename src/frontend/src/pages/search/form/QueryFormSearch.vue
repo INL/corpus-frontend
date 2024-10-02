@@ -24,8 +24,7 @@
 						:data-custom-annotation-root="firstMainAnnotation.id"
 						data-is-simple="true"
 						ref="_simple"
-					/>
-
+					></div>
 					<Annotation v-else
 						:key="'simple/' + firstMainAnnotation.annotatedFieldId + '/' + firstMainAnnotation.id"
 						:htmlId="'simple/' + firstMainAnnotation.annotatedFieldId + '/' + firstMainAnnotation.id"
@@ -35,7 +34,6 @@
 					/>
 
 					<ParallelSourceAndTargets v-if="isParallelCorpus" />
-
 				</div>
 			</div>
 			<div :class="['tab-pane form-horizontal', {'active': activePattern==='extended'}]" id="extended">
@@ -56,7 +54,7 @@
 									:key="getTabId(tab.label) + '/' + annotation.annotatedFieldId + '/' + annotation.id"
 									:data-custom-annotation-root="annotation.id"
 									:ref="getTabId(tab.label) + '/' + annotation.annotatedFieldId + '/' + annotation.id"
-								/>
+								></div>
 
 								<Annotation v-else
 									:key="getTabId(tab.label) + '/' + annotation.annotatedFieldId + '/' + annotation.id"
@@ -64,7 +62,6 @@
 									:annotation="annotation"
 								/>
 							</template>
-
 						</div>
 					</div>
 				</template>
@@ -82,8 +79,6 @@
 							:annotation="annotation"
 						/>
 					</template>
-
-
 				</template>
 
 				<Within />
@@ -169,8 +164,6 @@ import ParallelSourceAndTargets from '@/pages/search/form/ParallelSourceAndTarge
 import Within from '@/pages/search/form/Within.vue';
 import uid from '@/mixins/uid';
 
-import { QueryBuilder } from '@/modules/cql_querybuilder';
-
 import { blacklabPaths } from '@/api';
 import * as AppTypes from '@/types/apptypes';
 import { getAnnotationSubset } from '@/utils';
@@ -182,7 +175,7 @@ function isVue(v: any): v is Vue { return v instanceof Vue; }
 function isJQuery(v: any): v is JQuery { return typeof v !== 'boolean' && v && v.jquery; }
 
 export default Vue.extend({
-	mixins: [uid] as any,
+	mixins: [uid],
 	components: {
 		SelectPicker,
 		ParallelSourceAndTargets,

@@ -40,8 +40,8 @@
 			"alignBy": "Aligneer op",
 			"inSourceVersion": "in bronversie",
 			"andCompareWithTargetVersions": "en vergelijk met doelversie(s)",
-			"sourceVersion": "Bronversie",
-			"targetVersion": "Doelversie",
+			"queryForSourceVersion": "Bronversie",
+			"queryForTargetVersion": "Doelversie",
 			"chooseTargetVersion": "Kies een doelversie",
 			"addTargetVersion": "Voeg nog een doelversie toe"
 		}

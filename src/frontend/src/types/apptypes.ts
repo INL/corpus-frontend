@@ -62,7 +62,7 @@ export type NormalizedMetadataField = {
 	 * Unknown types are replaced by 'text'
 	 */
 	uiType: 'select'|'combobox'|'text'|'range'|'checkbox'|'radio'|'date';
-	/** Only when uiType === 'select' */
+	/** Only when uiType === 'select', 'checkbox' or 'radio'. See blacklabutils::normalizeMetadata */
 	values?: Array<{value: string, label: string, title: string|null}>;
 };
 
@@ -89,7 +89,7 @@ export type NormalizedAnnotationGroup = {
 };
 
 export type NormalizedMetadataGroup = {
-	/** Unique within groups with the same annotatedFieldId, treat as a user-friendly name. */
+	/** Unique, treat as a user-friendly name. */
 	id: string;
 	/** Keys in metadataFields */
 	entries: string[];
@@ -127,7 +127,7 @@ export type NormalizedIndexBase = {
 /** Contains information about the internal structure of the index - which fields exist for tokens, which metadata fields exist for documents, etc */
 export type NormalizedIndex = NormalizedIndexBase&{
 	annotatedFields: { [id: string]: NormalizedAnnotatedField; };
-	/** Key info annotatedFields */
+	/** Default Annotated Field that BlackLab searches in, if not explicity overridden in the query. */
 	mainAnnotatedField: string;
 	/**
 	 * If no groups are defined by blacklab itself, all annotations of all annotatedFields are placed in generated groups.

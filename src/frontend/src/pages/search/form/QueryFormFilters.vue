@@ -22,8 +22,8 @@
 			>
 				<template v-for="(subtab, j) in tab.subtabs">
 					<h3 v-if="subtab.tabname" :key="j + subtab.tabname">{{subtab.tabname}}</h3>
-					<hr v-else-if="j !== 0" :key="j + subtab.tabname">
-					<Component v-for="id in subtab.filters" :key="tab.tabname + id"
+					<hr v-else-if="j !== 0" :key="j">
+					<Component v-for="id in subtab.filters" :key="tab.name + id"
 						:is="filterMap[id].componentName"
 						:htmlId="i+(j+id) /* brackets or else i+j collapses before stringifying */"
 						:definition="filterMap[id]"

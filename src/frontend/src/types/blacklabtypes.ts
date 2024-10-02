@@ -221,7 +221,7 @@ export interface BLAnnotation {
 	valueListComplete?: boolean;
 }
 
-/** A set of annotations that form one data set on a token, usually there is only one of these in an index, called 'content' */
+/** A set of annotations that form one data set on a token, usually there is only one of these in an index, called 'contents' */
 interface BLAnnotatedFieldInternal  {
 	description: string;
 	displayName: string;
@@ -363,9 +363,9 @@ export type BLSearchSummary = {
 	pattern?: {
 		/** The serialization of the query object BlackLab actually executed. */
 		bcql: string;
-		/** The main annotatedField that was searched */
+		/** The main annotatedField that was searched. This is the full name of the field e.g. "contents__en" */
 		fieldName: string;
-		/** Any other annotatedFields involved in the search (in case of parallel corpora) */
+		/** Any other annotatedFields involved in the search (in case of parallel corpora). These are the full names e.g. ["contents__en"] */
 		otherFields?: string[];
 		/** Json representation of the query. Not present when requesting results as xml output. */
 		json?: any;

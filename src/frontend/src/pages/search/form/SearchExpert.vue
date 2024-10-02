@@ -9,13 +9,17 @@
 			<textarea class="form-control querybox" name="querybox" rows="7" v-model="mainQuery"></textarea>
 		</template>
 		<div v-else class="parallel">
+			<!-- TODO see if we can reuse the ParallelSourceAndTarget component for this section. -->
 			<!-- Parallel corpus -->
+
+			<!-- Parallel source + its input box -->
 			<label class="control-label" for="sourceVersion">{{$t('search.parallel.queryForSourceVersion')}}
 				<SelectPicker id="sourceVersion" :options="parallelSourceVersionOptions"
 					v-model="parallelSourceVersion" data-menu-width="grow" hideEmpty/>
 			</label>
 			<textarea class="form-control querybox" name="querybox" rows="7" v-model="mainQuery"></textarea>
 
+			<!-- Parallel targets + their input boxes -->
 			<div v-for="(version, index) in parallelTargetVersions" :key="version">
 				<label class="control-label">{{$t('search.parallel.queryForTargetVersion')}}
 					<span @click="removeTargetVersion(version)" class="targetVersion" :title="$t('widgets.clickToRemove').toString()" href="#">
@@ -64,8 +68,6 @@ export default Vue.extend({
 		MultiValuePicker,
 		AlignBy,
 	},
-	data: () => ({
-	}),
 	computed: {
 		// Is this a parallel corpus?
 		isParallelCorpus: CorpusStore.get.isParallelCorpus,
@@ -98,23 +100,18 @@ export default Vue.extend({
 
 		// The query (or source query, for parallel corpora)
 		mainQuery: {
-			get() {
-				return PatternStore.getState().expert.query;
-			},
+			get() { return PatternStore.getState().expert.query ?? ''; },
 			set: PatternStore.actions.expert.query,
 		},
 
 		// If this is a parallel corpus: the target queries
 		targetQueries: {
-			get() {
-				return PatternStore.getState().expert.targetQueries;
-			},
+			get() { return PatternStore.getState().expert.targetQueries; },
 			set: PatternStore.actions.expert.targetQueries,
 		},
-
 	},
 	methods: {
-		changeTargetQuery(index: number, event: InputEvent): void {
+		changeTargetQuery(index: number, event: Event): void {
 			const textarea = event.target as HTMLTextAreaElement;
 			PatternStore.actions.expert.changeTargetQuery({index, value: textarea.value});
 		},

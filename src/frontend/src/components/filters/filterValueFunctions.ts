@@ -1,7 +1,6 @@
 import { unescapeLucene, escapeLucene, splitIntoTerms, mapReduce, cast } from '@/utils';
 import { FilterValue, Option } from '@/types/apptypes';
 import { ASTNode, ASTRange } from 'lucene-query-parser';
-// @ts-ignore (framework limitation) typechecking does not work for imports from .vue files
 import { modes } from './FilterRangeMultipleFields.vue';
 import { FullFilterState } from '@/store/search/form/filters';
 import { debugLog } from '@/utils/debug';
@@ -196,7 +195,9 @@ export const DateUtils = {
 	},
 }
 
-
+/**
+ * Separate from the components so we can easily call these functions from other places.
+ */
 export const valueFunctions: Record<string, FilterValueFunctions<any, any>> = {
 	'filter-autocomplete': cast<FilterValueFunctions<never, string>>({
 		decodeInitialState(id, filterMetadata, filterValues) {

@@ -2,17 +2,17 @@
 	<tr class="concordance rounded">
 		<td v-if="displayField" class='doc-version'><a @click.stop="" :href="href" title="Go to hit in document" target="_blank">{{ displayField }}</a></td>
 		<HitContextComponent tag="td" class="text-right"  :dir="dir" :data="data.context" :html="html" :annotation="mainAnnotation.id" :before="dir === 'ltr'" :after="dir === 'rtl'"
-			:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+			:hoverMatchInfos="hoverMatchInfos"
 			@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
 		<HitContextComponent tag="td" class="text-center" :dir="dir" :data="data.context" :html="html" :annotation="mainAnnotation.id" bold
-			:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+			:hoverMatchInfos="hoverMatchInfos"
 			@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)"/>
 		<HitContextComponent tag="td" class="text-left"   :dir="dir" :data="data.context" :html="html" :annotation="mainAnnotation.id" :after="dir === 'ltr'"  :before="dir === 'rtl'"
-			:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+			:hoverMatchInfos="hoverMatchInfos"
 			@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)"/>
 
 		<HitContextComponent tag="td" :annotation="a.id" :data="data.context" :html="html" :dir="dir" :key="a.id" :highlight="false" v-for="a in otherAnnotations"
-			:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+			:hoverMatchInfos="hoverMatchInfos"
 			@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)"/>
 
 		<td v-for="field in data.gloss_fields" :key="field.fieldName" style="overflow: visible;">
@@ -24,7 +24,7 @@
 				:hitId="data.hit_id"
 			/>
 		</td>
-		<td v-if="data.doc" v-for="meta in metadata" :key="meta.id">{{data.doc.docInfo[meta.id] ? data.doc.docInfo[meta.id].join(', ') : ''}}</td>
+		<td v-if="data.doc" v-for="meta in metadata" :key="meta.id">{{ data.doc.docInfo[meta.id]?.join(', ') || '' }}</td>
 	</tr>
 </template>
 

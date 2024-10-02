@@ -62,8 +62,6 @@ export function unescapeLucene(original: string) {
 export function NaNToNull(n: number) { return isNaN(n) ? null : n; }
 
 
-
-
 /**
  * @param context
  * @param prop - property to retrieve
@@ -550,6 +548,10 @@ export function fieldSubset<T extends {id: string}>(
 	return ret;
 }
 
+// The type of the field objects is a little more generic than a metadata field
+// because this function can also be used with filters. Which do not 100% overlap with metadata fields necessarily.
+// (although in the vast majority of cases, filters are created from metadata fields).
+// (but for example a date range filter has two underlying metadata fields, so it requires a custom id that doesn't exist in the metadata)
 export function getMetadataSubset<T extends {id: string, displayName: string}>(
 	ids: string[],
 	groups: AppTypes.NormalizedMetadataGroup[],
@@ -562,6 +564,9 @@ export function getMetadataSubset<T extends {id: string, displayName: string}>(
 	const defaultMetadataOptGroupName = 'Metadata';
 	const subset = fieldSubset(ids, groups, metadata);
 
+	// Map a metadata field's id + displayname + group to an option for rendering a groupby or sortby dropdown.
+	// This will map the value to be the string required for blacklab to sort/group by the field
+	// and the label to be the human-readable display name of the field.
 	function mapToOptions(value: string, displayName: string, groupId: string): AppTypes.Option[] {
 		// @ts-ignore
 		const displayIdHtml = debug ? `<small><strong>[id: ${value}]</strong></small>` : '';
@@ -607,7 +612,8 @@ export function getAnnotationSubset(
 	ids: string[],
 	groups: AppTypes.NormalizedAnnotationGroup[],
 	annotations: Record<string, AppTypes.NormalizedAnnotation>,
-	operation: 'Search'|'Sort'|'Group',
+	operation: 'Search'|'Sort',
+	i18n: Vue,
 	corpusTextDirection: 'rtl'|'ltr' = 'ltr',
 	debug = false,
 	/* show the <small/> labels at the end of options labels? */
@@ -626,40 +632,30 @@ export function getAnnotationSubset(
 		}));
 	}
 
-	// If sorting: do left/right
-	// if grouping: do wordleft/wordright
-	// See https://github.com/INL/corpus-frontend/issues/316#issuecomment-609627245
-	const operations = {
-		left: operation === 'Group' ? 'wordleft:' : 'left:',
-		right: operation === 'Group' ? 'wordright:' : 'right:'
-	};
-
+	// Generate options for sorting by annotation.
+	// I.e. 6 options per annotation. 3 for each position: before, hit, after
+	// and 2 per postion: ascending and descending.
 	return [
 		['hit:', 'Hit', ''],
-		[corpusTextDirection === 'rtl' ? operations.right : operations.left, 'Before hit', 'before'],
-		[corpusTextDirection === 'rtl' ? operations.left : operations.right, 'After hit', 'after']
+		[corpusTextDirection === 'rtl' ? 'right:' : 'left:', 'Before hit', 'before'],
+		[corpusTextDirection === 'rtl' ? 'left:' : 'right:', 'After hit', 'after']
 	]
 	.map<AppTypes.OptGroup&{entries: AppTypes.NormalizedAnnotation[]}>(([prefix, groupname, suffix]) =>({
 		label: groupname,
 		entries: subset[0].entries,
-		options: ids.flatMap(id => {
-			// @ts-ignore
+		options: ids.flatMap<AppTypes.Option>(id => {
+			// in debug mode - show IDs
 			const displayIdHtml = debug ? `<small><strong>[id: ${id}]</strong></small>` : '';
 			const displayNameHtml = annotations[id].displayName || id; // in development mode - show IDs
 			const displaySuffixHtml = showGroupLabels && suffix ? `<small class="text-muted">${suffix}</small>` : '';
 
-			const r: AppTypes.Option[] = [];
-			r.push({
+			return [{
 				label: `${operation} by ${displayNameHtml} ${displayIdHtml} ${displaySuffixHtml}`,
 				value: `${prefix}${id}`
-			});
-			if (operation === 'Sort') {
-				r.push({
-					label: `${operation} by ${displayNameHtml} ${displayIdHtml} (descending) ${displaySuffixHtml}`,
-					value: `-${prefix}${id}`
-				});
-			}
-			return r;
+			}, {
+				label: `${operation} by ${displayNameHtml} ${displayIdHtml} (descending) ${displaySuffixHtml}`,
+				value: `-${prefix}${id}`
+			}]
 		})
 	}));
 }
@@ -712,6 +708,7 @@ export function getCorrectUiType<T extends AppTypes.NormalizedAnnotation['uiType
 import type {ModuleRootState as ModuleRootStateExplore} from '@/store/search/form/explore';
 import type {ModuleRootState as ModuleRootStateSearch} from '@/store/search/form/patterns';
 import cloneDeep from 'clone-deep';
+
 export function getPatternStringExplore(
 	subForm: keyof ModuleRootStateExplore,
 	state: ModuleRootStateExplore,
@@ -770,7 +767,6 @@ export function getPatternStringSearch(
 		case 'glosses': return state.glosses?.trim() || undefined;
 		default: throw new Error('Unimplemented pattern generation.');
 	}
-
 }
 
 export function getPatternSummaryExplore<K extends keyof ModuleRootStateExplore>(

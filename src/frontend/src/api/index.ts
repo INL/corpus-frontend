@@ -317,14 +317,14 @@ export const blacklab = {
 		};
 	},
 
-	getDocs: (indexId: string, params: BLTypes.BLSearchParameters, requestParameters?: AxiosRequestConfig) => {
+	getDocs: <T extends BLTypes.BLDocResults|BLTypes.BLDocGroupResults = BLTypes.BLDocResults|BLTypes.BLDocGroupResults> (indexId: string, params: BLTypes.BLSearchParameters, requestParameters?: AxiosRequestConfig) => {
 		const {token: cancelToken, cancel} = axios.CancelToken.source();
 
-		let request: Promise<BLTypes.BLDocResults|BLTypes.BLDocGroupResults>;
+		let request: Promise<T>;
 		if (!indexId) {
 			request = Promise.reject(new ApiError('Error', 'No index specified', 'Internal error', undefined));
 		} else {
-			request = endpoints.blacklab.getOrPost<BLTypes.BLDocResults|BLTypes.BLDocGroupResults>(blacklabPaths.docs(indexId), params, { ...requestParameters, cancelToken })
+			request = endpoints.blacklab.getOrPost<T>(blacklabPaths.docs(indexId), params, { ...requestParameters, cancelToken })
 			.then(res => {
 				if (!BLTypes.isDocGroups(res)) {
 					res.docs.forEach(d => fixDocInfo(d.docInfo));

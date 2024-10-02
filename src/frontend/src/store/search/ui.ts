@@ -52,7 +52,6 @@ type ModuleRootState = {
 		shared: {
 			/**
 			 * Fields available in the filters view. Sorted by global metadata order.
-			 * This does not contain custom filters.
 			 * NOTE THAT THIS MAY CONTAIN IDS THAT ARE NOT A METADATA FIELD.
 			 * The reason for this is custom filters.
 			 * We cannot reasonably validate this, so we only output a warning when you're trying to register those.

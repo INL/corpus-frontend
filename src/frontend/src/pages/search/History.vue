@@ -105,7 +105,7 @@ import UrlStateParser from '@/store/search/util/url-state-parser';
 import UID from '@/mixins/uid';
 
 export default Vue.extend({
-	mixins: [UID] as any,
+	mixins: [UID],
 	data: () => ({
 		sessionStart: new Date().getTime(),
 		shownOlderEntries: 0,

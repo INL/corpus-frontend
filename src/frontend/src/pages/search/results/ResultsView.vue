@@ -84,7 +84,7 @@
 			<span v-html="error"></span>
 			<br>
 			<br>
-			<button type="button" class="btn btn-default" :title="$t('results.resultsView.tryAgainTitle')" @click="markDirty();">{{ $t('results.resultsView.tryAgain') }}</button>
+			<button type="button" class="btn btn-default" :title="$t('results.resultsView.tryAgainTitle').toString()" @click="markDirty();">{{ $t('results.resultsView.tryAgain') }}</button>
 		</div>
 	</div>
 </template>
@@ -440,7 +440,6 @@ export default Vue.extend({
 			r[r.length -1].active = true;
 			return r;
 		},
-
 
 		resultComponentName(): string {
 			if (this.isGroups) {

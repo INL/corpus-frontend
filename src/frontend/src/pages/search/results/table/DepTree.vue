@@ -110,6 +110,10 @@ export default Vue.extend({
 			return flatten(left, extract).concat(flatten(match, extract)).concat(flatten(right, extract));
 		},
 
+		/**
+		 * Convert BlackLab's returned relation object into something representing connl-u relations.
+		 * Meaning a list of "tokens" (i.e. positions in the sentence), pointing at their parent ("sourceIndex" property).
+		 */
 		relationInfo(): undefined|Array<undefined|{parentIndex: number; label: string;}> {
 			if (!this.hit || !this.context || !this.sensibleArray) return undefined;
 
@@ -129,10 +133,7 @@ export default Vue.extend({
 					r[targetIndex] = {
 						// might be undefined for root?
 						parentIndex: sourceIndex,
-						//@ts-ignore
 						label: v.relType,
-						// @ts-ignore
-						sourceObject: v
 					}
 				}
 			}

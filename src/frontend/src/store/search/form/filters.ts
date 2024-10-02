@@ -18,9 +18,7 @@ import { mapReduce } from '@/utils';
 import { getFilterString, getFilterSummary, valueFunctions } from '@/components/filters/filterValueFunctions';
 
 export type FilterState = {
-	// lucene: string|null;
 	value: any|null;
-	// summary: string|null;
 };
 
 export type FullFilterState = FilterDefinition<any, any>&FilterState;

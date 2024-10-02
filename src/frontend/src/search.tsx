@@ -114,7 +114,6 @@ async function runHook(hookName: keyof (typeof hooks)) {
 	}
 }
 
-
 $(document).ready(async () => {
 	// We can render before the tagset loads, the form just won't be populated from the url yet.
 	(window as any).vueRoot = new Vue({

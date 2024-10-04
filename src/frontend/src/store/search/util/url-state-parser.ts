@@ -460,6 +460,21 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 		// So we need to reconstruct the full field name from the query here.
 		const prefix = CorpusModule.get.parallelFieldPrefix();
 		const defaultAlignBy = UIModule.getState().search.shared.alignBy.defaultValue;
+
+		const parallelFieldsMap = CorpusModule.get.parallelAnnotatedFieldsMap();
+
+		// It used to be that sourceField was only the version suffix, but now it's the full field name
+		// So we need to check if the source field is a valid parallel field name, and if not, try to find the correct one
+		// For interop with legacy urls (which shouldn't be in production, but might be floating around in test docs).
+		let sourceFromUrl = this.getString('field', null, v => v ? v : null);
+		if (sourceFromUrl && !parallelFieldsMap[sourceFromUrl]) {
+			sourceFromUrl = getParallelFieldName(prefix, sourceFromUrl);
+			if (!parallelFieldsMap[sourceFromUrl]) {
+				console.log(`Invalid parallel source field name in url (${this.getString('field')}), ignoring`);
+				sourceFromUrl = null;
+			}
+		}
+
 		const result = {
 			source: this.getString('field', CorpusModule.get.parallelAnnotatedFields()[0]?.id),
 			targets: this._parsedCql ? this._parsedCql.slice(1).map(result => result.targetVersion ? getParallelFieldName(prefix, result.targetVersion) : '') : [],

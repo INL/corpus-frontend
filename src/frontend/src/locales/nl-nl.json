@@ -334,14 +334,5 @@
 		"clickGroup": "Click a <code>group</code> to show or hide the <code>hits</code> within that group.",
 		"clickGoBack": "Click here to go back to the normal <code>hits</code> view to see more detailed information for the hits in this group.<br>A small indicator will appear to let you know that you're looking at hits from a specific group only.",
 		"documentInfo": "Information about a <code>document</code>.<br>Click the document's title or the <code>view document info</code> button to open this document in a new window.<br>This functionality is only available when the corpus has not disabled the viewing of documents.<br>"
-	},
-
-	"index": {
-		"annotations": {
-			"word_description": "Een woord in de tekst."
-		},
-		"metadata": {
-			"bookId_description": "Het ID van het boek."
-		}
 	}
 }

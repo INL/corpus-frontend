@@ -582,7 +582,6 @@ export function getMetadataSubset<T extends {id: string, defaultDisplayName?: st
 		const r: AppTypes.Option[] = [];
 		const labelI18nKey = operation === 'Sort' ? 'results.table.sortBy' : 'results.table.groupBy';
 		r.push({
-			// TODO use display names/string from i18n bundle here to format this message.
 			value: operation === 'Sort' ? `field:${value}` : value, // groupby prepends field: on its own
 			label: i18n.$t(labelI18nKey, {field: `${displayNameHtml} ${displayIdHtml} ${displaySuffixHtml}`}).toString(),
 		});
@@ -645,35 +644,35 @@ export function getAnnotationSubset(
 			// So just use the first annotated field we come across.
 			label: i18n.$tAnnotGroupName({id: group.id, annotatedFieldId: findAnnotatedFieldId(group.id), entries: [], isRemainderGroup: false}),
 		}));
+	} else {
+		// Generate options for sorting by annotation.
+		// I.e. 6 options per annotation. 3 for each position: before, hit, after
+		// and 2 per postion: ascending and descending.
+		return [
+			['hit:', 'Hit', ''],
+			[corpusTextDirection === 'rtl' ? 'right:' : 'left:', 'Before hit', 'before'],
+			[corpusTextDirection === 'rtl' ? 'left:' : 'right:', 'After hit', 'after']
+		]
+		.map<AppTypes.OptGroup&{entries: AppTypes.NormalizedAnnotation[]}>(([prefix, groupname, suffix]) =>({
+			label: groupname,
+			entries: subset[0].entries,
+			options: ids.flatMap<AppTypes.Option>(id => {
+				// in debug mode - show IDs
+				const displayIdHtml = debug ? `<small><strong>[id: ${id}]</strong></small>` : '';
+				const displayNameHtml = i18n.$tAnnotDisplayName(annotations[id]);
+				const displaySuffixHtml = showGroupLabels && suffix ? `<small class="text-muted">${suffix}</small>` : '';
+
+				return [{
+					label: i18n.$t('results.table.sortBy', {field: `${displayNameHtml} ${displayIdHtml} ${displaySuffixHtml}`}).toString(),
+					value: `${prefix}${id}`
+				}, {
+					label: i18n.$t('results.table.sortByDescending', {field: `${displayNameHtml} ${displayIdHtml} ${displaySuffixHtml}`}).toString(),
+					value: `-${prefix}${id}`
+				}]
+			})
+		}));
 	}
 
-	// TODO i18n these labels.
-	// Generate options for sorting by annotation.
-	// I.e. 6 options per annotation. 3 for each position: before, hit, after
-	// and 2 per postion: ascending and descending.
-	return [
-		['hit:', 'Hit', ''],
-		[corpusTextDirection === 'rtl' ? 'right:' : 'left:', 'Before hit', 'before'],
-		[corpusTextDirection === 'rtl' ? 'left:' : 'right:', 'After hit', 'after']
-	]
-	.map<AppTypes.OptGroup&{entries: AppTypes.NormalizedAnnotation[]}>(([prefix, groupname, suffix]) =>({
-		label: groupname,
-		entries: subset[0].entries,
-		options: ids.flatMap<AppTypes.Option>(id => {
-			// in debug mode - show IDs
-			const displayIdHtml = debug ? `<small><strong>[id: ${id}]</strong></small>` : '';
-			const displayNameHtml = i18n.$tAnnotDisplayName(annotations[id]);
-			const displaySuffixHtml = showGroupLabels && suffix ? `<small class="text-muted">${suffix}</small>` : '';
-
-			return [{
-				label: `${operation} by ${displayNameHtml} ${displayIdHtml} ${displaySuffixHtml}`,
-				value: `${prefix}${id}`
-			}, {
-				label: `${operation} by ${displayNameHtml} ${displayIdHtml} (descending) ${displaySuffixHtml}`,
-				value: `-${prefix}${id}`
-			}]
-		})
-	}));
 }
 
 /**

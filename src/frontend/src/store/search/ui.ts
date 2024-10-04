@@ -1232,11 +1232,6 @@ const corpusCustomizations = {
 				return true;
 			},
 
-			/** Customize display name for a within element (return null for default behaviour) */
-			displayName(element: Option): string|null {
-				return null;
-			},
-
 			/** Which, if any, attribute filter fields should be displayed for this element? */
 			attributes(element: Option): string[]|Option[] {
 				return [];

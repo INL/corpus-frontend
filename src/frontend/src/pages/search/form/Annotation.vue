@@ -88,7 +88,9 @@
 				</label>
 			</div>
 		</div>
-		<small v-if="!bare && description" class="text-muted"><em>{{ description }}</em></small>
+		<div v-if="!bare && description" :class="bare ? '' : 'col-xs-12 col-md-push-3 col-md-9'">
+			<small class="text-muted"><em>{{ description }}</em></small>
+		</div>
 	</div>
 
 </template>

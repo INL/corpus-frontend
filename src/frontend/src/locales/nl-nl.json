@@ -15,7 +15,44 @@
 		},
 		"advanced": {
 			"heading": "Geavanceerd",
-			"copyAdvancedQuery": "Kopiëren naar CQL-editor"
+			"copyAdvancedQuery": "Kopiëren naar CQL-editor",
+
+
+			"queryBuilder": {
+				"$comment": "we use underscores here because mustachejs keys cannot contain dots",
+
+				"createTokenButton_label": "Voeg een woord toe",
+
+				"modalEditor_title": "Bewerken",
+				"modalEditor_clear": "Wissen",
+				"modalEditor_cancel": "Annuleren",
+				"modalEditor_save": "Wijzigingen opslaan",
+
+				"withinSelect_label": "Binnen:",
+
+				"token_head_handle_title": "Sleep hier om dit woord te verplaatsen",
+				"token_head_deleteButton_title": "Verwijder woord",
+
+				"body_tab_header_search": "Zoeken",
+				"body_tab_header_properties": "Context",
+
+				"body_tab_properties_optional": "Optioneel",
+				"body_tab_properties_beginOfSentence": "Begin van zin",
+				"body_tab_properties_endOfSentence": "Einde van zin",
+
+				"body_tab_properties_repeats_label": "herhalingen",
+				"body_tab_properties_repeats_to": "tot",
+				"body_tab_properties_repeats_times": "keer",
+
+				"attribute_caseAndDiacriticsSensitive": "Hoofdletter-\u00a0en\u00a0diakrietgevoelig",
+				"attribute_delete_attribute_button_title": "Verwijder dit attribuut",
+
+				"attribute_file_upload_button_title": "Upload een lijst met waarden",
+				"attribute_file_upload_edit_button_title": "Bewerk uw geüploade waarden",
+				"attribute_file_upload_clear_button_title": "Geüploade waarden wissen",
+
+				"attribute_create_button_title": "Voeg een attribuut toe"
+			}
 		},
 		"concept": {
 			"heading": "Concepten",
@@ -38,8 +75,8 @@
 		},
 		"parallel": {
 			"alignBy": "Aligneer op",
-			"inSourceVersion": "in bronversie",
-			"andCompareWithTargetVersions": "en vergelijk met doelversie(s)",
+			"inSourceVersion": "In bronversie",
+			"andCompareWithTargetVersions": "En vergelijk met doelversie(s)",
 			"queryForSourceVersion": "Bronversie",
 			"queryForTargetVersion": "Doelversie",
 			"chooseTargetVersion": "Kies een doelversie",
@@ -166,7 +203,7 @@
 
 			"caseSensitive": "Hoofdlettergevoelig",
 			"chooseWordPositions": "Kies hier de <strong>specifieke woorden</strong> om op te groeperen, in het voorbeeld hieronder ziet u welke woorden zijn geselecteerd.",
-			"selectDocumentMetadata": "Select the document metadata to group on.",
+			"selectDocumentMetadata": "Kies de documentwaarde om op te groeperen.",
 			"clickButtonsToStart": "Hier kunt u een groepering toepassen op de resultaten. Gebruik de knoppen links om een groepeercriterium te maken.",
 			"metadata": "Metadata",
 			"annotation": "Annotatie",
@@ -183,11 +220,12 @@
 			"hideHits": "Verberg Hits",
 			"document": "Document",
 			"hits": "Hits",
-			"hit": "Hit",
 			"columnLabelBeforeHit": "Voor Hit",
 			"columnLabelHit": "Hit",
 			"columnLabelAfterHit": "Na Hit",
 			"sortBy": "Sorteer op {field}",
+			"sortByDescending": "Sorteer op {field} aflopend",
+			"groupBy": "Groeperen op {field}",
 			"sortByDocument": "Sorteer op documenttitel",
 			"sortByHits": "Sorteer op aantal hits",
 			"moreHiddenHits": "meer verborgen hits",
@@ -296,5 +334,14 @@
 		"clickGroup": "Click a <code>group</code> to show or hide the <code>hits</code> within that group.",
 		"clickGoBack": "Click here to go back to the normal <code>hits</code> view to see more detailed information for the hits in this group.<br>A small indicator will appear to let you know that you're looking at hits from a specific group only.",
 		"documentInfo": "Information about a <code>document</code>.<br>Click the document's title or the <code>view document info</code> button to open this document in a new window.<br>This functionality is only available when the corpus has not disabled the viewing of documents.<br>"
+	},
+
+	"index": {
+		"annotations": {
+			"word_description": "Een woord in de tekst."
+		},
+		"metadata": {
+			"bookId_description": "Het ID van het boek."
+		}
 	}
 }

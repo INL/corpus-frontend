@@ -29,7 +29,6 @@ import {i18n} from '@/utils/i18n';
 import * as loginSystem from '@/utils/loginsystem';
 
 import '@/global.scss';
-import { initQueryBuilders } from '@/initQueryBuilders';
 import { debugLogCat } from '@/utils/debug';
 
 // --------------
@@ -135,7 +134,6 @@ $(document).ready(async () => {
 			RootStore.actions.replace(stateFromUrl);
 			// Don't do this before the url is parsed, as it controls the page url (among other things derived from the state).
 			connectStreamsToVuex();
-			initQueryBuilders(this);
 		},
 	}).$mount(document.querySelector('#vue-root')!);
 });

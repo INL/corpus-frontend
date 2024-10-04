@@ -13,7 +13,7 @@
 					<label class="col-xs-4 col-md-2" for="corpora-group-by">{{$t('explore.corpora.groupBy')}}</label>
 					<div class="col-xs-8">
 						<SelectPicker
-							placeholder="Group by..."
+							:placeholder="`${$t('explore.corpora.groupBy')}...`"
 							data-id="corpora-group-by"
 							data-width="100%"
 							style="max-width: 400px;"

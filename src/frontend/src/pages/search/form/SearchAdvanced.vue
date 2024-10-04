@@ -61,6 +61,7 @@ export default ParallelFields.extend({
 		AlignBy,
 	},
 	data: () => ({
+		queryBuilderLoading: false,
 	}),
 	computed: {
 		// The query (or source query, for parallel corpora)
@@ -77,6 +78,15 @@ export default ParallelFields.extend({
 			},
 			set: PatternStore.actions.advanced.targetQueries,
 		},
+
+		refreshQueryBuilders(): any {
+			return {
+				targetValue: this.pTargetValue,
+				// little stupid, but we need a way to know when the locale has changed.
+				// i18n.locale is not reactive?
+				localeChange: this.$i18n.locale
+			}
+		}
 	},
 	methods: {
 		copyAdvancedQuery() {
@@ -92,11 +102,19 @@ export default ParallelFields.extend({
 		},
 	},
 	watch: {
-		pTargetValue() {
-			// Timeout necessary to wait for the divs to appear in the template
-			setTimeout(() => initQueryBuilders(this), 100);
+		refreshQueryBuilders: {
+			immediate: true,
+			handler(v) {
+				if (this.queryBuilderLoading) return;
+				this.queryBuilderLoading = true;
+				setTimeout(() => {
+					initQueryBuilders(this).then(() => {
+						this.queryBuilderLoading = false;
+					});
+				}, 100);
+			},
 		}
-	}
+	},
 });
 </script>
 

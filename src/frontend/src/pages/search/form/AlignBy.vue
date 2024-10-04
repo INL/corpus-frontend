@@ -27,7 +27,10 @@ export default Vue.extend({
 	}),
 	computed: {
 		alignByOptions(): Option[] {
-			return UIStore.getState().search.shared.alignBy.elements;
+			return UIStore.getState().search.shared.alignBy.elements?.map(e => ({
+				...e,
+				label: this.$tAlignByDisplayName(e),
+			}));
 		},
 		alignBy: {
 			get(): string { return PatternStore.get.parallelAnnotatedFields().alignBy || UIStore.getState().search.shared.alignBy.defaultValue; },

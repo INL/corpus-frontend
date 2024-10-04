@@ -166,6 +166,12 @@ const i18nExtensionFunctions = {
 		if (!originalName) return undefined as T;
 		const key = `index.metadataGroups.${originalName}`;
 		return this.$td(key, originalName);
+	},
+	$tWithinDisplayName(this: Vue, within: Option): string {
+		return this.$td(`index.within.${within.value}`, within.label || within.value);
+	},
+	$tAlignByDisplayName(this: Vue, alignBy: Option): string {
+		return this.$td(`index.alignBy.${alignBy.value}`, alignBy.label || alignBy.value);
 	}
 }
 

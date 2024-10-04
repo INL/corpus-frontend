@@ -580,15 +580,16 @@ export function getMetadataSubset<T extends {id: string, defaultDisplayName?: st
 		const displayNameHtml = displayName || value;
 		const displaySuffixHtml = showGroupLabels && groupId ? `<small class="text-muted">${groupId}</small>` : '';
 		const r: AppTypes.Option[] = [];
+		const labelI18nKey = operation === 'Sort' ? 'results.table.sortBy' : 'results.table.groupBy';
 		r.push({
 			// TODO use display names/string from i18n bundle here to format this message.
 			value: operation === 'Sort' ? `field:${value}` : value, // groupby prepends field: on its own
-			label: `${operation} by ${displayNameHtml} ${displayIdHtml} ${displaySuffixHtml}`,
+			label: i18n.$t(labelI18nKey, {field: `${displayNameHtml} ${displayIdHtml} ${displaySuffixHtml}`}).toString(),
 		});
 		if (operation === 'Sort') {
 			r.push({
 				value: `-field:${value}`,
-				label: `${operation} by ${displayNameHtml} ${displayIdHtml} (descending) ${displaySuffixHtml}`,
+				label: i18n.$t('results.table.sortByDescending', {field: `${displayNameHtml} ${displayIdHtml} ${displaySuffixHtml}`}).toString(),
 			});
 		}
 		return r;

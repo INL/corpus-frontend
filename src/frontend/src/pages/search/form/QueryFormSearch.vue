@@ -353,9 +353,6 @@ export default ParallelFields.extend({
 				RootStore.store.watch(state => value, (cur, prev) => update(cur, prev, div), {deep: true});
 			}
 		},
-		withinOptionDisplayName(option: Option): string {
-			return corpusCustomizations.search.within.displayName(option) || option.label || option.value || 'document';
-		},
 		withinAttributes(): Option[] {
 			const within = this.within;
 			if (!within) return [];

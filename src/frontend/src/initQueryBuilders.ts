@@ -43,7 +43,7 @@ export async function initQueryBuilders(i18n: Vue): Promise<QueryBuilder[]> {
 			.filter(UIStore.corpusCustomizations.search.within.include)
 			.map(opt => ({
 				...opt,
-				label: UIStore.corpusCustomizations.search.within.displayName(opt) || opt.label || opt.value || 'document',
+				label: i18n.$tWithinDisplayName(opt) || 'document',
 			}));
 
 	// Initialize configuration
@@ -57,8 +57,11 @@ export async function initQueryBuilders(i18n: Vue): Promise<QueryBuilder[]> {
 	return queryBuilders;
 
 	async function initQueryBuilder(el: HTMLElement, i: number): Promise<QueryBuilder> {
-		if (el.classList.contains('bl-querybuilder-root'))
-			return $(el).data('builder'); // already initialized
+		if (el.classList.contains('bl-querybuilder-root')) {
+			const existing = $(el).data('builder') as QueryBuilder;
+			existing.refresh();
+			return existing;
+		}
 
 		const instance = new QueryBuilder($(el), {
 			queryBuilder: {

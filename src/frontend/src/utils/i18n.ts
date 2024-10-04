@@ -120,7 +120,7 @@ function textOrDefault<T extends string|null|undefined>(i18n: VueI18n, key: stri
 // (filters are technically not directly equal to metadata objects, but for translation purposes we use the same keys)
 const i18nExtensionFunctions = {
 	$td<T extends string|null|undefined>(this: Vue, key: string, defaultText: T): T|string {
-		return this.$te(key) ? this.$t(key).toString() : defaultText;
+		return this.$te(key) ? this.$t(key).toString() : (this.$i18n.locale !== defaultLocale && this.$te(key, defaultLocale)) ? this.$t(key, defaultLocale).toString() : defaultText;
 	},
 	/** Get the localized display name for an annotated field or the default value.
 	 * Note that the field ID should be *including* the parallel suffix. So just e.g. "contents__en" for a parallel field. */

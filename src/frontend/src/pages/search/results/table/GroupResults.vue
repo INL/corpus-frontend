@@ -26,7 +26,6 @@
 			:data="rows"
 			:maxima="maxima"
 
-			:annotatedField="results.summary.pattern?.fieldName || ''"
 			:mainAnnotation="mainAnnotation"
 			:otherAnnotations="otherAnnotations"
 			:metadata="metadata"
@@ -183,9 +182,9 @@ export default Vue.extend({
 
 				hitGroups.forEach(g => {
 					stage1.push({
-						id: g.identity || ResultsStore.GROUP_NAME_NO_VALUE,
+						id: g.identity || this.$t('results.groupBy.groupNameWithoutValue').toString(),
 						size: g.size,
-						displayname: decodePropertyValue(g) || ResultsStore.GROUP_NAME_NO_VALUE,
+						displayname: decodePropertyValue(g) || this.$t('results.groupBy.groupNameWithoutValue').toString(),
 
 						'r.d': summary.numberOfDocs,
 						'r.t': summary.tokensInMatchingDocuments!, // FIXME augment request to make this available
@@ -220,7 +219,7 @@ export default Vue.extend({
 					stage1.push({
 						id: g.identity,
 						size: g.size,
-						displayname: decodePropertyValue(g) || ResultsStore.GROUP_NAME_NO_VALUE,
+						displayname: decodePropertyValue(g) || this.$t('results.groupBy.groupNameWithoutValue').toString(),
 
 						'r.d': summary.numberOfDocs,
 						'r.t': summary.tokensInMatchingDocuments!, // FIXME augment request to make this available

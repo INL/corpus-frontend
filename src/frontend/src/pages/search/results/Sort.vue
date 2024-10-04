@@ -81,6 +81,7 @@ export default Vue.extend({
 					this.corpus.annotationGroups,
 					this.corpus.annotatedFields[this.corpus.mainAnnotatedField].annotations,
 					'Sort',
+					this,
 					this.corpus.textDirection,
 					debug.debug
 				));
@@ -104,6 +105,7 @@ export default Vue.extend({
 					this.corpus.metadataFieldGroups,
 					this.corpus.metadataFields,
 					'Sort',
+					this,
 					debug.debug
 				));
 			}

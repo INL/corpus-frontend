@@ -71,8 +71,8 @@ function flatten(part: BLHitSnippetPart|undefined, annotationId: string, lastPun
 	const r: HitToken[] = [];
 	const length = part[annotationId].length;
 	for (let i = 0; i < part[annotationId].length; i++) {
-		const word = part[annotationId][i];
-		const punct =  (i === length - 1 ? lastPunctuation : part.punct[i+1]) || ''; // punctuation is the whitespace before the current word. There is always one more punctuation than there are words in a document (fencepost problem).
+		// punctuation is the whitespace before the current word. There is always one more punctuation than there are words in a document (fencepost problem).
+		const punct =  (i === length - 1 ? lastPunctuation : part.punct[i+1]) || '';
 		r.push({punct, annotations: {}});
 	}
 	for (const annotationId in part) {
@@ -134,7 +134,7 @@ function mapCaptureSpan(key: string, span: BLMatchInfoSpan): HighlightSection {
  */
 function getHighlightSections(matchInfos: NonNullable<BLHit['matchInfos']>): HighlightSection[] {
 	let interestingCaptures = Object.entries(matchInfos).flatMap<HighlightSection>(([key, info]) => {
-		// This is when we ask BlackLab to explicitly return all relations in the hit,
+		// captured_rels happens when we ask BlackLab to explicitly return all relations in the hit,
 		// So ignore that, as we'd be highlighting every word in the sentence if we did.
 		// (this happens when requesting context to display in the UI, for example.)
 		// (NOTE: "captured_rels" is the default capture name for rcap() operations,
@@ -161,7 +161,7 @@ function getHighlightSections(matchInfos: NonNullable<BLHit['matchInfos']>): Hig
 	const result: HighlightSection[] = interestingCaptures
 		.map(mi => {
 			const style = corpusCustomizations.results.matchInfoHighlightStyle(mi);
-			if (style === 'none' || style === null && hasExplicitCaptures && mi.isRelation) {
+			if (style === 'none' || (style === null && hasExplicitCaptures && mi.isRelation)) {
 				// Exclude based on custom function result
 				// or default behaviour ("exclude relations if there's explicit captures").
 				//
@@ -177,7 +177,7 @@ function getHighlightSections(matchInfos: NonNullable<BLHit['matchInfos']>): Hig
 			return !mi.showHighlight ? mi : { ...mi, showHighlight: false };
 		})
 		.filter(mi => mi !== null)
-		.map(mi => mi as HighlightSection); // appease TS compiler
+
 	return result;
 }
 

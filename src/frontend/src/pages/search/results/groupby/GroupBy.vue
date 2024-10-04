@@ -212,8 +212,6 @@ import jsonStableStringify from 'json-stable-stringify';
 import SelectPicker, { Options } from '@/components/SelectPicker.vue';
 import { getHighlightColors, snippetParts } from '@/utils/hit-highlighting';
 import { CaptureAndRelation, HitToken, Option, TokenHighlight } from '@/types/apptypes';
-import { getParallelFieldName } from '@/utils/blacklabutils';
-import { annotatedFieldDisplayName } from '@/utils/i18n';
 
 export default Vue.extend({
 	components: {
@@ -270,6 +268,7 @@ export default Vue.extend({
 				CorpusStore.get.annotationGroups(),
 				CorpusStore.get.allAnnotationsMap(),
 				'Search',
+				this,
 				CorpusStore.get.textDirection(),
 				debug.debug, // is debug enabled - i.e. show debug labels in dropdown
 				UIStore.getState().dropdowns.groupBy.annotationGroupLabelsVisible
@@ -281,6 +280,7 @@ export default Vue.extend({
 				CorpusStore.get.metadataGroups(),
 				CorpusStore.get.allMetadataFieldsMap(),
 				'Group',
+				this,
 				debug.debug, // is debug enabled - i.e. show debug labels in dropdown
 				UIStore.getState().dropdowns.groupBy.metadataGroupLabelsVisible
 			)
@@ -562,27 +562,20 @@ export default Vue.extend({
 		isParallel(): boolean { return CorpusStore.get.isParallelCorpus() ?? false; },
 
 		parallelVersionOptions(): Option[] {
+			// First gather all parallel fields involved in the current search.
+			/** The complete names of the (parallel) fields involved in the query names, e.g. ["contents__en", "contents__nl"] */
 			const fieldNames: string[] = [];
 			fieldNames.push(this.mainSearchField);
 			if (this.hits?.summary.pattern?.otherFields)
 				fieldNames.push(...this.hits.summary.pattern.otherFields);
 
-			const pvs = CorpusStore.get.parallelVersions();
-			return fieldNames.map(value => {
-				if (value === '') {
-					// (should never happen)
-					return {
-						label: 'main search field',
-						value: '',
-					};
-				}
-				const version = pvs.find(pv => getParallelFieldName(pv.prefix, pv.name) === value);
-				const label = version ? annotatedFieldDisplayName(this.$i18n, value, version.displayName || value) : value;
-				return {
-					label,
-					value
-				};
-			});
+			// Now we have the full field names, map them to their localized display names.
+			// For this we need the underlying field objects from the corpus.
+			const fields = CorpusStore.get.allAnnotatedFieldsMap();
+			return fieldNames.map(name => fields[name]).map<Option>(field => ({
+				value: field.id,
+				label: this.$tAnnotatedFieldDisplayName(field)
+			}))
 		}
 	},
 	methods: {
@@ -614,7 +607,7 @@ export default Vue.extend({
 				return `${g.annotation}${wordCount ? ` (${wordCount})` : ''} ${position + ' hit'}`;
 			} else if (g.type === 'metadata') {
 				if (!g.field) return this.$t('results.groupBy.specify').toString();
-				return `document ${CorpusStore.get.allMetadataFieldsMap()[g.field].displayName}`;
+				return `document ${this.$tMetaDisplayName(CorpusStore.get.allMetadataFieldsMap()[g.field])}`;
 			} else {
 				return g.value;
 			}
@@ -819,6 +812,7 @@ export default Vue.extend({
 
 	.word > .main {
 		white-space: pre;
+		white-space: nowrap;
 	}
 
 	.word > .annotation {
@@ -828,6 +822,7 @@ export default Vue.extend({
 		position: absolute;
 		left: 0.5em;
 		bottom: 0;
+		white-space: nowrap;
 	}
 
 	.separator {

@@ -19,7 +19,7 @@
 						<DepTree
 							:data="data"
 							:fullSentence="sentenceShown ? sentence : undefined"
-							:mainAnnotation="mainAnnotation.id"
+							:mainAnnotation="mainAnnotation"
 							:otherAnnotations="depTreeAnnotations"
 						/>
 					</template>
@@ -46,14 +46,14 @@
 						</template>
 
 						<HitContextComponent tag="span" :dir="dir" :data="context" :html="html" :annotation="mainAnnotation.id" :before="dir === 'ltr'" :after="dir === 'rtl'"
-							:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+							:hoverMatchInfos="hoverMatchInfos"
 							@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
 						<HitContextComponent tag="strong" :dir="dir" :data="context" :html="html" :annotation="mainAnnotation.id" bold
-							:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+							:hoverMatchInfos="hoverMatchInfos"
 							@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
-						<a v-if="href" :href="href" title="Go to hit in document" target="_blank"><sup class="fa fa-link" style="margin-left: -5px;"></sup></a>
+						<a v-if="data.href" :href="data.href" title="Go to hit in document" target="_blank"><sup class="fa fa-link" style="margin-left: -5px;"></sup></a>
 						<HitContextComponent tag="span" :dir="dir" :data="context" :html="html" :annotation="mainAnnotation.id" :after="dir === 'ltr'"  :before="dir === 'rtl'"
-							:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+							:hoverMatchInfos="hoverMatchInfos"
 							@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
 					</p>
 					<table v-if="detailedAnnotations?.length" class="concordance-details-table">
@@ -65,9 +65,9 @@
 						</thead>
 						<tbody>
 							<tr v-for="(annot, index) in detailedAnnotations" :key="annot.id">
-								<th>{{annot.displayName}}</th>
+								<th>{{$tAnnotDisplayName(annot)}}</th>
 								<HitContextComponent v-for="(token, ti) in context.match" tag="td" :data="{match: [token]}" :html="html" :dir="dir" :key="annot.id + ti" :punct="false" :highlight="false" :annotation="annot.id"
-								:isParallel="isParallel" :hoverMatchInfos="hoverMatchInfos"
+									:hoverMatchInfos="hoverMatchInfos"
 								@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
 							</tr>
 						</tbody>
@@ -89,7 +89,6 @@ import * as BLTypes from '@/types/blacklabtypes';
 
 import { HitContext, NormalizedAnnotation, TokenHighlight } from '@/types/apptypes';
 import HitContextComponent from '@/pages/search/results/table/HitContext.vue';
-import { getDocumentUrl } from '@/utils';
 import { snippetParts } from '@/utils/hit-highlighting';
 import { HitRowData } from '@/pages/search/results/table/HitRow.vue';
 import DepTree from '@/pages/search/results/table/DepTree.vue';
@@ -99,7 +98,6 @@ import * as UIStore from '@/store/search/ui';
 import * as CorpusStore from '@/store/search/corpus';
 import * as Api from '@/api';
 import { debugLog } from '@/utils/debug';
-import { isParallelField } from '@/utils/blacklabutils';
 
 /** TODO disconnect from the store? */
 export default Vue.extend({
@@ -110,14 +108,11 @@ export default Vue.extend({
 	},
 	props: {
 		data: Object as () => HitRowData,
-		query: Object as () => BLTypes.BLSearchParameters|undefined,
 
-		annotatedField: {
-			type: String,
-			default: '',
-		},
 		mainAnnotation: Object as () => NormalizedAnnotation,
 		detailedAnnotations: Array as () => NormalizedAnnotation[]|undefined,
+		/** What properties/annotations to show for tokens in the deptree, e.g. lemma, pos, etc. */
+		depTreeAnnotations: Object as () => Record<'lemma'|'upos'|'xpos'|'feats', NormalizedAnnotation|null>,
 
 		html: Boolean,
 		colspan: Number,
@@ -131,7 +126,6 @@ export default Vue.extend({
 			default: () => [],
 		},
 		isParallel: { default: false },
-
 	},
 	data: () => ({
 		loading: false,
@@ -146,32 +140,12 @@ export default Vue.extend({
 		sentence: null as null|BLTypes.BLHit,
 	}),
 	computed: {
-		href(): string|undefined {
-			return this.getDocUrlForHit(this.data, this.annotatedField, this.query);
-		},
 		hasRelations: CorpusStore.get.hasRelations,
 		/** Exact surrounding sentence can only be loaded if we the start location of the current hit, and when the boundery element has been set. */
 		sentenceAvailable(): boolean { return this.hasRelations && !!UIStore.getState().search.shared.within.sentenceElement && 'start' in this.data.hit; },
-		/** What properties/annotations to show for tokens in the deptree, e.g. lemma, pos, etc. */
-		depTreeAnnotations(): Record<'lemma'|'upos'|'xpos'|'feats', string|null> { return UIStore.getState().results.shared.dependencies; }
+
 	},
 	methods: {
-		getDocUrlForHit(h: HitRowData, annotatedField: string, query: BLTypes.BLSearchParameters|undefined): string|undefined {
-			// we don't always have full-fledged hit objects here.
-			// If we're rendering the hits in a document search response
-			// they won't contain the start/end/parent document.
-			// in that case, don't bother with the url.
-			if (!('start' in h.hit)) return;
-			return getDocumentUrl(
-				h.doc.docPid,
-				annotatedField,
-				query?.field,
-				query?.patt,
-				query?.pattgapdata,
-				h.hit.start,
-				PAGE_SIZE,
-				h.hit.start);
-		},
 		/**
 		 * Separate from the snippet/context, as that can run over sentence boundaries, but this doesn't.
 		 * We use it to render the dependency tree for the entire sentence.
@@ -190,7 +164,7 @@ export default Vue.extend({
 			Api.blacklab.getSnippet(
 				INDEX_ID,
 				this.data.doc.docPid,
-				this.annotatedField,
+				this.data.annotatedField?.id,
 				this.data.hit.start,
 				this.data.hit.end,
 				context
@@ -214,7 +188,7 @@ export default Vue.extend({
 			const concordanceSize = UIStore.getState().results.shared.concordanceSize;
 
 			Api.blacklab
-			.getSnippet(INDEX_ID, this.data.doc.docPid, this.annotatedField, this.data.hit.start, this.data.hit.end, concordanceSize)
+			.getSnippet(INDEX_ID, this.data.doc.docPid, this.data.annotatedField?.id, this.data.hit.start, this.data.hit.end, concordanceSize)
 			.then(s => {
 				transformSnippets?.(s);
 
@@ -239,7 +213,7 @@ export default Vue.extend({
 					docId: this.data.doc.docPid,
 					corpus: INDEX_ID,
 					document: this.data.doc.docInfo,
-					documentUrl: this.href || '',
+					documentUrl: this.data.href || '',
 					wordAnnotationId: this.mainAnnotation.id,
 					dir: this.dir,
 					citation: s

@@ -20,9 +20,7 @@ import { mapReduce, unescapeRegex } from '@/utils';
 import { getFilterString, getFilterSummary, getValueFunctions, valueFunctions } from '@/components/filters/filterValueFunctions';
 
 export type FilterState = {
-	// lucene: string|null;
 	value: any|null;
-	// summary: string|null;
 };
 
 export type FullFilterState = FilterDefinition<any, any>&FilterState;
@@ -214,8 +212,8 @@ const init = () => {
 			actions.registerFilter({
 				filter: {
 					componentName,
-					description: f.description,
-					displayName: f.displayName,
+					defaultDescription: f.defaultDescription,
+					defaultDisplayName: f.defaultDisplayName,
 					groupId: g.id,
 					id: f.id,
 					metadata,

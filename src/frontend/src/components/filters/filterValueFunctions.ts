@@ -1,7 +1,6 @@
 import { unescapeLucene, escapeLucene, splitIntoTerms, mapReduce, cast, escapeRegex } from '@/utils';
 import { FilterValue, Option } from '@/types/apptypes';
 import { ASTNode, ASTRange } from 'lucene-query-parser';
-// @ts-ignore (framework limitation) typechecking does not work for imports from .vue files
 import { modes } from './FilterRangeMultipleFields.vue';
 import { FullFilterState } from '@/store/search/form/filters';
 import * as PatternStore from '@/store/search/form/patterns';
@@ -201,7 +200,9 @@ export const DateUtils = {
 	},
 }
 
-
+/**
+ * Separate from the components so we can easily call these functions from other places.
+ */
 export const valueFunctions: Record<string, FilterValueFunctions<any, any>> = {
 	'filter-autocomplete': cast<FilterValueFunctions<never, string>>({
 		decodeInitialState(id, filterMetadata, filterValues) {
@@ -536,5 +537,5 @@ export const getFilterSummary = (filters: FullFilterState[]): string|undefined =
 	.filter( f => !f.isSpanFilter)
 	.map(f => ({f, summary: getValueFunctions(f).luceneQuerySummary(f.id, f.metadata, f.value)}))
 	.filter(f => !!f.summary)
-	.map(f => `${f.f.displayName}: ${f.summary}`)
+	.map(f => `${f.f.defaultDisplayName}: ${f.summary}`)
 	.join(', ') || undefined;

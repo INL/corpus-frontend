@@ -221,7 +221,7 @@ export interface BLAnnotation {
 	valueListComplete?: boolean;
 }
 
-/** A set of annotations that form one data set on a token, usually there is only one of these in an index, called 'content' */
+/** A set of annotations that form one data set on a token, usually there is only one of these in an index, called 'contents' */
 interface BLAnnotatedFieldInternal  {
 	description: string;
 	displayName: string;
@@ -363,9 +363,9 @@ export type BLSearchSummary = {
 	pattern?: {
 		/** The serialization of the query object BlackLab actually executed. */
 		bcql: string;
-		/** The main annotatedField that was searched */
+		/** The main annotatedField that was searched. This is the full name of the field e.g. "contents__en" */
 		fieldName: string;
-		/** Any other annotatedFields involved in the search (in case of parallel corpora) */
+		/** Any other annotatedFields involved in the search (in case of parallel corpora). These are the full names e.g. ["contents__en"] */
 		otherFields?: string[];
 		/** Json representation of the query. Not present when requesting results as xml output. */
 		json?: any;
@@ -569,11 +569,8 @@ export interface BLMatchInfoList {
 
 export type BLMatchInfo = BLMatchInfoSpan|BLMatchInfoRelation|BLMatchInfoTag|BLMatchInfoList;
 
-/** A subset of a BLHit, returned in otherFields hits
- *  (hits in other annotated fields, i.e. in parallel corpora)
- *  (these don't repeat docPid, and can't have otherFields themselves).
- */
-export type BLHitInOtherField = BLHitSnippet&{ // (otherFields hits don't repeat the docPid)
+/** A hit in the BlackLab hits response. */
+export type BLHit = BLHitSnippet&{
 	start: number;
 	end: number;
 	/**
@@ -594,15 +591,14 @@ export type BLHitInOtherField = BLHitSnippet&{ // (otherFields hits don't repeat
 	 *  }
 	 */
 	matchInfos?: Record<string, BLMatchInfo>;
+	docPid: string;
+	/** parallel corpus: aligned hits in other (requested) versions. Keyed by te full id of the annotatedField e.g. "contents__en" */
+	otherFields?: Record<string, Omit<BLHit, 'otherFields'|'docPid'>>; //
 };
 
-/** A hit in the BlackLab hits response.
- *  (based on BLHitInOtherField which is in turn based on BLHitSnippet)
- */
-export type BLHit = BLHitInOtherField&{
-	docPid: string;
-	otherFields?: Record<string, BLHitInOtherField>; // parallel corpus: aligned hits in other (requested) versions
-};
+export function hitHasParallelinfo(h: BLHit|BLHitSnippet): h is Required<BLHit> {
+	return !!(h as BLHit).matchInfos && !!(h as BLHit).otherFields;
+}
 
 /** Contains occurance counts of terms in the index */
 export interface BLTermOccurances {

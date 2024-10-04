@@ -13,7 +13,7 @@
 					<label class="col-xs-4 col-md-2" for="corpora-group-by">{{$t('explore.corpora.groupBy')}}</label>
 					<div class="col-xs-8">
 						<SelectPicker
-							placeholder="Group by..."
+							:placeholder="`${$t('explore.corpora.groupBy')}...`"
 							data-id="corpora-group-by"
 							data-width="100%"
 							style="max-width: 400px;"
@@ -100,8 +100,8 @@
 							data-class="btn btn-default"
 							data-menu-width="grow"
 
-							:searchable="token.annotation.values.length > 12"
-							:placeholder="token.annotation.displayName"
+							:searchable="token.annotation.values && token.annotation.values.length > 12"
+							:placeholder="$tAnnotDisplayName(token.annotation)"
 							:data-dir="token.annotation.isMainAnnotation ? mainTokenTextDirection : undefined"
 							:options="token.annotation.values"
 							:disabled="index >= ngramSize"
@@ -123,7 +123,7 @@
 
 							useQuoteAsWordBoundary
 
-							:placeholder="token.annotation.displayName"
+							:placeholder="$tAnnotDisplayName(token.annotation)"
 							:dir="token.annotation.isMainAnnotation ? mainTokenTextDirection : undefined"
 							:disabled="index >= ngramSize"
 
@@ -226,6 +226,7 @@ export default Vue.extend({
 				CorpusStore.get.annotationGroups(),
 				CorpusStore.get.allAnnotationsMap(),
 				'Search',
+				this,
 				CorpusStore.get.textDirection()
 			);
 			return optGroups.length > 1 ? optGroups : optGroups.flatMap(g => g.options as Option[]);
@@ -236,6 +237,7 @@ export default Vue.extend({
 				CorpusStore.get.annotationGroups(),
 				CorpusStore.get.allAnnotationsMap(),
 				'Search', // we don't want the before hit/after hit context options, just do search mode, it'll be fine
+				this,
 				CorpusStore.get.textDirection()
 			);
 			return optGroups.length > 1 ? optGroups : optGroups.flatMap(g => g.options as Option[]);
@@ -252,7 +254,8 @@ export default Vue.extend({
 				UIStore.getState().results.shared.groupMetadataIds,
 				CorpusStore.get.metadataGroups(),
 				CorpusStore.get.allMetadataFieldsMap(),
-				'Group'
+				'Group',
+				this
 			);
 			optGroups.forEach(fix);
 			return optGroups;

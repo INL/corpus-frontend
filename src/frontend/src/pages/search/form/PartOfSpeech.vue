@@ -4,7 +4,7 @@
 			<div class="modal-content">
 				<div class="modal-header">
 					<button type="button" data-dismiss="modal" class="close" title="close">&times;</button>
-					<h3>{{annotationDisplayName || annotationId}}</h3>
+					<h3>{{$tAnnotDisplayName(annotation)}}</h3>
 				</div>
 				<div v-if="isValidTagset" class="modal-body">
 					<div class="list-group-container">
@@ -25,11 +25,11 @@
 
 						<div v-if="annotationValue" class="category-container">
 							<ul v-for="subId in annotationValue.subAnnotationIds" class="list-group category">
-								<li class="list-group-item active category-name">{{annotationDisplayNames[subId]}} <Debug>({{subId}})</Debug></li>
-								<!-- debugging -->
-								<!-- :style="{
-									backgroundColor: (!subValue.pos || subValue.pos.includes(annotationValue.value)) ? undefined : 'red'
-								}" -->
+								<li class="list-group-item active category-name">
+									{{$tAnnotDisplayName(allAnnotations[subId])}}
+									<Debug>({{subId}})</Debug>
+								</li>
+
 								<li class="list-group-item category-value" v-for="subValue in tagset.subAnnotations[subId].values" :key="subValue.value" v-if="!subValue.pos || subValue.pos.includes(annotationValue.value)">
 									<label>
 										<input type="checkbox" v-model="selected[`${annotationValue.value}/${subId}/${subValue.value}`]"/>
@@ -69,19 +69,15 @@ import { escapeRegex } from '@/utils';
 
 export default Vue.extend({
 	props: {
-		annotationId: {
-			required: true,
-			type: String,
-		},
-		annotationDisplayName: String,
+		annotation: Object as () => CorpusStore.NormalizedAnnotation,
 	},
 	data: () => ({
 		annotationValue: null as null|Tagset['values'][string],
 		selected: {} as {[key: string]: boolean}
 	}),
 	computed: {
+		allAnnotations: CorpusStore.get.allAnnotationsMap,
 		tagset: TagsetStore.getState,
-		annotationDisplayNames: CorpusStore.get.annotationDisplayNames,
 		isValidTagset(): boolean { return TagsetStore.getState().state === 'loaded'; },
 		errorMessage(): string { return this.isValidTagset ? '' : TagsetStore.getState().message; },
 		query(): string {
@@ -98,7 +94,7 @@ export default Vue.extend({
 
 			const subAnnotStrings = subAnnots.map(({id, values}) => `${id}="${values.join('|')}"`);
 
-			return [`${this.annotationId}="${mainValue}"`].concat(subAnnotStrings).join('&');
+			return [`${this.annotation.id}="${mainValue}"`].concat(subAnnotStrings).join('&');
 		},
 	},
 	methods: {
@@ -126,7 +122,7 @@ export default Vue.extend({
 			this.$emit('submit', {
 				queryString: this.query,
 				value: {
-					[this.annotationId]: mainValue,
+					[this.annotation.id]: mainValue,
 					...subAnnots.reduce((acc, cur) => {
 						acc[cur.id] = cur.values.join('|');
 						return acc;

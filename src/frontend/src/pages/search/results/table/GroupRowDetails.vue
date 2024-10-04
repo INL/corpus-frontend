@@ -18,7 +18,6 @@
 
 				<HitsTable v-if="type === 'hits' && concordances.results.length"
 					:data="concordances.results"
-			        :annotatedField="annotatedField"
 					:mainAnnotation="mainAnnotation"
 					:dir="dir"
 					:html="html"
@@ -39,7 +38,7 @@
 						<template v-else>{{$t('results.table.loadMoreConcordances')}}</template>
 					</button>
 
-					<button type="button" class="close close-concordances" :title="$t('results.table.close')" @click="$emit('close')"><span>&times;</span></button>
+					<button type="button" class="close close-concordances" :title="$t('results.table.close').toString()" @click="$emit('close')"><span>&times;</span></button>
 				</div>
 
 			</div>
@@ -72,14 +71,10 @@ export default Vue.extend({
 	},
 	props: {
 		query: Object as () => BLSearchParameters,
+		/** Are we inside the docResults or hitResults. Not great. */
 		type: String as () => 'hits'|'docs',
 		data: Object as () => GroupRowData,
 
-		/** The field that was searched (for parallel corpora queries, the source field) */
-		annotatedField: {
-			type: String,
-			default: '',
-		},
 		mainAnnotation: Object as () => NormalizedAnnotation,
 		otherAnnotations: Array as () => NormalizedAnnotation[]|undefined,
 		metadata: Array as () => NormalizedMetadataField[]|undefined,
@@ -116,10 +111,23 @@ export default Vue.extend({
 					cancel,
 					request: request.then((r: BLHitResults) => r.hits.map<HitRowData>(h => {
 						const colors = getHighlightColors(r.summary);
+						UIStore.getState().results.shared.transformSnippets?.(h);
 						return {
 							type: 'hit',
+							// Don't bother with parallel results when expanding a group.
+							// When the user wants to see them, they can open the full concordances.
+							annotatedField: undefined,
+							isForeign: false,
 							hit: h,
 							context: snippetParts(h, this.mainAnnotation.id, this.dir, colors),
+							href: getDocumentUrl(
+								h.docPid,
+								this.query.field ?? '',
+								undefined,
+								this.query.patt || undefined,
+								this.query.pattgapdata || undefined,
+								h.start
+							),
 							doc: {
 								docInfo: r.docInfos[h.docPid],
 								docPid: h.docPid,
@@ -138,7 +146,8 @@ export default Vue.extend({
 					request: request.then((r: BLDocResults) => r.docs.map<DocRowData>(doc => ({
 						type: 'doc',
 						doc,
-						href: getDocumentUrl(doc.docPid,
+						href: getDocumentUrl(
+							doc.docPid,
 							this.query.field ?? '',
 							undefined,
 							this.query.patt || undefined,

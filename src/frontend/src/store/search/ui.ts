@@ -52,7 +52,6 @@ type ModuleRootState = {
 		shared: {
 			/**
 			 * Fields available in the filters view. Sorted by global metadata order.
-			 * This does not contain custom filters.
 			 * NOTE THAT THIS MAY CONTAIN IDS THAT ARE NOT A METADATA FIELD.
 			 * The reason for this is custom filters.
 			 * We cannot reasonably validate this, so we only output a warning when you're trying to register those.
@@ -1236,11 +1235,6 @@ const corpusCustomizations = {
 				return true;
 			},
 
-			/** Customize display name for a within element (return null for default behaviour) */
-			displayName(element: Option): string|null {
-				return null;
-			},
-
 			/** Which, if any, attribute filter fields should be displayed for this element? */
 			attributes(element: Option): string[]|Option[] {
 				return [];
@@ -1345,7 +1339,7 @@ const corpusCustomizations = {
 			componentName: `filter-${widget}`,
 			behaviourName, // i.e. generate a "within ..." BCQL query
 			isSpanFilter: true,
-			displayName,
+			defaultDisplayName: displayName,
 			metadata: {
 				name: spanName,
 				attribute: attrName,

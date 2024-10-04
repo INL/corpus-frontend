@@ -25,11 +25,10 @@ import SearchPageComponent from '@/pages/search/SearchPage.vue';
 
 
 import { init as initApi } from '@/api';
-import i18n from '@/utils/i18n';
+import {i18n} from '@/utils/i18n';
 import * as loginSystem from '@/utils/loginsystem';
 
 import '@/global.scss';
-import { initQueryBuilders } from '@/initQueryBuilders';
 import { debugLogCat } from '@/utils/debug';
 
 // --------------
@@ -114,14 +113,13 @@ async function runHook(hookName: keyof (typeof hooks)) {
 	}
 }
 
-
 $(document).ready(async () => {
 	// We can render before the tagset loads, the form just won't be populated from the url yet.
 	(window as any).vueRoot = new Vue({
 		i18n,
 		store: RootStore.store,
 		render: h => h(SearchPageComponent),
-		mounted: async () => {
+		async mounted() {
 			// we do this after render, so the user has something to look at while we're loading.
 			const user = await loginSystem.awaitInit(); // LOGIN SYSTEM
 			initApi('blacklab', BLS_URL, user);
@@ -137,7 +135,6 @@ $(document).ready(async () => {
 			FilterStore.actions.setFiltersFromWithinClauses(stateFromUrl.patterns.extended.withinClauses);
 			// Don't do this before the url is parsed, as it controls the page url (among other things derived from the state).
 			connectStreamsToVuex();
-			initQueryBuilders();
 		},
 	}).$mount(document.querySelector('#vue-root')!);
 });

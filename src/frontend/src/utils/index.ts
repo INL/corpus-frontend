@@ -5,7 +5,6 @@ import URI from 'urijs';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import * as AppTypes from '@/types/apptypes';
-import * as UIModule from '@/store/search/ui';
 
 export function escapeRegex(original: string, wildcardSupport: boolean) {
 	original = original.replace(/([\^$\-\\.(){}[\]+])/g, '\\$1'); // add slashes for regex characters
@@ -60,8 +59,6 @@ export function unescapeLucene(original: string) {
 }
 
 export function NaNToNull(n: number) { return isNaN(n) ? null : n; }
-
-
 
 
 /**
@@ -337,9 +334,16 @@ export function unparenQueryPart(query?: string) {
 	return query;
 }
 
-export const getPatternString = (annotations: AppTypes.AnnotationValue[], withinClauses: Record<string, Record<string, string>>,
-	parallelTargetVersions: string[] = [], alignBy?: string) => {
-
+export const getPatternString = (
+	annotations: AppTypes.AnnotationValue[],
+	withinClauses: Record<string, Record<string, string>>,
+	/**
+	 * Ids of the annotated fields the query should target (for parallel corpora).
+	 * Note that the generated query will only contain the version suffix, not the full field id.
+	 */
+	parallelTargetFields: string[] = [],
+	alignBy?: string
+) => {
 	const tokens = [] as string[][];
 
 	annotations.forEach(annot => getAnnotationPatternString(annot).forEach((value, index) => {
@@ -366,9 +370,9 @@ export const getPatternString = (annotations: AppTypes.AnnotationValue[], within
 		}
 	}
 
-	if (parallelTargetVersions.length > 0) {
+	if (parallelTargetFields.length > 0) {
 		const relationType = alignBy ?? '';
-		query = `${parenQueryPart(query, ['[]*', '_'])}` + parallelTargetVersions.map(v => ` =${relationType}=>${v}? _`).join(' ; ');
+		query = `${parenQueryPart(query, ['[]*', '_'])}` + parallelTargetFields.map(v => ` =${relationType}=>${getParallelFieldParts(v).version}? _`).join(' ; ');
 	}
 
 	return query || undefined;
@@ -395,7 +399,7 @@ export const getPatternStringFromCql = (sourceCql: string, targetVersions: strin
 	for (let i = 0; i < targetVersions.length; i++) {
 		if (i > 0)
 			queryParts.push(' ; ');
-		queryParts.push(` =${relationType}=>${targetVersions[i].trim()}? ${parenQueryPartParallel(targetCql[i].trim() || '_')}`)
+		queryParts.push(` =${relationType}=>${getParallelFieldParts(targetVersions[i]).version}? ${parenQueryPartParallel(targetCql[i].trim() || '_')}`)
 	}
 
 	const query = queryParts.join('');
@@ -405,14 +409,14 @@ export const getPatternStringFromCql = (sourceCql: string, targetVersions: strin
 
 export function getDocumentUrl(
 	pid: string,
+	/** Field for which to show the document contents (important when this is a parallel corpus, as there are multiple "copies" of the same document then, e.g. an English and Dutch version) */
 	fieldName: string,
-	searchField?: string, // if searchfield differs from field (parallel corpus)
+	/** Field on which the cql query is run. if searchfield differs from field (parallel corpus) */
+	searchField?: string,
 	cql?: string,
 	pattgapdata?: string,
-	wordstart: number = 0,
-	pageSize?: number,
 	/** HACK: make the backend figure out which page to display based on the start index of the hit -- see ArticlePagination.vue/PaginationInfo.java */
-	findHit?: number
+	findhit?: number
 ) {
 
 	cql = (cql || '').trim();
@@ -430,8 +434,7 @@ export function getDocumentUrl(
 		searchfield: searchField,
 		query: cql || undefined,
 		pattgapdata: pattgapdata || undefined,
-		wordstart: pageSize != null ? (Math.floor(wordstart / pageSize) * pageSize) || undefined : undefined,
-		findhit: findHit
+		findhit
 	}).toString();
 }
 
@@ -556,11 +559,16 @@ export function fieldSubset<T extends {id: string}>(
 	return ret;
 }
 
-export function getMetadataSubset<T extends {id: string, displayName: string}>(
+// The type of the field objects is a little more generic than a metadata field
+// because this function can also be used with filters. Which do not 100% overlap with metadata fields necessarily.
+// (although in the vast majority of cases, filters are created from metadata fields).
+// (but for example a date range filter has two underlying metadata fields, so it requires a custom id that doesn't exist in the metadata)
+export function getMetadataSubset<T extends {id: string, defaultDisplayName?: string}>(
 	ids: string[],
 	groups: AppTypes.NormalizedMetadataGroup[],
 	metadata: Record<string, T>,
 	operation: 'Sort'|'Group',
+	i18n: Vue,
 	debug = false,
 	/* show the <small/> labels at the end of options labels? */
 	showGroupLabels = true
@@ -568,29 +576,34 @@ export function getMetadataSubset<T extends {id: string, displayName: string}>(
 	const defaultMetadataOptGroupName = 'Metadata';
 	const subset = fieldSubset(ids, groups, metadata);
 
+	// Map a metadata field's id + displayname + group to an option for rendering a groupby or sortby dropdown.
+	// This will map the value to be the string required for blacklab to sort/group by the field
+	// and the label to be the human-readable display name of the field.
 	function mapToOptions(value: string, displayName: string, groupId: string): AppTypes.Option[] {
 		// @ts-ignore
 		const displayIdHtml = debug ? `<small><strong>[id: ${value}]</strong></small>` : '';
 		const displayNameHtml = displayName || value;
 		const displaySuffixHtml = showGroupLabels && groupId ? `<small class="text-muted">${groupId}</small>` : '';
 		const r: AppTypes.Option[] = [];
+		const labelI18nKey = operation === 'Sort' ? 'results.table.sortBy' : 'results.table.groupBy';
 		r.push({
+			// TODO use display names/string from i18n bundle here to format this message.
 			value: operation === 'Sort' ? `field:${value}` : value, // groupby prepends field: on its own
-			label: `${operation} by ${displayNameHtml} ${displayIdHtml} ${displaySuffixHtml}`,
+			label: i18n.$t(labelI18nKey, {field: `${displayNameHtml} ${displayIdHtml} ${displaySuffixHtml}`}).toString(),
 		});
 		if (operation === 'Sort') {
 			r.push({
 				value: `-field:${value}`,
-				label: `${operation} by ${displayNameHtml} ${displayIdHtml} (descending) ${displaySuffixHtml}`,
+				label: i18n.$t('results.table.sortByDescending', {field: `${displayNameHtml} ${displayIdHtml} ${displaySuffixHtml}`}).toString(),
 			});
 		}
 		return r;
 	}
 
 	const r = subset.map<AppTypes.OptGroup&{entries: T[]}>(group => ({
-		options: group.entries.flatMap(e => mapToOptions(e.id, e.displayName, group.id)),
+		options: group.entries.flatMap(e => mapToOptions(e.id, i18n.$tMetaDisplayName(e), i18n.$tMetaGroupName(group.id))),
 		entries: group.entries,
-		label: group.id
+		label: i18n.$tMetaGroupName(group.id)
 	}));
 
 	// If there is only one metadata group to display: do not display the group names, instead display only 'Metadata'
@@ -613,59 +626,57 @@ export function getAnnotationSubset(
 	ids: string[],
 	groups: AppTypes.NormalizedAnnotationGroup[],
 	annotations: Record<string, AppTypes.NormalizedAnnotation>,
-	operation: 'Search'|'Sort'|'Group',
+	operation: 'Search'|'Sort',
+	i18n: Vue,
 	corpusTextDirection: 'rtl'|'ltr' = 'ltr',
 	debug = false,
 	/* show the <small/> labels at the end of options labels? */
 	showGroupLabels = true
 ): Array<AppTypes.OptGroup&{entries: AppTypes.NormalizedAnnotation[]}> {
+	function findAnnotatedFieldId(groupId: string) {
+		return groups.find(g => g.id === groupId)?.annotatedFieldId || groups[0].annotatedFieldId;
+	}
+
 	const subset = fieldSubset(ids, groups, annotations, operation !== 'Search' ? 'Other' : undefined);
 	if (operation === 'Search')	{
 		return subset.map(group => ({
 			entries: group.entries,
 			options: group.entries.map(a => ({
 				value: a.id,
-				label: a.displayName + (debug ? ` (id: ${a.id})` : ''),
-				title: a.description
+				label: i18n.$tAnnotDisplayName(a) + (debug ? ` (id: ${a.id})` : ''),
+				title: i18n.$tAnnotDescription(a)
 			})),
-			label: group.id,
+			// hack, when using a default group we need to come up with an annotated field
+			// So just use the first annotated field we come across.
+			label: i18n.$tAnnotGroupName({id: group.id, annotatedFieldId: findAnnotatedFieldId(group.id), entries: [], isRemainderGroup: false}),
 		}));
 	}
 
-	// If sorting: do left/right
-	// if grouping: do wordleft/wordright
-	// See https://github.com/INL/corpus-frontend/issues/316#issuecomment-609627245
-	const operations = {
-		left: operation === 'Group' ? 'wordleft:' : 'left:',
-		right: operation === 'Group' ? 'wordright:' : 'right:'
-	};
-
+	// TODO i18n these labels.
+	// Generate options for sorting by annotation.
+	// I.e. 6 options per annotation. 3 for each position: before, hit, after
+	// and 2 per postion: ascending and descending.
 	return [
 		['hit:', 'Hit', ''],
-		[corpusTextDirection === 'rtl' ? operations.right : operations.left, 'Before hit', 'before'],
-		[corpusTextDirection === 'rtl' ? operations.left : operations.right, 'After hit', 'after']
+		[corpusTextDirection === 'rtl' ? 'right:' : 'left:', 'Before hit', 'before'],
+		[corpusTextDirection === 'rtl' ? 'left:' : 'right:', 'After hit', 'after']
 	]
 	.map<AppTypes.OptGroup&{entries: AppTypes.NormalizedAnnotation[]}>(([prefix, groupname, suffix]) =>({
 		label: groupname,
 		entries: subset[0].entries,
-		options: ids.flatMap(id => {
-			// @ts-ignore
+		options: ids.flatMap<AppTypes.Option>(id => {
+			// in debug mode - show IDs
 			const displayIdHtml = debug ? `<small><strong>[id: ${id}]</strong></small>` : '';
-			const displayNameHtml = annotations[id].displayName || id; // in development mode - show IDs
+			const displayNameHtml = i18n.$tAnnotDisplayName(annotations[id]);
 			const displaySuffixHtml = showGroupLabels && suffix ? `<small class="text-muted">${suffix}</small>` : '';
 
-			const r: AppTypes.Option[] = [];
-			r.push({
+			return [{
 				label: `${operation} by ${displayNameHtml} ${displayIdHtml} ${displaySuffixHtml}`,
 				value: `${prefix}${id}`
-			});
-			if (operation === 'Sort') {
-				r.push({
-					label: `${operation} by ${displayNameHtml} ${displayIdHtml} (descending) ${displaySuffixHtml}`,
-					value: `-${prefix}${id}`
-				});
-			}
-			return r;
+			}, {
+				label: `${operation} by ${displayNameHtml} ${displayIdHtml} (descending) ${displaySuffixHtml}`,
+				value: `-${prefix}${id}`
+			}]
 		})
 	}));
 }
@@ -718,6 +729,7 @@ export function getCorrectUiType<T extends AppTypes.NormalizedAnnotation['uiType
 import type {ModuleRootState as ModuleRootStateExplore} from '@/store/search/form/explore';
 import type {ModuleRootState as ModuleRootStateSearch} from '@/store/search/form/patterns';
 import cloneDeep from 'clone-deep';
+
 export function getPatternStringExplore(
 	subForm: keyof ModuleRootStateExplore,
 	state: ModuleRootStateExplore,
@@ -747,8 +759,8 @@ export function getPatternStringSearch(
 	// For the normal search form,
 	// the simple and extended views require the values to be processed before converting them to cql.
 	// The advanced and expert views already contain a good-to-go cql query. We only need to take care not to emit an empty string.
-	const alignBy = state.parallelVersions.alignBy || defaultAlignBy;
-	const targets = state.parallelVersions.targets || [];
+	const alignBy = state.parallelFields.alignBy || defaultAlignBy;
+	const targets = state.parallelFields.targets || [];
 	switch (subForm) {
 		case 'simple':
 			const q = state.simple.annotationValue.value ? [state.simple.annotationValue] : [];
@@ -776,7 +788,6 @@ export function getPatternStringSearch(
 		case 'glosses': return state.glosses?.trim() || undefined;
 		default: throw new Error('Unimplemented pattern generation.');
 	}
-
 }
 
 export function getPatternSummaryExplore<K extends keyof ModuleRootStateExplore>(
@@ -786,8 +797,8 @@ export function getPatternSummaryExplore<K extends keyof ModuleRootStateExplore>
 ): string|undefined {
 	switch (subForm) {
 		case 'corpora': return undefined;
-		case 'frequency': return `${annots[state.frequency.annotationId].displayName} frequency`;
-		case 'ngram': return `${annots[state.ngram.groupAnnotationId].displayName} ${state.ngram.size}-grams`
+		case 'frequency': return `${annots[state.frequency.annotationId].defaultDisplayName} frequency`;
+		case 'ngram': return `${annots[state.ngram.groupAnnotationId].defaultDisplayName} ${state.ngram.size}-grams`
 		default: return undefined;
 	}
 }
@@ -798,27 +809,41 @@ export function getPatternSummarySearch<K extends keyof ModuleRootStateSearch>(
 ) {
 	const patt = getPatternStringSearch(subForm, state, defaultAlignBy);
 	return patt?.replace(/\\(.)/g, '$1') || '';
-
-	// For the normal search form,
-	// the simple and extended views require the values to be processed before converting them to cql.
-	// The advanced and expert views already contain a good-to-go cql query. We only need to take care not to emit an empty string.
-	// switch (subForm) {
-	// 	case 'simple': return state.simple.annotationValue.value || undefined;
-	// 	case 'extended': {
-	// 		const annotations: AppTypes.AnnotationValue[] = cloneDeep(Object.values(state.extended.annotationValues).filter(annot => !!annot.value))
-	// 			.map(annot => ({
-	// 				...annot,
-	// 				type: getCorrectUiType(uiTypeSupport.search.extended, annot.type!)
-	// 			}));
-	// 		if (annotations.length === 0) { return undefined; }
-	// 		// remove escape backslashes as this is just a summary
-	// 		return getPatternString(annotations, state.extended.within, alignBy, state.parallelVersions?.targets || [])?.replace(/\\(.)/g, '$1');
-	// 	}
-	// 	case 'advanced': return state.advanced.query?.trim() || undefined;
-	// 	case 'expert': return state.expert.query?.trim() || undefined;
-	// 	case 'concept': return state.concept || undefined;
-	// 	case 'glosses': return state.glosses || undefined;
-	// 	default: return undefined;
-	// }
 }
 
+// Must be here to avoid recursive dependencies
+export const PARALLEL_FIELD_SEPARATOR = '__';
+
+/**
+ * Given a parallel field name, return the prefix and version parts separately.
+ *
+ * For example, for field name "contents__en", will return prefix "contents" and
+ * version "en".
+ *
+ * For a non-parallel field name, the version part will be an empty string.
+ *
+ * @param fieldName parallel field name
+ * @returns an object containing the prefix and version.
+ */
+export function getParallelFieldParts(fieldName: string) {
+	const parts = fieldName.split(PARALLEL_FIELD_SEPARATOR, 2);
+	if (parts.length === 1) {
+		// non-parallel field; return empty string as version
+		parts.push('');
+	}
+	return {
+		/** The base field, e.g. "contents" */
+		prefix: parts[0],
+		/** The suffix, e.g. "en" or "nl". Empty string when the field is not parallel. */
+		version: parts[1]
+	};
+}
+
+/** Get the full name of a parallel annotatedField, consisting of the base name/prefix and the version (e.g. "en", "nl") */
+export function getParallelFieldName(prefix: string, version: string) {
+	return `${prefix}${PARALLEL_FIELD_SEPARATOR}${version}`;
+}
+
+export function isParallelField(fieldName: string) {
+	return fieldName.includes(PARALLEL_FIELD_SEPARATOR);
+}

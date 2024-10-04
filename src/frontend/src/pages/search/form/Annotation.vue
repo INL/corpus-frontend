@@ -1,6 +1,6 @@
 <template>
 	<div :class="bare ? '' : 'form-group propertyfield'" :id="htmlId"> <!-- behaves as .row when in .form-horizontal so .row may be omitted -->
-		<label v-if="!bare" :for="inputId" class="col-xs-12 col-md-3" :title="annotation.description || undefined">{{displayName}} <Debug>(id: {{annotation.id}})</Debug></label>
+		<label v-if="!bare" :for="inputId" class="col-xs-12 col-md-3" :title="description">{{displayName}} <Debug>(id: {{annotation.id}})</Debug></label>
 		<div :class="bare ? '' : 'col-xs-12 col-md-9'">
 			<SelectPicker v-if="annotation.uiType === 'select'"
 				data-width="100%"
@@ -67,8 +67,7 @@
 			<template v-if="annotation.uiType === 'pos'">
 				<PartOfSpeech
 					:id="`pos_editor${uid}`"
-					:annotationId="annotation.id"
-					:annotationDisplayName="annotation.displayName"
+					:annotation="annotation"
 
 					@submit="value = $event.queryString"
 
@@ -88,6 +87,9 @@
 					{{$t('annotation.caseSensitive')}}
 				</label>
 			</div>
+		</div>
+		<div v-if="!bare && description" :class="bare ? '' : 'col-xs-12 col-md-push-3 col-md-9'">
+			<small class="text-muted"><em>{{ description }}</em></small>
 		</div>
 	</div>
 
@@ -110,7 +112,6 @@ import {blacklabPaths} from '@/api';
 import { AnnotationValue, NormalizedAnnotation } from '@/types/apptypes';
 
 export default Vue.extend({
-	mixins: [UID] as any,
 	components: {
 		SelectPicker,
 		PartOfSpeech,
@@ -128,6 +129,7 @@ export default Vue.extend({
 		simple: Boolean
 	},
 	data: () => ({
+		uid: UID(),
 		subscriptions: [] as Array<() => void>,
 	}),
 	computed: {
@@ -148,7 +150,8 @@ export default Vue.extend({
 		fileInputId(): string { return this.htmlId + '_file'; },
 		caseInputId(): string { return this.htmlId + '_case'; },
 
-		displayName(): string { return this.annotation.displayName; },
+		displayName(): string { return this.$tAnnotDisplayName(this.annotation); },
+		description(): string { return this.$tAnnotDescription(this.annotation); },
 
 		options(): Option[] { return this.annotation.values || []; },
 

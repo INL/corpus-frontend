@@ -22,7 +22,7 @@
 			>
 				<template v-for="(subtab, j) in tab.subtabs">
 					<h3 v-if="subtab.tabname" :key="j + subtab.tabname">{{subtab.tabname}}</h3>
-					<hr v-else-if="j !== 0" :key="j + (subtab.tabname ?? '')">
+					<hr v-else-if="j !== 0" :key="j">
 					<Component v-for="id in subtab.fields" :key="tab.tabname + id"
 						:is="filterMap[id].componentName"
 						:htmlId="i+(j+id) /* brackets or else i+j collapses before stringifying */"
@@ -101,14 +101,14 @@ export default Vue.extend({
 
 			// the filters should be in the correct order already
 			let result = FilterStore.getState().filterGroups
-				.map(group => ({
-					tabname: group.tabname,
+				.map<FilterStore.FilterGroupType>(group => ({
+					tabname: this.$tMetaGroupName(group.tabname)?.toString(),
 					subtabs: group.subtabs
 						.map(subtab => ({
-							tabname: subtab.tabname,
+							tabname: this.$tMetaGroupName(subtab.tabname)?.toString(),
 							fields: subtab.fields.filter(id => {
 								const showField = UIStore.corpusCustomizations.search.metadata.show(id);
-								return showField === true || showField === null && allIdsToShow.has(id);
+								return showField === true || (showField === null && allIdsToShow.has(id));
 							})
 						}))
 						.filter(subtab => subtab.fields.length),

@@ -13,7 +13,6 @@
 			<div :class="['tab-pane form-horizontal', {'active': activePattern==='simple'}]" id="simple">
 				<!-- TODO render the full annotation instance? requires some changes to bind to store correctly and apply appropriate classes though -->
 				<div class="form-group form-group-lg">
-
 					<label class="control-label"
 						:for="firstMainAnnotation.id + '_' + uid"
 						:title="$tAnnotDescription(firstMainAnnotation)"
@@ -32,9 +31,8 @@
 						bare
 						simple
 					/>
-
-					<ParallelSourceAndTargets v-if="isParallelCorpus" />
 				</div>
+				<ParallelSourceAndTargets v-if="isParallelCorpus" block lg/>
 			</div>
 			<div :class="['tab-pane form-horizontal', {'active': activePattern==='extended'}]" id="extended">
 				<template v-if="useTabs">
@@ -90,7 +88,7 @@
 						</label>
 					</div>
 				</div>
-				<ParallelSourceAndTargets v-if="isParallelCorpus" mode="extended" />
+				<ParallelSourceAndTargets v-if="isParallelCorpus"/>
 
 			</div>
 			<div v-if="advancedEnabled" :class="['tab-pane', {'active': activePattern==='advanced'}]" id="advanced">
@@ -168,7 +166,7 @@ import { blacklabPaths } from '@/api';
 import * as AppTypes from '@/types/apptypes';
 import { getAnnotationSubset } from '@/utils';
 
-import SelectPicker, { Option } from '@/components/SelectPicker.vue';
+import { Option } from '@/components/SelectPicker.vue';
 import { corpusCustomizations } from '@/store/search/ui';
 
 function isVue(v: any): v is Vue { return v instanceof Vue; }
@@ -178,7 +176,6 @@ import ParallelFields from './parallel/ParallelFields';
 
 export default ParallelFields.extend({
 	components: {
-		SelectPicker,
 		ParallelSourceAndTargets,
 		Annotation,
 		SearchAdvanced,
@@ -443,11 +440,11 @@ export default ParallelFields.extend({
 		margin-bottom: 0;
 		&.bl-querybuilder-root { padding: 0; }
 	}
-
 }
 
-#simple > .form-group {
-	margin: auto;
+#simple .form-group {
+	margin-right: auto;
+	margin-left: auto;
 	max-width: 1170px;
 }
 

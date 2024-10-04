@@ -11,6 +11,7 @@
 				:dir="dir"
 				:html="html"
 				:hoverMatchInfos="hoverMatchInfos"
+				:isParallel="isParallel"
 				@hover="hover($event)"
 				@unhover="unhover()"
 				@click.native="clickNative()"
@@ -78,6 +79,7 @@ export default Vue.extend({
 		/** The results */
 		h: Object as () => HitRows,
 
+		/** Toggles whether we show the source field of the hits */
 		isParallel: Boolean,
 	},
 	data: () => ({

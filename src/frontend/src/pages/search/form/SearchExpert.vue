@@ -8,34 +8,37 @@
 			<!-- Regular (non-parallel) corpus -->
 			<textarea class="form-control querybox" name="querybox" rows="7" v-model="mainQuery"></textarea>
 		</template>
-		<div v-else class="parallel">
+		<div v-else class="parallel ">
 			<!-- TODO see if we can reuse the ParallelSourceAndTarget component for this section. -->
 			<!-- Parallel corpus -->
 
 			<!-- Parallel source + its input box -->
-			<label class="control-label" for="sourceVersion">{{$t('search.parallel.queryForSourceVersion')}}
-				<SelectPicker id="sourceVersion" :options="pSourceOptions"
-					v-model="pSourceValue" data-menu-width="grow" hideEmpty/>
-			</label>
-			<textarea class="form-control querybox" name="querybox" rows="7" v-model="mainQuery"></textarea>
+			<div class="form-group">
+				<label class="control-label" for="sourceVersion">{{$t('search.parallel.queryForSourceVersion')}}
+					<SelectPicker id="sourceVersion" :options="pSourceOptions"
+						v-model="pSourceValue" data-menu-width="grow" hideEmpty/>
+				</label>
+				<textarea class="form-control querybox" name="querybox" rows="7" v-model="mainQuery"></textarea>
+			</div>
 
 			<!-- Parallel targets + their input boxes -->
-			<div v-for="(field, index) in pTargets" :key="field.value">
-				<label class="control-label">
+			<div v-for="(field, index) in pTargets" :key="field.value" class="form-group">
+				<label @click.prevent>
 					{{$t('search.parallel.queryForTargetVersion')}}
 					<button type="button" class="targetVersion" @click="removeTarget(field.value)" :title="$t('widgets.clickToRemove').toString()">
 						{{ field.label }}
 					</button>
 				</label>
+
 				<textarea class="form-control querybox" rows="7"
 					:value="targetQueries[index]"
 					@input="changeTargetQuery(index, $event)"
 				></textarea>
 			</div>
 
-			<template v-if="pTargetOptions.length">
+			<div v-if="pTargetOptions.length" class="form-group">
 				<!-- Parallel target extra field selector. -->
-				<label class="control-label">{{ $t(pTargetValue.length ? 'search.parallel.addTargetVersion' : 'search.parallel.chooseTargetVersion') }}</label>
+				<label>{{ $t(pTargetValue.length ? 'search.parallel.addTargetVersion' : 'search.parallel.chooseTargetVersion') }}</label>
 				<div>
 					<!--
 						Note: this selectpicker only allows a single value. Then every time the user selects something, the selected value is removed
@@ -44,9 +47,9 @@
 					-->
 					<SelectPicker :options="pTargetOptions" @input="addTarget($event)" hideEmpty/>
 				</div>
-			</template>
+			</div>
 
-			<AlignBy/>
+			<AlignBy block/>
 		</div>
 	</div>
 </template>

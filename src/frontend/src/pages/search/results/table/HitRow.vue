@@ -1,6 +1,6 @@
 <template>
 	<tr class="concordance rounded">
-		<td v-if="data.annotatedField" class='doc-version'><a @click.stop="" :href="data.href" title="Go to hit in document" target="_blank">{{ $tAnnotatedFieldDisplayName(data.annotatedField) }}</a></td>
+		<td v-if="isParallel && data.annotatedField" class='doc-version'><a @click.stop="" :href="data.href" title="Go to hit in document" target="_blank">{{ $tAnnotatedFieldDisplayName(data.annotatedField) }}</a></td>
 		<HitContextComponent tag="td" class="text-right"  :dir="dir" :data="data.context" :html="html" :annotation="mainAnnotation.id" :before="dir === 'ltr'" :after="dir === 'rtl'"
 			:hoverMatchInfos="hoverMatchInfos"
 			@hover="$emit('hover', $event)" @unhover="$emit('unhover', $event)" />
@@ -79,6 +79,8 @@ export default Vue.extend({
 		metadata: Array as () => NormalizedMetadataField[]|undefined,
 		dir: String as () => 'ltr'|'rtl',
 		html: Boolean,
+		/** Toggles whether we display the source annotated field of the hit. */
+		isParallel: Boolean,
 
 		// which match infos (capture/relation) should be highlighted because we're hovering over a token? (parallel corpora)
 		hoverMatchInfos: {

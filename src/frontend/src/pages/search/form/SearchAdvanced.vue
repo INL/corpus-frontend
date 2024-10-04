@@ -13,19 +13,18 @@
 				</label>
 				<div class="querybuilder"></div>
 			</div>
-			<div v-for="field in pTargets" :key="field.value">
-				<div class="qb-par-wrap">
-					<label class="control-label">{{$t('search.parallel.queryForTargetVersion')}}
-						<button type="button" class="targetVersion" @click="removeTarget(field.value)" :title="$t('widgets.clickToRemove').toString()">
-							{{ field.label }}
-						</button>
-					</label>
-					<div class="querybuilder"></div>
-				</div>
+
+			<div class="qb-par-wrap" v-for="field in pTargets" :key="field.value">
+				<label class="control-label" @click.prevent>{{$t('search.parallel.queryForTargetVersion')}}
+					<button type="button" class="targetVersion" @click="removeTarget(field.value)" :title="$t('widgets.clickToRemove').toString()">
+						{{ field.label }}
+					</button>
+				</label>
+				<div class="querybuilder"></div>
 			</div>
 
-			<div v-if="pTargetOptions.length" class="add-target-version">
-				<label class="control-label" :v-t="pTargetValue.length ? 'search.parallel.addTargetVersion' : 'search.parallel.chooseTargetVersion'"></label>
+			<div v-if="pTargetOptions.length" class="add-target-version form-group">
+				<label>{{ $t(pTargetValue.length ? 'search.parallel.addTargetVersion' : 'search.parallel.chooseTargetVersion') }}</label>
 				<div>
 					<!--
 						Note: this selectpicker only allows a single value. Then every time the user selects something, the selected value is removed
@@ -36,7 +35,7 @@
 				</div>
 			</div>
 
-			<AlignBy />
+			<AlignBy block />
 		</div>
 
 		<button type="button" class="btn btn-default btn-sm" @click="copyAdvancedQuery">{{$t('search.advanced.copyAdvancedQuery')}}</button>
@@ -159,12 +158,6 @@ h3 .help {
 			content: '✕';
 			margin-left: 5px;
 		}
-	}
-
-	.add-target-version, .align-by {
-		margin-bottom: 20px;
-
-		label { display: block; }
 	}
 }
 

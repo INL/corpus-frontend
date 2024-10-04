@@ -1,36 +1,18 @@
 <template>
-	<!-- Is this a parallel corpus? -->
-	<div v-if="mode === 'simple'">
-		<label class="control-label">{{ $t('search.parallel.inSourceVersion') }}</label>
-		<div>
-			<SelectPicker :options="pSourceOptions" v-model="pSourceValue" data-menu-width="grow" hideEmpty/>
-		</div>
-
-		<label class="control-label">{{ $t('search.parallel.andCompareWithTargetVersions') }}</label>
-		<div>
-			<MultiValuePicker :options="pTargetOptionsWithCurrent" v-model="pTargetValue" />
-		</div>
-		<AlignBy />
-	</div>
-	<div v-else>
-		<div class="form-group">
-			<label class="col-xs-12 col-md-3">{{ $t('search.parallel.inSourceVersion') }}</label>
-			<div class="col-xs-12 col-md-9">
+	<div>
+		<div :class="{'form-group': true, 'form-group-lg': lg}">
+			<label :class="{'col-xs-12': !block, 'col-md-3': !block, 'control-label': block}">{{ $t('search.parallel.inSourceVersion') }}</label>
+			<div :class="{'col-xs-12': !block, 'col-md-9': !block}">
 				<SelectPicker :options="pSourceOptions" v-model="pSourceValue" data-menu-width="grow" hideEmpty/>
 			</div>
 		</div>
-		<div class="form-group">
-			<label class="col-xs-12 col-md-3">{{ $t('search.parallel.andCompareWithTargetVersions') }}</label>
-			<div class="col-xs-12 col-md-9">
+		<div :class="{'form-group': true, 'form-group-lg': lg}">
+			<label :class="{'col-xs-12': !block, 'col-md-3': !block, 'control-label': block}">{{ $t('search.parallel.andCompareWithTargetVersions') }}</label>
+			<div :class="{'col-xs-12': !block, 'col-md-9': !block}">
 				<MultiValuePicker :options="pTargetOptionsWithCurrent" v-model="pTargetValue" />
 			</div>
 		</div>
-		<div class="form-group">
-			<label class="col-xs-12 col-md-3">{{ $t('search.parallel.alignBy') }}</label>
-			<div class="btn-group col-xs-12 col-md-9">
-				<AlignBy />
-			</div>
-		</div>
+		<AlignBy :block="block" :lg="lg"/>
 	</div>
 </template>
 
@@ -48,10 +30,8 @@ export default ParallelFields.extend({
 		AlignBy,
 	},
 	props: {
-		mode: {
-			type: String,
-			default: 'simple'
-		}
+		block: {default: false, type: Boolean},
+		lg: {default: false, type: Boolean},
 	},
 });
 </script>

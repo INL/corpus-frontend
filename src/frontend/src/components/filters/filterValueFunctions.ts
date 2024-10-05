@@ -1,6 +1,7 @@
 import { unescapeLucene, escapeLucene, splitIntoTerms, mapReduce, cast } from '@/utils';
 import { FilterValue, Option } from '@/types/apptypes';
 import { ASTNode, ASTRange } from 'lucene-query-parser';
+// @ts-ignore - weird this doesn't work during builds
 import { modes } from './FilterRangeMultipleFields.vue';
 import { FullFilterState } from '@/store/search/form/filters';
 import { debugLog } from '@/utils/debug';

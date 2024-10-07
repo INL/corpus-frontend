@@ -4,7 +4,7 @@
 			type="button"
 			class="btn btn-default btn-sm"
 			:disabled="downloadInProgress || disabled"
-			:title="downloadInProgress ? $t('results.export.downloading') : $t('results.export.csvTooltip')"
+			:title="(downloadInProgress ? $t('results.export.downloading') : $t('results.export.csvTooltip')).toLocaleString()"
 
 			@click="downloadCsv(false)"
 		>
@@ -15,7 +15,7 @@
 			type="button"
 			class="btn btn-default btn-sm"
 			:disabled="downloadInProgress || disabled"
-			:title="downloadInProgress ? $t('results.export.downloading') : $t('results.export.excelTooltip')"
+			:title="(downloadInProgress ? $t('results.export.downloading') : $t('results.export.excelTooltip')).toLocaleString()"
 
 			@click="downloadCsv(true)"
 		>

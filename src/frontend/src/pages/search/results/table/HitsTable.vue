@@ -164,13 +164,13 @@ export default Vue.extend({
 			...otherAnnots.map(a => ({
 				key: `annot_${a.id}`,
 				columnLabel: this.$tAnnotDisplayName(a),
-				textAlignClass: 'text-center',
+				textAlignClass: this.dir === 'rtl' ? 'text-right' : 'text-left',
 				sortOptions: [sortAnnot(a, blSortPrefixCenter)]
 			})),
 			...meta.map(m => ({
 				key: `meta_${m.id}`,
 				columnLabel: this.$tMetaDisplayName(m),
-				textAlignClass: 'text-center',
+				textAlignClass: this.dir === 'rtl' ? 'text-right' : 'text-left',
 				sortOptions: [sortMeta(m)]
 			}))]
 		},

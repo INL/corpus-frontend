@@ -2,7 +2,7 @@ import axios, {Canceler, AxiosRequestConfig} from 'axios';
 import * as qs from 'qs';
 
 import {createEndpoint} from '@/api/apiutils';
-import {normalizeIndex, fixDocInfo, normalizeFormat, normalizeIndexBase} from '@/utils/blacklabutils';
+import {normalizeIndex, normalizeFormat, normalizeIndexBase} from '@/utils/blacklabutils';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import { ApiError, NormalizedIndex, NormalizedIndexBase } from '@/types/apptypes';
@@ -325,12 +325,6 @@ export const blacklab = {
 			request = Promise.reject(new ApiError('Error', 'No index specified', 'Internal error', undefined));
 		} else {
 			request = endpoints.blacklab.getOrPost<T>(blacklabPaths.docs(indexId), params, { ...requestParameters, cancelToken })
-			.then(res => {
-				if (!BLTypes.isDocGroups(res)) {
-					res.docs.forEach(d => fixDocInfo(d.docInfo));
-				}
-				return res;
-			});
 		}
 
 		return {

@@ -54,7 +54,7 @@ import PaginatedGetter from '@/pages/search/results/table/ConcordanceGetter';
 import {blacklab} from '@/api';
 import { BLSearchParameters, BLHitResults, BLDocResults } from '@/types/blacklabtypes';
 
-import HitsTable, {HitRowData} from '@/pages/search/results/table/HitsTable.vue'
+import HitsTable, {HitRows} from '@/pages/search/results/table/HitsTable.vue'
 import DocsTable, {DocRowData} from '@/pages/search/results/table/DocsTable.vue';
 import { NormalizedAnnotation, NormalizedMetadataField } from '@/types/apptypes';
 import { GroupRowData } from '@/pages/search/results/table/GroupTable.vue';
@@ -85,7 +85,7 @@ export default Vue.extend({
 		open: Boolean
 	},
 	data: () => ({
-		concordances: null as any as PaginatedGetter<HitRowData|DocRowData>,
+		concordances: null as any as PaginatedGetter<HitRows|DocRowData>,
 	}),
 	methods: {
 		frac2Percent
@@ -94,7 +94,7 @@ export default Vue.extend({
 		const getDocumentSummary = UIStore.getState().results.shared.getDocumentSummary;
 		const fieldInfo = CorpusStore.getState().corpus!.fieldInfo;
 
-		this.concordances = new PaginatedGetter<HitRowData|DocRowData>((first, number) => {
+		this.concordances = new PaginatedGetter<HitRows|DocRowData>((first, number) => {
 			// make a copy of the parameters so we don't clear them for all components using the summary
 			const requestParameters: BLSearchParameters = Object.assign({}, this.query, {
 				// Do not clear sample/samplenum/samplecount,
@@ -109,35 +109,40 @@ export default Vue.extend({
 				let {request, cancel} = blacklab.getHits(INDEX_ID, requestParameters);
 				return {
 					cancel,
-					request: request.then((r: BLHitResults) => r.hits.map<HitRowData>(h => {
+					request: request.then((r: BLHitResults) => {
 						const colors = getHighlightColors(r.summary);
-						UIStore.getState().results.shared.transformSnippets?.(h);
-						return {
-							type: 'hit',
-							// Don't bother with parallel results when expanding a group.
-							// When the user wants to see them, they can open the full concordances.
-							annotatedField: undefined,
-							isForeign: false,
-							hit: h,
-							context: snippetParts(h, this.mainAnnotation.id, this.dir, colors),
-							href: getDocumentUrl(
-								h.docPid,
-								this.query.field ?? '',
-								undefined,
-								this.query.patt || undefined,
-								this.query.pattgapdata || undefined,
-								h.start
-							),
-							doc: {
-								docInfo: r.docInfos[h.docPid],
-								docPid: h.docPid,
-							},
-							gloss_fields: [],
-							hit_first_word_id: '',
-							hit_id: '',
-							hit_last_word_id: '',
-						}
-					}))
+						return r.hits.map<HitRows>(h => {
+							UIStore.getState().results.shared.transformSnippets?.(h);
+							return  {
+								type: 'hit',
+								doc: {docInfo: r.docInfos[h.docPid], docPid: h.docPid},
+								rows: [{
+									// Don't bother with parallel results when expanding a group.
+									// When the user wants to see them, they can open the full concordances.
+									annotatedField: undefined,
+									isForeign: false,
+									hit: h,
+									context: snippetParts(h, this.mainAnnotation.id, this.dir, colors),
+									href: getDocumentUrl(
+										h.docPid,
+										this.query.field ?? '',
+										undefined,
+										this.query.patt || undefined,
+										this.query.pattgapdata || undefined,
+										h.start
+									),
+									doc: {
+										docInfo: r.docInfos[h.docPid],
+										docPid: h.docPid,
+									},
+									gloss_fields: [],
+									hit_first_word_id: '',
+									hit_id: '',
+									hit_last_word_id: '',
+								}]
+							}
+						})
+					})
 				}
 			} else {
 				let {request, cancel} = blacklab.getDocs(INDEX_ID, requestParameters);

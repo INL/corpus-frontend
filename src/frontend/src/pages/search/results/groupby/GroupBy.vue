@@ -3,8 +3,48 @@
 	<button v-if="!active && !addedCriteria.length" class="btn btn-default btn-secondary btn-sm" type="button" @click="active=true">
 		{{$t('results.groupBy.groupResults')}}
 	</button>
+
 	<div v-else class="panel panel-default">
 		<div class="panel-heading" style="margin: 0">{{$t('results.groupBy.groupResults')}} <button class="pull-right close" type="button" @click="clear">&times;</button></div>
+
+
+		<Tabs :tabs="['a', 'b', 'c', 'dkjsydf', 'e']" vertical>
+
+		</Tabs>
+<!--
+		<div class="group-tabs">
+			<div class="tab inactive" @click="$event.currentTarget.classList.toggle('active'); $event.currentTarget.classList.toggle('inactive');"><button type="button" class="btn remove">&times;</button><button class="btn group">annot pre</button></div>
+			<div class="tab inactive" @click="$event.currentTarget.classList.toggle('active'); $event.currentTarget.classList.toggle('inactive');"><button type="button" class="btn remove">&times;</button><button class="btn group">meta preview</button></div>
+			<div class="tab inactive" @click="$event.currentTarget.classList.toggle('active'); $event.currentTarget.classList.toggle('inactive');"><button type="button" class="btn remove">&times;</button><button class="btn group">meta preview</button></div>
+			<div class="tab inactive" @click="$event.currentTarget.classList.toggle('active'); $event.currentTarget.classList.toggle('inactive');"><button type="button" class="btn remove">&times;</button><button class="btn group">meta preview</button></div>
+			<div class="tab add"><button type="button" class="btn add" @click="addAnnotation">Annotation + </button></div>
+			<div class="tab add"><button type="button" class="btn add" @click="addMetadata">Metadata + </button></div>
+		</div> -->
+
+		<div v-if="selectedCriterium?.type === 'context'" class="hit-preview panel-heading">
+			<template v-for="(section, i) of preview">
+				<div v-if="i !== 0" class="separator"></div>
+				<template v-for="({selectedAnnotation, word, punct, active, style}, j) of section">
+					<component
+						:is="active ? 'section' : 'div'"
+						:key="word + i + '_' + j"
+						:class="{
+							'word': true,
+							'active': active,
+							'text-primary': active,
+							'bold': i === 1
+						}"
+						:style="style"
+						@click="handlePreviewClick($event, i, j)"
+					>
+						<div :title="word" class="main">{{ word }}</div>
+						<div :title="selectedAnnotation" class="annotation">{{ selectedAnnotation }}</div>
+					</component>
+					<!-- punctuation between words. -->
+					<component :is="active && section[j+1]?.active ? 'section' : 'div'" :class="{punct: true, active: active && section[j+1]?.active}" :title="punct">{{ punct || ' ' }}</component>
+				</template>
+			</template>
+		</div>
 
 		<div class="group-by">
 			<!-- Group selector/creator container -->
@@ -156,31 +196,8 @@
 					</div>
 				</div>
 				<em v-else class="text-italic h5 text-muted content" style="display: flex; align-items: center; margin: 0; justify-self: center;">{{ $t('results.groupBy.clickButtonsToStart') }}</em>
-				<div v-if="selectedCriterium && selectedCriterium.type === 'context'" class="hit-preview panel-heading">
-					<template v-for="(section, i) of preview">
-						<div v-if="i !== 0" class="separator"></div>
-						<template v-for="({selectedAnnotation, word, punct, active, style}, j) of section">
-							<component
-								:is="active ? 'section' : 'div'"
-								:key="word + i + '_' + j"
-								:class="{
-									'word': true,
-									'active': active,
-									'text-primary': active,
-									'bold': i === 1
-								}"
-								:style="style"
-								@click="handlePreviewClick($event, i, j)"
-							>
-								<div :title="word" class="main">{{ word }}</div>
-								<div :title="selectedAnnotation" class="annotation">{{ selectedAnnotation }}</div>
-							</component>
-							<!-- punctuation between words. -->
-							<component :is="active && section[j+1]?.active ? 'section' : 'div'" :class="{punct: true, active: active && section[j+1]?.active}" :title="punct">{{ punct || ' ' }}</component>
-						</template>
-					</template>
-				</div>
-				<!-- <Debug v-if="current"><pre>Debug: {{ current }} <br> {{ {contextValue, preview} }}</pre></Debug> -->
+
+
 			</div>
 		</div>
 	</div>
@@ -213,10 +230,14 @@ import SelectPicker, { Options } from '@/components/SelectPicker.vue';
 import { getHighlightColors, snippetParts } from '@/utils/hit-highlighting';
 import { CaptureAndRelation, HitToken, Option, TokenHighlight } from '@/types/apptypes';
 
+
+import Tabs from '@/components/Tabs.vue';
+
 export default Vue.extend({
 	components: {
 		SelectPicker,
 		Slider,
+		Tabs
 	},
 	props: {
 		type: String, // grouping hits or docs?
@@ -776,19 +797,97 @@ export default Vue.extend({
 	}
 }
 
+.group-tabs {
+	padding: 0;
+	margin: 0;
+	border: none;
+	display: inline-flex;
+	flex-direction: column;
+	background-color: hsl(0, 0%, 95%);
+	// overflow: hidden;
+
+
+
+	.tab {
+		display: flex;
+		position: relative;
+		padding: 5px 10px;
+
+		border-radius: 0 10px 10px 0;
+		// outline: 1px solid blue;
+		// z-index: 2;
+		position: relative;
+
+		// &.inactive {
+			// inactive tab should have a background color
+			background-color: hsl(0, 0%, 95%);
+		// }
+
+		&.active {
+			// active tab should NOT have a background color
+			background-color: white;
+			border-radius: 10px 0 0 10px;
+			// z-index: 1;
+
+
+			&:before {
+				content: '';
+				position: absolute;
+				// bottom: -20px;
+				bottom: -20px;
+				right: -20px;
+				width: 20px;
+				height: 20px;
+				// border-radius: 100%;
+				box-shadow: 0px 5px 0px 5px #448CCB;
+				z-index: 10;
+			}
+
+			// &:before {
+			// 	content: '';
+			// 	position: absolute;
+			// 	top: -20px;
+			// 	right: 0;
+
+			// 	width: 20px;
+			// 	height: 20px;
+
+			// 	display: block;
+			// 	background: white;
+			// 	border-radius: 10px;
+			// 	border: 1px solid red;
+			// }
+
+			// &:after {
+			// 	content: '';
+			// 	position: absolute;
+			// 	bottom: -20px;
+			// 	right: 0;
+
+			// 	width: 20px;
+			// 	height: 20px;
+
+			// 	display: block;
+			// 	background: white;
+			// 	border-radius: 10px;
+			// 	border: 1px solid red;
+			// }
+		}
+
+		.btn {
+			padding: 0;
+			background: none;
+			border: none;
+		}
+	}
+}
+
 
 .hit-preview {
 	overflow: auto;
-	border: 1px solid #ddd;
-	padding: 10px 15px;
-	margin: 0 -15px 0;
-	border-top: 0;
-	border-right: 0;
-	border-left: 0;
-
+	border-radius: 0;
 
 	display: flex;
-	flex-direction: row;
 	flex-wrap: nowrap;
 	justify-content: safe center;
 
@@ -832,7 +931,7 @@ export default Vue.extend({
 		margin: 0 0.5em;
 		background: #555;
 		border-radius: 2px;
-		flex-shrink: 0;
+		flex: none;
 	}
 
 	.active {
@@ -840,12 +939,14 @@ export default Vue.extend({
 		border-bottom: 1px solid black;
 	}
 
+	// An active word
 	.active:first-of-type {
 		border-left: 1px solid black;
 		border-top-left-radius: 6px;
 		border-bottom-left-radius: 6px;
 	}
 
+	// An active word
 	.active:last-of-type {
 		border-right: 1px solid black;
 		border-top-right-radius: 6px;

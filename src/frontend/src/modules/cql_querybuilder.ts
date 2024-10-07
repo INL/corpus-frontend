@@ -161,13 +161,13 @@ const templates = {
 			body_tab_properties: `
 				<div id="{{currentId}}_tab_properties" class="tab-pane" style="padding: 10px 15px 25px 15px;">
 					<div class="checkbox">
-						<label title="Token is optional"><input type="checkbox" id="{{currentId}}_property_optional">{{i18n:body_tab_properties_optional}}</label>
+						<label title="{{i18n:body_tab_properties_optional_title}}"><input type="checkbox" id="{{currentId}}_property_optional">{{i18n:body_tab_properties_optional}}</label>
 					</div>
 					<div class="checkbox">
-						<label title="Token must occur at beginning of sentence"><input type="checkbox" id="{{currentId}}_property_sentence_start">{{i18n:body_tab_properties_beginOfSentence}}</label>
+						<label title="{{i18n:body_tab_properties_beginOfSentence_title}}"><input type="checkbox" id="{{currentId}}_property_sentence_start">{{i18n:body_tab_properties_beginOfSentence}}</label>
 					</div>
 					<div class="checkbox">
-						<label title="Token must occur at end of sentence"><input type="checkbox" id="{{currentId}}_property_sentence_end">{{i18n:body_tab_properties_endOfSentence}}</label>
+						<label title="{{i18n:body_tab_properties_endOfSentence_title}}"><input type="checkbox" id="{{currentId}}_property_sentence_end">{{i18n:body_tab_properties_endOfSentence}}</label>
 					</div>
 					<div class="input-group" style="width:318px;">
 						<span class="input-group-addon">{{i18n:body_tab_properties_repeats_label}}</span>

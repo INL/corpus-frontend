@@ -37,8 +37,11 @@
 				"body_tab_header_properties": "Context",
 
 				"body_tab_properties_optional": "Optioneel",
+				"body_tab_properties_optional_title": "Woord is optioneel",
 				"body_tab_properties_beginOfSentence": "Begin van zin",
+				"body_tab_properties_beginOfSentence_title": "Woord moet aan het begin van een zin staan",
 				"body_tab_properties_endOfSentence": "Einde van zin",
+				"body_tab_properties_endOfSentence_title": "Woord moet aan het einde van een zin staan",
 
 				"body_tab_properties_repeats_label": "herhalingen",
 				"body_tab_properties_repeats_to": "tot",
@@ -175,7 +178,7 @@
 
 			"groupResults": "Groeperen",
 			"clear": "Wissen",
-			"apply": "Toepassen",
+			"apply": "Groeperen",
 			"invalidGrouping": "Deze groepering is niet geldig.",
 
 			"parallelCorpusVersion": "Kijkend naar versie ",

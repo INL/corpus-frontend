@@ -36,8 +36,11 @@
 				"body_tab_header_properties": "Context",
 
 				"body_tab_properties_optional": "Optional",
+				"body_tab_properties_optional_title": "Token is optional",
 				"body_tab_properties_beginOfSentence": "Begin of sentence",
+				"body_tab_properties_beginOfSentence_title": "Token must occur at the beginning of a sentence",
 				"body_tab_properties_endOfSentence": "End of sentence",
+				"body_tab_properties_endOfSentence_title": "Token must occur at the end of a sentence",
 
 				"body_tab_properties_repeats_label": "repeats",
 				"body_tab_properties_repeats_to": "to",
@@ -174,7 +177,7 @@
 
 			"groupResults": "Group Results",
 			"clear": "Clear",
-			"apply": "Apply",
+			"apply": "Group",
 			"invalidGrouping": "This grouping is not valid.",
 
 			"parallelCorpusVersion": "Looking at version ",

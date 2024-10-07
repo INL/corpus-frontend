@@ -172,12 +172,15 @@ export default Vue.extend({
 				const doc = { docInfo, docPid: pid };
 				if (pid !== prevPid) {
 					prevPid = pid;
-					rows.push({
-						type: 'doc',
-						summary: this.getDocumentSummary(docInfo, docFields),
-						href: this.getDocumentUrl(pid, this.sourceField.id, undefined), // main document link doesn't open on the first hit.
-						doc
-					});
+
+					if (this.showTitles) {
+						rows.push({
+							type: 'doc',
+							summary: this.getDocumentSummary(docInfo, docFields),
+							href: this.getDocumentUrl(pid, this.sourceField.id, undefined), // main document link doesn't open on the first hit.
+							doc
+						});
+					}
 				}
 
 				this.transformSnippets?.(hit)

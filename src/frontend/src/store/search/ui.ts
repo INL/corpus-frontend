@@ -1269,6 +1269,57 @@ const corpusCustomizations = {
 				this.customTabs.push({ name, fields });
 			},
 
+			// Create a span filter for corpus.search.metadata.customTabs
+			createSpanFilter(displayName: string, spanName: string, attrName: string, widget: string = 'auto', metadata: any = {}): AppTypes.FilterDefinition {
+
+				// No options specified; try to get them from the corpus.
+				let optionsFromCorpus;
+				const corpus = CorpusStore.getState().corpus;
+				if (!metadata.options && corpus && corpus.relations.spans) {
+					const span: BLTypes.BLSpanInfo = corpus.relations.spans[spanName] ?? {};
+					const attr = span.attributes[attrName] ?? { values: {}, valueListComplete: false };
+					console.log(`${displayName} options:`, attr);
+					if (attr?.valueListComplete) {
+						optionsFromCorpus = Object.keys(attr.values).map((value: string) => ({ value }));
+					}
+				}
+
+				if (widget === 'auto') {
+					widget = optionsFromCorpus ? 'select' : 'text';
+				}
+
+				if (widget === 'select') {
+					// If user passed in just an array, assume these are the options.
+					if (Array.isArray(metadata)) {
+						metadata = { options: metadata };
+					}
+
+					if (!metadata.options)
+						metadata.options = optionsFromCorpus ?? [];
+
+					// If the options are just strings, convert them to simple Option objects.
+					metadata.options = metadata.options.map((option: any) => {
+						return typeof option === 'string' ? { value: option } : option;
+					});
+				}
+
+				const behaviourName = widget === 'select' ? 'span-select' : 'span-text';
+
+				return {
+					id: `${spanName}-${attrName}`,
+					componentName: `filter-${widget}`,
+					behaviourName, // i.e. generate a "within ..." BCQL query
+					isSpanFilter: true,
+					defaultDisplayName: displayName,
+					metadata: {
+						name: spanName,
+						attribute: attrName,
+						...metadata
+					},
+					// (groupId will be set automatically when creating the custom tabs)
+				};
+			},
+
 			/** any custom metadata fields we want to use */
 			customFilters: {} as Record<string, FilterStore.FullFilterState>,
 		}
@@ -1298,56 +1349,6 @@ const corpusCustomizations = {
 	customize(callback: ((corpus: any) => void)) {
 		corpusCustomizations.customize = () => callback(corpusCustomizations);
 	},
-
-	// Create a span filter for corpus.search.metadata.customTabs
-	createSpanFilter(displayName: string, spanName: string, attrName: string, widget: string = 'auto', metadata: any = {}): AppTypes.FilterDefinition {
-
-		// No options specified; try to get them from the corpus.
-		let optionsFromCorpus;
-		const corpus = CorpusStore.getState().corpus;
-		if (!metadata.options && corpus && corpus.relations.spans) {
-			const span: BLTypes.BLSpanInfo = corpus.relations.spans[spanName];
-			const attr = span.attributes[attrName];
-			if (attr?.valueListComplete) {
-				optionsFromCorpus = Object.keys(attr.values).map((value: string) => ({ value }));
-			}
-		}
-
-		if (widget === 'auto') {
-			widget = optionsFromCorpus ? 'select' : 'text';
-		}
-
-		if (widget === 'select') {
-			// If user passed in just an array, assume these are the options.
-			if (Array.isArray(metadata)) {
-				metadata = { options: metadata };
-			}
-
-			if (!metadata.options)
-				metadata.options = optionsFromCorpus ?? [];
-
-			// If the options are just strings, convert them to simple Option objects.
-			metadata.options = metadata.options.map((option: any) => {
-				return typeof option === 'string' ? { value: option } : option;
-			});
-		}
-
-		const behaviourName = widget === 'select' ? 'span-select' : 'span-text';
-
-		return {
-			id: `${spanName}-${attrName}`,
-			componentName: `filter-${widget}`,
-			behaviourName, // i.e. generate a "within ..." BCQL query
-			isSpanFilter: true,
-			defaultDisplayName: displayName,
-			metadata: {
-				name: spanName,
-				attribute: attrName,
-				...metadata
-			},
-			// (groupId will be set automatically when creating the custom tabs)
-		};
-	}
 
 };
 

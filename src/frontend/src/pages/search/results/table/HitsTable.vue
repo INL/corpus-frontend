@@ -136,13 +136,13 @@ export default Vue.extend({
 				label: this.$tAnnotDisplayName(a),
 				title: this.$t('results.table.sortBy', {field: this.$tAnnotDisplayName(a)}),
 				sortKey: `${prefix}:${a.id}`,
-				debugLabel: a.id
+				debugLabel: `(id: ${a.id})`
 			})
 			const sortMeta = (m: NormalizedMetadataField) => ({
 				label: this.$tMetaDisplayName(m),
 				title: this.$t('results.table.sortBy', {field: this.$tMetaDisplayName(m)}),
 				sortKey: `field:${m.id}`,
-				debugLabel: m.id
+				debugLabel: `(id: ${m.id})`
 			})
 
 			return [{

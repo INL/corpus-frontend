@@ -178,6 +178,7 @@
 
 			"groupResults": "Groeperen",
 			"clear": "Wissen",
+			"close": "Sluiten",
 			"apply": "Groeperen",
 			"invalidGrouping": "Deze groepering is niet geldig.",
 
@@ -207,7 +208,7 @@
 			"caseSensitive": "Hoofdlettergevoelig",
 			"chooseWordPositions": "Kies hier de <strong>specifieke woorden</strong> om op te groeperen, in het voorbeeld hieronder ziet u welke woorden zijn geselecteerd.",
 			"selectDocumentMetadata": "Kies de documentwaarde om op te groeperen.",
-			"clickButtonsToStart": "Hier kunt u een groepering toepassen op de resultaten. Gebruik de knoppen links om een groepeercriterium te maken.",
+			"clickButtonsToStart": "Hier kunt u een groepering toepassen op de resultaten. Gebruik de knoppen hieronder om een groepeercriterium te maken.",
 			"metadata": "Metadata",
 			"annotation": "Annotatie",
 			"specify": "Specificeer",

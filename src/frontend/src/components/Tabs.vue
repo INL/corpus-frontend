@@ -91,9 +91,9 @@ export default Vue.extend({
 <style lang="scss" scoped>
 
 .tabs {
-	--inactiveColor: #f5f5f5;
+	--inactiveColor: #white;
 	--activeColor: white;
-	--backgroundColor: #ddd;
+	--backgroundColor: white;
 	--disableColor: #eee;
 	--activeBorderColor: #ddd;
 }
@@ -176,25 +176,11 @@ export default Vue.extend({
 }
 
 
-@mixin tab-border-active($position) {
-	&:not(:first-child) {
-		border-#{$position}: 1px solid var(--inactiveColor);
-		&.active {
-			border-#{$position}-color: var(--activeBorderColor);
-		}
-	}
 
-	&.active+.tab {
-		border-#{$position}-color: var(--activeBorderColor);
-	}
-}
-
-$radius: 10px;
+$radius: 4px;
 
 .tabs {
 	display: flex;
-	// overflow: auto;
-	// overflow-y: hidden;
 	background: var(--backgroundColor);
 
 	&.wrap {
@@ -205,6 +191,12 @@ $radius: 10px;
 		background: var(--inactiveColor);
 		padding: 5px 10px;
 		display: flex;
+		border: 1px solid var(--backgroundColor);
+
+		&:not(.active):hover {
+			background: #efefef;
+			border-color: #efefef;
+		}
 
 		> .tab-content {
 			padding: 0;
@@ -219,7 +211,7 @@ $radius: 10px;
 
 		&.active {
 			background: var(--activeColor);
-			border-color: var(--activeBorderColor);
+			border: 1px solid var(--activeBorderColor);
 			position: relative;
 		}
 	}
@@ -235,15 +227,22 @@ $radius: 10px;
 		border-bottom: 1px solid var(--activeBorderColor);
 
 		> .tab {
+			// border-top: 0;
+			&:first-child { border-left: 0; }
+			&:last-child { margin-right: -1px; } // collapse border with container.
+
 			border-top-left-radius: $radius;
 			border-top-right-radius: $radius;
-			@include tab-border-active(left);
+			margin-right: 4px;
+
+			margin-bottom: -1px;
+			border-bottom: 1px solid transparent;
 		}
 		> .tab.active {
 			border-bottom: 1px solid var(--activeColor);
 			margin-bottom: -1px;
 			z-index: 2;
-			@include roundoverHorizontal($radius, var(--activeColor), var(--inactiveColor));
+			// @include roundoverHorizontal($radius, var(--activeColor), var(--inactiveColor));
 		}
 	}
 
@@ -253,17 +252,24 @@ $radius: 10px;
 		border-right: 1px solid var(--activeBorderColor);
 
 		> .tab {
+			// border-left: 0;
+			&:first-child { border-top: 0; }
+			&:last-child { margin-bottom: -1px; } // collapse border with container.
+
 			text-align: right;
 			border-top-left-radius: $radius;
 			border-bottom-left-radius: $radius;
-			@include tab-border-active(top);
+			margin-bottom: 4px;
+
+			margin-right: -1px;
+			border-right: 1px solid transparent;
 		}
 
 		> .tab.active {
 			border-right: 1px solid var(--activeColor);
 			margin-right: -1px;
 			z-index: 2;
-			@include roundoverVertical($radius, var(--activeColor), var(--inactiveColor));
+			// @include roundoverVertical($radius, var(--activeColor), var(--inactiveColor));
 		}
 	}
 }

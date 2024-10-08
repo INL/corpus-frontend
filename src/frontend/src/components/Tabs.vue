@@ -1,12 +1,20 @@
 <template>
-	<div class="tabs" :class="{ vertical }" :style="style">
-		<div v-for="tab, i in tabsModel" :class="{
-			active: tab.value === modelValue,
-			tab,
-			disabled: tab.disabled
-		}">
-			<slot name="default" :tab="tab" :i="i">
-				<slot name="before" :tab="tab" :i="i"></slot>
+	<div class="tabs" :class="{ vertical, flexy, wrap}">
+		<div v-for="tab, index in tabsModel"
+			:class="{
+				active: index === modelValue.index,
+				tab: true,
+				disabled: tab.disabled,
+				...(function() {
+					if (typeof tab.class === 'string') return {[tab.class]: true}
+					else return tab.class
+				})()
+			}"
+			:style="tab.style"
+			@click.middle="$emit('middlemouse', {tab, index})"
+		>
+			<slot name="default" :tab="tab" :i="index">
+				<slot name="before" :tab="tab" :i="index"></slot>
 				<button
 					type="button"
 					:class="{
@@ -15,11 +23,11 @@
 					}"
 					:title="tab.title || ''"
 					:disabled="tab.disabled"
-					@click="modelValue = tab.value"
+					@click="modelValue = {tab, index}"
 				>
-					{{ tab.label }}
+					{{ tab.label ?? tab.value }}
 				</button>
-				<slot name="after" :tab="tab" :i="i"></slot>
+				<slot name="after" :tab="tab" :i="index"></slot>
 			</slot>
 		</div>
 	</div>
@@ -29,31 +37,24 @@
 import { Option } from '@/types/apptypes';
 import Vue from 'vue';
 
+export type Tab = Option&{
+	class?: any,
+	style?: CSSStyleDeclaration,
+}
+
 export default Vue.extend({
 	props: {
-		value: String,
-		tabs: Array as () => Option[]|string[],
+		value: {required: false, type: [String, Number] },
+		tabs: Array as () => Array<string|Option&{class?: string, style?: CSSStyleDeclaration}>,
 		vertical: Boolean,
-		inactiveColor: {default: '#f5f5f5'},
-		activeColor: {default: 'white'},
-		backgroundColor: {default: '#ddd'},
-		disableColor: {default: 'eee'},
-		activeBorderColor: {default: '#ddd'},
+		flexy: Boolean,
+		wrap: Boolean,
 	},
 	data: () => ({
-		internalModel: '',
+		internalModel: -1,
 	}),
 	computed: {
-		style(): any {
-			return {
-				'--inactiveColor': this.inactiveColor,
-				'--activeColor': this.activeColor,
-				'--backgroundColor': this.backgroundColor,
-				'--disableColor': this.disableColor,
-				'--activeBorderColor': this.activeBorderColor,
-			}
-		},
-		tabsModel(): Option[] {
+		tabsModel(): Tab[] {
 			return this.tabs.map((tab: Option|string) => {
 				if (typeof tab === 'string') {
 					return { label: tab, value: tab };
@@ -62,12 +63,24 @@ export default Vue.extend({
 			});
 		},
 		modelValue: {
-			get(): string {
-				return this.value || this.internalModel;
+			get(): {tab?: Tab, index: number} {
+				if (typeof this.value === 'number') {
+					return {tab: this.tabsModel[this.value], index: this.value};
+				}
+				if (typeof this.value === 'string') {
+					const i = this.tabsModel.findIndex(tab => tab.value === this.value);
+					return {tab: this.tabsModel[i], index: i};
+				}
+				else {
+					return {tab: this.tabsModel[this.internalModel], index: this.internalModel};
+				}
 			},
-			set(value: string) {
-				this.$emit('input', value);
-				this.internalModel = value;
+			set(value: {tab: Tab, index: number}) {
+				// emit either a number or a string, depending on what was put in.
+				const emitValue = typeof this.value === 'string' ? value.tab.value : value.index;
+
+				this.$emit('input', emitValue);
+				this.internalModel = value.index;
 			}
 		}
 	}
@@ -76,6 +89,14 @@ export default Vue.extend({
 </script>
 
 <style lang="scss" scoped>
+
+.tabs {
+	--inactiveColor: #f5f5f5;
+	--activeColor: white;
+	--backgroundColor: #ddd;
+	--disableColor: #eee;
+	--activeBorderColor: #ddd;
+}
 
 @mixin roundover-blocks($zindex, $color, $size, $radius) {
 	&:before, &:after {
@@ -145,6 +166,7 @@ export default Vue.extend({
 			@include block('before', $size, $active, 2) {right: -1px; top: -$size; border-top-left-radius: 100%}
 		}
 	}
+
 	&:not(:last-child) {
 		@include block('after',  $size, $inactive, 3) {right: -1px; bottom: -$size; border-bottom-left-radius: 100%; border-top-right-radius: 100%; border-right: 1px solid var(--activeBorderColor); border-top: 1px solid var(--activeBorderColor);}
 		> *:first-child {
@@ -153,15 +175,36 @@ export default Vue.extend({
 	}
 }
 
+
+@mixin tab-border-active($position) {
+	&:not(:first-child) {
+		border-#{$position}: 1px solid var(--inactiveColor);
+		&.active {
+			border-#{$position}-color: var(--activeBorderColor);
+		}
+	}
+
+	&.active+.tab {
+		border-#{$position}-color: var(--activeBorderColor);
+	}
+}
+
+$radius: 10px;
+
 .tabs {
 	display: flex;
+	// overflow: auto;
+	// overflow-y: hidden;
 	background: var(--backgroundColor);
-	border: 1px solid var(--activeBorderColor);
+
+	&.wrap {
+		flex-wrap: wrap;
+	}
 
 	.tab {
 		background: var(--inactiveColor);
 		padding: 5px 10px;
-		border: 1px solid var(--inactiveColor);
+		display: flex;
 
 		> .tab-content {
 			padding: 0;
@@ -170,6 +213,8 @@ export default Vue.extend({
 			border: none;
 			margin: none;
 			text-decoration: none;
+			flex-grow: 1;
+			white-space: nowrap;
 		}
 
 		&.active {
@@ -179,21 +224,26 @@ export default Vue.extend({
 		}
 	}
 
+	&.flexy {
+		flex-grow: 1;
+		.tab {
+			flex-grow: 1;
+		}
+	}
+
 	&:not(.vertical) {
 		border-bottom: 1px solid var(--activeBorderColor);
 
 		> .tab {
-			border-top-left-radius: 10px;
-			border-top-right-radius: 10px;
-			border-top: none;
-			&:first-child { border-left: none; }
-			&:last-child { border-right: none; }
+			border-top-left-radius: $radius;
+			border-top-right-radius: $radius;
+			@include tab-border-active(left);
 		}
 		> .tab.active {
 			border-bottom: 1px solid var(--activeColor);
 			margin-bottom: -1px;
 			z-index: 2;
-			@include roundoverHorizontal(10px, var(--activeColor), var(--inactiveColor));
+			@include roundoverHorizontal($radius, var(--activeColor), var(--inactiveColor));
 		}
 	}
 
@@ -203,18 +253,17 @@ export default Vue.extend({
 		border-right: 1px solid var(--activeBorderColor);
 
 		> .tab {
-			border-top-left-radius: 10px;
-			border-bottom-left-radius: 10px;
-			border-left: none;
-			&:first-child { border-top: none; }
-			&:last-child { border-bottom: none; }
+			text-align: right;
+			border-top-left-radius: $radius;
+			border-bottom-left-radius: $radius;
+			@include tab-border-active(top);
 		}
 
 		> .tab.active {
 			border-right: 1px solid var(--activeColor);
 			margin-right: -1px;
 			z-index: 2;
-			@include roundoverVertical(10px, var(--activeColor), var(--inactiveColor));
+			@include roundoverVertical($radius, var(--activeColor), var(--inactiveColor));
 		}
 	}
 }

@@ -36,8 +36,11 @@
 				"body_tab_header_properties": "上下文",
 
 				"body_tab_properties_optional": "可选",
+				"body_tab_properties_optional_title": "标记是可选的",
 				"body_tab_properties_beginOfSentence": "句首",
+				"body_tab_properties_beginOfSentence_title": "标记必须出现在句子的开头",
 				"body_tab_properties_endOfSentence": "句尾",
+				"body_tab_properties_endOfSentence_title": "标记必须出现在句子的结尾",
 
 				"body_tab_properties_repeats_label": "重复",
 				"body_tab_properties_repeats_to": "到",

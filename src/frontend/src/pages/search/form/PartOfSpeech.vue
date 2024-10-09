@@ -1,62 +1,53 @@
 <template>
-	<div class="modal fade modal-fullwidth">
-		<div class="modal-dialog">
-			<div class="modal-content">
-				<div class="modal-header">
-					<button type="button" data-dismiss="modal" class="close" title="close">&times;</button>
-					<h3>{{$tAnnotDisplayName(annotation)}}</h3>
-				</div>
-				<div v-if="isValidTagset" class="modal-body">
-					<div class="list-group-container">
-						<div class="list-group main">
-							<button v-for="value in tagset.values"
-								type="button"
-								:key="value.value"
-								:class="{
-									'list-group-item': true,
-									'active': annotationValue === value
-								}"
+	<Modal large :title="$tAnnotDisplayName(annotation)" :confirmMessage="$t('partOfSpeech.submit')" @confirm="submit(); $emit('close');" @close="$emit('close')">
+		<template v-if="isValidTagset">
 
-								@click="annotationValue = (annotationValue === value ? null : value)"
-							>
-								{{value.displayName}} <Debug>({{value.value}})</Debug>
-							</button>
-						</div>
+			<div class="list-group-container" >
+				<div class="list-group main">
+					<button v-for="value in tagset.values"
+						type="button"
+						:key="value.value"
+						:class="{
+							'list-group-item': true,
+							'active': annotationValue === value
+						}"
 
-						<div v-if="annotationValue" class="category-container">
-							<ul v-for="subId in annotationValue.subAnnotationIds" class="list-group category">
-								<li class="list-group-item active category-name">
-									{{$tAnnotDisplayName(allAnnotations[subId])}}
-									<Debug>({{subId}})</Debug>
-								</li>
+						@click="annotationValue = (annotationValue === value ? null : value)"
+					>
+						{{value.displayName}} <Debug>({{value.value}})</Debug>
+					</button>
+				</div>
 
-								<li class="list-group-item category-value" v-for="subValue in tagset.subAnnotations[subId].values" :key="subValue.value" v-if="!subValue.pos || subValue.pos.includes(annotationValue.value)">
-									<label>
-										<input type="checkbox" v-model="selected[`${annotationValue.value}/${subId}/${subValue.value}`]"/>
-										{{subValue.displayName}}
-										<Debug>({{subValue.value}})</Debug>
-									</label>
-								</li>
-							</ul>
-							<em v-if="annotationValue.subAnnotationIds.length === 0">{{$t('partOfSpeech.noOptions')}}</em>
-						</div>
-					</div>
-					<hr>
-					<div>{{query}}</div>
-				</div>
-				<div v-else class="modal-body">
-					<div class="alert alert-danger">
-						{{errorMessage}}
-					</div>
-				</div>
-				<div class="modal-footer">
-					<!-- Don't use submit/reset, since these are not in their own form it messes up submitting any parent form using enter key in input -->
-					<button type="button" class="btn btn-primary" @click.prevent="submit" data-dismiss="modal">{{$t('partOfSpeech.submit')}}</button>
-					<button type="button" class="btn btn-default" @click.prevent="reset">{{$t('partOfSpeech.reset')}}</button>
+				<div v-if="annotationValue" class="category-container">
+					<ul v-for="subId in annotationValue.subAnnotationIds" class="list-group category">
+						<li class="list-group-item active category-name">
+							{{$tAnnotDisplayName(allAnnotations[subId])}}
+							<Debug>({{subId}})</Debug>
+						</li>
+
+						<li class="list-group-item category-value" v-for="subValue in tagset.subAnnotations[subId].values" :key="subValue.value" v-if="!subValue.pos || subValue.pos.includes(annotationValue.value)">
+							<label>
+								<input type="checkbox" v-model="selected[`${annotationValue.value}/${subId}/${subValue.value}`]"/>
+								{{subValue.displayName}}
+								<Debug>({{subValue.value}})</Debug>
+							</label>
+						</li>
+					</ul>
+					<em v-if="annotationValue.subAnnotationIds.length === 0">{{$t('partOfSpeech.noOptions')}}</em>
 				</div>
 			</div>
+			<hr>
+			<div>{{query}}</div>
+		</template>
+		<div v-else class="alert alert-danger">
+			{{errorMessage}}
 		</div>
-	</div>
+
+
+		<template #footer>
+			<button type="button" class="btn btn-default" @click="reset">{{$t('partOfSpeech.reset')}}</button>
+		</template>
+	</Modal>
 </template>
 
 <script lang="ts">
@@ -67,7 +58,12 @@ import * as CorpusStore from '@/store/search/corpus';
 import { Tagset } from '@/types/apptypes';
 import { escapeRegex } from '@/utils';
 
+import Modal from '@/components/Modal.vue';
+
 export default Vue.extend({
+	components: {
+		Modal,
+	},
 	props: {
 		annotation: Object as () => CorpusStore.NormalizedAnnotation,
 	},

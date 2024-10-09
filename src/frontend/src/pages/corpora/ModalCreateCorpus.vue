@@ -35,7 +35,7 @@
 </template>
 <script lang="ts">
 import Vue from 'vue';
-import Modal from './Modal.vue';
+import Modal from '@/components/Modal.vue';
 import SelectPicker from '@/components/SelectPicker.vue';
 import { NormalizedFormat } from '@/types/apptypes';
 import { Options } from '@/components/SelectPicker.vue';

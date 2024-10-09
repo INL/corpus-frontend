@@ -3,7 +3,7 @@
 		<div class="modal-dialog" :style="{height, width}">
 			<div class="modal-content">
 				<div class="modal-header">
-					<button v-if="close" type="button" :disabled="!closeEnabled" class="close" aria-hidden="true" @click="$emit('close')">×</button>
+					<button v-if="close" type="button" :disabled="!closeEnabled" class="close" @click="$emit('close')">×</button>
 					<slot name="title"><h4 class="modal-title">{{ title }}</h4></slot>
 					<slot name="header"></slot>
 				</div>
@@ -37,6 +37,8 @@ export default Vue.extend({
 
 		title: {default: 'Title'},
 		large: Boolean,
+		maxHeight: String,
+		maxWidth: String,
 		height: String,
 		width: String,
 	},
@@ -50,33 +52,37 @@ export default Vue.extend({
 			}
 		}
 	},
+	created() {
+		document.body.classList.add('modal-open');
+		document.body.setAttribute('data-modal-count', (parseInt(document.body.getAttribute('data-modal-count') || '0') + 1).toString());
+	},
+	beforeDestroy() {
+		document.body.setAttribute('data-modal-count', (parseInt(document.body.getAttribute('data-modal-count') || '0') - 1).toString());
+		if (!document.body.hasAttribute('data-modal-count') || document.body.getAttribute('data-modal-count') === '0')
+			document.body.classList.remove('modal-open');
+	}
 })
 </script>
 
 <style lang="scss" scoped>
-.modal { // wrapper
+// wrapper/backdrop. Should be fullscreen with some padding to prevent the modal itself from touching the screen edges.
+.modal {
 	background: rgba(0, 0, 0, 0.5);
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	padding: 30px;
-	@media (max-width: 767px) { padding: 17px; }
-	&.large {
-		padding: 17px;
-		@media (max-width: 767px) { padding: 0; }
 
-		.modal-dialog {
-			width: auto;
-			height: auto;
-		}
-	}
+	// normally quite a bit of padding.
+	padding: 30px;
+	// less padding on small screens
+	@media (max-width: 767px) { padding: 17px; }
+
 
 	.modal-dialog { // actual window
 		display: inline-flex;
 		max-width: 100%;
 		max-height: 100%;
 		margin: 0;
-
 
 		> .modal-content {
 			max-height: 100%;
@@ -91,8 +97,20 @@ export default Vue.extend({
 		}
 	}
 
+	&.large {
+		// Large modals have less padding
+		padding: 17px;
+		// And no padding on small screens
+		@media (max-width: 767px) { padding: 0; }
 
-
+		// We don't want the modal to be super large if it doesn't have to be.
+		// Limit the size to the content.
+		.modal-dialog {
+			width: auto;
+			min-width: 600px;
+			height: auto;
+		}
+	}
 }
 
 

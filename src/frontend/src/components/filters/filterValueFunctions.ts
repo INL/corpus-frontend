@@ -497,9 +497,9 @@ export const valueFunctions: Record<string, FilterValueFunctions<any, any>> = {
 				Vue.delete(withinClauses, name);
 		}
 	}),
-	'span-range': cast<FilterValueFunctions<never, { low: number, high: number }>>({
+	'span-range': cast<FilterValueFunctions<never, { low: number|null, high: number|null }>>({
 		luceneQuerySummary(id, filterMetadata, values) {
-			return values ? `${values.low}-${values.high}` : null;
+			return values ? `${values.low || 0}-${values.high || 9999}` : null;
 		},
 		isActive(id, filterMetadata, values) {
 			return !!(values && (values.low || values.high));
@@ -509,8 +509,8 @@ export const valueFunctions: Record<string, FilterValueFunctions<any, any>> = {
 			const name = filterMetadata['name'] || 'span';
 			const attribute = filterMetadata['attribute'] || 'value';
 			const current = { ...(withinClauses[name] || {}) };
-			if (newValues)
-				current[attribute] = newValues;
+			if (newValues && (newValues.low || newValues.high))
+				current[attribute] = { low: newValues.low ?? 0, high: newValues.high ?? 9999 };
 			else
 				delete current[attribute];
 			if (Object.keys(current).length > 0)

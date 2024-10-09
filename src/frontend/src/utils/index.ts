@@ -360,9 +360,9 @@ export const getPatternString = (
 						if (typeof v === 'string') {
 							// Regex query
 							return ` ${k}="${v.replace(/"/g, '\\"')}"`;
-						} else if (v.low && v.high) {
+						} else if (v.low || v.high) {
 							// Range query
-							return ` ${k}=in[${v.low},${v.high}]`;
+							return ` ${k}=in[${v.low || 0},${v.high || 9999}]`;
 						} else
 							return '';
 					})

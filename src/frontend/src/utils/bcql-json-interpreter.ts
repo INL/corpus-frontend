@@ -140,7 +140,7 @@ function interpretBcqlJson(bcql: string, json: any, defaultAnnotation: string): 
 		return Object.fromEntries(Object.entries(attributes).map(([k, v]: [string, string]) => {
 			if (v.startsWith('@@RANGE@@')) {
 				const [low, high] = v.substring(9).split(',').map(Number);
-				return [k, {low, high}];
+				return [k, { low: low === 0 ? '' : low, high: high === 9999 ? '' : high }];
 			}
 			return [k, v];
 		}));

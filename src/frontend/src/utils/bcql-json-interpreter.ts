@@ -133,14 +133,13 @@ function interpretBcqlJson(bcql: string, json: any, defaultAnnotation: string): 
 		return tokens;
 	}
 
-	function interpretTagsAttributes(attributes: Record<string, string>): Record<string, any> {
+	function interpretTagsAttributes(attributes: Record<string, any>): Record<string, any> {
 		if (!attributes)
 			return {};
-		// Recognize the special value that indicates a range query (e.g. "@@RANGE@@10,20" means range 10-20)
-		return Object.fromEntries(Object.entries(attributes).map(([k, v]: [string, string]) => {
-			if (v.startsWith('@@RANGE@@')) {
-				const [low, high] = v.substring(9).split(',').map(Number);
-				return [k, { low: low === 0 ? '' : low, high: high === 9999 ? '' : high }];
+		// Recognize range query (e.g. { low: 10, high: 20 })
+		return Object.fromEntries(Object.entries(attributes).map(([k, v]) => {
+			if (v.min || v.max) {
+				return [k, { low: v.min == 0 ? '' : v.min, high: v.max == 9999 ? '' : v.max }];
 			}
 			return [k, v];
 		}));

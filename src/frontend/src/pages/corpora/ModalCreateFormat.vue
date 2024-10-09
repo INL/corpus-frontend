@@ -5,9 +5,7 @@
 		:confirmEnabled="!uploading"
 		:confirmMessage="uploading ? 'Saving...' : dirty ? 'Save*' : 'Save'"
 
-		large
-		height="100%"
-		width="100%"
+		fullscreen
 
 		@confirm="uploadFormat"
 		@close="$emit('close')"

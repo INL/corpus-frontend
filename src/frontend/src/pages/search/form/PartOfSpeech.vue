@@ -1,5 +1,5 @@
 <template>
-	<Modal large :title="$tAnnotDisplayName(annotation)" :confirmMessage="$t('partOfSpeech.submit')" @confirm="submit(); $emit('close');" @close="$emit('close')">
+	<Modal :title="$tAnnotDisplayName(annotation)" :confirmMessage="$t('partOfSpeech.submit')" @confirm="submit(); $emit('close');" @close="$emit('close')" lg>
 		<template v-if="isValidTagset">
 
 			<div class="list-group-container" >

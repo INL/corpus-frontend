@@ -1,6 +1,5 @@
 <template>
 	<Modal title="Create new Corpus" @close="$emit('close')" @confirm="createCorpus" closeMessage="Cancel">
-
 		<div v-if="errorMessage" class="alert alert-danger">
 			<a href="#" class="close" aria-label="close" @click="errorMessage = ''">×</a>
 			{{ errorMessage }}

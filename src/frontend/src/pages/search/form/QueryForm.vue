@@ -47,7 +47,6 @@
 		<QueryFormSettings v-if="settingsOpen" id="settings" @close="settingsOpen=false"/>
 		<History v-if="historyOpen" id="history" @close="historyOpen=false"/>
 	</div>
-
 </template>
 
 <script lang="ts">

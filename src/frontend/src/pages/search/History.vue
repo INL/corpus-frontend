@@ -1,12 +1,12 @@
 <template>
-	<Modal large :title="$t('history.heading')" :closeMessage="$t('history.close')" :confirm="false" @close="$emit('close')">
+	<Modal :title="$t('history.heading')" :closeMessage="$t('history.close')" :confirm="false" @close="$emit('close')" auto>
 		<template #body>
 			<table class="table table-hover history-table">
 				<thead>
 					<tr>
-						<th width="30px;">#</th>
-						<th></th>
-						<th>{{ $t('history.results') }}</th>
+						<th width="30px">#</th>
+						<th width="80px"></th>
+						<th width="80px">{{ $t('history.results') }}</th>
 						<th>{{ $t('history.pattern') }}</th>
 						<th>{{ $t('history.filters') }}</th>
 						<th>{{ $t('history.grouping') }}</th>
@@ -62,6 +62,7 @@
 				:confirmMessage="$t('history.clear')"
 				@confirm="clearHistory"
 				@close="clearHistoryVisible=false"
+				auto
 			>
 				{{ $t('history.clearSearchHistoryConfirmation') }}
 			</Modal>

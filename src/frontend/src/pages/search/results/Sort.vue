@@ -50,10 +50,6 @@ export default Vue.extend({
 			options: OptGroup[],
 			searchable: boolean
 		} {
-			// NOTE: we need to always pass all available options, then hide invalids based on displayed results
-			// if we don't do this, sorting will be cleared on initial page load
-			// This happens because results aren't loaded yet, thus isHits/isDocs/isGroups all return false, and no options would be available
-			// then the selectpicker will reset value to undefined, which clears it in the store, which updates the url, etc.
 			const opts = [] as OptGroup[];
 
 			if (this.groups) {

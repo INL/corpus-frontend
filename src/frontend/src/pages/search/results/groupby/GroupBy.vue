@@ -4,11 +4,11 @@
 		{{$t('results.groupBy.groupResults')}}
 	</button>
 
-	<div v-else class="panel panel-default">
-		<div class="panel-heading" style="display: flex; background: #efefef; padding: 0; padding-top: 5px; border-bottom: 1px solid #ccc;" >
-			<div style="padding: 10px; flex: none; white-space: nowrap; align-self: center;">{{$t('results.groupBy.groupResults')}}</div>
-			<button class="btn btn-default" style="align-self: center; margin-right: 0.25em;" type="button" @click="addAnnotation">+ {{$t('results.groupBy.annotation')}}</button>
-			<button class="btn btn-default" style="align-self: center; margin-right: 0.25em;" type="button" @click="addMetadata">+ {{$t('results.groupBy.metadata')}}</button>
+	<div v-else class="panel panel-primary">
+		<div class="panel-heading" style="display: flex; align-items: first baseline; gap: 0.25em;">
+			<h3 class="panel-title" style="padding-right: 0.5em;">{{$t('results.groupBy.groupResults')}}</h3>
+			<button class="btn btn-default" type="button" @click="addAnnotation">+ {{$t('results.groupBy.annotation')}}</button>
+			<button class="btn btn-default" type="button" @click="addMetadata">+ {{$t('results.groupBy.metadata')}}</button>
 		</div>
 
 		<Tabs v-if="tabs.length"
@@ -31,10 +31,7 @@
 			</template>
 		</Tabs>
 
-
-
-
-		<div class="current-group-editor panel-body" v-if="!addedCriteria.length || selectedCriterium">
+		<div class="panel-body" v-if="!addedCriteria.length || selectedCriterium">
 			<template v-if="selectedCriterium?.type === 'context'">
 				<span v-if="isParallel">{{ $t('results.groupBy.parallelCorpusVersion') }}</span>
 				<SelectPicker v-if="isParallel"
@@ -145,7 +142,7 @@
 			<template v-else-if="selectedCriterium?.type === 'custom'">
 				{{selectedCriterium.value}}
 			</template>
-			<em v-else class="text-italic h5 text-muted content" style="display: flex; align-items: center; margin: 0; justify-self: center;">{{ $t('results.groupBy.clickButtonsToStart') }}</em>
+			<em v-else class="h5 text-muted">{{ $t('results.groupBy.clickButtonsToStart') }}</em>
 		</div>
 
 		<div v-if="selectedCriterium?.type === 'context'" class="hit-preview panel-footer">
@@ -173,13 +170,9 @@
 			</template>
 		</div>
 
-		<div class="panel-footer" style="display: flex;">
-
-			<div style="flex-grow: 1;"></div>
-			<button type="button" class="btn btn-default" @click="clear">{{
-				addedCriteria.length ? $t('results.groupBy.clear') : $t('results.groupBy.close')
-			}}</button>
-			<button type="button" :disabled="!addedCriteria.length" class="btn btn-primary" @click="apply">{{ $t('results.groupBy.apply') }}</button>
+		<div class="panel-footer text-right">
+			<button type="button" :disabled="disabled" class="btn btn-default" @click="clear">{{addedCriteria.length ? $t('results.groupBy.clear') : $t('results.groupBy.close')}}</button>
+			<button type="button" :disabled="disabled || !addedCriteria.length" class="btn btn-primary" @click="apply">{{ $t('results.groupBy.apply') }}</button>
 		</div>
 	</div>
 </template>
@@ -366,6 +359,7 @@ export default Vue.extend({
 		selectedCriterium(): GroupBy|undefined { return this.addedCriteria[this.selectedCriteriumIndex]; },
 		// Some utils to cast the current group to a specific type.
 		// so we can use it in computeds for the template.
+		/** When grouping on either: capture group, or relation source/target. */
 		selectedCriteriumAsLabel(): undefined|GroupByContext<ContextLabel> {
 			if (this.selectedCriterium?.type === 'context' && this.selectedCriterium.context.type === 'label')
 				return this.selectedCriterium as GroupByContext<ContextLabel>;
@@ -375,7 +369,7 @@ export default Vue.extend({
 				return this.selectedCriterium as GroupByContext<ContextPositional>;
 		},
 		selectedCriteriumAsSlider(): undefined|GroupByContext<ContextPositional> {
-			if (this.selectedCriteriumAsPositional?.context.info.type === 'specific')
+			if (this.selectedCriteriumAsPositional?.context.whichTokens === 'specific')
 				return this.selectedCriteriumAsPositional;
 		},
 
@@ -383,11 +377,11 @@ export default Vue.extend({
 		sliderInverted(): boolean { const p = this.selectedCriteriumAsSlider?.context.position; return p === 'E' || p === 'B'; },
 		sliderLabels(): any[] { return Array.from({length: this.contextsize}, (_, i) => i + 1).map(i => ({value: i, label: i})); },
 		sliderValue: {
-			get(): [number, number] { return this.selectedCriteriumAsSlider ? [this.selectedCriteriumAsSlider.context.info.start, this.selectedCriteriumAsSlider.context.info.end] : [1, 1]; },
+			get(): [number, number] { return [this.selectedCriteriumAsSlider?.context.start ?? 1, this.selectedCriteriumAsSlider?.context.end ?? 1]; },
 			set(v: [number, number]) {
 				if (this.selectedCriteriumAsSlider) {
-					this.selectedCriteriumAsSlider.context.info.start = v[0];
-					this.selectedCriteriumAsSlider.context.info.end = v[1];
+					this.selectedCriteriumAsSlider.context.start = v[0];
+					this.selectedCriteriumAsSlider.context.end = v[1];
 				}
 			}
 		},
@@ -417,10 +411,10 @@ export default Vue.extend({
 			let start =  Number.MAX_SAFE_INTEGER;
 			let end = -Number.MAX_SAFE_INTEGER;
 			if (context.type === 'positional') {
-				const pos = context.info;
-				if (pos.type === 'all') { start = 0; end = Number.MAX_SAFE_INTEGER; }
-				else if (pos.type === 'first') { start = 0; end = 0; }
-				else { start = pos.start! - 1; end = pos.end! - 1; }
+				const whichTokens = context.whichTokens;
+				if (whichTokens === 'all') { start = 0; end = Number.MAX_SAFE_INTEGER; }
+				else if (whichTokens === 'first') { start = 0; end = 0; }
+				else { start = context.start! - 1; end = context.end! - 1; }
 
 				// left/before context ('B') and hit-from-end context ('E') use inverted index in BlackLab, mimic this.
 				if (position === 'E' || position === 'B') {
@@ -493,25 +487,24 @@ export default Vue.extend({
 				value: 'specific'
 			}, {
 				label: this.$t('results.groupBy.some_words.captureGroupsLabel').toString(),
-				options:
-					this.relations.map(c => ({
+				options: [
+					...this.relations.map(c => ({
 						label: `<span class="color-ball" style="background-color: ${this.colors[c.label].color};">&nbsp;</span> relation ${c.name}`,
 						value: c.name
-					}))
-					.concat(this.captures.map(c => ({
+					})),
+					...this.captures.map(c => ({
 						label: `<span class="color-ball" style="background-color: ${this.colors[c.label].color};">&nbsp;</span> capture ${c.name}`,
 						value: c.name
-					})))
+					}))
+				]
 			}];
 		},
 		contextValue: {
 			/** The string value is when grouping on a capture group or relation. */
 			get(): 'first'|'all'|'context'|string {
-				if (this.selectedCriteriumAsLabel)
-					return this.selectedCriteriumAsLabel.context.label;
-				else if (this.selectedCriteriumAsPositional)
-					return this.selectedCriteriumAsPositional.context.info.type;
-				return '';
+				// if grouping on a label: return the label, if grouping on a position: return the position.
+				// Otherwise blank.
+				return this.selectedCriteriumAsLabel?.context.label ?? this.selectedCriteriumAsPositional?.context.whichTokens ?? '';
 			},
 			/** The string value is when grouping on a capture group or relation. */
 			set(v: 'first'|'all'|'specific'|string) {
@@ -521,13 +514,15 @@ export default Vue.extend({
 				// but make typescript happy.
 				if (v === 'first' || v === 'all' || v === 'specific') {
 					if (this.selectedCriteriumAsPositional) {
-						this.selectedCriteriumAsPositional.context.info.type = v;
+						this.selectedCriteriumAsPositional.context.whichTokens = v;
 					} else {
 						// update context object as we're currently grouping on a label.
 						this.selectedCriterium.context = {
 							type: 'positional',
 							position: 'H',
-							info: {type: v, start: 1, end: this.contextsize},
+							whichTokens: v,
+							start: 1,
+							end: this.contextsize,
 						}
 					}
 					// if we're grouping on the entire hit, we can't group from the end. (blacklab limitation)
@@ -551,7 +546,7 @@ export default Vue.extend({
 			{ label: this.$t('results.groupBy.in_this_location.beforeTheHit').toString(), value: 'B'},
 			{ label: this.$t('results.groupBy.in_this_location.inTheHit').toString(), value: 'H' },
 			// grouping from the end of the hit when grouping on entire hit is not possible (causes an exception in BlackLab)
-			...(this.selectedCriterium?.context.info.type !== 'all' ? [{label: this.$t('results.groupBy.in_this_location.fromTheEnd').toString(), value: 'E'}] : []),
+			...(this.selectedCriterium?.context.whichTokens !== 'all' ? [{label: this.$t('results.groupBy.in_this_location.fromTheEnd').toString(), value: 'E'}] : []),
 			{ label: this.$t('results.groupBy.in_this_location.afterTheHit').toString(), value: 'A' }];
 		},
 		positionValue: {
@@ -608,10 +603,10 @@ export default Vue.extend({
 
 				let wordCount: string;
 
-				if (g.context.info.type === 'all') wordCount = 'all';
-				else if (g.context.info.type === 'first') wordCount = 'first';
-				else if (g.context.info.start === g.context.info.end) wordCount = g.context.info.start + '';
-				else wordCount =`${g.context.info.start}-${g.context.info.end}`;
+				if (g.context.whichTokens === 'all') wordCount = 'all';
+				else if (g.context.whichTokens === 'first') wordCount = 'first';
+				else if (g.context.start === g.context.end) wordCount = g.context.start + '';
+				else wordCount =`${g.context.start}-${g.context.end}`;
 
 				return `${g.annotation}${wordCount ? ` (${wordCount})` : ''} ${position + ' hit'}`;
 			} else if (g.type === 'metadata') {
@@ -642,11 +637,9 @@ export default Vue.extend({
 				context: {
 					type: 'positional',
 					position: 'H',
-					info: {
-						type: 'all',
-						start: 1,
-						end: this.contextsize
-					},
+					whichTokens: 'all',
+					start: 1,
+					end: this.contextsize
 				},
 				caseSensitive: false
 			});
@@ -712,44 +705,11 @@ export default Vue.extend({
 				}
 			}
 		},
-	}
+	},
 });
 </script>
 
 <style lang="scss">
-
-.groupby {
-	display: flex;
-	flex-direction: row;
-	max-width: 100%;
-	overflow: auto;
-}
-
-.group-select-button {
-	text-align: left; border-radius: 0; border-right: 0; border-left: 0; flex-grow: 1;
-}
-.group-delete-button {
-	flex: 0; padding-right: 4px; padding-left: 4px;
-}
-
-.current-group-editor {
-	flex-grow: 1; // take up remainder of horizontal space
-	min-width: 0;
-	display: flex;
-	flex-direction: column;
-
-	> .hit-preview {
-		align-self: flex-end;
-		width: 100%;
-		margin: 0;
-		border-bottom: 0;
-		border-top: 1px solid #ddd;
-		border-top-left-radius: 0;
-		border-top-right-radius: 0;
-		border-bottom-right-radius: 4px;
-	}
-}
-
 
 .case-and-context {
 	display: flex;
@@ -757,7 +717,6 @@ export default Vue.extend({
 	justify-content: space-between;
 	align-items: center;
 	padding: 10px 0;
-
 
 	> .labels {
 		padding-right: 10px;
@@ -780,92 +739,6 @@ export default Vue.extend({
 
 	}
 }
-
-.group-tabs {
-	padding: 0;
-	margin: 0;
-	border: none;
-	display: inline-flex;
-	flex-direction: column;
-	background-color: hsl(0, 0%, 95%);
-	// overflow: hidden;
-
-
-
-	.tab {
-		display: flex;
-		position: relative;
-		padding: 5px 10px;
-
-		border-radius: 0 10px 10px 0;
-		// outline: 1px solid blue;
-		// z-index: 2;
-		position: relative;
-
-		// &.inactive {
-			// inactive tab should have a background color
-			background-color: hsl(0, 0%, 95%);
-		// }
-
-		&.active {
-			// active tab should NOT have a background color
-			background-color: white;
-			border-radius: 10px 0 0 10px;
-			// z-index: 1;
-
-
-			&:before {
-				content: '';
-				position: absolute;
-				// bottom: -20px;
-				bottom: -20px;
-				right: -20px;
-				width: 20px;
-				height: 20px;
-				// border-radius: 100%;
-				box-shadow: 0px 5px 0px 5px #448CCB;
-				z-index: 10;
-			}
-
-			// &:before {
-			// 	content: '';
-			// 	position: absolute;
-			// 	top: -20px;
-			// 	right: 0;
-
-			// 	width: 20px;
-			// 	height: 20px;
-
-			// 	display: block;
-			// 	background: white;
-			// 	border-radius: 10px;
-			// 	border: 1px solid red;
-			// }
-
-			// &:after {
-			// 	content: '';
-			// 	position: absolute;
-			// 	bottom: -20px;
-			// 	right: 0;
-
-			// 	width: 20px;
-			// 	height: 20px;
-
-			// 	display: block;
-			// 	background: white;
-			// 	border-radius: 10px;
-			// 	border: 1px solid red;
-			// }
-		}
-
-		.btn {
-			padding: 0;
-			background: none;
-			border: none;
-		}
-	}
-}
-
 
 .hit-preview {
 	overflow: auto;
@@ -938,68 +811,6 @@ export default Vue.extend({
 	}
 }
 
-.group-by {
-	display: flex;
-	flex-direction: row;
-
-	> *:not(:last-child) {
-		border-right: 1px solid #ddd;
-	}
-
-	.left-sidebar {
-		display: flex;
-		flex-direction: column;
-		> *:not(:last-child) {
-			border-bottom: 1px solid #ddd;
-		}
-
-		.group {
-			display: flex;
-			flex-direction: row;
-			flex-wrap: nowrap;
-			&:not(:last-child) {
-				border-bottom: 1px solid #ddd;
-			}
-
-			 > .btn {
-				border-width: 0;
-				border-radius: 0;
-				// &:not(:last-child) { border-right-width: 1px; }
-			 }
-		}
-
-		.two-button-container {
-			display: flex;
-			width: 100%;
-			flex-direction: column;
-
-			> .btn {
-				border-width: 0;
-				flex-basis: 0;
-				flex-grow: 1;
-				min-width: 50%;
-				border-radius: 0;
-			}
-
-			&.flex-col {
-				flex-grow: 1;
-				flex-direction: column;
-				> .btn:not(:last-child) {
-					border-bottom-width: 1px!important;
-				}
-				> .btn {flex-grow: 1;}
-			}
-			&.flex-row {
-				flex-direction: row;
-				> .btn {
-					&:not(:last-child) { border-right-width: 1px; }
-				}
-
-			}
-		}
-	}
-}
-
 .color-ball {
 	border-radius: 100%;
 	width: 16px;
@@ -1028,21 +839,6 @@ export default Vue.extend({
 			pointer-events: all;
 		}
 	}
-}
-
-.create-group {
-	border: 1px solid black;
-	border-style: dashed;
-	&+.create-group {
-		border-left: none!important;
-	}
-	&:hover {
-		background-color: #ccc!important;
-	}
-}
-
-.panel-footer button+button {
-	margin-left: 0.5em;
 }
 
 </style>

@@ -49,9 +49,6 @@ export default BaseFilter.extend({
 	computed: {
 		searchable(): boolean { return this.options!.length > 10; },
 	},
-	methods: {
-		log: console.log,
-	}
 });
 
 </script>

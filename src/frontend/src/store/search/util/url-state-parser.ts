@@ -470,7 +470,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 		if (sourceFromUrl && !parallelFieldsMap[sourceFromUrl]) {
 			sourceFromUrl = getParallelFieldName(prefix, sourceFromUrl);
 			if (!parallelFieldsMap[sourceFromUrl]) {
-				console.log(`Invalid parallel source field name in url (${this.getString('field')}), ignoring`);
+				console.info(`Invalid parallel source field name in url (${this.getString('field')}), ignoring`);
 				sourceFromUrl = null;
 			}
 		}

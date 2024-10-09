@@ -336,7 +336,7 @@ export function unparenQueryPart(query?: string) {
 
 export const getPatternString = (
 	annotations: AppTypes.AnnotationValue[],
-	withinClauses: Record<string, Record<string, string|number[]>>,
+	withinClauses: Record<string, Record<string, any>>,
 	/**
 	 * Ids of the annotated fields the query should target (for parallel corpora).
 	 * Note that the generated query will only contain the version suffix, not the full field id.
@@ -360,9 +360,9 @@ export const getPatternString = (
 						if (typeof v === 'string') {
 							// Regex query
 							return ` ${k}="${v.replace(/"/g, '\\"')}"`;
-						} else if (Array.isArray(v) && v.length === 2 && typeof v[0] === 'number' && typeof v[1] === 'number') {
+						} else if (v.low && v.high) {
 							// Range query
-							return ` ${k}=in[${v[0]},${v[1]}]`;
+							return ` ${k}=in[${v.low},${v.high}]`;
 						} else
 							return '';
 					})

@@ -57,7 +57,7 @@ export type Result = {
 	tokens?: Token[];
 
 	/** any within clauses on this query */
-	withinClauses?: Record<string, Record<string, string>>;
+	withinClauses?: Record<string, Record<string, any>>;
 
 	targetVersion?: string; // target version for this query, or undefined if this is the source query
 	relationType?: string; // relation type for this (target) query, or undefined if this is the source query
@@ -133,6 +133,19 @@ function interpretBcqlJson(bcql: string, json: any, defaultAnnotation: string): 
 		return tokens;
 	}
 
+	function interpretTagsAttributes(attributes: Record<string, string>): Record<string, any> {
+		if (!attributes)
+			return {};
+		// Recognize the special value that indicates a range query (e.g. "@@RANGE@@10,20" means range 10-20)
+		return Object.fromEntries(Object.entries(attributes).map(([k, v]: [string, string]) => {
+			if (v.startsWith('@@RANGE@@')) {
+				const [low, high] = v.substring(9).split(',').map(Number);
+				return [k, {low, high}];
+			}
+			return [k, v];
+		}));
+	}
+
 	function _posFilter(producer: any, operation: string, filter: any): Result {
 		if (operation !== 'within')
 			throw new Error('Unknown posfilter operation: ' + operation);
@@ -141,7 +154,8 @@ function interpretBcqlJson(bcql: string, json: any, defaultAnnotation: string): 
 		const query = _query(producer);
 
 		query.withinClauses = query.withinClauses ?? {};
-		query.withinClauses[filter.name.toString()] = filter.attributes ?? {};
+
+		query.withinClauses[filter.name.toString()] = interpretTagsAttributes(filter.attributes);
 
 		return query;
 	}
@@ -248,7 +262,7 @@ function interpretBcqlJson(bcql: string, json: any, defaultAnnotation: string): 
 			// "show me these tags" (not really within, no query given)
 			return {
 				withinClauses: {
-					[input.name]: input.attributes,
+					[input.name]: interpretTagsAttributes(input.attributes),
 				},
 			};
 

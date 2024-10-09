@@ -595,7 +595,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 
 	// TODO these might become dynamic in the future, then we need extra manual checking to see if the value is even supported in this corpus
 	@memoize
-	private get withinClauses(): Record<string, Record<string, string>> {
+	private get withinClauses(): Record<string, Record<string, any>> {
 		return this._parsedCql ? this._parsedCql[0].withinClauses || {} : {};
 	}
 

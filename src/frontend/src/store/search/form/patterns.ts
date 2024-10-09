@@ -34,7 +34,7 @@ type ModuleRootState = {
 			// }
 		},
 
-		withinClauses: Record<string, Record<string, string|number[]>>,
+		withinClauses: Record<string, Record<string, any>>,
 
 		splitBatch: boolean,
 	},
@@ -193,7 +193,7 @@ const actions = {
 			// Never overwrite annotatedFieldId or type, even when they're submitted through here.
 			Object.assign(state.extended.annotationValues[id], safeValues);
 		}, 'extended_annotation'),
-		withinClauses: b.commit((state, payload: Record<string, Record<string, string|number[]>>) => {
+		withinClauses: b.commit((state, payload: Record<string, Record<string, any>>) => {
 			state.extended.withinClauses = payload;
 		}, 'extended_within_clauses'),
 		splitBatch: b.commit((state, payload: boolean) => state.extended.splitBatch = payload, 'extended_split_batch'),

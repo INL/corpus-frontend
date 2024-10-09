@@ -502,7 +502,7 @@ export const valueFunctions: Record<string, FilterValueFunctions<any, any>> = {
 			return values ? `${values.low}-${values.high}` : null;
 		},
 		isActive(id, filterMetadata, values) {
-			return !!values;
+			return !!(values && (values.low || values.high));
 		},
 		onChange(id, filterMetadata, newValues) {
 			const withinClauses = PatternStore.getState().extended.withinClauses;
@@ -510,7 +510,7 @@ export const valueFunctions: Record<string, FilterValueFunctions<any, any>> = {
 			const attribute = filterMetadata['attribute'] || 'value';
 			const current = { ...(withinClauses[name] || {}) };
 			if (newValues)
-				current[attribute] = [newValues.low|0, newValues.high|0];
+				current[attribute] = newValues;
 			else
 				delete current[attribute];
 			if (Object.keys(current).length > 0)

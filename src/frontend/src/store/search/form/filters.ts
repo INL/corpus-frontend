@@ -137,7 +137,7 @@ const actions = {
 		return (filterObj.value = value != null ? value : null);
 	}, 'filter_value'),
 
-	setFiltersFromWithinClauses: b.commit((state, withinClauses: Record<string, Record<string, string|number[]>>) => {
+	setFiltersFromWithinClauses: b.commit((state, withinClauses: Record<string, Record<string, any>>) => {
 		// For each within clause...
 		Object.entries(withinClauses).forEach( ([el, attr]) => {
 			// For each attribute in this clause...

@@ -336,7 +336,7 @@ export function unparenQueryPart(query?: string) {
 
 export const getPatternString = (
 	annotations: AppTypes.AnnotationValue[],
-	withinClauses: Record<string, Record<string, string>>,
+	withinClauses: Record<string, Record<string, string|number[]>>,
 	/**
 	 * Ids of the annotated fields the query should target (for parallel corpora).
 	 * Note that the generated query will only contain the version suffix, not the full field id.
@@ -354,8 +354,20 @@ export const getPatternString = (
 	const queryGiven = query.length > 0;
 	if (Object.keys(withinClauses).length > 0) {
 		for (const [within, withinAttributes] of Object.entries(withinClauses)) {
-			const attr = withinAttributes ? Object.entries(withinAttributes).filter(([k, v]) => !!v)
-				.map(([k, v]) => ` ${k}="${v.replace(/"/g, '\\"')}"`).join('') : '';
+			const attr = withinAttributes ?
+				Object.entries(withinAttributes).filter(([k, v]) => !!v)
+					.map(([k, v]) => {
+						if (typeof v === 'string') {
+							// Regex query
+							return ` ${k}="${v.replace(/"/g, '\\"')}"`;
+						} else if (Array.isArray(v) && v.length === 2 && typeof v[0] === 'number' && typeof v[1] === 'number') {
+							// Range query
+							return ` ${k}=in[${v[0]},${v[1]}]`;
+						} else
+							return '';
+					})
+					.join('')
+				: '';
 			const tags = `<${within}${attr}/>`;
 			if (queryGiven) {
 				// Actual within

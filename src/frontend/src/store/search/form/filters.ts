@@ -137,17 +137,19 @@ const actions = {
 		return (filterObj.value = value != null ? value : null);
 	}, 'filter_value'),
 
-	setFiltersFromWithinClauses: b.commit((state, withinClauses: Record<string, Record<string, string>>) => {
+	setFiltersFromWithinClauses: b.commit((state, withinClauses: Record<string, Record<string, string|number[]>>) => {
 		// For each within clause...
 		Object.entries(withinClauses).forEach( ([el, attr]) => {
 			// For each attribute in this clause...
-			Object.entries(attr ?? {}).forEach( ([attrName, attrValueRegex]) => {
-				const attrValueWildcard = unescapeRegex(attrValueRegex, true); // convert to wildcard form (pipes are unaffected)
+			Object.entries(attr ?? {}).forEach( ([attrName, attrValue]) => {
+				// If it's a regex, convert it to wildcard form (pipes for multiple values are unaffected)
+				const widgetValue = typeof attrValue === 'string' ? unescapeRegex(attrValue, true) : attrValue;
 				// Find the matching filter and set the value
 				Object.values(state.filters)
 					.filter(f => f.isSpanFilter && f.metadata.name === el && f.metadata.attribute === attrName)
 					.forEach(f => {
-						f.value = f.componentName === 'filter-select' ? attrValueWildcard.split('|') : attrValueWildcard;
+						f.value = typeof widgetValue === 'string' && f.componentName === 'filter-select' ?
+								widgetValue.split('|') : widgetValue;
 					});
 			});
 		});

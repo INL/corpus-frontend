@@ -1303,7 +1303,7 @@ const corpusCustomizations = {
 					});
 				}
 
-				const behaviourName = widget === 'select' ? 'span-select' : 'span-text';
+				const behaviourName = widget === 'select' || widget === 'range' ? `span-${widget}` : 'span-text';
 
 				return {
 					id: `${spanName}-${attrName}`,

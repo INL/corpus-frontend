@@ -374,16 +374,11 @@ export default Vue.extend({
 		// simple view variables
 		indexId(): string { return INDEX_ID; },
 		resultsHaveData(): boolean {
-			const r = (() => {
-				if (BLTypes.isDocGroups(this.results)) { return this.results.docGroups.length > 0; }
-				if (BLTypes.isHitGroups(this.results)) { return this.results.hitGroups.length > 0; }
-				if (BLTypes.isHitResults(this.results)) { return this.results.hits.length > 0; }
-				if (BLTypes.isDocResults(this.results)) { return this.results.docs.length > 0; }
-				return false;
-
-			})();
-			console.log('resultshavedata', r)
-			return r;
+			if (BLTypes.isDocGroups(this.results)) { return this.results.docGroups.length > 0; }
+			if (BLTypes.isHitGroups(this.results)) { return this.results.hitGroups.length > 0; }
+			if (BLTypes.isHitResults(this.results)) { return this.results.hits.length > 0; }
+			if (BLTypes.isDocResults(this.results)) { return this.results.docs.length > 0; }
+			return false;
 		},
 		isHits(): boolean { return BLTypes.isHitResults(this.results); },
 		isDocs(): boolean { return BLTypes.isDocResults(this.results); },

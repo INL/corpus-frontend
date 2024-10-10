@@ -758,6 +758,11 @@ export default Vue.extend({
 		overflow: hidden; // hide the annotation if it's too long.
 		position: relative;
 		padding-bottom: 0.5em; // space for the annotation value that hovers below the word.
+
+		// Always round the borders of inactive words
+		// Otherwise highlights look bad.
+		// (active words have their own border radius logic.)
+		&:not(.active) { border-radius: 6px; }
 	}
 
 	/** In between words. Is separate from the word container because in the past words could be shrunk, but punctuation was exempt from that. */

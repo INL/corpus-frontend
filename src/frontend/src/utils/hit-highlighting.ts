@@ -157,30 +157,51 @@ function getHighlightSections(matchInfos: NonNullable<BLHit['matchInfos']>): Hig
 
 	// Allow custom script to determine what to highlight for this hit
 	// (i.e. "do (hover)highlight word alignments, but not verse alignments")
+	/** I.E. are there captures (e.g. a:[]) or only relations? */
 	const hasExplicitCaptures = interestingCaptures.find(c => !c.isRelation) !== undefined;
+
 	const result: HighlightSection[] = interestingCaptures
 		.map(mi => {
-			const style = corpusCustomizations.results.matchInfoHighlightStyle(mi);
-			if (style === 'none' || (style === null && hasExplicitCaptures && mi.isRelation)) {
-				// Exclude based on custom function result
-				// or default behaviour ("exclude relations if there's explicit captures").
-				//
-				// (JN) It might not be obvious to most users why slightly different queries highlight
-				// very different things. Maybe just highlight everything by default..?
+			// always highlight if the user "captured" (i.e. labelled this token in the query),
+			// OR if this is a relation and there are no explicit captures.
+			// Even if this is false, the highlight will appear up if the user hovers over the hit.
+			// This only controls whether it's always shown.
+			const shouldHighlightByDefault = !mi.isRelation || !hasExplicitCaptures;
+			const shouldHighlightByCustomizations = corpusCustomizations.results.matchInfoHighlightStyle(mi);
+
+			if (shouldHighlightByCustomizations === 'none') {
+				// this capture/relation should never be highlighed.
+				// remove this from the list.
 				return null;
+			} else if (shouldHighlightByCustomizations === 'static') {
+				// true signifies that this should always be highlighted.
+				mi.showHighlight = true;
+			} else if (shouldHighlightByCustomizations === 'hover') {
+				// false signifies that this should only be highlighted on hover.
+				mi.showHighlight = false;
+			} else {
+				// Script returned null or undefined, or something else we don't understand.
+				// Use the default behavior.
+				mi.showHighlight = shouldHighlightByDefault;
 			}
-			if (style === 'static') {
-				// Indicate that we want this to be highlighted permanently.
-				return mi.showHighlight ? mi : { ...mi, showHighlight: true };
-			}
-			// Not static, highlight on hover (parallel corpora).
-			return !mi.showHighlight ? mi : { ...mi, showHighlight: false };
+
+			return mi;
 		})
 		.filter(mi => mi !== null)
 
 	return result;
 }
 
+/**
+ * Given a BlackLab query's results, assign a color to every relation and capture.
+ * The returned colors are keyed by the matchInfos key as reported by BlackLab
+ *
+ * E.g. for a query "_ -obj-> _" the color would be under "obj".
+ * For an anonymous relation e.g. _ --> _ this the color would be under something like "dep" or "rel"
+ * For a capture group, e.g. "a:[] b:[]" this would be the name of the capture group, "a" or "b".
+ *
+ * We use this for highlighting the hits in the UI.
+ */
 export function getHighlightColors(summary: BLSearchSummary): Record<string, TokenHighlight> {
 	return mapReduce(Object.keys(summary.pattern?.matchInfos ?? {}).sort(), (hl, i) => color(hl, i));
 }
@@ -199,8 +220,6 @@ export function getHighlightColors(summary: BLSearchSummary): Record<string, Tok
  * @returns the hit split into before, match, and after parts, with capture and relation info added to the tokens. The punct is to be shown after the word.
  */
 export function snippetParts(hit: BLHit|BLHitSnippet, annotationId: string, dir: 'ltr'|'rtl', colors?: Record<string, TokenHighlight>): HitContext {
-	if (hit === undefined)
-		console.error('hit is undefined');
 	const before = flatten(dir === 'ltr' ? hit.left : hit.right, annotationId, hit.match.punct[0]);
 	const match = flatten(hit.match, annotationId, (dir === 'ltr' ? hit.right : hit.left)?.punct[0]);
 	const after = flatten(dir === 'ltr' ? hit.right : hit.left, annotationId);

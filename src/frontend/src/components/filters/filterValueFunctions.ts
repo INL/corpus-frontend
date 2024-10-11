@@ -46,10 +46,14 @@ type FilterValueFunctions<M, V> = {
 	 * If a custom filter wants to take "ownership" of a decoded filter value, it should delete the value from the map, to prevent
 	 * later (inbuilt) filters from decoding it.
 	 */
-	decodeInitialState?(id: string, filterMetadata: M, filterValues: Record<string, FilterValue|undefined>, ast: ASTNode, parsedCqlQuery: Result[]|null): V|null,
-	luceneQuery?(id: string, filterMetadata: M, value: V|null): string|null;
+	decodeInitialState?(id: string, filterMetadata: M, filterValues: Record<string, FilterValue|undefined>, ast: ASTNode): V|null,
+	/** For document-level filters: return the Lucene filter query */
+	luceneQuery(id: string, filterMetadata: M, value: V|null): string|null;
+	/** For all filter types: summarize what filter will be applied */
 	luceneQuerySummary(id: string, filterMetadata: M, value: V|null): string|null;
+	/** Is this filter currently active? */
 	isActive(id: string, filterMetadata: M, value: V|null): boolean;
+	/** Triggered when the filter values change. Used for span filters, to update withinClauses. */
 	onChange?(id: string, filterMetadata: M, newValue: V|null): void;
 };
 
@@ -218,7 +222,7 @@ export const valueFunctions: Record<string, FilterValueFunctions<any, any>> = {
 			return split.map(t => (t.isQuoted || split.length > 1) ? `"${t.value}"` : t.value).join(', ') || null;
 		},
 		isActive(id, filterMetadata, value) {
-			return this.luceneQuery!(id, filterMetadata, value) !== null;
+			return this.luceneQuery(id, filterMetadata, value) !== null;
 		}
 	}),
 	'filter-checkbox': cast<FilterValueFunctions<Option[], Record<string, boolean>>>({
@@ -247,7 +251,7 @@ export const valueFunctions: Record<string, FilterValueFunctions<any, any>> = {
 			return selected.length >= 2 ? selected.map(v => `"${v}"`).join(', ') : selected[0] || null;
 		},
 		isActive(id, filterMetadata, value) {
-			return this.luceneQuery!(id, filterMetadata, value) !== null;
+			return this.luceneQuery(id, filterMetadata, value) !== null;
 		}
 	}),
 	'filter-radio': cast<FilterValueFunctions<Option[], string>>({
@@ -269,7 +273,7 @@ export const valueFunctions: Record<string, FilterValueFunctions<any, any>> = {
 			return filterMetadata.find(option => option.value === value)?.label || value || null;
 		},
 		isActive(id, filterMetadata, value) {
-			return this.luceneQuery!(id, filterMetadata, value) !== null;
+			return this.luceneQuery(id, filterMetadata, value) !== null;
 		}
 	}),
 	'filter-range': cast<FilterValueFunctions<never, { low: string; high: string; }>>({
@@ -291,7 +295,7 @@ export const valueFunctions: Record<string, FilterValueFunctions<any, any>> = {
 			return (value && (value.low != null || value.high != null)) ? `${value.low || '0'} - ${value.high || '9999'}` : null;
 		},
 		isActive(id, filterMetadata, value) {
-			return this.luceneQuery!(id, filterMetadata, value) !== null;
+			return this.luceneQuery(id, filterMetadata, value) !== null;
 		}
 	}),
 	'filter-range-multiple-fields': cast<FilterValueFunctions<{low: string, high: string}, {low: string, high: string, mode: 'permissive'|'strict'}>>({
@@ -330,11 +334,11 @@ export const valueFunctions: Record<string, FilterValueFunctions<any, any>> = {
 			// as they're usually indexed as text values, and not numeric values
 			const longestValue = Math.max(lowValue.length, highValue.length);
 
-			const luceneQuery = this.luceneQuery!(id, filterMetadata, value);
+			const luceneQuery = this.luceneQuery(id, filterMetadata, value);
 			return luceneQuery ? `${lowValue.padStart(longestValue, '0')}-${highValue.padStart(longestValue, '0')}` : null;
 		},
 		isActive(id, filterMetadata, value) {
-			return this.luceneQuery!(id, filterMetadata, value) !== null;
+			return this.luceneQuery(id, filterMetadata, value) !== null;
 		}
 	}),
 	'filter-select': cast<FilterValueFunctions<Option[], string[]>>({
@@ -359,7 +363,7 @@ export const valueFunctions: Record<string, FilterValueFunctions<any, any>> = {
 			return asDisplayValues.length >= 2 ? asDisplayValues.map(v => `"${v}"`).join(', ') : asDisplayValues[0] || null;
 		},
 		isActive(id, filterMetadata, value) {
-			return this.luceneQuery!(id, filterMetadata, value) !== null;
+			return this.luceneQuery(id, filterMetadata, value) !== null;
 		}
 	}),
 	'filter-text': cast<FilterValueFunctions<never, string>>({
@@ -375,7 +379,7 @@ export const valueFunctions: Record<string, FilterValueFunctions<any, any>> = {
 			return split.map(t => (t.isQuoted || split.length > 1) ? `"${t.value}"` : t.value).join(', ') || null;
 		},
 		isActive(id, filterMetadata, value) {
-			return this.luceneQuery!(id, filterMetadata, value) !== null;
+			return this.luceneQuery(id, filterMetadata, value) !== null;
 		}
 	}),
 	'filter-date': cast<FilterValueFunctions<FilterDateMetadata, FilterDateValue>>({
@@ -436,7 +440,7 @@ export const valueFunctions: Record<string, FilterValueFunctions<any, any>> = {
 		},
 		luceneQuerySummary(id, filterMetadata, value) {
 			// Instead of repeating all the logic above, just regex out the relevant parts
-			const v = this.luceneQuery!(id, filterMetadata, value);
+			const v = this.luceneQuery(id, filterMetadata, value);
 			if (!v) return null;
 			let [_, start, end] = v.match(/(\d+).+?(\d+)/)!; // capture the first two numbers.
 			start = DateUtils.luceneToDisplayString(start);
@@ -444,10 +448,13 @@ export const valueFunctions: Record<string, FilterValueFunctions<any, any>> = {
 			return (start !== end) ? start + ' to ' + end : start;
 		},
 		isActive(id, filterMetadata, value) {
-			return this.luceneQuery!(id, filterMetadata, value) !== null;
+			return this.luceneQuery(id, filterMetadata, value) !== null;
 		}
 	}),
 	'span-text': cast<FilterValueFunctions<never, string>>({
+		luceneQuery(id, filterMetadata, value) {
+			return null; // not a document level filter
+		},
 		luceneQuerySummary(id, filterMetadata, value) {
 			return value ?? null;
 		},
@@ -471,6 +478,9 @@ export const valueFunctions: Record<string, FilterValueFunctions<any, any>> = {
 		}
 	}),
 	'span-select': cast<FilterValueFunctions<any, string[]>>({
+		luceneQuery(id, filterMetadata, value) {
+			return null; // not a document level filter
+		},
 		luceneQuerySummary(id, filterMetadata, value) {
 			const options: Option[] = filterMetadata.options || filterMetadata;
 			const asDisplayValues = (value || []).map(v => {
@@ -498,6 +508,9 @@ export const valueFunctions: Record<string, FilterValueFunctions<any, any>> = {
 		}
 	}),
 	'span-range': cast<FilterValueFunctions<never, { low: number|null, high: number|null }>>({
+		luceneQuery(id, filterMetadata, value) {
+			return null; // not a document level filter
+		},
 		luceneQuerySummary(id, filterMetadata, values) {
 			return values ? `${values.low || 0}-${values.high || 9999}` : null;
 		},
@@ -529,6 +542,7 @@ export function getValueFunctions(filter: FullFilterState): FilterValueFunctions
 	// Referencing nonexistent filter functions; report and return a dummy value
 	console.error(`No value functions for filter ${name}; returning dummy`);
 	return {
+		luceneQuery: () => null,
 		luceneQuerySummary: () => null,
 		isActive: () => false
 	};
@@ -551,7 +565,7 @@ export function getValueFunctions(filter: FullFilterState): FilterValueFunctions
 export function getFilterString(filters: FullFilterState[]): string|undefined {
 	return filters
 		.filter(f => !f.isSpanFilter)
-		.map(f => getValueFunctions(f).luceneQuery!(f.id, f.metadata, f.value))
+		.map(f => getValueFunctions(f).luceneQuery(f.id, f.metadata, f.value))
 		.filter(lucene => !!lucene).join(' AND ') || undefined;
 }
 

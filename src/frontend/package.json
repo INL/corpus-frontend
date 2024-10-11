@@ -7,8 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npm run build:blfschema && npm run build:source",
     "build:blfschema": "cd src/assets && node compile-schema.js && cd ../..",
-    "build:source": "NODE_OPTIONS=--max-old-space-size=8192 webpack --config webpack.config.prod.js --mode production",
-    "start": "NODE_OPTIONS=--max-old-space-size=8192 webpack-dev-server --hot --config webpack.config.dev.js --mode development --port 8081 --host 0.0.0.0",
+    "build:source": "webpack --config webpack.config.prod.js --mode production",
+    "start": "webpack-dev-server --hot --config webpack.config.dev.js --mode development --port 8081 --host 0.0.0.0",
     "node": "node"
   },
   "author": "INT",

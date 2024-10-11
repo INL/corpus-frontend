@@ -180,8 +180,7 @@ export default Vue.extend({
 							id,
 							filter.metadata,
 							{ [id]: { id: id, values: value } },
-							undefined as any,
-							null
+							undefined as any
 						) : null;
 
 						FilterStore.actions.filterValue({

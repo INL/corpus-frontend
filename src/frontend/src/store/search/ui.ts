@@ -1319,9 +1319,6 @@ const corpusCustomizations = {
 					// (groupId will be set automatically when creating the custom tabs)
 				};
 			},
-
-			/** any custom metadata fields we want to use */
-			customFilters: {} as Record<string, FilterStore.FullFilterState>,
 		}
 	},
 

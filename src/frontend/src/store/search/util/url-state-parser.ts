@@ -107,8 +107,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 					filterDefinition.id,
 					filterDefinition.metadata,
 					parsedQuery,
-					luceneQueryAST,
-					parsedCqlQuery
+					luceneQueryAST
 				) : null;
 
 				if (value) {

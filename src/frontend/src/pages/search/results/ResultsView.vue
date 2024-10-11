@@ -4,6 +4,7 @@
 		<Spinner v-if="request" overlay size="75"/>
 
 		<!-- i.e. HitResults, DocResults, GroupResults -->
+		<!-- Minor annoyance, all slot components are re-created when we group/ungroup results because this :is changes, causing a complete re-render. -->
 		<component v-if="resultsHaveData"
 			:is="resultComponentName"
 			v-bind="resultComponentData"
@@ -29,7 +30,6 @@
 				:type="id"
 				:results="results"
 				:disabled="!!request"
-				@viewgroupLeave="leaveViewgroup"
 			/>
 			<button v-else slot="groupBy" class="btn btn-sm btn-primary" @click="leaveViewgroup"><span class="fa fa-angle-double-left"></span> {{ $t('results.resultsView.backToGroupOverview') }}</button>
 
@@ -174,7 +174,6 @@ export default Vue.extend({
 		debug
 	}),
 	methods: {
-		log: console.log,
 		markDirty() {
 			this.isDirty = true;
 			if (this.cancel) {
@@ -288,8 +287,8 @@ export default Vue.extend({
 			set(v: string[]) { this.store.actions.groupBy(v); }
 		},
 		page: {
-			get(): number { const n = this.store.getState().page; console.log('got page', n); return n; },
-			set(v: number) { this.store.actions.page(v); console.log('set page', v); }
+			get(): number { return this.store.getState().page; },
+			set(v: number) { this.store.actions.page(v);  }
 		},
 		sort: {
 			get(): string|null { return this.store.getState().sort; },

@@ -176,6 +176,7 @@
 			"groupNameWithoutValue": "[none]",
 
 			"groupResults": "Group Results",
+			"close": "Close",
 			"clear": "Clear",
 			"apply": "Group",
 			"invalidGrouping": "This grouping is not valid.",

@@ -123,6 +123,12 @@ const actions = {
 			return;
 		}
 
+		// Backwards compat: we renamed these fields but not all extension scripts are upt-to-date
+		//@ts-ignore
+		filter.defaultDisplayName = filter.defaultDisplayName || filter.displayName;
+		//@ts-ignore
+		filter.defaultDisplayName = filter.defaultDescription || filter.description;
+
 		Vue.set<FullFilterState>(state.filters, filter.id, {...filter, value: null});
 	}, 'registerFilter'),
 

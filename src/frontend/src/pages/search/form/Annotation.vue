@@ -42,14 +42,9 @@
 					v-model="value"
 				/>
 				<div v-if="!bare" class="input-group-btn">
-					<a v-if="annotation.uiType === 'pos'"
-						data-toggle="modal"
-						class="btn btn-default"
-
-						:href="`#pos_editor${uid}`"
-					>
-						<span class="fa fa-pencil fa-fw"/>
-					</a>
+					<button v-if="annotation.uiType === 'pos'" class="btn btn-default" type="button" @click="posOpen = true">
+						<span class="fa fa-pencil fa-fw"></span>
+					</button>
 
 					<label class="btn btn-default file-input-button" :for="fileInputId" v-if="annotation.uiType !== 'pos'">
 						<span class="fa fa-upload fa-fw"></span>
@@ -65,7 +60,7 @@
 				</div>
 			</div>
 			<template v-if="annotation.uiType === 'pos'">
-				<PartOfSpeech
+				<PartOfSpeech v-if="posOpen" @close="posOpen = false"
 					:id="`pos_editor${uid}`"
 					:annotation="annotation"
 
@@ -131,6 +126,7 @@ export default Vue.extend({
 	data: () => ({
 		uid: UID(),
 		subscriptions: [] as Array<() => void>,
+		posOpen: false,
 	}),
 	computed: {
 		stateGetter(): () => AnnotationValue {

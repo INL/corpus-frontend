@@ -5,9 +5,7 @@
 		:confirmEnabled="!uploading"
 		:confirmMessage="uploading ? 'Saving...' : dirty ? 'Save*' : 'Save'"
 
-		large
-		height="100%"
-		width="100%"
+		fullscreen
 
 		@confirm="uploadFormat"
 		@close="$emit('close')"
@@ -63,7 +61,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import Modal from './Modal.vue';
+import Modal from '@/components/Modal.vue';
 import { NormalizedFormat, Option } from '@/types/apptypes';
 import * as Api from '@/api';
 

@@ -3,185 +3,176 @@
 	<button v-if="!active && !addedCriteria.length" class="btn btn-default btn-secondary btn-sm" type="button" @click="active=true">
 		{{$t('results.groupBy.groupResults')}}
 	</button>
-	<div v-else class="panel panel-default">
-		<div class="panel-heading" style="margin: 0">{{$t('results.groupBy.groupResults')}} <button class="pull-right close" type="button" @click="clear">&times;</button></div>
 
-		<div class="group-by">
-			<!-- Group selector/creator container -->
-			<div class="left-sidebar">
-				<div :class="{'two-button-container': true, 'flex-row': addedCriteria.length > 0, 'flex-col': addedCriteria.length === 0}">
-					<button type="button" @click="addAnnotation" class="create-group-btn btn btn-default" v-if="type === 'hits'">+ {{ $t('results.groupBy.annotation') }}</button>
-					<button type="button" @click="addMetadata" class="create-group-btn btn btn-default">+ {{ $t('results.groupBy.metadata') }}</button>
-				</div>
+	<div v-else class="panel panel-primary">
+		<div class="panel-heading" style="display: flex; align-items: first baseline; gap: 0.25em;">
+			<h3 class="panel-title" style="padding-right: 0.5em;">{{$t('results.groupBy.groupResults')}}</h3>
+			<button v-if="type === 'hits'" class="btn btn-default" type="button" @click="addAnnotation">+ {{$t('results.groupBy.annotation')}}</button>
+			<button class="btn btn-default" type="button" @click="addMetadata">+ {{$t('results.groupBy.metadata')}}</button>
+		</div>
 
-				<!-- list of current groups -->
-				<div v-if="addedCriteria.length" class="groups">
-					<div class="group" v-for="(a, i) in addedCriteria">
-						<button
-							type="button"
-							:key="i"
-							:class="['btn btn-default group-select-button', selectedCriteriumIndex === i ? 'active' : '']"
-							@click="selectedCriteriumIndex = i;"
-						>
-							<span class="text-primary" style="font-family: monospace;">[{{ a.type === 'metadata' ? 'M' : 'A' }}]</span>
-							<span :class="isEmptyGroup(a) ? 'text-muted' : ''">{{humanized[i]}}</span>
-							<span v-if="isInvalidGroup(a)" class="fa fas fa-warning text-danger" :title="$t('results.groupBy.invalidGrouping')"></span>
-						</button>
-						<button type="button" class="btn btn-danger group-delete-button" @click="removeGroup(i)">&times;</button>
-					</div>
-				</div>
+		<Tabs v-if="tabs.length"
+			:tabs="tabs"
 
-				<div v-if="addedCriteria.length" style="flex-grow: 1; margin-top: -1px; /*collapse borders between groups and bottom buttons*/"></div>
+			wrap
+			:value="selectedCriteriumIndex"
+			@input="selectedCriteriumIndex = $event"
+			@middlemouse="$event.index < addedCriteria.length && removeGroup($event.index)"
+		>
+			<template #after="{tab, i}">
+				<button
+					type="button"
+					@click="removeGroup(i)"
+					class="btn btn-link remove-group-button"
+					style="align-self: flex-start;margin-top: -0.25em;font-size: 150%"
+				>
+					<strong class="text-danger">&times;</strong>
+				</button>
+			</template>
+		</Tabs>
 
-				<!-- clear/apply -->
-				<div class="two-button-container flex-row" v-if="addedCriteria.length">
-					<button class="btn btn-primary" @click="apply">{{ $t('results.groupBy.apply') }}</button>
-					<button class="btn btn-default" @click="clear">{{ $t('results.groupBy.clear') }}</button>
-				</div>
-			</div>
-
-			<div class="current-group-editor panel-default">
-				<div class="content" v-if="selectedCriterium">
-					<template v-if="selectedCriterium.type === 'context'">
-						<div class="content">
-							<span v-if="isParallel">{{ $t('results.groupBy.parallelCorpusVersion') }}</span>
-							<SelectPicker v-if="isParallel"
-									:options="parallelVersionOptions"
-									v-model="targetField"
-									allowUnknownValues
-									data-width="auto"
-									data-menu-width="auto"
-									hideEmpty />
-							<i18n path="results.groupBy.iWantToGroupOnAnnotation" tag="div">
-								<!-- allow unknown values here. If grouping on a capture group/relation, they're not always available immediately (we need the first hit to decode them). -->
-								<template #some_words><SelectPicker
-									:options="contextOptions"
-									v-model="contextValue"
-									allowUnknownValues
-									data-width="auto"
-									data-menu-width="auto"
-									hideEmpty
-									allowHtml
-								/></template>
-								<!-- Specific layout, we want to hide the selectpicker, but there might be surrounding text that also needs to be hidden... -->
-								<template #in_this_location_with_text>
-									<!-- if not grouping on a label but on a specific position, then show the position picker. -->
-									<i18n v-if="selectedCriteriumAsPositional" path="results.groupBy.in_this_location_with_text">
-										<template #in_this_location> <!-- doesn't seem to work if we don't wrap the selectpicker in a template. -->
-											<SelectPicker
-												v-model="positionValue"
-												hideEmpty
-												data-width="auto"
-												data-menu-width="auto"
-												:options="positionOptions"
-											/>
-										</template>
-									</i18n>
-								</template>
-								<template #this_annotation>
+		<div class="panel-body" v-if="!addedCriteria.length || selectedCriterium">
+			<template v-if="selectedCriterium?.type === 'context'">
+				<span v-if="isParallel">{{ $t('results.groupBy.parallelCorpusVersion') }}</span>
+				<SelectPicker v-if="isParallel"
+						:options="parallelVersionOptions"
+						v-model="targetField"
+						allowUnknownValues
+						data-width="auto"
+						data-menu-width="auto"
+						hideEmpty />
+				<i18n path="results.groupBy.iWantToGroupOnAnnotation" tag="div">
+					<!-- allow unknown values here. If grouping on a capture group/relation, they're not always available immediately (we need the first hit to decode them). -->
+					<template #some_words><SelectPicker
+						:options="contextOptions"
+						v-model="contextValue"
+						allowUnknownValues
+						data-width="auto"
+						data-menu-width="auto"
+						hideEmpty
+						allowHtml
+					/></template>
+					<!-- Specific layout, we want to hide the selectpicker, but there might be surrounding text that also needs to be hidden... -->
+					<template #in_this_location_with_text>
+						<!-- if not grouping on a label but on a specific position, then show the position picker. -->
+						<i18n v-if="selectedCriteriumAsPositional" path="results.groupBy.in_this_location_with_text">
+							<template #in_this_location> <!-- doesn't seem to work if we don't wrap the selectpicker in a template. -->
 								<SelectPicker
-									:placeholder="'...' + '\xa0'.repeat(20) /*nbsp*/"
+									v-model="positionValue"
+									hideEmpty
 									data-width="auto"
 									data-menu-width="auto"
-									right
-									searchable
-									hideEmpty
-									:options="annotations"
-									v-model="selectedCriterium.annotation"
-								/></template>
-							</i18n>
-
-
-							<form class="case-and-context">
-								<div class="labels">
-									<label for="group-case-sensitive">{{ $t('results.groupBy.caseSensitive') }}: </label>
-									<label v-if="selectedCriterium.context.type === 'label' && relationNames?.includes(selectedCriterium.context.label)" for="group-relation">{{ $t('results.groupBy.relationPartLabel') }}:</label>
-								</div>
-								<div class="inputs">
-									<input id="group-case-sensitive" type="checkbox" v-model="selectedCriterium.caseSensitive">
-									<div v-if="selectedCriterium.context.type === 'label' && relationNames?.includes(selectedCriterium.context.label)" class="btn-group">
-										<button type="button"
-											class="btn btn-default btn-sm"
-											:class="{active: selectedCriterium.context.relation === 'target'}"
-											@click="selectedCriterium.context.relation = 'target'"
-											>{{$t('results.groupBy.relationTarget')}}</button>
-										<button type="button"
-											class="btn btn-default btn-sm"
-											:class="{active: selectedCriterium.context.relation === 'source'}"
-											@click="selectedCriterium.context.relation = 'source'"
-										>{{$t('results.groupBy.relationSource')}}</button>
-										<!-- Never want to group on things in between source and target of a relation apparently. So don't show this button. -->
-										<!-- <button type="button"
-											class="btn btn-default btn-sm"
-											:class="{active: current.context.relation === 'full' || !current.context.relation}"
-											@click="current.context.relation = 'full'"
-										>{{$t('results.groupBy.relationBoth')}}</button> -->
-									</div>
-								</div>
-							</form>
-
-
-							<div style="padding: 10px 0 25px;"  v-if="sliderVisible">
-								<div v-html="$t('results.groupBy.chooseWordPositions')"></div>
-								<Slider
-									:direction="sliderInverted ? 'rtl' : 'ltr'"
-									inline
-									:min="1"
-									:max="contextsize"
-									:data="sliderLabels"
-									v-model="sliderValue"
+									:options="positionOptions"
 								/>
-							</div>
+							</template>
+						</i18n>
+					</template>
+					<template #this_annotation>
+					<SelectPicker
+						:placeholder="'...' + '\xa0'.repeat(20) /*nbsp*/"
+						data-width="auto"
+						data-menu-width="auto"
+						right
+						searchable
+						hideEmpty
+						:options="annotations"
+						v-model="selectedCriterium.annotation"
+					/></template>
+				</i18n>
 
-							<em class="text-muted" v-if="relations.length + captures.length"><span class="fa fa-exclamation-triangle text-primary"></span> {{$t('results.groupBy.tipClickOnHighlightedWords')}} ⤵</em>
+
+				<form class="case-and-context">
+					<div class="labels">
+						<label for="group-case-sensitive">{{ $t('results.groupBy.caseSensitive') }}: </label>
+						<label v-if="selectedCriterium.context.type === 'label' && relationNames?.includes(selectedCriterium.context.label)" for="group-relation">{{ $t('results.groupBy.relationPartLabel') }}:</label>
+					</div>
+					<div class="inputs">
+						<input id="group-case-sensitive" type="checkbox" v-model="selectedCriterium.caseSensitive">
+						<div v-if="selectedCriterium.context.type === 'label' && relationNames?.includes(selectedCriterium.context.label)" class="btn-group">
+							<button type="button"
+								class="btn btn-default btn-sm"
+								:class="{active: selectedCriterium.context.relation === 'target'}"
+								@click="selectedCriterium.context.relation = 'target'"
+								>{{$t('results.groupBy.relationTarget')}}</button>
+							<button type="button"
+								class="btn btn-default btn-sm"
+								:class="{active: selectedCriterium.context.relation === 'source'}"
+								@click="selectedCriterium.context.relation = 'source'"
+							>{{$t('results.groupBy.relationSource')}}</button>
+							<!-- Never want to group on things in between source and target of a relation apparently. So don't show this button. -->
+							<!-- <button type="button"
+								class="btn btn-default btn-sm"
+								:class="{active: current.context.relation === 'full' || !current.context.relation}"
+								@click="current.context.relation = 'full'"
+							>{{$t('results.groupBy.relationBoth')}}</button> -->
 						</div>
-					</template>
-					<div v-else-if="selectedCriterium.type === 'metadata'" class="content">
-						{{ $t('results.groupBy.selectDocumentMetadata') }}<br>
-						<SelectPicker
-							:placeholder="$t('results.groupBy.metadata')"
-							allowHtml
-							hideEmpty
-							data-width="auto"
-							data-menu-width="auto"
-							v-model="selectedCriterium.field"
-							:options="metadata"
-						/>
+					</div>
+				</form>
 
-						<br>
-						<label><input type="checkbox" v-model="selectedCriterium.caseSensitive"> {{ $t('results.groupBy.caseSensitive') }}</label>
-					</div>
-					<div v-else-if="selectedCriterium.type === 'custom'">
-						{{selectedCriterium.value}}
-					</div>
+
+				<div style="padding: 10px 0 25px;"  v-if="sliderVisible">
+					<div v-html="$t('results.groupBy.chooseWordPositions')"></div>
+					<Slider
+						:direction="sliderInverted ? 'rtl' : 'ltr'"
+						inline
+						:min="1"
+						:max="contextsize"
+						:data="sliderLabels"
+						v-model="sliderValue"
+					/>
 				</div>
-				<em v-else class="text-italic h5 text-muted content" style="display: flex; align-items: center; margin: 0; justify-self: center;">{{ $t('results.groupBy.clickButtonsToStart') }}</em>
-				<div v-if="selectedCriterium && selectedCriterium.type === 'context'" class="hit-preview panel-heading">
-					<template v-for="(section, i) of preview">
-						<div v-if="i !== 0" class="separator"></div>
-						<template v-for="({selectedAnnotation, word, punct, active, style}, j) of section">
-							<component
-								:is="active ? 'section' : 'div'"
-								:key="word + i + '_' + j"
-								:class="{
-									'word': true,
-									'active': active,
-									'text-primary': active,
-									'bold': i === 1
-								}"
-								:style="style"
-								@click="handlePreviewClick($event, i, j)"
-							>
-								<div :title="word" class="main">{{ word }}</div>
-								<div :title="selectedAnnotation" class="annotation">{{ selectedAnnotation }}</div>
-							</component>
-							<!-- punctuation between words. -->
-							<component :is="active && section[j+1]?.active ? 'section' : 'div'" :class="{punct: true, active: active && section[j+1]?.active}" :title="punct">{{ punct || ' ' }}</component>
-						</template>
-					</template>
-				</div>
-				<!-- <Debug v-if="current"><pre>Debug: {{ current }} <br> {{ {contextValue, preview} }}</pre></Debug> -->
-			</div>
+
+				<em class="text-muted" v-if="relations.length + captures.length"><span class="fa fa-exclamation-triangle text-primary"></span> {{$t('results.groupBy.tipClickOnHighlightedWords')}} ⤵</em>
+			</template>
+			<template v-else-if="selectedCriterium?.type === 'metadata'" class="content">
+				{{ $t('results.groupBy.selectDocumentMetadata') }}<br>
+				<SelectPicker
+					:placeholder="$t('results.groupBy.metadata')"
+					allowHtml
+					hideEmpty
+					data-width="auto"
+					data-menu-width="auto"
+					v-model="selectedCriterium.field"
+					:options="metadata"
+				/>
+
+				<br>
+				<label><input type="checkbox" v-model="selectedCriterium.caseSensitive"> {{ $t('results.groupBy.caseSensitive') }}</label>
+			</template>
+			<template v-else-if="selectedCriterium?.type === 'custom'">
+				{{selectedCriterium.value}}
+			</template>
+			<em v-else class="h5 text-muted">{{ $t('results.groupBy.clickButtonsToStart') }}</em>
+		</div>
+
+		<div v-if="selectedCriterium?.type === 'context'" class="hit-preview panel-footer">
+			<template v-for="(section, i) of preview">
+				<div v-if="i !== 0" class="separator"></div>
+				<template v-for="({selectedAnnotation, word, punct, active, style}, j) of section">
+					<component
+						:is="active ? 'section' : 'div'"
+						:key="word + i + '_' + j"
+						:class="{
+							'word': true,
+							'active': active,
+							'text-primary': active,
+							'bold': i === 1
+						}"
+						:style="style"
+						@click="handlePreviewClick($event, i, j)"
+					>
+						<div :title="word" class="main">{{ word }}</div>
+						<div :title="selectedAnnotation" class="annotation">{{ selectedAnnotation }}</div>
+					</component>
+					<!-- punctuation between words. -->
+					<component :is="active && section[j+1]?.active ? 'section' : 'div'" :class="{punct: true, active: active && section[j+1]?.active}" :title="punct">{{ punct || ' ' }}</component>
+				</template>
+			</template>
+		</div>
+
+		<div class="panel-footer text-right">
+			<button type="button" :disabled="disabled" class="btn btn-default" @click="clear">{{addedCriteria.length ? $t('results.groupBy.clear') : $t('results.groupBy.close')}}</button>
+			<button type="button" :disabled="disabled || !addedCriteria.length" class="btn btn-primary" @click="apply">{{ $t('results.groupBy.apply') }}</button>
 		</div>
 	</div>
 </template>
@@ -213,10 +204,14 @@ import SelectPicker, { Options } from '@/components/SelectPicker.vue';
 import { getHighlightColors, snippetParts } from '@/utils/hit-highlighting';
 import { CaptureAndRelation, HitToken, Option, TokenHighlight } from '@/types/apptypes';
 
+
+import Tabs from '@/components/Tabs.vue';
+
 export default Vue.extend({
 	components: {
 		SelectPicker,
 		Slider,
+		Tabs
 	},
 	props: {
 		type: String, // grouping hits or docs?
@@ -237,6 +232,14 @@ export default Vue.extend({
 		active: false
 	}),
 	computed: {
+		tabs(): Option[] {
+			return this.addedCriteria.map((c, i) => ({
+				label: this.humanizeGroupBy(c),
+				value: i.toString(),
+				class: isValidGroupBy(c) ? '' : 'text-muted',
+				style: isValidGroupBy(c) ? {} : {'font-style': 'italic'}
+			}));
+		},
 		defaultAnnotation(): string {
 			const a = this.annotations.find(a => typeof a === 'object' && 'options' in a) as any;
 			return a?.options[0]?.value ?? '';
@@ -292,15 +295,14 @@ export default Vue.extend({
 			if (!params || !params.patt) return 5; // default
 			return typeof params.context === 'number' ? params.context as number :  // use actual value from query if set
 			    (typeof GlobalSearchSettingsStore.getState().context === 'number' ?
-				   	GlobalSearchSettingsStore.getState().context as number :  // use global default if set
-			       	5); // use default
+			        GlobalSearchSettingsStore.getState().context as number :  // use global default if set
+			        5); // use default
 		},
 
 		captures(): { name: string, label: string, targetField: string }[] {
 			const mi = this.hits?.summary?.pattern?.matchInfos;
-			// @ts-ignore
 			return Object.entries(mi|| {})
-				.filter(([k, v]) => v.type === 'span' && (v.fieldName === this.selectedCriteriumAsPositional?.fieldName))
+				.filter(([k, v]) => v.type === 'span' && (!v.fieldName || v.fieldName === this.selectedCriteriumAsPositional?.fieldName))
 				.map(([k,v]) => {
 					return {
 						name: k,
@@ -312,18 +314,17 @@ export default Vue.extend({
 		relations() {
 			const mi = this.hits?.summary?.pattern?.matchInfos;
 			const result: { name: string, label: string, targetField: string }[] = [];
-			// @ts-ignore
 			Object.entries(mi|| {})
 				.filter(([k, v]) => v.type === 'relation')
-				.forEach(([k,v]: [string, any]) => {
-					if (v.fieldName === this.selectedCriteriumAsPositional?.fieldName) {
+				.forEach(([k,v]) => {
+					if (!v.fieldName || v.fieldName === this.selectedCriteriumAsPositional?.fieldName) {
 						result.push({
 							label: k,
 							name: `${k}@source`,
 							targetField: v.fieldName ?? '',
 						});
 					}
-					if (v.targetField === this.selectedCriteriumAsPositional?.fieldName) {
+					if (!v.fieldName || v.targetField === this.selectedCriteriumAsPositional?.fieldName) {
 						result.push({
 							label: k,
 							name: `${k}@target`,
@@ -358,6 +359,7 @@ export default Vue.extend({
 		selectedCriterium(): GroupBy|undefined { return this.addedCriteria[this.selectedCriteriumIndex]; },
 		// Some utils to cast the current group to a specific type.
 		// so we can use it in computeds for the template.
+		/** When grouping on either: capture group, or relation source/target. */
 		selectedCriteriumAsLabel(): undefined|GroupByContext<ContextLabel> {
 			if (this.selectedCriterium?.type === 'context' && this.selectedCriterium.context.type === 'label')
 				return this.selectedCriterium as GroupByContext<ContextLabel>;
@@ -367,7 +369,7 @@ export default Vue.extend({
 				return this.selectedCriterium as GroupByContext<ContextPositional>;
 		},
 		selectedCriteriumAsSlider(): undefined|GroupByContext<ContextPositional> {
-			if (this.selectedCriteriumAsPositional?.context.info.type === 'specific')
+			if (this.selectedCriteriumAsPositional?.context.whichTokens === 'specific')
 				return this.selectedCriteriumAsPositional;
 		},
 
@@ -375,11 +377,11 @@ export default Vue.extend({
 		sliderInverted(): boolean { const p = this.selectedCriteriumAsSlider?.context.position; return p === 'E' || p === 'B'; },
 		sliderLabels(): any[] { return Array.from({length: this.contextsize}, (_, i) => i + 1).map(i => ({value: i, label: i})); },
 		sliderValue: {
-			get(): [number, number] { return this.selectedCriteriumAsSlider ? [this.selectedCriteriumAsSlider.context.info.start, this.selectedCriteriumAsSlider.context.info.end] : [1, 1]; },
+			get(): [number, number] { return [this.selectedCriteriumAsSlider?.context.start ?? 1, this.selectedCriteriumAsSlider?.context.end ?? 1]; },
 			set(v: [number, number]) {
 				if (this.selectedCriteriumAsSlider) {
-					this.selectedCriteriumAsSlider.context.info.start = v[0];
-					this.selectedCriteriumAsSlider.context.info.end = v[1];
+					this.selectedCriteriumAsSlider.context.start = v[0];
+					this.selectedCriteriumAsSlider.context.end = v[1];
 				}
 			}
 		},
@@ -409,10 +411,10 @@ export default Vue.extend({
 			let start =  Number.MAX_SAFE_INTEGER;
 			let end = -Number.MAX_SAFE_INTEGER;
 			if (context.type === 'positional') {
-				const pos = context.info;
-				if (pos.type === 'all') { start = 0; end = Number.MAX_SAFE_INTEGER; }
-				else if (pos.type === 'first') { start = 0; end = 0; }
-				else { start = pos.start! - 1; end = pos.end! - 1; }
+				const whichTokens = context.whichTokens;
+				if (whichTokens === 'all') { start = 0; end = Number.MAX_SAFE_INTEGER; }
+				else if (whichTokens === 'first') { start = 0; end = 0; }
+				else { start = context.start! - 1; end = context.end! - 1; }
 
 				// left/before context ('B') and hit-from-end context ('E') use inverted index in BlackLab, mimic this.
 				if (position === 'E' || position === 'B') {
@@ -485,25 +487,24 @@ export default Vue.extend({
 				value: 'specific'
 			}, {
 				label: this.$t('results.groupBy.some_words.captureGroupsLabel').toString(),
-				options:
-					this.relations.map(c => ({
+				options: [
+					...this.relations.map(c => ({
 						label: `<span class="color-ball" style="background-color: ${this.colors[c.label].color};">&nbsp;</span> relation ${c.name}`,
 						value: c.name
-					}))
-					.concat(this.captures.map(c => ({
+					})),
+					...this.captures.map(c => ({
 						label: `<span class="color-ball" style="background-color: ${this.colors[c.label].color};">&nbsp;</span> capture ${c.name}`,
 						value: c.name
-					})))
+					}))
+				]
 			}];
 		},
 		contextValue: {
 			/** The string value is when grouping on a capture group or relation. */
 			get(): 'first'|'all'|'context'|string {
-				if (this.selectedCriteriumAsLabel)
-					return this.selectedCriteriumAsLabel.context.label;
-				else if (this.selectedCriteriumAsPositional)
-					return this.selectedCriteriumAsPositional.context.info.type;
-				return '';
+				// if grouping on a label: return the label, if grouping on a position: return the position.
+				// Otherwise blank.
+				return this.selectedCriteriumAsLabel?.context.label ?? this.selectedCriteriumAsPositional?.context.whichTokens ?? '';
 			},
 			/** The string value is when grouping on a capture group or relation. */
 			set(v: 'first'|'all'|'specific'|string) {
@@ -513,13 +514,15 @@ export default Vue.extend({
 				// but make typescript happy.
 				if (v === 'first' || v === 'all' || v === 'specific') {
 					if (this.selectedCriteriumAsPositional) {
-						this.selectedCriteriumAsPositional.context.info.type = v;
+						this.selectedCriteriumAsPositional.context.whichTokens = v;
 					} else {
 						// update context object as we're currently grouping on a label.
 						this.selectedCriterium.context = {
 							type: 'positional',
 							position: 'H',
-							info: {type: v, start: 1, end: this.contextsize},
+							whichTokens: v,
+							start: 1,
+							end: this.contextsize,
 						}
 					}
 					// if we're grouping on the entire hit, we can't group from the end. (blacklab limitation)
@@ -543,7 +546,7 @@ export default Vue.extend({
 			{ label: this.$t('results.groupBy.in_this_location.beforeTheHit').toString(), value: 'B'},
 			{ label: this.$t('results.groupBy.in_this_location.inTheHit').toString(), value: 'H' },
 			// grouping from the end of the hit when grouping on entire hit is not possible (causes an exception in BlackLab)
-			...(this.selectedCriterium?.context.info.type !== 'all' ? [{label: this.$t('results.groupBy.in_this_location.fromTheEnd').toString(), value: 'E'}] : []),
+			...(this.selectedCriterium?.context.whichTokens !== 'all' ? [{label: this.$t('results.groupBy.in_this_location.fromTheEnd').toString(), value: 'E'}] : []),
 			{ label: this.$t('results.groupBy.in_this_location.afterTheHit').toString(), value: 'A' }];
 		},
 		positionValue: {
@@ -582,6 +585,7 @@ export default Vue.extend({
 		apply() {
 			this.storeValueUpdateIsOurs = true;
 			this.storeModule.actions.groupBy(serializeGroupBy(this.addedCriteria.filter(isValidGroupBy)));
+			this.selectedCriteriumIndex = -1;
 		},
 		humanizeGroupBy(g: GroupBy): string {
 			if (g.type === 'context') {
@@ -599,10 +603,10 @@ export default Vue.extend({
 
 				let wordCount: string;
 
-				if (g.context.info.type === 'all') wordCount = 'all';
-				else if (g.context.info.type === 'first') wordCount = 'first';
-				else if (g.context.info.start === g.context.info.end) wordCount = g.context.info.start + '';
-				else wordCount =`${g.context.info.start}-${g.context.info.end}`;
+				if (g.context.whichTokens === 'all') wordCount = 'all';
+				else if (g.context.whichTokens === 'first') wordCount = 'first';
+				else if (g.context.start === g.context.end) wordCount = g.context.start + '';
+				else wordCount =`${g.context.start}-${g.context.end}`;
 
 				return `${g.annotation}${wordCount ? ` (${wordCount})` : ''} ${position + ' hit'}`;
 			} else if (g.type === 'metadata') {
@@ -633,11 +637,9 @@ export default Vue.extend({
 				context: {
 					type: 'positional',
 					position: 'H',
-					info: {
-						type: 'all',
-						start: 1,
-						end: this.contextsize
-					},
+					whichTokens: 'all',
+					start: 1,
+					end: this.contextsize
 				},
 				caseSensitive: false
 			});
@@ -703,48 +705,11 @@ export default Vue.extend({
 				}
 			}
 		},
-	}
+	},
 });
 </script>
 
 <style lang="scss">
-
-.groupby {
-	display: flex;
-	flex-direction: row;
-	max-width: 100%;
-	overflow: auto;
-}
-
-.group-select-button {
-	text-align: left; border-radius: 0; border-right: 0; border-left: 0; flex-grow: 1;
-}
-.group-delete-button {
-	flex: 0; padding-right: 4px; padding-left: 4px;
-}
-
-.current-group-editor {
-	flex-grow: 1; // take up remainder of horizontal space
-	min-width: 0;
-	display: flex;
-	flex-direction: column;
-
-	> .content {
-		padding: 10px 15px;
-		flex-grow: 1; // push down preview
-	}
-	> .hit-preview {
-		align-self: flex-end;
-		width: 100%;
-		margin: 0;
-		border-bottom: 0;
-		border-top: 1px solid #ddd;
-		border-top-left-radius: 0;
-		border-top-right-radius: 0;
-		border-bottom-right-radius: 4px;
-	}
-}
-
 
 .case-and-context {
 	display: flex;
@@ -752,7 +717,6 @@ export default Vue.extend({
 	justify-content: space-between;
 	align-items: center;
 	padding: 10px 0;
-
 
 	> .labels {
 		padding-right: 10px;
@@ -776,19 +740,11 @@ export default Vue.extend({
 	}
 }
 
-
 .hit-preview {
 	overflow: auto;
-	border: 1px solid #ddd;
-	padding: 10px 15px;
-	margin: 0 -15px 0;
-	border-top: 0;
-	border-right: 0;
-	border-left: 0;
-
+	border-radius: 0;
 
 	display: flex;
-	flex-direction: row;
 	flex-wrap: nowrap;
 	justify-content: safe center;
 
@@ -802,6 +758,11 @@ export default Vue.extend({
 		overflow: hidden; // hide the annotation if it's too long.
 		position: relative;
 		padding-bottom: 0.5em; // space for the annotation value that hovers below the word.
+
+		// Always round the borders of inactive words
+		// Otherwise highlights look bad.
+		// (active words have their own border radius logic.)
+		&:not(.active) { border-radius: 6px; }
 	}
 
 	/** In between words. Is separate from the word container because in the past words could be shrunk, but punctuation was exempt from that. */
@@ -832,7 +793,7 @@ export default Vue.extend({
 		margin: 0 0.5em;
 		background: #555;
 		border-radius: 2px;
-		flex-shrink: 0;
+		flex: none;
 	}
 
 	.active {
@@ -840,78 +801,18 @@ export default Vue.extend({
 		border-bottom: 1px solid black;
 	}
 
+	// An active word
 	.active:first-of-type {
 		border-left: 1px solid black;
 		border-top-left-radius: 6px;
 		border-bottom-left-radius: 6px;
 	}
 
+	// An active word
 	.active:last-of-type {
 		border-right: 1px solid black;
 		border-top-right-radius: 6px;
 		border-bottom-right-radius: 6px;
-	}
-}
-
-.group-by {
-	display: flex;
-	flex-direction: row;
-
-	> *:not(:last-child) {
-		border-right: 1px solid #ddd;
-	}
-
-	.left-sidebar {
-		display: flex;
-		flex-direction: column;
-		> *:not(:last-child) {
-			border-bottom: 1px solid #ddd;
-		}
-
-		.group {
-			display: flex;
-			flex-direction: row;
-			flex-wrap: nowrap;
-			&:not(:last-child) {
-				border-bottom: 1px solid #ddd;
-			}
-
-			 > .btn {
-				border-width: 0;
-				border-radius: 0;
-				// &:not(:last-child) { border-right-width: 1px; }
-			 }
-		}
-
-		.two-button-container {
-			display: flex;
-			width: 100%;
-			flex-direction: column;
-
-			> .btn {
-				border-width: 0;
-				flex-basis: 0;
-				flex-grow: 1;
-				min-width: 50%;
-				border-radius: 0;
-			}
-
-			&.flex-col {
-				flex-grow: 1;
-				flex-direction: column;
-				> .btn:not(:last-child) {
-					border-bottom-width: 1px!important;
-				}
-				> .btn {flex-grow: 1;}
-			}
-			&.flex-row {
-				flex-direction: row;
-				> .btn {
-					&:not(:last-child) { border-right-width: 1px; }
-				}
-
-			}
-		}
 	}
 }
 
@@ -922,6 +823,27 @@ export default Vue.extend({
 
 	display: inline-block;
 	vertical-align: center;
+}
+
+.remove-group-button {
+	opacity: 0;
+	border: none;
+	padding: 0;
+	background: none;
+	padding-left: 0.25em;
+}
+
+.tab {
+	&.active,
+	&:hover,
+	&:focus,
+	&:active,
+	&:focus-within {
+		.remove-group-button {
+			opacity: 1;
+			pointer-events: all;
+		}
+	}
 }
 
 </style>

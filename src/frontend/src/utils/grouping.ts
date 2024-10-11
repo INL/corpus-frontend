@@ -3,13 +3,12 @@ export type ContextPositional = {
 	type: 'positional';
 	/** B === 'before', H === 'from start of hit', A === 'after hit', E === 'from end of hit (reverse)' */
 	position: 'B'|'H'|'A'|'E';
-	info: {
-		type: 'specific'|'first'|'all',
-		/** Unused when type !== 'specific', but for ease of use we make this always exist. */
-		start: number,
-		/** Unused when type !== 'specific', but for ease of use we make this always exist. */
-		end: number,
-	}
+
+	whichTokens: 'specific'|'first'|'all',
+	/** Unused when whichTokens !== 'specific', but for ease of use we make this always exist. */
+	start: number,
+	/** Unused when whichTokens !== 'specific', but for ease of use we make this always exist. */
+	end: number,
 }
 /** Group by a labelled part of the hit. E.G. a:[] or _ a:--> _ */
 export type ContextLabel = {
@@ -33,7 +32,11 @@ export type GroupByMetadata = {
 	field: string;
 	caseSensitive: boolean;
 }
-/** Represents grouping by something we don't support. */
+/**
+ * Represents grouping by something we don't support.
+ * We just stick the raw string in the value field.
+ * Should only occur from deserialization handcrafted urls, or when there are bugs in the parse code.
+ */
 export type GroupByCustom = {
 	type: 'custom';
 	value: string;
@@ -45,14 +48,15 @@ export type GroupBy = GroupByContext|GroupByMetadata|GroupByCustom;
  * https://inl.github.io/BlackLab/server/rest-api/corpus/hits/get.html#criteria-for-sorting-grouping-and-faceting
  */
 export function parseGroupBy(groupBy: string[]): GroupBy[] {
-	console.log('groupBy', groupBy);
 	const cast = <T>(x: T): T => x;
 	return groupBy.map<GroupBy>(part => {
 		const parts = part.split(':');
 		const type = parts.length > 0 ? parts[0] : '';
 
 		// some group by options refer to an annotation, optionally preceded by a field name and %.
-		const [optFieldName, optAnnotName] = parts.length > 1 && parts[1].includes('%') ? parts[1].split('%') : [undefined, parts.length > 1 ? parts[1] : undefined];
+		const [optFieldName, optAnnotName] = (parts.length > 1 && parts[1].includes('%'))
+			? parts[1].split('%')
+			: [undefined, parts.length > 1 ? parts[1] : undefined];
 
 		switch (type) {
 			// grouping by metadata
@@ -85,7 +89,8 @@ export function parseGroupBy(groupBy: string[]): GroupBy[] {
 					context: {
 						type: 'positional',
 						position: 'H',
-						info: { type: 'all', start: 1, end: 1 }
+						whichTokens: 'all',
+						start: 1, end: 1
 					}
 				})
 			// grouping by words in/around the hit
@@ -106,11 +111,10 @@ export function parseGroupBy(groupBy: string[]): GroupBy[] {
 					context: {
 						type: 'positional',
 						position: (type === 'left' || type === 'before') ? 'B' : 'A',
-						info: {
-							type: fullContext ? 'all' : 'specific',
-							start,
-							end,
-						}
+
+						whichTokens: fullContext ? 'all' : 'specific',
+						start,
+						end,
 					},
 				});
 			}
@@ -123,11 +127,9 @@ export function parseGroupBy(groupBy: string[]): GroupBy[] {
 				context: {
 					type: 'positional',
 					position: type === 'wordleft' ? 'B' : 'A',
-					info: {
-						type: 'specific',
-						start: 1,
-						end: 1
-					}
+					whichTokens: 'first',
+					start: 1,
+					end: 1
 				}
 			});
 
@@ -155,11 +157,10 @@ export function parseGroupBy(groupBy: string[]): GroupBy[] {
 						context: {
 							type: 'positional',
 							position: position as any,
-							info: {
-								type: fullContext ? 'all' : 'specific',
-								start,
-								end,
-							}
+
+							whichTokens: fullContext ? 'all' : 'specific',
+							start,
+							end,
 						}
 					});
 				} // else fallthrough default, which returns the whole part as a string.
@@ -179,49 +180,52 @@ export function parseGroupBy(groupBy: string[]): GroupBy[] {
 export function serializeGroupBy(groupBy: GroupBy): string;
 export function serializeGroupBy(groupBy: GroupBy[]): string[]
 export function serializeGroupBy(groupBy: GroupBy|GroupBy[]): string|string[] {
-	function single(g: GroupBy): string {
+	// we use a helper function to make sure we never forget to handle a type.
+	// We always call this with whatever we're switching on after handling all cases, so if we forget one, the argument will suddenly
+	// be able to exist and we'll get a compile error.
+	function never(x: never): never {
+		const e = new Error('Unimplemented context info type: ' + JSON.stringify(x, undefined, 2));
+		console.error(e, x);
+		throw e;
+	}
+
+	function serialize(g: GroupBy): string {
 		const optTargetField = g.type === 'context' && g.fieldName ? `${g.fieldName}%` : '';
-		if (g.type === 'context')
-			console.log('g.context', g.context);
 		switch (g.type) {
 			case 'metadata': return `field:${g.field}:${g.caseSensitive ? 's' : 'i'}`;
 			case 'context': {
-
-				if (g.context.type === 'label')
-					return `capture:${g.annotation}:${g.caseSensitive ? 's' : 'i'}:${g.context.label}${g.context.relation ? ':' + g.context.relation : ''}`;
-				else if (g.context.type === 'positional') {
+				const ctx = g.context;
+				if (ctx.type === 'label') {
+					return `capture:${g.annotation}:${g.caseSensitive ? 's' : 'i'}:${ctx.label}${ctx.relation ? ':' + ctx.relation : ''}`;
+				} else if (ctx.type === 'positional') {
 					/*
 						Examples:
-						{ type: 'positional', position: 'B', info: { type: 'specific', start: 1, end: 2 } } ==> 'context:capture:s:B1-2'
-						{ type: 'positional', position: 'H', info: { type: 'all' } } ==> 'context:capture:s:H'
-						{ type: 'positional', position: 'A', info: { type: 'first' } } ==> 'context:capture:s:A1-1'
+						{ type: 'positional', position: 'B', whichTokens: 'specific', start: 1, end: 2 } ==> 'context:capture:s:B1-2'
+						{ type: 'positional', position: 'H', whichTokens: 'all' } ==> 'context:capture:s:H'
+						{ type: 'positional', position: 'A', whichTokens: 'first' } ==> 'context:capture:s:A1-1'
 					*/
 
-					const info = g.context.info;
-					let spec: string = g.context.position; // before, after, hit, end (B,A,H,E)
-					if (info.type === 'all') {}
-					else if (info.type === 'first') spec += '1-1';
-					else if (info.type === 'specific') spec += `${info.start}${info.end ? '-' + info.end : ''}`;
+					const {position, whichTokens, start, end} = ctx;
+
+					let spec = position; // B, H, A, E
+					if (whichTokens === 'all') {}
+					else if (whichTokens === 'first') spec += '1-1';
+					else if (whichTokens === 'specific') spec += `${start}${end ? '-' + end : ''}`;
 					else {
-						// this will start to error compile-time if we ever add a new type.
-						function never(x: never): never { throw new Error('Unimplemented context info type: ' + x); }
-						never(info.type);
+						never(whichTokens && g);
 					}
 
 					return `context:${optTargetField}${g.annotation}:${g.caseSensitive ? 's' : 'i'}:${spec}`;
 				} else {
-					// this will start to error compile-time if we ever add a new type.
-					function never(x: never): never { throw new Error('Unimplemented context type: ' + x); }
-					never(g.context);
+					never(ctx && g);
 				}
 			}
 			case 'custom': return g.value;
-			// @ts-ignore
-			default: throw new Error('Unimplemented groupby type: ' + g.type);
+			default: never(g);
 		}
 	};
 
-	return Array.isArray(groupBy) ? groupBy.map(single) : single(groupBy);
+	return Array.isArray(groupBy) ? groupBy.map(serialize) : serialize(groupBy);
 }
 
 export function isValidGroupBy(g: GroupBy): boolean {
@@ -231,7 +235,7 @@ export function isValidGroupBy(g: GroupBy): boolean {
 		if (!g.annotation) return false;
 		if (g.context.type === 'label' && !g.context.label) return false;
 		if (g.context.type === 'positional' && !g.context.position) return false;
-		if (g.context.type === 'positional' && g.context.info.type === 'specific' && (!g.context.info.start || !g.context.info.end)) return false;
+		if (g.context.type === 'positional' && g.context.whichTokens === 'specific' && (!g.context.start || !g.context.end)) return false;
 	}
 	return true;
 }

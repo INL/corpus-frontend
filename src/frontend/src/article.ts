@@ -79,11 +79,14 @@ $(document).ready(async () => {
 	RootStore.store.watch(store => ({debug: debug.debug, document: store.document}), ({debug, document}) => {
 		if (debug && document) {
 			// Add the debug tab
-			let wordstart = PAGE_START;
-			let wordend = PAGE_END;
+			const queryParamsForContents = {
+				wordstart: PAGE_START,
+				wordend: PAGE_END,
+			} as any;
+			if (!PAGE_START) delete queryParamsForContents.wordstart
+			if (!PAGE_END || PAGE_END === document.docInfo.lengthInTokens) delete queryParamsForContents.wordend;
 
-			let q = Object.entries({wordstart, wordend}).filter(([k, v]) => !!v).reduce((acc, [k, v]) => acc += `&${k}=${v}`, '');
-			q = q ? '?' + q : q;
+			const queryString = new URLSearchParams(queryParamsForContents).toString();
 
 			const s =
 			`<div id="debug-info">
@@ -98,7 +101,7 @@ $(document).ready(async () => {
 					${Object.entries(document.docInfo).sort((a, b) => a[0].localeCompare(b[0])).map(([k, v]) => `<tr><td>${k}</td><td>${JSON.stringify(v)}</td></tr>`).join('')}
 				</table>
 
-				<a href="${BLS_URL}${INDEX_ID}/docs/${DOCUMENT_ID}/contents${q}" target="_blank">Open raw document</a>
+				<a href="${BLS_URL}${INDEX_ID}/docs/${DOCUMENT_ID}/contents${queryString && ('?' + queryString)}" target="_blank">Open raw document</a>
 			</div>`
 
 			$('#articleTabs').append(`<li id="debug-tab"><a href="#debug" data-toggle="tab">Debug</a></li>`)

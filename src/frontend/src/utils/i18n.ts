@@ -27,6 +27,10 @@ const i18n = new VueI18n({
 	messages: {},
 });
 
+function setFallbackLocale(locale: string) {
+	i18n.fallbackLocale = locale;
+}
+
 async function loadLocaleMessages(locale: string) {
 	// also allow loading locales not defined in the availableLocales.
 	// This is useful for loading overrides for locales that are not available in the UI.
@@ -96,7 +100,7 @@ const LocaleSelector = Vue.extend({
 				this.loading = false
 			}
 			this.$i18n.locale = locale.value
-		}
+		},
 	},
 	async created() {
 		await loadLocaleMessages(defaultLocale);
@@ -104,7 +108,7 @@ const LocaleSelector = Vue.extend({
 			await loadLocaleMessages(locale.value);
 	}
 });
-new LocaleSelector().$mount('#locale-selector');
+const localeSelectorInstance = new LocaleSelector().$mount('#locale-selector');
 
 /** Get the i18n text or fall back to a default value if the key doesn't exist.
  *  Useful for dynamic key values such as field names.
@@ -120,7 +124,9 @@ function textOrDefault<T extends string|null|undefined>(i18n: VueI18n, key: stri
 // (filters are technically not directly equal to metadata objects, but for translation purposes we use the same keys)
 const i18nExtensionFunctions = {
 	$td<T extends string|null|undefined>(this: Vue, key: string, defaultText: T): T|string {
-		return this.$te(key) ? this.$t(key).toString() : (this.$i18n.locale !== defaultLocale && this.$te(key, defaultLocale)) ? this.$t(key, defaultLocale).toString() : defaultText;
+		if (this.$te(key)) return this.$t(key).toString();
+		if (this.$i18n.locale !== this.$i18n.fallbackLocale && this.$te(key, this.$i18n.fallbackLocale as string)) return this.$t(key, this.$i18n.fallbackLocale as string).toString();
+		return defaultText;
 	},
 	/** Get the localized display name for an annotated field or the default value.
 	 * Note that the field ID should be *including* the parallel suffix. So just e.g. "contents__en" for a parallel field. */
@@ -196,7 +202,9 @@ export {
 window.i18n = {
 	registerLocale,
 	removeLocale,
+	setFallbackLocale,
 	setLocale(locale: string) {
 		i18n.locale = locale;
-	}
+	},
+	i18n
 }

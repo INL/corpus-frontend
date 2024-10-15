@@ -12,6 +12,7 @@
 		</div>
 
 		<Tabs v-if="tabs.length"
+			style="margin-top: 6px; padding: 0 0.5em;"
 			:tabs="tabs"
 
 			wrap
@@ -136,8 +137,15 @@
 					:options="metadata"
 				/>
 
-				<br>
-				<label><input type="checkbox" v-model="selectedCriterium.caseSensitive"> {{ $t('results.groupBy.caseSensitive') }}</label>
+				<!-- mimic style of annotation box. -->
+				<form class="case-and-context">
+					<div class="labels">
+						<label for="group-case-sensitive">{{ $t('results.groupBy.caseSensitive') }}: </label>
+					</div>
+					<div class="inputs">
+						<input id="group-case-sensitive" type="checkbox" v-model="selectedCriterium.caseSensitive">
+					</div>
+				</form>
 			</template>
 			<template v-else-if="selectedCriterium?.type === 'custom'">
 				{{selectedCriterium.value}}
@@ -237,7 +245,6 @@ export default Vue.extend({
 				label: this.humanizeGroupBy(c),
 				value: i.toString(),
 				class: isValidGroupBy(c) ? '' : 'text-muted',
-				style: isValidGroupBy(c) ? {} : {'font-style': 'italic'}
 			}));
 		},
 		defaultAnnotation(): string {
@@ -716,7 +723,7 @@ export default Vue.extend({
 	flex-direction: row;
 	justify-content: space-between;
 	align-items: center;
-	padding: 10px 0;
+	padding: 10px 0 0 0;
 
 	> .labels {
 		padding-right: 10px;

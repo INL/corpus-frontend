@@ -25,7 +25,8 @@ export async function initQueryBuilders(i18n: Vue): Promise<QueryBuilder[]> {
 		'Search',
 		i18n,
 		CorpusStore.get.textDirection(),
-		debug.debug
+		false,
+		false
 	);
 
 	const annotationGroups = first.map(g => ({
@@ -33,7 +34,7 @@ export async function initQueryBuilders(i18n: Vue): Promise<QueryBuilder[]> {
 		options: (g.options as Option[]).map<QueryBuilderAttributeDef>(({value: annotationId, label: localizedAnnotationDisplayName, title: localizedAnnotationDescription}, i) => ({
 			attribute: annotationId,
 			caseSensitive: g.entries[i].caseSensitive,
-			label: localizedAnnotationDisplayName || annotationId,
+			label: (localizedAnnotationDisplayName || annotationId) + (debug.debug ? ` [id: ${annotationId}]` : ''),
 			textDirection: CorpusStore.get.textDirection(),
 			values: g.entries[i].values
 		}))

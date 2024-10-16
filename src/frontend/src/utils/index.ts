@@ -624,7 +624,7 @@ export function getAnnotationSubset(
 	i18n: Vue,
 	corpusTextDirection: 'rtl'|'ltr' = 'ltr',
 	debug = false,
-	showGroupLabels = true
+	showGroupLabels = false
 ): Array<AppTypes.OptGroup&{entries: AppTypes.NormalizedAnnotation[]}> {
 	function findAnnotatedFieldId(groupId: string) {
 		return groups.find(g => g.id === groupId)?.annotatedFieldId || groups[0].annotatedFieldId;
@@ -645,7 +645,7 @@ export function getAnnotationSubset(
 				entries: group.entries,
 				options: group.entries.map(a => ({
 					value: a.id,
-					label: i18n.$tAnnotDisplayName(a) + (showGroupLabels ? ` <small class="text-muted">${groupNameLocalized}</small>` : '') + (debug ? ` (id: ${a.id})` : ''),
+					label: i18n.$tAnnotDisplayName(a) + (showGroupLabels ? ` <small class="text-muted">${groupNameLocalized}</small>` : '') + (debug ? ` <small><strong>[id: ${a.id}]</strong></small>` : ''),
 					title: i18n.$tAnnotDescription(a)
 				})),
 				// hack, when using a default group we need to come up with an annotated field

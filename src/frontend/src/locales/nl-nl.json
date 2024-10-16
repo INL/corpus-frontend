@@ -226,7 +226,21 @@
 			"annotation": "Annotatie",
 			"specify": "Specificeer",
 			"label": "{label} ({annotation})",
-			"document": "document"
+			
+			"summary": {
+				"indexedWord": "{field} [{index}] {position}",
+				"firstWord": "eerste {field} {position}",
+				"allWords": "{field} {position}",
+				"labelledWord": "label {label} op {field}",
+				"metadata": "Document {field}",
+
+				"position": {
+					"before": "voor hit",
+					"hit": "in hit",
+					"after": "na hit",
+					"end": "in hit"
+				}
+			}
 		},
 		"table": {
 			"showFullSentence": "Toon complete zin",

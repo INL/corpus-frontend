@@ -224,9 +224,21 @@
 			"clickButtonsToStart": "Click on Annotation or Metadata to define grouping criteria.",
 			"metadata": "Metadata",
 			"annotation": "Annotation",
-			"specify": "Specify",
-			"label": "label {label} ({annotation})",
-			"document": "document"
+
+			"summary": {
+				"indexedWord": "{field} [{index}] {position}",
+				"firstWord": "first {field} {position}",
+				"allWords": "{field} {position}",
+				"labelledWord": "label {label} on {field}",
+				"metadata": "Document {field}",
+
+				"position": {
+					"before": "before hit",
+					"hit": "within hit",
+					"after": "after hit",
+					"end": "within hit"
+				}
+			}
 		},
 		"table": {
 			"showFullSentence": "Show full sentence",

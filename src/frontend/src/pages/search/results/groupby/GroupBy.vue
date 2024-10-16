@@ -200,7 +200,7 @@ import { blacklab } from '@/api';
 
 import {isHitResults, BLSearchResult, BLSearchParameters, BLHitResults} from '@/types/blacklabtypes';
 
-import {GroupBy, serializeGroupBy, parseGroupBy, isValidGroupBy, ContextPositional, GroupByContext, ContextLabel} from '@/utils/grouping';
+import {GroupBy, serializeGroupBy, parseGroupBy, isValidGroupBy, ContextPositional, GroupByContext, ContextLabel, humanizeGroupBy as summarizeGroup} from '@/utils/grouping';
 
 import debug from '@/utils/debug';
 
@@ -241,9 +241,14 @@ export default Vue.extend({
 		active: false
 	}),
 	computed: {
+		metadataGroups() { return CorpusStore.get.metadataGroups() },
+		metadataFieldsMap() { return CorpusStore.get.allMetadataFieldsMap() },
+		annotationGroups() { return CorpusStore.get.annotationGroups() },
+		annotationsMap() { return CorpusStore.get.allAnnotationsMap() },
+		
 		tabs(): Option[] {
 			return this.addedCriteria.map((c, i) => ({
-				label: this.humanizeGroupBy(c),
+				label: summarizeGroup(this, c, this.annotationsMap, this.metadataFieldsMap),
 				value: i.toString(),
 				class: isValidGroupBy(c) ? '' : 'text-muted',
 			}));
@@ -276,8 +281,8 @@ export default Vue.extend({
 		annotations(): Options {
 			return getAnnotationSubset(
 				UIStore.getState().results.shared.groupAnnotationIds,
-				CorpusStore.get.annotationGroups(),
-				CorpusStore.get.allAnnotationsMap(),
+				this.annotationGroups,
+				this.annotationsMap,
 				'Search',
 				this,
 				CorpusStore.get.textDirection(),
@@ -288,8 +293,8 @@ export default Vue.extend({
 		metadata(): Options {
 			const r = getMetadataSubset(
 				UIStore.getState().results.shared.groupMetadataIds,
-				CorpusStore.get.metadataGroups(),
-				CorpusStore.get.allMetadataFieldsMap(),
+				this.metadataGroups,
+				this.metadataFieldsMap,
 				'Group',
 				this,
 				debug.debug, // is debug enabled - i.e. show debug labels in dropdown
@@ -566,10 +571,6 @@ export default Vue.extend({
 		},
 
 
-		humanized(): string[] {
-			return this.addedCriteria.map(g => this.humanizeGroupBy(g));
-		},
-
 		isParallel(): boolean { return CorpusStore.get.isParallelCorpus() ?? false; },
 
 		parallelVersionOptions(): Option[] {
@@ -595,35 +596,7 @@ export default Vue.extend({
 			this.storeModule.actions.groupBy(serializeGroupBy(this.addedCriteria.filter(isValidGroupBy)));
 			this.selectedCriteriumIndex = -1;
 		},
-		humanizeGroupBy(g: GroupBy): string {
-			if (g.type === 'context') {
-				if (!g.annotation) return this.$t('results.groupBy.specify').toString();
-
-				// when using capture label or relation, done.
-				if (g.context.type === 'label') {
-					return this.$t('results.groupBy.label', {
-						label: g.context.label,
-						annotation: g.annotation
-					}).toString();
-				}
-
-				const position = (g.context.position === 'H' || g.context.position === 'E') ? 'in' : g.context.position === 'B' ? 'before' : 'after';
-
-				let wordCount: string;
-
-				if (g.context.whichTokens === 'all') wordCount = 'all';
-				else if (g.context.whichTokens === 'first') wordCount = 'first';
-				else if (g.context.start === g.context.end) wordCount = g.context.start + '';
-				else wordCount =`${g.context.start}-${g.context.end}`;
-
-				return `${g.annotation}${wordCount ? ` (${wordCount})` : ''} ${position + ' hit'}`;
-			} else if (g.type === 'metadata') {
-				if (!g.field) return this.$t('results.groupBy.specify').toString();
-				return `document ${this.$tMetaDisplayName(CorpusStore.get.allMetadataFieldsMap()[g.field])}`;
-			} else {
-				return g.value;
-			}
-		},
+		
 
 		isEmptyGroup(group: GroupBy) { return (group.type === 'context' && !group.annotation) || (group.type === 'metadata' && !group.field); },
 		isInvalidGroup(group: GroupBy) { return !this.isEmptyGroup(group) && !isValidGroupBy(group); },

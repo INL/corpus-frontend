@@ -1,5 +1,5 @@
 <template>
-	<Modal :title="$tAnnotDisplayName(annotation)" :confirmMessage="$t('partOfSpeech.submit')" @confirm="submit(); $emit('close');" lg :close="false">
+	<Modal v-if="open" :title="$tAnnotDisplayName(annotation)" :confirmMessage="$t('partOfSpeech.submit')" @confirm="submit(); $emit('close');" lg :close="false">
 		<template v-if="isValidTagset">
 
 			<div class="list-group-container" >
@@ -68,6 +68,7 @@ export default Vue.extend({
 	},
 	props: {
 		annotation: Object as () => CorpusStore.NormalizedAnnotation,
+		open: { default: true }
 	},
 	data: () => ({
 		annotationValue: null as null|Tagset['values'][string],

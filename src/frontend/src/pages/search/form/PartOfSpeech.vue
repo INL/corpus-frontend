@@ -1,5 +1,5 @@
 <template>
-	<Modal :title="$tAnnotDisplayName(annotation)" :confirmMessage="$t('partOfSpeech.submit')" @confirm="submit(); $emit('close');" @close="$emit('close')" lg>
+	<Modal :title="$tAnnotDisplayName(annotation)" :confirmMessage="$t('partOfSpeech.submit')" @confirm="submit(); $emit('close');" lg :close="false">
 		<template v-if="isValidTagset">
 
 			<div class="list-group-container" >
@@ -36,8 +36,10 @@
 					<em v-if="annotationValue.subAnnotationIds.length === 0">{{$t('partOfSpeech.noOptions')}}</em>
 				</div>
 			</div>
-			<hr>
-			<div>{{query}}</div>
+			<template v-if="query">
+				<hr>
+				<div>{{query}}</div>
+			</template>
 		</template>
 		<div v-else class="alert alert-danger">
 			{{errorMessage}}

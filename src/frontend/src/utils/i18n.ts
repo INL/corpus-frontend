@@ -7,7 +7,8 @@ import { localStorageSynced } from '@/utils/localstore';
 
 
 Vue.use(VueI18n);
-const defaultLocale = 'en-us';
+const defaultFallbackLocale = 'en-us';
+const defaultLocale = navigator.language;
 const locale = localStorageSynced('cf/locale', defaultLocale, true);
 const availableLocales: Option[] = Vue.observable([]);
 
@@ -23,12 +24,20 @@ function removeLocale(locale: string) {
 
 const i18n = new VueI18n({
 	locale: locale.value,
-	fallbackLocale: defaultLocale,
+	fallbackLocale: defaultFallbackLocale,
 	messages: {},
 });
 
 function setFallbackLocale(locale: string) {
-	i18n.fallbackLocale = locale;
+	if (availableLocales.some(l => l.value === locale))
+		i18n.fallbackLocale = locale;
+	else 
+		console.warn(`Fallback locale ${locale} is not in the list of available locales!`);
+}
+
+function setDefaultLocale(defaultLocale: string) {
+	// If there is no explicit locale stored, set the locale to the value.
+	if (!locale.isFromStorage) locale.value = defaultLocale;
 }
 
 async function loadLocaleMessages(locale: string) {
@@ -109,6 +118,8 @@ const LocaleSelector = Vue.extend({
 	}
 });
 const localeSelectorInstance = new LocaleSelector().$mount('#locale-selector');
+
+
 
 /** Get the i18n text or fall back to a default value if the key doesn't exist.
  *  Useful for dynamic key values such as field names.
@@ -203,6 +214,7 @@ window.i18n = {
 	registerLocale,
 	removeLocale,
 	setFallbackLocale,
+	setDefaultLocale,
 	setLocale(locale: string) {
 		i18n.locale = locale;
 	},

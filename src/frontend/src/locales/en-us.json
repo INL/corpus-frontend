@@ -105,7 +105,12 @@
 		"corpora": {
 			"heading": "Documents",
 			"groupBy": "Group documents by metadata",
-			"showAs": "Show groups as"
+			"showAs": {
+				"heading": "Show groups as",
+				"table": "Table",
+				"docs": "Docs",
+				"tokens": "Tokens"
+			}
 		},
 		"ngram": {
 			"heading": "N-grams",

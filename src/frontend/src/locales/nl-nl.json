@@ -106,7 +106,12 @@
 		"corpora": {
 			"heading": "Documenten",
 			"groupBy": "Groepeer documenten op metadata",
-			"showAs": "Groepen weergeven als"
+			"showAs": {
+				"heading": "Groepen weergaven als",
+				"table": "Tabel",
+				"docs": "Documenten",
+				"tokens": "Tokens"
+			}
 		},
 		"ngram": {
 			"heading": "N-grammen",

@@ -90,6 +90,14 @@
 		"noFilter": {
 			"title": "没有可用的筛选器",
 			"content": "该语料库不包含元数据，或者作者选择不允许对元数据进行筛选。"
+		},
+		"range": {
+			"from": "从",
+			"to": "到",
+			"permissive": "宽松",
+			"permissiveDescription": "匹配部分包含在输入范围内的文档",
+			"strict": "严格",
+			"strictDescription": "匹配完全包含在输入范围内的文档"
 		}
 	},
 	"explore": {
@@ -97,7 +105,12 @@
 		"corpora": {
 			"heading": "文档",
 			"groupBy": "按元数据分组文档",
-			"showAs": "显示分组方式"
+			"showAs": {
+				"heading": "显示分组方式",
+				"table": "表格",
+				"docs": "文档",
+				"tokens": "tokens"
+			}
 		},
 		"ngram": {
 			"heading": "N元组",
@@ -274,7 +287,7 @@
 			"continue": "继续",
 			"hits": "命中",
 			"documents": "文档",
-			"tokens": "tokens"
+			"tokens": "Tokens"
 		},
 		"sort": {
 			"sortBy": "分类依据"

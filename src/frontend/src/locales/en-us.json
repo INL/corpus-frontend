@@ -90,6 +90,14 @@
 		"noFilter": {
 			"title": "No filters available",
 			"content": "This corpus does not contain metadata, or the author has chosen not to allow filtering on metadata."
+		},
+		"range": {
+			"from": "From",
+			"to": "To",
+			"permissive": "Permissive",
+			"permissiveDescription": "Matches documents that are partially contained within the entered range",
+			"strict": "Strict",
+			"strictDescription": "Matches documents that are completely contained within the entered range"
 		}
 	},
 	"explore": {

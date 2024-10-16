@@ -91,6 +91,14 @@
 		"noFilter": {
 			"title": "Geen filters beschikbaar",
 			"content": "This corpus does not contain metadata, or the author has chosen not to allow filtering on metadata."
+		},
+		"range": {
+			"from": "Van",
+			"to": "Tot",
+			"permissive": "Gedeeltelijke overlap",
+			"permissiveDescription": "Toon documenten die gedeeltelijk of volledig binnen het ingevoerde bereik vallen",
+			"strict": "Volledige overlap",
+			"strictDescription": "Toon documenten die volledig binnen het ingevoerde berijk vallen"
 		}
 	},
 	"explore": {
@@ -208,7 +216,7 @@
 			"caseSensitive": "Hoofdlettergevoelig",
 			"chooseWordPositions": "Kies hier de <strong>specifieke woorden</strong> om op te groeperen, in het voorbeeld hieronder ziet u welke woorden zijn geselecteerd.",
 			"selectDocumentMetadata": "Kies de documentwaarde om op te groeperen.",
-			"clickButtonsToStart": "Hier kunt u een groepering toepassen op de resultaten. Gebruik de knoppen hieronder om een groepeercriterium te maken.",
+			"clickButtonsToStart": "Hier kunt u een groepering toepassen op de resultaten. Klik op de knoppen Metadata of Annotatie om groepeercriteria te definiëren.",
 			"metadata": "Metadata",
 			"annotation": "Annotatie",
 			"specify": "Specificeer",

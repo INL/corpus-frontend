@@ -77,6 +77,7 @@
 						searchable
 						hideEmpty
 						:options="annotations"
+						allowHtml
 						v-model="selectedCriterium.annotation"
 					/></template>
 				</i18n>

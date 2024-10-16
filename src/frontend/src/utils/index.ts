@@ -614,7 +614,7 @@ export function getMetadataSubset<T extends {id: string, defaultDisplayName?: st
  * @param operation What section of the interface to generate the options list for: 'Search' will output every annotation only once per group, 'Sort' will generate additional entries to sort in reverse order, and 'Group' is just to generate appropriate option labels "Group by ...".
  * @param corpusTextDirection important for the order of left/right context sorting
  * @param debug is debug mode enabled? print raw annotation IDS in labels
- * @param showGroupLabels show little group name headers between options?
+ * @param showGroupLabels show little group name suffixes at the end of options?
  */
 export function getAnnotationSubset(
 	ids: string[],
@@ -624,7 +624,6 @@ export function getAnnotationSubset(
 	i18n: Vue,
 	corpusTextDirection: 'rtl'|'ltr' = 'ltr',
 	debug = false,
-	/* show the <small/> labels at the end of options labels? */
 	showGroupLabels = true
 ): Array<AppTypes.OptGroup&{entries: AppTypes.NormalizedAnnotation[]}> {
 	function findAnnotatedFieldId(groupId: string) {
@@ -633,17 +632,27 @@ export function getAnnotationSubset(
 
 	const subset = fieldSubset(ids, groups, annotations, operation !== 'Search' ? 'Other' : undefined);
 	if (operation === 'Search')	{
-		return subset.map(group => ({
-			entries: group.entries,
-			options: group.entries.map(a => ({
-				value: a.id,
-				label: i18n.$tAnnotDisplayName(a) + (debug ? ` (id: ${a.id})` : ''),
-				title: i18n.$tAnnotDescription(a)
-			})),
-			// hack, when using a default group we need to come up with an annotated field
-			// So just use the first annotated field we come across.
-			label: i18n.$tAnnotGroupName({id: group.id, annotatedFieldId: findAnnotatedFieldId(group.id), entries: [], isRemainderGroup: false}),
-		}));
+		return subset.map(group => {
+			const annotationGroupMock: AppTypes.NormalizedAnnotationGroup = {
+				annotatedFieldId: findAnnotatedFieldId(group.id),
+				entries: [],
+				id: group.id,
+				isRemainderGroup: false
+			}
+			const groupNameLocalized = i18n.$tAnnotGroupName(annotationGroupMock);
+
+			return {
+				entries: group.entries,
+				options: group.entries.map(a => ({
+					value: a.id,
+					label: i18n.$tAnnotDisplayName(a) + (showGroupLabels ? ` <small class="text-muted">${groupNameLocalized}</small>` : '') + (debug ? ` (id: ${a.id})` : ''),
+					title: i18n.$tAnnotDescription(a)
+				})),
+				// hack, when using a default group we need to come up with an annotated field
+				// So just use the first annotated field we come across.
+				label: i18n.$tAnnotGroupName({id: group.id, annotatedFieldId: findAnnotatedFieldId(group.id), entries: [], isRemainderGroup: false}),
+			}
+		});
 	} else {
 		// Generate options for sorting by annotation.
 		// I.e. 6 options per annotation. 3 for each position: before, hit, after
@@ -660,7 +669,7 @@ export function getAnnotationSubset(
 				// in debug mode - show IDs
 				const displayIdHtml = debug ? `<small><strong>[id: ${id}]</strong></small>` : '';
 				const displayNameHtml = i18n.$tAnnotDisplayName(annotations[id]);
-				const displaySuffixHtml = showGroupLabels && suffix ? `<small class="text-muted">${suffix}</small>` : '';
+				const displaySuffixHtml = (showGroupLabels && suffix) ? `<small class="text-muted">${suffix}</small>` : '';
 
 				return [{
 					label: i18n.$t('results.table.sortBy', {field: `${displayNameHtml} ${displayIdHtml} ${displaySuffixHtml}`}).toString(),

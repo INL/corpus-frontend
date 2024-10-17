@@ -126,7 +126,10 @@
 	"setting": {
 		"heading": "Globale instellingen",
 		"resultsPerPage": "Resultaten per pagina",
+		"resultsPerPageOption": "{n} per pagina",
 		"sampleSize": "Steekproefgrootte",
+		"sampleSizeCount": "aantal",
+		"sampleSizePercentage": "percentage",
 		"sampleSeed": "Steekproef-seed",
 		"context": "Contextgrootte",
 		"wideView": "Breedbeeld",

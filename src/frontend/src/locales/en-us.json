@@ -125,7 +125,10 @@
 	"setting": {
 		"heading": "Global settings",
 		"resultsPerPage": "Results per page",
+		"resultsPerPageOption": "{n} results per page",
 		"sampleSize": "Sample size",
+		"sampleSizeCount": "count",
+		"sampleSizePercentage": "percentage",
 		"sampleSeed": "Seed",
 		"context": "Context size",
 		"wideView": " Wide View",

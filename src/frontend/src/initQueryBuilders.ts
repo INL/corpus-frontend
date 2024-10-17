@@ -58,13 +58,8 @@ export async function initQueryBuilders(i18n: Vue): Promise<QueryBuilder[]> {
 	return queryBuilders;
 
 	async function initQueryBuilder(el: HTMLElement, i: number): Promise<QueryBuilder> {
-		if (el.classList.contains('bl-querybuilder-root')) {
-			const existing = $(el).data('builder') as QueryBuilder;
-			existing.refresh();
-			return existing;
-		}
-
-		const instance = new QueryBuilder($(el), {
+		// Re-init settings due to potentially changed translations in the options
+		const settings = {
 			queryBuilder: {
 				view: {
 					withinSelectOptions
@@ -77,7 +72,15 @@ export async function initQueryBuilders(i18n: Vue): Promise<QueryBuilder[]> {
 					defaultAttribute: UIStore.getState().search.advanced.defaultSearchAnnotationId
 				}
 			}
-		}, i18n);
+		};
+
+		if (el.classList.contains('bl-querybuilder-root')) {
+			const existing = $(el).data('builder') as QueryBuilder;
+			existing.refresh(settings);
+			return existing;
+		}
+
+		const instance = new QueryBuilder($(el), settings, i18n);
 
 		if (i == 0) {
 			// SOURCE

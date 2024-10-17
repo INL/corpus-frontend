@@ -560,13 +560,14 @@ export class QueryBuilder {
 	}
 
 	/** Rerender this querybuilder, for example when selected locale has changed. */
-	public refresh() {
+	public refresh(settings?: QueryBuilderOptions) {
 		const cur = this.getCql();
 		const newRoot = $('<div></div>');
 		const currentClasses = this.element[0].classList;
 		currentClasses.forEach(c => newRoot[0].classList.add(c));
-
 		this.element.replaceWith(newRoot);
+		this.settings = $.extendext(true, 'replace', {}, this.settings, settings);
+
 		this._prepareElement(newRoot);
 		this.parse(cur);
 	}

@@ -1114,7 +1114,7 @@ export class Attribute {
 			const $input = $optionsContainer.find('[data-attribute-role="value"]');
 			const rawValue = [$input.val() as string|string[]].flat(2); // transform to array if it isn't
 			// if we're a dropdown we need to regex-escape, since they're exact values, but are interpreted as if they're regex
-			values = $input.is('select') ? rawValue.map(v => escapeRegex(v, false).replace(/([|"])/g, '\\$1')) : rawValue;
+			values = $input.is('select') ? rawValue.map(v => escapeRegex(v)) : rawValue;
 		}
 
 		const callback = this.builder.settings.attribute.getCql;

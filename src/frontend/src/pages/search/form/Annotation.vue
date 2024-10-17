@@ -65,7 +65,7 @@
 					:id="`pos_editor${uid}`"
 					:annotation="annotation"
 
-					@submit="value = $event.queryString"
+					@submit="value = $event"
 
 					ref="reset"
 				/>

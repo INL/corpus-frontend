@@ -193,8 +193,8 @@
 			"groupNameWithoutValue": "[geen waarde]",
 
 			"groupResults": "Groeperen",
-			"clear": "Wissen",
 			"close": "Sluiten",
+			"clear": "Wissen",
 			"apply": "Groeperen",
 			"invalidGrouping": "Deze groepering is niet geldig.",
 

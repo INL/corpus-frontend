@@ -107,7 +107,7 @@
 			"heading": "Documenten",
 			"groupBy": "Groepeer documenten op metadata",
 			"showAs": {
-				"heading": "Groepen weergaven als",
+				"heading": "Groepen weergeven als",
 				"table": "Tabel",
 				"docs": "Documenten",
 				"tokens": "Tokens"

@@ -73,7 +73,7 @@
 			"importQuery": "Importeer zoekvraag",
 			"importQueryTitle": "Importeer een eerder gedownloade zoekvraag",
 			"gapFilling": "Gap-filling",
-			"gapFillingTitle": "Upload a tab-separated list of values to substitute for gap values ('@@' in your query).",
+			"gapFillingTitle": "Upload een lijst waardes gescheiden door tabs om in de query te gebruiken (op de plaats van '@@').",
 			"clearGapValues": "Gap-waarden wissen"
 		},
 		"parallel": {
@@ -90,7 +90,7 @@
 		"heading": "Filter zoekopdracht op …",
 		"noFilter": {
 			"title": "Geen filters beschikbaar",
-			"content": "This corpus does not contain metadata, or the author has chosen not to allow filtering on metadata."
+			"content": "Dit corpus bevat geen metadata, of de auteur staat het niet toe om te filteren op metadata."
 		},
 		"range": {
 			"from": "Van",
@@ -226,7 +226,7 @@
 			"annotation": "Annotatie",
 			"specify": "Specificeer",
 			"label": "{label} ({annotation})",
-			
+
 			"summary": {
 				"indexedWord": "{field} [{index}] {position}",
 				"firstWord": "eerste {field} {position}",

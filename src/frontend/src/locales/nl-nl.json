@@ -228,7 +228,6 @@
 			"metadata": "Metadata",
 			"annotation": "Annotatie",
 			"specify": "Specificeer",
-			"label": "{label} ({annotation})",
 
 			"summary": {
 				"indexedWord": "{field} [{index}] {position}",

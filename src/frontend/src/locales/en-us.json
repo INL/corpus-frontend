@@ -227,6 +227,7 @@
 			"clickButtonsToStart": "Click on Annotation or Metadata to define grouping criteria.",
 			"metadata": "Metadata",
 			"annotation": "Annotation",
+			"specify": "Specify",
 
 			"summary": {
 				"indexedWord": "{field} [{index}] {position}",

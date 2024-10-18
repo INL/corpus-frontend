@@ -37,7 +37,7 @@
 				<span v-if="isParallel">{{ $t('results.groupBy.parallelCorpusVersion') }}</span>
 				<SelectPicker v-if="isParallel"
 						:options="parallelVersionOptions"
-						v-model="targetField"
+						v-model="selectedCriterium.fieldName"
 						allowUnknownValues
 						data-width="auto"
 						data-menu-width="auto"
@@ -236,6 +236,7 @@ export default Vue.extend({
 		/** micro optimization: whether to skip next parse since the new value came from us anyway. */
 		storeValueUpdateIsOurs: false,
 
+		/** For the preview. Results from props can also be grouped, so we need to request these ourselves. */
 		hits: undefined as undefined|BLHitResults,
 
 		active: false
@@ -245,7 +246,7 @@ export default Vue.extend({
 		metadataFieldsMap() { return CorpusStore.get.allMetadataFieldsMap() },
 		annotationGroups() { return CorpusStore.get.annotationGroups() },
 		annotationsMap() { return CorpusStore.get.allAnnotationsMap() },
-		
+
 		tabs(): Option[] {
 			return this.addedCriteria.map((c, i) => ({
 				label: summarizeGroup(this, c, this.annotationsMap, this.metadataFieldsMap),
@@ -352,17 +353,7 @@ export default Vue.extend({
 		},
 
 		mainSearchField(): string {
-			return this.hits?.summary.pattern?.fieldName ?? '';
-		},
-		targetField: {
-			get(): string {
-				return this.selectedCriteriumAsPositional?.fieldName ?? '';
-			},
-			set(v: string) {
-				if (this.selectedCriteriumAsPositional) {
-					this.selectedCriteriumAsPositional.fieldName = v;
-				}
-			},
+			return this.results?.summary.pattern?.fieldName ?? '';
 		},
 
 		colors(): Record<string, TokenHighlight> {
@@ -596,7 +587,6 @@ export default Vue.extend({
 			this.storeModule.actions.groupBy(serializeGroupBy(this.addedCriteria.filter(isValidGroupBy)));
 			this.selectedCriteriumIndex = -1;
 		},
-		
 
 		isEmptyGroup(group: GroupBy) { return (group.type === 'context' && !group.annotation) || (group.type === 'metadata' && !group.field); },
 		isInvalidGroup(group: GroupBy) { return !this.isEmptyGroup(group) && !isValidGroupBy(group); },

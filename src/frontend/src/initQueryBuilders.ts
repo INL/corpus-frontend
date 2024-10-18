@@ -74,9 +74,17 @@ export async function initQueryBuilders(i18n: Vue): Promise<QueryBuilder[]> {
 			}
 		};
 
+		// Set initial value
+		let lastPattern: string|null = null;
+
 		if (el.classList.contains('bl-querybuilder-root')) {
 			const existing = $(el).data('builder') as QueryBuilder;
 			existing.refresh(settings);
+			existing.element.on('cql:modified', () => {
+				const pattern = instance.getCql();
+				lastPattern = pattern;
+				PatternStore.actions.advanced.query(pattern);
+			});
 			return existing;
 		}
 
@@ -86,7 +94,6 @@ export async function initQueryBuilders(i18n: Vue): Promise<QueryBuilder[]> {
 			// SOURCE
 
 			// Set initial value
-			let lastPattern: string|null = null;
 			if (PatternStore.getState().advanced.query == null) {
 				// not initialized in store, set to default from querybuilder
 				lastPattern = instance.getCql();
@@ -117,8 +124,7 @@ export async function initQueryBuilders(i18n: Vue): Promise<QueryBuilder[]> {
 			// TARGET
 			const targetIndex = i - 1;
 
-			// Set initial value
-			let lastPattern: string|null = null;
+
 			if (PatternStore.getState().advanced.targetQueries[targetIndex] == null) {
 				// not initialized in store, set to default from querybuilder
 				lastPattern = instance.getCql();
@@ -145,7 +151,6 @@ export async function initQueryBuilders(i18n: Vue): Promise<QueryBuilder[]> {
 				lastPattern = pattern;
 				PatternStore.actions.advanced.changeTargetQuery({ index: targetIndex, value: pattern || '' });
 			});
-
 		}
 
 		return instance;

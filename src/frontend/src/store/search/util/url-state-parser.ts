@@ -476,7 +476,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 		}
 
 		const result = {
-			source: this.getString('field', CorpusModule.get.parallelAnnotatedFields()[0]?.id),
+			source: sourceFromUrl,
 			targets: this._parsedCql ? this._parsedCql.slice(1).map(result => result.targetVersion ? getParallelFieldName(prefix, result.targetVersion) : '') : [],
 			alignBy: (this._parsedCql ? this._parsedCql[1]?.relationType : defaultAlignBy) ?? defaultAlignBy,
 		};

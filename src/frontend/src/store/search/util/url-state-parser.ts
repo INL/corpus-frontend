@@ -277,7 +277,7 @@ export default class UrlStateParser extends BaseUrlStateParser<HistoryModule.His
 			cql.tokens.find(t =>
 				t.leadingXmlTag != null ||
 				t.trailingXmlTag != null ||
-				t.repeats != null ||
+				(t.repeats != null && (t.repeats.min !== 1 || t.repeats.max !== 1)) ||
 				t.optional ||
 				(t.expression != null && (t.expression.type !== 'attribute' || t.expression.operator !== '='))
 			) != null

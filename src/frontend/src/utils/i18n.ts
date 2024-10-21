@@ -77,9 +77,9 @@ async function loadLocaleMessages(locale: string) {
 	}
 }
 
-registerLocale('en-us', '🇺🇸 English')
-registerLocale('zh-cn', '🇨🇳 中文')
-registerLocale('nl-nl', '🇳🇱 Nederlands')
+registerLocale('en-us', 'English')
+registerLocale('zh-cn', '中文')
+registerLocale('nl-nl', 'Nederlands')
 
 const LocaleSelector = Vue.extend({
 	i18n,

@@ -827,8 +827,8 @@ const init = () => {
 	// Always remove any possible bogus annotations set by invalid configs
 	// And then replace with default values if not configured
 	// The setters have builtin validation. So call them, then check if a valid was set, and if not, replace with default.
-
-	actions.search.simple.searchAnnotationId(initialState.search.simple.searchAnnotationId);
+	if (initialState.search.simple.searchAnnotationId)
+		actions.search.simple.searchAnnotationId(initialState.search.simple.searchAnnotationId);
 	if (!getState().search.simple.searchAnnotationId) actions.search.simple.searchAnnotationId(mainAnnotation.id);
 
 	actions.search.extended.searchAnnotationIds(initialState.search.extended.searchAnnotationIds);

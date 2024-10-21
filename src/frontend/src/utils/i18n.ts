@@ -8,7 +8,7 @@ import { localStorageSynced } from '@/utils/localstore';
 
 Vue.use(VueI18n);
 const defaultFallbackLocale = 'en-us';
-const defaultLocale = navigator.language;
+const defaultLocale = navigator.language.toLowerCase();
 const locale = localStorageSynced('cf/locale', defaultLocale, true);
 const availableLocales: Option[] = Vue.observable([]);
 
@@ -41,6 +41,7 @@ function setDefaultLocale(defaultLocale: string) {
 }
 
 async function loadLocaleMessages(locale: string) {
+	if (!locale) return;
 	// also allow loading locales not defined in the availableLocales.
 	// This is useful for loading overrides for locales that are not available in the UI.
 	// Also, because the UI list can be updated asynchronously (from customjs), we might have a locale in localStorage that is not in the list yet.
@@ -52,7 +53,7 @@ async function loadLocaleMessages(locale: string) {
 	try { messages = await import(`@/locales/${locale}.json`); }
 	catch (e) { console.info(`Failed to load builtin locale messages for ${locale}: ${e}`); }
 
-	overrides = await fetch(`${CONTEXT_URL}/${INDEX_ID}/static/locales/${locale}.json`)
+	overrides =  await fetch(`${CONTEXT_URL}${INDEX_ID ? `/${INDEX_ID}` : ''}/static/locales/${locale}.json`)
 		.then(r => {
 			if (!r.ok) {
 				// If the file doesn't exist, that's fine, we just won't have any overrides.

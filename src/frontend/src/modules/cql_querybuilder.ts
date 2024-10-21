@@ -424,9 +424,7 @@ const DEFAULTS = {
 	}
 };
 
-type QueryBuilderOptions = RecursivePartial<typeof DEFAULTS>;
-// so not everything is optional and extracting types from nested properties works
-export type QueryBuilderOptionsDef = typeof DEFAULTS;
+export type QueryBuilderOptions = RecursivePartial<typeof DEFAULTS>;
 
 // -------------------
 // Class Querybuilder

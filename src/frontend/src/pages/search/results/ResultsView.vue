@@ -299,8 +299,7 @@ export default Vue.extend({
 			set(v: string|null) { this.store.actions.viewGroup(v); }
 		},
 
-		annotations: CorpusStore.get.allAnnotationsMap,
-		metadata: CorpusStore.get.allMetadataFieldsMap,
+		corpus(): NormalizedIndex { return CorpusStore.getState().corpus!; },
 
 		concordanceAnnotationOptions(): CorpusStore.NormalizedAnnotation[] { return UIStore.getState().results.shared.concordanceAnnotationIdOptions.map(id => CorpusStore.get.allAnnotationsMap()[id]); },
 		concordanceAnnotationId: {
@@ -409,7 +408,7 @@ export default Vue.extend({
 			});
 			if (this.groupBy.length > 0) {
 				r.push({
-					label: 'Grouped by ' + parseGroupBy(this.groupBy).map(g => humanizeGroupBy(this, g, this.annotations, this.metadata)).join(', '),
+					label: 'Grouped by ' + parseGroupBy(this.groupBy).map(g => humanizeGroupBy(this, g, CorpusStore.get.allAnnotationsMap(), CorpusStore.get.allMetadataFieldsMap())).join(', '),
 					title: 'Go back to grouped results',
 					active: false, //this.viewGroup == null,
 					onClick: () => {

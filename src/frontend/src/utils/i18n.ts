@@ -7,7 +7,8 @@ import { localStorageSynced } from '@/utils/localstore';
 
 
 Vue.use(VueI18n);
-const defaultLocale = 'en-us';
+const defaultFallbackLocale = 'en-us';
+const defaultLocale = navigator.language.toLowerCase();
 const locale = localStorageSynced('cf/locale', defaultLocale, true);
 const availableLocales: Option[] = Vue.observable([]);
 
@@ -23,15 +24,24 @@ function removeLocale(locale: string) {
 
 const i18n = new VueI18n({
 	locale: locale.value,
-	fallbackLocale: defaultLocale,
+	fallbackLocale: defaultFallbackLocale,
 	messages: {},
 });
 
 function setFallbackLocale(locale: string) {
-	i18n.fallbackLocale = locale;
+	if (availableLocales.some(l => l.value === locale))
+		i18n.fallbackLocale = locale;
+	else 
+		console.warn(`Fallback locale ${locale} is not in the list of available locales!`);
+}
+
+function setDefaultLocale(defaultLocale: string) {
+	// If there is no explicit locale stored, set the locale to the value.
+	if (!locale.isFromStorage) locale.value = defaultLocale;
 }
 
 async function loadLocaleMessages(locale: string) {
+	if (!locale) return;
 	// also allow loading locales not defined in the availableLocales.
 	// This is useful for loading overrides for locales that are not available in the UI.
 	// Also, because the UI list can be updated asynchronously (from customjs), we might have a locale in localStorage that is not in the list yet.
@@ -43,7 +53,7 @@ async function loadLocaleMessages(locale: string) {
 	try { messages = await import(`@/locales/${locale}.json`); }
 	catch (e) { console.info(`Failed to load builtin locale messages for ${locale}: ${e}`); }
 
-	overrides = await fetch(`${CONTEXT_URL}/${INDEX_ID}/static/locales/${locale}.json`)
+	overrides =  await fetch(`${CONTEXT_URL}${INDEX_ID ? `/${INDEX_ID}` : ''}/static/locales/${locale}.json`)
 		.then(r => {
 			if (!r.ok) {
 				// If the file doesn't exist, that's fine, we just won't have any overrides.
@@ -67,9 +77,9 @@ async function loadLocaleMessages(locale: string) {
 	}
 }
 
-registerLocale('en-us', '🇺🇸 English')
-registerLocale('zh-cn', '🇨🇳 中文')
-registerLocale('nl-nl', '🇳🇱 Nederlands')
+registerLocale('en-us', 'English')
+registerLocale('zh-cn', '中文')
+registerLocale('nl-nl', 'Nederlands')
 
 const LocaleSelector = Vue.extend({
 	i18n,
@@ -109,6 +119,8 @@ const LocaleSelector = Vue.extend({
 	}
 });
 const localeSelectorInstance = new LocaleSelector().$mount('#locale-selector');
+
+
 
 /** Get the i18n text or fall back to a default value if the key doesn't exist.
  *  Useful for dynamic key values such as field names.
@@ -203,6 +215,7 @@ window.i18n = {
 	registerLocale,
 	removeLocale,
 	setFallbackLocale,
+	setDefaultLocale,
 	setLocale(locale: string) {
 		i18n.locale = locale;
 	},

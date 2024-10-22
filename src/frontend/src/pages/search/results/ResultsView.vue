@@ -122,7 +122,7 @@ import debug, { debugLog } from '@/utils/debug';
 
 import * as BLTypes from '@/types/blacklabtypes';
 import { NormalizedIndex } from '@/types/apptypes';
-import { parseGroupBy, serializeGroupBy } from '@/utils/grouping';
+import { humanizeGroupBy, parseGroupBy, serializeGroupBy } from '@/utils/grouping';
 
 export default Vue.extend({
 	components: {
@@ -300,6 +300,7 @@ export default Vue.extend({
 		},
 
 		corpus(): NormalizedIndex { return CorpusStore.getState().corpus!; },
+
 		concordanceAnnotationOptions(): CorpusStore.NormalizedAnnotation[] { return UIStore.getState().results.shared.concordanceAnnotationIdOptions.map(id => CorpusStore.get.allAnnotationsMap()[id]); },
 		concordanceAnnotationId: {
 			get(): string { return UIStore.getState().results.shared.concordanceAnnotationId; },
@@ -407,7 +408,7 @@ export default Vue.extend({
 			});
 			if (this.groupBy.length > 0) {
 				r.push({
-					label: 'Grouped by ' + this.groupBy.toString(),
+					label: 'Grouped by ' + parseGroupBy(this.groupBy).map(g => humanizeGroupBy(this, g, CorpusStore.get.allAnnotationsMap(), CorpusStore.get.allMetadataFieldsMap())).join(', '),
 					title: 'Go back to grouped results',
 					active: false, //this.viewGroup == null,
 					onClick: () => {

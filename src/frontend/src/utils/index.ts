@@ -47,7 +47,7 @@ export function escapeRegex(value: string, settings: RegexEscapeOptions = {}) {
 		if (active) value = value.replaceAll(input, output);
 	}
 
-	const escapeBase = (s: string) => s.replace(/([\\^$+.(){}[\]])/g, '\\$1');
+	const escapeBase = (s: string) => s.replace(/([\\^$#@+.(){}[\]])/g, '\\$1');
 	const escapeWildcards = (s: string) => s.replace(/([*?])/g, '\\$1');
 	const activateWildcards = (s: string) => s.replace(/\*/g, '.*').replace(/\?/g, '.');
 	const escapePipes = (s: string) => s.replace(/\|/g, '\\|');
@@ -87,7 +87,7 @@ export function unescapeRegex(value: string, settings: RegexEscapeOptions = {}) 
 		if (active) value = value.replaceAll(input, output);
 	}
 
-	const unescapeBase = (s: string) => s.replace(/\\([\\^$+.(){}[\]])/g, '$1');
+	const unescapeBase = (s: string) => s.replace(/\\([\\^$#@+.(){}[\]])/g, '$1');
 	const unescapeWildcards = (s: string) => s.replace(/\\([*?])/g, '$1');
 	const deactivateWildcards = (s: string) => s.replace(/\.\*/g, '*').replace(/\./g, '?');
 	const unescapePipes = (s: string) => s.replace(/\\[|]/g, '|');

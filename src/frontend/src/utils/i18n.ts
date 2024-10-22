@@ -5,6 +5,20 @@ import { NormalizedAnnotatedField, NormalizedAnnotation, NormalizedAnnotationGro
 import SelectPicker from '@/components/SelectPicker.vue';
 import { localStorageSynced } from '@/utils/localstore';
 
+// This is some cool typescript magic to get the paths of the keys in the i18n json files.
+// This way we can typecheck the keys in the code and get autocompletion.
+// However we can't use this yet because it's currently not possible to
+// overwrite the $t function in the Vue prototype with the correct types.
+// For that we'd need to overwrite the declaration in the vue-i18n package
+// but that's not supported by typescript currently.
+// See https://github.com/microsoft/TypeScript/issues/36146
+// type Path<T> = {
+// [K in keyof T]: K extends string ? T[K] extends object
+// 	? `${K}.${Path<T[K]>}`
+// 	: K
+// 	: never;
+// }[keyof T];
+// type ValidPaths = Path<typeof import('@/locales/en-us.json')>;
 
 Vue.use(VueI18n);
 const defaultFallbackLocale = 'en-us';
@@ -31,7 +45,7 @@ const i18n = new VueI18n({
 function setFallbackLocale(locale: string) {
 	if (availableLocales.some(l => l.value === locale))
 		i18n.fallbackLocale = locale;
-	else 
+	else
 		console.warn(`Fallback locale ${locale} is not in the list of available locales!`);
 }
 

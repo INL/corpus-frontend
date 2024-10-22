@@ -286,7 +286,16 @@
 			"documentsWhere": "documents where"
 		},
 		"resultsView": {
-			"backToGroupOverview": "Back to group overview",
+			"navigation": {
+				"backToGroupedResults": "Go back to grouped results",
+				"backToUngroupedResults": "Go vack to ungrouped results",
+				"hits": "Hits",
+				"documents": "Documents",
+				"viewingGroup": "Viewing group {group}",
+				"groupedBy": "Grouped by {group}",
+				"randomSample": "Random sample ({sample})"
+			},
+
 			"noResultsFound": "No results found.",
 			"inactiveView": "This view is inactive because no search criteria for words were specified.",
 			"tryAgainTitle": "Try again with current search settings",

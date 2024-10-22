@@ -286,7 +286,16 @@
 			"documentsWhere": "documenten waar"
 		},
 		"resultsView": {
-			"backToGroupOverview": "Terug naar groepen",
+			"navigation": {
+				"backToGroupedResults": "Terug naar gegroepeerde resultaten",
+				"backToUngroupedResults": "Terug naar niet-gegroepeerde resultaten",
+				"hits": "Hits",
+				"documents": "Documenten",
+				"viewingGroup": "In groep {group}",
+				"groupedBy": "Gegroepeerd op {group}",
+				"randomSample": "Steekproef ({sample})"
+			},
+
 			"noResultsFound": "Geen resultaten gevonden.",
 			"inactiveView": "Deze weergave is niet actief omdat er niet naar woorden gezocht is.",
 			"tryAgainTitle": "Probeer opnieuw met huidige parameters",

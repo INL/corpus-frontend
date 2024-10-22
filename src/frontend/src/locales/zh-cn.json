@@ -270,6 +270,16 @@
 			"documentsWhere": "文件筛选于"
 		},
 		"resultsView": {
+			"navigation": {
+				"backToGroupedResults": "返回分组结果",
+				"backToUngroupedResults": "返回未分组结果",
+				"hits": "命中",
+				"documents": "文档",
+				"viewingGroup": "查看组 {group}",
+				"groupedBy": "按 {group} 分组",
+				"randomSample": "随机样本 ({sample})"
+			},
+
 			"backToGroupOverview": "返回分组概览",
 			"noResultsFound": "未找到结果。",
 			"inactiveView": "此视图不活跃，因为未指定单词的搜索条件。",
